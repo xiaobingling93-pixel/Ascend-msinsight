@@ -28,9 +28,11 @@
         "pkg": "^5.8.1"
     },
     "scripts": {
-        "package": "pkg . -t nodev14-win-x64 --compress GZip",
+        "packageWin": "pkg ./package.json -t nodev14-win-x64 -C GZip -o profiler-server",
+        "packageLinuxX64": "pkg ./package.json -t nodev14-linux-x64 -C GZip -o profiler-server",
         "build": "eslint ./src && tsc ",
-        "start": "eslint ./src && tsc && node ./dist/app.js"
+        "start": "eslint ./src && tsc && node ./dist/app.js",
+        "package": "npm run packageWin&&npm run packageLinuxX64"
     },
     "pkg": {
         "scripts": [

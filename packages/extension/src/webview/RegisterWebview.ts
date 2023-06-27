@@ -3,6 +3,7 @@ import { Webview } from "./Webview";
 const fs = require('fs');
 const path = require('path');
 const cp = require('child_process');
+const os = require('os');
 
 export class RegisterWebview extends Webview {
 
@@ -52,7 +53,11 @@ export class RegisterWebview extends Webview {
         this.panel.webview.html = this.html();
     }
     startServer() {
-        const serverPath = path.join(__dirname, './profiler/profiler-server.exe');
+        let serverName = './profiler/profiler-server';
+        if (os.platform() === 'win32') {
+            serverName = serverName + '.exe';
+        }
+        const serverPath = path.join(__dirname, serverName);
         console.log(serverPath);
         this.server = cp.spawn(serverPath, []);
         this.server.stdout.on('data', (data:any) => {

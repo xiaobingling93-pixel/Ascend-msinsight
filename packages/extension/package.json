@@ -1,6 +1,6 @@
 {
-    "name": "ascend-profiler-extension",
-    "displayName": "ascend-profiler-extension",
+    "name": "ascend-insight-extension",
+    "displayName": "ascend-insight-extension",
     "description": "",
     "version": "0.0.1",
     "engines": {
@@ -16,16 +16,16 @@
     "contributes": {
         "commands": [
             {
-                "command": "ascend-profiler.start",
-                "title": "ascend-profiler.start"
+                "command": "ascend-insight.start",
+                "title": "ascend-insight.start"
             }
         ],
         "menus": {
             "editor/context": [
                 {
-                    "command": "ascend-profiler.start",
+                    "command": "ascend-insight.start",
                     "when": "editorTextFocus && !editorReadonly",
-                    "title": "ascend-profiler.start"
+                    "title": "ascend-insight.start"
                 }
             ]
         }

@@ -8,13 +8,20 @@
     ],
     "scripts": {
         "start": "cd .\\packages\\frontend&&npm start",
-        "build": "npm run buildFrontend&&npm run buildServer&&npm run copyFrontend&&npm run copyServer&&npm run buildExtension",
-        "buildFrontend": "cd .\\packages\\frontend&&npm install&&npm run build",
-        "buildServer": "cd .\\packages\\server&&npm install&&npm run build&&npm run package",
+        "build": "npm run buildWin",
+        "buildWin": "npm run buildFrontendWin&&npm run buildServerWin&&npm run copyFrontendWin&&npm run copyServerWin&&npm run buildExtensionWin",
+        "buildFrontendWin": "cd .\\packages\\frontend&&npm install&&npm run build",
+        "buildServerWin": "cd .\\packages\\server&&npm install&&npm run build&&npm run packageWin",
         "clear": "rmdir .\\packages\\extension\\profiler /s /q",
-        "copyFrontend": "xcopy .\\packages\\frontend\\build .\\packages\\extension\\profiler /E /I /Y",
-        "copyServer": "xcopy .\\packages\\server\\profiler-server.exe .\\packages\\extension\\profiler /E /I /Y",
-        "buildExtension": "cd .\\packages\\extension&&npm install&&vsce package",
-        "initProject": "cd .\\packages\\frontend&&npm install&&cd ..\\packages\\extension&&npm install&&mkdir profiler"
+        "copyFrontendWin": "xcopy .\\packages\\frontend\\build .\\packages\\extension\\profiler /E /I /Y",
+        "copyServerWin": "xcopy .\\packages\\server\\profiler-server.exe .\\packages\\serverBuild\\ /E /I /Y",
+        "buildExtensionWin": "cd .\\packages\\extension&&npm install&&vsce package",
+        "initProject": "cd .\\packages\\frontend&&npm install&&cd ..\\packages\\extension&&npm install&&mkdir profiler",
+        "buildLinux": "npm run buildFrontendLinux&&npm run buildServerLinux&&npm run copyFrontendLinux&&npm run copyServerLinux&&npm run buildExtensionLinux",
+        "buildFrontendLinux": "cd ./packages/frontend&&npm install&&npm run build",
+        "buildServerLinux": "cd ./packages/server&&npm install&&npm run build&&npm run packageLinuxX64",
+        "copyFrontendLinux": "cp -rf ./packages/frontend/build ./packages/extension/profiler",
+        "copyServerLinux": "cp -rf ./packages/server/profiler-server ./packages/serverBuild/",
+        "buildExtensionLinux": "cd ./packages/extension&&npm install&&vsce package"
     }
 }

@@ -6,8 +6,8 @@ import { Webview } from './webview/Webview';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
-		vscode.commands.registerCommand('ascend-profiler.start', () => {
-			let webview = new RegisterWebview('profiler', 'profiler', context);
+		vscode.commands.registerCommand('ascend-insight.start', () => {
+			let webview = new RegisterWebview('insight', 'insight', context);
 			webview.previewUIPage();
 		})
 	);
