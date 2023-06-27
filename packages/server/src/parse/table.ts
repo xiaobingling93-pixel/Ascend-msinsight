@@ -212,6 +212,22 @@ export class Table {
         }
     }
 
+    async selectData(sql: string, params: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.db.all(sql, params, (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    console.error(err.message);
+                    reject(err);
+                } else {
+                    const result = rows.map(row => {
+                        return row;
+                    });
+                    resolve(result);
+                }
+            });
+        });
+    }
+
     async creatIndex(): Promise<void> {
         return new Promise((resolve, reject) => {
             const start = new Date().getTime();
