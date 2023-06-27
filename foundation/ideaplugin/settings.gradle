@@ -1,0 +1,9 @@
+pluginManagement {
+    repositories {
+        maven {
+            url 'https://cmc.centralrepo.rnd.huawei.com/maven/'
+        }
+    }
+}
+rootProject.name = 'ohos-hiinsight'
+

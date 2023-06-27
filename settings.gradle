@@ -1,0 +1,3 @@
+rootProject.name = 'ohos-hiinsight'
+include 'ohos-hiinsight'
+project(':ohos-hiinsight').projectDir = file("$rootDir/foundation/ideaplugin")
