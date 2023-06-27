@@ -8,11 +8,12 @@ export class Table {
     private readonly flowTable = 'flow';
     private readonly idIndex = 'id_index';
     private readonly trackIdTimeIndex = 'track_id_time_index';
-    private dataCaches: any[] = [];
+    private sliceDataCaches: any[] = [];
+    private flowDataCaches: any[] = [];
     private readonly maxCachesSize = 1000;
     count = 0;
-    private readonly depthCache = new Map<number, number[]>();
-    private stat: Statement | undefined;
+    private sliceStat: Statement | undefined;
+    private flowStat: Statement | undefined;
 
     constructor(dbPath: string) {
         this.db = new sqlite.Database(dbPath, sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE | sqlite.OPEN_SHAREDCACHE, (err) => {
@@ -21,6 +22,33 @@ export class Table {
             }
             console.log('Connect to database.');
         });
+        this.initStat();
+    }
+
+    async setConfig(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.db.run('PRAGMA synchronous = OFF')
+                .run('PRAGMA journal_mode = MEMORY', (err) => {
+                    if (err) {
+                        console.error(err.message);
+                    }
+                    console.log('set config');
+                    resolve();
+                });
+        });
+    }
+
+    initStat(): void {
+        if (this.sliceStat === undefined) {
+            const placeholders: string = '(?,?,?,?,?),'.repeat(this.maxCachesSize - 1).concat('(?,?,?,?,?)');
+            const sql: string = `INSERT INTO ${this.sliceTable} (timestamp, duration, name, track_id, args) VALUES ${placeholders}`;
+            this.sliceStat = this.db.prepare(sql);
+        }
+        if (this.flowStat === undefined) {
+            const placeholders: string = '(?,?,?,?,?,?),'.repeat(this.maxCachesSize - 1).concat('(?,?,?,?,?,?)');
+            const sql: string = `INSERT INTO ${this.flowTable} (flow_id, name, track_id, timestamp, cat, type) VALUES ${placeholders}`;
+            this.flowStat = this.db.prepare(sql);
+        }
     }
 
     async createTable(): Promise<void> {
@@ -33,7 +61,7 @@ export class Table {
                     .run(`DROP TABLE IF EXISTS ${this.processTable}`)
                     .run(`CREATE TABLE ${this.processTable} (pid TEXT PRIMARY KEY, process_name TEXT, label TEXT, process_sort_index INTEGER)`)
                     .run(`DROP TABLE IF EXISTS ${this.flowTable}`)
-                    .run(`CREATE TABLE ${this.flowTable} (flow_id TEXT PRIMARY KEY, name TEXT, cat TEXT, start_track_id INTEGER, start_timestamp INTEGER, end_track_id INTEGER, end_timestamp INTEGER)`)
+                    .run(`CREATE TABLE ${this.flowTable} (id INTEGER PRIMARY KEY AUTOINCREMENT, flow_id TEXT, name TEXT, cat TEXT, track_id INTEGER, timestamp INTEGER, type TEXT)`)
                     .run(`DROP INDEX IF EXISTS ${this.idIndex}`)
                     .run(`DROP INDEX IF EXISTS ${this.trackIdTimeIndex}`)
                     .run('PRAGMA synchronous = OFF')
@@ -50,8 +78,11 @@ export class Table {
 
     async close(): Promise<void> {
         return new Promise((resolve, reject) => {
-            this.stat?.finalize(() => {
-                console.log('stat finalize.');
+            this.sliceStat?.finalize(() => {
+                console.log('slice stat finalize.');
+            });
+            this.flowStat?.finalize(() => {
+                console.log('flow stat finalize.');
             });
             this.db.close((err) => {
                 if (err !== null) {
@@ -64,18 +95,12 @@ export class Table {
         });
     }
 
-    // ts: double us
     async insertSliceList(dataList: Array<{ name: string; ts: number; dur: number; track_id: number; args: any }>): Promise<void> {
         return new Promise((resolve, reject) => {
-            if (this.stat === undefined && dataList.length === this.maxCachesSize) {
-                const placeholders: string = dataList.map(() => '(?,?,?,?,?)').join(',');
-                const sql: string = `INSERT INTO ${this.sliceTable} (timestamp, duration, name, track_id, args) VALUES ${placeholders}`;
-                this.stat = this.db.prepare(sql);
-            }
             const paramsList: any[] = [];
             dataList.forEach((data) => { paramsList.push(data.ts, data.dur, data.name, data.track_id, JSON.stringify(data.args)); });
             if (dataList.length === this.maxCachesSize) {
-                this.stat?.reset().run(paramsList, (err) => {
+                this.sliceStat?.reset().run(paramsList, (err) => {
                     if (err) {
                         console.error(err.message);
                         reject(err);
@@ -106,11 +131,11 @@ export class Table {
 
     async insertSlice(data: { name: string; ts: number; dur: number; track_id: number; args: any }): Promise<void> {
         return new Promise((resolve, reject) => {
-            this.dataCaches.push(data);
-            if (this.dataCaches.length >= this.maxCachesSize) {
-                this.insertSliceList(this.dataCaches).finally(() => {
+            this.sliceDataCaches.push(data);
+            if (this.sliceDataCaches.length >= this.maxCachesSize) {
+                this.insertSliceList(this.sliceDataCaches).finally(() => {
+                    this.sliceDataCaches = [];
                     resolve();
-                    this.dataCaches = [];
                 });
             } else {
                 resolve();
@@ -119,7 +144,8 @@ export class Table {
     }
 
     updateProcessName(pid: string, name: string): void {
-        const sql: string = `INSERT INTO ${this.processTable} (pid, process_name) VALUES (?, ?) ON CONFLICT (pid) DO UPDATE SET process_name = excluded.process_name`;
+        const sql: string = `INSERT INTO ${this.processTable} (pid, process_name) VALUES (?, ?)
+                            ON CONFLICT (pid) DO UPDATE SET process_name = excluded.process_name`;
         this.db.run(sql, [ pid, name ], (err) => {
             if (err !== null) {
                 console.error(err.message);
@@ -128,7 +154,8 @@ export class Table {
     }
 
     updateProcessLabel(pid: string, label: string): void {
-        const sql: string = `INSERT INTO ${this.processTable} (pid, label) VALUES (?, ?) ON CONFLICT (pid) DO UPDATE SET label = excluded.label;`;
+        const sql: string = `INSERT INTO ${this.processTable} (pid, label) VALUES (?, ?)
+                            ON CONFLICT (pid) DO UPDATE SET label = excluded.label;`;
         this.db.run(sql, [ pid, label ], (err) => {
             if (err !== null) {
                 console.error(err.message);
@@ -137,7 +164,8 @@ export class Table {
     }
 
     updateProcessSortIndex(pid: string, sortIndex: number): void {
-        const sql: string = `INSERT INTO ${this.processTable} (pid, process_sort_index) VALUES (?, ?) ON CONFLICT (pid) DO UPDATE SET process_sort_index = excluded.process_sort_index;`;
+        const sql: string = `INSERT INTO ${this.processTable} (pid, process_sort_index) VALUES (?, ?)
+                            ON CONFLICT (pid) DO UPDATE SET process_sort_index = excluded.process_sort_index;`;
         this.db.run(sql, [ pid, sortIndex ], (err) => {
             if (err !== null) {
                 console.error(err.message);
@@ -146,7 +174,9 @@ export class Table {
     }
 
     updateThreadName(trackId: number, tid: number, pid: string, threadName: string): void {
-        const sql: string = `INSERT INTO ${this.threadTable} (track_id, tid, pid, thread_name) VALUES (?, ?, ?, ?) ON CONFLICT (track_id) DO UPDATE SET tid = excluded.tid, pid = excluded.pid, thread_name = excluded.thread_name`;
+        const sql: string = `INSERT INTO ${this.threadTable} (track_id, tid, pid, thread_name) VALUES (?, ?, ?, ?)
+                            ON CONFLICT (track_id) DO UPDATE
+                            SET tid = excluded.tid, pid = excluded.pid, thread_name = excluded.thread_name`;
         this.db.run(sql, [ trackId, tid, pid, threadName ], (err) => {
             if (err !== null) {
                 console.error(err.message);
@@ -155,7 +185,8 @@ export class Table {
     }
 
     updateThreadSortIndex(trackId: number, sortIndex: number): void {
-        const sql: string = `INSERT INTO ${this.threadTable} (track_id, thread_sort_index) VALUES (?, ?) ON CONFLICT (track_id) DO UPDATE SET thread_sort_index = excluded.thread_sort_index`;
+        const sql: string = `INSERT INTO ${this.threadTable} (track_id, thread_sort_index) VALUES (?, ?)
+                            ON CONFLICT (track_id) DO UPDATE SET thread_sort_index = excluded.thread_sort_index`;
         this.db.run(sql, [ trackId, sortIndex ], (err) => {
             if (err !== null) {
                 console.error(err.message);
@@ -163,20 +194,42 @@ export class Table {
         });
     }
 
-    updateFlowStartPosition(data: { name: string; cat: string; id: string; track_id: number; ts: number }): void {
-        const sql: string = `INSERT INTO ${this.flowTable} (flow_id, name, cat, start_track_id, start_timestamp) VALUES (?, ?, ?, ?, ?) ON CONFLICT (flow_id) DO UPDATE SET start_track_id = excluded.start_track_id, start_timestamp = excluded.start_timestamp`;
-        this.db.run(sql, [ data.id, data.name, data.cat, data.track_id, data.ts ], (err) => {
-            if (err !== null) {
-                console.error(err.message);
+    async insertFlowList(dataList: Array<{ name: string; cat: string; id: string; track_id: number; ts: number; ph: string }>): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const paramsList: any[] = [];
+            dataList.forEach((data) => { paramsList.push(data.id, data.name, data.track_id, data.ts, data.cat, data.ph); });
+            if (dataList.length === this.maxCachesSize) {
+                this.flowStat?.reset().run(paramsList, (err) => {
+                    if (err) {
+                        console.error(err.message);
+                        reject(err);
+                    }
+                    resolve();
+                });
+            } else {
+                const placeholders: string = dataList.map(() => '(?,?,?,?,?,?)').join(',');
+                const sql: string = `INSERT INTO ${this.flowTable} (flow_id, name, track_id, timestamp, cat, type) VALUES ${placeholders}`;
+                this.db.run(sql, paramsList, (err) => {
+                    if (err !== null) {
+                        console.error(err.message);
+                        reject(err);
+                    }
+                    resolve();
+                });
             }
         });
     }
 
-    updateFlowEndPosition(data: { name: string; cat: string; id: string; track_id: number; ts: number }): void {
-        const sql: string = `INSERT INTO ${this.flowTable} (flow_id, name, cat, end_track_id, end_timestamp) VALUES (?, ?, ?, ?, ?) ON CONFLICT (flow_id) DO UPDATE SET end_track_id = excluded.end_track_id, end_timestamp = excluded.end_timestamp`;
-        this.db.run(sql, [ data.id, data.name, data.cat, data.track_id, data.ts ], (err) => {
-            if (err !== null) {
-                console.error(err.message);
+    async insertFlow(data: { name: string; cat: string; id: string; track_id: number; ts: number; ph: string }): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.flowDataCaches.push(data);
+            if (this.flowDataCaches.length === this.maxCachesSize) {
+                this.insertFlowList(this.flowDataCaches).finally(() => {
+                    this.flowDataCaches = [];
+                    resolve();
+                });
+            } else {
+                resolve();
             }
         });
     }
@@ -206,26 +259,14 @@ export class Table {
     }
 
     async commitData(): Promise<void> {
-        if (this.dataCaches.length > 0) {
-            await this.insertSliceList(this.dataCaches);
-            this.dataCaches = [];
+        if (this.sliceDataCaches.length > 0) {
+            await this.insertSliceList(this.sliceDataCaches);
+            this.sliceDataCaches = [];
         }
-    }
-
-    async selectData(sql: string, params: any): Promise<any> {
-        return new Promise((resolve, reject) => {
-            this.db.all(sql, params, (err, rows) => {
-                if (err !== undefined && err !== null) {
-                    console.error(err.message);
-                    reject(err);
-                } else {
-                    const result = rows.map(row => {
-                        return row;
-                    });
-                    resolve(result);
-                }
-            });
-        });
+        if (this.flowDataCaches.length > 0) {
+            await this.insertFlowList(this.flowDataCaches);
+            this.flowDataCaches = [];
+        }
     }
 
     async creatIndex(): Promise<void> {
@@ -246,10 +287,108 @@ export class Table {
         });
     }
 
+    async getTrackIdList(): Promise<number[]> {
+        return new Promise((resolve, reject) => {
+            this.db.all(`SELECT track_id From ${this.threadTable}`, (err, rows: any[]) => {
+                if (err) {
+                    console.error(err.message);
+                    reject(err);
+                }
+                const tracks = [];
+                for (const row of rows) {
+                    tracks.push(row.track_id);
+                }
+                resolve(tracks);
+            });
+        });
+    }
+
+    async updateDepth(): Promise<void> {
+        const start = new Date().getTime();
+        const trackIdList = await this.getTrackIdList();
+        for (const trackId of trackIdList) {
+            await this.updateOneTrackDepth(trackId);
+        }
+        console.log('update depth end. time:', new Date().getTime() - start);
+    }
+
+    async updateOneTrackDepth(trackId: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const start = new Date().getTime();
+            const maxParams = 10000;
+            this.db.serialize(() => {
+                this.db.run('BEGIN')
+                    .all(`SELECT id, timestamp, duration, track_id FROM ${this.sliceTable} WHERE track_id = ? ORDER BY timestamp`,
+                        [trackId], (err, rows: any[]) => {
+                            if (err) {
+                                console.error(err.message);
+                                reject(err);
+                            }
+                            const depthMap = this.getDepth(rows);
+                            depthMap.forEach((idList, depth) => {
+                                while (idList.length > 0) {
+                                    const paramList = idList.splice(0, maxParams);
+                                    const placeholders: string = paramList.map((id) => `${id}`).join(',');
+                                    const sql: string = `UPDATE ${this.sliceTable} set depth = ${depth} WHERE id in (${placeholders})`;
+                                    this.db.run(sql);
+                                }
+                            });
+                            console.log('end update depth. count:', rows.length, ' time:', new Date().getTime() - start);
+                        })
+                    .run('COMMIT', (err) => {
+                        if (err) {
+                            console.error(err.message);
+                            reject(err);
+                        }
+                        console.log('end update depth. time:', new Date().getTime() - start);
+                        resolve();
+                    });
+            });
+        });
+    }
+
+    getDepth(rows: any[]): Map<number, number[]> {
+        const depthCache: number[] = [];
+        const depthMap = new Map<number, number[]>();
+        for (const row of rows) {
+            let depth = -1;
+            for (let i = 0; i < depthCache.length; ++i) {
+                if (row.timestamp > depthCache[i]) {
+                    depthCache[i] = row.timestamp + row.duration;
+                    depth = i;
+                    break;
+                }
+            }
+            if (depth < 0) {
+                depth = depthCache.length;
+                depthCache.push(row.timestamp + row.duration);
+                depthMap.set(depth, []);
+            }
+            depthMap.get(depth)?.push(row.id);
+        }
+        return depthMap;
+    }
+
+    async selectData(sql: string, params: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.db.all(sql, params, (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    console.error(err.message);
+                    reject(err);
+                } else {
+                    const result = rows.map(row => {
+                        return row;
+                    });
+                    resolve(result);
+                }
+            });
+        });
+    }
+
     async queryThreadTraceList(trackId: number, startTime: number, endTime: number): Promise<any> {
         return new Promise((resolve, reject) => {
-            this.db.all(`SELECT timestamp, duration, name, depth, track_id FROM slice 
-            WHERE track_id = ${trackId} 
+            this.db.all(`SELECT timestamp, duration, name, depth, track_id FROM slice
+            WHERE track_id = ${trackId}
             AND timestamp >= ${startTime} AND timestamp <= ${endTime} ORDER BY timestamp`,
             async (err, rows: any) => {
                 if (err) {

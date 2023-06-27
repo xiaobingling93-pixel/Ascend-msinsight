@@ -31,7 +31,7 @@ export class ThreadPool {
             console.log(`[ThreadPool] worker ${n} is online and executing code!`);
         });
         work.on('message', (msg) => {
-            console.log(`[ThreadPool] worker ${n} is done!`);
+            console.log(`[ThreadPool] worker ${n} is done! task count:${this.taskList.length}`);
             if (this.taskFinishCallback) {
                 this.taskFinishCallback(msg.data);
             }

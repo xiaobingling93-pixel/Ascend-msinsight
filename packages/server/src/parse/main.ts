@@ -21,6 +21,7 @@ export async function parse(filePath: string, dbPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
         threadPool.setAllTaskFinishCallback(async (data: any) => {
             await table.creatIndex();
+            await table.updateDepth();
             await table.close();
             console.log('parse end. time:', new Date().getTime() - start);
             resolve();

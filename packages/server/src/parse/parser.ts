@@ -52,10 +52,10 @@ export class Parser {
                 await this.CompleteEventsHandler(data);
                 break;
             case 's':
-                this.flowEventsHandler(data);
+                await this.flowEventsHandler(data);
                 break;
             case 'f':
-                this.flowEventsHandler(data);
+                await this.flowEventsHandler(data);
                 break;
             default:
                 console.log('Unknown data type. ', data.ph);
@@ -92,15 +92,9 @@ export class Parser {
         await this.table.insertSlice(data);
     }
 
-    flowEventsHandler(data: any): void {
+    async flowEventsHandler(data: any): Promise<void> {
         data.track_id = getTrackId(data.tid, data.pid);
         data.ts = data.ts * 1000; // to ns
-        if (data.ph === 's') {
-            this.table.updateFlowStartPosition(data);
-        } else if (data.ph === 'f') {
-            this.table.updateFlowEndPosition(data);
-        } else {
-            console.log('Unknown flow events.', data);
-        }
+        await this.table.insertFlow(data);
     }
 }
