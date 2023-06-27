@@ -22,7 +22,6 @@ export class Table {
             }
             console.log('Connect to database.');
         });
-        this.initStat();
     }
 
     async setConfig(): Promise<void> {
@@ -100,6 +99,9 @@ export class Table {
             const paramsList: any[] = [];
             dataList.forEach((data) => { paramsList.push(data.ts, data.dur, data.name, data.track_id, JSON.stringify(data.args)); });
             if (dataList.length === this.maxCachesSize) {
+                if (this.sliceStat === undefined) {
+                    this.initStat();
+                }
                 this.sliceStat?.reset().run(paramsList, (err) => {
                     if (err) {
                         console.error(err.message);
@@ -199,6 +201,9 @@ export class Table {
             const paramsList: any[] = [];
             dataList.forEach((data) => { paramsList.push(data.id, data.name, data.track_id, data.ts, data.cat, data.ph); });
             if (dataList.length === this.maxCachesSize) {
+                if (this.flowStat === undefined) {
+                    this.initStat();
+                }
                 this.flowStat?.reset().run(paramsList, (err) => {
                     if (err) {
                         console.error(err.message);
@@ -333,14 +338,13 @@ export class Table {
                                     this.db.run(sql);
                                 }
                             });
-                            console.log('end update depth. count:', rows.length, ' time:', new Date().getTime() - start);
                         })
                     .run('COMMIT', (err) => {
                         if (err) {
                             console.error(err.message);
                             reject(err);
                         }
-                        console.log('end update depth. time:', new Date().getTime() - start);
+                        console.log(`trackId ${trackId} update depth end. time:${new Date().getTime() - start}`);
                         resolve();
                     });
             });

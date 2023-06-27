@@ -3,6 +3,7 @@ import { parentPort } from 'worker_threads';
 import { WorkMessageType, WorkStatus } from './threadPool';
 
 export type ParseMessage = {
+    rankId: string;
     filePath: string;
     dbPath: string;
     readPosition: number;
@@ -10,6 +11,7 @@ export type ParseMessage = {
 };
 
 export type EndMessage = {
+    rankId: string;
     count: number;
     ignoreCount: number;
 };
@@ -25,7 +27,7 @@ parentPort?.on('message', async (msg: { command: WorkMessageType; data: ParseMes
             const count = parser.getCount();
             const ignoreCount = parser.getIgnoreCount();
             console.log(`[work] read ${count} data. ignore ${ignoreCount} data. time:`, new Date().getTime());
-            parentPort?.postMessage({ status: WorkStatus.END, data: { count, ignoreCount } });
+            parentPort?.postMessage({ status: WorkStatus.END, data: { rankId: msg.data.rankId, count, ignoreCount } });
             break;
         }
         case WorkMessageType.EXIT:

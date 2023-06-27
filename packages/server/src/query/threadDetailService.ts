@@ -1,5 +1,5 @@
 import { SliceDao, ThreadDetailRequest, ThreadDetailResponse } from './data';
-import { Table } from '../parse/table';
+import { Table } from '../database/table';
 import { getTrackId } from '../common/common';
 
 const table: Table = new Table('./trace_view.db');

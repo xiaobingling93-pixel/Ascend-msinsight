@@ -1,4 +1,4 @@
-import { Table } from './parse/table';
+import { Table } from './database/table';
 import { Client } from './types';
 // TO_DO
 // import { getTrackId } from './utils/common_util';

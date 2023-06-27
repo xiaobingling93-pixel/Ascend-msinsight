@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Table } from './table';
+import { Table } from '../database/table';
 import { getTrackId } from '../utils/common_util';
 
 export class Parser {
