@@ -15,7 +15,7 @@ export const unitMetadataHandler = async (req: { rankId: number }): Promise<Reco
  *
  * @param rankId 即cardId
  */
-async function queryUnitsMetadata(rankId: number): Promise<InsightMetaData<any>> {
+async function queryUnitsMetadata(rankId: number): Promise<any> {
     const table = tableMap.get(rankId) as Table;
     const rows = await table.selectUnitsMetadata() as metadataDto[];
     const insightMetaData: InsightMetaData<any> = { type: 'card', metadata: { cardId: rankId } };
@@ -48,5 +48,11 @@ async function queryUnitsMetadata(rankId: number): Promise<InsightMetaData<any>>
             (insightMetaData.children?.[insightMetaData.children?.length - 1] as InsightMetaData<any>).children?.push(threadInsightMetaData);
         }
     });
-    return insightMetaData;
+    const extremumTimestamp = await table.selectExtremumTimestamp() as ExtremumTimestamp;
+    return { insightMetaData, extremumTimestamp };
 }
+
+type ExtremumTimestamp = {
+    minTimestamp: number;
+    maxTimestamp: number;
+};

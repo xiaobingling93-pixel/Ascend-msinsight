@@ -275,6 +275,20 @@ export class Table {
         }
     }
 
+    async selectExtremumTimestamp(): Promise<any> {
+        const sql: string = `select min(timestamp) as minTimestamp, max(timestamp) as maxTimestamp from ${this.sliceTable};`;
+        return new Promise((resolve, reject) => {
+            this.db.get(sql, (err, row) => {
+                if (err !== undefined && err !== null) {
+                    console.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(row);
+                }
+            });
+        });
+    }
+
     async selectUnitsMetadata(): Promise<any> {
         const sql: string = `select pt.pid,
                                     pt.process_name as processName,
@@ -423,9 +437,9 @@ export class Table {
     async queryThreadTraceList(threadId: number, trackId: number, startTime: number, endTime: number): Promise<ThreadTrace[][]> {
         return new Promise((resolve, reject) => {
             const rowDatas: ThreadTrace[][] = [];
-            this.db.all(`SELECT * FROM slice 
-            WHERE track_id = ${trackId} 
-            AND timestamp >= ${startTime} AND timestamp <= ${endTime} 
+            this.db.all(`SELECT * FROM slice
+            WHERE track_id = ${trackId}
+            AND timestamp >= ${startTime} AND timestamp <= ${endTime}
             GROUP BY depth, id;`,
             async (err, rows: any) => {
                 if (err) {
