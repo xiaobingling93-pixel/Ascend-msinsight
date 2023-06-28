@@ -75,7 +75,7 @@ export class Domain {
     set endTimeAll(endTimeAll: TimeStamp) {
         this._endTimeAll = endTimeAll;
         if (this.maxDuration / this._endTimeAll < 2 * this.BOUNDARY_ZOOM_RATE) {
-            this.maxDuration = Math.min(this._UPPER_BOUND, this.maxDuration * this.BOUNDARY_ZOOM_RATE);
+            this.maxDuration = Math.min(this._UPPER_BOUND, this._endTimeAll * this.BOUNDARY_ZOOM_RATE);
         }
         if (this._endTimeAll > this._domainEnd) {
             this._realTimeUpdate && ([ this._domainStart, this._domainEnd ] = [ endTimeAll - this.duration, endTimeAll ]);

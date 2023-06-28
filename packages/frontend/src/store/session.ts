@@ -12,8 +12,8 @@ export class SessionStore {
             phase: 'configuring',
             units: [],
             availableUnits: [],
-            startRecordTime: 123,
-            endTimeAll: 456,
+            startRecordTime: 0,
+            endTimeAll: undefined,
             isNsMode: true,
         });
     }

@@ -33,19 +33,8 @@ export const ThreadUnit = unit<ThreadMetaData>({
             };
             try {
                 const request = await window.request('unit/threadTraces', requestParam);
-                const threadTraceList = request.data as ThreadTrace[];
-                const result: ThreadTrace[][] = [];
-                threadTraceList.forEach(it => {
-                    if (result[it.depth] === undefined) {
-                        result[it.depth] = [];
-                    } else {
-                        result[it.depth].push(it);
-                    }
-                });
-                for (let i = 0; i < result.length; i++) {
-                    if (result[i] === undefined) { result[i] = []; }
-                }
-                return result.map((it) => it.map((data) => ({
+                const threadTraceList = request.data as ThreadTrace[][];
+                return threadTraceList.map(it => it.map((data) => ({
                     startTime: data.startTime,
                     duration: data.duration,
                     name: data.name,
@@ -148,32 +137,22 @@ export const CardUnit = unit<CardMetaData>({
     name: 'Card',
     tag: 'Card',
     pinType: 'move',
-    renderInfo: (session: Session, metadata: { cardName: string }) => `${metadata.cardName}`,
+    renderInfo: (session: Session, metadata: { cardId: string }) => `${metadata.cardId}`,
     spreadUnits: on(
         'create',
         async (self): Promise<void> => {
             runInAction(() => {
                 const insightData: InsightMetaData<keyof MetaData> = {
                     type: 'card',
-                    metadata: { cardId: 1, cardName: 'card1' },
+                    metadata: { cardId: '1', cardName: 'card1' },
                     children: [
                         {
                             type: 'process',
-                            metadata: { processId: 10001, processName: 'process10001' },
+                            metadata: { processId: '10001', processName: 'process10001' },
                             children: [
                                 {
                                     type: 'thread',
-                                    metadata: { threadId: 10010, threadName: 'threadId10010', maxDepth: 3 },
-                                },
-                            ],
-                        },
-                        {
-                            type: 'process',
-                            metadata: { processId: 10001, processName: 'process10001' },
-                            children: [
-                                {
-                                    type: 'thread',
-                                    metadata: { threadId: 10010, threadName: 'threadId10010', maxDepth: 3 },
+                                    metadata: { threadId: 10010, threadName: 'threadId10010', maxDepth: 9 },
                                 },
                             ],
                         },
