@@ -11,14 +11,15 @@ import {
     ThreadsResponse,
 } from './data';
 import { InsightError } from '../utils/error';
-import { Table } from '../database/table';
 import { getTrackId } from '../utils/common_util';
+import { tableMap } from '../database/tableManager';
+import { Table } from '../database/table';
 
-const table: Table = new Table('./trace_view.db');
 const sliceTable = 'slice';
 const flowTable = 'flow';
 
 export const threadInfoHandler = async (request: ThreadDetailRequest): Promise<ThreadDetailResponse> => {
+    const table = tableMap.get(request.rankId) as Table;
     const depth = request.depth;
     const pid = request.pid;
     const tid = request.tid;
@@ -28,9 +29,8 @@ export const threadInfoHandler = async (request: ThreadDetailRequest): Promise<T
     const sql: string = `SELECT * FROM ${sliceTable}
                             WHERE DEPTH = ? AND TRACK_ID = ? AND TIMESTAMP = ?`;
     let emptyFlag = true;
-    const threadResponse: ThreadDetailResponse = { emptyFlag: true, data: [{ selfTime: 0, args: '', title: '', duration: 0 }] };
-    const result = await table.selectData(sql, param);
-    const rows = result as SliceDao[];
+    const threadResponse: ThreadDetailResponse = { emptyFlag: true, data: { selfTime: 0, args: '', title: '', duration: 0, cat: '' } };
+    const rows = await table.selectData(sql, param) as SliceDao[];
     if (rows.length !== 1) {
         throw new InsightError(101, 'select slice error');
     }
@@ -38,17 +38,22 @@ export const threadInfoHandler = async (request: ThreadDetailRequest): Promise<T
     let selfTime = rows[0].duration;
     const endTime = rows[0].timestamp + rows[0].duration;
     const depthSql: string = `SELECT DURATION FROM ${sliceTable}
-                            WHERE DEPTH = ? AND TIMESTAMP + DURATION &lt;= ? AND TIMESTAMP &gt;= ?`;
-    const depthParams = [ depth, endTime, rows[0].timestamp ];
-    const result2 = await table.selectData(depthSql, depthParams);
-    const rows2 = result2 as number[];
-    rows2.forEach(row => {
-        selfTime -= row;
-    });
+                            WHERE DEPTH = ? AND TIMESTAMP + DURATION <= ? AND TIMESTAMP >= ? AND TRACK_ID = ?`;
+    const depthParams = [ depth + 1, endTime, rows[0].timestamp, trackId ];
+    const nextDepthResult = await table.selectData(depthSql, depthParams) as Array<{duration: number}>;
+    if (nextDepthResult.length === 0) {
+        selfTime = 0;
+    } else {
+        nextDepthResult.forEach(row => {
+            selfTime -= row.duration;
+        });
+    }
     threadResponse.emptyFlag = emptyFlag;
-    threadResponse.data[0].selfTime = selfTime;
-    threadResponse.data[0].args = rows[0].args;
-    threadResponse.data[0].title = rows[0].name;
+    threadResponse.data.selfTime = selfTime;
+    threadResponse.data.args = rows[0].args;
+    threadResponse.data.title = rows[0].name;
+    threadResponse.data.duration = rows[0].duration;
+    threadResponse.data.cat = rows[0].cat ? rows[0].cat : '';
     return threadResponse;
 };
 
@@ -64,40 +69,50 @@ const emptyThreadsResponse = {
 };
 
 export const threadsInfoHandler = async (request: ThreadsRequest): Promise<ThreadsResponse> => {
+    const table = tableMap.get(request.rankId) as Table;
     const pid = request.pid;
     const tid = request.tid;
     const startTime = request.startTime;
     const endTime = request.endTime;
     const trackId = getTrackId(tid, pid);
     const param = [ trackId, startTime, endTime ];
-    let selfTimeKeyValue: {[key: string]: any} = {};
+    const selfTimeKeyValue: Record<string, number> = {};
     let threadResponse: ThreadsResponse = emptyThreadsResponse;
-    const sql: string = `SELECT * FROM ${sliceTable} WHERE TRACK_ID = ? AND TIMESTAMP + DURATION &gt;= ? AND TIMESTAMP &lt;= ?`;
-    table.selectData(sql, param).then(result => {
-        const rows = result as SliceDao[];
-        if (rows.length === 0) {
-            threadResponse.emptyFlag = true;
-            return;
-        }
-        rows.forEach(res => {
-            let selfTime = res.duration;
-            const endTime = rows[0].timestamp + rows[0].duration;
-            const depth = res.depth;
-            const depthSql: string = `SELECT DURATION FROM ${sliceTable}
-                            WHERE DEPTH = ? AND TIMESTAMP + DURATION &lt;= ? AND TIMESTAMP &gt;= ?`;
-            const depthParams = [ depth, endTime, rows[0].timestamp ];
-            table.selectData(depthSql, depthParams).then(result => {
-                const rows = result as number[];
-                rows.forEach(row => {
-                    selfTime -= row;
-                });
+    const sql: string = `SELECT * FROM ${sliceTable} WHERE TRACK_ID = ? AND TIMESTAMP + DURATION >= ? AND TIMESTAMP <= ?`;
+    const rows = await table.selectData(sql, param) as SliceDao[];
+    if (rows.length === 0) {
+        threadResponse.emptyFlag = true;
+        return threadResponse;
+    }
+    threadResponse.data.shift();
+    for (const res of rows) {
+        let selfTime = res.duration;
+        const endTime = res.timestamp + res.duration;
+        const depth = res.depth;
+        const depthSql: string = `SELECT DURATION FROM ${sliceTable}
+                            WHERE DEPTH = ? AND TIMESTAMP + DURATION <= ? AND TIMESTAMP >= ? AND TRACK_ID = ?`;
+        const depthParams = [ depth + 1, endTime, res.timestamp, trackId ];
+        const nextDepthResult = await table.selectData(depthSql, depthParams) as Array<{duration: number}>;
+        if (nextDepthResult.length === 0) {
+            selfTime = 0;
+        } else {
+            nextDepthResult.forEach(row => {
+                selfTime -= row.duration;
             });
-            selfTimeKeyValue = Object.assign({}, selfTimeKeyValue, { name: res.name, selfTime });
-        });
-        threadResponse = reduceThread(rows, selfTimeKeyValue);
-    });
+        }
+        addData(selfTimeKeyValue, res.name, selfTime);
+    }
+    threadResponse = reduceThread(rows, selfTimeKeyValue);
     return threadResponse;
 };
+
+function addData(selfTimeKeyValue: Record<string, number>, key: string, selfTime: number): void {
+    if (selfTimeKeyValue[key]) {
+        selfTimeKeyValue[key] += selfTime;
+    } else {
+        selfTimeKeyValue[key] = selfTime;
+    }
+}
 
 function reduceThread(rows: SliceDao[], selfTimeKeyValue: {[key: string]: any}): ThreadsResponse {
     const tmp: ThreadsResponse = emptyThreadsResponse;
@@ -121,6 +136,7 @@ function reduceThread(rows: SliceDao[], selfTimeKeyValue: {[key: string]: any}):
 }
 
 export const flowNameHandler = async (request: EventRequest): Promise<FlowResponse> => {
+    const table = tableMap.get(request.rankId) as Table;
     const pid = request.pid;
     const tid = request.tid;
     const trackId = getTrackId(tid, pid);
@@ -138,6 +154,7 @@ export const flowNameHandler = async (request: EventRequest): Promise<FlowRespon
 };
 
 export const flowDetailHandler = async (request: FlowDetailRequest): Promise<FlowDetailResponse> => {
+    const table = tableMap.get(request.rankId) as Table;
     const pid = request.pid;
     const tid = request.tid;
     const trackId = getTrackId(tid, pid);
