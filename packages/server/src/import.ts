@@ -70,7 +70,7 @@ export const importHandler = async (): Promise<Record<string, unknown>> => {
             }
             const filePath = path.join(folder.cardPath, file);
             const rankId = parseCardID(filePath);
-            parse(filePath, rankId, (err, rankId) => {
+            parse(filePath, rankId, (rankId, err) => {
                 if (err) {
                     // this to send parse file error message
                     console.log(err);
