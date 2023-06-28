@@ -18,10 +18,12 @@ export class ThreadPool {
     private taskFinishCallback: Function | undefined;
     private allTaskFinishCallback: Function | undefined;
 
-    constructor(workPath: string) {
+    constructor(workPath: string, taskFinishCallback?: Function, allTaskFinishCallback?: Function) {
         for (let i = 0; i < this.taskCount; ++i) {
             this.awaitWorkers.push(this.createWork(workPath, i));
         }
+        this.taskFinishCallback = taskFinishCallback;
+        this.allTaskFinishCallback = allTaskFinishCallback;
     }
 
     createWork(workPath: string, n: number): Worker {
@@ -44,7 +46,7 @@ export class ThreadPool {
                 this.awaitWorkers.push(work);
                 console.log(`[ThreadPool] tasks. running:${this.runningWorkers.length}, await:${this.awaitWorkers.length}`);
                 if (this.runningWorkers.length === 0 && this.allTaskFinishCallback) {
-                    this.allTaskFinishCallback(msg.data);
+                    this.allTaskFinishCallback();
                 }
             }
         });

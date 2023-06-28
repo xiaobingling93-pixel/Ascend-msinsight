@@ -2,6 +2,8 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
+import { parseCardID } from './parse/metadata';
+import { parse } from './parse/main';
 
 const execAsync = promisify(exec);
 
@@ -57,8 +59,28 @@ async function selectFolders(): Promise<FolderInfo[]> {
 }
 
 export const importHandler = async (): Promise<Record<string, unknown>> => {
-    const result = await selectFolders();
+    const folders = await selectFolders();
+    for (const folder of folders) {
+        const files = fs.readdirSync(folder.cardPath, { withFileTypes: true })
+            .filter(dirent => dirent.isFile())
+            .map(dirent => dirent.name);
+        for (const file of files) {
+            if (path.extname(file) !== '.json') {
+                continue;
+            }
+            const filePath = path.join(folder.cardPath, file);
+            const rankId = parseCardID(filePath);
+            parse(filePath, rankId, (err, rankId) => {
+                if (err) {
+                    // this to send parse file error message
+                    console.log(err);
+                }
+                // this to send parse file success message
+                console.log('send notify rankId parse end. ', rankId);
+            });
+        }
+    }
     return {
-        result: [result],
+        result: [folders],
     };
 };

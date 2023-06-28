@@ -7,24 +7,22 @@ import { EndMessage, ParseMessage } from './parser_worker';
 
 const defaultReadSize = 1024 * 1024 * 50;
 const parseTaskCount = new Map<string, number>(); // rankId, task count
-const threadPool = new ThreadPool('./dist/parse/parser_worker.js');
+const callbackMap = new Map<string, Function>(); // rankId, callback
+const threadPool = new ThreadPool('./dist/parse/parser_worker.js', parseFileEnd);
 
-export async function parse(filePath: string, rankId: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-        if (tableMap.has(rankId)) {
-            reject(new Error('repeat rank Id'));
+export function parse(filePath: string, rankId: string, callback?: (err: Error | null, rankId: string) => void): void {
+    if (tableMap.has(rankId)) {
+        if (callback) {
+            callback(new Error('repeat rank Id'), rankId);
         }
-        const start = new Date().getTime();
-        const dbPath = getDbPath(filePath, rankId);
-        const table = new Table(dbPath);
-        tableMap.set(rankId, table);
-        threadPool.setTaskFinishCallback((message: EndMessage) => {
-            parseFileEnd(message).then(rankId => {
-                console.log(`parse end. rankId:${rankId}, time:${new Date().getTime() - start}`);
-            });
-        });
-        table.createTable().then(() => parseFile(filePath, dbPath, rankId));
-    });
+    }
+    const dbPath = getDbPath(filePath, rankId);
+    const table = new Table(dbPath);
+    tableMap.set(rankId, table);
+    if (callback) {
+        callbackMap.set(rankId, callback);
+    }
+    table.createTable().then(() => parseFile(filePath, dbPath, rankId));
 }
 
 function parseFile(filePath: string, dbPath: string, rankId: string): void {
@@ -37,13 +35,13 @@ function parseFile(filePath: string, dbPath: string, rankId: string): void {
         }
         while (readPosition < fileSize) {
             if (readPosition + defaultReadSize >= fileSize) {
-                console.log(`get read size. readPosition:${readPosition}, readSize:${fileSize - readPosition - 1}`);
+                console.log(`get read size. rankId:${rankId}, readPosition:${readPosition}, readSize:${fileSize - readPosition - 1}`);
                 threadPool.addTask({ rankId, filePath, dbPath, readPosition, readSize: fileSize - readPosition - 1 } as ParseMessage);
                 taskCount++;
                 break;
             } else {
                 const data = getReadSize(fd, readPosition);
-                console.log(`get read size. readPosition:${data.readPosition}, readSize:${data.readSize}`);
+                console.log(`get read size. rankId:${rankId}, readPosition:${data.readPosition}, readSize:${data.readSize}`);
                 taskCount++;
                 threadPool.addTask({ rankId, filePath, dbPath, readPosition: data.readPosition, readSize: data.readSize });
                 readPosition = data.readPosition + data.readSize + 2;
@@ -56,15 +54,20 @@ function parseFile(filePath: string, dbPath: string, rankId: string): void {
 
 async function parseFileEnd(message: EndMessage): Promise<string> {
     if (!tableMap.has(message.rankId) || !parseTaskCount.has(message.rankId)) {
-        // reject(new Error('repeat rank Id'));
+        console.log(`can not find rankId, ${message.rankId}`);
+        return '';
     }
     const unfinishedTaskCount = parseTaskCount.get(message.rankId) as number;
+    console.log(`parseFileEnd. rankId:${message.rankId}, count: ${unfinishedTaskCount}`);
     if (unfinishedTaskCount - 1 === 0) {
         parseTaskCount.delete(message.rankId);
         const table = tableMap.get(message.rankId) as Table;
         await table.creatIndex();
         await table.updateDepth();
         await table.close();
+        console.log(`parse end. rankId:${message.rankId}`);
+        callbackMap.get(message.rankId)?.(null, message.rankId);
+        callbackMap.delete(message.rankId);
         return message.rankId;
     } else {
         parseTaskCount.set(message.rankId, unfinishedTaskCount - 1);
@@ -76,7 +79,6 @@ function getReadSize(fd: number, start: number): { readPosition: number; readSiz
     const buf = Buffer.alloc(1024 * 10);
     fs.readSync(fd, buf, 0, 1024, start);
     let offset = buf.toString('utf-8').indexOf('{');
-    // console.log(buf.toString(), ' ', offset);
     if (offset < 0) {
         console.log('no find {');
         return { readPosition: 0, readSize: 0 };
