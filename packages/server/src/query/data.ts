@@ -1,11 +1,42 @@
 export type ThreadDetailResponse = {
     emptyFlag: boolean;
-    data: {
+    data: ThreadDetail[];
+};
+
+type ThreadDetail = {
+    title: string;
+    selfTime: number;
+    duration: number;
+    args: string;
+};
+
+export type ThreadsResponse = {
+    emptyFlag: boolean;
+    data: Array<{
         title: string;
         selfTime: number;
-        duration: number;
-        args: string;
-    };
+        wallDuration: number;
+        avgWallDuration: number;
+        occurrences: number;
+    }>;
+};
+
+export type FlowResponse = {
+    flowDetail: FlowDetail[];
+};
+
+type FlowDetail = {
+    title: string;
+    track_id: number;
+    timestamp: number;
+};
+
+export type FlowDetailResponse = {
+    title: string;
+    cat: string;
+    id: string;
+    from: SliceDao;
+    to: SliceDao;
 };
 
 export type ThreadDetailRequest = {
@@ -15,11 +46,45 @@ export type ThreadDetailRequest = {
     depth: number;
 };
 
+export type ThreadsRequest = {
+    pid: string;
+    tid: number;
+    startTime: number;
+    endTime: number;
+    depth: number;
+};
+
+export type EventRequest = {
+    pid: string;
+    tid: number;
+    startTime: number;
+};
+
+export type FlowDetailRequest = {
+    pid: string;
+    tid: number;
+    startTime: number;
+    title: string;
+};
+
 export type SliceDao = {
+    id: number;
     timestamp: number;
     duration: number;
     name: string;
+    depth: number;
+    track_id: number;
     args: string;
+};
+
+export type FlowDao = {
+    id: number;
+    name: string;
+    flow_id: string;
+    track_id: number;
+    timestamp: number;
+    cat: string;
+    type: string;
 };
 
 export type MetaData = {
