@@ -1,5 +1,6 @@
 import { SHA256 } from 'crypto-js';
 import fs from 'fs';
+import path from 'path';
 
 /**
  * get traceId
@@ -36,4 +37,14 @@ export function parseCardID(filePath: string): number {
         console.log(err);
     }
     return rankId;
+}
+
+/**
+ * get database path by rankId
+ *
+ * @param filePath
+ * @param rankId
+ */
+export function getDbPath(filePath: string, rankId: number): string {
+    return './' + path.basename(filePath, '.json') + '_' + String(rankId) + '.db';
 }

@@ -1,5 +1,5 @@
 import fs from 'fs';
-import path from 'path';
+import { getDbPath } from '../utils/common_util';
 import { ThreadPool } from './threadPool';
 import { Table } from '../database/table';
 import { tableMap } from '../database/tableManager';
@@ -10,10 +10,10 @@ const parseTaskCount = new Map<number, number>(); // rankId, task count
 const callbackMap = new Map<number, Function>(); // rankId, callback
 const threadPool = new ThreadPool('./dist/parse/parser_worker.js', parseFileEnd);
 
-export function parse(filePath: string, rankId: number, callback?: (err: Error | null, rankId: number) => void): void {
+export function parse(filePath: string, rankId: number, callback?: (rankId: number, err?: Error) => void): void {
     if (tableMap.has(rankId)) {
         if (callback) {
-            callback(new Error('repeat rank Id'), rankId);
+            callback(rankId, new Error('repeat rank Id'));
         }
     }
     const dbPath = getDbPath(filePath, rankId);
@@ -31,7 +31,7 @@ function parseFile(filePath: string, dbPath: string, rankId: number): void {
     let taskCount = 0;
     fs.open(filePath, 'rs', (err, fd) => {
         if (err) {
-            parseCallback(err, rankId);
+            parseCallback(rankId, err);
             return;
         }
         while (readPosition < fileSize) {
@@ -64,9 +64,8 @@ async function parseFileEnd(message: EndMessage): Promise<void> {
         const table = tableMap.get(message.rankId) as Table;
         await table.creatIndex();
         await table.updateDepth();
-        await table.close();
         console.log(`parse end. rankId:${message.rankId}`);
-        parseCallback(null, message.rankId);
+        parseCallback(message.rankId);
     } else {
         parseTaskCount.set(message.rankId, unfinishedTaskCount - 1);
     }
@@ -91,11 +90,7 @@ function getReadSize(fd: number, start: number): { readPosition: number; readSiz
     return { readPosition, readSize };
 }
 
-function getDbPath(filePath: string, rankId: number): string {
-    return './' + path.basename(filePath, '.json') + '_' + String(rankId) + '.db';
-}
-
-function parseCallback(err: Error | null, rankId: number): void {
-    callbackMap.get(rankId)?.(err, rankId);
+function parseCallback(rankId: number, err?: Error): void {
+    callbackMap.get(rankId)?.(rankId, err);
     callbackMap.delete(rankId);
 }
