@@ -1,6 +1,6 @@
 export type ThreadDetailResponse = {
     emptyFlag: boolean;
-    data: ThreadDetail[];
+    data: ThreadDetail;
 };
 
 type ThreadDetail = {
@@ -8,6 +8,7 @@ type ThreadDetail = {
     selfTime: number;
     duration: number;
     args: string;
+    cat: string;
 };
 
 export type ThreadsResponse = {
@@ -40,6 +41,7 @@ export type FlowDetailResponse = {
 };
 
 export type ThreadDetailRequest = {
+    rankId: number;
     pid: string;
     tid: number;
     startTime: number;
@@ -47,20 +49,22 @@ export type ThreadDetailRequest = {
 };
 
 export type ThreadsRequest = {
+    rankId: number;
     pid: string;
     tid: number;
     startTime: number;
     endTime: number;
-    depth: number;
 };
 
 export type EventRequest = {
+    rankId: number;
     pid: string;
     tid: number;
     startTime: number;
 };
 
 export type FlowDetailRequest = {
+    rankId: number;
     pid: string;
     tid: number;
     startTime: number;
@@ -75,6 +79,7 @@ export type SliceDao = {
     depth: number;
     track_id: number;
     args: string;
+    cat: string;
 };
 
 export type FlowDao = {
