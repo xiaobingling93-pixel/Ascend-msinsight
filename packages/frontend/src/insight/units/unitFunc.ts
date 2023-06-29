@@ -1,4 +1,4 @@
-import { InsightMetaData, MetaData, ProcessMetaData, ThreadMetaData } from '../../entity/data';
+import { InsightMetaData, MetaData, ProcessMetaData, ThreadTraceRequest, ThreadMetaData } from '../../entity/data';
 import { ChartDesc, InsightUnit } from '../../entity/insight';
 import { ChartConfig } from '../../entity/chart';
 import { ProcessUnit, ThreadUnit } from './AscendUnit';
@@ -74,4 +74,9 @@ function checkMetaData<T extends keyof MetaData>(unitMetaData: any, paramMetaDat
         return true;
     }
     return false;
+}
+
+export function createStackStatusParam(method: string, params: Record<string, unknown>): string {
+    const threadTracesParams = params as ThreadTraceRequest;
+    return `cardId${threadTracesParams.cardId}&processId${threadTracesParams.processId}&threadId${threadTracesParams.threadId}`;
 }

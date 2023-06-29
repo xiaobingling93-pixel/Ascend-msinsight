@@ -5,10 +5,11 @@ import {
     CardMetaData, ProcessMetaData, ThreadMetaData, ThreadTrace,
 } from '../../entity/data';
 import { colorPalette } from './utils';
+import { simpleCache } from '../../cache/simplecache';
+import { createStackStatusParam } from './unitFunc';
 
 export const ThreadUnit = unit<ThreadMetaData>({
     name: 'Thread',
-    tag: 'Thread',
     pinType: 'move',
     renderInfo: (session: Session, thread: ThreadMetaData) => {
         return `${thread.threadName} ${thread.threadId}`;
@@ -25,8 +26,12 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 startTime: session.domainRange.domainStart + session.startRecordTime,
                 endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd) + session.startRecordTime,
             };
+            const requestKey = createStackStatusParam('unit/threadTraces', requestParam);
             try {
-                const request = await window.request('unit/threadTraces', requestParam);
+                const request = await simpleCache.tryFetchFromCache('unit/threadTraces', requestKey, requestParam);
+                if (request === undefined) {
+                    return [];
+                }
                 const threadTraceList = request.data as ThreadTrace[][];
                 return threadTraceList.map(it => it.map((data) => ({
                     startTime: data.startTime - session.startRecordTime,

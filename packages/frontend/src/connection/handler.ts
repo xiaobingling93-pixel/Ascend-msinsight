@@ -17,6 +17,6 @@ export const parseSuccessHandler = (data: any): void => {
             }
         });
         session.startRecordTime = data.timeStamp.minTimestamp;
-        session.endTimeAll = 5 * 60 * 1e9;
+        session.endTimeAll = data.timeStamp.maxTimestamp;
     });
 };

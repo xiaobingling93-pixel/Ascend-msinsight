@@ -47,7 +47,6 @@ const selectFolders = async (isImporting: boolean, setIsImporting: React.Dispatc
     const result = await window.request('import/action', {});
     runInAction(() => {
         session.phase = 'download';
-        session.domainRange = { domainStart: 0, domainEnd: 1000000000 };
         session.endTimeAll = 1000000000;
         result.result.forEach((item: CardInfo) => {
             session.units.push(new CardUnit({ cardId: item.rankId, cardName: item.cardName }));

@@ -698,3 +698,11 @@ export type ThreadTrace = {
     depth: number;
     threadId: number;
 };
+
+export type ThreadTraceRequest = {
+    cardId: number,
+    processId: string,
+    threadId: number,
+    startTime: number,
+    endTime: number,
+};
