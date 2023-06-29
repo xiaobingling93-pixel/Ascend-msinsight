@@ -14,6 +14,7 @@ import { SimpleTabularDetail } from '../../components/details/SimpleDetail';
 import { DetailTabs, TabPanes } from '../../components/details/TabPanes';
 import { SelectSimpleTabularDetail } from '../../components/details/SelectSimpleDetail';
 import { slicesListDetail } from './details';
+import { renderRadiusBorder } from '../../components/details/utils';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -142,12 +143,8 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     return;
                 }
                 // 来自本泳道点击的数据，给数据描边+画线
-                const halfLine = 2;
-                ctx.lineWidth = halfLine * 2;
-                ctx.strokeStyle = 'white';
-                const height = yScale(1) - halfLine - 1;
-                const totalHeight = height + halfLine;
-                ctx.strokeRect(xScale(selectedData.startTime), yScale(0) + halfLine + totalHeight * selectedData.depth, xScale(selectedData.duration), height);
+                ctx.strokeStyle = theme.fontColor;
+                renderRadiusBorder(xScale(selectedData.startTime), yScale(0), xScale(selectedData.duration < 0 ? session.endTimeAll as number : selectedData.startTime + selectedData.duration) - xScale(selectedData.startTime), yScale(1), selectedData.depth, ctx);
             },
             triggers: [ session.selectedData, session.selectedData?.duration ],
         }),

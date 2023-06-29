@@ -39,7 +39,7 @@ const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element =>
         return <div>
             <StyledSliceArgsDiv>
                 <ExpandIcon
-                    onClick={ () => setHidden(!isHiddenArgs) } style={{ margin: '-2px 0 0 8px', display: 'flex', transform: `rotate(${!isHiddenArgs ? 0 : '-90deg'}) translate(${!isHiddenArgs ? '-2' : '1'}px, ${!isHiddenArgs ? '0' : '-2'}px)`, cursor: 'pointer' }}/>
+                    onClick={ () => setHidden(!isHiddenArgs) } style={{ margin: '-2px 0 0 8px', float: 'left', transform: `rotate(${!isHiddenArgs ? 0 : '-90deg'}) translate(${!isHiddenArgs ? '-2' : '1'}px, ${!isHiddenArgs ? '0' : '-2'}px)`, cursor: 'pointer' }}/>
                 <div style={{ fontWeight: 'bold', margin: '8px 0 0 8px' }}>Args</div>
                 {!isHiddenArgs
                     ? Object.keys(args).map(key => {

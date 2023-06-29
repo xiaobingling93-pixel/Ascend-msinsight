@@ -21,9 +21,9 @@ export const slicesListDetail = detail({
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => a.occurrences ?? 0 - (b.occurrences ?? 0) },
     ],
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
-        let startTime = session.selectedRange?.[0] ?? 0 - session.startRecordTime;
+        let startTime = session.selectedRange?.[0] ?? 0;
         startTime = startTime < 0 ? 0 : startTime;
-        let endTime = session.selectedRange?.[1] ?? 0 - session.startRecordTime;
+        let endTime = session.selectedRange?.[1] ?? 0;
         endTime = endTime < 0 ? 0 : endTime;
         const params = {
             rankId: metadata.cardId,

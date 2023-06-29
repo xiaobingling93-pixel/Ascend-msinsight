@@ -11,6 +11,7 @@ import { FixedType } from '../base/rc-table/types';
 import { Abbreviature } from './base/Abbreviature';
 import { parseFilterDef } from './tableFilter';
 import { TableState } from './types';
+import { drawRoundedRect } from '../charts/common';
 
 const parseSorterDef = <T extends Record<string, unknown>>(sorterDef?: SorterDef<T>): Record<string, unknown> => {
     if (sorterDef?.sorter) {
@@ -89,4 +90,21 @@ export const onExpandForChildren = (session: Session, onExpand: OnExpandConfig |
             }
         });
     };
+};
+
+export const renderRadiusBorder = (topLeft: number, topRight: number, bottomRight: number, bottomLeft: number, depth: number, ctx: CanvasRenderingContext2D): void => {
+    const halfLine = 1;
+    ctx.lineWidth = halfLine * 2;
+    let width = bottomRight;
+    width = Math.max(1, Math.floor(width));
+    const height = Math.floor(bottomLeft - halfLine - 1);
+    const beginX = topLeft;
+    const beginY = topRight + (halfLine * 2 + height) * depth;
+    const radius = width >= 8 ? 4 : width / 2;
+    if (radius < 1) {
+        ctx.strokeRect(beginX, beginY, bottomRight, Math.floor(bottomLeft - halfLine - 1));
+    } else {
+        drawRoundedRect([ Math.floor(beginX), Math.floor(beginY), Math.floor(bottomRight), Math.floor(bottomLeft - halfLine - 1) ], ctx, radius);
+        ctx.stroke();
+    }
 };
