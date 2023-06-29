@@ -12,9 +12,7 @@ import { getTrackId } from '../utils/common_util';
 export const threadTracesHandler = async (req: ThreadTracesRequest, client: Client): Promise<Record<string, unknown>> => {
     const database = tableMap.get(req.cardId);
     const traceId = getTrackId(req.threadId, String(req.processId));
-    const startTime = req.startTime + client.shadowSession.extremumTimestamp.minTimestamp;
-    const endTime = req.endTime + client.shadowSession.extremumTimestamp.minTimestamp;
-    const threadTraceList = await database?.queryThreadTraceList(req.threadId, traceId, startTime, endTime, client);
+    const threadTraceList = await database?.queryThreadTraceList(client, req.threadId, traceId, req.startTime, req.endTime);
     return {
         data: threadTraceList,
     };
@@ -37,7 +35,7 @@ export type ThreadTracesRequest = {
  */
 export type RowThreadTrace = {
     id: number;
-    timestamp: number;
+    start_time: number;
     duration: number;
     name: string;
     depth: number;
