@@ -5,5 +5,5 @@ pluginManagement {
         }
     }
 }
-rootProject.name = 'ohos-hiinsight'
+rootProject.name = 'ascnend-insight'
 

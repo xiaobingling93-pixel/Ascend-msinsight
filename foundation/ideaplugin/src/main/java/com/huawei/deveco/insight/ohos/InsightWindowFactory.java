@@ -10,13 +10,20 @@ import com.huawei.deveco.insight.ohos.common.ProjectContext;
 import com.huawei.deveco.insight.ohos.common.constant.CmdConstants;
 import com.huawei.deveco.insight.ohos.common.constant.URLConstants;
 import com.huawei.deveco.insight.ohos.resourcehandler.InsightRequestHandler;
+import com.huawei.deveco.insight.ohos.service.ServerHelper;
 import com.huawei.deveco.insight.ohos.ui.MessagePanel;
+import com.huawei.deveco.insight.ohos.utils.BalloonNotification;
 import com.huawei.deveco.insight.ohos.utils.LogPrinter;
 import com.huawei.deveco.insight.ohos.utils.LogProperties;
 
+import com.huawei.deveco.insight.ohos.utils.ProcessUtils;
 import com.intellij.DynamicBundle;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
@@ -43,6 +50,10 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
+import java.io.*;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -80,6 +91,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
 
     static {
         hookThread();
+        ProcessUtils.killProcess(CmdConstants.DIC_SERVER);
     }
 
     private PropertyChangeListener propertyChangeListener;
@@ -98,6 +110,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
 
         // 关闭窗口之前发送相关命令暂停session
         private void onBeforeCloseStopSession(CefBrowser cefBrowser) {
+            ProcessUtils.killProcess(CmdConstants.DIC_SERVER);
             // 移除webView注册的相关内容
             cefBrowser.getClient().removeMessageRouter(router);
             webView.getJBCefClient().removeRequestHandler(insightRequestHandler, cefBrowser);
@@ -180,8 +193,15 @@ public class InsightWindowFactory implements ToolWindowFactory {
         if (!JBCefApp.isSupported()) {
             throw new IllegalStateException("JCEF is not supported");
         }
+        if (startServer()) {
+            LOGGER.info("start profiler server success");
+        } else {
+            LOGGER.info("start profiler server failed");
+            BalloonNotification.show("Fail to start profiler server", NotificationType.WARNING);
+        }
         initJCEFBrowser(project, toolWindow);
     }
+
 
     /**
      * initJCEFBrowser
@@ -237,6 +257,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
     }
 
     private void addPropertyChangeListener(JBCefBrowser webView) {
+
         JComponent component = webView.getComponent();
         propertyChangeListener = event -> {
             String command = "window.setTheme(" + UIUtil.isUnderDarcula() + ");";
@@ -254,5 +275,23 @@ public class InsightWindowFactory implements ToolWindowFactory {
     private static void hookThread() {
         // hook the Runtime thread
         Runtime.getRuntime().addShutdownHook(new WindowShutdownHook("HookThread insight"));
+    }
+
+    public static Project getProject() {
+        return project;
+    }
+
+
+    private boolean startServer() {
+        if (ProcessUtils.findProcess(CmdConstants.DIC_SERVER)) {
+            return true;
+        }
+        String pluginsPath = PathManager.getPluginsPath() + "\\ascnend-insight\\tools";
+        List<String> processArgs = new ArrayList<>();
+        processArgs.add(CmdConstants.WINDOWS_CMD);
+        processArgs.add(CmdConstants.WINDOWS_CMD_TERMINAL);
+        processArgs.add(CmdConstants.DIC_SERVER);
+        Optional<Process> process = ProcessUtils.execute(processArgs, pluginsPath);
+        return process.isPresent();
     }
 }

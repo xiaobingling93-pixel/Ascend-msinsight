@@ -56,7 +56,7 @@ public class CmdConstants {
     /**
      * DIC_SERVER
      */
-    public static final String DIC_SERVER = "dic_server" + ExecutableUtils.ext(".exe", "");
+    public static final String DIC_SERVER = "profiler-server" + ExecutableUtils.ext(".exe", "");
 
     /**
      * TRACE_STREAMER

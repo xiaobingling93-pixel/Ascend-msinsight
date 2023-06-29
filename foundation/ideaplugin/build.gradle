@@ -90,22 +90,6 @@ dependencies {
     testImplementation 'org.junit.platform:junit-platform-console-standalone:1.9.2'
 }
 
-//task buildFrontend {
-//  doLast {
-//    println("start building frontend ..........................")
-//    exec {
-//      def cmdLine = "npm config set strict-ssl false && npm install && npm run build\n"
-//      workingDir("../../frontend")
-//      if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-//        commandLine("cmd", "/C", cmdLine)
-//      } else {
-//        commandLine("sh", "-c", cmdLine)
-//      }
-//    }
-//    println("building frontend finished..............................")
-//  }
-//}
-
 task copyFrontendBuild(type: Copy) {
     from "../../frontend/build"
     into "src/main/resources/frontend"
@@ -151,9 +135,6 @@ String getPropertyValue(String arg) {
     return value
 }
 
-// 此处默认拷贝win下的文件，如果要出mac的包，则将win修改为mac
-task copyExeToSandbox() { }
-
 task copyZipToRootBuild{
     onlyIf {
         true
@@ -166,6 +147,16 @@ task copyZipToRootBuild{
     }
 }
 
+task copyExeToSandbox() {
+    doLast {
+        copy {
+            from "${rootDir}/foundation/ideaplugin/src/main/resources/server"
+            into "${project.buildDir}/idea-sandbox/plugins/ascnend-insight/tools"
+        }
+    }
+}
+
+prepareSandbox.finalizedBy copyExeToSandbox
 compileJava.dependsOn(setLogProperties)
 buildPlugin.finalizedBy(copyZipToRootBuild)
 runIde.dependsOn(buildPlugin)

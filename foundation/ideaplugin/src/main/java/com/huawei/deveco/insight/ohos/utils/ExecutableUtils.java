@@ -38,14 +38,14 @@ public class ExecutableUtils {
     /**
      * DIC_SERVER_PATH_MAC
      */
-    private static final String DIC_SERVER_PATH_MAC = "tools/profiler/dic_server/dic_server";
+    private static final String DIC_SERVER_PATH_MAC = "frontend/static/profiler-server";
 
     /**
      * DIC_SERVER_PATH_WINDOWS
      */
-    private static final String DIC_SERVER_PATH_WINDOWS = "tools/profiler/dic_server/dic_server.exe";
+    private static final String DIC_SERVER_PATH_WINDOWS = "frontend/static/profiler-server.exe";
 
-    private static final String INSIGHT_PATH = "/ohos-hiinsight";;
+    private static final String INSIGHT_PATH = "/ascnend-insight";;
 
     /**
      * get server install path
@@ -54,9 +54,9 @@ public class ExecutableUtils {
      */
     public static String getServerInstallPath() {
         if (SystemInfo.isWindows) {
-            return getFilePath(DIC_SERVER_PATH_WINDOWS);
+            return DIC_SERVER_PATH_WINDOWS;
         } else if (SystemInfo.isMac) {
-            return getFilePath(DIC_SERVER_PATH_MAC);
+            return DIC_SERVER_PATH_MAC;
         } else {
             return "";
         }
