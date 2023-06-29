@@ -1,12 +1,85 @@
-import { chart, on, unit, UnitHeight } from '../../entity/insight';
 import { Session } from '../../entity/session';
 import { hashToNumber } from '../../utils/colorUtils';
-import {
-    CardMetaData, ProcessMetaData, ThreadMetaData, ThreadTrace,
-} from '../../entity/data';
 import { colorPalette } from './utils';
+import { runInAction } from 'mobx';
+import { chart, on, singleData, TriggerEvent, unit, UnitHeight } from '../../entity/insight';
+import {
+    CardMetaData, ProcessMetaData, ThreadMetaData, ThreadTrace, AscendSliceDetail,
+} from '../../entity/data';
 import { simpleCache } from '../../cache/simplecache';
 import { createStackStatusParam } from './unitFunc';
+import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
+import React from 'react';
+import { SimpleTabularDetail } from '../../components/details/SimpleDetail';
+import { DetailTabs, TabPanes } from '../../components/details/TabPanes';
+import { SelectSimpleTabularDetail } from '../../components/details/SelectSimpleDetail';
+import { slicesListDetail } from './details';
+
+const isHiddenTitle = (data: AscendSliceDetail): boolean => {
+    return data.title === undefined;
+};
+
+const isHiddenStartTime = (data: AscendSliceDetail): boolean => {
+    return data.startTime === undefined;
+};
+
+const isHiddenDuration = (data: AscendSliceDetail): boolean => {
+    return data.duration === undefined;
+};
+
+const isHiddenSelfTime = (data: AscendSliceDetail): boolean => {
+    return data.selfTime === undefined || data.selfTime === 0;
+};
+
+const singleSliceDetail = singleData({
+    name: 'SingleSlice',
+    renderFields: [
+        [ 'Title', data => data.title === undefined ? '' : `${data.title}`, isHiddenTitle ],
+        [ 'Start', data => data.startTime === undefined ? '' : `${data.startTime}`, isHiddenStartTime ],
+        [ 'Wall Duration', data => data.duration === undefined ? '' : `${data.duration}`, isHiddenDuration ],
+        [ 'Self Time', data => data.selfTime === undefined ? '' : `${data.selfTime}`, isHiddenSelfTime ],
+    ],
+    fetchData: async (session: Session, metadata: ThreadMetaData) => {
+        const selectedSliceData = session.selectedData as ThreadTrace;
+        const params = {
+            rankId: metadata.cardId,
+            pid: metadata.processId,
+            tid: metadata.threadId,
+            startTime: selectedSliceData.startTime,
+            depth: selectedSliceData.depth,
+        };
+        const result = await window.request('unit/threadDetail', params);
+        const data: AscendSliceDetail = {
+            pid: metadata?.processId,
+            tid: metadata?.threadId,
+            title: result?.data?.title,
+            startTime: selectedSliceData?.startTime,
+            depth: selectedSliceData?.depth,
+            duration: result?.data?.duration,
+            selfTime: result?.data?.selfTime,
+            args: result?.data?.args,
+        };
+        return data;
+    },
+});
+
+const EmptyJSXElement = (): JSX.Element | null => {
+    return <></>;
+};
+
+const tabs: DetailTabs[] = [
+    {
+        title: 'Slices List',
+        detail: slicesListDetail,
+        bottomPanel: {
+            Detail: SelectSimpleTabularDetail,
+        },
+    },
+];
+
+const commonBottomPanel = {
+    Detail: SimpleTabularDetail,
+};
 
 export const ThreadUnit = unit<ThreadMetaData>({
     name: 'Thread',
@@ -47,10 +120,46 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 return [];
             }
         },
+        decorator: (session: Session, metaData: unknown) => ({
+            action: async (handle, xScale, yScale, theme) => {
+                // click
+                const ctx = handle.context;
+                const selectedData = session.selectedData as ThreadTrace | undefined;
+                const selectedUnitMetaData = session.selectedUnits?.[0]?.metadata as ThreadMetaData;
+                const threadMetaData = metaData as ThreadMetaData;
+                if (ctx === null || selectedData === undefined || selectedUnitMetaData === undefined || selectedUnitMetaData !== threadMetaData) {
+                    return;
+                }
+                // 来自本泳道点击的数据，给数据描边+画线
+                const halfLine = 2;
+                ctx.lineWidth = halfLine * 2;
+                ctx.strokeStyle = 'white';
+                const height = yScale(1) - halfLine - 1;
+                const totalHeight = height + halfLine;
+                ctx.strokeRect(xScale(selectedData.startTime), yScale(0) + halfLine + totalHeight * selectedData.depth, xScale(selectedData.duration), height);
+            },
+            triggers: [ session.selectedData, session.selectedData?.duration ],
+        }),
+        onClick: async (data, session) => {
+            if (data === undefined) { return; }
+            runInAction(() => {
+                session.selectedData = data;
+            });
+        },
         config: {
             rowHeight: UnitHeight.STANDARD,
         },
     }),
+    bottomPanelRender: (session: Session, triggerEvent: TriggerEvent) => {
+        console.info(triggerEvent);
+        if (triggerEvent === 'SELECTED_DATA') {
+            return {
+                Detail: ({ session }) => <SelectedDataBottomPanel session={session} detail={singleSliceDetail}>{EmptyJSXElement}</SelectedDataBottomPanel>,
+                DetailTitle: 'Slice Detail',
+            };
+        }
+        return TabPanes({ tabs, commonBottomPanel });
+    },
 });
 
 export const ProcessUnit = unit<ProcessMetaData>({

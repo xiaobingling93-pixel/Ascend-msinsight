@@ -56,7 +56,7 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
     recentRange.current = selectedRange;
 
     const loadData = (): void => {
-        if (detail && onDataFetched && selectedRange !== undefined && selectedUnit?.phase === 'download') {
+        if (detail && onDataFetched && selectedRange !== undefined) {
             Logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
             setState({ ...EMPTY_TABLE_STATE, isLoading: true });
             onDataFetched?.then(result => {
@@ -201,7 +201,7 @@ export const useSelectedDataDetailUpdater = (session: Session, detail: SingleDat
                     const render = item[1];
                     if (item[2] !== undefined) {
                         const isHiden = item[2];
-                        if (isHiden(result)) {
+                        if (!isHiden(result)) {
                             renderField.push([ item[0], render(result, session) ]);
                         }
                     } else {

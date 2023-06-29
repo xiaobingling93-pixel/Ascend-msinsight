@@ -706,3 +706,21 @@ export type ThreadTraceRequest = {
     startTime: number,
     endTime: number,
 };
+export type AscendSliceDetail = {
+    pid?: string;
+    tid?: number;
+    title?: string;
+    startTime?: number;
+    depth?: number;
+    duration?: number;
+    selfTime?: number;
+    args?: string;
+};
+
+export type AscendMultiSliceList = {
+    title?: string;
+    wallDuration?: number;
+    selfTime?: number;
+    avgWallDuration?: number;
+    occurrences?: number;
+};

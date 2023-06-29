@@ -55,8 +55,8 @@ export const SelectedDataBase = observer(function SelectedDataBase(props: timeDe
     const { renderer } = props;
     return <StyledSliceDetailDiv>
         {renderer?.map(item => <div className = "sliceDetail" key={item[0]}>
-            <div className = "sliceDetailName">{item[0]}</div>
-            <div className = "sliceDetailMsg">{item[1]}</div>
+            <div style={{ width: '30%' }} className = "sliceDetailName">{item[0]}</div>
+            <div style={{ width: '70%' }} className = "sliceDetailMsg">{item[1]}</div>
         </div>)}
     </StyledSliceDetailDiv>;
 });
