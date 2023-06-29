@@ -4,12 +4,13 @@ import { Caches } from '../cache/cache';
 import { toLocalTimeString } from '../utils/humanReadable';
 import { TimeStamp } from './common';
 import { Domain } from './domain';
-import { InsightUnit, UnitMatcher } from './insight';
+import { ChartMatcher, InsightUnit, UnitMatcher } from './insight';
 import { TimeLineMaker, TIME_MAKER_DEFAULT } from './timeMaker';
 import { omit } from 'lodash';
 import { platform } from '../platforms';
 import i18n from '../i18n';
 import { Phase, stateTexts } from '../utils/constant';
+import { ChartDataEle, ChartType } from './chart';
 
 export interface SelectedParams {
     baseRawId: undefined | number;
@@ -25,6 +26,25 @@ export type ValidSession = Session & { startRecordTime: TimeStamp; phase: Exclud
 export function isValidSession(session?: Session): session is ValidSession {
     return !(session === undefined || session.phase === 'configuring' || session.startRecordTime === undefined);
 }
+
+export type LinktCharts<T extends ChartType> = {
+    locateChart: ChartMatcher<T>;
+    locateUnit: UnitMatcher;
+    type: 'source' | 'target';
+    res?: LinkRes;
+};
+
+type LinkRes = {
+    metadata?: {
+        unit?: InsightUnit;
+        data?: ChartDataEle<ChartType>;
+    };
+    type?: 'source' | 'target';
+    unitHeight?: number;
+    chartHeight?: number;
+    screenHeight?: number;
+    isFinished: boolean;
+};
 
 export class Session {
     id = '';
@@ -64,6 +84,7 @@ export class Session {
 
     // set this field with a new matcher to trigger jump-to-target-lane
     locateUnit?: UnitMatcher;
+    linkCharts: Array<LinktCharts<ChartType>> = [];
 
     timer: ReturnType<typeof setInterval> | undefined;
     private _interval: number;
@@ -214,5 +235,9 @@ export class Session {
 
     printSessionInfo(): string {
         return `${JSON.stringify({ ...omit(this, [ 'caches', 'sharedState', '_units' ]) })}`;
+    }
+
+    resetLink(): void {
+        this.linkCharts = [];
     }
 }

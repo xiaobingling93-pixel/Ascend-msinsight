@@ -1,7 +1,7 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import React from 'react';
 import { CommonStateProto } from '../components/details/base/Tabs';
-import { ChartConfig, ChartDecorator, ChartReaction, ChartType, GetChartConfig, MapFunc, RenderTooltip } from './chart';
+import { ChartConfig, ChartDataEle, ChartDecorator, ChartReaction, ChartType, GetChartConfig, MapFunc, RenderTooltip } from './chart';
 import { ElementType, TreeNode } from './common';
 import { Session } from './session';
 import { TabState } from './tabDependency';
@@ -308,10 +308,14 @@ export const recursiveSpreadUnits = async (unit: InsightUnit, session: Session, 
     }
 };
 
-export type UnitMatcher = {
-    target: (unit: InsightUnit) => boolean;
-    onSuccess: (unit: InsightUnit) => void;
+type Matcher<T extends InsightUnit | ChartType> = {
+    target: (ele: T extends InsightUnit ? InsightUnit : ChartDataEle<ChartType>) => boolean;
+    onSuccess: (ele: T extends InsightUnit ? InsightUnit : ChartDataEle<ChartType>) => void;
 };
+
+export type UnitMatcher = Matcher<InsightUnit>;
+
+export type ChartMatcher<T extends ChartType> = Matcher<T>;
 
 /**
  * @member source the source file defining this template

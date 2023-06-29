@@ -1,25 +1,26 @@
 import styled from '@emotion/styled';
 import cls from 'classnames';
-import { autorun, computed, runInAction } from 'mobx';
+import { computed, runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 // hooks
 import { useWatchResize } from '../../../utils/useWatchDomResize';
 // support utils/types
 import { preOrderFlatten } from '../../../entity/common';
-import { InsightUnit, UnitMatcher } from '../../../entity/insight';
+import { InsightUnit } from '../../../entity/insight';
 import { Session } from '../../../entity/session';
 import { getAutoKey } from '../../../utils/dataAutoKey';
 import { traceSingle } from '../../../utils/traceLogger';
 import { Chart } from '../../charts';
 import { isPinned } from '../unitPin';
-import { useSelectUnit } from './hooks';
+import { useSelectUnit } from './hooks/useSelectUnit';
 import { KeyedInsightUnit } from './types';
 import { UnitInfo } from './UnitInfo';
 import { ChartErrorBoundary } from '../../error/ChartErrorBoundary';
 import eventBus, { EventType, useEventBus } from '../../../utils/eventBus';
 import { Mask } from '../../charts/Mask';
 import { useEffect, useRef } from 'react';
+import { useJumpTarget } from './hooks';
 
 const Lane = styled.div<{ laneHeight: number; className: string }>`
     display: flex;
@@ -58,12 +59,14 @@ const ChartView = observer(({ unit, session, width, height }: {unit: KeyedInsigh
     if (Array.isArray(unit.chart)) {
         return <Join joiner={Splitter}>
             {unit.chart.map((desc, index) =>
-                <Chart desc={desc} key={`${getAutoKey(unit)}/${index}`} serial={`${getAutoKey(unit)}/${index}`}
+                <Chart desc={desc} key={`${getAutoKey(unit)}/${index}`} serial={`${getAutoKey(unit)}/${index}`} unit={unit}
                     title={unit.name} session={session} metadata={unit.metadata} width={width} phase={unit.phase} />,
             )}
         </Join>;
     } else if (unit.chart !== undefined) {
-        return <Chart desc={unit.chart} key={getAutoKey(unit)} serial={getAutoKey(unit)} title={unit.name} session={session} metadata={unit.metadata} width={width} phase={unit.phase} />;
+        return <Chart
+            unit={unit} desc={unit.chart} key={getAutoKey(unit)} serial={getAutoKey(unit)}
+            title={unit.name} session={session} metadata={unit.metadata} width={width} phase={unit.phase} />;
     }
     return <ChartErrorBoundary height={height} width={width} phase={unit.phase}>
         { session.id !== 'HomePage' && session.phase !== 'error' && unit.phase !== 'configuring' && unit.phase !== 'download' && unit.phase !== 'error'
@@ -124,28 +127,6 @@ const computeVisibleUnitRange = (units: InsightUnit[], viewportHeight: number, s
         end++;
     }
     return [ start, end + 1 ];
-};
-
-/**
- * Searches a list of given @param units recursively in pre-order, comparing them with @param matcher, and save the result path in @path
- *
- * @param units the root units to start searching from
- * @param matcher matcher
- * @param path if a matching unit is found, keeps the path from root to the matching unit.
- * @returns true if found a matching unit
- */
-const searchUnit = (units: InsightUnit[], matcher: UnitMatcher, path: InsightUnit[]): boolean => {
-    for (const unit of units) {
-        path.push(unit);
-        if (matcher.target(unit)) {
-            return true;
-        }
-        if (unit.children && searchUnit(unit.children, matcher, path)) {
-            return true;
-        }
-        path.pop();
-    }
-    return false;
 };
 
 type FlattenUnitsProps = {
@@ -245,44 +226,6 @@ const handleWheel = (event: WheelEvent): void => {
     if (event.ctrlKey) {
         event.preventDefault();
     }
-};
-const useJumpTarget = (session: Session, dom: HTMLDivElement | null): void => {
-    React.useEffect(() => autorun(() => {
-        if (session.locateUnit === undefined || dom === null) {
-            return;
-        }
-        const path: InsightUnit[] = [];
-        if (!searchUnit(session.units, session.locateUnit, path)) {
-            return;
-        }
-        runInAction(() => {
-            // expand all parent units
-            for (const unit of path) {
-                unit.isExpanded = true;
-            }
-            const unit = path[path.length - 1];
-            session.selectedUnitKeys = [getAutoKey(unit)];
-            session.selectedUnits = [unit];
-            session.locateUnit?.onSuccess(unit);
-        });
-        const when = (unit: InsightUnit): boolean => unit.isExpanded;
-        // pinned-by-move-units should be excluded in the result
-        const exclude = (unit: InsightUnit): boolean => unit.pinType === 'move' && isPinned(unit);
-        const bypass = (unit: InsightUnit): boolean => unit.type === 'transparent';
-        const flattenUnits = preOrderFlatten(session.units, 0, { bypass, when, exclude });
-        let scrollTop = 0;
-        for (const unit of flattenUnits) {
-            if (unit === path[path.length - 1]) {
-                break;
-            }
-            scrollTop += unit.height();
-        }
-        scrollTop -= 10;
-        dom.scrollTo(0, scrollTop);
-        runInAction(() => {
-            session.locateUnit = undefined;
-        });
-    }), [ session, dom ]);
 };
 
 const INVISIBLE_UNITS_PLACEHOLDER = 'invisible-units-placeholder';
