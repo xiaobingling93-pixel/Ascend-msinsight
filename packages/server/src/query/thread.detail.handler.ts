@@ -4,6 +4,7 @@ import {
     FlowDetailRequest,
     FlowDetailResponse,
     FlowResponse,
+    LocationData,
     SliceDao,
     ThreadDetailRequest,
     ThreadDetailResponse,
@@ -18,6 +19,7 @@ import { extremumTimestamp } from '../handlers/import';
 
 const sliceTable = 'slice';
 const flowTable = 'flow';
+const threadTable = 'thread';
 
 export const threadInfoHandler = async (request: ThreadDetailRequest): Promise<ThreadDetailResponse> => {
     const table = tableMap.get(request.rankId) as Table;
@@ -142,7 +144,7 @@ export const flowNameHandler = async (request: EventRequest): Promise<FlowRespon
     const tid = request.tid;
     const trackId = getTrackId(tid, pid);
     const startTime = request.startTime + extremumTimestamp.minTimestamp;
-    const response: FlowResponse = { flowDetail: [{ title: '', timestamp: 0, trackId: 0 }] };
+    const response: FlowResponse = { flowDetail: [] };
     const param = [ trackId, startTime ];
     const sql: string = `SELECT * FROM ${flowTable}
                             WHERE TRACK_ID = ? AND TIMESTAMP = ?`;
@@ -161,8 +163,8 @@ export const flowDetailHandler = async (request: FlowDetailRequest): Promise<Flo
     const title = request.title;
     const flowSql: string = `SELECT * FROM ${flowTable} WHERE TIMESTAMP = ? AND TRACK_ID = ? AND NAME = ?`;
     const flowParam = [ startTime, trackId, title ];
-    const flowResult = await table.selectData(flowSql, flowParam) as FlowDao;
-    const type = flowResult.type;
+    const flowResult = await table.selectData(flowSql, flowParam) as FlowDao[];
+    const type = flowResult[0].type;
     const toParam = [ startTime, trackId, title, type, startTime, trackId, title, type ];
     const toSql: string = `SELECT * FROM ${sliceTable} WHERE TRACK_ID IN
                         (SELECT TRACK_ID FROM ${flowTable}
@@ -173,15 +175,21 @@ export const flowDetailHandler = async (request: FlowDetailRequest): Promise<Flo
                             (SELECT TIMESTAMP FROM ${flowTable} WHERE FLOW_ID IN
                                 (SELECT FLOW_ID FROM ${flowTable} WHERE TIMESTAMP = ? AND TRACK_ID = ? AND NAME = ?)
                                 AND TYPE <> ?)`;
-    const toSliceDetail = await table.selectData(toSql, toParam) as SliceDao;
-    const fromParam = [ startTime, trackId, title, type, startTime, trackId, title, type ];
-    const fromSql: string = `SELECT * FROM ${sliceTable} WHERE TIMESTAMP = ? AND TRACK_ID = ? AND NAME = ?)`;
-    const fromSliceDetail = await table.selectData(fromSql, fromParam) as SliceDao;
+    const toSliceDetail = await table.selectData(toSql, toParam) as SliceDao[];
+    const toLocation = await getLocationDataByTimeTrackId(table,
+        [ toSliceDetail[0].timestamp, toSliceDetail[0].track_id ]);
+    const fromLocation = await getLocationDataByTimeTrackId(table, [ startTime, trackId ]);
     return {
-        id: flowResult.flow_id,
-        title: flowResult.name,
-        cat: flowResult.cat,
-        from: type === 's' ? fromSliceDetail : toSliceDetail,
-        to: type === 's' ? toSliceDetail : fromSliceDetail,
+        id: flowResult[0].flow_id,
+        title: flowResult[0].name,
+        cat: flowResult[0].cat,
+        from: type === 's' ? fromLocation[0] : toLocation[0],
+        to: type === 's' ? toLocation[0] : fromLocation[0],
     };
 };
+
+async function getLocationDataByTimeTrackId(table: Table, param: number[]): Promise<LocationData[]> {
+    const sql: string = `SELECT PID, TID, DEPTH, TIMESTAMP FROM ${threadTable} TH
+                          LEFT JOIN ${sliceTable} SL ON SL.TRACK_ID = TH.TRACK_ID WHERE SL.TIMESTAMP = ? AND SL.TRACK_ID = ?`;
+    return await table.selectData(sql, param);
+}

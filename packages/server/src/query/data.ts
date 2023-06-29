@@ -32,12 +32,19 @@ type FlowDetail = {
     timestamp: number;
 };
 
+export type LocationData = {
+    pid: string;
+    tid: number;
+    depth: number;
+    timestamp: number;
+};
+
 export type FlowDetailResponse = {
     title: string;
     cat: string;
     id: string;
-    from: SliceDao;
-    to: SliceDao;
+    from: LocationData;
+    to: LocationData;
 };
 
 export type ThreadDetailRequest = {
