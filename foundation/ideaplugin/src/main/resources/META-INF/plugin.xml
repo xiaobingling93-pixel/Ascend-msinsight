@@ -1,6 +1,6 @@
 <idea-plugin>
     <!--插件基本信息-->
-    <id>com.huawei.deveco.AscendInsight</id>
+    <id>com.huawei.ascend.AscendInsight</id>
     <name>AscendInsight</name>
     <vendor email="harmonysupport@huawei.com" url="https://developer.harmonyos.com/">Huawei</vendor>
     <description><![CDATA[DevEco Insight is a performance optimization tool.<br>]]></description>
@@ -13,9 +13,9 @@
 
     <!--实现intellij底座拓展点，Insight主体-->
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow id="AscendInsight" factoryClass="com.huawei.deveco.insight.ohos.InsightWindowFactory" anchor="bottom"
+        <toolWindow id="Ascend Insight" factoryClass="com.huawei.ascend.insight.InsightWindowFactory" anchor="bottom"
                     icon="/META-INF/pluginIcon.svg"/>
-        <applicationService serviceImplementation="com.huawei.deveco.insight.ohos.data.InsightCfgPreferences"/>
+        <applicationService serviceImplementation="com.huawei.ascend.insight.data.InsightCfgPreferences"/>
         <notificationGroup id="Insight" displayType="BALLOON"/>
     </extensions>
 </idea-plugin>

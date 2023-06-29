@@ -27,3 +27,4 @@ build
 *.exe
 **/*.exe
 foundation/ideaplugin/src/main/resources/server
+foundation/ideaplugin/src/main/resources/profiler
