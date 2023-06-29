@@ -60,17 +60,6 @@ export const threadInfoHandler = async (request: ThreadDetailRequest): Promise<T
     return threadResponse;
 };
 
-const emptyThreadsResponse = {
-    emptyFlag: false,
-    data: [{
-        title: '',
-        selfTime: 0,
-        wallDuration: 0,
-        avgWallDuration: 0,
-        occurrences: 0,
-    }],
-};
-
 export const threadsInfoHandler = async (request: ThreadsRequest): Promise<ThreadsResponse> => {
     const table = tableMap.get(request.rankId) as Table;
     const pid = request.pid;
@@ -80,14 +69,13 @@ export const threadsInfoHandler = async (request: ThreadsRequest): Promise<Threa
     const trackId = getTrackId(tid, pid);
     const param = [ trackId, startTime, endTime ];
     const selfTimeKeyValue: Record<string, number> = {};
-    let threadResponse: ThreadsResponse = emptyThreadsResponse;
+    let threadResponse: ThreadsResponse = { emptyFlag: false, data: [] };
     const sql: string = `SELECT * FROM ${sliceTable} WHERE TRACK_ID = ? AND TIMESTAMP + DURATION >= ? AND TIMESTAMP <= ?`;
     const rows = await table.selectData(sql, param) as SliceDao[];
     if (rows.length === 0) {
         threadResponse.emptyFlag = true;
         return threadResponse;
     }
-    threadResponse.data.shift();
     for (const res of rows) {
         let selfTime = res.duration;
         const endTime = res.timestamp + res.duration;
@@ -118,7 +106,7 @@ function addData(selfTimeKeyValue: Record<string, number>, key: string, selfTime
 }
 
 function reduceThread(rows: SliceDao[], selfTimeKeyValue: {[key: string]: any}): ThreadsResponse {
-    const tmp: ThreadsResponse = emptyThreadsResponse;
+    const tmp: ThreadsResponse = { emptyFlag: false, data: [] };
     return rows.reduce((acc, cur) => {
         const index = acc.data.findIndex((item) => item.title === cur.name);
         if (index === -1) {
