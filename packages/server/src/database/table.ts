@@ -1,5 +1,5 @@
 import sqlite, { Statement } from 'sqlite3';
-import { RowThreadTrace, ThreadTrace } from '../query/trhead.trace.handler';
+import { RowThreadTrace, ThreadTrace } from '../query/thread.trace.handler';
 
 export class Table {
     private readonly db: sqlite.Database;

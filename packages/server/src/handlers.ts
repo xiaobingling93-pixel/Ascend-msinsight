@@ -1,5 +1,5 @@
 import { chartHandler, testHandler } from './handlers.mock';
-import { threadTracesHandler } from './query/trhead.trace.handler';
+import { threadTracesHandler } from './query/thread.trace.handler';
 import { Handler } from './types';
 import { flowDetailHandler, flowNameHandler, threadInfoHandler, threadsInfoHandler } from './query/thread.detail.handler';
 import { importHandler } from './handlers/import';
