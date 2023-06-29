@@ -67,7 +67,6 @@ allprojects {
     }
 
     dependencies {
-        api(group: 'com.huawei.deveco', name: 'dap4intellij', version: LIBRARY_VERSION)
         compileOnly(group: "org.java-websocket", name: "Java-WebSocket", version: "1.5.1") {
             exclude group: 'org.slf4j', module: 'slf4j-api'
         }
@@ -78,9 +77,6 @@ allprojects {
 }
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
-    testImplementation 'com.huawei.deveco:ohos-hdclib:0.0.0.1-SNAPSHOT'
-    testImplementation 'com.huawei.deveco:sdk-oh-idea:0.0.0.1-SNAPSHOT'
-    testImplementation 'com.huawei.deveco:cdt-java-client:4.0.3'
     testImplementation (group: "org.java-websocket", name: "Java-WebSocket", version: "1.5.1") {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
@@ -150,8 +146,16 @@ task copyZipToRootBuild{
 task copyExeToSandbox() {
     doLast {
         copy {
+            from "${rootDir}/foundation/ideaplugin/src/main/resources/profiler"
+            into "${project.buildDir}/idea-sandbox/plugins/ascnend-insight/tools/dist"
+        }
+        copy {
+            from "${rootDir}/foundation/ideaplugin/src/main/resources/frontend"
+            into "${project.buildDir}/idea-sandbox/plugins/ascnend-insight/tools/dist"
+        }
+        copy {
             from "${rootDir}/foundation/ideaplugin/src/main/resources/server"
-            into "${project.buildDir}/idea-sandbox/plugins/ascnend-insight/tools"
+            into "${project.buildDir}/idea-sandbox/plugins/ascnend-insight/tools/"
         }
     }
 }
