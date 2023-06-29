@@ -441,13 +441,13 @@ export class Table {
         });
     }
 
-    async queryThreadTraceList(threadId: number, trackId: number, startTime: number, endTime: number, client: Client): Promise<ThreadTrace[][]> {
+    async queryThreadTraceList(client: Client, threadId: number, trackId: number, startTime: number, endTime: number): Promise<ThreadTrace[][]> {
         return new Promise((resolve, reject) => {
             const rowDatas: ThreadTrace[][] = [];
-            this.db.all(`SELECT id, timestamp - ${client.shadowSession.extremumTimestamp.minTimestamp}, duration, name, depth, track_id
+            this.db.all(`SELECT id, timestamp - ${client.shadowSession.extremumTimestamp.minTimestamp} as start_time, duration, name, depth, track_id
             FROM ${this.sliceTable}
             WHERE track_id = ${trackId}
-            AND timestamp >= ${startTime} AND timestamp <= ${endTime}
+            AND start_time >= ${startTime} AND start_time <= ${endTime}
             GROUP BY depth, id;`,
             async (err, rows: any) => {
                 if (err) {
@@ -476,8 +476,8 @@ function processThreadTracesRowData(threadId: number, rows: any, rowDatas: Threa
             const threadTrace = {
                 name: it.name,
                 duration: it.duration,
-                startTime: it.timestamp,
-                endTime: it.timestamp + it.duration,
+                startTime: it.start_time,
+                endTime: it.start_time + it.duration,
                 depth: it.depth,
                 threadId,
             };
