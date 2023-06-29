@@ -2,14 +2,15 @@ import { detail, DetailDescriptor } from '../../entity/insight';
 import { isEmpty } from 'lodash';
 import { AscendMultiSliceList, ThreadMetaData } from '../../entity/data';
 import { Session } from '../../entity/session';
+import { getSliceTimeDisplay } from './AscendUnit';
 
 export const slicesListDetail = detail({
     name: 'Slices List',
     columns: [
         [ 'Name', data => `${isEmpty(data.title) ? 'null' : data.title}`, 100 ],
-        [ 'Wall Duration', data => `${data.wallDuration ?? 0}`, 180 ],
-        [ 'Self Time', data => `${data.selfTime ?? 0}`, 100 ],
-        [ 'Average Wall Duration', data => `${data.avgWallDuration ?? 0}`, 180 ],
+        [ 'Wall Duration', data => getSliceTimeDisplay(data.wallDuration), 180 ],
+        [ 'Self Time', data => getSliceTimeDisplay(data.selfTime), 100 ],
+        [ 'Average Wall Duration', data => getSliceTimeDisplay(data.avgWallDuration), 180 ],
         [ 'Occurrences', data => `${data.occurrences ?? 0}`, 'auto' ],
     ],
     actions: [
@@ -20,12 +21,16 @@ export const slicesListDetail = detail({
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => a.occurrences ?? 0 - (b.occurrences ?? 0) },
     ],
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
+        let startTime = session.selectedRange?.[0] ?? 0 - session.startRecordTime;
+        startTime = startTime < 0 ? 0 : startTime;
+        let endTime = session.selectedRange?.[1] ?? 0 - session.startRecordTime;
+        endTime = endTime < 0 ? 0 : endTime;
         const params = {
             rankId: metadata.cardId,
             tid: metadata.threadId,
             pid: metadata.processId,
-            startTime: session.selectedRange?.[0],
-            endTime: session.selectedRange?.[1],
+            startTime: startTime,
+            endTime: endTime,
         };
         const raw = await window.request('unit/threads', params);
         return raw.data;

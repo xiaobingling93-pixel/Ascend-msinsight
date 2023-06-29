@@ -31,13 +31,24 @@ const isHiddenSelfTime = (data: AscendSliceDetail): boolean => {
     return data.selfTime === undefined || data.selfTime === 0;
 };
 
+const nsToMs = (ns: number): number => {
+    return ns / 1000000;
+};
+
+export const getSliceTimeDisplay = (startTime: number | undefined): string => {
+    if (startTime === undefined) {
+        return '';
+    }
+    return `${nsToMs(startTime).toString() + ' ms'}`;
+};
+
 const singleSliceDetail = singleData({
     name: 'SingleSlice',
     renderFields: [
         [ 'Title', data => data.title === undefined ? '' : `${data.title}`, isHiddenTitle ],
-        [ 'Start', data => data.startTime === undefined ? '' : `${data.startTime}`, isHiddenStartTime ],
-        [ 'Wall Duration', data => data.duration === undefined ? '' : `${data.duration}`, isHiddenDuration ],
-        [ 'Self Time', data => data.selfTime === undefined ? '' : `${data.selfTime}`, isHiddenSelfTime ],
+        [ 'Start', data => getSliceTimeDisplay(data.startTime), isHiddenStartTime ],
+        [ 'Wall Duration', data => getSliceTimeDisplay(data.duration), isHiddenDuration ],
+        [ 'Self Time', data => getSliceTimeDisplay(data.selfTime), isHiddenSelfTime ],
     ],
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
         const selectedSliceData = session.selectedData as ThreadTrace;

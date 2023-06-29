@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import { SelectedDataBase } from './details/base/SelectedData';
@@ -6,6 +6,7 @@ import { Session } from '../entity/session';
 import { SingleDataDesc } from '../entity/insight';
 import { useSelectedDataDetailUpdater } from './details/hooks';
 import { AscendSliceDetail } from '../entity/data';
+import { ReactComponent as ExpandIcon } from '../assets/images/insights/PullDownIcon.svg';
 
 interface DetailProps<T extends Record<string, unknown>> {
     session: Session;
@@ -29,6 +30,7 @@ const StyledSliceArgsDiv = styled.div`
 
 const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element => {
     const argsJson = data.args;
+    const [ isHiddenArgs, setHidden ] = useState(false);
     if (argsJson === undefined) {
         return <></>;
     }
@@ -36,11 +38,15 @@ const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element =>
         const args = JSON.parse(argsJson);
         return <div>
             <StyledSliceArgsDiv>
-                <div style={{ fontWeight: 'bold' }}>Args</div>
-                {Object.keys(args).map(key => {
-                    return <div style={{ marginLeft: '24px', height: '32px', lineHeight: '32px' }} key={key}><div style={{ minWidth: '110px', width: '10%', float: 'left', display: 'flex' }}>{key}</div>
-                        <div style={{ width: '90%', float: 'left' }} dangerouslySetInnerHTML={{ __html: key === 'Call stack' ? args[key].replace(/\n/g, '<br>') : args[key] }}></div></div>;
-                })}
+                <ExpandIcon
+                    onClick={ () => setHidden(!isHiddenArgs) } style={{ margin: '-2px 0 0 8px', display: 'flex', transform: `rotate(${!isHiddenArgs ? 0 : '-90deg'}) translate(${!isHiddenArgs ? '-2' : '1'}px, ${!isHiddenArgs ? '0' : '-2'}px)`, cursor: 'pointer' }}/>
+                <div style={{ fontWeight: 'bold', margin: '8px 0 0 8px' }}>Args</div>
+                {!isHiddenArgs
+                    ? Object.keys(args).map(key => {
+                        return <div style={{ marginLeft: '24px', height: '32px', lineHeight: '32px' }} key={key}><div style={{ minWidth: '110px', width: '10%', float: 'left', display: 'flex' }}>{key}</div>
+                            <div style={{ width: '90%', float: 'left' }} dangerouslySetInnerHTML={{ __html: key === 'Call stack' ? args[key].replace(/\n/g, '<br>') : args[key] }}></div></div>;
+                    })
+                    : <></>}
             </StyledSliceArgsDiv>
         </div>;
     } catch (e) {
