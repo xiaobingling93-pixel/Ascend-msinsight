@@ -472,17 +472,16 @@ function processThreadTracesRowData(threadId: number, rows: any, rowDatas: Threa
     rows.forEach((it: RowThreadTrace) => {
         if (rowDatas[it.depth] === undefined) {
             rowDatas[it.depth] = [];
-        } else {
-            const threadTrace = {
-                name: it.name,
-                duration: it.duration,
-                startTime: it.start_time,
-                endTime: it.start_time + it.duration,
-                depth: it.depth,
-                threadId,
-            };
-            rowDatas[it.depth].push(threadTrace);
         }
+        const threadTrace = {
+            name: it.name,
+            duration: it.duration,
+            startTime: it.start_time,
+            endTime: it.start_time + it.duration,
+            depth: it.depth,
+            threadId,
+        };
+        rowDatas[it.depth].push(threadTrace);
     });
     for (let i = 0; i < rowDatas.length; i++) {
         if (rowDatas[i] === undefined) {
