@@ -1,4 +1,5 @@
 import sqlite, { Statement } from 'sqlite3';
+import { extremumTimestamp } from '../handlers/import';
 import { RowThreadTrace, ThreadTrace } from '../query/thread.trace.handler';
 
 export class Table {
@@ -437,7 +438,8 @@ export class Table {
     async queryThreadTraceList(threadId: number, trackId: number, startTime: number, endTime: number): Promise<ThreadTrace[][]> {
         return new Promise((resolve, reject) => {
             const rowDatas: ThreadTrace[][] = [];
-            this.db.all(`SELECT * FROM slice
+            this.db.all(`SELECT id, timestamp - ${extremumTimestamp.minTimestamp}, duration, name, depth, track_id
+            FROM ${this.sliceTable}
             WHERE track_id = ${trackId}
             AND timestamp >= ${startTime} AND timestamp <= ${endTime}
             GROUP BY depth, id;`,
