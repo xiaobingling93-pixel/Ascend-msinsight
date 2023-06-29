@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Session } from '../entity/session';
 import { TimeMakerButton } from './TimeMakerButton';
 import { CustomButton } from './base/StyledButton';
-import { ReactComponent as OpenIcon } from '../assets/images/ic_public_save.svg';
+import { ReactComponent as OpenIcon } from '../assets/images/ic_public_download.svg';
 import { ReactComponent as ResetIcon } from '../assets/images/insights/ark_gc.svg';
 import { runInAction } from 'mobx';
 import { useState } from 'react';

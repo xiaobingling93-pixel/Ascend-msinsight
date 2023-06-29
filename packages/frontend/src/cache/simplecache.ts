@@ -38,7 +38,7 @@ export class SimpleCache {
     }
 
     clear(): void {
-        this.data.clear();
+        this.data.get(stackStatusKey).clear();
     }
 }
 
