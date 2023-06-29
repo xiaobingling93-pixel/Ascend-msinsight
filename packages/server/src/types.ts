@@ -1,6 +1,13 @@
+export class ShadowSession {
+    private readonly placeholder = {};
+};
+
 export interface Client {
     // send a notification message to the client, which may not be triggered by a client request
     notify: (method: string, data: Record<string, unknown>) => void;
+
+    // keeps all necessary states of a session for the client, such as start/end timestamp
+    shadowSession: ShadowSession;
 }
 
 /**
