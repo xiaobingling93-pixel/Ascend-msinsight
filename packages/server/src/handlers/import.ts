@@ -6,6 +6,7 @@ import { parseCardID } from '../utils/common_util';
 import { parse } from '../parse/main';
 import { Client } from '../types';
 import { queryUnitsMetadata } from '../query/unitMetadataHandler';
+import { ExtremumTimestamp } from '../query/data';
 
 const execAsync = promisify(exec);
 
@@ -59,6 +60,11 @@ type CardInfo = {
     rankId: number;
 };
 
+export const extremumTimestamp: ExtremumTimestamp = {
+    minTimestamp: Number.MAX_VALUE,
+    maxTimestamp: Number.MIN_VALUE,
+};
+
 export const importHandler = async (req: any, client: Client): Promise<Record<string, unknown>> => {
     const folders = await selectFolders();
     const result: CardInfo[] = [];
@@ -74,7 +80,7 @@ export const importHandler = async (req: any, client: Client): Promise<Record<st
             const rankId = parseCardID(filePath);
             if (importedRankIdSet.has(rankId)) {
                 continue;
-            };
+            }
             importedRankIdSet.add(rankId);
             result.push({ cardName: folder.cardName, rankId });
             parse(filePath, rankId, (ranId, err) => {
@@ -84,6 +90,7 @@ export const importHandler = async (req: any, client: Client): Promise<Record<st
                 }
                 // this to send parse file success message
                 queryUnitsMetadata(rankId).then((queryResult) => {
+                    extremumTimestamp.minTimestamp = Math.min(extremumTimestamp.minTimestamp, queryResult.extremumTimestamp.minTimestamp);
                     client?.notify('parse/success', { unit: queryResult.insightMetaData, timeStamp: queryResult.extremumTimestamp });
                 });
                 console.log('send notify rankId parse end. ', rankId);

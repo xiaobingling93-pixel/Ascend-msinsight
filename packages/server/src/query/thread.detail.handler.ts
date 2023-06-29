@@ -14,6 +14,7 @@ import { InsightError } from '../utils/error';
 import { getTrackId } from '../utils/common_util';
 import { tableMap } from '../database/tableManager';
 import { Table } from '../database/table';
+import { extremumTimestamp } from '../handlers/import';
 
 const sliceTable = 'slice';
 const flowTable = 'flow';
@@ -23,7 +24,7 @@ export const threadInfoHandler = async (request: ThreadDetailRequest): Promise<T
     const depth = request.depth;
     const pid = request.pid;
     const tid = request.tid;
-    const startTime = request.startTime;
+    const startTime = request.startTime + extremumTimestamp.minTimestamp;
     const trackId = getTrackId(tid, pid);
     const param = [ depth, trackId, startTime ];
     const sql: string = `SELECT * FROM ${sliceTable}
@@ -72,8 +73,8 @@ export const threadsInfoHandler = async (request: ThreadsRequest): Promise<Threa
     const table = tableMap.get(request.rankId) as Table;
     const pid = request.pid;
     const tid = request.tid;
-    const startTime = request.startTime;
-    const endTime = request.endTime;
+    const startTime = request.startTime + extremumTimestamp.minTimestamp;
+    const endTime = request.endTime + extremumTimestamp.minTimestamp;
     const trackId = getTrackId(tid, pid);
     const param = [ trackId, startTime, endTime ];
     const selfTimeKeyValue: Record<string, number> = {};
@@ -140,24 +141,22 @@ export const flowNameHandler = async (request: EventRequest): Promise<FlowRespon
     const pid = request.pid;
     const tid = request.tid;
     const trackId = getTrackId(tid, pid);
-    const startTime = request.startTime;
-    const response: FlowResponse = { flowDetail: [{ title: '', timestamp: 0, track_id: 0 }] };
+    const startTime = request.startTime + extremumTimestamp.minTimestamp;
+    const response: FlowResponse = { flowDetail: [{ title: '', timestamp: 0, trackId: 0 }] };
     const param = [ trackId, startTime ];
     const sql: string = `SELECT * FROM ${flowTable}
                             WHERE TRACK_ID = ? AND TIMESTAMP = ?`;
     const result = await table.selectData(sql, param);
     const rows = result as FlowDao[];
     rows.forEach(row => {
-        response.flowDetail.push({ title: row.name, track_id: row.track_id, timestamp: row.timestamp });
+        response.flowDetail.push({ title: row.name, trackId: row.track_id, timestamp: row.timestamp });
     });
     return response;
 };
 
 export const flowDetailHandler = async (request: FlowDetailRequest): Promise<FlowDetailResponse> => {
     const table = tableMap.get(request.rankId) as Table;
-    const pid = request.pid;
-    const tid = request.tid;
-    const trackId = getTrackId(tid, pid);
+    const trackId = request.trackId;
     const startTime = request.startTime;
     const title = request.title;
     const flowSql: string = `SELECT * FROM ${flowTable} WHERE TIMESTAMP = ? AND TRACK_ID = ? AND NAME = ?`;

@@ -1,6 +1,6 @@
 import { tableMap } from '../database/tableManager';
 import { Table } from '../database/table';
-import { InsightMetaData, metadataDto, ProcessMetaData, ThreadMetaData } from './data';
+import { ExtremumTimestamp, InsightMetaData, metadataDto, ProcessMetaData, ThreadMetaData } from './data';
 
 export const unitMetadataHandler = async (req: { rankId: number }): Promise<Record<string, unknown>> => {
     if (req.rankId === undefined || !tableMap.has(req.rankId)) {
@@ -51,8 +51,3 @@ export async function queryUnitsMetadata(rankId: number): Promise<any> {
     const extremumTimestamp = await table.selectExtremumTimestamp() as ExtremumTimestamp;
     return { insightMetaData, extremumTimestamp };
 }
-
-type ExtremumTimestamp = {
-    minTimestamp: number;
-    maxTimestamp: number;
-};

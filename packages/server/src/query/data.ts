@@ -28,7 +28,7 @@ export type FlowResponse = {
 
 type FlowDetail = {
     title: string;
-    track_id: number;
+    trackId: number;
     timestamp: number;
 };
 
@@ -65,8 +65,7 @@ export type EventRequest = {
 
 export type FlowDetailRequest = {
     rankId: number;
-    pid: string;
-    tid: number;
+    trackId: number;
     startTime: number;
     title: string;
 };
@@ -129,4 +128,9 @@ export type ProcessMetaData = {
 export type CardMetaData = {
     cardId: number;
     cardName?: string;
+};
+
+export type ExtremumTimestamp = {
+    minTimestamp: number;
+    maxTimestamp: number;
 };
