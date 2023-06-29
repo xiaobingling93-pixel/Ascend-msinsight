@@ -108,8 +108,8 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 cardId: threadMetaData.cardId,
                 processId: threadMetaData.processId,
                 threadId: threadMetaData.threadId,
-                startTime: session.domainRange.domainStart + session.startRecordTime,
-                endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd) + session.startRecordTime,
+                startTime: session.domainRange.domainStart,
+                endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd),
             };
             const requestKey = createStackStatusParam('unit/threadTraces', requestParam);
             try {
@@ -119,7 +119,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 }
                 const threadTraceList = request.data as ThreadTrace[][];
                 return threadTraceList.map(it => it.map((data) => ({
-                    startTime: data.startTime - session.startRecordTime,
+                    startTime: data.startTime,
                     duration: data.duration,
                     name: data.name,
                     type: data.name,
