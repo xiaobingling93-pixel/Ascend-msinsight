@@ -10,47 +10,35 @@ import { ExtremumTimestamp } from '../query/data';
 
 const execAsync = promisify(exec);
 
-type FolderInfo = {
-    cardName: string;
-    cardPath: string;
-};
-
 const script = 'Add-Type -AssemblyName System.Windows.Forms; $dialog = New-Object System.Windows.Forms.FolderBrowserDialog;$result = $dialog.ShowDialog(); if ($result -eq “OK”) { $dialog.SelectedPath }';
 
-async function selectFolders(): Promise<FolderInfo[]> {
-    const result: FolderInfo[] = [];
+function findJsonFiles(dir: string, traceViewJsonPaths: string[], depth: number): void {
+    if (depth > 5) return; // 控制递归深度
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+        const filePath = path.join(dir, file);
+        const stats = fs.statSync(filePath);
+        if (stats.isDirectory()) {
+            findJsonFiles(filePath, traceViewJsonPaths, depth + 1);
+        } else if (file === 'trace_view.json') {
+            traceViewJsonPaths.push(filePath);
+        }
+    }
+}
+
+async function findTraceViewJson(): Promise<string[]> {
+    const traceViewJsonPaths: string[] = [];
     try {
         const { stdout } = await execAsync(`PowerShell -Command "${script}`);
         const folderPath = stdout.trim();
         if (!folderPath) {
-            return result;
+            return traceViewJsonPaths;
         }
-        const deviceFolder = folderPath.match(/\b\d+\.\d+\.\d+\.\d+\b/)?.[0];
-        if (deviceFolder === undefined) {
-            return result;
-        }
-        if (path.basename(folderPath) === deviceFolder) {
-            const subfolders = fs.readdirSync(folderPath, { withFileTypes: true })
-                .filter(dirent => dirent.isDirectory())
-                .map(dirent => dirent.name);
-            for (const subfolder of subfolders) {
-                const subfolderPath = path.join(folderPath, subfolder);
-                result.push({
-                    cardName: subfolder,
-                    cardPath: subfolderPath,
-                });
-            }
-        } else if (path.basename(path.dirname(folderPath)) === deviceFolder) {
-            const cardName = path.basename(folderPath);
-            result.push({
-                cardName,
-                cardPath: folderPath,
-            });
-        }
+        findJsonFiles(folderPath, traceViewJsonPaths, 0);
     } catch (error) {
         console.error(error);
     }
-    return result;
+    return traceViewJsonPaths;
 }
 
 export const importedRankIdSet = new Set<number>();
@@ -66,36 +54,27 @@ export const extremumTimestamp: ExtremumTimestamp = {
 };
 
 export const importHandler = async (req: any, client: Client): Promise<Record<string, unknown>> => {
-    const folders = await selectFolders();
+    const traceViewJsonPaths = await findTraceViewJson();
     const result: CardInfo[] = [];
-    for (const folder of folders) {
-        const files = fs.readdirSync(folder.cardPath, { withFileTypes: true })
-            .filter(dirent => dirent.isFile())
-            .map(dirent => dirent.name);
-        for (const file of files) {
-            if (path.extname(file) !== '.json') {
-                continue;
+    for (const traceViewJsonPath of traceViewJsonPaths) {
+        const rankId = parseCardID(traceViewJsonPath);
+        if (importedRankIdSet.has(rankId)) {
+            continue;
+        };
+        result.push({ cardName: rankId.toString(), rankId });
+        parse(traceViewJsonPath, rankId, (ranId, err) => {
+            if (err) {
+                // this to send parse file error message
+                console.log(err);
             }
-            const filePath = path.join(folder.cardPath, file);
-            const rankId = parseCardID(filePath);
-            if (importedRankIdSet.has(rankId)) {
-                continue;
-            }
-            importedRankIdSet.add(rankId);
-            result.push({ cardName: folder.cardName, rankId });
-            parse(filePath, rankId, (ranId, err) => {
-                if (err) {
-                    // this to send parse file error message
-                    console.log(err);
-                }
-                // this to send parse file success message
-                queryUnitsMetadata(rankId).then((queryResult) => {
-                    extremumTimestamp.minTimestamp = Math.min(extremumTimestamp.minTimestamp, queryResult.extremumTimestamp.minTimestamp);
-                    client?.notify('parse/success', { unit: queryResult.insightMetaData, timeStamp: queryResult.extremumTimestamp });
-                });
-                console.log('send notify rankId parse end. ', rankId);
+            // this to send parse file success message
+            queryUnitsMetadata(rankId).then((queryResult) => {
+                extremumTimestamp.minTimestamp = Math.min(extremumTimestamp.minTimestamp, queryResult.extremumTimestamp.minTimestamp);
+                client?.notify('parse/success', { unit: queryResult.insightMetaData, timeStamp: queryResult.extremumTimestamp });
             });
-        }
+            console.log('send notify rankId parse end. ', rankId);
+        });
+        importedRankIdSet.add(rankId);
     }
     return { result };
 };
