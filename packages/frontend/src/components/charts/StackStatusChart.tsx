@@ -6,7 +6,7 @@ import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { ChartProps, Scale, StackStatusData, TextConfig } from '../../entity/chart';
 import { Canvas, CanvasContainer, drawMultiBgRoundedRect, drawRoundedRect, zipStatusData } from './common';
-import { useBatchedRender, useClick, useData, useHoverPos, useRangeAndDomain } from './hooks';
+import { useBatchedRender, useClick, useData, useHoverPos, useLocateChart, useRangeAndDomain } from './hooks';
 import { TooltipComponent, TooltipProps } from './TooltipComp';
 
 type StackStatusChartProps = ChartProps<'stackStatus'>;
@@ -137,9 +137,7 @@ const findDataByXY = (mousePos: {x: number; y: number} | undefined, datas: Stack
     return undefined;
 };
 
-export const StackStatusChart = observer(({
-    session, margin, mapFunc, title, metadata, renderTooltip, height, onHover, onClick, decorator, rowHeight, width, textConfig, isNeedClamp,
-}: StackStatusChartProps) => {
+export const StackStatusChart = observer(({ session, unit, margin, mapFunc, metadata, renderTooltip, height, onHover, onClick, decorator, rowHeight, width, textConfig, isNeedClamp }: StackStatusChartProps) => {
     const theme = useTheme();
     const canvasContainer = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
@@ -157,6 +155,8 @@ export const StackStatusChart = observer(({
     };
     useEffect(() => onHover?.(hoveredData, session, metadata), [ hoveredData, metadata ]);
     useClick(canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp);
+    const yScale = (depth: number): number => depth * rowHeight;
+    useLocateChart<'stackStatus'>(session, unit, datasState, (data) => yScale(data.depth));
     useBatchedRender(() => {
         if (canvasContainer.current === null || canvas.current === null || datasState.length === 0 || rangeAndDomain.length === 0 ||
             canvas.current.width === 0 || canvas.current.height === 0) {
@@ -164,7 +164,6 @@ export const StackStatusChart = observer(({
         }
         const ctx = canvas.current.getContext('2d');
         const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(isNeedClamp ?? true);
-        const yScale = (depth: number): number => depth * rowHeight;
         ctx?.clearRect(0, 0, width, height);
         draw(ctx, datasState, xScale, yScale, theme, session.endTimeAll ?? 0, textConfig);
         drawExt({

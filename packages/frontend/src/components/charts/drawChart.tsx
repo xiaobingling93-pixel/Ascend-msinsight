@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react';
 import React, { useMemo } from 'react';
 import { ChartProps, ChartType } from '../../entity/chart';
-import { ChartDesc, isGetChartConfig } from '../../entity/insight';
+import { ChartDesc, InsightUnit, isGetChartConfig } from '../../entity/insight';
 import { Session } from '../../entity/session';
 import { EventChart } from './EventChart';
 import { FilledLineChart } from './FilledLineChart';
@@ -30,10 +30,11 @@ export const Chart = observer(<T extends ChartType>(props: {
     title: string;
     session: Session;
     metadata: unknown;
+    unit: InsightUnit;
     width: number;
     phase: string;
 }) => {
-    const { desc, serial, title, session, metadata, width, phase } = props;
+    const { desc, serial, title, session, metadata, width, phase, unit } = props;
     const offlinePlaceholder = useMemo(() => {
         return <ChartErrorBoundary height={desc.height} width={width} phase={phase}>
             <div className="chart-offline" style={{ width, height: desc.height }}/>
@@ -55,6 +56,7 @@ export const Chart = observer(<T extends ChartType>(props: {
         onHover: desc.onHover,
         onClick: desc.onClick,
         decorator: desc.decorator,
+        unit,
         ...chartConfig,
     };
     return <ChartErrorBoundary height={desc.height} width={width} phase={phase}>

@@ -10,7 +10,7 @@ interface DetailProps<T extends Record<string, unknown>> {
     session: Session;
     detail: SingleDataDesc<Record<string, unknown>, unknown>;
     children: React.FC<{data: T; session: Session}>;
-}
+};
 
 const StyledSliceDetailDiv = styled.div`
     width: 100%;

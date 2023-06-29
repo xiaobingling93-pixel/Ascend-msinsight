@@ -1,8 +1,9 @@
 import React, { RefObject, useEffect, useMemo, useRef, useState } from 'react';
-import { ChartData, ChartType, MapFunc } from '../../entity/chart';
+import { ChartData, ChartDataEle, ChartType, MapFunc } from '../../entity/chart';
 import { Session } from '../../entity/session';
 import { Logger } from '../../utils/Logger';
-import { runInAction } from 'mobx';
+import { autorun, runInAction } from 'mobx';
+import { InsightUnit } from '../../entity/insight';
 
 export type Pos = {
     x: number;
@@ -135,4 +136,37 @@ export const useClick = <T extends ChartType>(canvasContainer: RefObject<HTMLEle
             canvasContainer.current?.removeEventListener('mousemove', onMouseMoveListener);
         };
     }, [ datasState, rangeAndDomain, session, metadata ]);
+};
+
+export const useLocateChart = <T extends ChartType>(session: Session, curUnit: InsightUnit, dataState: ChartData<T>, getHeight: (data: ChartDataEle<T>) => number): void => {
+    React.useEffect(() => autorun(
+        () => {
+            if (session.linkCharts.length === 0) { return; }
+            for (const linkChart of session.linkCharts) {
+                if (linkChart.res?.metadata?.unit !== curUnit || linkChart?.res.isFinished) {
+                    continue;
+                }
+                const calculateHeight = (data: ChartDataEle<T>): void => {
+                    if (linkChart.locateChart.target(data)) {
+                        linkChart.locateChart.onSuccess(data);
+                        runInAction(() => {
+                            linkChart.res = {
+                                ...linkChart.res,
+                                isFinished: true,
+                                metadata: { ...linkChart.res?.metadata, data },
+                                chartHeight: getHeight(data),
+                            };
+                        });
+                    }
+                };
+                dataState.forEach(data => {
+                    if (Array.isArray(data)) {
+                        data.forEach((it) => calculateHeight(it as ChartDataEle<T>));
+                    } else {
+                        calculateHeight(data as ChartDataEle<T>);
+                    }
+                });
+            }
+        },
+    ), [session]);
 };

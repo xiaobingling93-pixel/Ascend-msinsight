@@ -2,7 +2,7 @@ import type { Theme } from '@emotion/react';
 import { Readable } from '../utils/humanReadable';
 import { AtomicObjectElementType } from './common';
 import { Session } from './session';
-import { UnitHeight } from './insight';
+import { InsightUnit, UnitHeight } from './insight';
 
 export type SizePx = number;
 
@@ -23,6 +23,8 @@ type ChartDataDefinition = {
 export type ChartType = keyof ChartDataDefinition;
 
 export type ChartData<T extends ChartType> = ChartDataDefinition[T]['data'];
+
+export type ChartDataEle<T extends ChartType> = T extends 'stackStatus' | 'filledLine' ? ChartData<T>[number][number] : ChartData<T>[number];
 
 export type ChartConfig<T extends ChartType> = ChartDataDefinition[T]['config'];
 
@@ -67,6 +69,7 @@ export type ChartDecorator<T extends ChartType> = (session: Session, metadata: u
 
 export type ChartProps<T extends ChartType> = ChartConfig<T> & {
     session: Session;
+    unit: InsightUnit;
     margin: SizePx;
     width: number;
     height: number;

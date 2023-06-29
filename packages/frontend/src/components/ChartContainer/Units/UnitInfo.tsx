@@ -21,7 +21,7 @@ import { platform } from '../../../platforms';
 import { traceSingle } from '../../../utils/traceLogger';
 // common constant variable
 import { isPinned, switchPinned } from '../unitPin';
-import { useSelectUnit } from './hooks';
+import { useSelectUnit } from './hooks/useSelectUnit';
 import { ReactComponent as Supported } from '../../../assets/images/insights/Supported.svg';
 import { StyledTooltip } from '../../../components/base/StyledTooltip';
 

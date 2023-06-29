@@ -1,7 +1,7 @@
 import { runInAction } from 'mobx';
-import { Session } from '../../../entity/session';
-import { getAutoKey } from '../../../utils/dataAutoKey';
-import { KeyedInsightUnit } from './types';
+import { Session } from '../../../../entity/session';
+import { getAutoKey } from '../../../../utils/dataAutoKey';
+import { KeyedInsightUnit } from '../types';
 
 type SelectUnit = (unit: KeyedInsightUnit) => void;
 export const useSelectUnit = (session: Session): SelectUnit => {

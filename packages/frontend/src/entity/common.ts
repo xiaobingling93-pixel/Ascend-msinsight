@@ -6,8 +6,7 @@ export type TreeNode<T> = T & {
 };
 
 export const level = Symbol('unitLevel');
-
-export function preOrderFlatten<T>(tree: Array<TreeNode<T>>, currentLevel: number, options?: {
+export type PreOrderFlattenOptions<T> = {
     // nodes that should always be flattened, but not appearing in the result, and not counted as one level
     bypass?: (node: TreeNode<T>) => boolean;
 
@@ -16,7 +15,8 @@ export function preOrderFlatten<T>(tree: Array<TreeNode<T>>, currentLevel: numbe
 
     // nodes that are to be flattened but should not appear in the result
     exclude?: (node: TreeNode<T>) => boolean;
-}): T[] {
+};
+export function preOrderFlatten<T>(tree: Array<TreeNode<T>>, currentLevel: number, options?: PreOrderFlattenOptions<T>): T[] {
     tree.forEach(node => {
         if ((node as any)[level] === undefined) {
             (node as any)[level] = currentLevel;
