@@ -17,7 +17,13 @@ export class Parser {
         const buf = Buffer.alloc(readSize);
         fs.readSync(this.fd, buf, 0, readSize, readPosition);
         const str = buf.toString('utf-8');
-        const events = JSON.parse('[' + str + ']');
+        let events: any;
+        try {
+            events = JSON.parse('[' + str + ']');
+        } catch (e) {
+            console.log(`parse json error. ${e} \njson string: ${str.slice(0, 100)}......${str.slice(-100, -1)}`);
+            return;
+        }
         for (const event of events) {
             await this.handler(event);
         }

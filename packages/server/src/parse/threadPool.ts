@@ -1,4 +1,9 @@
-import { Worker } from 'worker_threads';
+import { Worker, isMainThread, parentPort } from 'worker_threads';
+import { parseWorkerOnMessage } from './parser_worker';
+
+if (!isMainThread) {
+    parentPort?.on('message', async (msg: any) => await parseWorkerOnMessage(msg));
+}
 
 export enum WorkMessageType {
     PARSE = 0,
@@ -18,16 +23,17 @@ export class ThreadPool {
     private taskFinishCallback: Function | undefined;
     private allTaskFinishCallback: Function | undefined;
 
-    constructor(workPath: string, taskFinishCallback?: Function, allTaskFinishCallback?: Function) {
+    constructor(taskFinishCallback?: Function, allTaskFinishCallback?: Function) {
         for (let i = 0; i < this.taskCount; ++i) {
-            this.awaitWorkers.push(this.createWork(workPath, i));
+            this.awaitWorkers.push(this.createWork(i));
         }
         this.taskFinishCallback = taskFinishCallback;
         this.allTaskFinishCallback = allTaskFinishCallback;
     }
 
-    createWork(workPath: string, n: number): Worker {
-        const work: Worker = new Worker(workPath);
+    createWork(n: number): Worker {
+        const work = new Worker(__filename);
+        // const work: Worker = new Worker(workPath);
         // On worker online
         work.on('online', () => {
             console.log(`[ThreadPool] worker ${n} is online and executing code!`);

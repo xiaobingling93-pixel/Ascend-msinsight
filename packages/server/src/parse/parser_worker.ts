@@ -16,10 +16,9 @@ export type EndMessage = {
     ignoreCount: number;
 };
 
-parentPort?.on('message', async (msg: { command: WorkMessageType; data: ParseMessage }) => {
+export async function parseWorkerOnMessage(msg: { command: WorkMessageType; data: ParseMessage }): Promise<void> {
     switch (msg.command) {
-        case WorkMessageType.PARSE:
-        {
+        case WorkMessageType.PARSE: {
             console.log(`[work] on message. read position: ${msg.data.readPosition}, read size: ${msg.data.readSize}`);
             const parser = new Parser(msg.data.filePath, msg.data.dbPath);
             await parser.parse(msg.data.readPosition, msg.data.readSize);
@@ -30,8 +29,7 @@ parentPort?.on('message', async (msg: { command: WorkMessageType; data: ParseMes
             parentPort?.postMessage({ status: WorkStatus.END, data: { rankId: msg.data.rankId, count, ignoreCount } });
             break;
         }
-        case WorkMessageType.EXIT:
-        {
+        case WorkMessageType.EXIT: {
             console.log('[work] on message. Exit.');
             parentPort?.close();
             break;
@@ -39,4 +37,4 @@ parentPort?.on('message', async (msg: { command: WorkMessageType; data: ParseMes
         default:
             console.log('[work] Unknown message. ', msg);
     }
-});
+}

@@ -8,7 +8,7 @@ import { EndMessage, ParseMessage } from './parser_worker';
 const defaultReadSize = 1024 * 1024 * 50;
 const parseTaskCount = new Map<number, number>(); // rankId, task count
 const callbackMap = new Map<number, Function>(); // rankId, callback
-const threadPool = new ThreadPool('./dist/parse/parser_worker.js', parseFileEnd);
+const threadPool = new ThreadPool(parseWorkerEnd);
 
 export function parse(filePath: string, rankId: number, callback?: (rankId: number, err?: Error) => void): void {
     if (tableMap.has(rankId)) {
@@ -53,7 +53,7 @@ function parseFile(filePath: string, dbPath: string, rankId: number): void {
     });
 }
 
-async function parseFileEnd(message: EndMessage): Promise<void> {
+async function parseWorkerEnd(message: EndMessage): Promise<void> {
     if (!tableMap.has(message.rankId) || !parseTaskCount.has(message.rankId)) {
         console.log(`can not find rankId, ${message.rankId}`);
     }
