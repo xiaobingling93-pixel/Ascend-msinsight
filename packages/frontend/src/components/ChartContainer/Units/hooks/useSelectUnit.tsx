@@ -8,6 +8,7 @@ export const useSelectUnit = (session: Session): SelectUnit => {
     return (unit: KeyedInsightUnit): void => runInAction(() => {
         if (session.selectedUnits[0] === unit) return;
         session.selectedData = undefined;
+        session.linkData = undefined;
         session.selectedUnitKeys = [getAutoKey(unit)];
         session.selectedUnits = [unit];
     });

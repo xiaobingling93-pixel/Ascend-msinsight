@@ -20,7 +20,8 @@ import {
     mouseUpAction,
     mouseLeaveAction,
     mouseWheelAction,
-    mouseMoveAction, MouseDownActionResult,
+    mouseMoveAction,
+    MouseDownActionResult,
 } from './actions';
 
 registerCrossUnitRenderer({
@@ -127,7 +128,7 @@ const Interactor = (props: ChartInteractorProps, ref: Ref<ChartInteractorHandles
         traceAction.forEach((item) => {
             traceEnd(item);
         });
-    }, [ domainStart, domainEnd, endTimeAll, session.selectedRange, theme, rect, ...customRenderTriggers ]);
+    }, [ domainStart, domainEnd, endTimeAll, session.selectedRange, theme, rect, session.linkData, session.scrollTop, ...customRenderTriggers ]);
     useImperativeHandle(ref, () => ({
         mouseMoveAction: (interactorMouseState: InteractorMouseState) => {
             mouseMoveAction(interactorParams, interactorMouseState);

@@ -6,7 +6,7 @@ import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { ChartProps, Scale, StackStatusData, TextConfig } from '../../entity/chart';
 import { Canvas, CanvasContainer, drawMultiBgRoundedRect, drawRoundedRect, zipStatusData } from './common';
-import { useBatchedRender, useClick, useData, useHoverPos, useLocateChart, useRangeAndDomain } from './hooks';
+import { useBatchedRender, useClick, useData, useHoverPos, useRangeAndDomain } from './hooks';
 import { TooltipComponent, TooltipProps } from './TooltipComp';
 
 type StackStatusChartProps = ChartProps<'stackStatus'>;
@@ -156,7 +156,6 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
     useEffect(() => onHover?.(hoveredData, session, metadata), [ hoveredData, metadata ]);
     useClick(canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp);
     const yScale = (depth: number): number => depth * rowHeight;
-    useLocateChart<'stackStatus'>(session, unit, datasState, (data) => yScale(data.depth));
     useBatchedRender(() => {
         if (canvasContainer.current === null || canvas.current === null || datasState.length === 0 || rangeAndDomain.length === 0 ||
             canvas.current.width === 0 || canvas.current.height === 0) {

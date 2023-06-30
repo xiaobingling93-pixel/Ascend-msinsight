@@ -1,7 +1,7 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import React from 'react';
 import { CommonStateProto } from '../components/details/base/Tabs';
-import { ChartConfig, ChartDataEle, ChartDecorator, ChartReaction, ChartType, GetChartConfig, MapFunc, RenderTooltip } from './chart';
+import { ChartConfig, ChartDecorator, ChartReaction, ChartType, GetChartConfig, MapFunc, RenderTooltip } from './chart';
 import { ElementType, TreeNode } from './common';
 import { Session } from './session';
 import { TabState } from './tabDependency';
@@ -90,8 +90,8 @@ type DetailDesc<DataType extends Record<string, unknown>, ExtraDataType extends 
 } & TableDataAdapter<DataType>;
 
 type renderFieldsType<DataType> =
-[string, (data: DataType, session: Session) => (string | JSX.Element), (data: DataType) => boolean ] |
-[string, (data: DataType, session: Session) => (string | JSX.Element) ];
+[string, (data: DataType, session: Session, metadata?: unknown) => (string | JSX.Element), (data: DataType) => boolean ] |
+[string, (data: DataType, session: Session, metadata?: unknown) => (string | JSX.Element) ];
 
 export type SingleDataDesc<DataType extends Record<string, unknown>, MetaData> = {
     name?: string;
@@ -99,6 +99,15 @@ export type SingleDataDesc<DataType extends Record<string, unknown>, MetaData> =
     renderFields: Array<renderFieldsType<DataType>>;
     clickCallback?: (args: SingleDataDesc<Record<string, unknown>, unknown>) => void; // execute statement in onClick event
 };
+
+export type LinkDataDesc<DataType extends Record<string, unknown>, MetaData> = {
+    fetchData: (session: Session, metadata: MetaData) => Promise<DataType[] | DataType>;
+    templateField?: renderFieldsType<DataType>;
+    renderFields: Array<renderFieldsType<DataType>>;
+    onDestroy?: (session: Session) => void;
+};
+
+export const linkData = <T extends Record<string, unknown>, MetaData>(desc: LinkDataDesc<T, MetaData>): LinkDataDesc<Record<string, unknown>, unknown> => desc as unknown as LinkDataDesc<Record<string, unknown>, unknown>;
 
 export const singleData = <T extends Record<string, unknown>, MetaData>(desc: SingleDataDesc<T, MetaData>): SingleDataDesc<Record<string, unknown>, unknown> => desc as unknown as SingleDataDesc<Record<string, unknown>, unknown>;
 
@@ -114,7 +123,7 @@ DetailDescriptor<MetaData> {
 
 export type TriggerEvent = 'SELECTED_RANGE' | 'SELECTED_DATA';
 
-export type BottomPanelRender = <MetaData>(session: Session, triggerEvent: TriggerEvent, metaData: MetaData) => {
+export type BottomPanelRender = <Metadata>(session: Session, triggerEvent: TriggerEvent, metadata: Metadata) => {
     DetailTitle?: React.FC<{ session: Session }> | string;
     Detail?: React.FC<{ session: Session; height: number }>;
     More?: React.FC<{ session: Session; height: number }>;
@@ -308,14 +317,10 @@ export const recursiveSpreadUnits = async (unit: InsightUnit, session: Session, 
     }
 };
 
-type Matcher<T extends InsightUnit | ChartType> = {
-    target: (ele: T extends InsightUnit ? InsightUnit : ChartDataEle<ChartType>) => boolean;
-    onSuccess: (ele: T extends InsightUnit ? InsightUnit : ChartDataEle<ChartType>) => void;
+export type UnitMatcher = {
+    target: (ele: InsightUnit) => boolean;
+    onSuccess: (ele: InsightUnit) => void;
 };
-
-export type UnitMatcher = Matcher<InsightUnit>;
-
-export type ChartMatcher<T extends ChartType> = Matcher<T>;
 
 /**
  * @member source the source file defining this template

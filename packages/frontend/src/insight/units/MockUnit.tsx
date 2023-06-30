@@ -2,11 +2,14 @@ import styled from '@emotion/styled';
 import { runInAction } from 'mobx';
 import React from 'react';
 import { registerCrossUnitRenderer } from '../../components/charts/ChartInteractor';
+import { drawRoundedRect } from '../../components/charts/common';
 import { SimpleTabularDetail } from '../../components/details/SimpleDetail';
-import { StatusData } from '../../entity/chart';
+import { StackStatusData, StatusData } from '../../entity/chart';
 import { chart, detail, DetailDescriptor, InsightUnit, on, unit, UnitHeight } from '../../entity/insight';
 import { Session } from '../../entity/session';
 import { toPercent } from '../../utils/humanReadable';
+import { SliceRight } from './AscendUnit';
+import { colorPalette } from './utils';
 
 interface ThreadInfo {
     tid: number;
@@ -167,9 +170,67 @@ export const MockUnit = unit({
         }),
 });
 
-const foregroundDataFields = {
-
+const renderRadiusBorder = (topLeft: number, topRight: number, bottomRight: number, bottomLeft: number, ctx: CanvasRenderingContext2D): void => {
+    const halfLine = 1;
+    ctx.lineWidth = halfLine * 2;
+    let width = bottomRight;
+    width = Math.max(1, Math.floor(width));
+    const radius = width >= 8 ? 4 : width / 2;
+    if (radius < 1) {
+        ctx.strokeRect(topLeft, topRight + halfLine, bottomRight, bottomLeft - halfLine - 1);
+    } else {
+        drawRoundedRect([ topLeft, topRight + halfLine, bottomRight, bottomLeft - halfLine - 1 ], ctx, radius);
+        ctx.stroke();
+    }
 };
+
+export const MockStackStatus = unit<number>({
+    name: 'MockStackStatus',
+    tag: 'MockStackStatus',
+    pinType: 'move',
+    chart: chart({
+        config: { rowHeight: 20 },
+        height: 60,
+        mapFunc: async (session, metadata: unknown) => {
+            const mockData = Array(3).fill(0).map((it, index) => Array(8).fill(0).map((_, idx) => ({
+                startTime: 1e9 * idx * 2,
+                duration: 1e9,
+                type: `${index}-idx`,
+                name: `${index}-idx`,
+                color: colorPalette[index],
+                depth: index,
+                metadata: metadata,
+            })));
+            return mockData;
+        },
+        renderTooltip: undefined,
+        type: 'stackStatus',
+        onClick: (data, session, metadata) => {
+            session.locateUnit = {
+                target: (unit) => unit.metadata === 20,
+                onSuccess: () => {
+                    if (data === undefined) { return; }
+                    session.domainRange = { domainStart: data.startTime - 1e9, domainEnd: data.startTime + data.duration + 1e9 };
+                },
+            };
+        },
+        decorator: (session, metadata) => {
+            const selectedData = session.selectedData as { startTime: number; duration: number; type: string; name: string; color: string; depth: number; metadata: number } | undefined;
+            return {
+                action: (handle, xScale, yScale, theme) => {
+                    const ctx = handle.context;
+                    if (ctx === null || selectedData === undefined || metadata !== selectedData?.metadata) {
+                        return;
+                    }
+                    ctx.strokeStyle = 'red';
+                    renderRadiusBorder(xScale(selectedData.startTime), yScale(selectedData.depth),
+                        xScale(selectedData.duration + selectedData.startTime) - xScale(selectedData.startTime), yScale(1), ctx);
+                },
+                triggers: [session.selectedData],
+            };
+        },
+    }),
+});
 
 export const ForegroundUnit = unit({
     name: 'Foreground',

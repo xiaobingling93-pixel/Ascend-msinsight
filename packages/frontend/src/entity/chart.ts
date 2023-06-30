@@ -24,8 +24,6 @@ export type ChartType = keyof ChartDataDefinition;
 
 export type ChartData<T extends ChartType> = ChartDataDefinition[T]['data'];
 
-export type ChartDataEle<T extends ChartType> = T extends 'stackStatus' | 'filledLine' ? ChartData<T>[number][number] : ChartData<T>[number];
-
 export type ChartConfig<T extends ChartType> = ChartDataDefinition[T]['config'];
 
 export type GetChartConfig<T extends ChartType> = (session: Session, metadata: unknown) => ChartDataDefinition[T]['config'];

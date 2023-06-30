@@ -1,20 +1,23 @@
+import { chart, on, LinkDataDesc, singleData, TriggerEvent, unit, UnitHeight } from '../../entity/insight';
 import { Session } from '../../entity/session';
 import { hashToNumber } from '../../utils/colorUtils';
-import { colorPalette } from './utils';
-import { runInAction } from 'mobx';
-import { chart, on, singleData, TriggerEvent, unit, UnitHeight } from '../../entity/insight';
 import {
     CardMetaData, ProcessMetaData, ThreadMetaData, ThreadTrace, AscendSliceDetail,
 } from '../../entity/data';
 import { createStackStatusParam } from './unitFunc';
 import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
-import React from 'react';
 import { SimpleTabularDetail } from '../../components/details/SimpleDetail';
 import { DetailTabs, TabPanes } from '../../components/details/TabPanes';
 import { SelectSimpleTabularDetail } from '../../components/details/SelectSimpleDetail';
-import { slicesListDetail } from './details';
 import { renderRadiusBorder } from '../../components/details/utils';
 import { getTimestamp } from '../../utils/humanReadable';
+import { slicesListDetail, generateLinkDetail, generateFlowParam } from './details';
+import { colorPalette } from './utils';
+import React from 'react';
+import { observer } from 'mobx-react-lite';
+import _ from 'lodash';
+import { runInAction } from 'mobx';
+import { SelectedDataBase } from '../../components/details/base/SelectedData';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -162,10 +165,12 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 ],
             };
         },
-        onClick: async (data, session) => {
+        onClick: async (data, session, metadata) => {
             if (data === undefined) { return; }
             runInAction(() => {
                 session.selectedData = data;
+                session.linkDetail = generateLinkDetail((metadata as ThreadMetaData).threadName.toLowerCase().includes('stream') ? 'Incoming flow' : 'Outgoing flow');
+                session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data.startTime);
             });
         },
         onHover: (data, session: Session): void => {
@@ -180,12 +185,12 @@ export const ThreadUnit = unit<ThreadMetaData>({
             rowHeight: UnitHeight.STANDARD,
         },
     }),
-    bottomPanelRender: (session: Session, triggerEvent: TriggerEvent) => {
-        console.info(triggerEvent);
+    bottomPanelRender: (session: Session, triggerEvent: TriggerEvent, metadata) => {
         if (triggerEvent === 'SELECTED_DATA') {
             return {
                 Detail: ({ session }) => <SelectedDataBottomPanel session={session} detail={singleSliceDetail}>{EmptyJSXElement}</SelectedDataBottomPanel>,
                 DetailTitle: 'Slice Detail',
+                More: ({ session }) => <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
             };
         }
         return TabPanes({ tabs, commonBottomPanel });
@@ -208,4 +213,60 @@ export const CardUnit = unit<CardMetaData>({
         'create',
         async (self): Promise<void> => {
         }),
+});
+
+const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<Record<string, unknown>, unknown>, linkFlow: unknown, metadata: unknown): Array<[string, string | JSX.Element]> | undefined => {
+    const [ renderFields, setRenderFields ] = React.useState<Array<[string, string | JSX.Element]>>();
+    const { selectedUnits } = session;
+    const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
+    const detail = (session.linkDetail as LinkDataDesc<Record<string, unknown>, unknown>) ?? originDetail;
+    const fetchData = session.phase === 'error' ? undefined : detail?.fetchData;
+    const onDataFetched = React.useMemo(() => ([ selectedUnits, linkFlow ].filter(_.isEmpty).length === 0
+        ? fetchData?.(session, selectedUnit?.metadata)
+        : undefined), [ selectedUnits, linkFlow, detail, session.linkDetail ]);
+
+    const recentUnits = React.useRef(selectedUnits);
+    const recentData = React.useRef(linkFlow);
+    recentUnits.current = selectedUnits;
+    recentData.current = linkFlow;
+    const loadData = (): void => {
+        if (onDataFetched !== undefined && linkFlow !== undefined) {
+            onDataFetched?.then(result => {
+                if (recentUnits.current !== selectedUnits || recentData.current !== linkFlow) return;
+                const state: Array<[string, string | JSX.Element]> = [];
+                if (Array.isArray(result)) {
+                    const templateField = detail.templateField;
+                    if (!templateField) { return; }
+                    result.forEach(res => {
+                        const render = templateField[1];
+                        if (templateField[2] !== undefined) {
+                            const isHiden = templateField[2];
+                            isHiden(res) && state.push([ templateField[0], render(res, session, metadata) ]);
+                        } else {
+                            state.push([ templateField[0], render(res, session, metadata) ]);
+                        }
+                    });
+                } else {
+                    detail.renderFields.forEach(renderField => {
+                        const render = renderField[1];
+                        if (renderField[2] !== undefined) {
+                            const isHiden = renderField[2];
+                            isHiden(result) && state.push([ renderField[0], render(result, session, metadata) ]);
+                        } else {
+                            state.push([ renderField[0], render(result, session, metadata) ]);
+                        }
+                    });
+                }
+                setRenderFields(state);
+            });
+        }
+    };
+
+    React.useEffect(loadData, [ selectedUnits, linkFlow, detail, session.linkDetail ]);
+    return renderFields;
+};
+
+export const SliceRight = observer(({ session, detail, metadata }: { session: Session; detail: LinkDataDesc<Record<string, unknown>, unknown>; metadata: unknown }) => {
+    const renderFields = useSliceRightDataUpdator(session, detail, session.linkFlow, metadata);
+    return <SelectedDataBase renderer={renderFields} hasTitle />;
 });
