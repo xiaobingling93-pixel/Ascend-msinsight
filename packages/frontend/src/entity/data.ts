@@ -683,6 +683,7 @@ export type ProcessMetaData = {
     cardId?: number;
     processId: string;
     processName: string;
+    label?: string;
 };
 
 export type CardMetaData = {
