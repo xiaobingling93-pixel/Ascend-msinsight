@@ -143,23 +143,29 @@ task copyZipToRootBuild{
     }
 }
 
+clean {
+    delete += "./src/main/resources/profiler"
+    delete += "./src/main/resources/server"
+//    delete += "src/main/resources/frontend"
+//    delete += "src/main/resources/Log.properties"
+//    delete += "../../frontend/src/dic"
+}
+
 task copyExeToSandbox() {
     doLast {
         copy {
-            from "${rootDir}/foundation/ideaplugin/src/main/resources/profiler"
+            from "${rootDir}/profiler/dist"
             into "${project.buildDir}/idea-sandbox/plugins/ascnend-insight/tools/dist"
         }
         copy {
-            from "${rootDir}/foundation/ideaplugin/src/main/resources/frontend"
-            into "${project.buildDir}/idea-sandbox/plugins/ascnend-insight/tools/dist"
-        }
-        copy {
-            from "${rootDir}/foundation/ideaplugin/src/main/resources/server"
+            from "${rootDir}/profiler/server"
             into "${project.buildDir}/idea-sandbox/plugins/ascnend-insight/tools/"
         }
     }
 }
 
+//clean.dependsOn(copyExeToSandbox)
+//prepareSandbox.finalizedBy clean
 prepareSandbox.finalizedBy copyExeToSandbox
 compileJava.dependsOn(setLogProperties)
 buildPlugin.finalizedBy(copyZipToRootBuild)
