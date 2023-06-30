@@ -87,14 +87,11 @@ export class Parser {
 
     async CompleteEventsHandler(data: any): Promise<void> {
         data.track_id = getTrackId(data.tid, data.pid);
-        data.ts = data.ts * 1000; // to ns
-        data.dur = data.dur * 1000; // to ns
         await this.table.insertSlice(data);
     }
 
     async flowEventsHandler(data: any): Promise<void> {
         data.track_id = getTrackId(data.tid, data.pid);
-        data.ts = data.ts * 1000; // to ns
         await this.table.insertFlow(data);
     }
 }

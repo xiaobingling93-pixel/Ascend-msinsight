@@ -43,12 +43,14 @@ export class Table {
 
     initStat(): void {
         if (this.sliceStat === undefined) {
-            const placeholders: string = '(?,?,?,?,?,?),'.repeat(this.maxCachesSize - 1).concat('(?,?,?,?,?,?)');
+            const valueParams = '(round(? * 1000),round(? * 1000),?,?,?,?)';
+            const placeholders: string = (valueParams + ',').repeat(this.maxCachesSize - 1).concat(valueParams);
             const sql: string = `INSERT INTO ${this.sliceTable} (timestamp, duration, name, track_id, cat, args) VALUES ${placeholders}`;
             this.sliceStat = this.db.prepare(sql);
         }
         if (this.flowStat === undefined) {
-            const placeholders: string = '(?,?,?,?,?,?),'.repeat(this.maxCachesSize - 1).concat('(?,?,?,?,?,?)');
+            const valueParams = '(?,?,?,round(? * 1000),?,?)';
+            const placeholders: string = (valueParams + ',').repeat(this.maxCachesSize - 1).concat((valueParams));
             const sql: string = `INSERT INTO ${this.flowTable} (flow_id, name, track_id, timestamp, cat, type) VALUES ${placeholders}`;
             this.flowStat = this.db.prepare(sql);
         }
@@ -118,7 +120,7 @@ export class Table {
                     resolve();
                 });
             } else {
-                const placeholders: string = dataList.map(() => '(?,?,?,?,?,?)').join(',');
+                const placeholders: string = dataList.map(() => '(round(? * 1000),round(? * 1000),?,?,?,?)').join(',');
                 const sql: string = `INSERT INTO ${this.sliceTable} (timestamp, duration, name, track_id, cat, args) VALUES ${placeholders}`;
                 this.db.run(sql, paramsList, (err) => {
                     if (err !== null) {
@@ -220,7 +222,7 @@ export class Table {
                     resolve();
                 });
             } else {
-                const placeholders: string = dataList.map(() => '(?,?,?,?,?,?)').join(',');
+                const placeholders: string = dataList.map(() => '(?,?,?,round(? * 1000),?,?)').join(',');
                 const sql: string = `INSERT INTO ${this.flowTable} (flow_id, name, track_id, timestamp, cat, type) VALUES ${placeholders}`;
                 this.db.run(sql, paramsList, (err) => {
                     if (err !== null) {
