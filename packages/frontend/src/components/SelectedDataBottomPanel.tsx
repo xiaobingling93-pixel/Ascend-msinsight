@@ -59,10 +59,10 @@ export const SelectedDataBottomPanel = observer(function SelectedDataDetail<T ex
     const { session, detail } = props;
     const { renderFields, data } = useSelectedDataDetailUpdater(session, detail, session.selectedData);
     const sliceDetailData = data as AscendSliceDetail;
-    return <><StyledSliceDetailDiv>
+    return <div style={{ height: '100%', overflow: 'scroll' }}><StyledSliceDetailDiv>
         <SelectedDataBase renderer={renderFields}/>
         <div></div>
     </StyledSliceDetailDiv>
     {(data as AscendSliceDetail).args === undefined ? <></> : <ArgsData data={sliceDetailData}/>}
-    </>;
+    </div>;
 });

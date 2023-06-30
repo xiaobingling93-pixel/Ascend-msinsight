@@ -7,18 +7,18 @@ import { getSliceTimeDisplay } from './AscendUnit';
 export const slicesListDetail = detail({
     name: 'Slices List',
     columns: [
-        [ 'Name', data => `${isEmpty(data.title) ? 'null' : data.title}`, 100 ],
+        [ 'Name', data => `${isEmpty(data.title) ? 'null' : data.title}`, 'max-content', 'scroll' ],
         [ 'Wall Duration', data => getSliceTimeDisplay(data.wallDuration), 180 ],
-        [ 'Self Time', data => getSliceTimeDisplay(data.selfTime), 100 ],
+        [ 'Self Time', data => getSliceTimeDisplay(data.selfTime), 180 ],
         [ 'Average Wall Duration', data => getSliceTimeDisplay(data.avgWallDuration), 180 ],
-        [ 'Occurrences', data => `${data.occurrences ?? 0}`, 'auto' ],
+        [ 'Occurrences', data => `${data.occurrences ?? 0}`, 180 ],
     ],
     actions: [
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => a.title?.localeCompare(b?.title ?? '') ?? 0 },
-        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => a.wallDuration ?? 0 - (b.wallDuration ?? 0) },
-        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => a.selfTime ?? 0 - (b.selfTime ?? 0) },
-        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => a.avgWallDuration ?? 0 - (b.avgWallDuration ?? 0) },
-        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => a.occurrences ?? 0 - (b.occurrences ?? 0) },
+        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => (a.wallDuration ?? 0) - (b.wallDuration ?? 0) },
+        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => (a.selfTime ?? 0) - (b.selfTime ?? 0) },
+        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => (a.avgWallDuration ?? 0) - (b.avgWallDuration ?? 0) },
+        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => (a.occurrences ?? 0) - (b.occurrences ?? 0) },
     ],
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
         let startTime = session.selectedRange?.[0] ?? 0;

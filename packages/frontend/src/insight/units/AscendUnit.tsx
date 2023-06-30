@@ -14,6 +14,7 @@ import { DetailTabs, TabPanes } from '../../components/details/TabPanes';
 import { SelectSimpleTabularDetail } from '../../components/details/SelectSimpleDetail';
 import { slicesListDetail } from './details';
 import { renderRadiusBorder } from '../../components/details/utils';
+import { getTimestamp } from '../../utils/humanReadable';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -46,7 +47,7 @@ const singleSliceDetail = singleData({
     name: 'SingleSlice',
     renderFields: [
         [ 'Title', data => data.title === undefined ? '' : `${data.title}`, isHiddenTitle ],
-        [ 'Start', data => getSliceTimeDisplay(data.startTime), isHiddenStartTime ],
+        [ 'Start', data => getTimestamp(data.startTime ?? 0, { precision: 'ns' }), isHiddenStartTime ],
         [ 'Wall Duration', data => getSliceTimeDisplay(data.duration), isHiddenDuration ],
         [ 'Self Time', data => getSliceTimeDisplay(data.selfTime), isHiddenSelfTime ],
     ],
