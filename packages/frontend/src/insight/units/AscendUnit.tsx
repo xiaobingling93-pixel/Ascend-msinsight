@@ -124,33 +124,52 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     type: data.name,
                     color: colorPalette[hashToNumber(data.name, colorPalette.length)],
                     depth: data.depth,
-                    threadId: 0,
+                    threadId: data.threadId,
                 })));
             } catch (e) {
                 console.warn('request threadTrace info failed', e);
                 return [];
             }
         },
-        decorator: (session: Session, metaData: unknown) => ({
-            action: async (handle, xScale, yScale, theme) => {
-                // click
-                const ctx = handle.context;
-                const selectedData = session.selectedData as ThreadTrace | undefined;
-                const selectedUnitMetaData = session.selectedUnits?.[0]?.metadata as ThreadMetaData;
-                const threadMetaData = metaData as ThreadMetaData;
-                if (ctx === null || selectedData === undefined || selectedUnitMetaData === undefined || selectedUnitMetaData !== threadMetaData) {
-                    return;
-                }
-                // 来自本泳道点击的数据，给数据描边+画线
-                ctx.strokeStyle = theme.fontColor;
-                renderRadiusBorder(xScale(selectedData.startTime), yScale(0), xScale(selectedData.duration < 0 ? session.endTimeAll as number : selectedData.startTime + selectedData.duration) - xScale(selectedData.startTime), yScale(1), selectedData.depth, ctx);
-            },
-            triggers: [ session.selectedData, session.selectedData?.duration ],
-        }),
+        decorator: (session: Session, metaData: unknown) => {
+            const hoveredData = session.sharedState.threadTrace as ThreadTrace | undefined;
+            return {
+                action: async (handle, xScale, yScale, theme) => {
+                    if (hoveredData && hoveredData.threadId === (metaData as ThreadMetaData).threadId) {
+                        const name = hoveredData.name;
+                        const data = handle.findAll(it => it.name !== name).map(it => it.map(data => ({ ...data, color: 'transparentMask' as const })));
+                        handle.draw(data, xScale, yScale);
+                    }
+                    // click
+                    const ctx = handle.context;
+                    const selectedData = session.selectedData as ThreadTrace | undefined;
+                    const selectedUnitMetaData = session.selectedUnits?.[0]?.metadata as ThreadMetaData;
+                    const threadMetaData = metaData as ThreadMetaData;
+                    if (ctx === null || selectedData === undefined || selectedUnitMetaData === undefined || selectedUnitMetaData !== threadMetaData) {
+                        return;
+                    }
+                    // 来自本泳道点击的数据，给数据描边+画线
+                    ctx.strokeStyle = theme.fontColor;
+                    renderRadiusBorder(xScale(selectedData.startTime), yScale(0), xScale(selectedData.duration < 0 ? session.endTimeAll as number : selectedData.startTime + selectedData.duration) - xScale(selectedData.startTime), yScale(1), selectedData.depth, ctx);
+                },
+                triggers: [
+                    session.selectedData,
+                    session.selectedData?.duration,
+                    hoveredData?.name,
+                    hoveredData?.depth,
+                    hoveredData?.threadId,
+                ],
+            };
+        },
         onClick: async (data, session) => {
             if (data === undefined) { return; }
             runInAction(() => {
                 session.selectedData = data;
+            });
+        },
+        onHover: (data, session: Session): void => {
+            runInAction(() => {
+                session.sharedState.threadTrace = data;
             });
         },
         renderTooltip: (data) => new Map([
