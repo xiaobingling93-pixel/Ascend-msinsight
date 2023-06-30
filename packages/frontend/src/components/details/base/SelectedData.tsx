@@ -4,6 +4,7 @@ import { observer } from 'mobx-react';
 
 interface timeDetailProps {
     renderer?: Array<[string, string | JSX.Element]>;
+    hasTitle?: boolean;
 }
 
 const StyledSliceDetailDiv = styled.div`
@@ -52,9 +53,13 @@ const StyledSliceDetailDiv = styled.div`
 `;
 
 export const SelectedDataBase = observer(function SelectedDataBase(props: timeDetailProps): JSX.Element {
-    const { renderer } = props;
+    const { renderer, hasTitle = false } = props;
     return <StyledSliceDetailDiv>
-        {renderer?.map(item => <div className = "sliceDetail" key={item[0]}>
+        {hasTitle && <div className = "sliceDetail">
+            <div className = "sliceDetailName">Event(s)</div>
+            <div className = "sliceDetailMsg">Link</div>
+        </div>}
+        {renderer?.map((item, index) => <div className = "sliceDetail" key={`${item[0]}-${index}`}>
             <div style={{ width: '30%' }} className = "sliceDetailName">{item[0]}</div>
             <div style={{ width: '70%' }} className = "sliceDetailMsg">{item[1]}</div>
         </div>)}

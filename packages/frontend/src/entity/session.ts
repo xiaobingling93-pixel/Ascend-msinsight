@@ -4,13 +4,12 @@ import { Caches } from '../cache/cache';
 import { toLocalTimeString } from '../utils/humanReadable';
 import { TimeStamp } from './common';
 import { Domain } from './domain';
-import { ChartMatcher, InsightUnit, UnitMatcher } from './insight';
+import { InsightUnit, UnitMatcher } from './insight';
 import { TimeLineMaker, TIME_MAKER_DEFAULT } from './timeMaker';
 import { omit } from 'lodash';
 import { platform } from '../platforms';
 import i18n from '../i18n';
 import { Phase, stateTexts } from '../utils/constant';
-import { ChartDataEle, ChartType } from './chart';
 import { SimpleCache } from '../cache/simplecache';
 
 export interface SelectedParams {
@@ -22,29 +21,24 @@ export type SelectedData = Record<string, unknown> & {
     sourceUnit?: InsightUnit;
 };
 
+export type DataWithHeight<T> = T & { height?: number };
+export type LinkedDataWithHeight<T> = {
+    data: DataWithHeight<T>;
+    datas: Array<DataWithHeight<T>>;
+};
 export type ValidSession = Session & { startRecordTime: TimeStamp; phase: Exclude<Phase, 'configuring'> };
 
 export function isValidSession(session?: Session): session is ValidSession {
     return !(session === undefined || session.phase === 'configuring' || session.startRecordTime === undefined);
 }
-
-export type LinktCharts<T extends ChartType> = {
-    locateChart: ChartMatcher<T>;
-    locateUnit: UnitMatcher;
-    type: 'source' | 'target';
-    res?: LinkRes;
-};
-
-type LinkRes = {
-    metadata?: {
-        unit?: InsightUnit;
-        data?: ChartDataEle<ChartType>;
+export type LinkDataType<T extends Record<string, unknown> = Record<string, unknown>> = T & { startTime: number; height: number; duration: number };
+export type DataMatcher = (unit: InsightUnit) => boolean;
+export type LinkData = {
+    target: {
+        data: LinkDataType;
+        matcher: DataMatcher;
     };
-    type?: 'source' | 'target';
-    unitHeight?: number;
-    chartHeight?: number;
-    screenHeight?: number;
-    isFinished: boolean;
+    sources: Array<{ data: LinkDataType; matcher: DataMatcher }>;
 };
 
 export class Session {
@@ -81,12 +75,14 @@ export class Session {
     selectedDetailKeys: [string] | [] = [];
     selectedDetails: [Record<string, unknown>] | [] = []; // redundant for reducing extra computation
     unitsConfig: Record<string, Record<string, unknown>> = {};
-    selectedData?: Record<string, unknown>;
+    private _selectedData?: Record<string, unknown>;
+    linkData?: LinkData;
+    linkFlow?: Record<string, unknown>;
+    linkDetail?: Record<string, unknown>;
     buttons: Array<React.FC<{ session: Session }>>;
 
     // set this field with a new matcher to trigger jump-to-target-lane
     locateUnit?: UnitMatcher;
-    linkCharts: Array<LinktCharts<ChartType>> = [];
 
     timer: ReturnType<typeof setInterval> | undefined;
     private _interval: number;
@@ -235,11 +231,18 @@ export class Session {
         this._availableUnits = availableUnits;
     }
 
-    printSessionInfo(): string {
-        return `${JSON.stringify({ ...omit(this, [ 'caches', 'sharedState', '_units' ]) })}`;
+    get selectedData(): Record<string, unknown> | undefined {
+        return this._selectedData;
     }
 
-    resetLink(): void {
-        this.linkCharts = [];
+    set selectedData(data: Record<string, unknown> | undefined) {
+        this._selectedData = data;
+        this.linkFlow = undefined;
+        this.linkData = undefined;
+        this.linkDetail = undefined;
+    }
+
+    printSessionInfo(): string {
+        return `${JSON.stringify({ ...omit(this, [ 'caches', 'sharedState', '_units' ]) })}`;
     }
 }

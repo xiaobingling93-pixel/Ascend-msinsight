@@ -1,4 +1,4 @@
-import { runInAction, when } from 'mobx';
+import { autorun, runInAction } from 'mobx';
 import React from 'react';
 import { preOrderFlatten, PreOrderFlattenOptions } from '../../../../entity/common';
 import { InsightUnit, UnitMatcher } from '../../../../entity/insight';
@@ -65,44 +65,10 @@ const getNormalUnitHeight = (session: Session, targetUnit: InsightUnit): number 
     return getUnitHeight(session.units, targetUnit, { when, exclude, bypass });
 };
 
-const getPinnedUnitHeight = (session: Session, targetUnit: InsightUnit): number => {
-    const when = (unit: InsightUnit): boolean => unit.isExpanded;
-    const bypass = (unit: InsightUnit): boolean => unit.type === 'transparent';
-    return getUnitHeight(session.pinnedUnits, targetUnit, { when, bypass });
-};
-
-export const useLocateUnit = (session: Session): void => {
-    React.useEffect(() => when(
-        () => session.linkCharts.length !== 0,
-        () => {
-            session.linkCharts.forEach((linkChart, index) => {
-                getTargetUnit(session.units, linkChart.locateUnit, (unit) => {
-                    linkChart.locateUnit.onSuccess(unit);
-                    linkChart.res = {
-                        ...linkChart.res,
-                        isFinished: false,
-                        unitHeight: getNormalUnitHeight(session, unit),
-                        metadata: { unit },
-                    };
-                });
-
-                getTargetUnit(session.pinnedUnits, linkChart.locateUnit, (unit) => {
-                    linkChart.locateUnit.onSuccess(unit);
-                    linkChart.res = {
-                        ...linkChart.res,
-                        isFinished: false,
-                        unitHeight: getPinnedUnitHeight(session, unit),
-                        metadata: { unit },
-                    };
-                });
-            });
-        }), [session]);
-};
-
 export const useJumpTarget = (session: Session, dom: HTMLDivElement | null): void => {
-    React.useEffect(() => when(
-        () => session.locateUnit !== undefined && dom !== null,
+    React.useEffect(() => autorun(
         () => {
+            if (session.locateUnit === undefined || dom === null) { return; }
             const targetUnit = getTargetUnit(session.units, session.locateUnit as UnitMatcher, (unit) => {
                 session.selectedUnitKeys = [getAutoKey(unit)];
                 session.selectedUnits = [unit];
@@ -114,5 +80,6 @@ export const useJumpTarget = (session: Session, dom: HTMLDivElement | null): voi
             runInAction(() => {
                 session.locateUnit = undefined;
             });
-        }), [ session, dom ]);
+        },
+    ), [ session, dom ]);
 };

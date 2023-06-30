@@ -351,12 +351,12 @@ const doSelectRange = (session: Session, data?: { startTime: number; endTime: nu
         return;
     }
     const { startTime, endTime } = data;
-    // const targetData: ((unit: InsightUnit) => boolean) = threadId === undefined
+    // const data: ((unit: InsightUnit) => boolean) = threadId === undefined
     //     ? (unit) => unit instanceof JsCpuTime
     //     : (unit) => unit instanceof ThreadCpuTime && (unit.metadata as ThreadInfo).tid === Number(threadId);
     // runInAction(() => {
     //     session.locateUnit = {
-    //         target: targetData,
+    //         target: data,
     //         onSuccess: (unit) => {
     //             const duration = endTime - startTime;
     //             const [ rangeStart, rangeEnd ] = calculateDomainRange(session, startTime, duration);

@@ -6,6 +6,8 @@ import { drawRoundedRect } from '../common';
 import { InteractorMouseState } from './ChartInteractor';
 import { THUMB_WIDTH_PX } from '../../base';
 import { getTextParser } from '../TimelineAxis';
+import { Scale } from '../../../entity/chart';
+import { calculateClipTopAndPinedHeight, getHeight, UNDRAW_HEIGHT } from './locateUtils';
 
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
@@ -204,5 +206,57 @@ export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height
         // timeRect & text
         drawHoverTimeRect(ctx, width, mousePosNow, xScale, session);
     }
+
+    if (session.linkData !== undefined) {
+        drawLinkLine(ctx, session, xReverseScale, theme);
+    }
     customRenderers.forEach(it => it(ctx, session, xReverseScale, theme));
+};
+
+export const drawLinkLine = (ctx: CanvasRenderingContext2D | null, session: Session, xScale: Scale, theme: Theme): void => {
+    const linkedData = session?.linkData;
+    if (ctx === null || linkedData === undefined) {
+        return;
+    }
+
+    const target = linkedData.target;
+    const targetX = xScale(target.data.startTime);
+    const targetY = getHeight(session, target.matcher, target.data);
+    const sourceDataPos: Array<[x: number, y: number]> = [];
+    const offset = 40;
+    const [ clipTop, pinnedHeight ] = calculateClipTopAndPinedHeight(session.pinnedUnits, target, linkedData.sources);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(-1, clipTop, ctx.canvas.width + 1, ctx.canvas.height + 1);
+    ctx.clip();
+    linkedData.sources.forEach((source) => {
+        const sourceX = xScale(source.data.startTime + source.data.duration);
+        const sourceY = getHeight(session, source.matcher, source);
+        if ((sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT) || (targetY === 0 || sourceY === 0)) {
+            return;
+        }
+
+        if (
+            sourceY < UNDRAW_HEIGHT + pinnedHeight &&
+            targetY < UNDRAW_HEIGHT + pinnedHeight
+        ) {
+            ctx.strokeStyle = theme.frameRelativeLineColor;
+        } else {
+            ctx.strokeStyle = theme.selectedChartColor;
+        }
+
+        ctx.beginPath();
+        sourceDataPos.push([ sourceX, sourceY ]);
+        ctx.moveTo(sourceX, sourceY);
+        ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
+        ctx.stroke();
+    });
+    if (targetY >= UNDRAW_HEIGHT) {
+        const len = sourceDataPos.length;
+        let [ fromX, fromY ] = sourceDataPos.reduce(([ prevX, prevY ], [ x, y ]) => [ prevX + x + offset, prevY + y ], [ 0, 0 ]);
+        fromX = fromX / len; fromY = fromY / len;
+        drawArrow(ctx, { toX: targetX, toY: targetY, fromX: targetX - offset, fromY: targetY + (fromY - targetY) * Math.sqrt(Math.abs(fromY - targetY)) / (Math.abs(fromX - targetX) + Math.abs(fromY - targetY)), length: 10, angle: 30, color: theme.selectedChartColor });
+    }
+    ctx.restore();
 };
