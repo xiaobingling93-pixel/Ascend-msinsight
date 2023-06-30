@@ -5,7 +5,7 @@ export class ShadowSession {
 
     private _extremumTimestamp: ExtremumTimestamp = {
         minTimestamp: Number.MAX_VALUE,
-        maxTimestamp: Number.MIN_VALUE,
+        maxTimestamp: -Number.MAX_VALUE,
     };
 
     private readonly _importedRankIdSet = new Set<number>();
