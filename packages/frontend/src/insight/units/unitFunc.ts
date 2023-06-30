@@ -49,6 +49,7 @@ function newLane (insightMetaData: InsightMetaData<any>): InsightUnit | undefine
                 cardId: paramsTree.get(insightMetaData.metadata).cardId,
                 processId: insightMetaData.metadata.processId,
                 processName: insightMetaData.metadata.processName,
+                label: insightMetaData.metadata.label,
             });
         }
         case 'thread': {

@@ -461,7 +461,8 @@ export class Table {
             FROM ${this.sliceTable}
             WHERE track_id = ${trackId}
             AND start_time >= ${startTime} AND start_time <= ${endTime}
-            GROUP BY depth, id;`,
+            GROUP BY depth, id
+            ORDER BY start_time;`,
             async (err, rows: any) => {
                 if (err) {
                     console.log('track_id error:', err);
