@@ -1,4 +1,4 @@
-import sqlite, { Statement } from 'sqlite3';
+import * as sqlite from 'sqlite3';
 import { RowThreadTrace, ThreadTrace } from '../query/thread.trace.handler';
 import { Client } from '../types';
 
@@ -14,8 +14,8 @@ export class Table {
     private flowDataCaches: any[] = [];
     private readonly maxCachesSize = 1000;
     count = 0;
-    private sliceStat: Statement | undefined;
-    private flowStat: Statement | undefined;
+    private sliceStat: sqlite.Statement | undefined;
+    private flowStat: sqlite.Statement | undefined;
     private readonly _dbPath: string;
 
     constructor(dbPath: string) {
