@@ -28,7 +28,7 @@
         "pkg": "^5.8.1"
     },
     "scripts": {
-        "package": "pkg . -t nodev14-win-x64",
+        "package": "pkg . -t nodev14-win-x64 --compress GZip",
         "build": "eslint ./src && tsc ",
         "start": "eslint ./src && tsc && node ./dist/app.js"
     },
@@ -37,8 +37,7 @@
             "./dist/*.js"
         ],
         "assets": [
-            "./node_modules/*",
-            "./node_modules/**/*"
+            "./node_modules/sqlite3/**/*.node"
         ]
     }
 }
