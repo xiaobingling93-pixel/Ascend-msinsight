@@ -108,6 +108,7 @@ export type MetaData = {
 export type metadataDto = {
     pid: string;
     processName: string;
+    label: string;
     tid: number;
     threadName: string;
     maxDepth: number;
@@ -131,6 +132,7 @@ export type ProcessMetaData = {
     cardId?: number;
     processId: string;
     processName: string;
+    label?: string;
 };
 
 export type CardMetaData = {

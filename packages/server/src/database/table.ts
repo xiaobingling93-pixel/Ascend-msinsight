@@ -299,23 +299,34 @@ export class Table {
     }
 
     async selectUnitsMetadata(): Promise<any> {
-        const sql: string = `select pt.pid,
-                                    pt.process_name as processName,
-                                    pt.tid,
-                                    pt.thread_name  as threadName,
-                                    max(depth) + 1  as maxDepth
-                             from (select p.pid,
-                                          p.process_name,
-                                          p.process_sort_index,
-                                          t.tid,
-                                          t.thread_name,
-                                          t.track_id,
-                                          t.thread_sort_index
-                                   from ${this.processTable} p
-                                            left join ${this.threadTable} t on p.pid = t.pid) as pt
-                                      left join ${this.sliceTable} s on pt.track_id = s.track_id
-                             GROUP BY s.track_id
-                             ORDER BY pt.process_sort_index asc, pt.thread_sort_index asc;`;
+        const sql: string = `SELECT
+                                 pt.pid,
+                                 pt.process_name AS processName,
+                                 pt.label,
+                                 pt.tid,
+                                 pt.thread_name AS threadName,
+                                 max( depth ) + 1 AS maxDepth
+                             FROM
+                                 (
+                                     SELECT
+                                         p.pid,
+                                         p.process_name,
+                                         p.label,
+                                         p.process_sort_index,
+                                         t.tid,
+                                         t.thread_name,
+                                         t.track_id,
+                                         t.thread_sort_index
+                                     FROM
+                                         ${this.processTable} p
+                                             LEFT JOIN ${this.threadTable} t ON p.pid = t.pid
+                                 ) AS pt
+                                     LEFT JOIN ${this.sliceTable} s ON pt.track_id = s.track_id
+                             GROUP BY
+                                 s.track_id
+                             ORDER BY
+                                 pt.process_sort_index ASC,
+                                 pt.thread_sort_index ASC;`;
         return new Promise((resolve, reject) => {
             this.db.all(sql, function (err, rows) {
                 if (err !== undefined && err !== null) {
