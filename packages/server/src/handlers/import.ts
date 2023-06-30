@@ -97,6 +97,7 @@ export const importHandler = async (req: any, client: Client): Promise<Record<st
             queryUnitsMetadata(rankId).then((queryResult) => {
                 let startTimeUpdated = false;
                 if (extremumTimestamp.minTimestamp > queryResult.extremumTimestamp.minTimestamp) {
+                    extremumTimestamp.maxTimestamp = extremumTimestamp.maxTimestamp + extremumTimestamp.minTimestamp - queryResult.extremumTimestamp.minTimestamp;
                     extremumTimestamp.minTimestamp = queryResult.extremumTimestamp.minTimestamp;
                     startTimeUpdated = true;
                 };
