@@ -86,7 +86,7 @@ public class ExecutableUtils {
         File installedInsightFile = new File(installedInsightPath);
         String toolParentPath = installedInsightFile.exists() ? installedInsightPath : PathManager.getHomePath();
         if (StringUtils.isEmpty(toolParentPath)) {
-            LOGGER.warn("deveco studio path is not found");
+            LOGGER.warn("mindstudio path is not found");
             return "";
         }
         File target = FileUtils.getFile(toolParentPath, pathSuffix);

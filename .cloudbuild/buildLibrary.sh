@@ -18,10 +18,10 @@ exit 1
 fi
 fi
 set -e
-cd ohos-hiinsight
+cd IntelliJ_Based
 
 chmod +x gradlew
 java --version
 
-cd $WORKSPACE/ohos-hiinsight
-./gradlew buildLibrary --stacktrace -PLIBRARY_VERSION=$1 -PRELEASE_VERSION=$2 -PBINARY_VERSION=$3 -Pinternal=$4 -PUSERNAME=$5 -PPASSWORD=$6
+cd $WORKSPACE/IntelliJ_Based
+./gradlew buildPlugin
