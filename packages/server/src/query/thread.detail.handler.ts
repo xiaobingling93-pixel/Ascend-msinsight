@@ -4,7 +4,7 @@ import {
     FlowDetailRequest,
     FlowDetailResponse,
     FlowResponse,
-    LocationData,
+    LocationData, SimpleSlice,
     SliceDao,
     ThreadDetailRequest,
     ThreadDetailResponse,
@@ -67,35 +67,50 @@ export const threadsInfoHandler = async (request: ThreadsRequest, client: Client
     const startTime = request.startTime + client.shadowSession.extremumTimestamp.minTimestamp;
     const endTime = request.endTime + client.shadowSession.extremumTimestamp.minTimestamp;
     const trackId = getTrackId(tid, pid);
-    const param = [ trackId, startTime, endTime ];
+    const param = [ trackId, endTime, startTime ];
     const selfTimeKeyValue: Record<string, number> = {};
     let threadResponse: ThreadsResponse = { emptyFlag: false, data: [] };
-    const sql: string = `SELECT * FROM ${sliceTable} WHERE TRACK_ID = ? AND TIMESTAMP + DURATION >= ? AND TIMESTAMP <= ?`;
-    const rows = await table.selectData(sql, param) as SliceDao[];
+    const sql: string = `SELECT timestamp, duration, timestamp + duration as endTime, name, depth
+                         FROM ${sliceTable}
+                         WHERE TRACK_ID = ? AND TIMESTAMP <= ? AND TIMESTAMP + DURATION >= ?`;
+    const rows = await table.selectData(sql, param) as SimpleSlice[];
     if (rows.length === 0) {
         threadResponse.emptyFlag = true;
         return threadResponse;
     }
+    const sliceDaoDepthMap = generateSliceDaoDepthMap(rows);
     for (const res of rows) {
-        let selfTime = res.duration;
-        const endTime = res.timestamp + res.duration;
-        const depth = res.depth;
-        const depthSql: string = `SELECT DURATION FROM ${sliceTable}
-                            WHERE DEPTH = ? AND TIMESTAMP + DURATION <= ? AND TIMESTAMP >= ? AND TRACK_ID = ?`;
-        const depthParams = [ depth + 1, endTime, res.timestamp, trackId ];
-        const nextDepthResult = await table.selectData(depthSql, depthParams) as Array<{duration: number}>;
-        if (nextDepthResult.length === 0) {
-            selfTime = 0;
-        } else {
-            nextDepthResult.forEach(row => {
-                selfTime -= row.duration;
-            });
-        }
+        const selfTime = calculateSelfTimeByNextDepthSlices(res, sliceDaoDepthMap);
         addData(selfTimeKeyValue, res.name, selfTime);
     }
     threadResponse = reduceThread(rows, selfTimeKeyValue);
     return threadResponse;
 };
+
+function generateSliceDaoDepthMap(sliceDaoArray: SimpleSlice[]): Map<number, SimpleSlice[]> {
+    const sliceDaoDepthMap = new Map<number, SimpleSlice[]>();
+    for (const res of sliceDaoArray) {
+        if (!sliceDaoDepthMap.has(res.depth)) {
+            sliceDaoDepthMap.set(res.depth, []);
+        }
+        sliceDaoDepthMap.get(res.depth)?.push(res);
+    }
+    return sliceDaoDepthMap;
+}
+
+function calculateSelfTimeByNextDepthSlices(slice: SimpleSlice, sliceDaoDepthMap: Map<number, SimpleSlice[]>): number {
+    let selfTime = slice.duration;
+    const nextDepthSlices = sliceDaoDepthMap.get(slice.depth + 1);
+    if (nextDepthSlices === undefined) {
+        return 0;
+    }
+    nextDepthSlices.forEach(singleSlice => {
+        if (singleSlice.endTime <= slice.endTime && singleSlice.timestamp >= slice.timestamp) {
+            selfTime -= singleSlice.duration;
+        }
+    });
+    return selfTime;
+}
 
 function addData(selfTimeKeyValue: Record<string, number>, key: string, selfTime: number): void {
     if (selfTimeKeyValue[key]) {
@@ -105,7 +120,7 @@ function addData(selfTimeKeyValue: Record<string, number>, key: string, selfTime
     }
 }
 
-function reduceThread(rows: SliceDao[], selfTimeKeyValue: {[key: string]: any}): ThreadsResponse {
+function reduceThread(rows: SimpleSlice[], selfTimeKeyValue: {[key: string]: any}): ThreadsResponse {
     const tmp: ThreadsResponse = { emptyFlag: false, data: [] };
     return rows.reduce((acc, cur) => {
         const index = acc.data.findIndex((item) => item.title === cur.name);

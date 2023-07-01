@@ -89,6 +89,14 @@ export type SliceDao = {
     cat: string;
 };
 
+export type SimpleSlice = {
+    timestamp: number;
+    duration: number;
+    endTime: number;
+    name: string;
+    depth: number;
+};
+
 export type FlowDao = {
     id: number;
     name: string;
