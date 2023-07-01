@@ -1,5 +1,5 @@
 allprojects {
-    group "com.huawei.deveco"
+    group "com.huawei.ascend"
     version getReleaseVersion()
     jar {
         archiveVersion.set(project.version.toString())

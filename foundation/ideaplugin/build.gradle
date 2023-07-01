@@ -76,6 +76,7 @@ allprojects {
     }
 }
 dependencies {
+    implementation "com.alibaba:fastjson:1.2.83"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
     testImplementation (group: "org.java-websocket", name: "Java-WebSocket", version: "1.5.1") {
         exclude group: 'org.slf4j', module: 'slf4j-api'

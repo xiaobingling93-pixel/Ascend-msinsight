@@ -11,11 +11,8 @@ import com.huawei.ascend.insight.common.constant.CmdConstants;
 import com.huawei.ascend.insight.common.constant.URLConstants;
 import com.huawei.ascend.insight.resourcehandler.InsightRequestHandler;
 import com.huawei.ascend.insight.ui.MessagePanel;
-import com.huawei.ascend.insight.utils.BalloonNotification;
-import com.huawei.ascend.insight.utils.LogPrinter;
-import com.huawei.ascend.insight.utils.LogProperties;
+import com.huawei.ascend.insight.utils.*;
 
-import com.huawei.ascend.insight.utils.ProcessUtils;
 import com.intellij.DynamicBundle;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -47,6 +44,12 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -82,6 +85,8 @@ public class InsightWindowFactory implements ToolWindowFactory {
 
     private static Project project = null;
 
+    private static boolean isCloseIDE = false;
+
     private static JBCefBrowser webView;
 
     static {
@@ -108,6 +113,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
             ProcessUtils.killProcess(CmdConstants.DIC_SERVER);
             // 移除webView注册的相关内容
             cefBrowser.getClient().removeMessageRouter(router);
+            isCloseIDE = true;
             webView.getJBCefClient().removeRequestHandler(insightRequestHandler, cefBrowser);
             webView.getJBCefClient().removeLifeSpanHandler(lifeSpanHandler, cefBrowser);
             webView.getComponent().removePropertyChangeListener("foreground", propertyChangeListener);
@@ -194,6 +200,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
             LOGGER.info("start profiler server failed");
             BalloonNotification.show("Fail to start profiler server", NotificationType.WARNING);
         }
+//        initSocket();
         initJCEFBrowser(project, toolWindow);
     }
 
@@ -298,5 +305,36 @@ public class InsightWindowFactory implements ToolWindowFactory {
         }
         Optional<Process> process = ProcessUtils.execute(processArgs, pluginsPath);
         return process.isPresent();
+    }
+
+    private void initSocket() {
+        ThreadUtil.runInUIThread(new Runnable() {
+            @Override public void run() {
+                while (!isCloseIDE) {
+                    try {
+                        ServerSocket serverSocket = new ServerSocket(3001);
+                        Socket socket = serverSocket.accept();
+                        InputStream in = socket.getInputStream();
+                        //从Socket中得到网络输出流，将数据发送到网络上
+                        OutputStream out = socket.getOutputStream();
+
+                        //接收客户端发来的数据
+                        byte[] bs = new byte[1024];
+                        //将数据存入bs数组中，返回值为数组的长度
+                        int len = in.read(bs);
+                        String str = new String(bs, 0, len, StandardCharsets.UTF_8);
+                        System.out.println("来自客户端的消息: " + str);
+
+                        //向客户端写数据,注意客户端代码中别忘记写read()方法,否则会抛异常
+                        out.write("欢迎访问，你好，我是服务端".getBytes());
+                        System.out.println("服务端正常结束");
+                        socket.close();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                }
+            }
+        });
     }
 }
