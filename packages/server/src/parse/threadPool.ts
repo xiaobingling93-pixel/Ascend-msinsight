@@ -16,7 +16,7 @@ export enum WorkStatus {
 }
 
 export class ThreadPool {
-    private readonly taskCount = 6;
+    private readonly taskCount = 4;
     private readonly runningWorkers = new Array<Worker>();
     private readonly awaitWorkers = new Array<Worker>();
     private readonly taskList = new Array<any>();

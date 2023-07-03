@@ -14,6 +14,7 @@ export class Parser {
     }
 
     public async parse(readPosition: number, readSize: number): Promise<void> {
+        await this.table.setConfig();
         const buf = Buffer.alloc(readSize);
         fs.readSync(this.fd, buf, 0, readSize, readPosition);
         const str = buf.toString('utf-8');

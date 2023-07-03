@@ -75,7 +75,6 @@ export class Connection implements Client {
     }
 
     private reply(id: number, result: Record<string, unknown>): void {
-        console.log('reply', id, result);
         this.sendObj({
             id,
             result,
