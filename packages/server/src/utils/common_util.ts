@@ -22,6 +22,7 @@ export function getTrackId(tid: number, pid: string): number {
  * @param filePath 文件路径
  */
 export function parseCardID(filePath: string): string {
+    console.log('start parse CardID');
     let rankId = crypto.randomUUID() as string;
     try {
         const fd = fs.openSync(filePath, 'r');
@@ -32,15 +33,16 @@ export function parseCardID(filePath: string): string {
         const start = bufString.indexOf('{');
         const end = bufString.indexOf('}');
         const rankIDJsonString = bufString.substring(start, end + 1);
-        if (!rankIDJsonString.includes('rank_id')) {
-            rankId = path.basename(path.dirname(path.dirname(filePath)));
-            return rankId;
-        }
         const rank = JSON.parse(rankIDJsonString);
-        rankId = String(rank.rank_id);
+        return String(rank.rank_id);
     } catch (err) {
-        console.log(err);
-        return rankId;
+        console.error(err);
+    }
+    try {
+        console.log('try get dirname*2 of filePath.');
+        rankId = path.basename(path.dirname(path.dirname(filePath)));
+    } catch (error) {
+        console.error(error);
     }
     return rankId;
 }
