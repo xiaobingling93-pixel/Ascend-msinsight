@@ -61,55 +61,71 @@ export const threadInfoHandler = async (request: ThreadDetailRequest, client: Cl
 };
 
 export const threadsInfoHandler = async (request: ThreadsRequest, client: Client): Promise<ThreadsResponse> => {
-    const table = tableMap.get(request.rankId) as Table;
     const pid = request.pid;
     const tid = request.tid;
+    const trackId = getTrackId(tid, pid);
     const startTime = request.startTime + client.shadowSession.extremumTimestamp.minTimestamp;
     const endTime = request.endTime + client.shadowSession.extremumTimestamp.minTimestamp;
-    const trackId = getTrackId(tid, pid);
     const param = [ trackId, endTime, startTime ];
-    const selfTimeKeyValue: Record<string, number> = {};
-    let threadResponse: ThreadsResponse = { emptyFlag: false, data: [] };
-    const sql: string = `SELECT timestamp, duration, timestamp + duration as endTime, name, depth
-                         FROM ${sliceTable}
-                         WHERE TRACK_ID = ? AND TIMESTAMP <= ? AND TIMESTAMP + DURATION >= ?`;
+    const sql: string = `SELECT timestamp, duration, timestamp + duration AS endTime, name, depth FROM ${sliceTable}
+                         WHERE
+                             TRACK_ID = ?
+                           AND TIMESTAMP <= ?
+                           AND TIMESTAMP + DURATION >= ?
+                         ORDER BY
+                             depth ASC,
+                             timestamp ASC`;
+    const table = tableMap.get(request.rankId) as Table;
     const rows = await table.selectData(sql, param) as SimpleSlice[];
+    let threadResponse: ThreadsResponse = { emptyFlag: false, data: [] };
     if (rows.length === 0) {
         threadResponse.emptyFlag = true;
         return threadResponse;
     }
-    const sliceDaoDepthMap = generateSliceDaoDepthMap(rows);
-    for (const res of rows) {
-        const selfTime = calculateSelfTimeByNextDepthSlices(res, sliceDaoDepthMap);
-        addData(selfTimeKeyValue, res.name, selfTime);
-    }
+    const selfTimeKeyValue: Record<string, number> = {};
+    calculateSelfTime(rows, selfTimeKeyValue);
     threadResponse = reduceThread(rows, selfTimeKeyValue);
     return threadResponse;
 };
 
-function generateSliceDaoDepthMap(sliceDaoArray: SimpleSlice[]): Map<number, SimpleSlice[]> {
-    const sliceDaoDepthMap = new Map<number, SimpleSlice[]>();
-    for (const res of sliceDaoArray) {
-        if (!sliceDaoDepthMap.has(res.depth)) {
-            sliceDaoDepthMap.set(res.depth, []);
+function calculateSelfTime(rows: SimpleSlice[], selfTimeKeyValue: Record<string, number>): void {
+    let i = 0;
+    let j = 0;
+    let tmpSelfTime = rows[0].duration;
+    while (i < rows.length) {
+        const rowI = rows[i];
+        const rowJ = rows[j];
+        // j滑完直接滑完所有i
+        if (j === rows.length) {
+            // 处理当前tmpSelfTime
+            addData(selfTimeKeyValue, rows[i].name, tmpSelfTime);
+            // 处理剩余元素
+            while (++i < rows.length) {
+                addData(selfTimeKeyValue, rows[i].name, rows[i].duration);
+            }
+            break;
         }
-        sliceDaoDepthMap.get(res.depth)?.push(res);
-    }
-    return sliceDaoDepthMap;
-}
-
-function calculateSelfTimeByNextDepthSlices(slice: SimpleSlice, sliceDaoDepthMap: Map<number, SimpleSlice[]>): number {
-    let selfTime = slice.duration;
-    const nextDepthSlices = sliceDaoDepthMap.get(slice.depth + 1);
-    if (nextDepthSlices === undefined) {
-        return 0;
-    }
-    nextDepthSlices.forEach(singleSlice => {
-        if (singleSlice.endTime <= slice.endTime && singleSlice.timestamp >= slice.timestamp) {
-            selfTime -= singleSlice.duration;
+        // 层数相等 or 同一元素, j右移
+        if (rowI.depth === rowJ.depth || i === j) {
+            j++;
+            continue;
         }
-    });
-    return selfTime;
+        // j元素超出i元素覆盖范围，或者j右移到下一层, 记录i元素selfTime并i右移(隐式|| rowJ.timestamp < rowI.timestamp)
+        if (rowJ.endTime > rowI.endTime || rowI.depth + 1 < rowJ.depth) {
+            addData(selfTimeKeyValue, rowI.name, tmpSelfTime);
+            if (i + 1 === rows.length) { // i滑完结束
+                break;
+            }
+            i++;
+            tmpSelfTime = rows[i].duration;
+            continue;
+        }
+        // 符合要求的元素
+        if (rowJ.timestamp >= rowI.timestamp && rowJ.endTime <= rowI.endTime) {
+            tmpSelfTime -= rowJ.duration;
+        }
+        j++;
+    }
 }
 
 function addData(selfTimeKeyValue: Record<string, number>, key: string, selfTime: number): void {
