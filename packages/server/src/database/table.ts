@@ -438,17 +438,22 @@ export class Table {
         return depthMap;
     }
 
-    async selectData(sql: string, params: any): Promise<any> {
+    async queryThreadsInfo(trackId: number, startTime: number, endTime: number): Promise<any> {
         return new Promise((resolve, reject) => {
-            this.db.all(sql, params, (err, rows) => {
+            const sql: string = `SELECT timestamp, duration, timestamp + duration AS endTime, name, depth FROM ${this.sliceTable}
+                         WHERE
+                             TRACK_ID = ?
+                           AND TIMESTAMP <= ?
+                           AND TIMESTAMP + DURATION >= ?
+                         ORDER BY
+                             depth ASC,
+                             timestamp ASC`;
+            this.db.all(sql, [ trackId, endTime, startTime ], (err, rows) => {
                 if (err !== undefined && err !== null) {
                     console.error(err.message);
                     reject(err);
                 } else {
-                    const result = rows.map(row => {
-                        return row;
-                    });
-                    resolve(result);
+                    resolve(rows);
                 }
             });
         });
@@ -473,6 +478,116 @@ export class Table {
             });
         });
     }
+
+    async querySingleSliceByDepthTrackIdTime(depth: number, trackId: number, startTime: number): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `SELECT
+                                    *
+                                 FROM
+                                    ${this.sliceTable}
+                                 WHERE
+                                    DEPTH = ?
+                                    AND TRACK_ID = ?
+                                    AND TIMESTAMP = ?`;
+            this.db.all(sql, [ depth, trackId, startTime ], async (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    console.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
+    async queryDurationFromSliceByTimeRange(depth: number, endTime: number, startTime: number, trackId: number): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `SELECT DURATION FROM ${this.sliceTable} WHERE DEPTH = ?
+                                    AND TIMESTAMP + DURATION <= ?
+                                    AND TIMESTAMP >= ?
+                                    AND TRACK_ID = ?`;
+            this.db.all(sql, [ depth, endTime, startTime, trackId ], async (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    console.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
+    async queryFlowListByFlowId(flowId: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `SELECT * FROM ${this.flowTable} WHERE FLOW_ID = ?`;
+            this.db.all(sql, [flowId], async (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    console.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    };
+
+    async queryLocationFlowByFlowId(flowId: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `SELECT FL.NAME, FL.CAT, FL.FLOW_ID as flowId,
+                                    TH.PID, TH.TID, SL.DEPTH, SL.TIMESTAMP, FL.TYPE FROM ${this.threadTable} TH
+                                 LEFT JOIN ${this.sliceTable} SL ON SL.TRACK_ID = TH.TRACK_ID
+                                 LEFT JOIN ${this.flowTable} FL ON FL.TRACK_ID = SL.TRACK_ID
+                                 WHERE FL.TIMESTAMP = SL.TIMESTAMP AND FL.flow_id = ?`;
+            this.db.all(sql, [flowId], async (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    console.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    };
+
+    async querySimpleFlowListByTrackIdTime(trackId: number, startTime: number): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `SELECT name, flow_id as flowId, type FROM ${this.flowTable} WHERE
+                                    TIMESTAMP = ? AND TRACK_ID = ?`;
+            this.db.all(sql, [ startTime, trackId ], async (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    console.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    };
+
+    async querySliceFlowList(flowId: string, type: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `SELECT sl.timestamp, th.pid, th.tid, sl.depth FROM ${this.sliceTable} sl
+                                 LEFT JOIN ${this.threadTable} th ON sl.TRACK_ID = th.TRACK_ID
+                                 WHERE sl.TRACK_ID IN
+                                    (
+                                        SELECT TRACK_ID FROM ${this.flowTable} WHERE FLOW_ID = ?
+                                            AND TYPE <> ?
+                                    )
+                                    AND TIMESTAMP IN
+                                        (
+                                            SELECT TIMESTAMP FROM ${this.flowTable} WHERE FLOW_ID = ?
+                                            AND TYPE <> ?
+                                        )`;
+            this.db.all(sql, [ flowId, type, flowId, type ], async (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    console.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    };
 }
 
 /**

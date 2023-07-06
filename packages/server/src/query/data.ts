@@ -78,7 +78,7 @@ export type FlowDetailRequest = {
     flowId: string;
 };
 
-export type SliceDao = {
+export type SliceDto = {
     id: number;
     timestamp: number;
     duration: number;
@@ -97,13 +97,19 @@ export type SimpleSlice = {
     depth: number;
 };
 
-export type FlowDao = {
+export type FlowDto = {
     id: number;
     name: string;
     flow_id: string;
     track_id: number;
     timestamp: number;
     cat: string;
+    type: string;
+};
+
+export type SimpleFlowDto = {
+    name: string;
+    flowId: string;
     type: string;
 };
 
