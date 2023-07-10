@@ -1,5 +1,5 @@
 import {
-    EventRequest,
+    EventRequest, ExtremumTimestamp,
     FlowDetailRequest,
     FlowDetailResponse,
     FlowResponse,
@@ -54,7 +54,8 @@ export const threadsInfoHandler = async (request: ThreadsRequest, client: Client
     const startTime = request.startTime + client.shadowSession.extremumTimestamp.minTimestamp;
     const endTime = request.endTime + client.shadowSession.extremumTimestamp.minTimestamp;
     const table = tableMap.get(request.rankId) as Table;
-    const rows = await table.queryThreadsInfo(trackId, startTime, endTime) as SimpleSlice[];
+    const extremumTimestamp = await table.queryExtremumTimeOfFirstDepth(trackId, startTime, endTime) as ExtremumTimestamp;
+    const rows = await table.queryThreadsInfo(trackId, extremumTimestamp.minTimestamp, extremumTimestamp.maxTimestamp) as SimpleSlice[];
     let threadResponse: ThreadsResponse = { emptyFlag: false, data: [] };
     if (rows.length === 0) {
         threadResponse.emptyFlag = true;
@@ -62,8 +63,19 @@ export const threadsInfoHandler = async (request: ThreadsRequest, client: Client
     }
     const selfTimeKeyValue: Record<string, number> = {};
     calculateSelfTime(rows, selfTimeKeyValue);
-    threadResponse = reduceThread(rows, selfTimeKeyValue);
+    const nRows = threadsInfoFilter(rows, startTime, endTime);
+    threadResponse = reduceThread(nRows, selfTimeKeyValue);
     return threadResponse;
+};
+
+function threadsInfoFilter(rows: SimpleSlice[], startTime: number, endTime: number): SimpleSlice[] {
+    const nRows = [] as SimpleSlice[];
+    rows.forEach((row) => {
+        if (row.timestamp <= endTime && row.endTime >= startTime) {
+            nRows.push(row);
+        }
+    });
+    return nRows;
 };
 
 function calculateSelfTime(rows: SimpleSlice[], selfTimeKeyValue: Record<string, number>): void {
