@@ -62,7 +62,7 @@ export const threadsInfoHandler = async (request: ThreadsRequest, client: Client
         return threadResponse;
     }
     const selfTimeKeyValue: Record<string, number> = {};
-    calculateSelfTime(rows, selfTimeKeyValue);
+    calculateSelfTime(rows, selfTimeKeyValue, startTime, endTime);
     const nRows = threadsInfoFilter(rows, startTime, endTime);
     threadResponse = reduceThread(nRows, selfTimeKeyValue);
     return threadResponse;
@@ -78,7 +78,7 @@ function threadsInfoFilter(rows: SimpleSlice[], startTime: number, endTime: numb
     return nRows;
 };
 
-function calculateSelfTime(rows: SimpleSlice[], selfTimeKeyValue: Record<string, number>): void {
+function calculateSelfTime(rows: SimpleSlice[], selfTimeKeyValue: Record<string, number>, startTime: number, endTime: number): void {
     let i = 0;
     let j = 0;
     let tmpSelfTime = rows[0].duration;
@@ -91,13 +91,24 @@ function calculateSelfTime(rows: SimpleSlice[], selfTimeKeyValue: Record<string,
             addData(selfTimeKeyValue, rows[i].name, tmpSelfTime);
             // 处理剩余元素
             while (++i < rows.length) {
-                addData(selfTimeKeyValue, rows[i].name, rows[i].duration);
+                if (rows[i].timestamp <= endTime && rows[i].endTime >= startTime) {
+                    addData(selfTimeKeyValue, rows[i].name, rows[i].duration);
+                }
             }
             break;
         }
         // 层数相等 or 同一元素, j右移
-        if (rowI.depth === rowJ.depth || i === j) {
+        if (rowI.depth === rowJ.depth || i >= j) {
             j++;
+            continue;
+        }
+        // rows[i]不属于框选范围内，跳过
+        if (rows[i].timestamp > endTime || rows[i].endTime < startTime) {
+            if (i + 1 === rows.length) { // i滑完结束
+                break;
+            }
+            i++;
+            tmpSelfTime = rows[i].duration;
             continue;
         }
         // j元素超出i元素覆盖范围，或者j右移到下一层, 记录i元素selfTime并i右移(隐式|| rowJ.timestamp < rowI.timestamp)
