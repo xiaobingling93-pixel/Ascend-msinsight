@@ -447,7 +447,7 @@ export class Table {
                                AND TIMESTAMP + DURATION >= ?
                                AND DEPTH = 0`;
         return new Promise((resolve, reject) => {
-            this.db.get(sql, [ trackId, startTime, endTime ], (err, row) => {
+            this.db.get(sql, [ trackId, endTime, startTime ], (err, row) => {
                 if (err !== undefined && err !== null) {
                     console.error(err.message);
                     reject(err);
