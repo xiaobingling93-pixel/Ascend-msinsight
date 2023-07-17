@@ -277,9 +277,20 @@ public class InsightWindowFactory implements ToolWindowFactory {
     }
 
     private boolean startServer() {
-        if (ProcessUtils.findProcess(CmdConstants.DIC_SERVER)) {
-            return true;
+        int maxFailTime = 10;
+        int tryTime = 0;
+        while(tryTime++ < maxFailTime) {
+            executeStartServerCommand();
+            if (ProcessUtils.findProcess(CmdConstants.DIC_SERVER)) {
+                return true;
+            }
+            LOGGER.info("start server failed, tryTime:{}", tryTime);
+            ThreadUtil.threadSleep(500);
         }
+        return false;
+    }
+
+    private void executeStartServerCommand() {
         String pluginsPath = PathManager.getPluginsPath() + StringUtil.lineSeparator + "ascend-insight"
             + StringUtil.lineSeparator + "tools";
         List<String> processArgs = new ArrayList<>();
@@ -287,22 +298,15 @@ public class InsightWindowFactory implements ToolWindowFactory {
             processArgs.add(CmdConstants.WINDOWS_CMD);
             processArgs.add(CmdConstants.WINDOWS_CMD_TERMINAL);
             processArgs.add(CmdConstants.DIC_SERVER);
-            Optional<Process> process = ProcessUtils.execute(processArgs, pluginsPath);
-            return process.isPresent();
-        } else if (SystemInfo.isLinux) {
-            boolean isStart = true;
-            try {
-                Runtime.getRuntime()
-                    .exec("chmod +x " + pluginsPath + StringUtil.lineSeparator + CmdConstants.DIC_SERVER);
-                Runtime.getRuntime().exec(pluginsPath + StringUtil.lineSeparator + CmdConstants.DIC_SERVER);
-            } catch (IOException e) {
-                LOGGER.info(e.getMessage());
-                isStart = false;
-            }
-            return isStart;
-        } else {
-            LOGGER.info("start dicServer error, system not supported");
-            return false;
+            ProcessUtils.execute(processArgs, pluginsPath);
+            return;
+        }
+        try {
+            Runtime.getRuntime()
+                .exec("chmod +x " + pluginsPath + StringUtil.lineSeparator + CmdConstants.DIC_SERVER);
+            Runtime.getRuntime().exec(pluginsPath + StringUtil.lineSeparator + CmdConstants.DIC_SERVER);
+        } catch (IOException e) {
+            LOGGER.info(e.getMessage());
         }
     }
 }
