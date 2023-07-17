@@ -3,7 +3,7 @@ import { getDbPath } from '../utils/common_util';
 import { ThreadPool } from './threadPool';
 import { Table } from '../database/table';
 import { tableMap } from '../database/tableManager';
-import { EndMessage, ParseMessage } from './parser_worker';
+import { EndMessage } from './parser_worker';
 
 const defaultReadSize = 1024 * 1024 * 50;
 const parseTaskCount = new Map<string, number>(); // rankId, task count
@@ -35,18 +35,15 @@ function parseFile(filePath: string, dbPath: string, rankId: string): void {
             return;
         }
         while (readPosition < fileSize) {
-            if (readPosition + defaultReadSize >= fileSize) {
-                console.log(`get read size. rankId:${rankId}, readPosition:${readPosition}, readSize:${fileSize - readPosition - 1}`);
-                threadPool.addTask({ rankId, filePath, dbPath, readPosition, readSize: fileSize - readPosition - 1 } as ParseMessage);
-                taskCount++;
-                break;
-            } else {
-                const data = getReadSize(fd, readPosition);
-                console.log(`get read size. rankId:${rankId}, readPosition:${data.readPosition}, readSize:${data.readSize}`);
-                taskCount++;
-                threadPool.addTask({ rankId, filePath, dbPath, readPosition: data.readPosition, readSize: data.readSize });
-                readPosition = data.readPosition + data.readSize + 2;
+            const data = getReadSize(fd, readPosition, fileSize);
+            if (data.readSize === 0) {
+                console.log('Failed to split file.');
+                continue;
             }
+            console.log(`get read size. rankId:${rankId}, readPosition:${data.readPosition}, readSize:${data.readSize}`);
+            taskCount++;
+            threadPool.addTask({ rankId, filePath, dbPath, readPosition: data.readPosition, readSize: data.readSize });
+            readPosition = data.readPosition + data.readSize + 2;
         }
         parseTaskCount.set(rankId, taskCount);
         fs.close(fd);
@@ -71,7 +68,7 @@ async function parseWorkerEnd(message: EndMessage): Promise<void> {
     }
 }
 
-function getReadSize(fd: number, start: number): { readPosition: number; readSize: number } {
+function getReadSize(fd: number, start: number, fileSize: number): { readPosition: number; readSize: number } {
     const buf = Buffer.alloc(1024 * 10);
     fs.readSync(fd, buf, 0, 1024, start);
     let offset = buf.toString('utf-8').indexOf('{');
@@ -80,13 +77,16 @@ function getReadSize(fd: number, start: number): { readPosition: number; readSiz
         return { readPosition: 0, readSize: 0 };
     }
     const readPosition = start + offset;
-    fs.readSync(fd, buf, 0, buf.length, readPosition + defaultReadSize);
-    offset = buf.toString('utf-8').indexOf('}, {');
-    if (offset < 0) {
-        console.log('no find }, {');
-        return { readPosition: 0, readSize: 0 };
+    let readSize: number;
+    if (readPosition + defaultReadSize >= fileSize) {
+        fs.readSync(fd, buf, 0, buf.length, fileSize - buf.length);
+        offset = buf.toString('utf-8').indexOf(']');
+        readSize = fileSize - readPosition - (buf.length - offset);
+    } else {
+        fs.readSync(fd, buf, 0, buf.length, readPosition + defaultReadSize);
+        offset = buf.toString('utf-8').indexOf('}, {');
+        readSize = defaultReadSize + offset + 1;
     }
-    const readSize = defaultReadSize + offset + 1;
     return { readPosition, readSize };
 }
 
