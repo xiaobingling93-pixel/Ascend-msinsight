@@ -13,7 +13,7 @@ html {
 
 code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-            monospace;
+    monospace;
 }
 
 #root {
@@ -85,4 +85,24 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 
 .insight-category-search-overlay div.ant-tooltip-arrow {
     display: none;
+}
+
+.theme_dark *{
+    color:white;
+}
+
+.theme_dark .ant-select-selector{
+    background-color: #383838;
+}
+
+.left20{
+    padding-left:20px ;
+}
+
+.fullbox{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right:0;
 }
