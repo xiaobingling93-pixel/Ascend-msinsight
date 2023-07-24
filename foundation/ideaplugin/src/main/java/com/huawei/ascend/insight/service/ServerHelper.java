@@ -27,7 +27,9 @@ public class ServerHelper {
 
     private static ScheduledFuture<?> startServerHook = null;
 
-    private static boolean hasDead = false;
+    private static boolean hasBeenDead = false;
+
+    private static int tryRestartTime = 0;
 
     public static void startServer() {
         ThreadUtil.runInUIThread(() -> {
@@ -57,17 +59,25 @@ public class ServerHelper {
     }
 
     private static void serverCheckAndRestart() {
-        LOGGER.info("start check server status");
+        // 未找到server进程
         if (!ProcessUtils.findProcess(CmdConstants.DIC_SERVER)) {
-            hasDead = true;
-            LOGGER.info("try to start server again!");
-            BalloonNotification.show("[Ascend Insight]: server is dead,try to restart now", NotificationType.WARNING);
-            executeStartServerCommand();
+            hasBeenDead = true;
+            if (++tryRestartTime <= 5) {
+                LOGGER.info("try to start server again!");
+                BalloonNotification.show("[Ascend Insight]: server is dead,try to restart now, tryTime: " + tryRestartTime,
+                    NotificationType.WARNING);
+                executeStartServerCommand();
+                return;
+            }
+            BalloonNotification.show("[Ascend Insight]: server restart failed",
+                NotificationType.ERROR);
             return;
         }
-        if(hasDead) {
-            BalloonNotification.show("[Ascend Insight]: server has been started, please clear and try again", NotificationType.WARNING);
-            hasDead = false;
+        // 找到了server进程
+        if (hasBeenDead) {
+            tryRestartTime = 0;
+            BalloonNotification.show("[Ascend Insight]: server has been started, please clear and try again",
+                NotificationType.INFORMATION);
         }
 
     }
