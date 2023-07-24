@@ -51,7 +51,7 @@ const selectFolders = async (isImporting: boolean, setIsImporting: React.Dispatc
         result.result.forEach((item: CardInfo) => {
             session.units.push(new CardUnit({ cardId: item.rankId, cardName: item.cardName }));
         });
-        processUnits(session.units, 'download');
+        processUnits(session.units, 'analyzing');
     });
     setIsImporting(false);
 };
