@@ -75,6 +75,7 @@ public class ServerHelper {
         }
         // 找到了server进程
         if (hasBeenDead) {
+            hasBeenDead = false;
             tryRestartTime = 0;
             BalloonNotification.show("[Ascend Insight]: server has been started, please clear and try again",
                 NotificationType.INFORMATION);
