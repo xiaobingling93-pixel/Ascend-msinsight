@@ -10,16 +10,15 @@ import com.huawei.ascend.insight.common.ProjectContext;
 import com.huawei.ascend.insight.common.constant.CmdConstants;
 import com.huawei.ascend.insight.common.constant.URLConstants;
 import com.huawei.ascend.insight.resourcehandler.InsightRequestHandler;
+import com.huawei.ascend.insight.service.ServerHelper;
 import com.huawei.ascend.insight.ui.MessagePanel;
 import com.huawei.ascend.insight.utils.*;
 
 import com.intellij.DynamicBundle;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
@@ -105,6 +104,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
 
         // 关闭窗口之前发送相关命令暂停session
         private void onBeforeCloseStopSession(CefBrowser cefBrowser) {
+            ServerHelper.cancelServerHook();
             ProcessUtils.killProcess(CmdConstants.DIC_SERVER);
             // 移除webView注册的相关内容
             cefBrowser.getClient().removeMessageRouter(router);
@@ -129,6 +129,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
 
         @Override
         public void run() {
+            ServerHelper.cancelServerHook();
         }
     }
 
@@ -191,12 +192,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
         if (!JBCefApp.isSupported()) {
             throw new IllegalStateException("JCEF is not supported");
         }
-        if (startServer()) {
-            LOGGER.info("start profiler server success");
-        } else {
-            LOGGER.info("start profiler server failed");
-            BalloonNotification.show("Fail to start profiler server", NotificationType.WARNING);
-        }
+        ServerHelper.startServer();
         initJCEFBrowser(project, toolWindow);
     }
 
@@ -276,37 +272,4 @@ public class InsightWindowFactory implements ToolWindowFactory {
         return project;
     }
 
-    private boolean startServer() {
-        int maxFailTime = 10;
-        int tryTime = 0;
-        while(tryTime++ < maxFailTime) {
-            executeStartServerCommand();
-            if (ProcessUtils.findProcess(CmdConstants.DIC_SERVER)) {
-                return true;
-            }
-            LOGGER.info("start server failed, tryTime:{}", tryTime);
-            ThreadUtil.threadSleep(500);
-        }
-        return false;
-    }
-
-    private void executeStartServerCommand() {
-        String pluginsPath = PathManager.getPluginsPath() + StringUtil.lineSeparator + "ascend-insight"
-            + StringUtil.lineSeparator + "tools";
-        List<String> processArgs = new ArrayList<>();
-        if (SystemInfo.isWindows) {
-            processArgs.add(CmdConstants.WINDOWS_CMD);
-            processArgs.add(CmdConstants.WINDOWS_CMD_TERMINAL);
-            processArgs.add(CmdConstants.DIC_SERVER);
-            ProcessUtils.execute(processArgs, pluginsPath);
-            return;
-        }
-        try {
-            Runtime.getRuntime()
-                .exec("chmod +x " + pluginsPath + StringUtil.lineSeparator + CmdConstants.DIC_SERVER);
-            Runtime.getRuntime().exec(pluginsPath + StringUtil.lineSeparator + CmdConstants.DIC_SERVER);
-        } catch (IOException e) {
-            LOGGER.info(e.getMessage());
-        }
-    }
 }
