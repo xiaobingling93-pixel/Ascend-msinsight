@@ -369,7 +369,7 @@ export const recursiveSetUnits = (unit: InsightUnit, unitPhase: string): void =>
 export const processUnits = (units: InsightUnit[], unitPhase: string): void => {
     runInAction(() => {
         units.forEach(unit => {
-            if (unit.phase === 'error') {
+            if (unit.phase === 'error' || unit.phase === 'download') {
                 return;
             }
             unit.phase = unitPhase;
