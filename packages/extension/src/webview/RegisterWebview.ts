@@ -1,26 +1,32 @@
 import * as vscode from 'vscode';
 import { Webview } from "./Webview";
-const fs = require('fs');
-const path = require('path');
-const cp = require('child_process');
-const os = require('os');
+import { spawn, exec } from 'child_process';
+import { ChildProcess } from 'child_process';
+import { join } from 'path';
+import { platform } from 'os';
+import { readFileSync } from 'fs';
 
 export class RegisterWebview extends Webview {
-
+    
     private readonly _extensionUri: vscode.Uri;
-
+    
     private readonly nameList: any;
-
-    private server: any;
+    
+    private server?: ChildProcess;
+    private serverCheckSchedule?: NodeJS.Timeout;
+    private hasBeenDead = false;
+    private tryRestartTime = 0;
+    private readonly findServerCommand = platform() === 'win32' ? 'tasklist | findstr profiler-server.exe' : 'ps aux | grep profiler-server';
 
     constructor(viewType: string, title: string, context: vscode.ExtensionContext) {
         super(viewType, title, context);
         this._extensionUri = context.extensionUri;
-        let data = fs.readFileSync(path.join(__dirname, './profiler/asset-manifest.json'));
+        let data = readFileSync(join(__dirname, './profiler/asset-manifest.json'));
         let result = data.toString();
         const jsonObject = JSON.parse(result);
         this.nameList = jsonObject;
         this.startServer();
+        this.startServerCheckAndRestart();
     }
 
     newPanel() {
@@ -52,27 +58,74 @@ export class RegisterWebview extends Webview {
         this.panel.webview.postMessage(this._extensionUri.toString);
         this.panel.webview.html = this.html();
     }
-    startServer() {
+    async startServer() {
+        let tryTime = 0;
+        const maxTryTime = 10;
+        while (tryTime++ < maxTryTime) {
+            this.executeStartServerCommand();
+            exec(this.findServerCommand, (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`exec error: ${error}`);
+                    return;
+                }
+                if (stderr) {
+                    console.error(`exec stderr: ${stderr}`);
+                    return;
+                }
+                // 不包含 server 进程
+                if (!stdout.includes('profiler-server.exe')) {
+                    console.log('[ascend]: start server failed, tryTime:{}', tryTime);
+                    return;
+                }
+                // 包含server进程
+                tryTime = maxTryTime;
+                this.startServerCheckAndRestart();
+            });
+        }
+    }
+
+    executeStartServerCommand() {
         let serverName = './profiler/profiler-server';
-        if (os.platform() === 'win32') {
+        if (platform() === 'win32') {
             serverName = serverName + '.exe';
         }
-        const serverPath = path.join(__dirname, serverName);
-        if (os.platform() !== 'win32') {
-            cp.spawn('chmod', ['+x', serverPath]);
+        const serverPath = join(__dirname, serverName);
+        if (platform() !== 'win32') {
+            spawn('chmod', ['+x', serverPath]);
         }
-        this.server = cp.spawn(serverPath, []);
-        this.server.stdout.on('data', (data:any) => {
+        this.server = spawn(serverPath, []);
+        this.server.stdout?.on('data', (data: any) => {
             console.log('[server][info]: ' + data);
         });
-        this.server.stderr.on('data', (data:any) => {
+        this.server.stderr?.on('data', (data: any) => {
             console.log('[server][err]: ' + data);
         });
     }
+    
+    startServerCheckAndRestart() {
+        this.serverCheckSchedule = setInterval(() => {
+            exec(this.findServerCommand, (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`exec error: ${error}`);
+                }
+                if (stderr) {
+                    console.error(`exec stderr: ${stderr}`);
+                }
+                // server挂了,只提醒3次
+                if (!stdout.includes('profiler-server.exe')) {
+                    if (this.tryRestartTime++ < 3) {
+                        vscode.window.showWarningMessage('[insight]: server has been dead, please close and reopen');
+                        return;
+                    } 
+                }
+            });
+        }, 3000);
+    }
 
     dispose() {
-        console.log('profiler is closed');
-        this.server.kill();
+        console.log('profiler is closed!!');
+        this.server?.kill();
+        clearInterval(this.serverCheckSchedule);
     }
 
     // rem单位相对于font-size取值，设为6px，设计稿为750px时，设置初始UI宽度缩放100%时450px，6*750/450=10px=1rem，默认缩放比例为75%，初始时6*0.75=4.5

@@ -50,7 +50,9 @@ export const Mask: React.FC<{ unitPhase: string }> = ({ children, ...props }): J
     `;
     return <div style={{ position: 'relative' }}>
         <MaskLayer>
-            <Info><ImgWithFallback className={'img'} src={loading}/>{props.unitPhase}</Info>
+            <Info>
+                <ImgWithFallback className={'img'} src={loading} />
+                { props.unitPhase }</Info>
         </MaskLayer>
         {children}
     </div>;
