@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { useTheme } from '@emotion/react';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
+import { ReactComponent as Reset } from '../assets/images/reset.svg';
 import { ReactComponent as Del } from '../assets/images/zoomTimestamp_delete.svg';
 import { ReactComponent as Add } from '../assets/images/zoomTimestamp_add.svg';
 import { Session } from '../entity/session';
@@ -35,6 +36,16 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
         isUpperBound: session.domain.isUpperBound,
     }), [ session.domain.duration, session.endTimeAll ]);
     return <Container>
+        <Container>
+            <Reset
+                fill={isUpperBound ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
+                onClick={() => {
+                    runInAction(() => {
+                        session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+                    });
+                }}
+            />
+        </Container>
         <Del
             fill={isUpperBound ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
             onClick={() => {
