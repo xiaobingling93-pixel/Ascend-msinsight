@@ -438,7 +438,27 @@ export class Table {
         return depthMap;
     }
 
-    async queryThreadsInfo(trackId: number, startTime: number, endTime: number): Promise<any> {
+    async queryExtremumTimeOfFirstDepth(trackId: number, startTime: number, endTime: number): Promise<any> {
+        const sql: string = `SELECT min(timestamp) as minTimestamp, max(timestamp + duration) AS maxTimestamp
+                             FROM ${this.sliceTable}
+                             WHERE
+                                 TRACK_ID = ?
+                               AND TIMESTAMP <= ?
+                               AND TIMESTAMP + DURATION >= ?
+                               AND DEPTH = 0`;
+        return new Promise((resolve, reject) => {
+            this.db.get(sql, [ trackId, endTime, startTime ], (err, row) => {
+                if (err !== undefined && err !== null) {
+                    console.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(row);
+                }
+            });
+        });
+    }
+
+    async queryThreadsInfo(trackId: number, minTimestamp: number, maxTimestamp: number): Promise<any> {
         return new Promise((resolve, reject) => {
             const sql: string = `SELECT timestamp, duration, timestamp + duration AS endTime, name, depth FROM ${this.sliceTable}
                          WHERE
@@ -448,7 +468,7 @@ export class Table {
                          ORDER BY
                              depth ASC,
                              timestamp ASC`;
-            this.db.all(sql, [ trackId, endTime, startTime ], (err, rows) => {
+            this.db.all(sql, [ trackId, maxTimestamp, minTimestamp ], (err, rows) => {
                 if (err !== undefined && err !== null) {
                     console.error(err.message);
                     reject(err);

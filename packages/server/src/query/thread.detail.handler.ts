@@ -1,5 +1,5 @@
 import {
-    EventRequest,
+    EventRequest, ExtremumTimestamp,
     FlowDetailRequest,
     FlowDetailResponse,
     FlowResponse,
@@ -54,19 +54,31 @@ export const threadsInfoHandler = async (request: ThreadsRequest, client: Client
     const startTime = request.startTime + client.shadowSession.extremumTimestamp.minTimestamp;
     const endTime = request.endTime + client.shadowSession.extremumTimestamp.minTimestamp;
     const table = tableMap.get(request.rankId) as Table;
-    const rows = await table.queryThreadsInfo(trackId, startTime, endTime) as SimpleSlice[];
+    const extremumTimestamp = await table.queryExtremumTimeOfFirstDepth(trackId, startTime, endTime) as ExtremumTimestamp;
+    const rows = await table.queryThreadsInfo(trackId, extremumTimestamp.minTimestamp, extremumTimestamp.maxTimestamp) as SimpleSlice[];
     let threadResponse: ThreadsResponse = { emptyFlag: false, data: [] };
     if (rows.length === 0) {
         threadResponse.emptyFlag = true;
         return threadResponse;
     }
     const selfTimeKeyValue: Record<string, number> = {};
-    calculateSelfTime(rows, selfTimeKeyValue);
-    threadResponse = reduceThread(rows, selfTimeKeyValue);
+    calculateSelfTime(rows, selfTimeKeyValue, startTime, endTime);
+    const nRows = threadsInfoFilter(rows, startTime, endTime);
+    threadResponse = reduceThread(nRows, selfTimeKeyValue);
     return threadResponse;
 };
 
-function calculateSelfTime(rows: SimpleSlice[], selfTimeKeyValue: Record<string, number>): void {
+function threadsInfoFilter(rows: SimpleSlice[], startTime: number, endTime: number): SimpleSlice[] {
+    const nRows = [] as SimpleSlice[];
+    rows.forEach((row) => {
+        if (row.timestamp <= endTime && row.endTime >= startTime) {
+            nRows.push(row);
+        }
+    });
+    return nRows;
+};
+
+function calculateSelfTime(rows: SimpleSlice[], selfTimeKeyValue: Record<string, number>, startTime: number, endTime: number): void {
     let i = 0;
     let j = 0;
     let tmpSelfTime = rows[0].duration;
@@ -79,13 +91,24 @@ function calculateSelfTime(rows: SimpleSlice[], selfTimeKeyValue: Record<string,
             addData(selfTimeKeyValue, rows[i].name, tmpSelfTime);
             // 处理剩余元素
             while (++i < rows.length) {
-                addData(selfTimeKeyValue, rows[i].name, rows[i].duration);
+                if (rows[i].timestamp <= endTime && rows[i].endTime >= startTime) {
+                    addData(selfTimeKeyValue, rows[i].name, rows[i].duration);
+                }
             }
             break;
         }
         // 层数相等 or 同一元素, j右移
-        if (rowI.depth === rowJ.depth || i === j) {
+        if (rowI.depth === rowJ.depth || i >= j) {
             j++;
+            continue;
+        }
+        // rows[i]不属于框选范围内，跳过
+        if (rows[i].timestamp > endTime || rows[i].endTime < startTime) {
+            if (i + 1 === rows.length) { // i滑完结束
+                break;
+            }
+            i++;
+            tmpSelfTime = rows[i].duration;
             continue;
         }
         // j元素超出i元素覆盖范围，或者j右移到下一层, 记录i元素selfTime并i右移(隐式|| rowJ.timestamp < rowI.timestamp)
