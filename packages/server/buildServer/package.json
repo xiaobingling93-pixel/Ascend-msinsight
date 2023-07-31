@@ -1,0 +1,34 @@
+{
+    "name": "profiler-server",
+    "version": "1.0.0",
+    "main": "app.js",
+    "license": "MIT",
+    "bin": "./dist/app.js",
+    "private": true,
+    "workspaces": [
+        "packages/*"
+    ],
+    "dependencies": {
+        "crypto-js": "^4.1.1",
+        "sqlite3": "^5.1.5",
+        "threads": "^1.7.0",
+        "ws": "^8.13.0"
+    },
+    "devDependencies": {
+        "electron": "^24.1.2",
+        "electron-packager": "^17.1.1"
+    },
+    "scripts": {
+        "packWin": "electron-packager ./ profiler-server --platform=win32 --arch=x64 --electron-version=24.6.5 --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/",
+        "packLinux": "electron-packager ./ profiler-server --platform=linux --arch=x64 --electron-version=24.6.5 --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/"
+    },
+    "build": {
+        "appId": "ascend.insight.server",
+        "productName": "profiler-server",
+        "copyright": "Copyright © 2021 Huawei",
+        "directories": {
+            "buildResources": "build",
+            "output": "dist"
+        }
+    }
+}
