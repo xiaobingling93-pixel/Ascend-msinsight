@@ -44,7 +44,7 @@ public class ServerHelper {
                     return;
                 }
                 LOGGER.info("start server failed, tryTime:{}", tryTime);
-                ThreadUtil.threadSleep(500);
+                ThreadUtil.threadSleep(1500);
             }
             LOGGER.info("start profiler server failed");
             BalloonNotification.show("Fail to start profiler server", NotificationType.WARNING);

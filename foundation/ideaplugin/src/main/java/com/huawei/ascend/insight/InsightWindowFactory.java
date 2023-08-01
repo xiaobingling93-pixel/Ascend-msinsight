@@ -15,9 +15,12 @@ import com.huawei.ascend.insight.model.dto.JcefRequest;
 import com.huawei.ascend.insight.resourcehandler.InsightRequestHandler;
 import com.huawei.ascend.insight.service.ServerHelper;
 import com.huawei.ascend.insight.ui.MessagePanel;
-import com.huawei.ascend.insight.utils.*;
+import com.huawei.ascend.insight.utils.CefMessageRouterProxy;
+import com.huawei.ascend.insight.utils.JsonUtil;
+import com.huawei.ascend.insight.utils.LogPrinter;
+import com.huawei.ascend.insight.utils.LogProperties;
+import com.huawei.ascend.insight.utils.ProcessUtils;
 
-import com.huawei.deveco.common.cef.CefMessageRouterHandlerProxy;
 import com.intellij.DynamicBundle;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -52,8 +55,8 @@ import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.Optional;
+import java.util.ResourceBundle;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -119,6 +122,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
         private void onBeforeCloseStopSession(CefBrowser cefBrowser) {
             ServerHelper.cancelServerHook();
             ProcessUtils.killProcess(CmdConstants.DIC_SERVER);
+            CefMessageRouterProxy.getInstance().removeRouter(webView.getCefBrowser());
             // 移除webView注册的相关内容
             cefBrowser.getClient().removeMessageRouter(router);
             isCloseIDE = true;
@@ -274,7 +278,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
     private void addMessageRouter(JBCefBrowser webView) {
         router = CefMessageRouter.create();
         MessageRouterHandlerAdapter cefMessageRouterHandler = new MessageRouterHandlerAdapter();
-        CefMessageRouterHandlerProxy routerHandlerProxy = CefMessageRouterHandlerProxy.getInstance();
+        CefMessageRouterProxy routerHandlerProxy = CefMessageRouterProxy.getInstance();
         routerHandlerProxy.putCefRouter(webView.getCefBrowser(), cefMessageRouterHandler);
         router.addHandler(routerHandlerProxy, true);
         webView.getCefBrowser().getClient().addMessageRouter(router);
