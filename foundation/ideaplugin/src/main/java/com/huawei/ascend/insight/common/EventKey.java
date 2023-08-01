@@ -14,4 +14,9 @@ public class EventKey {
      * Ark profiler
      */
     public static final String OPEN_FILES = "ark.profiler";
+
+    /**
+     * Insight selectFolder
+     */
+    public static final String INSIGHT_IMPORT = "ascend.selectFolder";
 }

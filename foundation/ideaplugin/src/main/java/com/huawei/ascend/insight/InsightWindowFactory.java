@@ -6,14 +6,18 @@ package com.huawei.ascend.insight;
 
 import static com.huawei.ascend.insight.common.constant.Constant.INSIGHT_NOTIFY;
 
+import com.huawei.ascend.insight.common.EventKey;
 import com.huawei.ascend.insight.common.ProjectContext;
 import com.huawei.ascend.insight.common.constant.CmdConstants;
 import com.huawei.ascend.insight.common.constant.URLConstants;
+import com.huawei.ascend.insight.handlers.SelectFolderHandler;
+import com.huawei.ascend.insight.model.dto.JcefRequest;
 import com.huawei.ascend.insight.resourcehandler.InsightRequestHandler;
 import com.huawei.ascend.insight.service.ServerHelper;
 import com.huawei.ascend.insight.ui.MessagePanel;
 import com.huawei.ascend.insight.utils.*;
 
+import com.huawei.deveco.common.cef.CefMessageRouterHandlerProxy;
 import com.intellij.DynamicBundle;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -34,20 +38,22 @@ import org.cef.browser.CefMessageRouter;
 import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.callback.CefNativeAdapter;
+import org.cef.callback.CefQueryCallback;
 import org.cef.handler.CefContextMenuHandler;
 import org.cef.handler.CefContextMenuHandlerAdapter;
 import org.cef.handler.CefLifeSpanHandler;
 import org.cef.handler.CefLifeSpanHandlerAdapter;
+import org.cef.handler.CefMessageRouterHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Optional;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -72,6 +78,13 @@ public class InsightWindowFactory implements ToolWindowFactory {
             }
         }
     };
+
+    private static final Map<String, CefQueryHandler> CEF_QUERY_HANDLER_MAP = Collections.unmodifiableMap(
+            new HashMap<>() {
+                {
+                    put(EventKey.INSIGHT_IMPORT, new SelectFolderHandler());
+                }
+            });
 
     private static ToolWindow toolWindow;
 
@@ -260,6 +273,10 @@ public class InsightWindowFactory implements ToolWindowFactory {
 
     private void addMessageRouter(JBCefBrowser webView) {
         router = CefMessageRouter.create();
+        MessageRouterHandlerAdapter cefMessageRouterHandler = new MessageRouterHandlerAdapter();
+        CefMessageRouterHandlerProxy routerHandlerProxy = CefMessageRouterHandlerProxy.getInstance();
+        routerHandlerProxy.putCefRouter(webView.getCefBrowser(), cefMessageRouterHandler);
+        router.addHandler(routerHandlerProxy, true);
         webView.getCefBrowser().getClient().addMessageRouter(router);
     }
 
@@ -270,6 +287,21 @@ public class InsightWindowFactory implements ToolWindowFactory {
 
     public static Project getProject() {
         return project;
+    }
+
+    static class MessageRouterHandlerAdapter extends CefMessageRouterHandlerAdapter {
+        @Override
+        public boolean onQuery(CefBrowser browser, CefFrame frame, long queryId, String request, boolean isPersistent,
+                               CefQueryCallback callback) {
+            try {
+                JcefRequest jcefRequest = JsonUtil.parseObject(request, JcefRequest.class);
+                CefQueryHandler handler = CEF_QUERY_HANDLER_MAP.get(jcefRequest.getKey());
+                handler.onQuery(jcefRequest.getData().getMethod(), jcefRequest.getData().getParams(), callback);
+            } catch (Exception e) {
+                LOGGER.warn("Failed to invoke handler, cause {}", e.getMessage());
+            }
+            return true;
+        }
     }
 
 }
