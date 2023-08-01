@@ -10,6 +10,7 @@ import { runInAction } from 'mobx';
 import { useState } from 'react';
 import { CardUnit } from '../insight/units/AscendUnit';
 import { processUnits } from '../entity/insight';
+import { messageSender } from '../connection/messageSender';
 
 const Container = styled.div`
     display: flex;
@@ -42,9 +43,11 @@ type CardInfo = {
     cardName: string;
     rankId: string;
 };
+
 const selectFolders = async (isImporting: boolean, setIsImporting: React.Dispatch<React.SetStateAction<boolean>>, session: Session): Promise<void> => {
     setIsImporting(true);
-    const result = await window.request('import/action', {});
+    const selectedPath = await messageSender.selectFolder();
+    const result = await window.request('import/action', { path: selectedPath });
     runInAction(() => {
         session.phase = 'download';
         session.endTimeAll = 1000000000;

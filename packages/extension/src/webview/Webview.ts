@@ -23,6 +23,31 @@ export abstract class Webview {
             retainContextWhenHidden: true,
             localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, 'profiler'))]
         });
+
+        this.panel.webview.onDidReceiveMessage(
+            async message => {
+                switch (message.command) {
+                    case 'ascend.selectFolder':
+                        const options: vscode.OpenDialogOptions = {
+                            canSelectMany: false,
+                            canSelectFolders: true,
+                            canSelectFiles: false,
+                            openLabel: '选择文件夹'
+                        };
+                        const result = await vscode.window.showOpenDialog(options);
+                        if (result && result.length > 0) {
+                            const folderPath = result[0].fsPath;
+                            this.panel.webview.postMessage({command: 'ascend.folderSelected', path: folderPath});
+                        } else {
+                            this.panel.webview.postMessage({command: 'ascend.folderSelectionCanceled'});
+                        }
+                        break;
+                }
+            },
+            undefined,
+            this.context.subscriptions
+        );
+
         this.panel.onDidDispose(() => {
             if (this.panel !== undefined) {
                 this.panel.dispose();
