@@ -113,8 +113,8 @@ def write_total_coverage(results):
                 "branch_cov": cal_coverage(cov_branch, total_branch)
             }
             writer.writerow(line)
-            logging.info("[module] %-28s  [line cov] %.3f  [method cov] %.3f  [branch cov] %.3f"
-                  % (module, line.get("line_cov"), line.get("method_cov"), line.get("branch_cov")))
+            logging.info("[module] %-28s  [line cov] %.3f  [method cov] %.3f  [branch cov] %.3f",
+                module, line.get("line_cov"), line.get("method_cov"), line.get("branch_cov"))
             cov_line_cnt += cov_line
             total_line_cnt += total_line
             cov_method_cnt += cov_method
@@ -125,9 +125,9 @@ def write_total_coverage(results):
     total_method_cov = cal_coverage(cov_method_cnt, total_method_cnt) * 100
     total_branch_cov = cal_coverage(cov_branch_cnt, total_branch_cnt) * 100
     write_junit_json(total_line_cov, total_method_cov, total_branch_cov)
-    logging.info("Total line cov: %.2f" % total_line_cov)
-    logging.info("Total method cov: %.2f" % total_method_cov)
-    logging.info("Total branch cov: %.2f" % total_branch_cov)
+    logging.info("Total line cov: %.2f", total_line_cov)
+    logging.info("Total method cov: %.2f", total_method_cov)
+    logging.info("Total branch cov: %.2f", total_branch_cov)
 
 
 def cal_coverage(cov, total):
