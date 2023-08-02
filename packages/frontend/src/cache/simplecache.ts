@@ -59,8 +59,10 @@ async function requestThreadTraces(requestParam: Record<string, unknown>): Promi
 }
 
 function sliceArr(params: Record<string, unknown>, data: Map<string, any>, paramsKey: string): any {
-    const start = (params as ThreadTraceRequest).startTime;
-    const end = (params as ThreadTraceRequest).endTime;
+    const requestParams = params as ThreadTraceRequest;
+    const start = requestParams.startTime;
+    const end = requestParams.endTime;
+
     const result = data.get(stackStatusKey).get(paramsKey);
     return result.map((subArr: unknown[]) => {
         if (subArr.length === 0) {

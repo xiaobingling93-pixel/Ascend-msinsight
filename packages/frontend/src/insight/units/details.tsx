@@ -29,12 +29,15 @@ export const slicesListDetail = detail({
         startTime = startTime < 0 ? 0 : startTime;
         let endTime = session.selectedRange?.[1] ?? 0;
         endTime = endTime < 0 ? 0 : endTime;
+        const timestampOffset = metadata.cardId !== undefined
+            ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[metadata.cardId] ?? 0
+            : 0;
         const params = {
             rankId: metadata.cardId,
             tid: metadata.threadId,
             pid: metadata.processId,
-            startTime: startTime,
-            endTime: endTime,
+            startTime: startTime + timestampOffset,
+            endTime: endTime + timestampOffset,
         };
         const raw = await window.request('unit/threads', params);
         return raw.data;

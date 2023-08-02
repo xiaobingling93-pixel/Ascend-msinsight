@@ -41,7 +41,7 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
         }).catch(() => {
             Logger('hooks useData', 'mapFunc occurred an exception.');
         });
-    }, [ session.phase, domainStart, domainEnd, endTimeAll, width ]);
+    }, [ session.phase, domainStart, domainEnd, endTimeAll, width, session.unitsConfig.offsetConfig.timestampOffset ]);
     return datasState;
 };
 

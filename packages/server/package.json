@@ -24,15 +24,16 @@
         "eslint-plugin-import": "^2.25.3",
         "eslint-plugin-n": "^15.7.0",
         "eslint-plugin-promise": "^6.0.0",
-        "typescript": "^4.2.3",
-        "pkg": "^5.8.1"
+        "typescript": "^4.2.3"
     },
     "scripts": {
-        "packageWin": "pkg ./package.json -t nodev14-win-x64 -C GZip -o profiler-server",
-        "packageLinuxX64": "pkg ./package.json -t nodev14-linux-x64 -C GZip -o profiler-server",
+        "packageWin": "npm run copyWin && cd buildServer && npm install && npm run packWin",
+        "packageLinuxX64": "npm run copyLinux && cd buildServer && npm install && npm run packLinux",
         "build": "eslint ./src && tsc ",
         "start": "eslint ./src && tsc && node ./dist/app.js",
-        "package": "npm run packageWin&&npm run packageLinuxX64"
+        "package": "npm run packageWin&&npm run packageLinuxX64",
+        "copyWin": "xcopy .\\dist\\* .\\buildServer\\ /E /I /Y",
+        "copyLinux": "cp -R ./dist/* ./buildServer"
     },
     "pkg": {
         "scripts": [

@@ -18,6 +18,7 @@ import { observer } from 'mobx-react-lite';
 import _ from 'lodash';
 import { runInAction } from 'mobx';
 import { SelectedDataBase } from '../../components/details/base/SelectedData';
+import { offsetConfig } from './config/offsetConfig';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -56,11 +57,15 @@ const singleSliceDetail = singleData({
     ],
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
         const selectedSliceData = session.selectedData as ThreadTrace;
+        const timestampOffset = metadata.cardId !== undefined
+            ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[metadata.cardId] ?? 0
+            : 0;
+        // 因为泳道chart数据减去了偏移，所有点选的时候得把偏移加回来
         const params = {
             rankId: metadata.cardId,
             pid: metadata.processId,
             tid: metadata.threadId,
-            startTime: selectedSliceData.startTime,
+            startTime: selectedSliceData.startTime + timestampOffset,
             depth: selectedSliceData.depth,
         };
         const result = await window.request('unit/threadDetail', params);
@@ -107,12 +112,16 @@ export const ThreadUnit = unit<ThreadMetaData>({
         height: UnitHeight.STANDARD,
         mapFunc: async (session: Session, metaData: unknown) => {
             const threadMetaData = metaData as ThreadMetaData;
+            // 查询泳道chart参数加上时间偏移
+            const timestampOffset = threadMetaData.cardId !== undefined
+                ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[threadMetaData.cardId] ?? 0
+                : 0;
             const requestParam = {
                 cardId: threadMetaData.cardId,
                 processId: threadMetaData.processId,
                 threadId: threadMetaData.threadId,
-                startTime: session.domainRange.domainStart,
-                endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd),
+                startTime: session.domainRange.domainStart + timestampOffset,
+                endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset),
             };
             const requestKey = createStackStatusParam('unit/threadTraces', requestParam);
             try {
@@ -121,8 +130,9 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     return [];
                 }
                 const threadTraceList = request.data as ThreadTrace[][];
+                // 泳道chart返回数据减去时间偏移
                 return threadTraceList.map(it => it.map((data) => ({
-                    startTime: data.startTime,
+                    startTime: data.startTime - timestampOffset,
                     duration: data.duration,
                     name: data.name,
                     type: data.name,
@@ -207,6 +217,7 @@ export const ProcessUnit = unit<ProcessMetaData>({
 export const CardUnit = unit<CardMetaData>({
     name: 'Card',
     tag: 'Card',
+    configBar: offsetConfig,
     pinType: 'move',
     renderInfo: (session: Session, metadata: { cardId: string }) => `${metadata.cardId}`,
     spreadUnits: on(

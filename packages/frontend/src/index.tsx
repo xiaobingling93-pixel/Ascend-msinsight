@@ -8,6 +8,8 @@ import './index.css';
 import { NOTIFICATION_HANDLERS } from './interface';
 import { store } from './store';
 
+type CefQueryType = {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
+
 declare global {
     interface Window {
         // for inspecting some internal state
@@ -16,6 +18,7 @@ declare global {
         };
         setTheme: (isDark: boolean) => void;
         request: (method: string, params: Record<string, unknown>) => Promise<any>;
+        cefQuery: (obj: CefQueryType) => void;
     }
 };
 

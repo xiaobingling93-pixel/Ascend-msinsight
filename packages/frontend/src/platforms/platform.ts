@@ -1,4 +1,5 @@
 import { ThemeItem } from '../theme/theme';
+import { IMessageSender, removeAndAddEventListener } from '../connection/messageSender';
 
 export type NotifyLevel = 'info' | 'warn' | 'error';
 
@@ -26,4 +27,50 @@ export interface Platform {
     initSession: (sessionId: string) => Promise<string>;
     openFrameworkUrl: () => void;
     isUltimateEdition: Promise<boolean>;
+}
+
+export class IntellijPlatform implements IMessageSender {
+    selectFolder(): Promise<string> {
+        return new Promise(resolve => {
+            this.sendMessage({
+                request: JSON.stringify({
+                    key: 'ascend.selectFolder',
+                    data: {
+                        method: 'ascend.selectFolder',
+                        params: {},
+                    },
+                }),
+                onSuccess: function (response: string) {
+                    resolve(JSON.parse(response).body);
+                },
+            });
+        });
+    }
+
+    sendMessage(ceq: any): void {
+        window.cefQuery(ceq);
+    }
+}
+
+export class VsCodePlatform implements IMessageSender {
+    selectFolder(): Promise<string> {
+        return new Promise(resolve => {
+            this.sendMessage({ command: 'ascend.selectFolder' });
+            removeAndAddEventListener(resolve);
+        });
+    }
+
+    sendMessage(ceq: any): void {
+    }
+}
+
+export class BrowserPlatform implements IMessageSender {
+    selectFolder(): Promise<string> {
+        return new Promise(resolve => {
+            resolve('browser');
+        });
+    }
+
+    sendMessage(): void {
+    }
 }
