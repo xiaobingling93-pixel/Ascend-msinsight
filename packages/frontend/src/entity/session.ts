@@ -112,6 +112,9 @@ export class Session {
                 filterSize: 4096,
                 maxStackDepth: 10,
             },
+            offsetConfig: {
+                timestampOffset: {},
+            },
         };
         this.startRecordTime = 0;
         if (conf) {

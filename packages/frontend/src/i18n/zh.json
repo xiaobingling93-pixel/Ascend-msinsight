@@ -44,6 +44,7 @@
     "AllocationDescribe": "录制各项分配的堆栈轨迹（会产生额外的性能开销）",
     "FilterSizeDescribe": "请输入一个位于1024Bytes和10MB之间的值.",
     "StackDepthDescribe": "请输入一个位于5和100之间的值.",
+    "TimeStampOffset": "请输入一个合适的值, 保证时间偏移在30天之内.",
     "Snapshot": "堆快照",
     "SnapshotDescribe": "ArkTS堆快照采样间隔",
     "TakeHeapSnapshot": "拍摄堆快照",

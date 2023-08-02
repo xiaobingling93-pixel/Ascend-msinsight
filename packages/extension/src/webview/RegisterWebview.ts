@@ -26,7 +26,6 @@ export class RegisterWebview extends Webview {
         const jsonObject = JSON.parse(result);
         this.nameList = jsonObject;
         this.startServer();
-        this.startServerCheckAndRestart();
     }
 
     newPanel() {
@@ -58,34 +57,15 @@ export class RegisterWebview extends Webview {
         this.panel.webview.postMessage(this._extensionUri.toString);
         this.panel.webview.html = this.html();
     }
-    async startServer() {
-        let tryTime = 0;
-        const maxTryTime = 10;
-        while (tryTime++ < maxTryTime) {
-            this.executeStartServerCommand();
-            exec(this.findServerCommand, (error, stdout, stderr) => {
-                if (error) {
-                    console.error(`exec error: ${error}`);
-                    return;
-                }
-                if (stderr) {
-                    console.error(`exec stderr: ${stderr}`);
-                    return;
-                }
-                // 不包含 server 进程
-                if (!stdout.includes('profiler-server.exe')) {
-                    console.log('[ascend]: start server failed, tryTime:{}', tryTime);
-                    return;
-                }
-                // 包含server进程
-                tryTime = maxTryTime;
-                this.startServerCheckAndRestart();
-            });
-        }
+    startServer() {
+        this.executeStartServerCommand();
+        this.startServerCheckAndRestart();
     }
 
     executeStartServerCommand() {
-        let serverName = './profiler/profiler-server';
+        const entryName = './profiler/server/resources/app/app.js';
+        const entryWholeName = join(__dirname, entryName);
+        let serverName = './profiler/server/profiler-server';
         if (platform() === 'win32') {
             serverName = serverName + '.exe';
         }
@@ -93,7 +73,7 @@ export class RegisterWebview extends Webview {
         if (platform() !== 'win32') {
             spawn('chmod', ['+x', serverPath]);
         }
-        this.server = spawn(serverPath, []);
+        this.server = spawn(serverPath, [entryWholeName]);
         this.server.stdout?.on('data', (data: any) => {
             console.log('[server][info]: ' + data);
         });
@@ -124,8 +104,8 @@ export class RegisterWebview extends Webview {
 
     dispose() {
         console.log('profiler is closed!!');
-        this.server?.kill();
         clearInterval(this.serverCheckSchedule);
+        this.server?.kill();
     }
 
     // rem单位相对于font-size取值，设为6px，设计稿为750px时，设置初始UI宽度缩放100%时450px，6*750/450=10px=1rem，默认缩放比例为75%，初始时6*0.75=4.5

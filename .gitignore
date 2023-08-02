@@ -5,7 +5,7 @@
 *.vsix
 dist
 media
-src/resources/vuetemplate/package-lock.json
+package-lock.json
 twowayPreview
 log.txt
 **/node_modules
@@ -18,3 +18,4 @@ log.txt
 **/*.exe
 **/*.db
 **/profiler
+serverBuild

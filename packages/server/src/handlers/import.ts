@@ -1,4 +1,3 @@
-import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parseCardID } from '../utils/common_util';
@@ -7,9 +6,9 @@ import { Client } from '../types';
 import { queryUnitsMetadata } from '../query/unitMetadataHandler';
 import { exec } from 'child_process';
 import * as os from 'os';
+import { promisify } from 'util';
 
 const execute = promisify(exec);
-
 function findJsonFiles(dir: string, traceViewJsonPaths: string[], depth: number): void {
     if (depth > 5) return; // 控制递归深度
     const files = fs.readdirSync(dir);
@@ -57,15 +56,19 @@ async function selectFolder(): Promise<string | null> {
     return null;
 }
 
-async function findTraceViewJson(): Promise<string[]> {
+async function findTraceViewJson(path: string): Promise<string[]> {
     const traceViewJsonPaths: string[] = [];
     try {
-        await selectFolder().then(folderPath => {
-            if (folderPath === null) {
-                return traceViewJsonPaths;
-            }
-            findJsonFiles(folderPath, traceViewJsonPaths, 0);
-        });
+        if (path === 'browser') {
+            await selectFolder().then(folderPath => {
+                if (folderPath === null) {
+                    return traceViewJsonPaths;
+                }
+                findJsonFiles(folderPath, traceViewJsonPaths, 0);
+            });
+        } else {
+            findJsonFiles(path, traceViewJsonPaths, 0);
+        }
     } catch (error) {
         console.error(error);
     }
@@ -77,8 +80,8 @@ type CardInfo = {
     rankId: string;
 };
 
-export const importHandler = async (req: any, client: Client): Promise<Record<string, unknown>> => {
-    const traceViewJsonPaths = await findTraceViewJson();
+export const importHandler = async (req: { path: string }, client: Client): Promise<Record<string, unknown>> => {
+    const traceViewJsonPaths = await findTraceViewJson(req.path);
     const importedRankIdSet = client.shadowSession.importedRankIdSet;
     const extremumTimestamp = client.shadowSession.extremumTimestamp;
     const result: CardInfo[] = [];
