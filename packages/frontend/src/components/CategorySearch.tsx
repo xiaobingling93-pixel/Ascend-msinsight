@@ -266,58 +266,13 @@ const calculateDomainRange = (session: Session, startTime: number, duration: num
 const doJumpCpuSlice = (session: Session, cpu?: number, startTime?: number, duration?: number): void => {
     if (cpu === undefined || startTime === undefined || duration === undefined) {
         Logger('doJumpCpuSlice', `cpu: ${cpu}, startTime: ${startTime}, duration: ${duration}, some of them is undefined.`, 'warn');
-        return;
     }
-    // runInAction(() => {
-    //     session.locateUnit = {
-    //         target: (unit) => unit instanceof CPUSliceUnit && unit.metadata === cpu,
-    //         onSuccess: (unit) => {
-    //             const [ rangeStart, rangeEnd ] = calculateDomainRange(session, startTime, duration);
-    //             session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-    //             session.selectedData = { cpuCoreId: cpu, duration, startTime };
-    //         },
-    //     };
-    // });
 };
 
 const doJumpSystraceSlice = (session: Session, taskData?: TaskData): void => {
     if (taskData === undefined) {
         Logger('doJumpSystraceSlice', 'taskData is undefined.', 'warn');
-        return;
     }
-    runInAction(() => {
-        if (taskData.type === 'threadTrace') {
-            // session.locateUnit = {
-            //     target: (unit) => unit instanceof CPUThreadTraceUnit && (unit.metadata as ThreadTraceMetadataChildren).tid === taskData.tid,
-            //     onSuccess: (unit) => {
-            //         const [ rangeStart, rangeEnd ] = calculateDomainRange(session, taskData.startTime, taskData.duration);
-            //         session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-            //         session.selectedData = {
-            //             threadId: taskData.tid,
-            //             duration: taskData.duration,
-            //             startTime: taskData.startTime,
-            //             depth: taskData.depth,
-            //             name: taskData.taskName,
-            //         };
-            //     },
-            // };
-        } else if (taskData.type === 'userTrace') {
-            // session.locateUnit = {
-            //     target: (unit) => unit instanceof CPUUserTraceUnit && (unit.metadata as UserTraceMetadataChildren).pid === taskData.pid && (unit.metadata as UserTraceMetadataChildren).taskName === taskData.taskName,
-            //     onSuccess: (unit) => {
-            //         const [ rangeStart, rangeEnd ] = calculateDomainRange(session, taskData.startTime, taskData.duration);
-            //         session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-            //         session.selectedData = {
-            //             name: taskData.cookie,
-            //             taskName: taskData.taskName,
-            //             timestamp: taskData.startTime,
-            //             duration: taskData.duration,
-            //             depth: taskData.depth,
-            //         };
-            //     },
-            // };
-        }
-    });
 };
 
 // 帧跳转
@@ -326,45 +281,14 @@ const doJumpFrameSlice = (session: Session, frameData?: FrameSearchResultType): 
     if (frameData === undefined) {
         Logger('doJumpFrameSlice', `processId: ${processId}, startTime: ${startTime}, endTime: ${endTime},
         depth: ${depth}, isJank: ${isJank} some of them is undefined.`);
-        return;
     }
-    // runInAction(() => {
-    //     session.locateUnit = {
-    //         target: (unit) => {
-    //             const res = unit instanceof FrameLeafUnit && unit.metadata.processId === processId;
-    //             return res;
-    //         },
-    //         onSuccess: (unit) => {
-    //             const duration = endTime - startTime;
-    //             const [ rangeStart, rangeEnd ] = calculateDomainRange(session, startTime, duration);
-    //             session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-    //             session.selectedData = { processId, startTime, endTime, depth, isJank, duration };
-    //         },
-    //     };
-    // });
 };
 
 // callStack 范围框选
 const doSelectRange = (session: Session, data?: { startTime: number; endTime: number }, threadId?: number): void => {
     if (data === undefined) {
         Logger('doSelectRange', 'taskData is undefined.');
-        return;
     }
-    const { startTime, endTime } = data;
-    // const data: ((unit: InsightUnit) => boolean) = threadId === undefined
-    //     ? (unit) => unit instanceof JsCpuTime
-    //     : (unit) => unit instanceof ThreadCpuTime && (unit.metadata as ThreadInfo).tid === Number(threadId);
-    // runInAction(() => {
-    //     session.locateUnit = {
-    //         target: data,
-    //         onSuccess: (unit) => {
-    //             const duration = endTime - startTime;
-    //             const [ rangeStart, rangeEnd ] = calculateDomainRange(session, startTime, duration);
-    //             session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-    //             session.selectedRange = [ startTime, endTime ];
-    //         },
-    //     };
-    // });
 };
 
 // 跳转分发函数

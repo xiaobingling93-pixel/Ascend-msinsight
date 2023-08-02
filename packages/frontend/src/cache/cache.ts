@@ -43,8 +43,7 @@ export default class DicCachedEngine {
         let jsonData: Partial<any> = {};
         for (const key in params) {
             const requestKey = key as keyof any;
-            const currCache = null // sessionCaches[requestKey];
-            // const dataFunc = dataFuncMap[requestKey];
+            const currCache = null;
             if (dataFunc === undefined) {
                 continue;
             }

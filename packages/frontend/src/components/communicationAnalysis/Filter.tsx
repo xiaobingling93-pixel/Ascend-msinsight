@@ -1,72 +1,94 @@
 import { observer } from 'mobx-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Select, Radio, Form } from 'antd';
 import { Label, Space } from './Common';
 
-const options = [
-    {
-        value: '0',
-        label: '0',
-    },
-    {
-        value: '1',
-        label: '1',
-    },
-    {
-        value: '2',
-        label: '2',
-    },
-    {
-        value: '3',
-        label: '3',
-    },
-];
+export interface conditionDataType{
+    iterationId: string | number;
+    rankIds: string[];
+    operatorName: string | number;
+    type: string;
+}
+
+interface optionDataType{
+    key?: string;
+    label: React.ReactNode;
+    value: string | number ;
+}
+
+interface optionMapDataType{
+    [props: string]: optionDataType[];
+}
 
 const Filter = observer((props: any) => {
-    const [ iteration, setIteration ] = useState('');
-    const [ operator, setOperator ] = useState('');
-    const handleChange = (name: string, value: string): void => {
-        const obj: {[propName: string]: any} = { iteration, operator };
-        obj[name.toLowerCase()] = value;
-        if (name === 'Iteration') {
-            setIteration(value);
-        } else if (name === 'Operator') {
-            setOperator(value);
-        }
-
-        props.handleFilterChange(obj);
+    const { handleFilterChange } = props;
+    // 获取可选项
+    useEffect(() => {
+        getOptions();
+    }, []);
+    const [ options, setOptions ] = useState<optionMapDataType>({});
+    const getOptions = (): void => {
+        const iterationlist = [ 0, 1, 2, 3, 4, 5 ];
+        const iterationOptions: optionDataType[] = iterationlist.map(item => ({ value: item, label: item }));
+        const operatorlist = [ 'allGather_1_1', 0, 1 ];
+        const operatorOptions: optionDataType[] = operatorlist.map(item => ({ value: item, label: item }));
+        const rankIds = [ 0, 1, 2, 3 ];
+        const rankIdOptions: optionDataType[] = rankIds.map(item => ({ value: item, label: item }));
+        setOptions({ iterationOptions, operatorOptions, rankIdOptions });
+        setConditions({ ...conditions, iterationId: iterationlist[0], operatorName: operatorlist[0] });
     };
-    return (<div style={ { margin: '0 20px', ...props.style ?? {} }}>
-        <Label name="Iteration ID"/>
+    // 筛选条件变化
+    const [ conditions, setConditions ] = useState<conditionDataType>(
+        { iterationId: '', rankIds: [], operatorName: '', type: 'CommunicationDurationAnalysis' });
+    const handleChange = (prop: keyof conditionDataType, val: string | number | string[]): void => {
+        setConditions({ ...conditions, [prop]: val });
+    };
+    useEffect(() => {
+        handleFilterChange(conditions);
+    }, [conditions]);
+
+    return (<FilterCom conditions={conditions} handleChange={handleChange} options={options} />);
+});
+
+const FilterCom = (props: any): JSX.Element => {
+    const { conditions, handleChange = [], options = {} } = props;
+    return (<div style={ { margin: '0 20px 10px' }}>
+        <Label name="Iteration ID" />
         <Select
-            defaultValue="0"
+            value={conditions.iterationId}
             style={{ width: 120 }}
-            onChange={val => handleChange('Iteration', val)}
-            options={options}
+            onChange={val => handleChange('iterationId', val)}
+            options={options.iterationOptions}
+        />
+        <Label name="Rank ID"/>
+        <Select
+            value={conditions.rankIds}
+            style={{ width: 200 }}
+            onChange={val => handleChange('rankIds', val)}
+            options={options.rankIdOptions}
+            mode="multiple"
         />
         <Label name="Operator Name"/>
         <Select
-            defaultValue="0"
-            style={{ width: 200 }}
-            onChange={val => handleChange('Operator', val)}
-            options={options}
+            value={conditions.operatorName}
+            style={{ width: 300 }}
+            onChange={val => handleChange('operatorName', val)}
+            options={options.operatorOptions}
         />
         <Space length={20}/>
-        <Radio.Group value={props.showWindow} onChange={(e) => { props.switchPage(e.target.value); }}>
+        <Radio.Group value={conditions.type} onChange={(e) => { handleChange('type', e.target.value); }}>
             <Radio value={'CommunicationDurationAnalysis'}>Communication Duration Analysis</Radio>
-            <Radio value={'CommunicationMatrix'}>Communication Matrix</Radio>
         </Radio.Group>
     </div>);
-});
+};
 
 export const FilterForm = observer((props: any) => {
     const [form] = Form.useForm();
     const [ page, setPage ] = useState(0);
     const onFinish = (values: any): void => {
-        console.log(values);
     };
     const handleChange = (value: string): void => {
-        console.log(`selected ${value}`);
+
     };
 
     const layout = {
@@ -84,7 +106,7 @@ export const FilterForm = observer((props: any) => {
                     defaultValue="lucy"
                     style={{ width: 120 }}
                     onChange={handleChange}
-                    options={options}
+                    options={[]}
                 />
             </Form.Item>
             <Form.Item name="OperatorName" label="Operator Name">
@@ -92,13 +114,13 @@ export const FilterForm = observer((props: any) => {
                     defaultValue="lucy"
                     style={{ width: 120 }}
                     onChange={handleChange}
-                    options={options}
+                    options={[]}
                 />
             </Form.Item>
             <Form.Item {...tailLayout}>
                 <Radio.Group onChange={(e) => {
                     setPage(e.target.value);
-                    props.switchPage(e.target.value);
+                    props.switchWindow(e.target.value);
                 }} value={page}>
                     <Radio value={0}>Communication Duration Analysis</Radio>
                     <Radio value={1}>Communication Matrix</Radio>
