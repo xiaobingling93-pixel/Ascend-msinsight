@@ -1,0 +1,78 @@
+version: 2.0
+
+params:
+  - name: internal
+    value: "NO"
+  - name: pluginVersion
+    value: "0.0.1"
+  - name: releaseVersion
+    value: "0.0.0.1-SNAPSHOT"
+  - name: serverBranch
+    value: "dev_ci"
+  - name: buildVersion
+    value: "0.0.1_linux"
+
+env:
+  label: Bitfun2Yellow_x64_vpc # 虚拟机标签，表示在哪台虚拟机执行，都写deveco_build
+steps:
+  PRE_BUILD:
+    - checkout:
+        path: IntelliJ_Based # 源码下载到子目录，命名请跟 clone下来的默认名称一致
+    - codehub:
+        url: https://codehub-dg-y.huawei.com/IDE-Insight/Ascend/Insight_Kernel.git
+        branch: ${serverBranch}
+        path: Insight_Kernel
+  BUILD:
+    - build_execute: # master用0.0.0.1-SNAPSHOT 和 0.0.0.1，  develop用0.0.0.2-SNAPSHOT，和 0.0.0.2
+        command: |
+          echo ---------------build frontend----------------------
+          cd Insight_Kernel/packages/frontend
+           npm config set strict-ssl false
+           npm install
+           npm run build
+          echo ---------------build server source----------------------
+          cd ../server
+           npm install
+           npm run build
+           cp -r ./dist/* ./buildServer/
+          echo ---------------build server binary----------------------
+          cd buildServer
+           npm install
+           node_modules/.bin/electron-packager ./ profiler-server --platform=linux --arch=x64 --electron-version=24.6.5 --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/ 
+           rm -rf profiler-server-linux-x64/locales
+          cd ../../../
+          mkdir serverBuild
+          mkdir serverBuild/server
+           cp -r ./packages/frontend/build ./packages/extension/profiler
+           cp -r ./packages/server/buildServer/profiler-server-linux-x64 ./serverBuild/server/
+          echo ---------------build vscode extension----------------------
+          cd ./packages/extension
+          npm install
+          npm install keytar@7.9.0 --ignore-scripts
+          npm install @vscode/vsce@2.15.0  --registry=https://cmc.centralrepo.rnd.huawei.com/npm/
+          npm install vsce@2.15.0 --registry=https://cmc.centralrepo.rnd.huawei.com/npm/
+            node_modules/.bin/vsce package ${pluginVersion}
+          cd ../../../
+          mkdir ./IntelliJ_Based/profiler
+          mkdir ./IntelliJ_Based/profiler/server
+          cp -r ./Insight_Kernel/packages/frontend/build ./IntelliJ_Based/foundation/ideaplugin/src/main/resources/frontend/
+          cp -r ./Insight_Kernel/serverBuild/server/* ./IntelliJ_Based/profiler/server/
+          echo ---------------build intellij plugin----------------------
+          cd ./IntelliJ_Based
+          chmod +x ./gradlew
+           ./gradlew buildPlugin
+          cd ..
+          mkdir build
+           cp Insight_Kernel/packages/extension/ascend-insight-extension-${pluginVersion}.vsix build/
+           cp IntelliJ_Based/build/distributions/ascend-insight-6.0.RC2.zip build/
+          echo ---------------uploading-----------------------
+          cd build
+           tar -czvf ../build.tar.gz *
+        check: true
+  POST_BUILD:
+    - get_build_metadata
+    - artget:
+        artifact_type: cloudartifact  # 仓库类型
+        file_path: build.tar.gz
+    - version_set #通常建议将这个插件一起配置上，主要用于上传versionset
+    - get_build_metadata

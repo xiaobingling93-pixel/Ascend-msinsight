@@ -10,59 +10,23 @@ params:
   - name: serverBranch
     value: "dev_ci"
   - name: buildVersion
-    value: "0.0.0.1-SNAPSHOT"
+    value: "0.0.1"
+  - name: onlyWin
+    value: true
+
+
 
 env:
-  label: pap_build20 # 虚拟机标签，表示在哪台虚拟机执行，都写deveco_build
-steps:
-  PRE_BUILD:
-    - checkout:
-        path: IntelliJ_Based # 源码下载到子目录，命名请跟 clone下来的默认名称一致
-    - codehub:
-        url: https://codehub-dg-y.huawei.com/IDE-Insight/Ascend/Insight_Kernel.git
-        branch: ${serverBranch}
-        path: Insight_Kernel
-  BUILD:
-    - build_execute: # master用0.0.0.1-SNAPSHOT 和 0.0.0.1，  develop用0.0.0.2-SNAPSHOT，和 0.0.0.2
-        command: |
-          set JAVA_HOME=D:\install\jdk17
-          echo ---------------build frontend----------------------
-          cd Insight_Kernel\\packages\\frontend
-          call npm install
-          call npm run build
-          echo ---------------build server source----------------------
-          cd ..\\server
-          call npm install
-          call npm run build
-          call xcopy .\\dist\\* .\\buildServer\\ /E /I /Y
-          echo ---------------build server binary----------------------
-          cd buildServer
-          call npm install
-          call electron-packager ./ profiler-server --platform=win32 --arch=x64 --electron-version=24.6.5 --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/ 
-          call rmdir profiler-server-win32-x64\\locales /s /q
-          cd ..\\..\\..\\
-          call xcopy .\\packages\\frontend\\build .\\packages\\extension\\profiler /E /I /Y
-          call xcopy .\\packages\\server\\buildServer\\profiler-server-win32-x64 .\\serverBuild\\server\\ /E /I /Y
-          echo ---------------build vscode extension----------------------
-          cd .\\packages\\extension
-          call npm install
-          call vsce package %pluginVersion%
-          cd ..\\..\\..\\
-          xcopy .\\Insight_Kernel\\packages\\frontend\\build .\\IntelliJ_Based\\foundation\\ideaplugin\\src\\main\\resources\\frontend\\ /E /I /Y
-          xcopy .\\Insight_Kernel\\serverBuild\\server\\* .\\IntelliJ_Based\\profiler\\server\\ /E /I /Y
-          echo ---------------build intellij plugin----------------------
-          cd .\\Intellij_Based
-          call gradlew.bat buildPlugin
-          cd ..
-          mkdir build
-          call xcopy Insight_Kernel\\packages\\extension\\ascend-insight-extension-%pluginVersion%.vsix build\\ /E /I /Y
-          call xcopy Intellij_Based\\build\\distributions\\ascend-insight-6.0.RC2.zip build\\ /E /I /Y
-          echo ---------------uploading----------------------
-          cd build
-          call tar -czvf ../build.tar.gz *
-        check: true
-  POST_BUILD:
-    - artget:
-        artifact_type: cloudartifact  # 仓库类型
-        file_path: build.tar.gz
-    - version_set #通常建议将这个插件一起配置上，主要用于上传versionset
+  label: Bitfun2Yellow_x64_vpc # 虚拟机标签，表示在哪台虚拟机执行，都写deveco_build
+buildflows:
+  - condition: onlyWin == true
+    jobs:
+      - job: buildWin
+        build_ref: .cloudbuild/buildWin.yml
+  - condition: onlyWin == false
+    jobs:
+      - job: buildWin
+        build_ref: .cloudbuild/buildWin.yml
+      - job: buildLinux
+        build_ref: .cloudbuild/buildLinux.yml
+
