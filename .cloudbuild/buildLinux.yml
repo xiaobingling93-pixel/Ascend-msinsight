@@ -44,7 +44,7 @@ steps:
           mkdir serverBuild
           mkdir serverBuild/server
            cp -r ./packages/frontend/build ./packages/extension/profiler
-           cp -r ./packages/server/buildServer/profiler-server-linux-x64 ./serverBuild/server/
+           cp -r ./packages/server/buildServer/profiler-server-linux-x64/* ./serverBuild/server/
           echo ---------------build vscode extension----------------------
           cd ./packages/extension
           npm install

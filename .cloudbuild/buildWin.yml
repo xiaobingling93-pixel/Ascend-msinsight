@@ -55,8 +55,8 @@ steps:
           call gradlew.bat buildPlugin
           cd ..
           mkdir build
-          call xcopy Insight_Kernel\\packages\\extension\\ascend-insight-extension-%pluginVersion%.vsix build\\ /E /I /Y
-          call xcopy IntelliJ_Based\\build\\distributions\\ascend-insight-6.0.RC2.zip build\\ /E /I /Y
+          call xcopy Insight_Kernel\\packages\\extension\\ascend-insight-extension-%pluginVersion%.vsix build\\  /I /Y
+          call xcopy IntelliJ_Based\\build\\distributions\\ascend-insight-6.0.RC2.zip build\\  /I /Y
           echo ---------------uploading----------------------
           cd build
           call tar -czvf ../build.tar.gz *
