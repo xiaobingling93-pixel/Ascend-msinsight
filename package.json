@@ -3,9 +3,6 @@
     "version": "1.0.0",
     "license": "MIT",
     "private": true,
-    "workspaces": [
-        "packages/*"
-    ],
     "scripts": {
         "start": "cd .\\packages\\frontend&&npm start",
         "build": "npm run buildWin",

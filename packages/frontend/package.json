@@ -1,5 +1,5 @@
 {
-  "name": "ohos-hiinsight",
+  "name": "insight_frontend",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
