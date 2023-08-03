@@ -95,14 +95,15 @@ public class ServerHelper {
         }
         try {
             Runtime.getRuntime().exec("chmod +x " + pluginsPath + lineSeparator + CmdConstants.DIC_SERVER);
-            serverProcess = Runtime.getRuntime().exec(pluginsPath + lineSeparator + CmdConstants.DIC_SERVER);
+            serverProcess = Runtime.getRuntime()
+                .exec(pluginsPath + lineSeparator + CmdConstants.DIC_SERVER + CmdConstants.NO_SANDBOX);
         } catch (IOException e) {
             LOGGER.info(e.getMessage());
         }
     }
 
     public static void destroy() {
-        if(serverProcess != null) {
+        if (serverProcess != null) {
             serverProcess.destroy();
             serverProcess = null;
         }

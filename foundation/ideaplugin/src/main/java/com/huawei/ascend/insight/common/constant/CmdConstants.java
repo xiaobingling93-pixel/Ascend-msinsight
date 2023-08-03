@@ -19,6 +19,11 @@ import java.io.File;
  */
 public class CmdConstants {
     /**
+     * NO_SANDBOX
+     */
+    public static final String NO_SANDBOX = " --no-sandbox";
+
+    /**
      * WINDOWS_CMD
      */
     public static final String WINDOWS_CMD = "CMD";
