@@ -7,6 +7,7 @@ package com.huawei.ascend.insight.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -29,25 +30,17 @@ public class ServerHelper {
 
     private static boolean hasBeenDead = false;
 
+    private static boolean isFirstStart = true;
+
+    private static Process serverProcess = null;
+
     private static int tryRestartTime = 0;
 
     public static void startServer() {
         ThreadUtil.runInUIThread(() -> {
-            int maxFailTime = 10;
-            int tryTime = 0;
-            while (tryTime++ < maxFailTime) {
-                executeStartServerCommand();
-                if (ProcessUtils.findProcess(CmdConstants.DIC_SERVER)) {
-                    LOGGER.info("start profiler server success");
-                    startServerHook = AppExecutorUtil.getAppScheduledExecutorService()
-                        .scheduleWithFixedDelay(ServerHelper::serverCheckAndRestart, 3, 3, TimeUnit.SECONDS);
-                    return;
-                }
-                LOGGER.info("start server failed, tryTime:{}", tryTime);
-                ThreadUtil.threadSleep(1500);
-            }
-            LOGGER.info("start profiler server failed");
-            BalloonNotification.show("Fail to start profiler server", NotificationType.WARNING);
+            executeStartServerCommand();
+            startServerHook = AppExecutorUtil.getAppScheduledExecutorService()
+                .scheduleWithFixedDelay(ServerHelper::serverCheckAndRestart, 10, 3, TimeUnit.SECONDS);
         });
     }
 
@@ -64,16 +57,20 @@ public class ServerHelper {
             hasBeenDead = true;
             if (++tryRestartTime <= 5) {
                 LOGGER.info("try to start server again!");
-                BalloonNotification.show("[Ascend Insight]: server is dead,try to restart now, tryTime: " + tryRestartTime,
+                BalloonNotification.show(
+                    "[Ascend Insight]: server is dead,try to restart now, tryTime: " + tryRestartTime,
                     NotificationType.WARNING);
                 executeStartServerCommand();
                 return;
             }
-            BalloonNotification.show("[Ascend Insight]: server restart failed",
-                NotificationType.ERROR);
+            BalloonNotification.show("[Ascend Insight]: server restart failed", NotificationType.ERROR);
             return;
         }
         // 找到了server进程
+        if (isFirstStart) {
+            LOGGER.info("server start success");
+            isFirstStart = false;
+        }
         if (hasBeenDead) {
             hasBeenDead = false;
             tryRestartTime = 0;
@@ -84,21 +81,30 @@ public class ServerHelper {
     }
 
     private static void executeStartServerCommand() {
-        String pluginsPath = PathManager.getPluginsPath() + StringUtil.lineSeparator + "ascend-insight"
-            + StringUtil.lineSeparator + "tools";
+        destroy();
+        String lineSeparator = StringUtil.lineSeparator;
+        String pluginsPath = PathManager.getPluginsPath() + lineSeparator + "ascend-insight" + lineSeparator + "tools";
         List<String> processArgs = new ArrayList<>();
         if (SystemInfo.isWindows) {
             processArgs.add(CmdConstants.WINDOWS_CMD);
             processArgs.add(CmdConstants.WINDOWS_CMD_TERMINAL);
             processArgs.add(CmdConstants.DIC_SERVER);
-            ProcessUtils.execute(processArgs, pluginsPath);
+            Optional<Process> execute = ProcessUtils.execute(processArgs, pluginsPath);
+            serverProcess = execute.orElse(null);
             return;
         }
         try {
-            Runtime.getRuntime().exec("chmod +x " + pluginsPath + StringUtil.lineSeparator + CmdConstants.DIC_SERVER);
-            Runtime.getRuntime().exec(pluginsPath + StringUtil.lineSeparator + CmdConstants.DIC_SERVER);
+            Runtime.getRuntime().exec("chmod +x " + pluginsPath + lineSeparator + CmdConstants.DIC_SERVER);
+            serverProcess = Runtime.getRuntime().exec(pluginsPath + lineSeparator + CmdConstants.DIC_SERVER);
         } catch (IOException e) {
             LOGGER.info(e.getMessage());
+        }
+    }
+
+    public static void destroy() {
+        if(serverProcess != null) {
+            serverProcess.destroy();
+            serverProcess = null;
         }
     }
 }

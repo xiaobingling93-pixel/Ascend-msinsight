@@ -101,7 +101,6 @@ public class InsightWindowFactory implements ToolWindowFactory {
 
     static {
         hookThread();
-        ProcessUtils.killProcess(CmdConstants.DIC_SERVER);
     }
 
     private PropertyChangeListener propertyChangeListener;
@@ -121,7 +120,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
         // 关闭窗口之前发送相关命令暂停session
         private void onBeforeCloseStopSession(CefBrowser cefBrowser) {
             ServerHelper.cancelServerHook();
-            ProcessUtils.killProcess(CmdConstants.DIC_SERVER);
+            ServerHelper.destroy();
             CefMessageRouterProxy.getInstance().removeRouter(webView.getCefBrowser());
             // 移除webView注册的相关内容
             cefBrowser.getClient().removeMessageRouter(router);
