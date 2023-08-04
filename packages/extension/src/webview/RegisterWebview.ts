@@ -16,7 +16,7 @@ export class RegisterWebview extends Webview {
     private serverCheckSchedule?: NodeJS.Timeout;
     private hasBeenDead = false;
     private tryRestartTime = 0;
-    private readonly findServerCommand = platform() === 'win32' ? 'tasklist | findstr profiler-server.exe' : 'ps aux | grep profiler-server';
+    private readonly findServerCommand = platform() === 'win32' ? 'tasklist | findstr profiler-server.exe' : 'ps aux | grep profiler-serve';
 
     constructor(viewType: string, title: string, context: vscode.ExtensionContext) {
         super(viewType, title, context);
@@ -92,7 +92,7 @@ export class RegisterWebview extends Webview {
                     console.error(`exec stderr: ${stderr}`);
                 }
                 // server挂了,只提醒3次
-                if (!stdout.includes('profiler-server.exe')) {
+                if (!stdout.includes('profiler-server')) {
                     if (this.tryRestartTime++ < 3) {
                         vscode.window.showWarningMessage('[insight]: server has been dead, please close and reopen');
                         return;
