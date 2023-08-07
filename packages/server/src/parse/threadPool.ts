@@ -44,7 +44,7 @@ export class ThreadPool {
                 this.taskFinishCallback(msg.data);
             }
             if (this.taskList.length > 0) {
-                const data = this.taskList.pop();
+                const data = this.taskList.shift();
                 work.postMessage({ command: WorkMessageType.PARSE, data });
             } else {
                 const i = this.runningWorkers.indexOf(work);
