@@ -1,6 +1,5 @@
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react-lite';
-import loading from '../assets/images/loading.webp';
 import React, { useEffect } from 'react';
 import { BottomPanel } from '../components/BottomPanel';
 import { ChartContainer } from '../components/ChartContainer';
@@ -9,10 +8,7 @@ import { stateTexts } from '../utils/constant';
 import { DragDirection, useDraggableContainer } from '../utils/useDraggableContainer';
 
 const ImgWithFallback = ({
-    src = '',
-    fallback = '',
-    type = 'image/webp',
-    ...delegated
+    className = '',
 }): JSX.Element => {
     const PictureContainer = styled.picture`
         img {
@@ -22,8 +18,7 @@ const ImgWithFallback = ({
     `;
     return (
         <PictureContainer>
-            <source srcSet={src} type={type} />
-            <img src={fallback} {...delegated} />
+            <div className={className}></div>
         </PictureContainer>
     );
 };
@@ -59,7 +54,7 @@ const StatePopover = observer(({ session }: { session: Session }) => {
     `;
     return <Mask>
         <Info className={'info'}>
-            <ImgWithFallback className={'img'} src={loading} />
+            <ImgWithFallback className={'loading'}/>
             {stateText}</Info>
     </Mask>;
 });

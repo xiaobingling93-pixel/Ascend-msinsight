@@ -187,7 +187,7 @@ function InternalTable<RecordType extends DefaultRecordType>(
     mergedExpandable.expandIcon = mergedExpandable.expandIcon || expandIconFor(tableLocale);
 
     const wrapperClassNames = classNames(`${prefixCls}-wrapper`, className);
-    Spin.setDefaultIndicator(<img src = {loading}></img>)
+    Spin.setDefaultIndicator(<div className='loading'/>)
     return (
         <div className={wrapperClassNames}>
             <Spin spinning={isLoading}>
