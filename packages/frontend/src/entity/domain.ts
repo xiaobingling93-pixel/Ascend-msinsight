@@ -39,7 +39,7 @@ const zoomCenterify = ({ domain: [ start, end ], newDuration, upperBound, point 
 
 export class Domain {
     private readonly _DEFAULT_DURATION: TimeStamp;
-    private readonly _UPPER_BOUND: TimeStamp;
+    private readonly _UPPER_BOUND: TimeStamp = Number.MAX_VALUE;
     private readonly _LOWER_BOUND: TimeStamp;
 
     private _domainStart: TimeStamp;
@@ -58,7 +58,6 @@ export class Domain {
         // return ns time duration or ms time duration
         this._DEFAULT_DURATION = isNsMode ? 2e10 : 2e4;
         // one screen represent 5min at most
-        this._UPPER_BOUND = isNsMode ? 5 * 60 * 1e9 : 5 * 60 * 1e3;
         // one screen represent 10[us] or 625[ms] at least
         this._LOWER_BOUND = isNsMode ? 1e3 : 625;
         this._endTimeAll = endTimeAll ?? this._DEFAULT_DURATION;
@@ -114,7 +113,7 @@ export class Domain {
         if (positiveStart === 0 && positiveEnd === 0) {
             // reset domainRange
             [ this._domainStart, this._domainEnd ] = [ 0, this._DEFAULT_DURATION ];
-        } else if (positiveEnd - positiveStart < this._LOWER_BOUND || positiveEnd - positiveStart > this._UPPER_BOUND) {
+        } else if (positiveEnd - positiveStart < this._LOWER_BOUND || positiveEnd - positiveStart > this.maxDuration) {
             // when domain oversize, zoom adaptably.
             const newDuration = clamp(this.duration, this._LOWER_BOUND, this.maxDuration);
             [ this._domainStart, this._domainEnd ] = zoomCenterify({

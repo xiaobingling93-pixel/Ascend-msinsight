@@ -21,6 +21,7 @@ import {
     mouseLeaveAction,
     mouseWheelAction,
     mouseMoveAction,
+    keyDownAction,
     MouseDownActionResult,
 } from './actions';
 
@@ -82,6 +83,7 @@ export interface ChartInteractorHandles {
     mouseUpAction: (interactorMouseState: InteractorMouseState, e: MouseEvent) => void;
     mouseWheelAction: (interactorMouseState: InteractorMouseState) => void;
     mouseLeaveAction: (interactorMouseState: InteractorMouseState) => void;
+    keyDownAction: (e: React.KeyboardEvent<HTMLDivElement>, interactorMouseState: InteractorMouseState) => void;
 }
 
 export type InteractorMouseState = {
@@ -129,6 +131,7 @@ const Interactor = (props: ChartInteractorProps, ref: Ref<ChartInteractorHandles
             traceEnd(item);
         });
     }, [ domainStart, domainEnd, endTimeAll, session.selectedRange, theme, rect, session.linkData, session.scrollTop, ...customRenderTriggers ]);
+    const point = interactorMouseState.lastPos?.current?.x !== undefined ? xScale(interactorMouseState.lastPos?.current?.x) : undefined;
     useImperativeHandle(ref, () => ({
         mouseMoveAction: (interactorMouseState: InteractorMouseState) => {
             mouseMoveAction(interactorParams, interactorMouseState);
@@ -141,11 +144,14 @@ const Interactor = (props: ChartInteractorProps, ref: Ref<ChartInteractorHandles
         },
         mouseWheelAction: (interactorMouseState: InteractorMouseState) => {
             if (interactorMouseState.wheelEvent) {
-                mouseWheelAction(session, accumulativeZoomRef, xScale(interactorMouseState.lastPos?.current?.x ?? 0), interactorMouseState.wheelEvent);
+                mouseWheelAction(session, accumulativeZoomRef, point, interactorMouseState.wheelEvent);
             }
         },
         mouseLeaveAction: (interactorMouseState: InteractorMouseState) => {
             mouseLeaveAction(interactorParams, interactorMouseState);
+        },
+        keyDownAction: (e: React.KeyboardEvent<HTMLDivElement>, interactorMouseState: InteractorMouseState) => {
+            keyDownAction(e.key, session, point);
         },
     }));
     return <Overlay ref={canvas} style={{ width: '100%' }}></Overlay>;
