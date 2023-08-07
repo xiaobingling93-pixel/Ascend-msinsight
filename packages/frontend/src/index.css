@@ -86,3 +86,23 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .insight-category-search-overlay div.ant-tooltip-arrow {
     display: none;
 }
+
+.loading {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #7f7f7f;
+    border-top-color: transparent;
+    border-radius: 100%;
+    margin-right: 3px;
+
+    animation: circle infinite 0.75s linear;
+}
+@keyframes circle {
+    0% {
+        transform: rotate(0);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
