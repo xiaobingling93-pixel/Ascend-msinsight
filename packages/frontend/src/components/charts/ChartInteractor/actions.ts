@@ -1,4 +1,4 @@
-import { throttle } from 'lodash';
+import { clamp, throttle } from 'lodash';
 import { runInAction } from 'mobx';
 import React from 'react';
 import { Session } from '../../../entity/session';
@@ -7,6 +7,7 @@ import { InteractorMouseState, InteractorParams } from './ChartInteractor';
 import { isOnSideline, SINGLE_DRAG_OFFSET } from './common';
 import { draw } from './draw';
 import { changeRangeMarkerTimestamp } from '../../TimelineMarker';
+import { GOLDEN_RATE as MOVE_RATE } from '../../../entity/domain';
 
 const MIN_BRUSH_SIZE = 1;
 
@@ -145,3 +146,38 @@ export const mouseWheelAction = (
         handleZoom(session, accumulativeZoomRef, zoomPoint);
     }
 };
+
+const zoomDomain = (session: Session, zoomCount: number, zoomPoint: number | undefined): void => {
+    runInAction(() => {
+        session.zoom = { zoomCount, zoomPoint };
+    });
+};
+
+const moveDomain = (session: Session, direction: number): void => {
+    const { domainRange: { domainStart, domainEnd } } = session;
+    const timeDuration = domainEnd - domainStart;
+    const timeOffset = direction * MOVE_RATE * timeDuration;
+    const newEnd = clamp(domainEnd + timeOffset, timeDuration, session.endTimeAll ?? session.domain.defaultDuration);
+    runInAction(() => {
+        session.domainRange = { domainStart: newEnd - timeDuration, domainEnd: newEnd };
+    });
+};
+
+const zoomOrMoveDirection = {
+    upOrRight: 1,
+    downOrLeft: -1,
+};
+
+export const keyDownAction = throttle((key: string, session: Session, zoomPoint: number | undefined): void => {
+    if (key === 'w' || key === 'W') {
+        zoomDomain(session, zoomOrMoveDirection.downOrLeft, zoomPoint);
+    } else if (key === 's' || key === 'S') {
+        zoomDomain(session, zoomOrMoveDirection.upOrRight, zoomPoint);
+    } else if (key === 'a' || key === 'A') {
+        moveDomain(session, zoomOrMoveDirection.downOrLeft);
+    } else if (key === 'd' || key === 'D') {
+        moveDomain(session, zoomOrMoveDirection.upOrRight);
+    } else {
+        // handle other keys
+    }
+}, 30);
