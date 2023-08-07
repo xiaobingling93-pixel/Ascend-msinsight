@@ -521,6 +521,22 @@ export class Table {
         });
     }
 
+    async queryTrackId(threadName: String): Promise<any> {
+        const sql: string = `SELECT track_id
+                             FROM ${this.threadTable}
+                             WHERE thread_name = ?`;
+        return new Promise((resolve, reject) => {
+            this.db.get(sql, [threadName], (err, row) => {
+                if (err !== undefined && err !== null) {
+                    logger.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(row);
+                }
+            });
+        });
+    }
+
     async queryThreadsInfo(trackId: number, minTimestamp: number, maxTimestamp: number): Promise<any> {
         return new Promise((resolve, reject) => {
             const sql: string = `SELECT timestamp, duration, timestamp + duration AS endTime, name, depth FROM ${this.sliceTable}
@@ -532,6 +548,59 @@ export class Table {
                              depth ASC,
                              timestamp ASC`;
             this.db.all(sql, [ trackId, maxTimestamp, minTimestamp ], (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    logger.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
+    async queryCommunicationDetailInfo(timeFlag: String, currentPage: number, pageSize: number, client: Client, trackId: number): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `SELECT name, timestamp -
+                                        ${client.shadowSession.extremumTimestamp.minTimestamp} as startTime, duration
+                                 FROM ${this.sliceTable}
+                                 WHERE
+                                     track_id = ?
+                                   and
+                                     ARGS like '%transport type%'
+                                   and ARGS like '%${timeFlag}%'
+                                     LIMIT ?
+                                 offset ?`;
+            this.db.all(sql, [ trackId, pageSize, (currentPage - 1) * pageSize ], (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    logger.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
+    async queryComputeDetailInfo(timeFlag: string, currentPage: number, pageSize: number, client: Client): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `SELECT
+                                    name,
+                                    type,
+                                    start_time - ${client.shadowSession.extremumTimestamp.minTimestamp} as startTime,
+                                    duration,
+                                    wait_time,
+                                    block_dim,
+                                    input_shapes,
+                                    input_data_types,
+                                    input_formats,
+                                    output_shapes,
+                                    output_data_types,
+                                    output_formats
+                                    FROM ${KERNEL_DETAIL_TABLE}
+                                    WHERE accelerator_core = ?
+                                    ORDER BY id
+                                   LIMIT ? offset ?`;
+            this.db.all(sql, [ timeFlag, pageSize, (currentPage - 1) * pageSize ], async (err, rows) => {
                 if (err !== undefined && err !== null) {
                     logger.error(err.message);
                     reject(err);
@@ -671,6 +740,23 @@ export class Table {
             });
         });
     };
+
+    async queryNotOverlapTime(table: Table, notOverlapTrackId: number, timeStamp: number, duration: number): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `SELECT duration FROM ${this.sliceTable}
+                                WHERE track_id = ?
+                              and timestamp >= ?
+                              and timeStamp + duration <= ?`;
+            this.db.all(sql, [ notOverlapTrackId, timeStamp, duration + timeStamp ], async (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    logger.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
 
     async queryComputeStatisticsData(): Promise<any> {
         return new Promise((resolve, reject) => {

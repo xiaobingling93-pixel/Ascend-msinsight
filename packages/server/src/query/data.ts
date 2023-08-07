@@ -159,6 +159,42 @@ export type ExtremumTimestamp = {
     maxTimestamp: number;
 };
 
+export type SummaryDetailRequest = {
+    rankId: string;
+    timeFlag: string;
+    currentPage: number;
+    pageSize: number;
+};
+
+export type CommunicationDetailResponse = {
+    communicationDetail: CommunicationDetail[];
+};
+export type CommunicationDetail = {
+    communicationKernel: string;
+    startTime: number;
+    totalDuration: number;
+    overlapDuration: number;
+    notOverlapDuration: number;
+};
+export type ComputeDetailResponse = {
+    computeDetail: ComputeDetail[];
+};
+
+export type ComputeDetail = {
+    name: string;
+    type: string;
+    startTime: number;
+    duration: number;
+    waitTime: number;
+    blockDim: number;
+    inputShapes: string;
+    inputDataTypes: string;
+    inputFormats: string;
+    outputShapes: string;
+    outputDataTypes: string;
+    outputFormats: string;
+};
+
 export type SummaryItemVO = {
     rankId: String;
     totalTime: number;
