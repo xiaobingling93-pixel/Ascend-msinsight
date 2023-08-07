@@ -5,6 +5,7 @@ import { flowDetailHandler, flowNameHandler, threadInfoHandler, threadsInfoHandl
 import { importHandler } from './handlers/import';
 import { unitMetadataHandler } from './query/unitMetadataHandler';
 import { resetHandler } from './handlers/reset';
+import { loggerHandler } from './logger/logger_handler';
 
 export const HANDLER_MAP: Record<string, Handler> = {
     test: testHandler,
@@ -17,4 +18,5 @@ export const HANDLER_MAP: Record<string, Handler> = {
     'unit/threads': threadsInfoHandler,
     'unit/flowName': flowNameHandler,
     'unit/flow': flowDetailHandler,
+    'log/logger': loggerHandler,
 };

@@ -1,6 +1,9 @@
 import * as sqlite from 'sqlite3';
 import { RowThreadTrace, ThreadTrace } from '../query/thread.trace.handler';
 import { Client } from '../types';
+import { getLoggerByName } from '../logger/loggger_configure';
+
+const logger = getLoggerByName('table', 'info');
 
 export class Table {
     private readonly db: sqlite.Database;
@@ -21,9 +24,9 @@ export class Table {
     constructor(dbPath: string) {
         this.db = new sqlite.Database(dbPath, sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE | sqlite.OPEN_SHAREDCACHE, (err) => {
             if (err !== null) {
-                console.error(err.message);
+                logger.error(err.message);
             }
-            console.log('Connect to database.');
+            logger.info('Connect to database.');
         });
         this._dbPath = dbPath;
     }
@@ -33,9 +36,9 @@ export class Table {
             this.db.run('PRAGMA synchronous = OFF')
                 .run('PRAGMA journal_mode = MEMORY', (err) => {
                     if (err) {
-                        console.error(err.message);
+                        logger.error(err.message);
                     }
-                    console.log('set config');
+                    logger.info('set config');
                     resolve();
                 });
         });
@@ -72,9 +75,9 @@ export class Table {
                     .run('PRAGMA synchronous = OFF')
                     .run('PRAGMA journal_mode = MEMORY', (err) => {
                         if (err) {
-                            console.error(err.message);
+                            logger.error(err.message);
                         }
-                        console.log('Create table end.');
+                        logger.info('Create table end.');
                         resolve();
                     });
             });
@@ -84,17 +87,17 @@ export class Table {
     async close(): Promise<void> {
         return new Promise((resolve, reject) => {
             this.sliceStat?.finalize(() => {
-                console.log('slice stat finalize.');
+                logger.info('slice stat finalize.');
             });
             this.flowStat?.finalize(() => {
-                console.log('flow stat finalize.');
+                logger.info('flow stat finalize.');
             });
             this.db.close((err) => {
                 if (err !== null) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 }
-                console.log('Close the database connection.');
+                logger.info('Close the database connection.');
                 resolve();
             });
         });
@@ -110,12 +113,12 @@ export class Table {
                 }
                 this.sliceStat?.reset().run(paramsList, (err) => {
                     if (err) {
-                        console.error(err.message);
+                        logger.error(err.message);
                         reject(err);
                     }
                     ++this.count;
                     if (this.count % 100 === 0) {
-                        console.log('insertSliceList count.', this.count * dataList.length);
+                        logger.info('insertSliceList count.', this.count * dataList.length);
                     }
                     resolve();
                 });
@@ -124,12 +127,12 @@ export class Table {
                 const sql: string = `INSERT INTO ${this.sliceTable} (timestamp, duration, name, track_id, cat, args) VALUES ${placeholders}`;
                 this.db.run(sql, paramsList, (err) => {
                     if (err !== null) {
-                        console.error(err.message);
+                        logger.error(err.message);
                         reject(err);
                     }
                     ++this.count;
                     if (this.count % 100 === 0) {
-                        console.log('insertSliceList count.', this.count * dataList.length);
+                        logger.info('insertSliceList count.', this.count * dataList.length);
                     }
                     resolve();
                 });
@@ -156,7 +159,7 @@ export class Table {
                             ON CONFLICT (pid) DO UPDATE SET process_name = excluded.process_name`;
         this.db.run(sql, [ pid, name ], (err) => {
             if (err !== null) {
-                console.error(err.message);
+                logger.error(err.message);
             }
         });
     }
@@ -166,7 +169,7 @@ export class Table {
                             ON CONFLICT (pid) DO UPDATE SET label = excluded.label;`;
         this.db.run(sql, [ pid, label ], (err) => {
             if (err !== null) {
-                console.error(err.message);
+                logger.error(err.message);
             }
         });
     }
@@ -176,7 +179,7 @@ export class Table {
                             ON CONFLICT (pid) DO UPDATE SET process_sort_index = excluded.process_sort_index;`;
         this.db.run(sql, [ pid, sortIndex ], (err) => {
             if (err !== null) {
-                console.error(err.message);
+                logger.error(err.message);
             }
         });
     }
@@ -187,7 +190,7 @@ export class Table {
                             SET tid = excluded.tid, pid = excluded.pid, thread_name = excluded.thread_name`;
         this.db.run(sql, [ trackId, tid, pid, threadName ], (err) => {
             if (err !== null) {
-                console.error(err.message);
+                logger.error(err.message);
             }
         });
     }
@@ -197,7 +200,7 @@ export class Table {
                             ON CONFLICT (track_id) DO UPDATE SET thread_sort_index = excluded.thread_sort_index`;
         this.db.run(sql, [ trackId, sortIndex ], (err) => {
             if (err !== null) {
-                console.error(err.message);
+                logger.error(err.message);
             }
         });
     }
@@ -216,7 +219,7 @@ export class Table {
                 }
                 this.flowStat?.reset().run(paramsList, (err) => {
                     if (err) {
-                        console.error(err.message);
+                        logger.error(err.message);
                         reject(err);
                     }
                     resolve();
@@ -226,7 +229,7 @@ export class Table {
                 const sql: string = `INSERT INTO ${this.flowTable} (flow_id, name, track_id, timestamp, cat, type) VALUES ${placeholders}`;
                 this.db.run(sql, paramsList, (err) => {
                     if (err !== null) {
-                        console.error(err.message);
+                        logger.error(err.message);
                         reject(err);
                     }
                     resolve();
@@ -253,7 +256,7 @@ export class Table {
         return new Promise((resolve, reject) => {
             this.db.run('BEGIN', (err) => {
                 if (err) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 }
                 resolve();
@@ -265,7 +268,7 @@ export class Table {
         return new Promise((resolve, reject) => {
             this.db.run('COMMIT', (err) => {
                 if (err) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 }
                 resolve();
@@ -289,7 +292,7 @@ export class Table {
         return new Promise((resolve, reject) => {
             this.db.get(sql, (err, row) => {
                 if (err !== undefined && err !== null) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 } else {
                     resolve(row);
@@ -331,7 +334,7 @@ export class Table {
         return new Promise((resolve, reject) => {
             this.db.all(sql, function (err, rows) {
                 if (err !== undefined && err !== null) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 } else {
                     resolve(rows);
@@ -348,10 +351,10 @@ export class Table {
                     .run(`CREATE INDEX ${this.idIndex} ON ${this.sliceTable} (id)`)
                     .run(`CREATE INDEX ${this.trackIdTimeIndex} ON ${this.sliceTable} (track_id, timestamp)`, (err) => {
                         if (err) {
-                            console.error(err.message);
+                            logger.error(err.message);
                             reject(err);
                         }
-                        console.log('create id index end.', new Date().getTime() - start);
+                        logger.info('create id index end.', new Date().getTime() - start);
                         resolve();
                     });
             });
@@ -362,7 +365,7 @@ export class Table {
         return new Promise((resolve, reject) => {
             this.db.all(`SELECT track_id From ${this.threadTable}`, (err, rows: any[]) => {
                 if (err) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 }
                 const tracks = [];
@@ -380,7 +383,7 @@ export class Table {
         for (const trackId of trackIdList) {
             await this.updateOneTrackDepth(trackId);
         }
-        console.log('update depth end. time:', new Date().getTime() - start);
+        logger.info('update depth end. time:', new Date().getTime() - start);
     }
 
     async updateOneTrackDepth(trackId: number): Promise<void> {
@@ -392,7 +395,7 @@ export class Table {
                     .all(`SELECT id, timestamp, duration, track_id FROM ${this.sliceTable} WHERE track_id = ? ORDER BY timestamp`,
                         [trackId], (err, rows: any[]) => {
                             if (err) {
-                                console.error(err.message);
+                                logger.error(err.message);
                                 reject(err);
                             }
                             const depthMap = this.getDepth(rows);
@@ -407,10 +410,10 @@ export class Table {
                         })
                     .run('COMMIT', (err) => {
                         if (err) {
-                            console.error(err.message);
+                            logger.error(err.message);
                             reject(err);
                         }
-                        console.log(`trackId ${trackId} update depth end. time:${new Date().getTime() - start}`);
+                        logger.info(`trackId ${trackId} update depth end. time:${new Date().getTime() - start}`);
                         resolve();
                     });
             });
@@ -450,7 +453,7 @@ export class Table {
         return new Promise((resolve, reject) => {
             this.db.get(sql, [ trackId, endTime, startTime ], (err, row) => {
                 if (err !== undefined && err !== null) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 } else {
                     resolve(row);
@@ -471,7 +474,7 @@ export class Table {
                              timestamp ASC`;
             this.db.all(sql, [ trackId, maxTimestamp, minTimestamp ], (err, rows) => {
                 if (err !== undefined && err !== null) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 } else {
                     resolve(rows);
@@ -491,7 +494,7 @@ export class Table {
             ORDER BY start_time;`,
             async (err, rows: any) => {
                 if (err) {
-                    console.log('track_id error:', err);
+                    logger.info('track_id error:', err);
                     reject(err);
                 }
                 processThreadTracesRowData(threadId, rows, rowDatas);
@@ -512,7 +515,7 @@ export class Table {
                                     AND TIMESTAMP = ?`;
             this.db.all(sql, [ depth, trackId, startTime ], async (err, rows) => {
                 if (err !== undefined && err !== null) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 } else {
                     resolve(rows);
@@ -529,7 +532,7 @@ export class Table {
                                     AND TRACK_ID = ?`;
             this.db.all(sql, [ depth, endTime, startTime, trackId ], async (err, rows) => {
                 if (err !== undefined && err !== null) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 } else {
                     resolve(rows);
@@ -543,7 +546,7 @@ export class Table {
             const sql: string = `SELECT * FROM ${this.flowTable} WHERE FLOW_ID = ?`;
             this.db.all(sql, [flowId], async (err, rows) => {
                 if (err !== undefined && err !== null) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 } else {
                     resolve(rows);
@@ -561,7 +564,7 @@ export class Table {
                                  WHERE FL.TIMESTAMP = SL.TIMESTAMP AND FL.flow_id = ?`;
             this.db.all(sql, [flowId], async (err, rows) => {
                 if (err !== undefined && err !== null) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 } else {
                     resolve(rows);
@@ -576,7 +579,7 @@ export class Table {
                                     TIMESTAMP = ? AND TRACK_ID = ?`;
             this.db.all(sql, [ startTime, trackId ], async (err, rows) => {
                 if (err !== undefined && err !== null) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 } else {
                     resolve(rows);
@@ -601,7 +604,7 @@ export class Table {
                                         )`;
             this.db.all(sql, [ flowId, type, flowId, type ], async (err, rows) => {
                 if (err !== undefined && err !== null) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 } else {
                     resolve(rows);

@@ -1,7 +1,9 @@
 import fs from 'fs';
 import { Table } from '../database/table';
 import { getTrackId } from '../utils/common_util';
+import { getLoggerByName } from '../logger/loggger_configure';
 
+export const logger = getLoggerByName('parser', 'info');
 export class Parser {
     private counter = 0;
     private ignoreCount = 0;
@@ -22,7 +24,7 @@ export class Parser {
         try {
             events = JSON.parse('[' + str + ']');
         } catch (e) {
-            console.log(`parse json error. ${e} \njson string: ${str.slice(0, 100)}......${str.slice(-100, -1)}`);
+            logger.info(`parse json error. ${e} \njson string: ${str.slice(0, 100)}......${str.slice(-100, -1)}`);
             return;
         }
         for (const event of events) {
@@ -65,7 +67,7 @@ export class Parser {
                 await this.flowEventsHandler(data);
                 break;
             default:
-                console.log('Unknown data type. ', data.ph);
+                logger.info('Unknown data type. ', data.ph);
                 ++this.ignoreCount;
         }
     }

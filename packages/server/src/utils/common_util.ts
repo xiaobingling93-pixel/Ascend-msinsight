@@ -2,6 +2,9 @@ import { SHA256 } from 'crypto-js';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { getLoggerByName } from '../logger/loggger_configure';
+
+const logger = getLoggerByName('common_util', 'info');
 
 /**
  * get traceId
@@ -22,27 +25,27 @@ export function getTrackId(tid: number, pid: string): number {
  * @param filePath 文件路径
  */
 export function parseCardID(filePath: string): string {
-    console.log('start parse CardID');
+    logger.info('start parse CardID');
     let rankId = crypto.randomUUID() as string;
     try {
         const fd = fs.openSync(filePath, 'r');
         const buf = Buffer.alloc(128);
         fs.readSync(fd, buf, 0, 128, 0);
         const bufString = buf.toString('utf-8');
-        console.log('bufString: ', bufString);
+        logger.info('bufString: ', bufString);
         const start = bufString.indexOf('{');
         const end = bufString.indexOf('}');
         const rankIDJsonString = bufString.substring(start, end + 1);
         const rank = JSON.parse(rankIDJsonString);
         return String(rank.rank_id);
     } catch (err) {
-        console.error(err);
+        logger.error(err);
     }
     try {
-        console.log('try get dirname*2 of filePath.');
+        logger.info('try get dirname*2 of filePath.');
         rankId = path.basename(path.dirname(path.dirname(filePath)));
     } catch (error) {
-        console.error(error);
+        logger.error(error);
     }
     return rankId;
 }

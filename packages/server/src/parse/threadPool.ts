@@ -1,5 +1,6 @@
 import { Worker, isMainThread, parentPort } from 'worker_threads';
 import { parseWorkerOnMessage } from './parser_worker';
+import { getLoggerByName } from '../logger/loggger_configure';
 
 if (!isMainThread) {
     parentPort?.on('message', async (msg: any) => await parseWorkerOnMessage(msg));
@@ -14,6 +15,8 @@ export enum WorkStatus {
     RUNNING = 0,
     END,
 }
+
+const logger = getLoggerByName('threadPool', 'info');
 
 export class ThreadPool {
     private readonly taskCount = 4;
@@ -36,10 +39,10 @@ export class ThreadPool {
         // const work: Worker = new Worker(workPath);
         // On worker online
         work.on('online', () => {
-            console.log(`[ThreadPool] worker ${n} is online and executing code!`);
+            logger.info(`[ThreadPool] worker ${n} is online and executing code!`);
         });
         work.on('message', (msg) => {
-            console.log(`[ThreadPool] worker ${n} is done! task count:${this.taskList.length}`);
+            logger.info(`[ThreadPool] worker ${n} is done! task count:${this.taskList.length}`);
             if (this.taskFinishCallback) {
                 this.taskFinishCallback(msg.data);
             }
@@ -50,7 +53,7 @@ export class ThreadPool {
                 const i = this.runningWorkers.indexOf(work);
                 this.runningWorkers.splice(i, 1);
                 this.awaitWorkers.push(work);
-                console.log(`[ThreadPool] tasks. running:${this.runningWorkers.length}, await:${this.awaitWorkers.length}`);
+                logger.info(`[ThreadPool] tasks. running:${this.runningWorkers.length}, await:${this.awaitWorkers.length}`);
                 if (this.runningWorkers.length === 0 && this.allTaskFinishCallback) {
                     this.allTaskFinishCallback();
                 }
@@ -58,12 +61,12 @@ export class ThreadPool {
         });
         // On worker exit
         work.on('exit', (code) => {
-            console.log(`[ThreadPool] Worker ${n} execution is over with code: ${code}`);
+            logger.info(`[ThreadPool] Worker ${n} execution is over with code: ${code}`);
         });
         // On worker error
         work.on('error', (error) => {
             // Sometime stack is undefined, we can stringify error instead
-            console.log(`[ThreadPool] Worker ${n} catch an error: ${error.stack ?? JSON.stringify(error)}`);
+            logger.info(`[ThreadPool] Worker ${n} catch an error: ${error.stack ?? JSON.stringify(error)}`);
         });
         return work;
     }

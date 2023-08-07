@@ -1,6 +1,7 @@
 import { tableMap } from '../database/tableManager';
 import { Table } from '../database/table';
 import { ExtremumTimestamp, InsightMetaData, metadataDto, ProcessMetaData, ThreadMetaData } from './data';
+import { getLoggerByName } from '../logger/loggger_configure';
 
 enum UnitType {
     Card = 'card',
@@ -8,9 +9,11 @@ enum UnitType {
     Thread = 'thread',
 }
 
+const logger = getLoggerByName('unitMetadataHandler', 'info');
+
 export const unitMetadataHandler = async (req: { rankId: string }): Promise<Record<string, unknown>> => {
     if (req.rankId === undefined || !tableMap.has(req.rankId)) {
-        console.error('rank id is invalid.');
+        logger.error('rank id is invalid.');
         return {};
     }
     return queryUnitsMetadata(req.rankId);
@@ -26,7 +29,7 @@ export async function queryUnitsMetadata(rankId: string): Promise<any> {
     const rows = await table.selectUnitsMetadata() as metadataDto[];
     const insightMetaData: InsightMetaData<any> = { type: UnitType.Card, metadata: { cardId: rankId } };
     if (rows.length === 0) {
-        console.error('not find metadata, rank id: ', rankId);
+        logger.error('not find metadata, rank id: ', rankId);
         return { insightMetaData, extremumTimestamp: { maxTimestamp: 0, minTimestamp: 0 } };
     }
     insightMetaData.children = [];

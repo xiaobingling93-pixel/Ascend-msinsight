@@ -11,6 +11,8 @@
     "dependencies": {
         "crypto-js": "^4.1.1",
         "sqlite3": "^5.1.5",
+        "log4js": "6.7.1",
+        "lodash": "4.17.21",
         "threads": "^1.7.0",
         "ws": "^8.13.0"
     },
