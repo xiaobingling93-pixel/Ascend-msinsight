@@ -4,22 +4,21 @@ import { getLoggerByName } from '../loggger_configure';
 import { levels } from 'log4js';
 
 describe('logger test', () => {
-
     it('logger handler throw error when name is empty', async function () {
         const req: Record<string, any> = {
             logName: null,
             level: 'info',
-            message: 'log test'
+            message: 'log test',
         };
-        // @ts-ignore
+        // @ts-expect-error
         await expect(loggerHandler(req, null)).rejects
             .toEqual(new InsightError(1, 'logName is empty'));
         req.logName = undefined;
-        // @ts-ignore
+        // @ts-expect-error
         await expect(loggerHandler(req, null)).rejects
             .toEqual(new InsightError(1, 'logName is empty'));
         req.logName = '';
-        // @ts-ignore
+        // @ts-expect-error
         await expect(loggerHandler(req, null)).rejects
             .toEqual(new InsightError(1, 'logName is empty'));
     });
@@ -28,16 +27,16 @@ describe('logger test', () => {
         const req: Record<string, any> = {
             logName: 'test',
             level: 'info',
-            message: 'log test'
+            message: 'log test',
         };
-        // @ts-ignore
-        await expect(loggerHandler(req, null)).resolves.toStrictEqual({code: 0})
-        req.level = 'debug'
-        // @ts-ignore
-        await expect(loggerHandler(req, null)).resolves.toStrictEqual({code: 0})
-        req.level = 'error'
-        // @ts-ignore
-        await expect(loggerHandler(req, null)).resolves.toStrictEqual({code: 0})
+        // @ts-expect-error
+        await expect(loggerHandler(req, null)).resolves.toStrictEqual({ code: 0 });
+        req.level = 'debug';
+        // @ts-expect-error
+        await expect(loggerHandler(req, null)).resolves.toStrictEqual({ code: 0 });
+        req.level = 'error';
+        // @ts-expect-error
+        await expect(loggerHandler(req, null)).resolves.toStrictEqual({ code: 0 });
     });
 
     it('get logger is enabled when level is high than logger\'s level', async function () {
