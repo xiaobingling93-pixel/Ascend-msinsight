@@ -4,12 +4,16 @@ import * as React from 'react';
 import { Session } from '../entity/session';
 import { TimeMakerButton } from './TimeMakerButton';
 import { CustomButton } from './base/StyledButton';
-import { ReactComponent as OpenIcon } from '../assets/images/ic_public_download.svg';
-import { ReactComponent as ResetIcon } from '../assets/images/insights/ark_gc.svg';
+import { ReactComponent as AntdOpenIcon } from '../assets/images/ic_public_download.svg';
+import { ReactComponent as AntdResetIcon } from '../assets/images/insights/ark_gc.svg';
 import { runInAction } from 'mobx';
 import { useState } from 'react';
 import { CardUnit } from '../insight/units/AscendUnit';
 import { messageSender } from '../connection/messageSender';
+import { SvgType } from './base/rc-table/types';
+
+const OpenIcon = AntdOpenIcon as SvgType;
+const ResetIcon = AntdResetIcon as SvgType;
 
 const Container = styled.div`
     display: flex;

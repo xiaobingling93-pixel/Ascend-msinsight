@@ -4,10 +4,13 @@ import { Checkbox, Tooltip } from 'antd';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { observer } from 'mobx-react';
 import React, { Fragment, useState } from 'react';
-import { ReactComponent as funnelIcon } from '../assets/images/insights/FunnelIcon.svg';
+import { ReactComponent as AntdFunnelIcon } from '../assets/images/insights/FunnelIcon.svg';
 import { InsightUnit } from '../entity/insight';
 import { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
+import { SvgType } from './base/rc-table/types';
+
+const funnelIcon = AntdFunnelIcon as SvgType;
 
 // index is availableUnits`s index
 const onChange = (session: Session, index: number, e: CheckboxChangeEvent): void => {
@@ -63,7 +66,7 @@ const UnitListContent = (session: Session): JSX.Element => {
                             <Checkbox
                                 style={{ color: theme.tooltipFontColor, backgroundColor: theme.tooltipBGColor }}
                                 defaultChecked={getIndexInUnits(session, unit.constructor) !== -1}
-                                onChange={(e) => onChange(session, index, e)}>{unit.name}
+                                onChange={(e: CheckboxChangeEvent) => onChange(session, index, e)}>{unit.name}
                             </Checkbox>
                             <br />
                         </Fragment>

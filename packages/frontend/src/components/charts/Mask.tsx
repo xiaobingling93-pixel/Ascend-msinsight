@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import styled from '@emotion/styled';
 
 const ImgWithFallback = ({
@@ -17,7 +17,7 @@ const ImgWithFallback = ({
     );
 };
 
-export const Mask: React.FC<{ unitPhase: string }> = ({ children, ...props }): JSX.Element => {
+export const Mask: React.FC<{ unitPhase: string } & { children: ReactNode }> = ({ children, ...props }): JSX.Element => {
     const MaskLayer = styled.div`
         position: absolute;
         display: flex;

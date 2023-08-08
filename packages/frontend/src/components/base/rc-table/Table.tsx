@@ -5,13 +5,14 @@ import useTitleColumns from 'antd/lib/table/hooks/useTitleColumns';
 import classNames from 'classnames';
 import useMergedState from 'rc-util/lib/hooks/useMergedState';
 import * as React from 'react';
-import loading from '../../../assets/images/loading.webp';
 import BaseTable, { INSIGHT_TABLE_PREFIX, TableProps as BaseTableProps } from './BaseTable';
 import {
     ColumnsType, GetPopupContainer, GetRowKey, Key, SortOrder, TableHandle, TableLocale, TableRowSelection
 } from './interface';
 import { DefaultRecordType } from './types';
 import { customizeFilterData } from './utils/filterUtil';
+import { ColumnsType as AntdColumnsType } from 'antd/lib/table/interface';
+import { ColumnsType as TypesColumnsType } from './types';
 
 export type { ColumnsType };
 
@@ -144,7 +145,7 @@ function InternalTable<RecordType extends DefaultRecordType>(
     // ============================ Sort ============================
     const [transformSorterColumns, sortStates, sorterTitleProps] = useSorter<RecordType>({
         prefixCls,
-        mergedColumns: columns,
+        mergedColumns: columns as AntdColumnsType<RecordType>,
         sortDirections,
         tableLocale,
         showSorterTooltip,
@@ -161,7 +162,7 @@ function InternalTable<RecordType extends DefaultRecordType>(
         prefixCls,
         locale: tableLocale,
         dropdownPrefixCls,
-        mergedColumns: columns,
+        mergedColumns: columns as AntdColumnsType<RecordType>,
         getPopupContainer,
         onFilterChange: () => {},
     });
@@ -170,7 +171,7 @@ function InternalTable<RecordType extends DefaultRecordType>(
 
     const [transformTitleColumns] = useTitleColumns(sorterTitleProps);
     const transformColumns = React.useCallback((innerColumns: ColumnsType<RecordType>): ColumnsType<RecordType> =>
-        transformTitleColumns(transformFilterColumns(transformSorterColumns(innerColumns))),
+        transformTitleColumns(transformFilterColumns(transformSorterColumns(innerColumns as AntdColumnsType<RecordType>))) as ColumnsType<RecordType>,
         [transformSorterColumns, transformFilterColumns],
     );
 
@@ -194,7 +195,7 @@ function InternalTable<RecordType extends DefaultRecordType>(
                 <BaseTable<RecordType>
                     {...props}
                     ref={ref}
-                    columns={columns}
+                    columns={columns as TypesColumnsType<RecordType>}
                     expandable={mergedExpandable}
                     prefixCls={prefixCls}
                     className={classNames({
