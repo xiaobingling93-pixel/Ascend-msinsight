@@ -3,91 +3,66 @@ import React, { useState } from 'react';
 import { Table, Button } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
+import { Container } from './Common';
 
 interface DataType {
-    RankID: string ;
-    OperatorsName?: string ;
-    ElapseTime: string | number;
-    TransitTime: string | number;
-    SynchronizationTime: number;
-    WaitTime: string | number;
-    SynchronizationTimeRatio: string | number;
-    WaitTimeRatio: string | number;
-    IdleTime: string | number;
+    'Rank ID': string ;
+    'Operator Name': string ;
+    'Elapse Time(ms)': string | number;
+    'Transit Time(ms)': string | number;
+    'Synchronization Time(ms)': number;
+    'Wait Time(ms)': string | number;
+    'Synchronization Time Ratio': string | number;
+    'Wait Time Ratio': string | number;
+    'Idle Time(ms)': string | number;
+    'Communication Bandwidth Info': any;
+    [prop: string]: any;
 }
 
 const commonColumns = [
     {
         title: 'Elapse Time(ms)',
-        dataIndex: 'ElapseTime',
-        key: 'ElapseTime',
+        dataIndex: 'Elapse Time(ms)',
     },
     {
         title: 'Transit Time(ms)',
-        dataIndex: 'TransitTime',
-        key: 'TransitTime',
+        dataIndex: 'Transit Time(ms)',
     },
     {
         title: 'Synchronization Time(ms)',
-        dataIndex: 'SynchronizationTime',
-        key: 'SynchronizationTime',
+        dataIndex: 'Synchronization Time(ms)',
         sorter: (a: DataType, b: DataType) => a.SynchronizationTime - b.SynchronizationTime,
     },
     {
         title: 'Wait Time(ms)',
-        dataIndex: 'WaitTime',
-        key: 'WaitTime',
+        dataIndex: 'Wait Time(ms)',
     },
     {
         title: 'Synchronization Time Ratio',
-        dataIndex: 'SynchronizationTimeRatio',
-        key: 'SynchronizationTimeRatio',
+        dataIndex: 'Synchronization Time Ratio',
     },
     {
         title: 'Wait Time Ratio',
-        dataIndex: 'WaitTimeRatio',
-        key: 'WaitTimeRatio',
+        dataIndex: 'Wait Time Ratio',
     },
     {
         title: 'Idle Time(ms)',
-        dataIndex: 'IdleTime',
-        key: 'IdleTime',
+        dataIndex: 'Idle Time(ms)',
     } ];
 
-const defaultDataSource = [
-    {
-        RankID: '1',
-        ElapseTime: 62.9322,
-        TransitTime: 5,
-        SynchronizationTime: 55,
-        WaitTime: 60,
-        SynchronizationTimeRatio: 0.95,
-        WaitTimeRatio: 0.96,
-        IdleTime: 0.08,
-    },
-    {
-        RankID: '2',
-        ElapseTime: 62.8256,
-        TransitTime: 7,
-        SynchronizationTime: 52,
-        WaitTime: 55,
-        SynchronizationTimeRatio: 1.2,
-        WaitTimeRatio: 0.91,
-        IdleTime: 0.1,
-    },
-];
+const defaultDataSource: DataType[] = [];
 
 // Total HCCL Opertators表
-const expandedRowRender = (): JSX.Element => {
+const expandedRowRender = (record: DataType): JSX.Element => {
     const columns: TableColumnsType<DataType> = [
         { title: 'Operators Name', dataIndex: 'OperatorsName', key: 'OperatorsName' },
         ...commonColumns,
     ];
 
-    const data = [];
+    const data: any = [];
     for (let i = 0; i < 3; ++i) {
         data.push({
-            RankID: i.toString(),
+            rankId: i.toString(),
             OperatorsName: 'operator' + i.toString(),
             ElapseTime: 62.9322,
             TransitTime: 5,
@@ -106,8 +81,8 @@ const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[
     const columns = [
         {
             title: 'Rank ID',
-            dataIndex: 'RankID',
-            key: 'RankID',
+            dataIndex: 'Rank ID',
+            key: 'Rank ID',
         },
         ...commonColumns,
         {
@@ -116,7 +91,7 @@ const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[
             render: (_: any, record: DataType) => (
                 <Button type="link"
                     onClick={() => {
-                        props.showOperator(record.RankID);
+                        props.showOperator(record['Rank ID']);
                     }}>see more</Button>),
         },
         {
@@ -126,9 +101,9 @@ const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[
                 onClick={() => {
                     setExpandedKeys(pre => {
                         const list = [...pre];
-                        const keyIndex = list.indexOf(record.RankID);
+                        const keyIndex = list.indexOf(record['Rank ID']);
                         if (keyIndex === -1) {
-                            list.push(record.RankID);
+                            list.push(record['Rank ID']);
                         } else {
                             list.splice(keyIndex, 1);
                         }
@@ -138,11 +113,17 @@ const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[
         },
     ];
     const dataSource = props.dataSource ?? defaultDataSource;
-    return (<Table
-        dataSource={dataSource}
-        columns={columns}
-        expandable={{ expandedRowRender, expandedRowKeys, expandIcon: () => (<></>) }}
-        rowKey={'RankID'}/>);
+    return (
+        <Container
+            title={'DataAnalysis of Communication Time'}
+            content={<Table
+                dataSource={dataSource}
+                columns={columns}
+                expandable={{ expandedRowRender, expandedRowKeys, expandIcon: () => (<></>) }}
+                rowKey={'Rank ID'}/>}
+        />
+
+    );
 });
 
 export default CommunicationTimeTable;
