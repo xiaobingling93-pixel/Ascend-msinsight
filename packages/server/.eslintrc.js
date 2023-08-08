@@ -117,5 +117,5 @@ module.exports = {
       },
     },
   ],
-  'ignorePatterns': ['src/dic/*'],
+  'ignorePatterns': process.env.NODE_ENV === 'production' ? ['src/dic/*', 'src/**/__test__/**'] : ['src/dic/*'],
 }

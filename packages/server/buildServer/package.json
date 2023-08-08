@@ -21,13 +21,13 @@
         "electron-packager": "^17.1.1"
     },
     "scripts": {
-        "packWin": "electron-packager ./ profiler-server --platform=win32 --arch=x64 --electron-version=24.6.5 --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/",
-        "packLinux": "electron-packager ./ profiler-server --platform=linux --arch=x64 --electron-version=24.6.5 --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/"
+        "packWin": "electron-packager ./ profiler-server --platform=win32 --arch=x64 --electron-version=24.6.5 --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/",
+        "packLinux": "electron-packager ./ profiler-server --platform=linux --arch=x64 --electron-version=24.6.5 --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/"
     },
     "build": {
         "appId": "ascend.insight.server",
         "productName": "profiler-server",
-        "copyright": "Copyright © 2021 Huawei",
+        "copyright": "Copyright © 2023 Huawei",
         "directories": {
             "buildResources": "build",
             "output": "dist"

@@ -48,7 +48,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "cross-env GENERATE_SOURCEMAP=true CI=false craco build",
+    "build": "cross-env NODE_ENV=production GENERATE_SOURCEMAP=true CI=false craco build",
+    "build:dev": "cross-env GENERATE_SOURCEMAP=true CI=false craco build",
     "test": "set REACT_APP_TEST=1&&set CI=true&&react-scripts test --watchAll=false  --coverage",
     "test:dev": "set REACT_APP_TEST=1&&react-scripts test",
     "eject": "react-scripts eject",
