@@ -158,3 +158,33 @@ export type ExtremumTimestamp = {
     minTimestamp: number;
     maxTimestamp: number;
 };
+
+export type SummaryItemVO = {
+    rankId: String;
+    totalTime: number;
+    totalComputeTime: number;
+    totalCommunicationNotOverLapTime: number;
+    totalPureCommunicationTime: number;
+    totalFreeTime: number;
+};
+
+export type SummaryVO = {
+    rankCount: number;
+    dataSize: number;
+    collectStartTime: number;
+    filePath: string;
+    collectDuration: number;
+    stepNum: number;
+    summaryList: SummaryItemVO[];
+};
+
+export type SummaryStatisticsVO = {
+    acceleratorCore: string;
+    duration: number;
+    utilization: number;
+    transportType: string;
+};
+
+export type SummaryRequest = {
+    limit: number;
+};

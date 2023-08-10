@@ -9,6 +9,7 @@ import { flowDetailHandler, flowNameHandler, threadInfoHandler, threadsInfoHandl
 import { importHandler } from './handlers/import';
 import { unitMetadataHandler } from './query/unitMetadataHandler';
 import { resetHandler } from './handlers/reset';
+import { summaryHandler, summaryStatisticHandler } from './query/summary.handler';
 import { loggerHandler } from './logger/logger_handler';
 import {
     iterationsHandler,
@@ -39,4 +40,6 @@ export const HANDLER_MAP: Record<string, Handler> = {
     'communication/duration/operatorDetails': operatorDetailsHandler,
     'communication/duration/bandwidth': bandwidthHandler,
     'communication/duration/distribution': distributionHandler,
+    'summary/queryTopData': summaryHandler,
+    'summary/statistic': summaryStatisticHandler,
 };

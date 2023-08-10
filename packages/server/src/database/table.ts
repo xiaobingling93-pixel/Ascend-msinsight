@@ -2,6 +2,8 @@ import * as sqlite from 'sqlite3';
 import { RowThreadTrace, ThreadTrace } from '../query/thread.trace.handler';
 import { Client } from '../types';
 import { getLoggerByName } from '../logger/loggger_configure';
+import { createKernelDetailTableSql, kernelDetailTable } from '../common/sqlConstant';
+import { KernelDetailEntity } from '../query/entity';
 
 const logger = getLoggerByName('table', 'info');
 
@@ -15,10 +17,12 @@ export class Table {
     private readonly trackIdTimeIndex = 'track_id_time_index';
     private sliceDataCaches: any[] = [];
     private flowDataCaches: any[] = [];
+    private kernelDetailCaches: any[] = [];
     private readonly maxCachesSize = 1000;
     count = 0;
     private sliceStat: sqlite.Statement | undefined;
     private flowStat: sqlite.Statement | undefined;
+    private kernelDetailStat: sqlite.Statement | undefined;
     private readonly _dbPath: string;
 
     constructor(dbPath: string) {
@@ -70,6 +74,8 @@ export class Table {
                     .run(`CREATE TABLE ${this.processTable} (pid TEXT PRIMARY KEY, process_name TEXT, label TEXT, process_sort_index INTEGER)`)
                     .run(`DROP TABLE IF EXISTS ${this.flowTable}`)
                     .run(`CREATE TABLE ${this.flowTable} (id INTEGER PRIMARY KEY AUTOINCREMENT, flow_id TEXT, name TEXT, cat TEXT, track_id INTEGER, timestamp INTEGER, type TEXT)`)
+                    .run(`DROP TABLE IF EXISTS ${kernelDetailTable}`)
+                    .run(createKernelDetailTableSql)
                     .run(`DROP INDEX IF EXISTS ${this.idIndex}`)
                     .run(`DROP INDEX IF EXISTS ${this.trackIdTimeIndex}`)
                     .run('PRAGMA synchronous = OFF')
@@ -87,10 +93,13 @@ export class Table {
     async close(): Promise<void> {
         return new Promise((resolve, reject) => {
             this.sliceStat?.finalize(() => {
-                logger.info('slice stat finalize.');
+                logger.info('slice statement finalize close.');
             });
             this.flowStat?.finalize(() => {
-                logger.info('flow stat finalize.');
+                logger.info('flow statement finalize close.');
+            });
+            this.kernelDetailStat?.finalize(() => {
+                logger.info('kernelDetail statement finalize close.');
             });
             this.db.close((err) => {
                 if (err !== null) {
@@ -146,6 +155,56 @@ export class Table {
             if (this.sliceDataCaches.length >= this.maxCachesSize) {
                 this.insertSliceList(this.sliceDataCaches).finally(() => {
                     this.sliceDataCaches = [];
+                    resolve();
+                });
+            } else {
+                resolve();
+            }
+        });
+    }
+
+    async insertKernelDetailList(dataList: KernelDetailEntity[]): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const paramsList: any[] = [];
+            dataList.forEach((data) => {
+                paramsList.push(data.name, data.type, data.acceleratorCore, data.startTime, data.duration,
+                    data.waitTime, data.blockDim, data.inputShapes, data.inputDataTypes, data.inputFormats,
+                    data.outputShapes, data.outputDataTypes, data.outputFormats);
+            });
+            const valueParams = '(?,?,?,?,?,?,?,?,?,?,?,?,?)';
+            const columns = 'name,type,accelerator_core,start_time,duration,wait_time,' +
+                'block_dim,input_shapes,input_data_types,input_formats,output_shapes,output_data_types,output_formats';
+            if (dataList.length === this.maxCachesSize) {
+                if (this.kernelDetailStat === undefined) {
+                    const placeholders: string = (valueParams + ',').repeat(this.maxCachesSize - 1).concat(valueParams);
+                    const sql: string = `INSERT INTO ${kernelDetailTable} (${columns}) VALUES ${placeholders}`;
+                    this.kernelDetailStat = this.db.prepare(sql);
+                }
+                this.kernelDetailStat?.reset().run(paramsList, (err) => {
+                    if (err) {
+                        logger.error(err.message);
+                        reject(err);
+                    }
+                });
+            } else {
+                const placeholders: string = dataList.map(() => valueParams).join(',');
+                const sql: string = `INSERT INTO ${kernelDetailTable} (${columns}) VALUES ${placeholders}`;
+                this.db.run(sql, paramsList, (err) => {
+                    if (err !== null) {
+                        logger.error(err.message);
+                        reject(err);
+                    }
+                });
+            }
+        });
+    }
+
+    async insertKernelDetail(data: KernelDetailEntity): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.kernelDetailCaches.push(data);
+            if (this.kernelDetailCaches.length >= this.maxCachesSize) {
+                this.insertKernelDetailList(this.kernelDetailCaches).finally(() => {
+                    this.kernelDetailCaches = [];
                     resolve();
                 });
             } else {
@@ -284,6 +343,10 @@ export class Table {
         if (this.flowDataCaches.length > 0) {
             await this.insertFlowList(this.flowDataCaches);
             this.flowDataCaches = [];
+        }
+        if (this.kernelDetailCaches.length > 0) {
+            await this.insertKernelDetailList(this.kernelDetailCaches);
+            this.kernelDetailCaches = [];
         }
     }
 
