@@ -32,9 +32,9 @@ const HomePage = observer(function ({ session, theme }: { session: Session;theme
         },
     ];
     return (
-        <div style={{ height: '100%', width: '100%' }} className={'theme_' + theme}>
+        <div style={{ height: '100%', width: '100%' }}>
             <Switch checkedChildren="dark" unCheckedChildren="light" defaultChecked onChange={onChange}
-                style={{ position: 'absolute', top: '10px', right: '50px', zIndex: 1000, display: 'none' }}/>
+                style={{ position: 'absolute', top: '10px', right: '50px', zIndex: 1000 }}/>
             <Tabs >
                 {
                     items.map(item => (

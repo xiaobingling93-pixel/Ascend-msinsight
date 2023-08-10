@@ -95,7 +95,7 @@ export const App = observer(() => {
         i18n.changeLanguage(lang === 'zh' ? 'zh' : 'en');
         platform.initTheme().then((res: ThemeItem) => {
             themeInstance.setCurrentTheme(res);
-            window.setTheme(false);
+            window.setTheme(res === 'dark');
         });
     }, []);
     return (

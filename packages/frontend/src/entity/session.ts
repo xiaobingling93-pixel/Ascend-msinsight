@@ -47,6 +47,7 @@ export class Session {
     private _phase: Phase = 'configuring';
     private _units: InsightUnit[] = [];
     private _availableUnits: InsightUnit[] = [];
+    allRankIds: any[] = [];
     pinnedUnits: InsightUnit[] = [];
     icon: JSX.Element | undefined;
     caches: Caches | null = null;

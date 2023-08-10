@@ -16,9 +16,7 @@ export const Space = (props: {length: string | number }): JSX.Element => {
 
 export const Container = (props: {title?: JSX.Element | string; content?: JSX.Element;style?: any}): JSX.Element => {
     return <div style={{ height: '100%', margin: '10px', ...(props.style ?? {}) }}>
-        <div style={{
-            fontWeight: 'bold', background: '#fafafa', height: '3rem', lineHeight: '3rem', fontSize: '1.5rem', paddingLeft: '10px',
-        }}>{props.title}</div>
+        <div className={'container-header'}>{props.title}</div>
         <div style={{ height: 'calc(100% - 20px', overflow: 'auto' }}>{props.content}</div>
     </div>;
 };

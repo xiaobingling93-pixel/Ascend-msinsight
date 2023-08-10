@@ -14,115 +14,7 @@ import CommunicationTimeChart, { dataType as chartDataType }
 import CommunicationMatrix from '../components/communicationAnalysis/CommunicationMatrix';
 import BandwidthAnalysis from '../components/communicationAnalysis/BandwidthAnalysis';
 import { Space, Tan } from '../components/communicationAnalysis/Common';
-
-const defaultValue: any = [
-    {
-        'Rank ID': '0',
-        'Elapse Time(ms)': 0.3139404296875,
-        'Transit Time(ms)': 0.022670000000000003,
-        'Wait Time(ms)': 0.08212999999999997,
-        'Synchronization Time(ms)': 0.02225,
-        'Wait Time Ratio': 0.7837,
-        'Synchronization Time Ratio': 0.4953,
-        'Idle Time(ms)': 3,
-        'Communication Bandwidth Info': {
-            RDMA: {
-                'Transit Size(MB)': 0,
-                'Transit Time(ms)': 0,
-                'Bandwidth(GB/s)': 0,
-                'Bandwidth(Utilization)': 0.0,
-                'Large Packet Ratio': 0,
-                'Size Distribution': {},
-            },
-            HCCS: {
-                'Transit Size(MB)': 0.0146484375,
-                'Transit Time(ms)': 0.045090000000000005,
-                'Bandwidth(GB/s)': 0.3249,
-                'Bandwidth(Utilization)': 0.0181,
-                'Large Packet Ratio': 0.0,
-                'Size Distribution': {
-                    0.0003662109375: 36.0,
-                    0.000244140625: 6.0,
-                },
-            },
-            PCIE: {
-                'Transit Size(MB)': 0.0048828125,
-                'Transit Time(ms)': 0.02176,
-                'Bandwidth(GB/s)': 0.2244,
-                'Bandwidth(Utilization)': 0.0112,
-                'Large Packet Ratio': 0.0,
-                'Size Distribution': {
-                    0.000244140625: 2.0,
-                    0.0003662109375: 12.0,
-                },
-            },
-            SDMA: {
-                'Transit Size(MB)': 0.01953125,
-                'Transit Time(ms)': 0.06685,
-                'Bandwidth(GB/s)': 0.2922,
-                'Bandwidth(Utilization)': 0,
-                'Large Packet Ratio': 0,
-                'Size Distribution': {},
-            },
-        },
-        'Slow Link Suggestion': 'SDMA communication takes most of the time, and is the dominated bottleneck. \nHCCS bandwidth is inefficient, and the bandwidth utilization is 0.02. Because it transported too many small packets, the big packet ratio is only 0.00. \n PCIE bandwidth is inefficient, and the bandwidth utilization is 0.01. Because it transported too many small packets, the big packet ratio is only 0.00. \n ',
-    },
-    {
-        'Rank ID': '1',
-        'Elapse Time(ms)': 0.261169921875,
-        'Transit Time(ms)': 0.016100000000000003,
-        'Wait Time(ms)': 0.012149999999999996,
-        'Synchronization Time(ms)': 1e-05,
-        'Wait Time Ratio': 0.4301,
-        'Synchronization Time Ratio': 0.0006,
-        'Communication Bandwidth Info': {
-            RDMA: {
-                'Transit Size(MB)': 0,
-                'Transit Time(ms)': 0,
-                'Bandwidth(GB/s)': 0,
-                'Bandwidth(Utilization)': 0.0,
-                'Large Packet Ratio': 0,
-                'Size Distribution': {},
-            },
-            HCCS: {
-                'Transit Size(MB)': 0.0146484375,
-                'Transit Time(ms)': 0.04500000000000001,
-                'Bandwidth(GB/s)': 0.3255,
-                'Bandwidth(Utilization)': 0.0181,
-                'Large Packet Ratio': 0.0,
-                'Size Distribution': {
-                    0.0003662109375: 36.0,
-                    0.000244140625: 6.0,
-                },
-            },
-            PCIE: {
-                'Transit Size(MB)': 0.0048828125,
-                'Transit Time(ms)': 0.02198,
-                'Bandwidth(GB/s)': 0.2221,
-                'Bandwidth(Utilization)': 0.0111,
-                'Large Packet Ratio': 0.0,
-                'Size Distribution': {
-                    0.0003662109375: 12.0,
-                    0.000244140625: 2.0,
-                },
-            },
-            SDMA: {
-                'Transit Size(MB)': 0.01953125,
-                'Transit Time(ms)': 0.06698000000000001,
-                'Bandwidth(GB/s)': 0.2916,
-                'Bandwidth(Utilization)': 0,
-                'Large Packet Ratio': 0,
-                'Size Distribution': {},
-            },
-        },
-        'Slow Link Suggestion': 'SDMA communication takes most of the time, and is the dominated bottleneck. \nHCCS bandwidth is inefficient, and the bandwidth utilization is 0.02. Because it transported too many small packets, the big packet ratio is only 0.00. \n PCIE bandwidth is inefficient, and the bandwidth utilization is 0.01. Because it transported too many small packets, the big packet ratio is only 0.00. \n ',
-    },
-    { 'Rank ID': '2', 'Elapse Time(ms)': 7, 'Transit Time(ms)': 9, 'Synchronization Time(ms)': 9, 'Wait Time(ms)': 9, 'Synchronization Time Ratio': 3.3, 'Wait Time Ratio': 4.5 },
-    { 'Rank ID': '3', 'Elapse Time(ms)': 23.2, 'Transit Time(ms)': 26.4, 'Synchronization Time(ms)': 26.4, 'Wait Time(ms)': 26.4, 'Synchronization Time Ratio': 4.5, 'Wait Time Ratio': 6.3 },
-    { 'Rank ID': '4', 'Elapse Time(ms)': 25.6, 'Transit Time(ms)': 28.7, 'Synchronization Time(ms)': 28.7, 'Wait Time(ms)': 28.7, 'Synchronization Time Ratio': 6.3, 'Wait Time Ratio': 18.8 },
-    { 'Rank ID': '5', 'Elapse Time(ms)': 76.7, 'Transit Time(ms)': 70.7, 'Synchronization Time(ms)': 70.7, 'Wait Time(ms)': 70.7, 'Synchronization Time Ratio': 10.2, 'Wait Time Ratio': 6 },
-    { 'Rank ID': '6', 'Elapse Time(ms)': 135.6, 'Transit Time(ms)': 175.6, 'Synchronization Time(ms)': 175.6, 'Wait Time(ms)': 175.6, 'Synchronization Time Ratio': 20.3, 'Wait Time Ratio': 2.3 },
-];
+import { communicationAnalysisData } from '../utils/__test__/mockData';
 
 const Operators = ({ returnHome, rankId, session }: any): JSX.Element => {
     return (
@@ -144,7 +36,7 @@ interface showDataType{
 }
 
 const searchData = (conditions: conditionDataType): any => {
-    const list = defaultValue;
+    const list = communicationAnalysisData;
     // 显示字段
     const fields = [ 'Rank ID', 'Elapse Time(ms)', 'Transit Time(ms)', 'Synchronization Time(ms)',
         'Wait Time(ms)', 'Synchronization Time Ratio', 'Wait Time Ratio' ];
