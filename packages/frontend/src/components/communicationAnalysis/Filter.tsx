@@ -1,19 +1,17 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { Select, Radio, Form } from 'antd';
-import { Label, Space } from './Common';
+import { Label, Space, MultiSelectWithAll } from './Common';
+import { optionDataType } from '../../utils/interface';
 
 export interface conditionDataType{
     iterationId: string | number;
     rankIds: string[];
     operatorName: string | number;
     type: string;
-}
-
-interface optionDataType{
-    key?: string;
-    label: React.ReactNode;
-    value: string | number ;
 }
 
 interface optionMapDataType{
@@ -51,7 +49,7 @@ const Filter = observer((props: any) => {
 });
 
 const FilterCom = (props: any): JSX.Element => {
-    const { conditions, handleChange = [], options = {} } = props;
+    const { conditions, handleChange, options = {} } = props;
     return (<div style={ { margin: '0 20px 10px' }}>
         <Label name="Iteration ID" />
         <Select
@@ -61,12 +59,12 @@ const FilterCom = (props: any): JSX.Element => {
             options={options.iterationOptions}
         />
         <Label name="Rank ID"/>
-        <Select
+        <MultiSelectWithAll
             value={conditions.rankIds}
-            style={{ width: 200 }}
-            onChange={val => handleChange('rankIds', val)}
+            onChange={(val: any) => handleChange('rankIds', val)}
             options={options.rankIdOptions}
-            mode="multiple"
+            maxTagCount={2}
+            style={{ width: 200 }}
         />
         <Label name="Operator Name"/>
         <Select

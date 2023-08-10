@@ -1,16 +1,21 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import * as echarts from 'echarts';
+import { Container } from './Common';
 
-function InitCharts(): void {
+function InitCharts(data: dataType): void {
     const chartDom = document.getElementById('main');
     if (chartDom !== null) {
+        echarts.init(chartDom).dispose();
         const myChart = echarts.init(chartDom);
-        myChart.setOption(wrapData());
+        myChart.setOption(wrapData(data));
     }
 }
 
-const baseOption = {
+const baseOption: any = {
     tooltip: {
         trigger: 'axis',
         axisPointer: {
@@ -34,7 +39,7 @@ const baseOption = {
     xAxis: [
         {
             type: 'category',
-            data: [ '6', '0', '1', '3', '7', '4', '5', 2 ],
+            data: [],
             axisPointer: {
                 type: 'shadow',
             },
@@ -68,48 +73,40 @@ const baseOption = {
             type: 'bar',
             tooltip: {
                 valueFormatter: function (value: any) {
-                    return value + ' ml';
+                    return value + 'ms';
                 },
             },
-            data: [
-                2.0, 4.9, 7.0, 23.2, 25.6, 76.7, 135.6, 162.2, 32.6, 20.0, 6.4, 3.3,
-            ],
+            data: [ ],
         },
         {
             name: 'Transit Time',
             type: 'bar',
             tooltip: {
                 valueFormatter: function (value: any) {
-                    return value + ' ml';
+                    return value + 'ms';
                 },
             },
-            data: [
-                2.6, 5.9, 9.0, 26.4, 28.7, 70.7, 175.6, 182.2, 48.7, 18.8, 6.0, 2.3,
-            ],
+            data: [ ],
         },
         {
             name: 'Synchronization Time',
             type: 'bar',
             tooltip: {
                 valueFormatter: function (value: any) {
-                    return value + ' ml';
+                    return value + 'ms';
                 },
             },
-            data: [
-                2.6, 5.9, 9.0, 26.4, 28.7, 70.7, 175.6, 182.2, 48.7, 18.8, 6.0, 2.3,
-            ],
+            data: [ ],
         },
         {
             name: 'Wait Time',
             type: 'bar',
             tooltip: {
                 valueFormatter: function (value: any) {
-                    return value + ' ml';
+                    return value + 'ms';
                 },
             },
-            data: [
-                2.6, 5.9, 9.0, 26.4, 28.7, 70.7, 175.6, 182.2, 48.7, 18.8, 6.0, 2.3,
-            ],
+            data: [],
         },
         {
             name: 'Synchronization Time Ratio',
@@ -117,10 +114,10 @@ const baseOption = {
             yAxisIndex: 1,
             tooltip: {
                 valueFormatter: function (value: any) {
-                    return value + ' °C';
+                    return value + '%';
                 },
             },
-            data: [ 2.0, 2.2, 3.3, 4.5, 6.3, 10.2, 20.3, 23.4, 23.0, 16.5, 12.0, 6.2 ],
+            data: [ ],
         },
         {
             name: 'Wait Time Ratio',
@@ -128,23 +125,45 @@ const baseOption = {
             yAxisIndex: 1,
             tooltip: {
                 valueFormatter: function (value: any) {
-                    return value + ' °C';
+                    return value + '%';
                 },
             },
-            data: [ 2.0, 2.2, 3.3, 4.5, 6.3, 10.2, 20.3, 23.4, 23.0, 16.5, 12.0, 6.2 ],
+            data: [ ],
         },
     ],
 };
 
-function wrapData(): any {
+function wrapData(data: dataType): any {
+    baseOption.xAxis[0].data = data['Rank ID'];
+    const order: Array<keyof dataType> = [ 'Elapse Time(ms)', 'Transit Time(ms)', 'Synchronization Time(ms)',
+        'Wait Time(ms)', 'Synchronization Time Ratio', 'Wait Time Ratio' ];
+    for (let i = 0; i < 6; i++) {
+        baseOption.series[i].data = data[order[i]];
+    }
     return baseOption;
 }
 
-const CommunicationTimeChart = observer(function (prop: {showWindow: string}) {
+export interface dataType{
+    ranklist: string[];
+    ElapseTime?: number[];
+    TransitTime?: number[];
+    SynchronizationTime?: number[];
+    WaitTime?: number[];
+    SynchronizationTimeRatio?: number[];
+    WaitTimeRatio?: number[];
+    [name: string]: any;
+}
+
+const CommunicationTimeChart = observer(function (props: {dataSource: dataType}) {
     useEffect(() => {
-        InitCharts();
-    }, []);
-    return (<div id={'main'} style={{ height: '400px' }}></div>);
+        InitCharts(props.dataSource);
+    }, [props.dataSource]);
+    return (
+        <Container
+            title={'Visualized Communication Time'}
+            content={<div id={'main'} style={{ height: '400px' }} ></div>}
+        />
+    );
 });
 
 export default CommunicationTimeChart;
