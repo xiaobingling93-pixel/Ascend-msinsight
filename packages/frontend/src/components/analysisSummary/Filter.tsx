@@ -37,13 +37,27 @@ const Filter = observer((props: any) => {
         const rankIdOptions: optionDataType[] = rankIds.map(item => ({ value: item, label: item }));
         const orderlist = [ 'Computing', 'Communication(Not Overlapped)', 'Communication(Overlapped)', 'Free' ];
         const orderOptions: optionDataType[] = orderlist.map(item => ({ value: item, label: item }));
-        const toplist = [ 1, 2, 4, 8, 16, 32 ];
-        const topOptions: optionDataType[] = toplist.map(item => ({ value: item, label: item }));
+        const topOptions = getTopOptions(rankIds.length);
         setOptions({ stepOptions, topOptions, rankIdOptions, orderOptions });
+        setConditions({ ...conditions, top: rankIds.length });
+    };
+
+    // Top可选项： 1、2、4、8.......n(All)
+    const getTopOptions = (count: number): optionDataType[] => {
+        const logIndex = Math.ceil(Math.log2(count > 0 ? count : 1));
+        const toplist = [];
+        for (let i = 0; i < logIndex; i++) {
+            toplist.push(Math.pow(2, i));
+        }
+        const topOptions: optionDataType[] = toplist.map(item => ({ value: item, label: item }));
+        if (count > 0) {
+            topOptions.push({ value: count, label: `${count} ( All )` });
+        }
+        return topOptions;
     };
     // 筛选条件变化
     const [ conditions, setConditions ] = useState<ConditionDataType>(
-        { step: 'All', rankIds: [], order: 'Computing', top: 4 });
+        { step: 'All', rankIds: [], order: 'Computing', top: 0 });
     const handleChange = (prop: keyof ConditionDataType, val: string | number | string[]): void => {
         setConditions({ ...conditions, [prop]: val });
     };
@@ -82,7 +96,7 @@ const FilterCom = (props: any): JSX.Element => {
         <Label name="Top"/>
         <Select
             value={conditions.top}
-            style={{ width: 100 }}
+            style={{ width: 120 }}
             onChange={val => handleChange('top', val)}
             options={options.topOptions}
         />
