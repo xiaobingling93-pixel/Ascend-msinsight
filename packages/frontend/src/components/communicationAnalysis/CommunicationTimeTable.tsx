@@ -1,9 +1,13 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 import { observer } from 'mobx-react-lite';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, Button } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
-import { Container } from './Common';
+import { Container, GetPageConfigWhithAllData, PaginationWhithPgaeData } from './Common';
+import { VoidFunction } from '../../utils/interface';
 
 interface DataType {
     'Rank ID': string ;
@@ -15,7 +19,7 @@ interface DataType {
     'Synchronization Time Ratio': string | number;
     'Wait Time Ratio': string | number;
     'Idle Time(ms)': string | number;
-    'Communication Bandwidth Info': any;
+    'Communication Bandwidth Info'?: any;
     [prop: string]: any;
 }
 
@@ -52,33 +56,52 @@ const commonColumns = [
 
 const defaultDataSource: DataType[] = [];
 
-// Total HCCL Opertators表
-const expandedRowRender = (record: DataType): JSX.Element => {
-    const columns: TableColumnsType<DataType> = [
-        { title: 'Operators Name', dataIndex: 'OperatorsName', key: 'OperatorsName' },
-        ...commonColumns,
-    ];
-
-    const data: any = [];
+function queryOperators(rankId: string, page?: any): DataType[] {
+    const data: DataType[] = [];
     for (let i = 0; i < 3; ++i) {
         data.push({
-            rankId: i.toString(),
-            OperatorsName: 'operator' + i.toString(),
-            ElapseTime: 62.9322,
-            TransitTime: 5,
-            SynchronizationTime: 55,
-            WaitTime: 60,
-            SynchronizationTimeRatio: 0.95,
-            WaitTimeRatio: 0.96,
-            IdleTime: 0.08,
+            'Rank ID': i.toString(),
+            'Operator Name': 'operator' + i.toString(),
+            'Elapse Time(ms)': 62.9322,
+            'Transit Time(ms)': 5,
+            'Synchronization Time(ms)': 55,
+            'Wait Time(ms)': 60,
+            'Synchronization Time Ratio': 0.95,
+            'Wait Time Ratio': 0.96,
+            'Idle Time(ms)': 0.08,
         });
     }
-    return <Table columns={columns} dataSource={data} pagination={false} size="small"/>;
+    return data;
+}
+
+// Total HCCL Opertators表
+const OperatorsTable = (record: any): JSX.Element => {
+    useEffect(() => {
+        updateData();
+    }, [ ]);
+    const [ dataSource, setDataSource ] = useState<any[]>([]);
+    const { rankId } = record;
+    const updateData = async(page?: any): Promise<void> => {
+        const data = await queryOperators(rankId, page);
+        setDataSource(data);
+        setPageInfo({ total: data.length });
+    };
+
+    const [ pageInfo, setPageInfo ] = useState({ total: 0 });
+
+    const columns: TableColumnsType<DataType> = [
+        { title: 'Operator Name', dataIndex: 'Operator Name', key: 'Operator Name' },
+        ...commonColumns,
+    ];
+    return <div>
+        <Table columns={columns} dataSource={dataSource} pagination={false} size="small"/>
+        <PaginationWhithPgaeData handlePageChange={updateData} total={pageInfo.total}/>
+    </div>;
 };
 
-const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[];showOperator: (rankid: string) => void}) {
-    const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
-    const columns = [
+const getRankColumns = (handleAction: VoidFunction[]): any => {
+    const [ showOperator, setExpandedKeys ] = handleAction;
+    return [
         {
             title: 'Rank ID',
             dataIndex: 'Rank ID',
@@ -91,7 +114,7 @@ const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[
             render: (_: any, record: DataType) => (
                 <Button type="link"
                     onClick={() => {
-                        props.showOperator(record['Rank ID']);
+                        showOperator(record['Rank ID']);
                     }}>see more</Button>),
         },
         {
@@ -99,7 +122,7 @@ const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[
             key: 'action2',
             render: (_: any, record: DataType) => (<Button type="link"
                 onClick={() => {
-                    setExpandedKeys(pre => {
+                    setExpandedKeys((pre: any) => {
                         const list = [...pre];
                         const keyIndex = list.indexOf(record['Rank ID']);
                         if (keyIndex === -1) {
@@ -112,15 +135,27 @@ const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[
                 }}>see more<DownOutlined/></Button>),
         },
     ];
-    const dataSource = props.dataSource ?? defaultDataSource;
+};
+const CommunicationTimeTable = observer(function (props: {dataSource?: DataType[];showOperator: (rankid: string) => void}) {
+    const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
+    const columns = getRankColumns([ props.showOperator, setExpandedKeys ]);
+    const dataSource: DataType[] = props.dataSource ?? defaultDataSource;
     return (
         <Container
             title={'DataAnalysis of Communication Time'}
             content={<Table
                 dataSource={dataSource}
                 columns={columns}
-                expandable={{ expandedRowRender, expandedRowKeys, expandIcon: () => (<></>) }}
-                rowKey={'Rank ID'}/>}
+                expandable={{
+                    expandedRowRender: (record: DataType) => <div style={{ marginLeft: '30px' }}><OperatorsTable record={record}/></div>,
+                    expandedRowKeys,
+                    expandIcon: () => (<></>),
+                }}
+                rowKey={'Rank ID'}
+                pagination={GetPageConfigWhithAllData(dataSource.length)}
+                size="small"
+            />
+            }
         />
 
     );

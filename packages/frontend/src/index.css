@@ -1,4 +1,7 @@
-body {
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
+{
     margin: 0;
     font-family: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Arial Narrow', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -105,4 +108,51 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     bottom: 0;
     left: 0;
     right:0;
+}
+
+.fileshover{
+    background:grey;
+}
+
+.tan-box>div{
+    background-color:white;
+}
+.tan-box>div>.bottomC {
+    background-color:white;
+}
+.tan-box>div>.bottomC>.dragContainer{
+    padding-right: 10px;
+}
+.tan-box>div>.topC {
+    overflow: auto;
+}
+
+.fullwindow-topflex-bottomstretch{
+    height:100%;
+    display: flex;
+    flex-direction: column;
+}
+.fullwindow-topflex-bottomstretch > div:nth-child(2){
+    display: block;
+    flex: 1 ;
+    overflow: auto;
+}
+
+.common-title{
+    font-weight: bold;
+    height: 3rem;
+    line-height: 3rem;
+    font-size: 1.5rem;
+}
+
+.common-title-bottom{
+    font-weight: bold;
+    height: 3rem;
+    line-height: 3rem;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.ant-table-cell.ant-table-row-expand-icon-cell{
+    /*display: none;*/
 }
