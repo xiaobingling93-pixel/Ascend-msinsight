@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.concurrent.CompletableFuture;
 
-public class SelectFolderProcessor {
+public class SelectProcessor {
     /**
      * select Folder
      *
@@ -23,15 +23,29 @@ public class SelectFolderProcessor {
      * @return Response<?>
      */
     public static Response<?> selectFolder(JSONObject params) {
-        CompletableFuture<String> future = openFolderChooserAndGetPath(ProjectContext.getProject());
+        CompletableFuture<String> future = openFolderChooserAndGetPath(ProjectContext.getProject(), false, true);
         String folderPath = future.join();
         return Response.success(folderPath);
     }
 
-    public static CompletableFuture<String> openFolderChooserAndGetPath(Project project) {
+    /**
+     * select Folder
+     *
+     * @param params JSONObject parameters
+     * @return Response<?>
+     */
+    public static Response<?> selectFile(JSONObject params) {
+        CompletableFuture<String> future = openFolderChooserAndGetPath(ProjectContext.getProject(), true, false);
+        String folderPath = future.join();
+        return Response.success(folderPath);
+    }
+
+    public static CompletableFuture<String> openFolderChooserAndGetPath(Project project,
+        Boolean isChooseFiles, Boolean isChooseFolders) {
         CompletableFuture<String> future = new CompletableFuture<>();
         ApplicationManager.getApplication().invokeLater(() -> {
-            FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+            FileChooserDescriptor descriptor = new FileChooserDescriptor(isChooseFiles,
+            isChooseFolders, false, false, false, false);
             VirtualFile[] virtualFiles = FileChooser.chooseFiles(descriptor, project, null);
             String path = virtualFiles.length > 0 ? virtualFiles[0].getPath() : "";
             future.complete(path);

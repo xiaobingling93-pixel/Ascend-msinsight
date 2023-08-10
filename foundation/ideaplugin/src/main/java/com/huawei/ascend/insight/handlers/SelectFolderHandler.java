@@ -8,7 +8,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.huawei.ascend.insight.CefQueryHandler;
 import com.huawei.ascend.insight.common.Response;
-import com.huawei.ascend.insight.processor.SelectFolderProcessor;
+import com.huawei.ascend.insight.processor.SelectProcessor;
 import com.huawei.ascend.insight.utils.LogPrinter;
 import com.intellij.openapi.application.ApplicationManager;
 import org.cef.callback.CefQueryCallback;
@@ -26,7 +26,8 @@ public class SelectFolderHandler implements CefQueryHandler {
     private static final LogPrinter LOGGER = LogPrinter.createLogger(SelectFolderHandler.class);
 
     private static final Map<String, Function<JSONObject, Response<?>>> IMPORT_FUNC_MAP = Map.of(
-            "ascend.selectFolder", SelectFolderProcessor::selectFolder
+            "ascend.selectFolder", SelectProcessor::selectFolder,
+            "ascend.selectFile", SelectProcessor::selectFile
     );
     @Override
     public void onQuery(@NotNull String method, @NotNull JSONObject params, @NotNull CefQueryCallback callback) {
