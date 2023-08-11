@@ -14,8 +14,14 @@ export const Space = (props: {length: string | number }): JSX.Element => {
     return <span style={{ display: 'inline-block', marginRight: `${props.length}px` }}/>;
 };
 
-export const Container = (props: {title?: JSX.Element | string; content?: JSX.Element;style?: any}): JSX.Element => {
-    return <div style={{ height: '100%', margin: '10px', ...(props.style ?? {}) }}>
+export const Container = (props: {title?: JSX.Element | string; content?: JSX.Element;style?: any;type?: String}): JSX.Element => {
+    if (props.type === 'headerfixed') {
+        return <div className={'header-fixed-content-scroll'} style={{ ...(props.style ?? {}) }}>
+            <div className={'container-header'}>{props.title}</div>
+            <div>{props.content}</div>
+        </div>;
+    }
+    return <div style={{ height: '100%', ...(props.style ?? {}) }}>
         <div className={'container-header'}>{props.title}</div>
         <div style={{ height: 'calc(100% - 20px', overflow: 'auto' }}>{props.content}</div>
     </div>;

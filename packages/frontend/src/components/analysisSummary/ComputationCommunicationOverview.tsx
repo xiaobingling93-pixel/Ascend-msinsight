@@ -36,7 +36,16 @@ const baseOption: any = {
             type: 'shadow',
         },
     },
-    legend: {},
+    legend: {
+        data: [
+            { name: 'Computing', textStyle: { color: 'rgb(123,122,122)' } },
+            { name: 'Communication(Not Overlapped)', textStyle: { color: 'rgb(123,122,122)' } },
+            { name: 'Communication(Overlapped)', textStyle: { color: 'rgb(123,122,122)' } },
+            { name: 'Free', textStyle: { color: 'rgb(123,122,122)' } },
+            { name: 'Computing Ratio', textStyle: { color: 'rgb(123,122,122)' } },
+            { name: 'Communication Ratio', textStyle: { color: 'rgb(123,122,122)' } },
+        ],
+    },
     grid: {
         left: '3%',
         right: '4%',
@@ -47,6 +56,10 @@ const baseOption: any = {
         {
             type: 'category',
             data: [ ],
+            name: 'Rank',
+            nameLocation: 'start',
+            nameGap: 15,
+            nameTextStyle: { fontWeight: 'bold', fontSize: '1rem', padding: [ 0, 10, 0, 0 ] },
         },
     ],
     yAxis: [
@@ -187,7 +200,7 @@ const ComputationCommunicationOverview = (): JSX.Element => {
             setSelected({ rankId, timeFlag });
         }
     };
-    return <div style={{ textAlign: 'left', padding: '0 20px' }} className={'fullwindow-topflex-bottomstretch'}>
+    return <div style={{ textAlign: 'left', padding: '0 20px' }} className={'header-fixed-content-scroll'}>
         <div>
             <div className={'common-title-bottom'}>Computation/CommunicationOverview</div>
             <Filter handleFilterChange={handleFilterChange}/>

@@ -18,7 +18,7 @@ import { communicationAnalysisData } from '../utils/__test__/mockData';
 
 const Operators = ({ returnHome, rankId, session }: any): JSX.Element => {
     return (
-        <div className={'fullbox'} style={{ padding: '0 20px', background: 'white', zIndex: 10 }}>
+        <div className={'fullbox'} style={{ padding: '0 20px' }}>
             <Breadcrumb>
                 <Breadcrumb.Item onClick={returnHome }>
                     <a><ArrowLeftOutlined /><Space length={10}/><span>Communication Duration Analysis</span></a>
@@ -35,7 +35,7 @@ interface showDataType{
     tableData: [];
 }
 
-const searchData = (conditions: conditionDataType): any => {
+const searchData = async (conditions: conditionDataType): Promise<showDataType> => {
     const list = communicationAnalysisData;
     // 显示字段
     const fields = [ 'Rank ID', 'Elapse Time(ms)', 'Transit Time(ms)', 'Synchronization Time(ms)',
@@ -62,16 +62,16 @@ const CommunicationAnalysis = observer(function ({ session }: { session: Session
         setRankId(rankId);
     };
     const returnHome = (): void => { setRankId(''); };
-    const handleFilterChange = (conditions: conditionDataType): void => {
+    const handleFilterChange = async(conditions: conditionDataType): Promise<void> => {
         if (currentWindow !== conditions.type) {
             setCurrentWindow(conditions.type);
             return;
         }
-        const res = searchData(conditions);
+        const res = await searchData(conditions);
         setShowData(res);
     };
     return (
-        <div style={{ textAlign: 'left' }} className={'fullwindow-topflex-bottomstretch'}>
+        <div style={{ textAlign: 'left' }} className={'header-fixed-content-scroll'}>
             {/* 筛选条件 */}
             <Filter handleFilterChange={handleFilterChange} session={session} />
             {/* 通信用时分析 */}
@@ -79,7 +79,7 @@ const CommunicationAnalysis = observer(function ({ session }: { session: Session
                 position={'left'}
                 drag={<Help />}
                 main={
-                    <div>
+                    <div style={{ padding: '0 16px' }}>
                         <CommunicationTimeChart dataSource={showData.chartData}/>
                         <CommunicationTimeTable showOperator={showOperator} dataSource={showData.tableData}/>
                     </div>

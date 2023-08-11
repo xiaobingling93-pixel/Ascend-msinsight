@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import React from 'react';
+import { Container } from './Common';
 
 const hit = [ {
     title: '1. Check whether the Wait Time Ratio of a rank is greater than 0.2 (threshold).',
@@ -37,28 +38,31 @@ const hit = [ {
 ];
 const Help = ({ style = {} }: {style?: object}): JSX.Element => {
     return (<div style={{
-        padding: '0 16px',
         lineHeight: '2.5rem',
         height: '100%',
-        overflow: 'auto',
+        padding: '0 5px 0 15px',
         ...style,
     }}>
-        <Typography.Title level={5} >Guidance</Typography.Title>
-        <div >
-            {
-                hit.map((item, index) => (
-                    <p key={index}>
-                        {item.title}
-                        <p className={'left20'}>
-                            {
-                                item.contentlist.map((content, contentindex) =>
-                                    (<span key={contentindex}>{content}<br/></span>))
-                            }
-                        </p>
-                    </p>
-                ))
-            }
-        </div>
+        <Container
+            type={'headerfixed'}
+            title={'Guidance'}
+            content={
+                <div >
+                    {
+                        hit.map((item, index) => (
+                            <p key={index}>
+                                {item.title}
+                                <p className={'left20'}>
+                                    {
+                                        item.contentlist.map((content, contentindex) =>
+                                            (<span key={contentindex}>{content}<br/></span>))
+                                    }
+                                </p>
+                            </p>
+                        ))
+                    }
+                </div>}
+        />
         <div style={{ display: 'none' }}>
             <Typography.Title level={5} >
                 <div>Advisor</div>

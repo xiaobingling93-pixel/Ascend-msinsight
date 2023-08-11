@@ -34,7 +34,13 @@ const baseOption: any = {
         },
     },
     legend: {
-        data: [ 'Elapse Time', 'Transit Time', 'Synchronization Time', 'Wait Time', 'Synchronization Time Ratio', 'Wait Time Ratio' ],
+        data: [
+            { name: 'Elapse Time', textStyle: { color: 'rgb(123,122,122)' } },
+            { name: 'Transit Time', textStyle: { color: 'rgb(123,122,122)' } },
+            { name: 'Synchronization Time', textStyle: { color: 'rgb(123,122,122)' } },
+            { name: 'Wait Time', textStyle: { color: 'rgb(123,122,122)' } },
+            { name: 'Synchronization Time Ratio', textStyle: { color: 'rgb(123,122,122)' } },
+            { name: 'Wait Time Ratio', textStyle: { color: 'rgb(123,122,122)' } } ],
     },
     xAxis: [
         {
