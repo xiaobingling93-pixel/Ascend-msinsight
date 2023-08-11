@@ -1,0 +1,26 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ */
+
+#ifndef DATA_INSIGHT_CORE_PROTOCOL_RESPONSE_UTIL_H
+#define DATA_INSIGHT_CORE_PROTOCOL_RESPONSE_UTIL_H
+
+#include <optional>
+#include "GlobalDefs.h"
+#include "ProtocolResponse.h"
+
+namespace Dic {
+namespace Protocol {
+template <typename RESPONSE> std::optional<json_t> ToResponseJson(const RESPONSE &response);
+// global
+template <> std::optional<json_t> ToResponseJson<TokenCreateResponse>(const TokenCreateResponse &response);
+template <> std::optional<json_t> ToResponseJson<TokenDestroyResponse>(const TokenDestroyResponse &response);
+template <> std::optional<json_t> ToResponseJson<TokenCheckResponse>(const TokenCheckResponse &response);
+template <> std::optional<json_t> ToResponseJson<ConfigGetResponse>(const ConfigGetResponse &response);
+template <> std::optional<json_t> ToResponseJson<ConfigSetResponse>(const ConfigSetResponse &response);
+// harmony
+template <> std::optional<json_t> ToResponseJson<HdcDeviceListResponse>(const HdcDeviceListResponse &response);
+} // end of namespace Protocol
+} // end of namespace Dic
+
+#endif // DATA_INSIGHT_CORE_PROTOCOL_RESPONSE_UTIL_H

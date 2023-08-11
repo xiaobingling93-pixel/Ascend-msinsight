@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <remote name="origin" fetch="https://codehub-dg-g.huawei.com/"/>
+  <remote name="openCodehub" fetch="https://open.codehub.huawei.com/"/>
+  <remote name="szvOpen" fetch="https://szv-open.codehub.huawei.com/"/>
+  <default remote="origin" revision="master"/>
+
+  <include name=".codecheck/code.xml"/>
+  <include name=".codecheck/opensource.xml"/>
+</manifest>

@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.16)
+
+if (${_PROJECT_TYPE} MATCHES "CentricServer")
+    add_subdirectory(centric)
+elseif(${_PROJECT_TYPE} MATCHES "EdgeServer")
+    add_subdirectory(edge)
+else()
+    add_subdirectory(centric)
+    add_subdirectory(edge)
+endif()

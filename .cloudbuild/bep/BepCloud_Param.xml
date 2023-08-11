@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AgentTaskInfo>
+<!-- 此模块为必输项 -->
+		<taskName>OH_data_insight_core_bep</taskName>
+		<user>l30038348</user>
+		<pbiVersionB>OpenHarmony Basesoftware_IDE 1.1.0.B631</pbiVersionB>
+		<originalPath>D:/cde/cpp/workspace/ohos-data-insight-core_bep/originalPath/target</originalPath>
+		<rebuildPath>D:/cde/cpp/workspace/ohos-data-insight-core_bep/rebuildPath/target</rebuildPath>
+		<isReleaseVersion>0</isReleaseVersion>
+		<taskLimitNum>1</taskLimitNum>
+<!-- 此模块为必输项 -->
+</AgentTaskInfo>
