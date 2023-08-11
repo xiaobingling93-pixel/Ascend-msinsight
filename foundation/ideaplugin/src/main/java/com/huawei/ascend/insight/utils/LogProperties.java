@@ -4,7 +4,7 @@
 
 package com.huawei.ascend.insight.utils;
 
-import com.intellij.CommonBundle;
+import com.intellij.AbstractBundle;
 import com.intellij.reference.SoftReference;
 
 import org.jetbrains.annotations.NonNls;
@@ -63,7 +63,7 @@ public class LogProperties {
      * @return value
      */
     private static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
-        return CommonBundle.messageOrNull(getBundle(), key, params);
+        return AbstractBundle.message(getBundle(), key, params);
     }
 
     private static ResourceBundle getBundle() {
