@@ -25,6 +25,8 @@ export class ThreadPool {
     private readonly taskList = new Array<any>();
     private taskFinishCallback: Function | undefined;
     private allTaskFinishCallback: Function | undefined;
+    private running = true;
+    private _resolve: ((value: (void | PromiseLike<void>)) => void) | undefined;
 
     constructor(taskFinishCallback?: Function, allTaskFinishCallback?: Function) {
         for (let i = 0; i < this.taskCount; ++i) {
@@ -34,7 +36,7 @@ export class ThreadPool {
         this.allTaskFinishCallback = allTaskFinishCallback;
     }
 
-    createWork(n: number): Worker {
+    private createWork(n: number): Worker {
         const work = new Worker(__filename);
         // const work: Worker = new Worker(workPath);
         // On worker online
@@ -47,15 +49,15 @@ export class ThreadPool {
                 this.taskFinishCallback(msg.data);
             }
             if (this.taskList.length > 0) {
-                const data = this.taskList.pop();
+                const data = this.taskList.shift();
                 work.postMessage({ command: WorkMessageType.PARSE, data });
             } else {
                 const i = this.runningWorkers.indexOf(work);
                 this.runningWorkers.splice(i, 1);
                 this.awaitWorkers.push(work);
                 logger.info(`[ThreadPool] tasks. running:${this.runningWorkers.length}, await:${this.awaitWorkers.length}`);
-                if (this.runningWorkers.length === 0 && this.allTaskFinishCallback) {
-                    this.allTaskFinishCallback();
+                if (this.runningWorkers.length === 0) {
+                    this.allTaskEnd();
                 }
             }
         });
@@ -69,6 +71,18 @@ export class ThreadPool {
             logger.info(`[ThreadPool] Worker ${n} catch an error: ${error.stack ?? JSON.stringify(error)}`);
         });
         return work;
+    }
+
+    private allTaskEnd(): void {
+        console.log('[ThreadPool] All task end.');
+        if (!this.running && this._resolve !== undefined) {
+            this._resolve();
+            this._resolve = undefined;
+            this.running = true;
+        }
+        if (this.allTaskFinishCallback) {
+            this.allTaskFinishCallback();
+        }
     }
 
     public addTask(data: any): void {
@@ -87,5 +101,13 @@ export class ThreadPool {
 
     public setAllTaskFinishCallback(callback?: Function): void {
         this.allTaskFinishCallback = callback;
+    }
+
+    public async terminateAllTask(): Promise<void> {
+        return new Promise(resolve => {
+            this.running = false;
+            this.taskList.length = 0;
+            this._resolve = resolve;
+        });
     }
 }

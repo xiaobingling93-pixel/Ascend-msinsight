@@ -9,7 +9,7 @@ interface CustomButtonProps {
     isEmphasize?: boolean;
     isDisabled?: boolean;
     isSuspend?: boolean;
-    icon: FunctionComponent<SVGProps<SVGSVGElement>>;
+    icon: FunctionComponent<SVGProps<SVGSVGElement> & { title?: string }>;
 }
 
 export const StyledButton = styled(Button)`
@@ -21,7 +21,7 @@ export const StyledButton = styled(Button)`
     background-color: ${props => props?.style?.backgroundColor ?? props.theme.insightHeaderButtonBackgroundColor}!important;
     &:hover {
         background-color: ${props => props?.style?.backgroundColor ?? props.theme.insightHeaderButtonBackgroundColor};
-        cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+        cursor: ${props => props.disabled as boolean ? 'not-allowed' : 'pointer'};
     }
 
     border-radius: 4px;

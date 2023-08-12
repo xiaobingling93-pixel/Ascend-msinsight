@@ -2,7 +2,7 @@ import { store } from '../store';
 import { CardMetaData } from '../entity/data';
 import { runInAction } from 'mobx';
 import { handleMap, recursiveExpandUnit } from '../insight/units/unitFunc';
-import { processUnits } from '../entity/insight';
+import { setUnitPhaseByCardId } from '../entity/insight';
 
 export const parseSuccessHandler = (data: any): void => {
     const { sessionStore } = store;
@@ -19,9 +19,21 @@ export const parseSuccessHandler = (data: any): void => {
         });
         session.startRecordTime = 0;
         session.endTimeAll = data.maxTimeStamp;
-        processUnits(session.units, 'download');
+        setUnitPhaseByCardId(data.unit.metadata.cardId, session, 'download');
         if (data.startTimeUpdated === true) {
             session.simpleCache.clear();
         }
+    });
+};
+
+export const parseFailHandler = (data: any): void => {
+    console.log('Parse fail. ', data);
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        setUnitPhaseByCardId(data.rankId, session, 'error');
     });
 };

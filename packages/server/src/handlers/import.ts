@@ -32,7 +32,7 @@ async function selectFolderWindows(): Promise<string> {
         const folderPath = stdout.trim();
         return folderPath;
     } catch (error) {
-        logger.error(error);
+        console.error(error);
         return '';
     }
 }
@@ -91,12 +91,16 @@ export const importHandler = async (req: { path: string }, client: Client): Prom
         const rankId = parseCardID(traceViewJsonPath);
         if (importedRankIdSet.has(rankId)) {
             continue;
-        };
-        result.push({ cardName: rankId.toString(), rankId });
+        }
+        const cardInfo: CardInfo = { cardName: rankId.toString(), rankId, result: true };
+        result.push(cardInfo);
         parse(traceViewJsonPath, rankId, (rankId, err) => {
             if (err) {
                 // this to send parse file error message
-                logger.error(err);
+                logger.error(`parse error. ${err.message}`);
+                cardInfo.result = false;
+                client?.notify('parse/fail', { rankId, errorMsg: err.message });
+                return;
             }
             // this to send parse file success message
             queryUnitsMetadata(rankId).then((queryResult) => {
@@ -105,7 +109,7 @@ export const importHandler = async (req: { path: string }, client: Client): Prom
                     extremumTimestamp.maxTimestamp = extremumTimestamp.maxTimestamp + extremumTimestamp.minTimestamp - queryResult.extremumTimestamp.minTimestamp;
                     extremumTimestamp.minTimestamp = queryResult.extremumTimestamp.minTimestamp;
                     startTimeUpdated = true;
-                };
+                }
                 extremumTimestamp.maxTimestamp = Math.max(queryResult.extremumTimestamp.maxTimestamp - extremumTimestamp.minTimestamp, extremumTimestamp.maxTimestamp);
                 client?.notify('parse/success', { unit: queryResult.insightMetaData, startTimeUpdated, maxTimeStamp: extremumTimestamp.maxTimestamp });
             });

@@ -28,7 +28,7 @@ export class Table {
     constructor(dbPath: string) {
         this.db = new sqlite.Database(dbPath, sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE | sqlite.OPEN_SHAREDCACHE, (err) => {
             if (err !== null) {
-                logger.error(err.message);
+                logger.error(`Connect to database error.${err.message}`);
             }
             logger.info('Connect to database.');
         });

@@ -11,18 +11,21 @@ const callbackMap = new Map<string, Function>(); // rankId, callback
 const threadPool = new ThreadPool(parseWorkerEnd);
 
 export function parse(filePath: string, rankId: string, callback?: (rankId: string, err?: Error) => void): void {
-    if (tableMap.has(rankId)) {
-        if (callback) {
-            callback(rankId, new Error('repeat rank Id'));
-        }
-    }
-    const dbPath = getDbPath(filePath, rankId);
-    const table = new Table(dbPath);
-    tableMap.set(rankId, table);
     if (callback) {
         callbackMap.set(rankId, callback);
     }
+    if (tableMap.has(rankId)) {
+        parseCallback(rankId, new Error('Repeat rank id'));
+    }
+    const dbPath = getDbPath(filePath, rankId);
+    console.log(`Save to db. ${dbPath}`);
+    if (dbPath.length === 0) {
+        parseCallback(rankId, new Error('Failed to creat db path.'));
+        return;
+    }
+    const table = new Table(dbPath);
     table.createTable().then(() => parseFile(filePath, dbPath, rankId));
+    tableMap.set(rankId, table);
 }
 
 function parseFile(filePath: string, dbPath: string, rankId: string): void {
@@ -53,6 +56,7 @@ function parseFile(filePath: string, dbPath: string, rankId: string): void {
 async function parseWorkerEnd(message: EndMessage): Promise<void> {
     if (!tableMap.has(message.rankId) || !parseTaskCount.has(message.rankId)) {
         console.log(`can not find rankId, ${message.rankId}`);
+        return;
     }
     const unfinishedTaskCount = parseTaskCount.get(message.rankId) as number;
     console.log(`parseFileEnd. rankId:${message.rankId}, count: ${unfinishedTaskCount}`);
@@ -93,4 +97,10 @@ function getReadSize(fd: number, start: number, fileSize: number): { readPositio
 function parseCallback(rankId: string, err?: Error): void {
     callbackMap.get(rankId)?.(rankId, err);
     callbackMap.delete(rankId);
+}
+
+export async function terminateParse(): Promise<void> {
+    parseTaskCount.clear();
+    callbackMap.clear();
+    await threadPool.terminateAllTask();
 }

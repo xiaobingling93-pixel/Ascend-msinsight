@@ -122,7 +122,7 @@ const PinButton = observer(({ session, unit, isHovered, hasPinButton, isPinned }
                 <StyledButton
                     style={style}
                     icon={<StickyIcon fill={isPinned ? 'rgb(240, 165, 59)' : 'grey'} />}
-                    onClick={(e) => {
+                    onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         e.preventDefault();
                         let execute = (): void => {};

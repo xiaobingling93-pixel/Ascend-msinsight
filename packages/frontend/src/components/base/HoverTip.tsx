@@ -40,6 +40,7 @@ interface HoverTipProps {
     width: number;
     height: number;
     hidden?: boolean;
+    children?: React.ReactNode;
 }
 
 export const HoverTip: React.FC<HoverTipProps> = (props) => {

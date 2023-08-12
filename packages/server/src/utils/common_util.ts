@@ -57,5 +57,13 @@ export function parseCardID(filePath: string): string {
  * @param rankId
  */
 export function getDbPath(filePath: string, rankId: string): string {
-    return './' + path.basename(filePath, '.json') + '_' + rankId + '.db';
+    try {
+        if (!fs.existsSync('database')) {
+            fs.mkdirSync('database');
+        }
+        return path.resolve(path.join('database', path.basename(filePath, '.json') + '_' + rankId + '.db'));
+    } catch (e) {
+        console.log('Can not creat the folder. error:', (e as Error).message);
+        return '';
+    }
 }

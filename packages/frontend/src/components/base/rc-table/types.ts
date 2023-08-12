@@ -29,6 +29,10 @@ export type CellEllipsisType = { showTitle?: boolean } | boolean;
 
 export type AlignType = 'left' | 'center' | 'right';
 
+export type SvgType = React.FunctionComponent<React.SVGProps<
+    SVGSVGElement
+> & { title?: string }> & React.ReactNode;
+
 export interface RenderedCell<RecordType> {
     props?: CellType<RecordType>;
     children?: React.ReactNode;

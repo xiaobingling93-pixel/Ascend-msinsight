@@ -3,14 +3,11 @@
     "version": "1.0.0",
     "license": "MIT",
     "private": true,
-    "workspaces": [
-        "packages/*"
-    ],
     "scripts": {
         "start": "cd .\\packages\\frontend&&npm start",
         "build": "npm run buildWin",
         "buildWin": "npm run buildFrontendWin&&npm run buildServerWin&&npm run copyFrontendWin&&npm run copyServerWin&&npm run buildExtensionWin",
-        "buildFrontendWin": "cd .\\packages\\frontend&&npm install&&npm run build",
+        "buildFrontendWin": "cd .\\packages\\frontend&&npm install --force&&npm run build",
         "buildServerWin": "cd .\\packages\\server&&npm install&&npm run build&&npm run packageWin",
         "clear": "rmdir .\\packages\\extension\\profiler /s /q",
         "copyFrontendWin": "xcopy .\\packages\\frontend\\build .\\packages\\extension\\profiler /E /I /Y",
