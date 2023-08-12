@@ -36,7 +36,7 @@ export class Parser {
     public async parseEnd(): Promise<void> {
         fs.closeSync(this.fd);
         await this.table.commitData();
-        await this.table.close();
+        // await this.table.close();
     }
 
     public getCount(): number {

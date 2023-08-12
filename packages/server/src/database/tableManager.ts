@@ -3,10 +3,10 @@
  */
 
 import { Table } from './table';
-import { ClusterDatabase } from './clusterDatabase';
+import { ClusterDatabase } from './cluster_database';
 import { CommunicationAnalysisDataBase } from './communicationAnalysisDataBase';
 
 // rankId, table object
 export const tableMap = new Map<string, Table>();
-export const clusterDatabase = new ClusterDatabase('cluster');
+export const CLUSTER_DATABASE = new ClusterDatabase('cluster.db');
 export const communicationDbMap = new Map<string, CommunicationAnalysisDataBase>();

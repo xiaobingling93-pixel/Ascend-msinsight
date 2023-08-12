@@ -4,68 +4,76 @@ import { ThreadPool } from './threadPool';
 import { Table } from '../database/table';
 import { tableMap } from '../database/tableManager';
 import { EndMessage } from './parser_worker';
+import { getLoggerByName } from '../logger/loggger_configure';
+import path from 'path';
+import { importKernelDetail } from '../handlers/import';
 
 const defaultReadSize = 1024 * 1024 * 50;
 const parseTaskCount = new Map<string, number>(); // rankId, task count
 const callbackMap = new Map<string, Function>(); // rankId, callback
 const threadPool = new ThreadPool(parseWorkerEnd);
 
-export function parse(filePath: string, rankId: string, callback?: (rankId: string, err?: Error) => void): void {
+const logger = getLoggerByName('main', 'info');
+
+export function parse(filePath: string[], rankId: string, callback?: (rankId: string, err?: Error) => void): void {
+    if (tableMap.has(rankId)) {
+        if (callback) {
+            callback(rankId, new Error('repeat rank Id'));
+        }
+    }
+    const dbPath = getDbPath(filePath, rankId);
+    const table = new Table(dbPath);
+    tableMap.set(rankId, table);
     if (callback) {
         callbackMap.set(rankId, callback);
     }
-    if (tableMap.has(rankId)) {
-        parseCallback(rankId, new Error('Repeat rank id'));
-    }
-    const dbPath = getDbPath(filePath, rankId);
-    console.log(`Save to db. ${dbPath}`);
-    if (dbPath.length === 0) {
-        parseCallback(rankId, new Error('Failed to creat db path.'));
-        return;
-    }
-    const table = new Table(dbPath);
-    table.createTable().then(() => parseFile(filePath, dbPath, rankId));
-    tableMap.set(rankId, table);
+    table.createTable()
+        .then(() => parseFile(filePath, dbPath, rankId))
+        .then(() => importKernelDetail(path.dirname(filePath[0]), rankId))
+        .then(() => table.close);
 }
 
-function parseFile(filePath: string, dbPath: string, rankId: string): void {
-    const fileSize = fs.statSync(filePath).size;
-    let readPosition = 0;
+function parseFile(filePathArr: string[], dbPath: string, rankId: string): void {
     let taskCount = 0;
-    fs.open(filePath, 'rs', (err, fd) => {
-        if (err) {
-            parseCallback(rankId, err);
-            return;
-        }
-        while (readPosition < fileSize) {
-            const data = getReadSize(fd, readPosition, fileSize);
-            if (data.readSize === 0) {
-                console.log('Failed to split file.');
-                continue;
+    for (const filePath of filePathArr) {
+        const fileSize = fs.statSync(filePath).size;
+        let readPosition = 0;
+        logger.log(`FetchSize:${fileSize},readPosition:${readPosition}`);
+        fs.open(filePath, 'rs', (err, fd) => {
+            if (err) {
+                parseCallback(rankId, err);
+                return;
             }
-            console.log(`get read size. rankId:${rankId}, readPosition:${data.readPosition}, readSize:${data.readSize}`);
-            taskCount++;
-            threadPool.addTask({ rankId, filePath, dbPath, readPosition: data.readPosition, readSize: data.readSize });
-            readPosition = data.readPosition + data.readSize + 2;
-        }
-        parseTaskCount.set(rankId, taskCount);
-        fs.close(fd);
-    });
+            while (readPosition < fileSize) {
+                const data = getReadSize(fd, readPosition, fileSize);
+                if (data.readSize === 0) {
+                    logger.log('Failed to split file.');
+                    continue;
+                }
+                logger.log(`get read size. rankId:${rankId}, readPosition:${data.readPosition}, readSize:${data.readSize}`);
+                taskCount++;
+                threadPool.addTask({ rankId, filePath, dbPath, readPosition: data.readPosition, readSize: data.readSize });
+                readPosition = data.readPosition + data.readSize + 2;
+            }
+            parseTaskCount.set(rankId, taskCount);
+            fs.close(fd);
+        });
+    }
 }
 
 async function parseWorkerEnd(message: EndMessage): Promise<void> {
     if (!tableMap.has(message.rankId) || !parseTaskCount.has(message.rankId)) {
-        console.log(`can not find rankId, ${message.rankId}`);
+        logger.log(`can not find rankId, ${message.rankId}`);
         return;
     }
     const unfinishedTaskCount = parseTaskCount.get(message.rankId) as number;
-    console.log(`parseFileEnd. rankId:${message.rankId}, count: ${unfinishedTaskCount}`);
+    logger.log(`parseFileEnd. rankId:${message.rankId}, count: ${unfinishedTaskCount}`);
     if (unfinishedTaskCount - 1 === 0) {
         parseTaskCount.delete(message.rankId);
         const table = tableMap.get(message.rankId) as Table;
         await table.creatIndex();
         await table.updateDepth();
-        console.log(`parse end. rankId:${message.rankId}`);
+        logger.log(`parse end. rankId:${message.rankId}`);
         parseCallback(message.rankId);
     } else {
         parseTaskCount.set(message.rankId, unfinishedTaskCount - 1);
@@ -77,15 +85,16 @@ function getReadSize(fd: number, start: number, fileSize: number): { readPositio
     fs.readSync(fd, buf, 0, 1024, start);
     let offset = buf.toString('utf-8').indexOf('{');
     if (offset < 0) {
-        console.log('no find {');
+        logger.log('no find {');
         return { readPosition: 0, readSize: 0 };
     }
     const readPosition = start + offset;
     let readSize: number;
     if (readPosition + defaultReadSize >= fileSize) {
-        fs.readSync(fd, buf, 0, buf.length, fileSize - buf.length);
+        const tempStartPosition = fileSize - buf.length > 0 ? fileSize - buf.length : 0;
+        fs.readSync(fd, buf, 0, buf.length, tempStartPosition);
         offset = buf.toString('utf-8').indexOf(']');
-        readSize = fileSize - readPosition - (buf.length - offset);
+        readSize = fileSize - readPosition - (Math.min(buf.length, fileSize) - offset);
     } else {
         fs.readSync(fd, buf, 0, buf.length, readPosition + defaultReadSize);
         offset = buf.toString('utf-8').indexOf('}, {');

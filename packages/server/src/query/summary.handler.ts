@@ -3,11 +3,11 @@
  */
 
 import { SummaryItemVO, SummaryRequest, SummaryStatisticsVO, SummaryVO } from './data';
-import { clusterDatabase } from '../database/tableManager';
+import { CLUSTER_DATABASE } from '../database/tableManager';
 import { Client } from '../types';
 
 export const summaryHandler = async (request: SummaryRequest, client: Client): Promise<Record<string, SummaryVO>> => {
-    const rows: SummaryItemVO[] = await clusterDatabase.querySummaryData();
+    const rows: SummaryItemVO[] = await CLUSTER_DATABASE.querySummaryData();
     const result = {
         rankCount: rows.length,
         dataSize: 100,

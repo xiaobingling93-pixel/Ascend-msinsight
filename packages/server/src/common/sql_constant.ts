@@ -2,13 +2,13 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-export const clusterBaseInfoTable = 'cluster_base_info';
-export const communicationTimeInfoTable = 'communication_time_info';
-export const communicationBandWidthTable = 'communication_bandwidth_info';
-export const stepStatisticInfoTable = 'step_statistic_info';
-export const kernelDetailTable = 'kernel_detail';
+export const CLUSTER_BASE_INFO_TABLE = 'cluster_base_info';
+export const COMMUNICATION_TIME_INFO_TABLE = 'communication_time_info';
+export const COMMUNICATION_BAND_WIDTH_TABLE = 'communication_bandwidth_info';
+export const STEP_STATISTIC_INFO_TABLE = 'step_statistic_info';
+export const KERNEL_DETAIL_TABLE = 'kernel_detail';
 
-export const createCommunicationTimeInfoSql = `CREATE TABLE ${communicationTimeInfoTable}
+export const CREATE_COMMUNICATION_TIME_INFO_SQL = `CREATE TABLE ${COMMUNICATION_TIME_INFO_TABLE}
                                                (
                                                    id                         INTEGER PRIMARY KEY AUTOINCREMENT,
                                                    iteration_id               INT,
@@ -21,7 +21,7 @@ export const createCommunicationTimeInfoSql = `CREATE TABLE ${communicationTimeI
                                                    wait_time_ratio            double,
                                                    wait_time                  double
                                                )`;
-export const createCommunicationBandwidthInfoSql = `CREATE TABLE ${communicationBandWidthTable}
+export const CREATE_COMMUNICATION_BANDWIDTH_INFO_SQL = `CREATE TABLE ${COMMUNICATION_BAND_WIDTH_TABLE}
                                                     (
                                                         id                    INTEGER PRIMARY KEY AUTOINCREMENT,
                                                         iteration_id          INT,
@@ -36,7 +36,7 @@ export const createCommunicationBandwidthInfoSql = `CREATE TABLE ${communication
                                                         transit_time          double
                                                     )`;
 
-export const createClusterTableSql = `CREATE TABLE ${clusterBaseInfoTable}
+export const CREATE_CLUSTER_TABLE_SQL = `CREATE TABLE ${CLUSTER_BASE_INFO_TABLE}
                                       (
                                           id                 INTEGER PRIMARY KEY AUTOINCREMENT,
                                           file_path          VARCHAR(500),
@@ -46,7 +46,7 @@ export const createClusterTableSql = `CREATE TABLE ${clusterBaseInfoTable}
                                           collect_duration   double,
                                           data_size          double
                                       )`;
-export const createStepStatisticInfoTableSql = `CREATE TABLE ${stepStatisticInfoTable}
+export const CREATE_STEP_STATISTIC_INFO_TABLE_SQL = `CREATE TABLE ${STEP_STATISTIC_INFO_TABLE}
                                                 (
                                                     id                                      INTEGER PRIMARY KEY AUTOINCREMENT,
                                                     rank_id                                 VARCHAR(50),
@@ -62,7 +62,7 @@ export const createStepStatisticInfoTableSql = `CREATE TABLE ${stepStatisticInfo
                                                     pure_communication_exclude_receive_time double
                                                 )`;
 
-export const createKernelDetailTableSql = `CREATE TABLE ${kernelDetailTable}
+export const CREATE_KERNEL_DETAIL_TABLE_SQL = `CREATE TABLE ${KERNEL_DETAIL_TABLE}
                                            (
                                                id                INTEGER PRIMARY KEY AUTOINCREMENT,
                                                name              VARCHAR(50),

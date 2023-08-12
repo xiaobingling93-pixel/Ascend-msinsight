@@ -39,7 +39,7 @@ const HomePage = observer(function ({ session, theme }: { session: Session;theme
                 {
                     items.map(item => (
                         <Tabs.TabPane tab={item.tab} key={item.key}>
-                            <div style={{ height: 'calc(100% - 62px)', width: '100%', position: 'absolute' }}>
+                            <div style={{ width: '100%', position: 'absolute' }}>
                                 {item.content}
                             </div>
                         </Tabs.TabPane>

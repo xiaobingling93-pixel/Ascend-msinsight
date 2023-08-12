@@ -2,7 +2,7 @@ import * as sqlite from 'sqlite3';
 import { RowThreadTrace, ThreadTrace } from '../query/thread.trace.handler';
 import { Client } from '../types';
 import { getLoggerByName } from '../logger/loggger_configure';
-import { createKernelDetailTableSql, kernelDetailTable } from '../common/sqlConstant';
+import { CREATE_KERNEL_DETAIL_TABLE_SQL, KERNEL_DETAIL_TABLE } from '../common/sql_constant';
 import { KernelDetailEntity } from '../query/entity';
 
 const logger = getLoggerByName('table', 'info');
@@ -19,6 +19,7 @@ export class Table {
     private flowDataCaches: any[] = [];
     private kernelDetailCaches: any[] = [];
     private readonly maxCachesSize = 1000;
+    private readonly maxKernelCacheSize = 100;
     count = 0;
     private sliceStat: sqlite.Statement | undefined;
     private flowStat: sqlite.Statement | undefined;
@@ -74,8 +75,8 @@ export class Table {
                     .run(`CREATE TABLE ${this.processTable} (pid TEXT PRIMARY KEY, process_name TEXT, label TEXT, process_sort_index INTEGER)`)
                     .run(`DROP TABLE IF EXISTS ${this.flowTable}`)
                     .run(`CREATE TABLE ${this.flowTable} (id INTEGER PRIMARY KEY AUTOINCREMENT, flow_id TEXT, name TEXT, cat TEXT, track_id INTEGER, timestamp INTEGER, type TEXT)`)
-                    .run(`DROP TABLE IF EXISTS ${kernelDetailTable}`)
-                    .run(createKernelDetailTableSql)
+                    .run(`DROP TABLE IF EXISTS ${KERNEL_DETAIL_TABLE}`)
+                    .run(CREATE_KERNEL_DETAIL_TABLE_SQL)
                     .run(`DROP INDEX IF EXISTS ${this.idIndex}`)
                     .run(`DROP INDEX IF EXISTS ${this.trackIdTimeIndex}`)
                     .run('PRAGMA synchronous = OFF')
@@ -163,54 +164,46 @@ export class Table {
         });
     }
 
-    async insertKernelDetailList(dataList: KernelDetailEntity[]): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const paramsList: any[] = [];
-            dataList.forEach((data) => {
-                paramsList.push(data.name, data.type, data.acceleratorCore, data.startTime, data.duration,
-                    data.waitTime, data.blockDim, data.inputShapes, data.inputDataTypes, data.inputFormats,
-                    data.outputShapes, data.outputDataTypes, data.outputFormats);
-            });
-            const valueParams = '(?,?,?,?,?,?,?,?,?,?,?,?,?)';
-            const columns = 'name,type,accelerator_core,start_time,duration,wait_time,' +
-                'block_dim,input_shapes,input_data_types,input_formats,output_shapes,output_data_types,output_formats';
-            if (dataList.length === this.maxCachesSize) {
-                if (this.kernelDetailStat === undefined) {
-                    const placeholders: string = (valueParams + ',').repeat(this.maxCachesSize - 1).concat(valueParams);
-                    const sql: string = `INSERT INTO ${kernelDetailTable} (${columns}) VALUES ${placeholders}`;
-                    this.kernelDetailStat = this.db.prepare(sql);
-                }
-                this.kernelDetailStat?.reset().run(paramsList, (err) => {
-                    if (err) {
-                        logger.error(err.message);
-                        reject(err);
-                    }
-                });
-            } else {
-                const placeholders: string = dataList.map(() => valueParams).join(',');
-                const sql: string = `INSERT INTO ${kernelDetailTable} (${columns}) VALUES ${placeholders}`;
-                this.db.run(sql, paramsList, (err) => {
-                    if (err !== null) {
-                        logger.error(err.message);
-                        reject(err);
-                    }
-                });
-            }
+    insertKernelDetailList(dataList: KernelDetailEntity[]): void {
+        const paramsList: any[] = [];
+        dataList.forEach((data) => {
+            paramsList.push(data.name, data.type, data.acceleratorCore, data.startTime, data.duration,
+                data.waitTime, data.blockDim, data.inputShapes, data.inputDataTypes, data.inputFormats,
+                data.outputShapes, data.outputDataTypes, data.outputFormats);
         });
+        const valueParams = '(?,?,?,?,?,?,?,?,?,?,?,?,?)';
+        const columns = 'name,type,accelerator_core,start_time,duration,wait_time,' +
+            'block_dim,input_shapes,input_data_types,input_formats,output_shapes,output_data_types,output_formats';
+        if (dataList.length === this.maxKernelCacheSize) {
+            logger.info('start execute insert into kernel detail table prepare statement ');
+            if (this.kernelDetailStat === undefined) {
+                const placeholders: string = (valueParams + ',').repeat(this.maxKernelCacheSize - 1).concat(valueParams);
+                const sql: string = `INSERT INTO ${KERNEL_DETAIL_TABLE} (${columns})VALUES ${placeholders}`;
+                this.kernelDetailStat = this.db.prepare(sql);
+            }
+            this.kernelDetailStat?.reset().run(paramsList, (err) => {
+                if (err) {
+                    logger.error('execute insert into kernel detail table is failed:{}', err.message);
+                }
+            });
+        } else {
+            logger.info('start run insert into kernel detail table sql,data size : ', dataList.length);
+            const placeholders: string = dataList.map(() => valueParams).join(',');
+            const sql: string = `INSERT INTO ${KERNEL_DETAIL_TABLE} (${columns})VALUES ${placeholders}`;
+            this.db.run(sql, paramsList, (err) => {
+                if (err !== null) {
+                    logger.error('execute insert into kernel detail table is failed:{}', err.message);
+                }
+            });
+        }
     }
 
-    async insertKernelDetail(data: KernelDetailEntity): Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.kernelDetailCaches.push(data);
-            if (this.kernelDetailCaches.length >= this.maxCachesSize) {
-                this.insertKernelDetailList(this.kernelDetailCaches).finally(() => {
-                    this.kernelDetailCaches = [];
-                    resolve();
-                });
-            } else {
-                resolve();
-            }
-        });
+    insertKernelDetail(data: KernelDetailEntity): void {
+        this.kernelDetailCaches.push(data);
+        if (this.kernelDetailCaches.length >= this.maxKernelCacheSize) {
+            this.insertKernelDetailList(this.kernelDetailCaches);
+            this.kernelDetailCaches = [];
+        }
     }
 
     updateProcessName(pid: string, name: string): void {
@@ -344,8 +337,11 @@ export class Table {
             await this.insertFlowList(this.flowDataCaches);
             this.flowDataCaches = [];
         }
+    }
+
+    saveLastKernelData(): void {
         if (this.kernelDetailCaches.length > 0) {
-            await this.insertKernelDetailList(this.kernelDetailCaches);
+            this.insertKernelDetailList(this.kernelDetailCaches);
             this.kernelDetailCaches = [];
         }
     }

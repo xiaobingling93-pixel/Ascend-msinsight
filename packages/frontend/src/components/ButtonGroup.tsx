@@ -55,7 +55,7 @@ const selectFolders = async (isImporting: boolean, setIsImporting: React.Dispatc
     runInAction(() => {
         session.phase = 'download';
         session.endTimeAll = 1000000000;
-        result.result.forEach((item: CardInfo) => {
+        result.cards.forEach((item: CardInfo) => {
             const unit = new CardUnit({ cardId: item.rankId, cardName: item.cardName });
             if (item.result as boolean) {
                 unit.phase = 'analyzing';
@@ -64,6 +64,7 @@ const selectFolders = async (isImporting: boolean, setIsImporting: React.Dispatc
             }
             session.units.push(unit);
         });
+        session.allRankIds = result.cards.map((item: any) => item.rankId);
     });
     setIsImporting(false);
 };

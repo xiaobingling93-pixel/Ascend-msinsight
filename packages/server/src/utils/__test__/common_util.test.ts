@@ -6,6 +6,6 @@ describe('common_util test', () => {
     });
 
     it('getDbPath test', function () {
-        expect(getDbPath('aaa.json', 'rank0')).toBe('./aaa_rank0.db');
+        expect(getDbPath(['aaa.json'], 'rank0')).toBe('./aaa_rank0.db');
     });
 });
