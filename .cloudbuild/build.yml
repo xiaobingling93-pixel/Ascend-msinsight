@@ -21,7 +21,9 @@ params:
     value: BitFun Kernel
   - name: component_name
     value: Ascend Insight Plugin For VSCode And Intellij
-  - name: version #上传到cmc的版本号
+  - name: version #下载的cmc的版本号
+    value: 0.0.1
+  - name: cmc_version #上传到cmc的版本号
     value: 0.0.1
   - name: snapshot #CMC快照版本，值为 Y 为上传快照版
     value: 'Y'

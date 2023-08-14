@@ -34,15 +34,28 @@ steps:
           mkdir linux
           tar -zxvf ./build_win/build.tar.gz -C ./win
           tar -zxvf ./build_linux/build.tar.gz -C ./linux
-          tar -czvf ../ascend_insight_plugin_${version}.tar.gz win linux
         check: true
   POST_BUILD:
     - get_build_metadata
-    - artget:
-        artifact_type: cmcbinary   # 仓库类型
-        action: push
-        dependency: IntelliJ_Based/.cloudbuild/dependency.xml
-        agent: .
-        username: ${cmc_username}
-        password: ${cmc_password}
-        params: {"version":"${version}", "snapshot":"${snapshot}", "offering":"${offering}", "component_name":"${component_name}", "versionType":"${versionType}"}
+    - when:
+        condition: offering == "BitFun Kernel"
+        steps:
+          - artget:
+              artifact_type: cmcbinary   # 仓库类型
+              action: push
+              dependency: IntelliJ_Based/.cloudbuild/bitfun_dependency.xml
+              agent: .
+              username: ${cmc_username}
+              password: ${cmc_password}
+              params: {"cmc_version":"${cmc_version}", "snapshot":"${snapshot}", "offering":"${offering}", "component_name":"${component_name}", "versionType":"${versionType}"}
+    - when:
+        condition: offering == "MindStudio"
+        steps:
+          - artget:
+              artifact_type: cmcbinary   # 仓库类型
+              action: push
+              dependency: IntelliJ_Based/.cloudbuild/mindStudio_dependency.xml
+              agent: .
+              username: ${cmc_username}
+              password: ${cmc_password}
+              params: {"cmc_version":"${cmc_version}", "offering":"${offering}", "versionType":"${versionType}"}

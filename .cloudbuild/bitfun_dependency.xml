@@ -6,18 +6,18 @@
         <id>
             <offering>${offering}</offering>
             <name>${component_name}</name>
-            <version>${version}</version>
+            <version>${cmc_version}</version>
             <snapshot>${snapshot}</snapshot>
         </id>
         <isClear>N</isClear>
         <copies>
             <copy>
-                <source>ascend_insight_plugin_${version}.tar.gz</source>
-                <dest>distributions</dest>
+                <source>download/win/*</source>
+                <dest>Ascend Insight/win</dest>
             </copy>
             <copy>
-                <source>build.yml.lock</source>
-                <dest>build/yml/file</dest>
+                <source>download/linux/*</source>
+                <dest>Ascend Insight/linux</dest>
             </copy>
         </copies>
     </artifact>
