@@ -42,6 +42,14 @@ const std::string REQ_RES_CONFIG_SET = "config.set";
 
 // template
 const std::string REQ_RES_HDC_DEVICE_LIST = "hdc.listDevice";
+const std::string REQ_RES_IMPORT_ACTION = "import/action";
+const std::string REQ_RES_UNIT_THREAD_TRACES = "unit/threadTraces";
+const std::string REQ_RES_UNIT_THREADS = "unit/threads";
+const std::string REQ_RES_UNIT_THREAD_DETAIL = "unit/threadDetail";
+const std::string REQ_RES_UNIT_FLOW_NAME = "unit/flowName";
+const std::string REQ_RES_UNIT_FLOW = "unit/flow";
+const std::string REQ_RES_RESET_WINDOW = "reset/window";
+const std::string REQ_RES_UNIT_CHART = "unit/chart";
 #pragma endregion
 } // end of namespace
 }
