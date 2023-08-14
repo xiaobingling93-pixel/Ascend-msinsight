@@ -49,6 +49,14 @@ private:
     static std::unique_ptr<Request> ToConfigSetRequest(const json_t &json, std::string &error);
     // harmony
     static std::unique_ptr<Request> ToHdcDeviceListRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToImportActionRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToUnitThreadTracesRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToUnitThreadsRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToThreadDetailRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToUnitFlowNameRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToUnitFlowRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToResetWindowRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToUnitChartRequest(const json_t &json, std::string &error);
 
     std::mutex mutex;
     std::map<std::string, JsonToRequestFunc> jsonToReqFactory;

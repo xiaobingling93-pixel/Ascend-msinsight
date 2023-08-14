@@ -38,6 +38,14 @@ void RequestManager::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_CONFIG_SET, ToConfigSetRequest);
 
     jsonToReqFactory.emplace(REQ_RES_HDC_DEVICE_LIST, ToHdcDeviceListRequest);
+    jsonToReqFactory.emplace(REQ_RES_IMPORT_ACTION, ToImportActionRequest);
+    jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_TRACES, ToUnitThreadTracesRequest);
+    jsonToReqFactory.emplace(REQ_RES_UNIT_THREADS, ToUnitThreadsRequest);
+    jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_DETAIL, ToThreadDetailRequest);
+    jsonToReqFactory.emplace(REQ_RES_UNIT_FLOW_NAME, ToUnitFlowNameRequest);
+    jsonToReqFactory.emplace(REQ_RES_UNIT_FLOW, ToUnitFlowRequest);
+    jsonToReqFactory.emplace(REQ_RES_RESET_WINDOW, ToResetWindowRequest);
+    jsonToReqFactory.emplace(REQ_RES_UNIT_CHART, ToUnitChartRequest);
 }
 
 void RequestManager::UnRegister()
@@ -190,6 +198,109 @@ std::unique_ptr<Request> RequestManager::ToHdcDeviceListRequest(const json_t &js
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.timeout, json["params"], "timeout");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> RequestManager::ToImportActionRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<ImportActionRequest> reqPtr = std::make_unique<ImportActionRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.path, json["params"], "path");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> RequestManager::ToUnitThreadTracesRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<UnitThreadTracesRequest> reqPtr = std::make_unique<UnitThreadTracesRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.cardId, json["params"], "cardId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.processId, json["params"], "processId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.threadId, json["params"], "threadId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> RequestManager::ToUnitThreadsRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<UnitThreadsRequest> reqPtr = std::make_unique<UnitThreadsRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.tid, json["params"], "tid");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> RequestManager::ToThreadDetailRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<ThreadDetailRequest> reqPtr = std::make_unique<ThreadDetailRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.tid, json["params"], "tid");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.depth, json["params"], "depth");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> RequestManager::ToUnitFlowNameRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<UnitFlowNameRequest> reqPtr = std::make_unique<UnitFlowNameRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.tid, json["params"], "tid");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> RequestManager::ToUnitFlowRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<UnitFlowRequest> reqPtr = std::make_unique<UnitFlowRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.flowId, json["params"], "flowId");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> RequestManager::ToResetWindowRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<ResetWindowRequest> reqPtr = std::make_unique<ResetWindowRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    return reqPtr;
+}
+
+std::unique_ptr<Request> RequestManager::ToUnitChartRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<UnitChartRequest> reqPtr = std::make_unique<UnitChartRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.param, json["params"], "param");
     return reqPtr;
 }
 

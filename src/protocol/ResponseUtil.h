@@ -20,6 +20,14 @@ template <> std::optional<json_t> ToResponseJson<ConfigGetResponse>(const Config
 template <> std::optional<json_t> ToResponseJson<ConfigSetResponse>(const ConfigSetResponse &response);
 // harmony
 template <> std::optional<json_t> ToResponseJson<HdcDeviceListResponse>(const HdcDeviceListResponse &response);
+template <> std::optional<json_t> ToResponseJson<ImportActionResponse>(const ImportActionResponse &response);
+template <> std::optional<json_t> ToResponseJson<UnitThreadTracesResponse>(const UnitThreadTracesResponse &response);
+template <> std::optional<json_t> ToResponseJson<UnitThreadsResponse>(const UnitThreadsResponse &response);
+template <> std::optional<json_t> ToResponseJson<UnitThreadDetailResponse>(const UnitThreadDetailResponse &response);
+template <> std::optional<json_t> ToResponseJson<UnitFlowNameResponse>(const UnitFlowNameResponse &response);
+template <> std::optional<json_t> ToResponseJson<UnitFlowResponse>(const UnitFlowResponse &response);
+template <> std::optional<json_t> ToResponseJson<ResetWindowResponse>(const ResetWindowResponse &response);
+template <> std::optional<json_t> ToResponseJson<UnitChartResponse>(const UnitChartResponse &response);
 } // end of namespace Protocol
 } // end of namespace Dic
 
