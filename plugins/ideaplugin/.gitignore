@@ -1,0 +1,6 @@
+.idea/
+.gradle/
+build/
+src/main/resources/frontend
+src/main/resources/Log.properties
+profiler
