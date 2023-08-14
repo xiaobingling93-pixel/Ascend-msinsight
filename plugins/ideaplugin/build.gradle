@@ -156,7 +156,7 @@ clean {
 task copyExeToSandbox() {
     doLast {
         copy {
-            from "${rootDir}/profiler/server"
+            from "${rootDir}/../serverBuild/server"
             into "${project.buildDir}/idea-sandbox/plugins/ascend-insight/tools/"
         }
     }
@@ -164,6 +164,7 @@ task copyExeToSandbox() {
 
 prepareSandbox.finalizedBy copyExeToSandbox
 compileJava.dependsOn(setLogProperties)
+processResources.dependsOn(setLogProperties)
 buildPlugin.finalizedBy(copyZipToRootBuild)
 runIde.dependsOn(buildPlugin)
 
