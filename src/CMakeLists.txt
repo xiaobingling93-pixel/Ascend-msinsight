@@ -39,6 +39,7 @@ include_directories(${SRC_HOME_DIR}/scene/core/hdc)
 include_directories(${SRC_HOME_DIR}/scene/core/hdc/common)
 include_directories(${SRC_HOME_DIR}/scene/handler/harmony)
 include_directories(${SRC_HOME_DIR}/scene/handler/harmony/hdc)
+include_directories(${SRC_HOME_DIR}/scene/handler/ascend)
 
 # scene for server
 aux_source_directory(${SRC_HOME_DIR}/scene DIC_SCENE_SRC)
@@ -53,6 +54,7 @@ aux_source_directory(${SRC_HOME_DIR}/scene/core/hdc DIC_SCENE_CORE_HDC_SRC)
 aux_source_directory(${SRC_HOME_DIR}/scene/core/hdc/common DIC_SCENE_CORE_HDC_COMMON_SRC)
 aux_source_directory(${SRC_HOME_DIR}/scene/handler/harmony/ DIC_SCENE_HANDLER_HARMONY_SRC)
 aux_source_directory(${SRC_HOME_DIR}/scene/handler/harmony/hdc DIC_SCENE_HANDLER_HARMONY_HDC_SRC)
+aux_source_directory(${SRC_HOME_DIR}/scene/handler/ascend DIC_SCENE_HANDLER_ASCEND_SRC)
 
 list(APPEND DIC_SCENE_SRC_LIST
         ${DIC_SCENE_SRC}
@@ -65,6 +67,7 @@ list(APPEND DIC_SCENE_SRC_LIST
         ${DIC_SCENE_CORE_HDC_SRC}
         ${DIC_SCENE_CORE_HDC_COMMON_SRC}
         ${DIC_SCENE_HANDLER_HARMONY_SRC}
-        ${DIC_SCENE_HANDLER_HARMONY_HDC_SRC})
+        ${DIC_SCENE_HANDLER_HARMONY_HDC_SRC}
+        ${DIC_SCENE_HANDLER_ASCEND_SRC})
 
 add_subdirectory(entry)

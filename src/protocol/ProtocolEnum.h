@@ -14,6 +14,7 @@ enum class SceneType : int {
     DATABASE = 2,
     TOOL = 4,
     LOG = 8,
+    ASCEND = 16,
     HARMONY = 256,
 };
 

@@ -49,6 +49,10 @@ struct Application {
 struct GlobalConfig {
     int maxSessionCount = 20;
 };
+// ascend
+struct AscendConfig {
+    int maxSessionCount = 20;
+};
 // harmony
 struct HdcConfig {
     bool enable = true;
