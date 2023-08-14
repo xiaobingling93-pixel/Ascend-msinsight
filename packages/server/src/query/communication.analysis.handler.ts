@@ -16,15 +16,13 @@ import {
     OperatorsResponse,
     RanksRequest,
 } from './communicationAnalysisData';
-import { communicationDbMap } from '../database/tableManager';
-import { CommunicationAnalysisDataBase } from '../database/communicationAnalysisDataBase';
+import { CLUSTER_DATABASE } from '../database/tableManager';
 import { getLoggerByName } from '../logger/loggger_configure';
 const logger = getLoggerByName('communication', 'info');
 
-export const iterationsHandler = async (request: {dbIndex: string}): Promise<IterationsOrRanksResponse> => {
-    const communicationDB = communicationDbMap.get(request.dbIndex) as CommunicationAnalysisDataBase;
+export const iterationsHandler = async (): Promise<IterationsOrRanksResponse> => {
     const response: IterationsOrRanksResponse = { iterationsOrRanks: [] };
-    response.iterationsOrRanks = await communicationDB.queryIterationIds() as number[];
+    response.iterationsOrRanks = await CLUSTER_DATABASE.queryIterationIds() as number[];
     if (response.iterationsOrRanks.length === 0) {
         logger.error('Failed to obtain the number of iteration ids. At least one id must be contained. ' +
             'Check whether communication data files exist in the directory.');
@@ -33,30 +31,26 @@ export const iterationsHandler = async (request: {dbIndex: string}): Promise<Ite
 };
 
 export const ranksHandler = async (request: RanksRequest): Promise<IterationsOrRanksResponse> => {
-    const communicationDB = communicationDbMap.get(request.dbIndex) as CommunicationAnalysisDataBase;
     const response: IterationsOrRanksResponse = { iterationsOrRanks: [] };
-    response.iterationsOrRanks = await communicationDB.queryRankIds(request.iterationId) as number[];
+    response.iterationsOrRanks = await CLUSTER_DATABASE.queryRankIds(request.iterationId) as number[];
     return response;
 };
 
 export const operatorNamesHandler = async (request: OperatorNamesRequest): Promise<OperatorsResponse> => {
-    const communicationDB = communicationDbMap.get(request.dbIndex) as CommunicationAnalysisDataBase;
     const response: OperatorsResponse = { operators: [] };
-    response.operators = await communicationDB.selectOperators(request.iterationId, request.rankList) as string[];
+    response.operators = await CLUSTER_DATABASE.selectOperators(request.iterationId, request.rankList) as string[];
     return response;
 };
 
 export const durationListHandler = async (request: DurationListRequest): Promise<DurationResponse> => {
-    const communicationDB = communicationDbMap.get(request.dbIndex) as CommunicationAnalysisDataBase;
     const response: DurationResponse = { duration: [] };
-    response.duration = await communicationDB.queryDurationList(request.iterationId,
+    response.duration = await CLUSTER_DATABASE.queryDurationList(request.iterationId,
         request.rankList, request.operatorName) as Durations[];
     return response;
 };
 
 export const operatorDetailsHandler = async (request: OperatorDetailsRequest): Promise<AllOperatorsResponse> => {
-    const communicationDB = communicationDbMap.get(request.dbIndex) as CommunicationAnalysisDataBase;
-    const operatorNumber = await communicationDB.queryOperatorsCount(request.iterationId, request.rankId);
+    const operatorNumber = await CLUSTER_DATABASE.queryOperatorsCount(request.iterationId, request.rankId);
     if (operatorNumber.length !== 1) {
         logger.error('select operator counts error');
     }
@@ -66,15 +60,14 @@ export const operatorDetailsHandler = async (request: OperatorDetailsRequest): P
         currentPage: request.currentPage,
         allOperators: [],
     };
-    response.allOperators = await communicationDB.queryAllOperators(request.iterationId,
+    response.allOperators = await CLUSTER_DATABASE.queryAllOperators(request.iterationId,
         request.rankId, request.pageSize, request.currentPage);
     return response;
 };
 
 export const bandwidthHandler = async (request: BandwidthDataRequest): Promise<BandwidthDataResponse> => {
-    const communicationDB = communicationDbMap.get(request.dbIndex) as CommunicationAnalysisDataBase;
     const response: BandwidthDataResponse = { bandwidthData: [] };
-    response.bandwidthData = await communicationDB.queryBandwidthData(request.iterationId, request.rankId,
+    response.bandwidthData = await CLUSTER_DATABASE.queryBandwidthData(request.iterationId, request.rankId,
         request.operatorName);
     if (response.bandwidthData.length !== 4) {
         logger.error('select bandwidth data error. Four types of communication data, ' +
@@ -84,9 +77,8 @@ export const bandwidthHandler = async (request: BandwidthDataRequest): Promise<B
 };
 
 export const distributionHandler = async (request: DistributionDataRequest): Promise<DistributionResponse> => {
-    const communicationDB = communicationDbMap.get(request.dbIndex) as CommunicationAnalysisDataBase;
     const response: DistributionResponse = { distributionData: '' };
-    response.distributionData = await communicationDB.queryDistributionData(request.iterationId,
+    response.distributionData = await CLUSTER_DATABASE.queryDistributionData(request.iterationId,
         request.rankId, request.operatorName, request.transportType) as string;
     return response;
 };

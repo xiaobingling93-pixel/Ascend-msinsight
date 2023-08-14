@@ -241,4 +241,103 @@ export class ClusterDatabase {
             return rows[0];
         });
     }
+
+    async executeSql(sql: string, params: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.clusterDb.all(sql, params, function (err, rows) {
+                if (err !== undefined && err !== null) {
+                    logger.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
+    async queryIterationIds(): Promise<any> {
+        const sql: string = `SELECT DISTINCT iteration_id FROM ${COMMUNICATION_TIME_INFO_TABLE}`;
+        return new Promise((resolve, reject) => {
+            this.clusterDb.all(sql, function (err, rows) {
+                if (err !== undefined && err !== null) {
+                    logger.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
+    async queryRankIds(iterationId: number): Promise<any> {
+        const sql: string = `SELECT DISTINCT rank_id FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                                 WHERE iteration_id = ?`;
+        return this.executeSql(sql, [iterationId]);
+    }
+
+    async selectOperators(iterationId: number, rankIdList: number[]): Promise<any> {
+        let sql: string = '';
+        if (rankIdList.length === 0) {
+            sql = `SELECT DISTINCT op_name FROM (
+                   SELECT op_name FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                                 WHERE iteration_id = ?)`;
+        } else {
+            sql = `SELECT DISTINCT op_name FROM (
+                   SELECT op_name FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                                 WHERE iteration_id = ?
+                                 AND rank_id IN (${rankIdList.join(',')}))`;
+        }
+        return this.executeSql(sql, [iterationId]);
+    }
+
+    async queryDurationList(iterationId: number, rankIdList: number[], operatorName: string): Promise<any> {
+        let sql: string = '';
+        if (rankIdList.length === 0) {
+            sql = `SELECT rank_id, elapse_time, transit_time, synchronization_time, wait_time,
+                                  synchronization_time_ratio, wait_time_ratio FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                                  WHERE iteration_id = ?
+                                  AND op_name = ?`;
+        } else {
+            sql = `SELECT rank_id, elapse_time, transit_time, synchronization_time, wait_time,
+                                  synchronization_time_ratio, wait_time_ratio FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                                  WHERE iteration_id = ?
+                                  AND rank_id IN (${rankIdList.join(',')})
+                                  AND op_name = ?`;
+        }
+        return this.executeSql(sql, [ iterationId, operatorName ]);
+    };
+
+    async queryAllOperators(iterationId: number, rankId: number, pageSize: number, currentPage: number): Promise<any> {
+        const sql: string = `SELECT op_name, elapse_time, transit_time, synchronization_time, wait_time,
+                                  synchronization_time_ratio, wait_time_ratio FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                                  WHERE iteration_id = ?
+                                  AND rank_id = ?
+                                  LIMIT ?, ?`;
+        return this.executeSql(sql, [ iterationId, rankId, (currentPage - 1) * pageSize, pageSize ]);
+    }
+
+    async queryOperatorsCount(iterationId: number, rankId: number): Promise<any> {
+        const sql: string = `SELECT count(*) AS nums FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                             WHERE iteration_id = ?
+                             AND rank_id = ?`;
+        return this.executeSql(sql, [ iterationId, rankId ]);
+    }
+
+    async queryBandwidthData(iterationId: number, rankId: number, operatorName: string): Promise<any> {
+        const sql: string = `SELECT transport_type, transit_size, transit_time, bandwidth_size,
+                             bandwidth_utilization, large_package_ratio FROM ${COMMUNICATION_BAND_WIDTH_TABLE}
+                             WHERE iteration_id = ?
+                             AND rank_id = ?
+                             AND op_name = ?`;
+        return this.executeSql(sql, [ iterationId, rankId, operatorName ]);
+    }
+
+    async queryDistributionData(iterationId: number, rankId: number, operatorName: string, transportType: string): Promise<any> {
+        const sql: string = `SELECT size_distribution FROM ${COMMUNICATION_BAND_WIDTH_TABLE}
+                             WHERE iteration_id = ?
+                             AND rank_id = ?
+                             AND op_name = ?
+                             AND transport_type = ?`;
+        return this.executeSql(sql, [ iterationId, rankId, operatorName, transportType ]);
+    }
 }

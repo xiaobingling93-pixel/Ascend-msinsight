@@ -111,13 +111,13 @@ const BandwidthAnalysis = observer(function ({ session }: { session: Session }) 
 
 async function getTableData (): Promise<any> {
     const bandwidthDetails = await window.request('communication/duration/bandwidth',
-        { dbIndex: 'test', iterationId: 1, rankId: 0, operatorName: 'send' });
+        { iterationId: 1, rankId: 1, operatorName: 'hcom_allReduce__5' });
     return bandwidthDetails.bandwidthData;
 }
 
 async function getChartData (): Promise<any> {
     const distributions = await window.request('communication/duration/distribution',
-        { dbIndex: 'test', iterationId: 1, rankId: 0, operatorName: 'send', transportType: 'HCCS' });
+        { iterationId: 1, rankId: 1, operatorName: 'hcom_allReduce__5', transportType: 'HCCS' });
     return distributions.distributionData[0].size_distribution;
 }
 
