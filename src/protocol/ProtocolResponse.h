@@ -86,6 +86,131 @@ struct HdcDeviceListResponse : public Response {
     HdcDeviceListResponse() : Response(REQ_RES_HDC_DEVICE_LIST) {}
     HdcDeviceListResBody body;
 };
+
+struct Action {
+    std::string cardName;
+    std::string rankId;
+    bool result = true;
+};
+
+struct ImportActionResBody {
+    std::vector<Action> result;
+};
+
+struct ImportActionResponse : public Response {
+    ImportActionResponse() : Response(REQ_RES_IMPORT_ACTION) {}
+    ImportActionResBody body;
+};
+
+struct ThreadTraces {
+    std::string name;
+    uint32_t duration = 0;
+    uint64_t startTime;
+    uint64_t endTime;
+    uint32_t depth = 0;
+    uint32_t threadId = 0;
+};
+
+struct UnitThreadTracesBody {
+    std::vector<std::vector<ThreadTraces>> data;
+};
+
+struct UnitThreadTracesResponse : public Response {
+    UnitThreadTracesResponse() : Response(REQ_RES_UNIT_THREAD_TRACES) {}
+    UnitThreadTracesBody body;
+};
+
+struct Threads {
+    std::string title;
+    uint32_t wallDuration = 0;
+    uint32_t occurrences = 0;
+    uint32_t avgWallDuration = 0;
+    uint64_t selfTime;
+};
+
+struct UnitThreadsBody {
+    bool emptyFlag = false;
+    std::vector<Threads> data;
+};
+
+struct UnitThreadsResponse : public Response {
+    UnitThreadsResponse() : Response(REQ_RES_UNIT_THREADS) {}
+    UnitThreadsBody body;
+};
+
+struct ThreadDetail {
+    uint64_t selfTime;
+    std::string args;
+    std::string title;
+    uint64_t duration;
+    std::string cat;
+};
+
+struct UnitThreadDetailBody {
+    bool emptyFlag = false;
+    ThreadDetail data;
+};
+
+struct UnitThreadDetailResponse : public Response {
+    UnitThreadDetailResponse() : Response(REQ_RES_UNIT_THREAD_DETAIL) {}
+    UnitThreadDetailBody body;
+};
+
+struct FlowName {
+    std::string title;
+    uint32_t tid = 0;
+    std::string pid;
+    uint64_t timestamp;
+    uint32_t depth = 0;
+    std::string flowId;
+};
+
+struct UnitFlowNameBody {
+    std::vector<FlowName> flowDetail;
+};
+
+struct UnitFlowNameResponse : public Response {
+    UnitFlowNameResponse() : Response(REQ_RES_UNIT_FLOW_NAME) {}
+    UnitFlowNameBody body;
+};
+
+struct FromTo {
+    std::string pid;
+    uint32_t tid = 0;
+    uint64_t timestamp;
+    uint32_t depth = 0;
+};
+
+struct UnitFlowBody {
+    std::string title;
+    std::string cat;
+    std::string id;
+    FromTo from;
+    FromTo to;
+};
+
+struct UnitFlowResponse : public Response {
+    UnitFlowResponse() : Response(REQ_RES_UNIT_FLOW) {}
+    UnitFlowBody body;
+};
+
+struct ResetWindowResponse : public Response {
+    ResetWindowResponse() : Response(REQ_RES_RESET_WINDOW) {}
+};
+
+struct Chart {
+    uint32_t ts = 0;
+    uint32_t value = 0;
+};
+
+struct UnitChartBody {
+    std::vector<Chart> data;
+};
+
+struct UnitChartResponse : public Response {
+    UnitChartResponse() : Response(REQ_RES_UNIT_CHART) {}
+    UnitChartBody body;
+};
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic
