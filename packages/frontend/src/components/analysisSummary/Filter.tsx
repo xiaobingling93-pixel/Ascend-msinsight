@@ -75,7 +75,7 @@ const FilterCom = (props: any): JSX.Element => {
         <Select
             value={conditions.step}
             style={{ width: 120 }}
-            onChange={val => handleChange('step', val)}
+            onChange={(val: any) => handleChange('step', val)}
             options={options.stepOptions}
         />
         <Label name="Rank ID"/>
@@ -90,14 +90,14 @@ const FilterCom = (props: any): JSX.Element => {
         <Select
             value={conditions.order}
             style={{ width: 280 }}
-            onChange={val => handleChange('order', val)}
+            onChange={(val: any) => handleChange('order', val)}
             options={options.orderOptions}
         />
         <Label name="Top"/>
         <Select
             value={conditions.top}
             style={{ width: 120 }}
-            onChange={val => handleChange('top', val)}
+            onChange={(val: any) => handleChange('top', val)}
             options={options.topOptions}
         />
     </div>);

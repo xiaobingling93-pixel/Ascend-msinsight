@@ -270,7 +270,7 @@ const SingleSelect = ({ theme, tabState, optionVal, options, style, origin }: Si
         dropdownStyle={{ background: theme.deviceProcessBackgroundColor }}
         bordered={false}
         onSelect={(value: any) => selectVal(value, tabState, origin)}
-        getPopupContainer={(trigger: HTMLElement) => trigger.parentNode}
+        getPopupContainer={(trigger: any) => trigger.parentNode}
         options={options}
         style={style}>
     </Select>;
@@ -286,7 +286,7 @@ const MultiSelect = ({ theme, tabState, dftVal, options, style, mode }: Multiple
         suffixIcon={<PullDownIcon className="pullDownIcon"/>}
         dropdownStyle={{ background: theme.deviceProcessBackgroundColor }}
         bordered={false}
-        getPopupContainer={(trigger: HTMLElement) => trigger.parentNode}
+        getPopupContainer={(trigger: any) => trigger.parentNode}
         style={style}
         mode={mode}
         onChange={(value: unknown) => handleChange(value, tabState, setDirty)}

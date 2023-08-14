@@ -1,6 +1,7 @@
 import { tableMap } from '../database/tableManager';
 import * as fs from 'fs';
 import { Client } from '../types';
+import { terminateParse } from '../parse/main';
 import { getLoggerByName } from '../logger/loggger_configure';
 
 const logger = getLoggerByName('reset', 'info');

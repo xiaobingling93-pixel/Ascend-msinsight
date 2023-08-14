@@ -271,7 +271,7 @@ const doJumpSystraceSlice = (session: Session, taskData?: TaskData): void => {
         Logger('doJumpSystraceSlice', 'taskData is undefined.', 'warn');
     }
     runInAction(() => {
-        if (taskData.type === 'threadTrace') {
+        if (taskData?.type === 'threadTrace') {
             // session.locateUnit = {
             //     target: (unit) => unit instanceof CPUThreadTraceUnit && (unit.metadata as ThreadTraceMetadataChildren).tid === taskData.tid,
             //     onSuccess: (unit) => {
@@ -286,7 +286,7 @@ const doJumpSystraceSlice = (session: Session, taskData?: TaskData): void => {
             //         };
             //     },
             // };
-        } else if (taskData.type === 'userTrace') {
+        } else if (taskData?.type === 'userTrace') {
             // session.locateUnit = {
             //     target: (unit) => unit instanceof CPUUserTraceUnit && (unit.metadata as UserTraceMetadataChildren).pid === taskData.pid && (unit.metadata as UserTraceMetadataChildren).taskName === taskData.taskName,
             //     onSuccess: (unit) => {
@@ -516,7 +516,7 @@ const useChooseResult = ({ session, result, setResult, visible, setVisible, setT
                             item.mode === 'input'
                                 ? <div onClick={() => clickResultItem(item, result, setResult, setSearchContent)} style={{ cursor: arr.some(item => item.value === '') ? 'default' : 'pointer' }}>{`${item.showKey} : ${item.showValue}`}</div>
                                 : <Select options={item.options} value={item.showKey === undefined ? `${item.showValue}` : `${item.showKey} : ${item.showValue}`}
-                                    getPopupContainer={(trigger: HTMLElement) => trigger.parentNode} bordered={false} disabled={ item?.options === undefined }
+                                    getPopupContainer={(trigger: any) => trigger.parentNode} bordered={false} disabled={ item?.options === undefined }
                                     onSelect={(value: string, option: SelectOptionType) => selectResultItem({ curValue: item.value as string, option, result, setResult, visible, setVisible, setSearchContent })} />
                         }
                         { <CloseIcon className="icon" style={{ cursor: 'pointer' }}
@@ -607,7 +607,7 @@ const CategorySearchContent = (session: Session, menuList: MenuType[]): JSX.Elem
         <CustomDiv theme={theme} isDisableMenu={isDisableMenu} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
             onMouseMove={(e) => { e.stopPropagation(); }}>
             { useChooseResult({ session, result, setResult, visible, setVisible, setTime, updatePaginationData, setSearchContent }) }
-            <Dropdown overlay={ MenuJSX } trigger={['click']} disabled={isDisableMenu} getPopupContainer={trigger => trigger} >
+            <Dropdown overlay={ MenuJSX } trigger={['click']} disabled={isDisableMenu} getPopupContainer={(trigger: any) => trigger} >
                 <div className="popup"></div>
             </Dropdown>
             <StyledInput allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor}/> }} ref={inputRef}

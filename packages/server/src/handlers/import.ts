@@ -80,6 +80,7 @@ async function findTraceViewJson(path: string): Promise<string[]> {
 type CardInfo = {
     cardName: string;
     rankId: string;
+    result: boolean;
 };
 
 export const importHandler = async (req: { path: string }, client: Client): Promise<Record<string, unknown>> => {

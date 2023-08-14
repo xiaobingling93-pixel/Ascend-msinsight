@@ -10,7 +10,6 @@ import { platform } from './platforms';
 import { themeInstance, ThemeItem } from './theme/theme';
 import { getSearchParams } from './utils/localUrl';
 import eventBus, { EventType } from './utils/eventBus';
-import loading from './assets/images/loading.webp';
 import HomePage from './pages/HomePage';
 
 const Window = styled.div`

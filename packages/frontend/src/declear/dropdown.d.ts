@@ -1,3 +1,4 @@
+import 'antd/lib/index';
 declare module 'antd' {
     import type { InputRef, TooltipProps } from 'antd';
     import { DropDownProps } from 'antd/lib/dropdown/dropdown';

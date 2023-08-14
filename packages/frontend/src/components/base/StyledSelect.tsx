@@ -29,7 +29,7 @@ export const StyledSelect = styled((props: SelectProps &
         <Select
             suffixIcon={<StyledPullDownIcon/>}
             notFoundContent={<StyledEmpty/>}
-            getPopupContainer={(trigger: HTMLElement) => trigger.parentNode}
+            getPopupContainer={(trigger: any) => trigger.parentNode}
             {...props}
         />
     </ArrowController>)`
