@@ -104,6 +104,24 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     background-color: var(--grey80);
 }
 
+.bandwidthChart{
+    text-align:left;
+}
+
+.bandwidthChart>div{
+    background: #ffffff;
+}
+
+.bandwidthChart>div>div>div{
+    border: 1px solid #b0aeae;
+    background: white;
+    margin:10px;
+}
+
+.bandwidthHeader{
+    background: #f3f7f7;
+}
+
 .left20{
     padding-left:20px ;
 }
