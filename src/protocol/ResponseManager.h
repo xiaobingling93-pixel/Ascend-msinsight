@@ -48,6 +48,14 @@ private:
     static std::optional<json_t> ToConfigSetResponseJson(const Response &response);
     // harmony
     static std::optional<json_t> ToHdcDeviceListResponseJson(const Response &response);
+    static std::optional<json_t> ToImportActionResponseJson(const Response &response);
+    static std::optional<json_t> ToUnitThreadTracesResponseJson(const Response &response);
+    static std::optional<json_t> ToUnitThreadsResponseJson(const Response &response);
+    static std::optional<json_t> ToThreadDetailResponseJson(const Response &response);
+    static std::optional<json_t> ToUnitFlowNameResponseJson(const Response &response);
+    static std::optional<json_t> ToUnitFlowResponseJson(const Response &response);
+    static std::optional<json_t> ToResetWindowResponseJson(const Response &response);
+    static std::optional<json_t> ToUnitChartResponseJson(const Response &response);
 
     std::mutex mutex;
     std::map<std::string, ResponseToJsonFunc> resToJsonFactory;

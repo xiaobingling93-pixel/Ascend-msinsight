@@ -113,6 +113,46 @@ std::optional<json_t> ResponseManager::ToHdcDeviceListResponseJson(const Respons
     return ToResponseJson<HdcDeviceListResponse>(dynamic_cast<const HdcDeviceListResponse &>(response));
 }
 
+std::optional<json_t> ResponseManager::ToImportActionResponseJson(const Response &response)
+{
+    return ToResponseJson<ImportActionResponse>(dynamic_cast<const ImportActionResponse &>(response));
+}
+
+std::optional<json_t> ResponseManager::ToUnitThreadTracesResponseJson(const Response &response)
+{
+    return ToResponseJson<UnitThreadTracesResponse>(dynamic_cast<const UnitThreadTracesResponse &>(response));
+}
+
+std::optional<json_t> ResponseManager::ToUnitThreadsResponseJson(const Response &response)
+{
+    return ToResponseJson<UnitThreadsResponse>(dynamic_cast<const UnitThreadsResponse &>(response));
+}
+
+std::optional<json_t> ResponseManager::ToThreadDetailResponseJson(const Response &response)
+{
+    return ToResponseJson<UnitThreadDetailResponse>(dynamic_cast<const UnitThreadDetailResponse &>(response));
+}
+
+std::optional<json_t> ResponseManager::ToUnitFlowNameResponseJson(const Response &response)
+{
+    return ToResponseJson<UnitFlowNameResponse>(dynamic_cast<const UnitFlowNameResponse &>(response));
+}
+
+std::optional<json_t> ResponseManager::ToUnitFlowResponseJson(const Response &response)
+{
+    return ToResponseJson<UnitFlowResponse>(dynamic_cast<const UnitFlowResponse &>(response));
+}
+
+std::optional<json_t> ResponseManager::ToResetWindowResponseJson(const Response &response)
+{
+    return ToResponseJson<ResetWindowResponse>(dynamic_cast<const ResetWindowResponse &>(response));
+}
+
+std::optional<json_t> ResponseManager::ToUnitChartResponseJson(const Response &response)
+{
+    return ToResponseJson<UnitChartResponse>(dynamic_cast<const UnitChartResponse &>(response));
+}
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic
