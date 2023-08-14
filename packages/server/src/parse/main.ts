@@ -56,7 +56,7 @@ function parseFile(filePathArr: string[], dbPath: string, rankId: string): void 
                 readPosition = data.readPosition + data.readSize + 2;
             }
             parseTaskCount.set(rankId, taskCount);
-            fs.close(fd);
+            fs.close(fd, () => { });
         });
     }
 }
