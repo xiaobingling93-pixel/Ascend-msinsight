@@ -78,6 +78,25 @@ public:
 #endif
         return 0;
     }
+
+    static inline std::string GetFileName(const std::string &path)
+    {
+        if (path.empty()) {
+            return "";
+        }
+        auto pos = path.find_last_of('/');
+#ifdef _WIN32
+        if (pos == std::string::npos) {
+            pos = path.find_last_of('\\');
+        } else if (path.find_last_of('\\') != std::string::npos) {
+            pos = std::max(pos, path.find_last_of('\\'));
+        }
+#endif
+        if (pos == std::string::npos) {
+            return path;
+        }
+        return path.substr(pos + 1);
+    }
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_FILEUTIL_H

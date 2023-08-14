@@ -13,23 +13,32 @@
 namespace Dic {
 class RegexUtil {
 public:
-    static inline bool RegexSearch(const std::string &data, const std::string &pattern)
+    static inline std::optional<std::smatch> RegexSearch(const std::string &data, const std::string &pattern)
     {
-        std::regex regex(pattern);
-        if (!std::regex_search(data, regex)) {
-            return false;
+        try {
+            std::regex regex(pattern);
+            std::smatch result;
+            if (!std::regex_search(data, result, regex)) {
+                return std::nullopt;
+            }
+            return result;
+        } catch (std::exception &e) {
+            return std::nullopt;
         }
-        return true;
     }
 
     static inline std::optional<std::smatch> RegexMatch(const std::string &data, const std::string &pattern)
     {
-        std::regex regex(pattern);
-        std::smatch result;
-        if (!std::regex_match(data, result, regex)) {
+        try {
+            std::regex regex(pattern);
+            std::smatch result;
+            if (!std::regex_match(data, result, regex)) {
+                return std::nullopt;
+            }
+            return result;
+        } catch (std::exception &e) {
             return std::nullopt;
         }
-        return result;
     }
 };
 } // end of namespace Dic

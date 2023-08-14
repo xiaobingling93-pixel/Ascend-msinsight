@@ -2,22 +2,27 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#include <iostream>
 #include "ThreadPool.h"
+#include "ServerLog.h"
 
+namespace Dic {
+using namespace Dic::Server;
 void ThreadPool::threadFunc(ThreadPool &threadPool, int index)
 {
     std::function<void()> func;
     bool hasTask = false;
-    while(threadPool.running) {
+    while (threadPool.running) {
         {
             std::unique_lock<std::mutex> lock(threadPool.taskMutex);
             if (threadPool.taskQueue.Empty()) {
-                threadPool.taskCv.wait(lock, [&threadPool](){return !threadPool.running || !threadPool.taskQueue.Empty();});
+                ServerLog::Info("[Thread worker] worker ", index, " is waiting.");
+                threadPool.taskCv.wait(lock, [&threadPool]() {
+                    return !threadPool.running || !threadPool.taskQueue.Empty();
+                });
             }
             hasTask = threadPool.taskQueue.Pop(func);
         }
-        std::cout << "work " << index << " run. hasTask:" << hasTask << std::endl;
+        ServerLog::Info("[Thread worker] worker ", index, " run task end. hasTask:", hasTask);
         if (hasTask) {
             threadPool.runningTasks++;
             func();
@@ -27,11 +32,12 @@ void ThreadPool::threadFunc(ThreadPool &threadPool, int index)
             threadPool.taskDoneCv.notify_all();
         }
     }
-    std::cout << "work " << index << " exit" << std::endl;
+    ServerLog::Info("[Thread worker] worker ", index, " exit.");
 }
 
 ThreadPool::ThreadPool(int threadCount)
 {
+    ServerLog::Info("[Thread pool] Init. thread count:", threadCount);
     for (int i = 0; i < threadCount; i++) {
         threads.emplace_back(ThreadPool::threadFunc, std::ref(*this), i);
     }
@@ -44,31 +50,37 @@ ThreadPool::~ThreadPool()
 
 void ThreadPool::Reset()
 {
+    ServerLog::Info("[Thread pool] Reset.");
     taskQueue.Clear();
     WaitForAllTasks();
+    ServerLog::Info("[Thread pool] Reset end.");
 }
 
 void ThreadPool::ShutDown()
 {
+    ServerLog::Info("[Thread pool] Shut down.");
     if (running) {
         WaitForAllTasks();
         taskQueue.Clear();
         running = false;
         taskCv.notify_all();
-        std::cout << "thread notify_all" << std::endl;
-        for(auto &thread : threads) {
+        for (auto &thread : threads) {
             if (thread.joinable()) {
                 thread.join();
             }
         }
         threads.clear();
     }
+    ServerLog::Info("[Thread pool] Shut down end.");
 }
 
 void ThreadPool::WaitForAllTasks()
 {
+    ServerLog::Info("[Thread pool] Wait for all tasks to complete.");
     std::unique_lock<std::mutex> lock(taskMutex);
     waiting = true;
-    taskDoneCv.wait(lock, [this](){return runningTasks == 0 && taskQueue.Empty();});
+    taskDoneCv.wait(lock, [this]() { return runningTasks == 0 && taskQueue.Empty(); });
     waiting = false;
+    ServerLog::Info("[Thread pool] All tasks completed.");
+}
 }

@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#ifndef THREADPOOL_THREADPOOL_H
-#define THREADPOOL_THREADPOOL_H
+#ifndef DATA_INSIGHT_CORE_HTHREADPOOL_THREADPOOL_H
+#define DATA_INSIGHT_CORE_HTHREADPOOL_THREADPOOL_H
 
 #include <atomic>
 #include <functional>
@@ -13,14 +13,15 @@
 #include <condition_variable>
 #include "SafeQueue.h"
 
+namespace Dic {
 class ThreadPool {
 public:
     explicit ThreadPool(int threadCount);
     ~ThreadPool();
-    ThreadPool(const ThreadPool&) = delete;
-    ThreadPool& operator=(const ThreadPool&) = delete;
-    ThreadPool(ThreadPool&&) = delete;
-    ThreadPool& operator=(ThreadPool&&) = delete;
+    ThreadPool(const ThreadPool &) = delete;
+    ThreadPool &operator=(const ThreadPool &) = delete;
+    ThreadPool(ThreadPool &&) = delete;
+    ThreadPool &operator=(ThreadPool &&) = delete;
 
     /**
      * Add a task to the queue.
@@ -34,18 +35,18 @@ public:
     {
         std::function<decltype(f(args...))()> func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
         auto task = std::make_shared<std::packaged_task<decltype(f(args...))()>>(func);
-        std::function<void()> warpper_func = [task]()
-        {
+        std::function<void()> warpper_func = [task]() {
             (*task)();
         };
         taskQueue.Push(warpper_func);
         taskCv.notify_one();
         return task->get_future();
     }
+
     /**
      * Wait for all tasks to complete.
      */
-     void WaitForAllTasks();
+    void WaitForAllTasks();
 
     /**
      * Clear task queue, and wait for all running tasks to complete.
@@ -69,6 +70,6 @@ private:
 
     static void threadFunc(ThreadPool &threadPool, int index);
 };
+} // namespace Dic
 
-
-#endif //THREADPOOL_THREADPOOL_H
+#endif // DATA_INSIGHT_CORE_HTHREADPOOL_THREADPOOL_H
