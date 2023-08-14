@@ -62,7 +62,6 @@ export interface FilterDropdownProps {
 }
 
 export interface ColumnType<RecordType> extends RcColumnType<RecordType> {
-    title?: ColumnTitle<RecordType>;
     // Sorter
     sorter?:
         | boolean

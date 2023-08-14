@@ -4,13 +4,16 @@ import * as React from 'react';
 import { Session } from '../entity/session';
 import { TimeMakerButton } from './TimeMakerButton';
 import { CustomButton } from './base/StyledButton';
-import { ReactComponent as OpenIcon } from '../assets/images/ic_public_download.svg';
-import { ReactComponent as ResetIcon } from '../assets/images/insights/ark_gc.svg';
+import { ReactComponent as AntdOpenIcon } from '../assets/images/ic_public_download.svg';
+import { ReactComponent as AntdResetIcon } from '../assets/images/insights/ark_gc.svg';
 import { runInAction } from 'mobx';
 import { useState } from 'react';
 import { CardUnit } from '../insight/units/AscendUnit';
-import { processUnits } from '../entity/insight';
 import { messageSender } from '../connection/messageSender';
+import { SvgType } from './base/rc-table/types';
+
+const OpenIcon = AntdOpenIcon as SvgType;
+const ResetIcon = AntdResetIcon as SvgType;
 
 const Container = styled.div`
     display: flex;
@@ -42,6 +45,7 @@ export const ButtonGroup = observer(({ session }: { session: Session }) => {
 type CardInfo = {
     cardName: string;
     rankId: string;
+    result: boolean;
 };
 
 const selectFolders = async (isImporting: boolean, setIsImporting: React.Dispatch<React.SetStateAction<boolean>>, session: Session): Promise<void> => {
@@ -52,11 +56,15 @@ const selectFolders = async (isImporting: boolean, setIsImporting: React.Dispatc
         session.phase = 'download';
         session.endTimeAll = 1000000000;
         result.cards.forEach((item: CardInfo) => {
-            session.units.push(new CardUnit({ cardId: item.rankId, cardName: item.cardName }));
+            const unit = new CardUnit({ cardId: item.rankId, cardName: item.cardName });
+            if (item.result as boolean) {
+                unit.phase = 'analyzing';
+            } else {
+                unit.phase = 'error';
+            }
+            session.units.push(unit);
         });
-        processUnits(session.units, 'analyzing');
-        session.allRankIds = result.result.map((item: any) => item.rankId);
-        processUnits(session.units, 'download');
+        session.allRankIds = result.cards.map((item: any) => item.rankId);
     });
     setIsImporting(false);
 };

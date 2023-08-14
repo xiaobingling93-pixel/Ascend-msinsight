@@ -6,8 +6,8 @@ import { PaginationProps } from 'antd/lib/pagination';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { ChangeEvent, Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
-import { ReactComponent as SearchIcon } from '../assets/images/insights/ic_search_lined.svg';
-import { ReactComponent as CloseIcon } from '../assets/images/insights/ic_close_filled.svg';
+import { ReactComponent as AntdSearchIcon } from '../assets/images/insights/ic_search_lined.svg';
+import { ReactComponent as AntdCloseIcon } from '../assets/images/insights/ic_close_filled.svg';
 import { Session } from '../entity/session';
 import { platform } from '../platforms';
 import { CustomButton } from './base/StyledButton';
@@ -16,9 +16,13 @@ import { Logger } from '../utils/Logger';
 import { InsightUnit, MenuType } from '../entity/insight';
 import { preOrderFlatten } from '../entity/common';
 import { isPinned } from './ChartContainer/unitPin';
-import { FrameSearchResultType, ThreadInfo } from '../entity/data';
+import { FrameSearchResultType } from '../entity/data';
 import { EventHandler, EventType, useEventBus } from '../utils/eventBus';
 import { MenuClickEventHandler } from 'rc-menu/lib/interface';
+import { SvgType } from './base/rc-table/types';
+
+const SearchIcon = AntdSearchIcon as SvgType;
+const CloseIcon = AntdCloseIcon as SvgType;
 
 interface TaskData {
     type: string;
@@ -256,13 +260,6 @@ const queryDataCount = async (session: Session, result: ResultType[],
     return 0;
 };
 
-const calculateDomainRange = (session: Session, startTime: number, duration: number): [ number, number ] => {
-    let rangeStart = startTime - duration * 9;
-    rangeStart = rangeStart > 0 ? rangeStart : 0;
-    const rangeEnd = Math.min(startTime + duration * 10, session.endTimeAll ?? Number.MAX_SAFE_INTEGER);
-    return [ rangeStart, rangeEnd ];
-};
-
 const doJumpCpuSlice = (session: Session, cpu?: number, startTime?: number, duration?: number): void => {
     if (cpu === undefined || startTime === undefined || duration === undefined) {
         Logger('doJumpCpuSlice', `cpu: ${cpu}, startTime: ${startTime}, duration: ${duration}, some of them is undefined.`, 'warn');
@@ -273,6 +270,39 @@ const doJumpSystraceSlice = (session: Session, taskData?: TaskData): void => {
     if (taskData === undefined) {
         Logger('doJumpSystraceSlice', 'taskData is undefined.', 'warn');
     }
+    runInAction(() => {
+        if (taskData?.type === 'threadTrace') {
+            // session.locateUnit = {
+            //     target: (unit) => unit instanceof CPUThreadTraceUnit && (unit.metadata as ThreadTraceMetadataChildren).tid === taskData.tid,
+            //     onSuccess: (unit) => {
+            //         const [ rangeStart, rangeEnd ] = calculateDomainRange(session, taskData.startTime, taskData.duration);
+            //         session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
+            //         session.selectedData = {
+            //             threadId: taskData.tid,
+            //             duration: taskData.duration,
+            //             startTime: taskData.startTime,
+            //             depth: taskData.depth,
+            //             name: taskData.taskName,
+            //         };
+            //     },
+            // };
+        } else if (taskData?.type === 'userTrace') {
+            // session.locateUnit = {
+            //     target: (unit) => unit instanceof CPUUserTraceUnit && (unit.metadata as UserTraceMetadataChildren).pid === taskData.pid && (unit.metadata as UserTraceMetadataChildren).taskName === taskData.taskName,
+            //     onSuccess: (unit) => {
+            //         const [ rangeStart, rangeEnd ] = calculateDomainRange(session, taskData.startTime, taskData.duration);
+            //         session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
+            //         session.selectedData = {
+            //             name: taskData.cookie,
+            //             taskName: taskData.taskName,
+            //             timestamp: taskData.startTime,
+            //             duration: taskData.duration,
+            //             depth: taskData.depth,
+            //         };
+            //     },
+            // };
+        }
+    });
 };
 
 // 帧跳转
@@ -486,7 +516,7 @@ const useChooseResult = ({ session, result, setResult, visible, setVisible, setT
                             item.mode === 'input'
                                 ? <div onClick={() => clickResultItem(item, result, setResult, setSearchContent)} style={{ cursor: arr.some(item => item.value === '') ? 'default' : 'pointer' }}>{`${item.showKey} : ${item.showValue}`}</div>
                                 : <Select options={item.options} value={item.showKey === undefined ? `${item.showValue}` : `${item.showKey} : ${item.showValue}`}
-                                    getPopupContainer={trigger => trigger.parentNode} bordered={false} disabled={ item?.options === undefined }
+                                    getPopupContainer={(trigger: any) => trigger.parentNode} bordered={false} disabled={ item?.options === undefined }
                                     onSelect={(value: string, option: SelectOptionType) => selectResultItem({ curValue: item.value as string, option, result, setResult, visible, setVisible, setSearchContent })} />
                         }
                         { <CloseIcon className="icon" style={{ cursor: 'pointer' }}
@@ -577,7 +607,7 @@ const CategorySearchContent = (session: Session, menuList: MenuType[]): JSX.Elem
         <CustomDiv theme={theme} isDisableMenu={isDisableMenu} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
             onMouseMove={(e) => { e.stopPropagation(); }}>
             { useChooseResult({ session, result, setResult, visible, setVisible, setTime, updatePaginationData, setSearchContent }) }
-            <Dropdown overlay={ MenuJSX } trigger={['click']} disabled={isDisableMenu} getPopupContainer={trigger => trigger} >
+            <Dropdown overlay={ MenuJSX } trigger={['click']} disabled={isDisableMenu} getPopupContainer={(trigger: any) => trigger} >
                 <div className="popup"></div>
             </Dropdown>
             <StyledInput allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor}/> }} ref={inputRef}

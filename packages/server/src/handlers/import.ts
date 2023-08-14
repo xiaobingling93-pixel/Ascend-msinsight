@@ -91,13 +91,12 @@ export function splitRankFile(matchedFilePaths: string[]): Map<string, string[]>
 type CardInfo = {
     cardName: string;
     rankId: string;
+    result: boolean;
 };
 
 export const importHandler = async (req: { path: string | null }, client: Client): Promise<Record<string, unknown>> => {
     let selectedFolder = req.path;
-    if (req.path === 'browser') {
-        selectedFolder = await selectFolder();
-    }
+    selectedFolder = req.path === 'browser' ? await selectFolder() : selectedFolder;
     let scene = 'train';
     let timeLineJsonFileArr = findFilesByPath(selectedFolder, 'trace_view.json');
     // 没有找到去查找msprof文件
@@ -113,12 +112,16 @@ export const importHandler = async (req: { path: string | null }, client: Client
     for (const rankId of timeLineJsonFileMap.keys()) {
         const fileArr = timeLineJsonFileMap.get(rankId);
         if (importedRankIdSet.has(rankId) || fileArr === undefined) continue;
-        result.cards.push({ cardName: rankId.toString(), rankId });
+        const cardInfo: CardInfo = { cardName: rankId.toString(), rankId, result: true };
+        result.cards.push(cardInfo);
         // 按卡解析文件
         parse(fileArr, rankId, (rankId, err) => {
             if (err) {
                 // this to send parse file error message
-                logger.error(err);
+                logger.error(`parse error. ${err.message}`);
+                cardInfo.result = false;
+                client?.notify('parse/fail', { rankId, errorMsg: err.message });
+                return;
             }
             // this to send parse file success message
             queryUnitsMetadata(rankId).then((queryResult) => {
@@ -127,7 +130,7 @@ export const importHandler = async (req: { path: string | null }, client: Client
                     extremumTimestamp.maxTimestamp = extremumTimestamp.maxTimestamp + extremumTimestamp.minTimestamp - queryResult.extremumTimestamp.minTimestamp;
                     extremumTimestamp.minTimestamp = queryResult.extremumTimestamp.minTimestamp;
                     startTimeUpdated = true;
-                };
+                }
                 extremumTimestamp.maxTimestamp = Math.max(queryResult.extremumTimestamp.maxTimestamp - extremumTimestamp.minTimestamp, extremumTimestamp.maxTimestamp);
                 client?.notify('parse/success', { unit: queryResult.insightMetaData, startTimeUpdated, maxTimeStamp: extremumTimestamp.maxTimestamp });
             });

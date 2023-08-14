@@ -16,7 +16,7 @@
     "useDefineForClassFields": true,
     "downlevelIteration": true,
     "outDir": "dist",
-    "sourceMap": false
+    "sourceMap": true
   },
   "include": [
     "src"

@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { InsightConnection } from './connection/client';
 import { RootStoreContext } from './context/context';
@@ -22,14 +22,13 @@ declare global {
     }
 };
 
-ReactDOM.render(
+const root = createRoot(document.getElementById('root') as HTMLElement);
+root.render(
     (<React.StrictMode>
-        <RootStoreContext.Provider value={ store }>
-            <App/>
+        <RootStoreContext.Provider value={store}>
+            <App />
         </RootStoreContext.Provider>
-    </React.StrictMode>),
-    document.getElementById('root') as HTMLElement,
-);
+    </React.StrictMode>));
 
 (async () => {
     const conn = new InsightConnection(NOTIFICATION_HANDLERS);

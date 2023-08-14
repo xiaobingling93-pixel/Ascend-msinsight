@@ -7,11 +7,15 @@ import * as React from 'react';
 import styled from '@emotion/styled';
 import { useWatchResize } from '../utils/useWatchDomResize';
 import i18n from '../i18n';
-import { ReactComponent as PlaceFlagButtonSvg } from '../assets/images/timeline/ic_place_flag.svg';
-import { ReactComponent as FlagIcon } from '../assets/images/insights/UIicon_timeFlag_filled.svg';
+import { ReactComponent as AntdPlaceFlagButtonSvg } from '../assets/images/timeline/ic_place_flag.svg';
+import { ReactComponent as AntdFlagIcon } from '../assets/images/insights/UIicon_timeFlag_filled.svg';
 import { addRangeFlag, deleteRangeFlag, linearScaleFactory, transformTimeToLeft } from './TimelineMarker';
 import { runInAction } from 'mobx';
 import { getTimestamp } from '../utils/humanReadable';
+import { SvgType } from './base/rc-table/types';
+
+const PlaceFlagButtonSvg = AntdPlaceFlagButtonSvg as SvgType;
+const FlagIcon = AntdFlagIcon as SvgType;
 
 export const TimeMakerButton = observer(({ session }: { session: Session }): JSX.Element | null => {
     const [ isSuspend, updateIsSuspend ] = useState(false);

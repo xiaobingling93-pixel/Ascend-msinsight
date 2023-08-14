@@ -5,6 +5,7 @@ import { ChartConfig, ChartDecorator, ChartReaction, ChartType, GetChartConfig, 
 import { ElementType, TreeNode } from './common';
 import { Session } from './session';
 import { TabState } from './tabDependency';
+import { CardMetaData } from './data';
 
 // #region chart desc
 /**
@@ -381,21 +382,30 @@ export const processUnits = (units: InsightUnit[], unitPhase: string): void => {
 /**
  * Set the unit phase corresponding to the plugin.
  *
- * @param unitName 待设置状态的unitName
+ * @param unit unit
+ * @param phase unit phase
+ */
+export function setUnitPhase(unit: InsightUnit, phase: UnitPhase): void {
+    if (unit.phase === 'error') {
+        return;
+    }
+    unit.phase = phase;
+    recursiveSetUnits(unit, phase);
+}
+
+/**
+ * Set the unit phase corresponding to the plugin.
+ *
+ * @param cardId 待设置状态的cardId
  * @param session session
  * @param phase unit phase
  */
-export function setUnitPhase(unitName: string, session: Session, phase: UnitPhase): void {
+export function setUnitPhaseByCardId(cardId: string, session: Session, phase: UnitPhase): void {
     session.units.forEach(unit => {
-        if (unit.name !== unitName) {
+        if ((unit.metadata as CardMetaData).cardId !== cardId) {
             return unit;
         }
-        // 单个泳道可能有多个plugin，目前以插件进行驱动修改泳道的状态，如果有一个插件失败使得泳道失败后，unit的状态就不可被修改
-        if (unit.phase === 'error') {
-            return unit;
-        }
-        unit.phase = phase;
-        recursiveSetUnits(unit, phase);
+        setUnitPhase(unit, phase);
         return unit;
     });
 }

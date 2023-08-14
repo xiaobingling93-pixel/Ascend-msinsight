@@ -62,7 +62,7 @@ export const MultiSelectWithAll = (props: any): JSX.Element => {
                             checked={checked}
                             onChange={event => {
                                 setChecked(event.target.checked);
-                                if (event.target.checked) {
+                                if (event?.target.checked) {
                                     onChange(options.map((item: optionDataType) => item.value));
                                 } else {
                                     onChange([]);

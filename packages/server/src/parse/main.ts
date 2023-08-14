@@ -64,6 +64,7 @@ function parseFile(filePathArr: string[], dbPath: string, rankId: string): void 
 async function parseWorkerEnd(message: EndMessage): Promise<void> {
     if (!tableMap.has(message.rankId) || !parseTaskCount.has(message.rankId)) {
         logger.log(`can not find rankId, ${message.rankId}`);
+        return;
     }
     const unfinishedTaskCount = parseTaskCount.get(message.rankId) as number;
     logger.log(`parseFileEnd. rankId:${message.rankId}, count: ${unfinishedTaskCount}`);
@@ -105,4 +106,10 @@ function getReadSize(fd: number, start: number, fileSize: number): { readPositio
 function parseCallback(rankId: string, err?: Error): void {
     callbackMap.get(rankId)?.(rankId, err);
     callbackMap.delete(rankId);
+}
+
+export async function terminateParse(): Promise<void> {
+    parseTaskCount.clear();
+    callbackMap.clear();
+    await threadPool.terminateAllTask();
 }

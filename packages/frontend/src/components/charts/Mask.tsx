@@ -1,12 +1,8 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import styled from '@emotion/styled';
-import loading from '../../assets/images/loading.webp';
 
 const ImgWithFallback = ({
-    src = '',
-    fallback = '',
-    type = 'image/webp',
-    ...delegated
+    className = '',
 }): JSX.Element => {
     const PictureContainer = styled.picture`
         img {
@@ -16,13 +12,12 @@ const ImgWithFallback = ({
     `;
     return (
         <PictureContainer>
-            <source srcSet={src} type={type} />
-            <img src={fallback} {...delegated} />
+            <div className={className}></div>
         </PictureContainer>
     );
 };
 
-export const Mask: React.FC<{ unitPhase: string }> = ({ children, ...props }): JSX.Element => {
+export const Mask: React.FC<{ unitPhase: string } & { children: ReactNode }> = ({ children, ...props }): JSX.Element => {
     const MaskLayer = styled.div`
         position: absolute;
         display: flex;
@@ -51,7 +46,7 @@ export const Mask: React.FC<{ unitPhase: string }> = ({ children, ...props }): J
     return <div style={{ position: 'relative' }}>
         <MaskLayer>
             <Info>
-                <ImgWithFallback className={'img'} src={loading} />
+                <ImgWithFallback className={'loading'} />
                 { props.unitPhase }</Info>
         </MaskLayer>
         {children}

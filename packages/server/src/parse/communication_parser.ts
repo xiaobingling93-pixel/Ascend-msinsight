@@ -19,7 +19,7 @@ export function parseCommunicationFile(filePathArr: string[]): void {
         const parser = JSONStream.parse([ /.*/, { recurse: true }, /[0-9]{1,5}/, { emitPath: true } ]);
         stream.pipe(parser);
         let countTimeInfo = 0; let countBandWidth = 0;
-        parser.on('data', (data) => {
+        parser.on('data', (data: any) => {
             const tempPath = data.path;
             const tempData = data.value;
             const tempOpName = tempPath[0];
@@ -40,7 +40,7 @@ export function parseCommunicationFile(filePathArr: string[]): void {
                 });
             }
         });
-        parser.on('error', (err) => {
+        parser.on('error', (err: any) => {
             logger.error(err);
         });
         parser.on('end', () => {

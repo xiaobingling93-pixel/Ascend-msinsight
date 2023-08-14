@@ -270,7 +270,7 @@ const SingleSelect = ({ theme, tabState, optionVal, options, style, origin }: Si
         dropdownStyle={{ background: theme.deviceProcessBackgroundColor }}
         bordered={false}
         onSelect={(value: any) => selectVal(value, tabState, origin)}
-        getPopupContainer={trigger => trigger.parentNode}
+        getPopupContainer={(trigger: any) => trigger.parentNode}
         options={options}
         style={style}>
     </Select>;
@@ -286,17 +286,17 @@ const MultiSelect = ({ theme, tabState, dftVal, options, style, mode }: Multiple
         suffixIcon={<PullDownIcon className="pullDownIcon"/>}
         dropdownStyle={{ background: theme.deviceProcessBackgroundColor }}
         bordered={false}
-        getPopupContainer={trigger => trigger.parentNode}
+        getPopupContainer={(trigger: any) => trigger.parentNode}
         style={style}
         mode={mode}
         onChange={(value: unknown) => handleChange(value, tabState, setDirty)}
-        onMouseDown={e => { setDirty(false); e.stopPropagation(); }}
+        onMouseDown={(e: React.MouseEvent) => { setDirty(false); e.stopPropagation(); }}
         maxTagCount="responsive"
         placeholder="Click to choose">
         { options.map(item =>
             <Select.Option key={item.value}>
                 <Row className={'multiSelectRow'}>
-                    <Checkbox value={item.value} onClick={e => { if (dirty) { e.stopPropagation(); } setDirty(false); }}
+                    <Checkbox value={item.value} onClick={(e: React.MouseEvent) => { if (dirty) { e.stopPropagation(); } setDirty(false); }}
                         checked={tabState?.filter?.filterKeys.includes(String(item.value))}>
                         <div style={{ width: '135px' }}><Abbreviature content={ item.label } placement={'right'} availableWidth={135} /></div>
                     </Checkbox>
@@ -347,7 +347,7 @@ const SearchContainer = observer(({ initialContent, fieldName, tabState }: { ini
         <SearchIcon className="searchIcon"/>
         <Input
             placeholder={`Involves ${fieldName}`}
-            onPressEnter={(e) => handleSearch(tabState, e)}
+            onPressEnter={(e: React.KeyboardEvent<HTMLInputElement>) => handleSearch(tabState, e)}
             key={fieldName}
             value={content}
             onChange={handleInput}
@@ -392,7 +392,7 @@ export const FilterContainer = observer(({ tabState }: {tabState: TabState}) => 
             checked !== undefined && tips !== undefined &&
             <div className="switch">
                 <span>{tips}</span>
-                <Switch defaultChecked={checked} onChange={(checked) => { switchChange(checked, tabState); changeCallBack?.(checked); }} size="small"/>
+                <Switch defaultChecked={checked} onChange={(checked: boolean) => { switchChange(checked, tabState); changeCallBack?.(checked); }} size="small"/>
             </div>
         }
     </Container>;

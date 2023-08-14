@@ -10,7 +10,6 @@ import { platform } from './platforms';
 import { themeInstance, ThemeItem } from './theme/theme';
 import { getSearchParams } from './utils/localUrl';
 import eventBus, { EventType } from './utils/eventBus';
-import loading from './assets/images/loading.webp';
 import HomePage from './pages/HomePage';
 
 const Window = styled.div`
@@ -33,10 +32,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 const ImgWithFallback = ({
-    src = '',
-    fallback = '',
-    type = 'image/webp',
-    ...delegated
+    className = '',
 }): JSX.Element => {
     const PictureContainer = styled.picture`
       img {
@@ -46,8 +42,7 @@ const ImgWithFallback = ({
     `;
     return (
         <PictureContainer>
-            <source srcSet={src} type={type} />
-            <img src={fallback} {...delegated} />
+            <div className={className}></div>
         </PictureContainer>
     );
 };
@@ -80,7 +75,7 @@ const StatePopover = observer(() => {
       }
     `;
     return <Mask>
-        <Info className={'info'}><ImgWithFallback className={'img'} src={loading} />waiting...</Info>
+        <Info className={'info'}><ImgWithFallback className={'loading'}/>waiting...</Info>
     </Mask>;
 });
 
