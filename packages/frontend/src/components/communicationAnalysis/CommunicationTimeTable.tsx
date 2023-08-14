@@ -8,8 +8,9 @@ import type { TableColumnsType } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { Container, GetPageConfigWhithAllData, PaginationWhithPgaeData } from './Common';
 import { VoidFunction } from '../../utils/interface';
+import { queryOperatorDetails } from '../../utils/RequestUtils';
 
-interface DataType {
+export interface DataType {
     'Rank ID': string ;
     'Operator Name': string ;
     'Elapse Time(ms)': string | number;
@@ -56,24 +57,6 @@ const commonColumns = [
 
 const defaultDataSource: DataType[] = [];
 
-function queryOperators(rankId: string, page?: any): DataType[] {
-    const data: DataType[] = [];
-    for (let i = 0; i < 3; ++i) {
-        data.push({
-            'Rank ID': i.toString(),
-            'Operator Name': 'operator' + i.toString(),
-            'Elapse Time(ms)': 62.9322,
-            'Transit Time(ms)': 5,
-            'Synchronization Time(ms)': 55,
-            'Wait Time(ms)': 60,
-            'Synchronization Time Ratio': 0.95,
-            'Wait Time Ratio': 0.96,
-            'Idle Time(ms)': 0.08,
-        });
-    }
-    return data;
-}
-
 // Total HCCL Opertators表
 const OperatorsTable = (record: any): JSX.Element => {
     useEffect(() => {
@@ -82,7 +65,7 @@ const OperatorsTable = (record: any): JSX.Element => {
     const [ dataSource, setDataSource ] = useState<any[]>([]);
     const { rankId } = record;
     const updateData = async(page?: any): Promise<void> => {
-        const data = await queryOperators(rankId, page);
+        const data = await queryOperatorDetails({ rankId, ...page });
         setDataSource(data);
         setPageInfo({ total: data.length });
     };

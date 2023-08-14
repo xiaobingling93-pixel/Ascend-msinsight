@@ -5,8 +5,8 @@ import { Button, Table } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 import { StringMap } from '../../utils/interface';
-import { PaginationWhithPgaeData } from '../communicationAnalysis/Common';
-import { computationCommunicationData } from '../../utils/__test__/mockData';
+import { PaginationWhithPgaeData, notNull } from '../communicationAnalysis/Common';
+import { querySummaryDetail, querySummaryStatistics } from '../../utils/RequestUtils';
 
 const computingStatisticsColumns = [
     {
@@ -30,51 +30,51 @@ const computingStatisticsColumns = [
 const computingDetailColumns = [
     {
         title: 'Name',
-        dataIndex: 'Name',
+        dataIndex: 'name',
     },
     {
         title: 'Type',
-        dataIndex: 'Type',
+        dataIndex: 'type',
     },
     {
         title: 'Start Time',
-        dataIndex: 'Start Time',
+        dataIndex: 'startTime',
     },
     {
         title: 'Duration(us)',
-        dataIndex: 'Duration(us)',
+        dataIndex: 'duration',
     },
     {
         title: 'Wait Time(us)',
-        dataIndex: 'Wait Time(us)',
+        dataIndex: 'waitTime',
     },
     {
         title: 'Block Dim',
-        dataIndex: 'Block Dim',
+        dataIndex: 'blockDim',
     },
     {
         title: 'Input Shapes',
-        dataIndex: 'Input Shapes',
+        dataIndex: 'inputShapes',
     },
     {
         title: 'Input Data Types',
-        dataIndex: 'Input Data Types',
+        dataIndex: 'inputDataTypes',
     },
     {
         title: 'Input Formats',
-        dataIndex: 'Input Formats',
+        dataIndex: 'inputFormats',
     },
     {
         title: 'Output Shapes',
-        dataIndex: 'Output Shapes',
+        dataIndex: 'outputShapes',
     },
     {
         title: 'Output Data Types',
-        dataIndex: 'Output Data Types',
+        dataIndex: 'outputDataTypes',
     },
     {
         title: 'Output Formats',
-        dataIndex: 'Output Formats',
+        dataIndex: 'outputFormats',
     },
 ];
 
@@ -127,7 +127,7 @@ const communicationNotOverlappedColumns = [
     },
 ];
 
-const getTableSet = (type: string, setExpandedKeys?: any): any => {
+const getTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
     const rowKeyMap: any = {
         Computing: 'Accelerator Core',
         ComputingDetail: 'Name',
@@ -142,10 +142,10 @@ const getTableSet = (type: string, setExpandedKeys?: any): any => {
         'Communication(OverLapped)Detail': communicationOverlappedColumns,
         'Communication(Not OverLapped)Detail': communicationNotOverlappedColumns,
     };
-    const rowKey = rowKeyMap[type];
-    const columns = notNull(colMap[type]) ? [...colMap[type]] : [];
+    const rowKey = rowKeyMap[timeFlag];
+    const columns = notNull(colMap[timeFlag]) ? [...colMap[timeFlag]] : [];
 
-    if ([ 'Computing', 'Communication(OverLapped)', 'Communication(Not OverLapped)' ].includes(type)) {
+    if ([ 'Computing', 'Communication(OverLapped)', 'Communication(Not OverLapped)' ].includes(timeFlag)) {
         const btnCol = {
             title: 'See Details',
             key: 'action',
@@ -169,21 +169,16 @@ const getTableSet = (type: string, setExpandedKeys?: any): any => {
     return { rowKey, columns };
 };
 
-function queryDetail(type: string, page?: any): any {
-    return computationCommunicationData[type];
-}
-
-const DtetailTable = (props: any): JSX.Element => {
+const DtetailTable = ({ rankId, timeFlag }: any): JSX.Element => {
     const [ dataSource, setDataSource ] = useState<any[]>([]);
-    const { type } = props;
-    const { columns, rowKey } = getTableSet(type);
+    const { columns, rowKey } = getTableSet(timeFlag);
     useEffect(() => {
         updateData();
     }, []);
     const updateData = async(page?: any): Promise<void> => {
-        const data = await queryDetail(type, page);
+        const data = await querySummaryDetail({ rankId, timeFlag, ...page });
         setDataSource(data);
-        setPageInfo({ total: 1000 });
+        setPageInfo({ total: data.length });
     };
 
     const [ pageInfo, setPageInfo ] = useState({ total: 0 });
@@ -203,46 +198,38 @@ const DtetailTable = (props: any): JSX.Element => {
     </>;
 };
 
-function queryStatistics(type: string, rankId: string): any {
-    return computationCommunicationData[type];
-}
-
-function notNull(val: any): boolean {
-    return val !== undefined && val !== null && val !== '';
-}
-
-const typeMap: StringMap = {
+const timeFlagMap: StringMap = {
     totalComputeTime: 'Computing',
     totalCommunicationNotOverLapTime: 'Communication(Not OverLapped)',
     totalCommunicationTime: 'Communication(OverLapped)',
     totalFreeTime: 'Free',
 };
 function getTitle(timeFlag: string): string {
-    return (typeMap[timeFlag] || '') + ' Detail';
+    return (timeFlagMap[timeFlag] || '') + ' Detail';
 }
 const StatisticsTable = (props: any): JSX.Element => {
-    const { timeFlag = '', rankId = '' } = props;
-    const type = typeMap[timeFlag];
+    let { timeFlag = '', rankId = '' } = props;
+    timeFlag = timeFlagMap[timeFlag];
     useEffect(() => {
         updateData();
     }, [ props.rankId, props.timeFlag ]);
     const updateData = async (): Promise<void> => {
-        const data = await queryStatistics(type, rankId);
+        const data = await querySummaryStatistics({ timeFlag, rankId });
         setDataSource(data);
     };
     const [ dataSource, setDataSource ] = useState<any[]>([]);
     const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
-    const { columns, rowKey } = getTableSet(type, setExpandedKeys);
+    const { columns, rowKey } = getTableSet(timeFlag, setExpandedKeys);
 
-    return notNull(rankId) && notNull(type)
+    return notNull(rankId) && notNull(timeFlag)
         ? (
             <div>
-                <div className={'common-title'}>{getTitle(timeFlag)}</div>
+                <div className={'common-title'}>{getTitle(props.timeFlag)}</div>
                 <Table
                     dataSource={dataSource}
                     columns={columns}
                     expandable={{
-                        expandedRowRender: record => <DtetailTable type={type + 'Detail' } rankId={rankId}/>,
+                        expandedRowRender: record => <DtetailTable timeFlag={timeFlag + 'Detail' } rankId={rankId}/>,
                         expandedRowKeys,
                         expandIcon: () => (<></>),
                     }}

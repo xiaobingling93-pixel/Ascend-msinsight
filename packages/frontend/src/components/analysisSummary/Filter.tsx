@@ -24,16 +24,17 @@ interface optionMapDataType{
 }
 
 const Filter = observer((props: any) => {
-    const { handleFilterChange } = props;
-    // 获取可选项
-    useEffect(() => {
-        getOptions();
-    }, []);
+    const [ conditions, setConditions ] = useState<ConditionDataType>(
+        { step: 'All', rankIds: [], order: 'Computing', top: 0 });
     const [ options, setOptions ] = useState<optionMapDataType>({});
-    const getOptions = (): void => {
-        const steplist = [ 'All', 0, 1, 2, 3, 4, 5 ];
-        const stepOptions: optionDataType[] = steplist.map(item => ({ value: item, label: item }));
-        const rankIds = [ 0, 1, 2, 3 ];
+    // 初始化
+    useEffect(() => {
+        initDefault();
+    }, [ props.groupData.rankCount, props.groupData.stepNum ]);
+    const initDefault = async (): Promise<void> => {
+        const steplist: number[] = new Array(props.groupData.stepNum).fill(0).map((item, index) => index);
+        const stepOptions: optionDataType[] = [ 'All', ...steplist ].map(item => ({ value: item, label: item }));
+        const rankIds: number[] = new Array(props.groupData.rankCount).fill(0).map((item, index) => index);
         const rankIdOptions: optionDataType[] = rankIds.map(item => ({ value: item, label: item }));
         const orderlist = [ 'Computing', 'Communication(Not Overlapped)', 'Communication(Overlapped)', 'Free' ];
         const orderOptions: optionDataType[] = orderlist.map(item => ({ value: item, label: item }));
@@ -55,14 +56,12 @@ const Filter = observer((props: any) => {
         }
         return topOptions;
     };
-    // 筛选条件变化
-    const [ conditions, setConditions ] = useState<ConditionDataType>(
-        { step: 'All', rankIds: [], order: 'Computing', top: 0 });
+
     const handleChange = (prop: keyof ConditionDataType, val: string | number | string[]): void => {
         setConditions({ ...conditions, [prop]: val });
     };
     useEffect(() => {
-        handleFilterChange(conditions);
+        props.handleFilterChange(conditions);
     }, [conditions]);
 
     return (<FilterCom conditions={conditions} handleChange={handleChange} options={options} />);

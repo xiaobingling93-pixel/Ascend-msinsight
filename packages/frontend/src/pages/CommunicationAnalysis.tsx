@@ -14,7 +14,7 @@ import CommunicationTimeChart, { dataType as chartDataType }
 import CommunicationMatrix from '../components/communicationAnalysis/CommunicationMatrix';
 import BandwidthAnalysis from '../components/communicationAnalysis/BandwidthAnalysis';
 import { Space, Tan } from '../components/communicationAnalysis/Common';
-import { communicationAnalysisData } from '../utils/__test__/mockData';
+import { queryCommunication } from '../utils/RequestUtils';
 
 const Operators = ({ returnHome, rankId, session }: any): JSX.Element => {
     return (
@@ -36,7 +36,7 @@ interface showDataType{
 }
 
 const searchData = async (conditions: conditionDataType): Promise<showDataType> => {
-    const list = communicationAnalysisData;
+    const list = await queryCommunication(conditions);
     // 显示字段
     const fields = [ 'Rank ID', 'Elapse Time(ms)', 'Transit Time(ms)', 'Synchronization Time(ms)',
         'Wait Time(ms)', 'Synchronization Time Ratio', 'Wait Time Ratio' ];

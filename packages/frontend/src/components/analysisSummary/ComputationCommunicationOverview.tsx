@@ -7,7 +7,7 @@ import Filter, { ConditionDataType } from './Filter';
 import StatisticsTable from './StatisticsTable';
 import { VoidFunction } from '../../utils/interface';
 import SummaryTable from './SummaryTable';
-import { computationCommunicationData } from '../../utils/__test__/mockData';
+import { queryTopSummary } from '../../utils/RequestUtils';
 
 interface SummaryDataType{
     rankId: string ;
@@ -19,15 +19,6 @@ interface SummaryDataType{
     ComputeTimeRatio?: string | number;
     CommunicationTimeRatio?: string | number;
 }
-
-const queryTopData = async (conditions: ConditionDataType): Promise<SummaryDataType[]> => {
-    const data: SummaryDataType[] = computationCommunicationData.top;
-    if (window.request !== undefined) {
-        const result = await window.request('test', {});
-        return result.data;
-    }
-    return data;
-};
 
 const baseOption: any = {
     tooltip: {
@@ -185,13 +176,16 @@ async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
 }
 
 const ComputationCommunicationOverview = (): JSX.Element => {
+    const [ groupData, setGroupData ] = useState({ rankCount: 0, stepNum: 0 });
     const [ dataSource, setDatasource ] = useState<SummaryDataType[]>([]);
     const [ selected, setSelected ] = useState({ rankId: '', timeFlag: '' });
 
-    const handleFilterChange = async (conditions: any): Promise<void> => {
-        const data = await queryTopData(conditions);
-        setDatasource(data);
-        initCharts(data, handleClick);
+    const handleFilterChange = async (conditions: ConditionDataType): Promise<void> => {
+        const data = await queryTopSummary(conditions);
+        const { summaryList, rankCount, stepNum } = data;
+        setDatasource(summaryList);
+        initCharts(summaryList, handleClick);
+        setGroupData({ rankCount, stepNum });
     };
 
     const handleClick = (param: any): void => {
@@ -203,7 +197,7 @@ const ComputationCommunicationOverview = (): JSX.Element => {
     return <div style={{ textAlign: 'left', padding: '0 20px' }} className={'header-fixed-content-scroll'}>
         <div>
             <div className={'common-title-bottom'}>Computation/CommunicationOverview</div>
-            <Filter handleFilterChange={handleFilterChange}/>
+            <Filter handleFilterChange={handleFilterChange} groupData={groupData}/>
             <div id={'overview-chart'} style={{ height: '400px' }} ></div>
         </div>
         <div>

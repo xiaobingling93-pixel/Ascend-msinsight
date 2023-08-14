@@ -263,3 +263,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
         transform: rotate(360deg);
     }
 }
+
+.theme_dark tr.ant-table-placeholder:hover>td {
+    background: var(--grey80);
+}

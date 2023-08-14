@@ -121,3 +121,21 @@ export const doRequest = (func: (...rest: any[]) => any): void => {
         func();
     }
 };
+
+export function notNull(val: any): boolean {
+    return val !== undefined && val !== null && val !== '';
+}
+
+export function isNull(val: any): boolean {
+    return val === undefined || val === null || val === '';
+}
+
+export function notNullObj(obj: {[prop: string]: any}): boolean {
+    let flag = true;
+    Object.keys(obj).forEach(key => {
+        if (isNull(obj[key])) {
+            flag = false;
+        }
+    });
+    return flag;
+}

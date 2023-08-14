@@ -4,13 +4,15 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { Select, Radio, Form } from 'antd';
-import { Label, Space, MultiSelectWithAll } from './Common';
-import { optionDataType } from '../../utils/interface';
+import { Label, Space, MultiSelectWithAll, notNullObj } from './Common';
+import { optionDataType, VoidFunction } from '../../utils/interface';
+import { queryIterations, queryAllRanks, queryOperators } from '../../utils/RequestUtils';
+import { Session } from '../../entity/session';
 
 export interface conditionDataType{
     iterationId: string | number;
-    rankIds: string[];
-    operatorName: string | number;
+    rankIds: number[];
+    operatorName: string ;
     type: string;
 }
 
@@ -18,32 +20,53 @@ interface optionMapDataType{
     [props: string]: optionDataType[];
 }
 
-const Filter = observer((props: any) => {
-    const { handleFilterChange } = props;
-    // 获取可选项
-    useEffect(() => {
-        getOptions();
-    }, []);
-    const [ options, setOptions ] = useState<optionMapDataType>({});
-    const getOptions = (): void => {
-        const iterationlist = [ 0, 1, 2, 3, 4, 5 ];
-        const iterationOptions: optionDataType[] = iterationlist.map(item => ({ value: item, label: item }));
-        const operatorlist = [ 'allGather_1_1', 0, 1 ];
-        const operatorOptions: optionDataType[] = operatorlist.map(item => ({ value: item, label: item }));
-        const rankIds = [ 0, 1, 2, 3 ];
-        const rankIdOptions: optionDataType[] = rankIds.map(item => ({ value: item, label: item }));
-        setOptions({ iterationOptions, operatorOptions, rankIdOptions });
-        setConditions({ ...conditions, iterationId: iterationlist[0], operatorName: operatorlist[0] });
-    };
-    // 筛选条件变化
+const Filter = observer((props: {session: Session;handleFilterChange: VoidFunction}) => {
     const [ conditions, setConditions ] = useState<conditionDataType>(
         { iterationId: '', rankIds: [], operatorName: '', type: 'CommunicationDurationAnalysis' });
-    const handleChange = (prop: keyof conditionDataType, val: string | number | string[]): void => {
+    const [ options, setOptions ] = useState<optionMapDataType>(
+        { iterationOptions: [], operatorOptions: [], rankIdOptions: [] },
+    );
+
+    // 初始化
+    useEffect(() => {
+        init();
+    }, [props.session.allRankIds]);
+    // Rank ID 联动算子选项
+    useEffect(() => {
+        updateOperator(conditions.rankIds);
+    }, [conditions.rankIds]);
+    // 筛选条件变化
+    useEffect(() => {
+        if (notNullObj(conditions)) {
+            props.handleFilterChange(conditions);
+        }
+    }, [conditions]);
+
+    const init = async(): Promise<void> => {
+        const iterationlist: number[] = await queryIterations();
+        const iterationOptions: optionDataType[] = iterationlist.map(item => ({ value: item, label: item }));
+        const rankIds: number[] = await queryAllRanks();
+        const rankIdOptions: optionDataType[] = rankIds.map(item => ({ value: item, label: item }));
+        const operatorlist: string[] = await queryOperators({ iterationId: iterationlist[0], rankIds: [] });
+        const operatorOptions: optionDataType[] = operatorlist.map(item => ({ value: item, label: item }));
+        // 初始可选项
+        setOptions({ ...options, iterationOptions, rankIdOptions, operatorOptions });
+        // 初始查询条件
+        setConditions({ ...conditions, iterationId: iterationlist[0], operatorName: 'total' });
+    };
+
+    const updateOperator = async (rankIds: number[]): Promise<void> => {
+        const operatorlist: string[] = await queryOperators({ iterationId: conditions.iterationId, rankIds });
+        const operatorOptions: optionDataType[] = operatorlist.map(item => ({ value: item, label: item }));
+        setOptions({ ...options, operatorOptions });
+        if (conditions.operatorName !== 'total' && !operatorlist.includes(conditions.operatorName)) {
+            setConditions({ ...conditions, operatorName: 'total' });
+        }
+    };
+
+    const handleChange = (prop: keyof conditionDataType, val: string | number | string[] | number[]): void => {
         setConditions({ ...conditions, [prop]: val });
     };
-    useEffect(() => {
-        handleFilterChange(conditions);
-    }, [conditions]);
 
     return (<FilterCom conditions={conditions} handleChange={handleChange} options={options} />);
 });

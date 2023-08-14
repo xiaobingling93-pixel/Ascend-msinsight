@@ -8,12 +8,13 @@ import { Session } from '../entity/session';
 import { SessionPage } from './SessionPage';
 import CommunicationAnalysis from './CommunicationAnalysis';
 import AnalysisSummary from './AnalysisSummary';
+import { notNull } from '../components/communicationAnalysis/Common';
 
 const onChange = async (checked: boolean): Promise<void> => {
     window.setTheme(checked);
 };
 
-const HomePage = observer(function ({ session, theme }: { session: Session;theme: string }) {
+const HomePage = observer(function ({ session }: { session: Session }) {
     const items = [
         {
             tab: 'Timeline View',
@@ -24,11 +25,13 @@ const HomePage = observer(function ({ session, theme }: { session: Session;theme
             tab: 'Analysis Summary',
             key: 'AnalysisSummary',
             content: <AnalysisSummary session={session}/>,
+            display: notNull(session.allRankIds) && session.allRankIds.length > 0,
         },
         {
             tab: 'Communication Analysis',
             key: 'CommunicationAnalysis',
             content: <CommunicationAnalysis session={session}/>,
+            display: notNull(session.allRankIds) && session.allRankIds.length > 0,
         },
     ];
     return (
@@ -39,7 +42,7 @@ const HomePage = observer(function ({ session, theme }: { session: Session;theme
                 {
                     items.map(item => (
                         <Tabs.TabPane tab={item.tab} key={item.key}>
-                            <div style={{ width: '100%', position: 'absolute' }}>
+                            <div style={{ width: '100%', position: 'fixed', height: 'calc(100% - 62px)' }}>
                                 {item.content}
                             </div>
                         </Tabs.TabPane>

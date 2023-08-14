@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
+
 export const computationCommunicationData: any = {
     top: [
         {
@@ -255,4 +256,51 @@ export const communicationAnalysisData: any = [
     { 'Rank ID': '4', 'Elapse Time(ms)': 25.6, 'Transit Time(ms)': 28.7, 'Synchronization Time(ms)': 28.7, 'Wait Time(ms)': 28.7, 'Synchronization Time Ratio': 6.3, 'Wait Time Ratio': 18.8 },
     { 'Rank ID': '5', 'Elapse Time(ms)': 76.7, 'Transit Time(ms)': 70.7, 'Synchronization Time(ms)': 70.7, 'Wait Time(ms)': 70.7, 'Synchronization Time Ratio': 10.2, 'Wait Time Ratio': 6 },
     { 'Rank ID': '6', 'Elapse Time(ms)': 135.6, 'Transit Time(ms)': 175.6, 'Synchronization Time(ms)': 175.6, 'Wait Time(ms)': 175.6, 'Synchronization Time Ratio': 20.3, 'Wait Time Ratio': 2.3 },
+];
+
+export const OperatorDetailsData: any = [
+    {
+        'Rank ID': 1,
+        'Operator Name': 'operator1',
+        'Elapse Time(ms)': 62.9322,
+        'Transit Time(ms)': 5,
+        'Synchronization Time(ms)': 55,
+        'Wait Time(ms)': 60,
+        'Synchronization Time Ratio': 0.95,
+        'Wait Time Ratio': 0.96,
+        'Idle Time(ms)': 0.08,
+    },
+    {
+        'Rank ID': 2,
+        'Operator Name': 'operator2',
+        'Elapse Time(ms)': 62.9322,
+        'Transit Time(ms)': 5,
+        'Synchronization Time(ms)': 55,
+        'Wait Time(ms)': 60,
+        'Synchronization Time Ratio': 0.95,
+        'Wait Time Ratio': 0.96,
+        'Idle Time(ms)': 0.08,
+    },
+    {
+        'Rank ID': 3,
+        'Operator Name': 'operator3',
+        'Elapse Time(ms)': 62.9322,
+        'Transit Time(ms)': 5,
+        'Synchronization Time(ms)': 55,
+        'Wait Time(ms)': 60,
+        'Synchronization Time Ratio': 0.95,
+        'Wait Time Ratio': 0.96,
+        'Idle Time(ms)': 0.08,
+    },
+    {
+        'Rank ID': 4,
+        'Operator Name': 'operator4',
+        'Elapse Time(ms)': 62.9322,
+        'Transit Time(ms)': 5,
+        'Synchronization Time(ms)': 55,
+        'Wait Time(ms)': 60,
+        'Synchronization Time Ratio': 0.95,
+        'Wait Time Ratio': 0.96,
+        'Idle Time(ms)': 0.08,
+    },
 ];
