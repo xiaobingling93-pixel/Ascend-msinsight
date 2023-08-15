@@ -14,7 +14,7 @@ import {
     CREATE_STEP_STATISTIC_INFO_TABLE_SQL,
     STEP_STATISTIC_INFO_TABLE,
 } from '../common/sql_constant';
-import { CommunicationBandWidthEntity, CommunicationTimeInfoEntity } from '../query/entity';
+import { CommunicationBandWidthEntity, CommunicationTimeInfoEntity, StepStatisticEntity } from '../query/entity';
 
 const logger = getLoggerByName('ClusterDatabase', 'info');
 
@@ -158,14 +158,16 @@ export class ClusterDatabase {
         }
     }
 
-    insertStepStatisticsInfo(data: any[]): void {
+    insertStepStatisticsInfo(data: StepStatisticEntity): void {
         const sql: string = `INSERT INTO ${STEP_STATISTIC_INFO_TABLE}
                              (rank_id, step_id, stage_id, compute_time,
                               pure_communication_time, overlap_communication_time,
                               communication_time, free_time, stage_time, bubble_time,
                               pure_communication_exclude_receive_time)
                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        this.clusterDb.run(sql, data, (err) => {
+        this.clusterDb.run(sql, [ data.rankId, data.stepId, data.stageId, data.computingTime,
+            data.overlapCommunicationTime, data.communicationTime, data.freeTime, data.stageTime,
+            data.bubbleTime, data.pureCommunicationExcludeReceiveTime ], (err) => {
             if (err !== null) {
                 logger.error(err.message);
             }
@@ -221,17 +223,25 @@ export class ClusterDatabase {
         });
     }
 
-    async querySummaryData(orderBy: string): Promise<any> {
+    async querySummaryData(orderBy: string, stepId: string): Promise<any> {
         return new Promise((resolve, reject) => {
+            const param = [];
+            let stepCondition = '';
+            if (stepId !== undefined && stepId !== '' && stepId !== 'ALL') {
+                param.push(stepId);
+                stepCondition = 'and step_id = ?';
+            }
+            param.push(orderBy);
             const sql: string = `SELECT
-                                         rank_id as rankId,
-                                         GROUP_CONCAT(step_id) as stepIdList,
-                                         sum(compute_time) as computingTime,
-                                         sum(pure_communication_time) as communicationNotOverLappedTime,
-                                         sum(overlap_communication_time) as communicationOverLappedTime,
-                                         sum(free_time) as freeTime
-                                     FROM ${STEP_STATISTIC_INFO_TABLE}
-                                     group by rank_id order by ?`;
+                                     rank_id as rankId,
+                                     GROUP_CONCAT(step_id) as stepIdList,
+                                     sum(compute_time) as computingTime,
+                                     sum(pure_communication_time) as communicationNotOverLappedTime,
+                                     sum(overlap_communication_time) as communicationOverLappedTime,
+                                     sum(free_time) as freeTime
+                                 FROM ${STEP_STATISTIC_INFO_TABLE}
+                                 WHERE rank_id !='' ${stepCondition}
+                                 group by rank_id order by ?`;
             this.clusterDb.all(sql, [orderBy], async (err, rows) => {
                 if (err !== undefined && err !== null) {
                     logger.error(err.message);

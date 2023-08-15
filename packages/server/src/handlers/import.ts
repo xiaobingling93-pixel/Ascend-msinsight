@@ -1,6 +1,4 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { parseCardID } from '../utils/common_util';
+import { findFilesByPath, parseRankIdByFile } from '../utils/common_util';
 import { parse } from '../parse/main';
 import { Client } from '../types';
 import { queryUnitsMetadata } from '../query/unitMetadataHandler';
@@ -14,21 +12,6 @@ import { CLUSTER_DATABASE } from '../database/tableManager';
 
 const logger = getLoggerByName('import', 'info');
 const execute = promisify(exec);
-
-function findJsonFiles(dir: string, matchedFilePaths: string[], depth: number, fileFormatter: RegExp): void {
-    if (depth > 5) return; // 控制递归深度
-    const files = fs.readdirSync(dir);
-    for (const file of files) {
-        const filePath = path.join(dir, file);
-        const stats = fs.statSync(filePath);
-        if (stats.isDirectory()) {
-            findJsonFiles(filePath, matchedFilePaths, depth + 1, fileFormatter);
-            // } else if (file === 'trace_view.json') {
-        } else if (fileFormatter.test(file)) {
-            matchedFilePaths.push(filePath);
-        }
-    }
-}
 
 async function selectFolderWindows(): Promise<string> {
     const script = '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; $dialog = New-Object System.Windows.Forms.FolderBrowserDialog;$result = $dialog.ShowDialog(); if ($result -eq “OK”) { $dialog.SelectedPath }';
@@ -60,24 +43,10 @@ export async function selectFolder(): Promise<string | null> {
     return null;
 }
 
-function findFilesByPath(path: string | null, fileNameFormatter: string): string[] {
-    const filePaths: string[] = [];
-    if (path === null) {
-        return filePaths;
-    }
-    const fileFormatter = new RegExp(fileNameFormatter);
-    try {
-        findJsonFiles(path, filePaths, 0, fileFormatter);
-    } catch (error) {
-        logger.error(error);
-    }
-    return filePaths;
-}
-
 export function splitRankFile(matchedFilePaths: string[]): Map<string, string[]> {
     const resultMap = new Map<string, string[]>();
     matchedFilePaths.forEach(filePath => {
-        const tempRankId = parseCardID(filePath);
+        const tempRankId = parseRankIdByFile(filePath);
         const tempArr = resultMap.get(tempRankId);
         if (tempArr === undefined) {
             resultMap.set(tempRankId, [filePath]);
@@ -154,7 +123,7 @@ export const importHandler = async (req: { path: string | null }, client: Client
 };
 
 export const importCommunication = (selectedPath: string, client: Client): void => {
-    const communicationFileArr = findFilesByPath(selectedPath, 'communication.json');
+    const communicationFileArr = findFilesByPath(selectedPath, 'cluster_communication.json');
     if (communicationFileArr.length === 0) {
         logger.info('communication file is not found.');
         return;
@@ -172,9 +141,9 @@ export const importKernelDetail = (parentPath: string, rankId: string): void => 
 };
 
 const importStepStatistics = (selectedPath: string): void => {
-    const stepStatisticsFiles = findFilesByPath(selectedPath, 'step_statistics.csv');
+    const stepStatisticsFiles = findFilesByPath(selectedPath, 'cluster_step_trace_time.csv');
     if (stepStatisticsFiles.length === 0) {
-        logger.info('step_statistics.csv file is not found.');
+        logger.info('cluster_step_trace_time.csv file is not found.');
         return;
     }
     parseStepStatisticsFile(stepStatisticsFiles);

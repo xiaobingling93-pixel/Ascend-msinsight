@@ -12,10 +12,11 @@ const logger = getLoggerByName('summaryHandler', 'info');
 
 export const summaryHandler = async (request: SummaryRequest, client: Client): Promise<Record<string, SummaryVO>> => {
     logger.info('request to summaryHandler');
-    if (request.orderBy === '' || ![ 'computingTime', 'communicationNotOverLappedTime', 'communicationOverLappedTime', 'freeTime' ].includes(request.orderBy)) {
+    if (request.orderBy === '' || ![ 'computingTime', 'communicationNotOverLappedTime',
+        'communicationOverLappedTime', 'freeTime' ].includes(request.orderBy)) {
         request.orderBy = 'computingTime';
     }
-    const rows: SummaryItemVO[] = await CLUSTER_DATABASE.querySummaryData(request.orderBy);
+    const rows: SummaryItemVO[] = await CLUSTER_DATABASE.querySummaryData(request.orderBy, request.stepId);
     const extremumTimestamp = await client.shadowSession.extremumTimestamp;
     const baseInfo = await CLUSTER_DATABASE.queryBaseInfo();
     const result = {
@@ -45,6 +46,7 @@ export const summaryHandler = async (request: SummaryRequest, client: Client): P
 
 export const summaryStatisticHandler = async (request: {rankId: string; timeFlag: string}):
 Promise<Record<string, SummaryStatisticsVO[]>> => {
+    logger.info('request to summaryStatisticHandler', request.rankId, request.timeFlag);
     const table = tableMap.get(request.rankId);
     if (table === undefined) {
         logger.error('can not find this rank database,', request.rankId);
@@ -58,7 +60,12 @@ Promise<Record<string, SummaryStatisticsVO[]>> => {
             total = total + row.duration;
         });
         computeStatistics?.forEach((row: any) => {
-            rows.push({ transportType: '', acceleratorCore: row.acceleratorCore, duration: row.duration, utilization: total > 0 ? row.duration / total : 0 });
+            rows.push({
+                transportType: '',
+                acceleratorCore: row.acceleratorCore,
+                duration: row.duration,
+                utilization: total > 0 ? row.duration / total : 0,
+            });
         });
     } else {
         const communicationStatistics = await table.queryCommunicationStatisticsData();
@@ -66,5 +73,6 @@ Promise<Record<string, SummaryStatisticsVO[]>> => {
             rows.push({ transportType: row.transportType, acceleratorCore: '', duration: row.duration, utilization: 0 });
         });
     }
+    logger.info('end request to summaryStatisticHandler, rows:', rows);
     return { result: rows };
 };

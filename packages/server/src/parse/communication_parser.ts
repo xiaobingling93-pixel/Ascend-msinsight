@@ -5,7 +5,7 @@
 import { getLoggerByName } from '../logger/loggger_configure';
 import { CLUSTER_DATABASE } from '../database/tableManager';
 import fs from 'fs';
-import { mapperToBandWidthEntity, mapperToTimeInfoEntity } from '../utils/mapper_util';
+import { mapperToBandWidthEntity, mapperToStepStatisticsInfo, mapperToTimeInfoEntity } from '../utils/mapper_util';
 import JSONStream from 'JSONStream';
 import readline from 'readline';
 import { getFolderSize } from '../utils/common_util';
@@ -17,25 +17,26 @@ export function parseCommunicationFile(filePathArr: string[]): void {
     for (const filePath of filePathArr) {
         logger.info('start save communication data into db ,file:', filePath);
         const stream = fs.createReadStream(filePath, { encoding: 'utf-8' });
-        const parser = JSONStream.parse([ /.*/, { recurse: true }, /[0-9]{1,5}/, { emitPath: true } ]);
+        const parser = JSONStream.parse([ /.*/, { recurse: true }, /^[0-9]{1,5}/, { emitPath: true } ]);
         stream.pipe(parser);
         let countTimeInfo = 0; let countBandWidth = 0;
         parser.on('data', (data: any) => {
             const tempPath = data.path;
             const tempData = data.value;
-            const tempOpName = tempPath[0];
-            const tempRankId = tempPath[1];
-            if (tempPath[2] === 'Communication Time Info') {
+            const tempStepId = tempPath[1];
+            const tempOpName = tempPath[2];
+            const tempRankId = tempPath[3];
+            if (tempPath[4] === 'Communication Time Info') {
                 if (typeof tempData !== 'string') {
-                    const tempTimeInfo = mapperToTimeInfoEntity(tempRankId, tempOpName, tempData);
+                    const tempTimeInfo = mapperToTimeInfoEntity(tempRankId, tempOpName, tempStepId, tempData);
                     CLUSTER_DATABASE.insertCommunicationTimeInfo(tempTimeInfo);
                 }
                 countTimeInfo++;
-            } else if (tempPath[2] === 'Communication Bandwidth Info') {
+            } else if (tempPath[4] === 'Communication Bandwidth Info') {
                 const keys = Object.keys(tempData);
                 keys.forEach(key => {
                     const obj = data.value[key];
-                    const bandWidth = mapperToBandWidthEntity(tempRankId, tempOpName, key, obj);
+                    const bandWidth = mapperToBandWidthEntity(tempRankId, tempOpName, tempStepId, key, obj);
                     CLUSTER_DATABASE.insertCommunicationBandWidth(bandWidth);
                     countBandWidth++;
                 });
@@ -65,17 +66,19 @@ export function parseStepStatisticsFile(filePathArr: string[]): void {
             crlfDelay: 0,
         });
         rl.on('line', (line) => {
-            if (!line.trim().startsWith('step_id')) {
+            if (!line.trim().startsWith('Step')) {
                 const arr = line.split(',');
-                if (!rankList.includes(arr[1])) {
-                    rankList.push(arr[1]);
+                if (arr[1] === 'rank') {
+                    if (!rankList.includes(arr[2])) {
+                        rankList.push(arr[2]);
+                    }
+                    if (!stepList.includes(arr[0])) {
+                        console.log(arr[0]);
+                        stepList.push(arr[0]);
+                    }
+                    CLUSTER_DATABASE.insertStepStatisticsInfo(mapperToStepStatisticsInfo(arr));
+                    count++;
                 }
-                if (!stepList.includes(arr[0])) {
-                    stepList.push(arr[0]);
-                }
-                logger.log(arr.toString());
-                CLUSTER_DATABASE.insertStepStatisticsInfo(arr);
-                count++;
             }
         });
         rl.on('close', () => {

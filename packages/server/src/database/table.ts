@@ -428,8 +428,10 @@ export class Table {
                     reject(err);
                 }
                 const tracks = [];
-                for (const row of rows) {
-                    tracks.push(row.track_id);
+                if (rows !== undefined && rows.length > 0) {
+                    for (const row of rows) {
+                        tracks.push(row.track_id);
+                    }
                 }
                 resolve(tracks);
             });

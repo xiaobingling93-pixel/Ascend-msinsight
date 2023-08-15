@@ -51,6 +51,59 @@ export function parseCardID(filePath: string): string {
 }
 
 /**
+ * 根据外层文件名获取rankId profiler_info_{}.json
+ *
+ * @param filePath 文件路径
+ */
+export function parseRankIdByFile(filePath: string): string {
+    logger.info('start parse rank id');
+    let rankId = crypto.randomUUID() as string;
+    try {
+        logger.info('try get dirname*2 of filePath.');
+        const rankFile = findFilesByPath(path.dirname(path.dirname(filePath)), 'profiler_info_[0-9]{1,}.json');
+        if (rankFile.length > 0) {
+            rankId = path.basename(rankFile[0])
+                .replace('profiler_info_', '')
+                .replace('.json', '');
+        } else {
+            rankId = path.basename(path.dirname(path.dirname(filePath)));
+        }
+    } catch (error) {
+        logger.error('parseRankIdByFile :', error);
+    }
+    return rankId;
+}
+
+export function findJsonFiles(dir: string, matchedFilePaths: string[], depth: number, fileFormatter: RegExp): void {
+    if (depth > 5) return; // 控制递归深度
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+        const filePath = path.join(dir, file);
+        const stats = fs.statSync(filePath);
+        if (stats.isDirectory()) {
+            findJsonFiles(filePath, matchedFilePaths, depth + 1, fileFormatter);
+            // } else if (file === 'trace_view.json') {
+        } else if (fileFormatter.test(file)) {
+            matchedFilePaths.push(filePath);
+        }
+    }
+}
+
+export function findFilesByPath(path: string | null, fileNameFormatter: string): string[] {
+    const filePaths: string[] = [];
+    if (path === null) {
+        return filePaths;
+    }
+    const fileFormatter = new RegExp(fileNameFormatter);
+    try {
+        findJsonFiles(path, filePaths, 0, fileFormatter);
+    } catch (error) {
+        logger.error(error);
+    }
+    return filePaths;
+}
+
+/**
  * get database path by rankId
  *
  * @param filePath

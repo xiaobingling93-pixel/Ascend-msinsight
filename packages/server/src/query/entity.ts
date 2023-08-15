@@ -44,15 +44,15 @@ export type KernelDetailEntity = {
 };
 
 export type StepStatisticEntity = {
-    rank_id: string;
-    step_id: string;
-    stage_id: string;
-    computing_time: number;
-    pure_communication_time: number;
-    overlap_communication_time: number;
-    communication_time: number;
-    free_time: number;
-    stage_time: number;
-    bubble_time: number;
-    pure_communication_exclude_receive_time: number;
+    rankId: string;
+    stepId: string;
+    stageId: string;
+    computingTime: number;
+    pureCommunicationTime: number;
+    overlapCommunicationTime: number;
+    communicationTime: number;
+    freeTime: number;
+    stageTime: number;
+    bubbleTime: number;
+    pureCommunicationExcludeReceiveTime: number;
 };
