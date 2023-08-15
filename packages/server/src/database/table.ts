@@ -611,6 +611,43 @@ export class Table {
         });
     }
 
+    async queryComputeTotalNum(timeFlag: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `SELECT
+                                    count(*)
+                                    FROM ${KERNEL_DETAIL_TABLE}
+                                    WHERE accelerator_core = ?`;
+            this.db.all(sql, [timeFlag], async (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    logger.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
+    async queryCommunicationTotalNum(trackId: number, timeFlag: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `SELECT count(*)
+                                 FROM ${this.sliceTable}
+                                 WHERE
+                                     track_id = ?
+                                   and
+                                     ARGS like '%transport type%'
+                                   and ARGS like '%${timeFlag}%'`;
+            this.db.all(sql, [trackId], (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    logger.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
     async queryThreadTraceList(client: Client, threadId: number, trackId: number, startTime: number, endTime: number): Promise<ThreadTrace[][]> {
         return new Promise((resolve, reject) => {
             const rowDatas: ThreadTrace[][] = [];

@@ -167,6 +167,7 @@ export type SummaryDetailRequest = {
 };
 
 export type CommunicationDetailResponse = {
+    totalNum: number;
     communicationDetail: CommunicationDetail[];
 };
 export type CommunicationDetail = {
@@ -177,6 +178,7 @@ export type CommunicationDetail = {
     notOverlapDuration: number;
 };
 export type ComputeDetailResponse = {
+    totalNum: number;
     computeDetail: ComputeDetail[];
 };
 

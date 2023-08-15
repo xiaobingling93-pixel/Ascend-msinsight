@@ -2,11 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-import {
-    SummaryDetailRequest,
-    CommunicationDetailResponse,
-    ComputeDetailResponse, ComputeDetail,
-} from './data';
+import { CommunicationDetailResponse, ComputeDetail, ComputeDetailResponse, SummaryDetailRequest } from './data';
 import { tableMap } from '../database/tableManager';
 import { Table } from '../database/table';
 import { Client } from '../types';
@@ -16,13 +12,15 @@ export const computeDetailInfoHandler = async (request: SummaryDetailRequest, cl
     const currentPage = request.currentPage;
     const pageSize = request.pageSize;
     const table = tableMap.get(request.rankId) as Table;
-    const response: ComputeDetailResponse = { computeDetail: [] };
+    const response: ComputeDetailResponse = { totalNum: 0, computeDetail: [] };
     response.computeDetail = await table.queryComputeDetailInfo(timeFlag, currentPage, pageSize, client) as ComputeDetail[];
+    response.totalNum = await table.queryComputeTotalNum(timeFlag) as number;
     return response;
 };
 
-async function queryNotOverlapByTime(table: Table, rows: any[], notOverlapTrackId: number, client: Client): Promise<CommunicationDetailResponse> {
-    const response: CommunicationDetailResponse = { communicationDetail: [] };
+async function queryNotOverlapByTime(table: Table, rows: any[], notOverlapTrackId: number, trackId: number, client: Client, timeFlag: string): Promise<CommunicationDetailResponse> {
+    const response: CommunicationDetailResponse = { totalNum: 0, communicationDetail: [] };
+    response.totalNum = await table.queryCommunicationTotalNum(trackId, timeFlag);
     for (const row of rows) {
         let totalTime = 0;
         const timeStamp = row.startTime + client.shadowSession.extremumTimestamp.minTimestamp;
@@ -52,5 +50,5 @@ export const communicationDetailInfoHandler = async (request: SummaryDetailReque
     const opTrackId = await table.queryTrackId(threadName);
     const notOverlapTrackId = await table.queryTrackId(notOverlap);
     const rows = await table.queryCommunicationDetailInfo(timeFlag, currentPage, pageSize, client, opTrackId.track_id);
-    return queryNotOverlapByTime(table, rows, notOverlapTrackId.track_id, client);
+    return queryNotOverlapByTime(table, rows, notOverlapTrackId.track_id, opTrackId.track_id, client, timeFlag);
 };
