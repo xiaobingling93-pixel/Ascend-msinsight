@@ -20,22 +20,24 @@ export const summaryHandler = async (request: SummaryRequest, client: Client): P
     const baseInfo = await CLUSTER_DATABASE.queryBaseInfo();
     const result = {
         rankCount: rows.length,
-        rankList: '',
+        rankList: [],
         dataSize: 0,
         filePath: '',
         collectStartTime: extremumTimestamp.minTimestamp,
         collectDuration: extremumTimestamp.maxTimestamp - extremumTimestamp.minTimestamp,
         stepNum: 0,
-        stepList: '',
+        stepList: [],
         summaryList: rows,
     };
     if (baseInfo.length > 0) {
-        result.rankList = baseInfo[0].ranks;
+        if (isJsonStr(baseInfo[0].ranks)) {
+            result.rankList = JSON.parse(baseInfo[0].ranks);
+        }
         result.dataSize = baseInfo[0].dataSize / (1024 * 1024);
         result.filePath = baseInfo[0].filePath;
         if (isJsonStr(baseInfo[0].steps)) {
-            result.stepList = baseInfo[0].steps;
-            result.stepNum = JSON.parse(result.stepList)?.length;
+            result.stepList = JSON.parse(baseInfo[0].steps);
+            result.stepNum = result.stepList.length;
         }
     }
     return { result };

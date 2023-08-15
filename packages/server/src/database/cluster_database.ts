@@ -53,7 +53,7 @@ export class ClusterDatabase {
                     .run('PRAGMA synchronous = OFF')
                     .run('PRAGMA journal_mode = MEMORY', (err) => {
                         if (err) {
-                            logger.error(err.message);
+                            console.error(err.message);
                         }
                         console.log('Create cluster table end.');
                         resolve();
@@ -160,9 +160,9 @@ export class ClusterDatabase {
 
     insertStepStatisticsInfo(data: any[]): void {
         const sql: string = `INSERT INTO ${STEP_STATISTIC_INFO_TABLE}
-                             (rank_id, step_id, stage_id, computing_time,
+                             (rank_id, step_id, stage_id, compute_time,
                               pure_communication_time, overlap_communication_time,
-                              communication_time, free_time, bubble_time,
+                              communication_time, free_time, stage_time, bubble_time,
                               pure_communication_exclude_receive_time)
                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         this.clusterDb.run(sql, data, (err) => {
@@ -177,6 +177,16 @@ export class ClusterDatabase {
                              (file_path, ranks, steps, collect_start_time,
                               collect_duration, data_size)
                              VALUES (?, ?, ?, ?, ?, ?)`;
+        this.clusterDb.run(sql, data, (err) => {
+            if (err !== null) {
+                logger.error(err.message);
+            }
+        });
+    }
+
+    updateClusterBaseInfoRankList(data: any[]): void {
+        const sql: string = `UPDATE ${CLUSTER_BASE_INFO_TABLE}
+                             SET ranks=?, steps=?`;
         this.clusterDb.run(sql, data, (err) => {
             if (err !== null) {
                 logger.error(err.message);
@@ -215,6 +225,7 @@ export class ClusterDatabase {
         return new Promise((resolve, reject) => {
             const sql: string = `SELECT
                                          rank_id as rankId,
+                                         GROUP_CONCAT(step_id) as stepIdList,
                                          sum(compute_time) as computingTime,
                                          sum(pure_communication_time) as communicationNotOverLappedTime,
                                          sum(overlap_communication_time) as communicationOverLappedTime,
@@ -314,7 +325,7 @@ export class ClusterDatabase {
 
     async queryRankIds(iterationId: number): Promise<any> {
         const sql: string = `SELECT DISTINCT rank_id FROM ${COMMUNICATION_TIME_INFO_TABLE}
-                                 WHERE iteration_id = ? ORDER BY rank_id`;
+                             WHERE iteration_id = ? ORDER BY rank_id`;
         return this.executeSql(sql, [iterationId]);
     }
 
@@ -322,13 +333,13 @@ export class ClusterDatabase {
         let sql: string = '';
         if (rankIdList.length === 0) {
             sql = `SELECT DISTINCT op_name FROM (
-                   SELECT op_name FROM ${COMMUNICATION_TIME_INFO_TABLE}
-                                 WHERE iteration_id = ? ORDER BY op_name)`;
+                                                    SELECT op_name FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                                                    WHERE iteration_id = ? ORDER BY op_name)`;
         } else {
             sql = `SELECT DISTINCT op_name FROM (
-                   SELECT op_name FROM ${COMMUNICATION_TIME_INFO_TABLE}
-                                 WHERE iteration_id = ?
-                                 AND rank_id IN (${rankIdList.join(',')}) ORDER BY op_name)`;
+                                                    SELECT op_name FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                                                    WHERE iteration_id = ?
+                                                      AND rank_id IN (${rankIdList.join(',')}) ORDER BY op_name)`;
         }
         return this.executeSql(sql, [iterationId]);
     }
@@ -337,27 +348,27 @@ export class ClusterDatabase {
         let sql: string = '';
         if (rankIdList.length === 0) {
             sql = `SELECT rank_id, ROUND(elapse_time, 4) as elapse_time,
-                                  ROUND(transit_time, 4) as transit_time,
-                                  ROUND(synchronization_time, 4) as synchronization_time,
-                                  ROUND(wait_time, 4) as wait_time,
-                                  ROUND(elapse_time - transit_time - wait_time, 4) as idle_time,
-                                  ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio,
-                                  ROUND(wait_time_ratio, 4) as wait_time_ratio
-                                  FROM ${COMMUNICATION_TIME_INFO_TABLE}
-                                  WHERE iteration_id = ?
-                                  AND op_name = ?`;
+                          ROUND(transit_time, 4) as transit_time,
+                          ROUND(synchronization_time, 4) as synchronization_time,
+                          ROUND(wait_time, 4) as wait_time,
+                          ROUND(elapse_time - transit_time - wait_time, 4) as idle_time,
+                          ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio,
+                          ROUND(wait_time_ratio, 4) as wait_time_ratio
+                   FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                   WHERE iteration_id = ?
+                     AND op_name = ?`;
         } else {
             sql = `SELECT rank_id, ROUND(elapse_time, 4) as elapse_time,
-                                   ROUND(transit_time, 4) as transit_time,
-                                   ROUND(synchronization_time, 4) as synchronization_time,
-                                   ROUND(wait_time, 4) as wait_time,
-                                   ROUND(elapse_time - transit_time - wait_time, 4) as idle_time,
-                                   ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio,
-                                   ROUND(wait_time_ratio, 4) as wait_time_ratio
-                                   FROM ${COMMUNICATION_TIME_INFO_TABLE}
-                                  WHERE iteration_id = ?
-                                  AND rank_id IN (${rankIdList.join(',')})
-                                  AND op_name = ?`;
+                          ROUND(transit_time, 4) as transit_time,
+                          ROUND(synchronization_time, 4) as synchronization_time,
+                          ROUND(wait_time, 4) as wait_time,
+                          ROUND(elapse_time - transit_time - wait_time, 4) as idle_time,
+                          ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio,
+                          ROUND(wait_time_ratio, 4) as wait_time_ratio
+                   FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                   WHERE iteration_id = ?
+                     AND rank_id IN (${rankIdList.join(',')})
+                     AND op_name = ?`;
         }
         return this.executeSql(sql, [ iterationId, operatorName ]);
     };
@@ -371,17 +382,17 @@ export class ClusterDatabase {
                                     ROUND(elapse_time - transit_time - wait_time, 4) as idle_time,
                                     ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio,
                                     ROUND(wait_time_ratio, 4) as wait_time_ratio
-                                    FROM ${COMMUNICATION_TIME_INFO_TABLE}
-                                    WHERE iteration_id = ?
-                                    AND rank_id = ?
-                                    LIMIT ?, ?`;
+                             FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                             WHERE iteration_id = ?
+                               AND rank_id = ?
+                                 LIMIT ?, ?`;
         return this.executeSql(sql, [ iterationId, rankId, (currentPage - 1) * pageSize, pageSize ]);
     }
 
     async queryOperatorsCount(iterationId: number, rankId: number): Promise<any> {
         const sql: string = `SELECT count(*) AS nums FROM ${COMMUNICATION_TIME_INFO_TABLE}
                              WHERE iteration_id = ?
-                             AND rank_id = ?`;
+                               AND rank_id = ?`;
         return this.executeSql(sql, [ iterationId, rankId ]);
     }
 
@@ -392,19 +403,19 @@ export class ClusterDatabase {
                                     ROUND(bandwidth_size, 4) as bandwidth_size,
                                     ROUND(bandwidth_utilization, 4) as bandwidth_utilization,
                                     ROUND(large_package_ratio, 4)  as large_package_ratio
-                                    FROM ${COMMUNICATION_BAND_WIDTH_TABLE}
-                                    WHERE iteration_id = ?
-                                    AND rank_id = ?
-                                    AND op_name = ?`;
+                             FROM ${COMMUNICATION_BAND_WIDTH_TABLE}
+                             WHERE iteration_id = ?
+                               AND rank_id = ?
+                               AND op_name = ?`;
         return this.executeSql(sql, [ iterationId, rankId, operatorName ]);
     }
 
     async queryDistributionData(iterationId: number, rankId: number, operatorName: string, transportType: string): Promise<any> {
         const sql: string = `SELECT size_distribution FROM ${COMMUNICATION_BAND_WIDTH_TABLE}
                              WHERE iteration_id = ?
-                             AND rank_id = ?
-                             AND op_name = ?
-                             AND transport_type = ?`;
+                               AND rank_id = ?
+                               AND op_name = ?
+                               AND transport_type = ?`;
         return this.executeSql(sql, [ iterationId, rankId, operatorName, transportType ]);
     }
 }

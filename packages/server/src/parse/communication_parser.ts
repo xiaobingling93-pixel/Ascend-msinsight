@@ -53,43 +53,48 @@ export function parseCommunicationFile(filePathArr: string[]): void {
     }
 }
 
-export function parseStepStatisticsFile(filePathArr: string[], callback?: (rankId: string, err?: Error) => void): void {
+export function parseStepStatisticsFile(filePathArr: string[]): void {
     let count = 0;
+    const stepList: string[] = [];
+    const rankList: string[] = [];
     filePathArr.forEach(filePath => {
+        logger.info('import step statistics file start:', filePath);
         const stream = fs.createReadStream(filePath);
         const rl = readline.createInterface({
             input: stream,
             crlfDelay: 0,
         });
         rl.on('line', (line) => {
-            const arr = line.split(',');
-            CLUSTER_DATABASE.insertStepStatisticsInfo(arr);
-            count++;
+            if (!line.trim().startsWith('step_id')) {
+                const arr = line.split(',');
+                if (!rankList.includes(arr[1])) {
+                    rankList.push(arr[1]);
+                }
+                if (!stepList.includes(arr[0])) {
+                    stepList.push(arr[0]);
+                }
+                logger.log(arr.toString());
+                CLUSTER_DATABASE.insertStepStatisticsInfo(arr);
+                count++;
+            }
         });
         rl.on('close', () => {
+            CLUSTER_DATABASE.updateClusterBaseInfoRankList([ JSON.stringify(rankList), JSON.stringify(stepList) ]);
             // 读取完成
-            logger.log('import step statistics file end, total line:{}', count);
+            logger.info('import step statistics file end, total line:{}', count);
         });
     });
 }
 
 export function saveClusterBaseInfo(selectedPath: string): void {
     if (selectedPath == null) return;
-    const stepIdList = CLUSTER_DATABASE.getRankIdList();
-    const rankIdList = CLUSTER_DATABASE.getStepIdList();
-    Promise.all([ stepIdList, rankIdList ]).then(res => {
-        const data = [];
-        data.push(selectedPath);
-        data.push(JSON.stringify(res[0].map(function(row: any) {
-            return row.rankId;
-        })));
-        data.push(JSON.stringify(res[1].map(function(row: any) {
-            return row.stepId;
-        })));
-        data.push(new Date().getTime());
-        data.push(1000);
-        data.push(getFolderSize(selectedPath));
-        logger.info('start save cluster base info', data);
-        CLUSTER_DATABASE.insertClusterBaseInfo(data);
-    });
+    const data = [];
+    data.push(selectedPath);
+    data.push(JSON.stringify([]));
+    data.push(JSON.stringify([]));
+    data.push(new Date());
+    data.push(1000);
+    data.push(getFolderSize(selectedPath));
+    logger.info('start save cluster base info', data);
+    CLUSTER_DATABASE.insertClusterBaseInfo(data);
 }

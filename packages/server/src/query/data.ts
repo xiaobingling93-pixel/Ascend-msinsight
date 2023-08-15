@@ -197,6 +197,7 @@ export type ComputeDetail = {
 
 export type SummaryItemVO = {
     rankId: String;
+    stepIdList: string[];
     totalTime: number;
     computingTime: number;
     communicationOverLappedTime: number;
@@ -206,13 +207,13 @@ export type SummaryItemVO = {
 
 export type SummaryVO = {
     rankCount: number;
-    rankList: string;
+    rankList: string[];
     dataSize: number;
     collectStartTime: number;
     filePath: string;
     collectDuration: number;
     stepNum: number;
-    stepList: string;
+    stepList: string[];
     summaryList: SummaryItemVO[];
 };
 

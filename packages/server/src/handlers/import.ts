@@ -23,7 +23,7 @@ function findJsonFiles(dir: string, matchedFilePaths: string[], depth: number, f
         const stats = fs.statSync(filePath);
         if (stats.isDirectory()) {
             findJsonFiles(filePath, matchedFilePaths, depth + 1, fileFormatter);
-        // } else if (file === 'trace_view.json') {
+            // } else if (file === 'trace_view.json') {
         } else if (fileFormatter.test(file)) {
             matchedFilePaths.push(filePath);
         }
@@ -145,10 +145,10 @@ export const importHandler = async (req: { path: string | null }, client: Client
         await CLUSTER_DATABASE.createClusterTable();
         // import communication data
         importCommunication(selectedFolder, client);
-        // import step statistics data
-        importStepStatistics(selectedFolder);
         // write base info table
         saveClusterBaseInfo(selectedFolder);
+        // import step statistics data
+        importStepStatistics(selectedFolder);
     }
     return result;
 };

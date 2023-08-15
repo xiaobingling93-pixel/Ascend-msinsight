@@ -15,9 +15,9 @@ export const CREATE_COMMUNICATION_TIME_INFO_SQL = `CREATE TABLE ${COMMUNICATION_
                                                    rank_id                    INT,
                                                    op_name                    VARCHAR(100),
                                                    elapse_time                double,
-                                                   synchronization_time_Ratio double,
+                                                   synchronization_time_ratio double,
                                                    synchronization_time       double,
-                                                   Transit_Time               double,
+                                                   transit_time               double,
                                                    wait_time_ratio            double,
                                                    wait_time                  double
                                                )`;
@@ -63,19 +63,19 @@ export const CREATE_STEP_STATISTIC_INFO_TABLE_SQL = `CREATE TABLE ${STEP_STATIST
                                                 )`;
 
 export const CREATE_KERNEL_DETAIL_TABLE_SQL = `CREATE TABLE ${KERNEL_DETAIL_TABLE}
-                                           (
-                                               id                INTEGER PRIMARY KEY AUTOINCREMENT,
-                                               name              VARCHAR(50),
-                                               type              VARCHAR(50),
-                                               accelerator_core  VARCHAR(50),
-                                               start_time        DATETIME,
-                                               duration          double,
-                                               wait_time         double,
-                                               block_dim         double,
-                                               input_shapes      VARCHAR(300),
-                                               input_data_types  VARCHAR(200),
-                                               input_formats     VARCHAR(200),
-                                               output_shapes     VARCHAR(300),
-                                               output_data_types VARCHAR(200),
-                                               output_formats    VARCHAR(200)
-                                           )`;
+                                               (
+                                                   id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                   name              VARCHAR(50),
+                                                   type              VARCHAR(50),
+                                                   accelerator_core  VARCHAR(50),
+                                                   start_time        DATETIME,
+                                                   duration          double,
+                                                   wait_time         double,
+                                                   block_dim         double,
+                                                   input_shapes      VARCHAR(300),
+                                                   input_data_types  VARCHAR(200),
+                                                   input_formats     VARCHAR(200),
+                                                   output_shapes     VARCHAR(300),
+                                                   output_data_types VARCHAR(200),
+                                                   output_formats    VARCHAR(200)
+                                               )`;
