@@ -62,3 +62,28 @@ export function getDbPath(filePath: string[], rankId: string): string {
     }
     return './' + path.basename(filePath[0], '.json') + '_' + rankId + '.db';
 }
+
+export function getFolderSize(folderPath: string): number {
+    let totalSize = 0;
+    const files = fs.readdirSync(folderPath);
+    files.forEach(function(file) {
+        const filePath = path.join(folderPath, file);
+        const stats = fs.statSync(filePath);
+        if (stats.isFile()) {
+            totalSize += stats.size;
+        } else if (stats.isDirectory()) {
+            totalSize += getFolderSize(filePath);
+        }
+    });
+    return totalSize;
+}
+
+export function isJsonStr(str: string): boolean {
+    try {
+        JSON.parse(str);
+        return true;
+    } catch (e) {
+        logger.error('parse json str is err:', str);
+        return false;
+    }
+}

@@ -140,7 +140,7 @@ export const importHandler = async (req: { path: string | null }, client: Client
         importedRankIdSet.add(rankId);
     }
     // 多卡场景才处理
-    if (scene === 'train' && result.cards.length > 1) {
+    if (selectedFolder !== null && scene === 'train' && result.cards.length > 1) {
         logger.info('generate train cluster tables');
         await CLUSTER_DATABASE.createClusterTable();
         // import communication data
@@ -153,7 +153,7 @@ export const importHandler = async (req: { path: string | null }, client: Client
     return result;
 };
 
-export const importCommunication = (selectedPath: string | null, client: Client): void => {
+export const importCommunication = (selectedPath: string, client: Client): void => {
     const communicationFileArr = findFilesByPath(selectedPath, 'communication.json');
     if (communicationFileArr.length === 0) {
         logger.info('communication file is not found.');
@@ -171,7 +171,7 @@ export const importKernelDetail = (parentPath: string, rankId: string): void => 
     parseKernelDetail(rankId, kernelDetailFileArr);
 };
 
-const importStepStatistics = (selectedPath: string | null): void => {
+const importStepStatistics = (selectedPath: string): void => {
     const stepStatisticsFiles = findFilesByPath(selectedPath, 'step_statistics.csv');
     if (stepStatisticsFiles.length === 0) {
         logger.info('step_statistics.csv file is not found.');

@@ -8,17 +8,21 @@ import { COMMUNICATION_BAND_WIDTH_TABLE, COMMUNICATION_TIME_INFO_TABLE } from '.
 import { CLUSTER_DATABASE } from '../../database/tableManager';
 
 describe('communication parse test', () => {
-    it('test parse file ', async function () {
+    test('test parse file ', async function () {
         const testFile = path.join(__dirname, 'test_communication_file.json');
         const fileArr = [testFile];
+        await CLUSTER_DATABASE.createClusterTable();
         await parseCommunicationFile(fileArr);
-        const num1 = CLUSTER_DATABASE.getTotal(COMMUNICATION_TIME_INFO_TABLE);
-        const num2 = CLUSTER_DATABASE.getTotal(COMMUNICATION_BAND_WIDTH_TABLE);
-        expect(num1).toBe(undefined);
-        expect(num2).toBe(undefined);
+        setTimeout(async () => {
+            const num1 = await CLUSTER_DATABASE.getTotal(COMMUNICATION_TIME_INFO_TABLE);
+            const num2 = await CLUSTER_DATABASE.getTotal(COMMUNICATION_BAND_WIDTH_TABLE);
+            await expect(num1).toEqual({ num: 2 });
+            await expect(num2).toEqual({ num: 8 });
+            CLUSTER_DATABASE.close();
+        }, 1000);
     });
 
-    it('test saveClusterBaseInfo', function () {
+    it('test saveClusterBaseInfo', async function () {
         saveClusterBaseInfo(__dirname);
     });
 });

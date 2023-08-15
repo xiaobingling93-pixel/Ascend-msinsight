@@ -1,4 +1,4 @@
-import { getTrackId, getDbPath } from '../common_util';
+import { getTrackId, getDbPath, getFolderSize } from '../common_util';
 
 describe('common_util test', () => {
     it('getTrackId test', () => {
@@ -7,5 +7,10 @@ describe('common_util test', () => {
 
     it('getDbPath test', function () {
         expect(getDbPath(['aaa.json'], 'rank0')).toBe('./aaa_rank0.db');
+    });
+
+    it('test getFolderSize', function () {
+        const size = getFolderSize(__dirname);
+        expect(size).toBeGreaterThan(0);
     });
 });

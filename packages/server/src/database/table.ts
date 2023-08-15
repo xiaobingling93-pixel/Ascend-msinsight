@@ -671,6 +671,43 @@ export class Table {
             });
         });
     };
+
+    async queryComputeStatisticsData(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `SELECT
+                                 sum(duration) as duration,
+                                 accelerator_core as acceleratorCore
+                                 FROM ${KERNEL_DETAIL_TABLE}
+                                 WHERE accelerator_core in ('AI_CPU','AI_CORE')
+                                 GROUP BY accelerator_core`;
+            this.db.all(sql, [], async (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    logger.error('queryComputeStatisticsData error:', err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
+    async queryCommunicationStatisticsData(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql: string = `select sum(duration) as duration,
+                                    json_extract(args, '$.transport type') as  transportType
+                                    from ${this.sliceTable}
+                                    where track_id = (select track_id from thread where thread_name='Communication OP')
+                                    group by json_extract(args, '$.transport type')`;
+            this.db.all(sql, [], async (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    logger.error('queryCommunicationStatisticsData error:', err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
 }
 
 /**

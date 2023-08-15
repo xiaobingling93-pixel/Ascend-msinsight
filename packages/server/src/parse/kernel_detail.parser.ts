@@ -17,7 +17,6 @@ export function parseKernelDetail(rankId: string, filePathArr: string[], callbac
             callback(rankId, new Error('no rank Id:' + rankId));
         }
     }
-    tableMap.get(rankId);
     const table = tableMap.get(rankId);
     if (table === undefined) return;
     let count = 0;

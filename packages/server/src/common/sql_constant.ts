@@ -40,8 +40,8 @@ export const CREATE_CLUSTER_TABLE_SQL = `CREATE TABLE ${CLUSTER_BASE_INFO_TABLE}
                                       (
                                           id                 INTEGER PRIMARY KEY AUTOINCREMENT,
                                           file_path          VARCHAR(500),
-                                          rank_count         INT,
-                                          step_count         INT,
+                                          ranks         json,
+                                          steps         json,
                                           collect_start_time DATETIME,
                                           collect_duration   double,
                                           data_size          double

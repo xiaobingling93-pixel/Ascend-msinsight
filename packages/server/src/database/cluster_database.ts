@@ -16,7 +16,7 @@ import {
 } from '../common/sql_constant';
 import { CommunicationBandWidthEntity, CommunicationTimeInfoEntity } from '../query/entity';
 
-const logger = getLoggerByName('Cluster_database', 'info');
+const logger = getLoggerByName('ClusterDatabase', 'info');
 
 export class ClusterDatabase {
     private readonly clusterDb: sqlite.Database;
@@ -53,7 +53,7 @@ export class ClusterDatabase {
                     .run('PRAGMA synchronous = OFF')
                     .run('PRAGMA journal_mode = MEMORY', (err) => {
                         if (err) {
-                            console.error(err.message);
+                            logger.error(err.message);
                         }
                         console.log('Create cluster table end.');
                         resolve();
@@ -174,7 +174,7 @@ export class ClusterDatabase {
 
     insertClusterBaseInfo(data: any[]): void {
         const sql: string = `INSERT INTO ${CLUSTER_BASE_INFO_TABLE}
-                             (file_path, rank_count, step_count, collect_start_time,
+                             (file_path, ranks, steps, collect_start_time,
                               collect_duration, data_size)
                              VALUES (?, ?, ?, ?, ?, ?)`;
         this.clusterDb.run(sql, data, (err) => {
@@ -184,7 +184,7 @@ export class ClusterDatabase {
         });
     }
 
-    saveData(): void {
+    saveCommunicationData(): void {
         if (this.communicationTimeInfoCaches.length > 0) {
             this.insertCommunicationTimeInfoList(this.communicationTimeInfoCaches);
             this.communicationTimeInfoCaches = [];
@@ -211,19 +211,19 @@ export class ClusterDatabase {
         });
     }
 
-    async querySummaryData(): Promise<any> {
+    async querySummaryData(orderBy: string): Promise<any> {
         return new Promise((resolve, reject) => {
             const sql: string = `SELECT
                                          rank_id as rankId,
-                                         sum(compute_time) as 'totalComputeTime',
-                                         sum(pure_communication_time) as 'totalPureCommunicationTime',
-                                         sum(overlap_communication_time) as 'totalCommunicationNotOverLapTime',
-                                         sum(free_time) as 'totalFreeTime'
+                                         sum(compute_time) as computingTime,
+                                         sum(pure_communication_time) as communicationNotOverLappedTime,
+                                         sum(overlap_communication_time) as communicationOverLappedTime,
+                                         sum(free_time) as freeTime
                                      FROM ${STEP_STATISTIC_INFO_TABLE}
-                                     group by rank_id`;
-            this.clusterDb.all(sql, [], async (err, rows) => {
+                                     group by rank_id order by ?`;
+            this.clusterDb.all(sql, [orderBy], async (err, rows) => {
                 if (err !== undefined && err !== null) {
-                    console.error(err.message);
+                    logger.error(err.message);
                     reject(err);
                 } else {
                     resolve(rows);
@@ -232,13 +232,56 @@ export class ClusterDatabase {
         });
     }
 
-    getTotal(tableName: string): any {
-        this.clusterDb.all(`select count(1) as num from ${tableName}`, [], (err, rows) => {
-            if (err) {
-                console.log(err);
-                throw err;
-            }
-            return rows[0];
+    async getTotal(tableName: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.clusterDb.all(`select count(1) as num from ${tableName}`, [], (err, rows) => {
+                if (err) {
+                    logger.error('getTotal error:', err);
+                    reject(err);
+                }
+                resolve(rows[0]);
+            });
+        });
+    }
+
+    async getRankIdList(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.clusterDb.all(`select distinct rank_id as rankId from ${STEP_STATISTIC_INFO_TABLE}`, [], (err, rows) => {
+                if (err) {
+                    logger.error('getRankIdList error:', err);
+                    reject(err);
+                }
+                resolve(rows);
+            });
+        });
+    }
+
+    async getStepIdList(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.clusterDb.all(`select distinct step_id as stepId from ${STEP_STATISTIC_INFO_TABLE}`, [], (err, rows) => {
+                if (err) {
+                    logger.error('getStepIdList error:', err);
+                    reject(err);
+                }
+                resolve(rows);
+            });
+        });
+    }
+
+    async queryBaseInfo(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.clusterDb.all(`select file_path as filePath,
+                                       ranks,
+                                       steps,
+                                       data_size as dataSize
+                                from ${CLUSTER_BASE_INFO_TABLE}`,
+            [], (err, rows) => {
+                if (err) {
+                    logger.error('queryBaseInfo error:', err);
+                    reject(err);
+                }
+                resolve(rows);
+            });
         });
     }
 

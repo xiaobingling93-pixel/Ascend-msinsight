@@ -162,19 +162,21 @@ export type ExtremumTimestamp = {
 export type SummaryItemVO = {
     rankId: String;
     totalTime: number;
-    totalComputeTime: number;
-    totalCommunicationNotOverLapTime: number;
-    totalPureCommunicationTime: number;
-    totalFreeTime: number;
+    computingTime: number;
+    communicationOverLappedTime: number;
+    communicationNotOverLappedTime: number;
+    freeTime: number;
 };
 
 export type SummaryVO = {
     rankCount: number;
+    rankList: string;
     dataSize: number;
     collectStartTime: number;
     filePath: string;
     collectDuration: number;
     stepNum: number;
+    stepList: string;
     summaryList: SummaryItemVO[];
 };
 
@@ -187,4 +189,5 @@ export type SummaryStatisticsVO = {
 
 export type SummaryRequest = {
     limit: number;
+    orderBy: string;
 };

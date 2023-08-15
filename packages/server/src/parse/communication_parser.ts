@@ -8,6 +8,7 @@ import fs from 'fs';
 import { mapperToBandWidthEntity, mapperToTimeInfoEntity } from '../utils/mapper_util';
 import JSONStream from 'JSONStream';
 import readline from 'readline';
+import { getFolderSize } from '../utils/common_util';
 
 const logger = getLoggerByName('communicationParser', 'info');
 
@@ -44,7 +45,7 @@ export function parseCommunicationFile(filePathArr: string[]): void {
             logger.error(err);
         });
         parser.on('end', () => {
-            CLUSTER_DATABASE.saveData();
+            CLUSTER_DATABASE.saveCommunicationData();
             const end = new Date().getTime();
             logger.info('cost time :', end - start);
             logger.info('Finished parsing file. time info:{}, bandWidth:{}', countTimeInfo, countBandWidth);
@@ -72,15 +73,23 @@ export function parseStepStatisticsFile(filePathArr: string[], callback?: (rankI
     });
 }
 
-export function saveClusterBaseInfo(selectedPath: string | null): void {
+export function saveClusterBaseInfo(selectedPath: string): void {
     if (selectedPath == null) return;
-    const data = [];
-    data.push(selectedPath);
-    data.push(1);
-    data.push(2);
-    data.push(new Date().getTime());
-    data.push(1000);
-    data.push(fs.statSync(selectedPath).size);
-    logger.info('start save cluster base info', data);
-    CLUSTER_DATABASE.insertClusterBaseInfo(data);
+    const stepIdList = CLUSTER_DATABASE.getRankIdList();
+    const rankIdList = CLUSTER_DATABASE.getStepIdList();
+    Promise.all([ stepIdList, rankIdList ]).then(res => {
+        const data = [];
+        data.push(selectedPath);
+        data.push(JSON.stringify(res[0].map(function(row: any) {
+            return row.rankId;
+        })));
+        data.push(JSON.stringify(res[1].map(function(row: any) {
+            return row.stepId;
+        })));
+        data.push(new Date().getTime());
+        data.push(1000);
+        data.push(getFolderSize(selectedPath));
+        logger.info('start save cluster base info', data);
+        CLUSTER_DATABASE.insertClusterBaseInfo(data);
+    });
 }
