@@ -4,9 +4,10 @@
 
 package com.huawei.ascend.insight.processor;
 
-import com.alibaba.fastjson.JSONObject;
 import com.huawei.ascend.insight.common.ProjectContext;
 import com.huawei.ascend.insight.common.Response;
+
+import com.alibaba.fastjson.JSONObject;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -15,6 +16,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * SelectProcessor
+ *
+ * @since 2023-08-15
+ */
 public class SelectProcessor {
     /**
      * select Folder
@@ -40,6 +46,14 @@ public class SelectProcessor {
         return Response.success(folderPath);
     }
 
+    /**
+     * openFolderChooserAndGetPath
+     *
+     * @param project project
+     * @param isChooseFiles isChooseFiles
+     * @param isChooseFolders isChooseFolders
+     * @return CompletableFuture<String>
+     */
     public static CompletableFuture<String> openFolderChooserAndGetPath(Project project,
         Boolean isChooseFiles, Boolean isChooseFolders) {
         CompletableFuture<String> future = new CompletableFuture<>();

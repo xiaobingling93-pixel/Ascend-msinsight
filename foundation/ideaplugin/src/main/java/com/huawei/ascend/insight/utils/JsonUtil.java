@@ -4,10 +4,11 @@
 
 package com.huawei.ascend.insight.utils;
 
-import com.alibaba.fastjson.*;
+import com.alibaba.fastjson.JSONException;
+import com.alibaba.fastjson.JSONObject;
+
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Optional;
 
 /**

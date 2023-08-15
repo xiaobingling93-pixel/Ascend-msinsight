@@ -8,7 +8,6 @@ import static com.huawei.ascend.insight.common.constant.Constant.INSIGHT_NOTIFY;
 
 import com.huawei.ascend.insight.common.EventKey;
 import com.huawei.ascend.insight.common.ProjectContext;
-import com.huawei.ascend.insight.common.constant.CmdConstants;
 import com.huawei.ascend.insight.common.constant.URLConstants;
 import com.huawei.ascend.insight.handlers.SelectFolderHandler;
 import com.huawei.ascend.insight.model.dto.JcefRequest;
@@ -19,7 +18,6 @@ import com.huawei.ascend.insight.utils.CefMessageRouterProxy;
 import com.huawei.ascend.insight.utils.JsonUtil;
 import com.huawei.ascend.insight.utils.LogPrinter;
 import com.huawei.ascend.insight.utils.LogProperties;
-import com.huawei.ascend.insight.utils.ProcessUtils;
 
 import com.intellij.DynamicBundle;
 import com.intellij.notification.NotificationGroupManager;
@@ -263,7 +261,6 @@ public class InsightWindowFactory implements ToolWindowFactory {
     }
 
     private void addPropertyChangeListener(JBCefBrowser webView) {
-
         JComponent component = webView.getComponent();
         propertyChangeListener = event -> {
             String command = "window.setTheme(" + UIUtil.isUnderDarcula() + ");";
@@ -306,5 +303,4 @@ public class InsightWindowFactory implements ToolWindowFactory {
             return true;
         }
     }
-
 }

@@ -49,15 +49,15 @@ public class CefMessageRouterProxy extends CefMessageRouterHandlerAdapter {
      * @param frame frame
      * @param queryId queryId
      * @param request request
-     * @param persistent persistent
+     * @param isPersistent persistent
      * @param callback callback
      * @return is success
      */
-    public boolean onQuery(CefBrowser browser, CefFrame frame, long queryId, String request, boolean persistent,
+    public boolean onQuery(CefBrowser browser, CefFrame frame, long queryId, String request, boolean isPersistent,
         CefQueryCallback callback) {
         CefMessageRouterHandler messageRouterHandler = this.routerHandlers.get(browser);
         return messageRouterHandler == null
-            || messageRouterHandler.onQuery(browser, frame, queryId, request, persistent, callback);
+            || messageRouterHandler.onQuery(browser, frame, queryId, request, isPersistent, callback);
     }
 
     /**

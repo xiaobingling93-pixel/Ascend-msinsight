@@ -4,6 +4,15 @@
 
 package com.huawei.ascend.insight.utils;
 
+import com.huawei.ascend.insight.common.constant.CmdConstants;
+import com.huawei.ascend.insight.model.dto.ExecuteResult;
+
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
+import com.intellij.openapi.util.SystemInfo;
+
+import org.apache.commons.io.FileUtils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,14 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import org.apache.commons.io.FileUtils;
-
-import com.huawei.ascend.insight.common.constant.CmdConstants;
-import com.huawei.ascend.insight.model.dto.ExecuteResult;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.PtyCommandLine;
-import com.intellij.openapi.util.SystemInfo;
 
 /**
  * ProcessUtils

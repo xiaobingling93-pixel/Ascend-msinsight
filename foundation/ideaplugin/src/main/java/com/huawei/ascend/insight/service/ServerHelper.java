@@ -4,19 +4,24 @@
 
 package com.huawei.ascend.insight.service;
 
+import com.huawei.ascend.insight.common.constant.CmdConstants;
+import com.huawei.ascend.insight.utils.LogPrinter;
+import com.huawei.ascend.insight.utils.ThreadUtil;
+import com.huawei.ascend.insight.utils.ProcessUtils;
+import com.huawei.ascend.insight.utils.BalloonNotification;
+import com.huawei.ascend.insight.utils.StringUtil;
+
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.concurrency.AppExecutorUtil;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
-import com.huawei.ascend.insight.common.constant.CmdConstants;
-import com.huawei.ascend.insight.utils.*;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.concurrency.AppExecutorUtil;
 
 /**
  * DicHelper
@@ -36,6 +41,9 @@ public class ServerHelper {
 
     private static int tryRestartTime = 0;
 
+    /**
+     * startServer
+     */
     public static void startServer() {
         ThreadUtil.runInUIThread(() -> {
             executeStartServerCommand();
@@ -44,6 +52,9 @@ public class ServerHelper {
         });
     }
 
+    /**
+     * cancelServerHook
+     */
     public static void cancelServerHook() {
         if (startServerHook != null) {
             startServerHook.cancel(true);
@@ -77,12 +88,11 @@ public class ServerHelper {
             BalloonNotification.show("[Ascend Insight]: server has been started, please clear and try again",
                 NotificationType.INFORMATION);
         }
-
     }
 
     private static void executeStartServerCommand() {
         destroy();
-        String lineSeparator = StringUtil.lineSeparator;
+        String lineSeparator = StringUtil.LINE_SEPARATOR;
         String pluginsPath = PathManager.getPluginsPath() + lineSeparator + "ascend-insight" + lineSeparator + "tools";
         List<String> processArgs = new ArrayList<>();
         if (SystemInfo.isWindows) {
@@ -102,6 +112,9 @@ public class ServerHelper {
         }
     }
 
+    /**
+     * destroy
+     */
     public static void destroy() {
         if (serverProcess != null) {
             serverProcess.destroy();

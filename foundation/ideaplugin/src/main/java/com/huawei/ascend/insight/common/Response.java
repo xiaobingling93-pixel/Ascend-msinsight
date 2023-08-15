@@ -4,10 +4,13 @@
 
 package com.huawei.ascend.insight.common;
 
-import com.google.gson.annotations.SerializedName;
 import com.huawei.ascend.insight.common.constant.Constant;
 import com.huawei.ascend.insight.utils.LogPrinter;
+
+import com.google.gson.annotations.SerializedName;
+
 import lombok.Getter;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
@@ -129,7 +132,7 @@ public class Response<T> {
                 checkAndSetSameField(field, response, rhs, rhsFieldMap, responseType);
             }
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchFieldException
-                 | NoSuchMethodException e) {
+            | NoSuchMethodException e) {
             LOGGER.warn("Failed to merge two responses, cause: ", e.getMessage());
             return new Response<>(Constant.IS_FAILURE);
         }

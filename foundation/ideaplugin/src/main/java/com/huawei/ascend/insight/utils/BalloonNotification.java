@@ -6,12 +6,14 @@ package com.huawei.ascend.insight.utils;
 
 import static com.huawei.ascend.insight.common.constant.Constant.INSIGHT_NOTIFY;
 
-import java.util.Map;
-
 import com.huawei.ascend.insight.InsightWindowFactory;
+
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
+
 import org.apache.commons.lang.StringUtils;
+
+import java.util.Map;
 
 /**
  * LogNotification

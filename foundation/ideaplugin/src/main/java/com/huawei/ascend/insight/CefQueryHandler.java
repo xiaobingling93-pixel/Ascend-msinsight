@@ -4,10 +4,10 @@
 
 package com.huawei.ascend.insight;
 
+import com.alibaba.fastjson.JSONObject;
+
 import org.cef.callback.CefQueryCallback;
 import org.jetbrains.annotations.NotNull;
-
-import com.alibaba.fastjson.JSONObject;
 
 /**
  * CefQueryHandler

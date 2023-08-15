@@ -12,8 +12,11 @@ import com.intellij.openapi.util.SystemInfo;
  * @since 2022-11-24
  */
 public class StringUtil {
+    /**
+     * lineSeparator
+     */
+    public static final String LINE_SEPARATOR = SystemInfo.isWindows ? "\\" : "/";
 
-    public static String lineSeparator = SystemInfo.isWindows ? "\\" : "/";
     /**
      * Anonymous String
      *

@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 public class ProjectContext {
     private static Project sProject;
 
-
     public static Project getProject() {
         return sProject;
     }
@@ -22,5 +21,4 @@ public class ProjectContext {
     public static void setProject(Project project) {
         sProject = project;
     }
-
 }

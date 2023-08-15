@@ -4,13 +4,15 @@
 
 package com.huawei.ascend.insight.handlers;
 
-import com.alibaba.fastjson.JSONObject;
-import com.google.gson.Gson;
 import com.huawei.ascend.insight.CefQueryHandler;
 import com.huawei.ascend.insight.common.Response;
 import com.huawei.ascend.insight.processor.SelectProcessor;
 import com.huawei.ascend.insight.utils.LogPrinter;
+
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.Gson;
 import com.intellij.openapi.application.ApplicationManager;
+
 import org.cef.callback.CefQueryCallback;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +31,7 @@ public class SelectFolderHandler implements CefQueryHandler {
             "ascend.selectFolder", SelectProcessor::selectFolder,
             "ascend.selectFile", SelectProcessor::selectFile
     );
+
     @Override
     public void onQuery(@NotNull String method, @NotNull JSONObject params, @NotNull CefQueryCallback callback) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {

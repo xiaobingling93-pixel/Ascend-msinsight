@@ -4,18 +4,29 @@
 
 package com.huawei.ascend.insight.utils;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.huawei.ascend.insight.model.dto.ExecuteResult;
+
+import com.intellij.openapi.util.SystemInfo;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.huawei.ascend.insight.model.dto.ExecuteResult;
-import com.intellij.openapi.util.SystemInfo;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * ShellCommand
