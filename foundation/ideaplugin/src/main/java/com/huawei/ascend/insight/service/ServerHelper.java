@@ -5,11 +5,11 @@
 package com.huawei.ascend.insight.service;
 
 import com.huawei.ascend.insight.common.constant.CmdConstants;
-import com.huawei.ascend.insight.utils.LogPrinter;
-import com.huawei.ascend.insight.utils.ThreadUtil;
-import com.huawei.ascend.insight.utils.ProcessUtils;
 import com.huawei.ascend.insight.utils.BalloonNotification;
+import com.huawei.ascend.insight.utils.LogPrinter;
+import com.huawei.ascend.insight.utils.ProcessUtils;
 import com.huawei.ascend.insight.utils.StringUtil;
+import com.huawei.ascend.insight.utils.ThreadUtil;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.PathManager;
