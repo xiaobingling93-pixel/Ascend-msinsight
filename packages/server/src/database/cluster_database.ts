@@ -299,7 +299,7 @@ export class ClusterDatabase {
     }
 
     async queryIterationIds(): Promise<any> {
-        const sql: string = `SELECT DISTINCT iteration_id FROM ${COMMUNICATION_TIME_INFO_TABLE}`;
+        const sql: string = `SELECT DISTINCT iteration_id FROM ${COMMUNICATION_TIME_INFO_TABLE} ORDER BY iteration_id`;
         return new Promise((resolve, reject) => {
             this.clusterDb.all(sql, function (err, rows) {
                 if (err !== undefined && err !== null) {
@@ -314,7 +314,7 @@ export class ClusterDatabase {
 
     async queryRankIds(iterationId: number): Promise<any> {
         const sql: string = `SELECT DISTINCT rank_id FROM ${COMMUNICATION_TIME_INFO_TABLE}
-                                 WHERE iteration_id = ?`;
+                                 WHERE iteration_id = ? ORDER BY rank_id`;
         return this.executeSql(sql, [iterationId]);
     }
 
@@ -323,12 +323,12 @@ export class ClusterDatabase {
         if (rankIdList.length === 0) {
             sql = `SELECT DISTINCT op_name FROM (
                    SELECT op_name FROM ${COMMUNICATION_TIME_INFO_TABLE}
-                                 WHERE iteration_id = ?)`;
+                                 WHERE iteration_id = ? ORDER BY op_name)`;
         } else {
             sql = `SELECT DISTINCT op_name FROM (
                    SELECT op_name FROM ${COMMUNICATION_TIME_INFO_TABLE}
                                  WHERE iteration_id = ?
-                                 AND rank_id IN (${rankIdList.join(',')}))`;
+                                 AND rank_id IN (${rankIdList.join(',')}) ORDER BY op_name)`;
         }
         return this.executeSql(sql, [iterationId]);
     }
@@ -336,13 +336,25 @@ export class ClusterDatabase {
     async queryDurationList(iterationId: number, rankIdList: number[], operatorName: string): Promise<any> {
         let sql: string = '';
         if (rankIdList.length === 0) {
-            sql = `SELECT rank_id, elapse_time, transit_time, synchronization_time, wait_time,
-                                  synchronization_time_ratio, wait_time_ratio FROM ${COMMUNICATION_TIME_INFO_TABLE}
+            sql = `SELECT rank_id, ROUND(elapse_time, 4) as elapse_time,
+                                  ROUND(transit_time, 4) as transit_time,
+                                  ROUND(synchronization_time, 4) as synchronization_time,
+                                  ROUND(wait_time, 4) as wait_time,
+                                  ROUND(elapse_time - transit_time - wait_time, 4) as idle_time,
+                                  ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio,
+                                  ROUND(wait_time_ratio, 4) as wait_time_ratio
+                                  FROM ${COMMUNICATION_TIME_INFO_TABLE}
                                   WHERE iteration_id = ?
                                   AND op_name = ?`;
         } else {
-            sql = `SELECT rank_id, elapse_time, transit_time, synchronization_time, wait_time,
-                                  synchronization_time_ratio, wait_time_ratio FROM ${COMMUNICATION_TIME_INFO_TABLE}
+            sql = `SELECT rank_id, ROUND(elapse_time, 4) as elapse_time,
+                                   ROUND(transit_time, 4) as transit_time,
+                                   ROUND(synchronization_time, 4) as synchronization_time,
+                                   ROUND(wait_time, 4) as wait_time,
+                                   ROUND(elapse_time - transit_time - wait_time, 4) as idle_time,
+                                   ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio,
+                                   ROUND(wait_time_ratio, 4) as wait_time_ratio
+                                   FROM ${COMMUNICATION_TIME_INFO_TABLE}
                                   WHERE iteration_id = ?
                                   AND rank_id IN (${rankIdList.join(',')})
                                   AND op_name = ?`;
@@ -351,11 +363,18 @@ export class ClusterDatabase {
     };
 
     async queryAllOperators(iterationId: number, rankId: number, pageSize: number, currentPage: number): Promise<any> {
-        const sql: string = `SELECT op_name, elapse_time, transit_time, synchronization_time, wait_time,
-                                  synchronization_time_ratio, wait_time_ratio FROM ${COMMUNICATION_TIME_INFO_TABLE}
-                                  WHERE iteration_id = ?
-                                  AND rank_id = ?
-                                  LIMIT ?, ?`;
+        const sql: string = `SELECT op_name,
+                                    ROUND(elapse_time, 4) as elapse_time,
+                                    ROUND(transit_time, 4) as transit_time,
+                                    ROUND(synchronization_time, 4) as synchronization_time,
+                                    ROUND(wait_time, 4) as wait_time,
+                                    ROUND(elapse_time - transit_time - wait_time, 4) as idle_time,
+                                    ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio,
+                                    ROUND(wait_time_ratio, 4) as wait_time_ratio
+                                    FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                                    WHERE iteration_id = ?
+                                    AND rank_id = ?
+                                    LIMIT ?, ?`;
         return this.executeSql(sql, [ iterationId, rankId, (currentPage - 1) * pageSize, pageSize ]);
     }
 
@@ -367,11 +386,16 @@ export class ClusterDatabase {
     }
 
     async queryBandwidthData(iterationId: number, rankId: number, operatorName: string): Promise<any> {
-        const sql: string = `SELECT transport_type, transit_size, transit_time, bandwidth_size,
-                             bandwidth_utilization, large_package_ratio FROM ${COMMUNICATION_BAND_WIDTH_TABLE}
-                             WHERE iteration_id = ?
-                             AND rank_id = ?
-                             AND op_name = ?`;
+        const sql: string = `SELECT transport_type,
+                                    ROUND(transit_size, 4) as transit_size,
+                                    ROUND(transit_time, 4) as transit_time,
+                                    ROUND(bandwidth_size, 4) as bandwidth_size,
+                                    ROUND(bandwidth_utilization, 4) as bandwidth_utilization,
+                                    ROUND(large_package_ratio, 4)  as large_package_ratio
+                                    FROM ${COMMUNICATION_BAND_WIDTH_TABLE}
+                                    WHERE iteration_id = ?
+                                    AND rank_id = ?
+                                    AND op_name = ?`;
         return this.executeSql(sql, [ iterationId, rankId, operatorName ]);
     }
 

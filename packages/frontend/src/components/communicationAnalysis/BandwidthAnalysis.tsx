@@ -125,9 +125,9 @@ async function wrapBandwidthData(domId: string): Promise<echarts.EChartsOption> 
             console.error('The format of distribution data is error');
             return {};
         }
-        packetSizeData.push(Number(packetSize));
+        packetSizeData.push(Number(Number(packetSize).toFixed(4)));
         packetNumberData.push(values[0]);
-        packetBandwidthData.push(values[1]);
+        packetBandwidthData.push(Number(values[1].toFixed(4)));
     }
     (bandwidthOption.xAxis as CategoryAxisBaseOption).data = packetSizeData;
     (bandwidthOption.series as echarts.SeriesOption[])[0].data = packetNumberData;

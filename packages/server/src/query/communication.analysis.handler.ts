@@ -9,10 +9,13 @@ import {
     DistributionDataRequest,
     DistributionResponse,
     DurationListRequest,
-    DurationResponse, Durations,
+    DurationResponse,
+    Durations,
+    IterationsOrRanksObject,
     IterationsOrRanksResponse,
     OperatorDetailsRequest,
     OperatorNamesRequest,
+    OperatorsObject,
     OperatorsResponse,
     RanksRequest,
 } from './communicationAnalysisData';
@@ -22,7 +25,7 @@ const logger = getLoggerByName('communication', 'info');
 
 export const iterationsHandler = async (): Promise<IterationsOrRanksResponse> => {
     const response: IterationsOrRanksResponse = { iterationsOrRanks: [] };
-    response.iterationsOrRanks = await CLUSTER_DATABASE.queryIterationIds() as number[];
+    response.iterationsOrRanks = await CLUSTER_DATABASE.queryIterationIds() as IterationsOrRanksObject[];
     if (response.iterationsOrRanks.length === 0) {
         logger.error('Failed to obtain the number of iteration ids. At least one id must be contained. ' +
             'Check whether communication data files exist in the directory.');
@@ -32,13 +35,14 @@ export const iterationsHandler = async (): Promise<IterationsOrRanksResponse> =>
 
 export const ranksHandler = async (request: RanksRequest): Promise<IterationsOrRanksResponse> => {
     const response: IterationsOrRanksResponse = { iterationsOrRanks: [] };
-    response.iterationsOrRanks = await CLUSTER_DATABASE.queryRankIds(request.iterationId) as number[];
+    response.iterationsOrRanks = await CLUSTER_DATABASE.queryRankIds(request.iterationId) as IterationsOrRanksObject[];
     return response;
 };
 
 export const operatorNamesHandler = async (request: OperatorNamesRequest): Promise<OperatorsResponse> => {
     const response: OperatorsResponse = { operators: [] };
-    response.operators = await CLUSTER_DATABASE.selectOperators(request.iterationId, request.rankList) as string[];
+    response.operators = await CLUSTER_DATABASE.selectOperators(request.iterationId,
+        request.rankList) as OperatorsObject[];
     return response;
 };
 

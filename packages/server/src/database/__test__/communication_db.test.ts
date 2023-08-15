@@ -6,7 +6,9 @@ import {
     AllOperatorsResponse, BandwidthDataResponse, DistributionResponse,
     DurationResponse,
     Durations,
+    IterationsOrRanksObject,
     IterationsOrRanksResponse,
+    OperatorsObject,
     OperatorsResponse,
 } from '../../query/communicationAnalysisData';
 import { ClusterDatabase } from '../cluster_database';
@@ -15,37 +17,37 @@ const globalDatabase = new ClusterDatabase('./db_tensorboard.db');
 
 it('query iteration ids', async function () {
     const response: IterationsOrRanksResponse = { iterationsOrRanks: [] };
-    response.iterationsOrRanks = await globalDatabase.queryIterationIds() as number[];
+    response.iterationsOrRanks = await globalDatabase.queryIterationIds() as IterationsOrRanksObject[];
     expect(response).toEqual({ iterationsOrRanks: [ { iteration_id: 1 }, { iteration_id: 2 } ] });
 });
 
 it('query rank ids', async function () {
     const response: IterationsOrRanksResponse = { iterationsOrRanks: [] };
-    response.iterationsOrRanks = await globalDatabase.queryRankIds(1) as number[];
+    response.iterationsOrRanks = await globalDatabase.queryRankIds(1) as IterationsOrRanksObject[];
     expect(response).toEqual({ iterationsOrRanks: [ { rank_id: 0 }, { rank_id: 1 } ] });
 });
 
 it('query rank ids with no data', async function () {
     const response: IterationsOrRanksResponse = { iterationsOrRanks: [] };
-    response.iterationsOrRanks = await globalDatabase.queryRankIds(5) as number[];
+    response.iterationsOrRanks = await globalDatabase.queryRankIds(5) as IterationsOrRanksObject[];
     expect(response).toEqual({ iterationsOrRanks: [] });
 });
 
 it('query all operator names', async function () {
     const response: OperatorsResponse = { operators: [] };
-    response.operators = await globalDatabase.selectOperators(1, []) as string[];
+    response.operators = await globalDatabase.selectOperators(1, []) as OperatorsObject[];
     expect(response).toEqual({ operators: [ { op_name: 'send' }, { op_name: 'send1' }, { op_name: 'allReduce' }, { op_name: 'all2' } ] });
 });
 
 it('query all operator names with rank list', async function () {
     const response: OperatorsResponse = { operators: [] };
-    response.operators = await globalDatabase.selectOperators(1, [0]) as string[];
+    response.operators = await globalDatabase.selectOperators(1, [0]) as OperatorsObject[];
     expect(response).toEqual({ operators: [ { op_name: 'send' }, { op_name: 'send1' }, { op_name: 'allReduce' } ] });
 });
 
 it('query all operator names with no data', async function () {
     const response: OperatorsResponse = { operators: [] };
-    response.operators = await globalDatabase.selectOperators(5, [0]) as string[];
+    response.operators = await globalDatabase.selectOperators(5, [0]) as OperatorsObject[];
     expect(response).toEqual({ operators: [] });
 });
 
@@ -56,6 +58,7 @@ it('query duration data', async function () {
         duration: [
             {
                 elapse_time: 1,
+                idle_time: -1,
                 rank_id: 0,
                 synchronization_time: 1,
                 synchronization_time_ratio: 1,
@@ -102,6 +105,7 @@ it('query all Operator details with fenye', async function () {
             {
                 op_name: 'send',
                 elapse_time: 1,
+                idle_time: -1,
                 transit_time: 1,
                 synchronization_time: 1,
                 wait_time: 1,

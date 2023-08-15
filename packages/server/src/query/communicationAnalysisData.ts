@@ -12,6 +12,7 @@ export type Durations = {
     transitTime: number;
     synchronizationTime: number;
     waitTime: number;
+    idleTime: number;
     synchronizationTimeRatio: number;
     waitTimeRatio: number;
 };
@@ -29,6 +30,7 @@ type AllOperators = {
     transitTime: number;
     synchronizationTime: number;
     waitTime: number;
+    idleTime: number;
     synchronizationTimeRatio: number;
     waitTimeRatio: number;
 };
@@ -88,11 +90,19 @@ export type DistributionDataRequest = {
 };
 
 export type IterationsOrRanksResponse = {
-    iterationsOrRanks: number[];
+    iterationsOrRanks: IterationsOrRanksObject[];
+};
+
+export type IterationsOrRanksObject = {
+    iterationOrRankId: number;
 };
 
 export type OperatorsResponse = {
-    operators: string[];
+    operators: OperatorsObject[];
+};
+
+export type OperatorsObject = {
+    operator: string;
 };
 
 export type DistributionResponse = {
