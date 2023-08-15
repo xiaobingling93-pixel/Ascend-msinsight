@@ -18,8 +18,7 @@ template <> std::optional<json_t> ToResponseJson<TokenDestroyResponse>(const Tok
 template <> std::optional<json_t> ToResponseJson<TokenCheckResponse>(const TokenCheckResponse &response);
 template <> std::optional<json_t> ToResponseJson<ConfigGetResponse>(const ConfigGetResponse &response);
 template <> std::optional<json_t> ToResponseJson<ConfigSetResponse>(const ConfigSetResponse &response);
-// harmony
-template <> std::optional<json_t> ToResponseJson<HdcDeviceListResponse>(const HdcDeviceListResponse &response);
+// ascend
 template <> std::optional<json_t> ToResponseJson<ImportActionResponse>(const ImportActionResponse &response);
 template <> std::optional<json_t> ToResponseJson<UnitThreadTracesResponse>(const UnitThreadTracesResponse &response);
 template <> std::optional<json_t> ToResponseJson<UnitThreadsResponse>(const UnitThreadsResponse &response);

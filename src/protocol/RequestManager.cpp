@@ -37,7 +37,7 @@ void RequestManager::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_CONFIG_GET, ToConfigGetRequest);
     jsonToReqFactory.emplace(REQ_RES_CONFIG_SET, ToConfigSetRequest);
 
-    jsonToReqFactory.emplace(REQ_RES_HDC_DEVICE_LIST, ToHdcDeviceListRequest);
+    // ascend
     jsonToReqFactory.emplace(REQ_RES_IMPORT_ACTION, ToImportActionRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_TRACES, ToUnitThreadTracesRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREADS, ToUnitThreadsRequest);
@@ -187,17 +187,6 @@ std::unique_ptr<Request> RequestManager::ToConfigSetRequest(const json_t &json, 
         ProtocolUtil::SetHarmonyConfigStruct(json["params"]["config"]["harmony"], config);
         reqPtr->params.harmonyConfig = config;
     }
-    return reqPtr;
-}
-
-std::unique_ptr<Request> RequestManager::ToHdcDeviceListRequest(const json_t &json, std::string &error)
-{
-    std::unique_ptr<HdcDeviceListRequest> reqPtr = std::make_unique<HdcDeviceListRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
-        return nullptr;
-    }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.timeout, json["params"], "timeout");
     return reqPtr;
 }
 

@@ -72,15 +72,6 @@ struct ConfigSetRequest : public Request {
 #pragma endregion
 
 #pragma region << harmony>>
-// hdc device list
-struct HdcDeviceListParams {
-    int timeout = 3000;
-};
-
-struct HdcDeviceListRequest : public Request {
-    HdcDeviceListRequest() : Request(REQ_RES_HDC_DEVICE_LIST) {};
-    HdcDeviceListParams params;
-};
 
 struct ImportActionParams {
     std::string path;

@@ -71,8 +71,16 @@ void ResponseManager::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_TOKEN_CHECK, ToTokenCheckResponseJson);
     resToJsonFactory.emplace(REQ_RES_CONFIG_GET, ToConfigGetResponseJson);
     resToJsonFactory.emplace(REQ_RES_CONFIG_SET, ToConfigSetResponseJson);
-    // harmony
-    resToJsonFactory.emplace(REQ_RES_HDC_DEVICE_LIST, ToHdcDeviceListResponseJson);
+    // ascend
+    resToJsonFactory.emplace(REQ_RES_IMPORT_ACTION, ToImportActionResponseJson);
+    resToJsonFactory.emplace(REQ_RES_IMPORT_ACTION, ToImportActionResponseJson);
+    resToJsonFactory.emplace(REQ_RES_UNIT_THREAD_TRACES, ToUnitThreadTracesResponseJson);
+    resToJsonFactory.emplace(REQ_RES_UNIT_THREADS, ToUnitThreadsResponseJson);
+    resToJsonFactory.emplace(REQ_RES_UNIT_THREAD_DETAIL, ToThreadDetailResponseJson);
+    resToJsonFactory.emplace(REQ_RES_UNIT_FLOW_NAME, ToUnitFlowNameResponseJson);
+    resToJsonFactory.emplace(REQ_RES_UNIT_FLOW, ToUnitFlowResponseJson);
+    resToJsonFactory.emplace(REQ_RES_RESET_WINDOW, ToResetWindowResponseJson);
+    resToJsonFactory.emplace(REQ_RES_UNIT_CHART, ToUnitChartResponseJson);
 }
 
 void ResponseManager::UnRegister()
@@ -106,11 +114,6 @@ std::optional<json_t> ResponseManager::ToConfigGetResponseJson(const Response &r
 std::optional<json_t> ResponseManager::ToConfigSetResponseJson(const Response &response)
 {
     return ToResponseJson<ConfigSetResponse>(dynamic_cast<const ConfigSetResponse &>(response));
-}
-
-std::optional<json_t> ResponseManager::ToHdcDeviceListResponseJson(const Response &response)
-{
-    return ToResponseJson<HdcDeviceListResponse>(dynamic_cast<const HdcDeviceListResponse &>(response));
 }
 
 std::optional<json_t> ResponseManager::ToImportActionResponseJson(const Response &response)

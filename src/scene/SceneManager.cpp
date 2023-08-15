@@ -4,7 +4,6 @@
 
 #include "ServerLog.h"
 #include "GlobalScene.h"
-#include "HarmonyScene.h"
 #include "SceneManager.h"
 
 namespace Dic {
@@ -31,11 +30,8 @@ void SceneManager::Register()
     std::unique_lock<std::mutex> lock(mutex);
     sceneMap.clear();
     std::unique_ptr<GlobalScene> globalScene = std::make_unique<GlobalScene>();
-    std::unique_ptr<HarmonyScene> harmonyScene = std::make_unique<HarmonyScene>();
-    harmonyScene->RegisterRequestHandlers();
     globalScene->RegisterRequestHandlers();
     sceneMap.emplace(SceneType::GLOBAL, std::move(globalScene));
-    sceneMap.emplace(SceneType::HARMONY, std::move(harmonyScene));
 }
 
 void SceneManager::UnRegister()
@@ -53,29 +49,12 @@ bool SceneManager::SetGlobalConfig(const GlobalConfig &config)
     return true;
 }
 
-bool SceneManager::SetHarmonyConfig(const HarmonyConfig &config)
-{
-    if (sceneMap.count(SceneType::HARMONY) == 0) {
-        return false;
-    }
-    ((HarmonyScene &)(*sceneMap.at(SceneType::HARMONY).get())).Config(config);
-    return true;
-}
-
 const std::optional<GlobalConfig> SceneManager::GetGlobalConfig()
 {
     if (sceneMap.count(SceneType::GLOBAL) == 0) {
         return std::nullopt;
     }
     return ((GlobalScene &)(*sceneMap.at(SceneType::GLOBAL).get())).GetConfig();
-}
-
-const std::optional<HarmonyConfig> SceneManager::GetHarmonyConfig()
-{
-    if (sceneMap.count(SceneType::HARMONY) == 0) {
-        return std::nullopt;
-    }
-    return ((HarmonyScene &)(*sceneMap.at(SceneType::HARMONY).get())).GetConfig();
 }
 
 void SceneManager::OnDispatchSceneRequest(std::unique_ptr<Request> request)

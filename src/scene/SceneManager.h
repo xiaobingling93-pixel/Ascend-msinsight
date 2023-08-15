@@ -16,9 +16,7 @@ class SceneManager {
 public:
     static SceneManager &Instance();
     bool SetGlobalConfig(const GlobalConfig &config);
-    bool SetHarmonyConfig(const HarmonyConfig &config);
     const std::optional<GlobalConfig> GetGlobalConfig();
-    const std::optional<HarmonyConfig> GetHarmonyConfig();
     void OnDispatchSceneRequest(std::unique_ptr<Request> request);
 
 private:

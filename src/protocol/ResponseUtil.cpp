@@ -72,27 +72,6 @@ template <> std::optional<json_t> ToResponseJson<ConfigSetResponse>(const Config
     return json;
 }
 
-template <> std::optional<json_t> ToResponseJson<HdcDeviceListResponse>(const HdcDeviceListResponse &response)
-{
-    json_t json;
-    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["deviceList"] = json_t::array();
-    for (const Device& device : response.body.deviceList) {
-        json_t devJson = json_t::object();
-        devJson["deviceKey"] = device.deviceKey;
-        devJson["cpuAbi"] = device.cpuAbi;
-        devJson["apiVersion"] = device.apiVersion;
-        devJson["productModel"] = device.productModel;
-        devJson["deviceType"] = device.deviceType;
-        devJson["softwareVersion"] = device.softwareVersion;
-        devJson["status"] = ENUM_TO_STR<DeviceStatus>(device.status).value();
-        devJson["connectType"] = ENUM_TO_STR<DeviceConnectType>(device.connectType).value();
-        devJson["productBrand"] = device.productBrand;
-        json["body"]["deviceList"].push_back(devJson);
-    }
-    return json;
-}
-
 template <> std::optional<json_t> ToResponseJson<ImportActionResponse>(const ImportActionResponse &response)
 {
     json_t json;

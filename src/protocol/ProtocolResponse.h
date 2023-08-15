@@ -77,15 +77,6 @@ struct ConfigSetResponse : public Response {
 #pragma endregion
 
 #pragma region << harmony>>
-// hdc device list
-struct HdcDeviceListResBody {
-    std::vector<Device> deviceList;
-};
-
-struct HdcDeviceListResponse : public Response {
-    HdcDeviceListResponse() : Response(REQ_RES_HDC_DEVICE_LIST) {}
-    HdcDeviceListResBody body;
-};
 
 struct Action {
     std::string cardName;

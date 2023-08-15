@@ -41,7 +41,6 @@ const std::string REQ_RES_CONFIG_GET = "config.get";
 const std::string REQ_RES_CONFIG_SET = "config.set";
 
 // template
-const std::string REQ_RES_HDC_DEVICE_LIST = "hdc.listDevice";
 const std::string REQ_RES_IMPORT_ACTION = "import/action";
 const std::string REQ_RES_UNIT_THREAD_TRACES = "unit/threadTraces";
 const std::string REQ_RES_UNIT_THREADS = "unit/threads";

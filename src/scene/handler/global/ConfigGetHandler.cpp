@@ -28,9 +28,6 @@ void ConfigGetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     if ((sceneMask == -1) || (sceneMask & static_cast<int>(SceneType::GLOBAL))) {
         response.body.globalConfig = SceneManager::Instance().GetGlobalConfig();
     }
-    if ((sceneMask == -1) || (sceneMask & static_cast<int>(SceneType::HARMONY))) {
-        response.body.harmonyConfig = SceneManager::Instance().GetHarmonyConfig();
-    }
     SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
 }

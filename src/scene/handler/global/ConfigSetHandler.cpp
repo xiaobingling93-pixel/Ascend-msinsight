@@ -28,10 +28,6 @@ void ConfigSetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     if (request.params.globalConfig.has_value()) {
         SceneManager::Instance().SetGlobalConfig(request.params.globalConfig.value());
     }
-    if (request.params.harmonyConfig.has_value()) {
-        SceneManager::Instance().SetHarmonyConfig(request.params.harmonyConfig.value());
-        response.body.isAlertMsg = !CheckDiskSize(request.params.harmonyConfig.value().dfx.dbDir);
-    }
     response.body.configSetTime = TimeUtil::Instance().NowUTC();
     SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
