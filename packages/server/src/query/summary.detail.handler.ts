@@ -14,13 +14,15 @@ export const computeDetailInfoHandler = async (request: SummaryDetailRequest, cl
     const table = tableMap.get(request.rankId) as Table;
     const response: ComputeDetailResponse = { totalNum: 0, computeDetail: [] };
     response.computeDetail = await table.queryComputeDetailInfo(timeFlag, currentPage, pageSize, client) as ComputeDetail[];
-    response.totalNum = await table.queryComputeTotalNum(timeFlag) as number;
+    const rows = await table.queryComputeTotalNum(timeFlag);
+    response.totalNum = rows[0].nums;
     return response;
 };
 
 async function queryNotOverlapByTime(table: Table, rows: any[], notOverlapTrackId: number, trackId: number, client: Client, timeFlag: string): Promise<CommunicationDetailResponse> {
     const response: CommunicationDetailResponse = { totalNum: 0, communicationDetail: [] };
-    response.totalNum = await table.queryCommunicationTotalNum(trackId, timeFlag);
+    const res = await table.queryCommunicationTotalNum(trackId, timeFlag);
+    response.totalNum = res[0].nums;
     for (const row of rows) {
         let totalTime = 0;
         const timeStamp = row.startTime + client.shadowSession.extremumTimestamp.minTimestamp;

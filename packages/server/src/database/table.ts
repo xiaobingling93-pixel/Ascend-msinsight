@@ -614,7 +614,7 @@ export class Table {
     async queryComputeTotalNum(timeFlag: string): Promise<any> {
         return new Promise((resolve, reject) => {
             const sql: string = `SELECT
-                                    count(*)
+                                    count(*) as nums
                                     FROM ${KERNEL_DETAIL_TABLE}
                                     WHERE accelerator_core = ?`;
             this.db.all(sql, [timeFlag], async (err, rows) => {
@@ -630,7 +630,7 @@ export class Table {
 
     async queryCommunicationTotalNum(trackId: number, timeFlag: string): Promise<any> {
         return new Promise((resolve, reject) => {
-            const sql: string = `SELECT count(*)
+            const sql: string = `SELECT count(*) as nums
                                  FROM ${this.sliceTable}
                                  WHERE
                                      track_id = ?
