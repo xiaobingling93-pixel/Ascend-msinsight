@@ -11,6 +11,7 @@ import { unitMetadataHandler } from './query/unitMetadataHandler';
 import { resetHandler } from './handlers/reset';
 import { summaryHandler, summaryStatisticHandler } from './query/summary.handler';
 import { loggerHandler } from './logger/logger_handler';
+import { communicationDetailInfoHandler, computeDetailInfoHandler } from './query/summary.detail.handler';
 import {
     iterationsHandler,
     ranksHandler,
@@ -33,6 +34,8 @@ export const HANDLER_MAP: Record<string, Handler> = {
     'unit/flowName': flowNameHandler,
     'unit/flow': flowDetailHandler,
     'log/logger': loggerHandler,
+    'summary/queryComputeDetail': computeDetailInfoHandler,
+    'summary/queryCommunicationDetail': communicationDetailInfoHandler,
     'communication/duration/iterations': iterationsHandler,
     'communication/duration/ranks': ranksHandler,
     'communication/duration/operatorNames': operatorNamesHandler,
