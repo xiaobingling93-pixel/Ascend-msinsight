@@ -1,8 +1,10 @@
-import { BrowserPlatform, IntellijPlatform, VsCodePlatform } from '../platforms/platform';
+import { Browser } from '../platforms/Browser';
+import { IntellijPlatform } from '../platforms/IntellijPlatform';
+import { VsCodePlatform } from '../platforms/VsCodePlatform';
 
 declare function acquireVsCodeApi(): any;
 
-export let messageSender: IMessageSender = new BrowserPlatform();
+export let messageSender: IMessageSender = new Browser();
 
 if (typeof acquireVsCodeApi === 'function') {
     messageSender = new VsCodePlatform();

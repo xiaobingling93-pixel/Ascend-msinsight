@@ -1,7 +1,8 @@
 import { ThemeItem } from '../theme/theme';
 import { InsightState, NavigationParam, NotifyLevel, Platform } from './platform';
+import { IMessageSender } from '../connection/messageSender';
 
-export class Browser implements Platform {
+export class Browser implements Platform, IMessageSender {
     trace(action: string, traceInfo: object): void {
         // do nothing
     };
@@ -49,4 +50,13 @@ export class Browser implements Platform {
     }
 
     isUltimateEdition: Promise<boolean> = new Promise<boolean>(() => false);
+
+    selectFolder = (): Promise<string> => new Promise(resolve => {
+        resolve('browser');
+    });
+
+    selectFile = (): Promise<string> => this.selectFolder();
+
+    sendMessage = (): void => {
+    };
 }
