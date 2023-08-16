@@ -98,7 +98,6 @@ export class Session {
             selectedUnits: false,
             selectedDetails: false,
             caches: false,
-            unitsConfig: false,
             isNsMode: false,
             printSessionInfo: false,
         });
