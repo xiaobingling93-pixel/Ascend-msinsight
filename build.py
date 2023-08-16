@@ -6,6 +6,7 @@
 
 """build for Insight"""
 import os
+import platform
 import shutil
 import sys
 
@@ -42,8 +43,13 @@ def build_intellij(idea_version, os_name):
         os.system('cd ' + plugins_path + ' && gradle wrapper')
     else:
         os.system('cd ' + plugins_path + ' && gradle wrapper --gradle-distribution-url ' + url)
-    os.system('cd ' + plugins_path + ' && gradlew clean')
-    os.system('cd ' + plugins_path + ' && gradlew buildPlugin')
+    gradlew = 'gradlew'
+    if os_name.startswith('linux'):
+        os.system('cd ' + plugins_path + ' && chmod a+x gradlew')
+        gradlew = './gradlew'
+    os.system('cd ' + plugins_path + ' && ' + gradlew + ' clean')
+    os.system('cd ' + plugins_path + ' && ' + gradlew + ' ascend-insight:copyFrontendBuild')
+    os.system('cd ' + plugins_path + ' && ' + gradlew + ' buildPlugin')
     src = os.path.join(SCRIPT_PATH, 'plugins', 'build', 'distributions')
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-plugin_' + idea_version + '_' + os_name + '.zip')
     for file in os.listdir(src):
@@ -54,8 +60,10 @@ def build_intellij(idea_version, os_name):
 def main():
     vscode_version = '6.0.3'
     idea_version = '6.0.RC3'
-    os_name = sys.argv[1]
     init()
+    os_info = platform.platform()
+    framework = 'x86_64' if os_info.find('x86_64') > -1 else 'aarch64'
+    os_name = 'win' if os_info.find('Windows') > -1 else 'linux-' + framework
     build_vscode(vscode_version, os_name)
     build_intellij(idea_version, os_name)
 
