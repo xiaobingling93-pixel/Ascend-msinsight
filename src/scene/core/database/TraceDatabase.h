@@ -19,6 +19,8 @@ public:
     bool SetConfig();
     bool CreateTable();
     bool CreateIndex();
+    bool InitStmt();
+    void ReleaseStmt();
     bool InsertSlice(const json_t &json);
     bool UpdateProcessName(const json_t &json);
     bool UpdateProcessLabel(const json_t &json);
@@ -26,8 +28,10 @@ public:
     bool UpdateThreadName(const json_t &json);
     bool UpdateThreadSortIndex(const json_t &json);
     bool InsertFlow(const json_t &json);
-    bool InitStmt();
-    void ReleaseStmt();
+    void UpdateDepth();
+
+    // search
+    std::vector<int64_t> GetTrackIdList();
 
 private:
     const std::string sliceTable = "slice";
@@ -46,6 +50,17 @@ private:
     sqlite3_stmt *updateThreadSortIndexStmt = nullptr;
     sqlite3_stmt *insertFlowStmt = nullptr;
 
+    struct SliceTimeData {
+        int64_t id;
+        int64_t time;
+        int64_t dur;
+    };
+
+    void UpdateOneTrackDepth(int64_t trackId);
+    bool SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeData> &sliceTimeList);
+    // depth, idList
+    void CalcDepth(const std::vector<SliceTimeData> &sliceData, std::map<int, std::vector<int64_t>> &depthMap);
+    void UpdateDepthByID(const std::vector<int64_t> &idList, int depth);
 };
 } // end of namespace Core
 } // end of namespace Scene

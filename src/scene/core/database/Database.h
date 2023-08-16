@@ -34,6 +34,7 @@ protected:
     bool isOpen = false;
     std::string path;
     const int bindStartIndex = 1;
+    const int resultStartIndex = 0;
 
 private:
     bool DropAllTable();
