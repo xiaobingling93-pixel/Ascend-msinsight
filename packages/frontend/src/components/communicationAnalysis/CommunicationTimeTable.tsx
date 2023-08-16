@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { Table, Button } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
-import { Container, GetPageConfigWhithAllData, PaginationWhithPgaeData } from './Common';
+import { Container, GetPageConfigWhithAllData, PaginationWhithPgaeData } from '../Common';
 import { VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails } from '../../utils/RequestUtils';
 import { totalOperator } from './Filter';

@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
-import { Label } from './Common';
+import { Label } from '../Common';
 import { Select } from 'antd';
 import * as echarts from 'echarts';
 

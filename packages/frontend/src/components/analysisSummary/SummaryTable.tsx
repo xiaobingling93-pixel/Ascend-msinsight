@@ -3,7 +3,7 @@
  */
 import { Table } from 'antd';
 import React from 'react';
-import { GetPageConfigWhithAllData } from '../communicationAnalysis/Common';
+import { GetPageConfigWhithAllData } from '../Common';
 
 const columns = [
     {

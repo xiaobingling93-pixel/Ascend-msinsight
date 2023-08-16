@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { Select, Radio, Form } from 'antd';
-import { Label, Space, MultiSelectWithAll, notNullObj } from './Common';
+import { Label, Space, MultiSelectWithAll, notNullObj } from '../Common';
 import { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryIterations, queryOperators, queryRanks } from '../../utils/RequestUtils';
 import { Session } from '../../entity/session';
