@@ -7,6 +7,7 @@ import { CustomButton } from './base/StyledButton';
 import { ReactComponent as AntdResetIcon } from '../assets/images/insights/ark_gc.svg';
 import { runInAction } from 'mobx';
 import { SvgType } from './base/rc-table/types';
+import { store } from '../store';
 
 const ResetIcon = AntdResetIcon as SvgType;
 
@@ -34,8 +35,12 @@ export const ButtonGroup = observer(({ session }: { session: Session }) => {
 });
 
 const resetSession = async (session: Session): Promise<void> => {
-    runInAction(() => {
-        location.reload();
+    runInAction(async () => {
+        const sessionConf: Partial<Session> = {
+            name: 'entry',
+            isNsMode: true,
+        };
+        store.sessionStore.activeSession = await store.sessionStore.newSession(sessionConf);
     });
     await window.request('reset/window', {});
 };

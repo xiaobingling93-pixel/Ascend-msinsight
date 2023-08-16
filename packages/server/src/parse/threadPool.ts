@@ -104,7 +104,11 @@ export class ThreadPool {
         return new Promise(resolve => {
             this.running = false;
             this.taskList.length = 0;
-            this._resolve = resolve;
+            if (this.runningWorkers.length === 0) {
+                resolve();
+            } else {
+                this._resolve = resolve;
+            }
         });
     }
 }
