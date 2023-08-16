@@ -4,22 +4,22 @@
 
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { Session } from '../../entity/session';
+import ReactDOM from 'react-dom';
 import * as echarts from 'echarts';
-import { Col, Layout, Row, Table } from 'antd';
+import { Col, Layout, Row, Table, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 // eslint-disable-next-line import/no-unresolved
 import { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import { Container } from './Common';
 
-const BandwidthTable: React.FC = (props: any) => {
+const BandwidthTable: React.FC<{ iterationId: number; rankId: number; operatorName: string }> = (props: any) => {
     const [ data, setData ] = useState([]);
     useEffect(() => {
         updateData();
     }, []);
 
     const updateData = async(): Promise<void> => {
-        const result = await getTableData();
+        const result = await getTableData(props.iterationId, props.rankId, props.operatorName);
         const data = wrapData(result);
         setData(data);
     };
@@ -38,34 +38,36 @@ const BandwidthTable: React.FC = (props: any) => {
 
 function wrapData(data: any): any {
     const sdma = data.find((item: any) => item.transport_type === 'SDMA');
-    const hp = data.filter((item: any) => item.transport_type === 'HCCS' || item.transport_type === 'PCIe');
+    sdma.bandwidth_utilization = '/';
+    sdma.large_package_ratio = '/';
+    const hp = data.filter((item: any) => item.transport_type === 'HCCS' || item.transport_type === 'PCIE');
     const rdma = data.find((item: any) => item.transport_type === 'RDMA');
     return [ { ...sdma, children: hp }, rdma ];
 }
 
-const BandwidthChart: React.FC = (props: any) => {
+const BandwidthChart: React.FC<{ iterationId: number; rankId: number; operatorName: string }> = (props: any) => {
     useEffect(() => {
-        InitPacketAndBandwidthCharts('HCCS');
-        InitPacketAndBandwidthCharts('PCIe');
-        InitPacketAndBandwidthCharts('RDMA');
+        InitPacketAndBandwidthCharts('HCCS', props.iterationId, props.rankId, props.operatorName);
+        InitPacketAndBandwidthCharts('PCIE', props.iterationId, props.rankId, props.operatorName);
+        InitPacketAndBandwidthCharts('RDMA', props.iterationId, props.rankId, props.operatorName);
     }, []);
     return (
         <div className={'bandwidthChart'}>
             <Row wrap={false}>
                 <Col span={8}>
-                    <div>
+                    <div className={'chartDiv'}>
                         <div style={{ margin: '20px', fontSize: ' 2rem' }}>HCCS</div>
                         <div id={'HCCS'} style={{ height: '400px', width: '100%', display: 'inline-block' }}/>
                     </div>
                 </Col>
                 <Col span={8}>
-                    <div>
-                        <div style={{ margin: '20px', fontSize: ' 2rem' }}>PCIe</div>
-                        <div id={'PCIe'} style={{ height: '400px', width: '100%', display: 'inline-block' }}/>
+                    <div className={'chartDiv'}>
+                        <div style={{ margin: '20px', fontSize: ' 2rem' }}>PCIE</div>
+                        <div id={'PCIE'} style={{ height: '400px', width: '100%', display: 'inline-block' }}/>
                     </div>
                 </Col>
                 <Col span={8}>
-                    <div>
+                    <div className={'chartDiv'}>
                         <div style={{ margin: '20px', fontSize: ' 2rem' }}>RDMA</div>
                         <div id={'RDMA'} style={{ height: '400px', width: '100%', display: 'inline-block' }}/>
                     </div>
@@ -75,59 +77,75 @@ const BandwidthChart: React.FC = (props: any) => {
     );
 };
 
-const BandwidthAnalysis = observer(function ({ session, rankId, operatorName }:
-{ session: Session;rankId: number;operatorName: string }) {
+const BandwidthAnalysis = observer(function (props:
+{ iterationId: number; rankId: number; operatorName: string }) {
     return (
         <Layout>
             <Container
                 title={'Packet Distribution'}
-                content={ <BandwidthChart/>}
+                content={ <BandwidthChart {...props}/>}
             />
             <Container
                 title={'Bandwidth Analysis'}
-                content={ <BandwidthTable/> }
+                content={ <BandwidthTable {...props}/> }
             />
         </Layout>
     );
 });
 
-async function getTableData (): Promise<any> {
+async function getTableData (iterationId: number, rankId: number, operatorName: string): Promise<any> {
     const bandwidthDetails = await window.request('communication/duration/bandwidth',
-        { iterationId: 1, rankId: 1, operatorName: 'hcom_allReduce__5' });
+        { iterationId, rankId, operatorName });
     return bandwidthDetails.bandwidthData;
 }
 
-async function getChartData (): Promise<any> {
+async function getChartData (domId: string, iterationId: number, rankId: number, operatorName: string): Promise<any> {
     const distributions = await window.request('communication/duration/distribution',
-        { iterationId: 1, rankId: 1, operatorName: 'hcom_allReduce__5', transportType: 'HCCS' });
+        { iterationId, rankId, operatorName, transportType: domId });
     return distributions.distributionData[0].size_distribution;
 }
 
-async function InitPacketAndBandwidthCharts(domId: string): Promise<void> {
+async function InitPacketAndBandwidthCharts(domId: string, iterationId: number,
+    rankId: number, operatorName: string): Promise<void> {
     const chartDom = document.getElementById(domId);
     if (chartDom !== null) {
-        const myChart = echarts.init(chartDom);
-        myChart.setOption(await wrapBandwidthData(domId));
+        const res = await wrapBandwidthData(domId, iterationId, rankId, operatorName);
+        if (res === null) {
+            ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
+        } else {
+            const myChart = echarts.init(chartDom);
+            myChart.setOption(res);
+        }
     }
 }
 
-async function wrapBandwidthData(domId: string): Promise<echarts.EChartsOption> {
-    const distributionData = await getChartData();
+async function wrapBandwidthData(domId: string, iterationId: number,
+    rankId: number, operatorName: string): Promise<echarts.EChartsOption | null> {
+    const distributionData = await getChartData(domId, iterationId, rankId, operatorName);
     const packetSizeData: number[] = [];
     const packetNumberData: number[] = [];
     const packetBandwidthData: number[] = [];
-    if (distributionData.length === 0) {
-        return {};
+    if (distributionData === '{}' || distributionData === null || distributionData === undefined) {
+        return null;
     }
     const distributionDataJson: Distribution = JSON.parse(distributionData);
-    for (const [ packetSize, values ] of Object.entries(distributionDataJson)) {
+    for (const [ packetSize, values ] of Object.entries(distributionDataJson)
+        .sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]))) {
         if (values.length !== 2) {
             console.error('The format of distribution data is error');
-            return {};
+            return null;
         }
-        packetSizeData.push(Number(Number(packetSize).toFixed(4)));
-        packetNumberData.push(values[0]);
-        packetBandwidthData.push(Number(values[1].toFixed(4)));
+        const packetSizeNumber = Number(packetSize);
+        const packetNumber = values[0];
+        const durationTime = values[1];
+        if (durationTime === 0.0) {
+            packetBandwidthData.push(0);
+        } else {
+            packetBandwidthData.push(Number((packetSizeNumber * packetNumber / 1024 / (durationTime / 1000))
+                .toFixed(4)));
+        }
+        packetSizeData.push(Number(packetSizeNumber.toFixed(4)));
+        packetNumberData.push(packetNumber);
     }
     (bandwidthOption.xAxis as CategoryAxisBaseOption).data = packetSizeData;
     (bandwidthOption.series as echarts.SeriesOption[])[0].data = packetNumberData;
@@ -158,7 +176,10 @@ const bandwidthOption: echarts.EChartsOption = {
         },
     },
     legend: {
-        data: [ 'Packet Number', 'Bandwidth(GB/s)' ],
+        data: [
+            { name: 'Packet Number', textStyle: { color: 'rgb(123,122,122)' } },
+            { name: 'Bandwidth(GB/s)', textStyle: { color: 'rgb(123,122,122)' } },
+        ],
     },
     xAxis: {
         type: 'category',

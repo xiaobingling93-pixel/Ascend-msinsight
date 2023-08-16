@@ -16,16 +16,16 @@ import BandwidthAnalysis from '../components/communicationAnalysis/BandwidthAnal
 import { Space, Tan } from '../components/communicationAnalysis/Common';
 import { queryCommunication } from '../utils/RequestUtils';
 
-const Operators = ({ returnHome, rankId, operatorName, session }: any): JSX.Element => {
+const Operators = ({ returnHome, rankId, operatorName, iterationId, session }: any): JSX.Element => {
     return (
         <div className={'fullbox'} style={{ padding: '0 20px', overflow: 'auto' }}>
             <Breadcrumb>
                 <Breadcrumb.Item onClick={returnHome }>
                     <a><ArrowLeftOutlined /><Space length={10}/><span>Communication Duration Analysis</span></a>
                 </Breadcrumb.Item>
-                <Breadcrumb.Item>Total HCCL Operators(RankId {rankId})</Breadcrumb.Item>
+                <Breadcrumb.Item>{operatorName}(RankId {rankId})</Breadcrumb.Item>
             </Breadcrumb>
-            <BandwidthAnalysis session={session} rankId={rankId} operatorName={operatorName}/>
+            <BandwidthAnalysis iterationId={iterationId} rankId={rankId} operatorName={operatorName}/>
         </div>
     );
 };
@@ -90,9 +90,9 @@ const CommunicationAnalysis = observer(function ({ session }: { session: Session
             />
             {/* 通信矩阵 */}
             <CommunicationMatrix isShow={isShow('CommunicationMatrix')}/>
-            {/* 算子详情 */}
-            { rankId !== '' && <Operators
-                rankId={rankId} session={session} returnHome={returnHome} operatorName={conditions.operatorName}/> }
+            {/* 带宽分析 */}
+            { rankId !== '' && <Operators iterationId={conditions.iterationId}
+                rankId={rankId} session={session} returnHome={returnHome} operatorName={conditions.operatorName} /> }
         </div>
     );
 });

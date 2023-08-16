@@ -286,3 +286,12 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     background: var(--grey70);
 }
 
+
+.theme_dark td.ant-table-column-sort {
+    background: var(--grey70);
+}
+
+
+.theme_dark .chartDiv {
+    background: var(--grey80);
+}
