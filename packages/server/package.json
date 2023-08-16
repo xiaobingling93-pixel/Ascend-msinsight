@@ -35,7 +35,8 @@
     },
     "scripts": {
         "packageWin": "npm run copyWin && cd buildServer && npm install && npm run packWin",
-        "packageLinuxX64": "npm run copyLinux && cd buildServer && npm install && npm run packLinux",
+        "packageLinuxX64": "npm run copyLinux && cd buildServer && npm install && npm run packLinuxX64",
+        "packageLinuxArm": "npm run copyLinux && cd buildServer && npm install && npm run packLinuxArm",
         "build": "cross-env NODE_ENV=production eslint ./src && tsc -p tsconfig-prod.json",
         "build:dev": "eslint ./src && tsc",
         "start": "eslint ./src && tsc && node ./dist/app.js",
