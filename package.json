@@ -11,7 +11,7 @@
         "buildServerWin": "cd .\\packages\\server&&npm install&&npm run build&&npm run packageWin",
         "clear": "rmdir .\\packages\\extension\\profiler /s /q",
         "copyFrontendWin": "xcopy .\\packages\\frontend\\build .\\packages\\extension\\profiler /E /I /Y",
-        "copyServerWin": "xcopy .\\packages\\server\\buildServer\\profiler-server-win32-x64 .\\serverBuild\\server\\ /E /I /Y",
+        "copyServerWin": "xcopy .\\packages\\server\\buildServer\\profiler-server-win32-ia32 .\\serverBuild\\server\\ /E /I /Y",
         "buildExtensionWin": "cd .\\packages\\extension&&npm install&&npm run vsce:package",
         "initProject": "cd .\\packages\\frontend&&npm install&&cd ..\\packages\\extension&&npm install&&mkdir profiler",
         "buildLinuxX64": "npm run buildFrontendLinux&&npm run buildServerLinuxX64&&npm run copyFrontendLinux&&npm run copyServerLinux&&npm run buildExtensionLinux",

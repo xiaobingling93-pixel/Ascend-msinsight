@@ -18,9 +18,9 @@
         "electron-packager": "^17.1.1"
     },
     "scripts": {
-        "packWin": "electron-packager ./ profiler-server --platform=win32 --arch=ia32 --electron-version=24.6.5 --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/",
-        "packLinuxX64": "electron-packager ./ profiler-server --platform=linux --arch=x64 --electron-version=24.6.5 --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/",
-        "packLinuxArm": "electron-packager ./ profiler-server --platform=linux --arch=arm64 --electron-version=24.6.5 --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/"
+        "packWin": "electron-packager ./ profiler-server --platform=win32 --arch=ia32 --electron-version=24.6.5 --ignore=node_modules/JSONStream/test --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/",
+        "packLinuxX64": "electron-packager ./ profiler-server --platform=linux --arch=x64 --electron-version=24.6.5 --ignore=node_modules/JSONStream/test --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/",
+        "packLinuxArm": "electron-packager ./ profiler-server --platform=linux --arch=arm64 --electron-version=24.6.5 --ignore=node_modules/JSONStream/test --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/"
     },
     "build": {
         "appId": "ascend.insight.server",
