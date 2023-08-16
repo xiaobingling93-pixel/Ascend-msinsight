@@ -24,7 +24,10 @@ def init():
 
 def build_vscode(vscode_version, os_name):
     os.putenv('npm_config_build_from_source', 'true')
-    os.system('cd ' + SCRIPT_PATH + ' && npm run buildWin')
+    if os_name == 'win':
+        os.system('cd ' + SCRIPT_PATH + ' && npm run buildWin')
+    else:
+        os.system('cd ' + SCRIPT_PATH + ' && npm run buildLinux')
     src = os.path.join(SCRIPT_PATH, 'packages/extension')
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-extension_' + vscode_version + '_' + os_name + '.vsix')
     for file in os.listdir(src):

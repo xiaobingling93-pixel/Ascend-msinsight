@@ -18,7 +18,7 @@
         "buildFrontendLinux": "cd ./packages/frontend&&npm install --force&&npm run build",
         "buildServerLinux": "cd ./packages/server&&npm install&&npm run build&&npm run packageLinuxX64",
         "copyFrontendLinux": "cp -rf ./packages/frontend/build ./packages/extension/profiler",
-        "copyServerLinux": "mkdir -p serverBuild&&cp -rf ./packages/server/buildServer/profiler-server-linux-x64 ./serverBuild/",
+        "copyServerLinux": "mkdir -p serverBuild&&cp -rf ./packages/server/buildServer/profiler-server-linux-x64 ./serverBuild/server",
         "buildExtensionLinux": "cd ./packages/extension&&npm install&&npm run vsce:package",
         "compile": "npm run buildFrontendLinux",
         "test": "cd ./packages/frontend && npm install && npm run test"
