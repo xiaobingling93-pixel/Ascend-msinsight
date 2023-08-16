@@ -27,16 +27,18 @@ export function parseKernelDetail(rankId: string, filePathArr: string[], callbac
             input: stream,
             crlfDelay: 0,
         });
+        const map = new Map<string, number>();
         rl.on('line', (line) => {
-            // 处理每一行数据
             const regex = /,(?=(?:[^"]*"{2,3}[^"]*"{3,4})*(?![^"]*"))/;
             const arr = line.split(regex);
-            if (arr.length >= 13) {
-                const kernelDetail = mapperToKernelDetail(arr);
-                table.insertKernelDetail(kernelDetail);
-            } else {
-                logger.info('split arr is less 13', line, ' arr:', arr);
+            if (line.startsWith('Name') || line.startsWith('Step')) {
+                for (let i = 0; i < arr.length; i++) {
+                    map.set(arr[i], i);
+                }
             }
+            // 处理每一行数据
+            const kernelDetail = mapperToKernelDetail(arr, map);
+            table.insertKernelDetail(kernelDetail);
             count++;
         });
         rl.on('close', () => {

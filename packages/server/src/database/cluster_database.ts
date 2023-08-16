@@ -64,11 +64,11 @@ export class ClusterDatabase {
 
     initStat(): void {
         if (this.timeInfoStat === undefined) {
-            const valueParams = '(?,?,?,?,?,?,?,?,?)';
+            const valueParams = '(?,?,?,?,?,?,?,?,?,?)';
             const placeholders: string = (valueParams + ',').repeat(this.maxCachesSize - 1).concat(valueParams);
             const sql: string = `INSERT INTO ${COMMUNICATION_TIME_INFO_TABLE}
                                  (iteration_id, rank_id, op_name, elapse_time, synchronization_time_ratio,
-                                  synchronization_time, transit_time, wait_time_ratio, wait_time)
+                                  synchronization_time, transit_time, wait_time_ratio, wait_time, idle_time)
                                  VALUES ${placeholders}`;
             this.timeInfoStat = this.clusterDb.prepare(sql);
         }
@@ -87,7 +87,7 @@ export class ClusterDatabase {
         const paramsList: any[] = [];
         dataList.forEach((data) => {
             paramsList.push(data.iterationId, data.rankId, data.opName, data.elapseTime, data.synchronizationTimeRatio,
-                data.synchronizationTime, data.transitTime, data.waitTimeRatio, data.waitTime);
+                data.synchronizationTime, data.transitTime, data.waitTimeRatio, data.waitTime, data.idleTime);
         });
         if (dataList.length === this.maxCachesSize) {
             if (this.timeInfoStat === undefined) {
@@ -99,10 +99,10 @@ export class ClusterDatabase {
                 }
             });
         } else {
-            const placeholders: string = dataList.map(() => '(?,?,?,?,?,?,?,?,?)').join(',');
+            const placeholders: string = dataList.map(() => '(?,?,?,?,?,?,?,?,?,?)').join(',');
             const sql: string = `INSERT INTO ${COMMUNICATION_TIME_INFO_TABLE}
                                  (iteration_id, rank_id, op_name, elapse_time, synchronization_time_ratio,
-                                  synchronization_time, transit_time, wait_time_ratio, wait_time)
+                                  synchronization_time, transit_time, wait_time_ratio, wait_time, idle_time)
                                  VALUES ${placeholders}`;
             this.clusterDb.run(sql, paramsList, (err) => {
                 if (err !== null) {

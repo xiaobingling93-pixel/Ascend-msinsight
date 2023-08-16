@@ -35,21 +35,36 @@ export const mapperToTimeInfoEntity = (tempRankId: number, tempOpName: string, t
     };
 };
 
-export function mapperToKernelDetail(arr: any[]): KernelDetailEntity {
+export function mapperToKernelDetail(arr: any[], map: Map<string, number>): KernelDetailEntity {
+    const stepIndex = map.get('Step Id');
+    const nameIndex = map.get('Name');
+    const typeIndex = map.get('Type');
+    const acceleratorIndex = map.get('Accelerator Core');
+    const startTimeIndex = map.get('Start Time');
+    const durationIndex = map.get('Duration(us)');
+    const waitTimeIndex = map.get('Wait Time(us)');
+    const blockDimIndex = map.get('Block Dim');
+    const inputShapesIndex = map.get('Input Shapes');
+    const inputDataIndex = map.get('Input Data Types');
+    const inputFormatsIndex = map.get('Input Formats');
+    const outputIndex = map.get('Output Shapes');
+    const outputDataIndex = map.get('Output Data Types');
+    const outputFormatsIndex = map.get('Output Formats');
     return {
-        name: arr[0],
-        type: arr[1],
-        acceleratorCore: arr[2],
-        startTime: arr[3],
-        duration: arr[4],
-        waitTime: arr[5],
-        blockDim: arr[6],
-        inputShapes: arr[7],
-        inputDataTypes: arr[8],
-        inputFormats: arr[9],
-        outputShapes: arr[10],
-        outputDataTypes: arr[11],
-        outputFormats: arr[12],
+        stepId: stepIndex === undefined ? '' : arr[stepIndex],
+        name: nameIndex === undefined ? '' : arr[nameIndex],
+        type: typeIndex === undefined ? '' : arr[typeIndex],
+        acceleratorCore: acceleratorIndex === undefined ? '' : arr[acceleratorIndex],
+        startTime: startTimeIndex === undefined ? 0 : arr[startTimeIndex],
+        duration: durationIndex === undefined ? 0 : arr[durationIndex],
+        waitTime: waitTimeIndex === undefined ? 0 : arr[waitTimeIndex],
+        blockDim: blockDimIndex === undefined ? 0 : arr[blockDimIndex],
+        inputShapes: inputShapesIndex === undefined ? '' : arr[inputShapesIndex],
+        inputDataTypes: inputDataIndex === undefined ? '' : arr[inputDataIndex],
+        inputFormats: inputFormatsIndex === undefined ? '' : arr[inputFormatsIndex],
+        outputShapes: outputIndex === undefined ? '' : arr[outputIndex],
+        outputDataTypes: outputDataIndex === undefined ? '' : arr[outputDataIndex],
+        outputFormats: outputFormatsIndex === undefined ? '' : arr[outputFormatsIndex],
     };
 };
 

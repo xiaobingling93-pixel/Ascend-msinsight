@@ -167,12 +167,12 @@ export class Table {
     insertKernelDetailList(dataList: KernelDetailEntity[]): void {
         const paramsList: any[] = [];
         dataList.forEach((data) => {
-            paramsList.push(data.name, data.type, data.acceleratorCore, data.startTime, data.duration,
+            paramsList.push(data.stepId, data.name, data.type, data.acceleratorCore, data.startTime, data.duration,
                 data.waitTime, data.blockDim, data.inputShapes, data.inputDataTypes, data.inputFormats,
                 data.outputShapes, data.outputDataTypes, data.outputFormats);
         });
-        const valueParams = '(?,?,?,?,?,?,?,?,?,?,?,?,?)';
-        const columns = 'name,type,accelerator_core,start_time,duration,wait_time,' +
+        const valueParams = '(?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+        const columns = 'step_id,name,type,accelerator_core,start_time,duration,wait_time,' +
             'block_dim,input_shapes,input_data_types,input_formats,output_shapes,output_data_types,output_formats';
         if (dataList.length === this.maxKernelCacheSize) {
             logger.info('start execute insert into kernel detail table prepare statement ');

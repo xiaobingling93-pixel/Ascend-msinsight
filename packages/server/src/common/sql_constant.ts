@@ -66,6 +66,7 @@ export const CREATE_STEP_STATISTIC_INFO_TABLE_SQL = `CREATE TABLE ${STEP_STATIST
 export const CREATE_KERNEL_DETAIL_TABLE_SQL = `CREATE TABLE ${KERNEL_DETAIL_TABLE}
                                                (
                                                    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                   step_id           VARCHAR(50),
                                                    name              VARCHAR(50),
                                                    type              VARCHAR(50),
                                                    accelerator_core  VARCHAR(50),

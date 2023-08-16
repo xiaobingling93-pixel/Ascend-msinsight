@@ -12,6 +12,7 @@ export type CommunicationTimeInfoEntity = {
     transitTime: number;
     waitTimeRatio: number;
     waitTime: number;
+    idleTime: number;
 };
 
 export type CommunicationBandWidthEntity = {
@@ -28,6 +29,7 @@ export type CommunicationBandWidthEntity = {
 };
 
 export type KernelDetailEntity = {
+    stepId: string;
     name: string;
     type: string;
     acceleratorCore: string;
