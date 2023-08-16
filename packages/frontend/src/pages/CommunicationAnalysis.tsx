@@ -42,8 +42,8 @@ const searchData = async (conditions: conditionDataType): Promise<showDataType> 
 };
 const wrapChartData = (data: tableDataType[]): chartDataType => {
     // 显示字段
-    const fields = [ 'rank_id', 'elapse_time', 'Transit_Time', 'synchronization_time',
-        'wait_time', 'synchronization_time_Ratio', 'wait_time_ratio' ];
+    const fields = [ 'rank_id', 'elapse_time', 'transit_time', 'synchronization_time',
+        'wait_time', 'synchronization_time_ratio', 'wait_time_ratio' ];
     const chartData: chartDataType = {} as chartDataType;
     fields.forEach(field => {
         chartData[field] = data.map((item: any) => item[field]);
