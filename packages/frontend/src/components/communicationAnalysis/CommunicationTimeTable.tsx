@@ -34,6 +34,7 @@ const commonColumns = [
     {
         title: 'Transit Time(ms)',
         dataIndex: 'transit_time',
+        sorter: (a: DataType, b: DataType) => a.transit_time - b.transit_time,
     },
     {
         title: 'Synchronization Time(ms)',
@@ -43,18 +44,22 @@ const commonColumns = [
     {
         title: 'Wait Time(ms)',
         dataIndex: 'wait_time',
+        sorter: (a: DataType, b: DataType) => a.wait_time - b.wait_time,
     },
     {
         title: 'Synchronization Time Ratio',
         dataIndex: 'synchronization_time_ratio',
+        sorter: (a: DataType, b: DataType) => a.synchronization_time_ratio - b.synchronization_time_ratio,
     },
     {
         title: 'Wait Time Ratio',
         dataIndex: 'wait_time_ratio',
+        sorter: (a: DataType, b: DataType) => a.wait_time_ratio - b.wait_time_ratio,
     },
     {
         title: 'Idle Time(ms)',
         dataIndex: 'idle_time',
+        sorter: (a: DataType, b: DataType) => a.idle_time - b.idle_time,
     } ];
 
 // Total HCCL Opertators表
@@ -130,6 +135,9 @@ const CommunicationTimeTable = observer(function (props:
     const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
     const columns = getRankColumns([ props.showOperator, setExpandedKeys ], props.conditions);
     const dataSource: DataType[] = props.dataSource ?? [];
+    useEffect(() => {
+        setExpandedKeys([]);
+    }, [props.dataSource]);
     return (
         <Container
             title={'DataAnalysis of Communication Time'}
@@ -148,6 +156,7 @@ const CommunicationTimeTable = observer(function (props:
                 size="small"
                 onChange={(pagination, filters, sorter, extra) => {
                     if (extra.action === 'sort') {
+                        setExpandedKeys([]);
                         props.updateSort(extra.currentDataSource);
                     }
                 }
