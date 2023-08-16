@@ -1,6 +1,6 @@
 import { Typography } from 'antd';
 import React from 'react';
-import { Container } from './Common';
+import { Container } from '../Common';
 
 const hit = [ {
     title: '1. Check whether the Wait Time Ratio of a rank is greater than 0.2 (threshold).',

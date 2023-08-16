@@ -6,9 +6,9 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { Session } from '../entity/session';
 import { SessionPage } from './SessionPage';
-import CommunicationAnalysis from './CommunicationAnalysis';
+import CommunicationAnalysis from '../components/communicationAnalysis/CommunicationAnalysis';
 import AnalysisSummary from './AnalysisSummary';
-import { notNull } from '../components/communicationAnalysis/Common';
+import { notNull } from '../components/Common';
 
 const onChange = async (checked: boolean): Promise<void> => {
     window.setTheme(checked);

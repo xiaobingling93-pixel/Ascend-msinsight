@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { isNull } from '../components/communicationAnalysis/Common';
+import { isNull } from '../components/Common';
 import { communicationAnalysisData, computationCommunicationData, OperatorDetailsData } from './__test__/mockData';
 
 /**

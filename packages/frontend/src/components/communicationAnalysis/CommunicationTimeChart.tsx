@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import * as echarts from 'echarts';
-import { Container } from './Common';
+import { Container } from '../Common';
 
 function InitCharts(data: dataType): void {
     const chartDom = document.getElementById('main');

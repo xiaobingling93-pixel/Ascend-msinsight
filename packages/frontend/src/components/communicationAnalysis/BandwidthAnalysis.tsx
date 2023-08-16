@@ -10,7 +10,7 @@ import { Col, Layout, Row, Table, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 // eslint-disable-next-line import/no-unresolved
 import { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
-import { Container } from './Common';
+import { Container } from '../Common';
 
 const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
     const [ data, setData ] = useState([]);

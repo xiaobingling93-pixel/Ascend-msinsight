@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { Select } from 'antd';
-import { Label, MultiSelectWithAll } from '../communicationAnalysis/Common';
+import { Label, MultiSelectWithAll } from '../Common';
 
 export interface ConditionDataType {
     step: string | number;

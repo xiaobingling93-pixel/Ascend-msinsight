@@ -5,16 +5,16 @@ import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Breadcrumb } from 'antd';
-import { Session } from '../entity/session';
-import Help from '../components/communicationAnalysis/Help';
-import Filter, { conditionDataType } from '../components/communicationAnalysis/Filter';
-import CommunicationTimeTable, { DataType as tableDataType } from '../components/communicationAnalysis/CommunicationTimeTable';
+import { Session } from '../../entity/session';
+import Help from './Help';
+import Filter, { conditionDataType } from './Filter';
+import CommunicationTimeTable, { DataType as tableDataType } from './CommunicationTimeTable';
 import CommunicationTimeChart, { dataType as chartDataType }
-    from '../components/communicationAnalysis/CommunicationTimeChart';
-import CommunicationMatrix from '../components/communicationAnalysis/CommunicationMatrix';
-import BandwidthAnalysis from '../components/communicationAnalysis/BandwidthAnalysis';
-import { Space, Tan } from '../components/communicationAnalysis/Common';
-import { queryCommunication } from '../utils/RequestUtils';
+    from './CommunicationTimeChart';
+import CommunicationMatrix from './CommunicationMatrix';
+import BandwidthAnalysis from './BandwidthAnalysis';
+import { Space, Tan } from '../Common';
+import { queryCommunication } from '../../utils/RequestUtils';
 
 const Operators = ({ returnHome, rankId, operatorName, iterationId, session }: any): JSX.Element => {
     return (

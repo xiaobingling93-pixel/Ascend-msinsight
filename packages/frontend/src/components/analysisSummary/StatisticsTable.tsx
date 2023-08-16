@@ -5,7 +5,7 @@ import { Button, Table } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 import { StringMap } from '../../utils/interface';
-import { PaginationWhithPgaeData, notNull } from '../communicationAnalysis/Common';
+import { PaginationWhithPgaeData, notNull } from '../Common';
 import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } from '../../utils/RequestUtils';
 
 const computingStatisticsColumns = [
