@@ -22,7 +22,6 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
     if (isOpen) {
         return false;
     }
-    // SQLITE_OPEN_FULLMUTEX
     int result = sqlite3_open_v2(CheckSqlString(dbPath).c_str(), &db,
         SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr);
     if (result == SQLITE_OK) {

@@ -17,14 +17,14 @@ class Database {
 public:
     Database() = default;
     virtual ~Database();
-    bool OpenDb(const std::string &dbPath, bool clearAllTable = false);
-    bool AttachDb(const std::string &dbPath);
-    bool IsOpen() const;
-    void CloseDb();
-    bool StartTransaction();
-    bool EndTransaction();
-    std::string GetDbPath();
-    bool GetTableList(std::vector<std::string> &tableList) const;
+    virtual bool OpenDb(const std::string &dbPath, bool clearAllTable = false);
+    virtual bool AttachDb(const std::string &dbPath);
+    virtual bool IsOpen() const;
+    virtual void CloseDb();
+    virtual bool StartTransaction();
+    virtual bool EndTransaction();
+    virtual std::string GetDbPath();
+    virtual bool GetTableList(std::vector<std::string> &tableList) const;
 
 protected:
     bool ExecSql(const std::string &sql, sqlite3_callback callback = nullptr);
@@ -33,6 +33,7 @@ protected:
     sqlite3 *db = nullptr;
     bool isOpen = false;
     std::string path;
+    const int bindStartIndex = 1;
 
 private:
     bool DropAllTable();
