@@ -16,6 +16,8 @@ using namespace Dic::Server;
 ThreadPool TraceFileParser::threadPool = ThreadPool(TraceFileParser::MAX_THREAD_NUM);
 bool TraceFileParser::Parse(const std::string &filePath, const std::string &fileId)
 {
+    auto start = std::chrono::system_clock::now();
+    ServerLog::Info("start parse.");
     auto splitFile = TraceFileParser::SplitFile(filePath);
     std::string dbPath = GetDbPath(filePath, fileId);
     TraceDatabase database;
@@ -26,6 +28,9 @@ bool TraceFileParser::Parse(const std::string &filePath, const std::string &file
         eventParser.Parse(pos.first, pos.second);
     }
     database.CreateIndex();
+    database.UpdateDepth();
+    auto dur = std::chrono::system_clock::now() - start;
+    ServerLog::Info("end parse. time:", dur.count());
     return true;
 }
 

@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
+#include <algorithm>
 #include "TraceDatabase.h"
 #include "ServerLog.h"
 
@@ -124,7 +125,13 @@ bool TraceDatabase::CreateTable()
 
 bool TraceDatabase::CreateIndex()
 {
-    return false;
+    if (!isOpen) {
+        ServerLog::Error("Failed to creat index. Database is not open.");
+        return false;
+    }
+    std::string sql = "CREATE INDEX " + idIndex + " ON " + sliceTable + " (id);" +
+        "CREATE INDEX " + trackIdTimeIndex + " ON " + sliceTable + " (track_id, timestamp)";
+    return ExecSql(sql);
 }
 
 bool TraceDatabase::InsertSlice(const json_t &json)
@@ -306,6 +313,106 @@ bool TraceDatabase::InsertFlow(const json_t &json)
     return true;
 }
 
+void TraceDatabase::UpdateDepth()
+{
+    auto trackList = GetTrackIdList();
+    for (auto trackId : trackList) {
+        UpdateOneTrackDepth(trackId);
+    }
+}
+
+std::vector<int64_t> TraceDatabase::GetTrackIdList()
+{
+    std::vector<int64_t> trackIdList;
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "SELECT track_id FROM " + threadTable;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql.");
+        return {};
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        trackIdList.push_back(sqlite3_column_int64(stmt, resultStartIndex));
+    }
+    sqlite3_finalize(stmt);
+    return trackIdList;
+}
+
+void TraceDatabase::UpdateOneTrackDepth(int64_t trackId)
+{
+    std::vector<SliceTimeData> sliceTimeList;
+    if (!SearchSliceTimeData(trackId, sliceTimeList)) {
+        ServerLog::Error("Failed to search slice time data.");
+        return;
+    }
+    std::map<int, std::vector<int64_t>> depthMap;
+    CalcDepth(sliceTimeList, depthMap);
+    StartTransaction();
+    for (auto &it : depthMap) {
+        UpdateDepthByID(it.second, it.first);
+    }
+    EndTransaction();
+}
+
+bool TraceDatabase::SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeData> &sliceTimeList)
+{
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "SELECT id, timestamp, duration FROM " + sliceTable + " WHERE track_id = ? ORDER BY timestamp;";
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql.");
+        return false;
+    }
+    sqlite3_bind_int64(stmt, bindStartIndex, trackId);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int64_t id = sqlite3_column_int64(stmt, 0);
+        int64_t ts = sqlite3_column_int64(stmt, 1);
+        int64_t dur = sqlite3_column_int64(stmt, 2);
+        sliceTimeList.push_back({id, ts, dur});
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+void TraceDatabase::CalcDepth(const std::vector<SliceTimeData> &sliceData, std::map<int, std::vector<int64_t>> &depthMap)
+{
+    std::vector<int64_t> depthCache;
+    for (const auto &slice : sliceData) {
+        int depth = -1;
+        for (int i = 0; i < depthCache.size(); ++i) {
+            if (slice.time >= depthCache[i]) {
+                depthCache[i] = slice.time + slice.dur;
+                depth = i;
+                break;
+            }
+        }
+        if (depth < 0) {
+            depth = depthCache.size();
+            depthCache.push_back(slice.time + slice.dur);
+        }
+        depthMap[depth].emplace_back(slice.id);
+    }
+}
+
+void TraceDatabase::UpdateDepthByID(const std::vector<int64_t> &idList, int depth)
+{
+    static const uint64_t maxParams = 1000;
+    std::string sql = "UPDATE " + sliceTable + " set depth = " + std::to_string(depth) + " WHERE id in ";
+    uint64_t start = 0;
+    while (start < idList.size()) {
+        std::string updateSql = sql;
+        uint64_t end = std::min(start + maxParams, idList.size());
+        updateSql.append("(");
+        for (auto i = start; i < end - 1; ++i) {
+            updateSql.append(std::to_string(idList[i]) + ",");
+        }
+        updateSql.append(std::to_string(idList[end - 1]) + ");");
+        if (!ExecSql(updateSql)) {
+            ServerLog::Error("Failed to update depth, failed to run sql.");
+        }
+        start = end;
+    }
+}
 } // end of namespace Core
 } // end of namespace Scene
 } // end of namespace Dic

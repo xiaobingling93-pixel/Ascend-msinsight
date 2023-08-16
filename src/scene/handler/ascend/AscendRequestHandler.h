@@ -21,4 +21,4 @@ public:
 } // end of namespace Scene
 } // end of namespace Dic
 
-#endif PROFILER_SERVER_ASCEND_REQUEST_HANDLER_H
+#endif // PROFILER_SERVER_ASCEND_REQUEST_HANDLER_H
