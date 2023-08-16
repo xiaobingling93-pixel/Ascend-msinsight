@@ -13,47 +13,47 @@ import {
 } from '../../query/communicationAnalysisData';
 import { ClusterDatabase } from '../cluster_database';
 
-const globalDatabase = new ClusterDatabase('./db_tensorboard.db');
+const globalDatabase = new ClusterDatabase('cluster.db');
 
 it('query iteration ids', async function () {
     const response: IterationsOrRanksResponse = { iterationsOrRanks: [] };
     response.iterationsOrRanks = await globalDatabase.queryIterationIds() as IterationsOrRanksObject[];
-    expect(response).toEqual({ iterationsOrRanks: [ { iteration_id: 1 }, { iteration_id: 2 } ] });
+    expect(response).toEqual({ iterationsOrRanks: [ { iteration_id: '2' }, { iteration_id: '3' } ] });
 });
 
 it('query rank ids', async function () {
     const response: IterationsOrRanksResponse = { iterationsOrRanks: [] };
-    response.iterationsOrRanks = await globalDatabase.queryRankIds(1) as IterationsOrRanksObject[];
-    expect(response).toEqual({ iterationsOrRanks: [ { rank_id: 0 }, { rank_id: 1 } ] });
+    response.iterationsOrRanks = await globalDatabase.queryRankIds('2') as IterationsOrRanksObject[];
+    expect(response).toEqual({ iterationsOrRanks: [ { rank_id: '0' }, { rank_id: '1' } ] });
 });
 
 it('query rank ids with no data', async function () {
     const response: IterationsOrRanksResponse = { iterationsOrRanks: [] };
-    response.iterationsOrRanks = await globalDatabase.queryRankIds(5) as IterationsOrRanksObject[];
+    response.iterationsOrRanks = await globalDatabase.queryRankIds('5') as IterationsOrRanksObject[];
     expect(response).toEqual({ iterationsOrRanks: [] });
 });
 
 it('query all operator names', async function () {
     const response: OperatorsResponse = { operators: [] };
-    response.operators = await globalDatabase.selectOperators(1, []) as OperatorsObject[];
+    response.operators = await globalDatabase.selectOperators('step2', []) as OperatorsObject[];
     expect(response).toEqual({ operators: [ { op_name: 'send' }, { op_name: 'send1' }, { op_name: 'allReduce' }, { op_name: 'all2' } ] });
 });
 
 it('query all operator names with rank list', async function () {
     const response: OperatorsResponse = { operators: [] };
-    response.operators = await globalDatabase.selectOperators(1, [0]) as OperatorsObject[];
+    response.operators = await globalDatabase.selectOperators('1', ['0']) as OperatorsObject[];
     expect(response).toEqual({ operators: [ { op_name: 'send' }, { op_name: 'send1' }, { op_name: 'allReduce' } ] });
 });
 
 it('query all operator names with no data', async function () {
     const response: OperatorsResponse = { operators: [] };
-    response.operators = await globalDatabase.selectOperators(5, [0]) as OperatorsObject[];
+    response.operators = await globalDatabase.selectOperators('2', ['0']) as OperatorsObject[];
     expect(response).toEqual({ operators: [] });
 });
 
 it('query duration data', async function () {
     const response: DurationResponse = { duration: [] };
-    response.duration = await globalDatabase.queryDurationList(1, [], 'allReduce') as Durations[];
+    response.duration = await globalDatabase.queryDurationList('2', [], 'Total Op Info') as Durations[];
     expect(response).toEqual({
         duration: [
             {
@@ -71,7 +71,7 @@ it('query duration data', async function () {
 
 it('query duration data with rank list', async function () {
     const response: DurationResponse = { duration: [] };
-    response.duration = await globalDatabase.queryDurationList(1, [0], 'allReduce') as Durations[];
+    response.duration = await globalDatabase.queryDurationList('1', ['0'], 'allReduce') as Durations[];
     expect(response).toEqual({
         duration: [
             {
@@ -87,7 +87,7 @@ it('query duration data with rank list', async function () {
 });
 
 it('query all Operator details with fenye', async function () {
-    const operatorNumber = await globalDatabase.queryOperatorsCount(1, 0);
+    const operatorNumber = await globalDatabase.queryOperatorsCount('1', '0');
     console.log(operatorNumber.length);
     const response: AllOperatorsResponse = {
         count: operatorNumber[0].nums,
@@ -95,8 +95,8 @@ it('query all Operator details with fenye', async function () {
         currentPage: 1,
         allOperators: [],
     };
-    response.allOperators = await globalDatabase.queryAllOperators(1,
-        0, 1, 1);
+    response.allOperators = await globalDatabase.queryAllOperators('1',
+        '0', 1, 1);
     expect(response).toEqual({
         count: 3,
         pageSize: 1,
@@ -117,7 +117,7 @@ it('query all Operator details with fenye', async function () {
 
 it('query bandwidth data', async function () {
     const response: BandwidthDataResponse = { bandwidthData: [] };
-    response.bandwidthData = await globalDatabase.queryBandwidthData(1, 0,
+    response.bandwidthData = await globalDatabase.queryBandwidthData('1', '0',
         'send');
     console.log(response.bandwidthData.length);
     expect(response).toEqual({
@@ -159,8 +159,8 @@ it('query bandwidth data', async function () {
 
 it('query distribute data', async function () {
     const response: DistributionResponse = { distributionData: '' };
-    response.distributionData = await globalDatabase.queryDistributionData(1,
-        0, 'send', 'HCCS');
+    response.distributionData = await globalDatabase.queryDistributionData('1',
+        '0', 'send', 'HCCS');
     const obj = JSON.parse('{ "12": [1, 0.55], "17": [7, 0.35], "22": [10, 0.33] }');
     console.log(obj);
     expect(response).toEqual({
@@ -175,8 +175,8 @@ it('query distribute data', async function () {
 
 it('query distribute data with SDMA', async function () {
     const response: DistributionResponse = { distributionData: '' };
-    response.distributionData = await globalDatabase.queryDistributionData(1,
-        0, 'send', 'SDMA') as string;
+    response.distributionData = await globalDatabase.queryDistributionData('1',
+        '0', 'send', 'SDMA') as string;
     expect(response).toEqual({
         distributionData: [{
             size_distribution: '',

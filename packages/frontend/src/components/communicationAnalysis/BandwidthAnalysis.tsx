@@ -38,7 +38,6 @@ const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorNa
 
 function wrapData(data: any): any {
     const sdma = data.find((item: any) => item.transport_type === 'SDMA');
-    sdma.bandwidth_utilization = '/';
     sdma.large_package_ratio = '/';
     const hp = data.filter((item: any) => item.transport_type === 'HCCS' || item.transport_type === 'PCIE');
     const rdma = data.find((item: any) => item.transport_type === 'RDMA');
@@ -141,7 +140,7 @@ async function wrapBandwidthData(domId: string, iterationId: number,
         if (durationTime === 0.0) {
             packetBandwidthData.push(0);
         } else {
-            packetBandwidthData.push(Number((packetSizeNumber * packetNumber / 1024 / (durationTime / 1000))
+            packetBandwidthData.push(Number((packetSizeNumber * packetNumber / 1000 / (durationTime / 1000))
                 .toFixed(4)));
         }
         packetSizeData.push(Number(packetSizeNumber.toFixed(4)));
@@ -264,11 +263,6 @@ const columns: ColumnsType<DataType> = [
         title: 'Bandwidth(GB/s) ',
         dataIndex: 'bandwidth_size',
         key: 'Bandwidth',
-    },
-    {
-        title: 'Bandwidth(Utilization)',
-        dataIndex: 'bandwidth_utilization',
-        key: 'BandwidthUtilization',
     },
     {
         title: 'Large Packet Ratio',

@@ -44,47 +44,46 @@ type BandwidthData = {
     transitSize: number;
     transitTime: number;
     bandwidth: number;
-    bandwidthUtilization: number;
     largePacketRatio: number;
 };
 
 export type RanksRequest = {
     dbIndex: string;
-    iterationId: number;
+    iterationId: string;
 };
 
 export type OperatorNamesRequest = {
     dbIndex: string;
-    iterationId: number;
-    rankList: number[];
+    iterationId: string;
+    rankList: string[];
 };
 
 export type DurationListRequest = {
     dbIndex: string;
-    iterationId: number;
-    rankList: number[];
+    iterationId: string;
+    rankList: string[];
     operatorName: string;
 };
 
 export type OperatorDetailsRequest = {
     dbIndex: string;
-    iterationId: number;
-    rankId: number;
+    iterationId: string;
+    rankId: string;
     pageSize: number;
     currentPage: number;
 };
 
 export type BandwidthDataRequest = {
     dbIndex: string;
-    iterationId: number;
-    rankId: number;
+    iterationId: string;
+    rankId: string;
     operatorName: string;
 };
 
 export type DistributionDataRequest = {
     dbIndex: string;
-    iterationId: number;
-    rankId: number;
+    iterationId: string;
+    rankId: string;
     operatorName: string;
     transportType: string;
 };
@@ -94,7 +93,7 @@ export type IterationsOrRanksResponse = {
 };
 
 export type IterationsOrRanksObject = {
-    iterationOrRankId: number;
+    iterationOrRankId: string;
 };
 
 export type OperatorsResponse = {

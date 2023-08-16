@@ -332,13 +332,13 @@ export class ClusterDatabase {
         });
     }
 
-    async queryRankIds(iterationId: number): Promise<any> {
+    async queryRankIds(iterationId: string): Promise<any> {
         const sql: string = `SELECT DISTINCT rank_id FROM ${COMMUNICATION_TIME_INFO_TABLE}
                              WHERE iteration_id = ? ORDER BY rank_id`;
         return this.executeSql(sql, [iterationId]);
     }
 
-    async selectOperators(iterationId: number, rankIdList: number[]): Promise<any> {
+    async selectOperators(iterationId: string, rankIdList: string[]): Promise<any> {
         let sql: string = '';
         if (rankIdList.length === 0) {
             sql = `SELECT DISTINCT op_name FROM (
@@ -353,14 +353,14 @@ export class ClusterDatabase {
         return this.executeSql(sql, [iterationId]);
     }
 
-    async queryDurationList(iterationId: number, rankIdList: number[], operatorName: string): Promise<any> {
+    async queryDurationList(iterationId: string, rankIdList: string[], operatorName: string): Promise<any> {
         let sql: string = '';
         if (rankIdList.length === 0) {
             sql = `SELECT rank_id, ROUND(elapse_time, 4) as elapse_time,
                           ROUND(transit_time, 4) as transit_time,
                           ROUND(synchronization_time, 4) as synchronization_time,
                           ROUND(wait_time, 4) as wait_time,
-                          ROUND(elapse_time - transit_time - wait_time, 4) as idle_time,
+                          ROUND(idle_time, 4) as idle_time,
                           ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio,
                           ROUND(wait_time_ratio, 4) as wait_time_ratio
                    FROM ${COMMUNICATION_TIME_INFO_TABLE}
@@ -371,7 +371,7 @@ export class ClusterDatabase {
                           ROUND(transit_time, 4) as transit_time,
                           ROUND(synchronization_time, 4) as synchronization_time,
                           ROUND(wait_time, 4) as wait_time,
-                          ROUND(elapse_time - transit_time - wait_time, 4) as idle_time,
+                          ROUND(idle_time, 4) as idle_time,
                           ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio,
                           ROUND(wait_time_ratio, 4) as wait_time_ratio
                    FROM ${COMMUNICATION_TIME_INFO_TABLE}
@@ -382,13 +382,13 @@ export class ClusterDatabase {
         return this.executeSql(sql, [ iterationId, operatorName ]);
     };
 
-    async queryAllOperators(iterationId: number, rankId: number, pageSize: number, currentPage: number): Promise<any> {
+    async queryAllOperators(iterationId: string, rankId: string, pageSize: number, currentPage: number): Promise<any> {
         const sql: string = `SELECT op_name,
                                     ROUND(elapse_time, 4) as elapse_time,
                                     ROUND(transit_time, 4) as transit_time,
                                     ROUND(synchronization_time, 4) as synchronization_time,
                                     ROUND(wait_time, 4) as wait_time,
-                                    ROUND(elapse_time - transit_time - wait_time, 4) as idle_time,
+                                    ROUND(idle_time, 4) as idle_time,
                                     ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio,
                                     ROUND(wait_time_ratio, 4) as wait_time_ratio
                              FROM ${COMMUNICATION_TIME_INFO_TABLE}
@@ -398,19 +398,18 @@ export class ClusterDatabase {
         return this.executeSql(sql, [ iterationId, rankId, (currentPage - 1) * pageSize, pageSize ]);
     }
 
-    async queryOperatorsCount(iterationId: number, rankId: number): Promise<any> {
+    async queryOperatorsCount(iterationId: string, rankId: string): Promise<any> {
         const sql: string = `SELECT count(*) AS nums FROM ${COMMUNICATION_TIME_INFO_TABLE}
                              WHERE iteration_id = ?
                                AND rank_id = ?`;
         return this.executeSql(sql, [ iterationId, rankId ]);
     }
 
-    async queryBandwidthData(iterationId: number, rankId: number, operatorName: string): Promise<any> {
+    async queryBandwidthData(iterationId: string, rankId: string, operatorName: string): Promise<any> {
         const sql: string = `SELECT transport_type,
                                     ROUND(transit_size, 4) as transit_size,
                                     ROUND(transit_time, 4) as transit_time,
                                     ROUND(bandwidth_size, 4) as bandwidth_size,
-                                    ROUND(bandwidth_utilization, 4) as bandwidth_utilization,
                                     ROUND(large_package_ratio, 4)  as large_package_ratio
                              FROM ${COMMUNICATION_BAND_WIDTH_TABLE}
                              WHERE iteration_id = ?
@@ -419,7 +418,7 @@ export class ClusterDatabase {
         return this.executeSql(sql, [ iterationId, rankId, operatorName ]);
     }
 
-    async queryDistributionData(iterationId: number, rankId: number, operatorName: string, transportType: string): Promise<any> {
+    async queryDistributionData(iterationId: string, rankId: string, operatorName: string, transportType: string): Promise<any> {
         const sql: string = `SELECT size_distribution FROM ${COMMUNICATION_BAND_WIDTH_TABLE}
                              WHERE iteration_id = ?
                                AND rank_id = ?
