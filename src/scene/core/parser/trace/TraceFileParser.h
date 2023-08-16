@@ -6,7 +6,6 @@
 #define DATA_INSIGHT_CORE_SCENE_CORE_TRACE_FILE_PARSER_H
 
 #include <vector>
-#include <map>
 #include <optional>
 #include "FileParser.h"
 #include "ThreadPool.h"
@@ -24,8 +23,6 @@ public:
 private:
     static const int MAX_THREAD_NUM = 4;
     static ThreadPool threadPool;
-    std::map<std::string, std::function<void()>> eventHandleMap;
-
 
     static const int64_t BLOCK_SIZE = 1024 * 1024 * 50; // 50MB
     static const int BUFFER_LENGTH = 1024 * 10;

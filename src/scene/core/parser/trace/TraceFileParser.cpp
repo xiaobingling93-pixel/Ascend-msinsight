@@ -6,6 +6,7 @@
 #include "ServerLog.h"
 #include "RegexUtil.h"
 #include "FileUtil.h"
+#include "EventParser.h"
 #include "TraceFileParser.h"
 
 namespace Dic {
@@ -17,8 +18,15 @@ bool TraceFileParser::Parse(const std::string &filePath, const std::string &file
 {
     auto splitFile = TraceFileParser::SplitFile(filePath);
     std::string dbPath = GetDbPath(filePath, fileId);
-
-    return false;
+    TraceDatabase database;
+    database.OpenDb(dbPath, true);
+    database.CreateTable();
+    for (const auto &pos : splitFile) {
+        EventParser eventParser(filePath, dbPath);
+        eventParser.Parse(pos.first, pos.second);
+    }
+    database.CreateIndex();
+    return true;
 }
 
 bool TraceFileParser::WaitParseEnd()

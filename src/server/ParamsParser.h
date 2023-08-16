@@ -45,8 +45,8 @@ private:
     const string symbolLogSize = "--logSize=";
     const string symbolLogLevel = "--logLevel=";
     const string symbolSid = "--sid=";
-    const int minPortNum = 6001;
-    const int maxPortNum = 6101;
+    const int minPortNum = 9000;
+    const int maxPortNum = 9100;
 
     ParamsOption option;
     std::string error;
