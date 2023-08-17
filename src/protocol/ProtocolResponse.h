@@ -226,6 +226,28 @@ struct SimpleSlice {
     std::string name;
     int64_t depth;
 };
+
+struct SliceDto{
+    int64_t id;
+    int64_t timestamp;
+    int64_t duration;
+    std::string name;
+    int64_t depth;
+    int64_t track_id;
+    std::string args;
+    std::string cat;
+};
+
+struct FlowDetailDto {
+    std::string name;
+    std::string cat;
+    std::string flowId;
+    std::string pid;
+    int64_t tid;
+    int64_t depth;
+    int64_t timestamp;
+    std::string type;
+};
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic
