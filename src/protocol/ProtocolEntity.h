@@ -75,6 +75,32 @@ struct HarmonyConfig {
     DfxConfig dfx;
     JsVmConfig jsvm;
 };
+
+struct UintMetaData {
+    std::string cardId;
+};
+
+struct UintTrackMeatData {
+    std::string cardId;
+    std::string processId;
+    std::string processName;
+    std::string label;
+    int64_t threadId = 0;
+    std::string threadName;
+    int maxDepth = 0;
+};
+
+struct UintTrack {
+    std::string type;
+    UintTrackMeatData metaData;
+    std::vector<std::unique_ptr<UintTrack>> children;
+};
+
+struct Uint {
+    std::string type;
+    UintMetaData metadata;
+    std::vector<std::unique_ptr<UintTrack>> children;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

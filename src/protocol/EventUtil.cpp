@@ -33,6 +33,36 @@ template <> std::optional<json_t> ToEventJson<DeviceChangedEvent>(const DeviceCh
     return json;
 }
 
+json_t UintTrackToJson(const UintTrack &uintTrack) {
+    json_t json;
+    json["type"] = uintTrack.type;
+    json["metaData"]["cardId"] = uintTrack.metaData.cardId;
+    json["metaData"]["processId"] = uintTrack.metaData.processId;
+    json["metaData"]["processName"] = uintTrack.metaData.processName;
+    json["metaData"]["label"] = uintTrack.metaData.label;
+    json["metaData"]["threadId"] = uintTrack.metaData.threadId;
+    json["metaData"]["threadName"] = uintTrack.metaData.threadName;
+    json["metaData"]["maxDepth"] = uintTrack.metaData.maxDepth;
+    for (const auto &track : uintTrack.children) {
+        json["children"].emplace_back(UintTrackToJson(*track));
+    }
+    return json;
+}
+
+template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSuccessEvent &event)
+{
+    json_t json;
+    ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    json["body"]["maxTimeStamp"] = event.body.maxTimeStamp;
+    json["body"]["startTimeUpdated"] = event.body.startTimeUpdated;
+    json["body"]["uint"]["type"] = event.body.uint.type;
+    json["body"]["uint"]["metadata"]["cardId"] = event.body.uint.metadata.cardId;
+    for (const auto &track : event.body.uint.children) {
+        json["children"].emplace_back(UintTrackToJson(*track));
+    }
+    return json;
+}
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

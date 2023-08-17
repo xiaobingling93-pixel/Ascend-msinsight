@@ -28,7 +28,8 @@ const std::string EVENT_NAME = "event";
 
 #pragma region << Event Name>>
 const std::string EVENT_INITIALIZED = "initialized";
-// harmony
+// ascend
+const std::string EVENT_PARSE_SUCCESS = "parse/success";
 const std::string EVENT_DEVICE_CHANGED = "deviceChanged";
 #pragma endregion
 

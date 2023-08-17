@@ -30,6 +30,11 @@ void DataBaseManager::ReleaseTraceDatabase(const std::string &fileId)
     }
 }
 
+bool DataBaseManager::HasFileId(const std::string &fileId)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    return traceDatabaseMap.count(fileId) != 0;
+}
 } // end of namespace Core
 } // end of namespace Scene
 } // end of namespace Dic

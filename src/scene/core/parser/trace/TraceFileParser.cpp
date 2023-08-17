@@ -42,10 +42,10 @@ bool TraceFileParser::Parse(const std::string &filePath, const std::string &file
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
     std::string dbPath = GetDbPath(filePath, fileId);
-    database->OpenDb(dbPath, true);
-    database->CreateTable();
-    database->SetConfig();
-    database->InitStmt();
+    if (!(database->OpenDb(dbPath, true) && database->CreateTable() && database->SetConfig() && database->InitStmt())) {
+        ServerLog::Error("Failed to open database. path:", dbPath);
+        return false;
+    }
     database->StartTransaction();
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
     for (const auto &pos : splitFile) {
@@ -179,6 +179,19 @@ std::string TraceFileParser::GetDbPath(const std::string &filePath, const std::s
     return Dic::FileUtil::GetRealPath(dbPath);
 }
 
+int64_t TraceFileParser::GetTrackId(const std::string &pid, int64_t tid)
+{
+    std::unique_lock<std::mutex> lock(trackMutex);
+    std::string str = pid + std::to_string(tid);
+    if (trackIdMap.count(str) > 0) {
+        return trackIdMap.at(str);
+    }
+    if (trackId == INT64_MAX) {
+        trackId = 0;
+    }
+    trackIdMap.emplace(str, ++trackId);
+    return trackId;
+}
 } // end of namespace Core
 } // end of namespace Scene
 } // end of namespace Dic

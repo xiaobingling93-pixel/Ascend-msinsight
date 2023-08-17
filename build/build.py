@@ -3,7 +3,7 @@
 # Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
 #
 # build server
-# python build.py build --release --project_type=CentricServer / EdgeServer
+# python build.py build --release --project_type=bin
 #
 # build test
 # python build.py test --profile --project_type=test

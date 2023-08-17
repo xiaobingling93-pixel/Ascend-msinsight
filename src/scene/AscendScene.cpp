@@ -4,7 +4,6 @@
 
 #include "AscendScene.h"
 #include "ServerLog.h"
-#include "QueryImportDataHandler.h"
 #include "QueryThreadTracesHandler.h"
 #include "QueryThreadsHandler.h"
 #include "QueryThreadDetailHandler.h"
@@ -12,6 +11,7 @@
 #include "QueryFlowHandler.h"
 #include "ResetWindowHandler.h"
 #include "QueryChartHandler.h"
+#include "ImportActionHandler.h"
 
 namespace Dic {
 namespace Scene {
@@ -39,7 +39,6 @@ const AscendConfig &AscendScene::GetConfig() const
 void AscendScene::RegisterRequestHandlers()
 {
     requestHandlerMap.clear();
-    requestHandlerMap.emplace(REQ_RES_IMPORT_ACTION, std::make_unique<QueryImportDataHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_TRACES, std::make_unique<QueryThreadTracesHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_THREADS, std::make_unique<QueryThreadsHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_DETAIL, std::make_unique<QueryThreadDetailHandler>());
@@ -47,6 +46,7 @@ void AscendScene::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_UNIT_FLOW, std::make_unique<QueryFlowHandler>());
     requestHandlerMap.emplace(REQ_RES_RESET_WINDOW, std::make_unique<ResetWindowHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_CHART, std::make_unique<QueryChartHandler>());
+    requestHandlerMap.emplace(REQ_RES_IMPORT_ACTION, std::make_unique<ImportActionHandler>());
 }
 
 void AscendScene::OnRequest(std::unique_ptr<Protocol::Request> request)

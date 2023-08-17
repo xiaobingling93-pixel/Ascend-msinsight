@@ -35,8 +35,7 @@ private:
     void MetaDataHandle(json_t &json);
     void CompleteEventsHandle(json_t &json);
     void FlowEventsHandle(json_t &json);
-    int id = 1;
-    std::map<std::string, int> trackeMap;
+    std::map<std::string, int64_t> trackIdMap;
     int64_t GetTrackId(const std::string &pid, int64_t tid);
     void AddTrackId(json_t &json);
 };

@@ -6,7 +6,9 @@
 #define DATA_INSIGHT_CORE_SCENE_CORE_TRACE_FILE_PARSER_H
 
 #include <vector>
+#include <map>
 #include <optional>
+#include <mutex>
 #include "FileParser.h"
 #include "ThreadPool.h"
 
@@ -19,6 +21,7 @@ public:
     bool Parse(const std::string &filePath, const std::string &fileId) override;
     bool WaitParseEnd(const std::string &fileId) override;
 
+    int64_t GetTrackId(const std::string &pid, int64_t tid);
 private:
     TraceFileParser();
     ~TraceFileParser() override;
@@ -33,6 +36,9 @@ private:
     static bool SeekRegexPosition(std::ifstream &file, const std::string &regex);
     static std::string GetDbPath(const std::string &filePath, const std::string &fileId);
 
+    std::mutex trackMutex;
+    std::map<std::string, int64_t> trackIdMap;
+    int64_t trackId = 0;
     std::chrono::system_clock::time_point start;
 };
 } // end of namespace Core

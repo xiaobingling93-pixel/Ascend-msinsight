@@ -41,6 +41,7 @@ void EventManager::RegisterJsonToEventFuncs()
 void EventManager::RegisterEventToJsonFuncs()
 {
     eventToJsonFactory.emplace(EVENT_DEVICE_CHANGED, ToDeviceChangedEventJson);
+    eventToJsonFactory.emplace(EVENT_PARSE_SUCCESS, ToParseSuccessEventJson);
 }
 
 void EventManager::UnRegister()
@@ -125,6 +126,11 @@ std::optional<json_t> EventManager::ToJson(const Event &event, std::string &erro
 std::optional<json_t> EventManager::ToDeviceChangedEventJson(const Event &event)
 {
     return ToEventJson<DeviceChangedEvent>(dynamic_cast<const DeviceChangedEvent &>(event));
+}
+
+std::optional<json_t> EventManager::ToParseSuccessEventJson(const Event &event)
+{
+    return ToEventJson<ParseSuccessEvent>(dynamic_cast<const ParseSuccessEvent &>(event));
 }
 
 #pragma endregion

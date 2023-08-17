@@ -76,5 +76,14 @@ void WsSessionManager::OnEventByMainSession(Protocol::Event &event)
     }
 }
 
+void WsSessionManager::OnParseSuccessEvent(const std::string &token, Protocol::ParseSuccessEvent &event)
+{
+    std::unique_lock<std::mutex> lock(sessionMutex);
+    if (sessionMap.count(token) == 0) {
+        return;
+    }
+    sessionMap.at(token)->SendEvent(event);
+}
+
 } // end of namespace Server
 } // end of namespace Dic

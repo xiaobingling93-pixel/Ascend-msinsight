@@ -23,6 +23,7 @@ public:
 
     TraceDatabase *GetTraceDatabase(const std::string &fileId);
     void ReleaseTraceDatabase(const std::string &fileId);
+    bool HasFileId(const std::string &fileId);
 
 private:
     DataBaseManager() = default;

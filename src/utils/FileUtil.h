@@ -6,8 +6,10 @@
 #define DATA_INSIGHT_CORE_FILEUTIL_H
 
 #include <string>
+#include <dirent.h>
 #if defined(_WIN32)
 #include <windows.h>
+#include <shlwapi.h>
 #include <io.h>
 #else
 #include <sys/stat.h>
@@ -35,22 +37,23 @@ public:
         return true;
     }
 
-    static inline void SplicePath(std::string &path, const std::string fileName)
+    static inline std::string SplicePath(const std::string &path, const std::string &fileName)
     {
         if (path.empty()) {
-            path = fileName;
-            return;
+            return fileName;
         }
+        std::string res(path);
 #ifdef _WIN32
         if (path[path.size() - 1] != '/' || path[path.size() - 1] != '\\') {
-            path += "\\";
+            res.append("\\");
         }
 #else
         if (path[path.size() - 1] != '/') {
-            path += "/";
+            res.append("/");
         }
 #endif
-        path += fileName;
+        res.append(fileName);
+        return res;
     }
 
     static inline std::string GetRealPath(const std::string &path)
@@ -96,6 +99,40 @@ public:
             return path;
         }
         return path.substr(pos + 1);
+    }
+
+    // return file and folder in path
+    static inline std::vector<std::string> FindFolders(const std::string &path) {
+        if (path.empty()) {
+            return {};
+        }
+        DIR *pDir = nullptr;
+        struct dirent *pDirent = nullptr;
+        pDir = opendir(path.c_str());
+        if (pDir == nullptr) {
+            return {};
+        }
+        std::vector<std::string> folders;
+        while ((pDirent = readdir(pDir)) != nullptr) {
+            if (std::string(pDirent->d_name) == ".." || std::string(pDirent->d_name) == ".") {
+                continue;
+            }
+            folders.emplace_back(pDirent->d_name);
+        }
+        closedir(pDir);
+        return folders;
+    }
+
+    static inline bool IsFolder(const std::string &path) {
+#ifdef _WIN32
+        return PathIsDirectory(path.c_str());
+#else
+        struct stat st;
+        if (stat(path.c_str(), &st) == -1) {
+            return false;
+        }
+        return S_ISDIR(st.st_mode);
+#endif
     }
 };
 } // end of namespace Dic

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(server_edge)
+project(server)
 
 aux_source_directory(./ SERVER_BIN_SRC)
 

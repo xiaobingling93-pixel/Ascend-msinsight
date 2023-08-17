@@ -7,6 +7,7 @@
 #include "JsonUtil.h"
 #include "EventParser.h"
 #include "DataBaseManager.h"
+#include "TraceFileParser.h"
 
 namespace Dic {
 namespace Scene {
@@ -133,11 +134,12 @@ void EventParser::AddTrackId(json_t &json)
 int64_t EventParser::GetTrackId(const std::string &pid, int64_t tid)
 {
     std::string str = pid + std::to_string(tid);
-    if (trackeMap.count(str) > 0) {
-        return trackeMap.at(str);
+    if (trackIdMap.count(str) > 0) {
+        return trackIdMap.at(str);
     }
-    trackeMap.emplace(str, id++);
-    return trackeMap.at(str);
+    int64_t id = TraceFileParser::Instance().GetTrackId(pid, tid);
+    trackIdMap.emplace(str, id);
+    return id;
 }
 } // end of namespace Core
 } // end of namespace Scene

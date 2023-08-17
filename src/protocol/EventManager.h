@@ -43,9 +43,8 @@ private:
     void RegisterEventToJsonFuncs();
     void UnRegister();
 
+    static std::optional<json_t> ToParseSuccessEventJson(const Event &event);
     static std::optional<json_t> ToDeviceChangedEventJson(const Event &event);
-    static std::optional<json_t> ToSystemProcessAndApplicationsChangedEventJson(const Event &event);
-    static std::optional<json_t> ToApplicationsChangedEventJson(const Event &event);
 
     std::mutex mutex;
     std::map<std::string, JsonToEventFunc> jsonToEventFactory;

@@ -20,6 +20,18 @@ struct InitializedEvent : public Event {
     InitializedEventBody body;
 };
 
+// ascend
+struct ParseSuccessEventBody {
+    Uint uint;
+    uint64_t startTimeUpdated = 0;
+    uint64_t maxTimeStamp = 0;
+};
+
+struct ParseSuccessEvent : public Event {
+    ParseSuccessEvent() : Event(EVENT_PARSE_SUCCESS) {}
+    ParseSuccessEventBody body;
+};
+
 // harmony
 struct DeviceChangedEventBody {
     Device device;

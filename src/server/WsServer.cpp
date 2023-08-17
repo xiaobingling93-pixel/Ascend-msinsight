@@ -143,7 +143,7 @@ void WsServer::OnCloseCb(WsChannel *ws, int code, std::string_view message)
 
 void WsServer::OnMessageCb(WsChannel *ws, std::string_view message, uWS::OpCode opCode)
 {
-    ServerLog::Info("on message, channel = ", ws);
+    ServerLog::Info("on message, channel = ", ws, ". msg:", message);
     if (ws == nullptr) {
         return;
     }
