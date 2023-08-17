@@ -6,6 +6,7 @@
 #include "ServerLog.h"
 #include "RegexUtil.h"
 #include "FileUtil.h"
+#include "DataBaseManager.h"
 #include "EventParser.h"
 #include "TraceFileParser.h"
 
@@ -13,30 +14,84 @@ namespace Dic {
 namespace Scene {
 namespace Core {
 using namespace Dic::Server;
-ThreadPool TraceFileParser::threadPool = ThreadPool(TraceFileParser::MAX_THREAD_NUM);
+
+TraceFileParser &TraceFileParser::Instance()
+{
+    static TraceFileParser instance;
+    return instance;
+}
+
+TraceFileParser::TraceFileParser()
+{
+    threadPool = std::make_unique<ThreadPool>(TraceFileParser::MAX_THREAD_NUM);
+}
+
+TraceFileParser::~TraceFileParser()
+{
+    threadPool->ShutDown();
+}
+
 bool TraceFileParser::Parse(const std::string &filePath, const std::string &fileId)
 {
-    auto start = std::chrono::system_clock::now();
+    start = std::chrono::system_clock::now();
     ServerLog::Info("start parse.");
     auto splitFile = TraceFileParser::SplitFile(filePath);
-    std::string dbPath = GetDbPath(filePath, fileId);
-    TraceDatabase database;
-    database.OpenDb(dbPath, true);
-    database.CreateTable();
-    for (const auto &pos : splitFile) {
-        EventParser eventParser(filePath, dbPath);
-        eventParser.Parse(pos.first, pos.second);
+    if (splitFile.empty()) {
+        ServerLog::Error("Failed to split file.");
+        return false;
     }
-    database.CreateIndex();
-    database.UpdateDepth();
-    auto dur = std::chrono::system_clock::now() - start;
-    ServerLog::Info("end parse. time:", dur.count());
+    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    std::string dbPath = GetDbPath(filePath, fileId);
+    database->OpenDb(dbPath, true);
+    database->CreateTable();
+    database->SetConfig();
+    database->InitStmt();
+    database->StartTransaction();
+    std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
+    for (const auto &pos : splitFile) {
+        auto future = threadPool->AddTask([filePath, dbPath, pos, fileId]() {
+            EventParser eventParser(filePath, dbPath, fileId);
+            eventParser.Parse(pos.first, pos.second);
+        });
+        futures->emplace_back(std::move(future));
+    }
+    auto future = threadPool->AddTask([futures, fileId]() {
+        ServerLog::Info("Wait parse completed. ID:", fileId);
+        for (const auto &future : *futures) {
+            future.wait();
+        }
+        ServerLog::Info("Parse completed. ID:", fileId);
+        auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+        database->EndTransaction();
+        database->CreateIndex();
+        database->UpdateDepth();
+        ServerLog::Info("Update depth completed. ID:", fileId);
+    });
+    futureMap.emplace(fileId, std::move(future));
+    if(paserEndCallback != nullptr) {
+        std::thread thread{[this, fileId](){
+            WaitParseEnd(fileId);
+        }};
+        thread.detach();
+    }
     return true;
 }
 
-bool TraceFileParser::WaitParseEnd()
+bool TraceFileParser::WaitParseEnd(const std::string &fileId)
 {
-    return false;
+    if (futureMap.count(fileId) == 0) {
+        return false;
+    }
+    ServerLog::Info("Wait parse completed. ID:", fileId);
+    auto &future = futureMap.at(fileId);
+    future.wait();
+    futureMap.erase(fileId);
+    auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
+    ServerLog::Info("end parse. ID:", fileId, ". time:", dur.count());
+    if (paserEndCallback != nullptr) {
+        paserEndCallback(fileId, true);
+    }
+    return true;
 }
 
 std::vector<std::pair<uint64_t, uint64_t>> TraceFileParser::SplitFile(const std::string &filePath)

@@ -17,11 +17,12 @@ class Database {
 public:
     Database() = default;
     virtual ~Database();
-    virtual bool OpenDb(const std::string &dbPath, bool clearAllTable = false);
+    virtual bool OpenDb(const std::string &dbPath, bool clearAllTable);
     virtual bool AttachDb(const std::string &dbPath);
     virtual bool IsOpen() const;
     virtual void CloseDb();
     virtual bool StartTransaction();
+    virtual bool ReStartTransaction();
     virtual bool EndTransaction();
     virtual std::string GetDbPath();
     virtual bool GetTableList(std::vector<std::string> &tableList) const;

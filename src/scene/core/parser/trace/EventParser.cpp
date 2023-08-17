@@ -6,13 +6,16 @@
 #include "ServerLog.h"
 #include "JsonUtil.h"
 #include "EventParser.h"
+#include "DataBaseManager.h"
 
 namespace Dic {
 namespace Scene {
 namespace Core {
 using namespace Dic::Server;
-EventParser::EventParser(const std::string &filePath, const std::string &dbPath) : filePath(filePath), dbPath(dbPath)
+EventParser::EventParser(const std::string &filePath, const std::string &dbPath, const std::string &fileId) : filePath(filePath), dbPath(dbPath), fileId(fileId)
 {
+    ServerLog::Info("Init event parser. file:", filePath, ", db:", dbPath);
+    database = DataBaseManager::Instance().GetTraceDatabase(fileId);
     InitEventHandle();
 }
 
@@ -26,10 +29,6 @@ void EventParser::InitEventHandle()
 
 void EventParser::Parse(uint64_t startPosition, uint64_t endPosition)
 {
-    if (!(database.OpenDb(dbPath) && database.InitStmt() && database.SetConfig())) {
-        ServerLog::Error("EventParser. Failed to creat database.");
-        return;
-    }
     uint64_t len = endPosition - startPosition + 1 + 2; // + '[' ']'
     auto buffer = std::make_unique<char[]>(endPosition - startPosition + 1);
     if (!ReadBuffer(buffer.get() + 1, startPosition, endPosition)) {
@@ -38,20 +37,18 @@ void EventParser::Parse(uint64_t startPosition, uint64_t endPosition)
     }
     buffer[0] ='[';
     buffer[len - 1] = ']';
-    std::string s1 = std::string(buffer.get(), 10);
-    std::string s2 = std::string(buffer.get() + (len - 10), 10);
-    ServerLog::Info("read data:", s1, "...", s2);
     std::string error;
     auto json = JsonUtil::TryParse(buffer.get(), len, error);
     if (!(json.has_value() && json.value().is_array())) {
         ServerLog::Error("EventParser. Failed to parse json string. error:", error);
         return;
     }
-    database.StartTransaction();
     for (auto &event : json.value()) {
         EventHandle(event);
     }
-    database.EndTransaction();
+    database->ReStartTransaction();
+    ServerLog::Info("EventParser. Parse ", startPosition, " to ", endPosition,
+                    ". Count:", parseCount, ", ignore Count:", ignoreCount);
 }
 
 bool EventParser::ReadBuffer(char *buffer, uint64_t startPosition, uint64_t endPosition)
@@ -96,17 +93,17 @@ void EventParser::MetaDataHandle(json_t &json)
         return;
     }
     if (name == "process_name") {
-        database.UpdateProcessName(json);
+        database->UpdateProcessName(json);
     } else if (name == "thread_name") {
         AddTrackId(json);
-        database.UpdateThreadName(json);
+        database->UpdateThreadName(json);
     } else if (name == "process_labels") {
-        database.UpdateProcessLabel(json);
+        database->UpdateProcessLabel(json);
     } else if (name == "process_sort_index") {
-        database.UpdateProcessSortIndex(json);
+        database->UpdateProcessSortIndex(json);
     } else if (name == "thread_sort_index") {
         AddTrackId(json);
-        database.UpdateThreadSortIndex(json);
+        database->UpdateThreadSortIndex(json);
     } else {
         ServerLog::Error("EventParser. Failed to get meta data type. json:", json.dump());
     }
@@ -115,13 +112,13 @@ void EventParser::MetaDataHandle(json_t &json)
 void EventParser::CompleteEventsHandle(json_t &json)
 {
     AddTrackId(json);
-    database.InsertSlice(json);
+    database->InsertSlice(json);
 }
 
 void EventParser::FlowEventsHandle(json_t &json)
 {
     AddTrackId(json);
-    database.InsertFlow(json);
+    database->InsertFlow(json);
 }
 
 void EventParser::AddTrackId(json_t &json)

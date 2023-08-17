@@ -16,13 +16,13 @@ public:
     FileParser() = default;
     virtual ~FileParser() = default;
     virtual bool Parse(const std::string &filePath, const std::string &fileId) = 0;
-    virtual bool WaitParseEnd() = 0;
-    virtual void SetParseEndCallBack(std::function<void(const std::string)> &callback);
+    virtual bool WaitParseEnd(const std::string &fileId) = 0;
+    virtual void SetParseEndCallBack(std::function<void(const std::string, bool result)> &callback);
     virtual std::string GetError();
 
 protected:
     std::string error;
-    std::function<void(const std::string)> paserEndCallback;
+    std::function<void(const std::string, bool result)> paserEndCallback;
 };
 } // end of namespace Core
 } // end of namespace Scene

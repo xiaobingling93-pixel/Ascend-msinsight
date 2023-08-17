@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
  */
 
+#include <thread>
 #include "Database.h"
 #include "ServerLog.h"
 
@@ -23,7 +24,7 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
         return false;
     }
     int result = sqlite3_open_v2(CheckSqlString(dbPath).c_str(), &db,
-        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nullptr);
+        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_SHAREDCACHE, nullptr);
     if (result == SQLITE_OK) {
         isOpen = true;
         this->path = dbPath;
@@ -117,7 +118,7 @@ bool Database::StartTransaction()
     if (!isOpen) {
         return false;
     }
-    return ExecSql("BEGIN");
+    return ExecSql("BEGIN;");
 }
 
 bool Database::EndTransaction()
@@ -125,7 +126,16 @@ bool Database::EndTransaction()
     if (!isOpen) {
         return false;
     }
-    return ExecSql("COMMIT");
+    return ExecSql("COMMIT;");
+}
+
+bool Database::ReStartTransaction()
+{
+    if (!isOpen) {
+        return false;
+    }
+    //return true;
+    return ExecSql("COMMIT;BEGIN;");
 }
 
 std::string Database::GetDbPath()

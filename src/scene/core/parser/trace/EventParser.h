@@ -16,16 +16,17 @@ namespace Scene {
 namespace Core {
 class EventParser {
 public:
-    EventParser(const std::string &filePath, const std::string &dbPath);
+    EventParser(const std::string &filePath, const std::string &dbPath, const std::string &fileId);
     ~EventParser() = default;
     void Parse(uint64_t startPosition, uint64_t endPosition);
 
 private:
     std::string filePath;
     std::string dbPath;
+    std::string fileId;
     int parseCount = 0;
     int ignoreCount = 0;
-    TraceDatabase database;
+    TraceDatabase *database = nullptr;
     std::map<std::string, std::function<void(json_t &json)>> eventHandleMap;
 
     bool ReadBuffer(char *buffer, uint64_t startPosition, uint64_t endPosition);

@@ -15,14 +15,16 @@ namespace Scene {
 namespace Core {
 class TraceFileParser : public FileParser {
 public:
-    TraceFileParser() = default;
-    ~TraceFileParser() override = default;
+    static TraceFileParser &Instance();
     bool Parse(const std::string &filePath, const std::string &fileId) override;
-    bool WaitParseEnd() override;
+    bool WaitParseEnd(const std::string &fileId) override;
 
 private:
-    static const int MAX_THREAD_NUM = 4;
-    static ThreadPool threadPool;
+    TraceFileParser();
+    ~TraceFileParser() override;
+    const int MAX_THREAD_NUM = 4;
+    std::unique_ptr<ThreadPool> threadPool;
+    std::map<std::string, std::future<void>> futureMap;
 
     static const int64_t BLOCK_SIZE = 1024 * 1024 * 50; // 50MB
     static const int BUFFER_LENGTH = 1024 * 10;
@@ -30,6 +32,8 @@ private:
     static bool SeekCharPosition(std::ifstream &file, char c);
     static bool SeekRegexPosition(std::ifstream &file, const std::string &regex);
     static std::string GetDbPath(const std::string &filePath, const std::string &fileId);
+
+    std::chrono::system_clock::time_point start;
 };
 } // end of namespace Core
 } // end of namespace Scene

@@ -160,7 +160,7 @@ bool TraceDatabase::InsertSlice(const json_t &json)
     sqlite3_bind_text(insertSliceStmt, idx++, args.c_str(), args.length(), SQLITE_TRANSIENT);
     auto result = sqlite3_step(insertSliceStmt);
     if (result != SQLITE_DONE) {
-        ServerLog::Error("Insert data fail. ", sqlite3_errmsg(db));
+        ServerLog::Error("Insert slice data fail. ", sqlite3_errmsg(db));
         return false;
     }
     return true;
@@ -315,10 +315,14 @@ bool TraceDatabase::InsertFlow(const json_t &json)
 
 void TraceDatabase::UpdateDepth()
 {
+    ServerLog::Info("UpdateDepth.");
+    StartTransaction();
     auto trackList = GetTrackIdList();
     for (auto trackId : trackList) {
         UpdateOneTrackDepth(trackId);
     }
+    EndTransaction();
+    ServerLog::Info("UpdateDepth end.");
 }
 
 std::vector<int64_t> TraceDatabase::GetTrackIdList()
@@ -347,11 +351,9 @@ void TraceDatabase::UpdateOneTrackDepth(int64_t trackId)
     }
     std::map<int, std::vector<int64_t>> depthMap;
     CalcDepth(sliceTimeList, depthMap);
-    StartTransaction();
     for (auto &it : depthMap) {
         UpdateDepthByID(it.second, it.first);
     }
-    EndTransaction();
 }
 
 bool TraceDatabase::SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeData> &sliceTimeList)
@@ -396,7 +398,7 @@ void TraceDatabase::CalcDepth(const std::vector<SliceTimeData> &sliceData, std::
 
 void TraceDatabase::UpdateDepthByID(const std::vector<int64_t> &idList, int depth)
 {
-    static const uint64_t maxParams = 1000;
+    static const uint64_t maxParams = 10000;
     std::string sql = "UPDATE " + sliceTable + " set depth = " + std::to_string(depth) + " WHERE id in ";
     uint64_t start = 0;
     while (start < idList.size()) {
@@ -407,9 +409,14 @@ void TraceDatabase::UpdateDepthByID(const std::vector<int64_t> &idList, int dept
             updateSql.append(std::to_string(idList[i]) + ",");
         }
         updateSql.append(std::to_string(idList[end - 1]) + ");");
-        if (!ExecSql(updateSql)) {
-            ServerLog::Error("Failed to update depth, failed to run sql.");
+        sqlite3_stmt *stmt = nullptr;
+        int result = sqlite3_prepare_v2(db, updateSql.c_str(), updateSql.length(), &stmt, nullptr);
+        if (result != SQLITE_OK) {
+            ServerLog::Error("Failed to prepare sql. error:", sqlite3_errmsg(db));
+            return;
         }
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
         start = end;
     }
 }
