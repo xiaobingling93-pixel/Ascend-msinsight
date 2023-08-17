@@ -34,15 +34,16 @@ const HomePage = observer(function ({ session }: { session: Session }) {
             display: notNull(session.allRankIds) && session.allRankIds.length > 0,
         },
     ];
+    const displayItems = items.filter(item => item);
     return (
         <div style={{ height: '100%', width: '100%' }}>
             <Switch checkedChildren="dark" unCheckedChildren="light" defaultChecked onChange={onChange}
                 style={{ position: 'absolute', top: '10px', right: '50px', zIndex: 1000 }}/>
             <Tabs >
                 {
-                    items.map(item => (
+                    displayItems.map(item => (
                         <Tabs.TabPane tab={item.tab} key={item.key}>
-                            <div style={{ width: '100%', position: 'fixed', height: 'calc(100% - 62px)' }}>
+                            <div style={{ width: '100%', position: 'fixed', height: 'calc(100% - 62px)' }} className={'common-tabcontent'}>
                                 {item.content}
                             </div>
                         </Tabs.TabPane>

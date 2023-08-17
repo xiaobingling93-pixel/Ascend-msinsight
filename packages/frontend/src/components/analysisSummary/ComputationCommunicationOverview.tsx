@@ -8,8 +8,11 @@ import StatisticsTable from './StatisticsTable';
 import { VoidFunction } from '../../utils/interface';
 import SummaryTable from './SummaryTable';
 import { queryTopSummary } from '../../utils/RequestUtils';
-import BaseInfo, { defaultBaseInfo } from './BaseInfo';
-import { formatDate } from '../Common';
+import BaseInfo, { BaseInfoDataType, defaultBaseInfo } from './BaseInfo';
+import { formatDate, isNull } from '../Common';
+import { Tooltip } from 'antd';
+import { QuestionCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
+import { Session } from '../../entity/session';
 
 interface SummaryDataType{
     rankId: string ;
@@ -66,7 +69,7 @@ const baseOption: any = {
         {
             type: 'value',
             name: 'Ratio',
-            max: 100,
+            min: 0,
             axisLabel: {
                 formatter: '{value}%',
             },
@@ -158,9 +161,19 @@ const baseOption: any = {
     ],
 };
 function wrapData(data: SummaryDataType[]): any {
+    const list = [ 'computingTime', 'communicationNotOverLappedTime', 'freeTime' ];
+    data.forEach(item => {
+        let total = 0;
+        list.forEach(field => {
+            item[field] = Number(item[field].toFixed(2));
+            total += item[field];
+        });
+        item.computeTimeRatio = (100 * item.computingTime / total).toFixed(2);
+        item.communicationTimeRatio = (100 * item.communicationNotOverLappedTime / total).toFixed(2);
+    });
     baseOption.xAxis[0].data = data.map(item => item.rankId);
     const order: Array<keyof SummaryDataType> = [ 'computingTime', 'communicationNotOverLappedTime',
-        'communicationOverLappedTime', 'freeTime', 'ComputeTimeRatio', 'CommunicationTimeRatio' ];
+        'communicationOverLappedTime', 'freeTime', 'computeTimeRatio', 'communicationTimeRatio' ];
     for (let i = 0; i < order.length; i++) {
         baseOption.series[i].data = data.map(item => item[order[i]]);
     }
@@ -176,20 +189,37 @@ async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
         myChart.on('click', handleClick);
     }
 }
+export const hit = (<Tooltip title={
+    (
+        <div style={{ background: 'var(--grey100)', padding: '1rem' }}>
+            <div>总时间 = Computing + Communication(Not Overlapped) + Free</div>
+            <div>Computing Ratio = ( Computing + Communication(Not Overlapped) + Free ) / 总时间</div>
+            <div>Communication Ratio = Communication(Not Overlapped) / 总时间</div>
+            <div style={{ marginTop: '2rem' }}><ExclamationCircleFilled />
+                点击不同卡的柱状图展示单卡Computation / Communication详情</div>
+        </div>
+    )
+}>
+    <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
+</Tooltip>);
 
-const ComputationCommunicationOverview = (): JSX.Element => {
+const ComputationCommunicationOverview = ({ session }: { session: Session }): JSX.Element => {
     const [ groupData, setGroupData ] = useState({ rankList: [], stepList: [], init: false });
     const [ dataSource, setDatasource ] = useState<SummaryDataType[]>([]);
     const [ allDataSource, setAllDatasource ] = useState<SummaryDataType[]>([]);
     const [ selected, setSelected ] = useState({ rankId: '', timeFlag: '' });
-    const [ baseInfo, setBaseInfo ] = useState(defaultBaseInfo);
-
+    const [ baseInfo, setBaseInfo ] = useState<BaseInfoDataType>(defaultBaseInfo);
     useEffect(() => {
         handleFilterChange({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 });
     }, [ ]);
     useEffect(() => {
         initCharts(dataSource, handleClick);
     }, [dataSource]);
+    useEffect(() => {
+        if (isNull(baseInfo.collectDuration)) {
+            setBaseInfo({ ...baseInfo, collectDuration: session.endTimeAll });
+        }
+    }, [session.endTimeAll]);
     const handleFilterChange = async (conditions: ConditionDataType, doQuery?: boolean): Promise<void> => {
         if (doQuery === false) {
             let data = [...allDataSource];
@@ -197,10 +227,11 @@ const ComputationCommunicationOverview = (): JSX.Element => {
             setDatasource(data);
             return;
         }
-        const res = await queryTopSummary(conditions);
+        const res: any = await queryTopSummary(conditions);
         const { summaryList, rankList, stepList } = res.result;
         setDatasource(summaryList);
-        setAllDatasource(summaryList);
+        const data = summaryList.slice(0, conditions.top);
+        setAllDatasource(data);
         if (!groupData.init) {
             setGroupData({ rankList, stepList, init: true });
             setBaseInfo({ ...res.result, collectStartTime: formatDate(new Date(res.result.collectStartTime)) });
@@ -212,12 +243,16 @@ const ComputationCommunicationOverview = (): JSX.Element => {
         const { name: rankId, seriesId: timeFlag } = param;
         setSelected({ rankId, timeFlag });
     };
+    return <OverviewCom baseInfo={baseInfo} handleFilterChange={handleFilterChange} session={session}
+        groupData={groupData} dataSource={dataSource} selected={selected}/>;
+};
+const OverviewCom = ({ baseInfo, handleFilterChange, groupData, dataSource, selected, session }: any): JSX.Element => {
     return <div className={'text-selectable'}
         style={{ textAlign: 'left', padding: '0 20px', overflow: 'auto', height: '100%' }}>
-        <BaseInfo data={baseInfo}/>
+        <BaseInfo data={baseInfo} session={session}/>
         <div>
             <div>
-                <div className={'common-title-bottom'}>Computation/Communication Overview</div>
+                <div className={'common-title-bottom'}>Computation/Communication Overview{hit}</div>
                 <Filter handleFilterChange={handleFilterChange} groupData={groupData}/>
                 <div id={'overview-chart'} style={{ height: '400px' }} ></div>
             </div>

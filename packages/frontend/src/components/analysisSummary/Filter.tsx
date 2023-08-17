@@ -89,8 +89,8 @@ const FilterCom = (props: any): JSX.Element => {
             value={conditions.rankIds}
             onChange={(val: any) => handleChange('rankIds', val)}
             options={options.rankIdOptions}
-            style={{ width: 150 }}
-            maxTagCount={1}
+            style={{ width: 180 }}
+            maxTagCount={2}
         />
         <Label name="Order By"/>
         <Select

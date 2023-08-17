@@ -119,6 +119,7 @@ const FilterCom = (props: any): JSX.Element => {
             style={{ width: 300 }}
             onChange={val => handleChange('operatorName', val)}
             options={options.operatorOptions}
+            showSearch={true}
         />
         <Space length={20}/>
         <Radio.Group value={conditions.type} onChange={(e) => { handleChange('type', e.target.value); }}>

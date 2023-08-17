@@ -1,8 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { Button, Table, Tooltip } from 'antd';
-import { DownOutlined, QuestionCircleFilled } from '@ant-design/icons';
+import { Button, Table } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 import { StringMap } from '../../utils/interface';
 import { PaginationWhithPgaeData, notNull } from '../Common';
@@ -78,32 +78,20 @@ const computingDetailColumns = [
     },
 ];
 
-const communicationOverlappedStatisticsColumns = [
+const communicationStatisticsColumns = [
     {
-        title: 'Transport Type',
-        dataIndex: 'transportType',
-        key: 'transportType',
+        title: 'Overlapped Type',
+        dataIndex: 'OverlappedType',
+        key: 'OverlappedType',
     },
     {
-        title: 'Total Overlapped Durations(us)',
-        dataIndex: 'duration',
-        key: 'duration',
-    },
-];
-const communicationNotOverlappedStatisticsColumns = [
-    {
-        title: 'Transport Type',
-        dataIndex: 'transportType',
-        key: 'transportType',
-    },
-    {
-        title: 'Total Not Overlapped Durations(us)',
-        dataIndex: 'duration',
-        key: 'duration',
+        title: 'Total Durations(us)',
+        dataIndex: 'totalDuration',
+        key: 'totalDuration',
     },
 ];
 
-const communicationColumns = [
+const communicationDetailColumns = [
     {
         title: 'Communication Kernel',
         dataIndex: 'communicationKernel',
@@ -121,8 +109,8 @@ const communicationColumns = [
     },
 ];
 
-const communicationOverlappedColumns = [
-    ...communicationColumns,
+const communicationOverlappedDetailColumns = [
+    ...communicationDetailColumns,
     {
         title: 'Overlapped Durations(us)',
         dataIndex: 'overlapDuration',
@@ -130,32 +118,30 @@ const communicationOverlappedColumns = [
     },
 ];
 
-const communicationNotOverlappedColumns = [
-    ...communicationColumns,
+const communicationNotOverlappedDetailColumns = [
+    ...communicationDetailColumns,
     {
         title: 'Not Overlapped Durations(us)',
         dataIndex: 'notOverlapDuration',
         key: 'notOverlapDuration',
     },
 ];
+
 const rowKeyMap: any = {
     compute: 'acceleratorCore',
-    communicationOverLappedTime: 'transportType',
-    communicationNotOverLappedTime: 'transportType',
+    communication: 'OverlappedType',
 };
 const colMap: any = {
     compute: computingStatisticsColumns,
     computeDetail: computingDetailColumns,
-    communicationOverLappedTime: communicationOverlappedStatisticsColumns,
-    communicationNotOverLappedTime: communicationNotOverlappedStatisticsColumns,
-    communicationOverLappedTimeDetail: communicationOverlappedColumns,
-    communicationNotOverLappedTimeDetail: communicationNotOverlappedColumns,
+    communication: communicationStatisticsColumns,
+    communicationOverLappedDetail: communicationOverlappedDetailColumns,
+    communicationNotOverLappedDetail: communicationNotOverlappedDetailColumns,
 };
 const getTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
     const rowKey = rowKeyMap[timeFlag];
     const columns = notNull(colMap[timeFlag]) ? [...colMap[timeFlag]] : [];
-
-    if ([ 'compute', 'communicationOverLappedTime', 'communicationNotOverLappedTime' ].includes(timeFlag)) {
+    if ([ 'compute', 'communication' ].includes(timeFlag)) {
         const btnCol = {
             title: 'Details',
             render: (_: any, record: any) => (<Button type="link"
@@ -199,7 +185,6 @@ const DtetailTable = ({ rankId, record, name }: any): JSX.Element => {
         } else {
             const res = await queryCommunicationDetail({
                 rankId,
-                timeFlag: record.transportType,
                 currentPage: page.current,
                 pageSize: page.pageSize,
             });
@@ -215,7 +200,7 @@ const DtetailTable = ({ rankId, record, name }: any): JSX.Element => {
         updateData(page);
     };
 
-    return <>
+    return <div>
         <Table
             dataSource={dataSource}
             columns={columns}
@@ -224,7 +209,7 @@ const DtetailTable = ({ rankId, record, name }: any): JSX.Element => {
             size="small"
         />
         <PaginationWhithPgaeData handlePageChange={handlePageChange} total={pageInfo.total}/>
-    </>;
+    </div>;
 };
 
 const timeFlagMap: StringMap = {
@@ -268,7 +253,8 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
 };
 
 export const CommunicationStatisticsTable = (props: any): JSX.Element => {
-    const { timeFlag, rankId = '' } = props;
+    const timeFlag = 'communication';
+    const { rankId = '' } = props;
     const [ dataSource, setDataSource ] = useState<any[]>([]);
     const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
     const { columns, rowKey } = getTableSet(timeFlag, setExpandedKeys);
@@ -278,7 +264,7 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
     }, [props.rankId]);
     const updateData = async (): Promise<void> => {
         const res = await querySummaryStatistics({ timeFlag, rankId });
-        setDataSource(res.result ?? []);
+        setDataSource(res.result ?? [ ]);
     };
 
     return <Table
@@ -286,7 +272,7 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
         columns={columns}
         expandable={{
             expandedRowRender: record => <DtetailTable record={record}
-                name={timeFlag + 'Detail' } rankId={ rankId}/>,
+                name={timeFlag + record.OverlappedType + 'Detail' } rankId={ rankId}/>,
             expandedRowKeys,
             expandIcon: () => (<></>),
         }}
@@ -296,30 +282,21 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
     />;
 };
 
-const hit = (<Tooltip title="点击柱状图显示Rank详情表">
-    <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
-</Tooltip>);
 const StatisticsTable = (props: any): JSX.Element => {
     const { rankId = '' } = props;
     return (
         <div style={{ display: notNull(rankId) ? 'block' : 'none' }}>
             <div style={{ marginBottom: '20px' }}>
                 <div className={'common-title-h2'}>
-                    {getTitle('compute')} ( Rank {rankId} ) {hit}
+                    {getTitle('compute')} ( Rank {rankId} )
                 </div>
                 <ComputeStatisticsTable rankId={rankId}/>
             </div>
             <div style={{ marginBottom: '20px' }}>
                 <div className={'common-title-h2'}>
-                    {getTitle('communicationNotOverLappedTime')} ( Rank {rankId} ){hit}
+                    {'Communication Detail'} ( Rank {rankId} )
                 </div>
-                <CommunicationStatisticsTable rankId={rankId} timeFlag={'communicationNotOverLappedTime'}/>
-            </div>
-            <div>
-                <div className={'common-title-h2'}>
-                    {getTitle('communicationOverLappedTime')} ( Rank {rankId} ){hit}
-                </div>
-                <CommunicationStatisticsTable rankId={rankId} timeFlag={'communicationOverLappedTime'}/>
+                <CommunicationStatisticsTable rankId={rankId}/>
             </div>
         </div>)
     ;

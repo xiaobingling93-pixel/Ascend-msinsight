@@ -3,9 +3,10 @@
  */
 import React from 'react';
 import ComputationCommunicationOverview from '../components/analysisSummary/ComputationCommunicationOverview';
+import { Session } from '../entity/session';
 
-const AnalysisSummary = (props: any): JSX.Element => {
-    return <ComputationCommunicationOverview/>;
+const AnalysisSummary = ({ session }: { session: Session }): JSX.Element => {
+    return <ComputationCommunicationOverview session={session}/>;
 };
 
 export default AnalysisSummary;

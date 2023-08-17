@@ -106,7 +106,7 @@ export const queryComputeDetail = async (param: {
 };
 
 export const queryCommunicationDetail = async (param: {
-    rankId: string; timeFlag: string; pageSize: number;currentPage: number;}): Promise<any> => {
+    rankId: string; pageSize: number;currentPage: number;}): Promise<any> => {
     if (isNull(window.request)) {
         return [ ];
     }

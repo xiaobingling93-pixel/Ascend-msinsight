@@ -37,3 +37,14 @@ export const parseFailHandler = (data: any): void => {
         setUnitPhaseByCardId(data.rankId, session, 'error');
     });
 };
+
+export const parseProgressHandler = (data: any): void => {
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.parseProgress = data;
+    });
+};

@@ -47,6 +47,7 @@ export class Session {
     private _phase: Phase = 'configuring';
     private _units: InsightUnit[] = [];
     private _availableUnits: InsightUnit[] = [];
+    private _parseProgress: Record<string, unknown> | undefined;
     allRankIds: any[] = [];
     pinnedUnits: InsightUnit[] = [];
     icon: JSX.Element | undefined;
@@ -248,5 +249,13 @@ export class Session {
 
     printSessionInfo(): string {
         return `${JSON.stringify({ ...omit(this, [ 'caches', 'sharedState', '_units' ]) })}`;
+    }
+
+    get parseProgress(): Record<string, unknown> | undefined {
+        return this._parseProgress;
+    }
+
+    set parseProgress(data: Record<string, unknown> | undefined) {
+        this._parseProgress = data;
     }
 }

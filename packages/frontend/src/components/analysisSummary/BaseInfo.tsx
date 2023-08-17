@@ -4,6 +4,12 @@
 import React from 'react';
 import { Container } from '../Common';
 import { StringMap } from '../../utils/interface';
+import { Session } from '../../entity/session';
+
+export interface BaseInfoDataType{
+    collectDuration: string | number | undefined;
+    [prop: string]: any;
+}
 
 export const defaultBaseInfo = {
     filePath: '',
@@ -42,7 +48,7 @@ const list = [
     },
 ];
 
-const BaseInfo = ({ data }: {data: StringMap}): JSX.Element => {
+const BaseInfo = ({ data }: {data: StringMap;session: Session}): JSX.Element => {
     return <Container
         title={'BaseInfo'}
         titleClassName={'common-title-bottom'}

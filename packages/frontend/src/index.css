@@ -95,11 +95,13 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     --grey5: #f8f8f8;
     --grey10: #d1d1d1;
     --grey20: #a9a9a9;
-    --grey50: rgba(0, 0, 0, 0.5);
-    --grey60: rgba(0, 0, 0, 0.6);
+    --grey50: rgb(128, 128, 128);
+    --grey60: rgb(91, 91, 91);
     --grey70: #414141;
     --grey80: #383838;
-    --grey90: #1b1b1b;
+    --grey85: #292929;
+    --grey90: #202020;
+    --grey95: #1b1b1b;
     --grey100: black;
 }
 
@@ -213,22 +215,23 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     background:none;
 }
 .theme_dark .container-header{
-    background: var(--grey60);
+    background: var(--grey70);
 }
 .theme_dark .container-body{
     background: var(--grey90);
 }
 .theme_dark .ant-select:not(.ant-select-customize-input) .ant-select-selector{
-    background: black;
+    background: var(--grey90);
 }
 .theme_dark .ant-select-multiple .ant-select-selection-item{
-    background: var(--grey50);
+    background: var(--grey80);
+    border-color: var(--grey60);
 }
 .theme_dark button.ant-btn-link *{
     color: #1890ff!important;
 }
 .theme_dark tr.ant-table-expanded-row > td,.theme_dark tr.ant-table-expanded-row:hover > td{
-    background: black;
+    background: var(--grey95);
 }
 .theme_dark .ant-pagination-prev .ant-pagination-item-link,.theme_dark  .ant-pagination-next .ant-pagination-item-link{
     background-color: var(--grey80);
@@ -330,4 +333,15 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     height: 2.5rem;
     line-height: 2.5rem;
     font-size: 1.3rem;
+}
+
+.theme_dark .ant-select-multiple .ant-select-selection-item-remove svg{
+    color:var(--grey20);
+}
+.ant-table-tbody > tr > td {
+    word-break: break-word;
+}
+
+.theme_dark .common-tabcontent{
+    background: var(--grey85);
 }
