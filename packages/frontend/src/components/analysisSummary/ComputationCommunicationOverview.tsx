@@ -9,6 +9,7 @@ import { VoidFunction } from '../../utils/interface';
 import SummaryTable from './SummaryTable';
 import { queryTopSummary } from '../../utils/RequestUtils';
 import BaseInfo, { defaultBaseInfo } from './BaseInfo';
+import { formatDate } from '../Common';
 
 interface SummaryDataType{
     rankId: string ;
@@ -202,15 +203,14 @@ const ComputationCommunicationOverview = (): JSX.Element => {
         setAllDatasource(summaryList);
         if (!groupData.init) {
             setGroupData({ rankList, stepList, init: true });
-            setBaseInfo(res.result);
+            setBaseInfo({ ...res.result, collectStartTime: formatDate(new Date(res.result.collectStartTime)) });
+            setSelected({ ...selected, rankId: rankList[0] });
         }
     };
 
     const handleClick = (param: any): void => {
         const { name: rankId, seriesId: timeFlag } = param;
-        if (timeFlag !== 'totalFreeTime') {
-            setSelected({ rankId, timeFlag });
-        }
+        setSelected({ rankId, timeFlag });
     };
     return <div className={'text-selectable'}
         style={{ textAlign: 'left', padding: '0 20px', overflow: 'auto', height: '100%' }}>
@@ -221,7 +221,7 @@ const ComputationCommunicationOverview = (): JSX.Element => {
                 <Filter handleFilterChange={handleFilterChange} groupData={groupData}/>
                 <div id={'overview-chart'} style={{ height: '400px' }} ></div>
             </div>
-            <div>
+            <div style={{ padding: '0 3rem' }}>
                 <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
                 <StatisticsTable {...selected}/>
             </div>

@@ -1,8 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { Button, Table } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
+import { Button, Table, Tooltip } from 'antd';
+import { DownOutlined, QuestionCircleFilled } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 import { StringMap } from '../../utils/interface';
 import { PaginationWhithPgaeData, notNull } from '../Common';
@@ -295,18 +295,32 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
         size="small"
     />;
 };
+
+const hit = (<Tooltip title="点击柱状图显示Rank详情表">
+    <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
+</Tooltip>);
 const StatisticsTable = (props: any): JSX.Element => {
-    const { timeFlag = '', rankId = '' } = props;
-    let tableDom;
-    if (timeFlag === 'compute') {
-        tableDom = <ComputeStatisticsTable rankId={rankId}/>;
-    } else {
-        tableDom = <CommunicationStatisticsTable rankId={rankId} timeFlag={timeFlag}/>;
-    }
+    const { rankId = '' } = props;
     return (
-        <div style={{ display: notNull(timeFlag) ? 'block' : 'none' }}>
-            <div className={'common-title'}>{getTitle(props.timeFlag)} ( Rank {rankId} ) </div>
-            {tableDom}
+        <div style={{ display: notNull(rankId) ? 'block' : 'none' }}>
+            <div style={{ marginBottom: '20px' }}>
+                <div className={'common-title-h2'}>
+                    {getTitle('compute')} ( Rank {rankId} ) {hit}
+                </div>
+                <ComputeStatisticsTable rankId={rankId}/>
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+                <div className={'common-title-h2'}>
+                    {getTitle('communicationNotOverLappedTime')} ( Rank {rankId} ){hit}
+                </div>
+                <CommunicationStatisticsTable rankId={rankId} timeFlag={'communicationNotOverLappedTime'}/>
+            </div>
+            <div>
+                <div className={'common-title-h2'}>
+                    {getTitle('communicationOverLappedTime')} ( Rank {rankId} ){hit}
+                </div>
+                <CommunicationStatisticsTable rankId={rankId} timeFlag={'communicationOverLappedTime'}/>
+            </div>
         </div>)
     ;
 };

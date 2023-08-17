@@ -325,3 +325,9 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .text-selectable{
     user-select: text;
 }
+.common-title-h2{
+    font-weight: bold;
+    height: 2.5rem;
+    line-height: 2.5rem;
+    font-size: 1.3rem;
+}
