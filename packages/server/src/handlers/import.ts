@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { parseCardID } from '../utils/common_util';
+import { Matchs, parseCardID } from '../utils/common_util';
 import { parse } from '../parse/main';
 import { Client } from '../types';
 import { queryUnitsMetadata } from '../query/unitMetadataHandler';
@@ -14,23 +14,30 @@ const execute = promisify(exec);
 function findJsonFiles(dir: string, traceViewJsonPaths: string[], depth: number): void {
     const stats = fs.statSync(dir);
     if (stats.isFile()) {
-        if (path.basename(dir) === 'trace_view.json') {
+        if (isJsonValid(path.basename(dir))) {
             traceViewJsonPaths.push(dir);
         }
         return;
     }
-    if (depth > 5) { return; } // 控制递归深度
+    if (depth > 7) { return; } // 控制递归深度
     const files = fs.readdirSync(dir);
     for (const file of files) {
         const filePath = path.join(dir, file);
         const stats = fs.statSync(filePath);
         if (stats.isDirectory()) {
             findJsonFiles(filePath, traceViewJsonPaths, depth + 1);
-        } else if (file === 'trace_view.json') {
+        } else if (isJsonValid(file)) {
             traceViewJsonPaths.push(filePath);
         }
     }
 }
+
+const isJsonValid = (fileName: string): boolean => {
+    const msprofPattern = Matchs.msprof;
+    const validTraceView = fileName === Matchs.trace_view;
+    const validMsprof = fileName.match(msprofPattern) !== null;
+    return validMsprof || validTraceView;
+};
 
 async function selectFolderWindows(): Promise<string> {
     const script = '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; $dialog = New-Object System.Windows.Forms.FolderBrowserDialog;$result = $dialog.ShowDialog(); if ($result -eq “OK”) { $dialog.SelectedPath }';
@@ -63,25 +70,54 @@ async function selectFolder(): Promise<string | null> {
     return null;
 }
 
-async function findTraceViewJson(path: string): Promise<string[]> {
-    const traceViewJsonPaths: string[] = [];
+async function findJsons(path: string): Promise<string[]> {
+    const traceJsonPaths: string[] = [];
     try {
         if (path === 'browser') {
             await selectFolder().then(folderPath => {
                 if (folderPath === null) {
-                    return traceViewJsonPaths;
+                    return traceJsonPaths;
                 }
-                findJsonFiles(folderPath, traceViewJsonPaths, 0);
-                return traceViewJsonPaths;
+                findJsonFiles(folderPath, traceJsonPaths, 0);
+                return traceJsonPaths;
             });
         } else {
-            findJsonFiles(path, traceViewJsonPaths, 0);
+            findJsonFiles(path, traceJsonPaths, 0);
         }
     } catch (error) {
         logger.error(error);
     }
-    return traceViewJsonPaths;
+    filterJsonPaths(traceJsonPaths);
+    return traceJsonPaths;
 }
+
+const filterJsonPaths = (traceJsonPaths: string[]): void => {
+    const resultFolders = new Set();
+    const msprofFiles = [];
+    traceJsonPaths.forEach(filePath => {
+        const match = filePath.match(Matchs.ascend_pt);
+        if (match) {
+            const resultFolder = match[0];
+            if (filePath.endsWith(Matchs.trace_view)) {
+                resultFolders.add(resultFolder);
+            } else if (filePath.match(Matchs.msprof)) {
+                msprofFiles.push({ filePath, resultFolder });
+            }
+        }
+    });
+
+    for (let i = traceJsonPaths.length - 1; i >= 0; i--) {
+        const filePath = traceJsonPaths[i];
+        if (filePath.match(Matchs.msprof)) {
+            const match = filePath.match(Matchs.ascend_pt);
+            if (match) {
+                if (resultFolders.has(match[0])) {
+                    traceJsonPaths.splice(i, 1);
+                }
+            }
+        }
+    }
+};
 
 type CardInfo = {
     cardName: string;
@@ -90,7 +126,7 @@ type CardInfo = {
 };
 
 export const importHandler = async (req: { path: string }, client: Client): Promise<Record<string, unknown>> => {
-    const traceViewJsonPaths = await findTraceViewJson(req.path);
+    const traceViewJsonPaths = await findJsons(req.path);
     const importedRankIdSet = client.shadowSession.importedRankIdSet;
     const extremumTimestamp = client.shadowSession.extremumTimestamp;
     const result: CardInfo[] = [];

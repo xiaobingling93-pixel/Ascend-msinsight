@@ -3,6 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 
+export const Matchs = {
+    ascend_pt: /.*_ascend_pt/,
+    msprof: /msprof.*\.json/,
+    trace_view: 'trace_view.json',
+};
+
 /**
  * get traceId
  *
@@ -39,13 +45,26 @@ export function parseCardID(filePath: string): string {
         console.error(err);
     }
     try {
-        console.log('try get dirname*2 of filePath.');
-        rankId = path.basename(path.dirname(path.dirname(filePath)));
+        rankId = getRankIdFromPath(filePath);
     } catch (error) {
         console.error(error);
     }
     return rankId;
 }
+
+const getRankIdFromPath = (filePath: string): string => {
+    console.log('try get disPlayName of filePath.');
+    const match = filePath.match(Matchs.ascend_pt);
+    if (match) {
+        if (filePath.endsWith(Matchs.trace_view)) {
+            return path.basename(match[0]);
+        } else if (filePath.match(Matchs.msprof)) {
+            const devicePath = path.dirname(path.dirname(filePath));
+            return path.basename(path.dirname(devicePath)) + path.basename(devicePath);
+        }
+    }
+    return '';
+};
 
 /**
  * get database path by rankId
