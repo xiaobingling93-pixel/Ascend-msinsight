@@ -36,11 +36,16 @@ public:
     std::vector<int64_t> GetTrackIdList();
 
     // query thread traces data
-    bool QueryThreadTraces(Protocol::UnitThreadTracesRequest &request, Protocol::UnitThreadTracesResponse &response,
+    bool QueryThreadTraces(Protocol::UnitThreadTracesParams &requestParams, Protocol::UnitThreadTracesBody &responseBody,
         int64_t minTimestamp, int64_t traceId);
     // query threads data
-    bool QueryThreads(Protocol::UnitThreadsRequest &request, Protocol::UnitThreadsResponse &response,
+    bool QueryThreads(Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
         int64_t minTimestamp, int64_t traceId);
+    // query thread Detail
+    bool QueryThreadDetail(Protocol::ThreadDetailParams &requestParams, Protocol::UnitThreadDetailBody &responseBody,
+       int64_t minTimestamp, int64_t trackId);
+    // query flow detail
+    bool QueryFlowDetail(Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody, int64_t minTimestamp, int64_t trackId);
 
 private:
     const std::string sliceTable = "slice";
@@ -75,7 +80,9 @@ private:
     void CalculateSelfTime(std::vector<Protocol::SimpleSlice> &simpleSliceVec, std::map<std::string, int64_t> &selfTimeKeyValue, int64_t startTime, int64_t endTime);
     void AddData(std::map<std::string, int64_t> &selfTimeKeyValue, std::string name, int64_t tmpSelfTime);
     std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(std::vector<Protocol::SimpleSlice> &simpleSliceVec, int64_t startTime, int64_t endTime);
-    void ReduceThread(std::vector<Protocol::SimpleSlice> &rows, std::map<std::string, int64_t> &selfTimeKeyValue, Protocol::UnitThreadsResponse &threadsRes);
+    void ReduceThread(std::vector<Protocol::SimpleSlice> &rows, std::map<std::string, int64_t> &selfTimeKeyValue, Protocol::UnitThreadsBody &responseBody);
+    bool QueryDurationFromSliceByTimeRange(Protocol::ThreadDetailParams &requestParams, const std::vector<Protocol::SliceDto> &rows,
+            std::vector<int64_t> &nextDepthResult, int64_t trackId);
 };
 } // end of namespace Core
 } // end of namespace Scene
