@@ -9,8 +9,14 @@ import os
 import platform
 import shutil
 import sys
+import logging
 
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
+
+
+class ExecError(Exception):
+    def __init__(self, message=None):
+        super(ExecError, self).__init__(message)
 
 
 def init():
@@ -26,11 +32,11 @@ def init():
 def build_vscode(vscode_version, os_name):
     os.putenv('npm_config_build_from_source', 'true')
     if os_name == 'win':
-        os.system('cd ' + SCRIPT_PATH + ' && npm run buildWin')
+        exec_command('cd ' + SCRIPT_PATH + ' && npm run buildWin')
     elif os_name.endswith('x86_64'):
-        os.system('cd ' + SCRIPT_PATH + ' && npm run buildLinuxX64')
+        exec_command('cd ' + SCRIPT_PATH + ' && npm run buildLinuxX64')
     elif os_name.endswith('aarch64'):
-        os.system('cd ' + SCRIPT_PATH + ' && npm run buildLinuxArm')
+        exec_command('cd ' + SCRIPT_PATH + ' && npm run buildLinuxArm')
     src = os.path.join(SCRIPT_PATH, 'packages/extension')
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-extension_' + vscode_version + '_' + os_name + '.vsix')
     for file in os.listdir(src):
@@ -42,21 +48,27 @@ def build_intellij(idea_version, os_name):
     url = os.getenv('GRADLE_URL')
     plugins_path = os.path.join(SCRIPT_PATH, 'plugins')
     if url is None:
-        os.system('cd ' + plugins_path + ' && gradle wrapper')
+        exec_command('cd ' + plugins_path + ' && gradle wrapper')
     else:
-        os.system('cd ' + plugins_path + ' && gradle wrapper --gradle-distribution-url ' + url)
+        exec_command('cd ' + plugins_path + ' && gradle wrapper --gradle-distribution-url ' + url)
     gradlew = 'gradlew'
     if os_name.startswith('linux'):
-        os.system('cd ' + plugins_path + ' && chmod a+x gradlew')
+        exec_command('cd ' + plugins_path + ' && chmod a+x gradlew')
         gradlew = './gradlew'
-    os.system('cd ' + plugins_path + ' && ' + gradlew + ' clean')
-    os.system('cd ' + plugins_path + ' && ' + gradlew + ' ascend-insight:copyFrontendBuild')
-    os.system('cd ' + plugins_path + ' && ' + gradlew + ' buildPlugin')
+    exec_command('cd ' + plugins_path + ' && ' + gradlew + ' clean')
+    exec_command('cd ' + plugins_path + ' && ' + gradlew + ' ascend-insight:copyFrontendBuild')
+    exec_command('cd ' + plugins_path + ' && ' + gradlew + ' buildPlugin')
     src = os.path.join(SCRIPT_PATH, 'plugins', 'build', 'distributions')
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-plugin_' + idea_version + '_' + os_name + '.zip')
     for file in os.listdir(src):
         if file.endswith('.zip'):
             shutil.copy(os.path.join(src, file), dst_file)
+
+
+def exec_command(command):
+    if os.system(command) == 1:
+        logging.error('execute %s failed', command)
+        raise ExecError()
 
 
 def main():

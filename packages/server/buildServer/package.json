@@ -6,21 +6,21 @@
     "bin": "./dist/app.js",
     "private": true,
     "dependencies": {
-        "crypto-js": "^4.1.1",
-        "sqlite3": "^5.1.5",
+        "crypto-js": "4.1.1",
+        "sqlite3": "5.1.5",
         "log4js": "6.7.1",
         "lodash": "4.17.21",
-        "ws": "^8.5.0",
+        "ws": "8.5.0",
         "JSONStream": "1.3.5"
     },
     "devDependencies": {
-        "electron": "^24.1.2",
+        "electron": "24.1.2",
         "electron-packager": "^17.1.1"
     },
     "scripts": {
-        "packWin": "electron-packager ./ profiler-server --platform=win32 --arch=ia32 --electron-version=24.6.5 --ignore=node_modules/JSONStream/test --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/",
-        "packLinuxX64": "electron-packager ./ profiler-server --platform=linux --arch=x64 --electron-version=24.6.5 --ignore=node_modules/JSONStream/test --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/",
-        "packLinuxArm": "electron-packager ./ profiler-server --platform=linux --arch=arm64 --electron-version=24.6.5 --ignore=node_modules/JSONStream/test --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/"
+        "packWin": "electron-packager ./ profiler-server --platform=win32 --arch=ia32 --electron-version=24.1.2 --ignore=node_modules/JSONStream/test --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/",
+        "packLinuxX64": "electron-packager ./ profiler-server --platform=linux --arch=x64 --electron-version=24.1.2 --ignore=node_modules/JSONStream/test --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/",
+        "packLinuxArm": "electron-packager ./ profiler-server --platform=linux --arch=arm64 --electron-version=24.1.2 --ignore=node_modules/JSONStream/test --overwrite --download.mirrorOptions.mirror=http://mirrors.tools.huawei.com/electron/"
     },
     "build": {
         "appId": "ascend.insight.server",
