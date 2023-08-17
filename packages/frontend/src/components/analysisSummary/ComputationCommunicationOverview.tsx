@@ -8,6 +8,7 @@ import StatisticsTable from './StatisticsTable';
 import { VoidFunction } from '../../utils/interface';
 import SummaryTable from './SummaryTable';
 import { queryTopSummary } from '../../utils/RequestUtils';
+import BaseInfo, { defaultBaseInfo } from './BaseInfo';
 
 interface SummaryDataType{
     rankId: string ;
@@ -180,6 +181,7 @@ const ComputationCommunicationOverview = (): JSX.Element => {
     const [ dataSource, setDatasource ] = useState<SummaryDataType[]>([]);
     const [ allDataSource, setAllDatasource ] = useState<SummaryDataType[]>([]);
     const [ selected, setSelected ] = useState({ rankId: '', timeFlag: '' });
+    const [ baseInfo, setBaseInfo ] = useState(defaultBaseInfo);
 
     useEffect(() => {
         handleFilterChange({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 });
@@ -200,6 +202,7 @@ const ComputationCommunicationOverview = (): JSX.Element => {
         setAllDatasource(summaryList);
         if (!groupData.init) {
             setGroupData({ rankList, stepList, init: true });
+            setBaseInfo(res.result);
         }
     };
 
@@ -209,15 +212,19 @@ const ComputationCommunicationOverview = (): JSX.Element => {
             setSelected({ rankId, timeFlag });
         }
     };
-    return <div style={{ textAlign: 'left', padding: '0 20px' }} className={'header-fixed-content-scroll'}>
+    return <div className={'text-selectable'}
+        style={{ textAlign: 'left', padding: '0 20px', overflow: 'auto', height: '100%' }}>
+        <BaseInfo data={baseInfo}/>
         <div>
-            <div className={'common-title-bottom'}>Computation/Communication Overview</div>
-            <Filter handleFilterChange={handleFilterChange} groupData={groupData}/>
-            <div id={'overview-chart'} style={{ height: '400px' }} ></div>
-        </div>
-        <div>
-            <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
-            <StatisticsTable {...selected}/>
+            <div>
+                <div className={'common-title-bottom'}>Computation/Communication Overview</div>
+                <Filter handleFilterChange={handleFilterChange} groupData={groupData}/>
+                <div id={'overview-chart'} style={{ height: '400px' }} ></div>
+            </div>
+            <div>
+                <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
+                <StatisticsTable {...selected}/>
+            </div>
         </div>
     </div>;
 };

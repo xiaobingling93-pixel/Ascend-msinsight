@@ -92,6 +92,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 
 :root {
     --grey0: white;
+    --grey5: #f8f8f8;
     --grey10: #d1d1d1;
     --grey20: #a9a9a9;
     --grey50: rgba(0, 0, 0, 0.5);
@@ -307,4 +308,20 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 
 .theme_dark .chartDiv {
     background: var(--grey80);
+}
+
+.baseinfo {
+    padding: 1rem 0 1rem 3rem;
+}
+.baseinfo>div>div{
+    display: inline-block;
+    height:2rem;
+    line-height: 2rem;
+}
+.baseinfo>div>div:first-child{
+    font-weight: bold;
+    width: 250px;
+}
+.text-selectable{
+    user-select: text;
 }

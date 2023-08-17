@@ -14,7 +14,8 @@ export const Space = (props: {length: string | number }): JSX.Element => {
     return <span style={{ display: 'inline-block', marginRight: `${props.length}px` }}/>;
 };
 
-export const Container = (props: {title?: JSX.Element | string; content?: JSX.Element;style?: any;type?: String}): JSX.Element => {
+export const Container = (props: {title?: JSX.Element | string; content?: JSX.Element;
+    style?: any;type?: String;titleClassName?: string;}): JSX.Element => {
     if (props.type === 'headerfixed') {
         return <div className={'header-fixed-content-scroll'} style={{ ...(props.style ?? {}) }}>
             <div className={'container-header'}>{props.title}</div>
@@ -22,9 +23,9 @@ export const Container = (props: {title?: JSX.Element | string; content?: JSX.El
         </div>;
     }
     return <div className={'container-box'} style={{ height: '100%', ...(props.style ?? {}) }}>
-        <div className={'container-header'}>{props.title}</div>
+        <div className={props.titleClassName ?? 'container-header'} >{props.title}</div>
         <div className={'container-body'}
-            style={{ height: 'calc(100% - 20px', overflow: 'auto' }}>{props.content}</div>
+            style={{ height: 'calc(100% - 20px)', overflow: 'auto' }}>{props.content}</div>
     </div>;
 };
 
