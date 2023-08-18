@@ -1,20 +1,33 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { Tabs, Switch } from 'antd';
-import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { observer } from 'mobx-react-lite';
+import { Tabs, Switch, Spin } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 import { Session } from '../entity/session';
 import { SessionPage } from './SessionPage';
 import CommunicationAnalysis from '../components/communicationAnalysis/CommunicationAnalysis';
 import AnalysisSummary from './AnalysisSummary';
-import { notNull } from '../components/Common';
+
+const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
 const onChange = async (checked: boolean): Promise<void> => {
     window.setTheme(checked);
 };
 
+const isParing = (session: Session): boolean => {
+    let parsing = false;
+    session.units.forEach(unit => {
+        if (unit.phase === 'analyzing') {
+            parsing = true;
+        }
+    });
+    return parsing;
+};
+
 const HomePage = observer(function ({ session }: { session: Session }) {
+    const parsing = isParing(session);
     const items = [
         {
             tab: 'Timeline View',
@@ -22,19 +35,19 @@ const HomePage = observer(function ({ session }: { session: Session }) {
             content: <div style={{ display: 'flex', height: '100%' }}><SessionPage session={session}/></div>,
         },
         {
-            tab: 'Analysis Summary',
+            tab: <div>Analysis Summary {parsing && <Spin indicator={antIcon}/>}</div>,
             key: 'AnalysisSummary',
             content: <AnalysisSummary session={session}/>,
-            display: notNull(session.allRankIds) && session.allRankIds.length > 0,
+            display: session.units.length > 0,
         },
         {
-            tab: 'Communication Analysis',
+            tab: <div>Communication Analysis {parsing && <Spin indicator={antIcon}/>}</div>,
             key: 'CommunicationAnalysis',
             content: <CommunicationAnalysis session={session}/>,
-            display: notNull(session.allRankIds) && session.allRankIds.length > 0,
+            display: session.units.length > 0,
         },
     ];
-    const displayItems = items.filter(item => item);
+    const displayItems = items.filter(item => item.display !== false);
     return (
         <div style={{ height: '100%', width: '100%' }}>
             <Switch checkedChildren="dark" unCheckedChildren="light" defaultChecked onChange={onChange}

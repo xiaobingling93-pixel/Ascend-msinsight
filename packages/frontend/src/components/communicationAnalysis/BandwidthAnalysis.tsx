@@ -217,6 +217,7 @@ const bandwidthOption: echarts.EChartsOption = {
                 },
             },
             data: [],
+            barMaxWidth: 80,
         },
         {
             name: 'Bandwidth(GB/s)',

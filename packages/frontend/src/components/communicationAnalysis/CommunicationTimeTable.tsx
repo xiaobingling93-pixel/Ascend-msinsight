@@ -140,7 +140,8 @@ const CommunicationTimeTable = observer(function (props:
     }, [props.dataSource]);
     return (
         <Container
-            title={'DataAnalysis of Communication Time'}
+            title={'Data Analysis of Communication Time'}
+            style={{ margin: '1rem 0' }}
             content={<Table
                 dataSource={dataSource}
                 columns={columns}

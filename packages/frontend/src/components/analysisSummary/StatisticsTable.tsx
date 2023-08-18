@@ -81,13 +81,13 @@ const computingDetailColumns = [
 const communicationStatisticsColumns = [
     {
         title: 'Overlapped Type',
-        dataIndex: 'OverlappedType',
-        key: 'OverlappedType',
+        dataIndex: 'overlapType',
+        key: 'overlapType',
     },
     {
         title: 'Total Durations(us)',
-        dataIndex: 'totalDuration',
-        key: 'totalDuration',
+        dataIndex: 'duration',
+        key: 'duration',
     },
 ];
 
@@ -129,14 +129,14 @@ const communicationNotOverlappedDetailColumns = [
 
 const rowKeyMap: any = {
     compute: 'acceleratorCore',
-    communication: 'OverlappedType',
+    communication: 'overlapType',
 };
 const colMap: any = {
     compute: computingStatisticsColumns,
     computeDetail: computingDetailColumns,
     communication: communicationStatisticsColumns,
-    communicationOverLappedDetail: communicationOverlappedDetailColumns,
-    communicationNotOverLappedDetail: communicationNotOverlappedDetailColumns,
+    'Communication(Overlapped)Detail': communicationOverlappedDetailColumns,
+    'Communication(Not Overlapped)Detail': communicationNotOverlappedDetailColumns,
 };
 const getTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
     const rowKey = rowKeyMap[timeFlag];
@@ -272,7 +272,7 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
         columns={columns}
         expandable={{
             expandedRowRender: record => <DtetailTable record={record}
-                name={timeFlag + record.OverlappedType + 'Detail' } rankId={ rankId}/>,
+                name={record.overlapType + 'Detail' } rankId={ rankId}/>,
             expandedRowKeys,
             expandIcon: () => (<></>),
         }}

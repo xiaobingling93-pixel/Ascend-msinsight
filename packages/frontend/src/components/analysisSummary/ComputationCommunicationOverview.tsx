@@ -9,7 +9,7 @@ import { VoidFunction } from '../../utils/interface';
 import SummaryTable from './SummaryTable';
 import { queryTopSummary } from '../../utils/RequestUtils';
 import BaseInfo, { BaseInfoDataType, defaultBaseInfo } from './BaseInfo';
-import { formatDate, isNull } from '../Common';
+import { formatDate } from '../Common';
 import { Tooltip } from 'antd';
 import { QuestionCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
 import { Session } from '../../entity/session';
@@ -215,11 +215,6 @@ const ComputationCommunicationOverview = ({ session }: { session: Session }): JS
     useEffect(() => {
         initCharts(dataSource, handleClick);
     }, [dataSource]);
-    useEffect(() => {
-        if (isNull(baseInfo.collectDuration)) {
-            setBaseInfo({ ...baseInfo, collectDuration: session.endTimeAll });
-        }
-    }, [session.endTimeAll]);
     const handleFilterChange = async (conditions: ConditionDataType, doQuery?: boolean): Promise<void> => {
         if (doQuery === false) {
             let data = [...allDataSource];
@@ -228,15 +223,15 @@ const ComputationCommunicationOverview = ({ session }: { session: Session }): JS
             return;
         }
         const res: any = await queryTopSummary(conditions);
-        const { summaryList, rankList, stepList } = res.result;
-        setDatasource(summaryList);
-        const data = summaryList.slice(0, conditions.top);
+        const { summaryList, rankList = [], stepList = [] } = res.result;
+        const data = [...summaryList];
         setAllDatasource(data);
+        setBaseInfo({ ...res.result, collectStartTime: formatDate(new Date(res.result.collectStartTime / 1000)) });
         if (!groupData.init) {
             setGroupData({ rankList, stepList, init: true });
-            setBaseInfo({ ...res.result, collectStartTime: formatDate(new Date(res.result.collectStartTime)) });
             setSelected({ ...selected, rankId: rankList[0] });
         }
+        setDatasource(conditions.top === 0 ? summaryList : summaryList.slice(0, conditions.top));
     };
 
     const handleClick = (param: any): void => {
@@ -257,7 +252,7 @@ const OverviewCom = ({ baseInfo, handleFilterChange, groupData, dataSource, sele
                 <div id={'overview-chart'} style={{ height: '400px' }} ></div>
             </div>
             <div style={{ padding: '0 3rem' }}>
-                <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
+                <SummaryTable dataSource={dataSource} />
                 <StatisticsTable {...selected}/>
             </div>
         </div>

@@ -121,5 +121,9 @@ export const queryTopSummary = async (param:
     top: number;
 },
 ): Promise<any> => {
-    return window.request('summary/queryTopData', param);
+    return window.request('summary/queryTopData', {
+        orderBy: param.orderBy,
+        stepIdList: param.step !== 'All' ? [param.step] : [],
+        rankIdList: param.rankIds,
+    });
 };
