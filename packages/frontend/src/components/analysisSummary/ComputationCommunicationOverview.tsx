@@ -252,7 +252,7 @@ const OverviewCom = ({ baseInfo, handleFilterChange, groupData, dataSource, sele
                 <div id={'overview-chart'} style={{ height: '400px' }} ></div>
             </div>
             <div style={{ padding: '0 3rem' }}>
-                <SummaryTable dataSource={dataSource} />
+                <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
                 <StatisticsTable {...selected}/>
             </div>
         </div>
