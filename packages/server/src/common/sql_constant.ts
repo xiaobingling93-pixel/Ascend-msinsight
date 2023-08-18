@@ -12,8 +12,10 @@ export const CREATE_COMMUNICATION_TIME_INFO_SQL = `CREATE TABLE ${COMMUNICATION_
                                                (
                                                    id                         INTEGER PRIMARY KEY AUTOINCREMENT,
                                                    iteration_id               VARCHAR(50),
+                                                   stage_id                   VARCHAR(200),
                                                    rank_id                    VARCHAR(50),
                                                    op_name                    VARCHAR(100),
+                                                   op_suffix                  VARCHAR(100),
                                                    elapse_time                double,
                                                    synchronization_time_ratio double,
                                                    synchronization_time       double,
@@ -26,8 +28,10 @@ export const CREATE_COMMUNICATION_BANDWIDTH_INFO_SQL = `CREATE TABLE ${COMMUNICA
                                                     (
                                                         id                    INTEGER PRIMARY KEY AUTOINCREMENT,
                                                         iteration_id          VARCHAR(50),
+                                                        stage_id              VARCHAR(200),
                                                         rank_id               VARCHAR(50),
                                                         op_name               VARCHAR(100),
+                                                        op_suffix             VARCHAR(100),
                                                         transport_type        VARCHAR(20),
                                                         bandwidth_size        double,
                                                         bandwidth_utilization double,

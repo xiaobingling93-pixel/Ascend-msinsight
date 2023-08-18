@@ -27,10 +27,11 @@ export function parseCommunicationFile(filePathArr: string[], client?: Client): 
             const tempData = data.value;
             const tempStepId = tempPath[1].replace('step', '');
             const tempOpName = tempPath[2];
+            const stageId = tempPath[0];
             const tempRankId = tempPath[3];
             if (tempPath[4] === 'Communication Time Info') {
                 if (typeof tempData !== 'string') {
-                    const tempTimeInfo = mapperToTimeInfoEntity(tempRankId, tempOpName, tempStepId, tempData);
+                    const tempTimeInfo = mapperToTimeInfoEntity(tempRankId, tempOpName, tempStepId, tempData, stageId);
                     CLUSTER_DATABASE.insertCommunicationTimeInfo(tempTimeInfo);
                 }
                 countTimeInfo++;
@@ -38,7 +39,7 @@ export function parseCommunicationFile(filePathArr: string[], client?: Client): 
                 const keys = Object.keys(tempData);
                 keys.forEach(key => {
                     const obj = data.value[key];
-                    const bandWidth = mapperToBandWidthEntity(tempRankId, tempOpName, tempStepId, key, obj);
+                    const bandWidth = mapperToBandWidthEntity(tempRankId, tempOpName, tempStepId, key, obj, stageId);
                     CLUSTER_DATABASE.insertCommunicationBandWidth(bandWidth);
                     countBandWidth++;
                 });

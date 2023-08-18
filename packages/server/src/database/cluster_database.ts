@@ -65,19 +65,19 @@ export class ClusterDatabase {
 
     initStat(): void {
         if (this.timeInfoStat === undefined) {
-            const valueParams = '(?,?,?,?,?,?,?,?,?,?)';
+            const valueParams = '(?,?,?,?,?,?,?,?,?,?,?,?)';
             const placeholders: string = (valueParams + ',').repeat(this.maxCachesSize - 1).concat(valueParams);
             const sql: string = `INSERT INTO ${COMMUNICATION_TIME_INFO_TABLE}
-                                 (iteration_id, rank_id, op_name, elapse_time, synchronization_time_ratio,
+                                 (iteration_id, stage_id, rank_id, op_name, op_suffix, elapse_time, synchronization_time_ratio,
                                   synchronization_time, transit_time, wait_time_ratio, wait_time, idle_time)
                                  VALUES ${placeholders}`;
             this.timeInfoStat = this.clusterDb.prepare(sql);
         }
         if (this.bandWidthStat === undefined) {
-            const valueParams = '(?,?,?,?,?,?,?,?,?,?)';
+            const valueParams = '(?,?,?,?,?,?,?,?,?,?,?,?)';
             const placeholders: string = (valueParams + ',').repeat(this.maxCachesSize - 1).concat((valueParams));
             const sql: string = `INSERT INTO ${COMMUNICATION_BAND_WIDTH_TABLE}
-                                 (iteration_id, rank_id, op_name, transport_type, bandwidth_size, bandwidth_utilization,
+                                 (iteration_id, stage_id, rank_id, op_name, op_suffix, transport_type, bandwidth_size, bandwidth_utilization,
                                   large_package_ratio, size_distribution, transit_size, transit_time)
                                  VALUES ${placeholders}`;
             this.bandWidthStat = this.clusterDb.prepare(sql);
@@ -87,7 +87,7 @@ export class ClusterDatabase {
     insertCommunicationTimeInfoList(dataList: CommunicationTimeInfoEntity[]): void {
         const paramsList: any[] = [];
         dataList.forEach((data) => {
-            paramsList.push(data.iterationId, data.rankId, data.opName, data.elapseTime, data.synchronizationTimeRatio,
+            paramsList.push(data.iterationId, data.stageId, data.rankId, data.opName, data.opSuffix, data.elapseTime, data.synchronizationTimeRatio,
                 data.synchronizationTime, data.transitTime, data.waitTimeRatio, data.waitTime, data.idleTime);
         });
         if (dataList.length === this.maxCachesSize) {
@@ -102,7 +102,7 @@ export class ClusterDatabase {
         } else {
             const placeholders: string = dataList.map(() => '(?,?,?,?,?,?,?,?,?,?)').join(',');
             const sql: string = `INSERT INTO ${COMMUNICATION_TIME_INFO_TABLE}
-                                 (iteration_id, rank_id, op_name, elapse_time, synchronization_time_ratio,
+                                 (iteration_id,stage_id, rank_id, op_name,op_suffix, elapse_time, synchronization_time_ratio,
                                   synchronization_time, transit_time, wait_time_ratio, wait_time, idle_time)
                                  VALUES ${placeholders}`;
             this.clusterDb.run(sql, paramsList, (err) => {
@@ -124,7 +124,7 @@ export class ClusterDatabase {
     insertCommunicationBandWidthList(dataList: CommunicationBandWidthEntity[]): void {
         const paramsList: any[] = [];
         dataList.forEach((data) => {
-            paramsList.push(data.iterationId, data.rankId, data.opName, data.transportType, data.bandwidthSize,
+            paramsList.push(data.iterationId, data.stageId, data.rankId, data.opName, data.opSuffix, data.transportType, data.bandwidthSize,
                 data.bandwidthUtilization, data.largePackageRatio, data.sizeDistribution, data.transitSize, data.transitTime);
         });
         if (dataList.length === this.maxCachesSize) {
@@ -137,9 +137,9 @@ export class ClusterDatabase {
                 }
             });
         } else {
-            const placeholders: string = dataList.map(() => '(?,?,?,?,?,?,?,?,?,?)').join(',');
+            const placeholders: string = dataList.map(() => '(?,?,?,?,?,?,?,?,?,?,?,?)').join(',');
             const sql: string = `INSERT INTO ${COMMUNICATION_BAND_WIDTH_TABLE}
-                                 (iteration_id, rank_id, op_name, transport_type, bandwidth_size,
+                                 (iteration_id, stage_id, rank_id, op_name, op_suffix, transport_type, bandwidth_size,
                                   bandwidth_utilization,
                                   large_package_ratio, size_distribution, transit_size, transit_time)
                                  VALUES ${placeholders}`;

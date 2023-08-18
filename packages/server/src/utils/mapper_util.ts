@@ -5,14 +5,17 @@
 import { KernelDetailEntity, StepStatisticEntity } from '../query/entity';
 import { toInteger } from 'lodash';
 
-export const mapperToBandWidthEntity = (tempRankId: number, tempOpName: string, tempStepId: string, key: string, transportInfo: any): any => {
+export const mapperToBandWidthEntity = (tempRankId: number, tempOpName: string, tempStepId: string,
+    key: string, transportInfo: any, stageId: string): any => {
+    const tempOpNameArr = tempOpName.split('@');
     return {
         iterationId: tempStepId,
+        stageId,
         rankId: tempRankId,
-        opName: tempOpName,
+        opName: tempOpNameArr[0],
+        opSuffix: tempOpNameArr[1],
         transportType: key,
         bandwidthSize: transportInfo['Bandwidth(GB/s)'],
-        // bandwidthUtilization: transportInfo['Bandwidth(Utilization)'],
         largePackageRatio: transportInfo['Large Packet Ratio'],
         sizeDistribution: JSON.stringify(transportInfo['Size Distribution']),
         transitSize: transportInfo['Transit Size(MB)'],
@@ -20,19 +23,23 @@ export const mapperToBandWidthEntity = (tempRankId: number, tempOpName: string, 
     };
 };
 
-export const mapperToTimeInfoEntity = (tempRankId: number, tempOpName: string, tempStepId: string, tempData: any): any => {
+export const mapperToTimeInfoEntity = (tempRankId: number, tempOpName: string, tempStepId: string,
+    tempData: any, stageId: string): any => {
+    const tempOpNameArr = tempOpName.split('@');
     return {
         iterationId: tempStepId,
+        stageId,
         rankId: tempRankId,
-        opName: tempOpName,
+        opName: tempOpNameArr[0],
+        opSuffix: tempOpNameArr[1],
         elapseTime: tempData['Elapse Time(ms)'],
         idleTime: tempData['Idle Time(ms)'],
         startTime: tempData['Start Timestamp(us)'],
         synchronizationTimeRatio: tempData['Synchronization Time Ratio'],
         synchronizationTime: tempData['Synchronization Time(ms)'],
         transitTime: tempData['Transit Time(ms)'],
-        waitTimeRatio: tempData['Elapse Time(ms)'],
-        waitTime: tempData['Elapse Time(ms)'],
+        waitTimeRatio: tempData['Wait Time Ratio'],
+        waitTime: tempData['Wait Time(ms)'],
     };
 };
 

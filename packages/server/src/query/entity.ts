@@ -3,9 +3,11 @@
  */
 
 export type CommunicationTimeInfoEntity = {
-    iterationId: number;
-    rankId: number;
+    iterationId: string;
+    stageId: string;
+    rankId: string;
     opName: string;
+    opSuffix: string;
     elapseTime: number;
     synchronizationTimeRatio: number;
     synchronizationTime: number;
@@ -16,9 +18,11 @@ export type CommunicationTimeInfoEntity = {
 };
 
 export type CommunicationBandWidthEntity = {
-    iterationId: number;
-    rankId: number;
+    iterationId: string;
+    rankId: string;
+    stageId: string;
     opName: string;
+    opSuffix: string;
     transportType: string;
     bandwidthSize: number;
     bandwidthUtilization: number;
