@@ -6,6 +6,7 @@
 #include "ServerLog.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "TraceFileParser.h"
 
 namespace Dic {
 namespace Scene {
@@ -24,9 +25,7 @@ void ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     std::unique_ptr<ResetWindowResponse> responsePtr = std::make_unique<ResetWindowResponse>();
     ResetWindowResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-
-    // query data from database, code in core package
-
+    TraceFileParser::Instance().Reset();
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

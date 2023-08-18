@@ -15,6 +15,12 @@ void FileParser::SetParseEndCallBack(std::function<void(const std::string, bool 
 {
     paserEndCallback = callback;
 }
+
+void FileParser::Reset()
+{
+    error.clear();
+    paserEndCallback == nullptr;
+}
 } // end of namespace Core
 } // end of namespace Scene
 } // end of namespace Dic

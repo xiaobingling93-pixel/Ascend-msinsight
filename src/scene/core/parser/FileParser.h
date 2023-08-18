@@ -19,6 +19,7 @@ public:
     virtual bool WaitParseEnd(const std::string &fileId) = 0;
     virtual void SetParseEndCallBack(std::function<void(const std::string, bool result)> &callback);
     virtual std::string GetError();
+    virtual void Reset();
 
 protected:
     std::string error;

@@ -22,6 +22,8 @@ public:
     DataBaseManager &operator=(DataBaseManager &&) = delete;
 
     TraceDatabase *GetTraceDatabase(const std::string &fileId);
+    std::vector<TraceDatabase *> GetAllTraceDatabase();
+    void Clear();
     void ReleaseTraceDatabase(const std::string &fileId);
     bool HasFileId(const std::string &fileId);
 
