@@ -3,6 +3,7 @@
  */
 
 import { KernelDetailEntity, StepStatisticEntity } from '../query/entity';
+import { toInteger } from 'lodash';
 
 export const mapperToBandWidthEntity = (tempRankId: number, tempOpName: string, tempStepId: string, key: string, transportInfo: any): any => {
     return {
@@ -70,7 +71,7 @@ export function mapperToKernelDetail(arr: any[], map: Map<string, number>): Kern
 
 export function mapperToStepStatisticsInfo(arr: any[]): StepStatisticEntity {
     return {
-        stepId: arr[0],
+        stepId: toInteger(arr[0]).toString(),
         rankId: arr[1] === 'rank' ? arr[2] : '',
         stageId: arr[1] === 'stage' ? arr[2] : '',
         computingTime: arr[3],

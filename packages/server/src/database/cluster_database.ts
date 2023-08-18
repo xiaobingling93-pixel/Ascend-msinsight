@@ -223,13 +223,20 @@ export class ClusterDatabase {
         });
     }
 
-    async querySummaryData(orderBy: string, stepId: string): Promise<any> {
+    async querySummaryData(orderBy: string, stepIdList: string[], rankIdList: string[]): Promise<any> {
         return new Promise((resolve, reject) => {
-            const param = [];
+            let param: string[] = [];
             let stepCondition = '';
-            if (stepId !== undefined && stepId !== '' && stepId !== 'ALL') {
-                param.push(stepId);
-                stepCondition = 'and step_id = ?';
+            let rankCondition = '';
+            if (stepIdList !== undefined && stepIdList.length > 0) {
+                param = param.concat(stepIdList);
+                stepCondition = 'and step_id in ('
+                    .concat('?').concat((',?').repeat(stepIdList.length - 1)).concat(') ');
+            }
+            if (rankIdList !== undefined && rankIdList.length > 0) {
+                param = param.concat(rankIdList);
+                rankCondition = 'and rank_id in ('
+                    .concat('?').concat((',?').repeat(rankIdList.length - 1)).concat(') ');
             }
             param.push(orderBy);
             const sql: string = `SELECT
@@ -240,9 +247,9 @@ export class ClusterDatabase {
                                      sum(overlap_communication_time) as communicationOverLappedTime,
                                      sum(free_time) as freeTime
                                  FROM ${STEP_STATISTIC_INFO_TABLE}
-                                 WHERE rank_id !='' ${stepCondition}
+                                 WHERE rank_id !='' ${stepCondition}  ${rankCondition}
                                  group by rank_id order by ?`;
-            this.clusterDb.all(sql, [orderBy], async (err, rows) => {
+            this.clusterDb.all(sql, param, async (err, rows) => {
                 if (err !== undefined && err !== null) {
                     logger.error(err.message);
                     reject(err);

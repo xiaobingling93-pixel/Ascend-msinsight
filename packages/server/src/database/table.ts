@@ -812,12 +812,12 @@ export class Table {
 
     async queryCommunicationStatisticsData(timestampCondition: string, param: number[]): Promise<any> {
         return new Promise((resolve, reject) => {
-            const sql: string = `select sum(duration) as duration,
-                                    json_extract(args, '$.transport type') as  transportType
+            const sql: string = `select duration, t.thread_name as overlapType from (select sum(duration) as duration, track_id
                                     from ${this.sliceTable}
-                                    where track_id = (select track_id from thread where thread_name='Communication OP')
+                                    where track_id in (select track_id from thread where thread_name in('Communication(Not Overlapped)', 'Communication'))
                                     ${timestampCondition}
-                                    group by json_extract(args, '$.transport type')`;
+                                    group by track_id) s
+                                    left join thread t on s.track_id=t.track_id`;
             this.db.all(sql, param, async (err, rows) => {
                 if (err !== undefined && err !== null) {
                     logger.error('queryCommunicationStatisticsData error:', err.message);

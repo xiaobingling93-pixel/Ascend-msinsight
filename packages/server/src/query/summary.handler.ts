@@ -16,7 +16,7 @@ export const summaryHandler = async (request: SummaryRequest, client: Client): P
         'communicationOverLappedTime', 'freeTime' ].includes(request.orderBy)) {
         request.orderBy = 'computingTime';
     }
-    const rows: SummaryItemVO[] = await CLUSTER_DATABASE.querySummaryData(request.orderBy, request.stepId);
+    const rows: SummaryItemVO[] = await CLUSTER_DATABASE.querySummaryData(request.orderBy, request.rankIdList, request.stepIdList);
     const extremumTimestamp = await client.shadowSession.extremumTimestamp;
     const baseInfo = await CLUSTER_DATABASE.queryBaseInfo();
     const result = {
@@ -67,7 +67,7 @@ Promise<Record<string, SummaryStatisticsVO[]>> => {
         });
         computeStatistics?.forEach((row: any) => {
             rows.push({
-                transportType: '',
+                overlapType: '',
                 acceleratorCore: row.acceleratorCore,
                 duration: row.duration,
                 utilization: total > 0 ? row.duration / total : 0,
@@ -84,9 +84,12 @@ Promise<Record<string, SummaryStatisticsVO[]>> => {
             }
         }
         const communicationStatistics = await table.queryCommunicationStatisticsData(timestampCondition, param);
+        let overlapTime = 0; let communicationTime = 0;
         communicationStatistics?.forEach((row: any) => {
-            rows.push({ transportType: row.transportType, acceleratorCore: '', duration: row.duration, utilization: 0 });
+            row.overlapType === 'Communication' ? communicationTime = row.duration : overlapTime = row.duration;
         });
+        rows.push({ overlapType: 'Communication(Overlapped)', acceleratorCore: '', duration: overlapTime, utilization: 0 });
+        rows.push({ overlapType: 'Communication(Not Overlapped)', acceleratorCore: '', duration: communicationTime - overlapTime, utilization: 0 });
     }
     logger.info('end request to summaryStatisticHandler, rows:', rows);
     return { result: rows };

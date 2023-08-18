@@ -10,6 +10,7 @@ import JSONStream from 'JSONStream';
 import readline from 'readline';
 import { getFolderSize } from '../utils/common_util';
 import { Client } from '../types';
+import { toInteger, toNumber } from 'lodash';
 
 const logger = getLoggerByName('communicationParser', 'info');
 
@@ -44,11 +45,12 @@ export function parseCommunicationFile(filePathArr: string[], client?: Client): 
             }
         });
         parser.on('error', (err: any) => {
-            logger.error(err);
+            client?.notify('parseCommunication/success', { parseResult: 'fail', parseName: 'communication' });
+            logger.error('parseCommunication occur error: ', err);
         });
         parser.on('end', () => {
             CLUSTER_DATABASE.saveCommunicationData();
-            client?.notify('parseCommunication/success', { parseResult: 'ok' });
+            client?.notify('parseCommunication/success', { parseResult: 'ok', parseName: 'communication' });
             const end = new Date().getTime();
             logger.info('cost time :', end - start);
             logger.info('Finished parsing file. time info:{}, bandWidth:{}', countTimeInfo, countBandWidth);
@@ -60,6 +62,7 @@ export function parseStepStatisticsFile(filePathArr: string[]): void {
     let count = 0;
     const stepList: string[] = [];
     const rankList: string[] = [];
+    const start = new Date().getTime();
     filePathArr.forEach(filePath => {
         logger.info('import step statistics file start:', filePath);
         const stream = fs.createReadStream(filePath);
@@ -74,8 +77,9 @@ export function parseStepStatisticsFile(filePathArr: string[]): void {
                     if (!rankList.includes(arr[2])) {
                         rankList.push(arr[2]);
                     }
-                    if (!stepList.includes(arr[0])) {
-                        stepList.push(arr[0]);
+                    const tempStep = toInteger(arr[0]).toString();
+                    if (!stepList.includes(tempStep)) {
+                        stepList.push(tempStep);
                     }
                     CLUSTER_DATABASE.insertStepStatisticsInfo(mapperToStepStatisticsInfo(arr));
                     count++;
@@ -83,9 +87,16 @@ export function parseStepStatisticsFile(filePathArr: string[]): void {
             }
         });
         rl.on('close', () => {
-            CLUSTER_DATABASE.updateClusterBaseInfoRankList([ JSON.stringify(rankList), JSON.stringify(stepList) ]);
+            // 更新rankList 和 stepList
+            CLUSTER_DATABASE.updateClusterBaseInfoRankList(
+                [ JSON.stringify(rankList.sort((a, b) => {
+                    return toNumber(a) - toNumber(b);
+                })), JSON.stringify(stepList.sort((a, b) => {
+                    return toNumber(a) - toNumber(b);
+                })) ]);
+            const end = new Date().getTime();
             // 读取完成
-            logger.info('import step statistics file end, total line:{}', count);
+            logger.info('import step statistics file end, total line:', count, 'cost time:', end - start);
         });
     });
 }

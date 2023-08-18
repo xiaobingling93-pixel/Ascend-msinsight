@@ -229,11 +229,12 @@ export type SummaryStatisticsVO = {
     acceleratorCore: string;
     duration: number;
     utilization: number;
-    transportType: string;
+    overlapType: string;
 };
 
 export type SummaryRequest = {
     limit: number;
-    stepId: string;
+    stepIdList: string[];
+    rankIdList: string[];
     orderBy: string;
 };
