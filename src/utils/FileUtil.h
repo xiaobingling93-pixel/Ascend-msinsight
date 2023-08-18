@@ -134,6 +134,10 @@ public:
         return S_ISDIR(st.st_mode);
 #endif
     }
+
+    static inline bool RemoveFile(const std::string &path) {
+        return  std::remove(path.c_str()) == 0;
+    }
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_FILEUTIL_H

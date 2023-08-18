@@ -35,6 +35,22 @@ bool DataBaseManager::HasFileId(const std::string &fileId)
     std::unique_lock<std::mutex> lock(mutex);
     return traceDatabaseMap.count(fileId) != 0;
 }
+
+std::vector<TraceDatabase *> DataBaseManager::GetAllTraceDatabase()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    std::vector<TraceDatabase *> traceDatabases;
+    for (auto &traceDatabase : traceDatabaseMap) {
+        traceDatabases.emplace_back(traceDatabase.second.get());
+    }
+    return traceDatabases;
+}
+
+void DataBaseManager::Clear()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    traceDatabaseMap.clear();
+}
 } // end of namespace Core
 } // end of namespace Scene
 } // end of namespace Dic

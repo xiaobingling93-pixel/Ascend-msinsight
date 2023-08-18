@@ -20,6 +20,7 @@ public:
     static TraceFileParser &Instance();
     bool Parse(const std::string &filePath, const std::string &fileId) override;
     bool WaitParseEnd(const std::string &fileId) override;
+    void Reset() override;
 
     int64_t GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid);
 private:

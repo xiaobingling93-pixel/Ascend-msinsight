@@ -8,6 +8,7 @@
 #include "FileUtil.h"
 #include "DataBaseManager.h"
 #include "EventParser.h"
+#include "TraceTime.h"
 #include "TraceFileParser.h"
 
 namespace Dic {
@@ -191,6 +192,24 @@ int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string
     }
     trackIdMap[fileId].emplace(str, ++trackId);
     return trackId;
+}
+
+void TraceFileParser::Reset()
+{
+    ServerLog::Info("Reset. wait task completed.");
+    threadPool->Reset();
+    ServerLog::Info("Task completed.");
+    auto databaseList = DataBaseManager::Instance().GetAllTraceDatabase();
+    for (auto &database : databaseList) {
+        std::string path = database->GetDbPath();
+        database->ReleaseStmt();
+        database->CloseDb();
+        if (!FileUtil::RemoveFile(path)) {
+            ServerLog::Error("Failed to remove file. ", path);
+        }
+    }
+    DataBaseManager::Instance().Clear();
+    TraceTime::Instance().Reset();
 }
 } // end of namespace Core
 } // end of namespace Scene
