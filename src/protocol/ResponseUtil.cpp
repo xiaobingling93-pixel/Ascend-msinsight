@@ -82,7 +82,7 @@ template <> std::optional<json_t> ToResponseJson<ImportActionResponse>(const Imp
         actionJson["cardName"] = action.cardName;
         actionJson["rankId"] = action.rankId;
         actionJson["result"] = action.result;
-        json["body"]["result"].push_back(actionJson);
+        json["body"]["result"].emplace_back(actionJson);
     }
     return json;
 }
@@ -94,16 +94,16 @@ template <> std::optional<json_t> ToResponseJson<UnitThreadTracesResponse>(const
     for (const std::vector<ThreadTraces>& array : response.body.data) {
         json_t threadTracesArray = json_t::array();
         for (const ThreadTraces& threadTraces : array) {
-            json_t json = json_t::object();
-            json["name"] = threadTraces.name;
-            json["duration"] = threadTraces.duration;
-            json["startTime"] = threadTraces.startTime;
-            json["endTime"] = threadTraces.endTime;
-            json["depth"] = threadTraces.depth;
-            json["threadId"] = threadTraces.threadId;
-            threadTracesArray.push_back(json);
+            json_t threadJson = json_t::object();
+            threadJson["name"] = threadTraces.name;
+            threadJson["duration"] = threadTraces.duration;
+            threadJson["startTime"] = threadTraces.startTime;
+            threadJson["endTime"] = threadTraces.endTime;
+            threadJson["depth"] = threadTraces.depth;
+            threadJson["threadId"] = threadTraces.threadId;
+            threadTracesArray.emplace_back(threadJson);
         }
-        json["body"]["data"].push_back(threadTracesArray);
+        json["body"]["data"].emplace_back(threadTracesArray);
     }
     return json;
 }
@@ -114,13 +114,13 @@ template <> std::optional<json_t> ToResponseJson<UnitThreadsResponse>(const Unit
     json["body"]["emptyFlag"] = response.body.emptyFlag;
     json["body"]["data"] = json_t::array();
     for (const Threads& threads : response.body.data) {
-        json_t json = json_t::object();
-        json["title"] = threads.title;
-        json["wallDuration"] = threads.wallDuration;
-        json["occurrences"] = threads.occurrences;
-        json["avgWallDuration"] = threads.avgWallDuration;
-        json["selfTime"] = threads.selfTime;
-        json["body"]["data"].push_back(json);
+        json_t threadsJson;
+        threadsJson["title"] = threads.title;
+        threadsJson["wallDuration"] = threads.wallDuration;
+        threadsJson["occurrences"] = threads.occurrences;
+        threadsJson["avgWallDuration"] = threads.avgWallDuration;
+        threadsJson["selfTime"] = threads.selfTime;
+        json["body"]["data"].emplace_back(threadsJson);
     }
     return json;
 }
@@ -142,14 +142,14 @@ template <> std::optional<json_t> ToResponseJson<UnitFlowNameResponse>(const Uni
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["flowDetail"] = json_t::array();
     for (const FlowName& flowName : response.body.flowDetail) {
-        json_t json = json_t::object();
-        json["title"] = flowName.title;
-        json["tid"] = flowName.tid;
-        json["pid"] = flowName.pid;
-        json["timestamp"] = flowName.timestamp;
-        json["depth"] = flowName.depth;
-        json["flowId"] = flowName.flowId;
-        json["body"]["data"].push_back(json);
+        json_t flowJson = json_t::object();
+        flowJson["title"] = flowName.title;
+        flowJson["tid"] = flowName.tid;
+        flowJson["pid"] = flowName.pid;
+        flowJson["timestamp"] = flowName.timestamp;
+        flowJson["depth"] = flowName.depth;
+        flowJson["flowId"] = flowName.flowId;
+        json["body"]["data"].emplace_back(flowJson);
     }
     return json;
 }
@@ -186,10 +186,10 @@ template <> std::optional<json_t> ToResponseJson<UnitChartResponse>(const UnitCh
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["data"] = json_t::array();
     for (const Chart& chart: response.body.data) {
-        json_t json = json_t::object();
-        json["ts"] = chart.ts;
-        json["value"] = chart.value;
-        json["body"]["data"].push_back(json);
+        json_t chartJson = json_t::object();
+        chartJson["ts"] = chart.ts;
+        chartJson["value"] = chart.value;
+        json["body"]["data"].emplace_back(chartJson);
     }
     return json;
 }

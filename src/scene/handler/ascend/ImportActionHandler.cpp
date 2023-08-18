@@ -8,6 +8,7 @@
 #include "FileUtil.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "TraceTime.h"
 #include "TraceFileParser.h"
 
 namespace Dic {
@@ -58,10 +59,14 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
 {
     ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId, ", result:", result);
     auto event = std::make_unique<ParseSuccessEvent>();
-    event->body.uint.type = "card";
-    event->body.uint.metadata.cardId = fileId;
-    std::vector<std::unique_ptr<UintTrack>> metaData;
-    SearchMetaData(fileId, metaData);
+    uint64_t min, max;
+    event->body.unit.type = "card";
+    event->body.unit.metadata.cardId = fileId;
+    DataBaseManager::Instance().GetTraceDatabase(fileId)->QueryExtremumTimestamp(min, max);
+    TraceTime::Instance().UpdateTime(min, max);
+    event->body.startTimeUpdated = true;
+    event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
+    SearchMetaData(fileId, event->body.unit.children);
     WsSessionManager::Instance().OnParseSuccessEvent(token, *event);
 }
 
@@ -99,9 +104,9 @@ std::string ImportActionHandler::GetFileId(const std::string &path)
     return std::to_string(i++);
 }
 
-void ImportActionHandler::SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UintTrack>> &metaData)
+void ImportActionHandler::SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData)
 {
-
+    DataBaseManager::Instance().GetTraceDatabase(fileId)->QueryUnitsMetadata(fileId, metaData);
 }
 } // Dic
 } // Scene

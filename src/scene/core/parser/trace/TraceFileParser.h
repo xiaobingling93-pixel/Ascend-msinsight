@@ -21,7 +21,7 @@ public:
     bool Parse(const std::string &filePath, const std::string &fileId) override;
     bool WaitParseEnd(const std::string &fileId) override;
 
-    int64_t GetTrackId(const std::string &pid, int64_t tid);
+    int64_t GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid);
 private:
     TraceFileParser();
     ~TraceFileParser() override;
@@ -37,7 +37,7 @@ private:
     static std::string GetDbPath(const std::string &filePath, const std::string &fileId);
 
     std::mutex trackMutex;
-    std::map<std::string, int64_t> trackIdMap;
+    std::map<std::string, std::map<std::string, int64_t>> trackIdMap;
     int64_t trackId = 0;
     std::chrono::system_clock::time_point start;
 };

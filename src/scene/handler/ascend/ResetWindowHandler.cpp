@@ -5,14 +5,16 @@
 #include "ResetWindowHandler.h"
 #include "ServerLog.h"
 #include "WsSessionManager.h"
+#include "DataBaseManager.h"
 
 namespace Dic {
 namespace Scene {
 using namespace Dic::Server;
+using namespace Dic::Scene::Core;
 void ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) {
     ResetWindowRequest &request = dynamic_cast<ResetWindowRequest &>(*requestPtr.get());
     std::string token = request.token;
-    ServerLog::Info("Hdc list device start, token = ", StringUtil::AnonymousString(token));
+    ServerLog::Info("Reset window, token = ", StringUtil::AnonymousString(token));
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
                         ", command = ", command);

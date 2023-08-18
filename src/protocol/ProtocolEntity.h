@@ -76,11 +76,11 @@ struct HarmonyConfig {
     JsVmConfig jsvm;
 };
 
-struct UintMetaData {
+struct UnitMetaData {
     std::string cardId;
 };
 
-struct UintTrackMeatData {
+struct UnitTrackMeatData {
     std::string cardId;
     std::string processId;
     std::string processName;
@@ -90,16 +90,16 @@ struct UintTrackMeatData {
     int maxDepth = 0;
 };
 
-struct UintTrack {
+struct UnitTrack {
     std::string type;
-    UintTrackMeatData metaData;
-    std::vector<std::unique_ptr<UintTrack>> children;
+    UnitTrackMeatData metaData;
+    std::vector<std::unique_ptr<UnitTrack>> children;
 };
 
-struct Uint {
+struct Unit {
     std::string type;
-    UintMetaData metadata;
-    std::vector<std::unique_ptr<UintTrack>> children;
+    UnitMetaData metadata;
+    std::vector<std::unique_ptr<UnitTrack>> children;
 };
 } // end of namespace Protocol
 } // end of namespace Dic

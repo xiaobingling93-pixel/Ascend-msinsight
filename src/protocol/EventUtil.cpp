@@ -33,18 +33,18 @@ template <> std::optional<json_t> ToEventJson<DeviceChangedEvent>(const DeviceCh
     return json;
 }
 
-json_t UintTrackToJson(const UintTrack &uintTrack) {
+json_t UnitTrackToJson(const UnitTrack &unitTrack) {
     json_t json;
-    json["type"] = uintTrack.type;
-    json["metaData"]["cardId"] = uintTrack.metaData.cardId;
-    json["metaData"]["processId"] = uintTrack.metaData.processId;
-    json["metaData"]["processName"] = uintTrack.metaData.processName;
-    json["metaData"]["label"] = uintTrack.metaData.label;
-    json["metaData"]["threadId"] = uintTrack.metaData.threadId;
-    json["metaData"]["threadName"] = uintTrack.metaData.threadName;
-    json["metaData"]["maxDepth"] = uintTrack.metaData.maxDepth;
-    for (const auto &track : uintTrack.children) {
-        json["children"].emplace_back(UintTrackToJson(*track));
+    json["type"] = unitTrack.type;
+    json["metadata"]["cardId"] = unitTrack.metaData.cardId;
+    json["metadata"]["processId"] = unitTrack.metaData.processId;
+    json["metadata"]["processName"] = unitTrack.metaData.processName;
+    json["metadata"]["label"] = unitTrack.metaData.label;
+    json["metadata"]["threadId"] = unitTrack.metaData.threadId;
+    json["metadata"]["threadName"] = unitTrack.metaData.threadName;
+    json["metadata"]["maxDepth"] = unitTrack.metaData.maxDepth;
+    for (const auto &track : unitTrack.children) {
+        json["children"].emplace_back(UnitTrackToJson(*track));
     }
     return json;
 }
@@ -55,10 +55,10 @@ template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSucc
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
     json["body"]["maxTimeStamp"] = event.body.maxTimeStamp;
     json["body"]["startTimeUpdated"] = event.body.startTimeUpdated;
-    json["body"]["uint"]["type"] = event.body.uint.type;
-    json["body"]["uint"]["metadata"]["cardId"] = event.body.uint.metadata.cardId;
-    for (const auto &track : event.body.uint.children) {
-        json["children"].emplace_back(UintTrackToJson(*track));
+    json["body"]["unit"]["type"] = event.body.unit.type;
+    json["body"]["unit"]["metadata"]["cardId"] = event.body.unit.metadata.cardId;
+    for (const auto &track : event.body.unit.children) {
+        json["body"]["unit"]["children"].emplace_back(UnitTrackToJson(*track));
     }
     return json;
 }

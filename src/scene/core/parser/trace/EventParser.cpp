@@ -15,7 +15,7 @@ namespace Core {
 using namespace Dic::Server;
 EventParser::EventParser(const std::string &filePath, const std::string &dbPath, const std::string &fileId) : filePath(filePath), dbPath(dbPath), fileId(fileId)
 {
-    ServerLog::Info("Init event parser. file:", filePath, ", db:", dbPath);
+    ServerLog::Info("Init event parser. fileId:", fileId);
     database = DataBaseManager::Instance().GetTraceDatabase(fileId);
     InitEventHandle();
 }
@@ -137,7 +137,7 @@ int64_t EventParser::GetTrackId(const std::string &pid, int64_t tid)
     if (trackIdMap.count(str) > 0) {
         return trackIdMap.at(str);
     }
-    int64_t id = TraceFileParser::Instance().GetTrackId(pid, tid);
+    int64_t id = TraceFileParser::Instance().GetTrackId(fileId, pid, tid);
     trackIdMap.emplace(str, id);
     return id;
 }

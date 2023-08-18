@@ -124,7 +124,7 @@ struct ThreadDetailRequest : public Request {
 
 struct UnitFlowNameParams {
     std::string rankId;
-    uint32_t tid = 0;
+    int64_t tid = 0;
     std::string pid;
     uint64_t startTime;
 };

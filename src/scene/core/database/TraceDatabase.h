@@ -5,8 +5,9 @@
 #ifndef PROFILER_SERVER_TRACEDATABASE_H
 #define PROFILER_SERVER_TRACEDATABASE_H
 
-#include <ProtocolRequest.h>
-#include <ProtocolResponse.h>
+#include "ProtocolRequest.h"
+#include "ProtocolResponse.h"
+#include "ProtocolEntity.h"
 #include "Database.h"
 #include "GlobalDefs.h"
 
@@ -45,7 +46,9 @@ public:
     bool QueryThreadDetail(Protocol::ThreadDetailParams &requestParams, Protocol::UnitThreadDetailBody &responseBody,
        int64_t minTimestamp, int64_t trackId);
     // query flow detail
-    bool QueryFlowDetail(Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody, int64_t minTimestamp, int64_t trackId);
+    bool QueryFlowDetail(Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody, int64_t minTimestamp);
+    bool QueryUnitsMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
+    bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max);
     // query flow name
     bool QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody, int64_t minTimestamp, int64_t trackId);
 

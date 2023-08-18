@@ -22,8 +22,8 @@ struct InitializedEvent : public Event {
 
 // ascend
 struct ParseSuccessEventBody {
-    Uint uint;
-    uint64_t startTimeUpdated = 0;
+    Unit unit;
+    bool startTimeUpdated = false;
     uint64_t maxTimeStamp = 0;
 };
 

@@ -1,0 +1,31 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ */
+
+#ifndef PROFILER_SERVER_TRACE_TIME_H
+#define PROFILER_SERVER_TRACE_TIME_H
+
+#include <cstdint>
+
+namespace Dic {
+namespace Scene {
+namespace Core {
+class TraceTime {
+public:
+    static TraceTime &Instance();
+    void Reset();
+    void UpdateTime(uint64_t min, uint64_t max);
+    uint64_t GetStartTime();
+    uint64_t GetDuration();
+
+private:
+    TraceTime();
+    ~TraceTime() = default;
+    uint64_t maxTimestamp;
+    uint64_t minTimestamp;
+};
+} // end of namespace Core
+} // end of namespace Scene
+} // end of namespace Dic
+
+#endif // PROFILER_SERVER_TRACE_TIME_H

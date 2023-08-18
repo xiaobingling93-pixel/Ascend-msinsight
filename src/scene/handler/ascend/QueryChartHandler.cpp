@@ -5,14 +5,16 @@
 #include "QueryChartHandler.h"
 #include "ServerLog.h"
 #include "WsSessionManager.h"
+#include "DataBaseManager.h"
 
 namespace Dic {
 namespace Scene {
 using namespace Dic::Server;
+using namespace Dic::Scene::Core;
 void QueryChartHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) {
     UnitChartRequest &request = dynamic_cast<UnitChartRequest &>(*requestPtr.get());
     std::string token = request.token;
-    ServerLog::Info("Hdc list device start, token = ", StringUtil::AnonymousString(token));
+    ServerLog::Info("Query chart, token = ", StringUtil::AnonymousString(token));
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
                         ", command = ", command);
@@ -22,7 +24,7 @@ void QueryChartHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
     std::unique_ptr<UnitChartResponse> responsePtr = std::make_unique<UnitChartResponse>();
     UnitChartResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-
+    // mock
     // query data from database, code in core package
 
     SetResponseResult(response, true);

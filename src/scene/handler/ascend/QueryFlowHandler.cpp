@@ -5,14 +5,17 @@
 #include "QueryFlowHandler.h"
 #include "ServerLog.h"
 #include "WsSessionManager.h"
+#include "TraceTime.h"
+#include "DataBaseManager.h"
 
 namespace Dic {
 namespace Scene {
 using namespace Dic::Server;
+using namespace Dic::Scene::Core;
 void QueryFlowHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) {
     UnitFlowRequest &request = dynamic_cast<UnitFlowRequest &>(*requestPtr.get());
     std::string token = request.token;
-    ServerLog::Info("Hdc list device start, token = ", StringUtil::AnonymousString(token));
+    ServerLog::Info("Query flow, token = ", StringUtil::AnonymousString(token));
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
                         ", command = ", command);
@@ -22,9 +25,12 @@ void QueryFlowHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestP
     std::unique_ptr<UnitFlowResponse> responsePtr = std::make_unique<UnitFlowResponse>();
     UnitFlowResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-
-    // query data from database, code in core package
-
+    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    if (!database->QueryFlowDetail(request.params, response.body, TraceTime::Instance().GetStartTime())) {
+        SetResponseResult(response, false);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

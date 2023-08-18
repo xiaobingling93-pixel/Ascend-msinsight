@@ -5,14 +5,18 @@
 #include "QueryThreadsHandler.h"
 #include "ServerLog.h"
 #include "WsSessionManager.h"
+#include "DataBaseManager.h"
+#include "TraceFileParser.h"
+#include "TraceTime.h"
 
 namespace Dic {
 namespace Scene {
 using namespace Dic::Server;
+using namespace Dic::Scene::Core;
 void QueryThreadsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) {
     UnitThreadsRequest &request = dynamic_cast<UnitThreadsRequest &>(*requestPtr.get());
     std::string token = request.token;
-    ServerLog::Info("Hdc list device start, token = ", StringUtil::AnonymousString(token));
+    ServerLog::Info("Query threads, token = ", StringUtil::AnonymousString(token));
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
                         ", command = ", command);
@@ -23,7 +27,13 @@ void QueryThreadsHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     UnitThreadsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
 
-    // query data from database, code in core package
+    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    int64_t trackId = TraceFileParser::Instance().GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
+    if (!database->QueryThreads(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId)) {
+        SetResponseResult(response, false);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
 
     SetResponseResult(response, true);
     // add response to response queue in session

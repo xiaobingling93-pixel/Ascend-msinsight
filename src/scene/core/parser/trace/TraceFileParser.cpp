@@ -179,17 +179,17 @@ std::string TraceFileParser::GetDbPath(const std::string &filePath, const std::s
     return Dic::FileUtil::GetRealPath(dbPath);
 }
 
-int64_t TraceFileParser::GetTrackId(const std::string &pid, int64_t tid)
+int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid)
 {
     std::unique_lock<std::mutex> lock(trackMutex);
     std::string str = pid + std::to_string(tid);
-    if (trackIdMap.count(str) > 0) {
-        return trackIdMap.at(str);
+    if (trackIdMap[fileId].count(str) > 0) {
+        return trackIdMap[fileId].at(str);
     }
     if (trackId == INT64_MAX) {
         trackId = 0;
     }
-    trackIdMap.emplace(str, ++trackId);
+    trackIdMap[fileId].emplace(str, ++trackId);
     return trackId;
 }
 } // end of namespace Core
