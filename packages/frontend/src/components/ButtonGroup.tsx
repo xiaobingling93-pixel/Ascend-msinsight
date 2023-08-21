@@ -4,12 +4,12 @@ import * as React from 'react';
 import { Session } from '../entity/session';
 import { TimeMakerButton } from './TimeMakerButton';
 import { CustomButton } from './base/StyledButton';
-import { ReactComponent as AntdResetIcon } from '../assets/images/insights/ark_gc.svg';
+import { ReactComponent as AntdCleanIcon } from '../assets/images/insights/ark_gc.svg';
 import { runInAction } from 'mobx';
-import { SvgType } from './base/rc-table/types';
 import { store } from '../store';
+import { SvgType } from './base/rc-table/types';
 
-const ResetIcon = AntdResetIcon as SvgType;
+const CleanIcon = AntdCleanIcon as SvgType;
 
 const Container = styled.div`
     display: flex;
@@ -25,7 +25,7 @@ const Container = styled.div`
 export const ButtonGroup = observer(({ session }: { session: Session }) => {
     const unit = session.selectedUnits[0];
     return (<Container>
-        {<CustomButton icon={ ResetIcon }
+        {<CustomButton icon={ CleanIcon } tooltip={'Clean'}
             onClick={() => resetSession(session)}
         />}
         <TimeMakerButton session={session} />

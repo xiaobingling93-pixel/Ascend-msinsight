@@ -47,6 +47,9 @@ type CardInfo = {
 
 export const selectFolders = async (session: Session, isSelectFile: boolean): Promise<void> => {
     const selectedPath = isSelectFile ? await messageSender.selectFile() : await messageSender.selectFolder();
+    if (selectedPath === '') {
+        return;
+    }
     const result = await window.request('import/action', { path: selectedPath });
     runInAction(() => {
         session.phase = 'download';
