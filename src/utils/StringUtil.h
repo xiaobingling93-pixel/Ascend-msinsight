@@ -93,17 +93,6 @@ public:
         return res;
     }
 
-    static inline std::string GetFileNameByUnixPath(const std::string &path)
-    {
-        std::string name;
-        if (path.find_last_of('/') != std::string::npos) {
-            name = path.substr(path.find_last_of('/') + 1);
-        } else {
-            name = path;
-        }
-        return name;
-    }
-
     static inline std::string Trim(std::string &str)
     {
         if (str.empty()) {

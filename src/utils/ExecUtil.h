@@ -23,7 +23,6 @@ public:
             while(fgets(buffer, sizeof(buffer), ptr) != nullptr)
             {
                 result.append(buffer);
-                ZeroMemory(buffer, sizeof(buffer));
             }
             pclose(ptr);
         }

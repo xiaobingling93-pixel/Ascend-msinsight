@@ -26,7 +26,6 @@ private:
 
     void SetParseCallBack(const std::string &token);
     std::vector<std::string> FindTraceFile(const std::string &path);
-    std::string GetFileId(const std::string &path);
 };
 } // end of namespace Scene
 } // end of namespace Dic

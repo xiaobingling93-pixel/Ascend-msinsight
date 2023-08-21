@@ -6,6 +6,7 @@
 #include "ServerLog.h"
 #include "RegexUtil.h"
 #include "FileUtil.h"
+#include "JsonUtil.h"
 #include "DataBaseManager.h"
 #include "EventParser.h"
 #include "TraceTime.h"
@@ -210,6 +211,58 @@ void TraceFileParser::Reset()
     }
     DataBaseManager::Instance().Clear();
     TraceTime::Instance().Reset();
+}
+
+std::string TraceFileParser::GetFileId(const std::string &filePath)
+{
+    std::string fileId = GetFileIdFromFile(filePath);
+    if (fileId.empty()) {
+        fileId = GetFileIdFromPath(filePath);
+    }
+    return fileId;
+}
+
+std::string TraceFileParser::GetFileIdFromFile(const std::string &filePath)
+{
+    // [{"rank_id":0},{"name": "proces
+    std::ifstream file(filePath);
+    if (!file.is_open()) {
+        ServerLog::Error("Failed to open file.");
+        return "";
+    }
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(BUFFER_LENGTH);
+    if (!file.read(buffer.get(), BUFFER_LENGTH)) {
+        ServerLog::Error("Failed to read file.");
+        return "";
+    }
+    std::string str(buffer.get(), BUFFER_LENGTH);
+    std::string rankId = str.substr(str.find_first_of('{'), str.find_first_of('}') - str.find_first_of('{') + 1);
+    std::string error;
+    auto json = JsonUtil::TryParse(rankId, error);
+    if (!json.has_value()) {
+        ServerLog::Error("Failed to parse json.", error);
+        return "";
+    }
+    if (json.value().contains("rank_id")) {
+        return nlohmann::to_string(json.value()["rank_id"]);
+    }
+    return "";
+}
+
+std::string TraceFileParser::GetFileIdFromPath(const std::string &filePath)
+{
+    const int fileIdPosition = 3; // 上上层目录
+    std::string path = FileUtil::GetRealPath(filePath);
+    auto pos = path.find_first_of('\\');
+    while (pos != std::string::npos) {
+        path.replace(pos, 1, "/");
+        pos = path.find_first_of('\\');
+    }
+    auto list = StringUtil::Split(path, "/");
+    if (list.size() < fileIdPosition) {
+        return "";
+    }
+    return list.at(list.size() - fileIdPosition);
 }
 } // end of namespace Core
 } // end of namespace Scene

@@ -42,7 +42,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
     SetParseCallBack(token);
     for (const auto &file : traceFiles) {
-        std::string fileId = GetFileId(file);
+        std::string fileId = TraceFileParser::Instance().GetFileId(file);
         if (DataBaseManager::Instance().HasFileId(fileId)) {
             continue;
         }
@@ -96,12 +96,6 @@ void ImportActionHandler::SetParseCallBack(const std::string &token)
     std::function<void(const std::string, bool)> func =
         std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2);
     TraceFileParser::Instance().SetParseEndCallBack(func);
-}
-
-std::string ImportActionHandler::GetFileId(const std::string &path)
-{
-    static int i = 0;
-    return std::to_string(i++);
 }
 
 void ImportActionHandler::SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData)
