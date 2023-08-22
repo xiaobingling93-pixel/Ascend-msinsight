@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import * as echarts from 'echarts';
-import { Container } from '../Common';
+import { addResizeEvent, Container } from '../Common';
 
 function InitCharts(data: dataType): void {
     const chartDom = document.getElementById('main');
@@ -12,6 +12,7 @@ function InitCharts(data: dataType): void {
         echarts.init(chartDom).dispose();
         const myChart = echarts.init(chartDom);
         myChart.setOption(wrapData(data));
+        addResizeEvent(myChart);
     }
 }
 function wrapData(data: dataType): any {

@@ -8,9 +8,8 @@ import ReactDOM from 'react-dom';
 import * as echarts from 'echarts';
 import { Col, Layout, Row, Table, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-// eslint-disable-next-line import/no-unresolved
-import { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
-import { Container } from '../Common';
+import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
+import { Container, addResizeEvent } from '../Common';
 
 const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
     const [ data, setData ] = useState([]);
@@ -119,6 +118,7 @@ async function InitPacketAndBandwidthCharts(domId: string, iterationId: number,
         } else {
             const myChart = echarts.init(chartDom);
             myChart.setOption(res);
+            addResizeEvent(myChart);
         }
     }
 }

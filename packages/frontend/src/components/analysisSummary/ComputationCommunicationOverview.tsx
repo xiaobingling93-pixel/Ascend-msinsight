@@ -9,7 +9,7 @@ import { VoidFunction } from '../../utils/interface';
 import SummaryTable from './SummaryTable';
 import { queryTopSummary } from '../../utils/RequestUtils';
 import BaseInfo, { BaseInfoDataType, defaultBaseInfo } from './BaseInfo';
-import { formatDate } from '../Common';
+import { addResizeEvent, formatDate } from '../Common';
 import { Tooltip } from 'antd';
 import { QuestionCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
 import { Session } from '../../entity/session';
@@ -187,6 +187,7 @@ async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
         const myChart = echarts.init(chartDom);
         myChart.setOption(wrapData(data));
         myChart.on('click', handleClick);
+        addResizeEvent(myChart);
     }
 }
 export const hit = (<Tooltip title={
