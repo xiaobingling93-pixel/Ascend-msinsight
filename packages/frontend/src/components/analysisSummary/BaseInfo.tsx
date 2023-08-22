@@ -48,6 +48,40 @@ const list = [
     },
 ];
 
+const formateTime = (t: number): string => {
+    if (isNaN(t)) {
+        return '';
+    }
+    let leftTime = t;
+    // 小时级
+    if (t >= 1000 * 1000 * 60 * 60) {
+        const h = Math.floor(leftTime / (1000 * 1000 * 60 * 60));
+        leftTime = leftTime % (1000 * 1000 * 60 * 60);
+        const m = Math.floor(leftTime / (1000 * 1000 * 60));
+        leftTime = leftTime % (1000 * 1000 * 60);
+        const s = Number((leftTime / (1000 * 1000)).toFixed(2));
+        return `${h}h${m}m${s}s`;
+    }
+    // 分钟级
+    if (t >= 1000 * 1000 * 60) {
+        const m = Math.floor(leftTime / (1000 * 1000 * 60));
+        leftTime = leftTime % (1000 * 1000 * 60);
+        const s = Number((leftTime / (1000 * 1000)).toFixed(2));
+        return `${m}m${s}s`;
+    }
+    // 秒级
+    if (t >= 1000 * 1000) {
+        const s = Number((leftTime / (1000 * 1000)).toFixed(2));
+        return `${s}s`;
+    }
+    // 毫秒级
+    if (t >= 1000) {
+        const s = Number((leftTime / (1000)).toFixed(2));
+        return `${s}ms`;
+    }
+    return `${t}μs`;
+};
+
 const BaseInfo = ({ data }: {data: StringMap;session: Session}): JSX.Element => {
     return <Container
         title={'BaseInfo'}
@@ -58,7 +92,11 @@ const BaseInfo = ({ data }: {data: StringMap;session: Session}): JSX.Element => 
                 list.map(item => (
                     <div key={item.key}>
                         <div>{item.label}:</div>
-                        <div>{data[item.key]}</div>
+                        <div>{
+                            item.key === 'collectDuration'
+                                ? formateTime(Number(data.collectDuration))
+                                : data[item.key]
+                        }</div>
                     </div>
                 ))
             }
