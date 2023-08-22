@@ -192,11 +192,11 @@ async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
 export const hit = (<Tooltip title={
     (
         <div style={{ background: 'var(--grey100)', padding: '1rem' }}>
-            <div>总时间 = Computing + Communication(Not Overlapped) + Free</div>
-            <div>Computing Ratio = ( Computing + Communication(Not Overlapped) + Free ) / 总时间</div>
-            <div>Communication Ratio = Communication(Not Overlapped) / 总时间</div>
-            <div style={{ marginTop: '2rem' }}><ExclamationCircleFilled />
-                点击不同卡的柱状图展示单卡Computation / Communication详情</div>
+            <div>Total Time = Computing + Communication(Not Overlapped) + Free</div>
+            <div>Computing Ratio = Computing / Total Time</div>
+            <div>Communication Ratio = Communication(Not Overlapped) / Total Time</div>
+            <div style={{ marginTop: '2rem' }}><ExclamationCircleFilled style={{ marginRight: '10px' }}/>
+                Click Bar Chart Display The Single Rank Computation / Communication Detail</div>
         </div>
     )
 }>
