@@ -585,7 +585,7 @@ export class Table {
             const sql: string = `SELECT
                                     name,
                                     type,
-                                    start_time - ${client.shadowSession.extremumTimestamp.minTimestamp} as startTime,
+                                    start_time as startTime,
                                     duration,
                                     wait_time,
                                     block_dim,
