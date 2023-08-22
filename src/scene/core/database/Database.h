@@ -22,7 +22,6 @@ public:
     virtual bool IsOpen() const;
     virtual void CloseDb();
     virtual bool StartTransaction();
-    virtual bool ReStartTransaction();
     virtual bool EndTransaction();
     virtual std::string GetDbPath();
     virtual bool GetTableList(std::vector<std::string> &tableList) const;
