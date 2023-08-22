@@ -12,6 +12,7 @@ import {
     OperatorsResponse,
 } from '../../query/communicationAnalysisData';
 import { ClusterDatabase } from '../cluster_database';
+import { CLUSTER_DATABASE } from '../tableManager';
 
 const globalDatabase = new ClusterDatabase('cluster.db');
 
@@ -87,17 +88,19 @@ it('query duration data with rank list', async function () {
 });
 
 it('query all Operator details with fenye', async function () {
-    const operatorNumber = await globalDatabase.queryOperatorsCount('2', '0');
+    const operatorNumber = await globalDatabase.queryOperatorsCount('16', '0');
+    const totalOpInfoNumber = await CLUSTER_DATABASE.queryTotalOpInfoCount('16', '0');
     console.log(operatorNumber.length);
+    console.log(totalOpInfoNumber.length);
     const response: AllOperatorsResponse = {
-        count: operatorNumber[0].nums,
+        count: operatorNumber[0].nums - totalOpInfoNumber[0].nums,
         pageSize: 1,
         currentPage: 1,
         allOperators: [],
     };
     const param: OperatorDetailsRequest = {
-        iterationId: '2',
-        rankId: '1',
+        iterationId: '16',
+        rankId: '0',
         pageSize: 10,
         currentPage: 1,
         orderBy: 'elapse_time',
@@ -105,7 +108,7 @@ it('query all Operator details with fenye', async function () {
     };
     response.allOperators = await globalDatabase.queryAllOperators(param);
     expect(response).toEqual({
-        count: 3,
+        count: 4,
         pageSize: 1,
         currentPage: 1,
         allOperators: [

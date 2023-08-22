@@ -55,13 +55,14 @@ export const durationListHandler = async (request: DurationListRequest): Promise
 
 export const operatorDetailsHandler = async (request: OperatorDetailsRequest): Promise<AllOperatorsResponse> => {
     const operatorNumber = await CLUSTER_DATABASE.queryOperatorsCount(request.iterationId, request.rankId);
-    if (operatorNumber.length !== 1) {
-        logger.error('select operator counts error');
+    const totalOpInfoNumber = await CLUSTER_DATABASE.queryTotalOpInfoCount(request.iterationId, request.rankId);
+    if (operatorNumber.length !== 1 || totalOpInfoNumber.length !== 1) {
+        logger.error('select operator counts error.');
     }
     const orderByName = [ '', 'elapse_time', 'transit_time', 'synchronization_time',
         'wait_time', 'synchronization_time_ratio', 'wait_time_ratio', 'idle_time' ];
     if (!orderByName.includes(request.orderBy)) {
-        logger.error('select operator counts error');
+        logger.error('The sort field entered is incorrect.');
     }
     const params: OperatorDetailsRequest = {
         iterationId: request.iterationId,
@@ -72,7 +73,7 @@ export const operatorDetailsHandler = async (request: OperatorDetailsRequest): P
         order: request.order === 'ascend' ? 'ASC' : 'DESC',
     };
     const response: AllOperatorsResponse = {
-        count: operatorNumber[0].nums,
+        count: operatorNumber[0].nums - totalOpInfoNumber[0].nums,
         pageSize: request.pageSize,
         currentPage: request.currentPage,
         allOperators: [],

@@ -414,6 +414,14 @@ export class ClusterDatabase {
         return this.executeSql(sql, [ iterationId, rankId ]);
     }
 
+    async queryTotalOpInfoCount(iterationId: string, rankId: string): Promise<any> {
+        const sql: string = `SELECT count(*) AS nums FROM ${COMMUNICATION_TIME_INFO_TABLE}
+                             WHERE iteration_id = ?
+                               AND rank_id = ?
+                               AND op_name = 'Total Op Info'`;
+        return this.executeSql(sql, [ iterationId, rankId ]);
+    }
+
     async queryBandwidthData(iterationId: string, rankId: string, operatorName: string): Promise<any> {
         const sql: string = `SELECT transport_type,
                                     ROUND(transit_size, 4) as transit_size,
