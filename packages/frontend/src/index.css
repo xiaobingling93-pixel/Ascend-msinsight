@@ -93,8 +93,11 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 :root {
     --grey0: white;
     --grey5: #f8f8f8;
+    --grey8: #dddddd;
     --grey10: #d1d1d1;
     --grey20: #a9a9a9;
+    --grey30: #a3a3a3;
+    --grey40: #939393;
     --grey50: rgb(128, 128, 128);
     --grey60: rgb(91, 91, 91);
     --grey70: #414141;
@@ -103,6 +106,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     --grey90: #202020;
     --grey95: #1b1b1b;
     --grey100: black;
+    --activeblue: #1890ff;
 }
 
 .theme_dark .ant-select-selector{
@@ -195,7 +199,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     z-index: 10;
 }
 
-.theme_dark *:not(path){
+.theme_dark *:not(path,svg){
     color:white;
 }
 

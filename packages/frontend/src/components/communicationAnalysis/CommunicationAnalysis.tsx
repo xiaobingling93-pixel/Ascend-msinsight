@@ -8,7 +8,7 @@ import { Breadcrumb } from 'antd';
 import { Session } from '../../entity/session';
 import Help from './Help';
 import Filter, { conditionDataType } from './Filter';
-import CommunicationTimeTable, { DataType as tableDataType } from './CommunicationTimeTable';
+import CommunicationTimeTable, { DataType, DataType as tableDataType } from './CommunicationTimeTable';
 import CommunicationTimeChart, { dataType as chartDataType }
     from './CommunicationTimeChart';
 import CommunicationMatrix from './CommunicationMatrix';
@@ -38,6 +38,7 @@ interface showDataType{
 const searchData = async (conditions: conditionDataType): Promise<showDataType> => {
     const res = await queryCommunication(conditions);
     res.duration.forEach((item: any) => { item.rankId = item.rank_id; });
+    res.duration.sort((a: DataType, b: DataType) => b.elapse_time - a.elapse_time);
     return { chartData: wrapChartData(res.duration), tableData: res.duration };
 };
 const wrapChartData = (data: tableDataType[]): chartDataType => {

@@ -6,7 +6,13 @@ import React, { useEffect, useState } from 'react';
 import { Table, Button } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
-import { Container, GetPageConfigWhithAllData, PaginationWhithPgaeData } from '../Common';
+import type { ColumnsType } from 'antd/es/table';
+import {
+    Container,
+    GetPageConfigWhithAllData,
+    GetPageConfigWhithPageData,
+    notNull,
+} from '../Common';
 import { VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails } from '../../utils/RequestUtils';
 import { totalOperator } from './Filter';
@@ -25,7 +31,7 @@ export interface DataType {
     [prop: string]: any;
 }
 
-const commonColumns = [
+const commonColumns: ColumnsType<DataType> = [
     {
         title: 'Elapse Time(ms)',
         dataIndex: 'elapse_time',
@@ -64,30 +70,43 @@ const commonColumns = [
 
 // Total HCCL Opertators表
 const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
-    useEffect(() => {
-        updateData({ current: 1, pageSize: 10 });
-    }, [ ]);
+    const defaultPage = { current: 1, pageSize: 10, total: 0 };
+    const defaultSorter = { field: 'elapse_time', order: 'descend' };
     const [ dataSource, setDataSource ] = useState<any[]>([]);
-    const updateData = async(page: any): Promise<void> => {
+    const [ page, setPage ] = useState(defaultPage);
+    const [ sorter, setSorter ] = useState(defaultSorter);
+
+    useEffect(() => {
+        updateData(page, sorter);
+    }, [ page.current, page.pageSize, sorter.field, sorter.order, conditions.iterationId, record.rank_id ]);
+    const updateData = async(page: any, sorter: {field: string;order: string}): Promise<void> => {
         const res = await queryOperatorDetails({
             iterationId: conditions.iterationId,
             rankId: record.rank_id,
             currentPage: page.current,
             pageSize: page.pageSize,
+            orderBy: sorter.field,
+            order: sorter.order,
         });
         setDataSource(res.allOperators);
-        setPageInfo({ total: res.count });
+        setPage({ ...page, total: res.count });
     };
 
-    const [ pageInfo, setPageInfo ] = useState({ total: 0 });
-
     const columns: TableColumnsType<DataType> = [
-        { title: 'Operator Name', dataIndex: 'op_name', key: 'op_name' },
-        ...commonColumns,
+        { title: 'Operator Name', dataIndex: 'op_name', key: 'op_name', sorter: true },
+        ...commonColumns.map(item => {
+            return { ...item, sorter: true };
+        }),
     ];
     return <div>
-        <Table columns={columns} dataSource={dataSource} pagination={false} size="small"/>
-        <PaginationWhithPgaeData handlePageChange={updateData} total={pageInfo.total}/>
+        <Table columns={columns} dataSource={dataSource} size="small"
+            pagination={GetPageConfigWhithPageData(page, setPage)}
+            onChange={(pagination, filters, sorter: any, extra) => {
+                if (extra.action === 'sort') {
+                    setSorter(sorter);
+                }
+            }}
+        />
     </div>;
 };
 
@@ -146,7 +165,7 @@ const CommunicationTimeTable = observer(function (props:
                 dataSource={dataSource}
                 columns={columns}
                 expandable={{
-                    expandedRowRender: (record: DataType) => <div style={{ marginLeft: '30px' }}>
+                    expandedRowRender: (record: DataType) => <div style={{ marginLeft: '0' }}>
                         <OperatorsTable record={record} conditions={props.conditions}/>
                     </div>,
                     expandedRowKeys,

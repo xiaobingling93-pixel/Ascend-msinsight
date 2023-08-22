@@ -67,7 +67,8 @@ export const queryCommunication = async(param: {
  * @return {[]} 返回数组
  */
 export const queryOperatorDetails = async(param: {
-    iterationId: number; rankId: number; pageSize: number;currentPage: number;}): Promise<any> => {
+    iterationId: number; rankId: number; pageSize: number;currentPage: number;orderBy: string;order: string;
+}): Promise<any> => {
     if (isNull(window.request)) {
         return OperatorDetailsData;
     }

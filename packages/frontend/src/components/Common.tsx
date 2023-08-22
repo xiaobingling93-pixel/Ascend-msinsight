@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { Checkbox, Divider, Select, Pagination } from 'antd';
 import { DragDirection, useDraggableContainer } from '../utils/useDraggableContainer';
-import { optionDataType } from '../utils/interface';
+import { optionDataType, VoidFunction } from '../utils/interface';
 import type { EChartsType } from 'echarts';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
@@ -90,12 +90,24 @@ export const PaginationWhithPgaeData = (props: any): JSX.Element => {
     return <Pagination
         {...page}
         defaultCurrent={1}
-        pageSizeOptions= {[ 2, 10, 20, 50, 100 ] }
+        pageSizeOptions= {[ 10, 20, 50, 100 ] }
         showTotal={(total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>)}
         onChange={(current, pageSize) => { setPage({ ...page, current, pageSize }); }}
         showQuickJumper={page.total / page.pageSize > 5}
         style={{ float: 'right', marginTop: '10px' }}
     />;
+};
+export const GetPageConfigWhithPageData = (page: { current: number; pageSize: number; total: number },
+    setPage: VoidFunction): object => {
+    return {
+        ...page,
+        showSizeChanger: page.total > 10,
+        pageSizeOptions: [ 10, 20, 50, 100 ],
+        showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>),
+        hideOnSinglePage: false,
+        onChange: (current: number, pageSize: number) => { setPage({ ...page, current, pageSize }); },
+        showQuickJumper: page.total / page.pageSize > 5,
+    };
 };
 
 export const GetPageConfigWhithAllData = (total: number): object => {
