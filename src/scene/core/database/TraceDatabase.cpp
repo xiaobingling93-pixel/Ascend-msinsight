@@ -12,6 +12,7 @@ namespace Core {
 using namespace Dic::Server;
 TraceDatabase::~TraceDatabase()
 {
+    CommitData();
     if (initStmt) {
         ReleaseStmt();
     }
@@ -23,7 +24,10 @@ bool TraceDatabase::InitStmt()
         return true;
     }
     std::string sql = "INSERT INTO " + sliceTable +
-                      " (timestamp, duration, name, track_id, cat, args) VALUES (round(? * 1000),round(? * 1000),?,?,?,?);";
+                      " (timestamp, duration, name, track_id, cat, args) VALUES (round(? * 1000),round(? * 1000),?,?,?,?)";
+    for (int i = 0; i < cacheSize - 1; ++i) {
+        sql.append(",(round(? * 1000),round(? * 1000),?,?,?,?)");
+    }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertSliceStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare slice statement. error:", sqlite3_errmsg(db));
         return false;
@@ -60,11 +64,15 @@ bool TraceDatabase::InitStmt()
         return false;
     }
     sql = "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" +
-          " VALUES (?,?,?,round(? * 1000),?,?);";
+          " VALUES (?,?,?,round(? * 1000),?,?)";
+    for (int i = 0; i < cacheSize - 1; ++i) {
+        sql.append(",(?,?,?,round(? * 1000),?,?)");
+    }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertFlowStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare insertFlow statement. error:", sqlite3_errmsg(db));
         return false;
     }
+    initStmt = true;
     return true;
 }
 
@@ -125,40 +133,75 @@ bool TraceDatabase::CreateTable()
 
 bool TraceDatabase::CreateIndex()
 {
+    auto start = std::chrono::system_clock::now();
     if (!isOpen) {
         ServerLog::Error("Failed to creat index. Database is not open.");
         return false;
     }
     std::string sql = "CREATE INDEX " + idIndex + " ON " + sliceTable + " (id);" +
         "CREATE INDEX " + trackIdTimeIndex + " ON " + sliceTable + " (track_id, timestamp)";
-    return ExecSql(sql);
+    ExecSql(sql);
+    auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
+    ServerLog::Info("CreateIndex end. time:", dur.count());
+    return true;
 }
 
 bool TraceDatabase::InsertSlice(const json_t &json)
 {
+    sliceCache.emplace_back(json);
+    if (sliceCache.size() == cacheSize) {
+        InsertSliceList(sliceCache);
+        sliceCache.clear();
+    }
+    return true;
+}
+
+bool TraceDatabase::InsertSliceList(const std::vector<json_t> &jsonList)
+{
     double ts, dur;
     int64_t trackId;
     std::string name, cat, args;
-    try {
-        ts = json["ts"];
-        dur = json["dur"];
-        name = json["name"];
-        trackId = json["track_id"];
-        cat = json.contains("cat") ? json["cat"] : "";
-        args = json["args"].dump();
-    } catch (std::exception &e) {
-        ServerLog::Error("Failed to insert slice. error:", e.what(), ". json:", json.dump());
-        return false;
+    sqlite3_stmt *stmt = nullptr;
+    if (jsonList.size() == cacheSize) {
+        stmt = insertSliceStmt;
+        sqlite3_reset(stmt);
+    } else {
+        std::string sql = "INSERT INTO " + sliceTable +
+                          " (timestamp, duration, name, track_id, cat, args) VALUES (round(? * 1000),round(? * 1000),?,?,?,?)";
+        for (int i = 0; i < jsonList.size() - 1; ++i) {
+            sql.append(",(round(? * 1000),round(? * 1000),?,?,?,?)");
+        }
+        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            ServerLog::Error("Failed to prepare slice stat. error:", sqlite3_errmsg(db));
+            return false;
+        }
     }
-    sqlite3_reset(insertSliceStmt);
+
     int idx = bindStartIndex;
-    sqlite3_bind_double(insertSliceStmt, idx++, ts);
-    sqlite3_bind_double(insertSliceStmt, idx++, dur);
-    sqlite3_bind_text(insertSliceStmt, idx++, name.c_str(), name.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int64(insertSliceStmt, idx++, trackId);
-    sqlite3_bind_text(insertSliceStmt, idx++, cat.c_str(), cat.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(insertSliceStmt, idx++, args.c_str(), args.length(), SQLITE_TRANSIENT);
-    auto result = sqlite3_step(insertSliceStmt);
+    for (const auto &json : jsonList) {
+        try {
+            ts = json["ts"];
+            dur = json["dur"];
+            name = json["name"];
+            trackId = json["track_id"];
+            cat = json.contains("cat") ? json["cat"] : "";
+            args = json["args"].dump();
+        } catch (std::exception &e) {
+            ServerLog::Error("Failed to insert slice. error:", e.what(), ". json:", json.dump());
+            continue;
+        }
+        sqlite3_bind_double(stmt, idx++, ts);
+        sqlite3_bind_double(stmt, idx++, dur);
+        sqlite3_bind_text(stmt, idx++, name.c_str(), name.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, idx++, trackId);
+        sqlite3_bind_text(stmt, idx++, cat.c_str(), cat.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, args.c_str(), args.length(), SQLITE_TRANSIENT);
+    }
+
+    auto result = sqlite3_step(stmt);
+    if (jsonList.size() != cacheSize) {
+        sqlite3_finalize(stmt);
+    }
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert slice data fail. ", sqlite3_errmsg(db));
         return false;
@@ -284,28 +327,59 @@ bool TraceDatabase::UpdateThreadSortIndex(const json_t &json)
 
 bool TraceDatabase::InsertFlow(const json_t &json)
 {
+    flowCache.emplace_back(json);
+    if (flowCache.size() == cacheSize) {
+        InsertFlowList(flowCache);
+        flowCache.clear();
+    }
+    return true;
+}
+
+bool TraceDatabase::InsertFlowList(const std::vector<json_t> &jsonList)
+{
     int64_t trackId, ts;
     std::string flowId, name, cat, ph;
-    try {
-        flowId = to_string(json["id"]);
-        name = json["name"];
-        trackId = json["track_id"];
-        ts = json["ts"];
-        cat = json.contains("cat") ? json["cat"] : "";
-        ph = json["ph"];
-    } catch (std::exception &e) {
-        ServerLog::Error("Failed to insert flow. error:", e.what(), json.dump());
-        return false;
+
+    sqlite3_stmt *stmt = nullptr;
+    if (jsonList.size() == cacheSize) {
+        stmt = insertFlowStmt;
+        sqlite3_reset(stmt);
+    } else {
+        std::string sql = "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" +
+              " VALUES (?,?,?,round(? * 1000),?,?)";
+        for (int i = 0; i < jsonList.size() - 1; ++i) {
+            sql.append(",(?,?,?,round(? * 1000),?,?)");
+        }
+        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            ServerLog::Error("Failed to prepare insertFlow stat. error:", sqlite3_errmsg(db));
+            return false;
+        }
     }
-    sqlite3_reset(insertFlowStmt);
+
     int idx = bindStartIndex;
-    sqlite3_bind_text(insertFlowStmt, idx++, flowId.c_str(), flowId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(insertFlowStmt, idx++, name.c_str(), name.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int64(insertFlowStmt, idx++, trackId);
-    sqlite3_bind_int64(insertFlowStmt, idx++, ts);
-    sqlite3_bind_text(insertFlowStmt, idx++, cat.c_str(), cat.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(insertFlowStmt, idx++, ph.c_str(), ph.length(), SQLITE_TRANSIENT);
-    auto result = sqlite3_step(insertFlowStmt);
+    for (const auto &json : jsonList) {
+        try {
+            flowId = nlohmann::to_string(json["id"]);
+            name = json["name"];
+            trackId = json["track_id"];
+            ts = json["ts"];
+            cat = json.contains("cat") ? json["cat"] : "";
+            ph = json["ph"];
+        } catch (std::exception &e) {
+            ServerLog::Error("Failed to insert flow. error:", e.what(), json.dump());
+            return false;
+        }
+        sqlite3_bind_text(stmt, idx++, flowId.c_str(), flowId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, name.c_str(), name.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, idx++, trackId);
+        sqlite3_bind_int64(stmt, idx++, ts);
+        sqlite3_bind_text(stmt, idx++, cat.c_str(), cat.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, ph.c_str(), ph.length(), SQLITE_TRANSIENT);
+    }
+    auto result = sqlite3_step(stmt);
+    if (jsonList.size() != cacheSize) {
+        sqlite3_finalize(stmt);
+    }
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert flow fail. ", sqlite3_errmsg(db));
         return false;
@@ -821,7 +895,7 @@ bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestPar
     return true;
 }
 
-bool TraceDatabase::QuerySliceFlowList(const std::string flowId, const std::string type, std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec) {
+bool TraceDatabase::QuerySliceFlowList(const std::string &flowId, const std::string &type, std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec) {
     std::string sql = "SELECT sl.timestamp, th.pid, th.tid, sl.depth FROM slice sl LEFT JOIN thread th "
                       "ON sl.TRACK_ID = th.TRACK_ID WHERE sl.TRACK_ID IN (SELECT TRACK_ID FROM flow WHERE FLOW_ID = ? "
                       "AND TYPE <> ? ) AND TIMESTAMP IN ( SELECT TIMESTAMP FROM flow WHERE FLOW_ID = ? AND TYPE <> ? )";
@@ -911,6 +985,18 @@ bool TraceDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
     }
     sqlite3_finalize(stmt);
     return true;
+}
+
+bool TraceDatabase::CommitData()
+{
+    if (!sliceCache.empty()) {
+        InsertSliceList(sliceCache);
+        sliceCache.clear();
+    }
+    if (!flowCache.empty()) {
+        InsertFlowList(flowCache);
+        flowCache.clear();
+    }
 }
 } // end of namespace Core
 } // end of namespace Scene

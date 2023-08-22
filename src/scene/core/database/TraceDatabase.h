@@ -31,25 +31,22 @@ public:
     bool UpdateThreadName(const json_t &json);
     bool UpdateThreadSortIndex(const json_t &json);
     bool InsertFlow(const json_t &json);
+    bool InsertSliceList(const std::vector<json_t> &jsonList);
+    bool InsertFlowList(const std::vector<json_t> &jsonList);
+    bool CommitData();
     void UpdateDepth();
 
     // search
     std::vector<int64_t> GetTrackIdList();
-
-    // query thread traces data
     bool QueryThreadTraces(Protocol::UnitThreadTracesParams &requestParams, Protocol::UnitThreadTracesBody &responseBody,
         int64_t minTimestamp, int64_t traceId);
-    // query threads data
     bool QueryThreads(Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
         int64_t minTimestamp, int64_t traceId);
-    // query thread Detail
     bool QueryThreadDetail(Protocol::ThreadDetailParams &requestParams, Protocol::UnitThreadDetailBody &responseBody,
        int64_t minTimestamp, int64_t trackId);
-    // query flow detail
     bool QueryFlowDetail(Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody, int64_t minTimestamp);
     bool QueryUnitsMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max);
-    // query flow name
     bool QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody, int64_t minTimestamp, int64_t trackId);
 
 private:
@@ -68,6 +65,9 @@ private:
     sqlite3_stmt *updateThreadNameStmt = nullptr;
     sqlite3_stmt *updateThreadSortIndexStmt = nullptr;
     sqlite3_stmt *insertFlowStmt = nullptr;
+    const int cacheSize = 1000;
+    std::vector<json_t> sliceCache;
+    std::vector<json_t> flowCache;
 
     struct SliceTimeData {
         int64_t id;
@@ -88,7 +88,7 @@ private:
     void ReduceThread(std::vector<Protocol::SimpleSlice> &rows, std::map<std::string, int64_t> &selfTimeKeyValue, Protocol::UnitThreadsBody &responseBody);
     bool QueryDurationFromSliceByTimeRange(Protocol::ThreadDetailParams &requestParams, const std::vector<Protocol::SliceDto> &rows,
             std::vector<int64_t> &nextDepthResult, int64_t trackId);
-    bool QuerySliceFlowList(const std::string flowId, const std::string type, std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec);
+    bool QuerySliceFlowList(const std::string &flowId, const std::string &type, std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec);
 };
 } // end of namespace Core
 } // end of namespace Scene

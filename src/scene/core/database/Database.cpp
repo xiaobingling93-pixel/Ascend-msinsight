@@ -24,7 +24,7 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
         return false;
     }
     int result = sqlite3_open_v2(CheckSqlString(dbPath).c_str(), &db,
-        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_SHAREDCACHE, nullptr);
+        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, nullptr);
     if (result == SQLITE_OK) {
         isOpen = true;
         this->path = dbPath;
@@ -129,15 +129,6 @@ bool Database::EndTransaction()
     return ExecSql("COMMIT;");
 }
 
-bool Database::ReStartTransaction()
-{
-    if (!isOpen) {
-        return false;
-    }
-    //return true;
-    return ExecSql("COMMIT;BEGIN;");
-}
-
 std::string Database::GetDbPath()
 {
     return path;
@@ -153,6 +144,10 @@ bool Database::GetTableList(std::vector<std::string> &tableList) const
     int result = sqlite3_prepare_v2(db, SQL.c_str(), -1, &stmt, nullptr);
     if (result == SQLITE_OK) {
         while (sqlite3_step(stmt) == SQLITE_ROW) {
+            std::string table = sqlite3_column_string(stmt, 0);
+            if (table == "sqlite_sequence") {
+                continue;
+            }
             tableList.emplace_back(sqlite3_column_string(stmt, 0));
         }
     } else {

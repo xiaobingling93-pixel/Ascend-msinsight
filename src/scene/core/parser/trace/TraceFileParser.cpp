@@ -48,7 +48,6 @@ bool TraceFileParser::Parse(const std::string &filePath, const std::string &file
         ServerLog::Error("Failed to open database. path:", dbPath);
         return false;
     }
-    database->StartTransaction();
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
     for (const auto &pos : splitFile) {
         auto future = threadPool->AddTask([filePath, dbPath, pos, fileId]() {
@@ -64,7 +63,6 @@ bool TraceFileParser::Parse(const std::string &filePath, const std::string &file
         }
         ServerLog::Info("Parse completed. ID:", fileId);
         auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
-        database->EndTransaction();
         database->CreateIndex();
         database->UpdateDepth();
         ServerLog::Info("Update depth completed. ID:", fileId);
@@ -239,7 +237,7 @@ std::string TraceFileParser::GetFileIdFromFile(const std::string &filePath)
     std::string error;
     auto json = JsonUtil::TryParse(rankId, error);
     if (!json.has_value()) {
-        ServerLog::Error("Failed to parse json.", error);
+        ServerLog::Error("Failed to parse json.", error, " string:", rankId);
         return "";
     }
     if (json.value().contains("rank_id")) {

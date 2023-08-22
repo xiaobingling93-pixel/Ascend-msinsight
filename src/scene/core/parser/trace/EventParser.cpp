@@ -6,7 +6,6 @@
 #include "ServerLog.h"
 #include "JsonUtil.h"
 #include "EventParser.h"
-#include "DataBaseManager.h"
 #include "TraceFileParser.h"
 
 namespace Dic {
@@ -16,7 +15,10 @@ using namespace Dic::Server;
 EventParser::EventParser(const std::string &filePath, const std::string &dbPath, const std::string &fileId) : filePath(filePath), dbPath(dbPath), fileId(fileId)
 {
     ServerLog::Info("Init event parser. fileId:", fileId);
-    database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    database = std::make_unique<TraceDatabase>();
+    database->OpenDb(dbPath, false);
+    database->InitStmt();
+    database->SetConfig();
     InitEventHandle();
 }
 
@@ -47,7 +49,8 @@ void EventParser::Parse(uint64_t startPosition, uint64_t endPosition)
     for (auto &event : json.value()) {
         EventHandle(event);
     }
-    database->ReStartTransaction();
+    database->CommitData();
+    database->CloseDb();
     ServerLog::Info("EventParser. Parse ", startPosition, " to ", endPosition,
                     ". Count:", parseCount, ", ignore Count:", ignoreCount);
 }

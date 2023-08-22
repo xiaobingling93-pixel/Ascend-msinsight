@@ -26,7 +26,7 @@ private:
     std::string fileId;
     int parseCount = 0;
     int ignoreCount = 0;
-    TraceDatabase *database = nullptr;
+    std::unique_ptr<TraceDatabase> database;
     std::map<std::string, std::function<void(json_t &json)>> eventHandleMap;
 
     bool ReadBuffer(char *buffer, uint64_t startPosition, uint64_t endPosition);
