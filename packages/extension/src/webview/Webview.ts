@@ -5,7 +5,7 @@ export abstract class Webview {
 
     title: string;
 
-    panel!: vscode.WebviewPanel;
+    panel!: vscode.WebviewPanel | undefined;
     context: vscode.ExtensionContext;
 
     constructor(viewType: string, title: string, context: vscode.ExtensionContext) {
@@ -34,11 +34,11 @@ export abstract class Webview {
             const result = await vscode.window.showOpenDialog(options);
             if (result && result.length > 0) {
                 const folderPath = result[0].fsPath;
-                this.panel.webview.postMessage({command: 'ascend.folderSelected', path: folderPath});
+                this.panel?.webview.postMessage({command: 'ascend.folderSelected', path: folderPath});
             } else {
-                this.panel.webview.postMessage({command: 'ascend.folderSelectionCanceled'});
+                this.panel?.webview.postMessage({command: 'ascend.folderSelectionCanceled'});
             }
-        }
+        };
 
         this.panel.webview.onDidReceiveMessage(
             async message => {
@@ -58,6 +58,7 @@ export abstract class Webview {
         this.panel.onDidDispose(() => {
             if (this.panel !== undefined) {
                 this.panel.dispose();
+                this.panel = undefined;
             }
             this.dispose();
         });
@@ -65,7 +66,8 @@ export abstract class Webview {
 
     active() {
         if (this.panel !== undefined) {
-            this.panel.reveal(vscode.ViewColumn.Nine, true);
+            this.panel.reveal(vscode.ViewColumn.One, true);
+            return;
         }
         this.newPanel();
     }
