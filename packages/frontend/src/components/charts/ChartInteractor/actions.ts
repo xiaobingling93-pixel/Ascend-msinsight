@@ -168,7 +168,7 @@ const zoomOrMoveDirection = {
     downOrLeft: -1,
 };
 
-export const keyDownAction = throttle((key: string, session: Session, zoomPoint: number | undefined): void => {
+export const keyDownAction = (key: string, session: Session, zoomPoint: number | undefined): void => {
     if (key === 'w' || key === 'W') {
         zoomDomain(session, zoomOrMoveDirection.downOrLeft, zoomPoint);
     } else if (key === 's' || key === 'S') {
@@ -180,4 +180,4 @@ export const keyDownAction = throttle((key: string, session: Session, zoomPoint:
     } else {
         // handle other keys
     }
-}, 30);
+};

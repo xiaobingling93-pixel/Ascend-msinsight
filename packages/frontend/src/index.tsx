@@ -30,6 +30,10 @@ root.render(
         </RootStoreContext.Provider>
     </React.StrictMode>));
 
+window.addEventListener('contextmenu', e => {
+    e.stopImmediatePropagation();
+}, true);
+
 (async () => {
     const conn = new InsightConnection(NOTIFICATION_HANDLERS);
     await conn.reset();

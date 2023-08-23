@@ -1,7 +1,7 @@
 import type { Theme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
-import React, { useEffect, useRef } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 // hooks
 import { useWatchResize } from '../../utils/useWatchDomResize';
 // support utils/types
@@ -19,6 +19,7 @@ import { ChartInteractorHandles, InteractorMouseState } from '../charts/ChartInt
 import { Pos } from '../charts/ChartInteractor/common';
 import { THUMB_WIDTH_PX } from '../base';
 import { MouseDownActionResult } from '../charts/ChartInteractor/actions';
+import { loopActionFactory } from '../../utils/FactoryActions';
 
 const TIME_LINE_AXIS_HEIGHT_PX = 30;
 const LANE_INFO_WIDTH_PX = 400;
@@ -106,8 +107,15 @@ export const ChartContainer = observer((props: Props) => {
             document.removeEventListener('mouseup', onMouseUp);
         };
     }, [containerDom]);
+    const keyHoldAction = useMemo(() => loopActionFactory((e: React.KeyboardEvent<HTMLDivElement>) => onKeyDown(e), 40, 1000), [session]);
     return <Container onMouseMove={ (e) => onMouseMove(e) }
-        onKeyDown={ (e) => onKeyDown(e) }
+        onKeyDown={(e) => {
+            if (!e.repeat) {
+                keyHoldAction.beginLoop(e);
+            }
+        }}
+        onKeyUp={() => { keyHoldAction.clearLoop(); }}
+        onBlur={() => { keyHoldAction.clearLoop(); }}
         onMouseDown={(e) => onMouseDown(e) }
         onWheel={(e) => onWheel(e) }
         ref={(dom) => {

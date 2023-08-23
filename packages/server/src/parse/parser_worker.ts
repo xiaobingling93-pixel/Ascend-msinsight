@@ -35,6 +35,6 @@ export async function parseWorkerOnMessage(msg: { command: WorkMessageType; data
             break;
         }
         default:
-            logger.log('[work] Unknown message. ', msg);
+            logger.info('[work] Unknown message. ', msg);
     }
 }

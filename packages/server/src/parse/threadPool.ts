@@ -6,6 +6,8 @@ if (!isMainThread) {
     parentPort?.on('message', async (msg: any) => await parseWorkerOnMessage(msg));
 }
 
+const logger = getLoggerByName('threadPool', 'info');
+
 export enum WorkMessageType {
     PARSE = 0,
     EXIT,
@@ -15,8 +17,6 @@ export enum WorkStatus {
     RUNNING = 0,
     END,
 }
-
-const logger = getLoggerByName('threadPool', 'info');
 
 export class ThreadPool {
     private readonly taskCount = 4;
@@ -74,7 +74,7 @@ export class ThreadPool {
     }
 
     private allTaskEnd(): void {
-        console.log('[ThreadPool] All task end.');
+        logger.info('[ThreadPool] All task end.');
         if (!this.running && this._resolve !== undefined) {
             this._resolve();
             this._resolve = undefined;
@@ -107,7 +107,11 @@ export class ThreadPool {
         return new Promise(resolve => {
             this.running = false;
             this.taskList.length = 0;
-            this._resolve = resolve;
+            if (this.runningWorkers.length === 0) {
+                resolve();
+            } else {
+                this._resolve = resolve;
+            }
         });
     }
 }

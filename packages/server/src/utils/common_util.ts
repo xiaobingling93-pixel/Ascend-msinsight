@@ -6,6 +6,13 @@ import { getLoggerByName } from '../logger/loggger_configure';
 
 const logger = getLoggerByName('common_util', 'info');
 
+export const Matchs = {
+    ascend_output: /ASCEND_PROFILER_OUTPUT/,
+    msprof: /msprof.*\.json/,
+    PROF: /PROF_.*/,
+    trace_view: 'trace_view.json',
+};
+
 /**
  * get traceId
  *
@@ -43,12 +50,23 @@ export function parseCardID(filePath: string): string {
     }
     try {
         logger.info('try get dirname*2 of filePath.');
-        rankId = path.basename(path.dirname(path.dirname(filePath)));
+        rankId = getRankIdFromPath(filePath);
     } catch (error) {
         logger.error(error);
     }
     return rankId;
 }
+
+const getRankIdFromPath = (filePath: string): string => {
+    console.log('try get disPlayName of filePath.');
+    if (filePath.endsWith(Matchs.trace_view)) {
+        return path.basename(path.dirname(path.dirname(filePath)));
+    } else if (filePath.match(Matchs.msprof)) {
+        const devicePath = path.dirname(path.dirname(filePath));
+        return path.basename(path.dirname(devicePath)) + path.basename(devicePath);
+    }
+    return '';
+};
 
 /**
  * 根据外层文件名获取rankId profiler_info_{}.json
@@ -110,10 +128,18 @@ export function findFilesByPath(path: string | null, fileNameFormatter: string):
  * @param rankId
  */
 export function getDbPath(filePath: string[], rankId: string): string {
-    if (filePath.length > 1) {
-        return './' + rankId + '.db';
+    try {
+        if (!fs.existsSync('database')) {
+            fs.mkdirSync('database');
+        }
+        if (filePath.length > 1) {
+            return path.join('database', rankId + '.db');
+        }
+        return path.resolve(path.join('database', path.basename(filePath[0], '.json') + '_' + rankId + '.db'));
+    } catch (e) {
+        console.log('Can not creat the folder. error:', (e as Error).message);
+        return '';
     }
-    return './' + path.basename(filePath[0], '.json') + '_' + rankId + '.db';
 }
 
 export function getFolderSize(folderPath: string): number {

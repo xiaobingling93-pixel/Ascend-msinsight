@@ -15,22 +15,23 @@ type FallBackProps = {
     phase?: string;
 };
 export class ChartErrorBoundary extends ErrorBoundaryBase<FallBackProps> {
-    handleError(error: UncaughtError): void {
+    handleError = (error: UncaughtError): void => {
         // 根据不同子组件，按需设置session状态为error、右下角弹出提示、自定义状态/重置数据尝试恢复现场等等
         Logger('insightError', `error in chart：
         ${error.stack}`, 'warn');
-    }
+    };
 
-    fallBackUI(session: Session): JSX.Element {
-        return <ChartErrorContainer className={this.props.className} height={this.props.height} width={this.props.width}>No Data</ChartErrorContainer>;
-    }
+    fallBackUI = (session: Session): JSX.Element => <ChartErrorContainer className={this.props.className}
+        height={this.props.height}
+        width={this.props.width}>No
+        Data</ChartErrorContainer>;
 
-    render(): ReactNode {
+    render = (): ReactNode => {
         if (this.state.hasError || this.props.phase === 'error') {
             return this.fallBackUI(this.props.children.props.session);
         }
         return this.props.children;
-    }
+    };
 }
 
 const ChartErrorContainer = styled.div<{height?: number; width?: number}>`

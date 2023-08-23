@@ -199,9 +199,8 @@ const getMoreContent = (session: Session, height: number, bottomPanelComponents?
 const getDetailTitleContent = (session: Session, bottomPanelComponents?: ReturnType<BottomPanelRender>): JSX.Element | undefined => {
     if (typeof bottomPanelComponents?.DetailTitle === 'string') {
         return <span>{bottomPanelComponents?.DetailTitle}</span>;
-    } else {
-        return bottomPanelComponents?.DetailTitle && <bottomPanelComponents.DetailTitle session={session} />;
     }
+    return bottomPanelComponents?.DetailTitle && <bottomPanelComponents.DetailTitle session={session} />;
 };
 
 /* More title */
@@ -209,9 +208,8 @@ const getMoreTitle = (session: Session, bottomPanelComponents?: ReturnType<Botto
     const Title = bottomPanelComponents?.MoreTitle;
     if (typeof Title === 'string' || Title === undefined) {
         return <span>{Title ?? 'More'}</span>;
-    } else {
-        return <Title session={session} />;
     }
+    return <Title session={session} />;
 };
 
 /* Filter container in bottom */

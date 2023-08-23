@@ -8,6 +8,7 @@ import Recommendations from '../Recommendations';
 import { ZoomTimestamp } from '../ZoomTimestamp';
 import { ButtonGroup } from '../ButtonGroup';
 import { TimeMakerAxis } from '../TimeMakerAxis';
+import ImportModeSelect from '../ImportSelect';
 
 const HeaderToolbar = styled.div<{ width?: number }>`
     display: flex;
@@ -27,6 +28,7 @@ const HeaderToolbar = styled.div<{ width?: number }>`
 
 const HeaderLeft = observer(({ session, laneInfoWidth }: { session: Session; laneInfoWidth: number }) =>
     (<HeaderToolbar width={laneInfoWidth}>
+        <ImportModeSelect session={session}/>
         <ButtonGroup session={session} />
         <ZoomTimestamp session={session} />
     </HeaderToolbar>));

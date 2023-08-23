@@ -1,8 +1,10 @@
-import { BrowserPlatform, IntellijPlatform, VsCodePlatform } from '../platforms/platform';
+import { Browser } from '../platforms/Browser';
+import { IntellijPlatform } from '../platforms/IntellijPlatform';
+import { VsCodePlatform } from '../platforms/VsCodePlatform';
 
 declare function acquireVsCodeApi(): any;
 
-export let messageSender: IMessageSender = new BrowserPlatform();
+export let messageSender: IMessageSender = new Browser();
 
 if (typeof acquireVsCodeApi === 'function') {
     messageSender = new VsCodePlatform();
@@ -16,6 +18,7 @@ if (typeof window.cefQuery === 'function') {
 export interface IMessageSender {
     sendMessage: (ceq: any) => void;
     selectFolder: () => Promise<string>;
+    selectFile: () => Promise<string>;
 }
 
 export const removeAndAddEventListener = (resolve: (value: (string | PromiseLike<string>)) => void): void => {

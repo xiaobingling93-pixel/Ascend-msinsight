@@ -5,7 +5,7 @@ export abstract class Webview {
 
     title: string;
 
-    panel!: vscode.WebviewPanel;
+    panel!: vscode.WebviewPanel | undefined;
     context: vscode.ExtensionContext;
 
     constructor(viewType: string, title: string, context: vscode.ExtensionContext) {
@@ -24,23 +24,30 @@ export abstract class Webview {
             localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, 'profiler'))]
         });
 
+        const openChooseDialog = async (canSelectFolders: boolean, canSelectFiles: boolean) => {
+            const options: vscode.OpenDialogOptions = {
+                canSelectMany: false,
+                canSelectFolders: canSelectFolders,
+                canSelectFiles: canSelectFiles,
+                openLabel: '确定选择',
+            };
+            const result = await vscode.window.showOpenDialog(options);
+            if (result && result.length > 0) {
+                const folderPath = result[0].fsPath;
+                this.panel?.webview.postMessage({command: 'ascend.folderSelected', path: folderPath});
+            } else {
+                this.panel?.webview.postMessage({command: 'ascend.folderSelectionCanceled'});
+            }
+        };
+
         this.panel.webview.onDidReceiveMessage(
             async message => {
                 switch (message.command) {
                     case 'ascend.selectFolder':
-                        const options: vscode.OpenDialogOptions = {
-                            canSelectMany: false,
-                            canSelectFolders: true,
-                            canSelectFiles: false,
-                            openLabel: '选择文件夹'
-                        };
-                        const result = await vscode.window.showOpenDialog(options);
-                        if (result && result.length > 0) {
-                            const folderPath = result[0].fsPath;
-                            this.panel.webview.postMessage({command: 'ascend.folderSelected', path: folderPath});
-                        } else {
-                            this.panel.webview.postMessage({command: 'ascend.folderSelectionCanceled'});
-                        }
+                        await openChooseDialog(true, false);
+                        break;
+                    case 'ascend.selectFile':
+                        await openChooseDialog(false, true);
                         break;
                 }
             },
@@ -51,6 +58,7 @@ export abstract class Webview {
         this.panel.onDidDispose(() => {
             if (this.panel !== undefined) {
                 this.panel.dispose();
+                this.panel = undefined;
             }
             this.dispose();
         });
@@ -58,7 +66,8 @@ export abstract class Webview {
 
     active() {
         if (this.panel !== undefined) {
-            this.panel.reveal(vscode.ViewColumn.Nine, true);
+            this.panel.reveal(vscode.ViewColumn.One, true);
+            return;
         }
         this.newPanel();
     }
