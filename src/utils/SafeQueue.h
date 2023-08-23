@@ -20,7 +20,7 @@ public:
         if (deque.empty()) {
             return false;
         }
-        t = deque.front();
+        t = std::move(deque.front());
         deque.pop_front();
         return true;
     }

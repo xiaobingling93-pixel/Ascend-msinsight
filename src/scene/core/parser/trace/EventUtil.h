@@ -1,0 +1,47 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ */
+
+#ifndef PROFILER_SERVER_EVENT_UTIL_H
+#define PROFILER_SERVER_EVENT_UTIL_H
+
+#include <string>
+#include <map>
+#include <optional>
+#include <memory>
+#include <functional>
+#include "GlobalDefs.h"
+#include "EventDef.h"
+
+namespace Dic {
+namespace Scene {
+namespace Core {
+using namespace Trace;
+class EventUtil {
+public:
+    static EventUtil &Instance()
+    {
+        static EventUtil instance;
+        return instance;
+    }
+    static std::string Type(const json_t &json) ;
+    std::unique_ptr<Event> FromJson(const json_t &json);
+
+private:
+    EventUtil();
+    ~EventUtil();
+
+    void Register();
+    void UnRegister();
+
+    using JsonToEventFunc = std::function<std::unique_ptr<Event>(const json_t &)>;
+    std::map<std::string, JsonToEventFunc> jsonToEventFactory;
+    std::optional<JsonToEventFunc> GetJsonToEventFunc(const std::string &type);
+    static std::unique_ptr<Event> ToSliceEvent(const json_t &json);
+    static std::unique_ptr<Event> ToMetaDataEvent(const json_t &json);
+    static std::unique_ptr<Event> ToFlowEvent(const json_t &json);
+};
+} // end of namespace Core
+} // end of namespace Scene
+} // end of namespace Dic
+#endif // PROFILER_SERVER_EVENT_UTIL_H

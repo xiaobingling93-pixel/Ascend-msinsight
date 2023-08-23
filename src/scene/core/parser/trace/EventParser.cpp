@@ -5,8 +5,9 @@
 #include <fstream>
 #include "ServerLog.h"
 #include "JsonUtil.h"
-#include "EventParser.h"
+#include "EventUtil.h"
 #include "TraceFileParser.h"
+#include "EventParser.h"
 
 namespace Dic {
 namespace Scene {
@@ -74,64 +75,60 @@ bool EventParser::ReadBuffer(char *buffer, uint64_t startPosition, uint64_t endP
 
 void EventParser::EventHandle(json_t &json)
 {
-    std::string type;
-    try {
-        type = json["ph"];
-    } catch (std::exception &e) {
-        ServerLog::Error("EventHandle json:", json.dump(), ". error:", e.what());
+    std::string type = EventUtil::Type(json);
+    if (type.empty()) {
+        ServerLog::Error("EventHandle. event type is empty. ", json.dump());
         return;
     }
     if (eventHandleMap.count(type) > 0) {
         parseCount++;
-        eventHandleMap.at(type)(json);
+        eventHandleMap.at(type)(EventUtil::Instance().FromJson(json));
     } else {
         ignoreCount++;
     }
 }
 
-void EventParser::MetaDataHandle(json_t &json)
+void EventParser::MetaDataHandle(std::unique_ptr<Trace::Event> eventPtr)
 {
-    std::string name = JsonUtil::GetString(json, "name");
-    if (name.empty()) {
-        ServerLog::Error("EventParser. Failed to get event name. json:", json.dump());
+    if (eventPtr == nullptr) {
         return;
     }
-    if (name == "process_name") {
-        database->UpdateProcessName(json);
-    } else if (name == "thread_name") {
-        AddTrackId(json);
-        database->UpdateThreadName(json);
-    } else if (name == "process_labels") {
-        database->UpdateProcessLabel(json);
-    } else if (name == "process_sort_index") {
-        database->UpdateProcessSortIndex(json);
-    } else if (name == "thread_sort_index") {
-        AddTrackId(json);
-        database->UpdateThreadSortIndex(json);
+    auto &event = dynamic_cast<Trace::MetaData &>(*eventPtr);
+    if (event.name == "process_name") {
+        database->UpdateProcessName(event);
+    } else if (event.name == "thread_name") {
+        event.trackId = GetTrackId(event.pid, event.tid);
+        database->UpdateThreadName(event);
+    } else if (event.name == "process_labels") {
+        database->UpdateProcessLabel(event);
+    } else if (event.name == "process_sort_index") {
+        database->UpdateProcessSortIndex(event);
+    } else if (event.name == "thread_sort_index") {
+        event.trackId = GetTrackId(event.pid, event.tid);
+        database->UpdateThreadSortIndex(event);
     } else {
-        ServerLog::Error("EventParser. Failed to get meta data type. json:", json.dump());
+        ServerLog::Error("EventParser. Failed to get meta data type. name:", event.name);
     }
 }
 
-void EventParser::CompleteEventsHandle(json_t &json)
+void EventParser::CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
 {
-    AddTrackId(json);
-    database->InsertSlice(json);
-}
-
-void EventParser::FlowEventsHandle(json_t &json)
-{
-    AddTrackId(json);
-    database->InsertFlow(json);
-}
-
-void EventParser::AddTrackId(json_t &json)
-{
-    try {
-        json["track_id"] = GetTrackId(json["pid"], json["tid"]);
-    } catch (std::exception &e) {
-        ServerLog::Error("EventParser. Failed to parse flow event. error", e.what(), ". json:", json.dump());
+    if (eventPtr == nullptr) {
+        return;
     }
+    auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
+    event.trackId = GetTrackId(event.pid, event.tid);
+    database->InsertSlice(event);
+}
+
+void EventParser::FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
+{
+    if (eventPtr == nullptr) {
+        return;
+    }
+    auto &event = dynamic_cast<Trace::Flow &>(*eventPtr);
+    event.trackId = GetTrackId(event.pid, event.tid);
+    database->InsertFlow(event);
 }
 
 int64_t EventParser::GetTrackId(const std::string &pid, int64_t tid)

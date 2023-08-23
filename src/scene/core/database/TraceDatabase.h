@@ -10,6 +10,7 @@
 #include "ProtocolEntity.h"
 #include "Database.h"
 #include "GlobalDefs.h"
+#include "EventDef.h"
 
 namespace Dic {
 namespace Scene {
@@ -24,15 +25,15 @@ public:
     bool CreateIndex();
     bool InitStmt();
     void ReleaseStmt();
-    bool InsertSlice(const json_t &json);
-    bool UpdateProcessName(const json_t &json);
-    bool UpdateProcessLabel(const json_t &json);
-    bool UpdateProcessSortIndex(const json_t &json);
-    bool UpdateThreadName(const json_t &json);
-    bool UpdateThreadSortIndex(const json_t &json);
-    bool InsertFlow(const json_t &json);
-    bool InsertSliceList(const std::vector<json_t> &jsonList);
-    bool InsertFlowList(const std::vector<json_t> &jsonList);
+    bool InsertSlice(const Trace::Slice &event);
+    bool UpdateProcessName(const Trace::MetaData &event);
+    bool UpdateProcessLabel(const Trace::MetaData &event);
+    bool UpdateProcessSortIndex(const Trace::MetaData &event);
+    bool UpdateThreadName(const Trace::MetaData &event);
+    bool UpdateThreadSortIndex(const Trace::MetaData &event);
+    bool InsertFlow(const Trace::Flow &event);
+    bool InsertSliceList(const std::vector<Trace::Slice> &eventList);
+    bool InsertFlowList(const std::vector<Trace::Flow> &eventList);
     bool CommitData();
     void UpdateDepth();
 
@@ -66,8 +67,8 @@ private:
     sqlite3_stmt *updateThreadSortIndexStmt = nullptr;
     sqlite3_stmt *insertFlowStmt = nullptr;
     const int cacheSize = 1000;
-    std::vector<json_t> sliceCache;
-    std::vector<json_t> flowCache;
+    std::vector<Trace::Slice> sliceCache;
+    std::vector<Trace::Flow> flowCache;
 
     struct SliceTimeData {
         int64_t id;
@@ -75,6 +76,8 @@ private:
         int64_t dur;
     };
 
+    sqlite3_stmt *GetSliceStmt(uint64_t paramLen);
+    sqlite3_stmt *GetFlowStmt(uint64_t paramLen);
     void UpdateOneTrackDepth(int64_t trackId);
     bool SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeData> &sliceTimeList);
     // depth, idList

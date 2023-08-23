@@ -16,6 +16,7 @@ TraceDatabase::~TraceDatabase()
     if (initStmt) {
         ReleaseStmt();
     }
+    CloseDb();
 }
 
 bool TraceDatabase::InitStmt()
@@ -146,9 +147,9 @@ bool TraceDatabase::CreateIndex()
     return true;
 }
 
-bool TraceDatabase::InsertSlice(const json_t &json)
+bool TraceDatabase::InsertSlice(const Trace::Slice &event)
 {
-    sliceCache.emplace_back(json);
+    sliceCache.emplace_back(event);
     if (sliceCache.size() == cacheSize) {
         InsertSliceList(sliceCache);
         sliceCache.clear();
@@ -156,50 +157,32 @@ bool TraceDatabase::InsertSlice(const json_t &json)
     return true;
 }
 
-bool TraceDatabase::InsertSliceList(const std::vector<json_t> &jsonList)
+bool TraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventList)
 {
-    double ts, dur;
-    int64_t trackId;
-    std::string name, cat, args;
-    sqlite3_stmt *stmt = nullptr;
-    if (jsonList.size() == cacheSize) {
-        stmt = insertSliceStmt;
-        sqlite3_reset(stmt);
-    } else {
-        std::string sql = "INSERT INTO " + sliceTable +
-                          " (timestamp, duration, name, track_id, cat, args) VALUES (round(? * 1000),round(? * 1000),?,?,?,?)";
-        for (int i = 0; i < jsonList.size() - 1; ++i) {
-            sql.append(",(round(? * 1000),round(? * 1000),?,?,?,?)");
-        }
-        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare slice stat. error:", sqlite3_errmsg(db));
-            return false;
-        }
+    sqlite3_stmt *stmt = GetSliceStmt(eventList.size());
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to get slice stmt.");
+        return false;
     }
-
     int idx = bindStartIndex;
-    for (const auto &json : jsonList) {
-        try {
-            ts = json["ts"];
-            dur = json["dur"];
-            name = json["name"];
-            trackId = json["track_id"];
-            cat = json.contains("cat") ? json["cat"] : "";
-            args = json["args"].dump();
-        } catch (std::exception &e) {
-            ServerLog::Error("Failed to insert slice. error:", e.what(), ". json:", json.dump());
-            continue;
+    for (const auto &event : eventList) {
+        sqlite3_bind_double(stmt, idx++, event.ts);
+        sqlite3_bind_double(stmt, idx++, event.dur);
+        sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, idx++, event.trackId);
+        if (event.cat.has_value()) {
+            sqlite3_bind_text(stmt, idx++, event.cat.value().c_str(), -1, SQLITE_TRANSIENT);
+        } else {
+            idx++;
         }
-        sqlite3_bind_double(stmt, idx++, ts);
-        sqlite3_bind_double(stmt, idx++, dur);
-        sqlite3_bind_text(stmt, idx++, name.c_str(), name.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_int64(stmt, idx++, trackId);
-        sqlite3_bind_text(stmt, idx++, cat.c_str(), cat.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, idx++, args.c_str(), args.length(), SQLITE_TRANSIENT);
+        if (event.args.has_value()) {
+            sqlite3_bind_text(stmt, idx++, event.args.value().c_str(), -1, SQLITE_TRANSIENT);
+        } else {
+            idx++;
+        }
     }
-
     auto result = sqlite3_step(stmt);
-    if (jsonList.size() != cacheSize) {
+    if (eventList.size() != cacheSize) {
         sqlite3_finalize(stmt);
     }
     if (result != SQLITE_DONE) {
@@ -209,20 +192,32 @@ bool TraceDatabase::InsertSliceList(const std::vector<json_t> &jsonList)
     return true;
 }
 
-bool TraceDatabase::UpdateProcessName(const json_t &json)
+sqlite3_stmt *TraceDatabase::GetSliceStmt(uint64_t paramLen)
 {
-    std::string pid, name;
-    try {
-        pid = json["pid"];
-        name = json["args"]["name"];
-    } catch (std::exception &e) {
-        ServerLog::Error("Failed to update process name. error:", e.what());
-        return false;
+    sqlite3_stmt *stmt = nullptr;
+    if (paramLen == cacheSize) {
+        sqlite3_reset(insertSliceStmt);
+        stmt = insertSliceStmt;
+    } else {
+        std::string sql = "INSERT INTO " + sliceTable +
+                          " (timestamp, duration, name, track_id, cat, args) VALUES (round(? * 1000),round(? * 1000),?,?,?,?)";
+        for (int i = 0; i < paramLen - 1; ++i) {
+            sql.append(",(round(? * 1000),round(? * 1000),?,?,?,?)");
+        }
+        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            ServerLog::Error("Failed to prepare slice stat. error:", sqlite3_errmsg(db));
+            return nullptr;
+        }
     }
+    return stmt;
+}
+
+bool TraceDatabase::UpdateProcessName(const Trace::MetaData &event)
+{
     sqlite3_reset(updateProcessNameStmt);
     int idx = bindStartIndex;
-    sqlite3_bind_text(updateProcessNameStmt, idx++, pid.c_str(), pid.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(updateProcessNameStmt, idx++, name.c_str(), name.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(updateProcessNameStmt, idx++, event.pid.c_str(), event.pid.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(updateProcessNameStmt, idx++, event.args.name.c_str(), event.args.name.length(), SQLITE_TRANSIENT);
     auto result = sqlite3_step(updateProcessNameStmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Update process name fail. ", sqlite3_errmsg(db));
@@ -231,20 +226,12 @@ bool TraceDatabase::UpdateProcessName(const json_t &json)
     return true;
 }
 
-bool TraceDatabase::UpdateProcessLabel(const json_t &json)
+bool TraceDatabase::UpdateProcessLabel(const Trace::MetaData &event)
 {
-    std::string pid, label;
-    try {
-        pid = json["pid"];
-        label = json["args"]["labels"];
-    } catch (std::exception &e) {
-        ServerLog::Error("Failed to update process label. error:", e.what());
-        return false;
-    }
     sqlite3_reset(updateProcessLabelStmt);
     int idx = bindStartIndex;
-    sqlite3_bind_text(updateProcessLabelStmt, idx++, pid.c_str(), pid.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(updateProcessLabelStmt, idx++, label.c_str(), label.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(updateProcessLabelStmt, idx++, event.pid.c_str(), event.pid.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(updateProcessLabelStmt, idx++, event.args.labels.c_str(), event.args.labels.length(), SQLITE_TRANSIENT);
     auto result = sqlite3_step(updateProcessLabelStmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Update process label fail. ", sqlite3_errmsg(db));
@@ -253,21 +240,12 @@ bool TraceDatabase::UpdateProcessLabel(const json_t &json)
     return true;
 }
 
-bool TraceDatabase::UpdateProcessSortIndex(const json_t &json)
+bool TraceDatabase::UpdateProcessSortIndex(const Trace::MetaData &event)
 {
-    std::string pid;
-    int64_t sortIndex;
-    try {
-        pid = json["pid"];
-        sortIndex = json["args"]["sort_index"];
-    } catch (std::exception &e) {
-        ServerLog::Error("Failed to update process sort index. error:", e.what());
-        return false;
-    }
     sqlite3_reset(updateProcessSortIndexStmt);
     int idx = bindStartIndex;
-    sqlite3_bind_text(updateProcessSortIndexStmt, idx++, pid.c_str(), pid.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int64(updateProcessSortIndexStmt, idx++, sortIndex);
+    sqlite3_bind_text(updateProcessSortIndexStmt, idx++, event.pid.c_str(), event.pid.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_int64(updateProcessSortIndexStmt, idx++, event.args.sortIndex);
     auto result = sqlite3_step(updateProcessSortIndexStmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Update process sort index fail. ", sqlite3_errmsg(db));
@@ -276,25 +254,14 @@ bool TraceDatabase::UpdateProcessSortIndex(const json_t &json)
     return true;
 }
 
-bool TraceDatabase::UpdateThreadName(const json_t &json)
+bool TraceDatabase::UpdateThreadName(const Trace::MetaData &event)
 {
-    int64_t trackId, tid;
-    std::string pid, threadName;
-    try {
-        trackId = json["track_id"];
-        tid = json["tid"];
-        pid = json["pid"];
-        threadName = json["args"]["name"];
-    } catch (std::exception &e) {
-        ServerLog::Error("Failed to update thread name. error:", e.what());
-        return false;
-    }
     sqlite3_reset(updateThreadNameStmt);
     int idx = bindStartIndex;
-    sqlite3_bind_int64(updateThreadNameStmt, idx++, trackId);
-    sqlite3_bind_int64(updateThreadNameStmt, idx++, tid);
-    sqlite3_bind_text(updateThreadNameStmt, idx++, pid.c_str(), pid.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(updateThreadNameStmt, idx++, threadName.c_str(), threadName.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_int64(updateThreadNameStmt, idx++, event.trackId);
+    sqlite3_bind_int64(updateThreadNameStmt, idx++, event.tid);
+    sqlite3_bind_text(updateThreadNameStmt, idx++, event.pid.c_str(), event.pid.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(updateThreadNameStmt, idx++, event.args.name.c_str(), event.args.name.length(), SQLITE_TRANSIENT);
     auto result = sqlite3_step(updateThreadNameStmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Update thread name fail. ", sqlite3_errmsg(db));
@@ -303,20 +270,12 @@ bool TraceDatabase::UpdateThreadName(const json_t &json)
     return true;
 }
 
-bool TraceDatabase::UpdateThreadSortIndex(const json_t &json)
+bool TraceDatabase::UpdateThreadSortIndex(const Trace::MetaData &event)
 {
-    int64_t trackId, sortIndex;
-    try {
-        trackId = json["track_id"];
-        sortIndex = json["args"]["sort_index"];
-    } catch (std::exception &e) {
-        ServerLog::Error("Failed to update thread sort index. error:", e.what());
-        return false;
-    }
     sqlite3_reset(updateThreadSortIndexStmt);
     int idx = bindStartIndex;
-    sqlite3_bind_int64(updateThreadSortIndexStmt, idx++, trackId);
-    sqlite3_bind_int64(updateThreadSortIndexStmt, idx++, sortIndex);
+    sqlite3_bind_int64(updateThreadSortIndexStmt, idx++, event.trackId);
+    sqlite3_bind_int64(updateThreadSortIndexStmt, idx++, event.args.sortIndex);
     auto result = sqlite3_step(updateThreadSortIndexStmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Update thread sort index fail. ", sqlite3_errmsg(db));
@@ -325,9 +284,9 @@ bool TraceDatabase::UpdateThreadSortIndex(const json_t &json)
     return true;
 }
 
-bool TraceDatabase::InsertFlow(const json_t &json)
+bool TraceDatabase::InsertFlow(const Trace::Flow &event)
 {
-    flowCache.emplace_back(json);
+    flowCache.emplace_back(event);
     if (flowCache.size() == cacheSize) {
         InsertFlowList(flowCache);
         flowCache.clear();
@@ -335,49 +294,28 @@ bool TraceDatabase::InsertFlow(const json_t &json)
     return true;
 }
 
-bool TraceDatabase::InsertFlowList(const std::vector<json_t> &jsonList)
+bool TraceDatabase::InsertFlowList(const std::vector<Trace::Flow> &eventList)
 {
-    int64_t trackId, ts;
-    std::string flowId, name, cat, ph;
-
-    sqlite3_stmt *stmt = nullptr;
-    if (jsonList.size() == cacheSize) {
-        stmt = insertFlowStmt;
-        sqlite3_reset(stmt);
-    } else {
-        std::string sql = "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" +
-              " VALUES (?,?,?,round(? * 1000),?,?)";
-        for (int i = 0; i < jsonList.size() - 1; ++i) {
-            sql.append(",(?,?,?,round(? * 1000),?,?)");
-        }
-        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare insertFlow stat. error:", sqlite3_errmsg(db));
-            return false;
-        }
+    sqlite3_stmt *stmt = GetFlowStmt(eventList.size());
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to get flow stmt.");
+        return false;
     }
-
     int idx = bindStartIndex;
-    for (const auto &json : jsonList) {
-        try {
-            flowId = nlohmann::to_string(json["id"]);
-            name = json["name"];
-            trackId = json["track_id"];
-            ts = json["ts"];
-            cat = json.contains("cat") ? json["cat"] : "";
-            ph = json["ph"];
-        } catch (std::exception &e) {
-            ServerLog::Error("Failed to insert flow. error:", e.what(), json.dump());
-            return false;
+    for (const auto &event : eventList) {
+        sqlite3_bind_text(stmt, idx++, event.flowId.c_str(), event.flowId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, idx++, event.trackId);
+        sqlite3_bind_int64(stmt, idx++, event.ts);
+        if (event.cat.has_value()) {
+            sqlite3_bind_text(stmt, idx++, event.cat.value().c_str(), event.cat.value().length(), SQLITE_TRANSIENT);
+        } else {
+            idx++;
         }
-        sqlite3_bind_text(stmt, idx++, flowId.c_str(), flowId.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, idx++, name.c_str(), name.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_int64(stmt, idx++, trackId);
-        sqlite3_bind_int64(stmt, idx++, ts);
-        sqlite3_bind_text(stmt, idx++, cat.c_str(), cat.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, idx++, ph.c_str(), ph.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, event.type.c_str(), event.type.length(), SQLITE_TRANSIENT);
     }
     auto result = sqlite3_step(stmt);
-    if (jsonList.size() != cacheSize) {
+    if (eventList.size() != cacheSize) {
         sqlite3_finalize(stmt);
     }
     if (result != SQLITE_DONE) {
@@ -385,6 +323,26 @@ bool TraceDatabase::InsertFlowList(const std::vector<json_t> &jsonList)
         return false;
     }
     return true;
+}
+
+sqlite3_stmt *TraceDatabase::GetFlowStmt(uint64_t paramLen)
+{
+    sqlite3_stmt *stmt = nullptr;
+    if (paramLen == cacheSize) {
+        stmt = insertFlowStmt;
+        sqlite3_reset(stmt);
+    } else {
+        std::string sql = "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" +
+                          " VALUES (?,?,?,round(? * 1000),?,?)";
+        for (int i = 0; i < paramLen - 1; ++i) {
+            sql.append(",(?,?,?,round(? * 1000),?,?)");
+        }
+        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            ServerLog::Error("Failed to prepare insertFlow stat. error:", sqlite3_errmsg(db));
+            return nullptr;
+        }
+    }
+    return stmt;
 }
 
 void TraceDatabase::UpdateDepth()

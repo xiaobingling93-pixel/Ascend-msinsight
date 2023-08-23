@@ -58,6 +58,9 @@ bool Database::AttachDb(const std::string &dbPath)
 
 void Database::CloseDb()
 {
+    if (!isOpen) {
+        return;
+    }
     if (db != nullptr) {
         sqlite3_close_v2(db);
         db = nullptr;
