@@ -72,6 +72,34 @@ public:
         }
         return "";
     }
+
+    static inline std::optional<std::string> GetOptionalString(const json_t &json, const std::string &key)
+    {
+        if (!json.contains(key)) {
+            return std::nullopt;
+        }
+        if (json.at(key).is_string()) {
+            return json.at(key);
+        } else {
+            return nlohmann::to_string(json.at(key));
+        }
+    }
+
+    static inline int64_t GetInteger(const json_t &json, const std::string &key)
+    {
+        if (json.contains(key) && json.at(key).is_number()) {
+            return json.at(key);
+        }
+        return 0;
+    }
+
+    static inline double GetDouble(const json_t &json, const std::string &key)
+    {
+        if (json.contains(key) && json.at(key).is_number()) {
+            return json.at(key);
+        }
+        return 0;
+    }
 };
 } // end of namespace Dic
 

@@ -20,7 +20,7 @@ public:
     virtual bool OpenDb(const std::string &dbPath, bool clearAllTable);
     virtual bool AttachDb(const std::string &dbPath);
     virtual bool IsOpen() const;
-    virtual void CloseDb();
+    void CloseDb();
     virtual bool StartTransaction();
     virtual bool EndTransaction();
     virtual std::string GetDbPath();

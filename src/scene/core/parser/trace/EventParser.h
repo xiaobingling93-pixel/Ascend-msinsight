@@ -27,17 +27,16 @@ private:
     int parseCount = 0;
     int ignoreCount = 0;
     std::unique_ptr<TraceDatabase> database;
-    std::map<std::string, std::function<void(json_t &json)>> eventHandleMap;
+    std::map<std::string, std::function<void(std::unique_ptr<Trace::Event>)>> eventHandleMap;
 
     bool ReadBuffer(char *buffer, uint64_t startPosition, uint64_t endPosition);
     void EventHandle(json_t &json);
     void InitEventHandle();
-    void MetaDataHandle(json_t &json);
-    void CompleteEventsHandle(json_t &json);
-    void FlowEventsHandle(json_t &json);
+    void MetaDataHandle(std::unique_ptr<Trace::Event> eventPtr);
+    void CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
+    void FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
     std::map<std::string, int64_t> trackIdMap;
     int64_t GetTrackId(const std::string &pid, int64_t tid);
-    void AddTrackId(json_t &json);
 };
 } // end of namespace Core
 } // end of namespace Scene
