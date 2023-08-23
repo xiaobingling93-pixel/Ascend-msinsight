@@ -65,6 +65,9 @@ const baseOption: any = {
             nameLocation: 'start',
             nameGap: 15,
             nameTextStyle: { fontWeight: 'bold', fontSize: '1rem', padding: [ 0, 10, 0, 0 ] },
+            axisLabel: {
+                color: 'rgb(152,152,152)',
+            },
         },
     ],
     yAxis: [
@@ -73,6 +76,7 @@ const baseOption: any = {
             name: 'Time(μs)',
             axisLabel: {
                 formatter: '{value}',
+                color: 'rgb(152,152,152)',
             },
         },
         {
@@ -81,6 +85,13 @@ const baseOption: any = {
             min: 0,
             axisLabel: {
                 formatter: '{value}%',
+                color: 'rgb(152,152,152)',
+            },
+            splitLine: {
+                lineStyle: {
+                    color: 'rgb(202,202,202)',
+                    type: 'dashed',
+                },
             },
         },
     ],

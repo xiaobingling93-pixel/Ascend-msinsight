@@ -176,7 +176,6 @@ const bandwidthOption: echarts.EChartsOption = {
             dataView: { show: true, readOnly: false },
             magicType: { show: true, type: [ 'line', 'bar' ] },
             restore: { show: true },
-            saveAsImage: { show: true },
         },
     },
     legend: {
@@ -203,6 +202,9 @@ const bandwidthOption: echarts.EChartsOption = {
         axisPointer: {
             type: 'shadow',
         },
+        axisLabel: {
+            color: 'rgb(152,152,152)',
+        },
     },
     yAxis: [
         {
@@ -211,6 +213,7 @@ const bandwidthOption: echarts.EChartsOption = {
             name: 'Packet Number',
             axisLabel: {
                 formatter: '{value}',
+                color: 'rgb(152,152,152)',
             },
         },
         {
@@ -218,6 +221,13 @@ const bandwidthOption: echarts.EChartsOption = {
             name: 'Bandwidth(GB/s)',
             axisLabel: {
                 formatter: '{value} GB/s',
+                color: 'rgb(152,152,152)',
+            },
+            splitLine: {
+                lineStyle: {
+                    color: 'rgb(202,202,202)',
+                    type: 'dashed',
+                },
             },
         },
     ],

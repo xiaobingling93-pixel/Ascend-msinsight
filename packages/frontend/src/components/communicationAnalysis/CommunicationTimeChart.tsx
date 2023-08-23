@@ -40,7 +40,6 @@ const baseOption: any = {
             dataView: { show: true, readOnly: false },
             magicType: { show: true, type: [ 'line', 'bar' ] },
             restore: { show: true },
-            saveAsImage: { show: true },
         },
     },
     legend: {
@@ -68,23 +67,32 @@ const baseOption: any = {
             axisPointer: {
                 type: 'shadow',
             },
+            axisLabel: {
+                color: 'rgb(152,152,152)',
+            },
         },
     ],
     yAxis: [
         {
             type: 'value',
             name: 'Time(ms)',
-            min: 0,
             axisLabel: {
                 formatter: '{value}',
+                color: 'rgb(152,152,152)',
             },
         },
         {
             type: 'value',
             name: 'Ratio',
-            min: 0,
             axisLabel: {
                 formatter: '{value}',
+                color: 'rgb(152,152,152)',
+            },
+            splitLine: {
+                lineStyle: {
+                    color: 'rgb(202,202,202)',
+                    type: 'dashed',
+                },
             },
         },
     ],
