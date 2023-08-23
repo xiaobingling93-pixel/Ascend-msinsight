@@ -41,6 +41,15 @@ const baseOption: any = {
             { name: 'Computing Ratio', textStyle: { color: 'rgb(123,122,122)' } },
             { name: 'Communication Ratio', textStyle: { color: 'rgb(123,122,122)' } },
         ],
+        tooltip: {
+            show: true,
+            formatter: function () {
+                const div = document.createElement('div');
+                div.className = 'legend-tooltip';
+                div.append('Click to Switch Display and Hide');
+                return div;
+            },
+        },
     },
     grid: {
         left: '3%',
@@ -61,7 +70,7 @@ const baseOption: any = {
     yAxis: [
         {
             type: 'value',
-            name: 'Time(ms)',
+            name: 'Time(μs)',
             axisLabel: {
                 formatter: '{value}',
             },

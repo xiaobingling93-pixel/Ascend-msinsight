@@ -184,6 +184,15 @@ const bandwidthOption: echarts.EChartsOption = {
             { name: 'Packet Number', textStyle: { color: 'rgb(123,122,122)' } },
             { name: 'Bandwidth(GB/s)', textStyle: { color: 'rgb(123,122,122)' } },
         ],
+        tooltip: {
+            show: true,
+            formatter: function () {
+                const div = document.createElement('div');
+                div.className = 'legend-tooltip';
+                div.append('Click to Switch Chart Display and Hide');
+                return div;
+            },
+        },
     },
     xAxis: {
         type: 'category',

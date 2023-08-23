@@ -51,6 +51,15 @@ const baseOption: any = {
             { name: 'Wait Time', textStyle: { color: 'rgb(123,122,122)' } },
             { name: 'Synchronization Time Ratio', textStyle: { color: 'rgb(123,122,122)' } },
             { name: 'Wait Time Ratio', textStyle: { color: 'rgb(123,122,122)' } } ],
+        tooltip: {
+            show: true,
+            formatter: function () {
+                const div = document.createElement('div');
+                div.className = 'legend-tooltip';
+                div.append('Click to Switch Chart Display and Hide');
+                return div;
+            },
+        },
     },
     xAxis: [
         {
