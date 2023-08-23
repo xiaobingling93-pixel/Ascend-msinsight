@@ -11,7 +11,6 @@ import {
     Container,
     GetPageConfigWhithAllData,
     GetPageConfigWhithPageData,
-    notNull,
 } from '../Common';
 import { VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails } from '../../utils/RequestUtils';
