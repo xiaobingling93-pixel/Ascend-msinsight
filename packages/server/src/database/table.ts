@@ -4,6 +4,7 @@ import { Client } from '../types';
 import { getLoggerByName } from '../logger/loggger_configure';
 import { CREATE_KERNEL_DETAIL_TABLE_SQL, KERNEL_DETAIL_TABLE } from '../common/sql_constant';
 import { KernelDetailEntity } from '../query/entity';
+import { CommunicationDetailRequest } from '../query/data';
 
 const logger = getLoggerByName('table', 'info');
 
@@ -560,16 +561,22 @@ export class Table {
         });
     }
 
-    async queryCommunicationDetailInfo(currentPage: number, pageSize: number, client: Client, trackId: number): Promise<any> {
+    async queryCommunicationDetailInfo(request: CommunicationDetailRequest, client: Client, trackId: number): Promise<any> {
+        const orderList = request.orderList;
+        const offset = (request.currentPage - 1) * request.pageSize;
+        const ascend = request.sortBy === 'ascend' ? 'ASC' : 'DESC';
+        let sql: string = '';
         return new Promise((resolve, reject) => {
-            const sql: string = `SELECT name, timestamp -
-                                        ${client.shadowSession.extremumTimestamp.minTimestamp} as startTime, duration
-                                 FROM ${this.sliceTable}
-                                 WHERE
-                                     track_id = ?
-                                   LIMIT ?
-                                 offset ?`;
-            this.db.all(sql, [ trackId, pageSize, (currentPage - 1) * pageSize ], (err, rows) => {
+            if (orderList.length === 0) {
+                sql = `SELECT name, timestamp -${client.shadowSession.extremumTimestamp.minTimestamp} as startTime, duration
+               FROM ${this.sliceTable}
+               WHERE track_id = ${trackId} LIMIT ${request.pageSize} offset ${offset}`;
+            } else {
+                sql = `SELECT name, timestamp -${client.shadowSession.extremumTimestamp.minTimestamp} as startTime, duration
+               FROM ${this.sliceTable}
+               WHERE track_id = ${trackId}  order by "${orderList}" ${ascend} LIMIT ${request.pageSize} offset ${offset}`;
+            }
+            this.db.all(sql, (err, rows) => {
                 if (err !== undefined && err !== null) {
                     logger.error(err.message);
                     reject(err);
@@ -580,26 +587,9 @@ export class Table {
         });
     }
 
-    async queryComputeDetailInfo(timeFlag: string, currentPage: number, pageSize: number, client: Client): Promise<any> {
+    async queryComputeDetailInfo(sql: string): Promise<any> {
         return new Promise((resolve, reject) => {
-            const sql: string = `SELECT
-                                    name,
-                                    type,
-                                    start_time as startTime,
-                                    duration,
-                                    wait_time,
-                                    block_dim,
-                                    input_shapes,
-                                    input_data_types,
-                                    input_formats,
-                                    output_shapes,
-                                    output_data_types,
-                                    output_formats
-                                    FROM ${KERNEL_DETAIL_TABLE}
-                                    WHERE accelerator_core = ?
-                                    ORDER BY id
-                                   LIMIT ? offset ?`;
-            this.db.all(sql, [ timeFlag, pageSize, (currentPage - 1) * pageSize ], async (err, rows) => {
+            this.db.all(sql, async (err, rows) => {
                 if (err !== undefined && err !== null) {
                     logger.error(err.message);
                     reject(err);

@@ -164,12 +164,16 @@ export type ComputeDetailRequest = {
     timeFlag: string;
     currentPage: number;
     pageSize: number;
+    orderList: string;
+    sortBy: string;
 };
 
 export type CommunicationDetailRequest = {
     rankId: string;
     currentPage: number;
     pageSize: number;
+    orderList: string;
+    sortBy: string;
 };
 
 export type CommunicationDetailResponse = {
