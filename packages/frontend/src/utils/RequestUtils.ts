@@ -99,7 +99,8 @@ export const querySummaryStatistics = async (param: {rankId: string; timeFlag: s
  * @return {[]} 返回数组
  */
 export const queryComputeDetail = async (param: {
-    rankId: string; timeFlag: string; pageSize: number;currentPage: number;}): Promise<any> => {
+    rankId: string; timeFlag: string; pageSize: number;currentPage: number;orderBy: string;order: string;
+}): Promise<any> => {
     if (isNull(window.request)) {
         return [ ];
     }
@@ -107,7 +108,7 @@ export const queryComputeDetail = async (param: {
 };
 
 export const queryCommunicationDetail = async (param: {
-    rankId: string; pageSize: number;currentPage: number;}): Promise<any> => {
+    rankId: string; pageSize: number;currentPage: number;orderBy: string;order: string;}): Promise<any> => {
     if (isNull(window.request)) {
         return [ ];
     }

@@ -5,7 +5,7 @@ import { Button, Table } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 import { StringMap } from '../../utils/interface';
-import { PaginationWhithPgaeData, notNull } from '../Common';
+import { notNull, GetPageConfigWhithPageData } from '../Common';
 import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } from '../../utils/RequestUtils';
 
 const computingStatisticsColumns = [
@@ -31,50 +31,62 @@ const computingDetailColumns = [
     {
         title: 'Name',
         dataIndex: 'name',
+        sorter: true,
     },
     {
         title: 'Type',
         dataIndex: 'type',
+        sorter: true,
     },
     {
         title: 'Start Time',
         dataIndex: 'startTime',
+        sorter: true,
     },
     {
         title: 'Duration(us)',
         dataIndex: 'duration',
+        sorter: true,
     },
     {
         title: 'Wait Time(us)',
         dataIndex: 'wait_time',
+        sorter: true,
     },
     {
         title: 'Block Dim',
         dataIndex: 'block_dim',
+        sorter: true,
     },
     {
         title: 'Input Shapes',
         dataIndex: 'input_shapes',
+        sorter: true,
     },
     {
         title: 'Input Data Types',
         dataIndex: 'input_data_types',
+        sorter: true,
     },
     {
         title: 'Input Formats',
         dataIndex: 'input_formats',
+        sorter: true,
     },
     {
         title: 'Output Shapes',
         dataIndex: 'output_shapes',
+        sorter: true,
     },
     {
         title: 'Output Data Types',
         dataIndex: 'output_data_types',
+        sorter: true,
     },
     {
         title: 'Output Formats',
         dataIndex: 'output_formats',
+        sorter: true,
     },
 ];
 
@@ -96,16 +108,19 @@ const communicationDetailColumns = [
         title: 'Communication Kernel',
         dataIndex: 'communicationKernel',
         key: 'communicationKernel',
+        sorter: true,
     },
     {
         title: 'Start Time',
         dataIndex: 'startTime',
         key: 'startTime',
+        sorter: true,
     },
     {
         title: 'Communication Durations(us)',
         dataIndex: 'totalDuration',
         key: 'totalDuration',
+        sorter: true,
     },
 ];
 
@@ -115,6 +130,7 @@ const communicationOverlappedDetailColumns = [
         title: 'Overlapped Durations(us)',
         dataIndex: 'overlapDuration',
         key: 'overlapDuration',
+        sorter: true,
     },
 ];
 
@@ -124,6 +140,7 @@ const communicationNotOverlappedDetailColumns = [
         title: 'Not Overlapped Durations(us)',
         dataIndex: 'notOverlapDuration',
         key: 'notOverlapDuration',
+        sorter: true,
     },
 ];
 
@@ -166,38 +183,36 @@ const getTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
 
 const DtetailTable = ({ rankId, record, name }: any): JSX.Element => {
     const [ dataSource, setDataSource ] = useState<any[]>([]);
+    const defaultPage = { current: 1, pageSize: 10, total: 0 };
+    const defaultSorter = { field: 'elapse_time', order: 'descend' };
+    const [ page, setPage ] = useState(defaultPage);
+    const [ sorter, setSorter ] = useState(defaultSorter);
     const { columns, rowKey } = getTableSet(name);
     useEffect(() => {
-        updateData({ current: 1, pageSize: 10 });
-    }, []);
-    const updateData = async(page: any): Promise<void> => {
+        updateData(page, sorter);
+    }, [ page.current, page.pageSize, sorter.field, sorter.order, record.acceleratorCore ]);
+    const updateData = async(page: any, sorter: any): Promise<void> => {
         let data;
         let total;
+        const param = {
+            rankId,
+            timeFlag: record.acceleratorCore,
+            currentPage: page.current,
+            pageSize: page.pageSize,
+            orderBy: sorter.field,
+            order: sorter.order,
+        };
         if (name === 'computeDetail') {
-            const res = await queryComputeDetail({
-                rankId,
-                timeFlag: record.acceleratorCore,
-                currentPage: page.current,
-                pageSize: page.pageSize,
-            });
+            const res = await queryComputeDetail(param);
             data = res.computeDetail;
             total = res.totalNum;
         } else {
-            const res = await queryCommunicationDetail({
-                rankId,
-                currentPage: page.current,
-                pageSize: page.pageSize,
-            });
+            const res = await queryCommunicationDetail(param);
             data = res.communicationDetail;
             total = res.totalNum;
         }
         setDataSource(data);
-        setPageInfo({ total });
-    };
-
-    const [ pageInfo, setPageInfo ] = useState({ total: 0 });
-    const handlePageChange = (page: any): void => {
-        updateData(page);
+        setPage({ ...page, total });
     };
 
     return <div>
@@ -205,10 +220,15 @@ const DtetailTable = ({ rankId, record, name }: any): JSX.Element => {
             dataSource={dataSource}
             columns={columns}
             rowKey={rowKey}
-            pagination={ false}
             size="small"
+            pagination={GetPageConfigWhithPageData(page, setPage)}
+            onChange={(pagination, filters, sorter: any, extra) => {
+                if (extra.action === 'sort') {
+                    setSorter(sorter);
+                }
+            }
+            }
         />
-        <PaginationWhithPgaeData handlePageChange={handlePageChange} total={pageInfo.total}/>
     </div>;
 };
 
