@@ -206,13 +206,14 @@ function wrapData(data: SummaryDataType[]): any {
 
 async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
     const chartDom = document.getElementById('overview-chart');
-    if (chartDom !== null) {
-        echarts.init(chartDom).dispose();
-        const myChart = echarts.init(chartDom);
-        myChart.setOption(wrapData(data));
-        myChart.on('click', handleClick);
-        addResizeEvent(myChart);
+    if (chartDom === null || chartDom.offsetParent === null) {
+        return;
     }
+    echarts.init(chartDom).dispose();
+    const myChart = echarts.init(chartDom);
+    myChart.setOption(wrapData(data));
+    myChart.on('click', handleClick);
+    addResizeEvent(myChart);
 }
 export const hit = (<Tooltip title={
     (
@@ -228,7 +229,7 @@ export const hit = (<Tooltip title={
     <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
 </Tooltip>);
 
-const ComputationCommunicationOverview = ({ session }: { session: Session }): JSX.Element => {
+const ComputationCommunicationOverview = ({ session, active }: { session: Session ;active: boolean}): JSX.Element => {
     const [ groupData, setGroupData ] = useState({ rankList: [], stepList: [], init: false });
     const [ dataSource, setDatasource ] = useState<SummaryDataType[]>([]);
     const [ allDataSource, setAllDatasource ] = useState<SummaryDataType[]>([]);
@@ -238,8 +239,11 @@ const ComputationCommunicationOverview = ({ session }: { session: Session }): JS
         handleFilterChange({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 });
     }, [ ]);
     useEffect(() => {
-        initCharts(dataSource, handleClick);
-    }, [dataSource]);
+        setTimeout(() => {
+            initCharts(dataSource, handleClick);
+        },
+        );
+    }, [ dataSource, active ]);
     const handleFilterChange = async (conditions: ConditionDataType, doQuery?: boolean): Promise<void> => {
         if (doQuery === false) {
             let data = [...allDataSource];

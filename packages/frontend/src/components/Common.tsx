@@ -177,9 +177,15 @@ export function formatDate(date: Date): string {
 
 export function addResizeEvent(echart: EChartsType): void {
     window.addEventListener('resize', function () {
-        echart.resize();
+        if (checkDomDisplay(echart.getDom())) {
+            echart.resize();
+        }
     });
 }
+
+export const checkDomDisplay = (dom: HTMLElement): boolean => {
+    return dom.offsetParent !== null;
+};
 
 export const COLOR = {
     BrightBlue: '#7df7ff',

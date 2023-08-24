@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Tabs, Switch, Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -28,6 +28,7 @@ const isParing = (session: Session): boolean => {
 
 const HomePage = observer(function ({ session }: { session: Session }) {
     const parsing = isParing(session);
+    const [ activeTab, setActiveTab ] = useState('timeline');
     const items = [
         {
             tab: 'Timeline View',
@@ -37,22 +38,25 @@ const HomePage = observer(function ({ session }: { session: Session }) {
         {
             tab: <div>Analysis Summary {parsing && <Spin indicator={antIcon}/>}</div>,
             key: 'AnalysisSummary',
-            content: <AnalysisSummary session={session}/>,
+            content: <AnalysisSummary session={session} active={activeTab === 'AnalysisSummary'}/>,
             display: session.units.length > 0,
         },
         {
             tab: <div>Communication Analysis {parsing && <Spin indicator={antIcon}/>}</div>,
             key: 'CommunicationAnalysis',
-            content: <CommunicationAnalysis session={session}/>,
+            content: <CommunicationAnalysis session={session} active={activeTab === 'CommunicationAnalysis'}/>,
             display: session.units.length > 0,
         },
     ];
     const displayItems = items.filter(item => item.display !== false);
+    const handleTabsChange = (activeKey: string): void => {
+        setActiveTab(activeKey);
+    };
     return (
         <div style={{ height: '100%', width: '100%' }}>
             <Switch checkedChildren="dark" unCheckedChildren="light" defaultChecked onChange={onChange}
                 style={{ position: 'absolute', top: '10px', right: '50px', zIndex: 1000 }}/>
-            <Tabs >
+            <Tabs onChange={handleTabsChange}>
                 {
                     displayItems.map(item => (
                         <Tabs.TabPane tab={item.tab} key={item.key}>

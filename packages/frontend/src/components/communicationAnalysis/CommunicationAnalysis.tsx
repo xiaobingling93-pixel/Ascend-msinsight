@@ -55,7 +55,7 @@ const isShow = (name: string): boolean => {
     return name === 'CommunicationDurationAnalysis';
 };
 
-const CommunicationAnalysis = observer(function ({ session }: { session: Session }) {
+const CommunicationAnalysis = observer(function ({ session, active }: { session: Session;active: boolean }) {
     const [ rankId, setRankId ] = useState('');
     const [ showData, setShowData ] = useState<showDataType>({
         chartData: {} as chartDataType,
@@ -81,7 +81,7 @@ const CommunicationAnalysis = observer(function ({ session }: { session: Session
                 position={'left'}
                 drag={<Help />}
                 main={ <div style={{ padding: '0 16px' }}>
-                    <CommunicationTimeChart dataSource={showData.chartData}/>
+                    <CommunicationTimeChart dataSource={showData.chartData} active={active}/>
                     <CommunicationTimeTable showOperator={showOperator} dataSource={showData.tableData}
                         conditions={conditions} updateSort={(data) => {
                             setShowData({ ...showData, chartData: wrapChartData(data) });

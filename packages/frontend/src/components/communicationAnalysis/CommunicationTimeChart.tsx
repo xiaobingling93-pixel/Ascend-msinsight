@@ -8,12 +8,13 @@ import { addResizeEvent, COLOR, Container } from '../Common';
 
 function InitCharts(data: dataType): void {
     const chartDom = document.getElementById('main');
-    if (chartDom !== null) {
-        echarts.init(chartDom).dispose();
-        const myChart = echarts.init(chartDom);
-        myChart.setOption(wrapData(data));
-        addResizeEvent(myChart);
+    if (chartDom === null || chartDom.offsetParent === null) {
+        return;
     }
+    echarts.init(chartDom).dispose();
+    const myChart = echarts.init(chartDom);
+    myChart.setOption(wrapData(data));
+    addResizeEvent(myChart);
 }
 function wrapData(data: dataType): any {
     baseOption.xAxis[0].data = data.rank_id;
@@ -174,10 +175,12 @@ export interface dataType{
     [name: string]: any;
 }
 
-const CommunicationTimeChart = observer(function (props: {dataSource: dataType}) {
+const CommunicationTimeChart = observer(function (props: {dataSource: dataType;active: boolean}) {
     useEffect(() => {
-        InitCharts(props.dataSource);
-    }, [props.dataSource]);
+        setTimeout(() => {
+            InitCharts(props.dataSource);
+        });
+    }, [ props.dataSource, props.active ]);
     return (
         <Container
             title={'Visualized Communication Time'}
