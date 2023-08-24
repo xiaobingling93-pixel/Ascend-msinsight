@@ -23,7 +23,7 @@ export const TimeMakerButton = observer(({ session }: { session: Session }): JSX
         updateIsSuspend(open);
     };
     const timeMakerProps = { session, onToolTipVisibleChange };
-    return <CustomButton icon={FlagIcon}
+    return <CustomButton icon={FlagIcon} tooltip={'TimeMarkerList'}
         isSuspend={ isSuspend } onClick={ () => { handleTimeMakerAction(timeMakerProps); }}/>;
 });
 

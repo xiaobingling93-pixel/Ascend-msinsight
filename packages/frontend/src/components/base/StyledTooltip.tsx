@@ -7,7 +7,16 @@ export const StyledTooltip: React.FC<TooltipProps> = ({ children, overlayInnerSt
     const theme = useTheme();
     return <Tooltip
         color={theme.tooltipBGColor}
-        overlayInnerStyle={{ color: theme.tooltipFontColor, ...overlayInnerStyle }}
+        overlayInnerStyle={
+            {
+                borderRadius: '12px',
+                color: theme.tooltipFontColor,
+                boxShadow: theme.tooltipBoxShadow,
+                whiteSpace: 'pre-wrap',
+                fontSize: 14,
+            }
+        }
+        mouseEnterDelay={0.3}
         {...props}
     >
         {children}
