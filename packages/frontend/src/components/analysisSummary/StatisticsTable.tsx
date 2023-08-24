@@ -184,13 +184,13 @@ const getTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
 const DtetailTable = ({ rankId, record, name }: any): JSX.Element => {
     const [ dataSource, setDataSource ] = useState<any[]>([]);
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
-    const defaultSorter = { field: 'elapse_time', order: 'descend' };
+    const defaultSorter = { field: '', order: 'descend' };
     const [ page, setPage ] = useState(defaultPage);
     const [ sorter, setSorter ] = useState(defaultSorter);
     const { columns, rowKey } = getTableSet(name);
     useEffect(() => {
         updateData(page, sorter);
-    }, [ page.current, page.pageSize, sorter.field, sorter.order, record.acceleratorCore ]);
+    }, [ page.current, page.pageSize, sorter.field, sorter.order, record.acceleratorCore, rankId ]);
     const updateData = async(page: any, sorter: any): Promise<void> => {
         let data;
         let total;
