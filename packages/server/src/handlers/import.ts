@@ -180,6 +180,7 @@ export const importHandler = async (req: { path: string }, client: Client): Prom
     // 多卡场景才处理
     if (selectedFolder !== null && scene === 'train' && result.cards.length > 1) {
         logger.info('generate train cluster tables');
+        await execClusterPython(selectedFolder);
         await CLUSTER_DATABASE.createClusterTable();
         // import communication data
         importCommunication(selectedFolder, client);
@@ -191,6 +192,21 @@ export const importHandler = async (req: { path: string }, client: Client): Prom
     return result;
 };
 
+function execClusterPython(folder: string): void {
+    if (!fs.existsSync(folder + '/cluster_analysis_output') &&
+        fs.existsSync('resource/cluster_analyse/cluster_analysis.py')) {
+        logger.info('can not find dir cluster_analysis_output, start execute merge cluster python script');
+        exec(`python resource/cluster_analyse/cluster_analysis.py -d ${folder}`,
+            (error, stdout, stderr) => {
+                if (error) {
+                    logger.error(`exec error: ${error}`);
+                    return;
+                }
+                logger.info(`stdout: ${stdout}`);
+                logger.info(`stderr: ${stderr}`);
+            });
+    }
+}
 export const importCommunication = (selectedPath: string, client: Client): void => {
     const communicationFileArr = findFilesByPath(selectedPath, 'cluster_communication.json');
     if (communicationFileArr.length === 0) {

@@ -246,7 +246,7 @@ export class ClusterDatabase {
                                      sum(ROUND(free_time,2)) as freeTime
                                  FROM ${STEP_STATISTIC_INFO_TABLE}
                                  WHERE rank_id !='' ${stepCondition}  ${rankCondition}
-                                 group by rank_id order by ${orderBy}`;
+                                 group by rank_id order by ${orderBy} desc`;
             this.clusterDb.all(sql, param, async (err, rows) => {
                 if (err !== undefined && err !== null) {
                     logger.error(err.message);
