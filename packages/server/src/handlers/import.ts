@@ -1,4 +1,6 @@
-import { findFilesByPath, parseRankIdByFile } from '../utils/common_util';
+import * as fs from 'fs';
+import * as path from 'path';
+import { Matchs, findFilesByPath, parseRankIdByFile } from '../utils/common_util';
 import { parse } from '../parse/main';
 import { Client } from '../types';
 import { queryUnitsMetadata } from '../query/unitMetadataHandler';
@@ -12,6 +14,34 @@ import { CLUSTER_DATABASE } from '../database/tableManager';
 
 const logger = getLoggerByName('import', 'info');
 const execute = promisify(exec);
+
+function findJsonFiles(dir: string, traceViewJsonPaths: string[], depth: number): void {
+    const stats = fs.statSync(dir);
+    if (stats.isFile()) {
+        if (isJsonValid(path.basename(dir))) {
+            traceViewJsonPaths.push(dir);
+        }
+        return;
+    }
+    if (depth > 7) { return; } // 控制递归深度
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+        const filePath = path.join(dir, file);
+        const stats = fs.statSync(filePath);
+        if (stats.isDirectory()) {
+            findJsonFiles(filePath, traceViewJsonPaths, depth + 1);
+        } else if (isJsonValid(file)) {
+            traceViewJsonPaths.push(filePath);
+        }
+    }
+}
+
+const isJsonValid = (fileName: string): boolean => {
+    const msprofPattern = Matchs.msprof;
+    const validTraceView = fileName === Matchs.trace_view;
+    const validMsprof = fileName.match(msprofPattern) !== null;
+    return validMsprof || validTraceView;
+};
 
 async function selectFolderWindows(): Promise<string> {
     const script = '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; $dialog = New-Object System.Windows.Forms.FolderBrowserDialog;$result = $dialog.ShowDialog(); if ($result -eq “OK”) { $dialog.SelectedPath }';
@@ -34,14 +64,60 @@ async function selectFolderLinux(): Promise<string> {
     }
 }
 
-export async function selectFolder(): Promise<string | null> {
+export async function selectFolder(): Promise<string> {
     if (os.platform() === 'win32') {
         return await selectFolderWindows();
     } else if (os.platform() === 'linux') {
         return await selectFolderLinux();
     }
-    return null;
+    return '';
 }
+
+async function findJsons(path: string): Promise<string[]> {
+    const traceJsonPaths: string[] = [];
+    if (path == null) {
+        return traceJsonPaths;
+    }
+    try {
+        findJsonFiles(path, traceJsonPaths, 0);
+    } catch (error) {
+        logger.error(error);
+    }
+    filterJsonPaths(traceJsonPaths);
+    return traceJsonPaths;
+}
+
+const filterJsonPaths = (traceJsonPaths: string[]): void => {
+    const resultFolders = new Set();
+    traceJsonPaths.forEach(filePath => {
+        const ascendOutputFolder = getMatchedPathSegment(filePath, Matchs.ascend_output);
+        if (ascendOutputFolder !== null) {
+            resultFolders.add(path.dirname(ascendOutputFolder));
+        }
+    });
+
+    for (let i = traceJsonPaths.length - 1; i >= 0; i--) {
+        const filePath = traceJsonPaths[i];
+        if (filePath.match(Matchs.msprof)) {
+            const ProfFolder = getMatchedPathSegment(filePath, Matchs.PROF);
+            if (ProfFolder !== null && resultFolders.has(path.dirname(ProfFolder))) {
+                traceJsonPaths.splice(i, 1);
+            }
+        }
+    }
+};
+
+const getMatchedPathSegment = (filePath: string, regex: RegExp): string | null => {
+    const pathSegments = filePath.split(path.sep);
+    let matchedPath = '';
+    for (let i = 0; i < pathSegments.length; i++) {
+        matchedPath = path.join(matchedPath, pathSegments[i]);
+        if (regex.test(pathSegments[i])) {
+            return matchedPath;
+        }
+    }
+    return null;
+};
 
 export function splitRankFile(matchedFilePaths: string[]): Map<string, string[]> {
     const resultMap = new Map<string, string[]>();
@@ -63,20 +139,14 @@ type CardInfo = {
     result: boolean;
 };
 
-export const importHandler = async (req: { path: string | null }, client: Client): Promise<Record<string, unknown>> => {
+export const importHandler = async (req: { path: string }, client: Client): Promise<Record<string, unknown>> => {
     let selectedFolder = req.path;
     selectedFolder = req.path === 'browser' ? await selectFolder() : selectedFolder;
-    let scene = 'train';
-    let timeLineJsonFileArr = findFilesByPath(selectedFolder, 'trace_view.json');
-    // 没有找到去查找msprof文件
-    if (timeLineJsonFileArr.length === 0) {
-        logger.info('trace_view.json file is not found, then go to find infer msprof file.');
-        scene = 'infer';
-        timeLineJsonFileArr = findFilesByPath(selectedFolder, 'msprof_[0-9]{1,}_[0-9]{1,}_[0-9]{1,}.json');
-    }
-    const timeLineJsonFileMap = splitRankFile(timeLineJsonFileArr);
+    const timelineJsonPaths = await findJsons(selectedFolder);
     const importedRankIdSet = client.shadowSession.importedRankIdSet;
     const extremumTimestamp = client.shadowSession.extremumTimestamp;
+    const timeLineJsonFileMap = splitRankFile(timelineJsonPaths);
+    const scene = 'train';
     const result: {cards: CardInfo[]; steps: string[]; scene: string} = { cards: [], steps: [], scene };
     for (const rankId of timeLineJsonFileMap.keys()) {
         const fileArr = timeLineJsonFileMap.get(rankId);
@@ -105,7 +175,6 @@ export const importHandler = async (req: { path: string | null }, client: Client
             });
             logger.info('send notify rankId parse end. ', rankId);
         });
-        // import kernel detail data
         importedRankIdSet.add(rankId);
     }
     // 多卡场景才处理

@@ -26,7 +26,6 @@ function getUserHome(): string {
         return process.env.HOME;
     } else if (process.env.USERPROFILE !== undefined) {
         return process.env.USERPROFILE;
-    } else {
-        return __dirname;
     }
+    return __dirname;
 }

@@ -60,15 +60,9 @@ export const useRangeAndDomain = (session: Session, width: number, margin: numbe
  * @param deps the dependencies that triggers re-render
  */
 export const useBatchedRender = (renderer: () => void, deps: React.DependencyList): void => {
-    const [ render, setRender ] = useState(false);
     useEffect(() => {
-        setRender(true);
-    }, deps);
-    useEffect(() => {
-        if (!render) { return; }
         renderer();
-        setRender(false);
-    }, [render]);
+    }, deps);
 };
 
 export const useHoverPosX = (ref: React.RefObject<HTMLElement>): number | undefined => {

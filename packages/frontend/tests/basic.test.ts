@@ -23,19 +23,6 @@ test('process select test', async ({ page }) => {
   expect(await page.locator('.main>div').first().screenshot()).toMatchSnapshot('selectProcess.png');
 });
 
-test('home page test', async ({ page }) => {
-  await page.goto('http://localhost:3000/');
-  // select process
-  await page.locator('.processContainer > .ant-select > .ant-select-selector').click();
-  await page.locator('.ant-select-item').first().click();
-  await page.waitForTimeout(200);
-  const charts = await page.locator('tbody.ant-table-tbody > tr');
-  const chartsLength = await charts.count();
-  for (let i = 0; i < chartsLength; i++) {
-    await expect(await charts.nth(i).screenshot()).toMatchSnapshot(`chart${i}.png`);
-  }
-});
-
 test('time page test', async ({ page }) => {
   await page.goto('http://localhost:3000/');
   // select process

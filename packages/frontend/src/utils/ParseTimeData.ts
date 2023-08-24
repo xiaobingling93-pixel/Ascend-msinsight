@@ -1,5 +1,5 @@
 export class FormatDate {
-    formatTimeData(): string {
+    formatTimeData = (): string => {
         const Dates = new Date();
         const Year: string = Dates.getFullYear().toString();
         const Months: string = (Dates.getMonth() + 1) < 10 ? '0' + (Dates.getMonth() + 1).toString() : (Dates.getMonth() + 1).toString();
@@ -8,5 +8,5 @@ export class FormatDate {
         const Minutes: string = Dates.getMinutes() < 10 ? '0' + Dates.getMinutes().toString() : Dates.getMinutes().toString();
         const Seconds: string = Dates.getSeconds() < 10 ? '0' + Dates.getSeconds().toString() : Dates.getSeconds().toString();
         return Year + '-' + Months + '-' + Day + '-' + Hours + ':' + Minutes + ':' + Seconds;
-    }
+    };
 }

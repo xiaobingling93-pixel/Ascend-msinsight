@@ -34,26 +34,26 @@ export class RegisterWebview extends Webview {
 
     entry() {
         const entryPath = vscode.Uri.joinPath(this._extensionUri, 'profiler', this.nameList.files['main.js']);
-        return this.panel.webview.asWebviewUri(entryPath);
+        return this.panel?.webview.asWebviewUri(entryPath);
     }
 
     style() {
         const entryPath = vscode.Uri.joinPath(this._extensionUri, 'profiler', this.nameList.files['main.css']);
-        return this.panel.webview.asWebviewUri(entryPath);
+        return this.panel?.webview.asWebviewUri(entryPath);
     }
     manifest() {
         const manifestPath = vscode.Uri.joinPath(this._extensionUri, 'profiler', 'manifest.json');
-        return this.panel.webview.asWebviewUri(manifestPath); 
+        return this.panel?.webview.asWebviewUri(manifestPath); 
     }
     icon() {
         const icontPath = vscode.Uri.joinPath(this._extensionUri, 'profiler', 'logo192.png');
-        return this.panel.webview.asWebviewUri(icontPath);
+        return this.panel?.webview.asWebviewUri(icontPath);
     }
 
     previewUIPage() {
         this.active();
-        this.panel.webview.postMessage(this._extensionUri.toString);
-        this.panel.webview.html = this.html();
+        this.panel?.webview.postMessage(this._extensionUri.toString);
+        (this.panel as vscode.WebviewPanel).webview.html = this.html();
     }
     startServer() {
         this.executeStartServerCommand();
