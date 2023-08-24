@@ -8,6 +8,7 @@ import { exec } from 'child_process';
 import * as os from 'os';
 import { promisify } from 'util';
 import { getLoggerByName } from '../logger/loggger_configure';
+import { waitResetComplete } from './reset';
 
 const logger = getLoggerByName('import', 'info');
 const execute = promisify(exec);
@@ -134,6 +135,7 @@ export const importHandler = async (req: { path: string }, client: Client): Prom
     const importedRankIdSet = client.shadowSession.importedRankIdSet;
     const extremumTimestamp = client.shadowSession.extremumTimestamp;
     const result: CardInfo[] = [];
+    await waitResetComplete();
     for (const traceViewJsonPath of traceViewJsonPaths) {
         const rankId = parseCardID(traceViewJsonPath);
         if (importedRankIdSet.has(rankId)) {
