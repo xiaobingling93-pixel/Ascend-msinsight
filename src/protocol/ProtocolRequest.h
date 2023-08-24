@@ -61,7 +61,7 @@ struct ConfigGetRequest : public Request {
 // config.set
 struct ConfigSetParams {
     std::optional<GlobalConfig> globalConfig;
-    std::optional<AscendConfig> ascendConfig;
+    std::optional<TimelineConfig> ascendConfig;
 };
 
 struct ConfigSetRequest : public Request {

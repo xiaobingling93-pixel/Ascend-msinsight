@@ -17,17 +17,16 @@
 #include "ProtocolEvent.h"
 #include "RequestManager.h"
 #include "ResponseManager.h"
-#include "SceneErrorCode.h"
+#include "ModuleErrorCode.h"
 #include "EventManager.h"
 #include "ProtocolMessageBuffer.h"
 
 namespace Dic {
 namespace Protocol {
-using namespace Dic::Scene;
-// scene map
-const std::map<SceneType, std::string> SCENE_MAP = {
-    { SceneType::UNKNOWN, SCENE_UNKNOWN }, { SceneType::GLOBAL, SCENE_GLOBAL }, { SceneType::DATABASE, SCENE_DATABASE },
-    { SceneType::TOOL, SCENE_TOOL },       { SceneType::LOG, SCENE_LOG },       { SceneType::ASCEND, SCENE_ASCEND }
+using namespace Dic::Module;
+// module map
+const std::map<ModuleType, std::string> MODULE_MAP = {
+    {ModuleType::UNKNOWN, MODULE_UNKNOWN }, {ModuleType::GLOBAL, MODULE_GLOBAL }, {ModuleType::TIMELINE, MODULE_TIMELINE }
 };
 
 inline ErrorMessage MakeError(ErrorCode errorCode, const std::string &message)

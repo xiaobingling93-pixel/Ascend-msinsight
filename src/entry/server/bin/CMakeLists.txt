@@ -8,7 +8,7 @@ list(APPEND SERVER_SRC_LIST
         ${U_SOCKETS_SRC_LIST}
         ${DIC_UTILS_SRC}
         ${DIC_PROTOCOL_SRC}
-        ${DIC_MODULE_SRC_LIST}
+        ${DIC_MODULES_SRC_LIST}
         ${DIC_SERVER_SRC}
         ${DIC_CHANNEL_SRC})
 

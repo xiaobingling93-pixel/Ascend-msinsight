@@ -5,13 +5,13 @@
 #include "ServerLog.h"
 #include "Protocol.h"
 #include "TokenBuilder.h"
-#include "SceneManager.h"
+#include "ModuleManager.h"
 #include "WsSession.h"
 
 namespace Dic {
 namespace Server {
 using namespace Dic::Protocol;
-using namespace Dic::Scene;
+using namespace Dic::Module;
 WsSession::WsSession(WsChannel *channel) : channel(channel)
 {
     loop = uWS::Loop::get();
@@ -73,7 +73,7 @@ void WsSession::OnHandleMsgBuffer(WsSession &session)
         if (msg->type == ProtocolMessage::Type::REQUEST) {
             Request *reqPtr = dynamic_cast<Request *>(msg.release());
             if (reqPtr != nullptr) {
-                SceneManager::Instance().OnDispatchSceneRequest(std::unique_ptr<Request>(reqPtr));
+                ModuleManager::Instance().OnDispatchSceneRequest(std::unique_ptr<Request>(reqPtr));
             } else {
                 ServerLog::Info("Request is not supported, scene = ", static_cast<int>(msg->scene));
             }

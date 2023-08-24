@@ -37,7 +37,7 @@ void RequestManager::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_CONFIG_GET, ToConfigGetRequest);
     jsonToReqFactory.emplace(REQ_RES_CONFIG_SET, ToConfigSetRequest);
 
-    // ascend
+    // timeline
     jsonToReqFactory.emplace(REQ_RES_IMPORT_ACTION, ToImportActionRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_TRACES, ToUnitThreadTracesRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREADS, ToUnitThreadsRequest);
@@ -183,7 +183,7 @@ std::unique_ptr<Request> RequestManager::ToConfigSetRequest(const json_t &json, 
         reqPtr->params.globalConfig = config;
     }
     if (JsonUtil::IsJsonKeyValid(json["params"]["config"], "ascendConfig")) {
-        AscendConfig config;
+        TimelineConfig config;
         ProtocolUtil::SetAscendConfigStruct(json["params"]["config"]["ascendConfig"], config);
         reqPtr->params.ascendConfig = config;
     }

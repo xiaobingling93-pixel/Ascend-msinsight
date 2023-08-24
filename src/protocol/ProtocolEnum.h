@@ -8,13 +8,10 @@
 
 namespace Dic {
 namespace Protocol {
-enum class SceneType : int {
+enum class ModuleType : int {
     UNKNOWN = -1,
     GLOBAL = 1,
-    DATABASE = 2,
-    TOOL = 4,
-    LOG = 8,
-    ASCEND = 16,
+    TIMELINE = 2,
 };
 
 enum class LinkType : int {

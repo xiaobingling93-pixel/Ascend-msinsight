@@ -10,6 +10,7 @@
 #include <string>
 #include <optional>
 
+#include "ProtocolDefs.h"
 #include "ProtocolEnum.h"
 #include "ProtocolBase.h"
 
@@ -19,15 +20,12 @@ namespace Protocol {
 
 template <typename ENUM> using EnumStrMap = std::map<ENUM, std::string>;
 
-const EnumStrMap<ProtocolMessage::Type> PROTOCOL_MESSAGE_TYPE_ES = { { ProtocolMessage::Type::REQUEST, "request" },
-                                                                     { ProtocolMessage::Type::RESPONSE, "response" },
-                                                                     { ProtocolMessage::Type::EVENT, "event" } };
+const EnumStrMap<ProtocolMessage::Type> PROTOCOL_MESSAGE_TYPE_ES = { { ProtocolMessage::Type::REQUEST, REQUEST_NAME },
+                                                                     { ProtocolMessage::Type::RESPONSE, RESPONSE_NAME },
+                                                                     { ProtocolMessage::Type::EVENT, EVENT_NAME } };
 
-const EnumStrMap<Protocol::SceneType> SCENE_TYPE_ES = { { Protocol::SceneType::GLOBAL, "global" },
-                                                        { Protocol::SceneType::DATABASE, "database" },
-                                                        { Protocol::SceneType::TOOL, "tool" },
-                                                        { Protocol::SceneType::LOG, "log" },
-                                                        { Protocol::SceneType::ASCEND, "ascend" }};
+const EnumStrMap<Protocol::ModuleType> MODULE_TYPE_ES = {{Protocol::ModuleType::GLOBAL,   MODULE_GLOBAL },
+                                                         {Protocol::ModuleType::TIMELINE, MODULE_TIMELINE }};
 
 const EnumStrMap<Protocol::LinkType> LINK_TYPE_ES = { { Protocol::LinkType::WEBSOCKET, "websocket" },
                                                       { Protocol::LinkType::SOCKET, "socket" } };
@@ -71,17 +69,17 @@ template <> inline const std::optional<ProtocolMessage::Type> STR_TO_ENUM<Protoc
 }
 
 // Protocol::SceneType
-template <> inline const std::optional<std::string> ENUM_TO_STR<Protocol::SceneType>(const Protocol::SceneType &e)
+template <> inline const std::optional<std::string> ENUM_TO_STR<Protocol::ModuleType>(const Protocol::ModuleType &e)
 {
-    if (SCENE_TYPE_ES.count(e) == 0) {
+    if (MODULE_TYPE_ES.count(e) == 0) {
         return std::nullopt;
     }
-    return SCENE_TYPE_ES.at(e);
+    return MODULE_TYPE_ES.at(e);
 }
 
-template <> inline const std::optional<Protocol::SceneType> STR_TO_ENUM<Protocol::SceneType>(const std::string &s)
+template <> inline const std::optional<Protocol::ModuleType> STR_TO_ENUM<Protocol::ModuleType>(const std::string &s)
 {
-    return TryGetEnum<Protocol::SceneType>(SCENE_TYPE_ES, s);
+    return TryGetEnum<Protocol::ModuleType>(MODULE_TYPE_ES, s);
 }
 
 // Protocol::LinkType

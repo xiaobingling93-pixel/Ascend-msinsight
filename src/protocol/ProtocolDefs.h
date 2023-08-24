@@ -10,14 +10,10 @@
 
 namespace Dic {
 namespace Protocol {
-#pragma region << Scene>>
-const std::string SCENE_UNKNOWN = "unknown";
-const std::string SCENE_GLOBAL = "global";
-const std::string SCENE_DATABASE = "database";
-const std::string SCENE_TOOL = "tool";
-const std::string SCENE_LOG = "log";
-// mix scene
-const std::string SCENE_ASCEND = "ascend";
+#pragma region <<Module>>
+const std::string MODULE_UNKNOWN = "unknown";
+const std::string MODULE_GLOBAL = "global";
+const std::string MODULE_TIMELINE = "ascend";
 #pragma endregion
 
 #pragma region << Base>>

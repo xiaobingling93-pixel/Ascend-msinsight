@@ -30,7 +30,7 @@ struct ProtocolMessage {
     unsigned int id = 0;
     ProtocolMessage::Type type;
     // request: { "params": { "scene": xxx ...} }; response/event { "body": { "scene": xxx ...} }
-    SceneType scene = SceneType::GLOBAL;
+    ModuleType scene = ModuleType::GLOBAL;
     // request: { "params": { "token": xxx ...} }; response/event { "body": { "token": xxx ...} }
     std::string token;
     std::optional<int> resultCallbackId;

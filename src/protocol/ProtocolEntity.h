@@ -21,7 +21,7 @@ struct GlobalConfig {
     int maxSessionCount = 20;
 };
 // ascend
-struct AscendConfig {
+struct TimelineConfig {
     int maxSessionCount = 20;
 };
 

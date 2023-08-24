@@ -55,7 +55,7 @@ struct TokenCheckResponse : public Response {
 // config.get
 struct ConfigGetResBody {
     std::optional<GlobalConfig> globalConfig;
-    std::optional<AscendConfig> ascendConfig;
+    std::optional<TimelineConfig> ascendConfig;
 };
 
 struct ConfigGetResponse : public Response {

@@ -13,7 +13,7 @@ void ProtocolUtil::SetGlobalConfigJson(const GlobalConfig &config, json_t &jsonG
     jsonGlobalConfig["maxSessionCount"] = config.maxSessionCount;
 }
 
-void ProtocolUtil::SetAscendConfigJson(const AscendConfig &config, json_t &jsonAscendConfig)
+void ProtocolUtil::SetAscendConfigJson(const TimelineConfig &config, json_t &jsonAscendConfig)
 {
     jsonAscendConfig["maxSessionCount"] = config.maxSessionCount;
 }
@@ -23,7 +23,7 @@ void ProtocolUtil::SetGlobalConfigStruct(const json_t &jsonGlobalConfig, GlobalC
     JsonUtil::SetByJsonKeyValue(config.maxSessionCount, jsonGlobalConfig, "maxSessionCount");
 }
 
-void ProtocolUtil::SetAscendConfigStruct(const json_t &jsonAscendConfig, AscendConfig &config)
+void ProtocolUtil::SetAscendConfigStruct(const json_t &jsonAscendConfig, TimelineConfig &config)
 {
     JsonUtil::SetByJsonKeyValue(config.maxSessionCount, jsonAscendConfig, "maxSessionCount");
 }
@@ -52,7 +52,7 @@ bool ProtocolUtil::SetRequestBaseInfo(Request &request, const json_t &json)
     request.id = json["id"];
     request.command = json["command"];
     request.type = STR_TO_ENUM<Dic::Protocol::ProtocolMessage::Type>(json["type"]).value();
-    request.scene = STR_TO_ENUM<Dic::Protocol::SceneType>(json["params"]["scene"]).value();
+    request.scene = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["params"]["scene"]).value();
     JsonUtil::SetByJsonKeyValue<std::string>(request.token, json["params"], "token");
     if (json.contains("resultCallbackId")) {
         request.resultCallbackId = json["resultCallbackId"];
@@ -93,7 +93,7 @@ bool ProtocolUtil::SetResponseBaseInfo(Response &response, const json_t &json)
     response.requestId = json["requestId"];
     response.command = json["command"];
     response.type = STR_TO_ENUM<Dic::Protocol::ProtocolMessage::Type>(json["type"]).value();
-    response.scene = STR_TO_ENUM<Dic::Protocol::SceneType>(json["body"]["scene"]).value();
+    response.scene = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["body"]["scene"]).value();
     JsonUtil::SetByJsonKeyValue<std::string>(response.token, json["body"], "token");
     if (json.contains("resultCallbackId")) {
         response.resultCallbackId = json["resultCallbackId"];
@@ -125,7 +125,7 @@ bool ProtocolUtil::SetEventBaseInfo(Event &event, const json_t &json)
     event.id = json["id"];
     event.event = json["event"];
     event.type = STR_TO_ENUM<Dic::Protocol::ProtocolMessage::Type>(json["type"]).value();
-    event.scene = STR_TO_ENUM<Dic::Protocol::SceneType>(json["body"]["scene"]).value();
+    event.scene = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["body"]["scene"]).value();
     JsonUtil::SetByJsonKeyValue<std::string>(event.token, json["body"], "token");
     if (json.contains("resultCallbackId")) {
         event.resultCallbackId = json["resultCallbackId"];
