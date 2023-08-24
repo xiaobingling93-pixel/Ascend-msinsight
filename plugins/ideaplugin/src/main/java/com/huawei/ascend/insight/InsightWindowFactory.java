@@ -221,7 +221,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
         LOGGER.info("insightCount: start initJCEFBrowser");
         ProjectContext.setProject(project);
         LOGGER.info("insightCount: start createBrowser");
-        webView = JBCefBrowser.createBuilder().setOffScreenRendering(true).build();
+        webView = JBCefBrowser.createBuilder().setOffScreenRendering(false).build();
         webView.getJBCefClient().addRequestHandler(insightRequestHandler, webView.getCefBrowser());
         webView.getJBCefClient().addLifeSpanHandler(lifeSpanHandler, webView.getCefBrowser());
 
