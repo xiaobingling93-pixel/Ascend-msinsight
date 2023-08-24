@@ -562,9 +562,14 @@ export class Table {
     }
 
     async queryCommunicationDetailInfo(request: CommunicationDetailRequest, client: Client, trackId: number): Promise<any> {
-        const orderList = request.orderList;
+        const map = new Map([
+            [ 'communicationKernel', 'name' ],
+            [ 'startTime', 'startTime' ],
+            [ 'totalDuration', 'duration' ],
+        ]);
+        const orderList = request.orderBy;
         const offset = (request.currentPage - 1) * request.pageSize;
-        const ascend = request.sortBy === 'ascend' ? 'ASC' : 'DESC';
+        const ascend = request.order === 'ascend' ? 'ASC' : 'DESC';
         let sql: string = '';
         return new Promise((resolve, reject) => {
             if (orderList.length === 0) {
@@ -574,7 +579,7 @@ export class Table {
             } else {
                 sql = `SELECT name, timestamp -${client.shadowSession.extremumTimestamp.minTimestamp} as startTime, duration
                FROM ${this.sliceTable}
-               WHERE track_id = ${trackId}  order by "${orderList}" ${ascend} LIMIT ${request.pageSize} offset ${offset}`;
+               WHERE track_id = ${trackId}  order by "${map.get(orderList)}" ${ascend} LIMIT ${request.pageSize} offset ${offset}`;
             }
             this.db.all(sql, (err, rows) => {
                 if (err !== undefined && err !== null) {

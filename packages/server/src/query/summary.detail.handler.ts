@@ -58,9 +58,9 @@ export const communicationDetailInfoHandler = async (request: CommunicationDetai
 };
 
 function genComputeSql(request: ComputeDetailRequest): string {
-    const orderList = request.orderList;
+    const orderList = request.orderBy;
     const offset = (request.currentPage - 1) * request.pageSize;
-    const ascend = request.sortBy === 'ascend' ? 'ASC' : 'DESC';
+    const ascend = request.order === 'ascend' ? 'ASC' : 'DESC';
     let sql: string = '';
     if (orderList.length === 0) {
         sql = `SELECT name, type, start_time as startTime, duration, wait_time, block_dim, input_shapes, input_data_types,
