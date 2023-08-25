@@ -8,6 +8,7 @@ import { ReactComponent as AntdCleanIcon } from '../assets/images/insights/ark_g
 import { runInAction } from 'mobx';
 import { store } from '../store';
 import { SvgType } from './base/rc-table/types';
+import i18n from 'i18next';
 
 const CleanIcon = AntdCleanIcon as SvgType;
 
@@ -25,7 +26,7 @@ const Container = styled.div`
 export const ButtonGroup = observer(({ session }: { session: Session }) => {
     const unit = session.selectedUnits[0];
     return (<Container>
-        {<CustomButton icon={ CleanIcon } tooltip={'Clean'}
+        {<CustomButton icon={ CleanIcon } tooltip={i18n.t('tooltip:clean')}
             onClick={() => resetSession(session)}
         />}
         <TimeMakerButton session={session} />

@@ -94,7 +94,8 @@
     "Duration": "持续时间",
     "abilityName": "Ability名",
     "abilityEvent": "Ability事件",
-    "reset": "复原"
+    "reset": "复原",
+    "clean": "清空界面"
   },
   "snapshot": {
     "Tooltip": "可通过窗口访问的用户对象"
@@ -108,6 +109,8 @@
     "unselected": "未选中标记",
     "guide": "在时间轴上单击即可创建标记点",
     "marker": "标记点",
+    "markerList": "标记列表",
+    "markerDiff": "选中标记与悬浮标记时间差",
     "time": "时间",
     "operation": "操作",
     "clear": "清空全部",
