@@ -56,9 +56,10 @@ template <> std::optional<json_t> ToResponseJson<ConfigGetResponse>(const Config
         json["body"]["config"]["global"] = json_t::object();
         ProtocolUtil::SetGlobalConfigJson(response.body.globalConfig.value(), json["body"]["config"]["global"]);
     }
-    if (response.body.ascendConfig.has_value()) {
-        json["body"]["config"]["ascendConfig"] = json_t::object();
-        ProtocolUtil::SetAscendConfigJson(response.body.ascendConfig.value(), json["body"]["config"]["ascendConfig"]);
+    if (response.body.timelineConfig.has_value()) {
+        json["body"]["config"]["timelineConfig"] = json_t::object();
+        ProtocolUtil::SetTimelineConfigJson(response.body.timelineConfig.value(),
+                                            json["body"]["config"]["timelineConfig"]);
     }
     return json;
 }

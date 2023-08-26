@@ -55,7 +55,7 @@ struct TokenCheckResponse : public Response {
 // config.get
 struct ConfigGetResBody {
     std::optional<GlobalConfig> globalConfig;
-    std::optional<TimelineConfig> ascendConfig;
+    std::optional<TimelineConfig> timelineConfig;
 };
 
 struct ConfigGetResponse : public Response {
@@ -76,7 +76,7 @@ struct ConfigSetResponse : public Response {
 
 #pragma endregion
 
-#pragma region <<ascend>>
+#pragma region <<timeline>>
 
 struct Action {
     std::string cardName;

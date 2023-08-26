@@ -71,7 +71,7 @@ void ResponseManager::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_TOKEN_CHECK, ToTokenCheckResponseJson);
     resToJsonFactory.emplace(REQ_RES_CONFIG_GET, ToConfigGetResponseJson);
     resToJsonFactory.emplace(REQ_RES_CONFIG_SET, ToConfigSetResponseJson);
-    // ascend
+    // timeline
     resToJsonFactory.emplace(REQ_RES_IMPORT_ACTION, ToImportActionResponseJson);
     resToJsonFactory.emplace(REQ_RES_IMPORT_ACTION, ToImportActionResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_THREAD_TRACES, ToUnitThreadTracesResponseJson);

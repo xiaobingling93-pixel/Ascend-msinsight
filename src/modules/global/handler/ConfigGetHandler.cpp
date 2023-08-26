@@ -24,12 +24,12 @@ void ConfigGetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     std::unique_ptr<ConfigGetResponse> responsePtr = std::make_unique<ConfigGetResponse>();
     ConfigGetResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    int sceneMask = request.params.moduleMask;
-    if ((sceneMask == -1) || (sceneMask & static_cast<int>(ModuleType::GLOBAL))) {
+    int moduleMask = request.params.moduleMask;
+    if ((moduleMask == -1) || (moduleMask & static_cast<int>(ModuleType::GLOBAL))) {
         response.body.globalConfig = ModuleManager::Instance().GetGlobalConfig();
     }
-    if ((sceneMask == -1) || (sceneMask & static_cast<int>(ModuleType::TIMELINE))) {
-        response.body.ascendConfig = ModuleManager::Instance().GetTimelineConfig();
+    if ((moduleMask == -1) || (moduleMask & static_cast<int>(ModuleType::TIMELINE))) {
+        response.body.timelineConfig = ModuleManager::Instance().GetTimelineConfig();
     }
     SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));

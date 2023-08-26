@@ -61,7 +61,7 @@ struct ConfigGetRequest : public Request {
 // config.set
 struct ConfigSetParams {
     std::optional<GlobalConfig> globalConfig;
-    std::optional<TimelineConfig> ascendConfig;
+    std::optional<TimelineConfig> timelineConfig;
 };
 
 struct ConfigSetRequest : public Request {
@@ -71,7 +71,7 @@ struct ConfigSetRequest : public Request {
 
 #pragma endregion
 
-#pragma region <<ascend>>
+#pragma region <<timeline>>
 
 struct ImportActionParams {
     std::string path;

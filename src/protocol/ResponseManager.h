@@ -46,7 +46,7 @@ private:
     static std::optional<json_t> ToTokenCheckResponseJson(const Response &response);
     static std::optional<json_t> ToConfigGetResponseJson(const Response &response);
     static std::optional<json_t> ToConfigSetResponseJson(const Response &response);
-    // ascend
+    // timeline
     static std::optional<json_t> ToImportActionResponseJson(const Response &response);
     static std::optional<json_t> ToUnitThreadTracesResponseJson(const Response &response);
     static std::optional<json_t> ToUnitThreadsResponseJson(const Response &response);

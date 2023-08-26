@@ -16,9 +16,9 @@ class ProtocolUtil {
 public:
     // entity
     static void SetGlobalConfigJson(const GlobalConfig &config, json_t &jsonGlobalConfig);
-    static void SetAscendConfigJson(const TimelineConfig &config, json_t &jsonAscendConfig);
+    static void SetTimelineConfigJson(const TimelineConfig &config, json_t &jsonTimelineConfig);
     static void SetGlobalConfigStruct(const json_t &jsonGlobalConfig, GlobalConfig &config);
-    static void SetAscendConfigStruct(const json_t &jsonAscendConfig, TimelineConfig &config);
+    static void SetTimelineConfigStruct(const json_t &jsonTimelineConfig, TimelineConfig &config);
     // request
     static void SetRequestJsonBaseInfo(const Request &request, json_t &json);
     static bool SetRequestBaseInfo(Request &request, const json_t &json);

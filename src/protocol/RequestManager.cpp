@@ -182,10 +182,10 @@ std::unique_ptr<Request> RequestManager::ToConfigSetRequest(const json_t &json, 
         ProtocolUtil::SetGlobalConfigStruct(json["params"]["config"]["global"], config);
         reqPtr->params.globalConfig = config;
     }
-    if (JsonUtil::IsJsonKeyValid(json["params"]["config"], "ascendConfig")) {
+    if (JsonUtil::IsJsonKeyValid(json["params"]["config"], "timelineConfig")) {
         TimelineConfig config;
-        ProtocolUtil::SetAscendConfigStruct(json["params"]["config"]["ascendConfig"], config);
-        reqPtr->params.ascendConfig = config;
+        ProtocolUtil::SetTimelineConfigStruct(json["params"]["config"]["timelineConfig"], config);
+        reqPtr->params.timelineConfig = config;
     }
     return reqPtr;
 }

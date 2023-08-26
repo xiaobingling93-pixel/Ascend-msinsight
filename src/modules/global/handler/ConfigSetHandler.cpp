@@ -28,8 +28,8 @@ void ConfigSetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     if (request.params.globalConfig.has_value()) {
         ModuleManager::Instance().SetGlobalConfig(request.params.globalConfig.value());
     }
-    if (request.params.ascendConfig.has_value()) {
-        ModuleManager::Instance().SetTimelineConfig(request.params.ascendConfig.value());
+    if (request.params.timelineConfig.has_value()) {
+        ModuleManager::Instance().SetTimelineConfig(request.params.timelineConfig.value());
     }
     response.body.configSetTime = TimeUtil::Instance().NowUTC();
     SetResponseResult(response, true);

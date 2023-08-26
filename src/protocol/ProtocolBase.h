@@ -29,8 +29,8 @@ struct ProtocolMessage {
     virtual ~ProtocolMessage() {}
     unsigned int id = 0;
     ProtocolMessage::Type type;
-    // request: { "params": { "scene": xxx ...} }; response/event { "body": { "scene": xxx ...} }
-    ModuleType scene = ModuleType::GLOBAL;
+    // request: { "params": { "moduleType": xxx ...} }; response/event { "body": { "moduleType": xxx ...} }
+    ModuleType moduleType = ModuleType::GLOBAL;
     // request: { "params": { "token": xxx ...} }; response/event { "body": { "token": xxx ...} }
     std::string token;
     std::optional<int> resultCallbackId;

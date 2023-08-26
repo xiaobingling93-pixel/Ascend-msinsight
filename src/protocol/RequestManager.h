@@ -47,7 +47,7 @@ private:
     static std::unique_ptr<Request> ToTokenCheckRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToConfigGetRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToConfigSetRequest(const json_t &json, std::string &error);
-    // ascend
+    // timeline
     static std::unique_ptr<Request> ToImportActionRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitThreadTracesRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitThreadsRequest(const json_t &json, std::string &error);
