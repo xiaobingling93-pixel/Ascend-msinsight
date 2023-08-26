@@ -20,7 +20,7 @@ struct InitializedEvent : public Event {
     InitializedEventBody body;
 };
 
-// ascend
+// timeline
 struct ParseSuccessEventBody {
     Unit unit;
     bool startTimeUpdated = false;

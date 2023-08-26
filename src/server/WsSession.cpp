@@ -75,7 +75,7 @@ void WsSession::OnHandleMsgBuffer(WsSession &session)
             if (reqPtr != nullptr) {
                 ModuleManager::Instance().OnDispatchModuleRequest(std::unique_ptr<Request>(reqPtr));
             } else {
-                ServerLog::Info("Request is not supported, scene = ", static_cast<int>(msg->scene));
+                ServerLog::Info("Request is not supported, moduleType = ", static_cast<int>(msg->moduleType));
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(interval));
@@ -210,10 +210,8 @@ void WsSession::OnRequestMessage(const std::string &data)
 
 void PrintResponseInfo(const Protocol::Response &response)
 {
-    int callbackId = response.resultCallbackId.has_value() ? response.resultCallbackId.value() : -1;
     ServerLog::Info("send response: ", response.command, ", token = ", StringUtil::AnonymousString(response.token),
-        ", result = ", response.result, ", request id = ", response.requestId, ", response id = ", response.id,
-        ", callback id = ", callbackId, "\n");
+        ", result = ", response.result, ", request id = ", response.requestId, ", response id = ", response.id, "\n");
 }
 
 void WsSession::OnResponse(std::unique_ptr<Protocol::Response> responsePtr)

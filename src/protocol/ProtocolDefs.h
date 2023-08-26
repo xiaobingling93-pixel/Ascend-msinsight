@@ -13,7 +13,7 @@ namespace Protocol {
 #pragma region <<Module>>
 const std::string MODULE_UNKNOWN = "unknown";
 const std::string MODULE_GLOBAL = "global";
-const std::string MODULE_TIMELINE = "ascend";
+const std::string MODULE_TIMELINE = "timeline";
 #pragma endregion
 
 #pragma region << Base>>
@@ -24,7 +24,7 @@ const std::string EVENT_NAME = "event";
 
 #pragma region << Event Name>>
 const std::string EVENT_INITIALIZED = "initialized";
-// ascend
+// timeline
 const std::string EVENT_PARSE_SUCCESS = "parse/success";
 #pragma endregion
 

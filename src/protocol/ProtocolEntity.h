@@ -16,12 +16,16 @@
 
 namespace Dic {
 namespace Protocol {
+struct ModuleConfig {
+    virtual ~ModuleConfig() = default;
+    ModuleType moduleType = ModuleType::UNKNOWN;
+};
 // global
-struct GlobalConfig {
+struct GlobalConfig : public ModuleConfig {
     int maxSessionCount = 20;
 };
-// ascend
-struct TimelineConfig {
+// timeline
+struct TimelineConfig : public ModuleConfig {
     int maxSessionCount = 20;
 };
 

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
- * Description: Scene request handler declaration
+ * Description: Module request handler declaration
  */
 
 #ifndef DATA_INSIGHT_CORE_MODULE_REQUEST_HANDLER_H

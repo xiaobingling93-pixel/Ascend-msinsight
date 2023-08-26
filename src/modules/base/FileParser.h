@@ -15,7 +15,7 @@ public:
     FileParser() = default;
     virtual ~FileParser() = default;
     virtual bool Parse(const std::string &filePath, const std::string &fileId) = 0;
-    virtual void SetParseEndCallBack(std::function<void(const std::string, bool result)> &callback);
+    virtual void SetParseEndCallBack(std::function<void(const std::string, bool result)> &callback); // fileId, result
     virtual std::string GetError();
     virtual void Reset();
 

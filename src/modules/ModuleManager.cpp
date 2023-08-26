@@ -78,16 +78,16 @@ const std::optional<TimelineConfig> ModuleManager::GetTimelineConfig() {
 
 void ModuleManager::OnDispatchModuleRequest(std::unique_ptr<Request> request)
 {
-    if (moduleMap.count(request->scene) == 0) {
-        ServerLog::Error("Failed to dispatch to scene, scene = ", ENUM_TO_STR(request->scene).value(),
+    auto moduleType = request->moduleType;
+    if (moduleMap.count(moduleType) == 0) {
+        ServerLog::Error("Failed to dispatch to module, module = ", ENUM_TO_STR(moduleType).value(),
             ", token = ", StringUtil::AnonymousString(request->token), ", command = ", request->command);
         return;
     }
-    int callbackId = request->resultCallbackId.has_value() ? request->resultCallbackId.value() : -1;
-    ServerLog::Info("Dispatch to scene, scene = ", ENUM_TO_STR(request->scene).value(),
+    ServerLog::Info("Dispatch to scene, scene = ", ENUM_TO_STR(moduleType).value(),
         ", token = ", StringUtil::AnonymousString(request->token), ", command = ", request->command,
-        ", request id = ", request->id, ", callback id = ", callbackId);
-    moduleMap.at(request->scene)->OnRequest(std::move(request));
+        ", request id = ", request->id);
+    moduleMap.at(moduleType)->OnRequest(std::move(request));
 }
 } // end of namespace Module
 } // end of namespace Dic
