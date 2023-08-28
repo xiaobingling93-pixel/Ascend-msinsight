@@ -1,0 +1,1 @@
+python build.py build --release --project_type=server --project_subtype=bin
