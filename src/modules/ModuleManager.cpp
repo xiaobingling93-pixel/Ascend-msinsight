@@ -53,14 +53,6 @@ bool ModuleManager::SetGlobalConfig(const GlobalConfig &config)
     return true;
 }
 
-bool ModuleManager::SetTimelineConfig(const TimelineConfig &config) {
-    if (moduleMap.count(ModuleType::TIMELINE) == 0) {
-        return false;
-    }
-    ((TimelineModule &)(*moduleMap.at(ModuleType::TIMELINE).get())).Config(config);
-    return true;
-}
-
 const std::optional<GlobalConfig> ModuleManager::GetGlobalConfig()
 {
     if (moduleMap.count(ModuleType::GLOBAL) == 0) {
@@ -69,25 +61,18 @@ const std::optional<GlobalConfig> ModuleManager::GetGlobalConfig()
     return ((GlobalModule &)(*moduleMap.at(ModuleType::GLOBAL).get())).GetConfig();
 }
 
-const std::optional<TimelineConfig> ModuleManager::GetTimelineConfig() {
-    if (moduleMap.count(ModuleType::TIMELINE) == 0) {
-        return std::nullopt;
-    }
-    return ((TimelineModule &)(*moduleMap.at(ModuleType::TIMELINE).get())).GetConfig();
-}
-
 void ModuleManager::OnDispatchModuleRequest(std::unique_ptr<Request> request)
 {
-    auto moduleType = request->moduleType;
-    if (moduleMap.count(moduleType) == 0) {
-        ServerLog::Error("Failed to dispatch to module, module = ", ENUM_TO_STR(moduleType).value(),
+    auto moduleName = request->moduleName;
+    if (moduleMap.count(moduleName) == 0) {
+        ServerLog::Error("Failed to dispatch to module, module = ", ENUM_TO_STR(moduleName).value(),
             ", token = ", StringUtil::AnonymousString(request->token), ", command = ", request->command);
         return;
     }
-    ServerLog::Info("Dispatch to scene, scene = ", ENUM_TO_STR(moduleType).value(),
+    ServerLog::Info("Dispatch to module, module = ", ENUM_TO_STR(moduleName).value(),
         ", token = ", StringUtil::AnonymousString(request->token), ", command = ", request->command,
         ", request id = ", request->id);
-    moduleMap.at(moduleType)->OnRequest(std::move(request));
+    moduleMap.at(moduleName)->OnRequest(std::move(request));
 }
 } // end of namespace Module
 } // end of namespace Dic

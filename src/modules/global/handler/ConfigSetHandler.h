@@ -18,8 +18,6 @@ public:
     ~ConfigSetHandler() override = default;
     void HandleRequest(std::unique_ptr<Request> requestPtr) override;
 
-private:
-    bool CheckDiskSize(const std::string &path) const;
 };
 } // end of namespace Module
 } // Dic

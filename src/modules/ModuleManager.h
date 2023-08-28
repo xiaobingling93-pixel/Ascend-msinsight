@@ -16,9 +16,7 @@ class ModuleManager {
 public:
     static ModuleManager &Instance();
     bool SetGlobalConfig(const GlobalConfig &config);
-    bool SetTimelineConfig(const TimelineConfig &config);
     const std::optional<GlobalConfig> GetGlobalConfig();
-    const std::optional<TimelineConfig> GetTimelineConfig();
     void OnDispatchModuleRequest(std::unique_ptr<Request> request);
 
 private:

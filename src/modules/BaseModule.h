@@ -22,7 +22,7 @@ public:
     virtual void OnRequest(std::unique_ptr<Protocol::Request> request);
 
 protected:
-    ModuleType moduleType = ModuleType::UNKNOWN;
+    ModuleType moduleName = ModuleType::UNKNOWN;
     std::map<std::string, std::unique_ptr<ModuleRequestHandler>> requestHandlerMap;
 };
 } // end of namespace Module

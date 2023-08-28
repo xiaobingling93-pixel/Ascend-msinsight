@@ -14,13 +14,8 @@ public:
     TimelineModule();
     ~TimelineModule() override;
 
-    void Config(const TimelineConfig &cfg);
-    const TimelineConfig &GetConfig() const;
     void RegisterRequestHandlers() override;
     void OnRequest(std::unique_ptr<Protocol::Request> request) override;
-
-private:
-    TimelineConfig config;
 };
 } // end of namespace Module
 } // end of namespace Dic

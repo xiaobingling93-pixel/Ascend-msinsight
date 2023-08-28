@@ -13,10 +13,7 @@ using namespace Dic::Server;
 TraceDatabase::~TraceDatabase()
 {
     CommitData();
-    if (initStmt) {
-        ReleaseStmt();
-    }
-    CloseDb();
+    ReleaseStmt();
 }
 
 bool TraceDatabase::InitStmt()
@@ -79,6 +76,10 @@ bool TraceDatabase::InitStmt()
 
 void TraceDatabase::ReleaseStmt()
 {
+    if (!initStmt) {
+        return;
+    }
+    initStmt = false;
     if (insertSliceStmt != nullptr) {
         sqlite3_finalize(insertSliceStmt);
     }
@@ -700,8 +701,10 @@ bool TraceDatabase::QueryThreadDetail(Protocol::ThreadDetailParams &requestParam
             sliceDto.args = sqlite3_column_string(stmt, col++);
             sliceDtoVec.emplace_back(sliceDto);
         }
+        sqlite3_finalize(stmt);
         if (sliceDtoVec.size() != 1) {
             ServerLog::Error("select slice error!");
+            return false;
         }
         int64_t selfTime = sliceDtoVec.at(0).duration;
         std::vector<int64_t> nextDepthResult;
@@ -723,7 +726,6 @@ bool TraceDatabase::QueryThreadDetail(Protocol::ThreadDetailParams &requestParam
         ServerLog::Error("QueryThreadDetail failed!");
         return false;
     }
-    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -827,6 +829,7 @@ bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestPar
             simpleFlowDto.type = sqlite3_column_string(stmt, col++);
             simpleFlowVec.emplace_back(simpleFlowDto);
         }
+        sqlite3_finalize(stmt);
         if (simpleFlowVec.empty()) {
             ServerLog::Info("simpleFlowVec is empty!");
             return true;
@@ -836,6 +839,9 @@ bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestPar
             std::string flowId = row.flowId;
             std::vector<Protocol::SliceFlowDetail> sliceFlowDetailVec;
             QuerySliceFlowList(flowId, type, sliceFlowDetailVec);
+            if (sliceFlowDetailVec.empty()) {
+                continue;
+            }
             Protocol::FlowName flowName {};
             flowName.title = row.name;
             flowName.tid = sliceFlowDetailVec[0].tid;
@@ -849,7 +855,6 @@ bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestPar
         ServerLog::Error("QueryFlowDetail failed!");
         return false;
     }
-    sqlite3_finalize(stmt);
     return true;
 }
 

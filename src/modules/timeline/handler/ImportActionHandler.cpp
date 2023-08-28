@@ -34,6 +34,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         ServerLog::Warn("Import path is empty.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
+        return;
     }
     if (path == "browser") {
         path = ExecUtil::SelectFolder();
@@ -70,6 +71,9 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
     }
     auto event = std::make_unique<ParseSuccessEvent>();
     uint64_t min, max;
+    event->moduleName = ModuleType::TIMELINE;
+    event->token = token;
+    event->result = result;
     event->body.unit.type = "card";
     event->body.unit.metadata.cardId = fileId;
     DataBaseManager::Instance().GetTraceDatabase(fileId)->QueryExtremumTimestamp(min, max);

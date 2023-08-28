@@ -51,6 +51,7 @@ void EventParser::Parse(uint64_t startPosition, uint64_t endPosition)
         EventHandle(event);
     }
     database->CommitData();
+    database->ReleaseStmt();
     database->CloseDb();
     ServerLog::Info("EventParser. Parse ", startPosition, " to ", endPosition,
                     ". Count:", parseCount, ", ignore Count:", ignoreCount);

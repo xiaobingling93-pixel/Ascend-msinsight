@@ -15,10 +15,7 @@
 #include "ProtocolRequest.h"
 #include "ProtocolResponse.h"
 #include "ProtocolEvent.h"
-#include "RequestManager.h"
-#include "ResponseManager.h"
 #include "ModuleErrorCode.h"
-#include "EventManager.h"
 #include "ProtocolMessageBuffer.h"
 
 namespace Dic {

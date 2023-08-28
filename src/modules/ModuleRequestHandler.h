@@ -25,7 +25,7 @@ protected:
 
     std::string command;
     std::string error;
-    ModuleType moduleType = ModuleType::UNKNOWN;
+    ModuleType moduleName = ModuleType::UNKNOWN;
 };
 } // end of namespace Module
 } // end of namespace Dic

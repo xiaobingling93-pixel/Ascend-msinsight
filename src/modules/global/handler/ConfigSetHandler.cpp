@@ -28,24 +28,9 @@ void ConfigSetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     if (request.params.globalConfig.has_value()) {
         ModuleManager::Instance().SetGlobalConfig(request.params.globalConfig.value());
     }
-    if (request.params.timelineConfig.has_value()) {
-        ModuleManager::Instance().SetTimelineConfig(request.params.timelineConfig.value());
-    }
     response.body.configSetTime = TimeUtil::Instance().NowUTC();
     SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
-}
-
-bool ConfigSetHandler::CheckDiskSize(const std::string &path) const
-{
-    static const uint64_t ALERT_SIZE = 1024 * 1024 * 1024; // 1GB
-    uint64_t size = Dic::FileUtil::GetDiskFreeSize(path);
-    ServerLog::Info("Disk free size is ", size, " alertSize:", ALERT_SIZE);
-    if (size > ALERT_SIZE) {
-        return true;
-    } else {
-        return false;
-    }
 }
 } // end of namespace Module
 } // Dic

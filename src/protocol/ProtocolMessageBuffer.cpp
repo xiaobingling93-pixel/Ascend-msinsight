@@ -4,9 +4,7 @@
  */
 
 #include "ServerLog.h"
-#include "RequestManager.h"
-#include "ResponseManager.h"
-#include "EventManager.h"
+#include "ProtocolManager.h"
 #include "RegexUtil.h"
 #include "ProtocolMessageBuffer.h"
 
@@ -94,17 +92,8 @@ std::unique_ptr<ProtocolMessage> ProtocolMessageBuffer::Pop()
     }
     std::string bodyStr = buffer.substr(bodyPos, bodyLen);
     buffer = buffer.substr(bodyPos + bodyLen); // buffer removes head and body string
-    ProtocolMessage::Type msgType = GetMessageType(bodyStr);
-    if (msgType == ProtocolMessage::Type::REQUEST) {
-        std::unique_ptr<Request> request = RequestManager::Instance().FromJson(bodyStr, error);
-        return std::unique_ptr<ProtocolMessage>(request.release());
-    } else if (msgType == ProtocolMessage::Type::EVENT) {
-        std::unique_ptr<Event> event = EventManager::Instance().FromJson(bodyStr, error);
-        return std::unique_ptr<ProtocolMessage>(event.release());
-    } else {
-        ServerLog::Warn("The message type is none. json:", bodyStr);
-        return nullptr;
-    }
+    std::unique_ptr<Request> request = ProtocolManager::Instance().FromJson(bodyStr, error);
+    return std::unique_ptr<ProtocolMessage>(request.release());
 }
 
 void ProtocolMessageBuffer::Clear()

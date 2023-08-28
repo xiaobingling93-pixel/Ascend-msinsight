@@ -16,19 +16,11 @@
 
 namespace Dic {
 namespace Protocol {
-struct ModuleConfig {
-    virtual ~ModuleConfig() = default;
-    ModuleType moduleType = ModuleType::UNKNOWN;
-};
 // global
-struct GlobalConfig : public ModuleConfig {
+struct GlobalConfig {
     int maxSessionCount = 20;
 };
 // timeline
-struct TimelineConfig : public ModuleConfig {
-    int maxSessionCount = 20;
-};
-
 struct UnitMetaData {
     std::string cardId;
 };

@@ -28,9 +28,6 @@ void ConfigGetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     if ((moduleMask == -1) || (moduleMask & static_cast<int>(ModuleType::GLOBAL))) {
         response.body.globalConfig = ModuleManager::Instance().GetGlobalConfig();
     }
-    if ((moduleMask == -1) || (moduleMask & static_cast<int>(ModuleType::TIMELINE))) {
-        response.body.timelineConfig = ModuleManager::Instance().GetTimelineConfig();
-    }
     SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
 }

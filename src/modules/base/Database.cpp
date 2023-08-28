@@ -14,7 +14,6 @@ Database::~Database()
     if (isOpen) {
         CloseDb();
     }
-    db = nullptr;
 }
 
 bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)

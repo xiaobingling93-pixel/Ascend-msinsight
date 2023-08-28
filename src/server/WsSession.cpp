@@ -6,6 +6,7 @@
 #include "Protocol.h"
 #include "TokenBuilder.h"
 #include "ModuleManager.h"
+#include "ProtocolManager.h"
 #include "WsSession.h"
 
 namespace Dic {
@@ -75,7 +76,7 @@ void WsSession::OnHandleMsgBuffer(WsSession &session)
             if (reqPtr != nullptr) {
                 ModuleManager::Instance().OnDispatchModuleRequest(std::unique_ptr<Request>(reqPtr));
             } else {
-                ServerLog::Info("Request is not supported, moduleType = ", static_cast<int>(msg->moduleType));
+                ServerLog::Info("Request is not supported, moduleName = ", static_cast<int>(msg->moduleName));
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(interval));
@@ -247,7 +248,7 @@ void WsSession::Send(const std::string &message)
 void WsSession::SendResponse(const Protocol::Response &response)
 {
     std::string error;
-    std::optional<json_t> json = ResponseManager::Instance().ToJson(response, error);
+    std::optional<json_t> json = ProtocolManager::Instance().ToJson(response, error);
     if (!json.has_value()) {
         ServerLog::Error(error);
         return;
@@ -266,7 +267,7 @@ void WsSession::SendEvent(Protocol::Event &event)
     std::string error;
     // set event token
     event.token = tokenString;
-    std::optional<json_t> json = EventManager::Instance().ToJson(event, error);
+    std::optional<json_t> json = ProtocolManager::Instance().ToJson(event, error);
     if (!json.has_value()) {
         ServerLog::Info(error);
         return;

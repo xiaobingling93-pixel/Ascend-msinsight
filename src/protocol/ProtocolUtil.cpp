@@ -13,19 +13,9 @@ void ProtocolUtil::SetGlobalConfigJson(const GlobalConfig &config, json_t &jsonG
     jsonGlobalConfig["maxSessionCount"] = config.maxSessionCount;
 }
 
-void ProtocolUtil::SetTimelineConfigJson(const TimelineConfig &config, json_t &jsonTimelineConfig)
-{
-    jsonTimelineConfig["maxSessionCount"] = config.maxSessionCount;
-}
-
 void ProtocolUtil::SetGlobalConfigStruct(const json_t &jsonGlobalConfig, GlobalConfig &config)
 {
     JsonUtil::SetByJsonKeyValue(config.maxSessionCount, jsonGlobalConfig, "maxSessionCount");
-}
-
-void ProtocolUtil::SetTimelineConfigStruct(const json_t &jsonTimelineConfig, TimelineConfig &config)
-{
-    JsonUtil::SetByJsonKeyValue(config.maxSessionCount, jsonTimelineConfig, "maxSessionCount");
 }
 
 void ProtocolUtil::SetRequestJsonBaseInfo(const Request &request, json_t &json)
@@ -33,7 +23,7 @@ void ProtocolUtil::SetRequestJsonBaseInfo(const Request &request, json_t &json)
     json["type"] = REQUEST_NAME;
     json["id"] = request.id;
     json["command"] = request.command;
-    json["params"]["moduleType"] = ENUM_TO_STR(request.moduleType).value();
+    json["moduleName"] = ENUM_TO_STR(request.moduleName).value();
     json["params"]["token"] = request.token;
     if (request.resultCallbackId.has_value()) {
         json["resultCallbackId"] = request.resultCallbackId.value();
@@ -46,13 +36,13 @@ bool ProtocolUtil::SetRequestBaseInfo(Request &request, const json_t &json)
         !JsonUtil::IsJsonKeyValid(json, "command")) {
         return false;
     }
-    if (!JsonUtil::IsJsonKeyValid(json, "params") || !JsonUtil::IsJsonKeyValid(json["params"], "moduleType")) {
+    if (!JsonUtil::IsJsonKeyValid(json, "params") || !JsonUtil::IsJsonKeyValid(json, "moduleName")) {
         return false;
     }
     request.id = json["id"];
     request.command = json["command"];
     request.type = STR_TO_ENUM<Dic::Protocol::ProtocolMessage::Type>(json["type"]).value();
-    request.moduleType = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["params"]["moduleType"]).value();
+    request.moduleName = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["moduleName"]).value();
     JsonUtil::SetByJsonKeyValue<std::string>(request.token, json["params"], "token");
     if (json.contains("resultCallbackId")) {
         request.resultCallbackId = json["resultCallbackId"];
@@ -67,11 +57,11 @@ void ProtocolUtil::SetResponseJsonBaseInfo(const Response &response, json_t &jso
     json["requestId"] = response.requestId;
     json["result"] = response.result;
     json["command"] = response.command;
+    json["moduleName"] = ENUM_TO_STR(response.moduleName).value();
     if (response.error.has_value()) {
         json["error"]["code"] = response.error.value().code;
         json["error"]["message"] = response.error.value().message;
     }
-    json["body"]["moduleType"] = ENUM_TO_STR(response.moduleType).value();
     json["body"]["token"] = response.token;
     if (response.resultCallbackId.has_value()) {
         json["resultCallbackId"] = response.resultCallbackId.value();
@@ -85,7 +75,7 @@ bool ProtocolUtil::SetResponseBaseInfo(Response &response, const json_t &json)
         !JsonUtil::IsJsonKeyValid(json, "requestId")) {
         return false;
     }
-    if (!JsonUtil::IsJsonKeyValid(json, "body") || !JsonUtil::IsJsonKeyValid(json["body"], "moduleType")) {
+    if (!JsonUtil::IsJsonKeyValid(json, "body") || !JsonUtil::IsJsonKeyValid(json, "moduleName")) {
         return false;
     }
     response.result = json["result"];
@@ -93,7 +83,7 @@ bool ProtocolUtil::SetResponseBaseInfo(Response &response, const json_t &json)
     response.requestId = json["requestId"];
     response.command = json["command"];
     response.type = STR_TO_ENUM<Dic::Protocol::ProtocolMessage::Type>(json["type"]).value();
-    response.moduleType = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["body"]["moduleType"]).value();
+    response.moduleName = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["moduleName"]).value();
     JsonUtil::SetByJsonKeyValue<std::string>(response.token, json["body"], "token");
     if (json.contains("resultCallbackId")) {
         response.resultCallbackId = json["resultCallbackId"];
@@ -106,7 +96,7 @@ void ProtocolUtil::SetEventJsonBaseInfo(const Event &event, json_t &json)
     json["type"] = EVENT_NAME;
     json["id"] = event.id;
     json["event"] = event.event;
-    json["body"]["moduleType"] = ENUM_TO_STR(event.moduleType).value();
+    json["moduleName"] = ENUM_TO_STR(event.moduleName).value();
     json["body"]["token"] = event.token;
     if (event.resultCallbackId.has_value()) {
         json["resultCallbackId"] = event.resultCallbackId.value();
@@ -119,13 +109,13 @@ bool ProtocolUtil::SetEventBaseInfo(Event &event, const json_t &json)
         !JsonUtil::IsJsonKeyValid(json, "event")) {
         return false;
     }
-    if (!JsonUtil::IsJsonKeyValid(json, "body") || !JsonUtil::IsJsonKeyValid(json["body"], "moduleType")) {
+    if (!JsonUtil::IsJsonKeyValid(json, "body") || !JsonUtil::IsJsonKeyValid(json, "moduleName")) {
         return false;
     }
     event.id = json["id"];
     event.event = json["event"];
     event.type = STR_TO_ENUM<Dic::Protocol::ProtocolMessage::Type>(json["type"]).value();
-    event.moduleType = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["body"]["moduleType"]).value();
+    event.moduleName = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["moduleName"]).value();
     JsonUtil::SetByJsonKeyValue<std::string>(event.token, json["body"], "token");
     if (json.contains("resultCallbackId")) {
         event.resultCallbackId = json["resultCallbackId"];

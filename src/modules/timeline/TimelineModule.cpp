@@ -19,22 +19,12 @@ using namespace Dic::Server;
 using namespace Dic::Module::Timeline;
 TimelineModule::TimelineModule() : BaseModule()
 {
-    moduleType = ModuleType::TIMELINE;
+    moduleName = ModuleType::TIMELINE;
 }
 
 TimelineModule::~TimelineModule()
 {
     requestHandlerMap.clear();
-}
-
-void TimelineModule::Config(const TimelineConfig &cfg)
-{
-    config.maxSessionCount = cfg.maxSessionCount;
-}
-
-const TimelineConfig &TimelineModule::GetConfig() const
-{
-    return config;
 }
 
 void TimelineModule::RegisterRequestHandlers()

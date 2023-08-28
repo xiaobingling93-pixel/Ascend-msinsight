@@ -22,7 +22,7 @@ void ModuleRequestHandler::SetBaseResponse(const Request &request, Response &res
     response.id = static_cast<uint32_t>(IdBuilder::ResponseIdBuilder().Build());
     response.requestId = request.id;
     response.command = request.command;
-    response.moduleType = request.moduleType;
+    response.moduleName = request.moduleName;
     response.token = request.token;
     if (request.resultCallbackId.has_value()) {
         response.resultCallbackId = request.resultCallbackId;
