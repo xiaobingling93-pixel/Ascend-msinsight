@@ -1,24 +1,70 @@
 {
-    "name": "profiler-gui",
-    "version": "1.0.0",
-    "license": "MIT",
-    "private": true,
+    "name": "ascend-insight-extension",
+    "displayName": "ascend-insight-extension",
+    "description": "",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.63.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "ascend-insight.start",
+                "title": "ascend-insight.start"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "command": "ascend-insight.start",
+                    "when": "editorTextFocus && !editorReadonly",
+                    "title": "ascend-insight.start"
+                }
+            ]
+        }
+    },
     "scripts": {
-        "start": "cd .\\packages\\frontend&&npm start",
-        "build": "npm run buildWin",
-        "buildWin": "npm run buildFrontendWin&&npm run buildServerWin&&npm run copyFrontendWin&&npm run copyServerWin&&npm run buildExtensionWin",
-        "buildFrontendWin": "cd .\\packages\\frontend&&npm install --force&&npm run build",
-        "buildServerWin": "cd .\\packages\\server&&npm install&&npm run build&&npm run packageWin",
-        "clear": "rmdir .\\packages\\extension\\profiler /s /q",
-        "copyFrontendWin": "xcopy .\\packages\\frontend\\build .\\packages\\extension\\profiler /E /I /Y",
-        "copyServerWin": "xcopy .\\packages\\server\\buildServer\\profiler-server-win32-x64 .\\serverBuild\\server\\ /E /I /Y",
-        "buildExtensionWin": "cd .\\packages\\extension&&npm install&&vsce package 0.0.1",
-        "initProject": "cd .\\packages\\frontend&&npm install&&cd ..\\packages\\extension&&npm install&&mkdir profiler",
-        "buildLinux": "npm run buildFrontendLinux&&npm run buildServerLinux&&npm run copyFrontendLinux&&npm run copyServerLinux&&npm run buildExtensionLinux",
-        "buildFrontendLinux": "cd ./packages/frontend&&npm install&&npm run build",
-        "buildServerLinux": "cd ./packages/server&&npm install&&npm run build&&npm run packageLinuxX64",
-        "copyFrontendLinux": "cp -rf ./packages/frontend/build ./packages/extension/profiler",
-        "copyServerLinux": "mkdir -p serverBuild&&cp -rf ./packages/server/profiler-server ./serverBuild/",
-        "buildExtensionLinux": "cd ./packages/extension&&npm install&&vsce package"
+        "vscode:prepublish": "npm run package",
+        "compile": "webpack",
+        "watch": "webpack --watch",
+        "package": "webpack --mode production --devtool hidden-source-map",
+        "compile-tests": "tsc -p . --outDir out",
+        "watch-tests": "tsc -p . -w --outDir out",
+        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "test": "node ./out/test/runTest.js",
+        "dev": "bash -exec 'code --extensionDevelopmentPath=$(pwd)'",
+        "publish-extension": "vsce package $(node -e \"console.log(require('./package.json').version)\")"
+    },
+    "devDependencies": {
+        "@types/glob": "^7.1.4",
+        "@types/mocha": "^9.0.0",
+        "@types/node": "18.14.1",
+        "@types/vscode": "^1.63.0",
+        "@typescript-eslint/eslint-plugin": "^5.1.0",
+        "@typescript-eslint/parser": "^5.1.0",
+        "@vscode/test-electron": "^1.6.2",
+        "copy-webpack-plugin": "^11.0.0",
+        "electron-builder": "^24.6.3",
+        "eslint": "^8.1.0",
+        "glob": "^7.1.7",
+        "mocha": "^9.1.3",
+        "ts-loader": "^9.2.5",
+        "typescript": "^4.2.3",
+        "vscode-languageclient": "^6.1.0",
+        "webpack": "^5.52.1",
+        "webpack-cli": "^4.8.0"
+    },
+    "LICENSE": "HuaWei Technology",
+    "publisher": "PAP",
+    "repository": {
+        "url": ""
     }
 }

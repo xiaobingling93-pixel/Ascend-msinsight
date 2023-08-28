@@ -1,6 +1,4 @@
 ./node_modules
-./packages/extension/node_modules
-./packages/frontend/node_modules
 .vscode-test/
 *.vsix
 dist
@@ -11,11 +9,10 @@ log.txt
 **/node_modules
 **/dist
 **/build
-./packages/extension/profiler
+./profiler
 **/.vscode
 **/.idea
 **/*.vsix
 **/*.exe
 **/*.db
 **/profiler
-serverBuild

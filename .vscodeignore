@@ -11,13 +11,3 @@ vsc-extension-quickstart.md
 **/.eslintrc.json
 **/*.map
 **/*.ts
-./node_modules
-./packages/extension/node_modules
-./packages/client/node_modules
-.vscode-test/
-*.vsix
-dist
-media
-src/resources/vuetemplate/package-lock.json
-twowayPreview
-log.txt

@@ -1,2 +1,0 @@
-# ascent-profiler-extension README
-
