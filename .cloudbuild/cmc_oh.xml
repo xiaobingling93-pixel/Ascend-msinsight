@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+   <artifact>
+		<versionType>BVersion</versionType>
+		<repoType>Generic</repoType>
+		<id>
+			<offering>OpenHarmony Basesoftware_IDE</offering>
+			<version>OpenHarmony Basesoftware_IDE ${version}</version>
+		</id>
+		<isClear>N</isClear>
+		<copies>
+			<copy>
+				<source>ohos-data-insight-core/build/bin/ohos-data-insight-core.tar.gz</source>
+				<dest>/</dest>
+			</copy>
+		</copies>
+	</artifact>
+</project>
