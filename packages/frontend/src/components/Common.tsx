@@ -8,7 +8,7 @@ import { optionDataType, VoidFunction } from '../utils/interface';
 import type { EChartsType } from 'echarts';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
-    return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name} :</span>;
+    return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? props.name + ' :' : ''} </span>;
 };
 
 export const Space = (props: {length: string | number }): JSX.Element => {
@@ -192,4 +192,8 @@ export const COLOR = {
     Grey20: 'rgb(202,202,202)',
     Grey40: 'rgb(152,152,152)',
     Grey50: 'rgb(123,122,122)',
+    Band0: '#f82d18',
+    Band1: '#eac299',
+    Band2: '#c7eef5',
+    Band3: '#0177ff',
 };

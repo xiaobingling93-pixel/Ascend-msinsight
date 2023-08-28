@@ -304,3 +304,57 @@ export const OperatorDetailsData: any = [
         'Idle Time(ms)': 0.08,
     },
 ];
+
+export const communicationMatrixData = {
+
+    '1_4': {
+        'Transport Type': 0,
+        'Transit Size(MB)': 2.1691080000000076,
+        'Transit Time(ms)': 4.511760000000004,
+        'Bandwidth(GB/s)': 0.4808,
+    },
+
+    '2_3': {
+        'Transport Type': 0,
+        'Transit Size(MB)': 2.1691080000000076,
+        'Transit Time(ms)': 4.511760000000004,
+        'Bandwidth(GB/s)': 0.4808,
+    },
+
+    '5_6': {
+        'Transport Type': 0,
+        'Transit Size(MB)': 2.1691080000000076,
+        'Transit Time(ms)': 4.511760000000004,
+        'Bandwidth(GB/s)': 0.4808,
+    },
+    '7_4': {
+        'Transport Type': 0,
+        'Transit Size(MB)': 2.1691080000000076,
+        'Transit Time(ms)': 4.511760000000004,
+        'Bandwidth(GB/s)': 0.4808,
+    },
+    '7_3': {
+        'Transport Type': 1,
+        'Transit Size(MB)': 2.1550080000000076,
+        'Transit Time(ms)': 6.790580000000003,
+        'Bandwidth(GB/s)': 0.3174,
+    },
+    '7_6': {
+        'Transport Type': 0,
+        'Transit Size(MB)': 2.150400000000007,
+        'Transit Time(ms)': 4.27529,
+        'Bandwidth(GB/s)': 0.503,
+    },
+    '7_5': {
+        'Transport Type': 0,
+        'Transit Size(MB)': 2.150400000000007,
+        'Transit Time(ms)': 4.3023299999999995,
+        'Bandwidth(GB/s)': 0.4998,
+    },
+    '7_7': {
+        'Transport Type': 0,
+        'Transit Size(MB)': 2.1691080000000076,
+        'Transit Time(ms)': 6.790580000000003,
+        'Bandwidth(GB/s)': 100,
+    },
+};

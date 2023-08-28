@@ -1,46 +1,55 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect } from 'react';
-import { addResizeEvent, Label } from '../Common';
-import { Select } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Select, Checkbox } from 'antd';
+import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import * as echarts from 'echarts';
+import { addResizeEvent, Container, Label, COLOR } from '../Common';
+import { conditionDataType } from './Filter';
+import { communicationMatrixData } from '../../utils/__test__/mockData';
+import { optionDataType, VoidFunction } from '../../utils/interface';
 
-const options = [
+const options: optionDataType[] = [
     {
-        value: '0',
-        label: '0',
+        value: 'Bandwidth(GB/s)',
+        label: 'Bandwidth(GB/s)',
     },
     {
-        value: '1',
-        label: '1',
+        value: 'Transit Size(MB)',
+        label: 'Transit Size(MB)',
     },
     {
-        value: '2',
-        label: '2',
+        value: 'Transit Time(ms)',
+        label: 'Transit Time(ms)',
     },
     {
-        value: '3',
-        label: '3',
+        value: 'Transport Type',
+        label: 'Transport Type',
     },
 ];
 
-function InitCharts(): void {
+function InitCharts(data: any): void {
     const chartDom = document.getElementById('matrixchart');
     if (chartDom !== null) {
         echarts.init(chartDom).dispose();
         const myChart = echarts.init(chartDom);
-        myChart.setOption(wrapData());
+        myChart.setOption(wrapData(data));
         addResizeEvent(myChart);
     }
 }
 
-function wrapData(): any {
+function wrapData(data: any): any {
+    baseOption.series[0].data = data;
+    const max = Math.max(...data.map((item: number[]) => item[2]));
+    const min = Math.min(...data.map((item: number[]) => item[2]));
+    baseOption.visualMap.max = max;
+    baseOption.visualMap.min = min;
+    const ranklist = [ '0', '1', '2', '3', '4', '5', '6', '7' ];
+    baseOption.xAxis.data = ranklist;
+    baseOption.yAxis.data = ranklist;
     return baseOption;
 }
 
-const data = [].map(function (item) {
-    return [ item[1], item[0], item[2] || '-' ];
-});
-const baseOption = {
+const baseOption: any = {
     tooltip: {
         position: 'top',
     },
@@ -50,14 +59,14 @@ const baseOption = {
     },
     xAxis: {
         type: 'category',
-        data: [ '0', '1', '2', '3', '4', '5', '6', '7' ],
+        data: [ ],
         splitArea: {
             show: true,
         },
     },
     yAxis: {
         type: 'category',
-        data: [ '0', '1', '2', '3', '4', '5', '6', '7' ],
+        data: [ ],
         splitArea: {
             show: true,
         },
@@ -69,66 +78,88 @@ const baseOption = {
         orient: 'horizontal',
         left: 'center',
         bottom: '15%',
-        inRange: { color: [ '#f82d18', '#eac299', '#c7eef5', '#0177ff' ] },
+        inRange: { color: [ COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3 ] },
     },
     series: [
         {
             name: 'Punch Card',
             type: 'heatmap',
-            data,
+            data: [],
             label: {
                 show: true,
             },
             emphasis: {
                 itemStyle: {
                     shadowBlur: 10,
-                    shadowColor: 'rgba(0, 0, 0, 0.5)',
+                    shadowColor: COLOR.Grey50,
                 },
             },
         },
     ],
 };
 
-const updateChart = (val: string): void => {
-    InitCharts();
-};
-
-const CommunicationMatrix = observer(function (props: { isShow: boolean}) {
+const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow: boolean;conditions: conditionDataType}) {
+    const [ dataSource, setDataSource ] = useState<any>({});
+    const [ switchCondition, setSwitchCondition ] = useState({ type: 'Bandwidth(GB/s)', showInner: false });
     useEffect(() => {
-        if (props.isShow) {
-            InitCharts();
+        if (isShow) {
+            updateData();
         }
-    }, [props.isShow]);
-    const handleChange = (val: string): void => {
-        updateChart(val);
+    }, [ isShow, conditions ]);
+    useEffect(() => {
+        if (isShow) {
+            const keys = Object.keys(dataSource);
+            let data = keys.map(key => {
+                const list = key.split('_');
+                return [ list[0], list[1], dataSource[key][switchCondition.type] ];
+            });
+            if (!switchCondition.showInner) {
+                data = data.filter(item => item[0] !== item[1]);
+            }
+            InitCharts(data);
+        }
+    }, [ dataSource, switchCondition ]);
+    const updateData = (): void => {
+        setDataSource(communicationMatrixData);
     };
-    return (
-        <div style={{ display: props.isShow ? 'block' : 'none' }}>
-            <div>
-                Suggestions
-                <div>
-                    <p>The time ratio of transiting data in HCCS,PCIE  and RDMA aer 0.74,0.26 and 0.00 respectively.
-                        <p>HCCS general information and optimization suggestion:</p>
-                    </p>
-                </div>
-            </div>
-            <div>
-                <div>Matrix Model</div>
+    const handleChange = (filed: string, val: string | boolean): void => {
+        setSwitchCondition({ ...switchCondition, [filed]: val });
+    };
+    return <CommunicationMatrixCom isShow={isShow} handleChange={handleChange} switchCondition={switchCondition}/>;
+});
+
+const CommunicationMatrixCom = ({ isShow, handleChange, switchCondition }:
+{isShow: boolean;handleChange: VoidFunction;switchCondition: any}): JSX.Element => {
+    return (<div style={{ display: isShow ? 'block' : 'none', overflow: 'auto' }}>
+        <Container
+            type={'headerfixed'}
+            title={'Matrix Model'}
+            style={{ margin: '0 20px' }}
+            content={<div>
                 <div>
                     <Label name={'Communication Matrix Type'}/>
                     <Select
                         defaultValue="0"
-                        style={{ width: 200 }}
-                        onChange={handleChange}
+                        style={{ width: 200, marginRight: '20px' }}
+                        onChange={val => {
+                            handleChange('type', val);
+                        }}
                         options={options}
+                        value={switchCondition.type}
                     />
+                    <Checkbox checked={switchCondition.showInner}
+                        onChange={(e: CheckboxChangeEvent): void => {
+                            handleChange('showInner', e.target.checked);
+                        }}
+                    >Show Inner Communication</Checkbox>
                 </div>
                 <div>
-                    <div id={'matrixchart'} style={{ height: '400px' }}></div>
+                    <div id={'matrixchart'} style={{ height: '600px' }}></div>
                 </div>
-            </div>
-        </div>
+            </div>}
+        />
+    </div>
     );
-});
+};
 
 export default CommunicationMatrix;
