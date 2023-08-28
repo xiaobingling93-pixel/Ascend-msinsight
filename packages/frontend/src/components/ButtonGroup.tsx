@@ -9,6 +9,7 @@ import { runInAction } from 'mobx';
 import { store } from '../store';
 import { SvgType } from './base/rc-table/types';
 import i18n from 'i18next';
+import { UnitsFilter } from './UnitsFilter';
 
 const CleanIcon = AntdCleanIcon as SvgType;
 
@@ -30,6 +31,7 @@ export const ButtonGroup = observer(({ session }: { session: Session }) => {
             onClick={() => resetSession(session)}
         />}
         <TimeMakerButton session={session} />
+        <UnitsFilter session={session} />
         {session.buttons.map((_Button, index) => <_Button session={session} key={`${session.id}-${index}`} />)}
         {unit?.buttons?.map((_Button, index) => <_Button session={session} key={`${unit.name}-${index}`} />)}
     </Container>);

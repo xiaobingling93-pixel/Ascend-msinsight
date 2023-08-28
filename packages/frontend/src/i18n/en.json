@@ -95,7 +95,8 @@
     "abilityName": "Ability Name",
     "abilityEvent": "Ability Event",
     "reset": "Reset",
-    "clean": "Clean"
+    "clean": "Clean",
+    "filter": "Filter"
   },
   "snapshot": {
     "Tooltip": "User object reachable from window"

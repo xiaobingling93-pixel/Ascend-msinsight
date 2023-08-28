@@ -180,6 +180,7 @@ export interface InsightUnit extends InsightUnitParams<unknown, Record<string, u
     expandable: boolean;
     isExpanded: boolean;
     height: () => number;
+    isDisplay: boolean;
     children?: InsightUnit[];
     type: 'basic' | 'transparent';
     phase: string;
@@ -254,6 +255,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         height = (): number => heightOf(this.chart);
         expandable = false;
         isExpanded = false;
+        isDisplay = true;
         detail = transformDetail(params.detail);
         bottomPanelRender = params.bottomPanelRender;
         spreadUnits = wrapSpread(params.spreadUnits);
@@ -286,6 +288,7 @@ Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknow
         children?: InsightUnit[] = params.spreadUnits ? [] : undefined;
         metadata: T;
         isExpanded = false;
+        isDisplay = true;
         name = params.name;
         spreadUnits = wrapSpread(params.spreadUnits);
         phase: UnitPhase = 'configuring';
