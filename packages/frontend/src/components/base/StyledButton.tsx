@@ -5,12 +5,13 @@ import * as React from 'react';
 import { useTheme } from '@emotion/react';
 import { ForwardedRef, FunctionComponent, SVGProps } from 'react';
 import { StyledTooltip } from './StyledTooltip';
+import { DefaultTFuncReturn } from 'i18next';
 
 interface CustomButtonProps {
     isEmphasize?: boolean;
     isDisabled?: boolean;
     isSuspend?: boolean;
-    tooltip?: string;
+    tooltip?: DefaultTFuncReturn;
     icon: FunctionComponent<SVGProps<SVGSVGElement> & { title?: string }>;
 }
 

@@ -8,6 +8,7 @@ import { exec } from 'child_process';
 import * as os from 'os';
 import { promisify } from 'util';
 import { getLoggerByName } from '../logger/loggger_configure';
+import { waitResetComplete } from './reset';
 import { parseKernelDetail } from '../parse/kernel_detail.parser';
 import { parseCommunicationFile, parseStepStatisticsFile, saveClusterBaseInfo } from '../parse/communication_parser';
 import { CLUSTER_DATABASE } from '../database/tableManager';
@@ -148,6 +149,7 @@ export const importHandler = async (req: { path: string }, client: Client): Prom
     const timeLineJsonFileMap = splitRankFile(timelineJsonPaths);
     const scene = 'train';
     const result: {cards: CardInfo[]; steps: string[]; scene: string} = { cards: [], steps: [], scene };
+    await waitResetComplete();
     for (const rankId of timeLineJsonFileMap.keys()) {
         const fileArr = timeLineJsonFileMap.get(rankId);
         if (importedRankIdSet.has(rankId) || fileArr === undefined) continue;
