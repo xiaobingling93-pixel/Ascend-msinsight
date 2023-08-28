@@ -10,6 +10,7 @@ describe('hooks test', () => {
         height: () => 1,
         expandable: false,
         isExpanded: false,
+        isDisplay: true,
         type: 'basic',
         phase: 'download',
     };

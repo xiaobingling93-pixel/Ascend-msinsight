@@ -95,7 +95,8 @@
     "abilityName": "Ability名",
     "abilityEvent": "Ability事件",
     "reset": "复原",
-    "clean": "清空界面"
+    "clean": "清空界面",
+    "filter": "过滤"
   },
   "snapshot": {
     "Tooltip": "可通过窗口访问的用户对象"
