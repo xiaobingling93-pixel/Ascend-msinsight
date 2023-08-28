@@ -1,0 +1,51 @@
+version: 2.0
+env:
+  label: ${env_label} # 虚拟机标签，表示在哪台虚拟机执行，都写deveco_build
+params:
+  - name: branch
+    value: master
+steps:
+  PRE_BUILD:
+    - manifest_checkout:
+        manifest_file: .codecheck/dependency.xml
+        groups: 'dic'
+  BUILD:
+    - build_execute:
+        command: chmod +x ./ohos-data-insight-core/.cloudbuild/buildBinary.sh && ./ohos-data-insight-core/.cloudbuild/buildBinary.sh  # 生成二进制zip包的指令都默认写到 buildBinary.sh
+        check:
+          mode: sync
+          buildcheck: true
+          fail_on_error: true
+          cmcdependency: true
+          compileoption: true
+          dangerouscmd: true
+          buildcheck:
+            ruleset: default
+            project_dir: ./ohos-data-insight-core
+            exclude_dir: ./ohos-data-insight-core/.cloudbuild; ./ohos-data-insight-core/.codecheck; ./ohos-data-insight-core/third_party
+  POST_BUILD:
+    - artget: # 生成的二进制上传到cmc仓库
+        artifact_type: cmcbinary  # 固定写cmcbinary
+        action: push  # 固定是push推送
+        dependency: ohos-data-insight-core/.cloudbuild/dependency.xml  # dependency.xml所在路径，dependency.xml里面的内容是固定的
+        params: # dependency.xml 里面的参数
+          componentName: deveco-studio-ohos-data-insight-core  # 前缀 deveco-studio- + 子目录名称
+          releaseVersion: 0.0.0.1  # snapshot版本号，正式版本不可以自己发布，master用0.0.0.1，develop用0.0.0.2
+        agent: ohos-data-insight-core/build/bin/ohos-data-insight-core.tar.gz  # 最后需要上传的文件，文件名用上面的子目录一样名称，不需要体现版本号
+        add_env_image: push
+        add_source_code_params:
+          operate_type: restore
+          data_source: build
+          only_self: true
+        version_output_path: .  # 元数据存放目录，必须要写. 都要保留元数据
+        username: ${username}  # 用户名
+        password: ${password}  # 密码
+    - compile_report: 
+        compiler: gcc
+        exclude_rules:
+          - 'warning /.*(_WIN32_WINNT|third_party|NMAKE).*/'
+          - 'error /.*(_WIN32_WINNT|third_party|NMAKE).*/'
+        gate:
+            total: 10
+            warning: 5
+            error: 5
