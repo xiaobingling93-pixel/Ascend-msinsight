@@ -15,7 +15,7 @@ const computingStatisticsColumns = [
         key: 'acceleratorCore',
     },
     {
-        title: 'Accelerator Core Durations(us)',
+        title: 'Accelerator Core Durations(μs)',
         dataIndex: 'duration',
         key: 'duration',
     },
@@ -44,12 +44,12 @@ const computingDetailColumns = [
         sorter: true,
     },
     {
-        title: 'Duration(us)',
+        title: 'Duration(μs)',
         dataIndex: 'duration',
         sorter: true,
     },
     {
-        title: 'Wait Time(us)',
+        title: 'Wait Time(μs)',
         dataIndex: 'wait_time',
         sorter: true,
     },
@@ -97,7 +97,7 @@ const communicationStatisticsColumns = [
         key: 'overlapType',
     },
     {
-        title: 'Total Durations(us)',
+        title: 'Total Durations(μs)',
         dataIndex: 'duration',
         key: 'duration',
     },
@@ -117,7 +117,7 @@ const communicationDetailColumns = [
         sorter: true,
     },
     {
-        title: 'Communication Durations(us)',
+        title: 'Communication Durations(μs)',
         dataIndex: 'totalDuration',
         key: 'totalDuration',
         sorter: true,
@@ -127,7 +127,7 @@ const communicationDetailColumns = [
 const communicationOverlappedDetailColumns = [
     ...communicationDetailColumns,
     {
-        title: 'Overlapped Durations(us)',
+        title: 'Overlapped Durations(μs)',
         dataIndex: 'overlapDuration',
         key: 'overlapDuration',
     },
@@ -136,7 +136,7 @@ const communicationOverlappedDetailColumns = [
 const communicationNotOverlappedDetailColumns = [
     ...communicationDetailColumns,
     {
-        title: 'Not Overlapped Durations(us)',
+        title: 'Not Overlapped Durations(μs)',
         dataIndex: 'notOverlapDuration',
         key: 'notOverlapDuration',
     },
@@ -179,10 +179,39 @@ const getTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
     return { rowKey, columns };
 };
 
+const serachData = async({ rankId, record, page, sorter, name }: any): Promise<{total: number;data: object[]}> => {
+    let data;
+    let total;
+    const param = {
+        rankId,
+        timeFlag: record.acceleratorCore,
+        currentPage: page.current,
+        pageSize: page.pageSize,
+        orderBy: sorter.field,
+        order: sorter.order,
+    };
+    if (name === 'computeDetail') {
+        const res = await queryComputeDetail(param);
+        data = res.computeDetail;
+        data = data.map((item: any) => ({
+            ...item,
+            startTime: Number(item.startTime.toFixed(4)),
+            duration: Number(item.duration.toFixed(4)),
+            wait_time: Number(item.wait_time.toFixed(4)),
+        }));
+        total = res.totalNum;
+    } else {
+        const res = await queryCommunicationDetail(param);
+        data = res.communicationDetail;
+        total = res.totalNum;
+    }
+    return { data, total };
+};
+
+const defaultPage = { current: 1, pageSize: 10, total: 0 };
+const defaultSorter = { field: '', order: 'descend' };
 const DtetailTable = ({ rankId, record, name }: any): JSX.Element => {
     const [ dataSource, setDataSource ] = useState<any[]>([]);
-    const defaultPage = { current: 1, pageSize: 10, total: 0 };
-    const defaultSorter = { field: '', order: 'descend' };
     const [ page, setPage ] = useState(defaultPage);
     const [ sorter, setSorter ] = useState(defaultSorter);
     const { columns, rowKey } = getTableSet(name);
@@ -190,25 +219,7 @@ const DtetailTable = ({ rankId, record, name }: any): JSX.Element => {
         updateData(page, sorter);
     }, [ page.current, page.pageSize, sorter.field, sorter.order, record.acceleratorCore, rankId ]);
     const updateData = async(page: any, sorter: any): Promise<void> => {
-        let data;
-        let total;
-        const param = {
-            rankId,
-            timeFlag: record.acceleratorCore,
-            currentPage: page.current,
-            pageSize: page.pageSize,
-            orderBy: sorter.field,
-            order: sorter.order,
-        };
-        if (name === 'computeDetail') {
-            const res = await queryComputeDetail(param);
-            data = res.computeDetail;
-            total = res.totalNum;
-        } else {
-            const res = await queryCommunicationDetail(param);
-            data = res.communicationDetail;
-            total = res.totalNum;
-        }
+        const { data, total } = await serachData({ rankId, record, page, sorter, name });
         setDataSource(data);
         setPage({ ...page, total });
     };
@@ -252,7 +263,13 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
     }, [props.rankId]);
     const updateData = async (): Promise<void> => {
         const res = await querySummaryStatistics({ timeFlag, rankId });
-        setDataSource(res.result ?? []);
+        let data = res.result ?? [];
+        data = data.map((item: any) => ({
+            ...item,
+            duration: Number(item.duration.toFixed(4)),
+            utilization: Number(item.utilization.toFixed(4)),
+        }));
+        setDataSource(data);
     };
 
     return <Table

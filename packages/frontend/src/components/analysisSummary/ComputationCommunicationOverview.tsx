@@ -110,7 +110,7 @@ const baseOption: any = {
             },
             tooltip: {
                 valueFormatter: function (value: any) {
-                    return value + ' ms';
+                    return value + ' μs';
                 },
             },
             data: [ ],
@@ -125,7 +125,7 @@ const baseOption: any = {
             },
             tooltip: {
                 valueFormatter: function (value: any) {
-                    return value + ' ms';
+                    return value + ' μs';
                 },
             },
             data: [ ],
@@ -140,7 +140,7 @@ const baseOption: any = {
             },
             tooltip: {
                 valueFormatter: function (value: any) {
-                    return value + ' ms';
+                    return value + ' μs';
                 },
             },
             data: [ ],
@@ -155,7 +155,7 @@ const baseOption: any = {
             },
             tooltip: {
                 valueFormatter: function (value: any) {
-                    return value + ' ms';
+                    return value + ' μs';
                 },
             },
             data: [ ],
@@ -185,15 +185,18 @@ const baseOption: any = {
     ],
 };
 function wrapData(data: SummaryDataType[]): any {
-    const list = [ 'computingTime', 'communicationNotOverLappedTime', 'freeTime' ];
     data.forEach(item => {
-        let total = 0;
+        const list = [ 'computingTime', 'communicationNotOverLappedTime', 'communicationOverLappedTime', 'freeTime' ];
         list.forEach(field => {
-            item[field] = Number(item[field].toFixed(2));
+            item[field] = Number(item[field].toFixed(4));
+        });
+        const totalFields = [ 'computingTime', 'communicationNotOverLappedTime', 'freeTime' ];
+        let total = 0;
+        totalFields.forEach(field => {
             total += item[field];
         });
-        item.computeTimeRatio = (100 * item.computingTime / total).toFixed(2);
-        item.communicationTimeRatio = (100 * item.communicationNotOverLappedTime / total).toFixed(2);
+        item.computeTimeRatio = Number((100 * item.computingTime / total).toFixed(2));
+        item.communicationTimeRatio = Number((100 * item.communicationNotOverLappedTime / total).toFixed(2));
     });
     baseOption.xAxis[0].data = data.map(item => item.rankId);
     const order: Array<keyof SummaryDataType> = [ 'computingTime', 'communicationNotOverLappedTime',
@@ -255,7 +258,7 @@ const ComputationCommunicationOverview = ({ session, active }: { session: Sessio
         const { summaryList, rankList = [], stepList = [] } = res.result;
         const data = [...summaryList];
         setAllDatasource(data);
-        setBaseInfo({ ...res.result, collectStartTime: formatDate(new Date(res.result.collectStartTime / 1000)) });
+        setBaseInfo({ ...res.result, collectStartTime: formatDate(new Date(res.result.collectStartTime)) });
         if (!groupData.init) {
             setGroupData({ rankList, stepList, init: true });
             setSelected({ ...selected, rankId: rankList[0] });
