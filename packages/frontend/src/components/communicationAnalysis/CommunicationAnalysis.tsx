@@ -16,7 +16,7 @@ import BandwidthAnalysis from './BandwidthAnalysis';
 import { Space, Tan } from '../Common';
 import { queryCommunication } from '../../utils/RequestUtils';
 
-const Operators = ({ returnHome, rankId, operatorName, iterationId, session }: any): JSX.Element => {
+const Operators = ({ returnHome, rankId, operatorName, iterationId }: any): JSX.Element => {
     return (
         <div className={'fullbox'} style={{ padding: '0 20px', overflow: 'auto' }}>
             <Breadcrumb>
@@ -51,9 +51,6 @@ const wrapChartData = (data: tableDataType[]): chartDataType => {
     });
     return chartData;
 };
-const isShow = (name: string): boolean => {
-    return name === 'CommunicationDurationAnalysis';
-};
 
 const CommunicationAnalysis = observer(function ({ session, active }: { session: Session;active: boolean }) {
     const [ rankId, setRankId ] = useState('');
@@ -62,16 +59,37 @@ const CommunicationAnalysis = observer(function ({ session, active }: { session:
         tableData: [],
     });
     const [ conditions, setConditions ] = useState<conditionDataType>(
-        { iterationId: '', rankIds: [], operatorName: '', type: '' });
+        { iterationId: '', rankIds: [], operatorName: '', type: '', stageId: '' });
     const showOperator = (rankId: string): void => {
         setRankId(rankId);
     };
     const returnHome = (): void => { setRankId(''); };
-    const handleFilterChange = async(conditions: conditionDataType): Promise<void> => {
-        setConditions(conditions);
-        const res = await searchData(conditions);
+    const handleFilterChange = async(newConditions: conditionDataType): Promise<void> => {
+        setConditions(newConditions);
+        if (conditions.type !== newConditions.type) {
+            return;
+        }
+        const res = await searchData(newConditions);
         setShowData(res);
     };
+
+    const isShow = (name: string): boolean => {
+        return conditions.type === name;
+    };
+    return <CommunicationAnalysisCom
+        session={session}
+        handleFilterChange={handleFilterChange} showData={showData}
+        active={active} showOperator={showOperator} setShowData={setShowData} conditions={conditions}
+        isShow={isShow} rankId={rankId} returnHome={returnHome}
+    />;
+});
+
+const CommunicationAnalysisCom = (props: {isShow:
+(name: string) => boolean;session: Session;[propName: string]: any;}): JSX.Element => {
+    const {
+        session, handleFilterChange, showData, active, showOperator,
+        setShowData, conditions, isShow, rankId, returnHome,
+    } = props;
     return (
         <div style={{ textAlign: 'left' }} className={'header-fixed-content-scroll'}>
             {/* 筛选条件 */}
@@ -93,12 +111,12 @@ const CommunicationAnalysis = observer(function ({ session, active }: { session:
                 style={{ display: isShow('CommunicationDurationAnalysis') ? 'block' : 'none' }}
             />
             {/* 通信矩阵 */}
-            <CommunicationMatrix isShow={isShow('CommunicationMatrix')}/>
+            <CommunicationMatrix isShow={isShow('CommunicationMatrix') && active} conditions={conditions}/>
             {/* 带宽分析 */}
             { rankId !== '' && <Operators iterationId={conditions.iterationId}
                 rankId={rankId} session={session} returnHome={returnHome} operatorName={conditions.operatorName} /> }
         </div>
     );
-});
+};
 
 export default CommunicationAnalysis;

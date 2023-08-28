@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { Select, Radio, Form } from 'antd';
-import { Label, Space, MultiSelectWithAll, notNullObj } from '../Common';
+import { Label, MultiSelectWithAll, notNullObj } from '../Common';
 import { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryIterations, queryOperators, queryRanks } from '../../utils/RequestUtils';
 import { Session } from '../../entity/session';
@@ -14,32 +14,53 @@ export interface conditionDataType{
     rankIds: string[];
     operatorName: string ;
     type: string;
+    stageId: string;
 }
 
 interface optionMapDataType{
     [props: string]: optionDataType[];
 }
 
-const getOptions = async(): Promise<any> => {
+const getiterationOptions = async(): Promise<optionDataType[]> => {
     const iterationRes: {iterationsOrRanks: Array<{iteration_id: string } > } = await queryIterations();
     const iterationlist: string[] = iterationRes.iterationsOrRanks.map(item => item.iteration_id);
     const iterationOptions: optionDataType[] = iterationlist.map(item => ({ value: item, label: item }));
-    const rankRes: {iterationsOrRanks: Array<{rank_id: number } > } = await queryRanks({ iterationId: iterationlist[0] });
+    return iterationOptions;
+};
+
+const getStageOptions = (): optionDataType[] => {
+    const stageList = [ 0, 1, 2, 3, 4, 5, 6, 7 ];
+    const stageOptions = stageList.map(item => ({ value: item, label: item }));
+    return stageOptions;
+};
+
+const getOptions = async(): Promise<any> => {
+    const iterationOptions: optionDataType[] = await getiterationOptions();
+    const defaultIterationId = iterationOptions[0]?.value as string;
+    const rankRes: {iterationsOrRanks: Array<{rank_id: number } > } = await queryRanks({ iterationId: defaultIterationId });
     const rankIds: number[] = rankRes.iterationsOrRanks.map(item => item.rank_id);
     const rankIdOptions: optionDataType[] = rankIds.map(item => ({ value: item, label: item }));
-    const operatorRes: any = await queryOperators({ iterationId: iterationlist[0], rankIds: [] });
+    const operatorRes: any = await queryOperators({ iterationId: defaultIterationId, rankIds: [] });
     const operatorlist: string[] = operatorRes.operators.map((item: any) => item.op_name);
     const operatorOptions: optionDataType[] = operatorlist.map(item => ({ value: item, label: item }));
-    return { iterationOptions, rankIdOptions, operatorOptions, iterationId: iterationlist[0] };
+    const stageOptions: optionDataType[] = getStageOptions();
+    return {
+        iterationOptions,
+        rankIdOptions,
+        operatorOptions,
+        stageOptions,
+        iterationId: defaultIterationId,
+        stageId: stageOptions[0]?.value,
+    };
 };
 
 export const totalOperator = 'Total Op Info';
 
 const Filter = observer((props: {session: Session;handleFilterChange: VoidFunction}) => {
     const [ conditions, setConditions ] = useState<conditionDataType>(
-        { iterationId: '', rankIds: [], operatorName: '', type: 'CommunicationDurationAnalysis' });
+        { iterationId: '', rankIds: [], operatorName: '', type: 'CommunicationDurationAnalysis', stageId: '' });
     const [ options, setOptions ] = useState<optionMapDataType>(
-        { iterationOptions: [], operatorOptions: [], rankIdOptions: [] },
+        { iterationOptions: [], operatorOptions: [], rankIdOptions: [], stageOptions: [] },
     );
 
     // 初始化
@@ -63,11 +84,11 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
 
     const init = async(): Promise<void> => {
         const optionsObj = await getOptions();
-        const { iterationOptions, rankIdOptions, operatorOptions, iterationId } = optionsObj;
+        const { iterationOptions, rankIdOptions, operatorOptions, iterationId, stageOptions, stageId } = optionsObj;
         // 初始可选项
-        setOptions({ ...options, iterationOptions, rankIdOptions, operatorOptions });
+        setOptions({ ...options, iterationOptions, rankIdOptions, operatorOptions, stageOptions });
         // 初始查询条件
-        setConditions({ ...conditions, iterationId, operatorName: totalOperator });
+        setConditions({ ...conditions, iterationId, operatorName: totalOperator, stageId });
     };
 
     const updateRanks = async (iterationId: string): Promise<void> => {
@@ -95,36 +116,61 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
     return (<FilterCom conditions={conditions} handleChange={handleChange} options={options} />);
 });
 
-const FilterCom = (props: any): JSX.Element => {
-    const { conditions, handleChange, options = {} } = props;
-    return (<div style={ { margin: '0 20px 10px' }}>
-        <Label name="Step" />
-        <Select
-            value={conditions.iterationId}
-            style={{ width: 120 }}
-            onChange={val => handleChange('iterationId', val)}
-            options={options.iterationOptions}
-        />
-        <Label name="Rank ID"/>
-        <MultiSelectWithAll
-            value={conditions.rankIds}
-            onChange={(val: any) => handleChange('rankIds', val)}
-            options={options.rankIdOptions}
-            maxTagCount={2}
-            style={{ width: 200 }}
-        />
-        <Label name="Operator Name"/>
-        <Select
-            value={conditions.operatorName}
-            style={{ width: 300 }}
-            onChange={val => handleChange('operatorName', val)}
-            options={options.operatorOptions}
-            showSearch={true}
-        />
-        <Space length={20}/>
-        <Radio.Group value={conditions.type} onChange={(e) => { handleChange('type', e.target.value); }}>
-            <Radio value={'CommunicationDurationAnalysis'}>Communication Duration Analysis</Radio>
-        </Radio.Group>
+const FilterCom = ({ conditions, handleChange, options = {} }: any): JSX.Element => {
+    return (<div>
+        <FormItem
+            name="Step"
+            content={(<Select
+                value={conditions.iterationId}
+                style={{ width: 120 }}
+                onChange={val => handleChange('iterationId', val)}
+                options={options.iterationOptions}
+            />
+            )}/>
+        <FormItem
+            name="Stage"
+            content={(<Select
+                value={conditions.stageId}
+                style={{ width: 120 }}
+                onChange={val => handleChange('stageId', val)}
+                options={options.stageOptions}
+            />
+            )}/>
+        <FormItem
+            name="Rank ID"
+            content={(<MultiSelectWithAll
+                value={conditions.rankIds}
+                onChange={(val: any) => handleChange('rankIds', val)}
+                options={options.rankIdOptions}
+                maxTagCount={2}
+                style={{ width: 200 }}
+            />
+            )}/>
+        <FormItem
+            name="Operator Name"
+            content={(
+                <Select
+                    value={conditions.operatorName}
+                    style={{ width: 300 }}
+                    onChange={val => handleChange('operatorName', val)}
+                    options={options.operatorOptions}
+                    showSearch={true}
+                />)}/>
+        <FormItem content={(
+            <Radio.Group value={conditions.type}
+                onChange={(e) => { handleChange('type', e.target.value); }}>
+                <Radio value={'CommunicationDurationAnalysis'}>Communication Duration Analysis</Radio>
+                <Radio value={'CommunicationMatrix'}>Communication Matrix</Radio>
+            </Radio.Group>)}/>
+        <div>
+        </div>
+    </div>);
+};
+
+const FormItem = (props: any): JSX.Element => {
+    return (<div style={{ display: 'inline-block', height: '30px', lineHeight: '30px', margin: '0 20px 10px 0' }}>
+        <Label name={props.name}/>
+        {props.content}
     </div>);
 };
 
