@@ -13,8 +13,8 @@
 #include <optional>
 #include <memory>
 #include "GlobalDefs.h"
-#include "ProtocolBase.h"
-#include "BaseProtocol.h"
+#include "ProtocolMessage.h"
+#include "ProtocolUtil.h"
 
 namespace Dic {
 namespace Protocol {
@@ -38,7 +38,7 @@ private:
     void UnRegister();
 
     std::mutex mutex;
-    std::map<Dic::Protocol::ModuleType, std::unique_ptr<BaseProtocol>> protocolMap;
+    std::map<Dic::Protocol::ModuleType, std::unique_ptr<ProtocolUtil>> protocolMap;
 };
 } // namespace Protocol
 } // namespace Dic

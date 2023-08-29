@@ -12,14 +12,14 @@
 #include <optional>
 #include <memory>
 #include "GlobalDefs.h"
-#include "ProtocolBase.h"
+#include "ProtocolMessage.h"
 
 namespace Dic {
 namespace Protocol {
-class BaseProtocol {
+class ProtocolUtil {
 public:
-    BaseProtocol() = default;
-    virtual ~BaseProtocol() = default;
+    ProtocolUtil() = default;
+    virtual ~ProtocolUtil() = default;
 
     void Register();
     void UnRegister();
@@ -27,6 +27,17 @@ public:
     std::unique_ptr<Request> FromJson(const json_t &requestJson, std::string &error);
     std::optional<json_t> ToJson(const Response &response, std::string &error);
     std::optional<json_t> ToJson(const Event &event, std::string &error);
+
+    // set base info
+    // request
+    static void SetRequestJsonBaseInfo(const Request &request, json_t &json);
+    static bool SetRequestBaseInfo(Request &request, const json_t &json);
+    // response
+    static void SetResponseJsonBaseInfo(const Response &response, json_t &json);
+    static bool SetResponseBaseInfo(Response &response, const json_t &json);
+    // event
+    static void SetEventJsonBaseInfo(const Event &event, json_t &json);
+    static bool SetEventBaseInfo(Event &event, const json_t &json);
 
 private:
     virtual void RegisterJsonToRequestFuncs() = 0;

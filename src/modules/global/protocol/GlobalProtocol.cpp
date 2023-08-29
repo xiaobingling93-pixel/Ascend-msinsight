@@ -4,8 +4,6 @@
 
 #include "ServerLog.h"
 #include "JsonUtil.h"
-#include "ProtocolEnumUtil.h"
-#include "ProtocolUtil.h"
 #include "GlobalProtocolUtil.h"
 #include "GlobalProtocol.h"
 #include "GlobalProtocolRequest.h"

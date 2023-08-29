@@ -4,7 +4,7 @@
 #include "ServerLog.h"
 #include "JsonUtil.h"
 #include "ProtocolEnumUtil.h"
-#include "ProtocolUtil.h"
+#include "TimelineProtocol.h"
 #include "TimelineProtocolUtil.h"
 
 namespace Dic {

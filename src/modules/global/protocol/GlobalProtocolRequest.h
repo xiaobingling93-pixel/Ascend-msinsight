@@ -9,7 +9,7 @@
 #include <string>
 #include <optional>
 #include "ProtocolDefs.h"
-#include "ProtocolBase.h"
+#include "ProtocolMessage.h"
 
 namespace Dic {
 namespace Protocol {

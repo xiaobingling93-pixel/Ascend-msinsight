@@ -7,10 +7,9 @@
 #define DIC_PROTOCOL_H
 
 #include "ProtocolDefs.h"
-#include "ProtocolBase.h"
+#include "ProtocolMessage.h"
 #include "ProtocolEnum.h"
 #include "ProtocolEnumUtil.h"
-#include "ProtocolUtil.h"
 #include "TimelineProtocolEvent.h"
 #include "ProtocolErrorCode.h"
 

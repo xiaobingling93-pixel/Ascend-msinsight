@@ -26,9 +26,9 @@ struct ProtocolMessage {
         EVENT,
         NONE
     };
-    virtual ~ProtocolMessage() {}
+    virtual ~ProtocolMessage() = default;
     unsigned int id = 0;
-    ProtocolMessage::Type type;
+    ProtocolMessage::Type type = Type::NONE;
     // request: { "moduleName": xxx, "params": { ...} }; response/event {"moduleName": xxx, "body": { ...} }
     ModuleType moduleName = ModuleType::UNKNOWN;
     // request: { "params": { "token": xxx ...} }; response/event { "body": { "token": xxx ...} }
@@ -42,7 +42,7 @@ struct Request : public ProtocolMessage {
         type = ProtocolMessage::Type::REQUEST;
     }
 
-    ~Request() override {}
+    ~Request() override = default;
     std::string command;
     // arguments will be placed into specified request
 };
@@ -52,7 +52,7 @@ struct Response : public ProtocolMessage {
     {
         type = ProtocolMessage::Type::RESPONSE;
     }
-    ~Response() override {}
+    ~Response() override = default;
     unsigned int requestId = 0;
     bool result = false;
     std::string command;
@@ -66,7 +66,7 @@ struct Event : public ProtocolMessage {
         type = ProtocolMessage::Type::EVENT;
     }
 
-    ~Event() override {}
+    ~Event() override = default;
     std::string event;
     bool result = false;
     // body will be placed into specified event

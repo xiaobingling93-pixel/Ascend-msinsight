@@ -6,8 +6,10 @@
 #ifndef DIC_PROTOCOL_EVENT_H
 #define DIC_PROTOCOL_EVENT_H
 
+#include <vector>
+#include <memory>
 #include "ProtocolDefs.h"
-#include "ProtocolBase.h"
+#include "ProtocolMessage.h"
 
 namespace Dic {
 namespace Protocol {

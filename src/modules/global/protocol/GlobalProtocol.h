@@ -5,11 +5,11 @@
 #ifndef PROFILER_SERVER_GLOBAL_PROTOCOL_H
 #define PROFILER_SERVER_GLOBAL_PROTOCOL_H
 
-#include "BaseProtocol.h"
+#include "ProtocolUtil.h"
 
 namespace Dic {
 namespace Protocol {
-class GlobalProtocol : public BaseProtocol {
+class GlobalProtocol : public ProtocolUtil {
 public:
     GlobalProtocol() = default;
     ~GlobalProtocol() override = default;

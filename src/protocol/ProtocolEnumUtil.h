@@ -12,7 +12,7 @@
 
 #include "ProtocolDefs.h"
 #include "ProtocolEnum.h"
-#include "ProtocolBase.h"
+#include "ProtocolMessage.h"
 
 namespace Dic {
 namespace Protocol {
@@ -24,7 +24,8 @@ const EnumStrMap<ProtocolMessage::Type> PROTOCOL_MESSAGE_TYPE_ES = { { ProtocolM
                                                                      { ProtocolMessage::Type::RESPONSE, RESPONSE_NAME },
                                                                      { ProtocolMessage::Type::EVENT, EVENT_NAME } };
 
-const EnumStrMap<Protocol::ModuleType> MODULE_TYPE_ES = {{Protocol::ModuleType::GLOBAL,   MODULE_GLOBAL },
+const EnumStrMap<Protocol::ModuleType> MODULE_TYPE_ES = {{Protocol::ModuleType::UNKNOWN,  MODULE_UNKNOWN },
+                                                         {Protocol::ModuleType::GLOBAL,   MODULE_GLOBAL },
                                                          {Protocol::ModuleType::TIMELINE, MODULE_TIMELINE }};
 
 const EnumStrMap<Protocol::LinkType> LINK_TYPE_ES = { { Protocol::LinkType::WEBSOCKET, "websocket" },
@@ -34,19 +35,19 @@ const EnumStrMap<Protocol::LinkType> LINK_TYPE_ES = { { Protocol::LinkType::WEBS
 
 #pragma region << EnumToStr Template Specialization>>
 
-template <typename E> const std::optional<std::string> ENUM_TO_STR(const E &e)
+template <typename E> std::optional<std::string> ENUM_TO_STR(const E &e)
 {
     return std::nullopt;
 }
 
-template <typename E> const std::optional<E> STR_TO_ENUM(const std::string &s)
+template <typename E> std::optional<E> STR_TO_ENUM(const std::string &s)
 {
     return std::nullopt;
 }
 
-template <typename E, typename M> const std::optional<E> TryGetEnum(const M &map, const std::string &s)
+template <typename E, typename M> std::optional<E> TryGetEnum(const M &map, const std::string &s)
 {
-    for (auto iter : map) {
+    for (const auto &iter : map) {
         if (iter.second == s) {
             return iter.first;
         }
@@ -55,7 +56,7 @@ template <typename E, typename M> const std::optional<E> TryGetEnum(const M &map
 }
 
 // ProtocolMessage::Type
-template <> inline const std::optional<std::string> ENUM_TO_STR<ProtocolMessage::Type>(const ProtocolMessage::Type &e)
+template <> inline std::optional<std::string> ENUM_TO_STR<ProtocolMessage::Type>(const ProtocolMessage::Type &e)
 {
     if (PROTOCOL_MESSAGE_TYPE_ES.count(e) == 0) {
         return std::nullopt;
@@ -63,13 +64,13 @@ template <> inline const std::optional<std::string> ENUM_TO_STR<ProtocolMessage:
     return PROTOCOL_MESSAGE_TYPE_ES.at(e);
 }
 
-template <> inline const std::optional<ProtocolMessage::Type> STR_TO_ENUM<ProtocolMessage::Type>(const std::string &s)
+template <> inline std::optional<ProtocolMessage::Type> STR_TO_ENUM<ProtocolMessage::Type>(const std::string &s)
 {
     return TryGetEnum<ProtocolMessage::Type>(PROTOCOL_MESSAGE_TYPE_ES, s);
 }
 
 // Protocol::ModuleType
-template <> inline const std::optional<std::string> ENUM_TO_STR<Protocol::ModuleType>(const Protocol::ModuleType &e)
+template <> inline std::optional<std::string> ENUM_TO_STR<Protocol::ModuleType>(const Protocol::ModuleType &e)
 {
     if (MODULE_TYPE_ES.count(e) == 0) {
         return std::nullopt;
@@ -77,13 +78,13 @@ template <> inline const std::optional<std::string> ENUM_TO_STR<Protocol::Module
     return MODULE_TYPE_ES.at(e);
 }
 
-template <> inline const std::optional<Protocol::ModuleType> STR_TO_ENUM<Protocol::ModuleType>(const std::string &s)
+template <> inline std::optional<Protocol::ModuleType> STR_TO_ENUM<Protocol::ModuleType>(const std::string &s)
 {
     return TryGetEnum<Protocol::ModuleType>(MODULE_TYPE_ES, s);
 }
 
 // Protocol::LinkType
-template <> inline const std::optional<std::string> ENUM_TO_STR<Protocol::LinkType>(const Protocol::LinkType &e)
+template <> inline std::optional<std::string> ENUM_TO_STR<Protocol::LinkType>(const Protocol::LinkType &e)
 {
     if (LINK_TYPE_ES.count(e) == 0) {
         return std::nullopt;
@@ -91,7 +92,7 @@ template <> inline const std::optional<std::string> ENUM_TO_STR<Protocol::LinkTy
     return LINK_TYPE_ES.at(e);
 }
 
-template <> inline const std::optional<Protocol::LinkType> STR_TO_ENUM<Protocol::LinkType>(const std::string &s)
+template <> inline std::optional<Protocol::LinkType> STR_TO_ENUM<Protocol::LinkType>(const std::string &s)
 {
     return TryGetEnum<Protocol::LinkType>(LINK_TYPE_ES, s);
 }
