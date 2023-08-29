@@ -8,19 +8,34 @@
 
 #include "ProtocolDefs.h"
 #include "ProtocolBase.h"
-#include "ProtocolEntity.h"
 
 namespace Dic {
 namespace Protocol {
-// global
-struct InitializedEventBody {};
-
-struct InitializedEvent : public Event {
-    InitializedEvent() : Event(EVENT_INITIALIZED) {}
-    InitializedEventBody body;
+struct UnitMetaData {
+    std::string cardId;
 };
 
-// timeline
+struct UnitTrackMeatData {
+    std::string cardId;
+    std::string processId;
+    std::string processName;
+    std::string label;
+    int64_t threadId = 0;
+    std::string threadName;
+    int maxDepth = 0;
+};
+
+struct UnitTrack {
+    std::string type;
+    UnitTrackMeatData metaData;
+    std::vector<std::unique_ptr<UnitTrack>> children;
+};
+
+struct Unit {
+    std::string type;
+    UnitMetaData metadata;
+    std::vector<std::unique_ptr<UnitTrack>> children;
+};
 struct ParseSuccessEventBody {
     Unit unit;
     bool startTimeUpdated = false;

@@ -7,16 +7,12 @@
 
 #include "GlobalDefs.h"
 #include "ProtocolBase.h"
-#include "ProtocolEntity.h"
 #include "ProtocolEnumUtil.h"
 
 namespace Dic {
 namespace Protocol {
 class ProtocolUtil {
 public:
-    // entity
-    static void SetGlobalConfigJson(const GlobalConfig &config, json_t &jsonGlobalConfig);
-    static void SetGlobalConfigStruct(const json_t &jsonGlobalConfig, GlobalConfig &config);
     // request
     static void SetRequestJsonBaseInfo(const Request &request, json_t &json);
     static bool SetRequestBaseInfo(Request &request, const json_t &json);

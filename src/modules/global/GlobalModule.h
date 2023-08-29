@@ -14,13 +14,8 @@ public:
     GlobalModule();
     ~GlobalModule() override;
 
-    void Config(const GlobalConfig &cfg);
-    const GlobalConfig &GetConfig() const;
     void RegisterRequestHandlers() override;
     void OnRequest(std::unique_ptr<Protocol::Request> request) override;
-
-private:
-    GlobalConfig config;
 };
 } // end of namespace Module
 } // end of namespace Dic

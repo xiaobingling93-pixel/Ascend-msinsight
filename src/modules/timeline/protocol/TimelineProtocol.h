@@ -7,6 +7,7 @@
 
 #include "BaseProtocol.h"
 
+
 namespace Dic {
 namespace Protocol {
 class TimelineProtocol : public BaseProtocol {

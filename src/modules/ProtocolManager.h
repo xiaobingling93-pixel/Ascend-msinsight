@@ -13,7 +13,7 @@
 #include <optional>
 #include <memory>
 #include "GlobalDefs.h"
-#include "ProtocolRequest.h"
+#include "ProtocolBase.h"
 #include "BaseProtocol.h"
 
 namespace Dic {

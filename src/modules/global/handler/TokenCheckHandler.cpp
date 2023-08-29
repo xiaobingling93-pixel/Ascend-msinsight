@@ -4,7 +4,7 @@
 
 #include "ServerLog.h"
 #include "WsSessionManager.h"
-#include "ModuleErrorCode.h"
+#include "ProtocolErrorCode.h"
 #include "TokenCheckHandler.h"
 
 namespace Dic {

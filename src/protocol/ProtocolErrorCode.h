@@ -6,7 +6,7 @@
 #define DATA_INSIGHT_CORE_MODULE_ERROR_CODE_H
 
 namespace Dic {
-namespace Module {
+namespace Protocol {
 const int ERR_CODE_TOKEN_CHECK = 0x1010;
 const int ERR_CODE_SUB_TOKEN_CHECK = 0x1011;
 enum class ErrorCode {

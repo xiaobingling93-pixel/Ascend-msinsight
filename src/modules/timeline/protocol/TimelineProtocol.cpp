@@ -8,6 +8,8 @@
 #include "ProtocolUtil.h"
 #include "TimelineProtocolUtil.h"
 #include "TimelineProtocol.h"
+#include "TimelineProtocolRequest.h"
+#include "TimelineProtocolResponse.h"
 
 namespace Dic {
 namespace Protocol {

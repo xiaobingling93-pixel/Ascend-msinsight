@@ -4,6 +4,7 @@
  */
 
 #include "ServerLog.h"
+#include "ProtocolDefs.h"
 #include "ProtocolManager.h"
 #include "RegexUtil.h"
 #include "ProtocolMessageBuffer.h"

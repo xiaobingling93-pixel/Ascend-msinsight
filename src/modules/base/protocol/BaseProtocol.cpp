@@ -4,6 +4,7 @@
 
 #include "ServerLog.h"
 #include "BaseProtocol.h"
+#include "ProtocolDefs.h"
 
 namespace Dic {
 namespace Protocol {

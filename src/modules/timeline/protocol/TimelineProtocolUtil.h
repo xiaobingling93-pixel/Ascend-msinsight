@@ -7,8 +7,8 @@
 
 #include <optional>
 #include "GlobalDefs.h"
-#include "ProtocolResponse.h"
-#include "ProtocolEvent.h"
+#include "TimelineProtocolResponse.h"
+#include "TimelineProtocolEvent.h"
 
 namespace Dic {
 namespace Protocol {

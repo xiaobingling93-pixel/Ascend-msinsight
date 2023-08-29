@@ -23,14 +23,10 @@ private:
     static std::unique_ptr<Request> ToTokenCreateRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToTokenDestroyRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToTokenCheckRequest(const json_t &json, std::string &error);
-    static std::unique_ptr<Request> ToConfigGetRequest(const json_t &json, std::string &error);
-    static std::unique_ptr<Request> ToConfigSetRequest(const json_t &json, std::string &error);
     // response to json
     static std::optional<json_t> ToTokenCreateResponseJson(const Response &response);
     static std::optional<json_t> ToTokenDestroyResponseJson(const Response &response);
     static std::optional<json_t> ToTokenCheckResponseJson(const Response &response);
-    static std::optional<json_t> ToConfigGetResponseJson(const Response &response);
-    static std::optional<json_t> ToConfigSetResponseJson(const Response &response);
 };
 } // namespace Protocol
 } // namespace Dic

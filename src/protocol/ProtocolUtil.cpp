@@ -8,16 +8,6 @@
 
 namespace Dic {
 namespace Protocol {
-void ProtocolUtil::SetGlobalConfigJson(const GlobalConfig &config, json_t &jsonGlobalConfig)
-{
-    jsonGlobalConfig["maxSessionCount"] = config.maxSessionCount;
-}
-
-void ProtocolUtil::SetGlobalConfigStruct(const json_t &jsonGlobalConfig, GlobalConfig &config)
-{
-    JsonUtil::SetByJsonKeyValue(config.maxSessionCount, jsonGlobalConfig, "maxSessionCount");
-}
-
 void ProtocolUtil::SetRequestJsonBaseInfo(const Request &request, json_t &json)
 {
     json["type"] = REQUEST_NAME;
