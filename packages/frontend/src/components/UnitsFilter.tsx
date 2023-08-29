@@ -113,9 +113,9 @@ const CustomDiv = styled.div`
     }
 `;
 
-const useAutoCompleteHandles = (session: Session): [ selectValue: string, dropdownRenderr: () => JSX.Element, isOpen: boolean,
-    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>, completeOptions: Array<{value: string}>, handleSearch: Function,
-    handleSearch: (value: string) => void, handleSelect: (value: string) => void ] => {
+const useAutoCompleteHandles = (session: Session): [ selectValue: string, dropdownRender: () => JSX.Element, isOpen: boolean,
+    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>, completeOptions: Array<{value: string}>, handleSearch: (value: string) => void,
+    handleChange: any, handleSelect: any ] => {
     const [ selectValue, setSelectValue ] = useState<string>('Filter');
     const [ isOpen, setIsOpen ] = useState<boolean>(false);
     const { cardNames, unitNames } = useUnitsNameSet(session);
@@ -138,7 +138,7 @@ const useAutoCompleteHandles = (session: Session): [ selectValue: string, dropdo
                 }}>Units Filter</div>
             </ChildrenContainer>
         );
-    };
+    }
 
     const handleSearch = (value: string): void => {
         const result: Array<{value: string}> = [];
@@ -186,7 +186,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
             </StyledSelect>
 
             <StyledAutoComplete
-                type={'text'} options={completeOptions} style={{ top: 2 }}
+                options={completeOptions} style={{ top: 2 }}
                 onSearch={handleSearch} onChange={handleChange} onSelect={handleSelect} getPopupContainer={(triggerNode: { parentNode: any }) => triggerNode.parentNode}>
                 <StyledInput allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor}/> }}
                     minwidth={450} height={24} isshow={Number(selectValue !== 'Filter')} type={'text'}>

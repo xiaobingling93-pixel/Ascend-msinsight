@@ -26,7 +26,6 @@ def init():
             os.remove(os.path.join(out, file))
         os.rmdir(out)
     os.makedirs(os.path.join(SCRIPT_PATH, 'out'))
-    sys.platform
 
 
 def build_vscode(vscode_version, os_name):
@@ -66,7 +65,7 @@ def build_intellij(idea_version, os_name):
 
 
 def exec_command(command):
-    if os.system(command) == 1:
+    if os.system(command) != 0:
         logging.error('execute %s failed', command)
         raise ExecError()
 
