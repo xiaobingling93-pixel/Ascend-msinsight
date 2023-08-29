@@ -10,7 +10,12 @@ import { promisify } from 'util';
 import { getLoggerByName } from '../logger/loggger_configure';
 import { waitResetComplete } from './reset';
 import { parseKernelDetail } from '../parse/kernel_detail.parser';
-import { parseCommunicationFile, parseStepStatisticsFile, saveClusterBaseInfo } from '../parse/communication_parser';
+import {
+    parseCommunicationFile,
+    parseCommunicationMatrixFile,
+    parseStepStatisticsFile,
+    saveClusterBaseInfo,
+} from '../parse/communication_parser';
 import { CLUSTER_DATABASE } from '../database/tableManager';
 
 const logger = getLoggerByName('import', 'info');
@@ -181,18 +186,24 @@ export const importHandler = async (req: { path: string }, client: Client): Prom
     }
     // 多卡场景才处理
     if (selectedFolder !== null && scene === 'train' && result.cards.length > 1) {
-        logger.info('generate train cluster tables');
-        await execClusterPython(selectedFolder);
-        await CLUSTER_DATABASE.createClusterTable();
-        // import communication data
-        importCommunication(selectedFolder, client);
-        // write base info table
-        saveClusterBaseInfo(selectedFolder);
-        // import step statistics data
-        importStepStatistics(selectedFolder);
+        await execClusterScenario(selectedFolder, client);
     }
     return result;
 };
+
+async function execClusterScenario(selectedFolder: string, client: Client): Promise<void> {
+    logger.info('generate train cluster tables');
+    await execClusterPython(selectedFolder);
+    await CLUSTER_DATABASE.createClusterTable();
+    // import communication data
+    importCommunication(selectedFolder, client);
+    // write base info table
+    saveClusterBaseInfo(selectedFolder);
+    // import step statistics data
+    importStepStatistics(selectedFolder);
+    // import communication matrix data
+    importCommunicationMatrix(selectedFolder, client);
+}
 
 function execClusterPython(folder: string): void {
     if (!fs.existsSync(folder + '/cluster_analysis_output') &&
@@ -216,6 +227,15 @@ export const importCommunication = (selectedPath: string, client: Client): void 
         return;
     }
     parseCommunicationFile(communicationFileArr, client);
+};
+
+export const importCommunicationMatrix = (selectedPath: string, client: Client): void => {
+    const communicationMatrixFile = findFilesByPath(selectedPath, 'communication_matrix.json');
+    if (communicationMatrixFile.length === 0) {
+        logger.info('communication matrix file is not found.');
+        return;
+    }
+    parseCommunicationMatrixFile(communicationMatrixFile, client);
 };
 
 export const importKernelDetail = (parentPath: string, rankId: string): void => {

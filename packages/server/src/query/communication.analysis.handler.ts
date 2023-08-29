@@ -13,6 +13,8 @@ import {
     Durations,
     IterationsOrRanksObject,
     IterationsOrRanksResponse,
+    MatrixRequest,
+    MatrixResponse,
     OperatorDetailsRequest,
     OperatorNamesRequest,
     OperatorsObject,
@@ -98,4 +100,16 @@ export const distributionHandler = async (request: DistributionDataRequest): Pro
     response.distributionData = await CLUSTER_DATABASE.queryDistributionData(request.iterationId,
         request.rankId, request.operatorName, request.transportType) as string;
     return response;
+};
+
+export const matrixListHandler = async (request: MatrixRequest): Promise<MatrixResponse> => {
+    const response: MatrixResponse = { matrixList: [] };
+    response.matrixList = await CLUSTER_DATABASE.queryMatrixList(request.step, request.operatorName, request.groupId);
+    return response;
+};
+
+export const groupHandler = async (): Promise<{data: string[]}> => {
+    const response: [] = await CLUSTER_DATABASE.getGroups();
+    const result = response.map((item: any) => item.groupId);
+    return { data: result };
 };

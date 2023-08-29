@@ -1,0 +1,26 @@
+{
+  "(0, 1, 2, 3, 4, 5, 6, 7)": {
+    "step12": {
+      "hcom_allReduce__764_0@10097716055986069764": {
+        "7_4": {
+          "Transport Type": "hccs",
+          "Transit Size(MB)": 4e-05,
+          "Transit Time(ms)": 0.00113,
+          "Bandwidth(GB/s)": 0.0354
+        }
+      }
+    }
+  },
+  "(0, 1, 2, 3, 4, 5, 6, 7)": {
+    "step13": {
+      "hcom_allReduce__764_0@10097716055986069764": {
+        "7_3": {
+          "Transport Type": "hccs",
+          "Transit Size(MB)": 4e-05,
+          "Transit Time(ms)": 0.00113,
+          "Bandwidth(GB/s)": 0.0354
+        }
+      }
+    }
+  }
+}

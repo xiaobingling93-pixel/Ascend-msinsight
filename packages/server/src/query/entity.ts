@@ -62,3 +62,16 @@ export type StepStatisticEntity = {
     bubbleTime: number;
     pureCommunicationExcludeReceiveTime: number;
 };
+
+export type CommunicationMatrixInfoEntity = {
+    groupId: string;
+    step: string;
+    opName: string;
+    groupName: string;
+    srcRank: number;
+    dstRank: number;
+    transportType: string;
+    transitSize: number;
+    transitTime: number;
+    bandwidth: number;
+};

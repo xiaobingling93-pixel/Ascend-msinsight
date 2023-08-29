@@ -7,6 +7,7 @@ export const COMMUNICATION_TIME_INFO_TABLE = 'communication_time_info';
 export const COMMUNICATION_BAND_WIDTH_TABLE = 'communication_bandwidth_info';
 export const STEP_STATISTIC_INFO_TABLE = 'step_statistic_info';
 export const KERNEL_DETAIL_TABLE = 'kernel_detail';
+export const COMMUNICATION_MATRIX = 'communication_matrix';
 
 export const CREATE_COMMUNICATION_TIME_INFO_SQL = `CREATE TABLE ${COMMUNICATION_TIME_INFO_TABLE}
                                                (
@@ -84,4 +85,19 @@ export const CREATE_KERNEL_DETAIL_TABLE_SQL = `CREATE TABLE ${KERNEL_DETAIL_TABL
                                                    output_shapes     VARCHAR(300),
                                                    output_data_types VARCHAR(200),
                                                    output_formats    VARCHAR(200)
+                                               )`;
+
+export const CREATE_COMMUNICATION_MATRIX_TABLE = `CREATE TABLE ${COMMUNICATION_MATRIX}
+                                               (
+                                                   id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                   group_id           VARCHAR(100),
+                                                   step         VARCHAR(50),
+                                                   op_name         VARCHAR(100),
+                                                   group_name      VARCHAR(100),
+                                                   src_rank        VARCHAR(50),
+                                                   dst_rank          VARCHAR(50),
+                                                   transport_type    VARCHAR(50),
+                                                   transit_size      double,
+                                                   transit_time      double,
+                                                   bandwidth         double
                                                )`;

@@ -6,15 +6,21 @@ import * as sqlite from 'sqlite3';
 import { getLoggerByName } from '../logger/loggger_configure';
 import {
     CLUSTER_BASE_INFO_TABLE,
-    COMMUNICATION_BAND_WIDTH_TABLE,
+    COMMUNICATION_BAND_WIDTH_TABLE, COMMUNICATION_MATRIX,
     COMMUNICATION_TIME_INFO_TABLE,
     CREATE_CLUSTER_TABLE_SQL,
     CREATE_COMMUNICATION_BANDWIDTH_INFO_SQL,
+    CREATE_COMMUNICATION_MATRIX_TABLE,
     CREATE_COMMUNICATION_TIME_INFO_SQL,
     CREATE_STEP_STATISTIC_INFO_TABLE_SQL,
     STEP_STATISTIC_INFO_TABLE,
 } from '../common/sql_constant';
-import { CommunicationBandWidthEntity, CommunicationTimeInfoEntity, StepStatisticEntity } from '../query/entity';
+import {
+    CommunicationBandWidthEntity,
+    CommunicationMatrixInfoEntity,
+    CommunicationTimeInfoEntity,
+    StepStatisticEntity,
+} from '../query/entity';
 import { OperatorDetailsRequest } from '../query/communicationAnalysisData';
 
 const logger = getLoggerByName('ClusterDatabase', 'info');
@@ -24,10 +30,12 @@ export class ClusterDatabase {
     private readonly _dbPath: string;
     private communicationTimeInfoCaches: any[] = [];
     private communicationBandWidthCaches: any[] = [];
+    private communicationMatrixCaches: any[] = [];
     private readonly maxCachesSize = 100;
     count = 0;
     private timeInfoStat: sqlite.Statement | undefined;
     private bandWidthStat: sqlite.Statement | undefined;
+    private matrixStat: sqlite.Statement | undefined;
 
     constructor(dbPath: string) {
         this.clusterDb = new sqlite.Database(dbPath, sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE | sqlite.OPEN_SHAREDCACHE, (err) => {
@@ -51,6 +59,8 @@ export class ClusterDatabase {
                     .run(CREATE_CLUSTER_TABLE_SQL)
                     .run(`DROP TABLE IF EXISTS ${STEP_STATISTIC_INFO_TABLE}`)
                     .run(CREATE_STEP_STATISTIC_INFO_TABLE_SQL)
+                    .run(`DROP TABLE IF EXISTS ${COMMUNICATION_MATRIX}`)
+                    .run(CREATE_COMMUNICATION_MATRIX_TABLE)
                     .run('PRAGMA synchronous = OFF')
                     .run('PRAGMA journal_mode = MEMORY', (err) => {
                         if (err) {
@@ -81,6 +91,15 @@ export class ClusterDatabase {
                                   large_package_ratio, size_distribution, transit_size, transit_time)
                                  VALUES ${placeholders}`;
             this.bandWidthStat = this.clusterDb.prepare(sql);
+        }
+        if (this.matrixStat === undefined) {
+            const valueParams = '(?,?,?,?,?,?,?,?,?,?)';
+            const placeholders: string = (valueParams + ',').repeat(this.maxCachesSize - 1).concat((valueParams));
+            const sql: string = `INSERT INTO ${COMMUNICATION_MATRIX}
+                                 (group_id, step, op_name, group_name, src_rank, dst_rank, transport_type,
+                                  transit_size, transit_time, bandwidth)
+                                 VALUES ${placeholders}`;
+            this.matrixStat = this.clusterDb.prepare(sql);
         }
     }
 
@@ -119,6 +138,55 @@ export class ClusterDatabase {
             this.insertCommunicationTimeInfoList(this.communicationTimeInfoCaches);
             this.communicationTimeInfoCaches = [];
         }
+    }
+
+    async insertCommunicationMatrixInfo(data: CommunicationMatrixInfoEntity): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.communicationMatrixCaches.push(data);
+            if (this.communicationMatrixCaches.length === this.maxCachesSize) {
+                this.insertCommunicationMatrix(this.communicationMatrixCaches).finally(() => {
+                    this.communicationMatrixCaches = [];
+                    resolve();
+                });
+            } else {
+                resolve();
+            }
+        });
+    }
+
+    async insertCommunicationMatrix(dataList: CommunicationMatrixInfoEntity[]): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const paramsList: any[] = [];
+            dataList.forEach((data) => {
+                paramsList.push(data.groupId, data.step, data.opName, data.groupName,
+                    data.srcRank, data.dstRank, data.transportType, data.transitSize, data.transitTime, data.bandwidth);
+            });
+            if (dataList.length === this.maxCachesSize) {
+                if (this.matrixStat === undefined) {
+                    this.initStat();
+                }
+                this.matrixStat?.reset().run(paramsList, (err) => {
+                    if (err) {
+                        logger.error(err.message);
+                        reject(err);
+                    }
+                    resolve();
+                });
+            } else {
+                const placeholders: string = dataList.map(() => '(?,?,?,?,?,?,?,?,?,?)').join(',');
+                const sql: string = `INSERT INTO ${COMMUNICATION_MATRIX}
+                                 (group_id, step, op_name, group_name, src_rank, dst_rank, transport_type,
+                                  transit_size, transit_time, bandwidth)
+                                 VALUES ${placeholders}`;
+                this.clusterDb.run(sql, paramsList, (err) => {
+                    if (err !== null) {
+                        logger.error(err.message);
+                        reject(err);
+                    }
+                    resolve();
+                });
+            }
+        });
     }
 
     insertCommunicationBandWidthList(dataList: CommunicationBandWidthEntity[]): void {
@@ -205,6 +273,10 @@ export class ClusterDatabase {
         if (this.communicationBandWidthCaches.length > 0) {
             this.insertCommunicationBandWidthList(this.communicationBandWidthCaches);
             this.communicationBandWidthCaches = [];
+        }
+        if (this.communicationMatrixCaches.length > 0) {
+            this.insertCommunicationMatrix(this.communicationMatrixCaches);
+            this.communicationMatrixCaches = [];
         }
     }
 
@@ -442,5 +514,43 @@ export class ClusterDatabase {
                                AND op_name = ?
                                AND transport_type = ?`;
         return this.executeSql(sql, [ iterationId, rankId, operatorName, transportType ]);
+    }
+
+    async queryMatrixList(step: string, operatorName: string, groupId: string): Promise<any> {
+        let sql: string = '';
+        if (groupId === null || groupId === '') {
+            sql = `SELECT src_rank as srcRank, dst_rank as dstRank,
+                          transport_type as transportType,
+                          ROUND(transit_size, 4) as transitSize,
+                          ROUND(transit_time, 4) as transitTime,
+                          ROUND(bandwidth, 4) as bandwidth
+                   FROM ${COMMUNICATION_MATRIX}
+                   WHERE step = ?
+                     AND op_name = ?`;
+            return this.executeSql(sql, [ step, operatorName ]);
+        } else {
+            sql = `SELECT src_rank as srcRank, dst_rank as dstRank,
+                          transport_type as transportType,
+                          ROUND(transit_size, 4) as transitSize,
+                          ROUND(transit_time, 4) as transitTime,
+                          ROUND(bandwidth, 4) as bandwidth
+                   FROM ${COMMUNICATION_MATRIX}
+                   WHERE group_id = ? AND
+                      step = ?
+                     AND op_name = ?`;
+            return this.executeSql(sql, [ groupId, step, operatorName ]);
+        }
+    }
+
+    async getGroups(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.clusterDb.all(`SELECT DISTINCT group_id as groupId FROM ${COMMUNICATION_MATRIX}`, [], (err, rows) => {
+                if (err) {
+                    logger.error('get group error:', err);
+                    reject(err);
+                }
+                resolve(rows);
+            });
+        });
     }
 }

@@ -108,3 +108,22 @@ export type OperatorsObject = {
 export type DistributionResponse = {
     distributionData: string;
 };
+
+export type MatrixList = {
+    srcRank: number;
+    dstRank: number;
+    transportType: string;
+    transitSize: number;
+    transitTime: number;
+    bandwidth: number;
+};
+
+export type MatrixResponse = {
+    matrixList: MatrixList[];
+};
+
+export type MatrixRequest = {
+    groupId: string;
+    operatorName: string;
+    step: string;
+};

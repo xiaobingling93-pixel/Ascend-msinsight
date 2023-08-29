@@ -5,7 +5,12 @@
 import { getLoggerByName } from '../logger/loggger_configure';
 import { CLUSTER_DATABASE } from '../database/tableManager';
 import fs from 'fs';
-import { mapperToBandWidthEntity, mapperToStepStatisticsInfo, mapperToTimeInfoEntity } from '../utils/mapper_util';
+import {
+    mapperToBandWidthEntity,
+    mapperToMatrixInfoEntity,
+    mapperToStepStatisticsInfo,
+    mapperToTimeInfoEntity,
+} from '../utils/mapper_util';
 import JSONStream from 'JSONStream';
 import readline from 'readline';
 import { getFolderSize } from '../utils/common_util';
@@ -55,6 +60,38 @@ export function parseCommunicationFile(filePathArr: string[], client?: Client): 
             const end = new Date().getTime();
             logger.info('cost time :', end - start);
             logger.info('Finished parsing file. time info:{}, bandWidth:{}', countTimeInfo, countBandWidth);
+        });
+    }
+}
+
+export function parseCommunicationMatrixFile(filePathArray: string[], client?: Client): void {
+    const start = new Date().getTime();
+    for (const filePath of filePathArray) {
+        let temp: any[] = [];
+        logger.info('start save communication matrix data into db ,file:', filePath);
+        const stream = fs.createReadStream(filePath, { encoding: 'utf-8' });
+        const parser = JSONStream.parse([ /.*/, { recurse: true }, /^[0-9]{1,5}/, { emitPath: true } ]);
+        stream.pipe(parser);
+        parser.on('data', (data: any) => {
+            const tempPath = data.path;
+            const tempData = data.value;
+            temp.push(tempData);
+            if (temp.length === 4) {
+                const tempTimeInfo = mapperToMatrixInfoEntity(tempPath, temp);
+                CLUSTER_DATABASE.insertCommunicationMatrixInfo(tempTimeInfo);
+                temp = [];
+            }
+        });
+        parser.on('error', (err: any) => {
+            client?.notify('parseCommunication/success', { parseResult: 'fail', parseName: 'communication' });
+            logger.error('parseCommunication occur error: ', err);
+        });
+        parser.on('end', () => {
+            CLUSTER_DATABASE.saveCommunicationData();
+            client?.notify('parseCommunication/success', { parseResult: 'ok', parseName: 'communication' });
+            const end = new Date().getTime();
+            logger.info('cost time :', end - start);
+            logger.info('Finished parsing file');
         });
     }
 }

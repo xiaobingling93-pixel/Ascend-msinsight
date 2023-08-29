@@ -7,7 +7,9 @@ import {
     DurationResponse,
     Durations,
     IterationsOrRanksObject,
-    IterationsOrRanksResponse, OperatorDetailsRequest,
+    IterationsOrRanksResponse,
+    MatrixResponse,
+    OperatorDetailsRequest,
     OperatorsObject,
     OperatorsResponse,
 } from '../../query/communicationAnalysisData';
@@ -192,4 +194,30 @@ it('query distribute data with SDMA', async function () {
             size_distribution: '',
         }],
     });
+});
+
+it('query matrix data', async function () {
+    const response: MatrixResponse = { matrixList: [] };
+    response.matrixList = await globalDatabase.queryMatrixList('12', 'hcom_allReduce__764_0',
+        '');
+    expect(response).toEqual({
+        matrixList: [
+            {
+                srcRank: '7',
+                dstRank: '4',
+                transportType: 'hccs',
+                transitSize: 0,
+                transitTime: 0.0011,
+                bandwidth: 0.0354,
+            }],
+    });
+});
+
+it('query group data', async function () {
+    const response: [] = await globalDatabase.getGroups();
+    const result = response.map((item: any) => item.groupId);
+    console.log(response.map((item: any) => item.groupId));
+    expect(result).toEqual(
+        ['(0, 1, 2, 3, 4, 5, 6, 7)'],
+    );
 });

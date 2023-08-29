@@ -43,6 +43,23 @@ export const mapperToTimeInfoEntity = (tempRankId: number, tempOpName: string, t
     };
 };
 
+export const mapperToMatrixInfoEntity = (tempPath: any, temp: any): any => {
+    const tempName = tempPath[2].split('@');
+    const rankIds = tempPath[3].split('_');
+    return {
+        groupId: tempPath[0],
+        step: tempPath[1].replace('step', ''),
+        opName: tempName[0],
+        groupName: tempName[1],
+        srcRank: rankIds[0],
+        dstRank: rankIds[1],
+        transportType: temp[0],
+        transitSize: temp[1],
+        transitTime: temp[2],
+        bandwidth: temp[3],
+    };
+};
+
 export function mapperToKernelDetail(arr: any[], map: Map<string, number>): KernelDetailEntity {
     const stepIndex = map.get('Step Id');
     const nameIndex = map.get('Name');

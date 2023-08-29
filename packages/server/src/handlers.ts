@@ -19,7 +19,7 @@ import {
     durationListHandler,
     operatorDetailsHandler,
     bandwidthHandler,
-    distributionHandler,
+    distributionHandler, matrixListHandler, groupHandler,
 } from './query/communication.analysis.handler';
 
 export const HANDLER_MAP: Record<string, Handler> = {
@@ -43,6 +43,8 @@ export const HANDLER_MAP: Record<string, Handler> = {
     'communication/duration/operatorDetails': operatorDetailsHandler,
     'communication/duration/bandwidth': bandwidthHandler,
     'communication/duration/distribution': distributionHandler,
+    'communication/matrix/bandwidthInfo': matrixListHandler,
+    'communication/matrix/group': groupHandler,
     'summary/queryTopData': summaryHandler,
     'summary/statistic': summaryStatisticHandler,
 };
