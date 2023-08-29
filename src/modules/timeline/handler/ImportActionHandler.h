@@ -19,13 +19,13 @@ public:
     };
     ~ImportActionHandler() override = default;
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
-    static void ParseEndCallBack(const std::string token, const std::string fileId, bool result);
-    static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
 
 private:
     const std::string_view traceFileName = "trace_view.json";
 
-    void SetParseCallBack(const std::string &token);
+    static void SetParseCallBack(const std::string &token);
+    static void ParseEndCallBack(const std::string token, const std::string fileId, bool result);
+    static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
     std::vector<std::string> FindTraceFile(const std::string &path);
 };
 } // end of namespace Timeline

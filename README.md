@@ -11,15 +11,15 @@
 |	|-- entry						# 编译模块
 |	|	|-- server					#
 |	|	|	|-- bin					# server模块
-|	|-- protocol					# 全局消息格式转换
+|	|-- protocol					# 消息定义
 |	|-- module						# 
 |	|   |-- base					# module共用基类 
-|	|	|-- global					# 全局消息
-|	|	|-- timeline				# timeline消息处理
-|	|	|	|-- core				# 核心处理逻辑
-|	|	|	|-- handler				# 消息处理
-|	|	|	|-- protocol			# 消息格式转换
-|	|	|-- ...						#
+|	|   |-- global					# 全局消息
+|	|   |-- timeline				# timeline消息处理
+|	|   |	|-- core				# 核心处理逻辑
+|	|   |	|-- handler				# 消息处理
+|	|   |	|-- protocol    		# 消息格式转换
+|	|   |-- ...						#
 |	|-- server						# server服务
 |	|-- utils						# 工具类
 |-- third_party						# 开源软件

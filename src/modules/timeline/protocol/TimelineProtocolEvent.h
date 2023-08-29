@@ -38,6 +38,7 @@ struct Unit {
     UnitMetaData metadata;
     std::vector<std::unique_ptr<UnitTrack>> children;
 };
+
 struct ParseSuccessEventBody {
     Unit unit;
     bool startTimeUpdated = false;
