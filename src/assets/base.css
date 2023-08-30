@@ -4,6 +4,9 @@
     --vt-c-white-soft: #f8f8f8;
     --vt-c-white-mute: #f2f2f2;
 
+    --vt-c-medium: rgb(100, 100, 100);
+    --vt-c-medium-active: rgba(100, 100, 100, 0.8);
+
     --vt-c-black: #181818;
     --vt-c-black-soft: #222222;
     --vt-c-black-mute: #282828;
@@ -11,7 +14,7 @@
     --vt-c-indigo: #2c3e50;
 
     --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-    --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
+    --vt-c-divider-light-2: rgba(255, 255, 255, 0.4);
     --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
     --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
 
@@ -23,15 +26,17 @@
 
 /* semantic color variables for this project */
 :root {
-    --color-background: var(--vt-c-white);
+    --color-background: var(--vt-c-black);
     --color-background-soft: var(--vt-c-white-soft);
     --color-background-mute: var(--vt-c-white-mute);
+    --color-background-medium: var(--vt-c-medium);
+    --color-background-medium-active: var(--vt-c-medium-active);
 
     --color-border: var(--vt-c-divider-light-2);
     --color-border-hover: var(--vt-c-divider-light-1);
 
     --color-heading: var(--vt-c-text-light-1);
-    --color-text: var(--vt-c-text-light-1);
+    --color-text: var(--vt-c-text-dark-2);
 
     --section-gap: 160px;
 }
@@ -39,6 +44,7 @@
 @media (prefers-color-scheme: dark) {
     :root {
         --color-background: var(--vt-c-black);
+        --color-background-medium: var(--vt-c-medium);
         --color-background-soft: var(--vt-c-black-soft);
         --color-background-mute: var(--vt-c-black-mute);
 
@@ -65,7 +71,6 @@ body {
     transition:
         color 0.5s,
         background-color 0.5s;
-    line-height: 1.6;
     font-family:
         Inter,
         -apple-system,
@@ -79,7 +84,7 @@ body {
         'Droid Sans',
         'Helvetica Neue',
         sans-serif;
-    font-size: 15px;
+    font-size: 16px;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

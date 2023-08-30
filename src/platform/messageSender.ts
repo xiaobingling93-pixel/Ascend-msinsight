@@ -21,7 +21,9 @@ export interface IMessageSender {
     selectFile: () => Promise<string>;
 }
 
-export const removeAndAddEventListener = (resolve: (value: (string | PromiseLike<string>)) => void): void => {
+export const removeAndAddEventListener = (
+    resolve: (value: string | PromiseLike<string>) => void,
+): void => {
     function onMessage(event: MessageEvent): void {
         const message = event.data;
         if (message.command === 'ascend.folderSelected') {

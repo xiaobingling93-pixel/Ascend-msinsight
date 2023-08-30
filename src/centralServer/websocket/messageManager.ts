@@ -23,11 +23,15 @@ export const connectRemote = async function (remote: Remote): Promise<boolean> {
     return true;
 };
 
-export const request = async function (
+export const request = function (
     remote: Remote,
     moduleName: ModuleName,
     args: DataRequest,
 ): Promise<unknown> {
-    const connection: Connection = CONNECTION_MAP.get(remote);
-    return await connection.fetch(moduleName, args);
+    const connection: Connection | undefined = CONNECTION_MAP.get(remote);
+    return new Promise((resolve, reject) => connection?.fetch(moduleName, args)?.then(resolve, reject));
+};
+
+export const request2 = function(a: string) {
+    console.log(a);
 };

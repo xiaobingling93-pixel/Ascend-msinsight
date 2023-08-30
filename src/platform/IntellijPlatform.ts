@@ -2,7 +2,7 @@ import { IMessageSender } from '../connection/messageSender';
 
 export class IntellijPlatform implements IMessageSender {
     selectFolder(): Promise<string> {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             this.sendMessage({
                 request: JSON.stringify({
                     key: 'ascend.selectFolder',
@@ -19,7 +19,7 @@ export class IntellijPlatform implements IMessageSender {
     }
 
     selectFile(): Promise<string> {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             this.sendMessage({
                 request: JSON.stringify({
                     key: 'ascend.selectFolder',
