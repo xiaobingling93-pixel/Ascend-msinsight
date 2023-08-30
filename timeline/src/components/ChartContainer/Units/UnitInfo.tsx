@@ -1,0 +1,268 @@
+import * as React from 'react';
+import styled from '@emotion/styled';
+import cls from 'classnames';
+import { isEmpty } from 'lodash';
+import { runInAction } from 'mobx';
+import { observer } from 'mobx-react';
+// support utils/types
+import i18n from '../../../i18n';
+import { level } from '../../../entity/common';
+import { Session } from '../../../entity/session';
+import { KeyedInsightUnit } from './types';
+import { InsightUnit } from '../../../entity/insight';
+import { getAutoKey } from '../../../utils/dataAutoKey';
+// assets
+import { ReactComponent as Arrow } from '../../../assets/images/insights/PullDownIcon.svg';
+import { ReactComponent as StickyIcon } from '../../../assets/images/sticky_unit_button_icon.svg';
+// components
+import { StyledButton } from '../../base/StyledButton';
+// trace/platform
+import { platform } from '../../../platforms';
+import { traceSingle } from '../../../utils/traceLogger';
+// common constant variable
+import { isPinned, switchPinned } from '../unitPin';
+import { useSelectUnit } from './hooks/useSelectUnit';
+import { ReactComponent as Supported } from '../../../assets/images/insights/Supported.svg';
+import { StyledTooltip } from '../../../components/base/StyledTooltip';
+
+const DefaultInfoContainer = styled.div`
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    height: 100%;
+
+    .insight-lane-info-header {
+        margin-left: 8px;
+        min-width: 0;
+        flex: 1;
+        height: 100%;
+
+        .insight-lane-info-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .insight-lane-info-outer-name {
+            display: flex;
+            align-items: center;
+            &.noTag {
+                height: 100%;
+                font-size: 12px;
+            }
+        }
+
+       .insight-lane-info-tag-info {
+            font-size: 12px;
+            line-height: 14px;
+
+            .insight-lane-info-tag-text {
+                padding: 1px 8px;
+                background-color: ${props => props.theme.unitTagInfoBackgroundColor};
+                border-radius: 4px;
+            }
+        }
+    }
+
+    .insight-lane-info-header.expandable {
+        align-items: center;
+    }
+`;
+
+interface DefaultInfoProps {
+    session: Session;
+    unit: KeyedInsightUnit;
+    isHovered: boolean;
+    hasPinButton: boolean;
+    name: string;
+}
+
+const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProps): JSX.Element => {
+    const tag = (typeof unit.tag === 'string') ? `${unit.tag}` : unit.tag?.(session, unit.metadata) ?? undefined;
+    return <DefaultInfoContainer>
+        <div
+            key={ `${getAutoKey(unit)} lane info` }
+            className={cls('insight-lane-info-header', { expandable: unit.children && unit.children.length > 0 }) }
+        >
+            <div className={cls('insight-lane-info-outer-name', { noTag: isEmpty(tag) })}>
+                <span className="insight-lane-info-name">{name}</span>
+                { [...unit.notifications ?? []]?.map((item, index) => {
+                    const notifyRes = item(unit.metadata);
+                    if (notifyRes !== false) {
+                        return <StyledTooltip key={index} title={notifyRes}><Supported style={{ marginLeft: 8 }}/></StyledTooltip>;
+                    }
+                    return null;
+                })}
+            </div>
+            { !isEmpty(tag) && <div className={ 'insight-lane-info-tag-info' }>
+                <span className="insight-lane-info-tag-text">{tag}</span>
+            </div> }
+        </div>
+        <ConfigBar unit={unit} session={session} {...props} />
+    </DefaultInfoContainer>;
+});
+
+const shouldDisplayStickyButton = (session: Session, isHovered: boolean, hasPinButton: boolean, isPinned: boolean): boolean => {
+    return session.phase === 'download' && ((hasPinButton && isHovered) || isPinned);
+};
+
+interface PinButtonProps {
+    session: Session;
+    unit: KeyedInsightUnit;
+    isHovered: boolean;
+    hasPinButton: boolean;
+    isPinned: boolean;
+}
+const PinButton = observer(({ session, unit, isHovered, hasPinButton, isPinned }: PinButtonProps): JSX.Element => {
+    const style = { backgroundColor: 'transparent', marginLeft: 10 };
+    const placeholder = <StyledButton style={style} icon={<StickyIcon fill="transparent" />} />;
+    return <>
+        {shouldDisplayStickyButton(session, isHovered, hasPinButton, isPinned)
+            ? <StyledTooltip title={i18n.t(`headerButtonTooltip:${isPinned ? 'UnpinButton' : 'PinButton'}`)}>
+                <StyledButton
+                    style={style}
+                    icon={<StickyIcon fill={isPinned ? 'rgb(240, 165, 59)' : 'grey'} />}
+                    onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        let execute = (): void => {};
+                        const { pinnedUnits } = session;
+                        if (!isPinned) {
+                            execute = () => {
+                                platform.trace('stickyLane', {});
+                                pinnedUnits.unshift(unit);
+                                session.pinnedUnits = [...pinnedUnits];
+                            };
+                        } else {
+                            execute = () => {
+                                pinnedUnits.splice(pinnedUnits.indexOf(unit), 1);
+                                session.pinnedUnits = [...pinnedUnits];
+                            };
+                        }
+                        runInAction(() => {
+                            execute();
+                            switchPinned(unit);
+                        });
+                    }}
+                />
+            </StyledTooltip>
+            : placeholder}
+    </>;
+});
+
+interface ConfigBarProps {
+    session: Session;
+    unit: KeyedInsightUnit;
+    isHovered: boolean;
+    hasPinButton: boolean;
+}
+const ConfigBar = observer(({ session, unit, isHovered, hasPinButton }: ConfigBarProps): JSX.Element => {
+    return <div className="insight-lane-configbar">
+        <div style={{ display: 'flex', marginLeft: 5 }}>
+            {unit.configBar?.(session, unit.metadata)}
+            <PinButton
+                session={session}
+                unit={unit}
+                isHovered={isHovered}
+                hasPinButton={hasPinButton}
+                isPinned={isPinned(unit)}
+            />
+        </div>
+    </div>;
+});
+
+interface UnitInfoContentProps {
+    unit: KeyedInsightUnit;
+    session: Session;
+    isHovered: boolean;
+    hasPinButton: boolean;
+    isPinned: boolean;
+}
+
+const InsightLaneInfoContainer = styled.div`
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+`;
+const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentProps): JSX.Element => {
+    const info = unit.renderInfo?.(session, unit.metadata) ?? `${unit.name}`;
+    if (typeof (info) === 'string') {
+        return <DefaultInfo
+            session={session}
+            unit={unit}
+            name={info}
+            {...props}
+        />;
+    }
+    return <InsightLaneInfoContainer className="insight-lane-info">
+        {info}
+        {unit.configBar && <ConfigBar
+            session={session}
+            unit={unit}
+            {...props}
+        />}
+    </InsightLaneInfoContainer>;
+});
+
+const ExpandIcon = observer(({ unit, session }: { unit: KeyedInsightUnit; session: Session }): JSX.Element | null => {
+    const onExpand = React.useCallback(async (unit: KeyedInsightUnit) => {
+        const spreadUnits = unit.spreadUnits;
+        if (spreadUnits?.phase === 'expand') {
+            await spreadUnits.action?.(unit, session);
+        }
+        runInAction(() => {
+            unit.isExpanded = !unit.isExpanded;
+            if (unit.isExpanded) {
+                platform.trace(`unfold${unit.name.replace(/\s*/g, '')}`, {});
+            }
+        });
+    }, [session]);
+    if (unit.children) {
+        return <div style={{ float: 'left', height: '20px', marginLeft: '6px' }}
+            onClick={(e: React.MouseEvent<HTMLElement, MouseEvent>) => onExpand(unit)}>
+            <Arrow style={{ transform: `rotate(${unit.isExpanded ? 0 : '-90deg'})`, cursor: 'pointer' }}
+                className={`insight-unit-${unit.isExpanded ? 'expanded' : 'fold'}`} />
+        </div>;
+    }
+    return null;
+});
+
+const UnitInfoContainer = styled.div<{ unit: InsightUnit; laneInfoWidth: number }>`
+    flex-grow: 0;
+    flex-shrink: 0;
+    width: ${props => props.laneInfoWidth}px;
+    flex-basis: ${props => props.laneInfoWidth}px;
+    height: ${props => props.unit.height()}px;
+    padding-left: ${props => 36 * ((props.unit as any)[level] ?? 0)}px;
+    text-align: left;
+`;
+
+interface UnitInfoProps {
+    session: Session;
+    unit: KeyedInsightUnit;
+    laneInfoWidth: number;
+    hasExpandIcon: boolean;
+    hasPinButton: boolean;
+    isPinned: boolean;
+}
+
+export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon, ...props }: UnitInfoProps): JSX.Element => {
+    const [ isHovered, setIsHovered ] = React.useState(false);
+    const selectUnit = useSelectUnit(session);
+    return <UnitInfoContainer
+        className="unit-info"
+        unit={unit}
+        laneInfoWidth={laneInfoWidth}
+        onClick={() => { selectUnit(unit); traceSingle('selectLane', [unit.name]); }}
+        onMouseOver={() => { !isHovered && setIsHovered(true); }}
+        onMouseLeave={() => { setIsHovered(false); }}
+    >
+        {hasExpandIcon && <ExpandIcon unit={unit} session={session}/>}
+        <UnitInfoContent
+            unit={unit}
+            session={session}
+            isHovered={isHovered}
+            {...props}
+        />
+    </UnitInfoContainer>;
+});

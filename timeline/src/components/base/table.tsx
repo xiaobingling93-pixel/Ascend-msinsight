@@ -1,0 +1,127 @@
+import styled from '@emotion/styled';
+import React from 'react';
+import AntdTable, { TableProps } from './rc-table';
+import { TableHandle } from './rc-table/interface';
+
+export const Table = styled(React.forwardRef(function Support(props: TableProps<any>, ref: React.Ref<TableHandle>) {
+    return <AntdTable { ...props } ref={ref} />;
+}))`
+    .insight-table-body::-webkit-scrollbar {
+        width: 7px;
+        transition: opacity 120ms ease-out;
+    }
+
+    .insight-table-body::-webkit-scrollbar-track {
+        background-color: transparent;
+    }
+
+    .insight-table-body::-webkit-scrollbar-thumb {
+        background-color: rgba(127, 127, 127, .5);
+        z-index: 100;
+        border-radius: 5px;
+        transition: .3s background-color;
+    }
+    .insight-table .insight-table-thead th.insight-table-cell {
+        background-color: ${props => props.theme.contentBackgroundColor};
+        border-bottom-color: unset;
+        color: unset;
+    }
+
+    color: ${props => props.theme.fontColor};
+
+    .insight-table-cell {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    /* highlight selected row */
+    tr.insight-table-row-selected {
+        background-color: ${props => props.theme.selectBackgroundColor};
+    }
+    /* highlight hovered row */
+    tr.insight-table-row:hover {
+        background-color: ${props => props.theme.selectBackgroundColor};
+    }
+    .insight-table-tbody > tr > td {
+        border-bottom: solid 1px ${props => props.theme.tableBorderColor};
+    }
+    .insight-table-header {
+        border-bottom: solid 1px ${props => props.theme.tableBorderColor};
+        .insight-table-thead .insight-table-cell {
+            border-bottom: none;
+        }
+    }
+    /* hide header row if no data */
+    .insight-table-empty .insight-table-header {
+        display: none;
+    }
+    .ant-empty-description {
+        color: gray;
+    }
+    tr.insight-table-placeholder > td.insight-table-cell {
+        border-bottom: unset;
+    }
+    /* don't highlight table on hover */
+    .insight-table-tbody > tr.insight-table-placeholder:hover > td {
+        background-color: unset;
+    }
+    .insight-table-cell-fix-right, .insight-table-cell-fix-left {
+        background-color: ${props => props.theme.contentBackgroundColor};
+        z-index: 5;
+    }
+    .insight-table .insight-table-thead > tr > th,
+    .insight-table .insight-table-tbody > tr > td {
+        padding: 0 8px;
+    }
+    .insight-table-thead > tr > th,
+    .insight-table-tbody > tr > td {
+        position: relative;
+        padding: 16px 16px;
+        overflow-wrap: break-word;
+    }
+    .insight-table-thead > tr > th {
+        position: relative;
+        color: rgba(0, 0, 0, 0.85);
+        font-weight: 500;
+        text-align: left;
+        background: #fafafa;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.3s ease;
+    }
+    .insight-table-row-indent {
+        float: left;
+        height: 1px;
+    }
+    .insight-table table {
+        width: 100%;
+        text-align: left;
+        border-radius: 2px 2px 0 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    .insight-table-filter-column {
+        display: flex;
+    }
+    .insight-table-filter-trigger {
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: 0 4px;
+        font-size: 12px;
+        border-radius: 2px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .insight-table-filter-dropdown {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-size: 14px;
+        font-variant: tabular-nums;
+        line-height: 1.5715;
+        list-style: none;
+        font-feature-settings: 'tnum';
+        min-width: 120px;
+        border-radius: 2px;
+    }
+`;

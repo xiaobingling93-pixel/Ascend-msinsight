@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="10px" height="20px" viewBox="0 0 12 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+        <path d="M2.00015813,9 L9.9998787,9 C10.5522304,9 11,9.44776286 11,10.0001063 C11,10.227202 10.9227099,10.4475359 10.7808422,10.6248678 L6.78098194,15.6246183 C6.43593055,16.0559261 5.80656184,16.1258549 5.37524759,15.7808087 C5.31757589,15.734672 5.26519224,15.6822891 5.21905488,15.6246183 L1.2191946,10.6248678 C0.874143201,10.19356 0.944073057,9.56420072 1.3753873,9.21915449 C1.55272186,9.07728897 1.77305909,9 2.00015813,9 Z" id="path-4"></path>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill-rule="evenodd">
+        <g id="默认页面" transform="translate(-16.000000, -146.000000)">
+            <g id="编组备份" transform="translate(0.000000, 90.000000)">
+                <g id="list/item/Normal备份" transform="translate(8.000000, 52.000000)">
+                    <g id="Group" transform="translate(8.000000, 4.000000)">
+                        <mask id="mask-4" fill="white">
+                            <use xlink:href="#path-4"></use>
+                        </mask>
+                        <use id="矩形备份" fill-opacity="0.9" fill="#FFFFFF" xlink:href="#path-4"></use>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

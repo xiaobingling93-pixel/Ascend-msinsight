@@ -1,0 +1,128 @@
+{
+  "translation": {
+    "Welcome": "欢迎使用DevEco Insight，请先选择设备和进程",
+    "NoData": "暂无数据",
+    "allSessionText": "查看所有会话",
+    "Realtime Monitor": "实时监控",
+    "Current process": "当前进程",
+    "Current device": "当前设备",
+    "Other processes": "其他进程",
+    "Current": "Current",
+    "Other": "Other",
+    "Idle": "空闲",
+    "Free": "空闲",
+    "CPU": "CPU",
+    "Memory": "内存",
+    "FPS": "FPS",
+    "GPU": "GPU",
+    "Energy": "能耗",
+    "Display": "Display",
+    "Location": "Location",
+    "System Events": "系统事件",
+    "Foreground Ability": "前台Ability",
+    "NewSession": "新会话",
+    "OpenFile": "导入文件...",
+    "RecommendedTemplate": "使用 &进行分析",
+    "Create": "创建",
+    "traceSupport": "基于SmartPerf的trace解析",
+    "TimeDescribe": "对ArkTS/JS/C++函数运行情况进行跟踪,快速定位函数耗时问题",
+    "AllocationsDescribe": "对ArkTS/JS/C++内存分配情况进行分析,快速掌握运行时内存开销情况，定位内存泄漏问题",
+    "SnapshotDescribe": "利用堆快照对比分析应用中的ArkTS对象内存分布情况",
+    "CPUDescribe": "跟踪CPU核心运行调度细节，以及ArkTS和native代码在系统的运行表现",
+    "ArkHeapSnapshot": "方舟堆快照",
+    "FrameDescribe": "记录每一帧的渲染数据，自动识别卡顿帧，并提供同时段的cpu调度信息和函数栈采样数据",
+    "LaunchDescribe": "记录启动信息",
+    "In": " 位于 ",
+    "Multiply": " x",
+    "Seconds Time Unit": "秒",
+    "Comparison Base": "源",
+    "Comparison Target": "目标快照"
+  },
+  "headerButtonTooltip": {
+    "Title": "选择性能分析类型",
+    "Allocation": "时间轴上的分配插桩",
+    "AllocationDescribe": "录制各项分配的堆栈轨迹（会产生额外的性能开销）",
+    "FilterSizeDescribe": "请输入一个位于1024Bytes和10MB之间的值.",
+    "StackDepthDescribe": "请输入一个位于5和100之间的值.",
+    "TimeStampOffset": "请输入一个合适的值, 保证时间偏移在30天之内.",
+    "Snapshot": "堆快照",
+    "SnapshotDescribe": "ArkTS堆快照采样间隔",
+    "TakeHeapSnapshot": "拍摄堆快照",
+    "CollectGarbage": "回收垃圾",
+    "PinButton": "置顶泳道",
+    "UnpinButton": "取消置顶泳道"
+  },
+  "sessionList": {
+    "Template": "模板",
+    "Device": "设备",
+    "Process": "进程",
+    "Duration": "录制时长",
+    "EndTime": "结束时间",
+    "Operation": "操作",
+    "Session": "个会话",
+    "Tips": "搜索..."
+  },
+  "error": {
+    "4001": "请确认是否删除会话？",
+    "4002": "请先选择设备和进程",
+    "4003": "请先选择存活的进程",
+    "4004": "未知的异常，请重启 insight",
+    "4005": "至少配置一条泳道"
+  },
+  "notify": {
+    "5001": "停止session失败",
+    "5002": "录制过程中无法新建session",
+    "5003": "采集插件启动失败，请尝试重启或重新安装应用",
+    "5004": "停止session失败",
+    "5005": "录制过程中无法切换session",
+    "5006": "请先停止进程录制",
+    "5007": "重启DIC服务失败.",
+    "5008": "不支持的API版本：{{apiVersion}}，支持的最小API版本是{{minVersion}}",
+    "5009": "获取会话数据源失败",
+    "5010": "打开insight数据文件失败，文件版本不被支持",
+    "5011": "磁盘空间不足",
+    "5012": "录制时长已超过5min，若继续录制可能导致解析失败，建议停止录制。"
+  },
+  "deviceAndProcess": {
+    "SelectDevice": "请选择设备",
+    "SelectProcess": "请选择进程",
+    "6001": "请确认设备已正常连接",
+    "6002": "请确认进程已正常运行"
+  },
+  "tooltip": {
+    "Name": "名称",
+    "Duration": "持续时间",
+    "abilityName": "Ability名",
+    "abilityEvent": "Ability事件",
+    "reset": "复原",
+    "clean": "清空界面",
+    "filter": "过滤"
+  },
+  "snapshot": {
+    "Tooltip": "可通过窗口访问的用户对象"
+  },
+  "timelineMarker": {
+    "description": "标记描述",
+    "color": "颜色",
+    "confirmButton": "确定",
+    "deleteButton": "删除",
+    "cancelButton": "取消",
+    "unselected": "未选中标记",
+    "guide": "在时间轴上单击即可创建标记点",
+    "marker": "标记点",
+    "markerList": "标记列表",
+    "markerDiff": "选中标记与悬浮标记时间差",
+    "time": "时间",
+    "operation": "操作",
+    "clear": "清空全部",
+    "confirmClear": "确定要清空全部标记么？"
+  },
+  "deviceNotify": {
+    "apiSupported": "设备需为API {{msg}}及以上版本。",
+    "versionSupported": "设备需为{{msg}}及以上版本。",
+    "deviceSupported": "当前设备不支持。"
+  },
+  "laneNotify": {
+    "frameNoRenderService": "Render Service无渲染数据，请在Frame Insight录制期间进行亮屏操作."
+  }
+}

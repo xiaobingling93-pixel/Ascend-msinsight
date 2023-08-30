@@ -1,0 +1,245 @@
+import styled from '@emotion/styled';
+import cls from 'classnames';
+import { computed, runInAction } from 'mobx';
+import { observer } from 'mobx-react';
+import * as React from 'react';
+// hooks
+import { useWatchResize } from '../../../utils/useWatchDomResize';
+// support utils/types
+import { preOrderFlatten } from '../../../entity/common';
+import { InsightUnit } from '../../../entity/insight';
+import { Session } from '../../../entity/session';
+import { getAutoKey } from '../../../utils/dataAutoKey';
+import { traceSingle } from '../../../utils/traceLogger';
+import { Chart } from '../../charts';
+import { isPinned } from '../unitPin';
+import { useSelectUnit } from './hooks/useSelectUnit';
+import { KeyedInsightUnit } from './types';
+import { UnitInfo } from './UnitInfo';
+import { ChartErrorBoundary } from '../../error/ChartErrorBoundary';
+import eventBus, { EventType, useEventBus } from '../../../utils/eventBus';
+import { Mask } from '../../charts/Mask';
+import { useEffect, useRef } from 'react';
+import { useJumpTarget } from './hooks';
+
+const Lane = styled.div<{ laneHeight: number; className: string }>`
+    display: flex;
+    box-sizing: border-box;
+    flex-direction: row;
+    height: ${props => props.laneHeight}px;
+    border-bottom: solid 1px ${props => props.theme.tableBorderColor};
+    .unit-info {
+        background-color: ${props => props.className.includes(UNIT_SELECTED) ? props.theme.selectedChartBackgroundColor : props.theme.contentBackgroundColor};
+        div svg g use {
+            fill: ${props => props.theme.fontColor};
+        }
+    }
+    .chart-selected {
+        box-shadow: 0 0 0 2px ${props => props.theme.selectedChartBorderColor} inset;
+    }
+`;
+
+const VIRTUAL_SCROLL_THRESHOLD = 30;
+const UNIT_SELECTED = 'unit-selected';
+const UNIT_VISIBLE = 'unit-visible';
+
+const Splitter = styled.div`
+    width: 100%;
+    height: 1px;
+    background-color: ${props => props.theme.tableBorderColor};
+`;
+
+const Join = (props: { joiner: React.FC; children: JSX.Element[] }): JSX.Element => (
+    <>
+        {props.children.slice(1).reduce((prev, cur, index) => [ ...prev, <props.joiner key={`joiner/${index}`}/>, cur ], [props.children[0]])}
+    </>
+);
+
+const ChartView = observer(({ unit, session, width, height }: {unit: KeyedInsightUnit; session: Session; width: number; height: number }): JSX.Element => {
+    if (Array.isArray(unit.chart)) {
+        return <Join joiner={Splitter}>
+            {unit.chart.map((desc, index) =>
+                <Chart desc={desc} key={`${getAutoKey(unit)}/${index}`} serial={`${getAutoKey(unit)}/${index}`} unit={unit}
+                    title={unit.name} session={session} metadata={unit.metadata} width={width} phase={unit.phase} />,
+            )}
+        </Join>;
+    } else if (unit.chart !== undefined) {
+        return <Chart
+            unit={unit} desc={unit.chart} key={getAutoKey(unit)} serial={getAutoKey(unit)}
+            title={unit.name} session={session} metadata={unit.metadata} width={width} phase={unit.phase} />;
+    }
+    return <ChartErrorBoundary height={height} width={width} phase={unit.phase}>
+        { session.id !== 'HomePage' && session.phase !== 'error' && unit.phase !== 'configuring' && unit.phase !== 'download' && unit.phase !== 'error'
+            ? <Mask unitPhase={unit.phase}><div className="chart-empty" style={{ width, height }}/></Mask>
+            : <div className="chart-empty" style={{ width, height }}/> }
+    </ChartErrorBoundary>;
+});
+
+interface UnitProps {
+    unit: KeyedInsightUnit;
+    session: Session;
+    isVisible: boolean;
+    hasPinButton: boolean;
+    laneInfoWidth: number;
+    hasExpandIcon: boolean;
+    isPinned: boolean;
+}
+
+export const Unit = observer(({ unit, session, isVisible, ...props }: UnitProps): JSX.Element => {
+    const isSelected = (session.selectedUnitKeys as string[]).includes(getAutoKey(unit));
+    const [ chartWidth, ref ] = useWatchResize<HTMLDivElement>('width');
+    const height = unit.height() + 1; // to support modifying height from outside during runtime, don't useMemo
+    const placeholder = React.useMemo(() => {
+        return <div className="chart-invisible" style={{ width: chartWidth, height }}/>;
+    }, [ chartWidth, height ]);
+    // to support auto redraw when unit height is modified, don't useMemo
+    const chart = <ChartView unit={unit} session={session} width={chartWidth} height={height} />;
+    const selectUnit = useSelectUnit(session);
+    return <Lane className={cls('unit', { [UNIT_SELECTED]: isSelected, [UNIT_VISIBLE]: isVisible })} laneHeight={height}>
+        <UnitInfo
+            session={session}
+            unit={unit}
+            {...props}
+        />
+        <div className={isSelected ? 'chart-selected' : 'chart'} ref={ref}
+            onMouseDown={() => {
+                selectUnit(unit);
+                traceSingle('selectLane', [unit.name]);
+            }}
+            style={{ flexGrow: 1, minWidth: 0 }}>
+            { isVisible ? chart : placeholder }
+        </div>
+    </Lane>;
+});
+
+const computeVisibleUnitRange = (units: InsightUnit[], viewportHeight: number, scrollTop: number): [ number, number ] => {
+    let start = 0;
+    let end = 0;
+    let yOffset = 0;
+    for (let i = 0; i < units.length; i++) {
+        if (yOffset + VIRTUAL_SCROLL_THRESHOLD > viewportHeight + scrollTop) {
+            break;
+        }
+        if (yOffset + units[i].height() + VIRTUAL_SCROLL_THRESHOLD < scrollTop) {
+            start++;
+        }
+        yOffset += units[i].height();
+        end++;
+    }
+    return [ start, end + 1 ];
+};
+
+type FlattenUnitsProps = {
+    session: Session;
+    height: number;
+    laneInfoWidth: number;
+    hasPinButton: boolean;
+};
+
+const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth }: FlattenUnitsProps): JSX.Element => {
+    const [ scrollTop, setScrollTop ] = React.useState(0);
+    // 监听滚动事件，计算虚拟滚动的泳道
+    useEventBus(EventType.UNITWRAPPERSCROLL, (value) => setScrollTop(value as number));
+    const flattenUnits = computed(() => preOrderFlatten(session.units, 0,
+        { when: unit => unit.isExpanded, bypass: unit => unit.type === 'transparent', exclude: unit => (unit.pinType === 'move' && isPinned(unit)) || !unit.isDisplay })).get();
+    const [ first, last ] = React.useMemo(
+        () => computeVisibleUnitRange(flattenUnits, height, scrollTop),
+        [ flattenUnits, height, scrollTop ],
+    );
+    const headOffset = React.useMemo(
+        () => flattenUnits.filter((_, i) => i < first).reduce((prev, cur) => prev + cur.height(), 0),
+        [ flattenUnits, first ],
+    );
+    const visibleUnitsHeight = React.useMemo(
+        () => flattenUnits.filter((_, i) => first <= i && i < last).reduce((prev, cur) => prev + cur.height(), 0),
+        [ flattenUnits, first, last ],
+    );
+    const tailOffset = React.useMemo(
+        () => flattenUnits.filter((_, i) => i >= last).reduce((prev, cur) => prev + cur.height(), 0),
+        [ flattenUnits, last ],
+    );
+    const totalHeight = React.useMemo(() => headOffset + visibleUnitsHeight + tailOffset, [ headOffset, visibleUnitsHeight, tailOffset ]);
+    const ref = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const element = ref.current;
+        if (element) {
+            element.addEventListener('wheel', handleWheel, { passive: false });
+            return () => {
+                element.removeEventListener('wheel', handleWheel);
+            };
+        }
+    }, []);
+    return <div ref={ref} style={{ display: 'flex', flexDirection: 'column', height: totalHeight }} className="laneView">
+        <div className={INVISIBLE_UNITS_PLACEHOLDER} style={{ height: headOffset }} />
+        {flattenUnits.filter((_, i) => first <= i && i < last).map((unit) => (!isPinned(unit) || unit.pinType === 'copied') &&
+            <Unit
+                key={getAutoKey(unit)}
+                laneInfoWidth={laneInfoWidth}
+                unit={unit}
+                session={session}
+                hasPinButton={hasPinButton}
+                hasExpandIcon={true}
+                isVisible={true}
+                isPinned={isPinned(unit)}
+            />)}
+        <div className={INVISIBLE_UNITS_PLACEHOLDER} style={{ height: tailOffset }} />
+    </div>;
+});
+
+const TableScroller = styled.div`
+    flex-grow: 1;
+    overflow-y: overlay;
+    overflow-x: hidden;
+    border-top: solid 1px ${props => props.theme.tableBorderColor};
+`;
+
+type ScrollerProps = {
+    children: JSX.Element | null;
+    session: Session;
+};
+
+const Scroller = observer(React.forwardRef(function Scroller({ session, children }: ScrollerProps, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element {
+    // 广播滚动事件
+    function scroll(e: React.UIEvent<HTMLDivElement>): void {
+        const scrollTop = e.currentTarget.scrollTop;
+        eventBus.emit(EventType.UNITWRAPPERSCROLL, scrollTop);
+        // 修改session.scrollTop
+        runInAction(() => {
+            session.scrollTop = scrollTop;
+        });
+    }
+
+    // 切换session滚动到之前记录的地方
+    React.useEffect(() => {
+        (ref as React.MutableRefObject<HTMLDivElement | null>).current?.scrollTo(0, session.scrollTop);
+    }, [session]);
+
+    // 跳转到指定泳道
+    useJumpTarget(session, (ref as React.MutableRefObject<HTMLDivElement | null>).current);
+
+    return <TableScroller className="laneWrapper" onScroll={scroll} ref={ref}>
+        {children}
+    </TableScroller>;
+}));
+
+const handleWheel = (event: WheelEvent): void => {
+    if (event.ctrlKey) {
+        event.preventDefault();
+    }
+};
+
+const INVISIBLE_UNITS_PLACEHOLDER = 'invisible-units-placeholder';
+
+const Units = ({ session, height, hasPinButton, laneInfoWidth }:
+{ session: Session; height: number; hasPinButton: boolean; laneInfoWidth: number }, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element => {
+    return <Scroller session={session} ref={ref}>
+        <FlattenUnits
+            session={session}
+            height={height}
+            laneInfoWidth={laneInfoWidth}
+            hasPinButton={hasPinButton} />
+    </Scroller>;
+};
+
+export const RefUnits = observer(React.forwardRef(Units));
+RefUnits.displayName = 'Units';

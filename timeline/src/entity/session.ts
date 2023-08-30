@@ -1,0 +1,250 @@
+import { makeAutoObservable, runInAction, when } from 'mobx';
+import React from 'react';
+import { Caches } from '../cache/cache';
+import { toLocalTimeString } from '../utils/humanReadable';
+import { TimeStamp } from './common';
+import { Domain } from './domain';
+import { InsightUnit, UnitMatcher } from './insight';
+import { TimeLineMaker, TIME_MAKER_DEFAULT } from './timeMaker';
+import { omit } from 'lodash';
+import { platform } from '../platforms';
+import i18n from '../i18n';
+import { Phase, stateTexts } from '../utils/constant';
+import { SimpleCache } from '../cache/simplecache';
+
+export interface SelectedParams {
+    baseRawId: undefined | number;
+    curRawId: undefined | number;
+}
+
+export type SelectedData = Record<string, unknown> & {
+    sourceUnit?: InsightUnit;
+};
+
+export type DataWithHeight<T> = T & { height?: number };
+export type LinkedDataWithHeight<T> = {
+    data: DataWithHeight<T>;
+    datas: Array<DataWithHeight<T>>;
+};
+export type ValidSession = Session & { startRecordTime: TimeStamp; phase: Exclude<Phase, 'configuring'> };
+
+export function isValidSession(session?: Session): session is ValidSession {
+    return !(session === undefined || session.phase === 'configuring' || session.startRecordTime === undefined);
+}
+export type LinkDataType<T extends Record<string, unknown> = Record<string, unknown>> = T & { startTime: number; height: number; duration: number };
+export type DataMatcher = (unit: InsightUnit) => boolean;
+export type LinkData = {
+    target: {
+        data: LinkDataType;
+        matcher: DataMatcher;
+    };
+    sources: Array<{ data: LinkDataType; matcher: DataMatcher }>;
+};
+
+export class Session {
+    id = '';
+    private _name: string | null;
+    private _phase: Phase = 'configuring';
+    private _units: InsightUnit[] = [];
+    private _availableUnits: InsightUnit[] = [];
+    pinnedUnits: InsightUnit[] = [];
+    icon: JSX.Element | undefined;
+    caches: Caches | null = null;
+    simpleCache: SimpleCache;
+
+    // Frontend start time of recording.
+    startRecordTime: TimeStamp;
+
+    // Relative to the startTimeOffset, which means that it will start from 0.
+    private _endTimeAll: TimeStamp | undefined;
+
+    // Any data out of max duration would be dropped, Number.MAX_SAFE_INTEGER means unlimited
+    maxDuration = Number.MAX_SAFE_INTEGER;
+
+    // should use ns time unit
+    isNsMode: boolean = false;
+
+    // some params for selected value which is not a range.
+    selectedParams: SelectedParams = { baseRawId: undefined, curRawId: undefined };
+    selectedRange: undefined | [ TimeStamp, TimeStamp ];
+    scrollTop: number = 0;
+    private readonly _domain: Domain;
+    private _selectedUnitKeys: [string] | [] = [];
+    expandedUnitKeys: string[] | [] = [];
+    selectedUnits: [InsightUnit] | [] = []; // redundant for reducing extra computation
+    selectedDetailKeys: [string] | [] = [];
+    selectedDetails: [Record<string, unknown>] | [] = []; // redundant for reducing extra computation
+    unitsConfig: Record<string, Record<string, unknown>> = {};
+    private _selectedData?: Record<string, unknown>;
+    linkData?: LinkData;
+    linkFlow?: Record<string, unknown>;
+    linkDetail?: Record<string, unknown>;
+    buttons: Array<React.FC<{ session: Session }>>;
+
+    // set this field with a new matcher to trigger jump-to-target-lane
+    locateUnit?: UnitMatcher;
+
+    timer: ReturnType<typeof setInterval> | undefined;
+    private _interval: number;
+
+    sharedState: Record<string, unknown> = {}; // used for sharing state across different units
+
+    // timeline flag data source
+    timelineMaker: TimeLineMaker = TIME_MAKER_DEFAULT;
+
+    constructor(conf?: Partial<Session>) {
+        makeAutoObservable(this, {
+            timer: false,
+            selectedUnits: false,
+            selectedDetails: false,
+            caches: false,
+            isNsMode: false,
+            printSessionInfo: false,
+        });
+        this._name = conf?.name ?? this.id;
+        this._interval = 100;
+        this.unitsConfig = {
+            jsAllocationUsage: {
+                isRecordStackTraces: false,
+            },
+            nativeConfig: {
+                filterSize: 4096,
+                maxStackDepth: 10,
+            },
+            offsetConfig: {
+                timestampOffset: {},
+            },
+        };
+        this.startRecordTime = 0;
+        if (conf) {
+            Object.assign(this, conf);
+        }
+        this._domain = new Domain(this.isNsMode, this.endTimeAll);
+        this.buttons = conf?.buttons ?? [];
+        this.simpleCache = new SimpleCache();
+        // 录制时长大于等于5min，建议结束录制
+        const MAXTIME = this.isNsMode ? 5 * 60 * 1e9 : 5 * 60 * 1e3;
+        when(
+            () => this._endTimeAll !== undefined && this._endTimeAll >= MAXTIME,
+            () => {
+                const showTimeoutTip = window.localStorage.getItem('showTimeoutTip');
+                if (showTimeoutTip === null) {
+                    platform.notify(i18n.t('notify:5012'));
+                    window.localStorage.setItem('showTimeoutTip', 'false');
+                }
+            },
+        );
+    }
+
+    set endTimeAll(endTimeAll: TimeStamp | undefined) {
+        this._endTimeAll = endTimeAll;
+        this._domain !== undefined && (this._domain.endTimeAll = endTimeAll ?? this.domain.maxDuration);
+    }
+
+    get endTimeAll(): TimeStamp | undefined {
+        return this._endTimeAll;
+    }
+
+    get name(): string | null {
+        return this._name;
+    }
+
+    set name(value: string | null) {
+        this._name = value;
+    }
+
+    get phase(): Phase {
+        return this._phase;
+    }
+
+    set phase(value: Phase) {
+        this._phase = value;
+    }
+
+    get statusInfo(): string {
+        if (this.phase === 'configuring') {
+            return 'Idle';
+        } else if (this.phase === 'download' && this.startRecordTime !== undefined) {
+            return 'Recorded at: ' + toLocalTimeString(this.startRecordTime);
+        } else {
+            return stateTexts[this.phase];
+        }
+    }
+
+    get selectedUnitKeys(): ([string] | []) {
+        return this._selectedUnitKeys;
+    }
+
+    set selectedUnitKeys(value: [string] | []) {
+        this._selectedUnitKeys = value;
+        // 'More' panel should be cleared when selected unit is changed
+        runInAction(() => {
+            this.selectedDetailKeys = [];
+            this.selectedDetails = [];
+        });
+    }
+
+    get domainRange(): { domainStart: TimeStamp; domainEnd: TimeStamp } {
+        const { domainStart, domainEnd } = this._domain.domainRange;
+        return { domainStart, domainEnd };
+    }
+
+    set domainRange(domainRange: { domainStart: TimeStamp; domainEnd: TimeStamp }) {
+        this._domain.domainRange = domainRange;
+    }
+
+    set zoom({ zoomCount, zoomPoint }: { zoomCount: number; zoomPoint?: TimeStamp }) {
+        this._domain.zoom = { zoomCount, zoomPoint: zoomPoint ?? ((this.selectedRange) && ((this.selectedRange[0] + this.selectedRange[1]) / 2)) };
+    }
+
+    get realTimeUpdate(): boolean {
+        return this._domain.realTimeUpdate && this.phase === 'recording';
+    }
+
+    set realTimeUpdate(realTime: boolean) {
+        this._domain.realTimeUpdate = realTime && this.phase === 'recording';
+    }
+
+    get domain(): Domain {
+        return this._domain;
+    }
+
+    get interval(): number {
+        return this._interval;
+    }
+
+    set interval(value: number) {
+        this._interval = value;
+    }
+
+    get units(): InsightUnit[] {
+        return this._units;
+    }
+
+    set units(units: InsightUnit[]) {
+        this._units = units;
+    }
+
+    get availableUnits(): InsightUnit[] {
+        return this._availableUnits;
+    }
+
+    set availableUnits(availableUnits: InsightUnit[]) {
+        this._availableUnits = availableUnits;
+    }
+
+    get selectedData(): Record<string, unknown> | undefined {
+        return this._selectedData;
+    }
+
+    set selectedData(data: Record<string, unknown> | undefined) {
+        this._selectedData = data;
+        this.linkFlow = undefined;
+        this.linkData = undefined;
+        this.linkDetail = undefined;
+    }
+
+    printSessionInfo(): string {
+        return `${JSON.stringify({ ...omit(this, [ 'caches', 'sharedState', '_units' ]) })}`;
+    }
+}
