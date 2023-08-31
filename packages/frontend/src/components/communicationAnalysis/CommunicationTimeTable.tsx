@@ -100,7 +100,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     return <div>
         <Table columns={columns} dataSource={dataSource} size="small"
             pagination={GetPageConfigWhithPageData(page, setPage)}
-            onChange={(pagination, filters, sorter: any, extra) => {
+            onChange={(pagination: any, filters: any, sorter: any, extra: any) => {
                 if (extra.action === 'sort') {
                     setSorter(sorter);
                 }
@@ -114,8 +114,8 @@ const getRankColumns = (handleAction: VoidFunction[], conditions: any): any => {
     return [
         {
             title: 'Rank ID',
-            dataIndex: rowKey,
-            key: rowKey,
+            dataIndex: 'rank_id',
+            key: 'rank_id',
         },
         ...commonColumns,
         {
@@ -147,7 +147,7 @@ const getRankColumns = (handleAction: VoidFunction[], conditions: any): any => {
         },
     ].filter((item: any) => item.display !== false);
 };
-const rowKey = 'rank_id';
+const rowKey = 'index';
 const CommunicationTimeTable = observer(function (props:
 {dataSource?: DataType[];showOperator: (rankid: string) => void;conditions: any;updateSort: VoidFunction}) {
     const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
@@ -173,7 +173,7 @@ const CommunicationTimeTable = observer(function (props:
                 rowKey={rowKey}
                 pagination={GetPageConfigWhithAllData(dataSource.length)}
                 size="small"
-                onChange={(pagination, filters, sorter, extra) => {
+                onChange={(pagination: any, filters: any, sorter: any, extra: any) => {
                     if (extra.action === 'sort') {
                         setExpandedKeys([]);
                         props.updateSort(extra.currentDataSource);

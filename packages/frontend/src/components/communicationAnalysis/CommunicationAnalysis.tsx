@@ -37,7 +37,7 @@ interface showDataType{
 
 const searchData = async (conditions: conditionDataType): Promise<showDataType> => {
     const res = await queryCommunication(conditions);
-    res.duration.forEach((item: any) => { item.rankId = item.rank_id; });
+    res.duration.forEach((item: any, index: number) => { item.index = index; });
     res.duration.sort((a: DataType, b: DataType) => b.elapse_time - a.elapse_time);
     return { chartData: wrapChartData(res.duration), tableData: res.duration };
 };
