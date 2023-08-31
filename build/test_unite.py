@@ -18,7 +18,7 @@ class Constant:
     MODULES_LIST = [
         r"packages/frontend"
     ]
-    SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
+    SCRIPT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     FINAL_REPORT_PATH = os.path.join(SCRIPT_PATH, "llt_cov")
 
 

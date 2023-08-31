@@ -8,10 +8,10 @@
 import os
 import platform
 import shutil
-import sys
+import subprocess
 import logging
 
-SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
+SCRIPT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
 class ExecError(Exception):
@@ -20,22 +20,31 @@ class ExecError(Exception):
 
 
 def init():
+    clean()
+    os.makedirs(os.path.join(SCRIPT_PATH, 'out'))
+
+
+def clean():
     out = os.path.join(SCRIPT_PATH, 'out')
     if os.path.exists(out):
-        for file in os.listdir(out):
-            os.remove(os.path.join(out, file))
-        os.rmdir(out)
-    os.makedirs(os.path.join(SCRIPT_PATH, 'out'))
+        shutil.rmtree(out)
+    build = os.path.join(SCRIPT_PATH, 'packages', 'frontend', 'build')
+    if os.path.exists(build):
+        shutil.rmtree(build)
 
 
 def build_vscode(vscode_version, os_name):
     os.putenv('npm_config_build_from_source', 'true')
+    os.putenv('npm_config_audit', 'false')
+    os.putenv('npm_config_strict_ssl', 'false')
+    os.putenv('npm_config_disturl', 'http://mirrors.tools.huawei.com/nodejs')
+    os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
     if os_name == 'win':
-        exec_command('cd ' + SCRIPT_PATH + ' && npm run buildWin')
+        exec_command(['npm.cmd', 'run', 'buildWin'], SCRIPT_PATH)
     elif os_name.endswith('x86_64'):
-        exec_command('cd ' + SCRIPT_PATH + ' && npm run buildLinuxX64')
+        exec_command(['npm', 'run', 'buildLinuxX64'], SCRIPT_PATH)
     elif os_name.endswith('aarch64'):
-        exec_command('cd ' + SCRIPT_PATH + ' && npm run buildLinuxArm')
+        exec_command(['npm', 'run', 'buildLinuxArm'], SCRIPT_PATH)
     src = os.path.join(SCRIPT_PATH, 'packages/extension')
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-extension_' + vscode_version + '_' + os_name + '.vsix')
     for file in os.listdir(src):
@@ -46,17 +55,19 @@ def build_vscode(vscode_version, os_name):
 def build_intellij(idea_version, os_name):
     url = os.getenv('GRADLE_URL')
     plugins_path = os.path.join(SCRIPT_PATH, 'plugins')
+    is_linux = os_name.startswith('linux')
+    gradle_exec = 'gradle' if is_linux else 'gradle.bat'
     if url is None:
-        exec_command('cd ' + plugins_path + ' && gradle wrapper')
+        exec_command([gradle_exec, 'wrapper'], plugins_path)
     else:
-        exec_command('cd ' + plugins_path + ' && gradle wrapper --gradle-distribution-url ' + url)
-    gradlew = 'gradlew'
-    if os_name.startswith('linux'):
-        exec_command('cd ' + plugins_path + ' && chmod a+x gradlew')
-        gradlew = './gradlew'
-    exec_command('cd ' + plugins_path + ' && ' + gradlew + ' clean')
-    exec_command('cd ' + plugins_path + ' && ' + gradlew + ' ascend-insight:copyFrontendBuild')
-    exec_command('cd ' + plugins_path + ' && ' + gradlew + ' buildPlugin')
+        exec_command([gradle_exec, 'wrapper', '--gradle-distribution-url', url], plugins_path)
+    gradlew = os.path.join(plugins_path, 'gradlew.bat')
+    if is_linux:
+        exec_command(['chmod', 'a+x', 'gradlew'], plugins_path)
+        gradlew = os.path.join(plugins_path, 'gradlew')
+    exec_command([gradlew, 'clean'], plugins_path)
+    exec_command([gradlew, 'ascend-insight:copyFrontendBuild'], plugins_path)
+    exec_command([gradlew, 'buildPlugin'], plugins_path)
     src = os.path.join(SCRIPT_PATH, 'plugins', 'build', 'distributions')
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-plugin_' + idea_version + '_' + os_name + '.zip')
     for file in os.listdir(src):
@@ -64,8 +75,9 @@ def build_intellij(idea_version, os_name):
             shutil.copy(os.path.join(src, file), dst_file)
 
 
-def exec_command(command):
-    if os.system(command) != 0:
+def exec_command(command, path):
+    process = subprocess.run(command, cwd=path)
+    if process.returncode != 0:
         logging.error('execute %s failed', command)
         raise ExecError()
 
