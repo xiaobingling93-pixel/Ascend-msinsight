@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Tabs, Switch, Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -9,6 +9,7 @@ import { Session } from '../entity/session';
 import { SessionPage } from './SessionPage';
 import CommunicationAnalysis from '../components/communicationAnalysis/CommunicationAnalysis';
 import AnalysisSummary from './AnalysisSummary';
+import { DragFileInit } from '../components/dragFile/DragFile';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
@@ -33,7 +34,7 @@ const HomePage = observer(function ({ session }: { session: Session }) {
         {
             tab: 'Timeline View',
             key: 'timeline',
-            content: <div style={{ display: 'flex', height: '100%' }}><SessionPage session={session}/></div>,
+            content: <div style={{ display: 'flex', height: '100%' }} id={'home'}><SessionPage session={session}/></div>,
         },
         {
             tab: <div>Analysis Summary {parsing && <Spin indicator={antIcon}/>}</div>,
@@ -52,6 +53,9 @@ const HomePage = observer(function ({ session }: { session: Session }) {
     const handleTabsChange = (activeKey: string): void => {
         setActiveTab(activeKey);
     };
+    useEffect(() => {
+        DragFileInit('home');
+    }, []);
     return (
         <div style={{ height: '100%', width: '100%' }}>
             <Switch checkedChildren="dark" unCheckedChildren="light" defaultChecked onChange={onChange}

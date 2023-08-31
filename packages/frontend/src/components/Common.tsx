@@ -184,7 +184,7 @@ export function addResizeEvent(echart: EChartsType): void {
 }
 
 export const checkDomDisplay = (dom: HTMLElement): boolean => {
-    return dom.offsetParent !== null;
+    return dom?.offsetParent !== null;
 };
 
 export const COLOR = {

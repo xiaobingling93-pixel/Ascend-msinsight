@@ -143,10 +143,6 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     right:0;
 }
 
-.fileshover{
-    background: var(--grey50);
-}
-
 .tan-box>div{
     background-color:white;
 }
@@ -370,4 +366,8 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 }
 .ant-table-expanded-row .ant-table-thead > tr > th:not(.ant-table-selection-column):not([colspan]) {
     border-top: none;
+}
+
+.theme_dark .ant-notification-notice{
+    background: var(--grey85);
 }
