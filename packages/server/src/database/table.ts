@@ -4,7 +4,6 @@ import { Client } from '../types';
 import { getLoggerByName } from '../logger/loggger_configure';
 import { CREATE_KERNEL_DETAIL_TABLE_SQL, KERNEL_DETAIL_TABLE } from '../common/sql_constant';
 import { KernelDetailEntity } from '../query/entity';
-import { CommunicationDetailRequest } from '../query/data';
 
 const logger = getLoggerByName('table', 'info');
 
@@ -561,26 +560,11 @@ export class Table {
         });
     }
 
-    async queryCommunicationDetailInfo(request: CommunicationDetailRequest, client: Client, trackId: number): Promise<any> {
-        const map = new Map([
-            [ 'communicationKernel', 'name' ],
-            [ 'startTime', 'startTime' ],
-            [ 'totalDuration', 'duration' ],
-        ]);
-        const orderList = request.orderBy;
-        const offset = (request.currentPage - 1) * request.pageSize;
-        const ascend = request.order === 'ascend' ? 'ASC' : 'DESC';
-        let sql: string = '';
+    async queryCommunicationDetailInfo(client: Client, trackId: number): Promise<any> {
         return new Promise((resolve, reject) => {
-            if (orderList.length === 0) {
-                sql = `SELECT name, timestamp -${client.shadowSession.extremumTimestamp.minTimestamp} as startTime, duration
-               FROM ${this.sliceTable}
-               WHERE track_id = ${trackId} LIMIT ${request.pageSize} offset ${offset}`;
-            } else {
-                sql = `SELECT name, timestamp -${client.shadowSession.extremumTimestamp.minTimestamp} as startTime, duration
-               FROM ${this.sliceTable}
-               WHERE track_id = ${trackId}  order by "${map.get(orderList)}" ${ascend} LIMIT ${request.pageSize} offset ${offset}`;
-            }
+            const sql = `SELECT name, timestamp -${client.shadowSession.extremumTimestamp.minTimestamp} as startTime, duration
+                         FROM ${this.sliceTable}
+                         WHERE track_id = ${trackId}`;
             this.db.all(sql, (err, rows) => {
                 if (err !== undefined && err !== null) {
                     logger.error(err.message);

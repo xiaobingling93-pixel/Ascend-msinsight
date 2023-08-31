@@ -3,6 +3,7 @@
  */
 
 import {
+    CommunicationDetail,
     CommunicationDetailRequest,
     CommunicationDetailResponse,
     ComputeDetail, ComputeDetailRequest,
@@ -24,10 +25,21 @@ export const computeDetailInfoHandler = async (request: ComputeDetailRequest, cl
     return response;
 };
 
-async function queryNotOverlapByTime(table: Table, rows: any[], notOverlapTrackId: number, trackId: number, client: Client): Promise<CommunicationDetailResponse> {
+export const communicationDetailInfoHandler = async (request: CommunicationDetailRequest, client: Client): Promise<CommunicationDetailResponse> => {
+    const table = tableMap.get(request.rankId) as Table;
+    const threadName = 'Group 0 Communication';
+    const notOverlap = 'Communication(Not Overlapped)';
+    const opTrackId = await table.queryTrackId(threadName);
+    const notOverlapTrackId = await table.queryTrackId(notOverlap);
     const response: CommunicationDetailResponse = { totalNum: 0, communicationDetail: [] };
-    const res = await table.queryCommunicationTotalNum(trackId);
-    response.totalNum = res[0].nums;
+    const totalNum = await table.queryCommunicationTotalNum(opTrackId.track_id);
+    response.totalNum = totalNum[0].nums;
+    const rows = await table.queryCommunicationDetailInfo(client, opTrackId.track_id);
+    response.communicationDetail = await queryNotOverlapByTime(request, response, table, rows, notOverlapTrackId.track_id, client);
+    return response;
+};
+
+async function queryNotOverlapByTime(request: CommunicationDetailRequest, response: CommunicationDetailResponse, table: Table, rows: any[], notOverlapTrackId: number, client: Client): Promise<CommunicationDetail[]> {
     for (const row of rows) {
         let totalTime = 0;
         const timeStamp = row.startTime + client.shadowSession.extremumTimestamp.minTimestamp;
@@ -44,18 +56,17 @@ async function queryNotOverlapByTime(table: Table, rows: any[], notOverlapTrackI
             overlapDuration: duration - totalTime,
         });
     }
-    return response;
+    const orderBy = request.orderBy;
+    const pageSize = request.pageSize;
+    const currentPage = request.currentPage;
+    const ascend = request.order;
+    sortByRequest(response.communicationDetail, orderBy, ascend);
+    const length = response.communicationDetail.length;
+    if ((currentPage * pageSize - 1) > (length - 1)) {
+        return response.communicationDetail.slice((currentPage - 1) * pageSize, length);
+    }
+    return response.communicationDetail.slice((currentPage - 1) * pageSize, currentPage * pageSize - 1);
 }
-
-export const communicationDetailInfoHandler = async (request: CommunicationDetailRequest, client: Client): Promise<CommunicationDetailResponse> => {
-    const table = tableMap.get(request.rankId) as Table;
-    const threadName = 'Group 0 Communication';
-    const notOverlap = 'Communication(Not Overlapped)';
-    const opTrackId = await table.queryTrackId(threadName);
-    const notOverlapTrackId = await table.queryTrackId(notOverlap);
-    const rows = await table.queryCommunicationDetailInfo(request, client, opTrackId.track_id);
-    return queryNotOverlapByTime(table, rows, notOverlapTrackId.track_id, opTrackId.track_id, client);
-};
 
 function genComputeSql(request: ComputeDetailRequest): string {
     const orderList = request.orderBy;
@@ -74,4 +85,49 @@ function genComputeSql(request: ComputeDetailRequest): string {
                WHERE accelerator_core = '${request.timeFlag}'  order by "${orderList}" ${ascend} LIMIT ${request.pageSize} offset ${offset}`;
     }
     return sql;
+}
+
+function sortByRequest(communicationDetail: CommunicationDetail[], orderBy: string, ascend: string): void {
+    switch (orderBy) {
+        case 'startTime': {
+            if (ascend === 'ascend') {
+                communicationDetail.sort((a, b) => a.startTime - b.startTime);
+            } else {
+                communicationDetail.sort((a, b) => b.startTime - a.startTime);
+            }
+            break;
+        }
+        case 'totalDuration': {
+            if (ascend === 'ascend') {
+                communicationDetail.sort((a, b) => a.totalDuration - b.totalDuration);
+            } else {
+                communicationDetail.sort((a, b) => b.totalDuration - a.totalDuration);
+            }
+            break;
+        }
+        case 'overlapDuration': {
+            if (ascend === 'ascend') {
+                communicationDetail.sort((a, b) => a.overlapDuration - b.overlapDuration);
+            } else {
+                communicationDetail.sort((a, b) => b.overlapDuration - a.overlapDuration);
+            }
+            break;
+        }
+        case 'notOverlapDuration': {
+            if (ascend === 'ascend') {
+                communicationDetail.sort((a, b) => a.notOverlapDuration - b.notOverlapDuration);
+            } else {
+                communicationDetail.sort((a, b) => b.notOverlapDuration - a.notOverlapDuration);
+            }
+            break;
+        }
+        default: {
+            if (ascend === 'ascend') {
+                communicationDetail.sort((a, b) => a.communicationKernel.localeCompare(b.communicationKernel));
+            } else {
+                communicationDetail.sort((a, b) => b.communicationKernel.localeCompare(a.communicationKernel));
+            }
+            break;
+        }
+    }
 }
