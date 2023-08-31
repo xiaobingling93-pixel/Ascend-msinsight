@@ -358,3 +358,16 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     border-radius: 4px;
     box-shadow: rgba(0, 0, 0, 0.3) 1px 2px 10px;
 }
+
+.ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+    display: none;
+}
+.ant-table-thead > tr > th:not(.ant-table-selection-column):not([colspan]) {
+    border-top: 1px solid var(--grey10);
+}
+.ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan]) {
+    border-right: 1px solid var(--grey10);
+}
+.ant-table-expanded-row .ant-table-thead > tr > th:not(.ant-table-selection-column):not([colspan]) {
+    border-top: none;
+}
