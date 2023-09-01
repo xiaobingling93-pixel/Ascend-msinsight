@@ -67,7 +67,6 @@ export class Parser {
                 await this.flowEventsHandler(data);
                 break;
             default:
-                logger.info('Unknown data type. ', data.ph);
                 ++this.ignoreCount;
         }
     }
