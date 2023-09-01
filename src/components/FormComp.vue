@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import Button from '@components/ButtonComp.vue';
-import DeleteIcon from '@components/icons/bin_icon.vue';
-import AddIcon from '@components/icons/cross_icon.vue';
+import Button from '@/components/ButtonComp.vue';
+import DeleteIcon from '@/components/icons/bin_icon.vue';
+import AddIcon from '@/components/icons/cross_icon.vue';
 const defaultValue = 'Please enter';
 const inputs = ref([defaultValue]);
 

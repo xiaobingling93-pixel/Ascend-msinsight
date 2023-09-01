@@ -30,7 +30,7 @@ export class Connection {
     private _remote: string;
     private _msgId: number = 0;
     private readonly _responseHandlers: Map<number, ResponseHandler> = new Map();
-    private _token: string;
+    private _token?: string;
     private _fetchFlag: boolean = true;
 
     constructor(remote: string) {

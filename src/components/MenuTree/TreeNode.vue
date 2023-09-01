@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { defineProps, ref } from 'vue';
-import { TreeNodeType } from './types';
+import type { TreeNodeType } from './types';
 import Expand from './ExpandIcon.vue';
 import Delete from './DeleteIcon.vue';
 import { indent } from './types';

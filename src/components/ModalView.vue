@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { defineProps } from 'vue';
-import ButtonComp from '@components/ButtonComp.vue';
+import ButtonComp from '@/components/ButtonComp.vue';
 defineProps<{ title: string; close: () => void }>();
 </script>
 <template>

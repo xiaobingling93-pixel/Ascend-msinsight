@@ -1,4 +1,4 @@
-import { IMessageSender } from '../connection/messageSender';
+import type { IMessageSender } from "./messageSender";
 
 export class IntellijPlatform implements IMessageSender {
     selectFolder(): Promise<string> {

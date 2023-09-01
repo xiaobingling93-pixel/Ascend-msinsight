@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import AddIcon from '@components/icons/cross_icon.vue';
-import GearIcon from '@components/icons/gear_icon.vue';
-import IconContainer from '@components/IconContainer.vue';
-import MenuTree from '@components/MenuTree/MenuTree.vue';
+import AddIcon from '@/components/icons/cross_icon.vue';
+import GearIcon from '@/components/icons/gear_icon.vue';
+import IconContainer from '@/components/IconContainer.vue';
+import MenuTree from '@/components/MenuTree/MenuTree.vue';
 import ModalView from '@/components/ModalView.vue';
 import FormComp from '@/components/FormComp.vue';
 const width = 2;
@@ -14,11 +14,11 @@ function addRemote(e: MouseEvent) {
 }
 const mockData = [
     {
-        content: 123,
+        content: '123',
         cancelable: true,
         children: [
             {
-                content: 456,
+                content: '456',
                 children: [],
             },
         ],

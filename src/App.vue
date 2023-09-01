@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import RemoteManager from '@remoteManager';
-import Modules from '@modules';
+import RemoteManager from './views/RemoteManager.vue';
+import Modules from './views/ModulesView.vue';
 </script>
 
 <template>

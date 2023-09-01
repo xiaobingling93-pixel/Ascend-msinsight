@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { defineProps } from 'vue';
-defineProps<{ click: (e: MouseEvent) => void; type?: 'confirm' | 'cancel' }>();
+defineProps<{ click: (e: any) => void; type?: 'confirm' | 'cancel' }>();
 </script>
 <template>
     <button @click="click" :style="{ backgroundColor: type === 'cancel' ? '#ff4d4f' : '#0078d7' }" v-bind="$attrs">

@@ -10,7 +10,6 @@ export default defineConfig({
     vue(),
     vueJsx(),
   ],
-  assetsInclude: ['**/*.html'],
   resolve: {
     alias: {
       'vue': fileURLToPath(new URL('./node_modules/vue/dist/vue.esm-bundler.js', import.meta.url)),
@@ -23,5 +22,8 @@ export default defineConfig({
       '@centralServer': fileURLToPath(new URL('./src/centralServer/server.ts', import.meta.url))
       '@assets': fileURLToPath(new URL('./src/assets', import.meta.url))
     }
+  },
+  build: {
+    manifest: true
   }
 })
