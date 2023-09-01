@@ -5,6 +5,7 @@ import { RootStoreContext } from './context/context';
 import './i18n';
 import './index.css';
 import { store } from './store';
+import { NOTIFICATION_HANDLERS } from './interface';
 
 type CefQueryType = {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
 
@@ -15,7 +16,7 @@ declare global {
             store?: unknown;
         };
         setTheme: (isDark: boolean) => void;
-        request: (method: string, params: Record<string, unknown>) => Promise<any>;
+        request: (remote: string, params: { command: string; params: Record<string, unknown> }) => Promise<any>;
         cefQuery: (obj: CefQueryType) => void;
     }
 };
@@ -32,8 +33,17 @@ window.addEventListener('contextmenu', e => {
     e.stopImmediatePropagation();
 }, true);
 
-window.addEventListener('message', (...args) => {
-    console.log('frame window is', window, args);
+window.addEventListener('message', (e: MessageEvent<{ event: string; remote: string; body: string }>) => {
+    if (NOTIFICATION_HANDLERS[e.data.event] === undefined ||
+        NOTIFICATION_HANDLERS[e.data.body] === undefined ||
+        NOTIFICATION_HANDLERS[e.data.remote] === undefined) {
+        console.error('[notify]', 'Wrong notify format.');
+        return;
+    }
+    NOTIFICATION_HANDLERS[e.data.event]({ remote: e.data.remote, body: e.data.body });
 });
 
-console.log('frame window is', window);
+window.request = (remote: string, args: { command: string; params: Record<string, unknown> }) => {
+    const reqFunction = JSON.parse(localStorage.getItem('request') as string) as (remote: string, moduleName: string, args: { command: string; params: Record<string, unknown> }) => Promise<any>;
+    return reqFunction(remote, 'timeline', args);
+};

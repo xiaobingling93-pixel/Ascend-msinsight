@@ -50,6 +50,7 @@ function newLane (insightMetaData: InsightMetaData<any>): InsightUnit | undefine
                 processId: insightMetaData.metadata.processId,
                 processName: insightMetaData.metadata.processName,
                 label: insightMetaData.metadata.label,
+                remote: insightMetaData.remote,
             });
         }
         case 'thread': {
@@ -58,6 +59,7 @@ function newLane (insightMetaData: InsightMetaData<any>): InsightUnit | undefine
                 processId: paramsTree.get(insightMetaData.metadata).processId,
                 threadId: insightMetaData.metadata.threadId,
                 threadName: insightMetaData.metadata.threadName,
+                remote: insightMetaData.remote,
             });
             const chart = threadUnit.chart as ChartDesc<'stackStatus'>;
             chart.height = Math.max(insightMetaData.metadata.maxDepth * (chart.config as ChartConfig<'stackStatus'>).rowHeight, chart.height);

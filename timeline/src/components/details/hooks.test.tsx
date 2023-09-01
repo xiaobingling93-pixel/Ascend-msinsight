@@ -12,7 +12,8 @@ describe('hooks test', () => {
         isExpanded: false,
         isDisplay: true,
         type: 'basic',
-        phase: 'download'
+        phase: 'download',
+        metadata: {},
     };
     const expectedTablestate = {
         data: [],

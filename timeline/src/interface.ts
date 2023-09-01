@@ -1,6 +1,5 @@
-import { notificationTestHandler } from './connection/handler.mock';
 import { NotificationHandler } from './connection/defs';
-import { parseSuccessHandler, parseFailHandler } from './connection/handler';
+import { parseSuccessHandler, parseFailHandler, importRemoteHandler, removeRemoteHandler } from './connection/handler';
 
 type InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> = {
     request: Request;
@@ -12,7 +11,8 @@ export type InterfaceDefs = {
 };
 
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
-    'test/notify': notificationTestHandler,
+    'remote/import': importRemoteHandler,
+    'remote/remove': removeRemoteHandler,
     'parse/success': parseSuccessHandler,
     'parse/fail': parseFailHandler,
 };

@@ -39,7 +39,7 @@ export const slicesListDetail = detail({
             startTime: startTime + timestampOffset,
             endTime: endTime + timestampOffset,
         };
-        const raw = await window.request('unit/threads', params);
+        const raw = await window.request(metadata.remote as string, { command: 'unit/threads', params });
         return raw.data;
     },
 }) as DetailDescriptor<unknown>;
@@ -83,7 +83,7 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
                     fetchData: async (session: Session, metadata) => {
                         const flowId = session.linkFlow?.flowId as string;
                         const rankId = (metadata as Record<string, unknown>)?.cardId;
-                        const raw = await window.request('unit/flow', { flowId, rankId }) as any;
+                        const raw = await window.request((metadata as Record<string, unknown>)?.remote as string, { command: 'unit/flow', params: { flowId, rankId } } ) as any;
                         const from = raw.from;
                         const to = raw.to;
                         session.linkData = {
@@ -108,8 +108,8 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
                 session.linkFlow = data;
             });
         }}>{data.title}</Link> ],
-        fetchData: async (session: Session) => {
-            const raw = await window.request('unit/flowName', session.linkFlow as Record<string, unknown>);
+        fetchData: async (session: Session, metadata) => {
+            const raw = await window.request((metadata as Record<string, unknown>)?.remote as string, { command: 'unit/flowName', params: session.linkFlow as Record<string, unknown> });
             return raw.flowDetail;
         },
     });

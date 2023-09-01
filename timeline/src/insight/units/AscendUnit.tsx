@@ -68,7 +68,7 @@ const singleSliceDetail = singleData({
             startTime: selectedSliceData.startTime + timestampOffset,
             depth: selectedSliceData.depth,
         };
-        const result = await window.request('unit/threadDetail', params);
+        const result = await window.request(metadata.remote as string, { command: 'unit/threadDetail', params });
         const data: AscendSliceDetail = {
             pid: metadata?.processId,
             tid: metadata?.threadId,
@@ -122,6 +122,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 threadId: threadMetaData.threadId,
                 startTime: session.domainRange.domainStart + timestampOffset,
                 endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset),
+                remote: threadMetaData.remote,
             };
             const requestKey = createStackStatusParam('unit/threadTraces', requestParam);
             try {
