@@ -21,11 +21,13 @@ import {
     bandwidthHandler,
     distributionHandler, matrixListHandler, groupHandler,
 } from './query/communication.analysis.handler';
+import { towingImportHandler } from './handlers/towing_import';
 
 export const HANDLER_MAP: Record<string, Handler> = {
     test: testHandler,
     'unit/chart': chartHandler,
     'import/action': importHandler,
+    'towingImport/action': towingImportHandler,
     'reset/window': resetHandler,
     'unit/threadTraces': threadTracesHandler,
     'unit/queryUnitMetadata': unitMetadataHandler,
