@@ -371,3 +371,33 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .theme_dark .ant-notification-notice{
     background: var(--grey85);
 }
+
+.CommunicatorHeader{
+    min-width: 600px;
+}
+.theme_dark .CommunicatorHeader .ant-input-number-input{
+    background-color: var(--grey90);
+}
+.theme_dark .CommunicatorHeader .ant-input-number .ant-input-number-handler-wrap{
+    background-color: var(--grey90);
+}
+.theme_dark .CommunicatorHeader .ant-btn {
+    background: var(--grey50);
+    border-color: var(--grey60);
+}
+.CommunicatorHeader .ant-btn {
+    background: var(--grey10);
+}
+.CommunicatorHeader .ant-form-item-control{
+    width: calc(100% - 100px);
+}
+.ant-message-custom-content > span{
+    color: var(--grey90);
+}
+.activeRank .Select {
+    stroke: #0077ff !important;
+    stroke-width:1.5;
+}
+.CommunicatorContainer .ant-divider {
+    border-top: 2px dashed var(--grey50);
+}

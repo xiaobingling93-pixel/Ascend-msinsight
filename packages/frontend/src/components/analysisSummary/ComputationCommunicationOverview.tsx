@@ -13,6 +13,7 @@ import { addResizeEvent, COLOR, formatDate } from '../Common';
 import { Tooltip } from 'antd';
 import { QuestionCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
 import { Session } from '../../entity/session';
+import { CommunicatorContainer } from '../communicatorContainer/communicatorContainer';
 
 interface SummaryDataType{
     rankId: string ;
@@ -277,6 +278,7 @@ const OverviewCom = ({ baseInfo, handleFilterChange, groupData, dataSource, sele
     return <div className={'text-selectable'}
         style={{ textAlign: 'left', padding: '0 20px', overflow: 'auto', height: '100%' }}>
         <BaseInfo data={baseInfo} session={session}/>
+        <CommunicatorContainer session={session}></CommunicatorContainer>
         <div>
             <div>
                 <div className={'common-title-bottom'}>Computation/Communication Overview{hit}</div>
