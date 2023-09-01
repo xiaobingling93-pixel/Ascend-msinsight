@@ -4,8 +4,8 @@
 
 #include "ServerLog.h"
 #include "JsonUtil.h"
-#include "ProtocolUtil.h"
 #include "Protocol.h"
+#include "ProtocolUtil.h"
 
 namespace Dic {
 namespace Protocol {

@@ -4,10 +4,10 @@
 
 #include "ServerLog.h"
 #include "JsonUtil.h"
-#include "GlobalProtocolUtil.h"
-#include "GlobalProtocol.h"
 #include "GlobalProtocolRequest.h"
 #include "GlobalProtocolResponse.h"
+#include "GlobalProtocolUtil.h"
+#include "GlobalProtocol.h"
 
 namespace Dic {
 namespace Protocol {
