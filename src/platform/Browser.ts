@@ -1,4 +1,4 @@
-import { IMessageSender } from './messageSender';
+import type { IMessageSender } from './messageSender';
 
 export class Browser implements IMessageSender {
     selectFolder = (): Promise<string> =>

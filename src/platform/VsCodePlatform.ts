@@ -1,4 +1,4 @@
-import { IMessageSender, removeAndAddEventListener } from './messageSender';
+import { type IMessageSender, removeAndAddEventListener } from './messageSender';
 
 export class VsCodePlatform implements IMessageSender {
     selectFolder(): Promise<string> {
