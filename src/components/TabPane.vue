@@ -3,7 +3,6 @@ import { RouterView, RouterLink } from 'vue-router';
 import { onMounted, ref } from 'vue';
 import { routes } from '@router';
 
-const routerLinkRefs = ref([]);
 const navRef = ref();
 onMounted(() => {
     navRef.value.querySelector('a').click();
@@ -11,14 +10,13 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="tab-pane" ref>
+    <div class="tab-pane">
         <div class="tab-titles">
             <nav ref="navRef">
                 <RouterLink
                     v-for="route in routes"
                     :key="`${route.name}-${route.path}`"
                     :to="route.path"
-                    ref="routerLinkRefs"
                 >
                     {{ route.name }}
                 </RouterLink>
@@ -39,7 +37,7 @@ onMounted(() => {
 }
 
 .tab-titles {
-    height: 30px;
+    height: var(--header-height);
 }
 
 @media (min-height: 1024px) {
@@ -57,7 +55,7 @@ nav {
     height: 100%;
     font-size: 1rem;
     text-align: left;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: var(--border-style);
     display: flex;
     align-items: flex-end;
 }
@@ -67,13 +65,17 @@ nav a.router-link-exact-active {
     background-color: var(--color-background-medium);
 }
 
+nav a:first-of-type {
+    margin-left: 1px;
+}
+
 nav a {
     display: inline-block;
     border-radius: 0.5rem 0.5rem 0 0;
     padding: 0 1rem;
-    border-left: 1px solid var(--color-border);
-    border-right: 1px solid var(--color-border);
-    border-top: 1px solid var(--color-border);
+    border-left: var(--border-style);
+    border-right: var(--border-style);
+    border-top: var(--border-style);
     height: 90%;
     min-width: 10rem;
     text-align: center;

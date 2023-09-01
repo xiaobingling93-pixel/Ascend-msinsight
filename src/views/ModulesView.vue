@@ -4,8 +4,3 @@ import TabPane from '@components/TabPane.vue';
 <template>
     <TabPane />
 </template>
-
-<style>
-@media (min-width: 1024px) {
-}
-</style>

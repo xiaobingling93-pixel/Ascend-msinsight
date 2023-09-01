@@ -1,10 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { request2 as request } from '@centralServer';
 
 const modules = import.meta.glob('@plugins/*/*.html');
 const test = () => {
     console.log(123);
-}
+};
 
 export const routes = Object.entries(modules).map(([path]) => {
     const name = path.replace('/plugins/', '').replace(/\/\w+.html/, '');
@@ -17,9 +16,12 @@ export const routes = Object.entries(modules).map(([path]) => {
                 setTimeout(() => {
                     const iframe = document.getElementById(name) as HTMLIFrameElement;
                     console.log(iframe);
-                    iframe.contentWindow?.postMessage({
-                        test
-                    }, '*');
+                    iframe.contentWindow?.postMessage(
+                        {
+                            test,
+                        },
+                        '*',
+                    );
                     localStorage.setItem('request', JSON.stringify(test));
                 }, 1000);
             },

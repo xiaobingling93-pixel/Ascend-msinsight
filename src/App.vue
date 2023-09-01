@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router';
-import RemoteManager from '@RemoteManager';
-import Modules from '@Modules';
+import RemoteManager from '@remoteManager';
+import Modules from '@modules';
 </script>
 
 <template>
@@ -27,7 +26,9 @@ aside {
     min-height: 100px;
     max-height: 200px;
     height: 15%;
-    border-right: 1px solid var(--color-border);
+    border-right: var(--border-style);
+    display: flex;
+    border-radius: var(--border-radius);
 }
 
 article {
@@ -40,13 +41,13 @@ article {
     }
 
     aside {
-        max-width: calc(400px + var(--section-gap) / 8);
-        min-width: calc(200px + var(--section-gap) / 8);
+        max-width: 400px;
+        min-width: 200px;
         width: 15%;
         height: 100%;
         max-height: unset;
         min-height: unset;
-        padding-right: calc(var(--section-gap) / 8);
+        flex-direction: column;
     }
 }
 </style>

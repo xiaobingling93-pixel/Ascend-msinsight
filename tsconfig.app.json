@@ -5,8 +5,16 @@
   "compilerOptions": {
     "composite": true,
     "baseUrl": ".",
+    "moduleResolution": "node",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@modules": ["./src/views/Modules/index.vue"],
+      "@remoteManager": ["./src/views/RemoteManager/index.vue"],
+      "@plugins": ["./plugins"],
+      "@components": ["./src/components"],
+      "@router": ["./src/router/index.ts"],
+      "@centralServer": ["./src/centralServer/websocket/messageManager.ts"],
+      "@assets": ["./src/assets"],
     }
   }
 }

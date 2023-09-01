@@ -29,9 +29,11 @@ export const request = function (
     args: DataRequest,
 ): Promise<unknown> {
     const connection: Connection | undefined = CONNECTION_MAP.get(remote);
-    return new Promise((resolve, reject) => connection?.fetch(moduleName, args)?.then(resolve, reject));
+    return new Promise(
+        (resolve, reject) => connection?.fetch(moduleName, args)?.then(resolve, reject),
+    );
 };
 
-export const request2 = function(a: string) {
+export const request2 = function (a: string) {
     console.log(a);
 };

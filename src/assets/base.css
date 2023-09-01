@@ -39,6 +39,11 @@
     --color-text: var(--vt-c-text-dark-2);
 
     --section-gap: 160px;
+
+    --header-height: 30px;
+
+    --border-style: 2px solid var(--color-border);
+    --border-radius: 0.3rem;
 }
 
 @media (prefers-color-scheme: dark) {
