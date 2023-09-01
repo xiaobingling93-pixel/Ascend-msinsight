@@ -16,7 +16,8 @@ namespace Module {
 namespace Timeline {
 using namespace Dic;
 using namespace Dic::Server;
-void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) {
+void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+{
     ImportActionRequest &request = dynamic_cast<ImportActionRequest &>(*requestPtr.get());
     std::string token = request.token;
     ServerLog::Info("Import action, token = ", StringUtil::AnonymousString(token));

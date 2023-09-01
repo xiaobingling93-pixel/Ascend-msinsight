@@ -13,7 +13,8 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryFlowNameHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) {
+void QueryFlowNameHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+{
     UnitFlowNameRequest &request = dynamic_cast<UnitFlowNameRequest &>(*requestPtr.get());
     std::string token = request.token;
     ServerLog::Info("Query flow name, token = ", StringUtil::AnonymousString(token));

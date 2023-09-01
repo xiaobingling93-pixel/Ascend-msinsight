@@ -4,8 +4,8 @@
 
 #include "ServerLog.h"
 #include "GlobalModule.h"
-#include "ModuleManager.h"
 #include "TimelineModule.h"
+#include "ModuleManager.h"
 
 namespace Dic {
 namespace Module {

@@ -18,10 +18,8 @@ public:
         char buffer[CMD_RESULT_BUF_SIZE] = {0};
         FILE *ptr;
 
-        if((ptr = popen(command.c_str(), "r")) != nullptr)
-        {
-            while(fgets(buffer, sizeof(buffer), ptr) != nullptr)
-            {
+        if ((ptr = popen(command.c_str(), "r")) != nullptr) {
+            while (fgets(buffer, sizeof(buffer), ptr) != nullptr) {
                 result.append(buffer);
             }
             pclose(ptr);

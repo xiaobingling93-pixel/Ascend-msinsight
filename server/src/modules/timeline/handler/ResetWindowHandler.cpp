@@ -12,7 +12,8 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) {
+void ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+{
     ResetWindowRequest &request = dynamic_cast<ResetWindowRequest &>(*requestPtr.get());
     std::string token = request.token;
     ServerLog::Info("Reset window, token = ", StringUtil::AnonymousString(token));

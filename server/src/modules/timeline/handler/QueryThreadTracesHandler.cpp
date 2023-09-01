@@ -13,7 +13,8 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) {
+void QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+{
     UnitThreadTracesRequest &request = dynamic_cast<UnitThreadTracesRequest &>(*requestPtr.get());
     std::string token = request.token;
     ServerLog::Info("Query thread traces, token = ", StringUtil::AnonymousString(token));

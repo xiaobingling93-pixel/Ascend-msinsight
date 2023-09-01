@@ -10,12 +10,14 @@
 template <typename T>
 class SafeQueue {
 public:
-    void Push(T &t) {
+    void Push(T &t)
+    {
         std::unique_lock<std::mutex> lock(mutex);
         deque.emplace_back(t);
     }
 
-    bool Pop(T &t) {
+    bool Pop(T &t)
+    {
         std::unique_lock<std::mutex> lock(mutex);
         if (deque.empty()) {
             return false;
@@ -25,17 +27,20 @@ public:
         return true;
     }
 
-    bool Empty() {
+    bool Empty()
+    {
         std::unique_lock<std::mutex> lock(mutex);
         return deque.empty();
     }
 
-    size_t Size() {
+    size_t Size()
+    {
         std::unique_lock<std::mutex> lock(mutex);
         return deque.size();
     }
 
-    void Clear() {
+    void Clear()
+    {
         std::unique_lock<std::mutex> lock(mutex);
         deque.clear();
     }
@@ -45,4 +50,4 @@ private:
     std::mutex mutex;
 };
 
-#endif //THREADPOOL_SAFEQUEUE_H
+#endif // THREADPOOL_SAFEQUEUE_H

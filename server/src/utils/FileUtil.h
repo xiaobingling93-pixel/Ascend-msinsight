@@ -102,7 +102,8 @@ public:
     }
 
     // return file and folder in path
-    static inline std::vector<std::string> FindFolders(const std::string &path) {
+    static inline std::vector<std::string> FindFolders(const std::string &path)
+    {
         if (path.empty()) {
             return {};
         }
@@ -123,7 +124,8 @@ public:
         return folders;
     }
 
-    static inline bool IsFolder(const std::string &path) {
+    static inline bool IsFolder(const std::string &path)
+    {
 #ifdef _WIN32
         return PathIsDirectory(path.c_str());
 #else
@@ -135,7 +137,8 @@ public:
 #endif
     }
 
-    static inline bool RemoveFile(const std::string &path) {
+    static inline bool RemoveFile(const std::string &path)
+    {
         return  std::remove(path.c_str()) == 0;
     }
 };

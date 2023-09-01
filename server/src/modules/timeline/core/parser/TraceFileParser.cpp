@@ -68,7 +68,7 @@ bool TraceFileParser::Parse(const std::string &filePath, const std::string &file
         ServerLog::Info("Update depth completed. ID:", fileId);
     });
     futureMap.emplace(fileId, std::move(future));
-    if(paserEndCallback != nullptr) {
+    if (paserEndCallback != nullptr) {
         std::thread thread{[this, fileId](){
             WaitParseEnd(fileId);
         }};
