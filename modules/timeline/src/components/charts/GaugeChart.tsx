@@ -1,0 +1,170 @@
+/** @jsxImportSource @emotion/react */
+import type { Theme } from '@emotion/react';
+import { useTheme } from '@emotion/react';
+import * as d3 from 'd3';
+import { observer } from 'mobx-react';
+import React, { useMemo, useRef } from 'react';
+import { Session } from '../../entity/session';
+import { Logger } from '../../utils/Logger';
+import { useAsyncEffect } from '../../utils/useEffectHooks';
+import styled from '@emotion/styled';
+
+export type ArcData = {
+    startAngle: number;
+    endAngle: number;
+    innerRadius: number;
+    outerRadius: number;
+};
+
+type GaugeChartProps = {
+    session: Session;
+    dataFormat: (data: number) => string;
+    mapFunc: () => Promise<Array<[number, string]>>;
+    palette: Array<keyof Theme['colorPalette']>;
+    totalFormat?: [ () => Promise<string>, string? ]; // [ totalValue, unit ]
+};
+
+const margin = 30;
+
+const CanvasChart = styled.canvas`
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    display: block;
+`;
+
+interface DrawLeftParams {
+    datas: Array<[ number, string ]>;
+    palette: string[];
+    canvasHeight: number;
+};
+const drawLeft = (ctx: CanvasRenderingContext2D, {
+    datas,
+    palette,
+    canvasHeight,
+}: DrawLeftParams): (undefined | {startAngle: number; endAngle: number; innerRadius: number; outerRadius: number}) => {
+    const step = 78;
+    const totalValue = datas.reduce((previousValue, data) => previousValue + data[0], 0);
+    if (totalValue === 0) {
+        ctx.beginPath();
+        ctx.arc(margin + step / 2, canvasHeight / 2, step / 3, 0, 2 * Math.PI);
+        ctx.arc(margin + step / 2, canvasHeight / 2, step / 2, 0, 2 * Math.PI, true);
+        ctx.fillStyle = 'grey';
+        ctx.fill();
+        ctx.closePath();
+        return;
+    }
+    let nowRadStart = 0;
+    const arcDatas: ArcData[] = datas.map((data, index) => {
+        const arcData = {
+            startAngle: nowRadStart,
+            endAngle: nowRadStart + 2 * Math.PI * data[0] / totalValue,
+            innerRadius: step / 3,
+            outerRadius: step / 2,
+        };
+        nowRadStart = arcData.endAngle;
+        if (index === datas.length - 1) {
+            arcData.endAngle = 2 * Math.PI;
+        }
+        return arcData;
+    });
+    arcDatas.forEach((data, index) => {
+        ctx.beginPath();
+        ctx.arc(margin + step / 2, canvasHeight / 2, data.innerRadius, data.startAngle, data.endAngle);
+        ctx.arc(margin + step / 2, canvasHeight / 2, data.outerRadius, data.endAngle, data.startAngle, true);
+        ctx.fillStyle = palette[index];
+        ctx.fill();
+        ctx.closePath();
+    });
+};
+
+const drawTotalText = (ctx: CanvasRenderingContext2D, height: number, totalFormat: [ string, string? ], theme: Theme): void => {
+    const step = 78;
+    ctx.fillStyle = theme.fontColor;
+    ctx.font = 'Bold 10px MicrosoftYaHei';
+    const totalLength = ctx.measureText('Total').width;
+    const valueLength = ctx.measureText(totalFormat[0]).width;
+    if (totalFormat[1] === undefined) {
+        ctx.fillText('Total', margin + step / 2 - totalLength / 2, height / 2 - 3);
+        ctx.fillText(totalFormat[0], margin + step / 2 - valueLength / 2, height / 2 + 13);
+        return;
+    }
+    ctx.fillText('Total', margin + step / 2 - totalLength / 2, height / 2 - 10);
+    ctx.fillText(totalFormat[0], margin + step / 2 - valueLength / 2, height / 2 + 6);
+    ctx.fillStyle = theme.tableHeadFontColor;
+    ctx.font = 'Regular 10px PingFangSC';
+    const unitLength = ctx.measureText(totalFormat[1]).width;
+    ctx.fillText(totalFormat[1], margin + step / 2 - unitLength / 2, height / 2 + 20);
+};
+
+interface DrawRightParams {
+    range: [ number, number ];
+    datas: Array<[ number, string ]>;
+    dataFormat: (data: number) => string;
+    theme: Theme;
+    palette: string[];
+    canvasHeight: number;
+};
+const drawRight = (ctx: CanvasRenderingContext2D, {
+    range,
+    datas,
+    dataFormat,
+    theme,
+    palette,
+    canvasHeight,
+}: DrawRightParams): void => {
+    const xScale = d3.scaleLinear().range(range).domain([ 0, 10 ]);
+    const ratio = 0.15;
+    const yOffset = canvasHeight / datas.length;
+    const rectSizePara = canvasHeight * ratio / 5;
+    const paddingTop = 10;
+    const radius = canvasHeight * ratio / 6;
+    datas.forEach((data, index) => {
+        const positionY = index * yOffset + paddingTop;
+        ctx.fillStyle = palette[index];
+        ctx.beginPath();
+        ctx.arc(xScale(0), positionY, radius, Math.PI, Math.PI * 1.5);
+        ctx.arc(xScale(0) + rectSizePara, positionY, radius, Math.PI * 1.5, 0);
+        ctx.arc(xScale(0) + rectSizePara, positionY + rectSizePara, radius, 0, Math.PI * 0.5);
+        ctx.arc(xScale(0), positionY + rectSizePara, radius, Math.PI * 0.5, Math.PI);
+        ctx.closePath();
+        ctx.fillStyle = palette[index];
+        ctx.fill();
+        ctx.fillStyle = theme.fontColor;
+        ctx.font = '12px sans-serif';
+        ctx.fillText(data[1], xScale(1), positionY + rectSizePara + radius);
+        ctx.fillText(dataFormat(data[0]), xScale(8), positionY + rectSizePara + radius);
+    });
+};
+
+export const GaugeChart = observer(({ session, dataFormat, mapFunc, totalFormat, palette }: GaugeChartProps) => {
+    const canvas = useRef<HTMLCanvasElement>(null);
+    const theme = useTheme();
+    const topHeight = 11;
+    const colorPalette = useMemo(() => palette.map(d => theme.colorPalette[d]), [ palette, theme ]);
+    const draw = async (isCanceled: () => boolean): Promise<void> => {
+        let datas: Array<[number, string]> = [];
+        try {
+            datas = await mapFunc();
+        } catch {
+            Logger('GaugeChart', 'mapFunc occurred an exception.');
+        }
+        if (isCanceled() || !canvas.current) { return; }
+        const height = canvas.current.clientHeight;
+        const width = canvas.current.clientWidth;
+        const rangeRight: [ number, number ] = [ 160, 350 ];
+        canvas.current.width = width;
+        canvas.current.height = height;
+        const ctx = canvas.current.getContext('2d');
+        if (!ctx) { return; }
+        drawLeft(ctx, { datas, canvasHeight: height - topHeight, palette: colorPalette });
+        drawRight(ctx, { range: rangeRight, datas, dataFormat, theme, palette: colorPalette, canvasHeight: 90 });
+        if (totalFormat !== undefined) {
+            const format: [ string, string | undefined ] = [ (await totalFormat[0]()).toString(), totalFormat[1] ];
+            drawTotalText(ctx, height - topHeight, format, theme);
+        }
+    };
+    useAsyncEffect(draw, [ session.endTimeAll, theme ]);
+    return <CanvasChart ref={canvas} width={400} height={90} />;
+});

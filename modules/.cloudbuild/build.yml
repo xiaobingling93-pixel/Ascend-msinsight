@@ -1,0 +1,20 @@
+version: 2.0
+
+params:
+  - name: product
+    value: cloudbuild2.0
+
+env:
+  label: pap_build20 # 虚拟机标签，表示在哪台虚拟机执行，都写deveco_build
+steps:
+  PRE_BUILD:
+    - checkout:
+        path: Modules # 源码下载到子目录，命名请跟 clone下来的默认名称一致
+  BUILD:
+    - build_execute: # master用0.0.0.1-SNAPSHOT 和 0.0.0.1，  develop用0.0.0.2-SNAPSHOT，和 0.0.0.2
+        command: |
+          cd Modules\\timeline
+          call npm config set strict-ssl false
+          call npm install 
+          call npm run build
+        check: true
