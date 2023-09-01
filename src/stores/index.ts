@@ -1,0 +1,91 @@
+import { ref, computed } from 'vue';
+import { defineStore } from 'pinia';
+import type { DataSource } from '@/centralServer/websocket/defs';
+import type { TreeNodeType } from '@/components/MenuTree/types';
+import { connectRemote, disconnectRemote } from '@/centralServer/server';
+
+export type FormItemData = { value: string; status: 'wait' | 'error' | 'success' };
+type FormDataSource = {
+    remote: FormItemData;
+    port: FormItemData;
+    dataPath: FormItemData[];
+}
+
+const validator = (formItemData: FormItemData, rule: RegExp | null): boolean => {
+    if (!rule) { return true; }
+    return rule.test(formItemData.value);
+}
+
+const validateAll = (formData: FormDataSource): boolean => {
+    let rule: RegExp | null;
+    let res = true;
+    for (const key in formData) {
+        if (key === 'remote') {
+            rule = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/;
+        } else if (key === 'port') {
+            rule = /^([0-9]|[1-9]\d|[1-9]\d{2}|[1-9]\d{3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5])$/;
+        } else {
+            rule = null;
+        }
+        if (Array.isArray(formData[key as keyof FormDataSource])) { continue; }
+        if (!validator((formData[key as keyof FormDataSource] as FormItemData), rule)) {
+            (formData[key as keyof FormDataSource] as FormItemData).status = 'error';
+            res = false;
+        } else {
+            (formData[key as keyof FormDataSource] as FormItemData).status = 'success';
+        }
+    }
+    console.log(res);
+    return res;
+}
+
+export const useDataSources = defineStore('dataSources', () => {
+    const dataSources = ref<DataSource[]>([]);
+    let temp: FormDataSource | null = null;
+    function add(originSource: FormDataSource) {
+        temp = originSource;
+    }
+
+    function confirm(): boolean {
+        if (temp && validateAll(temp)) {
+            const dataSource: DataSource = {
+                remote: temp.remote.value,
+                port: Number(temp.port.value || 0),
+                dataPath: temp.dataPath.map(data => data.value),
+            };
+            dataSources.value.push(dataSource);
+            connectRemote(dataSource);
+            return true;
+        }
+        return false;
+    }
+
+    function cancel() {
+        temp = null;
+    }
+
+    function remove(index: number) {
+        menuTree.value.splice(index, 1);
+        disconnectRemote(dataSources.value[index]);
+        const iframe = document.querySelector('iframe') as HTMLIFrameElement;
+        console.log(dataSources.value[index]);
+        iframe.contentWindow?.postMessage(
+            {
+                event: 'remote/remove',
+                dataSource: JSON.stringify(dataSources.value[index]),
+                body: '',
+            },
+            '*',
+        );
+        dataSources.value.splice(index, 1);
+    }
+
+    const menuTree = computed<TreeNodeType[]>(() =>
+        dataSources.value.map(dataSource => ({
+            content: `${dataSource.remote}: ${dataSource.port}`,
+            children: dataSource.dataPath.map(data => ({ content: data })),
+            cancelable: true,
+        })));
+
+    return { dataSources, menuTree, temp, add, remove, confirm, cancel };
+});

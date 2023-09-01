@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { defineProps } from 'vue';
 import ButtonComp from '@/components/ButtonComp.vue';
-defineProps<{ title: string; close: () => void }>();
+defineProps<{ title: string; close: () => void; confirm: () => void }>();
 </script>
 <template>
     <div class="modal-view-container">
@@ -11,7 +11,7 @@ defineProps<{ title: string; close: () => void }>();
         </div>
         <div class="modal-view-footer">
             <ButtonComp :click="close" :type="'cancel'">cancel</ButtonComp>
-            <ButtonComp :click="close">confirm</ButtonComp>
+            <ButtonComp :click="confirm">confirm</ButtonComp>
         </div>
     </div>
 </template>

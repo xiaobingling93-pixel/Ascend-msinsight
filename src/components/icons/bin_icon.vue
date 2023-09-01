@@ -1,5 +1,6 @@
 <template>
     <svg
+        v-bind="$attrs"
         t="1693385563499"
         class="icon"
         viewBox="0 0 1024 1024"

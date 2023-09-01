@@ -1,29 +1,46 @@
 <script setup lang="ts">
-import { RouterView, RouterLink } from 'vue-router';
-import { onMounted, ref } from 'vue';
-import { routes } from '@router';
+import { watch, ref } from 'vue';
+import { request } from '@/centralServer/server';
+import type { DataRequest, DataSource } from '@/centralServer/websocket/defs';
 
-const navRef = ref();
-onMounted(() => {
-    navRef.value.querySelector('a').click();
+const localPaths = [ './plugins/Timeline/index.html' ];
+
+const getModuleName = (index: number): string => {
+    return localPaths?.[index]?.replace('./plugins/', '').replace(/\/\w+.html/, '') ?? '';
+};
+
+const currentPath = ref(0);
+const moduleRef = ref();
+watch(currentPath, () => {
+    const moduleDom = moduleRef.value;
+    moduleDom.onload = () => {
+        if (moduleDom.contentWindow) {
+            moduleDom.contentWindow.request = (remote: DataSource, args: DataRequest) => request(remote, getModuleName(currentPath.value).toLowerCase(), args);
+        }
+    };
 });
-</script>
 
+function toggleTab(index: number): void {
+    currentPath.value = index;
+}
+
+</script>
 <template>
     <div class="tab-pane">
         <div class="tab-titles">
-            <nav ref="navRef">
-                <RouterLink
-                    v-for="route in routes"
-                    :key="`${route.name}-${route.path}`"
-                    :to="route.path"
+            <nav>
+                <a
+                    v-for="(path, index) in localPaths"
+                    :key="`${index}-${path}`"
+                    @click="() => toggleTab(index)"
+                    :class="index === currentPath && 'active'"
                 >
-                    {{ route.name }}
-                </RouterLink>
+                    {{ getModuleName(index) }}
+                </a>
             </nav>
         </div>
         <div class="tab-body">
-            <RouterView />
+            <iframe :src="localPaths[currentPath]" ref="moduleRef"></iframe>
         </div>
     </div>
 </template>
@@ -60,7 +77,7 @@ nav {
     align-items: flex-end;
 }
 
-nav a.router-link-exact-active {
+nav a.active {
     color: var(--color-text);
     background-color: var(--color-background-medium);
 }

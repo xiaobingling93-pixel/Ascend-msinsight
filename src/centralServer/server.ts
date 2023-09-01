@@ -1,4 +1,4 @@
-import type { DataRequest, ModuleName, NotificationRegistration, Remote } from './websocket/defs';
+import type { DataRequest, ModuleName, NotificationRegistration, DataSource } from './websocket/defs';
 import { Connection } from '@/centralServer/websocket/connection';
 
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
@@ -12,19 +12,35 @@ export const registerNotification = function (notificationRegistration: Notifica
     );
 };
 
-export const connectRemote = async function (remote: Remote): Promise<boolean> {
-    const connection = new Connection(remote.remote);
+const getConnectionMapKey = (dataSource: DataSource): string => {
+    return `${dataSource.remote}:${dataSource.port}`;
+}
+
+export const disconnectRemote = function (dataSource: DataSource): boolean {
+    const connection: Connection | undefined = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
+    try {
+        connection?.disconnect();
+        CONNECTION_MAP.delete(getConnectionMapKey(dataSource));
+    } catch (e) {
+        console.warn(e);
+        return false;
+    }
+    return true;
+}
+
+export const connectRemote = async function (dataSource: DataSource): Promise<boolean> {
+    const connection = new Connection(dataSource);
     try {
         await connection.connect();
     } catch (e) {
         return false;
     }
-    CONNECTION_MAP.set(remote.remote, connection);
+    CONNECTION_MAP.set(getConnectionMapKey(dataSource), connection);
     const iframe = document.querySelector('iframe') as HTMLIFrameElement;
     iframe.contentWindow?.postMessage(
         {
             event: 'remote/import',
-            remote,
+            dataSource,
             body: '',
         },
         '*',
@@ -33,10 +49,10 @@ export const connectRemote = async function (remote: Remote): Promise<boolean> {
 };
 
 export const request = function (
-    remote: Remote,
+    dataSource: DataSource,
     moduleName: ModuleName,
     args: DataRequest,
 ): Promise<unknown> {
-    const connection: Connection | undefined = CONNECTION_MAP.get(remote.remote);
+    const connection: Connection | undefined = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
     return new Promise((resolve, reject) => connection?.fetch(moduleName, args)?.then(resolve, reject));
 };
