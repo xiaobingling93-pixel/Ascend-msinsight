@@ -4,7 +4,7 @@
 #include "ServerLog.h"
 #include "JsonUtil.h"
 #include "ProtocolEnumUtil.h"
-#include "ProtocolUtil.h"
+#include "GlobalProtocol.h"
 #include "GlobalProtocolUtil.h"
 
 namespace Dic {
@@ -44,26 +44,6 @@ template <> std::optional<json_t> ToResponseJson<TokenCheckResponse>(const Token
     json["body"]["checkedToken"] = response.body.checkedToken;
     json["body"]["deadTime"] = response.body.deadTime;
     json["body"]["createTime"] = response.body.createTime;
-    return json;
-}
-
-template <> std::optional<json_t> ToResponseJson<ConfigGetResponse>(const ConfigGetResponse &response)
-{
-    json_t json;
-    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    if (response.body.globalConfig.has_value()) {
-        json["body"]["config"]["global"] = json_t::object();
-        ProtocolUtil::SetGlobalConfigJson(response.body.globalConfig.value(), json["body"]["config"]["global"]);
-    }
-    return json;
-}
-
-template <> std::optional<json_t> ToResponseJson<ConfigSetResponse>(const ConfigSetResponse &response)
-{
-    json_t json;
-    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["configSetTime"] = response.body.configSetTime;
-    json["body"]["isAlertMsg"] = response.body.isAlertMsg;
     return json;
 }
 #pragma endregion

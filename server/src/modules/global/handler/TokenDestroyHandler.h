@@ -6,6 +6,7 @@
 #define DATA_INSIGHT_CORE_MODULE_GLOBAL_TOKEN_DESTROY_HANDLER_H
 
 #include "GlobalHandler.h"
+#include "GlobalProtocolRequest.h"
 
 namespace Dic {
 namespace Module {

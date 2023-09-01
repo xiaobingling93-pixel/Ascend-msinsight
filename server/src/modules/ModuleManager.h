@@ -15,8 +15,6 @@ namespace Module {
 class ModuleManager {
 public:
     static ModuleManager &Instance();
-    bool SetGlobalConfig(const GlobalConfig &config);
-    const std::optional<GlobalConfig> GetGlobalConfig();
     void OnDispatchModuleRequest(std::unique_ptr<Request> request);
 
 private:

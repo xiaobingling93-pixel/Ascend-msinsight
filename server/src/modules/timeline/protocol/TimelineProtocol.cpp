@@ -4,8 +4,8 @@
 
 #include "ServerLog.h"
 #include "JsonUtil.h"
-#include "ProtocolEnumUtil.h"
-#include "ProtocolUtil.h"
+#include "TimelineProtocolRequest.h"
+#include "TimelineProtocolResponse.h"
 #include "TimelineProtocolUtil.h"
 #include "TimelineProtocol.h"
 

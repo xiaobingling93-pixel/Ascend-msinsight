@@ -6,6 +6,8 @@
 #define PROFILER_SERVER_TIMELINE_REQUEST_HANDLER_H
 
 #include "ModuleRequestHandler.h"
+#include "TimelineProtocolRequest.h"
+#include "TimelineProtocolResponse.h"
 
 namespace Dic {
 namespace Module {

@@ -6,6 +6,8 @@
 #define DATA_INSIGHT_CORE_MODULE_GLOBAL_HANDLER_H
 
 #include "ModuleRequestHandler.h"
+#include "GlobalProtocolRequest.h"
+#include "GlobalProtocolResponse.h"
 
 namespace Dic {
 namespace Module {

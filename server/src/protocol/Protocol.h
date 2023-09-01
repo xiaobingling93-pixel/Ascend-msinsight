@@ -7,20 +7,14 @@
 #define DIC_PROTOCOL_H
 
 #include "ProtocolDefs.h"
-#include "ProtocolBase.h"
+#include "ProtocolMessage.h"
 #include "ProtocolEnum.h"
-#include "ProtocolEntity.h"
 #include "ProtocolEnumUtil.h"
-#include "ProtocolUtil.h"
-#include "ProtocolRequest.h"
-#include "ProtocolResponse.h"
-#include "ProtocolEvent.h"
-#include "ModuleErrorCode.h"
-#include "ProtocolMessageBuffer.h"
+#include "TimelineProtocolEvent.h"
+#include "ProtocolErrorCode.h"
 
 namespace Dic {
 namespace Protocol {
-using namespace Dic::Module;
 // module map
 const std::map<ModuleType, std::string> MODULE_MAP = {
     {ModuleType::UNKNOWN, MODULE_UNKNOWN }, {ModuleType::GLOBAL, MODULE_GLOBAL }, {ModuleType::TIMELINE, MODULE_TIMELINE }

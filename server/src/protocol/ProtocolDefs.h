@@ -33,8 +33,6 @@ const std::string EVENT_PARSE_SUCCESS = "parse/success";
 const std::string REQ_RES_TOKEN_CREATE = "token.create";
 const std::string REQ_RES_TOKEN_DESTROY = "token.destroy";
 const std::string REQ_RES_TOKEN_CHECK = "token.check";
-const std::string REQ_RES_CONFIG_GET = "config.get";
-const std::string REQ_RES_CONFIG_SET = "config.set";
 
 // template
 const std::string REQ_RES_IMPORT_ACTION = "import/action";

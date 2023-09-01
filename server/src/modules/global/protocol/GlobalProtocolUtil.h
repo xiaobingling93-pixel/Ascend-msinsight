@@ -7,7 +7,7 @@
 
 #include <optional>
 #include "GlobalDefs.h"
-#include "ProtocolResponse.h"
+#include "GlobalProtocolResponse.h"
 
 namespace Dic {
 namespace Protocol {
@@ -16,8 +16,6 @@ template <typename RESPONSE> std::optional<json_t> ToResponseJson(const RESPONSE
 template <> std::optional<json_t> ToResponseJson<TokenCreateResponse>(const TokenCreateResponse &response);
 template <> std::optional<json_t> ToResponseJson<TokenDestroyResponse>(const TokenDestroyResponse &response);
 template <> std::optional<json_t> ToResponseJson<TokenCheckResponse>(const TokenCheckResponse &response);
-template <> std::optional<json_t> ToResponseJson<ConfigGetResponse>(const ConfigGetResponse &response);
-template <> std::optional<json_t> ToResponseJson<ConfigSetResponse>(const ConfigSetResponse &response);
 } // end of namespace Protocol
 } // end of namespace Dic
 

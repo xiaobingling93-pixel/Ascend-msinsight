@@ -44,23 +44,6 @@ void ModuleManager::UnRegister()
     moduleMap.clear();
 }
 
-bool ModuleManager::SetGlobalConfig(const GlobalConfig &config)
-{
-    if (moduleMap.count(ModuleType::GLOBAL) == 0) {
-        return false;
-    }
-    ((GlobalModule &)(*moduleMap.at(ModuleType::GLOBAL).get())).Config(config);
-    return true;
-}
-
-const std::optional<GlobalConfig> ModuleManager::GetGlobalConfig()
-{
-    if (moduleMap.count(ModuleType::GLOBAL) == 0) {
-        return std::nullopt;
-    }
-    return ((GlobalModule &)(*moduleMap.at(ModuleType::GLOBAL).get())).GetConfig();
-}
-
 void ModuleManager::OnDispatchModuleRequest(std::unique_ptr<Request> request)
 {
     auto moduleName = request->moduleName;

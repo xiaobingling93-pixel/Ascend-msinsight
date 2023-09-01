@@ -5,9 +5,9 @@
 #ifndef PROFILER_SERVER_TRACE_DATABASE_H
 #define PROFILER_SERVER_TRACE_DATABASE_H
 
-#include "ProtocolRequest.h"
-#include "ProtocolResponse.h"
-#include "ProtocolEntity.h"
+#include "TimelineProtocolRequest.h"
+#include "TimelineProtocolResponse.h"
+#include "TimelineProtocolEvent.h"
 #include "Database.h"
 #include "GlobalDefs.h"
 #include "EventDef.h"

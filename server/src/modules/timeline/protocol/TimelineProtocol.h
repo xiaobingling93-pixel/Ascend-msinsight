@@ -5,11 +5,11 @@
 #ifndef PROFILER_SERVER_TIMELINE_PROTOCOL_H
 #define PROFILER_SERVER_TIMELINE_PROTOCOL_H
 
-#include "BaseProtocol.h"
+#include "ProtocolUtil.h"
 
 namespace Dic {
 namespace Protocol {
-class TimelineProtocol : public BaseProtocol {
+class TimelineProtocol : public ProtocolUtil {
 public:
     TimelineProtocol() = default;
     ~TimelineProtocol() override = default;

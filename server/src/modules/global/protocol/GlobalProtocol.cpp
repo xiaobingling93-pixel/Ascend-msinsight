@@ -4,8 +4,8 @@
 
 #include "ServerLog.h"
 #include "JsonUtil.h"
-#include "ProtocolEnumUtil.h"
-#include "ProtocolUtil.h"
+#include "GlobalProtocolRequest.h"
+#include "GlobalProtocolResponse.h"
 #include "GlobalProtocolUtil.h"
 #include "GlobalProtocol.h"
 
@@ -16,8 +16,6 @@ void GlobalProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_TOKEN_CREATE, ToTokenCreateRequest);
     jsonToReqFactory.emplace(REQ_RES_TOKEN_DESTROY, ToTokenDestroyRequest);
     jsonToReqFactory.emplace(REQ_RES_TOKEN_CHECK, ToTokenCheckRequest);
-    jsonToReqFactory.emplace(REQ_RES_CONFIG_GET, ToConfigGetRequest);
-    jsonToReqFactory.emplace(REQ_RES_CONFIG_SET, ToConfigSetRequest);
 }
 
 void GlobalProtocol::RegisterResponseToJsonFuncs()
@@ -25,8 +23,6 @@ void GlobalProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_TOKEN_CREATE, ToTokenCreateResponseJson);
     resToJsonFactory.emplace(REQ_RES_TOKEN_DESTROY, ToTokenDestroyResponseJson);
     resToJsonFactory.emplace(REQ_RES_TOKEN_CHECK, ToTokenCheckResponseJson);
-    resToJsonFactory.emplace(REQ_RES_CONFIG_GET, ToConfigGetResponseJson);
-    resToJsonFactory.emplace(REQ_RES_CONFIG_SET, ToConfigSetResponseJson);
 }
 
 void GlobalProtocol::RegisterEventToJsonFuncs()
@@ -71,35 +67,6 @@ std::unique_ptr<Request> GlobalProtocol::ToTokenCheckRequest(const json_t &json,
     return reqPtr;
 }
 
-std::unique_ptr<Request> GlobalProtocol::ToConfigGetRequest(const json_t &json, std::string &error)
-{
-    std::unique_ptr<ConfigGetRequest> reqPtr = std::make_unique<ConfigGetRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
-        return nullptr;
-    }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.moduleMask, json["params"], "moduleMask");
-    return reqPtr;
-}
-
-std::unique_ptr<Request> GlobalProtocol::ToConfigSetRequest(const json_t &json, std::string &error)
-{
-    std::unique_ptr<ConfigSetRequest> reqPtr = std::make_unique<ConfigSetRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
-        return nullptr;
-    }
-    if (!JsonUtil::IsJsonKeyValid(json["params"], "config")) {
-        error = "Failed to get config object, command is: " + reqPtr->command;
-        return nullptr;
-    }
-    if (JsonUtil::IsJsonKeyValid(json["params"]["config"], "global")) {
-        GlobalConfig config;
-        ProtocolUtil::SetGlobalConfigStruct(json["params"]["config"]["global"], config);
-        reqPtr->params.globalConfig = config;
-    }
-    return reqPtr;
-}
 #pragma endregion
 
 #pragma region <<Response To Json>>
@@ -116,16 +83,6 @@ std::optional<json_t> GlobalProtocol::ToTokenDestroyResponseJson(const Response 
 std::optional<json_t> GlobalProtocol::ToTokenCheckResponseJson(const Response &response)
 {
     return ToResponseJson<TokenCheckResponse>(dynamic_cast<const TokenCheckResponse &>(response));
-}
-
-std::optional<json_t> GlobalProtocol::ToConfigGetResponseJson(const Response &response)
-{
-    return ToResponseJson<ConfigGetResponse>(dynamic_cast<const ConfigGetResponse &>(response));
-}
-
-std::optional<json_t> GlobalProtocol::ToConfigSetResponseJson(const Response &response)
-{
-    return ToResponseJson<ConfigSetResponse>(dynamic_cast<const ConfigSetResponse &>(response));
 }
 
 #pragma endregion

@@ -8,7 +8,7 @@
 
 #include <mutex>
 #include <memory>
-#include "ProtocolBase.h"
+#include "ProtocolMessage.h"
 
 namespace Dic {
 namespace Protocol {
