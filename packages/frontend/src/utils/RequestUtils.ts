@@ -2,7 +2,12 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { isNull } from '../components/Common';
-import { communicationAnalysisData, computationCommunicationData, OperatorDetailsData } from './__test__/mockData';
+import {
+    communicationAnalysisData,
+    communicationMatrixData,
+    computationCommunicationData,
+    OperatorDetailsData,
+} from './__test__/mockData';
 
 /**
  * 查询所有迭代ID
@@ -14,6 +19,18 @@ export const queryIterations = async(): Promise<any> => {
         return [ 0, 1, 2, 3 ];
     }
     return window.request('communication/duration/iterations', {});
+};
+
+/**
+ * 查询一次迭代下所有通信域
+ * 无参
+ * @return {[]} 返回迭代数组['(0,1,2)']
+ */
+export const queryStages = async(param: {step: string }): Promise<any> => {
+    if (isNull(window.request)) {
+        return ['(0,1,2)'];
+    }
+    return window.request('communication/matrix/group', {});
 };
 
 /**
@@ -128,4 +145,20 @@ export const queryTopSummary = async (param:
         stepIdList: param.step !== 'All' ? [param.step] : [],
         rankIdList: param.rankIds,
     });
+};
+
+/**
+ * 查询通信矩阵
+ *
+ * @param {string} iterationId 迭代ID
+ * @param {string} stage
+ * @param {string} operatorName 算子名
+ * @return {[]} 返回数组
+ */
+export const queryCommunicationMatrix = async(param: { step: string ; groupId: string ; operatorName: string}):
+Promise<any> => {
+    if (isNull(window.request)) {
+        return communicationMatrixData;
+    }
+    return window.request('communication/matrix/bandwidthInfo', param);
 };

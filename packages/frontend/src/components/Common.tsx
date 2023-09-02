@@ -145,9 +145,10 @@ export function isNull(val: any): boolean {
     return val === undefined || val === null || val === '';
 }
 
-export function notNullObj(obj: {[prop: string]: any}): boolean {
+export function notNullObj(obj: {[prop: string]: any}, keys?: string[]): boolean {
     let flag = true;
-    Object.keys(obj).forEach(key => {
+    const keylist = keys ?? Object.keys(obj);
+    keylist.forEach(key => {
         if (isNull(obj[key])) {
             flag = false;
         }

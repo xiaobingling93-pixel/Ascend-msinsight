@@ -7,7 +7,7 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Breadcrumb } from 'antd';
 import { Session } from '../../entity/session';
 import Help from './Help';
-import Filter, { conditionDataType } from './Filter';
+import Filter, { ConditionDataType } from './Filter';
 import CommunicationTimeTable, { DataType, DataType as tableDataType } from './CommunicationTimeTable';
 import CommunicationTimeChart, { dataType as chartDataType }
     from './CommunicationTimeChart';
@@ -35,7 +35,7 @@ interface showDataType{
     tableData: [];
 }
 
-const searchData = async (conditions: conditionDataType): Promise<showDataType> => {
+const searchData = async (conditions: ConditionDataType): Promise<showDataType> => {
     const res = await queryCommunication(conditions);
     res.duration.forEach((item: any, index: number) => { item.index = index; });
     res.duration.sort((a: DataType, b: DataType) => b.elapse_time - a.elapse_time);
@@ -58,13 +58,13 @@ const CommunicationAnalysis = observer(function ({ session, active }: { session:
         chartData: {} as chartDataType,
         tableData: [],
     });
-    const [ conditions, setConditions ] = useState<conditionDataType>(
-        { iterationId: '', rankIds: [], operatorName: '', type: '', stageId: '' });
+    const [ conditions, setConditions ] = useState<ConditionDataType>(
+        { iterationId: '', rankIds: [], operatorName: '', type: '', stage: '' });
     const showOperator = (rankId: string): void => {
         setRankId(rankId);
     };
     const returnHome = (): void => { setRankId(''); };
-    const handleFilterChange = async(newConditions: conditionDataType): Promise<void> => {
+    const handleFilterChange = async(newConditions: ConditionDataType): Promise<void> => {
         setConditions(newConditions);
         if (conditions.type !== newConditions.type) {
             return;

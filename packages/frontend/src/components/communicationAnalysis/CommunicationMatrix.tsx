@@ -4,26 +4,26 @@ import { Select, Checkbox } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import * as echarts from 'echarts';
 import { addResizeEvent, Container, Label, COLOR } from '../Common';
-import { conditionDataType } from './Filter';
-import { communicationMatrixData } from '../../utils/__test__/mockData';
+import { ConditionDataType } from './Filter';
 import { optionDataType, VoidFunction } from '../../utils/interface';
+import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
 
 const options: optionDataType[] = [
     {
-        value: 'Bandwidth(GB/s)',
         label: 'Bandwidth(GB/s)',
+        value: 'bandwidth',
     },
     {
-        value: 'Transit Size(MB)',
         label: 'Transit Size(MB)',
+        value: 'transitSize',
     },
     {
-        value: 'Transport Type',
         label: 'Transport Type',
+        value: 'transportType',
     },
     {
-        value: 'Transit Time(ms)',
         label: 'Transit Time(ms)',
+        value: 'transitTime',
     },
 ];
 
@@ -37,16 +37,45 @@ function InitCharts(data: any): void {
     }
 }
 
-function wrapData(data: any): any {
-    baseOption.series[0].data = data;
-    const max = Math.max(...data.map((item: number[]) => item[2]));
-    const min = Math.min(...data.map((item: number[]) => item[2]));
-    baseOption.visualMap.max = max;
-    baseOption.visualMap.min = min;
-    const ranklist = [ '0', '1', '2', '3', '4', '5', '6', '7' ];
-    baseOption.xAxis.data = ranklist;
-    baseOption.yAxis.data = ranklist;
-    return baseOption;
+const allTransporType = [ 'HCCS', 'PCIE', 'RDMA', 'LOCAL' ];
+function wrapData(dataSource: any): any {
+    const { data, rankIds, type } = dataSource;
+    const option: any = baseOption;
+    option.xAxis.data = rankIds;
+    option.yAxis.data = rankIds;
+    if (type === 'transportType') {
+        data.forEach((item: any[]) => { item[2] = allTransporType.indexOf(item[2]); });
+        option.series[0].data = data;
+        option.visualMap = transportTypeOption.visualMap;
+        option.series[0].label.formatter = (params: any) => {
+            return allTransporType[params.value[2]];
+        };
+        option.series[0].tooltip.formatter = function (params: any) {
+            const { data } = params;
+            return `${data[0]} -> ${data[1]} : ${allTransporType[data[2]]}`;
+        };
+    } else {
+        option.series[0].data = data;
+        option.visualMap = {
+            calculable: true,
+            orient: 'horizontal',
+            left: 'center',
+            bottom: '15%',
+            inRange: { color: [ COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3 ] },
+        };
+        if (data.length > 0) {
+            const max = Math.max(...data.map((item: number[]) => item[2]));
+            const min = Math.min(...data.map((item: number[]) => item[2]));
+            option.visualMap.max = max;
+            option.visualMap.min = min;
+        }
+
+        option.series[0].tooltip.formatter = function (params: any) {
+            const { data } = params;
+            return `${data[0]} -> ${data[1]} : ${data[2]}`;
+        };
+    }
+    return option;
 }
 
 const baseOption: any = {
@@ -86,8 +115,10 @@ const baseOption: any = {
         {
             type: 'heatmap',
             tooltip: {
-                valueFormatter: function (value: any) {
-                    return value;
+                show: true,
+                formatter: function (params: any) {
+                    const { data } = params;
+                    return `${data[0]} -> ${data[1]} : ${data[2]}`;
                 },
             },
             data: [],
@@ -104,29 +135,51 @@ const baseOption: any = {
     ],
 };
 
-const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow: boolean;conditions: conditionDataType}) {
+const transportTypeOption = {
+    visualMap: {
+        type: 'piecewise',
+        calculable: true,
+        orient: 'horizontal',
+        left: 'center',
+        bottom: '15%',
+        splitNumber: 1,
+        pieces: [
+            { value: 0, label: allTransporType[0], color: COLOR.Band0 },
+            { value: 1, label: allTransporType[1], color: COLOR.Band2 },
+            { value: 2, label: allTransporType[2], color: COLOR.Band3 },
+        ],
+        textStyle: { color: COLOR.Grey40 },
+    },
+};
+
+const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow: boolean;conditions: ConditionDataType}) {
     const [ dataSource, setDataSource ] = useState<any>({});
-    const [ switchCondition, setSwitchCondition ] = useState({ type: 'Bandwidth(GB/s)', showInner: false });
+    const [ switchCondition, setSwitchCondition ] = useState({ type: 'bandwidth', showInner: false });
     useEffect(() => {
         if (isShow) {
-            updateData();
+            updateData(conditions);
         }
     }, [ isShow, conditions ]);
     useEffect(() => {
         if (isShow) {
-            const keys = Object.keys(dataSource);
-            let data = keys.map(key => {
-                const list = key.split('_');
-                return [ list[0], list[1], dataSource[key][switchCondition.type] ];
+            let { data } = dataSource;
+            data = data.map((item: any) => {
+                return [ item.srcRank, item.dstRank, item[switchCondition.type] ];
             });
             if (!switchCondition.showInner) {
-                data = data.filter(item => item[0] !== item[1]);
+                data = data.filter((item: any[]) => item[0] !== item[1]);
             }
-            InitCharts(data);
+            InitCharts({ ...dataSource, data, type: switchCondition.type });
         }
     }, [ dataSource, switchCondition ]);
-    const updateData = (): void => {
-        setDataSource(communicationMatrixData);
+    const updateData = async(conditions: ConditionDataType): Promise<void> => {
+        const param = { step: conditions.iterationId, groupId: conditions.stage, operatorName: conditions.operatorName };
+        const res = await queryCommunicationMatrix(param);
+        const data = res.matrixList ?? [];
+        const rankRes: {iterationsOrRanks: Array<{rank_id: string } > } =
+            await queryRanks({ iterationId: conditions.iterationId });
+        const rankIds = rankRes.iterationsOrRanks.map(item => item.rank_id);
+        setDataSource({ data, rankIds });
     };
     const handleChange = (filed: string, val: string | boolean): void => {
         setSwitchCondition({ ...switchCondition, [filed]: val });
