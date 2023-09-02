@@ -39,7 +39,7 @@ export const slicesListDetail = detail({
             startTime: startTime + timestampOffset,
             endTime: endTime + timestampOffset,
         };
-        const raw = await window.request(metadata.remote as string, { command: 'unit/threads', params });
+        const raw = await window.request(metadata.dataSource, { command: 'unit/threads', params });
         return raw.data;
     },
 }) as DetailDescriptor<unknown>;
@@ -61,7 +61,7 @@ export const generateFlowParam = function(metadata: ThreadMetaData, startTime: n
 };
 
 /* eslint-disable */
-export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, unknown>, unknown> => {
+export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, unknown>> => {
     return linkData({
         renderFields: [],
         templateField: [ field, (data: any, session) => <Link onClick={() => {
@@ -83,7 +83,7 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
                     fetchData: async (session: Session, metadata) => {
                         const flowId = session.linkFlow?.flowId as string;
                         const rankId = (metadata as Record<string, unknown>)?.cardId;
-                        const raw = await window.request((metadata as Record<string, unknown>)?.remote as string, { command: 'unit/flow', params: { flowId, rankId } } ) as any;
+                        const raw = await window.request(metadata.dataSource, { command: 'unit/flow', params: { flowId, rankId } } ) as any;
                         const from = raw.from;
                         const to = raw.to;
                         session.linkData = {
@@ -109,7 +109,7 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
             });
         }}>{data.title}</Link> ],
         fetchData: async (session: Session, metadata) => {
-            const raw = await window.request((metadata as Record<string, unknown>)?.remote as string, { command: 'unit/flowName', params: session.linkFlow as Record<string, unknown> });
+            const raw = await window.request(metadata.dataSource, { command: 'unit/flowName', params: session.linkFlow as Record<string, unknown> });
             return raw.flowDetail;
         },
     });

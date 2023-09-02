@@ -16,8 +16,14 @@ declare global {
             store?: unknown;
         };
         setTheme: (isDark: boolean) => void;
-        request: (remote: string, params: { command: string; params: Record<string, unknown> }) => Promise<any>;
+        request: (dataSource: DataSource, params: { command: string; params: Record<string, unknown> }) => Promise<any>;
         cefQuery: (obj: CefQueryType) => void;
+    }
+
+    interface DataSource {
+        remote: string;
+        port: number;
+        dataPath: string[];
     }
 };
 
@@ -33,17 +39,13 @@ window.addEventListener('contextmenu', e => {
     e.stopImmediatePropagation();
 }, true);
 
-window.addEventListener('message', (e: MessageEvent<{ event: string; remote: string; body: string }>) => {
+window.addEventListener('message', (e: MessageEvent<{ event: string; dataSource: DataSource; body: Record<string, unknown> }>) => {
+    console.log(e);
     if (NOTIFICATION_HANDLERS[e.data.event] === undefined ||
-        NOTIFICATION_HANDLERS[e.data.body] === undefined ||
-        NOTIFICATION_HANDLERS[e.data.remote] === undefined) {
+        e.data.body === undefined ||
+        e.data.dataSource === undefined) {
         console.error('[notify]', 'Wrong notify format.');
         return;
     }
-    NOTIFICATION_HANDLERS[e.data.event]({ remote: e.data.remote, body: e.data.body });
+    NOTIFICATION_HANDLERS[e.data.event]({ dataSource: e.data.dataSource, body: e.data.body });
 });
-
-window.request = (remote: string, args: { command: string; params: Record<string, unknown> }) => {
-    const reqFunction = JSON.parse(localStorage.getItem('request') as string) as (remote: string, moduleName: string, args: { command: string; params: Record<string, unknown> }) => Promise<any>;
-    return reqFunction(remote, 'timeline', args);
-};

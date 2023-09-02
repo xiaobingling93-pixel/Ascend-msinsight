@@ -1,4 +1,4 @@
-import { chart, on, LinkDataDesc, singleData, TriggerEvent, unit, UnitHeight } from '../../entity/insight';
+import { chart, on, LinkDataDesc, singleData, TriggerEvent, unit, UnitHeight, MetaData } from '../../entity/insight';
 import { Session } from '../../entity/session';
 import { hashToNumber } from '../../utils/colorUtils';
 import {
@@ -68,7 +68,7 @@ const singleSliceDetail = singleData({
             startTime: selectedSliceData.startTime + timestampOffset,
             depth: selectedSliceData.depth,
         };
-        const result = await window.request(metadata.remote as string, { command: 'unit/threadDetail', params });
+        const result = await window.request(metadata.dataSource, { command: 'unit/threadDetail', params });
         const data: AscendSliceDetail = {
             pid: metadata?.processId,
             tid: metadata?.threadId,
@@ -122,8 +122,9 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 threadId: threadMetaData.threadId,
                 startTime: session.domainRange.domainStart + timestampOffset,
                 endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset),
-                remote: threadMetaData.remote,
+                dataSource: threadMetaData.dataSource,
             };
+            console.log('fetch', requestParam);
             const requestKey = createStackStatusParam('unit/threadTraces', requestParam);
             try {
                 const request = await session.simpleCache.tryFetchFromCache('unit/threadTraces', requestKey, requestParam);
@@ -227,14 +228,14 @@ export const CardUnit = unit<CardMetaData>({
         }),
 });
 
-const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<Record<string, unknown>, unknown>, linkFlow: unknown, metadata: unknown): Array<[string, string | JSX.Element]> | undefined => {
+const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<Record<string, unknown>>, linkFlow: unknown, metadata: unknown): Array<[string, string | JSX.Element]> | undefined => {
     const [ renderFields, setRenderFields ] = React.useState<Array<[string, string | JSX.Element]>>();
     const { selectedUnits } = session;
     const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
-    const detail = (session.linkDetail as LinkDataDesc<Record<string, unknown>, unknown>) ?? originDetail;
+    const detail = (session.linkDetail as LinkDataDesc<Record<string, unknown>>) ?? originDetail;
     const fetchData = session.phase === 'error' ? undefined : detail?.fetchData;
     const onDataFetched = React.useMemo(() => ([ selectedUnits, linkFlow ].filter(_.isEmpty).length === 0
-        ? fetchData?.(session, selectedUnit?.metadata)
+        ? fetchData?.(session, selectedUnit?.metadata as MetaData)
         : undefined), [ selectedUnits, linkFlow, detail, session.linkDetail ]);
 
     const recentUnits = React.useRef(selectedUnits);
@@ -278,7 +279,7 @@ const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<R
     return renderFields;
 };
 
-export const SliceRight = observer(({ session, detail, metadata }: { session: Session; detail: LinkDataDesc<Record<string, unknown>, unknown>; metadata: unknown }) => {
+export const SliceRight = observer(({ session, detail, metadata }: { session: Session; detail: LinkDataDesc<Record<string, unknown>>; metadata: unknown }) => {
     const renderFields = useSliceRightDataUpdator(session, detail, session.linkFlow, metadata);
     return <SelectedDataBase renderer={renderFields} hasTitle />;
 });
