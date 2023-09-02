@@ -22,6 +22,7 @@ import {
     distributionHandler, matrixListHandler, groupHandler,
 } from './query/communication.analysis.handler';
 import { towingImportHandler } from './handlers/towing_import';
+import { parseCommunicationGroupHandler } from './parse/communicator_parser';
 
 export const HANDLER_MAP: Record<string, Handler> = {
     test: testHandler,
@@ -49,4 +50,5 @@ export const HANDLER_MAP: Record<string, Handler> = {
     'communication/matrix/group': groupHandler,
     'summary/queryTopData': summaryHandler,
     'summary/statistic': summaryStatisticHandler,
+    'communicator/parser': parseCommunicationGroupHandler,
 };

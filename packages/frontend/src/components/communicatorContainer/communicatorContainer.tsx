@@ -3,15 +3,17 @@
  */
 import { observer } from 'mobx-react';
 import { Session } from '../../entity/session';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Tabs, Form, InputNumber, Row, Button, message, Select, Tooltip } from 'antd';
 import { ReactComponent as Rank } from '../../assets/images/rank_id.svg';
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import eventBus, { useEventBus } from '../../utils/eventBus';
 import { QuestionCircleFilled } from '@ant-design/icons';
+import { StringMap } from '../../utils/interface';
 
 type communicatorContainerData = {
     partitionModes: partitionMode[];
+    defaultPPSize: number;
 };
 
 type partitionMode = {
@@ -37,8 +39,15 @@ const titleMap = new Map([
     [ 'tpOrDp', 'Tensor/Data Parallel' ],
 ]);
 
-export const CommunicatorContainer = observer(({ session }: { session: Session }) => {
-    const [ communicator, setCommunicator ] = useState(getDefaultCommunicatorData());
+export const CommunicatorContainer = observer(({ session, baseInfo }: { session: Session; baseInfo: StringMap }) => {
+    const [ communicator, setCommunicator ] = useState({} as communicatorContainerData);
+    useEffect(() => {
+        if (baseInfo !== undefined && !isEmpty(baseInfo.filePath)) {
+            getDefaultCommunicatorData(baseInfo).then(value => {
+                setCommunicator(value);
+            });
+        }
+    }, [baseInfo]);
     const [ activeTab, setActiveTab ] = useState<string>('pp');
     useEventBus('setCommunicator', (data) => {
         setCommunicator(data as communicatorContainerData);
@@ -54,7 +63,7 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
     }, [communicator]);
     return (
         <div style={{ height: '300px', width: '100%', margin: '10px 0' }} className={'CommunicatorContainer'}>
-            {<CommunicatorHeader session={session}></CommunicatorHeader>}
+            {<CommunicatorHeader session={session} defaultPPSize={communicator.defaultPPSize}></CommunicatorHeader>}
             <Tabs activeKey={activeTab} onTabClick={(key) => setActiveTab(key)} style={{ height: '240px' }}>
                 {
                     items.map(item => (
@@ -94,7 +103,7 @@ const RankGroup = ({ rankGroup }: {rankGroup: communicator}): JSX.Element => {
     });
     const width = (rankGroup.ranks.length * 85).toString().concat('px');
     return (
-        <div style={{ width }}>
+        <div style={{ width, margin: '0 10px' }}>
             <Row className={active === rankGroup.name ? 'activeRank' : active} wrap={false} >
                 {
                     _.map(rankGroup.ranks, (value) => (
@@ -106,18 +115,33 @@ const RankGroup = ({ rankGroup }: {rankGroup: communicator}): JSX.Element => {
     );
 };
 
-const CommunicatorHeader = observer(({ session }: { session: Session }) => {
+const CommunicatorHeader = observer(({ session, defaultPPSize }: { session: Session; defaultPPSize: number }) => {
     const [form] = Form.useForm();
-    const onClick = (): void => {
+    const onClick = (size: number) => () => {
         const values: {ppSize: number; tpSize: number; dpSize: number} = form.getFieldsValue();
-        if (values.dpSize * values.tpSize * values.dpSize !== session.units.length) {
+        if (values.dpSize * values.tpSize !== values.ppSize || values.ppSize !== size) {
             message.error('The parameter is incorrect.');
             return;
         }
-        eventBus.emit('setCommunicator', generateCommunicatorData(values, session.units.length));
+        eventBus.emit('setCommunicator', generateCommunicatorData(values, size, session.units.length));
     };
     return (
         <Form form={form} labelAlign={'left'} layout="inline" className={'CommunicatorHeader'}>
+            <Form.Item name={'algorithm'} label={'Algorithm'} style={{ margin: '10px 10px 10px 0' }}>
+                <Select defaultValue="Megatron" disabled={true} style={{ width: '120px' }} options={[
+                    {
+                        value: 'Megatron',
+                        label: <div>Megatron <Tooltip title={
+                            (
+                                <div style={{ background: 'var(--grey100)', padding: '1rem' }}>
+                                    <div>PP Size = TP Size * DP Size</div>
+                                </div>
+                            )
+                        }>
+                            <QuestionCircleFilled style={{ cursor: 'pointer' }}/>
+                        </Tooltip></div>,
+                    }]}/>
+            </Form.Item>
             <Form.Item name={'ppSize'} label={'PP Size'} style={{ margin: '10px 10px 10px 0' }}>
                 <InputNumber min={0} max={session.units.length} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
             </Form.Item>
@@ -127,22 +151,7 @@ const CommunicatorHeader = observer(({ session }: { session: Session }) => {
             <Form.Item name={'dpSize'} label={'DP Size'} style={{ margin: '10px 10px 10px 0' }}>
                 <InputNumber min={0} max={session.units.length} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
             </Form.Item>
-            <Form.Item name={'algorithm'} label={'Algorithm'} style={{ margin: '10px 10px 10px 0' }}>
-                <Select defaultValue="Megatron" disabled={true} style={{ width: '120px' }} options={[
-                    {
-                        value: 'Megatron',
-                        label: <div>Megatron <Tooltip title={
-                            (
-                                <div style={{ background: 'var(--grey100)', padding: '1rem' }}>
-                                    <div>RankCounts = PP Size * TP Size * DP Size</div>
-                                </div>
-                            )
-                        }>
-                            <QuestionCircleFilled style={{ cursor: 'pointer' }}/>
-                        </Tooltip></div>,
-                    }]}/>
-            </Form.Item>
-            <Button style={{ margin: '10px 10px 10px 0' }} onClick={onClick}>Generate</Button>
+            <Button style={{ margin: '10px 10px 10px 0' }} onClick={onClick(defaultPPSize)}>Generate</Button>
         </Form>
     );
 });
@@ -160,25 +169,24 @@ const RankId = ({ id, onClick }: { id: number; onClick: () => void }): JSX.Eleme
     );
 };
 
-function getDefaultCommunicatorData(): communicatorContainerData {
-    // 先用模拟数据代替
+async function getDefaultCommunicatorData(baseInfo: StringMap): Promise<communicatorContainerData> {
+    const data = await window.request('communicator/parser', { path: baseInfo.filePath });
     const partitionModes: partitionMode[] = [
         {
             mode: 'pp',
-            communicators: [ { name: 'stage1', ranks: [ 0, 1, 2, 3 ] }, { name: 'stage2', ranks: [ 4, 5, 6, 7 ] } ],
+            communicators: data.ppGroups,
         },
         {
             mode: 'tpOrDp',
-            communicators: [ { name: 'modelOrData1', ranks: [ 0, 1 ] }, { name: 'modelOrData2', ranks: [ 2, 3 ] },
-                { name: 'modelOrData3', ranks: [ 4, 5 ] }, { name: 'modelOrData4', ranks: [ 6, 7 ] } ],
+            communicators: data.tpOrDpGroups,
         },
     ];
     return {
-        partitionModes,
+        partitionModes, defaultPPSize: data.defaultPPSize,
     };
 }
 
-function generateCommunicatorData(values: {ppSize: number; tpSize: number; dpSize: number}, rankNum: number): communicatorContainerData {
+function generateCommunicatorData(values: {ppSize: number; tpSize: number; dpSize: number}, defaultPPSize: number, rankNum: number): communicatorContainerData {
     const partitionModes: partitionMode[] = [
         { mode: 'pp', communicators: [] },
         { mode: 'tp', communicators: [] },
@@ -203,7 +211,7 @@ function generateCommunicatorData(values: {ppSize: number; tpSize: number; dpSiz
         });
     }
     eventBus.emit('activeCommunicator', undefined);
-    return { partitionModes };
+    return { partitionModes, defaultPPSize };
 }
 
 function selectRankGroup(rankGroup: communicator): void {
