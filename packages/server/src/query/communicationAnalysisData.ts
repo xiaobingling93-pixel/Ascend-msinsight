@@ -125,5 +125,5 @@ export type MatrixResponse = {
 export type MatrixRequest = {
     groupId: string;
     operatorName: string;
-    step: string;
+    iterationId: string;
 };

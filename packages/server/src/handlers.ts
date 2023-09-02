@@ -9,7 +9,14 @@ import { flowDetailHandler, flowNameHandler, threadInfoHandler, threadsInfoHandl
 import { importHandler } from './handlers/import';
 import { unitMetadataHandler } from './query/unitMetadataHandler';
 import { resetHandler } from './handlers/reset';
-import { summaryHandler, summaryStatisticHandler } from './query/summary.handler';
+import {
+    rankAndBubbleTimeHandler,
+    stageAndBubbleTimeHandler,
+    stageHandler,
+    stepHandler,
+    summaryHandler,
+    summaryStatisticHandler,
+} from './query/summary.handler';
 import { loggerHandler } from './logger/logger_handler';
 import { communicationDetailInfoHandler, computeDetailInfoHandler } from './query/summary.detail.handler';
 import {
@@ -51,4 +58,8 @@ export const HANDLER_MAP: Record<string, Handler> = {
     'summary/queryTopData': summaryHandler,
     'summary/statistic': summaryStatisticHandler,
     'communicator/parser': parseCommunicationGroupHandler,
+    'parallelism/pipeline/getAllSteps': stepHandler,
+    'parallelism/pipeline/getAllStages': stageHandler,
+    'parallelism/pipeline/stageAndBubbleTime': stageAndBubbleTimeHandler,
+    'parallelism/pipeline/rankAndBubbleTime': rankAndBubbleTimeHandler,
 };

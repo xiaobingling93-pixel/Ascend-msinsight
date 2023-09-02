@@ -104,7 +104,7 @@ export const distributionHandler = async (request: DistributionDataRequest): Pro
 
 export const matrixListHandler = async (request: MatrixRequest): Promise<MatrixResponse> => {
     const response: MatrixResponse = { matrixList: [] };
-    response.matrixList = await CLUSTER_DATABASE.queryMatrixList(request.step, request.operatorName, request.groupId);
+    response.matrixList = await CLUSTER_DATABASE.queryMatrixList(request.iterationId, request.operatorName, request.groupId);
     return response;
 };
 

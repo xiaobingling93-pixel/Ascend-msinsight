@@ -241,3 +241,13 @@ export type SummaryRequest = {
     rankIdList: string[];
     orderBy: string;
 };
+
+export type StageAndBubbleTime = {
+    stageOrRankId: string;
+    stageTime: number;
+    bubbleTime: string;
+};
+
+export type StageAndBubbleTimeResponse = {
+    stageAndBubbleTimes: StageAndBubbleTime[];
+};

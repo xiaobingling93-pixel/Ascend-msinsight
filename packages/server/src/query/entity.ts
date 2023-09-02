@@ -65,7 +65,7 @@ export type StepStatisticEntity = {
 
 export type CommunicationMatrixInfoEntity = {
     groupId: string;
-    step: string;
+    iterationId: string;
     opName: string;
     groupName: string;
     srcRank: number;

@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-import { SummaryItemVO, SummaryRequest, SummaryStatisticsVO, SummaryVO } from './data';
+import { StageAndBubbleTimeResponse, SummaryItemVO, SummaryRequest, SummaryStatisticsVO, SummaryVO } from './data';
 import { CLUSTER_DATABASE, tableMap } from '../database/tableManager';
 import { getLoggerByName } from '../logger/loggger_configure';
 import { Client } from '../types';
@@ -94,4 +94,29 @@ Promise<Record<string, SummaryStatisticsVO[]>> => {
     }
     logger.info('end request to summaryStatisticHandler, rows:', rows);
     return { result: rows };
+};
+
+export const stepHandler = async (): Promise<{data: string[]}> => {
+    const response: [] = await CLUSTER_DATABASE.getStepIdList();
+    const result = response.map((item: any) => item.stepId);
+    return { data: result };
+};
+
+export const stageHandler = async (request: {stepId: string}): Promise<{data: string[]}> => {
+    const response: [] = await CLUSTER_DATABASE.getStage(request.stepId);
+    const result = response.map((item: any) => item.stageId);
+    return { data: result };
+};
+
+export const stageAndBubbleTimeHandler = async (request: {stepId: string}): Promise<StageAndBubbleTimeResponse> => {
+    const response: StageAndBubbleTimeResponse = { stageAndBubbleTimes: [] };
+    response.stageAndBubbleTimes = await CLUSTER_DATABASE.getStageAndBubbleTime(request.stepId);
+    return response;
+};
+
+export const rankAndBubbleTimeHandler = async (request: {stepId: string; stageId: string}):
+Promise<StageAndBubbleTimeResponse> => {
+    const response: StageAndBubbleTimeResponse = { stageAndBubbleTimes: [] };
+    response.stageAndBubbleTimes = await CLUSTER_DATABASE.getRankAndBubbleTime(request.stepId, request.stageId);
+    return response;
 };

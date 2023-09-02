@@ -30,7 +30,7 @@ export function parseCommunicationFile(filePathArr: string[], client?: Client): 
         parser.on('data', (data: any) => {
             const tempPath = data.path;
             const tempData = data.value;
-            const tempStepId = tempPath[1].replace('step', '');
+            const tempStepId = tempPath[1];
             const tempOpName = tempPath[2];
             const stageId = tempPath[0];
             const tempRankId = tempPath[3];
@@ -76,7 +76,7 @@ export function parseCommunicationMatrixFile(filePathArray: string[], client?: C
             const tempPath = data.path;
             const tempData = data.value;
             temp.push(tempData);
-            if (temp.length === 4) {
+            if (temp.length === 4 && tempPath.length >= 4) {
                 const tempTimeInfo = mapperToMatrixInfoEntity(tempPath, temp);
                 CLUSTER_DATABASE.insertCommunicationMatrixInfo(tempTimeInfo);
                 temp = [];
@@ -111,6 +111,12 @@ export function parseStepStatisticsFile(filePathArr: string[]): void {
         rl.on('line', (line) => {
             if (!line.trim().startsWith('Step')) {
                 const arr = line.split(',');
+                if (arr[1] === 'stage') {
+                    const startIndex = arr.findIndex(item => item.includes('('));
+                    const endIndex = arr.findIndex(item => item.includes(')'));
+                    const indexStr = arr.slice(startIndex, endIndex + 1).join(',').replace(/"/g, '');
+                    arr.splice(startIndex, endIndex - startIndex + 1, indexStr);
+                }
                 if (arr[1] === 'rank') {
                     if (!rankList.includes(arr[2])) {
                         rankList.push(arr[2]);
@@ -119,9 +125,9 @@ export function parseStepStatisticsFile(filePathArr: string[]): void {
                     if (!stepList.includes(tempStep)) {
                         stepList.push(tempStep);
                     }
-                    CLUSTER_DATABASE.insertStepStatisticsInfo(mapperToStepStatisticsInfo(arr));
-                    count++;
                 }
+                CLUSTER_DATABASE.insertStepStatisticsInfo(mapperToStepStatisticsInfo(arr));
+                count++;
             }
         });
         rl.on('close', () => {

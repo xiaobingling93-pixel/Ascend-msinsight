@@ -15,6 +15,7 @@ import {
 } from '../../query/communicationAnalysisData';
 import { ClusterDatabase } from '../cluster_database';
 import { CLUSTER_DATABASE } from '../tableManager';
+import { StageAndBubbleTimeResponse } from '../../query/data';
 
 const globalDatabase = new ClusterDatabase('cluster.db');
 
@@ -198,7 +199,7 @@ it('query distribute data with SDMA', async function () {
 
 it('query matrix data', async function () {
     const response: MatrixResponse = { matrixList: [] };
-    response.matrixList = await globalDatabase.queryMatrixList('12', 'hcom_allReduce__764_0',
+    response.matrixList = await globalDatabase.queryMatrixList('', 'hcom_allReduce__764_0',
         '');
     expect(response).toEqual({
         matrixList: [
@@ -220,4 +221,108 @@ it('query group data', async function () {
     expect(result).toEqual(
         ['(0, 1, 2, 3, 4, 5, 6, 7)'],
     );
+});
+
+it('string split', async function () {
+    const str = '13.0,stage,"(0, 1, 2, 3, 4, 5, 6, 7)",294211.5200000002,193649.6699999998,180817.35000000015,373838.2,' +
+        '141532.01000000015,532809.75,0,193649.6699999998';
+    const arr = str.split(',');
+    const startindex = arr.findIndex(item => item.includes('('));
+    const endindex = arr.findIndex(item => item.includes(')'));
+    const indexStr = arr.slice(startindex, endindex + 1).join(',').replace(/"/g, '');
+    arr.splice(startindex, endindex - startindex + 1, indexStr);
+    expect(arr).toEqual(
+        [
+            '13.0',
+            'stage',
+            '(0, 1, 2, 3, 4, 5, 6, 7)',
+            '294211.5200000002',
+            '193649.6699999998',
+            '180817.35000000015',
+            '373838.2',
+            '141532.01000000015',
+            '532809.75',
+            '0',
+            '193649.6699999998',
+        ],
+    );
+});
+
+it('query step data', async function () {
+    const response: [] = await globalDatabase.getStepIdList();
+    const result = response.map((item: any) => item.stepId);
+    console.log(response.map((item: any) => item.stepId));
+    expect(result).toEqual(
+        [ '12', '13', '14', '15', '16' ],
+    );
+});
+
+it('query stage data', async function () {
+    const response: [] = await globalDatabase.getStage('12');
+    const result = response.map((item: any) => item.stageId);
+    console.log(response.map((item: any) => item.stageId));
+    expect(result).toEqual(
+        ['(0, 1, 2, 3, 4, 5, 6, 7)'],
+    );
+});
+
+it('query stage bubble time', async function () {
+    const response: StageAndBubbleTimeResponse = { stageAndBubbleTimes: [] };
+    response.stageAndBubbleTimes = await CLUSTER_DATABASE.getStageAndBubbleTime('12');
+    expect(response).toEqual({
+        stageAndBubbleTimes:
+        [{
+            bubbleTime: 0,
+            stageId: '(0, 1, 2, 3, 4, 5, 6, 7)',
+            stageTime: 5513799.3999,
+        }],
+    });
+});
+
+it('query stage bubble time', async function () {
+    const response: StageAndBubbleTimeResponse = { stageAndBubbleTimes: [] };
+    response.stageAndBubbleTimes = await CLUSTER_DATABASE.getRankAndBubbleTime('12', '(0, 1, 2, 3, 4, 5, 6, 7)');
+    expect(response).toEqual({
+        stageAndBubbleTimes: [
+            {
+                bubbleTime: 0,
+                rankId: '0',
+                stageTime: 4804145.1802,
+            },
+            {
+                bubbleTime: 0,
+                rankId: '1',
+                stageTime: 4887810.1399,
+            },
+            {
+                bubbleTime: 0,
+                rankId: '2',
+                stageTime: 5311810.2998,
+            },
+            {
+                bubbleTime: 0,
+                rankId: '3',
+                stageTime: 4823466.99,
+            },
+            {
+                bubbleTime: 0,
+                rankId: '4',
+                stageTime: 5513799.3999,
+            },
+            {
+                bubbleTime: 0,
+                rankId: '5',
+                stageTime: 5005903.7402,
+            },
+            {
+                bubbleTime: 0,
+                rankId: '6',
+                stageTime: 5246236.1399,
+            },
+            {
+                bubbleTime: 0,
+                rankId: '7',
+                stageTime: 4907440.55,
+            } ],
+    });
 });
