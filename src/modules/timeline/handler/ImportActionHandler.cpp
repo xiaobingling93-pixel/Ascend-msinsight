@@ -49,18 +49,22 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         return;
     }
     SetParseCallBack(token);
+    std::vector<std::pair<std::string, std::string>> files;
     for (const auto &file : traceFiles) {
         std::string fileId = TraceFileParser::Instance().GetFileId(file);
         if (DataBaseManager::Instance().HasFileId(fileId)) {
             continue;
         }
-        Action action{fileId, fileId, true};
-        action.result = TraceFileParser::Instance().Parse(file, fileId);
-        response.body.result.emplace_back(action);
+        response.body.result.emplace_back(Action{fileId, fileId, true});
+        files.emplace_back(std::make_pair(file, fileId));
     }
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    // 先回复消息，再解析，小文件解析可能比回复消息还快
+    for (const auto &file : files) {
+        TraceFileParser::Instance().Parse(file.first, file.second);
+    }
 }
 
 void ImportActionHandler::ParseEndCallBack(const std::string token, const std::string fileId, bool result)
@@ -80,8 +84,12 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
     uint64_t min = UINT64_MAX;
     uint64_t max = 0;
     DataBaseManager::Instance().GetTraceDatabase(fileId)->QueryExtremumTimestamp(min, max);
-    TraceTime::Instance().UpdateTime(min, max);
-    event->body.startTimeUpdated = true;
+    if (min == max && max == 0) {
+        event->body.startTimeUpdated = false;
+    } else {
+        event->body.startTimeUpdated = true;
+        TraceTime::Instance().UpdateTime(min, max);
+    }
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     SearchMetaData(fileId, event->body.unit.children);
     session->OnEvent(std::move(event));
@@ -118,7 +126,7 @@ std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &p
 
 bool ImportActionHandler::IsJsonValid(const std::string &fileName)
 {
-    static std::string reg = R"((trace_view|msprof\w+)\.json$)";
+    static std::string reg = R"((trace_view|msprof.*)\.json$)";
     auto result = RegexUtil::RegexMatch(fileName, reg);
     return result.has_value();
 }
