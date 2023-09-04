@@ -91,7 +91,7 @@ export const CREATE_COMMUNICATION_MATRIX_TABLE = `CREATE TABLE ${COMMUNICATION_M
                                                (
                                                    id                INTEGER PRIMARY KEY AUTOINCREMENT,
                                                    group_id           VARCHAR(100),
-                                                   step         VARCHAR(50),
+                                                   iteration_id       VARCHAR(50),
                                                    op_name         VARCHAR(100),
                                                    group_name      VARCHAR(100),
                                                    src_rank        VARCHAR(50),

@@ -45,10 +45,10 @@ export const mapperToTimeInfoEntity = (tempRankId: number, tempOpName: string, t
 
 export const mapperToMatrixInfoEntity = (tempPath: any, temp: any): any => {
     const tempName = tempPath[2].split('@');
-    const rankIds = tempPath[3].split('_');
+    const rankIds = tempPath[3].split('-');
     return {
         groupId: tempPath[0],
-        step: tempPath[1].replace('step', ''),
+        iterationId: tempPath[1],
         opName: tempName[0],
         groupName: tempName[1],
         srcRank: rankIds[0],

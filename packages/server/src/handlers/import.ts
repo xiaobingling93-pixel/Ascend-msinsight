@@ -232,7 +232,7 @@ export const importCommunication = (selectedPath: string, client: Client): void 
 };
 
 export const importCommunicationMatrix = (selectedPath: string, client: Client): void => {
-    const communicationMatrixFile = findFilesByPath(selectedPath, 'communication_matrix.json');
+    const communicationMatrixFile = findFilesByPath(selectedPath, 'cluster_communication_matrix.json');
     if (communicationMatrixFile.length === 0) {
         logger.info('communication matrix file is not found.');
         return;

@@ -96,7 +96,7 @@ export class ClusterDatabase {
             const valueParams = '(?,?,?,?,?,?,?,?,?,?)';
             const placeholders: string = (valueParams + ',').repeat(this.maxCachesSize - 1).concat((valueParams));
             const sql: string = `INSERT INTO ${COMMUNICATION_MATRIX}
-                                 (group_id, step, op_name, group_name, src_rank, dst_rank, transport_type,
+                                 (group_id, iteration_id, op_name, group_name, src_rank, dst_rank, transport_type,
                                   transit_size, transit_time, bandwidth)
                                  VALUES ${placeholders}`;
             this.matrixStat = this.clusterDb.prepare(sql);
@@ -140,53 +140,41 @@ export class ClusterDatabase {
         }
     }
 
-    async insertCommunicationMatrixInfo(data: CommunicationMatrixInfoEntity): Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.communicationMatrixCaches.push(data);
-            if (this.communicationMatrixCaches.length === this.maxCachesSize) {
-                this.insertCommunicationMatrix(this.communicationMatrixCaches).finally(() => {
-                    this.communicationMatrixCaches = [];
-                    resolve();
-                });
-            } else {
-                resolve();
-            }
-        });
+    insertCommunicationMatrixInfo(data: CommunicationMatrixInfoEntity): void {
+        this.communicationMatrixCaches.push(data);
+        if (this.communicationMatrixCaches.length >= this.maxCachesSize) {
+            this.insertCommunicationMatrix(this.communicationMatrixCaches);
+            this.communicationMatrixCaches = [];
+        }
     }
 
-    async insertCommunicationMatrix(dataList: CommunicationMatrixInfoEntity[]): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const paramsList: any[] = [];
-            dataList.forEach((data) => {
-                paramsList.push(data.groupId, data.step, data.opName, data.groupName,
-                    data.srcRank, data.dstRank, data.transportType, data.transitSize, data.transitTime, data.bandwidth);
-            });
-            if (dataList.length === this.maxCachesSize) {
-                if (this.matrixStat === undefined) {
-                    this.initStat();
+    insertCommunicationMatrix(dataList: CommunicationMatrixInfoEntity[]): void {
+        const paramsList: any[] = [];
+        dataList.forEach((data) => {
+            paramsList.push(data.groupId, data.iterationId, data.opName, data.groupName,
+                data.srcRank, data.dstRank, data.transportType, data.transitSize, data.transitTime, data.bandwidth);
+        });
+        if (dataList.length === this.maxCachesSize) {
+            if (this.matrixStat === undefined) {
+                this.initStat();
+            }
+            this.matrixStat?.reset().run(paramsList, (err) => {
+                if (err) {
+                    logger.error(err.message);
                 }
-                this.matrixStat?.reset().run(paramsList, (err) => {
-                    if (err) {
-                        logger.error(err.message);
-                        reject(err);
-                    }
-                    resolve();
-                });
-            } else {
-                const placeholders: string = dataList.map(() => '(?,?,?,?,?,?,?,?,?,?)').join(',');
-                const sql: string = `INSERT INTO ${COMMUNICATION_MATRIX}
-                                 (group_id, step, op_name, group_name, src_rank, dst_rank, transport_type,
+            });
+        } else {
+            const placeholders: string = dataList.map(() => '(?,?,?,?,?,?,?,?,?,?)').join(',');
+            const sql: string = `INSERT INTO ${COMMUNICATION_MATRIX}
+                                 (group_id, iteration_id, op_name, group_name, src_rank, dst_rank, transport_type,
                                   transit_size, transit_time, bandwidth)
                                  VALUES ${placeholders}`;
-                this.clusterDb.run(sql, paramsList, (err) => {
-                    if (err !== null) {
-                        logger.error(err.message);
-                        reject(err);
-                    }
-                    resolve();
-                });
-            }
-        });
+            this.clusterDb.run(sql, paramsList, (err) => {
+                if (err !== null) {
+                    logger.error(err.message);
+                }
+            });
+        }
     }
 
     insertCommunicationBandWidthList(dataList: CommunicationBandWidthEntity[]): void {
@@ -235,6 +223,7 @@ export class ClusterDatabase {
                               pure_communication_exclude_receive_time)
                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         this.clusterDb.run(sql, [ data.rankId, data.stepId, data.stageId, data.computingTime,
+            data.pureCommunicationTime,
             data.overlapCommunicationTime, data.communicationTime, data.freeTime, data.stageTime,
             data.bubbleTime, data.pureCommunicationExcludeReceiveTime ], (err) => {
             if (err !== null) {
@@ -356,9 +345,56 @@ export class ClusterDatabase {
 
     async getStepIdList(): Promise<any> {
         return new Promise((resolve, reject) => {
-            this.clusterDb.all(`select distinct step_id as stepId from ${STEP_STATISTIC_INFO_TABLE}`, [], (err, rows) => {
+            this.clusterDb.all(`select distinct step_id as stepId from ${STEP_STATISTIC_INFO_TABLE} ORDER BY step_id`,
+                [], (err, rows) => {
+                    if (err) {
+                        logger.error('getStepIdList error:', err);
+                        reject(err);
+                    }
+                    resolve(rows);
+                });
+        });
+    }
+
+    async getStage(step: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql = `SELECT DISTINCT stage_id as stageId FROM ${STEP_STATISTIC_INFO_TABLE}
+                             WHERE stage_id != '' AND step_id = ?`;
+            this.clusterDb.all(sql, [step], (err, rows) => {
                 if (err) {
-                    logger.error('getStepIdList error:', err);
+                    logger.error('get stages error:', err);
+                    reject(err);
+                }
+                resolve(rows);
+            });
+        });
+    }
+
+    async getStageAndBubbleTime(step: string): Promise<any> {
+        const sql = `SELECT stage_id as stageId, ROUND(stage_time, 4) as stageTime,
+                             ROUND(bubble_time, 4) as bubbleTime
+                             FROM ${STEP_STATISTIC_INFO_TABLE}
+                             WHERE stage_id != '' AND step_id = ?`;
+        return new Promise((resolve, reject) => {
+            this.clusterDb.all(sql, [step], (err, rows) => {
+                if (err) {
+                    logger.error('get stage and bubbleTime error:', err);
+                    reject(err);
+                }
+                resolve(rows);
+            });
+        });
+    }
+
+    async getRankAndBubbleTime(step: string, stageId: string): Promise<any> {
+        const sql = `SELECT rank_id as rankId, ROUND(stage_time, 4) as stageTime,
+                             ROUND(bubble_time, 4) as bubbleTime
+                             FROM ${STEP_STATISTIC_INFO_TABLE}
+                             WHERE step_id = ? AND rank_id IN ${stageId}`;
+        return new Promise((resolve, reject) => {
+            this.clusterDb.all(sql, [step], (err, rows) => {
+                if (err) {
+                    logger.error('get stage and bubbleTime error:', err);
                     reject(err);
                 }
                 resolve(rows);
@@ -516,7 +552,7 @@ export class ClusterDatabase {
         return this.executeSql(sql, [ iterationId, rankId, operatorName, transportType ]);
     }
 
-    async queryMatrixList(step: string, operatorName: string, groupId: string): Promise<any> {
+    async queryMatrixList(iterationId: string, operatorName: string, groupId: string): Promise<any> {
         let sql: string = '';
         if (groupId === null || groupId === '') {
             sql = `SELECT src_rank as srcRank, dst_rank as dstRank,
@@ -525,9 +561,9 @@ export class ClusterDatabase {
                           ROUND(transit_time, 4) as transitTime,
                           ROUND(bandwidth, 4) as bandwidth
                    FROM ${COMMUNICATION_MATRIX}
-                   WHERE step = ?
+                   WHERE iteration_id = ?
                      AND op_name = ?`;
-            return this.executeSql(sql, [ step, operatorName ]);
+            return this.executeSql(sql, [ iterationId, operatorName ]);
         } else {
             sql = `SELECT src_rank as srcRank, dst_rank as dstRank,
                           transport_type as transportType,
@@ -536,9 +572,9 @@ export class ClusterDatabase {
                           ROUND(bandwidth, 4) as bandwidth
                    FROM ${COMMUNICATION_MATRIX}
                    WHERE group_id = ? AND
-                      step = ?
+                      iteration_id = ?
                      AND op_name = ?`;
-            return this.executeSql(sql, [ groupId, step, operatorName ]);
+            return this.executeSql(sql, [ groupId, iterationId, operatorName ]);
         }
     }
 
