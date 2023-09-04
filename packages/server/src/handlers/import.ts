@@ -172,12 +172,14 @@ export const importHandler = async (req: { path: string }, client: Client): Prom
             // this to send parse file success message
             queryUnitsMetadata(rankId).then((queryResult) => {
                 let startTimeUpdated = false;
-                if (extremumTimestamp.minTimestamp > queryResult.extremumTimestamp.minTimestamp) {
-                    extremumTimestamp.maxTimestamp = extremumTimestamp.maxTimestamp + extremumTimestamp.minTimestamp - queryResult.extremumTimestamp.minTimestamp;
-                    extremumTimestamp.minTimestamp = queryResult.extremumTimestamp.minTimestamp;
-                    startTimeUpdated = true;
+                if (queryResult.extremumTimestamp.minTimestamp !== null && queryResult.extremumTimestamp.maxTimestamp !== null) {
+                    if (extremumTimestamp.minTimestamp > queryResult.extremumTimestamp.minTimestamp) {
+                        extremumTimestamp.maxTimestamp = extremumTimestamp.maxTimestamp + extremumTimestamp.minTimestamp - queryResult.extremumTimestamp.minTimestamp;
+                        extremumTimestamp.minTimestamp = queryResult.extremumTimestamp.minTimestamp;
+                        startTimeUpdated = true;
+                    }
+                    extremumTimestamp.maxTimestamp = Math.max(queryResult.extremumTimestamp.maxTimestamp - extremumTimestamp.minTimestamp, extremumTimestamp.maxTimestamp);
                 }
-                extremumTimestamp.maxTimestamp = Math.max(queryResult.extremumTimestamp.maxTimestamp - extremumTimestamp.minTimestamp, extremumTimestamp.maxTimestamp);
                 client?.notify('parse/success', { unit: queryResult.insightMetaData, startTimeUpdated, maxTimeStamp: extremumTimestamp.maxTimestamp });
             });
             logger.info('send notify rankId parse end. ', rankId);
