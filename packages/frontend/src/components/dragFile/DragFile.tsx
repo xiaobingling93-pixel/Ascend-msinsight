@@ -4,7 +4,25 @@
 import React, { useEffect } from 'react';
 import { FolderFilled } from '@ant-design/icons';
 import { notification, Progress } from 'antd';
-export const DragFileInit = (id: string): void => {
+
+interface UploadFileDataType{
+    file: any;// 二进制流
+    info: {
+        name: string;// 文件名
+        path: string;// 文件路径
+        index?: number;
+        isInFolder?: boolean;
+        isLast?: boolean;
+        count?: number;
+        [prop: string]: any;
+    };
+    [prop: string]: any;
+}
+
+const SLICE_SIZE = 1024 * 1024 * 10;
+let uploadId = 1;
+
+export const DragFileInit = (id: string, handleSucceed?: any): void => {
     const dropZone = document.getElementById(id);
     if (dropZone) {
         dropZone.addEventListener('dragenter', function (e: any) {
@@ -28,56 +46,52 @@ export const DragFileInit = (id: string): void => {
             e.preventDefault();
             e.stopPropagation();
             e.target.classList.remove('fileshover');
-            handleFile(e.dataTransfer.items);
+
+            async function handle(): Promise<void> {
+                const res = await handleFile(e.dataTransfer.items);
+                if (handleSucceed as boolean) {
+                    handleSucceed(res);
+                }
+            }
+            handle();
         }, false);
     }
 };
 
 async function handleFile(items: DataTransferItemList): Promise<void> {
     const allFiles = await getFilelist(items);
-    allFiles.forEach((fileinfo: UploadFileDataType) => {
-        readFile(fileinfo);
+    notification.success({
+        message: 'Start:',
+        description: (<div style={{ width: '800px' }}>
+            {
+                allFiles.map((fileInfo: UploadFileDataType) =>
+                    (<div key={fileInfo.info.index}>{'【File】' + fileInfo.info.path}</div>))
+            }
+        </div>),
+        duration: null,
     });
-}
-interface UploadFileDataType{
-    file: any;// 二进制流
-    name: string;// 文件名
-    path: string;// 文件路径
-    progress?: number;// 上传进度
-    status?: 'normal' | 'exception' | 'active' | 'success' | undefined;// 上传状态
+    const result = await loopUpload(allFiles);
+    notification.success({
+        message: 'Succeed:',
+        description: (<div style={{ width: '800px' }}>
+            {
+                result.map((fileInfo: UploadFileDataType) =>
+                    (<div key={fileInfo.info.index}>{`【${((fileInfo.succeed as boolean) ? 'Succeed' : 'Failed')}】` + fileInfo.info.path }</div>))
+            }
+        </div>),
+        duration: null,
+    });
+
+    return result;
 }
 
-function readFile(fileInfo: any): void {
-    const { file, name, path } = fileInfo;
-    const reader = new FileReader();
-    // 二进制流
-    reader.readAsArrayBuffer(file);
-    reader.onload = event => {
-        const buffer: any = event.target?.result;
-        if (buffer !== null && buffer !== undefined) {
-            notification.success({
-                message: 'Start Reading:',
-                description: '【File】' + fileInfo.path,
-                duration: null,
-            });
-            window.request('towingImport/action',
-                { isBinary: true, buffer, params: { name, path } }).then(res => {
-                notification.success({
-                    message: 'Read File Succeed:',
-                    description: '【File】' + fileInfo.path,
-                    duration: null,
-                });
-            }).catch(error => {
-                notification.error({
-                    message: 'Read File Failed:',
-                    description: <div>
-                        <div>{error.message}</div>
-                        <div>{'【File】' + fileInfo.path}</div></div>,
-                    duration: null,
-                });
-            });
-        }
-    };
+async function loopUpload(list: UploadFileDataType[], i = 0): Promise<any> {
+    const reslist = [];
+    for (let i = 0; i < list.length; i++) {
+        const res = await readFile(list[i]);
+        reslist.push(res);
+    }
+    return reslist;
 }
 
 async function getFilelist(items: any): Promise<any> {
@@ -90,7 +104,16 @@ async function getFilelist(items: any): Promise<any> {
             }
         }
         Promise.all(list).then(values => {
-            resolve(values.flat(1));
+            const files = values.flat(1);
+            files.forEach((fileInfo: UploadFileDataType, index: number) => {
+                fileInfo.info.index = index + 1;
+                fileInfo.info.count = files.length;
+                fileInfo.info.isLast = (index + 1) === files.length;
+                fileInfo.info.isInFolder = fileInfo.info.path !== fileInfo.info.name;
+                fileInfo.info.uploadId = uploadId;
+            });
+            uploadId++;
+            resolve(files);
         });
     });
 }
@@ -99,7 +122,7 @@ async function getFileFromEntryRecusively(entry: any): Promise<any> {
     return new Promise((resolve, reject) => {
         if (entry.isFile === true) {
             entry.file((file: any) => {
-                const fileInfo = { file, path: entry.fullPath.slice(1), name: file.name };
+                const fileInfo = { file, info: { path: entry.fullPath.slice(1), name: file.name } };
                 resolve(fileInfo);
             }, (e: any) => {
                 console.log(e);
@@ -118,6 +141,35 @@ async function getFileFromEntryRecusively(entry: any): Promise<any> {
                 },
             );
         }
+    });
+}
+
+function readFile(fileInfo: any, i = 1): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const { file } = fileInfo;
+        const count = Math.ceil(file.size / SLICE_SIZE);
+        const start = (i - 1) * SLICE_SIZE;
+        const end = Math.min(file.size, i * SLICE_SIZE);
+        const fileBlob = fileInfo.file.slice(start, end);
+
+        const reader = new FileReader();
+        reader.readAsArrayBuffer(fileBlob);
+        reader.onload = event => {
+            const buffer: any = event.target?.result;
+            if (buffer !== null && buffer !== undefined) {
+                window.request('towingImport/action',
+                    { isBinary: true, buffer, params: { ...fileInfo.info, slice: { isSliced: count > 1, index: i, count } } }).then(res => {
+                    if (i === count) {
+                        resolve({ succeed: true, info: fileInfo.info, res });
+                    } else {
+                        resolve(readFile(fileInfo, i + 1));
+                    }
+                }).catch(error => {
+                    // eslint-disable-next-line prefer-promise-reject-errors
+                    reject({ error, succeed: false });
+                });
+            }
+        };
     });
 }
 
@@ -142,7 +194,7 @@ export const FileUploadList: React.FC<{fileList: UploadFileDataType[]}> = ({ fil
             {
                 fileList.map((file: UploadFileDataType, index: number) => (
                     <div key={index}>
-                        <span>{file.name}</span><Progress percent={file.progress} status={file.status}/>
+                        <span>{file.info.name}</span><Progress percent={file.info.progress} status={file.info.status}/>
                     </div>
                 ))
             }

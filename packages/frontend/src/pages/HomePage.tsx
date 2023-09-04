@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import React, { useState, useEffect } from 'react';
+import { runInAction } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { Tabs, Switch, Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -10,6 +11,7 @@ import { SessionPage } from './SessionPage';
 import CommunicationAnalysis from '../components/communicationAnalysis/CommunicationAnalysis';
 import AnalysisSummary from './AnalysisSummary';
 import { DragFileInit } from '../components/dragFile/DragFile';
+import { CardUnit } from '../insight/units/AscendUnit';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
@@ -26,6 +28,25 @@ const isParing = (session: Session): boolean => {
     });
     return parsing;
 };
+
+function init(session: Session): void {
+    DragFileInit('home', (result: any) => {
+        runInAction(() => {
+            session.phase = 'download';
+            session.endTimeAll = 1000000000;
+            result.cards.forEach((item: any) => {
+                const unit = new CardUnit({ cardId: item.rankId, cardName: item.cardName });
+                if (item.result as boolean) {
+                    unit.phase = 'analyzing';
+                } else {
+                    unit.phase = 'error';
+                }
+                session.units.push(unit);
+            });
+            session.allRankIds = result.cards.map((item: any) => item.rankId);
+        });
+    });
+}
 
 const HomePage = observer(function ({ session }: { session: Session }) {
     const parsing = isParing(session);
@@ -54,7 +75,7 @@ const HomePage = observer(function ({ session }: { session: Session }) {
         setActiveTab(activeKey);
     };
     useEffect(() => {
-        DragFileInit('home');
+        init(session);
     }, []);
     return (
         <div style={{ height: '100%', width: '100%' }}>
