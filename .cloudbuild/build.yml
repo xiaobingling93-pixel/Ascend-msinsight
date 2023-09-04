@@ -3,6 +3,12 @@ version: 2.0
 params:
   - name: product
     value: cloudbuild2.0
+  - name: targetBranch
+    value: "dev_ci"
+  - name: ciType
+    value: "mrCheck"
+  - name: buildVersion
+    value: 0.0.1
 
 env:
   label: pap_build20 # 虚拟机标签，表示在哪台虚拟机执行，都写deveco_build
@@ -10,13 +16,50 @@ steps:
   PRE_BUILD:
     - checkout:
         path: Insight_Framework # 源码下载到子目录，命名请跟 clone下来的默认名称一致
+    - codehub:
+        url: https://codehub-dg-y.huawei.com/IDE-Insight/Ascend/Modules.git
+        branch: ${targetBranch}
+        path: Modules
   BUILD:
-    - build_execute: # master用0.0.0.1-SNAPSHOT 和 0.0.0.1，  develop用0.0.0.2-SNAPSHOT，和 0.0.0.2
-        command: |
-          set PATH="D:\\tool\nodejs\\node-v18.14.1-win-x64";%PATH%
-          node -v
-          cd Insight_Framework
-          call npm config set strict-ssl false
-          call npm install 
-          call npm run build
-        check: true
+    - when:
+        condition: ciType == "mrCheck"
+        steps:
+          - build_execute: # master用0.0.0.1-SNAPSHOT 和 0.0.0.1，  develop用0.0.0.2-SNAPSHOT，和 0.0.0.2
+              command: |
+                set PATH="D:\\tool\nodejs\\node-v18.14.1-win-x64";%PATH%
+                node -v
+                cd Insight_Framework
+                call npm config set strict-ssl false
+                call npm install 
+                call npm run build
+              check: true
+    - when:
+        condition: ciType == "upload"
+        steps:
+          - build_execute: # master用0.0.0.1-SNAPSHOT 和 0.0.0.1，  develop用0.0.0.2-SNAPSHOT，和 0.0.0.2
+              command: |
+                set PATH="D:\\tool\nodejs\\node-v18.14.1-win-x64";%PATH%
+                node -v
+                echo ---------------build timeline----------------------
+                cd Modules\\timeline
+                call npm config set strict-ssl false
+                call npm install --force
+                call npm run build
+                echo ---------------build framework----------------------
+                xcopy build\\* ..\\..\\Insight_Framework\\plugins\\Timeline\\ /E /I /Y /Q
+                cd ..\\..\\Insight_Framework
+                call npm config set strict-ssl false
+                call npm install
+                call npm run build
+                xcopy ..\\Modules\\timeline\\build\\* .\\dist\\plugins\\Timeline\\ /E /I /Y /Q
+                cd dist
+                call tar -czvf ../../frontend.tar.gz *
+              check: true
+  POST_BUILD:
+    - when:
+        condition: ciType == "upload"
+        steps:
+          - artget:
+              artifact_type: cloudartifact  # 仓库类型
+              file_path: frontend.tar.gz
+          - version_set #通常建议将这个插件一起配置上，主要用于上传versionset
