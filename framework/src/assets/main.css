@@ -1,0 +1,42 @@
+@import './base.css';
+
+#app {
+    width: 100vw;
+    height: 100vh;
+    margin: 0 auto;
+    font-weight: normal;
+}
+
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+    transition: opacity 120ms ease-out;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(127, 127, 127, 0.5);
+    z-index: 100;
+    border-radius: 5px;
+    transition: 0.3s background-color;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: transparent;
+    z-index: 100;
+}
+
+@media (min-width: 1024px) {
+    body {
+        display: flex;
+        place-items: center;
+    }
+
+    #app {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}
