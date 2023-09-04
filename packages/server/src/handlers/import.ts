@@ -145,9 +145,7 @@ type CardInfo = {
     result: boolean;
 };
 
-export const importHandler = async (req: { path: string }, client: Client): Promise<Record<string, unknown>> => {
-    let selectedFolder = req.path;
-    selectedFolder = req.path === 'browser' ? await selectFolder() : selectedFolder;
+export async function parseFile(selectedFolder: string, client: Client): Promise<Record<string, unknown>> {
     const timelineJsonPaths = await findJsons(selectedFolder);
     const importedRankIdSet = client.shadowSession.importedRankIdSet;
     const extremumTimestamp = client.shadowSession.extremumTimestamp;
@@ -191,6 +189,12 @@ export const importHandler = async (req: { path: string }, client: Client): Prom
         await execClusterScenario(selectedFolder, client);
     }
     return result;
+}
+
+export const importHandler = async (req: { path: string }, client: Client): Promise<Record<string, unknown>> => {
+    let selectedFolder = req.path;
+    selectedFolder = req.path === 'browser' ? await selectFolder() : selectedFolder;
+    return await parseFile(selectedFolder, client);
 };
 
 async function execClusterScenario(selectedFolder: string, client: Client): Promise<void> {
