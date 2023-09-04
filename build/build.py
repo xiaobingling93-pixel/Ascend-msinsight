@@ -22,12 +22,16 @@ class ExecError(Exception):
 def init():
     clean()
     os.makedirs(os.path.join(SCRIPT_PATH, 'out'))
+    os.makedirs(os.path.join(SCRIPT_PATH, 'product'))
 
 
 def clean():
     out = os.path.join(SCRIPT_PATH, 'out')
     if os.path.exists(out):
         shutil.rmtree(out)
+    ascend_insight = os.path.join(SCRIPT_PATH, 'product')
+    if os.path.exists(ascend_insight):
+        shutil.rmtree(ascend_insight)
     build = os.path.join(SCRIPT_PATH, 'packages', 'frontend', 'build')
     if os.path.exists(build):
         shutil.rmtree(build)
@@ -46,10 +50,15 @@ def build_vscode(vscode_version, os_name):
     elif os_name.endswith('aarch64'):
         exec_command(['npm', 'run', 'buildLinuxArm'], SCRIPT_PATH)
     src = os.path.join(SCRIPT_PATH, 'packages/extension')
+    # copy vscode plugin
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-extension_' + vscode_version + '_' + os_name + '.vsix')
     for file in os.listdir(src):
         if file.endswith('.vsix'):
             shutil.copy(os.path.join(src, file), dst_file)
+    profiler_path = os.path.join(src, 'dist/profiler')
+    # Lightweight base middleware
+    dst_file = os.path.join(SCRIPT_PATH, 'product/ascend-insight_' + vscode_version + '_' + os_name)
+    shutil.make_archive(dst_file, 'zip', profiler_path)
 
 
 def build_intellij(idea_version, os_name):
