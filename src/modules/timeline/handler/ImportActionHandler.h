@@ -15,7 +15,7 @@ class ImportActionHandler : public TimelineRequestHandler {
 public:
     ImportActionHandler()
     {
-        command = Protocol::REQ_RES_RESET_WINDOW;
+        command = Protocol::REQ_RES_IMPORT_ACTION;
     };
     ~ImportActionHandler() override = default;
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;

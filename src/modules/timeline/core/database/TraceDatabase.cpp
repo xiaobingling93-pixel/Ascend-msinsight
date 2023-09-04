@@ -3,8 +3,8 @@
  */
 
 #include <algorithm>
-#include "TraceDatabase.h"
 #include "ServerLog.h"
+#include "TraceDatabase.h"
 
 namespace Dic {
 namespace Module {
@@ -21,6 +21,12 @@ bool TraceDatabase::InitStmt()
     if (initStmt) {
         return true;
     }
+    initStmt = true;
+    return InitSliceFlowStmt() && InitProcessThreadStmt();
+}
+
+bool TraceDatabase::InitSliceFlowStmt()
+{
     std::string sql = "INSERT INTO " + sliceTable +
                       " (timestamp, duration, name, track_id, cat, args) VALUES"
                       " (round(? * 1000),round(? * 1000),?,?,?,?)";
@@ -31,7 +37,21 @@ bool TraceDatabase::InitStmt()
         ServerLog::Error("Failed to prepare slice statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sql = "INSERT INTO " + processTable + " (pid, process_name) VALUES (?, ?) " +
+    sql = "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" +
+          " VALUES (?,?,?,round(? * 1000),?,?)";
+    for (int i = 0; i < cacheSize - 1; ++i) {
+        sql.append(",(?,?,?,round(? * 1000),?,?)");
+    }
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertFlowStmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare insertFlow statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    return true;
+}
+
+bool TraceDatabase::InitProcessThreadStmt()
+{
+    std::string sql = "INSERT INTO " + processTable + " (pid, process_name) VALUES (?, ?) " +
           "ON CONFLICT (pid) DO UPDATE SET process_name = excluded.process_name;";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &updateProcessNameStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare updateProcessName statement. error:", sqlite3_errmsg(db));
@@ -71,7 +91,6 @@ bool TraceDatabase::InitStmt()
         ServerLog::Error("Failed to prepare insertFlow statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    initStmt = true;
     return true;
 }
 
@@ -170,15 +189,15 @@ bool TraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventList)
     for (const auto &event : eventList) {
         sqlite3_bind_double(stmt, idx++, event.ts);
         sqlite3_bind_double(stmt, idx++, event.dur);
-        sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_STATIC);
+        sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, idx++, event.trackId);
         if (event.cat.has_value()) {
-            sqlite3_bind_text(stmt, idx++, event.cat.value().c_str(), -1, SQLITE_STATIC);
+            sqlite3_bind_text(stmt, idx++, event.cat.value().c_str(), -1, SQLITE_TRANSIENT);
         } else {
             idx++;
         }
         if (event.args.has_value()) {
-            sqlite3_bind_text(stmt, idx++, event.args.value().c_str(), -1, SQLITE_STATIC);
+            sqlite3_bind_text(stmt, idx++, event.args.value().c_str(), -1, SQLITE_TRANSIENT);
         } else {
             idx++;
         }
@@ -307,16 +326,16 @@ bool TraceDatabase::InsertFlowList(const std::vector<Trace::Flow> &eventList)
     }
     int idx = bindStartIndex;
     for (const auto &event : eventList) {
-        sqlite3_bind_text(stmt, idx++, event.flowId.c_str(), event.flowId.length(), SQLITE_STATIC);
-        sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_STATIC);
+        sqlite3_bind_text(stmt, idx++, event.flowId.c_str(), event.flowId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, idx++, event.trackId);
         sqlite3_bind_double(stmt, idx++, event.ts);
         if (event.cat.has_value()) {
-            sqlite3_bind_text(stmt, idx++, event.cat.value().c_str(), event.cat.value().length(), SQLITE_STATIC);
+            sqlite3_bind_text(stmt, idx++, event.cat.value().c_str(), event.cat.value().length(), SQLITE_TRANSIENT);
         } else {
             idx++;
         }
-        sqlite3_bind_text(stmt, idx++, event.type.c_str(), event.type.length(), SQLITE_STATIC);
+        sqlite3_bind_text(stmt, idx++, event.type.c_str(), event.type.length(), SQLITE_TRANSIENT);
     }
     auto result = sqlite3_step(stmt);
     if (eventList.size() != cacheSize) {
@@ -392,7 +411,8 @@ void TraceDatabase::UpdateOneTrackDepth(int64_t trackId)
     }
 }
 
-bool TraceDatabase::SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeData> &sliceTimeList) {
+bool TraceDatabase::SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeData> &sliceTimeList)
+{
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT id, timestamp, duration FROM " + sliceTable + " WHERE track_id = ? ORDER BY timestamp;";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -460,7 +480,8 @@ void TraceDatabase::UpdateDepthByID(const std::vector<int64_t> &idList, int dept
 
 bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
                                       Protocol::UnitThreadTracesBody &responseBody,
-                                      uint64_t minTimestamp, int64_t traceId) {
+                                      uint64_t minTimestamp, int64_t traceId)
+{
     std::string sql = "SELECT id, timestamp - ? as start_time, duration, name, depth, track_id "
                       " FROM " + sliceTable +
                       " WHERE track_id = ? AND start_time >= ? AND start_time <= ?"
@@ -491,7 +512,7 @@ bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &re
     }
     sqlite3_finalize(stmt);
     std::map<int64_t, std::vector<Protocol::ThreadTraces>> threadTracesMap;
-    for(auto &item : rowThreadTraceVec) {
+    for (auto &item : rowThreadTraceVec) {
         Protocol::ThreadTraces threadTraces {};
         threadTraces.name = item.name;
         threadTraces.duration = item.duration;
@@ -501,7 +522,7 @@ bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &re
         threadTraces.threadId = requestParams.threadId;
         threadTracesMap[item.depth].emplace_back(threadTraces);
     }
-    for(int i = 0; i < rowThreadTraceVec.size(); i++) {
+    for (int i = 0; i < rowThreadTraceVec.size(); i++) {
         if (threadTracesMap.find(i) != threadTracesMap.end()) {
             responseBody.data.emplace_back(threadTracesMap.at(i));
         } else {
@@ -514,7 +535,8 @@ bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &re
 
 bool TraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestParams,
                                  Protocol::UnitThreadsBody &responseBody,
-                                 uint64_t minTimestamp, int64_t traceId) {
+                                 uint64_t minTimestamp, int64_t traceId)
+{
     uint64_t startTime = requestParams.startTime + minTimestamp;
     uint64_t endTime = requestParams.endTime + minTimestamp;
     Protocol::ExtremumTimestamp extremumTimestamp {};
@@ -561,7 +583,8 @@ bool TraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestParam
 }
 
 bool TraceDatabase::QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t startTime, uint64_t endTime,
-                                                  Protocol::ExtremumTimestamp &extremumTimestamp) {
+                                                  Protocol::ExtremumTimestamp &extremumTimestamp)
+{
     std::string sql = "SELECT min(timestamp) as minTimestamp, max(timestamp + duration) AS maxTimestamp"
                       " FROM " + sliceTable +
                       " WHERE track_id = ? AND timestamp <= ? AND timestamp + duration >= ? AND depth = 0;";
@@ -586,7 +609,8 @@ bool TraceDatabase::QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t star
 
 void TraceDatabase::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
                                       std::map<std::string, uint64_t> &selfTimeKeyValue,
-                                      uint64_t startTime, uint64_t endTime) {
+                                      uint64_t startTime, uint64_t endTime)
+{
     int32_t i = 0;
     int32_t j = 0;
     if (rows.empty()) {
@@ -642,7 +666,8 @@ void TraceDatabase::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
 }
 
 void TraceDatabase::AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, const std::string &name,
-                            uint64_t tmpSelfTime) {
+                            uint64_t tmpSelfTime)
+{
     if (selfTimeKeyValue.find(name) != selfTimeKeyValue.end()) {
         selfTimeKeyValue.at(name) = selfTimeKeyValue.at(name) + tmpSelfTime;
     } else {
@@ -651,7 +676,8 @@ void TraceDatabase::AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, c
 }
 
 std::vector<Protocol::SimpleSlice> TraceDatabase::ThreadsInfoFilter(
-    const std::vector<Protocol::SimpleSlice> &simpleSliceVec, uint64_t startTime, uint64_t endTime) {
+    const std::vector<Protocol::SimpleSlice> &simpleSliceVec, uint64_t startTime, uint64_t endTime)
+{
     std::vector<Protocol::SimpleSlice> nRows;
     for (auto &row : simpleSliceVec) {
         if (row.timestamp <= endTime && row.endTime >= startTime) {
@@ -663,8 +689,9 @@ std::vector<Protocol::SimpleSlice> TraceDatabase::ThreadsInfoFilter(
 
 void TraceDatabase::ReduceThread(const std::vector<Protocol::SimpleSlice> &rows,
                                  const std::map<std::string, uint64_t> &selfTimeKeyValue,
-                                 Protocol::UnitThreadsBody &responseBody) {
-    for(auto &cur : rows) {
+                                 Protocol::UnitThreadsBody &responseBody)
+{
+    for (auto &cur : rows) {
         int index = -1;
         for (int i = 0; i < responseBody.data.size(); i++) {
             if (responseBody.data[i].title == cur.name) {
@@ -691,7 +718,8 @@ void TraceDatabase::ReduceThread(const std::vector<Protocol::SimpleSlice> &rows,
 
 bool TraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
                                       Protocol::UnitThreadDetailBody &responseBody,
-                                      uint64_t minTimestamp, int64_t trackId) {
+                                      uint64_t minTimestamp, int64_t trackId)
+{
     std::string sql = "SELECT * FROM " + sliceTable + " WHERE depth = ? AND track_id = ? AND timestamp = ?";
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -729,7 +757,7 @@ bool TraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &reques
     if (nextDepthResult.empty()) {
         selfTime = 0;
     } else {
-        for(const auto &item : nextDepthResult) {
+        for (const auto &item : nextDepthResult) {
             selfTime -= item;
         }
     }
@@ -744,7 +772,8 @@ bool TraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &reques
 
 bool TraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::ThreadDetailParams &requestParams,
                                                       const std::vector<Protocol::SliceDto> &rows,
-                                                      std::vector<uint64_t> &nextDepthResult, int64_t trackId) {
+                                                      std::vector<uint64_t> &nextDepthResult, int64_t trackId)
+{
     if (rows.empty()) {
         ServerLog::Error("sliceDto array is empty!");
         return false;
@@ -771,7 +800,8 @@ bool TraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::ThreadDeta
 }
 
 bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParams,
-                                    Protocol::UnitFlowBody &responseBody, uint64_t minTimestamp) {
+                                    Protocol::UnitFlowBody &responseBody, uint64_t minTimestamp)
+{
     std::string sql = "SELECT FL.name, FL.cat, FL.flow_id as flowId, TH.pid, TH.tid, SL.depth, SL.timestamp, FL.type "
                       " FROM " + threadTable + " TH LEFT JOIN " + sliceTable + " SL" +
                       " ON SL.track_id = TH.track_id LEFT JOIN flow FL"
@@ -784,7 +814,7 @@ bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParam
         return false;
     }
     int index = bindStartIndex;
-    sqlite3_bind_text(stmt, index++, requestParams.flowId.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, index++, requestParams.flowId.c_str(), -1, SQLITE_TRANSIENT);
     std::vector<Protocol::FlowDetailDto> flowDetailVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
@@ -800,7 +830,14 @@ bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParam
         flowDetailVec.emplace_back(flowDetailDto);
     }
     sqlite3_finalize(stmt);
-    if(flowDetailVec.size() != 2) {
+    return FlowDetailToResponse(flowDetailVec, minTimestamp, responseBody);
+}
+
+bool TraceDatabase::FlowDetailToResponse(std::vector<Protocol::FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
+                                         Protocol::UnitFlowBody &responseBody)
+{
+    const static int FLOW_COUNT = 2; // from + to
+    if (flowDetailVec.size() != FLOW_COUNT) {
         ServerLog::Error("select location error");
         return false;
     }
@@ -827,7 +864,8 @@ bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParam
 }
 
 bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestParams,
-                                  Protocol::UnitFlowNameBody &responseBody, uint64_t minTimestamp, int64_t trackId) {
+                                  Protocol::UnitFlowNameBody &responseBody, uint64_t minTimestamp, int64_t trackId)
+{
     std::string sql = "SELECT name, flow_id as flowId, type"
                       " FROM " + flowTable + " WHERE timestamp = ? AND track_id = ?";
     sqlite3_stmt *stmt = nullptr;
@@ -874,7 +912,8 @@ bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestPar
 }
 
 bool TraceDatabase::QuerySliceFlowList(const std::string &flowId, const std::string &type,
-                                       std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec) {
+                                       std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec)
+{
     std::string sql = "SELECT sl.timestamp, th.pid, th.tid, sl.depth"
                       " FROM " + sliceTable +" sl LEFT JOIN thread th "
                       "ON sl.track_id = th.track_id WHERE sl.track_id IN"

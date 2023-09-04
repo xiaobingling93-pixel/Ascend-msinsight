@@ -3,7 +3,7 @@
 # Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
 #
 # build server
-# python build.py build --release --project_type=bin
+# python build.py build --release
 #
 # build test
 # python build.py test --profile --project_type=test

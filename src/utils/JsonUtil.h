@@ -46,20 +46,6 @@ public:
         return std::nullopt;
     }
 
-    static inline std::optional<json_t> TryParse(char *buffer, uint64_t length, std::string &error)
-    {
-        try {
-            return json_t::parse(buffer, buffer + length);
-        } catch (json_t::parse_error &) {
-            error = "Failed to parse json string.";
-        } catch (json_t::type_error &) {
-            error = "Failed to parse json type.";
-        } catch (...) {
-            error = "Unknown parse error.";
-        }
-        return std::nullopt;
-    }
-
     static inline bool IsJsonArray(const json_t &json, const std::string &key)
     {
         return (json.contains(key) && json.at(key).is_array());
