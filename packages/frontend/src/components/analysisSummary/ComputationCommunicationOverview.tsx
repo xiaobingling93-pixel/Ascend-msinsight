@@ -13,7 +13,9 @@ import { addResizeEvent, COLOR, formatDate } from '../Common';
 import { Tooltip } from 'antd';
 import { QuestionCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
 import { Session } from '../../entity/session';
-import { CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
+import { communicator, CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
+import { useEventBus } from '../../utils/eventBus';
+import PpBandwidthAnalysis from './PpBandwidthAnalysis';
 
 interface SummaryDataType{
     rankId: string ;
@@ -275,20 +277,32 @@ const ComputationCommunicationOverview = ({ session, active }: { session: Sessio
         groupData={groupData} dataSource={dataSource} selected={selected}/>;
 };
 const OverviewCom = ({ baseInfo, handleFilterChange, groupData, dataSource, selected, session }: any): JSX.Element => {
+    const [ pipelineVisible, setPipelineVisible ] = useState(true);
+    useEventBus('activeCommunicator', (data) => {
+        if (data === undefined) {
+            setPipelineVisible(true);
+        } else {
+            const selectCommunicator = data as communicator;
+            setPipelineVisible(selectCommunicator.name.startsWith('stage'));
+        }
+    });
     return <div className={'text-selectable'}
         style={{ textAlign: 'left', padding: '0 20px', overflow: 'auto', height: '100%' }}>
         <BaseInfo data={baseInfo} session={session}/>
         <CommunicatorContainer session={session}></CommunicatorContainer>
-        <div>
+        <div className={pipelineVisible ? 'hide' : ''}>
             <div>
                 <div className={'common-title-bottom'}>Computation/Communication Overview{hit}</div>
-                <Filter handleFilterChange={handleFilterChange} groupData={groupData}/>
+                <Filter handleFilterChange={handleFilterChange} groupData={groupData} session={session}/>
                 <div id={'overview-chart'} style={{ height: '400px' }} ></div>
             </div>
             <div style={{ padding: '0 3rem' }}>
                 <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
                 <StatisticsTable {...selected}/>
             </div>
+        </div>
+        <div className={pipelineVisible ? '' : 'hide'}>
+            <PpBandwidthAnalysis session={session}></PpBandwidthAnalysis>
         </div>
     </div>;
 };

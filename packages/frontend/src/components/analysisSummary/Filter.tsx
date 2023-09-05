@@ -4,19 +4,23 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { Select } from 'antd';
-import { Label, MultiSelectWithAll } from '../Common';
+import { Label } from '../Common';
+import _ from 'lodash';
+import { communicator } from '../communicatorContainer/CommunicatorContainer';
 
 export interface ConditionDataType {
     step: string | number;
     rankIds: string[];
     orderBy: string ;
     top: number;
+    group?: string;
 }
 
 interface optionDataType{
     key?: string;
     label: React.ReactNode;
     value: string | number ;
+    data?: string[];
 }
 
 interface optionMapDataType{
@@ -50,28 +54,48 @@ const Filter = observer((props: any) => {
     // 初始化
     useEffect(() => {
         initDefault();
-    }, [props.groupData.init]);
+    }, [ props.groupData.init, props.session.communicatorData ]);
     useEffect(() => {
+        conditions.rankIds = _.find(options.groupOptions, item => item.value === conditions.group)?.data as string[];
         props.handleFilterChange(conditions);
-    }, [ conditions.step, conditions.orderBy, conditions.rankIds ]);
+    }, [ conditions.step, conditions.orderBy, conditions.group ]);
     useEffect(() => {
         props.handleFilterChange(conditions, false);
     }, [conditions.top]);
+    useEffect(() => {
+        const find = _.find(options.groupOptions, item => item.key === props.session.activeCommunicator?.name);
+        if (find !== undefined) {
+            setConditions({ ...conditions, group: find.value as string });
+        }
+    }, [props.session.activeCommunicator]);
     const initDefault = async (): Promise<void> => {
         const stepList: number[] = props.groupData.stepList;
         const stepOptions: optionDataType[] = [ 'All', ...stepList ].map(item => ({ value: item, label: item }));
         const rankIds: number[] = props.groupData.rankList;
-        const rankIdOptions: optionDataType[] = rankIds.map(item => ({ value: item, label: item }));
+        const communicators: communicator[] = [];
+        _.filter(props.session.communicatorData.partitionModes, data => data.mode !== 'pp')
+            .map(data => data.communicators).forEach((item) => {
+                _.forEach(item, tmp => {
+                    communicators.push(tmp);
+                });
+            });
+        const groupOptions: optionDataType[] = _.map(communicators, value => ({
+            value: value.value as string,
+            label: value.value,
+            data: value.ranks.map(item => item.toString()),
+            key: value.name,
+        }));
+        const group = groupOptions.length > 0 ? groupOptions[0].value as string : '';
         const topOptions = getTopOptions(rankIds.length);
-        setOptions({ stepOptions, topOptions, rankIdOptions, orderOptions });
-        setConditions({ ...conditions, top: rankIds.length });
+        setOptions({ stepOptions, topOptions, groupOptions, orderOptions });
+        setConditions({ ...conditions, top: rankIds.length, group });
     };
 
     const handleChange = (prop: keyof ConditionDataType, val: string | number | string[]): void => {
         setConditions({ ...conditions, [prop]: val });
     };
 
-    return (<FilterCom conditions={conditions} handleChange={handleChange} options={options} />);
+    return (<FilterCom conditions={conditions} handleChange={handleChange} options={options} session={props.session}/>);
 });
 
 const FilterCom = (props: any): JSX.Element => {
@@ -84,13 +108,13 @@ const FilterCom = (props: any): JSX.Element => {
             onChange={(val: any) => handleChange('step', val)}
             options={options.stepOptions}
         />
-        <Label name="Rank ID"/>
-        <MultiSelectWithAll
-            value={conditions.rankIds}
-            onChange={(val: any) => handleChange('rankIds', val)}
-            options={options.rankIdOptions}
-            style={{ width: 180 }}
-            maxTagCount={2}
+        <Label name="Rank Group"/>
+        <Select
+            defaultValue={conditions.group}
+            value={conditions.group}
+            style={{ width: 200 }}
+            onChange={(val: any) => handleChange('group', val)}
+            options={options.groupOptions}
         />
         <Label name="Order By"/>
         <Select
