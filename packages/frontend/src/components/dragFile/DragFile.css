@@ -33,3 +33,12 @@
 .theme_dark .drag-zone-icon{
     color: var(--grey50);
 }
+.drag-file-hit{
+    width: auto!important;
+    overflow: auto;
+}
+
+.drag-file-hit .ant-notification-notice-description{
+    max-height: calc(100vh - 200px);
+    overflow: auto;
+}
