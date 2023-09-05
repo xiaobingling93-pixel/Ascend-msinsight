@@ -202,6 +202,8 @@ std::string ProtocolUtil::Command(const json_t &jsonRequest)
 
 std::optional<ProtocolUtil::JsonToRequestFunc> ProtocolUtil::GetJsonToRequestFunc(const std::string &command)
 {
+    ServerLog::Error(command);
+    ServerLog::Error(jsonToReqFactory.count(command));
     std::lock_guard<std::mutex> lock(mutex);
     if (jsonToReqFactory.count(command) == 0) {
         ServerLog::Warn("The json to request function is not find. command:", command);

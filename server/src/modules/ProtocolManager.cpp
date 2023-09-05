@@ -7,6 +7,7 @@
 #include "GlobalProtocol.h"
 #include "TimelineProtocol.h"
 #include "ProtocolEnumUtil.h"
+#include "MemoryProtocol.h"
 #include "ProtocolManager.h"
 
 namespace Dic {
@@ -30,8 +31,11 @@ void ProtocolManager::Register()
     globalProtocol->Register();
     auto timelineProtocol = std::make_unique<TimelineProtocol>();
     timelineProtocol->Register();
+    auto memoryProtocol = std::make_unique<MemoryProtocol>();
+    memoryProtocol->Register();
     protocolMap.emplace(ModuleType::GLOBAL, std::move(globalProtocol));
     protocolMap.emplace(ModuleType::TIMELINE, std::move(timelineProtocol));
+    protocolMap.emplace(ModuleType::MEMORY, std::move(memoryProtocol));
 }
 
 void ProtocolManager::UnRegister()

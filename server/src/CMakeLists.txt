@@ -41,6 +41,11 @@ include_directories(${SRC_HOME_DIR}/modules/timeline/core/database)
 include_directories(${SRC_HOME_DIR}/modules/timeline/core/parser)
 include_directories(${SRC_HOME_DIR}/modules/timeline/handler)
 include_directories(${SRC_HOME_DIR}/modules/timeline/protocol)
+include_directories(${SRC_HOME_DIR}/modules/memory)
+include_directories(${SRC_HOME_DIR}/modules/memory/database)
+include_directories(${SRC_HOME_DIR}/modules/memory/handler)
+include_directories(${SRC_HOME_DIR}/modules/memory/parser)
+include_directories(${SRC_HOME_DIR}/modules/memory/protocol)
 
 # modules for server
 aux_source_directory(${SRC_HOME_DIR}/modules DIC_MODULES_SRC)
@@ -57,6 +62,11 @@ aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/database DIC_MODULES_
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/parser DIC_MODULES_TIMELINE_CORE_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/handler DIC_MODULES_TIMELINE_HANDLER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/protocol DIC_MODULES_TIMELINE_PROTOCOL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memory  DIC_MODULES_MEMORY_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memory/database DIC_MODULES_MEMORY_DATABASE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memory/handler DIC_MODULES_MEMORY_HANDLER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memory/parser DIC_MODULES_MEMORY_PARSER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memory/protocol DIC_MODULES_MEMORY_PROTOCOL_SRC)
 
 list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SRC}
@@ -72,6 +82,11 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_TIMELINE_CORE_DATABASE_SRC}
         ${DIC_MODULES_TIMELINE_CORE_PARSER_SRC}
         ${DIC_MODULES_TIMELINE_HANDLER_SRC}
-        ${DIC_MODULES_TIMELINE_PROTOCOL_SRC})
+        ${DIC_MODULES_TIMELINE_PROTOCOL_SRC}
+        ${DIC_MODULES_MEMORY_SRC}
+        ${DIC_MODULES_MEMORY_DATABASE_SRC}
+        ${DIC_MODULES_MEMORY_PARSER_SRC}
+        ${DIC_MODULES_MEMORY_HANDLER_SRC}
+        ${DIC_MODULES_MEMORY_PROTOCOL_SRC})
 
 add_subdirectory(entry)

@@ -22,6 +22,15 @@ TraceDatabase *DataBaseManager::GetTraceDatabase(const std::string &fileId)
     return traceDatabaseMap[fileId].get();
 }
 
+Memory::MemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::string &fileId)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (memoryDatabaseMap.count(fileId) == 0) {
+        memoryDatabaseMap.emplace(fileId, std::make_unique<Memory::MemoryDataBase>());
+    }
+    return memoryDatabaseMap[fileId].get();
+}
+
 void DataBaseManager::ReleaseTraceDatabase(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
@@ -46,10 +55,27 @@ std::vector<TraceDatabase *> DataBaseManager::GetAllTraceDatabase()
     return traceDatabases;
 }
 
+std::vector<Memory::MemoryDataBase *> DataBaseManager::GetAllMemoryDatabase()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    std::vector<Memory::MemoryDataBase *> databases;
+    for (auto &databaseMap: memoryDatabaseMap) {
+        databases.emplace_back(databaseMap.second.get());
+    }
+    return databases;
+}
+
+bool DataBaseManager::MemoryHasFileId(const std::string &fileId)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    return memoryDatabaseMap.count(fileId) != 0;
+}
+
 void DataBaseManager::Clear()
 {
     std::unique_lock<std::mutex> lock(mutex);
     traceDatabaseMap.clear();
+    memoryDatabaseMap.clear();
 }
 } // end of namespace Timeline
 } // end of namespace Module

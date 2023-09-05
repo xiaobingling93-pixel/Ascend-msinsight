@@ -1,0 +1,202 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
+
+#include "MemoryParse.h"
+#include "ServerLog.h"
+
+#include "EventUtil.h"
+#include "FileUtil.h"
+#include "TraceFileParser.h"
+#include "DataBaseManager.h"
+
+namespace Dic {
+namespace Module {
+namespace Memory {
+using namespace Dic::Server;
+MemoryParse &MemoryParse::Instance()
+{
+    static MemoryParse instance;
+    return instance;
+}
+
+bool MemoryParse::Parse(const std::string &filePath, const std::string &fileId)
+{
+    start = std::chrono::system_clock::now();
+    ServerLog::Info("start parse.");
+
+    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
+    std::string dbPath = GetDbPath(filePath, fileId);
+    if (!(database->OpenDb(dbPath, true) && database->CreateTable() && database->SetConfig() && database->InitStmt())) {
+        ServerLog::Error("Failed to open database. path:", dbPath);
+        return false;
+    }
+    std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
+
+    auto future = threadPool->AddTask([futures, fileId, &filePath, this]() {
+        ServerLog::Info("Wait parse completed. ID:", fileId);
+        for (const auto &future : *futures) {
+            future.wait();
+        }
+        ServerLog::Info("Parse completed. ID:", fileId);
+        OperatorParse(filePath, fileId);
+        RecordToParse(filePath, fileId);
+        ServerLog::Info("Update depth completed. ID:", fileId);
+    });
+    futureMap.emplace(fileId, std::move(future));
+    if (paserEndCallback != nullptr) {
+        std::thread thread{[this, fileId]() {
+            WaitParseEnd(fileId);
+        }};
+        thread.detach();
+    }
+    return true;
+}
+
+bool MemoryParse::WaitParseEnd(const std::string &fileId)
+{
+    if (futureMap.count(fileId) == 0) {
+        return false;
+    }
+    ServerLog::Info("Wait parse completed. ID:", fileId);
+    auto &future = futureMap.at(fileId);
+    future.wait();
+    futureMap.erase(fileId);
+    auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
+    ServerLog::Info("end parse. ID:", fileId, ". time:", dur.count());
+    if (paserEndCallback != nullptr) {
+        paserEndCallback(fileId, true);
+    }
+    return true;
+}
+
+bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &fileId)
+{
+    ServerLog::Info("start parse.");
+    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
+    std::ifstream file(filePath);
+    std::string line;
+    std::map<std::string, std::int16_t> dataMap;
+    while (getline(file, line)) {
+        std::stringstream ss(line);
+        std::vector<std::string> row;
+        std::string cell;
+
+        while (getline(ss, cell, ',')) {
+            row.push_back(cell);
+        }
+        if (row[0] == "Name") {
+            for (int i = 0; i < row.size(); i++) {
+                dataMap[row[i]] = i;
+            }
+            continue;
+        }
+        Operator opePtr = MemoryParse::mapperToOperatorDetail(dataMap, row);
+        // 读取每一行数据
+        database->insertOperatorDetail(opePtr);
+    }
+    // 读取剩下的数据
+    database->SaveOperatorDetail();
+    return true;
+}
+
+MemoryParse::MemoryParse()
+{
+    threadPool = std::make_unique<ThreadPool>(MemoryParse::maxThreadNum);
+}
+
+Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string> row)
+{
+    std::int16_t nameIndex = dataMap["Name"];
+    std::int16_t allocationTimeIndex = dataMap["Allocation Time(us)"];
+    std::int16_t releaseTimeIndex = dataMap["Release Time(us)"];
+    std::int16_t sizeIndex = dataMap["Size(KB)"];
+    std::int16_t durationIndex = dataMap["Duration(us)"];
+    Operator anOperator {};
+    anOperator.name = row[nameIndex];
+    anOperator.size = atof(row[sizeIndex].c_str());
+    anOperator.allocationTime = atof(row[allocationTimeIndex].c_str());
+    anOperator.releaseTime = atof(row[releaseTimeIndex].c_str());
+    anOperator.duration = atof(row[durationIndex].c_str());
+    return anOperator;
+}
+
+Record MemoryParse::mapperToRecordDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string> row)
+{
+    std::int16_t nameIndex = dataMap["Component"];
+    std::int16_t timeStampIndex = dataMap["Timestamp(us)"];
+    std::int16_t totalAllocatedIndex = dataMap["Total Allocated(MB)"];
+    std::int16_t totalReservedIndex = dataMap["Total Reserved(MB)"];
+    std::int16_t deviceTypeIndex = dataMap["Device Type"];
+    Record record {};
+    record.component = row[nameIndex];
+    record.timesTamp = atof(row[timeStampIndex].c_str());
+    record.totalAllocated = atof(row[totalAllocatedIndex].c_str());
+    record.totalReserved = atof(row[totalReservedIndex].c_str());
+    record.deviceType = row[deviceTypeIndex];
+    return record;
+}
+
+std::string MemoryParse::GetDbPath(const std::string &filePath, const std::string &fileId)
+{
+    std::string fileName = Dic::FileUtil::GetFileName(filePath);
+    auto pos = fileName.find_last_of('.');
+    std::string dbPath = fileName.substr(0, pos) + "_" + fileId + ".db";
+    return Dic::FileUtil::GetRealPath(dbPath);
+}
+
+bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &fileId)
+{
+    ServerLog::Info("start parse.");
+    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
+    std::ifstream file(filePath);
+    std::string line;
+    std::map<std::string, std::int16_t> dataMap;
+    while (getline(file, line)) {
+        std::stringstream ss(line);
+        std::vector<std::string> row;
+        std::string cell;
+        while (getline(ss, cell, ',')) {
+            row.push_back(cell);
+        }
+        if (row[0] == "Component") {
+            for (int i = 0; i < row.size(); i++) {
+                dataMap[row[i]] = i;
+            }
+            continue;
+        }
+        Record recordPtr = MemoryParse::mapperToRecordDetail(dataMap, row);
+        // 读取每一行数据
+        database->insertRecordDetail(recordPtr);
+    }
+    // 读取剩下的数据
+    database->SaveRecordDetail();
+    return true;
+}
+
+MemoryParse::~MemoryParse()
+{
+    threadPool->ShutDown();
+}
+
+void MemoryParse::Reset()
+{
+    ServerLog::Info("Reset. wait task completed.");
+    threadPool->Reset();
+    ServerLog::Info("Task completed.");
+    auto databaseList = Timeline::DataBaseManager::Instance().GetAllMemoryDatabase();
+    for (auto &database: databaseList) {
+        std::string path = database->GetDbPath();
+        database->ReleaseStmt();
+        database->CloseDb();
+        if (!FileUtil::RemoveFile(path)) {
+            ServerLog::Error("Failed to remove file. ", path);
+        }
+    }
+    Timeline::DataBaseManager::Instance().Clear();
+    MemoryParse::Reset();
+}
+
+} // end of namespace Memory
+} // end of namespace Module
+} // end of namespace Dic

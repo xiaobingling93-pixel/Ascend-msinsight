@@ -57,6 +57,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         action.result = TraceFileParser::Instance().Parse(file, fileId);
         response.body.result.emplace_back(action);
     }
+
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

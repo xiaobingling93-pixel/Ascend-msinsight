@@ -999,7 +999,7 @@ bool TraceDatabase::CommitData()
         InsertFlowList(flowCache);
         flowCache.clear();
     }
-}
+};
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

@@ -13,6 +13,7 @@ enum class ModuleType : int {
     UNKNOWN = -1,
     GLOBAL = 1,
     TIMELINE = 2,
+    MEMORY = 3,
 };
 
 enum class LinkType : int {

@@ -5,6 +5,7 @@
 #include "ServerLog.h"
 #include "GlobalModule.h"
 #include "TimelineModule.h"
+#include "MemoryModule.h"
 #include "ModuleManager.h"
 
 namespace Dic {
@@ -32,10 +33,13 @@ void ModuleManager::Register()
     moduleMap.clear();
     std::unique_ptr<GlobalModule> global = std::make_unique<GlobalModule>();
     std::unique_ptr<TimelineModule> timelineModule = std::make_unique<TimelineModule>();
+    std::unique_ptr<MemoryModule> memoryModule = std::make_unique<MemoryModule>();
     global->RegisterRequestHandlers();
     timelineModule->RegisterRequestHandlers();
+    memoryModule->RegisterRequestHandlers();
     moduleMap.emplace(ModuleType::GLOBAL, std::move(global));
     moduleMap.emplace(ModuleType::TIMELINE, std::move(timelineModule));
+    moduleMap.emplace(ModuleType::MEMORY, std::move(memoryModule));
 }
 
 void ModuleManager::UnRegister()

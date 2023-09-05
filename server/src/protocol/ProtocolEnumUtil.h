@@ -26,7 +26,8 @@ const EnumStrMap<ProtocolMessage::Type> PROTOCOL_MESSAGE_TYPE_ES = { { ProtocolM
 
 const EnumStrMap<Protocol::ModuleType> MODULE_TYPE_ES = {{Protocol::ModuleType::UNKNOWN,  MODULE_UNKNOWN },
                                                          {Protocol::ModuleType::GLOBAL,   MODULE_GLOBAL },
-                                                         {Protocol::ModuleType::TIMELINE, MODULE_TIMELINE }};
+                                                         {Protocol::ModuleType::TIMELINE, MODULE_TIMELINE },
+                                                         {Protocol::ModuleType::MEMORY, MODULE_MEMORY }};
 
 const EnumStrMap<Protocol::LinkType> LINK_TYPE_ES = { { Protocol::LinkType::WEBSOCKET, "websocket" },
                                                       { Protocol::LinkType::SOCKET, "socket" } };

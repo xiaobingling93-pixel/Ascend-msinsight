@@ -17,7 +17,10 @@ namespace Dic {
 namespace Protocol {
 // module map
 const std::map<ModuleType, std::string> MODULE_MAP = {
-    {ModuleType::UNKNOWN, MODULE_UNKNOWN }, {ModuleType::GLOBAL, MODULE_GLOBAL }, {ModuleType::TIMELINE, MODULE_TIMELINE }
+    {ModuleType::UNKNOWN, MODULE_UNKNOWN },
+    {ModuleType::GLOBAL, MODULE_GLOBAL },
+    {ModuleType::TIMELINE, MODULE_TIMELINE },
+    {ModuleType::MEMORY, MODULE_MEMORY }
 };
 
 inline ErrorMessage MakeError(ErrorCode errorCode, const std::string &message)
