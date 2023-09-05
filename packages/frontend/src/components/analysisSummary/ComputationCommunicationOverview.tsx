@@ -13,7 +13,7 @@ import { addResizeEvent, COLOR, formatDate } from '../Common';
 import { Tooltip } from 'antd';
 import { QuestionCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
 import { Session } from '../../entity/session';
-import { CommunicatorContainer } from '../communicatorContainer/communicatorContainer';
+import { CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
 
 interface SummaryDataType{
     rankId: string ;

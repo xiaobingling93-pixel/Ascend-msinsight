@@ -4,14 +4,13 @@
 import { observer } from 'mobx-react';
 import { Session } from '../../entity/session';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Tabs, Form, InputNumber, Row, Button, message, Select, Tooltip } from 'antd';
-import { ReactComponent as Rank } from '../../assets/images/rank_id.svg';
+import { Tabs, Form, InputNumber, Row, Button, message, Select } from 'antd';
+import { ReactComponent as Rank_Dark } from '../../assets/images/round_dark.svg';
 import _, { isEmpty } from 'lodash';
 import eventBus, { useEventBus } from '../../utils/eventBus';
-import { QuestionCircleFilled } from '@ant-design/icons';
 import { StringMap } from '../../utils/interface';
 
-type communicatorContainerData = {
+export type communicatorContainerData = {
     partitionModes: partitionMode[];
     defaultPPSize: number;
 };
@@ -21,7 +20,7 @@ type partitionMode = {
     communicators: communicator[];
 };
 
-type communicator = {
+export type communicator = {
     name: string;
     ranks: number[];
 };
@@ -40,30 +39,26 @@ const titleMap = new Map([
 ]);
 
 export const CommunicatorContainer = observer(({ session, baseInfo }: { session: Session; baseInfo: StringMap }) => {
-    const [ communicator, setCommunicator ] = useState({} as communicatorContainerData);
+    const [ activeTab, setActiveTab ] = useState<string>('pp');
     useEffect(() => {
         if (baseInfo !== undefined && !isEmpty(baseInfo.filePath)) {
             getDefaultCommunicatorData(baseInfo).then(value => {
-                setCommunicator(value);
+                session.communicatorData = value;
             });
         }
     }, [baseInfo]);
-    const [ activeTab, setActiveTab ] = useState<string>('pp');
-    useEventBus('setCommunicator', (data) => {
-        setCommunicator(data as communicatorContainerData);
-    });
     const items = useMemo(() => {
-        return _.map(communicator.partitionModes, (value: partitionMode): tabData => {
+        return _.map(session.communicatorData.partitionModes, (value: partitionMode): tabData => {
             return {
                 tab: titleMap.get(value.mode) as string,
                 key: value.mode,
                 content: <CommunicatorContent session={session} partitionData={value}/>,
             };
         });
-    }, [communicator]);
+    }, [session.communicatorData]);
     return (
         <div style={{ height: '300px', width: '100%', margin: '10px 0' }} className={'CommunicatorContainer'}>
-            {<CommunicatorHeader session={session} defaultPPSize={communicator.defaultPPSize}></CommunicatorHeader>}
+            {<CommunicatorHeader session={session} defaultPPSize={session.communicatorData.defaultPPSize}></CommunicatorHeader>}
             <Tabs activeKey={activeTab} onTabClick={(key) => setActiveTab(key)} style={{ height: '240px' }}>
                 {
                     items.map(item => (
@@ -84,21 +79,23 @@ const CommunicatorContent = observer(({ session, partitionData }: { session: Ses
         <Row>
             {
                 _.map(partitionData.communicators, (communicator) => (
-                    <RankGroup key={communicator.name} rankGroup={communicator}></RankGroup>
+                    <RankGroup key={communicator.name} rankGroup={communicator} session={session}></RankGroup>
                 ))
             }
         </Row>
     );
 });
 
-const RankGroup = ({ rankGroup }: {rankGroup: communicator}): JSX.Element => {
+const RankGroup = ({ rankGroup, session }: { rankGroup: communicator; session: Session }): JSX.Element => {
     const [ active, setActive ] = useState('');
     useEventBus('activeCommunicator', (data) => {
         if (data === undefined) {
             setActive('');
+            session.activeCommunicator = data;
         } else {
             const selectCommunicator = data as communicator;
             setActive(selectCommunicator.name);
+            session.activeCommunicator = selectCommunicator;
         }
     });
     const width = (rankGroup.ranks.length * 85).toString().concat('px');
@@ -123,7 +120,8 @@ const CommunicatorHeader = observer(({ session, defaultPPSize }: { session: Sess
             message.error('The parameter is incorrect.');
             return;
         }
-        eventBus.emit('setCommunicator', generateCommunicatorData(values, size, session.units.length));
+        session.communicatorData = generateCommunicatorData(values, size, session.units.length);
+        eventBus.emit('activeCommunicator', undefined);
     };
     return (
         <Form form={form} labelAlign={'left'} layout="inline" className={'CommunicatorHeader'}>
@@ -131,15 +129,7 @@ const CommunicatorHeader = observer(({ session, defaultPPSize }: { session: Sess
                 <Select defaultValue="Megatron" disabled={true} style={{ width: '120px' }} options={[
                     {
                         value: 'Megatron',
-                        label: <div>Megatron <Tooltip title={
-                            (
-                                <div style={{ background: 'var(--grey100)', padding: '1rem' }}>
-                                    <div>PP Size = TP Size * DP Size</div>
-                                </div>
-                            )
-                        }>
-                            <QuestionCircleFilled style={{ cursor: 'pointer' }}/>
-                        </Tooltip></div>,
+                        label: 'Megatron',
                     }]}/>
             </Form.Item>
             <Form.Item name={'ppSize'} label={'PP Size'} style={{ margin: '10px 10px 10px 0' }}>
@@ -160,7 +150,7 @@ const RankId = ({ id, onClick }: { id: number; onClick: () => void }): JSX.Eleme
     return (
         <div style={{ height: '75px', width: '65px' }}>
             <Row justify={'center'} onClick={onClick}>
-                <Rank></Rank>
+                <Rank_Dark></Rank_Dark>
             </Row>
             <Row justify={'center'} onClick={onClick}>
                 <span>rank {id}</span>
@@ -210,7 +200,6 @@ function generateCommunicatorData(values: {ppSize: number; tpSize: number; dpSiz
             ranks: _.range(i * values.tpSize, (i + 1) * values.tpSize), name: 'model' + i.toString(),
         });
     }
-    eventBus.emit('activeCommunicator', undefined);
     return { partitionModes, defaultPPSize };
 }
 
