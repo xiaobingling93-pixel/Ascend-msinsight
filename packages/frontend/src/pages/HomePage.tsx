@@ -12,6 +12,8 @@ import CommunicationAnalysis from '../components/communicationAnalysis/Communica
 import AnalysisSummary from './AnalysisSummary';
 import { DragFileInit } from '../components/dragFile/DragFile';
 import { CardUnit } from '../insight/units/AscendUnit';
+import { queryTopSummary } from '../utils/RequestUtils';
+import { getDefaultCommunicatorData } from '../components/communicatorContainer/CommunicatorContainer';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
 
@@ -81,6 +83,15 @@ const HomePage = observer(function ({ session }: { session: Session }) {
     useEffect(() => {
         init(session);
     }, []);
+    useEffect(() => {
+        if (!parsing && session.units.length > 0) {
+            queryTopSummary({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 }).then(({ result }) => {
+                getDefaultCommunicatorData(result.filePath).then(value => {
+                    session.communicatorData = value;
+                });
+            });
+        }
+    }, [ session.units, parsing ]);
     return (
         <div style={{ height: '100%', width: '100%' }}>
             <Switch checkedChildren="dark" unCheckedChildren="light" defaultChecked onChange={onChange}

@@ -412,3 +412,11 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .CommunicatorContainer .ant-divider {
     border-top: 2px dashed var(--grey50);
 }
+
+.theme_dark .CommunicatorContainer .st0 {fill-rule:evenodd;clip-rule:evenodd;fill:var(--grey90);}
+.theme_dark .CommunicatorContainer .st1 {fill-rule:evenodd;clip-rule:evenodd;fill:#50525B;stroke:#2A2F37;}
+.theme_dark .CommunicatorContainer .st2 {fill-rule:evenodd;clip-rule:evenodd;fill:#50525B;}
+.theme_dark .CommunicatorContainer .st3 {fill-rule:evenodd;clip-rule:evenodd;fill:#D1D1D1;}
+.theme_dark .CommunicatorContainer .st4 {fill:#D1D1D1;}
+.theme_dark .CommunicatorContainer .st5 {fill:#007AFF;}
+.theme_dark .CommunicatorContainer .st6 {fill:#242425;}

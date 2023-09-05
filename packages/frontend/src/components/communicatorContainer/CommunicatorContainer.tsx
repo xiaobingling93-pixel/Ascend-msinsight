@@ -5,10 +5,10 @@ import { observer } from 'mobx-react';
 import { Session } from '../../entity/session';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Tabs, Form, InputNumber, Row, Button, message, Select } from 'antd';
-import { ReactComponent as Rank_Dark } from '../../assets/images/round_dark.svg';
-import _, { isEmpty } from 'lodash';
+import { ReactComponent as Rank } from '../../assets/images/round_light.svg';
+import _ from 'lodash';
 import eventBus, { useEventBus } from '../../utils/eventBus';
-import { StringMap } from '../../utils/interface';
+import { queryTopSummary } from '../../utils/RequestUtils';
 
 export type communicatorContainerData = {
     partitionModes: partitionMode[];
@@ -38,15 +38,17 @@ const titleMap = new Map([
     [ 'tpOrDp', 'Tensor/Data Parallel' ],
 ]);
 
-export const CommunicatorContainer = observer(({ session, baseInfo }: { session: Session; baseInfo: StringMap }) => {
+export const CommunicatorContainer = observer(({ session }: { session: Session }) => {
     const [ activeTab, setActiveTab ] = useState<string>('pp');
     useEffect(() => {
-        if (baseInfo !== undefined && !isEmpty(baseInfo.filePath)) {
-            getDefaultCommunicatorData(baseInfo).then(value => {
-                session.communicatorData = value;
+        if (session.communicatorData.partitionModes.length === 0) {
+            queryTopSummary({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 }).then(({ result }) => {
+                getDefaultCommunicatorData(result.filePath).then(value => {
+                    session.communicatorData = value;
+                });
             });
         }
-    }, [baseInfo]);
+    }, [session.communicatorData]);
     const items = useMemo(() => {
         return _.map(session.communicatorData.partitionModes, (value: partitionMode): tabData => {
             return {
@@ -116,7 +118,7 @@ const CommunicatorHeader = observer(({ session, defaultPPSize }: { session: Sess
     const [form] = Form.useForm();
     const onClick = (size: number) => () => {
         const values: {ppSize: number; tpSize: number; dpSize: number} = form.getFieldsValue();
-        if (values.dpSize * values.tpSize !== values.ppSize || values.ppSize !== size) {
+        if (values.dpSize * values.tpSize * values.ppSize !== session.units.length || values.ppSize !== size) {
             message.error('The parameter is incorrect.');
             return;
         }
@@ -150,7 +152,7 @@ const RankId = ({ id, onClick }: { id: number; onClick: () => void }): JSX.Eleme
     return (
         <div style={{ height: '75px', width: '65px' }}>
             <Row justify={'center'} onClick={onClick}>
-                <Rank_Dark></Rank_Dark>
+                <Rank></Rank>
             </Row>
             <Row justify={'center'} onClick={onClick}>
                 <span>rank {id}</span>
@@ -159,8 +161,8 @@ const RankId = ({ id, onClick }: { id: number; onClick: () => void }): JSX.Eleme
     );
 };
 
-async function getDefaultCommunicatorData(baseInfo: StringMap): Promise<communicatorContainerData> {
-    const data = await window.request('communicator/parser', { path: baseInfo.filePath });
+export async function getDefaultCommunicatorData(filePath: string): Promise<communicatorContainerData> {
+    const data = await window.request('communicator/parser', { path: filePath });
     const partitionModes: partitionMode[] = [
         {
             mode: 'pp',
@@ -182,15 +184,16 @@ function generateCommunicatorData(values: {ppSize: number; tpSize: number; dpSiz
         { mode: 'tp', communicators: [] },
         { mode: 'dp', communicators: [] },
     ];
-    const pipelineCount = rankNum / values.ppSize;
+    const pipelineCount = values.ppSize;
+    const pipelineSize = rankNum / values.ppSize;
     const modelCount = rankNum / values.tpSize;
     for (let i = 0; i < pipelineCount; i++) {
         partitionModes[0].communicators.push({
-            ranks: _.range(i * values.ppSize, (i + 1) * values.ppSize), name: 'stage' + i.toString(),
+            ranks: _.range(i * pipelineSize, (i + 1) * pipelineSize), name: 'stage' + i.toString(),
         });
         for (let j = 0; j < values.tpSize; j++) {
             partitionModes[2].communicators.push({
-                ranks: _.range(i * values.ppSize + j, (i + 1) * values.ppSize + j, values.tpSize),
+                ranks: _.range(i * pipelineSize + j, (i + 1) * pipelineSize + j, values.tpSize),
                 name: 'data' + (i * values.tpSize + j).toString(),
             });
         }
