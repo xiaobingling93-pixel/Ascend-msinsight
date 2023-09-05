@@ -26,11 +26,11 @@ export const queryIterations = async(): Promise<any> => {
  * 无参
  * @return {[]} 返回迭代数组['(0,1,2)']
  */
-export const queryStages = async(param: {step: string }): Promise<any> => {
+export const queryStages = async(param: {iterationId: string }): Promise<any> => {
     if (isNull(window.request)) {
         return ['(0,1,2)'];
     }
-    return window.request('communication/matrix/group', {});
+    return window.request('communication/matrix/group', param);
 };
 
 /**
@@ -51,7 +51,7 @@ export const queryRanks = async(param: {iterationId: string }): Promise<any> => 
  * @param {number[]} rankIds rankId数组
  * @return {[]} 返回算子名数组[0,1,2,3]
  */
-export const queryOperators = async(param: {iterationId: string ;rankIds: string[]}): Promise<any> => {
+export const queryOperators = async(param: {iterationId: string ;rankIds: string[];stage: string}): Promise<any> => {
     if (isNull(window.request)) {
         return [ 'op1', 1, 2, 3 ];
     }
@@ -85,6 +85,7 @@ export const queryCommunication = async(param: {
  */
 export const queryOperatorDetails = async(param: {
     iterationId: number; rankId: number; pageSize: number;currentPage: number;orderBy: string;order: string;
+    stage: string;
 }): Promise<any> => {
     if (isNull(window.request)) {
         return OperatorDetailsData;
@@ -155,7 +156,7 @@ export const queryTopSummary = async (param:
  * @param {string} operatorName 算子名
  * @return {[]} 返回数组
  */
-export const queryCommunicationMatrix = async(param: { iterationId: string ; groupId: string ; operatorName: string}):
+export const queryCommunicationMatrix = async(param: { iterationId: string ; stage: string ; operatorName: string}):
 Promise<any> => {
     if (isNull(window.request)) {
         return communicationMatrixData;

@@ -37,7 +37,7 @@ const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorNa
 
 function wrapData(data: any): any {
     data.forEach((item: any) => {
-        if (item.large_package_ratio === null) {
+        if (item.large_package_ratio === null || item.large_package_ratio === undefined) {
             item.large_package_ratio = '/';
         }
     });
@@ -107,6 +107,9 @@ async function getChartData (domId: string, iterationId: number, rankId: number,
     operatorName: string, stage: string): Promise<any> {
     const distributions = await window.request('communication/duration/distribution',
         { iterationId, rankId, operatorName, transportType: domId, stage });
+    if (distributions.distributionData[0] === undefined) {
+        return '{}';
+    }
     return distributions.distributionData[0].size_distribution;
 }
 

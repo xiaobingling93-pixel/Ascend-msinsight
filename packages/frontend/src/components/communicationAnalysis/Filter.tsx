@@ -28,16 +28,17 @@ const getiterationOptions = async(): Promise<optionDataType[]> => {
     return options;
 };
 
-const getStageOptions = async (step: string): Promise<optionDataType[]> => {
-    const res: {data: string[] } = await queryStages({ step });
+const getStageOptions = async (iterationId: string): Promise<optionDataType[]> => {
+    const res: {data: string[] } = await queryStages({ iterationId });
     const list = res.data;
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;
 };
 
-const getOperatorOptions = async ({ iterationId, rankIds }: {iterationId: string; rankIds: string[]}):
+const getOperatorOptions = async ({ iterationId, rankIds, stage }: {iterationId: string;
+    rankIds: string[]; stage: string;}):
 Promise<optionDataType[]> => {
-    const res: {operators: Array<{op_name: string } > } = await queryOperators({ iterationId, rankIds }); ;
+    const res: {operators: Array<{op_name: string } > } = await queryOperators({ iterationId, rankIds, stage }); ;
     const list = res.operators.map((item: any) => item.op_name);
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;
@@ -56,15 +57,12 @@ const getOptions = async(): Promise<any> => {
     const firstIterationId = iterationOptions[0]?.value as string;
     // stage
     const stageOptions: optionDataType[] = await getStageOptions(firstIterationId);
+    const firstStage = stageOptions[0]?.value as string;
     // Operator Name
     const operatorOptions: optionDataType[] =
-        await getOperatorOptions({ iterationId: firstIterationId, rankIds: [] });
+        await getOperatorOptions({ iterationId: firstIterationId, rankIds: [], stage: firstStage });
 
-    return {
-        iterationOptions,
-        operatorOptions,
-        stageOptions,
-    };
+    return { iterationOptions, operatorOptions, stageOptions };
 };
 
 export const totalOperator = 'Total Op Info';
@@ -90,6 +88,11 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
     useEffect(() => {
         init();
     }, [props.session.allRankIds]);
+    useEffect(() => {
+        if (props.session.activeCommunicator?.ranks !== undefined) {
+            setConditions({ ...conditions, stage: `(${props.session.activeCommunicator.ranks.join(',')})` });
+        }
+    }, [props.session.activeCommunicator]);
 
     // Iteration ID联动Stage
     useEffect(() => {
@@ -102,7 +105,7 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
 
     // 筛选条件变化
     useEffect(() => {
-        const list = [ 'stage', 'operatorName', 'type' ];
+        const list = [ 'operatorName', 'type' ];
         if (notNullObj(conditions, list)) {
             props.handleFilterChange(conditions);
         }
@@ -125,13 +128,12 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
             const stage = stageOptions[0]?.value as string;
             setOptionMap({ ...optionMap, stageOptions });
             setConditions({ ...conditions, stage });
-        } else if (source === 'stage') {
-            const operatorOptions: optionDataType[] =
-                await getOperatorOptions({ iterationId: conditions.iterationId, rankIds: [] });
-            setOptionMap({ ...optionMap, operatorOptions });
-            if (!operatorOptions.map(item => item.value).includes(conditions.operatorName)) {
-                setConditions({ ...conditions, operatorName: totalOperator });
-            }
+        }
+        const operatorOptions: optionDataType[] = await getOperatorOptions(
+            { iterationId: conditions.iterationId, rankIds: [], stage: conditions.stage });
+        setOptionMap({ ...optionMap, operatorOptions });
+        if (!operatorOptions.map(item => item.value).includes(conditions.operatorName)) {
+            setConditions({ ...conditions, operatorName: totalOperator });
         }
     };
 
@@ -154,7 +156,7 @@ const FilterCom = ({ conditions, handleChange, optionMap = {} }: any): JSX.Eleme
             />
             )}/>
         <FormItem
-            name="Stage"
+            name="Communication Group"
             content={(<Select
                 value={conditions.stage}
                 style={{ width: 200 }}

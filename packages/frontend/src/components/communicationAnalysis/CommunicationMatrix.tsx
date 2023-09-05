@@ -173,7 +173,7 @@ const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow:
         }
     }, [ dataSource, switchCondition ]);
     const updateData = async(conditions: ConditionDataType): Promise<void> => {
-        const param = { iterationId: conditions.iterationId, groupId: conditions.stage, operatorName: conditions.operatorName };
+        const param = { iterationId: conditions.iterationId, stage: conditions.stage, operatorName: conditions.operatorName };
         const res = await queryCommunicationMatrix(param);
         const data = res.matrixList ?? [];
         const rankRes: {iterationsOrRanks: Array<{rank_id: string } > } =

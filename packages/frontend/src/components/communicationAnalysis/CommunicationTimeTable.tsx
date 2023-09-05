@@ -87,6 +87,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
             pageSize: page.pageSize,
             orderBy: sorter.field,
             order: sorter.order,
+            stage: conditions.stage,
         });
         setDataSource(res.allOperators);
         setPage({ ...page, total: res.count });
@@ -125,7 +126,7 @@ const getRankColumns = (handleAction: VoidFunction[], conditions: any): any => {
             render: (_: any, record: DataType) => (
                 <Button type="link"
                     onClick={() => {
-                        showOperator(record[rowKey]);
+                        showOperator(record.rank_id);
                     }}>see more</Button>),
         },
         {

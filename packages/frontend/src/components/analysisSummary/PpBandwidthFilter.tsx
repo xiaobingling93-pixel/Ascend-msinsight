@@ -6,7 +6,8 @@ import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { Select } from 'antd';
 import { Label, notNull } from '../Common';
-import { getStagesData, getStepsData } from './PpBandwidthAnalysis';
+import { getStepsData } from './PpBandwidthAnalysis';
+import { getPpContainerData } from '../communicatorContainer/ContainerUtisl';
 
 export interface ConditionDataType {
     step: string | number;
@@ -25,20 +26,6 @@ interface optionMapDataType{
     [props: string]: optionDataType[];
 }
 
-// Top可选项： 1、2、4、8.......n(All)
-const getTopOptions = (count: number): optionDataType[] => {
-    const logIndex = Math.ceil(Math.log2(count > 0 ? count : 1));
-    const toplist = [];
-    for (let i = 0; i < logIndex; i++) {
-        toplist.push(Math.pow(2, i));
-    }
-    const topOptions: optionDataType[] = toplist.map(item => ({ value: item, label: item }));
-    if (count > 0) {
-        topOptions.push({ value: count, label: `${count} ( All )` });
-    }
-    return topOptions;
-};
-
 const Filter = observer((props: any) => {
     const [ conditions, setConditions ] = useState<ConditionDataType>(
         { step: '', stage: '', orderBy: 'computingTime', top: 0 });
@@ -46,7 +33,7 @@ const Filter = observer((props: any) => {
     // 初始化
     useEffect(() => {
         initDefault();
-    }, []);
+    }, [props.session.communicatorData]);
     useEffect(() => {
         if (notNull(conditions.step) && notNull(conditions.stage)) {
             props.handleFilterChange(conditions);
@@ -55,11 +42,10 @@ const Filter = observer((props: any) => {
     const initDefault = async (): Promise<void> => {
         const stepList: string[] = await getStepsData();
         const stepOptions: optionDataType[] = stepList.map(item => ({ value: item, label: item }));
-        const stages: string[] = await getStagesData({ stepId: stepList[0] });
-        const stageOptions: optionDataType[] = stages.map(item => ({ value: item, label: item }));
-        const topOptions = getTopOptions(stages.length);
-        setOptions({ stepOptions, topOptions, stageOptions });
-        setConditions({ ...conditions, step: stepList[0], stage: stages[0] });
+        const stageOptions: optionDataType[] = getPpContainerData(props.session.communicatorData, 'pp') as optionDataType[];
+        const stage: string = stageOptions.length > 0 ? stageOptions[0].value as string : '';
+        setOptions({ stepOptions, stageOptions });
+        setConditions({ ...conditions, step: stepList[0], stage });
     };
 
     useEffect(() => {
@@ -73,7 +59,7 @@ const Filter = observer((props: any) => {
         setConditions({ ...conditions, [prop]: val });
     };
 
-    return (<FilterCom conditions={conditions} handleChange={handleChange} options={options} />);
+    return (<FilterCom conditions={conditions} handleChange={handleChange} options={options} session={props.session}/>);
 });
 
 const FilterCom = (props: any): JSX.Element => {
