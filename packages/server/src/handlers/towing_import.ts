@@ -19,7 +19,7 @@ export type ImportRequest = {
     isInFolder: boolean;
     isLast: boolean;
     slice: {
-        isSlice: boolean;
+        isSliced: boolean;
         index: number;
         count: number;
     };
@@ -32,18 +32,20 @@ export const towingImportHandler = async (request: ImportRequest, client: Client
     let data = Buffer.alloc(0);
     data = Buffer.concat([ data, buffer ], data.length + buffer.length);
     const downLoadPath = isInFolder ? join(__dirname, 'download') : join(__dirname, 'download', realPath);
-    fs.mkdir(downLoadPath, { recursive: true }, (err, path) => {
-        if (err) {
-            return logger.error('创建文件夹失败');
-        } else {
-            logger.info('文件夹创建成功');
-        }
-    });
+    if (!fs.existsSync(join(__dirname, 'download', realPath))) {
+        fs.mkdir(join(__dirname, 'download', realPath), { recursive: true }, (err, path) => {
+            if (err) {
+                return logger.error('创建文件夹失败');
+            } else {
+                logger.info('文件夹创建成功');
+            }
+        });
+    }
     // 需要接收一个flag 来识别是否为切片文件
-    const isSlice: boolean = request.slice.isSlice;
+    const isSliced: boolean = request.slice.isSliced;
     const sliceIndex: number = request.slice.index;
-    if (isSlice && sliceIndex > 1) {
-        fs.appendFile(join(__dirname, 'download', path), data, { flag: 'w+' }, function(err) {
+    if (isSliced && sliceIndex > 1) {
+        fs.appendFile(join(downLoadPath, path), data, function(err) {
             if (err) {
                 return logger.error('文件追加失败');
             } else {
@@ -51,7 +53,7 @@ export const towingImportHandler = async (request: ImportRequest, client: Client
             }
         });
     } else {
-        fs.writeFile(join(__dirname, 'download', path), data, { flag: 'w+' }, function(err) {
+        fs.writeFile(join(downLoadPath, path), data, { flag: 'w+' }, function(err) {
             if (err) {
                 return logger.error('文件下载失败');
             } else {
@@ -60,9 +62,16 @@ export const towingImportHandler = async (request: ImportRequest, client: Client
         });
     }
 
-    if (isLast) {
-        logger.info('开始解析文件');
-        return await parseFile(downLoadPath, client);
+    if (isInFolder) {
+        if (isLast) {
+            logger.info('开始解析文件');
+            return await parseFile(downLoadPath, client);
+        }
+    } else {
+        if (sliceIndex === request.slice.count) {
+            logger.info('开始解析文件');
+            return await parseFile(downLoadPath, client);
+        }
     }
     return { msg: '文件下载还在继续', isEnd: false };
 };
