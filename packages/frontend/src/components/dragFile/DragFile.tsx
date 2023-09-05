@@ -23,6 +23,14 @@ interface UploadFileDataType{
 const SLICE_SIZE = 1024 * 1024 * 20;
 let uploadId = 1;
 
+let uploading = false;
+function setUploading(val: boolean): void {
+    uploading = val;
+}
+function isUploading(): boolean {
+    return uploading;
+}
+
 export const DragFileInit = (id: string, handleSucceed?: any): void => {
     const dropZone = document.getElementById(id);
     if (dropZone) {
@@ -50,9 +58,21 @@ export const DragFileInit = (id: string, handleSucceed?: any): void => {
 
             handle();
             async function handle(): Promise<void> {
-                const res = await handleFile(e.dataTransfer.items);
-                if (handleSucceed as boolean) {
-                    handleSucceed(res);
+                if (isUploading()) {
+                    notification.error({
+                        className: 'drag-file-hit',
+                        message: 'Warn',
+                        description: 'Files are uploading, Please wait for a while',
+                        duration: 5,
+                        placement: 'top',
+                    });
+                    return;
+                }
+                setUploading(true);
+                const result = await handleFile(e.dataTransfer.items);
+                setUploading(false);
+                if (handleSucceed as boolean && result as boolean) {
+                    handleSucceed(result);
                 }
             }
         }, false);
@@ -99,8 +119,7 @@ async function handleFile(items: DataTransferItemList): Promise<any> {
         </div>),
         duration: null,
     });
-
-    return result;
+    return result[result.length - 1]?.res;
 }
 
 function alertError(description: string | ReactNode): void {

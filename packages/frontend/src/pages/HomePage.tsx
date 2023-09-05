@@ -30,8 +30,7 @@ const isParing = (session: Session): boolean => {
 };
 
 function init(session: Session): void {
-    DragFileInit('home', (res: any) => {
-        const result = res[res.length - 1].res;
+    DragFileInit('home', (result: any) => {
         runInAction(() => {
             session.phase = 'download';
             session.endTimeAll = 1000000000;
