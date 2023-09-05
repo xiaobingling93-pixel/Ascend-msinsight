@@ -51,6 +51,7 @@ function init(session: Session): void {
     });
 }
 
+// eslint-disable-next-line max-lines-per-function
 const HomePage = observer(function ({ session }: { session: Session }) {
     const parsing = isParing(session);
     const [ activeTab, setActiveTab ] = useState('timeline');
@@ -71,6 +72,11 @@ const HomePage = observer(function ({ session }: { session: Session }) {
             key: 'CommunicationAnalysis',
             children: <CommunicationAnalysis session={session} active={activeTab === 'CommunicationAnalysis'}/>,
             display: session.units.length > 1,
+        },
+        {
+            label: 'Memory Analysis',
+            key: 'MemoryAnalysis',
+            content: <div style={{ display: 'flex', height: '100%' }} id={'home'} />,
         },
     ];
     items.forEach(item => {
