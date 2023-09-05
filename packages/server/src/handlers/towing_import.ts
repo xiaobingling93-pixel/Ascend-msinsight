@@ -25,13 +25,7 @@ export type ImportRequest = {
     };
 };
 
-export const towingImportHandler = async (request: ImportRequest, client: Client): Promise<Record<string, unknown>> => {
-    logger.info('接收请求，开始下载文件');
-    const { buffer, isLast, name, path, isInFolder } = request;
-    const realPath = path.split(name)[0].toString();
-    let data = Buffer.alloc(0);
-    data = Buffer.concat([ data, buffer ], data.length + buffer.length);
-    const downLoadPath = isInFolder ? join(__dirname, 'download') : join(__dirname, 'download', realPath);
+function mkdirByFilePath(realPath: string): void {
     if (!fs.existsSync(join(__dirname, 'download', realPath))) {
         fs.mkdir(join(__dirname, 'download', realPath), { recursive: true }, (err, path) => {
             if (err) {
@@ -41,9 +35,23 @@ export const towingImportHandler = async (request: ImportRequest, client: Client
             }
         });
     }
+}
+
+export const towingImportHandler = async (request: ImportRequest, client: Client): Promise<Record<string, unknown>> => {
+    logger.info('接收请求，开始下载文件');
+    const { buffer, isLast, name, path, isInFolder } = request;
+    const realPath = path.split(name)[0].toString();
+    let data = Buffer.alloc(0);
+    data = Buffer.concat([ data, buffer ], data.length + buffer.length);
+    const downLoadPath = isInFolder ? join(__dirname, 'download') : join(__dirname, 'download', realPath);
+    mkdirByFilePath(realPath);
     // 需要接收一个flag 来识别是否为切片文件
     const isSliced: boolean = request.slice.isSliced;
     const sliceIndex: number = request.slice.index;
+    if (isSliced && sliceIndex === 1 && fs.existsSync(join(downLoadPath, path))) {
+        fs.unlinkSync(join(downLoadPath, path));
+        logger.info('delete repeat file');
+    }
     if (isSliced && sliceIndex > 1) {
         fs.appendFile(join(downLoadPath, path), data, function(err) {
             if (err) {
