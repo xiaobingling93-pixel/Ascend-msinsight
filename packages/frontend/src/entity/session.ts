@@ -11,6 +11,7 @@ import { platform } from '../platforms';
 import i18n from '../i18n';
 import { Phase, stateTexts } from '../utils/constant';
 import { SimpleCache } from '../cache/simplecache';
+import { communicator, communicatorContainerData } from '../components/communicatorContainer/CommunicatorContainer';
 
 export interface SelectedParams {
     baseRawId: undefined | number;
@@ -94,6 +95,10 @@ export class Session {
     // timeline flag data source
     timelineMaker: TimeLineMaker = TIME_MAKER_DEFAULT;
 
+    // communicatorContainerData
+    communicatorData: communicatorContainerData;
+    activeCommunicator: communicator | undefined;
+
     constructor(conf?: Partial<Session>) {
         makeAutoObservable(this, {
             timer: false,
@@ -124,6 +129,10 @@ export class Session {
         this._domain = new Domain(this.isNsMode, this.endTimeAll);
         this.buttons = conf?.buttons ?? [];
         this.simpleCache = new SimpleCache();
+        this.communicatorData = {
+            partitionModes: [],
+            defaultPPSize: 0,
+        };
         // 录制时长大于等于5min，建议结束录制
         const MAXTIME = this.isNsMode ? 5 * 60 * 1e9 : 5 * 60 * 1e3;
         when(

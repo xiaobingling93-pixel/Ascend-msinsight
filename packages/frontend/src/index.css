@@ -391,6 +391,9 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .CommunicatorHeader .ant-form-item-control{
     width: calc(100% - 100px);
 }
+.CommunicatorHeader .ant-select-disabled{
+    pointer-events: none;
+}
 .ant-message-custom-content > span{
     color: var(--grey90);
 }
