@@ -139,8 +139,7 @@ export class InsightConnection {
         const paramsStr = JSON.stringify({ id, method, params: params.params }).padEnd(1000, ' ');
         const buffer: any = params.buffer;
         const blob = new Blob([ paramsStr, buffer ]);
-        console.log(blob);
-        this._ws.send(`${CONTENT_LENGTH_PREFIX}:${blob.length}\r\n\r\n`);
+        this._ws.send(`${CONTENT_LENGTH_PREFIX}:${blob.size}\r\n\r\n`);
         this._ws.send(blob);
     }
 }

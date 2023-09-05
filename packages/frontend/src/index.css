@@ -345,6 +345,14 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .theme_dark .common-tabcontent{
     background: var(--grey85);
 }
+.home-tab-children{
+    width: 100%;
+    position: fixed;
+    height: calc(100% - 62px);
+}
+.theme_dark .home-tab-children{
+    background: var(--grey85);
+}
 
 .theme_dark .legend-tooltip{
     background: var(--grey90);

@@ -60,6 +60,11 @@ export const DragFileInit = (id: string, handleSucceed?: any): void => {
 
 async function handleFile(items: DataTransferItemList): Promise<void> {
     const allFiles = await getFilelist(items);
+    const checkRes = checkUsable(allFiles);
+    if (!checkRes.usable) {
+        alert(checkRes.error);
+        return;
+    }
     notification.success({
         message: 'Start:',
         description: (<div style={{ width: '800px' }}>
@@ -67,6 +72,7 @@ async function handleFile(items: DataTransferItemList): Promise<void> {
                 allFiles.map((fileInfo: UploadFileDataType) =>
                     (<div key={fileInfo.info.index}>{'【File】' + fileInfo.info.path}</div>))
             }
+            {`【Total File Size】${formateFileSize(checkRes.totalSize)}` }
         </div>),
         duration: null,
     });
@@ -118,6 +124,58 @@ async function getFilelist(items: any): Promise<any> {
     });
 }
 
+function checkUsable (list: UploadFileDataType[]): {
+    usable: boolean;
+    error?: string;
+    totalSize?: number;
+} {
+    const singleFiles = list.filter((fileInfo: UploadFileDataType) => !fileInfo.info.isInFolder);
+    if (singleFiles.length > 1) {
+        return {
+            usable: false,
+            error: 'Only Allow one File Or Folder',
+        };
+    }
+    if (singleFiles.length === 1) {
+        if ([ 'trace_view.json', 'msprof.json' ].includes(singleFiles[0].info.name)) {
+            return {
+                usable: true,
+                totalSize: singleFiles[0].file.size,
+
+            };
+        } else {
+            return {
+                usable: false,
+                error: 'Single File Only Allow 【trace_view.json】 or 【msprof.json】',
+            };
+        }
+    }
+    let totalSize = 0;
+    list.forEach((fileInfo: UploadFileDataType) => {
+        totalSize += fileInfo.file.size;
+    });
+    return {
+        usable: true,
+        totalSize,
+    };
+}
+
+function formateFileSize(size = 0): string {
+    const k = 1024;
+    const m = 1024 * 1024;
+    const g = 1024 * 1024 * 1024;
+    if (size >= g) {
+        return (size / g).toFixed(0) + 'GB';
+    }
+    if (size >= m) {
+        return (size / m).toFixed(0) + 'MB';
+    }
+    if (size >= k) {
+        return (size / k).toFixed(0) + 'KB';
+    }
+    return String(size) + 'Byte';
+}
+
 async function getFileFromEntryRecusively(entry: any): Promise<any> {
     return new Promise((resolve, reject) => {
         if (entry.isFile === true) {
@@ -159,7 +217,7 @@ function readFile(fileInfo: any, i = 1): Promise<any> {
             if (buffer !== null && buffer !== undefined) {
                 window.request('towingImport/action',
                     { isBinary: true, buffer, params: { ...fileInfo.info, slice: { isSliced: count > 1, index: i, count } } }).then(res => {
-                    if (i === count) {
+                    if (i >= count) {
                         resolve({ succeed: true, info: fileInfo.info, res });
                     } else {
                         resolve(readFile(fileInfo, i + 1));
