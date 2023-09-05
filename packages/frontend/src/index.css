@@ -420,3 +420,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .theme_dark .CommunicatorContainer .st4 {fill:#D1D1D1;}
 .theme_dark .CommunicatorContainer .st5 {fill:#007AFF;}
 .theme_dark .CommunicatorContainer .st6 {fill:#242425;}
+
+.hide {
+    display: none;
+}

@@ -23,6 +23,7 @@ type partitionMode = {
 export type communicator = {
     name: string;
     ranks: number[];
+    value?: string;
 };
 
 type tabData = {
@@ -189,18 +190,23 @@ function generateCommunicatorData(values: {ppSize: number; tpSize: number; dpSiz
     const modelCount = rankNum / values.tpSize;
     for (let i = 0; i < pipelineCount; i++) {
         partitionModes[0].communicators.push({
-            ranks: _.range(i * pipelineSize, (i + 1) * pipelineSize), name: 'stage' + i.toString(),
+            ranks: _.range(i * pipelineSize, (i + 1) * pipelineSize),
+            name: 'stage' + i.toString(),
+            value: `(${_.range(i * pipelineSize, (i + 1) * pipelineSize).join(', ')}` + (pipelineSize > 1 ? ')' : ',)'),
         });
         for (let j = 0; j < values.tpSize; j++) {
             partitionModes[2].communicators.push({
                 ranks: _.range(i * pipelineSize + j, (i + 1) * pipelineSize + j, values.tpSize),
                 name: 'data' + (i * values.tpSize + j).toString(),
+                value: `(${_.range(i * pipelineSize + j, (i + 1) * pipelineSize + j, values.tpSize).join(', ')}` + (values.dpSize > 1 ? ')' : ',)'),
             });
         }
     }
     for (let i = 0; i < modelCount; i++) {
         partitionModes[1].communicators.push({
-            ranks: _.range(i * values.tpSize, (i + 1) * values.tpSize), name: 'model' + i.toString(),
+            ranks: _.range(i * values.tpSize, (i + 1) * values.tpSize),
+            name: 'model' + i.toString(),
+            value: `(${_.range(i * values.tpSize, (i + 1) * values.tpSize).join(', ')}` + (values.tpSize > 1 ? ')' : ',)'),
         });
     }
     return { partitionModes, defaultPPSize };

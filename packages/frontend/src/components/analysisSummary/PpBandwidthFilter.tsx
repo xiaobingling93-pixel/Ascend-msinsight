@@ -5,7 +5,7 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { Select } from 'antd';
-import { Label, MultiSelectWithAll, notNull } from '../Common';
+import { Label, notNull } from '../Common';
 import { getStagesData, getStepsData } from './PpBandwidthAnalysis';
 
 export interface ConditionDataType {
@@ -24,12 +24,6 @@ interface optionDataType{
 interface optionMapDataType{
     [props: string]: optionDataType[];
 }
-const orderOptions = [
-    { label: 'Computing', value: 'computingTime' },
-    { label: 'Communication(Not Overlapped)', value: 'communicationNotOverLappedTime' },
-    { label: 'Communication(Overlapped)', value: 'communicationOverLappedTime' },
-    { label: 'Free', value: 'freeTime' },
-];
 
 // Top可选项： 1、2、4、8.......n(All)
 const getTopOptions = (count: number): optionDataType[] => {
@@ -67,6 +61,13 @@ const Filter = observer((props: any) => {
         setOptions({ stepOptions, topOptions, stageOptions });
         setConditions({ ...conditions, step: stepList[0], stage: stages[0] });
     };
+
+    useEffect(() => {
+        const name = props.session.activeCommunicator?.name as string;
+        if (name?.startsWith('stage')) {
+            setConditions({ ...conditions, stage: props.session.activeCommunicator?.value });
+        }
+    }, [props.session.activeCommunicator]);
 
     const handleChange = (prop: keyof ConditionDataType, val: string | number | string[]): void => {
         setConditions({ ...conditions, [prop]: val });

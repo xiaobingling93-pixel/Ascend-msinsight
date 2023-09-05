@@ -4,12 +4,13 @@
 
 import { observer } from 'mobx-react-lite';
 import { Session } from '../../entity/session';
-import { Col, Layout, Row, Select } from 'antd';
+import { Col, Empty, Layout, Row } from 'antd';
 import { addResizeEvent, COLOR, Container, isNull, notNullObj } from '../Common';
 import React, { useEffect, useState } from 'react';
 import * as echarts from 'echarts';
 import Filter, { ConditionDataType } from './PpBandwidthFilter';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
+import ReactDOM from 'react-dom';
 
 const PpBandwidthAnalysis = observer(function ({ session }: { session: Session }) {
     const [ conditions, setConditions ] = useState<ConditionDataType>(
@@ -62,6 +63,13 @@ async function InitCharts(domId: string, stepId: string, stageId: string): Promi
         return;
     }
     const res = domId === 'STAGE' ? await wrapBandwidthDataInStage(domId, stepId) : await wrapBandwidthDataInRank(domId, stepId, stageId);
+    if (res === null) {
+        ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
+    } else {
+        const myChart = echarts.init(chartDom);
+        myChart.setOption(res);
+        addResizeEvent(myChart);
+    }
     const myChart = echarts.init(chartDom);
     myChart.setOption(bandwidthOption);
     addResizeEvent(myChart);
