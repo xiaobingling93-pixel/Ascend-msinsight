@@ -18,7 +18,7 @@ class EventParser {
 public:
     EventParser(const std::string &filePath, const std::string &dbPath, const std::string &fileId);
     ~EventParser() = default;
-    void Parse(uint64_t startPosition, uint64_t endPosition);
+    void Parse(int64_t startPosition, int64_t endPosition);
 
 private:
     std::string filePath;
@@ -29,8 +29,8 @@ private:
     std::unique_ptr<TraceDatabase> database;
     std::map<std::string, std::function<void(std::unique_ptr<Trace::Event>)>> eventHandleMap;
 
-    bool ReadBuffer(char *buffer, uint64_t startPosition, uint64_t endPosition);
-    void EventHandle(json_t &json);
+    std::string ReadBuffer(int64_t startPosition, int64_t endPosition);
+    void EventHandle(const json_t &json);
     void InitEventHandle();
     void MetaDataHandle(std::unique_ptr<Trace::Event> eventPtr);
     void CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr);

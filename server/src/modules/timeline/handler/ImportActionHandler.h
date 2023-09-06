@@ -15,18 +15,18 @@ class ImportActionHandler : public TimelineRequestHandler {
 public:
     ImportActionHandler()
     {
-        command = Protocol::REQ_RES_RESET_WINDOW;
+        command = Protocol::REQ_RES_IMPORT_ACTION;
     };
     ~ImportActionHandler() override = default;
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 
 private:
-    const std::string_view traceFileName = "trace_view.json";
-
     static void SetParseCallBack(const std::string &token);
     static void ParseEndCallBack(const std::string token, const std::string fileId, bool result);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
     std::vector<std::string> FindTraceFile(const std::string &path);
+    bool IsJsonValid(const std::string &fileName);
+    void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
 };
 } // end of namespace Timeline
 } // end of namespace Module

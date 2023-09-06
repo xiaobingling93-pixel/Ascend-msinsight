@@ -13,13 +13,10 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-EventParser::EventParser(const std::string &filePath, const std::string &dbPath, const std::string &fileId) : filePath(filePath), dbPath(dbPath), fileId(fileId)
+EventParser::EventParser(const std::string &filePath, const std::string &dbPath,
+                         const std::string &fileId) : filePath(filePath), dbPath(dbPath), fileId(fileId)
 {
     ServerLog::Info("Init event parser. fileId:", fileId);
-    database = std::make_unique<TraceDatabase>();
-    database->OpenDb(dbPath, false);
-    database->InitStmt();
-    database->SetConfig();
     InitEventHandle();
 }
 
@@ -31,18 +28,20 @@ void EventParser::InitEventHandle()
     eventHandleMap.emplace("f", std::bind(&EventParser::FlowEventsHandle, this, std::placeholders::_1));
 }
 
-void EventParser::Parse(uint64_t startPosition, uint64_t endPosition)
+void EventParser::Parse(int64_t startPosition, int64_t endPosition)
 {
-    uint64_t len = endPosition - startPosition + 1 + 2; // + '[' ']'
-    auto buffer = std::make_unique<char[]>(endPosition - startPosition + 1);
-    if (!ReadBuffer(buffer.get() + 1, startPosition, endPosition)) {
+    database = std::make_unique<TraceDatabase>();
+    database->OpenDb(dbPath, false);
+    database->InitStmt();
+    database->SetConfig();
+    std::string buffer = ReadBuffer(startPosition, endPosition);
+    if (buffer.empty()) {
         ServerLog::Error("EventParser. Failed to read buffer.");
         return;
     }
-    buffer[0] ='[';
-    buffer[len - 1] = ']';
+    buffer = "[" + buffer + "]";
     std::string error;
-    auto json = JsonUtil::TryParse(buffer.get(), len, error);
+    auto json = JsonUtil::TryParse(buffer, error);
     if (!(json.has_value() && json.value().is_array())) {
         ServerLog::Error("EventParser. Failed to parse json string. error:", error);
         return;
@@ -50,6 +49,7 @@ void EventParser::Parse(uint64_t startPosition, uint64_t endPosition)
     for (auto &event : json.value()) {
         EventHandle(event);
     }
+    json.reset();
     database->CommitData();
     database->ReleaseStmt();
     database->CloseDb();
@@ -57,24 +57,26 @@ void EventParser::Parse(uint64_t startPosition, uint64_t endPosition)
                     ". Count:", parseCount, ", ignore Count:", ignoreCount);
 }
 
-bool EventParser::ReadBuffer(char *buffer, uint64_t startPosition, uint64_t endPosition)
+std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
 {
     std::ifstream file(filePath, std::ios::in);
     if (!file.is_open()) {
         ServerLog::Error("EventParser. Failed to open file.");
-        return false;
+        return "";
     }
     file.seekg(startPosition, std::ios::beg);
-    if (!file.read(buffer, endPosition - startPosition + 1)) {
+    int64_t len = endPosition - startPosition + 1;
+    auto buffer = std::make_unique<char[]>(len);
+    if (!file.read(buffer.get(), len)) {
         file.close();
         ServerLog::Error("EventParser. Failed to read file. start:", startPosition, ", end:", endPosition);
-        return false;
+        return "";
     }
     file.close();
-    return true;
+    return std::string(buffer.get(), len);
 }
 
-void EventParser::EventHandle(json_t &json)
+void EventParser::EventHandle(const json_t &json)
 {
     std::string type = EventUtil::Type(json);
     if (type.empty()) {

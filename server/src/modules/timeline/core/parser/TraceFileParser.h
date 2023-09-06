@@ -26,16 +26,16 @@ public:
 private:
     TraceFileParser();
     ~TraceFileParser() override;
-    const int MAX_THREAD_NUM = 4;
+    const int maxThreadNum = 4;
     std::unique_ptr<ThreadPool> threadPool;
     std::map<std::string, std::future<void>> futureMap;
 
     bool WaitParseEnd(const std::string &fileId);
     std::string GetFileIdFromFile(const std::string &filePath);
     std::string GetFileIdFromPath(const std::string &filePath);
-    static const int64_t BLOCK_SIZE = 1024 * 1024 * 50; // 50MB
-    static const int BUFFER_LENGTH = 1024 * 10;
-    static std::vector<std::pair<uint64_t, uint64_t>> SplitFile(const std::string &filePath);
+    static const int64_t blockSize = 1024 * 1024 * 50; // 50MB
+    static const int bufferLength = 1024 * 10;
+    static std::vector<std::pair<int64_t, int64_t>> SplitFile(const std::string &filePath);
     static bool SeekCharPosition(std::ifstream &file, char c);
     static bool SeekRegexPosition(std::ifstream &file, const std::string &regex);
     static std::string GetDbPath(const std::string &filePath, const std::string &fileId);
