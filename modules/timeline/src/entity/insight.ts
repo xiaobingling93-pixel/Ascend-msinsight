@@ -154,7 +154,7 @@ export interface InsightUnitParams<MetaData, DetailType extends Record<string, u
     renderInfo?: (session: Session, metadata: MetaData) => JSX.Element | string | null;
     detail?: DetailDesc<DetailType, ExtraDataType, MoreDataType, MetaData, keyof DetailType>;
     bottomPanelRender?: BottomPanelRender;
-    metadata?: MetaData;
+    metadata: MetaData;
     tabState?: TabState;
     spreadUnits?: SpreadDesc;
     notifications?: Array<(metaData: MetaData) => (false | string)>; // false代表无需提示信息 不为false返回提示的信息
@@ -234,7 +234,7 @@ const wrapSpread = (original?: SpreadDesc): SpreadDesc | undefined => {
     };
 };
 
-export const unit = <T = undefined>(params:
+export const unit = <T extends { remote: string } = { remote: string }>(params:
 Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'metadata'>): typeof BasicUnit => {
     const BasicUnit = class implements InsightUnit {
         type = 'basic' as const;
@@ -273,7 +273,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
     return BasicUnit;
 };
 
-export const transparentUnit = <T = undefined>(params:
+export const transparentUnit = <T extends { remote: string } = { remote: string }>(params:
 Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'name' | 'spreadUnits' | 'pinType' | 'description' | 'buttons'>): typeof TransparentUnit => {
     const TransparentUnit = class implements InsightUnit {
         type = 'transparent' as const;

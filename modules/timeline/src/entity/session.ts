@@ -43,6 +43,7 @@ export type LinkData = {
 
 export class Session {
     id = '';
+    remoteAttrs: Map<string, Record<string, unknown>> = new Map();
     private _name: string | null;
     private _phase: Phase = 'configuring';
     private _units: InsightUnit[] = [];

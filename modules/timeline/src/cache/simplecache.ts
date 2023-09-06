@@ -49,7 +49,7 @@ async function requestThreadTraces(requestParam: Record<string, unknown>): Promi
         const param: Record<string, unknown> = Object.assign({}, requestParam);
         param.startTime = 0;
         param.endTime = session?.endTimeAll ?? 0;
-        const request = await window.request('unit/threadTraces', param);
+        const request = await window.request(requestParam.remote as string, { command: 'unit/threadTraces', params: param });
         return request.data as ThreadTrace[][];
     } catch (e) {
         console.warn('request threadTrace info failed', e);

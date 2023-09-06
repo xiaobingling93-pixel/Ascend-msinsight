@@ -47,7 +47,7 @@ export class Browser implements Platform, IMessageSender {
     openFrameworkUrl = (): void => {
     };
 
-    isUltimateEdition: Promise<boolean> = new Promise<boolean>(() => false);
+    isUltimateEdition: Promise<boolean> = Promise.resolve(false);
 
     selectFolder = (): Promise<string> => new Promise(resolve => {
         resolve('browser');
