@@ -293,7 +293,7 @@ const OverviewCom = ({ baseInfo, handleFilterChange, groupData, dataSource, sele
         <div className={pipelineVisible ? 'hide' : ''}>
             <div>
                 <div className={'common-title-bottom'}>Computation/Communication Overview{hit}</div>
-                <Filter handleFilterChange={handleFilterChange} groupData={groupData} session={session}/>
+                <Filter handleFilterChange={handleFilterChange} groupData={groupData} session={session} visible={!pipelineVisible}/>
                 <div id={'overview-chart'} style={{ height: '400px' }} ></div>
             </div>
             <div style={{ padding: '0 3rem' }}>

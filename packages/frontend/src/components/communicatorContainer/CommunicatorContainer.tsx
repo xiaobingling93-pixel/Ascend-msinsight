@@ -42,6 +42,7 @@ const titleMap = new Map([
 export const CommunicatorContainer = observer(({ session }: { session: Session }) => {
     const [ activeTab, setActiveTab ] = useState<string>('pp');
     useEffect(() => {
+        setActiveTab('pp');
         if (session.communicatorData.partitionModes.length === 0) {
             queryTopSummary({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 }).then(({ result }) => {
                 getDefaultCommunicatorData(result.filePath).then(value => {

@@ -58,7 +58,7 @@ const Filter = observer((props: any) => {
     useEffect(() => {
         conditions.rankIds = _.find(options.groupOptions, item => item.value === conditions.group)?.data as string[];
         props.handleFilterChange(conditions);
-    }, [ conditions.step, conditions.orderBy, conditions.group ]);
+    }, [ conditions.step, conditions.orderBy, conditions.group, props.visible ]);
     useEffect(() => {
         props.handleFilterChange(conditions, false);
     }, [conditions.top]);

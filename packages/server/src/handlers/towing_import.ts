@@ -25,35 +25,25 @@ export type ImportRequest = {
     };
 };
 
-function mkdirByFilePath(realPath: string): void {
-    if (!fs.existsSync(join(__dirname, 'download', realPath))) {
-        fs.mkdir(join(__dirname, 'download', realPath), { recursive: true }, (err, path) => {
-            if (err) {
-                return logger.error('创建文件夹失败');
-            } else {
-                logger.info('文件夹创建成功');
-            }
-        });
-    }
-}
-
 export const towingImportHandler = async (request: ImportRequest, client: Client): Promise<Record<string, unknown>> => {
     logger.info('接收请求，开始下载文件');
     const { buffer, isLast, name, path, isInFolder } = request;
     const realPath = path.split(name)[0].toString();
     let data = Buffer.alloc(0);
     data = Buffer.concat([ data, buffer ], data.length + buffer.length);
-    const downLoadPath = isInFolder ? join(__dirname, 'download') : join(__dirname, 'download', realPath);
-    mkdirByFilePath(realPath);
+    const parentFilePath = join(__dirname, 'download', realPath);
+    const downLoadPath = isInFolder ? join(__dirname, 'download') : parentFilePath;
+    mkdirByFilePath(parentFilePath);
     // 需要接收一个flag 来识别是否为切片文件
     const isSliced: boolean = request.slice.isSliced;
     const sliceIndex: number = request.slice.index;
-    if (isSliced && sliceIndex === 1 && fs.existsSync(join(downLoadPath, path))) {
-        fs.unlinkSync(join(downLoadPath, path));
+    const filePath = join(downLoadPath, path);
+    if (isSliced && sliceIndex === 1 && fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
         logger.info('delete repeat file');
     }
     if (isSliced && sliceIndex > 1) {
-        fs.appendFile(join(downLoadPath, path), data, function(err) {
+        fs.appendFile(filePath, data, function(err) {
             if (err) {
                 return logger.error('文件追加失败');
             } else {
@@ -61,7 +51,7 @@ export const towingImportHandler = async (request: ImportRequest, client: Client
             }
         });
     } else {
-        fs.writeFile(join(downLoadPath, path), data, { flag: 'w+' }, function(err) {
+        fs.writeFile(filePath, data, { flag: 'w+' }, function(err) {
             if (err) {
                 return logger.error('文件下载失败');
             } else {
@@ -83,3 +73,10 @@ export const towingImportHandler = async (request: ImportRequest, client: Client
     }
     return { msg: '文件下载还在继续', isEnd: false };
 };
+
+function mkdirByFilePath(parentFilePath: string): void {
+    if (!fs.existsSync(parentFilePath)) {
+        fs.mkdirSync(parentFilePath, { recursive: true });
+        logger.info(parentFilePath, '文件夹创建成功');
+    }
+}
