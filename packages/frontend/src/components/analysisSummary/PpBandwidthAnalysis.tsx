@@ -159,7 +159,8 @@ const bandwidthOption: echarts.EChartsOption = {
         axisPointer: {
             type: 'cross',
             crossStyle: {
-                color: '#999',
+                color: COLOR.BrightBlue,
+                type: 'solid',
             },
         },
     },
@@ -170,7 +171,10 @@ const bandwidthOption: echarts.EChartsOption = {
         },
     },
     legend: {
-        data: [ 'Stage Time', 'Bubble Time' ],
+        data: [
+            { name: 'Stage Time', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Bubble Time', textStyle: { color: COLOR.Grey50 } },
+        ],
     },
     xAxis:
         {
