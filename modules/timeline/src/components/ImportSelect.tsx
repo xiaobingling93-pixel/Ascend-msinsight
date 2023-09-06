@@ -16,8 +16,6 @@ type SelectProps = {
 };
 
 const ImportModeSelect = observer((props: SelectProps) => {
-    // const { session } = props;
-
     function dropdownRender(): JSX.Element {
         return (
             <ChildrenContainer>
