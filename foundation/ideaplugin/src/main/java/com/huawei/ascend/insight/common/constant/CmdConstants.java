@@ -61,7 +61,7 @@ public class CmdConstants {
     /**
      * DIC_SERVER
      */
-    public static final String DIC_SERVER = "profiler-server" + ExecutableUtils.ext(".exe", "");
+    public static final String PROFILER_SERVER = "profiler_server" + ExecutableUtils.ext(".exe", "");
 
     /**
      * TRACE_STREAMER
@@ -121,7 +121,7 @@ public class CmdConstants {
     /**
      * WS_BASE_PORT
      */
-    public static final String WS_BASE_PORT = "6001";
+    public static final String WS_BASE_PORT = "9001";
 
     /**
      * LINE_AND
