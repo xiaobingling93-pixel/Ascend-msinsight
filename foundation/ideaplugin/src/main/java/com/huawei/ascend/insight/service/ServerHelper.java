@@ -108,7 +108,8 @@ public class ServerHelper {
         try {
             Runtime.getRuntime().exec("chmod +x " + pluginsPath + lineSeparator + CmdConstants.PROFILER_SERVER);
             serverProcess = Runtime.getRuntime()
-                .exec(pluginsPath + lineSeparator + CmdConstants.PROFILER_SERVER + CmdConstants.NO_SANDBOX);
+                .exec(pluginsPath + lineSeparator + CmdConstants.PROFILER_SERVER + ' ' + CmdConstants.PORT_PREFIX
+                    + CmdConstants.WS_BASE_PORT);
         } catch (IOException e) {
             LOGGER.info(e.getMessage());
         }
