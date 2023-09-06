@@ -195,10 +195,8 @@ function checkUsable (list: UploadFileDataType[]): {
     let totalSize = 0;
     const usableList: UploadFileDataType[] = [];
     list.forEach((fileInfo: UploadFileDataType) => {
-        if (checkFileName(fileInfo.info.name)) {
-            totalSize += fileInfo.file.size;
-            usableList.push(fileInfo);
-        }
+        totalSize += fileInfo.file.size;
+        usableList.push(fileInfo);
     });
     usableList.forEach((fileInfo: UploadFileDataType, index: number) => {
         fileInfo.info.index = index + 1;
