@@ -51,18 +51,21 @@ export const getRankIdOptions = async (iterationId: string): Promise<optionDataT
     return options;
 };
 
-const getOptions = async(): Promise<any> => {
+const getOptions = async(initObj: ConditionDataType): Promise<any> => {
     // step
     const iterationOptions: optionDataType[] = await getiterationOptions();
-    const firstIterationId = iterationOptions[0]?.value as string;
+    const iterationId = initObj.iterationId || iterationOptions[0]?.value as string;
     // stage
-    const stageOptions: optionDataType[] = await getStageOptions(firstIterationId);
-    const firstStage = stageOptions[0]?.value as string;
+    const stageOptions: optionDataType[] = await getStageOptions(iterationId);
+    const stage = initObj.stage || stageOptions[0]?.value as string;
     // Operator Name
     const operatorOptions: optionDataType[] =
-        await getOperatorOptions({ iterationId: firstIterationId, rankIds: [], stage: firstStage });
-
-    return { iterationOptions, operatorOptions, stageOptions };
+        await getOperatorOptions({ iterationId, rankIds: [], stage });
+    const operatorName = initObj.operatorName || totalOperator;
+    return {
+        optionMap: { iterationOptions, operatorOptions, stageOptions },
+        conditions: { iterationId, stage, operatorName },
+    };
 };
 
 export const totalOperator = 'Total Op Info';
@@ -83,16 +86,18 @@ const defaultOptionMap = {
 const Filter = observer((props: {session: Session;handleFilterChange: VoidFunction}) => {
     const [ conditions, setConditions ] = useState<ConditionDataType>(defaultCondition);
     const [ optionMap, setOptionMap ] = useState<optionMapDataType>(defaultOptionMap);
-
+    const activeCommunicator = props.session.activeCommunicator?.value;
     // 初始化
     useEffect(() => {
-        init();
+        init({ stage: activeCommunicator } as ConditionDataType);
     }, [props.session.allRankIds]);
     useEffect(() => {
-        if (props.session.activeCommunicator?.ranks !== undefined) {
-            setConditions({ ...conditions, stage: `(${props.session.activeCommunicator.ranks.join(',')})` });
-        }
-    }, [props.session.activeCommunicator]);
+        setTimeout(() => {
+            if (activeCommunicator !== undefined && activeCommunicator !== conditions.stage) {
+                init({ ...conditions, stage: activeCommunicator });
+            }
+        });
+    }, [activeCommunicator]);
 
     // Iteration ID联动Stage
     useEffect(() => {
@@ -111,21 +116,19 @@ const Filter = observer((props: {session: Session;handleFilterChange: VoidFuncti
         }
     }, [conditions]);
 
-    const init = async(): Promise<void> => {
-        const newOptionsMap: optionMapDataType = await getOptions();
+    const init = async(initObj: ConditionDataType): Promise<void> => {
+        const res: {optionMap: optionMapDataType;conditions: ConditionDataType} = await getOptions(initObj);
         // 初始可选项
-        setOptionMap({ ...optionMap, ...newOptionsMap });
+        setOptionMap({ ...optionMap, ...res.optionMap });
         // 初始查询条件
-        const iterationId = newOptionsMap.iterationOptions[0]?.value as string;
-        const stage = newOptionsMap.stageOptions[0]?.value as string;
-        setConditions({ ...conditions, iterationId, stage, operatorName: totalOperator });
+        setConditions({ ...conditions, ...res.conditions });
     };
 
     // 联动的条件
     const handleRelatedChange = async (source: string, value: string): Promise<void> => {
         if (source === 'iterationId') {
             const stageOptions: optionDataType[] = await getStageOptions(value);
-            const stage = stageOptions[0]?.value as string;
+            const stage = conditions.stage || stageOptions[0]?.value as string;
             setOptionMap({ ...optionMap, stageOptions });
             setConditions({ ...conditions, stage });
         }

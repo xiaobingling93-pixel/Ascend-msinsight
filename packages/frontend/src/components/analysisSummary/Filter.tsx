@@ -69,7 +69,8 @@ const Filter = observer((props: any) => {
         }
     }, [props.session.activeCommunicator]);
     const initDefault = async (): Promise<void> => {
-        const stepList: number[] = props.groupData.stepList;
+        const res = await window.request('parallelism/pipeline/getAllSteps', {});
+        const stepList: string[] = res.data;
         const stepOptions: optionDataType[] = [ 'All', ...stepList ].map(item => ({ value: item, label: item }));
         const rankIds: number[] = props.groupData.rankList;
         const communicators: communicator[] = [];
