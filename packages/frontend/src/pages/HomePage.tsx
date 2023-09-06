@@ -65,12 +65,14 @@ const HomePage = observer(function ({ session }: { session: Session }) {
             key: 'AnalysisSummary',
             children: <AnalysisSummary session={session} active={activeTab === 'AnalysisSummary'}/>,
             display: session.units.length > 1,
+            disabled: parsing,
         },
         {
             label: <div>Communication Analysis {parsing && <Spin indicator={antIcon}/>}</div>,
             key: 'CommunicationAnalysis',
             children: <CommunicationAnalysis session={session} active={activeTab === 'CommunicationAnalysis'}/>,
             display: session.units.length > 1,
+            disabled: parsing,
         },
         {
             label: 'Memory Analysis',
