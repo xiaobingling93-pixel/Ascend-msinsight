@@ -214,13 +214,13 @@ function checkUsable (list: UploadFileDataType[]): {
 }
 
 function checkFileName(name: string, isSingle = false): boolean {
-    const profReg = /^msprof\w{0,100}\.json$/;
+    const msprofReg = /^msprof\w{0,100}\.json$/; // msprof.json msprof_info_0.json
+    const profilerReg = /^profiler\w{0,100}\.json$/;// profiler_info_0.json
     if (isSingle) {
         const ALL_ALLOW_FILE = [
             'trace_view.json',
-            'msprof.json',
         ];
-        return ALL_ALLOW_FILE.includes(name) || profReg.test(name);
+        return ALL_ALLOW_FILE.includes(name) || msprofReg.test(name);
     }
     const ALL_ALLOW_FILE = [
         'cluster_communication.json',
@@ -228,11 +228,12 @@ function checkFileName(name: string, isSingle = false): boolean {
         'cluster_step_trace_time.csv',
         'communication_group.json',
         'operator_memory.csv',
-        'operator_record.csv',
-        'msprof.json',
+        'memory_record.csv',
+        'operator_details.csv',
+        'kernel_details.csv',
         'trace_view.json',
     ];
-    return ALL_ALLOW_FILE.includes(name) || profReg.test(name);
+    return ALL_ALLOW_FILE.includes(name) || msprofReg.test(name) || profilerReg.test(name);
 }
 
 function formateFileSize(size = 0): string {
