@@ -44,7 +44,7 @@ public:
     bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
                       uint64_t minTimestamp, int64_t traceId);
     bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
-                           Protocol::UnitThreadDetailBody &responseBody,uint64_t minTimestamp, int64_t trackId);
+                           Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId);
     bool QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody,
                          uint64_t minTimestamp);
     bool QueryUnitsMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
@@ -78,6 +78,8 @@ private:
         uint64_t dur;
     };
 
+    bool InitSliceFlowStmt();
+    bool InitProcessThreadStmt();
     sqlite3_stmt *GetSliceStmt(uint64_t paramLen);
     sqlite3_stmt *GetFlowStmt(uint64_t paramLen);
     void UpdateOneTrackDepth(int64_t trackId);
@@ -101,6 +103,8 @@ private:
                                            std::vector<uint64_t> &nextDepthResult, int64_t trackId);
     bool QuerySliceFlowList(const std::string &flowId, const std::string &type,
                             std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec);
+    bool FlowDetailToResponse(std::vector<Protocol::FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
+                              Protocol::UnitFlowBody &responseBody);
 };
 } // end of namespace Timeline
 } // end of namespace Module
