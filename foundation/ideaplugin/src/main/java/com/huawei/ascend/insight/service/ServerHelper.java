@@ -64,7 +64,7 @@ public class ServerHelper {
 
     private static void serverCheckAndRestart() {
         // 未找到server进程
-        if (!ProcessUtils.findProcess(CmdConstants.DIC_SERVER)) {
+        if (!ProcessUtils.findProcess(CmdConstants.PROFILER_SERVER)) {
             hasBeenDead = true;
             if (++tryRestartTime <= 5) {
                 LOGGER.info("try to start server again!");
@@ -75,6 +75,7 @@ public class ServerHelper {
                 return;
             }
             BalloonNotification.show("[Ascend Insight]: server restart failed", NotificationType.ERROR);
+            startServerHook.cancel(true);
             return;
         }
         // 找到了server进程
@@ -98,15 +99,16 @@ public class ServerHelper {
         if (SystemInfo.isWindows) {
             processArgs.add(CmdConstants.WINDOWS_CMD);
             processArgs.add(CmdConstants.WINDOWS_CMD_TERMINAL);
-            processArgs.add(CmdConstants.DIC_SERVER);
+            processArgs.add(CmdConstants.PROFILER_SERVER);
+            processArgs.add(CmdConstants.PORT_PREFIX + CmdConstants.WS_BASE_PORT);
             Optional<Process> execute = ProcessUtils.execute(processArgs, pluginsPath);
             serverProcess = execute.orElse(null);
             return;
         }
         try {
-            Runtime.getRuntime().exec("chmod +x " + pluginsPath + lineSeparator + CmdConstants.DIC_SERVER);
+            Runtime.getRuntime().exec("chmod +x " + pluginsPath + lineSeparator + CmdConstants.PROFILER_SERVER);
             serverProcess = Runtime.getRuntime()
-                .exec(pluginsPath + lineSeparator + CmdConstants.DIC_SERVER + CmdConstants.NO_SANDBOX);
+                .exec(pluginsPath + lineSeparator + CmdConstants.PROFILER_SERVER + CmdConstants.NO_SANDBOX);
         } catch (IOException e) {
             LOGGER.info(e.getMessage());
         }
