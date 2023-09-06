@@ -172,11 +172,13 @@ export async function parseFile(selectedFolder: string, client: Client): Promise
                 let startTimeUpdated = false;
                 if (queryResult.extremumTimestamp.minTimestamp !== null && queryResult.extremumTimestamp.maxTimestamp !== null) {
                     if (extremumTimestamp.minTimestamp > queryResult.extremumTimestamp.minTimestamp) {
-                        extremumTimestamp.maxTimestamp = extremumTimestamp.maxTimestamp + extremumTimestamp.minTimestamp - queryResult.extremumTimestamp.minTimestamp;
+                        extremumTimestamp.maxTimestamp = extremumTimestamp.maxTimestamp + extremumTimestamp.minTimestamp -
+                            queryResult.extremumTimestamp.minTimestamp;
                         extremumTimestamp.minTimestamp = queryResult.extremumTimestamp.minTimestamp;
                         startTimeUpdated = true;
                     }
-                    extremumTimestamp.maxTimestamp = Math.max(queryResult.extremumTimestamp.maxTimestamp - extremumTimestamp.minTimestamp, extremumTimestamp.maxTimestamp);
+                    extremumTimestamp.maxTimestamp = Math.max(queryResult.extremumTimestamp.maxTimestamp -
+                        extremumTimestamp.minTimestamp, extremumTimestamp.maxTimestamp);
                 }
                 client?.notify('parse/success', { unit: queryResult.insightMetaData, startTimeUpdated, maxTimeStamp: extremumTimestamp.maxTimestamp });
             });
