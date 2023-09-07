@@ -80,15 +80,14 @@ export const removeRemoteHandler = async ({ dataSource }: any): Promise<void> =>
         const metadata = unit.metadata as any;
         return metadata.dataSource.remote === dataSource.remote;
     });
+    for (const unit of removeUnits) {
+        const metadata = unit.metadata as any;
+        session.remoteAttrs.delete(metadata.dataSource.remote);
+    }
     session.units = session?.units.filter((unit) => {
         const metadata = unit.metadata as any;
         return metadata.dataSource.remote !== dataSource.remote;
     });
-    for (const unit of removeUnits) {
-        const metadata = unit.metadata as any;
-        await window.request(metadata.dataSource, { command: 'reset/window', params: {} });
-        session.remoteAttrs.delete(metadata.dataSource.remote);
-    }
     let remoteMaxTimeStamps = 0;
     session.remoteAttrs.forEach((attrs) => {
         remoteMaxTimeStamps = Math.max(<number>attrs.maxTimeStamp, remoteMaxTimeStamps);
