@@ -31,19 +31,15 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    std::string path = request.params.path;
-    if (path.empty()) {
+    if (request.params.path.empty()) {
         ServerLog::Warn("Import path is empty.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    if (path == "browser") {
-        path = ExecUtil::SelectFolder();
-    }
-    auto traceFiles = FindTraceFile(path);
+    auto traceFiles = FindAllTraceFile(request.params.path);
     if (traceFiles.empty()) {
-        ServerLog::Error("Failed to find trace file, path = ", path);
+        ServerLog::Error("Failed to find trace file.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;
@@ -93,6 +89,23 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     SearchMetaData(fileId, event->body.unit.children);
     session->OnEvent(std::move(event));
+}
+
+std::vector<std::string> ImportActionHandler::FindAllTraceFile(const std::vector<std::string> &pathList)
+{
+    std::vector<std::string> traceFiles;
+    for (const auto &path : pathList) {
+        if (path == "browser") {
+            return FindTraceFile(ExecUtil::SelectFolder());
+        }
+        auto files = FindTraceFile(path);
+        if (files.empty()) {
+            ServerLog::Warn("Can't find trace file in path:", path);
+            continue;
+        }
+        traceFiles.insert(traceFiles.end(), files.begin(), files.end());
+    }
+    return traceFiles;
 }
 
 std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &path)

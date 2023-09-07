@@ -39,6 +39,15 @@ public:
     static void SetEventJsonBaseInfo(const Event &event, json_t &json);
     static bool SetEventBaseInfo(Event &event, const json_t &json);
 
+protected:
+    std::mutex mutex;
+    using JsonToRequestFunc = std::function<std::unique_ptr<Request>(const json_t &, std::string &error)>;
+    using ResponseToJsonFunc = std::function<std::optional<json_t>(const Response &)>;
+    using EventToJsonFunc = std::function<std::optional<json_t>(const Event &)>;
+    std::map<std::string, JsonToRequestFunc> jsonToReqFactory;
+    std::map<std::string, ResponseToJsonFunc> resToJsonFactory;
+    std::map<std::string, EventToJsonFunc> eventToJsonFactory;
+
 private:
     virtual void RegisterJsonToRequestFuncs() = 0;
     virtual void RegisterResponseToJsonFuncs() = 0;
@@ -46,23 +55,12 @@ private:
 
     // request
     static bool IsRequest(const json_t &jsonRequest);
-    static std::string Command(const json_t &jsonRequest) ;
-    using JsonToRequestFunc = std::function<std::unique_ptr<Request>(const json_t &, std::string &error)>;
+    static std::string Command(const json_t &jsonRequest);
     std::optional<JsonToRequestFunc> GetJsonToRequestFunc(const std::string &command);
-
     // response
-    using ResponseToJsonFunc = std::function<std::optional<json_t>(const Response &)>;
     std::optional<ResponseToJsonFunc> GetResponseToJsonFunc(const std::string &command);
-
     // event
-    using EventToJsonFunc = std::function<std::optional<json_t>(const Event &)>;
     std::optional<EventToJsonFunc> GetEventToJsonFunc(const std::string &event);
-
-protected:
-    std::mutex mutex;
-    std::map<std::string, JsonToRequestFunc> jsonToReqFactory;
-    std::map<std::string, ResponseToJsonFunc> resToJsonFactory;
-    std::map<std::string, EventToJsonFunc> eventToJsonFactory;
 };
 } // namespace Protocol
 } // namespace Dic

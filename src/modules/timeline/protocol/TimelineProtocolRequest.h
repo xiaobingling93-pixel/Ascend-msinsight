@@ -8,13 +8,14 @@
 
 #include <string>
 #include <optional>
+#include <vector>
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 
 namespace Dic {
 namespace Protocol {
 struct ImportActionParams {
-    std::string path;
+    std::vector<std::string> path;
 };
 
 struct ImportActionRequest : public Request {
