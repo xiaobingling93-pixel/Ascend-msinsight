@@ -35,6 +35,33 @@ struct SummaryStatisticRequest : public Request {
     SummaryStatisticRequest() : Request(REQ_RES_SUMMARY_STATISTIC) {};
     SummaryStatisticParams params;
 };
+
+struct ComputeDetailParams {
+    std::string rankId;
+    std::string timeFlag;
+    double currentPage = 0;
+    double pageSize = 0;
+    std::string orderBy;
+    std::string order;
+};
+
+struct ComputeDetailRequest : public Request {
+    ComputeDetailRequest() : Request(REQ_RES_COMPUTE_DETAIL) {};
+    ComputeDetailParams params;
+};
+
+struct CommunicationDetailParams {
+    std::string rankId;
+    double currentPage = 0;
+    double pageSize = 0;
+    std::string orderBy;
+    std::string order;
+};
+
+struct CommunicationDetailRequest : public Request {
+    CommunicationDetailRequest() : Request(REQ_RES_COMMUNICATION_DETAIL) {};
+    CommunicationDetailParams params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

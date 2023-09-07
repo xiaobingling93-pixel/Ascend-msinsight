@@ -26,7 +26,7 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<MemoryOperatorResponse> responsePtr = std::make_unique<MemoryOperatorResponse>();
     MemoryOperatorResponse &response = *responsePtr.get();
-
+    SetBaseResponse(request, response);
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!database->QueryOperatorDetail(request.params, response.operatorDetails)) {
         SetResponseResult(response, false);

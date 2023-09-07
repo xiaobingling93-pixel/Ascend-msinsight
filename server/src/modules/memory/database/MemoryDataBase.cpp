@@ -157,30 +157,30 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
                                          std::vector<Protocol::MemoryOperator> &responseBody)
 {
     std::string sql =
-            "SELECT id, allocation_time, release_time, size, duration FROM operator "
-            "WHERE allocation_time <= ? AND allocation_time >= ?";
+            "SELECT name, allocation_time, release_time, size, duration FROM " + operatorTable +
+             "where allocation_time <= ? AND allocation_time >= ?";
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result == SQLITE_OK) {
-        int index = bindStartIndex;
-        sqlite3_bind_double(stmt, index++, requestParams.endTime);
-        sqlite3_bind_double(stmt, index++, requestParams.startTime);
-        std::vector<Protocol::MemoryOperator> operatorDtoVec;
-        while (sqlite3_step(stmt) == SQLITE_ROW) {
-            int col = resultStartIndex;
-            Protocol::MemoryOperator operatorDto{};
-            operatorDto.name = sqlite3_column_string(stmt, col++);
-            operatorDto.size = static_cast<double>(sqlite3_column_double(stmt, col++));
-            operatorDto.allocationTime = static_cast<double>(sqlite3_column_double(stmt, col++));
-            operatorDto.releaseTime = static_cast<double>(sqlite3_column_double(stmt, col++));
-            operatorDto.duration = static_cast<double>(sqlite3_column_double(stmt, col++));
-            operatorDtoVec.emplace_back(operatorDto);
-        }
-        responseBody = operatorDtoVec;
-    } else {
-        ServerLog::Error("QueryOperatorDetail failed!");
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryOperatorDetail. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
+    int index = bindStartIndex;
+    sqlite3_bind_double(stmt, index++, requestParams.endTime);
+    sqlite3_bind_double(stmt, index++, requestParams.startTime);
+    std::vector<Protocol::MemoryOperator> operatorDtoVec;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::MemoryOperator operatorDto{};
+        operatorDto.name = sqlite3_column_string(stmt, col++);
+        operatorDto.allocationTime = static_cast<double>(sqlite3_column_double(stmt, col++));
+        operatorDto.releaseTime = static_cast<double>(sqlite3_column_double(stmt, col++));
+        operatorDto.size = static_cast<double>(sqlite3_column_double(stmt, col++));
+        operatorDto.duration = static_cast<double>(sqlite3_column_double(stmt, col++));
+        operatorDtoVec.emplace_back(operatorDto);
+    }
+    responseBody = operatorDtoVec;
+
     sqlite3_finalize(stmt);
     return true;
 }
@@ -188,39 +188,39 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
 bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
                                      Protocol::OperatorMemory &operatorBody)
 {
-    std::string sql = "SELECT component, timestamp, total_allocated, total_reserve FROM record";
+    std::string sql = "SELECT component, timestamp, total_allocated, total_reserve FROM " + recordTable;
     double startTime = Timeline::TraceTime::Instance().GetStartTime();
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result == SQLITE_OK) {
-        int index = bindStartIndex;
-        std::vector<Protocol::ComponentDto> componentDtoVec;
-        while (sqlite3_step(stmt) == SQLITE_ROW) {
-            int col = resultStartIndex;
-            Protocol::ComponentDto componentDto{};
-            componentDto.component = sqlite3_column_string(stmt, col++);
-            // 减去timeline开始的时间作为时间戳
-            componentDto.timesTamp = static_cast<double>(sqlite3_column_double(stmt, col++)) - startTime;
-            componentDto.totalAllocated = static_cast<double>(sqlite3_column_double(stmt, col++));
-            componentDto.totalReserved = static_cast<double>(sqlite3_column_double(stmt, col++));
-            componentDtoVec.emplace_back(componentDto);
-        }
-        Protocol::ComponentMemory componentMap;
-        Protocol::OperatorMemory operatorMap;
-        for (auto &item: componentDtoVec) {
-            std::vector<double> recordLine;
-            recordLine[0] = item.timesTamp;
-            if (item.component == "PTA+GE") {
-                GetOperatorLine(item, operatorMap);
-            } else if (item.component == "APP") {
-                GetAppLine(item, operatorMap);
-            }
-        }
-        operatorBody = operatorMap;
-    } else {
-        ServerLog::Error("QueryOperatorDetail failed!");
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryOperatorDetail. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
+    int index = bindStartIndex;
+    std::vector<Protocol::ComponentDto> componentDtoVec;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::ComponentDto componentDto{};
+        componentDto.component = sqlite3_column_string(stmt, col++);
+        // 减去timeline开始的时间作为时间戳
+        componentDto.timesTamp = static_cast<double>(sqlite3_column_double(stmt, col++)) - startTime;
+        componentDto.totalAllocated = static_cast<double>(sqlite3_column_double(stmt, col++));
+        componentDto.totalReserved = static_cast<double>(sqlite3_column_double(stmt, col++));
+        componentDtoVec.emplace_back(componentDto);
+    }
+    Protocol::ComponentMemory componentMap;
+    Protocol::OperatorMemory operatorMap;
+    for (auto &item: componentDtoVec) {
+        std::vector<double> recordLine;
+        recordLine[0] = item.timesTamp;
+        if (item.component == "PTA+GE") {
+            GetOperatorLine(item, operatorMap);
+        } else if (item.component == "APP") {
+            GetAppLine(item, operatorMap);
+        }
+    }
+    operatorBody = operatorMap;
+
     sqlite3_finalize(stmt);
     return true;
 }

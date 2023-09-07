@@ -44,6 +44,8 @@ include_directories(${SRC_HOME_DIR}/modules/timeline/protocol)
 include_directories(${SRC_HOME_DIR}/modules/summary)
 include_directories(${SRC_HOME_DIR}/modules/summary/protocol)
 include_directories(${SRC_HOME_DIR}/modules/summary/handler)
+include_directories(${SRC_HOME_DIR}/modules/summary/database)
+include_directories(${SRC_HOME_DIR}/modules/summary/parser)
 include_directories(${SRC_HOME_DIR}/modules/memory)
 include_directories(${SRC_HOME_DIR}/modules/memory/database)
 include_directories(${SRC_HOME_DIR}/modules/memory/handler)
@@ -68,6 +70,8 @@ aux_source_directory(${SRC_HOME_DIR}/modules/timeline/protocol DIC_MODULES_TIMEL
 aux_source_directory(${SRC_HOME_DIR}/modules/summary/protocol DIC_MODULES_SUMMARY_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/summary/handler DIC_MODULES_SUMMARY_HANDLER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/summary DIC_MODULES_SUMMARY_PROTOCOL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/summary/database DIC_MODULES_SUMMARY_DATABASE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/summary/parser DIC_MODULES_SUMMARY_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memory  DIC_MODULES_MEMORY_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memory/database DIC_MODULES_MEMORY_DATABASE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memory/handler DIC_MODULES_MEMORY_HANDLER_SRC)
@@ -92,6 +96,8 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SUMMARY_SRC}
         ${DIC_MODULES_SUMMARY_HANDLER_SRC}
         ${DIC_MODULES_SUMMARY_PROTOCOL_SRC}
+        ${DIC_MODULES_SUMMARY_DATABASE_SRC}
+        ${DIC_MODULES_SUMMARY_PARSER_SRC}
         ${DIC_MODULES_TIMELINE_PROTOCOL_SRC}
         ${DIC_MODULES_MEMORY_SRC}
         ${DIC_MODULES_MEMORY_DATABASE_SRC}

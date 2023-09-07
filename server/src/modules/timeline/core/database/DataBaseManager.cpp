@@ -22,6 +22,15 @@ TraceDatabase *DataBaseManager::GetTraceDatabase(const std::string &fileId)
     return traceDatabaseMap[fileId].get();
 }
 
+Summary::SummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::string &fileId)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (summaryDatabaseMap.count(fileId) == 0) {
+        summaryDatabaseMap.emplace(fileId, std::make_unique<Summary::SummaryDataBase>());
+    }
+    return summaryDatabaseMap[fileId].get();
+}
+
 Memory::MemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
@@ -65,6 +74,16 @@ std::vector<Memory::MemoryDataBase *> DataBaseManager::GetAllMemoryDatabase()
     return databases;
 }
 
+std::vector<Summary::SummaryDataBase *> DataBaseManager::GetAllSummaryDatabase()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    std::vector<Summary::SummaryDataBase *> databases;
+    for (auto &databaseMap: summaryDatabaseMap) {
+        databases.emplace_back(databaseMap.second.get());
+    }
+    return databases;
+}
+
 bool DataBaseManager::MemoryHasFileId(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
@@ -76,6 +95,7 @@ void DataBaseManager::Clear()
     std::unique_lock<std::mutex> lock(mutex);
     traceDatabaseMap.clear();
     memoryDatabaseMap.clear();
+    summaryDatabaseMap.clear();
 }
 
     ClusterDatabase *DataBaseManager::GetClusterDatabase()

@@ -27,14 +27,13 @@ bool MemoryParse::Parse(const std::vector<std::string> &filePaths, const std::st
     ServerLog::Info("start parse.");
 
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
-    std::string dbPath = GetDbPath(filePaths[0], fileId);
+    std::string dbPath = FileUtil::GetDbPath(selectedFolder, fileId);
     if (!(database->OpenDb(dbPath, false) && database->CreateTable() &&
     database->SetConfig() && database->InitStmt())) {
         ServerLog::Error("Failed to open database. path:", dbPath);
         return false;
     }
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
-
     for (const auto &filePath: filePaths) {
         auto future = threadPool->AddTask([futures, fileId, &filePath, this]() {
             ServerLog::Info("Wait parse completed. ID:", fileId);
@@ -62,7 +61,7 @@ bool MemoryParse::WaitParseEnd(const std::string &fileId)
     if (futureMap.count(fileId) == 0) {
         return false;
     }
-    ServerLog::Info("Wait parse completed. ID:", fileId);
+    ServerLog::Info("Wait memory parse completed. ID:", fileId);
     auto &future = futureMap.at(fileId);
     future.wait();
     futureMap.erase(fileId);
@@ -78,7 +77,8 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
 {
     ServerLog::Info("start parse.");
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
-    std::ifstream file(filePath);
+    std::string operatorFile = FileUtil::GetDetailFile(filePath, memoryOperatorFile);
+    std::ifstream file(operatorFile);
     std::string line;
     std::map<std::string, std::int16_t> dataMap;
     while (getline(file, line)) {
@@ -141,19 +141,18 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, std::int16_t> dat
     return record;
 }
 
-std::string MemoryParse::GetDbPath(const std::string &filePath, const std::string &fileId)
+std::string MemoryParse::GetDbPath(const std::string &selectedFolder, const std::string &rankId)
 {
-    std::string fileName = Dic::FileUtil::GetFileName(filePath);
-    auto pos = fileName.find_last_of('.');
-    std::string dbPath = fileName.substr(0, pos) + "_" + fileId + ".db";
+    std::string dbPath = selectedFolder + "/" + rankId + ".db";
     return Dic::FileUtil::GetRealPath(dbPath);
 }
 
 bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &fileId)
 {
-    ServerLog::Info("start parse.");
+    ServerLog::Info("start parse Record.");
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
-    std::ifstream file(filePath);
+    std::string recordFile = FileUtil::GetDetailFile(filePath, memoryRecordFile);
+    std::ifstream file(recordFile);
     std::string line;
     std::map<std::string, std::int16_t> dataMap;
     while (getline(file, line)) {

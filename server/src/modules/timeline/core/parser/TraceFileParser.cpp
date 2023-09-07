@@ -71,7 +71,6 @@ bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const s
         database->UpdateDepth();
         ServerLog::Info("Update depth completed. ID:", rankId);
     });
-    std::string kernelDetailFile = FileUtil::GetKernelDetailFile(filePathArr[0]);
     futureMap.emplace(rankId, std::move(future));
     if (paserEndCallback != nullptr) {
         std::thread thread { [this, rankId]() { WaitParseEnd(rankId); } };

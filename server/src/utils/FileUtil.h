@@ -178,12 +178,13 @@ public:
         }
     }
 
-    static inline std::string GetKernelDetailFile(std::string traceViewFileName)
+    static inline std::string GetDetailFile(std::string traceViewFileName, std::string detailName)
     {
         std::string parent = GetParentPath(traceViewFileName);
-        std::ifstream file(parent + "/kernel_details.csv");
+        std::string path = SplicePath(parent, detailName);
+        std::ifstream file(path);
         if (file.good()) {
-            return parent + "/kernel_details.csv";
+            return path;
         }
         return "";
     }
@@ -239,6 +240,13 @@ public:
         };
         find(path, 0);
         return matchedFiles;
+    }
+
+    static std::string GetDbPath(const std::string &filePath, const std::string &fileId)
+    {
+        std::string dbName = fileId + ".db";
+        std::string dbPath = SplicePath(filePath, dbName);
+        return Dic::FileUtil::GetRealPath(dbPath);
     }
 };
 } // end of namespace Dic

@@ -24,7 +24,7 @@ void QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<MemoryViewResponse> responsePtr = std::make_unique<MemoryViewResponse>();
     MemoryViewResponse &response = *responsePtr.get();
-
+    SetBaseResponse(request, response);
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!database->QueryMemoryView(request.params, response.map)) {
         SetResponseResult(response, false);

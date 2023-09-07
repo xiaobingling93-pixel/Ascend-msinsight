@@ -55,6 +55,41 @@ struct SummaryStatisticsResponse : public Response {
 
     SummaryStatisticsBody body;
 };
+
+struct ComputeDetail {
+    std::string name;
+    std::string type;
+    double startTime;
+    double duration;
+    double waitTime;
+    double blockDim;
+    std::string inputShapes;
+    std::string inputDataTypes;
+    std::string inputFormats;
+    std::string outputShapes;
+    std::string outputDataTypes;
+    std::string outputFormats;
+};
+
+struct ComputeDetailResponse : public Response {
+    ComputeDetailResponse() : Response(REQ_RES_COMPUTE_DETAIL) {}
+    std::vector<ComputeDetail> computeDetails;
+    int32_t totalNum;
+};
+
+struct CommunicationDetail {
+    std::string communicationKernel;
+    double startTime;
+    double totalDuration;
+    double overlapDuration;
+    double notOverlapDuration;
+};
+
+struct CommunicationDetailResponse : public Response {
+    CommunicationDetailResponse() : Response(REQ_RES_COMMUNICATION_DETAIL) {}
+    std::vector<CommunicationDetail> communication;
+    int32_t totalNum;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

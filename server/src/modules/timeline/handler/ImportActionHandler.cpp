@@ -12,6 +12,7 @@
 #include "TraceTime.h"
 #include "TraceFileParser.h"
 #include "ClusterFileParser.h"
+#include "MemoryParse.h"
 
 namespace Dic {
 namespace Module {
@@ -66,6 +67,8 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     // 先回复消息，再解析，小文件解析可能比回复消息还快
     for (const auto &rankEntry: rankListMap) {
         TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, path);
+        Memory::MemoryParse::Instance().Parse(rankEntry.second, rankEntry.first, path);
+        Summary::KernelParse::Instance().Parse(rankEntry.second, rankEntry.first, path);
     }
     if (rankListMap.size() > 1) {
         ClusterFileParser clusterFileParser;

@@ -30,12 +30,14 @@ public:
     bool RecordToParse(const std::string &filePath, const std::string &fileId);
 
 private:
-    const int maxThreadNum = 4;
+    const int maxThreadNum = 1;
 
     std::unique_ptr<MemoryDataBase> database;
     std::unique_ptr<ThreadPool> threadPool;
     std::map<std::string, std::future<void>> futureMap;
     std::chrono::system_clock::time_point start;
+    const std::string memoryOperatorFile = "operator_memory.csv";
+    const std::string memoryRecordFile = "memory_record.csv";
 
     bool WaitParseEnd(const std::string &fileId);
 

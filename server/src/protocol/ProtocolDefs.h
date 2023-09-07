@@ -53,7 +53,8 @@ const std::string REQ_RES_COMMUNICATION_DISTRIBUTION = "communication/duration/d
 // summary
 const std::string REQ_RES_SUMMARY_QUERY_TOP_DATA = "summary/queryTopData";
 const std::string REQ_RES_SUMMARY_STATISTIC = "summary/statistic";
-
+const std::string REQ_RES_COMPUTE_DETAIL = "summary/queryComputeDetail";
+const std::string REQ_RES_COMMUNICATION_DETAIL = "summary/queryCommunicationDetail";
 
 // memory
 const std::string REQ_RES_MEMORY_OPERATOR = "Memory/view/operator";

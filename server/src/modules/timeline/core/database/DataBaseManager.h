@@ -11,6 +11,7 @@
 #include "TraceDatabase.h"
 #include "../../../base/core/ClusterDatabase.h"
 #include "MemoryDataBase.h"
+#include "KernelParse.h"
 
 namespace Dic {
 namespace Module {
@@ -25,6 +26,7 @@ public:
 
     TraceDatabase *GetTraceDatabase(const std::string &fileId);
     Memory::MemoryDataBase *GetMemoryDatabase(const std::string &fileId);
+    Summary::SummaryDataBase *GetSummaryDatabase(const std::string &fileId);
     std::vector<TraceDatabase *> GetAllTraceDatabase();
     void Clear();
     void ReleaseTraceDatabase(const std::string &fileId);
@@ -32,6 +34,8 @@ public:
     ClusterDatabase *GetClusterDatabase();
 
     std::vector<Memory::MemoryDataBase *> GetAllMemoryDatabase();
+
+    std::vector<Summary::SummaryDataBase *> GetAllSummaryDatabase();
 
 private:
     DataBaseManager() = default;
@@ -41,6 +45,7 @@ private:
     std::map<std::string, std::unique_ptr<TraceDatabase>> traceDatabaseMap;
     std::map<std::string, std::unique_ptr<ClusterDatabase>> clusterDatabaseMap;
     std::map<std::string, std::unique_ptr<Memory::MemoryDataBase>> memoryDatabaseMap;
+    std::map<std::string, std::unique_ptr<Summary::SummaryDataBase>> summaryDatabaseMap;
 
     bool MemoryHasFileId(const std::string &fileId);
 };
