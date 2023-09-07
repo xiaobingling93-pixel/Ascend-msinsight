@@ -243,6 +243,24 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], inputValue: string): void =>
             }
         });
     });
+    const setUnitDislay = (unit: InsightUnit): void => {
+        runInAction(() => {
+            unit.isDisplay = true;
+        });
+        if (unit.children) {
+            for (const child of unit.children) {
+                setUnitDislay(child);
+            }
+        }
+    };
+    flattenUnits.forEach(unit => {
+        if (!unit.children) {
+            return;
+        }
+        if ((unit.metadata as ProcessMetaData).processName === inputValue) {
+            setUnitDislay(unit);
+        }
+    })
 };
 
 const setAllUnitsDisplay = (session: Session): void => {
