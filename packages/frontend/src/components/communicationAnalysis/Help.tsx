@@ -51,7 +51,7 @@ const Help = ({ style = {} }: {style?: object}): JSX.Element => {
                     {
                         hit.map((item, index) => (
                             <p key={index}>
-                                {item.title}
+                                <span className={'h5'}>{item.title}</span>
                                 <p className={'left20'}>
                                     {
                                         item.contentlist.map((content, contentindex) =>

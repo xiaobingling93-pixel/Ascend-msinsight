@@ -81,7 +81,11 @@ const HomePage = observer(function ({ session }: { session: Session }) {
         },
     ];
     items.forEach(item => {
-        item.children = (<div className={'home-tab-children'}>{item.children}</div>);
+        let style = {};
+        if (item.key === 'timeline') {
+            style = { padding: 0 };
+        }
+        item.children = (<div className={'home-tab-children'} style={style}>{item.children}</div>);
     });
     const displayItems = items.filter(item => item.display !== false);
     const handleTabsChange = (activeKey: string): void => {

@@ -92,21 +92,27 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 
 :root {
     --grey0: white;
-    --grey5: #f8f8f8;
+    --grey5: #EEEEEE;
+    --grey6:#ebebeb;
     --grey8: #dddddd;
     --grey10: #d1d1d1;
+    --grey15:#bcbcbc;
     --grey20: #a9a9a9;
     --grey30: #a3a3a3;
     --grey40: #939393;
     --grey50: rgb(128, 128, 128);
-    --grey60: rgb(91, 91, 91);
+    --grey60: #656565;
     --grey70: #414141;
-    --grey80: #383838;
-    --grey85: #292929;
+    --grey80: #3C3C3C;
+    --grey83: #2C2C2C;
+    --grey85: #252526;
     --grey90: #202020;
-    --grey95: #1b1b1b;
+    --grey95: #1e1e1e;
     --grey100: black;
     --activeblue: #1890ff;
+    --whiteblue:#F4F6FA;
+    --grey80blue:#2E2F31;
+    --grey20blue:#8D98AA;
 }
 
 .theme_dark .ant-select-selector{
@@ -130,9 +136,13 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .bandwidthHeader{
     background: #f3f7f7;
 }
-
+.h5{
+    font-weight: 600;
+    font-size: 14px;
+}
 .left20{
     padding-left:20px ;
+    color: var(--grey60);
 }
 
 .fullbox{
@@ -189,6 +199,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     font-size: 1.5rem;
     padding-left: 10px;
     margin: 0 0 10px 0;
+    background: var(--grey5);
 }
 .fullbox{
     background: white;
@@ -208,7 +219,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 }
 
 .theme_dark .fullbox{
-    background: var(--grey80);
+    background: var(--grey85);
 }
 
 .theme_dark .tan-box>div>.bottomC,.tan-box>div {
@@ -217,11 +228,10 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .theme_dark .container-header{
     background: var(--grey70);
 }
-.theme_dark .container-body{
-    background: var(--grey90);
-}
+
 .theme_dark .ant-select:not(.ant-select-customize-input) .ant-select-selector{
     background: var(--grey90);
+    border-color: var(--grey60);
 }
 .theme_dark .ant-select-multiple .ant-select-selection-item{
     background: var(--grey80);
@@ -349,6 +359,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     width: 100%;
     position: fixed;
     height: calc(100% - 62px);
+    padding-top:10px;
 }
 .theme_dark .home-tab-children{
     background: var(--grey85);
@@ -364,13 +375,13 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 }
 
 .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
-    display: none;
+    top: 15%;
+    transform: none;
+    height: 70%;
+    background-color:var(--grey20);
 }
-.ant-table-thead > tr > th:not(.ant-table-selection-column):not([colspan]) {
-    border-top: 1px solid var(--grey10);
-}
-.ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan]) {
-    border-right: 1px solid var(--grey10);
+.ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan]):hover::before {
+    background-color: var(--grey20) !important;
 }
 .ant-table-expanded-row .ant-table-thead > tr > th:not(.ant-table-selection-column):not([colspan]) {
     border-top: none;
@@ -378,10 +389,6 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 
 .theme_dark .ant-notification-notice{
     background: var(--grey85);
-}
-
-.CommunicatorHeader{
-    min-width: 600px;
 }
 .theme_dark .CommunicatorHeader .ant-input-number-input{
     background-color: var(--grey90);
@@ -392,6 +399,10 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .theme_dark .CommunicatorHeader .ant-btn {
     background: var(--grey50);
     border-color: var(--grey60);
+}
+
+.CommunicatorHeader{
+    min-width: 600px;
 }
 .CommunicatorHeader .ant-btn {
     background: var(--grey10);
@@ -423,4 +434,90 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 
 .hide {
     display: none;
+}
+
+.ant-tabs-top > .ant-tabs-nav::before{
+    border-bottom: 1px solid var(--grey0);
+}
+.ant-tabs .ant-tabs-nav{
+    background: var(--grey5);
+}
+.ant-tabs-top > .ant-tabs-nav{
+    margin: 0;
+}
+.ant-tabs-tab{
+    padding: 9px 0;
+}
+.ant-tabs-tab {
+    margin: 0 0 0 32px;
+}
+.ant-breadcrumb{
+    height: 36px;
+    line-height: 36px;
+}
+.ant-table .ant-table-thead > tr > th.ant-table-cell {
+    background-color: var(--grey5);
+    color: var(--grey80);
+}
+.ant-table-thead > tr > th {
+    border: none;
+}
+.ant-table-tbody > tr > td {
+    border-bottom: 1px solid var(--grey6);
+    color: var(--grey60);
+}
+.ant-select:not(.ant-select-customize-input) .ant-select-selector{
+    border-color:var(--grey15);
+}
+
+.theme_dark .ant-tabs.ant-tabs-top{
+    background: var(--grey85);
+}
+.theme_dark .home-tab-children{
+    background: var(--grey85);
+}
+.theme_dark .container-header {
+    background: var(--grey85);
+    color: var(--whiteblue);
+}
+.theme_dark .container-body{
+    background: var(--grey95);
+}
+.theme_dark .ant-table .ant-table-thead > tr > th.ant-table-cell {
+    background: var(--grey80blue);
+    color:var(--whiteblue);
+}
+.theme_dark .ant-table-column-sorter svg{
+    color: var(--grey20blue);
+}
+.theme_dark .ant-tabs-top > .ant-tabs-nav::before{
+    border-bottom: 1px solid var(--grey95);
+}
+.theme_dark .ant-tabs-nav{
+    background: var(--grey83);
+}
+.theme_dark .ant-table-tbody > tr > td {
+    border-bottom: 1px solid var(--grey85);
+    color: var(--grey15);
+}
+.theme_dark .ant-input-number{
+    border-color: var(--grey60);
+}
+.theme_dark .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before{
+    background-color:var(--grey15);
+}
+.theme_dark .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan]):hover::before {
+    background-color: var(--grey15) !important;
+}
+.theme_dark .ant-select-disabled.ant-select:not(.ant-select-customize-input) .ant-select-selector {
+    background: var(--grey60);
+}
+.theme_dark .common-title-bottom{
+    color: var(--whiteblue)!important;
+}
+.theme_dark .h5{
+    color: var(--whiteblue)!important;
+}
+.theme_dark .left20{
+    color: var(--grey15);
 }
