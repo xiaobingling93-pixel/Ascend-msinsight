@@ -6,11 +6,11 @@ export const dark: Theme = {
     mainPageIcon: HomePageDarkImage, // 首页图标
     timeInsightIcon: '#86AD53', // time Insight 图标颜色
     allocationInsightIcon: '#9E644F', // allocation Insight 图标颜色
-    contentBackgroundColor: '#383838', // 区域内容背景色
+    contentBackgroundColor: '#1E1E1E', // 区域内容背景色
     buttonBackgroundColor: '#4C4C4C', // 模板、按钮背景色
     okBackgroundColor: '#5391FF', // ok按钮背景色
     selectBackgroundColor: '#4c4c4c', // session选中背景色
-    cardHeadBackgroundColor: '#4E4E4E', // 卡片表头背景色
+    cardHeadBackgroundColor: '#2C2C2C', // 卡片表头背景色
     fontColor: 'rgb(255, 255, 255, 0.9)', // 字体颜色
     disabledFontColor: 'rgb(255, 255, 255, 0.15)',
     tableHeadFontColor: 'rgb(255, 255, 255, 0.6)', // 表格表头字体颜色

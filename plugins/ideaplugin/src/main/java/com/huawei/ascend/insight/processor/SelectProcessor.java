@@ -60,7 +60,12 @@ public class SelectProcessor {
         CompletableFuture<String> future = new CompletableFuture<>();
         ApplicationManager.getApplication().invokeLater(() -> {
             FileChooserDescriptor descriptor = new FileChooserDescriptor(isChooseFiles,
-            isChooseFolders, false, false, false, false);
+            isChooseFolders, false, false, false, false) {
+                @Override
+                public boolean isFileVisible(VirtualFile file, boolean isShowHiddenFiles) {
+                    return file.isDirectory() || "json".equals(file.getExtension());
+                }
+            };
             VirtualFile[] virtualFiles = FileChooser.chooseFiles(descriptor, project, null);
             String path = virtualFiles.length > 0 ? virtualFiles[0].getPath() : "";
             future.complete(path);
