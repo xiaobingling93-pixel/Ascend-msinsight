@@ -1,5 +1,6 @@
 import type { DataRequest, ModuleName, NotificationRegistration, DataSource } from './websocket/defs';
 import { Connection } from '@/centralServer/websocket/connection';
+import connector from '@/connection';
 
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
@@ -36,15 +37,11 @@ export const connectRemote = async function (dataSource: DataSource): Promise<bo
         return false;
     }
     CONNECTION_MAP.set(getConnectionMapKey(dataSource), connection);
-    const iframe = document.querySelector('iframe') as HTMLIFrameElement;
-    iframe.contentWindow?.postMessage(
-        {
-            event: 'remote/import',
-            dataSource,
-            body: '',
-        },
-        '*',
-    );
+    connector.send({
+        event: 'remote/import',
+        dataSource,
+        body: '',
+    });
     return true;
 };
 

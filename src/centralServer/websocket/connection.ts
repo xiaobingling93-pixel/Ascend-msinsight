@@ -1,5 +1,6 @@
 import { CONTENT_LENGTH_PREFIX, isResponse, PORT } from './defs';
 import type { DataRequest, ModuleName, DataSource, Notification, Response, Request, ResponseHandler } from './defs';
+import connector from '@/connection';
 
 const createRequestHead = function (
     id: number,
@@ -26,7 +27,7 @@ export class Connection {
     private _fetchFlag: boolean = true;
 
     constructor(dataSource: DataSource) {
-        console.log('[connector]', 'init');
+        console.info('[connector]', 'init');
         if (this._ws !== undefined) {
             // wedge: close and release the old websocket
         }
@@ -36,7 +37,7 @@ export class Connection {
     }
 
     async reset(): Promise<void> {
-        console.log('[connector]', 'reset');
+        console.info('[connector]', 'reset');
     }
 
     disconnect(): void {
@@ -55,7 +56,7 @@ export class Connection {
                 return;
             }
             this._ws.onopen = (ev: Event) => {
-                console.log('[connector]', 'onopen');
+                console.info('[connector]', 'onopen');
                 // token Create
                 const msg: Request = createRequestHead(0, 'global', 'token.create', { token: '' });
                 msg.params.deadTime = -1;
@@ -103,7 +104,7 @@ export class Connection {
             );
             this.request(msg);
             const reqCallback = (res: Response): void => {
-                console.log('[connector]', 'received:', res);
+                console.info('[connector]', 'received:', res);
                 if (res.result && res.body !== undefined) {
                     // wedge: return cache resolve
                     resolve(res.body);
@@ -136,11 +137,7 @@ export class Connection {
         // handle notifications
         if (!isResponse(msg)) {
             msg.dataSource = this._dataSource;
-            const iframe = document.querySelector('iframe') as HTMLIFrameElement;
-            iframe.contentWindow?.postMessage(
-                msg,
-                '*',
-            );
+            connector.send(msg);
             return;
         }
 
