@@ -69,10 +69,12 @@ export type SorterDef<DataType extends Record<string, unknown>> = {
     sorter?: (a: DataType, b: DataType) => number | boolean;
 };
 
+export type MetaData = Record<string, unknown> & { dataSource: DataSource };
+
 type TabularClickCacallbackArgs<CommonState extends CommonStateProto, DataType> = {
     row: DataType;
     session: Session;
-    detail: DetailDescriptor<unknown>;
+    detail: DetailDescriptor<MetaData>;
     commonState?: CommonState;
     unit?: InsightUnit;
 };
@@ -101,14 +103,14 @@ export type SingleDataDesc<DataType extends Record<string, unknown>, MetaData> =
     clickCallback?: (args: SingleDataDesc<Record<string, unknown>, unknown>) => void; // execute statement in onClick event
 };
 
-export type LinkDataDesc<DataType extends Record<string, unknown>, MetaData> = {
+export type LinkDataDesc<DataType extends Record<string, unknown>> = {
     fetchData: (session: Session, metadata: MetaData) => Promise<DataType[] | DataType>;
     templateField?: renderFieldsType<DataType>;
     renderFields: Array<renderFieldsType<DataType>>;
     onDestroy?: (session: Session) => void;
 };
 
-export const linkData = <T extends Record<string, unknown>, MetaData>(desc: LinkDataDesc<T, MetaData>): LinkDataDesc<Record<string, unknown>, unknown> => desc as unknown as LinkDataDesc<Record<string, unknown>, unknown>;
+export const linkData = <T extends Record<string, unknown>>(desc: LinkDataDesc<T>): LinkDataDesc<Record<string, unknown>> => desc as unknown as LinkDataDesc<Record<string, unknown>>;
 
 export const singleData = <T extends Record<string, unknown>, MetaData>(desc: SingleDataDesc<T, MetaData>): SingleDataDesc<Record<string, unknown>, unknown> => desc as unknown as SingleDataDesc<Record<string, unknown>, unknown>;
 
@@ -234,7 +236,7 @@ const wrapSpread = (original?: SpreadDesc): SpreadDesc | undefined => {
     };
 };
 
-export const unit = <T extends { remote: string } = { remote: string }>(params:
+export const unit = <T extends { dataSource: DataSource } = { dataSource: DataSource }>(params:
 Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'metadata'>): typeof BasicUnit => {
     const BasicUnit = class implements InsightUnit {
         type = 'basic' as const;
@@ -273,7 +275,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
     return BasicUnit;
 };
 
-export const transparentUnit = <T extends { remote: string } = { remote: string }>(params:
+export const transparentUnit = <T extends { dataSource: DataSource } = { dataSource: DataSource }>(params:
 Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'name' | 'spreadUnits' | 'pinType' | 'description' | 'buttons'>): typeof TransparentUnit => {
     const TransparentUnit = class implements InsightUnit {
         type = 'transparent' as const;

@@ -668,8 +668,8 @@ export type MetaData = {
 export type InsightMetaData <T extends keyof MetaData> = {
     type: T;
     metadata: MetaData[T];
-    children?: InsightMetaData <keyof MetaData> [];
-    remote: string;
+    children?: Array<InsightMetaData<keyof MetaData>>;
+    dataSource: DataSource;
 };
 
 export type ThreadMetaData = {
@@ -678,7 +678,7 @@ export type ThreadMetaData = {
     threadId: number;
     threadName: string;
     maxDepth?: number;
-    remote: string;
+    dataSource: DataSource;
 };
 
 export type ProcessMetaData = {
@@ -686,13 +686,13 @@ export type ProcessMetaData = {
     processId: string;
     processName: string;
     label?: string;
-    remote: string;
+    dataSource: DataSource;
 };
 
 export type CardMetaData = {
     cardId: string;
     cardName?: string;
-    remote: string;
+    dataSource: DataSource;
 };
 
 export type ThreadTrace = {

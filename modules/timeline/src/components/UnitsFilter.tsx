@@ -4,7 +4,7 @@ import { Tooltip } from 'antd';
 import { computed, runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useRef, useState } from 'react';
-import { ReactComponent as AntdSearchIcon } from '../assets/images/insights/ic_search_lined.svg';
+import { ReactComponent as AntdFilterIcon } from '../assets/images/insights/FunnelIcon.svg';
 import { ReactComponent as AntdCloseIcon } from '../assets/images/insights/ic_close_filled.svg';
 import { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
@@ -19,7 +19,7 @@ import { isPinned } from './ChartContainer/unitPin';
 import { StyledAutoComplete } from './base/rc-table/StyledAutoComplete';
 import i18n from 'i18next';
 
-const SearchIcon = AntdSearchIcon as SvgType;
+const FilterIcon = AntdFilterIcon as SvgType;
 const CloseIcon = AntdCloseIcon as SvgType;
 
 const ChildrenContainer = styled.div`
@@ -243,6 +243,24 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], inputValue: string): void =>
             }
         });
     });
+    const setUnitDislay = (unit: InsightUnit): void => {
+        runInAction(() => {
+            unit.isDisplay = true;
+        });
+        if (unit.children) {
+            for (const child of unit.children) {
+                setUnitDislay(child);
+            }
+        }
+    };
+    flattenUnits.forEach(unit => {
+        if (!unit.children) {
+            return;
+        }
+        if ((unit.metadata as ProcessMetaData).processName === inputValue) {
+            setUnitDislay(unit);
+        }
+    });
 };
 
 const setAllUnitsDisplay = (session: Session): void => {
@@ -289,7 +307,7 @@ export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Elem
     const [ customButtonProps, updateCustomButtonProps ] = useState({
         isEmphasize: false,
         isSuspend: false,
-        icon: SearchIcon,
+        icon: FilterIcon,
     });
     // tooltip显隐控制悬浮效果
     const onTooltipVisibleChange = (visible: boolean): void => {

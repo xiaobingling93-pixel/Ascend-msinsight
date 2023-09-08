@@ -24,7 +24,7 @@ export type Notification<T = Record<string, unknown>> = {
 
 export type ResponseHandler = (res: Response) => void;
 
-export type NotificationHandler = (notification: any) => void;
+export type NotificationHandler = (notification: { dataSource: DataSource; body: Record<string, unknown> }) => void;
 
 export const isResopnse = (msg: Response | Notification): msg is Response => {
     return (msg as Response).id !== undefined;

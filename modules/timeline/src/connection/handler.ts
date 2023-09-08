@@ -6,9 +6,10 @@ import { setUnitPhaseByCardId } from '../entity/insight';
 import { CardUnit } from '../insight/units/AscendUnit';
 import { CardInfo } from '../components/ImportSelect';
 import { Session } from '../entity/session';
+import { NotificationHandler } from './defs';
 
-export const parseSuccessHandler = (data: any): void => {
-    const unitData = data.body;
+export const parseSuccessHandler: NotificationHandler = (data): void => {
+    const unitData = data.body as any;
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
     runInAction(() => {
@@ -17,7 +18,7 @@ export const parseSuccessHandler = (data: any): void => {
         }
         session.units.forEach((unit) => {
             if ((unit.metadata as CardMetaData).cardId === unitData.unit.metadata.cardId) {
-                handleMap(unitData.unit);
+                handleMap(unitData.unit, (unit.metadata as CardMetaData).dataSource);
                 recursiveExpandUnit(unitData.unit.children ?? [], unit);
             }
         });
@@ -27,9 +28,9 @@ export const parseSuccessHandler = (data: any): void => {
         } else {
             session.endTimeAll = Math.max(session.endTimeAll, unitData.maxTimeStamp);
         }
-        const remoteAttrs = session.remoteAttrs.get(data.remote);
+        const remoteAttrs = session.remoteAttrs.get(data.dataSource.remote);
         if (remoteAttrs === undefined) {
-            session.remoteAttrs.set(data.remote, { maxTimeStamp: unitData.maxTimeStamp });
+            session.remoteAttrs.set(data.dataSource.remote, { maxTimeStamp: unitData.maxTimeStamp });
         } else {
             remoteAttrs.maxTimeStamp = unitData.maxTimeStamp;
         }
@@ -40,23 +41,22 @@ export const parseSuccessHandler = (data: any): void => {
     });
 };
 
-export const parseFailHandler = (data: any): void => {
-    console.log('Parse fail. ', data);
+export const parseFailHandler: NotificationHandler = (data): void => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
     runInAction(() => {
         if (!session) {
             return;
         }
-        setUnitPhaseByCardId(data.body.rankId, session, 'error');
+        setUnitPhaseByCardId((data.body as any).rankId, session, 'error');
     });
 };
 
-export const importRemoteHandler = async (data: any): Promise<void> => {
+export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
-    for (const path in data.remote.dataPath) {
-        const result = await window.request(data.remote, { command: 'import/action', params: { path } });
+    for (const path of data.dataSource.dataPath) {
+        const result = await window.request(data.dataSource, { command: 'import/action', params: { path } });
         runInAction(() => {
             if (!session) {
                 return;
@@ -64,7 +64,7 @@ export const importRemoteHandler = async (data: any): Promise<void> => {
             session.phase = 'download';
             session.endTimeAll = 1000000000;
             result.result.forEach((item: CardInfo) => {
-                const unit = new CardUnit({ remote: data.remote, cardId: item.rankId, cardName: item.cardName });
+                const unit = new CardUnit({ dataSource: data.dataSource, cardId: item.rankId, cardName: item.cardName });
                 if (item.result as boolean) {
                     unit.phase = 'analyzing';
                 } else {
@@ -76,20 +76,20 @@ export const importRemoteHandler = async (data: any): Promise<void> => {
     }
 };
 
-export const removeRemoteHandler = async (data: any): Promise<void> => {
+export const removeRemoteHandler = async ({ dataSource }: any): Promise<void> => {
     const session = store.sessionStore.activeSession as Session;
     const removeUnits = session.units.filter((unit) => {
         const metadata = unit.metadata as any;
-        return metadata.remote === data.remote;
+        return metadata.dataSource.remote === dataSource.remote;
     });
     session.units = session?.units.filter((unit) => {
         const metadata = unit.metadata as any;
-        return metadata.remote !== data.remote;
+        return metadata.dataSource.remote !== dataSource.remote;
     });
     for (const unit of removeUnits) {
         const metadata = unit.metadata as any;
-        await window.request(metadata.remote, { command: 'reset/window', params: {} });
-        session.remoteAttrs.delete(metadata.remote);
+        await window.request(metadata.dataSource, { command: 'reset/window', params: {} });
+        session.remoteAttrs.delete(metadata.dataSource.remote);
     }
     let remoteMaxTimeStamps = 0;
     session.remoteAttrs.forEach((attrs) => {

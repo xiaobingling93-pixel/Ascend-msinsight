@@ -32,12 +32,15 @@ export function recursiveExpandUnit <T extends keyof MetaData> (metaDataList: Ar
     }
 }
 
-export function handleMap <T extends keyof MetaData> (insightMetaData: InsightMetaData<T>): void {
+export function handleMap <T extends keyof MetaData> (insightMetaData: InsightMetaData<T>, dataSource: DataSource): void {
     paramsTree.clear();
     insightMetaData.children?.forEach(processInfo => {
-        paramsTree.set((processInfo.metadata as ProcessMetaData), insightMetaData.metadata);
+        const processMetadata = (processInfo.metadata as ProcessMetaData);
+        processMetadata.dataSource = dataSource;
+        insightMetaData.metadata.dataSource = dataSource;
+        paramsTree.set(processMetadata, insightMetaData.metadata);
         processInfo.children?.forEach(threadInfo => {
-            paramsTree.set((threadInfo.metadata as ThreadMetaData), (processInfo.metadata as ProcessMetaData));
+            paramsTree.set((threadInfo.metadata as ThreadMetaData), processMetadata);
         });
     });
 }
@@ -50,7 +53,7 @@ function newLane (insightMetaData: InsightMetaData<any>): InsightUnit | undefine
                 processId: insightMetaData.metadata.processId,
                 processName: insightMetaData.metadata.processName,
                 label: insightMetaData.metadata.label,
-                remote: insightMetaData.remote,
+                dataSource: paramsTree.get(insightMetaData.metadata).dataSource,
             });
         }
         case 'thread': {
@@ -59,7 +62,7 @@ function newLane (insightMetaData: InsightMetaData<any>): InsightUnit | undefine
                 processId: paramsTree.get(insightMetaData.metadata).processId,
                 threadId: insightMetaData.metadata.threadId,
                 threadName: insightMetaData.metadata.threadName,
-                remote: insightMetaData.remote,
+                dataSource: paramsTree.get(insightMetaData.metadata).dataSource,
             });
             const chart = threadUnit.chart as ChartDesc<'stackStatus'>;
             chart.height = Math.max(insightMetaData.metadata.maxDepth * (chart.config as ChartConfig<'stackStatus'>).rowHeight, chart.height);
