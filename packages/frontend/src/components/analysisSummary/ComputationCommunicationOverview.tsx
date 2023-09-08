@@ -1,20 +1,20 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import * as echarts from 'echarts';
 import React, { useEffect, useState } from 'react';
-import Filter, { ConditionDataType } from './Filter';
-import StatisticsTable from './StatisticsTable';
-import { VoidFunction } from '../../utils/interface';
-import SummaryTable from './SummaryTable';
-import { queryTopSummary } from '../../utils/RequestUtils';
-import BaseInfo, { BaseInfoDataType, defaultBaseInfo } from './BaseInfo';
-import { addResizeEvent, COLOR, formatDate } from '../Common';
+import * as echarts from 'echarts';
 import { Tooltip } from 'antd';
 import { QuestionCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
 import { Session } from '../../entity/session';
-import { communicator, CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
+import { VoidFunction } from '../../utils/interface';
 import { useEventBus } from '../../utils/eventBus';
+import { queryTopSummary } from '../../utils/RequestUtils';
+import { addResizeEvent, COLOR, formatDate } from '../Common';
+import Filter, { ConditionDataType, defaultConditions } from './Filter';
+import StatisticsTable from './StatisticsTable';
+import SummaryTable from './SummaryTable';
+import BaseInfo, { BaseInfoDataType, defaultBaseInfo } from './BaseInfo';
+import { communicator, CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
 import PpBandwidthAnalysis from './PpBandwidthAnalysis';
 
 interface SummaryDataType{
@@ -236,47 +236,46 @@ export const hit = (<Tooltip title={
 </Tooltip>);
 
 const ComputationCommunicationOverview = ({ session, active }: { session: Session ;active: boolean}): JSX.Element => {
-    const [ groupData, setGroupData ] = useState({ rankList: [], stepList: [], init: false });
     const [ dataSource, setDatasource ] = useState<SummaryDataType[]>([]);
     const [ allDataSource, setAllDatasource ] = useState<SummaryDataType[]>([]);
-    const [ selected, setSelected ] = useState({ rankId: '', timeFlag: '' });
+    const [ selected, setSelected ] = useState({ rankId: '', step: '' });
     const [ baseInfo, setBaseInfo ] = useState<BaseInfoDataType>(defaultBaseInfo);
     useEffect(() => {
-        handleFilterChange({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 });
-    }, [ ]);
-    useEffect(() => {
         setTimeout(() => {
-            initCharts(dataSource, handleClick);
-        },
-        );
+            if (active) {
+                initCharts(dataSource, handleClick);
+            }
+            initBaseInfo();
+        });
     }, [ dataSource, active ]);
+    const initBaseInfo = async (): Promise<void> => {
+        const res: any = await queryTopSummary(defaultConditions);
+        setBaseInfo({ ...res.result, collectStartTime: formatDate(new Date(res.result.collectStartTime)) });
+    };
     const handleFilterChange = async (conditions: ConditionDataType, doQuery?: boolean): Promise<void> => {
         if (doQuery === false) {
             let data = [...allDataSource];
             data = data.slice(0, conditions.top);
             setDatasource(data);
+            setSelected({ ...selected, step: conditions.step, rankId: data[0]?.rankId });
             return;
         }
         const res: any = await queryTopSummary(conditions);
-        const { summaryList, rankList = [], stepList = [] } = res.result;
+        const { summaryList } = res.result;
         const data = [...summaryList];
         setAllDatasource(data);
-        setBaseInfo({ ...res.result, collectStartTime: formatDate(new Date(res.result.collectStartTime)) });
-        if (!groupData.init) {
-            setGroupData({ rankList, stepList, init: true });
-            setSelected({ ...selected, rankId: rankList[0] });
-        }
         setDatasource(conditions.top === 0 ? summaryList : summaryList.slice(0, conditions.top));
+        setSelected({ ...selected, step: conditions.step, rankId: data[0]?.rankId });
     };
 
     const handleClick = (param: any): void => {
-        const { name: rankId, seriesId: timeFlag } = param;
-        setSelected({ rankId, timeFlag });
+        const { name: rankId } = param;
+        setSelected({ ...selected, rankId });
     };
     return <OverviewCom baseInfo={baseInfo} handleFilterChange={handleFilterChange} session={session}
-        groupData={groupData} dataSource={dataSource} selected={selected}/>;
+        dataSource={dataSource} selected={selected}/>;
 };
-const OverviewCom = ({ baseInfo, handleFilterChange, groupData, dataSource, selected, session }: any): JSX.Element => {
+const OverviewCom = ({ baseInfo, handleFilterChange, dataSource, selected, session }: any): JSX.Element => {
     const [ pipelineVisible, setPipelineVisible ] = useState(true);
     useEventBus('activeCommunicator', (data) => {
         if (data === undefined) {
@@ -293,7 +292,7 @@ const OverviewCom = ({ baseInfo, handleFilterChange, groupData, dataSource, sele
         <div className={pipelineVisible ? 'hide' : ''}>
             <div>
                 <div className={'common-title-bottom'}>Computation/Communication Overview{hit}</div>
-                <Filter handleFilterChange={handleFilterChange} groupData={groupData} session={session} visible={!pipelineVisible}/>
+                <Filter handleFilterChange={handleFilterChange} session={session} visible={!pipelineVisible}/>
                 <div id={'overview-chart'} style={{ height: '400px' }} ></div>
             </div>
             <div style={{ padding: '0 3rem' }}>

@@ -7,9 +7,10 @@ import { Select } from 'antd';
 import { Label } from '../Common';
 import _ from 'lodash';
 import { communicator } from '../communicatorContainer/CommunicatorContainer';
+import { queryTopSummary } from '../../utils/RequestUtils';
 
 export interface ConditionDataType {
-    step: string | number;
+    step: string ;
     rankIds: string[];
     orderBy: string ;
     top: number;
@@ -47,14 +48,15 @@ const getTopOptions = (count: number): optionDataType[] => {
     return topOptions;
 };
 
+export const defaultConditions = { step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 };
+
 const Filter = observer((props: any) => {
-    const [ conditions, setConditions ] = useState<ConditionDataType>(
-        { step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 });
+    const [ conditions, setConditions ] = useState<ConditionDataType>(defaultConditions);
     const [ options, setOptions ] = useState<optionMapDataType>({});
     // 初始化
     useEffect(() => {
         initDefault();
-    }, [ props.groupData.init, props.session.communicatorData ]);
+    }, [props.session.communicatorData]);
     useEffect(() => {
         conditions.rankIds = _.find(options.groupOptions, item => item.value === conditions.group)?.data as string[];
         props.handleFilterChange(conditions);
@@ -72,7 +74,8 @@ const Filter = observer((props: any) => {
         const res = await window.request('parallelism/pipeline/getAllSteps', {});
         const stepList: string[] = res.data;
         const stepOptions: optionDataType[] = [ 'All', ...stepList ].map(item => ({ value: item, label: item }));
-        const rankIds: number[] = props.groupData.rankList;
+        const summaryRes: any = await queryTopSummary(conditions);
+        const { rankList = [] } = summaryRes.result;
         const communicators: communicator[] = [];
         _.filter(props.session.communicatorData.partitionModes, data => data.mode !== 'pp')
             .map(data => data.communicators).forEach((item) => {
@@ -87,9 +90,9 @@ const Filter = observer((props: any) => {
             key: value.name,
         }));
         const group = groupOptions.length > 0 ? groupOptions[0].value as string : '';
-        const topOptions = getTopOptions(rankIds.length);
+        const topOptions = getTopOptions(rankList.length);
         setOptions({ stepOptions, topOptions, groupOptions, orderOptions });
-        setConditions({ ...conditions, top: rankIds.length, group });
+        setConditions({ ...conditions, top: rankList.length, group });
     };
 
     const handleChange = (prop: keyof ConditionDataType, val: string | number | string[]): void => {

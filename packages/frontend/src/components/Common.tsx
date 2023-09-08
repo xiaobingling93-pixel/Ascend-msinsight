@@ -20,7 +20,7 @@ export const Container = (props: {title?: JSX.Element | string; content?: JSX.El
     if (props.type === 'headerfixed') {
         return <div className={'header-fixed-content-scroll'} style={{ ...(props.style ?? {}) }}>
             <div className={'container-header'}>{props.title}</div>
-            <div>{props.content}</div>
+            <div className={'container-body'}>{props.content}</div>
         </div>;
     }
     return <div className={'container-box'} style={{ height: '100%', ...(props.style ?? {}) }}>

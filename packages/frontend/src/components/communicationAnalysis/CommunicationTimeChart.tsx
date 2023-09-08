@@ -178,7 +178,9 @@ export interface dataType{
 const CommunicationTimeChart = observer(function (props: {dataSource: dataType;active: boolean}) {
     useEffect(() => {
         setTimeout(() => {
-            InitCharts(props.dataSource);
+            if (props.active) {
+                InitCharts(props.dataSource);
+            }
         });
     }, [ props.dataSource, props.active ]);
     return (
