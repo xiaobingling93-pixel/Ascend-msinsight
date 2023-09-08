@@ -74,7 +74,7 @@ export const towingImportHandler = async (request: ImportRequest, client: Client
     }
 
     if (isInFolder) {
-        if (isLast) {
+        if (isLast && (!isSliced || (isSliced && sliceIndex === request.slice.count))) {
             logger.info('开始解析文件');
             return await parseFile(downLoadPath, client);
         }
