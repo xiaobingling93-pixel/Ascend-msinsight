@@ -82,15 +82,6 @@ bool TraceDatabase::InitProcessThreadStmt()
         ServerLog::Error("Failed to prepare updateThreadSortIndex statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sql = "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" +
-          " VALUES (?,?,?,round(? * 1000),?,?)";
-    for (int i = 0; i < cacheSize - 1; ++i) {
-        sql.append(",(?,?,?,round(? * 1000),?,?)");
-    }
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertFlowStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare insertFlow statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
     return true;
 }
 

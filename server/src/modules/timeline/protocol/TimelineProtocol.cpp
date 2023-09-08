@@ -49,7 +49,11 @@ std::unique_ptr<Request> TimelineProtocol::ToImportActionRequest(const json_t &j
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.path, json["params"], "path");
+    if (json["params"].contains("path") && json["params"]["path"].is_array()) {
+        for (const auto &path : json["params"]["path"]) {
+            reqPtr->params.path.emplace_back(path);
+        }
+    }
     return reqPtr;
 }
 

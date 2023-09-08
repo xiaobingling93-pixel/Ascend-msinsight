@@ -42,11 +42,12 @@ public:
 protected:
     std::mutex mutex;
     using JsonToRequestFunc = std::function<std::unique_ptr<Request>(const json_t &, std::string &error)>;
-    std::map<std::string, JsonToRequestFunc> jsonToReqFactory;
     using ResponseToJsonFunc = std::function<std::optional<json_t>(const Response &)>;
-    std::map<std::string, ResponseToJsonFunc> resToJsonFactory;
     using EventToJsonFunc = std::function<std::optional<json_t>(const Event &)>;
+    std::map<std::string, JsonToRequestFunc> jsonToReqFactory;
+    std::map<std::string, ResponseToJsonFunc> resToJsonFactory;
     std::map<std::string, EventToJsonFunc> eventToJsonFactory;
+
 private:
     virtual void RegisterJsonToRequestFuncs() = 0;
     virtual void RegisterResponseToJsonFuncs() = 0;
@@ -54,12 +55,10 @@ private:
 
     // request
     static bool IsRequest(const json_t &jsonRequest);
-    static std::string Command(const json_t &jsonRequest) ;
+    static std::string Command(const json_t &jsonRequest);
     std::optional<JsonToRequestFunc> GetJsonToRequestFunc(const std::string &command);
-
     // response
     std::optional<ResponseToJsonFunc> GetResponseToJsonFunc(const std::string &command);
-
     // event
     std::optional<EventToJsonFunc> GetEventToJsonFunc(const std::string &event);
 };
