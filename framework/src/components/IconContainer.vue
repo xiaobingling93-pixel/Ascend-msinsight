@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { defineProps } from 'vue';
-defineProps<{ width: number }>();
+defineProps<{ width: number; boxShadow?: string }>();
 </script>
 
 <template>
-    <div class="icon-container" :style="`width: ${width}rem`">
+    <div class="icon-container" :style="{ width: `${width}rem`, boxShadow: `${boxShadow}` }">
         <slot></slot>
     </div>
 </template>
@@ -17,5 +17,9 @@ defineProps<{ width: number }>();
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.icon-container:hover {
+    background-color: var(--color-background-medium);
 }
 </style>

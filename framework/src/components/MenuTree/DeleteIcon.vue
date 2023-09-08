@@ -5,6 +5,6 @@ import { indent } from './types';
 </script>
 <template>
     <IconContainer :width="indent">
-        <BinIcon></BinIcon>
+        <BinIcon/>
     </IconContainer>
 </template>

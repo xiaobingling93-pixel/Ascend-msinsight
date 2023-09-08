@@ -1,41 +1,51 @@
 import { CONTENT_LENGTH_PREFIX, isResponse, PORT } from './defs';
-import type { DataRequest, ModuleName, Notification, Response, Request, ResponseHandler } from './defs';
+import type { DataRequest, ModuleName, DataSource, Notification, Response, Request, ResponseHandler } from './defs';
+import connector from '@/connection';
 
 const createRequestHead = function (
     id: number,
     module: string,
     command: string,
     args: Request['params'],
+    token?: string
 ): Request {
     return {
         id,
         moduleName: module,
         type: 'request',
         command,
-        params: args,
+        params: { token, ...args },
     };
 };
 
 export class Connection {
     private _ws: WebSocket | undefined;
-    private _remote: string;
+    private _dataSource: DataSource;
     private _msgId: number = 0;
     private readonly _responseHandlers: Map<number, ResponseHandler> = new Map();
     private _token?: string;
     private _fetchFlag: boolean = true;
 
-    constructor(remote: string) {
-        console.log('[connector]', 'init');
+    constructor(dataSource: DataSource) {
+        console.info('[connector]', 'init');
         if (this._ws !== undefined) {
             // wedge: close and release the old websocket
         }
         this._msgId = 0;
-        this._ws = new WebSocket('ws://' + remote);
-        this._remote = remote;
+        this._ws = new WebSocket(`ws://${dataSource.remote}:${dataSource.port}`);
+        this._dataSource = dataSource;
     }
 
     async reset(): Promise<void> {
-        console.log('[connector]', 'reset');
+        console.info('[connector]', 'reset');
+    }
+
+    disconnect(): void {
+        if (!this._ws) {
+            new Error('connection is not initialized');
+            return;
+        }
+        this._ws.close()
     }
 
     async connect(): Promise<void> {
@@ -46,7 +56,7 @@ export class Connection {
                 return;
             }
             this._ws.onopen = (ev: Event) => {
-                console.log('[connector]', 'onopen');
+                console.info('[connector]', 'onopen');
                 // token Create
                 const msg: Request = createRequestHead(0, 'global', 'token.create', { token: '' });
                 msg.params.deadTime = -1;
@@ -90,10 +100,11 @@ export class Connection {
                 module,
                 dataRequest.command,
                 dataRequest.params,
+                this._token
             );
             this.request(msg);
             const reqCallback = (res: Response): void => {
-                console.log('[connector]', 'received:', res);
+                console.info('[connector]', 'received:', res);
                 if (res.result && res.body !== undefined) {
                     // wedge: return cache resolve
                     resolve(res.body);
@@ -125,14 +136,8 @@ export class Connection {
 
         // handle notifications
         if (!isResponse(msg)) {
-            msg.remote = this._remote;
-            const iframe = document.querySelector('iframe') as HTMLIFrameElement;
-            iframe.contentWindow?.postMessage(
-                {
-                    msg,
-                },
-                '*',
-            );
+            msg.dataSource = this._dataSource;
+            connector.send(msg);
             return;
         }
 

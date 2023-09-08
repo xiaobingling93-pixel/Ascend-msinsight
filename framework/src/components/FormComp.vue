@@ -3,21 +3,34 @@ import { ref } from 'vue';
 import Button from '@/components/ButtonComp.vue';
 import DeleteIcon from '@/components/icons/bin_icon.vue';
 import AddIcon from '@/components/icons/cross_icon.vue';
+import { useDataSources } from '@/stores';
+import type { FormItemData } from '@/stores';
 const defaultValue = 'Please enter';
-const inputs = ref([defaultValue]);
+const inputs = ref<FormItemData[]>([{ value: '', status: 'wait' }]);
+const remote: FormItemData = { value: '', status: 'wait' };
+const port: FormItemData = { value: '', status: 'wait' };
+
+const store = useDataSources();
+
+store.add({
+    remote: remote,
+    port,
+    dataPath: inputs.value,
+});
 
 const buttonAttrs = {
     borderRadius: '50%',
     width: '2rem',
-    height: '2rem'
-}
+    height: '2rem',
+};
 
 function deleteInput(index: number) {
     inputs.value.splice(index, 1);
-};
+}
 
 function addInput() {
-    inputs.value.push(defaultValue);
+    inputs.value.push({ value: '', status: 'wait' });
+    console.log(inputs, remote, port);
 }
 </script>
 
@@ -26,22 +39,40 @@ function addInput() {
         <div class="form-row">
             <div class="form-col">
                 <label for="ip">IP:</label>
-                <input id="ip" type="text" :placeholder="defaultValue" />
+                <input
+                    id="ip"
+                    type="text"
+                    v-model="remote.value"
+                    :placeholder="defaultValue"
+                    :class="remote.status !== 'wait' ? `input-${remote.status}` : ''"
+                />
             </div>
             <div class="form-col">
                 <label for="port">port:</label>
-                <input id="port" type="text" :placeholder="defaultValue" />
+                <input
+                    id="port"
+                    type="text"
+                    :placeholder="defaultValue"
+                    v-model="port.value"
+                    :class="port.status !== 'wait' ? `input-${port.status}` : ''"
+                />
             </div>
         </div>
         <div v-for="(input, index) in inputs" :key="index" class="form-row">
             <div class="form-col dynamic-line">
                 <label for="data-path">DataPath:</label>
-                <input id="data-path" type="text" :placeholder="input" />
+                <input
+                    id="data-path"
+                    type="text"
+                    :placeholder="defaultValue"
+                    v-model="input.value"
+                    :class="input.status !== 'wait' ? `input-${input.status}` : ''"
+                />
                 <Button :click="addInput" v-if="index === inputs.length - 1" :style="buttonAttrs">
-                    <AddIcon/>
+                    <AddIcon />
                 </Button>
                 <Button :click="deleteInput" v-else :type="'cancel'" :style="buttonAttrs">
-                    <DeleteIcon/>
+                    <DeleteIcon />
                 </Button>
             </div>
         </div>
@@ -51,6 +82,24 @@ function addInput() {
 <style scoped>
 label {
     margin-right: 1rem;
+}
+
+.form {
+    --outline-color: #1890ff;
+}
+
+.form .input-error {
+    --outline-color: #ff4d4f;
+    box-shadow:
+        var(--outline-color) 1px 1px 5px 1px,
+        var(--outline-color) -1px -1px 5px 1px;
+}
+
+.form .input-success {
+    --outline-color: #98e273;
+    box-shadow:
+        var(--outline-color) 1px 1px 5px 1px,
+        var(--outline-color) -1px -1px 5px 1px;
 }
 
 .form-row {
@@ -80,7 +129,7 @@ label {
         flex-direction: row;
         margin-bottom: 1rem;
     }
-    
+
     .form-col {
         width: unset;
         margin-bottom: 0;
@@ -100,8 +149,9 @@ input[type='text'] {
 
 input[type='text']:focus {
     outline: none;
+    --outline-color: #1890ff;
     box-shadow:
-        #1890ff 1px 1px 5px 1px,
-        #1890ff -1px -1px 5px 1px;
+        var(--outline-color) 1px 1px 5px 1px,
+        var(--outline-color) -1px -1px 5px 1px;
 }
 </style>

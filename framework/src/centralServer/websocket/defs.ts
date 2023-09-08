@@ -12,6 +12,7 @@ export type Request = {
     moduleName: string;
     params: Record<string, unknown>;
     command: string;
+    token?: string;
 };
 
 export type Response<T = Record<string, unknown>> = {
@@ -28,7 +29,7 @@ export type Response<T = Record<string, unknown>> = {
 };
 
 export type Notification<T = Record<string, unknown>> = {
-    remote?: string;
+    dataSource?: DataSource;
     moduleName: ModuleName;
     event: string;
     body: T;
@@ -38,8 +39,9 @@ export type NotificationRegistration = { moduleName: ModuleName; callBack: Funct
 
 export type ModuleName = string;
 
-export type Remote = {
+export type DataSource = {
     remote: string;
+    port: number;
     dataPath: string[];
 };
 

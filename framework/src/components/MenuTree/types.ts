@@ -5,4 +5,4 @@ export type TreeNodeType = {
     origin?: TreeNodeType[];
 };
 
-export const indent = 1.5;
+export const indent = 1.2;

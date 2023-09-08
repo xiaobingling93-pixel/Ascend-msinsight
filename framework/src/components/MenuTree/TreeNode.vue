@@ -4,17 +4,22 @@ import type { TreeNodeType } from './types';
 import Expand from './ExpandIcon.vue';
 import Delete from './DeleteIcon.vue';
 import { indent } from './types';
+import { useDataSources } from '@/stores';
 
 const props = defineProps<{ data: TreeNodeType; tier: number }>();
 let isExpanded = ref(true);
 const hasExpandIcon = props.data.children && props.data.children.length !== 0;
 const occupy = hasExpandIcon ? 0 : 1;
 const nextTier = props.tier + 1;
+
+const store = useDataSources();
+
 const handleClick = () => {
     isExpanded.value = !isExpanded.value;
 };
 const handleDelete = () => {
-    console.log('delete');
+    const current = store.menuTree.findIndex(data => data === props.data);
+    store.remove(current);
 };
 </script>
 <template>
@@ -31,8 +36,7 @@ const handleDelete = () => {
             :key="`${item}-${index}`"
             :data="item"
             :tier="nextTier"
-        >
-        </TreeNode>
+        />
     </template>
 </template>
 <style scoped>

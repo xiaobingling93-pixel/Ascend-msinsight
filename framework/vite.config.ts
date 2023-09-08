@@ -1,14 +1,17 @@
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
+import { viteSingleFile } from 'vite-plugin-singlefile';
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '',
   plugins: [
     vue(),
     vueJsx(),
+    viteSingleFile()
   ],
   resolve: {
     alias: {
@@ -19,11 +22,12 @@ export default defineConfig({
       '@plugins': fileURLToPath(new URL('./plugins', import.meta.url)),
       '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
       '@router': fileURLToPath(new URL('./src/router/index.ts', import.meta.url)),
-      '@centralServer': fileURLToPath(new URL('./src/centralServer/server.ts', import.meta.url)),
+      '@stores': fileURLToPath(new URL('./src/stores/index.ts', import.meta.url)),
+      '@centralServer': fileURLToPath(new URL('./src/centralServer', import.meta.url)),
       '@assets': fileURLToPath(new URL('./src/assets', import.meta.url))
     }
   },
   build: {
-    manifest: true
+    manifest: true,
   }
 })

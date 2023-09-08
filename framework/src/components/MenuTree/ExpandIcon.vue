@@ -8,6 +8,6 @@ defineProps<{ isExpanded: boolean }>();
 </script>
 <template>
     <IconContainer :width="indent">
-        <ArrowIcon :transform="`rotate(${isExpanded ? 0 : -90})`"></ArrowIcon>
+        <ArrowIcon :transform="`rotate(${isExpanded ? 0 : -90})`"/>
     </IconContainer>
 </template>
