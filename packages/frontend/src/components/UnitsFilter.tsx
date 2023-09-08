@@ -260,7 +260,7 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], inputValue: string): void =>
         if ((unit.metadata as ProcessMetaData).processName === inputValue) {
             setUnitDislay(unit);
         }
-    })
+    });
 };
 
 const setAllUnitsDisplay = (session: Session): void => {
