@@ -3,6 +3,7 @@ import { defineStore } from 'pinia';
 import type { DataSource } from '@/centralServer/websocket/defs';
 import type { TreeNodeType } from '@/components/MenuTree/types';
 import { connectRemote, disconnectRemote } from '@/centralServer/server';
+import connector from '@/connection';
 
 export type FormItemData = { value: string; status: 'wait' | 'error' | 'success' };
 type FormDataSource = {
@@ -35,7 +36,6 @@ const validateAll = (formData: FormDataSource): boolean => {
             (formData[key as keyof FormDataSource] as FormItemData).status = 'success';
         }
     }
-    console.log(res);
     return res;
 }
 
@@ -67,16 +67,11 @@ export const useDataSources = defineStore('dataSources', () => {
     function remove(index: number) {
         menuTree.value.splice(index, 1);
         disconnectRemote(dataSources.value[index]);
-        const iframe = document.querySelector('iframe') as HTMLIFrameElement;
-        console.log(dataSources.value[index]);
-        iframe.contentWindow?.postMessage(
-            {
-                event: 'remote/remove',
-                dataSource: JSON.stringify(dataSources.value[index]),
-                body: '',
-            },
-            '*',
-        );
+        connector.send({
+            event: 'remote/remove',
+            dataSource: dataSources.value[index],
+            body: ''
+        });
         dataSources.value.splice(index, 1);
     }
 

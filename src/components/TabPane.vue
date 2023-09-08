@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { watch, ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { request } from '@/centralServer/server';
-import type { DataRequest, DataSource } from '@/centralServer/websocket/defs';
+import connector from '@/connection';
 
 const localPaths = [ './plugins/Timeline/index.html' ];
 
@@ -11,13 +11,14 @@ const getModuleName = (index: number): string => {
 
 const currentPath = ref(0);
 const moduleRef = ref();
-watch(currentPath, () => {
-    const moduleDom = moduleRef.value;
-    moduleDom.onload = () => {
-        if (moduleDom.contentWindow) {
-            moduleDom.contentWindow.request = (remote: DataSource, args: DataRequest) => request(remote, getModuleName(currentPath.value).toLowerCase(), args);
-        }
-    };
+
+onMounted(() => {
+    connector.addListener(async (e) => {
+        if (e.data.event !== 'request') { return; }
+        const { remote, args, id } = e.data;
+        const result = await request(remote, getModuleName(currentPath.value).toLowerCase(), args);
+        connector.send({ event: 'request', dataSource: remote, body: result, id });
+    });
 });
 
 function toggleTab(index: number): void {
