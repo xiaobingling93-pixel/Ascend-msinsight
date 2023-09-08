@@ -116,3 +116,17 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_COMMUNICATION_PROTOCOL_SRC})
 
 add_subdirectory(entry)
+if (${_PROJECT_TYPE} MATCHES "test")
+    enable_testing()
+    set(CMAKE_C_FLAGS_PROFILE --coverage)
+    set(CMAKE_CXX_FLAGS_PROFILE --coverage)
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
+    add_subdirectory(${HOME_DIR}/third_party/googletest googletest.out EXCLUDE_FROM_ALL)
+    add_subdirectory(test)
+elseif ($ENV{DEV_TYPE} MATCHES "true")
+
+    enable_testing()
+    add_subdirectory(${HOME_DIR}/third_party/googletest googletest.out EXCLUDE_FROM_ALL)
+    add_subdirectory(test)
+endif()

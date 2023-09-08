@@ -7,6 +7,8 @@
 
 #include <string>
 #include <dirent.h>
+#include "regex"
+#include <fstream>
 
 #if defined(_WIN32)
 
