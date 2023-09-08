@@ -19,7 +19,7 @@ public:
     ~SummaryRequestHandler() override = default;
     void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override {}
 };
-} // end of namespace Timeline
+} // end of namespace Summary
 } // end of namespace Module
 } // end of namespace Dic
 

@@ -22,6 +22,8 @@ public:
     };
     ~SummaryTopRankHandler() override = default;
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+private:
+    int numberThousands = 1000;
 };
 } // end of namespace Timeline
 } // end of namespace Module

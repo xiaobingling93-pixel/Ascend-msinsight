@@ -1074,7 +1074,7 @@ bool TraceDatabase::CommitData()
             sqlite3_bind_int64(stmt, index++, min);
             sqlite3_bind_int64(stmt, index, max);
         }
-        std::string sql = "select duration, t.thread_name as overlapType from (select sum(duration) as duration,"
+        std::string sql = "select duration / 1000, t.thread_name as overlapType from (select sum(duration) as duration,"
                           " track_id from" + sliceTable +
                           " where track_id in (select track_id from thread where thread_name "
                           " in ('Communication(Not Overlapped)', 'Communication'))"

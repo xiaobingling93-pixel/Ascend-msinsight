@@ -47,7 +47,7 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
         std::vector<std::string> tokens(std::sregex_token_iterator(line.begin(), line.end(), pattern, -1),
                                         std::sregex_token_iterator());
         if (tokens[0] != "Step") {
-            Cluster::StepStatistic statistic = MapToStepStatistic(tokens);
+            StepStatistic statistic = MapToStepStatistic(tokens);
             database->InsertStepStatisticsInfo(statistic);
         }
     }
@@ -59,7 +59,7 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
 
 void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
 {
-    Cluster::ClusterBaseInfo baseInfo;
+    ClusterBaseInfo baseInfo;
     FileUtil::CalculateDirSize(selectedPath, baseInfo.dataSize, 0);
     baseInfo.filePath = selectedPath;
     baseInfo.collectDuration = 0;
@@ -104,9 +104,9 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     return true;
 }
 
-Cluster::StepStatistic ClusterFileParser::MapToStepStatistic(std::vector<std::string> tokens)
+StepStatistic ClusterFileParser::MapToStepStatistic(std::vector<std::string> tokens)
 {
-    Cluster::StepStatistic statistic;
+    StepStatistic statistic;
     int index = 0;
     statistic.stepId = tokens[index++];
     std::string flag = tokens[index++];

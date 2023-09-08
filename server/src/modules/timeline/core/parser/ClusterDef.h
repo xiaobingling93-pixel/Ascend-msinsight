@@ -13,8 +13,6 @@
 
 namespace Dic {
 namespace Module {
-namespace Timeline {
-namespace Cluster {
 struct CommunicationTimeInfo {
     std::string iterationId;
     std::string stageId;
@@ -65,8 +63,6 @@ struct ClusterBaseInfo {
     double collectDuration;
     long long dataSize  =  0;
 };
-} // end of namespace Cluster
-} // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H

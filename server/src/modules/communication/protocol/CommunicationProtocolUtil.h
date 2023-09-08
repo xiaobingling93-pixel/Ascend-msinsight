@@ -1,0 +1,22 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ */
+
+#ifndef PROFILER_SERVER_COMMUNICATION_PROTOCOL_UTIL_H
+#define PROFILER_SERVER_COMMUNICATION_PROTOCOL_UTIL_H
+
+#include <optional>
+#include "GlobalDefs.h"
+#include "CommunicationProtocolResponse.h"
+
+namespace Dic {
+namespace Protocol {
+// response
+template <typename RESPONSE> std::optional<json_t> ToResponseJson(const RESPONSE &response);
+template <> std::optional<json_t> ToResponseJson<OperatorDetailsResponse>(const OperatorDetailsResponse &response);
+template <> std::optional<json_t> ToResponseJson<DistributionResponse>(const DistributionResponse &response);
+template <> std::optional<json_t> ToResponseJson<BandwidthDataResponse>(const BandwidthDataResponse &response);
+} // end of namespace Protocol
+} // end of namespace Dic
+
+#endif // PROFILER_SERVER_COMMUNICATION_PROTOCOL_UTIL_H

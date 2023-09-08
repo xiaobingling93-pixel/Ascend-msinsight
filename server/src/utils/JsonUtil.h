@@ -25,6 +25,13 @@ public:
         }
     }
 
+    template <typename T> static inline void SetByJsonKeyArrayValue(T &src, const json_t &json, const std::string &key)
+    {
+        if (json.contains(key) && !json[key].is_null()) {
+            src =  json[key].get<std::vector<std::string>>();
+        }
+    }
+
     template <typename T> static inline void SetByOptionalValue(const T &src, json_t &json, const std::string &key)
     {
         if (src.has_value()) {

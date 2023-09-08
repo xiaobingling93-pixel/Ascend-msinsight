@@ -94,14 +94,14 @@ bool CommunicationSaxHandler::end_object()
     currentDepth--;
     if (currentDepth == infoDepth && "Communication Bandwidth Info" == tableFlag) {
         Server::ServerLog::Debug("save Communication Bandwidth Info:", currentObject);
-        Cluster::CommunicationBandWidth bandWidth = MapToBandwidth(currentObject);
+        CommunicationBandWidth bandWidth = MapToBandwidth(currentObject);
         database->InsertBandwidth(bandWidth);
         currentObject = nlohmann::json({});
     }
 
     if (currentDepth == tableFlagDepth && "Communication Time Info" == tableFlag) {
         Server::ServerLog::Debug("save Communication Time Info:", currentObject);
-        Cluster::CommunicationTimeInfo timeInfo = MapToTimeInfo(currentObject);
+        CommunicationTimeInfo timeInfo = MapToTimeInfo(currentObject);
         database->InsertTimeInfo(timeInfo);
         currentObject = nlohmann::json({});
     }
@@ -148,9 +148,9 @@ bool CommunicationSaxHandler::parse_error(std::size_t position, const std::strin
     return false;
 }
 
-Cluster::CommunicationBandWidth CommunicationSaxHandler::MapToBandwidth(const json_t &json)
+CommunicationBandWidth CommunicationSaxHandler::MapToBandwidth(const json_t &json)
 {
-    Cluster::CommunicationBandWidth bandWidth;
+    CommunicationBandWidth bandWidth;
     bandWidth.stageId = stageId;
     bandWidth.iterationId = stepId;
     bandWidth.rankId = rankId;
@@ -169,9 +169,9 @@ Cluster::CommunicationBandWidth CommunicationSaxHandler::MapToBandwidth(const js
     return bandWidth;
 }
 
-Cluster::CommunicationTimeInfo CommunicationSaxHandler::MapToTimeInfo(const json_t &json)
+CommunicationTimeInfo CommunicationSaxHandler::MapToTimeInfo(const json_t &json)
 {
-    Cluster::CommunicationTimeInfo timeInfo;
+    CommunicationTimeInfo timeInfo;
     timeInfo.rankId = rankId;
     timeInfo.iterationId = stepId;
     timeInfo.stageId = stageId;

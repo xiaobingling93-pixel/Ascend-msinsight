@@ -22,6 +22,10 @@ void SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     ServerLog::Info("request to summaryHandler");
     SummaryTopRankRequest &request = dynamic_cast<SummaryTopRankRequest &>(*requestPtr.get());
     std::string token = request.token;
+    if (!WsSessionManager::Instance().CheckSession(token)) {
+        ServerLog::Error("Failed to check session token  , command = ", command);
+        return;
+    }
     std::unique_ptr<SummaryTopRankResponse> responsePtr = std::make_unique<SummaryTopRankResponse>();
     SummaryTopRankResponse &response = *responsePtr.get();
     std::vector<std::string> timeFlagVector = {"computingTime", "communicationNotOverLappedTime",
@@ -32,8 +36,9 @@ void SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
         request.params.orderBy = "computingTime";
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
-    response.body.collectStartTime = Timeline::TraceTime::Instance().GetStartTime();
-    response.body.collectDuration = Timeline::TraceTime::Instance().GetDuration();
+    response.body.collectStartTime =
+            Timeline::TraceTime::Instance().GetStartTime() / (numberThousands * numberThousands);
+    response.body.collectDuration = Timeline::TraceTime::Instance().GetDuration() / numberThousands;
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
     if (!database->QuerySummaryData(request.params, response.body)) {
         SetResponseResult(response, false);

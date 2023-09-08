@@ -20,7 +20,7 @@ public:
     void ParseStepStatisticsFile(const std::vector<std::string> &filePathList);
     void SaveClusterBaseInfo(const std::string& selectedPath);
 private:
-    Cluster::StepStatistic MapToStepStatistic(std::vector<std::string> tokens);
+    StepStatistic MapToStepStatistic(std::vector<std::string> tokens);
 };
 } // end of namespace Timeline
 } // end of namespace Module

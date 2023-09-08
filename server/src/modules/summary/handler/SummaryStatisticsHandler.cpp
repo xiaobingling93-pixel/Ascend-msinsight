@@ -22,6 +22,10 @@ void SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     Protocol::SummaryStatisticRequest &request =
             dynamic_cast<Protocol::SummaryStatisticRequest &>(*requestPtr.get());
     std::string token = request.token;
+    if (!WsSessionManager::Instance().CheckSession(token)) {
+        ServerLog::Error("Failed to check session token  , command = ", command);
+        return;
+    }
     std::unique_ptr<Protocol::SummaryStatisticsResponse> responsePtr =
             std::make_unique<Protocol::SummaryStatisticsResponse>();
     SummaryStatisticsResponse &response = *responsePtr.get();
@@ -45,6 +49,6 @@ void SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     }
     session.OnResponse(std::move(responsePtr));
 }
-} // Timeline
+} // Summary
 } // Module
 } // Dic

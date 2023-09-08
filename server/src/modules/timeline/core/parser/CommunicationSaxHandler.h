@@ -35,8 +35,8 @@ public:
     bool parse_error(std::size_t position, const std::string &last_token,
                      const nlohmann::detail::exception &ex) override;
 
-    Cluster::CommunicationBandWidth MapToBandwidth(const json_t &json);
-    Cluster::CommunicationTimeInfo MapToTimeInfo(const json_t &json);
+    CommunicationBandWidth MapToBandwidth(const json_t &json);
+    CommunicationTimeInfo MapToTimeInfo(const json_t &json);
 
 private:
     float tempFloat;
