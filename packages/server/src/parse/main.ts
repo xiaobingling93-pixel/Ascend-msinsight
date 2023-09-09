@@ -9,6 +9,7 @@ const defaultReadSize = 1024 * 1024 * 50;
 const parseTaskCount = new Map<string, number>(); // rankId, task count
 const callbackMap = new Map<string, Function>(); // rankId, callback
 const threadPool = new ThreadPool(parseWorkerEnd);
+let depthTaskCount = 0;
 
 export function parse(filePath: string, rankId: string, callback?: (rankId: string, err?: Error) => void): void {
     if (callback) {
@@ -61,12 +62,16 @@ async function parseWorkerEnd(message: EndMessage): Promise<void> {
     const unfinishedTaskCount = parseTaskCount.get(message.rankId) as number;
     console.log(`parseFileEnd. rankId:${message.rankId}, count: ${unfinishedTaskCount}`);
     if (unfinishedTaskCount - 1 === 0) {
-        parseTaskCount.delete(message.rankId);
+        depthTaskCount++;
+        console.log('depthTaskCount++:', depthTaskCount);
         const table = tableMap.get(message.rankId) as Table;
         await table.creatIndex();
         await table.updateDepth();
         console.log(`parse end. rankId:${message.rankId}`);
         parseCallback(message.rankId);
+        parseTaskCount.delete(message.rankId);
+        depthTaskCount--;
+        console.log('depthTaskCount--:', depthTaskCount);
     } else {
         parseTaskCount.set(message.rankId, unfinishedTaskCount - 1);
     }
@@ -100,7 +105,25 @@ function parseCallback(rankId: string, err?: Error): void {
 }
 
 export async function terminateParse(): Promise<void> {
-    parseTaskCount.clear();
-    callbackMap.clear();
-    await threadPool.terminateAllTask();
+    return new Promise(resolve => {
+        // 删除未解析完的任务
+        console.log('terminateParse');
+        for (const [ key, value ] of parseTaskCount) {
+            if (value !== 1) {
+                parseTaskCount.delete(key);
+            }
+        }
+        threadPool.terminateAllTask().then(async () => {
+            parseTaskCount.clear();
+            callbackMap.clear();
+            while (true) {
+                if (depthTaskCount === 0) {
+                    console.log('terminateAllTask');
+                    resolve();
+                    break;
+                }
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+        });
+    });
 }
