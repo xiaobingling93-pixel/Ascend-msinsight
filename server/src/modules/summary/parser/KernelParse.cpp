@@ -24,6 +24,16 @@ KernelParse::KernelParse()
     threadPool = std::make_unique<ThreadPool>(KernelParse::maxThreadNum);
 }
 
+void KernelParse::StringSplit(const std::string& str, std::vector<std::string>& res)
+{
+    std::regex regex(R"(,(?=(?:[^"]*"[^"]*")*[^"]*$))"); // 正则表达式,用于匹配逗号（,）但是排除在引号（“）内的逗号
+    std::sregex_token_iterator pos(str.begin(), str.end(), regex, -1);
+    decltype(pos) end;              // 自动推导类型
+    for (; pos != end; ++pos) {
+        res.push_back(pos->str());
+    }
+}
+
 bool KernelParse::KernelFileParse(const std::string &filePath, const std::string &fileId)
 {
     ServerLog::Info("start parse kernel detail.");
@@ -33,12 +43,10 @@ bool KernelParse::KernelFileParse(const std::string &filePath, const std::string
     std::map<std::string, std::int16_t> dataMap;
     auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId);
     while (getline(file, line)) {
-        std::stringstream ss(line);
+        std::basic_string<char> ss(line);
         std::vector<std::string> row;
         std::string cell;
-        while (getline(ss, cell, ',')) {
-            row.push_back(cell);
-        }
+        StringSplit(ss, row);
         if (row[0] == "Step Id" or row[0] == "Model ID") {
             for (int i = 0; i < row.size(); i++) {
                 dataMap[row[i]] = i;
@@ -114,7 +122,9 @@ bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::st
                 future.wait();
             }
             ServerLog::Info("Parse completed. ID:", fileId);
-            KernelFileParse(filePath, fileId);
+            if (!KernelFileParse(filePath, fileId)) {
+                ServerLog::Info("Parse kernel detail table failed.");
+            }
             ServerLog::Info("Update depth completed. ID:", fileId);
         });
         futureMap.emplace(fileId, std::move(future));

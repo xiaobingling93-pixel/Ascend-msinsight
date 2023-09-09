@@ -37,6 +37,7 @@ private:
     Kernel mapperToKernelDetail(std::map<std::string, int16_t> dataMap, std::vector<std::string> row);
 
     bool WaitParseEnd(const std::string &fileId);
+    void StringSplit(const std::string& str, std::vector<std::string>& res);
 };
 
 } // end of namespace Summary
