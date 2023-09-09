@@ -19,7 +19,8 @@ export class InsightConnection {
         this._msgId = 0;
         this._responseHandlers.clear();
         const port = await this.findServerPort();
-        this._ws = new WebSocket(`ws://localhost:${port}`);
+        const hostname = window.location.hostname;
+        this._ws = new WebSocket(`ws://${hostname}:${port}`);
     }
 
     async connect(): Promise<void> {
