@@ -195,8 +195,10 @@ function checkUsable (list: UploadFileDataType[]): {
     let totalSize = 0;
     const usableList: UploadFileDataType[] = [];
     list.forEach((fileInfo: UploadFileDataType) => {
-        totalSize += fileInfo.file.size;
-        usableList.push(fileInfo);
+        if (checkFileName(fileInfo.info.name)) {
+            totalSize += fileInfo.file.size;
+            usableList.push(fileInfo);
+        }
     });
     usableList.forEach((fileInfo: UploadFileDataType, index: number) => {
         fileInfo.info.index = index + 1;
@@ -294,7 +296,10 @@ function readFile(fileInfo: any, i = 1): Promise<any> {
                         {
                             isBinary: true,
                             buffer,
-                            params: { ...fileInfo.info, slice: { isSliced: count > 1, index: i, count } },
+                            params: {
+                                ...fileInfo.info,
+                                slice: { isSliced: count > 1, index: i, count, isLast: count <= 1 || i === count },
+                            },
                         }).then(res => {
                         if (i >= count) {
                             resolve({ succeed: true, info: fileInfo.info, res });
