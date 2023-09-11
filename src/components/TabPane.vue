@@ -13,11 +13,10 @@ const currentPath = ref(0);
 const moduleRef = ref();
 
 onMounted(() => {
-    connector.addListener(async (e) => {
-        if (e.data.event !== 'request') { return; }
-        const { remote, args, id } = e.data;
+    connector.resigsterAwaitFetch(async (e) => {
+        const { remote, args } = e.data;
         const result = await request(remote, getModuleName(currentPath.value).toLowerCase(), args);
-        connector.send({ event: 'request', dataSource: remote, body: result, id });
+        return { dataSource: remote, body: result };
     });
 });
 

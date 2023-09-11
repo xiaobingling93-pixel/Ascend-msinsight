@@ -30,7 +30,6 @@ function deleteInput(index: number) {
 
 function addInput() {
     inputs.value.push({ value: '', status: 'wait' });
-    console.log(inputs, remote, port);
 }
 </script>
 
