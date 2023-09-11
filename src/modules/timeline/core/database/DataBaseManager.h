@@ -23,6 +23,7 @@ public:
 
     TraceDatabase *GetTraceDatabase(const std::string &fileId);
     std::vector<TraceDatabase *> GetAllTraceDatabase();
+    std::vector<std::string> GetAllFileId();
     void Clear();
     void ReleaseTraceDatabase(const std::string &fileId);
     bool HasFileId(const std::string &fileId);

@@ -34,7 +34,7 @@ public:
     bool InsertFlow(const Trace::Flow &event);
     bool InsertSliceList(const std::vector<Trace::Slice> &eventList);
     bool InsertFlowList(const std::vector<Trace::Flow> &eventList);
-    bool CommitData();
+    void CommitData();
     void UpdateDepth();
 
     // search
@@ -51,6 +51,8 @@ public:
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max);
     bool QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody,
                        uint64_t minTimestamp, int64_t trackId);
+    int SearchSliceNameCount(const std::string &name);
+    bool SearchSliceName(const std::string &name, int index, Protocol::SearchSliceBody &responseBody);
 
 private:
     const std::string sliceTable = "slice";

@@ -51,6 +51,16 @@ void DataBaseManager::Clear()
     std::unique_lock<std::mutex> lock(mutex);
     traceDatabaseMap.clear();
 }
+
+std::vector<std::string> DataBaseManager::GetAllFileId()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    std::vector<std::string> traceFileId;
+    for (auto &traceDatabase : traceDatabaseMap) {
+        traceFileId.emplace_back(traceDatabase.first);
+    }
+    return traceFileId;
+}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

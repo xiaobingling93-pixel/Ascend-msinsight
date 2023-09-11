@@ -4,7 +4,6 @@
  */
 
 #include <vector>
-#include "TimeUtil.h"
 #include "ServerLog.h"
 #include "ParamsParser.h"
 #include "WsServer.h"
@@ -29,8 +28,9 @@ void StartServer(const ParamsOption &option)
     ServerLog::Info("=============================== Data Insight Core Server Start ===============================");
     WsServer server(option.host, option.wsPort, option.sid);
     server.Start();
+    const int checkInterval = 1000;
     while (server.IsStart()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(checkInterval));
     }
     ServerLog::Info("=============================== Data Insight Core Server End =================================");
 }

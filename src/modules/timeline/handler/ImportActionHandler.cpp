@@ -181,15 +181,12 @@ void ImportActionHandler::FindAscendFolder(const std::string &path, std::vector<
         break;
     }
 }
+
 void ImportActionHandler::SetParseCallBack(const std::string &token)
 {
-    static bool flag = false;
-    if (!flag) {
-        flag = true;
-        std::function<void(const std::string, bool)> func =
-            std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2);
-        TraceFileParser::Instance().SetParseEndCallBack(func);
-    }
+    std::function<void(const std::string, bool)> func =
+        std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2);
+    TraceFileParser::Instance().SetParseEndCallBack(func);
 }
 
 void ImportActionHandler::SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData)

@@ -1006,7 +1006,7 @@ bool TraceDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
     return true;
 }
 
-bool TraceDatabase::CommitData()
+void TraceDatabase::CommitData()
 {
     if (!sliceCache.empty()) {
         InsertSliceList(sliceCache);
@@ -1016,6 +1016,53 @@ bool TraceDatabase::CommitData()
         InsertFlowList(flowCache);
         flowCache.clear();
     }
+}
+
+int TraceDatabase::SearchSliceNameCount(const std::string &name)
+{
+    std::string sql = "SELECT count(*) FROM " + sliceTable + " WHERE name like '%'||?||'%'";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QuerySliceNameCount failed!. ", sqlite3_errmsg(db));
+        return 0;
+    }
+    sqlite3_bind_text(stmt, bindStartIndex, name.c_str(), -1, SQLITE_STATIC);
+    int count = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        count = sqlite3_column_int(stmt, resultStartIndex);
+    }
+    sqlite3_finalize(stmt);
+    return count;
+}
+
+bool TraceDatabase::SearchSliceName(const std::string &name, int index, Protocol::SearchSliceBody &responseBody)
+{
+    std::string sql = "SELECT pid, tid, timestamp, duration, depth"
+                      " FROM " + sliceTable + " JOIN " + threadTable + " USING (track_id)"
+                      " WHERE name like '%'||?||'%'"
+                      " ORDER BY timestamp LIMIT 1 OFFSET ?";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QuerySliceName failed!. ", sqlite3_errmsg(db));
+        return false;
+    }
+    int bindIndex = bindStartIndex;
+    sqlite3_bind_text(stmt, bindIndex++, name.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, bindIndex++, index);
+    if (sqlite3_step(stmt) != SQLITE_ROW) {
+        sqlite3_finalize(stmt);
+        return false;
+    }
+    int col = resultStartIndex;
+    responseBody.pid = sqlite3_column_string(stmt, col++);
+    responseBody.tid = sqlite3_column_int(stmt, col++);
+    responseBody.startTime = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+    responseBody.duration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+    responseBody.depth = sqlite3_column_int(stmt, col++);
+    sqlite3_finalize(stmt);
+    return true;
 }
 } // end of namespace Timeline
 } // end of namespace Module
