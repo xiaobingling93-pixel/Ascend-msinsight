@@ -34,10 +34,10 @@ void KernelParse::StringSplit(const std::string& str, std::vector<std::string>& 
     }
 }
 
-bool KernelParse::KernelFileParse(const std::string &filePath, const std::string &fileId)
+bool KernelParse::KernelFileParse(const std::string &parentDir, const std::string &fileId)
 {
     ServerLog::Info("start parse kernel detail.");
-    std::string kernelFile = FileUtil::GetDetailFile(filePath, kernelDetailFile);
+    std::string kernelFile = FileUtil::GetDetailFile(parentDir, kernelDetailFile);
     std::ifstream file(kernelFile);
     std::string line;
     std::map<std::string, std::int16_t> dataMap;

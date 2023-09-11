@@ -10,6 +10,8 @@
 #include "DataBaseManager.h"
 #include "EventParser.h"
 #include "TraceTime.h"
+#include "MemoryParse.h"
+#include "KernelParse.h"
 #include "TraceFileParser.h"
 
 namespace Dic {
@@ -36,17 +38,12 @@ TraceFileParser::~TraceFileParser()
 bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const std::string &rankId,
                             const std::string &selectedFolder)
 {
-    auto database = DataBaseManager::Instance().GetTraceDatabase(rankId);
     std::string dbPath = GetDbPath(selectedFolder, rankId);
-    if (!(database->OpenDb(dbPath, true) && database->CreateTable() &&
-    database->SetConfig() && database->InitStmt())) {
-        ServerLog::Error("Failed to open database. path:", dbPath);
-        return false;
-    }
+    InitDatabase(dbPath, rankId);
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
     for (const auto &filePath: filePathArr) {
         start = std::chrono::system_clock::now();
-        ServerLog::Info("start parse.");
+        ServerLog::Info("start parse.", filePath);
         auto splitFileVector = TraceFileParser::SplitFile(filePath);
         if (splitFileVector.empty()) {
             ServerLog::Error("Failed to split file: ", filePath);
@@ -58,6 +55,12 @@ bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const s
                 eventParser.Parse(pos.first, pos.second);
             });
             futures->emplace_back(std::move(future));
+        }
+        std::string parentDir = FileUtil::GetParentPath(filePath);
+        if (!parentDir.empty()) {
+            Memory::MemoryParse::Instance().OperatorParse(parentDir, rankId);
+            Memory::MemoryParse::Instance().RecordToParse(parentDir, rankId);
+            Summary::KernelParse::Instance().KernelFileParse(parentDir, rankId);
         }
     }
     auto future = threadPool->AddTask([futures, rankId]() {
@@ -262,6 +265,29 @@ std::string TraceFileParser::GetFileIdFromPath(const std::string &filePath)
         return "";
     }
     return list.at(list.size() - fileIdPosition);
+}
+
+bool TraceFileParser::InitDatabase(const std::string& dbPath, const std::string& rankId)
+{
+    auto database = DataBaseManager::Instance().GetTraceDatabase(rankId);
+    if (!(database->OpenDb(dbPath, true) && database->CreateTable() &&
+          database->SetConfig() && database->InitStmt())) {
+        ServerLog::Error("Failed to open traceDatabase. path:", dbPath);
+        return false;
+    }
+    auto summaryDatabase = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
+    if (!(summaryDatabase->OpenDb(dbPath, false) && summaryDatabase->CreateTable() &&
+          summaryDatabase->SetConfig() && summaryDatabase->InitStmt())) {
+        ServerLog::Error("Failed to open summaryDatabase. path:", dbPath);
+        return false;
+    }
+    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemoryDatabase(rankId);
+    if (!(memoryDatabase->OpenDb(dbPath, false) && memoryDatabase->CreateTable() &&
+            memoryDatabase->SetConfig() && memoryDatabase->InitStmt())) {
+        ServerLog::Error("Failed to open memoryDatabase. path:", dbPath);
+        return false;
+    }
+    return true;
 }
 } // end of namespace Timeline
 } // end of namespace Module

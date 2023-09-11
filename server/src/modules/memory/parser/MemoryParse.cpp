@@ -34,15 +34,16 @@ bool MemoryParse::Parse(const std::vector<std::string> &filePaths, const std::st
         return false;
     }
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
-    for (const auto &filePath: filePaths) {
+    for (std::string filePath: filePaths) {
         auto future = threadPool->AddTask([futures, fileId, &filePath, this]() {
             ServerLog::Info("Wait parse completed. ID:", fileId);
             for (const auto &future: *futures) {
                 future.wait();
             }
             ServerLog::Info("Parse completed. ID:", fileId);
-            OperatorParse(filePath, fileId);
-            RecordToParse(filePath, fileId);
+            std::string parentDir = FileUtil::GetParentPath(filePath);
+            OperatorParse(parentDir, fileId);
+            RecordToParse(parentDir, fileId);
             ServerLog::Info("Update depth completed. ID:", fileId);
         });
         futureMap.emplace(fileId, std::move(future));
@@ -73,11 +74,11 @@ bool MemoryParse::WaitParseEnd(const std::string &fileId)
     return true;
 }
 
-bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &fileId)
+bool MemoryParse::OperatorParse(const std::string &parentDir, const std::string &fileId)
 {
     ServerLog::Info("start parse.");
-    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
-    std::string operatorFile = FileUtil::GetDetailFile(filePath, memoryOperatorFile);
+    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
+    std::string operatorFile = FileUtil::GetDetailFile(parentDir, memoryOperatorFile);
     std::ifstream file(operatorFile);
     std::string line;
     std::map<std::string, std::int16_t> dataMap;
@@ -97,10 +98,10 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
         }
         Operator opePtr = MemoryParse::mapperToOperatorDetail(dataMap, row);
         // 读取每一行数据并插入到operator内
-        database->insertOperatorDetail(opePtr);
+        memoryDatabase->insertOperatorDetail(opePtr);
     }
     // 读取剩下的数据并插入到operator内
-    database->SaveOperatorDetail();
+    memoryDatabase->SaveOperatorDetail();
     return true;
 }
 
@@ -147,11 +148,11 @@ std::string MemoryParse::GetDbPath(const std::string &selectedFolder, const std:
     return Dic::FileUtil::GetRealPath(dbPath);
 }
 
-bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &fileId)
+bool MemoryParse::RecordToParse(const std::string &parentDir, const std::string &fileId)
 {
     ServerLog::Info("start parse Record.");
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
-    std::string recordFile = FileUtil::GetDetailFile(filePath, memoryRecordFile);
+    std::string recordFile = FileUtil::GetDetailFile(parentDir, memoryRecordFile);
     std::ifstream file(recordFile);
     std::string line;
     std::map<std::string, std::int16_t> dataMap;

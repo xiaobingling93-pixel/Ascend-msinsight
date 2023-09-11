@@ -32,7 +32,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
-    ImportActionResponse &response = *responsePtr.get();
+    ImportActionResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     if (request.params.path.empty()) {
         ServerLog::Warn("Import path is empty.");
@@ -40,7 +40,8 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    auto traceFiles = FindAllTraceFile(request.params.path);
+    std::string selectedFolder = request.params.path[0];
+    auto traceFiles = FindAllTraceFile(request.params.path, selectedFolder);
     if (traceFiles.empty()) {
         ServerLog::Error("Failed to find trace file.");
         SetResponseResult(response, false);
@@ -55,21 +56,16 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         if (DataBaseManager::Instance().HasFileId(rankId)) {
             continue;
         }
+        TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, selectedFolder);
         response.body.result.emplace_back(Action{rankId, rankId, true});
-        SetResponseResult(response, true);
-        // add response to response queue in session
-        session.OnResponse(std::move(responsePtr));
-    }
-    // 先回复消息，再解析，小文件解析可能比回复消息还快
-    for (const auto &rankEntry: rankListMap) {
-        TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, request.params.path.at(0));
-        Memory::MemoryParse::Instance().Parse(rankEntry.second, rankEntry.first, request.params.path.at(0));
-        Summary::KernelParse::Instance().Parse(rankEntry.second, rankEntry.first, request.params.path.at(0));
     }
     if (rankListMap.size() > 1) {
         ClusterFileParser clusterFileParser;
-        clusterFileParser.ParseClusterFiles(request.params.path.at(0));
+        clusterFileParser.ParseClusterFiles(selectedFolder);
     }
+    SetResponseResult(response, true);
+    // add response to response queue in session
+    session.OnResponse(std::move(responsePtr));
 }
 
 void ImportActionHandler::ParseEndCallBack(const std::string token, const std::string fileId,
@@ -102,13 +98,15 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
     session->OnEvent(std::move(event));
 }
 
-std::vector<std::string> ImportActionHandler::FindAllTraceFile(const std::vector<std::string> &pathList)
+std::vector<std::string> ImportActionHandler::FindAllTraceFile(const std::vector<std::string> &pathList,
+                                                               std::string &selectedFolder)
 {
     std::vector<std::string> traceFiles;
+    if (std::strcmp(selectedFolder.c_str(), "browser") == 0) {
+        selectedFolder = ExecUtil::SelectFolder();
+        return FindTraceFile(selectedFolder);
+    }
     for (const auto &path : pathList) {
-        if (path == "browser") {
-            return FindTraceFile(ExecUtil::SelectFolder());
-        }
         auto files = FindTraceFile(path);
         if (files.empty()) {
             ServerLog::Warn("Can't find trace file in path:", path);

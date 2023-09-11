@@ -26,7 +26,7 @@ private:
     static void ParseEndCallBack(const std::string token, const std::string fileId, bool result);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
     std::vector<std::string> FindTraceFile(const std::string &path);
-    std::vector<std::string> FindAllTraceFile(const std::vector<std::string> &pathList);
+    std::vector<std::string> FindAllTraceFile(const std::vector<std::string> &pathList, std::string &selectedFolder);
     bool IsJsonValid(const std::string &fileName);
     void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
 };

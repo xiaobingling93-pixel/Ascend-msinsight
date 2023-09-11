@@ -172,18 +172,18 @@ public:
         }
     }
 
-    static inline std::string GetParentPath(std::string filePath)
+    static inline std::string GetParentPath(const std::string filePath)
     {
         size_t pos = filePath.find_last_of("\\/");
         if (pos != std::string::npos) {
             return filePath.substr(0, pos);
         }
+        return "";
     }
 
-    static inline std::string GetDetailFile(std::string traceViewFileName, std::string detailName)
+    static inline std::string GetDetailFile(std::string parentDir, std::string detailName)
     {
-        std::string parent = GetParentPath(traceViewFileName);
-        std::string path = SplicePath(parent, detailName);
+        std::string path = SplicePath(parentDir, detailName);
         std::ifstream file(path);
         if (file.good()) {
             return path;

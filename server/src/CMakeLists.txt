@@ -80,9 +80,9 @@ aux_source_directory(${SRC_HOME_DIR}/modules/memory/database DIC_MODULES_MEMORY_
 aux_source_directory(${SRC_HOME_DIR}/modules/memory/handler DIC_MODULES_MEMORY_HANDLER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memory/parser DIC_MODULES_MEMORY_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memory/protocol DIC_MODULES_MEMORY_PROTOCOL_SRC)
-aux_source_directory(${SRC_HOME_DIR}/modules/summary/protocol DIC_MODULES_COMMUNICATION_SRC)
-aux_source_directory(${SRC_HOME_DIR}/modules/summary/handler DIC_MODULES_COMMUNICATION_HANDLER_SRC)
-aux_source_directory(${SRC_HOME_DIR}/modules/summary DIC_MODULES_COMMUNICATION_PROTOCOL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/communication/protocol DIC_MODULES_COMMUNICATION_PROTOCOL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/communication/handler DIC_MODULES_COMMUNICATION_HANDLER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/communication DIC_MODULES_COMMUNICATION_SRC)
 
 list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SRC}

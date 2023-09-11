@@ -81,7 +81,7 @@ bool CommunicationSaxHandler::key(string_t &val)
     if (currentDepth == tempOpNameDepth)tempOpName = val;
     if (currentDepth == rankIdDepth)rankId = val;
     if (currentDepth == tableFlagDepth)tableFlag = val;
-    if (currentDepth == infoDepth && "Communication Bandwidth Info" == tableFlag) {
+    if (currentDepth == infoDepth && std::strcmp("Communication Bandwidth Info", tableFlag.c_str()) == 0) {
         transportType = val;
         Server::ServerLog::Debug("currentDepth:", currentDepth, " transportType=", val);
     }
@@ -92,14 +92,14 @@ bool CommunicationSaxHandler::end_object()
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase();
     currentDepth--;
-    if (currentDepth == infoDepth && "Communication Bandwidth Info" == tableFlag) {
+    if (currentDepth == infoDepth && std::strcmp(tableFlag.c_str(), "Communication Bandwidth Info") == 0) {
         Server::ServerLog::Debug("save Communication Bandwidth Info:", currentObject);
         CommunicationBandWidth bandWidth = MapToBandwidth(currentObject);
         database->InsertBandwidth(bandWidth);
         currentObject = nlohmann::json({});
     }
 
-    if (currentDepth == tableFlagDepth && "Communication Time Info" == tableFlag) {
+    if (currentDepth == tableFlagDepth && std::strcmp(tableFlag.c_str(), "Communication Time Info") == 0) {
         Server::ServerLog::Debug("save Communication Time Info:", currentObject);
         CommunicationTimeInfo timeInfo = MapToTimeInfo(currentObject);
         database->InsertTimeInfo(timeInfo);

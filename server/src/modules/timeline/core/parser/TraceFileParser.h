@@ -41,6 +41,7 @@ private:
     static bool SeekRegexPosition(std::ifstream &file, const std::string &regex);
     static std::string GetDbPath(const std::string &filePath, const std::string &fileId);
 
+    bool InitDatabase(const std::string& dbPath, const std::string& rankId);
     std::mutex trackMutex;
     std::map<std::string, std::map<std::string, int64_t>> trackIdMap;
     int64_t trackId = 0;
