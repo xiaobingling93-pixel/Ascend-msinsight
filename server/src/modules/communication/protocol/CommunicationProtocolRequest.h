@@ -54,6 +54,15 @@ struct DistributionDataRequest : public Request {
     DistributionDataRequest() : Request(REQ_RES_COMMUNICATION_DISTRIBUTION) {};
     DistributionDataParam params;
 };
+
+struct CommunicatorGroupParam {
+    std::string filePath;
+};
+
+struct CommunicatorGroupRequest : public Request {
+    CommunicatorGroupRequest() : Request(REQ_RES_COMMUNICATOR_PARSE) {};
+    CommunicatorGroupParam params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

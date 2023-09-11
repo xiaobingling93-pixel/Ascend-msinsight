@@ -65,6 +65,30 @@ template <> std::optional<json_t> ToResponseJson<BandwidthDataResponse>(const Ba
     return json;
 }
 
+template <> std::optional<json_t> ToResponseJson<CommunicatorGroupResponse>(const CommunicatorGroupResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+
+    json["body"]["defaultPPSize"] = response.body.defaultPPSize;
+    json["body"]["ppGroups"] = json_t::array();
+    for (auto item : response.body.ppGroups) {
+        json_t itemJson = json_t::object();
+        itemJson["name"] = item.name;
+        itemJson["value"] = item.value;
+        itemJson["ranks"] = item.ranks;
+        json["body"]["ppGroups"].emplace_back(itemJson);
+    }
+    for (auto item : response.body.tpOrDpGroups) {
+        json_t itemJson = json_t::object();
+        itemJson["name"] = item.name;
+        itemJson["value"] = item.value;
+        itemJson["ranks"] = item.ranks;
+        json["body"]["tpOrDpGroups"].emplace_back(itemJson);
+    }
+    return json;
+}
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

@@ -131,6 +131,19 @@ public:
         return std::string(str.get());
     }
 #endif
+
+    template<typename T>
+    static std::string join(std::vector<T> list, std::string separator)
+    {
+        std::stringstream ss;
+        for (int i = 0; i < list.size(); i++) {
+            if (i != 0) {
+                ss << separator;
+            }
+            ss << list.at(i);
+        }
+        return ss.str();
+    }
 };
 }
 

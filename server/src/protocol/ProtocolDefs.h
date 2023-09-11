@@ -51,6 +51,7 @@ const std::string REQ_RES_UNIT_CHART = "unit/chart";
 const std::string REQ_RES_COMMUNICATION_OPERATOR_DETAILS = "communication/operatorDetails";
 const std::string REQ_RES_COMMUNICATION_BANDWIDTH = "communication/bandwidth";
 const std::string REQ_RES_COMMUNICATION_DISTRIBUTION = "communication/distribution";
+const std::string REQ_RES_COMMUNICATOR_PARSE = "communicator/parse";
 
 // summary
 const std::string REQ_RES_SUMMARY_QUERY_TOP_DATA = "summary/queryTopData";

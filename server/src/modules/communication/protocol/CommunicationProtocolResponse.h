@@ -35,6 +35,24 @@ struct OperatorDetailsResponse : public Response {
     OperatorDetailsResBody body;
 };
 
+struct GroupItem {
+    GroupItem(std::string name, std::vector<int> ranks, std::string value) : name(name), ranks(ranks), value(value) {}
+    std::string name;
+    std::vector<int> ranks;
+    std::string value;
+};
+
+struct CommunicatorGroupResBody {
+    int defaultPPSize;
+    std::vector<GroupItem> ppGroups;
+    std::vector<GroupItem> tpOrDpGroups;
+};
+
+struct CommunicatorGroupResponse : public Response {
+    CommunicatorGroupResponse() : Response(REQ_RES_COMMUNICATOR_PARSE) {}
+    CommunicatorGroupResBody body;
+};
+
 struct BandwidthDataItem {
     std::string transportType;
     double transitSize;
