@@ -98,14 +98,24 @@ void DataBaseManager::Clear()
     summaryDatabaseMap.clear();
 }
 
-    ClusterDatabase *DataBaseManager::GetClusterDatabase()
-    {
-        std::unique_lock<std::mutex> lock(mutex);
-        if (clusterDatabaseMap.count("cluster") == 0) {
-            clusterDatabaseMap.emplace("cluster", std::make_unique<ClusterDatabase>());
-        }
-        return clusterDatabaseMap["cluster"].get();
+ClusterDatabase *DataBaseManager::GetClusterDatabase()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (clusterDatabaseMap.count("cluster") == 0) {
+        clusterDatabaseMap.emplace("cluster", std::make_unique<ClusterDatabase>());
     }
+    return clusterDatabaseMap["cluster"].get();
+}
+
+std::vector<std::string> DataBaseManager::GetAllFileId()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    std::vector<std::string> traceFileId;
+    for (auto &traceDatabase : traceDatabaseMap) {
+        traceFileId.emplace_back(traceDatabase.first);
+    }
+    return traceFileId;
+}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

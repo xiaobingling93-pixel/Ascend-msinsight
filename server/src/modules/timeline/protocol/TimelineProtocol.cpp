@@ -21,6 +21,8 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_UNIT_FLOW, ToUnitFlowRequest);
     jsonToReqFactory.emplace(REQ_RES_RESET_WINDOW, ToResetWindowRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_CHART, ToUnitChartRequest);
+    jsonToReqFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountRequest);
+    jsonToReqFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceRequest);
 }
 
 void TimelineProtocol::RegisterResponseToJsonFuncs()
@@ -33,6 +35,8 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_UNIT_FLOW, ToUnitFlowResponseJson);
     resToJsonFactory.emplace(REQ_RES_RESET_WINDOW, ToResetWindowResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_CHART, ToUnitChartResponseJson);
+    resToJsonFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountResponseJson);
+    resToJsonFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceResponseJson);
 }
 
 void TimelineProtocol::RegisterEventToJsonFuncs()
@@ -148,6 +152,31 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitChartRequest(const json_t &json
     JsonUtil::SetByJsonKeyValue(reqPtr->params.param, json["params"], "param");
     return reqPtr;
 }
+
+std::unique_ptr<Request> TimelineProtocol::ToSearchCountRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<SearchCountRequest> reqPtr = std::make_unique<SearchCountRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.searchContent, json["params"], "searchContent");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> TimelineProtocol::ToSearchSliceRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<SearchSliceRequest> reqPtr = std::make_unique<SearchSliceRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.searchContent, json["params"], "searchContent");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.index, json["params"], "index");
+    return reqPtr;
+}
 #pragma endregion
 
 #pragma region <<Response To Json>>
@@ -190,6 +219,16 @@ std::optional<json_t> TimelineProtocol::ToResetWindowResponseJson(const Response
 std::optional<json_t> TimelineProtocol::ToUnitChartResponseJson(const Response &response)
 {
     return ToResponseJson<UnitChartResponse>(dynamic_cast<const UnitChartResponse &>(response));
+}
+
+std::optional<json_t> TimelineProtocol::ToSearchCountResponseJson(const Response &response)
+{
+    return ToResponseJson<SearchCountResponse>(dynamic_cast<const SearchCountResponse &>(response));
+}
+
+std::optional<json_t> TimelineProtocol::ToSearchSliceResponseJson(const Response &response)
+{
+    return ToResponseJson<SearchSliceResponse>(dynamic_cast<const SearchSliceResponse &>(response));
 }
 #pragma endregion
 

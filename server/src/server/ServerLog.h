@@ -86,7 +86,7 @@ private:
 
     static const std::string GetLogHead(const LogLevel &level)
     {
-        std::string head = "[Dic Server]|";
+        std::string head;
         head.append(LogPrefix::Instance().TimePrefix());
         head.append("|");
         head.append(LogPrefix::Instance().LevelPrefix(level));
@@ -98,7 +98,7 @@ private:
     {
         std::lock_guard<std::mutex> lock(recordInstanceMutex);
         if (recordInstance == nullptr) {
-            std::string logPath = "./dic_server.log";
+            std::string logPath = "./profiler_server.log";
             const int LOG_SIZE = 32 * 1024 * 1024;
             recordInstance = std::make_unique<LogUtil>(LogOutType::FILE, logPath);
             recordInstance->SetLogLevel(level).SetMaxSize(LOG_SIZE);

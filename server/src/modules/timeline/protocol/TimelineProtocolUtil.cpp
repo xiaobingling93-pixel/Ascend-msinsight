@@ -145,6 +145,33 @@ template <> std::optional<json_t> ToResponseJson<UnitChartResponse>(const UnitCh
     }
     return json;
 }
+
+template <> std::optional<json_t> ToResponseJson<SearchCountResponse>(const SearchCountResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["totalCount"] = response.body.totalCount;
+    for (const auto &data : response.body.countList) {
+        json_t tmp;
+        tmp["rankId"] = data.rankId;
+        tmp["count"] = data.count;
+        json["body"]["countList"].emplace_back(tmp);
+    }
+    return json;
+}
+
+template <> std::optional<json_t> ToResponseJson<SearchSliceResponse>(const SearchSliceResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["rankId"] = response.body.rankId;
+    json["body"]["pid"] = response.body.pid;
+    json["body"]["tid"] = response.body.tid;
+    json["body"]["startTime"] = response.body.startTime;
+    json["body"]["duration"] = response.body.duration;
+    json["body"]["depth"] = response.body.depth;
+    return json;
+}
 #pragma endregion
 
 #pragma region <<Event to json>>

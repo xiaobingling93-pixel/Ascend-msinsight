@@ -197,6 +197,35 @@ struct SliceFlowDetail {
     std::string pid;
 };
 
+struct SearchResult {
+    std::string rankId;
+    int count = 0;
+};
+
+struct SearchCountBody {
+    int totalCount = 0;
+    std::vector<SearchResult> countList;
+};
+
+struct SearchCountResponse : public Response {
+    SearchCountResponse() : Response(REQ_RES_SEARCH_COUNT) {}
+    SearchCountBody body;
+};
+
+struct SearchSliceBody {
+    std::string rankId;
+    std::string pid;
+    int32_t tid = 0;
+    uint64_t startTime = 0;
+    uint64_t duration = 0;
+    int32_t depth = 0;
+};
+
+struct SearchSliceResponse : public Response {
+    SearchSliceResponse() : Response(REQ_RES_SEARCH_SLICE) {}
+    SearchSliceBody body;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

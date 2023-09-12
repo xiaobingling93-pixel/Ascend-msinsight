@@ -3,7 +3,6 @@
 //
 
 #include "TimelineModule.h"
-#include "ServerLog.h"
 #include "QueryThreadTracesHandler.h"
 #include "QueryThreadsHandler.h"
 #include "QueryThreadDetailHandler.h"
@@ -12,10 +11,11 @@
 #include "ResetWindowHandler.h"
 #include "QueryChartHandler.h"
 #include "ImportActionHandler.h"
+#include "SearchCountHandler.h"
+#include "SearchSliceHandler.h"
 
 namespace Dic {
 namespace Module {
-using namespace Dic::Server;
 using namespace Dic::Module::Timeline;
 TimelineModule::TimelineModule() : BaseModule()
 {
@@ -38,6 +38,8 @@ void TimelineModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_RESET_WINDOW, std::make_unique<ResetWindowHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_CHART, std::make_unique<QueryChartHandler>());
     requestHandlerMap.emplace(REQ_RES_IMPORT_ACTION, std::make_unique<ImportActionHandler>());
+    requestHandlerMap.emplace(REQ_RES_SEARCH_COUNT, std::make_unique<SearchCountHandler>());
+    requestHandlerMap.emplace(REQ_RES_SEARCH_SLICE, std::make_unique<SearchSliceHandler>());
 }
 
 void TimelineModule::OnRequest(std::unique_ptr<Protocol::Request> request)

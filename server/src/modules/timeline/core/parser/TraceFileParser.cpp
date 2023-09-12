@@ -38,6 +38,8 @@ TraceFileParser::~TraceFileParser()
 bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const std::string &rankId,
                             const std::string &selectedFolder)
 {
+    start = std::chrono::system_clock::now();
+    ServerLog::Info("start parse.");
     std::string dbPath = GetDbPath(selectedFolder, rankId);
     InitDatabase(dbPath, rankId);
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
@@ -242,7 +244,7 @@ std::string TraceFileParser::GetFileIdFromFile(const std::string &filePath)
     std::string error;
     auto json = JsonUtil::TryParse(rankId, error);
     if (!json.has_value()) {
-        ServerLog::Error("Failed to parse json.", error, " string:", rankId);
+        ServerLog::Warn("Failed to parse json.", error, " string:", rankId);
         return "";
     }
     if (json.value().contains("rank_id")) {

@@ -46,6 +46,8 @@ const std::string REQ_RES_UNIT_FLOW_NAME = "unit/flowName";
 const std::string REQ_RES_UNIT_FLOW = "unit/flow";
 const std::string REQ_RES_RESET_WINDOW = "reset/window";
 const std::string REQ_RES_UNIT_CHART = "unit/chart";
+const std::string REQ_RES_SEARCH_COUNT = "search/count";
+const std::string REQ_RES_SEARCH_SLICE = "search/slice";
 
 // communication
 const std::string REQ_RES_COMMUNICATION_OPERATOR_DETAILS = "communication/operatorDetails";

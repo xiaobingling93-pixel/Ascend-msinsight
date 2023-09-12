@@ -101,6 +101,26 @@ struct UnitChartRequest : public Request {
     UnitChartParams params;
 };
 
+struct SearchCountParams {
+    std::string rankId;
+    std::string searchContent;
+};
+
+struct SearchCountRequest : public Request {
+    SearchCountRequest() : Request(REQ_RES_SEARCH_COUNT) {};
+    SearchCountParams params;
+};
+
+struct SearchSliceParams {
+    std::string rankId;
+    std::string searchContent;
+    int index = 0;
+};
+
+struct SearchSliceRequest : public Request {
+    SearchSliceRequest() : Request(REQ_RES_SEARCH_SLICE) {};
+    SearchSliceParams params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 
