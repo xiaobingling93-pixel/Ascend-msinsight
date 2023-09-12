@@ -193,7 +193,7 @@ export type UnitPhase = 'configuring' | 'initializing' | 'recording' | 'analyzin
 
 const heightOf = (chartDesc: InsightUnit['chart']): number => {
     if (chartDesc === undefined) {
-        return UnitHeight.UPPER;
+        return UnitHeight.STANDARD;
     }
     return Array.isArray(chartDesc) ? chartDesc.reduce((prev, cur) => prev + cur.height + 1, 0) - 1 : chartDesc.height;
 };

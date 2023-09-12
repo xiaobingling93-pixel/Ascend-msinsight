@@ -212,12 +212,21 @@ export const ProcessUnit = unit<ProcessMetaData>({
     name: 'Process',
     tag: (_, metadata: { label?: string }) => `${metadata.label}`,
     pinType: 'move',
+    chart: chart({
+        type: 'status',
+        mapFunc: async (session: Session, metaData: unknown) => {
+            return [];
+        },
+        config: {
+            rowHeight: UnitHeight.STANDARD,
+        },
+        height: UnitHeight.UPPER,
+    }),
     renderInfo: (_, metadata: { processName: string; processId: string; label?: string }) => `${metadata.processName} (${metadata.processId})`,
 });
 
 export const CardUnit = unit<CardMetaData>({
     name: 'Card',
-    tag: 'Card',
     configBar: offsetConfig,
     pinType: 'move',
     renderInfo: (session: Session, metadata: { cardId: string }) => `${metadata.cardId}`,
