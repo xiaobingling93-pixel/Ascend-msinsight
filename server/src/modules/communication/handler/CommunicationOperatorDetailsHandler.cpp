@@ -34,8 +34,6 @@ void CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     // query data
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
-    database->QueryOperatorsCount(request.params, response.body);
-    database->QueryAllOperators(request.params, response.body);
     if (!database->QueryOperatorsCount(request.params, response.body) ||
         !database->QueryAllOperators(request.params, response.body)) {
         SetResponseResult(response, false);

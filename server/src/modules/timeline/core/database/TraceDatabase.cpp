@@ -940,7 +940,7 @@ bool TraceDatabase::QuerySliceFlowList(const std::string &flowId, const std::str
 bool TraceDatabase::QueryUnitsMetadata(const std::string &fileId,
                                        std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
-    std::string sql = "SELECT pt.pid, pt.process_name AS processName, pt.label, pt.tid, pt.thread_name AS threadName,"
+    std::string sql = " SELECT pt.pid, pt.process_name AS processName, pt.label, pt.tid, pt.thread_name AS threadName,"
                       " max( depth ) + 1 AS maxDepth "
                       " FROM "
                       " (SELECT p.pid, p.process_name, p.label, p.process_sort_index, t.tid, t.thread_name,"
@@ -1069,15 +1069,16 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, Protocol
                                                    Protocol::SummaryStatisticsBody &responseBody)
     {
         std::string stepCondition;
+        sqlite3_stmt *stmt = nullptr;
+        int index = bindStartIndex;
         if (!requestParams.stepId.empty() && requestParams.stepId != "ALL") {
             stepCondition.append(" and step_id =? ");
+            sqlite3_bind_text(stmt, index, requestParams.stepId.c_str(), -1, SQLITE_TRANSIENT);
         }
         std::string sql = "SELECT sum(duration) as duration,accelerator_core as acceleratorCore FROM kernel_detail"
                           " WHERE accelerator_core in ('AI_CPU','AI_CORE') "
                           + stepCondition +
                           " GROUP BY accelerator_core";
-        sqlite3_stmt *stmt = nullptr;
-        int index = bindStartIndex;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("QueryComputeStatisticsData failed!. ", sqlite3_errmsg(db));
@@ -1095,6 +1096,7 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, Protocol
         for (auto &item: responseBody.summaryStatisticsItemList) {
             item.utilization = totalDuration > 0 ? item.duration / totalDuration : 0;
         }
+        sqlite3_finalize(stmt);
         return true;
     }
 
@@ -1113,11 +1115,11 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, Protocol
             sqlite3_bind_int64(stmt, index, max);
         }
         std::string sql = "select duration / 1000, t.thread_name as overlapType from (select sum(duration) as duration,"
-                          " track_id from" + sliceTable +
+                          " track_id from " + sliceTable +
                           " where track_id in (select track_id from thread where thread_name "
-                          " in ('Communication(Not Overlapped)', 'Communication'))"
+                          " in ('Communication(Not Overlapped)', 'Communication')) "
                           + timestampCondition +
-                          "group by track_id) s left join thread t on s.track_id=t.track_id";
+                          " group by track_id) s left join thread t on s.track_id=t.track_id";
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("QueryCommunicationStatisticsData failed!. ", sqlite3_errmsg(db));
@@ -1130,13 +1132,14 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, Protocol
             item.overlapType = sqlite3_column_string(stmt, col++);
             responseBody.summaryStatisticsItemList.push_back(item);
         }
+        sqlite3_finalize(stmt);
         return true;
     }
 
     bool TraceDatabase::QueryStepDuration(const std::string &stepId, uint64_t &min, uint64_t &max)
     {
         std::string profileName = "ProfilerStep#"+stepId;
-        std::string sql = "select timestamp, duration from "+ sliceTable + "where name=?";
+        std::string sql = "select timestamp, duration from "+ sliceTable + " where name=?";
         sqlite3_stmt *stmt = nullptr;
         int index = bindStartIndex;
         sqlite3_bind_text(stmt, index++, profileName.c_str(), -1, SQLITE_STATIC);
@@ -1150,7 +1153,8 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, Protocol
             min = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
             max = min + static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
         }
-        return false;
+        sqlite3_finalize(stmt);
+        return true;
     }
 } // end of namespace Timeline
 } // end of namespace Module

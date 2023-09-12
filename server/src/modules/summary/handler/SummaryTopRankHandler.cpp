@@ -40,7 +40,8 @@ void SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
             Timeline::TraceTime::Instance().GetStartTime() / (numberThousands * numberThousands);
     response.body.collectDuration = Timeline::TraceTime::Instance().GetDuration() / numberThousands;
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
-    if (!database->QuerySummaryData(request.params, response.body)) {
+    if (!database->QuerySummaryData(request.params, response.body) ||
+        !database->QueryBaseInfo(response.body)) {
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;

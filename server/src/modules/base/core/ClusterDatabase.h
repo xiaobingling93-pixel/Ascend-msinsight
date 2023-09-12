@@ -33,6 +33,7 @@ public:
     bool InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo);
     bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
                           Protocol::SummaryTopRankResBody &responseBody);
+    bool QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody);
     bool QueryAllOperators(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody);
     bool QueryOperatorsCount(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody);
     bool QueryBandwidthData(Protocol::BandwidthDataParam &param, Protocol::BandwidthDataResBody &resBody);

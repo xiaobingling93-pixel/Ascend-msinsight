@@ -111,8 +111,8 @@ StepStatistic ClusterFileParser::MapToStepStatistic(std::vector<std::string> tok
     statistic.stepId = tokens[index++];
     std::string flag = tokens[index++];
     std::string order = tokens[index++];
-    statistic.rankId = std::strcmp(flag.c_str(), " rank") == 0 ? order : "";
-    statistic.stageId = std::strcmp(flag.c_str(), " stage") == 0  ? order : "";
+    statistic.rankId = std::strcmp(flag.c_str(), "rank") == 0 ? order : "";
+    statistic.stageId = std::strcmp(flag.c_str(), "stage") == 0  ? order : "";
     statistic.computingTime = tokens[index].empty() ? 0 : std::stod(tokens[index++]);
     statistic.pureCommunicationTime = tokens[index].empty() ? 0 : std::stod(tokens[index++]);
     statistic.overlapCommunicationTime = tokens[index].empty() ? 0 : std::stod(tokens[index++]);

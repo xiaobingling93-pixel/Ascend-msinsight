@@ -34,7 +34,7 @@ void SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
-    if (!request.params.timeFlag.empty() && request.params.timeFlag.find_last_of("compute") > 0) {
+    if (!request.params.timeFlag.empty() && request.params.timeFlag.find("compute") != std::string::npos) {
         if (!database->QueryComputeStatisticsData(request.params, response.body)) {
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));

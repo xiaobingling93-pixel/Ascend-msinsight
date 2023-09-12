@@ -152,7 +152,7 @@ CommunicationBandWidth CommunicationSaxHandler::MapToBandwidth(const json_t &jso
 {
     CommunicationBandWidth bandWidth;
     bandWidth.stageId = stageId;
-    bandWidth.iterationId = stepId;
+    bandWidth.iterationId = stepId.length() > stepSubLen ? stepId.substr(stepSubLen) : stepId;
     bandWidth.rankId = rankId;
     int index = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
     if (index > 0) {
@@ -173,7 +173,8 @@ CommunicationTimeInfo CommunicationSaxHandler::MapToTimeInfo(const json_t &json)
 {
     CommunicationTimeInfo timeInfo;
     timeInfo.rankId = rankId;
-    timeInfo.iterationId = stepId;
+    // 去掉step前缀
+    timeInfo.iterationId = stepId.length() > stepSubLen ? stepId.substr(stepSubLen) : stepId;
     timeInfo.stageId = stageId;
     int index = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
     if (index > 0) {

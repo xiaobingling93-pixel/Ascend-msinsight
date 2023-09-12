@@ -56,6 +56,7 @@ private:
     int stepIdDepth = 2;
     int tempOpNameDepth = 3;
     int rankIdDepth = 4;
+    int stepSubLen = 4;
     int tableFlagDepth = 5;
     int infoDepth = 6;
     int infoDepthSeven = 7;
