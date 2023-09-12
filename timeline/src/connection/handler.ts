@@ -55,25 +55,23 @@ export const parseFailHandler: NotificationHandler = (data): void => {
 export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
-    for (const path of data.dataSource.dataPath) {
-        const result = await window.request(data.dataSource, { command: 'import/action', params: { path } });
-        runInAction(() => {
-            if (!session) {
-                return;
+    const result = await window.request(data.dataSource, { command: 'import/action', params: { path: data.dataSource.dataPath } });
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.phase = 'download';
+        session.endTimeAll = 1000000000;
+        result.result.forEach((item: CardInfo) => {
+            const unit = new CardUnit({ dataSource: data.dataSource, cardId: item.rankId, cardName: item.cardName });
+            if (item.result as boolean) {
+                unit.phase = 'analyzing';
+            } else {
+                unit.phase = 'error';
             }
-            session.phase = 'download';
-            session.endTimeAll = 1000000000;
-            result.result.forEach((item: CardInfo) => {
-                const unit = new CardUnit({ dataSource: data.dataSource, cardId: item.rankId, cardName: item.cardName });
-                if (item.result as boolean) {
-                    unit.phase = 'analyzing';
-                } else {
-                    unit.phase = 'error';
-                }
-                session.units.push(unit);
-            });
+            session.units.push(unit);
         });
-    }
+    });
 };
 
 export const removeRemoteHandler = async ({ dataSource }: any): Promise<void> => {

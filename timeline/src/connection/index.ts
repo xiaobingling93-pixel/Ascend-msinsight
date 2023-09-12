@@ -106,6 +106,10 @@ class ServerConnector extends BaseConnector {
     }
 };
 
+type FetchParams = {
+    event?: never;
+    [x: string]: unknown;
+};
 class ClientConnector extends BaseConnector {
     private readonly _msgSequence: Map<FetchSequenceID, Function> = new Map();
     private _curFetchSequenceID: FetchSequenceID = 0;
@@ -122,11 +126,11 @@ class ClientConnector extends BaseConnector {
         this._msgSequence.delete(res.data.id);
     }
 
-    async fetch<T extends EventHanlder>(params: Record<string, unknown>): Promise<unknown> {
+    async fetch(params: FetchParams): Promise<unknown> {
         return new Promise((resolve, reject) => {
             params.id = this._curFetchSequenceID;
-            params.event = 'request';
-            this.send(params as SendParams<T>, reject);
+            (params as Record<string, unknown>).event = 'request';
+            this.send(params as any, reject);
             this._msgSequence.set(this._curFetchSequenceID++, resolve);
         });
     };

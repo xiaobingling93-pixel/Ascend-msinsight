@@ -43,7 +43,7 @@ window.addEventListener('contextmenu', e => {
 }, true);
 
 window.request = async (dataSource, params) => {
-    const data = await connector.fetch({ event: 'request', remote: dataSource, args: params });
+    const data = await connector.fetch({ remote: dataSource, args: params });
     return (data as any).body;
 };
 
