@@ -85,7 +85,9 @@ const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProp
             className={cls('insight-lane-info-header', { expandable: unit.children && unit.children.length > 0 }) }
         >
             <div className={cls('insight-lane-info-outer-name', { noTag: isEmpty(tag) })}>
-                <span className="insight-lane-info-name">{name}</span>
+                <StyledTooltip title={name}>
+                    <span className="insight-lane-info-name">{name}</span>
+                </StyledTooltip>
                 { [...unit.notifications ?? []]?.map((item, index) => {
                     const notifyRes = item(unit.metadata);
                     if (notifyRes !== false) {
