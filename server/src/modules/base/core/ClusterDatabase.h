@@ -54,9 +54,8 @@ private:
     sqlite3_stmt *GetTimeInfoStmtSql(int len);
     sqlite3_stmt *GetBandwidthStmtSql(int len);
 
-    static void BuildCondition(const Protocol::SummaryTopRankParams &requestParams,
-                               sqlite3_stmt *stmt, int index, std::string &stepCondition,
-                               std::string &rankCondition);
+    bool BuildCondition(const Protocol::SummaryTopRankParams &requestParams,
+                               sqlite3_stmt *stmt, int index);
 };
 } // end of namespace Module
 } // end of namespace Dic

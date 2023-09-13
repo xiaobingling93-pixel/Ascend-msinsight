@@ -160,8 +160,9 @@ public:
 
     static inline std::string GetRankIdFromFile(std::string timeLineFile)
     {
-        std::string parent = GetParentPath(GetParentPath(timeLineFile));
-        auto folders = FileUtil::FindFolders(parent);
+        std::string parent = GetParentPath(timeLineFile);
+        std::string parentSec = GetParentPath(parent);
+        auto folders = FileUtil::FindFolders(parentSec);
         for (const auto &folder: folders) {
             std::regex rankIdFileRegex("profiler_info_[0-9]{1,5}.json");
             if (std::regex_match(folder, rankIdFileRegex)) {
@@ -170,6 +171,8 @@ public:
                 return folder.substr(index + 1, index2 - index - 1);
             }
         }
+        int index3 = timeLineFile.find_last_of('.');
+        return timeLineFile.substr(parent.length() + 1, index3 - parent.length() - 1);
     }
 
     static inline std::string GetParentPath(const std::string filePath)

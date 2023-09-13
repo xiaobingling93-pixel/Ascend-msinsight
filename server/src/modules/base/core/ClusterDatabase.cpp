@@ -311,18 +311,7 @@ bool ClusterDatabase::QuerySummaryData(const Protocol::SummaryTopRankParams &req
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
-    std::string stepCondition;
-    std::string rankCondition;
-    BuildCondition(requestParams, stmt, index, stepCondition, rankCondition);
-    std::string sql = "SELECT rank_id as rankId, sum(ROUND(compute_time,2)) as computingTime,"
-                      "sum(ROUND(pure_communication_time,2)) as communicationNotOverLappedTime,"
-                      "sum(ROUND(overlap_communication_time,2)) as communicationOverLappedTime,"
-                      "sum(ROUND(free_time,2)) as freeTime FROM " + stepTraceTable +
-                      " WHERE rank_id !='' " + stepCondition + rankCondition
-                      + "group by rank_id order by " + requestParams.orderBy + " desc";
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryThreads. Failed to prepare sql.", sqlite3_errmsg(db));
+    if (!BuildCondition(requestParams, stmt, index)) {
         return false;
     }
     std::vector<Protocol::SummaryDto> summaryDtoList;
@@ -372,33 +361,43 @@ bool ClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBod
     return true;
 }
 
-void ClusterDatabase::BuildCondition(const Protocol::SummaryTopRankParams &requestParams,
-                                     sqlite3_stmt *stmt, int index, std::string &stepCondition,
-                                     std::string &rankCondition)
+bool ClusterDatabase::BuildCondition(const Protocol::SummaryTopRankParams &requestParams,
+                                     sqlite3_stmt *stmt, int index)
 {
+    std::string stepCondition;
+    std::string rankCondition;
     if (!requestParams.stepIdList.empty()) {
         stepCondition = " and step_id in (?";
-        sqlite3_bind_text(stmt, index++, requestParams.stepIdList[0].c_str(),
-                          requestParams.stepIdList[0].length(), SQLITE_TRANSIENT);
         for (int i = 1; i < requestParams.stepIdList.size(); i++) {
-            sqlite3_bind_text(stmt, index++, requestParams.stepIdList[i].c_str(),
-                              requestParams.stepIdList[i].length(),
-                              SQLITE_TRANSIENT);
             stepCondition.append(",?");
         }
         stepCondition.append(") ");
     }
     if (!requestParams.rankIdList.empty()) {
         rankCondition = " and rank_id in (?";
-        sqlite3_bind_text(stmt, index++, requestParams.rankIdList[0].c_str(),
-                          requestParams.rankIdList[0].length(), SQLITE_TRANSIENT);
         for (int i = 1; i < requestParams.rankIdList[0].size(); i++) {
-            sqlite3_bind_text(stmt, index++, requestParams.rankIdList[i].c_str(),
-                              requestParams.rankIdList[i].length(), SQLITE_TRANSIENT);
             rankCondition.append(",?");
         }
         rankCondition.append(") ");
     }
+    std::string sql = "SELECT rank_id as rankId, sum(ROUND(compute_time,2)) as computingTime,"
+                      "sum(ROUND(pure_communication_time,2)) as communicationNotOverLappedTime,"
+                      "sum(ROUND(overlap_communication_time,2)) as communicationOverLappedTime,"
+                      "sum(ROUND(free_time,2)) as freeTime FROM " + stepTraceTable +
+                      " WHERE rank_id !='' " + stepCondition + rankCondition
+                      + "group by rank_id order by " + requestParams.orderBy + " desc";
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryThreads. Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    for (const auto &item: requestParams.stepIdList) {
+        sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
+    }
+    for (const auto &item: requestParams.rankIdList) {
+        sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
+    }
+    return true;
 }
 
 bool ClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
@@ -419,15 +418,15 @@ bool ClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
                       orderBy +
                       " ) WHERE iteration_id = ? AND rank_id = ? AND stage_id = ?"
                       " AND op_name != 'Total Op Info' LIMIT ?, ?";
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare QueryAllOperators statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.rankId.c_str(), param.rankId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, index++, (param.currentPage - 1) * param.pageSize);
     sqlite3_bind_int(stmt, index,  param.pageSize);
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryAllOperators statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::OperatorItem operatorItem;
@@ -453,23 +452,29 @@ bool ClusterDatabase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
     std::string sql = "SELECT op_name, count(*) AS nums  from " + timeInfoTable
                       + " where 1=1 ";
     if (!param.iterationId.empty()) {
-        sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_TRANSIENT);
         sql.append("and iteration_id = ? ");
     }
     if (!param.rankId.empty()) {
-        sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_TRANSIENT);
         sql.append(" AND rank_id = ? ");
     }
     if (!param.stage.empty()) {
-        sqlite3_bind_text(stmt, index, param.stage.c_str(), -1, SQLITE_TRANSIENT);
         sql.append(" AND stage_id = ? ");
     }
-    sql.append(" group by op_name");
-    int count = 0;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryOperatorsCount statement. error:", sqlite3_errmsg(db));
         return false;
     }
+    sql.append(" group by op_name");
+    if (!param.iterationId.empty()) {
+        sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_TRANSIENT);
+    }
+    if (!param.rankId.empty()) {
+        sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_TRANSIENT);
+    }
+    if (!param.stage.empty()) {
+        sqlite3_bind_text(stmt, index, param.stage.c_str(), -1, SQLITE_TRANSIENT);
+    }
+    int count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         std::string opName = sqlite3_column_string(stmt, col++);
@@ -491,15 +496,15 @@ bool ClusterDatabase::QueryBandwidthData(Protocol::BandwidthDataParam &param, Pr
                       "ROUND(bandwidth_size, 4) as bandwidth_size,"
                       "ROUND(large_package_ratio, 4)  as large_package_ratio from "
                       + bandwidthTable +
-                      " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ? AND op_name = ?";
-    sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.stage.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.operatorName.c_str(), -1, SQLITE_TRANSIENT);
+                      " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ? AND op_name = ? ";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryBandwidthData statement. error:", sqlite3_errmsg(db));
         return false;
     }
+    sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.stage.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.operatorName.c_str(), -1, SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::BandwidthDataItem bandwidth;
@@ -519,22 +524,22 @@ bool ClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam &par
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
-    std::string sql = "SELECT size_distribution from "
+    std::string sql = "SELECT size_distribution FROM "
                       + bandwidthTable +
                       " WHERE iteration_id = ? "
                       "AND rank_id = ? "
                       "AND stage_id = ? "
                       "AND op_name = ? "
-                      "AND transport_type = ?";
-    sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.stage.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.operatorName.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.transportType.c_str(), -1, SQLITE_TRANSIENT);
+                      "AND transport_type = ? ;";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryDistributionData statement. error:", sqlite3_errmsg(db));
         return false;
     }
+    sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, index++, param.stage.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, index++, param.operatorName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, index++, param.transportType.c_str(), -1, SQLITE_STATIC);
     resBody.distributionData = "";
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;

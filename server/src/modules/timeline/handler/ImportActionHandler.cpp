@@ -56,16 +56,18 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         if (DataBaseManager::Instance().HasFileId(rankId)) {
             continue;
         }
-        TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, selectedFolder);
         response.body.result.emplace_back(Action{rankId, rankId, true});
+    }
+    SetResponseResult(response, true);
+    // add response to response queue in session
+    session.OnResponse(std::move(responsePtr));
+    for (const auto &rankEntry : rankListMap) {
+        TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, selectedFolder);
     }
     if (rankListMap.size() > 1) {
         ClusterFileParser clusterFileParser;
         clusterFileParser.ParseClusterFiles(selectedFolder);
     }
-    SetResponseResult(response, true);
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
 }
 
 void ImportActionHandler::ParseEndCallBack(const std::string token, const std::string fileId,
