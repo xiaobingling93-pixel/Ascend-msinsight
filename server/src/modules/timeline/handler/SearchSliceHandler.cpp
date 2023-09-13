@@ -5,6 +5,7 @@
 #include "ServerLog.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "TraceTime.h"
 #include "SearchSliceHandler.h"
 
 namespace Dic {
@@ -26,6 +27,7 @@ void SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     SearchSliceResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
 
+    response.body.rankId = request.params.rankId;
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Can't find rankId. rankId:", request.params.rankId);
@@ -33,7 +35,8 @@ void SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    if (!database->SearchSliceName(request.params.searchContent, request.params.index, response.body)) {
+    if (!database->SearchSliceName(request.params.searchContent, request.params.index - 1,
+                                   TraceTime::Instance().GetStartTime(), response.body)) {
         ServerLog::Error("Failed to search slice name. rankId:", request.params.rankId, ", searchContent:",
                          request.params.searchContent, ", index:", request.params.index);
         SetResponseResult(response, false);

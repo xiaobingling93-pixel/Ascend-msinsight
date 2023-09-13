@@ -20,7 +20,7 @@ public:
             serverLog.printInstance = std::make_unique<LogUtil>(LogOutType::TERMINAL, "");
         }
         if (serverLog.recordInstance == nullptr) {
-            std::string logFileName = logPath + "/dic_server.log";
+            std::string logFileName = logPath + "/profiler_server.log";
             serverLog.recordInstance = std::make_unique<LogUtil>(LogOutType::FILE, logFileName);
             LogLevel logLevel = LogUtil::GetLogLevel(logLevelStr);
             serverLog.recordInstance->SetLogLevel(logLevel).SetMaxSize(logSize);

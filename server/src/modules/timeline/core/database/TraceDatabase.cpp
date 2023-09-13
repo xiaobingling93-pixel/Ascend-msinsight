@@ -946,7 +946,7 @@ bool TraceDatabase::QueryUnitsMetadata(const std::string &fileId,
                       " (SELECT p.pid, p.process_name, p.label, p.process_sort_index, t.tid, t.thread_name,"
                       " t.track_id, t.thread_sort_index "
                       " FROM " + processTable + " p LEFT JOIN " + threadTable + " t ON p.pid = t.pid ) AS pt "
-                      " LEFT JOIN " + sliceTable + " s ON pt.track_id = s.track_id" +
+                      " INNER JOIN " + sliceTable + " s ON pt.track_id = s.track_id" +
                       " WHERE pt.process_name is not null "
                       " GROUP BY s.track_id"
                       " ORDER BY pt.process_sort_index ASC, pt.thread_sort_index ASC;";
@@ -1036,9 +1036,10 @@ int TraceDatabase::SearchSliceNameCount(const std::string &name)
     return count;
 }
 
-bool TraceDatabase::SearchSliceName(const std::string &name, int index, Protocol::SearchSliceBody &responseBody)
+bool TraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
+                                    Protocol::SearchSliceBody &responseBody)
 {
-    std::string sql = "SELECT pid, tid, timestamp, duration, depth"
+    std::string sql = "SELECT pid, tid, timestamp - ?, duration, depth"
                       " FROM " + sliceTable + " JOIN " + threadTable + " USING (track_id)"
                       " WHERE name like '%'||?||'%'"
                       " ORDER BY timestamp LIMIT 1 OFFSET ?";
@@ -1049,6 +1050,7 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, Protocol
         return false;
     }
     int bindIndex = bindStartIndex;
+    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(minTimestamp));
     sqlite3_bind_text(stmt, bindIndex++, name.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_int(stmt, bindIndex++, index);
     if (sqlite3_step(stmt) != SQLITE_ROW) {
