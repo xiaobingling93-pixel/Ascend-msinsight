@@ -1,6 +1,6 @@
-import type { IMessageSender } from './messageSender';
+import { BasePlatform } from './BasePlatform';
 
-export class Browser implements IMessageSender {
+export class Browser extends BasePlatform {
     selectFolder = (): Promise<string> =>
         new Promise((resolve) => {
             resolve('browser');

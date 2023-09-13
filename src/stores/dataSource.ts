@@ -4,7 +4,7 @@ import type { DataSource } from '@/centralServer/websocket/defs';
 import type { TreeNodeType } from '@/components/MenuTree/types';
 import { connectRemote, disconnectRemote, request } from '@/centralServer/server';
 import connector from '@/connection';
-import { modules } from '@/moduleConfig';
+import { modulesConfig } from '@/moduleConfig';
 
 export type FormItemData = { value: string; status: 'wait' | 'error' | 'success' };
 type FormDataSource = {
@@ -43,11 +43,11 @@ const validateAll = (formData: FormDataSource): boolean => {
 export const useDataSources = defineStore('dataSources', () => {
     const dataSources = ref<DataSource[]>([]);
     let temp: FormDataSource | null = null;
-    function add(originSource: FormDataSource) {
+    const add = (originSource: FormDataSource) => {
         temp = originSource;
     }
 
-    function confirm(): boolean {
+    const confirm = (): boolean => {
         if (temp && validateAll(temp)) {
             const dataSource: DataSource = {
                 remote: temp.remote.value,
@@ -61,18 +61,18 @@ export const useDataSources = defineStore('dataSources', () => {
         return false;
     }
 
-    function cancel() {
+    const cancel = (): void => {
         temp = null;
     }
 
-    async function remove(index: number) {
+    const remove = async (index: number): Promise<void> => {
         menuTree.value.splice(index, 1);
         connector.send({
             event: 'remote/remove',
             dataSource: dataSources.value[index],
             body: ''
         });
-        for (const module of modules) {
+        for (const module of modulesConfig) {
             await request(dataSources.value[index], module.requestName, { command: 'remote/reset', params: {} });
         }
         disconnectRemote(dataSources.value[index]);

@@ -4,7 +4,7 @@ import type { TreeNodeType } from './types';
 import Expand from './ExpandIcon.vue';
 import Delete from './DeleteIcon.vue';
 import { indent } from './types';
-import { useDataSources } from '@/stores';
+import { useDataSources } from '@/stores/dataSource';
 
 const props = defineProps<{ data: TreeNodeType; tier: number }>();
 let isExpanded = ref(true);

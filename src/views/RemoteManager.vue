@@ -6,7 +6,7 @@ import IconContainer from '@/components/IconContainer.vue';
 import MenuTree from '@/components/MenuTree/MenuTree.vue';
 import ModalView from '@/components/ModalView.vue';
 import FormComp from '@/components/FormComp.vue';
-import { useDataSources } from '@/stores';
+import { useDataSources } from '@/stores/dataSource';
 const width = 1.3;
 const boxShadow = '1px 1px 1px 1px var(--color-background-soft) inset, -1px -1px 1px 1px var(--color-background-soft) inset';
 let showModal = ref(false);

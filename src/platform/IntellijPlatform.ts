@@ -1,6 +1,5 @@
-import type { IMessageSender } from "./messageSender";
-
-export class IntellijPlatform implements IMessageSender {
+import { BasePlatform } from "./BasePlatform";
+export class IntellijPlatform extends BasePlatform {
     selectFolder(): Promise<string> {
         return new Promise((resolve) => {
             this.sendMessage({
