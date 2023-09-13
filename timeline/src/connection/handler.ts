@@ -93,4 +93,10 @@ export const removeRemoteHandler = async ({ dataSource }: any): Promise<void> =>
         remoteMaxTimeStamps = Math.max(<number>attrs.maxTimeStamp, remoteMaxTimeStamps);
     });
     session.endTimeAll = remoteMaxTimeStamps;
+    if (session.selectedUnits[0] !== undefined && !session.units.includes(session.selectedUnits[0])) {
+        session.selectedUnits = [];
+    }
+    if (session.units.length === 0) {
+        session.selectedRange = undefined;
+    }
 };
