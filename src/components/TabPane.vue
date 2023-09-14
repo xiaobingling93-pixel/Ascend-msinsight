@@ -9,8 +9,8 @@ const moduleRefs = ref<HTMLIFrameElement[] | undefined>();
 
 onMounted(async () => {
     connector.resigsterAwaitFetch(async (e) => {
-        const { remote, args } = e.data;
-        const result = await request(remote, modulesConfig[activeModule.value].name.toLowerCase(), args);
+        const { remote, args, module } = e.data;
+        const result = await request(remote, module, args);
         return { dataSource: remote, body: result };
     });
 });
