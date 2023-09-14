@@ -6,7 +6,6 @@
 #define PROFILER_SERVER_SUMMARY_DEF_H
 
 #include <string>
-#include <optional>
 
 namespace Dic {
 namespace Module {
@@ -33,4 +32,4 @@ struct Kernel {
 } // end of namespace Module
 } // end of namespace Dic
 
-#endif //PROFILER_SERVER_SUMMARY_DEF_H
+#endif // PROFILER_SERVER_SUMMARY_DEF_H

@@ -84,11 +84,12 @@ public:
 
     static inline std::string AnonymousString(const std::string &str)
     {
-        if (str.length() < 3) {
+        const uint16_t MIN_ANONYMOUS_LEN = 3;
+        if (str.length() < MIN_ANONYMOUS_LEN) {
             return str;
         }
         std::string res(str);
-        int pos = res.length() / 3;
+        int pos = res.length() / MIN_ANONYMOUS_LEN;
         res.replace(pos, pos, pos, '*');
         return res;
     }

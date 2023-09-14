@@ -6,7 +6,6 @@
 #define PROFILER_SERVER_MEMORYDEF_H
 
 #include <string>
-#include <optional>
 
 namespace Dic {
 namespace Module {

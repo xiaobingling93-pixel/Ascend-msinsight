@@ -23,7 +23,7 @@ int ProtocolMessageBuffer::GetBodyLength(const uint64_t &headPosition, const uin
 {
     std::string lenStr = buffer.substr(headPosition, headLength);
     std::optional<std::smatch> matchRes = RegexUtil::RegexMatch(lenStr, "Content-Length:\\s*(\\d+)");
-    if (!matchRes.has_value() || matchRes.value().size() < MATCH_MIN_NUM) {
+    if (!matchRes.has_value() || matchRes.value().size() < matchMinNum) {
         return -1;
     }
     int res;

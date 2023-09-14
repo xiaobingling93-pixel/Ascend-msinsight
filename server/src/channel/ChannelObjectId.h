@@ -18,7 +18,7 @@ private:
     ChannelObjectId() = default;
     ~ChannelObjectId() = default;
 
-    static const int MAX_ID;
+    static const int maxId;
     int id = 0;
     std::mutex mtx;
 };

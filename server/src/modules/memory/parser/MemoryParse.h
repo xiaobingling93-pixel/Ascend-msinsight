@@ -26,8 +26,8 @@ public:
     bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
                const std::string &selectedFolder) override;
     void Reset() override;
-    bool OperatorParse(const std::string &filePath, const std::string &fileId);
-    bool RecordToParse(const std::string &filePath, const std::string &fileId);
+    bool OperatorParse(const std::string &parentDir, const std::string &fileId);
+    bool RecordToParse(const std::string &parentDir, const std::string &fileId);
 
 private:
     const int maxThreadNum = 1;
@@ -44,7 +44,7 @@ private:
     Record mapperToRecordDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string>);
     Operator mapperToOperatorDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string>);
 
-    std::string GetDbPath(const std::string &filePath, const std::string &fileId);
+    std::string GetDbPath(const std::string &selectedFolder, const std::string &rankId);
 };
 } // end of namespace Memory
 } // end of namespace Module

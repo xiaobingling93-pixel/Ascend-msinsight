@@ -33,7 +33,7 @@ IdBuilder &IdBuilder::SessionIdBuilder()
 int IdBuilder::Build()
 {
     std::unique_lock<std::mutex> lock(idMutex);
-    if (id >= MAX_ID) {
+    if (id >= maxId) {
         id = 0;
     }
     return id++;

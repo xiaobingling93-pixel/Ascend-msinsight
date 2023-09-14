@@ -7,6 +7,7 @@
 #include <deque>
 #include <mutex>
 
+namespace Dic {
 template <typename T>
 class SafeQueue {
 public:
@@ -49,5 +50,6 @@ private:
     std::deque<T> deque;
     std::mutex mutex;
 };
+}
 
-#endif //THREADPOOL_SAFEQUEUE_H
+#endif // THREADPOOL_SAFEQUEUE_H

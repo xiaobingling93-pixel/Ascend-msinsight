@@ -92,8 +92,9 @@ public:
     const std::string NowStr(const TimeStyle &style = TimeStyle::WITH_MILLI_SEC) const
     {
         using TimeStyleFunc = std::function<std::string(const Time &time)>;
-        static std::map<TimeStyle, TimeStyleFunc> funcMap = { { TimeStyle::WITH_MILLI_SEC, GetTimeStyleWithMilliSec },
-                                                              { TimeStyle::WITH_SEC_NO_SPLIT, &GetTimeStyleWithSecNoSplit } };
+        static std::map<TimeStyle, TimeStyleFunc> funcMap = {
+            { TimeStyle::WITH_MILLI_SEC, GetTimeStyleWithMilliSec },
+            { TimeStyle::WITH_SEC_NO_SPLIT, &GetTimeStyleWithSecNoSplit } };
         if (funcMap.count(style) == 0) {
             return "";
         }

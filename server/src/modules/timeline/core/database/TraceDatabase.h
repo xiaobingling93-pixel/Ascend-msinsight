@@ -116,6 +116,9 @@ private:
                             std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec);
     bool FlowDetailToResponse(std::vector<Protocol::FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
                               Protocol::UnitFlowBody &responseBody);
+    bool DealLastData(std::vector<Protocol::SimpleSlice> &simpleSliceVec,
+                      std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime,
+                      uint64_t endTime, uint64_t index);
 };
 } // end of namespace Timeline
 } // end of namespace Module

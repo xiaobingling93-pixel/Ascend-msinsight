@@ -28,7 +28,8 @@ void QueryThreadDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     UnitThreadDetailResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
-    int64_t trackId = TraceFileParser::Instance().GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
+    int64_t trackId = TraceFileParser::Instance()
+            .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
     if (!database->QueryThreadDetail(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId)) {
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
