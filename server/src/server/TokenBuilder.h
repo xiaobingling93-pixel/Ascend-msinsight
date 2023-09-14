@@ -19,8 +19,7 @@ private:
     TokenBuilder() = default;
     ~TokenBuilder() = default;
 
-    static const int MAX_TOKEN_CODE;
-    static const std::string TOKEN_HEAD;
+    static const int maxTokenCode = 0x7dffffff;
     int tokenCode = 0;
     std::mutex tokenCodeMutex;
 };

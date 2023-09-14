@@ -598,6 +598,17 @@ bool TraceDatabase::QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t star
     return true;
 }
 
+bool TraceDatabase::DealLastData(std::vector<Protocol::SimpleSlice> &rows,
+                                 std::map<std::string, uint64_t> &selfTimeKeyValue,
+                                 uint64_t startTime, uint64_t endTime, uint64_t index)
+{
+    while (++index < rows.size()) {
+        if (rows.at(index).timestamp <= endTime && rows.at(index).endTime >= startTime) {
+            AddData(selfTimeKeyValue, rows.at(index).name, rows.at(index).duration);
+        }
+    }
+}
+
 void TraceDatabase::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
                                       std::map<std::string, uint64_t> &selfTimeKeyValue,
                                       uint64_t startTime, uint64_t endTime)
@@ -615,11 +626,7 @@ void TraceDatabase::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
             // 处理当前tmpSelfTime
             AddData(selfTimeKeyValue, rows.at(i).name, tmpSelfTime);
             // 处理剩余元素
-            while (++i < rows.size()) {
-                if (rows.at(i).timestamp <= endTime && rows.at(i).endTime >= startTime) {
-                    AddData(selfTimeKeyValue, rows.at(i).name, rows.at(i).duration);
-                }
-            }
+            DealLastData(rows, selfTimeKeyValue, startTime, endTime, i);
             break;
         }
         Protocol::SimpleSlice rowI = rows.at(i);

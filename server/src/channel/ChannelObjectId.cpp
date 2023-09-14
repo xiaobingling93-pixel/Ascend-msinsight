@@ -6,7 +6,9 @@
 
 using namespace Dic;
 
-const int ChannelObjectId::MAX_ID = 0x7dffffff;
+namespace Dic {
+    const int ChannelObjectId::maxId = 0x7dffffff;
+}
 
 ChannelObjectId &ChannelObjectId::ChannelId()
 {
@@ -23,7 +25,7 @@ ChannelObjectId &ChannelObjectId::ThreadId()
 int ChannelObjectId::Create()
 {
     std::lock_guard<std::mutex> lock(mtx);
-    if (id >= MAX_ID) {
+    if (id >= maxId) {
         id = 0;
     }
     return id++;

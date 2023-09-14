@@ -7,7 +7,7 @@
 
 namespace Dic {
 using namespace Dic::Server;
-void ThreadPool::threadFunc(ThreadPool &threadPool, int index)
+void ThreadPool::ThreadFunc(ThreadPool &threadPool, int index)
 {
     std::function<void()> func;
     bool hasTask = false;
@@ -39,7 +39,7 @@ ThreadPool::ThreadPool(int threadCount)
 {
     ServerLog::Info("[Thread pool] Init. thread count:", threadCount);
     for (int i = 0; i < threadCount; i++) {
-        threads.emplace_back(ThreadPool::threadFunc, std::ref(*this), i);
+        threads.emplace_back(ThreadPool::ThreadFunc, std::ref(*this), i);
     }
 }
 

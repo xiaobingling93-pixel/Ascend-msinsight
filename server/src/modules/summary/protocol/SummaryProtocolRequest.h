@@ -7,9 +7,9 @@
 
 #include <string>
 #include <optional>
+#include <vector>
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
-#include <vector>
 
 namespace Dic {
 namespace Protocol {

@@ -35,10 +35,10 @@ public:
     {
         std::function<decltype(f(args...))()> func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
         auto task = std::make_shared<std::packaged_task<decltype(f(args...))()>>(func);
-        std::function<void()> warpper_func = [task]() {
+        std::function<void()> warpperFunc = [task]() {
             (*task)();
         };
-        taskQueue.Push(warpper_func);
+        taskQueue.Push(warpperFunc);
         taskCv.notify_one();
         return task->get_future();
     }
@@ -62,13 +62,13 @@ private:
     bool running = true;
     bool waiting = false;
     std::atomic<int> runningTasks{0};
-    SafeQueue<std::function<void()>> taskQueue;
+    Dic::SafeQueue<std::function<void()>> taskQueue;
     std::vector<std::thread> threads;
     std::mutex taskMutex;
     std::condition_variable taskCv;
     std::condition_variable taskDoneCv;
 
-    static void threadFunc(ThreadPool &threadPool, int index);
+    static void ThreadFunc(ThreadPool &threadPool, int index);
 };
 } // namespace Dic
 

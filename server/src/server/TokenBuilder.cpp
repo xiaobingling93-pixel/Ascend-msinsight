@@ -6,8 +6,6 @@
 
 namespace Dic {
 namespace Server {
-const int TokenBuilder::MAX_TOKEN_CODE = 0x7dffffff;
-const std::string TokenBuilder::TOKEN_HEAD = "dic_server_token_";
 
 TokenBuilder &TokenBuilder::Instance()
 {
@@ -17,8 +15,9 @@ TokenBuilder &TokenBuilder::Instance()
 
 const std::string TokenBuilder::Build()
 {
+    static const std::string TOKEN_HEAD = "dic_server_token_";
     std::lock_guard<std::mutex> lock(tokenCodeMutex);
-    if (tokenCode >= MAX_TOKEN_CODE) {
+    if (tokenCode >= maxTokenCode) {
         tokenCode = 0;
     }
     std::string tokenString = TOKEN_HEAD + std::to_string(++tokenCode);

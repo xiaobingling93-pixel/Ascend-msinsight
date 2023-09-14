@@ -25,7 +25,7 @@ public:
 
     bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
                const std::string &selectedFolder) override;
-    bool KernelFileParse(const std::string &filePath, const std::string &fileId);
+    bool KernelFileParse(const std::string &parentDir, const std::string &fileId);
 private:
     std::unique_ptr<SummaryDataBase> database;
     const int maxThreadNum = 1;

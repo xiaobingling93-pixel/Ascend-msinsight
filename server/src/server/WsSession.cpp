@@ -13,7 +13,7 @@ namespace Dic {
 namespace Server {
 using namespace Dic::Protocol;
 using namespace Dic::Module;
-WsSession::WsSession(WsChannel *channel) : channel(channel)
+WsSession::WsSession(WsChannel *channel) : channel(channel), tokenString(), status()
 {
     loop = uWS::Loop::get();
     tokenString = TokenBuilder::Instance().Build();
@@ -89,7 +89,7 @@ void WsSession::OnHandleMsgBuffer(WsSession &session)
 void WsSession::OnHandleResponseQueue(WsSession &session)
 {
     ServerLog::Info("Handle response queue thread start.");
-    const int INTERVAL = 50;
+    const int interval = 50;
     while (session.useResponseQueue) {
         if (session.status == Status::CLOSED) {
             session.responseQueue->Clear();
@@ -97,7 +97,7 @@ void WsSession::OnHandleResponseQueue(WsSession &session)
         }
         std::unique_ptr<Response> responsePtr = session.responseQueue->Pop();
         if (responsePtr == nullptr) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(INTERVAL));
+            std::this_thread::sleep_for(std::chrono::milliseconds(interval));
             continue;
         }
         session.SendResponse(*responsePtr.get());
@@ -119,10 +119,10 @@ void WsSession::WaitForExit(int milliSeconds)
 
 const std::string WsSession::GetMessageHeader(int length) const
 {
-    const std::string DELIMITER = "\r\n\r\n";
+    const std::string delimiter = "\r\n\r\n";
     std::string result = "Content-Length:";
     result.append(std::to_string(length));
-    result.append(DELIMITER);
+    result.append(delimiter);
     return result;
 }
 

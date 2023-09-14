@@ -27,7 +27,7 @@ private:
 
     const std::string REQ_DELIMITER = "\r\n\r\n";
     const std::string HEAD_START = "Content-Length:";
-    const int MATCH_MIN_NUM = 2;
+    const int matchMinNum = 2;
     std::mutex mutex;
     std::string buffer;
     std::string error;

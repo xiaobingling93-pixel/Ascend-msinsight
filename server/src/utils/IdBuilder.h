@@ -20,7 +20,7 @@ private:
     IdBuilder() = default;
     ~IdBuilder() = default;
 
-    const int MAX_ID = 0x7dffffff;
+    const int maxId = 0x7dffffff;
     int id;
     std::mutex idMutex;
 };
