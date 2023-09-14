@@ -108,18 +108,32 @@ StepStatistic ClusterFileParser::MapToStepStatistic(std::vector<std::string> tok
 {
     StepStatistic statistic;
     int index = 0;
-    statistic.stepId = tokens[index++];
+    statistic.stepId = tokens[index].empty() ? "0" : tokens[index];
+    index++;
     std::string flag = tokens[index++];
     std::string order = tokens[index++];
     statistic.rankId = std::strcmp(flag.c_str(), "rank") == 0 ? order : "";
-    statistic.stageId = std::strcmp(flag.c_str(), "stage") == 0  ? order : "";
-    statistic.computingTime = tokens[index].empty() ? 0 : std::stod(tokens[index++]);
-    statistic.pureCommunicationTime = tokens[index].empty() ? 0 : std::stod(tokens[index++]);
-    statistic.overlapCommunicationTime = tokens[index].empty() ? 0 : std::stod(tokens[index++]);
-    statistic.communicationTime = tokens[index].empty() ? 0 : std::stod(tokens[index++]);
-    statistic.freeTime = tokens[index].empty() ? 0 : std::stod(tokens[index++]);
-    statistic.stageTime = tokens[index].empty() ? 0 : std::stod(tokens[index++]);
-    statistic.bubbleTime = tokens[index].empty() ? 0 : std::stod(tokens[index++]);
+    // 去掉stage的首尾引号
+    if (std::strcmp(flag.c_str(), "stage") == 0 &&
+        order.find('\"') != std::string::npos &&
+        order.length() > subStrlen) {
+        order = order.substr(1, order.length() - subStrlen);
+        statistic.stageId = order;
+    }
+    statistic.computingTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
+    index++;
+    statistic.pureCommunicationTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
+    index++;
+    statistic.overlapCommunicationTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
+    index++;
+    statistic.communicationTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
+    index++;
+    statistic.freeTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
+    index++;
+    statistic.stageTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
+    index++;
+    statistic.bubbleTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
+    index++;
     statistic.pureCommunicationExcludeReceiveTime =
             tokens[index].empty() ? 0 : std::stod(tokens[index]);
     return statistic;

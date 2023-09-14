@@ -21,6 +21,7 @@ public:
     void SaveClusterBaseInfo(const std::string& selectedPath);
 private:
     StepStatistic MapToStepStatistic(std::vector<std::string> tokens);
+    int subStrlen = 2;
 };
 } // end of namespace Timeline
 } // end of namespace Module

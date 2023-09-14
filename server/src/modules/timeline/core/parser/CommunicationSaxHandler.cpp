@@ -153,9 +153,12 @@ CommunicationBandWidth CommunicationSaxHandler::MapToBandwidth(const json_t &jso
     CommunicationBandWidth bandWidth;
     bandWidth.stageId = stageId;
     bandWidth.iterationId = stepId.length() > stepSubLen ? stepId.substr(stepSubLen) : stepId;
+    if (std::strcmp(stepId.c_str(), "step") == 0) {
+        bandWidth.iterationId = "0";
+    }
     bandWidth.rankId = rankId;
     int index = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
-    if (index > 0) {
+    if (index != std::string::npos) {
         bandWidth.opName = tempOpName.substr(0, index);
         bandWidth.opSuffix = tempOpName.substr(index + 1);
     } else {
@@ -175,9 +178,12 @@ CommunicationTimeInfo CommunicationSaxHandler::MapToTimeInfo(const json_t &json)
     timeInfo.rankId = rankId;
     // 去掉step前缀
     timeInfo.iterationId = stepId.length() > stepSubLen ? stepId.substr(stepSubLen) : stepId;
+    if (std::strcmp(stepId.c_str(), "step") == 0) {
+        timeInfo.iterationId = "0";
+    }
     timeInfo.stageId = stageId;
     int index = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
-    if (index > 0) {
+    if (index != std::string::npos) {
         timeInfo.opName = tempOpName.substr(0, index);
         timeInfo.opSuffix = tempOpName.substr(index + 1);
     } else {
