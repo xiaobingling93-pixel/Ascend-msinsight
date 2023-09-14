@@ -6,13 +6,13 @@ type SendParams<T extends EventHanlder> = {
     [x: string]: unknown;
 };
 type ListenerCallback = (res: MessageEvent) => void;
+type ListenerHandler = { event: EventHanlder; sequence: number };
 abstract class BaseConnector {
     protected readonly _errMsgType = 'postMessage';
     protected invalidFunc: null | (() => void) = null;
     protected _targetWindow: TargetWindow;
     protected _getTargetWindow: () => TargetWindow;
-    protected _listeners: Map<EventHanlder, ListenerCallback> = new Map();
-    protected _broadcastListeners: ListenerCallback[] = [];
+    protected _listeners: Map<EventHanlder, Array<ListenerCallback | null>> = new Map();
 
     constructor(getTargetWindow: () => TargetWindow) {
         if (typeof window !== 'object') {
@@ -28,10 +28,8 @@ abstract class BaseConnector {
             const listener = this._listeners.get(res.data.event);
             if (res.data.event === 'request') {
                 this.awaitFetch(res);
-            } else if (res.data.event === 'broadcast') {
-                this._broadcastListeners.forEach(callback => callback(res));
             } else if (listener) {
-                listener(res);
+                listener.forEach(cb => cb?.(res));
             } else {
                 console.warn(this.printErrMsg('missed [event] in your message, please check your params, or maybe have an invalid send'));
             }
@@ -67,22 +65,27 @@ abstract class BaseConnector {
         this._targetWindow.postMessage(JSON.stringify(params), '*');
     }
 
-    addListener<T extends EventHanlder>(event: T extends ReservedEventHandler ? never : T, callback: ListenerCallback): T {
+    addListener<T extends EventHanlder>(event: T extends ReservedEventHandler ? never : T, callback: ListenerCallback): ListenerHandler {
         if (this.invalidFunc) {
             this.invalidFunc();
         }
         if (this._listeners.has(event)) {
-            console.warn(this.printErrMsg('detected some even type was overrided, this maybe cause some mistake, pleas check it'));
+            (this._listeners.get(event) as ListenerCallback[]).push(callback);
+        } else {
+            this._listeners.set(event, [callback]);
         }
-        this._listeners.set(event, callback);
-        return event;
+        return { event, sequence: (this._listeners.get(event) as ListenerCallback[]).length - 1 };
     }
 
-    removeListener<T extends EventHanlder>(event: T extends ReservedEventHandler ? never : T): void {
+    removeListener({ event, sequence }: ListenerHandler): void {
         if (this.invalidFunc) {
             this.invalidFunc();
         }
-        this._listeners.delete(event);
+        const listeners = this._listeners.get(event);
+        if (listeners) {
+            listeners[sequence] = null;
+            listeners.filter(item => item).length === 0 && this._listeners.delete(event);
+        }
     }
 };
 
@@ -106,9 +109,25 @@ class ServerConnector extends BaseConnector {
     }
 };
 
+type FetchParams = {
+    event?: never;
+    [x: string]: unknown;
+};
 class ClientConnector extends BaseConnector {
     private readonly _msgSequence: Map<FetchSequenceID, Function> = new Map();
     private _curFetchSequenceID: FetchSequenceID = 0;
+    private readonly _module: TypeForConnector;
+
+    constructor({
+        getTargetWindow,
+        module,
+    }: {
+        getTargetWindow: () => TargetWindow;
+        module: TypeForConnector;
+    }) {
+        super(getTargetWindow);
+        this._module = module;
+    }
 
     protected awaitFetch(res: MessageEvent): void {
         const _resolve = this._msgSequence.get(res.data.id);
@@ -122,22 +141,29 @@ class ClientConnector extends BaseConnector {
         this._msgSequence.delete(res.data.id);
     }
 
-    async fetch<T extends EventHanlder>(params: Record<string, unknown>): Promise<unknown> {
+    send<T extends EventHanlder>(params: SendParams<T>, reject?: Function): void {
+        params.module = this._module;
+        super.send(params, reject);
+    }
+
+    async fetch(params: FetchParams): Promise<unknown> {
         return new Promise((resolve, reject) => {
             params.id = this._curFetchSequenceID;
-            params.event = 'request';
-            this.send(params as SendParams<T>, reject);
+            (params as Record<string, unknown>).event = 'request';
+            params.module = this._module;
+            this.send(params as any, reject);
             this._msgSequence.set(this._curFetchSequenceID++, resolve);
         });
     };
 };
 
-type TypeForConnector = {
-    server: ServerConnector;
-    client: ClientConnector;
-};
-
-type ConnectorType = keyof TypeForConnector;
-export default (function connectorFactory<T extends ConnectorType>(connectorType: T): TypeForConnector[T] {
-    return (connectorType === 'server' ? new ServerConnector(() => document?.querySelector('iframe')?.contentWindow) : new ClientConnector(() => window?.top)) as TypeForConnector[T];
-})('server');
+type TypeForConnector = 'framework' | string;
+type ConnectorType<T extends TypeForConnector> = T extends 'framework' ? ServerConnector : ClientConnector;
+export default (function connectorFactory<T extends TypeForConnector>(connectorType: T): ConnectorType<T> {
+    return (connectorType === 'framework'
+        ? new ServerConnector(() => document?.querySelector('iframe')?.contentWindow)
+        : new ClientConnector({
+            getTargetWindow: () => window?.top,
+            module: connectorType,
+        })) as ConnectorType<T>;
+})('framework');
