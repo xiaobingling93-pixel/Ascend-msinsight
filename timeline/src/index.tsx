@@ -57,3 +57,7 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([ event, callback ]) => {
         callback({ dataSource: res.dataSource, body: res.body });
     });
 });
+
+connector.addListener('setTheme', (e) => {
+    window.setTheme(e.data.isDark);
+});
