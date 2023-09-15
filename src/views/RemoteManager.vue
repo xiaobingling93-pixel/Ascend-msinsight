@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import AddIcon from '@/components/icons/cross_icon.vue';
-import GearIcon from '@/components/icons/gear_icon.vue';
 import IconContainer from '@/components/IconContainer.vue';
 import MenuTree from '@/components/MenuTree/MenuTree.vue';
 import ModalView from '@/components/ModalView.vue';
@@ -38,9 +37,6 @@ function reset() {
     <header class="header">
         <IconContainer :width="width" :boxShadow="boxShadow" @click="addRemote">
             <AddIcon />
-        </IconContainer>
-        <IconContainer :width="width" :boxShadow="boxShadow">
-            <GearIcon />
         </IconContainer>
         <el-switch class="theme-toggle" v-model="isDarkTheme"></el-switch>
         <ModalView v-if="showModal" :close="reset" :confirm="confirm" title="Add your remote">

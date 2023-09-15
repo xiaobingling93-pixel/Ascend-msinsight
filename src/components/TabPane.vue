@@ -23,7 +23,7 @@ function toggleTab(index: number): void {
 <template>
     <div class="tab-pane">
         <div class="tab-titles">
-            <el-menu class="el-menu-title" mode="horizontal" background-color="#545c64" text-color="#fff" active-text-color="#ffd04b" router>
+            <el-menu class="el-menu-title" mode="horizontal" background-color="#252526" router>
                 <el-menu-item v-for="(moduleConfig, index) in modulesConfig"
                     :key="`${index}-${moduleConfig.name}`"
                     @click="() => toggleTab(index)"
@@ -56,7 +56,7 @@ function toggleTab(index: number): void {
     height: var(--header-height);
 }
 
-.el-menu-title {
+.el-menu {
   display: flex;
   border: none;
   height: 30px;
@@ -65,23 +65,30 @@ function toggleTab(index: number): void {
   border-bottom: var(--border-style);
 }
 
-el-menu-item {
-  background-color: #383838;
+.el-menu-item {
   margin-right: 1px;
   text-align: center;
-  height: 28px !important;
-  width: 100px;
+  width: 150px;
+  color: #ffffff;
   line-height: 30px;
   user-select: none;
 }
 
-el-menu-item.active {
-  color: #FFD04B !important; /* 你想要的字体颜色 */
-  border-bottom: 2px solid #FFD04B
+.el-menu-item.active {
+  color: #066ad8 !important; /* 你想要的字体颜色 */
 }
 
-el-menu-item:hover {
-  background-color: #545C64;
+.el-menu-item.active:after {
+  content: '';
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  bottom: 0;
+  border-bottom: 2px solid #066ad8
+}
+
+.el-menu-item:hover {
+  background-color: #383838;
 }
 
 @media (min-height: 1024px) {
