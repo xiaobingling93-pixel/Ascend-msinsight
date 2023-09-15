@@ -37,6 +37,11 @@ const handleDisplayAside = () => {
     width: 100vw;
     height: 100vh;
 }
+
+.el-aside {
+    background-color: #252526;
+}
+
 .aside-handler {
     position: absolute;
     display: flex;
