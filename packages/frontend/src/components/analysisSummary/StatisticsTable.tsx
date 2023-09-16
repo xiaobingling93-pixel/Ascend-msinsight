@@ -266,7 +266,7 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
         setExpandedKeys([]);
     }, [ props.rankId, props.step ]);
     const updateData = async (): Promise<void> => {
-        const res = await querySummaryStatistics({ timeFlag, rankId, step: step === 'All' ? '' : step });
+        const res = await querySummaryStatistics({ timeFlag, rankId, stepId: step === 'All' ? '' : step });
         let data = res.result ?? [];
         data = data.map((item: any) => ({
             ...item,
@@ -302,7 +302,7 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
         setExpandedKeys([]);
     }, [ props.rankId, props.step ]);
     const updateData = async (): Promise<void> => {
-        const res = await querySummaryStatistics({ timeFlag, rankId, step: step === 'All' ? '' : step });
+        const res = await querySummaryStatistics({ timeFlag, rankId, stepId: step === 'All' ? '' : step });
         setDataSource(res.result ?? [ ]);
     };
 
