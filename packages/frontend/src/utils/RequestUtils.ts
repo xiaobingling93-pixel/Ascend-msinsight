@@ -100,7 +100,7 @@ export const queryOperatorDetails = async(param: {
  * @param {string} timeFlag 类型：SCMA、
  * @return {[]} 返回数组
  */
-export const querySummaryStatistics = async (param: {rankId: string; timeFlag: string;step: string}): Promise<any> => {
+export const querySummaryStatistics = async (param: {rankId: string; timeFlag: string;stepId: string}): Promise<any> => {
     if (isNull(window.request)) {
         return computationCommunicationData[param.timeFlag];
     }
