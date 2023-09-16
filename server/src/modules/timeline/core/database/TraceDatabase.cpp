@@ -1174,13 +1174,15 @@ bool TraceDatabase::GetCommunicationDetails(const int64_t& opTrackId,
                                             std::vector<Protocol::CommunicationDetail> &details)
 {
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT name, timestamp, duration FROM " + sliceTable;
+    std::string sql = "SELECT name, timestamp, duration FROM " + sliceTable + " WHERE track_id = ?";
 
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
+    int index = bindStartIndex;
+    sqlite3_bind_int64(stmt, index++, opTrackId);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::CommunicationDetail communicationDetail{};

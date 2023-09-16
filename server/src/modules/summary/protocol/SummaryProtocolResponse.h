@@ -74,7 +74,7 @@ struct ComputeDetail {
 struct ComputeDetailResponse : public Response {
     ComputeDetailResponse() : Response(REQ_RES_COMPUTE_DETAIL) {}
     std::vector<ComputeDetail> computeDetails;
-    int32_t totalNum;
+    int64_t totalNum;
 };
 } // end of namespace Protocol
 } // end of namespace Dic

@@ -144,8 +144,7 @@ sqlite3_stmt *SummaryDataBase::GetKernelStmt(uint64_t paramLen)
 }
 
 bool SummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
-                                                std::vector<Protocol::ComputeDetail> &computeDetails,
-                                                int32_t &totalNum)
+                                                std::vector<Protocol::ComputeDetail> &computeDetails)
 {
     std::string sql = GenComputeSql(params);
     std::string timeFlag = params.timeFlag;
@@ -182,7 +181,6 @@ bool SummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams pa
     }
     computeDetails = computeVec;
 
-    totalNum = queryComputeTotalNum(params.timeFlag);
     sqlite3_finalize(stmt);
     return true;
 }
@@ -210,9 +208,8 @@ std::string SummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request
     return sql;
 }
 
-int64_t SummaryDataBase::queryComputeTotalNum(std::string name)
+bool SummaryDataBase::QueryComputeTotalNum(std::string name, int64_t &totalNum)
 {
-    int64_t totalNum = 0;
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT count(*) as nums FROM " + kernelTable + " WHERE accelerator_core = ?";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -221,13 +218,13 @@ int64_t SummaryDataBase::queryComputeTotalNum(std::string name)
         sqlite3_bind_text(stmt, index++, name.c_str(), name.length(), nullptr);
     } else {
         ServerLog::Error("QueryComputeTotalNum failed! Failed to prepare sql.", sqlite3_errmsg(db));
-        return {};
+        return false;
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         totalNum = sqlite3_column_int64(stmt, resultStartIndex);
     }
     sqlite3_finalize(stmt);
-    return totalNum;
+    return true;
 }
 
 } // end of namespace Summary

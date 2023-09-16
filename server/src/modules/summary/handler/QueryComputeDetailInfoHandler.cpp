@@ -25,7 +25,8 @@ void QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     ComputeDetailResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(request.params.rankId);
-    if (!database->QueryComputeDetailHandler(request.params, response.computeDetails, response.totalNum)) {
+    if (!database->QueryComputeDetailHandler(request.params, response.computeDetails) or
+        !database->QueryComputeTotalNum(request.params.timeFlag, response.totalNum)) {
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;
