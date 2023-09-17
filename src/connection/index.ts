@@ -1,4 +1,4 @@
-type TargetWindow = Window | null | undefined;
+type TargetWindow = Window;
 type ReservedEventHandler = 'request';
 type EventHanlder = string;
 type SendParams<T extends EventHanlder> = {
@@ -7,20 +7,22 @@ type SendParams<T extends EventHanlder> = {
 };
 type ListenerCallback = (res: MessageEvent) => void;
 type ListenerHandler = { event: EventHanlder; sequence: number };
+type GetTragetWindows = () => TargetWindow[];
+type SendTargetKey = number;
 abstract class BaseConnector {
     protected readonly _errMsgType = 'postMessage';
     protected invalidFunc: null | (() => void) = null;
-    protected _targetWindow: TargetWindow;
-    protected _getTargetWindow: () => TargetWindow;
+    protected _targetWindows: TargetWindow[] | undefined;
+    protected _getTargetWindows: GetTragetWindows;
     protected _listeners: Map<EventHanlder, Array<ListenerCallback | null>> = new Map();
 
-    constructor(getTargetWindow: () => TargetWindow) {
+    constructor(getTargetWindow: GetTragetWindows) {
         if (typeof window !== 'object') {
             const errMsg = 'cannot find global Window object, please check your runtime environment';
             console.error(this.printErrMsg(errMsg));
             this.invalidFunc = () => { throw new Error(this.printErrMsg(errMsg)); };
         }
-        this._getTargetWindow = getTargetWindow;
+        this._getTargetWindows = getTargetWindow;
 
         window.onmessage = (event: MessageEvent) => {
             const res = { ...event };
@@ -48,21 +50,20 @@ abstract class BaseConnector {
 
     protected abstract awaitFetch(e: MessageEvent): void;
 
-    send<T extends EventHanlder>(params: SendParams<T>, reject?: Function): void {
+    send<T extends EventHanlder>(params: SendParams<T>, to?: SendTargetKey, reject?: Function): void {
         if (this.invalidFunc) {
             this.invalidFunc();
             return;
         }
-        if (!this._targetWindow) {
-            this._targetWindow = this._getTargetWindow();
-        }
-        if (!this._targetWindow?.postMessage) {
+        this._targetWindows = this._getTargetWindows();
+
+        if ((to !== undefined && this._targetWindows[to]?.postMessage !== undefined) || this._targetWindows.length === 0) {
             const errMsg = 'missed postMessage function, please check your iframe element';
             console.warn(this.printErrMsg(errMsg));
             reject?.(new Error(errMsg));
             return;
         }
-        this._targetWindow.postMessage(JSON.stringify(params), '*');
+        this._targetWindows.forEach(targetWindow => { targetWindow.postMessage(JSON.stringify(params), '*'); });
     }
 
     addListener<T extends EventHanlder>(event: T extends ReservedEventHandler ? never : T, callback: ListenerCallback): ListenerHandler {
@@ -122,7 +123,7 @@ class ClientConnector extends BaseConnector {
         getTargetWindow,
         module,
     }: {
-        getTargetWindow: () => TargetWindow;
+        getTargetWindow: GetTragetWindows;
         module: TypeForConnector;
     }) {
         super(getTargetWindow);
@@ -141,17 +142,16 @@ class ClientConnector extends BaseConnector {
         this._msgSequence.delete(res.data.id);
     }
 
-    send<T extends EventHanlder>(params: SendParams<T>, reject?: Function): void {
-        params.module = this._module;
-        super.send(params, reject);
+    send<T extends EventHanlder>(params: SendParams<T>, to?: SendTargetKey, reject?: Function, module?: TypeForConnector): void {
+        params.module = module ?? this._module;
+        super.send(params, undefined, reject);
     }
 
-    async fetch(params: FetchParams): Promise<unknown> {
+    async fetch(params: FetchParams, module?: TypeForConnector): Promise<unknown> {
         return new Promise((resolve, reject) => {
             params.id = this._curFetchSequenceID;
             (params as Record<string, unknown>).event = 'request';
-            params.module = this._module;
-            this.send(params as any, reject);
+            this.send(params as any, undefined, reject, module);
             this._msgSequence.set(this._curFetchSequenceID++, resolve);
         });
     };
@@ -161,9 +161,13 @@ type TypeForConnector = 'framework' | string;
 type ConnectorType<T extends TypeForConnector> = T extends 'framework' ? ServerConnector : ClientConnector;
 export default (function connectorFactory<T extends TypeForConnector>(connectorType: T): ConnectorType<T> {
     return (connectorType === 'framework'
-        ? new ServerConnector(() => document?.querySelector('iframe')?.contentWindow)
+        ? new ServerConnector(() => {
+            const res: TargetWindow[] = [];
+            document?.querySelectorAll('iframe')?.forEach(item => item.contentWindow && res.push(item.contentWindow));
+            return res;
+        })
         : new ClientConnector({
-            getTargetWindow: () => window?.top,
+            getTargetWindow: () => window.top ? [window.top] : [],
             module: connectorType,
         })) as ConnectorType<T>;
 })('framework');

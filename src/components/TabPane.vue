@@ -3,9 +3,13 @@ import { ref, onMounted } from 'vue';
 import { request } from '@/centralServer/server';
 import connector from '@/connection';
 import { modulesConfig } from '@/moduleConfig';
+import { useSession, type Session } from '@/stores/session';
+import { connectRemote } from '@/centralServer/server';
+import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 
 const activeModule = ref(0);
 const moduleRefs = ref<HTMLIFrameElement[] | undefined>();
+const { session, setSession } = useSession();
 
 onMounted(async () => {
     connector.resigsterAwaitFetch(async (e) => {
@@ -13,6 +17,22 @@ onMounted(async () => {
         const result = await request(remote, module, args);
         return { dataSource: remote, body: result };
     });
+
+    connector.addListener('updateSession', (e) => {
+        const receivePropKeys = Object.keys(e.data);
+        const validPropKeys = Object.keys(session);
+        const updateState = {};
+        for (const key of receivePropKeys) {
+            if (validPropKeys.includes(key) && Object.prototype.toString.call(e.data[key]) === Object.prototype.toString.call(session[key as keyof Session])) {
+                Object.assign(updateState, { [key]: e.data[key] });
+                continue;
+            }
+            console.warn(`you just send a invalid data: {${key}: ${e.data[key]}} to update session, please check it`);
+        }
+        setSession(updateState);
+    });
+    const isSuccess = await connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
+    setSession({ hasLocalServer: isSuccess });
 });
 
 function toggleTab(index: number): void {

@@ -47,7 +47,7 @@ export const useDataSources = defineStore('dataSources', () => {
         temp = originSource;
     }
 
-    const confirm = (): boolean => {
+    const confirm = async (): Promise<boolean> => {
         if (temp && validateAll(temp)) {
             const dataSource: DataSource = {
                 remote: temp.remote.value,
@@ -55,8 +55,15 @@ export const useDataSources = defineStore('dataSources', () => {
                 dataPath: temp.dataPath.map(data => data.value),
             };
             dataSources.value.push(dataSource);
-            connectRemote(dataSource);
-            return true;
+            const isSuccess = await connectRemote(dataSource);
+            if (isSuccess) {
+                connector.send({
+                    event: 'remote/import',
+                    dataSource,
+                    body: '',
+                });
+                return true;
+            }
         }
         return false;
     }

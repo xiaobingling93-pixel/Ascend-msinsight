@@ -1,5 +1,6 @@
 export const CONTENT_LENGTH_PREFIX = 'Content-Length';
 export const PORT = 9000;
+export const LOCAL_HOST = '127.0.0.1';
 
 export type DataRequest = {
     command: string;

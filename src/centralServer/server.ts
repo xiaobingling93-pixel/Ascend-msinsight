@@ -1,6 +1,5 @@
 import type { DataRequest, ModuleName, NotificationRegistration, DataSource } from './websocket/defs';
 import { Connection } from '@/centralServer/websocket/connection';
-import connector from '@/connection';
 
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
@@ -29,6 +28,10 @@ export const disconnectRemote = function (dataSource: DataSource): boolean {
     return true;
 }
 
+export const isExistedRemote = function(dataSource: DataSource): boolean {
+    return CONNECTION_MAP.has(getConnectionMapKey(dataSource));
+}
+
 export const connectRemote = async function (dataSource: DataSource): Promise<boolean> {
     const connection = new Connection(dataSource);
     try {
@@ -37,13 +40,18 @@ export const connectRemote = async function (dataSource: DataSource): Promise<bo
         return false;
     }
     CONNECTION_MAP.set(getConnectionMapKey(dataSource), connection);
-    connector.send({
-        event: 'remote/import',
-        dataSource,
-        body: '',
-    });
     return true;
 };
+
+export const addDataPath = function(dataSource: DataSource): void {
+    const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
+    connection?.addDataPath(dataSource.dataPath);
+}
+
+export const deleteDataPath = function(dataSource: DataSource): void {
+    const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
+    connection?.deleteDataPath(dataSource.dataPath);
+}
 
 export const request = function (
     dataSource: DataSource,
