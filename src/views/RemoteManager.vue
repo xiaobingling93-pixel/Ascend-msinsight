@@ -57,7 +57,6 @@ header {
     min-width: 80px;
     border-right: var(--border-style);
 }
-
 .theme-toggle {
     --el-switch-off-color: rgb(141, 141, 141);
     --el-switch-on-color: rgb(60, 60, 60);

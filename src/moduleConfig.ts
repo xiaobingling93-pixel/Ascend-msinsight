@@ -4,6 +4,7 @@ export interface ModuleConfig {
     name: string;
     requestName: Lowercase<string>;
     attributes: IframeHTMLAttributes;
+    isDefault?: boolean;
 };
 
 export const modulesConfig: ModuleConfig[] = [
@@ -13,6 +14,7 @@ export const modulesConfig: ModuleConfig[] = [
         attributes: {
             src: './plugins/Timeline/index.html'
         },
+        isDefault: true,
     },
     {
         name: 'test',
