@@ -7,6 +7,7 @@
 
 #include <string>
 #include <dirent.h>
+#include <vector>
 #if defined(_WIN32)
 #include <windows.h>
 #include <shlwapi.h>
@@ -160,6 +161,19 @@ public:
         disk.emplace_back("/");
 #endif
         return disk;
+    }
+
+    static inline bool IsHiddenPath(std::string_view path)
+    {
+        if (path.empty()) {
+            return false;
+        }
+#ifdef _WIN32
+        auto attribute = GetFileAttributes(path.data());
+        return (attribute & FILE_ATTRIBUTE_HIDDEN) != 0 ;
+#else
+        return path[0] == '.';
+#endif
     }
 };
 } // end of namespace Dic

@@ -46,6 +46,33 @@ template <> std::optional<json_t> ToResponseJson<TokenCheckResponse>(const Token
     json["body"]["createTime"] = response.body.createTime;
     return json;
 }
+
+json_t FolderToJson(const std::unique_ptr<Folder> &folder)
+{
+    json_t json;
+    json["name"] = folder->name;
+    for (const auto &file : folder->childrenFiles) {
+        json["childrenFiles"].emplace_back(file);
+    }
+    for (const auto &childrenFolder : folder->childrenFolders) {
+        json["childrenFolders"].emplace_back(FolderToJson(childrenFolder));
+    }
+    return json;
+}
+
+template <> std::optional<json_t> ToResponseJson<FilesGetResponse>(const FilesGetResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["path"] = response.body.path;
+    for (const auto &file : response.body.childrenFiles) {
+        json["body"]["childrenFiles"].emplace_back(file);
+    }
+    for (const auto &folder : response.body.childrenFolders) {
+        json["body"]["childrenFolders"].emplace_back(FolderToJson(folder));
+    }
+    return json;
+}
 #pragma endregion
 
 #pragma region <<Event to json>>

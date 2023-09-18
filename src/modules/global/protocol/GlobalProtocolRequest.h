@@ -45,6 +45,14 @@ struct TokenCheckRequest : public Request {
     TokenCheckParams params;
 };
 
+struct FilesGetParams {
+    std::string path;
+};
+
+struct FilesGetRequest : public Request {
+    FilesGetRequest() : Request(REQ_RES_FILES_GET) {}
+    FilesGetParams params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

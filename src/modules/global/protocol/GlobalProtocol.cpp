@@ -5,9 +5,9 @@
 #include "ServerLog.h"
 #include "JsonUtil.h"
 #include "GlobalProtocolUtil.h"
-#include "GlobalProtocol.h"
 #include "GlobalProtocolRequest.h"
 #include "GlobalProtocolResponse.h"
+#include "GlobalProtocol.h"
 
 namespace Dic {
 namespace Protocol {
@@ -16,6 +16,7 @@ void GlobalProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_TOKEN_CREATE, ToTokenCreateRequest);
     jsonToReqFactory.emplace(REQ_RES_TOKEN_DESTROY, ToTokenDestroyRequest);
     jsonToReqFactory.emplace(REQ_RES_TOKEN_CHECK, ToTokenCheckRequest);
+    jsonToReqFactory.emplace(REQ_RES_FILES_GET, ToFilesGetRequest);
 }
 
 void GlobalProtocol::RegisterResponseToJsonFuncs()
@@ -23,12 +24,10 @@ void GlobalProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_TOKEN_CREATE, ToTokenCreateResponseJson);
     resToJsonFactory.emplace(REQ_RES_TOKEN_DESTROY, ToTokenDestroyResponseJson);
     resToJsonFactory.emplace(REQ_RES_TOKEN_CHECK, ToTokenCheckResponseJson);
+    resToJsonFactory.emplace(REQ_RES_FILES_GET, ToFilesGetResponseJson);
 }
 
-void GlobalProtocol::RegisterEventToJsonFuncs()
-{
-
-}
+void GlobalProtocol::RegisterEventToJsonFuncs() { }
 
 #pragma region <<Json To Request>>
 std::unique_ptr<Request> GlobalProtocol::ToTokenCreateRequest(const json_t &json, std::string &error)
@@ -67,6 +66,16 @@ std::unique_ptr<Request> GlobalProtocol::ToTokenCheckRequest(const json_t &json,
     return reqPtr;
 }
 
+std::unique_ptr<Request> GlobalProtocol::ToFilesGetRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<FilesGetRequest> reqPtr = std::make_unique<FilesGetRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.path, json["params"], "path");
+    return reqPtr;
+}
 #pragma endregion
 
 #pragma region <<Response To Json>>
@@ -85,6 +94,10 @@ std::optional<json_t> GlobalProtocol::ToTokenCheckResponseJson(const Response &r
     return ToResponseJson<TokenCheckResponse>(dynamic_cast<const TokenCheckResponse &>(response));
 }
 
+std::optional<json_t> GlobalProtocol::ToFilesGetResponseJson(const Response &response)
+{
+    return ToResponseJson<FilesGetResponse>(dynamic_cast<const FilesGetResponse &>(response));
+}
 #pragma endregion
 
 #pragma region <<Event To Json>>
