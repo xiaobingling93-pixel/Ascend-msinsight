@@ -1,53 +1,57 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
 import RemoteManager from './views/RemoteManager.vue';
 import Modules from './views/ModulesView.vue';
+const displayAside = ref(true);
+const asideWidth = ref(300);
+const handleDisplayAside = () => {
+    displayAside.value = !displayAside.value;
+    asideWidth.value = displayAside.value ? 300 : 0;
+}
 </script>
 
 <template>
-    <div class="wrapper">
-        <aside>
+    <el-container class="container">
+        <el-aside class="aside" :width="`${asideWidth}px`">
             <RemoteManager />
-        </aside>
-        <article>
+            <div
+                class="aside-handler"
+                :style="{ left: `${Math.max(0, asideWidth - 20)}px` }"
+                @click="handleDisplayAside"
+            >
+                <el-icon>
+                    <ArrowLeft v-if="displayAside"/>
+                    <ArrowRight v-else/>
+                </el-icon>
+            </div>
+        </el-aside>
+        <el-main class="main">
             <Modules />
-        </article>
-    </div>
+        </el-main>
+    </el-container>
 </template>
 
 <style scoped>
-.wrapper {
+.container {
     width: 100vw;
     height: 100vh;
+}
+.aside-handler {
+    position: absolute;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    top: 50%;
+    height: 50px;
+    width: 20px;
 }
 
-aside {
-    min-height: 100px;
-    max-height: 200px;
-    height: 15%;
-    border-right: var(--border-style);
-    display: flex;
-    border-radius: var(--border-radius);
+.aside-handler:hover {
+    background-color: rgb(90, 90, 90);
 }
 
-article {
-    flex-grow: 1;
-}
-
-@media (min-width: 1024px) {
-    .wrapper {
-        flex-direction: row;
-    }
-
-    aside {
-        max-width: 400px;
-        min-width: 200px;
-        width: 15%;
-        height: 100%;
-        max-height: unset;
-        min-height: unset;
-        flex-direction: column;
-    }
+main {
+    padding: 0;
 }
 </style>

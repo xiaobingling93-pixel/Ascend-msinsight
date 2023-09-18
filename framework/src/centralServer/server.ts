@@ -29,6 +29,10 @@ export const disconnectRemote = function (dataSource: DataSource): boolean {
     return true;
 }
 
+export const isExistedRemote = function(dataSource: DataSource): boolean {
+    return CONNECTION_MAP.has(getConnectionMapKey(dataSource));
+}
+
 export const connectRemote = async function (dataSource: DataSource): Promise<boolean> {
     const connection = new Connection(dataSource);
     try {
@@ -37,13 +41,32 @@ export const connectRemote = async function (dataSource: DataSource): Promise<bo
         return false;
     }
     CONNECTION_MAP.set(getConnectionMapKey(dataSource), connection);
-    connector.send({
-        event: 'remote/import',
-        dataSource,
-        body: '',
-    });
     return true;
 };
+
+export const addDataPath = function(dataSource: DataSource): void {
+    const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
+    if (connection) {
+        connection.addDataPath(dataSource.dataPath);
+        connector.send({
+            event: 'remote/import',
+            dataSource,
+            body: '',
+        });
+    }
+}
+
+export const deleteDataPath = function(dataSource: DataSource): void {
+    const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
+    if (connection) {
+        connection.deleteDataPath(dataSource.dataPath);
+        connector.send({
+            event: 'remote/remove',
+            dataSource,
+            body: '',
+        });
+    }
+}
 
 export const request = function (
     dataSource: DataSource,

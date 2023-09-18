@@ -2,7 +2,7 @@ import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
 import type { DataSource } from '@/centralServer/websocket/defs';
 import type { TreeNodeType } from '@/components/MenuTree/types';
-import { connectRemote, disconnectRemote, request } from '@/centralServer/server';
+import { addDataPath, connectRemote, disconnectRemote, request } from '@/centralServer/server';
 import connector from '@/connection';
 import { modulesConfig } from '@/moduleConfig';
 
@@ -42,28 +42,60 @@ const validateAll = (formData: FormDataSource): boolean => {
 
 export const useDataSources = defineStore('dataSources', () => {
     const dataSources = ref<DataSource[]>([]);
+
+    const mergeDataSource = (dataSource: DataSource): boolean => {
+        const idx = dataSources.value.findIndex((item) => item.remote === dataSource.remote && item.port === dataSource.port);
+        if (idx === -1) {
+            dataSources.value.push(dataSource);
+            return false;
+        }
+        dataSources.value[idx].dataPath.push(...dataSource.dataPath);
+        addDataPath(dataSource);
+        return true;
+    }
+
     let temp: FormDataSource | null = null;
     const add = (originSource: FormDataSource) => {
         temp = originSource;
     }
 
-    const confirm = (): boolean => {
-        if (temp && validateAll(temp)) {
-            const dataSource: DataSource = {
-                remote: temp.remote.value,
-                port: Number(temp.port.value || 0),
-                dataPath: temp.dataPath.map(data => data.value),
-            };
-            dataSources.value.push(dataSource);
-            connectRemote(dataSource);
+    const confirm = async (): Promise<boolean> => {
+        if (!temp || !validateAll(temp)) {
+            return false;
+        }
+
+        const dataSource: DataSource = {
+            remote: temp.remote.value,
+            port: Number(temp.port.value || 0),
+            dataPath: temp.dataPath.map(data => data.value),
+        };
+
+        const hasExistedServer = mergeDataSource(dataSource);
+        if (hasExistedServer) {
             return true;
         }
-        return false;
+
+        const isSuccess = await connectRemote(dataSource);
+        isSuccess && connector.send({
+            event: 'remote/import',
+            dataSource,
+            body: '',
+        });
+        return isSuccess;
     }
 
     const cancel = (): void => {
         temp = null;
     }
+
+    const SPLITTER = ': ';
+    const menuTree = computed<TreeNodeType[]>(() =>
+        dataSources.value.map(dataSource => ({
+            content: `${dataSource.remote}${SPLITTER}${dataSource.port}`,
+            children: dataSource.dataPath.map(data => ({ content: data })),
+            cancelable: true,
+        }))
+    );
 
     const remove = async (index: number): Promise<void> => {
         menuTree.value.splice(index, 1);
@@ -79,12 +111,5 @@ export const useDataSources = defineStore('dataSources', () => {
         dataSources.value.splice(index, 1);
     }
 
-    const menuTree = computed<TreeNodeType[]>(() =>
-        dataSources.value.map(dataSource => ({
-            content: `${dataSource.remote}: ${dataSource.port}`,
-            children: dataSource.dataPath.map(data => ({ content: data })),
-            cancelable: true,
-        })));
-
-    return { dataSources, menuTree, temp, add, remove, confirm, cancel };
+    return { menuTree, add, remove, confirm, cancel };
 });

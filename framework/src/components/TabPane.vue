@@ -3,9 +3,13 @@ import { ref, onMounted } from 'vue';
 import { request } from '@/centralServer/server';
 import connector from '@/connection';
 import { modulesConfig } from '@/moduleConfig';
+import { useSession, type Session } from '@/stores/session';
+import { connectRemote } from '@/centralServer/server';
+import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 
 const activeModule = ref(0);
 const moduleRefs = ref<HTMLIFrameElement[] | undefined>();
+const { session, setSession } = useSession();
 
 onMounted(async () => {
     connector.resigsterAwaitFetch(async (e) => {
@@ -13,6 +17,27 @@ onMounted(async () => {
         const result = await request(remote, module, args);
         return { dataSource: remote, body: result };
     });
+
+    connector.addListener('updateSession', (e) => {
+        const receiver = e.data.body;
+        if (!receiver) {
+            console.warn('data.body is undefined, please check your params');
+            return;
+        }
+        const receivePropKeys = Object.keys(receiver);
+        const validPropKeys = Object.keys(session);
+        const updateState = {};
+        for (const key of receivePropKeys) {
+            if (validPropKeys.includes(key) && Object.prototype.toString.call(receiver[key]) === Object.prototype.toString.call(session[key as keyof Session])) {
+                Object.assign(updateState, { [key]: receiver[key] });
+                continue;
+            }
+            console.warn(`you just send a invalid data: {${key}: ${receiver[key]}} to update session, please check it`);
+        }
+        setSession(updateState);
+    });
+    const isSuccess = await connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
+    setSession({ hasLocalServer: isSuccess });
 });
 
 function toggleTab(index: number): void {
@@ -24,17 +49,24 @@ function toggleTab(index: number): void {
     <div class="tab-pane">
         <div class="tab-titles">
             <el-menu class="el-menu-title" mode="horizontal" background-color="#252526" router>
-                <el-menu-item v-for="(moduleConfig, index) in modulesConfig"
-                    :key="`${index}-${moduleConfig.name}`"
+                <template
+                    v-for="(moduleConfig, index) in modulesConfig"
+                    :key="`${index}-${moduleConfig.name}`">
+                <el-menu-item
+                    v-if="moduleConfig.isDefault || session.isCluster"
                     @click="() => toggleTab(index)"
-                    :class="index === activeModule && 'active'"> {{ moduleConfig.name }}
+                    :class="index === activeModule && 'active'"
+                >
+                    {{ moduleConfig.name }}
                 </el-menu-item>
+                </template>
             </el-menu>
         </div>
         <div class="tab-body">
             <template v-for="(moduleConfig, index) in modulesConfig" 
                     :key="`${index}-${moduleConfig.name}`">
                 <iframe
+                    v-if="moduleConfig.isDefault || session.isCluster"
                     v-bind={...moduleConfig.attributes}
                     v-show="activeModule === index"
                     ref="moduleRefs"

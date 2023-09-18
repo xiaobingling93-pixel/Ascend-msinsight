@@ -36,6 +36,16 @@ export class Connection {
         this._dataSource = dataSource;
     }
 
+    addDataPath(dataPath: string[] | string): void {
+        !Array.isArray(dataPath) && (dataPath = [dataPath]);
+        this._dataSource.dataPath.push(...dataPath);
+    }
+
+    deleteDataPath(dataPath: string[] | string): void {
+        !Array.isArray(dataPath) && (dataPath = [dataPath]);
+        this._dataSource.dataPath = this._dataSource.dataPath.filter(item => !dataPath.includes(item));
+    }
+
     async reset(): Promise<void> {
         console.info('[connector]', 'reset');
     }
