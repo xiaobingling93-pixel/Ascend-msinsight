@@ -6,6 +6,10 @@
 #include "SummaryTopRankHandler.h"
 #include "SummaryStatisticsHandler.h"
 #include "QueryComputeDetailInfoHandler.h"
+#include "StepHandler.h"
+#include "StageHandler.h"
+#include "StageAndBubbleTimeHandler.h"
+#include "RankAndBubbleTimeHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -26,6 +30,10 @@ void SummaryModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_SUMMARY_QUERY_TOP_DATA, std::make_unique<SummaryTopRankHandler>());
     requestHandlerMap.emplace(REQ_RES_SUMMARY_STATISTIC, std::make_unique<SummaryStatisticsHandler>());
     requestHandlerMap.emplace(REQ_RES_COMPUTE_DETAIL, std::make_unique<QueryComputeDetailInfoHandler>());
+    requestHandlerMap.emplace(REQ_RES_PIPELINE_GET_ALL_STEPS, std::make_unique<StepHandler>());
+    requestHandlerMap.emplace(REQ_RES_PIPELINE_GET_ALL_STAGES, std::make_unique<StageHandler>());
+    requestHandlerMap.emplace(REQ_RES_PIPELINE_STAGE_BUBBLE, std::make_unique<StageAndBubbleTimeHandler>());
+    requestHandlerMap.emplace(REQ_RES_PIPELINE_RANK_BUBBLE, std::make_unique<RankAndBubbleTimeHandler>());
 }
 
 void SummaryModule::OnRequest(std::unique_ptr<Protocol::Request> request)

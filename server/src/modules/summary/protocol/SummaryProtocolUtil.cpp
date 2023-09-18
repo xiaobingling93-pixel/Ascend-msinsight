@@ -90,6 +90,58 @@ template <> std::optional<json_t> ToResponseJson<ComputeDetailResponse>(const Co
     return json;
 }
 
+template <> std::optional<json_t> ToResponseJson<PipelineStepResponse>(const PipelineStepResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["data"] = json_t::array();
+    for (const std::string &action : response.body.stepList) {
+        json["body"]["data"].emplace_back(action);
+    }
+    return json;
+}
+
+template <> std::optional<json_t> ToResponseJson<PipelineStageResponse>(const PipelineStageResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["data"] = json_t::array();
+    for (const std::string &action : response.body.stageList) {
+        json["body"]["data"].emplace_back(action);
+    }
+    return json;
+}
+
+template <> std::optional<json_t> ToResponseJson<PipelineStageTimeResponse>(const PipelineStageTimeResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["stageAndBubbleTimes"] = json_t::array();
+    for (const BubbleDetail &action : response.body.bubbleDetails) {
+        json_t itemJson = json_t::object();
+        itemJson["stageId"] = action.stageOrRankId;
+        itemJson["stageTime"] = action.stageTime;
+        itemJson["bubbleTime"] = action.bubbleTime;
+        json["body"]["stageAndBubbleTimes"].emplace_back(itemJson);
+    }
+    return json;
+}
+
+template <> std::optional<json_t> ToResponseJson<PipelineRankTimeResponse>(const PipelineRankTimeResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["stageAndBubbleTimes"] = json_t::array();
+    for (const BubbleDetail &action : response.body.bubbleDetails) {
+        json_t itemJson = json_t::object();
+        itemJson["rankId"] = action.stageOrRankId;
+        itemJson["stageTime"] = action.stageTime;
+        itemJson["bubbleTime"] = action.bubbleTime;
+        json["body"]["stageAndBubbleTimes"].emplace_back(itemJson);
+    }
+    return json;
+}
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

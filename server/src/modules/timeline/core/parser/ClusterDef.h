@@ -63,6 +63,20 @@ struct ClusterBaseInfo {
     double collectDuration;
     long long dataSize  =  0;
 };
+
+struct CommunicationMatrixInfo {
+    std::string groupId;
+    std::string iterationId;
+    std::string opName;
+    std::string groupName;
+    int srcRank;
+    int dstRank;
+    std::string transportType;
+    double transitSize;
+    double transitTime;
+    double bandwidth;
+};
+
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H

@@ -66,6 +66,16 @@ const std::string REQ_RES_SUMMARY_STATISTIC = "summary/statistic";
 const std::string REQ_RES_COMPUTE_DETAIL = "summary/queryComputeDetail";
 const std::string REQ_RES_COMMUNICATION_DETAIL = "summary/queryCommunicationDetail";
 
+// pipeline
+const std::string REQ_RES_PIPELINE_GET_ALL_STEPS = "parallelism/pipeline/getAllSteps";
+const std::string REQ_RES_PIPELINE_GET_ALL_STAGES = "parallelism/pipeline/getAllStages";
+const std::string REQ_RES_PIPELINE_STAGE_BUBBLE = "parallelism/pipeline/stageAndBubbleTime";
+const std::string REQ_RES_PIPELINE_RANK_BUBBLE = "parallelism/pipeline/rankAndBubbleTime";
+
+// matrix
+const std::string REQ_RES_COMMUNICATION_MATRIX_GROUP = "communication/matrix/group";
+const std::string REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH = "communication/matrix/bandwidthInfo";
+
 // memory
 const std::string REQ_RES_MEMORY_OPERATOR = "Memory/view/operator";
 const std::string REQ_RES_MEMORY_VIEW = "Memory/view/memoryUsage";

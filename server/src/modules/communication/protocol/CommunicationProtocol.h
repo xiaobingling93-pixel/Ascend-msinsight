@@ -28,6 +28,8 @@ private:
     static std::unique_ptr<Request> ToDurationRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToRanksRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToOperatorNamesRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToMatrixGroupRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToMatrixListRequest(const json_t &json, std::string &error);
 
     static std::optional<json_t> ToOperatorDetailsResponse(const Response &response);
     static std::optional<json_t> ToBandwidthDataResponse(const Response &response);
@@ -37,6 +39,8 @@ private:
     static std::optional<json_t> ToOperatorNamesResponse(const Response &response);
     static std::optional<json_t> ToDurationResponse(const Response &response);
     static std::optional<json_t> ToRanksResponse(const Response &response);
+    static std::optional<json_t> ToMatrixGroupResponse(const Response &response);
+    static std::optional<json_t> ToMatrixListResponse(const Response &response);
     // response to json
 };
 } // namespace Protocol

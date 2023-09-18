@@ -9,6 +9,7 @@
 #include "json.hpp"
 #include "ServerLog.h"
 #include "CommunicationSaxHandler.h"
+#include "CommunicationMatrixHandler.h"
 #include "FileUtil.h"
 #include "ExecUtil.h"
 #include "DataBaseManager.h"
@@ -30,6 +31,23 @@ bool ClusterFileParser::ParseCommunication(const std::vector<std::string> &fileP
     ServerLog::Info("end parse communication data into db ,file:", filePath, "cost time:", end - start);
     ifs.close();
     return true;
+}
+
+void ClusterFileParser::ParseCommunicationMatrix(const std::vector<std::string> &filePathList)
+{
+    const std::string &filePath = filePathList[0];
+    DWORD start = GetTickCount();
+    ServerLog::Info("start save communication matrix data into db ,file:", filePath);
+    bool checkFilePath = FileUtil::CheckFilePath(filePath);
+    if (!checkFilePath) {
+        return;
+    }
+    std::ifstream ifs(filePath);
+    CommunicationMatrixHandler handler;
+    nlohmann::json::sax_parse(ifs, &handler);
+    DWORD end = GetTickCount();
+    ServerLog::Info("end parse communication matrix data into db ,file:", filePath, "cost time:", end - start);
+    ifs.close();
 }
 
 void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &filePathList)
@@ -93,6 +111,14 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     if (!communicationFileList.empty()) {
         ParseCommunication(communicationFileList);
     }
+    // matrix
+    std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
+    std::vector<std::string> communicationMatrixList =
+            FileUtil::FindFilesByRegex(selectedPath, patternCommunicationMatrix);
+    if (!communicationMatrixList.empty()) {
+        ParseCommunicationMatrix(communicationMatrixList);
+    }
+
     database->SaveLastData();
     // parse cluster_step_trace_time csv
     std::regex patternStepTrace(R"(cluster_step_trace_time.csv)");

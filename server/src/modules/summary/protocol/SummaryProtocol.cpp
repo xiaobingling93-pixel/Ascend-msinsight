@@ -16,6 +16,10 @@ void SummaryProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_SUMMARY_QUERY_TOP_DATA, ToTopNRequest);
     jsonToReqFactory.emplace(REQ_RES_SUMMARY_STATISTIC, ToStatisticsRequest);
     jsonToReqFactory.emplace(REQ_RES_COMPUTE_DETAIL, ToComputeDetailRequest);
+    jsonToReqFactory.emplace(REQ_RES_PIPELINE_GET_ALL_STEPS, ToStepRequest);
+    jsonToReqFactory.emplace(REQ_RES_PIPELINE_GET_ALL_STAGES, ToStagesRequest);
+    jsonToReqFactory.emplace(REQ_RES_PIPELINE_STAGE_BUBBLE, ToStageTimeRequest);
+    jsonToReqFactory.emplace(REQ_RES_PIPELINE_RANK_BUBBLE, ToRankTimeRequest);
 }
 
 void SummaryProtocol::RegisterResponseToJsonFuncs()
@@ -23,6 +27,10 @@ void SummaryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_SUMMARY_QUERY_TOP_DATA, ToTopNResponse);
     resToJsonFactory.emplace(REQ_RES_SUMMARY_STATISTIC, ToStatisticsResponse);
     resToJsonFactory.emplace(REQ_RES_COMPUTE_DETAIL, ToComputeDetailResponse);
+    resToJsonFactory.emplace(REQ_RES_PIPELINE_GET_ALL_STEPS, ToStepResponse);
+    resToJsonFactory.emplace(REQ_RES_PIPELINE_GET_ALL_STAGES, ToStagesResponse);
+    resToJsonFactory.emplace(REQ_RES_PIPELINE_STAGE_BUBBLE, ToStageTimeResponse);
+    resToJsonFactory.emplace(REQ_RES_PIPELINE_RANK_BUBBLE, ToRankTimeResponse);
 }
 
 void SummaryProtocol::RegisterEventToJsonFuncs()
@@ -74,6 +82,50 @@ std::unique_ptr<Request> SummaryProtocol::ToComputeDetailRequest(const json_t &j
     return reqPtr;
 }
 
+std::unique_ptr<Request> SummaryProtocol::ToStepRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<PipelineStepRequest> reqPtr = std::make_unique<PipelineStepRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    return reqPtr;
+}
+
+std::unique_ptr<Request> SummaryProtocol::ToStagesRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<PipelineStageRequest> reqPtr = std::make_unique<PipelineStageRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> SummaryProtocol::ToStageTimeRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<PipelineStageTimeRequest> reqPtr = std::make_unique<PipelineStageTimeRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> SummaryProtocol::ToRankTimeRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<PipelineRankTimeRequest> reqPtr = std::make_unique<PipelineRankTimeRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.stageId, json["params"], "stageId");
+    return reqPtr;
+}
+
 #pragma endregion
 
 #pragma region <<Json To Request>>
@@ -91,6 +143,26 @@ std::optional<json_t> SummaryProtocol::ToStatisticsResponse(const Response &resp
 std::optional<json_t> SummaryProtocol::ToComputeDetailResponse(const Response &response)
 {
     return ToResponseJson<ComputeDetailResponse>(dynamic_cast<const ComputeDetailResponse &>(response));
+}
+
+std::optional<json_t> SummaryProtocol::ToStepResponse(const Response &response)
+{
+    return ToResponseJson<PipelineStepResponse>(dynamic_cast<const PipelineStepResponse &>(response));
+}
+
+std::optional<json_t> SummaryProtocol::ToStagesResponse(const Response &response)
+{
+    return ToResponseJson<PipelineStageResponse>(dynamic_cast<const PipelineStageResponse &>(response));
+}
+
+std::optional<json_t> SummaryProtocol::ToStageTimeResponse(const Response &response)
+{
+    return ToResponseJson<PipelineStageTimeResponse>(dynamic_cast<const PipelineStageTimeResponse &>(response));
+}
+
+std::optional<json_t> SummaryProtocol::ToRankTimeResponse(const Response &response)
+{
+    return ToResponseJson<PipelineRankTimeResponse>(dynamic_cast<const PipelineRankTimeResponse &>(response));
 }
 
 #pragma endregion

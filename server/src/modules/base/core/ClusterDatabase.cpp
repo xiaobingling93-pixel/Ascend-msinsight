@@ -52,7 +52,11 @@ bool ClusterDatabase::CreateTable()
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id VARCHAR(50), step_id VARCHAR(50),"
             " stage_id VARCHAR(50), compute_time double, pure_communication_time double, "
             "overlap_communication_time double, communication_time double, free_time double, "
-            "stage_time double, bubble_time double, pure_communication_exclude_receive_time double);";
+            "stage_time double, bubble_time double, pure_communication_exclude_receive_time double);" +
+            "CREATE TABLE " + communicationMatrixTable +
+            "(id INTEGER PRIMARY KEY AUTOINCREMENT, group_id VARCHAR(100), iteration_id VARCHAR(50), "
+            "op_name VARCHAR(100), group_name VARCHAR(100), src_rank VARCHAR(50), dst_rank VARCHAR(50), "
+            "transport_type VARCHAR(50), transit_size double, transit_time double, bandwidth double);";
     return ExecSql(sql);
 }
 
@@ -63,6 +67,7 @@ bool ClusterDatabase::InitStmt()
     }
     insertTimeInfoStmt = GetTimeInfoStmtSql(cacheSize);
     insertBandwidthStmt = GetBandwidthStmtSql(cacheSize);
+    matrixStmt = GetMatrixStmtSql(cacheSize);
     isInitStmt = true;
     return true;
 }
@@ -116,6 +121,9 @@ void ClusterDatabase::ReleaseStmt()
     if (insertBandwidthStmt != nullptr) {
         sqlite3_finalize(insertBandwidthStmt);
     }
+    if (matrixStmt != nullptr) {
+        sqlite3_finalize(matrixStmt);
+    }
 }
 
 void ClusterDatabase::SaveLastData()
@@ -128,6 +136,13 @@ void ClusterDatabase::SaveLastData()
     if (!bandwidthCache.empty()) {
         InsertBandwidthList(bandwidthCache);
         bandwidthCache.clear();
+    }
+    if (!matrixCache.empty()) {
+        bool result = InsertCommunicationMatrixInfo(matrixCache);
+        if (!result) {
+            ServerLog::Error("Insert communicationMatrix data fail.");
+        }
+        matrixCache.clear();
     }
 }
 
@@ -306,6 +321,77 @@ bool ClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo)
     return true;
 }
 
+void ClusterDatabase::InsertCommunicationMatrix(Dic::Module::CommunicationMatrixInfo &communicationMatrix)
+{
+    matrixCache.emplace_back(communicationMatrix);
+    if (matrixCache.size() == cacheSize) {
+        bool result = InsertCommunicationMatrixInfo(matrixCache);
+        if (!result) {
+            ServerLog::Error("Insert communicationMatrix data fail.");
+        }
+        matrixCache.clear();
+    }
+}
+
+bool ClusterDatabase::InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo)
+{
+    if (communicationMatrixInfo.empty()) {
+        return false;
+    }
+    sqlite3_stmt *stmt = GetMatrixStmtSql(communicationMatrixInfo.size());
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to get matrix stmt.");
+        return false;
+    }
+    int idx = bindStartIndex;
+    for (const auto &communicationMatrix: communicationMatrixInfo) {
+        sqlite3_bind_text(stmt, idx++, communicationMatrix.groupId.c_str(), communicationMatrix.groupId.length(),
+                          SQLITE_STATIC);
+        sqlite3_bind_text(stmt, idx++, communicationMatrix.iterationId.c_str(),
+                          communicationMatrix.iterationId.length(), SQLITE_STATIC);
+        sqlite3_bind_text(stmt, idx++, communicationMatrix.opName.c_str(), communicationMatrix.opName.length(),
+                          SQLITE_STATIC);
+        sqlite3_bind_text(stmt, idx++, communicationMatrix.groupName.c_str(), communicationMatrix.groupName.length(),
+                          SQLITE_STATIC);
+        sqlite3_bind_int(stmt, idx++, communicationMatrix.srcRank);
+        sqlite3_bind_int(stmt, idx++, communicationMatrix.dstRank);
+        sqlite3_bind_text(stmt, idx++, communicationMatrix.transportType.c_str(),
+                          communicationMatrix.transportType.length(), SQLITE_STATIC);
+        sqlite3_bind_double(stmt, idx++, communicationMatrix.transitSize);
+        sqlite3_bind_double(stmt, idx++, communicationMatrix.transitTime);
+        sqlite3_bind_double(stmt, idx++, communicationMatrix.bandwidth);
+    }
+    auto result = sqlite3_step(stmt);
+    if (communicationMatrixInfo.size() != cacheSize) {
+        sqlite3_finalize(stmt);
+    }
+    if (result != SQLITE_DONE) {
+        ServerLog::Error("Insert matrix data fail. ", sqlite3_errmsg(db));
+        return false;
+    }
+    return true;
+}
+
+sqlite3_stmt *ClusterDatabase::GetMatrixStmtSql(int len)
+{
+    if (len == cacheSize && isInitStmt) {
+        sqlite3_reset(matrixStmt);
+        return matrixStmt;
+    }
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "INSERT INTO " + communicationMatrixTable +
+                      " (group_id, iteration_id, op_name, group_name, src_rank, "
+                      "dst_rank, transport_type, transit_size, transit_time, bandwidth) "
+                      "VALUES (?,?,?,?,?,?,?,?,?,?)";
+    for (int i = 0; i < len - 1; i++) {
+        sql.append(",(?,?,?,?,?,?,?,?,?,?)");
+    }
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare matrix table statement. error:", sqlite3_errmsg(db));
+    }
+    return stmt;
+}
+
 bool ClusterDatabase::QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
                                        Protocol::SummaryTopRankResBody &responseBody)
 {
@@ -357,6 +443,148 @@ bool ClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBod
         responseBody.rankCount = responseBody.rankList.size();
     }
     sqlite3_finalize(stmtBaseInfo);
+    return true;
+}
+
+bool ClusterDatabase::GetStepIdList(Protocol::PipelineStepResponseBody &responseBody)
+{
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "select distinct step_id as stepId "
+                      "FROM " + stepTraceTable +
+                      " ORDER BY step_id";
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare GetStepIdList statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        std::string res = sqlite3_column_string(stmt, col++);
+        responseBody.stepList.emplace_back(res);
+    }
+    return true;
+}
+
+bool ClusterDatabase::GetStages(Protocol::PipelineStageParam param,
+                                Protocol::PipelineStageResponseBody &responseBody)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
+    std::string sql = "SELECT DISTINCT stage_id as stageId "
+                      "FROM " + stepTraceTable + " WHERE stage_id != '' AND step_id = ?";
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare GetStages statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_bind_text(stmt, index++, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        std::string res = sqlite3_column_string(stmt, col++);
+        responseBody.stageList.emplace_back(res);
+    }
+    return true;
+}
+
+bool ClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam param,
+                                        Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
+    std::string sql = "SELECT stage_id as stageId, "
+                      "ROUND(stage_time, 4) as stageTime, "
+                      "ROUND(bubble_time, 4) as bubbleTime "
+                      "FROM " + stepTraceTable + " WHERE stage_id != '' AND step_id = ?";
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare GetStageAndBubble statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_bind_text(stmt, index++, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::BubbleDetail bubbleDetail;
+        bubbleDetail.stageOrRankId = sqlite3_column_string(stmt, col++);
+        bubbleDetail.stageTime = sqlite3_column_double(stmt, col++);
+        bubbleDetail.bubbleTime = sqlite3_column_double(stmt, col++);
+        responseBody.bubbleDetails.emplace_back(bubbleDetail);
+    }
+    return true;
+}
+
+bool ClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam param,
+                                       Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
+{
+    int index = bindStartIndex;
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "SELECT rank_id as rankId, "
+                      "ROUND(stage_time, 4) as stageTime, "
+                      "ROUND(bubble_time, 4) as bubbleTime "
+                      " FROM " + stepTraceTable +
+                      " WHERE step_id = ? AND rank_id IN" + param.stageId + " ";
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare GetRankAndBubble statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_bind_text(stmt, index++, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::BubbleDetail bubbleDetail;
+        bubbleDetail.stageOrRankId = sqlite3_column_string(stmt, col++);
+        bubbleDetail.stageTime = sqlite3_column_double(stmt, col++);
+        bubbleDetail.bubbleTime = sqlite3_column_double(stmt, col++);
+        responseBody.bubbleDetails.emplace_back(bubbleDetail);
+    }
+    return true;
+}
+
+bool ClusterDatabase::GetGroups(Protocol::MatrixGroupParam param,
+                                Protocol::MatrixGroupResponseBody &responseBody)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
+    std::string sql = "SELECT DISTINCT group_id as groupId "
+                      "FROM " + communicationMatrixTable + " WHERE iteration_id = ?";
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare GetGroups statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        std::string res = sqlite3_column_string(stmt, col++);
+        responseBody.groupList.emplace_back(res);
+    }
+    return true;
+}
+
+bool ClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
+                                      Protocol::MatrixListResponseBody &responseBody)
+{
+    int index = bindStartIndex;
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "SELECT src_rank as srcRank, dst_rank as dstRank, "
+                      "transport_type as transportType, "
+                      "ROUND(transit_size, 4) as transitSize, "
+                      "ROUND(transit_time, 4) as transitTime, "
+                      "ROUND(bandwidth, 4) as bandwidth "
+                      "FROM " + communicationMatrixTable +
+                      " WHERE group_id = ? AND iteration_id = ? AND op_name = ? ";
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare QueryMatrixList statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, param.operatorName.c_str(), param.operatorName.length(), SQLITE_TRANSIENT);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::MatrixList matrixList;
+        matrixList.srcRank = sqlite3_column_int(stmt, col++);
+        matrixList.dstRank = sqlite3_column_int(stmt, col++);
+        matrixList.transportType = sqlite3_column_string(stmt, col++);
+        matrixList.transitSize = sqlite3_column_double(stmt, col++);
+        matrixList.transitTime = sqlite3_column_double(stmt, col++);
+        matrixList.bandwidth = sqlite3_column_double(stmt, col++);
+        responseBody.matrixList.emplace_back(matrixList);
+    }
     return true;
 }
 

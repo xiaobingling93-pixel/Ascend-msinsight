@@ -11,6 +11,8 @@
 #include "DurationListHandler.h"
 #include "OperatorNamesHandler.h"
 #include "RanksHandler.h"
+#include "GroupHandler.h"
+#include "MatrixListHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -38,6 +40,8 @@ void CommunicationModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_RANKS, std::make_unique<RanksHandler>());
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, std::make_unique<OperatorNamesHandler>());
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_LIST, std::make_unique<DurationListHandler>());
+    requestHandlerMap.emplace(REQ_RES_COMMUNICATION_MATRIX_GROUP, std::make_unique<GroupHandler>());
+    requestHandlerMap.emplace(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH, std::make_unique<MatrixListHandler>());
 }
 
 void CommunicationModule::OnRequest(std::unique_ptr<Protocol::Request> request)

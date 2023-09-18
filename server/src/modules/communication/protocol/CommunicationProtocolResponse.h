@@ -118,6 +118,35 @@ struct DurationResponse : public Response {
     DurationResponse() : Response(REQ_RES_COMMUNICATION_LIST) {}
     std::vector<Duration> body;
 };
+struct MatrixList {
+    int srcRank;
+    int dstRank;
+    std::string transportType;
+    double transitSize;
+    double transitTime;
+    double bandwidth;
+};
+
+struct MatrixListResponseBody {
+    std::vector<MatrixList> matrixList;
+};
+
+struct MatrixListResponse : public Response {
+    MatrixListResponse() : Response(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH) {}
+
+    MatrixListResponseBody body;
+};
+
+struct MatrixGroupResponseBody {
+    std::vector<std::string> groupList;
+};
+
+struct MatrixGroupResponse : public Response {
+    MatrixGroupResponse() : Response(REQ_RES_COMMUNICATION_MATRIX_GROUP) {}
+
+    MatrixGroupResponseBody body;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

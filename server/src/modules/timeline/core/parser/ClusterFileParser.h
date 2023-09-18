@@ -19,6 +19,7 @@ public:
     bool ParseCommunication(const std::vector<std::string> &filePathList);
     void ParseStepStatisticsFile(const std::vector<std::string> &filePathList);
     void SaveClusterBaseInfo(const std::string& selectedPath);
+    void ParseCommunicationMatrix(const std::vector<std::string> &filePathList);
 private:
     StepStatistic MapToStepStatistic(std::vector<std::string> tokens);
     int subStrlen = 2;

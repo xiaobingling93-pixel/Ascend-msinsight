@@ -140,6 +140,34 @@ template <> std::optional<json_t> ToResponseJson<RanksResponse>(const RanksRespo
     return json;
 }
 
+template <> std::optional<json_t> ToResponseJson<MatrixGroupResponse>(const MatrixGroupResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["data"] = json_t::array();
+    for (const std::string &action : response.body.groupList) {
+        json["body"]["data"].emplace_back(action);
+    }
+    return json;
+}
+
+template <> std::optional<json_t> ToResponseJson<MatrixListResponse>(const MatrixListResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["matrixList"] = json_t::array();
+    for (const MatrixList& matrixList : response.body.matrixList) {
+        json_t itemJson = json_t::object();
+        itemJson["srcRank"] = matrixList.srcRank;
+        itemJson["dstRank"] = matrixList.dstRank;
+        itemJson["transportType"] = matrixList.transportType;
+        itemJson["transitTime"] = matrixList.transitTime;
+        itemJson["bandwidth"] = matrixList.bandwidth;
+        json["body"]["matrixList"].emplace_back(itemJson);
+    }
+    return json;
+}
+
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

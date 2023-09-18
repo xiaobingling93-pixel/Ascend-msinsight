@@ -21,6 +21,8 @@ template <> std::optional<json_t> ToResponseJson<OperatorNamesResponse>(const Op
 template <> std::optional<json_t> ToResponseJson<DurationResponse>(const DurationResponse &response);
 template <> std::optional<json_t> ToResponseJson<RanksResponse>(const RanksResponse &response);
 
+template <> std::optional<json_t> ToResponseJson<MatrixGroupResponse>(const MatrixGroupResponse &response);
+template <> std::optional<json_t> ToResponseJson<MatrixListResponse>(const MatrixListResponse &response);
 } // end of namespace Protocol
 } // end of namespace Dic
 

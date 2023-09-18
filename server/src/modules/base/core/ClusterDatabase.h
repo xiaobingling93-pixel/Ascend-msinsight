@@ -31,9 +31,19 @@ public:
     bool InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList);
     bool InsertStepStatisticsInfo(StepStatistic &stepStatistic);
     bool InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo);
+    void InsertCommunicationMatrix(CommunicationMatrixInfo &communicationMatrix);
+    bool InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo);
     bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
                           Protocol::SummaryTopRankResBody &responseBody);
     bool QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody);
+    bool GetStepIdList(Protocol::PipelineStepResponseBody &responseBody);
+    bool GetStages(Protocol::PipelineStageParam param, Protocol::PipelineStageResponseBody &responseBody);
+    bool GetStageAndBubble(Protocol::PipelineStageTimeParam param,
+                           Protocol::PipelineStageOrRankTimeResponseBody &responseBody);
+    bool GetRankAndBubble(Protocol::PipelineRankTimeParam param,
+                          Protocol::PipelineStageOrRankTimeResponseBody &responseBody);
+    bool GetGroups(Protocol::MatrixGroupParam param, Protocol::MatrixGroupResponseBody &responseBody);
+    bool QueryMatrixList(Protocol::MatrixBandwidthParam param, Protocol::MatrixListResponseBody &responseBody);
     bool QueryAllOperators(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody);
     bool QueryOperatorsCount(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody);
     bool QueryBandwidthData(Protocol::BandwidthDataParam &param, Protocol::BandwidthDataResBody &resBody);
@@ -53,15 +63,19 @@ private:
     const std::string bandwidthTable = "communication_bandwidth_info";
     const std::string stepTraceTable = "step_statistic_info";
     const std::string baseInfoTable = "cluster_base_info";
+    const std::string communicationMatrixTable = "communication_matrix";
     sqlite3_stmt *insertTimeInfoStmt = nullptr;
     sqlite3_stmt *insertBandwidthStmt = nullptr;
     sqlite3_stmt *stepStmt = nullptr;
+    sqlite3_stmt *matrixStmt = nullptr;
     bool isInitStmt = false;
     const int cacheSize = 100;
     std::vector<CommunicationTimeInfo> timeInfoCache;
     std::vector<CommunicationBandWidth> bandwidthCache;
+    std::vector<CommunicationMatrixInfo> matrixCache;
     sqlite3_stmt *GetTimeInfoStmtSql(int len);
     sqlite3_stmt *GetBandwidthStmtSql(int len);
+    sqlite3_stmt *GetMatrixStmtSql(int len);
 
     sqlite3_stmt *BuildCondition(const Protocol::SummaryTopRankParams &requestParams);
     std::string GetRanksSql(std::vector<std::string> rankList);

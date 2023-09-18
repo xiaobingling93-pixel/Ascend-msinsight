@@ -36,6 +36,42 @@ struct SummaryStatisticRequest : public Request {
     SummaryStatisticParams params;
 };
 
+struct PipelineStepParam {
+};
+
+struct PipelineStepRequest : public Request {
+    PipelineStepRequest() : Request(REQ_RES_PIPELINE_GET_ALL_STEPS) {};
+    PipelineStepParam params;
+};
+
+struct PipelineStageParam {
+    std::string stepId;
+};
+
+struct PipelineStageRequest : public Request {
+    PipelineStageRequest() : Request(REQ_RES_PIPELINE_GET_ALL_STAGES) {};
+    PipelineStageParam params;
+};
+
+struct PipelineStageTimeParam {
+    std::string stepId;
+};
+
+struct PipelineStageTimeRequest : public Request {
+    PipelineStageTimeRequest() : Request(REQ_RES_PIPELINE_STAGE_BUBBLE) {};
+    PipelineStageTimeParam params;
+};
+
+struct PipelineRankTimeParam {
+    std::string stepId;
+    std::string stageId;
+};
+
+struct PipelineRankTimeRequest : public Request {
+    PipelineRankTimeRequest() : Request(REQ_RES_PIPELINE_RANK_BUBBLE) {};
+    PipelineRankTimeParam params;
+};
+
 struct ComputeDetailParams {
     std::string rankId;
     std::string timeFlag;

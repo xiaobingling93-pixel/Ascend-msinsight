@@ -106,6 +106,26 @@ struct DurationListRequest  : public Request {
     DurationListRequest() : Request(REQ_RES_COMMUNICATION_LIST) {};
     DurationListParams params;
 };
+
+struct MatrixGroupParam {
+    std::string iterationId;
+};
+
+struct MatrixGroupRequest : public Request {
+    MatrixGroupRequest() : Request(REQ_RES_COMMUNICATION_MATRIX_GROUP) {};
+    MatrixGroupParam params;
+};
+
+struct MatrixBandwidthParam {
+    std::string stage;
+    std::string operatorName;
+    std::string iterationId;
+};
+
+struct MatrixBandwidthRequest : public Request {
+    MatrixBandwidthRequest() : Request(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH) {};
+    MatrixBandwidthParam params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

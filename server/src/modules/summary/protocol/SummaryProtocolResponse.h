@@ -50,6 +50,49 @@ struct SummaryStatisticsItem {
 struct SummaryStatisticsBody {
     std::vector<SummaryStatisticsItem> summaryStatisticsItemList;
 };
+
+struct PipelineStepResponseBody {
+    std::vector<std::string> stepList;
+};
+
+struct PipelineStepResponse : public Response {
+    PipelineStepResponse() : Response(REQ_RES_PIPELINE_GET_ALL_STEPS) {}
+
+    PipelineStepResponseBody body;
+};
+
+struct PipelineStageResponseBody {
+    std::vector<std::string> stageList;
+};
+
+struct PipelineStageResponse : public Response {
+    PipelineStageResponse() : Response(REQ_RES_PIPELINE_GET_ALL_STAGES) {}
+
+    PipelineStageResponseBody body;
+};
+
+struct BubbleDetail {
+    std::string stageOrRankId;
+    double stageTime;
+    double bubbleTime;
+};
+
+struct PipelineStageOrRankTimeResponseBody {
+    std::vector<BubbleDetail> bubbleDetails;
+};
+
+struct PipelineStageTimeResponse : public Response {
+    PipelineStageTimeResponse() : Response(REQ_RES_PIPELINE_STAGE_BUBBLE) {}
+
+    PipelineStageOrRankTimeResponseBody body;
+};
+
+struct PipelineRankTimeResponse : public Response {
+    PipelineRankTimeResponse() : Response(REQ_RES_PIPELINE_RANK_BUBBLE) {}
+
+    PipelineStageOrRankTimeResponseBody body;
+};
+
 struct SummaryStatisticsResponse : public Response {
     SummaryStatisticsResponse() : Response(REQ_RES_SUMMARY_STATISTIC) {}
 

@@ -21,6 +21,8 @@ void CommunicationProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, ToOperatorNamesRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_LIST, ToDurationRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_RANKS, ToRanksRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_GROUP, ToMatrixGroupRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH, ToMatrixListRequest);
 }
 
 void CommunicationProtocol::RegisterResponseToJsonFuncs()
@@ -33,6 +35,8 @@ void CommunicationProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, ToOperatorNamesResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_LIST, ToDurationResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_RANKS, ToRanksResponse);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_GROUP, ToMatrixGroupResponse);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH, ToMatrixListResponse);
 }
 
 void CommunicationProtocol::RegisterEventToJsonFuncs()
@@ -98,6 +102,30 @@ std::unique_ptr<Request> CommunicationProtocol::ToCommunicatorParserRequest(cons
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.filePath, json["params"], "filePath");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> CommunicationProtocol::ToMatrixGroupRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<MatrixGroupRequest> reqPtr = std::make_unique<MatrixGroupRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> CommunicationProtocol::ToMatrixListRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<MatrixBandwidthRequest> reqPtr = std::make_unique<MatrixBandwidthRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.operatorName, json["params"], "operatorName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.stage, json["params"], "stage");
     return reqPtr;
 }
 
@@ -194,6 +222,16 @@ std::optional<json_t> CommunicationProtocol::ToRanksResponse(const Response &res
 {
     return ToResponseJson<RanksResponse>(dynamic_cast<const RanksResponse &>(response));
 }
+std::optional<json_t> CommunicationProtocol::ToMatrixGroupResponse(const Response &response)
+{
+    return ToResponseJson<MatrixGroupResponse>(dynamic_cast<const MatrixGroupResponse &>(response));
+}
+
+std::optional<json_t> CommunicationProtocol::ToMatrixListResponse(const Response &response)
+{
+    return ToResponseJson<MatrixListResponse>(dynamic_cast<const MatrixListResponse &>(response));
+}
+
 #pragma endregion
 } // namespace Protocol
 } // namespace Dic

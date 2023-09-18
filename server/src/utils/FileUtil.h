@@ -362,6 +362,28 @@ public:
             break;
         }
     }
+
+    static bool CheckFilePath(std::string filePath)
+    {
+        // reading
+        if (access(filePath.c_str(), R_OK) == -1) {
+            Server::ServerLog::Error("Cannot read" + filePath +": ", filePath);
+            return false;
+        }
+        // isOk
+        std::ifstream file(filePath);
+        if (!file.good()) {
+            Server::ServerLog::Error("Cannot get" + filePath +": ", filePath);
+            return false;
+        }
+        // size checked
+        long long size = getFileSize(filePath.c_str());
+        if (size >= MAX_FILE_SIZE_2G) {
+            Server::ServerLog::Error("The size of " + filePath + " is too large in path:", filePath);
+            return false;
+        }
+        return true;
+    }
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_FILEUTIL_H
