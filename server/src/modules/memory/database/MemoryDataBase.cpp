@@ -376,6 +376,22 @@ sqlite3_stmt *MemoryDataBase::GetRecordStmt(uint64_t paramLen)
     }
     return stmt;
 }
+
+bool MemoryDataBase::QueryOperatorsTotalNum(int64_t &totalNum)
+{
+        sqlite3_stmt *stmt = nullptr;
+        std::string sql = "SELECT count(*) as nums FROM " + operatorTable;
+        int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+        if (result != SQLITE_OK) {
+            ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
+            return false;
+        }
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            totalNum = sqlite3_column_int(stmt, resultStartIndex);
+        }
+        sqlite3_finalize(stmt);
+        return true;
+    }
 } // end of namespace Memory
 } // end of namespace Module
 } // end of namespace Dic

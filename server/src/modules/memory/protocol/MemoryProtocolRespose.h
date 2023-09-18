@@ -41,6 +41,7 @@ struct OperatorMemory {
 struct MemoryOperatorResponse : public Response {
     MemoryOperatorResponse() : Response(REQ_RES_MEMORY_OPERATOR) {}
     std::vector<MemoryOperator> operatorDetails;
+    int64_t totalNum = 0;
 };
 
 struct MemoryViewResponse : public Response {

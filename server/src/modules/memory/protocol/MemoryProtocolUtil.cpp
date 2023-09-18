@@ -14,6 +14,7 @@ template <> std::optional<json_t> ToResponseJson<MemoryOperatorResponse>(const M
     json_t json;
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["operatorDetail"] = json_t::array();
+    json["body"]["totalNum"] = response.totalNum;
     for (const MemoryOperator& anOperator : response.operatorDetails) {
         json_t basicJson = json_t::object();
         if (anOperator.name.empty()) {

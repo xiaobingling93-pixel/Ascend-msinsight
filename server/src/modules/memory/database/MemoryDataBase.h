@@ -34,6 +34,9 @@ public:
 
     bool SaveRecordDetail();
     bool SaveOperatorDetail();
+
+    bool QueryOperatorsTotalNum(int64_t &totalNum);
+
 private:
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";
