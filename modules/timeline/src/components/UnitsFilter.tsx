@@ -10,7 +10,6 @@ import { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
 import { StyledInput } from './base/StyledInput';
 import { InsightUnit } from '../entity/insight';
-import { EventHandler, EventType, useEventBus } from '../utils/eventBus';
 import { SvgType } from './base/rc-table/types';
 import { StyledSelect } from './base/StyledSelect';
 import { CardMetaData, ProcessMetaData } from '../entity/data';
@@ -313,12 +312,7 @@ export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Elem
     const onTooltipVisibleChange = (visible: boolean): void => {
         updateCustomButtonProps({ ...customButtonProps, isSuspend: visible });
     };
-    // ctrl+f/F调出全局搜索输入框
     const ref = useRef<HTMLButtonElement>(null);
-    const searchShortCutHandler = (): void => {
-        ref.current?.click();
-    };
-    useEventBus(EventType.GLOBALSEARCH, searchShortCutHandler as EventHandler<unknown>);
     return (
         <Tooltip overlayStyle={{ maxWidth: 1000 }}
             title={CategorySearchContent(session)}

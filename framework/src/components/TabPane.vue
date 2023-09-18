@@ -2,46 +2,44 @@
 import { ref, onMounted } from 'vue';
 import { request } from '@/centralServer/server';
 import connector from '@/connection';
+import { modulesConfig } from '@/moduleConfig';
 
-const localPaths = [ './plugins/Timeline/index.html' ];
+const activeModule = ref(0);
+const moduleRefs = ref<HTMLIFrameElement[] | undefined>();
 
-const getModuleName = (index: number): string => {
-    return localPaths?.[index]?.replace('./plugins/', '').replace(/\/\w+.html/, '') ?? '';
-};
-
-const currentPath = ref(0);
-const moduleRef = ref();
-
-onMounted(() => {
-    connector.addListener(async (e) => {
-        if (e.data.event !== 'request') { return; }
-        const { remote, args, id } = e.data;
-        const result = await request(remote, getModuleName(currentPath.value).toLowerCase(), args);
-        connector.send({ event: 'request', dataSource: remote, body: result, id });
+onMounted(async () => {
+    connector.resigsterAwaitFetch(async (e) => {
+        const { remote, args, module } = e.data;
+        const result = await request(remote, module, args);
+        return { dataSource: remote, body: result };
     });
 });
 
 function toggleTab(index: number): void {
-    currentPath.value = index;
+    activeModule.value = index;
 }
 
 </script>
 <template>
     <div class="tab-pane">
         <div class="tab-titles">
-            <nav>
-                <a
-                    v-for="(path, index) in localPaths"
-                    :key="`${index}-${path}`"
+            <el-menu class="el-menu-title" mode="horizontal" background-color="#252526" router>
+                <el-menu-item v-for="(moduleConfig, index) in modulesConfig"
+                    :key="`${index}-${moduleConfig.name}`"
                     @click="() => toggleTab(index)"
-                    :class="index === currentPath && 'active'"
-                >
-                    {{ getModuleName(index) }}
-                </a>
-            </nav>
+                    :class="index === activeModule && 'active'"> {{ moduleConfig.name }}
+                </el-menu-item>
+            </el-menu>
         </div>
         <div class="tab-body">
-            <iframe :src="localPaths[currentPath]" ref="moduleRef"></iframe>
+            <template v-for="(moduleConfig, index) in modulesConfig" 
+                    :key="`${index}-${moduleConfig.name}`">
+                <iframe
+                    v-bind={...moduleConfig.attributes}
+                    v-show="activeModule === index"
+                    ref="moduleRefs"
+                ></iframe>
+            </template>
         </div>
     </div>
 </template>
@@ -58,6 +56,41 @@ function toggleTab(index: number): void {
     height: var(--header-height);
 }
 
+.el-menu {
+  display: flex;
+  border: none;
+  height: 30px;
+  width: 100%;
+  line-height: 30px;
+  border-bottom: var(--border-style);
+}
+
+.el-menu-item {
+  margin-right: 1px;
+  text-align: center;
+  width: 150px;
+  color: #ffffff;
+  line-height: 30px;
+  user-select: none;
+}
+
+.el-menu-item.active {
+  color: #066ad8 !important; /* 你想要的字体颜色 */
+}
+
+.el-menu-item.active:after {
+  content: '';
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  bottom: 0;
+  border-bottom: 2px solid #066ad8
+}
+
+.el-menu-item:hover {
+  background-color: #383838;
+}
+
 @media (min-height: 1024px) {
     .tab-titles {
         height: 40px;
@@ -66,40 +99,6 @@ function toggleTab(index: number): void {
 
 .tab-body {
     flex-grow: 1;
-}
-
-nav {
-    width: 100%;
-    height: 100%;
-    font-size: 1rem;
-    text-align: left;
-    border-bottom: var(--border-style);
-    display: flex;
-    align-items: flex-end;
-}
-
-nav a.active {
-    color: var(--color-text);
-    background-color: var(--color-background-medium);
-}
-
-nav a:first-of-type {
-    margin-left: 1px;
-}
-
-nav a {
-    display: inline-block;
-    border-radius: 0.5rem 0.5rem 0 0;
-    padding: 0 1rem;
-    border-left: var(--border-style);
-    border-right: var(--border-style);
-    border-top: var(--border-style);
-    height: 90%;
-    min-width: 10rem;
-    text-align: center;
-    margin-right: 1px;
-    text-decoration: none;
-    color: var(--color-text);
 }
 
 @media (hover: hover) {

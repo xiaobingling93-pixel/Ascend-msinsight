@@ -4,7 +4,7 @@ import type { TreeNodeType } from './types';
 import Expand from './ExpandIcon.vue';
 import Delete from './DeleteIcon.vue';
 import { indent } from './types';
-import { useDataSources } from '@/stores';
+import { useDataSources } from '@/stores/dataSource';
 
 const props = defineProps<{ data: TreeNodeType; tier: number }>();
 let isExpanded = ref(true);
@@ -28,7 +28,15 @@ const handleDelete = () => {
         <div class="menu-tree-node">
             {{ data.content }}
         </div>
-        <Delete @click="handleDelete" v-if="data.cancelable" />
+        <el-popconfirm    width="200"
+                          hide-icon=true
+                          @confirm="handleDelete"
+                          hide-after=0
+                          title="Are you sure to delete this?">
+            <template #reference>
+              <Delete v-if="data.cancelable" />
+            </template>
+        </el-popconfirm>
     </div>
     <template v-if="isExpanded">
         <TreeNode
@@ -48,6 +56,9 @@ const handleDelete = () => {
     border-radius: var(--border-radius);
 }
 
+.delete-confirm {
+  background-color: #98e273;
+}
 .tree-node-line:hover {
     background-color: var(--color-background-medium);
 }

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Session } from '../entity/session';
 import { TimeMakerButton } from './TimeMakerButton';
 import { UnitsFilter } from './UnitsFilter';
+import { CategorySearch } from './CategorySearch';
 
 const Container = styled.div`
     display: flex;
@@ -21,6 +22,7 @@ export const ButtonGroup = observer(({ session }: { session: Session }) => {
     return (<Container>
         <TimeMakerButton session={session} />
         <UnitsFilter session={session} />
+        <CategorySearch session={session} />
         {session.buttons.map((_Button, index) => <_Button session={session} key={`${session.id}-${index}`} />)}
         {unit?.buttons?.map((_Button, index) => <_Button session={session} key={`${unit.name}-${index}`} />)}
     </Container>);

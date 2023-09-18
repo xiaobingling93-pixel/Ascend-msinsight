@@ -55,25 +55,23 @@ export const parseFailHandler: NotificationHandler = (data): void => {
 export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
-    for (const path of data.dataSource.dataPath) {
-        const result = await window.request(data.dataSource, { command: 'import/action', params: { path } });
-        runInAction(() => {
-            if (!session) {
-                return;
+    const result = await window.request(data.dataSource, { command: 'import/action', params: { path: data.dataSource.dataPath } });
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.phase = 'download';
+        session.endTimeAll = 1000000000;
+        result.result.forEach((item: CardInfo) => {
+            const unit = new CardUnit({ dataSource: data.dataSource, cardId: item.rankId, cardName: item.cardName });
+            if (item.result as boolean) {
+                unit.phase = 'analyzing';
+            } else {
+                unit.phase = 'error';
             }
-            session.phase = 'download';
-            session.endTimeAll = 1000000000;
-            result.result.forEach((item: CardInfo) => {
-                const unit = new CardUnit({ dataSource: data.dataSource, cardId: item.rankId, cardName: item.cardName });
-                if (item.result as boolean) {
-                    unit.phase = 'analyzing';
-                } else {
-                    unit.phase = 'error';
-                }
-                session.units.push(unit);
-            });
+            session.units.push(unit);
         });
-    }
+    });
 };
 
 export const removeRemoteHandler = async ({ dataSource }: any): Promise<void> => {
@@ -82,18 +80,23 @@ export const removeRemoteHandler = async ({ dataSource }: any): Promise<void> =>
         const metadata = unit.metadata as any;
         return metadata.dataSource.remote === dataSource.remote;
     });
+    for (const unit of removeUnits) {
+        const metadata = unit.metadata as any;
+        session.remoteAttrs.delete(metadata.dataSource.remote);
+    }
     session.units = session?.units.filter((unit) => {
         const metadata = unit.metadata as any;
         return metadata.dataSource.remote !== dataSource.remote;
     });
-    for (const unit of removeUnits) {
-        const metadata = unit.metadata as any;
-        await window.request(metadata.dataSource, { command: 'reset/window', params: {} });
-        session.remoteAttrs.delete(metadata.dataSource.remote);
-    }
     let remoteMaxTimeStamps = 0;
     session.remoteAttrs.forEach((attrs) => {
         remoteMaxTimeStamps = Math.max(<number>attrs.maxTimeStamp, remoteMaxTimeStamps);
     });
     session.endTimeAll = remoteMaxTimeStamps;
+    if (session.selectedUnits[0] !== undefined && !session.units.includes(session.selectedUnits[0])) {
+        session.selectedUnits = [];
+    }
+    if (session.units.length === 0) {
+        session.selectedRange = undefined;
+    }
 };

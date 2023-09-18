@@ -166,4 +166,4 @@ export default (function connectorFactory<T extends TypeForConnector>(connectorT
             getTargetWindow: () => window?.top,
             module: connectorType,
         })) as ConnectorType<T>;
-})('framework');
+})('timeline');

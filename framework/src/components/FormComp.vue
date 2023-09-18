@@ -3,8 +3,7 @@ import { ref } from 'vue';
 import Button from '@/components/ButtonComp.vue';
 import DeleteIcon from '@/components/icons/bin_icon.vue';
 import AddIcon from '@/components/icons/cross_icon.vue';
-import { useDataSources } from '@/stores';
-import type { FormItemData } from '@/stores';
+import { useDataSources, type FormItemData } from '@/stores/dataSource';
 const defaultValue = 'Please enter';
 const inputs = ref<FormItemData[]>([{ value: '', status: 'wait' }]);
 const remote: FormItemData = { value: '', status: 'wait' };
@@ -30,7 +29,6 @@ function deleteInput(index: number) {
 
 function addInput() {
     inputs.value.push({ value: '', status: 'wait' });
-    console.log(inputs, remote, port);
 }
 </script>
 
