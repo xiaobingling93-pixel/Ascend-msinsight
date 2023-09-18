@@ -22,7 +22,7 @@ import { MouseDownActionResult } from '../charts/ChartInteractor/actions';
 import { loopActionFactory } from '../../utils/FactoryActions';
 
 const TIME_LINE_AXIS_HEIGHT_PX = 30;
-const LANE_INFO_WIDTH_PX = 400;
+const LANE_INFO_WIDTH_PX = 250;
 export const CHARTINTERACTOR_NAME = 'chartInteractor';
 
 const Container = styled.div`
@@ -107,7 +107,7 @@ export const ChartContainer = observer((props: Props) => {
             document.removeEventListener('mouseup', onMouseUp);
         };
     }, [containerDom]);
-    const keyHoldAction = useMemo(() => loopActionFactory((e: React.KeyboardEvent<HTMLDivElement>) => onKeyDown(e), 40, 1000), [session]);
+    const keyHoldAction = useMemo(() => loopActionFactory((e: React.KeyboardEvent<HTMLDivElement>) => onKeyDown(e), 40, 100), [session]);
     return <Container onMouseMove={ (e) => onMouseMove(e) }
         onKeyDown={(e) => {
             if (!e.repeat) {
