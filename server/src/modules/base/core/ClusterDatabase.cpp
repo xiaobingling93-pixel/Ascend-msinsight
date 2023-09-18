@@ -70,7 +70,7 @@ bool ClusterDatabase::InitStmt()
 sqlite3_stmt *ClusterDatabase::GetTimeInfoStmtSql(int len)
 {
     if (len == cacheSize && isInitStmt) {
-        sqlite3_reset(insertBandwidthStmt);
+        sqlite3_reset(insertTimeInfoStmt);
         return insertTimeInfoStmt;
     }
     sqlite3_stmt *stmt = nullptr;

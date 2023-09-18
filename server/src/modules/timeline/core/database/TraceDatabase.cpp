@@ -1138,13 +1138,23 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t
             sqlite3_bind_int64(stmt, index++, min);
             sqlite3_bind_int64(stmt, index, max);
         }
+        double communicationTime = 0;
+        double notOverlapTime = 0;
         while (sqlite3_step(stmt) == SQLITE_ROW) {
-            Protocol::SummaryStatisticsItem item;
             int col = resultStartIndex;
-            item.duration = static_cast<double>(sqlite3_column_int64(stmt, col++));
-            item.overlapType = sqlite3_column_string(stmt, col++);
-            responseBody.summaryStatisticsItemList.push_back(item);
+            auto duration = static_cast<double>(sqlite3_column_int64(stmt, col++));
+            std::string overType = sqlite3_column_string(stmt, col++);
+            std::strcmp(overType.c_str(), "Communication") == 0 ? communicationTime = duration
+                    : notOverlapTime = duration;
         }
+        Protocol::SummaryStatisticsItem overlapItem;
+        overlapItem.duration = communicationTime - notOverlapTime;
+        overlapItem.overlapType = "Communication(Overlapped)";
+        responseBody.summaryStatisticsItemList.push_back(overlapItem);
+        Protocol::SummaryStatisticsItem notOverlapItem;
+        notOverlapItem.duration = notOverlapTime;
+        notOverlapItem.overlapType = "Communication(Not Overlapped)";
+        responseBody.summaryStatisticsItemList.push_back(notOverlapItem);
         sqlite3_finalize(stmt);
         return true;
     }
