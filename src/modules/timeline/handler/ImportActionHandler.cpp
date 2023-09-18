@@ -37,23 +37,14 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    auto traceFiles = FindAllTraceFile(request.params.path);
-    if (traceFiles.empty()) {
-        ServerLog::Error("Failed to find trace file.");
+    auto files = GetTraceFiles(request.params.path, response.body);
+    if (files.empty()) {
+        ServerLog::Warn("Import files is empty.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;
     }
     SetParseCallBack(token);
-    std::vector<std::pair<std::string, std::string>> files;
-    for (const auto &file : traceFiles) {
-        std::string fileId = TraceFileParser::Instance().GetFileId(file);
-        if (DataBaseManager::Instance().HasFileId(fileId)) {
-            continue;
-        }
-        response.body.result.emplace_back(Action{fileId, fileId, true});
-        files.emplace_back(std::make_pair(file, fileId));
-    }
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
@@ -151,7 +142,6 @@ void ImportActionHandler::FindAscendFolder(const std::string &path, std::vector<
     ServerLog::Info("FindAscendFolder. ", traceFilePath);
     if (FileUtil::CheckDirectoryExist(traceFilePath)) {
         traceFiles.emplace_back(traceFilePath);
-        ServerLog::Info("FindAscendFolder2. ");
         return;
     }
     std::function<void(const std::string&, int)> find = [&find, this, &traceFiles](const std::string &path, int depth) {
@@ -194,6 +184,62 @@ void ImportActionHandler::SearchMetaData(const std::string &fileId, std::vector<
     DataBaseManager::Instance().GetTraceDatabase(fileId)->QueryUnitsMetadata(fileId, metaData);
 }
 
+std::string ImportActionHandler::GetFileId(const std::string &filePath)
+{
+    std::string fileId = TraceFileParser::Instance().GetFileId(filePath);
+    int i = 1;
+    std::string result = fileId;
+    while (DataBaseManager::Instance().HasFileId(result)) {
+        result = fileId + "_" + std::to_string(++i);
+    }
+    auto database = DataBaseManager::Instance().GetTraceDatabase(result);
+    return database == nullptr ? "" : result;
+}
+
+bool ImportActionHandler::CheckIsCluster(const std::string &filePath)
+{
+    auto folders = FileUtil::FindFolders(filePath);
+    for (const auto &folder : folders) {
+        if (folder == "cluster_analysis_output") {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFiles(
+    const std::vector<std::string> &pathList, ImportActionResBody &body)
+{
+    auto traceFiles = FindAllTraceFile(pathList);
+    if (traceFiles.empty()) {
+        ServerLog::Error("Failed to find trace file.");
+        return {};
+    }
+    if (pathList.size() == 1) {
+        bool isCluster = CheckIsCluster(pathList[0]);
+        bool reset = isCluster || curIsCluster;
+        ServerLog::Info("new Cluster:", isCluster, ", old Cluster:", curIsCluster, ", reset:", reset);
+        curIsCluster = isCluster;
+        if (reset) {
+            TraceFileParser::Instance().Reset();
+            body.reset = reset;
+        }
+        body.isCluster = isCluster;
+    } else {
+        body.isCluster = false;
+    }
+    std::vector<std::pair<std::string, std::string>> files;
+    for (const auto &file : traceFiles) {
+        std::string fileId = GetFileId(file);
+        if (fileId.empty()) {
+            ServerLog::Error("File id is empty. file:", file);
+            continue;
+        }
+        body.result.emplace_back(Action{fileId, fileId, true});
+        files.emplace_back(file, fileId);
+    }
+    return files;
+}
 } // Timeline
 } // Module
 } // Dic

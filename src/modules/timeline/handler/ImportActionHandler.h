@@ -21,13 +21,19 @@ public:
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 
 private:
+    bool curIsCluster = false;
+
     static void SetParseCallBack(const std::string &token);
     static void ParseEndCallBack(const std::string token, const std::string fileId, bool result);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
+    static std::string GetFileId(const std::string &filePath);
+    static bool CheckIsCluster(const std::string &filePath);
     std::vector<std::string> FindTraceFile(const std::string &path);
     std::vector<std::string> FindAllTraceFile(const std::vector<std::string> &pathList);
     bool IsJsonValid(const std::string &fileName);
     void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
+    std::vector<std::pair<std::string, std::string>> GetTraceFiles(const std::vector<std::string> &pathList,
+                                                                   ImportActionResBody &body);
 };
 } // end of namespace Timeline
 } // end of namespace Module
