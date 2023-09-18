@@ -124,8 +124,8 @@ struct SearchSliceRequest : public Request {
 
 struct CommunicationDetailParams {
     std::string rankId;
-    double currentPage = 0;
-    double pageSize = 0;
+    int32_t currentPage = 0;
+    int32_t pageSize = 0;
     std::string orderBy;
     std::string order;
 };

@@ -17,6 +17,9 @@ struct MemoryOperatorParams {
     std::string rankId;
     double startTime;
     double endTime;
+    double currentPage = 0;
+    double pageSize = 0;
+    std::string orderBy;
 };
 
 struct MemoryOperatorRequest : public Request {

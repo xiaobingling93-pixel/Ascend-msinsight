@@ -21,8 +21,11 @@ public:
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 
     static bool GetResponseData(const Protocol::CommunicationDetailParams& params,
-                                std::vector<Protocol::CommunicationDetail> &details,
-                                int32_t &totalNum);
+                                CommunicationDetailResponse &response);
+    static void OrderBy(const Protocol::CommunicationDetailParams& params,
+                        std::vector<Protocol::CommunicationDetail> &details);
+private:
+    static std::vector<double> res;
 };
 
 } // Timeline
