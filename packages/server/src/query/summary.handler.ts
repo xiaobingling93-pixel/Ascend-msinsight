@@ -84,12 +84,12 @@ Promise<Record<string, SummaryStatisticsVO[]>> => {
             }
         }
         const communicationStatistics = await table.queryCommunicationStatisticsData(timestampCondition, param);
-        let overlapTime = 0; let communicationTime = 0;
+        let notOverlapTime = 0; let communicationTime = 0;
         communicationStatistics?.forEach((row: any) => {
-            row.overlapType === 'Communication' ? communicationTime = row.duration : overlapTime = row.duration;
+            row.overlapType === 'Communication' ? communicationTime = row.duration : notOverlapTime = row.duration;
         });
-        rows.push({ overlapType: 'Communication(Overlapped)', acceleratorCore: '', duration: overlapTime / 1000, utilization: 0 });
-        rows.push({ overlapType: 'Communication(Not Overlapped)', acceleratorCore: '', duration: (communicationTime - overlapTime) / 1000, utilization: 0 });
+        rows.push({ overlapType: 'Communication(Not Overlapped)', acceleratorCore: '', duration: notOverlapTime / 1000, utilization: 0 });
+        rows.push({ overlapType: 'Communication(Overlapped)', acceleratorCore: '', duration: (communicationTime - notOverlapTime) / 1000, utilization: 0 });
     }
     logger.info('end request to summaryStatisticHandler, rows:', rows);
     return { result: rows };
