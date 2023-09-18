@@ -55,6 +55,7 @@ header {
     justify-content: start;
     align-items: center;
     min-width: 80px;
+    background-color: #2C2C2C;
     border-right: var(--border-style);
 }
 .theme-toggle {
@@ -63,6 +64,7 @@ header {
 }
 .container {
     flex-grow: 1;
+    background-color: #252526;
 }
 
 .header .icon-container  {
@@ -74,7 +76,6 @@ header {
         flex-direction: row;
         height: var(--header-height);
         border-right: unset;
-        border-bottom: var(--border-style);
     }
 }
 </style>

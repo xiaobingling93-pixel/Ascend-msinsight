@@ -94,33 +94,34 @@ function toggleTab(index: number): void {
   height: 30px;
   width: 100%;
   line-height: 30px;
-  border-bottom: var(--border-style);
+  border-bottom: none !important;
 }
 
 .el-menu-item {
-  margin-right: 1px;
-  text-align: center;
-  width: 150px;
-  color: #ffffff;
-  line-height: 30px;
-  user-select: none;
+    margin-right: 1px;
+    text-align: center;
+    width: 150px;
+    font-size: 14px;
+    color: #F4F6FA !important;
+    line-height: 30px;
+    user-select: none;
 }
 
 .el-menu-item.active {
-  color: #066ad8 !important; /* 你想要的字体颜色 */
+  color: #007AFF !important;
 }
 
 .el-menu-item.active:after {
-  content: '';
-  position: absolute;
-  left: 20%;
-  right: 20%;
-  bottom: 0;
-  border-bottom: 2px solid #066ad8
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 64px;
+    height: 1px;
+    background-color: #007aff;
 }
 
 .el-menu-item:hover {
-  background-color: #383838;
+    background-color: #383838;
 }
 
 @media (min-height: 1024px) {
