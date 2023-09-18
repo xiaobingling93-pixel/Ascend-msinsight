@@ -2,20 +2,20 @@ import type { Theme } from '@emotion/react';
 import { ReactComponent as HomePageDarkImage } from '../assets/images/ic_user_experience_rate_filled_dark.svg';
 
 export const dark: Theme = {
-    backgroundColor: '#222222', // 主界面背景色
+    backgroundColor: 'rgb(30, 30, 30)', // 主界面背景色
     mainPageIcon: HomePageDarkImage, // 首页图标
     timeInsightIcon: '#86AD53', // time Insight 图标颜色
     allocationInsightIcon: '#9E644F', // allocation Insight 图标颜色
-    contentBackgroundColor: '#383838', // 区域内容背景色
+    contentBackgroundColor: 'rgb(30, 30, 30)', // 区域内容背景色
     buttonBackgroundColor: '#4C4C4C', // 模板、按钮背景色
     okBackgroundColor: '#5391FF', // ok按钮背景色
     selectBackgroundColor: '#4c4c4c', // session选中背景色
-    cardHeadBackgroundColor: '#4E4E4E', // 卡片表头背景色
-    fontColor: 'rgb(255, 255, 255, 0.9)', // 字体颜色
+    cardHeadBackgroundColor: 'rgb(44, 44, 44)', // 卡片表头背景色
+    fontColor: 'rgb(177, 177, 177)', // 字体颜色
     disabledFontColor: 'rgb(255, 255, 255, 0.15)',
     tableHeadFontColor: 'rgb(255, 255, 255, 0.6)', // 表格表头字体颜色
     subtitleColor: 'rgb(255, 255, 255, 0.4)', // session小字体颜色
-    solidLine: 'rgb(255, 255, 255, 0.2)', // border分割线颜色
+    solidLine: 'rgb(46, 47, 49)', // border分割线颜色
     buttonFontColor: '#5291FF', // 模板、按钮字体颜色
     svgBackgroundColor: '#A3A3A3', // svg设备、homePage图片颜色
     svgPlayBackgroundColor: '#FFFFFF', // svg录制、暂停、删除等图片颜色
