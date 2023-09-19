@@ -3,17 +3,16 @@
  */
 
 #include "ImportActionHandler.h"
+
 #include "ServerLog.h"
 #include "ExecUtil.h"
 #include "FileUtil.h"
-#include "RegexUtil.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
 #include "TraceFileParser.h"
 #include "ClusterFileParser.h"
 #include "MemoryParse.h"
-#include "FileUtil.h"
 
 namespace Dic {
 namespace Module {
@@ -113,6 +112,7 @@ void ImportActionHandler::ParseClusterEndProcess(const std::string token, std::s
     event->moduleName = ModuleType::TIMELINE;
     event->token = token;
     event->result = true;
+    event->body.parseResult = std::move(result);
     session->OnEvent(std::move(event));
 }
 
