@@ -633,19 +633,19 @@ bool ClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
-    std::string orderBy = param.orderBy.empty() ? "" : " order by " + param.orderBy + " " + param.order;
+    std::string orderBy = param.orderBy.empty() ? " order by elapseTime " : " order by " + param.orderBy;
+    std::string order = !param.order.empty() && std::strcmp(param.order.c_str(), "ascend") == 0 ? "ASC" : "DESC";
     std::string sql = "SELECT op_name,"
-                      " ROUND(elapse_time, 4) as elapse_time, "
-                      " ROUND(transit_time, 4) as transit_time,"
-                      " ROUND(synchronization_time, 4) as synchronization_time,"
-                      " ROUND(wait_time, 4) as wait_time,"
-                      " ROUND(idle_time, 4) as idle_time,"
-                      " ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio,"
-                      " ROUND(wait_time_ratio, 4) as wait_time_ratio "
-                      "FROM ( SELECT * FROM " + timeInfoTable +
-                      orderBy +
-                      " ) WHERE iteration_id = ? AND rank_id = ? AND stage_id = ?"
-                      " AND op_name != 'Total Op Info' LIMIT ?, ?";
+                      " ROUND(elapse_time, 4) as elapseTime, "
+                      " ROUND(transit_time, 4) as transitTime,"
+                      " ROUND(synchronization_time, 4) as synchronizationTime,"
+                      " ROUND(wait_time, 4) as waitTime,"
+                      " ROUND(idle_time, 4) as idleTime,"
+                      " ROUND(synchronization_time_ratio, 4) as synchronizationTimeRatio,"
+                      " ROUND(wait_time_ratio, 4) as waitTimeRatio "
+                      "FROM " + timeInfoTable +
+                      " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ?"
+                      " AND op_name != 'Total Op Info' " + orderBy + " " + order + " LIMIT ?, ?";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryAllOperators statement. error:", sqlite3_errmsg(db));
         return false;
