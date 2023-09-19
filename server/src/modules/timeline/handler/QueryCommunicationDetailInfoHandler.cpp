@@ -84,16 +84,16 @@ bool CompareByNotOverlapped(CommunicationDetail detail1, CommunicationDetail det
 void QueryCommunicationDetailInfoHandler::OrderBy(const Protocol::CommunicationDetailParams& params,
                                                   std::vector<Protocol::CommunicationDetail> &details)
 {
-    if (params.orderBy == "CommunicationKernel") {
+    if (params.orderBy == "communicationKernel") {
         std::sort(details.begin(), details.end(), CompareByKernel);
-    } else if (params.orderBy == "StartTime") {
+    } else if (params.orderBy == "startTime") {
         std::sort(details.begin(), details.end(), CompareByStart);
-    } else if (params.orderBy == "CommunicationDuration") {
+    } else if (params.orderBy == "totalDuration") {
         std::sort(details.begin(), details.end(), CompareByOverlapped);
-    } else if (params.orderBy == "NotOverlappedDuration") {
+    } else if (params.orderBy == "notOverlapDuration") {
         std::sort(details.begin(), details.end(), CompareByNotOverlapped);
     }
-    if (params.order != "ASC") {
+    if (params.order != "ascend") {
         std::reverse(details.begin(), details.end());
     }
     int32_t offset = (params.currentPage - 1) * params.pageSize;
