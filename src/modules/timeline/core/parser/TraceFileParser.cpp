@@ -43,7 +43,7 @@ bool TraceFileParser::Parse(const std::string &filePath, const std::string &file
         return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
-    std::string dbPath = GetDbPath(filePath);
+    std::string dbPath = GetDbPath(filePath, fileId);
     if (!(database->OpenDb(dbPath, true) && database->CreateTable() && database->SetConfig() && database->InitStmt())) {
         ServerLog::Error("Failed to open database. path:", dbPath);
         return false;
@@ -171,11 +171,20 @@ bool TraceFileParser::SeekRegexPosition(std::ifstream &file, const std::string &
     return true;
 }
 
-std::string TraceFileParser::GetDbPath(const std::string &filePath)
+std::string TraceFileParser::GetDbPath(const std::string &filePath, const std::string &fileId)
 {
     std::string path = FileUtil::GetRealPath(filePath);
-    auto pos = path.find_last_of('.');
-    path.replace(pos, path.size() - pos, ".db");
+    std::string suffix = ".db";
+    auto pos = fileId.find_last_of('_');
+    if (pos != std::string::npos) {
+        suffix = fileId.substr(pos) + suffix;
+    }
+    pos = path.find_last_of('.');
+    if (pos != std::string::npos) {
+        path.replace(pos, path.size() - pos, suffix);
+    } else {
+        path.append(suffix);
+    }
     return path;
 }
 
