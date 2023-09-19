@@ -162,9 +162,9 @@ const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow:
     }, [ isShow, conditions ]);
     useEffect(() => {
         if (isShow) {
-            let { data } = dataSource;
-            data = data.map((item: any) => {
-                return [ item.srcRank, item.dstRank, item[switchCondition.type] ];
+            let data: any = dataSource.data.map((item: any) => {
+                return [ item.srcRank, item.dstRank,
+                    item[switchCondition.type] !== undefined ? item[switchCondition.type] : null ];
             });
             if (!switchCondition.showInner) {
                 data = data.filter((item: any[]) => item[0] !== item[1]);
@@ -176,9 +176,9 @@ const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow:
         const param = { iterationId: conditions.iterationId, stage: conditions.stage, operatorName: conditions.operatorName };
         const res = await queryCommunicationMatrix(param);
         const data = res.matrixList ?? [];
-        const rankRes: {iterationsOrRanks: Array<{rank_id: string } > } =
+        const rankRes: {iterationOrRankId: string[] } =
             await queryRanks({ iterationId: conditions.iterationId });
-        const rankIds = rankRes.iterationsOrRanks.map(item => item.rank_id);
+        const rankIds = rankRes.iterationOrRankId;
         setDataSource({ data, rankIds });
     };
     const handleChange = (filed: string, val: string | boolean): void => {

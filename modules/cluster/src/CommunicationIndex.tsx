@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RootStoreContext, useRootStore } from './context/context';
@@ -10,6 +13,12 @@ import { getSearchParams } from './utils/localUrl';
 import { platform } from './platforms';
 import { themeInstance, ThemeItem } from './theme/theme';
 import CommunicationAnalysis from './components/communicationAnalysis/CommunicationAnalysis';
+import { NOTIFICATION_HANDLERS } from './interface';
+
+const Loading = (<div style={{ textAlign: 'center', top: '50%', position: 'absolute', width: '50px', left: 'calc(50% - 25px)' }}>
+    <div className={'loading'} style={{ marginLeft: '15px' }}></div>
+    <div>waiting</div>
+</div>);
 
 export const App = observer(() => {
     const { insightStore, sessionStore } = useRootStore();
@@ -25,7 +34,7 @@ export const App = observer(() => {
             window.setTheme(res === 'dark');
         });
     }, []);
-    return (<>{session !== undefined ? <CommunicationAnalysis session={session} /> : <div>loading</div>}</>);
+    return (<>{session !== undefined && session.clusterStatus === true ? <CommunicationAnalysis session={session} /> : Loading}</>);
 });
 
 window.dataSource = { remote: '127.0.0.1', port: 9000, dataPath: [] };
@@ -42,3 +51,14 @@ root.render(
             <App />
         </RootStoreContext.Provider>
     </React.StrictMode>));
+
+Object.entries(NOTIFICATION_HANDLERS).forEach(([ event, callback ]) => {
+    connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
+        const res = e.data;
+        if (res.body === undefined || typeof res.body !== 'object') {
+            console.error('[notify]', 'Wrong notify format.');
+            return;
+        }
+        callback(res.body);
+    });
+});

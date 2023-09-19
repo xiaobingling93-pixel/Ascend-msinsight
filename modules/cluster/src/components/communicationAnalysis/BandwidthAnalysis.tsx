@@ -37,14 +37,14 @@ const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorNa
 
 function wrapData(data: any): any {
     data.forEach((item: any) => {
-        if (item.large_package_ratio === null || item.large_package_ratio === undefined) {
-            item.large_package_ratio = '/';
+        if (item.largePacketRatio === null || item.largePacketRatio === undefined) {
+            item.largePacketRatio = '/';
         }
     });
-    const sdma = data.find((item: any) => item.transport_type === 'SDMA');
+    const sdma = data.find((item: any) => item.transportType === 'SDMA');
     sdma.large_package_ratio = '/';
-    const hp = data.filter((item: any) => item.transport_type === 'HCCS' || item.transport_type === 'PCIE');
-    const rdma = data.find((item: any) => item.transport_type === 'RDMA');
+    const hp = data.filter((item: any) => item.transportType === 'HCCS' || item.transportType === 'PCIE');
+    const rdma = data.find((item: any) => item.transportType === 'RDMA');
     return [ { ...sdma, children: hp }, rdma ];
 }
 
@@ -98,19 +98,19 @@ const BandwidthAnalysis = observer(function (props:
 });
 
 async function getTableData (iterationId: number, rankId: number, operatorName: string, stage: string): Promise<any> {
-    const bandwidthDetails = await window.requestData('communication/duration/bandwidth',
+    const bandwidthDetails = await window.requestData('communication/bandwidth',
         { iterationId, rankId, operatorName, stage });
-    return bandwidthDetails.bandwidthData;
+    return bandwidthDetails.items;
 }
 
 async function getChartData (domId: string, iterationId: number, rankId: number,
     operatorName: string, stage: string): Promise<any> {
-    const distributions = await window.requestData('communication/duration/distribution',
+    const distributions = await window.requestData('communication/distribution',
         { iterationId, rankId, operatorName, transportType: domId, stage });
-    if (distributions.distributionData[0] === undefined) {
+    if (distributions.distributionData === undefined) {
         return '{}';
     }
-    return distributions.distributionData[0].size_distribution;
+    return distributions.distributionData;
 }
 
 async function InitPacketAndBandwidthCharts(domId: string, iterationId: number,
@@ -277,31 +277,31 @@ interface DataType {
 const columns: ColumnsType<DataType> = [
     {
         title: 'Transport Type',
-        dataIndex: 'transport_type',
+        dataIndex: 'transportType',
         key: 'TransportType',
         align: 'center',
     },
     {
         title: 'Transit Size(MB)',
-        dataIndex: 'transit_size',
+        dataIndex: 'transitSize',
         key: 'TransitSize',
         align: 'center',
     },
     {
         title: 'Transit Time(ms)',
-        dataIndex: 'transit_time',
+        dataIndex: 'transitTime',
         key: 'TransitTime',
         align: 'center',
     },
     {
         title: 'Bandwidth(GB/s) ',
-        dataIndex: 'bandwidth_size',
+        dataIndex: 'bandwidth',
         key: 'Bandwidth',
         align: 'center',
     },
     {
         title: 'Large Packet Ratio',
-        dataIndex: 'large_package_ratio',
+        dataIndex: 'largePacketRatio',
         key: 'LargePacketRatio',
         align: 'center',
     },

@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Breadcrumb } from 'antd';
 import { Session } from '../../entity/session';
@@ -54,9 +54,6 @@ const wrapChartData = (data: tableDataType[]): chartDataType => {
 };
 
 const CommunicationAnalysis = observer(function ({ session, active = true }: { session: Session;active?: boolean }) {
-    useEffect(() => {
-
-    }, [session.units]);
     const [ rankId, setRankId ] = useState('');
     const [ showData, setShowData ] = useState<showDataType>({
         chartData: {} as chartDataType,
@@ -69,10 +66,11 @@ const CommunicationAnalysis = observer(function ({ session, active = true }: { s
     };
     const returnHome = (): void => { setRankId(''); };
     const handleFilterChange = async(newConditions: ConditionDataType): Promise<void> => {
-        setConditions(newConditions);
         if (conditions.type !== newConditions.type) {
+            setConditions({ ...conditions, ...newConditions });
             return;
         }
+        setConditions({ ...conditions, ...newConditions });
         const res = await searchData(newConditions);
         setShowData(res);
     };

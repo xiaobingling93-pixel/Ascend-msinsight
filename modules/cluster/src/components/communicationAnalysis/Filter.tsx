@@ -68,15 +68,15 @@ const getiterationOptions = async(): Promise<optionDataType[]> => {
     return options;
 };
 const getStageOptions = async (iterationId: string): Promise<optionDataType[]> => {
-    const res: {iterationOrRankId: string[] } = await queryStages({ iterationId });
-    const list = res.iterationOrRankId;
+    const res: {data: string[] } = await queryStages({ iterationId });
+    const list = res.data;
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;
 };
 const getOperatorOptions = async ({ iterationId, rankList, stage }: {iterationId: string;
     rankList: string[]; stage: string;}):
 Promise<optionDataType[]> => {
-    const res: {operatorName: string[] } = await queryOperators({ iterationId, rankList, stage }); ;
+    const res: {operatorName: string[] } = await queryOperators({ iterationId, rankList, stage });
     const list = res.operatorName;
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;

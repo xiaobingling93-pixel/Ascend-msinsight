@@ -44,7 +44,7 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
     useEffect(() => {
         setActiveTab('pp');
         if (session.communicatorData.partitionModes.length === 0) {
-            queryTopSummary({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 }).then(({ result }) => {
+            queryTopSummary({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 }).then((result) => {
                 getDefaultCommunicatorData(result.filePath).then(value => {
                     session.communicatorData = value;
                 });
@@ -63,7 +63,7 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
     return (
         <div style={{ height: '300px', width: '100%', margin: '10px 0' }} className={'CommunicatorContainer'}>
             {<CommunicatorHeader session={session} defaultPPSize={session.communicatorData.defaultPPSize}></CommunicatorHeader>}
-            <Tabs activeKey={activeTab} onTabClick={(key) => setActiveTab(key)} style={{ height: '240px' }}>
+            <Tabs activeKey={activeTab} onTabClick={(key) => { eventBus.emit('setActiveTab', key); setActiveTab(key); }} style={{ height: '240px' }}>
                 {
                     items.map(item => (
                         <Tabs.TabPane tab={item.tab} key={item.key} style={{ height: '140px' }}>
@@ -164,20 +164,34 @@ const RankId = ({ id, onClick }: { id: number; onClick: () => void }): JSX.Eleme
 };
 
 export async function getDefaultCommunicatorData(filePath: string): Promise<communicatorContainerData> {
-    const data = await window.requestData('communicator/parser', { path: filePath });
-    const partitionModes: partitionMode[] = [
-        {
-            mode: 'pp',
-            communicators: data.ppGroups,
-        },
-        {
-            mode: 'tpOrDp',
-            communicators: data.tpOrDpGroups,
-        },
-    ];
-    return {
-        partitionModes, defaultPPSize: data.defaultPPSize,
+    const result = {
+        partitionModes: [
+            {
+                mode: 'pp',
+                communicators: [],
+            },
+            {
+                mode: 'tpOrDp',
+                communicators: [],
+            },
+        ],
+        defaultPPSize: 0,
     };
+    const data = await window.requestData('communicator/parse', { filePath }, 'communication');
+    if (data?.ppGroups !== undefined && data?.tpOrDpGroups !== undefined && data?.defaultPPSize !== undefined) {
+        result.partitionModes = [
+            {
+                mode: 'pp',
+                communicators: data.ppGroups,
+            },
+            {
+                mode: 'tpOrDp',
+                communicators: data.tpOrDpGroups,
+            },
+        ];
+        result.defaultPPSize = data.defaultPPSize;
+    }
+    return result;
 }
 
 function generateCommunicatorData(values: {ppSize: number; tpSize: number; dpSize: number}, defaultPPSize: number, rankNum: number): communicatorContainerData {

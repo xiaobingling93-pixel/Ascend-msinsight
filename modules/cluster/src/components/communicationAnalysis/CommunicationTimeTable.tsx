@@ -94,7 +94,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     };
 
     const columns: TableColumnsType<DataType> = [
-        { title: 'Operator Name', dataIndex: 'op_name', key: 'op_name', sorter: true },
+        { title: 'Operator Name', dataIndex: 'operatorName', key: 'operatorName', sorter: true },
         ...commonColumns.map(item => {
             return { ...item, sorter: true };
         }),

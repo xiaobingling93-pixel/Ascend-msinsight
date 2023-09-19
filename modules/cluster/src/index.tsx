@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RootStoreContext } from './context/context';
@@ -105,13 +108,13 @@ window.request = async (dataSource, params) => {
 };
 
 Object.entries(NOTIFICATION_HANDLERS).forEach(([ event, callback ]) => {
-    connector.addListener(event, (e: MessageEvent<{ event: string; dataSource: DataSource; body: Record<string, unknown> }>) => {
+    connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
         const res = e.data;
-        if (res.body === undefined || res.dataSource === undefined) {
+        if (res.body === undefined || typeof res.body !== 'object') {
             console.error('[notify]', 'Wrong notify format.');
             return;
         }
-        callback({ dataSource: res.dataSource, body: res.body });
+        callback(res.body);
     });
 });
 
@@ -121,7 +124,3 @@ declare global {
         dataSource: DataSource;
     }
 };
-
-connector.addListener('setTheme', (e) => {
-    window.setTheme(e.data.isDark);
-});

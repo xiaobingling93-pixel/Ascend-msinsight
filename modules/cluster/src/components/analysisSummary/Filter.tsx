@@ -51,8 +51,8 @@ const getTopOptions = (count: number): optionDataType[] => {
 export const defaultConditions = { step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 };
 
 const getStepOptions = async(): Promise<optionDataType[]> => {
-    const res = await window.requestData('parallelism/pipeline/getAllSteps', {});
-    const list: string[] = res.summaryStatisticsItemList;
+    const res = await window.requestData('parallelism/pipeline/getAllSteps', {}, 'summary');
+    const list: string[] = res.data;
     const options: optionDataType[] = [ 'All', ...list ].map(item => ({ value: item, label: item }));
     return options;
 };

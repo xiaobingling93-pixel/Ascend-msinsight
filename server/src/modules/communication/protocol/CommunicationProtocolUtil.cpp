@@ -164,6 +164,7 @@ template <> std::optional<json_t> ToResponseJson<MatrixListResponse>(const Matri
         itemJson["transitSize"] = matrixList.transitSize;
         itemJson["transitTime"] = matrixList.transitTime;
         itemJson["bandwidth"] = matrixList.bandwidth;
+        itemJson["transitSize"] = matrixList.transitSize;
         json["body"]["matrixList"].emplace_back(itemJson);
     }
     return json;

@@ -90,7 +90,7 @@ export const queryOperatorDetails = async(param: {
     if (isNull(window.requestData)) {
         return OperatorDetailsData;
     }
-    return window.requestData('communication/duration/operatorDetails', param);
+    return window.requestData('communication/operatorDetails', param);
 };
 
 /**

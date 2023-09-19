@@ -14,7 +14,7 @@ import Filter, { ConditionDataType } from './Filter';
 import StatisticsTable from './StatisticsTable';
 import SummaryTable from './SummaryTable';
 import BaseInfo from './BaseInfo';
-import { communicator, CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
+import { CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
 import PpBandwidthAnalysis from './PpBandwidthAnalysis';
 
 interface SummaryDataType{
@@ -271,29 +271,24 @@ const ComputationCommunicationOverview = ({ session, active = true }: { session:
 };
 const OverviewCom = ({ handleFilterChange, dataSource, selected, session }: any): JSX.Element => {
     const [ pipelineVisible, setPipelineVisible ] = useState(true);
-    useEventBus('activeCommunicator', (data) => {
-        if (data === undefined) {
-            setPipelineVisible(true);
-        } else {
-            const selectCommunicator = data as communicator;
-            setPipelineVisible(selectCommunicator.name.startsWith('stage'));
-        }
+    useEventBus('setActiveTab', (data) => {
+        setPipelineVisible(data === 'pp');
     });
     return <div className={'text-selectable'}
         style={{ textAlign: 'left', padding: '0 20px', overflow: 'auto', height: '100%', width: '100%' }}>
         <BaseInfo session={session}/>
         <CommunicatorContainer session={session}></CommunicatorContainer>
-        {/* <div className={pipelineVisible ? 'hide' : ''}> */}
-        <div>
-            <div className={'common-title-bottom'}>Computation/Communication Overview{hit}</div>
-            <Filter handleFilterChange={handleFilterChange} session={session} visible={!pipelineVisible}/>
-            <div id={'overview-chart'} style={{ height: '400px' }} ></div>
+        <div className={pipelineVisible ? 'hide' : ''}>
+            <div>
+                <div className={'common-title-bottom'}>Computation/Communication Overview{hit}</div>
+                <Filter handleFilterChange={handleFilterChange} session={session} visible={!pipelineVisible}/>
+                <div id={'overview-chart'} style={{ height: '400px' }} ></div>
+            </div>
+            <div style={{ padding: '0 3rem' }}>
+                <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
+                <StatisticsTable {...selected}/>
+            </div>
         </div>
-        <div style={{ padding: '0 3rem' }}>
-            <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
-            <StatisticsTable {...selected}/>
-        </div>
-        {/* </div> */}
         <div className={pipelineVisible ? '' : 'hide'}>
             <PpBandwidthAnalysis session={session}></PpBandwidthAnalysis>
         </div>

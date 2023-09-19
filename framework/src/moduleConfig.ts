@@ -17,11 +17,18 @@ export const modulesConfig: ModuleConfig[] = [
         isDefault: true,
     },
     {
-        name: 'test',
-        requestName: 'test',
+        name: 'summary',
+        requestName: 'summary',
         attributes: {
-            src: './plugins/test/index.html'
+            src: 'http://localhost:3000/summary.html'
         }
-    }
+    },
+    {
+        name: 'communication',
+        requestName: 'communication',
+        attributes: {
+            src: 'http://localhost:3000/communication.html'
+        }
+    },
 ];
 

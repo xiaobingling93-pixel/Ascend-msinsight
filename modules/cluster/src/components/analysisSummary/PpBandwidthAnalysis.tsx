@@ -125,7 +125,7 @@ export const getStepsData = async (): Promise<string[]> => {
     if (isNull(window.requestData)) {
         return [ '0', '1', '2', '3' ];
     }
-    const steps = await window.requestData('parallelism/pipeline/getAllSteps', {});
+    const steps = await window.requestData('parallelism/pipeline/getAllSteps', {}, 'summary');
     return steps.data;
 };
 
@@ -133,7 +133,7 @@ export const getStagesData = async (param: {stepId: string}): Promise<string[]> 
     if (isNull(window.requestData)) {
         return ['(0, 1, 2, 3)'];
     }
-    const stages = await window.requestData('parallelism/pipeline/getAllStages', param);
+    const stages = await window.requestData('parallelism/pipeline/getAllStages', param, 'summary');
     return stages.data;
 };
 
@@ -141,7 +141,8 @@ async function getStageAndBubbleTimeData (stepId: string): Promise<any> {
     if (isNull(window.requestData)) {
         return [];
     }
-    const stageAndBubbleTimeList = await window.requestData('parallelism/pipeline/stageAndBubbleTime', { stepId });
+    const stageAndBubbleTimeList = await window.requestData('parallelism/pipeline/stageAndBubbleTime',
+        { stepId }, 'summary');
     return stageAndBubbleTimeList.stageAndBubbleTimes;
 }
 
@@ -149,7 +150,7 @@ async function getRankAndBubbleTimeData (stepId: string, stageId: string): Promi
     if (isNull(window.requestData)) {
         return [];
     }
-    const RankAndBubbleTimeData = await window.requestData('parallelism/pipeline/rankAndBubbleTime', { stepId, stageId });
+    const RankAndBubbleTimeData = await window.requestData('parallelism/pipeline/rankAndBubbleTime', { stepId, stageId }, 'summary');
     return RankAndBubbleTimeData.stageAndBubbleTimes;
 }
 

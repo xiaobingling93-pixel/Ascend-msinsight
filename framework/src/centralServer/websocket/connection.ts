@@ -114,6 +114,7 @@ export class Connection {
             );
             this.request(msg);
             const reqCallback = (res: Response): void => {
+                console.info('----request:', msg);
                 console.info('[connector]', 'received:', res);
                 if (res.result && res.body !== undefined) {
                     // wedge: return cache resolve

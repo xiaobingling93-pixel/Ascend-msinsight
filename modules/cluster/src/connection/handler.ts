@@ -1,36 +1,24 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 import { store } from '../store';
 import { runInAction } from 'mobx';
 import { setUnitPhaseByCardId } from '../entity/insight';
-import { CardUnit } from '../insight/units/AscendUnit';
-import { CardInfo } from '../components/ImportSelect';
-import { Session } from '../entity/session';
 import { NotificationHandler } from './defs';
 
 export const parseSuccessHandler: NotificationHandler = (data): void => {
-    const unitData = data.body as any;
-    const { sessionStore } = store;
-    const session = sessionStore.activeSession;
-    runInAction(() => {
-        if (!session) {
-            return;
-        }
-        session.startRecordTime = 0;
-        if (session.endTimeAll === undefined) {
-            session.endTimeAll = unitData.maxTimeStamp;
-        } else {
-            session.endTimeAll = Math.max(session.endTimeAll, unitData.maxTimeStamp);
-        }
-        const remoteAttrs = session.remoteAttrs.get(data.dataSource.remote);
-        if (remoteAttrs === undefined) {
-            session.remoteAttrs.set(data.dataSource.remote, { maxTimeStamp: unitData.maxTimeStamp });
-        } else {
-            remoteAttrs.maxTimeStamp = unitData.maxTimeStamp;
-        }
-        setUnitPhaseByCardId(unitData.unit.metadata.cardId, session, 'download');
-        if (unitData.startTimeUpdated === true) {
-            session.simpleCache.clear();
-        }
-    });
+    try {
+        const { sessionStore } = store;
+        const session = sessionStore.activeSession;
+        runInAction(() => {
+            if (!session) {
+                return;
+            }
+            session.startRecordTime = 0;
+        });
+    } catch (error) {
+        console.error(error);
+    }
 };
 
 export const parseFailHandler: NotificationHandler = (data): void => {
@@ -40,67 +28,37 @@ export const parseFailHandler: NotificationHandler = (data): void => {
         if (!session) {
             return;
         }
-        setUnitPhaseByCardId((data.body as any).rankId, session, 'error');
+        setUnitPhaseByCardId((data as any).rankId, session, 'error');
     });
 };
 
-export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
-    const { sessionStore } = store;
-    const session = sessionStore.activeSession;
-    const result = await window.request(data.dataSource, { command: 'import/action', params: { path: data.dataSource.dataPath } });
-    runInAction(() => {
-        if (!session) {
-            return;
-        }
-        session.phase = 'download';
-        session.endTimeAll = 1000000000;
-        result.result.forEach((item: CardInfo) => {
-            const unit = new CardUnit({ dataSource: data.dataSource, cardId: item.rankId, cardName: item.cardName });
-            if (item.result as boolean) {
-                unit.phase = 'analyzing';
-            } else {
-                unit.phase = 'error';
+export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
+    try {
+        const { sessionStore } = store;
+        const session = sessionStore.activeSession;
+        runInAction(() => {
+            if (!session) {
+                return;
             }
-            session.units.push(unit);
+            session.clusterStatus = false;
         });
-    });
+    } catch (error) {
+        console.error(error);
+    }
 };
 
-export const removeRemoteHandler = async ({ dataSource }: any): Promise<void> => {
-    const session = store.sessionStore.activeSession as Session;
-    const removeUnits = session.units.filter((unit) => {
-        const metadata = unit.metadata as any;
-        return metadata.dataSource.remote === dataSource.remote;
-    });
-    for (const unit of removeUnits) {
-        const metadata = unit.metadata as any;
-        session.remoteAttrs.delete(metadata.dataSource.remote);
-    }
-    session.units = session?.units.filter((unit) => {
-        const metadata = unit.metadata as any;
-        return metadata.dataSource.remote !== dataSource.remote;
-    });
-    let remoteMaxTimeStamps = 0;
-    session.remoteAttrs.forEach((attrs) => {
-        remoteMaxTimeStamps = Math.max(<number>attrs.maxTimeStamp, remoteMaxTimeStamps);
-    });
-    session.endTimeAll = remoteMaxTimeStamps;
-    if (session.selectedUnits[0] !== undefined && !session.units.includes(session.selectedUnits[0])) {
-        session.selectedUnits = [];
-    }
-    if (session.units.length === 0) {
-        session.selectedRange = undefined;
-    }
+export const setTheme: NotificationHandler = (data): void => {
+    window.setTheme(Boolean(data.isDark));
 };
 
 export const parseClusterSuccessHandler: NotificationHandler = (data): void => {
-    const stausData = data.body as any;
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
     runInAction(() => {
         if (!session) {
             return;
         }
-        session.clusterStatus = stausData;
+        session.clusterStatus = true;
+        window.dataSource = data.dataSource as DataSource;
     });
 };
