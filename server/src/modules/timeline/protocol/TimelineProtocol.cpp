@@ -44,6 +44,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
 void TimelineProtocol::RegisterEventToJsonFuncs()
 {
     eventToJsonFactory.emplace(EVENT_PARSE_SUCCESS, ToParseSuccessEventJson);
+    eventToJsonFactory.emplace(EVENT_PARSE_CLUSTER_COMPLETED, ToParseClusterCompletedEventJson);
 }
 
 #pragma region <<Json To Request>>
