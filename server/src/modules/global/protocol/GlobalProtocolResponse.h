@@ -49,6 +49,22 @@ struct TokenCheckResponse : public Response {
     TokenCheckResBody body;
 };
 
+struct Folder {
+    std::string name;
+    std::vector<std::unique_ptr<Folder>> childrenFolders;
+    std::vector<std::string> childrenFiles;
+};
+
+struct FilesGetResBody {
+    std::string path;
+    std::vector<std::unique_ptr<Folder>> childrenFolders;
+    std::vector<std::string> childrenFiles;
+};
+
+struct FilesGetResponse : public Response {
+    FilesGetResponse() : Response(REQ_RES_FILES_GET) {};
+    FilesGetResBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

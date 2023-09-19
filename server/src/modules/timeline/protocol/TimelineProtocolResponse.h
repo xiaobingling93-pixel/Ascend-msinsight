@@ -22,6 +22,8 @@ struct Action {
 
 struct ImportActionResBody {
     std::vector<Action> result;
+    bool isCluster = false;
+    bool reset = false;
 };
 
 struct ImportActionResponse : public Response {

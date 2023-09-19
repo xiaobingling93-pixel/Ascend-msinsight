@@ -7,6 +7,7 @@
 
 #include <string>
 #include <dirent.h>
+#include <vector>
 #include <sys/stat.h>
 #include "regex"
 #include "RegexUtil.h"
@@ -152,13 +153,46 @@ public:
         return std::remove(path.c_str()) == 0;
     }
 
+    static inline std::vector<std::string> GetDiskInfo()
+    {
+        std::vector<std::string> disk;
+#ifdef _WIN32
+        DWORD dwSize = MAX_PATH;
+        char szLogicalDrives[MAX_PATH] = {0};
+        DWORD dwResult = GetLogicalDriveStrings(dwSize - 1, szLogicalDrives);
+        if (dwResult > 0 && dwResult <= MAX_PATH) {
+            auto *szSingleDrive = szLogicalDrives;
+            while (*szSingleDrive) {
+                disk.emplace_back(szSingleDrive);
+                szSingleDrive += strlen(szSingleDrive) + 1;
+            }
+        }
+#else
+        disk.emplace_back("/");
+#endif
+        return disk;
+    }
+
+    static inline bool IsHiddenPath(std::string_view path)
+    {
+        if (path.empty()) {
+            return false;
+        }
+#ifdef _WIN32
+        auto attribute = GetFileAttributes(path.data());
+        return (attribute & FILE_ATTRIBUTE_HIDDEN) != 0 ;
+#else
+        return path[0] == '.';
+#endif
+    }
+
     static inline std::map<std::string, std::vector<std::string>>
-    SplitToRankList(std::vector<std::string> fileList)
+    SplitToRankList(std::vector<std::pair<std::string, std::string>> fileList)
     {
         std::map<std::string, std::vector<std::string>> rankListMap;
         for (const auto &item: fileList) {
-            std::string rankId = GetRankIdFromFile(item);
-            rankListMap[rankId].push_back(item);
+            std::string rankId = GetRankIdFromFile(item.first);
+            rankListMap[rankId].push_back(item.first);
         }
         return rankListMap;
     }

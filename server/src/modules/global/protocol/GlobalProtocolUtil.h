@@ -16,6 +16,7 @@ template <typename RESPONSE> std::optional<json_t> ToResponseJson(const RESPONSE
 template <> std::optional<json_t> ToResponseJson<TokenCreateResponse>(const TokenCreateResponse &response);
 template <> std::optional<json_t> ToResponseJson<TokenDestroyResponse>(const TokenDestroyResponse &response);
 template <> std::optional<json_t> ToResponseJson<TokenCheckResponse>(const TokenCheckResponse &response);
+template <> std::optional<json_t> ToResponseJson<FilesGetResponse>(const FilesGetResponse &response);
 } // end of namespace Protocol
 } // end of namespace Dic
 

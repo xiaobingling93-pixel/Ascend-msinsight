@@ -22,10 +22,20 @@ public:
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 
 private:
+    bool curIsCluster = false;
+
     static void SetParseCallBack(const std::string &token);
     static void ParseEndCallBack(const std::string token, const std::string fileId, bool result);
     static void ParseClusterEndProcess(const std::string token, std::string result);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
+    static std::string GetFileId(const std::string &filePath);
+    static bool CheckIsCluster(const std::string &filePath);
+    std::vector<std::string> FindTraceFile(const std::string &path);
+    std::vector<std::string> FindAllTraceFile(const std::vector<std::string> &pathList);
+    bool IsJsonValid(const std::string &fileName);
+    void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
+    std::vector<std::pair<std::string, std::string>> GetTraceFiles(const std::vector<std::string> &pathList,
+                                                                   ImportActionResBody &body);
     bool HasMemoryFile(const std::string& path);
     const std::string traceViewFile = "trace_view.json";
     const std::string memoryOperatorFile = "operator_memory.csv";
@@ -33,7 +43,6 @@ private:
     const std::string traceViewReg = R"((trace_view|msprof_[0-9]{1,4}_[0-9]{1,4})\.json$)";
     const std::string memoryOperatorReg = R"((operator_memory|msprof_[0-9]{1,4}_[0-9]{1,4})\.csv$)";
     const std::string memoryRecordReg = R"((memory_record|msprof_[0-9]{1,4}_[0-9]{1,4})\.csv$)";
-
     void SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>>& rankListMap,
                                  ImportActionResponse &response, const std::string &path);
 };

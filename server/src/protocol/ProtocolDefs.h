@@ -37,8 +37,9 @@ const std::string EVENT_PARSE_CLUSTER_COMPLETED = "parse/clusterCompleted";
 const std::string REQ_RES_TOKEN_CREATE = "token.create";
 const std::string REQ_RES_TOKEN_DESTROY = "token.destroy";
 const std::string REQ_RES_TOKEN_CHECK = "token.check";
+const std::string REQ_RES_FILES_GET = "files/get";
 
-// template
+// timeline
 const std::string REQ_RES_IMPORT_ACTION = "import/action";
 const std::string REQ_RES_UNIT_THREAD_TRACES = "unit/threadTraces";
 const std::string REQ_RES_UNIT_THREADS = "unit/threads";

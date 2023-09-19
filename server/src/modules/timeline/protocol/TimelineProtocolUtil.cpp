@@ -21,6 +21,8 @@ template <> std::optional<json_t> ToResponseJson<ImportActionResponse>(const Imp
 {
     json_t json;
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["isCluster"] = response.body.isCluster;
+    json["body"]["reset"] = response.body.reset;
     json["body"]["result"] = json_t::array();
     for (const Action& action : response.body.result) {
         json_t actionJson = json_t::object();

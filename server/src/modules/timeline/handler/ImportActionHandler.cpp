@@ -33,7 +33,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
-    ImportActionResponse &response = *responsePtr;
+    ImportActionResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     if (request.params.path.empty()) {
         ServerLog::Warn("Import path is empty.");
@@ -42,15 +42,15 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         return;
     }
     std::string selectedFolder = request.params.path[0];
-    auto traceFiles = FileUtil::FindAllFileByName(request.params.path, selectedFolder, traceViewFile, traceViewReg);
-    if (traceFiles.empty()) {
-        ServerLog::Error("Failed to find trace file.");
+    auto files = GetTraceFiles(request.params.path, response.body);
+    if (files.empty()) {
+        ServerLog::Warn("Import files is empty.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;
     }
     // 按rankId 拆分文件
-    std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(traceFiles);
+    std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
     SetParseCallBack(token);
     SetBaseActionOfResponse(rankListMap, response, selectedFolder);
     SetResponseResult(response, true);
@@ -146,6 +146,96 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
     session->OnEvent(std::move(event));
 }
 
+std::vector<std::string> ImportActionHandler::FindAllTraceFile(const std::vector<std::string> &pathList)
+{
+    std::vector<std::string> traceFiles;
+    for (const auto &path : pathList) {
+        if (path == "browser") {
+            return FindTraceFile(ExecUtil::SelectFolder());
+        }
+        auto files = FindTraceFile(path);
+        if (files.empty()) {
+            ServerLog::Warn("Can't find trace file in path:", path);
+            continue;
+        }
+        traceFiles.insert(traceFiles.end(), files.begin(), files.end());
+    }
+    return traceFiles;
+}
+
+std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &path)
+{
+    std::vector<std::string> traceFiles;
+    if (!FileUtil::IsFolder(path)) {
+        traceFiles.emplace_back(path);
+        return traceFiles;
+    }
+    std::function<void(const std::string&, int)> find = [&find, this, &traceFiles](const std::string &path, int depth) {
+        if (depth > 5) {
+            return;
+        }
+        auto folders = FileUtil::FindFolders(path);
+        if (std::find(folders.begin(), folders.end(), "ASCEND_PROFILER_OUTPUT") != folders.end()) {
+            FindAscendFolder(path, traceFiles);
+            return;
+        }
+        for (const auto &folder : folders) {
+            std::string tmpPath = FileUtil::SplicePath(path, folder);
+            if (FileUtil::IsFolder(tmpPath)) {
+                find(tmpPath, depth + 1);
+            } else if (IsJsonValid(folder)) {
+                traceFiles.push_back(tmpPath);
+            }
+        }
+    };
+    find(path, 0);
+    return traceFiles;
+}
+
+bool ImportActionHandler::IsJsonValid(const std::string &fileName)
+{
+    static std::string reg = R"((trace_view|msprof.*)\.json$)";
+    auto result = RegexUtil::RegexMatch(fileName, reg);
+    return result.has_value();
+}
+
+void ImportActionHandler::FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles)
+{
+    std::string traceFilePath = FileUtil::SplicePath(path, "ASCEND_PROFILER_OUTPUT");
+    traceFilePath = FileUtil::SplicePath(traceFilePath, "trace_view.json");
+    ServerLog::Info("FindAscendFolder. ", traceFilePath);
+    if (FileUtil::CheckDirectoryExist(traceFilePath)) {
+        traceFiles.emplace_back(traceFilePath);
+        return;
+    }
+    std::function<void(const std::string&, int)> find = [&find, this, &traceFiles](const std::string &path, int depth) {
+        if (depth > 5) {
+            return;
+        }
+        auto folders = FileUtil::FindFolders(path);
+        for (const auto &folder : folders) {
+            std::string tmpPath = FileUtil::SplicePath(path, folder);
+            if (FileUtil::IsFolder(tmpPath)) {
+                find(tmpPath, depth + 1);
+            } else if (IsJsonValid(folder)) {
+                traceFiles.push_back(tmpPath);
+            }
+        }
+    };
+    auto folders = FileUtil::FindFolders(path);
+    static std::string reg = R"(PROF_.*)";
+    for (const auto &folder : folders) {
+        if (!RegexUtil::RegexMatch(folder, reg).has_value()) {
+            continue;
+        }
+        std::string tmpPath = FileUtil::SplicePath(path, folder);
+        if (FileUtil::IsFolder(tmpPath)) {
+            find(tmpPath, 0);
+        }
+        break;
+    }
+}
+
 void ImportActionHandler::SetParseCallBack(const std::string &token)
 {
     static bool flag = false;
@@ -163,6 +253,62 @@ void ImportActionHandler::SearchMetaData(const std::string &fileId,
     DataBaseManager::Instance().GetTraceDatabase(fileId)->QueryUnitsMetadata(fileId, metaData);
 }
 
+std::string ImportActionHandler::GetFileId(const std::string &filePath)
+{
+    std::string fileId = TraceFileParser::Instance().GetFileId(filePath);
+    int i = 1;
+    std::string result = fileId;
+    while (DataBaseManager::Instance().HasFileId(result)) {
+        result = fileId + "_" + std::to_string(++i);
+    }
+    auto database = DataBaseManager::Instance().GetTraceDatabase(result);
+    return database == nullptr ? "" : result;
+}
+
+bool ImportActionHandler::CheckIsCluster(const std::string &filePath)
+{
+    auto folders = FileUtil::FindFolders(filePath);
+    for (const auto &folder : folders) {
+        if (folder == "cluster_analysis_output") {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFiles(
+    const std::vector<std::string> &pathList, ImportActionResBody &body)
+{
+    auto traceFiles = FindAllTraceFile(pathList);
+    if (traceFiles.empty()) {
+        ServerLog::Error("Failed to find trace file.");
+        return {};
+    }
+    if (pathList.size() == 1) {
+        bool isCluster = CheckIsCluster(pathList[0]);
+        bool reset = isCluster || curIsCluster;
+        ServerLog::Info("new Cluster:", isCluster, ", old Cluster:", curIsCluster, ", reset:", reset);
+        curIsCluster = isCluster;
+        if (reset) {
+            TraceFileParser::Instance().Reset();
+            body.reset = reset;
+        }
+        body.isCluster = isCluster;
+    } else {
+        body.isCluster = false;
+    }
+    std::vector<std::pair<std::string, std::string>> files;
+    for (const auto &file : traceFiles) {
+        std::string fileId = GetFileId(file);
+        if (fileId.empty()) {
+            ServerLog::Error("File id is empty. file:", file);
+            continue;
+        }
+        body.result.emplace_back(Action{fileId, fileId, true});
+        files.emplace_back(file, fileId);
+    }
+    return files;
+}
 } // Timeline
 } // Module
 } // Dic
