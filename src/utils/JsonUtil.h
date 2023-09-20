@@ -51,40 +51,49 @@ public:
         return (json.contains(key) && json.at(key).is_array());
     }
 
-    static inline std::string GetString(const json_t &json, const std::string &key)
+    // rapidjson
+    static inline std::string JsonDump(const rapidjson::Value &json)
     {
-        if (json.contains(key) && json.at(key).is_string()) {
-            return json.at(key);
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        json.Accept(writer);
+        return buffer.GetString();
+    }
+
+    static inline double GetDouble(const rapidjson::Value &json, std::string_view key)
+    {
+        if (json.HasMember(key.data()) && json[key.data()].IsDouble()) {
+            return json[key.data()].GetDouble();
+        }
+        return 0;
+    }
+
+    static inline int64_t GetInteger(const rapidjson::Value &json, std::string_view key)
+    {
+        if (json.HasMember(key.data()) && json[key.data()].IsInt64()) {
+            return json[key.data()].GetInt64();
+        }
+        return 0;
+    }
+
+    static inline std::string GetString(const rapidjson::Value &json, std::string_view key)
+    {
+        if (json.HasMember(key.data()) && json[key.data()].IsString()) {
+            return json[key.data()].GetString();
         }
         return "";
     }
 
-    static inline std::optional<std::string> GetOptionalString(const json_t &json, const std::string &key)
+    static inline std::optional<std::string> GetOptionalString(const rapidjson::Value &json, std::string_view key)
     {
-        if (!json.contains(key)) {
+        if (!json.HasMember(key.data())) {
             return std::nullopt;
         }
-        if (json.at(key).is_string()) {
-            return json.at(key);
+        if (json[key.data()].IsString()) {
+            return json[key.data()].GetString();
         } else {
-            return nlohmann::to_string(json.at(key));
+            return JsonDump(json[key.data()]);
         }
-    }
-
-    static inline int64_t GetInteger(const json_t &json, const std::string &key)
-    {
-        if (json.contains(key) && json.at(key).is_number()) {
-            return json.at(key);
-        }
-        return 0;
-    }
-
-    static inline double GetDouble(const json_t &json, const std::string &key)
-    {
-        if (json.contains(key) && json.at(key).is_number()) {
-            return json.at(key);
-        }
-        return 0;
     }
 };
 } // end of namespace Dic

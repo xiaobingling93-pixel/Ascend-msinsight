@@ -216,6 +216,7 @@ void TraceFileParser::Reset()
             ServerLog::Error("Failed to remove file. ", path);
         }
     }
+    trackIdMap.clear();
     DataBaseManager::Instance().Clear();
     TraceTime::Instance().Reset();
     FileParser::Reset();

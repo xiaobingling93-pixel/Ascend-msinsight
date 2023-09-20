@@ -35,8 +35,8 @@ void EventUtil::UnRegister()
 
 std::string EventUtil::Type(const json_t &json)
 {
-    if (json.contains("ph") && json["ph"].is_string()) {
-        return json["ph"];
+    if (json.HasMember("ph") && json["ph"].IsString()) {
+        return json["ph"].GetString();
     }
     return "";
 }
@@ -45,7 +45,7 @@ std::unique_ptr<Event> EventUtil::FromJson(const json_t &json)
 {
     const std::string type = Type(json);
     if (type.empty()) {
-        ServerLog::Warn("Can't find the type. json:", json.dump());
+        ServerLog::Warn("Can't find the type. json:", JsonUtil::JsonDump(json));
         return nullptr;
     }
     std::optional<EventUtil::JsonToEventFunc> func = GetJsonToEventFunc(type);
@@ -85,7 +85,7 @@ std::unique_ptr<Event> EventUtil::ToMetaDataEvent(const json_t &json)
     event->name = JsonUtil::GetString(json, "name");
     event->tid = JsonUtil::GetInteger(json, "tid");
     event->pid = JsonUtil::GetString(json, "pid");
-    if (json.contains("args")) {
+    if (json.HasMember("args")) {
         event->args.name = JsonUtil::GetString(json["args"], "name");
         event->args.labels = JsonUtil::GetString(json["args"], "labels");
         event->args.sortIndex = JsonUtil::GetInteger(json["args"], "sort_index");
@@ -100,7 +100,7 @@ std::unique_ptr<Event> EventUtil::ToFlowEvent(const json_t &json)
     event->ts = JsonUtil::GetDouble(json, "ts");
     event->tid = JsonUtil::GetInteger(json, "tid");
     event->pid = JsonUtil::GetString(json, "pid");
-    auto flowId = JsonUtil::GetOptionalString(json, "id");
+    auto flowId = JsonUtil::GetOptionalString(json, "id"); // 可能是一个数字
     event->flowId = flowId.has_value() ? flowId.value() : "";
     event->name = JsonUtil::GetString(json, "name");
     event->cat = JsonUtil::GetOptionalString(json, "cat");

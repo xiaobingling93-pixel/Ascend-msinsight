@@ -78,7 +78,6 @@ template <> std::optional<json_t> ToResponseJson<FilesGetResponse>(const FilesGe
     for (const auto &folder : response.body.childrenFolders) {
         json["body"]["childrenFolders"].emplace_back(FolderToJson(folder));
     }
-    ServerLog::Info(json.dump());
     return json;
 }
 #pragma endregion

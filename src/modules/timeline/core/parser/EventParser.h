@@ -30,7 +30,7 @@ private:
     std::map<std::string, std::function<void(std::unique_ptr<Trace::Event>)>> eventHandleMap;
 
     std::string ReadBuffer(int64_t startPosition, int64_t endPosition);
-    void EventHandle(const json_t &json);
+    void EventHandle(const rapidjson::Value &json);
     void InitEventHandle();
     void MetaDataHandle(std::unique_ptr<Trace::Event> eventPtr);
     void CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr);

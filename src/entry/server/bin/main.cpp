@@ -25,14 +25,14 @@ void ParamsOptionInfo()
 
 void StartServer(const ParamsOption &option)
 {
-    ServerLog::Info("=============================== Data Insight Core Server Start ===============================");
+    ServerLog::Info("=============================== Server Start ===============================");
     WsServer server(option.host, option.wsPort, option.sid);
     server.Start();
     const int checkInterval = 1000;
     while (server.IsStart()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(checkInterval));
     }
-    ServerLog::Info("=============================== Data Insight Core Server End =================================");
+    ServerLog::Info("=============================== Server End =================================");
 }
 } // end of namespace Dic
 
