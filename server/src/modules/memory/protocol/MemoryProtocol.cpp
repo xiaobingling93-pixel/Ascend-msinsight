@@ -33,17 +33,31 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorRequest(const json_t &j
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
-    if (json["params"].contains("startTime") and json["params"].contains("endTime")) {
+    if (json["params"].contains("startTime")) {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
-        JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     } else {
         reqPtr->params.startTime = -1;
+    }
+    if (json["params"].contains("endTime")) {
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    } else {
         reqPtr->params.endTime = -1;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "currentPage");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+    if (json["params"].contains("minSize")) {
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.minSize, json["params"], "minSize");
+    } else {
+        reqPtr->params.minSize = -1;
+    }
+    if (json["params"].contains("maxSize")) {
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.maxSize, json["params"], "maxSize");
+    } else {
+        reqPtr->params.maxSize = -1;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderName, json["params"], "orderName");
     return reqPtr;
 }
 
