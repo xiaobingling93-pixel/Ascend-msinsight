@@ -1,3 +1,0 @@
-rootProject.name = 'ascend-insight'
-include 'ascend-insight'
-project(':ascend-insight').projectDir = file("$rootDir/ideaplugin")
