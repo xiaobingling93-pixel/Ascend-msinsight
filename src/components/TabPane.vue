@@ -36,12 +36,19 @@ onMounted(async () => {
         }
         setSession(updateState);
     });
-    const isSuccess = await connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
-    setSession({ hasLocalServer: isSuccess });
+
+    await connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
 });
 
 function toggleTab(index: number): void {
     activeModule.value = index;
+    connector.send({
+        body: {
+            event: 'wakeup',
+            body: {}
+        },
+        to: index,
+    });
 }
 
 </script>
