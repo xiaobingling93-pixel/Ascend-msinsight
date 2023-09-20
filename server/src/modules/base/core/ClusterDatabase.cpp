@@ -603,7 +603,7 @@ sqlite3_stmt *ClusterDatabase::BuildCondition(const Protocol::SummaryTopRankPara
     }
     if (!requestParams.rankIdList.empty()) {
         rankCondition = " and rank_id in (?";
-        for (int i = 1; i < requestParams.rankIdList[0].size(); i++) {
+        for (int i = 1; i < requestParams.rankIdList.size(); i++) {
             rankCondition.append(",?");
         }
         rankCondition.append(") ");

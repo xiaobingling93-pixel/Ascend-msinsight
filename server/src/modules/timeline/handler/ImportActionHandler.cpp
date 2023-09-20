@@ -304,7 +304,6 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
             ServerLog::Error("File id is empty. file:", file);
             continue;
         }
-        body.result.emplace_back(Action{fileId, fileId, true});
         files.emplace_back(file, fileId);
     }
     return files;
