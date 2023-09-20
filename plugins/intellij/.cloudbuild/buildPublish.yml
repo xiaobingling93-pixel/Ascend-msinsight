@@ -1,0 +1,61 @@
+version: 2.0
+
+params:
+  - name: product
+    value: cloudbuild2.0
+
+env:
+  label: Bitfun2Yellow_x64_vpc # 虚拟机标签，表示在哪台虚拟机执行，都写deveco_build
+steps:
+  PRE_BUILD:
+    - checkout:
+          path: IntelliJ_Based # 源码下载到子目录，命名请跟 clone下来的默认名称一致
+    - artget:
+        artifact_type: cloudartifact
+        action: pull
+        service_id: 052c58ed0d1848b0acd9580a27a9beb3
+        service_version: ${version}_win
+        version_category: snapshot
+        version_repo_path: build.tar.gz
+        agent: download/build_win
+    - artget:
+        artifact_type: cloudartifact
+        action: pull
+        service_id: 052c58ed0d1848b0acd9580a27a9beb3
+        service_version: ${version}_linux
+        version_category: snapshot
+        version_repo_path: build.tar.gz
+        agent: download/build_linux
+  BUILD:
+    - build_execute: # master用0.0.0.1-SNAPSHOT 和 0.0.0.1，  develop用0.0.0.2-SNAPSHOT，和 0.0.0.2
+        command: |
+          cd download
+          mkdir win
+          mkdir linux
+          tar -zxvf ./build_win/build.tar.gz -C ./win
+          tar -zxvf ./build_linux/build.tar.gz -C ./linux
+        check: true
+  POST_BUILD:
+    - get_build_metadata
+    - when:
+        condition: offering == "BitFun Kernel"
+        steps:
+          - artget:
+              artifact_type: cmcbinary   # 仓库类型
+              action: push
+              dependency: IntelliJ_Based/.cloudbuild/bitfun_dependency.xml
+              agent: .
+              username: ${cmc_username}
+              password: ${cmc_password}
+              params: {"cmc_version":"${cmc_version}", "snapshot":"${snapshot}", "offering":"${offering}", "component_name":"${component_name}", "versionType":"${versionType}"}
+    - when:
+        condition: offering == "MindStudio"
+        steps:
+          - artget:
+              artifact_type: cmcbinary   # 仓库类型
+              action: push
+              dependency: IntelliJ_Based/.cloudbuild/mindStudio_dependency.xml
+              agent: .
+              username: ${cmc_username}
+              password: ${cmc_password}
+              params: {"cmc_version":"${cmc_version}", "offering":"${offering}", "versionType":"${versionType}"}

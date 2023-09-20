@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+    <artifact>
+        <versionType>${versionType}</versionType>
+        <repoType>Generic</repoType>
+        <id>
+            <offering>${offering}</offering>
+            <name>${component_name}</name>
+            <version>${cmc_version}</version>
+            <snapshot>${snapshot}</snapshot>
+        </id>
+        <isClear>N</isClear>
+        <copies>
+            <copy>
+                <source>download/win/*</source>
+                <dest>Ascend Insight/win</dest>
+            </copy>
+            <copy>
+                <source>download/linux/*</source>
+                <dest>Ascend Insight/linux</dest>
+            </copy>
+        </copies>
+    </artifact>
+</project>
