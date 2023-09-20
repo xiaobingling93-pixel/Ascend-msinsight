@@ -49,16 +49,25 @@ struct TokenCheckResponse : public Response {
     TokenCheckResBody body;
 };
 
+struct File {
+    File() = default;
+    ~File() = default;
+    File(const std::string &n, const std::string &p) : name(n), path(p) {}
+    std::string name;
+    std::string path;
+};
+
 struct Folder {
     std::string name;
+    std::string path;
     std::vector<std::unique_ptr<Folder>> childrenFolders;
-    std::vector<std::string> childrenFiles;
+    std::vector<std::unique_ptr<File>> childrenFiles;
 };
 
 struct FilesGetResBody {
     std::string path;
     std::vector<std::unique_ptr<Folder>> childrenFolders;
-    std::vector<std::string> childrenFiles;
+    std::vector<std::unique_ptr<File>> childrenFiles;
 };
 
 struct FilesGetResponse : public Response {
