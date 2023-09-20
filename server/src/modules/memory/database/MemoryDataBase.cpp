@@ -165,21 +165,33 @@ std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requ
     std::string sql = "SELECT name, ROUND(allocation_time / 1000, 2) as allocation_time, "
                       "ROUND(release_time / 1000, 2) as release_time, size, "
                       "ROUND(duration / 1000, 2) as duration FROM " + operatorTable +
-                      " ORDER BY " + requestParams.orderBy + " " + ascend + " LIMIT ? offset ?";
-    if (requestParams.startTime == -1 and requestParams.endTime == -1) {
-        return sql;
-    } else {
-        std::string scope = "(" + std::to_string(requestParams.startTime) + ","
-                        + std::to_string(requestParams.endTime) + ")";
-        return sql + " WHERE allocation_time in " + scope;
+                      " WHERE name LIKE ?";
+
+    if (requestParams.startTime != -1) {
+        sql += " AND allocation_time >= " + std::to_string(requestParams.startTime);
     }
+    if (requestParams.endTime != -1) {
+        sql += " AND allocation_time <= " + std::to_string(requestParams.endTime);
+    }
+
+    if (requestParams.minSize != -1) {
+        sql += " AND size >= " + std::to_string(requestParams.minSize);
+    }
+    if (requestParams.maxSize != -1) {
+        sql += " AND size <= " + std::to_string(requestParams.maxSize);
+    }
+    if (!requestParams.orderBy.empty()) {
+        sql += " ORDER BY " + requestParams.orderBy + " " + ascend;
+    }
+    sql += " LIMIT ? offset ?";
+    return sql;
 }
 
 bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                                          std::vector<Protocol::MemoryOperator> &responseBody)
 {
     std::string sql = GetOperatorSql(requestParams);
-    double offset = (requestParams.currentPage - 1) * requestParams.pageSize;
+    int64_t offset = (requestParams.currentPage - 1) * requestParams.pageSize;
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -187,8 +199,10 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
         return false;
     }
     int index = bindStartIndex;
-    sqlite3_bind_double(stmt, index++, requestParams.pageSize);
-    sqlite3_bind_double(stmt, index++, offset);
+    std::string orderName = requestParams.orderName + "%";
+    sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
+    sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
+    sqlite3_bind_int64(stmt, index++, offset);
     std::vector<Protocol::MemoryOperator> operatorDtoVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;

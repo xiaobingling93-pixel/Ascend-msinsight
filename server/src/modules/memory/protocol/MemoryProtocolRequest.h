@@ -15,10 +15,13 @@ namespace Protocol {
 
 struct MemoryOperatorParams {
     std::string rankId;
+    std::string orderName;
+    double minSize;
+    double maxSize;
     double startTime;
     double endTime;
-    double currentPage = 0;
-    double pageSize = 0;
+    int64_t currentPage = 0;
+    int64_t pageSize = 0;
     std::string orderBy;
     std::string order;
 };
