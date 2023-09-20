@@ -15,7 +15,6 @@ void QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
 {
     MemoryViewRequest &request = dynamic_cast<MemoryViewRequest &>(*requestPtr.get());
     std::string token = request.token;
-    ServerLog::Info("Memory View, token = ", StringUtil::AnonymousString(token));
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
                         ", command = ", command);

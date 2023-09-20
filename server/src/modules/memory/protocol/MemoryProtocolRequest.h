@@ -45,6 +45,11 @@ struct MemoryViewRequest : public Request {
     MemoryComponentParams params;
 };
 
+struct MemoryOperatorSizeRequest : public Request {
+    MemoryOperatorSizeRequest() : Request(REQ_RES_MEMORY_OPERATOR_MIN_MAX) {};
+    MemoryComponentParams params;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

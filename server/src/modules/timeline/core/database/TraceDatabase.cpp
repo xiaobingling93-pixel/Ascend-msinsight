@@ -1196,7 +1196,7 @@ bool TraceDatabase::GetCommunicationDetails(const std::vector<std::string>& opTr
         Protocol::CommunicationDetail communicationDetail{};
         communicationDetail.communicationKernel = sqlite3_column_string(stmt, col++);
         double startTime = sqlite3_column_double(stmt, col++) -
-                static_cast<double>(Timeline::TraceTime::Instance().GetStartTime()) / 1000;
+                Timeline::TraceTime::Instance().GetStartTime() / 1000;
         double duration = sqlite3_column_double(stmt, col++);
         communicationDetail.startTime = startTime;
         communicationDetail.totalDuration = duration;

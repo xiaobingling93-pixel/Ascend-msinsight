@@ -49,6 +49,16 @@ struct MemoryViewResponse : public Response {
     OperatorMemory map;
 };
 
+struct OperatorSize {
+    double minSize;
+    double maxSize;
+};
+
+struct MemoryOperatorSizeResponse : public Response {
+    MemoryOperatorSizeResponse() : Response(REQ_RES_MEMORY_OPERATOR_MIN_MAX) {}
+    OperatorSize size;
+};
+
 struct ComponentDto {
     std::string component;
     double totalReserved;

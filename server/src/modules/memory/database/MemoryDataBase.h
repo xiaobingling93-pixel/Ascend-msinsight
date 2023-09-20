@@ -36,6 +36,7 @@ public:
     bool SaveOperatorDetail();
 
     bool QueryOperatorsTotalNum(int64_t &totalNum);
+    bool QueryOperatorSize(double &min, double &max);
 
 private:
     const std::string operatorTable = "operator";

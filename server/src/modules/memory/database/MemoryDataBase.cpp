@@ -228,7 +228,7 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
                       "ROUND(total_allocated, 2) as total_allocated, "
                       "ROUND(total_reserve, 2) as total_reserve FROM " + recordTable;
     // 1ms = 1000 * 1000 ns
-    double startTime = static_cast<double>(Timeline::TraceTime::Instance().GetStartTime() / (1000 * 1000));
+    double startTime = Timeline::TraceTime::Instance().GetStartTime() / (1000 * 1000);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -410,7 +410,26 @@ bool MemoryDataBase::QueryOperatorsTotalNum(int64_t &totalNum)
         }
         sqlite3_finalize(stmt);
         return true;
+}
+
+bool MemoryDataBase::QueryOperatorSize(double &min, double &max)
+{
+    std::string sql = "SELECT min(size) as minSize, max(size) as maxSize FROM " + operatorTable;
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryOperatorSize failed!. ", sqlite3_errmsg(db));
+        return false;
     }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        min = sqlite3_column_double(stmt, col++);
+        max = sqlite3_column_double(stmt, col++);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 } // end of namespace Memory
 } // end of namespace Module
 } // end of namespace Dic

@@ -15,12 +15,14 @@ void MemoryProtocol::RegisterJsonToRequestFuncs()
 {
     jsonToReqFactory.emplace(REQ_RES_MEMORY_OPERATOR, ToMemoryOperatorRequest);
     jsonToReqFactory.emplace(REQ_RES_MEMORY_VIEW, ToMemoryViewRequest);
+    jsonToReqFactory.emplace(REQ_RES_MEMORY_OPERATOR_MIN_MAX, ToMemoryOperatorSizeRequest);
 }
 
 void MemoryProtocol::RegisterResponseToJsonFuncs()
 {
     resToJsonFactory.emplace(REQ_RES_MEMORY_OPERATOR, ToMemoryOperatorResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMORY_VIEW, ToMemoryViewResponseJson);
+    resToJsonFactory.emplace(REQ_RES_MEMORY_OPERATOR_MIN_MAX, ToMemoryOperatorSizeResponseJson);
 }
 
 #pragma region <<Json To Request>>
@@ -72,6 +74,17 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryViewRequest(const json_t &json,
     return reqPtr;
 }
 
+std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorSizeRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<MemoryOperatorSizeRequest> reqPtr = std::make_unique<MemoryOperatorSizeRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    return reqPtr;
+}
+
 #pragma endregion
 
 #pragma region <<Response To Json>>
@@ -84,6 +97,11 @@ std::optional<json_t> MemoryProtocol::ToMemoryOperatorResponseJson(const Respons
 std::optional<json_t> MemoryProtocol::ToMemoryViewResponseJson(const Response &response)
 {
     return ToResponseJson<MemoryViewResponse>(dynamic_cast<const MemoryViewResponse &>(response));
+}
+
+std::optional<json_t> MemoryProtocol::ToMemoryOperatorSizeResponseJson(const Response &response)
+{
+    return ToResponseJson<MemoryOperatorSizeResponse>(dynamic_cast<const MemoryOperatorSizeResponse &>(response));
 }
 #pragma endregion
 } // end of namespace Protocol

@@ -31,7 +31,7 @@ bool QueryCommunicationDetailInfoHandler::GetResponseData(const Protocol::Commun
     }
     for (Protocol::CommunicationDetail &detail: response.communication) {
         double duration = detail.totalDuration;
-        double timestamp = detail.startTime + static_cast<double>(Timeline::TraceTime::Instance().GetStartTime());
+        double timestamp = detail.startTime + Timeline::TraceTime::Instance().GetStartTime();
         double totalTime = 0;
         res = database->QueryNotOverlapTime(notOverlapTrackId, timestamp, duration);
         for (double re: res) {

@@ -41,6 +41,15 @@ template <> std::optional<json_t> ToResponseJson<MemoryViewResponse>(const Memor
     json["body"]["peakMemoryUsage"] = response.map.peakMemoryUsage;
     return json;
 }
+
+template<>std::optional<json_t> ToResponseJson<MemoryOperatorSizeResponse>(const MemoryOperatorSizeResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["minSize"] = response.size.minSize;
+    json["body"]["maxSize"] = response.size.maxSize;
+    return json;
+}
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic
