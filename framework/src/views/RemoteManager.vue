@@ -9,7 +9,7 @@ import connector from '@/connection';
 const isDarkTheme = ref(true);
 
 watch(isDarkTheme, () => {
-    connector.send({ event: 'setTheme', body: { isDark: isDarkTheme.value } });
+    connector.send({ body: { event: 'setTheme', body: { isDark: isDarkTheme.value } } });
 });
 
 const showModal = ref(false);

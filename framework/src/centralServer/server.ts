@@ -1,21 +1,17 @@
-import type { DataRequest, ModuleName, NotificationRegistration, DataSource } from './websocket/defs';
+import type { DataRequest, ModuleName, DataSource } from './websocket/defs';
 import { Connection } from '@/centralServer/websocket/connection';
 import connector from '@/connection';
 
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
-export const NOTIFICATION_METHOD_MAP: Map<ModuleName, Function> = new Map();
-
-export const registerNotification = function (notificationRegistration: NotificationRegistration) {
-    NOTIFICATION_METHOD_MAP.set(
-        notificationRegistration.moduleName,
-        notificationRegistration.callBack,
-    );
-};
-
 const getConnectionMapKey = (dataSource: DataSource): string => {
     return `${dataSource.remote}:${dataSource.port}`;
 }
+
+export const isConnected = (dataSoure: DataSource): boolean => {
+    const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSoure));
+    return !!connection?.isConnected;
+};
 
 export const disconnectRemote = function (dataSource: DataSource): boolean {
     const connection: Connection | undefined = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
@@ -49,8 +45,10 @@ export const addDataPath = function(dataSource: DataSource): void {
     if (connection) {
         connection.addDataPath(dataSource.dataPath);
         connector.send({
-            event: 'remote/import',
-            body: { dataSource },
+            body: {
+                event: 'remote/import',
+                body: { dataSource },
+            }
         });
     }
 }
@@ -60,8 +58,10 @@ export const deleteDataPath = function(dataSource: DataSource): void {
     if (connection) {
         connection.deleteDataPath(dataSource.dataPath);
         connector.send({
-            event: 'remote/remove',
-            body: { dataSource },
+            body: {
+                event: 'remote/remove',
+                body: { dataSource },
+            }
         });
     }
 }

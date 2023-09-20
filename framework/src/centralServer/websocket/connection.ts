@@ -148,7 +148,7 @@ export class Connection {
         // handle notifications
         if (!isResponse(msg)) {
             msg.body.dataSource = this._dataSource;
-            connector.send(msg);
+            connector.send({ body: msg });
             return;
         }
 
@@ -168,8 +168,12 @@ export class Connection {
         if (this._ws === undefined) {
             throw new Error('');
         }
-        this._ws.send(`${CONTENT_LENGTH_PREFIX}:${msgStr.length}\r\n\r\n`);
+        this._ws.send(`${CONTENT_LENGTH_PREFIX}:${new TextEncoder().encode(msgStr).length}\r\n\r\n`);
         this._ws.send(msgStr);
+    }
+
+    get isConnected(): boolean {
+        return this._ws?.readyState === WebSocket.OPEN;
     }
 
     async findServerPort(): Promise<number> {

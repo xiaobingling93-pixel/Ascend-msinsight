@@ -36,8 +36,6 @@ export type Notification<T = Record<string, unknown>> = {
     body: T;
 };
 
-export type NotificationRegistration = { moduleName: ModuleName; callBack: Function };
-
 export type ModuleName = string;
 
 export type DataSource = {
