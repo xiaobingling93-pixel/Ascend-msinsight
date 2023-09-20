@@ -129,7 +129,7 @@ public:
 #ifdef _WIN32
             folders.emplace_back(StringUtil::GbkToUtf8(pDirent->d_name));
 #else
-            folders.emplace_back(SpDirent->d_name);
+            folders.emplace_back(pDirent->d_name);
 #endif
         }
         closedir(pDir);
