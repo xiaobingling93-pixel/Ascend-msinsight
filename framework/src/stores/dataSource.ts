@@ -1,10 +1,11 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch, type Ref } from 'vue';
 import { defineStore } from 'pinia';
-import type { DataSource } from '@/centralServer/websocket/defs';
+import { type DataSource, LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import type { TreeNodeType } from '@/components/MenuTree/types';
 import { addDataPath, connectRemote, disconnectRemote, request } from '@/centralServer/server';
 import connector from '@/connection';
 import { modulesConfig } from '@/moduleConfig';
+import { Session, useSession } from './session';
 
 export type FormItemData = { value: string; status: 'wait' | 'error' | 'success' };
 type FormDataSource = {
@@ -40,19 +41,31 @@ const validateAll = (formData: FormDataSource): boolean => {
     return res;
 }
 
-export const useDataSources = defineStore('dataSources', () => {
-    const dataSources = ref<DataSource[]>([]);
-
-    const mergeDataSource = (dataSource: DataSource): boolean => {
-        const idx = dataSources.value.findIndex((item) => item.remote === dataSource.remote && item.port === dataSource.port);
-        if (idx === -1) {
-            dataSources.value.push(dataSource);
-            return false;
+const useWatchReset = (session: Omit<Session, '_sharedState'>, dataSources: Ref<DataSource[]>): void => {
+    watch(session, () => {
+        if (session.isReset) {
+            dataSources.value = [];
+            session.reset();
         }
-        dataSources.value[idx].dataPath.push(...dataSource.dataPath);
-        addDataPath(dataSource);
-        return true;
+    });
+};
+
+
+const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource): boolean => {
+    const idx = dataSources.value.findIndex((item) => item.remote === dataSource.remote && item.port === dataSource.port);
+    if (idx === -1) {
+        dataSources.value.push(dataSource);
+        return false;
     }
+    dataSources.value[idx].dataPath.push(...dataSource.dataPath);
+    addDataPath(dataSource);
+    return true;
+}
+
+export const useDataSources = defineStore('dataSources', () => {
+    const { session } = useSession();
+    const dataSources = ref<DataSource[]>([{ remote: LOCAL_HOST, port: PORT, dataPath: [] }]);
+    useWatchReset(session, dataSources);
 
     let temp: FormDataSource | null = null;
     const add = (originSource: FormDataSource) => {
@@ -70,15 +83,17 @@ export const useDataSources = defineStore('dataSources', () => {
             dataPath: temp.dataPath.map(data => data.value),
         };
 
-        const hasExistedServer = mergeDataSource(dataSource);
+        const hasExistedServer = mergeDataSource(dataSources, dataSource);
         if (hasExistedServer) {
             return true;
         }
 
         const isSuccess = await connectRemote(dataSource);
         isSuccess && connector.send({
-            event: 'remote/import',
-            body: { dataSource },
+            body: {
+                event: 'remote/import',
+                body: { dataSource },
+            }
         });
         return isSuccess;
     }
@@ -89,7 +104,7 @@ export const useDataSources = defineStore('dataSources', () => {
 
     const SPLITTER = ': ';
     const menuTree = computed<TreeNodeType[]>(() =>
-        dataSources.value.map(dataSource => ({
+        dataSources.value.filter(dataSource => dataSource.dataPath.length !== 0).map(dataSource => ({
             content: `${dataSource.remote}${SPLITTER}${dataSource.port}`,
             children: dataSource.dataPath.map(data => ({ content: data })),
             cancelable: true,
@@ -99,8 +114,10 @@ export const useDataSources = defineStore('dataSources', () => {
     const remove = async (index: number): Promise<void> => {
         menuTree.value.splice(index, 1);
         connector.send({
-            event: 'remote/remove',
-            body: { dataSource: dataSources.value[index] },
+            body: {
+                event: 'remote/remove',
+                body: { dataSource: dataSources.value[index] },
+            }
         });
         for (const module of modulesConfig) {
             await request(dataSources.value[index], module.requestName, { command: 'remote/reset', params: {} });

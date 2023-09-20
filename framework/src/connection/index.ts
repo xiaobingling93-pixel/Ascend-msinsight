@@ -2,6 +2,12 @@ type TargetWindow = Window;
 type ReservedEventHandler = 'request';
 type EventHanlder = string;
 type SendParams<T extends EventHanlder> = {
+    body: SendBody<T>;
+    to?: SendTargetKey;
+    reject?: Function;
+    module?: TypeForConnector;
+};
+type SendBody<T extends EventHanlder> = {
     event: T extends ReservedEventHandler ? never : T;
     [x: string]: unknown;
 };
@@ -50,20 +56,21 @@ abstract class BaseConnector {
 
     protected abstract awaitFetch(e: MessageEvent): void;
 
-    send<T extends EventHanlder>(params: SendParams<T>, to?: SendTargetKey, reject?: Function): void {
+    send<T extends EventHanlder>({ body, to, reject }: SendParams<T>): void {
         if (this.invalidFunc) {
             this.invalidFunc();
             return;
         }
         this._targetWindows = this._getTargetWindows();
-
-        if ((to !== undefined && this._targetWindows[to]?.postMessage !== undefined) || this._targetWindows.length === 0) {
+        if ((to !== undefined && this._targetWindows[to]?.postMessage === undefined) || this._targetWindows.length === 0) {
             const errMsg = 'missed postMessage function, please check your iframe element';
             console.warn(this.printErrMsg(errMsg));
             reject?.(new Error(errMsg));
             return;
         }
-        this._targetWindows.forEach(targetWindow => { targetWindow.postMessage(JSON.stringify(params), '*'); });
+
+        const targetWindows = to !== undefined ? [this._targetWindows[to]] : this._targetWindows;
+        targetWindows.forEach(targetWindow => { targetWindow.postMessage(JSON.stringify(body), '*'); });
     }
 
     addListener<T extends EventHanlder>(event: T extends ReservedEventHandler ? never : T, callback: ListenerCallback): ListenerHandler {
@@ -106,7 +113,7 @@ class ServerConnector extends BaseConnector {
             return;
         }
         const res = await this._responseForFetch(event);
-        this.send({ event: 'request', id: event.data.id, ...res } as SendParams<EventHanlder>);
+        this.send({ body: { event: 'request', id: event.data.id, ...res } } as SendParams<EventHanlder>);
     }
 };
 
@@ -142,16 +149,17 @@ class ClientConnector extends BaseConnector {
         this._msgSequence.delete(res.data.id);
     }
 
-    send<T extends EventHanlder>(params: SendParams<T>, to?: SendTargetKey, reject?: Function, module?: TypeForConnector): void {
-        params.module = module ?? this._module;
-        super.send(params, undefined, reject);
+    send<T extends EventHanlder>({ body, to, reject, module }: SendParams<T>): void {
+        body.module = module ?? this._module;
+        super.send({ body, to, reject });
     }
 
     async fetch(params: FetchParams, module?: TypeForConnector): Promise<unknown> {
         return new Promise((resolve, reject) => {
             params.id = this._curFetchSequenceID;
             (params as Record<string, unknown>).event = 'request';
-            this.send(params as any, undefined, reject, module);
+            const body = params as unknown as SendBody<string>;
+            this.send({ body, reject, module });
             this._msgSequence.set(this._curFetchSequenceID++, resolve);
         });
     };
