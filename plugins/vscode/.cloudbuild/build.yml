@@ -1,0 +1,54 @@
+version: 2.0
+
+params:
+  - name: internal
+    value: "NO"
+  - name: libraryVersion
+    value: "0.0.0.1-SNAPSHOT"
+  - name: releaseVersion
+    value: "0.0.0.1-SNAPSHOT"
+
+env:
+  label: ${env_label} # 虚拟机标签，表示在哪台虚拟机执行，都写deveco_build
+steps:
+  PRE_BUILD:
+    - checkout:
+        path: ohos-hiinsight # 源码下载到子目录，命名请跟 clone下来的默认名称一致
+  BUILD:
+    - build_execute: # master用0.0.0.1-SNAPSHOT 和 0.0.0.1，  develop用0.0.0.2-SNAPSHOT，和 0.0.0.2
+        command: >
+          export JAVA_HOME=/software/jbr17
+          && rm -rf /home/buildMember/.gradle/init.d/gennerateMd5.gradle
+          && chmod +x ./ohos-hiinsight/.cloudbuild/buildLibrary.sh
+          && ./ohos-hiinsight/.cloudbuild/buildLibrary.sh
+          ${libraryVersion} ${releaseVersion} '0.0.0.1' ${internal} ${username} ${password}
+        check:
+          mode: sync
+          buildcheck:
+              ruleset: default
+              task_name: hiinsight_buildcheck
+              project_dir: ./ohos-hiinsight
+              exclude_dir: ./ohos-hiinsight/.cloudbuild; ./ohos-hiinsight/.codecheck; ./ohos-hiinsight/frontend/node_modules; ./ohos-hiinsight/frontend/tests; ./ohos-hiinsight/foundation/ideaplugin; ./ohos-hiinsight/gradlew.bat
+          fail_on_error: true
+          sourcecheck:
+            - project_type: gradle
+              project_dir: ohos-hiinsight
+          dependency:
+            - tool_type: gradle
+              project_dir: ohos-hiinsight/foundation/ideaplugin
+          cmcdependency: true
+          compileoption: true
+          dangerouscmd: true
+        gradle_enhance: # 上传元数据需要，固定这么写
+          - name: md5_source_tracement
+            parameters:
+              publish_task: "publish"
+
+
+  POST_BUILD:
+    - compile_report:
+        compiler: javac
+        gate:
+          total: 10
+          warning: 5
+          error: 5
