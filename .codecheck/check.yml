@@ -43,6 +43,10 @@ steps:
         url: https://szv-open.codehub.huawei.com/OpenSourceCenter/nlohmann/json.git
         branch: refs/tags/v3.10.1
         path: third_party/json
+    - codehub:
+        url: https://szv-open.codehub.huawei.com/OpenSourceCenter/Tencent/rapidjson.git
+        branch: refs/tags/012be8528783cdbf4b7a9e64f78bd8f056b97e24
+        path: third_party/rapidjson
     - sh:
         command: |
           cd code && sh .cloudbuild/build.sh

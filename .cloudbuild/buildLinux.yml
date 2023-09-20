@@ -34,6 +34,10 @@ steps:
         url: https://szv-open.codehub.huawei.com/OpenSourceCenter/nlohmann/json.git
         tag: v3.10.1
         path: server/third_party/json
+    - codehub:
+        url: https://szv-open.codehub.huawei.com/OpenSourceCenter/Tencent/rapidjson.git
+        tag: 012be8528783cdbf4b7a9e64f78bd8f056b97e24
+        path: server/third_party/rapidjson
   BUILD:
     - build_execute: # master用0.0.0.1-SNAPSHOT 和 0.0.0.1，  develop用0.0.0.2-SNAPSHOT，和 0.0.0.2
         command: |
