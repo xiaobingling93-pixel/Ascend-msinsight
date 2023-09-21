@@ -103,8 +103,16 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     std::regex patternCommunication(R"(cluster_communication.json)");
     std::vector<std::string> communicationFileList =
             FileUtil::FindFilesByRegex(selectedPath, patternCommunication);
+    // cluster analysis
     if (communicationFileList.empty()) {
-        // todo 集群解析
+        ServerLog::Info("can not find cluster analysis file, start execute cluster analysis");
+        std::string command = "cluster_analysis.exe -d " + selectedPath;
+        int result = std::system(command.c_str());
+        if (result == 1) {
+            ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file");
+            return false;
+        }
+        ServerLog::Info("Execute cluster analysis success");
     }
     communicationFileList =
             FileUtil::FindFilesByRegex(selectedPath, patternCommunication);

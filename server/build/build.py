@@ -29,6 +29,7 @@ CMAKE_BUILD_DIR = os.path.join(BUILD_DIR, 'build')
 HOME_DIR = os.path.dirname(BUILD_DIR)
 THIRD_PARTY_DIR = os.path.join(HOME_DIR, 'third_party')
 SRC_DIR = os.path.join(HOME_DIR, 'src')
+CLUSTER_ANALYSE_DIR = os.path.join(SRC_DIR, 'cluster_analyse')
 PROTO_DIR = os.path.join(SRC_DIR, 'protos')
 
 OUTPUT_DIR = os.path.join(HOME_DIR, 'output')
@@ -105,6 +106,17 @@ def build_bin(args):
     build_cmds = ['cmake', '--build', '.', '-j', str(MAKE_JOBS)]
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
     log_output(output)
+
+    att_dir = os.path.join(OUTPUT_DIR, gxx_type)
+    att_bin_dir = os.path.join(att_dir, 'bin')
+    att_main_path = os.path.join(CLUSTER_ANALYSE_DIR, 'cluster_analysis.py')
+    build_att = [
+        'pyinstaller', '--collect-submodules', 'cluster_analyse', '--path=' + CLUSTER_ANALYSE_DIR,
+        '--distpath=' + att_bin_dir, '--specpath', CMAKE_BUILD_DIR, '--onefile', att_main_path
+    ]
+    output = subprocess.Popen(build_att, cwd=BUILD_DIR, stdout=subprocess.PIPE)
+    log_output(output)
+
     log('end build.\n')
 
 
