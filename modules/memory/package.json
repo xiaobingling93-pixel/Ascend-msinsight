@@ -6,7 +6,7 @@
   "dependencies": {
     "@emotion/react": "11.11.0",
     "@emotion/styled": "11.11.0",
-    "@material-ui/core": "^4.12.4",
+    "@material-ui/core": "4.12.4",
     "antd": "4.24.13",
     "d3": "7.8.2",
     "echarts": "5.4.2",

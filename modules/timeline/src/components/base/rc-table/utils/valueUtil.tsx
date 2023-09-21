@@ -1,4 +1,5 @@
 import { DataIndex, Key } from '../types';
+import React from 'react';
 
 const INTERNAL_KEY_PREFIX = 'INSIGHT_TABLE_KEY';
 
@@ -17,7 +18,7 @@ export function getPathValue<ValueType, ObjectType extends Record<string, unknow
     if (!path && typeof path !== 'number') {
       return record as unknown as ValueType;
     }
-  
+
     const pathList = toArray(path);
     let current = record as Record<string | number, unknown>;
     for (let i = 0; i < pathList.length; i += 1) {

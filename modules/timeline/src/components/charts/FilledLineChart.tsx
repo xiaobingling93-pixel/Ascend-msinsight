@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import React, { useMemo, useRef, useState } from 'react';
-import { ChartProps } from '../../entity/chart';
+import { ChartProps, Scale } from '../../entity/chart';
 import { Readable } from '../../utils/humanReadable';
 import { Canvas, CanvasContainer, LegendArea, search, zipTimeSeriesData } from './common';
 import { useBatchedRender, useData, useHoverPosX, useRangeAndDomain } from './hooks';
@@ -27,7 +27,7 @@ const findHeights = (datas: number[][]): [number, number] => {
     return [ minHeight, maxHeight * 1.2 ];
 };
 
-const drawAuxiliaryLine = (context: CanvasRenderingContext2D, yScale: d3.ScaleLinear<number, number, never>,
+const drawAuxiliaryLine = (context: CanvasRenderingContext2D, yScale: Scale,
     auxiliaryValue: number, width: number): void => {
     context.beginPath();
     context.setLineDash([ 10, 10 ]);

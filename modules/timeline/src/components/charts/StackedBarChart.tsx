@@ -1,14 +1,14 @@
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import React, { useRef } from 'react';
-import { ChartProps, ScaleType } from '../../entity/chart';
+import { ChartProps, Scale, ScaleType } from '../../entity/chart';
 import { Canvas, CanvasContainer, drawRoundedRect } from './common';
 import { useBatchedRender, useData, useHoverPosX, useRangeAndDomain } from './hooks';
 import { TooltipComponent, TooltipProps } from './TooltipComp';
 import { useTheme } from '@emotion/react';
 import { Session } from '../../entity/session';
 
-type ScaleTypeDefinition = Record<ScaleType, d3.ScaleContinuousNumeric<number, number, never>>;
+type ScaleTypeDefinition = Record<ScaleType, d3.ScaleContinuousNumeric<number, number>>;
 
 const getScale: ScaleTypeDefinition = {
     Linear: d3.scaleLinear(),
@@ -32,7 +32,7 @@ const getTotalHeight = (data: Data, limited: number, callback?: (accHeight: numb
 };
 
 const drawAuxiliaryLine = (context: CanvasRenderingContext2D,
-    yScale: d3.ScaleContinuousNumeric<number, number, never>,
+    yScale: Scale,
     auxiliaryValue: number, width: number): void => {
     context.beginPath();
     context.setLineDash([ 10, 10 ]);
@@ -48,8 +48,8 @@ type DrawAreaArgs = {
     datas: Data[];
     minHeight: number;
     radius: number;
-    xScale: d3.ScaleLinear<number, number, never>;
-    yScale: d3.ScaleContinuousNumeric<number, number, never>;
+    xScale: Scale;
+    yScale: Scale;
     domainStart: number;
     barWidthStamp: number;
     barWidthPix?: number;
@@ -131,7 +131,7 @@ const draw = ({
         return;
     }
     if (!ctx) { return; }
-    const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(false);
+    const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(false) as Scale;
     let barWidthPix: number | undefined;
     const domainStart = rangeAndDomain[1][0];
     if (barWidth !== undefined) {
@@ -157,7 +157,7 @@ const draw = ({
         findHeights(datas);
         maxHeight *= 2;
     }
-    const yScale = getScale[yScaleType].range([ height, 0 ]).domain([ minHeight, maxHeight ]);
+    const yScale = getScale[yScaleType].range([ height, 0 ]).domain([ minHeight, maxHeight ]) as Scale;
     if (auxiliaryValue !== undefined && auxiliaryValue !== 0) { drawAuxiliaryLine(ctx, yScale, auxiliaryValue, rangeAndDomain[0][1]); }
     // draw line and area
     drawArea({ ctx, datas, minHeight, radius, xScale, yScale, domainStart, barWidthStamp, barWidthPix, palette });
@@ -167,9 +167,9 @@ type ToolTipData = [ Data, number ];
 const findDataByX = (mousePosX: number | undefined, datas: Data[], rangeAndDomain: Array<[number, number]>): ToolTipData | undefined => {
     if (rangeAndDomain.length === 0 || datas.length === 0 || mousePosX === undefined) { return; }
     const reverseXScale = d3.scaleLinear().range([ rangeAndDomain[1][0], rangeAndDomain[1][1] ])
-        .domain([ rangeAndDomain[0][0], rangeAndDomain[0][1] ]).clamp(false);
+        .domain([ rangeAndDomain[0][0], rangeAndDomain[0][1] ]).clamp(false) as Scale;
     const xScale = d3.scaleLinear().domain([ rangeAndDomain[1][0], rangeAndDomain[1][1] ])
-        .range([ rangeAndDomain[0][0], rangeAndDomain[0][1] ]).clamp(false);
+        .range([ rangeAndDomain[0][0], rangeAndDomain[0][1] ]).clamp(false) as Scale;
     const mouseTimestamp = reverseXScale(mousePosX);
     let minDistance = Number.MAX_VALUE;
     let selectedData = null;
@@ -190,7 +190,7 @@ const isTooltipXInDomain = (data: ToolTipData, session: Session): boolean => {
 };
 
 const getBarWidthStamp = (barWidth: number | string, rangeAndDomain: Array<[number, number]>): number => {
-    const xReverseScale = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false);
+    const xReverseScale = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false) as Scale;
     const domainStart = rangeAndDomain[1][0];
     if (typeof barWidth === 'number') {
         return barWidth;
@@ -202,7 +202,7 @@ const isHoverPosOnBar = (data: ToolTipData, barWidthStamp: number, rangeAndDomai
     const drawStartStamp = data[0].timestamp - barWidthStamp / 2;
     const drawEndStamp = data[0].timestamp + barWidthStamp / 2;
     const reverseXScale = d3.scaleLinear().range([ rangeAndDomain[1][0], rangeAndDomain[1][1] ])
-        .domain([ rangeAndDomain[0][0], rangeAndDomain[0][1] ]).clamp(false);
+        .domain([ rangeAndDomain[0][0], rangeAndDomain[0][1] ]).clamp(false) as Scale;
     const mouseTimestamp = reverseXScale(mousePosX);
     return mouseTimestamp >= drawStartStamp && mouseTimestamp <= drawEndStamp;
 };
