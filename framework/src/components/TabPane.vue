@@ -109,6 +109,7 @@ function toggleTab(index: number): void {
     text-align: center;
     width: 150px;
     font-size: 14px;
+    font-weight: bold;
     color: #F4F6FA !important;
     line-height: 30px;
     user-select: none;

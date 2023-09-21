@@ -1,5 +1,5 @@
 export type TreeNodeType = {
-    content: string;
+    label: string;
     cancelable?: boolean;
     children?: TreeNodeType[];
     origin?: TreeNodeType[];

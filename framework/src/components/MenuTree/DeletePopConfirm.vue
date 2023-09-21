@@ -1,0 +1,43 @@
+<script setup lang="ts">
+import {defineProps, ref, toRaw} from 'vue';
+import type { TreeNodeType } from '@/components/MenuTree/types';
+import { useDataSources } from '@/stores/dataSource';
+import Delete from './DeleteIcon.vue';
+
+const props = defineProps<{ data: TreeNodeType; isDeleteAll: boolean }>();
+const dialogVisible = ref(false);
+const store = useDataSources();
+const handleDelete = () => {
+  const current = store.menuTree.findIndex(data => data === toRaw(props.data));
+  store.remove(current);
+};
+const handleDeleteAll = (done: () => void) => {
+  handleDelete();
+  dialogVisible.value = false;
+};
+</script>
+
+<template>
+    <el-popconfirm
+        width="200"
+        v-if="!isDeleteAll"
+        hide-icon="true"
+        @confirm="handleDelete"
+        hide-after="0"
+        title="Are you sure to delete this?"
+    >
+        <template #reference>
+            <Delete />
+        </template>
+    </el-popconfirm>
+    <Delete v-if="isDeleteAll" @click="dialogVisible = true" />
+    <el-dialog v-model="dialogVisible" width="30%" :show-close="false">
+        <span>Are you sure to delete All</span>
+        <template #footer>
+            <span class="dialog-footer">
+                <el-button @click="dialogVisible = false">Cancel</el-button>
+                <el-button type="primary" @click="handleDeleteAll"> Confirm </el-button>
+            </span>
+        </template>
+    </el-dialog>
+</template>

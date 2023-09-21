@@ -64,7 +64,7 @@ const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource)
 
 export const useDataSources = defineStore('dataSources', () => {
     const { session } = useSession();
-    const dataSources = ref<DataSource[]>([{ remote: LOCAL_HOST, port: PORT, dataPath: [] }]);
+    let dataSources = ref<DataSource[]>([{ remote: LOCAL_HOST, port: PORT, dataPath: [] }]);
     useWatchReset(session, dataSources);
 
     let temp: FormDataSource | null = null;
@@ -105,14 +105,14 @@ export const useDataSources = defineStore('dataSources', () => {
     const SPLITTER = ': ';
     const menuTree = computed<TreeNodeType[]>(() =>
         dataSources.value.filter(dataSource => dataSource.dataPath.length !== 0).map(dataSource => ({
-            content: `${dataSource.remote}${SPLITTER}${dataSource.port}`,
-            children: dataSource.dataPath.map(data => ({ content: data })),
+            label: `${dataSource.remote}${SPLITTER}${dataSource.port}`,
+            children: dataSource.dataPath.map(data => ({label: data })),
             cancelable: true,
         }))
     );
 
     const remove = async (index: number): Promise<void> => {
-        menuTree.value.splice(index, 1);
+        dataSources.value.splice(index, 1);
         connector.send({
             body: {
                 event: 'remote/remove',
@@ -123,7 +123,6 @@ export const useDataSources = defineStore('dataSources', () => {
             await request(dataSources.value[index], module.requestName, { command: 'remote/reset', params: {} });
         }
         disconnectRemote(dataSources.value[index]);
-        dataSources.value.splice(index, 1);
     }
 
     return { menuTree, add, remove, confirm, cancel };
