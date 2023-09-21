@@ -20,14 +20,14 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'summary',
         requestName: 'summary',
         attributes: {
-            src: 'http://localhost:3000/summary.html'
+            src: './plugins/Cluster/summary.html'
         }
     },
     {
         name: 'communication',
         requestName: 'communication',
         attributes: {
-            src: 'http://localhost:3000/communication.html'
+            src: './plugins/Cluster/communication.html'
         }
     },
     {

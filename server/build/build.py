@@ -158,6 +158,9 @@ def build_test(args):
 
     build_cmds = ['cmake', HOME_DIR, '-G', generator, '-DCMAKE_BUILD_TYPE=' + build_type,
                   '-D_PROJECT_TYPE=' + args.project_type]
+    if args.cross_compile:
+        toolchain = os.path.join(HOME_DIR, 'toolchain.cmake')
+        build_cmds.append('-D_SYSTEM_NAME=Windows', '-DCMAKE_TOOLCHAIN_FILE=' + toolchain)
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
     log_output(output)
 
@@ -187,6 +190,11 @@ def main():
                               dest='project_type',
                               default='',
                               help='project type. CentricServer or EdgeServer')
+
+    parser_build.add_argument('--cross_compile',
+                              action='store_false',
+                              dest='cross_compile',
+                              help='cross compile')
 
     parser_clean = subparsers.add_parser('clean', help='clean build')
     parser_clean.set_defaults(func=clean)

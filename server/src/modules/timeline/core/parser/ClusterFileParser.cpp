@@ -4,7 +4,6 @@
  *
  */
 
-#include <sysinfoapi.h>
 #include <fstream>
 #include "json.hpp"
 #include "ServerLog.h"
@@ -22,13 +21,13 @@ using namespace Dic::Server;
 bool ClusterFileParser::ParseCommunication(const std::vector<std::string> &filePathList)
 {
     const std::string &filePath = filePathList[0];
-    DWORD start = GetTickCount();
+    auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("start save communication data into db ,file:", filePath);
     std::ifstream ifs(filePath);
     CommunicationSaxHandler handler;
     nlohmann::json::sax_parse(ifs, &handler);
-    DWORD end = GetTickCount();
-    ServerLog::Info("end parse communication data into db ,file:", filePath, "cost time:", end - start);
+    auto end = std::chrono::high_resolution_clock::now();
+    ServerLog::Info("end parse communication data into db ,file:", filePath, "cost time:", (end - start).count());
     ifs.close();
     return true;
 }
@@ -36,7 +35,7 @@ bool ClusterFileParser::ParseCommunication(const std::vector<std::string> &fileP
 void ClusterFileParser::ParseCommunicationMatrix(const std::vector<std::string> &filePathList)
 {
     const std::string &filePath = filePathList[0];
-    DWORD start = GetTickCount();
+    auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("start save communication matrix data into db ,file:", filePath);
     bool checkFilePath = FileUtil::CheckFilePath(filePath);
     if (!checkFilePath) {
@@ -45,15 +44,15 @@ void ClusterFileParser::ParseCommunicationMatrix(const std::vector<std::string> 
     std::ifstream ifs(filePath);
     CommunicationMatrixHandler handler;
     nlohmann::json::sax_parse(ifs, &handler);
-    DWORD end = GetTickCount();
-    ServerLog::Info("end parse communication matrix data into db ,file:", filePath, "cost time:", end - start);
+    auto end = std::chrono::high_resolution_clock::now();
+    ServerLog::Info("end parse communication matrix data into db ,file:", filePath, "cost time:", (end - start).count());
     ifs.close();
 }
 
 void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &filePathList)
 {
     const std::string &filePath = filePathList[0];
-    DWORD start = GetTickCount();
+    auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("start parseStepStatisticsFile data into db ,file:", filePath);
     std::ifstream stepTraceFileCsv(filePath);
     std::string line;
@@ -70,9 +69,9 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
             database->InsertStepStatisticsInfo(statistic);
         }
     }
-    DWORD end = GetTickCount();
+    auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("end parseStepStatisticsFile data into db ,file:", filePath, "cost time:",
-                    end - start);
+                    (end - start).count());
     stepTraceFileCsv.close();
 }
 

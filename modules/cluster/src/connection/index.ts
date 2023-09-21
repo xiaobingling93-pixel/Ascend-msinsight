@@ -25,6 +25,9 @@ abstract class BaseConnector {
         this._getTargetWindows = getTargetWindow;
 
         window.onmessage = (event: MessageEvent) => {
+            if (typeof event.data !== 'string') {
+                return;
+            }
             const res = { ...event };
             res.data = JSON.parse(event.data);
             const listener = this._listeners.get(res.data.event);
@@ -33,7 +36,7 @@ abstract class BaseConnector {
             } else if (listener) {
                 listener.forEach(cb => cb?.(res));
             } else {
-                console.warn(this.printErrMsg('missed [event] in your message, please check your params, or maybe have an invalid send'));
+                console.log(this.printErrMsg('missed [event] in your message, please check your params, or maybe have an invalid send'));
             }
         };
         Object.defineProperty(window, 'onmessage', {

@@ -17,9 +17,9 @@ add_executable(${PROJECT_NAME} ${SERVER_SRC_LIST})
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(${PROJECT_NAME}
             uv_a
-            UserEnv
+            userenv
             ws2_32
-            Iphlpapi
+            iphlpapi
             shlwapi
             sqlite
             -lssp)

@@ -23,9 +23,9 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(insight_test
             gtest_main
             uv_a
-            UserEnv
+            userenv
             ws2_32
-            Iphlpapi
+            iphlpapi
             shlwapi
             sqlite
             -lssp)
