@@ -124,6 +124,7 @@ CommunicationMatrixInfo CommunicationMatrixHandler::MapToMatrixInfo(const json_t
     CommunicationMatrixInfo matrixInfo;
     matrixInfo.groupId = groupId;
     matrixInfo.iterationId = iterationId;
+    matrixInfo.iterationId = iterationId.length() > stepSubLen ? iterationId.substr(stepSubLen) : iterationId;
     if (std::strcmp(iterationId.c_str(), "step") == 0) {
         matrixInfo.iterationId = "0";
     }

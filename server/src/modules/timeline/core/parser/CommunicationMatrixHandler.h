@@ -51,6 +51,7 @@ private:
     int stepDepth = 2;
     int opNameDepth = 3;
     int ranksDepth = 4;
+    int stepSubLen = 4;
 };
 } // end of namespace Timeline
 } // end of namespace Module
