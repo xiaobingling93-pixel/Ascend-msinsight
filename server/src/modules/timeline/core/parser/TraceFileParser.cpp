@@ -40,7 +40,7 @@ bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const s
 {
     start = std::chrono::system_clock::now();
     ServerLog::Info("start parse.");
-    std::string dbPath = GetDbPath(selectedFolder, rankId);
+    std::string dbPath = GetDbPath(filePathArr[0], rankId);
     InitDatabase(dbPath, rankId);
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
     for (const auto &filePath: filePathArr) {
@@ -178,10 +178,21 @@ bool TraceFileParser::SeekRegexPosition(std::ifstream &file, const std::string &
     return true;
 }
 
-std::string TraceFileParser::GetDbPath(const std::string &selectedFolder, const std::string &rankId)
+std::string TraceFileParser::GetDbPath(const std::string &filePath, const std::string &fileId)
 {
-    std::string dbPath = selectedFolder + "/" + rankId + ".db";
-    return Dic::FileUtil::GetRealPath(dbPath);
+    std::string path = FileUtil::GetRealPath(filePath);
+    std::string suffix = ".db";
+    auto pos = fileId.find_last_of('_');
+    if (pos != std::string::npos) {
+        suffix = fileId.substr(pos) + suffix;
+    }
+    pos = path.find_last_of('.');
+    if (pos != std::string::npos) {
+        path.replace(pos, path.size() - pos, suffix);
+    } else {
+        path.append(suffix);
+    }
+    return path;
 }
 
 int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid)
@@ -212,6 +223,7 @@ void TraceFileParser::Reset()
             ServerLog::Error("Failed to remove file. ", path);
         }
     }
+    trackIdMap.clear();
     DataBaseManager::Instance().Clear();
     TraceTime::Instance().Reset();
     FileParser::Reset();

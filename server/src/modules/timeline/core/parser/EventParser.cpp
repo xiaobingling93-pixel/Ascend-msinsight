@@ -13,6 +13,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
+using json_t = rapidjson::Value;
 EventParser::EventParser(const std::string &filePath, const std::string &dbPath,
                          const std::string &fileId) : filePath(filePath), dbPath(dbPath), fileId(fileId)
 {
@@ -39,17 +40,16 @@ void EventParser::Parse(int64_t startPosition, int64_t endPosition)
         ServerLog::Error("EventParser. Failed to read buffer.");
         return;
     }
-    buffer = "[" + buffer + "]";
-    std::string error;
-    auto json = JsonUtil::TryParse(buffer, error);
-    if (!(json.has_value() && json.value().is_array())) {
-        ServerLog::Error("EventParser. Failed to parse json string. error:", error);
+    rapidjson::Document d;
+    try {
+        d.Parse(buffer.c_str(), buffer.length());
+    } catch (std::exception &e) {
+        ServerLog::Error("EventParser. Failed to parse json. ", e.what());
         return;
     }
-    for (auto &event : json.value()) {
+    for (auto &event : d.GetArray()) {
         EventHandle(event);
     }
-    json.reset();
     database->CommitData();
     database->ReleaseStmt();
     database->CloseDb();
@@ -65,22 +65,25 @@ std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
         return "";
     }
     file.seekg(startPosition, std::ios::beg);
-    int64_t len = endPosition - startPosition + 1;
+    int64_t suffixLen = 2; // [ ]
+    int64_t len = endPosition - startPosition + 1 + suffixLen; // + [ ] + \0
     auto buffer = std::make_unique<char[]>(len);
-    if (!file.read(buffer.get(), len)) {
+    if (!file.read(buffer.get() + 1, len - suffixLen)) { // reserved '[' and ']'
         file.close();
         ServerLog::Error("EventParser. Failed to read file. start:", startPosition, ", end:", endPosition);
         return "";
     }
     file.close();
-    return std::string(buffer.get(), len);
+    buffer[0] = '[';
+    buffer[len - 1] = ']';
+    return {buffer.get(), static_cast<uint64_t>(len)};
 }
 
 void EventParser::EventHandle(const json_t &json)
 {
     std::string type = EventUtil::Type(json);
     if (type.empty()) {
-        ServerLog::Error("EventHandle. event type is empty. ", json.dump());
+        ServerLog::Error("EventHandle. event type is empty. ", JsonUtil::JsonDump(json));
         return;
     }
     if (eventHandleMap.count(type) > 0) {

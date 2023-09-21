@@ -51,8 +51,12 @@ json_t FolderToJson(const std::unique_ptr<Folder> &folder)
 {
     json_t json;
     json["name"] = folder->name;
+    json["path"] = folder->path;
     for (const auto &file : folder->childrenFiles) {
-        json["childrenFiles"].emplace_back(file);
+        json_t jFile;
+        jFile["path"] = file->path;
+        jFile["name"] = file->name;
+        json["childrenFiles"].emplace_back(jFile);
     }
     for (const auto &childrenFolder : folder->childrenFolders) {
         json["childrenFolders"].emplace_back(FolderToJson(childrenFolder));
@@ -66,7 +70,10 @@ template <> std::optional<json_t> ToResponseJson<FilesGetResponse>(const FilesGe
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["path"] = response.body.path;
     for (const auto &file : response.body.childrenFiles) {
-        json["body"]["childrenFiles"].emplace_back(file);
+        json_t jFile;
+        jFile["path"] = file->path;
+        jFile["name"] = file->name;
+        json["body"]["childrenFiles"].emplace_back(jFile);
     }
     for (const auto &folder : response.body.childrenFolders) {
         json["body"]["childrenFolders"].emplace_back(FolderToJson(folder));

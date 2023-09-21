@@ -8,6 +8,7 @@
 #include <string>
 #include <dirent.h>
 #include <vector>
+#include "StringUtil.h"
 #include <sys/stat.h>
 #include "regex"
 #include "RegexUtil.h"
@@ -55,7 +56,7 @@ public:
         }
         std::string res(path);
 #ifdef _WIN32
-        if (path[path.size() - 1] != '/' || path[path.size() - 1] != '\\') {
+        if (path[path.size() - 1] != '/' && path[path.size() - 1] != '\\') {
             res.append("\\");
         }
 #else
@@ -120,7 +121,13 @@ public:
         }
         DIR *pDir = nullptr;
         struct dirent *pDirent = nullptr;
-        pDir = opendir(path.c_str());
+        std::string tmpPath(path);
+#ifdef _WIN32
+        if (StringUtil::IsUtf8String(path)) {
+            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
+        }
+#endif
+        pDir = opendir(tmpPath.c_str());
         if (pDir == nullptr) {
             return {};
         }
@@ -129,7 +136,11 @@ public:
             if (std::string(pDirent->d_name) == ".." || std::string(pDirent->d_name) == ".") {
                 continue;
             }
+#ifdef _WIN32
+            folders.emplace_back(StringUtil::GbkToUtf8(pDirent->d_name));
+#else
             folders.emplace_back(pDirent->d_name);
+#endif
         }
         closedir(pDir);
         return folders;
@@ -138,7 +149,11 @@ public:
     static inline bool IsFolder(const std::string &path)
     {
 #ifdef _WIN32
-        return PathIsDirectory(path.c_str());
+        std::string tmpPath(path);
+        if (StringUtil::IsUtf8String(path)) {
+            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
+        }
+        return PathIsDirectory(tmpPath.c_str());
 #else
         struct stat st;
         if (stat(path.c_str(), &st) == -1) {
@@ -150,7 +165,13 @@ public:
 
     static inline bool RemoveFile(const std::string &path)
     {
-        return std::remove(path.c_str()) == 0;
+        std::string tmpPath(path);
+#ifdef _WIN32
+        if (StringUtil::IsUtf8String(path)) {
+            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
+        }
+#endif
+        return std::remove(tmpPath.c_str()) == 0;
     }
 
     static inline std::vector<std::string> GetDiskInfo()
@@ -179,8 +200,12 @@ public:
             return false;
         }
 #ifdef _WIN32
-        auto attribute = GetFileAttributes(path.data());
-        return (attribute & FILE_ATTRIBUTE_HIDDEN) != 0 ;
+        std::string tmpPath(path);
+        if (StringUtil::IsUtf8String(path.data())) {
+            tmpPath = StringUtil::Utf8ToGbk(path.data());
+        }
+        auto attribute = GetFileAttributes(tmpPath.data());
+        return attribute == INVALID_FILE_ATTRIBUTES || (attribute & FILE_ATTRIBUTE_HIDDEN) != 0;
 #else
         return path[0] == '.';
 #endif

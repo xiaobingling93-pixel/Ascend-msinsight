@@ -12,7 +12,7 @@ using namespace Protocol;
 
 void FileSelector::GetFoldersAndFiles(const std::string &path,
                                       std::vector<std::unique_ptr<Protocol::Folder>> &childrenFolders,
-                                      std::vector<std::string> &childrenFiles,
+                                      std::vector<std::unique_ptr<Protocol::File>> &childrenFiles,
                                       int depth)
 {
     if (depth >= maxDepth) {
@@ -31,7 +31,7 @@ void FileSelector::GetFoldersAndFiles(const std::string &path,
             if (FileUtil::IsFolder(tmpPath)) {
                 folders.emplace_back(file);
             } else {
-                childrenFiles.emplace_back(file);
+                childrenFiles.emplace_back(std::make_unique<Protocol::File>(file, tmpPath));
             }
         }
     }
@@ -39,6 +39,7 @@ void FileSelector::GetFoldersAndFiles(const std::string &path,
     for (const auto &folder : folders) {
         auto folderPtr = std::make_unique<Folder>();
         folderPtr->name = folder;
+        folderPtr->path = FileUtil::SplicePath(path, folder);
         std::string tmpPath = FileUtil::SplicePath(path, folder);
         GetFoldersAndFiles(tmpPath, folderPtr->childrenFolders, folderPtr->childrenFiles, depth);
         childrenFolders.emplace_back(std::move(folderPtr));

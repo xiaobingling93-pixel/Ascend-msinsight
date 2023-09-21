@@ -39,7 +39,7 @@ private:
     static std::vector<std::pair<int64_t, int64_t>> SplitFile(const std::string &filePath);
     static bool SeekCharPosition(std::ifstream &file, char c);
     static bool SeekRegexPosition(std::ifstream &file, const std::string &regex);
-    static std::string GetDbPath(const std::string &selectedFolder, const std::string &rankId);
+    static std::string GetDbPath(const std::string &filePath, const std::string &fileId);
 
     bool InitDatabase(const std::string& dbPath, const std::string& rankId);
     std::mutex trackMutex;
