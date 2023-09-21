@@ -2,9 +2,12 @@
 import { ref, reactive, watch, onMounted, nextTick } from 'vue';
 import type Node from 'element-plus/es/components/tree/src/model/node';
 import FolderIcon from '@/components/icons/folder_icon.vue';
+import FileIcon from '@/components/icons/file_icon.vue';
 import { useResource, type ResourceItem } from '@/stores/resourceComp';
-import { addDataPath } from '@/centralServer/server';
 import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
+import { useDataSources } from '@/stores/dataSource';
+
+const { confirm } = useDataSources();
 
 const treeRef = ref()
 
@@ -20,12 +23,21 @@ const state = reactive({
     defalultExpandedKeys: [] as string[],
 })
 
-const handleClick = (data: ResourceItem, node: Node) => {
+const handleExpand = (data: ResourceItem, node: Node) => {
     if (state.selectedPath === data.path) {
         return;
     }
     state.selectedPath = data.path;
     loadFiles(data.path);
+}
+
+const hanldeCollapse = (data: ResourceItem, node: Node) => {
+    state.selectedPath = data.path;
+    loadFiles(data.path);
+}
+
+const handleClick = (data: ResourceItem, node: Node) => {
+    state.selectedPath = data.path;
 }
 
 const doOpenCurrent = (currentKey: string) => {
@@ -50,7 +62,8 @@ watch(() => resourceState.currentPath, (newVal) => {
 
 const doSetCurrentPath = () => {
     setCurrentPath(state.selectedPath);
-    addDataPath({ remote: LOCAL_HOST, port: PORT, dataPath: [state.selectedPath] })
+    const dataSource = { remote: LOCAL_HOST, port: PORT, dataPath: [state.selectedPath] };
+    confirm(dataSource)
 }
 
 defineExpose({
@@ -60,14 +73,16 @@ defineExpose({
 
 <template>
     <div class="tree-wrap">
-        <!-- <p class="data-path">{{ resourceState.currentPath }}</p> -->
         <el-input v-model="state.selectedPath" disabled />
         <div class="data-tree">
             <el-tree ref="treeRef" :data="resourceState.resource" :props="defaultProps" :accordion="false" node-key="path"
-                @node-click="handleClick">
+                @node-click="handleClick" @node-expand="handleExpand" @node-collapse="hanldeCollapse">
                 <template #default="{ node, data }">
                     <div class="custom-tree-node">
-                        <FolderIcon v-if="data.children" />
+                        <el-icon :size="16">
+                            <FolderIcon v-if="data.children" />
+                            <FileIcon v-else />
+                        </el-icon>
                         <span>{{ data.name }}</span>
                     </div>
                 </template>
@@ -110,6 +125,7 @@ defineExpose({
     color: #F4F6FA;
     -webkit-text-fill-color: #F4F6FA;
     font-weight: 400;
+    cursor: auto;
 }
 
 .custom-tree-node {
