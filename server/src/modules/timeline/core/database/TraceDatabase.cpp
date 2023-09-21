@@ -1121,7 +1121,7 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t
         uint64_t max;
         if (!requestParams.stepId.empty()) {
             QueryStepDuration(requestParams.stepId, min, max);
-            timestampCondition = " and timestamp > ? and timestamp < ? ";
+            timestampCondition = " and timestamp >= ? and timestamp <= ? ";
         }
         std::string sql = "select duration / 1000, t.thread_name as overlapType from (select sum(duration) as duration,"
                           " track_id from " + sliceTable +

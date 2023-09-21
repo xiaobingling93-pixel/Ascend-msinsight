@@ -41,19 +41,22 @@ class CommunicationGroupGenerator:
 
     def analyze_communication_ops(self):
         for rank_id, rank_id_dict in self.rank_comm_dir_dict.items():
-            for step_id, step_id_dict in rank_id_dict.items():
-                if not isinstance(step_id_dict, dict):
-                    print(f"rank{rank_id}'s communication.json has a wrong data struct.")
+            self.analyze_communication_rank(rank_id, rank_id_dict)
+
+    def analyze_communication_rank(self, rank_id, rank_id_dict):
+        for step_id, step_id_dict in rank_id_dict.items():
+            if not isinstance(step_id_dict, dict):
+                print(f"rank{rank_id}'s communication.json has a wrong data struct.")
+                continue
+            for comm_op_type, comm_op_dict in step_id_dict.items():
+                if comm_op_type == Constant.COLLECTIVE:
+                    self.get_collective_ops_name(rank_id, comm_op_dict)
+                elif comm_op_type == Constant.P2P:
+                    pass
+                else:
+                    print(f"rank{rank_id}'s communication.json has no p2p or collective.")
                     continue
-                for comm_op_type, comm_op_dict in step_id_dict.items():
-                    if comm_op_type == Constant.COLLECTIVE:
-                        self.get_collective_ops_name(rank_id, comm_op_dict)
-                    elif comm_op_type == Constant.P2P:
-                        pass
-                    else:
-                        print(f"rank{rank_id}'s communication.json has no p2p or collective.")
-                        continue
-                    self.add_communication_ops(rank_id, step_id, comm_op_type, comm_op_dict)
+                self.add_communication_ops(rank_id, step_id, comm_op_type, comm_op_dict)
 
     def load_communication_json(self):
         for rank_id, profiling_dir_path in self.data_map.items():

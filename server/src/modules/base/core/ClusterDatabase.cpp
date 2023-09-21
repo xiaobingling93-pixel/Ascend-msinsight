@@ -633,9 +633,17 @@ bool ClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
-    std::string orderBy = param.orderBy.empty() ? " order by elapseTime " : " order by " + param.orderBy;
+    std::vector<std::string> orderByFlagVector = {"operatorName", "elapseTime", "synchronizationTime",
+                                                  "waitTime", "idleTime", "transitTime",
+                                                  "synchronizationTimeRatio", "waitTimeRatio"};
+    if (param.orderBy.empty() ||
+        std::find(orderByFlagVector.begin(), orderByFlagVector.end(), param.orderBy) ==
+        orderByFlagVector.end()) {
+        param.orderBy = "elapseTime";
+    }
+    std::string orderBy = " order by " + param.orderBy;
     std::string order = !param.order.empty() && std::strcmp(param.order.c_str(), "ascend") == 0 ? "ASC" : "DESC";
-    std::string sql = "SELECT op_name,"
+    std::string sql = "SELECT op_name as operatorName, "
                       " ROUND(elapse_time, 4) as elapseTime, "
                       " ROUND(transit_time, 4) as transitTime,"
                       " ROUND(synchronization_time, 4) as synchronizationTime,"
