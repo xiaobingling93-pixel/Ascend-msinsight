@@ -107,9 +107,9 @@ export const stageHandler = async (request: {stepId: string}): Promise<{data: st
     return { data: result };
 };
 
-export const stageAndBubbleTimeHandler = async (request: {stepId: string}): Promise<StageAndBubbleTimeResponse> => {
+export const stageAndBubbleTimeHandler = async (request: {stepId: string; ranks: number[]}): Promise<StageAndBubbleTimeResponse> => {
     const response: StageAndBubbleTimeResponse = { stageAndBubbleTimes: [] };
-    response.stageAndBubbleTimes = await CLUSTER_DATABASE.getStageAndBubbleTime(request.stepId);
+    response.stageAndBubbleTimes = await CLUSTER_DATABASE.getStageAndBubbleTime(request.stepId, request.ranks);
     return response;
 };
 

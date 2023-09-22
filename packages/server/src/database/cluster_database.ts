@@ -370,11 +370,12 @@ export class ClusterDatabase {
         });
     }
 
-    async getStageAndBubbleTime(step: string): Promise<any> {
-        const sql = `SELECT stage_id as stageId, ROUND(stage_time, 4) as stageTime,
-                             ROUND(bubble_time, 4) as bubbleTime
+    async getStageAndBubbleTime(step: string, ranks: number[]): Promise<any> {
+        const stageId = '(' + ranks.join(', ') + ')';
+        const sql = `SELECT '${stageId}' as stageId, max(ROUND(stage_time, 4)) as stageTime,
+                             max(ROUND(bubble_time, 4)) as bubbleTime
                              FROM ${STEP_STATISTIC_INFO_TABLE}
-                             WHERE stage_id != '' AND step_id = ?`;
+                             WHERE rank_id IN ${stageId} AND step_id = ?`;
         return new Promise((resolve, reject) => {
             this.clusterDb.all(sql, [step], (err, rows) => {
                 if (err) {

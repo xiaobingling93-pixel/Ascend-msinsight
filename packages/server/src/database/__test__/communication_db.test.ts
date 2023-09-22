@@ -272,7 +272,7 @@ it('query stage data', async function () {
 
 it('query stage bubble time', async function () {
     const response: StageAndBubbleTimeResponse = { stageAndBubbleTimes: [] };
-    response.stageAndBubbleTimes = await CLUSTER_DATABASE.getStageAndBubbleTime('12');
+    response.stageAndBubbleTimes = await CLUSTER_DATABASE.getStageAndBubbleTime('12', []);
     expect(response).toEqual({
         stageAndBubbleTimes:
         [{
