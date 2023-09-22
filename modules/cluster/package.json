@@ -54,7 +54,9 @@
     "test:dev": "set REACT_APP_TEST=1&&react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint src --fix",
-    "dt": "set BROWSER=none&&set REACT_APP_TEST=1&&react-scripts start"
+    "dt": "set BROWSER=none&&set REACT_APP_TEST=1&&react-scripts start",
+    "copyWin": "xcopy .\\build ..\\..\\framework\\plugins\\Cluster\\ /E /I /Y",
+    "copyLinux": "cp -rf ./build ../../framework/plugins/Cluster"
   },
   "eslintConfig": {
     "extends": [

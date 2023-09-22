@@ -21,14 +21,16 @@ export const modulesConfig: ModuleConfig[] = [
         requestName: 'summary',
         attributes: {
             src: './plugins/Cluster/summary.html'
-        }
+        },
+        isDefault: true,
     },
     {
         name: 'communication',
         requestName: 'communication',
         attributes: {
             src: './plugins/Cluster/communication.html'
-        }
+        },
+        isDefault: true,
     },
     {
         name: 'Memory',
