@@ -16,12 +16,5 @@ export const modulesConfig: ModuleConfig[] = [
         },
         isDefault: true,
     },
-    {
-        name: 'test',
-        requestName: 'test',
-        attributes: {
-            src: './plugins/test/index.html'
-        }
-    }
 ];
 

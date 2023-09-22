@@ -5,18 +5,7 @@ import type { TreeNodeType } from '@/components/MenuTree/types';
 import { addDataPath, connectRemote, disconnectRemote, request } from '@/centralServer/server';
 import connector from '@/connection';
 import { modulesConfig } from '@/moduleConfig';
-import { Session, useSession } from './session';
-
-
-const useWatchReset = (session: Omit<Session, '_sharedState'>, dataSources: Ref<DataSource[]>): void => {
-    watch(session, () => {
-        if (session.isReset) {
-            dataSources.value = [];
-            session.reset();
-        }
-    });
-};
-
+import { useSession } from './session';
 
 const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource): boolean => {
     const idx = dataSources.value.findIndex((item) => item.remote === dataSource.remote && item.port === dataSource.port);
@@ -36,9 +25,19 @@ const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource)
 export const useDataSources = defineStore('dataSources', () => {
     const { session } = useSession();
     const dataSources = ref<DataSource[]>([{ remote: LOCAL_HOST, port: PORT, dataPath: [] }]);
-    useWatchReset(session, dataSources);
+
+    watch(session, () => {
+        if (session.isReset) {
+            dataSources.value.splice(1);
+            dataSources.value[0].dataPath.splice(0, dataSources.value[0].dataPath.length - 1);
+        }
+    });
 
     const confirm = async (dataSource: DataSource): Promise<void> => {
+        if (session.isReset) {
+            session.reset();
+            dataSources.value = [{ remote: LOCAL_HOST, port: PORT, dataPath: [] }];
+        }
         const hasExistedServer = mergeDataSource(dataSources, dataSource);
         if (hasExistedServer) {
             return;
@@ -69,6 +68,12 @@ export const useDataSources = defineStore('dataSources', () => {
             event: 'remote/remove',
             body: { dataSource },
         });
+        if (dataSource.remote !== LOCAL_HOST) {
+            dataSources.value.splice(index, 1);
+        } else {
+            dataSources.value[index].dataPath = [];
+        }
+
         for (const module of modulesConfig) {
             // just request reset for displayed module
             if (module.isDefault || session.isCluster) {
@@ -76,10 +81,7 @@ export const useDataSources = defineStore('dataSources', () => {
             }
         }
         if (dataSource.remote !== LOCAL_HOST) {
-            dataSources.value.splice(index, 1);
             disconnectRemote(dataSource);
-        } else {
-            dataSources.value[index].dataPath = [];
         }
     }
 
