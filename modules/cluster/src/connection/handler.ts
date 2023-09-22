@@ -77,14 +77,3 @@ export const parseClusterSuccessHandler: NotificationHandler = (data): void => {
         window.dataSource = data.dataSource as DataSource;
     });
 };
-
-export const wakeupHandler: NotificationHandler = (data): void => {
-    const { sessionStore } = store;
-    const session = sessionStore.activeSession;
-    runInAction(() => {
-        if (!session) {
-            return;
-        }
-        session.clusterStatus = true;
-    });
-};

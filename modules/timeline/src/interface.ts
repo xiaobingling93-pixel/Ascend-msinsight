@@ -13,6 +13,7 @@ export type InterfaceDefs = {
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'remote/import': importRemoteHandler,
     'remote/remove': removeRemoteHandler,
+    'remote/reset': removeRemoteHandler,
     'parse/success': parseSuccessHandler,
     'parse/fail': parseFailHandler,
     setTheme,

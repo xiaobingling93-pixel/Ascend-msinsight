@@ -22,7 +22,6 @@ export const modulesConfig: ModuleConfig[] = [
         attributes: {
             src: './plugins/Cluster/summary.html'
         },
-        isDefault: true,
     },
     {
         name: 'Communication Analysis',
@@ -30,7 +29,6 @@ export const modulesConfig: ModuleConfig[] = [
         attributes: {
             src: './plugins/Cluster/communication.html'
         },
-        isDefault: true,
     },
     {
         name: 'Memory',
