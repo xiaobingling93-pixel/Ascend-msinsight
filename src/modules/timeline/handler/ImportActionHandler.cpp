@@ -54,7 +54,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
 }
 
-void ImportActionHandler::ParseEndCallBack(const std::string token, const std::string fileId, bool result)
+void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::string &fileId, bool result)
 {
     ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId, ", result:", result);
     WsSession *session = WsSessionManager::Instance().GetSession(token);
@@ -68,6 +68,10 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
     event->result = result;
     event->body.unit.type = "card";
     event->body.unit.metadata.cardId = fileId;
+    if (!result) {
+        session->OnEvent(std::move(event));
+        return;
+    }
     uint64_t min = UINT64_MAX;
     uint64_t max = 0;
     DataBaseManager::Instance().GetTraceDatabase(fileId)->QueryExtremumTimestamp(min, max);
