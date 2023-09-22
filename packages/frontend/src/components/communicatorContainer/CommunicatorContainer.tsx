@@ -120,7 +120,7 @@ const CommunicatorHeader = observer(({ session, defaultPPSize }: { session: Sess
     const [form] = Form.useForm();
     const onClick = (size: number) => () => {
         const values: {ppSize: number; tpSize: number; dpSize: number} = form.getFieldsValue();
-        if (values.dpSize * values.tpSize * values.ppSize !== session.units.length || values.ppSize !== size) {
+        if (values.dpSize * values.tpSize * values.ppSize !== session.units.length) {
             message.error('The parameter is incorrect.');
             return;
         }

@@ -14,7 +14,7 @@ import ReactDOM from 'react-dom';
 
 const PpBandwidthAnalysis = observer(function ({ session }: { session: Session }) {
     const [ conditions, setConditions ] = useState<ConditionDataType>(
-        { step: '', stage: '' });
+        { step: '', stage: '', ranks: [] });
 
     return (
         <Layout>
@@ -34,8 +34,8 @@ const PPBandwidthChart: React.FC<any> = ({ conditions }: any) => {
     useEffect(() => {
         setTimeout(() => {
             if (notNullObj(conditions)) {
-                InitCharts('STAGE', conditions.step, conditions.stage);
-                InitCharts('RANK', conditions.step, conditions.stage);
+                InitCharts('STAGE', conditions.step, conditions.stage, conditions.ranks);
+                InitCharts('RANK', conditions.step, conditions.stage, conditions.ranks);
             }
         });
     }, [conditions]);
@@ -57,12 +57,12 @@ const PPBandwidthChart: React.FC<any> = ({ conditions }: any) => {
     );
 };
 
-async function InitCharts(domId: string, stepId: string, stageId: string): Promise<void> {
+async function InitCharts(domId: string, stepId: string, stageId: string, ranks: number[]): Promise<void> {
     const chartDom = document.getElementById(domId);
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
-    const res = domId === 'STAGE' ? await wrapBandwidthDataInStage(domId, stepId) : await wrapBandwidthDataInRank(domId, stepId, stageId);
+    const res = domId === 'STAGE' ? await wrapBandwidthDataInStage(domId, stepId, ranks) : await wrapBandwidthDataInRank(domId, stepId, stageId);
     if (res === null) {
         ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
     } else {
@@ -75,8 +75,8 @@ async function InitCharts(domId: string, stepId: string, stageId: string): Promi
     addResizeEvent(myChart);
 }
 
-async function wrapBandwidthDataInStage(domId: string, stepId: string): Promise<echarts.EChartsOption | null> {
-    const datas = await getStageAndBubbleTimeData(stepId);
+async function wrapBandwidthDataInStage(domId: string, stepId: string, ranks: number[]): Promise<echarts.EChartsOption | null> {
+    const datas = await getStageAndBubbleTimeData(stepId, ranks);
     const stageData: number[] = [];
     const stageTimeData: number[] = [];
     const bubbleTimeData: number[] = [];
@@ -137,11 +137,11 @@ export const getStagesData = async (param: {stepId: string}): Promise<string[]> 
     return stages.data;
 };
 
-async function getStageAndBubbleTimeData (stepId: string): Promise<any> {
+async function getStageAndBubbleTimeData (stepId: string, ranks: number[]): Promise<any> {
     if (isNull(window.request)) {
         return [];
     }
-    const stageAndBubbleTimeList = await window.request('parallelism/pipeline/stageAndBubbleTime', { stepId });
+    const stageAndBubbleTimeList = await window.request('parallelism/pipeline/stageAndBubbleTime', { stepId, ranks });
     return stageAndBubbleTimeList.stageAndBubbleTimes;
 }
 

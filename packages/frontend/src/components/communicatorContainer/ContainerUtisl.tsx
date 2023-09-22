@@ -10,6 +10,6 @@ export const getPpContainerData = (data: communicatorContainerData, mode: string
         return [];
     }
     return tmp?.communicators.map(item => ({
-        value: item.value, label: item.value,
+        value: item.value, label: item.value, ranks: item.ranks,
     }));
 };
