@@ -90,10 +90,8 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
             });
         });
         connector.send({
-            body: {
-                event: 'updateSession',
-                body: { isCluster: result.isCluster, isReset: result.reset, startTime: 0, endTimeAll: session?.endTimeAll },
-            },
+            event: 'updateSession',
+            body: { isCluster: result.isCluster, isReset: result.reset, startTime: 0, endTimeAll: session?.endTimeAll },
         });
     } catch (error) {
         console.error(error);

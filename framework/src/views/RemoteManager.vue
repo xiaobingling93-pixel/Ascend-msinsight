@@ -11,7 +11,10 @@ const isDarkTheme = ref(true);
 const resourceComp = ref();
 
 watch(isDarkTheme, () => {
-    connector.send({ body: { event: 'setTheme', body: { isDark: isDarkTheme.value } } });
+    connector.send({
+        event: 'setTheme',
+        body: { isDark: isDarkTheme.value },
+    });
 });
 
 const showModal = ref(false);
