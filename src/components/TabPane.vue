@@ -43,10 +43,8 @@ onMounted(async () => {
 function toggleTab(index: number): void {
     activeModule.value = index;
     connector.send({
-        body: {
-            event: 'wakeup',
-            body: {}
-        },
+        event: 'wakeup',
+        body: {},
         to: index,
     });
 }
