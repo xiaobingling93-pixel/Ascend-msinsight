@@ -24,7 +24,7 @@ private:
     bool curIsCluster = false;
 
     static void SetParseCallBack(const std::string &token);
-    static void ParseEndCallBack(const std::string token, const std::string fileId, bool result);
+    static void ParseEndCallBack(const std::string &token, const std::string &fileId, bool result);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
     static std::string GetFileId(const std::string &filePath);
     static bool CheckIsCluster(const std::string &filePath);

@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_TRACE_TIME_H
 
 #include <cstdint>
+#include <mutex>
 
 namespace Dic {
 namespace Module {
@@ -21,8 +22,9 @@ public:
 private:
     TraceTime();
     ~TraceTime() = default;
-    uint64_t maxTimestamp;
-    uint64_t minTimestamp;
+    std::mutex mutex;
+    uint64_t maxTimestamp{};
+    uint64_t minTimestamp{};
 };
 } // end of namespace Timeline
 } // end of namespace Module

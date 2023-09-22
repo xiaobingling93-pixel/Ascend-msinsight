@@ -35,63 +35,62 @@ TraceFileParser::~TraceFileParser()
 
 bool TraceFileParser::Parse(const std::string &filePath, const std::string &fileId)
 {
-    start = std::chrono::system_clock::now();
     ServerLog::Info("start parse.");
-    auto splitFile = TraceFileParser::SplitFile(filePath);
-    if (splitFile.empty()) {
-        ServerLog::Error("Failed to split file.");
-        return false;
-    }
+    threadPool->AddTask(PreParseTask, filePath, fileId);
+    return true;
+}
+
+void TraceFileParser::PreParseTask(const std::string &filePath, const std::string &fileId)
+{
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
     std::string dbPath = GetDbPath(filePath, fileId);
     if (!(database->OpenDb(dbPath, true) && database->CreateTable() && database->SetConfig() && database->InitStmt())) {
         ServerLog::Error("Failed to open database. path:", dbPath);
-        return false;
+        ParseEndCallBack(fileId, false);
+        return;
     }
+    auto splitFile = TraceFileParser::SplitFile(filePath);
+    if (splitFile.empty()) {
+        ServerLog::Error("Failed to split file.");
+        ParseEndCallBack(fileId, false);
+        return;
+    }
+    auto &instance = TraceFileParser::Instance();
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
     for (const auto &pos : splitFile) {
-        auto future = threadPool->AddTask([filePath, dbPath, pos, fileId]() {
-            EventParser eventParser(filePath, dbPath, fileId);
-            eventParser.Parse(pos.first, pos.second);
-        });
+        auto future = instance.threadPool->AddTask(ParseTask, filePath, fileId, dbPath, pos);
         futures->emplace_back(std::move(future));
     }
-    auto future = threadPool->AddTask([futures, fileId]() {
-        ServerLog::Info("Wait parse completed. ID:", fileId);
-        for (const auto &future : *futures) {
-            future.wait();
-        }
-        ServerLog::Info("Parse completed. ID:", fileId);
-        auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
-        database->CreateIndex();
-        database->UpdateDepth();
-        ServerLog::Info("Update depth completed. ID:", fileId);
-    });
-    futureMap.emplace(fileId, std::move(future));
-    if (paserEndCallback != nullptr) {
-        std::thread thread{[this, fileId]() {
-            WaitParseEnd(fileId);
-        }};
-        thread.detach();
-    }
-    return true;
+    instance.threadPool->AddTask(EndParseTask, fileId, futures);
 }
 
-bool TraceFileParser::WaitParseEnd(const std::string &fileId)
+void TraceFileParser::ParseTask(const std::string &filePath, const std::string &fileId,
+                                const std::string &dbPath, std::pair<int64_t, int64_t> pos)
 {
-    if (futureMap.count(fileId) == 0) {
-        return false;
-    }
+    EventParser eventParser(filePath, dbPath, fileId);
+    eventParser.Parse(pos.first, pos.second);
+}
+
+void TraceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<std::vector<std::future<void>>> futures)
+{
     ServerLog::Info("Wait parse completed. ID:", fileId);
-    auto &future = futureMap.at(fileId);
-    future.wait();
-    futureMap.erase(fileId);
-    auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
-    ServerLog::Info("end parse. ID:", fileId, ". time:", dur.count());
-    if (paserEndCallback != nullptr) {
-        paserEndCallback(fileId, true);
+    for (const auto &future : *futures) {
+        future.wait();
     }
-    return true;
+    ServerLog::Info("Parse completed. ID:", fileId);
+    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    database->CreateIndex();
+    database->UpdateDepth();
+    ServerLog::Info("Update depth completed. ID:", fileId);
+    ParseEndCallBack(fileId, true);
+}
+
+void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result)
+{
+    auto &instance = TraceFileParser::Instance();
+    if (instance.paserEndCallback != nullptr) {
+        instance.paserEndCallback(fileId, result);
+    }
 }
 
 std::vector<std::pair<int64_t, int64_t>> TraceFileParser::SplitFile(const std::string &filePath)
