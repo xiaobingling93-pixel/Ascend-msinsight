@@ -48,6 +48,62 @@
     --header-background-color: rgb(44, 44, 44);
 }
 
+.dark-theme {
+    --color-background-soft: #ffffff;
+    --color-background-mute: #f2f2f2;
+    --color-background-medium: rgb(100, 100, 100);
+    --color-background-medium-active: rgba(100, 100, 100, 0.8);
+
+    --color-border: var(--vt-c-divider-light-2);
+    --color-border-hover: var(--vt-c-divider-dark-1);
+
+    --color-heading: var(--vt-c-text-light-1);
+    --color-text: var(--vt-c-text-dark-2);
+
+    --section-gap: 160px;
+
+    --header-height: 30px;
+
+    --border-style-hover: 1px solid var(--color-border-hover);
+    --border-radius: 0.3rem;
+    --SvgFillColor: #ffffff;
+    --color-background: #252526;
+    --header-background-color: rgb(44, 44, 44);
+    --treeContent-color: #f4f6fa;
+    --treeNode-color: #bcbcbc;
+    --dataPath-color: #F4F6FA;
+    --dataTree-background: #0a0a0a;
+    --dataTree-onclick: #2c2c2c;
+}
+
+.light-theme {
+    --color-background-soft: rgb(121, 121, 121);
+    --color-background-mute: #f2f2f2;
+    --color-background-medium: rgb(100, 100, 100);
+    --color-background-medium-active: rgba(100, 100, 100, 0.8);
+    --SvgFillColor: #000000;
+
+    --color-border: var(--vt-c-divider-dark-2);
+    --color-border-hover: #d3d3d3;
+
+    --color-heading: var(--vt-c-divider-dark-1);
+    --color-text: var(--vt-c-text-light-2);
+
+    --section-gap: 160px;
+
+    --header-height: 30px;
+
+    --border-style-hover: 1px solid var(--color-border-hover);
+    --border-radius: 0.3rem;
+
+    --color-background: #ffffff;
+    --header-background-color: #f2f2f2;
+    --treeContent-color: #3C3C3C;
+    --treeNode-color: #656565;
+    --dataPath-color: #0B0905;
+    --dataTree-background: #f5f5f5;
+    --dataTree-onclick: var(--vt-c-divider-light-1);
+}
 *,
 *::before,
 *::after {

@@ -15,6 +15,7 @@ watch(isDarkTheme, () => {
         event: 'setTheme',
         body: { isDark: isDarkTheme.value },
     });
+    document.body.className = document.body.className === 'dark-theme' ? 'light-theme' : 'dark-theme';
 });
 
 const showModal = ref(false);
@@ -73,7 +74,7 @@ header {
 
 .container {
     flex-grow: 1;
-    background-color: #252526;
+    background-color: var(--color-background);
 }
 
 .icon-button {

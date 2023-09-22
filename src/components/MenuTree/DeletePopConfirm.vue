@@ -11,7 +11,7 @@ const handleDelete = () => {
   const current = store.menuTree.findIndex(data => data === toRaw(props.data));
   store.remove(current);
 };
-const handleDeleteAll = (done: () => void) => {
+const handleDeleteAll = () => {
   handleDelete();
   dialogVisible.value = false;
 };
@@ -31,7 +31,7 @@ const handleDeleteAll = (done: () => void) => {
         </template>
     </el-popconfirm>
     <Delete v-if="isDeleteAll" @click="dialogVisible = true" />
-    <el-dialog v-model="dialogVisible" width="30%" :show-close="false">
+    <el-dialog v-model="dialogVisible" title="Delete All" width="30%" :show-close="false">
         <span>Are you sure to delete All</span>
         <template #footer>
             <span class="dialog-footer">

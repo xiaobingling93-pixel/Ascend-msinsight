@@ -33,6 +33,11 @@ const props = defineProps<{
 .menu-tree {
     padding: 0.5rem 0.8rem;
 }
+.el-tree {
+  --el-tree-node-hover-bg-color: var(--color-border-hover);
+  color: var(--dataPath-color) !important;
+}
+
 ::v-deep(.contentNode) {
     position: relative;
     width: 100%;
@@ -52,14 +57,14 @@ const props = defineProps<{
 ::v-deep(.contentText) {
     padding: 4px 0 0 2px;
     font-size: 14px;
-    color: #f4f6fa;
+    color: var(--treeContent-color);
     line-height: 24px;
     font-weight: 700;
 }
 ::v-deep(.contentNodeText) {
     padding: 0 0 0 2px;
     font-size: 12px;
-    color: #bcbcbc;
+    color: var(--treeNode-color);
     font-weight: 400;
 }
 </style>

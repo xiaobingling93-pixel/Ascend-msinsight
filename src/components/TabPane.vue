@@ -53,7 +53,7 @@ function toggleTab(index: number): void {
 <template>
     <div class="tab-pane">
         <div class="tab-titles">
-            <el-menu class="el-menu-title" mode="horizontal" background-color="#252526" router>
+            <el-menu class="el-menu-title" mode="horizontal" background-color="var(--color-background)" router>
                 <template
                     v-for="(moduleConfig, index) in modulesConfig"
                     :key="`${index}-${moduleConfig.name}`">
@@ -100,6 +100,7 @@ function toggleTab(index: number): void {
   width: 100%;
   line-height: 30px;
   border-bottom: none !important;
+  --el-menu-hover-bg-color: var(--color-border-hover) !important;
 }
 
 .el-menu-item {
@@ -124,10 +125,6 @@ function toggleTab(index: number): void {
     width: 64px;
     height: 1px;
     background-color: #007aff;
-}
-
-.el-menu-item:hover {
-    background-color: #383838;
 }
 
 @media (min-height: 1024px) {

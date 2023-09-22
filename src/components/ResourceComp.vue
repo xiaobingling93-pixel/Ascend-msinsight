@@ -98,18 +98,24 @@ defineExpose({
     border: 1px solid #656565;
     border-radius: 2px;
     font-size: 12px;
-    color: #F4F6FA;
+    color: var(--dataPath-color);
     line-height: 14px;
     font-weight: 400;
     height: 32px;
     padding: 8px 16px;
 }
 
+.el-tree {
+  --el-tree-node-hover-bg-color: var(--color-border-hover);
+  color: var(--dataPath-color) !important;
+}
+
 .data-tree {
     margin-top: 24px;
     height: 310px;
     overflow-y: auto;
-    background: #0a0a0a;
+    background: var(--dataTree-background);
+    color: var(--dataPath-color) !important;
     padding: 10px;
     border-radius: 4px;
 }
@@ -118,12 +124,13 @@ defineExpose({
     border-radius: 2px;
     border: 1px solid #656565;
     box-shadow: 0 0 0;
+    background-color: transparent !important;
 }
 
 :deep(.el-input.is-disabled .el-input__inner) {
     font-size: 12px;
-    color: #F4F6FA;
-    -webkit-text-fill-color: #F4F6FA;
+    color: var(--dataTree-background);
+    -webkit-text-fill-color: var(--dataPath-color);
     font-weight: 400;
     cursor: auto;
 }
@@ -139,6 +146,6 @@ defineExpose({
 }
 
 :deep(.el-tree-node.is-current > .el-tree-node__content) {
-    background-color: #2c2c2c;
+    background-color: var(--dataTree-onclick);
 }
 </style>

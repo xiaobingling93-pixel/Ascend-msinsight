@@ -17,7 +17,7 @@ import ProjectIcon from '@/components/icons/project_icon.vue';
   align-items: center;
   margin-right: auto;
   font-size: 12px;
-  color: #989A9C;
+  color: var(--color-text);
   line-height: 18px;
   font-weight: 400;
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
 import RemoteManager from './views/RemoteManager.vue';
 import Modules from './views/ModulesView.vue';
@@ -9,6 +9,11 @@ const handleDisplayAside = () => {
     displayAside.value = !displayAside.value;
     asideWidth.value = displayAside.value ? 300 : 0;
 }
+const theme = ref('dark-theme');
+
+onMounted(() => {
+    document.body.className = theme.value;
+})
 </script>
 
 <template>
@@ -39,7 +44,7 @@ const handleDisplayAside = () => {
 }
 
 .el-aside {
-    background-color: #252526;
+    background-color: var(--color-background);
 }
 
 .aside-handler {
