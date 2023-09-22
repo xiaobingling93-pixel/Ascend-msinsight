@@ -95,6 +95,18 @@ public:
             return JsonDump(json[key.data()]);
         }
     }
+
+    static inline std::string GetDumpString(const rapidjson::Value &json, std::string_view key)
+    {
+        if (!json.HasMember(key.data())) {
+            return "";
+        }
+        if (json[key.data()].IsString()) {
+            return json[key.data()].GetString();
+        } else {
+            return JsonDump(json[key.data()]);
+        }
+    }
 };
 } // end of namespace Dic
 

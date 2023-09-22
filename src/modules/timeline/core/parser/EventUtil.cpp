@@ -72,7 +72,7 @@ std::unique_ptr<Event> EventUtil::ToSliceEvent(const json_t &json)
     event->dur = JsonUtil::GetDouble(json, "dur");
     event->name = JsonUtil::GetString(json, "name");
     event->tid = JsonUtil::GetInteger(json, "tid");
-    event->pid = JsonUtil::GetString(json, "pid");
+    event->pid = JsonUtil::GetDumpString(json, "pid");
     event->cat = JsonUtil::GetOptionalString(json, "cat");
     event->args = JsonUtil::GetOptionalString(json, "args");
     return event;
@@ -84,7 +84,7 @@ std::unique_ptr<Event> EventUtil::ToMetaDataEvent(const json_t &json)
     event->type = Type(json);
     event->name = JsonUtil::GetString(json, "name");
     event->tid = JsonUtil::GetInteger(json, "tid");
-    event->pid = JsonUtil::GetString(json, "pid");
+    event->pid = JsonUtil::GetDumpString(json, "pid");
     if (json.HasMember("args")) {
         event->args.name = JsonUtil::GetString(json["args"], "name");
         event->args.labels = JsonUtil::GetString(json["args"], "labels");
@@ -100,8 +100,7 @@ std::unique_ptr<Event> EventUtil::ToFlowEvent(const json_t &json)
     event->ts = JsonUtil::GetDouble(json, "ts");
     event->tid = JsonUtil::GetInteger(json, "tid");
     event->pid = JsonUtil::GetString(json, "pid");
-    auto flowId = JsonUtil::GetOptionalString(json, "id"); // 可能是一个数字
-    event->flowId = flowId.has_value() ? flowId.value() : "";
+    event->flowId = JsonUtil::GetDumpString(json, "id");
     event->name = JsonUtil::GetString(json, "name");
     event->cat = JsonUtil::GetOptionalString(json, "cat");
     return event;
