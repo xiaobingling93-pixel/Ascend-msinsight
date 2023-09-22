@@ -83,7 +83,8 @@ export const wakeupHandler: NotificationHandler = (data): void => {
     const session = sessionStore.activeSession;
     runInAction(() => {
         if (!session) {
-
+            return;
         }
+        session.clusterStatus = true;
     });
 };
