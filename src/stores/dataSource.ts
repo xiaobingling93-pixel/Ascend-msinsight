@@ -46,10 +46,8 @@ export const useDataSources = defineStore('dataSources', () => {
 
         const isSuccess = await connectRemote(dataSource);
         isSuccess && connector.send({
-            body: {
-                event: 'remote/import',
-                body: { dataSource },
-            }
+            event: 'remote/import',
+            body: { dataSource },
         });
     }
 
@@ -68,10 +66,8 @@ export const useDataSources = defineStore('dataSources', () => {
             return;
         }
         connector.send({
-            body: {
-                event: 'remote/remove',
-                body: { dataSource },
-            }
+            event: 'remote/remove',
+            body: { dataSource },
         });
         for (const module of modulesConfig) {
             // just request reset for displayed module

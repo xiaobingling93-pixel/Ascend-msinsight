@@ -19,7 +19,8 @@ export class Session {
     set sharedState(newState: Record<string, unknown>) {
         this._sharedState = newState;
         connector.send({
-            body: { event: 'updateSharedState', body: this._sharedState }
+            event: 'updateSharedState',
+            body: this._sharedState,
         });
     }
     
