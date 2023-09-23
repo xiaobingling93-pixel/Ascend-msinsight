@@ -192,9 +192,9 @@ export const checkDomDisplay = (dom: HTMLElement): boolean => {
 
 export const COLOR = {
     BrightBlue: '#7df7ff',
-    Grey20: 'rgb(202,202,202)',
-    Grey40: 'rgb(152,152,152)',
-    Grey50: 'rgb(123,122,122)',
+    Grey20: '#cacaca',
+    Grey40: '#989898',
+    Grey50: '#7b7a7a',
     Band0: '#f82d18',
     Band1: '#eac299',
     Band2: '#c7eef5',
@@ -270,4 +270,11 @@ export const chartVisbilityListener = (dom: string, onVisibleChange?: AnyFunctio
             onVisibleChange();
         }
     });
+};
+
+export const getDecimalCount = (num: number): number => {
+    const numStr = num.toString();
+    const arr = numStr.split('.');
+    const decimalCount = arr[1].length;
+    return decimalCount;
 };

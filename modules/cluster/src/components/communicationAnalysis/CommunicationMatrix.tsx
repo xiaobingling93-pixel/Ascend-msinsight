@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Select, Checkbox } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import * as echarts from 'echarts';
-import { addResizeEvent, Container, Label, COLOR } from '../Common';
+import { addResizeEvent, Container, Label, COLOR, getDecimalCount } from '../Common';
 import { ConditionDataType } from './Filter';
 import { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
@@ -62,14 +62,17 @@ function wrapData(dataSource: any): any {
             left: 'center',
             bottom: '15%',
             inRange: { color: [ COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3 ] },
+            textStyle: { color: COLOR.Grey40 },
         };
         if (data.length > 0) {
             const max = Math.max(...data.map((item: number[]) => item[2]));
             const min = Math.min(...data.map((item: number[]) => item[2]));
             option.visualMap.max = max;
             option.visualMap.min = min;
+            const minDecimalCount = getDecimalCount(min);
+            const maxDecimalCount = getDecimalCount(max);
+            option.visualMap.precision = Math.max(minDecimalCount, maxDecimalCount);
         }
-
         option.series[0].tooltip.formatter = function (params: any) {
             const { data } = params;
             return `${data[0]} -> ${data[1]} : ${data[2]}`;
@@ -79,6 +82,13 @@ function wrapData(dataSource: any): any {
 }
 
 const baseOption: any = {
+    dataZoom: [
+        {
+            type: 'inside',
+            start: 0,
+            end: 100,
+        },
+    ],
     tooltip: {
         position: 'top',
     },
@@ -88,7 +98,7 @@ const baseOption: any = {
     },
     xAxis: {
         type: 'category',
-        name: 'Dst Rank Id',
+        name: 'Src Rank Id',
         data: [ ],
         splitArea: {
             show: true,
@@ -96,7 +106,7 @@ const baseOption: any = {
     },
     yAxis: {
         type: 'category',
-        name: 'Src Rank Id',
+        name: 'Dst Rank Id',
         data: [ ],
         splitArea: {
             show: true,
@@ -110,6 +120,7 @@ const baseOption: any = {
         left: 'center',
         bottom: '15%',
         inRange: { color: [ COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3 ] },
+        textStyle: { color: COLOR.Grey40 },
     },
     series: [
         {
@@ -145,8 +156,9 @@ const transportTypeOption = {
         splitNumber: 1,
         pieces: [
             { value: 0, label: allTransporType[0], color: COLOR.Band0 },
-            { value: 1, label: allTransporType[1], color: COLOR.Band2 },
-            { value: 2, label: allTransporType[2], color: COLOR.Band3 },
+            { value: 1, label: allTransporType[1], color: COLOR.Band1 },
+            { value: 2, label: allTransporType[2], color: COLOR.Band2 },
+            { value: 3, label: allTransporType[3], color: COLOR.Band3 },
         ],
         textStyle: { color: COLOR.Grey40 },
     },
@@ -179,6 +191,7 @@ const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow:
         const rankRes: {iterationOrRankId: string[] } =
             await queryRanks({ iterationId: conditions.iterationId });
         const rankIds = rankRes.iterationOrRankId;
+        rankIds.sort((a, b) => Number(a) - Number(b));
         setDataSource({ data, rankIds });
     };
     const handleChange = (filed: string, val: string | boolean): void => {

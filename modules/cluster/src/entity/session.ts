@@ -43,7 +43,7 @@ export type LinkData = {
 };
 
 export class Session {
-    clusterStatus: any = false;
+    clusterStatus: boolean = false;
     id = '';
     remoteAttrs: Map<string, Record<string, unknown>> = new Map();
     private _name: string | null;
