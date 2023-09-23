@@ -20,12 +20,6 @@ const computingStatisticsColumns = [
         dataIndex: 'duration',
         key: 'duration',
     },
-
-    {
-        title: 'Accelerator Core Utilization',
-        dataIndex: 'utilization',
-        key: 'utilization',
-    },
 ];
 
 const computingDetailColumns = [
