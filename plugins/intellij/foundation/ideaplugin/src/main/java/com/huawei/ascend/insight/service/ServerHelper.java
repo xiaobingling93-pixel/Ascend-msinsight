@@ -94,8 +94,7 @@ public class ServerHelper {
     private static void executeStartServerCommand() {
         destroy();
         String lineSeparator = StringUtil.FILE_SEPARATOR;
-        String pluginsPath = PathManager.getPluginsPath() + lineSeparator + "ascend-insight" + lineSeparator + "tools"
-                + lineSeparator + "bin";
+        String pluginsPath = PathManager.getPluginsPath() + lineSeparator + "ascend-insight" + lineSeparator + "tools";
         List<String> processArgs = new ArrayList<>();
         if (SystemInfo.isWindows) {
             processArgs.add(CmdConstants.WINDOWS_CMD);

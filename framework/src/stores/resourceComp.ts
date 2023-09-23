@@ -70,7 +70,7 @@ export const useResource = defineStore('resource', () => {
     }
 
     const loadFiles = async (path: string) => {
-        if (path === undefined || path === '') {
+        if (path === undefined) {
             return;
         }
         const result = await request({ remote: LOCAL_HOST, port: PORT, dataPath: [] }, 'global', {
