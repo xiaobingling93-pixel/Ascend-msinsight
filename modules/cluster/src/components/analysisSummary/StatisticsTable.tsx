@@ -324,21 +324,23 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
 
 const StatisticsTable = (props: any): JSX.Element => {
     const { rankId = '', step = '' } = props;
-    return (
-        <div style={{ display: notNull(rankId) ? 'block' : 'none' }}>
-            <div style={{ marginBottom: '20px' }}>
-                <div className={'common-title-h2'}>
-                    {getTitle('compute')} ( Rank {rankId} )
+    return notNull(rankId)
+        ? (
+            <div>
+                <div style={{ marginBottom: '20px' }}>
+                    <div className={'common-title-h2'}>
+                        {getTitle('compute')} ( Rank {rankId} )
+                    </div>
+                    <ComputeStatisticsTable rankId={rankId} step={step}/>
                 </div>
-                <ComputeStatisticsTable rankId={rankId} step={step}/>
-            </div>
-            <div style={{ marginBottom: '20px' }}>
-                <div className={'common-title-h2'}>
-                    {'Communication Detail'} ( Rank {rankId} )
+                <div style={{ marginBottom: '20px' }}>
+                    <div className={'common-title-h2'}>
+                        {'Communication Detail'} ( Rank {rankId} )
+                    </div>
+                    <CommunicationStatisticsTable rankId={rankId} step={step}/>
                 </div>
-                <CommunicationStatisticsTable rankId={rankId} step={step}/>
-            </div>
-        </div>)
+            </div>)
+        : <></>
     ;
 };
 export default StatisticsTable;
