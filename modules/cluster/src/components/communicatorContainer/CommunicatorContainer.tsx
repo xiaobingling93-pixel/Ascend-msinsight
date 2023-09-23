@@ -45,6 +45,7 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
         setActiveTab('pp');
         if (session.communicatorData.partitionModes.length === 0) {
             queryTopSummary({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 }).then((result) => {
+                session.rankCount = result.rankCount;
                 getDefaultCommunicatorData(result.filePath).then(value => {
                     session.communicatorData = value;
                 });
@@ -120,11 +121,11 @@ const CommunicatorHeader = observer(({ session, defaultPPSize }: { session: Sess
     const [form] = Form.useForm();
     const onClick = (size: number) => () => {
         const values: {ppSize: number; tpSize: number; dpSize: number} = form.getFieldsValue();
-        if (values.dpSize * values.tpSize * values.ppSize !== session.units.length || values.ppSize !== size) {
+        if (values.dpSize * values.tpSize * values.ppSize !== session.rankCount) {
             message.error('The parameter is incorrect.');
             return;
         }
-        session.communicatorData = generateCommunicatorData(values, size, session.units.length);
+        session.communicatorData = generateCommunicatorData(values, size, session.rankCount);
         eventBus.emit('activeCommunicator', undefined);
     };
     return (
@@ -137,13 +138,13 @@ const CommunicatorHeader = observer(({ session, defaultPPSize }: { session: Sess
                     }]}/>
             </Form.Item>
             <Form.Item name={'ppSize'} label={'PP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.units.length} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
+                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
             </Form.Item>
             <Form.Item name={'tpSize'} label={'TP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.units.length} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
+                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
             </Form.Item>
             <Form.Item name={'dpSize'} label={'DP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.units.length} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
+                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
             </Form.Item>
             <Button style={{ margin: '10px 10px 10px 0' }} onClick={onClick(defaultPPSize)}>Generate</Button>
         </Form>

@@ -111,6 +111,7 @@ std::unique_ptr<Request> SummaryProtocol::ToStageTimeRequest(const json_t &json,
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.stageId, json["params"], "stageId");
     return reqPtr;
 }
 
