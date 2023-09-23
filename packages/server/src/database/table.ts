@@ -4,6 +4,7 @@ import { Client } from '../types';
 import { getLoggerByName } from '../logger/loggger_configure';
 import { CREATE_KERNEL_DETAIL_TABLE_SQL, KERNEL_DETAIL_TABLE } from '../common/sql_constant';
 import { KernelDetailEntity } from '../query/entity';
+import { CommunicationDetailRequest } from '../query/data';
 
 const logger = getLoggerByName('table', 'info');
 
@@ -68,7 +69,7 @@ export class Table {
         return new Promise((resolve, reject) => {
             this.db.serialize(() => {
                 this.db.run(`DROP TABLE IF EXISTS ${this.sliceTable}`)
-                    .run(`CREATE TABLE ${this.sliceTable} (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER, duration INTEGER, name TEXT, depth INTEGER, track_id INTEGER, cat TEXT, args TEXT)`)
+                    .run(`CREATE TABLE ${this.sliceTable} (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER, duration INTEGER, overlapDuration INTEGER, notOverlapDuration INTEGER, name TEXT, depth INTEGER, track_id INTEGER, cat TEXT, args TEXT)`)
                     .run(`DROP TABLE IF EXISTS ${this.threadTable}`)
                     .run(`CREATE TABLE ${this.threadTable} (track_id INTEGER PRIMARY KEY, tid INTEGER, pid TEXT, thread_name TEXT, thread_sort_index INTEGER)`)
                     .run(`DROP TABLE IF EXISTS ${this.processTable}`)
@@ -447,6 +448,14 @@ export class Table {
         logger.info('update depth end. time:', new Date().getTime() - start);
     }
 
+    async updateOverlapDuration(): Promise<void> {
+        const threadName = 'Group 0 Communication';
+        const notOverlap = 'Communication(Not Overlapped)';
+        const opTrackId = await this.queryTrackId(threadName);
+        const notOverlapTrackId = await this.queryTrackId(notOverlap);
+        await this.updateCommunicationInfo(opTrackId.track_id, notOverlapTrackId.track_id);
+    }
+
     async updateOneTrackDepth(trackId: number): Promise<void> {
         return new Promise((resolve, reject) => {
             const start = new Date().getTime();
@@ -475,6 +484,49 @@ export class Table {
                             reject(err);
                         }
                         logger.info(`trackId ${trackId} update depth end. time:${new Date().getTime() - start}`);
+                        resolve();
+                    });
+            });
+        });
+    }
+
+    async updateCommunicationInfo(trackId: number, notOverlapTrackId: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.db.serialize(() => {
+                this.db.run('BEGIN')
+                    .all(`SELECT id, name,duration, timestamp as startTime, notOverlapDuration, overlapDuration FROM ${this.sliceTable} WHERE track_id = ?`,
+                        [trackId], (err, rows: any[]) => {
+                            if (err) {
+                                logger.error(err.message);
+                                reject(err);
+                            }
+                            for (const row of rows) {
+                                const timestamp = row.startTime;
+                                const duration = row.duration;
+                                const rowId = row.id;
+                                this.db.all(`SELECT duration FROM ${this.sliceTable} 
+                                    WHERE track_id = ${notOverlapTrackId}  and timestamp >= ${timestamp} and timestamp + duration <= ${timestamp + duration}`, (error, rows: any[]) => {
+                                    if (error) {
+                                        logger.error(error.message);
+                                        reject(error);
+                                    }
+                                    let notOverlapDuration = 0;
+                                    for (const row of rows) {
+                                        notOverlapDuration += row.duration;
+                                    }
+                                    const overlapDuration = duration - notOverlapDuration;
+                                    const sql: string = `UPDATE ${this.sliceTable} set notOverlapDuration = ${notOverlapDuration},
+                                        overlapDuration = ${overlapDuration} WHERE id = ${rowId}`;
+                                    this.db.run(sql);
+                                });
+                            }
+                        })
+                    .run('COMMIT', (err) => {
+                        if (err) {
+                            logger.error(err.message);
+                            reject(err);
+                        }
+                        logger.info(`trackId ${notOverlapTrackId} update notOverlapDuration end. time:${new Date().getTime()}`);
                         resolve();
                     });
             });
@@ -560,11 +612,51 @@ export class Table {
         });
     }
 
-    async queryCommunicationDetailInfo(client: Client, trackId: number): Promise<any> {
+    async queryCommunicationDetailInfo(trackId: number): Promise<any> {
         return new Promise((resolve, reject) => {
-            const sql = `SELECT name, timestamp -${client.shadowSession.extremumTimestamp.minTimestamp} as startTime, duration
+            const sql = `SELECT name, timestamp as startTime, duration, notOverlapDuration, overlapDuration
                          FROM ${this.sliceTable}
                          WHERE track_id = ${trackId}`;
+            this.db.all(sql, (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    logger.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
+    async queryCommunicationDetailInfoBySort(request: CommunicationDetailRequest, trackId: number): Promise<any> {
+        const orderList = request.orderBy;
+        const offset = (request.currentPage - 1) * request.pageSize;
+        const ascend = request.order === 'ascend' ? 'ASC' : 'DESC';
+        let sql = '';
+        if (orderList.length === 0) {
+            sql = `SELECT name as communicationKernel, timestamp as startTime, duration as totalDuration, notOverlapDuration, overlapDuration
+                         FROM ${this.sliceTable}
+                         WHERE track_id = ${trackId} LIMIT ${request.pageSize} offset ${offset}`;
+        } else {
+            sql = `SELECT name as communicationKernel, timestamp as startTime, duration as totalDuration, notOverlapDuration, overlapDuration
+                         FROM ${this.sliceTable}
+                         WHERE track_id = ${trackId} order by "${orderList}" ${ascend} LIMIT ${request.pageSize} offset ${offset}`;
+        }
+        return new Promise((resolve, reject) => {
+            this.db.all(sql, (err, rows) => {
+                if (err !== undefined && err !== null) {
+                    logger.error(err.message);
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
+    async updateCommunicationDetailInfo(client: Client, name: Text, notOverlapDuration: number, overlapDuration: number): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const sql = `UPDATE ${this.sliceTable} set notOverlapDuration = ${notOverlapDuration}, overlapDuration = ${overlapDuration} WHERE name = '${name}'`;
             this.db.all(sql, (err, rows) => {
                 if (err !== undefined && err !== null) {
                     logger.error(err.message);
@@ -753,7 +845,7 @@ export class Table {
         });
     };
 
-    async queryNotOverlapTime(table: Table, notOverlapTrackId: number, timeStamp: number, duration: number): Promise<any> {
+    async queryNotOverlapTime(notOverlapTrackId: number, timeStamp: number, duration: number): Promise<any> {
         return new Promise((resolve, reject) => {
             const sql: string = `SELECT duration FROM ${this.sliceTable}
                                 WHERE track_id = ?

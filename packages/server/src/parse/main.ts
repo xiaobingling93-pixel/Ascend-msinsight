@@ -75,6 +75,7 @@ async function parseWorkerEnd(message: EndMessage): Promise<void> {
         const table = tableMap.get(message.rankId) as Table;
         await table.creatIndex();
         await table.updateDepth();
+        await table.updateOverlapDuration();
         logger.log(`parse end. rankId:${message.rankId}`);
         parseCallback(message.rankId);
         parseTaskCount.delete(message.rankId);

@@ -28,45 +28,13 @@ export const computeDetailInfoHandler = async (request: ComputeDetailRequest, cl
 export const communicationDetailInfoHandler = async (request: CommunicationDetailRequest, client: Client): Promise<CommunicationDetailResponse> => {
     const table = tableMap.get(request.rankId) as Table;
     const threadName = 'Group 0 Communication';
-    const notOverlap = 'Communication(Not Overlapped)';
     const opTrackId = await table.queryTrackId(threadName);
-    const notOverlapTrackId = await table.queryTrackId(notOverlap);
     const response: CommunicationDetailResponse = { totalNum: 0, communicationDetail: [] };
     const totalNum = await table.queryCommunicationTotalNum(opTrackId.track_id);
     response.totalNum = totalNum[0].nums;
-    const rows = await table.queryCommunicationDetailInfo(client, opTrackId.track_id);
-    response.communicationDetail = await queryNotOverlapByTime(request, response, table, rows, notOverlapTrackId.track_id, client);
+    response.communicationDetail = await table.queryCommunicationDetailInfoBySort(request, opTrackId.track_id) as CommunicationDetail[];
     return response;
 };
-
-async function queryNotOverlapByTime(request: CommunicationDetailRequest, response: CommunicationDetailResponse, table: Table, rows: any[], notOverlapTrackId: number, client: Client): Promise<CommunicationDetail[]> {
-    for (const row of rows) {
-        let totalTime = 0;
-        const timeStamp = row.startTime + client.shadowSession.extremumTimestamp.minTimestamp;
-        const duration = row.duration;
-        const res = await table.queryNotOverlapTime(table, notOverlapTrackId, timeStamp, duration);
-        for (const re of res) {
-            totalTime += re.duration;
-        }
-        response.communicationDetail.push({
-            communicationKernel: row.name,
-            startTime: row.startTime,
-            totalDuration: row.duration,
-            notOverlapDuration: totalTime,
-            overlapDuration: duration - totalTime,
-        });
-    }
-    const orderBy = request.orderBy;
-    const pageSize = request.pageSize;
-    const currentPage = request.currentPage;
-    const ascend = request.order;
-    sortByRequest(response.communicationDetail, orderBy, ascend);
-    const length = response.communicationDetail.length;
-    if ((currentPage * pageSize - 1) > (length - 1)) {
-        return response.communicationDetail.slice((currentPage - 1) * pageSize, length);
-    }
-    return response.communicationDetail.slice((currentPage - 1) * pageSize, currentPage * pageSize - 1);
-}
 
 function genComputeSql(request: ComputeDetailRequest): string {
     const orderList = request.orderBy;
@@ -85,35 +53,4 @@ function genComputeSql(request: ComputeDetailRequest): string {
                WHERE accelerator_core = '${request.timeFlag}'  order by "${orderList}" ${ascend} LIMIT ${request.pageSize} offset ${offset}`;
     }
     return sql;
-}
-
-function sortByRequest(communicationDetail: CommunicationDetail[], orderBy: string, ascend: string): void {
-    const isAsc = ascend === 'ascend';
-    switch (orderBy) {
-        case 'startTime': {
-            communicationDetail.sort((a, b) =>
-                isAsc ? a.startTime - b.startTime : b.startTime - a.startTime);
-            break;
-        }
-        case 'totalDuration': {
-            communicationDetail.sort((a, b) =>
-                isAsc ? a.totalDuration - b.totalDuration : b.totalDuration - a.totalDuration);
-            break;
-        }
-        case 'overlapDuration': {
-            communicationDetail.sort((a, b) =>
-                isAsc ? a.overlapDuration - b.overlapDuration : b.overlapDuration - a.overlapDuration);
-            break;
-        }
-        case 'notOverlapDuration': {
-            communicationDetail.sort((a, b) =>
-                isAsc ? a.notOverlapDuration - b.notOverlapDuration : b.notOverlapDuration - a.notOverlapDuration);
-            break;
-        }
-        default: {
-            communicationDetail.sort((a, b) =>
-                isAsc ? a.communicationKernel.localeCompare(b.communicationKernel) : b.communicationKernel.localeCompare(a.communicationKernel));
-            break;
-        }
-    }
 }
