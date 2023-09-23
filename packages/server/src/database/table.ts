@@ -776,7 +776,8 @@ export class Table {
                                  sum(duration) as duration,
                                  accelerator_core as acceleratorCore
                                  FROM ${KERNEL_DETAIL_TABLE}
-                                 WHERE accelerator_core in ('AI_CPU','AI_CORE') ${stepCondition}
+                                 WHERE accelerator_core in ('AI_CPU','AI_CORE', 'AI_VECTOR_CORE', 'MIX_AIC',
+                                                            'MIX_AIV', 'FFTS_PLUS') ${stepCondition}
                                  GROUP BY accelerator_core`;
             this.db.all(sql, param, async (err, rows) => {
                 if (err !== undefined && err !== null) {
