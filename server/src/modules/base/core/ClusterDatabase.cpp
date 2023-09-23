@@ -489,10 +489,10 @@ bool ClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam param,
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
-    std::string sql = "SELECT stage_id as stageId, "
-                      "ROUND(stage_time, 4) as stageTime, "
-                      "ROUND(bubble_time, 4) as bubbleTime "
-                      "FROM " + stepTraceTable + " WHERE stage_id != '' AND step_id = ?";
+    std::string sql = "SELECT '" + param.stageId + "' as stageId, "
+                      "max(ROUND(stage_time, 4)) as stageTime, "
+                      "max(ROUND(bubble_time, 4)) as bubbleTime "
+                      "FROM " + stepTraceTable + " WHERE rank_id IN" + param.stageId + " AND step_id = ?";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare GetStageAndBubble statement. error:", sqlite3_errmsg(db));
         return false;

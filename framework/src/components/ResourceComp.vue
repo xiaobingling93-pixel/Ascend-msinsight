@@ -73,7 +73,7 @@ defineExpose({
 
 <template>
     <div class="tree-wrap">
-        <el-input v-model="state.selectedPath" disabled />
+        <el-input v-model="state.selectedPath" />
         <div class="data-tree">
             <el-tree ref="treeRef" :data="resourceState.resource" :props="defaultProps" :accordion="false" node-key="path"
                 @node-click="handleClick" @node-expand="handleExpand" @node-collapse="hanldeCollapse">

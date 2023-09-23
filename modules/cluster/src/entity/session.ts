@@ -56,6 +56,7 @@ export class Session {
     icon: JSX.Element | undefined;
     caches: Caches | null = null;
     simpleCache: SimpleCache;
+    rankCount: number = 0;
 
     // Frontend start time of recording.
     startRecordTime: TimeStamp;

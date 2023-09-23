@@ -55,6 +55,7 @@ struct PipelineStageRequest : public Request {
 
 struct PipelineStageTimeParam {
     std::string stepId;
+    std::string stageId;
 };
 
 struct PipelineStageTimeRequest : public Request {

@@ -73,7 +73,7 @@ async function InitCharts(domId: string, stepId: string, stageId: string): Promi
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
-    const res = domId === 'STAGE' ? await wrapBandwidthDataInStage(domId, stepId) : await wrapBandwidthDataInRank(domId, stepId, stageId);
+    const res = domId === 'STAGE' ? await wrapBandwidthDataInStage(domId, stepId, stageId) : await wrapBandwidthDataInRank(domId, stepId, stageId);
     if (res === null) {
         ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
     } else {
@@ -86,8 +86,8 @@ async function InitCharts(domId: string, stepId: string, stageId: string): Promi
     addResizeEvent(myChart);
 }
 
-async function wrapBandwidthDataInStage(domId: string, stepId: string): Promise<echarts.EChartsOption | null> {
-    const datas = await getStageAndBubbleTimeData(stepId);
+async function wrapBandwidthDataInStage(domId: string, stepId: string, stageId: string): Promise<echarts.EChartsOption | null> {
+    const datas = await getStageAndBubbleTimeData(stepId, stageId);
     const stageData: number[] = [];
     const stageTimeData: number[] = [];
     const bubbleTimeData: number[] = [];
@@ -148,12 +148,12 @@ export const getStagesData = async (param: {stepId: string}): Promise<string[]> 
     return stages.data;
 };
 
-async function getStageAndBubbleTimeData (stepId: string): Promise<any> {
+async function getStageAndBubbleTimeData (stepId: string, stageId: string): Promise<any> {
     if (isNull(window.requestData)) {
         return [];
     }
     const stageAndBubbleTimeList = await window.requestData('parallelism/pipeline/stageAndBubbleTime',
-        { stepId }, 'summary');
+        { stepId, stageId }, 'summary');
     return stageAndBubbleTimeList.stageAndBubbleTimes;
 }
 
