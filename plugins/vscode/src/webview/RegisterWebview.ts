@@ -41,7 +41,7 @@ export class RegisterWebview extends Webview {
     }
 
     executeStartServerCommand() {
-        let serverName = './profiler/server/bin/profiler_server';
+        let serverName = './profiler/server/profiler_server';
         if (platform() === 'win32') {
             serverName = serverName + '.exe';
         }
