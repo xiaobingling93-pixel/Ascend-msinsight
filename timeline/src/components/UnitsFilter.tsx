@@ -213,9 +213,23 @@ const startFilter = (session: Session, inputValue: string, selectValue: string):
 };
 
 const doCardFilter = (flattenUnits: InsightUnit[], inputValue: string): void => {
+    let targetUnit: InsightUnit | undefined;
     flattenUnits.forEach(unit => {
         runInAction(() => {
+            const isTargetUnit = (unit.metadata as CardMetaData).cardName === inputValue;
             unit.isDisplay = (unit.metadata as CardMetaData).cardName === inputValue;
+            if (isTargetUnit) {
+                targetUnit = unit;
+            }
+        });
+    });
+    if (targetUnit === undefined) {
+        return;
+    }
+    targetUnit.children?.forEach(unit => {
+        unit.isDisplay = true;
+        unit.children?.forEach(processUnit => {
+            processUnit.isDisplay = true;
         });
     });
 };
