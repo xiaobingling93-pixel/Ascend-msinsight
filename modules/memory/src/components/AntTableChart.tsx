@@ -2,8 +2,10 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { Table } from 'antd';
+import type { TableProps } from 'antd/es/table';
+import { SorterResult } from 'antd/lib/table/interface';
 import * as React from 'react';
-import { MemoryTable, MemoryTableColumn } from '../utils/interface';
+import { MemoryTable, MemoryTableColumn, OperatorDetail } from '../entity/memory';
 
 interface IProps {
     tableData: MemoryTable;
@@ -13,30 +15,47 @@ interface IProps {
     pageSize: number;
     onCurrentChange: (record: number) => void;
     onPageSizeChange: (record: number) => void;
+    onOrderChange: (order: string | undefined) => void;
+    onOrderByChange: (orderBy: string) => void;
     total: number;
 }
+
+interface IColName {
+    name: string;
+    size: string;
+    allocationTime: string;
+    releaseTime: string;
+    duration: string;
+}
+
+const orderByColName: IColName = {
+    name: 'name',
+    size: 'size',
+    allocationTime: 'allocation_time',
+    releaseTime: 'release_time',
+    duration: 'duration',
+};
 
 const getTableColumns = function (
     columns: MemoryTableColumn[],
     sort: string | undefined,
 ): any {
-    return columns.map((col: MemoryTableColumn) => {
-        const stringCompare = (a: any, b: any): number => a[col.key].localeCompare(b[col.key]);
-        const numberCompare = (a: any, b: any): number => (a[col.key] as number || 0) - (b[col.key] as number || 0);
+    return columns.map((col: MemoryTableColumn, index) => {
         return {
             dataIndex: col.key,
             key: col.key,
             title: col.name,
-            sorter: col.type === 'string' ? stringCompare : numberCompare,
-            defaultSortOrder: sort === col.name ? ('descend' as const) : undefined,
+            sorter: true,
+            width: index === 0 ? '40%' : '15%',
         };
     });
 };
 
+// eslint-disable-next-line max-lines-per-function
 export const AntTableChart: React.FC<IProps> = (props) => {
     const {
         tableData, sortColumn, onRowSelected, current, pageSize,
-        onCurrentChange, onPageSizeChange, total,
+        onCurrentChange, onPageSizeChange, total, onOrderChange, onOrderByChange,
     } = props;
 
     const columns = React.useMemo(
@@ -52,17 +71,24 @@ export const AntTableChart: React.FC<IProps> = (props) => {
         onPageSizeChange(size);
     };
 
+    const onTableChange: TableProps<OperatorDetail>['onChange'] = (pagination, filter,
+        sorter: SorterResult<OperatorDetail> | Array<SorterResult<OperatorDetail>>) => {
+        if ((sorter as SorterResult<OperatorDetail>).order) {
+            const orderByCol = `${(sorter as SorterResult<OperatorDetail>).field}`;
+            onOrderChange((sorter as SorterResult<OperatorDetail>).order as string);
+            onOrderByChange(orderByColName[orderByCol as keyof IColName]);
+        } else {
+            onOrderChange(undefined);
+        }
+    };
+
     const onRow = (record: object, rowIndex?: number): React.HTMLAttributes<any> => {
         return {
             onMouseEnter: (event: any) => {
-                if (onRowSelected) {
-                    onRowSelected(record, rowIndex);
-                }
+                onRowSelected?.(record, rowIndex);
             },
             onMouseLeave: (event: any) => {
-                if (onRowSelected) {
-                    onRowSelected(undefined, undefined);
-                }
+                onRowSelected?.(undefined, undefined);
             },
         };
     };
@@ -73,12 +99,15 @@ export const AntTableChart: React.FC<IProps> = (props) => {
             bordered
             columns={columns}
             dataSource={tableData.rows.map((item, index) => { return { ...item, key: `${item.name}_${index}` }; })}
+            onChange={onTableChange}
             pagination={{
                 current,
                 pageSize,
                 pageSizeOptions: [ '10', '20', '30', '50', '100' ],
                 onChange,
                 total,
+                showTotal: total => `Total ${total} items`,
+                showQuickJumper: true,
             }}
             rowClassName="memory-ant-table-row"
             key={key}

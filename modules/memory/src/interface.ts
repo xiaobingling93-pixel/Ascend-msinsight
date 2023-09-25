@@ -1,5 +1,5 @@
 import { NotificationHandler } from './connection/defs';
-import { importRemoteHandler, removeRemoteHandler, setTheme } from './connection/handler';
+import { parseMemoryCompletedHandler, removeRemoteHandler, setTheme } from './connection/handler';
 
 type InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> = {
     request: Request;
@@ -11,7 +11,7 @@ export type InterfaceDefs = {
 };
 
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
-    'remote/import': importRemoteHandler,
+    'parse/memoryCompleted': parseMemoryCompletedHandler,
     'remote/remove': removeRemoteHandler,
     setTheme,
 };

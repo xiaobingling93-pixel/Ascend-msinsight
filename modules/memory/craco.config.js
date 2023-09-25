@@ -21,7 +21,6 @@ module.exports = {
                 index: './src/index.tsx',
             };
             webpackConfig.output.filename = 'static/js/[name].bundle.js';
-            // webpackConfig.plugins.push(...htmllist);
             webpackConfig.devtool = 'inline-source-map';
             return webpackConfig;
         },

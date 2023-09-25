@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { MemoryCurve, OperatorMemory, OperatorMemoryCondition } from './interface';
+import { MemoryCurve, OperatorMemory, OperatorMemoryCondition } from '../entity/memory';
 
 const dataSource = {
     remote: '127.0.0.1',

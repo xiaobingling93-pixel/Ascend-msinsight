@@ -1,28 +1,19 @@
 import { store } from '../store';
 import { runInAction } from 'mobx';
-import { CardInfo } from '../components/ImportSelect';
 import { NotificationHandler } from './defs';
+import { RankInfo } from '../entity/memory';
 
-const getPropFromData = function<T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
-    if (data[key] === undefined) {
-        console.warn(`cannot get ${key.toString()} of `, data);
-        throw new Error('missed key');
-    }
-    return data[key];
-};
-
-export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
+export const parseMemoryCompletedHandler: NotificationHandler = async (data): Promise<void> => {
     try {
-        const dataSource = getPropFromData(data, 'dataSource') as DataSource;
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
-        const result = await window.request(dataSource, { command: 'import/action', params: { path: dataSource.dataPath } });
         runInAction(() => {
             if (!session) {
                 return;
             }
-            session.token = result.token;
-            result.result.forEach((item: CardInfo) => {
+            session.token = data.token as string;
+            const memoryResult = data.memoryResult as RankInfo[];
+            memoryResult.forEach((item) => {
                 if (!session.memoryRankIds.includes(item.rankId) && (item.hasMemory as boolean)) {
                     session.memoryRankIds.push(item.rankId);
                 }

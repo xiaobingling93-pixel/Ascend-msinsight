@@ -2,10 +2,23 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-export type CardInfo = {
-    cardName: string;
+/**
+ * 返回的数据是否包含memory信息
+ * @interface RankInfo
+ */
+export interface RankInfo {
+    /**
+     *
+     * @type {string}
+     * @memberof RankInfo
+     */
     rankId: string;
-    result: boolean;
+    /**
+     *
+     * @type {boolean}
+     * @memberof RankInfo
+     */
+    hasMemory: boolean;
 };
 
 /**
@@ -75,6 +88,12 @@ export interface OperatorMemory {
  * @interface OperatorDetail
  */
 export interface OperatorDetail {
+    /**
+     *
+     * @type {string}
+     * @memberof OperatorDetail
+     */
+    key?: string;
     /**
      *
      * @type {string}
@@ -197,9 +216,13 @@ export interface OperatorMemoryCondition {
      */
     pageSize: number;
     /**
+     * 排序方式
+     */
+    order?: string;
+    /**
      * 排序列名
      */
-    orderBy: string;
+    orderBy?: string;
     /**
      * 最小内存
      */
@@ -211,5 +234,5 @@ export interface OperatorMemoryCondition {
     /**
      * 算子名称筛选条件
      */
-    orderName: string;
+    orderName?: string;
 }

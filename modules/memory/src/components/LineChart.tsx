@@ -3,7 +3,7 @@
  */
 
 import * as React from 'react';
-import { Graph } from '../utils/interface';
+import { Graph } from '../entity/memory';
 import { useResizeEventDependency, binarySearch } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
 
@@ -208,7 +208,7 @@ export const LineChart: React.FC<IProps> = (props) => {
 
         setChartObj(myChart);
         return () => {
-            myChart.dispose();
+            myChart.clear();
         };
     }, [ graph, resizeEventDependency, isDark ]);
 

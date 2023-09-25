@@ -8,7 +8,7 @@ import { AntTableChart } from '../components/AntTableChart';
 import { LineChart } from '../components/LineChart';
 import { Button, Col, Empty, Input, InputNumber, message, Row, Select, Spin } from 'antd';
 import { Session } from '../entity/session';
-import { Graph, MemoryCurve, MemoryTableColumn, OperatorDetail, OperatorMemoryCondition } from '../utils/interface';
+import { Graph, MemoryCurve, MemoryTableColumn, OperatorDetail, OperatorMemoryCondition } from '../entity/memory';
 import { memoryCurveGet, operatorsMemoryGet } from '../utils/RequestUtils';
 import { Label } from '../components/Common';
 import i18n from '../i18n';
@@ -53,7 +53,8 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     const [ current, setCurrent ] = useState<number>(1);
     const [ pageSize, setPageSize ] = useState<number>(10);
     const [ total, setTotal ] = useState<number>(0);
-    const [ orderBy, setOrderBy ] = useState<string>('name');
+    const [ orderBy, setOrderBy ] = useState<string | undefined>(undefined);
+    const [ order, setOrder ] = useState<string | undefined>(undefined);
     const [ isBtnDisabled, setIsBtnDisabled ] = useState<boolean>(true);
 
     const onSearchEventOperatorChanged: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
@@ -81,12 +82,11 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             message.warning(i18n.t('Invalid Size Warning'));
             return;
         }
-        const param: OperatorMemoryCondition = {
+        let param: OperatorMemoryCondition = {
             rankId,
             token: session.token,
             currentPage: current,
             pageSize,
-            orderBy,
             orderName,
             minSize,
             maxSize,
@@ -94,6 +94,9 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         if (selectedRange) {
             param.startTime = selectedRange.startTs;
             param.endTime = selectedRange.endTs;
+        }
+        if (order !== undefined) {
+            param = { order, orderBy, ...param };
         }
 
         setTableSpin(true);
@@ -145,10 +148,14 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
 
     useEffect(() => {
         onSearch(searchEventOperatorName, minSize, maxSize);
-    }, [ selectedRange, rankId, current, pageSize ]);
+    }, [ selectedRange, rankId, current, pageSize, order, orderBy ]);
 
     useEffect(() => {
         if (rankId === undefined) {
+            setIsBtnDisabled(true);
+            setLineChartData(undefined);
+            setMemoryCurveData(undefined);
+            setMemoryTableData([]);
             return;
         }
 
@@ -174,6 +181,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
 
     useEffect(() => {
         setRankIdList(session.memoryRankIds);
+        session.memoryRankIds.length === 0 && setRankId(undefined);
     }, [session.memoryRankIds]);
 
     return (
@@ -278,6 +286,8 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                                 pageSize={pageSize}
                                 onCurrentChange={setCurrent}
                                 onPageSizeChange={setPageSize}
+                                onOrderChange={setOrder}
+                                onOrderByChange={setOrderBy}
                                 total={total}
                             />
                         </Spin>
