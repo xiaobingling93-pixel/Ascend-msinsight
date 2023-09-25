@@ -121,6 +121,15 @@ struct SearchSliceRequest : public Request {
     SearchSliceRequest() : Request(REQ_RES_SEARCH_SLICE) {};
     SearchSliceParams params;
 };
+
+struct RemoteDeleteParams {
+    std::vector<std::string> rankId;
+};
+
+struct RemoteDeleteRequest : public Request {
+    RemoteDeleteRequest() : Request(REQ_RES_REMOTE_DELETE) {};
+    RemoteDeleteParams params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

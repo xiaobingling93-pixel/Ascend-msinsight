@@ -227,6 +227,15 @@ struct SearchSliceResponse : public Response {
     SearchSliceBody body;
 };
 
+struct RemoteDeleteBody {
+    bool startTimeUpdated = false;
+    uint64_t maxTimeStamp = 0;
+};
+
+struct RemoteDeleteResponse : public Response {
+    RemoteDeleteResponse() : Response(REQ_RES_REMOTE_DELETE) {}
+    RemoteDeleteBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

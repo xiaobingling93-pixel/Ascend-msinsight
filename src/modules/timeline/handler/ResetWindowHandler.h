@@ -23,5 +23,4 @@ public:
 } // end of namespace Module
 } // end of namespace Dic
 
-
 #endif // PROFILER_SERVER_RESET_WINDOW_HANDLER_H

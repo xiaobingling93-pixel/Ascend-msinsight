@@ -9,6 +9,7 @@
 #include "JsonUtil.h"
 #include "DataBaseManager.h"
 #include "EventParser.h"
+#include "ParserStatusManager.h"
 #include "TraceTime.h"
 #include "TraceFileParser.h"
 
@@ -36,12 +37,17 @@ TraceFileParser::~TraceFileParser()
 bool TraceFileParser::Parse(const std::string &filePath, const std::string &fileId)
 {
     ServerLog::Info("start parse.");
+    ParserStatusManager::Instance().SetParserStatus(fileId, ParserStatus::INIT);
     threadPool->AddTask(PreParseTask, filePath, fileId);
     return true;
 }
 
 void TraceFileParser::PreParseTask(const std::string &filePath, const std::string &fileId)
 {
+    if (!ParserStatusManager::Instance().SetRunningStatus(fileId)) {
+        ServerLog::Info("Pre task skip this file.");
+        return;
+    }
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
     std::string dbPath = GetDbPath(filePath, fileId);
     if (!(database->OpenDb(dbPath, true) && database->CreateTable() && database->SetConfig() && database->InitStmt())) {
@@ -67,12 +73,21 @@ void TraceFileParser::PreParseTask(const std::string &filePath, const std::strin
 void TraceFileParser::ParseTask(const std::string &filePath, const std::string &fileId,
                                 const std::string &dbPath, std::pair<int64_t, int64_t> pos)
 {
+    if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
+        ServerLog::Info("Parse task skip this file. ID:", fileId);
+        return;
+    }
     EventParser eventParser(filePath, dbPath, fileId);
     eventParser.Parse(pos.first, pos.second);
 }
 
 void TraceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<std::vector<std::future<void>>> futures)
 {
+    if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
+        DeleteParseFileFromDisk(fileId);
+        ServerLog::Info("End parse task skip this file. ID:", fileId);
+        return;
+    }
     ServerLog::Info("Wait parse completed. ID:", fileId);
     for (const auto &future : *futures) {
         future.wait();
@@ -87,6 +102,10 @@ void TraceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<st
 
 void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result)
 {
+    if (!(result && ParserStatusManager::Instance().SetFinishStatus(fileId))) {
+        DeleteParseFileFromDisk(fileId);
+        result = false;
+    }
     auto &instance = TraceFileParser::Instance();
     if (instance.paserEndCallback != nullptr) {
         instance.paserEndCallback(fileId, result);
@@ -216,9 +235,11 @@ void TraceFileParser::Reset()
         }
     }
     trackIdMap.clear();
+    trackId = 0;
     DataBaseManager::Instance().Clear();
     TraceTime::Instance().Reset();
     FileParser::Reset();
+    ParserStatusManager::Instance().ClearAllParserStatus();
 }
 
 std::string TraceFileParser::GetFileId(const std::string &filePath)
@@ -270,6 +291,29 @@ std::string TraceFileParser::GetFileIdFromPath(const std::string &filePath)
         return "";
     }
     return list.at(list.size() - fileIdPosition);
+}
+
+void TraceFileParser::DeleteParseFileFromDisk(const std::string &fileId)
+{
+    ServerLog::Info("Delete file. id:", fileId);
+    ParserStatusManager::Instance().ClearParserStatus(fileId);
+    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    std::string path = database->GetDbPath();
+    database->ReleaseStmt();
+    database->CloseDb();
+    if (!path.empty()) {
+        FileUtil::RemoveFile(path);
+    }
+    DataBaseManager::Instance().ReleaseTraceDatabase(fileId);
+}
+
+void TraceFileParser::DeleteParseFile(const std::string &fileId)
+{
+    auto oldStatus = ParserStatusManager::Instance().SetTerminateStatus(fileId);
+    ServerLog::Info("Delete file. id:", fileId, ", status:", static_cast<int>(oldStatus));
+    if (oldStatus == ParserStatus::FINISH) {
+        DeleteParseFileFromDisk(fileId);
+    }
 }
 } // end of namespace Timeline
 } // end of namespace Module

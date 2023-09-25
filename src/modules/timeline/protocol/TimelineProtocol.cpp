@@ -23,6 +23,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_UNIT_CHART, ToUnitChartRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceRequest);
+    jsonToReqFactory.emplace(REQ_RES_REMOTE_DELETE, ToRemoteDeleteRequest);
 }
 
 void TimelineProtocol::RegisterResponseToJsonFuncs()
@@ -37,6 +38,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_UNIT_CHART, ToUnitChartResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceResponseJson);
+    resToJsonFactory.emplace(REQ_RES_REMOTE_DELETE, ToRemoteDeleteResponseJson);
 }
 
 void TimelineProtocol::RegisterEventToJsonFuncs()
@@ -177,6 +179,21 @@ std::unique_ptr<Request> TimelineProtocol::ToSearchSliceRequest(const json_t &js
     JsonUtil::SetByJsonKeyValue(reqPtr->params.index, json["params"], "index");
     return reqPtr;
 }
+
+std::unique_ptr<Request> TimelineProtocol::ToRemoteDeleteRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<RemoteDeleteRequest> reqPtr = std::make_unique<RemoteDeleteRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    if (json.contains("rankId") && json["rankId"].is_array()) {
+        for (const auto &id : json["rankId"]) {
+            reqPtr->params.rankId.emplace_back(id);
+        }
+    }
+    return reqPtr;
+}
 #pragma endregion
 
 #pragma region <<Response To Json>>
@@ -229,6 +246,11 @@ std::optional<json_t> TimelineProtocol::ToSearchCountResponseJson(const Response
 std::optional<json_t> TimelineProtocol::ToSearchSliceResponseJson(const Response &response)
 {
     return ToResponseJson<SearchSliceResponse>(dynamic_cast<const SearchSliceResponse &>(response));
+}
+
+std::optional<json_t> TimelineProtocol::ToRemoteDeleteResponseJson(const Response &response)
+{
+    return ToResponseJson<RemoteDeleteResponse>(dynamic_cast<const RemoteDeleteResponse &>(response));
 }
 #pragma endregion
 

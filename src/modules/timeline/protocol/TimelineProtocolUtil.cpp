@@ -174,6 +174,15 @@ template <> std::optional<json_t> ToResponseJson<SearchSliceResponse>(const Sear
     json["body"]["depth"] = response.body.depth;
     return json;
 }
+
+template <> std::optional<json_t> ToResponseJson<RemoteDeleteResponse>(const RemoteDeleteResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["startTimeUpdated"] = response.body.startTimeUpdated;
+    json["body"]["maxTimeStamp"] = response.body.maxTimeStamp;
+    return json;
+}
 #pragma endregion
 
 #pragma region <<Event to json>>

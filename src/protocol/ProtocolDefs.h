@@ -46,6 +46,7 @@ const std::string REQ_RES_RESET_WINDOW = "remote/reset";
 const std::string REQ_RES_UNIT_CHART = "unit/chart";
 const std::string REQ_RES_SEARCH_COUNT = "search/count";
 const std::string REQ_RES_SEARCH_SLICE = "search/slice";
+const std::string REQ_RES_REMOTE_DELETE = "remote/delete";
 #pragma endregion
 } // end of namespace
 }
