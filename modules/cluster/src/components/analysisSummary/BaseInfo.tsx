@@ -86,7 +86,11 @@ const formateTime = (t: number): string => {
 
 const initBaseInfo = async (setData: any): Promise<void> => {
     const res: any = await queryTopSummary(defaultConditions);
-    setData({ ...res, collectStartTime: formatDate(new Date(res.collectStartTime)) });
+    setData({
+        ...res,
+        collectStartTime: formatDate(new Date(res.collectStartTime)),
+        dataSize: res.dataSize !== undefined && res.dataSize > 0.01 ? Number(res.dataSize?.toFixed(2)) : res.dataSize,
+    });
 };
 const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
     const [ data, setData ] = useState<StringMap>({});

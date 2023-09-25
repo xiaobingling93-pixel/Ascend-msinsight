@@ -112,7 +112,7 @@ const communicationDetailColumns = [
         sorter: true,
     },
     {
-        title: 'Start Time',
+        title: 'Start Time(ms)',
         dataIndex: 'startTime',
         key: 'startTime',
         sorter: true,
@@ -208,6 +208,13 @@ const serachData = async({ rankId, record, page, sorter, name, step }: any): Pro
     } else {
         const res = await queryCommunicationDetail(param);
         data = res.communicationDetail;
+        data = data.map((item: any) => ({
+            ...item,
+            startTime: Number((item.startTime / 1000000).toFixed(4)),
+            totalDuration: Number((item.totalDuration / 1000).toFixed(4)),
+            overlapDuration: Number((item.overlapDuration / 1000).toFixed(4)),
+            notOverlapDuration: Number((item.notOverlapDuration / 1000)?.toFixed(4)),
+        }));
         total = res.totalNum;
     }
     return { data, total };

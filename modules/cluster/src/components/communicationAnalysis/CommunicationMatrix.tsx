@@ -242,7 +242,7 @@ const CommunicationMatrixCom = ({ isShow, handleChange, switchCondition }:
                     >Show Inner Communication</Checkbox>
                 </div>
                 <div>
-                    <div id={'matrixchart'} style={{ height: '600px' }}></div>
+                    <div id={'matrixchart'} style={{ height: '800px' }}></div>
                 </div>
             </div>}
         />

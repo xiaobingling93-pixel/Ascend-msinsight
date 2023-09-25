@@ -197,6 +197,8 @@ const bandwidthOption: echarts.EChartsOption = {
             },
             axisLabel: {
                 color: COLOR.Grey40,
+                width: 300,
+                overflow: 'truncate',
             },
         },
     yAxis: [
