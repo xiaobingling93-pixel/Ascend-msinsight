@@ -135,6 +135,7 @@ bool TraceDatabase::CreateTable()
     }
     std::string sql =
         "CREATE TABLE " + sliceTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER, duration INTEGER,"
+                                       " overlapDuration INTEGER, notOverlapDuration INTEGER,"
                                        " name TEXT, depth INTEGER, track_id INTEGER, cat TEXT, args TEXT);" +
         "CREATE TABLE " + threadTable + " (track_id INTEGER PRIMARY KEY, tid INTEGER, pid TEXT, thread_name TEXT," +
                                         " thread_sort_index INTEGER);" +
@@ -203,6 +204,63 @@ bool TraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventList)
         return false;
     }
     return true;
+}
+
+void TraceDatabase::updateCommunicationInfo(std::vector<std::string> opTrackId, std::vector<std::string> notOverlapTrackId)
+{
+    std::vector<Protocol::CommunicationDetail> communication = {};
+    if (!GetCommunicationDetails(opTrackId, communication)) {
+        ServerLog::Error("Failed to get communication detail.");
+    }
+    for (Protocol::CommunicationDetail &detail: communication) {
+        uint64_t duration = detail.totalDuration;
+        uint64_t timestamp = detail.startTime;
+        uint64_t totalTime = 0;
+        std::vector<uint64_t> res = {};
+        res = QueryNotOverlapTime(notOverlapTrackId, timestamp, duration);
+        for (uint64_t re: res) {
+            totalTime += re;
+        }
+        detail.notOverlapDuration = totalTime;
+        detail.overlapDuration = (duration - totalTime);
+        updateCommunication(detail.id, detail.notOverlapDuration, detail.overlapDuration);
+    }
+}
+
+bool TraceDatabase::updateCommunication(const std::string id, const int64_t notOverlapDuration, const int64_t overlapDuration)
+{
+    sqlite3_stmt *stmt = nullptr;
+
+    std::string sql = "UPDATE " + sliceTable + " set notOverlapDuration = ?,  overlapDuration = ? WHERE id = ?";
+
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare insetSlice stat. error:", sqlite3_errmsg(db));
+    }
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to get update slice stmt.");
+        return false;
+    }
+    int idx = bindStartIndex;
+    sqlite3_bind_int64(stmt, idx++, notOverlapDuration);
+    sqlite3_bind_int64(stmt, idx++, overlapDuration);
+    sqlite3_bind_text(stmt, idx++, id.c_str(), id.length(), SQLITE_TRANSIENT);
+
+    auto result = sqlite3_step(stmt);
+
+    if (result != SQLITE_DONE) {
+        ServerLog::Error("Update insert slice fail. ", sqlite3_errmsg(db));
+        return false;
+    }
+    return true;
+}
+
+
+void TraceDatabase::updateOverlapDuration() {
+    std::string threadName = "Group %";
+    std::string notOverlap = "Communication(Not Overlapped)";
+    std::vector<std::string> opTrackId = GetTrackIdList(threadName);
+    std::vector<std::string> notOverlapTrackId = GetTrackIdList(notOverlap);
+    updateCommunicationInfo(opTrackId, notOverlapTrackId);
 }
 
 sqlite3_stmt *TraceDatabase::GetSliceStmt(uint64_t paramLen)
@@ -1186,7 +1244,7 @@ bool TraceDatabase::GetCommunicationDetails(const std::vector<std::string>& opTr
 {
     sqlite3_stmt *stmt = nullptr;
     std::string trackIds = GetTracksSql(opTrackId);
-    std::string sql = "SELECT name, timestamp, duration FROM " + sliceTable + " WHERE track_id IN " + trackIds;
+    std::string sql = "SELECT id, name, timestamp, duration FROM " + sliceTable + " WHERE track_id IN " + trackIds;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
@@ -1195,12 +1253,10 @@ bool TraceDatabase::GetCommunicationDetails(const std::vector<std::string>& opTr
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::CommunicationDetail communicationDetail{};
+        communicationDetail.id = sqlite3_column_string(stmt, col++);
         communicationDetail.communicationKernel = sqlite3_column_string(stmt, col++);
-        double startTime = sqlite3_column_double(stmt, col++) -
-                Timeline::TraceTime::Instance().GetStartTime() / 1000;
-        double duration = sqlite3_column_double(stmt, col++);
-        communicationDetail.startTime = startTime;
-        communicationDetail.totalDuration = duration;
+        communicationDetail.startTime = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+        communicationDetail.totalDuration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
         details.emplace_back(communicationDetail);
     }
     sqlite3_finalize(stmt);
@@ -1217,7 +1273,7 @@ std::vector<std::string> TraceDatabase::GetTrackIdList(const std::string& name)
         int index = bindStartIndex;
         sqlite3_bind_text(stmt, index++, name.c_str(), name.length(), nullptr);
     } else {
-        ServerLog::Error("Failed to prepare sql.");
+        ServerLog::Error("Failed to prepare getTrackIdList sql.");
         return trackId;
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -1227,27 +1283,25 @@ std::vector<std::string> TraceDatabase::GetTrackIdList(const std::string& name)
     return trackId;
 }
 
-std::vector<double> TraceDatabase::QueryNotOverlapTime(const std::vector<std::string>& notOverlapTrackId,
-                                                       const double& timeStamp,
-                                                       const double& duration)
+std::vector<uint64_t> TraceDatabase::QueryNotOverlapTime(const std::vector<std::string>& notOverlapTrackId,
+                                                       const uint64_t timeStamp,
+                                                       const uint64_t duration)
 {
-    std::vector<double> trackId = {};
+    std::vector<uint64_t> trackId = {};
     sqlite3_stmt *stmt = nullptr;
     std::string trackIds = GetTracksSql(notOverlapTrackId);
     std::string sql = "SELECT duration FROM " + sliceTable +
             " WHERE track_id IN " + trackIds + " AND timestamp >= ? AND timeStamp + duration <= ?";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result == SQLITE_OK) {
-        int index = bindStartIndex;
-        sqlite3_bind_text(stmt, index++, trackIds.c_str(), trackIds.length(), nullptr);
-        sqlite3_bind_double(stmt, index++, timeStamp);
-        sqlite3_bind_double(stmt, index++, duration + timeStamp);
-    } else {
+    if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
         return trackId;
     }
+    int index = bindStartIndex;
+    sqlite3_bind_int64(stmt, index++, timeStamp);
+    sqlite3_bind_int64(stmt, index++, duration + timeStamp);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        double id = sqlite3_column_double(stmt, resultStartIndex);
+        auto id = static_cast<uint64_t>(sqlite3_column_int64(stmt, resultStartIndex));
         trackId.push_back(id);
     }
     sqlite3_finalize(stmt);
@@ -1291,6 +1345,59 @@ int32_t TraceDatabase::QueryCommunicationTotalNum(const std::vector<std::string>
     sqlite3_finalize(stmt);
     return totalNum;
 }
+
+bool TraceDatabase::QueryCommunicationNum(const Protocol::CommunicationDetailParams params,
+                                          Protocol::CommunicationDetailResponse &response,
+                                          const std::vector<std::string> &opTrackId)
+{
+    int32_t totalNum = 0;
+    sqlite3_stmt *stmt = nullptr;
+
+    std::string orderList = params.orderBy;
+    int64_t offset = (params.currentPage - 1) * params.pageSize;
+    std::string ascend;
+    if (params.order == "ascend") {
+        ascend = "ASC";
+    } else {
+        ascend = "DESC";
+    }
+    std::string trackIds = GetTracksSql(opTrackId);
+    std::string sql;
+    if (params.orderBy.empty()) {
+        sql = "SELECT name as communicationKernel, ROUND(timestamp - ?, 4) as startTime, "
+              "ROUND(duration, 4) as totalDuration, ROUND(notOverlapDuration, 4) as notOverlapDuration, "
+              "ROUND(overlapDuration, 4) as overlapDuration FROM " + sliceTable + " WHERE track_id IN "
+              + trackIds + " LIMIT ? offset ? ";
+    } else {
+        sql = "SELECT name as communicationKernel, ROUND(timestamp - ?, 4) as startTime, "
+              "ROUND(duration, 4) as totalDuration, ROUND(notOverlapDuration, 4) as notOverlapDuration, "
+              "ROUND(overlapDuration, 4) as overlapDuration FROM " + sliceTable + " WHERE track_id IN "
+              + trackIds + " ORDER BY " + params.orderBy + " " + ascend + " LIMIT ? offset ? ";
+    }
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    int index = bindStartIndex;
+    sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_double(stmt, index++, params.pageSize);
+    sqlite3_bind_int64(stmt, index++, offset);
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::CommunicationDetail communicationDetail{};
+        communicationDetail.communicationKernel = sqlite3_column_string(stmt, col++);
+        communicationDetail.startTime = sqlite3_column_int64(stmt, col++);
+        communicationDetail.totalDuration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+        communicationDetail.notOverlapDuration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+        communicationDetail.overlapDuration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+        response.communication.emplace_back(communicationDetail);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

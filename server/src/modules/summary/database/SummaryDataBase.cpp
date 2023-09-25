@@ -167,7 +167,8 @@ bool SummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams pa
         Protocol::ComputeDetail computeDetail{};
         computeDetail.name = sqlite3_column_string(stmt, col++);
         computeDetail.type = sqlite3_column_string(stmt, col++);
-        computeDetail.startTime = static_cast<double>(sqlite3_column_double(stmt, col++));
+        computeDetail.startTime = (static_cast<double>(sqlite3_column_double(stmt, col++))
+                                  - Timeline::TraceTime::Instance().GetStartTime() / 1000) / 1000;
         computeDetail.duration = static_cast<double>(sqlite3_column_double(stmt, col++));
         computeDetail.waitTime = static_cast<double>(sqlite3_column_double(stmt, col++));
         computeDetail.blockDim = static_cast<double>(sqlite3_column_double(stmt, col++));

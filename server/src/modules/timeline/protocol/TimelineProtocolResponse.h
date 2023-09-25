@@ -229,10 +229,11 @@ struct SearchSliceResponse : public Response {
 
 struct CommunicationDetail {
     std::string communicationKernel;
-    double startTime;
-    double totalDuration;
-    double overlapDuration;
-    double notOverlapDuration;
+    std::string id;
+    uint64_t startTime;
+    uint64_t totalDuration;
+    uint64_t overlapDuration;
+    uint64_t notOverlapDuration;
 };
 
 struct CommunicationDetailResponse : public Response {

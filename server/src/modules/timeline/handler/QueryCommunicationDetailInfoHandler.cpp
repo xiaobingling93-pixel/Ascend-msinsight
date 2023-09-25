@@ -13,111 +13,18 @@ namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
 
-std::vector<double> QueryCommunicationDetailInfoHandler::res;
-
 bool QueryCommunicationDetailInfoHandler::GetResponseData(const Protocol::CommunicationDetailParams& params,
                                                           CommunicationDetailResponse &response)
 {
     std::string threadName = "Group %";
-    std::string notOverlap = "Communication(Not Overlapped)";
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(params.rankId);
     std::vector<std::string> opTrackId = database->GetTrackIdList(threadName);
-    std::vector<std::string> notOverlapTrackId = database->GetTrackIdList(notOverlap);
     response.totalNum = database->QueryCommunicationTotalNum(opTrackId);
-
-    if (!database->GetCommunicationDetails(opTrackId, response.communication)) {
-        ServerLog::Error("Failed to get communication detail.");
+    if (!database->QueryCommunicationNum(params, response, opTrackId)) {
+        ServerLog::Error("Failed to get Communication Details!");
         return false;
     }
-    for (Protocol::CommunicationDetail &detail: response.communication) {
-        double duration = detail.totalDuration;
-        double timestamp = detail.startTime + Timeline::TraceTime::Instance().GetStartTime();
-        double totalTime = 0;
-        res = database->QueryNotOverlapTime(notOverlapTrackId, timestamp, duration);
-        for (double re: res) {
-            totalTime += re;
-        }
-        detail.notOverlapDuration = totalTime;
-        detail.overlapDuration = duration - totalTime;
-    }
-    OrderBy(params, response.communication);
     return true;
-}
-
-// ASC从小到大排序
-bool CompareByKernel(CommunicationDetail detail1, CommunicationDetail detail2)
-{
-    if (detail1.communicationKernel != detail2.communicationKernel) {
-        return detail1.communicationKernel < detail2.communicationKernel;
-    } else {
-        return detail1.startTime < detail2.startTime;
-    }
-}
-
-bool CompareByStart(CommunicationDetail detail1, CommunicationDetail detail2)
-{
-    if (detail1.startTime != detail2.startTime) {
-        return detail1.startTime < detail2.startTime;
-    } else {
-        return detail1.communicationKernel < detail2.communicationKernel;
-    }
-}
-
-bool CompareByOverlapped(CommunicationDetail detail1, CommunicationDetail detail2)
-{
-    if (detail1.overlapDuration != detail2.overlapDuration) {
-        return detail1.overlapDuration < detail2.overlapDuration;
-    } else {
-        return detail1.communicationKernel < detail2.communicationKernel;
-    }
-}
-
-bool CompareByNotOverlapped(CommunicationDetail detail1, CommunicationDetail detail2)
-{
-    if (detail1.notOverlapDuration != detail2.notOverlapDuration) {
-        return detail1.notOverlapDuration < detail2.notOverlapDuration;
-    } else {
-        return detail1.communicationKernel < detail2.communicationKernel;
-    }
-}
-
-bool CompareByDuration(CommunicationDetail detail1, CommunicationDetail detail2)
-{
-    if (detail1.totalDuration != detail2.totalDuration) {
-        return detail1.totalDuration < detail2.totalDuration;
-    } else {
-        return detail1.communicationKernel < detail2.communicationKernel;
-    }
-}
-
-void QueryCommunicationDetailInfoHandler::OrderBy(const Protocol::CommunicationDetailParams& params,
-                                                  std::vector<Protocol::CommunicationDetail> &details)
-{
-    if (params.orderBy == "communicationKernel") {
-        std::sort(details.begin(), details.end(), CompareByKernel);
-    } else if (params.orderBy == "startTime") {
-        std::sort(details.begin(), details.end(), CompareByStart);
-    } else if (params.orderBy == "totalDuration") {
-        std::sort(details.begin(), details.end(), CompareByDuration);
-    } else if (params.orderBy == "notOverlapDuration") {
-        std::sort(details.begin(), details.end(), CompareByNotOverlapped);
-    } else if (params.orderBy == "overlapDuration") {
-        std::sort(details.begin(), details.end(), CompareByOverlapped);
-    }
-    if (params.order != "ascend") {
-        std::reverse(details.begin(), details.end());
-    }
-    int32_t offset = (params.currentPage - 1) * params.pageSize;
-    int32_t vectorSize = details.size();
-    int32_t right = 0;
-    if (params.currentPage * params.pageSize + 1 > vectorSize) {
-        right = vectorSize;
-    } else {
-        right = params.currentPage * params.pageSize;
-    }
-    int32_t left = offset;
-    details.erase(details.begin() + right, details.end());
-    details.erase(details.begin(), details.begin() + left);
 }
 
 void QueryCommunicationDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)

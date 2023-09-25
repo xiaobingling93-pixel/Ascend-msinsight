@@ -76,6 +76,7 @@ bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const s
         auto database = DataBaseManager::Instance().GetTraceDatabase(rankId);
         database->CreateIndex();
         database->UpdateDepth();
+        database->updateOverlapDuration();
         ServerLog::Info("Update depth completed. ID:", rankId);
     });
     futureMap.emplace(rankId, std::move(future));

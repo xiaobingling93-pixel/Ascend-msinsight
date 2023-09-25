@@ -22,10 +22,6 @@ public:
 
     static bool GetResponseData(const Protocol::CommunicationDetailParams& params,
                                 CommunicationDetailResponse &response);
-    static void OrderBy(const Protocol::CommunicationDetailParams& params,
-                        std::vector<Protocol::CommunicationDetail> &details);
-private:
-    static std::vector<double> res;
 };
 
 } // Timeline

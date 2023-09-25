@@ -162,8 +162,8 @@ std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requ
     } else {
         ascend = "DESC";
     }
-    std::string sql = "SELECT name, ROUND(allocation_time / 1000, 2) as allocation_time, "
-                      "ROUND(release_time / 1000, 2) as release_time, size, "
+    std::string sql = "SELECT name, ROUND(allocation_time / 1000 - ?, 2) as allocation_time, "
+                      "ROUND(release_time / 1000 - ?, 2) as release_time, size, "
                       "ROUND(duration / 1000, 2) as duration FROM " + operatorTable +
                       " WHERE name LIKE ?";
 
@@ -200,19 +200,23 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
     }
     int index = bindStartIndex;
     std::string orderName = "%" + requestParams.orderName + "%";
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime() / (1000 * 1000);
+    sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
+    // 1ms = 1000 * 1000 ns
     std::vector<Protocol::MemoryOperator> operatorDtoVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::MemoryOperator operatorDto{};
         operatorDto.name = sqlite3_column_string(stmt, col++);
         // 1ms = 1000us
-        operatorDto.allocationTime = static_cast<double>(sqlite3_column_double(stmt, col++));
-        operatorDto.releaseTime = static_cast<double>(sqlite3_column_double(stmt, col++));
-        operatorDto.size = static_cast<double>(sqlite3_column_double(stmt, col++));
-        operatorDto.duration = static_cast<double>(sqlite3_column_double(stmt, col++));
+        operatorDto.allocationTime = sqlite3_column_double(stmt, col++);
+        operatorDto.releaseTime = sqlite3_column_double(stmt, col++);
+        operatorDto.size = sqlite3_column_double(stmt, col++);
+        operatorDto.duration = sqlite3_column_double(stmt, col++);
         operatorDtoVec.emplace_back(operatorDto);
     }
     responseBody = operatorDtoVec;
@@ -259,7 +263,7 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
             GetOperatorLine(item, operatorMap);
             peak.hasPtaGe = true;
         } else if (item.component == "APP") {
-            peak.appAllocated = std::max(peak.appAllocated, item.totalAllocated);
+            peak.appAllocated = std::max(peak.appAllocated, item.totalReserved);
             GetAppLine(item, operatorMap);
             peak.hasApp = true;
         }
