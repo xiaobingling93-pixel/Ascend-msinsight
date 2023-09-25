@@ -23,6 +23,7 @@
 #include <windows.h>
 #include <shlwapi.h>
 #include <io.h>
+#include <tchar.h>
 
 #else
 #include <sys/stat.h>
@@ -446,6 +447,20 @@ public:
             return false;
         }
         return true;
+    }
+
+    static std::string GetCurrPath()
+    {
+        char currPath[1024];
+    #ifdef _WIN32
+            ::GetModuleFileName(NULL, currPath, MAX_PATH);
+            (_tcsrchr(currPath, '\\'))[1] = 0;
+    #else
+            getcwd(currPath, 1024);
+      sprintf(currPath, "%s/", currPath);
+    #endif
+        std::string strCurrPath = currPath;
+        return strCurrPath;
     }
 };
 } // end of namespace Dic
