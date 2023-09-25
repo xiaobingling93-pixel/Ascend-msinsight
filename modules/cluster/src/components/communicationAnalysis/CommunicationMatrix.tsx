@@ -43,6 +43,10 @@ function wrapData(dataSource: any): any {
     const option: any = baseOption;
     option.xAxis.data = rankIds;
     option.yAxis.data = rankIds;
+    if (rankIds.length > 16) {
+        option.series[0].label.show = false;
+    }
+
     if (type === 'transportType') {
         data.forEach((item: any[]) => { item[2] = allTransporType.indexOf(item[2]); });
         option.series[0].data = data;
@@ -83,6 +87,18 @@ function wrapData(dataSource: any): any {
 
 const baseOption: any = {
     dataZoom: [
+        {
+            type: 'inside',
+            xAxisIndex: [0],
+            start: 0,
+            end: 100,
+        },
+        {
+            type: 'inside',
+            yAxisIndex: [0],
+            start: 0,
+            end: 100,
+        },
         {
             type: 'inside',
             start: 0,

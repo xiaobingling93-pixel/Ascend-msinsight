@@ -696,11 +696,11 @@ bool ClusterDatabase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
     if (!param.stage.empty()) {
         sql.append(" AND stage_id = ? ");
     }
+    sql.append(" group by op_name");
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryOperatorsCount statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sql.append(" group by op_name");
     if (!param.iterationId.empty()) {
         sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_TRANSIENT);
     }
