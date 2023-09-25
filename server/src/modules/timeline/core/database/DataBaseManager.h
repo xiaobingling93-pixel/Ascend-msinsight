@@ -9,7 +9,7 @@
 #include <memory>
 #include <mutex>
 #include "TraceDatabase.h"
-#include "../../../base/core/ClusterDatabase.h"
+#include "ClusterDatabase.h"
 #include "MemoryDataBase.h"
 #include "KernelParse.h"
 

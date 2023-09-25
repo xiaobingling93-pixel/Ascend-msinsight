@@ -14,6 +14,7 @@
 #include "RegexUtil.h"
 #include "ServerLog.h"
 #include "ExecUtil.h"
+#include "NumberUtil.h"
 #include "FileDef.h"
 #include <fstream>
 
@@ -211,10 +212,11 @@ public:
 #endif
     }
 
-    static inline std::map<std::string, std::vector<std::string>>
+    static inline std::map<std::string, std::vector<std::string>, decltype(&NumberUtil::RankIdCompare)>
     SplitToRankList(std::vector<std::pair<std::string, std::string>> fileList)
     {
-        std::map<std::string, std::vector<std::string>> rankListMap;
+        std::map<std::string, std::vector<std::string>, decltype(&NumberUtil::RankIdCompare)>
+                rankListMap(NumberUtil::RankIdCompare);
         for (const auto &item: fileList) {
             std::string rankId = GetRankIdFromFile(item.first);
             rankListMap[rankId].push_back(item.first);

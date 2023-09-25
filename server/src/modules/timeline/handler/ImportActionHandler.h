@@ -7,7 +7,9 @@
 
 #include <set>
 #include <regex>
+#include <atomic>
 #include "TimelineRequestHandler.h"
+#include "NumberUtil.h"
 
 namespace Dic {
 namespace Module {
@@ -20,13 +22,15 @@ public:
     };
     ~ImportActionHandler() override = default;
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    std::atomic<int> executingRankCount = 0;
 
 private:
     bool curIsCluster = false;
 
     static void SetParseCallBack(const std::string &token);
-    static void ParseEndCallBack(const std::string token, const std::string fileId, bool result);
     static void ParseClusterEndProcess(const std::string token, std::string result);
+    static void ParseEndCallBack(const std::string token, const std::string fileId,
+                                 bool result, int executingRankCount);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
     static std::string GetFileId(const std::string &filePath);
     static bool CheckIsCluster(const std::string &filePath);
@@ -43,13 +47,11 @@ private:
     const std::string traceViewReg = R"((trace_view|msprof_[0-9]{1,4}_[0-9]{1,4})\.json$)";
     const std::string memoryOperatorReg = R"((operator_memory|msprof_[0-9]{1,4}_[0-9]{1,4})\.csv$)";
     const std::string memoryRecordReg = R"((memory_record|msprof_[0-9]{1,4}_[0-9]{1,4})\.csv$)";
-    void SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>>& rankListMap,
+    void SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>,
+                                 decltype(&NumberUtil::RankIdCompare)>& rankListMap,
                                  ImportActionResponse &response);
-
     std::vector<MemorySuccess> hasMemory = {};
-
     void ParseMemoryEndProcess(const std::string token);
-
 };
 } // end of namespace Timeline
 } // end of namespace Module

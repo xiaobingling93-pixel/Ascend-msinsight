@@ -48,6 +48,24 @@ public:
             return INVALID_NUMBER;
         }
     }
+
+    static inline bool IsNumber(const std::string& str)
+    {
+        for (char i : str) {
+            if (!isdigit(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static inline bool RankIdCompare(const std::string &a, const std::string &b)
+    {
+        if (NumberUtil::IsNumber(a) && NumberUtil::IsNumber(b)) {
+            return std::stoi(a) < std::stoi(b);
+        }
+        return a < b;
+    }
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_NUMBER_UTIL_H

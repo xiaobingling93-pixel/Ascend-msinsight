@@ -10,6 +10,7 @@
 #include <fstream>
 #include "json.hpp"
 #include "ServerLog.h"
+#include "NumberUtil.h"
 
 namespace Dic {
 namespace Module {
@@ -76,7 +77,6 @@ struct CommunicationMatrixInfo {
     double transitTime;
     double bandwidth;
 };
-
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H

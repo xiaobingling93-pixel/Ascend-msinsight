@@ -16,13 +16,14 @@ public:
     virtual ~FileParser() = default;
     virtual bool Parse(const std::vector<std::string> &filePathArr, const std::string &rankId,
                        const std::string &selectedFolder) = 0;
-    virtual void SetParseEndCallBack(std::function<void(const std::string, bool result)> &callback); // fileId, result
+    virtual void SetParseEndCallBack(std::function<void(const std::string, bool result, int executingRankCount)>
+            &callback); // fileId, result
     virtual std::string GetError();
     virtual void Reset();
 
 protected:
     std::string error;
-    std::function<void(const std::string, bool result)> paserEndCallback;
+    std::function<void(const std::string, bool result, int executingRankCount)> paserEndCallback;
 };
 } // end of namespace Module
 } // end of namespace Dic
