@@ -20,17 +20,15 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Summary',
         requestName: 'summary',
         attributes: {
-            src: 'http://localhost:3000/summary.html'
+            src: './plugins/Cluster/summary.html'
         },
-        // isDefault: true,
     },
     {
         name: 'Communication',
         requestName: 'communication',
         attributes: {
-            src: 'http://localhost:3000/communication.html'
+            src: './plugins/Cluster/communication.html'
         },
-        // isDefault: true,
     },
     {
         name: 'Memory',
@@ -38,6 +36,6 @@ export const modulesConfig: ModuleConfig[] = [
         attributes: {
             src: './plugins/Memory/index.html'
         },
-        // isDefault: true
+        isDefault: true
     }
 ];
