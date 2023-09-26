@@ -275,6 +275,8 @@ export const chartVisbilityListener = (dom: string, onVisibleChange?: AnyFunctio
 export const getDecimalCount = (num: number): number => {
     const numStr = num.toString();
     const arr = numStr.split('.');
-    const decimalCount = arr[1].length;
-    return decimalCount;
+    if (arr[1]?.length) {
+        return arr[1].length;
+    }
+    return 0;
 };
