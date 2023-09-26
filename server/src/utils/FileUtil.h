@@ -217,7 +217,7 @@ public:
     {
         std::map<std::string, std::vector<std::string>> rankListMap;
         for (const auto &item: fileList) {
-            std::string rankId = GetRankIdFromFile(item.first);
+            std::string rankId = item.second;
             rankListMap[rankId].push_back(item.first);
         }
         return rankListMap;
@@ -228,6 +228,7 @@ public:
         std::string parent = GetParentPath(timeLineFile);
         std::string parentSec = GetParentPath(parent);
         auto folders = FileUtil::FindFolders(parentSec);
+        // 从profiler_info_文件获取
         for (const auto &folder: folders) {
             std::regex rankIdFileRegex("profiler_info_[0-9]{1,5}.json");
             if (std::regex_match(folder, rankIdFileRegex)) {
@@ -236,8 +237,30 @@ public:
                 return folder.substr(index + 1, index2 - index - 1);
             }
         }
-        int index3 = timeLineFile.find_last_of('.');
-        return timeLineFile.substr(parent.length() + 1, index3 - parent.length() - 1);
+        // 取上上层目录名
+        std::string rankId = GetRankIdFromPath(timeLineFile);
+        // 上上层目录名没有则取文件的名字
+        if (rankId.empty()) {
+            int index3 = timeLineFile.find_last_of('.');
+            rankId = timeLineFile.substr(parent.length() + 1, index3 - parent.length() - 1);
+        }
+        return rankId;
+    }
+
+    static std::string GetRankIdFromPath(const std::string &filePath)
+    {
+        const int fileIdPosition = 3; // 上上层目录
+        std::string path = FileUtil::GetRealPath(filePath);
+        auto pos = path.find_first_of('\\');
+        while (pos != std::string::npos) {
+            path.replace(pos, 1, "/");
+            pos = path.find_first_of('\\');
+        }
+        auto list = StringUtil::Split(path, "/");
+        if (list.size() < fileIdPosition) {
+            return "";
+        }
+        return list.at(list.size() - fileIdPosition);
     }
 
     static inline std::string GetParentPath(const std::string filePath)

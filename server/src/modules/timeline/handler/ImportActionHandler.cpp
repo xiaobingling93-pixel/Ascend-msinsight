@@ -62,7 +62,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, selectedFolder);
     }
     std::string parseClusterResult = "none";
-    if (rankListMap.size() > 1) {
+    if (curIsCluster) {
         ClusterFileParser clusterFileParser;
         if (clusterFileParser.ParseClusterFiles(selectedFolder)) {
             parseClusterResult = "ok";
@@ -80,9 +80,6 @@ void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, st
     for (const auto &rankEntry : rankListMap) {
         std::string rankId = rankEntry.first;
         Action action;
-        if (DataBaseManager::Instance().HasFileId(rankId)) {
-            continue;
-        }
         action.cardName = rankId;
         action.rankId = rankId;
         action.result = true;
@@ -301,7 +298,7 @@ void ImportActionHandler::SearchMetaData(const std::string &fileId,
 
 std::string ImportActionHandler::GetFileId(const std::string &filePath)
 {
-    std::string fileId = TraceFileParser::Instance().GetFileId(filePath);
+    std::string fileId = FileUtil::GetRankIdFromFile(filePath);
     int i = 1;
     std::string result = fileId;
     while (DataBaseManager::Instance().HasFileId(result)) {
