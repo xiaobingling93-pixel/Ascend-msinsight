@@ -73,6 +73,9 @@ function wrapData(dataSource: any): any {
             const min = Math.min(...data.map((item: number[]) => item[2]));
             option.visualMap.max = max;
             option.visualMap.min = min;
+            if (min === max) {
+                option.visualMap.inRange = { color: [COLOR.Band1] };
+            }
             const minDecimalCount = getDecimalCount(min);
             const maxDecimalCount = getDecimalCount(max);
             option.visualMap.precision = Math.max(minDecimalCount, maxDecimalCount);
