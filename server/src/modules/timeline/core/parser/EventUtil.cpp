@@ -99,7 +99,7 @@ std::unique_ptr<Event> EventUtil::ToFlowEvent(const json_t &json)
     event->type = Type(json);
     event->ts = JsonUtil::GetDouble(json, "ts");
     event->tid = JsonUtil::GetInteger(json, "tid");
-    event->pid = JsonUtil::GetString(json, "pid");
+    event->pid = JsonUtil::GetDumpString(json, "pid");
     event->flowId = JsonUtil::GetDumpString(json, "id");
     event->name = JsonUtil::GetString(json, "name");
     event->cat = JsonUtil::GetOptionalString(json, "cat");
