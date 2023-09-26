@@ -174,6 +174,7 @@ void ImportActionHandler::SendParseSuccessEvent(const std::string &token, const 
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     SearchMetaData(fileId, event->body.unit.children);
     session->OnEvent(std::move(event));
+    ParseMemoryEndProcess(token);
 }
 
 void ImportActionHandler::SendParseFailEvent(const std::string &token, const std::string &fileId)
@@ -330,7 +331,7 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
         return {};
     }
     if (pathList.size() == 1) {
-        bool isCluster = CheckIsCluster(pathList[0]);
+        bool isCluster = traceFiles.size() > 1;
         bool reset = isCluster || curIsCluster;
         ServerLog::Info("new Cluster:", isCluster, ", old Cluster:", curIsCluster, ", reset:", reset);
         curIsCluster = isCluster;
