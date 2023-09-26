@@ -222,6 +222,13 @@ template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSucc
     return json;
 }
 
+template <> std::optional<json_t> ToEventJson<ParseFailEvent>(const ParseFailEvent &event)
+{
+    json_t json;
+    ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    json["body"]["rankId"] = event.body.rankId;
+    return json;
+}
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

@@ -57,6 +57,15 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
 void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::string &fileId, bool result)
 {
     ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId, ", result:", result);
+    if (result) {
+        SendParseSuccessEvent(token, fileId);
+    } else {
+        SendParseFailEvent(token, fileId);
+    }
+}
+
+void ImportActionHandler::SendParseSuccessEvent(const std::string &token, const std::string &fileId)
+{
     WsSession *session = WsSessionManager::Instance().GetSession(token);
     if (session == nullptr) {
         ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
@@ -65,13 +74,9 @@ void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::
     auto event = std::make_unique<ParseSuccessEvent>();
     event->moduleName = ModuleType::TIMELINE;
     event->token = token;
-    event->result = result;
+    event->result = true;
     event->body.unit.type = "card";
     event->body.unit.metadata.cardId = fileId;
-    if (!result) {
-        session->OnEvent(std::move(event));
-        return;
-    }
     uint64_t min = UINT64_MAX;
     uint64_t max = 0;
     DataBaseManager::Instance().GetTraceDatabase(fileId)->QueryExtremumTimestamp(min, max);
@@ -83,6 +88,21 @@ void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::
     }
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     SearchMetaData(fileId, event->body.unit.children);
+    session->OnEvent(std::move(event));
+}
+
+void ImportActionHandler::SendParseFailEvent(const std::string &token, const std::string &fileId)
+{
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        ServerLog::Warn("Failed to get session, token = ", StringUtil::AnonymousString(token));
+        return;
+    }
+    auto event = std::make_unique<ParseFailEvent>();
+    event->moduleName = ModuleType::TIMELINE;
+    event->token = token;
+    event->result = true;
+    event->body.rankId = fileId;
     session->OnEvent(std::move(event));
 }
 
