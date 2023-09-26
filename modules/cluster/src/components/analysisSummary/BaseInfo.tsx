@@ -100,7 +100,7 @@ const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
         });
     }, []);
     return <Container
-        title={'BaseInfo'}
+        title={'Base Info'}
         titleClassName={'common-title-bottom'}
         style={{ height: 'auto' }}
         content={(<div className={'baseinfo'}>
