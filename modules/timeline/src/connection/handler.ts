@@ -94,6 +94,7 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
                 }
                 session.units.push(unit);
             });
+            session.sortUnits();
         });
         connector.send({
             event: 'updateSession',

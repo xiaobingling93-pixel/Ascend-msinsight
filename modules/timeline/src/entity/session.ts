@@ -248,4 +248,15 @@ export class Session {
     printSessionInfo(): string {
         return `${JSON.stringify({ ...omit(this, [ 'caches', 'sharedState', '_units' ]) })}`;
     }
+
+    sortUnits(): void {
+        this.units.sort((a, b) => {
+            const aName = (a.metadata as any).cardId;
+            const bName = (b.metadata as any).cardId;
+            if (aName.length === bName.length) {
+                return aName.localeCompare(bName);
+            }
+            return aName.length - bName.length;
+        });
+    }
 }
