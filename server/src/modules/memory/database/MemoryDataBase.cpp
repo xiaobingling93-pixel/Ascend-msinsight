@@ -162,16 +162,16 @@ std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requ
     } else {
         ascend = "DESC";
     }
-    std::string sql = "SELECT name, ROUND(allocation_time / 1000 - ?, 2) as allocation_time, "
-                      "ROUND(release_time / 1000 - ?, 2) as release_time, size, "
+    std::string sql = "SELECT name, ROUND(allocation_time / 1000 - ?, 2) as allocationTime, "
+                      "ROUND(release_time / 1000 - ?, 2) as releaseTime, size, "
                       "ROUND(duration / 1000, 2) as duration FROM " + operatorTable +
                       " WHERE name LIKE ?";
 
     if (requestParams.startTime != -1) {
-        sql += " AND allocation_time >= " + std::to_string(requestParams.startTime);
+        sql += " AND allocationTime >= " + std::to_string(requestParams.startTime);
     }
     if (requestParams.endTime != -1) {
-        sql += " AND allocation_time <= " + std::to_string(requestParams.endTime);
+        sql += " AND allocationTime <= " + std::to_string(requestParams.endTime);
     }
 
     if (requestParams.minSize != -1) {

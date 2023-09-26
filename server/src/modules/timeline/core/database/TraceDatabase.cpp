@@ -1287,25 +1287,39 @@ std::vector<uint64_t> TraceDatabase::QueryNotOverlapTime(const std::vector<std::
                                                        const uint64_t timeStamp,
                                                        const uint64_t duration)
 {
-    std::vector<uint64_t> trackId = {};
+    std::vector<uint64_t> trackDuration = {};
     sqlite3_stmt *stmt = nullptr;
     std::string trackIds = GetTracksSql(notOverlapTrackId);
-    std::string sql = "SELECT duration FROM " + sliceTable +
-            " WHERE track_id IN " + trackIds + " AND timestamp >= ? AND timeStamp + duration <= ?";
+    std::string sql = "SELECT duration, duration + timestamp AS endTime, timestamp AS startTime FROM " + sliceTable +
+            " WHERE track_id IN " + trackIds +
+            " AND ((timestamp >= ? AND timestamp <= ?) OR (timeStamp + duration <= ? AND timeStamp + duration >= ?))";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
-        return trackId;
+        return trackDuration;
     }
     int index = bindStartIndex;
     sqlite3_bind_int64(stmt, index++, timeStamp);
     sqlite3_bind_int64(stmt, index++, duration + timeStamp);
+    sqlite3_bind_int64(stmt, index++, duration + timeStamp);
+    sqlite3_bind_int64(stmt, index++, timeStamp);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        auto id = static_cast<uint64_t>(sqlite3_column_int64(stmt, resultStartIndex));
-        trackId.push_back(id);
+        int col = resultStartIndex;
+        auto time = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+        auto endTime = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+        auto startTime = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+        if (timeStamp <= startTime and endTime <= duration + timeStamp) {
+            trackDuration.push_back(time);
+        } else if (timeStamp <= startTime and duration + timeStamp < endTime) {
+            trackDuration.push_back(duration + timeStamp - startTime);
+        } else if (startTime < timeStamp and endTime <= duration + timeStamp) {
+            trackDuration.push_back(endTime - timeStamp);
+        } else if (startTime < timeStamp and duration + timeStamp < endTime) {
+            trackDuration.push_back(duration);
+        }
     }
     sqlite3_finalize(stmt);
-    return trackId;
+    return trackDuration;
 }
 
 std::string TraceDatabase::GetTracksSql(const std::vector<std::string>& rankList)

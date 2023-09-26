@@ -23,6 +23,8 @@ namespace Timeline {
 using namespace Dic;
 using namespace Dic::Server;
 
+std::vector<MemorySuccess> ImportActionHandler::hasMemory = {};
+
 void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     ImportActionRequest &request = dynamic_cast<ImportActionRequest &>(*requestPtr.get());
@@ -54,9 +56,8 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     // 按rankId 拆分文件
     std::map<std::string, std::vector<std::string>, decltype(&NumberUtil::RankIdCompare)> rankListMap =
             FileUtil::SplitToRankList(files);
-    SetParseCallBack(token);
     SetBaseActionOfResponse(rankListMap, response);
-    ParseMemoryEndProcess(token);
+    SetParseCallBack(token);
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
@@ -173,6 +174,7 @@ void ImportActionHandler::ParseEndCallBack(const std::string token, const std::s
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     SearchMetaData(fileId, event->body.unit.children);
     session->OnEvent(std::move(event));
+    ParseMemoryEndProcess(token);
 }
 
 std::vector<std::string> ImportActionHandler::FindAllTraceFile(const std::vector<std::string> &pathList)
