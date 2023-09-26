@@ -50,6 +50,15 @@ struct ParseSuccessEvent : public Event {
     ParseSuccessEventBody body;
 };
 
+struct ParseFailEventBody {
+    std::string rankId;
+};
+
+struct ParseFailEvent : public Event {
+    ParseFailEvent() : Event(EVENT_PARSE_FAIL) {}
+    ParseFailEventBody body;
+};
+
 } // end of namespace Protocol
 } // end if namespace Dic
 

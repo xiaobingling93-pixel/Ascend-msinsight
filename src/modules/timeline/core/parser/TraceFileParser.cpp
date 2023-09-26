@@ -7,6 +7,7 @@
 #include "RegexUtil.h"
 #include "FileUtil.h"
 #include "JsonUtil.h"
+#include "StringUtil.h"
 #include "DataBaseManager.h"
 #include "EventParser.h"
 #include "ParserStatusManager.h"
@@ -114,10 +115,18 @@ void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result)
 
 std::vector<std::pair<int64_t, int64_t>> TraceFileParser::SplitFile(const std::string &filePath)
 {
-    std::vector<std::pair<int64_t, int64_t>> result;
+#ifdef _WIN32
+    std::string path(filePath);
+    if (StringUtil::IsUtf8String(filePath)) {
+        path = StringUtil::Utf8ToGbk(filePath.c_str());
+    }
+    std::ifstream file(path, std::ios::in);
+#else
     std::ifstream file(filePath, std::ios::in);
+#endif
+    std::vector<std::pair<int64_t, int64_t>> result;
     if (!file.is_open()) {
-        ServerLog::Error("Failed to open file.");
+        ServerLog::Error("Failed to open file. ", filePath);
         return result;
     }
     file.seekg(0, std::ifstream::end);
@@ -268,7 +277,6 @@ std::string TraceFileParser::GetFileIdFromFile(const std::string &filePath)
     std::string error;
     auto json = JsonUtil::TryParse(rankId, error);
     if (!json.has_value()) {
-        ServerLog::Warn("Failed to parse json.", error, " string:", rankId);
         return "";
     }
     if (json.value().contains("rank_id")) {

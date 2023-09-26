@@ -26,6 +26,7 @@ const std::string EVENT_NAME = "event";
 const std::string EVENT_INITIALIZED = "initialized";
 // timeline
 const std::string EVENT_PARSE_SUCCESS = "parse/success";
+const std::string EVENT_PARSE_FAIL = "parse/fail";
 #pragma endregion
 
 #pragma region << Request / Response Command>>

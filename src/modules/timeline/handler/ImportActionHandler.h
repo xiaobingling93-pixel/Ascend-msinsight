@@ -34,6 +34,8 @@ private:
     void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
     std::vector<std::pair<std::string, std::string>> GetTraceFiles(const std::vector<std::string> &pathList,
                                                                    ImportActionResBody &body);
+    static void SendParseSuccessEvent(const std::string &token, const std::string &fileId);
+    static void SendParseFailEvent(const std::string &token, const std::string &fileId);
 };
 } // end of namespace Timeline
 } // end of namespace Module

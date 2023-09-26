@@ -44,6 +44,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
 void TimelineProtocol::RegisterEventToJsonFuncs()
 {
     eventToJsonFactory.emplace(EVENT_PARSE_SUCCESS, ToParseSuccessEventJson);
+    eventToJsonFactory.emplace(EVENT_PARSE_FAIL, ToParseFailEventJson);
 }
 
 #pragma region <<Json To Request>>
@@ -258,6 +259,10 @@ std::optional<json_t> TimelineProtocol::ToRemoteDeleteResponseJson(const Respons
 std::optional<json_t> TimelineProtocol::ToParseSuccessEventJson(const Event &event)
 {
     return ToEventJson<ParseSuccessEvent>(dynamic_cast<const ParseSuccessEvent &>(event));
+}
+std::optional<json_t> TimelineProtocol::ToParseFailEventJson(const Event &event)
+{
+    return ToEventJson<ParseFailEvent>(dynamic_cast<const ParseFailEvent &>(event));
 }
 #pragma endregion
 } // namespace Protocol

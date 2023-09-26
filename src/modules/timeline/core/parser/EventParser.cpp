@@ -59,7 +59,15 @@ void EventParser::Parse(int64_t startPosition, int64_t endPosition)
 
 std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
 {
+#ifdef _WIN32
+    std::string path(filePath);
+    if (StringUtil::IsUtf8String(filePath)) {
+        path = StringUtil::Utf8ToGbk(filePath.c_str());
+    }
+    std::ifstream file(path, std::ios::in);
+#else
     std::ifstream file(filePath, std::ios::in);
+#endif
     if (!file.is_open()) {
         ServerLog::Error("EventParser. Failed to open file.");
         return "";

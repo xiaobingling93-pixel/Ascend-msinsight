@@ -362,12 +362,10 @@ sqlite3_stmt *TraceDatabase::GetFlowStmt(uint64_t paramLen)
 void TraceDatabase::UpdateDepth()
 {
     ServerLog::Info("UpdateDepth.");
-    StartTransaction();
     auto trackList = GetTrackIdList();
     for (auto &trackId : trackList) {
         UpdateOneTrackDepth(trackId);
     }
-    EndTransaction();
     ServerLog::Info("UpdateDepth end.");
 }
 
@@ -397,6 +395,7 @@ void TraceDatabase::UpdateOneTrackDepth(int64_t trackId)
     }
     std::map<int, std::vector<int64_t>> depthMap;
     CalcDepth(sliceTimeList, depthMap);
+    sliceTimeList.clear();
     for (auto &it : depthMap) {
         UpdateDepthByID(it.second, it.first);
     }
