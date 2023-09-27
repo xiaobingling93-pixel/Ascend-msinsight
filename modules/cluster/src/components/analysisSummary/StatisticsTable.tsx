@@ -5,9 +5,10 @@ import { Button } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 import { StringMap } from '../../utils/interface';
-import { notNull, GetPageConfigWhithPageData } from '../Common';
+import { notNull, GetPageConfigWhithPageData, Loading } from '../Common';
 import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } from '../../utils/RequestUtils';
 import ResizeTable from '../resize/ResizeTable';
+import { Session } from '../../entity/session';
 
 const computingStatisticsColumns = [
     {
@@ -329,8 +330,8 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
     />;
 };
 
-const StatisticsTable = (props: any): JSX.Element => {
-    const { rankId = '', step = '' } = props;
+const StatisticsTable = (props: {step: string;rankId: string;session: Session}): JSX.Element => {
+    const { rankId = '', step = '', session } = props;
     return notNull(rankId)
         ? (
             <div>
@@ -338,13 +339,19 @@ const StatisticsTable = (props: any): JSX.Element => {
                     <div className={'common-title-h2'}>
                         {getTitle('compute')} ( Rank {rankId} )
                     </div>
-                    <ComputeStatisticsTable rankId={rankId} step={step}/>
+                    {session.parseCompleted
+                        ? (<ComputeStatisticsTable rankId={rankId} step={step} session={session}/>)
+                        : <Loading style={{ margin: '10px auto' }}/>
+                    }
                 </div>
                 <div style={{ marginBottom: '20px' }}>
                     <div className={'common-title-h2'}>
                         {'Communication Detail'} ( Rank {rankId} )
                     </div>
-                    <CommunicationStatisticsTable rankId={rankId} step={step}/>
+                    {session.parseCompleted
+                        ? <CommunicationStatisticsTable rankId={rankId} step={step} session={session}/>
+                        : <Loading style={{ margin: '10px auto' }}/>
+                    }
                 </div>
             </div>)
         : <></>
