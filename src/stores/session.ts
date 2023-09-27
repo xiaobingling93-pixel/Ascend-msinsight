@@ -10,6 +10,8 @@ export class Session {
     endTimeAll: Timestamp = -1; 
     isCluster: boolean = false;
     isReset: boolean = false;
+    parseCompleted: boolean = false;
+    clusterCompleted: boolean = false;
     private _sharedState: Record<string, unknown> = {};
 
     get sharedState(): Record<string, unknown> {
