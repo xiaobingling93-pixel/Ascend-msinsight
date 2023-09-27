@@ -893,7 +893,7 @@ bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestPar
         flowName.title = row.name;
         flowName.tid = sliceFlowDetailVec[0].tid;
         flowName.pid = sliceFlowDetailVec[0].pid;
-        flowName.timestamp = sliceFlowDetailVec[0].timestamp;
+        flowName.timestamp = sliceFlowDetailVec[0].timestamp - minTimestamp;
         flowName.depth = sliceFlowDetailVec[0].depth;
         flowName.flowId = row.flowId;
         responseBody.flowDetail.emplace_back(flowName);
