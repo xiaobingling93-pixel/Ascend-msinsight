@@ -49,6 +49,12 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             if (unitData.startTimeUpdated === true) {
                 session.simpleCache.clear();
             }
+            if (!(session.units.find(item => item.phase === 'analyzing'))) {
+                connector.send({
+                    event: 'updateSession',
+                    body: { parseCompleted: !(session.units.find(item => item.phase === 'analyzing')) },
+                });
+            }
         });
     } catch (error) {
         console.error(error);
@@ -134,4 +140,13 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
 
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
+};
+
+export const clusterCompletedHandler: NotificationHandler = (data): void => {
+    if (data.parseResult === 'ok') {
+        connector.send({
+            event: 'updateSession',
+            body: { isCluster: true },
+        });
+    }
 };

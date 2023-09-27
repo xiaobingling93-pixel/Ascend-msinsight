@@ -202,7 +202,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
             return {
                 Detail: ({ session }) => <SelectedDataBottomPanel session={session} detail={singleSliceDetail}>{EmptyJSXElement}</SelectedDataBottomPanel>,
                 DetailTitle: 'Slice Detail',
-                More: ({ session }) => <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
+                // More: ({ session }) => <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
             };
         }
         return TabPanes({ tabs, commonBottomPanel });
