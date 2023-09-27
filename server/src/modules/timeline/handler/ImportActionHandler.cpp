@@ -328,7 +328,7 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
         return {};
     }
     if (pathList.size() == 1) {
-        bool isCluster = traceFiles.size() > 1;
+        bool isCluster = traceFiles.size() > 1 || CheckIsCluster(pathList[0]);
         bool reset = isCluster || curIsCluster;
         ServerLog::Info("new Cluster:", isCluster, ", old Cluster:", curIsCluster, ", reset:", reset);
         curIsCluster = isCluster;
