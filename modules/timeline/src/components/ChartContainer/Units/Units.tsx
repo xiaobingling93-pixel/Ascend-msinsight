@@ -35,7 +35,7 @@ const Lane = styled.div<{ laneHeight: number; className: string }>`
         }
     }
     .chart-selected {
-        box-shadow: 0 0 0 2px ${props => props.theme.selectedChartBorderColor} inset;
+        box-shadow: 0 0 0 3px ${props => props.theme.selectedChartBorderColor} inset;
     }
 `;
 

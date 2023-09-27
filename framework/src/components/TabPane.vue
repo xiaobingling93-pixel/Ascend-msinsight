@@ -39,7 +39,7 @@ onMounted(async () => {
           if ((updateState as any).parseCompleted !== undefined || (updateState as any).clusterCompleted !== undefined) {
             connector.send({
               event: 'updateSession',
-              body: {parseCompleted:session.parseCompleted,clusterCompleted:session.clusterCompleted,...updateState},
+              body: { parseCompleted: session.parseCompleted, clusterCompleted: session.clusterCompleted, ...updateState },
             });
           }
         })

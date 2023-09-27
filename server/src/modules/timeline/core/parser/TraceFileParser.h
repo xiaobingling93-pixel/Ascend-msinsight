@@ -49,7 +49,7 @@ private:
 
     static bool InitDatabase(const std::string& dbPath, const std::string& rankId);
     std::mutex trackMutex;
-    std::map<std::string, std::map<std::string, int64_t>> trackIdMap;
+    std::unordered_map<std::string, std::map<std::pair<std::string, int64_t>, int64_t>> trackIdMap;
     int64_t trackId = 0;
 };
 } // end of namespace Timeline

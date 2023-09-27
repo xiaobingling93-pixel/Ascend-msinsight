@@ -18,8 +18,6 @@ declare global {
         };
         setTheme: (isDark: boolean) => void;
         request: (dataSource: DataSource, params: { command: string; params: Record<string, unknown> }) => Promise<any>;
-        _resolve: (value: unknown) => void;
-        _reject: (value?: any) => void;
         cefQuery: (obj: CefQueryType) => void;
     }
 

@@ -675,6 +675,7 @@ export type InsightMetaData <T extends keyof MetaData> = {
 export type ThreadMetaData = {
     cardId?: string;
     processId?: string;
+    processName?: string;
     threadId: number;
     threadName: string;
     maxDepth?: number;

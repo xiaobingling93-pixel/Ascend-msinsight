@@ -229,14 +229,14 @@ std::string TraceFileParser::GetDbPath(const std::string &filePath, const std::s
 int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid)
 {
     std::unique_lock<std::mutex> lock(trackMutex);
-    std::string str = pid + std::to_string(tid);
-    if (trackIdMap[fileId].count(str) > 0) {
-        return trackIdMap[fileId].at(str);
+    auto item = std::make_pair(pid, tid);
+    if (trackIdMap[fileId].count(item) > 0) {
+        return trackIdMap[fileId].at(item);
     }
     if (trackId == INT64_MAX) {
         trackId = 0;
     }
-    trackIdMap[fileId].emplace(str, ++trackId);
+    trackIdMap[fileId].emplace(item, ++trackId);
     return trackId;
 }
 

@@ -1,4 +1,4 @@
-import { chart, on, LinkDataDesc, singleData, TriggerEvent, unit, UnitHeight, MetaData } from '../../entity/insight';
+import { chart, on, LinkDataDesc, singleData, TriggerEvent, unit, UnitHeight, MetaData, InsightUnit } from '../../entity/insight';
 import { Session } from '../../entity/session';
 import { hashToNumber } from '../../utils/colorUtils';
 import {
@@ -19,6 +19,7 @@ import _ from 'lodash';
 import { runInAction } from 'mobx';
 import { SelectedDataBase } from '../../components/details/base/SelectedData';
 import { offsetConfig } from './config/offsetConfig';
+import { isPinned } from '../../components/ChartContainer/unitPin';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -104,8 +105,8 @@ const commonBottomPanel = {
 export const ThreadUnit = unit<ThreadMetaData>({
     name: 'Thread',
     pinType: 'move',
-    renderInfo: (session: Session, thread: ThreadMetaData) => {
-        return `${thread.threadName}`;
+    renderInfo: (session: Session, thread: ThreadMetaData, thisUnit: InsightUnit) => {
+        return isPinned(thisUnit) ? `${thread.cardId}_${thread.processName} (${thread.processId})_${thread.threadName}` : `${thread.threadName}`;
     },
     chart: chart({
         type: 'stackStatus',
@@ -201,7 +202,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
             return {
                 Detail: ({ session }) => <SelectedDataBottomPanel session={session} detail={singleSliceDetail}>{EmptyJSXElement}</SelectedDataBottomPanel>,
                 DetailTitle: 'Slice Detail',
-                More: ({ session }) => <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
+                // More: ({ session }) => <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
             };
         }
         return TabPanes({ tabs, commonBottomPanel });
@@ -222,7 +223,9 @@ export const ProcessUnit = unit<ProcessMetaData>({
         },
         height: UnitHeight.UPPER,
     }),
-    renderInfo: (_, metadata: { processName: string; processId: string; label?: string }) => `${metadata.processName} (${metadata.processId})`,
+    renderInfo: (_, metadata: ProcessMetaData, thisUnit) => {
+        return isPinned(thisUnit) ? `${metadata.cardId}_${metadata.processName} (${metadata.processId})` : `${metadata.processName} (${metadata.processId})`;
+    },
 });
 
 export const CardUnit = unit<CardMetaData>({

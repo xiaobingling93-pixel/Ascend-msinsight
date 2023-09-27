@@ -153,7 +153,7 @@ export interface InsightUnitParams<MetaData, DetailType extends Record<string, u
     tag?: string | ((session: Session, metadata: MetaData) => string | null);
     description?: string;
     chart?: ChartDesc<ChartType> | Array<ChartDesc<ChartType>>;
-    renderInfo?: (session: Session, metadata: MetaData) => JSX.Element | string | null;
+    renderInfo?: (session: Session, metadata: MetaData, thisUnit: InsightUnit) => JSX.Element | string | null;
     detail?: DetailDesc<DetailType, ExtraDataType, MoreDataType, MetaData, keyof DetailType>;
     bottomPanelRender?: BottomPanelRender;
     metadata: MetaData;
@@ -251,7 +251,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         tabState = params.tabState ?? undefined;
         notifications = params.notifications as Array<(metaData: unknown) => (false | string)>;
         renderInfo = (session: Session): (string | JSX.Element | null) => {
-            return params.renderInfo?.(session, this.metadata) ?? null;
+            return params.renderInfo?.(session, this.metadata, this) ?? null;
         };
 
         height = (): number => heightOf(this.chart);
