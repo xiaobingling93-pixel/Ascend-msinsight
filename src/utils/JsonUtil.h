@@ -65,7 +65,7 @@ public:
         if (!json.HasMember(key.data())) {
             return 0;
         }
-        if (json[key.data()].IsDouble()) {
+        if (json[key.data()].IsNumber()) {
             return json[key.data()].GetDouble();
         }
         if (json[key.data()].IsString()) {
@@ -83,8 +83,11 @@ public:
         if (!json.HasMember(key.data())) {
             return 0;
         }
-        if (json[key.data()].IsInt64()) {
+        if (json[key.data()].IsInt()) {
             return json[key.data()].GetInt64();
+        }
+        if (json[key.data()].IsDouble()) {
+            return static_cast<int64_t>(json[key.data()].GetDouble());
         }
         if (json[key.data()].IsString()) {
             try {
