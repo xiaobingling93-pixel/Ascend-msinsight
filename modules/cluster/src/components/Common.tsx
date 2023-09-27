@@ -46,6 +46,11 @@ export const Tan = (props: {position: string;main: JSX.Element;drag: JSX.Element
     </div>;
 };
 
+export const Loading = ({ size = 20, style = {} }: {size?: number;style?: object}): JSX.Element => {
+    return (<div className={'loading'}
+        style={{ width: `${size}px`, height: `${size}px`, ...style }}></div>);
+};
+
 export const MultiSelectWithAll = (props: any): JSX.Element => {
     const { onChange, options = [] } = props;
     const [ checked, setChecked ] = useState(false);

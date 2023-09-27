@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
-import { Container, formatDate } from '../Common';
+import { Container, formatDate, Loading } from '../Common';
 import { StringMap } from '../../utils/interface';
 import { Session } from '../../entity/session';
 import { queryTopSummary } from '../../utils/RequestUtils';
@@ -88,6 +88,7 @@ const initBaseInfo = async (setData: any): Promise<void> => {
     const res: any = await queryTopSummary(defaultConditions);
     setData({
         ...res,
+        collectDuration: formateTime(Number(res.collectDuration)),
         collectStartTime: formatDate(new Date(res.collectStartTime)),
         dataSize: res.dataSize !== undefined && res.dataSize > 0.01 ? Number(res.dataSize?.toFixed(2)) : res.dataSize,
     });
@@ -98,7 +99,7 @@ const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
         setTimeout(() => {
             initBaseInfo(setData);
         });
-    }, []);
+    }, [ session.parseCompleted, session.renderId ]);
     return <Container
         title={'Base Info'}
         titleClassName={'common-title-bottom'}
@@ -109,10 +110,9 @@ const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
                     <div key={item.key}>
                         <div>{item.label}:</div>
                         <div>{
-                            item.key === 'collectDuration'
-                                ? formateTime(Number(data.collectDuration))
-                                : data[item.key]
-                        }</div>
+                            item.key === 'collectDuration' && !session.parseCompleted
+                                ? <Loading style={{ marginTop: '10px' }}/>
+                                : data[item.key] }</div>
                     </div>
                 ))
             }

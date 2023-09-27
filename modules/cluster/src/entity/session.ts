@@ -44,6 +44,9 @@ export type LinkData = {
 
 export class Session {
     clusterStatus: boolean = false;
+    parseCompleted: boolean = false;
+    clusterCompleted: boolean = false;
+    renderId: number = 1;
     id = '';
     remoteAttrs: Map<string, Record<string, unknown>> = new Map();
     private _name: string | null;
@@ -150,7 +153,8 @@ export class Session {
         );
 
         window.closeWaiting = () => {
-            this.clusterStatus = true;
+            this.clusterCompleted = true;
+            this.parseCompleted = true;
         };
     }
 

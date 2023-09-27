@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import * as echarts from 'echarts';
 import { Tooltip } from 'antd';
+import { observer } from 'mobx-react';
 import { QuestionCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
 import { Session } from '../../entity/session';
 import { VoidFunction } from '../../utils/interface';
@@ -235,7 +236,7 @@ export const hit = (<Tooltip title={
     <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
 </Tooltip>);
 
-const ComputationCommunicationOverview = ({ session, active = true }: { session: Session ;active?: boolean}): JSX.Element => {
+const ComputationCommunicationOverview = observer(({ session, active = true }: { session: Session ;active?: boolean}): JSX.Element => {
     const [ dataSource, setDatasource ] = useState<SummaryDataType[]>([]);
     const [ allDataSource, setAllDatasource ] = useState<SummaryDataType[]>([]);
     const [ selected, setSelected ] = useState({ rankId: '', step: '' });
@@ -266,9 +267,11 @@ const ComputationCommunicationOverview = ({ session, active = true }: { session:
         const { name: rankId } = param;
         setSelected({ ...selected, rankId });
     };
-    return <OverviewCom handleFilterChange={handleFilterChange} session={session}
-        dataSource={dataSource} selected={selected}/>;
-};
+    return session.renderId > 0
+        ? (<OverviewCom handleFilterChange={handleFilterChange} session={session}
+            dataSource={dataSource} selected={selected}/>)
+        : <></>;
+});
 const OverviewCom = ({ handleFilterChange, dataSource, selected, session }: any): JSX.Element => {
     const [ pipelineVisible, setPipelineVisible ] = useState(true);
     useEventBus('setActiveTab', (data) => {
@@ -286,7 +289,7 @@ const OverviewCom = ({ handleFilterChange, dataSource, selected, session }: any)
             </div>
             <div style={{ padding: '0 3rem' }}>
                 <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
-                <StatisticsTable {...selected}/>
+                <StatisticsTable {...selected} session={session}/>
             </div>
         </div>
         <div className={pipelineVisible ? '' : 'hide'}>

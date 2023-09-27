@@ -32,7 +32,7 @@ export const App = observer(() => {
         });
     }, []);
     return (<ThemeProvider theme={themeInstance.getThemeType()}>
-        { session !== undefined ? <AnalysisSummary session={session} /> : Loading}
+        { session?.clusterCompleted ? <AnalysisSummary session={session} /> : Loading}
     </ThemeProvider>);
 });
 

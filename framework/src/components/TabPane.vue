@@ -35,6 +35,14 @@ onMounted(async () => {
             console.warn(`you just send a invalid data: {${key}: ${receiver[key]}} to update session, please check it`);
         }
         setSession(updateState);
+        setTimeout(()=>{
+          if ((updateState as any).parseCompleted !== undefined || (updateState as any).clusterCompleted !== undefined) {
+            connector.send({
+              event: 'updateSession',
+              body: {parseCompleted:session.parseCompleted,clusterCompleted:session.clusterCompleted,...updateState},
+            });
+          }
+        })
     });
 
     await connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
@@ -71,7 +79,7 @@ function toggleTab(index: number): void {
             <template v-for="(moduleConfig, index) in modulesConfig" 
                     :key="`${index}-${moduleConfig.name}`">
                 <iframe
-                    v-if="moduleConfig.isDefault || (session.isCluster && session.parseCompleted)"
+                    v-if="moduleConfig.isDefault || (session.isCluster)"
                     v-bind={...moduleConfig.attributes}
                     v-show="activeModule === index"
                     ref="moduleRefs"

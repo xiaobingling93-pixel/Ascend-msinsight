@@ -34,14 +34,7 @@ export const parseFailHandler: NotificationHandler = (data): void => {
 
 export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
-        const { sessionStore } = store;
-        const session = sessionStore.activeSession;
-        runInAction(() => {
-            if (!session) {
-                return;
-            }
-            session.clusterStatus = false;
-        });
+        resetStatus();
     } catch (error) {
         console.error(error);
     }
@@ -49,14 +42,7 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
 
 export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
-        const { sessionStore } = store;
-        const session = sessionStore.activeSession;
-        runInAction(() => {
-            if (!session) {
-                return;
-            }
-            session.clusterStatus = false;
-        });
+        resetStatus();
     } catch (error) {
         console.error(error);
     }
@@ -86,5 +72,33 @@ export const moduleMessageHandler: NotificationHandler = (data): void => {
             return;
         }
         session.clusterStatus = true;
+    });
+};
+export const updateSessionHandler: NotificationHandler = (data): void => {
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        const dataKeys = Object.keys(data);
+        const sessionKeys = Object.keys(session);
+        dataKeys.forEach((key: any) => {
+            if (sessionKeys.includes(key)) {
+                (session as any)[key] = data[key];
+            }
+        });
+        session.renderId++;
+    });
+};
+
+const resetStatus = (): void => {
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.clusterCompleted = false;
+        session.parseCompleted = false;
     });
 };

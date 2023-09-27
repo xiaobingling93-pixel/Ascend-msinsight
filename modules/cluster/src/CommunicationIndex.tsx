@@ -36,7 +36,7 @@ export const App = observer(() => {
         });
     }, []);
     return (<ThemeProvider theme={themeInstance.getThemeType()}>
-        {session !== undefined ? <CommunicationAnalysis session={session} /> : Loading}
+        {session?.clusterCompleted ? <CommunicationAnalysis session={session} /> : Loading}
     </ThemeProvider>);
 });
 
