@@ -6,6 +6,7 @@ import DeletePopConfirm from '@/components/MenuTree/DeletePopConfirm.vue';
 
 const props = defineProps<{
     dataSource: TreeNodeType[];
+    isDarkTheme: boolean;
 }>();
 
 </script>
@@ -19,9 +20,11 @@ const props = defineProps<{
                         <span v-if="node.level === 1" class="contentText">
                             {{ node.label }}
                         </span>
-                        <span v-if="node.level === 2" class="contentNodeText">
-                            {{ node.label }}
-                        </span>
+                        <el-tooltip :content="node.label" :effect="isDarkTheme ? 'light' : 'dark'">
+                            <span v-if="node.level === 2" class="contentNodeText">
+                                {{ node.label }}
+                            </span>
+                        </el-tooltip>
                     </span>
                   <DeletePopConfirm v-if="node.level === 1" :data="data" :is-delete-all="node.level === 1"/>
                 </div>

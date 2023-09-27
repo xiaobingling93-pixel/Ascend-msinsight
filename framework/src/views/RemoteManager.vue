@@ -50,7 +50,7 @@ const handleConfirm = () => {
         </el-dialog>
     </header>
     <div class="container">
-        <MenuTree :dataSource="store.menuTree"></MenuTree>
+        <MenuTree :dataSource="store.menuTree" :is-dark-theme="isDarkTheme"></MenuTree>
     </div>
 </template>
 
