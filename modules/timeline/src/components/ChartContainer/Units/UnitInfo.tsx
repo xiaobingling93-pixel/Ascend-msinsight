@@ -187,7 +187,7 @@ const InsightLaneInfoContainer = styled.div`
     flex-direction: column;
 `;
 const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentProps): JSX.Element => {
-    const info = unit.renderInfo?.(session, unit.metadata) ?? `${unit.name}`;
+    const info = unit.renderInfo?.(session, unit.metadata, unit) ?? `${unit.name}`;
     if (typeof (info) === 'string') {
         return <DefaultInfo
             session={session}

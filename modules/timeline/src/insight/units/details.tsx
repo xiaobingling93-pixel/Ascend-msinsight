@@ -40,7 +40,23 @@ export const slicesListDetail = detail({
             endTime: endTime + timestampOffset,
         };
         const raw = await window.request(metadata.dataSource, { command: 'unit/threads', params });
-        return raw.data;
+        const res = raw.data;
+
+        let totalWallDuration = 0;
+        let totalSelfTime = 0;
+        let totalOccurrences = 0;
+
+        res.forEach((element: AscendMultiSliceList) => {
+            totalWallDuration += element.wallDuration ?? 0;
+            totalSelfTime += element.selfTime ?? 0;
+            totalOccurrences += element.occurrences ?? 0;
+        });
+
+        console.log(totalWallDuration / totalOccurrences);
+
+        res.push({ title: 'total', wallDuration: totalWallDuration, selfTime: totalSelfTime, avgWallDuration: totalWallDuration / totalOccurrences, occurrences: totalOccurrences });
+
+        return res;
     },
 }) as DetailDescriptor<unknown>;
 

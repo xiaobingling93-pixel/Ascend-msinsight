@@ -13,7 +13,7 @@ export function recursiveExpandUnit <T extends keyof MetaData> (metaDataList: Ar
         if (parentUnit.children !== undefined) {
             const existingUnit = parentUnit.children.find(unit => checkMetaData(unit.metadata, metaData));
             if (!existingUnit) {
-                const newUnit = newLane(metaData);
+                const newUnit = newLane(metaData, parentUnit.metadata);
                 if (newUnit !== undefined) {
                     parentUnit.children?.push(newUnit);
                     recursiveExpandUnit(metaData.children ?? [], newUnit);
@@ -22,7 +22,7 @@ export function recursiveExpandUnit <T extends keyof MetaData> (metaDataList: Ar
                 recursiveExpandUnit(metaData.children ?? [], existingUnit);
             }
         } else {
-            const newUnit = newLane(metaData);
+            const newUnit = newLane(metaData, parentUnit.metadata);
             if (newUnit !== undefined) {
                 parentUnit.children = [];
                 parentUnit.children.push(newUnit);
@@ -45,7 +45,8 @@ export function handleMap <T extends keyof MetaData> (insightMetaData: InsightMe
     });
 }
 
-function newLane (insightMetaData: InsightMetaData<any>): InsightUnit | undefined {
+function newLane (insightMetaData: InsightMetaData<any>, parentMetaData: any): InsightUnit | undefined {
+    console.log(insightMetaData.metadata, parentMetaData.metadata);
     switch (insightMetaData.type) {
         case 'process': {
             return new ProcessUnit({
@@ -59,7 +60,8 @@ function newLane (insightMetaData: InsightMetaData<any>): InsightUnit | undefine
         case 'thread': {
             const threadUnit = new ThreadUnit({
                 cardId: paramsTree.get(paramsTree.get(insightMetaData.metadata)).cardId,
-                processId: paramsTree.get(insightMetaData.metadata).processId,
+                processId: (parentMetaData as ProcessMetaData).processId,
+                processName: (parentMetaData as ProcessMetaData).processName,
                 threadId: insightMetaData.metadata.threadId,
                 threadName: insightMetaData.metadata.threadName,
                 dataSource: paramsTree.get(insightMetaData.metadata).dataSource,
