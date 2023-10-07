@@ -109,7 +109,7 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
         const session = store.sessionStore.activeSession as Session;
-        const removeUnits = session.units.filter((unit) => {
+        const removeUnits = session.pinnedUnits.concat(session.units).filter((unit) => {
             const metadata = unit.metadata as any;
             const isSameDataPath = dataSource.dataPath.filter((item) => metadata.dataSource.dataPath.includes(item)).length !== 0;
             return metadata.dataSource.remote === dataSource.remote && isSameDataPath;
@@ -119,6 +119,10 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
             session.remoteAttrs.delete(metadata.dataSource.remote);
         }
         session.units = session?.units.filter((unit) => {
+            const metadata = unit.metadata as any;
+            return metadata.dataSource.remote !== dataSource.remote;
+        });
+        session.pinnedUnits = session?.pinnedUnits.filter((unit) => {
             const metadata = unit.metadata as any;
             return metadata.dataSource.remote !== dataSource.remote;
         });

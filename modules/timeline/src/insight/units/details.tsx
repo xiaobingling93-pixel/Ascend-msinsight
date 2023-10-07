@@ -54,7 +54,7 @@ export const slicesListDetail = detail({
 
         console.log(totalWallDuration / totalOccurrences);
 
-        res.push({ title: 'total', wallDuration: totalWallDuration, selfTime: totalSelfTime, avgWallDuration: totalWallDuration / totalOccurrences, occurrences: totalOccurrences });
+        res.push({ title: 'Totals', wallDuration: totalWallDuration, selfTime: totalSelfTime, avgWallDuration: totalWallDuration / totalOccurrences, occurrences: totalOccurrences });
 
         return res;
     },

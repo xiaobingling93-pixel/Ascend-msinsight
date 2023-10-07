@@ -39,7 +39,11 @@ public:
     static inline bool CheckDirectoryExist(const std::string &path)
     {
 #ifdef _WIN32
-        if (_access(path.c_str(), 0) == -1) {
+        std::string tmpPath(path);
+        if (StringUtil::IsUtf8String(path)) {
+            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
+        }
+        if (_access(tmpPath.c_str(), 0) == -1) {
             return false;
         }
 #else
@@ -84,8 +88,12 @@ public:
     static inline uint64_t GetDiskFreeSize(const std::string &path)
     {
 #ifdef _WIN32
+        std::string tmpPath(path);
+        if (StringUtil::IsUtf8String(path)) {
+            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
+        }
         ULARGE_INTEGER freeBytes;
-        if (GetDiskFreeSpaceEx(path.c_str(), &freeBytes, nullptr, nullptr)) {
+        if (GetDiskFreeSpaceEx(tmpPath.c_str(), &freeBytes, nullptr, nullptr)) {
             return freeBytes.QuadPart;
         }
 #endif

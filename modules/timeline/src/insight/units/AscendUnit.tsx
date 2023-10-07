@@ -45,7 +45,7 @@ export const getSliceTimeDisplay = (startTime: number | undefined): string => {
     if (startTime === undefined) {
         return '';
     }
-    return `${nsToMs(startTime).toString() + ' ms'}`;
+    return `${nsToMs(startTime).toFixed(3).toString() + ' ms'}`;
 };
 
 const singleSliceDetail = singleData({
