@@ -51,6 +51,7 @@ void RemoteDeleteHandler::GetUpdateTime(RemoteDeleteBody &body)
                 body.startTimeUpdated = true;
                 TraceTime::Instance().UpdateTime(min, max);
             }
+            ServerLog::Info("update time. rankId:", fileId, ", min:", min, ", max:", max);
         }
     }
     if (body.startTimeUpdated) {
