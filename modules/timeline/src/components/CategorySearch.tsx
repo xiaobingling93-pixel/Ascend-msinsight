@@ -114,7 +114,7 @@ const doJumpSlice = (session: Session, slice: SliceData): void => {
     runInAction(() => {
         session.locateUnit = {
             target: (unit) => {
-                return unit instanceof ThreadUnit && unit.metadata.cardId.includes(slice.rankId) && unit.metadata.processId === slice.pid && unit.metadata.threadId === slice.tid;
+                return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId.includes(slice.rankId))) && unit.metadata.processId === slice.pid && unit.metadata.threadId === slice.tid;
             },
             onSuccess: (unit) => {
                 const [ rangeStart, rangeEnd ] = calculateDomainRange(session, slice.startTime, slice.duration);

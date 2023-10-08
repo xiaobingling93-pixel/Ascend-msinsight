@@ -184,7 +184,7 @@ export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height
     if (maskRange !== undefined) {
         maskRange.sort((a, b) => a - b);
         ctx.fillStyle = 'rgba(66,66,66,0.5)';
-        if (session.selectedUnits !== []) {
+        if (session.selectedUnits.length !== 0) {
             ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, width, height);
             if (element.length !== 0) {
                 const rect = element[0].getBoundingClientRect();
