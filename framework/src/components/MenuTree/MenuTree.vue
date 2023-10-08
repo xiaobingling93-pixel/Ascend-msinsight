@@ -26,7 +26,10 @@ const props = defineProps<{
                             </span>
                         </el-tooltip>
                     </span>
-                  <DeletePopConfirm v-if="node.level === 1" :data="data" :is-delete-all="node.level === 1"/>
+                    <span class="deleteIcon">
+                        <DeletePopConfirm :data="data" :node="node" :is-delete-all="node.level === 1" />
+                    </span>
+
                 </div>
             </template>
         </el-tree>
@@ -36,27 +39,33 @@ const props = defineProps<{
 .menu-tree {
     padding: 0.5rem 0.8rem;
 }
+
 .el-tree {
-  --el-tree-node-hover-bg-color: var(--color-border-hover);
-  color: var(--dataPath-color) !important;
+    --el-tree-node-hover-bg-color: var(--color-border-hover);
+    color: var(--dataPath-color) !important;
 }
 
 ::v-deep(.contentNode) {
     position: relative;
-    width: 100%;
     display: flex;
     user-select: none;
     justify-content: space-between;
+    flex: 1;
 }
+
 ::v-deep(.contentBody) {
     display: flex;
     align-items: center;
+    width: 0;
+    flex: 1 1 auto;
 }
+
 ::v-deep(.treeDeleteIcon) {
     position: absolute;
     right: 0;
     transition: all 0.5s ease-out;
 }
+
 ::v-deep(.contentText) {
     padding: 4px 0 0 2px;
     font-size: 14px;
@@ -64,10 +73,21 @@ const props = defineProps<{
     line-height: 24px;
     font-weight: 700;
 }
+
 ::v-deep(.contentNodeText) {
     padding: 0 0 0 2px;
     font-size: 12px;
     color: var(--treeNode-color);
     font-weight: 400;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+::v-deep(.deleteIcon) {
+    flex: 0 0 auto;
+}
+
+::v-deep(.el-popper.is-dark) {
+    color: red;
 }
 </style>
