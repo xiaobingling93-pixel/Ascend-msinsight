@@ -47,19 +47,19 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     auto files = GetTraceFiles(request.params.path, response.body);
     if (files.empty()) {
         ServerLog::Warn("Import files is empty.");
-        SetResponseResult(response, false);
+        SetResponseResult(response, true);
         session.OnResponse(std::move(responsePtr));
-        return;
-    }
-    // 按rankId 拆分文件
-    std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
-    SetBaseActionOfResponse(rankListMap, response);
-    SetParseCallBack(token);
-    SetResponseResult(response, true);
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
-    for (const auto &rankEntry : rankListMap) {
-        TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, selectedFolder);
+    } else {
+        // 按rankId 拆分文件
+        std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
+        SetBaseActionOfResponse(rankListMap, response);
+        SetParseCallBack(token);
+        SetResponseResult(response, true);
+        // add response to response queue in session
+        session.OnResponse(std::move(responsePtr));
+        for (const auto &rankEntry : rankListMap) {
+            TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, selectedFolder);
+        }
     }
     std::string parseClusterResult = "none";
     if (curIsCluster) {
@@ -323,10 +323,6 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
     const std::vector<std::string> &pathList, ImportActionResBody &body)
 {
     auto traceFiles = FindAllTraceFile(pathList);
-    if (traceFiles.empty()) {
-        ServerLog::Error("Failed to find trace file.");
-        return {};
-    }
     if (pathList.size() == 1) {
         bool isCluster = traceFiles.size() > 1 || CheckIsCluster(pathList[0]);
         bool reset = isCluster || curIsCluster;
@@ -339,6 +335,10 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
         body.isCluster = isCluster;
     } else {
         body.isCluster = false;
+    }
+    if (traceFiles.empty()) {
+        ServerLog::Warn("Failed to find trace file.");
+        return {};
     }
     std::vector<std::pair<std::string, std::string>> files;
     for (const auto &file : traceFiles) {
