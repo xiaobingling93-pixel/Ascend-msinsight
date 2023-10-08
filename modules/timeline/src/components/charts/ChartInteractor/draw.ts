@@ -8,6 +8,7 @@ import { THUMB_WIDTH_PX } from '../../base';
 import { getTextParser } from '../TimelineAxis';
 import { Scale } from '../../../entity/chart';
 import { calculateClipTopAndPinedHeight, getHeight, UNDRAW_HEIGHT } from './locateUtils';
+import { TIME_LINE_AXIS_HEIGHT_PX } from '../../ChartContainer/ChartContainer';
 
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
@@ -179,11 +180,20 @@ export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height
         // not brushing now but has selected range
         maskRange = [ xReverseScale(selectedRange[0]), xReverseScale(selectedRange[1]) ];
     }
+    const element = document.getElementsByClassName('chart-selected');
     if (maskRange !== undefined) {
         maskRange.sort((a, b) => a - b);
         ctx.fillStyle = 'rgba(66,66,66,0.5)';
-        ctx.fillRect(0, 0, maskRange[0], height);
-        ctx.fillRect(maskRange[1], 0, width - maskRange[1], height);
+        if (session.selectedUnits.length !== 0) {
+            ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, width, height);
+            if (element.length !== 0) {
+                const rect = element[0].getBoundingClientRect();
+                ctx.clearRect(maskRange[0], rect.top, maskRange[1] - maskRange[0], rect.height);
+            }
+        } else {
+            ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, maskRange[0], height);
+            ctx.fillRect(maskRange[1], TIME_LINE_AXIS_HEIGHT_PX, width - maskRange[1], height);
+        }
         drawTimeDiff(ctx, maskRange, xScale, isNsMode, theme, selectedRange);
     }
     // draw hoverline and timeaxis highlight

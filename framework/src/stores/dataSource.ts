@@ -86,5 +86,18 @@ export const useDataSources = defineStore('dataSources', () => {
         }
     }
 
-    return { menuTree, remove, confirm };
+    const removeSingle = async (parentIndex: number, index: number): Promise<void> => {
+        const dataSource = dataSources.value[parentIndex];
+        if (!dataSource) {
+            return;
+        }
+        const singleDataPath = dataSource.dataPath[index];
+        connector.send({
+            event: 'remote/removeSingle',
+            body: { dataSource, singleDataPath },
+        });
+        dataSources.value[parentIndex].dataPath.splice(index, 1);
+    }
+
+    return { menuTree, remove, confirm, removeSingle };
 });

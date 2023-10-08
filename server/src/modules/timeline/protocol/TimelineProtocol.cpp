@@ -192,8 +192,8 @@ std::unique_ptr<Request> TimelineProtocol::ToRemoteDeleteRequest(const json_t &j
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
-    if (json.contains("rankId") && json["rankId"].is_array()) {
-        for (const auto &id : json["rankId"]) {
+    if (json["params"].contains("rankId") && json["params"]["rankId"].is_array()) {
+        for (const auto &id : json["params"]["rankId"]) {
             reqPtr->params.rankId.emplace_back(id);
         }
     }
