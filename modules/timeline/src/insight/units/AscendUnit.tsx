@@ -151,7 +151,13 @@ export const ThreadUnit = unit<ThreadMetaData>({
             const hoveredData = session.sharedState.threadTrace as ThreadTrace | undefined;
             return {
                 action: async (handle, xScale, yScale, theme) => {
-                    if (hoveredData && hoveredData.threadId === (metaData as ThreadMetaData).threadId) {
+                    if (session.selectedData) {
+                        const startTime = session.selectedData.startTime;
+                        const depth = session.selectedData.depth;
+                        const data = handle.findAll(it => it.startTime !== startTime || it.depth !== depth || session.selectedData?.threadId !== (metaData as ThreadMetaData).threadId)
+                            .map(it => it.map(data => ({ ...data, color: 'transparentMask' as const })));
+                        handle.draw(data, xScale, yScale);
+                    } else if (hoveredData && hoveredData.threadId === (metaData as ThreadMetaData).threadId) {
                         const name = hoveredData.name;
                         const data = handle.findAll(it => it.name !== name).map(it => it.map(data => ({ ...data, color: 'transparentMask' as const })));
                         handle.draw(data, xScale, yScale);
@@ -180,7 +186,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
         onClick: async (data, session, metadata) => {
             if (data === undefined) { return; }
             runInAction(() => {
-                session.selectedData = data;
+                session.selectedData = { ...data, threadId: (metadata as ThreadMetaData).threadId };
                 session.linkDetail = generateLinkDetail((metadata as ThreadMetaData).threadName.toLowerCase().includes('stream') ? 'Incoming flow' : 'Outgoing flow');
                 session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data.startTime);
             });

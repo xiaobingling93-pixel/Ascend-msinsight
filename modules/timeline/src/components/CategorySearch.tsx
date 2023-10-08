@@ -114,12 +114,12 @@ const doJumpSlice = (session: Session, slice: SliceData): void => {
     runInAction(() => {
         session.locateUnit = {
             target: (unit) => {
-                return unit instanceof ThreadUnit && unit.metadata.cardId === slice.rankId && unit.metadata.processId === slice.pid && unit.metadata.threadId === slice.tid;
+                return unit instanceof ThreadUnit && unit.metadata.cardId.includes(slice.rankId) && unit.metadata.processId === slice.pid && unit.metadata.threadId === slice.tid;
             },
             onSuccess: (unit) => {
                 const [ rangeStart, rangeEnd ] = calculateDomainRange(session, slice.startTime, slice.duration);
                 session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                session.selectedData = { startTime: slice.startTime, duration: slice.duration, depth: slice.depth };
+                session.selectedData = { startTime: slice.startTime, duration: slice.duration, depth: slice.depth, threadId: slice.tid };
             },
         };
     });
@@ -152,7 +152,8 @@ const CategorySearchContent = (session: Session): JSX.Element => {
             return;
         }
         const totalCnt = await queryDataCount(session, searchContent);
-        updatePaginationData({ current: 0, total: totalCnt });
+        updatePaginationData({ current: 1, total: totalCnt });
+        onPageChange(1, totalCnt);
         setSearchIconVisible(false);
     };
     const onInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -167,7 +168,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                 minwidth={200} height={24} isshow={1} value={searchContent} onChange={onInputChange} onPressEnter={onInputPressEnter}></StyledInput>
             <div className="searchResult">{ searchIconVisible
                 ? <CustomButton icon={SearchIcon} onClick={onInputPressEnter}></CustomButton>
-                : <StylePagination defaultCurrent={0} pageSize={1} { ...paginationData } onChange={onPageChange} simple/> }
+                : <StylePagination defaultCurrent={1} pageSize={1} { ...paginationData } onChange={onPageChange} simple/> }
             </div>
         </CustomDiv>
     );

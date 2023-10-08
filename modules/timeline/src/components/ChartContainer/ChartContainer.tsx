@@ -21,7 +21,7 @@ import { THUMB_WIDTH_PX } from '../base';
 import { MouseDownActionResult } from '../charts/ChartInteractor/actions';
 import { loopActionFactory } from '../../utils/FactoryActions';
 
-const TIME_LINE_AXIS_HEIGHT_PX = 30;
+export const TIME_LINE_AXIS_HEIGHT_PX = 30;
 const LANE_INFO_WIDTH_PX = 250;
 export const CHARTINTERACTOR_NAME = 'chartInteractor';
 

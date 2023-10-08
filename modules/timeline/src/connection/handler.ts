@@ -9,7 +9,7 @@ import { Session } from '../entity/session';
 import { NotificationHandler } from './defs';
 import connector from '../connection/index';
 
-const getPropFromData = function<T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
+const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
     if (data[key] === undefined) {
         console.warn(`cannot get ${key.toString()} of `, data);
         throw new Error('missed key');
@@ -136,6 +136,54 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
         }
         if (session.units.length === 0) {
             session.selectedRange = undefined;
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+export const removeSingleRemoteHandler: NotificationHandler = async (data): Promise<void> => {
+    try {
+        const dataSource = getPropFromData(data, 'dataSource') as DataSource;
+        const singleDataPath = getPropFromData(data, 'singleDataPath') as string;
+        const session = store.sessionStore.activeSession as Session;
+
+        const removeUnits = session.units.filter((unit) => {
+            const metadata = unit.metadata as any;
+            const isSameDataPath = metadata.dataSource.dataPath.includes(singleDataPath);
+            return metadata.dataSource.remote === dataSource.remote && isSameDataPath;
+        });
+
+        const removeCardIds = removeUnits.map((unit) => {
+            const metadata = unit.metadata as any;
+            return metadata.cardId;
+        });
+        session.units = session?.units.filter((unit) => {
+            const metadata = unit.metadata as any;
+            return metadata.dataSource.remote !== dataSource.remote || !(metadata.dataSource.dataPath as string[]).includes(singleDataPath);
+        });
+        if (session.selectedUnits[0] !== undefined && !session.units.includes(session.selectedUnits[0])) {
+            session.selectedUnits = [];
+        }
+        if (session.units.length === 0) {
+            session.selectedRange = undefined;
+        }
+        for (const unit of removeUnits) {
+            const metadata = unit.metadata as any;
+            const remote = metadata.dataSource.remote;
+            if (session.remoteAttrs.has(remote) && !session.units.find(unit => (unit.metadata as any)?.dataSource.remote === remote)) {
+                session.remoteAttrs.delete(remote);
+            }
+        }
+        const result = await window.request(dataSource, { command: 'remote/delete', params: { rankId: removeCardIds } });
+        if (result?.startTimeUpdated as boolean) {
+            session.remoteAttrs.set(dataSource.remote, { maxTimeStamp: result.maxTimeStamp });
+
+            let remoteMaxTimeStamps = 0;
+            session.remoteAttrs.forEach((attrs) => {
+                remoteMaxTimeStamps = Math.max(<number>attrs.maxTimeStamp, remoteMaxTimeStamps);
+            });
+            session.endTimeAll = remoteMaxTimeStamps;
         }
     } catch (error) {
         console.error(error);
