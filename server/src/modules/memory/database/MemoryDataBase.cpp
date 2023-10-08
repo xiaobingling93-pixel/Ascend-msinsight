@@ -162,9 +162,9 @@ std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requ
     } else {
         ascend = "DESC";
     }
-    std::string sql = "SELECT name, ROUND(allocation_time / 1000 - ?, 2) as allocationTime, "
-                      "ROUND(release_time / 1000 - ?, 2) as releaseTime, size, "
-                      "ROUND(duration / 1000, 2) as duration FROM " + operatorTable +
+    std::string sql = "SELECT name, ROUND(allocation_time / 1000.0 - ?, 2) as allocationTime, "
+                      "ROUND(release_time / 1000.0 - ?, 2) as releaseTime, size, "
+                      "ROUND(duration / 1000.0, 2) as duration FROM " + operatorTable +
                       " WHERE name LIKE ?";
 
     if (requestParams.startTime != -1) {
@@ -406,10 +406,10 @@ bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requ
     std::string sql = "SELECT count(*) as nums FROM " + operatorTable + " WHERE name LIKE ?";
 
     if (requestParams.startTime != -1) {
-        sql += " AND allocation_time >= " + std::to_string(requestParams.startTime);
+        sql += " AND ROUND(allocation_time / 1000.0 - ?, 2) >= " + std::to_string(requestParams.startTime);
     }
     if (requestParams.endTime != -1) {
-        sql += " AND allocation_time <= " + std::to_string(requestParams.endTime);
+        sql += " AND ROUND(allocation_time / 1000.0 - ?, 2) <= " + std::to_string(requestParams.endTime);
     }
     if (requestParams.minSize != -1) {
         sql += " AND size >= " + std::to_string(requestParams.minSize);
@@ -425,6 +425,13 @@ bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requ
     int index = bindStartIndex;
     std::string orderName = "%" + requestParams.orderName + "%";
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime() / (1000 * 1000);
+    if (requestParams.startTime != -1) {
+        sqlite3_bind_double(stmt, index++, startTime);
+    }
+    if (requestParams.endTime != -1) {
+        sqlite3_bind_double(stmt, index++, startTime);
+    }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         totalNum = sqlite3_column_int(stmt, resultStartIndex);
     }

@@ -36,7 +36,7 @@ export function useResizeEventDependency(): readonly [number] {
  * @param compareFun 比较函数
  * @returns {number} 要搜索值的索引
  */
-export function binarySearch(arr: any[], key: any, compareFun: Function): number {
+export function binarySearch(arr: number[][], key: any, compareFun: Function): number {
     let low = 0;
     let high = arr.length - 1;
     while (low <= high) {
@@ -47,7 +47,22 @@ export function binarySearch(arr: any[], key: any, compareFun: Function): number
         } else if (cmp < 0) {
             high = mid - 1;
         } else {
-            return mid;
+            // 可能存在多个arr[mid][0]等于key，只有arr[mid][1]（Allocated项）不为null时才是真正要找的项
+            if (arr[mid][1] !== null) {
+                return mid;
+            } else {
+                let step = 1;
+                while ((mid - step >= 0 && arr[mid - step][0] === key) ||
+                    (mid + step <= arr.length - 1 && arr[mid + step][0] === key)) {
+                    if (mid - step >= 0 && arr[mid - step][1] !== null) {
+                        return mid - step;
+                    }
+                    if (mid + step <= arr.length - 1 && arr[mid + step][1] !== null) {
+                        return mid + step;
+                    }
+                    step += 1;
+                }
+            }
         }
     }
     return -1;

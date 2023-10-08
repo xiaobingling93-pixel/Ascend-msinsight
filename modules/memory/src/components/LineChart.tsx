@@ -3,7 +3,7 @@
  */
 
 import * as React from 'react';
-import { Graph } from '../entity/memory';
+import { Graph, OperatorDetail } from '../entity/memory';
 import { useResizeEventDependency, binarySearch } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
 
@@ -12,7 +12,7 @@ interface IProps {
     hAxisTitle?: string;
     vAxisTitle?: string;
     onSelectionChanged?: (start: number, end: number) => void;
-    record?: any;
+    record?: OperatorDetail;
     isDark: boolean;
     isWakeup: boolean;
 }
@@ -69,11 +69,14 @@ const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: b
     };
 };
 
-const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.EChartsOption => {
+const _handleOption = (option: echarts.EChartsOption, graph: Graph, dataRowsRef: React.MutableRefObject<number[][]>): echarts.EChartsOption => {
     const lineSerie: echarts.SeriesOption = {
         type: 'line',
         connectNulls: true,
         emphasis: {
+            label: {
+                show: true,
+            },
             itemStyle: {
                 borderWidth: 5,
                 shadowBlur: 5,
@@ -103,6 +106,7 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
             return a[0] - b[0];
         });
     }
+    dataRowsRef.current = finalRows;
     option = {
         ...option,
         dataset:
@@ -115,11 +119,11 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
 };
 
 const _showGraph = (myChart: echarts.ECharts, selectedPoints: React.MutableRefObject<number[]>,
-    props: IProps, isDark: boolean): void => {
+    props: IProps, isDark: boolean, dataRowsRef: React.MutableRefObject<number[][]>): void => {
     const { graph, hAxisTitle, vAxisTitle, onSelectionChanged } = props;
 
     let option = _getOriginOption(graph.title, hAxisTitle, vAxisTitle, isDark);
-    option = _handleOption(option, graph);
+    option = _handleOption(option, graph, dataRowsRef);
 
     myChart.setOption(option, true);
 
@@ -165,31 +169,32 @@ const _showGraph = (myChart: echarts.ECharts, selectedPoints: React.MutableRefOb
     });
 };
 
-const _handleEvents = (chartObj: echarts.ECharts | undefined, props: IProps, selectedPoints: React.MutableRefObject<number[]>): void => {
+const _handleEvents = (chartObj: echarts.ECharts | undefined, props: IProps,
+    selectedPoints: React.MutableRefObject<number[]>, dataRowsRef: React.MutableRefObject<number[][]>): void => {
     const { graph, record } = props;
     const compareFun = (key: number, mid: number[]): number => key - parseFloat(mid[0].toFixed(2));
     if (chartObj) {
         if (record !== undefined) {
-            const startId = binarySearch(graph.rows.allocated, record.col2, compareFun);
-            const endId = binarySearch(graph.rows.allocated, record.col3, compareFun);
+            const startId = binarySearch(dataRowsRef.current, record.allocationTime, compareFun);
+            const endId = binarySearch(dataRowsRef.current, record.releaseTime, compareFun);
             const selection = [];
             startId >= 0 && selection.push(startId);
             endId >= 0 && selection.push(endId);
             chartObj.dispatchAction({
                 type: 'downplay',
-                seriesName: 'Allocated',
+                seriesName: 'Operators Allocated',
                 dataIndex: selectedPoints.current,
             });
             chartObj.dispatchAction({
                 type: 'highlight',
-                seriesName: 'Allocated',
+                seriesName: 'Operators Allocated',
                 dataIndex: selection,
             });
             selectedPoints.current = selection;
         } else {
             chartObj.dispatchAction({
                 type: 'downplay',
-                seriesName: 'Allocated',
+                seriesName: 'Operators Allocated',
                 dataIndex: selectedPoints.current,
             });
             selectedPoints.current = [];
@@ -202,6 +207,7 @@ export const LineChart: React.FC<IProps> = (props) => {
     const graphRef = React.useRef<HTMLDivElement>(null);
     const [resizeEventDependency] = useResizeEventDependency();
     const [ chartObj, setChartObj ] = React.useState<echarts.ECharts | undefined>();
+    const dataRowsRef = React.useRef<number[][]>([]);
     const selectedPoints = React.useRef<number[]>([]);
 
     React.useLayoutEffect(() => {
@@ -212,7 +218,7 @@ export const LineChart: React.FC<IProps> = (props) => {
         element.oncontextmenu = () => { return false; };
 
         const myChart = echarts.init(element, isDark ? 'dark' : 'customed');
-        _showGraph(myChart, selectedPoints, props, isDark);
+        _showGraph(myChart, selectedPoints, props, isDark, dataRowsRef);
 
         setChartObj(myChart);
         return () => {
@@ -221,7 +227,7 @@ export const LineChart: React.FC<IProps> = (props) => {
     }, [ graph, resizeEventDependency, isDark, isWakeup ]);
 
     React.useEffect(() => {
-        _handleEvents(chartObj, props, selectedPoints);
+        _handleEvents(chartObj, props, selectedPoints, dataRowsRef);
     }, [ graph, record, chartObj ]);
 
     return (

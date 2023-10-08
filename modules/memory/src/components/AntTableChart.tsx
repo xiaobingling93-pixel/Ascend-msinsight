@@ -10,7 +10,7 @@ import { MemoryTable, MemoryTableColumn, OperatorDetail } from '../entity/memory
 interface IProps {
     tableData: MemoryTable;
     sortColumn?: string;
-    onRowSelected?: (record?: object, rowIndex?: number) => void;
+    onRowSelected?: (record?: OperatorDetail, rowIndex?: number) => void;
     current: number;
     pageSize: number;
     onCurrentChange: (record: number) => void;
@@ -82,7 +82,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
         }
     };
 
-    const onRow = (record: object, rowIndex?: number): React.HTMLAttributes<any> => {
+    const onRow = (record: OperatorDetail, rowIndex?: number): React.HTMLAttributes<any> => {
         return {
             onMouseEnter: (event: any) => {
                 onRowSelected?.(record, rowIndex);

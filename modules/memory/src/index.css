@@ -464,7 +464,6 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     background: var(--grey83);
 }
 .theme_dark .ant-table-tbody > tr > td {
-    border-bottom: 1px solid var(--grey85);
     color: var(--grey15);
 }
 .theme_dark .ant-input-number-input{

@@ -26,7 +26,7 @@ const MemoryWrapper = styled.div`
       height: 100%;
     `;
 
-const lineColumn = [ 'Time (ms)', 'Operators Allocated (MB)', 'Operators Reserved (MB)' ];
+const lineColumn = [ 'Time (ms)', 'Operators Allocated', 'Operators Reserved' ];
 const tableColumn: MemoryTableColumn[] = [ { name: 'Name', type: 'string', key: 'name' },
     { name: 'Size(KB)', type: 'number', key: 'size' },
     { name: 'Allocation Time(ms)', type: 'number', key: 'allocationTime' },
@@ -63,8 +63,8 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         setSearchEventOperatorName(event.target.value as string);
     };
 
-    const [ selectedRecord, setSelectedRecord ] = useState<any | undefined>();
-    const onRowSelected = (record?: object, rowIndex?: number): void => {
+    const [ selectedRecord, setSelectedRecord ] = useState<OperatorDetail | undefined>();
+    const onRowSelected = (record?: OperatorDetail, rowIndex?: number): void => {
         setSelectedRecord(record);
     };
 
@@ -136,14 +136,16 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             setSelectedRange(undefined);
             return;
         }
-
-        const allDatas = memoryCurveData.AllocatesLine;
-        if (allDatas.length <= 1) {
+        const allDataSet = new Set(memoryCurveData.AllocatesLine.concat(memoryCurveData.ReservedLine).concat(memoryCurveData.AppLine)
+            .map(item => {
+                return parseFloat(item[0].toFixed(2));
+            }).sort((a, b) => a - b));
+        if (allDataSet.size <= 1) {
             setSelectedRange(undefined);
             return;
         }
-
-        setSelectedRange({ startTs: allDatas[start][0], endTs: allDatas[end][0] });
+        const allDatas = Array.from(allDataSet);
+        setSelectedRange({ startTs: allDatas[start], endTs: allDatas[end] });
         setCurrent(1);
         setPageSize(10);
     };
@@ -185,7 +187,8 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     }, [rankId]);
 
     useEffect(() => {
-        setRankIdList(session.memoryRankIds);
+        // 只对RandId为数字做排序，不能转为数字的字符串则不排序
+        setRankIdList(session.memoryRankIds.sort((a, b) => Number(a) - Number(b)));
         session.memoryRankIds.length === 0
             ? setRankId(undefined)
             : (rankId === undefined && setRankId(session.memoryRankIds[0]));
