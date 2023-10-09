@@ -58,7 +58,7 @@ export const DragFileInit = (id: string, handleSucceed?: any): void => {
             handle();
             async function handle(): Promise<void> {
                 if (isUploading()) {
-                    notification.error({
+                    notify('error', {
                         className: 'drag-file-hit',
                         message: 'Warn',
                         description: 'Files are uploading, Please wait for a while',
@@ -79,7 +79,7 @@ export const DragFileInit = (id: string, handleSucceed?: any): void => {
 };
 
 async function handleFile(items: DataTransferItemList): Promise<any> {
-    notification.info({
+    notify('info', {
         className: 'drag-file-hit',
         message: 'Read File',
         duration: 5,
@@ -91,7 +91,7 @@ async function handleFile(items: DataTransferItemList): Promise<any> {
         return;
     }
     const { usableList = [] } = checkRes;
-    notification.success({
+    notify('success', {
         className: 'drag-file-hit',
         message: 'Start:',
         description: (<div>
@@ -107,7 +107,7 @@ async function handleFile(items: DataTransferItemList): Promise<any> {
 
     const result: UploadFileDataType[] = await loopUpload(usableList);
     const isSucceed = result.filter((item: UploadFileDataType) => item.succeed).length === result.length;
-    notification[isSucceed ? 'success' : 'error']({
+    notify(isSucceed ? 'success' : 'error', {
         className: 'drag-file-hit',
         message: isSucceed ? 'Succeed:' : 'Error:',
         description: (<div>
@@ -122,7 +122,7 @@ async function handleFile(items: DataTransferItemList): Promise<any> {
 }
 
 function alertError(description: string | ReactNode): void {
-    notification.error({
+    notify('error', {
         className: 'drag-file-hit',
         message: 'Error',
         description,
@@ -276,6 +276,10 @@ async function getFileFromEntryRecusively(entry: any): Promise<any> {
         }
     });
 }
+type IconType = 'success' | 'info' | 'error' | 'warning';
+const notify = (type: IconType, param: any): void => {
+    notification[type](param);
+};
 
 function readFile(fileInfo: any, i = 1): Promise<any> {
     return new Promise((resolve, reject) => {

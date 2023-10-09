@@ -46,7 +46,6 @@ export function handleMap <T extends keyof MetaData> (insightMetaData: InsightMe
 }
 
 function newLane (insightMetaData: InsightMetaData<any>, parentMetaData: any): InsightUnit | undefined {
-    console.log(insightMetaData.metadata, parentMetaData.metadata);
     switch (insightMetaData.type) {
         case 'process': {
             return new ProcessUnit({

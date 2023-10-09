@@ -46,6 +46,7 @@ export class Session {
     clusterStatus: boolean = false;
     parseCompleted: boolean = false;
     clusterCompleted: boolean = false;
+    unitcount: number = 0;
     renderId: number = 1;
     id = '';
     remoteAttrs: Map<string, Record<string, unknown>> = new Map();

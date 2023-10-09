@@ -12,6 +12,7 @@ export class Session {
     isReset: boolean = false;
     parseCompleted: boolean = false;
     clusterCompleted: boolean = false;
+    unitcount: number = 0;
     private _sharedState: Record<string, unknown> = {};
 
     get sharedState(): Record<string, unknown> {
@@ -36,8 +37,9 @@ export class Session {
         this.isCluster = false;
         this.isReset = false;
         this._sharedState = {};
-        this.parseCompleted=false;
-        this.clusterCompleted=false;
+        this.parseCompleted = false;
+        this.clusterCompleted = false;
+        this.unitcount = 0;
     }
 };
 
