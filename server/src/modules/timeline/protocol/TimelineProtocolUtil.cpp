@@ -242,6 +242,7 @@ template <> std::optional<json_t> ToEventJson<ParseMemoryCompletedEvent>(const P
 {
     json_t json;
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    json["body"]["isCluster"] = event.isCluster;
     json["body"]["memoryResult"] = json_t::array();
     for (const MemorySuccess &memory: event.memoryResult) {
         json_t chartJson = json_t::object();

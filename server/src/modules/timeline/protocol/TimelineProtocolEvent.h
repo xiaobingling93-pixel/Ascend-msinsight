@@ -75,6 +75,7 @@ struct ParseClusterCompletedEvent : public Event {
 
 struct ParseMemoryCompletedEvent : public Event {
     ParseMemoryCompletedEvent() : Event(EVENT_PARSE_MEMORY_COMPLETED) {}
+    bool isCluster = false;
     std::vector<MemorySuccess> memoryResult;
 };
 

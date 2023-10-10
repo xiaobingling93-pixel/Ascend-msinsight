@@ -22,6 +22,7 @@ using namespace Dic;
 using namespace Dic::Server;
 
 std::vector<MemorySuccess> ImportActionHandler::hasMemory = {};
+bool ImportActionHandler::curIsCluster = false;
 
 void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
@@ -125,6 +126,7 @@ void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::
     ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId, ", result:", result);
     if (result) {
         SendParseSuccessEvent(token, fileId);
+        ParseMemoryEndProcess(token);
     } else {
         SendParseFailEvent(token, fileId);
     }
@@ -141,9 +143,9 @@ void ImportActionHandler::ParseMemoryEndProcess(const std::string token)
     event->moduleName = ModuleType::TIMELINE;
     event->token = token;
     event->result = true;
-    event->memoryResult = std::move(hasMemory);
+    event->isCluster = curIsCluster;
+    event->memoryResult = hasMemory;
     session->OnEvent(std::move(event));
-    hasMemory.clear();
 }
 
 void ImportActionHandler::SendParseSuccessEvent(const std::string &token, const std::string &fileId)
@@ -171,7 +173,6 @@ void ImportActionHandler::SendParseSuccessEvent(const std::string &token, const 
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     SearchMetaData(fileId, event->body.unit.children);
     session->OnEvent(std::move(event));
-    ParseMemoryEndProcess(token);
 }
 
 void ImportActionHandler::SendParseFailEvent(const std::string &token, const std::string &fileId)
@@ -339,6 +340,7 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
         if (reset) {
             TraceFileParser::Instance().Reset();
             body.reset = reset;
+            hasMemory.clear();
         }
         body.isCluster = isCluster;
     } else {
