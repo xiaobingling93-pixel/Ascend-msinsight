@@ -64,7 +64,7 @@ type SliceData = {
     depth: number;
 };
 
-const remoteCntArray: RemoteCount[] = [];
+let remoteCntArray: RemoteCount[] = [];
 
 // 获取搜索的结果数量
 const queryDataCount = async (session: Session, searchContent: string): Promise<number> => {
@@ -72,9 +72,10 @@ const queryDataCount = async (session: Session, searchContent: string): Promise<
         return 0;
     }
     let totalCnt = 0;
+    remoteCntArray = [];
     for (const unit of session.units) {
         const metadata = unit.metadata as any;
-        const res = await window.request(metadata.dataSource, { command: 'search/count', params: { searchContent } });
+        const res = await window.request(metadata.dataSource, { command: 'search/count', params: { rankId: metadata.cardId, searchContent } });
         if (res.totalCount === 0) {
             continue;
         }
