@@ -55,8 +55,8 @@
     "eject": "react-scripts eject",
     "lint": "eslint src --fix",
     "dt": "set BROWSER=none&&set REACT_APP_TEST=1&&react-scripts start",
-    "copyWin": "xcopy .\\build ..\\..\\framework\\plugins\\Cluster\\ /E /I /Y",
-    "copyLinux": "cp -rf ./build ../../framework/plugins/Cluster"
+    "publishWin": "del ..\\..\\framework\\plugins\\Cluster\\ /S /Q && xcopy .\\build ..\\..\\framework\\plugins\\Cluster\\ /E /I /Y",
+    "publishLinux": "rm -rf ../../framework/plugins/Cluster && cp -rf ./build ../../framework/plugins/Cluster"
   },
   "eslintConfig": {
     "extends": [

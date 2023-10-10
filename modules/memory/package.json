@@ -55,8 +55,8 @@
     "eject": "react-scripts eject",
     "lint": "eslint src --fix",
     "dt": "set BROWSER=none&&set REACT_APP_TEST=1&&react-scripts start",
-    "copyWin": "xcopy .\\build ..\\..\\framework\\plugins\\Memory\\ /E /I /Y",
-    "copyLinux": "cp -rf ./build ../../framework/plugins/Memory"
+    "publishWin": "del ..\\..\\framework\\plugins\\Memory\\ /S /Q && xcopy .\\build ..\\..\\framework\\plugins\\Memory\\ /E /I /Y",
+    "publishLinux": "rm -rf ../../framework/plugins/Memory && cp -rf ./build ../../framework/plugins/Memory"
   },
   "eslintConfig": {
     "extends": [

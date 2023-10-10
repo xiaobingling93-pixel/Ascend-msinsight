@@ -80,7 +80,7 @@ def get_gxx_type():
     elif IS_DARWIN:
         gxx_type = 'darwin'
     else:
-        gxx_type = 'linux_x86_64'
+        gxx_type = 'linux-x86_64'
     return gxx_type
 
 
