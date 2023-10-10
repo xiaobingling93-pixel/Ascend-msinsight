@@ -222,6 +222,14 @@ std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &p
             FindAscendFolder(path, traceFiles);
             return;
         }
+        if (std::find(folders.begin(), folders.end(), "mindstudio_profiler_output") != folders.end()) {
+            std::string tmpPath = FileUtil::SplicePath(path, "mindstudio_profiler_output");
+            if (FileUtil::IsFolder(tmpPath)) {
+                find(tmpPath, depth + 1);
+                return;
+            }
+        }
+
         for (const auto &folder : folders) {
             std::string tmpPath = FileUtil::SplicePath(path, folder);
             if (FileUtil::IsFolder(tmpPath)) {
