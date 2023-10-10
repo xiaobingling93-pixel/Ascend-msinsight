@@ -1,0 +1,20 @@
+{
+    "name": "modules",
+    "version": "1.0.0",
+    "license": "MIT",
+    "private": true,
+    "scripts": {
+        "buildModuleWin": "npm run buildTimelineWin && npm run buildMemoryWin && npm run buildClusterWin",
+        "buildModuleLinux": "npm run buildTimelineLinux && npm run buildMemoryLinux && npm run buildClusterLinux",
+        "buildClusterWin": "cd .\\cluster && npm install --force && npm run build && npm run publishWin",
+        "buildClusterLinux": "cd ./cluster && npm install --force && npm run build && npm run publishLinux",
+        "buildMemoryWin": "cd .\\memory && npm install --force && npm run build && npm run publishWin",
+        "buildMemoryLinux": "cd ./memory && npm install --force && npm run build && npm run publishLinux",
+        "buildTimelineWin": "cd .\\timeline && npm install --force && npm run build && npm run publishWin",
+        "buildTimelineLinux": "cd ./timeline && npm install --force && npm run build && npm run publishLinux",
+        "test": "npm run testMemory",
+        "testCluster": "cd cluster && npm install --force && npm run test",
+        "testMemory": "cd memory && npm install --force && npm run test",
+        "testTimeline": "cd timeline && npm install --force && npm run test"
+    }
+}

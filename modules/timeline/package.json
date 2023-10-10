@@ -55,8 +55,8 @@
     "eject": "react-scripts eject",
     "lint": "eslint src",
     "dt": "set BROWSER=none&&set REACT_APP_TEST=1&&react-scripts start",
-    "copyWin": "xcopy .\\build ..\\..\\framework\\plugins\\Timeline\\ /E /I /Y",
-    "copyLinux": "cp -rf ./build ../../framework/plugins/Timeline"
+    "publishWin": "del ..\\..\\framework\\plugins\\Timeline\\ /S /Q && xcopy .\\build ..\\..\\framework\\plugins\\Timeline\\ /E /I /Y",
+    "publishLinux": "rm -rf ../../framework/plugins/Timeline && cp -rf ./build ../../framework/plugins/Timeline"
   },
   "eslintConfig": {
     "extends": [
