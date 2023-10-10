@@ -134,17 +134,23 @@ std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &p
         if (depth > 5) {
             return;
         }
-        auto folders = FileUtil::FindFolders(path);
+        std::vector<std::string> folders;
+        std::vector<std::string> files;
+        if (!FileUtil::FindFolders(path, folders, files)) {
+            return;
+        }
         if (std::find(folders.begin(), folders.end(), "ASCEND_PROFILER_OUTPUT") != folders.end()) {
             FindAscendFolder(path, traceFiles);
             return;
         }
         for (const auto &folder : folders) {
             std::string tmpPath = FileUtil::SplicePath(path, folder);
-            if (FileUtil::IsFolder(tmpPath)) {
-                find(tmpPath, depth + 1);
-            } else if (IsJsonValid(folder)) {
-                traceFiles.push_back(tmpPath);
+            find(tmpPath, depth + 1);
+        }
+        for (const auto &file : files) {
+            std::string tmpPath = FileUtil::SplicePath(path, file);
+            if (IsJsonValid(tmpPath)) {
+                traceFiles.push_back(FileUtil::SplicePath(path, file));
             }
         }
     };
@@ -172,26 +178,34 @@ void ImportActionHandler::FindAscendFolder(const std::string &path, std::vector<
         if (depth > 5) {
             return;
         }
-        auto folders = FileUtil::FindFolders(path);
+        std::vector<std::string> folders;
+        std::vector<std::string> files;
+        if (!FileUtil::FindFolders(path, folders, files)) {
+            return;
+        }
         for (const auto &folder : folders) {
             std::string tmpPath = FileUtil::SplicePath(path, folder);
-            if (FileUtil::IsFolder(tmpPath)) {
-                find(tmpPath, depth + 1);
-            } else if (IsJsonValid(folder)) {
-                traceFiles.push_back(tmpPath);
+            find(tmpPath, depth + 1);
+        }
+        for (const auto &file : files) {
+            std::string tmpPath = FileUtil::SplicePath(path, file);
+            if (IsJsonValid(tmpPath)) {
+                traceFiles.push_back(FileUtil::SplicePath(path, file));
             }
         }
     };
-    auto folders = FileUtil::FindFolders(path);
+    std::vector<std::string> folders;
+    std::vector<std::string> files;
+    if (!FileUtil::FindFolders(path, folders, files)) {
+        return;
+    }
     static std::string reg = R"(PROF_.*)";
     for (const auto &folder : folders) {
         if (!RegexUtil::RegexMatch(folder, reg).has_value()) {
             continue;
         }
         std::string tmpPath = FileUtil::SplicePath(path, folder);
-        if (FileUtil::IsFolder(tmpPath)) {
-            find(tmpPath, 0);
-        }
+        find(tmpPath, 0);
         break;
     }
 }
@@ -222,13 +236,13 @@ std::string ImportActionHandler::GetFileId(const std::string &filePath)
 
 bool ImportActionHandler::CheckIsCluster(const std::string &filePath)
 {
-    auto folders = FileUtil::FindFolders(filePath);
-    for (const auto &folder : folders) {
-        if (folder == "cluster_analysis_output") {
-            return true;
-        }
+    std::vector<std::string> folders;
+    std::vector<std::string> files;
+    if (!FileUtil::FindFolders(filePath, folders, files)) {
+        return false;
     }
-    return false;
+    return std::any_of(folders.begin(), folders.end(),
+                       [](std::string &folder) {return folder == "cluster_analysis_output";});
 }
 
 std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFiles(
