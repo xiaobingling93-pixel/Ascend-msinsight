@@ -332,7 +332,7 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
 
 const StatisticsTable = (props: {step: string;rankId: string;session: Session}): JSX.Element => {
     const { rankId = '', step = '', session } = props;
-    return notNull(rankId)
+    return notNull(rankId) && session.unitcount > 0
         ? (
             <div>
                 <div style={{ marginBottom: '20px' }}>

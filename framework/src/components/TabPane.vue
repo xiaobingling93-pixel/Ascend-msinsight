@@ -26,7 +26,7 @@ onMounted(async () => {
         }
         const receivePropKeys = Object.keys(receiver);
         const validPropKeys = Object.keys(session);
-        const updateState = {};
+        const updateState: any = {};
         for (const key of receivePropKeys) {
             if (validPropKeys.includes(key) && Object.prototype.toString.call(receiver[key]) === Object.prototype.toString.call(session[key as keyof Session])) {
                 Object.assign(updateState, { [key]: receiver[key] });
@@ -36,10 +36,15 @@ onMounted(async () => {
         }
         setSession(updateState);
         setTimeout(()=>{
-          if ((updateState as any).parseCompleted !== undefined || (updateState as any).clusterCompleted !== undefined) {
+          if (updateState.parseCompleted !== undefined || updateState.clusterCompleted !== undefined || updateState.unitcount !== undefined ) {
             connector.send({
               event: 'updateSession',
-              body: { parseCompleted: session.parseCompleted, clusterCompleted: session.clusterCompleted, ...updateState },
+              body: {
+                parseCompleted: session.parseCompleted,
+                clusterCompleted: session.clusterCompleted,
+                unitcount: session.unitcount,
+                ...updateState
+              },
             });
           }
         })

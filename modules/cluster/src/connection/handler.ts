@@ -100,5 +100,6 @@ const resetStatus = (): void => {
         }
         session.clusterCompleted = false;
         session.parseCompleted = false;
+        session.unitcount = 0;
     });
 };

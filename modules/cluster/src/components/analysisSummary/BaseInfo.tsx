@@ -93,6 +93,13 @@ const initBaseInfo = async (setData: any): Promise<void> => {
         dataSize: res.dataSize !== undefined && res.dataSize > 0.01 ? Number(res.dataSize?.toFixed(2)) : res.dataSize,
     });
 };
+
+const getDisplayItems = (session: Session): any[] => {
+    if (session.unitcount === 0) {
+        return list.filter(item => ![ 'collectStartTime', 'collectDuration' ].includes(item.key));
+    }
+    return list;
+};
 const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
     const [ data, setData ] = useState<StringMap>({});
     useEffect(() => {
@@ -100,19 +107,23 @@ const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
             initBaseInfo(setData);
         });
     }, [ session.parseCompleted, session.renderId ]);
+    const displaylist = getDisplayItems(session);
     return <Container
         title={'Base Info'}
         titleClassName={'common-title-bottom'}
         style={{ height: 'auto' }}
         content={(<div className={'baseinfo'}>
             {
-                list.map(item => (
+                displaylist.map(item => (
                     <div key={item.key}>
                         <div>{item.label}:</div>
-                        <div>{
-                            item.key === 'collectDuration' && !session.parseCompleted
-                                ? <Loading style={{ marginTop: '10px' }}/>
-                                : data[item.key] }</div>
+                        <div>
+                            {
+                                item.key === 'collectDuration' && !session.parseCompleted
+                                    ? <Loading style={{ marginTop: '10px' }}/>
+                                    : data[item.key]
+                            }
+                        </div>
                     </div>
                 ))
             }
