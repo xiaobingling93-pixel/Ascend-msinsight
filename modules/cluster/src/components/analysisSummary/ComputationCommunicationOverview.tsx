@@ -199,6 +199,7 @@ function wrapData(data: SummaryDataType[]): any {
         totalFields.forEach(field => {
             total += item[field];
         });
+        item.computingTime = item.computingTime - item.communicationOverLappedTime;
         item.computeTimeRatio = Number((100 * item.computingTime / total).toFixed(2));
         item.communicationTimeRatio = Number((100 * item.communicationNotOverLappedTime / total).toFixed(2));
     });
@@ -225,7 +226,8 @@ async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
 export const hit = (<Tooltip title={
     (
         <div style={{ background: 'var(--grey100)', padding: '1rem' }}>
-            <div>Total Time = Computing + Communication(Not Overlapped) + Free</div>
+            <div>Computing = Sum of kernel time on NPU - Communication(Overlapped)</div>
+            <div>Total Time = Computing + Communication(Overlapped) + Communication(Not Overlapped) + Free</div>
             <div>Computing Ratio = Computing / Total Time</div>
             <div>Communication Ratio = Communication(Not Overlapped) / Total Time</div>
             <div style={{ marginTop: '2rem' }}><ExclamationCircleFilled style={{ marginRight: '10px' }}/>
