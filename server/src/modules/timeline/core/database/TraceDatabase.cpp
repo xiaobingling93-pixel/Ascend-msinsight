@@ -1378,14 +1378,14 @@ bool TraceDatabase::QueryCommunicationNum(const Protocol::CommunicationDetailPar
     std::string trackIds = GetTracksSql(opTrackId);
     std::string sql;
     if (params.orderBy.empty()) {
-        sql = "SELECT name as communicationKernel, ROUND(timestamp - ?, 4) as startTime, "
-              "ROUND(duration, 4) as totalDuration, ROUND(notOverlapDuration, 4) as notOverlapDuration, "
-              "ROUND(overlapDuration, 4) as overlapDuration FROM " + sliceTable + " WHERE track_id IN "
+        sql = "SELECT name as communicationKernel, ROUND((timestamp - ?) / (1000 * 1000), 4) as startTime, "
+              "ROUND(duration / 1000, 4) as totalDuration, ROUND(notOverlapDuration / 1000, 4) as notOverlapDuration, "
+              "ROUND(overlapDuration / 1000, 4) as overlapDuration FROM " + sliceTable + " WHERE track_id IN "
               + trackIds + " LIMIT ? offset ? ";
     } else {
-        sql = "SELECT name as communicationKernel, ROUND(timestamp - ?, 4) as startTime, "
-              "ROUND(duration, 4) as totalDuration, ROUND(notOverlapDuration, 4) as notOverlapDuration, "
-              "ROUND(overlapDuration, 4) as overlapDuration FROM " + sliceTable + " WHERE track_id IN "
+        sql = "SELECT name as communicationKernel, ROUND((timestamp - ?) / (1000 * 1000), 4) as startTime, "
+              "ROUND(duration / 1000, 4) as totalDuration, ROUND(notOverlapDuration / 1000, 4) as notOverlapDuration, "
+              "ROUND(overlapDuration / 1000, 4) as overlapDuration FROM " + sliceTable + " WHERE track_id IN "
               + trackIds + " ORDER BY " + params.orderBy + " " + ascend + " LIMIT ? offset ? ";
     }
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
