@@ -20,7 +20,7 @@ public:
 
     static void GetFoldersAndFiles(const std::string &path,
                                    std::vector<std::unique_ptr<Protocol::Folder>> &childrenFolders,
-                                   std::vector<std::unique_ptr<Protocol::File>> &childrenFiles, int depth = 0);
+                                   std::vector<std::unique_ptr<Protocol::File>> &childrenFiles);
 
 private:
     static const int maxDepth = 2;
