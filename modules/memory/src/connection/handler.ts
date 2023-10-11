@@ -13,11 +13,20 @@ export const parseMemoryCompletedHandler: NotificationHandler = async (data): Pr
             }
             session.token = data.token as string;
             const memoryResult = data.memoryResult as RankInfo[];
-            memoryResult.forEach((item) => {
-                if (!session.memoryRankIds.includes(item.rankId) && (item.hasMemory as boolean)) {
-                    session.memoryRankIds.push(item.rankId);
-                }
-            });
+            const isCluster = data.isCluster as boolean;
+            if (!isCluster && !session.isCluster) {
+                memoryResult.forEach((item) => {
+                    if (!session.memoryRankIds.includes(item.rankId) && (item.hasMemory as boolean)) {
+                        session.memoryRankIds.push(item.rankId);
+                    }
+                });
+            } else {
+                session.memoryRankIds = [];
+                memoryResult.forEach((item) => {
+                    item.hasMemory && session.memoryRankIds.push(item.rankId);
+                });
+            }
+            session.isCluster = isCluster;
         });
     } catch (err) {
         console.error(err);
@@ -33,6 +42,7 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
                 return;
             }
             session.memoryRankIds = [];
+            session.isCluster = false;
         });
     } catch (error) {
         console.error(error);

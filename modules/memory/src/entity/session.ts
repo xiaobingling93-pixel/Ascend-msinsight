@@ -97,6 +97,7 @@ export class Session {
     timelineMaker: TimeLineMaker = TIME_MAKER_DEFAULT;
     memoryRankIds: string[] = [];
     isWakeup: boolean = false;
+    isCluster: boolean = false;
 
     constructor(conf?: Partial<Session>) {
         makeAutoObservable(this, {

@@ -189,10 +189,8 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     useEffect(() => {
         // 只对RandId为数字做排序，不能转为数字的字符串则不排序
         setRankIdList(session.memoryRankIds.sort((a, b) => Number(a) - Number(b)));
-        session.memoryRankIds.length === 0
-            ? setRankId(undefined)
-            : (rankId === undefined && setRankId(session.memoryRankIds[0]));
-    }, [session.memoryRankIds.length]);
+        session.memoryRankIds.length === 0 ? setRankId(undefined) : setRankId(session.memoryRankIds[0]);
+    }, [JSON.stringify(session.memoryRankIds)]);
 
     useEffect(() => {
         setIsWakeup(session.isWakeup);
