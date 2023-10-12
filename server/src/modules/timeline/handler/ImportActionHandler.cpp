@@ -88,7 +88,7 @@ void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, st
         MemorySuccess memory;
         memory.rankId = rankId;
         if (HasMemoryFile(path)) {
-            memory.hasMemory = true;
+            memory.hasFile = true;
         }
         hasMemory.emplace_back(memory);
         response.body.result.emplace_back(action);
@@ -126,10 +126,20 @@ void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::
     ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId, ", result:", result);
     if (result) {
         SendParseSuccessEvent(token, fileId);
-        ParseMemoryEndProcess(token);
+        for (auto & memory : hasMemory) {
+            if (memory.rankId == fileId) {
+                memory.parseSuccess = true;
+            }
+        }
     } else {
         SendParseFailEvent(token, fileId);
+        for (auto & memory : hasMemory) {
+            if (memory.rankId == fileId) {
+                memory.parseSuccess = false;
+            }
+        }
     }
+    ParseMemoryEndProcess(token);
 }
 
 void ImportActionHandler::ParseMemoryEndProcess(const std::string token)
@@ -332,6 +342,7 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
     const std::vector<std::string> &pathList, ImportActionResBody &body)
 {
     auto traceFiles = FindAllTraceFile(pathList);
+    hasMemory.clear();
     if (pathList.size() == 1) {
         bool isCluster = traceFiles.size() > 1 || CheckIsCluster(pathList[0]);
         bool reset = isCluster || curIsCluster;
@@ -340,7 +351,6 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
         if (reset) {
             TraceFileParser::Instance().Reset();
             body.reset = reset;
-            hasMemory.clear();
         }
         body.isCluster = isCluster;
     } else {

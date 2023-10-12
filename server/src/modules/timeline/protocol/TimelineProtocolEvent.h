@@ -61,7 +61,8 @@ struct ParseFailEvent : public Event {
 
 struct MemorySuccess {
     std::string rankId;
-    bool hasMemory = false;
+    bool parseSuccess = false;
+    bool hasFile = false;
 };
 
 struct ParseClusterCompletedEventBody {

@@ -247,7 +247,7 @@ template <> std::optional<json_t> ToEventJson<ParseMemoryCompletedEvent>(const P
     for (const MemorySuccess &memory: event.memoryResult) {
         json_t chartJson = json_t::object();
         chartJson["rankId"] = memory.rankId;
-        chartJson["hasMemory"] = memory.hasMemory;
+        chartJson["hasMemory"] = memory.hasFile and memory.parseSuccess;
         json["body"]["memoryResult"].emplace_back(chartJson);
     }
     return json;
