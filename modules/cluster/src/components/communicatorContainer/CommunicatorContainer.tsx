@@ -5,7 +5,6 @@ import { observer } from 'mobx-react';
 import { Session } from '../../entity/session';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Tabs, Form, InputNumber, Row, Button, message, Select } from 'antd';
-import { ReactComponent as Rank } from '../../assets/images/round_light.svg';
 import _ from 'lodash';
 import eventBus, { useEventBus } from '../../utils/eventBus';
 import { queryTopSummary } from '../../utils/RequestUtils';
@@ -105,7 +104,7 @@ const RankGroup = ({ rankGroup, session }: { rankGroup: communicator; session: S
     });
     const width = (rankGroup.ranks.length * 85).toString().concat('px');
     return (
-        <div style={{ width, margin: '0 10px' }}>
+        <div style={{ width, margin: '0 10px', cursor: 'pointer' }}>
             <Row className={active === rankGroup.name ? 'activeRank' : active} wrap={false} >
                 {
                     _.map(rankGroup.ranks, (value) => (
@@ -155,7 +154,7 @@ const RankId = ({ id, onClick }: { id: number; onClick: () => void }): JSX.Eleme
     return (
         <div style={{ height: '75px', width: '65px' }}>
             <Row justify={'center'} onClick={onClick}>
-                <Rank></Rank>
+                <div className={'rank_icon'}></div>
             </Row>
             <Row justify={'center'} onClick={onClick}>
                 <span>rank {id}</span>
