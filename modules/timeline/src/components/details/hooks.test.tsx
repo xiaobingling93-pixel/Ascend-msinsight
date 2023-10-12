@@ -226,7 +226,7 @@ describe('hooks test', () => {
         expect(render).toBeCalled();
         expect(result.current).toStrictEqual(ExpectedRes);
 
-        const hidden = jest.fn().mockReturnValue(true);
+        const hidden = jest.fn().mockReturnValue(false);
         detail = {
             fetchData: jest.fn().mockResolvedValue({ result: '' }),
             renderFields: [

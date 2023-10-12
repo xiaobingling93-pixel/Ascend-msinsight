@@ -111,6 +111,7 @@ module.exports = {
       allowNullableBoolean: true,
     }],
     '@typescript-eslint/no-unnecessary-type-assertion': ['off'],
+    '@typescript-eslint/no-var-requires': 0,
   },
   overrides: [
     {

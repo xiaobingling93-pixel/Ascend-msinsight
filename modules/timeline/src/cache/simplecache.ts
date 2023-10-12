@@ -1,6 +1,5 @@
 import { ThreadTraceRequest, ThreadTrace } from '../entity/data';
 import { binarySearchFirstBig, binarySearchLastSmall } from './strategies/utils';
-import { store } from '../store';
 
 const stackStatusKey = 'chart/stackStatus';
 type Method = 'unit/threadTraces'; // store methodKey
@@ -44,6 +43,7 @@ export class SimpleCache {
 
 async function requestThreadTraces(requestParam: Record<string, unknown>): Promise<ThreadTrace[][]> {
     try {
+        const { store } = require('../store');
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
         const param: Record<string, unknown> = Object.assign({}, requestParam);
