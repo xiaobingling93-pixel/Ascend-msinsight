@@ -20,8 +20,8 @@ const props = defineProps<{
                         <span v-if="node.level === 1" class="contentText">
                             {{ node.label }}
                         </span>
-                        <el-tooltip :content="node.label" :effect="isDarkTheme ? 'light' : 'dark'">
-                            <span v-if="node.level === 2" class="contentNodeText">
+                        <el-tooltip v-if="node.level === 2" :content="node.label" :effect="isDarkTheme ? 'light' : 'dark'">
+                            <span class="contentNodeText">
                                 {{ node.label }}
                             </span>
                         </el-tooltip>

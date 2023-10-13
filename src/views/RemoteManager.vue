@@ -27,8 +27,10 @@ function addRemote(e: MouseEvent) {
 const store = useDataSources();
 
 const handleConfirm = () => {
-    resourceComp.value.doSetCurrentPath();
-    showModal.value = false;
+    const result = resourceComp.value.doSetCurrentPath();
+    if (result) {
+        showModal.value = false;
+    }
 }
 </script>
 
@@ -39,7 +41,7 @@ const handleConfirm = () => {
             <AddIcon />
         </el-icon>
         <el-switch class="theme-toggle" v-model="isDarkTheme"></el-switch>
-        <el-dialog v-model="showModal" title="File Explorer" width="30%" destroy-on-close>
+        <el-dialog v-model="showModal" title="File Explorer" width="30%">
             <ResourceComp ref="resourceComp" />
             <template #footer>
                 <span>

@@ -9,6 +9,7 @@ export type ResourceItem = {
     childrenFolders?: ResourceItem[];
     childrenFiles?: ResourceItem[],
     children?: ResourceItem[];
+    leaf?: boolean;
 };
 
 interface Body {
@@ -18,39 +19,27 @@ interface Body {
     childrenFiles: ResourceItem[];
 }
 
+type ResourceTotal = {
+    [key: string]: ResourceItem[]
+}
+
 
 export const useResource = defineStore('resource', () => {
 
     const resourceState = reactive({
-        resource: [] as ResourceItem[],
         currentPath: "",
+        startResource: [] as ResourceItem[],
+        resourceTotal: {} as ResourceTotal
     });
 
-    const dealResource = (newResource: ResourceItem): ResourceItem['children'] => {
+    const dealResource = (newResource: ResourceItem): ResourceItem[] => {
         newResource.childrenFolders?.forEach(item => {
-            item.children = dealResource(item);
+            item.leaf = false;
         })
-        return [...(newResource.childrenFolders ? newResource.childrenFolders : []), ...(newResource.childrenFiles ? newResource.childrenFiles : [])]
-    }
-
-    const doMerge = (resource: ResourceItem[], newResource: ResourceItem): boolean => {
-        const path = newResource.path;
-        const target = resource.find(item => item.path === path);
-        if (target) {
-            target.childrenFolders = newResource.childrenFolders || [];
-            target.childrenFiles = newResource.childrenFiles || [];
-            target.children = newResource.children;
-            return true;
-        } else {
-            for (let i = 0; i < resource.length; i++) {
-                const item = resource[i];
-                if (item.childrenFolders) {
-                    const result = doMerge(item.childrenFolders, newResource);
-                    if (result) return true;
-                }
-            }
-            return false;
-        }
+        newResource.childrenFiles?.forEach(item => {
+            item.leaf = true;
+        })
+        return [...(newResource.childrenFolders ? newResource.childrenFolders : []), ...(newResource.childrenFiles ? newResource.childrenFiles : [])];
     }
 
     const setResource = (body: Body) => {
@@ -62,21 +51,23 @@ export const useResource = defineStore('resource', () => {
             childrenFiles,
         }
         newResource.children = dealResource(newResource)
-        if (path === "" && newResource.children) {
-            resourceState.resource = [...newResource.children];
-            return;
+        if (newResource.children) {
+            resourceState.resourceTotal[newResource.path] = newResource.children;
+            if (path === "") {
+                resourceState.startResource = [...newResource.children];
+            }
         }
-        const mergeResult = doMerge(resourceState.resource, newResource)
+        return newResource.children;
     }
 
-    const loadFiles = async (path: string) => {
+    const loadFiles = async (path: string): Promise<ResourceItem[]> => {
         const result = await request({ remote: LOCAL_HOST, port: PORT, dataPath: [] }, 'global', {
             command: 'files/get',
             params: {
                 path,
             }
         });
-        setResource(result as Body)
+        return setResource(result as Body)
     }
 
     const setCurrentPath = (path: string) => {

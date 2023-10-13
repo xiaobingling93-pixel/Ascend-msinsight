@@ -16,54 +16,89 @@ const { resourceState, loadFiles, setCurrentPath } = useResource();
 const defaultProps = {
     label: 'name',
     children: 'children',
+    isLeaf: 'leaf',
 }
+let isUpdateLoading = false;
+let defalultExpandedKeysSet: Set<string> = new Set();
 
 const state = reactive({
-    selectedPath: "",
     defalultExpandedKeys: [] as string[],
+    inputPath: "",
 })
 
-const handleExpand = (data: ResourceItem, node: Node) => {
-    if (state.selectedPath === data.path) {
+const updateData = async (path: string,node: Node) => {
+    if (isUpdateLoading) {
         return;
     }
-    state.selectedPath = data.path;
-    loadFiles(data.path);
+    isUpdateLoading = true;
+    const oldData = resourceState.resourceTotal[path];
+    if (oldData) {
+        const newData = await loadFiles(path);
+        checkData(newData, oldData, node)
+    }
+    isUpdateLoading = false;
+}
+
+const checkData = (newData: ResourceItem[], oldData: ResourceItem[], node: Node) => {
+    const newPaths = newData.map(item => item.path);
+    const oldPaths = oldData.map(item => item.path);
+    const addData = newData.filter(item => !oldPaths.includes(item.path));
+    const deleteDtat = oldData.filter(item => !newPaths.includes(item.path));
+    deleteDtat.forEach(item => {
+        treeRef.value.remove(item);
+    })
+    addData.forEach(item => {
+        treeRef.value.append(item, node);
+    })
+}
+
+const handleExpand = async (data: ResourceItem, node: Node) => {
+    state.inputPath = data.path;
+    defalultExpandedKeysSet.add(data.path)
+    state.defalultExpandedKeys = [...defalultExpandedKeysSet];
+    updateData(data.path,node);
 }
 
 const hanldeCollapse = (data: ResourceItem, node: Node) => {
-    state.selectedPath = data.path;
-    loadFiles(data.path);
+    state.inputPath = data.path;
+    defalultExpandedKeysSet.delete(data.path)
+    state.defalultExpandedKeys = [...defalultExpandedKeysSet];
 }
 
-const handleClick = (data: ResourceItem, node: Node) => {
-    state.selectedPath = data.path;
-}
-
-const doOpenCurrent = (currentKey: string) => {
-    if (treeRef.value) {
-        treeRef.value.setCurrentKey(currentKey);
-    } else {
-        nextTick(() => {
-            doOpenCurrent(currentKey)
-        })
+const handleClick = async (data: ResourceItem, node: Node) => {
+    const oldData = resourceState.resourceTotal[data.path];
+    if (oldData && oldData.length <= 0) {
+        defalultExpandedKeysSet.add(data.path)
+        state.defalultExpandedKeys = [...defalultExpandedKeysSet];
     }
+    state.inputPath = data.path;
+    updateData(data.path, node);
 }
 
 onMounted(() => {
     loadFiles(resourceState.currentPath)
 })
 
-watch(() => resourceState.currentPath, (newVal) => {
-    state.selectedPath = newVal;
-    doOpenCurrent(newVal)
-
-}, { immediate: true })
-
 const doSetCurrentPath = () => {
-    setCurrentPath(state.selectedPath);
-    const dataSource = { remote: LOCAL_HOST, port: PORT, dataPath: [state.selectedPath] };
-    confirm(dataSource)
+    const currentkey = treeRef.value.getCurrentKey();
+    if (currentkey && (currentkey === state.inputPath || `${currentkey}\\` === state.inputPath)) {
+        setCurrentPath(currentkey);
+        const dataSource = { remote: LOCAL_HOST, port: PORT, dataPath: [currentkey] };
+        confirm(dataSource);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+const getLoadData = async (node: Node, resolve: (data: ResourceItem[]) => void) => {
+    const resource = resourceState.startResource;
+    if (node.level === 0) {
+        return resolve(resource);
+    }
+    const path = node.data.path;
+    const newData = await loadFiles(path);
+    resolve(newData || []);
 }
 
 defineExpose({
@@ -73,17 +108,18 @@ defineExpose({
 
 <template>
     <div class="tree-wrap">
-        <el-input v-model="state.selectedPath" disabled />
+        <el-input v-model="state.inputPath" disabled />
         <div class="data-tree">
-            <el-tree ref="treeRef" :data="resourceState.resource" :props="defaultProps" :accordion="false" node-key="path"
-                @node-click="handleClick" @node-expand="handleExpand" @node-collapse="hanldeCollapse">
+            <el-tree ref="treeRef" :default-expanded-keys="state.defalultExpandedKeys" :data="resourceState.startResource" :props="defaultProps" :auto-expand-parent="false"
+                node-key="path" @node-click="handleClick" @node-expand="handleExpand" @node-collapse="hanldeCollapse" lazy
+                :load="getLoadData">
                 <template #default="{ node, data }">
                     <div class="custom-tree-node">
                         <el-icon :size="16">
-                            <FolderIcon v-if="data.children" />
-                            <FileIcon v-else />
+                            <FileIcon v-if="data.leaf" />
+                            <FolderIcon v-else />
                         </el-icon>
-                        <span>{{ data.name }}</span>
+                        <span :id="data.path">{{ data.name }}</span>
                     </div>
                 </template>
             </el-tree>
