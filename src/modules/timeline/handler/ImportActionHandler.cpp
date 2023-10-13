@@ -148,8 +148,7 @@ std::vector<std::string> ImportActionHandler::FindTraceFile(const std::string &p
             find(tmpPath, depth + 1);
         }
         for (const auto &file : files) {
-            std::string tmpPath = FileUtil::SplicePath(path, file);
-            if (IsJsonValid(tmpPath)) {
+            if (IsJsonValid(file)) {
                 traceFiles.push_back(FileUtil::SplicePath(path, file));
             }
         }
@@ -188,8 +187,7 @@ void ImportActionHandler::FindAscendFolder(const std::string &path, std::vector<
             find(tmpPath, depth + 1);
         }
         for (const auto &file : files) {
-            std::string tmpPath = FileUtil::SplicePath(path, file);
-            if (IsJsonValid(tmpPath)) {
+            if (IsJsonValid(file)) {
                 traceFiles.push_back(FileUtil::SplicePath(path, file));
             }
         }
