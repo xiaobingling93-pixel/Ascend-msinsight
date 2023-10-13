@@ -53,8 +53,10 @@ def build_vscode(vscode_version, os_name):
     os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
     if os_name == 'win':
         exec_command(['npm.cmd', 'run', 'buildWin'], SCRIPT_PATH)
-    elif os_name.startswith('linux'):
-        exec_command(['npm', 'run', 'buildLinux'], SCRIPT_PATH)
+    elif os_name.endswith('x86_64'):
+        exec_command(['npm', 'run', 'buildLinuxX64'], SCRIPT_PATH)
+    elif os_name.endswith('aarch64'):
+        exec_command(['npm', 'run', 'buildLinuxArm'], SCRIPT_PATH)
     src = os.path.join(SCRIPT_PATH, 'plugins', 'vscode')
     # copy vscode plugin
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-extension_' + vscode_version + '_' + os_name + '.vsix')
