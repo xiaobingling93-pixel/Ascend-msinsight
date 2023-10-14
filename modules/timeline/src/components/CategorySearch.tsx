@@ -12,6 +12,7 @@ import { StyledInput } from './base/StyledInput';
 import { SvgType } from './base/rc-table/types';
 import { runInAction } from 'mobx';
 import { ThreadUnit } from '../insight/units/AscendUnit';
+import i18n from 'i18next';
 
 const SearchIcon = AntdSearchIcon as SvgType;
 const CloseIcon = AntdCloseIcon as SvgType;
@@ -197,7 +198,7 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
             overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
             overlayClassName={'insight-category-search-overlay'}
             align={{ offset: [ -8, 3 ] }}>
-            <CustomButton { ...customButtonProps }/>
+            <CustomButton tooltip={i18n.t('tooltip:search')} { ...customButtonProps }/>
         </Tooltip>
     );
 });

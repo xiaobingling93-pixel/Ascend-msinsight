@@ -96,7 +96,10 @@
     "abilityEvent": "Ability Event",
     "reset": "Reset",
     "clean": "Clean",
-    "filter": "Filter"
+    "filter": "Filter",
+    "search": "Search",
+    "del": "Timeline Zoom Out",
+    "add": "Timeline Zoom In"
   },
   "snapshot": {
     "Tooltip": "User object reachable from window"
