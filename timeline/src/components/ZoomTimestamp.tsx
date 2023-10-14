@@ -55,24 +55,28 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
                 }}
             /></StyledTooltip>
         </Container>
-        <Del
-            fill={isUpperBound ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
-            onClick={() => {
-                runInAction(() => {
-                    traceStart('zoomProportion', { action: 'zoomProportion' });
-                    session.zoom = { zoomCount: 1 };
-                });
-            }}
-        />
+        <StyledTooltip title={i18n.t('tooltip:del')}>
+            <Del
+                fill={isUpperBound ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
+                onClick={() => {
+                    runInAction(() => {
+                        traceStart('zoomProportion', { action: 'zoomProportion' });
+                        session.zoom = { zoomCount: 1 };
+                    });
+                }}
+            />
+        </StyledTooltip>
         <Percentage>{zoom}</Percentage>
-        <Add
-            fill={isLowerBound ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
-            onClick={() => {
-                runInAction(() => {
-                    traceStart('zoomProportion', { action: 'zoomProportion' });
-                    session.zoom = { zoomCount: -1 };
-                });
-            }}
-        />
+        <StyledTooltip title={i18n.t('tooltip:add')}>
+            <Add
+                fill={isLowerBound ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
+                onClick={() => {
+                    runInAction(() => {
+                        traceStart('zoomProportion', { action: 'zoomProportion' });
+                        session.zoom = { zoomCount: -1 };
+                    });
+                }}
+            />
+        </StyledTooltip>
     </Container>;
 });
