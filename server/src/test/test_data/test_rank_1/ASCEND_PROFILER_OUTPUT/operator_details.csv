@@ -1,0 +1,35 @@
+Name,Input Shapes,Call Stack,Host Self Duration(us),Host Total Duration(us),Device Self Duration(us),Device Total Duration(us),Device Self Duration With AICore(us),Device Total Duration With AICore(us)
+aten::empty,";
+;
+;
+;
+;
+","/usr/local/python3.7.5/lib/python3.7/site-packages/torch_npu/npu/profiler.py(675): __enter__;
+/usr/local/python3.7.5/lib/python3.7/site-packages/torch_npu/profiler/profiler_action_controller.py(136): _iteration_start;
+/usr/local/python3.7.5/lib/python3.7/site-packages/torch_npu/profiler/profiler_action_controller.py(121): start_prof;
+/usr/local/python3.7.5/lib/python3.7/site-packages/torch_npu/profiler/profiler_action_controller.py(107): transit_action;
+/usr/local/python3.7.5/lib/python3.7/site-packages/torch_npu/profiler/profiler.py(81): step;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/training.py(780): train;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/training.py(150): pretrain;
+../../pretrain_gpt.py(122): <module>",60.81,60.81,0,0,0,0
+aten::zero_,232138240,"/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/model/distributed.py(28): zero;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/model/distributed.py(192): zero_grad_buffer;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/training.py(407): train_step;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/training.py(709): train;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/training.py(150): pretrain;
+../../pretrain_gpt.py(122): <module>",244.34,281.67,0,498.4,0,498.4
+aten::empty,";
+;
+;
+;
+;
+","/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/core/tensor_parallel/data.py(38): _build_key_size_numel_dictionaries;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/core/tensor_parallel/data.py(78): broadcast_data;
+../../pretrain_gpt.py(48): get_batch;
+../../pretrain_gpt.py(84): forward_step;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/schedules.py(118): forward_step;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/schedules.py(654): forward_backward_pipelining_without_interleaving;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/training.py(417): train_step;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/training.py(709): train;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/training.py(150): pretrain;
+../../pretrain_gpt.py(122): <module>",40.48,40.48,0,0,0,0

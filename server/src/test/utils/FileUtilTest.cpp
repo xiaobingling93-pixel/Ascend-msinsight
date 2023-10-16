@@ -3,10 +3,13 @@
  */
 #include <gtest/gtest.h>
 #include "FileUtil.h"
+#include "../TestSuit.cpp"
 
 using namespace Dic;
-
-TEST(SplicePath, BasicAssertions) {
+class FileUtilTest : TestSuit {
+};
+TEST_F(TestSuit, BasicAssertions)
+{
 #ifdef _WIN32
     EXPECT_EQ(FileUtil::SplicePath("a", "b"), "a\\b");
 #else
