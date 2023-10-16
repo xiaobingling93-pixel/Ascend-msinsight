@@ -117,6 +117,8 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
                 return false;
             }
             ServerLog::Info("Execute cluster analysis success, command:", command);
+        } else {
+            ServerLog::Warn("Can not find cluster analysis execute file under.", selectedPath);
         }
     }
     communicationFileList =
