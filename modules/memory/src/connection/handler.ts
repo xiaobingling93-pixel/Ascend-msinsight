@@ -25,6 +25,9 @@ export const parseMemoryCompletedHandler: NotificationHandler = async (data): Pr
                 memoryResult.forEach((item) => {
                     item.hasMemory && session.memoryRankIds.push(item.rankId);
                 });
+                if (data.parseEnd as boolean) {
+                    session.isClusterMemoryCompletedSwitch = !session.isClusterMemoryCompletedSwitch;
+                }
             }
             session.isCluster = isCluster;
         });
