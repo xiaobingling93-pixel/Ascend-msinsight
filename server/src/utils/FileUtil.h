@@ -122,38 +122,65 @@ public:
         return path.substr(pos + 1);
     }
 
-    // return file and folder in path
-    static inline std::vector<std::string> FindFolders(const std::string &path)
+#ifdef _WIN32
+    static inline bool FindFolders(const std::string &path,
+                                   std::vector<std::string> &folders,
+                                   std::vector<std::string> &files)
+    {
+        long hFile = 0;
+        struct _finddata_t fileInfo{};
+        std::string tmpPath;
+        if (StringUtil::IsUtf8String(path)) {
+            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
+        }
+        if ((hFile = _findfirst(tmpPath.append("\\*").c_str(), &fileInfo)) == -1) {
+            return false;
+        }
+        do {
+            if ((fileInfo.attrib & (_A_HIDDEN | _A_SYSTEM)) != 0) {
+                continue;
+            }
+            if (std::string(fileInfo.name) == ".." || std::string(fileInfo.name) == ".") {
+                continue;
+            }
+            if ((fileInfo.attrib & _A_SUBDIR) != 0) {
+                folders.emplace_back(StringUtil::GbkToUtf8(fileInfo.name));
+            } else {
+                files.emplace_back(StringUtil::GbkToUtf8(fileInfo.name));
+            }
+        } while (_findnext(hFile, &fileInfo) == 0);
+        _findclose(hFile);
+        return true;
+    }
+#else
+    static inline bool FindFolders(const std::string &path,
+                                   std::vector<std::string> &folders,
+                                   std::vector<std::string> &files)
     {
         if (path.empty()) {
-            return {};
+            return false;
         }
         DIR *pDir = nullptr;
         struct dirent *pDirent = nullptr;
         std::string tmpPath(path);
-#ifdef _WIN32
-        if (StringUtil::IsUtf8String(path)) {
-            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
-        }
-#endif
         pDir = opendir(tmpPath.c_str());
         if (pDir == nullptr) {
-            return {};
+            return false;
         }
-        std::vector<std::string> folders;
         while ((pDirent = readdir(pDir)) != nullptr) {
             if (std::string(pDirent->d_name) == ".." || std::string(pDirent->d_name) == ".") {
                 continue;
             }
-#ifdef _WIN32
-            folders.emplace_back(StringUtil::GbkToUtf8(pDirent->d_name));
-#else
-            folders.emplace_back(pDirent->d_name);
-#endif
+            if (pDirent->d_type == DT_DIR) {
+                folders.emplace_back(pDirent->d_name);
+            } else if (pDirent->d_type == DT_REG) {
+                files.emplace_back(pDirent->d_name);
+            }
         }
         closedir(pDir);
-        return folders;
+        return true;
     }
+#endif
 
     static inline bool IsFolder(const std::string &path)
     {
