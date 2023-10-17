@@ -84,7 +84,6 @@ def build_intellij(idea_version, os_name):
         gradlew = os.path.join(plugins_path, 'gradlew')
     exec_command([gradlew, 'clean'], plugins_path)
     exec_command([gradlew, 'ascend-insight:copyFrontendBuild'], plugins_path)
-    exec_command([gradlew, 'ascend-insight:copyServerBuild'], plugins_path)
     exec_command([gradlew, 'buildPlugin'], plugins_path)
     src = os.path.join(SCRIPT_PATH, 'plugins', 'intellij', 'build', 'distributions')
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-plugin_' + idea_version + '_' + os_name + '.zip')
