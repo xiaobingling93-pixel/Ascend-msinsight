@@ -1,0 +1,20 @@
+Name,Input Shapes,Call Stack,Host Self Duration(us),Host Total Duration(us),Device Self Duration(us),Device Total Duration(us),Device Self Duration With AICore(us),Device Total Duration With AICore(us)
+aten::empty,";
+;
+;
+;
+;
+","/usr/local/python3.7.5/lib/python3.7/site-packages/torch_npu/npu/profiler.py(675): __enter__;
+/usr/local/python3.7.5/lib/python3.7/site-packages/torch_npu/profiler/profiler_action_controller.py(136): _iteration_start;
+/usr/local/python3.7.5/lib/python3.7/site-packages/torch_npu/profiler/profiler_action_controller.py(121): start_prof;
+/usr/local/python3.7.5/lib/python3.7/site-packages/torch_npu/profiler/profiler_action_controller.py(107): transit_action;
+/usr/local/python3.7.5/lib/python3.7/site-packages/torch_npu/profiler/profiler.py(81): step;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/training.py(780): train;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/training.py(150): pretrain;
+../../pretrain_gpt.py(122): <module>",66.25,66.25,0,0,0,0
+aten::zero_,232138240,"/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/model/distributed.py(28): zero;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/model/distributed.py(192): zero_grad_buffer;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/training.py(407): train_step;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/training.py(709): train;
+/work/Megatron-LM_useAttention_1_level_l1_bf16_ftts_0_jit_true/megatron/training.py(150): pretrain;
+../../pretrain_gpt.py(122): <module>",221.16,256.85,0,496.8508203,0,496.8508203

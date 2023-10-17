@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.16)
-
 project(insight_server_test VERSION 0.1.0)
 
 set(SRC_HOME_DIR ${HOME_DIR}/src)
@@ -17,11 +16,12 @@ list(APPEND DIC_TEST_LIST
         ${DIC_SERVER_SRC}
         ${DIC_CHANNEL_SRC})
 
-add_executable(insight_test ${DIC_TEST_LIST})
+add_executable(insight_test ${DIC_TEST_LIST} modules/summary/SummaryTest.cpp modules/summary/MockTraceDatabase.h TestSuit.cpp)
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(insight_test
             gtest_main
+            gmock_main
             uv_a
             userenv
             ws2_32
@@ -32,6 +32,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
 else()
     target_link_libraries(insight_test
             gtest_main
+            gmock_main
             uv_a
             pthread
             dl

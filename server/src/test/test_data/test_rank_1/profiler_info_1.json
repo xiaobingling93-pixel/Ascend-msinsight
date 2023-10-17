@@ -1,0 +1,38 @@
+{
+    "config": {
+        "common_config": {
+            "activities": [
+                "ProfilerActivity.CPU",
+                "ProfilerActivity.NPU"
+            ],
+            "schedule": {
+                "_wait": 1,
+                "_warmup": 0,
+                "_active": 1,
+                "_repeat": 1,
+                "_skip_first": 1
+            },
+            "on_trace_ready": {
+                "_worker_name": "localhost.localdomain_1408367",
+                "_dir_name": "/work/GPT-3_result/use-attention_1_level_l1_bp16_ftts_0_jit_True"
+            },
+            "record_shapes": true,
+            "profile_memory": true,
+            "with_stack": true,
+            "with_flops": true,
+            "with_modules": true
+        },
+        "experimental_config": {
+            "_profiler_level": "Level1",
+            "_aic_metrics": "ACL_AICORE_L0B_AND_WIDTH",
+            "_l2_cache": false,
+            "_data_simplification": null,
+            "record_op_args": false
+        }
+    },
+    "end_info": {
+        "collectionTimeEnd": 1695115379274664320,
+        "MonotonicTimeEnd": 23502779358290
+    },
+    "rank_id": 1
+}

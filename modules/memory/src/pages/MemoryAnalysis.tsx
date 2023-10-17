@@ -152,7 +152,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
 
     useEffect(() => {
         onSearch(searchEventOperatorName, minSize, maxSize);
-    }, [ selectedRange, rankId, current, pageSize, order, orderBy ]);
+    }, [ selectedRange, rankId, current, pageSize, order, orderBy, session.isClusterMemoryCompletedSwitch ]);
 
     useEffect(() => {
         if (rankId === undefined) {
@@ -184,11 +184,11 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         }).catch(err => {
             message.error(err);
         });
-    }, [rankId]);
+    }, [ rankId, session.isClusterMemoryCompletedSwitch ]);
 
     useEffect(() => {
         // 只对RandId为数字做排序，不能转为数字的字符串则不排序
-        setRankIdList(session.memoryRankIds.sort((a, b) => Number(a) - Number(b)));
+        setRankIdList(JSON.parse(JSON.stringify(session.memoryRankIds)).sort((a: any, b: any) => Number(a) - Number(b)));
         session.memoryRankIds.length === 0 ? setRankId(undefined) : setRankId(session.memoryRankIds[0]);
     }, [JSON.stringify(session.memoryRankIds)]);
 

@@ -98,6 +98,9 @@ export class Session {
     memoryRankIds: string[] = [];
     isWakeup: boolean = false;
     isCluster: boolean = false;
+    isClusterMemoryCompletedSwitch: boolean = false;
+    rankIdsTotal = 0;
+    curRankIdsCount = 0;
 
     constructor(conf?: Partial<Session>) {
         makeAutoObservable(this, {

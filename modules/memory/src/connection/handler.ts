@@ -21,6 +21,11 @@ export const parseMemoryCompletedHandler: NotificationHandler = async (data): Pr
                     }
                 });
             } else {
+                if (isCluster) {
+                    if (++session.curRankIdsCount === session.rankIdsTotal) {
+                        session.isClusterMemoryCompletedSwitch = !session.isClusterMemoryCompletedSwitch;
+                    }
+                }
                 session.memoryRankIds = [];
                 memoryResult.forEach((item) => {
                     item.hasMemory && session.memoryRankIds.push(item.rankId);
@@ -62,6 +67,24 @@ export const wakeUpHandler: NotificationHandler = async (data): Promise<void> =>
                 return;
             }
             session.isWakeup = !session.isWakeup;
+        });
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+export const updateSessionHandler: NotificationHandler = async (data): Promise<void> => {
+    try {
+        const { sessionStore } = store;
+        const session = sessionStore.activeSession;
+        runInAction(() => {
+            if (!session) {
+                return;
+            }
+            if (data.isReset !== undefined) {
+                session.rankIdsTotal = data.unitcount as number;
+                session.curRankIdsCount = 0;
+            }
         });
     } catch (error) {
         console.error(error);

@@ -1,0 +1,2 @@
+Step,Computing,Communication(Not Overlapped),Overlapped,Communication,Free,Stage,Bubble,Communication(Not Overlapped and Exclude Receive)
+2,75174.57464453117,146614.02034375005,6987.303296874976,153601.32364062502,69909.50350390615,291698.0,0,146614.02034375005

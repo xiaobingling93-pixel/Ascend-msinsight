@@ -1,0 +1,80 @@
+{
+  "p2p": {
+    "step2": {
+      "hcom_send__822_0@13337953553061386822": {
+        "0-0": {
+          "Transport Type": "LOCAL",
+          "Transit Time(ms)": 0.0275528359375,
+          "Transit Size(MB)": 20.97152,
+          "Bandwidth(GB/s)": 761.1383
+        },
+        "0-8": {
+          "Transport Type": "RDMA",
+          "Transit Time(ms)": 0.86381540625,
+          "Transit Size(MB)": 20.97152,
+          "Bandwidth(GB/s)": 24.2778
+        }
+      },
+      "hcom_receive__822_0@13337953553061386822": {
+        "8-8": {
+          "Transport Type": "LOCAL",
+          "Transit Time(ms)": 0.02982417578125,
+          "Transit Size(MB)": 20.97152,
+          "Bandwidth(GB/s)": 703.1718
+        },
+        "9-9": {
+          "Transport Type": "LOCAL",
+          "Transit Time(ms)": 0.02954059375,
+          "Transit Size(MB)": 20.97152,
+          "Bandwidth(GB/s)": 709.9221
+        }
+      },
+      "Total Op Info": {
+        "0-0": {
+          "Transport Type": "LOCAL",
+          "Transit Time(ms)": 0.0275528359375,
+          "Transit Size(MB)": 20.97152,
+          "Bandwidth(GB/s)": 761.1383
+        },
+        "0-8": {
+          "Transport Type": "RDMA",
+          "Transit Time(ms)": 0.86381540625,
+          "Transit Size(MB)": 20.97152,
+          "Bandwidth(GB/s)": 24.2778
+        }
+      }
+    }
+  },
+  "(0, 1, 2, 3, 4, 5, 6, 7)": {
+    "step2": {
+      "hcom_broadcast__483_0@9350434047717501483": {
+        "0-0": {
+          "Transport Type": "LOCAL",
+          "Transit Time(ms)": 0.0009797421875,
+          "Transit Size(MB)": 4e-05,
+          "Bandwidth(GB/s)": 0.0408
+        },
+        "1-0": {
+          "Transport Type": "HCCS",
+          "Transit Time(ms)": 0.00162,
+          "Transit Size(MB)": 4e-05,
+          "Bandwidth(GB/s)": 0.0247
+        }
+      },
+      "hcom_broadcast__483_1@9350434047717501483": {
+        "0-0": {
+          "Transport Type": "LOCAL",
+          "Transit Time(ms)": 0.00105972265625,
+          "Transit Size(MB)": 0.131088,
+          "Bandwidth(GB/s)": 123.7003
+        },
+        "0-7": {
+          "Transport Type": "HCCS",
+          "Transit Time(ms)": 0.00185951953125,
+          "Transit Size(MB)": 0.015504,
+          "Bandwidth(GB/s)": 8.3376
+        }
+      }
+    }
+  }
+}
