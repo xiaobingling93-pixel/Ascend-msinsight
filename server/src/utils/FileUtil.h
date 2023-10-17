@@ -404,7 +404,7 @@ public:
         return Dic::FileUtil::GetRealPath(dbPath);
     }
 
-        static std::vector<std::string> FindFileByName(const std::string &path,
+    static std::vector<std::string> FindFileByName(const std::string &path,
                                                    const std::string &fileName, const std::string &fileReg)
     {
         std::vector<std::string> files;
@@ -418,8 +418,8 @@ public:
                 return;
             }
             std::vector<std::string> folders;
-            std::vector<std::string> files;
-            if (!FileUtil::FindFolders(path, folders, files)) {
+            std::vector<std::string> fileList;
+            if (!FileUtil::FindFolders(path, folders, fileList)) {
                 return;
             }
             if (std::find(folders.begin(), folders.end(), "ASCEND_PROFILER_OUTPUT") != folders.end()) {
@@ -430,7 +430,7 @@ public:
                 std::string tmpPath = FileUtil::SplicePath(path, folder);
                 find(tmpPath, depth + 1);
             }
-            for (const auto &file: files) {
+            for (const auto &file: fileList) {
                 std::string tmpPath = FileUtil::SplicePath(path, file);
                 if (IsFileValid(file, fileReg)) {
                     files.push_back(tmpPath);
