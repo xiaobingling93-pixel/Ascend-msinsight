@@ -75,8 +75,10 @@ struct UnitFlowNameRequest : public Request {
 };
 
 struct UnitFlowParams {
+    uint64_t startTime = 0;
     std::string flowId;
     std::string rankId;
+    std::string type; // s, f
 };
 
 struct UnitFlowRequest : public Request {

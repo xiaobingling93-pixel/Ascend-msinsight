@@ -6,6 +6,7 @@
 #ifndef DIC_TIMELINE_PROTOCOL_RESPONSE_H
 #define DIC_TIMELINE_PROTOCOL_RESPONSE_H
 
+#include <utility>
 #include <vector>
 #include "GlobalDefs.h"
 #include "ProtocolDefs.h"
@@ -85,12 +86,11 @@ struct UnitThreadDetailResponse : public Response {
 };
 
 struct FlowName {
-    int32_t depth = 0;
-    int32_t tid = 0;
-    uint64_t timestamp = 0;
+    FlowName(std::string name, std::string id, std::string type)
+        : title(std::move(name)), flowId(std::move(id)), type(std::move(type)) {};
     std::string title;
-    std::string pid;
     std::string flowId;
+    std::string type; // s, f
 };
 
 struct UnitFlowNameBody {

@@ -26,6 +26,7 @@ void EventUtil::Register()
     jsonToEventFactory.emplace("X", ToSliceEvent);
     jsonToEventFactory.emplace("s", ToFlowEvent);
     jsonToEventFactory.emplace("f", ToFlowEvent);
+    jsonToEventFactory.emplace("t", ToFlowEvent);
 }
 
 void EventUtil::UnRegister()

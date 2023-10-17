@@ -797,6 +797,12 @@ bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParam
                       " ON SL.track_id = TH.track_id LEFT JOIN flow FL"
                       " ON FL.track_id = SL.track_id "
                       " WHERE FL.timestamp = SL.timestamp AND FL.flow_id = ?";
+    if (requestParams.type == "s") {
+        sql.append(" AND FL.timestamp >= ?");
+    } else {
+        sql.append(" AND FL.timestamp <= ?");
+    }
+    sql.append(" ORDER BY FL.timestamp LIMIT 2");
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -805,6 +811,7 @@ bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParam
     }
     int index = bindStartIndex;
     sqlite3_bind_text(stmt, index++, requestParams.flowId.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt, index++, requestParams.startTime);
     std::vector<Protocol::FlowDetailDto> flowDetailVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
@@ -834,22 +841,14 @@ bool TraceDatabase::FlowDetailToResponse(std::vector<Protocol::FlowDetailDto> &f
     responseBody.title = flowDetailVec[0].name;
     responseBody.cat = flowDetailVec[0].cat;
     responseBody.id = flowDetailVec[0].flowId;
-    for (auto &item : flowDetailVec) {
-        item.timestamp -= minTimestamp;
-        if (item.type == "s") {
-            responseBody.from.pid = item.pid;
-            responseBody.from.tid = item.tid;
-            responseBody.from.timestamp = item.timestamp;
-            responseBody.from.depth = item.depth;
-        } else if (item.type == "f") {
-            responseBody.to.pid = item.pid;
-            responseBody.to.tid = item.tid;
-            responseBody.to.timestamp = item.timestamp;
-            responseBody.to.depth = item.depth;
-        } else {
-            ServerLog::Error("error flow type. ", item.type);
-        }
-    }
+    responseBody.from.pid = flowDetailVec[0].pid;
+    responseBody.from.tid = flowDetailVec[0].tid;
+    responseBody.from.timestamp = flowDetailVec[0].timestamp - minTimestamp;
+    responseBody.from.depth = flowDetailVec[0].depth;
+    responseBody.to.pid = flowDetailVec[1].pid;
+    responseBody.to.tid = flowDetailVec[1].tid;
+    responseBody.to.timestamp = flowDetailVec[1].timestamp - minTimestamp;
+    responseBody.to.depth = flowDetailVec[1].depth;
     return true;
 }
 
@@ -867,70 +866,19 @@ bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestPar
     int index = bindStartIndex;
     sqlite3_bind_int64(stmt, index++, requestParams.startTime + minTimestamp);
     sqlite3_bind_int64(stmt, index++, trackId);
-    std::vector<Protocol::SimpleFlowDto> simpleFlowVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        Protocol::SimpleFlowDto simpleFlowDto {};
-        simpleFlowDto.name = sqlite3_column_string(stmt, col++);
-        simpleFlowDto.flowId = sqlite3_column_string(stmt, col++);
-        simpleFlowDto.type = sqlite3_column_string(stmt, col++);
-        simpleFlowVec.emplace_back(simpleFlowDto);
-    }
-    sqlite3_finalize(stmt);
-    if (simpleFlowVec.empty()) {
-        ServerLog::Info("Query flow result is empty!");
-        return true;
-    }
-    std::string type = simpleFlowVec[0].type;
-    for (const auto &row : simpleFlowVec) {
-        std::string flowId = row.flowId;
-        std::vector<Protocol::SliceFlowDetail> sliceFlowDetailVec;
-        QuerySliceFlowList(flowId, type, sliceFlowDetailVec);
-        if (sliceFlowDetailVec.empty()) {
-            continue;
+        std::string name = sqlite3_column_string(stmt, col++);
+        std::string flowId = sqlite3_column_string(stmt, col++);
+        std::string type = sqlite3_column_string(stmt, col++);
+        if (type == "s" || type == "f") {
+            responseBody.flowDetail.emplace_back(name, flowId, type);
+        } else if (type == "t") {
+            responseBody.flowDetail.emplace_back(name, flowId, "f");
+            responseBody.flowDetail.emplace_back(name, flowId, "s");
+        } else {
+            ServerLog::Warn("Unknown flow type. type:", type);
         }
-        Protocol::FlowName flowName {};
-        flowName.title = row.name;
-        flowName.tid = sliceFlowDetailVec[0].tid;
-        flowName.pid = sliceFlowDetailVec[0].pid;
-        flowName.timestamp = sliceFlowDetailVec[0].timestamp - minTimestamp;
-        flowName.depth = sliceFlowDetailVec[0].depth;
-        flowName.flowId = row.flowId;
-        responseBody.flowDetail.emplace_back(flowName);
-    }
-    return true;
-}
-
-bool TraceDatabase::QuerySliceFlowList(const std::string &flowId, const std::string &type,
-                                       std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec)
-{
-    std::string sql = "SELECT sl.timestamp, th.pid, th.tid, sl.depth"
-                      " FROM " + sliceTable +" sl LEFT JOIN thread th "
-                      "ON sl.track_id = th.track_id WHERE sl.track_id IN"
-                      " (SELECT track_id FROM " + flowTable +
-                      " WHERE flow_id = ? AND type <> ? )"
-                      " AND timestamp IN "
-                      " (SELECT timestamp FROM " + flowTable +
-                      " WHERE flow_id = ? AND type <> ? )";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QuerySliceFlowList. Failed to prepare sql.", sqlite3_errmsg(db));
-        return false;
-    }
-    int index = bindStartIndex;
-    sqlite3_bind_text(stmt, index++, flowId.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, index++, type.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, index++, flowId.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, index++, type.c_str(), -1, SQLITE_STATIC);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        Protocol::SliceFlowDetail sliceFlowDetail {};
-        int col = resultStartIndex;
-        sliceFlowDetail.timestamp = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        sliceFlowDetail.pid = sqlite3_column_string(stmt, col++);
-        sliceFlowDetail.tid = sqlite3_column_int(stmt, col++);
-        sliceFlowDetail.depth = sqlite3_column_int(stmt, col++);
-        sliceFlowDetailVec.emplace_back(sliceFlowDetail);
     }
     sqlite3_finalize(stmt);
     return true;

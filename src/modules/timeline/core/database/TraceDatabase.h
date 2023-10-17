@@ -104,8 +104,6 @@ private:
     bool QueryDurationFromSliceByTimeRange(const Protocol::ThreadDetailParams &requestParams,
                                            const std::vector<Protocol::SliceDto> &rows,
                                            std::vector<uint64_t> &nextDepthResult, int64_t trackId);
-    bool QuerySliceFlowList(const std::string &flowId, const std::string &type,
-                            std::vector<Protocol::SliceFlowDetail> &sliceFlowDetailVec);
     bool FlowDetailToResponse(std::vector<Protocol::FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
                               Protocol::UnitFlowBody &responseBody);
 };

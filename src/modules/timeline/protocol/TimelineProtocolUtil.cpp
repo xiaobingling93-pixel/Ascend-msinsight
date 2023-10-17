@@ -95,11 +95,8 @@ template <> std::optional<json_t> ToResponseJson<UnitFlowNameResponse>(const Uni
     for (const FlowName& flowName : response.body.flowDetail) {
         json_t flowJson = json_t::object();
         flowJson["title"] = flowName.title;
-        flowJson["tid"] = flowName.tid;
-        flowJson["pid"] = flowName.pid;
-        flowJson["timestamp"] = flowName.timestamp;
-        flowJson["depth"] = flowName.depth;
         flowJson["flowId"] = flowName.flowId;
+        flowJson["type"] = flowName.type;
         json["body"]["flowDetail"].emplace_back(flowJson);
     }
     return json;
