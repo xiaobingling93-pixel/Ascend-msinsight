@@ -121,7 +121,7 @@ public class CmdConstants {
     /**
      * WS_BASE_PORT
      */
-    public static final String WS_BASE_PORT = "9001";
+    public static final String WS_BASE_PORT = "9000";
 
     /**
      * LINE_AND

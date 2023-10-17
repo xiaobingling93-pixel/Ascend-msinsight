@@ -14,7 +14,7 @@ export class RegisterWebview extends Webview {
     private server?: ChildProcess;
     private serverCheckSchedule?: NodeJS.Timeout;
     private tryRestartTime = 0;
-    private readonly port = 9001;
+    private readonly port = 9000;
     private readonly findServerCommand = platform() === 'win32' ? 'tasklist | findstr profiler_server.exe' : 'ps aux | grep profiler_serve';
 
     constructor(viewType: string, title: string, context: vscode.ExtensionContext,  manager: WebviewManager) {
