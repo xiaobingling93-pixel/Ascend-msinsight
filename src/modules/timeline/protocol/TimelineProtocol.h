@@ -31,6 +31,7 @@ private:
     static std::unique_ptr<Request> ToSearchCountRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToSearchSliceRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToRemoteDeleteRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToFlowCategoryRequest(const json_t &json, std::string &error);
     // response to json
     static std::optional<json_t> ToImportActionResponseJson(const Response &response);
     static std::optional<json_t> ToUnitThreadTracesResponseJson(const Response &response);
@@ -43,6 +44,7 @@ private:
     static std::optional<json_t> ToSearchCountResponseJson(const Response &response);
     static std::optional<json_t> ToSearchSliceResponseJson(const Response &response);
     static std::optional<json_t> ToRemoteDeleteResponseJson(const Response &response);
+    static std::optional<json_t> ToFlowCategoryResponse(const Response &response);
     // event to json
     static std::optional<json_t> ToParseSuccessEventJson(const Event &event);
     static std::optional<json_t> ToParseFailEventJson(const Event &event);

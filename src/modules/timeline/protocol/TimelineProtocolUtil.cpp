@@ -180,6 +180,17 @@ template <> std::optional<json_t> ToResponseJson<RemoteDeleteResponse>(const Rem
     json["body"]["maxTimeStamp"] = response.body.maxTimeStamp;
     return json;
 }
+
+template <> std::optional<json_t> ToResponseJson<FlowCategoryListResponse>(const FlowCategoryListResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["category"] = json_t::array();
+    for (const std::string &category : response.body.category) {
+        json["body"]["category"].emplace_back(category);
+    }
+    return json;
+}
 #pragma endregion
 
 #pragma region <<Event to json>>

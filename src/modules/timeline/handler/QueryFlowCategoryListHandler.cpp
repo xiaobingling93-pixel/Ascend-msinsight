@@ -1,36 +1,33 @@
-//
-// * Copyright (c) Huawei Technologies Co., Ltd. 2012-2023. All rights reserved.
-//
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ */
 
-#include "QueryThreadDetailHandler.h"
 #include "ServerLog.h"
 #include "WsSessionManager.h"
-#include "DataBaseManager.h"
-#include "TraceFileParser.h"
 #include "TraceTime.h"
+#include "DataBaseManager.h"
+#include "QueryFlowCategoryListHandler.h"
 
 namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryThreadDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+void QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    ThreadDetailRequest &request = dynamic_cast<ThreadDetailRequest &>(*requestPtr.get());
+    FlowCategoryListRequest &request = dynamic_cast<FlowCategoryListRequest &>(*requestPtr.get());
     std::string token = request.token;
-    ServerLog::Info("Query thread detail, token = ", StringUtil::AnonymousString(token));
+    ServerLog::Info("Query flow category list, token = ", StringUtil::AnonymousString(token));
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
                         ", command = ", command);
         return;
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
-    std::unique_ptr<UnitThreadDetailResponse> responsePtr = std::make_unique<UnitThreadDetailResponse>();
-    UnitThreadDetailResponse &response = *responsePtr.get();
+    std::unique_ptr<FlowCategoryListResponse> responsePtr = std::make_unique<FlowCategoryListResponse>();
+    FlowCategoryListResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
-    int64_t trackId = TraceFileParser::Instance()
-        .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
-    if (!database->QueryThreadDetail(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId)) {
+    if (!database->QueryFlowCategoryList(response.body.category)) {
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;

@@ -11,7 +11,8 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryChartHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) {
+void QueryChartHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+{
     UnitChartRequest &request = dynamic_cast<UnitChartRequest &>(*requestPtr.get());
     std::string token = request.token;
     ServerLog::Info("Query chart, token = ", StringUtil::AnonymousString(token));

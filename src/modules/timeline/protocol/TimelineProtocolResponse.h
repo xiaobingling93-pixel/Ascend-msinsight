@@ -236,6 +236,15 @@ struct RemoteDeleteResponse : public Response {
     RemoteDeleteResponse() : Response(REQ_RES_REMOTE_DELETE) {}
     RemoteDeleteBody body;
 };
+
+struct FlowCategoryListBody {
+    std::vector<std::string> category;
+};
+
+struct FlowCategoryListResponse : public Response {
+    FlowCategoryListResponse() : Response(REQ_RES_FLOW_CATEGORY_LIST) {}
+    FlowCategoryListBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

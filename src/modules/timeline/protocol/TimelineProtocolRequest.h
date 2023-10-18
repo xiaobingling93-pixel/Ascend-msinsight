@@ -132,6 +132,15 @@ struct RemoteDeleteRequest : public Request {
     RemoteDeleteRequest() : Request(REQ_RES_REMOTE_DELETE) {};
     RemoteDeleteParams params;
 };
+
+struct FlowCategoryListParams {
+    std::string rankId;
+};
+
+struct FlowCategoryListRequest : public Request {
+    FlowCategoryListRequest() : Request(REQ_RES_FLOW_CATEGORY_LIST) {};
+    FlowCategoryListParams params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

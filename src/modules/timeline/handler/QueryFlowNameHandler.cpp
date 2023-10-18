@@ -13,7 +13,8 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryFlowNameHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) {
+void QueryFlowNameHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+{
     UnitFlowNameRequest &request = dynamic_cast<UnitFlowNameRequest &>(*requestPtr.get());
     std::string token = request.token;
     ServerLog::Info("Query flow name, token = ", StringUtil::AnonymousString(token));
@@ -27,7 +28,8 @@ void QueryFlowNameHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
     UnitFlowNameResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
-    int64_t trackId = TraceFileParser::Instance().GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
+    int64_t trackId = TraceFileParser::Instance()
+        .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
     if (!database->QueryFlowName(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId)) {
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));

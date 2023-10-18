@@ -54,6 +54,7 @@ public:
     int SearchSliceNameCount(const std::string &name);
     bool SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
                          Protocol::SearchSliceBody &responseBody);
+    bool QueryFlowCategoryList(std::vector<std::string> &categories);
 
 private:
     const std::string sliceTable = "slice";

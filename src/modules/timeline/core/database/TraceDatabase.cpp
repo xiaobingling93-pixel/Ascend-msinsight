@@ -366,7 +366,7 @@ void TraceDatabase::UpdateDepth()
     for (auto &trackId : trackList) {
         UpdateOneTrackDepth(trackId);
     }
-    ServerLog::Info("UpdateDepth end.");
+    ServerLog::Info("UpdateDepth end. track id size:", trackList.size());
 }
 
 std::vector<int64_t> TraceDatabase::GetTrackIdList()
@@ -1010,6 +1010,22 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t
     responseBody.startTime = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
     responseBody.duration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
     responseBody.depth = sqlite3_column_int(stmt, col++);
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool TraceDatabase::QueryFlowCategoryList(std::vector<std::string> &categories)
+{
+    std::string sql = "SELECT cat FROM flow GROUP BY cat";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryFlowCategoryList failed!. ", sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        categories.emplace_back(sqlite3_column_string(stmt, resultStartIndex));
+    }
     sqlite3_finalize(stmt);
     return true;
 }

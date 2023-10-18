@@ -54,9 +54,9 @@ void WsServer::StartListen()
 
 uWS::App::WebSocketBehavior<WsUserData> WsServer::CreateWsBehavior()
 {
-    const int MAX_PAY_LOAD_SIZE = 16 * 1024 * 1024;
-    const int IDLE_TIMEOUT = 16;
-    const int MAX_BACK_PRESSURE_SIZE = 1 * 1024 * 1024;
+    static const int MAX_PAY_LOAD_SIZE = 16 * 1024 * 1024;
+    static const int IDLE_TIMEOUT = 16;
+    static const int MAX_BACK_PRESSURE_SIZE = 1 * 1024 * 1024;
     uWS::App::WebSocketBehavior<WsUserData> wsBehavior = {
         .compression = uWS::SHARED_COMPRESSOR,
         .maxPayloadLength = MAX_PAY_LOAD_SIZE,
@@ -126,7 +126,7 @@ void WsServer::OnOpenCb(WsChannel *ws)
 
 void WsServer::OnCloseCb(WsChannel *ws, int code, std::string_view message)
 {
-    ServerLog::Info("session close, channel = ", ws, ", code = " + std::to_string(code));
+    ServerLog::Info("session close, channel = ", ws, ", code = ", code, ", message = ", message);
     if (ws == nullptr) {
         return;
     }
