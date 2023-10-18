@@ -96,7 +96,10 @@
     "abilityEvent": "Ability事件",
     "reset": "复原",
     "clean": "清空界面",
-    "filter": "过滤"
+    "filter": "过滤",
+    "search": "搜索",
+    "del": "时间轴缩小",
+    "add": "时间轴放大"
   },
   "snapshot": {
     "Tooltip": "可通过窗口访问的用户对象"
