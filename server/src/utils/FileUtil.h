@@ -356,10 +356,16 @@ public:
             std::string spliceFile = SplicePath(path, folder);
             CalculateDirSize(spliceFile, size, depth + 1);
         }
+        std::string gbkPath(path);
+#ifdef _WIN32
+        if (StringUtil::IsUtf8String(path)) {
+            gbkPath = StringUtil::Utf8ToGbk(path.c_str());
+        }
+#endif
         for (std::string& file: files) {
-            std::string spliceFile = SplicePath(path, file);
-            if (file.find_last_of("trace_view.db") != std::string::npos &&
-                file.find_last_of("cluster.db") != std::string::npos) {
+            std::string spliceFile = SplicePath(gbkPath, file);
+            if (std::strcmp("trace_view.db", file.c_str()) != 0 &&
+                    std::strcmp("cluster.db", file.c_str()) != 0) {
                 size +=  getFileSize(spliceFile.c_str());
             }
         }

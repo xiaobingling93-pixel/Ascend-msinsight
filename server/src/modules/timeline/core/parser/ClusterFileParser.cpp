@@ -110,7 +110,7 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
         std::vector<std::string> exePathVector = FileUtil::FindFilesByRegex(
                 FileUtil::GetCurrPath(), std::regex("cluster_analysis.exe"));
         if (!exePathVector.empty()) {
-            std::string command = "\"" + exePathVector[0] +  "\" -d " + selectedPath;
+            std::string command = "\"" + exePathVector[0] +  "\" -d " + FileUtil::PathPreprocess(selectedPath);
             int result = std::system(command.c_str());
             if (result != 0) {
                 ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file, command:", command);
