@@ -77,6 +77,7 @@ export class Session {
     selectedDetails: [Record<string, unknown>] | [] = []; // redundant for reducing extra computation
     unitsConfig: Record<string, Record<string, unknown>> = {};
     private _selectedData?: Record<string, unknown>;
+    private _selectedRangeData?: Array<Record<string, unknown>>;
     linkData?: LinkData;
     linkFlow?: Record<string, unknown>;
     linkDetail?: Record<string, unknown>;
@@ -243,6 +244,14 @@ export class Session {
         this.linkFlow = undefined;
         this.linkData = undefined;
         this.linkDetail = undefined;
+    }
+
+    get selectedRangeData(): Array<Record<string, unknown>> | undefined {
+        return this._selectedRangeData;
+    }
+
+    set selectedRangeData(data: Array<Record<string, unknown>> | undefined) {
+        this._selectedRangeData = data;
     }
 
     printSessionInfo(): string {

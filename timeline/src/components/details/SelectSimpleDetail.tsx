@@ -33,6 +33,12 @@ export const SelectSimpleTabularDetail = observer(function<T extends CommonState
                 selectRow(row, session, state);
                 detail?.doubleClickCallback?.({ row, session, detail, unit, commonState });
             },
+            onMouseEnter: () => {
+                detail?.mouseEnterCallback?.({ session, row });
+            },
+            onMouseLeave: () => {
+                detail?.mouseLeaveCallback?.({ session, row });
+            },
         })}
     />;
 });

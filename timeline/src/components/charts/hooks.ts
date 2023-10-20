@@ -96,7 +96,8 @@ export const useHoverPos = (ref: React.RefObject<HTMLElement>): Pos | undefined 
 };
 
 export const useClick = <T extends ChartType>(canvasContainer: RefObject<HTMLElement>, datasState: ChartData<T>,
-    rangeAndDomain: Array<[number, number]>, session: Session, metadata: unknown, handleMouseUp: (e: MouseEvent) => void): void => {
+    rangeAndDomain: Array<[number, number]>, session: Session, metadata: unknown, handleMouseUp: (e: MouseEvent) => void,
+    handleMouseMoveUp?: (xArr: number[]) => void): void => {
     useEffect(() => {
         if (canvasContainer.current === null) {
             return;
@@ -115,6 +116,9 @@ export const useClick = <T extends ChartType>(canvasContainer: RefObject<HTMLEle
                 runInAction(() => {
                     session.selectedData = undefined;
                 });
+                if (mouseMoved && mousedownX !== null) {
+                    handleMouseMoveUp?.([ mousedownX, e.offsetX ]);
+                }
                 return;
             }
             if (!mouseMoved) {

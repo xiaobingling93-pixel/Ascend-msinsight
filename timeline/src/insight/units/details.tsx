@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash';
 import styled from '@emotion/styled';
 import React from 'react';
 import { action, runInAction } from 'mobx';
-import { AscendMultiSliceList, ThreadMetaData } from '../../entity/data';
+import { AscendMultiSliceList, ThreadMetaData, ThreadTrace } from '../../entity/data';
 import { Session } from '../../entity/session';
 import { getSliceTimeDisplay } from './AscendUnit';
 import { getTimestamp } from '../../utils/humanReadable';
@@ -57,6 +57,23 @@ export const slicesListDetail = detail({
         res.push({ title: 'Totals', wallDuration: totalWallDuration, selfTime: totalSelfTime, avgWallDuration: totalWallDuration / totalOccurrences, occurrences: totalOccurrences });
 
         return res;
+    },
+    mouseEnterCallback: ({ session, row }) => {
+        const selectedRangeData = session.selectedRangeData;
+        const name = row.title;
+        const hoveredData = selectedRangeData?.find((item) => item.name === name);
+        runInAction(() => {
+            session.sharedState.threadTrace = hoveredData;
+        });
+    },
+    mouseLeaveCallback: ({ session, row }) => {
+        const name = row.title;
+        const hoveredData = session.sharedState.threadTrace as ThreadTrace | undefined;
+        if (hoveredData && hoveredData.name === name) {
+            runInAction(() => {
+                session.sharedState.threadTrace = undefined;
+            });
+        }
     },
 }) as DetailDescriptor<unknown>;
 
