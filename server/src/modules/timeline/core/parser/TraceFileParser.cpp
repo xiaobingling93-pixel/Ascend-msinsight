@@ -108,7 +108,6 @@ void TraceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<st
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
     database->CreateIndex();
     database->UpdateDepth();
-    database->updateOverlapDuration();
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true);
 }

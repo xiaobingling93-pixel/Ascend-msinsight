@@ -131,18 +131,6 @@ struct RemoteDeleteRequest : public Request {
     RemoteDeleteParams params;
 };
 
-struct CommunicationDetailParams {
-    std::string rankId;
-    int32_t currentPage = 0;
-    int32_t pageSize = 0;
-    std::string orderBy;
-    std::string order;
-};
-
-struct CommunicationDetailRequest : public Request {
-    CommunicationDetailRequest() : Request(REQ_RES_COMMUNICATION_DETAIL) {};
-    CommunicationDetailParams params;
-};
 } // end of namespace Protocol
 } // end of namespace Dic
 

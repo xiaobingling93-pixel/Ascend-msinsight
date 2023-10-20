@@ -63,18 +63,6 @@ public:
                                           Protocol::SummaryStatisticsBody &responseBody);
     bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max);
 
-    std::vector<std::string> GetTrackIdList(const std::string& name);
-    std::vector<uint64_t> QueryNotOverlapTime(const std::vector<std::string>& notOverlapTrackId, const uint64_t timeStamp,
-                                            const uint64_t duration);
-    int32_t QueryCommunicationTotalNum(const std::vector<std::string>& name);
-    bool GetCommunicationDetails(const std::vector<std::string>& opTrackId,
-                                 std::vector<Protocol::CommunicationDetail> &details);
-    bool QueryCommunicationNum(const Protocol::CommunicationDetailParams params,
-                               Protocol::CommunicationDetailResponse &response,
-                               const std::vector<std::string> &opTrackId);
-
-    void updateOverlapDuration();
-
 private:
     const std::string sliceTable = "slice";
     const std::string threadTable = "thread";
@@ -131,11 +119,6 @@ private:
     bool DealLastData(std::vector<Protocol::SimpleSlice> &simpleSliceVec,
                       std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime,
                       uint64_t endTime, uint64_t index);
-
-    std::string GetTracksSql(const std::vector<std::string>& rankList);
-
-    bool updateCommunication(const std::string id, const int64_t notOverlapDuration, const int64_t overlapDuration);
-    void updateCommunicationInfo(std::vector<std::string> opTrackId, std::vector<std::string> notOverlapTrackId);
 };
 } // end of namespace Timeline
 } // end of namespace Module

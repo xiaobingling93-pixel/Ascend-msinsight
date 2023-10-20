@@ -237,20 +237,6 @@ struct RemoteDeleteResponse : public Response {
     RemoteDeleteBody body;
 };
 
-struct CommunicationDetail {
-    std::string communicationKernel;
-    std::string id;
-    uint64_t startTime;
-    uint64_t totalDuration;
-    uint64_t overlapDuration;
-    uint64_t notOverlapDuration;
-};
-
-struct CommunicationDetailResponse : public Response {
-    CommunicationDetailResponse() : Response(REQ_RES_COMMUNICATION_DETAIL) {}
-    std::vector<CommunicationDetail> communication;
-    int32_t totalNum;
-};
 } // end of namespace Protocol
 } // end of namespace Dic
 
