@@ -34,6 +34,10 @@ export const App = observer(() => {
             themeInstance.setCurrentTheme(res);
             window.setTheme(res === 'dark');
         });
+        connector.send({
+            event: 'getParseStatus',
+            body: { },
+        });
     }, []);
     return (<ThemeProvider theme={themeInstance.getThemeType()}>
         {session?.clusterCompleted ? <CommunicationAnalysis session={session} /> : Loading}

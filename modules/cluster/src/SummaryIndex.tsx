@@ -31,6 +31,10 @@ export const App = observer(() => {
             window.setTheme(res === 'dark');
         });
     }, []);
+    connector.send({
+        event: 'getParseStatus',
+        body: { },
+    });
     return (<ThemeProvider theme={themeInstance.getThemeType()}>
         { session?.clusterCompleted ? <AnalysisSummary session={session} /> : Loading}
     </ThemeProvider>);

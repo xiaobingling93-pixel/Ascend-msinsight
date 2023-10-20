@@ -50,6 +50,17 @@ onMounted(async () => {
         })
     });
 
+  connector.addListener('getParseStatus', () => {
+      connector.send({
+        event: 'updateSession',
+        body: {
+          parseCompleted: session.parseCompleted,
+          clusterCompleted: session.clusterCompleted,
+          unitcount: session.unitcount,
+        },
+      });
+  });
+
     await connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
 });
 
