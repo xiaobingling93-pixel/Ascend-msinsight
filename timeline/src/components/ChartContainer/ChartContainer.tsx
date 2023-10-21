@@ -93,6 +93,20 @@ const ChartBody = observer((props: ChartBodyProps) => {
     </>);
 });
 
+const addKeyEvent = (keyHoldAction: { beginLoop: Function; clearLoop: Function }): void => {
+    document.addEventListener('keydown', (e) => {
+        if (!e.repeat) {
+            keyHoldAction.beginLoop(e);
+        }
+    });
+    document.addEventListener('keyup', (e) => {
+        keyHoldAction.clearLoop();
+    });
+    document.addEventListener('blur', (e) => {
+        keyHoldAction.clearLoop();
+    });
+};
+
 export const ChartContainer = observer((props: Props) => {
     const { session } = props;
     const [ containerDom, setContainerDom ] = React.useState<HTMLDivElement | undefined>(undefined);
@@ -110,14 +124,8 @@ export const ChartContainer = observer((props: Props) => {
         };
     }, [containerDom]);
     const keyHoldAction = useMemo(() => loopActionFactory((e: React.KeyboardEvent<HTMLDivElement>) => onKeyDown(e), 40, 100), [session]);
+    addKeyEvent(keyHoldAction);
     return <Container onMouseMove={ (e) => onMouseMove(e) }
-        onKeyDown={(e) => {
-            if (!e.repeat) {
-                keyHoldAction.beginLoop(e);
-            }
-        }}
-        onKeyUp={() => { keyHoldAction.clearLoop(); }}
-        onBlur={() => { keyHoldAction.clearLoop(); }}
         onMouseDown={(e) => onMouseDown(e) }
         onWheel={(e) => onWheel(e) }
         ref={(dom) => {

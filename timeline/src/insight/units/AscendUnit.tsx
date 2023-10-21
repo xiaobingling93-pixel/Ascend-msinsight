@@ -208,7 +208,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
             return {
                 Detail: ({ session }) => <SelectedDataBottomPanel session={session} detail={singleSliceDetail}>{EmptyJSXElement}</SelectedDataBottomPanel>,
                 DetailTitle: 'Slice Detail',
-                // More: ({ session }) => <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
+                More: ({ session }) => <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
             };
         }
         return TabPanes({ tabs, commonBottomPanel });
@@ -245,6 +245,16 @@ export const CardUnit = unit<CardMetaData>({
         }),
 });
 
+const getFlowName = (res: any): string | undefined => {
+    let flowName;
+    if (res.type === 's') {
+        flowName = 'Outgoing flow';
+    } else if (res.type === 'f') {
+        flowName = 'Incoming flow';
+    }
+    return flowName;
+};
+
 const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<Record<string, unknown>>, linkFlow: unknown, metadata: unknown): Array<[string, string | JSX.Element]> | undefined => {
     const [ renderFields, setRenderFields ] = React.useState<Array<[string, string | JSX.Element]>>();
     const { selectedUnits } = session;
@@ -273,7 +283,7 @@ const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<R
                             const isHiden = templateField[2];
                             isHiden(res) && state.push([ templateField[0], render(res, session, metadata) ]);
                         } else {
-                            state.push([ templateField[0], render(res, session, metadata) ]);
+                            state.push([ getFlowName(res) ?? templateField[0], render(res, session, metadata) ]);
                         }
                     });
                 } else {
