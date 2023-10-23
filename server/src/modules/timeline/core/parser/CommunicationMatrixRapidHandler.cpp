@@ -1,0 +1,157 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
+
+#include "ServerLog.h"
+#include "JsonUtil.h"
+#include "CommunicationMatrixRapidHandler.h"
+
+namespace Dic {
+namespace Module {
+namespace Timeline {
+using namespace Dic::Server;
+CommunicationMatrixRapidHandler::CommunicationMatrixRapidHandler()
+{
+    currentObject.SetObject();
+}
+
+CommunicationMatrixRapidHandler::~CommunicationMatrixRapidHandler() {}
+
+bool CommunicationMatrixRapidHandler::Null()
+{
+    return true;
+}
+
+bool CommunicationMatrixRapidHandler::Bool(bool b)
+{
+    rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
+    currentObject.AddMember(tempKey, b, currentObject.GetAllocator());
+    Server::ServerLog::Debug("boolean val:", b, " depth=", currentDepth, " key=", currentKey);
+    return true;
+}
+
+bool CommunicationMatrixRapidHandler::Int(int i)
+{
+    rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
+    currentObject.AddMember(tempKey, i, currentObject.GetAllocator());
+    Server::ServerLog::Debug("Int val:", i, " depth=", currentDepth, " key=", currentKey);
+    return true;
+}
+
+bool CommunicationMatrixRapidHandler::Uint(unsigned int u)
+{
+    rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
+    currentObject.AddMember(tempKey, u, currentObject.GetAllocator());
+    Server::ServerLog::Debug("Uint val:", u, " depth=", currentDepth, " key=", currentKey);
+    return true;
+}
+
+bool CommunicationMatrixRapidHandler::Int64(int64_t i)
+{
+    rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
+    currentObject.AddMember(tempKey, i, currentObject.GetAllocator());
+    Server::ServerLog::Debug("Int64 val:", i, " depth=", currentDepth, " key=", currentKey);
+    return true;
+}
+
+bool CommunicationMatrixRapidHandler::Uint64(uint64_t u)
+{
+    rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
+    currentObject.AddMember(tempKey, u, currentObject.GetAllocator());
+    Server::ServerLog::Debug("Uint64 val:", u, " depth=", currentDepth, " key=", currentKey);
+    return true;
+}
+
+bool CommunicationMatrixRapidHandler::Double(double d)
+{
+    rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
+    currentObject.AddMember(tempKey, d, currentObject.GetAllocator());
+    Server::ServerLog::Debug("Double val:", d, " depth=", currentDepth, " key=", currentKey);
+    return true;
+}
+
+bool CommunicationMatrixRapidHandler::String(const char *str, rapidjson::SizeType length, bool copy)
+{
+    rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
+    rapidjson::Value val(str, currentObject.GetAllocator());
+    currentObject.AddMember(tempKey, val, currentObject.GetAllocator());
+    Server::ServerLog::Debug("string val:", str, " depth=", currentDepth, " key=", currentKey);
+    return true;
+}
+
+bool CommunicationMatrixRapidHandler::StartObject()
+{
+    currentDepth++;
+    Server::ServerLog::Debug("start_object elements:", " depth=", currentDepth, " key=", currentKey);
+    return true;
+}
+
+bool CommunicationMatrixRapidHandler::Key(const char *str, rapidjson::SizeType length, bool copy)
+{
+    Server::ServerLog::Debug("key currentDepth:", currentDepth, " key=", currentKey, " val=", str);
+    currentKey = str;
+    if (currentDepth == groupDepth) { groupId = str; }
+    if (currentDepth == stepDepth) { iterationId = str; }
+    if (currentDepth == opNameDepth) { tempOpName = str; }
+    if (currentDepth == ranksDepth) { tempRank = str; }
+    return true;
+}
+
+bool CommunicationMatrixRapidHandler::EndObject(rapidjson::SizeType memberCount)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase();
+    currentDepth--;
+    if (currentDepth == ranksDepth) {
+        CommunicationMatrixInfo matrix = MapToMatrixInfo(currentObject);
+        database->InsertCommunicationMatrix(matrix);
+        currentObject.RemoveAllMembers();
+    }
+    Server::ServerLog::Debug("end object currentDepth:", currentDepth, " key=", currentKey);
+    return true;
+}
+
+bool CommunicationMatrixRapidHandler::StartArray()
+{
+    Server::ServerLog::Debug("start_array depth:", currentDepth, " key=", currentKey);
+    return true;
+}
+
+bool CommunicationMatrixRapidHandler::EndArray(rapidjson::SizeType elementCount)
+{
+    Server::ServerLog::Debug("end array depth", currentDepth, " key=", currentKey);
+    return true;
+}
+
+CommunicationMatrixInfo CommunicationMatrixRapidHandler::MapToMatrixInfo(const rapidjson::Document &json)
+{
+    CommunicationMatrixInfo matrixInfo;
+    matrixInfo.groupId = groupId;
+    matrixInfo.iterationId = iterationId;
+    matrixInfo.iterationId = iterationId.length() > stepSubLen ? iterationId.substr(stepSubLen) : iterationId;
+    if (std::strcmp(iterationId.c_str(), "step") == 0) {
+        matrixInfo.iterationId = "0";
+    }
+    int nameIndex = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
+    if (nameIndex > 0) {
+        matrixInfo.opName = tempOpName.substr(0, nameIndex);
+        matrixInfo.groupName = tempOpName.substr(nameIndex + 1);
+    } else {
+        matrixInfo.opName = tempOpName;
+    }
+    int rankIndex = tempRank.empty() ? 0 : tempRank.find_last_of('-');
+    if (rankIndex > 0) {
+        matrixInfo.srcRank = atof(tempRank.substr(0, rankIndex).c_str());
+        matrixInfo.dstRank =  atof(tempRank.substr(rankIndex + 1).c_str());
+    } else {
+        matrixInfo.srcRank = atof(tempRank.c_str());
+    }
+    matrixInfo.transportType = JsonUtil::GetDumpString(json, "Transport Type");
+    matrixInfo.transitTime = JsonUtil::GetDouble(json, "Transit Time(ms)");
+    matrixInfo.transitSize = JsonUtil::GetDouble(json, "Transit Size(MB)");
+    matrixInfo.bandwidth = JsonUtil::GetDouble(json, "Bandwidth(GB/s)");
+    return matrixInfo;
+}
+
+} // end of namespace Timeline
+} // end of namespace Module
+} // end of namespace Dic

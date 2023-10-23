@@ -5,10 +5,11 @@
  */
 
 #include <fstream>
+#include "filereadstream.h"
 #include "json.hpp"
 #include "ServerLog.h"
-#include "CommunicationSaxHandler.h"
-#include "CommunicationMatrixHandler.h"
+#include "CommunicationMatrixRapidHandler.h"
+#include "CommunicationRapidSaxHandler.h"
 #include "FileUtil.h"
 #include "ExecUtil.h"
 #include "DataBaseManager.h"
@@ -21,32 +22,39 @@ using namespace Dic::Server;
 bool ClusterFileParser::ParseCommunication(const std::vector<std::string> &filePathList)
 {
     const std::string &filePath = filePathList[0];
-    auto start = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("start save communication data into db ,file:", filePath);
-    std::ifstream ifs(filePath);
-    CommunicationSaxHandler handler;
-    nlohmann::json::sax_parse(ifs, &handler);
-    auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("end parse communication data into db ,file:", filePath, "cost time:", (end - start).count());
-    ifs.close();
+    SaxParseJsonFile(filePath, 0);
     return true;
 }
 
 void ClusterFileParser::ParseCommunicationMatrix(const std::vector<std::string> &filePathList)
 {
     const std::string &filePath = filePathList[0];
+    SaxParseJsonFile(filePath, 1);
+}
+
+void ClusterFileParser::SaxParseJsonFile(const std::string& filePath, int saxHandlerType)
+{
     auto start = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("start save communication matrix data into db ,file:", filePath);
+    ServerLog::Info("start SaxParseJsonFile data into db ,file:", filePath);
     bool checkFilePath = FileUtil::CheckFilePath(filePath);
     if (!checkFilePath) {
         return;
     }
-    std::ifstream ifs(filePath);
-    CommunicationMatrixHandler handler;
-    nlohmann::json::sax_parse(ifs, &handler);
+    // 打开JSON文件
+    FILE* fp = fopen(filePath.c_str(), "rb");
+    char readBuffer[65536];
+    rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+    rapidjson::Reader reader;
+    if (saxHandlerType == 0) {
+        CommunicationRapidSaxHandler rapidSaxHandler;
+        reader.Parse(is, rapidSaxHandler);
+    } else {
+        CommunicationMatrixRapidHandler matrixRapidHandler;
+        reader.Parse(is, matrixRapidHandler);
+    }
     auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("end parse communication matrix data into db ,file:", filePath, "cost time:", (end - start).count());
-    ifs.close();
+    ServerLog::Info("end SaxParseJsonFile data into db ,file:", filePath, "cost time:", (end - start).count());
+    fclose(fp);
 }
 
 void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &filePathList)
@@ -70,7 +78,7 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
         }
     }
     auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("end parseStepStatisticsFile data into db ,file:", filePath, "cost time:",
+    ServerLog::Info("end parseStepStatisticsFile data into db ,file:", filePath, ",cost time:",
                     (end - start).count());
     stepTraceFileCsv.close();
 }

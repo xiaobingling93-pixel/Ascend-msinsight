@@ -21,6 +21,7 @@ public:
     void SaveClusterBaseInfo(const std::string& selectedPath);
     void ParseCommunicationMatrix(const std::vector<std::string> &filePathList);
 private:
+    void SaxParseJsonFile(const std::string& filePath, int saxHandlerType);
     StepStatistic MapToStepStatistic(std::vector<std::string> tokens);
     int subStrlen = 2;
 };

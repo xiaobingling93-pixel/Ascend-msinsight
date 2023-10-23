@@ -24,6 +24,7 @@ const std::string TOTAL_RESERVED = "Total Reserved(MB)";
 const std::vector<std::string> RECORD_CSV = {COMPONENT, TIMESTAMP, DEVICE, TOTAL_ALLOCATED, TOTAL_RESERVED};
 
 const long long MAX_FILE_SIZE_2G = (long long)(1024 * 1024 * 1024) * 2;
+const long long MAX_FILE_SIZE_10G = (long long)(1024 * 1024 * 1024) * 10;
 }
 
 #endif // PROFILER_SERVER_FILEDEF_H

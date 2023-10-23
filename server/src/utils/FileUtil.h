@@ -230,23 +230,6 @@ public:
         return disk;
     }
 
-    static inline bool IsHiddenPath(std::string_view path)
-    {
-        if (path.empty()) {
-            return false;
-        }
-#ifdef _WIN32
-        std::string tmpPath(path);
-        if (StringUtil::IsUtf8String(path.data())) {
-            tmpPath = StringUtil::Utf8ToGbk(path.data());
-        }
-        auto attribute = GetFileAttributes(tmpPath.data());
-        return attribute == INVALID_FILE_ATTRIBUTES || (attribute & FILE_ATTRIBUTE_HIDDEN) != 0;
-#else
-        return path[0] == '.';
-#endif
-    }
-
     static inline std::map<std::string, std::vector<std::string>>
     SplitToRankList(std::vector<std::pair<std::string, std::string>> fileList)
     {
@@ -332,13 +315,22 @@ public:
         return "";
     }
 
-    static long getFileSize(const char* fileName)
+    static long long getFileSize(const char* fileName)
     {
+#ifdef _WIN32
         FILE *fp = fopen(fileName, "r");
         fseek(fp, 0L, SEEK_END);
-        long size = ftell(fp);
+        long long size = ftell(fp);
         fclose(fp);
         return size;
+#else
+        struct stat st;
+        long long size = 0;
+        if (stat("filename", &st) == 0) {
+            size = st.st_size;
+        }
+        return size;
+#endif
     }
 
     static void CalculateDirSize(const std::string &path, long long &size, int depth)
@@ -513,7 +505,7 @@ public:
         }
         // size checked
         long long size = getFileSize(filePath.c_str());
-        if (size >= MAX_FILE_SIZE_2G) {
+        if (size >= MAX_FILE_SIZE_10G) {
             Server::ServerLog::Error("The size of " + filePath + " is too large in path:", filePath);
             return false;
         }
