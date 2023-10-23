@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import tarfile
 import urllib.request
-
+from pip._internal import main as pip
 from build import init_log, log_output
 
 BUILD_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -119,15 +119,17 @@ def reorganize_3rd_party():
                 shutil.copyfile(os.path.join(
                     THIRD_PARTY_DIR, file[1]), dst_file)
             else:
-                LOG.error(BUILD_TITLE +
-                          'The file is not exist: {}'.format(src_file))
+                LOG.error('%s The file is not exist: %s', BUILD_TITLE, src_file)
     log('finish to reorganize third party')
 
 
 def download_pip_package():
     log('start to install pip package')
-    os.system(f'python3 -m pip install ninja==1.11.1 pyinstaller==5.13.2 -i '
-              f'https://mirrors.tools.huawei.com/pypi/simple/ --trusted-host mirrors.tools.huawei.com')
+    return_code = pip(['install', 'ninja==1.11.1', 'pyinstaller==5.13.2', '-i',
+                       'https://mirrors.tools.huawei.com/pypi/simple/', '--trusted-host',
+                       'mirrors.tools.huawei.com'])
+    if return_code != 0:
+        LOG.error('install pip package failed')
     log('finish to install pip package')
 
 
@@ -136,4 +138,3 @@ if __name__ == '__main__':
     download_pip_package()
     download_sqlite_cache()
     reorganize_3rd_party()
-

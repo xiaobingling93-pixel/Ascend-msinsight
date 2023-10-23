@@ -19,27 +19,27 @@ function init() {
   os=$(uname -s)
   # 优先读取交叉编译设置
   if [ "${build_type}" == 'cross_compile' ]; then
-    pythonExe=python3
+    python_exe=python3
     os_name=win
   elif [ "${os:0:5}" == 'MINGW' ]; then
-    pythonExe=python
+    python_exe=python
     os_name=win
   elif [ "${os:0:5}" == 'Linux' ]; then
-    pythonExe=python3
+    python_exe=python3
     os_name=linux-"$(arch)"
   else
     echo "${os:0:5}"':os system is not support' && exit 1
   fi
 }
 
-function buildFramework() {
+function build_framework() {
   cd "${root}"/framework && rm -rf dist
   npm install && npm run build
   mkdir -p "${root}"/plugins/vscode/profiler && rm -rf "${root}"/plugins/vscode/profiler/*
   cp -fr "${root}"/framework/dist/* "${root}"/plugins/vscode/profiler/
 }
 
-function buildModules() {
+function build_modules() {
   mkdir -p "${root}"/framework/plugins && rm -rf "${root}"/framework/plugins/*
   cd "${root}"/modules
   for module in ${modules[*]}; do
@@ -50,19 +50,19 @@ function buildModules() {
   cp -rf "${root}"/framework/plugins "${root}"/plugins/vscode/profiler/
 }
 
-function buildServer() {
+function build_server() {
   cd "${root}"/server/build
-  ${pythonExe} download_third_party.py
-  ${pythonExe} build.py clean
+  ${python_exe} download_third_party.py
+  ${python_exe} build.py clean
   if [ "${build_type}" == 'cross_compile' ]; then
-    ${pythonExe} build.py build --release --cross_compile
+    ${python_exe} build.py build --release --cross_compile
   else
-    ${pythonExe} build.py build --release
+    ${python_exe} build.py build --release
   fi
   cp -fr "${root}"/server/output/"${os_name}"*/bin "${root}"/serverBuild/server
 }
 
-function buildVscode() {
+function build_vscode() {
   rm -fr cd "${root}"/plugins/vscode/dist
   cd "${root}"/plugins/vscode && npm install --force && npm run vsce:package
   cp "${root}"/plugins/vscode/ascend-insight-extension-* "${root}"/out/ascend-insight-extension_"${vscode_version}"_"${os_name}".vsix
@@ -71,7 +71,7 @@ function buildVscode() {
   tar -czvf "${root}"/out/ascend-insight_"${vscode_version}"_"${os_name}".tar.gz profiler
 }
 
-function buildIntellij() {
+function build_intellij() {
   cd "${root}"/plugins/intellij
   if [ 0"$GRADLE_URL" = "0" ]; then
     gradle wrapper
@@ -89,17 +89,17 @@ function buildIntellij() {
 }
 
 function main() {
-  export npm_config_build_from_source=true
-  export npm_config_audit=false
-  export npm_config_strict_ssl=false
-  export npm_config_disturl=http://mirrors.tools.huawei.com/nodejs
-  export npm_config_registry=https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/
+  export NPM_CONFIG_BUILD_FROM_SOURCE=true
+  export NPM_CONFIG_AUDIT=false
+  export NPM_CONFIG_STRICT_SSL=false
+  export NPM_CONFIG_DISTURL=http://mirrors.tools.huawei.com/nodejs
+  export NPM_CONFIG_REGISTRY=https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/
   init
-  buildFramework
-  buildModules
-  buildServer
-  buildVscode
-  buildIntellij
+  build_framework
+  build_modules
+  build_server
+  build_vscode
+  build_intellij
 }
 
 main
