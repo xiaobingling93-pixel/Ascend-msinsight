@@ -13,6 +13,8 @@
 namespace Dic {
 namespace Module {
 namespace Memory {
+using memoryLines = std::vector<std::vector<std::string>>;
+using componentDtoVector = std::vector<Protocol::ComponentDto>;
 class MemoryDataBase : public Database {
 public:
     MemoryDataBase() = default;
@@ -41,6 +43,7 @@ public:
 private:
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";
+    const int exLength = 4;
 
     bool hasInitStmt = false;
     const int cacheSize = 100;
@@ -53,13 +56,11 @@ private:
     sqlite3_stmt *GetOperatorStmt(uint64_t paramLen);
     sqlite3_stmt *GetRecordStmt(uint64_t paramLen);
 
-    void GetOperatorLine(Protocol::ComponentDto item, Protocol::OperatorMemory &operatorMap);
-    void GetAppLine(Protocol::ComponentDto item, Protocol::OperatorMemory &operatorMap);
-    void GetComponentMap(Protocol::ComponentDto item, Protocol::ComponentMemory &componentMap);
-
     std::string GetOperatorSql(Protocol::MemoryOperatorParams &requestParams);
 
     std::string GetPeakMemory(const Protocol::MemoryPeak &peak);
+    void GetLines(const componentDtoVector componentDtoVec,
+                  memoryLines &lines, Protocol::MemoryPeak &peak);
 };
 
 } // end of namespace Memory

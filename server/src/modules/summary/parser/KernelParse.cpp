@@ -170,7 +170,6 @@ void KernelParse::Reset()
         }
     }
     Timeline::DataBaseManager::Instance().Clear();
-    KernelParse::Reset();
 }
 
 } // end of namespace Summary

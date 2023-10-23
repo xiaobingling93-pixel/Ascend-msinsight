@@ -225,14 +225,45 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
     return true;
 }
 
+/*
+ * 将多个单条线的数据组装成[x,y,y,y]的格式，对于x点上不存在的y补为NULL。
+ */
+void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, memoryLines &lines, Protocol::MemoryPeak &peak)
+{
+    for (auto &item: componentDtoVec) {
+        std::vector<std::string> points = {};
+        if (item.component == "PTA+GE") {
+            peak.ptaGeAllocated = std::max(peak.ptaGeAllocated, item.totalAllocated);
+            peak.ptaGeReserved = std::max(peak.ptaGeReserved, item.totalReserved);
+            std::string time = std::to_string(item.timesTamp);
+            points.emplace_back(time.substr(0, time.length() - exLength));
+            std::string allocated = std::to_string(item.totalAllocated);
+            points.emplace_back(allocated.substr(0, allocated.length() - exLength));
+            std::string reserved = std::to_string(item.totalReserved);
+            points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+            points.emplace_back("NULL");
+            peak.hasPtaGe = true;
+            lines.emplace_back(points);
+        } else if (item.component == "APP") {
+            peak.appReserved = std::max(peak.appReserved, item.totalReserved);
+            std::string time = std::to_string(item.timesTamp);
+            points.emplace_back(time.substr(0, time.length() - exLength));
+            points.emplace_back("NULL");
+            points.emplace_back("NULL");
+            std::string reserved = std::to_string(item.totalReserved);
+            points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+            peak.hasApp = true;
+            lines.emplace_back(points);
+        }
+    }
+}
+
 bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
                                      Protocol::OperatorMemory &operatorBody)
 {
-    std::string sql = "SELECT component, ROUND(timestamp, 2) as timestamp, "
+    std::string sql = "SELECT component, ROUND(timestamp / 1000.0 - ?, 2) as timestamp, "
                       "ROUND(total_allocated, 2) as total_allocated, "
-                      "ROUND(total_reserve, 2) as total_reserve FROM " + recordTable;
-    // 1ms = 1000 * 1000 ns
-    double startTime = Timeline::TraceTime::Instance().GetStartTime() / (1000 * 1000);
+                      "ROUND(total_reserve, 2) as total_reserve FROM " + recordTable + " ORDER BY timestamp ASC";
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -240,6 +271,9 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
         return false;
     }
     int index = bindStartIndex;
+    // 1ms = 1000 * 1000 ns
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime() / (1000 * 1000);
+    sqlite3_bind_int64(stmt, index++, startTime);
     std::string peakMemory;
     std::vector<Protocol::ComponentDto> componentDtoVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -248,28 +282,15 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
         componentDto.component = sqlite3_column_string(stmt, col++);
         // 减去timeline开始的时间作为时间戳
         // 1ms = 1000us
-        componentDto.timesTamp = static_cast<double>(sqlite3_column_double(stmt, col++)) / 1000 - startTime;
-        componentDto.totalAllocated = static_cast<double>(sqlite3_column_double(stmt, col++));
-        componentDto.totalReserved = static_cast<double>(sqlite3_column_double(stmt, col++));
+        componentDto.timesTamp = sqlite3_column_double(stmt, col++);
+        componentDto.totalAllocated = sqlite3_column_double(stmt, col++);
+        componentDto.totalReserved = sqlite3_column_double(stmt, col++);
         componentDtoVec.emplace_back(componentDto);
     }
-    Protocol::ComponentMemory componentMap;
-    Protocol::OperatorMemory operatorMap;
     Protocol::MemoryPeak peak;
-    for (auto &item: componentDtoVec) {
-        if (item.component == "PTA+GE") {
-            peak.ptaGeAllocated = std::max(peak.ptaGeAllocated, item.totalAllocated);
-            peak.ptaGeReserved = std::max(peak.ptaGeReserved, item.totalReserved);
-            GetOperatorLine(item, operatorMap);
-            peak.hasPtaGe = true;
-        } else if (item.component == "APP") {
-            peak.appAllocated = std::max(peak.appAllocated, item.totalReserved);
-            GetAppLine(item, operatorMap);
-            peak.hasApp = true;
-        }
-    }
-    operatorBody = operatorMap;
+    GetLines(componentDtoVec, operatorBody.lines, peak);
     operatorBody.peakMemoryUsage = GetPeakMemory(peak);
+    operatorBody.hasApp = peak.hasApp;
 
     sqlite3_finalize(stmt);
     return true;
@@ -289,45 +310,12 @@ std::string MemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak& peak)
         peakMemory.append(" | Operator Allocated： ").append(ptaGeRe).append("MB");
     }
     if (peak.hasApp) {
-        std::string appAllo = std::to_string(peak.appAllocated);
+        std::string appAllo = std::to_string(peak.appReserved);
         // double转换成string默认生成六位小数，删除后4位小数
         appAllo = appAllo.substr(0, appAllo.length() - 4);
         peakMemory.append(" | APP Reserved： ").append(appAllo).append("MB");
     }
     return peakMemory;
-}
-
-void MemoryDataBase::GetOperatorLine(Protocol::ComponentDto item, Protocol::OperatorMemory &operatorMap)
-{
-    std::vector<double> AllocatesLine;
-    AllocatesLine.emplace_back(item.timesTamp);
-    AllocatesLine.emplace_back(item.totalAllocated);
-    std::vector<double> ReservedLine;
-    ReservedLine.emplace_back(item.timesTamp);
-    ReservedLine.emplace_back(item.totalReserved);
-
-    operatorMap.reservedLine.emplace_back(ReservedLine);
-    operatorMap.allocatesLine.emplace_back(AllocatesLine);
-}
-
-void MemoryDataBase::GetComponentMap(Protocol::ComponentDto item, Protocol::ComponentMemory &componentMap)
-{
-    std::vector<double> AllocatesLine;
-    AllocatesLine[1] = item.totalAllocated;
-    AllocatesLine[0] = item.timesTamp;
-    std::vector<double> ReservedLine;
-    ReservedLine[1] = item.totalReserved;
-    ReservedLine[0] = item.timesTamp;
-    Protocol::ComponentMemory operatorVec;
-    if (item.component == "PTA") {
-        componentMap.ptaReservedLine.emplace_back(ReservedLine);
-        componentMap.ptaAllocatesLine.emplace_back(AllocatesLine);
-    } else if (item.component == "GE") {
-        componentMap.geReservedLine.emplace_back(ReservedLine);
-        componentMap.geAllocatesLine.emplace_back(AllocatesLine);
-    } else if (item.component == "APP") {
-        componentMap.appLine.emplace_back(ReservedLine);
-    }
 }
 
 bool MemoryDataBase::SaveOperatorDetail()
@@ -346,18 +334,6 @@ bool MemoryDataBase::SaveRecordDetail()
         recordCache.clear();
     }
     return true;
-}
-
-void MemoryDataBase::GetAppLine(Protocol::ComponentDto item, Protocol::OperatorMemory &operatorMap)
-{
-    std::vector<double> AllocatesLine;
-    AllocatesLine.emplace_back(item.totalAllocated);
-    AllocatesLine.emplace_back(item.timesTamp);
-    std::vector<double> ReservedLine;
-    ReservedLine.emplace_back(item.timesTamp);
-    ReservedLine.emplace_back(item.totalReserved);
-
-    operatorMap.appLine.emplace_back(ReservedLine);
 }
 
 sqlite3_stmt *MemoryDataBase::GetOperatorStmt(uint64_t paramLen)

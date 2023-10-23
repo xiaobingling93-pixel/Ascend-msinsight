@@ -214,7 +214,6 @@ void MemoryParse::Reset()
         }
     }
     Timeline::DataBaseManager::Instance().Clear();
-    MemoryParse::Reset();
 }
 
 } // end of namespace Memory

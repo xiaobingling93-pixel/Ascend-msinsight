@@ -31,11 +31,10 @@ struct ComponentMemory {
 };
 
 struct OperatorMemory {
+    bool hasApp = false;
     std::string peakMemoryUsage;
     // [timesTamp, memoryUsage]
-    std::vector<std::vector<double>> allocatesLine;
-    std::vector<std::vector<double>> reservedLine;
-    std::vector<std::vector<double>> appLine;
+    std::vector<std::vector<std::string>> lines;
 };
 
 struct MemoryOperatorResponse : public Response {
@@ -71,7 +70,7 @@ struct MemoryPeak {
     bool hasApp = false;
     double ptaGeAllocated = 0;
     double ptaGeReserved = 0;
-    double appAllocated = 0;
+    double appReserved = 0;
 };
 } // end of namespace Protocol
 } // end of namespace Dic

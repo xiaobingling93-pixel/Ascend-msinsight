@@ -35,9 +35,8 @@ template <> std::optional<json_t> ToResponseJson<MemoryViewResponse>(const Memor
 {
     json_t json;
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["AllocatesLine"] = response.map.allocatesLine;
-    json["body"]["ReservedLine"] = response.map.reservedLine;
-    json["body"]["AppLine"] = response.map.appLine;
+    json["body"]["lines"] = response.map.lines;
+    json["body"]["hasApp"] = response.map.hasApp;
     json["body"]["peakMemoryUsage"] = response.map.peakMemoryUsage;
     return json;
 }
