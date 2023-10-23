@@ -106,7 +106,9 @@ struct FlowLocation {
     int32_t tid = 0;
     int32_t depth = 0;
     uint64_t timestamp = 0;
+    uint64_t duration = 0; // slice duration
     std::string pid;
+    std::string name; // slice name
 };
 
 struct UnitFlowBody {
@@ -182,20 +184,9 @@ struct FlowDetailDto {
     int32_t tid = 0;
     int32_t depth = 0;
     uint64_t timestamp = 0;
+    uint64_t duration = 0;
     std::string type;
-};
-
-struct SimpleFlowDto {
-    std::string name;
-    std::string flowId;
-    std::string type;
-};
-
-struct SliceFlowDetail {
-    int32_t tid = 0;
-    int32_t depth = 0;
-    uint64_t timestamp = 0;
-    std::string pid;
+    std::string sliceName;
 };
 
 struct SearchResult {
@@ -244,6 +235,37 @@ struct FlowCategoryListBody {
 struct FlowCategoryListResponse : public Response {
     FlowCategoryListResponse() : Response(REQ_RES_FLOW_CATEGORY_LIST) {}
     FlowCategoryListBody body;
+};
+
+struct FlowCategoryEventsDto {
+    std::string type;
+    std::string flowId;
+    std::string pid;
+    int32_t tid = 0;
+    int32_t depth = 0;
+    uint64_t timestamp = 0;
+};
+
+struct FlowEventLocation {
+    int32_t tid = 0;
+    int32_t depth = 0;
+    uint64_t timestamp = 0;
+    std::string pid;
+};
+
+struct FlowEvent {
+    std::string category;
+    FlowEventLocation from;
+    FlowEventLocation to;
+};
+
+struct FlowCategoryEventsBody {
+    std::vector<std::unique_ptr<FlowEvent>> flowDetailList;
+};
+
+struct FlowCategoryEventsResponse : public Response {
+    FlowCategoryEventsResponse() : Response(REQ_RES_FLOW_CATEGORY_EVENTS) {}
+    FlowCategoryEventsBody body;
 };
 } // end of namespace Protocol
 } // end of namespace Dic

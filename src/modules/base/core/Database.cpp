@@ -3,8 +3,8 @@
  */
 
 #include <thread>
-#include "Database.h"
 #include "ServerLog.h"
+#include "Database.h"
 
 namespace Dic {
 namespace Module {
@@ -149,7 +149,7 @@ bool Database::GetTableList(std::vector<std::string> &tableList) const
             if (table == "sqlite_sequence") {
                 continue;
             }
-            tableList.emplace_back(sqlite3_column_string(stmt, 0));
+            tableList.emplace_back(table);
         }
     } else {
         sqlite3_finalize(stmt);

@@ -26,6 +26,8 @@ template <> std::optional<json_t> ToResponseJson<SearchCountResponse>(const Sear
 template <> std::optional<json_t> ToResponseJson<SearchSliceResponse>(const SearchSliceResponse &response);
 template <> std::optional<json_t> ToResponseJson<RemoteDeleteResponse>(const RemoteDeleteResponse &response);
 template <> std::optional<json_t> ToResponseJson<FlowCategoryListResponse>(const FlowCategoryListResponse &response);
+template <>
+std::optional<json_t> ToResponseJson<FlowCategoryEventsResponse>(const FlowCategoryEventsResponse &response);
 // event
 template <typename EVENT> std::optional<json_t> ToEventJson(const EVENT &event);
 template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSuccessEvent &event);

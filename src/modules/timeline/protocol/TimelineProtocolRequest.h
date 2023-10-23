@@ -141,6 +141,18 @@ struct FlowCategoryListRequest : public Request {
     FlowCategoryListRequest() : Request(REQ_RES_FLOW_CATEGORY_LIST) {};
     FlowCategoryListParams params;
 };
+
+struct FlowCategoryEventsParams {
+    std::string rankId;
+    std::string category;
+    uint64_t startTime = 0;
+    uint64_t endTime = 0;
+};
+
+struct FlowCategoryEventsRequest : public Request {
+    FlowCategoryEventsRequest() : Request(REQ_RES_FLOW_CATEGORY_EVENTS) {};
+    FlowCategoryEventsParams params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

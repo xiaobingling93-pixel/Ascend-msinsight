@@ -10,6 +10,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
+using namespace Dic::Protocol;
 TraceDatabase::~TraceDatabase()
 {
     CommitData();
@@ -93,24 +94,31 @@ void TraceDatabase::ReleaseStmt()
     initStmt = false;
     if (insertSliceStmt != nullptr) {
         sqlite3_finalize(insertSliceStmt);
+        insertSliceStmt = nullptr;
     }
     if (updateProcessNameStmt != nullptr) {
         sqlite3_finalize(updateProcessNameStmt);
+        updateProcessNameStmt = nullptr;
     }
     if (updateProcessLabelStmt != nullptr) {
         sqlite3_finalize(updateProcessLabelStmt);
+        updateProcessLabelStmt = nullptr;
     }
     if (updateProcessSortIndexStmt != nullptr) {
         sqlite3_finalize(updateProcessSortIndexStmt);
+        updateProcessSortIndexStmt = nullptr;
     }
     if (updateThreadNameStmt != nullptr) {
         sqlite3_finalize(updateThreadNameStmt);
+        updateThreadNameStmt = nullptr;
     }
     if (updateThreadSortIndexStmt != nullptr) {
         sqlite3_finalize(updateThreadSortIndexStmt);
+        updateThreadSortIndexStmt = nullptr;
     }
     if (insertFlowStmt != nullptr) {
         sqlite3_finalize(insertFlowStmt);
+        insertFlowStmt = nullptr;
     }
 }
 
@@ -152,7 +160,8 @@ bool TraceDatabase::CreateIndex()
         return false;
     }
     std::string sql = "CREATE INDEX " + idIndex + " ON " + sliceTable + " (id);" +
-        "CREATE INDEX " + trackIdTimeIndex + " ON " + sliceTable + " (track_id, timestamp)";
+        "CREATE INDEX " + trackIdTimeIndex + " ON " + sliceTable + " (timestamp, track_id);" +
+        "CREATE INDEX " + flowIndex + " ON " + flowTable + " (timestamp, track_id);";
     ExecSql(sql);
     auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
     ServerLog::Info("CreateIndex end. time:", dur.count());
@@ -512,7 +521,7 @@ bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &re
         threadTraces.threadId = requestParams.threadId;
         threadTracesMap[item.depth].emplace_back(threadTraces);
     }
-    for (int i = 0; i < rowThreadTraceVec.size(); i++) {
+    for (int i = 0; i < threadTracesMap.size(); i++) {
         if (threadTracesMap.find(i) != threadTracesMap.end()) {
             responseBody.data.emplace_back(threadTracesMap.at(i));
         } else {
@@ -792,17 +801,17 @@ bool TraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::ThreadDeta
 bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParams,
                                     Protocol::UnitFlowBody &responseBody, uint64_t minTimestamp)
 {
-    std::string sql = "SELECT FL.name, FL.cat, FL.flow_id as flowId, TH.pid, TH.tid, SL.depth, SL.timestamp, FL.type "
+    std::string sql = "SELECT FL.name, FL.cat, FL.flow_id as flowId, TH.pid, TH.tid, SL.depth, SL.timestamp,"
+                      " SL.duration, FL.type, SL.name "
                       " FROM " + threadTable + " TH LEFT JOIN " + sliceTable + " SL" +
                       " ON SL.track_id = TH.track_id LEFT JOIN flow FL"
                       " ON FL.track_id = SL.track_id "
                       " WHERE FL.timestamp = SL.timestamp AND FL.flow_id = ?";
     if (requestParams.type == "s") {
-        sql.append(" AND FL.timestamp >= ?");
+        sql.append(" AND FL.timestamp >= ? ORDER BY FL.timestamp ASC LIMIT 2");
     } else {
-        sql.append(" AND FL.timestamp <= ?");
+        sql.append(" AND FL.timestamp <= ? ORDER BY FL.timestamp DESC LIMIT 2");
     }
-    sql.append(" ORDER BY FL.timestamp LIMIT 2");
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -811,7 +820,7 @@ bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParam
     }
     int index = bindStartIndex;
     sqlite3_bind_text(stmt, index++, requestParams.flowId.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, index++, requestParams.startTime);
+    sqlite3_bind_int64(stmt, index++, requestParams.startTime + minTimestamp);
     std::vector<Protocol::FlowDetailDto> flowDetailVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
@@ -823,32 +832,44 @@ bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParam
         flowDetailDto.tid = sqlite3_column_int(stmt, col++);
         flowDetailDto.depth = sqlite3_column_int(stmt, col++);
         flowDetailDto.timestamp = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+        flowDetailDto.duration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
         flowDetailDto.type = sqlite3_column_string(stmt, col++);
+        flowDetailDto.sliceName = sqlite3_column_string(stmt, col++);
         flowDetailVec.emplace_back(flowDetailDto);
     }
     sqlite3_finalize(stmt);
     return FlowDetailToResponse(flowDetailVec, minTimestamp, responseBody);
 }
 
-bool TraceDatabase::FlowDetailToResponse(std::vector<Protocol::FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
-                                         Protocol::UnitFlowBody &responseBody)
+bool TraceDatabase::FlowDetailToResponse(const std::vector<Protocol::FlowDetailDto> &flowDetailVec,
+                                         uint64_t minTimestamp, Protocol::UnitFlowBody &responseBody)
 {
     const static int FLOW_COUNT = 2; // from + to
     if (flowDetailVec.size() != FLOW_COUNT) {
-        ServerLog::Error("select location error");
-        return false;
+        ServerLog::Warn("Flow detail size is ", flowDetailVec.size());
+        return true;
     }
     responseBody.title = flowDetailVec[0].name;
     responseBody.cat = flowDetailVec[0].cat;
     responseBody.id = flowDetailVec[0].flowId;
-    responseBody.from.pid = flowDetailVec[0].pid;
-    responseBody.from.tid = flowDetailVec[0].tid;
-    responseBody.from.timestamp = flowDetailVec[0].timestamp - minTimestamp;
-    responseBody.from.depth = flowDetailVec[0].depth;
-    responseBody.to.pid = flowDetailVec[1].pid;
-    responseBody.to.tid = flowDetailVec[1].tid;
-    responseBody.to.timestamp = flowDetailVec[1].timestamp - minTimestamp;
-    responseBody.to.depth = flowDetailVec[1].depth;
+    Protocol::FlowDetailDto from(flowDetailVec[0]);
+    Protocol::FlowDetailDto to(flowDetailVec[1]);
+    if (from.timestamp > to.timestamp) {
+        from = flowDetailVec[1];
+        to = flowDetailVec[0];
+    }
+    responseBody.from.pid = from.pid;
+    responseBody.from.tid = from.tid;
+    responseBody.from.timestamp = from.timestamp - minTimestamp;
+    responseBody.from.duration = from.duration;
+    responseBody.from.depth = from.depth;
+    responseBody.from.name = from.sliceName;
+    responseBody.to.pid = to.pid;
+    responseBody.to.tid = to.tid;
+    responseBody.to.timestamp = to.timestamp - minTimestamp;
+    responseBody.to.duration = to.duration;
+    responseBody.to.depth = to.depth;
+    responseBody.to.name = to.sliceName;
     return true;
 }
 
@@ -1028,6 +1049,90 @@ bool TraceDatabase::QueryFlowCategoryList(std::vector<std::string> &categories)
     }
     sqlite3_finalize(stmt);
     return true;
+}
+
+void TraceDatabase::DeleteInvalidFlowData()
+{
+    std::string sql = "DELETE from " + flowTable +
+        " Where id IN"
+        " (select id FROM " + flowTable +
+        " GROUP BY flow_id HAVING count(flow_id) < 2)";
+    if (!ExecSql(sql)) {
+        ServerLog::Error("DeleteInvalidFlowData failed!. ", sqlite3_errmsg(db));
+    }
+}
+
+bool TraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, uint64_t minTimestamp,
+                                            std::vector<std::unique_ptr<FlowEvent>> &flowDetailList)
+{
+    std::string sql = "SELECT flow.type, flow.flow_id, thread.pid, thread.tid, slice.depth, flow.timestamp - ?"
+                      "FROM flow "
+                      "LEFT JOIN slice USING (track_id, timestamp) "
+                      "JOIN thread USING (track_id) "
+                      "WHERE flow_id IN "
+                      "(SELECT flow_id FROM flow "
+                      "WHERE (timestamp >= ? AND (type = 'f' OR type = 't')) "
+                      "OR (timestamp <= ? AND (type = 's' OR type = 't')) "
+                      "GROUP BY flow_id HAVING COUNT(flow_id) >= 2"
+                      ") "
+                      "AND flow.cat = ? ORDER BY flow.flow_id, timestamp;";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryFlowCategoryEvents failed!. ", sqlite3_errmsg(db));
+        return false;
+    }
+    int bindIndex = bindStartIndex;
+    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(minTimestamp));
+    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(params.startTime + minTimestamp));
+    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(params.endTime + minTimestamp));
+    sqlite3_bind_text(stmt, bindIndex++, params.category.c_str(), -1, SQLITE_STATIC);
+    std::vector<FlowCategoryEventsDto> flowEventsVec;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        FlowCategoryEventsDto flowCategoryEventsDto;
+        flowCategoryEventsDto.type = sqlite3_column_string(stmt, col++);
+        flowCategoryEventsDto.flowId = sqlite3_column_string(stmt, col++);
+        flowCategoryEventsDto.pid = sqlite3_column_string(stmt, col++);
+        flowCategoryEventsDto.tid = sqlite3_column_int(stmt, col++);
+        flowCategoryEventsDto.depth = sqlite3_column_int(stmt, col++);
+        flowCategoryEventsDto.timestamp = sqlite3_column_int64(stmt, col++);
+        flowEventsVec.emplace_back(flowCategoryEventsDto);
+    }
+    sqlite3_finalize(stmt);
+    FlowEventsToResponse(flowEventsVec, params.category, flowDetailList);
+    ServerLog::Info("Query flow category events. size:", flowDetailList.size());
+    return true;
+}
+
+void TraceDatabase::FlowEventsToResponse(const std::vector<FlowCategoryEventsDto> &flowEventsVec,
+                                         const std::string &category,
+                                         std::vector<std::unique_ptr<FlowEvent>> &flowDetailList)
+{
+    std::string curFlowId;
+    FlowEventLocation location;
+    FlowEventLocation *locationPtr = &location;
+    for (const auto &flow : flowEventsVec) {
+        std::string type = flow.type;
+        std::string flowId = flow.flowId;
+        if (type == "s" || flowId != curFlowId) {
+            locationPtr->pid = flow.pid;
+            locationPtr->tid = flow.tid;
+            locationPtr->depth = flow.depth;
+            locationPtr->timestamp = flow.timestamp;
+        } else if ((type == "f" || type == "t") && flowId == curFlowId) {
+            auto flowEvent = std::make_unique<FlowEvent>();
+            flowEvent->category = category;
+            flowEvent->from = *locationPtr;
+            flowEvent->to.pid = flow.pid;
+            flowEvent->to.tid = flow.tid;
+            flowEvent->to.depth = flow.depth;
+            flowEvent->to.timestamp = flow.timestamp;
+            locationPtr = &(flowEvent->to);
+            flowDetailList.emplace_back(std::move(flowEvent));
+        }
+        curFlowId = flowId;
+    }
 }
 } // end of namespace Timeline
 } // end of namespace Module

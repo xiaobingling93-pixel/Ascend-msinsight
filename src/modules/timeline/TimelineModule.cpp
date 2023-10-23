@@ -14,6 +14,8 @@
 #include "SearchCountHandler.h"
 #include "SearchSliceHandler.h"
 #include "RemoteDeleteHandler.h"
+#include "QueryFlowCategoryListHandler.h"
+#include "QueryFlowCategoryEventsHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -42,6 +44,8 @@ void TimelineModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_SEARCH_COUNT, std::make_unique<SearchCountHandler>());
     requestHandlerMap.emplace(REQ_RES_SEARCH_SLICE, std::make_unique<SearchSliceHandler>());
     requestHandlerMap.emplace(REQ_RES_REMOTE_DELETE, std::make_unique<RemoteDeleteHandler>());
+    requestHandlerMap.emplace(REQ_RES_FLOW_CATEGORY_LIST, std::make_unique<QueryFlowCategoryListHandler>());
+    requestHandlerMap.emplace(REQ_RES_FLOW_CATEGORY_EVENTS, std::make_unique<QueryFlowCategoryEventsHandler>());
 }
 
 void TimelineModule::OnRequest(std::unique_ptr<Protocol::Request> request)

@@ -36,6 +36,7 @@ public:
     bool InsertFlowList(const std::vector<Trace::Flow> &eventList);
     void CommitData();
     void UpdateDepth();
+    void DeleteInvalidFlowData();
 
     // search
     std::vector<int64_t> GetTrackIdList();
@@ -55,6 +56,8 @@ public:
     bool SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
                          Protocol::SearchSliceBody &responseBody);
     bool QueryFlowCategoryList(std::vector<std::string> &categories);
+    bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
+                                 std::vector<std::unique_ptr<Protocol::FlowEvent>> &flowDetailList);
 
 private:
     const std::string sliceTable = "slice";
@@ -63,6 +66,7 @@ private:
     const std::string flowTable = "flow";
     const std::string idIndex = "id_index";
     const std::string trackIdTimeIndex = "track_id_time_index";
+    const std::string flowIndex = "flow_cat_time_index";
 
     bool initStmt = false;
     sqlite3_stmt *insertSliceStmt = nullptr;
@@ -105,8 +109,11 @@ private:
     bool QueryDurationFromSliceByTimeRange(const Protocol::ThreadDetailParams &requestParams,
                                            const std::vector<Protocol::SliceDto> &rows,
                                            std::vector<uint64_t> &nextDepthResult, int64_t trackId);
-    bool FlowDetailToResponse(std::vector<Protocol::FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
+    bool FlowDetailToResponse(const std::vector<Protocol::FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
                               Protocol::UnitFlowBody &responseBody);
+    void FlowEventsToResponse(const std::vector<Protocol::FlowCategoryEventsDto> &flowEventsVec,
+                              const std::string &category,
+                              std::vector<std::unique_ptr<Protocol::FlowEvent>> &flowDetailList);
 };
 } // end of namespace Timeline
 } // end of namespace Module

@@ -102,6 +102,18 @@ template <> std::optional<json_t> ToResponseJson<UnitFlowNameResponse>(const Uni
     return json;
 }
 
+json_t FlowLocationToJson(const FlowLocation& flowLocation)
+{
+    json_t json;
+    json["pid"] = flowLocation.pid;
+    json["tid"] = flowLocation.tid;
+    json["timestamp"] = flowLocation.timestamp;
+    json["duration"] = flowLocation.duration;
+    json["depth"] = flowLocation.depth;
+    json["name"] = flowLocation.name;
+    return json;
+}
+
 template <> std::optional<json_t> ToResponseJson<UnitFlowResponse>(const UnitFlowResponse &response)
 {
     json_t json;
@@ -109,18 +121,8 @@ template <> std::optional<json_t> ToResponseJson<UnitFlowResponse>(const UnitFlo
     json["body"]["title"] = response.body.title;
     json["body"]["cat"] = response.body.cat;
     json["body"]["id"] = response.body.id;
-    json_t fromJson = json_t::object();
-    fromJson["pid"] = response.body.from.pid;
-    fromJson["tid"] = response.body.from.tid;
-    fromJson["timestamp"] = response.body.from.timestamp;
-    fromJson["depth"] = response.body.from.depth;
-    json["body"]["from"] = fromJson;
-    json_t toJson = json_t::object();
-    toJson["pid"] = response.body.to.pid;
-    toJson["tid"] = response.body.to.tid;
-    toJson["timestamp"] = response.body.to.timestamp;
-    toJson["depth"] = response.body.to.depth;
-    json["body"]["to"] = toJson;
+    json["body"]["from"] = FlowLocationToJson(response.body.from);
+    json["body"]["to"] = FlowLocationToJson(response.body.to);
     return json;
 }
 
@@ -188,6 +190,31 @@ template <> std::optional<json_t> ToResponseJson<FlowCategoryListResponse>(const
     json["body"]["category"] = json_t::array();
     for (const std::string &category : response.body.category) {
         json["body"]["category"].emplace_back(category);
+    }
+    return json;
+}
+
+json_t FlowEventLocationToJson(const FlowEventLocation& flowLocation)
+{
+    json_t json;
+    json["pid"] = flowLocation.pid;
+    json["tid"] = flowLocation.tid;
+    json["timestamp"] = flowLocation.timestamp;
+    json["depth"] = flowLocation.depth;
+    return json;
+}
+
+template <> std::optional<json_t> ToResponseJson<FlowCategoryEventsResponse>(const FlowCategoryEventsResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["flowDetailList"] = json_t::array();
+    for (const auto &flowDetail : response.body.flowDetailList) {
+        json_t flowDetailJson = json_t::object();
+        flowDetailJson["category"] = flowDetail->category;
+        flowDetailJson["from"] = FlowEventLocationToJson(flowDetail->from);
+        flowDetailJson["to"] = FlowEventLocationToJson(flowDetail->to);
+        json["body"]["flowDetailList"].emplace_back(flowDetailJson);
     }
     return json;
 }
