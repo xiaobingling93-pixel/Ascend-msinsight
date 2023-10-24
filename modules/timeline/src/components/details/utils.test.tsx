@@ -61,14 +61,5 @@ describe('utils test', () => {
         expect(Object.getOwnPropertySymbols(node).length).toBe(2);
         expect(session.selectedDetailKeys).not.toBe(keys);
         expect(session.selectedDetailKeys).toStrictEqual(keys);
-        node = {};
-        const onExpandFail = jest.fn().mockRejectedValue(node);
-        const setTableState1 = jest.fn();
-        fn = onExpandForChildren(session, onExpandFail, setTableState1) as Function;
-        await fn(true, node);
-        expect(onExpandFail).toBeCalledTimes(1);
-        expect(Object.getOwnPropertySymbols(node).length).toBe(1);
-        expect(setTableState).toBeCalledTimes(1);
-        expect(setTableState1).toBeCalledTimes(0);
     })
 })

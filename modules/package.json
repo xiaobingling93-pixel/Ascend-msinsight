@@ -12,7 +12,7 @@
         "buildMemoryLinux": "cd ./memory && npm install --force && npm run build && npm run publishLinux",
         "buildTimelineWin": "cd .\\timeline && npm install --force && npm run build && npm run publishWin",
         "buildTimelineLinux": "cd ./timeline && npm install --force && npm run build && npm run publishLinux",
-        "test": "npm run testMemory",
+        "test": "npm run testMemory && npm run testTimeline",
         "testCluster": "cd cluster && npm install --force && npm run test",
         "testMemory": "cd memory && npm install --force && npm run test",
         "testTimeline": "cd timeline && npm install --force && npm run test"
