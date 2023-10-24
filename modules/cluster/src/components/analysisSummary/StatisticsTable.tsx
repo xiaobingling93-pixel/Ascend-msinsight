@@ -35,7 +35,7 @@ const computingDetailColumns = [
         sorter: true,
     },
     {
-        title: 'Start Time',
+        title: 'Start Time(ms)',
         dataIndex: 'startTime',
         sorter: true,
     },
@@ -88,34 +88,46 @@ const computingDetailColumns = [
 
 const communicationStatisticsColumns = [
     {
-        title: 'Overlapped Type',
-        dataIndex: 'overlapType',
-        key: 'overlapType',
+        title: 'Accelerator Core',
+        dataIndex: 'acceleratorCore',
+        key: 'acceleratorCore',
     },
     {
-        title: 'Total Durations(μs)',
-        dataIndex: 'duration',
-        key: 'duration',
+        title: 'Communication(Not Overlapped) Durations(μs)',
+        dataIndex: 'NotOverlapped',
+        key: 'NotOverlapped',
+    },
+    {
+        title: 'Communication(Overlapped) Durations(μs)',
+        dataIndex: 'Overlapped',
+        key: 'Overlapped',
     },
 ];
 
 const communicationDetailColumns = [
     {
-        title: 'Communication Kernel',
-        dataIndex: 'communicationKernel',
-        key: 'communicationKernel',
+        title: 'Name',
+        dataIndex: 'name',
+        sorter: true,
+    },
+    {
+        title: 'Type',
+        dataIndex: 'type',
         sorter: true,
     },
     {
         title: 'Start Time(ms)',
         dataIndex: 'startTime',
-        key: 'startTime',
         sorter: true,
     },
     {
-        title: 'Communication Durations(μs)',
-        dataIndex: 'totalDuration',
-        key: 'totalDuration',
+        title: 'Duration(μs)',
+        dataIndex: 'duration',
+        sorter: true,
+    },
+    {
+        title: 'Wait Time(μs)',
+        dataIndex: 'waitTime',
         sorter: true,
     },
 ];
@@ -142,12 +154,13 @@ const communicationNotOverlappedDetailColumns = [
 
 const rowKeyMap: any = {
     compute: 'acceleratorCore',
-    communication: 'overlapType',
+    communication: 'acceleratorCore',
 };
 const colMap: any = {
     compute: computingStatisticsColumns,
     computeDetail: computingDetailColumns,
     communication: communicationStatisticsColumns,
+    CommunicationDetail: communicationDetailColumns,
     'Communication(Overlapped)Detail': communicationOverlappedDetailColumns,
     'Communication(Not Overlapped)Detail': communicationNotOverlappedDetailColumns,
 };
@@ -202,7 +215,7 @@ const serachData = async({ rankId, record, page, sorter, name, step }: any): Pro
         total = res.totalNum;
     } else {
         const res = await queryCommunicationDetail(param);
-        data = res.communicationDetail;
+        data = res.communicationDetails;
         total = res.totalNum;
     }
     return { data, total };
@@ -210,7 +223,7 @@ const serachData = async({ rankId, record, page, sorter, name, step }: any): Pro
 
 const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: '', order: 'descend' };
-const DtetailTable = ({ rankId, record, name, step }: any): JSX.Element => {
+const DetailTable = ({ rankId, record, name, step }: any): JSX.Element => {
     const [ dataSource, setDataSource ] = useState<any[]>([]);
     const [ page, setPage ] = useState(defaultPage);
     const [ sorter, setSorter ] = useState(defaultSorter);
@@ -276,7 +289,7 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
         dataSource={ dataSource}
         columns={columns}
         expandable={{
-            expandedRowRender: (record: any) => <DtetailTable record={record}
+            expandedRowRender: (record: any) => <DetailTable record={record}
                 name={timeFlag + 'Detail' } rankId={ rankId} step={step}/>,
             expandedRowKeys,
             expandIcon: () => (<></>),
@@ -299,15 +312,21 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
     }, [ props.rankId, props.step ]);
     const updateData = async (): Promise<void> => {
         const res = await querySummaryStatistics({ timeFlag, rankId, stepId: step === 'All' ? '' : step });
-        setDataSource(res.summaryStatisticsItemList ?? [ ]);
+        const list: any[] = res.summaryStatisticsItemList ?? [ ];
+        const data = {
+            acceleratorCore: 'HCCL',
+            Overlapped: list.find(item => item.overlapType === 'Communication(Overlapped)')?.duration,
+            NotOverlapped: list.find(item => item.overlapType === 'Communication(Not Overlapped)')?.duration,
+        };
+        setDataSource([data]);
     };
 
     return <ResizeTable
         dataSource={ dataSource}
         columns={columns}
         expandable={{
-            expandedRowRender: (record: any) => <DtetailTable record={record}
-                name={record.overlapType + 'Detail' } rankId={ rankId} step={step}/>,
+            expandedRowRender: (record: any) => <DetailTable record={record}
+                name={'CommunicationDetail' } rankId={ rankId} step={step}/>,
             expandedRowKeys,
             expandIcon: () => (<></>),
         }}
