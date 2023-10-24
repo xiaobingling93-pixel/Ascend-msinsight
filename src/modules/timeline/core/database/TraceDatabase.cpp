@@ -23,10 +23,10 @@ bool TraceDatabase::InitStmt()
         return true;
     }
     initStmt = true;
-    return InitSliceFlowStmt() && InitProcessThreadStmt();
+    return InitSliceFlowCounterStmt() && InitProcessThreadStmt();
 }
 
-bool TraceDatabase::InitSliceFlowStmt()
+bool TraceDatabase::InitSliceFlowCounterStmt()
 {
     std::string sql = "INSERT INTO " + sliceTable +
                       " (timestamp, duration, name, track_id, cat, args) VALUES"
@@ -45,6 +45,15 @@ bool TraceDatabase::InitSliceFlowStmt()
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertFlowStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare insertFlow statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    sql = "INSERT INTO " + counterTable + " (name, pid, timestamp, cat, args)" +
+          " VALUES (?,?,round(? * 1000),?,?)";
+    for (int i = 0; i < cacheSize - 1; ++i) {
+        sql.append(",(?,?,round(? * 1000),?,?)");
+    }
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertCounterStmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare insertCounter statement. error:", sqlite3_errmsg(db));
         return false;
     }
     return true;
@@ -120,6 +129,10 @@ void TraceDatabase::ReleaseStmt()
         sqlite3_finalize(insertFlowStmt);
         insertFlowStmt = nullptr;
     }
+    if (insertCounterStmt != nullptr) {
+        sqlite3_finalize(insertCounterStmt);
+        insertCounterStmt = nullptr;
+    }
 }
 
 bool TraceDatabase::SetConfig()
@@ -148,7 +161,9 @@ bool TraceDatabase::CreateTable()
         "CREATE TABLE " + processTable + " (pid TEXT PRIMARY KEY, process_name TEXT, label TEXT," +
                                          " process_sort_index INTEGER);" +
         "CREATE TABLE " + flowTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, flow_id TEXT, name TEXT, cat TEXT," +
-                                      " track_id INTEGER, timestamp INTEGER, type TEXT);";
+                                      " track_id INTEGER, timestamp INTEGER, type TEXT);" +
+         "CREATE TABLE " + counterTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pid TEXT," +
+                                          "timestamp INTEGER, cat TEXT, args TEXT);";
     return ExecSql(sql);
 }
 
@@ -362,6 +377,66 @@ sqlite3_stmt *TraceDatabase::GetFlowStmt(uint64_t paramLen)
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
             ServerLog::Error("Failed to prepare insertFlow stat. error:", sqlite3_errmsg(db));
+            return nullptr;
+        }
+    }
+    return stmt;
+}
+
+bool TraceDatabase::InsertCounter(const Trace::Counter &event)
+{
+    counterCache.emplace_back(event);
+    if (counterCache.size() == cacheSize) {
+        InsertCounterList(counterCache);
+        counterCache.clear();
+    }
+    return true;
+}
+
+bool TraceDatabase::InsertCounterList(const std::vector<Trace::Counter> &eventList)
+{
+    sqlite3_stmt *stmt = GetCounterStmt(eventList.size());
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to get counter stmt.");
+        return false;
+    }
+    int idx = bindStartIndex;
+    for (const auto &event : eventList) {
+        sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, idx++, event.pid.c_str(), event.pid.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_double(stmt, idx++, event.ts);
+        if (event.cat.has_value()) {
+            sqlite3_bind_text(stmt, idx++, event.cat.value().c_str(), -1, SQLITE_TRANSIENT);
+        } else {
+            idx++;
+        }
+        sqlite3_bind_text(stmt, idx++, event.args.c_str(), -1, SQLITE_TRANSIENT);
+    }
+    auto result = sqlite3_step(stmt);
+    if (eventList.size() != cacheSize) {
+        sqlite3_finalize(stmt);
+    }
+    if (result != SQLITE_DONE) {
+        ServerLog::Error("Insert counter data fail. ", sqlite3_errmsg(db));
+        return false;
+    }
+    return true;
+}
+
+sqlite3_stmt *TraceDatabase::GetCounterStmt(uint64_t paramLen)
+{
+    sqlite3_stmt *stmt = nullptr;
+    if (paramLen == cacheSize) {
+        sqlite3_reset(insertCounterStmt);
+        stmt = insertCounterStmt;
+    } else {
+        std::string sql = "INSERT INTO " + counterTable + " (name, pid, timestamp, cat, args)" +
+              " VALUES (?,?,round(? * 1000),?,?)";
+        for (int i = 0; i < paramLen - 1; ++i) {
+            sql.append(",(?,?,round(? * 1000),?,?)");
+        }
+        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+            ServerLog::Error("Failed to prepare counter stat. error:", sqlite3_errmsg(db));
             return nullptr;
         }
     }
@@ -983,6 +1058,10 @@ void TraceDatabase::CommitData()
     if (!flowCache.empty()) {
         InsertFlowList(flowCache);
         flowCache.clear();
+    }
+    if (!counterCache.empty()) {
+        InsertCounterList(counterCache);
+        counterCache.clear();
     }
 }
 

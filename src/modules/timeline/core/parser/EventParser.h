@@ -35,6 +35,7 @@ private:
     void MetaDataHandle(std::unique_ptr<Trace::Event> eventPtr);
     void CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
     void FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
+    void CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
     std::map<std::string, int64_t> trackIdMap;
     int64_t GetTrackId(const std::string &pid, int64_t tid);
 };

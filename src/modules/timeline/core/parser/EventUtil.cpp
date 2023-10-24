@@ -27,6 +27,7 @@ void EventUtil::Register()
     jsonToEventFactory.emplace("s", ToFlowEvent);
     jsonToEventFactory.emplace("f", ToFlowEvent);
     jsonToEventFactory.emplace("t", ToFlowEvent);
+    jsonToEventFactory.emplace("C", ToCounterEvent);
 }
 
 void EventUtil::UnRegister()
@@ -107,6 +108,21 @@ std::unique_ptr<Event> EventUtil::ToFlowEvent(const json_t &json)
     return event;
 }
 
+std::unique_ptr<Event> EventUtil::ToCounterEvent(const json_t &json)
+{
+    std::unique_ptr<Counter> event = std::make_unique<Counter>();
+    event->type = Type(json);
+    if (json.HasMember("id")) {
+        event->name = JsonUtil::GetString(json, "name") + std::to_string(JsonUtil::GetInteger(json, "id"));
+    } else {
+        event->name = JsonUtil::GetString(json, "name");
+    }
+    event->pid = JsonUtil::GetDumpString(json, "pid");
+    event->ts = JsonUtil::GetDouble(json, "ts");
+    event->cat = JsonUtil::GetOptionalString(json, "cat");
+    event->args = JsonUtil::GetDumpString(json, "args");
+    return event;
+}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

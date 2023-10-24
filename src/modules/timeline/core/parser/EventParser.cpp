@@ -25,6 +25,7 @@ void EventParser::InitEventHandle()
 {
     eventHandleMap.emplace("M", std::bind(&EventParser::MetaDataHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("X", std::bind(&EventParser::CompleteEventsHandle, this, std::placeholders::_1));
+    eventHandleMap.emplace("C", std::bind(&EventParser::CounterEventsHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("s", std::bind(&EventParser::FlowEventsHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("t", std::bind(&EventParser::FlowEventsHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("f", std::bind(&EventParser::FlowEventsHandle, this, std::placeholders::_1));
@@ -144,6 +145,14 @@ void EventParser::FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     auto &event = dynamic_cast<Trace::Flow &>(*eventPtr);
     event.trackId = GetTrackId(event.pid, event.tid);
     database->InsertFlow(event);
+}
+
+void EventParser::CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
+{
+    if (eventPtr == nullptr) {
+        return;
+    }
+    database->InsertCounter(dynamic_cast<Trace::Counter &>(*eventPtr));
 }
 
 int64_t EventParser::GetTrackId(const std::string &pid, int64_t tid)

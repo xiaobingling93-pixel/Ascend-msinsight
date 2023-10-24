@@ -32,8 +32,10 @@ public:
     bool UpdateThreadName(const Trace::MetaData &event);
     bool UpdateThreadSortIndex(const Trace::MetaData &event);
     bool InsertFlow(const Trace::Flow &event);
+    bool InsertCounter(const Trace::Counter &event);
     bool InsertSliceList(const std::vector<Trace::Slice> &eventList);
     bool InsertFlowList(const std::vector<Trace::Flow> &eventList);
+    bool InsertCounterList(const std::vector<Trace::Counter> &eventList);
     void CommitData();
     void UpdateDepth();
     void DeleteInvalidFlowData();
@@ -64,6 +66,7 @@ private:
     const std::string threadTable = "thread";
     const std::string processTable = "process";
     const std::string flowTable = "flow";
+    const std::string counterTable = "counter";
     const std::string idIndex = "id_index";
     const std::string trackIdTimeIndex = "track_id_time_index";
     const std::string flowIndex = "flow_cat_time_index";
@@ -76,9 +79,11 @@ private:
     sqlite3_stmt *updateThreadNameStmt = nullptr;
     sqlite3_stmt *updateThreadSortIndexStmt = nullptr;
     sqlite3_stmt *insertFlowStmt = nullptr;
+    sqlite3_stmt *insertCounterStmt = nullptr;
     const int cacheSize = 1000;
     std::vector<Trace::Slice> sliceCache;
     std::vector<Trace::Flow> flowCache;
+    std::vector<Trace::Counter> counterCache;
 
     struct SliceTimeData {
         int64_t id;
@@ -86,10 +91,11 @@ private:
         uint64_t dur;
     };
 
-    bool InitSliceFlowStmt();
+    bool InitSliceFlowCounterStmt();
     bool InitProcessThreadStmt();
     sqlite3_stmt *GetSliceStmt(uint64_t paramLen);
     sqlite3_stmt *GetFlowStmt(uint64_t paramLen);
+    sqlite3_stmt *GetCounterStmt(uint64_t paramLen);
     void UpdateOneTrackDepth(int64_t trackId);
     bool SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeData> &sliceTimeList);
     // depth, idList
