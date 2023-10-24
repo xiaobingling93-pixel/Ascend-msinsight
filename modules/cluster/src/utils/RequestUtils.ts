@@ -130,7 +130,7 @@ export const queryCommunicationDetail = async (param: {
     if (isNull(window.requestData)) {
         return [ ];
     }
-    return window.requestData('summary/queryCommunicationDetail', param, 'timeline');
+    return window.requestData('summary/queryCommunicationDetail', param);
 };
 
 export const queryTopSummary = async (param:

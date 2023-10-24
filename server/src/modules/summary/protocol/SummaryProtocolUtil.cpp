@@ -147,6 +147,7 @@ std::optional<json_t> ToResponseJson<CommunicationDetailResponse>(const Communic
     json_t json;
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["communicationDetails"] = json_t::array();
+    json["body"]["totalNum"] = response.totalNum;
     for (const CommunicationDetail &detail : response.commDetails) {
         json_t itemJson = json_t::object();
         itemJson["name"] = detail.name;
