@@ -34,28 +34,22 @@ export interface MemoryCurve {
     peakMemoryUsage: string;
     /**
      *
-     * @type {number[][]}
+     * @type {Array<Array<number | string>>}
      * @memberof MemoryCurve
      */
-    AllocatesLine: number[][];
-    /**
-     *
-     * @type {number[][]}
-     * @memberof MemoryCurve
-     */
-    ReservedLine: number[][];
-    /**
-     *
-     * @type {number[][]}
-     * @memberof MemoryCurve
-     */
-    AppLine: number[][];
+    lines: Array<Array<number | string>>;
     /**
      *
      * @type {string}
      * @memberof MemoryCurve
      */
     token?: string;
+    /**
+     *
+     * @type {boolean}
+     * @memberof MemoryCurve
+     */
+    hasApp: boolean;
 }
 
 /**
@@ -145,34 +139,10 @@ export interface Graph {
     columns: string[];
     /**
      *
-     * @type {GraphRow}
+     * @type {Array<Array<number | string>>}
      * @memberof Graph
      */
-    rows: GraphRow;
-}
-
-/**
- * @interface GraphRow
- */
-export interface GraphRow {
-    /**
-     *
-     * @type {number[][]}
-     * @memberof GraphRow
-     */
-    allocated: number[][];
-    /**
-     *
-     * @type {number[][]}
-     * @memberof GraphRow
-     */
-    reserved: number[][];
-    /**
-     *
-     * @type {number[][]}
-     * @memberof GraphRow
-     */
-    app: number[][];
+    rows: Array<Array<number | string>>;
 }
 
 export interface MemoryTable {

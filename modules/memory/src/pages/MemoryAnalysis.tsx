@@ -55,7 +55,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     const [ total, setTotal ] = useState<number>(0);
     const [ orderBy, setOrderBy ] = useState<string | undefined>(undefined);
     const [ order, setOrder ] = useState<string | undefined>(undefined);
-    const [ isBtnDisabled, setIsBtnDisabled ] = useState<boolean>(true);
+    const [ isBtnDisabled, setBtnDisabled ] = useState<boolean>(true);
     // 监听窗口唤醒状态以重绘echarts
     const [ isWakeup, setIsWakeup ] = useState<boolean>(false);
 
@@ -102,15 +102,16 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         }
 
         setTableSpin(true);
-        setIsBtnDisabled(true);
+        setBtnDisabled(true);
         operatorsMemoryGet(param).then((resp) => {
             const operatorDetails = resp.operatorDetail;
             setTotal(resp.totalNum);
             setMemoryTableData(operatorDetails);
-            setTableSpin(false);
-            setIsBtnDisabled(false);
+            setBtnDisabled(false);
         }).catch(err => {
             message.error(err);
+        }).finally(() => {
+            setTableSpin(false);
         });
     };
 
@@ -136,9 +137,9 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             setSelectedRange(undefined);
             return;
         }
-        const allDataSet = new Set(memoryCurveData.AllocatesLine.concat(memoryCurveData.ReservedLine).concat(memoryCurveData.AppLine)
+        const allDataSet = new Set(memoryCurveData.lines
             .map(item => {
-                return parseFloat(item[0].toFixed(2));
+                return parseFloat(item[0] as string);
             }).sort((a, b) => a - b));
         if (allDataSet.size <= 1) {
             setSelectedRange(undefined);
@@ -156,7 +157,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
 
     useEffect(() => {
         if (rankId === undefined) {
-            setIsBtnDisabled(true);
+            setBtnDisabled(true);
             setLineChartData(undefined);
             setMemoryCurveData(undefined);
             setMemoryTableData([]);
@@ -165,7 +166,6 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             setPageSize(10);
             return;
         }
-
         setCurveSpin(true);
         memoryCurveGet({ rankId, token: session.token }).then((resp) => {
             // Reset the select range to null when rankId changes
@@ -173,23 +173,24 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             setMemoryCurveData(resp);
             setLineChartData({
                 title: resp.peakMemoryUsage,
-                columns: resp.AppLine.length > 0 ? [ ...lineColumn, 'APP Reserved' ] : lineColumn,
-                rows: {
-                    allocated: resp.AllocatesLine,
-                    reserved: resp.ReservedLine,
-                    app: resp.AppLine,
-                },
+                columns: resp.hasApp ? [ ...lineColumn, 'APP Reserved' ] : lineColumn,
+                rows: resp.lines,
             });
-            setCurveSpin(false);
         }).catch(err => {
             message.error(err);
+        }).finally(() => {
+            setCurveSpin(false);
         });
     }, [ rankId, session.isClusterMemoryCompletedSwitch ]);
 
     useEffect(() => {
         // 只对RandId为数字做排序，不能转为数字的字符串则不排序
         setRankIdList(JSON.parse(JSON.stringify(session.memoryRankIds)).sort((a: any, b: any) => Number(a) - Number(b)));
-        session.memoryRankIds.length === 0 ? setRankId(undefined) : setRankId(session.memoryRankIds[0]);
+        if (session.memoryRankIds.length === 0) {
+            setRankId(undefined);
+        } else {
+            setRankId(session.memoryRankIds[0]);
+        }
     }, [JSON.stringify(session.memoryRankIds)]);
 
     useEffect(() => {

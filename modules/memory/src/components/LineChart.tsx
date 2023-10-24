@@ -27,9 +27,9 @@ const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: b
         tooltip: {
             trigger: 'axis',
             formatter: function (params: any) {
-                let res = `${params[0].name} <br/>`;
+                let res = `${params?.[0]?.name} <br/>`;
                 for (const item of params) {
-                    if (typeof item.value[item.encode.y[0]] === 'number') {
+                    if (!isNaN(Number(item?.value?.[item?.encode?.y?.[0]]))) {
                         res += `<span style="background: ${item.color}; 
                         height:10px; 
                         width: 10px; 
@@ -37,7 +37,7 @@ const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: b
                         display: inline-block;
                         margin-right:10px;">
                         </span> 
-                        ${item.seriesName}: ${item.value[item.encode.y[0]]}<br/>`;
+                        ${item.seriesName}: ${item?.value?.[item?.encode?.y?.[0]]}<br/>`;
                     }
                 }
                 return res;
@@ -69,7 +69,7 @@ const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: b
     };
 };
 
-const _handleOption = (option: echarts.EChartsOption, graph: Graph, dataRowsRef: React.MutableRefObject<number[][]>): echarts.EChartsOption => {
+const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.EChartsOption => {
     const lineSerie: echarts.SeriesOption = {
         type: 'line',
         connectNulls: true,
@@ -89,29 +89,12 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph, dataRowsRef:
                 shadowBlur: 5,
             },
         },
-        datasetIndex: 0,
     };
-    const allocatedRows = graph.rows.allocated.map(item => {
-        return [ parseFloat(item[0].toFixed(2)), item[1] ];
-    });
-    const reservedRows = graph.rows.reserved.map(item => {
-        return [ parseFloat(item[0].toFixed(2)), null, item[1] ];
-    });
-    let finalRows = allocatedRows.concat(reservedRows as number[][]);
-    if (graph.columns.length === 4) {
-        const appRows = graph.rows.app.map(item => {
-            return [ parseFloat(item[0].toFixed(2)), null, null, item[1] ];
-        });
-        finalRows = finalRows.concat(appRows as number[][]).sort((a, b) => {
-            return a[0] - b[0];
-        });
-    }
-    dataRowsRef.current = finalRows;
     option = {
         ...option,
         dataset:
         {
-            source: [ graph.columns, ...finalRows ],
+            source: [ graph.columns, ...graph.rows ],
         },
         series: Array(graph.columns.length - 1).fill(lineSerie),
     };
@@ -119,11 +102,11 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph, dataRowsRef:
 };
 
 const _showGraph = (myChart: echarts.ECharts, selectedPoints: React.MutableRefObject<number[]>,
-    props: IProps, isDark: boolean, dataRowsRef: React.MutableRefObject<number[][]>): void => {
+    props: IProps, isDark: boolean): void => {
     const { graph, hAxisTitle, vAxisTitle, onSelectionChanged } = props;
 
     let option = _getOriginOption(graph.title, hAxisTitle, vAxisTitle, isDark);
-    option = _handleOption(option, graph, dataRowsRef);
+    option = _handleOption(option, graph);
 
     myChart.setOption(option, true);
 
@@ -170,13 +153,13 @@ const _showGraph = (myChart: echarts.ECharts, selectedPoints: React.MutableRefOb
 };
 
 const _handleEvents = (chartObj: echarts.ECharts | undefined, props: IProps,
-    selectedPoints: React.MutableRefObject<number[]>, dataRowsRef: React.MutableRefObject<number[][]>): void => {
-    const { graph, record } = props;
-    const compareFun = (key: number, mid: number[]): number => key - parseFloat(mid[0].toFixed(2));
+    selectedPoints: React.MutableRefObject<number[]>, graph: Graph): void => {
+    const { record } = props;
+    const compareFun = (key: number, mid: Array<number | string>): number => key - parseFloat(mid[0] as string);
     if (chartObj) {
         if (record !== undefined) {
-            const startId = binarySearch(dataRowsRef.current, record.allocationTime, compareFun);
-            const endId = binarySearch(dataRowsRef.current, record.releaseTime, compareFun);
+            const startId = binarySearch(graph.rows, record.allocationTime, compareFun);
+            const endId = binarySearch(graph.rows, record.releaseTime, compareFun);
             const selection = [];
             startId >= 0 && selection.push(startId);
             endId >= 0 && selection.push(endId);
@@ -207,7 +190,6 @@ export const LineChart: React.FC<IProps> = (props) => {
     const graphRef = React.useRef<HTMLDivElement>(null);
     const [resizeEventDependency] = useResizeEventDependency();
     const [ chartObj, setChartObj ] = React.useState<echarts.ECharts | undefined>();
-    const dataRowsRef = React.useRef<number[][]>([]);
     const selectedPoints = React.useRef<number[]>([]);
 
     React.useLayoutEffect(() => {
@@ -218,7 +200,7 @@ export const LineChart: React.FC<IProps> = (props) => {
         element.oncontextmenu = () => { return false; };
 
         const myChart = echarts.init(element, isDark ? 'dark' : 'customed');
-        _showGraph(myChart, selectedPoints, props, isDark, dataRowsRef);
+        _showGraph(myChart, selectedPoints, props, isDark);
 
         setChartObj(myChart);
         return () => {
@@ -227,7 +209,7 @@ export const LineChart: React.FC<IProps> = (props) => {
     }, [ graph, resizeEventDependency, isDark, isWakeup ]);
 
     React.useEffect(() => {
-        _handleEvents(chartObj, props, selectedPoints, dataRowsRef);
+        _handleEvents(chartObj, props, selectedPoints, graph);
     }, [ graph, record, chartObj ]);
 
     return (
