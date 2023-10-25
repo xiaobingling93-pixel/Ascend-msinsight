@@ -17,19 +17,20 @@ struct UnitMetaData {
     std::string cardId;
 };
 
-struct UnitTrackMeatData {
+struct UnitTrackMetaData {
     std::string cardId;
     std::string processId;
-    std::string processName;
-    std::string label;
-    int64_t threadId = 0;
-    std::string threadName;
-    int maxDepth = 0;
+    std::string processName; // type = process
+    std::string label; // type = process
+    int64_t threadId = 0; // type = thread
+    std::string threadName; // type = thread, counter
+    int maxDepth = 0; // type = thread
+    std::vector<std::string> dataType; // type = counter
 };
 
 struct UnitTrack {
     std::string type;
-    UnitTrackMeatData metaData;
+    UnitTrackMetaData metaData;
     std::vector<std::unique_ptr<UnitTrack>> children;
 };
 

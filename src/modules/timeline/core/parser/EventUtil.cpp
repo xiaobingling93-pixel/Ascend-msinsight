@@ -113,7 +113,7 @@ std::unique_ptr<Event> EventUtil::ToCounterEvent(const json_t &json)
     std::unique_ptr<Counter> event = std::make_unique<Counter>();
     event->type = Type(json);
     if (json.HasMember("id")) {
-        event->name = JsonUtil::GetString(json, "name") + std::to_string(JsonUtil::GetInteger(json, "id"));
+        event->name = JsonUtil::GetString(json, "name") + "[" + std::to_string(JsonUtil::GetInteger(json, "id")) + "]";
     } else {
         event->name = JsonUtil::GetString(json, "name");
     }

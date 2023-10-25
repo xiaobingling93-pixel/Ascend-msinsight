@@ -10,6 +10,7 @@
 #include "TimelineProtocolEvent.h"
 #include "Database.h"
 #include "GlobalDefs.h"
+#include "TraceDatabaseDef.h"
 #include "EventDef.h"
 
 namespace Dic {
@@ -113,13 +114,16 @@ private:
                       const std::map<std::string, uint64_t> &selfTimeKeyValue,
                       Protocol::UnitThreadsBody &responseBody);
     bool QueryDurationFromSliceByTimeRange(const Protocol::ThreadDetailParams &requestParams,
-                                           const std::vector<Protocol::SliceDto> &rows,
+                                           const std::vector<SliceDto> &rows,
                                            std::vector<uint64_t> &nextDepthResult, int64_t trackId);
-    bool FlowDetailToResponse(const std::vector<Protocol::FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
+    bool FlowDetailToResponse(const std::vector<FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
                               Protocol::UnitFlowBody &responseBody);
-    void FlowEventsToResponse(const std::vector<Protocol::FlowCategoryEventsDto> &flowEventsVec,
+    void FlowEventsToResponse(const std::vector<FlowCategoryEventsDto> &flowEventsVec,
                               const std::string &category,
                               std::vector<std::unique_ptr<Protocol::FlowEvent>> &flowDetailList);
+    void MetaDataToResponse(const std::vector<MetaDataDto> &metaDataVec, const std::string &fileId,
+                            std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
+    std::vector<std::string> GetCounterDataType(const std::string &args);
 };
 } // end of namespace Timeline
 } // end of namespace Module

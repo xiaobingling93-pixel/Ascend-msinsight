@@ -165,30 +165,6 @@ struct SimpleSlice {
     std::string name;
 };
 
-struct SliceDto {
-    uint64_t id = 0;
-    uint64_t timestamp = 0;
-    uint64_t duration = 0;
-    int32_t depth = 0;
-    int64_t track_id = 0;
-    std::string name;
-    std::string args;
-    std::string cat;
-};
-
-struct FlowDetailDto {
-    std::string name;
-    std::string cat;
-    std::string flowId;
-    std::string pid;
-    int32_t tid = 0;
-    int32_t depth = 0;
-    uint64_t timestamp = 0;
-    uint64_t duration = 0;
-    std::string type;
-    std::string sliceName;
-};
-
 struct SearchResult {
     std::string rankId;
     int count = 0;
@@ -235,15 +211,6 @@ struct FlowCategoryListBody {
 struct FlowCategoryListResponse : public Response {
     FlowCategoryListResponse() : Response(REQ_RES_FLOW_CATEGORY_LIST) {}
     FlowCategoryListBody body;
-};
-
-struct FlowCategoryEventsDto {
-    std::string type;
-    std::string flowId;
-    std::string pid;
-    int32_t tid = 0;
-    int32_t depth = 0;
-    uint64_t timestamp = 0;
 };
 
 struct FlowEventLocation {

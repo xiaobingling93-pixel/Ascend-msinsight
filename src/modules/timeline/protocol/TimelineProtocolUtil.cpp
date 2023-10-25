@@ -237,6 +237,9 @@ json_t UnitTrackToJson(const UnitTrack &unitTrack)
     json["metadata"]["threadId"] = unitTrack.metaData.threadId;
     json["metadata"]["threadName"] = unitTrack.metaData.threadName;
     json["metadata"]["maxDepth"] = unitTrack.metaData.maxDepth;
+    for (const auto &dataType : unitTrack.metaData.dataType) {
+        json["metadata"]["dataType"].emplace_back(dataType);
+    }
     for (const auto &track : unitTrack.children) {
         json["children"].emplace_back(UnitTrackToJson(*track));
     }

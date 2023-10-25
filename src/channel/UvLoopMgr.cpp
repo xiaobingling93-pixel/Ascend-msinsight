@@ -26,8 +26,12 @@ uv_loop_t *UvLoopMgr::Loop(const int &id)
 {
     std::lock_guard<std::mutex> lock(loopMutex);
     if (loopMap.count(id) == 0) {
-        uv_loop_t *loop = uv_loop_new();
+        uv_loop_t *loop = static_cast<uv_loop_t *>(malloc(sizeof *loop));
         if (loop == nullptr) {
+            return nullptr;
+        }
+        if (uv_loop_init(loop) != 0) {
+            free(loop);
             return nullptr;
         }
         loopMap[id] = loop;
@@ -95,6 +99,7 @@ void UvLoopMgr::LoopRemove(const int &id)
     if (loopMap.count(id) == 0) {
         return;
     }
-    uv_loop_delete(loopMap.at(id));
+    uv_loop_close(loopMap.at(id));
+    free(loopMap.at(id));
     loopMap.erase(id);
 }
