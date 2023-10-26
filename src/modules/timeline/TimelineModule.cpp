@@ -16,6 +16,7 @@
 #include "RemoteDeleteHandler.h"
 #include "QueryFlowCategoryListHandler.h"
 #include "QueryFlowCategoryEventsHandler.h"
+#include "QueryUnitCounterHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -46,6 +47,7 @@ void TimelineModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_REMOTE_DELETE, std::make_unique<RemoteDeleteHandler>());
     requestHandlerMap.emplace(REQ_RES_FLOW_CATEGORY_LIST, std::make_unique<QueryFlowCategoryListHandler>());
     requestHandlerMap.emplace(REQ_RES_FLOW_CATEGORY_EVENTS, std::make_unique<QueryFlowCategoryEventsHandler>());
+    requestHandlerMap.emplace(REQ_RES_UNIT_COUNTER, std::make_unique<QueryUnitCounterHandler>());
 }
 
 void TimelineModule::OnRequest(std::unique_ptr<Protocol::Request> request)

@@ -61,6 +61,8 @@ public:
     bool QueryFlowCategoryList(std::vector<std::string> &categories);
     bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
                                  std::vector<std::unique_ptr<Protocol::FlowEvent>> &flowDetailList);
+    bool QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
+                          std::vector<Protocol::UnitCounterData> &dataList);
 
 private:
     const std::string sliceTable = "slice";

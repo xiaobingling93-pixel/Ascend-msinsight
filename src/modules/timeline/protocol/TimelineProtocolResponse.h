@@ -234,6 +234,20 @@ struct FlowCategoryEventsResponse : public Response {
     FlowCategoryEventsResponse() : Response(REQ_RES_FLOW_CATEGORY_EVENTS) {}
     FlowCategoryEventsBody body;
 };
+
+struct UnitCounterData {
+    uint64_t timestamp = 0;
+    std::string valueJsonStr; // json string, need to convert to json object before send
+};
+
+struct UnitCounterBody {
+    std::vector<UnitCounterData> data;
+};
+
+struct UnitCounterResponse : public Response {
+    UnitCounterResponse() : Response(REQ_RES_UNIT_COUNTER) {}
+    UnitCounterBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

@@ -988,12 +988,12 @@ bool TraceDatabase::QueryUnitsMetadata(const std::string &fileId,
                                        std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     std::string sql = "SELECT pt.pid, pt.process_name AS processName, pt.label, pt.tid, pt.thread_name AS threadName,"
-                      " s.maxDepth, pt.name"
+                      " s.maxDepth, pt.name, pt.args"
                       " FROM ("
                       " SELECT p.pid, p.process_name, p.label, p.process_sort_index, t.tid, t.thread_name,"
-                      " t.track_id, t.thread_sort_index, c.name"
+                      " t.track_id, t.thread_sort_index, c.name, c.args"
                       " FROM " + processTable + " p LEFT JOIN " + threadTable + " t ON p.pid = t.pid" +
-                      " LEFT JOIN (SELECT pid, name FROM " + counterTable + " GROUP BY name) c ON c.pid = p.pid"
+                      " LEFT JOIN (SELECT pid, name, args FROM " + counterTable + " GROUP BY name) c ON c.pid = p.pid"
                       " ) AS pt "
                       " LEFT JOIN ("
                       " SELECT max( depth ) + 1 AS maxDepth, track_id"
@@ -1251,10 +1251,11 @@ void TraceDatabase::FlowEventsToResponse(const std::vector<FlowCategoryEventsDto
         std::string type = flow.type;
         std::string flowId = flow.flowId;
         if (type == "s" || flowId != curFlowId) {
-            locationPtr->pid = flow.pid;
-            locationPtr->tid = flow.tid;
-            locationPtr->depth = flow.depth;
-            locationPtr->timestamp = flow.timestamp;
+            location.pid = flow.pid;
+            location.tid = flow.tid;
+            location.depth = flow.depth;
+            location.timestamp = flow.timestamp;
+            locationPtr = &location;
         } else if ((type == "f" || type == "t") && flowId == curFlowId) {
             auto flowEvent = std::make_unique<FlowEvent>();
             flowEvent->category = category;
@@ -1268,6 +1269,36 @@ void TraceDatabase::FlowEventsToResponse(const std::vector<FlowCategoryEventsDto
         }
         curFlowId = flowId;
     }
+}
+
+bool TraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
+                                     std::vector<Protocol::UnitCounterData> &dataList)
+{
+    std::string sql = "SELECT timestamp - ?, args"
+                      " FROM " + counterTable +
+                      " WHERE pid = ? AND name = ?"
+                      " AND timestamp >= ? AND timestamp <= ?";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryUnitCounter failed!. ", sqlite3_errmsg(db));
+        return false;
+    }
+    int bindIndex = bindStartIndex;
+    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(minTimestamp));
+    sqlite3_bind_text(stmt, bindIndex++, params.pid.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, bindIndex++, params.threadName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(params.startTime + minTimestamp));
+    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(params.endTime + minTimestamp));
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        UnitCounterData unitCounterData;
+        unitCounterData.timestamp = sqlite3_column_int64(stmt, col++);
+        unitCounterData.valueJsonStr = sqlite3_column_string(stmt, col++);
+        dataList.emplace_back(unitCounterData);
+    }
+    sqlite3_finalize(stmt);
+    return true;
 }
 } // end of namespace Timeline
 } // end of namespace Module

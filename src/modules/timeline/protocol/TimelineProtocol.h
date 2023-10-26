@@ -33,6 +33,7 @@ private:
     static std::unique_ptr<Request> ToRemoteDeleteRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToFlowCategoryListRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToFlowCategoryEventsRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToUnitCounterRequest(const json_t &json, std::string &error);
     // response to json
     static std::optional<json_t> ToImportActionResponseJson(const Response &response);
     static std::optional<json_t> ToUnitThreadTracesResponseJson(const Response &response);
@@ -47,6 +48,7 @@ private:
     static std::optional<json_t> ToRemoteDeleteResponseJson(const Response &response);
     static std::optional<json_t> ToFlowCategoryListResponse(const Response &response);
     static std::optional<json_t> ToFlowCategoryEventsResponse(const Response &response);
+    static std::optional<json_t> ToUnitCounterResponse(const Response &response);
     // event to json
     static std::optional<json_t> ToParseSuccessEventJson(const Event &event);
     static std::optional<json_t> ToParseFailEventJson(const Event &event);

@@ -50,6 +50,7 @@ const std::string REQ_RES_SEARCH_SLICE = "search/slice";
 const std::string REQ_RES_REMOTE_DELETE = "remote/delete";
 const std::string REQ_RES_FLOW_CATEGORY_LIST = "flow/categoryList";
 const std::string REQ_RES_FLOW_CATEGORY_EVENTS = "flow/categoryEvents";
+const std::string REQ_RES_UNIT_COUNTER = "unit/counter";
 #pragma endregion
 } // end of namespace
 }

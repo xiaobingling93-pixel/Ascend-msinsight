@@ -218,6 +218,24 @@ template <> std::optional<json_t> ToResponseJson<FlowCategoryEventsResponse>(con
     }
     return json;
 }
+
+template <> std::optional<json_t> ToResponseJson<UnitCounterResponse>(const UnitCounterResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["data"] = json_t::array();
+    for (const auto &data : response.body.data) {
+        json_t tmp;
+        tmp["timestamp"] = data.timestamp;
+        try {
+            tmp["value"] = json_t::parse(data.valueJsonStr);
+        } catch (std::exception &e) {
+            ServerLog::Warn("Failed to parse unit counter value. ", data.valueJsonStr, ", ", e.what());
+        }
+        json["body"]["data"].emplace_back(tmp);
+    }
+    return json;
+}
 #pragma endregion
 
 #pragma region <<Event to json>>
