@@ -31,6 +31,7 @@ declare module 'antd' {
     export const TreeSelect;
     export const Tag;
     export const AutoComplete;
+    export const message;
     export type TooltipProps = TooltipProps;
     export type InputRef = InputRef;
     export type AutoCompleteProps = AutoCompleteProps;
