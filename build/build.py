@@ -42,7 +42,6 @@ def clean():
         build_dir = os.path.join(SCRIPT_PATH, 'modules', module, 'build')
         if os.path.exists(build_dir):
             shutil.rmtree(build_dir)
-    
 
 
 def build_vscode(vscode_version, os_name):
@@ -111,10 +110,16 @@ def build_light_package(version, os_name):
     if not os.path.exists(cargo_path):
         logging.error('cargo is not installed')
         return
-    exec_command([cargo_path, 'make', 'insight'], package_path)
+    task = 'insight-windows' if os_name == 'win' else 'insight-mac'
+    exec_command([cargo_path, 'make', task], package_path)
+    package_name = 'Ascend-Insight_' + version + '_' + os_name
     for tmp in os.listdir(os.path.join(package_path, 'preview')):
-        if tmp.startswith('Ascend-Insight_'):
-            shutil.copyfile(os.path.join(package_path, 'preview', tmp), os.path.join(SCRIPT_PATH, 'out', tmp))
+        if tmp.startswith('Ascend-Insight_') and tmp.endswith('.exe'):
+            shutil.copyfile(os.path.join(package_path, 'preview', tmp),
+                            os.path.join(SCRIPT_PATH, 'out', package_name + '.exe'))
+        if tmp == 'ascend_insight.zip':
+            shutil.copyfile(os.path.join(package_path, 'preview', tmp),
+                            os.path.join(SCRIPT_PATH, 'out', package_name + '.zip'))
 
 
 def exec_command(command, path):
