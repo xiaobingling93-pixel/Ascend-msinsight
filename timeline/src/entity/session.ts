@@ -4,7 +4,7 @@ import { Caches } from '../cache/cache';
 import { toLocalTimeString } from '../utils/humanReadable';
 import { TimeStamp } from './common';
 import { Domain } from './domain';
-import { InsightUnit, UnitMatcher } from './insight';
+import { InsightUnit, UnitMatcher, LinkLines } from './insight';
 import { TimeLineMaker, TIME_MAKER_DEFAULT } from './timeMaker';
 import { omit } from 'lodash';
 import { platform } from '../platforms';
@@ -79,6 +79,9 @@ export class Session {
     private _selectedData?: Record<string, unknown>;
     private _selectedRangeData?: Array<Record<string, unknown>>;
     linkData?: LinkData;
+    linkLines: LinkLines = {};
+    totalHeight: number = 0;
+
     linkFlow?: Record<string, unknown>;
     linkDetail?: Record<string, unknown>;
     buttons: Array<React.FC<{ session: Session }>>;

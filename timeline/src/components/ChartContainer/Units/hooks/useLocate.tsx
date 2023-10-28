@@ -13,10 +13,10 @@ import { isPinned } from '../../unitPin';
  * @param path if a matching unit is found, keeps the path from root to the matching unit.
  * @returns true if found a matching unit
  */
-const searchUnit = (units: InsightUnit[], matcher: UnitMatcher, path: InsightUnit[]): boolean => {
+const searchUnit = (units: InsightUnit[], matcher: UnitMatcher['target'], path: InsightUnit[]): boolean => {
     for (const unit of units) {
         path.push(unit);
-        if (matcher.target(unit)) {
+        if (matcher(unit)) {
             return true;
         }
         if (unit.children && searchUnit(unit.children, matcher, path)) {
@@ -27,9 +27,7 @@ const searchUnit = (units: InsightUnit[], matcher: UnitMatcher, path: InsightUni
     return false;
 };
 
-type LocateAction = (unit: InsightUnit) => void;
-
-const getTargetUnit = (units: InsightUnit[], matcher: UnitMatcher, callback: LocateAction): InsightUnit | undefined => {
+const getTargetUnit = (units: InsightUnit[], matcher: UnitMatcher['target']): InsightUnit | undefined => {
     const path: InsightUnit[] = [];
     if (!searchUnit(units, matcher, path)) {
         return;
@@ -39,7 +37,6 @@ const getTargetUnit = (units: InsightUnit[], matcher: UnitMatcher, callback: Loc
         for (const unit of path) {
             unit.isExpanded = true;
         }
-        callback(path[path.length - 1]);
     });
     return path[path.length - 1];
 };
@@ -51,7 +48,7 @@ const getUnitHeight = (units: InsightUnit[], targetUnit: InsightUnit, options: P
         if (unit === targetUnit) {
             break;
         }
-        height += unit.height();
+        height += unit.height() + 1;
     }
     height -= 10;
     return height;
@@ -68,13 +65,13 @@ const getNormalUnitHeight = (session: Session, targetUnit: InsightUnit): number 
 export const useJumpTarget = (session: Session, dom: HTMLDivElement | null): void => {
     React.useEffect(() => autorun(
         () => {
-            if (session.locateUnit === undefined || dom === null) { return; }
-            const targetUnit = getTargetUnit(session.units, session.locateUnit as UnitMatcher, (unit) => {
-                session.selectedUnitKeys = [getAutoKey(unit)];
-                session.selectedUnits = [unit];
-                session.locateUnit?.onSuccess(unit);
-            });
+            if (dom === null) { return; }
+            if (session.locateUnit === undefined) { return; }
+            const targetUnit = getTargetUnit(session.units, session.locateUnit.target);
             if (targetUnit !== undefined) {
+                session.selectedUnitKeys = [getAutoKey(targetUnit)];
+                session.selectedUnits = [targetUnit];
+                session.locateUnit?.onSuccess(targetUnit);
                 dom?.scrollTo(0, getNormalUnitHeight(session, targetUnit));
             }
             runInAction(() => {

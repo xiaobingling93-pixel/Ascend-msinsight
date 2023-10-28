@@ -54,8 +54,6 @@ export const slicesListDetail = detail({
             totalOccurrences += element.occurrences ?? 0;
         });
 
-        console.log(totalWallDuration / totalOccurrences);
-
         res.push({ title: 'Totals', wallDuration: totalWallDuration, selfTime: totalSelfTime, avgWallDuration: totalWallDuration / totalOccurrences, occurrences: totalOccurrences });
 
         return res;
@@ -135,24 +133,10 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
                         const type = session.linkFlow?.type as string;
                         const rankId = (metadata as Record<string, unknown>)?.cardId;
                         const raw = await window.request(metadata.dataSource, { command: 'unit/flow', params: { flowId, type, startTime, rankId } } ) as any;
-                        const from = raw.from;
-                        const to = raw.to;
-                        session.linkData = {
-                            sources: [{
-                                data: { ...from, startTime: from.timestamp, duration: from?.duration ?? 0 },
-                                matcher: (unit) => {
-                                    const typedMetadata = unit?.metadata as any;
-                                    return typedMetadata?.processId === from.pid && typedMetadata?.threadId === from.tid;
-                                },
-                            }],
-                            target: {
-                                data: { ...to, startTime: to.timestamp, duration: to?.duration ?? 0 },
-                                matcher: (unit) => {
-                                    const typedMetadata = unit?.metadata as any;
-                                    return typedMetadata?.processId === to.pid && typedMetadata?.threadId === to.tid;
-                                },
-                            },
-                        };
+                        const linkLine = { [raw.cat]: [{ category: raw.cat, ...raw }]  }
+                        runInAction(() => {
+                            session.linkLines = linkLine;
+                        });
                         return raw;
                     },
                 });

@@ -57,6 +57,7 @@ const Overlay = styled.canvas`
     left: 0;
     right: 0;
     height: 100%;
+    width: 100%;
     pointer-events: none;
     z-index: 1;
 `;
@@ -93,7 +94,8 @@ export type InteractorMouseState = {
 };
 
 export type InteractorParams = {
-    canvas: React.RefObject<HTMLCanvasElement>;
+    normalCanvas: React.RefObject<HTMLCanvasElement>;
+    hoverCanvas: React.RefObject<HTMLCanvasElement>;
     xReverseScale: (x: number) => number;
     xScale: (x: number) => number;
     isNsMode: boolean;
@@ -103,34 +105,32 @@ export type InteractorParams = {
 };
 
 const INTERACTOR_WIDTH = 1153;
-const Interactor = (props: ChartInteractorProps, ref: Ref<ChartInteractorHandles>): JSX.Element => {
+const Interactor = ({ domainStart, domainEnd, endTimeAll, session, interactorMouseState, isNsMode }: ChartInteractorProps,
+    ref: Ref<ChartInteractorHandles>): JSX.Element => {
     const theme = useTheme();
-    const { domainStart, domainEnd, endTimeAll, session, interactorMouseState, isNsMode } = props;
     // use ref instead of state
     // if using state when mousemoving lastPos will keep updating causing component reload
     const accumulativeZoomRef = React.useRef(0);
     // time -> pos
     const [ customRenderers, customRenderTriggers ] = useCustomRenderers(session);
-    const [ rect, canvas ] = useWatchDomResize<HTMLCanvasElement>();
+    const [ normalRect, normalCanvas ] = useWatchDomResize<HTMLCanvasElement>();
+    const [ hoverRect, hoverCanvas ] = useWatchDomResize<HTMLCanvasElement>();
     // pos -> time
-    const xScale = React.useMemo(() => {
-        return d3.scaleLinear().range([ domainStart, domainEnd ]).domain([ 0, rect?.width ?? INTERACTOR_WIDTH ]);
-    }, [ rect?.width, session.domain.timePerPx, domainStart, domainEnd ]);
-    const xReverseScale = React.useMemo(() => {
-        return d3.scaleLinear().range([ 0, rect?.width ?? INTERACTOR_WIDTH ]).domain([ domainStart, domainEnd ]);
-    }, [ rect?.width, session.domain.timePerPx, domainStart, domainEnd ]);
-    const interactorParams: InteractorParams = { canvas, xReverseScale, xScale, isNsMode, session, customRenderers, theme };
+    const xScale = React.useMemo(() => d3.scaleLinear().range([ domainStart, domainEnd ]).domain([ 0, normalRect?.width ?? INTERACTOR_WIDTH ])
+        , [ normalRect?.width, session.domain.timePerPx, domainStart, domainEnd ]);
+    const xReverseScale = React.useMemo(() => d3.scaleLinear().range([ 0, normalRect?.width ?? INTERACTOR_WIDTH ]).domain([ domainStart, domainEnd ])
+        , [ normalRect?.width, session.domain.timePerPx, domainStart, domainEnd ]);
+    const interactorParams: InteractorParams = { normalCanvas, hoverCanvas, xReverseScale, xScale, isNsMode, session, customRenderers, theme };
     useEffect(() => {
-        resetCanvasSize(canvas, rect);
-    }, [rect]);
+        resetCanvasSize(normalCanvas, normalRect); resetCanvasSize(hoverCanvas, hoverRect);
+    }, [ normalRect, hoverRect ]);
     useEffect(() => {
-        if (!canvas.current) { return; }
-        draw(canvas.current.getContext('2d'), canvas.current.clientWidth, canvas.current.clientHeight, xReverseScale, xScale, interactorMouseState, session.selectedRange, isNsMode, session, customRenderers, theme);
+        if (!normalCanvas.current) { return; }
+        draw(normalCanvas.current.getContext('2d'), normalCanvas.current.clientWidth, normalCanvas.current.clientHeight, xReverseScale, xScale, interactorMouseState, session.selectedRange, isNsMode, session, customRenderers, theme);
         const traceAction: string[] = [ 'selectBrushScope', 'dragLane', 'zoomProportion' ];
-        traceAction.forEach((item) => {
-            traceEnd(item);
-        });
-    }, [ domainStart, domainEnd, endTimeAll, session.selectedRange, theme, rect, session.linkData, session.scrollTop, ...customRenderTriggers ]);
+        traceAction.forEach((item) => { traceEnd(item); });
+    }, [ domainStart, domainEnd, endTimeAll, session.selectedRange, theme, normalRect, session.linkData, session.scrollTop, ...customRenderTriggers ]);
+    useEffect(() => { if (!normalCanvas.current) { return; } draw(normalCanvas.current.getContext('2d'), normalCanvas.current.clientWidth, normalCanvas.current.clientHeight, xReverseScale, xScale, interactorMouseState, session.selectedRange, isNsMode, session, customRenderers, theme); }, [ session.linkLines, session.totalHeight ]);
     const point = interactorMouseState.lastPos?.current?.x !== undefined ? xScale(interactorMouseState.lastPos?.current?.x) : undefined;
     useImperativeHandle(ref, () => ({
         mouseMoveAction: (interactorMouseState: InteractorMouseState) => {
@@ -154,7 +154,10 @@ const Interactor = (props: ChartInteractorProps, ref: Ref<ChartInteractorHandles
             keyDownAction(e.key, session, point);
         },
     }));
-    return <Overlay ref={canvas} style={{ width: '100%' }}></Overlay>;
+    return <>
+        <Overlay ref={normalCanvas} />
+        <Overlay ref={hoverCanvas} />
+    </>;
 };
 export const ChartInteractor = observer(React.forwardRef(Interactor));
 ChartInteractor.displayName = 'ChartInteractor';
