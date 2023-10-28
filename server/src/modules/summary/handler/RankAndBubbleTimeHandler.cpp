@@ -15,7 +15,7 @@ void RankAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
 {
     PipelineRankTimeRequest &request = dynamic_cast<PipelineRankTimeRequest &>(*requestPtr.get());
     if (!WsSessionManager::Instance().CheckSession(request.token)) {
-        ServerLog::Warn("Failed to check session, command = ", command);
+        ServerLog::Error("Failed to check session token , command = ", command);
         return;
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(request.token);

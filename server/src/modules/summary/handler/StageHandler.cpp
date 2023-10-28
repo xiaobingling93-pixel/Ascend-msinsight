@@ -15,7 +15,7 @@ void StageHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     PipelineStageRequest &request = dynamic_cast<PipelineStageRequest &>(*requestPtr.get());
     if (!WsSessionManager::Instance().CheckSession(request.token)) {
-        ServerLog::Warn("Failed to check session command = ", command);
+        ServerLog::Error("Failed to check session token , command = ", command);
         return;
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(request.token);

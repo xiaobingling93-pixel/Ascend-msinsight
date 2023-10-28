@@ -70,12 +70,12 @@ void SummaryDataBase::ReleaseStmt()
     }
 }
 
-bool SummaryDataBase::InsertKernelDetailList(std::vector<Kernel> kernelVec)
+void SummaryDataBase::InsertKernelDetailList(std::vector<Kernel> kernelVec)
 {
     sqlite3_stmt *stmt = GetKernelStmt(kernelVec.size());
     if (stmt == nullptr) {
         ServerLog::Error("Failed to get kernel stmt.");
-        return false;
+        return;
     }
     int idx = bindStartIndex;
     for (const auto &event : kernelVec) {
@@ -100,9 +100,8 @@ bool SummaryDataBase::InsertKernelDetailList(std::vector<Kernel> kernelVec)
     }
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert kernel detail fail. ", sqlite3_errmsg(db));
-        return false;
+        return;
     }
-    return true;
 }
 
 void SummaryDataBase::InsertKernelDetail(Kernel kernel)

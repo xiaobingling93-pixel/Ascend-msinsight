@@ -24,7 +24,7 @@ public:
     bool InitStmt();
     void ReleaseStmt();
 
-    bool InsertKernelDetailList(std::vector<Kernel> kernelVec);
+    void InsertKernelDetailList(std::vector<Kernel> kernelVec);
     void InsertKernelDetail(Kernel kernel);
     void SaveKernelDetail();
 

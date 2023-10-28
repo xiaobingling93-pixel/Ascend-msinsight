@@ -461,6 +461,7 @@ bool ClusterDatabase::GetStepIdList(Protocol::PipelineStepResponseBody &response
         std::string res = sqlite3_column_string(stmt, col++);
         responseBody.stepList.emplace_back(res);
     }
+    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -481,6 +482,7 @@ bool ClusterDatabase::GetStages(Protocol::PipelineStageParam param,
         std::string res = sqlite3_column_string(stmt, col++);
         responseBody.stageList.emplace_back(res);
     }
+    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -506,6 +508,7 @@ bool ClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam param,
         bubbleDetail.bubbleTime = sqlite3_column_double(stmt, col++);
         responseBody.bubbleDetails.emplace_back(bubbleDetail);
     }
+    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -532,6 +535,7 @@ bool ClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam param,
         bubbleDetail.bubbleTime = sqlite3_column_double(stmt, col++);
         responseBody.bubbleDetails.emplace_back(bubbleDetail);
     }
+    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -552,6 +556,7 @@ bool ClusterDatabase::GetGroups(Protocol::MatrixGroupParam param,
         std::string res = sqlite3_column_string(stmt, col++);
         responseBody.groupList.emplace_back(res);
     }
+    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -585,6 +590,7 @@ bool ClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
         matrixList.bandwidth = sqlite3_column_double(stmt, col++);
         responseBody.matrixList.emplace_back(matrixList);
     }
+    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -803,6 +809,7 @@ bool ClusterDatabase::QueryRanksHandler(Protocol::RanksParams &requestParam,
         object.iterationOrRankId = sqlite3_column_string(stmt, col++);
         responseBody.emplace_back(object);
     }
+    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -859,6 +866,7 @@ bool ClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requestP
         object.operatorName = sqlite3_column_string(stmt, col++);
         responseBody.emplace_back(object);
     }
+    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -882,6 +890,7 @@ bool ClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRanksObj
         ServerLog::Error("Failed to obtain the number of iteration ids. At least one id must be contained. "
                      "Check whether communication data files exist in the directory.");
     }
+    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -932,6 +941,7 @@ bool ClusterDatabase::QueryDurationList(Protocol::DurationListParams &requestPar
         object.waitTimeRatio = sqlite3_column_double(stmt, col++);
         responseBody.emplace_back(object);
     }
+    sqlite3_finalize(stmt);
     return true;
 }
 } // end of namespace Module

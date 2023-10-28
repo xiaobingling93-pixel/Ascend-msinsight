@@ -16,8 +16,7 @@ void QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     ComputeDetailRequest &request = dynamic_cast<ComputeDetailRequest &>(*requestPtr.get());
     std::string token = request.token;
     if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
-                        ", command = ", command);
+        ServerLog::Error("Failed to check session token , command = ", command);
         return;
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);

@@ -74,9 +74,15 @@ void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr, 
 
         std::string parentDir = FileUtil::GetParentPath(filePath);
         if (!parentDir.empty()) {
-            Memory::MemoryParse::Instance().OperatorParse(parentDir, fileId);
-            Memory::MemoryParse::Instance().RecordToParse(parentDir, fileId);
-            Summary::KernelParse::Instance().KernelFileParse(parentDir, fileId);
+            if (!Memory::MemoryParse::Instance().OperatorParse(parentDir, fileId)) {
+                ServerLog::Error("Memory Operator parse failed.");
+            }
+            if (!Memory::MemoryParse::Instance().RecordToParse(parentDir, fileId)) {
+                ServerLog::Error("Memory Record parse failed.");
+            }
+            if (!Summary::KernelParse::Instance().KernelFileParse(parentDir, fileId)) {
+                ServerLog::Error("Summary Kernel parse failed.");
+            }
         }
     }
     instance.threadPool->AddTask(EndParseTask, fileId, futures);
