@@ -11,9 +11,17 @@ const handleDisplayAside = () => {
 }
 const theme = ref('dark-theme');
 
+const forbidDefaultEvent = (e: MouseEvent) => {
+    e.preventDefault();
+}
+
 onMounted(() => {
     document.body.className = theme.value;
+    
+    window.addEventListener('drop', forbidDefaultEvent);
+    window.addEventListener('dragover', forbidDefaultEvent);
 })
+
 </script>
 
 <template>
