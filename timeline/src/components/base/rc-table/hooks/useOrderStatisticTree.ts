@@ -127,7 +127,7 @@ export class OrderStatisticTree<T> {
             return tree;
         }
         if (!tree.children || tree.children.length === 0) {
-            console.log('findNode returning undefined for empty children');
+            ('findNode returning undefined for empty children');
             return undefined;
         }
         let subTreeIndex = index - 1; // skipped the root
@@ -159,7 +159,7 @@ export class OrderStatisticTree<T> {
             })
             return subTreeIndex;
         };
-        let initTreeLength = 0;     
+        let initTreeLength = 0;
         if (!Array.isArray(this.vm)) {
             throw new Error('Unsupported Data');
         }

@@ -335,6 +335,11 @@ export type UnitMatcher = {
     onSuccess: (ele: InsightUnit) => void;
 };
 
+export type LinkLine = Array<Record<string, unknown>> | undefined;
+export type LinkLines = {
+    [x: string]: LinkLine;
+};
+
 /**
  * @member source the source file defining this template
  */

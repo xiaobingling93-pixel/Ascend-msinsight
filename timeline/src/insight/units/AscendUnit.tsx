@@ -104,7 +104,7 @@ const commonBottomPanel = {
 
 export const ThreadUnit = unit<ThreadMetaData>({
     name: 'Thread',
-    pinType: 'move',
+    pinType: 'copied',
     renderInfo: (session: Session, thread: ThreadMetaData, thisUnit: InsightUnit) => {
         return isPinned(thisUnit) ? `${thread.cardId}_${thread.processName} (${thread.processId})_${thread.threadName}` : `${thread.threadName}`;
     },
@@ -218,7 +218,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
 export const ProcessUnit = unit<ProcessMetaData>({
     name: 'Process',
     tag: (_, metadata: { label?: string }) => `${metadata.label}`,
-    pinType: 'move',
+    pinType: 'copied',
     chart: chart({
         type: 'status',
         mapFunc: async (session: Session, metaData: unknown) => {
@@ -237,7 +237,7 @@ export const ProcessUnit = unit<ProcessMetaData>({
 export const CardUnit = unit<CardMetaData>({
     name: 'Card',
     configBar: offsetConfig,
-    pinType: 'move',
+    pinType: 'copied',
     renderInfo: (session: Session, metadata: { cardId: string }) => `${metadata.cardId}`,
     spreadUnits: on(
         'create',

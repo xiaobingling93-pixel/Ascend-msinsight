@@ -112,7 +112,7 @@ export const ChartContainer = observer((props: Props) => {
     const [ containerDom, setContainerDom ] = React.useState<HTMLDivElement | undefined>(undefined);
     const chartInteractorRef = useRef<ChartInteractorHandles>(null);
     const scrollerRef = React.useRef<HTMLDivElement>(null);
-    const { onMouseMove, onMouseDown, onWheel, onMouseUp, onKeyDown, interactorMouseState } =
+    const { onMouseUp, onKeyDown, interactorMouseState, ...otherInteractors } =
         useInteractorMouseState(chartInteractorRef, scrollerRef, session, !!props.interactive);
     useEffect(() => {
         if (containerDom === undefined) {
@@ -125,9 +125,15 @@ export const ChartContainer = observer((props: Props) => {
     }, [containerDom]);
     const keyHoldAction = useMemo(() => loopActionFactory((e: React.KeyboardEvent<HTMLDivElement>) => onKeyDown(e), 40, 100), [session]);
     addKeyEvent(keyHoldAction);
-    return <Container onMouseMove={ (e) => onMouseMove(e) }
-        onMouseDown={(e) => onMouseDown(e) }
-        onWheel={(e) => onWheel(e) }
+    return <Container
+        onKeyDown={(e) => {
+            if (!e.repeat) {
+                keyHoldAction.beginLoop(e);
+            }
+        }}
+        onKeyUp={() => { keyHoldAction.clearLoop(); }}
+        onBlur={() => { keyHoldAction.clearLoop(); }}
+        {...otherInteractors}
         ref={(dom) => {
             setContainerDom(dom ?? undefined);
         }}

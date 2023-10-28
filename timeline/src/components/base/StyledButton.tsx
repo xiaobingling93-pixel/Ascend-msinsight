@@ -11,15 +11,16 @@ interface CustomButtonProps {
     isDisabled?: boolean;
     isSuspend?: boolean;
     tooltip?: string | null;
-    icon: FunctionComponent<SVGProps<SVGSVGElement> & { title?: string }>;
+    icon?: FunctionComponent<SVGProps<SVGSVGElement> & { title?: string }>;
 }
 
 export const StyledButton = styled(Button)`
     display: flex;
     align-items: center;
-    width: 22px;
+    width: ${props => props.width !== undefined ? `${props.width}px` : '22px'};
     height: 20px;
     line-height: 20px;
+    color: ${props => props.theme.fontColor} !important;
     background-color: ${props => props?.style?.backgroundColor ?? props.theme.insightHeaderButtonBackgroundColor}!important;
     &:hover {
         background-color: ${props => props?.style?.backgroundColor ?? props.theme.insightHeaderButtonBackgroundColor};
@@ -43,7 +44,7 @@ export const CustomButton = React.forwardRef(({ icon, isDisabled, isSuspend, too
     }
     const Icon = icon;
     return <StyledTooltip title={tooltip}>
-        <StyledButton ref={ref} disabled={isDisabled} {...props} icon={<Icon fill={buttonFillColor}></Icon>}
+        <StyledButton ref={ref} disabled={isDisabled} {...props} icon={Icon && <Icon fill={buttonFillColor}/>}
             style={{ backgroundColor: isSuspend ? theme.buttonColor.suspendBGColor : theme.buttonColor.unSuspendBGColor }}>
         </StyledButton>
     </StyledTooltip>;

@@ -1,18 +1,17 @@
 export class RenderManager {
-    private _isRunning: boolean = true;
     private readonly _renderQueue: Function[] = [];
+    private readonly _frequency: number;
+    private _timer: NodeJS.Timer | undefined;
 
-    constructor() {
+    constructor(fps: number) {
+        this._frequency = 1e3 / fps;
         this.run();
     }
 
     private run(): void {
-        requestAnimationFrame(() => {
+        this._timer = setInterval(() => {
             this.flush();
-            if (this._isRunning) {
-                this.run();
-            }
-        });
+        }, this._frequency);
     }
 
     private flush(): void {
@@ -27,8 +26,8 @@ export class RenderManager {
     }
 
     stop(): void {
-        if (this._isRunning) {
-            this._isRunning = false;
+        if (this._timer) {
+            this._timer = undefined;
         }
     }
 
@@ -37,4 +36,4 @@ export class RenderManager {
     }
 };
 
-export const renderManager = new RenderManager();
+export const renderManager = new RenderManager(40);
