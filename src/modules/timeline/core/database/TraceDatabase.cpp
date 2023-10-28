@@ -798,7 +798,9 @@ bool TraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &reques
                                       Protocol::UnitThreadDetailBody &responseBody,
                                       uint64_t minTimestamp, int64_t trackId)
 {
-    std::string sql = "SELECT * FROM " + sliceTable + " WHERE depth = ? AND track_id = ? AND timestamp = ?";
+    std::string sql = "SELECT id, timestamp, duration, name, depth, track_id, cat, args"
+                      " FROM " + sliceTable +
+                      " WHERE depth = ? AND track_id = ? AND timestamp = ?";
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -1084,6 +1086,7 @@ std::vector<std::string> TraceDatabase::GetCounterDataType(const std::string &ar
             ServerLog::Warn("Counter data type is not string. args:", args);
         }
     }
+    std::sort(type.begin(), type.end()); // 与metadata数据顺序一致，可能是因为使用json开源软件不一致
     return type;
 }
 
@@ -1277,7 +1280,8 @@ bool TraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64
     std::string sql = "SELECT timestamp - ?, args"
                       " FROM " + counterTable +
                       " WHERE pid = ? AND name = ?"
-                      " AND timestamp >= ? AND timestamp <= ?";
+                      " AND timestamp >= ? AND timestamp <= ?"
+                      " ORDER BY timestamp ASC";
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
