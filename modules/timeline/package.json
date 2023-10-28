@@ -56,7 +56,7 @@
     "lint": "eslint src",
     "dt": "set BROWSER=none&&set REACT_APP_TEST=1&&react-scripts start",
     "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\Timeline\\ /E /I /Y",
-    "publishLinux": "cp -rf ./build ../../framework/plugins/Timeline"
+    "publishLinux": "cp -rf ./build/* ../../framework/plugins/Timeline"
   },
   "eslintConfig": {
     "extends": [

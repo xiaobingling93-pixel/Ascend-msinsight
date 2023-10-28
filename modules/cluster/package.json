@@ -56,7 +56,7 @@
     "lint": "eslint src --fix",
     "dt": "set BROWSER=none&&set REACT_APP_TEST=1&&react-scripts start",
     "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\Cluster\\ /E /I /Y",
-    "publishLinux": "cp -rf ./build ../../framework/plugins/Cluster"
+    "publishLinux": "cp -rf ./build/* ../../framework/plugins/Cluster"
   },
   "eslintConfig": {
     "extends": [

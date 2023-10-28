@@ -56,7 +56,7 @@
     "lint": "eslint src --fix",
     "dt": "set BROWSER=none&&set REACT_APP_TEST=1&&react-scripts start",
     "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\Memory\\ /E /I /Y",
-    "publishLinux": "cp -rf ./build ../../framework/plugins/Memory"
+    "publishLinux": "cp -rf ./build/* ../../framework/plugins/Memory"
   },
   "eslintConfig": {
     "extends": [
