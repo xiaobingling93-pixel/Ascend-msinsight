@@ -31,6 +31,12 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+const forbidDefaultEvent = (e: MouseEvent): void => {
+    e.preventDefault();
+};
+window.addEventListener('drop', forbidDefaultEvent);
+window.addEventListener('dragover', forbidDefaultEvent);
+
 const ImgWithFallback = ({
     className = '',
 }): JSX.Element => {
