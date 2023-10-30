@@ -290,7 +290,6 @@ export const CounterUnit = unit<CounterMetaData>({
             });
             return {
                 palette,
-                valueRange: [ 0, 100 ],
             };
         },
         renderTooltip: (data, metadata) => {
