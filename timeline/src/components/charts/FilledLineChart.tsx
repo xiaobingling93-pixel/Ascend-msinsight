@@ -49,7 +49,7 @@ const drawArea = (context: CanvasRenderingContext2D, datas: number[][], minHeigh
         context.beginPath();
         context.moveTo(x[0], y0);
         for (let j = 0; j < datas.length; j++) {
-            const y = yScale(datas[j].slice(i, datas[0].length).reduce((prev, cur) => prev + cur, 0) + datas[0].length - i);
+            const y = yScale(datas[j].slice(i, datas[0].length).reduce((prev, cur) => prev + cur, 0)) - (datas[0].length - i);
             context.lineTo(x[j], y);
             context.lineTo(x[j + 1], y);
         }
