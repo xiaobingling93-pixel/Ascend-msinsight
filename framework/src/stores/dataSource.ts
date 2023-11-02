@@ -91,6 +91,10 @@ export const useDataSources = defineStore('dataSources', () => {
         if (!dataSource) {
             return;
         }
+        if (dataSource.dataPath.length === 1) {
+            remove(parentIndex);
+            return;
+        }
         const singleDataPath = dataSource.dataPath[index];
         connector.send({
             event: 'remote/removeSingle',
