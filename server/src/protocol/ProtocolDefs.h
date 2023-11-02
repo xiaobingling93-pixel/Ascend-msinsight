@@ -53,6 +53,9 @@ const std::string REQ_RES_UNIT_CHART = "unit/chart";
 const std::string REQ_RES_SEARCH_COUNT = "search/count";
 const std::string REQ_RES_SEARCH_SLICE = "search/slice";
 const std::string REQ_RES_REMOTE_DELETE = "remote/delete";
+const std::string REQ_RES_FLOW_CATEGORY_LIST = "flow/categoryList";
+const std::string REQ_RES_FLOW_CATEGORY_EVENTS = "flow/categoryEvents";
+const std::string REQ_RES_UNIT_COUNTER = "unit/counter";
 
 // communication
 const std::string REQ_RES_COMMUNICATION_OPERATOR_DETAILS = "communication/operatorDetails";
