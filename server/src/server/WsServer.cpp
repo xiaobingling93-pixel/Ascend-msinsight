@@ -54,14 +54,14 @@ void WsServer::StartListen()
 
 uWS::App::WebSocketBehavior<WsUserData> WsServer::CreateWsBehavior()
 {
-    const int MAX_PAY_LOAD_SIZE = 16 * 1024 * 1024;
-    const int IDLE_TIMEOUT = 16;
-    const int MAX_BACK_PRESSURE_SIZE = 1 * 1024 * 1024;
+    const int maxPayLoadSize = 16 * 1024 * 1024;
+    const int idleTimeout = 16;
+    const int maxBackPressureSize = 1 * 1024 * 1024;
     uWS::App::WebSocketBehavior<WsUserData> wsBehavior = {
         .compression = uWS::SHARED_COMPRESSOR,
-        .maxPayloadLength = MAX_PAY_LOAD_SIZE,
-        .idleTimeout = IDLE_TIMEOUT,
-        .maxBackpressure = MAX_BACK_PRESSURE_SIZE,
+        .maxPayloadLength = maxPayLoadSize,
+        .idleTimeout = idleTimeout,
+        .maxBackpressure = maxBackPressureSize,
         .closeOnBackpressureLimit = false,
         .resetIdleTimeoutOnSend = false,
         .sendPingsAutomatically = true,

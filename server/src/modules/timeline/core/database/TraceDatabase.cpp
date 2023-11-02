@@ -807,8 +807,7 @@ bool TraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &reques
                                       uint64_t minTimestamp, int64_t trackId)
 {
     std::string sql = "SELECT id, timestamp, duration, name, depth, track_id, cat, args"
-                      " FROM " + sliceTable +
-                      " WHERE depth = ? AND track_id = ? AND timestamp = ?";
+                      " FROM " + sliceTable + " WHERE depth = ? AND track_id = ? AND timestamp = ?";
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
