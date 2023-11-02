@@ -3,10 +3,12 @@ import { isEmpty } from 'lodash';
 import styled from '@emotion/styled';
 import React from 'react';
 import { action, runInAction } from 'mobx';
-import { AscendMultiSliceList, ThreadMetaData } from '../../entity/data';
+import { AscendMultiSliceList, ThreadMetaData, ThreadTrace } from '../../entity/data';
 import { Session } from '../../entity/session';
 import { getSliceTimeDisplay } from './AscendUnit';
 import { getTimestamp } from '../../utils/humanReadable';
+import { colorPalette } from './utils';
+import { hashToNumber } from '../../utils/colorUtils';
 
 export const slicesListDetail = detail({
     name: 'Slices List',
@@ -52,11 +54,26 @@ export const slicesListDetail = detail({
             totalOccurrences += element.occurrences ?? 0;
         });
 
-        console.log(totalWallDuration / totalOccurrences);
-
         res.push({ title: 'Totals', wallDuration: totalWallDuration, selfTime: totalSelfTime, avgWallDuration: totalWallDuration / totalOccurrences, occurrences: totalOccurrences });
 
         return res;
+    },
+    mouseEnterCallback: ({ session, row }) => {
+        const selectedRangeData = session.selectedRangeData;
+        const name = row.title;
+        const hoveredData = selectedRangeData?.find((item) => item.name === name);
+        runInAction(() => {
+            session.sharedState.threadTrace = hoveredData;
+        });
+    },
+    mouseLeaveCallback: ({ session, row }) => {
+        const name = row.title;
+        const hoveredData = session.sharedState.threadTrace as ThreadTrace | undefined;
+        if (hoveredData && hoveredData.name === name) {
+            runInAction(() => {
+                session.sharedState.threadTrace = undefined;
+            });
+        }
     },
 }) as DetailDescriptor<unknown>;
 
@@ -67,12 +84,24 @@ const Link = styled.span`
     border-bottom: 2px solid rgb(140, 140, 140);
 `;
 
-export const generateFlowParam = function(metadata: ThreadMetaData, startTime: number): { rankId: string; tid: number; pid: string; startTime: number } {
+export const generateFlowParam = function(metadata: ThreadMetaData, startTime: number, pid?: string, tid?: number): { rankId: string; tid: number; pid: string; startTime: number } {
     return {
         rankId: metadata.cardId ?? '',
-        tid: metadata.threadId,
-        pid: metadata.processId ?? '',
+        tid: tid ?? metadata.threadId,
+        pid: pid ?? (metadata.processId ?? ''),
         startTime,
+    };
+};
+
+const generateFlowData = function (data: any): any {
+    return {
+        startTime: data.timestamp,
+        duration: data.duration,
+        name: data.name,
+        type: data.name,
+        color: colorPalette[hashToNumber(data.name, colorPalette.length)],
+        depth: data.depth,
+        threadId: data.tid,
     };
 };
 
@@ -88,36 +117,26 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
                         [ 'Title', (data: any) => data.title ],
                         [ 'Category', (data: any) => data.cat ],
                         [ 'from', (data: any, session, metadata) => <Link onClick={action(() => {
+                            session.selectedData= generateFlowData(data.from);
                             session.linkDetail = generateLinkDetail('Outgoing flow');
-                            session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data.from.timestamp);
-                        })}>{`Slice at ${getTimestamp(data.to.timestamp ?? 0, { precision: 'ns' })}`}</Link> ],
+                            session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data.from.timestamp, data.from.pid, data.from.tid);
+                        })}>{`Slice at ${getTimestamp(data.from.timestamp ?? 0, { precision: 'ns' })}`}</Link> ],
                         [ 'to', (data: any, session, metadata) => <Link onClick={action(() => {
+                            session.selectedData= generateFlowData(data.to);
                             session.linkDetail = generateLinkDetail('Incoming flow');
-                            session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data.to.timestamp);
+                            session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data.to.timestamp, data.to.pid, data.to.tid);
                         })}>{`Slice at ${getTimestamp(data.to.timestamp ?? 0, { precision: 'ns' })}`}</Link> ],
                     ],
                     fetchData: async (session: Session, metadata) => {
+                        const startTime = session.selectedData?.startTime;
                         const flowId = session.linkFlow?.flowId as string;
+                        const type = session.linkFlow?.type as string;
                         const rankId = (metadata as Record<string, unknown>)?.cardId;
-                        const raw = await window.request(metadata.dataSource, { command: 'unit/flow', params: { flowId, rankId } } ) as any;
-                        const from = raw.from;
-                        const to = raw.to;
-                        session.linkData = {
-                            sources: [{
-                                data: { ...from, startTime: from.timestamp, duration: from?.duration ?? 0 },
-                                matcher: (unit) => {
-                                    const typedMetadata = unit?.metadata as any;
-                                    return typedMetadata?.processId === from.pid && typedMetadata?.threadId === from.tid;
-                                },
-                            }],
-                            target: {
-                                data: { ...to, startTime: to.timestamp, duration: to?.duration ?? 0 },
-                                matcher: (unit) => {
-                                    const typedMetadata = unit?.metadata as any;
-                                    return typedMetadata?.processId === to.pid && typedMetadata?.threadId === to.tid;
-                                },
-                            },
-                        };
+                        const raw = await window.request(metadata.dataSource, { command: 'unit/flow', params: { flowId, type, startTime, rankId } } ) as any;
+                        const linkLine = { [raw.cat]: [{ category: raw.cat, ...raw }]  }
+                        runInAction(() => {
+                            session.linkLines = linkLine;
+                        });
                         return raw;
                     },
                 });

@@ -4,7 +4,9 @@ import * as d3 from 'd3';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { ChartProps, Scale, StackStatusData, TextConfig } from '../../entity/chart';
+import { ChartProps, Scale, StackStatusData, TextConfig, ChartReaction } from '../../entity/chart';
+import { UnitHeight } from '../../entity/insight';
+import { Session } from '../../entity/session';
 import { Canvas, CanvasContainer, drawMultiBgRoundedRect, drawRoundedRect, zipStatusData } from './common';
 import { useBatchedRender, useClick, useData, useHoverPos, useRangeAndDomain } from './hooks';
 import { TooltipComponent, TooltipProps } from './TooltipComp';
@@ -137,6 +139,43 @@ const findDataByXY = (mousePos: {x: number; y: number} | undefined, datas: Stack
     return undefined;
 };
 
+const findDataByXXRange = ([ downX, upX ]: number[], datas: StackStatusData[][],
+    rangeAndDomain: Array<[number, number]>): StackStatusData[] | undefined => {
+    if (downX === undefined || upX === undefined || datas.length === 0 || rangeAndDomain.length === 0) {
+        return undefined;
+    }
+    const sX = Math.min(downX, upX);
+    const eX = Math.max(downX, upX);
+    const mouseSTime = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false)(sX);
+    const mouseETime = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false)(eX);
+
+    const result = [] as StackStatusData[];
+    datas.forEach((data) => {
+        data.forEach((elem) => {
+            if (elem.startTime < mouseETime && elem.startTime + elem.duration > mouseSTime) {
+                result.push(elem);
+            }
+        });
+    });
+    return result.length > 0 ? result : undefined;
+};
+
+const mouseUpFunc = (e: MouseEvent, datasState: StackStatusData[][], rangeAndDomain: Array<[number, number]>, rowHeight: UnitHeight, session: Session, metadata: unknown, onClick: ChartReaction<'stackStatus'> | undefined): void => {
+    const clickedData = findDataByXY({ x: e.offsetX, y: e.offsetY }, datasState, rangeAndDomain, rowHeight, session.endTimeAll ?? 0);
+    runInAction(() => {
+        session.selectedData = clickedData;
+        onClick?.(clickedData, session, metadata);
+        session.selectedRangeData = undefined;
+    });
+};
+
+const mouseMoveUpFunc = ([ downX, upX ]: number[], datasState: StackStatusData[][], rangeAndDomain: Array<[number, number]>, session: Session): void => {
+    const selectedRangeData = findDataByXXRange([ downX, upX ], datasState, rangeAndDomain);
+    runInAction(() => {
+        session.selectedRangeData = selectedRangeData;
+    });
+};
+
 export const StackStatusChart = observer(({ session, unit, margin, mapFunc, metadata, renderTooltip, height, onHover, onClick, decorator, rowHeight, width, textConfig, isNeedClamp }: StackStatusChartProps) => {
     const theme = useTheme();
     const canvasContainer = useRef<HTMLDivElement>(null);
@@ -146,15 +185,10 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
         data.map(row => zipStatusData(row, width, start, end)));
     const rangeAndDomain = useRangeAndDomain(session, width, margin); const mousePos = useHoverPos(canvasContainer);
     const hoveredData = useMemo(() => findDataByXY(mousePos, datasState, rangeAndDomain, rowHeight, session.endTimeAll ?? 0), [ mousePos, datasState, rangeAndDomain ]);
-    const handleMouseUp = (e: MouseEvent): void => {
-        const clickedData = findDataByXY({ x: e.offsetX, y: e.offsetY }, datasState, rangeAndDomain, rowHeight, session.endTimeAll ?? 0);
-        runInAction(() => {
-            session.selectedData = clickedData;
-            onClick?.(clickedData, session, metadata);
-        });
-    };
+    const handleMouseUp = (e: MouseEvent): void => { mouseUpFunc(e, datasState, rangeAndDomain, rowHeight, session, metadata, onClick); };
+    const handleMouseMoveUp = ([ downX, upX ]: number[]): void => { mouseMoveUpFunc([ downX, upX ], datasState, rangeAndDomain, session); };
     useEffect(() => onHover?.(hoveredData, session, metadata), [ hoveredData, metadata ]);
-    useClick(canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp);
+    useClick(canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp, handleMouseMoveUp);
     const yScale = (depth: number): number => depth * rowHeight;
     useBatchedRender(() => {
         if (canvasContainer.current === null || canvas.current === null || datasState.length === 0 || rangeAndDomain.length === 0 ||

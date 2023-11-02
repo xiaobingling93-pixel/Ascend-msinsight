@@ -67,7 +67,8 @@
     "5009": "Fetch session datasource failed.",
     "5010": "Failed to open insight data file. Unsupported file version.",
     "5011": "Insufficient storage space. Make sure the available space is 1 GB or larger.",
-    "5012": "This recording session has lasted more than 5 minutes. To avoid possible parsing errors, stop the session and start a new one."
+    "5012": "This recording session has lasted more than 5 minutes. To avoid possible parsing errors, stop the session and start a new one.",
+    "SearchEmpty": "The search result is empty."
   },
   "deviceAndProcess": {
     "SelectDevice": "Select device",
@@ -96,7 +97,10 @@
     "abilityEvent": "Ability Event",
     "reset": "Reset",
     "clean": "Clean",
-    "filter": "Filter"
+    "filter": "Filter",
+    "search": "Search",
+    "del": "Timeline Zoom Out",
+    "add": "Timeline Zoom In"
   },
   "snapshot": {
     "Tooltip": "User object reachable from window"

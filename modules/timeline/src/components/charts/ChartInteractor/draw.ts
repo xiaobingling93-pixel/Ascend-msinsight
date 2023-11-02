@@ -7,8 +7,12 @@ import { InteractorMouseState } from './ChartInteractor';
 import { THUMB_WIDTH_PX } from '../../base';
 import { getTextParser } from '../TimelineAxis';
 import { Scale } from '../../../entity/chart';
-import { calculateClipTopAndPinedHeight, getHeight, UNDRAW_HEIGHT } from './locateUtils';
 import { TIME_LINE_AXIS_HEIGHT_PX } from '../../ChartContainer/ChartContainer';
+import { DataBlock, FlowEvent } from '../../FilterLinkLine';
+import { hashToNumber } from '../../../utils/colorUtils';
+import { InsightUnit, UnitHeight } from '../../../entity/insight';
+import { ThreadMetaData } from '../../../entity/data';
+import { colorPalette } from '../../../insight/units/utils';
 
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
@@ -160,17 +164,33 @@ export const drawTimeDiffText = (ctx: CanvasRenderingContext2D, timeString: stri
     }
 };
 
-export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height: number,
-    xReverseScale: (ts: number) => number, xScale: (posX: number) => number,
-    interactorMouseState: InteractorMouseState, selectedRange: undefined | [number, number], isNsMode: boolean,
-    session: Session, customRenderers: CustomCrossRenderer[], theme: Theme): void => {
-    if (ctx === null) { return; }
-    // clear all
-    ctx.clearRect(0, 0, width, height);
+const drawSelectedRange = (ctx: CanvasRenderingContext2D | null, selectedRange: Session['selectedRange'], xScale: (posX: number) => number): void => {
+    if (ctx !== null && selectedRange !== undefined) {
+        ctx.beginPath();
+        ctx.moveTo(xScale(selectedRange[0]), 0);
+        ctx.setLineDash([ 4, 2 ]);
+        ctx.strokeStyle = '#5291FF';
+        ctx.lineTo(xScale(selectedRange[0]), 9999);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.beginPath();
+        ctx.moveTo(xScale(selectedRange[1]), 0);
+        ctx.setLineDash([ 4, 2 ]);
+        ctx.strokeStyle = '#5291FF';
+        ctx.lineTo(xScale(selectedRange[1]), 9999);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+};
+
+const drawMaskRange = ({
+    ctx, width, height, xReverseScale, xScale, interactorMouseState: {
+        clickPos: { current: clickPos },
+        lastPos: { current: mousePosNow },
+    }, selectedRange, isNsMode, session, theme,
+}: DrawArgs & { ctx: CanvasRenderingContext2D }): void => {
     let maskRange;
-    const clickPos = interactorMouseState.clickPos.current;
-    const mousePosNow = interactorMouseState.lastPos.current;
-    // draw mask
     if (clickPos !== undefined && mousePosNow !== undefined) {
         // 1st priority
         // is brushing
@@ -196,6 +216,33 @@ export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height
         }
         drawTimeDiff(ctx, maskRange, xScale, isNsMode, theme, selectedRange);
     }
+};
+
+export interface DrawArgs {
+    ctx: CanvasRenderingContext2D | null;
+    width: number;
+    height: number;
+    xReverseScale: (ts: number) => number;
+    xScale: (posX: number) => number;
+    interactorMouseState: InteractorMouseState;
+    selectedRange: undefined | [number, number];
+    isNsMode: boolean;
+    session: Session;
+    theme: Theme;
+}
+export const drawOnMove = ({
+    ctx, width, height, xReverseScale, xScale, interactorMouseState, selectedRange, isNsMode, session, theme,
+}: DrawArgs): void => {
+    if (ctx === null) { return; }
+    // clear all
+    ctx.clearRect(0, 0, width, height);
+    // draw mask
+
+    drawMaskRange({ ctx, width, height, xReverseScale, xScale, interactorMouseState, selectedRange, isNsMode, session, theme });
+
+    // should filter on data type
+    drawSelectedRange(ctx, selectedRange, xReverseScale);
+    const { clickPos: { current: clickPos }, lastPos: { current: mousePosNow } } = interactorMouseState;
     // draw hoverline and timeaxis highlight
     if (clickPos !== undefined) {
         ctx.strokeStyle = '#3778ED';
@@ -216,55 +263,85 @@ export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height
         // timeRect & text
         drawHoverTimeRect(ctx, width, mousePosNow, xScale, session);
     }
-
-    if (session.linkData !== undefined) {
-        drawLinkLine(ctx, session, xReverseScale, theme);
-    }
-    customRenderers.forEach(it => it(ctx, session, xReverseScale, theme));
 };
 
-export const drawLinkLine = (ctx: CanvasRenderingContext2D | null, session: Session, xScale: Scale, theme: Theme): void => {
-    const linkedData = session?.linkData;
-    if (ctx === null || linkedData === undefined) {
-        return;
+const heightMap = new Map();
+const updateUnitHeight = (session: Session): void => {
+    const height = session.pinnedUnits.reduce((prevHeight, unit) => prevHeight + unit.height() + 1, 0);
+
+    const computeUnitHeight = (units: InsightUnit[], height: number): number => {
+        for (const unit of units) {
+            const metadata = unit.metadata as ThreadMetaData;
+            if (metadata.threadId !== undefined && metadata.processId !== undefined) {
+                heightMap.set(`${metadata.processId}-${metadata.threadId}`, height);
+            }
+            height += unit.height() + 1;
+            if (unit.children && unit.isExpanded) {
+                height = computeUnitHeight(unit.children, height);
+            }
+        }
+        return height;
+    };
+    computeUnitHeight(session.units, height);
+};
+export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height: number,
+    xReverseScale: (ts: number) => number, xScale: (posX: number) => number,
+    interactorMouseState: InteractorMouseState, selectedRange: undefined | [number, number], isNsMode: boolean,
+    session: Session, customRenderers: CustomCrossRenderer[], theme: Theme): void => {
+    if (ctx === null) { return; }
+    // clear all
+    ctx.clearRect(0, 0, width, height);
+
+    drawMaskRange({ ctx, width, height, interactorMouseState, xReverseScale, xScale, selectedRange, session, isNsMode, theme });
+
+    // should filter on data type
+    drawSelectedRange(ctx, selectedRange, xReverseScale);
+
+    heightMap.clear();
+    updateUnitHeight(session);
+    const pinnedAreaHeight = session.pinnedUnits.reduce((prev, unit) => prev + unit.height() + 1, 0);
+    Object.values(session.linkLines)
+        .forEach(datas => {
+            datas?.forEach((data) => {
+                drawLinkLine(ctx, session, data as unknown as FlowEvent, xReverseScale, theme, pinnedAreaHeight);
+            });
+        });
+};
+
+const UNDRAW_HEIGHT = 45;
+const getHeight = (session: Session, data: DataBlock): number | undefined => {
+    let height;
+    const unitHeight = heightMap.get(`${data.pid}-${data.tid}`);
+    if (unitHeight !== undefined) {
+        height = UNDRAW_HEIGHT + unitHeight - session.scrollTop + (data.depth + 0.5) * UnitHeight.STANDARD;
     }
+    return height;
+};
 
-    const target = linkedData.target;
-    const targetX = xScale(target.data.startTime);
-    const targetY = getHeight(session, target.matcher, target.data);
-    const sourceDataPos: Array<[x: number, y: number]> = [];
-    const offset = 40;
-    const [ clipTop, pinnedHeight ] = calculateClipTopAndPinedHeight(session.pinnedUnits, target, linkedData.sources);
-
+const drawLinkLine = (ctx: CanvasRenderingContext2D, session: Session, data: FlowEvent, xScale: Scale, theme: Theme, pinnedAreaHeight: number): void => {
+    const { from, to } = data;
+    const targetX = xScale(to.timestamp);
+    const targetY = getHeight(session, to);
     ctx.save();
     ctx.beginPath();
+    const clipTop = pinnedAreaHeight + UNDRAW_HEIGHT;
     ctx.rect(-1, clipTop, ctx.canvas.width + 1, ctx.canvas.height + 1);
     ctx.clip();
-    linkedData.sources.forEach((source) => {
-        const sourceX = xScale(source.data.startTime + source.data.duration);
-        const sourceY = getHeight(session, source.matcher, source);
-        if ((sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT) || (targetY === 0 || sourceY === 0)) {
-            return;
-        }
+    const sourceX = xScale(from.timestamp);
+    const sourceY = getHeight(session, from);
+    if ((sourceY === undefined || targetY === undefined) || (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT)) { return; }
+    const targetPos: Array<[x: number, y: number]> = [[ targetX, targetY ]];
+    ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(data.category, colorPalette.length)]];
 
-        if (
-            sourceY < UNDRAW_HEIGHT + pinnedHeight &&
-            targetY < UNDRAW_HEIGHT + pinnedHeight
-        ) {
-            ctx.strokeStyle = theme.frameRelativeLineColor;
-        } else {
-            ctx.strokeStyle = theme.selectedChartColor;
-        }
+    const offset = 40;
+    ctx.beginPath();
+    ctx.moveTo(sourceX, sourceY);
+    ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
+    ctx.stroke();
 
-        ctx.beginPath();
-        sourceDataPos.push([ sourceX, sourceY ]);
-        ctx.moveTo(sourceX, sourceY);
-        ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
-        ctx.stroke();
-    });
     if (targetY >= UNDRAW_HEIGHT) {
-        const len = sourceDataPos.length;
-        let [ fromX, fromY ] = sourceDataPos.reduce(([ prevX, prevY ], [ x, y ]) => [ prevX + x + offset, prevY + y ], [ 0, 0 ]);
+        const len = targetPos.length;
+        let [ fromX, fromY ] = targetPos.reduce(([ prevX, prevY ], [ x, y ]) => [ prevX + x + offset, prevY + y ], [ 0, 0 ]);
         fromX = fromX / len; fromY = fromY / len;
         drawArrow(ctx, { toX: targetX, toY: targetY, fromX: targetX - offset, fromY: targetY + (fromY - targetY) * Math.sqrt(Math.abs(fromY - targetY)) / (Math.abs(fromX - targetX) + Math.abs(fromY - targetY)), length: 10, angle: 30, color: theme.selectedChartColor });
     }

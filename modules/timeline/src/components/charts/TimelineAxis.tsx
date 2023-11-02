@@ -4,6 +4,7 @@ import { throttle } from 'lodash';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
+import { useRenderManager } from '../../context/context';
 import { SizePx } from '../../entity/chart';
 import { Session } from '../../entity/session';
 import { TimeUnit } from '../../utils/adaptTimeForLength';
@@ -344,8 +345,9 @@ const TimelineAxis = observer(({ session, margin, timelineHeight }: TimelineAxis
             });
         }
     }, 50);
+    const renderManager = useRenderManager();
     React.useEffect(() => {
-        draw();
+        renderManager.addTask(draw);
     }, [ width, domainStart, domainEnd, theme, session ]);
     return <CanvasContainer ref={ref} className={TIME_LINE_AXIS_CLASSNAME}>
         <canvas

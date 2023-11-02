@@ -672,6 +672,15 @@ export type InsightMetaData <T extends keyof MetaData> = {
     dataSource: DataSource;
 };
 
+export type CounterMetaData = {
+    cardId: string;
+    processId: string;
+    processName?: string;
+    threadName: string;
+    dataType: string[];
+    dataSource: DataSource;
+};
+
 export type ThreadMetaData = {
     cardId?: string;
     processId?: string;
@@ -705,10 +714,23 @@ export type ThreadTrace = {
     threadId: number;
 };
 
+export type CounterData = {
+    timestamp: number;
+    value: any;
+};
+
 export type ThreadTraceRequest = {
     cardId: string;
     processId: string;
     threadId: number;
+    startTime: number;
+    endTime: number;
+};
+
+export type CounterRequest = {
+    rankId: string;
+    pid: string;
+    threadName: number;
     startTime: number;
     endTime: number;
 };

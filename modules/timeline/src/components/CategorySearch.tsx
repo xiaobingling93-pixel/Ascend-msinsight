@@ -1,6 +1,6 @@
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Pagination, Tooltip } from 'antd';
+import { Pagination, Tooltip, message } from 'antd';
 import { PaginationProps } from 'antd/lib/pagination';
 import { observer } from 'mobx-react';
 import React, { ChangeEvent, useEffect, useState } from 'react';
@@ -134,29 +134,53 @@ const calculateDomainRange = (session: Session, startTime: number, duration: num
     return [ rangeStart, rangeEnd ];
 };
 
+const ImgWithFallback = ({ className = '' }): JSX.Element => {
+    const theme = useTheme();
+    const PictureContainer = styled.picture`
+        display: block;
+        width: 25px;
+    `;
+    return (
+        <PictureContainer>
+            <div className={className} style={{
+                borderColor: theme.buttonColor.enableClickColor,
+                borderTopColor: 'transparent',
+            }}></div>
+        </PictureContainer>
+    );
+};
+
 const CategorySearchContent = (session: Session): JSX.Element => {
+    const [ messageApi, contextHolder ] = message.useMessage();
     const theme = useTheme();
     const [ paginationData, updatePaginationData ] = useState({ current: 0, total: 0 });
     const [ searchIconVisible, setSearchIconVisible ] = useState(true);
     const [ searchContent, setSearchContent ] = useState('');
+    const [ searchingStatus, setSearchingStatus ] = useState(false);
 
     useEffect(() => {
         setSearchIconVisible(true);
         setSearchContent('');
         updatePaginationData({ current: 0, total: 0 });
     }, [session]);
-    const onPageChange = (current: number, pageSize: number): void => {
+    const onPageChange = async (current: number, pageSize: number): Promise<void> => {
         updatePaginationData(prevState => ({ current, total: prevState.total }));
-        jumpSlice(session, searchContent, current);
+        await jumpSlice(session, searchContent, current);
     };
     const onInputPressEnter = async (): Promise<void> => {
         if (searchContent === '') {
             return;
         }
+        setSearchingStatus(true);
         const totalCnt = await queryDataCount(session, searchContent);
-        updatePaginationData({ current: 1, total: totalCnt });
-        onPageChange(1, totalCnt);
-        setSearchIconVisible(false);
+        if (totalCnt > 0) {
+            updatePaginationData({ current: 1, total: totalCnt });
+            await onPageChange(1, totalCnt);
+            setSearchIconVisible(false);
+        } else {
+            messageApi.warning(i18n.t('notify:SearchEmpty'));
+        }
+        setSearchingStatus(false);
     };
     const onInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
         const inputContent = e.target.value;
@@ -166,11 +190,14 @@ const CategorySearchContent = (session: Session): JSX.Element => {
 
     return (
         <CustomDiv theme={theme} onClick={(e) => { e.stopPropagation(); }}>
-            <StyledInput allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor}/> }}
+            { contextHolder}
+            <StyledInput allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor} /> }} disabled={searchingStatus}
                 minwidth={200} height={24} isshow={1} value={searchContent} onChange={onInputChange} onPressEnter={onInputPressEnter}></StyledInput>
-            <div className="searchResult">{ searchIconVisible
-                ? <CustomButton icon={SearchIcon} onClick={onInputPressEnter}></CustomButton>
-                : <StylePagination defaultCurrent={1} pageSize={1} { ...paginationData } onChange={onPageChange} simple/> }
+            <div className="searchResult">{searchingStatus
+                ? <ImgWithFallback className={'loading'} />
+                : searchIconVisible
+                    ? <CustomButton icon={SearchIcon} onClick={onInputPressEnter}></CustomButton>
+                    : <StylePagination defaultCurrent={1} pageSize={1} { ...paginationData } onChange={onPageChange} simple/> }
             </div>
         </CustomDiv>
     );

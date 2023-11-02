@@ -49,7 +49,7 @@ const drawArea = (context: CanvasRenderingContext2D, datas: number[][], minHeigh
         context.beginPath();
         context.moveTo(x[0], y0);
         for (let j = 0; j < datas.length; j++) {
-            const y = yScale(datas[j].slice(i, datas[0].length).reduce((prev, cur) => prev + cur, 0));
+            const y = yScale(datas[j].slice(i, datas[0].length).reduce((prev, cur) => prev + cur, 0)) - (datas[0].length - i);
             context.lineTo(x[j], y);
             context.lineTo(x[j + 1], y);
         }
@@ -70,7 +70,7 @@ const draw = (ctx: CanvasRenderingContext2D | null, datas: number[][], width: nu
     let minHeight = 0;
     let maxHeight = 0;
     [ minHeight, maxHeight ] = valueRange ?? findHeights(drawDatas);
-    maxHeight = maxHeight === 0 ? 1 : maxHeight * 1.3;
+    maxHeight = maxHeight === 0 ? 1 : maxHeight;
     const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(false);
     const yScale = d3.scaleLinear().range([ height, 0 ]).domain([ minHeight, maxHeight ]);
     if (auxiliaryValue !== undefined) { drawAuxiliaryLine(ctx, yScale, auxiliaryValue, width); }

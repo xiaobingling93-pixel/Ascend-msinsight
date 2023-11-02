@@ -79,6 +79,11 @@ type TabularClickCacallbackArgs<CommonState extends CommonStateProto, DataType> 
     unit?: InsightUnit;
 };
 
+type TabularEnterCacallbackArgs<DataType> = {
+    row: DataType;
+    session: Session;
+};
+
 type DetailDesc<DataType extends Record<string, unknown>, ExtraDataType extends Record<string, unknown>, MoreDataType extends Record<string, unknown>, MetaData, Field extends keyof DataType> = {
     childrenColumnName?: string;
     name?: string;
@@ -90,6 +95,8 @@ type DetailDesc<DataType extends Record<string, unknown>, ExtraDataType extends 
     more?: MoreDesc<DataType, Field>;
     clickCallback?: <CommonState extends CommonStateProto>(args: TabularClickCacallbackArgs<CommonState, DataType>) => void; // execute statement in onClick event
     doubleClickCallback?: <CommonState extends CommonStateProto>(args: TabularClickCacallbackArgs<CommonState, DataType>) => void;
+    mouseEnterCallback?: (args: TabularEnterCacallbackArgs<DataType>) => void;
+    mouseLeaveCallback?: (args: TabularEnterCacallbackArgs<DataType>) => void;
 } & TableDataAdapter<DataType>;
 
 type renderFieldsType<DataType> =
@@ -326,6 +333,11 @@ export const recursiveSpreadUnits = async (unit: InsightUnit, session: Session, 
 export type UnitMatcher = {
     target: (ele: InsightUnit) => boolean;
     onSuccess: (ele: InsightUnit) => void;
+};
+
+export type LinkLine = Array<Record<string, unknown>> | undefined;
+export type LinkLines = {
+    [x: string]: LinkLine;
 };
 
 /**

@@ -1,7 +1,14 @@
-import { InsightMetaData, MetaData, ProcessMetaData, ThreadTraceRequest, ThreadMetaData } from '../../entity/data';
+import {
+    InsightMetaData,
+    MetaData,
+    ProcessMetaData,
+    ThreadTraceRequest,
+    ThreadMetaData,
+    CounterRequest,
+} from '../../entity/data';
 import { ChartDesc, InsightUnit } from '../../entity/insight';
 import { ChartConfig } from '../../entity/chart';
-import { ProcessUnit, ThreadUnit } from './AscendUnit';
+import { CounterUnit, ProcessUnit, ThreadUnit } from './AscendUnit';
 
 const paramsTree = new Map();
 
@@ -69,6 +76,16 @@ function newLane (insightMetaData: InsightMetaData<any>, parentMetaData: any): I
             chart.height = Math.max(insightMetaData.metadata.maxDepth * (chart.config as ChartConfig<'stackStatus'>).rowHeight, chart.height);
             return threadUnit;
         }
+        case 'counter': {
+            const threadUnit = new CounterUnit({
+                cardId: paramsTree.get(paramsTree.get(insightMetaData.metadata)).cardId,
+                processId: (parentMetaData as ProcessMetaData).processId,
+                threadName: insightMetaData.metadata.threadName,
+                dataType: insightMetaData.metadata.dataType,
+                dataSource: paramsTree.get(insightMetaData.metadata).dataSource,
+            });
+            return threadUnit;
+        }
         default:
             return undefined;
     }
@@ -86,4 +103,9 @@ function checkMetaData<T extends keyof MetaData>(unitMetaData: any, paramMetaDat
 export function createStackStatusParam(method: string, params: Record<string, unknown>): string {
     const threadTracesParams = params as ThreadTraceRequest;
     return `cardId${threadTracesParams.cardId}&processId${threadTracesParams.processId}&threadId${threadTracesParams.threadId}`;
+}
+
+export function createCounterParam(method: string, params: Record<string, unknown>): string {
+    const threadTracesParams = params as CounterRequest;
+    return `cardId${threadTracesParams.rankId}&processId${threadTracesParams.pid}&threadId${threadTracesParams.threadName}`;
 }

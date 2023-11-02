@@ -12,7 +12,7 @@ import { getDuration } from '../utils/humanReadable';
 import { StyledTooltip } from './base/StyledTooltip';
 import i18n from 'i18next';
 
-const TEXT_WIDTH = 70;
+const TEXT_WIDTH = 50;
 const FONT_SIZE = 12;
 const Container = styled.div`
     display: flex;
@@ -26,6 +26,7 @@ const Container = styled.div`
 `;
 const Percentage = styled.span`
     margin: 0 .5em;
+    text-overflow: ellipsis;
     width: ${TEXT_WIDTH}px;
 `;
 
@@ -66,7 +67,9 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
                 }}
             />
         </StyledTooltip>
-        <Percentage>{zoom}</Percentage>
+        <StyledTooltip title={zoom}>
+            <Percentage>{zoom}</Percentage>
+        </StyledTooltip>
         <StyledTooltip title={i18n.t('tooltip:add')}>
             <Add
                 fill={isLowerBound ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}

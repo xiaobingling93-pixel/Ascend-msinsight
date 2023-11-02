@@ -1,17 +1,32 @@
-import { chart, on, LinkDataDesc, singleData, TriggerEvent, unit, UnitHeight, MetaData, InsightUnit } from '../../entity/insight';
+import {
+    chart,
+    InsightUnit,
+    LinkDataDesc,
+    MetaData,
+    on,
+    singleData,
+    TriggerEvent,
+    unit,
+    UnitHeight,
+} from '../../entity/insight';
 import { Session } from '../../entity/session';
 import { hashToNumber } from '../../utils/colorUtils';
 import {
-    CardMetaData, ProcessMetaData, ThreadMetaData, ThreadTrace, AscendSliceDetail,
+    AscendSliceDetail,
+    CardMetaData,
+    CounterMetaData,
+    ProcessMetaData,
+    ThreadMetaData,
+    ThreadTrace,
 } from '../../entity/data';
-import { createStackStatusParam } from './unitFunc';
+import { createCounterParam, createStackStatusParam } from './unitFunc';
 import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
 import { SimpleTabularDetail } from '../../components/details/SimpleDetail';
 import { DetailTabs, TabPanes } from '../../components/details/TabPanes';
 import { SelectSimpleTabularDetail } from '../../components/details/SelectSimpleDetail';
 import { renderRadiusBorder } from '../../components/details/utils';
 import { getTimestamp } from '../../utils/humanReadable';
-import { slicesListDetail, generateLinkDetail, generateFlowParam } from './details';
+import { generateFlowParam, generateLinkDetail, slicesListDetail } from './details';
 import { colorPalette } from './utils';
 import React from 'react';
 import { observer } from 'mobx-react-lite';
@@ -20,6 +35,7 @@ import { runInAction } from 'mobx';
 import { SelectedDataBase } from '../../components/details/base/SelectedData';
 import { offsetConfig } from './config/offsetConfig';
 import { isPinned } from '../../components/ChartContainer/unitPin';
+import type { Theme } from '@emotion/react';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -104,7 +120,7 @@ const commonBottomPanel = {
 
 export const ThreadUnit = unit<ThreadMetaData>({
     name: 'Thread',
-    pinType: 'move',
+    pinType: 'copied',
     renderInfo: (session: Session, thread: ThreadMetaData, thisUnit: InsightUnit) => {
         return isPinned(thisUnit) ? `${thread.cardId}_${thread.processName} (${thread.processId})_${thread.threadName}` : `${thread.threadName}`;
     },
@@ -208,7 +224,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
             return {
                 Detail: ({ session }) => <SelectedDataBottomPanel session={session} detail={singleSliceDetail}>{EmptyJSXElement}</SelectedDataBottomPanel>,
                 DetailTitle: 'Slice Detail',
-                // More: ({ session }) => <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
+                More: ({ session }) => <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
             };
         }
         return TabPanes({ tabs, commonBottomPanel });
@@ -218,7 +234,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
 export const ProcessUnit = unit<ProcessMetaData>({
     name: 'Process',
     tag: (_, metadata: { label?: string }) => `${metadata.label}`,
-    pinType: 'move',
+    pinType: 'copied',
     chart: chart({
         type: 'status',
         mapFunc: async (session: Session, metaData: unknown) => {
@@ -237,13 +253,64 @@ export const ProcessUnit = unit<ProcessMetaData>({
 export const CardUnit = unit<CardMetaData>({
     name: 'Card',
     configBar: offsetConfig,
-    pinType: 'move',
+    pinType: 'copied',
     renderInfo: (session: Session, metadata: { cardId: string }) => `${metadata.cardId}`,
     spreadUnits: on(
         'create',
         async (self): Promise<void> => {
         }),
 });
+
+export const CounterUnit = unit<CounterMetaData>({
+    name: 'Counter',
+    pinType: 'move',
+    renderInfo: (session: Session, metadata) => `${metadata.threadName}`,
+    chart: chart({
+        type: 'filledLine',
+        height: UnitHeight.SUPER_UPPER,
+        mapFunc: async (session: Session, metadata) => {
+            const countMetaData = metadata as CounterMetaData;
+            // 查询泳道chart参数加上时间偏移
+            const requestParam = {
+                rankId: countMetaData.cardId,
+                pid: countMetaData.processId,
+                threadName: countMetaData.threadName,
+                startTime: session.domainRange.domainStart,
+                endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd),
+                dataSource: countMetaData.dataSource,
+            };
+            const requestKey = createCounterParam('unit/counter', requestParam);
+            const request = await session.simpleCache.tryFetchFromCache('unit/counter', requestKey, requestParam, metadata);
+            return request?.data as number[][];
+        },
+        config: (session: Session, metadata) => {
+            const palette: Array<keyof Theme['colorPalette']> = [];
+            (metadata as CounterMetaData).dataType.forEach(item => {
+                palette.push(colorPalette[hashToNumber(item + (metadata as CounterMetaData).threadName, colorPalette.length)]);
+            });
+            return {
+                palette,
+            };
+        },
+        renderTooltip: (data, metadata) => {
+            const tooltipMap = new Map();
+            (metadata as CounterMetaData).dataType.forEach((item, index) => {
+                tooltipMap.set(item, `${data[index + 1]}`);
+            });
+            return tooltipMap;
+        },
+    }),
+});
+
+const getFlowName = (res: any): string | undefined => {
+    let flowName;
+    if (res.type === 's') {
+        flowName = 'Outgoing flow';
+    } else if (res.type === 'f') {
+        flowName = 'Incoming flow';
+    }
+    return flowName;
+};
 
 const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<Record<string, unknown>>, linkFlow: unknown, metadata: unknown): Array<[string, string | JSX.Element]> | undefined => {
     const [ renderFields, setRenderFields ] = React.useState<Array<[string, string | JSX.Element]>>();
@@ -273,7 +340,7 @@ const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<R
                             const isHiden = templateField[2];
                             isHiden(res) && state.push([ templateField[0], render(res, session, metadata) ]);
                         } else {
-                            state.push([ templateField[0], render(res, session, metadata) ]);
+                            state.push([ getFlowName(res) ?? templateField[0], render(res, session, metadata) ]);
                         }
                     });
                 } else {

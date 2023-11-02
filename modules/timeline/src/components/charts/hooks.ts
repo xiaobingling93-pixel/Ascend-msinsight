@@ -3,6 +3,7 @@ import { ChartData, ChartType, MapFunc } from '../../entity/chart';
 import { Session } from '../../entity/session';
 import { Logger } from '../../utils/Logger';
 import { runInAction } from 'mobx';
+import { useRenderManager } from '../../context/context';
 
 export type Pos = {
     x: number;
@@ -60,8 +61,9 @@ export const useRangeAndDomain = (session: Session, width: number, margin: numbe
  * @param deps the dependencies that triggers re-render
  */
 export const useBatchedRender = (renderer: () => void, deps: React.DependencyList): void => {
+    const renderManager = useRenderManager();
     useEffect(() => {
-        renderer();
+        renderManager.addTask(renderer);
     }, deps);
 };
 
@@ -94,7 +96,8 @@ export const useHoverPos = (ref: React.RefObject<HTMLElement>): Pos | undefined 
 };
 
 export const useClick = <T extends ChartType>(canvasContainer: RefObject<HTMLElement>, datasState: ChartData<T>,
-    rangeAndDomain: Array<[number, number]>, session: Session, metadata: unknown, handleMouseUp: (e: MouseEvent) => void): void => {
+    rangeAndDomain: Array<[number, number]>, session: Session, metadata: unknown, handleMouseUp: (e: MouseEvent) => void,
+    handleMouseMoveUp?: (xArr: number[]) => void): void => {
     useEffect(() => {
         if (canvasContainer.current === null) {
             return;
@@ -113,6 +116,9 @@ export const useClick = <T extends ChartType>(canvasContainer: RefObject<HTMLEle
                 runInAction(() => {
                     session.selectedData = undefined;
                 });
+                if (mouseMoved && mousedownX !== null) {
+                    handleMouseMoveUp?.([ mousedownX, e.offsetX ]);
+                }
                 return;
             }
             if (!mouseMoved) {
