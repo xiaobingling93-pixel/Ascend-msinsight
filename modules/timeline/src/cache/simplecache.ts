@@ -1,6 +1,5 @@
 import { ThreadTraceRequest, ThreadTrace, CounterData, CounterMetaData, CounterRequest } from '../entity/data';
 import { binarySearchFirstBig, binarySearchLastSmall } from './strategies/utils';
-import { store } from '../store';
 
 type Method = 'unit/threadTraces' | 'unit/counter'; // store methodKey
 type Handler = (params: Record<string, unknown>, metaData?: unknown) => Promise<ThreadTrace[][] | number[][]>;
@@ -66,6 +65,7 @@ async function requestThreadTraces(requestParam: Record<string, unknown>): Promi
 
 async function requestCounterData(requestParam: Record<string, unknown>, metadata: unknown): Promise<number[][]> {
     try {
+        const { store } = require('../store');
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
         const param: Record<string, unknown> = Object.assign({}, requestParam);
