@@ -67,12 +67,12 @@ void Database::CloseDb()
     path.clear();
 }
 
-bool Database::ExecSql(const std::string &sql, sqlite3_callback callback)
+bool Database::ExecSql(const std::string &sql)
 {
     if (!isOpen) {
         return false;
     }
-    int result = sqlite3_exec(db, sql.c_str(), callback, nullptr, nullptr);
+    int result = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, nullptr);
     if (result == SQLITE_OK) {
         return true;
     }
@@ -177,6 +177,23 @@ bool Database::DropAllTable()
         }
     }
     return ExecSql("VACUUM");
+}
+
+std::unique_ptr<SqlitePreparedStatement> Database::CreatPreparedStatement(const std::string &sql)
+{
+    if (!isOpen || sql.empty()) {
+        return nullptr;
+    }
+    auto stmt = std::make_unique<SqlitePreparedStatement>(db);
+    return stmt->Prepare(sql) ? std::move(stmt) : nullptr;
+}
+
+std::string Database::GetLastError()
+{
+    if (!isOpen) {
+        return "";
+    }
+    return sqlite3_errmsg(db);
 }
 } // end of namespace Module
 } // end of namespace Dic

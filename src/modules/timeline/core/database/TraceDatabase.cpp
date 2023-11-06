@@ -565,37 +565,35 @@ bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &re
                       " WHERE track_id = ? AND start_time >= ? AND start_time <= ?"
                       " GROUP BY depth, id"
                       " ORDER BY start_time;";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", GetLastError());
         return false;
     }
-    int index = bindStartIndex;
-    sqlite3_bind_int64(stmt, index++, minTimestamp);
-    sqlite3_bind_int64(stmt, index++, traceId);
-    sqlite3_bind_int64(stmt, index++, requestParams.startTime);
-    sqlite3_bind_int64(stmt, index++, requestParams.endTime);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, traceId, requestParams.startTime, requestParams.endTime);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryThreadTraces. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     std::vector<Protocol::RowThreadTrace> rowThreadTraceVec;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
+    while (resultSet->Next()) {
         int col = resultStartIndex;
         Protocol::RowThreadTrace rowThreadTrace {};
-        rowThreadTrace.id = sqlite3_column_int64(stmt, col++);
-        rowThreadTrace.start_time = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        rowThreadTrace.duration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        rowThreadTrace.name = sqlite3_column_string(stmt, col++);
-        rowThreadTrace.depth = sqlite3_column_int(stmt, col++);
-        rowThreadTrace.trace_id = sqlite3_column_int64(stmt, col++);
+        rowThreadTrace.id = resultSet->GetInt64("id");
+        rowThreadTrace.startTime = resultSet->GetUint64("start_time");
+        rowThreadTrace.duration = resultSet->GetUint64("duration");
+        rowThreadTrace.name = resultSet->GetString("name");
+        rowThreadTrace.depth = resultSet->GetInt32("depth");
+        rowThreadTrace.traceId = resultSet->GetInt64("track_id");
         rowThreadTraceVec.emplace_back(rowThreadTrace);
     }
-    sqlite3_finalize(stmt);
     std::map<int64_t, std::vector<Protocol::ThreadTraces>> threadTracesMap;
     for (auto &item : rowThreadTraceVec) {
         Protocol::ThreadTraces threadTraces {};
         threadTraces.name = item.name;
         threadTraces.duration = item.duration;
-        threadTraces.startTime = item.start_time;
-        threadTraces.endTime = item.start_time + item.duration;
+        threadTraces.startTime = item.startTime;
+        threadTraces.endTime = item.startTime + item.duration;
         threadTraces.depth = item.depth;
         threadTraces.threadId = requestParams.threadId;
         threadTracesMap[item.depth].emplace_back(threadTraces);

@@ -1,0 +1,107 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ */
+
+#ifndef PROFILER_SERVER_SQLITE_RESULT_SET_H
+#define PROFILER_SERVER_SQLITE_RESULT_SET_H
+
+#include <string>
+#include <unordered_map>
+#include "sqlite3.h"
+
+namespace Dic {
+namespace Module {
+class SqliteResultSet {
+public:
+    explicit SqliteResultSet(sqlite3_stmt *stmt);
+    ~SqliteResultSet() = default;
+    int GetErrorCode() const;
+    std::string GetErrorMessage() const;
+
+    /**
+     * 将光标移动到下一行，如果没有下一行，返回false，需要先调用next()，再读数据
+     * @return 下一行有数据，返回true，执行失败或到最后一行，返回false
+     */
+    inline bool Next()
+    {
+        lastErrorCode = sqlite3_step(stmt);
+        return lastErrorCode == SQLITE_ROW;
+    }
+
+    inline std::string GetString(int index)
+    {
+        const unsigned char *data = sqlite3_column_text(stmt, index);
+        if (data == nullptr) {
+            return "";
+        }
+        int len = sqlite3_column_bytes(stmt, index);
+        if (len <= 0) {
+            return "";
+        }
+        return std::string(reinterpret_cast<const char *>(data), len);
+    }
+
+    inline int32_t GetInt32(int index)
+    {
+        return sqlite3_column_int(stmt, index);
+    }
+
+    inline int64_t GetInt64(int index)
+    {
+        return sqlite3_column_int64(stmt, index);
+    }
+
+    inline uint32_t GetUint32(int index)
+    {
+        return sqlite3_column_int(stmt, index);
+    }
+
+    inline uint64_t GetUint64(int index)
+    {
+        return sqlite3_column_int64(stmt, index);
+    }
+
+    inline double GetDouble(int index)
+    {
+        return sqlite3_column_double(stmt, index);
+    }
+
+    inline std::string GetString(const std::string &columnName)
+    {
+        return GetString(columns.at(columnName));
+    }
+
+    inline int32_t GetInt32(const std::string &columnName)
+    {
+        return GetInt32(columns.at(columnName));
+    }
+
+    inline int64_t GetInt64(const std::string &columnName)
+    {
+        return GetInt64(columns.at(columnName));
+    }
+
+    inline uint32_t GetUint32(const std::string &columnName)
+    {
+        return GetUint32(columns.at(columnName));
+    }
+
+    inline uint64_t GetUint64(const std::string &columnName)
+    {
+        return GetUint64(columns.at(columnName));
+    }
+
+    inline double GetDouble(const std::string &columnName)
+    {
+        return GetDouble(columns.at(columnName));
+    }
+
+private:
+    sqlite3_stmt *stmt = nullptr;
+    std::unordered_map<std::string, int> columns;
+    int lastErrorCode = SQLITE_OK;
+};
+} // end of namespace Module
+} // end of namespace Dic
+
+#endif // PROFILER_SERVER_SQLITE_RESULT_SET_H
