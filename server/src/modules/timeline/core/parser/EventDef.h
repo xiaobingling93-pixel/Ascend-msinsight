@@ -51,6 +51,14 @@ struct Flow : public Event {
     std::string name;
     std::optional<std::string> cat;
 };
+
+struct Counter : public Event {
+    std::string name;
+    std::string pid;
+    double ts = 0;
+    std::optional<std::string> cat;
+    std::string args;
+};
 } // end of namespace Trace
 } // end of namespace Timeline
 } // end of namespace Module

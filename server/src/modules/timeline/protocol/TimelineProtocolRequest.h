@@ -75,8 +75,10 @@ struct UnitFlowNameRequest : public Request {
 };
 
 struct UnitFlowParams {
+    uint64_t startTime = 0;
     std::string flowId;
     std::string rankId;
+    std::string type; // s, f
 };
 
 struct UnitFlowRequest : public Request {
@@ -131,6 +133,39 @@ struct RemoteDeleteRequest : public Request {
     RemoteDeleteParams params;
 };
 
+struct FlowCategoryListParams {
+    std::string rankId;
+};
+
+struct FlowCategoryListRequest : public Request {
+    FlowCategoryListRequest() : Request(REQ_RES_FLOW_CATEGORY_LIST) {};
+    FlowCategoryListParams params;
+};
+
+struct FlowCategoryEventsParams {
+    std::string rankId;
+    std::string category;
+    uint64_t startTime = 0;
+    uint64_t endTime = 0;
+};
+
+struct FlowCategoryEventsRequest : public Request {
+    FlowCategoryEventsRequest() : Request(REQ_RES_FLOW_CATEGORY_EVENTS) {};
+    FlowCategoryEventsParams params;
+};
+
+struct UnitCounterParams {
+    std::string rankId;
+    std::string pid;
+    std::string threadName;
+    uint64_t startTime = 0;
+    uint64_t endTime = 0;
+};
+
+struct UnitCounterRequest : public Request {
+    UnitCounterRequest() : Request(REQ_RES_UNIT_COUNTER) {};
+    UnitCounterParams params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

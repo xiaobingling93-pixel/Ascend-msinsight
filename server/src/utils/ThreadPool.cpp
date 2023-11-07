@@ -22,7 +22,7 @@ void ThreadPool::ThreadFunc(ThreadPool &threadPool, int index)
             }
             hasTask = threadPool.taskQueue.Pop(func);
         }
-        ServerLog::Info("[Thread worker] worker ", index, " run task end. hasTask:", hasTask);
+        ServerLog::Info("[Thread worker] worker ", index, " run task. hasTask:", hasTask);
         if (hasTask) {
             threadPool.runningTasks++;
             func();

@@ -41,6 +41,7 @@ private:
     static std::unique_ptr<Event> ToSliceEvent(const json_t &json);
     static std::unique_ptr<Event> ToMetaDataEvent(const json_t &json);
     static std::unique_ptr<Event> ToFlowEvent(const json_t &json);
+    static std::unique_ptr<Event> ToCounterEvent(const json_t &json);
 };
 } // end of namespace Timeline
 } // end of namespace Module

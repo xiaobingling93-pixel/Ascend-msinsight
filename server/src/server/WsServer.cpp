@@ -126,7 +126,7 @@ void WsServer::OnOpenCb(WsChannel *ws)
 
 void WsServer::OnCloseCb(WsChannel *ws, int code, std::string_view message)
 {
-    ServerLog::Info("session close, channel = ", ws, ", code = " + std::to_string(code));
+    ServerLog::Info("session close, channel = ", ws, ", code = ", code, ", message = ", message);
     if (ws == nullptr) {
         return;
     }

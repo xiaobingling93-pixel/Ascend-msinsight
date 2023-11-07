@@ -6,6 +6,7 @@
 #ifndef DIC_TIMELINE_PROTOCOL_RESPONSE_H
 #define DIC_TIMELINE_PROTOCOL_RESPONSE_H
 
+#include <utility>
 #include <vector>
 #include "GlobalDefs.h"
 #include "ProtocolDefs.h"
@@ -85,12 +86,11 @@ struct UnitThreadDetailResponse : public Response {
 };
 
 struct FlowName {
-    int32_t depth = 0;
-    int32_t tid = 0;
-    uint64_t timestamp = 0;
+    FlowName(std::string name, std::string id, std::string type)
+        : title(std::move(name)), flowId(std::move(id)), type(std::move(type)) {};
     std::string title;
-    std::string pid;
     std::string flowId;
+    std::string type; // s, f
 };
 
 struct UnitFlowNameBody {
@@ -106,7 +106,9 @@ struct FlowLocation {
     int32_t tid = 0;
     int32_t depth = 0;
     uint64_t timestamp = 0;
+    uint64_t duration = 0; // slice duration
     std::string pid;
+    std::string name; // slice name
 };
 
 struct UnitFlowBody {
@@ -163,41 +165,6 @@ struct SimpleSlice {
     std::string name;
 };
 
-struct SliceDto {
-    uint64_t id = 0;
-    uint64_t timestamp = 0;
-    uint64_t duration = 0;
-    int32_t depth = 0;
-    int64_t track_id = 0;
-    std::string name;
-    std::string args;
-    std::string cat;
-};
-
-struct FlowDetailDto {
-    std::string name;
-    std::string cat;
-    std::string flowId;
-    std::string pid;
-    int32_t tid = 0;
-    int32_t depth = 0;
-    uint64_t timestamp = 0;
-    std::string type;
-};
-
-struct SimpleFlowDto {
-    std::string name;
-    std::string flowId;
-    std::string type;
-};
-
-struct SliceFlowDetail {
-    int32_t tid = 0;
-    int32_t depth = 0;
-    uint64_t timestamp = 0;
-    std::string pid;
-};
-
 struct SearchResult {
     std::string rankId;
     int count = 0;
@@ -237,6 +204,50 @@ struct RemoteDeleteResponse : public Response {
     RemoteDeleteBody body;
 };
 
+struct FlowCategoryListBody {
+    std::vector<std::string> category;
+};
+
+struct FlowCategoryListResponse : public Response {
+    FlowCategoryListResponse() : Response(REQ_RES_FLOW_CATEGORY_LIST) {}
+    FlowCategoryListBody body;
+};
+
+struct FlowEventLocation {
+    int32_t tid = 0;
+    int32_t depth = 0;
+    uint64_t timestamp = 0;
+    std::string pid;
+};
+
+struct FlowEvent {
+    std::string category;
+    FlowEventLocation from;
+    FlowEventLocation to;
+};
+
+struct FlowCategoryEventsBody {
+    std::vector<std::unique_ptr<FlowEvent>> flowDetailList;
+};
+
+struct FlowCategoryEventsResponse : public Response {
+    FlowCategoryEventsResponse() : Response(REQ_RES_FLOW_CATEGORY_EVENTS) {}
+    FlowCategoryEventsBody body;
+};
+
+struct UnitCounterData {
+    uint64_t timestamp = 0;
+    std::string valueJsonStr; // json string, need to convert to json object before send
+};
+
+struct UnitCounterBody {
+    std::vector<UnitCounterData> data;
+};
+
+struct UnitCounterResponse : public Response {
+    UnitCounterResponse() : Response(REQ_RES_UNIT_COUNTER) {}
+    UnitCounterBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

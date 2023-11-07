@@ -24,6 +24,9 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceRequest);
     jsonToReqFactory.emplace(REQ_RES_REMOTE_DELETE, ToRemoteDeleteRequest);
+    jsonToReqFactory.emplace(REQ_RES_FLOW_CATEGORY_LIST, ToFlowCategoryListRequest);
+    jsonToReqFactory.emplace(REQ_RES_FLOW_CATEGORY_EVENTS, ToFlowCategoryEventsRequest);
+    jsonToReqFactory.emplace(REQ_RES_UNIT_COUNTER, ToUnitCounterRequest);
 }
 
 void TimelineProtocol::RegisterResponseToJsonFuncs()
@@ -39,6 +42,9 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceResponseJson);
     resToJsonFactory.emplace(REQ_RES_REMOTE_DELETE, ToRemoteDeleteResponseJson);
+    resToJsonFactory.emplace(REQ_RES_FLOW_CATEGORY_LIST, ToFlowCategoryListResponse);
+    resToJsonFactory.emplace(REQ_RES_FLOW_CATEGORY_EVENTS, ToFlowCategoryEventsResponse);
+    resToJsonFactory.emplace(REQ_RES_UNIT_COUNTER, ToUnitCounterResponse);
 }
 
 void TimelineProtocol::RegisterEventToJsonFuncs()
@@ -134,6 +140,8 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitFlowRequest(const json_t &json,
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.flowId, json["params"], "flowId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
     return reqPtr;
 }
 
@@ -198,6 +206,45 @@ std::unique_ptr<Request> TimelineProtocol::ToRemoteDeleteRequest(const json_t &j
     return reqPtr;
 }
 
+std::unique_ptr<Request> TimelineProtocol::ToFlowCategoryListRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<FlowCategoryListRequest> reqPtr = std::make_unique<FlowCategoryListRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> TimelineProtocol::ToFlowCategoryEventsRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<FlowCategoryEventsRequest> reqPtr = std::make_unique<FlowCategoryEventsRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.category, json["params"], "category");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> TimelineProtocol::ToUnitCounterRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<UnitCounterRequest> reqPtr = std::make_unique<UnitCounterRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.threadName, json["params"], "threadName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    return reqPtr;
+}
 #pragma endregion
 
 #pragma region <<Response To Json>>
@@ -257,6 +304,20 @@ std::optional<json_t> TimelineProtocol::ToRemoteDeleteResponseJson(const Respons
     return ToResponseJson<RemoteDeleteResponse>(dynamic_cast<const RemoteDeleteResponse &>(response));
 }
 
+std::optional<json_t> TimelineProtocol::ToFlowCategoryListResponse(const Response &response)
+{
+    return ToResponseJson<FlowCategoryListResponse>(dynamic_cast<const FlowCategoryListResponse &>(response));
+}
+
+std::optional<json_t> TimelineProtocol::ToFlowCategoryEventsResponse(const Response &response)
+{
+    return ToResponseJson<FlowCategoryEventsResponse>(dynamic_cast<const FlowCategoryEventsResponse &>(response));
+}
+
+std::optional<json_t> TimelineProtocol::ToUnitCounterResponse(const Response &response)
+{
+    return ToResponseJson<UnitCounterResponse>(dynamic_cast<const UnitCounterResponse &>(response));
+}
 #pragma endregion
 
 #pragma region <<Event To Json>>

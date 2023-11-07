@@ -95,13 +95,22 @@ template <> std::optional<json_t> ToResponseJson<UnitFlowNameResponse>(const Uni
     for (const FlowName& flowName : response.body.flowDetail) {
         json_t flowJson = json_t::object();
         flowJson["title"] = flowName.title;
-        flowJson["tid"] = flowName.tid;
-        flowJson["pid"] = flowName.pid;
-        flowJson["timestamp"] = flowName.timestamp;
-        flowJson["depth"] = flowName.depth;
         flowJson["flowId"] = flowName.flowId;
+        flowJson["type"] = flowName.type;
         json["body"]["flowDetail"].emplace_back(flowJson);
     }
+    return json;
+}
+
+json_t FlowLocationToJson(const FlowLocation& flowLocation)
+{
+    json_t json;
+    json["pid"] = flowLocation.pid;
+    json["tid"] = flowLocation.tid;
+    json["timestamp"] = flowLocation.timestamp;
+    json["duration"] = flowLocation.duration;
+    json["depth"] = flowLocation.depth;
+    json["name"] = flowLocation.name;
     return json;
 }
 
@@ -112,18 +121,8 @@ template <> std::optional<json_t> ToResponseJson<UnitFlowResponse>(const UnitFlo
     json["body"]["title"] = response.body.title;
     json["body"]["cat"] = response.body.cat;
     json["body"]["id"] = response.body.id;
-    json_t fromJson = json_t::object();
-    fromJson["pid"] = response.body.from.pid;
-    fromJson["tid"] = response.body.from.tid;
-    fromJson["timestamp"] = response.body.from.timestamp;
-    fromJson["depth"] = response.body.from.depth;
-    json["body"]["from"] = fromJson;
-    json_t toJson = json_t::object();
-    toJson["pid"] = response.body.to.pid;
-    toJson["tid"] = response.body.to.tid;
-    toJson["timestamp"] = response.body.to.timestamp;
-    toJson["depth"] = response.body.to.depth;
-    json["body"]["to"] = toJson;
+    json["body"]["from"] = FlowLocationToJson(response.body.from);
+    json["body"]["to"] = FlowLocationToJson(response.body.to);
     return json;
 }
 
@@ -183,6 +182,60 @@ template <> std::optional<json_t> ToResponseJson<RemoteDeleteResponse>(const Rem
     json["body"]["maxTimeStamp"] = response.body.maxTimeStamp;
     return json;
 }
+
+template <> std::optional<json_t> ToResponseJson<FlowCategoryListResponse>(const FlowCategoryListResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["category"] = json_t::array();
+    for (const std::string &category : response.body.category) {
+        json["body"]["category"].emplace_back(category);
+    }
+    return json;
+}
+
+json_t FlowEventLocationToJson(const FlowEventLocation& flowLocation)
+{
+    json_t json;
+    json["pid"] = flowLocation.pid;
+    json["tid"] = flowLocation.tid;
+    json["timestamp"] = flowLocation.timestamp;
+    json["depth"] = flowLocation.depth;
+    return json;
+}
+
+template <> std::optional<json_t> ToResponseJson<FlowCategoryEventsResponse>(const FlowCategoryEventsResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["flowDetailList"] = json_t::array();
+    for (const auto &flowDetail : response.body.flowDetailList) {
+        json_t flowDetailJson = json_t::object();
+        flowDetailJson["category"] = flowDetail->category;
+        flowDetailJson["from"] = FlowEventLocationToJson(flowDetail->from);
+        flowDetailJson["to"] = FlowEventLocationToJson(flowDetail->to);
+        json["body"]["flowDetailList"].emplace_back(flowDetailJson);
+    }
+    return json;
+}
+
+template <> std::optional<json_t> ToResponseJson<UnitCounterResponse>(const UnitCounterResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["data"] = json_t::array();
+    for (const auto &data : response.body.data) {
+        json_t tmp;
+        tmp["timestamp"] = data.timestamp;
+        try {
+            tmp["value"] = json_t::parse(data.valueJsonStr);
+        } catch (std::exception &e) {
+            ServerLog::Warn("Failed to parse unit counter value. ", data.valueJsonStr, ", ", e.what());
+        }
+        json["body"]["data"].emplace_back(tmp);
+    }
+    return json;
+}
 #pragma endregion
 
 #pragma region <<Event to json>>
@@ -202,6 +255,9 @@ json_t UnitTrackToJson(const UnitTrack &unitTrack)
     json["metadata"]["threadId"] = unitTrack.metaData.threadId;
     json["metadata"]["threadName"] = unitTrack.metaData.threadName;
     json["metadata"]["maxDepth"] = unitTrack.metaData.maxDepth;
+    for (const auto &dataType : unitTrack.metaData.dataType) {
+        json["metadata"]["dataType"].emplace_back(dataType);
+    }
     for (const auto &track : unitTrack.children) {
         json["children"].emplace_back(UnitTrackToJson(*track));
     }
