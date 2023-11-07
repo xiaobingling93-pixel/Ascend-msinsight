@@ -18,38 +18,38 @@ import * as echarts from 'echarts';
 import Filter, { ConditionDataType } from './PpBandwidthFilter';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import ReactDOM from 'react-dom';
+import _ from 'lodash';
 
 const PpBandwidthAnalysis = observer(function ({ session }: { session: Session }) {
+    const [ allStageIds, setAllStageIds ] = useState<string[]>([]);
     const [ conditions, setConditions ] = useState<ConditionDataType>(
         { step: '', stage: '' });
 
     return (
         <Layout>
             <Container
-                content={ <Filter session={session} handleFilterChange={(value: any) => {
-                    setConditions(value);
-                }}/>}
+                content={ <Filter session={session} setAllStageIds={setAllStageIds} conditions={conditions} setConditions={setConditions}/>}
             />
             <Container
-                content={ <PPBandwidthChart conditions={conditions}/>}
+                content={ <PPBandwidthChart conditions={conditions} allStageIds={allStageIds} session={session}/>}
             />
         </Layout>
     );
 });
 
-const PPBandwidthChart: React.FC<any> = ({ conditions }: any) => {
+const PPBandwidthChart: React.FC<any> = ({ conditions, allStageIds }: any) => {
     chartVisbilityListener('STAGE', () => {
-        InitCharts('STAGE', conditions.step, conditions.stage);
-        InitCharts('RANK', conditions.step, conditions.stage);
+        if (notNullObj(conditions)) {
+            InitCharts('STAGE', conditions.step, conditions.stage, allStageIds);
+            InitCharts('RANK', conditions.step, conditions.stage, allStageIds);
+        }
     });
     useEffect(() => {
-        setTimeout(() => {
-            if (notNullObj(conditions)) {
-                InitCharts('STAGE', conditions.step, conditions.stage);
-                InitCharts('RANK', conditions.step, conditions.stage);
-            }
-        });
-    }, [conditions]);
+        if (notNullObj(conditions)) {
+            InitCharts('STAGE', conditions.step, conditions.stage, allStageIds);
+            InitCharts('RANK', conditions.step, conditions.stage, allStageIds);
+        }
+    }, [ conditions, allStageIds ]);
     return (
         <div className={'bandwidthChart'}>
             <Row wrap={false}>
@@ -68,62 +68,69 @@ const PPBandwidthChart: React.FC<any> = ({ conditions }: any) => {
     );
 };
 
-async function InitCharts(domId: string, stepId: string, stageId: string): Promise<void> {
+async function InitCharts(domId: string, stepId: string, stage: string, allStageIds: string[]): Promise<void> {
     const chartDom = document.getElementById(domId);
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
-    const res = domId === 'STAGE' ? await wrapBandwidthDataInStage(domId, stepId, stageId) : await wrapBandwidthDataInRank(domId, stepId, stageId);
+    const stageIds = stage !== 'All' ? [stage] : allStageIds;
+    const res = domId === 'STAGE' ? await wrapBandwidthDataInStage(domId, stepId, stageIds) : await wrapBandwidthDataInRank(domId, stepId, stageIds);
     if (res === null) {
         ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
     } else {
-        const myChart = echarts.init(chartDom);
-        myChart.setOption(res);
+        const myChart: echarts.ECharts = echarts.getInstanceByDom(chartDom) ? echarts.getInstanceByDom(chartDom) as echarts.ECharts : echarts.init(chartDom);
+        myChart.setOption(res, true);
+        myChart.dispatchAction({
+            type: 'takeGlobalCursor',
+            key: 'dataZoomSelect',
+            dataZoomSelectActive: true,
+        });
         addResizeEvent(myChart);
     }
-    const myChart = echarts.init(chartDom);
-    myChart.setOption(bandwidthOption);
-    addResizeEvent(myChart);
 }
 
-async function wrapBandwidthDataInStage(domId: string, stepId: string, stageId: string): Promise<echarts.EChartsOption | null> {
-    const datas = await getStageAndBubbleTimeData(stepId, stageId);
-    const stageData: number[] = [];
-    const stageTimeData: number[] = [];
-    const bubbleTimeData: number[] = [];
-    for (const item of datas
-        .sort((a: string[], b: string[]) => parseFloat(a[1]) - parseFloat(b[1]))) {
-        stageData.push(item.stageId);
-        stageTimeData.push(item.stageTime);
-        bubbleTimeData.push(item.bubbleTime);
+async function wrapBandwidthDataInStage(domId: string, stepId: string, stageIds: string[]): Promise<echarts.EChartsOption | null> {
+    const result = _.cloneDeep(bandwidthOption);
+    const xAxis = result.xAxis as CategoryAxisBaseOption;
+    const series = result.series as echarts.SeriesOption[];
+    for (const stageId of stageIds) {
+        const datas = await getStageAndBubbleTimeData(stepId, stageId);
+        const stageData: number[] = [];
+        const stageTimeData: number[] = [];
+        const bubbleTimeData: number[] = [];
+        for (const item of datas
+            .sort((a: string[], b: string[]) => parseFloat(a[1]) - parseFloat(b[1]))) {
+            stageData.push(item.stageId);
+            stageTimeData.push(item.stageTime);
+            bubbleTimeData.push(item.bubbleTime);
+        }
+        xAxis.data = xAxis.data?.concat(stageData);
+        series[0].data = (series[0].data as number[]).concat(stageTimeData);
+        series[1].data = (series[1].data as number[]).concat(bubbleTimeData);
     }
-    (bandwidthOption.xAxis as CategoryAxisBaseOption).data = stageData;
-    (bandwidthOption.series as echarts.SeriesOption[])[0].data = stageTimeData;
-    (bandwidthOption.series as echarts.SeriesOption[])[1].data = bubbleTimeData;
-    return bandwidthOption;
+    return result;
 }
 
-async function wrapBandwidthDataInRank(domId: string, stepId: string, stageId: string): Promise<echarts.EChartsOption | null> {
-    const datas: RankDataType[] = await getRankAndBubbleTimeData(stepId, stageId);
-    datas.sort((a, b) => Number(a.rankId) - Number(b.rankId));
-    const rankData: string[] = [];
-    const stageTimeData: number[] = [];
-    const bubbleTimeData: number[] = [];
-    for (const item of datas) {
-        rankData.push(item.rankId);
-        stageTimeData.push(item.stageTime);
-        bubbleTimeData.push(item.bubbleTime);
+async function wrapBandwidthDataInRank(domId: string, stepId: string, stageIds: string[]): Promise<echarts.EChartsOption | null> {
+    const result = _.cloneDeep(bandwidthOption);
+    const xAxis = result.xAxis as CategoryAxisBaseOption;
+    const series = result.series as echarts.SeriesOption[];
+    for (const stageId of stageIds) {
+        const datas: RankDataType[] = await getRankAndBubbleTimeData(stepId, stageId);
+        datas.sort((a, b) => Number(a.rankId) - Number(b.rankId));
+        const rankData: string[] = [];
+        const stageTimeData: number[] = [];
+        const bubbleTimeData: number[] = [];
+        for (const item of datas) {
+            rankData.push(item.rankId);
+            stageTimeData.push(item.stageTime);
+            bubbleTimeData.push(item.bubbleTime);
+        }
+        xAxis.data = xAxis.data?.concat(rankData);
+        series[0].data = (series[0].data as number[]).concat(stageTimeData);
+        series[1].data = (series[1].data as number[]).concat(bubbleTimeData);
     }
-    (bandwidthOption.xAxis as CategoryAxisBaseOption).data = rankData;
-    (bandwidthOption.series as echarts.SeriesOption[])[0].data = stageTimeData;
-    (bandwidthOption.series as echarts.SeriesOption[])[1].data = bubbleTimeData;
-    return bandwidthOption;
-}
-
-export interface StageDataType {
-    bubbleTime: number;
-    stageId: string;
-    stageTime: number ;
+    return result;
 }
 
 export interface RankDataType {
@@ -138,14 +145,6 @@ export const getStepsData = async (): Promise<string[]> => {
     }
     const steps = await window.requestData('parallelism/pipeline/getAllSteps', {}, 'summary');
     return steps.data;
-};
-
-export const getStagesData = async (param: {stepId: string}): Promise<string[]> => {
-    if (isNull(window.requestData)) {
-        return ['(0, 1, 2, 3)'];
-    }
-    const stages = await window.requestData('parallelism/pipeline/getAllStages', param, 'summary');
-    return stages.data;
 };
 
 async function getStageAndBubbleTimeData (stepId: string, stageId: string): Promise<any> {
@@ -179,6 +178,9 @@ const bandwidthOption: echarts.EChartsOption = {
     toolbox: {
         feature: {
             dataView: { show: true, readOnly: false },
+            dataZoom: {
+                yAxisIndex: 'none',
+            },
             restore: { show: true },
         },
     },

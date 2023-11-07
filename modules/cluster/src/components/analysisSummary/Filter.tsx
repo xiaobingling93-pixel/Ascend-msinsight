@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { Select } from 'antd';
 import { Label } from '../Common';
 import _ from 'lodash';
-import { communicator } from '../communicatorContainer/CommunicatorContainer';
+import { communicator } from '../communicatorContainer/ContainerUtils';
 import { queryTopSummary } from '../../utils/RequestUtils';
 
 export interface ConditionDataType {

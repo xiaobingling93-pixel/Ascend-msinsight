@@ -11,7 +11,7 @@ import { platform } from '../platforms';
 import i18n from '../i18n';
 import { Phase, stateTexts } from '../utils/constant';
 import { SimpleCache } from '../cache/simplecache';
-import { communicator, communicatorContainerData } from '../components/communicatorContainer/CommunicatorContainer';
+import { communicator, communicatorContainerData } from '../components/communicatorContainer/ContainerUtils';
 
 export interface SelectedParams {
     baseRawId: undefined | number;

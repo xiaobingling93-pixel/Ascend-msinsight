@@ -8,35 +8,13 @@ import { Tabs, Form, InputNumber, Row, Button, message, Select } from 'antd';
 import _ from 'lodash';
 import eventBus, { useEventBus } from '../../utils/eventBus';
 import { queryTopSummary } from '../../utils/RequestUtils';
-
-export type communicatorContainerData = {
-    partitionModes: partitionMode[];
-    defaultPPSize: number;
-};
-
-type partitionMode = {
-    mode: string;
-    communicators: communicator[];
-};
-
-export type communicator = {
-    name: string;
-    ranks: number[];
-    value?: string;
-};
-
-type tabData = {
-    tab: string;
-    key: string;
-    content: JSX.Element;
-};
-
-const titleMap = new Map([
-    [ 'pp', 'Pipeline Parallel' ],
-    [ 'tp', 'Tensor Parallel' ],
-    [ 'dp', 'Data Parallel' ],
-    [ 'tpOrDp', 'Tensor/Data Parallel' ],
-]);
+import {
+    communicator,
+    communicatorContainerData,
+    generateCommunicatorData,
+    partitionMode,
+    tabData, titleMap,
+} from './ContainerUtils';
 
 export const CommunicatorContainer = observer(({ session }: { session: Session }) => {
     const [ activeTab, setActiveTab ] = useState<string>('pp');
@@ -192,39 +170,6 @@ export async function getDefaultCommunicatorData(filePath: string): Promise<comm
         result.defaultPPSize = data.defaultPPSize;
     }
     return result;
-}
-
-function generateCommunicatorData(values: {ppSize: number; tpSize: number; dpSize: number}, defaultPPSize: number, rankNum: number): communicatorContainerData {
-    const partitionModes: partitionMode[] = [
-        { mode: 'pp', communicators: [] },
-        { mode: 'tp', communicators: [] },
-        { mode: 'dp', communicators: [] },
-    ];
-    const pipelineCount = values.ppSize;
-    const pipelineSize = rankNum / values.ppSize;
-    const modelCount = rankNum / values.tpSize;
-    for (let i = 0; i < pipelineCount; i++) {
-        partitionModes[0].communicators.push({
-            ranks: _.range(i * pipelineSize, (i + 1) * pipelineSize),
-            name: 'stage' + i.toString(),
-            value: `(${_.range(i * pipelineSize, (i + 1) * pipelineSize).join(', ')}` + (pipelineSize > 1 ? ')' : ',)'),
-        });
-        for (let j = 0; j < values.tpSize; j++) {
-            partitionModes[2].communicators.push({
-                ranks: _.range(i * pipelineSize + j, (i + 1) * pipelineSize + j, values.tpSize),
-                name: 'data' + (i * values.tpSize + j).toString(),
-                value: `(${_.range(i * pipelineSize + j, (i + 1) * pipelineSize + j, values.tpSize).join(', ')}` + (values.dpSize > 1 ? ')' : ',)'),
-            });
-        }
-    }
-    for (let i = 0; i < modelCount; i++) {
-        partitionModes[1].communicators.push({
-            ranks: _.range(i * values.tpSize, (i + 1) * values.tpSize),
-            name: 'model' + i.toString(),
-            value: `(${_.range(i * values.tpSize, (i + 1) * values.tpSize).join(', ')}` + (values.tpSize > 1 ? ')' : ',)'),
-        });
-    }
-    return { partitionModes, defaultPPSize };
 }
 
 function selectRankGroup(rankGroup: communicator): void {
