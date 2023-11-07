@@ -181,11 +181,16 @@ bool Database::DropAllTable()
 
 std::unique_ptr<SqlitePreparedStatement> Database::CreatPreparedStatement(const std::string &sql)
 {
-    if (!isOpen || sql.empty()) {
+    if ((!isOpen) || sql.empty()) {
+        ServerLog::Error("Failed prepare sql. Database is closed Or sql is empty.");
         return nullptr;
     }
     auto stmt = std::make_unique<SqlitePreparedStatement>(db);
-    return stmt->Prepare(sql) ? std::move(stmt) : nullptr;
+    if (!stmt->Prepare(sql)) {
+        ServerLog::Error("Failed prepare sql. ", stmt->GetErrorMessage());
+        return nullptr;
+    }
+    return stmt;
 }
 
 std::string Database::GetLastError()

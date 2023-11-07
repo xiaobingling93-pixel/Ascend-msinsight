@@ -71,11 +71,10 @@ void SqlitePreparedStatement::BindParam(int index, double value)
     lastErrorCode = sqlite3_bind_double(stmt, index, value);
 }
 
-SqlitePreparedStatement& SqlitePreparedStatement::Reset()
+void SqlitePreparedStatement::Reset()
 {
     lastErrorCode = sqlite3_reset(stmt);
     bindIndex = 1;
-    return *this;
 }
 
 bool SqlitePreparedStatement::Execute()

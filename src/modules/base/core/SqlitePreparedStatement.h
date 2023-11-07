@@ -21,6 +21,10 @@ public:
      * @param db 已打开的数据库指针
      */
     explicit SqlitePreparedStatement(sqlite3 *db);
+    SqlitePreparedStatement(const SqlitePreparedStatement &) = delete;
+    SqlitePreparedStatement(SqlitePreparedStatement &&) = delete;
+    SqlitePreparedStatement &operator=(const SqlitePreparedStatement &) = delete;
+    SqlitePreparedStatement &operator=(SqlitePreparedStatement &&) = delete;
     ~SqlitePreparedStatement();
     int GetErrorCode() const;
     std::string GetErrorMessage() const;
@@ -34,9 +38,8 @@ public:
 
     /**
      * reset stmt
-     * @return 返回自身引用，执行Execute或ExecuteQuery前需要先调用Reset()
      */
-    SqlitePreparedStatement& Reset();
+    void Reset();
 
     /**
      * 执行无返回值的sql语句，需要先执行Prepare，再执行execute
@@ -58,12 +61,12 @@ public:
     template <typename... Args>
     void BindParams(Args&&... args)
     {
-        std::tuple<Args &&...> tp(args...);
+        std::tuple<Args &&...> tp(std::forward<Args>(args)...);
         BindParamsHelper(tp, std::make_index_sequence<sizeof...(Args)>{});
     }
 
     /**
-     * 和Execute()相同，先绑定参数再执行
+     * 和Execute()相同，先绑定参数再执行，第二次调用前需要先执行Reset()
      * @tparam Args
      * @param args 需要绑定的参数
      * @return
@@ -76,7 +79,7 @@ public:
     }
 
     /**
-     * 和ExecuteQuery() 相同，先绑定参数再执行
+     * 和ExecuteQuery() 相同，先绑定参数再执行，第二次调用前需要先执行Reset()
      * @tparam Args
      * @param args 需要绑定的参数
      * @return

@@ -14,6 +14,10 @@ namespace Module {
 class SqliteResultSet {
 public:
     explicit SqliteResultSet(sqlite3_stmt *stmt);
+    SqliteResultSet(const SqliteResultSet &) = delete;
+    SqliteResultSet(SqliteResultSet &&) = delete;
+    SqliteResultSet &operator=(const SqliteResultSet &) = delete;
+    SqliteResultSet &operator=(SqliteResultSet &&) = delete;
     ~SqliteResultSet() = default;
     int GetErrorCode() const;
     std::string GetErrorMessage() const;
