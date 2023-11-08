@@ -307,7 +307,7 @@ std::string MemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak& peak)
         std::string ptaGeRe = std::to_string(peak.ptaGeReserved);
         // double转换成string默认生成六位小数，删除后4位小数
         ptaGeRe = ptaGeRe.substr(0, ptaGeRe.length() - 4);
-        peakMemory.append(" | Operator Allocated： ").append(ptaGeRe).append("MB");
+        peakMemory.append(" | Operator Reserved： ").append(ptaGeRe).append("MB");
     }
     if (peak.hasApp) {
         std::string appAllo = std::to_string(peak.appReserved);
