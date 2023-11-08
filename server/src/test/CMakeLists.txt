@@ -6,6 +6,8 @@ set(TEST_HOME_DIR ${HOME_DIR}/src/test)
 
 aux_source_directory(${TEST_HOME_DIR}/utils TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/communication/handler TEST)
+aux_source_directory(${TEST_HOME_DIR}/modules/memory TEST)
+aux_source_directory(${TEST_HOME_DIR}/modules/summary TEST)
 
 list(APPEND DIC_TEST_LIST
         ${TEST}
