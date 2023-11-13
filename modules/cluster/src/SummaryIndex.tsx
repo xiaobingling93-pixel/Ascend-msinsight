@@ -4,6 +4,7 @@ import { ThemeProvider } from '@emotion/react';
 import { RootStoreContext, useRootStore } from './context/context';
 import i18n from './i18n';
 import './index.css';
+import './Summary.css';
 import { store } from './store';
 import connector from './connection';
 import { observer } from 'mobx-react';

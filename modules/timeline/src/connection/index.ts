@@ -58,14 +58,14 @@ abstract class BaseConnector {
             return;
         }
         this._targetWindows = this._getTargetWindows();
-        if ((body.to !== undefined && window.top !== null && window.top[body.to]?.postMessage === undefined) || this._targetWindows.length === 0) {
+        if ((body.to !== undefined && window.parent !== null && window.parent[body.to]?.postMessage === undefined) || this._targetWindows.length === 0) {
             const errMsg = 'missed postMessage function, please check your iframe element';
             console.warn(this.printErrMsg(errMsg));
             reject?.(new Error(errMsg));
             return;
         }
-        body.from = Object.entries(window.top as Window).findIndex(([ , val ]) => val === window);
-        const targetWindows = body.to !== undefined ? [(window.top as Window)[body.to]] : this._targetWindows;
+        body.from = Object.entries(window.parent as Window).findIndex(([ , val ]) => val === window);
+        const targetWindows = body.to !== undefined ? [(window.parent as Window)[body.to]] : this._targetWindows;
         targetWindows.forEach(targetWindow => { targetWindow.postMessage(JSON.stringify(body), '*'); });
     }
 
@@ -177,7 +177,7 @@ export default (function connectorFactory<T extends TypeForConnector>(connectorT
             return res;
         })
         : new ClientConnector({
-            getTargetWindow: () => window.top ? [window.top] : [],
+            getTargetWindow: () => [window.parent],
             module: connectorType,
         })) as ConnectorType<T>;
 })('timeline');

@@ -6,6 +6,12 @@ import { readFileSync } from 'fs';
 import { platform } from 'os';
 import { WebviewManager } from './WebviewManager';
 
+const modules = ['./profiler/plugins/Timeline/index.html',
+    './profiler/plugins/Memory/index.html',
+    './profiler/plugins/Cluster/summary.html',
+    './profiler/plugins/Cluster/communication.html',
+];
+
 export class RegisterWebview extends Webview {
 
     private readonly _extensionUri: vscode.Uri;
@@ -33,6 +39,8 @@ export class RegisterWebview extends Webview {
         this.active();
         this.panel?.webview.postMessage(this._extensionUri.toString);
         (this.panel as vscode.WebviewPanel).webview.html = this.html();
+        this.panel?.webview.postMessage({ event: 'updateHtml',
+            modules: modules.map(path => this.getModulesHtml(path))});
     }
 
     startServer() {
@@ -89,5 +97,9 @@ export class RegisterWebview extends Webview {
 
     html() {
         return this.htmlStr;
+    }
+    
+    getModulesHtml(path: string) {
+        return readFileSync(join(__dirname, path), 'utf8');
     }
 }
