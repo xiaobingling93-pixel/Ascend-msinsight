@@ -42,7 +42,7 @@ export class SimpleCache {
 
     clear(): void {
         this.data.forEach((key) => {
-            this.data.get(key).clear();
+            this.data.get(key)?.clear();
         });
     }
 }
