@@ -13,6 +13,7 @@ export class Session {
     parseCompleted: boolean = false;
     clusterCompleted: boolean = false;
     unitcount: number = 0;
+    isVscode: boolean = document.location.origin.startsWith('vscode');
     private _sharedState: Record<string, unknown> = {};
 
     get sharedState(): Record<string, unknown> {

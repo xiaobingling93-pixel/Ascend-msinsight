@@ -1,0 +1,14 @@
+.rank_icon{
+    width: 55px;
+    height: 55px;
+    background:center no-repeat url('./assets/images/round_light.svg');
+}
+.theme_dark .rank_icon{
+    background:center no-repeat url('./assets/images/round_dark.svg');
+}
+.activeRank .rank_icon{
+    background:center no-repeat url('./assets/images/round_light_active.svg');
+}
+.theme_dark .activeRank .rank_icon{
+    background:center no-repeat url('./assets/images/round_dark_active.svg');
+}
