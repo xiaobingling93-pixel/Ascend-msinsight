@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include "ConnectionPool.h"
 #include "TraceDatabase.h"
 
 namespace Dic {
@@ -21,8 +22,9 @@ public:
     DataBaseManager(DataBaseManager &&) = delete;
     DataBaseManager &operator=(DataBaseManager &&) = delete;
 
-    TraceDatabase *GetTraceDatabase(const std::string &fileId);
-    std::vector<TraceDatabase *> GetAllTraceDatabase();
+    bool CreatConnectionPool(const std::string &fileId, const std::string &dbPath);
+    std::shared_ptr<TraceDatabase> GetTraceDatabase(const std::string &fileId);
+    std::vector<ConnectionPool *> GetAllTraceDatabase();
     std::vector<std::string> GetAllFileId();
     void Clear();
     void ReleaseTraceDatabase(const std::string &fileId);
@@ -33,7 +35,7 @@ private:
     ~DataBaseManager() = default;
 
     std::mutex mutex;
-    std::map<std::string, std::unique_ptr<TraceDatabase>> traceDatabaseMap;
+    std::map<std::string, std::unique_ptr<ConnectionPool>> traceDatabaseMap;
 };
 } // end of namespace Timeline
 } // end of namespace Module

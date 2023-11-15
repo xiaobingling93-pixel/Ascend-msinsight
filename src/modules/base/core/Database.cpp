@@ -167,16 +167,17 @@ bool Database::DropAllTable()
     }
     static const std::string SQL = "DROP TABLE IF EXISTS ";
     std::vector<std::string> tableList;
-    if (GetTableList(tableList)) {
-        for (const auto &table : tableList) {
-            if (ExecSql(SQL + table + ";")) {
-                ServerLog::Info("Drop table ", table);
-            } else {
-                ServerLog::Error("Failed to drop table ", table);
-            }
-        }
+    if (!GetTableList(tableList)) {
+        return false;
     }
-    return ExecSql("VACUUM");
+    if (tableList.empty()) {
+        return true;
+    }
+    std::string dropSql;
+    for (const auto &table : tableList) {
+        dropSql.append(SQL).append(table).append(";");
+    }
+    return ExecSql(dropSql);
 }
 
 std::unique_ptr<SqlitePreparedStatement> Database::CreatPreparedStatement(const std::string &sql)

@@ -45,40 +45,53 @@ bool TraceFileParser::Parse(const std::string &filePath, const std::string &file
 
 void TraceFileParser::PreParseTask(const std::string &filePath, const std::string &fileId)
 {
+    if (!InitParser(filePath, fileId)) {
+        ParseEndCallBack(fileId, false);
+    }
+}
+
+bool TraceFileParser::InitParser(const std::string &filePath, const std::string &fileId)
+{
     if (!ParserStatusManager::Instance().SetRunningStatus(fileId)) {
         ServerLog::Info("Pre task skip this file.");
-        return;
+        return true;
+    }
+    std::string dbPath = GetDbPath(filePath, fileId);
+    if (!DataBaseManager::Instance().CreatConnectionPool(fileId, dbPath)) {
+        ServerLog::Error("Failed to creat connection pool.");
+        return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
-    std::string dbPath = GetDbPath(filePath, fileId);
-    if (!(database->OpenDb(dbPath, true) && database->CreateTable() && database->SetConfig() && database->InitStmt())) {
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection.");
+        return false;
+    }
+
+    if (!(database->DropAllTable() && database->CreateTable())) {
         ServerLog::Error("Failed to open database. path:", dbPath);
-        ParseEndCallBack(fileId, false);
-        return;
+        return false;
     }
     auto splitFile = TraceFileParser::SplitFile(filePath);
     if (splitFile.empty()) {
         ServerLog::Error("Failed to split file.");
-        ParseEndCallBack(fileId, false);
-        return;
+        return false;
     }
     auto &instance = TraceFileParser::Instance();
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
     for (const auto &pos : splitFile) {
-        auto future = instance.threadPool->AddTask(ParseTask, filePath, fileId, dbPath, pos);
+        auto future = instance.threadPool->AddTask(ParseTask, filePath, fileId, pos);
         futures->emplace_back(std::move(future));
     }
     instance.threadPool->AddTask(EndParseTask, fileId, futures);
 }
 
-void TraceFileParser::ParseTask(const std::string &filePath, const std::string &fileId,
-                                const std::string &dbPath, std::pair<int64_t, int64_t> pos)
+void TraceFileParser::ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos)
 {
     if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
         ServerLog::Info("Parse task skip this file. ID:", fileId);
         return;
     }
-    EventParser eventParser(filePath, dbPath, fileId);
+    EventParser eventParser(filePath, fileId);
     eventParser.Parse(pos.first, pos.second);
 }
 
@@ -234,11 +247,10 @@ void TraceFileParser::Reset()
     ServerLog::Info("Reset. wait task completed.");
     threadPool->Reset();
     ServerLog::Info("Task completed.");
-    auto databaseList = DataBaseManager::Instance().GetAllTraceDatabase();
-    for (auto &database : databaseList) {
-        std::string path = database->GetDbPath();
-        database->ReleaseStmt();
-        database->CloseDb();
+    auto connList = DataBaseManager::Instance().GetAllTraceDatabase();
+    for (auto &conn : connList) {
+        std::string path = conn->GetDbPath();
+        conn->Stop();
         if (!FileUtil::RemoveFile(path)) {
             ServerLog::Error("Failed to remove file. ", path);
         }

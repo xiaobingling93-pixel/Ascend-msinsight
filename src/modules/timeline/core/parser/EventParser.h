@@ -16,17 +16,16 @@ namespace Module {
 namespace Timeline {
 class EventParser {
 public:
-    EventParser(const std::string &filePath, const std::string &dbPath, const std::string &fileId);
+    EventParser(const std::string &filePath, const std::string &fileId);
     ~EventParser() = default;
     void Parse(int64_t startPosition, int64_t endPosition);
 
 private:
     std::string filePath;
-    std::string dbPath;
     std::string fileId;
     int parseCount = 0;
     int ignoreCount = 0;
-    std::unique_ptr<TraceDatabase> database;
+    std::shared_ptr<TraceDatabase> database;
     std::map<std::string, std::function<void(std::unique_ptr<Trace::Event>)>> eventHandleMap;
 
     std::string ReadBuffer(int64_t startPosition, int64_t endPosition);

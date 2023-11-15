@@ -1,0 +1,136 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ */
+
+#include "ConnectionPool.h"
+
+namespace Dic {
+namespace Module {
+namespace Timeline {
+ConnectionPool::ConnectionPool(std::string dbPath) : path(std::move(dbPath)) {}
+
+ConnectionPool::~ConnectionPool()
+{
+    Stop();
+}
+
+std::shared_ptr<TraceDatabase> ConnectionPool::GetConnection()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!valid) {
+        return nullptr;
+    }
+    TraceDatabase *conn = nullptr;
+    if (!idlePool.empty()) {
+        conn = idlePool.front();
+        idlePool.pop_front();
+    } else if (activePool.size() < maxActiveConnections) {
+        conn = CreatConnection();
+    } else {
+        ServerLog::Info("Wait idle connection.");
+        cv.wait_for(lock, std::chrono::seconds(maxWaitTime));
+        if (valid && !idlePool.empty()) {
+            conn = idlePool.front();
+            idlePool.pop_front();
+        }
+    }
+    if (conn == nullptr) {
+        ServerLog::Error("Get connection Failed.");
+        return nullptr;
+    }
+    std::shared_ptr<TraceDatabase> connPtr(conn, [this] (TraceDatabase *conn) {
+        ReleaseConnection(conn);
+    });
+    return connPtr;
+}
+
+/*
+ * Set max active connections.
+ *
+ * @param count max active connections.
+ */
+void ConnectionPool::SetMaxActiveCount(int count)
+{
+    maxActiveConnections = count;
+}
+
+/*
+ * Set max retry attempts when create connection failed.
+ * Default value is 3.
+ *
+ * @param count max retry attempts.
+ */
+void ConnectionPool::SetMaxRetryCount(int count)
+{
+    maxRetryAttempts = count;
+}
+
+/*
+ * Set max wait time when no connection available.
+ * Default value is 2 seconds.
+ *
+ * @param seconds max wait time.
+ */
+void ConnectionPool::SetMaxWaitTime(int seconds)
+{
+    maxWaitTime = seconds;
+}
+
+void ConnectionPool::Stop()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!valid) {
+        return;
+    }
+    valid = false;
+    ServerLog::Info("Wait all connection released. path:", path, ", idle size:", idlePool.size(),
+                    ", active size:", activePool.size());
+    while (idlePool.size() != activePool.size()) {
+        cv.wait(lock);
+    }
+    ServerLog::Info("All connection released.");
+    for (auto conn : activePool) {
+        delete conn;
+    }
+    idlePool.clear();
+    activePool.clear();
+    path = "";
+}
+
+void ConnectionPool::ReleaseConnection(Timeline::TraceDatabase *conn)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    idlePool.emplace_back(conn);
+    if (valid) {
+        cv.notify_one();
+    } else {
+        ServerLog::Info("Release connection. idle pool size:", idlePool.size());
+        cv.notify_all();
+    }
+}
+
+TraceDatabase *ConnectionPool::CreatConnection()
+{
+    int retryCount = 0;
+    while (retryCount < maxRetryAttempts) {
+        TraceDatabase *conn = new TraceDatabase();
+        if (!conn->OpenDb(path, false)) {
+            delete conn;
+            retryCount++;
+            continue;
+        }
+        conn->SetConfig();
+        activePool.emplace_back(conn);
+        return conn;
+    }
+    ServerLog::Error("Failed create connect. path:", path);
+    return nullptr;
+}
+
+std::string ConnectionPool::GetDbPath()
+{
+    return path;
+}
+} // end of namespace Timeline
+} // end of namespace Module
+} // end of namespace Dic
