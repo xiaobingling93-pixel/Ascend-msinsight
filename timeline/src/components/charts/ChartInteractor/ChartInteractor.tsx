@@ -76,6 +76,7 @@ type ChartInteractorProps = {
 
     // These events are tracked for interacting with the underlying lanes.
     isNsMode: boolean;
+    splitLineRef: React.RefObject<HTMLDivElement>;
 };
 
 export interface ChartInteractorHandles {
@@ -105,7 +106,7 @@ export type InteractorParams = {
 };
 
 const INTERACTOR_WIDTH = 1153;
-const Interactor = ({ domainStart, domainEnd, endTimeAll, session, interactorMouseState, isNsMode }: ChartInteractorProps,
+const Interactor = ({ domainStart, domainEnd, endTimeAll, session, interactorMouseState, isNsMode, splitLineRef }: ChartInteractorProps,
     ref: Ref<ChartInteractorHandles>): JSX.Element => {
     const theme = useTheme();
     // use ref instead of state
@@ -137,7 +138,7 @@ const Interactor = ({ domainStart, domainEnd, endTimeAll, session, interactorMou
             mouseMoveAction(interactorParams, interactorMouseState);
         },
         mouseDownAction: (interactorMouseState: InteractorMouseState) => {
-            return mouseDownAction(session, xReverseScale, interactorMouseState);
+            return mouseDownAction(session, xReverseScale, interactorMouseState, splitLineRef);
         },
         mouseUpAction: (interactorMouseState: InteractorMouseState, e: MouseEvent) => {
             mouseUpAction(interactorParams, interactorMouseState, e);

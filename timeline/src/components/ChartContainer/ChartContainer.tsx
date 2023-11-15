@@ -22,6 +22,7 @@ import { MouseDownActionResult } from '../charts/ChartInteractor/actions';
 import { loopActionFactory } from '../../utils/FactoryActions';
 import { RenderManagerContext } from '../../context/context';
 import { renderManager } from '../../renderManager';
+import { DragDirection, useDraggableContainerEx } from '../../utils/useDraggableContainerEx';
 
 export const TIME_LINE_AXIS_HEIGHT_PX = 30;
 const LANE_INFO_WIDTH_PX = 250;
@@ -82,12 +83,28 @@ const ChartBody = observer((props: ChartBodyProps) => {
     const { session, interactive, interactorMouseState, chartInteractorRef } = props;
     const { domainStart, domainEnd } = session.domainRange;
     const [ height, ref ] = useWatchResize<HTMLDivElement>('height');
+    const [ pinnedHeight, pinnedRef ] = useWatchResize<HTMLDivElement>('height');
+    const splitLineRef = React.useRef<HTMLDivElement>(null);
+    const [ view, handleSwitchOpen ] = useDraggableContainerEx({ draggableWH: 100, dragDirection: DragDirection.top, splitLineRef, open: session.pinnedUnits.length > 0 });
+
+    useEffect(() => {
+        if (session.pinnedUnits.length > 0) {
+            handleSwitchOpen(true);
+        } else {
+            handleSwitchOpen(false);
+        }
+    }, [session.pinnedUnits]);
     return (<>
-        {interactive && session.pinnedUnits.length !== 0 && <PinnedUnits session={session} laneInfoWidth={LANE_INFO_WIDTH_PX} />}
-        <RefUnits session={session} height={height} ref={ref} hasPinButton={!!interactive} laneInfoWidth={LANE_INFO_WIDTH_PX} />
+        {
+            view({
+                mainContainer: <RefUnits session={session} height={height} ref={ref} hasPinButton={!!interactive} laneInfoWidth={LANE_INFO_WIDTH_PX} />,
+                draggableContainer: <PinnedUnits session={session} height={pinnedHeight} ref={pinnedRef} laneInfoWidth={LANE_INFO_WIDTH_PX} />,
+                id: 'UnitsPage',
+            })
+        }
         <Overlay leftOffset={LANE_INFO_WIDTH_PX} rightAreaName={CHARTINTERACTOR_NAME}>
             <></>
-            <ChartInteractor ref={chartInteractorRef} domainStart={domainStart} domainEnd={domainEnd} endTimeAll={session.endTimeAll}
+            <ChartInteractor ref={chartInteractorRef} splitLineRef={splitLineRef} domainStart={domainStart} domainEnd={domainEnd} endTimeAll={session.endTimeAll}
                 interactorMouseState={interactorMouseState} isNsMode={session.isNsMode} session={session}/>
         </Overlay>
     </>);

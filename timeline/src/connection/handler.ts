@@ -175,6 +175,10 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
                 session.remoteAttrs.delete(remote);
             }
         }
+        session.pinnedUnits = session?.pinnedUnits.filter((unit) => {
+            const metadata = unit.metadata as any;
+            return metadata.dataSource.remote !== dataSource.remote || !(metadata.dataSource.dataPath as string[]).includes(singleDataPath);
+        });
         const result = await window.request(dataSource, { command: 'remote/delete', params: { rankId: removeCardIds } });
         if (result?.startTimeUpdated as boolean) {
             session.remoteAttrs.set(dataSource.remote, { maxTimeStamp: result.maxTimeStamp });

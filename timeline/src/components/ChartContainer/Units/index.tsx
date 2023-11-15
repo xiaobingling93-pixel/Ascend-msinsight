@@ -1,3 +1,3 @@
-import { Unit, RefUnits } from './Units';
+import { Unit, RefUnits, Scroller, computeVisibleUnitRange } from './Units';
 
-export { Unit, RefUnits };
+export { Unit, RefUnits, Scroller, computeVisibleUnitRange };

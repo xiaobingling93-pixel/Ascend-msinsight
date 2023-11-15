@@ -110,12 +110,31 @@ export enum MouseDownActionResult {
     NoNeedToDragOneSide,
 }
 
+const getOffsetTop = (ele: HTMLElement): number => {
+    return (
+        ele.offsetTop + (ele.offsetParent ? getOffsetTop(ele.offsetParent as HTMLElement) : 0)
+    );
+};
+
+const isInSplitLineY = (offsetY: number, splitLineRef: React.RefObject<HTMLDivElement> | undefined): boolean => {
+    if (splitLineRef?.current) {
+        const splitLinePosTop = getOffsetTop(splitLineRef.current as HTMLElement);
+        const splitLineHeight = splitLineRef.current.clientHeight ?? 0;
+        const splitLinePosY = [ splitLinePosTop, splitLinePosTop + splitLineHeight ];
+        if (offsetY >= splitLinePosY[0] && offsetY <= splitLinePosY[1]) {
+            return true;
+        }
+    }
+    return false;
+};
+
 export const mouseDownAction = (session: Session, xReverseScale:
-(x: number) => number, interactorMouseState: InteractorMouseState): MouseDownActionResult => {
+(x: number) => number, interactorMouseState: InteractorMouseState, splitLineRef?: React.RefObject<HTMLDivElement>): MouseDownActionResult => {
     const lastPos = interactorMouseState.lastPos.current;
     if (session.endTimeAll === undefined || !lastPos) { return MouseDownActionResult.NoMouseDownRequired; }
     const rangeButtonCanvasHeight = 30;
     const offsetX = lastPos.x;
+    const offsetY = lastPos.y;
     if (session.selectedRange !== undefined && lastPos.y <= rangeButtonCanvasHeight) {
         // 点击放置框选标记按钮则屏蔽mouseDownAction，避免当前框选丢失
         const rangeMarkerButtonWidth = 18;
@@ -123,7 +142,7 @@ export const mouseDownAction = (session: Session, xReverseScale:
         const rangeEndOffsetX = xReverseScale(rangeEndTimestamp);
         if (offsetX >= rangeEndOffsetX - rangeMarkerButtonWidth && offsetX <= rangeEndOffsetX) { return MouseDownActionResult.NoMouseDownRequired; }
     }
-    if (offsetX > xReverseScale(session.endTimeAll)) {
+    if (offsetX > xReverseScale(session.endTimeAll) || isInSplitLineY(offsetY, splitLineRef)) {
         runInAction(() => {
             let isSingleLine = false;
             Object.values(session.linkLines).forEach((linkLine) => {

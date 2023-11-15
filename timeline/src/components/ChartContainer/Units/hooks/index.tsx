@@ -1,7 +1,8 @@
 import { useSelectUnit } from './useSelectUnit';
-import { useJumpTarget } from './useLocate';
+import { useJumpTarget, OrderOptions } from './useLocate';
 
 export {
     useSelectUnit,
     useJumpTarget,
+    type OrderOptions,
 };
