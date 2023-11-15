@@ -137,9 +137,9 @@ std::vector<std::pair<int64_t, int64_t>> TraceFileParser::SplitFile(const std::s
     if (StringUtil::IsUtf8String(filePath)) {
         path = StringUtil::Utf8ToGbk(filePath.c_str());
     }
-    std::ifstream file(path, std::ios::in);
+    std::ifstream file(path, std::ios::in | std::ios::binary);
 #else
-    std::ifstream file(filePath, std::ios::in);
+    std::ifstream file(filePath, std::ios::in | std::ios::binary);
 #endif
     std::vector<std::pair<int64_t, int64_t>> result;
     if (!file.is_open()) {
@@ -284,9 +284,9 @@ std::string TraceFileParser::GetFileIdFromFile(const std::string &filePath)
     if (StringUtil::IsUtf8String(filePath)) {
         path = StringUtil::Utf8ToGbk(filePath.c_str());
     }
-    std::ifstream file(path, std::ios::in);
+    std::ifstream file(path, std::ios::in | std::ios::binary);
 #else
-    std::ifstream file(filePath, std::ios::in);
+    std::ifstream file(filePath, std::ios::in | std::ios::binary);
 #endif
     if (!file.is_open()) {
         ServerLog::Error("Failed to open file.");

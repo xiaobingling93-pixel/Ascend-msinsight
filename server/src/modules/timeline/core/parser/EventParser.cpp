@@ -66,9 +66,9 @@ std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
     if (StringUtil::IsUtf8String(filePath)) {
         path = StringUtil::Utf8ToGbk(filePath.c_str());
     }
-    std::ifstream file(path, std::ios::in);
+    std::ifstream file(path, std::ios::in | std::ios::binary);
 #else
-    std::ifstream file(filePath, std::ios::in);
+    std::ifstream file(filePath, std::ios::in | std::ios::binary);
 #endif
     if (!file.is_open()) {
         ServerLog::Error("EventParser. Failed to open file.");
