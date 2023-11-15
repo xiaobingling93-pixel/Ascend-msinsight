@@ -41,7 +41,7 @@ const handleConfirm = () => {
             <AddIcon />
         </el-icon>
         <el-switch class="theme-toggle" v-model="isDarkTheme"></el-switch>
-        <el-dialog v-model="showModal" title="File Explorer" width="30%">
+        <el-dialog v-model="showModal" title="File Explorer" width="30%" :close-on-click-modal="false">
             <ResourceComp ref="resourceComp" />
             <template #footer>
                 <span>

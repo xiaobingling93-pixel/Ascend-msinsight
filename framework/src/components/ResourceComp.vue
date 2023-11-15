@@ -184,4 +184,10 @@ defineExpose({
 :deep(.el-tree-node.is-current > .el-tree-node__content) {
     background-color: var(--dataTree-onclick);
 }
+.el-tree{
+  width: fit-content;
+}
+.el-tree-node{
+  width: fit-content;
+}
 </style>
