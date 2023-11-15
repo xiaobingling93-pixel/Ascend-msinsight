@@ -6,6 +6,7 @@
 #include "ServerLog.h"
 #include "JsonUtil.h"
 #include "EventUtil.h"
+#include "DataBaseManager.h"
 #include "TraceFileParser.h"
 #include "EventParser.h"
 
@@ -14,8 +15,7 @@ namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
 using json_t = rapidjson::Value;
-EventParser::EventParser(const std::string &filePath, const std::string &dbPath,
-                         const std::string &fileId) : filePath(filePath), dbPath(dbPath), fileId(fileId)
+EventParser::EventParser(const std::string &filePath, const std::string &fileId) : filePath(filePath), fileId(fileId)
 {
     ServerLog::Info("Init event parser. fileId:", fileId);
     InitEventHandle();
@@ -33,10 +33,12 @@ void EventParser::InitEventHandle()
 
 void EventParser::Parse(int64_t startPosition, int64_t endPosition)
 {
-    database = std::make_unique<TraceDatabase>();
-    database->OpenDb(dbPath, false);
+    database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection. fileId:", fileId);
+        return;
+    }
     database->InitStmt();
-    database->SetConfig();
     std::string buffer = ReadBuffer(startPosition, endPosition);
     if (buffer.empty()) {
         ServerLog::Error("EventParser. Failed to read buffer.");
@@ -53,8 +55,7 @@ void EventParser::Parse(int64_t startPosition, int64_t endPosition)
         EventHandle(event);
     }
     database->CommitData();
-    database->ReleaseStmt();
-    database->CloseDb();
+    database.reset(); // return connection pool
     ServerLog::Info("EventParser. Parse ", startPosition, " to ", endPosition,
                     ". Count:", parseCount, ", ignore Count:", ignoreCount);
 }

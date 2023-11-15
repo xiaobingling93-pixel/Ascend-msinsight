@@ -26,6 +26,7 @@ public:
     virtual std::string GetDbPath();
     virtual bool GetTableList(std::vector<std::string> &tableList) const;
     virtual std::unique_ptr<SqlitePreparedStatement> CreatPreparedStatement(const std::string &sql);
+    bool DropAllTable();
 
 protected:
     bool ExecSql(const std::string &sql);
@@ -37,9 +38,6 @@ protected:
     std::string path;
     const int bindStartIndex = 1;
     const int resultStartIndex = 0;
-
-private:
-    bool DropAllTable();
 };
 } // end of namespace Module
 } // end of namespace Dic
