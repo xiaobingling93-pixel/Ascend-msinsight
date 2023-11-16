@@ -535,13 +535,13 @@ void TraceDatabase::CalcDepth(const std::vector<SliceTimeData> &sliceData,
 
 void TraceDatabase::UpdateDepthByID(const std::vector<int64_t> &idList, int depth)
 {
-    static const uint64_t maxParams = 10000;
+    static const uint64_t MAX_PARAMS = 10000;
     std::string sql = "UPDATE " + sliceTable + " SET depth = " + std::to_string(depth) + " WHERE id IN ";
     uint64_t start = 0;
     while (start < idList.size()) {
         std::string updateSql = sql;
         uint64_t idListSize = idList.size();
-        uint64_t end = std::min(start + maxParams, idListSize);
+        uint64_t end = std::min(start + MAX_PARAMS, idListSize);
         updateSql.append("(");
         for (auto i = start; i < end - 1; ++i) {
             updateSql.append(std::to_string(idList[i]) + ",");

@@ -22,11 +22,11 @@ bool CommunicationMatrixRapidHandler::Null()
     return true;
 }
 
-bool CommunicationMatrixRapidHandler::Bool(bool b)
+bool CommunicationMatrixRapidHandler::Bool(bool bl)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
-    currentObject.AddMember(tempKey, b, currentObject.GetAllocator());
-    Server::ServerLog::Debug("boolean val:", b, " depth=", currentDepth, " key=", currentKey);
+    currentObject.AddMember(tempKey, bl, currentObject.GetAllocator());
+    Server::ServerLog::Debug("boolean val:", bl, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -38,11 +38,11 @@ bool CommunicationMatrixRapidHandler::Int(int i)
     return true;
 }
 
-bool CommunicationMatrixRapidHandler::Uint(unsigned int u)
+bool CommunicationMatrixRapidHandler::Uint(unsigned int uint)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
-    currentObject.AddMember(tempKey, u, currentObject.GetAllocator());
-    Server::ServerLog::Debug("Uint val:", u, " depth=", currentDepth, " key=", currentKey);
+    currentObject.AddMember(tempKey, uint, currentObject.GetAllocator());
+    Server::ServerLog::Debug("Uint val:", uint, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -62,11 +62,11 @@ bool CommunicationMatrixRapidHandler::Uint64(uint64_t u)
     return true;
 }
 
-bool CommunicationMatrixRapidHandler::Double(double d)
+bool CommunicationMatrixRapidHandler::Double(double doubleVal)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
-    currentObject.AddMember(tempKey, d, currentObject.GetAllocator());
-    Server::ServerLog::Debug("Double val:", d, " depth=", currentDepth, " key=", currentKey);
+    currentObject.AddMember(tempKey, doubleVal, currentObject.GetAllocator());
+    Server::ServerLog::Debug("Double val:", doubleVal, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 

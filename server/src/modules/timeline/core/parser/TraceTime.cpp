@@ -2,7 +2,6 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#include <cmath>
 #include "TraceTime.h"
 
 namespace Dic {

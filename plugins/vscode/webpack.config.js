@@ -1,11 +1,11 @@
-//@ts-check
+// @ts-check
 
 'use strict';
 
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
-//@ts-check
+// @ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
 
 /** @type WebpackConfig */
@@ -50,8 +50,8 @@ const extensionConfig = {
   plugins: [
     new CopyWebpackPlugin({
       patterns: [
-        { from: "../../serverBuild", to: "profiler" },
-        { from: "../../framework/dist", to: "profiler" }
+        { from: '../../serverBuild', to: 'profiler' },
+        { from: '../../framework/dist', to: 'profiler' }
       ],
     }),
   ],
