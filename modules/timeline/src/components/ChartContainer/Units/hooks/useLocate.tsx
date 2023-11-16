@@ -1,10 +1,9 @@
 import { autorun, runInAction } from 'mobx';
 import React from 'react';
-import { preOrderFlatten, PreOrderFlattenOptions } from '../../../../entity/common';
+import { PreOrderFlattenOptions, TreeNode } from '../../../../entity/common';
 import { InsightUnit, UnitMatcher } from '../../../../entity/insight';
 import { Session } from '../../../../entity/session';
 import { getAutoKey } from '../../../../utils/dataAutoKey';
-import { isPinned } from '../../unitPin';
 /**
  * Searches a list of given @param units recursively in pre-order, comparing them with @param matcher, and save the result path in @path
  *
@@ -41,42 +40,45 @@ const getTargetUnit = (units: InsightUnit[], matcher: UnitMatcher['target']): In
     return path[path.length - 1];
 };
 
-const getUnitHeight = (units: InsightUnit[], targetUnit: InsightUnit, options: PreOrderFlattenOptions<InsightUnit>): number => {
-    const flattenUnits = preOrderFlatten(units, 0, options);
+const getNormalUnitHeight = (unitsArea: InsightUnit[], orderOptions: OrderOptions, targetUnit: InsightUnit): number | undefined => {
+    const flattenUnits = orderOptions.preOrderFlatten(unitsArea, 0, orderOptions.options);
+    let findResult = false;
     let height = 0;
     for (const unit of flattenUnits) {
         if (unit === targetUnit) {
+            findResult = true;
             break;
         }
         height += unit.height() + 1;
     }
     height -= 10;
-    return height;
+    return findResult ? height : undefined;
 };
 
-const getNormalUnitHeight = (session: Session, targetUnit: InsightUnit): number => {
-    const when = (unit: InsightUnit): boolean => unit.isExpanded;
-    // pinned-by-move-units should be excluded in the result
-    const exclude = (unit: InsightUnit): boolean => unit.pinType === 'move' && isPinned(unit);
-    const bypass = (unit: InsightUnit): boolean => unit.type === 'transparent';
-    return getUnitHeight(session.units, targetUnit, { when, exclude, bypass });
+export type OrderOptions = {
+    preOrderFlatten: <T>(tree: Array<TreeNode<T>>, currentLevel: number, options?: PreOrderFlattenOptions<T> | undefined) => T[];
+    options: PreOrderFlattenOptions<InsightUnit>;
 };
 
-export const useJumpTarget = (session: Session, dom: HTMLDivElement | null): void => {
+export const useJumpTarget = (session: Session, unitsArea: InsightUnit[], supportJump: boolean,
+    orderOptions: OrderOptions, dom: HTMLDivElement | null): void => {
     React.useEffect(() => autorun(
         () => {
-            if (dom === null) { return; }
+            if (dom === null || !supportJump) { return; }
             if (session.locateUnit === undefined) { return; }
             const targetUnit = getTargetUnit(session.units, session.locateUnit.target);
             if (targetUnit !== undefined) {
                 session.selectedUnitKeys = [getAutoKey(targetUnit)];
                 session.selectedUnits = [targetUnit];
                 session.locateUnit?.onSuccess(targetUnit);
-                dom?.scrollTo(0, getNormalUnitHeight(session, targetUnit));
+                const scrollHResult = getNormalUnitHeight(unitsArea, orderOptions, targetUnit);
+                if (scrollHResult !== undefined) {
+                    dom?.scrollTo(0, scrollHResult);
+                }
             }
             runInAction(() => {
                 session.locateUnit = undefined;
             });
         },
-    ), [ session, dom ]);
+    ), [ session, dom, unitsArea ]);
 };

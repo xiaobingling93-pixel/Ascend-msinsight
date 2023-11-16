@@ -6,7 +6,7 @@ import * as React from 'react';
 // hooks
 import { useWatchResize } from '../../../utils/useWatchDomResize';
 // support utils/types
-import { preOrderFlatten } from '../../../entity/common';
+import { preOrderFlatten, TreeNode } from '../../../entity/common';
 import { InsightUnit } from '../../../entity/insight';
 import { Session } from '../../../entity/session';
 import { getAutoKey } from '../../../utils/dataAutoKey';
@@ -20,7 +20,7 @@ import { ChartErrorBoundary } from '../../error/ChartErrorBoundary';
 import eventBus, { EventType, useEventBus } from '../../../utils/eventBus';
 import { Mask } from '../../charts/Mask';
 import { useEffect, useRef } from 'react';
-import { useJumpTarget } from './hooks';
+import { useJumpTarget, OrderOptions } from './hooks';
 
 const Lane = styled.div<{ laneHeight: number; className: string }>`
     display: flex;
@@ -112,7 +112,7 @@ export const Unit = observer(({ unit, session, isVisible, ...props }: UnitProps)
     </Lane>;
 });
 
-const computeVisibleUnitRange = (units: InsightUnit[], viewportHeight: number, scrollTop: number): [ number, number ] => {
+export const computeVisibleUnitRange = (units: InsightUnit[], viewportHeight: number, scrollTop: number): [ number, number ] => {
     let start = 0;
     let end = 0;
     let yOffset = 0;
@@ -134,17 +134,26 @@ type FlattenUnitsProps = {
     height: number;
     laneInfoWidth: number;
     hasPinButton: boolean;
+    eventType: string;
 };
 
-const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth }: FlattenUnitsProps): JSX.Element => {
+const orderOptions = {
+    preOrderFlatten: preOrderFlatten,
+    options: {
+        when: (unit: TreeNode<InsightUnit>) => unit.isExpanded,
+        bypass: (unit: TreeNode<InsightUnit>) => unit.type === 'transparent',
+        exclude: (unit: TreeNode<InsightUnit>) => (unit.pinType === 'move' && isPinned(unit)) || !unit.isDisplay,
+    },
+};
+
+const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, eventType }: FlattenUnitsProps): JSX.Element => {
     const [ scrollTop, setScrollTop ] = React.useState(0);
     // 监听滚动事件，计算虚拟滚动的泳道
-    useEventBus(EventType.UNITWRAPPERSCROLL, (value) => setScrollTop(value as number));
-    const flattenUnits = computed(() => preOrderFlatten(session.units, 0,
-        { when: unit => unit.isExpanded, bypass: unit => unit.type === 'transparent', exclude: unit => (unit.pinType === 'move' && isPinned(unit)) || !unit.isDisplay })).get();
+    useEventBus(eventType, (value) => setScrollTop(value as number));
+    const flattenUnits = computed(() => orderOptions.preOrderFlatten(session.units, 0, orderOptions.options)).get();
     const [ first, last ] = React.useMemo(
         () => computeVisibleUnitRange(flattenUnits, height, scrollTop),
-        [ flattenUnits, height, scrollTop ],
+        [ session.pinnedUnits, flattenUnits, height, scrollTop ],
     );
     const headOffset = React.useMemo(
         () => flattenUnits.filter((_, i) => i < first).reduce((prev, cur) => prev + cur.height() + 1, 0),
@@ -197,13 +206,17 @@ const TableScroller = styled.div`
 type ScrollerProps = {
     children: JSX.Element | null;
     session: Session;
+    eventType: string;
+    orderOptions: OrderOptions;
+    unitsArea: InsightUnit[];
+    supportJump: boolean;
 };
 
-const Scroller = observer(React.forwardRef(function Scroller({ session, children }: ScrollerProps, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element {
+export const Scroller = observer(React.forwardRef(function Scroller({ session, children, eventType, orderOptions, unitsArea, supportJump }: ScrollerProps, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element {
     // 广播滚动事件
     function scroll(e: React.UIEvent<HTMLDivElement>): void {
         const scrollTop = e.currentTarget.scrollTop;
-        eventBus.emit(EventType.UNITWRAPPERSCROLL, scrollTop);
+        eventBus.emit(eventType, scrollTop);
         // 修改session.scrollTop
         runInAction(() => {
             session.scrollTop = scrollTop;
@@ -216,7 +229,7 @@ const Scroller = observer(React.forwardRef(function Scroller({ session, children
     }, [session]);
 
     // 跳转到指定泳道
-    useJumpTarget(session, (ref as React.MutableRefObject<HTMLDivElement | null>).current);
+    useJumpTarget(session, unitsArea, supportJump, orderOptions, (ref as React.MutableRefObject<HTMLDivElement | null>).current);
 
     return <TableScroller className="laneWrapper" onScroll={scroll} ref={ref}>
         {children}
@@ -233,12 +246,13 @@ const INVISIBLE_UNITS_PLACEHOLDER = 'invisible-units-placeholder';
 
 const Units = ({ session, height, hasPinButton, laneInfoWidth }:
 { session: Session; height: number; hasPinButton: boolean; laneInfoWidth: number }, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element => {
-    return <Scroller session={session} ref={ref}>
+    return <Scroller session={session} unitsArea={session.units} supportJump={true} ref={ref} orderOptions={orderOptions} eventType={EventType.UNITWRAPPERSCROLL}>
         <FlattenUnits
             session={session}
             height={height}
             laneInfoWidth={laneInfoWidth}
-            hasPinButton={hasPinButton} />
+            hasPinButton={hasPinButton}
+            eventType={EventType.UNITWRAPPERSCROLL} />
     </Scroller>;
 };
 

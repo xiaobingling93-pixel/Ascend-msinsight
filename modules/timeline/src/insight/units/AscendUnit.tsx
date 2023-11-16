@@ -34,7 +34,7 @@ import _ from 'lodash';
 import { runInAction } from 'mobx';
 import { SelectedDataBase } from '../../components/details/base/SelectedData';
 import { offsetConfig } from './config/offsetConfig';
-import { isPinned } from '../../components/ChartContainer/unitPin';
+import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
@@ -122,7 +122,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
     name: 'Thread',
     pinType: 'copied',
     renderInfo: (session: Session, thread: ThreadMetaData, thisUnit: InsightUnit) => {
-        return isPinned(thisUnit) ? `${thread.cardId}_${thread.processName} (${thread.processId})_${thread.threadName}` : `${thread.threadName}`;
+        return isPinned(thisUnit) && !isSonPinned(thisUnit) ? `${thread.cardId}_${thread.processName} (${thread.processId})_${thread.threadName}` : `${thread.threadName}`;
     },
     chart: chart({
         type: 'stackStatus',
@@ -246,7 +246,7 @@ export const ProcessUnit = unit<ProcessMetaData>({
         height: UnitHeight.UPPER,
     }),
     renderInfo: (_, metadata: ProcessMetaData, thisUnit) => {
-        return isPinned(thisUnit) ? `${metadata.cardId}_${metadata.processName} (${metadata.processId})` : `${metadata.processName} (${metadata.processId})`;
+        return isPinned(thisUnit) && !isSonPinned(thisUnit) ? `${metadata.cardId}_${metadata.processName} (${metadata.processId})` : `${metadata.processName} (${metadata.processId})`;
     },
 });
 
