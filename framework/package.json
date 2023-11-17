@@ -14,8 +14,8 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write src/",
     "autoTest": "playwright test",
-    "copyWin": "xcopy .\\plugins .\\dist\\plugins /E /I /Y",
-    "copyLinux": "cp -rf ./plugins ./dist"
+    "copyWin": "git rev-parse HEAD > .\\dist\\build.info && xcopy .\\plugins .\\dist\\plugins /E /I /Y",
+    "copyLinux": "git rev-parse HEAD > ./dist/build.info && cp -rf ./plugins ./dist"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.1.0",
