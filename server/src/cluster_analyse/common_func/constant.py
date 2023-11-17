@@ -61,10 +61,19 @@ class Constant(object):
     DATA_MAP = "data_map"
     COLLECTIVE_GROUP = "collective_group"
     COMMUNICATION_OPS = "communication_ops"
+    MATRIX_OPS = "matrix_ops"
     COLLECTION_PATH = "collection_path"
     COMMUNICATION_GROUP = "communication_group"
     TRANSPORT_TYPE = "Transport Type"
+    COMM_DATA_DICT = "comm_data_dict"
 
     # step time
     RANK = 'rank'
     STAGE = 'stage'
+
+    # epsilon
+    EPS = 1e-15
+
+    # file suffix
+    JSON_SUFFIX = ".json"
+    CSV_SUFFIX = ".csv"
