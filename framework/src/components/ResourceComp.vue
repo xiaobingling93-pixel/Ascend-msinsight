@@ -186,6 +186,7 @@ defineExpose({
 }
 .el-tree{
   width: fit-content;
+  min-width: 100%;
 }
 .el-tree-node{
   width: fit-content;
