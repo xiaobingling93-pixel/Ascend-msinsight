@@ -49,6 +49,19 @@ onMounted(async () => {
     await connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
 });
 
+connector.addListener('updateHtml', (e) => {
+  const { modules }: {modules: string[]} = e.data;
+  modulesConfig.forEach((config, index) => {
+    config.attributes.src = window.URL.createObjectURL(
+        new Blob(
+            [modules[index]],
+            { type: "text/html" }
+        )
+    );
+  })
+  session.isVscode = false;
+});
+
 function toggleTab(index: number): void {
     activeModule.value = index;
     connector.send({
@@ -80,7 +93,7 @@ function toggleTab(index: number): void {
             <template v-for="(moduleConfig, index) in modulesConfig" 
                     :key="`${index}-${moduleConfig.name}`">
                 <iframe
-                    v-if="moduleConfig.isDefault || (session.isCluster)"
+                    v-if="(moduleConfig.isDefault || session.isCluster) && !(session.isVscode)"
                     v-bind={...moduleConfig.attributes}
                     v-show="activeModule === index"
                     ref="moduleRefs"
