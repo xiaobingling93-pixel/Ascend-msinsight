@@ -325,10 +325,7 @@ void TraceFileParser::DeleteParseFileFromDisk(const std::string &fileId)
 {
     ServerLog::Info("Delete file. id:", fileId);
     ParserStatusManager::Instance().ClearParserStatus(fileId);
-    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
-    std::string path = database->GetDbPath();
-    database->ReleaseStmt();
-    database->CloseDb();
+    std::string path = DataBaseManager::Instance().GetDbPath(fileId);
     if (!path.empty()) {
         FileUtil::RemoveFile(path);
     }

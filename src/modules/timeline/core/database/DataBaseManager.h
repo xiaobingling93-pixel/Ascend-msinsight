@@ -29,6 +29,7 @@ public:
     void Clear();
     void ReleaseTraceDatabase(const std::string &fileId);
     bool HasFileId(const std::string &fileId);
+    std::string GetDbPath(const std::string &fileId);
 
 private:
     DataBaseManager() = default;

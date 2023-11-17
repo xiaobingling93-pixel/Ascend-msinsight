@@ -15,6 +15,7 @@ public:
     ResetWindowHandler()
     {
         command = Protocol::REQ_RES_RESET_WINDOW;
+        async = false;
     };
     ~ResetWindowHandler() override = default;
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;

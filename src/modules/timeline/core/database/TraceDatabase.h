@@ -21,7 +21,7 @@ namespace Module {
 namespace Timeline {
 class TraceDatabase : public Database {
 public:
-    TraceDatabase() = default;
+    explicit TraceDatabase(std::mutex &sqlMutex);
     ~TraceDatabase() override;
 
     bool SetConfig();
@@ -68,6 +68,7 @@ public:
                           std::vector<Protocol::UnitCounterData> &dataList);
 
 private:
+    std::mutex &mutex;
     const std::string sliceTable = "slice";
     const std::string threadTable = "thread";
     const std::string processTable = "process";
