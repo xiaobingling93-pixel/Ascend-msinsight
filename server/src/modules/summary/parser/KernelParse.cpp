@@ -61,7 +61,7 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
             ServerLog::Error("The header of the imported file is incorrect or incomplete. The path is: " + kernelFile);
             return;
         }
-        Kernel recordPtr = KernelParse::mapperToKernelDetail(dataMap, row);
+        Kernel recordPtr = KernelParse::mapperToKernelDetail(dataMap, row, fileId);
         // 读取每一行数据写入kernel内
         database->InsertKernelDetail(recordPtr);
     }
@@ -69,7 +69,8 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
     database->SaveKernelDetail();
 }
 
-Kernel KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap, std::vector<std::string> row)
+Kernel KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
+    std::vector<std::string> row, const std::string &fileId)
 {
     std::int16_t stepIndex = dataMap["Step Id"];
     std::int16_t nameIndex = dataMap["Name"];
@@ -86,6 +87,7 @@ Kernel KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
     std::int16_t outputDataIndex = dataMap["Output Data Types"];
     std::int16_t outputFormatsIndex = dataMap["Output Formats"];
     Kernel oper {};
+    oper.rankId = fileId;
     oper.name = row[nameIndex];
     oper.stepId = row[stepIndex];
     oper.type = row[typeIndex];

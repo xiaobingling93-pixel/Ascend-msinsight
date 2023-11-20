@@ -98,7 +98,7 @@ const std::string REQ_RES_OPERATOR_DETAIL_INFO = "operator/details";
 const std::string REQ_RES_OPERATOR_MORE_INFO  = "operator/more_info";
 
 // Operator Event
-const std::string EVENT_PARSE_OPERATOR_STATUS = "parse/operator";
+const std::string EVENT_PARSE_OPERATOR_STATUS = "parse/operatorCompleted";
 
 #pragma endregion
 } // end of namespace

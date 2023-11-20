@@ -9,8 +9,13 @@
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 
-
 namespace Dic::Protocol {
+
+    enum class QueryType {
+        CATEGORY,
+        COMPUTE_UNIT
+    };
+
     // 算子视图饼图的请求参数
     struct OperatorDurationReqParams {
         std::string rankId;
@@ -35,6 +40,7 @@ namespace Dic::Protocol {
         std::string group;
         int64_t topK;
         std::string opType;
+        std::string opName;
         std::string shape;
         int64_t current;
         int64_t pageSize;

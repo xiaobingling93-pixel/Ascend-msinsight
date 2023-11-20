@@ -14,6 +14,7 @@
 #include "TraceFileParser.h"
 #include "ClusterFileParser.h"
 #include "MemoryParse.h"
+#include "OperatorProtocolEvent.h"
 
 namespace Dic {
 namespace Module {
@@ -142,6 +143,7 @@ void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::
         }
     }
     ParseMemoryEndProcess(token);
+    ParseOperatorEndProcess(token, fileId, result);
 }
 
 void ImportActionHandler::ParseMemoryEndProcess(const std::string token)
@@ -159,6 +161,23 @@ void ImportActionHandler::ParseMemoryEndProcess(const std::string token)
     event->memoryResult = hasMemory;
     session->OnEvent(std::move(event));
 }
+
+    void ImportActionHandler::ParseOperatorEndProcess(const std::string token, const std::string &fileId, bool result)
+    {
+        WsSession *session = WsSessionManager::Instance().GetSession(token);
+        if (session == nullptr) {
+            ServerLog::Warn("[Operator]Failed to get session token");
+            return;
+        }
+        auto event = std::make_unique<OperatorParseStatusEvent>();
+        event->moduleName = ModuleType::OPERATOR;
+        event->token = token;
+        event->result = true;
+        event->data.rankId = fileId;
+        event->data.status = result;
+        event->data.error = "";
+        session->OnEvent(std::move(event));
+    }
 
 void ImportActionHandler::SendParseSuccessEvent(const std::string &token, const std::string &fileId)
 {

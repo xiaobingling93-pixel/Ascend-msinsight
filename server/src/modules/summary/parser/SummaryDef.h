@@ -12,6 +12,7 @@ namespace Module {
 namespace Summary {
 
 struct Kernel {
+    std::string rankId;
     std::string stepId;
     std::string name;
     std::string type;

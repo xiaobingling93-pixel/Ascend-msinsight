@@ -17,16 +17,18 @@ namespace Dic::Module::Operator {
         OperatorCategoryInfoRequest &request = dynamic_cast<OperatorCategoryInfoRequest &>(*requestPtr);
         std::string token = request.token;
         if (!WsSessionManager::Instance().CheckSession(token)) {
-            ServerLog::Error("Failed to check session token of Category Info, command = ", command);
+            ServerLog::Error("[Operator]Failed to check session token of Category Info, command = ", command);
             return;
         }
         WsSession &session = *WsSessionManager::Instance().GetSession(token);
         std::unique_ptr<OperatorCategoryInfoResponse> responsePtr = std::make_unique<OperatorCategoryInfoResponse>();
         OperatorCategoryInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);
-        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(request.params.rankId);
-        if (true) {
-            SetResponseResult(response, true);
+        std::string rankId = request.params.rankId;
+        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
+        if (!database->QueryOperatorDurationInfo(request.params, QueryType::CATEGORY, response.datas)) {
+            ServerLog::Error("[Operator]Failed to query Category Info, RankId = ", rankId);
+            SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return;
         }

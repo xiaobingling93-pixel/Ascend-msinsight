@@ -46,6 +46,7 @@ namespace Dic::Protocol {
         for (const OperatorStatisticInfoRes& ele : res.datas) {
             json_t dataJson = json_t::object();
             dataJson["opType"] = ele.opType;
+            dataJson["opName"] = ele.opName;
             dataJson["inputShape"] = ele.inputShape;
             dataJson["accCore"] = ele.accCore;
             dataJson["totalTime"] = ele.totalTime;
@@ -119,14 +120,9 @@ namespace Dic::Protocol {
     {
         json_t json;
         ProtocolUtil::SetEventJsonBaseInfo(event, json);
-        json["body"]["data"] = json_t::array();
-        for (const OperatorRank& rank : event.datas) {
-            json_t dataJson = json_t::object();
-            dataJson["rankId"] = rank.rankId;
-            dataJson["status"] = rank.status;
-            dataJson["error"] = rank.error;
-            json["body"]["data"].emplace_back(dataJson);
-        }
+        json["body"]["rankId"] = event.data.rankId;
+        json["body"]["status"] = event.data.status;
+        json["body"]["error"] = event.data.error;
 
         return json;
     }

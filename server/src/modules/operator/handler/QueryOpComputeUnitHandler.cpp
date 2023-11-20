@@ -17,16 +17,18 @@ namespace Dic::Module::Operator {
         OperatorComputeUnitInfoRequest &request = dynamic_cast<OperatorComputeUnitInfoRequest &>(*requestPtr);
         std::string token = request.token;
         if (!WsSessionManager::Instance().CheckSession(token)) {
-            ServerLog::Error("Failed to check session token of Compute Unit Info, command = ", command);
+            ServerLog::Error("[Operator]Failed to check session token of Compute Unit Info, command = ", command);
             return;
         }
         WsSession &session = *WsSessionManager::Instance().GetSession(token);
         auto responsePtr = std::make_unique<OperatorComputeUnitInfoResponse>();
         OperatorComputeUnitInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);
-        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(request.params.rankId);
-        if (true) {
-            SetResponseResult(response, true);
+        std::string rankId = request.params.rankId;
+        auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
+        if (!database->QueryOperatorDurationInfo(request.params, QueryType::COMPUTE_UNIT, response.datas)) {
+            ServerLog::Error("[Operator]Failed to query Compute Unit Info, RankId = ", rankId);
+            SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
             return;
         }

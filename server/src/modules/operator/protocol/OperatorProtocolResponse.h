@@ -20,25 +20,27 @@ namespace Dic::Protocol {
     // 按Operator Type、Input Shape展示时算子统计信息
     struct OperatorStatisticInfoRes {
         std::string opType;
+        std::string opName;
         std::string inputShape;
         std::string accCore;
-        uint64_t totalTime;
-        uint64_t count;
-        uint64_t avgTime;
-        uint64_t maxTime;
-        uint64_t minTime;
+        int64_t totalTime;
+        int64_t count;
+        int64_t avgTime;
+        int64_t maxTime;
+        int64_t minTime;
     };
 
     // 按Operator展示算子详细信息，和See More响应
     struct OperatorDetailInfoRes {
+        std::string rankId;
         std::string stepId;
         std::string name;
         std::string type;
         std::string accCore;
-        uint64_t startTime;
-        uint64_t duration;
-        uint64_t waitTime;
-        uint64_t blockDim;
+        int64_t startTime;
+        int64_t duration;
+        int64_t waitTime;
+        int64_t blockDim;
         std::string inputShape;
         std::string inputType;
         std::string inputFormat;
@@ -62,14 +64,14 @@ namespace Dic::Protocol {
     // 获取按算子类型统计耗时信息以填充表格的响应
     struct OperatorStatisticInfoResponse : public Response {
         OperatorStatisticInfoResponse() : Response(REQ_RES_OPERATOR_STATISTIC_INFO) {};
-        uint64_t total;
+        int64_t total;
         std::vector<OperatorStatisticInfoRes> datas;
     };
 
     // 获取按算子详情信息以填充表格的响应
     struct OperatorDetailInfoResponse : public Response {
         OperatorDetailInfoResponse() : Response(REQ_RES_OPERATOR_DETAIL_INFO) {};
-        uint64_t total;
+        int64_t total;
         std::string level; // l0, l1, l2
         std::vector<OperatorDetailInfoRes> datas;
     };
@@ -77,7 +79,7 @@ namespace Dic::Protocol {
     // 获取See More时算子详情信息的响应
     struct OperatorMoreInfoResponse : public Response {
         OperatorMoreInfoResponse() : Response(REQ_RES_OPERATOR_MORE_INFO) {};
-        uint64_t total;
+        int64_t total;
         std::string level; // l0, l1, l2
         std::vector<OperatorDetailInfoRes> datas;
     };

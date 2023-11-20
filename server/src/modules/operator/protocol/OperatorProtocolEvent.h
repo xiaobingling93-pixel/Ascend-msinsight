@@ -18,7 +18,7 @@ namespace Dic::Protocol {
 
     struct OperatorParseStatusEvent : public Event {
         OperatorParseStatusEvent() : Event(EVENT_PARSE_OPERATOR_STATUS) {}
-        std::vector<OperatorRank> datas;
+        OperatorRank data;
     };
 }
 

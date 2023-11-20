@@ -10,6 +10,8 @@
 #include "SummaryDef.h"
 #include "SummaryProtocolRequest.h"
 #include "SummaryProtocolResponse.h"
+#include "OperatorProtocolRequest.h"
+#include "OperatorProtocolResponse.h"
 
 namespace Dic {
 namespace Module {
@@ -35,6 +37,18 @@ public:
     bool QueryCommDetailHandler(Protocol::CommunicationDetailParams params,
                                 std::vector<Protocol::CommunicationDetail> &computeDetails);
 
+    bool QueryOperatorDurationInfo(Protocol::OperatorDurationReqParams &reqParams, Protocol::QueryType type,
+        std::vector<Protocol::OperatorDurationRes> &datas);
+
+    bool QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
+        Protocol::OperatorStatisticInfoResponse &response);
+
+    bool QueryOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
+        Protocol::OperatorDetailInfoResponse& response);
+
+    bool QueryOperatorMoreInfo(Protocol::OperatorMoreInfoReqParams &reqParams,
+        Protocol::OperatorMoreInfoResponse& response);
+
 private:
     const std::string kernelTable = "kernel_detail";
     bool hasInitStmt = false;
@@ -45,6 +59,22 @@ private:
     sqlite3_stmt *GetKernelStmt(uint64_t paramLen);
     std::string GenComputeSql(Protocol::ComputeDetailParams request);
     std::string GetCommSql(Protocol::CommunicationDetailParams request);
+
+    std::string GenerateQueryCategoryDurationSql(Protocol::OperatorDurationReqParams &reqParams);
+
+    std::string GenerateQueryComputeUnitDurationSql(Protocol::OperatorDurationReqParams &reqParams);
+
+    std::string GenerateQueryStatisticSql(Protocol::OperatorStatisticReqParams &reqParams);
+
+    std::string GenerateQueryDetailSql(Protocol::OperatorStatisticReqParams &reqParams);
+
+    std::string GenerateQueryMoreInfoSql(Protocol::OperatorMoreInfoReqParams &reqParams);
+
+    bool QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total);
+
+    bool QueryDetailTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total);
+
+    bool QueryMoreInfoTotalNum(Protocol::OperatorMoreInfoReqParams &reqParams, int64_t &total);
 };
 
 } // end of namespace Summary

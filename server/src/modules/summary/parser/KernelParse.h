@@ -35,7 +35,8 @@ private:
     std::map<std::string, std::future<void>> futureMap;
     const std::string kernelDetailFile = "kernel_details.csv";
 
-    Kernel mapperToKernelDetail(std::map<std::string, int16_t> dataMap, std::vector<std::string> row);
+    Kernel mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
+        std::vector<std::string> row, const std::string &fileId);
 
     bool WaitParseEnd(const std::string &fileId);
     void StringSplit(const std::string& str, std::vector<std::string>& res);

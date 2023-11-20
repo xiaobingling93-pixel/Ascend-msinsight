@@ -13,7 +13,7 @@ namespace Dic::Module::Operator {
     public:
         QueryOpStatisticInfoHandler()
         {
-            command = REQ_RES_OPERATOR_MORE_INFO;
+            command = REQ_RES_OPERATOR_STATISTIC_INFO;
         }
 
         ~QueryOpStatisticInfoHandler() override = default;
