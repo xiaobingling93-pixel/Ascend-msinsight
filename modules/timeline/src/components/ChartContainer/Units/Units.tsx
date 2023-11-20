@@ -231,7 +231,7 @@ export const Scroller = observer(React.forwardRef(function Scroller({ session, c
     // 跳转到指定泳道
     useJumpTarget(session, unitsArea, supportJump, orderOptions, (ref as React.MutableRefObject<HTMLDivElement | null>).current);
 
-    return <TableScroller className="laneWrapper" onScroll={scroll} ref={ref}>
+    return <TableScroller className={`laneWrapper ${eventType === EventType.PINNEDUNITWRAPPERSCROLL ? 'pinnedScrollArea' : ''}`} onScroll={scroll} ref={ref}>
         {children}
     </TableScroller>;
 }));
