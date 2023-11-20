@@ -137,14 +137,25 @@ std::vector<std::pair<int64_t, int64_t>> TraceFileParser::SplitFile(const std::s
 #else
     std::ifstream file(filePath, std::ios::in | std::ios::binary);
 #endif
-    std::vector<std::pair<int64_t, int64_t>> result;
     if (!file.is_open()) {
         ServerLog::Error("Failed to open file. ", filePath);
-        return result;
+        return {};
     }
+    std::vector<std::pair<int64_t, int64_t>> result = GetSplitPosition(file);
+    file.close();
+    return result;
+}
+
+std::vector<std::pair<int64_t, int64_t>> TraceFileParser::GetSplitPosition(std::ifstream &file)
+{
+    std::vector<std::pair<int64_t, int64_t>> result;
     file.seekg(0, std::ifstream::end);
     int64_t fileSize = file.tellg();
     file.clear();
+    if (fileSize <= blockSize) {
+        result.emplace_back(0, 0);
+        return result;
+    }
     file.seekg(0, std::ios::beg);
     bool endFlag = false;
     while (!endFlag) {
@@ -169,7 +180,6 @@ std::vector<std::pair<int64_t, int64_t>> TraceFileParser::SplitFile(const std::s
         int64_t end = file.tellg();
         result.emplace_back(start, end);
     }
-    file.close();
     return result;
 }
 
@@ -177,12 +187,14 @@ bool TraceFileParser::SeekCharPosition(std::ifstream &file, char c)
 {
     auto cur = file.tellg();
     std::unique_ptr<char[]> buffer = std::make_unique<char[]>(bufferLength);
-    if (!file.read(buffer.get(), bufferLength)) {
-        ServerLog::Error("Failed to read file.");
+    file.read(buffer.get(), bufferLength);
+    int64_t readCount = file.gcount();
+    if (readCount <= 0) {
+        ServerLog::Error("Seek char. Failed to read file.");
         return false;
     }
     file.seekg(cur);
-    std::string str(buffer.get(), bufferLength);
+    std::string str(buffer.get(), readCount);
     uint64_t offset = str.find(c);
     if (offset == std::string::npos) {
         ServerLog::Error("Failed to find separator.");
@@ -196,12 +208,14 @@ bool TraceFileParser::SeekRegexPosition(std::ifstream &file, const std::string &
 {
     auto cur = file.tellg();
     std::unique_ptr<char[]> buffer = std::make_unique<char[]>(bufferLength);
-    if (!file.read(buffer.get(), bufferLength)) {
-        ServerLog::Error("Failed to read file.");
+    file.read(buffer.get(), bufferLength);
+    int64_t readCount = file.gcount();
+    if (readCount <= 0) {
+        ServerLog::Error("Seek regex. Failed to read file.");
         return false;
     }
     file.seekg(cur);
-    std::string str(buffer.get(), bufferLength);
+    std::string str(buffer.get(), readCount);
     auto result = RegexUtil::RegexSearch(str, regex);
     if (!result.has_value()) {
         ServerLog::Error("Failed to find match regex.");
@@ -288,11 +302,13 @@ std::string TraceFileParser::GetFileIdFromFile(const std::string &filePath)
         return "";
     }
     std::unique_ptr<char[]> buffer = std::make_unique<char[]>(bufferLength);
-    if (!file.read(buffer.get(), bufferLength)) {
-        ServerLog::Error("Failed to read file.");
+    file.read(buffer.get(), bufferLength);
+    int64_t readCount = file.gcount();
+    if (readCount <= 0) {
+        ServerLog::Error("Get file id. Failed to read file.");
         return "";
     }
-    std::string str(buffer.get(), bufferLength);
+    std::string str(buffer.get(), readCount);
     std::string rankId = str.substr(str.find_first_of('{'), str.find_first_of('}') - str.find_first_of('{') + 1);
     std::string error;
     auto json = JsonUtil::TryParse(rankId, error);

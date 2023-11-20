@@ -75,6 +75,10 @@ std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
         ServerLog::Error("EventParser. Failed to open file.");
         return "";
     }
+    if (startPosition == 0 && endPosition == 0) {
+        std::string str((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        return str;
+    }
     file.seekg(startPosition, std::ios::beg);
     int64_t suffixLen = 2; // [ ]
     int64_t len = endPosition - startPosition + 1 + suffixLen; // + [ ] + \0
