@@ -1,5 +1,22 @@
 export const CONTENT_LENGTH_PREFIX = 'Content-Length';
-export const PORT = 9000;
+const getParamMap = () => {
+    const paramMap: Map<string, string> = new Map();
+    if (window.location.search !== '') {
+        const params = window.location.search.slice(1).split('&');
+        params.forEach(param => {
+            const entry = param.split('=');
+            if (entry.length === 2) {
+                paramMap.set(entry[0], entry[1]);
+            }
+        });
+    }
+    if (!paramMap.has('port')) {
+        paramMap.set('port', '9000');
+    }
+    return paramMap;
+}
+const PARAM_MAP = getParamMap();
+export const PORT = Number.parseInt(<string>PARAM_MAP.get('port'));
 export const LOCAL_HOST = '127.0.0.1';
 
 export type DataRequest = {
