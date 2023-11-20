@@ -62,6 +62,11 @@ bool ParamsParser::ParseField(const std::string &data)
     if (pos != std::string::npos) {
         return ParseSid(data.substr(pos + symbolSid.length()));
     }
+    pos = data.find(symbolScan);
+    if (pos != std::string::npos) {
+        ParseScan(data.substr(pos + symbolScan.length()));
+        return true;
+    }
     error = "ERROR: " + data + " has not been supported.";
     return false;
 }
@@ -132,6 +137,13 @@ bool ParamsParser::ParseSid(const std::string &sid)
         option.sid = sid;
     }
     return true;
+}
+
+void ParamsParser::ParseScan(const std::string &scan)
+{
+    if (!scan.empty()) {
+        option.scanPort = TryParseInt(scan);
+    }
 }
 } // end of namespace Server
 } // end of namespace Dic

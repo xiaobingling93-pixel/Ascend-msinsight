@@ -6,6 +6,7 @@
 #include <vector>
 #include "ServerLog.h"
 #include "ParamsParser.h"
+#include "SocketUtil.h"
 #include "WsServer.h"
 
 using namespace std;
@@ -34,6 +35,22 @@ void StartServer(const ParamsOption &option)
     }
     ServerLog::Info("=============================== Server End =================================");
 }
+
+void PrintAvailablePort(int startPort)
+{
+    int port = startPort;
+    const int scanRange = 100;
+    while (port < startPort + scanRange) {
+        if (SocketUtil::PortIsUsed(port)) {
+            port++;
+        } else {
+            std::cout << "Available port: " << port << std::endl;
+            ServerLog::Info("Available port: ", port);
+            return;
+        }
+    }
+    std::cout << "[Error] Can't find port between " << startPort << " and " << port << std::endl;
+}
 } // end of namespace Dic
 
 int main(int argc, const char *argv[])
@@ -47,6 +64,10 @@ int main(int argc, const char *argv[])
         return -1;
     }
     const ParamsOption &option = ParamsParser::Instance().GetOption();
+    if (option.scanPort > 0) {
+        PrintAvailablePort(option.scanPort);
+        return 0;
+    }
     ServerLog::Initialize(option.logPath, option.logSize, option.logLevel);
     ParamsOptionInfo();
     StartServer(option);
