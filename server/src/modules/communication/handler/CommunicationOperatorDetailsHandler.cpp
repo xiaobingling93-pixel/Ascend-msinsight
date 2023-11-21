@@ -37,6 +37,7 @@ void CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
     if (!database->QueryOperatorsCount(request.params, response.body) ||
         !database->QueryAllOperators(request.params, response.body)) {
         SetResponseResult(response, false);
+        ServerLog::Error("Failed to get communication operator data.");
         session.OnResponse(std::move(responsePtr));
         return;
     }

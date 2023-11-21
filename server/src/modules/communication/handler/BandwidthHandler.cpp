@@ -36,6 +36,7 @@ void BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestP
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
     if (!database->QueryBandwidthData(request.params, response.body)) {
         SetResponseResult(response, false);
+        ServerLog::Error("Failed to get communication bandwidth data.");
         session.OnResponse(std::move(responsePtr));
         return;
     }

@@ -25,17 +25,17 @@ public:
     bool InitStmt();
     void ReleaseStmt();
 
-    bool InsertOperatorDetailList(const std::vector<Operator> &eventList);
-    bool insertOperatorDetail(const Operator &event);
-    bool InsertRecordDetailList(const std::vector<Record> &eventList);
-    bool insertRecordDetail(const Record &event);
+    void InsertOperatorDetailList(const std::vector<Operator> &eventList);
+    void insertOperatorDetail(const Operator &event);
+    void InsertRecordDetailList(const std::vector<Record> &eventList);
+    void insertRecordDetail(const Record &event);
 
     bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                              std::vector<Protocol::MemoryOperator> &responseBody);
     bool QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::OperatorMemory &operatorBody);
 
-    bool SaveRecordDetail();
-    bool SaveOperatorDetail();
+    void SaveRecordDetail();
+    void SaveOperatorDetail();
 
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum);
     bool QueryOperatorSize(double &min, double &max);

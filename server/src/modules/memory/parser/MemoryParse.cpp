@@ -43,12 +43,8 @@ bool MemoryParse::Parse(const std::vector<std::string> &filePaths, const std::st
             }
             ServerLog::Info("Parse completed. ID:", fileId);
             std::string parentDir = FileUtil::GetParentPath(filePath);
-            if (!OperatorParse(parentDir, fileId)) {
-                ServerLog::Error("Failed to parse operator.");
-            }
-            if (!RecordToParse(parentDir, fileId)) {
-                ServerLog::Error("Failed to parse record.");
-            }
+            OperatorParse(parentDir, fileId);
+            RecordToParse(parentDir, fileId);
             ServerLog::Info("Update depth completed. ID:", fileId);
         });
         futureMap.emplace(fileId, std::move(future));
@@ -79,13 +75,14 @@ bool MemoryParse::WaitParseEnd(const std::string &fileId)
     return true;
 }
 
-bool MemoryParse::OperatorParse(const std::string &parentDir, const std::string &fileId)
+void MemoryParse::OperatorParse(const std::string &parentDir, const std::string &fileId)
 {
     ServerLog::Info("start parse Operator.");
     auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
     std::string operatorFile = FileUtil::GetDetailFile(parentDir, memoryOperatorFile);
     if (operatorFile.empty()) {
-        return false;
+        ServerLog::Warn("There is no operator_memory.csv for rank " + fileId);
+        return;
     }
     std::ifstream file(operatorFile);
     std::string line;
@@ -105,13 +102,16 @@ bool MemoryParse::OperatorParse(const std::string &parentDir, const std::string 
             GetMapVaild(OPERATOR_CSV, dataMap);
             continue;
         }
+        if (dataMap.size() < operatorTableNum) {
+            ServerLog::Error("The header of the imported file is incorrect or incomplete. The path is: " +operatorFile);
+            return;
+        }
         Operator opePtr = MemoryParse::mapperToOperatorDetail(dataMap, row);
         // 读取每一行数据并插入到operator内
         memoryDatabase->insertOperatorDetail(opePtr);
     }
     // 读取剩下的数据并插入到operator内
     memoryDatabase->SaveOperatorDetail();
-    return true;
 }
 
 void MemoryParse::GetMapVaild(const std::vector<std::string>& vec, std::map<std::string, std::int16_t> dataMap)
@@ -160,13 +160,14 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, std::int16_t> dat
     return record;
 }
 
-bool MemoryParse::RecordToParse(const std::string &parentDir, const std::string &fileId)
+void MemoryParse::RecordToParse(const std::string &parentDir, const std::string &fileId)
 {
     ServerLog::Info("start parse Record.");
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
     std::string recordFile = FileUtil::GetDetailFile(parentDir, memoryRecordFile);
     if (recordFile.empty()) {
-        return false;
+        ServerLog::Warn("There is no memory_record.csv for rank " + fileId);
+        return;
     }
     std::ifstream file(recordFile);
     std::string line;
@@ -185,13 +186,16 @@ bool MemoryParse::RecordToParse(const std::string &parentDir, const std::string 
             GetMapVaild(RECORD_CSV, dataMap);
             continue;
         }
+        if (dataMap.size() < recordTableNum) {
+            ServerLog::Error("The header of the imported file is incorrect or incomplete. The path is: " + recordFile);
+            return;
+        }
         Record recordPtr = MemoryParse::mapperToRecordDetail(dataMap, row);
         // 读取每一行数据并插入到record内
         database->insertRecordDetail(recordPtr);
     }
     // 读取剩下的数据并插入到record内
     database->SaveRecordDetail();
-    return true;
 }
 
 MemoryParse::~MemoryParse()

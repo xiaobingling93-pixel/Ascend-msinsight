@@ -34,10 +34,14 @@ void KernelParse::StringSplit(const std::string& str, std::vector<std::string>& 
     }
 }
 
-bool KernelParse::KernelFileParse(const std::string &parentDir, const std::string &fileId)
+void KernelParse::KernelFileParse(const std::string &parentDir, const std::string &fileId)
 {
     ServerLog::Info("start parse kernel detail.");
     std::string kernelFile = FileUtil::GetDetailFile(parentDir, kernelDetailFile);
+    if (kernelDetailFile.empty()) {
+        ServerLog::Warn("There is no kernel_details.csv for rank " + fileId);
+        return;
+    }
     std::ifstream file(kernelFile);
     std::string line;
     std::map<std::string, std::int16_t> dataMap;
@@ -53,13 +57,16 @@ bool KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
             }
             continue;
         }
+        if (dataMap.size() < kernelTableNum) {
+            ServerLog::Error("The header of the imported file is incorrect or incomplete. The path is: " + kernelFile);
+            return;
+        }
         Kernel recordPtr = KernelParse::mapperToKernelDetail(dataMap, row);
         // 读取每一行数据写入kernel内
         database->InsertKernelDetail(recordPtr);
     }
     // 读取剩下的数据写入kernel内
     database->SaveKernelDetail();
-    return true;
 }
 
 Kernel KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap, std::vector<std::string> row)
@@ -122,9 +129,7 @@ bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::st
                 future.wait();
             }
             ServerLog::Info("Parse completed. ID:", fileId);
-            if (!KernelFileParse(filePath, fileId)) {
-                ServerLog::Info("Parse kernel detail table failed.");
-            }
+            KernelFileParse(filePath, fileId);
             ServerLog::Info("Update depth completed. ID:", fileId);
         });
         futureMap.emplace(fileId, std::move(future));

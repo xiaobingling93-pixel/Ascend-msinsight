@@ -26,6 +26,7 @@ void QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!database->QueryMemoryView(request.params, response.map)) {
         SetResponseResult(response, false);
+        ServerLog::Error("Failed to query memory view data.");
         session.OnResponse(std::move(responsePtr));
         return;
     }

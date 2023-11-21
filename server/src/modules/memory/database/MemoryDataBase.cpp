@@ -82,12 +82,12 @@ void MemoryDataBase::ReleaseStmt()
     }
 }
 
-bool MemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &eventList)
+void MemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &eventList)
 {
     sqlite3_stmt *stmt = GetOperatorStmt(eventList.size());
     if (stmt == nullptr) {
         ServerLog::Error("Failed to get operator stmt.");
-        return false;
+        return;
     }
     int idx = bindStartIndex;
     for (const auto &event : eventList) {
@@ -103,27 +103,24 @@ bool MemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &event
     }
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert operator fail. ", sqlite3_errmsg(db));
-        return false;
     }
-    return true;
 }
 
-bool MemoryDataBase::insertOperatorDetail(const Operator &event)
+void MemoryDataBase::insertOperatorDetail(const Operator &event)
 {
     operatorCache.emplace_back(event);
     if (operatorCache.size() == cacheSize) {
         InsertOperatorDetailList(operatorCache);
         operatorCache.clear();
     }
-    return true;
 }
 
-bool MemoryDataBase::InsertRecordDetailList(const std::vector<Record> &eventList)
+void MemoryDataBase::InsertRecordDetailList(const std::vector<Record> &eventList)
 {
     sqlite3_stmt *stmt = GetRecordStmt(eventList.size());
     if (stmt == nullptr) {
         ServerLog::Error("Failed to get Record stmt.");
-        return false;
+        return;
     }
     int idx = bindStartIndex;
     for (const auto &event : eventList) {
@@ -139,19 +136,16 @@ bool MemoryDataBase::InsertRecordDetailList(const std::vector<Record> &eventList
     }
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert operator fail. ", sqlite3_errmsg(db));
-        return false;
     }
-    return true;
 }
 
-bool MemoryDataBase::insertRecordDetail(const Record &event)
+void MemoryDataBase::insertRecordDetail(const Record &event)
 {
     recordCache.emplace_back(event);
     if (recordCache.size() == cacheSize) {
         InsertRecordDetailList(recordCache);
         recordCache.clear();
     }
-    return true;
 }
 
 std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requestParams)
@@ -318,22 +312,20 @@ std::string MemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak& peak)
     return peakMemory;
 }
 
-bool MemoryDataBase::SaveOperatorDetail()
+void MemoryDataBase::SaveOperatorDetail()
 {
     if (operatorCache.size() > 0) {
         InsertOperatorDetailList(operatorCache);
         operatorCache.clear();
     }
-    return true;
 }
 
-bool MemoryDataBase::SaveRecordDetail()
+void MemoryDataBase::SaveRecordDetail()
 {
     if (recordCache.size() > 0) {
         InsertRecordDetailList(recordCache);
         recordCache.clear();
     }
-    return true;
 }
 
 sqlite3_stmt *MemoryDataBase::GetOperatorStmt(uint64_t paramLen)

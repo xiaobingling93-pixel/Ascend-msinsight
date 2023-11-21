@@ -29,6 +29,7 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
     if (!database->QueryOperatorDetail(request.params, response.operatorDetails) or
         !database->QueryOperatorsTotalNum(request.params, response.totalNum)) {
         SetResponseResult(response, false);
+        ServerLog::Error("Failed to query memory operator data.");
         session.OnResponse(std::move(responsePtr));
         return;
     }

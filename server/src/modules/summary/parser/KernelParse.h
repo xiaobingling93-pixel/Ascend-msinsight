@@ -25,10 +25,11 @@ public:
 
     bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
                const std::string &selectedFolder) override;
-    bool KernelFileParse(const std::string &parentDir, const std::string &fileId);
+    void KernelFileParse(const std::string &parentDir, const std::string &fileId);
 private:
     std::unique_ptr<SummaryDataBase> database;
     const int maxThreadNum = 4;
+    const int kernelTableNum = 15;
     std::unique_ptr<ThreadPool> threadPool;
     std::chrono::system_clock::time_point start;
     std::map<std::string, std::future<void>> futureMap;

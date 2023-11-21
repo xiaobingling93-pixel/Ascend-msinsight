@@ -29,6 +29,7 @@ void RanksHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
         auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
         if (!database->QueryRanksHandler(request.params, response.body)) {
             SetResponseResult(response, false);
+            ServerLog::Error("Failed to get ranks response data.");
             session.OnResponse(std::move(responsePtr));
             return;
         }

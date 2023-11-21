@@ -26,11 +26,13 @@ public:
     bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
                const std::string &selectedFolder) override;
     void Reset() override;
-    bool OperatorParse(const std::string &parentDir, const std::string &fileId);
-    bool RecordToParse(const std::string &parentDir, const std::string &fileId);
+    void OperatorParse(const std::string &parentDir, const std::string &fileId);
+    void RecordToParse(const std::string &parentDir, const std::string &fileId);
 
 private:
     const int maxThreadNum = 4;
+    const int operatorTableNum = 5;
+    const int recordTableNum = 5;
 
     std::unique_ptr<MemoryDataBase> database;
     std::unique_ptr<ThreadPool> threadPool;

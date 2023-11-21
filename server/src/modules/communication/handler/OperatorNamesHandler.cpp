@@ -30,6 +30,7 @@ void OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
     if (!database->QueryOperatorNames(request.params, response.body)) {
         SetResponseResult(response, false);
+        ServerLog::Error("Failed to get operator names response data.");
         session.OnResponse(std::move(responsePtr));
         return;
     }

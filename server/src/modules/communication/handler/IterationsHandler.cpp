@@ -29,6 +29,7 @@ void IterationsHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
     if (!database->QueryIterations(response.body)) {
         SetResponseResult(response, false);
+        ServerLog::Error("Failed to get iterations response data.");
         session.OnResponse(std::move(responsePtr));
         return;
     }

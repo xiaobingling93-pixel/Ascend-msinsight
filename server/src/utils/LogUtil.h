@@ -283,8 +283,8 @@ private:
         LogStr(str);
     }
 
-    int maxSize = 32 * 1024 * 1024;
-    const int maxCount = 50;
+    int maxSize = 10 * 1024 * 1024;
+    const int maxCount = 10;
     volatile int currentSize = 0;
     volatile int count = 0;
     volatile bool isAppend = true;

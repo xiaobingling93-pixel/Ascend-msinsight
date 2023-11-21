@@ -17,7 +17,7 @@ using namespace Dic::Protocol;
 using jsonArray = nlohmann::json::array_t;
 void CommunicatorGroupParserHandler::HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr)
 {
-    ServerLog::Info("request to Communication CommunicationOperatorDetailsHandler");
+    ServerLog::Info("request to Communication CommunicationGroupParserHandler");
     Protocol::CommunicatorGroupRequest &request =
             dynamic_cast<Protocol::CommunicatorGroupRequest &>(*requestPtr.get());
     std::string token = request.token;
@@ -29,10 +29,13 @@ void CommunicatorGroupParserHandler::HandleRequest(std::unique_ptr<Dic::Protocol
             std::make_unique<Protocol::CommunicatorGroupResponse>();
     CommunicatorGroupResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    SetResponseResult(response, CommunicatorGroupParserHandler::ParseCommunicatorGroup(
-        request.params.filePath, response.body));
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
+    SetResponseResult(response, true);
+    if (!CommunicatorGroupParserHandler::ParseCommunicatorGroup(request.params.filePath, response.body)) {
+        SetResponseResult(response, false);
+        ServerLog::Error("Communication CommunicationGroupParserHandler Failed");
+    }
     session.OnResponse(std::move(responsePtr));
 }
 

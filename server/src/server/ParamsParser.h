@@ -14,7 +14,7 @@ using namespace std;
 
 struct ParamsOption {
     int wsPort = -1;
-    int logSize = 32 * 1024 * 1024;
+    int logSize = 10 * 1024 * 1024;
     string host = "0.0.0.0";
     string sid;
     string logLevel = "INFO";

@@ -36,6 +36,7 @@ void DistributionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
     if (!database->QueryDistributionData(request.params, response.body)) {
         SetResponseResult(response, false);
+        ServerLog::Error("Failed to get communication distribution data.");
         session.OnResponse(std::move(responsePtr));
         return;
     }

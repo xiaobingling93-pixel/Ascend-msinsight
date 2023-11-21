@@ -19,6 +19,7 @@ Database::~Database()
 bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
     if (isOpen) {
+        ServerLog::Error("The db file has been opened. " + dbPath);
         return false;
     }
     int result = sqlite3_open_v2(CheckSqlString(dbPath).c_str(), &db,
@@ -41,6 +42,7 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
 bool Database::AttachDb(const std::string &dbPath)
 {
     if (isOpen) {
+        ServerLog::Error("The db file has been opened. " + dbPath);
         return false;
     }
 
@@ -70,6 +72,7 @@ void Database::CloseDb()
 bool Database::ExecSql(const std::string &sql, sqlite3_callback callback)
 {
     if (!isOpen) {
+        ServerLog::Error("The db file is not opened.");
         return false;
     }
     int result = sqlite3_exec(db, sql.c_str(), callback, nullptr, nullptr);
@@ -138,6 +141,7 @@ std::string Database::GetDbPath()
 bool Database::GetTableList(std::vector<std::string> &tableList) const
 {
     if (!isOpen) {
+        ServerLog::Error("The db file is not opened.");
         return false;
     }
     static const std::string SQL = "select name from sqlite_master where type='table'";
@@ -163,6 +167,7 @@ bool Database::GetTableList(std::vector<std::string> &tableList) const
 bool Database::DropAllTable()
 {
     if (!isOpen) {
+        ServerLog::Error("The db file is not opened.");
         return false;
     }
     static const std::string SQL = "DROP TABLE IF EXISTS ";

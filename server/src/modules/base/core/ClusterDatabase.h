@@ -25,14 +25,14 @@ public:
     bool CreateTable();
     bool InitStmt();
     void ReleaseStmt();
-    bool InsertTimeInfo(CommunicationTimeInfo &timeInfo);
-    bool InsertTimeInfoList(std::vector<CommunicationTimeInfo> &timeInfoList);
-    bool InsertBandwidth(CommunicationBandWidth &bandWidth);
-    bool InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList);
-    bool InsertStepStatisticsInfo(StepStatistic &stepStatistic);
-    bool InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo);
+    void InsertTimeInfo(CommunicationTimeInfo &timeInfo);
+    void InsertTimeInfoList(std::vector<CommunicationTimeInfo> &timeInfoList);
+    void InsertBandwidth(CommunicationBandWidth &bandWidth);
+    void InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList);
+    void InsertStepStatisticsInfo(StepStatistic &stepStatistic);
+    void InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo);
     void InsertCommunicationMatrix(CommunicationMatrixInfo &communicationMatrix);
-    bool InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo);
+    void InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo);
     bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
                           Protocol::SummaryTopRankResBody &responseBody);
     bool QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody);

@@ -138,33 +138,29 @@ void ClusterDatabase::SaveLastData()
         bandwidthCache.clear();
     }
     if (!matrixCache.empty()) {
-        bool result = InsertCommunicationMatrixInfo(matrixCache);
-        if (!result) {
-            ServerLog::Error("Insert communicationMatrix data fail.");
-        }
+        InsertCommunicationMatrixInfo(matrixCache);
         matrixCache.clear();
     }
 }
 
-bool ClusterDatabase::InsertTimeInfo(CommunicationTimeInfo &timeInfo)
+void ClusterDatabase::InsertTimeInfo(CommunicationTimeInfo &timeInfo)
 {
     timeInfoCache.emplace_back(timeInfo);
     if (timeInfoCache.size() == cacheSize) {
         InsertTimeInfoList(timeInfoCache);
         timeInfoCache.clear();
     }
-    return true;
 }
 
-bool ClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> &timeInfoList)
+void ClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> &timeInfoList)
 {
     if (timeInfoList.empty()) {
-        return false;
+        return;
     }
     sqlite3_stmt *stmt = GetTimeInfoStmtSql(timeInfoList.size());
     if (stmt == nullptr) {
-        ServerLog::Error("Failed to get timeInfo stmt.");
-        return false;
+        ServerLog::Error("Failed to get timeInfo insert stmt.");
+        return;
     }
     int idx = bindStartIndex;
     for (const auto &timeInfo: timeInfoList) {
@@ -190,30 +186,27 @@ bool ClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> &tim
     }
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert timeInfo data fail. ", sqlite3_errmsg(db));
-        return false;
     }
-    return true;
 }
 
-bool ClusterDatabase::InsertBandwidth(CommunicationBandWidth &bandWidth)
+void ClusterDatabase::InsertBandwidth(CommunicationBandWidth &bandWidth)
 {
     bandwidthCache.emplace_back(bandWidth);
     if (bandwidthCache.size() == cacheSize) {
         InsertBandwidthList(bandwidthCache);
         bandwidthCache.clear();
     }
-    return true;
 }
 
-bool ClusterDatabase::InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList)
+void ClusterDatabase::InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList)
 {
     if (bandWidthList.empty()) {
-        return false;
+        return;
     }
     sqlite3_stmt *stmt = GetBandwidthStmtSql(bandWidthList.size());
     if (stmt == nullptr) {
         ServerLog::Error("Failed to get timeInfo stmt.");
-        return false;
+        return;
     }
     int idx = bindStartIndex;
     for (const auto &bandwidth: bandWidthList) {
@@ -243,12 +236,10 @@ bool ClusterDatabase::InsertBandwidthList(std::vector<CommunicationBandWidth> &b
     }
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert bandwidth data fail. ", sqlite3_errmsg(db));
-        return false;
     }
-    return true;
 }
 
-bool ClusterDatabase::InsertStepStatisticsInfo(StepStatistic &stepStatistic)
+void ClusterDatabase::InsertStepStatisticsInfo(StepStatistic &stepStatistic)
 {
     if (stepStmt == nullptr) {
         std::string sql = "INSERT INTO " + stepTraceTable +
@@ -258,10 +249,11 @@ bool ClusterDatabase::InsertStepStatisticsInfo(StepStatistic &stepStatistic)
                           " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stepStmt, nullptr) != SQLITE_OK) {
             ServerLog::Error("Failed to prepare stepTraceTable statement. error:", sqlite3_errmsg(db));
+            return;
         }
         if (stepStmt == nullptr) {
             ServerLog::Error("Failed to get stepTraceTable stmt.");
-            return false;
+            return;
         }
     } else {
         sqlite3_reset(stepStmt);
@@ -284,12 +276,10 @@ bool ClusterDatabase::InsertStepStatisticsInfo(StepStatistic &stepStatistic)
     auto result = sqlite3_step(stepStmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert bandwidth data fail. ", sqlite3_errmsg(db));
-        return false;
     }
-    return true;
 }
 
-bool ClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo)
+void ClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo)
 {
     sqlite3_stmt *stmt;
     std::string sql = "INSERT INTO " + baseInfoTable +
@@ -301,10 +291,11 @@ bool ClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo)
                       " ?, ?, ?)";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare baseInfoTable statement. error:", sqlite3_errmsg(db));
+        return;
     }
     if (stmt == nullptr) {
         ServerLog::Error("Failed to get baseInfoTable stmt.");
-        return false;
+        return;
     }
     int idx = bindStartIndex;
     sqlite3_bind_text(stmt, idx++, clusterBaseInfo.filePath.c_str(), clusterBaseInfo.filePath.length(),
@@ -315,33 +306,28 @@ bool ClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo)
     auto result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert baseInfoTable data fail. ", sqlite3_errmsg(db));
-        return false;
     }
     sqlite3_finalize(stmt);
-    return true;
 }
 
 void ClusterDatabase::InsertCommunicationMatrix(Dic::Module::CommunicationMatrixInfo &communicationMatrix)
 {
     matrixCache.emplace_back(communicationMatrix);
     if (matrixCache.size() == cacheSize) {
-        bool result = InsertCommunicationMatrixInfo(matrixCache);
-        if (!result) {
-            ServerLog::Error("Insert communicationMatrix data fail.");
-        }
+        InsertCommunicationMatrixInfo(matrixCache);
         matrixCache.clear();
     }
 }
 
-bool ClusterDatabase::InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo)
+void ClusterDatabase::InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo)
 {
     if (communicationMatrixInfo.empty()) {
-        return false;
+        return;
     }
     sqlite3_stmt *stmt = GetMatrixStmtSql(communicationMatrixInfo.size());
     if (stmt == nullptr) {
         ServerLog::Error("Failed to get matrix stmt.");
-        return false;
+        return;
     }
     int idx = bindStartIndex;
     for (const auto &communicationMatrix: communicationMatrixInfo) {
@@ -367,9 +353,8 @@ bool ClusterDatabase::InsertCommunicationMatrixInfo(std::vector<CommunicationMat
     }
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert matrix data fail. ", sqlite3_errmsg(db));
-        return false;
+        return;
     }
-    return true;
 }
 
 sqlite3_stmt *ClusterDatabase::GetMatrixStmtSql(int len)
