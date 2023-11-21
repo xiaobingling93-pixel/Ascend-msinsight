@@ -1,0 +1,87 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
+{
+    margin: 0;
+    font-family: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Arial Narrow', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    height: 100vh;
+    letter-spacing: .5px;
+}
+
+html {
+    font-size: 12px;
+}
+
+code {
+    font-family: "Microsoft YaHei",source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+#root {
+    height: 100vh;
+    overflow: hidden;
+}
+
+@import '~antd/dist/antd.css';
+
+:root {
+    --grey0: white;
+    --grey5: #EEEEEE;
+    --grey6:#ebebeb;
+    --grey8: #dddddd;
+    --grey10: #d1d1d1;
+    --grey15:#bcbcbc;
+    --grey20: #a9a9a9;
+    --grey30: #a3a3a3;
+    --grey40: #939393;
+    --grey50: rgb(128, 128, 128);
+    --grey60: #656565;
+    --grey70: #414141;
+    --grey80: #3C3C3C;
+    --grey83: #2C2C2C;
+    --grey85: #252526;
+    --grey90: #202020;
+    --grey95: #1e1e1e;
+    --grey100: black;
+    --activeblue: #1890ff;
+    --whiteblue:#F4F6FA;
+    --grey80blue:#2E2F31;
+    --grey20blue:#8D98AA;
+    --middleblue:#0c518d;
+    --labelblue:#40a9ff;
+    --lightblue:#318cd7;
+}
+
+/* reset some antd defaults */
+.ant-table {
+    background: unset;
+    color: unset;
+}
+.ant-table .ant-table-thead > tr > th.ant-table-cell {
+    background-color: unset;
+    border-bottom-color: unset;
+    color: unset;
+}
+
+.ant-table-tbody > tr > td > button.ant-table-row-expand-icon {
+    background-color: transparent;
+    width: 15px;
+    height: 15px;
+    border: none;
+}
+/* disable antd default highlight for hovered row */
+.ant-table-tbody > tr > td.ant-table-cell-row-hover, tr.ant-table-row:hover > td.ant-table-cell {
+    color: unset;
+    background: unset;
+}
+/* disable antd default highlight for selected row */
+.ant-table-tbody > tr.ant-table-row-selected > td {
+    background: unset;
+    border-color: unset;
+}
+
+.ant-tooltip {
+    max-width: fit-content;
+}
