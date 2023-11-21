@@ -1,0 +1,22 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
+.resizor{
+    z-index:1000;
+}
+.resizor{
+    height: 100%;
+    width: 16px;
+    cursor: col-resize;
+    position: absolute;
+    top: 0px;
+    right: -8px;
+}
+
+th.ant-table-cell *{
+    word-break: break-word;
+}
+
+.variableTotalWidth table{
+    table-layout: fixed!important;
+}
