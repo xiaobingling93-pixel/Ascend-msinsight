@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Webview } from "./Webview";
-import { spawn, exec, ChildProcess} from 'child_process';
+import { spawn, ChildProcess, spawnSync} from 'child_process';
 import { join } from 'path';
 import { readFileSync } from 'fs';
 import { platform } from 'os';
@@ -20,8 +20,7 @@ export class RegisterWebview extends Webview {
     private server?: ChildProcess;
     private serverCheckSchedule?: NodeJS.Timeout;
     private tryRestartTime = 0;
-    private readonly port = 9000;
-    private readonly findServerCommand = platform() === 'win32' ? 'tasklist | findstr profiler_server.exe' : 'ps aux | grep profiler_serve';
+    private port = 9000;
 
     constructor(viewType: string, title: string, context: vscode.ExtensionContext,  manager: WebviewManager) {
         super(viewType, title, context, manager);
@@ -40,7 +39,7 @@ export class RegisterWebview extends Webview {
         this.panel?.webview.postMessage(this._extensionUri.toString);
         (this.panel as vscode.WebviewPanel).webview.html = this.html();
         this.panel?.webview.postMessage({ event: 'updateHtml',
-            modules: modules.map(path => this.getModulesHtml(path))});
+            modules: modules.map(path => this.getModulesHtml(path)), port: this.port});
     }
 
     startServer() {
@@ -58,6 +57,14 @@ export class RegisterWebview extends Webview {
             spawn('chmod', ['+x', serverPath]);
         }
         const serverCommand = serverPath;
+
+        const port = this.scanPort(serverCommand);
+
+        if (!port) {
+            vscode.window.showWarningMessage('[insight]: Can\'t find available port');
+            return;
+        }
+        this.port = Number.parseInt(port);
         this.server = spawn(serverCommand, [' --wsPort=' + this.port]);
         this.server.stdout?.on('data', (data: any) => {
             console.log('[server][info]: ' + data);
@@ -67,24 +74,28 @@ export class RegisterWebview extends Webview {
         });
     }
 
+    scanPort(serverCommand: string) {
+        const scanPort = spawnSync(serverCommand, ['--scan=' + this.port]);
+        if (scanPort.error) {
+            return;
+        } else {
+            const output = scanPort.output.toString();
+            if (output.indexOf('Available port: ') !== -1) {
+                const result = output.match(/\d+/);
+                return result?.pop();
+            }
+        }
+    }
+
     startServerCheckAndRestart() {
         this.serverCheckSchedule = setInterval(() => {
-            exec(this.findServerCommand, (error, stdout, stderr) => {
-                if (error) {
-                    console.error(`exec error: ${error}`);
+            if (this.server && this.server.exitCode !== null && this.panel?.active) {
+                if (this.tryRestartTime++ < 3) {
+                    vscode.window.showWarningMessage('[insight]: server has been dead, please close and reopen');
+                    return;
                 }
-                if (stderr) {
-                    console.error(`exec stderr: ${stderr}`);
-                }
-                // server挂了,只提示3次
-                if (!stdout.includes('profiler_server')) {
-                    if (this.tryRestartTime++ < 3) {
-                        vscode.window.showWarningMessage('[insight]: server has been dead, please close and reopen');
-                        return;
-                    } 
-                    clearInterval(this.serverCheckSchedule);
-                }
-            });
+                clearInterval(this.serverCheckSchedule);
+            }
         }, 3000);
     }
 

@@ -3,19 +3,13 @@
  */
 import { MemoryCurve, OperatorMemory, OperatorMemoryCondition } from '../entity/memory';
 
-const dataSource = {
-    remote: '127.0.0.1',
-    port: 9000,
-    dataPath: [],
-};
-
 /**
  * 查询算子内存表格数据
  * @param params 查询条件
  * @returns {OperatorDetail[]} 查询结果
  */
 export const operatorsMemoryGet = (params: OperatorMemoryCondition): Promise<OperatorMemory> => {
-    return window.request(dataSource, { command: 'Memory/view/operator', params: { ...params } });
+    return window.request({ command: 'Memory/view/operator', params: { ...params } });
 };
 
 /**
@@ -24,5 +18,5 @@ export const operatorsMemoryGet = (params: OperatorMemoryCondition): Promise<Ope
  * @returns {OperatorDetail[]} 查询结果
  */
 export const memoryCurveGet = async (params: {rankId: string; token: string}): Promise<MemoryCurve> => {
-    return window.request(dataSource, { command: 'Memory/view/memoryUsage', params });
+    return window.request({ command: 'Memory/view/memoryUsage', params });
 };

@@ -19,7 +19,7 @@ declare global {
             store?: unknown;
         };
         setTheme: (isDark: boolean) => void;
-        request: (dataSource: DataSource, params: { command: string; params: Record<string, unknown> }) => Promise<any>;
+        request: (params: { command: string; params: Record<string, unknown> }) => Promise<any>;
         _resolve: (value: unknown) => void;
         _reject: (value?: any) => void;
         cefQuery: (obj: CefQueryType) => void;
@@ -40,8 +40,8 @@ root.render(
         </RootStoreContext.Provider>
     </React.StrictMode>));
 
-window.request = async (dataSource, params) => {
-    const data = await connector.fetch({ remote: dataSource, args: params });
+window.request = async (params) => {
+    const data = await connector.fetch({ args: params });
     return (data as any).body;
 };
 

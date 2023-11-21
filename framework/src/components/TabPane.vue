@@ -5,7 +5,8 @@ import connector from '@/connection';
 import { modulesConfig } from '@/moduleConfig';
 import { useSession, type Session } from '@/stores/session';
 import { connectRemote } from '@/centralServer/server';
-import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
+import { LOCAL_HOST, PORT, setPort } from '@/centralServer/websocket/defs';
+import { useDataSources } from '@/stores/dataSource';
 
 const activeModule = ref(0);
 const moduleRefs = ref<HTMLIFrameElement[] | undefined>();
@@ -13,6 +14,9 @@ const { session, setSession } = useSession();
 
 onMounted(async () => {
     connector.resigsterAwaitFetch(async (e) => {
+        if (!e.data.remote) {
+          e.data.remote = useDataSources().lastDataSource;
+        }
         const { remote, args, module } = e.data;
         const result = await request(remote, module, args);
         return { dataSource: remote, body: result };
@@ -62,7 +66,8 @@ onMounted(async () => {
   });
 
   connector.addListener('updateHtml', (e) => {
-    const { modules }: {modules: string[]} = e.data;
+    const { modules, port }: {modules: string[], port: number} = e.data;
+    setPort(port);
     modulesConfig.forEach((config, index) => {
       config.attributes.src = window.URL.createObjectURL(
           new Blob(
@@ -72,9 +77,12 @@ onMounted(async () => {
       );
     })
     session.isVscode = false;
+    connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
   });
 
+  if (!session.isVscode) {
     await connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
+  }
 });
 
 function toggleTab(index: number): void {

@@ -239,7 +239,8 @@ public class InsightWindowFactory implements ToolWindowFactory {
 
         String homePage =
             Boolean.getBoolean(USE_DEBUG_HOME_PAGE_KEY) ? URLConstants.DEBUG_HOME_PAGE : URLConstants.HOME_PAGE;
-        String url = homePage + "?language=" + DynamicBundle.getLocale().getLanguage();
+        String url = homePage + "?language=" + DynamicBundle.getLocale().getLanguage()
+                + "&port=" + ServerHelper.getServerPort();
         webView.loadURL(url);
         if (isDebugMode) {
             webView.openDevtools();

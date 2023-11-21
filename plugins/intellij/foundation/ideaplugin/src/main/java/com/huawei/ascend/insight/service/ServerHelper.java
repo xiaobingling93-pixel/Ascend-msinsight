@@ -9,12 +9,14 @@ import com.huawei.ascend.insight.utils.BalloonNotification;
 import com.huawei.ascend.insight.utils.LogPrinter;
 import com.huawei.ascend.insight.utils.ProcessUtils;
 import com.huawei.ascend.insight.utils.StringUtil;
-import com.huawei.ascend.insight.utils.ThreadUtil;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.concurrency.AppExecutorUtil;
+
+import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,6 +24,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * DicHelper
@@ -30,6 +34,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ServerHelper {
     private static final LogPrinter LOGGER = LogPrinter.createLogger(ServerHelper.class);
+    private static final Pattern PORT_PATTERN = Pattern.compile("\\d+");
 
     private static ScheduledFuture<?> startServerHook = null;
 
@@ -38,18 +43,22 @@ public class ServerHelper {
     private static boolean isFirstStart = true;
 
     private static Process serverProcess = null;
-
+    private static int serverPort = 9000;
     private static int tryRestartTime = 0;
 
     /**
      * startServer
      */
     public static void startServer() {
-        ThreadUtil.runInUIThread(() -> {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
             executeStartServerCommand();
             startServerHook = AppExecutorUtil.getAppScheduledExecutorService()
                 .scheduleWithFixedDelay(ServerHelper::serverCheckAndRestart, 5, 3, TimeUnit.SECONDS);
         });
+    }
+
+    public static int getServerPort() {
+        return serverPort;
     }
 
     /**
@@ -64,7 +73,7 @@ public class ServerHelper {
 
     private static void serverCheckAndRestart() {
         // 未找到server进程
-        if (!ProcessUtils.findProcess(CmdConstants.PROFILER_SERVER)) {
+        if (serverProcess != null && !serverProcess.isAlive()) {
             hasBeenDead = true;
             if (++tryRestartTime <= 5) {
                 LOGGER.info("try to start server again!");
@@ -96,23 +105,43 @@ public class ServerHelper {
         String lineSeparator = StringUtil.FILE_SEPARATOR;
         String pluginsPath = PathManager.getPluginsPath() + lineSeparator + "ascend-insight" + lineSeparator + "tools";
         List<String> processArgs = new ArrayList<>();
-        if (SystemInfo.isWindows) {
-            processArgs.add(CmdConstants.WINDOWS_CMD);
-            processArgs.add(CmdConstants.WINDOWS_CMD_TERMINAL);
-            processArgs.add(CmdConstants.PROFILER_SERVER);
-            processArgs.add(CmdConstants.PORT_PREFIX + CmdConstants.WS_BASE_PORT);
-            Optional<Process> execute = ProcessUtils.execute(processArgs, pluginsPath);
-            serverProcess = execute.orElse(null);
-            return;
-        }
         try {
+            if (SystemInfo.isWindows) {
+                processArgs.add(CmdConstants.WINDOWS_CMD);
+                processArgs.add(CmdConstants.WINDOWS_CMD_TERMINAL);
+                processArgs.add(CmdConstants.PROFILER_SERVER);
+                processArgs.add(CmdConstants.SCAN_PREFIX + CmdConstants.WS_BASE_PORT);
+                Process scanProcess = ProcessUtils.execute(processArgs, pluginsPath).get();
+                processArgs.remove(processArgs.size() - 1);
+                processArgs.add(CmdConstants.PORT_PREFIX + getAvailablePort(scanProcess));
+                Optional<Process> execute = ProcessUtils.execute(processArgs, pluginsPath);
+                serverProcess = execute.orElse(null);
+                return;
+            }
             Runtime.getRuntime().exec("chmod +x " + pluginsPath + lineSeparator + CmdConstants.PROFILER_SERVER);
+            Process scanProcess = Runtime.getRuntime().exec(pluginsPath + lineSeparator
+                    + CmdConstants.PROFILER_SERVER + ' ' + CmdConstants.SCAN_PREFIX + CmdConstants.WS_BASE_PORT);
+
             serverProcess = Runtime.getRuntime()
                 .exec(pluginsPath + lineSeparator + CmdConstants.PROFILER_SERVER + ' ' + CmdConstants.PORT_PREFIX
-                    + CmdConstants.WS_BASE_PORT);
-        } catch (IOException e) {
+                    + getAvailablePort(scanProcess));
+        } catch (IOException | InterruptedException e) {
             LOGGER.info(e.getMessage());
         }
+    }
+
+    private static int getAvailablePort(Process scanProcess) throws InterruptedException, IOException {
+        scanProcess.waitFor();
+        String scanInfo = IOUtils.toString(scanProcess.getInputStream(), "UTF-8");
+        int start = scanInfo.indexOf("Available port: ");
+        if (start != -1) {
+            Matcher matcher = PORT_PATTERN.matcher(scanInfo.substring(start));
+            if (matcher.find()) {
+                serverPort = Integer.parseInt(matcher.group());
+                return serverPort;
+            }
+        }
+        throw new IllegalStateException("Can\'t find available port");
     }
 
     /**

@@ -25,10 +25,11 @@ const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource)
 export const useDataSources = defineStore('dataSources', () => {
     const { session } = useSession();
     const dataSources = ref<DataSource[]>([{ remote: LOCAL_HOST, port: PORT, dataPath: [] }]);
+    const lastDataSource = ref<DataSource>({ remote: LOCAL_HOST, port: PORT, dataPath: [] })
 
     watch(session, () => {
         if (session.isReset) {
-            dataSources.value.splice(1);
+            dataSources.value = [lastDataSource.value];
             dataSources.value[0].dataPath.splice(0, dataSources.value[0].dataPath.length - 1);
         }
     });
@@ -40,6 +41,7 @@ export const useDataSources = defineStore('dataSources', () => {
         }
         const hasExistedServer = mergeDataSource(dataSources, dataSource);
         if (hasExistedServer) {
+            lastDataSource.value = dataSource;
             return;
         }
 
@@ -48,6 +50,7 @@ export const useDataSources = defineStore('dataSources', () => {
             event: 'remote/import',
             body: { dataSource },
         });
+        lastDataSource.value = dataSource;
     }
 
     const SPLITTER = ': ';
@@ -103,5 +106,5 @@ export const useDataSources = defineStore('dataSources', () => {
         dataSources.value[parentIndex].dataPath.splice(index, 1);
     }
 
-    return { menuTree, remove, confirm, removeSingle };
+    return { menuTree, remove, confirm, removeSingle, lastDataSource };
 });

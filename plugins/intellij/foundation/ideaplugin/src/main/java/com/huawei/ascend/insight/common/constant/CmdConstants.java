@@ -39,6 +39,11 @@ public class CmdConstants {
     public static final String PORT_PREFIX = "--wsPort=";
 
     /**
+     * SCAN_PREFIX
+     */
+    public static final String SCAN_PREFIX = "--scan=";
+
+    /**
      * LOG_PATH
      */
     public static final String LOG_PATH = "--logPath=";

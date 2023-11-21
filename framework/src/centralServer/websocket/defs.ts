@@ -16,7 +16,10 @@ const getParamMap = () => {
     return paramMap;
 }
 const PARAM_MAP = getParamMap();
-export const PORT = Number.parseInt(<string>PARAM_MAP.get('port'));
+export let PORT = Number.parseInt(<string>PARAM_MAP.get('port'));
+export function setPort(port: number) {
+    PORT = port;
+}
 export const LOCAL_HOST = '127.0.0.1';
 
 export type DataRequest = {
