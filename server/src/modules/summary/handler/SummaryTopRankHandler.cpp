@@ -42,6 +42,7 @@ void SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase();
     if (!database->QuerySummaryData(request.params, response.body) ||
         !database->QueryBaseInfo(response.body)) {
+        ServerLog::Warn("QuerySummaryData or QueryBaseInfo is failed");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;

@@ -26,6 +26,7 @@ void QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(request.params.rankId);
     if (!database->QueryComputeDetailHandler(request.params, response.computeDetails) or
         !database->QueryGetTotalNum(request.params.timeFlag, response.totalNum)) {
+        ServerLog::Warn("QueryComputeDetailHandler or QueryGetTotalNum is failed");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;

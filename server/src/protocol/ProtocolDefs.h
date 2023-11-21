@@ -72,6 +72,7 @@ const std::string REQ_RES_SUMMARY_QUERY_TOP_DATA = "summary/queryTopData";
 const std::string REQ_RES_SUMMARY_STATISTIC = "summary/statistic";
 const std::string REQ_RES_COMPUTE_DETAIL = "summary/queryComputeDetail";
 const std::string REQ_RES_COMMUNICATION_DETAIL = "summary/queryCommunicationDetail";
+const std::string AFFINITY_OPERATOR_QUERY = "summary/queryAffinityOperator";
 
 // pipeline
 const std::string REQ_RES_PIPELINE_GET_ALL_STEPS = "parallelism/pipeline/getAllSteps";

@@ -28,7 +28,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
 {
     ImportActionRequest &request = dynamic_cast<ImportActionRequest &>(*requestPtr.get());
     std::string token = request.token;
-    ServerLog::Info("Import action, token = ", StringUtil::AnonymousString(token));
+    ServerLog::Info("Import action request handler start");
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
                         ", command = ", command);
@@ -66,8 +66,10 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     if (curIsCluster) {
         ClusterFileParser clusterFileParser;
         if (clusterFileParser.ParseClusterFiles(selectedFolder)) {
+            ServerLog::Info("ParseClusterFiles is success");
             parseClusterResult = "ok";
         } else {
+            ServerLog::Warn("ParseClusterFiles is failed");
             parseClusterResult = "fail";
         }
     }
