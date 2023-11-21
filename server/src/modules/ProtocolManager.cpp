@@ -10,6 +10,7 @@
 #include "MemoryProtocol.h"
 #include "SummaryProtocol.h"
 #include "CommunicationProtocol.h"
+#include "OperatorProtocol.h"
 #include "ProtocolManager.h"
 
 namespace Dic {
@@ -39,11 +40,14 @@ void ProtocolManager::Register()
     summaryProtocol->Register();
     auto communicationProtocol = std::make_unique<CommunicationProtocol>();
     communicationProtocol->Register();
+    auto operatorProtocol = std::make_unique<OperatorProtocol>();
+    operatorProtocol->Register();
     protocolMap.emplace(ModuleType::GLOBAL, std::move(globalProtocol));
     protocolMap.emplace(ModuleType::TIMELINE, std::move(timelineProtocol));
     protocolMap.emplace(ModuleType::MEMORY, std::move(memoryProtocol));
     protocolMap.emplace(ModuleType::SUMMARY, std::move(summaryProtocol));
     protocolMap.emplace(ModuleType::COMMUNICATION, std::move(communicationProtocol));
+    protocolMap.emplace(ModuleType::OPERATOR, std::move(operatorProtocol));
 }
 
 void ProtocolManager::UnRegister()
