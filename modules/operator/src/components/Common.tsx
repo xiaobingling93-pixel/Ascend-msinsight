@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import { Col, Row } from 'antd';
+import type { EChartsType } from 'echarts';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? props.name + ' :' : ''} </span>;
@@ -110,3 +111,14 @@ export const GetPageConfigWhithPageData = (page: { current: number; pageSize: nu
         showQuickJumper: page.total / page.pageSize > 5,
     };
 };
+
+export const checkDomDisplay = (dom: HTMLElement): boolean => {
+    return dom?.offsetParent !== null;
+};
+export function addResizeEvent(echart: EChartsType): void {
+    window.addEventListener('resize', function () {
+        if (checkDomDisplay(echart.getDom())) {
+            echart.resize();
+        }
+    });
+}
