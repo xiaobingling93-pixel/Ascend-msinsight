@@ -9,6 +9,7 @@
 #include <string>
 #include <mutex>
 #include "sqlite3.h"
+#include "SqlitePreparedStatement.h"
 
 namespace Dic {
 namespace Module {
@@ -24,19 +25,19 @@ public:
     virtual bool EndTransaction();
     virtual std::string GetDbPath();
     virtual bool GetTableList(std::vector<std::string> &tableList) const;
+    virtual std::unique_ptr<SqlitePreparedStatement> CreatPreparedStatement(const std::string &sql);
+    bool DropAllTable();
 
 protected:
-    bool ExecSql(const std::string &sql, sqlite3_callback callback = nullptr);
+    bool ExecSql(const std::string &sql);
     static std::string CheckSqlString(const std::string &src);
     static std::string sqlite3_column_string(sqlite3_stmt *stmt, int iCol);
+    std::string GetLastError();
     sqlite3 *db = nullptr;
     bool isOpen = false;
     std::string path;
     const int bindStartIndex = 1;
     const int resultStartIndex = 0;
-
-private:
-    bool DropAllTable();
 };
 } // end of namespace Module
 } // end of namespace Dic
