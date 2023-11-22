@@ -34,16 +34,17 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                 }
             });
             session.startRecordTime = 0;
+            const defaultEndTimeAll = typeof unitData.maxTimeStamp === 'number' ? Math.min(Number.MAX_SAFE_INTEGER, unitData.maxTimeStamp) : 1000000000;
             if (session.endTimeAll === undefined) {
-                session.endTimeAll = unitData.maxTimeStamp;
+                session.endTimeAll = defaultEndTimeAll;
             } else {
-                session.endTimeAll = Math.max(session.endTimeAll, unitData.maxTimeStamp);
+                session.endTimeAll = Math.max(session.endTimeAll, defaultEndTimeAll);
             }
             const remoteAttrs = session.remoteAttrs.get(dataSource.remote);
             if (remoteAttrs === undefined) {
-                session.remoteAttrs.set(dataSource.remote, { maxTimeStamp: unitData.maxTimeStamp });
+                session.remoteAttrs.set(dataSource.remote, { maxTimeStamp: defaultEndTimeAll });
             } else {
-                remoteAttrs.maxTimeStamp = unitData.maxTimeStamp;
+                remoteAttrs.maxTimeStamp = defaultEndTimeAll;
             }
             setUnitPhaseByCardId(unitData.unit.metadata.cardId, session, 'download');
             if (unitData.startTimeUpdated === true) {
