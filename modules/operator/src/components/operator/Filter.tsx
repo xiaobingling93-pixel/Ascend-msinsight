@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react';
 import { observable, runInAction, observe } from 'mobx';
 import React, { useEffect } from 'react';
-import { Select } from 'antd';
+import { Select, InputNumber } from 'antd';
 import { Label } from '../Common';
 import { optionMapType, VoidFunction } from '../../utils/interface';
 import { Session } from '../../entity/session';
@@ -13,10 +13,10 @@ export interface ConditionType {
     rankId: string ;
     group: string;
     topK: number;
-    [prop: string]: any;
+    custom?: number;
 }
 
-const defaultCondition = {
+export const defaultCondition = {
     rankId: '',
     group: 'Operator',
     topK: 15,
@@ -50,20 +50,34 @@ const setOptions = async(initOptionMap?: optionMapType): Promise<void> => {
 };
 
 const setCondition = (initCondition?: ConditionType): void => {
-    const rankId = initCondition?.rankId ?? optionMap.rankIdOptions[0]?.value as string ?? defaultCondition.rankId;
-    const group = initCondition?.group ?? optionMap.groupOptions[0]?.value as string ?? defaultCondition.group;
-    const topK = initCondition?.topK ?? optionMap.topKOptions[0]?.value as number ?? defaultCondition.topK;
-
+    const rankId = getValue(
+        [ initCondition?.rankId, condition.rankId, optionMap.rankIdOptions[0]?.value, defaultCondition.rankId ]);
+    const group = getValue(
+        [ initCondition?.group, condition.group, optionMap.groupOptions[0]?.value, defaultCondition.group ]);
+    const topK = getValue(
+        [ initCondition?.topK, condition.topK, optionMap.topKOptions[0]?.value, defaultCondition.topK ]);
     runInAction(() => {
-        condition.group = group;
-        condition.rankId = rankId;
-        condition.topK = topK;
+        condition.group = group as string;
+        condition.rankId = rankId as string;
+        condition.topK = topK as number;
     });
 };
 
-const handleChange = (key: string, val: string | number): void => {
+function getValue<T>(list: T[]): T | undefined {
+    if (list.length === 0) {
+        return;
+    }
+    for (let i = 0; i < list.length; i++) {
+        if (list[i] !== undefined && list[i] !== null && list[i] !== '') {
+            return list[i];
+        }
+    }
+    return list[list.length - 1];
+};
+
+function handleChange<T>(key: keyof ConditionType, val: T): void {
     runInAction(() => {
-        condition[key] = val;
+        condition[key] = val as never;
     });
 };
 
@@ -71,7 +85,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     // 初始化
     useEffect(() => {
         observe(condition, () => {
-            handleFilterChange(condition);
+            handleFilterChange({ ...condition, topK: condition.topK !== -1 ? condition.topK : condition.custom });
         });
         observe(optionMap, () => {
             setCondition();
@@ -83,10 +97,23 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
         const rankIdOptions = session.allRankIds.map((item, index) => ({ label: item, value: index }));
         setOptions({ rankIdOptions });
     }, [session.allRankIds]);
-    return (<FilterCom />);
+
+    useEffect(() => {
+        const { total } = session;
+        if (total < 1) {
+            return;
+        }
+        const topKOptions = [
+            { label: '15', value: 15 },
+            { label: `${total}(All)`, value: total },
+            { label: 'Custom', value: -1 },
+        ];
+        setOptions({ topKOptions });
+    }, [session.total]);
+    return (<FilterCom session={session}/>);
 });
 
-const FilterCom = observer((): JSX.Element => {
+const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
     return (<div>
         <FormItem
             name="RankId"
@@ -110,13 +137,21 @@ const FilterCom = observer((): JSX.Element => {
             )}/>
         <FormItem
             name="Top"
-            content={(<Select
+            content={(<><Select
                 value={condition.topK}
                 style={{ width: 100 }}
                 onChange={val => handleChange('topK', val)}
                 options={optionMap.topKOptions}
                 showSearch={true}
             />
+            <InputNumber
+                min={0}
+                max={session.total}
+                onChange={val => handleChange('custom', val)}
+                controls={false}
+                formatter={val => String(Number(val))}
+                style={{ marginLeft: '10px', width: '80px', display: condition.topK === -1 ? 'inline-block' : 'none' }} />
+            </>
             )}/>
     </div>);
 });

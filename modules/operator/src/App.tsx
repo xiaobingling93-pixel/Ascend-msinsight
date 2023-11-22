@@ -11,6 +11,7 @@ const App = observer(() => {
     let session = sessionStore.activeSession;
     useEffect(() => {
         session = sessionStore.activeSession;
+        window.setTheme(true);
     }, []);
     return session !== undefined ? <Operator session={session} /> : <></>;
 });

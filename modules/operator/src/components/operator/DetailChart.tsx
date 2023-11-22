@@ -3,11 +3,8 @@
  */
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
- */
 import * as echarts from 'echarts';
-import { LeftRightContainer, addResizeEvent } from '../Common';
+import { LeftRightContainer, addResizeEvent, chartVisbilityListener } from '../Common';
 import { ConditionType } from './Filter';
 import { queryOperatorCategory, queryOperatorComputeUnit } from '../RequestUtils';
 
@@ -85,13 +82,27 @@ const DetailChart = observer(function ({ condition }: {condition: ConditionType}
     };
     const updateOpTypeData = async (): Promise<void> => {
         const res = await queryOperatorCategory(condition);
-        setOpTypeData(res);
+        if (res === null || res === undefined) {
+            return;
+        }
+        const data = res.data.map((item: any) => ({ name: item.name, value: item.duration }));
+        setOpTypeData(data);
     };
     const updateComputeData = async (): Promise<void> => {
         const res = await queryOperatorComputeUnit(condition);
-        setComputeData(res);
+        if (res === null || res === undefined) {
+            return;
+        }
+        const data = res.data.map((item: any) => ({ name: item.name, value: item.duration }));
+        setComputeData(data);
     };
-
+    // 避免echarts渲染空白
+    chartVisbilityListener('opTypeChart', () => {
+        if (document.getElementById('opTypeChart')?.innerHTML === '') {
+            InitCharts(opTypeData, 'opTypeChart');
+            InitCharts(computeData, 'computeChart');
+        }
+    });
     useEffect(() => {
         updateData();
     }, [condition]);

@@ -7,7 +7,9 @@ import { Button } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { Container, GetPageConfigWhithPageData } from '../Common';
 import { type ConditionType } from './Filter';
-import { queryOperators, queryOperatorStatic } from '../RequestUtils';
+import { queryOperators, queryOperatorsInStatic, queryOperatorStatic } from '../RequestUtils';
+import { runInAction } from 'mobx';
+import { Session } from '../../entity/session';
 
 const OPERATOR = 'Operator';
 
@@ -166,25 +168,33 @@ const opShapeStaticColumns = [
 const colMap: any = {
     Operator: {
         l0: opl0Columns,
+        l1: opl2Columns,
         l2: opl2Columns,
     },
     'Operator Type': opStaticColumns,
     'Input Shape': opShapeStaticColumns,
 };
 
-const OperatorTable = ({ condition, opType, inputShape }: {condition: ConditionType;opType: string;inputShape: string }): JSX.Element => {
-    return <BaseTable condition={{ ...condition, group: OPERATOR }} opType={opType} inputShape={inputShape}/>;
+const OperatorTable = ({ condition, opType, inputShape, session }:
+{condition: ConditionType;opType?: string;inputShape?: string;session: Session}): JSX.Element => {
+    return <BaseTable
+        condition={{ ...condition, group: OPERATOR }}
+        opType={opType}
+        inputShape={inputShape}
+        session={session}
+    />;
 };
 
 const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: '', order: '' };
 // eslint-disable-next-line max-lines-per-function
-const BaseTable = ({ condition, opType, inputShape }: {condition: ConditionType;opType?: string;inputShape?: string}): JSX.Element => {
+const BaseTable = ({ condition, opType, inputShape, session }:
+{condition: ConditionType;opType?: string;inputShape?: string;session: Session}): JSX.Element => {
     const [ cols, setCols ] = useState<any[]>(opl0Columns);
     const [ page, setPage ] = useState(defaultPage);
     const [ sorter, setSorter ] = useState(defaultSorter);
     const [ data, setData ] = useState<any[]>([]);
-    const rowKey = 'index';
+    const rowKey = 'rowKey';
     const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
     const btnCol = {
         title: 'Details',
@@ -206,7 +216,7 @@ const BaseTable = ({ condition, opType, inputShape }: {condition: ConditionType;
 
     const getCols = ({ group, level }: any): any[] => {
         if (group === OPERATOR) {
-            return colMap[group][level];
+            return colMap[group][level] ?? colMap[group].l2;
         } else {
             return [ ...colMap[group] ?? [], btnCol ];
         }
@@ -215,9 +225,12 @@ const BaseTable = ({ condition, opType, inputShape }: {condition: ConditionType;
         let res;
         // 展开算子
         if (opType !== undefined && inputShape !== undefined) {
-            res = await queryOperators(
+            res = await queryOperatorsInStatic(
                 { ...condition, ...page, order: sorter.order, orderBy: sorter.field, opType, shape: inputShape },
             );
+        } else if (condition.group === OPERATOR) {
+            res = await queryOperators(
+                { ...condition, ...page, order: sorter.order, orderBy: sorter.field });
         } else {
             res = await queryOperatorStatic(
                 { ...condition, ...page, order: sorter.order, orderBy: sorter.field });
@@ -227,12 +240,16 @@ const BaseTable = ({ condition, opType, inputShape }: {condition: ConditionType;
         }
         const { data, total, level } = res;
         data.forEach((item: any, index: number) => {
-            item.index = index;
+            item.rowKey = condition.group + String(page.pageSize * page.current + index);
         });
+
         setData(data);
         setPage({ ...page, total });
         const columns = getCols({ group: condition.group, level });
         setCols(columns);
+        runInAction(() => {
+            session.total = total;
+        });
     };
 
     useEffect(() => {
@@ -254,7 +271,12 @@ const BaseTable = ({ condition, opType, inputShape }: {condition: ConditionType;
         rowKey={rowKey}
         expandable={condition.group !== OPERATOR
             ? {
-                expandedRowRender: (record: any) => <OperatorTable condition={condition} opType={record.opType} inputShape={record.inputShape}/>,
+                expandedRowRender: (record: any) => <OperatorTable
+                    condition={condition}
+                    opType={record.opType}
+                    inputShape={record.inputShape}
+                    session={session}
+                />,
                 expandedRowKeys,
                 expandIcon: () => (<></>),
             }
@@ -262,11 +284,11 @@ const BaseTable = ({ condition, opType, inputShape }: {condition: ConditionType;
     />;
 };
 
-const DetailTable = ({ condition }: {condition: ConditionType}): JSX.Element => {
+const DetailTable = ({ condition, session }: {condition: ConditionType;session: Session}): JSX.Element => {
     return <Container
         style={{ height: 'auto' }}
         title={'Detail'}
-        content={<BaseTable condition={condition}/>}
+        content={<BaseTable condition={condition} session={session}/>}
     />;
 };
 

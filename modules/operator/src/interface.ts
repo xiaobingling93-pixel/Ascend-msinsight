@@ -7,7 +7,7 @@ import { setTheme, updateSessionHandler, parseSuccessHandler, resetHandler } fro
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     setTheme,
     updateSession: updateSessionHandler,
-    'operator/operator': parseSuccessHandler,
+    'parse/operatorCompleted': parseSuccessHandler,
     'remote/remove': resetHandler,
     'remote/reset': resetHandler,
 };

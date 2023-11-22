@@ -9,11 +9,11 @@ import { HeaderFixedContainer } from '../Common';
 import Filter from './Filter';
 import DetailChart from './DetailChart';
 import BaseTable from './DetailTable';
-import { type ConditionType } from './Filter';
+import { type ConditionType, defaultCondition } from './Filter';
 
 // eslint-disable-next-line max-lines-per-function
 const Index = observer(function ({ session }: { session: Session }) {
-    const [ condition, setCondition ] = useState<ConditionType>({ rankId: '', group: '', topK: 15 });
+    const [ condition, setCondition ] = useState<ConditionType>(defaultCondition);
     const handleFilterChange = (obj: any): void => {
         const newCondition = { ...condition, ...obj };
         setCondition(newCondition);
@@ -26,7 +26,7 @@ const Index = observer(function ({ session }: { session: Session }) {
             header={<Filter session={session} handleFilterChange={handleFilterChange}/>}
             body={ <>
                 <DetailChart condition={condition} />
-                <BaseTable condition={condition} />
+                <BaseTable condition={condition} session={session}/>
             </>
             }
         />
