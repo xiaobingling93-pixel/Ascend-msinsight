@@ -145,10 +145,10 @@ struct UnitChartResponse : public Response {
 // struct
 struct RowThreadTrace {
     int64_t id = 0;
-    uint64_t start_time = 0;
+    uint64_t startTime = 0;
     uint64_t duration = 0;
     int32_t depth = 0;
-    int64_t trace_id = 0;
+    int64_t traceId = 0;
     std::string name;
 };
 

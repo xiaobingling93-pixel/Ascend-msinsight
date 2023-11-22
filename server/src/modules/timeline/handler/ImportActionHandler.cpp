@@ -337,8 +337,7 @@ std::string ImportActionHandler::GetFileId(const std::string &filePath)
     while (DataBaseManager::Instance().HasFileId(result)) {
         result = fileId + "_" + std::to_string(++i);
     }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(result);
-    return database == nullptr ? "" : result;
+    return result;
 }
 
 bool ImportActionHandler::CheckIsCluster(const std::string &filePath)
