@@ -122,3 +122,53 @@ export function addResizeEvent(echart: EChartsType): void {
         }
     });
 }
+
+class DomVisibilityListener {
+    private _visible: boolean = false;
+    private readonly _target: HTMLElement | null;
+
+    private _listener: any;
+
+    private readonly _onVisibleChange: Function | undefined;
+    constructor(dom: string, onVisibleChange?: Function) {
+        this._target = document.getElementById(dom);
+        this.visible = this._target?.offsetParent !== null;
+        this._onVisibleChange = onVisibleChange;
+        this.add();
+    }
+
+    add(): void {
+        this._listener = setTimeout(() => {
+            const newStatus = this._target?.offsetParent !== null;
+            if (newStatus !== this.visible && this._onVisibleChange !== undefined) {
+                if (this._onVisibleChange !== undefined) {
+                    this._onVisibleChange(newStatus);
+                }
+            }
+            this.visible = newStatus;
+            this.add();
+        }, 100);
+    }
+
+    clear(): void {
+        if (this._listener !== null) {
+            clearTimeout(this._listener);
+        }
+    }
+
+    get visible(): boolean {
+        return this._visible;
+    }
+
+    set visible(value: boolean) {
+        this._visible = value;
+    }
+}
+
+export const chartVisbilityListener = (dom: string, onVisibleChange?: Function): DomVisibilityListener => {
+    return new DomVisibilityListener(dom, (status: boolean) => {
+        if (status && onVisibleChange !== undefined) {
+            onVisibleChange();
+        }
+    });
+};

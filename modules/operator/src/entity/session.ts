@@ -5,6 +5,7 @@ import { makeAutoObservable } from 'mobx';
 export class Session {
     allRankIds: string[] = [];
     renderId: number = 0;
+    total: number = 0;
     constructor() {
         makeAutoObservable(this);
     }

@@ -41,6 +41,21 @@ export const queryOperatorCategory = async(param: ShortParam): Promise<any> => {
 export const queryOperatorComputeUnit = async(param: ShortParam): Promise<any> => {
     return window.requestData('operator/compute_unit', param);
 };
+/**
+ * 分页查询算子
+ *
+ * @param {rankId} rankId RankID
+ * @param {number} group
+ * @param {number} topK
+ * @param {number} current 分页
+ * @param {number} pageSize
+ * @param {number} orderBy 排序
+ * @param {number} order
+ * @return {total:number;data:[]}
+ */
+export const queryOperators = async(param: StaticParam): Promise<any> => {
+    return window.requestData('operator/details', param);
+};
 
 /**
  * 分页查询算子统计详情
@@ -59,7 +74,7 @@ export const queryOperatorStatic = async(param: StaticParam): Promise<any> => {
 };
 
 /**
- * 分页查询算子详情
+ * 分页查询统计项（算子类型、算子类型加inputshape）下所有算子
  *
  * @param {rankId} rankId RankID
  * @param {number} group
@@ -72,6 +87,6 @@ export const queryOperatorStatic = async(param: StaticParam): Promise<any> => {
  * @param {string} shape
  * @return {total:number;data:[]}
  */
-export const queryOperators = async(param: DetailParam): Promise<any> => {
-    return window.requestData('operator/details', param);
+export const queryOperatorsInStatic = async(param: DetailParam): Promise<any> => {
+    return window.requestData('operator/more_info', param);
 };
