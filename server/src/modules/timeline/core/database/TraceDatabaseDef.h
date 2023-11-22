@@ -53,6 +53,12 @@ struct MetaDataDto {
     std::string name; // ph = C, name
     std::string args; // ph = C, args
 };
+
+struct SliceTimeData {
+    int64_t id;
+    uint64_t time;
+    uint64_t dur;
+};
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

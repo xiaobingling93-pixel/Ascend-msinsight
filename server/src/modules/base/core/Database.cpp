@@ -23,7 +23,7 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
         return false;
     }
     int result = sqlite3_open_v2(CheckSqlString(dbPath).c_str(), &db,
-        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, nullptr);
+        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, nullptr);
     if (result == SQLITE_OK) {
         isOpen = true;
         this->path = dbPath;
@@ -69,13 +69,13 @@ void Database::CloseDb()
     path.clear();
 }
 
-bool Database::ExecSql(const std::string &sql, sqlite3_callback callback)
+bool Database::ExecSql(const std::string &sql)
 {
     if (!isOpen) {
         ServerLog::Error("The db file is not opened.");
         return false;
     }
-    int result = sqlite3_exec(db, sql.c_str(), callback, nullptr, nullptr);
+    int result = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, nullptr);
     if (result == SQLITE_OK) {
         return true;
     }
@@ -172,16 +172,39 @@ bool Database::DropAllTable()
     }
     static const std::string SQL = "DROP TABLE IF EXISTS ";
     std::vector<std::string> tableList;
-    if (GetTableList(tableList)) {
-        for (const auto &table : tableList) {
-            if (ExecSql(SQL + table + ";")) {
-                ServerLog::Info("Drop table ", table);
-            } else {
-                ServerLog::Error("Failed to drop table ", table);
-            }
-        }
+    if (!GetTableList(tableList)) {
+        return false;
     }
-    return ExecSql("VACUUM");
+    if (tableList.empty()) {
+        return true;
+    }
+    std::string dropSql;
+    for (const auto &table : tableList) {
+        dropSql.append(SQL).append(table).append(";");
+    }
+    return ExecSql(dropSql);
+}
+
+std::unique_ptr<SqlitePreparedStatement> Database::CreatPreparedStatement(const std::string &sql)
+{
+    if ((!isOpen) || sql.empty()) {
+        ServerLog::Error("Failed prepare sql. Database is closed Or sql is empty.");
+        return nullptr;
+    }
+    auto stmt = std::make_unique<SqlitePreparedStatement>(db);
+    if (!stmt->Prepare(sql)) {
+        ServerLog::Error("Failed prepare sql. ", stmt->GetErrorMessage());
+        return nullptr;
+    }
+    return stmt;
+}
+
+std::string Database::GetLastError()
+{
+    if (!isOpen) {
+        return "";
+    }
+    return sqlite3_errmsg(db);
 }
 } // end of namespace Module
 } // end of namespace Dic

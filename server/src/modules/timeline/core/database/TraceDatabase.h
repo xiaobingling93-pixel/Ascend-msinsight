@@ -5,6 +5,9 @@
 #ifndef PROFILER_SERVER_TRACE_DATABASE_H
 #define PROFILER_SERVER_TRACE_DATABASE_H
 
+#include <memory>
+#include <string>
+#include <vector>
 #include "TimelineProtocolRequest.h"
 #include "TimelineProtocolResponse.h"
 #include "TimelineProtocolEvent.h"
@@ -20,7 +23,7 @@ namespace Module {
 namespace Timeline {
 class TraceDatabase : public Database {
 public:
-    TraceDatabase() = default;
+    explicit TraceDatabase(std::mutex &sqlMutex);
     ~TraceDatabase() override;
 
     bool SetConfig();
@@ -73,6 +76,7 @@ public:
     bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max);
 
 private:
+    std::mutex &mutex;
     const std::string sliceTable = "slice";
     const std::string threadTable = "thread";
     const std::string processTable = "process";
@@ -83,30 +87,24 @@ private:
     const std::string flowIndex = "flow_cat_time_index";
 
     bool initStmt = false;
-    sqlite3_stmt *insertSliceStmt = nullptr;
-    sqlite3_stmt *updateProcessNameStmt = nullptr;
-    sqlite3_stmt *updateProcessLabelStmt = nullptr;
-    sqlite3_stmt *updateProcessSortIndexStmt = nullptr;
-    sqlite3_stmt *updateThreadNameStmt = nullptr;
-    sqlite3_stmt *updateThreadSortIndexStmt = nullptr;
-    sqlite3_stmt *insertFlowStmt = nullptr;
-    sqlite3_stmt *insertCounterStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> insertSliceStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> updateProcessNameStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> updateProcessLabelStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> updateProcessSortIndexStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> updateThreadNameStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> updateThreadSortIndexStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> insertFlowStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> insertCounterStmt = nullptr;
     const int cacheSize = 1000;
     std::vector<Trace::Slice> sliceCache;
     std::vector<Trace::Flow> flowCache;
     std::vector<Trace::Counter> counterCache;
 
-    struct SliceTimeData {
-        int64_t id;
-        uint64_t time;
-        uint64_t dur;
-    };
-
     bool InitSliceFlowCounterStmt();
     bool InitProcessThreadStmt();
-    sqlite3_stmt *GetSliceStmt(uint64_t paramLen);
-    sqlite3_stmt *GetFlowStmt(uint64_t paramLen);
-    sqlite3_stmt *GetCounterStmt(uint64_t paramLen);
+    std::unique_ptr<SqlitePreparedStatement> GetSliceStmt(uint64_t paramLen);
+    std::unique_ptr<SqlitePreparedStatement> GetFlowStmt(uint64_t paramLen);
+    std::unique_ptr<SqlitePreparedStatement> GetCounterStmt(uint64_t paramLen);
     void UpdateOneTrackDepth(int64_t trackId);
     bool SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeData> &sliceTimeList);
     // depth, idList

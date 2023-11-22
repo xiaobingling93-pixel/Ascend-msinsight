@@ -30,8 +30,10 @@ void SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         for (const auto &fileId : fileIdList) {
             SearchResult searchResult;
             searchResult.rankId = fileId;
-            searchResult.count = DataBaseManager::Instance().
-                GetTraceDatabase(fileId)->SearchSliceNameCount(request.params.searchContent);
+            auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+            if (database != nullptr) {
+                searchResult.count = database->SearchSliceNameCount(request.params.searchContent);
+            }
             response.body.totalCount += searchResult.count;
             if (searchResult.count > 0) {
                 response.body.countList.emplace_back(searchResult);
@@ -40,8 +42,10 @@ void SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     } else {
         SearchResult searchResult;
         searchResult.rankId = request.params.rankId;
-        searchResult.count = DataBaseManager::Instance().
-            GetTraceDatabase(request.params.rankId)->SearchSliceNameCount(request.params.searchContent);
+        auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+        if (database != nullptr) {
+            searchResult.count = database->SearchSliceNameCount(request.params.searchContent);
+        }
         response.body.countList.emplace_back(searchResult);
         response.body.totalCount = searchResult.count;
     }

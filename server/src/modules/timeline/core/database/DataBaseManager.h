@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include "ConnectionPool.h"
 #include "TraceDatabase.h"
 #include "../../../base/core/ClusterDatabase.h"
 #include "MemoryDataBase.h"
@@ -24,10 +25,11 @@ public:
     DataBaseManager(DataBaseManager &&) = delete;
     DataBaseManager &operator=(DataBaseManager &&) = delete;
 
-    TraceDatabase *GetTraceDatabase(const std::string &fileId);
     Memory::MemoryDataBase *GetMemoryDatabase(const std::string &fileId);
     Summary::SummaryDataBase *GetSummaryDatabase(const std::string &fileId);
-    std::vector<TraceDatabase *> GetAllTraceDatabase();
+    bool CreatConnectionPool(const std::string &fileId, const std::string &dbPath);
+    std::shared_ptr<TraceDatabase> GetTraceDatabase(const std::string &fileId);
+    std::vector<ConnectionPool *> GetAllTraceDatabase();
     std::vector<std::string> GetAllFileId();
     void Clear();
     void ClearClusterDb();
@@ -38,13 +40,14 @@ public:
     std::vector<Memory::MemoryDataBase *> GetAllMemoryDatabase();
 
     std::vector<Summary::SummaryDataBase *> GetAllSummaryDatabase();
+    std::string GetDbPath(const std::string &fileId);
 
 private:
     DataBaseManager() = default;
     ~DataBaseManager() = default;
 
     std::mutex mutex;
-    std::map<std::string, std::unique_ptr<TraceDatabase>> traceDatabaseMap;
+    std::map<std::string, std::unique_ptr<ConnectionPool>> traceDatabaseMap;
     std::map<std::string, std::unique_ptr<ClusterDatabase>> clusterDatabaseMap;
     std::map<std::string, std::unique_ptr<Memory::MemoryDataBase>> memoryDatabaseMap;
     std::map<std::string, std::unique_ptr<Summary::SummaryDataBase>> summaryDatabaseMap;

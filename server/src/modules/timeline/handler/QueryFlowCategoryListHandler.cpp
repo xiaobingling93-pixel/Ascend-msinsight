@@ -27,6 +27,11 @@ void QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     FlowCategoryListResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     bool result = database->QueryFlowCategoryList(response.body.category);
     SetResponseResult(response, result);
     // add response to response queue in session

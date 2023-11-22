@@ -12,6 +12,8 @@ namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
 using namespace Dic::Protocol;
+TraceDatabase::TraceDatabase(std::mutex &sqlMutex) : mutex(sqlMutex) {}
+
 TraceDatabase::~TraceDatabase()
 {
     CommitData();
@@ -35,26 +37,21 @@ bool TraceDatabase::InitSliceFlowCounterStmt()
     for (int i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(round(? * 1000),round(? * 1000),?,?,?,?)");
     }
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertSliceStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare slice statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
+    insertSliceStmt = CreatPreparedStatement(sql);
     sql = "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" +
           " VALUES (?,?,?,round(? * 1000),?,?)";
     for (int i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,?,round(? * 1000),?,?)");
     }
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertFlowStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare insertFlow statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
+    insertFlowStmt = CreatPreparedStatement(sql);
     sql = "INSERT INTO " + counterTable + " (name, pid, timestamp, cat, args)" +
           " VALUES (?,?,round(? * 1000),?,?)";
     for (int i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,round(? * 1000),?,?)");
     }
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertCounterStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare insertCounter statement. error:", sqlite3_errmsg(db));
+    insertCounterStmt = CreatPreparedStatement(sql);
+    if (insertSliceStmt == nullptr || insertFlowStmt == nullptr || insertCounterStmt == nullptr) {
+        ServerLog::Error("Failed to prepare slice statement.");
         return false;
     }
     return true;
@@ -64,33 +61,24 @@ bool TraceDatabase::InitProcessThreadStmt()
 {
     std::string sql = "INSERT INTO " + processTable + " (pid, process_name) VALUES (?, ?) " +
           "ON CONFLICT (pid) DO UPDATE SET process_name = excluded.process_name;";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &updateProcessNameStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare updateProcessName statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
+    updateProcessNameStmt = CreatPreparedStatement(sql);
     sql = "INSERT INTO " + processTable + " (pid, label) VALUES (?, ?)" +
           " ON CONFLICT (pid) DO UPDATE SET label = excluded.label;";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &updateProcessLabelStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare updateProcessLabel statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
+    updateProcessLabelStmt = CreatPreparedStatement(sql);
     sql = "INSERT INTO " + processTable + " (pid, process_sort_index) VALUES (?, ?)" +
           "ON CONFLICT (pid) DO UPDATE SET process_sort_index = excluded.process_sort_index;";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &updateProcessSortIndexStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare updateProcessSortIndex statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
+    updateProcessSortIndexStmt = CreatPreparedStatement(sql);
     sql = "INSERT INTO " + threadTable + " (track_id, tid, pid, thread_name) VALUES (?, ?, ?, ?)" +
           " ON CONFLICT (track_id) DO UPDATE " +
           " SET tid = excluded.tid, pid = excluded.pid, thread_name = excluded.thread_name;";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &updateThreadNameStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare updateThreadName statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
+    updateThreadNameStmt = CreatPreparedStatement(sql);
     sql = "INSERT INTO " + threadTable + " (track_id, thread_sort_index) VALUES (?, ?) " +
           " ON CONFLICT (track_id) DO UPDATE SET thread_sort_index = excluded.thread_sort_index;";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &updateThreadSortIndexStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare updateThreadSortIndex statement. error:", sqlite3_errmsg(db));
+    updateThreadSortIndexStmt = CreatPreparedStatement(sql);
+    if (updateProcessNameStmt == nullptr || updateProcessLabelStmt == nullptr ||
+        updateProcessSortIndexStmt == nullptr || updateThreadNameStmt == nullptr ||
+        updateThreadSortIndexStmt == nullptr) {
+        ServerLog::Error("Failed to prepare process and thread statement.");
         return false;
     }
     return true;
@@ -102,38 +90,15 @@ void TraceDatabase::ReleaseStmt()
         return;
     }
     initStmt = false;
-    if (insertSliceStmt != nullptr) {
-        sqlite3_finalize(insertSliceStmt);
-        insertSliceStmt = nullptr;
-    }
-    if (updateProcessNameStmt != nullptr) {
-        sqlite3_finalize(updateProcessNameStmt);
-        updateProcessNameStmt = nullptr;
-    }
-    if (updateProcessLabelStmt != nullptr) {
-        sqlite3_finalize(updateProcessLabelStmt);
-        updateProcessLabelStmt = nullptr;
-    }
-    if (updateProcessSortIndexStmt != nullptr) {
-        sqlite3_finalize(updateProcessSortIndexStmt);
-        updateProcessSortIndexStmt = nullptr;
-    }
-    if (updateThreadNameStmt != nullptr) {
-        sqlite3_finalize(updateThreadNameStmt);
-        updateThreadNameStmt = nullptr;
-    }
-    if (updateThreadSortIndexStmt != nullptr) {
-        sqlite3_finalize(updateThreadSortIndexStmt);
-        updateThreadSortIndexStmt = nullptr;
-    }
-    if (insertFlowStmt != nullptr) {
-        sqlite3_finalize(insertFlowStmt);
-        insertFlowStmt = nullptr;
-    }
-    if (insertCounterStmt != nullptr) {
-        sqlite3_finalize(insertCounterStmt);
-        insertCounterStmt = nullptr;
-    }
+    // stmt对象需要在关闭数据库之前释放
+    insertSliceStmt = nullptr;
+    updateProcessNameStmt = nullptr;
+    updateProcessLabelStmt = nullptr;
+    updateProcessSortIndexStmt = nullptr;
+    updateThreadNameStmt = nullptr;
+    updateThreadSortIndexStmt = nullptr;
+    insertFlowStmt = nullptr;
+    insertCounterStmt = nullptr;
 }
 
 bool TraceDatabase::SetConfig()
@@ -201,69 +166,45 @@ bool TraceDatabase::InsertSlice(const Trace::Slice &event)
 
 bool TraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventList)
 {
-    sqlite3_stmt *stmt = GetSliceStmt(eventList.size());
-    if (stmt == nullptr) {
+    std::unique_ptr<SqlitePreparedStatement> stmt;
+    std::unique_ptr<SqlitePreparedStatement> &refStmt = (eventList.size() == cacheSize) ? insertSliceStmt : stmt;
+    if (refStmt == nullptr) {
+        refStmt = GetSliceStmt(eventList.size()); // 数据长度不是预设的长度则新建一个对象
+    } else {
+        refStmt->Reset(); // 数据长度是预设长度，需要Reset后再使用
+    }
+    if (refStmt == nullptr) {
         ServerLog::Error("Failed to get slice stmt.");
         return false;
     }
-    int idx = bindStartIndex;
     for (const auto &event : eventList) {
-        sqlite3_bind_double(stmt, idx++, event.ts);
-        sqlite3_bind_double(stmt, idx++, event.dur);
-        sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_int64(stmt, idx++, event.trackId);
-        if (event.cat.has_value()) {
-            sqlite3_bind_text(stmt, idx++, event.cat.value().c_str(), -1, SQLITE_TRANSIENT);
-        } else {
-            idx++;
-        }
-        if (event.args.has_value()) {
-            sqlite3_bind_text(stmt, idx++, event.args.value().c_str(), -1, SQLITE_TRANSIENT);
-        } else {
-            idx++;
-        }
+        refStmt->BindParams(event.ts, event.dur, event.name, event.trackId, event.cat, event.args);
     }
-    auto result = sqlite3_step(stmt);
-    if (eventList.size() != cacheSize) {
-        sqlite3_finalize(stmt);
-    }
-    if (result != SQLITE_DONE) {
-        ServerLog::Error("Insert slice data fail. ", sqlite3_errmsg(db));
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!refStmt->Execute()) {
+        ServerLog::Error("Insert slice data fail. ", refStmt->GetErrorMessage());
         return false;
     }
     return true;
 }
 
-sqlite3_stmt *TraceDatabase::GetSliceStmt(uint64_t paramLen)
+std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetSliceStmt(uint64_t paramLen)
 {
-    sqlite3_stmt *stmt = nullptr;
-    if (paramLen == cacheSize) {
-        sqlite3_reset(insertSliceStmt);
-        stmt = insertSliceStmt;
-    } else {
-        std::string sql = "INSERT INTO " + sliceTable +
-                          " (timestamp, duration, name, track_id, cat, args) VALUES "
-                          " (round(? * 1000),round(? * 1000),?,?,?,?)";
-        for (int i = 0; i < paramLen - 1; ++i) {
-            sql.append(",(round(? * 1000),round(? * 1000),?,?,?,?)");
-        }
-        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare slice stat. error:", sqlite3_errmsg(db));
-            return nullptr;
-        }
+    std::string sql = "INSERT INTO " + sliceTable +
+                      " (timestamp, duration, name, track_id, cat, args) VALUES "
+                      " (round(? * 1000),round(? * 1000),?,?,?,?)";
+    for (int i = 0; i < paramLen - 1; ++i) {
+        sql.append(",(round(? * 1000),round(? * 1000),?,?,?,?)");
     }
-    return stmt;
+    return CreatPreparedStatement(sql);
 }
 
 bool TraceDatabase::UpdateProcessName(const Trace::MetaData &event)
 {
-    sqlite3_reset(updateProcessNameStmt);
-    int idx = bindStartIndex;
-    sqlite3_bind_text(updateProcessNameStmt, idx++, event.pid.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(updateProcessNameStmt, idx++, event.args.name.c_str(), -1, SQLITE_STATIC);
-    auto result = sqlite3_step(updateProcessNameStmt);
-    if (result != SQLITE_DONE) {
-        ServerLog::Error("Update process name fail. ", sqlite3_errmsg(db));
+    updateProcessNameStmt->Reset();
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!updateProcessNameStmt->Execute(event.pid, event.args.name)) {
+        ServerLog::Error("Update process name fail. ", updateProcessNameStmt->GetErrorMessage());
         return false;
     }
     return true;
@@ -271,14 +212,10 @@ bool TraceDatabase::UpdateProcessName(const Trace::MetaData &event)
 
 bool TraceDatabase::UpdateProcessLabel(const Trace::MetaData &event)
 {
-    sqlite3_reset(updateProcessLabelStmt);
-    int idx = bindStartIndex;
-    sqlite3_bind_text(updateProcessLabelStmt, idx++, event.pid.c_str(), event.pid.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(updateProcessLabelStmt, idx++, event.args.labels.c_str(), event.args.labels.length(),
-                      SQLITE_TRANSIENT);
-    auto result = sqlite3_step(updateProcessLabelStmt);
-    if (result != SQLITE_DONE) {
-        ServerLog::Error("Update process label fail. ", sqlite3_errmsg(db));
+    updateProcessLabelStmt->Reset();
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!updateProcessLabelStmt->Execute(event.pid, event.args.labels)) {
+        ServerLog::Error("Update process label fail. ", updateProcessLabelStmt->GetErrorMessage());
         return false;
     }
     return true;
@@ -286,13 +223,10 @@ bool TraceDatabase::UpdateProcessLabel(const Trace::MetaData &event)
 
 bool TraceDatabase::UpdateProcessSortIndex(const Trace::MetaData &event)
 {
-    sqlite3_reset(updateProcessSortIndexStmt);
-    int idx = bindStartIndex;
-    sqlite3_bind_text(updateProcessSortIndexStmt, idx++, event.pid.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int64(updateProcessSortIndexStmt, idx++, event.args.sortIndex);
-    auto result = sqlite3_step(updateProcessSortIndexStmt);
-    if (result != SQLITE_DONE) {
-        ServerLog::Error("Update process sort index fail. ", sqlite3_errmsg(db));
+    updateProcessSortIndexStmt->Reset();
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!updateProcessSortIndexStmt->Execute(event.pid, event.args.sortIndex)) {
+        ServerLog::Error("Update process sort index fail. ", updateProcessSortIndexStmt->GetErrorMessage());
         return false;
     }
     return true;
@@ -300,15 +234,10 @@ bool TraceDatabase::UpdateProcessSortIndex(const Trace::MetaData &event)
 
 bool TraceDatabase::UpdateThreadName(const Trace::MetaData &event)
 {
-    sqlite3_reset(updateThreadNameStmt);
-    int idx = bindStartIndex;
-    sqlite3_bind_int64(updateThreadNameStmt, idx++, event.trackId);
-    sqlite3_bind_int64(updateThreadNameStmt, idx++, event.tid);
-    sqlite3_bind_text(updateThreadNameStmt, idx++, event.pid.c_str(), event.pid.length(), SQLITE_STATIC);
-    sqlite3_bind_text(updateThreadNameStmt, idx++, event.args.name.c_str(), event.args.name.length(), SQLITE_STATIC);
-    auto result = sqlite3_step(updateThreadNameStmt);
-    if (result != SQLITE_DONE) {
-        ServerLog::Error("Update thread name fail. ", sqlite3_errmsg(db));
+    updateThreadNameStmt->Reset();
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!updateThreadNameStmt->Execute(event.trackId, event.tid, event.pid, event.args.name)) {
+        ServerLog::Error("Update thread name fail. ", updateThreadNameStmt->GetErrorMessage());
         return false;
     }
     return true;
@@ -316,13 +245,10 @@ bool TraceDatabase::UpdateThreadName(const Trace::MetaData &event)
 
 bool TraceDatabase::UpdateThreadSortIndex(const Trace::MetaData &event)
 {
-    sqlite3_reset(updateThreadSortIndexStmt);
-    int idx = bindStartIndex;
-    sqlite3_bind_int64(updateThreadSortIndexStmt, idx++, event.trackId);
-    sqlite3_bind_int64(updateThreadSortIndexStmt, idx++, event.args.sortIndex);
-    auto result = sqlite3_step(updateThreadSortIndexStmt);
-    if (result != SQLITE_DONE) {
-        ServerLog::Error("Update thread sort index fail. ", sqlite3_errmsg(db));
+    updateThreadSortIndexStmt->Reset();
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!updateThreadSortIndexStmt->Execute(event.trackId, event.args.sortIndex)) {
+        ServerLog::Error("Update thread sort index fail. ", updateThreadSortIndexStmt->GetErrorMessage());
         return false;
     }
     return true;
@@ -340,53 +266,36 @@ bool TraceDatabase::InsertFlow(const Trace::Flow &event)
 
 bool TraceDatabase::InsertFlowList(const std::vector<Trace::Flow> &eventList)
 {
-    sqlite3_stmt *stmt = GetFlowStmt(eventList.size());
-    if (stmt == nullptr) {
+    std::unique_ptr<SqlitePreparedStatement> stmt;
+    std::unique_ptr<SqlitePreparedStatement> &refStmt = (eventList.size() == cacheSize) ? insertFlowStmt : stmt;
+    if (refStmt == nullptr) {
+        refStmt = GetFlowStmt(eventList.size()); // 数据长度不是预设的长度则新建一个对象
+    } else {
+        refStmt->Reset(); // 数据长度是预设长度，需要Reset后再使用
+    }
+    if (refStmt == nullptr) {
         ServerLog::Error("Failed to get flow stmt.");
         return false;
     }
-    int idx = bindStartIndex;
     for (const auto &event : eventList) {
-        sqlite3_bind_text(stmt, idx++, event.flowId.c_str(), event.flowId.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_int64(stmt, idx++, event.trackId);
-        sqlite3_bind_double(stmt, idx++, event.ts);
-        if (event.cat.has_value()) {
-            sqlite3_bind_text(stmt, idx++, event.cat.value().c_str(), event.cat.value().length(), SQLITE_TRANSIENT);
-        } else {
-            idx++;
-        }
-        sqlite3_bind_text(stmt, idx++, event.type.c_str(), event.type.length(), SQLITE_TRANSIENT);
+        refStmt->BindParams(event.flowId, event.name, event.trackId, event.ts, event.cat, event.type);
     }
-    auto result = sqlite3_step(stmt);
-    if (eventList.size() != cacheSize) {
-        sqlite3_finalize(stmt);
-    }
-    if (result != SQLITE_DONE) {
-        ServerLog::Error("Insert flow fail. ", sqlite3_errmsg(db));
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!refStmt->Execute()) {
+        ServerLog::Error("Insert flow fail. ", refStmt->GetErrorMessage());
         return false;
     }
     return true;
 }
 
-sqlite3_stmt *TraceDatabase::GetFlowStmt(uint64_t paramLen)
+std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetFlowStmt(uint64_t paramLen)
 {
-    sqlite3_stmt *stmt = nullptr;
-    if (paramLen == cacheSize) {
-        stmt = insertFlowStmt;
-        sqlite3_reset(stmt);
-    } else {
-        std::string sql = "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" +
-                          " VALUES (?,?,?,round(? * 1000),?,?)";
-        for (int i = 0; i < paramLen - 1; ++i) {
-            sql.append(",(?,?,?,round(? * 1000),?,?)");
-        }
-        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare insertFlow stat. error:", sqlite3_errmsg(db));
-            return nullptr;
-        }
+    std::string sql = "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" +
+                      " VALUES (?,?,?,round(? * 1000),?,?)";
+    for (int i = 0; i < paramLen - 1; ++i) {
+        sql.append(",(?,?,?,round(? * 1000),?,?)");
     }
-    return stmt;
+    return CreatPreparedStatement(sql);
 }
 
 bool TraceDatabase::InsertCounter(const Trace::Counter &event)
@@ -401,52 +310,36 @@ bool TraceDatabase::InsertCounter(const Trace::Counter &event)
 
 bool TraceDatabase::InsertCounterList(const std::vector<Trace::Counter> &eventList)
 {
-    sqlite3_stmt *stmt = GetCounterStmt(eventList.size());
-    if (stmt == nullptr) {
+    std::unique_ptr<SqlitePreparedStatement> stmt;
+    std::unique_ptr<SqlitePreparedStatement> &refStmt = (eventList.size() == cacheSize) ? insertCounterStmt : stmt;
+    if (refStmt == nullptr) {
+        refStmt = GetCounterStmt(eventList.size()); // 数据长度不是预设的长度则新建一个对象
+    } else {
+        refStmt->Reset(); // 数据长度是预设长度，需要Reset后再使用
+    }
+    if (refStmt == nullptr) {
         ServerLog::Error("Failed to get counter stmt.");
         return false;
     }
-    int idx = bindStartIndex;
     for (const auto &event : eventList) {
-        sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, idx++, event.pid.c_str(), event.pid.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_double(stmt, idx++, event.ts);
-        if (event.cat.has_value()) {
-            sqlite3_bind_text(stmt, idx++, event.cat.value().c_str(), -1, SQLITE_TRANSIENT);
-        } else {
-            idx++;
-        }
-        sqlite3_bind_text(stmt, idx++, event.args.c_str(), -1, SQLITE_TRANSIENT);
+        refStmt->BindParams(event.name, event.pid, event.ts, event.cat, event.args);
     }
-    auto result = sqlite3_step(stmt);
-    if (eventList.size() != cacheSize) {
-        sqlite3_finalize(stmt);
-    }
-    if (result != SQLITE_DONE) {
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!refStmt->Execute()) {
         ServerLog::Error("Insert counter data fail. ", sqlite3_errmsg(db));
         return false;
     }
     return true;
 }
 
-sqlite3_stmt *TraceDatabase::GetCounterStmt(uint64_t paramLen)
+std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetCounterStmt(uint64_t paramLen)
 {
-    sqlite3_stmt *stmt = nullptr;
-    if (paramLen == cacheSize) {
-        sqlite3_reset(insertCounterStmt);
-        stmt = insertCounterStmt;
-    } else {
-        std::string sql = "INSERT INTO " + counterTable + " (name, pid, timestamp, cat, args)" +
-              " VALUES (?,?,round(? * 1000),?,?)";
-        for (int i = 0; i < paramLen - 1; ++i) {
-            sql.append(",(?,?,round(? * 1000),?,?)");
-        }
-        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare counter stat. error:", sqlite3_errmsg(db));
-            return nullptr;
-        }
+    std::string sql = "INSERT INTO " + counterTable + " (name, pid, timestamp, cat, args)" +
+                           " VALUES (?,?,round(? * 1000),?,?)";
+    for (int i = 0; i < paramLen - 1; ++i) {
+        sql.append(",(?,?,round(? * 1000),?,?)");
     }
-    return stmt;
+    return CreatPreparedStatement(sql);
 }
 
 void TraceDatabase::UpdateDepth()
@@ -462,17 +355,16 @@ void TraceDatabase::UpdateDepth()
 std::vector<int64_t> TraceDatabase::GetTrackIdList()
 {
     std::vector<int64_t> trackIdList;
-    sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT track_id FROM " + threadTable;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql.");
         return {};
     }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        trackIdList.emplace_back(sqlite3_column_int64(stmt, resultStartIndex));
+    auto resultSet = stmt->ExecuteQuery();
+    while (resultSet->Next()) {
+        trackIdList.emplace_back(resultSet->GetInt64("track_id"));
     }
-    sqlite3_finalize(stmt);
     return trackIdList;
 }
 
@@ -493,22 +385,19 @@ void TraceDatabase::UpdateOneTrackDepth(int64_t trackId)
 
 bool TraceDatabase::SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeData> &sliceTimeList)
 {
-    sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT id, timestamp, duration FROM " + sliceTable + " WHERE track_id = ? ORDER BY timestamp;";
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_int64(stmt, bindStartIndex, trackId);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int iCol = resultStartIndex;
-        int64_t id = sqlite3_column_int64(stmt, iCol++);
-        uint64_t ts = static_cast<uint64_t>(sqlite3_column_int64(stmt, iCol++));
-        uint64_t dur = static_cast<uint64_t>(sqlite3_column_int64(stmt, iCol++));
+    auto resultSet = stmt->ExecuteQuery(trackId);
+    while (resultSet->Next()) {
+        int64_t id = resultSet->GetInt64("id");
+        uint64_t ts = resultSet->GetUint64("timestamp");
+        uint64_t dur = resultSet->GetUint64("duration");
         sliceTimeList.emplace_back(SliceTimeData{id, ts, dur});
     }
-    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -547,14 +436,12 @@ void TraceDatabase::UpdateDepthByID(const std::vector<int64_t> &idList, int dept
             updateSql.append(std::to_string(idList[i]) + ",");
         }
         updateSql.append(std::to_string(idList[end - 1]) + ");");
-        sqlite3_stmt *stmt = nullptr;
-        int result = sqlite3_prepare_v2(db, updateSql.c_str(), updateSql.length(), &stmt, nullptr);
-        if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare sql. error:", sqlite3_errmsg(db));
+        auto stmt = CreatPreparedStatement(updateSql);
+        if (stmt == nullptr) {
+            ServerLog::Error("Failed to prepare sql.");
             return;
         }
-        sqlite3_step(stmt);
-        sqlite3_finalize(stmt);
+        stmt->Execute();
         start = end;
     }
 }
@@ -564,39 +451,38 @@ bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &re
                                       uint64_t minTimestamp, int64_t traceId)
 {
     std::string sql = "SELECT id, timestamp - ? as start_time, duration, name, depth, track_id "
-                      " FROM " + sliceTable + " WHERE track_id = ? AND start_time >= ? AND start_time <= ?"
-                      " GROUP BY depth, id ORDER BY start_time;";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", sqlite3_errmsg(db));
+                      " FROM " + sliceTable +
+                      " WHERE track_id = ? AND start_time >= ? AND start_time <= ?"
+                      " GROUP BY depth, id"
+                      " ORDER BY start_time;";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", GetLastError());
         return false;
     }
-    int index = bindStartIndex;
-    sqlite3_bind_int64(stmt, index++, minTimestamp);
-    sqlite3_bind_int64(stmt, index++, traceId);
-    sqlite3_bind_int64(stmt, index++, requestParams.startTime);
-    sqlite3_bind_int64(stmt, index++, requestParams.endTime);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, traceId, requestParams.startTime, requestParams.endTime);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryThreadTraces. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     std::vector<Protocol::RowThreadTrace> rowThreadTraceVec;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
+    while (resultSet->Next()) {
         Protocol::RowThreadTrace rowThreadTrace {};
-        rowThreadTrace.id = sqlite3_column_int64(stmt, col++);
-        rowThreadTrace.start_time = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        rowThreadTrace.duration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        rowThreadTrace.name = sqlite3_column_string(stmt, col++);
-        rowThreadTrace.depth = sqlite3_column_int(stmt, col++);
-        rowThreadTrace.trace_id = sqlite3_column_int64(stmt, col++);
+        rowThreadTrace.id = resultSet->GetInt64("id");
+        rowThreadTrace.startTime = resultSet->GetUint64("start_time");
+        rowThreadTrace.duration = resultSet->GetUint64("duration");
+        rowThreadTrace.name = resultSet->GetString("name");
+        rowThreadTrace.depth = resultSet->GetInt32("depth");
+        rowThreadTrace.traceId = resultSet->GetInt64("track_id");
         rowThreadTraceVec.emplace_back(rowThreadTrace);
     }
-    sqlite3_finalize(stmt);
     std::map<int64_t, std::vector<Protocol::ThreadTraces>> threadTracesMap;
     for (auto &item : rowThreadTraceVec) {
         Protocol::ThreadTraces threadTraces {};
         threadTraces.name = item.name;
         threadTraces.duration = item.duration;
-        threadTraces.startTime = item.start_time;
-        threadTraces.endTime = item.start_time + item.duration;
+        threadTraces.startTime = item.startTime;
+        threadTraces.endTime = item.startTime + item.duration;
         threadTraces.depth = item.depth;
         threadTraces.threadId = requestParams.threadId;
         threadTracesMap[item.depth].emplace_back(threadTraces);
@@ -627,25 +513,22 @@ bool TraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestParam
                       " FROM " + sliceTable +
                       " WHERE track_id = ? AND timestamp <= ? AND timestamp + duration >= ?"
                       " ORDER BY depth ASC, timestamp ASC;";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryThreads. Failed to prepare sql.", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryThreads. Failed to prepare sql.");
         return false;
     }
     int index = bindStartIndex;
-    sqlite3_bind_int64(stmt, index++, traceId);
-    sqlite3_bind_int64(stmt, index++, extremumTimestamp.maxTimestamp);
-    sqlite3_bind_int64(stmt, index++, extremumTimestamp.minTimestamp);
+    auto resultSet = stmt->ExecuteQuery(traceId, extremumTimestamp.maxTimestamp, extremumTimestamp.minTimestamp);
     std::vector<Protocol::SimpleSlice> simpleSliceVec;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
+    while (resultSet->Next()) {
         int col = resultStartIndex;
         Protocol::SimpleSlice simpleSlice {};
-        simpleSlice.timestamp = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        simpleSlice.duration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        simpleSlice.endTime = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        simpleSlice.name = sqlite3_column_string(stmt, col++);
-        simpleSlice.depth = sqlite3_column_int(stmt, col++);
+        simpleSlice.timestamp = resultSet->GetUint64(col++);
+        simpleSlice.duration = resultSet->GetUint64(col++);
+        simpleSlice.endTime = resultSet->GetUint64(col++);
+        simpleSlice.name = resultSet->GetString(col++);
+        simpleSlice.depth = resultSet->GetInt32(col++);
         simpleSliceVec.emplace_back(simpleSlice);
     }
     // process data
@@ -657,7 +540,6 @@ bool TraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestParam
     CalculateSelfTime(simpleSliceVec, selfTimeKeyValue, startTime, endTime);
     std::vector<Protocol::SimpleSlice> nRows = ThreadsInfoFilter(simpleSliceVec, startTime, endTime);
     ReduceThread(nRows, selfTimeKeyValue, responseBody);
-    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -667,22 +549,16 @@ bool TraceDatabase::QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t star
     std::string sql = "SELECT min(timestamp) as minTimestamp, max(timestamp + duration) AS maxTimestamp"
                       " FROM " + sliceTable +
                       " WHERE track_id = ? AND timestamp <= ? AND timestamp + duration >= ? AND depth = 0;";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryExtremumTimeOfFirstDepth. Failed to prepare sql.", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryExtremumTimeOfFirstDepth. Failed to prepare sql.");
         return false;
     }
-    int index = bindStartIndex;
-    sqlite3_bind_int64(stmt, index++, trackId);
-    sqlite3_bind_int64(stmt, index++, endTime);
-    sqlite3_bind_int64(stmt, index++, startTime);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        extremumTimestamp.minTimestamp = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        extremumTimestamp.maxTimestamp = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+    auto resultSet = stmt->ExecuteQuery(trackId, endTime, startTime);
+    while (resultSet->Next()) {
+        extremumTimestamp.minTimestamp = resultSet->GetUint64("minTimestamp");
+        extremumTimestamp.maxTimestamp = resultSet->GetUint64("maxTimestamp");
     }
-    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -807,32 +683,28 @@ bool TraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &reques
                                       uint64_t minTimestamp, int64_t trackId)
 {
     std::string sql = "SELECT id, timestamp, duration, name, depth, track_id, cat, args"
-                      " FROM " + sliceTable + " WHERE depth = ? AND track_id = ? AND timestamp = ?";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryThreadDetail. Failed to prepare sql.", sqlite3_errmsg(db));
+                      " FROM " + sliceTable +
+                      " WHERE depth = ? AND track_id = ? AND timestamp = ?";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryThreadDetail. Failed to prepare sql.");
         return false;
     }
-    int index = bindStartIndex;
-    sqlite3_bind_int(stmt, index++, requestParams.depth);
-    sqlite3_bind_int64(stmt, index++, trackId);
-    sqlite3_bind_int64(stmt, index++, requestParams.startTime + minTimestamp);
+    auto resultSet = stmt->ExecuteQuery(requestParams.depth, trackId, requestParams.startTime + minTimestamp);
     std::vector<SliceDto> sliceDtoVec;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
+    while (resultSet->Next()) {
         int col = resultStartIndex;
         SliceDto sliceDto {};
-        sliceDto.id = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        sliceDto.timestamp = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        sliceDto.duration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        sliceDto.name = sqlite3_column_string(stmt, col++);
-        sliceDto.depth = sqlite3_column_int(stmt, col++);
-        sliceDto.trackId = sqlite3_column_int64(stmt, col++);
-        sliceDto.cat = sqlite3_column_string(stmt, col++);
-        sliceDto.args = sqlite3_column_string(stmt, col++);
+        sliceDto.id = resultSet->GetUint64("id");
+        sliceDto.timestamp = resultSet->GetUint64("timestamp");
+        sliceDto.duration = resultSet->GetUint64("duration");
+        sliceDto.name = resultSet->GetString("name");
+        sliceDto.depth = resultSet->GetInt32("depth");
+        sliceDto.trackId = resultSet->GetInt64("track_id");
+        sliceDto.cat = resultSet->GetString("cat");
+        sliceDto.args = resultSet->GetString("args");
         sliceDtoVec.emplace_back(sliceDto);
     }
-    sqlite3_finalize(stmt);
 
     if (sliceDtoVec.size() != 1) {
         ServerLog::Error("select slice error!");
@@ -867,22 +739,16 @@ bool TraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::ThreadDeta
     }
     std::string sql = "SELECT duration FROM " + sliceTable +
         " WHERE depth = ? AND timestamp + duration <= ? AND timestamp >= ? AND track_id = ?";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
         ServerLog::Error("QueryDurationFromSliceByTimeRange. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
-    int index = bindStartIndex;
-    sqlite3_bind_int(stmt, index++, requestParams.depth + 1);
-    sqlite3_bind_int64(stmt, index++, rows[0].timestamp + rows[0].duration);
-    sqlite3_bind_int64(stmt, index++, rows[0].timestamp);
-    sqlite3_bind_int64(stmt, index++, trackId);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        nextDepthResult.emplace_back(static_cast<uint64_t>(sqlite3_column_int64(stmt, col++)));
+    auto resultSet = stmt->ExecuteQuery(requestParams.depth + 1, rows[0].timestamp + rows[0].duration,
+                                        rows[0].timestamp, trackId);
+    while (resultSet->Next()) {
+        nextDepthResult.emplace_back(resultSet->GetUint64("duration"));
     }
-    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -890,7 +756,7 @@ bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParam
                                     Protocol::UnitFlowBody &responseBody, uint64_t minTimestamp)
 {
     std::string sql = "SELECT FL.name, FL.cat, FL.flow_id as flowId, TH.pid, TH.tid, SL.depth, SL.timestamp,"
-                      " SL.duration, FL.type, SL.name "
+                      " SL.duration, FL.type, SL.name as sliceName"
                       " FROM " + threadTable + " TH LEFT JOIN " + sliceTable + " SL" +
                       " ON SL.track_id = TH.track_id LEFT JOIN flow FL"
                       " ON FL.track_id = SL.track_id "
@@ -900,32 +766,28 @@ bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParam
     } else {
         sql.append(" AND FL.timestamp <= ? ORDER BY FL.timestamp DESC LIMIT 2");
     }
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryFlowDetail. Failed to prepare sql.", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryFlowDetail. Failed to prepare sql.");
         return false;
     }
-    int index = bindStartIndex;
-    sqlite3_bind_text(stmt, index++, requestParams.flowId.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, index++, requestParams.startTime + minTimestamp);
+    auto resultSet = stmt->ExecuteQuery(requestParams.flowId, requestParams.startTime + minTimestamp);
     std::vector<FlowDetailDto> flowDetailVec;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
+    while (resultSet->Next()) {
         int col = resultStartIndex;
         FlowDetailDto flowDetailDto {};
-        flowDetailDto.name = sqlite3_column_string(stmt, col++);
-        flowDetailDto.cat = sqlite3_column_string(stmt, col++);
-        flowDetailDto.flowId = sqlite3_column_string(stmt, col++);
-        flowDetailDto.pid = sqlite3_column_string(stmt, col++);
-        flowDetailDto.tid = sqlite3_column_int(stmt, col++);
-        flowDetailDto.depth = sqlite3_column_int(stmt, col++);
-        flowDetailDto.timestamp = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        flowDetailDto.duration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        flowDetailDto.type = sqlite3_column_string(stmt, col++);
-        flowDetailDto.sliceName = sqlite3_column_string(stmt, col++);
+        flowDetailDto.name = resultSet->GetString("name");
+        flowDetailDto.cat = resultSet->GetString("cat");
+        flowDetailDto.flowId = resultSet->GetString("flowId");
+        flowDetailDto.pid = resultSet->GetString("pid");
+        flowDetailDto.tid = resultSet->GetInt32("tid");
+        flowDetailDto.depth = resultSet->GetInt32("depth");
+        flowDetailDto.timestamp = resultSet->GetUint64("timestamp");
+        flowDetailDto.duration = resultSet->GetUint64("duration");
+        flowDetailDto.type = resultSet->GetString("type");
+        flowDetailDto.sliceName = resultSet->GetString("sliceName");
         flowDetailVec.emplace_back(flowDetailDto);
     }
-    sqlite3_finalize(stmt);
     return FlowDetailToResponse(flowDetailVec, minTimestamp, responseBody);
 }
 
@@ -966,20 +828,17 @@ bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestPar
 {
     std::string sql = "SELECT name, flow_id as flowId, type"
                       " FROM " + flowTable + " WHERE timestamp = ? AND track_id = ?";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryFlowName. Failed to prepare sql.", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryFlowName. Failed to prepare sql.");
         return false;
     }
-    int index = bindStartIndex;
-    sqlite3_bind_int64(stmt, index++, requestParams.startTime + minTimestamp);
-    sqlite3_bind_int64(stmt, index++, trackId);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
+    auto resultSet = stmt->ExecuteQuery(requestParams.startTime + minTimestamp, trackId);
+    while (resultSet->Next()) {
         int col = resultStartIndex;
-        std::string name = sqlite3_column_string(stmt, col++);
-        std::string flowId = sqlite3_column_string(stmt, col++);
-        std::string type = sqlite3_column_string(stmt, col++);
+        std::string name = resultSet->GetString("name");
+        std::string flowId = resultSet->GetString("flowId");
+        std::string type = resultSet->GetString("type");
         if (type == "s" || type == "f") {
             responseBody.flowDetail.emplace_back(name, flowId, type);
         } else if (type == "t") {
@@ -989,7 +848,6 @@ bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestPar
             ServerLog::Warn("Unknown flow type. type:", type);
         }
     }
-    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -1010,27 +868,26 @@ bool TraceDatabase::QueryUnitsMetadata(const std::string &fileId,
                       " ) AS s ON s.track_id = pt.track_id"
                       " WHERE pt.process_name is not null AND (maxDepth is not null OR  pt.tid is null)"
                       " ORDER BY pt.process_sort_index ASC, pt.thread_sort_index ASC, pt.name ASC;";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryUnitsMetadata failed!. ", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryUnitsMetadata failed!.");
         return false;
     }
+    auto resultSet = stmt->ExecuteQuery();
     std::vector<MetaDataDto> metaDataVec;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
+    while (resultSet->Next()) {
         int col = resultStartIndex;
         MetaDataDto metaDataDto;
-        metaDataDto.pid = sqlite3_column_string(stmt, col++);
-        metaDataDto.processName = sqlite3_column_string(stmt, col++);
-        metaDataDto.label = sqlite3_column_string(stmt, col++);
-        metaDataDto.threadId = sqlite3_column_int64(stmt, col++);
-        metaDataDto.threadName = sqlite3_column_string(stmt, col++);
-        metaDataDto.maxDepth = sqlite3_column_int(stmt, col++);
-        metaDataDto.name = sqlite3_column_string(stmt, col++);
-        metaDataDto.args = sqlite3_column_string(stmt, col++);
+        metaDataDto.pid = resultSet->GetString("pid");
+        metaDataDto.processName = resultSet->GetString("processName");
+        metaDataDto.label = resultSet->GetString("label");
+        metaDataDto.threadId = resultSet->GetInt64("tid");
+        metaDataDto.threadName = resultSet->GetString("threadName");
+        metaDataDto.maxDepth = resultSet->GetInt32("maxDepth");
+        metaDataDto.name = resultSet->GetString("name");
+        metaDataDto.args = resultSet->GetString("args");
         metaDataVec.emplace_back(metaDataDto);
     }
-    sqlite3_finalize(stmt);
     ServerLog::Info("Query units meta data. size:", metaDataVec.size());
     MetaDataToResponse(metaDataVec, fileId, metaData);
     return true;
@@ -1100,18 +957,17 @@ std::vector<std::string> TraceDatabase::GetCounterDataType(const std::string &ar
 bool TraceDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
 {
     std::string sql = "SELECT min(timestamp) as minTimestamp, max(timestamp) as maxTimestamp FROM " + sliceTable;
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryExtremumTimestamp failed!. ", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryExtremumTimestamp failed!.");
         return false;
     }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
+    auto resultSet = stmt->ExecuteQuery();
+    while (resultSet->Next()) {
         int col = resultStartIndex;
-        min = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        max = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+        min = resultSet->GetUint64("minTimestamp");
+        max = resultSet->GetUint64("maxTimestamp");
     }
-    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -1134,65 +990,55 @@ void TraceDatabase::CommitData()
 int TraceDatabase::SearchSliceNameCount(const std::string &name)
 {
     std::string sql = "SELECT count(*) FROM " + sliceTable + " WHERE name like '%'||?||'%'";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QuerySliceNameCount failed!. ", sqlite3_errmsg(db));
-        return 0;
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QuerySliceNameCount failed!.");
+        return false;
     }
-    sqlite3_bind_text(stmt, bindStartIndex, name.c_str(), -1, SQLITE_STATIC);
-    int count = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        count = sqlite3_column_int(stmt, resultStartIndex);
+    auto resultSet = stmt->ExecuteQuery(name);
+    if (resultSet->Next()) {
+        return resultSet->GetInt32(resultStartIndex);
     }
-    sqlite3_finalize(stmt);
-    return count;
+    return 0;
 }
 
 bool TraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
                                     Protocol::SearchSliceBody &responseBody)
 {
-    std::string sql = "SELECT pid, tid, timestamp - ?, duration, depth"
+    std::string sql = "SELECT pid, tid, timestamp - ? as startTime, duration, depth"
                       " FROM " + sliceTable + " JOIN " + threadTable + " USING (track_id)"
                       " WHERE name like '%'||?||'%'"
                       " ORDER BY timestamp LIMIT 1 OFFSET ?";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QuerySliceName failed!. ", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QuerySliceName failed!.");
         return false;
     }
-    int bindIndex = bindStartIndex;
-    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(minTimestamp));
-    sqlite3_bind_text(stmt, bindIndex++, name.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int(stmt, bindIndex++, index);
-    if (sqlite3_step(stmt) != SQLITE_ROW) {
-        sqlite3_finalize(stmt);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, name, index);
+    if (!resultSet->Next()) {
         return false;
     }
     int col = resultStartIndex;
-    responseBody.pid = sqlite3_column_string(stmt, col++);
-    responseBody.tid = sqlite3_column_int(stmt, col++);
-    responseBody.startTime = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-    responseBody.duration = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-    responseBody.depth = sqlite3_column_int(stmt, col++);
-    sqlite3_finalize(stmt);
+    responseBody.pid = resultSet->GetString("pid");
+    responseBody.tid = resultSet->GetInt32("tid");
+    responseBody.startTime = resultSet->GetUint64("startTime");
+    responseBody.duration = resultSet->GetUint64("duration");
+    responseBody.depth = resultSet->GetInt32("depth");
     return true;
 }
 
 bool TraceDatabase::QueryFlowCategoryList(std::vector<std::string> &categories)
 {
     std::string sql = "SELECT cat FROM flow GROUP BY cat";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryFlowCategoryList failed!. ", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryFlowCategoryList failed!.");
         return false;
     }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        categories.emplace_back(sqlite3_column_string(stmt, resultStartIndex));
+    auto resultSet = stmt->ExecuteQuery();
+    while (resultSet->Next()) {
+        categories.emplace_back(resultSet->GetString(resultStartIndex));
     }
-    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -1221,30 +1067,25 @@ bool TraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, ui
                       "GROUP BY flow_id HAVING COUNT(flow_id) >= 2"
                       ") "
                       "AND flow.cat = ? ORDER BY flow.flow_id, timestamp;";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryFlowCategoryEvents failed!. ", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryFlowCategoryEvents failed!.");
         return false;
     }
-    int bindIndex = bindStartIndex;
-    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(minTimestamp));
-    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(params.startTime + minTimestamp));
-    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(params.endTime + minTimestamp));
-    sqlite3_bind_text(stmt, bindIndex++, params.category.c_str(), -1, SQLITE_STATIC);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, params.startTime + minTimestamp, params.endTime + minTimestamp,
+                                        params.category);
     std::vector<FlowCategoryEventsDto> flowEventsVec;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
+    while (resultSet->Next()) {
         int col = resultStartIndex;
         FlowCategoryEventsDto flowCategoryEventsDto;
-        flowCategoryEventsDto.type = sqlite3_column_string(stmt, col++);
-        flowCategoryEventsDto.flowId = sqlite3_column_string(stmt, col++);
-        flowCategoryEventsDto.pid = sqlite3_column_string(stmt, col++);
-        flowCategoryEventsDto.tid = sqlite3_column_int(stmt, col++);
-        flowCategoryEventsDto.depth = sqlite3_column_int(stmt, col++);
-        flowCategoryEventsDto.timestamp = sqlite3_column_int64(stmt, col++);
+        flowCategoryEventsDto.type = resultSet->GetString(col++);
+        flowCategoryEventsDto.flowId = resultSet->GetString(col++);
+        flowCategoryEventsDto.pid = resultSet->GetString(col++);
+        flowCategoryEventsDto.tid = resultSet->GetInt32(col++);
+        flowCategoryEventsDto.depth = resultSet->GetInt32(col++);
+        flowCategoryEventsDto.timestamp = resultSet->GetUint64(col++);
         flowEventsVec.emplace_back(flowCategoryEventsDto);
     }
-    sqlite3_finalize(stmt);
     FlowEventsToResponse(flowEventsVec, params.category, flowDetailList);
     ServerLog::Info("Query flow category events. size:", flowDetailList.size());
     return true;
@@ -1284,31 +1125,23 @@ void TraceDatabase::FlowEventsToResponse(const std::vector<FlowCategoryEventsDto
 bool TraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
                                      std::vector<Protocol::UnitCounterData> &dataList)
 {
-    std::string sql = "SELECT timestamp - ?, args"
+    std::string sql = "SELECT timestamp - ? as startTime, args"
                       " FROM " + counterTable +
                       " WHERE pid = ? AND name = ?"
-                      " AND timestamp >= ? AND timestamp <= ?"
+                      " AND startTime >= ? AND startTime <= ?"
                       " ORDER BY timestamp ASC";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryUnitCounter failed!. ", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryUnitCounter failed!.");
         return false;
     }
-    int bindIndex = bindStartIndex;
-    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(minTimestamp));
-    sqlite3_bind_text(stmt, bindIndex++, params.pid.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, bindIndex++, params.threadName.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(params.startTime + minTimestamp));
-    sqlite3_bind_int64(stmt, bindIndex++, static_cast<int64_t>(params.endTime + minTimestamp));
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, params.pid, params.threadName, params.startTime, params.endTime);
+    while (resultSet->Next()) {
         UnitCounterData unitCounterData;
-        unitCounterData.timestamp = sqlite3_column_int64(stmt, col++);
-        unitCounterData.valueJsonStr = sqlite3_column_string(stmt, col++);
+        unitCounterData.timestamp = resultSet->GetUint64("startTime");
+        unitCounterData.valueJsonStr = resultSet->GetString("args");
         dataList.emplace_back(unitCounterData);
     }
-    sqlite3_finalize(stmt);
     return true;
 }
 

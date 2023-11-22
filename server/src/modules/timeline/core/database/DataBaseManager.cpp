@@ -2,24 +2,39 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
+#include "SystemUtil.h"
 #include "DataBaseManager.h"
+
 namespace Dic {
 namespace Module {
 namespace Timeline {
-    using namespace Dic::Server;
 DataBaseManager &DataBaseManager::Instance()
 {
     static DataBaseManager instance;
     return instance;
 }
 
-TraceDatabase *DataBaseManager::GetTraceDatabase(const std::string &fileId)
+bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::string &dbPath)
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (traceDatabaseMap.count(fileId) == 0) {
-        traceDatabaseMap.emplace(fileId, std::make_unique<TraceDatabase>());
+        auto conn = std::make_unique<ConnectionPool>(dbPath);
+        conn->SetMaxActiveCount(SystemUtil::GetCpuCoreCount());
+        traceDatabaseMap.emplace(fileId, std::move(conn));
+        return true;
     }
-    return traceDatabaseMap[fileId].get();
+    ServerLog::Error("The file id has a connection. id:", fileId, ", old path:",
+                     traceDatabaseMap.at(fileId)->GetDbPath(), ", new path:", dbPath);
+    return false;
+}
+
+std::shared_ptr<TraceDatabase> DataBaseManager::GetTraceDatabase(const std::string &fileId)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (traceDatabaseMap.count(fileId) == 0) {
+        return nullptr;
+    }
+    return traceDatabaseMap[fileId]->GetConnection();
 }
 
 Summary::SummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::string &fileId)
@@ -54,10 +69,10 @@ bool DataBaseManager::HasFileId(const std::string &fileId)
     return traceDatabaseMap.count(fileId) != 0;
 }
 
-std::vector<TraceDatabase *> DataBaseManager::GetAllTraceDatabase()
+std::vector<ConnectionPool *> DataBaseManager::GetAllTraceDatabase()
 {
     std::unique_lock<std::mutex> lock(mutex);
-    std::vector<TraceDatabase *> traceDatabases;
+    std::vector<ConnectionPool *> traceDatabases;
     for (auto &traceDatabase : traceDatabaseMap) {
         traceDatabases.emplace_back(traceDatabase.second.get());
     }
@@ -124,6 +139,15 @@ std::vector<std::string> DataBaseManager::GetAllFileId()
         traceFileId.emplace_back(traceDatabase.first);
     }
     return traceFileId;
+}
+
+std::string DataBaseManager::GetDbPath(const std::string &fileId)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (traceDatabaseMap.count(fileId) == 0) {
+        return "";
+    }
+    return traceDatabaseMap[fileId]->GetDbPath();
 }
 } // end of namespace Timeline
 } // end of namespace Module

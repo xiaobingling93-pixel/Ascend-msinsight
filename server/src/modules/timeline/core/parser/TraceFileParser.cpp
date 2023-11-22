@@ -48,14 +48,21 @@ bool TraceFileParser::Parse(const std::vector<std::string> &filePathArr, const s
 
 void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr, const std::string &fileId)
 {
+    if (!InitParser(filePathArr, fileId)) {
+        ParseEndCallBack(fileId, false);
+    }
+}
+
+bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, const std::string &fileId)
+{
     if (!ParserStatusManager::Instance().SetRunningStatus(fileId)) {
         ServerLog::Info("Pre task skip this file.");
-        return;
+        return true;
     }
     std::string dbPath = GetDbPath(filePathArr[0], fileId);
     if (!InitDatabase(dbPath, fileId)) {
         ServerLog::Error("Failed to Initial database.");
-        return;
+        return false;
     }
     auto &instance = TraceFileParser::Instance();
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_unique<std::vector<std::future<void>>>();
@@ -68,7 +75,7 @@ void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr, 
         }
 
         for (const auto &pos : splitFile) {
-            auto future = instance.threadPool->AddTask(ParseTask, filePath, fileId, dbPath, pos);
+            auto future = instance.threadPool->AddTask(ParseTask, filePath, fileId, pos);
             futures->emplace_back(std::move(future));
         }
 
@@ -80,16 +87,16 @@ void TraceFileParser::PreParseTask(const std::vector<std::string> &filePathArr, 
         }
     }
     instance.threadPool->AddTask(EndParseTask, fileId, futures);
+    return true;
 }
 
-void TraceFileParser::ParseTask(const std::string &filePath, const std::string &fileId,
-                                const std::string &dbPath, std::pair<int64_t, int64_t> pos)
+void TraceFileParser::ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos)
 {
     if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
         ServerLog::Info("Parse task skip this file. ID:", fileId);
         return;
     }
-    EventParser eventParser(filePath, dbPath, fileId);
+    EventParser eventParser(filePath, fileId);
     eventParser.Parse(pos.first, pos.second);
 }
 
@@ -106,6 +113,10 @@ void TraceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<st
     }
     ServerLog::Info("Parse completed. ID:", fileId);
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection. fileId:", fileId);
+        return;
+    }
     database->CreateIndex();
     database->UpdateDepth();
     ServerLog::Info("Update depth completed. ID:", fileId);
@@ -135,14 +146,25 @@ std::vector<std::pair<int64_t, int64_t>> TraceFileParser::SplitFile(const std::s
 #else
     std::ifstream file(filePath, std::ios::in | std::ios::binary);
 #endif
-    std::vector<std::pair<int64_t, int64_t>> result;
     if (!file.is_open()) {
         ServerLog::Error("Failed to open file. ", filePath);
-        return result;
+        return {};
     }
+    std::vector<std::pair<int64_t, int64_t>> result = GetSplitPosition(file);
+    file.close();
+    return result;
+}
+
+std::vector<std::pair<int64_t, int64_t>> TraceFileParser::GetSplitPosition(std::ifstream &file)
+{
+    std::vector<std::pair<int64_t, int64_t>> result;
     file.seekg(0, std::ifstream::end);
     int64_t fileSize = file.tellg();
     file.clear();
+    if (fileSize <= blockSize) {
+        result.emplace_back(0, 0);
+        return result;
+    }
     file.seekg(0, std::ios::beg);
     bool endFlag = false;
     while (!endFlag) {
@@ -167,7 +189,6 @@ std::vector<std::pair<int64_t, int64_t>> TraceFileParser::SplitFile(const std::s
         int64_t end = file.tellg();
         result.emplace_back(start, end);
     }
-    file.close();
     return result;
 }
 
@@ -175,12 +196,14 @@ bool TraceFileParser::SeekCharPosition(std::ifstream &file, char c)
 {
     auto cur = file.tellg();
     std::unique_ptr<char[]> buffer = std::make_unique<char[]>(bufferLength);
-    if (!file.read(buffer.get(), bufferLength)) {
-        ServerLog::Error("Failed to read file.");
+    file.read(buffer.get(), bufferLength);
+    int64_t readCount = file.gcount();
+    if (readCount <= 0) {
+        ServerLog::Error("Seek char. Failed to read file.");
         return false;
     }
     file.seekg(cur);
-    std::string str(buffer.get(), bufferLength);
+    std::string str(buffer.get(), readCount);
     uint64_t offset = str.find(c);
     if (offset == std::string::npos) {
         ServerLog::Error("Failed to find separator.");
@@ -194,12 +217,14 @@ bool TraceFileParser::SeekRegexPosition(std::ifstream &file, const std::string &
 {
     auto cur = file.tellg();
     std::unique_ptr<char[]> buffer = std::make_unique<char[]>(bufferLength);
-    if (!file.read(buffer.get(), bufferLength)) {
-        ServerLog::Error("Failed to read file.");
+    file.read(buffer.get(), bufferLength);
+    int64_t readCount = file.gcount();
+    if (readCount <= 0) {
+        ServerLog::Error("Seek regex. Failed to read file.");
         return false;
     }
     file.seekg(cur);
-    std::string str(buffer.get(), bufferLength);
+    std::string str(buffer.get(), readCount);
     auto result = RegexUtil::RegexSearch(str, regex);
     if (!result.has_value()) {
         ServerLog::Error("Failed to find match regex.");
@@ -245,11 +270,10 @@ void TraceFileParser::Reset()
     ServerLog::Info("Reset. wait task completed.");
     threadPool->Reset();
     ServerLog::Info("Task completed.");
-    auto databaseList = DataBaseManager::Instance().GetAllTraceDatabase();
-    for (auto &database : databaseList) {
-        std::string path = database->GetDbPath();
-        database->ReleaseStmt();
-        database->CloseDb();
+    auto connList = DataBaseManager::Instance().GetAllTraceDatabase();
+    for (auto &conn : connList) {
+        std::string path = conn->GetDbPath();
+        conn->Stop();
         if (!FileUtil::RemoveFile(path)) {
             ServerLog::Error("Failed to remove file. ", path);
         }
@@ -287,13 +311,14 @@ std::string TraceFileParser::GetFileIdFromFile(const std::string &filePath)
         return "";
     }
     std::unique_ptr<char[]> buffer = std::make_unique<char[]>(bufferLength);
-    if (!file.read(buffer.get(), bufferLength)) {
-        ServerLog::Error("Failed to read file.");
+    file.read(buffer.get(), bufferLength);
+    int64_t readCount = file.gcount();
+    if (readCount <= 0) {
+        ServerLog::Error("Get file id. Failed to read file.");
         return "";
     }
-    std::string str(buffer.get(), bufferLength);
-    std::string rankId =
-            str.substr(str.find_first_of('{'), str.find_first_of('}') - str.find_first_of('{') + 1);
+    std::string str(buffer.get(), readCount);
+    std::string rankId = str.substr(str.find_first_of('{'), str.find_first_of('}') - str.find_first_of('{') + 1);
     std::string error;
     auto json = JsonUtil::TryParse(rankId, error);
     if (!json.has_value()) {
@@ -326,10 +351,7 @@ void TraceFileParser::DeleteParseFileFromDisk(const std::string &fileId)
 {
     ServerLog::Info("Delete file. id:", fileId);
     ParserStatusManager::Instance().ClearParserStatus(fileId);
-    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
-    std::string path = database->GetDbPath();
-    database->ReleaseStmt();
-    database->CloseDb();
+    std::string path = DataBaseManager::Instance().GetDbPath(fileId);
     if (!path.empty()) {
         FileUtil::RemoveFile(path);
     }
@@ -347,10 +369,17 @@ void TraceFileParser::DeleteParseFile(const std::string &fileId)
 
 bool TraceFileParser::InitDatabase(const std::string& dbPath, const std::string& rankId)
 {
+    if (!DataBaseManager::Instance().CreatConnectionPool(rankId, dbPath)) {
+        ServerLog::Error("Failed to creat connection pool.");
+        return false;
+    }
     auto database = DataBaseManager::Instance().GetTraceDatabase(rankId);
-    if (!(database->OpenDb(dbPath, true) && database->CreateTable() &&
-          database->SetConfig() && database->InitStmt())) {
-        ParseEndCallBack(rankId, false);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection.");
+        return false;
+    }
+
+    if (!(database->DropAllTable() && database->CreateTable())) {
         ServerLog::Error("Failed to open traceDatabase. path:", dbPath);
         return false;
     }
