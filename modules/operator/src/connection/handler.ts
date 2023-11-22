@@ -34,7 +34,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
         if (!session) {
             return;
         }
-        session.allRankIds.push(data.value as string);
+        session.allRankIds.push(String(data.rankId));
     });
 };
 

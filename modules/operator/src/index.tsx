@@ -44,9 +44,7 @@ window.requestData = async (command, params, module) => {
     });
     return (data as any).body;
 };
-window.setTheme = (isDark: boolean) => {
-    document.body.className = isDark ? 'theme_dark' : 'theme_light';
-};
+
 Object.entries(NOTIFICATION_HANDLERS).forEach(([ event, callback ]) => {
     connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
         const res = e.data;

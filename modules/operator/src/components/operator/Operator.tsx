@@ -25,7 +25,7 @@ const Index = observer(function ({ session }: { session: Session }) {
             headerStyle={{ padding: '10px' }}
             header={<Filter session={session} handleFilterChange={handleFilterChange}/>}
             body={ <>
-                <DetailChart condition={condition} />
+                <DetailChart condition={condition} session={session}/>
                 <BaseTable condition={condition} session={session}/>
             </>
             }
