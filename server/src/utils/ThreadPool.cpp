@@ -15,12 +15,14 @@ void ThreadPool::ThreadFunc(ThreadPool &threadPool, int index)
         {
             std::unique_lock<std::mutex> lock(threadPool.taskMutex);
             if (threadPool.taskQueue.Empty()) {
+                ServerLog::Info("[Thread worker] worker ", index, " is waiting.");
                 threadPool.taskCv.wait(lock, [&threadPool]() {
                     return !threadPool.running || !threadPool.taskQueue.Empty();
                 });
             }
             hasTask = threadPool.taskQueue.Pop(func);
         }
+        ServerLog::Info("[Thread worker] worker ", index, " run task. hasTask:", hasTask);
         if (hasTask) {
             threadPool.runningTasks++;
             func();

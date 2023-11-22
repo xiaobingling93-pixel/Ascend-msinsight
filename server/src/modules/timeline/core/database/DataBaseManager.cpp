@@ -2,9 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#include "SystemUtil.h"
 #include "DataBaseManager.h"
-
 namespace Dic {
 namespace Module {
 namespace Timeline {
@@ -18,9 +16,7 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (traceDatabaseMap.count(fileId) == 0) {
-        auto conn = std::make_unique<ConnectionPool>(dbPath);
-        conn->SetMaxActiveCount(SystemUtil::GetCpuCoreCount());
-        traceDatabaseMap.emplace(fileId, std::move(conn));
+        traceDatabaseMap.emplace(fileId, std::make_unique<ConnectionPool>(dbPath));
         return true;
     }
     ServerLog::Error("The file id has a connection. id:", fileId, ", old path:",
@@ -139,15 +135,6 @@ std::vector<std::string> DataBaseManager::GetAllFileId()
         traceFileId.emplace_back(traceDatabase.first);
     }
     return traceFileId;
-}
-
-std::string DataBaseManager::GetDbPath(const std::string &fileId)
-{
-    std::unique_lock<std::mutex> lock(mutex);
-    if (traceDatabaseMap.count(fileId) == 0) {
-        return "";
-    }
-    return traceDatabaseMap[fileId]->GetDbPath();
 }
 } // end of namespace Timeline
 } // end of namespace Module

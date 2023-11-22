@@ -43,10 +43,5 @@ void ModuleRequestHandler::SetResponseResult(Response &response, bool result, co
         response.error = MakeError(errorCode, errorMsg);
     }
 }
-
-bool ModuleRequestHandler::IsAsync()
-{
-    return async;
-}
 } // end of namespace Module
 } // end of namespace Dic
