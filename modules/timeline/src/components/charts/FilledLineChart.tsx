@@ -166,13 +166,13 @@ const removeHideLayerDatas = (datas: number[][], palette: string[], hideLayer: n
 
 // eslint-disable-next-line max-lines-per-function
 export const FilledLineChart = observer(({
-    margin, session, mapFunc, valueFormat, valueRange, legend, auxiliaryValue, palette, renderTooltip, metadata, height, width,
+    margin, session, mapFunc, valueFormat, valueRange, legend, auxiliaryValue, palette, renderTooltip, metadata, height, width, unit,
 }: FilledLineChartProps) => {
     const theme = useTheme();
     const canvasContainer = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
 
-    const dataState = useData(session, mapFunc, metadata, width, zipTimeSeriesData);
+    const dataState = useData(session, mapFunc, unit, metadata, width, zipTimeSeriesData);
     const rangeAndDomain = useRangeAndDomain(session, width, margin);
 
     const [ hideLayer, setHideLayer ] = useState<number[]>([]);

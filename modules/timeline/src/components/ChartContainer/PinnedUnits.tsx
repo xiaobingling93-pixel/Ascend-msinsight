@@ -80,6 +80,7 @@ const FlattenUnits = observer(({ session, height, laneInfoWidth, eventType }:
             hasExpandIcon={true}
             isVisible={true}
             isPinned={isPinned(pinnedUnit)}
+            isSonPinned={isSonPinned(pinnedUnit)}
         />)}
         <div className={INVISIBLE_UNITS_PLACEHOLDER} style={{ height: tailOffset }} />
     </PinnedUnitsContainer>;

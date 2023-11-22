@@ -113,7 +113,7 @@ TraceDatabase *ConnectionPool::CreatConnection()
 {
     int retryCount = 0;
     while (retryCount < maxRetryAttempts) {
-        TraceDatabase *conn = new TraceDatabase();
+        TraceDatabase *conn = new TraceDatabase(insertSqlMutex);
         if (!conn->OpenDb(path, false)) {
             delete conn;
             retryCount++;

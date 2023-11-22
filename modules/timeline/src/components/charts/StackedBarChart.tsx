@@ -210,7 +210,7 @@ const isHoverPosOnBar = (data: ToolTipData, barWidthStamp: number, rangeAndDomai
 type Data = { timestamp: number; values: number[] };
 type StackedBarChartProps = ChartProps<'stackedBar'>;
 export const StackedBarChart = observer(({
-    margin, session, mapFunc, palette,
+    margin, session, mapFunc, palette, unit,
     valueRange, barWidth, radius, yScaleType, auxiliaryValue,
     renderTooltip, width, height, metadata,
 }: StackedBarChartProps) => {
@@ -218,7 +218,7 @@ export const StackedBarChart = observer(({
     const canvas = useRef<HTMLCanvasElement>(null);
     const rangeAndDomain = useRangeAndDomain(session, width, margin);
     const barWidthStamp = getBarWidthStamp(barWidth, rangeAndDomain);
-    const datas = useData(session, mapFunc, metadata, width, (data) => data.filter(item => item.timestamp + barWidthStamp / 2 >= rangeAndDomain[1][0] && item.timestamp - barWidthStamp / 2 <= rangeAndDomain[1][1]));
+    const datas = useData(session, mapFunc, unit, metadata, width, (data) => data.filter(item => item.timestamp + barWidthStamp / 2 >= rangeAndDomain[1][0] && item.timestamp - barWidthStamp / 2 <= rangeAndDomain[1][1]));
     const mousePosX = useHoverPosX(canvasContainer);
     const theme = useTheme();
     const defaultPalette = [ '#4183a2', '#549251', '#b09239', '#bb5f43', theme.colorPalette.otherColor ];

@@ -37,6 +37,7 @@ public:
 
 private:
     std::mutex mutex;
+    std::mutex insertSqlMutex;
     std::condition_variable cv;
     std::string path;
     bool valid = true;

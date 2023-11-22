@@ -184,13 +184,25 @@ const drawSelectedRange = (ctx: CanvasRenderingContext2D | null, selectedRange: 
     }
 };
 
+const getParentNodeByClassName = (el: Element, parentClassName: string): Element | null => {
+    const parent = el.parentElement;
+    if (parent !== null) {
+        if (parent.classList.contains(parentClassName)) {
+            return parent;
+        } else {
+            return getParentNodeByClassName(parent, parentClassName);
+        }
+    }
+    return parent;
+};
+
 const drawMaskRange = ({
     ctx, width, height, xReverseScale, xScale, interactorMouseState: {
         clickPos: { current: clickPos },
         lastPos: { current: mousePosNow },
     }, selectedRange, isNsMode, session, theme,
 }: DrawArgs & { ctx: CanvasRenderingContext2D }): void => {
-    let maskRange;
+    let maskRange: number[] | undefined;
     if (clickPos !== undefined && mousePosNow !== undefined) {
         // 1st priority
         // is brushing
@@ -200,15 +212,24 @@ const drawMaskRange = ({
         // not brushing now but has selected range
         maskRange = [ xReverseScale(selectedRange[0]), xReverseScale(selectedRange[1]) ];
     }
-    const element = document.getElementsByClassName('chart-selected');
+    const elements = document.getElementsByClassName('chart-selected');
     if (maskRange !== undefined) {
         maskRange.sort((a, b) => a - b);
         ctx.fillStyle = 'rgba(66,66,66,0.5)';
         if (session.selectedUnits.length !== 0) {
             ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, width, height);
-            if (element.length !== 0) {
-                const rect = element[0].getBoundingClientRect();
-                ctx.clearRect(maskRange[0], rect.top, maskRange[1] - maskRange[0], rect.height);
+            if (elements.length !== 0) {
+                Array.of(...elements).forEach(element => {
+                    const rect = element.getBoundingClientRect();
+                    const scrollContainer = getParentNodeByClassName(element, 'laneWrapper');
+                    const containerRect = scrollContainer?.getBoundingClientRect();
+                    const top = containerRect ? Math.max(rect.top, containerRect.top) : rect.top;
+                    const bottom = containerRect ? Math.min(rect.bottom, containerRect.bottom) : rect.bottom;
+                    if (bottom > top) {
+                        const maskRangeTemp = maskRange as number[];
+                        ctx.clearRect(maskRangeTemp[0], top, maskRangeTemp[1] - maskRangeTemp[0], bottom - top);
+                    }
+                });
             }
         } else {
             ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, maskRange[0], height);
@@ -266,8 +287,8 @@ export const drawOnMove = ({
 };
 
 const heightMap = new Map();
-const updateUnitHeight = (session: Session): void => {
-    const height = session.pinnedUnits.reduce((prevHeight, unit) => prevHeight + unit.height() + 1, 0);
+const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
+    const height = pinnedAreaHeight;
 
     const computeUnitHeight = (units: InsightUnit[], height: number): number => {
         for (const unit of units) {
@@ -298,8 +319,9 @@ export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height
     drawSelectedRange(ctx, selectedRange, xReverseScale);
 
     heightMap.clear();
-    updateUnitHeight(session);
-    const pinnedAreaHeight = session.pinnedUnits.reduce((prev, unit) => prev + unit.height() + 1, 0);
+    const pinnedScrollArea = document.getElementsByClassName('pinnedScrollArea');
+    const pinnedAreaHeight = pinnedScrollArea[0]?.clientHeight ?? 0;
+    updateUnitHeight(session, pinnedAreaHeight);
     Object.values(session.linkLines)
         .forEach(datas => {
             datas?.forEach((data) => {

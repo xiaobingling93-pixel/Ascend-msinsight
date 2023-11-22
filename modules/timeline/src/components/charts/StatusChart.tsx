@@ -94,14 +94,14 @@ const findDataByX = (mousePosX: number | undefined, data: StatusData[],
 };
 
 export const StatusChart = observer(({
-    session, margin, mapFunc, title, metadata, renderTooltip, height, onHover, onClick, decorator, width,
+    session, margin, mapFunc, unit, metadata, renderTooltip, height, onHover, onClick, decorator, width,
 }: StatusChartProps) => {
     const theme = useTheme();
     const canvasContainer = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
     const { action: drawExt = () => {}, triggers = [] } = decorator?.(session, metadata) ?? {};
 
-    const datasState = useData(session, mapFunc, metadata, width, zipStatusData);
+    const datasState = useData(session, mapFunc, unit, metadata, width, zipStatusData);
     const rangeAndDomain = useRangeAndDomain(session, width, margin);
 
     const mousePosX = useHoverPosX(canvasContainer);

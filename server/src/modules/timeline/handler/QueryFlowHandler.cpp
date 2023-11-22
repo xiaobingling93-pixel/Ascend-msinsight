@@ -27,12 +27,13 @@ void QueryFlowHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestP
     UnitFlowResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
-    if (!database->QueryFlowDetail(request.params, response.body, TraceTime::Instance().GetStartTime())) {
-        SetResponseResult(response, false);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    SetResponseResult(response, true);
+    bool result = database->QueryFlowDetail(request.params, response.body, TraceTime::Instance().GetStartTime());
+    SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
 }

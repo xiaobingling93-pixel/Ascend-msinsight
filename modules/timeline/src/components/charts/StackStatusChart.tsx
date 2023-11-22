@@ -181,7 +181,7 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
     const canvasContainer = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
     const { action: drawExt = () => {}, triggers = [] } = decorator?.(session, metadata) ?? {};
-    const datasState = useData(session, mapFunc, metadata, width, (data, width, start, end) =>
+    const datasState = useData(session, mapFunc, unit, metadata, width, (data, width, start, end) =>
         data.map(row => zipStatusData(row, width, start, end)));
     const rangeAndDomain = useRangeAndDomain(session, width, margin); const mousePos = useHoverPos(canvasContainer);
     const hoveredData = useMemo(() => findDataByXY(mousePos, datasState, rangeAndDomain, rowHeight, session.endTimeAll ?? 0), [ mousePos, datasState, rangeAndDomain ]);

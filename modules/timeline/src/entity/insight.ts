@@ -196,7 +196,7 @@ export interface InsightUnit extends InsightUnitParams<unknown, Record<string, u
 }
 // 增加rendering状态，用于unit analyze完成后、session变为download之前的状态设置(主要是进行await recursiveSpreadUnits)
 // 增加initializing状态，用于用户点击session start按钮后，unit plugin start完成之前的状态设置
-export type UnitPhase = 'configuring' | 'initializing' | 'recording' | 'analyzing' | 'rendering' | 'download' | 'error';
+export type UnitPhase = 'configuring' | 'initializing' | 'recording' | 'analyzing' | 'rendering' | 'download' | 'error' | 'loading';
 
 const heightOf = (chartDesc: InsightUnit['chart']): number => {
     if (chartDesc === undefined) {

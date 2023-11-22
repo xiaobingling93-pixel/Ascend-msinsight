@@ -12,6 +12,8 @@ namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
 using namespace Dic::Protocol;
+TraceDatabase::TraceDatabase(std::mutex &sqlMutex) : mutex(sqlMutex) {}
+
 TraceDatabase::~TraceDatabase()
 {
     CommitData();
@@ -178,6 +180,7 @@ bool TraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventList)
     for (const auto &event : eventList) {
         refStmt->BindParams(event.ts, event.dur, event.name, event.trackId, event.cat, event.args);
     }
+    std::unique_lock<std::mutex> lock(mutex);
     if (!refStmt->Execute()) {
         ServerLog::Error("Insert slice data fail. ", refStmt->GetErrorMessage());
         return false;
@@ -199,6 +202,7 @@ std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetSliceStmt(uint64_t pa
 bool TraceDatabase::UpdateProcessName(const Trace::MetaData &event)
 {
     updateProcessNameStmt->Reset();
+    std::unique_lock<std::mutex> lock(mutex);
     if (!updateProcessNameStmt->Execute(event.pid, event.args.name)) {
         ServerLog::Error("Update process name fail. ", updateProcessNameStmt->GetErrorMessage());
         return false;
@@ -209,6 +213,7 @@ bool TraceDatabase::UpdateProcessName(const Trace::MetaData &event)
 bool TraceDatabase::UpdateProcessLabel(const Trace::MetaData &event)
 {
     updateProcessLabelStmt->Reset();
+    std::unique_lock<std::mutex> lock(mutex);
     if (!updateProcessLabelStmt->Execute(event.pid, event.args.labels)) {
         ServerLog::Error("Update process label fail. ", updateProcessLabelStmt->GetErrorMessage());
         return false;
@@ -219,6 +224,7 @@ bool TraceDatabase::UpdateProcessLabel(const Trace::MetaData &event)
 bool TraceDatabase::UpdateProcessSortIndex(const Trace::MetaData &event)
 {
     updateProcessSortIndexStmt->Reset();
+    std::unique_lock<std::mutex> lock(mutex);
     if (!updateProcessSortIndexStmt->Execute(event.pid, event.args.sortIndex)) {
         ServerLog::Error("Update process sort index fail. ", updateProcessSortIndexStmt->GetErrorMessage());
         return false;
@@ -229,6 +235,7 @@ bool TraceDatabase::UpdateProcessSortIndex(const Trace::MetaData &event)
 bool TraceDatabase::UpdateThreadName(const Trace::MetaData &event)
 {
     updateThreadNameStmt->Reset();
+    std::unique_lock<std::mutex> lock(mutex);
     if (!updateThreadNameStmt->Execute(event.trackId, event.tid, event.pid, event.args.name)) {
         ServerLog::Error("Update thread name fail. ", updateThreadNameStmt->GetErrorMessage());
         return false;
@@ -239,6 +246,7 @@ bool TraceDatabase::UpdateThreadName(const Trace::MetaData &event)
 bool TraceDatabase::UpdateThreadSortIndex(const Trace::MetaData &event)
 {
     updateThreadSortIndexStmt->Reset();
+    std::unique_lock<std::mutex> lock(mutex);
     if (!updateThreadSortIndexStmt->Execute(event.trackId, event.args.sortIndex)) {
         ServerLog::Error("Update thread sort index fail. ", updateThreadSortIndexStmt->GetErrorMessage());
         return false;
@@ -272,6 +280,7 @@ bool TraceDatabase::InsertFlowList(const std::vector<Trace::Flow> &eventList)
     for (const auto &event : eventList) {
         refStmt->BindParams(event.flowId, event.name, event.trackId, event.ts, event.cat, event.type);
     }
+    std::unique_lock<std::mutex> lock(mutex);
     if (!refStmt->Execute()) {
         ServerLog::Error("Insert flow fail. ", refStmt->GetErrorMessage());
         return false;
@@ -315,6 +324,7 @@ bool TraceDatabase::InsertCounterList(const std::vector<Trace::Counter> &eventLi
     for (const auto &event : eventList) {
         refStmt->BindParams(event.name, event.pid, event.ts, event.cat, event.args);
     }
+    std::unique_lock<std::mutex> lock(mutex);
     if (!refStmt->Execute()) {
         ServerLog::Error("Insert counter data fail. ", sqlite3_errmsg(db));
         return false;

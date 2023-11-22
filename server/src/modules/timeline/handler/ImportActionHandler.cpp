@@ -194,7 +194,12 @@ void ImportActionHandler::SendParseSuccessEvent(const std::string &token, const 
     event->body.unit.metadata.cardId = fileId;
     uint64_t min = UINT64_MAX;
     uint64_t max = 0;
-    DataBaseManager::Instance().GetTraceDatabase(fileId)->QueryExtremumTimestamp(min, max);
+    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection. fileId:", fileId);
+        return;
+    }
+    database->QueryExtremumTimestamp(min, max);
     if (min == max && max == 0) {
         event->body.startTimeUpdated = false;
     } else {
@@ -345,7 +350,12 @@ void ImportActionHandler::SetParseCallBack(const std::string &token)
 void ImportActionHandler::SearchMetaData(const std::string &fileId,
                                          std::vector<std::unique_ptr<UnitTrack>> &metaData)
 {
-    DataBaseManager::Instance().GetTraceDatabase(fileId)->QueryUnitsMetadata(fileId, metaData);
+    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection. fileId:", fileId);
+        return;
+    }
+    database->QueryUnitsMetadata(fileId, metaData);
 }
 
 std::string ImportActionHandler::GetFileId(const std::string &filePath)

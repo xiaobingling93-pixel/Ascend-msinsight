@@ -142,7 +142,7 @@ export const mouseDownAction = (session: Session, xReverseScale:
         const rangeEndOffsetX = xReverseScale(rangeEndTimestamp);
         if (offsetX >= rangeEndOffsetX - rangeMarkerButtonWidth && offsetX <= rangeEndOffsetX) { return MouseDownActionResult.NoMouseDownRequired; }
     }
-    if (offsetX > xReverseScale(session.endTimeAll) || isInSplitLineY(offsetY, splitLineRef)) {
+    if (offsetX > xReverseScale(session.endTimeAll)) {
         runInAction(() => {
             let isSingleLine = false;
             Object.values(session.linkLines).forEach((linkLine) => {
@@ -156,6 +156,9 @@ export const mouseDownAction = (session: Session, xReverseScale:
             session.selectedRange = undefined;
             session.timelineMaker.oldMarkedRange = undefined;
         });
+        return MouseDownActionResult.NoMouseDownRequired;
+    }
+    if (isInSplitLineY(offsetY, splitLineRef)) {
         return MouseDownActionResult.NoMouseDownRequired;
     }
     let needDragOneSide = false;

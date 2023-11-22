@@ -25,10 +25,20 @@ export const switchPinned = function<T extends object>(unit: PinUnit<T>): void {
     switchSonPinned(unit);
 };
 
+const getPinnedFlag = <T extends object>(unit: PinUnit<T>): boolean => {
+    if (unit[pinState]) {
+        return unit[pinState];
+    } else if (unit[sonPinned]) {
+        return unit[sonPinned];
+    }
+    return false;
+};
+
 function switchSonPinned<T extends object>(unit: PinUnit<T>): void {
     if (unit.children) {
         unit.children.forEach(element => {
-            element[sonPinned] = unit[pinState];
+            element[sonPinned] = getPinnedFlag(unit);
+            switchSonPinned(element);
         });
     }
 }

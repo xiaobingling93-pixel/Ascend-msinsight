@@ -17,6 +17,7 @@ public:
     virtual ~ModuleRequestHandler() = default;
     virtual const std::string GetError();
     virtual void HandleRequest(std::unique_ptr<Request> requestPtr) = 0;
+    virtual bool IsAsync();
 
 protected:
     void SetBaseResponse(const Request &request, Response &response) const;
@@ -26,6 +27,7 @@ protected:
     std::string command;
     std::string error;
     ModuleType moduleName = ModuleType::UNKNOWN;
+    bool async = true;
 };
 } // end of namespace Module
 } // end of namespace Dic

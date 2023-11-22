@@ -6,6 +6,7 @@
 #define DATA_INSIGHT_CORE_MODULE_BASE_MODULE_H
 
 #include <memory>
+#include "ThreadPool.h"
 #include "GlobalDefs.h"
 #include "Protocol.h"
 #include "ModuleRequestHandler.h"
@@ -24,6 +25,9 @@ public:
 protected:
     ModuleType moduleName = ModuleType::UNKNOWN;
     std::map<std::string, std::unique_ptr<ModuleRequestHandler>> requestHandlerMap;
+
+private:
+    static ThreadPool threadPool;
 };
 } // end of namespace Module
 } // end of namespace Dic

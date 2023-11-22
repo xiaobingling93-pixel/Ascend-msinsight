@@ -4,6 +4,7 @@ import { Session } from '../../entity/session';
 import { Logger } from '../../utils/Logger';
 import { runInAction } from 'mobx';
 import { useRenderManager } from '../../context/context';
+import { InsightUnit } from '../../entity/insight';
 
 export type Pos = {
     x: number;
@@ -21,7 +22,7 @@ export type DataProcessor<T extends ChartType> = (data: ChartData<T>, width: num
  * @param width width
  * @returns the data that this chart is currently rendering
  */
-export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<T>, metadata: unknown, width: number, processor?: DataProcessor<T>): ChartData<T> => {
+export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<T>, unit: InsightUnit, metadata: unknown, width: number, processor?: DataProcessor<T>): ChartData<T> => {
     const { domainStart, domainEnd } = session.domainRange;
     const { endTimeAll } = session;
     const [ datasState, setDatasState ] = useState<ChartData<T>>([]);
@@ -32,6 +33,7 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
             return;
         }
         requestedWidth.current = width;
+        const loading = setTimeout(() => { runInAction(() => { unit.phase = 'loading'; }); }, 300);
         mapFunc(session, metadata).then(datas => {
             if (requestedWidth.current !== width) {
                 // drop the data if width has been changed since when request was made
@@ -41,6 +43,9 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
             setDatasState(processor?.(datas, width, domainStart, domainEnd) ?? datas);
         }).catch(() => {
             Logger('hooks useData', 'mapFunc occurred an exception.');
+        }).finally(() => {
+            clearTimeout(loading);
+            runInAction(() => { unit.phase = 'download'; });
         });
     }, [ session.phase, domainStart, domainEnd, endTimeAll, width, session.unitsConfig.offsetConfig.timestampOffset ]);
     return datasState;

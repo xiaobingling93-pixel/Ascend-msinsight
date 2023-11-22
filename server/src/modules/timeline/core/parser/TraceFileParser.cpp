@@ -87,6 +87,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         }
     }
     instance.threadPool->AddTask(EndParseTask, fileId, futures);
+    return true;
 }
 
 void TraceFileParser::ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos)
@@ -112,6 +113,10 @@ void TraceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<st
     }
     ServerLog::Info("Parse completed. ID:", fileId);
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection. fileId:", fileId);
+        return;
+    }
     database->CreateIndex();
     database->UpdateDepth();
     ServerLog::Info("Update depth completed. ID:", fileId);
@@ -346,10 +351,7 @@ void TraceFileParser::DeleteParseFileFromDisk(const std::string &fileId)
 {
     ServerLog::Info("Delete file. id:", fileId);
     ParserStatusManager::Instance().ClearParserStatus(fileId);
-    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
-    std::string path = database->GetDbPath();
-    database->ReleaseStmt();
-    database->CloseDb();
+    std::string path = DataBaseManager::Instance().GetDbPath(fileId);
     if (!path.empty()) {
         FileUtil::RemoveFile(path);
     }

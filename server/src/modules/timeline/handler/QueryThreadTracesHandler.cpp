@@ -29,15 +29,16 @@ void QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     SetBaseResponse(request, response);
 
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.cardId);
-    int64_t trackId = TraceFileParser::Instance()
-        .GetTrackId(request.params.cardId, request.params.processId, request.params.threadId);
-    if (!database->QueryThreadTraces(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId)) {
-        SetResponseResult(response, false);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection. fileId:", request.params.cardId);
         session.OnResponse(std::move(responsePtr));
         return;
     }
-
-    SetResponseResult(response, true);
+    int64_t trackId = TraceFileParser::Instance()
+        .GetTrackId(request.params.cardId, request.params.processId, request.params.threadId);
+    bool result = database->QueryThreadTraces(request.params, response.body, TraceTime::Instance().GetStartTime(),
+                                              trackId);
+    SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
 }
