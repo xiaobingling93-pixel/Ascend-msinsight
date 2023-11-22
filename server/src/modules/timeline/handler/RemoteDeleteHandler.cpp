@@ -46,12 +46,7 @@ void RemoteDeleteHandler::GetUpdateTime(RemoteDeleteBody &body)
         if (parseStatusInstance.GetParserStatus(fileId) == ParserStatus::FINISH) {
             uint64_t min = UINT64_MAX;
             uint64_t max = 0;
-            auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
-            if (database == nullptr) {
-                ServerLog::Error("Failed to get connection. fileId:", fileId);
-                return;
-            }
-            database->QueryExtremumTimestamp(min, max);
+            DataBaseManager::Instance().GetTraceDatabase(fileId)->QueryExtremumTimestamp(min, max);
             if (min != max || max != 0) {
                 body.startTimeUpdated = true;
                 TraceTime::Instance().UpdateTime(min, max);

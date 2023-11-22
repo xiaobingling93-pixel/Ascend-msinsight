@@ -87,7 +87,6 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         }
     }
     instance.threadPool->AddTask(EndParseTask, fileId, futures);
-    return true;
 }
 
 void TraceFileParser::ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos)
@@ -113,10 +112,6 @@ void TraceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<st
     }
     ServerLog::Info("Parse completed. ID:", fileId);
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
-    if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", fileId);
-        return;
-    }
     database->CreateIndex();
     database->UpdateDepth();
     ServerLog::Info("Update depth completed. ID:", fileId);

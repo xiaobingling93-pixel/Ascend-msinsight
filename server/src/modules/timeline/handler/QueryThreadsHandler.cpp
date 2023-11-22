@@ -29,15 +29,15 @@ void QueryThreadsHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     SetBaseResponse(request, response);
 
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
-    if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
+    int64_t trackId = TraceFileParser::Instance()
+        .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
+    if (!database->QueryThreads(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId)) {
+        SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    int64_t trackId = TraceFileParser::Instance()
-        .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
-    bool result = database->QueryThreads(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
-    SetResponseResult(response, result);
+
+    SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
 }

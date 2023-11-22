@@ -27,11 +27,6 @@ void QueryFlowCategoryEventsHandler::HandleRequest(std::unique_ptr<Protocol::Req
     FlowCategoryEventsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
-    if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
-        session.OnResponse(std::move(responsePtr));
-        return;
-    }
     bool result = database->QueryFlowCategoryEvents(request.params, TraceTime::Instance().GetStartTime(),
                                                     response.body.flowDetailList);
     SetResponseResult(response, result);
