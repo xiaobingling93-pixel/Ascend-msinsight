@@ -166,6 +166,49 @@ struct UnitCounterRequest : public Request {
     UnitCounterRequest() : Request(REQ_RES_UNIT_COUNTER) {};
     UnitCounterParams params;
 };
+struct SystemViewParams {
+    std::string orderBy;
+    std::string order;
+    uint64_t current;
+    uint64_t pageSize;
+    uint64_t type;
+    std::string rankId;
+    uint64_t endTime;
+    bool isQueryTotal = false;
+    std::string layer;
+};
+
+struct SystemViewRequest : public Request {
+    SystemViewRequest() : Request(REQ_RES_UNIT_SYSTEM_VIEW) {};
+    SystemViewParams params;
+};
+
+struct KernelDetailsParams {
+    std::string orderBy;
+    std::string order;
+    uint64_t current;
+    uint64_t pageSize;
+    std::string rankId;
+    std::string coreType;
+};
+
+struct KernelDetailsRequest : public Request {
+    KernelDetailsRequest() : Request(REQ_RES_UNIT_KERNEL_DETAILS) {};
+    KernelDetailsParams params;
+};
+
+struct KernelParams {
+    std::string rankId;
+    std::string name;
+    std::string timestamp;
+    uint64_t duration;
+};
+
+struct KernelRequest : public Request {
+    KernelRequest() : Request(REQ_RES_ONE_KERNEL_DETAILS) {};
+    KernelParams params;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

@@ -74,6 +74,16 @@ public:
     bool QueryCommunicationStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
                                           Protocol::SummaryStatisticsBody &responseBody);
     bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max);
+    bool QueryPythonViewData(const Protocol::SystemViewParams &requestParams, Protocol::SystemViewBody &responseBody);
+    int64_t QueryTotalNum(const std::string& sql);
+    double QueryLayerOperatorTime(const std::string &layer);
+    std::vector<std::string> QueryCoreType();
+    bool QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
+                                              Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp);
+    int64_t QueryTotalKernel(const std::string &coreType);
+    bool QueryKernelDepthAndThread(const Protocol::KernelParams &params,
+                                                  Protocol::OneKernelBody &responseBody);
+    int64_t QueryKernelTid(const uint64_t trackId);
 
 private:
     const std::string sliceTable = "slice";
@@ -84,6 +94,7 @@ private:
     const std::string idIndex = "id_index";
     const std::string trackIdTimeIndex = "track_id_time_index";
     const std::string flowIndex = "flow_cat_time_index";
+    const std::string kernelDetail = "kernel_detail";
 
     bool initStmt = false;
     std::unique_ptr<SqlitePreparedStatement> insertSliceStmt = nullptr;
@@ -95,6 +106,7 @@ private:
     std::unique_ptr<SqlitePreparedStatement> insertFlowStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> insertCounterStmt = nullptr;
     const int cacheSize = 1000;
+    const int unit = 1000;
     std::vector<Trace::Slice> sliceCache;
     std::vector<Trace::Flow> flowCache;
     std::vector<Trace::Counter> counterCache;
@@ -134,6 +146,7 @@ private:
     bool DealLastData(std::vector<Protocol::SimpleSlice> &simpleSliceVec,
                       std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime,
                       uint64_t endTime, uint64_t index);
+    void SetKernelDetail(sqlite3_stmt *stmt, uint64_t minTimestamp, Protocol::KernelDetailsBody &responseBody);
 };
 } // end of namespace Timeline
 } // end of namespace Module

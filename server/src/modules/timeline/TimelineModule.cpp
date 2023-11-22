@@ -8,6 +8,7 @@
 #include "QueryThreadDetailHandler.h"
 #include "QueryFlowNameHandler.h"
 #include "QueryFlowHandler.h"
+#include "QuerySystemViewHandler.h"
 #include "ResetWindowHandler.h"
 #include "QueryChartHandler.h"
 #include "ImportActionHandler.h"
@@ -17,6 +18,8 @@
 #include "QueryFlowCategoryListHandler.h"
 #include "QueryFlowCategoryEventsHandler.h"
 #include "QueryUnitCounterHandler.h"
+#include "QueryKernelDetailHandler.h"
+#include "QueryOneKernelHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -48,6 +51,9 @@ void TimelineModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_FLOW_CATEGORY_LIST, std::make_unique<QueryFlowCategoryListHandler>());
     requestHandlerMap.emplace(REQ_RES_FLOW_CATEGORY_EVENTS, std::make_unique<QueryFlowCategoryEventsHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_COUNTER, std::make_unique<QueryUnitCounterHandler>());
+    requestHandlerMap.emplace(REQ_RES_UNIT_SYSTEM_VIEW, std::make_unique<QuerySystemViewHandler>());
+    requestHandlerMap.emplace(REQ_RES_UNIT_KERNEL_DETAILS, std::make_unique<QueryKernelDetailHandler>());
+    requestHandlerMap.emplace(REQ_RES_ONE_KERNEL_DETAILS, std::make_unique<QueryOneKernelHandler>());
 }
 
 void TimelineModule::OnRequest(std::unique_ptr<Protocol::Request> request)

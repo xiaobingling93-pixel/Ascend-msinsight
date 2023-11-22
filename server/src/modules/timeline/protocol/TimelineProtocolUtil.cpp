@@ -236,6 +236,66 @@ template <> std::optional<json_t> ToResponseJson<UnitCounterResponse>(const Unit
     }
     return json;
 }
+
+template <> std::optional<json_t> ToResponseJson<SystemViewResponse>(const SystemViewResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["systemViewDetails"] = json_t::array();
+    for (const SystemViewDetail& systemView : response.body.systemViewDetail) {
+        json_t itemJson = json_t::object();
+        itemJson["name"] = systemView.name;
+        itemJson["time"] = systemView.time;
+        itemJson["totalTime"] = systemView.totalTime;
+        itemJson["numberCalls"] = systemView.numberCalls;
+        itemJson["avg"] = systemView.avg;
+        itemJson["min"] = systemView.min;
+        itemJson["max"] = systemView.max;
+        json["body"]["systemViewDetails"].emplace_back(itemJson);
+    }
+    json["body"]["count"] = response.body.total;
+    json["body"]["pageSize"] = response.body.pageSize;
+    json["body"]["currentPage"] = response.body.currentPage;
+    return json;
+}
+
+template <> std::optional<json_t> ToResponseJson<KernelDetailsResponse>(const KernelDetailsResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["kernelDetails"] = json_t::array();
+    for (const KernelDetail& detail : response.body.kernelDetails) {
+        json_t itemJson = json_t::object();
+        itemJson["name"] = detail.name;
+        itemJson["type"] = detail.type;
+        itemJson["acceleratorCore"] = detail.acceleratorCore;
+        itemJson["startTime"] = detail.startTime;
+        itemJson["duration"] = detail.duration;
+        itemJson["waitTime"] = detail.waitTime;
+        itemJson["blockDim"] = detail.blockDim;
+        itemJson["inputShapes"] = detail.inputShapes;
+        itemJson["inputDataTypes"] = detail.inputDataTypes;
+        itemJson["inputFormats"] = detail.inputFormats;
+        itemJson["outputShapes"] = detail.outputShapes;
+        itemJson["outputDataTypes"] = detail.outputDataTypes;
+        itemJson["outputFormats"] = detail.outputFormats;
+        json["body"]["kernelDetails"].emplace_back(itemJson);
+    }
+    json["body"]["acceleratorCoreList"] = response.body.acceleratorCoreList;
+    json["body"]["count"] = response.body.count;
+    json["body"]["pageSize"] = response.body.pageSize;
+    json["body"]["currentPage"] = response.body.currentPage;
+    return json;
+}
+
+template <> std::optional<json_t> ToResponseJson<OneKernelResponse>(const OneKernelResponse &response)
+{
+    json_t json;
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json["body"]["depth"] = response.body.depth;
+    json["body"]["threadId"] = response.body.threadId;
+    return json;
+}
 #pragma endregion
 
 #pragma region <<Event to json>>

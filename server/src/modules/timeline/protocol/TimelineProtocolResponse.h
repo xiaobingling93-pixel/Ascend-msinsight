@@ -248,6 +248,68 @@ struct UnitCounterResponse : public Response {
     UnitCounterResponse() : Response(REQ_RES_UNIT_COUNTER) {}
     UnitCounterBody body;
 };
+
+struct SystemViewDetail {
+    std::string name;
+    double time;
+    uint64_t totalTime;
+    uint64_t numberCalls;
+    double avg;
+    double stdDev;
+    uint64_t min;
+    uint64_t max;
+};
+
+struct SystemViewBody {
+    std::vector<SystemViewDetail> systemViewDetail;
+    uint64_t total;
+    uint64_t pageSize;
+    uint64_t currentPage;
+};
+
+struct SystemViewResponse  : public Response {
+    SystemViewResponse() : Response(REQ_RES_UNIT_SYSTEM_VIEW) {}
+    SystemViewBody body;
+};
+
+struct KernelDetail {
+    std::string name;
+    std::string type;
+    std::string acceleratorCore;
+    std::string startTime;
+    double duration;
+    double waitTime;
+    uint64_t blockDim;
+    std::string inputShapes;
+    std::string inputDataTypes;
+    std::string inputFormats;
+    std::string outputShapes;
+    std::string outputDataTypes;
+    std::string outputFormats;
+};
+
+struct KernelDetailsBody {
+    std::vector<std::string> acceleratorCoreList;
+    std::vector<KernelDetail> kernelDetails;
+    uint64_t count;
+    uint64_t pageSize;
+    uint64_t currentPage;
+};
+
+struct KernelDetailsResponse  : public Response {
+    KernelDetailsResponse() : Response(REQ_RES_UNIT_KERNEL_DETAILS) {}
+    KernelDetailsBody body;
+};
+
+struct OneKernelBody {
+    uint64_t depth;
+    uint64_t threadId;
+};
+
+struct OneKernelResponse  : public Response {
+    OneKernelResponse() : Response(REQ_RES_ONE_KERNEL_DETAILS) {}
+    OneKernelBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

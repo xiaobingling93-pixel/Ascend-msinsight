@@ -27,6 +27,9 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_FLOW_CATEGORY_LIST, ToFlowCategoryListRequest);
     jsonToReqFactory.emplace(REQ_RES_FLOW_CATEGORY_EVENTS, ToFlowCategoryEventsRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_COUNTER, ToUnitCounterRequest);
+    jsonToReqFactory.emplace(REQ_RES_UNIT_SYSTEM_VIEW, ToSystemViewRequest);
+    jsonToReqFactory.emplace(REQ_RES_UNIT_KERNEL_DETAILS, ToKernelDetailRequest);
+    jsonToReqFactory.emplace(REQ_RES_ONE_KERNEL_DETAILS, ToOneKernelRequest);
 }
 
 void TimelineProtocol::RegisterResponseToJsonFuncs()
@@ -39,12 +42,15 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_UNIT_FLOW, ToUnitFlowResponseJson);
     resToJsonFactory.emplace(REQ_RES_RESET_WINDOW, ToResetWindowResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_CHART, ToUnitChartResponseJson);
+    resToJsonFactory.emplace(REQ_RES_UNIT_SYSTEM_VIEW, ToSystemViewResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceResponseJson);
     resToJsonFactory.emplace(REQ_RES_REMOTE_DELETE, ToRemoteDeleteResponseJson);
     resToJsonFactory.emplace(REQ_RES_FLOW_CATEGORY_LIST, ToFlowCategoryListResponse);
     resToJsonFactory.emplace(REQ_RES_FLOW_CATEGORY_EVENTS, ToFlowCategoryEventsResponse);
     resToJsonFactory.emplace(REQ_RES_UNIT_COUNTER, ToUnitCounterResponse);
+    resToJsonFactory.emplace(REQ_RES_UNIT_KERNEL_DETAILS, ToKernelDetailResponseJson);
+    resToJsonFactory.emplace(REQ_RES_ONE_KERNEL_DETAILS, ToOneKernelResponseJson);
 }
 
 void TimelineProtocol::RegisterEventToJsonFuncs()
@@ -245,6 +251,55 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitCounterRequest(const json_t &js
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     return reqPtr;
 }
+
+std::unique_ptr<Request> TimelineProtocol::ToSystemViewRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<SystemViewRequest> reqPtr = std::make_unique<SystemViewRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.current, json["params"], "current");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isQueryTotal, json["params"], "isQueryTotal");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.layer, json["params"], "layer");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> TimelineProtocol::ToKernelDetailRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<KernelDetailsRequest> reqPtr = std::make_unique<KernelDetailsRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.current, json["params"], "current");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.coreType, json["params"], "coreType");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> TimelineProtocol::ToOneKernelRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<KernelRequest> reqPtr = std::make_unique<KernelRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.name, json["params"], "name");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.timestamp, json["params"], "timestamp");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.duration, json["params"], "duration");
+    return reqPtr;
+}
 #pragma endregion
 
 #pragma region <<Response To Json>>
@@ -317,6 +372,21 @@ std::optional<json_t> TimelineProtocol::ToFlowCategoryEventsResponse(const Respo
 std::optional<json_t> TimelineProtocol::ToUnitCounterResponse(const Response &response)
 {
     return ToResponseJson<UnitCounterResponse>(dynamic_cast<const UnitCounterResponse &>(response));
+}
+
+std::optional<json_t> TimelineProtocol::ToSystemViewResponseJson(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<SystemViewResponse>(dynamic_cast<const SystemViewResponse &>(response));
+}
+
+std::optional<json_t> TimelineProtocol::ToKernelDetailResponseJson(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<KernelDetailsResponse>(dynamic_cast<const KernelDetailsResponse &>(response));
+}
+
+std::optional<json_t> TimelineProtocol::ToOneKernelResponseJson(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<OneKernelResponse>(dynamic_cast<const OneKernelResponse &>(response));
 }
 #pragma endregion
 

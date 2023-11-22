@@ -29,6 +29,9 @@ template <> std::optional<json_t> ToResponseJson<FlowCategoryListResponse>(const
 template <>
 std::optional<json_t> ToResponseJson<FlowCategoryEventsResponse>(const FlowCategoryEventsResponse &response);
 template <> std::optional<json_t> ToResponseJson<UnitCounterResponse>(const UnitCounterResponse &response);
+template<> std::optional<json_t> ToResponseJson<SystemViewResponse>(const SystemViewResponse &response);
+template<> std::optional<json_t> ToResponseJson<KernelDetailsResponse>(const KernelDetailsResponse &response);
+template<> std::optional<json_t> ToResponseJson<OneKernelResponse>(const OneKernelResponse &response);
 // event
 template <typename EVENT> std::optional<json_t> ToEventJson(const EVENT &event);
 template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSuccessEvent &event);
