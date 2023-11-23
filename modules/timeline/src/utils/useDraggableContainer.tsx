@@ -40,7 +40,7 @@ interface DCProps {
 }
 
 const MIN_HORIZONTAL_WH = 14;
-const MIN_VERTICAL_WH = 32;
+const MIN_VERTICAL_WH = 36;
 
 const ContainerBase = styled.div<CssProps>`
     display: flex;
