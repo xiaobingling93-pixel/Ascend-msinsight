@@ -28,5 +28,8 @@ export const StyledAutoComplete = styled(AutoComplete)`
                     display: none;
                 }
             }
+            .rc-virtual-list-scrollbar-thumb {
+                background-color: ${props => props.theme.deviceProcessNotActiveFontColor} !important; /* 设置滚动条滑块的颜色为红色 */
+            }
         }
 `
