@@ -366,6 +366,11 @@ std::string ImportActionHandler::GetFileId(const std::string &filePath)
     while (DataBaseManager::Instance().HasFileId(result)) {
         result = fileId + "_" + std::to_string(++i);
     }
+    std::string dbPath = GetDbPath(filePath, i);
+    if (!DataBaseManager::Instance().CreatConnectionPool(result, dbPath)) {
+        ServerLog::Error("Failed to create connection pool. fileId:", result, ". path:", dbPath);
+        return "";
+    }
     return result;
 }
 
@@ -412,6 +417,22 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
         files.emplace_back(file, fileId);
     }
     return files;
+}
+
+std::string ImportActionHandler::GetDbPath(const std::string &filePath, const int index)
+{
+    std::string path = FileUtil::GetRealPath(filePath);
+    std::string suffix = ".db";
+    if (index != 1) {
+        suffix = "_" + std::to_string(index) + suffix;
+    }
+    auto pos = path.find_last_of('.');
+    if (pos != std::string::npos) {
+        path.replace(pos, path.size() - pos, suffix);
+    } else {
+        path.append(suffix);
+    }
+    return path;
 }
 } // Timeline
 } // Module

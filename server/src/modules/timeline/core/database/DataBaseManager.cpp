@@ -16,10 +16,11 @@ DataBaseManager &DataBaseManager::Instance()
 
 bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::string &dbPath)
 {
+    const static int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
     std::unique_lock<std::mutex> lock(mutex);
     if (traceDatabaseMap.count(fileId) == 0) {
         auto conn = std::make_unique<ConnectionPool>(dbPath);
-        conn->SetMaxActiveCount(SystemUtil::GetCpuCoreCount());
+        conn->SetMaxActiveCount(CPU_CORE_COUNT);
         traceDatabaseMap.emplace(fileId, std::move(conn));
         return true;
     }
@@ -32,6 +33,7 @@ std::shared_ptr<TraceDatabase> DataBaseManager::GetTraceDatabase(const std::stri
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (traceDatabaseMap.count(fileId) == 0) {
+        ServerLog::Error("Can't find connection pool. fileId:", fileId);
         return nullptr;
     }
     return traceDatabaseMap[fileId]->GetConnection();

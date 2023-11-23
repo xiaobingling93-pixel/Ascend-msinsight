@@ -29,6 +29,7 @@ private:
     static void ParseClusterEndProcess(const std::string token, std::string result);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
     static std::string GetFileId(const std::string &filePath);
+    static std::string GetDbPath(const std::string &filePath, const int index);
     static bool CheckIsCluster(const std::string &filePath);
     std::vector<std::string> FindTraceFile(const std::string &path);
     std::vector<std::string> FindAllTraceFile(const std::vector<std::string> &pathList);
