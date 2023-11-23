@@ -14,26 +14,26 @@ export type dataType = Array<{
     value: number;
     [name: string]: any;
 }>;
-function InitCharts(data: dataType, domId: string, isDark: boolean): void {
+function InitCharts({ data, domId, isDark, title }: {data: dataType; domId: string; isDark: boolean;title: string}): void {
     const chartDom = document.getElementById(domId);
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
     echarts.init(chartDom).dispose();
     const myChart = echarts.init(chartDom);
-    myChart.setOption(wrapData(data, domId, isDark));
+    myChart.setOption(wrapData({ data, domId, isDark, title }));
     addResizeEvent(myChart);
 }
-function wrapData(data: dataType, domId: string, isDark: boolean): any {
-    const option = getOption(domId, isDark);
+function wrapData({ data, domId, isDark, title }: {data: dataType; domId: string; isDark: boolean;title: string}): any {
+    const option = getOption({ isDark, title });
     (option.series as echarts.SeriesOption[])[0].data = data;
     return option;
 }
 
-const getOption = (domId: string, isDark: boolean): echarts.EChartsOption => {
+const getOption = ({ isDark, title }: { isDark: boolean;title: string }): echarts.EChartsOption => {
     baseOption.title = {
         ...baseOption.title ?? {},
-        text: domId === 'opTypeChart' ? '算子类型耗时占比' : '计算单元耗时占比',
+        text: title,
         textStyle: isDark ? { color: '#dcdcdc' } : {},
     };
     baseOption.legend = {
@@ -113,8 +113,8 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
         setComputeData(data);
     };
     function renderChart(): void {
-        InitCharts(opTypeData, 'opTypeChart', session.isDark);
-        InitCharts(computeData, 'computeChart', session.isDark);
+        InitCharts({ data: opTypeData, domId: 'opTypeChart', isDark: session.isDark, title: `Total Time(us) Group by ${condition.group}` });
+        InitCharts({ data: computeData, domId: 'computeChart', isDark: session.isDark, title: 'Total Time(us) Group by Accelerator Core' });
     }
     // 避免echarts渲染空白
     chartVisbilityListener('opTypeChart', () => {

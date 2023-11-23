@@ -126,11 +126,15 @@ export function addResizeEvent(echart: EChartsType): void {
 class DomVisibilityListener {
     private _visible: boolean = false;
     private readonly _target: HTMLElement | null;
-
     private _listener: any;
-
     private readonly _onVisibleChange: Function | undefined;
+    static ListenerMap: {[props: string]: any} = {};
     constructor(dom: string, onVisibleChange?: Function) {
+        if (DomVisibilityListener.ListenerMap[dom] !== undefined && DomVisibilityListener.ListenerMap[dom] !== null) {
+            DomVisibilityListener.ListenerMap[dom].clear();
+            DomVisibilityListener.ListenerMap[dom] = null;
+        }
+        DomVisibilityListener.ListenerMap[dom] = this;
         this._target = document.getElementById(dom);
         this.visible = this._target?.offsetParent !== null;
         this._onVisibleChange = onVisibleChange;
@@ -141,9 +145,7 @@ class DomVisibilityListener {
         this._listener = setTimeout(() => {
             const newStatus = this._target?.offsetParent !== null;
             if (newStatus !== this.visible && this._onVisibleChange !== undefined) {
-                if (this._onVisibleChange !== undefined) {
-                    this._onVisibleChange(newStatus);
-                }
+                this._onVisibleChange(newStatus);
             }
             this.visible = newStatus;
             this.add();

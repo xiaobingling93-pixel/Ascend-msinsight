@@ -8,6 +8,7 @@ import { Select, InputNumber } from 'antd';
 import { Label } from '../Common';
 import { optionMapType, VoidFunction } from '../../utils/interface';
 import { Session } from '../../entity/session';
+const OPERATOR_TYPE = 'Operator Type';
 
 export interface ConditionType {
     rankId: string ;
@@ -18,14 +19,14 @@ export interface ConditionType {
 
 export const defaultCondition = {
     rankId: '',
-    group: 'Operator',
+    group: OPERATOR_TYPE,
     topK: 15,
     custom: 0,
 };
 const defaultOptionMap = {
     rankIdOptions: [],
     groupOptions: [
-        { label: 'Opertator', value: 'Operator' },
+        { label: 'Operator', value: 'Operator' },
         { label: 'Operator Type', value: 'Operator Type' },
         { label: 'Operator Name and Input Shape', value: 'Input Shape' },
     ],
@@ -60,6 +61,9 @@ const setCondition = (initCondition: ConditionType = {} as ConditionType): void 
 function handleChange<T>(key: keyof ConditionType, val: T): void {
     runInAction(() => {
         condition[key] = val as never;
+        if (key === 'topK' && val === -1) {
+            condition.custom = 15;
+        }
     });
 };
 
@@ -78,6 +82,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
         const rankIdOptions = session.allRankIds.map((item, index) => ({ label: item, value: item }));
         setOptions({ rankIdOptions });
         if (session.allRankIds.length === 0) {
+            setOptions(defaultOptionMap);
             setCondition(defaultCondition);
         }
     }, [session.allRankIds]);
@@ -100,22 +105,22 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
 const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
     return (<div>
         <FormItem
-            name="RankId"
-            content={(<Select
-                value={condition.rankId}
-                style={{ width: 200 }}
-                onChange={val => handleChange('rankId', val)}
-                options={optionMap.rankIdOptions}
-                showSearch={true}
-            />
-            )}/>
-        <FormItem
             name="Group By"
             content={(<Select
                 value={condition.group}
                 style={{ width: 250 }}
                 onChange={val => handleChange('group', val)}
                 options={optionMap.groupOptions}
+                showSearch={true}
+            />
+            )}/>
+        <FormItem
+            name="RankId"
+            content={(<Select
+                value={condition.rankId}
+                style={{ width: 200 }}
+                onChange={val => handleChange('rankId', val)}
+                options={optionMap.rankIdOptions}
                 showSearch={true}
             />
             )}/>
@@ -130,10 +135,11 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
             />
             <InputNumber
                 min={0}
-                max={session.total}
+                max={100000000}
+                value={condition.custom}
                 onChange={val => handleChange('custom', val)}
                 controls={false}
-                formatter={val => String(Number(val))}
+                precision={0}
                 style={{ marginLeft: '10px', width: '80px', display: condition.topK === -1 ? 'inline-block' : 'none' }} />
             </>
             )}/>

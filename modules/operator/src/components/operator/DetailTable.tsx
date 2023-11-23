@@ -43,6 +43,7 @@ const opl0Columns = [
         title: 'Duration(μs)',
         dataIndex: 'duration',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Wait Time(μs)',
