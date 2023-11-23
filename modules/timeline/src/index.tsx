@@ -4,6 +4,7 @@ import { App } from './App';
 import { RootStoreContext } from './context/context';
 import './i18n';
 import './index.css';
+import './theme.css';
 import { store } from './store';
 import { NOTIFICATION_HANDLERS } from './interface';
 import connector from './connection';
@@ -19,6 +20,7 @@ declare global {
         setTheme: (isDark: boolean) => void;
         request: (dataSource: DataSource, params: { command: string; params: Record<string, unknown> }) => Promise<any>;
         cefQuery: (obj: CefQueryType) => void;
+        requestData: (method: string, params: any, module?: string) => Promise<any>;
     }
 
     interface DataSource {
@@ -55,3 +57,11 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([ event, callback ]) => {
         callback(res.body);
     });
 });
+
+window.requestData = async (command, params, module) => {
+    const data = await connector.fetch({
+        args: { command, params },
+        module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
+    });
+    return (data as any).body;
+};

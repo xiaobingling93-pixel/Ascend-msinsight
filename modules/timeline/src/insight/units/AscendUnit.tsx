@@ -21,8 +21,6 @@ import {
 } from '../../entity/data';
 import { createCounterParam, createStackStatusParam } from './unitFunc';
 import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
-import { SimpleTabularDetail } from '../../components/details/SimpleDetail';
-import { DetailTabs, TabPanes } from '../../components/details/TabPanes';
 import { SelectSimpleTabularDetail } from '../../components/details/SelectSimpleDetail';
 import { renderRadiusBorder } from '../../components/details/utils';
 import { getTimestamp } from '../../utils/humanReadable';
@@ -102,20 +100,6 @@ const singleSliceDetail = singleData({
 
 const EmptyJSXElement = (): JSX.Element | null => {
     return <></>;
-};
-
-const tabs: DetailTabs[] = [
-    {
-        title: 'Slices List',
-        detail: slicesListDetail,
-        bottomPanel: {
-            Detail: SelectSimpleTabularDetail,
-        },
-    },
-];
-
-const commonBottomPanel = {
-    Detail: SimpleTabularDetail,
 };
 
 export const ThreadUnit = unit<ThreadMetaData>({
@@ -227,7 +211,10 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 More: ({ session }) => <SliceRight session={session} detail={generateLinkDetail('Outgoing flow')} metadata={metadata} />,
             };
         }
-        return TabPanes({ tabs, commonBottomPanel });
+        return {
+            Detail: ({ session, height }) => <SelectSimpleTabularDetail session={session} height={height} detail={slicesListDetail}></SelectSimpleTabularDetail>,
+            DetailTitle: 'Slices List',
+        };
     },
 });
 

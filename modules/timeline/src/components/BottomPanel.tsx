@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Card } from 'antd';
+import { Card, Tabs } from 'antd/lib/index';
 import { CardProps } from 'antd/lib/card';
 import { isEmpty } from 'lodash';
 import { observer } from 'mobx-react';
@@ -11,6 +11,8 @@ import { DragDirection, useDraggableContainer } from '../utils/useDraggableConta
 import { SimpleTabularDetail } from './details/SimpleDetail';
 import { ChartErrorBoundary } from './error/ChartErrorBoundary';
 import { FILTER_HEIGHT } from './FilterContainer';
+import eventBus, { useEventBus } from '../utils/eventBus';
+import { getDetailViewItem } from './detailViews/DetailView';
 
 interface CssProps {
     className?: string;
@@ -25,7 +27,7 @@ type DataCardType = {
     session: Session;
 };
 
-export const DETAIL_HEADER_HEIGHT_PX = 36;
+export const DETAIL_HEADER_HEIGHT_PX = 38;
 const MORE_HEADER_HEIGHT_PX = 22;
 
 const Container = styled.div`
@@ -43,13 +45,21 @@ const Container = styled.div`
         border-radius: 0;
         line-height: 1.2;
     }
+    .ant-tabs-tab {
+        padding: 0 2px;
+    }
+    .ant-tabs-content {
+        height: 100%;
+    }
+    .ant-tabs-tabpane {
+        height: 100%;
+    }
     .title {
         text-align: start;
         border-bottom: 1px solid ${p => p.theme.solidLine};
-        background-color: ${p => p.theme.cardHeadBackgroundColor};
         height: ${DETAIL_HEADER_HEIGHT_PX - 2}px; // 2: draggable border-top width
         &>span {
-            margin-left: 16px;
+            margin: 0 8px;
             line-height: ${DETAIL_HEADER_HEIGHT_PX - 2}px;
             font-size: 1.14295rem;
             color: ${p => p.theme.fontColor};
@@ -149,10 +159,14 @@ interface BottomPanelReactNodes {
 const useTriggerEvent = (session: Session): TriggerEvent => {
     const [ event, setEvent ] = React.useState<TriggerEvent>('SELECTED_RANGE');
     React.useEffect(() => {
-        event !== 'SELECTED_RANGE' && setEvent('SELECTED_RANGE');
+        if (event !== 'SELECTED_RANGE') {
+            setEvent('SELECTED_RANGE');
+        }
     }, [session.selectedRange]);
     React.useEffect(() => {
-        event !== 'SELECTED_DATA' && setEvent('SELECTED_DATA');
+        if (event !== 'SELECTED_DATA') {
+            setEvent('SELECTED_DATA');
+        }
     }, [session.selectedData]);
     return event;
 };
@@ -166,15 +180,18 @@ const useBottomPanelReactNodes = (session: Session, height: number): BottomPanel
     const contentHeight = bottomPanelComponents?.Toolbar !== undefined
         ? (height - DETAIL_HEADER_HEIGHT_PX - FILTER_HEIGHT)
         : (height - DETAIL_HEADER_HEIGHT_PX);
-    const bottomPanelReactNodes = React.useMemo(() => ({
-        detailTitle: getDetailTitleContent(session, bottomPanelComponents),
-        detail: getDetailContent(session, contentHeight, bottomPanelComponents),
-        moreTitle: getMoreTitle(session, bottomPanelComponents),
-        // More Container has extra height
-        more: getMoreContent(session, contentHeight - MORE_HEADER_HEIGHT_PX, bottomPanelComponents),
-        toolbar: getFilterContent(session, bottomPanelComponents),
-    }), [ bottomPanelComponents, height ]);
-    return bottomPanelReactNodes;
+    return React.useMemo(() => {
+        const detailTitle = getDetailTitleContent(session, bottomPanelComponents);
+        eventBus.emit('setDetailTitle', detailTitle);
+        return {
+            detailTitle,
+            detail: getDetailContent(session, contentHeight, bottomPanelComponents),
+            moreTitle: getMoreTitle(session, bottomPanelComponents),
+            // More Container has extra height
+            more: getMoreContent(session, contentHeight - MORE_HEADER_HEIGHT_PX, bottomPanelComponents),
+            toolbar: getFilterContent(session, bottomPanelComponents),
+        };
+    }, [ bottomPanelComponents, height ]);
 };
 
 /* decide what to put in Detail container */
@@ -218,10 +235,9 @@ const getFilterContent = (session: Session, bottomPanelComponents?: ReturnType<B
 };
 
 const DataCard = observer(({ session, height }: DataCardType) => {
-    const { detailTitle, detail, moreTitle, more, toolbar } = useBottomPanelReactNodes(session, height);
+    const { detail, moreTitle, more, toolbar } = useBottomPanelReactNodes(session, height);
     const [view] = useDraggableContainer({ dragDirection: DragDirection.right, draggableWH: 590 });
-    return <div style={{ display: 'flex', flexDirection: 'column', width: '100%', zIndex: 3 }}>
-        <div className={'title'}>{detailTitle !== undefined ? detailTitle : <span>Details</span>}</div>
+    return <div style={{ display: 'flex', flexDirection: 'column', width: '100%', zIndex: 3, height: '100%' }}>
         {
             !isEmpty(more)
                 ? view({
@@ -261,6 +277,7 @@ const DataCard = observer(({ session, height }: DataCardType) => {
 export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     const { session } = props;
     const [ bottomHeight, setBottomHeight ] = useState(BOTTOM_HEIGHT);
+    const [ item, setItem ] = useState< string >('DataCard');
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
         const bottomResize = (): void => setBottomHeight(ref.current?.clientHeight ?? BOTTOM_HEIGHT);
@@ -271,8 +288,30 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
             window.removeEventListener('resize', bottomResize);
         };
     }, [setBottomHeight]);
+    useEffect(() => {
+        setItem('DataCard');
+    }, [ session.selectedData, session.selectedRange ]);
+
+    const items = [
+        getDataCardItem(bottomHeight, session),
+        getDetailViewItem(session),
+    ];
 
     return (<Container ref={ref} className="bottomPanelContainer">
-        <DataCard height={bottomHeight} session={session} />
+        <Tabs style={{ width: '100%' }} items={items} activeKey={item} onTabClick={key => setItem(key)}/>
     </Container>);
 });
+
+function getDataCardItem(bottomHeight: number, session: Session): any {
+    return {
+        label: <DataCardTitle/>,
+        key: 'DataCard',
+        children: <DataCard height={bottomHeight} session={session}/>,
+    };
+}
+
+const DataCardTitle = (): JSX.Element => {
+    const [ detailTitle, setDetailTitle ] = useState<JSX.Element | undefined>(undefined);
+    useEventBus('setDetailTitle', (data) => setDetailTitle(data as JSX.Element));
+    return (<div className={'title'}>{detailTitle !== undefined ? detailTitle : <span>Details</span>}</div>);
+};
