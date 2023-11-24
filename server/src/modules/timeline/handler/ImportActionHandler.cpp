@@ -378,7 +378,12 @@ bool ImportActionHandler::CheckIsCluster(const std::string &filePath)
 {
     std::vector<std::string> folders;
     std::vector<std::string> files;
+    if (filePath.find("cluster_analysis_output") != std::string::npos) {
+        ServerLog::Info("this folder is cluster_analysis_output,CheckIsCluster is true");
+        return true;
+    }
     if (!FileUtil::FindFolders(filePath, folders, files)) {
+        ServerLog::Info("FindFolders is empty,CheckIsCluster is false");
         return false;
     }
     return std::any_of(folders.begin(), folders.end(),

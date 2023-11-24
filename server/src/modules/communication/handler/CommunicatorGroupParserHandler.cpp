@@ -42,7 +42,8 @@ void CommunicatorGroupParserHandler::HandleRequest(std::unique_ptr<Dic::Protocol
 bool CommunicatorGroupParserHandler::ParseCommunicatorGroup(const std::string &filePath,
                                                             Protocol::CommunicatorGroupResBody &resBody)
 {
-    std::string path = FileUtil::SplicePath(filePath, "cluster_analysis_output");
+    std::string path = filePath.find("cluster_analysis_output") != std::string::npos ? filePath :
+            FileUtil::SplicePath(filePath, "cluster_analysis_output");
     path = FileUtil::SplicePath(path, "communication_group.json");
     path = FileUtil::PathPreprocess(path);
     std::ifstream file(path);
@@ -73,6 +74,7 @@ bool CommunicatorGroupParserHandler::ParseCommunicatorGroup(const std::string &f
         }
         return true;
     }
+    ServerLog::Warn("file is not found, path:", path);
     return false;
 }
 } // end of namespace Communication
