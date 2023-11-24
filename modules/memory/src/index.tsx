@@ -32,6 +32,10 @@ declare global {
     }
 };
 
+// 禁用右键刷新以及F5、Ctrl+R刷新
+document.oncontextmenu = () => false;
+document.onkeydown = (event) => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
+
 const root = createRoot(document.getElementById('root') as HTMLElement);
 root.render(
     (<React.StrictMode>

@@ -369,10 +369,6 @@ void TraceFileParser::DeleteParseFile(const std::string &fileId)
 
 bool TraceFileParser::InitDatabase(const std::string& dbPath, const std::string& rankId)
 {
-    if (!DataBaseManager::Instance().CreatConnectionPool(rankId, dbPath)) {
-        ServerLog::Error("Failed to creat connection pool.");
-        return false;
-    }
     auto database = DataBaseManager::Instance().GetTraceDatabase(rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection.");
@@ -380,7 +376,7 @@ bool TraceFileParser::InitDatabase(const std::string& dbPath, const std::string&
     }
 
     if (!(database->DropAllTable() && database->CreateTable())) {
-        ServerLog::Error("Failed to open traceDatabase. path:", dbPath);
+        ServerLog::Error("Failed to open traceDatabase. rankId:", rankId);
         return false;
     }
     auto summaryDatabase = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);

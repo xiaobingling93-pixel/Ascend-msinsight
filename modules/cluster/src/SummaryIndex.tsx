@@ -25,6 +25,10 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([ event, callback ]) => {
     });
 });
 
+// 禁用右键刷新以及F5、Ctrl+R刷新
+document.oncontextmenu = () => false;
+document.onkeydown = (event) => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
+
 const Loading = (<div style={{ textAlign: 'center', top: '50%', position: 'absolute', width: '50px', left: 'calc(50% - 25px)' }}>
     <div className={'loading'} style={{ marginLeft: '15px' }}></div>
     <div>waiting</div>

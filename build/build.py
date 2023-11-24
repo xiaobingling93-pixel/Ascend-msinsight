@@ -94,6 +94,9 @@ def build_intellij(idea_version, os_name):
 
 
 def build_light_package(version, os_name):
+    if os_name.startswith('linux-'):
+        logging.warning('Do not build packages on linux now')
+        return
     package_path = os.path.join(SCRIPT_PATH, 'opensource', 'package')
     if not os.path.exists(package_path):
         logging.error('light package code is not existed')
