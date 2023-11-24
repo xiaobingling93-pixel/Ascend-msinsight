@@ -232,7 +232,7 @@ const KernelDetails = observer((props: any) => {
                 },
                 onSuccess: () => {
                     props.session.selectedData = {
-                        startTime: Number(rowData.startTime),
+                        startTime: rowData.startTime,
                         name: rowData.name,
                         duration: Number((rowData.duration * 1000).toFixed(0)),
                         depth: res.depth,

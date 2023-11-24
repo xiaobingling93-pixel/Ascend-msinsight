@@ -1258,7 +1258,6 @@ bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &reques
                                         Protocol::SystemViewBody &responseBody)
 {
     double layerOperatorTime = QueryLayerOperatorTime(requestParams.layer);
-    sqlite3_stmt *stmt = nullptr;
     std::string orderBy;
     if (requestParams.order == "descend") {
         orderBy = " order by " + requestParams.orderBy + " DESC";
@@ -1274,24 +1273,24 @@ bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &reques
                       "ON thread.track_id = slice.track_id "
                       "GROUP BY name" + orderBy + " limit " + std::to_string(requestParams.pageSize)
                       + " offset " + std::to_string((requestParams.current - 1) * requestParams.pageSize);
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryPythonViewData failed!. ", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryPythonViewData, fail to prepare sql.");
         return false;
     }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
+    auto resultSet = stmt->ExecuteQuery();
+    while (resultSet->Next()) {
         Protocol::SystemViewDetail systemViewDetail;
         int col = resultStartIndex;
-        systemViewDetail.name = sqlite3_column_string(stmt, col++);
-        systemViewDetail.time = sqlite3_column_double(stmt, col++);
-        systemViewDetail.totalTime = static_cast<int64_t>(sqlite3_column_int64(stmt, col++));
-        systemViewDetail.numberCalls = static_cast<int64_t>(sqlite3_column_int64(stmt, col++));
-        systemViewDetail.avg = sqlite3_column_double(stmt, col++);
-        systemViewDetail.min = static_cast<int64_t>(sqlite3_column_int64(stmt, col++));
-        systemViewDetail.max = static_cast<int64_t>(sqlite3_column_int64(stmt, col++));
+        systemViewDetail.name = resultSet->GetString(col++);
+        systemViewDetail.time = resultSet->GetDouble(col++);
+        systemViewDetail.totalTime = resultSet->GetUint64(col++);
+        systemViewDetail.numberCalls = resultSet->GetUint64(col++);
+        systemViewDetail.avg = resultSet->GetDouble(col++);
+        systemViewDetail.min =  resultSet->GetUint64(col++);
+        systemViewDetail.max =  resultSet->GetUint64(col++);
         responseBody.systemViewDetail.emplace_back(systemViewDetail);
     }
-    sqlite3_finalize(stmt);
     if (requestParams.isQueryTotal) {
         sql = "select count(distinct name) from slice join"
               " (select track_id from process join thread t on process.pid = t.pid "
@@ -1304,57 +1303,52 @@ bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &reques
     return true;
 }
 
-int64_t TraceDatabase::QueryTotalNum(const std::string &sql)
+uint64_t TraceDatabase::QueryTotalNum(const std::string &sql)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryTotalNum failed!. ", sqlite3_errmsg(db));
-        return false;
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryTotalNum, fail to prepare sql.");
+        return 0;
     }
-    int64_t total = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        total = static_cast<int64_t>(sqlite3_column_int64(stmt, col++));
+    auto resultSet = stmt->ExecuteQuery();
+    uint64_t total = 0;
+    if (resultSet->Next()) {
+        total = resultSet->GetUint64(0);
     }
-    sqlite3_finalize(stmt);
     return total;
 }
 
 double TraceDatabase::QueryLayerOperatorTime(const std::string &layer)
 {
     double allOperatorTime = 0.1;
-    sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT sum(duration) AS totalTime FROM slice JOIN "
                       "( SELECT track_id FROM process JOIN thread t ON process.pid = t.pid "
                       "WHERE process_name = '" + layer + "' ) "
                       "AS thread ON thread.track_id = slice.track_id";
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryLayerOperatorTime failed!. ", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryLayerOperatorTime, fail to prepare sql.");
         return allOperatorTime;
     }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        allOperatorTime = sqlite3_column_double(stmt, resultStartIndex);
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet->Next()) {
+        allOperatorTime = resultSet->GetDouble(0);
     }
-    sqlite3_finalize(stmt);
     return allOperatorTime;
 }
 
 std::vector<std::string> TraceDatabase::QueryCoreType()
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
     std::vector<std::string> acceleratorCoreList;
     std::string sql = "SELECT DISTINCT accelerator_core FROM " + kernelDetail + " ORDER BY accelerator_core";
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryCoreType statement. error:", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryCoreType, fail to prepare sql.");
         return acceleratorCoreList;
     }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        std::string res = sqlite3_column_string(stmt, col++);
+    auto resultSet = stmt->ExecuteQuery();
+    while (resultSet->Next()) {
+        std::string res = resultSet->GetString(0);
         acceleratorCoreList.emplace_back(res);
     }
     return acceleratorCoreList;
@@ -1362,32 +1356,29 @@ std::vector<std::string> TraceDatabase::QueryCoreType()
 
 int64_t TraceDatabase::QueryTotalKernel(const std::string &coreType)
 {
-    sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT count(*) FROM kernel_detail where 1=1";
     if (!coreType.empty()) {
         sql += " AND accelerator_core = ? ";
     }
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryTotalKernel failed!. ", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryTotalKernel, fail to prepare sql.");
+        return false;
     }
     if (!coreType.empty()) {
-        int index = bindStartIndex;
-        sqlite3_bind_text(stmt, index++, coreType.c_str(), -1, SQLITE_TRANSIENT);
+        stmt->BindParams(coreType);
     }
+    auto resultSet = stmt->ExecuteQuery();
     int64_t total = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        total = static_cast<int64_t>(sqlite3_column_int64(stmt, col++));
+    if (resultSet->Next()) {
+        total = resultSet->GetInt64(0);
     }
-    sqlite3_finalize(stmt);
     return total;
 }
 
 bool TraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
                                           Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp)
 {
-    sqlite3_stmt *stmt = nullptr;
     std::string orderBy;
     std::string coreTypes;
     if (requestParams.order == "descend") {
@@ -1398,25 +1389,23 @@ bool TraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParams &r
     if (!requestParams.coreType.empty()) {
         coreTypes = " AND accelerator_core = ? ";
     }
-    std::string sql = "SELECT name, type, accelerator_core AS acceleratorCore, start_time AS startTime, "
+    std::string sql = "SELECT name, op_type as type, accelerator_core AS acceleratorCore, start_time AS startTime, "
                       "duration, wait_time as waitTime, block_dim AS blockDim, input_shapes AS inputShapes, "
                       "input_data_types AS inputDataTypes, input_formats AS inputFormats, "
                       "output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
                       "output_formats AS outputFormats FROM kernel_detail "
                       "where 1=1 " + coreTypes + orderBy +  " limit "  + std::to_string(requestParams.pageSize)
                       + " offset " + std::to_string((requestParams.current - 1) * requestParams.pageSize);
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result == SQLITE_OK) {
-        int index = bindStartIndex;
-        if (!requestParams.coreType.empty()) {
-            sqlite3_bind_text(stmt, index++, requestParams.coreType.c_str(), -1, SQLITE_TRANSIENT);
-        }
-    } else {
-        ServerLog::Error("QueryKernelDetailData failed!. ", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryKernelDetailData, fail to prepare sql.");
         return false;
     }
-    SetKernelDetail(stmt, minTimestamp, responseBody);
-    sqlite3_finalize(stmt);
+    if (!requestParams.coreType.empty()) {
+        stmt->BindParams(requestParams.coreType);
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    SetKernelDetail(std::move(resultSet), minTimestamp, responseBody);
     responseBody.pageSize = requestParams.pageSize;
     responseBody.currentPage = requestParams.current;
     const std::vector<std::string> cores = QueryCoreType();
@@ -1425,72 +1414,62 @@ bool TraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParams &r
     return true;
 }
 
-void TraceDatabase::SetKernelDetail(sqlite3_stmt *stmt, uint64_t minTimestamp,
-                                    Protocol::KernelDetailsBody &responseBody)
+void TraceDatabase::SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
+                                    Protocol::KernelDetailsBody &responseBody) const
 {
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
+    while (resultSet->Next()) {
         Protocol::KernelDetail detail;
-        int col = resultStartIndex;
-        detail.name = sqlite3_column_string(stmt, col++);
-        detail.type = sqlite3_column_string(stmt, col++);
-        detail.acceleratorCore = sqlite3_column_string(stmt, col++);
-        detail.startTime = std::to_string(static_cast<int64_t>(sqlite3_column_int64(stmt, col++))
-                * unit - minTimestamp);
-        detail.duration = sqlite3_column_double(stmt, col++);
-        detail.waitTime = sqlite3_column_double(stmt, col++);
-        detail.blockDim = static_cast<int64_t>(sqlite3_column_int64(stmt, col++));
-        detail.inputShapes = sqlite3_column_string(stmt, col++);
-        detail.inputDataTypes = sqlite3_column_string(stmt, col++);
-        detail.inputFormats = sqlite3_column_string(stmt, col++);
-        detail.outputShapes = sqlite3_column_string(stmt, col++);
-        detail.outputDataTypes = sqlite3_column_string(stmt, col++);
-        detail.outputFormats = sqlite3_column_string(stmt, col++);
+        detail.name = resultSet->GetString("name");
+        detail.type = resultSet->GetString("type");
+        detail.acceleratorCore = resultSet->GetString("acceleratorCore");
+        detail.startTime = resultSet->GetUint64("startTime") * unit - minTimestamp;
+        detail.duration = resultSet->GetDouble("duration");
+        detail.waitTime = resultSet->GetDouble("waitTime");
+        detail.blockDim = resultSet->GetUint64("blockDim");
+        detail.inputShapes = resultSet->GetString("inputShapes");
+        detail.inputDataTypes = resultSet->GetString("inputDataTypes");
+        detail.inputFormats = resultSet->GetString("inputFormats");
+        detail.outputShapes = resultSet->GetString("outputShapes");
+        detail.outputDataTypes = resultSet->GetString("outputDataTypes");
+        detail.outputFormats = resultSet->GetString("outputFormats");
         responseBody.kernelDetails.emplace_back(detail);
     }
 }
 
 bool TraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &params,
-                                              Protocol::OneKernelBody &responseBody)
+                                              Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
-    sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT depth, track_id FROM " + sliceTable + " WHERE name = ? AND duration = ?";
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryKernelDepthAndThread failed!. ", sqlite3_errmsg(db));
+    std::string sql = "SELECT depth, track_id FROM " + sliceTable + " WHERE name = ? AND duration = ? "
+                                                                    "AND timestamp = ?";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryKernelDepthAndThread, fail to prepare sql.");
         return false;
     }
-    int index = bindStartIndex;
-    sqlite3_bind_text(stmt, index++, params.name.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int64(stmt, index++, static_cast<int64_t>(params.duration));
+    auto resultSet = stmt->ExecuteQuery(params.name, params.duration, params.timestamp + minTimestamp);
     uint64_t trackId = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        responseBody.depth = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
-        trackId = static_cast<uint64_t>(sqlite3_column_int64(stmt, col++));
+    if (resultSet->Next()) {
+        responseBody.depth = resultSet->GetUint64("depth");
+        trackId = resultSet->GetUint64("track_id");
     }
-    int64_t tid = QueryKernelTid(trackId);
+    uint64_t tid = QueryKernelTid(trackId);
     responseBody.threadId = tid;
-    sqlite3_finalize(stmt);
     return true;
 }
 
-int64_t TraceDatabase::QueryKernelTid(const uint64_t trackId)
+uint64_t TraceDatabase::QueryKernelTid(const uint64_t trackId)
 {
-    sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT tid FROM " + threadTable + " WHERE track_id = ? ";
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("QueryKernelTid failed!. ", sqlite3_errmsg(db));
-        return 0;
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryKernelTid, fail to prepare sql.");
+        return false;
     }
-    int index = bindStartIndex;
-    sqlite3_bind_int64(stmt, index++, static_cast<int64_t>(trackId));
-    int64_t tid = 0;
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        tid = static_cast<int64_t>(sqlite3_column_int64(stmt, col++));
+    auto resultSet = stmt->ExecuteQuery(trackId);
+    uint64_t tid = 0;
+    if (resultSet->Next()) {
+        tid = resultSet->GetUint64(0);
     }
-    sqlite3_finalize(stmt);
     return tid;
 }
 } // end of namespace Timeline

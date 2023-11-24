@@ -200,7 +200,7 @@ struct KernelDetailsRequest : public Request {
 struct KernelParams {
     std::string rankId;
     std::string name;
-    std::string timestamp;
+    uint64_t timestamp;
     uint64_t duration;
 };
 

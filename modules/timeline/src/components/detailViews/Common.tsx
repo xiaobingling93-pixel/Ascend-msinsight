@@ -94,7 +94,7 @@ export const queryKernelDetails = async(param: {
 };
 
 export const queryOneKernel = async(param: {
-    rankId: string; name: string; timestamp: string; duration: number;
+    rankId: string; name: string; timestamp: number; duration: number;
 }): Promise<any> => {
     return window.requestData('unit/one/kernelDetail', param, 'timeline');
 };

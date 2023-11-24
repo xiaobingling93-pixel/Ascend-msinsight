@@ -75,15 +75,15 @@ public:
                                           Protocol::SummaryStatisticsBody &responseBody);
     bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max);
     bool QueryPythonViewData(const Protocol::SystemViewParams &requestParams, Protocol::SystemViewBody &responseBody);
-    int64_t QueryTotalNum(const std::string& sql);
+    uint64_t QueryTotalNum(const std::string& sql);
     double QueryLayerOperatorTime(const std::string &layer);
     std::vector<std::string> QueryCoreType();
     bool QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
                                               Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp);
     int64_t QueryTotalKernel(const std::string &coreType);
     bool QueryKernelDepthAndThread(const Protocol::KernelParams &params,
-                                                  Protocol::OneKernelBody &responseBody);
-    int64_t QueryKernelTid(const uint64_t trackId);
+                                                  Protocol::OneKernelBody &responseBody, uint64_t minTimestamp);
+    uint64_t QueryKernelTid(const uint64_t trackId);
 
 private:
     std::mutex &mutex;
@@ -147,7 +147,8 @@ private:
     bool DealLastData(std::vector<Protocol::SimpleSlice> &simpleSliceVec,
                       std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime,
                       uint64_t endTime, uint64_t index);
-    void SetKernelDetail(sqlite3_stmt *stmt, uint64_t minTimestamp, Protocol::KernelDetailsBody &responseBody);
+    void SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
+                         Protocol::KernelDetailsBody &responseBody) const;
 };
 } // end of namespace Timeline
 } // end of namespace Module

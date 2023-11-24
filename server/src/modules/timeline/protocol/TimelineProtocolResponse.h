@@ -276,7 +276,7 @@ struct KernelDetail {
     std::string name;
     std::string type;
     std::string acceleratorCore;
-    std::string startTime;
+    uint64_t startTime;
     double duration;
     double waitTime;
     uint64_t blockDim;

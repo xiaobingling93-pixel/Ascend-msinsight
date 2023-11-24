@@ -6,6 +6,7 @@
 #include "ServerLog.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "TraceTime.h"
 
 namespace Dic {
 namespace Module {
@@ -30,7 +31,7 @@ void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    if (!database->QueryKernelDepthAndThread(request.params, response.body)) {
+    if (!database->QueryKernelDepthAndThread(request.params, response.body, TraceTime::Instance().GetStartTime())) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to query the operator response data.");
     }
