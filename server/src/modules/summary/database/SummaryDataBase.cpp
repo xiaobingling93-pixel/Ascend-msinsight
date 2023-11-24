@@ -566,7 +566,6 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 "     SELECT *"
                 "     FROM " + kernelTable +
                 "     WHERE rank_id = " + reqParams.rankId + " AND" + condition +
-                "     ORDER BY duration DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery";
         ServerLog::Info("[Operator]Query More Total Num sql: ", sql);
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -589,7 +588,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
                 "     WHERE rank_id = " + reqParams.rankId +
-                "     ORDER by duration DESC LIMIT " + std::to_string(reqParams.topK) +
+                "     ORDER by duration DESC"
                 " ) subquery ";
         if (reqParams.group == Protocol::OP_TYPE_GROUP) {
             sql += " WHERE op_type = '" + reqParams.opType + "'";
