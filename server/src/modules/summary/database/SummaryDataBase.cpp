@@ -308,7 +308,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         std::string sql =
                 " SELECT " + group + " as name, ROUND(sum(duration), 2) as duration" +
                 " FROM " + kernelTable +
-                " WHERE rank_id = " + reqParams.rankId +
+                " WHERE rank_id = " + reqParams.rankId + " AND accelerator_core <> 'HCCL'"
                 " GROUP by " + group +
                 " ORDER BY duration DESC LIMIT " + std::to_string(reqParams.topK);
         return sql;
@@ -329,6 +329,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 " FROM ("
                 "     SELECT " + group + ", accelerator_core, ROUND(SUM(duration), 2) as duration" +
                 "     FROM " + kernelTable +
+                "     WHERE rank_id = " + reqParams.rankId + " AND accelerator_core <> 'HCCL'"
                 "     GROUP BY " + group +
                 "     ORDER BY duration DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery" +
@@ -377,7 +378,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 " FROM ("
                 "     SELECT *"
                 "     FROM " + kernelTable +
-                "     WHERE rank_id = " + reqParams.rankId +
+                "     WHERE rank_id = " + reqParams.rankId + " AND accelerator_core <> 'HCCL'"
                 "     GROUP by " + (reqParams.group == "Operator Type" ? "op_type" : R"(name || input_shapes)") +
                 "     ORDER by duration DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery";
@@ -413,7 +414,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 "     ROUND(max(duration), 2) as max_time,"
                 "     ROUND(min(duration), 2) as min_time"
                 "     FROM " + kernelTable +
-                "     WHERE rank_id = " + reqParams.rankId +
+                "     WHERE rank_id = " + reqParams.rankId + " AND accelerator_core <> 'HCCL'"
                 "     GROUP by " + group +
                 "     ORDER by duration DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery ";
@@ -476,7 +477,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 " FROM ("
                 "     SELECT * "
                 "     FROM " + kernelTable +
-                "     WHERE rank_id = " + reqParams.rankId +
+                "     WHERE rank_id = " + reqParams.rankId + " AND accelerator_core <> 'HCCL'"
                 "     ORDER BY duration DESC"
                 "     LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery";
@@ -501,6 +502,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
+                "     WHERE rank_id = " + reqParams.rankId + " AND accelerator_core <> 'HCCL'"
                 "     ORDER by duration DESC LIMIT " +  std::to_string(reqParams.topK) +
                 " ) subquery ";
         if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
