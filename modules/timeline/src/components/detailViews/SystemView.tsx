@@ -153,7 +153,12 @@ const BaseSummary = observer((props: any) => {
     };
     useEffect(() => {
         updateData(page, sorter, props);
-    }, [ sorter, props.rankId, status ]);
+    }, [ sorter, props.rankId ]);
+    useEffect(() => {
+        if (status === 'download') {
+            updateData(page, sorter, props);
+        }
+    }, [status]);
     return (
         (status === 'download' || props.rankId === undefined)
             ? <ResizeTable
@@ -200,7 +205,12 @@ const KernelDetails = observer((props: any) => {
     const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.rankId)?.phase;
     useEffect(() => {
         updateData(page, sorter);
-    }, [ sorter, props.rankId, status ]);
+    }, [ sorter, props.rankId ]);
+    useEffect(() => {
+        if (status === 'download') {
+            updateData(page, sorter);
+        }
+    }, [status]);
     const updateData = async(page: any, sorter: {field: string;order: string}): Promise<void> => {
         if (props.rankId === undefined) {
             setDataSource([]);
