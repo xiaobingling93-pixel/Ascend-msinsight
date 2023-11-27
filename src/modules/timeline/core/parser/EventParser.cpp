@@ -51,6 +51,10 @@ void EventParser::Parse(int64_t startPosition, int64_t endPosition)
         ServerLog::Error("EventParser. Failed to parse json. ", e.what());
         return;
     }
+    if (!d.IsArray()) {
+        ServerLog::Error("EventParser. json is not an array.");
+        return;
+    }
     for (auto &event : d.GetArray()) {
         EventHandle(event);
     }
