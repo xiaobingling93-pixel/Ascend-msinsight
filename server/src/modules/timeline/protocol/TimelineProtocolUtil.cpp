@@ -294,6 +294,7 @@ template <> std::optional<json_t> ToResponseJson<OneKernelResponse>(const OneKer
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json["body"]["depth"] = response.body.depth;
     json["body"]["threadId"] = response.body.threadId;
+    json["body"]["pid"] = response.body.pid;
     return json;
 }
 #pragma endregion

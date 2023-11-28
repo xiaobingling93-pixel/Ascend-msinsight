@@ -59,6 +59,11 @@ struct SliceTimeData {
     uint64_t time;
     uint64_t dur;
 };
+
+struct OneKernelData {
+    uint64_t threadId;
+    std::string pid;
+};
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

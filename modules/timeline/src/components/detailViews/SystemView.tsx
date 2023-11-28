@@ -238,7 +238,7 @@ const KernelDetails = observer((props: any) => {
         runInAction(() => {
             props.session.locateUnit = {
                 target: (unit: any) => {
-                    return unit.metadata.threadId === res.threadId;
+                    return unit.metadata.threadId === res.threadId && unit.metadata.processId === res.pid;
                 },
                 onSuccess: () => {
                     props.session.selectedData = {

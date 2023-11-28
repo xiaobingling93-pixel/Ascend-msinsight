@@ -85,7 +85,7 @@ public:
     int64_t QueryTotalKernel(const std::string &coreType);
     bool QueryKernelDepthAndThread(const Protocol::KernelParams &params,
                                                   Protocol::OneKernelBody &responseBody, uint64_t minTimestamp);
-    uint64_t QueryKernelTid(const uint64_t trackId);
+    OneKernelData QueryKernelTid(const uint64_t trackId);
 
 private:
     std::mutex &mutex;

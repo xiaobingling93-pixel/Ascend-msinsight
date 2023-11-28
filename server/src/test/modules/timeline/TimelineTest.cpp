@@ -6,6 +6,8 @@
 #include "TimelineProtocolRequest.h"
 #include "DataBaseManager.h"
 #include "../../TestSuit.cpp"
+#include "TraceTime.h"
+#include "ServerLog.h"
 
 class TimelineTest : TestSuit {
 };
@@ -136,12 +138,18 @@ TEST_F(TestSuit, QueryKernelDepthAndThread)
     Dic::Protocol::KernelParams requestParams;
     Dic::Protocol::OneKernelBody responseBody;
     uint64_t DURATION = 72861;
+    uint64_t TIMESTAMP = 1695115378736217088;
     requestParams.duration = DURATION;
-    requestParams.timestamp = "1695115378736217088";
+    requestParams.timestamp = TIMESTAMP;
     requestParams.name = "trans_Cast_15";
-    database->QueryKernelDepthAndThread(requestParams, responseBody);
+    uint64_t minTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
+    database->QueryKernelDepthAndThread(requestParams, responseBody, minTime);
+    Dic::Server::ServerLog::Info("-------------");
+    Dic::Server::ServerLog::Info(minTime);
     uint64_t depth = 0;
     uint64_t tid = 17;
+    std::string pid = "300";
     EXPECT_EQ(responseBody.depth, depth);
     EXPECT_EQ(responseBody.threadId, tid);
+    EXPECT_EQ(responseBody.pid, pid);
 }

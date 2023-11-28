@@ -1385,25 +1385,28 @@ bool TraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &para
         responseBody.depth = resultSet->GetUint64("depth");
         trackId = resultSet->GetUint64("track_id");
     }
-    uint64_t tid = QueryKernelTid(trackId);
-    responseBody.threadId = tid;
+    const OneKernelData &data = QueryKernelTid(trackId);
+    responseBody.threadId = data.threadId;
+    responseBody.pid = data.pid;
     return true;
 }
 
-uint64_t TraceDatabase::QueryKernelTid(const uint64_t trackId)
+OneKernelData TraceDatabase::QueryKernelTid(const uint64_t trackId)
 {
-    std::string sql = "SELECT tid FROM " + threadTable + " WHERE track_id = ? ";
+    std::string sql = "SELECT tid, pid FROM " + threadTable + " WHERE track_id = ? ";
     auto stmt = CreatPreparedStatement(sql);
+    OneKernelData oneKernel;
     if (stmt == nullptr) {
         ServerLog::Error("QueryKernelTid, fail to prepare sql.");
-        return false;
+        return oneKernel;
     }
     auto resultSet = stmt->ExecuteQuery(trackId);
     uint64_t tid = 0;
     if (resultSet->Next()) {
-        tid = resultSet->GetUint64(0);
+        oneKernel.threadId = resultSet->GetUint64(0);
+        oneKernel.pid = resultSet->GetString(1);
     }
-    return tid;
+    return oneKernel;
 }
 } // end of namespace Timeline
 } // end of namespace Module
