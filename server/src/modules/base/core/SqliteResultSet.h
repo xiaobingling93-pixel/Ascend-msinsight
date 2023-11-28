@@ -45,27 +45,27 @@ public:
         return std::string(reinterpret_cast<const char *>(data), len);
     }
 
-    inline int32_t GetInt32(int index)
+    inline int32_t GetInt32(const int index)
     {
         return sqlite3_column_int(stmt, index);
     }
 
-    inline int64_t GetInt64(int index)
+    inline int64_t GetInt64(const int index)
     {
         return sqlite3_column_int64(stmt, index);
     }
 
-    inline uint32_t GetUint32(int index)
+    inline uint32_t GetUint32(const int index)
     {
         return sqlite3_column_int(stmt, index);
     }
 
-    inline uint64_t GetUint64(int index)
+    inline uint64_t GetUint64(const int index)
     {
         return sqlite3_column_int64(stmt, index);
     }
 
-    inline double GetDouble(int index)
+    inline double GetDouble(const int index)
     {
         return sqlite3_column_double(stmt, index);
     }
