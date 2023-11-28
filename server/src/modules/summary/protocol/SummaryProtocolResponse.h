@@ -102,10 +102,10 @@ struct SummaryStatisticsResponse : public Response {
 struct ComputeDetail {
     std::string name;
     std::string type;
-    uint64_t startTime;
-    uint64_t duration;
-    uint64_t waitTime;
-    uint64_t blockDim;
+    double startTime;
+    double duration;
+    double waitTime;
+    int64_t blockDim;
     std::string inputShapes;
     std::string inputDataTypes;
     std::string inputFormats;
@@ -123,9 +123,9 @@ struct ComputeDetailResponse : public Response {
 struct CommunicationDetail {
     std::string name;
     std::string type;
-    uint64_t startTime;
-    uint64_t duration;
-    uint64_t waitTime;
+    double startTime;
+    double duration;
+    double waitTime;
 };
 
 struct CommunicationDetailResponse : public Response {

@@ -49,9 +49,9 @@ bool MemoryDataBase::InitStmt()
         return true;
     }
     std::string sql = "INSERT INTO " + operatorTable + " (name, allocation_time, release_time, size, duration)" +
-          " VALUES (?,?,?,?,?)";
+          " VALUES (?,round(? * 1000),round(? * 1000),?,?)";
     for (int i = 0; i < cacheSize - 1; ++i) {
-        sql.append(",(?,?,?,?,?)");
+        sql.append(",(?,round(? * 1000),round(? * 1000),?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertOperatorStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare insert Operator statement. error:", sqlite3_errmsg(db));
@@ -59,9 +59,9 @@ bool MemoryDataBase::InitStmt()
     }
 
     sql = "INSERT INTO " + recordTable + " (component, total_allocated, total_reserve, device_type, timestamp)" +
-          " VALUES (?,?,?,?,?)";
+          " VALUES (?,?,?,?,round(? * 1000))";
     for (int i = 0; i < cacheSize - 1; ++i) {
-        sql.append(",(?,?,?,?,?)");
+        sql.append(",(?,?,?,?,round(? * 1000))");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertRecordStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare insert Record statement. error:", sqlite3_errmsg(db));
@@ -92,10 +92,10 @@ void MemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &event
     int idx = bindStartIndex;
     for (const auto &event : eventList) {
         sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_int64(stmt, idx++, event.allocationTime);
-        sqlite3_bind_int64(stmt, idx++, event.releaseTime);
-        sqlite3_bind_int64(stmt, idx++, event.size);
-        sqlite3_bind_int64(stmt, idx++, event.duration);
+        sqlite3_bind_double(stmt, idx++, event.allocationTime);
+        sqlite3_bind_double(stmt, idx++, event.releaseTime);
+        sqlite3_bind_double(stmt, idx++, event.size);
+        sqlite3_bind_double(stmt, idx++, event.duration);
     }
     auto result = sqlite3_step(stmt);
     if (eventList.size() != cacheSize) {
@@ -125,10 +125,10 @@ void MemoryDataBase::InsertRecordDetailList(const std::vector<Record> &eventList
     int idx = bindStartIndex;
     for (const auto &event : eventList) {
         sqlite3_bind_text(stmt, idx++, event.component.c_str(), event.component.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_int64(stmt, idx++, event.totalAllocated);
-        sqlite3_bind_int64(stmt, idx++, event.totalReserved);
+        sqlite3_bind_double(stmt, idx++, event.totalAllocated);
+        sqlite3_bind_double(stmt, idx++, event.totalReserved);
         sqlite3_bind_text(stmt, idx++, event.deviceType.c_str(), event.deviceType.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_int64(stmt, idx++, event.timesTamp);
+        sqlite3_bind_double(stmt, idx++, event.timesTamp);
     }
     auto result = sqlite3_step(stmt);
     if (eventList.size() != cacheSize) {
@@ -156,8 +156,8 @@ std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requ
     } else {
         ascend = "DESC";
     }
-    std::string sql = "SELECT name, ROUND(allocation_time / 1000.0 - ?, 2) as allocationTime, "
-                      "ROUND(release_time / 1000.0 - ?, 2) as releaseTime, size, "
+    std::string sql = "SELECT name, ROUND((allocation_time- ?) / (1000.0 * 1000.0), 2) as allocationTime, "
+                      "ROUND((release_time - ?) / (1000.0 * 1000.0), 2) as releaseTime, size, "
                       "ROUND(duration / 1000.0, 2) as duration FROM " + operatorTable +
                       " WHERE name LIKE ?";
 
@@ -194,7 +194,7 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
     }
     int index = bindStartIndex;
     std::string orderName = "%" + requestParams.orderName + "%";
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime() / (1000 * 1000);
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
@@ -255,7 +255,7 @@ void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, memoryLi
 bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
                                      Protocol::OperatorMemory &operatorBody)
 {
-    std::string sql = "SELECT component, ROUND(timestamp / 1000.0 - ?, 2) as timestamp, "
+    std::string sql = "SELECT component, ROUND((timestamp - ?) / (1000.0 * 1000.0), 2) as timestamp, "
                       "ROUND(total_allocated, 2) as total_allocated, "
                       "ROUND(total_reserve, 2) as total_reserve FROM " + recordTable + " ORDER BY timestamp ASC";
     sqlite3_stmt *stmt = nullptr;
@@ -266,7 +266,7 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
     }
     int index = bindStartIndex;
     // 1ms = 1000 * 1000 ns
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime() / (1000 * 1000);
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     sqlite3_bind_int64(stmt, index++, startTime);
     std::string peakMemory;
     std::vector<Protocol::ComponentDto> componentDtoVec;
@@ -336,9 +336,9 @@ sqlite3_stmt *MemoryDataBase::GetOperatorStmt(uint64_t paramLen)
         sqlite3_reset(stmt);
     } else {
         std::string sql = "INSERT INTO " + operatorTable + " (name, allocation_time, release_time, size, duration)" +
-                          " VALUES (?,?,?,?,?)";
+                          " VALUES (?,round(? * 1000),round(? * 1000),?,?)";
         for (int i = 0; i < paramLen - 1; ++i) {
-            sql.append(",(?,?,?,?,?)");
+            sql.append(",(?,round(? * 1000),round(? * 1000),?,?)");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
             ServerLog::Error("Failed to prepare insertOperator stat. error:", sqlite3_errmsg(db));
@@ -356,9 +356,9 @@ sqlite3_stmt *MemoryDataBase::GetRecordStmt(uint64_t paramLen)
         sqlite3_reset(stmt);
     } else {
         std::string sql = "INSERT INTO " + recordTable +
-                " (component, total_allocated, total_reserve, device_type, timestamp) VALUES (?,?,?,?,?)";
+                " (component, total_allocated, total_reserve, device_type, timestamp) VALUES (?,?,?,?,round(? * 1000))";
         for (int i = 0; i < paramLen - 1; ++i) {
-            sql.append(",(?,?,?,?,?)");
+            sql.append(",(?,?,?,?,round(? * 1000))");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
             ServerLog::Error("Failed to prepare insertOperator stat. error:", sqlite3_errmsg(db));
@@ -374,10 +374,10 @@ bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requ
     std::string sql = "SELECT count(*) as nums FROM " + operatorTable + " WHERE name LIKE ?";
 
     if (requestParams.startTime != -1) {
-        sql += " AND ROUND(allocation_time / 1000.0 - ?, 2) >= " + std::to_string(requestParams.startTime);
+        sql += " AND ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) >= " + std::to_string(requestParams.startTime);
     }
     if (requestParams.endTime != -1) {
-        sql += " AND ROUND(allocation_time / 1000.0 - ?, 2) <= " + std::to_string(requestParams.endTime);
+        sql += " AND ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) <= " + std::to_string(requestParams.endTime);
     }
     if (requestParams.minSize != -1) {
         sql += " AND size >= " + std::to_string(requestParams.minSize);
@@ -393,7 +393,7 @@ bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requ
     int index = bindStartIndex;
     std::string orderName = "%" + requestParams.orderName + "%";
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime() / (1000 * 1000);
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     if (requestParams.startTime != -1) {
         sqlite3_bind_double(stmt, index++, startTime);
     }

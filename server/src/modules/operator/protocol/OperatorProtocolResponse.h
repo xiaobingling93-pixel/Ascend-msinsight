@@ -14,7 +14,7 @@ namespace Dic::Protocol {
     // 饼图中按算子类型耗时统计和按计算单元分类耗时统计
     struct OperatorDurationRes {
         std::string name;
-        int64_t duration;
+        double duration;
     };
 
     // 按Operator Type、Input Shape展示时算子统计信息
@@ -23,11 +23,11 @@ namespace Dic::Protocol {
         std::string opName;
         std::string inputShape;
         std::string accCore;
-        int64_t totalTime;
+        double totalTime;
         int64_t count;
-        int64_t avgTime;
-        int64_t maxTime;
-        int64_t minTime;
+        double avgTime;
+        double maxTime;
+        double minTime;
     };
 
     // 按Operator展示算子详细信息，和See More响应
@@ -37,9 +37,9 @@ namespace Dic::Protocol {
         std::string name;
         std::string type;
         std::string accCore;
-        int64_t startTime;
-        int64_t duration;
-        int64_t waitTime;
+        double startTime;
+        double duration;
+        double waitTime;
         int64_t blockDim;
         std::string inputShape;
         std::string inputType;

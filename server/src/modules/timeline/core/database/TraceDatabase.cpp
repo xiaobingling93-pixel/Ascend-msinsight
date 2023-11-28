@@ -1422,7 +1422,7 @@ void TraceDatabase::SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, 
         detail.name = resultSet->GetString("name");
         detail.type = resultSet->GetString("type");
         detail.acceleratorCore = resultSet->GetString("acceleratorCore");
-        detail.startTime = resultSet->GetUint64("startTime") * unit - minTimestamp;
+        detail.startTime = resultSet->GetUint64("startTime") - minTimestamp;
         detail.duration = resultSet->GetDouble("duration");
         detail.waitTime = resultSet->GetDouble("waitTime");
         detail.blockDim = resultSet->GetUint64("blockDim");
