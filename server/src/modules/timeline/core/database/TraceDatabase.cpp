@@ -104,7 +104,7 @@ void TraceDatabase::ReleaseStmt()
 bool TraceDatabase::SetConfig()
 {
     if (!isOpen) {
-        ServerLog::Error("[Trace Database]Failed to set config. Database is not open.");
+        ServerLog::Error("Failed to set config. Database is not open.");
         return false;
     }
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
@@ -113,15 +113,8 @@ bool TraceDatabase::SetConfig()
 bool TraceDatabase::CreateTable()
 {
     if (!isOpen) {
-        ServerLog::Error("[Trace Database]Failed to set config. Database is not open.");
+        ServerLog::Error("Failed to set config. Database is not open.");
         return false;
-    }
-    std::string dropIndexSql =
-        "DROP INDEX IF EXISTS " + idIndex + ";" +
-        "DROP INDEX IF EXISTS " + trackIdTimeIndex + ";"+
-        "DROP INDEX IF EXISTS " + flowIndex + ";";
-    if (!ExecSql(dropIndexSql)) {
-        ServerLog::Warn("Failed to drop index.");
     }
     std::string sql =
         "CREATE TABLE " + sliceTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER, duration INTEGER,"
@@ -142,12 +135,12 @@ bool TraceDatabase::CreateIndex()
 {
     auto start = std::chrono::system_clock::now();
     if (!isOpen) {
-        ServerLog::Error("[Trace Database]Failed to creat index. Database is not open.");
+        ServerLog::Error("Failed to creat index. Database is not open.");
         return false;
     }
     std::string sql = "CREATE INDEX " + idIndex + " ON " + sliceTable + " (id);" +
-        "CREATE INDEX " + trackIdTimeIndex + " ON " + sliceTable + " (timestamp, track_id);" +
-        "CREATE INDEX " + flowIndex + " ON " + flowTable + " (timestamp, track_id);";
+        "CREATE INDEX " + trackIdTimeIndex + " ON " + sliceTable + " (track_id, timestamp);" +
+        "CREATE INDEX " + flowIndex + " ON " + flowTable + " (track_id, timestamp);";
     ExecSql(sql);
     auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
     ServerLog::Info("CreateIndex end. time:", dur.count());
@@ -345,104 +338,44 @@ std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetCounterStmt(uint64_t 
 void TraceDatabase::UpdateDepth()
 {
     ServerLog::Info("UpdateDepth.");
-    auto trackList = GetTrackIdList();
-    for (auto &trackId : trackList) {
-        UpdateOneTrackDepth(trackId);
-    }
-    ServerLog::Info("UpdateDepth end. track id size:", trackList.size());
+    CreateDepthTempTable();
+    UpdateSliceDepth();
+    DropDepthTempTable();
+    ServerLog::Info("UpdateDepth end.");
 }
 
-std::vector<int64_t> TraceDatabase::GetTrackIdList()
+void TraceDatabase::CreateDepthTempTable()
 {
-    std::vector<int64_t> trackIdList;
-    std::string sql = "SELECT track_id FROM " + threadTable;
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql.");
-        return {};
-    }
-    auto resultSet = stmt->ExecuteQuery();
-    while (resultSet->Next()) {
-        trackIdList.emplace_back(resultSet->GetInt64("track_id"));
-    }
-    return trackIdList;
-}
+    std::string sql = "CREATE TEMPORARY TABLE temps AS "
+                      "SELECT S2.id, S0.id AS parent_id "
+                      "FROM slice AS S2 JOIN slice AS S0 "
+                      "WHERE (S2.track_id = S0.track_id AND S2.timestamp > S0.timestamp "
+                      "AND S2.timestamp < S0.timestamp + S0.duration) "
+                      "OR (S2.track_id = S0.track_id AND S2.timestamp = S0.timestamp AND S2.id > S0.id);";
 
-void TraceDatabase::UpdateOneTrackDepth(int64_t trackId)
-{
-    std::vector<SliceTimeData> sliceTimeList;
-    if (!SearchSliceTimeData(trackId, sliceTimeList)) {
-        ServerLog::Error("Failed to search slice time data.");
-        return;
-    }
-    std::map<int, std::vector<int64_t>> depthMap;
-    CalcDepth(sliceTimeList, depthMap);
-    sliceTimeList.clear();
-    for (auto &it : depthMap) {
-        UpdateDepthByID(it.second, it.first);
+    if (!ExecSql(sql)) {
+        ServerLog::Error("Creat temp table fail. ", GetLastError());
     }
 }
 
-bool TraceDatabase::SearchSliceTimeData(int64_t trackId, std::vector<SliceTimeData> &sliceTimeList)
+void TraceDatabase::DropDepthTempTable()
 {
-    std::string sql = "SELECT id, timestamp, duration FROM " + sliceTable + " WHERE track_id = ? ORDER BY timestamp;";
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
-        return false;
-    }
-    auto resultSet = stmt->ExecuteQuery(trackId);
-    while (resultSet->Next()) {
-        int64_t id = resultSet->GetInt64("id");
-        uint64_t ts = resultSet->GetUint64("timestamp");
-        uint64_t dur = resultSet->GetUint64("duration");
-        sliceTimeList.emplace_back(SliceTimeData{id, ts, dur});
-    }
-    return true;
-}
-
-void TraceDatabase::CalcDepth(const std::vector<SliceTimeData> &sliceData,
-                              std::map<int, std::vector<int64_t>> &depthMap)
-{
-    std::vector<uint64_t> depthCache;
-    for (const auto &slice : sliceData) {
-        int depth = -1;
-        for (int i = 0; i < depthCache.size(); ++i) {
-            if (slice.time >= depthCache[i]) {
-                depthCache[i] = slice.time + slice.dur;
-                depth = i;
-                break;
-            }
-        }
-        if (depth < 0) {
-            depth = depthCache.size();
-            depthCache.emplace_back(slice.time + slice.dur);
-        }
-        depthMap[depth].emplace_back(slice.id);
+    std::string sql = "DROP table temp.temps";
+    if (!ExecSql(sql)) {
+        ServerLog::Error("Drop temp table fail. ", GetLastError());
     }
 }
 
-void TraceDatabase::UpdateDepthByID(const std::vector<int64_t> &idList, int depth)
+void TraceDatabase::UpdateSliceDepth()
 {
-    static const uint64_t MAX_PARAMS = 10000;
-    std::string sql = "UPDATE " + sliceTable + " SET depth = " + std::to_string(depth) + " WHERE id IN ";
-    uint64_t start = 0;
-    while (start < idList.size()) {
-        std::string updateSql = sql;
-        uint64_t idListSize = idList.size();
-        uint64_t end = std::min(start + MAX_PARAMS, idListSize);
-        updateSql.append("(");
-        for (auto i = start; i < end - 1; ++i) {
-            updateSql.append(std::to_string(idList[i]) + ",");
-        }
-        updateSql.append(std::to_string(idList[end - 1]) + ");");
-        auto stmt = CreatPreparedStatement(updateSql);
-        if (stmt == nullptr) {
-            ServerLog::Error("Failed to prepare sql.");
-            return;
-        }
-        stmt->Execute();
-        start = end;
+    std::string sql = "UPDATE slice AS S SET depth = ("
+                      "SELECT COALESCE(tmp.count, 0) FROM slice LEFT JOIN ("
+                      "SELECT id, COUNT(*) as count "
+                      "FROM temps "
+                      "GROUP BY id) AS tmp "
+                      "ON tmp.id = S.id);";
+    if (!ExecSql(sql)) {
+        ServerLog::Error("Update slice depth fail. ", GetLastError());
     }
 }
 
