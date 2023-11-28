@@ -15,6 +15,7 @@ public:
     SummaryRequestHandler()
     {
         moduleName = Protocol::ModuleType::SUMMARY;
+        async = false;
     }
     ~SummaryRequestHandler() override = default;
     void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override {}

@@ -13,6 +13,7 @@ namespace Dic::Module::Operator {
         OperatorRequestHandler()
         {
             moduleName = Protocol::ModuleType::OPERATOR;
+            async = false;
         }
 
         ~OperatorRequestHandler() override = default;

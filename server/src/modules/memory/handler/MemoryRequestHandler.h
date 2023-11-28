@@ -15,6 +15,7 @@ public:
     MemoryRequestHandler()
     {
         moduleName = Protocol::ModuleType::MEMORY;
+        async = false;
     }
     ~MemoryRequestHandler() override = default;
 

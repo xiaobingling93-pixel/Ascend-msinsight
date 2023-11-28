@@ -15,6 +15,7 @@ public:
     CommunicationRequestHandler()
     {
         moduleName = Protocol::ModuleType::COMMUNICATION;
+        async = false;
     }
     ~CommunicationRequestHandler() override = default;
     void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override {}
