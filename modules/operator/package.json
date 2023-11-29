@@ -6,7 +6,7 @@
   "dependencies": {
     "@emotion/react": "11.11.0",
     "@emotion/styled": "11.11.0",
-    "antd": "4.24.13",
+    "antd": "4.23.0",
     "mobx": "6.7.0",
     "mobx-react": "7.4.0",
     "react": "18.2.0",

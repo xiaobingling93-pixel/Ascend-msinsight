@@ -263,6 +263,9 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .theme_dark .ant-select-dropdown{
     background-color: black;
 }
+.theme_dark .rc-virtual-list-scrollbar-thumb{
+    background-color:var(--grey60)!important;
+}
 .theme_dark .ant-select-item-option-active:not(.ant-select-item-option-disabled){
     background-color: var(--grey80);
 }
