@@ -59,8 +59,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         ServerLog::Info("Pre task skip this file.");
         return true;
     }
-    std::string dbPath = GetDbPath(filePathArr[0], fileId);
-    if (!InitDatabase(dbPath, fileId)) {
+    if (!InitDatabase(fileId)) {
         ServerLog::Error("Failed to Initial database.");
         return false;
     }
@@ -237,23 +236,6 @@ bool TraceFileParser::SeekRegexPosition(std::ifstream &file, const std::string &
     return true;
 }
 
-std::string TraceFileParser::GetDbPath(const std::string &filePath, const std::string &fileId)
-{
-    std::string path = FileUtil::GetRealPath(filePath);
-    std::string suffix = ".db";
-    auto pos = fileId.find_last_of('_');
-    if (pos != std::string::npos) {
-        suffix = fileId.substr(pos) + suffix;
-    }
-    pos = path.find_last_of('.');
-    if (pos != std::string::npos) {
-        path.replace(pos, path.size() - pos, suffix);
-    } else {
-        path.append(suffix);
-    }
-    return path;
-}
-
 int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid)
 {
     std::unique_lock<std::mutex> lock(trackMutex);
@@ -370,7 +352,7 @@ void TraceFileParser::DeleteParseFile(const std::string &fileId)
     }
 }
 
-bool TraceFileParser::InitDatabase(const std::string& dbPath, const std::string& rankId)
+bool TraceFileParser::InitDatabase(const std::string& rankId)
 {
     auto database = DataBaseManager::Instance().GetTraceDatabase(rankId);
     if (database == nullptr) {
@@ -383,17 +365,17 @@ bool TraceFileParser::InitDatabase(const std::string& dbPath, const std::string&
         return false;
     }
     auto summaryDatabase = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
-    if (!(summaryDatabase->OpenDb(dbPath, false) && summaryDatabase->CreateTable() &&
+    if (!(summaryDatabase->OpenDb(database->GetDbPath(), false) && summaryDatabase->CreateTable() &&
           summaryDatabase->SetConfig() && summaryDatabase->InitStmt())) {
         ParseEndCallBack(rankId, false);
-        ServerLog::Error("Failed to open summaryDatabase. path:", dbPath);
+        ServerLog::Error("Failed to open summaryDatabase. rankId:", rankId);
         return false;
     }
     auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemoryDatabase(rankId);
-    if (!(memoryDatabase->OpenDb(dbPath, false) && memoryDatabase->CreateTable() &&
+    if (!(memoryDatabase->OpenDb(database->GetDbPath(), false) && memoryDatabase->CreateTable() &&
             memoryDatabase->SetConfig() && memoryDatabase->InitStmt())) {
         ParseEndCallBack(rankId, false);
-        ServerLog::Error("Failed to open memoryDatabase. path:", dbPath);
+        ServerLog::Error("Failed to open memoryDatabase. rankId:", rankId);
         return false;
     }
     return true;

@@ -676,8 +676,7 @@ bool ClusterDatabase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
-    std::string sql = "SELECT op_name, count(*) AS nums  from " + timeInfoTable
-                      + " where 1=1 ";
+    std::string sql = "SELECT op_name, count(*) AS nums  from " + timeInfoTable + " where 1=1 ";
     if (!param.iterationId.empty()) {
         sql.append("and iteration_id = ? ");
     }
