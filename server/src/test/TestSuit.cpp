@@ -18,6 +18,10 @@ protected:
         std::string currPath = Dic::FileUtil::GetCurrPath();
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
+        Dic::Module::Timeline::DataBaseManager::Instance()
+        .CreatConnectionPool("0", currPath + R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.db)");
+        Dic::Module::Timeline::DataBaseManager::Instance()
+        .CreatConnectionPool("1", currPath + R"(/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.db)");
         Dic::Module::Timeline::TraceFileParser::Instance().Parse(
             {currPath + R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/trace_view.json)"}, "0", "");
         Dic::Module::Timeline::TraceFileParser::Instance().Parse(
