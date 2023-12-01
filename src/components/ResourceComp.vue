@@ -18,7 +18,7 @@ const defaultProps = {
     children: 'children',
     isLeaf: 'leaf',
 }
-let isUpdateLoading = false;
+let isUpdateLoading = {} as {[key: string]: boolean};
 let defalultExpandedKeysSet: Set<string> = new Set();
 
 const state = reactive({
@@ -26,29 +26,53 @@ const state = reactive({
     inputPath: "",
 })
 
-const updateData = async (path: string,node: Node) => {
-    if (isUpdateLoading) {
+const updateData = async (path: string, node: Node) => {
+    if (isUpdateLoading[path]) {
         return;
     }
-    isUpdateLoading = true;
+    isUpdateLoading[path] = true;
     const oldData = resourceState.resourceTotal[path];
     if (oldData) {
         const newData = await loadFiles(path);
         checkData(newData, oldData, node)
     }
-    isUpdateLoading = false;
+    isUpdateLoading[path] = false;
 }
 
 const checkData = (newData: ResourceItem[], oldData: ResourceItem[], node: Node) => {
     const newPaths = newData.map(item => item.path);
     const oldPaths = oldData.map(item => item.path);
-    const addData = newData.filter(item => !oldPaths.includes(item.path));
-    const deleteDtat = oldData.filter(item => !newPaths.includes(item.path));
-    deleteDtat.forEach(item => {
+    const deleteData = oldData.filter(item => !newPaths.includes(item.path));
+    deleteData.forEach(item => {
         treeRef.value.remove(item);
     })
-    addData.forEach(item => {
-        treeRef.value.append(item, node);
+    newData.forEach((item, i) => {
+        if (!oldPaths.includes(item.path)) {
+            let findNext = false;
+            for (let next = i + 1; next < newData.length; next++) {
+                const nextPath = newData[next].path;
+                const nextNode = treeRef.value.getNode(nextPath);
+                if (nextNode) {
+                    treeRef.value.insertBefore(item, nextNode);
+                    findNext = true;
+                    break;
+                }
+            }
+            if (!findNext) {
+                for (let pre = i - 1; pre >= 0; pre--) {
+                    const prePath = newData[pre].path;
+                    const preNode = treeRef.value.getNode(prePath);
+                    if (preNode) {
+                        treeRef.value.insertAfter(item, preNode);
+                        findNext = true;
+                        break;
+                    }
+                }
+            }
+            if (!findNext) {
+                treeRef.value.append(item, node);
+            }
+        }
     })
 }
 
@@ -101,8 +125,14 @@ const getLoadData = async (node: Node, resolve: (data: ResourceItem[]) => void) 
     resolve(newData || []);
 }
 
+const doWhileOpenDialog = () => {
+    const node = treeRef.value.getCurrentNode();
+    node && updateData(node.path, node);
+}
+
 defineExpose({
-    doSetCurrentPath
+    doSetCurrentPath,
+    doWhileOpenDialog,
 })
 </script>
 

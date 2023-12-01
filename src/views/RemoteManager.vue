@@ -22,6 +22,7 @@ const showModal = ref(false);
 function addRemote(e: MouseEvent) {
     e.stopPropagation();
     showModal.value = true;
+    resourceComp.value && resourceComp.value.doWhileOpenDialog();
 }
 
 const store = useDataSources();
@@ -44,6 +45,9 @@ const handleConfirm = () => {
         <el-dialog v-model="showModal" title="File Explorer" width="30%">
             <ResourceComp ref="resourceComp" />
             <template #footer>
+                <div class="foot-tip">
+                    To refresh a directory, collapse and expand the directory.
+                </div>
                 <span>
                     <el-button type="primary" @click="handleConfirm">Confirm</el-button>
                     <el-button @click="showModal = false">Cancel</el-button>
@@ -89,5 +93,12 @@ header {
 
 .header .icon-container {
     margin-right: 0.5rem;
+}
+
+.foot-tip {
+  font-size: 14px;
+  padding-bottom: 10px;
+  text-align: left;
+  color: var(--el-color-warning);
 }
 </style>
