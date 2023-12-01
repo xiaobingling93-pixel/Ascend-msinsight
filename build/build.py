@@ -68,9 +68,10 @@ def log_output(output):
             ret = output.poll()
             if ret and ret != 0:
                 LOG.error('build error: %d!\n', ret)
-                sys.exit(1)
+                return False
             break
         log(line.decode('UTF-8').rstrip())
+    return True
 
 
 def get_gxx_type():
@@ -100,11 +101,13 @@ def build_bin(args):
     if args.project_type == 'true':
         build_cmds.append('-DWASM_MJS_ENABLE=ON')
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
-    log_output(output)
+    if not log_output(output):
+        return
 
     build_cmds = ['cmake', '--build', '.', '-j', str(MAKE_JOBS)]
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
-    log_output(output)
+    if not log_output(output):
+        return
     log('end build.\n')
 
 
@@ -159,11 +162,13 @@ def build_test(args):
     build_cmds = ['cmake', HOME_DIR, '-G', generator, '-DCMAKE_BUILD_TYPE=' + build_type,
                   '-D_PROJECT_TYPE=' + args.project_type]
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
-    log_output(output)
+    if not log_output(output):
+        return
 
     build_cmds = ['cmake', '--build', '.', '-j', str(MAKE_JOBS)]
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
-    log_output(output)
+    if not log_output(output):
+        return
     log('end test build.\n')
 
 
