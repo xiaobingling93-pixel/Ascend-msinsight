@@ -37,7 +37,7 @@ TraceFileParser::~TraceFileParser()
 
 bool TraceFileParser::Parse(const std::string &filePath, const std::string &fileId)
 {
-    ServerLog::Info("start parse.");
+    ServerLog::Info("start parse. file id:", fileId, ". path:", filePath);
     ParserStatusManager::Instance().SetParserStatus(fileId, ParserStatus::INIT);
     threadPool->AddTask(PreParseTask, filePath, fileId);
     return true;

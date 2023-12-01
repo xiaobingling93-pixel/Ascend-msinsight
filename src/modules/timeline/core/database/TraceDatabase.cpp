@@ -106,6 +106,7 @@ bool TraceDatabase::SetConfig()
         ServerLog::Error("Failed to set config. Database is not open.");
         return false;
     }
+    std::unique_lock<std::mutex> lock(mutex);
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
 }
 
