@@ -21,6 +21,7 @@ import {
 import ResizeTable from '../resize/ResizeTable';
 import { CardMetaData } from '../../entity/data';
 import { runInAction } from 'mobx';
+import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 
 const Container = styled.div`
     width: 100%;
@@ -65,7 +66,7 @@ export const SystemView = observer((props: any) => {
             <SelectList setKey={setKey}></SelectList>
         </Space>
         <Divider type="vertical" />
-        <SelectContainer><SelectContent className={'SelectContent'} key={key} rankId={conditions.rankId} session={props.session}></SelectContent></SelectContainer>
+        <ChartErrorBoundary><SelectContainer><SelectContent className={'SelectContent'} key={key} rankId={conditions.rankId} session={props.session}></SelectContent></SelectContainer></ChartErrorBoundary>
     </Container>);
 });
 
@@ -131,14 +132,15 @@ const BaseSummary = observer((props: any) => {
     const [ dataSource, setDataSource ] = useState<any[]>([]);
     const [ page, setPage ] = useState(defaultPage);
     const [ sorter, setSorter ] = useState(defaultSorter);
-
+    const [ isLoading, setLoading ] = useState(false);
     const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.rankId)?.phase;
     const updateData = async(page: any, sorter: {field: string;order: string}, props: any): Promise<void> => {
-        if (props.rankId === undefined) {
+        if (props.rankId === undefined || props.rankId === '') {
             setDataSource([]);
             setPage(defaultPage);
             return;
         }
+        setLoading(true);
         const res = await querySystemViewDetails({
             isQueryTotal: true,
             rankId: props.rankId,
@@ -148,6 +150,7 @@ const BaseSummary = observer((props: any) => {
             order: sorter.order ?? defaultSorter.order,
             layer: props.layerType,
         });
+        setLoading(false);
         setDataSource(res.systemViewDetails);
         setPage({ ...page, total: res.count });
     };
@@ -168,7 +171,8 @@ const BaseSummary = observer((props: any) => {
                 pagination={GetPageData(page, setPage)}
                 dataSource={dataSource}
                 columns={pythonApiSummaryColumns}
-                size="small"/>
+                size="small"
+                loading = {isLoading}/>
             : <Loading style={{ marginTop: '10px' }}/>
     );
 });
