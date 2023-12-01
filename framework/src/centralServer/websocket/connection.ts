@@ -1,6 +1,7 @@
 import { CONTENT_LENGTH_PREFIX, isResponse, PORT } from './defs';
 import type { DataRequest, ModuleName, DataSource, Notification, Response, Request, ResponseHandler } from './defs';
 import connector from '@/connection';
+import { ElMessage, ElMessageBox } from 'element-plus';
 
 const createRequestHead = function (
     id: number,
@@ -88,13 +89,20 @@ export class Connection {
             };
 
             this._ws.onerror = (ev: Event): void => {
+                ElMessage.error('WebSocket connection failed! You are advised to restart Ascend Insight.');
                 console.error('[connector]', ev);
                 reject(new Error('connect failed.'));
+            };
+            this._ws.onclose  = (ev: Event): void => {
+                ElMessageBox.alert('WebSocket is already in CLOSING or CLOSED state! You are advised to restart Ascend Insight.',{type:'error'});
             };
         }) as Promise<void>;
     }
 
     async fetch(module: ModuleName, dataRequest: DataRequest): Promise<unknown> {
+        if(!this.isConnected){
+            ElMessage.error('WebSocket is already in CLOSING or CLOSED state! You are advised to restart Ascend Insight.');
+        }
         if (this._ws === undefined) {
             return Promise.reject(new Error('connection not initialized'));
         }
