@@ -4,6 +4,7 @@
 
 #include "ServerLog.h"
 #include "JsonUtil.h"
+#include "ParserStatusManager.h"
 #include "CommunicationMatrixRapidHandler.h"
 
 namespace Dic {
@@ -99,6 +100,9 @@ bool CommunicationMatrixRapidHandler::Key(const char *str, rapidjson::SizeType l
 
 bool CommunicationMatrixRapidHandler::EndObject(rapidjson::SizeType memberCount)
 {
+    if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
+        return false;
+    }
     auto database = DataBaseManager::Instance().GetClusterDatabase();
     currentDepth--;
     if (currentDepth == ranksDepth) {

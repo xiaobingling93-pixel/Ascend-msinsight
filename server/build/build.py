@@ -44,18 +44,18 @@ LOG_FILE = os.path.join(LOG_DIR, 'build.log')
 BUILD_TITLE = '[DIC Server]'
 
 
-def log(info):
-    LOG.info(BUILD_TITLE + info)
+def build_log(build_info):
+    LOG.info(BUILD_TITLE + build_info)
 
 
 def information():
-    log('os platform = {}'.format(platform.system()))
-    log('home directory = {}'.format(HOME_DIR))
-    log('third_party directory = {}'.format(THIRD_PARTY_DIR))
-    log('src directory = {}'.format(SRC_DIR))
-    log('output directory = {}'.format(OUTPUT_DIR))
-    log('build directory = {}'.format(BUILD_DIR))
-    log('log directory = {}'.format(LOG_DIR))
+    build_log('os platform = {}'.format(platform.system()))
+    build_log('home directory = {}'.format(HOME_DIR))
+    build_log('third_party directory = {}'.format(THIRD_PARTY_DIR))
+    build_log('src directory = {}'.format(SRC_DIR))
+    build_log('output directory = {}'.format(OUTPUT_DIR))
+    build_log('build directory = {}'.format(BUILD_DIR))
+    build_log('log directory = {}'.format(LOG_DIR))
 
 
 def info(args):
@@ -70,9 +70,10 @@ def log_output(output):
             ret = output.poll()
             if ret and ret != 0:
                 LOG.error('build error: %d!\n', ret)
-                sys.exit(1)
+                return False
             break
-        log(line.decode('UTF-8').rstrip())
+        build_log(line.decode('UTF-8').rstrip())
+    return True
 
 
 def get_gxx_type():
@@ -86,7 +87,7 @@ def get_gxx_type():
 
 
 def build_bin(args):
-    log('begin build...\n')
+    build_log('begin build...\n')
     generator = 'MinGW Makefiles' if IS_WINDOWS else 'Ninja'
     gxx_type = get_gxx_type()
     build_dir = os.path.join(CMAKE_BUILD_DIR, gxx_type)
@@ -124,7 +125,7 @@ def build_bin(args):
         output = subprocess.Popen(build_att, cwd=BUILD_DIR, stdout=subprocess.PIPE)
         log_output(output)
 
-    log('end build.\n')
+    build_log('end build.\n')
 
 
 def build(args):
@@ -133,7 +134,7 @@ def build(args):
 
 def clean(args):
     """clean build outputs and logs"""
-    log('begin clean...\n')
+    build_log('begin clean...\n')
     output_dirs = ['output', LOG_DIR, CMAKE_BUILD_DIR]
     for file_path in output_dirs:
         abs_file_path = os.path.join(HOME_DIR, file_path)
@@ -141,7 +142,7 @@ def clean(args):
             shutil.rmtree(abs_file_path, ignore_errors=True)
         if os.path.isfile(abs_file_path):
             os.remove(abs_file_path)
-    log('end clean.\n')
+    build_log('end clean.\n')
 
 
 def init_log(name):
@@ -149,25 +150,25 @@ def init_log(name):
     if not os.path.exists(LOG_DIR):
         os.makedirs(LOG_DIR)
 
-    log = logging.getLogger(name)
-    log.setLevel(logging.DEBUG)
+    building_log = logging.getLogger(name)
+    building_log.setLevel(logging.DEBUG)
     formatter = logging.Formatter('[%(asctime)s] %(message)s')
     streamhandler = logging.StreamHandler(sys.stdout)
     streamhandler.setLevel(logging.DEBUG)
     streamhandler.setFormatter(formatter)
-    log.addHandler(streamhandler)
+    building_log.addHandler(streamhandler)
     filehandler = TimedRotatingFileHandler(LOG_FILE,
                                            when='W6',
                                            interval=1,
                                            backupCount=60)
     filehandler.setLevel(logging.DEBUG)
     filehandler.setFormatter(formatter)
-    log.addHandler(filehandler)
-    return log
+    building_log.addHandler(filehandler)
+    return building_log
 
 
 def build_test(args):
-    log('begin test build...\n')
+    build_log('begin test build...\n')
     generator = 'MinGW Makefiles' if IS_WINDOWS else 'Ninja'
     build_dir = os.path.join(CMAKE_BUILD_DIR, "test")
 
@@ -184,7 +185,7 @@ def build_test(args):
     build_cmds = ['cmake', '--build', '.', '-j', str(MAKE_JOBS)]
     output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
     log_output(output)
-    log('end test build.\n')
+    build_log('end test build.\n')
 
 
 def main():

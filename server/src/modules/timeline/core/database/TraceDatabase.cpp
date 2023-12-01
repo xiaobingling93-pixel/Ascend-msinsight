@@ -107,6 +107,7 @@ bool TraceDatabase::SetConfig()
         ServerLog::Error("Failed to set config. Database is not open.");
         return false;
     }
+    std::unique_lock<std::mutex> lock(mutex);
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
 }
 
@@ -128,6 +129,7 @@ bool TraceDatabase::CreateTable()
                                       " track_id INTEGER, timestamp INTEGER, type TEXT);" +
         "CREATE TABLE " + counterTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pid TEXT," +
                                           "timestamp INTEGER, cat TEXT, args TEXT);";
+    std::unique_lock<std::mutex> lock(mutex);
     return ExecSql(sql);
 }
 

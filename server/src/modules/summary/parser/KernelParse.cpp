@@ -36,6 +36,7 @@ void KernelParse::StringSplit(const std::string& str, std::vector<std::string>& 
 
 void KernelParse::KernelFileParse(const std::string &parentDir, const std::string &fileId)
 {
+    auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("start parse kernel detail.");
     std::string kernelFile = FileUtil::GetDetailFile(parentDir, kernelDetailFile);
     if (kernelDetailFile.empty()) {
@@ -67,6 +68,9 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
     }
     // 读取剩下的数据写入kernel内
     database->SaveKernelDetail();
+    auto end = std::chrono::high_resolution_clock::now();
+    ServerLog::Info("end parse kernel detail, cost time:",
+                    std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
 }
 
 Kernel KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,

@@ -77,6 +77,7 @@ bool MemoryParse::WaitParseEnd(const std::string &fileId)
 
 void MemoryParse::OperatorParse(const std::string &parentDir, const std::string &fileId)
 {
+    auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("start parse Operator.");
     auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
     std::string operatorFile = FileUtil::GetDetailFile(parentDir, memoryOperatorFile);
@@ -112,6 +113,9 @@ void MemoryParse::OperatorParse(const std::string &parentDir, const std::string 
     }
     // 读取剩下的数据并插入到operator内
     memoryDatabase->SaveOperatorDetail();
+    auto end = std::chrono::high_resolution_clock::now();
+    ServerLog::Info("end parse Operator, cost time:",
+                    std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
 }
 
 void MemoryParse::GetMapVaild(const std::vector<std::string>& vec, std::map<std::string, std::int16_t> dataMap)
@@ -162,6 +166,7 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, std::int16_t> dat
 
 void MemoryParse::RecordToParse(const std::string &parentDir, const std::string &fileId)
 {
+    auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("start parse Record.");
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
     std::string recordFile = FileUtil::GetDetailFile(parentDir, memoryRecordFile);
@@ -196,6 +201,9 @@ void MemoryParse::RecordToParse(const std::string &parentDir, const std::string 
     }
     // 读取剩下的数据并插入到record内
     database->SaveRecordDetail();
+    auto end = std::chrono::high_resolution_clock::now();
+    ServerLog::Info("end parse Record, cost time:",
+                    std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
 }
 
 MemoryParse::~MemoryParse()

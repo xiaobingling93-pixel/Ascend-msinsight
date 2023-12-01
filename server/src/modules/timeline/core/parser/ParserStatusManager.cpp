@@ -41,6 +41,12 @@ ParserStatus ParserStatusManager::GetParserStatus(const std::string &fileId)
     return statusMap[fileId];
 }
 
+ParserStatus ParserStatusManager::GetClusterParserStatus()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    return clusterParseStatus;
+}
+
 bool ParserStatusManager::SetRunningStatus(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
@@ -76,6 +82,12 @@ ParserStatus ParserStatusManager::SetTerminateStatus(const std::string &fileId)
     auto oldStatus = statusMap[fileId];
     statusMap[fileId] = ParserStatus::TERMINATE;
     return oldStatus;
+}
+
+void ParserStatusManager::SetClusterParseStatus(ParserStatus parserStatus)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    clusterParseStatus = parserStatus;
 }
 
 } // end of namespace Timeline

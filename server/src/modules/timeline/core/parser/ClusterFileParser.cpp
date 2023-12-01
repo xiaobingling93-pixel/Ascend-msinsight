@@ -13,6 +13,7 @@
 #include "FileUtil.h"
 #include "ExecUtil.h"
 #include "DataBaseManager.h"
+#include "ParserStatusManager.h"
 #include "ClusterFileParser.h"
 
 namespace Dic {
@@ -66,7 +67,8 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
     std::string line;
     std::map<std::string, int> indexMap;
     auto database = DataBaseManager::Instance().GetClusterDatabase();
-    while (std::getline(stepTraceFileCsv, line)) {
+    while (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::RUNNING &&
+            std::getline(stepTraceFileCsv, line)) {
         std::vector<std::string> fields;
         std::string field;
         std::regex pattern(R"(,(?=(?:[^"]*"[^"]*")*[^"]*$))");
@@ -101,6 +103,7 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
 
 bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
 {
+    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::RUNNING);
     // 导入前清空cluster db
     DataBaseManager::Instance().ClearClusterDb();
     auto database = DataBaseManager::Instance().GetClusterDatabase();
@@ -114,20 +117,7 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
             FileUtil::FindFilesByRegex(selectedPath, patternCommunication);
     // cluster analysis
     if (communicationFileList.empty()) {
-        ServerLog::Info("can not find cluster analysis file, start execute cluster analysis");
-        std::vector<std::string> exePathVector = FileUtil::FindFilesByRegex(
-                FileUtil::GetCurrPath(), std::regex("cluster_analysis.exe"));
-        if (!exePathVector.empty()) {
-            std::string command = "\"" + exePathVector[0] +  "\" -d " + FileUtil::PathPreprocess(selectedPath);
-            int result = std::system(command.c_str());
-            if (result != 0) {
-                ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file, command:", command);
-                return false;
-            }
-            ServerLog::Info("Execute cluster analysis success, command:", command);
-        } else {
-            ServerLog::Warn("Can not find cluster analysis execute file under.", selectedPath);
-        }
+        AttAnalyze(selectedPath);
     }
     communicationFileList =
             FileUtil::FindFilesByRegex(selectedPath, patternCommunication);
@@ -151,7 +141,30 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
         // parse cluster_step_trace_time csv
         SaveClusterBaseInfo(selectedPath);
     }
+    if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
+        ServerLog::Warn("Parser Cluster Status Is Terminal");
+        return false;
+    }
+    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
     return true;
+}
+
+bool ClusterFileParser::AttAnalyze(const std::string& selectedPath)
+{
+    ServerLog::Info("can not find cluster analysis file, start execute cluster analysis");
+    std::vector<std::string> exePathVector = FileUtil::FindFilesByRegex(
+            FileUtil::GetCurrPath(), std::regex("cluster_analysis.exe"));
+    if (!exePathVector.empty()) {
+        std::string command = "\"" + exePathVector[0] +  "\" -d " + FileUtil::PathPreprocess(selectedPath);
+        int result = std::system(command.c_str());
+        if (result != 0) {
+            ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file, command:", command);
+            return false;
+        }
+        ServerLog::Info("Execute cluster analysis success, command:", command);
+    } else {
+        ServerLog::Warn("Can not find cluster analysis execute file under.", selectedPath);
+    }
 }
 
 StepStatistic ClusterFileParser::MapToStepStatistic(std::vector<std::string> tokens)

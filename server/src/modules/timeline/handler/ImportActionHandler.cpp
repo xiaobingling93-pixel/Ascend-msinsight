@@ -10,6 +10,8 @@
 #include "RegexUtil.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "ParserStatusManager.h"
+#include "ClusterParseThreadPoolExecutor.h"
 #include "TraceTime.h"
 #include "TraceFileParser.h"
 #include "ClusterFileParser.h"
@@ -63,8 +65,13 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
             TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, selectedFolder);
         }
     }
+    ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token, selectedFolder);
+}
+
+void ImportActionHandler::ClusterProcess(const std::string &token, const std::string &selectedFolder)
+{
     std::string parseClusterResult = "none";
-    if (curIsCluster) {
+    if (ImportActionHandler::curIsCluster) {
         ClusterFileParser clusterFileParser;
         if (clusterFileParser.ParseClusterFiles(selectedFolder)) {
             ServerLog::Info("ParseClusterFiles is success");
@@ -75,7 +82,7 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         }
     }
     // send event
-    ParseClusterEndProcess(token, parseClusterResult);
+    ImportActionHandler::ParseClusterEndProcess(token, parseClusterResult);
 }
 
 void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>> &rankListMap,

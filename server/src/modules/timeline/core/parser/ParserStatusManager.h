@@ -32,10 +32,12 @@ public:
     void ClearParserStatus(const std::string &fileId);
     void ClearAllParserStatus();
     ParserStatus GetParserStatus(const std::string &fileId);
+    ParserStatus GetClusterParserStatus();
     bool SetRunningStatus(const std::string &fileId);
     bool SetFinishStatus(const std::string &fileId);
     // return old status
     ParserStatus SetTerminateStatus(const std::string &fileId);
+    void SetClusterParseStatus(ParserStatus parserStatus);
 
 private:
     ParserStatusManager() = default;
@@ -43,6 +45,7 @@ private:
 
     std::mutex mutex;
     std::map<std::string, ParserStatus> statusMap;
+    ParserStatus clusterParseStatus;
 };
 } // end of namespace Timeline
 } // end of namespace Module

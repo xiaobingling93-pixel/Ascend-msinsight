@@ -24,6 +24,8 @@ private:
     void SaxParseJsonFile(const std::string& filePath, int saxHandlerType);
     StepStatistic MapToStepStatistic(std::vector<std::string> tokens);
     int subStrlen = 2;
+
+    bool AttAnalyze(const std::string& selectedPath);
 };
 } // end of namespace Timeline
 } // end of namespace Module

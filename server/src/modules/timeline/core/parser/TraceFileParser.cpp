@@ -14,6 +14,7 @@
 #include "TraceTime.h"
 #include "MemoryParse.h"
 #include "KernelParse.h"
+#include "ClusterParseThreadPoolExecutor.h"
 #include "TraceFileParser.h"
 
 namespace Dic {
@@ -253,7 +254,9 @@ int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string
 void TraceFileParser::Reset()
 {
     ServerLog::Info("Reset. wait task completed.");
+    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::TERMINATE);
     threadPool->Reset();
+    ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->Reset();
     ServerLog::Info("Task completed.");
     auto connList = DataBaseManager::Instance().GetAllTraceDatabase();
     for (auto &conn : connList) {

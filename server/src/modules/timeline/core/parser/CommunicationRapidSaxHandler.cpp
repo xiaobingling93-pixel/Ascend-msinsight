@@ -4,6 +4,7 @@
 
 #include "ServerLog.h"
 #include "JsonUtil.h"
+#include "ParserStatusManager.h"
 #include "CommunicationRapidSaxHandler.h"
 
 namespace Dic {
@@ -113,6 +114,9 @@ bool CommunicationRapidSaxHandler::Key(const char *str, rapidjson::SizeType leng
 
 bool CommunicationRapidSaxHandler::EndObject(rapidjson::SizeType memberCount)
 {
+    if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
+        return false;
+    }
     auto database = DataBaseManager::Instance().GetClusterDatabase();
     currentDepth--;
     if (currentDepth == infoDepth && std::strcmp(tableFlag.c_str(), "Communication Bandwidth Info") == 0) {
