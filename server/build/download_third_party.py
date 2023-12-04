@@ -18,6 +18,7 @@ THIRD_PARTY_DIR = os.path.join(HOME_DIR, 'third_party')
 
 SQLITE_DIR = 'sqlite'
 SQLITE3_SRC_DIR = 'sqlite3_src'
+SQLITE3_AUTOCONF_DIR = 'sqlite-autoconf-3400100'
 SQLITE_SRC_TAR = 'sqlite_src.tar.gz'
 
 BUILD_TITLE = '[Download Third Party]'
@@ -58,22 +59,22 @@ OPEN_SOURCE = [
 CHECK_FILE_LIST = [
     [
         os.path.join(SQLITE_DIR, 'include', 'sqlite3.h'),
-        os.path.join(SQLITE3_SRC_DIR, 'sqlite3.h'),
+        os.path.join(SQLITE3_AUTOCONF_DIR, 'sqlite3.h'),
         os.path.join(SQLITE3_SRC_DIR, 'build', 'sqlite3.h')
     ],
     [
         os.path.join(SQLITE_DIR, 'include', 'sqlite3ext.h'),
-        os.path.join(SQLITE3_SRC_DIR, 'sqlite3ext.h'),
+        os.path.join(SQLITE3_AUTOCONF_DIR, 'sqlite3ext.h'),
         os.path.join(SQLITE3_SRC_DIR, 'build', 'sqlite3ext.h')
     ],
     [
         os.path.join(SQLITE_DIR, 'src', 'shell.c'),
-        os.path.join(SQLITE3_SRC_DIR, 'shell.c'),
+        os.path.join(SQLITE3_AUTOCONF_DIR, 'shell.c'),
         os.path.join(SQLITE3_SRC_DIR, 'build', 'shell.c')
     ],
     [
         os.path.join(SQLITE_DIR, 'src', 'sqlite3.c'),
-        os.path.join(SQLITE3_SRC_DIR, 'sqlite3.c'),
+        os.path.join(SQLITE3_AUTOCONF_DIR, 'sqlite3.c'),
         os.path.join(SQLITE3_SRC_DIR, 'build', 'sqlite3.c')
     ],
     [
@@ -108,15 +109,12 @@ def prepare_sqlite_src():
     log('start to prepare sqlite src')
     sqlite3_src = os.path.join(THIRD_PARTY_DIR, SQLITE3_SRC_DIR)
     if platform.system() == "Windows":
-        if os.path.exists(sqlite3_src):
-            shutil.rmtree(sqlite3_src)
         tar_path = os.path.join(THIRD_PARTY_DIR, SQLITE_SRC_TAR)
         urllib.request.urlretrieve(SQLITE3_SOURCE_URL, tar_path)
         tar = tarfile.open(tar_path)
         tar.extractall(THIRD_PARTY_DIR)
         tar.close()
         os.remove(tar_path)
-        os.rename(os.path.join(THIRD_PARTY_DIR, "sqlite-autoconf-3400100"), sqlite3_src)
     else:
         build_path = os.path.join(THIRD_PARTY_DIR, SQLITE3_SRC_DIR, 'build')
         if os.path.exists(build_path):
