@@ -146,8 +146,10 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
     return (
         <LeftRightContainer
             style={{ height: '500px', padding: '20px 20px 0' }}
-            left={<div id={'opTypeChart'} style={{ height: '100%' }} ></div>}
-            right={<div id={'computeChart'} style={{ height: '100%' }} ></div>}
+            headerStyle={{ overflow: 'visible' }}
+            bodyStyle={{ overflow: 'visible' }}
+            left={<div id={'opTypeChart'} style={{ height: '100%', width: '100%' }} ></div>}
+            right={<div id={'computeChart'} style={{ height: '100%', width: '100%' }} ></div>}
         />
     );
 });

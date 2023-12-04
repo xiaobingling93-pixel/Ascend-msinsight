@@ -328,7 +328,7 @@ const DetailTable = ({ condition, session }: {condition: ConditionType;session: 
     return <Container
         style={{ height: 'auto' }}
         title={'Operator Detail'}
-        bodyStyle={{ overflowX: 'visible' }}
+        bodyStyle={{ overflow: 'visible' }}
         content={<BaseTable condition={condition} session={session}/>}
     />;
 };

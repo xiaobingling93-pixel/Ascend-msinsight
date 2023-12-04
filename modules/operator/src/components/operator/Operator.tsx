@@ -24,6 +24,7 @@ const Index = observer(function ({ session }: { session: Session }) {
             style={{ minWidth: '800px' }}
             headerStyle={{ padding: '10px' }}
             header={<Filter session={session} handleFilterChange={handleFilterChange}/>}
+            bodyStyle={{ overflow: 'visible' }}
             body={ <>
                 <DetailChart condition={condition} session={session}/>
                 <BaseTable condition={condition} session={session}/>
