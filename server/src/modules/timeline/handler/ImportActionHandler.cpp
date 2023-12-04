@@ -370,7 +370,12 @@ std::string ImportActionHandler::GetFileId(const std::string &filePath)
     std::string fileId = FileUtil::GetRankIdFromFile(filePath);
     int i = 1;
     std::string result = fileId;
-    while (DataBaseManager::Instance().HasFileId(result)) {
+    std::string parentDir = FileUtil::GetParentPath(filePath);
+    while (DataBaseManager::Instance().HasFileId(DatabaseType::TRACE, result)) {
+        std::string dir = FileUtil::GetParentPath(DataBaseManager::Instance().GetTraceDatabase(result)->GetDbPath());
+        if (parentDir == dir) {
+            return result;
+        }
         result = fileId + "_" + std::to_string(++i);
     }
     std::string dbPath = GetDbPath(filePath, i);

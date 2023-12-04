@@ -125,6 +125,21 @@ void SummaryDataBase::SaveKernelDetail()
     }
 }
 
+bool SummaryDataBase::HasParseKernelFile(const std::string &kernelFile)
+{
+    return std::count(kernelFiles.begin(), kernelFiles.end(), kernelFile) != 0;
+}
+
+void SummaryDataBase::AddParseKernelFile(const std::string &kernelFile)
+{
+    kernelFiles.emplace_back(kernelFile);
+}
+
+void SummaryDataBase::ClearParseKernelFile()
+{
+    kernelFiles.clear();
+}
+
 sqlite3_stmt *SummaryDataBase::GetKernelStmt(uint64_t paramLen)
 {
     sqlite3_stmt *stmt = nullptr;

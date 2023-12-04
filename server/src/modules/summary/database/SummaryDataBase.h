@@ -29,6 +29,9 @@ public:
     void InsertKernelDetailList(std::vector<Kernel> kernelVec);
     void InsertKernelDetail(Kernel kernel);
     void SaveKernelDetail();
+    bool HasParseKernelFile(const std::string& kernelFile);
+    void AddParseKernelFile(const std::string& kernelFile);
+    void ClearParseKernelFile();
 
     bool QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
                                    std::vector<Protocol::ComputeDetail> &computeDetails);
@@ -55,6 +58,7 @@ private:
     sqlite3_stmt *insertKernelStmt = nullptr;
     const int cacheSize = 1000;
     std::vector<Kernel> kernelCache;
+    std::vector<std::string> kernelFiles = {};
 
     sqlite3_stmt *GetKernelStmt(uint64_t paramLen);
     std::string GenComputeSql(Protocol::ComputeDetailParams request);

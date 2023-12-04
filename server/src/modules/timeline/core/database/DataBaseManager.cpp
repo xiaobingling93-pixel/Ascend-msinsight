@@ -65,10 +65,22 @@ void DataBaseManager::ReleaseTraceDatabase(const std::string &fileId)
     }
 }
 
-bool DataBaseManager::HasFileId(const std::string &fileId)
+bool DataBaseManager::HasFileId(DatabaseType type, const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    return traceDatabaseMap.count(fileId) != 0;
+    bool result = false;
+    switch (type) {
+        case DatabaseType::TRACE:
+            result = traceDatabaseMap.count(fileId) != 0;
+            break;
+        case DatabaseType::SUMMARY:
+            result = summaryDatabaseMap.count(fileId) != 0;
+            break;
+        case DatabaseType::MEMORY:
+            result = memoryDatabaseMap.count(fileId) != 0;
+            break;
+    }
+    return result;
 }
 
 std::vector<ConnectionPool *> DataBaseManager::GetAllTraceDatabase()
@@ -113,6 +125,22 @@ void DataBaseManager::Clear()
     traceDatabaseMap.clear();
     memoryDatabaseMap.clear();
     summaryDatabaseMap.clear();
+}
+
+void DataBaseManager::Clear(DatabaseType type)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    switch (type) {
+        case DatabaseType::TRACE:
+            traceDatabaseMap.clear();
+            break;
+        case DatabaseType::SUMMARY:
+            summaryDatabaseMap.clear();
+            break;
+        case DatabaseType::MEMORY:
+            memoryDatabaseMap.clear();
+            break;
+    }
 }
 
 void DataBaseManager::ClearClusterDb()

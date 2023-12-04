@@ -45,10 +45,17 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
     }
 
     std::string kernelFile = kernelFileVec[0];
+    auto db = Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId);
+    if (db->HasParseKernelFile(kernelFile)) {
+        return;
+    } else {
+        db->AddParseKernelFile(kernelFile);
+    }
+
     std::ifstream file(kernelFile);
     std::string line;
     std::map<std::string, std::int16_t> dataMap;
-    auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId);
+
     while (getline(file, line)) {
         std::basic_string<char> ss(line);
         std::vector<std::string> row;
@@ -66,10 +73,10 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
         }
         Kernel recordPtr = KernelParse::mapperToKernelDetail(dataMap, row, fileId);
         // 读取每一行数据写入kernel内
-        database->InsertKernelDetail(recordPtr);
+        db->InsertKernelDetail(recordPtr);
     }
     // 读取剩下的数据写入kernel内
-    database->SaveKernelDetail();
+    db->SaveKernelDetail();
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("end parse kernel detail, cost time:",
                     std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
@@ -190,6 +197,7 @@ void KernelParse::Reset()
         std::string path = database->GetDbPath();
         database->ReleaseStmt();
         database->CloseDb();
+        database->ClearParseKernelFile();
         if (!FileUtil::RemoveFile(path)) {
             ServerLog::Error("Failed to remove file. ", path);
         }

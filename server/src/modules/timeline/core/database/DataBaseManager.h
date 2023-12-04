@@ -17,6 +17,11 @@
 namespace Dic {
 namespace Module {
 namespace Timeline {
+enum class DatabaseType {
+    TRACE,
+    SUMMARY,
+    MEMORY
+};
 class DataBaseManager {
 public:
     static DataBaseManager &Instance();
@@ -32,9 +37,10 @@ public:
     std::vector<ConnectionPool *> GetAllTraceDatabase();
     std::vector<std::string> GetAllFileId();
     void Clear();
+    void Clear(DatabaseType type);
     void ClearClusterDb();
     void ReleaseTraceDatabase(const std::string &fileId);
-    bool HasFileId(const std::string &fileId);
+    bool HasFileId(DatabaseType type, const std::string &fileId);
     ClusterDatabase *GetClusterDatabase();
 
     std::vector<Memory::MemoryDataBase *> GetAllMemoryDatabase();
