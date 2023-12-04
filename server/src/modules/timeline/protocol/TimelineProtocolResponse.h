@@ -252,12 +252,12 @@ struct UnitCounterResponse : public Response {
 struct SystemViewDetail {
     std::string name;
     double time;
-    uint64_t totalTime;
+    double totalTime;
     uint64_t numberCalls;
     double avg;
     double stdDev;
-    uint64_t min;
-    uint64_t max;
+    double min;
+    double max;
 };
 
 struct SystemViewBody {

@@ -1202,8 +1202,9 @@ bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &reques
     }
     std::string sql = "SELECT name, ROUND(cast(sum(duration) as double) * 100 / "
                       +  std::to_string(layerOperatorTime) + ", 2) as "
-                      "time, sum(duration) as totalTime, count(1) as numberCalls, ROUND(avg(duration), 4) as avg, "
-                      "min(duration) as min, max(duration) as max "
+                      "time, sum(duration) / 1000.0 as totalTime, count(1) as numberCalls, "
+                      "ROUND(avg(duration) / 1000.0, 4) as avg, "
+                      "min(duration) / 1000.0 as min, max(duration) / 1000.0 as max "
                       "FROM slice WHERE slice.track_id IN ( SELECT track_id "
                       "FROM process JOIN thread t ON process.pid = t.pid "
                       "WHERE process_name = '" + requestParams.layer + "' ) "
@@ -1220,11 +1221,11 @@ bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &reques
         int col = resultStartIndex;
         systemViewDetail.name = resultSet->GetString(col++);
         systemViewDetail.time = resultSet->GetDouble(col++);
-        systemViewDetail.totalTime = resultSet->GetUint64(col++);
+        systemViewDetail.totalTime = resultSet->GetDouble(col++);
         systemViewDetail.numberCalls = resultSet->GetUint64(col++);
         systemViewDetail.avg = resultSet->GetDouble(col++);
-        systemViewDetail.min =  resultSet->GetUint64(col++);
-        systemViewDetail.max =  resultSet->GetUint64(col++);
+        systemViewDetail.min =  resultSet->GetDouble(col++);
+        systemViewDetail.max =  resultSet->GetDouble(col++);
         responseBody.systemViewDetail.emplace_back(systemViewDetail);
     }
     responseBody.total = data.total;

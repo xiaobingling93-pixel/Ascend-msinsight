@@ -34,11 +34,11 @@ export const Label = (props: {name: string;style?: object }): JSX.Element => {
 export const pythonApiSummaryColumns: ColumData[] = [
     { title: 'Name', dataIndex: 'name', key: 'name', ...getDefaultColumData('name') },
     { title: 'Time(%)', dataIndex: 'time', key: 'time', ...getDefaultColumData('time') },
-    { title: 'Total Time(ns)', dataIndex: 'totalTime', key: 'totalTime', ...getDefaultColumData('totalTime') },
+    { title: 'Total Time(us)', dataIndex: 'totalTime', key: 'totalTime', ...getDefaultColumData('totalTime') },
     { title: 'Num Calls', dataIndex: 'numberCalls', key: 'numberCalls', ...getDefaultColumData('numberCalls') },
-    { title: 'Avg(ns)', dataIndex: 'avg', key: 'avg', ...getDefaultColumData('avg') },
-    { title: 'Min(ns)', dataIndex: 'min', key: 'min', ...getDefaultColumData('min') },
-    { title: 'Max(ns)', dataIndex: 'max', key: 'max', ...getDefaultColumData('max') },
+    { title: 'Avg(us)', dataIndex: 'avg', key: 'avg', ...getDefaultColumData('avg') },
+    { title: 'Min(us)', dataIndex: 'min', key: 'min', ...getDefaultColumData('min') },
+    { title: 'Max(us)', dataIndex: 'max', key: 'max', ...getDefaultColumData('max') },
 ];
 
 export const kernelDetails: ColumData[] = [
