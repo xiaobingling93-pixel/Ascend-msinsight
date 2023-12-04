@@ -133,7 +133,7 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
                         const type = session.linkFlow?.type as string;
                         const rankId = (metadata as Record<string, unknown>)?.cardId;
                         const raw = await window.request(metadata.dataSource, { command: 'unit/flow', params: { flowId, type, startTime, rankId } } ) as any;
-                        const linkLine = { [raw.cat]: [{ category: raw.cat, ...raw }]  }
+                        const linkLine = { [raw.cat]: [{ category: raw.cat, ...raw, cardId: rankId }] }
                         runInAction(() => {
                             session.linkLines = linkLine;
                         });

@@ -294,7 +294,7 @@ const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
         for (const unit of units) {
             const metadata = unit.metadata as ThreadMetaData;
             if (metadata.threadId !== undefined && metadata.processId !== undefined) {
-                heightMap.set(`${metadata.processId}-${metadata.threadId}`, height);
+                heightMap.set(`${metadata.cardId}-${metadata.processId}-${metadata.threadId}`, height);
             }
             height += unit.height() + 1;
             if (unit.children && unit.isExpanded) {
@@ -331,9 +331,9 @@ export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height
 };
 
 const UNDRAW_HEIGHT = 45;
-const getHeight = (session: Session, data: DataBlock): number | undefined => {
+const getHeight = (session: Session, data: DataBlock, cardId: string): number | undefined => {
     let height;
-    const unitHeight = heightMap.get(`${data.pid}-${data.tid}`);
+    const unitHeight = heightMap.get(`${cardId}-${data.pid}-${data.tid}`);
     if (unitHeight !== undefined) {
         height = UNDRAW_HEIGHT + unitHeight - session.scrollTop + (data.depth + 0.5) * UnitHeight.STANDARD;
     }
@@ -343,14 +343,14 @@ const getHeight = (session: Session, data: DataBlock): number | undefined => {
 const drawLinkLine = (ctx: CanvasRenderingContext2D, session: Session, data: FlowEvent, xScale: Scale, theme: Theme, pinnedAreaHeight: number): void => {
     const { from, to } = data;
     const targetX = xScale(to.timestamp);
-    const targetY = getHeight(session, to);
+    const targetY = getHeight(session, to, data.cardId);
     ctx.save();
     ctx.beginPath();
     const clipTop = pinnedAreaHeight + UNDRAW_HEIGHT;
     ctx.rect(-1, clipTop, ctx.canvas.width + 1, ctx.canvas.height + 1);
     ctx.clip();
     const sourceX = xScale(from.timestamp);
-    const sourceY = getHeight(session, from);
+    const sourceY = getHeight(session, from, data.cardId);
     if ((sourceY === undefined || targetY === undefined) || (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT)) { return; }
     const targetPos: Array<[x: number, y: number]> = [[ targetX, targetY ]];
     ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(data.category, colorPalette.length)]];
