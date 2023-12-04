@@ -115,7 +115,7 @@ Kernel KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
     oper.waitTime = atof(row[waitTimeIndex].c_str());
     oper.blockDim = atof(row[dataMap["Block Dim"]].c_str());
     oper.inputDataTypes = row[dataMap["Input Data Types"]];
-    oper.inputShapes = row[dataMap["Input Data Types"]];
+    oper.inputShapes = row[dataMap["Input Shapes"]];
     oper.inputFormats = row[dataMap["Input Formats"]];
     oper.outputDataTypes = row[dataMap["Output Data Types"]];
     oper.outputShapes = row[dataMap["Output Shapes"]];
