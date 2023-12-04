@@ -86,6 +86,7 @@ export interface FlowEvent {
     category: string;
     from: DataBlock;
     to: DataBlock;
+    cardId: string;
 };
 interface CategoryEvents {
     flowDetailList: Array<{

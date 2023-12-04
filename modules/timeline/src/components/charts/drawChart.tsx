@@ -41,7 +41,7 @@ export const Chart = observer(<T extends ChartType>(props: {
         </ChartErrorBoundary>;
     }, [ width, desc.height, phase ]);
     if (session.phase !== 'download' && desc.offline === true) {
-        return isShowMask(session, phase) ? <Mask unitPhase={phase}>{offlinePlaceholder}</Mask> : offlinePlaceholder;
+        return <Mask unitPhase={phase} isShowMask={isShowMask(session, phase)}>{offlinePlaceholder}</Mask>;
     }
     const chartConfig = isGetChartConfig(desc.config) ? desc.config(session, metadata) : desc.config;
     const chartProps: ChartProps<T> = {
@@ -60,8 +60,8 @@ export const Chart = observer(<T extends ChartType>(props: {
         ...chartConfig,
     };
     return <ChartErrorBoundary height={desc.height} width={width} phase={phase}>
-        {isShowMask(session, phase)
-            ? <Mask unitPhase={phase}>{ React.createElement(chartMap[desc.type], { key: `${serial} chart`, ...chartProps }) }</Mask>
-            : React.createElement(chartMap[desc.type], { key: `${serial} chart`, ...chartProps })}
+        <Mask unitPhase={phase} isShowMask={isShowMask(session, phase)}>
+            { React.createElement(chartMap[desc.type], { key: `${serial} chart`, ...chartProps }) }
+        </Mask>
     </ChartErrorBoundary>;
 });
