@@ -21,7 +21,7 @@ const Index = observer(function ({ session }: { session: Session }) {
 
     return <div style={{ height: '100%', width: '100%', overflow: 'auto' }}>
         <HeaderFixedContainer
-            style={{ minWidth: '600px' }}
+            style={{ minWidth: '800px' }}
             headerStyle={{ padding: '10px' }}
             header={<Filter session={session} handleFilterChange={handleFilterChange}/>}
             body={ <>

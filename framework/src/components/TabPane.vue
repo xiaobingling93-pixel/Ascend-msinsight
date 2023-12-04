@@ -118,7 +118,7 @@ function toggleTab(index: number): void {
                 <iframe
                     v-if="(moduleConfig.isDefault || session.isCluster) && !(session.isVscode)"
                     v-bind={...moduleConfig.attributes}
-                    v-show="activeModule === index"
+                    :style="{display:activeModule === index?'block':'none'}"
                     :id="`${moduleConfig.name}`"
                     ref="moduleRefs"
                 ></iframe>
