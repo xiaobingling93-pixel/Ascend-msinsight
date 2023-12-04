@@ -64,13 +64,12 @@ module.exports = {
       // lets use the best we can get in line with `inline-source-map`
       webpackConfig.entry = {
         main: webpackConfig.entry,
-        index: './src/index.tsx',
         summary: './src/SummaryIndex.tsx',
         communication: './src/CommunicationIndex.tsx',
       };
       webpackConfig.output.filename = 'static/js/[name].bundle.js';
+      webpackConfig.plugins.splice(0, 1);
       webpackConfig.plugins.push(...htmllist);
-      webpackConfig.devtool = 'inline-source-map';
       return webpackConfig;
     },
   },

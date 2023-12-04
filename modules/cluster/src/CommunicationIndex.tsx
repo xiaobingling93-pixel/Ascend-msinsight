@@ -6,7 +6,6 @@ import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from '@emotion/react';
 import { RootStoreContext, useRootStore } from './context/context';
 import i18n from './i18n';
-import './index.css';
 import { store } from './store';
 import connector from './connection';
 import { observer } from 'mobx-react';
@@ -14,27 +13,7 @@ import { getSearchParams } from './utils/localUrl';
 import { platform } from './platforms';
 import { themeInstance, ThemeItem } from './theme/theme';
 import CommunicationAnalysis from './components/communicationAnalysis/CommunicationAnalysis';
-import { NOTIFICATION_HANDLERS } from './interface';
-
-Object.entries(NOTIFICATION_HANDLERS).forEach(([ event, callback ]) => {
-    connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
-        const res = e.data;
-        if (res.body === undefined || typeof res.body !== 'object') {
-            console.error('[notify]', 'Wrong notify format.');
-            return;
-        }
-        callback(res.body);
-    });
-});
-
-// 禁用右键刷新以及F5、Ctrl+R刷新
-document.oncontextmenu = () => false;
-document.onkeydown = (event) => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
-
-const Loading = (<div style={{ textAlign: 'center', top: '50%', position: 'absolute', width: '50px', left: 'calc(50% - 25px)' }}>
-    <div className={'loading'} style={{ marginLeft: '15px' }}></div>
-    <div>waiting</div>
-</div>);
+import { Loading } from './index';
 
 export const App = observer(() => {
     const { insightStore, sessionStore } = useRootStore();
@@ -55,22 +34,6 @@ export const App = observer(() => {
         {session?.clusterCompleted ? <CommunicationAnalysis session={session} /> : Loading}
     </ThemeProvider>);
 });
-
-window.requestData = async (command, params, module) => {
-    const data = await connector.fetch({
-        args: { command, params },
-        module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
-    });
-    return (data as any).body;
-};
-
-window.sendToModule = (body): void => {
-    connector.send({
-        event: 'moduleMessage',
-        body,
-        to: 2,
-    });
-};
 
 const root = createRoot(document.getElementById('root') as HTMLElement);
 root.render(
