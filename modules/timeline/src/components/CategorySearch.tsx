@@ -10,7 +10,7 @@ import { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
 import { StyledInput } from './base/StyledInput';
 import { SvgType } from './base/rc-table/types';
-import { runInAction } from 'mobx';
+import { action, runInAction } from 'mobx';
 import { ThreadUnit } from '../insight/units/AscendUnit';
 import i18n from 'i18next';
 
@@ -158,35 +158,35 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     const [ searchContent, setSearchContent ] = useState('');
     const [ searchingStatus, setSearchingStatus ] = useState(false);
 
-    useEffect(() => {
-        setSearchIconVisible(true);
-        setSearchContent('');
-        updatePaginationData({ current: 0, total: 0 });
-    }, [session]);
-    const onPageChange = async (current: number, pageSize: number): Promise<void> => {
+    useEffect(action(() => {
+        setSearchIconVisible(true); setSearchContent('');
+        updatePaginationData({ current: 0, total: 0 }); session.searchData = undefined;
+    }), [session]);
+    const onPageChange = (current: number, pageSize: number): void => {
         updatePaginationData(prevState => ({ current, total: prevState.total }));
-        await jumpSlice(session, searchContent, current);
-    };
-    const onInputPressEnter = async (): Promise<void> => {
-        if (searchContent === '') {
+        if (current === 1) {
+            session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+            session.selectedData = undefined;
             return;
         }
+        jumpSlice(session, searchContent, current);
+    };
+    const onInputPressEnter = async (): Promise<void> => {
+        if (searchContent === '') { return; }
         setSearchingStatus(true);
         const totalCnt = await queryDataCount(session, searchContent);
         if (totalCnt > 0) {
-            updatePaginationData({ current: 1, total: totalCnt });
-            await onPageChange(1, totalCnt);
+            updatePaginationData({ current: 1, total: totalCnt + 1 });
             setSearchIconVisible(false);
-        } else {
-            messageApi.warning(i18n.t('notify:SearchEmpty'));
-        }
+        } else { messageApi.warning(i18n.t('notify:SearchEmpty')); }
         setSearchingStatus(false);
     };
-    const onInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    const onInputChange = action((e: ChangeEvent<HTMLInputElement>): void => {
         const inputContent = e.target.value;
         setSearchContent(inputContent);
         setSearchIconVisible(true);
-    };
+        session.searchData = { content: inputContent };
+    });
 
     return (
         <CustomDiv theme={theme} onClick={(e) => { e.stopPropagation(); }}>
@@ -197,7 +197,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                 ? <ImgWithFallback className={'loading'} />
                 : searchIconVisible
                     ? <CustomButton icon={SearchIcon} onClick={onInputPressEnter}></CustomButton>
-                    : <StylePagination defaultCurrent={1} pageSize={1} { ...paginationData } onChange={onPageChange} simple/> }
+                    : <StylePagination pageSize={1} {...paginationData} onChange={onPageChange} simple/> }
             </div>
         </CustomDiv>
     );
@@ -211,9 +211,16 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
         isSuspend: false,
         icon: SearchIcon,
     });
+    const searchDataRef = React.useRef<Session['searchData']>();
     // tooltip显隐控制悬浮效果
     const onTooltipVisibleChange = (visible: boolean): void => {
         updateCustomButtonProps({ ...customButtonProps, isSuspend: visible });
+        if (visible) {
+            runInAction(() => { session.searchData = searchDataRef.current; });
+        } else {
+            searchDataRef.current = session.searchData;
+            session.searchData = undefined;
+        }
     };
     return (
         <Tooltip overlayStyle={{ maxWidth: 1000 }}

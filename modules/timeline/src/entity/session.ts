@@ -78,6 +78,7 @@ export class Session {
     unitsConfig: Record<string, Record<string, unknown>> = {};
     private _selectedData?: Record<string, unknown>;
     private _selectedRangeData?: Array<Record<string, unknown>>;
+    searchData?: { content: string; [x: string]: unknown };
     linkData?: LinkData;
     linkLines: LinkLines = {};
     totalHeight: number = 0;
