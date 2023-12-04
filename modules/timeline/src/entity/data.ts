@@ -712,6 +712,7 @@ export type ThreadTrace = {
     endTime: number;
     depth: number;
     threadId: number;
+    [x:string]: unknown;
 };
 
 export type CounterData = {

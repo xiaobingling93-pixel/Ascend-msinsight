@@ -69,9 +69,9 @@ const ChartView = observer(({ unit, session, width, height }: {unit: KeyedInsigh
             title={unit.name} session={session} metadata={unit.metadata} width={width} phase={unit.phase} />;
     }
     return <ChartErrorBoundary height={height} width={width} phase={unit.phase}>
-        { session.id !== 'HomePage' && session.phase !== 'error' && unit.phase !== 'configuring' && unit.phase !== 'download' && unit.phase !== 'error'
-            ? <Mask unitPhase={unit.phase}><div className="chart-empty" style={{ width, height }}/></Mask>
-            : <div className="chart-empty" style={{ width, height }}/> }
+        <Mask unitPhase={unit.phase} isShowMask={session.id !== 'HomePage' && session.phase !== 'error' && unit.phase !== 'configuring' && unit.phase !== 'download' && unit.phase !== 'error'}>
+            <div className="chart-empty" style={{ width, height }}/>
+        </Mask>
     </ChartErrorBoundary>;
 });
 

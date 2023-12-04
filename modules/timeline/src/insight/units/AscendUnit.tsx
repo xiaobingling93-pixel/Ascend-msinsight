@@ -34,6 +34,7 @@ import { SelectedDataBase } from '../../components/details/base/SelectedData';
 import { offsetConfig } from './config/offsetConfig';
 import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
+import { StackStatusData } from '../../entity/chart';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -132,34 +133,36 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     return [];
                 }
                 const threadTraceList = request.data as ThreadTrace[][];
+                const res: StackStatusData[][] = [];
                 // 泳道chart返回数据减去时间偏移
-                return threadTraceList.map(it => it.map((data) => ({
-                    startTime: data.startTime - timestampOffset,
-                    duration: data.duration,
-                    name: data.name,
-                    type: data.name,
-                    color: colorPalette[hashToNumber(data.name, colorPalette.length)],
-                    depth: data.depth,
-                    threadId: data.threadId,
-                })));
+                threadTraceList.forEach((it, index) => {
+                    res.push([]);
+                    it.forEach((data) => {
+                        res[index].push({
+                            ...data,
+                            startTime: data.startTime - timestampOffset,
+                            duration: data.duration,
+                            name: data.name,
+                            type: data.name,
+                            color: colorPalette[hashToNumber(data.name, colorPalette.length)],
+                            depth: data.depth,
+                            threadId: data.threadId,
+                            cardId: threadMetaData.cardId,
+                        });
+                    });
+                });
+                return res;
             } catch (e) {
                 console.warn('request threadTrace info failed', e);
                 return [];
             }
         },
         decorator: (session: Session, metaData: unknown) => {
-            const hoveredData = session.sharedState.threadTrace as ThreadTrace | undefined;
             return {
                 action: async (handle, xScale, yScale, theme) => {
-                    if (session.selectedData) {
-                        const startTime = session.selectedData.startTime;
-                        const depth = session.selectedData.depth;
-                        const data = handle.findAll(it => it.startTime !== startTime || it.depth !== depth || session.selectedData?.threadId !== (metaData as ThreadMetaData).threadId)
-                            .map(it => it.map(data => ({ ...data, color: 'transparentMask' as const })));
-                        handle.draw(data, xScale, yScale);
-                    } else if (hoveredData && hoveredData.threadId === (metaData as ThreadMetaData).threadId) {
-                        const name = hoveredData.name;
-                        const data = handle.findAll(it => it.name !== name).map(it => it.map(data => ({ ...data, color: 'transparentMask' as const })));
+                    if (session.searchData) {
+                        const name = session.searchData.content.toLocaleLowerCase();
+                        const data = handle.findAll(it => !it.name.toLocaleLowerCase().includes(name)).map(it => it.map(data => ({ ...data, color: 'transparentMask' as const })));
                         handle.draw(data, xScale, yScale);
                     }
                     // click
@@ -177,9 +180,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 triggers: [
                     session.selectedData,
                     session.selectedData?.duration,
-                    hoveredData?.name,
-                    hoveredData?.depth,
-                    hoveredData?.threadId,
+                    session?.searchData,
                 ],
             };
         },

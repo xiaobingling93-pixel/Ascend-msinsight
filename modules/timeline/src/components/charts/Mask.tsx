@@ -17,7 +17,7 @@ const ImgWithFallback = ({
     );
 };
 
-export const Mask: React.FC<{ unitPhase: string } & { children: ReactNode }> = ({ children, ...props }): JSX.Element => {
+export const Mask: React.FC<{ unitPhase: string; isShowMask: boolean } & { children: ReactNode }> = ({ children, ...props }): JSX.Element => {
     const MaskLayer = styled.div`
         position: absolute;
         display: flex;
@@ -44,11 +44,11 @@ export const Mask: React.FC<{ unitPhase: string } & { children: ReactNode }> = (
         }
     `;
     return <div style={{ position: 'relative' }}>
-        <MaskLayer>
+        {props.isShowMask && <MaskLayer>
             <Info>
                 <ImgWithFallback className={'loading'} />
                 { props.unitPhase }</Info>
-        </MaskLayer>
+        </MaskLayer>}
         {children}
     </div>;
 };
