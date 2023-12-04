@@ -79,6 +79,13 @@ onMounted(async () => {
     session.isVscode = false;
     connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
   });
+  connector.addListener('deleteRank', (e) => {const receiver = e.data.body;
+    if (!receiver) {
+      console.warn('data.body is undefined, please check your params');
+      return;
+    }
+    connector.send({ event: 'deleteRank', body: receiver });
+  });
 
   if (!session.isVscode) {
     await connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });

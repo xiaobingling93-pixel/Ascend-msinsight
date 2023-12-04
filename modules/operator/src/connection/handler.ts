@@ -22,6 +22,9 @@ export const updateSessionHandler: NotificationHandler = (data): void => {
                 (session as any)[key] = data[key];
             }
         });
+        if (data.isReset === true) {
+            resetHandler({});
+        }
         session.renderId++;
     });
 };
@@ -46,5 +49,19 @@ export const resetHandler: NotificationHandler = (data): void => {
             return;
         }
         session.allRankIds = [];
+    });
+};
+export const deleteRankHandler: NotificationHandler = (data): void => {
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        const deleteIds: string[] = data.rankId as string[];
+        if (deleteIds.length > 0) {
+            const rankIds = session.allRankIds.filter((item: string) => !deleteIds?.includes(item));
+            session.allRankIds = rankIds;
+        }
     });
 };

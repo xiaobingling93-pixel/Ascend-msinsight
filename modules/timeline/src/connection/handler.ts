@@ -190,6 +190,7 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
             });
             session.endTimeAll = remoteMaxTimeStamps;
         }
+        connector.send({ event: 'deleteRank', body: { rankId: removeCardIds } });
     } catch (error) {
         console.error(error);
     }

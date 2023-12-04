@@ -53,7 +53,7 @@ const setCondition = (initCondition: ConditionType = {} as ConditionType): void 
         keys.forEach(key => {
             (condition as any)[key] = (initCondition as any)[key];
         });
-        if (condition.rankId === '') {
+        if (condition.rankId === '' || !optionMap.rankIdOptions.find(item => item.value === condition.rankId)) {
             condition.rankId = optionMap.rankIdOptions[0]?.value as string ?? '';
         }
     });
