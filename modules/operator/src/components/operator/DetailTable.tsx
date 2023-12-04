@@ -227,6 +227,7 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
     const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
     const btnCol = {
         title: 'Details',
+        width: 115,
         key: 'action',
         render: (_: any, record: any) => (<Button type="link"
             onClick={() => {
@@ -327,6 +328,7 @@ const DetailTable = ({ condition, session }: {condition: ConditionType;session: 
     return <Container
         style={{ height: 'auto' }}
         title={'Operator Detail'}
+        bodyStyle={{ overflowX: 'visible' }}
         content={<BaseTable condition={condition} session={session}/>}
     />;
 };
