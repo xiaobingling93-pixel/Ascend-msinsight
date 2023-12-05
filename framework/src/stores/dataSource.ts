@@ -29,7 +29,7 @@ export const useDataSources = defineStore('dataSources', () => {
 
     watch(session, () => {
         if (session.isReset) {
-            dataSources.value = [lastDataSource.value];
+            dataSources.value = [JSON.parse(JSON.stringify(lastDataSource.value))];
             dataSources.value[0].dataPath.splice(0, dataSources.value[0].dataPath.length - 1);
         }
     });
