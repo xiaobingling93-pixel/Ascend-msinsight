@@ -67,13 +67,13 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
             }
             continue;
         }
-        if (dataMap.size() < kernelTableNum) {
+        Kernel kernel {};
+        if (dataMap.size() < kernelTableNum or !KernelParse::mapperToKernelDetail(dataMap, row, fileId, kernel)) {
             ServerLog::Error("The header of the imported file is incorrect or incomplete. The path is: " + kernelFile);
             return;
         }
-        Kernel recordPtr = KernelParse::mapperToKernelDetail(dataMap, row, fileId);
         // 读取每一行数据写入kernel内
-        db->InsertKernelDetail(recordPtr);
+        db->InsertKernelDetail(kernel);
     }
     // 读取剩下的数据写入kernel内
     db->SaveKernelDetail();
@@ -82,8 +82,8 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
 }
 
-Kernel KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
-    std::vector<std::string> row, const std::string &fileId)
+bool KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
+    std::vector<std::string> row, const std::string &fileId, Kernel &kernel)
 {
     std::int16_t deviceIndex = 0;
     std::int16_t stepIndex = 0;
@@ -101,7 +101,7 @@ Kernel KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
         startTimeIndex = dataMap["Start Time(us)"];
         durationIndex = dataMap["Duration(us)"];
         waitTimeIndex = dataMap["Wait Time(us)"];
-    } else {
+    } else if (dataMap.find("Device_id") != dataMap.end()) {
         deviceIndex = dataMap["Device_id"];
         nameIndex = dataMap["Op Name"];
         typeIndex = dataMap["OP Type"];
@@ -109,6 +109,9 @@ Kernel KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
         startTimeIndex = dataMap["Task Start Time(us)"];
         durationIndex = dataMap["Task Duration(us)"];
         waitTimeIndex = dataMap["Task Wait Time(us)"];
+    } else {
+        ServerLog::Error("The file header does not contain 'Step Id' or 'Device Id'.");
+        return false;
     }
 
     Kernel oper {};
@@ -127,7 +130,7 @@ Kernel KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
     oper.outputDataTypes = row[dataMap["Output Data Types"]];
     oper.outputShapes = row[dataMap["Output Shapes"]];
     oper.outputFormats = row[dataMap["Output Formats"]];
-    return oper;
+    return true;
 }
 
 KernelParse::~KernelParse()

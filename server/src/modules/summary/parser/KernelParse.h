@@ -36,8 +36,8 @@ private:
     const std::string kernelDetailFile = "kernel_details.csv";
     const std::string kernelDetailReg = R"((kernel_details|op_summary_[0-9]{1,14})\.csv$)";
 
-    Kernel mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
-        std::vector<std::string> row, const std::string &fileId);
+    bool mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
+                              std::vector<std::string> row, const std::string &fileId, Kernel &kernel);
 
     bool WaitParseEnd(const std::string &fileId);
     void StringSplit(const std::string& str, std::vector<std::string>& res);
