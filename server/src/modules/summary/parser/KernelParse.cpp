@@ -116,22 +116,21 @@ bool KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
         return false;
     }
 
-    Kernel oper {};
-    oper.rankId = fileId;
-    oper.name = row[nameIndex];
-    oper.stepId = dataMap.count("Step Id") != 0 ? row[stepIndex] : "";
-    oper.type = row[typeIndex];
-    oper.acceleratorCore = row[acceleratorIndex];
-    oper.startTime = atof(row[startTimeIndex].c_str());
-    oper.duration = atof(row[durationIndex].c_str());
-    oper.waitTime = atof(row[waitTimeIndex].c_str());
-    oper.blockDim = atof(row[dataMap["Block Dim"]].c_str());
-    oper.inputDataTypes = row[dataMap["Input Data Types"]];
-    oper.inputShapes = row[dataMap["Input Shapes"]];
-    oper.inputFormats = row[dataMap["Input Formats"]];
-    oper.outputDataTypes = row[dataMap["Output Data Types"]];
-    oper.outputShapes = row[dataMap["Output Shapes"]];
-    oper.outputFormats = row[dataMap["Output Formats"]];
+    kernel.rankId = fileId;
+    kernel.name = row[nameIndex];
+    kernel.stepId = dataMap.count("Step Id") != 0 ? row[stepIndex] : "";
+    kernel.type = row[typeIndex];
+    kernel.acceleratorCore = row[acceleratorIndex];
+    kernel.startTime = atof(row[startTimeIndex].c_str());
+    kernel.duration = atof(row[durationIndex].c_str());
+    kernel.waitTime = atof(row[waitTimeIndex].c_str());
+    kernel.blockDim = atof(row[dataMap["Block Dim"]].c_str());
+    kernel.inputDataTypes = row[dataMap["Input Data Types"]];
+    kernel.inputShapes = row[dataMap["Input Shapes"]];
+    kernel.inputFormats = row[dataMap["Input Formats"]];
+    kernel.outputDataTypes = row[dataMap["Output Data Types"]];
+    kernel.outputShapes = row[dataMap["Output Shapes"]];
+    kernel.outputFormats = row[dataMap["Output Formats"]];
     return true;
 }
 
