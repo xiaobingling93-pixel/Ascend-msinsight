@@ -8,6 +8,7 @@
 #include "EventUtil.h"
 #include "FileUtil.h"
 #include "TraceFileParser.h"
+#include "ParserStatusManager.h"
 #include "DataBaseManager.h"
 #include "FileDef.h"
 
@@ -88,7 +89,8 @@ void MemoryParse::OperatorParse(const std::string &parentDir, const std::string 
     std::ifstream file(operatorFile);
     std::string line;
     std::map<std::string, std::int16_t> dataMap;
-    while (getline(file, line)) {
+    while (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) ==
+    Timeline::ParserStatus::RUNNING && getline(file, line)) {
         std::stringstream ss(line);
         std::vector<std::string> row;
         std::string cell;
@@ -177,7 +179,8 @@ void MemoryParse::RecordToParse(const std::string &parentDir, const std::string 
     std::ifstream file(recordFile);
     std::string line;
     std::map<std::string, std::int16_t> dataMap;
-    while (getline(file, line)) {
+    while (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) ==
+    Timeline::ParserStatus::RUNNING && getline(file, line)) {
         std::stringstream ss(line);
         std::vector<std::string> row;
         std::string cell;

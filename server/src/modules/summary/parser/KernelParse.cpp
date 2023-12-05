@@ -6,6 +6,7 @@
 #include "DataBaseManager.h"
 #include "FileUtil.h"
 #include "TraceFileParser.h"
+#include "ParserStatusManager.h"
 #include "ServerLog.h"
 
 namespace Dic {
@@ -56,7 +57,8 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
     std::string line;
     std::map<std::string, std::int16_t> dataMap;
 
-    while (getline(file, line)) {
+    while (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) ==
+    Timeline::ParserStatus::RUNNING && getline(file, line)) {
         std::basic_string<char> ss(line);
         std::vector<std::string> row;
         std::string cell;
