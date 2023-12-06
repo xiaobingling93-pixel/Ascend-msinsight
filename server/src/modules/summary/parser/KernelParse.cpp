@@ -25,14 +25,28 @@ KernelParse::KernelParse()
     threadPool = std::make_unique<ThreadPool>(KernelParse::maxThreadNum);
 }
 
-void KernelParse::StringSplit(const std::string& str, std::vector<std::string>& res)
+std::vector<std::string> KernelParse::StringSplit(const std::string& str)
 {
-    std::regex regex(R"(,(?=(?:[^"]*"[^"]*")*[^"]*$))"); // 正则表达式,用于匹配逗号（,）但是排除在引号（“）内的逗号
-    std::sregex_token_iterator pos(str.begin(), str.end(), regex, -1);
-    decltype(pos) end;              // 自动推导类型
-    for (; pos != end; ++pos) {
-        res.push_back(pos->str());
+    std::vector<std::string> result;
+    std::string subStr = "";
+    int count = 0;
+    for (char ch : str) {
+        // 根据字符串内 ” 的数量来判断是否是一个完整的字符串，count % 2 = 0 为偶数个，满足要求
+        if (ch == ',' and count % 2 == 0) {
+            if (count != 0) {
+                subStr = '\"' + subStr + '\"';
+            }
+            result.push_back(subStr);
+            subStr = "";
+            count = 0;
+        } else if (ch == '\"') {
+            count++;
+        } else {
+            subStr += ch;
+        }
     }
+    result.push_back(subStr);
+    return result;
 }
 
 void KernelParse::KernelFileParse(const std::string &parentDir, const std::string &fileId)
@@ -59,18 +73,16 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
 
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) ==
     Timeline::ParserStatus::RUNNING && getline(file, line)) {
-        std::basic_string<char> ss(line);
-        std::vector<std::string> row;
-        std::string cell;
-        StringSplit(ss, row);
-        if (row[0] == "Step Id" or row[0] == "Model ID" or row[0] == "Device_id") {
-            for (int i = 0; i < row.size(); i++) {
-                dataMap[row[i]] = i;
+        const std::basic_string<char>& basicString(line);
+        rowVector = StringSplit(basicString);
+        if (rowVector[0] == "Step Id" or rowVector[0] == "Model ID" or rowVector[0] == "Device_id") {
+            for (int i = 0; i < rowVector.size(); i++) {
+                dataMap[rowVector[i]] = i;
             }
             continue;
         }
         Kernel kernel {};
-        if (dataMap.size() < kernelTableNum or !KernelParse::mapperToKernelDetail(dataMap, row, fileId, kernel)) {
+        if (dataMap.size() < kernelTableNum or !KernelParse::mapperToKernelDetail(dataMap, rowVector, fileId, kernel)) {
             ServerLog::Error("The header of the imported file is incorrect or incomplete. The path is: " + kernelFile);
             return;
         }
@@ -85,7 +97,7 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
 }
 
 bool KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
-    std::vector<std::string> row, const std::string &fileId, Kernel &kernel)
+    const std::vector<std::string>& row, const std::string &fileId, Kernel &kernel)
 {
     std::int16_t deviceIndex = 0;
     std::int16_t stepIndex = 0;
