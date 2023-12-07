@@ -115,13 +115,11 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     database->UpdateDepth();
     ServerLog::Info("Update depth completed. ID:", fileId);
 
-    for (const auto &filePath: filePathArr) {
-        std::string parentDir = FileUtil::GetParentPath(filePath);
-        if (!parentDir.empty()) {
-            Summary::KernelParse::Instance().KernelFileParse(parentDir, fileId);
-            Memory::MemoryParse::Instance().OperatorParse(parentDir, fileId);
-            Memory::MemoryParse::Instance().RecordToParse(parentDir, fileId);
-        }
+    std::string parentDir = FileUtil::GetParentPath(filePathArr[0]);
+    if (!parentDir.empty()) {
+        Summary::KernelParse::Instance().KernelFileParse(parentDir, fileId);
+        Memory::MemoryParse::Instance().OperatorParse(parentDir, fileId);
+        Memory::MemoryParse::Instance().RecordToParse(parentDir, fileId);
     }
     ParseEndCallBack(fileId, true);
 }

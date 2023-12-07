@@ -373,9 +373,10 @@ std::string ImportActionHandler::GetFileId(const std::string &filePath)
     int i = 1;
     std::string result = fileId;
     std::string parentDir = FileUtil::GetParentPath(filePath);
+    std::string name = FileUtil::GetFileName(filePath);
     while (DataBaseManager::Instance().HasFileId(DatabaseType::TRACE, result)) {
         std::string dir = FileUtil::GetParentPath(DataBaseManager::Instance().GetTraceDatabase(result)->GetDbPath());
-        if (parentDir == dir) {
+        if (RegexUtil::RegexMatch(name, R"(^msprof_slice_[0-9_]+\.json$)") && parentDir == dir) {
             return result;
         }
         result = fileId + "_" + std::to_string(++i);

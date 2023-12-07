@@ -93,3 +93,105 @@ TEST_F(TestSuit, QueryDurationDataWithRank)
     int expectSize = 1;
     EXPECT_EQ(responseBody.size(), expectSize);
 }
+
+TEST_F(TestSuit, QueryBandwidthDistributionData)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    Dic::Protocol::DistributionDataParam requestParams;
+    Dic::Protocol::DistributionResBody responseBody;
+    requestParams.iterationId = "2";
+    requestParams.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
+    requestParams.operatorName = "hcom_broadcast__483_1";
+    requestParams.transportType = "HCCS";
+    requestParams.rankId = "1";
+    database->QueryDistributionData(requestParams, responseBody);
+    std::string expectResult = "{\"0.015504\":[1,0.00166]}";
+    EXPECT_EQ(responseBody.distributionData, expectResult);
+}
+
+TEST_F(TestSuit, QueryBandwidthData)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    Dic::Protocol::BandwidthDataParam requestParams;
+    Dic::Protocol::BandwidthDataResBody responseBody;
+    requestParams.iterationId = "2";
+    requestParams.stage = "p2p";
+    requestParams.operatorName = "Total Op Info";
+    requestParams.rankId = "1";
+    database->QueryBandwidthData(requestParams, responseBody);
+    int expectSize = 4;
+    EXPECT_EQ(responseBody.items.size(), expectSize);
+    EXPECT_EQ(responseBody.items[0].transportType, "RDMA");
+    EXPECT_EQ(responseBody.items[0].transitSize, 20.9715); // transitSize = 20.9715
+    EXPECT_EQ(responseBody.items[0].transitTime, 0.8638); // transitTime = 0.8638
+    EXPECT_EQ(responseBody.items[0].bandwidth, 24.2777); // bandwidth = 24.2777
+    EXPECT_EQ(responseBody.items[0].largePacketRatio, 0.0);
+}
+
+TEST_F(TestSuit, QueryOperatorsCount)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    Dic::Protocol::OperatorDetailsParam requestParams;
+    Dic::Protocol::OperatorDetailsResBody responseBody;
+    requestParams.iterationId = "2";
+    requestParams.stage = "p2p";
+    requestParams.rankId = "1";
+    database->QueryOperatorsCount(requestParams, responseBody);
+    int expectSize = 1;
+    EXPECT_EQ(responseBody.count, expectSize);
+}
+
+TEST_F(TestSuit, GetCommunicationGroups)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    Dic::Protocol::MatrixGroupParam requestParams;
+    Dic::Protocol::MatrixGroupResponseBody responseBody;
+    requestParams.iterationId = "2";
+    database->GetGroups(requestParams, responseBody);
+    int expectSize = 2;
+    EXPECT_EQ(responseBody.groupList.size(), expectSize);
+    EXPECT_EQ(responseBody.groupList[0], "p2p");
+    EXPECT_EQ(responseBody.groupList[1], "(0, 1, 2, 3, 4, 5, 6, 7)");
+}
+
+TEST_F(TestSuit, QueryMatrixData)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    Dic::Protocol::MatrixBandwidthParam requestParams;
+    Dic::Protocol::MatrixListResponseBody responseBody;
+    requestParams.iterationId = "2";
+    requestParams.stage = "p2p";
+    requestParams.operatorName = "Total Op Info";
+    database->QueryMatrixList(requestParams, responseBody);
+    int expectSize = 2;
+    EXPECT_EQ(responseBody.matrixList.size(), expectSize);
+    EXPECT_EQ(responseBody.matrixList[1].srcRank, 0);
+    EXPECT_EQ(responseBody.matrixList[1].dstRank, 8); // dstRank = 8
+    EXPECT_EQ(responseBody.matrixList[1].transportType, "RDMA");
+    EXPECT_EQ(responseBody.matrixList[1].transitSize, 20.9715); // transitSize = 20.9715
+    EXPECT_EQ(responseBody.matrixList[1].transitTime, 0.8638); // transitTime = 0.8638
+    EXPECT_EQ(responseBody.matrixList[1].bandwidth, 24.2778); // bandwidth = 24.2778
+}
+
+TEST_F(TestSuit, QueryAllCommunicationOperatorsDetails)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase();
+    Dic::Protocol::OperatorDetailsParam requestParams;
+    Dic::Protocol::OperatorDetailsResBody responseBody;
+    requestParams.iterationId = "2";
+    requestParams.stage = "p2p";
+    requestParams.rankId = "1";
+    requestParams.currentPage = 1;
+    requestParams.pageSize = 10; // pageSize = 10
+    database->QueryAllOperators(requestParams, responseBody);
+    int expectSize = 1;
+    EXPECT_EQ(responseBody.allOperators.size(), expectSize);
+    EXPECT_EQ(responseBody.allOperators[0].operatorName, "hcom_send__822_0");
+    EXPECT_EQ(responseBody.allOperators[0].elapseTime, 0.8966); // elapseTime = 0.8966
+    EXPECT_EQ(responseBody.allOperators[0].transitTime, 0.8638); // transitTime = 0.8638
+    EXPECT_EQ(responseBody.allOperators[0].synchronizationTime, 0);
+    EXPECT_EQ(responseBody.allOperators[0].waitTime, 0);
+    EXPECT_EQ(responseBody.allOperators[0].idleTime, 0.0327); // idleTime = 0.0327
+    EXPECT_EQ(responseBody.allOperators[0].synchronizationTimeRatio, 0.0);
+    EXPECT_EQ(responseBody.allOperators[0].waitTimeRatio, 0.0);
+}

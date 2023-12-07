@@ -10,6 +10,7 @@ aux_source_directory(${TEST_HOME_DIR}/modules/memory TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/summary TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/timeline TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/communication TEST)
+aux_source_directory(${TEST_HOME_DIR}/modules/operator TEST)
 
 list(APPEND DIC_TEST_LIST
         ${TEST}
