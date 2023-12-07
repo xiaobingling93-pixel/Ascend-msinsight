@@ -98,6 +98,8 @@ export class Session {
     // timeline flag data source
     timelineMaker: TimeLineMaker = TIME_MAKER_DEFAULT;
 
+    zoom: {zoomCount: number; zoomPoint?: number | undefined} | undefined;
+
     constructor(conf?: Partial<Session>) {
         makeAutoObservable(this, {
             timer: false,
@@ -197,10 +199,6 @@ export class Session {
 
     set domainRange(domainRange: { domainStart: TimeStamp; domainEnd: TimeStamp }) {
         this._domain.domainRange = domainRange;
-    }
-
-    set zoom({ zoomCount, zoomPoint }: { zoomCount: number; zoomPoint?: TimeStamp }) {
-        this._domain.zoom = { zoomCount, zoomPoint: zoomPoint ?? ((this.selectedRange) && ((this.selectedRange[0] + this.selectedRange[1]) / 2)) };
     }
 
     get realTimeUpdate(): boolean {

@@ -331,10 +331,16 @@ const TimelineAxis = observer(({ session, margin, timelineHeight }: TimelineAxis
     const canvas = React.useRef<HTMLCanvasElement>(null);
     const [ width, ref ] = useWatchResize<HTMLDivElement>('width');
     const theme = useTheme();
-    const { domainRange: { domainStart, domainEnd }, domain, isNsMode } = session;
+    const { domainRange: { domainStart, domainEnd }, domain, isNsMode, zoom } = session;
     const draw = throttle(() => {
         if (canvas.current && width !== 0) {
-            runInAction(() => { domain.chartViewWidth = width; });
+            runInAction(() => {
+                if (zoom !== undefined) {
+                    domain.zoom = { zoomCount: zoom.zoomCount, zoomPoint: zoom.zoomPoint ?? ((session.selectedRange) && ((session.selectedRange[0] + session.selectedRange[1]) / 2)) };
+                    session.zoom = undefined;
+                }
+                domain.chartViewWidth = width;
+            });
             drawTimelineAxis(canvas.current, {
                 domain: [ domainStart, domainEnd ],
                 spaceX: margin,
@@ -348,7 +354,7 @@ const TimelineAxis = observer(({ session, margin, timelineHeight }: TimelineAxis
     const renderManager = useRenderManager();
     React.useEffect(() => {
         renderManager.addTask(draw);
-    }, [ width, domainStart, domainEnd, theme, session ]);
+    }, [ width, domainStart, domainEnd, zoom, theme, session ]);
     return <CanvasContainer ref={ref} className={TIME_LINE_AXIS_CLASSNAME}>
         <canvas
             ref={canvas}
