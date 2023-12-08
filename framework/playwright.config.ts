@@ -64,6 +64,11 @@ const config: PlaywrightTestConfig = {
   /* Run your local dev server before starting the tests */
   webServer: [
     {
+      // 需要先将server编译出来放到指定位置
+      command: "..\\serverBuild\\server\\profiler_server.exe --wsPort=9000",
+      reuseExistingServer: !process.env.CI
+    },
+    {
       /**
        * Use the dev server by default for faster feedback loop.
        * Use the preview server on CI for more realistic testing.
@@ -71,11 +76,6 @@ const config: PlaywrightTestConfig = {
        */
       command: process.env.CI ? 'vite preview --port 5173' : 'vite dev',
       port: 5173,
-      reuseExistingServer: !process.env.CI
-    },
-    {
-      // 需要先将server编译出来放到指定位置
-      command: "..\\serverBuild\\server\\profiler_server.exe --wsPort=9000",
       reuseExistingServer: !process.env.CI
     }
   ]

@@ -60,19 +60,19 @@ test.describe('comminucation', () => {
         if (frame !== null) {
             // ElapseTime升序排序
             await frame.locator('th').filter({ hasText: 'Elapse Time(ms)' }).click();
-            await frame.waitForTimeout(1000);
+            await frame.waitForTimeout(1500);
             await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('communicationTimeElapseTimeSortAscend.png');
             // ElapseTime降序排序
             await frame.locator('th').filter({ hasText: 'Elapse Time(ms)' }).click();
-            await frame.waitForTimeout(1000);
+            await frame.waitForTimeout(1500);
             await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('communicationTimeElapseTimeSortDscend.png');
             // TransitTime升序排序
             await frame.locator('th').filter({ hasText: 'Transit Time(ms)' }).click();
-            await frame.waitForTimeout(1000);
+            await frame.waitForTimeout(1500);
             await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('communicationTimeTransitTimeSortAscend.png');
             // TransitTime降序排序
             await frame.locator('th').filter({ hasText: 'Transit Time(ms)' }).click();
-            await frame.waitForTimeout(1000);
+            await frame.waitForTimeout(1500);
             await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('communicationTimeTransitTimeSortDscend.png');
         }
     });
@@ -86,12 +86,12 @@ test.describe('comminucation', () => {
     test('testMatrixFilterChange', async () => {
         const frame = page.frame({ url: /.communication.*/ });
         // 修改筛选条件 Communication Group
-        await clickSelect({ locator: frame, cur: 'p2p', target: '(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)' });
+        await clickSelect({ locator: frame, cur: '(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)', target: '(0, 1, 2, 3, 4, 5, 6, 7)' });
         await frame.waitForTimeout(1000);
         await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('matrixFilterChangeCommunicationGroup.png');
 
         // 修改筛选条件 Operator Name
-        await clickSelect({ locator: frame, cur: 'Total Op Info', target: 'hcom_allGather__822_4' });
+        await clickSelect({ locator: frame, cur: 'Total Op Info', target: 'hcom_allGather__483_11' });
         await frame.waitForTimeout(1000);
         await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('matrixFilterChangeOperatorName.png');
     });

@@ -1,5 +1,6 @@
 import { type Page,type Frame } from '@playwright/test'
 
+// 文件路径里面不能有点
 export async function selectFolder({ page, path }: { page: Page;path?: string}) {
     await page.locator('.el-aside > .header > .icon-button').click();
     let newPath = path ?? 'D:\\workspace\\data\\16ka_gpt3';
