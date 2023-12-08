@@ -75,7 +75,7 @@ const config: PlaywrightTestConfig = {
     },
     {
       // 需要先将server编译出来放到指定位置
-      command: "bash -exec '../serverBuild/server/profiler_server.exe --wsPort=9000'",
+      command: "..\\serverBuild\\server\\profiler_server.exe --wsPort=9000",
       reuseExistingServer: !process.env.CI
     }
   ]
