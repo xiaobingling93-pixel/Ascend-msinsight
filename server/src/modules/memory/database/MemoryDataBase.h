@@ -40,6 +40,9 @@ public:
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum);
     bool QueryOperatorSize(double &min, double &max);
 
+    void SetInferenceType(bool inference);
+    bool IsInferenceType() const;
+
 private:
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";
@@ -61,6 +64,11 @@ private:
     std::string GetPeakMemory(const Protocol::MemoryPeak &peak);
     void GetLines(const componentDtoVector componentDtoVec,
                   memoryLines &lines, Protocol::MemoryPeak &peak);
+    const std::string COMPONENT_APP = "APP";
+    const std::string COMPONENT_GE = "GE";
+    const std::string COMPONENT_PTA = "PTA";
+    const std::string COMPONENT_PTA_AND_GE = "PTA+GE";
+    bool isInference = false;
 };
 
 } // end of namespace Memory

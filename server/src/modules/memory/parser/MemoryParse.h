@@ -29,6 +29,9 @@ public:
     void OperatorParse(const std::string &parentDir, const std::string &fileId);
     void RecordToParse(const std::string &parentDir, const std::string &fileId);
 
+    const std::string memoryOperatorReg = R"((operator_memory|operator_memory_[0-9]{1,14})\.csv$)";
+    const std::string memoryRecordReg = R"((memory_record|memory_record_[0-9]{1,14})\.csv$)";
+
 private:
     const int maxThreadNum = 4;
     const int operatorTableNum = 5;
@@ -46,7 +49,7 @@ private:
     Record mapperToRecordDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string>);
     Operator mapperToOperatorDetail(std::map<std::string, std::int16_t> dataMap, std::vector<std::string>);
 
-    void GetMapVaild(const std::vector<std::string> &vec, std::map<std::string, int16_t> dataMap);
+    void GetMapValid(const std::vector<std::string> &vec, std::map<std::string, std::int16_t> dataMap);
 };
 } // end of namespace Memory
 } // end of namespace Module

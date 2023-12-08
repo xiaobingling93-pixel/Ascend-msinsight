@@ -44,11 +44,7 @@ private:
 
     bool HasMemoryFile(const std::string& path);
     const std::string traceViewFile = "trace_view.json";
-    const std::string memoryOperatorFile = "operator_memory.csv";
-    const std::string memoryRecordFile = "memory_record.csv";
     const std::string traceViewReg = R"((trace_view|msprof_[0-9]{1,4}_[0-9]{1,4})\.json$)";
-    const std::string memoryOperatorReg = R"((operator_memory|msprof_[0-9]{1,4}_[0-9]{1,4})\.csv$)";
-    const std::string memoryRecordReg = R"((memory_record|msprof_[0-9]{1,4}_[0-9]{1,4})\.csv$)";
     void SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>>& rankListMap,
                                  ImportActionResponse &response);
     static std::vector<MemorySuccess> hasMemory;

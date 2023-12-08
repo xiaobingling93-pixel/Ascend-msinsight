@@ -227,7 +227,7 @@ void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, memoryLi
 {
     for (auto &item: componentDtoVec) {
         std::vector<std::string> points = {};
-        if (item.component == "PTA+GE") {
+        if (item.component == COMPONENT_PTA_AND_GE || (isInference && item.component == COMPONENT_GE)) {
             peak.ptaGeAllocated = std::max(peak.ptaGeAllocated, item.totalAllocated);
             peak.ptaGeReserved = std::max(peak.ptaGeReserved, item.totalReserved);
             std::string time = std::to_string(item.timesTamp);
@@ -239,7 +239,7 @@ void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, memoryLi
             points.emplace_back("NULL");
             peak.hasPtaGe = true;
             lines.emplace_back(points);
-        } else if (item.component == "APP") {
+        } else if (item.component == COMPONENT_APP) {
             peak.appReserved = std::max(peak.appReserved, item.totalReserved);
             std::string time = std::to_string(item.timesTamp);
             points.emplace_back(time.substr(0, time.length() - exLength));
@@ -428,6 +428,16 @@ bool MemoryDataBase::QueryOperatorSize(double &min, double &max)
     sqlite3_finalize(stmt);
     return true;
 }
+
+    void MemoryDataBase::SetInferenceType(bool inference)
+    {
+        isInference = inference;
+    }
+
+    bool MemoryDataBase::IsInferenceType() const
+    {
+        return isInference;
+    }
 
 } // end of namespace Memory
 } // end of namespace Module

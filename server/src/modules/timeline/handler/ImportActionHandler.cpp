@@ -107,8 +107,10 @@ void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, st
 
 bool ImportActionHandler::HasMemoryFile(const std::string& path)
 {
-    auto operatorFiles = FileUtil::FindFileByName(path, memoryOperatorFile, memoryOperatorReg);
-    auto recordFiles = FileUtil::FindFileByName(path, memoryRecordFile, memoryRecordReg);
+    auto operatorFiles = FileUtil::FindFilesByRegex(path,
+                                                    std::regex(Memory::MemoryParse::Instance().memoryOperatorReg));
+    auto recordFiles = FileUtil::FindFilesByRegex(path,
+                                                  std::regex(Memory::MemoryParse::Instance().memoryRecordReg));
     if (!operatorFiles.empty() or !recordFiles.empty()) {
         return true;
     }
