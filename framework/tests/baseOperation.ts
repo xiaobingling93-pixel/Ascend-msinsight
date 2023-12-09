@@ -8,7 +8,11 @@ export async function selectFolder({ page, path }: { page: Page;path?: string}) 
     const list = newPath.split('\\');
     for (let i = 0; i < list.length; i++) {
         const curPath = list.slice(0, i + 1).join('');
-        await page.locator('.custom-tree-node').locator(`span[name=${curPath}]`).click();
+        const nextPath = list.slice(0, i + 2).join('');
+        const node = await page.locator('.custom-tree-node').locator(`span[name=${nextPath}]`).count();
+        if(node === 0 || curPath === nextPath){
+            await page.locator('.custom-tree-node').locator(`span[name=${curPath}]`).click();
+        }
     }
     await page.getByText('Confirm').click();
 }
