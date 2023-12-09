@@ -20,13 +20,13 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOpType)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
     Dic::Protocol::OperatorDurationReqParams params = {"0", GROUP_OPERATOR_TYPE, 15};
-    std::vector<Protocol::OperatorDurationRes> datas = {};
-    bool result = db->QueryOperatorDurationInfo(params, Protocol::QueryType::CATEGORY, datas);
+    std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
+    bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
     EXPECT_EQ(result, true);
     int size = 7;
     EXPECT_EQ(datas.size(), size);
     datas.clear();
-    result = db->QueryOperatorDurationInfo(params, Protocol::QueryType::COMPUTE_UNIT, datas);
+    result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::COMPUTE_UNIT, datas);
     EXPECT_EQ(result, true);
     int unitSize = 5;
     EXPECT_EQ(datas.size(), unitSize);
@@ -36,13 +36,13 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOpTypeAndInputShape)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
     Dic::Protocol::OperatorDurationReqParams params = {"0", GROUP_INPUT_SHAPE, 15};
-    std::vector<Protocol::OperatorDurationRes> datas = {};
-    bool result = db->QueryOperatorDurationInfo(params, Protocol::QueryType::CATEGORY, datas);
+    std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
+    bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
     EXPECT_EQ(result, true);
     int size = 9;
     EXPECT_EQ(datas.size(), size);
     datas.clear();
-    result = db->QueryOperatorDurationInfo(params, Protocol::QueryType::COMPUTE_UNIT, datas);
+    result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::COMPUTE_UNIT, datas);
     EXPECT_EQ(result, true);
     int unitSize = 6;
     EXPECT_EQ(datas.size(), unitSize);
@@ -52,13 +52,13 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOperator)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
     Dic::Protocol::OperatorDurationReqParams params = {"0", GROUP_OPERATOR, 15};
-    std::vector<Protocol::OperatorDurationRes> datas = {};
-    bool result = db->QueryOperatorDurationInfo(params, Protocol::QueryType::CATEGORY, datas);
+    std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
+    bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
     EXPECT_EQ(result, true);
     int size = 9;
     EXPECT_EQ(datas.size(), size);
     datas.clear();
-    result = db->QueryOperatorDurationInfo(params, Protocol::QueryType::COMPUTE_UNIT, datas);
+    result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::COMPUTE_UNIT, datas);
     EXPECT_EQ(result, true);
     int cnt = 6;
     EXPECT_EQ(datas.size(), cnt);
@@ -67,7 +67,7 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOperator)
 TEST_F(TestSuit, QueryOperatorStatisticInfoByOpType)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
-    Protocol::OperatorStatisticReqParams reqParams = {"0", GROUP_OPERATOR_TYPE, 15, 0, 10, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {"0", GROUP_OPERATOR_TYPE, 15, 0, 10, "", ""};
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     bool result = db->QueryOperatorStatisticInfo(reqParams, response);
     EXPECT_EQ(result, true);
@@ -79,7 +79,7 @@ TEST_F(TestSuit, QueryOperatorStatisticInfoByOpType)
 TEST_F(TestSuit, QueryOperatorStatisticInfoByOpTypeAndInputShape)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
-    Protocol::OperatorStatisticReqParams reqParams = {"0", GROUP_INPUT_SHAPE, 15, 0, 5, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {"0", GROUP_INPUT_SHAPE, 15, 0, 5, "", ""};
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     bool result = db->QueryOperatorStatisticInfo(reqParams, response);
     EXPECT_EQ(result, true);
@@ -92,8 +92,8 @@ TEST_F(TestSuit, QueryOperatorStatisticInfoByOpTypeAndInputShape)
 TEST_F(TestSuit, QueryOperatorDetailInfoByOperator)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
-    Protocol::OperatorStatisticReqParams reqParams = {"0", GROUP_OPERATOR, 15, 0, 10, "", ""};
-    Protocol::OperatorDetailInfoResponse response = {};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {"0", GROUP_OPERATOR, 15, 0, 10, "", ""};
+    Dic::Protocol::OperatorDetailInfoResponse response = {};
     bool result = db->QueryOperatorDetailInfo(reqParams, response);
     EXPECT_EQ(result, true);
     int total = 15;
@@ -106,8 +106,8 @@ TEST_F(TestSuit, QueryOperatorDetailInfoByOperator)
 TEST_F(TestSuit, QueryOperatorMoreInfoByOpType)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
-    Protocol::OperatorMoreInfoReqParams reqParams = {"0", GROUP_OPERATOR_TYPE, 15, "Cast", "", "", 0, 10, "", ""};
-    Protocol::OperatorMoreInfoResponse response = {};
+    Dic::Protocol::OperatorMoreInfoReqParams reqParams = {"0", GROUP_OPERATOR_TYPE, 15, "Cast", "", "", 0, 10, "", ""};
+    Dic::Protocol::OperatorMoreInfoResponse response = {};
     bool result = db->QueryOperatorMoreInfo(reqParams, response);
     EXPECT_EQ(result, true);
     int64_t total = 3;
@@ -119,10 +119,10 @@ TEST_F(TestSuit, QueryOperatorMoreInfoByOpType)
 TEST_F(TestSuit, QueryOperatorMoreInfoByInputShape)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
-    Protocol::OperatorMoreInfoReqParams reqParams = {
+    Dic::Protocol::OperatorMoreInfoReqParams reqParams = {
         "0", GROUP_INPUT_SHAPE, 15, "", "NonZero", R"("""16""")", 0, 10, "", ""
     };
-    Protocol::OperatorMoreInfoResponse response = {};
+    Dic::Protocol::OperatorMoreInfoResponse response = {};
     bool result = db->QueryOperatorMoreInfo(reqParams, response);
     EXPECT_EQ(result, true);
     int total = 3;

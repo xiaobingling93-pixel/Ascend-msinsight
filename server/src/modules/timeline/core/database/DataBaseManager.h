@@ -57,8 +57,6 @@ private:
     std::map<std::string, std::unique_ptr<ClusterDatabase>> clusterDatabaseMap;
     std::map<std::string, std::unique_ptr<Memory::MemoryDataBase>> memoryDatabaseMap;
     std::map<std::string, std::unique_ptr<Summary::SummaryDataBase>> summaryDatabaseMap;
-
-    bool MemoryHasFileId(const std::string &fileId);
 };
 } // end of namespace Timeline
 } // end of namespace Module

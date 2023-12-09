@@ -113,12 +113,6 @@ std::vector<Summary::SummaryDataBase *> DataBaseManager::GetAllSummaryDatabase()
     return databases;
 }
 
-bool DataBaseManager::MemoryHasFileId(const std::string &fileId)
-{
-    std::unique_lock<std::mutex> lock(mutex);
-    return memoryDatabaseMap.count(fileId) != 0;
-}
-
 void DataBaseManager::Clear()
 {
     std::unique_lock<std::mutex> lock(mutex);
