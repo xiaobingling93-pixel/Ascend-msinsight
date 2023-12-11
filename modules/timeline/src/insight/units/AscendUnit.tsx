@@ -133,25 +133,19 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     return [];
                 }
                 const threadTraceList = request.data as ThreadTrace[][];
-                const res: StackStatusData[][] = [];
                 // 泳道chart返回数据减去时间偏移
-                threadTraceList.forEach((it, index) => {
-                    res.push([]);
-                    it.forEach((data) => {
-                        res[index].push({
-                            ...data,
-                            startTime: data.startTime - timestampOffset,
-                            duration: data.duration,
-                            name: data.name,
-                            type: data.name,
-                            color: colorPalette[hashToNumber(data.name, colorPalette.length)],
-                            depth: data.depth,
-                            threadId: data.threadId,
-                            cardId: threadMetaData.cardId,
-                        });
-                    });
-                });
-                return res;
+                return _.map(threadTraceList, (it) => _.map(it, (data) => {
+                    return {
+                        startTime: data.startTime - timestampOffset,
+                        duration: data.duration,
+                        name: data.name,
+                        type: data.name,
+                        color: colorPalette[hashToNumber(data.name, colorPalette.length)],
+                        depth: data.depth,
+                        threadId: data.threadId,
+                        cardId: threadMetaData.cardId,
+                    } as StackStatusData;
+                }));
             } catch (e) {
                 console.warn('request threadTrace info failed', e);
                 return [];
