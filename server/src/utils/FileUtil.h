@@ -515,14 +515,15 @@ public:
     static std::string GetCurrPath()
     {
         char currPath[1024];
+        std::string strCurrPath;
     #ifdef _WIN32
             ::GetModuleFileName(NULL, currPath, MAX_PATH);
             (_tcsrchr(currPath, '\\'))[1] = 0;
+        strCurrPath =  StringUtil::GbkToUtf8(currPath);
     #else
             getcwd(currPath, 1024);
-      sprintf(currPath, "%s/", currPath);
+            strCurrPath = currPath;
     #endif
-        std::string strCurrPath = currPath;
         return strCurrPath;
     }
 };
