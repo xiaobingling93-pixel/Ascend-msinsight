@@ -12,10 +12,12 @@ test.describe('comminucation', () => {
         await page.close();
     });
 
+    // 1.未导入数据
     test('testCommunicationTabWithNoData', async () => {
         await expect(await page.getByText('Communication').count()).toBe(0);
     });
 
+    // 2.导入集群数据
     test('testCommunicationTabWithData', async () => {
         await selectFolder({ page });
         await page.waitForTimeout(3000);
@@ -24,6 +26,7 @@ test.describe('comminucation', () => {
         await expect(page).toHaveScreenshot('communication.png', { maxDiffPixels: 800 });
     });
 
+    // 3.修改筛选条件
     test('testDurationFilterChange', async () => {
         const frame = page.frame({ url: /.communication.*/ });
         await expect(Boolean(frame)).toBe(true);
@@ -39,6 +42,7 @@ test.describe('comminucation', () => {
         }
     });
 
+    // 4.通信时间表切换页数、每页记录数
     test('testDurationTablePageChange', async () => {
         const frame = page.frame({ url: /.communication.*/ });
         if (frame !== null) {
@@ -54,7 +58,7 @@ test.describe('comminucation', () => {
         }
     });
 
-    // 通信表格排序测试
+    // 5.通信时间表格排序
     test('testDurationTableSortChange', async () => {
         const frame = page.frame({ url: /.communication.*/ });
         if (frame !== null) {
@@ -77,12 +81,15 @@ test.describe('comminucation', () => {
         }
     });
 
+    // 6.通信矩阵
     test('testMatrix', async () => {
         const frame = page.frame({ url: /.communication.*/ });
         await frame.getByLabel('Communication Matrix', { exact: true }).check();
         await frame.waitForTimeout(1500);
         await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('communicationMatrix.png');
     });
+
+    // 7.通信矩阵筛选条件变化
     test('testMatrixFilterChange', async () => {
         const frame = page.frame({ url: /.communication.*/ });
         // 修改筛选条件 Communication Group
@@ -96,6 +103,7 @@ test.describe('comminucation', () => {
         await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('matrixFilterChangeOperatorName.png');
     });
 
+    // 8.通信矩阵类型变化
     test('testMatrixTypeChange', async () => {
         const frame = page.frame({ url: /.communication.*/ });
         await frame.waitForTimeout(1000);
@@ -120,6 +128,7 @@ test.describe('comminucation', () => {
         await clickSelect({ locator: frame, cur: 'Transit Time(ms)', target: 'Bandwidth(GB/s)' });
     });
 
+    // 9.通信矩阵show inner communication
     test('testMatrixOptionChange', async () => {
         const frame = page.frame({ url: /.communication.*/ });
         await frame.getByText('Show Inner Communication').check();

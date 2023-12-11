@@ -22,6 +22,7 @@ test.describe('operator',() => {
 
     // 2.导入推理单卡数据
     test('testImportInferenceSingleCardData', async () => {
+        // 删除数据
         await page.locator('.deleteIcon').first().click();
         await page.getByRole('button', { name: 'Confirm' }).click();
         await page.waitForTimeout(1000);
@@ -52,6 +53,7 @@ test.describe('operator',() => {
         await selectFolder({ page });
         await page.waitForTimeout(6000);
         const frame = page.frame({ url: /.Operator.*/ });
+        // 切换到RankId 0
         await frame.locator('.ant-select-selector').nth(1).click();
         await frame.locator('.ant-select-dropdown').nth(0).hover();
         await page.mouse.wheel(0, -1000);
@@ -60,7 +62,7 @@ test.describe('operator',() => {
         await expect(page).toHaveScreenshot('pytorchClusterData.png', { maxDiffPixels: 800 });
     });
 
-    // 6.Operator Type
+    // 6.Operator Type 筛选条件变化、排序变化
     test('testViewOperatorTypeStatistics', async () => {
         const frame = page.frame({ url: /.Operator.*/ });
         // 修改Top
