@@ -6,14 +6,14 @@
 #ifndef DATA_INSIGHT_CORE_DEFS_H
 #define DATA_INSIGHT_CORE_DEFS_H
 
-#include <json.hpp>
 #include "rapidjson.h"
 #include "document.h"
 #include "writer.h"
 #include "stringbuffer.h"
 
 namespace Dic {
-using json_t = nlohmann::json;
+using json_t = rapidjson::Value;
+using document_t = rapidjson::Document;
 } // end of namespace Dic
 
 #endif // DATA_INSIGHT_CORE_DEFS_H

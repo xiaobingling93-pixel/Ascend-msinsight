@@ -4,6 +4,7 @@
 
 #include "ServerLog.h"
 #include "Protocol.h"
+#include "JsonUtil.h"
 #include "TokenBuilder.h"
 #include "ModuleManager.h"
 #include "ProtocolManager.h"
@@ -252,12 +253,13 @@ void WsSession::Send(const std::string &message)
 void WsSession::SendResponse(const Protocol::Response &response)
 {
     std::string error;
-    std::optional<json_t> json = ProtocolManager::Instance().ToJson(response, error);
+    std::optional<document_t> json = ProtocolManager::Instance().ToJson(response, error);
     if (!json.has_value()) {
         ServerLog::Error(error);
         return;
     }
-    std::string responseStr = json->dump();
+    std::string responseStr = JsonUtil::JsonDump(json.value());
+    ServerLog::Info("send:", responseStr);
     std::string responseHeader = GetMessageHeader(responseStr.length());
     // send header + response
     loop->defer([this, responseHeader, responseStr]() {
@@ -271,12 +273,12 @@ void WsSession::SendEvent(Protocol::Event &event)
     std::string error;
     // set event token
     event.token = tokenString;
-    std::optional<json_t> json = ProtocolManager::Instance().ToJson(event, error);
+    std::optional<document_t> json = ProtocolManager::Instance().ToJson(event, error);
     if (!json.has_value()) {
         ServerLog::Info(error);
         return;
     }
-    std::string eventStr = json->dump();
+    std::string eventStr = JsonUtil::JsonDump(json.value());
     std::string eventHeader = GetMessageHeader(eventStr.length());
     // send header + response
     loop->defer([this, eventStr, eventHeader]() {

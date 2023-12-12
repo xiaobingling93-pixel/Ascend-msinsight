@@ -42,18 +42,17 @@ void ProtocolManager::UnRegister()
 
 std::unique_ptr<Request> ProtocolManager::FromJson(const std::string &requestStr, std::string &error)
 {
-    json_t requestJson;
-    try {
-        requestJson = json_t::parse(requestStr);
-    } catch (json_t::parse_error &) {
+    ServerLog::Info("recv:", requestStr);
+    auto requestJson = JsonUtil::TryParse(requestStr, error);
+    if (!requestJson.has_value()) {
         ServerLog::Warn("Failed to parse request json. ", requestStr);
         return nullptr;
     }
-    if (!JsonUtil::IsJsonKeyValid(requestJson, "moduleName")) {
+    if (!JsonUtil::IsJsonKeyValid(requestJson.value(), "moduleName")) {
         ServerLog::Warn("Failed to get module type from json. ", requestStr);
         return nullptr;
     }
-    auto moduleName = STR_TO_ENUM<ModuleType>(requestJson["moduleName"]);
+    auto moduleName = STR_TO_ENUM<ModuleType>(JsonUtil::GetString(requestJson.value(), "moduleName"));
     if (!moduleName.has_value()) {
         ServerLog::Warn("Failed to get module type from json. ", requestStr);
         return nullptr;
@@ -63,27 +62,27 @@ std::unique_ptr<Request> ProtocolManager::FromJson(const std::string &requestStr
         ServerLog::Warn("Failed to get request module protocol. module type:", static_cast<int>(moduleName.value()));
         return nullptr;
     }
-    return protocolMap.at(moduleName.value())->FromJson(requestJson, error);
+    return protocolMap.at(moduleName.value())->FromJson(requestJson.value(), error);
 }
 
-std::optional<json_t> ProtocolManager::ToJson(const Response &response, std::string &error)
+std::optional<document_t> ProtocolManager::ToJson(const Response &response, std::string &error)
 {
     auto moduleName = response.moduleName;
     std::unique_lock<std::mutex> lock(mutex);
     if (protocolMap.count(moduleName) == 0) {
         ServerLog::Warn("Failed to get response module protocol. module type:", static_cast<int>(moduleName));
-        return nullptr;
+        return std::nullopt;
     }
     return protocolMap.at(moduleName)->ToJson(response, error);
 }
 
-std::optional<json_t> ProtocolManager::ToJson(const Event &event, std::string &error)
+std::optional<document_t> ProtocolManager::ToJson(const Event &event, std::string &error)
 {
     auto moduleName = event.moduleName;
     std::unique_lock<std::mutex> lock(mutex);
     if (protocolMap.count(moduleName) == 0) {
         ServerLog::Warn("Failed to get event module protocol. module type:", static_cast<int>(moduleName));
-        return nullptr;
+        return std::nullopt;
     }
     return protocolMap.at(moduleName)->ToJson(event, error);
 }

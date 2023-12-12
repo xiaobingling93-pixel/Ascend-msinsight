@@ -25,10 +25,10 @@ private:
     static std::unique_ptr<Request> ToTokenCheckRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToFilesGetRequest(const json_t &json, std::string &error);
     // response to json
-    static std::optional<json_t> ToTokenCreateResponseJson(const Response &response);
-    static std::optional<json_t> ToTokenDestroyResponseJson(const Response &response);
-    static std::optional<json_t> ToTokenCheckResponseJson(const Response &response);
-    static std::optional<json_t> ToFilesGetResponseJson(const Response &response);
+    static std::optional<document_t> ToTokenCreateResponseJson(const Response &response);
+    static std::optional<document_t> ToTokenDestroyResponseJson(const Response &response);
+    static std::optional<document_t> ToTokenCheckResponseJson(const Response &response);
+    static std::optional<document_t> ToFilesGetResponseJson(const Response &response);
 };
 } // namespace Protocol
 } // namespace Dic

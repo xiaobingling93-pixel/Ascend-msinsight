@@ -4,12 +4,13 @@
 
 #include "ServerLog.h"
 #include "JsonUtil.h"
-#include "ProtocolUtil.h"
 #include "Protocol.h"
+#include "ProtocolUtil.h"
 
 namespace Dic {
 namespace Protocol {
 using namespace Dic::Server;
+using namespace rapidjson;
 void ProtocolUtil::Register()
 {
     std::lock_guard<std::mutex> lock(mutex);
@@ -29,7 +30,7 @@ void ProtocolUtil::UnRegister()
 std::unique_ptr<Request> ProtocolUtil::FromJson(const json_t &requestJson, std::string &error)
 {
     if (!IsRequest(requestJson)) {
-        ServerLog::Warn("json type is not request.", requestJson.dump());
+        ServerLog::Warn("json type is not request.", JsonUtil::JsonDump(requestJson));
         return nullptr;
     }
     const std::string command = Command(requestJson);
@@ -40,7 +41,7 @@ std::unique_ptr<Request> ProtocolUtil::FromJson(const json_t &requestJson, std::
     return func.value()(requestJson, error);
 }
 
-std::optional<json_t> ProtocolUtil::ToJson(const Response &response, std::string &error)
+std::optional<document_t> ProtocolUtil::ToJson(const Response &response, std::string &error)
 {
     std::string command = response.command;
     std::optional<ProtocolUtil::ResponseToJsonFunc> func = GetResponseToJsonFunc(command);
@@ -56,7 +57,7 @@ std::optional<json_t> ProtocolUtil::ToJson(const Response &response, std::string
     }
 }
 
-std::optional<json_t> ProtocolUtil::ToJson(const Event &event, std::string &error)
+std::optional<document_t> ProtocolUtil::ToJson(const Event &event, std::string &error)
 {
     std::string eventString = event.event;
     std::optional<ProtocolUtil::EventToJsonFunc> func = GetEventToJsonFunc(eventString);
@@ -73,19 +74,6 @@ std::optional<json_t> ProtocolUtil::ToJson(const Event &event, std::string &erro
     }
 }
 
-void ProtocolUtil::SetRequestJsonBaseInfo(const Request &request, json_t &json)
-{
-    json["type"] = REQUEST_NAME;
-    json["id"] = request.id;
-    json["command"] = request.command;
-    auto moduleName = ENUM_TO_STR(request.moduleName);
-    json["moduleName"] = moduleName.has_value() ? moduleName.value() : MODULE_UNKNOWN;
-    json["params"]["token"] = request.token;
-    if (request.resultCallbackId.has_value()) {
-        json["resultCallbackId"] = request.resultCallbackId.value();
-    }
-}
-
 bool ProtocolUtil::SetRequestBaseInfo(Request &request, const json_t &json)
 {
     if (!JsonUtil::IsJsonKeyValid(json, "id") || !JsonUtil::IsJsonKeyValid(json, "type") ||
@@ -95,107 +83,62 @@ bool ProtocolUtil::SetRequestBaseInfo(Request &request, const json_t &json)
     if (!JsonUtil::IsJsonKeyValid(json, "params") || !JsonUtil::IsJsonKeyValid(json, "moduleName")) {
         return false;
     }
-    request.id = json["id"];
-    request.command = json["command"];
-    auto type = STR_TO_ENUM<Dic::Protocol::ProtocolMessage::Type>(json["type"]);
+    request.id = json["id"].GetUint();
+    request.command = json["command"].GetString();
+    auto type = STR_TO_ENUM<Dic::Protocol::ProtocolMessage::Type>(json["type"].GetString());
     request.type = type.has_value() ? type.value() : ProtocolMessage::Type::NONE;
-    auto moduleName = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["moduleName"]);
+    auto moduleName = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["moduleName"].GetString());
     request.moduleName = moduleName.has_value() ? moduleName.value() : ModuleType::UNKNOWN;
-    JsonUtil::SetByJsonKeyValue<std::string>(request.token, json["params"], "token");
-    if (json.contains("resultCallbackId")) {
-        request.resultCallbackId = json["resultCallbackId"];
-    }
+    JsonUtil::SetByJsonKeyValue(request.token, json["params"], "token");
+    JsonUtil::SetByJsonKeyValue(request.resultCallbackId, json, "resultCallbackId");
     return true;
 }
 
-void ProtocolUtil::SetResponseJsonBaseInfo(const Response &response, json_t &json)
+void ProtocolUtil::SetResponseJsonBaseInfo(const Response &response, document_t &json)
 {
-    json["type"] = RESPONSE_NAME;
-    json["id"] = response.id;
-    json["requestId"] = response.requestId;
-    json["result"] = response.result;
-    json["command"] = response.command;
+    auto &allocator = json.GetAllocator();
+    JsonUtil::AddMember(json, "type", RESPONSE_NAME, allocator);
+    json.AddMember("id", response.id, allocator);
+    json.AddMember("requestId", response.requestId, allocator);
+    json.AddMember("result", response.result, allocator);
+    JsonUtil::AddMember(json, "command", response.command, allocator);
     auto moduleName = ENUM_TO_STR(response.moduleName);
-    json["moduleName"] = moduleName.has_value() ? moduleName.value() : MODULE_UNKNOWN;
+    JsonUtil::AddMember(json, "moduleName", moduleName.has_value() ? moduleName.value() : MODULE_UNKNOWN, allocator);
     if (response.error.has_value()) {
-        json["error"]["code"] = response.error.value().code;
-        json["error"]["message"] = response.error.value().message;
+        json_t error(kObjectType);
+        error.AddMember("code", response.error.value().code, allocator);
+        JsonUtil::AddMember(json, "message", response.error.value().message, allocator);
+        json.AddMember("error", error, allocator);
     }
-    json["body"]["token"] = response.token;
+    JsonUtil::AddMember(json, "token", response.token, allocator);
     if (response.resultCallbackId.has_value()) {
-        json["resultCallbackId"] = response.resultCallbackId.value();
+        json.AddMember("resultCallbackId", response.resultCallbackId.value(), allocator);
     }
 }
 
-bool ProtocolUtil::SetResponseBaseInfo(Response &response, const json_t &json)
+void ProtocolUtil::SetEventJsonBaseInfo(const Event &event, document_t &json)
 {
-    if (!JsonUtil::IsJsonKeyValid(json, "result") || !JsonUtil::IsJsonKeyValid(json, "id") ||
-        !JsonUtil::IsJsonKeyValid(json, "type") || !JsonUtil::IsJsonKeyValid(json, "command") ||
-        !JsonUtil::IsJsonKeyValid(json, "requestId")) {
-        return false;
-    }
-    if (!JsonUtil::IsJsonKeyValid(json, "body") || !JsonUtil::IsJsonKeyValid(json, "moduleName")) {
-        return false;
-    }
-    response.result = json["result"];
-    response.id = json["id"];
-    response.requestId = json["requestId"];
-    response.command = json["command"];
-    auto type = STR_TO_ENUM<Dic::Protocol::ProtocolMessage::Type>(json["type"]);
-    response.type = type.has_value() ? type.value() : ProtocolMessage::Type::NONE;
-    auto moduleName = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["moduleName"]);
-    response.moduleName = moduleName.has_value() ? moduleName.value() : ModuleType::UNKNOWN;
-    JsonUtil::SetByJsonKeyValue<std::string>(response.token, json["body"], "token");
-    if (json.contains("resultCallbackId")) {
-        response.resultCallbackId = json["resultCallbackId"];
-    }
-    return true;
-}
-
-void ProtocolUtil::SetEventJsonBaseInfo(const Event &event, json_t &json)
-{
-    json["type"] = EVENT_NAME;
-    json["id"] = event.id;
-    json["event"] = event.event;
+    auto &allocator = json.GetAllocator();
+    JsonUtil::AddMember(json, "type", EVENT_NAME, allocator);
+    json.AddMember("id", event.id, allocator);
+    JsonUtil::AddMember(json, "event", event.event, allocator);
     auto moduleName = ENUM_TO_STR(event.moduleName);
-    json["moduleName"] = moduleName.has_value() ? moduleName.value() : MODULE_UNKNOWN;
-    json["body"]["token"] = event.token;
+    JsonUtil::AddMember(json, "moduleName", moduleName.has_value() ? moduleName.value() : MODULE_UNKNOWN, allocator);
+    JsonUtil::AddMember(json, "token", event.token, allocator);
     if (event.resultCallbackId.has_value()) {
-        json["resultCallbackId"] = event.resultCallbackId.value();
+        json.AddMember("resultCallbackId", event.resultCallbackId.value(), allocator);
     }
-}
-
-bool ProtocolUtil::SetEventBaseInfo(Event &event, const json_t &json)
-{
-    if (!JsonUtil::IsJsonKeyValid(json, "id") || !JsonUtil::IsJsonKeyValid(json, "type") ||
-        !JsonUtil::IsJsonKeyValid(json, "event")) {
-        return false;
-    }
-    if (!JsonUtil::IsJsonKeyValid(json, "body") || !JsonUtil::IsJsonKeyValid(json, "moduleName")) {
-        return false;
-    }
-    event.id = json["id"];
-    event.event = json["event"];
-    auto type = STR_TO_ENUM<Dic::Protocol::ProtocolMessage::Type>(json["type"]);
-    event.type = type.has_value() ? type.value() : ProtocolMessage::Type::NONE;
-    auto moduleName = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["moduleName"]);
-    event.moduleName = moduleName.has_value() ? moduleName.value() : ModuleType::UNKNOWN;
-    JsonUtil::SetByJsonKeyValue<std::string>(event.token, json["body"], "token");
-    if (json.contains("resultCallbackId")) {
-        event.resultCallbackId = json["resultCallbackId"];
-    }
-    return true;
 }
 
 bool ProtocolUtil::IsRequest(const json_t &jsonRequest)
 {
-    return (jsonRequest.contains("type")) && (jsonRequest["type"] == REQUEST_NAME);
+    return (jsonRequest.HasMember("type")) && (jsonRequest["type"].GetString() == REQUEST_NAME);
 }
 
 std::string ProtocolUtil::Command(const json_t &jsonRequest)
 {
-    if (jsonRequest.contains("command") && jsonRequest["command"].is_string()) {
-        return jsonRequest["command"].get<std::string>();
+    if (jsonRequest.HasMember("command") && jsonRequest["command"].IsString()) {
+        return jsonRequest["command"].GetString();
     }
     return "";
 }

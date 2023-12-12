@@ -297,8 +297,8 @@ std::string TraceFileParser::GetFileIdFromFile(const std::string &filePath)
     if (!json.has_value()) {
         return "";
     }
-    if (json.value().contains("rank_id")) {
-        return nlohmann::to_string(json.value()["rank_id"]);
+    if (json.value().HasMember("rank_id")) {
+        return JsonUtil::GetDumpString(json.value(), "rank_id");
     }
     return "";
 }
