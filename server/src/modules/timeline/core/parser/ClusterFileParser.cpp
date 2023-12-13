@@ -116,8 +116,8 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     std::vector<std::string> communicationFileList =
             FileUtil::FindFilesByRegex(selectedPath, patternCommunication);
     // cluster analysis
-    if (communicationFileList.empty()) {
-        AttAnalyze(selectedPath);
+    if (communicationFileList.empty() && !AttAnalyze(selectedPath)) {
+        return false;
     }
     communicationFileList =
             FileUtil::FindFilesByRegex(selectedPath, patternCommunication);
@@ -152,8 +152,14 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
 bool ClusterFileParser::AttAnalyze(const std::string& selectedPath)
 {
     ServerLog::Info("can not find cluster analysis file, start execute cluster analysis");
+    std::string regex;
+#ifdef _WIN32
+    regex = "cluster_analysis.exe";
+#else
+    regex = "cluster_analysis";
+#endif
     std::vector<std::string> exePathVector =
-            FileUtil::FindFilesByRegex(FileUtil::GetCurrPath(), std::regex("cluster_analysis.exe"));
+            FileUtil::FindFilesByRegex(FileUtil::GetCurrPath(), std::regex(regex));
     if (!exePathVector.empty()) {
         std::string command = "\"" + exePathVector[0] +  "\" -d " + FileUtil::PathPreprocess(selectedPath);
         int result = std::system(command.c_str());
@@ -164,7 +170,9 @@ bool ClusterFileParser::AttAnalyze(const std::string& selectedPath)
         ServerLog::Info("Execute cluster analysis success, command:", command);
     } else {
         ServerLog::Warn("Can not find cluster analysis execute file under.", selectedPath);
+        return false;
     }
+    return true;
 }
 
 StepStatistic ClusterFileParser::MapToStepStatistic(std::vector<std::string> tokens)
