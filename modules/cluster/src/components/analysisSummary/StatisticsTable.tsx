@@ -15,11 +15,13 @@ const computingStatisticsColumns = [
         title: 'Accelerator Core',
         dataIndex: 'acceleratorCore',
         key: 'acceleratorCore',
+        ellipsis: true,
     },
     {
         title: 'Accelerator Core Durations(μs)',
         dataIndex: 'duration',
         key: 'duration',
+        ellipsis: true,
     },
 ];
 
@@ -28,61 +30,73 @@ const computingDetailColumns = [
         title: 'Name',
         dataIndex: 'name',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Type',
         dataIndex: 'type',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Start Time(ms)',
         dataIndex: 'startTime',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Duration(μs)',
         dataIndex: 'duration',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Wait Time(μs)',
         dataIndex: 'waitTime',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Block Dim',
         dataIndex: 'blockDim',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Input Shapes',
         dataIndex: 'inputShapes',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Input Data Types',
         dataIndex: 'inputDataTypes',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Input Formats',
         dataIndex: 'inputFormats',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Output Shapes',
         dataIndex: 'outputShapes',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Output Data Types',
         dataIndex: 'outputDataTypes',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Output Formats',
         dataIndex: 'outputFormats',
         sorter: true,
+        ellipsis: true,
     },
 ];
 
@@ -91,16 +105,19 @@ const communicationStatisticsColumns = [
         title: 'Accelerator Core',
         dataIndex: 'acceleratorCore',
         key: 'acceleratorCore',
+        ellipsis: true,
     },
     {
         title: 'Communication(Not Overlapped) Durations(μs)',
         dataIndex: 'NotOverlapped',
         key: 'NotOverlapped',
+        ellipsis: true,
     },
     {
         title: 'Communication(Overlapped) Durations(μs)',
         dataIndex: 'Overlapped',
         key: 'Overlapped',
+        ellipsis: true,
     },
 ];
 
@@ -109,26 +126,31 @@ const communicationDetailColumns = [
         title: 'Name',
         dataIndex: 'name',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Type',
         dataIndex: 'type',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Start Time(ms)',
         dataIndex: 'startTime',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Duration(μs)',
         dataIndex: 'duration',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Wait Time(μs)',
         dataIndex: 'waitTime',
         sorter: true,
+        ellipsis: true,
     },
 ];
 
@@ -139,6 +161,7 @@ const communicationOverlappedDetailColumns = [
         dataIndex: 'overlapDuration',
         key: 'overlapDuration',
         sorter: true,
+        ellipsis: true,
     },
 ];
 
@@ -149,6 +172,7 @@ const communicationNotOverlappedDetailColumns = [
         dataIndex: 'notOverlapDuration',
         key: 'notOverlapDuration',
         sorter: true,
+        ellipsis: true,
     },
 ];
 
@@ -171,6 +195,8 @@ const getTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
     if ([ 'compute', 'communication' ].includes(timeFlag)) {
         const btnCol = {
             title: 'Details',
+            ellipsis: true,
+            minWidth: 85,
             render: (_: any, record: any) => (<Button type="link"
                 onClick={() => {
                     setExpandedKeys((pre: string[]) => {

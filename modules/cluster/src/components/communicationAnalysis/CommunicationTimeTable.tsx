@@ -36,36 +36,43 @@ const commonColumns: ColumnsType<DataType> = [
         title: 'Elapse Time(ms)',
         dataIndex: 'elapseTime',
         sorter: (a: DataType, b: DataType) => a.elapseTime - b.elapseTime,
+        ellipsis: true,
     },
     {
         title: 'Transit Time(ms)',
         dataIndex: 'transitTime',
         sorter: (a: DataType, b: DataType) => a.transitTime - b.transitTime,
+        ellipsis: true,
     },
     {
         title: 'Synchronization Time(ms)',
         dataIndex: 'synchronizationTime',
         sorter: (a: DataType, b: DataType) => a.synchronizationTime - b.synchronizationTime,
+        ellipsis: true,
     },
     {
         title: 'Wait Time(ms)',
         dataIndex: 'waitTime',
         sorter: (a: DataType, b: DataType) => a.waitTime - b.waitTime,
+        ellipsis: true,
     },
     {
         title: 'Synchronization Time Ratio',
         dataIndex: 'synchronizationTimeRatio',
         sorter: (a: DataType, b: DataType) => a.synchronizationTimeRatio - b.synchronizationTimeRatio,
+        ellipsis: true,
     },
     {
         title: 'Wait Time Ratio',
         dataIndex: 'waitTimeRatio',
         sorter: (a: DataType, b: DataType) => a.waitTimeRatio - b.waitTimeRatio,
+        ellipsis: true,
     },
     {
         title: 'Idle Time(ms)',
         dataIndex: 'idleTime',
         sorter: (a: DataType, b: DataType) => a.idleTime - b.idleTime,
+        ellipsis: true,
     } ];
 
 // Total HCCL Opertators表
@@ -94,7 +101,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     };
 
     const columns: TableColumnsType<DataType> = [
-        { title: 'Operator Name', dataIndex: 'operatorName', key: 'operatorName', sorter: true },
+        { title: 'Operator Name', dataIndex: 'operatorName', key: 'operatorName', sorter: true, ellipsis: true },
         ...commonColumns.map(item => {
             return { ...item, sorter: true };
         }),
@@ -118,11 +125,16 @@ const getRankColumns = (handleAction: VoidFunction[], conditions: any): any => {
             title: 'Rank ID',
             dataIndex: 'rankId',
             key: 'rankId',
+            ellipsis: true,
+            width: 70,
         },
         ...commonColumns,
         {
             title: 'Bandwidth Analysis',
             key: 'action1',
+            ellipsis: true,
+            width: 110,
+            minWidth: 100,
             render: (_: any, record: DataType) => (
                 <Button type="link"
                     onClick={() => {
@@ -132,6 +144,9 @@ const getRankColumns = (handleAction: VoidFunction[], conditions: any): any => {
         {
             title: 'Communication Operators Details',
             key: 'action2',
+            ellipsis: true,
+            width: 110,
+            minWidth: 110,
             render: (_: any, record: DataType) => (<Button type="link"
                 onClick={() => {
                     setExpandedKeys((pre: any) => {

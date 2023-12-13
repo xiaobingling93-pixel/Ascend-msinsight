@@ -3,14 +3,15 @@
  */
 .resizor{
     z-index:1000;
-}
-.ant-table-cell .resizor{
+    position: absolute;
     height: 100%;
     width: 16px;
-    cursor: col-resize;
-    position: absolute;
-    top: 0px;
     right: -8px;
+    top: 0;
+    cursor: w-resize;
+}
+.ant-table-cell .resizor{
+    cursor: col-resize;
 }
 
 th.ant-table-cell *{

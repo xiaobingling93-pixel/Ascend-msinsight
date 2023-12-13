@@ -20,7 +20,13 @@ onMounted(() => {
     
     window.addEventListener('drop', forbidDefaultEvent);
     window.addEventListener('dragover', forbidDefaultEvent);
-})
+    // 鼠标在framework滑动
+    window.addEventListener('mouseover', () => {
+      for (let i = 0; i < window.frames.length; i++) {
+        window.frames[i].postMessage(JSON.stringify({ from: 'framework', event: 'mouseover' }), '*');
+      }
+    });
+});
 
 </script>
 
