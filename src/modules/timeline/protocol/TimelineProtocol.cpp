@@ -62,9 +62,9 @@ std::unique_ptr<Request> TimelineProtocol::ToImportActionRequest(const json_t &j
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
-    if (json["params"].contains("path") && json["params"]["path"].is_array()) {
-        for (const auto &path : json["params"]["path"]) {
-            reqPtr->params.path.emplace_back(path);
+    if (json["params"].HasMember("path") && json["params"]["path"].IsArray()) {
+        for (const auto &path : json["params"]["path"].GetArray()) {
+            reqPtr->params.path.emplace_back(path.GetString());
         }
     }
     return reqPtr;
@@ -196,9 +196,9 @@ std::unique_ptr<Request> TimelineProtocol::ToRemoteDeleteRequest(const json_t &j
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
-    if (json["params"].contains("rankId") && json["params"]["rankId"].is_array()) {
-        for (const auto &id : json["params"]["rankId"]) {
-            reqPtr->params.rankId.emplace_back(id);
+    if (json["params"].HasMember("rankId") && json["params"]["rankId"].IsArray()) {
+        for (const auto &id : json["params"]["rankId"].GetArray()) {
+            reqPtr->params.rankId.emplace_back(id.GetString());
         }
     }
     return reqPtr;
@@ -247,83 +247,83 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitCounterRequest(const json_t &js
 
 #pragma region <<Response To Json>>
 
-std::optional<json_t> TimelineProtocol::ToImportActionResponseJson(const Response &response)
+std::optional<document_t> TimelineProtocol::ToImportActionResponseJson(const Response &response)
 {
     return ToResponseJson<ImportActionResponse>(dynamic_cast<const ImportActionResponse &>(response));
 }
 
-std::optional<json_t> TimelineProtocol::ToUnitThreadTracesResponseJson(const Response &response)
+std::optional<document_t> TimelineProtocol::ToUnitThreadTracesResponseJson(const Response &response)
 {
     return ToResponseJson<UnitThreadTracesResponse>(dynamic_cast<const UnitThreadTracesResponse &>(response));
 }
 
-std::optional<json_t> TimelineProtocol::ToUnitThreadsResponseJson(const Response &response)
+std::optional<document_t> TimelineProtocol::ToUnitThreadsResponseJson(const Response &response)
 {
     return ToResponseJson<UnitThreadsResponse>(dynamic_cast<const UnitThreadsResponse &>(response));
 }
 
-std::optional<json_t> TimelineProtocol::ToThreadDetailResponseJson(const Response &response)
+std::optional<document_t> TimelineProtocol::ToThreadDetailResponseJson(const Response &response)
 {
     return ToResponseJson<UnitThreadDetailResponse>(dynamic_cast<const UnitThreadDetailResponse &>(response));
 }
 
-std::optional<json_t> TimelineProtocol::ToUnitFlowNameResponseJson(const Response &response)
+std::optional<document_t> TimelineProtocol::ToUnitFlowNameResponseJson(const Response &response)
 {
     return ToResponseJson<UnitFlowNameResponse>(dynamic_cast<const UnitFlowNameResponse &>(response));
 }
 
-std::optional<json_t> TimelineProtocol::ToUnitFlowResponseJson(const Response &response)
+std::optional<document_t> TimelineProtocol::ToUnitFlowResponseJson(const Response &response)
 {
     return ToResponseJson<UnitFlowResponse>(dynamic_cast<const UnitFlowResponse &>(response));
 }
 
-std::optional<json_t> TimelineProtocol::ToResetWindowResponseJson(const Response &response)
+std::optional<document_t> TimelineProtocol::ToResetWindowResponseJson(const Response &response)
 {
     return ToResponseJson<ResetWindowResponse>(dynamic_cast<const ResetWindowResponse &>(response));
 }
 
-std::optional<json_t> TimelineProtocol::ToUnitChartResponseJson(const Response &response)
+std::optional<document_t> TimelineProtocol::ToUnitChartResponseJson(const Response &response)
 {
     return ToResponseJson<UnitChartResponse>(dynamic_cast<const UnitChartResponse &>(response));
 }
 
-std::optional<json_t> TimelineProtocol::ToSearchCountResponseJson(const Response &response)
+std::optional<document_t> TimelineProtocol::ToSearchCountResponseJson(const Response &response)
 {
     return ToResponseJson<SearchCountResponse>(dynamic_cast<const SearchCountResponse &>(response));
 }
 
-std::optional<json_t> TimelineProtocol::ToSearchSliceResponseJson(const Response &response)
+std::optional<document_t> TimelineProtocol::ToSearchSliceResponseJson(const Response &response)
 {
     return ToResponseJson<SearchSliceResponse>(dynamic_cast<const SearchSliceResponse &>(response));
 }
 
-std::optional<json_t> TimelineProtocol::ToRemoteDeleteResponseJson(const Response &response)
+std::optional<document_t> TimelineProtocol::ToRemoteDeleteResponseJson(const Response &response)
 {
     return ToResponseJson<RemoteDeleteResponse>(dynamic_cast<const RemoteDeleteResponse &>(response));
 }
 
-std::optional<json_t> TimelineProtocol::ToFlowCategoryListResponse(const Response &response)
+std::optional<document_t> TimelineProtocol::ToFlowCategoryListResponse(const Response &response)
 {
     return ToResponseJson<FlowCategoryListResponse>(dynamic_cast<const FlowCategoryListResponse &>(response));
 }
 
-std::optional<json_t> TimelineProtocol::ToFlowCategoryEventsResponse(const Response &response)
+std::optional<document_t> TimelineProtocol::ToFlowCategoryEventsResponse(const Response &response)
 {
     return ToResponseJson<FlowCategoryEventsResponse>(dynamic_cast<const FlowCategoryEventsResponse &>(response));
 }
 
-std::optional<json_t> TimelineProtocol::ToUnitCounterResponse(const Response &response)
+std::optional<document_t> TimelineProtocol::ToUnitCounterResponse(const Response &response)
 {
     return ToResponseJson<UnitCounterResponse>(dynamic_cast<const UnitCounterResponse &>(response));
 }
 #pragma endregion
 
 #pragma region <<Event To Json>>
-std::optional<json_t> TimelineProtocol::ToParseSuccessEventJson(const Event &event)
+std::optional<document_t> TimelineProtocol::ToParseSuccessEventJson(const Event &event)
 {
     return ToEventJson<ParseSuccessEvent>(dynamic_cast<const ParseSuccessEvent &>(event));
 }
-std::optional<json_t> TimelineProtocol::ToParseFailEventJson(const Event &event)
+std::optional<document_t> TimelineProtocol::ToParseFailEventJson(const Event &event)
 {
     return ToEventJson<ParseFailEvent>(dynamic_cast<const ParseFailEvent &>(event));
 }

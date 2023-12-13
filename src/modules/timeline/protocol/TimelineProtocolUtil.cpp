@@ -10,280 +10,353 @@
 namespace Dic {
 namespace Protocol {
 using namespace Dic::Server;
+using namespace rapidjson;
 #pragma region <<Response to json>>
-template <typename RESPONSE> std::optional<json_t> ToResponseJson(const RESPONSE &response)
+template <typename RESPONSE> std::optional<document_t> ToResponseJson(const RESPONSE &response)
 {
     ServerLog::Warn("ToResponseJson is not implemented. command:", response.command);
     return std::nullopt;
 }
 
-template <> std::optional<json_t> ToResponseJson<ImportActionResponse>(const ImportActionResponse &response)
+template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const ImportActionResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["isCluster"] = response.body.isCluster;
-    json["body"]["reset"] = response.body.reset;
-    json["body"]["result"] = json_t::array();
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "isCluster", response.body.isCluster, allocator);
+    JsonUtil::AddMember(body, "reset", response.body.reset, allocator);
+    json_t result(kArrayType);
     for (const Action& action : response.body.result) {
-        json_t actionJson = json_t::object();
-        actionJson["cardName"] = action.cardName;
-        actionJson["rankId"] = action.rankId;
-        actionJson["result"] = action.result;
-        json["body"]["result"].emplace_back(actionJson);
+        json_t actionJson(kObjectType);
+        JsonUtil::AddMember(actionJson, "cardName", action.cardName, allocator);
+        JsonUtil::AddMember(actionJson, "rankId", action.rankId, allocator);
+        JsonUtil::AddMember(actionJson, "result", action.result, allocator);
+        result.PushBack(actionJson, allocator);
     }
-    return json;
+    JsonUtil::AddMember(body, "result", result, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<UnitThreadTracesResponse>(const UnitThreadTracesResponse &response)
+template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(const UnitThreadTracesResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["data"] = json_t::array();
+    json_t body(kObjectType);
+    json_t data(kArrayType);
     for (const std::vector<ThreadTraces>& array : response.body.data) {
-        json_t threadTracesArray = json_t::array();
+        json_t threadTracesArray(kArrayType);
         for (const ThreadTraces& threadTraces : array) {
-            json_t threadJson = json_t::object();
-            threadJson["name"] = threadTraces.name;
-            threadJson["duration"] = threadTraces.duration;
-            threadJson["startTime"] = threadTraces.startTime;
-            threadJson["endTime"] = threadTraces.endTime;
-            threadJson["depth"] = threadTraces.depth;
-            threadJson["threadId"] = threadTraces.threadId;
-            threadTracesArray.emplace_back(threadJson);
+            json_t threadJson(kObjectType);
+            JsonUtil::AddMember(threadJson, "name", threadTraces.name, allocator);
+            JsonUtil::AddMember(threadJson, "duration", threadTraces.duration, allocator);
+            JsonUtil::AddMember(threadJson, "startTime", threadTraces.startTime, allocator);
+            JsonUtil::AddMember(threadJson, "endTime", threadTraces.endTime, allocator);
+            JsonUtil::AddMember(threadJson, "depth", threadTraces.depth, allocator);
+            JsonUtil::AddMember(threadJson, "threadId", threadTraces.threadId, allocator);
+            threadTracesArray.PushBack(threadJson, allocator);
         }
-        json["body"]["data"].emplace_back(threadTracesArray);
+        data.PushBack(threadTracesArray, allocator);
     }
-    return json;
+    JsonUtil::AddMember(body, "data", data, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<UnitThreadsResponse>(const UnitThreadsResponse &response)
+template <> std::optional<document_t> ToResponseJson<UnitThreadsResponse>(const UnitThreadsResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["emptyFlag"] = response.body.emptyFlag;
-    json["body"]["data"] = json_t::array();
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "emptyFlag", response.body.emptyFlag, allocator);
+    json_t data(kArrayType);
     for (const Threads& threads : response.body.data) {
-        json_t threadsJson;
-        threadsJson["title"] = threads.title;
-        threadsJson["wallDuration"] = threads.wallDuration;
-        threadsJson["occurrences"] = threads.occurrences;
-        threadsJson["avgWallDuration"] = threads.avgWallDuration;
-        threadsJson["selfTime"] = threads.selfTime;
-        json["body"]["data"].emplace_back(threadsJson);
+        json_t threadsJson(kObjectType);
+        JsonUtil::AddMember(threadsJson, "title", threads.title, allocator);
+        JsonUtil::AddMember(threadsJson, "wallDuration", threads.wallDuration, allocator);
+        JsonUtil::AddMember(threadsJson, "occurrences", threads.occurrences, allocator);
+        JsonUtil::AddMember(threadsJson, "avgWallDuration", threads.avgWallDuration, allocator);
+        JsonUtil::AddMember(threadsJson, "selfTime", threads.selfTime, allocator);
+        data.PushBack(threadsJson, allocator);
     }
-    return json;
+    JsonUtil::AddMember(body, "data", data, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<UnitThreadDetailResponse>(const UnitThreadDetailResponse &response)
+template <> std::optional<document_t> ToResponseJson<UnitThreadDetailResponse>(const UnitThreadDetailResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["emptyFlag"] = response.body.emptyFlag;
-    json["body"]["data"]["selfTime"] = response.body.data.selfTime;
-    json["body"]["data"]["args"] = response.body.data.args;
-    json["body"]["data"]["title"] = response.body.data.title;
-    json["body"]["data"]["duration"] = response.body.data.duration;
-    json["body"]["data"]["cat"] = response.body.data.cat;
-    return json;
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "emptyFlag", response.body.emptyFlag, allocator);
+    json_t data(kObjectType);
+    JsonUtil::AddMember(data, "selfTime", response.body.data.selfTime, allocator);
+    JsonUtil::AddMember(data, "args", response.body.data.args, allocator);
+    JsonUtil::AddMember(data, "title", response.body.data.title, allocator);
+    JsonUtil::AddMember(data, "duration", response.body.data.duration, allocator);
+    JsonUtil::AddMember(data, "cat", response.body.data.cat, allocator);
+    JsonUtil::AddMember(body, "data", data, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<UnitFlowNameResponse>(const UnitFlowNameResponse &response)
+template <> std::optional<document_t> ToResponseJson<UnitFlowNameResponse>(const UnitFlowNameResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["flowDetail"] = json_t::array();
+    json_t body(kObjectType);
+    json_t flowDetail(kArrayType);
     for (const FlowName& flowName : response.body.flowDetail) {
-        json_t flowJson = json_t::object();
-        flowJson["title"] = flowName.title;
-        flowJson["flowId"] = flowName.flowId;
-        flowJson["type"] = flowName.type;
-        json["body"]["flowDetail"].emplace_back(flowJson);
+        json_t flowJson(kObjectType);
+        JsonUtil::AddMember(flowJson, "title", flowName.title, allocator);
+        JsonUtil::AddMember(flowJson, "flowId", flowName.flowId, allocator);
+        JsonUtil::AddMember(flowJson, "type", flowName.type, allocator);
+        flowDetail.PushBack(flowJson, allocator);
     }
-    return json;
+    JsonUtil::AddMember(body, "flowDetail", flowDetail, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-json_t FlowLocationToJson(const FlowLocation& flowLocation)
+json_t FlowLocationToJson(const FlowLocation& flowLocation, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
 {
-    json_t json;
-    json["pid"] = flowLocation.pid;
-    json["tid"] = flowLocation.tid;
-    json["timestamp"] = flowLocation.timestamp;
-    json["duration"] = flowLocation.duration;
-    json["depth"] = flowLocation.depth;
-    json["name"] = flowLocation.name;
-    return json;
+    json_t json(kObjectType);
+    JsonUtil::AddMember(json, "pid", flowLocation.pid, allocator);
+    JsonUtil::AddMember(json, "tid", flowLocation.tid, allocator);
+    JsonUtil::AddMember(json, "timestamp", flowLocation.timestamp, allocator);
+    JsonUtil::AddMember(json, "duration", flowLocation.duration, allocator);
+    JsonUtil::AddMember(json, "depth", flowLocation.depth, allocator);
+    JsonUtil::AddMember(json, "name", flowLocation.name, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<UnitFlowResponse>(const UnitFlowResponse &response)
+template <> std::optional<document_t> ToResponseJson<UnitFlowResponse>(const UnitFlowResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["title"] = response.body.title;
-    json["body"]["cat"] = response.body.cat;
-    json["body"]["id"] = response.body.id;
-    json["body"]["from"] = FlowLocationToJson(response.body.from);
-    json["body"]["to"] = FlowLocationToJson(response.body.to);
-    return json;
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "title", response.body.title, allocator);
+    JsonUtil::AddMember(body, "cat", response.body.cat, allocator);
+    JsonUtil::AddMember(body, "id", response.body.id, allocator);
+    JsonUtil::AddMember(body, "from", FlowLocationToJson(response.body.from, allocator), allocator);
+    JsonUtil::AddMember(body, "to", FlowLocationToJson(response.body.to, allocator), allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<ResetWindowResponse>(const ResetWindowResponse &response)
+template <> std::optional<document_t> ToResponseJson<ResetWindowResponse>(const ResetWindowResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    return json;
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<UnitChartResponse>(const UnitChartResponse &response)
+template <> std::optional<document_t> ToResponseJson<UnitChartResponse>(const UnitChartResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["data"] = json_t::array();
+    json_t body(kObjectType);
+    json_t data(kArrayType);
     for (const Chart& chart: response.body.data) {
-        json_t chartJson = json_t::object();
-        chartJson["ts"] = chart.ts;
-        chartJson["value"] = chart.value;
-        json["body"]["data"].emplace_back(chartJson);
+        json_t chartJson(kObjectType);
+        JsonUtil::AddMember(chartJson, "ts", chart.ts, allocator);
+        JsonUtil::AddMember(chartJson, "value", chart.value, allocator);
+        data.PushBack(chartJson, allocator);
     }
-    return json;
+    JsonUtil::AddMember(body, "data", data, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<SearchCountResponse>(const SearchCountResponse &response)
+template <> std::optional<document_t> ToResponseJson<SearchCountResponse>(const SearchCountResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["totalCount"] = response.body.totalCount;
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "totalCount", response.body.totalCount, allocator);
+    json_t countList(kArrayType);
     for (const auto &data : response.body.countList) {
-        json_t tmp;
-        tmp["rankId"] = data.rankId;
-        tmp["count"] = data.count;
-        json["body"]["countList"].emplace_back(tmp);
+        json_t tmp(kObjectType);
+        JsonUtil::AddMember(tmp, "rankId", data.rankId, allocator);
+        JsonUtil::AddMember(tmp, "count", data.count, allocator);
+        countList.PushBack(tmp, allocator);
     }
-    return json;
+    JsonUtil::AddMember(body, "countList", countList, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<SearchSliceResponse>(const SearchSliceResponse &response)
+template <> std::optional<document_t> ToResponseJson<SearchSliceResponse>(const SearchSliceResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["rankId"] = response.body.rankId;
-    json["body"]["pid"] = response.body.pid;
-    json["body"]["tid"] = response.body.tid;
-    json["body"]["startTime"] = response.body.startTime;
-    json["body"]["duration"] = response.body.duration;
-    json["body"]["depth"] = response.body.depth;
-    return json;
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "rankId", response.body.rankId, allocator);
+    JsonUtil::AddMember(body, "pid", response.body.pid, allocator);
+    JsonUtil::AddMember(body, "tid", response.body.tid, allocator);
+    JsonUtil::AddMember(body, "startTime", response.body.startTime, allocator);
+    JsonUtil::AddMember(body, "duration", response.body.duration, allocator);
+    JsonUtil::AddMember(body, "depth", response.body.depth, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<RemoteDeleteResponse>(const RemoteDeleteResponse &response)
+template <> std::optional<document_t> ToResponseJson<RemoteDeleteResponse>(const RemoteDeleteResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["startTimeUpdated"] = response.body.startTimeUpdated;
-    json["body"]["maxTimeStamp"] = response.body.maxTimeStamp;
-    return json;
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "startTimeUpdated", response.body.startTimeUpdated, allocator);
+    JsonUtil::AddMember(body, "maxTimeStamp", response.body.maxTimeStamp, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<FlowCategoryListResponse>(const FlowCategoryListResponse &response)
+template <> std::optional<document_t> ToResponseJson<FlowCategoryListResponse>(const FlowCategoryListResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["category"] = json_t::array();
-    for (const std::string &category : response.body.category) {
-        json["body"]["category"].emplace_back(category);
+    json_t body(kObjectType);
+    json_t category(kArrayType);
+    for (const std::string &cat : response.body.category) {
+        category.PushBack(json_t().SetString(cat.c_str(), allocator), allocator);
     }
-    return json;
+    JsonUtil::AddMember(body, "category", category, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-json_t FlowEventLocationToJson(const FlowEventLocation& flowLocation)
+json_t FlowEventLocationToJson(const FlowEventLocation& flowLocation, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
 {
-    json_t json;
-    json["pid"] = flowLocation.pid;
-    json["tid"] = flowLocation.tid;
-    json["timestamp"] = flowLocation.timestamp;
-    json["depth"] = flowLocation.depth;
-    return json;
+    json_t json(kObjectType);
+    JsonUtil::AddMember(json, "pid", flowLocation.pid, allocator);
+    JsonUtil::AddMember(json, "tid", flowLocation.tid, allocator);
+    JsonUtil::AddMember(json, "timestamp", flowLocation.timestamp, allocator);
+    JsonUtil::AddMember(json, "depth", flowLocation.depth, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<FlowCategoryEventsResponse>(const FlowCategoryEventsResponse &response)
+template <>
+std::optional<document_t> ToResponseJson<FlowCategoryEventsResponse>(const FlowCategoryEventsResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["flowDetailList"] = json_t::array();
+    json_t body(kObjectType);
+    json_t flowDetailList(kArrayType);
     for (const auto &flowDetail : response.body.flowDetailList) {
-        json_t flowDetailJson = json_t::object();
-        flowDetailJson["category"] = flowDetail->category;
-        flowDetailJson["from"] = FlowEventLocationToJson(flowDetail->from);
-        flowDetailJson["to"] = FlowEventLocationToJson(flowDetail->to);
-        json["body"]["flowDetailList"].emplace_back(flowDetailJson);
+        json_t flowDetailJson(kObjectType);
+        JsonUtil::AddMember(flowDetailJson, "category", flowDetail->category, allocator);
+        JsonUtil::AddMember(flowDetailJson, "from", FlowEventLocationToJson(flowDetail->from, allocator), allocator);
+        JsonUtil::AddMember(flowDetailJson, "to", FlowEventLocationToJson(flowDetail->to, allocator), allocator);
+        flowDetailList.PushBack(flowDetailJson, allocator);
     }
-    return json;
+    JsonUtil::AddMember(body, "flowDetailList", flowDetailList, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<UnitCounterResponse>(const UnitCounterResponse &response)
+template <> std::optional<document_t> ToResponseJson<UnitCounterResponse>(const UnitCounterResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["data"] = json_t::array();
-    for (const auto &data : response.body.data) {
-        json_t tmp;
-        tmp["timestamp"] = data.timestamp;
-        try {
-            tmp["value"] = json_t::parse(data.valueJsonStr);
-        } catch (std::exception &e) {
-            ServerLog::Warn("Failed to parse unit counter value. ", data.valueJsonStr, ", ", e.what());
+    json_t body(kObjectType);
+    json_t data(kArrayType);
+    std::string error;
+    for (const auto &counterData : response.body.data) {
+        json_t tmp(kObjectType);
+        JsonUtil::AddMember(tmp, "timestamp", counterData.timestamp, allocator);
+        auto value = JsonUtil::TryParse(counterData.valueJsonStr, error);
+        if (value.has_value()) {
+            JsonUtil::AddMember(tmp, "value", value.value(), allocator);
+        } else {
+            ServerLog::Warn("Failed to parse unit counter value. ", error);
         }
-        json["body"]["data"].emplace_back(tmp);
+        data.PushBack(tmp, allocator);
     }
-    return json;
+    JsonUtil::AddMember(body, "data", data, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 #pragma endregion
 
 #pragma region <<Event to json>>
-template <typename EVENT> std::optional<json_t> ToEventJson(const EVENT &event)
+template <typename EVENT> std::optional<document_t> ToEventJson(const EVENT &event)
 {
     return std::nullopt;
 }
 
-json_t UnitTrackToJson(const UnitTrack &unitTrack)
+json_t UnitTrackToJson(const UnitTrack &unitTrack, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
 {
-    json_t json;
-    json["type"] = unitTrack.type;
-    json["metadata"]["cardId"] = unitTrack.metaData.cardId;
-    json["metadata"]["processId"] = unitTrack.metaData.processId;
-    json["metadata"]["processName"] = unitTrack.metaData.processName;
-    json["metadata"]["label"] = unitTrack.metaData.label;
-    json["metadata"]["threadId"] = unitTrack.metaData.threadId;
-    json["metadata"]["threadName"] = unitTrack.metaData.threadName;
-    json["metadata"]["maxDepth"] = unitTrack.metaData.maxDepth;
-    for (const auto &dataType : unitTrack.metaData.dataType) {
-        json["metadata"]["dataType"].emplace_back(dataType);
+    json_t json(kObjectType);
+    JsonUtil::AddMember(json, "type", unitTrack.type, allocator);
+    json_t metadata(kObjectType);
+    JsonUtil::AddMember(metadata, "cardId", unitTrack.metaData.cardId, allocator);
+    JsonUtil::AddMember(metadata, "processId", unitTrack.metaData.processId, allocator);
+    JsonUtil::AddMember(metadata, "processName", unitTrack.metaData.processName, allocator);
+    JsonUtil::AddMember(metadata, "label", unitTrack.metaData.label, allocator);
+    JsonUtil::AddMember(metadata, "threadId", unitTrack.metaData.threadId, allocator);
+    JsonUtil::AddMember(metadata, "threadName", unitTrack.metaData.threadName, allocator);
+    JsonUtil::AddMember(metadata, "maxDepth", unitTrack.metaData.maxDepth, allocator);
+    json_t dataType(kArrayType);
+    for (const auto &type : unitTrack.metaData.dataType) {
+        dataType.PushBack(json_t().SetString(type.c_str(), type.length(), allocator), allocator);
     }
+    JsonUtil::AddMember(metadata, "dataType", dataType, allocator);
+    json_t children(kArrayType);
     for (const auto &track : unitTrack.children) {
-        json["children"].emplace_back(UnitTrackToJson(*track));
+        children.PushBack(UnitTrackToJson(*track, allocator), allocator);
     }
-    return json;
+    JsonUtil::AddMember(json, "children", children, allocator);
+    JsonUtil::AddMember(json, "metadata", metadata, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToEventJson<ParseSuccessEvent>(const ParseSuccessEvent &event)
+template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const ParseSuccessEvent &event)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
-    json["body"]["maxTimeStamp"] = event.body.maxTimeStamp;
-    json["body"]["startTimeUpdated"] = event.body.startTimeUpdated;
-    json["body"]["unit"]["type"] = event.body.unit.type;
-    json["body"]["unit"]["metadata"]["cardId"] = event.body.unit.metadata.cardId;
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "maxTimeStamp", event.body.maxTimeStamp, allocator);
+    JsonUtil::AddMember(body, "startTimeUpdated", event.body.startTimeUpdated, allocator);
+    json_t unit(kObjectType);
+    JsonUtil::AddMember(unit, "type", event.body.unit.type, allocator);
+    json_t metadata(kObjectType);
+    JsonUtil::AddMember(metadata, "cardId", event.body.unit.metadata.cardId, allocator);
+    JsonUtil::AddMember(unit, "metadata", metadata, allocator);
+    json_t children(kArrayType);
     for (const auto &track : event.body.unit.children) {
-        json["body"]["unit"]["children"].emplace_back(UnitTrackToJson(*track));
+        children.PushBack(UnitTrackToJson(*track, allocator), allocator);
     }
-    return json;
+    JsonUtil::AddMember(unit, "children", children, allocator);
+    JsonUtil::AddMember(body, "unit", unit, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToEventJson<ParseFailEvent>(const ParseFailEvent &event)
+template <> std::optional<document_t> ToEventJson<ParseFailEvent>(const ParseFailEvent &event)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
-    json["body"]["rankId"] = event.body.rankId;
-    return json;
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "rankId", event.body.rankId, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 #pragma endregion
 } // end of namespace Protocol

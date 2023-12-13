@@ -25,25 +25,22 @@ public:
     void UnRegister();
 
     std::unique_ptr<Request> FromJson(const json_t &requestJson, std::string &error);
-    std::optional<json_t> ToJson(const Response &response, std::string &error);
-    std::optional<json_t> ToJson(const Event &event, std::string &error);
+    std::optional<document_t> ToJson(const Response &response, std::string &error);
+    std::optional<document_t> ToJson(const Event &event, std::string &error);
 
     // set base info
     // request
-    static void SetRequestJsonBaseInfo(const Request &request, json_t &json);
     static bool SetRequestBaseInfo(Request &request, const json_t &json);
     // response
-    static void SetResponseJsonBaseInfo(const Response &response, json_t &json);
-    static bool SetResponseBaseInfo(Response &response, const json_t &json);
+    static void SetResponseJsonBaseInfo(const Response &response, document_t &json);
     // event
-    static void SetEventJsonBaseInfo(const Event &event, json_t &json);
-    static bool SetEventBaseInfo(Event &event, const json_t &json);
+    static void SetEventJsonBaseInfo(const Event &event, document_t &json);
 
 protected:
     std::mutex mutex;
     using JsonToRequestFunc = std::function<std::unique_ptr<Request>(const json_t &, std::string &error)>;
-    using ResponseToJsonFunc = std::function<std::optional<json_t>(const Response &)>;
-    using EventToJsonFunc = std::function<std::optional<json_t>(const Event &)>;
+    using ResponseToJsonFunc = std::function<std::optional<document_t>(const Response &)>;
+    using EventToJsonFunc = std::function<std::optional<document_t>(const Event &)>;
     std::map<std::string, JsonToRequestFunc> jsonToReqFactory;
     std::map<std::string, ResponseToJsonFunc> resToJsonFactory;
     std::map<std::string, EventToJsonFunc> eventToJsonFactory;

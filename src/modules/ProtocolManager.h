@@ -27,8 +27,8 @@ public:
     }
 
     std::unique_ptr<Request> FromJson(const std::string &requestStr, std::string &error);
-    std::optional<json_t> ToJson(const Response &response, std::string &error);
-    std::optional<json_t> ToJson(const Event &event, std::string &error);
+    std::optional<document_t> ToJson(const Response &response, std::string &error);
+    std::optional<document_t> ToJson(const Event &event, std::string &error);
 
 private:
     ProtocolManager();

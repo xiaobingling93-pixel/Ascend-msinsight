@@ -10,75 +10,97 @@
 namespace Dic {
 namespace Protocol {
 using namespace Dic::Server;
+using namespace rapidjson;
 #pragma region <<Response to json>>
-template <typename RESPONSE> std::optional<json_t> ToResponseJson(const RESPONSE &response)
+template <typename RESPONSE> std::optional<document_t> ToResponseJson(const RESPONSE &response)
 {
     ServerLog::Warn("ToResponseJson is not implemented. command:", response.command);
     return std::nullopt;
 }
 
-template <> std::optional<json_t> ToResponseJson<TokenCreateResponse>(const TokenCreateResponse &response)
+template <> std::optional<document_t> ToResponseJson<TokenCreateResponse>(const TokenCreateResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["createTime"] = response.body.createTime;
+    auto &allocator = json.GetAllocator();
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "createTime", response.body.createTime, allocator);
+    JsonUtil::AddMember(body, "token", response.token, allocator);
     if (response.body.parentToken.has_value() && !response.body.parentToken.value().empty()) {
-        json["body"]["parentToken"] = response.body.parentToken.value();
+        JsonUtil::AddMember(body, "parentToken", response.body.parentToken.value(), allocator);
     }
-    return json;
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<TokenDestroyResponse>(const TokenDestroyResponse &response)
+template <> std::optional<document_t> ToResponseJson<TokenDestroyResponse>(const TokenDestroyResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["destroyTime"] = response.body.destroyTime;
-    json["body"]["destroyToken"] = response.body.destroyToken;
-    return json;
+    auto &allocator = json.GetAllocator();
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "destroyTime", response.body.destroyTime, allocator);
+    JsonUtil::AddMember(body, "destroyToken", response.body.destroyToken, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<TokenCheckResponse>(const TokenCheckResponse &response)
+template <> std::optional<document_t> ToResponseJson<TokenCheckResponse>(const TokenCheckResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["checkedToken"] = response.body.checkedToken;
-    json["body"]["deadTime"] = response.body.deadTime;
-    json["body"]["createTime"] = response.body.createTime;
-    return json;
+    auto &allocator = json.GetAllocator();
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "checkedToken", response.body.checkedToken, allocator);
+    JsonUtil::AddMember(body, "deadTime", response.body.deadTime, allocator);
+    JsonUtil::AddMember(body, "createTime", response.body.createTime, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-json_t FolderToJson(const std::unique_ptr<Folder> &folder)
+json_t FolderToJson(const std::unique_ptr<Folder> &folder, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
 {
-    json_t json;
-    json["name"] = folder->name;
-    json["path"] = folder->path;
+    json_t json(kObjectType);
+    JsonUtil::AddMember(json, "name", folder->name, allocator);
+    JsonUtil::AddMember(json, "path", folder->path, allocator);
+    json_t childrenFiles(kArrayType);
     for (const auto &file : folder->childrenFiles) {
-        json_t jFile;
-        jFile["path"] = file->path;
-        jFile["name"] = file->name;
-        json["childrenFiles"].emplace_back(jFile);
+        json_t jFile(kObjectType);
+        JsonUtil::AddMember(jFile, "path", file->path, allocator);
+        JsonUtil::AddMember(jFile, "name", file->name, allocator);
+        childrenFiles.PushBack(jFile, allocator);
     }
+    JsonUtil::AddMember(json, "childrenFiles", childrenFiles, allocator);
+    json_t childrenFolders(kArrayType);
     for (const auto &childrenFolder : folder->childrenFolders) {
-        json["childrenFolders"].emplace_back(FolderToJson(childrenFolder));
+        childrenFolders.PushBack(FolderToJson(childrenFolder, allocator), allocator);
     }
-    return json;
+    JsonUtil::AddMember(json, "childrenFolders", childrenFolders, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<FilesGetResponse>(const FilesGetResponse &response)
+template <> std::optional<document_t> ToResponseJson<FilesGetResponse>(const FilesGetResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    json_t body(kObjectType);
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["path"] = response.body.path;
+    auto &allocator = json.GetAllocator();
+    JsonUtil::AddMember(body, "path", response.body.path, allocator);
+    json_t childrenFiles(kArrayType);
     for (const auto &file : response.body.childrenFiles) {
-        json_t jFile;
-        jFile["path"] = file->path;
-        jFile["name"] = file->name;
-        json["body"]["childrenFiles"].emplace_back(jFile);
+        json_t jFile(kObjectType);
+        JsonUtil::AddMember(jFile, "path", file->path, allocator);
+        JsonUtil::AddMember(jFile, "name", file->name, allocator);
+        childrenFiles.PushBack(jFile, allocator);
     }
+    JsonUtil::AddMember(body, "childrenFiles", childrenFiles, allocator);
+    json_t childrenFolders(kArrayType);
     for (const auto &folder : response.body.childrenFolders) {
-        json["body"]["childrenFolders"].emplace_back(FolderToJson(folder));
+        childrenFolders.PushBack(FolderToJson(folder, allocator), allocator);
     }
-    return json;
+    JsonUtil::AddMember(body, "childrenFolders", childrenFolders, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 #pragma endregion
 
