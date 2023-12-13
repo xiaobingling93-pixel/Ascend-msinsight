@@ -1,4 +1,4 @@
-import { type Page,type Frame } from '@playwright/test'
+import { type Page, type Frame } from '@playwright/test'
 
 export async function selectFolder({ page, path }: { page: Page;path?: string}) {
     await page.locator('.el-aside > .header > .icon-button').click();
@@ -10,14 +10,14 @@ export async function selectFolder({ page, path }: { page: Page;path?: string}) 
         const curPath = list.slice(0, i + 1).join('');
         const nextPath = list.slice(0, i + 2).join('');
         const node = await page.locator('.custom-tree-node').locator(`span[name=${nextPath}]`).count();
-        if(node === 0 || curPath === nextPath){
+        if (node === 0 || curPath === nextPath) {
             await page.locator('.custom-tree-node').locator(`span[name=${curPath}]`).click();
         }
     }
     await page.getByText('Confirm').click();
 }
 
-export async function clickSelect({ locator, cur, target }: { locator: Page|Frame;cur: string;target:string;}) {
-    await locator.locator('.ant-select-selector')?.getByText(cur,{exact:true})?.click();
-    await locator.locator('.ant-select-item.ant-select-item-option')?.getByText(target,{exact:true})?.click();
+export async function clickSelect({ locator, cur, target }: { locator: Page | Frame; cur: string; target: string; }) {
+    await locator.locator('.ant-select-selector')?.getByText(cur, { exact: true })?.click();
+    await locator.locator('.ant-select-item.ant-select-item-option')?.getByText(target, { exact: true })?.click();
 }

@@ -29,7 +29,7 @@ const config: PlaywrightTestConfig = {
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['html'],
-    ['json', {  outputFile: 'playwright-report/test-results.json' }]
+    ['.\\tests\\customReporter.ts']
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -65,7 +65,12 @@ const config: PlaywrightTestConfig = {
   webServer: [
     {
       // 需要先将server编译出来放到指定位置
-      command: "..\\serverBuild\\server\\profiler_server.exe --wsPort=9000",
+      command: "..\\serverBuild\\profiler_server.exe --wsPort=9000",
+      reuseExistingServer: !process.env.CI
+    },
+    {
+      // 需要先将server编译出来放到指定位置
+      command: "..\\serverBuild\\profiler_server.exe --wsPort=9003",
       reuseExistingServer: !process.env.CI
     },
     {
