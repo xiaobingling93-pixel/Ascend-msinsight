@@ -586,7 +586,7 @@ test.describe('timeline',() => {
         // 按card过滤,过滤出3号卡
         await timelineFrameLocator.getByText('Card Filter').click();
         await timelineFrameLocator.locator('input.ant-input').nth(1).click();
-        await timelineFrameLocator.getByTitle('3').getByText('3').click();
+        await timelineFrameLocator.getByTitle('3').getByText('3').nth(1).click();
         await waiting(800);
         await compare2Snapshot('timelineToolbarFilterCardNumber3.png');
 
