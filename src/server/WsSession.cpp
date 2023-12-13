@@ -259,7 +259,6 @@ void WsSession::SendResponse(const Protocol::Response &response)
         return;
     }
     std::string responseStr = JsonUtil::JsonDump(json.value());
-    ServerLog::Info("send:", responseStr);
     std::string responseHeader = GetMessageHeader(responseStr.length());
     // send header + response
     loop->defer([this, responseHeader, responseStr]() {

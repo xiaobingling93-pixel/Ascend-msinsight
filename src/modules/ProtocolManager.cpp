@@ -42,7 +42,6 @@ void ProtocolManager::UnRegister()
 
 std::unique_ptr<Request> ProtocolManager::FromJson(const std::string &requestStr, std::string &error)
 {
-    ServerLog::Info("recv:", requestStr);
     auto requestJson = JsonUtil::TryParse(requestStr, error);
     if (!requestJson.has_value()) {
         ServerLog::Warn("Failed to parse request json. ", requestStr);
