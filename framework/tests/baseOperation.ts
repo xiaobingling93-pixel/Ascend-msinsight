@@ -1,10 +1,10 @@
 import { type Page,type Frame } from '@playwright/test'
 
-// 文件路径里面不能有点
 export async function selectFolder({ page, path }: { page: Page;path?: string}) {
     await page.locator('.el-aside > .header > .icon-button').click();
     let newPath = path ?? 'D:\\GUI_Windows\\AscendInsight-GUI_Windows\\test_data\\16ka_gpt3';
     newPath = newPath.replace(/:/g, '');
+    newPath = newPath.replace(/\./g, '--dot--');
     const list = newPath.split('\\');
     for (let i = 0; i < list.length; i++) {
         const curPath = list.slice(0, i + 1).join('');
