@@ -144,7 +144,8 @@ def main():
     elif os_info.find('mac') > -1:
         os_name = 'darwin'
     build_vscode(vscode_version, os_name)
-    build_intellij(idea_version, os_name)
+    if platform.system() != 'Darwin':
+        build_intellij(idea_version, os_name)
     build_light_package(idea_version, os_name)
 
 

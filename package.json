@@ -9,7 +9,7 @@
         "buildWin": "npm run buildServerWin && npm run copyServerWin && npm run buildModulesWin &&npm run buildFrameWorkWin && npm run buildExtensionWin",
         "buildLinuxX64": "npm run buildServerLinux && npm run copyServerLinux && npm run buildModulesLinux && npm run buildFrameWorkLinux && npm run buildExtensionLinux",
         "buildLinuxArm": "npm run buildServerLinux && npm run copyServerLinux && npm run buildModulesLinux && npm run buildFrameWorkLinux && npm run buildExtensionLinux",
-        "buildLinuxDarwin": "npm run buildServerLinux && npm run copyServerDarwin && npm run buildModulesLinux && npm run buildFrameWorkLinux && npm run buildExtensionLinux",
+        "buildLinuxDarwin": "npm run buildServerLinux && npm run copyServerDarwin && npm run buildModulesLinux && npm run buildFrameWorkLinux",
         "buildServerWin": "cd .\\server\\build && python preprocess_third_party.py && python build.py build --release",
         "buildServerLinux": "export PATH=$HOME/.local/bin:$PATH && cd ./server/build && python3 preprocess_third_party.py && python3 build.py build --release",
         "copyServerWin": "xcopy .\\server\\output\\win_mingw64\\bin .\\serverBuild\\server\\ /E /I /Y",
