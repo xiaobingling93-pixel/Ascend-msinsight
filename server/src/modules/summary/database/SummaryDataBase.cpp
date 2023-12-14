@@ -217,14 +217,14 @@ std::string SummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request
     }
     std::string sql = "";
     if (orderList.size() == 0) {
-        sql = "SELECT name, op_type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, "
+        sql = "SELECT name, op_type　as type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, "
               "duration, wait_time as waitTime, block_dim as blockDim, "
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
               "FROM " + kernelTable +
               " WHERE accelerator_core = ?  LIMIT ? offset ?";
     } else {
-        sql = "SELECT name, op_type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, duration, "
+        sql = "SELECT name, op_type as type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, duration, "
               "wait_time as waitTime, block_dim as blockDim, "
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
@@ -264,11 +264,11 @@ std::string SummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams requ
     }
     std::string sql = "";
     if (order.size() == 0) {
-        sql = "SELECT name, op_type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, "
+        sql = "SELECT name, op_type as type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, "
               "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + kernelTable +
               " WHERE accelerator_core = ?  LIMIT ? offset ?";
     } else {
-        sql = "SELECT name, op_type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, "
+        sql = "SELECT name, op_type as type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, "
               "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + kernelTable +
               " WHERE accelerator_core = ?  ORDER BY " + order + " " + ascend + " LIMIT ? offset ?";
     }
