@@ -217,7 +217,7 @@ std::string SummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request
     }
     std::string sql = "";
     if (orderList.size() == 0) {
-        sql = "SELECT name, op_type　as type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, "
+        sql = "SELECT name, op_type as type, ROUND((start_time - ?) / (1000.0 * 1000.0), 4) as startTime, "
               "duration, wait_time as waitTime, block_dim as blockDim, "
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
