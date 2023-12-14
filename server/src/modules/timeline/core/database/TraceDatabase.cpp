@@ -795,14 +795,14 @@ bool TraceDatabase::QueryUnitsMetadata(const std::string &fileId,
                       " SELECT p.pid, p.process_name, p.label, p.process_sort_index, t.tid, t.thread_name,"
                       " t.track_id, t.thread_sort_index, c.name, c.args"
                       " FROM " + processTable + " p LEFT JOIN " + threadTable + " t ON p.pid = t.pid" +
-                      " LEFT JOIN (SELECT pid, name, args FROM " + counterTable + " GROUP BY name) c ON c.pid = p.pid"
-                      " and (c.name=t.thread_name OR c.name=p.process_name)) AS pt "
+                      " LEFT JOIN (SELECT pid, name, args FROM " + counterTable + " GROUP BY name, pid) c "
+                      " ON c.pid = p.pid) AS pt "
                       " LEFT JOIN ("
                       " SELECT max( depth ) + 1 AS maxDepth, track_id"
                       " FROM " + sliceTable + " INNER JOIN thread USING (track_id) GROUP BY track_id"
                       " ) AS s ON s.track_id = pt.track_id"
                       " WHERE pt.process_name is not null AND (maxDepth is not null OR pt.tid is null"
-                      " OR pt.name is not null)"
+                      " OR pt.name == pt.process_name OR pt.name == pt.thread_name)"
                       " ORDER BY pt.process_sort_index ASC, pt.thread_sort_index ASC, pt.name ASC;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
