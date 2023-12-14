@@ -134,7 +134,8 @@ async function wrapBandwidthData(domId: string, iterationId: number,
     const packetSizeData: number[] = [];
     const packetNumberData: number[] = [];
     const packetBandwidthData: number[] = [];
-    if (distributionData === '{}' || distributionData === null || distributionData === undefined) {
+    if (distributionData === '{}' || distributionData === null ||
+        distributionData === undefined || distributionData === 'null') {
         return null;
     }
     const distributionDataJson: Distribution = JSON.parse(distributionData);

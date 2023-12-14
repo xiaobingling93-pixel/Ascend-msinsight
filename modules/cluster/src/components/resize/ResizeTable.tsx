@@ -25,12 +25,10 @@ const ResizableTitle = (
 // eslint-disable-next-line max-lines-per-function
 const ResizeTable = (props: {variableTotalWidth?: boolean;[prop: string]: any}): JSX.Element => {
     const { columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, ...restProps } = props;
-    const [ columns, setColumns ] = useState<any[]>([]);
-
+    const [ columns, setColumns ] = useState<any[]>(propColumns ?? []);
     useEffect(() => {
-        const newColumns = [...props.columns].map((item: any, index: number) => ({ ...item }));
-        setColumns(newColumns);
-    }, [props.columns]);
+        setColumns(propColumns ?? []);
+    }, [JSON.stringify(propColumns)]);
 
     const mergeColumns = columns.map((col, index) => ({
         ...col,
