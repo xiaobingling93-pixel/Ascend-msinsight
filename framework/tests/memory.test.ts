@@ -173,8 +173,8 @@ test.describe('memory', () => {
       await expect(page).toHaveScreenshot('memoryTablePage30.png');
       // 每页显示20条
       await clickSelect({ locator: frame, cur: '10 / page', target: '20 / page' });
+      await frame.locator('th').filter({ hasText: 'Name' }).hover(); 
       await page.mouse.wheel(0, 400);
-      await page.waitForTimeout(1000);
       await expect(page).toHaveScreenshot('memoryTablePageSize20.png', { fullPage: true });
       // 重置初始状态
       await clickSelect({ locator: frame, cur: '20 / page', target: '10 / page' });

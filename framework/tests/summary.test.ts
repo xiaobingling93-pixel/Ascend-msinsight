@@ -8,6 +8,7 @@ test.describe('summary',() => {
 		await page.goto(baseURL + '?port=9001');
 		await selectFolder({ page, path:'D:\\GUI_Windows\\AscendInsight-GUI_Windows\\test_data\\16ka_gpt3' });
 		await page.waitForTimeout(20000);
+		await page.getByText('Summary').click();
 	});
 
 	test.afterAll(async () => {
@@ -15,7 +16,6 @@ test.describe('summary',() => {
 	});
 	
 	test('testImportClusterData', async () => {
-		await page.getByText('Summary').click();
 		await page.waitForTimeout(5000);
 		await expect(await page.screenshot({ fullPage: true })).toMatchSnapshot('clusterData.png', { maxDiffPixels: 800 });
 	})
@@ -80,7 +80,7 @@ test.describe('summary',() => {
 
 	test('testSelectAICOREDetails', async () => {
 		const frame = page.frame({ url: /.summary.*/ });
-		await frame.getByRole('row', { name: 'AI_CORE 35016 details down' }).getByRole('button').click();
+		await frame.getByRole('row', { name: 'AI_CORE 35221 details down' }).getByRole('button').click();
 		// 滚动到最下方
 		await frame.locator('#root').click();
 		await page.mouse.wheel(0, 10000);

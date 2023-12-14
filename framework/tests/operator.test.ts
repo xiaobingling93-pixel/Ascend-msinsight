@@ -15,7 +15,7 @@ test.describe('operator',() => {
     // 1.导入Pytorch单卡数据
     test('testImportPytorchSingleCardData', async () => {
         await selectFolder({ page,
-            path:'D:\\GUI_Windows\\AscendInsight-GUI_Windows\\test_data\\16ka_gpt3\\master47_1993653_20230919172551_ascend_pt' });
+            path:'D:\\GUI_Windows\\AscendInsight-GUI_Windows\\test_data\\16ka_gpt3_4\\master47_1993653_20230919172551_ascend_pt' });
         await page.waitForTimeout(10000);
         await expect(page).toHaveScreenshot('pytorchSingleCardData.png', { maxDiffPixels: 800 });
     });
@@ -27,7 +27,7 @@ test.describe('operator',() => {
         await page.getByRole('button', { name: 'Confirm' }).click();
         await page.waitForTimeout(1000);
         await selectFolder({ page,
-            path:'D:\\GUI_Windows\\AscendInsight-GUI_Windows\\test_data\\16ka_gpt3\\master47_1993649_20230919172551_ascend_pt\\PROF_000001_20230919172552034_IHHJIQFFNNKCDNFA' });
+            path:'D:\\GUI_Windows\\AscendInsight-GUI_Windows\\test_data\\16ka_gpt3_4\\master47_1993649_20230919172551_ascend_pt\\PROF_000001_20230919172552034_IHHJIQFFNNKCDNFA' });
         await page.waitForTimeout(1000);
         await expect(page).toHaveScreenshot('inferenceSingleCardData.png', { maxDiffPixels: 800 });
     });
@@ -35,7 +35,7 @@ test.describe('operator',() => {
     // 3.导入推理多卡数据
     test('testImportInferenceMultiCardData', async () => {
         await selectFolder({ page,
-            path:'D:\\GUI_Windows\\AscendInsight-GUI_Windows\\test_data\\16ka_gpt3\\master47_1993649_20230919172551_ascend_pt\\PROF_000001_20230919172552034_IHHJIQFFNNKCDNFA' });
+            path:'D:\\GUI_Windows\\AscendInsight-GUI_Windows\\test_data\\16ka_gpt3_4\\master47_1993649_20230919172551_ascend_pt\\PROF_000001_20230919172552034_IHHJIQFFNNKCDNFA' });
         await page.waitForTimeout(1000);
         await expect(page).toHaveScreenshot('inferenceMultiCardData.png', { maxDiffPixels: 800 });
     });

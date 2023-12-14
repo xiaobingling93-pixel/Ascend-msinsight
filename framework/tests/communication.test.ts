@@ -24,7 +24,7 @@ test.describe('comminucation', () => {
         await selectFolder({ page, path: DATA_PATH });
         await page.waitForTimeout(5000);
         await page.getByText('Communication')?.click();
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(5000);
         await expect(page).toHaveScreenshot('communication.png', { maxDiffPixels: 800 });
     });
 
