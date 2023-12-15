@@ -34,7 +34,7 @@ const Resizor = (props: any): JSX.Element => {
             // 如果页面中有iframe
             if (window.document.querySelectorAll('iframe').length !== 0) {
                 window.document.querySelectorAll('iframe').forEach((item: any) => {
-                    item.style['pointer-events'] = 'auto';
+                    item.style['pointer-events'] = 'none';
                 });
             }
         }

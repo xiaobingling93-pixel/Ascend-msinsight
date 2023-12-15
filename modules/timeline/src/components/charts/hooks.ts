@@ -13,6 +13,7 @@ export type Pos = {
 
 export type DataProcessor<T extends ChartType> = (data: ChartData<T>, width: number, domainStart: number, domainEnd: number) => ChartData<T>;
 
+const timeoutMap: any = {};
 /**
  * Manages the data that are to be rendered as a state.
  *
@@ -34,8 +35,13 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
             return;
         }
         requestedWidth.current = width;
+        const id = JSON.stringify(unit.metadata);
+        if (timeoutMap[id] as boolean) {
+            clearTimeout(timeoutMap[id]);
+        }
         const loading = setTimeout(() => { runInAction(() => { unit.phase = 'loading'; }); }, 300);
         loadingRef.current = loading;
+        timeoutMap[id] = loading;
         mapFunc(session, metadata).then(datas => {
             if (requestedWidth.current !== width) {
                 // drop the data if width has been changed since when request was made
@@ -49,6 +55,7 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
             if (loadingRef.current !== loading) { return; }
             clearTimeout(loading);
             runInAction(() => { unit.phase = 'download'; });
+            timeoutMap[id] = null;
         });
     }, [ session.phase, domainStart, domainEnd, endTimeAll, width, session.unitsConfig.offsetConfig.timestampOffset ]);
     return datasState;

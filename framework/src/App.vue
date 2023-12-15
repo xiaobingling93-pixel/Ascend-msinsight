@@ -3,11 +3,13 @@ import { onMounted, ref } from 'vue';
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
 import RemoteManager from './views/RemoteManager.vue';
 import Modules from './views/ModulesView.vue';
+import Resizor from '@/utils/Resizor.vue';
+let lastWidth = 300;
 const displayAside = ref(true);
-const asideWidth = ref(300);
+const asideWidth = ref(lastWidth);
 const handleDisplayAside = () => {
     displayAside.value = !displayAside.value;
-    asideWidth.value = displayAside.value ? 300 : 0;
+    asideWidth.value = displayAside.value ? lastWidth : 0;
 }
 const theme = ref('dark-theme');
 
@@ -28,11 +30,20 @@ onMounted(() => {
     });
 });
 
+function resize(deltaX:number, width:number){
+  if(width >= 200 && width <= 1000){
+    asideWidth.value = width;
+    lastWidth = width;
+  }
+}
 </script>
 
 <template>
     <el-container class="container">
         <el-aside class="aside" :width="`${asideWidth}px`">
+          <div :style="`width:${asideWidth}px;height:100%;position:absolute;`">
+            <Resizor @onResize="resize"/>
+          </div>
             <RemoteManager />
             <div
                 class="aside-handler"

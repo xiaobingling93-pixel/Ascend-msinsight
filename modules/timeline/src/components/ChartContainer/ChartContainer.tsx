@@ -2,6 +2,7 @@ import type { Theme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import React, { useMemo, useEffect, useRef } from 'react';
+import { observable, runInAction } from 'mobx';
 // hooks
 import { useWatchResize } from '../../utils/useWatchDomResize';
 // support utils/types
@@ -23,9 +24,10 @@ import { loopActionFactory } from '../../utils/FactoryActions';
 import { RenderManagerContext } from '../../context/context';
 import { renderManager } from '../../renderManager';
 import { DragDirection, useDraggableContainerEx } from '../../utils/useDraggableContainerEx';
+import Resizor from '../resize/Resizor';
 
 export const TIME_LINE_AXIS_HEIGHT_PX = 30;
-const LANE_INFO_WIDTH_PX = 250;
+const LANE_INFO_WIDTH_PX = observable({ value: 250 });
 export const CHARTINTERACTOR_NAME = 'chartInteractor';
 
 const Container = styled.div`
@@ -97,13 +99,19 @@ const ChartBody = observer((props: ChartBodyProps) => {
     return (<>
         {
             view({
-                mainContainer: <RefUnits session={session} height={height} ref={ref} hasPinButton={!!interactive} laneInfoWidth={LANE_INFO_WIDTH_PX} />,
-                draggableContainer: <PinnedUnits session={session} height={pinnedHeight} ref={pinnedRef} laneInfoWidth={LANE_INFO_WIDTH_PX} />,
+                mainContainer: <RefUnits session={session} height={height} ref={ref} hasPinButton={!!interactive} laneInfoWidth={LANE_INFO_WIDTH_PX.value} />,
+                draggableContainer: <PinnedUnits session={session} height={pinnedHeight} ref={pinnedRef} laneInfoWidth={LANE_INFO_WIDTH_PX.value} />,
                 id: 'UnitsPage',
             })
         }
-        <Overlay leftOffset={LANE_INFO_WIDTH_PX} rightAreaName={CHARTINTERACTOR_NAME}>
-            <></>
+        <Overlay leftOffset={LANE_INFO_WIDTH_PX.value} rightAreaName={CHARTINTERACTOR_NAME}>
+            <><Resizor onResize={(deltaX: number, width: number, nextWidth: number) => {
+                runInAction(() => {
+                    if (width > 150 && nextWidth > 100) {
+                        LANE_INFO_WIDTH_PX.value = width;
+                    }
+                });
+            }}/> </>
             <ChartInteractor ref={chartInteractorRef} splitLineRef={splitLineRef} domainStart={domainStart} domainEnd={domainEnd} endTimeAll={session.endTimeAll}
                 interactorMouseState={interactorMouseState} isNsMode={session.isNsMode} session={session}/>
         </Overlay>
@@ -159,7 +167,7 @@ export const ChartContainer = observer((props: Props) => {
         <RenderManagerContext.Provider value={renderManager}>
             <ChartHeader
                 session={session}
-                laneInfoWidth={LANE_INFO_WIDTH_PX}
+                laneInfoWidth={LANE_INFO_WIDTH_PX.value}
                 timelineHeight={TIME_LINE_AXIS_HEIGHT_PX}
                 showRecommendation={!props.interactive}
             />
@@ -167,7 +175,7 @@ export const ChartContainer = observer((props: Props) => {
         </RenderManagerContext.Provider>
         <HorizontalScroller
             session={session}
-            leftLaneInfoWidth={LANE_INFO_WIDTH_PX}
+            leftLaneInfoWidth={LANE_INFO_WIDTH_PX.value}
             containerDom={containerDom}
             scrollerRef={scrollerRef}
         />
@@ -190,7 +198,7 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
         }
         chartInteractorRef.current.mouseMoveAction(interactorMouseState);
         const rect = e.currentTarget.getBoundingClientRect();
-        const offsetX = e.nativeEvent.x - rect.left - LANE_INFO_WIDTH_PX;
+        const offsetX = e.nativeEvent.x - rect.left - LANE_INFO_WIDTH_PX.value;
         const offsetY = e.nativeEvent.y - rect.top;
         if (offsetX <= 0) {
             interactorMouseState.lastPos.current = interactorMouseState.clickPos.current ? { x: 0, y: offsetY } : undefined;
