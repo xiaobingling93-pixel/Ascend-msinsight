@@ -36,6 +36,8 @@ abstract class BaseConnector {
                         this.awaitFetch(res);
                     } else if (listener) {
                         listener.forEach(cb => cb?.(res));
+                    } else if (['mouseover'].includes(res.data.event)) {
+                        // 鼠标事件，无操作
                     } else {
                         console.log(this.printErrMsg('missed [event] in your message, please check your params, or maybe have an invalid send'));
                     }

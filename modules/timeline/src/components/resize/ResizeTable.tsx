@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
 import React, { cloneElement, useState, useEffect } from 'react';
 import { Table } from 'antd/lib/index';
 import Resizor from './Resizor';
@@ -23,14 +22,13 @@ const ResizableTitle = (
             <Resizor key={th.props.children.length} onResize={onResize}/> ]);
 };
 
-const ResizeTable = (props: any): JSX.Element => {
-    const { columns: propColumns, variableTotalWidth = false, minThWidth = 0, id, ...restProps } = props;
-    const [ columns, setColumns ] = useState<any[]>([]);
-
+// eslint-disable-next-line max-lines-per-function
+const ResizeTable = (props: {variableTotalWidth?: boolean;[prop: string]: any}): JSX.Element => {
+    const { columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, ...restProps } = props;
+    const [ columns, setColumns ] = useState<any[]>(propColumns ?? []);
     useEffect(() => {
-        const newColumns = [...props.columns].map((item: any, index: number) => ({ ...item }));
-        setColumns(newColumns);
-    }, [props.columns]);
+        setColumns(propColumns ?? []);
+    }, [JSON.stringify(propColumns)]);
 
     const mergeColumns = columns.map((col, index) => ({
         ...col,
@@ -39,17 +37,17 @@ const ResizeTable = (props: any): JSX.Element => {
                 const newColumns = [...columns];
                 newColumns[index] = {
                     ...newColumns[index],
-                    width: Math.max(width, minThWidth),
+                    width: Math.max(width, minThWidth, columns[index].minWidth ?? 0),
                 };
-                if (nextWidth !== null && nextWidth !== undefined && variableTotalWidth !== true) {
+                if (nextWidth !== null && nextWidth !== undefined && !variableTotalWidth) {
                     newColumns[index + 1] = {
                         ...newColumns[index + 1],
-                        width: Math.max(nextWidth, minThWidth),
+                        width: Math.max(nextWidth, minThWidth, columns[index + 1].minWidth ?? 0),
                     };
                 }
                 setColumns(newColumns);
             },
-            resizable: variableTotalWidth !== true ? index !== props.columns.length - 1 : true,
+            resizable: variableTotalWidth || index !== props.columns.length - 1,
         }),
     }));
 
@@ -57,7 +55,7 @@ const ResizeTable = (props: any): JSX.Element => {
         <div id={id} style={{ ...props.style ?? {} }}>
             <Table
                 { ...restProps }
-                className={variableTotalWidth !== true ? '' : 'variableTotalWidth'}
+                className={!variableTotalWidth ? '' : 'variableTotalWidth'}
                 columns={mergeColumns}
                 components={{
                     header: {
