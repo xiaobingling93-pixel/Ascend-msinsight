@@ -33,12 +33,11 @@ private:
     std::unique_ptr<ThreadPool> threadPool;
     std::chrono::system_clock::time_point start;
     std::map<std::string, std::future<void>> futureMap;
-    std::vector<std::string> rowVector;
     const std::string kernelDetailFile = "kernel_details.csv";
     const std::string kernelDetailReg = R"((kernel_details|op_summary_[0-9]{1,14})\.csv$)";
 
     bool mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
-                              const std::vector<std::string>& row, const std::string &fileId, Kernel &kernel);
+                              std::vector<std::string> row, const std::string &fileId, Kernel &kernel);
 
     bool WaitParseEnd(const std::string &fileId);
     std::vector<std::string> StringSplit(const std::string& str);

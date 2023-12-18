@@ -74,7 +74,7 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) ==
     Timeline::ParserStatus::RUNNING && getline(file, line)) {
         const std::basic_string<char>& basicString(line);
-        rowVector = StringSplit(basicString);
+        std::vector<std::string> rowVector = StringSplit(basicString);
         if (rowVector[0] == "Step Id" or rowVector[0] == "Model ID" or rowVector[0] == "Device_id") {
             for (int i = 0; i < rowVector.size(); i++) {
                 dataMap[rowVector[i]] = i;
@@ -97,7 +97,7 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
 }
 
 bool KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
-    const std::vector<std::string>& row, const std::string &fileId, Kernel &kernel)
+                                       std::vector<std::string> row, const std::string &fileId, Kernel &kernel)
 {
     std::int16_t deviceIndex = 0;
     std::int16_t stepIndex = 0;
