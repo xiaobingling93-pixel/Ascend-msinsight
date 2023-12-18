@@ -16,6 +16,8 @@
 # limitations under the License.
 
 import argparse
+import multiprocessing
+import sys
 from multiprocessing import freeze_support
 
 from cluster_data_preprocess.pytorch_data_preprocessor import PytorchDataPreprocessor
@@ -53,6 +55,8 @@ class Interface:
 
 
 if __name__ == "__main__":
+    if sys.platform == 'darwin':
+        multiprocessing.set_start_method('fork')
     freeze_support()
     parser = argparse.ArgumentParser(description="cluster analysis module")
     parser.add_argument('-d', '--collection_path', type=str, required=True, help="profiling data path")
