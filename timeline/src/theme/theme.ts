@@ -46,6 +46,7 @@ function getThemeType(): ThemeType {
 window.setTheme = (isDark: boolean) => {
     const isDarkStr = String(isDark);
     themeInstance.setCurrentTheme(isDarkStr === 'false' ? 'light' : 'dark');
+    document.body.className = isDark ? 'theme_dark' : 'theme_light';
 };
 
 export const themeInstance = new ThemeStore();
