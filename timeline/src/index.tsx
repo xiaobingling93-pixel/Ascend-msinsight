@@ -4,6 +4,7 @@ import { App } from './App';
 import { RootStoreContext } from './context/context';
 import './i18n';
 import './index.css';
+import './theme.css';
 import { store } from './store';
 import { NOTIFICATION_HANDLERS } from './interface';
 import connector from './connection';

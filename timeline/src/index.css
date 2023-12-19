@@ -106,3 +106,9 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
         transform: rotate(360deg);
     }
 }
+.rc-virtual-list-holder{
+    overflow: auto!important;
+}
+.rc-virtual-list-scrollbar-thumb{
+    display: none;
+}
