@@ -80,11 +80,9 @@ export const updateSessionHandler: NotificationHandler = async (data): Promise<v
             if (!session) {
                 return;
             }
-            if (typeof data.isCluster === 'boolean' && (data.isCluster || session.isCluster)) {
+            if (data.isReset === true) {
                 session.memoryRankIds = [];
-                session.isCluster = data.isCluster;
-            }
-            if (data.isReset !== undefined) {
+                session.isCluster = data.isCluster as boolean;
                 session.rankIdsTotal = data.unitcount as number;
                 session.curRankIdsCount = 0;
             }
