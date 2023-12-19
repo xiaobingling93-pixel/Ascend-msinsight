@@ -559,6 +559,13 @@ tr.ant-table-row:hover{
     color: #eeeeee;
 }
 
-.theme_dark .rc-virtual-list-scrollbar-thumb{
-    background-color:var(--grey60)!important;
+.theme_dark .ant-select-multiple .ant-select-selection-item-content{
+    color:var(--grey15);
+}
+.theme_dark .ant-select-clear{
+    background:var(--grey90);
+    color:var(--grey15);
+}
+.ant-select.circle-border:not(.ant-select-customize-input) .ant-select-selector {
+    border-radius: 20px!important;
 }

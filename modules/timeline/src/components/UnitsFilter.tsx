@@ -1,25 +1,21 @@
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip } from 'antd';
+import { Tooltip, Select } from 'antd';
 import { computed, runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { ReactComponent as AntdFilterIcon } from '../assets/images/insights/FunnelIcon.svg';
-import { ReactComponent as AntdCloseIcon } from '../assets/images/insights/ic_close_filled.svg';
 import { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
-import { StyledInput } from './base/StyledInput';
 import { InsightUnit } from '../entity/insight';
 import { SvgType } from './base/rc-table/types';
 import { StyledSelect } from './base/StyledSelect';
 import { CardMetaData, ProcessMetaData } from '../entity/data';
 import { preOrderFlatten } from '../entity/common';
 import { isPinned } from './ChartContainer/unitPin';
-import { StyledAutoComplete } from './base/rc-table/StyledAutoComplete';
 import i18n from 'i18next';
 
 const FilterIcon = AntdFilterIcon as SvgType;
-const CloseIcon = AntdCloseIcon as SvgType;
 
 const ChildrenContainer = styled.div`
     color: ${props => props.theme.fontColor};
@@ -113,8 +109,7 @@ const CustomDiv = styled.div`
 `;
 
 const useAutoCompleteHandles = (session: Session): [ selectValue: string, dropdownRenderr: () => JSX.Element, isOpen: boolean,
-    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>, completeOptions: Array<{value: string}>, handleSearch: Function,
-    handleSearch: (value: string) => void, handleSelect: (value: string) => void ] => {
+    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>, completeOptions: Array<{value: string}>, handleChange: Function ] => {
     const [ selectValue, setSelectValue ] = useState<string>('Filter');
     const [ isOpen, setIsOpen ] = useState<boolean>(false);
     const { cardNames, unitNames } = useUnitsNameSet(session);
@@ -156,23 +151,20 @@ const useAutoCompleteHandles = (session: Session): [ selectValue: string, dropdo
         setCompleteOptions(result);
     };
 
-    const handleChange = (value: string): void => {
-        if (value === '') {
-            startFilter(session, value, selectValue);
-        }
-    };
-
-    const handleSelect = (value: string): void => {
+    const handleChange = (value: string[]): void => {
         startFilter(session, value, selectValue);
     };
-
-    return [ selectValue, dropdownRender, isOpen, setIsOpen, completeOptions, handleSearch, handleChange, handleSelect ];
+    return [ selectValue, dropdownRender, isOpen, setIsOpen, completeOptions, handleChange ];
 };
 
 const CategorySearchContent = (session: Session): JSX.Element => {
     const theme = useTheme();
+    const [ selectValue, dropdownRender, isOpen, setIsOpen, completeOptions, handleChange ] = useAutoCompleteHandles(session);
+    const [ selection, setSelection ] = useState<string[]>([]);
+    useEffect(() => {
+        setSelection([]);
+    }, [completeOptions]);
 
-    const [ selectValue, dropdownRender, isOpen, setIsOpen, completeOptions, handleSearch, handleChange, handleSelect ] = useAutoCompleteHandles(session);
     return (
         <CustomDiv theme={theme}>
             <StyledSelect
@@ -183,21 +175,24 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                 open={isOpen}
                 height={24} width={120} itemPaddingLeft={20}>
             </StyledSelect>
-
-            <StyledAutoComplete
-                type={'text'} options={completeOptions} style={{ top: 2 }}
-                onSearch={handleSearch} onChange={handleChange} onSelect={handleSelect} getPopupContainer={(triggerNode: { parentNode: any }) => triggerNode.parentNode}>
-                <StyledInput allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor}/> }}
-                    minwidth={450} height={24} isshow={Number(selectValue !== 'Filter')} type={'text'}>
-                </StyledInput>
-            </StyledAutoComplete>
+            <Select
+                size={'small'}
+                mode="multiple"
+                allowClear
+                className={'circle-border'}
+                options={completeOptions}
+                style={{ top: '2px', width: '455px', height: '24px' }}
+                value={selection}
+                onChange={(val: string[]) => { setSelection(val); handleChange(val); }}
+            >
+            </Select>
         </CustomDiv>
     );
 };
 
-const startFilter = (session: Session, inputValue: string, selectValue: string): void => {
+const startFilter = (session: Session, inputValue: string[], selectValue: string): void => {
     setAllUnitsDisplay(session);
-    if (inputValue === '') {
+    if (inputValue.length === 0) {
         return;
     }
     const flattenUnits = computed(() => preOrderFlatten(session.units, 0,
@@ -212,38 +207,33 @@ const startFilter = (session: Session, inputValue: string, selectValue: string):
     }
 };
 
-const doCardFilter = (flattenUnits: InsightUnit[], inputValue: string): void => {
-    let targetUnit: InsightUnit | undefined;
-    flattenUnits.forEach(unit => {
-        runInAction(() => {
-            const isTargetUnit = (unit.metadata as CardMetaData).cardName === inputValue;
-            unit.isDisplay = (unit.metadata as CardMetaData).cardName === inputValue;
+const doCardFilter = (flattenUnits: InsightUnit[], selectValues: string[]): void => {
+    runInAction(() => {
+        flattenUnits.forEach(unit => {
+            const isTargetUnit = selectValues.includes((unit.metadata as CardMetaData).cardName as string);
+            unit.isDisplay = isTargetUnit;
             if (isTargetUnit) {
-                targetUnit = unit;
+                unit.children?.forEach(unit => {
+                    unit.isDisplay = true;
+                    unit.children?.forEach(processUnit => {
+                        processUnit.isDisplay = true;
+                    });
+                });
             }
-        });
-    });
-    if (targetUnit === undefined) {
-        return;
-    }
-    targetUnit.children?.forEach(unit => {
-        unit.isDisplay = true;
-        unit.children?.forEach(processUnit => {
-            processUnit.isDisplay = true;
         });
     });
 };
 
-const doUnitsFilter = (flattenUnits: InsightUnit[], inputValue: string): void => {
-    flattenUnits.forEach(unit => {
-        runInAction(() => {
+const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): void => {
+    runInAction(() => {
+        flattenUnits.forEach(unit => {
             if (!unit.children) {
                 unit.isDisplay = false;
                 return;
             }
             let hasMatchUnit = false;
             unit.children.forEach(processUnit => {
-                const isProcessUnitMatch = (processUnit.metadata as ProcessMetaData).processName === inputValue;
+                const isProcessUnitMatch = selectValues.includes((processUnit.metadata as ProcessMetaData).processName);
                 hasMatchUnit = hasMatchUnit || isProcessUnitMatch;
                 if (!isProcessUnitMatch) {
                     processUnit.isDisplay = false;
@@ -255,24 +245,23 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], inputValue: string): void =>
                 unit.isDisplay = false;
             }
         });
-    });
-    const setUnitDislay = (unit: InsightUnit): void => {
-        runInAction(() => {
+
+        const setUnitDislay = (unit: InsightUnit): void => {
             unit.isDisplay = true;
-        });
-        if (unit.children) {
-            for (const child of unit.children) {
-                setUnitDislay(child);
+            if (unit.children) {
+                for (const child of unit.children) {
+                    setUnitDislay(child);
+                }
             }
-        }
-    };
-    flattenUnits.forEach(unit => {
-        if (!unit.children) {
-            return;
-        }
-        if ((unit.metadata as ProcessMetaData).processName === inputValue) {
-            setUnitDislay(unit);
-        }
+        };
+        flattenUnits.forEach(unit => {
+            if (!unit.children) {
+                return;
+            }
+            if (selectValues.includes(((unit.metadata as ProcessMetaData).processName))) {
+                setUnitDislay(unit);
+            }
+        });
     });
 };
 
