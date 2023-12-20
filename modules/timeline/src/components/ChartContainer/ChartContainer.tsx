@@ -105,7 +105,7 @@ const ChartBody = observer((props: ChartBodyProps) => {
             })
         }
         <Overlay leftOffset={LANE_INFO_WIDTH_PX.value} rightAreaName={CHARTINTERACTOR_NAME}>
-            <><Resizor onResize={(deltaX: number, width: number, nextWidth: number) => {
+            <><Resizor style={{ width: '10px', right: '1px' }} onResize={(deltaX: number, width: number, nextWidth: number) => {
                 runInAction(() => {
                     if (width > 150 && nextWidth > 100) {
                         LANE_INFO_WIDTH_PX.value = width;

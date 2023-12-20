@@ -88,6 +88,6 @@ const Resizor = (props: any): JSX.Element => {
         }
     }
 
-    return <div ref={divRef} className={'resizor'} onMouseDown={handleMouseDown} ></div>;
+    return <div ref={divRef} className={'resizor'} onMouseDown={handleMouseDown} style={props.style ?? {}}></div>;
 };
 export default Resizor;
