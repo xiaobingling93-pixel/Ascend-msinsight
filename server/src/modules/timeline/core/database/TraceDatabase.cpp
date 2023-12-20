@@ -1356,14 +1356,13 @@ void TraceDatabase::SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, 
 bool TraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &params,
                                               Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
-    std::string sql = "SELECT depth, track_id FROM " + sliceTable + " WHERE name = ? AND duration = ? "
-                                                                    "AND timestamp = ?";
+    std::string sql = "SELECT depth, track_id FROM " + sliceTable + " WHERE name = ? AND timestamp = ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryKernelDepthAndThread, fail to prepare sql.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(params.name, params.duration, params.timestamp + minTimestamp);
+    auto resultSet = stmt->ExecuteQuery(params.name, params.timestamp + minTimestamp);
     uint64_t trackId = 0;
     if (resultSet->Next()) {
         responseBody.depth = resultSet->GetUint64("depth");

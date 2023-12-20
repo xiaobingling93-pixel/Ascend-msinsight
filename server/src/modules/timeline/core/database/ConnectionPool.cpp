@@ -7,7 +7,8 @@
 namespace Dic {
 namespace Module {
 namespace Timeline {
-ConnectionPool::ConnectionPool(std::string dbPath) : path(std::move(dbPath)) {}
+ConnectionPool::ConnectionPool(std::string dbPath, std::mutex &dbMutex)
+    : path(std::move(dbPath)), insertSqlMutex(dbMutex) {}
 
 ConnectionPool::~ConnectionPool()
 {

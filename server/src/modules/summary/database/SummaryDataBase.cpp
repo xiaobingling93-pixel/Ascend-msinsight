@@ -13,6 +13,8 @@ namespace Dic {
 namespace Module {
 namespace Summary {
 using namespace Server;
+SummaryDataBase::SummaryDataBase(std::mutex &sqlMutex) : mutex(sqlMutex) {}
+
 SummaryDataBase::~SummaryDataBase()
 {
     if (hasInitStmt) {
@@ -27,6 +29,7 @@ bool SummaryDataBase::SetConfig()
         ServerLog::Error("Failed to set config. Database is not open.");
         return false;
     }
+    std::unique_lock<std::mutex> lock(mutex);
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
 }
 
@@ -42,6 +45,7 @@ bool SummaryDataBase::CreateTable()
         "block_dim INTEGER, input_shapes TEXT, input_data_types TEXT, input_formats TEXT, output_shapes TEXT, " +
         "output_data_types TEXT, output_formats TEXT);" +
         "CREATE INDEX rank_index ON " + kernelTable + " (rank_id);";
+    std::unique_lock<std::mutex> lock(mutex);
     return ExecSql(sql);
 }
 
@@ -98,6 +102,7 @@ void SummaryDataBase::InsertKernelDetailList(std::vector<Kernel> kernelVec)
         sqlite3_bind_text(stmt, idx++, event.outputDataTypes.c_str(), event.outputDataTypes.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.outputFormats.c_str(), event.outputFormats.length(), SQLITE_TRANSIENT);
     }
+    std::unique_lock<std::mutex> lock(mutex);
     auto result = sqlite3_step(stmt);
     if (kernelVec.size() != cacheSize) {
         sqlite3_finalize(stmt);

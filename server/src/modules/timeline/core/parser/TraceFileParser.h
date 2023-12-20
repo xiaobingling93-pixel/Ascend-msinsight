@@ -16,6 +16,11 @@
 namespace Dic {
 namespace Module {
 namespace Timeline {
+const std::string MEMORY_PREFIX = "MemoryParse_";
+const std::string SUMMARY_PREFIX = "SummaryParse_";
+const std::string MEMORY_PREFIX_PATTEN = "^MemoryParse_.*";
+const std::string SUMMARY_PREFIX_PATTEN = "^SummaryParse_.*";
+
 class TraceFileParser : public FileParser {
 public:
     static TraceFileParser &Instance();

@@ -17,7 +17,7 @@ using memoryLines = std::vector<std::vector<std::string>>;
 using componentDtoVector = std::vector<Protocol::ComponentDto>;
 class MemoryDataBase : public Database {
 public:
-    MemoryDataBase() = default;
+    explicit MemoryDataBase(std::mutex &sqlMutex);
     ~MemoryDataBase() override;
 
     bool SetConfig();
@@ -44,6 +44,7 @@ public:
     bool IsInferenceType() const;
 
 private:
+    std::mutex &mutex;
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";
     const int exLength = 4;

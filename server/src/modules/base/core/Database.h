@@ -38,6 +38,7 @@ protected:
     std::string path;
     const int bindStartIndex = 1;
     const int resultStartIndex = 0;
+    const int timeoutMs = 5000;
 };
 } // end of namespace Module
 } // end of namespace Dic

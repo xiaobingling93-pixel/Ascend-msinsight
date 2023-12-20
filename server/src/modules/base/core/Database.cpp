@@ -30,6 +30,7 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
         if (clearAllTable && !DropAllTable()) {
             ServerLog::Warn("Failed to drop all tables");
         }
+        sqlite3_busy_timeout(db, timeoutMs);
         return true;
     }
     ServerLog::Error("open db fail. path:", dbPath);

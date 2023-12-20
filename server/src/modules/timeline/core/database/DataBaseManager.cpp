@@ -19,7 +19,8 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
     const static int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
     std::unique_lock<std::mutex> lock(mutex);
     if (traceDatabaseMap.count(fileId) == 0) {
-        auto conn = std::make_unique<ConnectionPool>(dbPath);
+        std::mutex &dbMutex = GetDbMutex(fileId);
+        auto conn = std::make_unique<ConnectionPool>(dbPath, dbMutex);
         conn->SetMaxActiveCount(CPU_CORE_COUNT);
         traceDatabaseMap.emplace(fileId, std::move(conn));
         return true;
@@ -43,7 +44,8 @@ Summary::SummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::string 
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (summaryDatabaseMap.count(fileId) == 0) {
-        summaryDatabaseMap.emplace(fileId, std::make_unique<Summary::SummaryDataBase>());
+        std::mutex &dbMutex = GetDbMutex(fileId);
+        summaryDatabaseMap.emplace(fileId, std::make_unique<Summary::SummaryDataBase>(dbMutex));
     }
     return summaryDatabaseMap[fileId].get();
 }
@@ -52,7 +54,8 @@ Memory::MemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::string &fi
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (memoryDatabaseMap.count(fileId) == 0) {
-        memoryDatabaseMap.emplace(fileId, std::make_unique<Memory::MemoryDataBase>());
+        std::mutex &dbMutex = GetDbMutex(fileId);
+        memoryDatabaseMap.emplace(fileId, std::make_unique<Memory::MemoryDataBase>(dbMutex));
     }
     return memoryDatabaseMap[fileId].get();
 }
@@ -119,6 +122,7 @@ void DataBaseManager::Clear()
     traceDatabaseMap.clear();
     memoryDatabaseMap.clear();
     summaryDatabaseMap.clear();
+    dbMutexMap.clear();
 }
 
 void DataBaseManager::Clear(DatabaseType type)
@@ -172,6 +176,15 @@ std::string DataBaseManager::GetDbPath(const std::string &fileId)
         return "";
     }
     return traceDatabaseMap[fileId]->GetDbPath();
+}
+
+std::mutex &DataBaseManager::GetDbMutex(const std::string &fileId)
+{
+    if (dbMutexMap.count(fileId) == 0) {
+        auto dbMutex = std::unique_lock<std::mutex>();
+        dbMutexMap.emplace(fileId, std::move(dbMutex));
+    }
+    return reinterpret_cast<std::mutex &>(dbMutexMap[fileId]);
 }
 } // end of namespace Timeline
 } // end of namespace Module

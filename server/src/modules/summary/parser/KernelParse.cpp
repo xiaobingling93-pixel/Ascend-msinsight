@@ -72,7 +72,7 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
     std::map<std::string, std::int16_t> dataMap;
 
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) ==
-    Timeline::ParserStatus::RUNNING && getline(file, line)) {
+    Timeline::ParserStatus::FINISH && getline(file, line)) {
         const std::basic_string<char>& basicString(line);
         std::vector<std::string> rowVector = StringSplit(basicString);
         if (rowVector[0] == "Step Id" or rowVector[0] == "Model ID" or rowVector[0] == "Device_id") {

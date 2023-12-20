@@ -12,6 +12,8 @@ namespace Dic {
 namespace Module {
 namespace Memory {
 using namespace Server;
+MemoryDataBase::MemoryDataBase(std::mutex &sqlMutex) : mutex(sqlMutex) {}
+
 MemoryDataBase::~MemoryDataBase()
 {
     if (hasInitStmt) {
@@ -27,6 +29,7 @@ bool MemoryDataBase::SetConfig()
         ServerLog::Error("Failed to set config. Database is not open.");
         return false;
     }
+    std::unique_lock<std::mutex> lock(mutex);
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
 }
 
@@ -41,6 +44,7 @@ bool MemoryDataBase::CreateTable()
             "allocation_time INTEGER, release_time INTEGER, size INTEGER, duration INTEGER);" +
             "CREATE TABLE " + recordTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, component TEXT, " +
             "total_allocated INTEGER, total_reserve INTEGER, device_type TEXT, timestamp INTEGER);";
+    std::unique_lock<std::mutex> lock(mutex);
     return ExecSql(sql);
 }
 
@@ -98,6 +102,7 @@ void MemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &event
         sqlite3_bind_double(stmt, idx++, event.size);
         sqlite3_bind_double(stmt, idx++, event.duration);
     }
+    std::unique_lock<std::mutex> lock(mutex);
     auto result = sqlite3_step(stmt);
     if (eventList.size() != cacheSize) {
         sqlite3_finalize(stmt);
@@ -131,6 +136,7 @@ void MemoryDataBase::InsertRecordDetailList(const std::vector<Record> &eventList
         sqlite3_bind_text(stmt, idx++, event.deviceType.c_str(), event.deviceType.length(), SQLITE_TRANSIENT);
         sqlite3_bind_double(stmt, idx++, event.timesTamp);
     }
+    std::unique_lock<std::mutex> lock(mutex);
     auto result = sqlite3_step(stmt);
     if (eventList.size() != cacheSize) {
         sqlite3_finalize(stmt);

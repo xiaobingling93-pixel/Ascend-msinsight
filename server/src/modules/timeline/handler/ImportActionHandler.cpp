@@ -135,24 +135,48 @@ void ImportActionHandler::ParseClusterEndProcess(const std::string token, std::s
 
 void ImportActionHandler::ParseEndCallBack(const std::string &token, const std::string &fileId, bool result)
 {
-    ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token), " fileId:", fileId, ", result:", result);
-    if (result) {
-        SendParseSuccessEvent(token, fileId);
-        for (auto &memory : hasMemory) {
-            if (memory.rankId == fileId) {
-                memory.parseSuccess = true;
-            }
-        }
+    std::string id;
+    std::string scene;
+    DatabaseType type;
+    // 解析未分离前，使用特点前缀进行区分
+    if (RegexUtil::RegexMatch(fileId, MEMORY_PREFIX_PATTEN)) {
+        type = DatabaseType::MEMORY;
+        id = fileId.substr(MEMORY_PREFIX.length());
+        scene = "Memory";
+    } else if (RegexUtil::RegexMatch(fileId, SUMMARY_PREFIX_PATTEN)) {
+        type = DatabaseType::SUMMARY;
+        id = fileId.substr(SUMMARY_PREFIX.length());
+        scene = "Summary";
     } else {
-        SendParseFailEvent(token, fileId);
-        for (auto &memory : hasMemory) {
-            if (memory.rankId == fileId) {
-                memory.parseSuccess = false;
-            }
-        }
+        type = DatabaseType::TRACE;
+        id = fileId;
+        scene = "Trace";
     }
-    ParseMemoryEndProcess(token);
-    ParseOperatorEndProcess(token, fileId, result);
+    ServerLog::Info("Parse end, token = ", StringUtil::AnonymousString(token),
+                    ", scene:", scene, " fileId:", id, ", result:", result);
+
+    switch (type) {
+        case DatabaseType::TRACE:
+            if (result) {
+                SendParseSuccessEvent(token, id);
+            } else {
+                SendParseFailEvent(token, id);
+            }
+            break;
+        case DatabaseType::SUMMARY:
+            ParseOperatorEndProcess(token, id, result);
+            break;
+        case DatabaseType::MEMORY:
+            for (auto &memory : hasMemory) {
+                if (memory.rankId == id) {
+                    memory.parseSuccess = result;
+                }
+            }
+            ParseMemoryEndProcess(token);
+            break;
+        default:
+            break;
+    }
 }
 
 void ImportActionHandler::ParseMemoryEndProcess(const std::string &token)

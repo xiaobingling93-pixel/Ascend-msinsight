@@ -114,19 +114,29 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     database->CreateIndex();
     database->UpdateDepth();
     ServerLog::Info("Update depth completed. ID:", fileId);
-
+    ParseEndCallBack(fileId, true);
     std::string parentDir = FileUtil::GetParentPath(filePathArr[0]);
     if (!parentDir.empty()) {
+        // 解析未分离前，使用特点前缀进行区分
         Summary::KernelParse::Instance().KernelFileParse(parentDir, fileId);
+        ParseEndCallBack(SUMMARY_PREFIX + fileId, true);
         Memory::MemoryParse::Instance().OperatorParse(parentDir, fileId);
         Memory::MemoryParse::Instance().RecordToParse(parentDir, fileId);
+        ParseEndCallBack(MEMORY_PREFIX + fileId, true);
     }
-    ParseEndCallBack(fileId, true);
 }
 
 void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result)
 {
-    if (!(result && ParserStatusManager::Instance().SetFinishStatus(fileId))) {
+    DatabaseType type;
+    if (RegexUtil::RegexMatch(fileId, MEMORY_PREFIX_PATTEN)) {
+        type = DatabaseType::MEMORY;
+    } else if (RegexUtil::RegexMatch(fileId, SUMMARY_PREFIX_PATTEN)) {
+        type = DatabaseType::SUMMARY;
+    } else {
+        type = DatabaseType::TRACE;
+    }
+    if (type == DatabaseType::TRACE && !(result && ParserStatusManager::Instance().SetFinishStatus(fileId))) {
         result = false;
     }
     auto &instance = TraceFileParser::Instance();

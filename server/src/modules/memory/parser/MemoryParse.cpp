@@ -90,7 +90,7 @@ void MemoryParse::OperatorParse(const std::string &parentDir, const std::string 
     std::string line;
     std::map<std::string, std::int16_t> dataMap;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) ==
-    Timeline::ParserStatus::RUNNING && getline(file, line)) {
+    Timeline::ParserStatus::FINISH && getline(file, line)) {
         std::stringstream ss(line);
         std::vector<std::string> row;
         std::string cell;
@@ -198,7 +198,7 @@ void MemoryParse::RecordToParse(const std::string &parentDir, const std::string 
     std::string line;
     std::map<std::string, std::int16_t> dataMap;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) ==
-    Timeline::ParserStatus::RUNNING && getline(file, line)) {
+    Timeline::ParserStatus::FINISH && getline(file, line)) {
         std::stringstream ss(line);
         std::vector<std::string> row;
         std::string cell;

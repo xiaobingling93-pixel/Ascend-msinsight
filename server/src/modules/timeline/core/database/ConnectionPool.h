@@ -21,7 +21,7 @@ namespace Timeline {
 using namespace Dic::Server;
 class ConnectionPool {
 public:
-    explicit ConnectionPool(std::string dbPath);
+    explicit ConnectionPool(std::string dbPath, std::mutex &dbMutex);
     ~ConnectionPool();
     ConnectionPool(const ConnectionPool &) = delete;
     ConnectionPool &operator=(const ConnectionPool &) = delete;
@@ -37,7 +37,7 @@ public:
 
 private:
     std::mutex mutex;
-    std::mutex insertSqlMutex;
+    std::mutex &insertSqlMutex;
     std::condition_variable cv;
     std::string path;
     bool valid = true;

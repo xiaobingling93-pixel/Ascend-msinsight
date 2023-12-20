@@ -18,7 +18,7 @@ namespace Module {
 namespace Summary {
 class SummaryDataBase : public Database {
 public:
-    SummaryDataBase() = default;
+    explicit SummaryDataBase(std::mutex &sqlMutex);
     ~SummaryDataBase() override;
 
     bool SetConfig();
@@ -53,6 +53,7 @@ public:
         Protocol::OperatorMoreInfoResponse& response);
 
 private:
+    std::mutex &mutex;
     const std::string kernelTable = "kernel_detail";
     bool hasInitStmt = false;
     sqlite3_stmt *insertKernelStmt = nullptr;
