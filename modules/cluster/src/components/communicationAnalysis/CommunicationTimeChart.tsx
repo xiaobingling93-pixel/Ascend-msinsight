@@ -36,6 +36,7 @@ const baseOption: any = {
                 type: 'solid',
             },
         },
+        confine: true,
     },
     toolbox: {
         feature: {
@@ -43,6 +44,7 @@ const baseOption: any = {
             magicType: { show: true, type: [ 'line', 'bar' ] },
             restore: { show: true },
         },
+        top: 20,
     },
     legend: {
         data: [
@@ -162,6 +164,9 @@ const baseOption: any = {
             data: [ ],
         },
     ],
+    grid: {
+        top: 80,
+    },
 };
 
 export interface dataType{
@@ -187,7 +192,8 @@ const CommunicationTimeChart = observer(function ({ dataSource }: {dataSource: d
     return (
         <Container
             title={'Visualized Communication Time'}
-            content={<div id={'main'} style={{ height: '400px' }} ></div>}
+            content={<div id={'main'} style={{ height: '400px' }} ></div> }
+            bodyStyle={{ overflow: 'visible' }}
         />
     );
 });

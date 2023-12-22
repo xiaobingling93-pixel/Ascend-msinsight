@@ -111,6 +111,7 @@ const CommunicationAnalysisCom = (props: {isShow:
                 dragSize={400}
                 id={'communication-analysis'}
                 style={{ display: isShow('CommunicationDurationAnalysis') ? 'block' : 'none' }}
+                className={'communication'}
             />
             {/* 通信矩阵 */}
             <CommunicationMatrix isShow={isShow('CommunicationMatrix') && active} conditions={conditions}/>
