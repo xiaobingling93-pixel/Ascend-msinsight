@@ -54,6 +54,7 @@ def build_vscode(vscode_version, os_name):
         exec_command(['npm.cmd', 'run', 'buildWin'], SCRIPT_PATH)
     elif os_name == 'darwin':
         exec_command(['npm', 'run', 'buildLinuxDarwin'], SCRIPT_PATH)
+        return
     elif os_name.endswith('x86_64'):
         exec_command(['npm', 'run', 'buildLinuxX64'], SCRIPT_PATH)
     elif os_name.endswith('aarch64'):
@@ -109,12 +110,9 @@ def build_light_package(version, os_name):
                     os.path.join(profiler_path, 'frontend'))
     shutil.copytree(os.path.join(SCRIPT_PATH, 'serverBuild', 'server'),
                     os.path.join(profiler_path, 'server'))
-    cargo_path = os.path.join(Path.home(), '.cargo', 'bin', 'cargo.exe' if os_name == 'win' else 'cargo')
-    if not os.path.exists(cargo_path):
-        logging.error('cargo is not installed')
-        return
+    cargo_cmd = 'cargo.exe' if os_name == 'win' else 'cargo'
     task = 'insight-windows' if os_name == 'win' else 'insight-mac'
-    exec_command([cargo_path, 'make', task], package_path)
+    exec_command([cargo_cmd, 'make', task], package_path)
     package_name = 'Ascend-Insight_' + version + '_' + os_name
     for tmp in os.listdir(os.path.join(package_path, 'preview')):
         if tmp.startswith('Ascend-Insight_') and tmp.endswith('.exe'):
