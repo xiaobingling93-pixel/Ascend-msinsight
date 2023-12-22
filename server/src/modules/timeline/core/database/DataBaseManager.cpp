@@ -180,11 +180,7 @@ std::string DataBaseManager::GetDbPath(const std::string &fileId)
 
 std::mutex &DataBaseManager::GetDbMutex(const std::string &fileId)
 {
-    if (dbMutexMap.count(fileId) == 0) {
-        auto dbMutex = std::unique_lock<std::mutex>();
-        dbMutexMap.emplace(fileId, std::move(dbMutex));
-    }
-    return reinterpret_cast<std::mutex &>(dbMutexMap[fileId]);
+    return dbMutexMap[fileId];
 }
 } // end of namespace Timeline
 } // end of namespace Module
