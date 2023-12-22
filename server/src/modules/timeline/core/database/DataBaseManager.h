@@ -53,7 +53,7 @@ private:
     ~DataBaseManager() = default;
 
     std::mutex mutex;
-    std::map<std::string, std::unique_lock<std::mutex>> dbMutexMap;
+    std::map<std::string, std::mutex> dbMutexMap;
     std::map<std::string, std::unique_ptr<ConnectionPool>> traceDatabaseMap;
     std::map<std::string, std::unique_ptr<ClusterDatabase>> clusterDatabaseMap;
     std::map<std::string, std::unique_ptr<Memory::MemoryDataBase>> memoryDatabaseMap;
