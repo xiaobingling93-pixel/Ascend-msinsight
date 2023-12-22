@@ -31,7 +31,7 @@ namespace Dic::Module::Operator {
             session.OnResponse(std::move(responsePtr));
             return;
         }
-        std::string rankId = request.params.rankId;
+        std::string rankId = Summary::SummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
         if (!database->QueryOperatorMoreInfo(request.params, response)) {
             ServerLog::Error("[Operator]Failed to query More Info, RankId = ", rankId);

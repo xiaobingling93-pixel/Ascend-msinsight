@@ -130,21 +130,6 @@ void SummaryDataBase::SaveKernelDetail()
     }
 }
 
-bool SummaryDataBase::HasParseKernelFile(const std::string &kernelFile)
-{
-    return std::count(kernelFiles.begin(), kernelFiles.end(), kernelFile) != 0;
-}
-
-void SummaryDataBase::AddParseKernelFile(const std::string &kernelFile)
-{
-    kernelFiles.emplace_back(kernelFile);
-}
-
-void SummaryDataBase::ClearParseKernelFile()
-{
-    kernelFiles.clear();
-}
-
 sqlite3_stmt *SummaryDataBase::GetKernelStmt(uint64_t paramLen)
 {
     sqlite3_stmt *stmt = nullptr;
@@ -328,10 +313,11 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         } else {
             group = R"(name || '[' || input_shapes || ']')";
         }
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         std::string sql =
                 " SELECT " + group + " as name, ROUND(sum(duration), 2) as duration" +
                 " FROM " + kernelTable +
-                " WHERE rank_id = '" + reqParams.rankId + "' AND accelerator_core <> 'HCCL'"
+                " WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL'"
                 " GROUP by " + group +
                 " ORDER BY duration DESC LIMIT " + std::to_string(reqParams.topK);
         return sql;
@@ -347,12 +333,13 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         } else {
             group = R"(name || '[' || input_shapes || ']')";
         }
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         std::string sql =
                 " SELECT accelerator_core as name, ROUND(SUM(duration), 2) as duration"
                 " FROM ("
                 "     SELECT " + group + ", accelerator_core, ROUND(SUM(duration), 2) as duration" +
                 "     FROM " + kernelTable +
-                "     WHERE rank_id = '" + reqParams.rankId + "' AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL'"
                 "     GROUP BY " + group +
                 "     ORDER BY duration DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery" +
@@ -401,12 +388,13 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     bool SummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
     {
         sqlite3_stmt *stmt = nullptr;
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
                 "     SELECT *"
                 "     FROM " + kernelTable +
-                "     WHERE rank_id = '" + reqParams.rankId + "' AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL'"
                 "     GROUP by " + (reqParams.group == "Operator Type" ? "op_type" : R"(name || input_shapes)") +
                 "     ORDER by duration DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery";
@@ -434,6 +422,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             group = R"(name || input_shapes)";
             name = "name";
         }
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         std::string sql =
                 " SELECT * FROM ("
                 "     SELECT op_type, " + name + " as name, input_shapes, accelerator_core,"
@@ -442,7 +431,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 "     ROUND(max(duration), 2) as max_time,"
                 "     ROUND(min(duration), 2) as min_time"
                 "     FROM " + kernelTable +
-                "     WHERE rank_id = '" + reqParams.rankId + "' AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL'"
                 "     GROUP by " + group +
                 "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery ";
@@ -499,12 +488,13 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     bool SummaryDataBase::QueryDetailTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
     {
         sqlite3_stmt *stmt = nullptr;
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
                 "     SELECT * "
                 "     FROM " + kernelTable +
-                "     WHERE rank_id = '" + reqParams.rankId + "' AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL'"
                 "     ORDER BY duration DESC"
                 "     LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery";
@@ -523,6 +513,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
 
     std::string SummaryDataBase::GenerateQueryDetailSql(Protocol::OperatorStatisticReqParams &reqParams)
     {
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         std::string sql =
                 " SELECT rank_id, step_id, name, op_type, accelerator_core,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
@@ -530,7 +521,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
-                "     WHERE rank_id = '" + reqParams.rankId + "' AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL'"
                 "     ORDER by duration DESC LIMIT " +  std::to_string(reqParams.topK) +
                 " ) subquery ";
         if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
@@ -591,12 +582,13 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         std::string condition = (reqParams.group == Protocol::OP_TYPE_GROUP) ?
                                 " op_type = '" + reqParams.opType + "'":
                                 " name = '" + reqParams.opName + "' AND input_shapes = '" + reqParams.shape + "'";
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
                 "     SELECT *"
                 "     FROM " + kernelTable +
-                "     WHERE rank_id = '" + reqParams.rankId + "' AND accelerator_core <> 'HCCL' AND" + condition +
+                "     WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL' AND" + condition +
                 " ) subquery";
 
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -613,6 +605,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
 
     std::string SummaryDataBase::GenerateQueryMoreInfoSql(Protocol::OperatorMoreInfoReqParams &reqParams)
     {
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         std::string sql =
                 " SELECT rank_id, step_id, name, op_type, accelerator_core,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
@@ -620,7 +613,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
-                "     WHERE rank_id = '" + reqParams.rankId + "' AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = '" +  rankId + "' AND accelerator_core <> 'HCCL'"
                 "     ORDER by duration DESC"
                 " ) subquery ";
         if (reqParams.group == Protocol::OP_TYPE_GROUP) {
@@ -685,6 +678,36 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         response.datas = res;
         sqlite3_finalize(stmt);
         return true;
+    }
+
+    std::string SummaryDataBase::GetFileIdFromCombinationId(const std::string str)
+    {
+        auto len = MSPROF_PREFIX.length();
+        if (str.length() <= len || str.compare(0, len, MSPROF_PREFIX) != 0) {
+            return str;
+        }
+
+        auto index = str.find_last_of(MSPROF_CONNECT);
+        if (index == std::string::npos) {
+            return str;
+        }
+
+        return str.substr(len, index - len - 1);
+    }
+
+    std::string SummaryDataBase::GetDeviceIdFromCombinationId(const std::string str)
+    {
+        auto len = MSPROF_PREFIX.length();
+        if (str.length() <= len || str.compare(0, len, MSPROF_PREFIX) != 0) {
+            return str;
+        }
+
+        auto index = str.find_last_of(MSPROF_CONNECT);
+        if (index == std::string::npos) {
+            return str;
+        }
+
+        return str.substr(index + MSPROF_CONNECT.length() - 1);
     }
 
 } // end of namespace Summary

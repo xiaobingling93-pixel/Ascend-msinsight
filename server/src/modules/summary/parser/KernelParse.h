@@ -7,6 +7,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 #include <functional>
 #include "SummaryDef.h"
 #include "ThreadPool.h"
@@ -25,7 +26,7 @@ public:
 
     bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
                const std::string &selectedFolder) override;
-    void KernelFileParse(const std::string &parentDir, const std::string &fileId);
+    void KernelFileParse(const std::string &parentDir, const std::string &fileId, std::set<std::string> &devices);
 private:
     std::unique_ptr<SummaryDataBase> database;
     const int maxThreadNum = 4;

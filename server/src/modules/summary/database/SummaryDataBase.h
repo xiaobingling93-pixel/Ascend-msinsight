@@ -16,6 +16,8 @@
 namespace Dic {
 namespace Module {
 namespace Summary {
+const std::string MSPROF_PREFIX = "[MSPROF]";
+const std::string MSPROF_CONNECT = "__";
 class SummaryDataBase : public Database {
 public:
     explicit SummaryDataBase(std::mutex &sqlMutex);
@@ -29,9 +31,10 @@ public:
     void InsertKernelDetailList(std::vector<Kernel> kernelVec);
     void InsertKernelDetail(Kernel kernel);
     void SaveKernelDetail();
-    bool HasParseKernelFile(const std::string& kernelFile);
-    void AddParseKernelFile(const std::string& kernelFile);
-    void ClearParseKernelFile();
+
+    static std::string GetFileIdFromCombinationId(const std::string str);
+
+    static std::string GetDeviceIdFromCombinationId(const std::string str);
 
     bool QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
                                    std::vector<Protocol::ComputeDetail> &computeDetails);

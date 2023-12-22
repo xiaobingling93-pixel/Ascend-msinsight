@@ -116,14 +116,22 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true);
     std::string parentDir = FileUtil::GetParentPath(filePathArr[0]);
-    if (!parentDir.empty()) {
-        // 解析未分离前，使用特点前缀进行区分
-        Summary::KernelParse::Instance().KernelFileParse(parentDir, fileId);
-        ParseEndCallBack(SUMMARY_PREFIX + fileId, true);
-        Memory::MemoryParse::Instance().OperatorParse(parentDir, fileId);
-        Memory::MemoryParse::Instance().RecordToParse(parentDir, fileId);
-        ParseEndCallBack(MEMORY_PREFIX + fileId, true);
+    if (parentDir.empty()) {
+        return;
     }
+    // 解析未分离前，使用特点前缀进行区分
+    std::set<std::string> devices = {};
+    Summary::KernelParse::Instance().KernelFileParse(parentDir, fileId, devices);
+    if (devices.size() == 1 && devices.count(fileId) == 1) {
+        ParseEndCallBack(SUMMARY_PREFIX + fileId, true);
+    } else {
+        for (std::string device : devices) {
+            ParseEndCallBack(SUMMARY_PREFIX + Summary::MSPROF_PREFIX + fileId + Summary::MSPROF_CONNECT + device, true);
+        }
+    }
+    Memory::MemoryParse::Instance().OperatorParse(parentDir, fileId);
+    Memory::MemoryParse::Instance().RecordToParse(parentDir, fileId);
+    ParseEndCallBack(MEMORY_PREFIX + fileId, true);
 }
 
 void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result)

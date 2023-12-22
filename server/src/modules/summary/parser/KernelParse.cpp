@@ -49,7 +49,8 @@ std::vector<std::string> KernelParse::StringSplit(const std::string& str)
     return result;
 }
 
-void KernelParse::KernelFileParse(const std::string &parentDir, const std::string &fileId)
+void KernelParse::KernelFileParse(const std::string &parentDir, const std::string &fileId,
+                                  std::set<std::string> &devices)
 {
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("start parse kernel detail.");
@@ -61,11 +62,6 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
 
     std::string kernelFile = kernelFileVec[0];
     auto db = Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId);
-    if (db->HasParseKernelFile(kernelFile)) {
-        return;
-    } else {
-        db->AddParseKernelFile(kernelFile);
-    }
 
     std::ifstream file(kernelFile);
     std::string line;
@@ -75,7 +71,7 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
     Timeline::ParserStatus::FINISH && getline(file, line)) {
         const std::basic_string<char>& basicString(line);
         std::vector<std::string> rowVector = StringSplit(basicString);
-        if (rowVector[0] == "Step Id" or rowVector[0] == "Model ID" or rowVector[0] == "Device_id") {
+        if (!rowVector.empty() and rowVector[0] == STEP_ID or rowVector[0] == MODEL_ID or rowVector[0] == DEVICE_ID) {
             for (int i = 0; i < rowVector.size(); i++) {
                 dataMap[rowVector[i]] = i;
             }
@@ -85,6 +81,11 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
         if (dataMap.size() < kernelTableNum or !KernelParse::mapperToKernelDetail(dataMap, rowVector, fileId, kernel)) {
             ServerLog::Error("The header of the imported file is incorrect or incomplete. The path is: " + kernelFile);
             return;
+        }
+        if (dataMap.count(DEVICE_ID) >= 1) {
+            devices.emplace(rowVector[0]);
+        } else {
+            devices.emplace(fileId);
         }
         // 读取每一行数据写入kernel内
         db->InsertKernelDetail(kernel);
@@ -116,15 +117,15 @@ bool KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
         return false;
     }
 
-    if (dataMap.find("Step Id") != dataMap.end()) {
-        stepIndex = dataMap["Step Id"];
+    if (dataMap.find(STEP_ID) != dataMap.end()) {
+        stepIndex = dataMap[STEP_ID];
         nameIndex = dataMap["Name"];
         typeIndex = dataMap["Type"];
         acceleratorIndex = dataMap["Accelerator Core"];
         durationIndex = dataMap["Duration(us)"];
         waitTimeIndex = dataMap["Wait Time(us)"];
-    } else if (dataMap.find("Device_id") != dataMap.end()) {
-        deviceIndex = dataMap["Device_id"];
+    } else if (dataMap.find(DEVICE_ID) != dataMap.end()) {
+        deviceIndex = dataMap[DEVICE_ID];
         nameIndex = dataMap["Op Name"];
         typeIndex = dataMap["OP Type"];
         acceleratorIndex = dataMap["Task Type"];
@@ -135,9 +136,9 @@ bool KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
         return false;
     }
 
-    kernel.rankId = fileId;
+    kernel.rankId = dataMap.count(STEP_ID) != 0 ? fileId : row[deviceIndex];
     kernel.name = row[nameIndex];
-    kernel.stepId = dataMap.count("Step Id") != 0 ? row[stepIndex] : "";
+    kernel.stepId = dataMap.count(STEP_ID) != 0 ? row[stepIndex] : "";
     kernel.type = row[typeIndex];
     kernel.acceleratorCore = row[acceleratorIndex];
     kernel.startTime = atof(row[startTimeIndex].c_str());
@@ -179,7 +180,8 @@ bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::st
                 future.wait();
             }
             ServerLog::Info("Parse completed. ID:", fileId);
-            KernelFileParse(filePath, fileId);
+            std::set<std::string> devices = {};
+            KernelFileParse(filePath, fileId, devices);
             ServerLog::Info("Update depth completed. ID:", fileId);
         });
         futureMap.emplace(fileId, std::move(future));
@@ -219,7 +221,6 @@ void KernelParse::Reset()
     for (auto &db: databaseList) {
         db->ReleaseStmt();
         db->CloseDb();
-        db->ClearParseKernelFile();
     }
     Timeline::DataBaseManager::Instance().Clear();
 }

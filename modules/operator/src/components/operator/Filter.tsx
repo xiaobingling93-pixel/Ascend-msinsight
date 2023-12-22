@@ -80,7 +80,9 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     }, [ ]);
 
     useEffect(() => {
-        const rankIdOptions = session.allRankIds.map((item, index) => ({ label: item, value: item }));
+        const rankIdOptions = session.allRankIds.map((item, index) => (
+            { label: !item.startsWith('[MSPROF]') ? item : item.substring(item.lastIndexOf('__') + 2), value: item }
+        ));
         setOptions({ rankIdOptions });
         if (session.allRankIds.length === 0) {
             setOptions(defaultOptionMap);
