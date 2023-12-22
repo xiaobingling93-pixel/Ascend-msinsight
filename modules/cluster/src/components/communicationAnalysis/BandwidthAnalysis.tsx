@@ -86,10 +86,12 @@ const BandwidthAnalysis = observer(function (props:
     return (
         <Layout>
             <Container
+                style={{ minWidth: '1000px' }}
                 title={'Packet Distribution'}
                 content={ <BandwidthChart {...props}/>}
             />
             <Container
+                style={{ minWidth: '1000px' }}
                 title={'Bandwidth Analysis'}
                 content={ <BandwidthTable {...props}/> }
             />
@@ -177,6 +179,7 @@ const bandwidthOption: echarts.EChartsOption = {
                 type: 'solid',
             },
         },
+        confine: true,
     },
     toolbox: {
         feature: {
@@ -184,6 +187,7 @@ const bandwidthOption: echarts.EChartsOption = {
             magicType: { show: true, type: [ 'line', 'bar' ] },
             restore: { show: true },
         },
+        top: 15,
     },
     legend: {
         data: [
@@ -221,6 +225,8 @@ const bandwidthOption: echarts.EChartsOption = {
             axisLabel: {
                 formatter: '{value}',
                 color: COLOR.Grey40,
+                width: 60,
+                overflow: 'break',
             },
         },
         {
@@ -229,6 +235,8 @@ const bandwidthOption: echarts.EChartsOption = {
             axisLabel: {
                 formatter: '{value} GB/s',
                 color: COLOR.Grey40,
+                width: 85,
+                overflow: 'break',
             },
             splitLine: {
                 lineStyle: {
@@ -262,6 +270,11 @@ const bandwidthOption: echarts.EChartsOption = {
             data: [],
         },
     ],
+    grid: {
+        left: 65,
+        right: 90,
+        top: 80,
+    },
 };
 
 interface DataType {
@@ -281,30 +294,35 @@ const columns: ColumnsType<DataType> = [
         dataIndex: 'transportType',
         key: 'TransportType',
         align: 'center',
+        ellipsis: true,
     },
     {
         title: 'Transit Size(MB)',
         dataIndex: 'transitSize',
         key: 'TransitSize',
         align: 'center',
+        ellipsis: true,
     },
     {
         title: 'Transit Time(ms)',
         dataIndex: 'transitTime',
         key: 'TransitTime',
         align: 'center',
+        ellipsis: true,
     },
     {
         title: 'Bandwidth(GB/s) ',
         dataIndex: 'bandwidth',
         key: 'Bandwidth',
         align: 'center',
+        ellipsis: true,
     },
     {
         title: 'Large Packet Ratio',
         dataIndex: 'largePacketRatio',
         key: 'LargePacketRatio',
         align: 'center',
+        ellipsis: true,
     },
 ];
 export default BandwidthAnalysis;

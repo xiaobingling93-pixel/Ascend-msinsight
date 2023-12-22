@@ -18,7 +18,9 @@ export const Space = (props: {length: string | number }): JSX.Element => {
 };
 
 export const Container = (props: {title?: JSX.Element | string; content?: JSX.Element;
-    style?: any;type?: String;titleClassName?: string;}): JSX.Element => {
+    style?: any;type?: String;titleClassName?: string;
+    headerStyle?: object;bodyStyle?: object;
+}): JSX.Element => {
     if (props.type === 'headerfixed') {
         return <div className={'header-fixed-content-scroll'} style={{ ...(props.style ?? {}) }}>
             <div className={'container-header'}>{props.title}</div>
@@ -26,16 +28,17 @@ export const Container = (props: {title?: JSX.Element | string; content?: JSX.El
         </div>;
     }
     return <div className={'container-box'} style={{ height: '100%', ...(props.style ?? {}) }}>
-        <div className={props.titleClassName ?? 'container-header'} >{props.title}</div>
+        <div className={props.titleClassName ?? 'container-header'} style={props.headerStyle ?? {}}>{props.title}</div>
         <div className={'container-body'}
-            style={{ height: 'calc(100% - 20px)', overflow: 'auto' }}>{props.content}</div>
+            style={{ height: 'calc(100% - 20px)', overflow: 'auto', ...props.bodyStyle ?? {} }}>{props.content}</div>
     </div>;
 };
 
-export const Tan = (props: {position: string;main: JSX.Element;drag: JSX.Element;id: string;dragSize?: number;style?: object}): JSX.Element => {
+export const Tan = (props: {position: string;main: JSX.Element;drag: JSX.Element;
+    id: string;dragSize?: number;style?: object;className?: string;}): JSX.Element => {
     const [view] = useDraggableContainer({ draggableWH: props.dragSize ?? 300, dragDirection: DragDirection.left, open: true });
-    const { style = {} } = props;
-    return <div style={{ display: 'block', userSelect: 'text', ...style }}>
+    const { style = {}, className } = props;
+    return <div style={{ display: 'block', userSelect: 'text', ...style }} className={className ?? ''}>
         <div style={{ display: 'flex', height: '100%', overflow: 'auto' }} className={'tan-box'}>
             {view({
                 mainContainer: props.main,
