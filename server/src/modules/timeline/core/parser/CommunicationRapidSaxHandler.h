@@ -38,8 +38,8 @@ public:
     CommunicationBandWidth MapToBandwidth(const rapidjson::Document &json);
     CommunicationTimeInfo MapToTimeInfo(const rapidjson::Document &json);
 private:
-    double tempTransitSize;
-    int tempInt;
+    double tempTransitSize = 0;
+    int tempInt = 0;
     rapidjson::Document currentObject;
     rapidjson::Value sizeDistribution;
     std::string currentKey;

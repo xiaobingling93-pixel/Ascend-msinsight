@@ -39,8 +39,8 @@ public:
     CommunicationTimeInfo MapToTimeInfo(const json_t &json);
 
 private:
-    float tempFloat;
-    int tempInt;
+    float tempFloat = 0;
+    int tempInt = 0;
     json_t currentObject;
     json_t sizeDistribution;
     std::string currentKey;
