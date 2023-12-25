@@ -132,6 +132,7 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     Memory::MemoryParse::Instance().OperatorParse(parentDir, fileId);
     Memory::MemoryParse::Instance().RecordToParse(parentDir, fileId);
     ParseEndCallBack(MEMORY_PREFIX + fileId, true);
+    ParserStatusManager::Instance().SetParserStatus(fileId, ParserStatus::FINISH_ALL);
 }
 
 void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result)

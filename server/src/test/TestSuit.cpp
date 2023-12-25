@@ -14,7 +14,6 @@
 using namespace Dic::Module::Timeline;
 class TestSuit : public ::testing::Test {
 protected:
-    static const int sleepSeconds = 5;
     static void SetUpTestCase()
     {
         std::string currPath = Dic::FileUtil::GetCurrPath();
@@ -33,7 +32,7 @@ protected:
         while (true) {
             ParserStatus status0 = ParserStatusManager::Instance().GetParserStatus("0");
             ParserStatus status1 = ParserStatusManager::Instance().GetParserStatus("1");
-            if (status0 == ParserStatus::FINISH && status1 == ParserStatus::FINISH) {
+            if (status0 == ParserStatus::FINISH_ALL && status1 == ParserStatus::FINISH_ALL) {
                 Dic::Server::ServerLog::Info("parse end");
                 return;
             }

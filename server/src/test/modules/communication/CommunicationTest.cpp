@@ -105,7 +105,7 @@ TEST_F(TestSuit, QueryBandwidthDistributionData)
     requestParams.transportType = "HCCS";
     requestParams.rankId = "1";
     database->QueryDistributionData(requestParams, responseBody);
-    std::string expectResult = "{\"0.015504\":[1,0.00166]}";
+    std::string expectResult = "{\"0.016512\":[7,0.01114],\"0.015504\":[1,0.00166]}";
     EXPECT_EQ(responseBody.distributionData, expectResult);
 }
 

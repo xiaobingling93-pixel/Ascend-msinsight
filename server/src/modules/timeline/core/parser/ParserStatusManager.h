@@ -17,6 +17,7 @@ enum class ParserStatus {
     INIT, // 未开始解析
     RUNNING, // 解析中
     FINISH, // 解释完成
+    FINISH_ALL, // 解释完成
     TERMINATE, // 终止解析
 };
 
