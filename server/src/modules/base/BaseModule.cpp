@@ -9,9 +9,9 @@
 namespace Dic {
 namespace Module {
 using namespace Dic::Server;
-ThreadPool BaseModule::threadPool(SystemUtil::GetCpuCoreCount());
 void BaseModule::OnRequest(std::unique_ptr<Protocol::Request> request)
 {
+    static ThreadPool threadPool(SystemUtil::GetCpuCoreCount());
     std::string command = request->command;
     if (requestHandlerMap.count(command) == 0) {
         std::string token = request->token;

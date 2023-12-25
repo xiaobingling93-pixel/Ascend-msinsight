@@ -59,16 +59,17 @@ int main(int argc, const char *argv[])
     for (int i = 0; i < argc; i++) {
         args.emplace_back(std::string(argv[i]));
     }
+    const ParamsOption &option = ParamsParser::Instance().GetOption();
     if (!ParamsParser::Instance().Parse(args)) {
+        ServerLog::Initialize(option.logPath, option.logSize, option.logLevel);
         ServerLog::Error(ParamsParser::Instance().GetError());
         return -1;
     }
-    const ParamsOption &option = ParamsParser::Instance().GetOption();
+    ServerLog::Initialize(option.logPath, option.logSize, option.logLevel);
     if (option.scanPort > 0) {
         PrintAvailablePort(option.scanPort);
         return 0;
     }
-    ServerLog::Initialize(option.logPath, option.logSize, option.logLevel);
     ParamsOptionInfo();
     StartServer(option);
     return 0;

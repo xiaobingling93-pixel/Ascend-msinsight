@@ -25,9 +25,6 @@ public:
 protected:
     ModuleType moduleName = ModuleType::UNKNOWN;
     std::map<std::string, std::unique_ptr<ModuleRequestHandler>> requestHandlerMap;
-
-private:
-    static ThreadPool threadPool;
 };
 } // end of namespace Module
 } // end of namespace Dic
