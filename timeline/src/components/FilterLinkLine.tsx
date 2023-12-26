@@ -104,7 +104,8 @@ const useFetchLinkLines = (session: Session): FetchLinkLines => {
         for (const unit of getCardUnits(session.units)) {
             const { dataSource, cardId } = unit.metadata as { dataSource: DataSource; cardId: string };
             res = res.concat((await window.request(dataSource,
-                { command: 'flow/categoryEvents', params: { rankId: cardId, startTime: domainStart, endTime: domainEnd, category } }) as CategoryEvents).flowDetailList);
+                { command: 'flow/categoryEvents', params: { rankId: cardId, startTime: domainStart, endTime: domainEnd, category } }) as CategoryEvents).flowDetailList
+                .map(data => ({ ...data, cardId })));
         };
         return res;
     }, [session]);
@@ -141,6 +142,20 @@ const useGetCategories = (session: Session, isSuspend: boolean): string[] => {
     }, [isSuspend]);
     return categories;
 };
+
+const filterDataSize = function<T>(datas: T[], maxDataSize: number): T[] {
+    if (datas.length > maxDataSize) {
+        const split = Math.ceil(datas.length / maxDataSize);
+        const res: T[] = [];
+        datas.forEach((data, index) => {
+            index % split === 0 && (res.push(data));
+        });
+        return res;
+    }
+    return datas;
+};
+
+const TOTAL_MAXIMUM_DATA_SIZE = 1e3;
 const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session; isSuspend: boolean }): JSX.Element => {
     const fetchLinkLines = useFetchLinkLines(session);
     const categories = useGetCategories(session, isSuspend);
@@ -156,18 +171,20 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
             {!isEmptyData && <FilterButtonLine>
                 <StyledButton width={50} onClick={async () => {
                     const newLines: LinkLines = {};
+                    const totalSize = categories.reduce((acc, cur) => acc + cur.length, 0);
                     for (const category of categories) {
                         const datas = await fetchLinkLines(session, category);
-                        newLines[category] = datas;
+                        const maxSize = TOTAL_MAXIMUM_DATA_SIZE * category.length / totalSize;
+                        newLines[category] = filterDataSize(datas, maxSize);
                     }
-                    runInAction(() => { session.linkLines = { ...newLines }; });
+                    session.linkLines = newLines;
                 }}>
                     All
                 </StyledButton>
                 <StyledButton width={50} onClick={action(() => {
                     const newLines: Record<string, undefined> = {};
                     categories.forEach(category => {
-                        newLines[category] = undefined;
+                        session.linkLines[category] = undefined;
                     });
                     session.linkLines = { ...newLines };
                 })}>

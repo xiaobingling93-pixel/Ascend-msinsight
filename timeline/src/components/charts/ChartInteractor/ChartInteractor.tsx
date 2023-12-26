@@ -121,25 +121,22 @@ const Interactor = ({ domainStart, domainEnd, endTimeAll, session, interactorMou
         , [ normalRect?.width, session.domain.timePerPx, domainStart, domainEnd ]);
     const xReverseScale = React.useMemo(() => d3.scaleLinear().range([ 0, normalRect?.width ?? INTERACTOR_WIDTH ]).domain([ domainStart, domainEnd ])
         , [ normalRect?.width, session.domain.timePerPx, domainStart, domainEnd ]);
+    const xReverseScaleRef = React.useRef(xReverseScale);
+    xReverseScaleRef.current = xReverseScale;
     const interactorParams: InteractorParams = { normalCanvas, hoverCanvas, xReverseScale, xScale, isNsMode, session, customRenderers, theme };
-    useEffect(() => {
-        resetCanvasSize(normalCanvas, normalRect); resetCanvasSize(hoverCanvas, hoverRect);
-    }, [ normalRect, hoverRect ]);
+    useEffect(() => { resetCanvasSize(normalCanvas, normalRect); resetCanvasSize(hoverCanvas, hoverRect); }, [ normalRect, hoverRect ]);
     useEffect(() => {
         if (!normalCanvas.current) { return; }
         draw(normalCanvas.current.getContext('2d'), normalCanvas.current.clientWidth, normalCanvas.current.clientHeight, xReverseScale, xScale, interactorMouseState, session.selectedRange, isNsMode, session, customRenderers, theme);
         const traceAction: string[] = [ 'selectBrushScope', 'dragLane', 'zoomProportion' ];
         traceAction.forEach((item) => { traceEnd(item); });
     }, [ domainStart, domainEnd, endTimeAll, session.selectedRange, theme, normalRect, session.linkData, session.scrollTop, ...customRenderTriggers ]);
-    useEffect(() => { if (!normalCanvas.current) { return; } draw(normalCanvas.current.getContext('2d'), normalCanvas.current.clientWidth, normalCanvas.current.clientHeight, xReverseScale, xScale, interactorMouseState, session.selectedRange, isNsMode, session, customRenderers, theme); }, [ session.linkLines, session.totalHeight ]);
     const point = interactorMouseState.lastPos?.current?.x !== undefined ? xScale(interactorMouseState.lastPos?.current?.x) : undefined;
     useImperativeHandle(ref, () => ({
         mouseMoveAction: (interactorMouseState: InteractorMouseState) => {
             mouseMoveAction(interactorParams, interactorMouseState);
         },
-        mouseDownAction: (interactorMouseState: InteractorMouseState) => {
-            return mouseDownAction(session, xReverseScale, interactorMouseState, splitLineRef);
-        },
+        mouseDownAction: (interactorMouseState: InteractorMouseState) => mouseDownAction(session, xReverseScale, interactorMouseState, splitLineRef),
         mouseUpAction: (interactorMouseState: InteractorMouseState, e: MouseEvent) => {
             mouseUpAction(interactorParams, interactorMouseState, e);
         },

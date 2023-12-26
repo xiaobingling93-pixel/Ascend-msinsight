@@ -20,8 +20,8 @@ import { Pos } from '../charts/ChartInteractor/common';
 import { THUMB_WIDTH_PX } from '../base';
 import { MouseDownActionResult } from '../charts/ChartInteractor/actions';
 import { loopActionFactory } from '../../utils/FactoryActions';
-import { RenderManagerContext } from '../../context/context';
-import { renderManager } from '../../renderManager';
+import { RenderEngineContext } from '../../context/context';
+import { renderEngine } from '../../renderEngine';
 import { DragDirection, useDraggableContainerEx } from '../../utils/useDraggableContainerEx';
 
 export const TIME_LINE_AXIS_HEIGHT_PX = 30;
@@ -156,7 +156,7 @@ export const ChartContainer = observer((props: Props) => {
         }}
         tabIndex={0}
     >
-        <RenderManagerContext.Provider value={renderManager}>
+        <RenderEngineContext.Provider value={renderEngine}>
             <ChartHeader
                 session={session}
                 laneInfoWidth={LANE_INFO_WIDTH_PX}
@@ -164,7 +164,7 @@ export const ChartContainer = observer((props: Props) => {
                 showRecommendation={!props.interactive}
             />
             <ChartBody session={session} interactive={props.interactive} interactorMouseState={interactorMouseState} chartInteractorRef={chartInteractorRef}/>
-        </RenderManagerContext.Provider>
+        </RenderEngineContext.Provider>
         <HorizontalScroller
             session={session}
             leftLaneInfoWidth={LANE_INFO_WIDTH_PX}

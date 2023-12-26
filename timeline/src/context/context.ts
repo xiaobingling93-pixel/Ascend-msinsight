@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import { RootStore } from '../store';
-import { RenderManager } from '../renderManager';
+import { RenderEngine } from '../renderEngine';
 export const RootStoreContext = createContext<RootStore | undefined>(undefined);
 
 export const useRootStore = (): RootStore => {
@@ -11,12 +11,12 @@ export const useRootStore = (): RootStore => {
     return store;
 };
 
-export const RenderManagerContext = createContext<RenderManager | undefined>(undefined);
+export const RenderEngineContext = createContext<RenderEngine | undefined>(undefined);
 
-export const useRenderManager = (): RenderManager => {
-    const renderManager = useContext(RenderManagerContext);
-    if (renderManager === undefined) {
-        throw new Error('RenderManager is undefined');
+export const useRenderEngine = (): RenderEngine => {
+    const renderEngine = useContext(RenderEngineContext);
+    if (renderEngine === undefined) {
+        throw new Error('RenderEngine is undefined');
     }
-    return renderManager;
+    return renderEngine;
 };

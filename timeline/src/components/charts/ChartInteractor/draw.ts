@@ -322,12 +322,7 @@ export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height
     const pinnedScrollArea = document.getElementsByClassName('pinnedScrollArea');
     const pinnedAreaHeight = pinnedScrollArea[0]?.clientHeight ?? 0;
     updateUnitHeight(session, pinnedAreaHeight);
-    Object.values(session.linkLines)
-        .forEach(datas => {
-            datas?.forEach((data) => {
-                drawLinkLine(ctx, session, data as unknown as FlowEvent, xReverseScale, theme, pinnedAreaHeight);
-            });
-        });
+    drawLinkLines(ctx, session, xReverseScale, theme, pinnedAreaHeight);
 };
 
 const UNDRAW_HEIGHT = 45;
@@ -340,32 +335,36 @@ const getHeight = (session: Session, data: DataBlock, cardId: string): number | 
     return height;
 };
 
-const drawLinkLine = (ctx: CanvasRenderingContext2D, session: Session, data: FlowEvent, xScale: Scale, theme: Theme, pinnedAreaHeight: number): void => {
-    const { from, to } = data;
-    const targetX = xScale(to.timestamp);
-    const targetY = getHeight(session, to, data.cardId);
+const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, xScale: Scale, theme: Theme, pinnedAreaHeight: number): void => {
     ctx.save();
     ctx.beginPath();
     const clipTop = pinnedAreaHeight + UNDRAW_HEIGHT;
     ctx.rect(-1, clipTop, ctx.canvas.width + 1, ctx.canvas.height + 1);
     ctx.clip();
-    const sourceX = xScale(from.timestamp);
-    const sourceY = getHeight(session, from, data.cardId);
-    if ((sourceY === undefined || targetY === undefined) || (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT)) { return; }
-    const targetPos: Array<[x: number, y: number]> = [[ targetX, targetY ]];
-    ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(data.category, colorPalette.length)]];
-
-    const offset = 40;
     ctx.beginPath();
-    ctx.moveTo(sourceX, sourceY);
-    ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
-    ctx.stroke();
+    const offset = 40;
+    Object.values(session.linkLines)
+        .forEach(datas => {
+            datas?.forEach((data) => {
+                const { category, from, to, cardId } = data as unknown as FlowEvent;
+                const targetX = xScale(to.timestamp);
+                const targetY = getHeight(session, to, cardId);
+                const sourceX = xScale(from.timestamp);
+                const sourceY = getHeight(session, from, cardId);
+                if ((sourceY === undefined || targetY === undefined) || (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT)) { return; }
+                const targetPos: Array<[x: number, y: number]> = [[ targetX, targetY ]];
+                ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(category, colorPalette.length)]];
+                ctx.moveTo(sourceX, sourceY);
+                ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
+                ctx.stroke();
+                if (targetY >= UNDRAW_HEIGHT) {
+                    const len = targetPos.length;
+                    let [ fromX, fromY ] = targetPos.reduce(([ prevX, prevY ], [ x, y ]) => [ prevX + x + offset, prevY + y ], [ 0, 0 ]);
+                    fromX = fromX / len; fromY = fromY / len;
+                    drawArrow(ctx, { toX: targetX, toY: targetY, fromX: targetX - offset, fromY: targetY + (fromY - targetY) * Math.sqrt(Math.abs(fromY - targetY)) / (Math.abs(fromX - targetX) + Math.abs(fromY - targetY)), length: 10, angle: 30, color: theme.selectedChartColor });
+                }
+            });
+        });
 
-    if (targetY >= UNDRAW_HEIGHT) {
-        const len = targetPos.length;
-        let [ fromX, fromY ] = targetPos.reduce(([ prevX, prevY ], [ x, y ]) => [ prevX + x + offset, prevY + y ], [ 0, 0 ]);
-        fromX = fromX / len; fromY = fromY / len;
-        drawArrow(ctx, { toX: targetX, toY: targetY, fromX: targetX - offset, fromY: targetY + (fromY - targetY) * Math.sqrt(Math.abs(fromY - targetY)) / (Math.abs(fromX - targetX) + Math.abs(fromY - targetY)), length: 10, angle: 30, color: theme.selectedChartColor });
-    }
     ctx.restore();
 };

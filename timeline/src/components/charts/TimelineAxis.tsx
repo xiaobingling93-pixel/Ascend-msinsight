@@ -1,10 +1,9 @@
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { throttle } from 'lodash';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
-import { useRenderManager } from '../../context/context';
+import { useRenderEngine } from '../../context/context';
 import { SizePx } from '../../entity/chart';
 import { Session } from '../../entity/session';
 import { TimeUnit } from '../../utils/adaptTimeForLength';
@@ -331,24 +330,26 @@ const TimelineAxis = observer(({ session, margin, timelineHeight }: TimelineAxis
     const canvas = React.useRef<HTMLCanvasElement>(null);
     const [ width, ref ] = useWatchResize<HTMLDivElement>('width');
     const theme = useTheme();
-    const { domainRange: { domainStart, domainEnd }, domain, isNsMode } = session;
-    const draw = throttle(() => {
-        if (canvas.current && width !== 0) {
-            runInAction(() => { domain.chartViewWidth = width; });
+    const draw = React.useMemo(() => () => {
+        if (canvas.current && ref.current?.clientWidth !== 0) {
+            runInAction(() => { session.domain.chartViewWidth = ref.current?.clientWidth ?? 0; });
             drawTimelineAxis(canvas.current, {
-                domain: [ domainStart, domainEnd ],
+                domain: [ session.domainRange.domainStart, session.domainRange.domainEnd ],
                 spaceX: margin,
                 fontColor: theme.fontColor,
                 lineColor: theme.timelineAxisColor,
-                textParser: getTextParser(isNsMode),
-                timePerPx: domain.timePerPx,
+                textParser: getTextParser(session.isNsMode),
+                timePerPx: session.domain.timePerPx,
             });
         }
-    }, 50);
-    const renderManager = useRenderManager();
+    }, []);
+    const renderEngine = useRenderEngine();
     React.useEffect(() => {
-        renderManager.addTask(draw);
-    }, [ width, domainStart, domainEnd, theme, session ]);
+        const renderID = renderEngine.addTask(draw);
+        return () => {
+            renderEngine.deleteTask(renderID);
+        };
+    }, []);
     return <CanvasContainer ref={ref} className={TIME_LINE_AXIS_CLASSNAME}>
         <canvas
             ref={canvas}
