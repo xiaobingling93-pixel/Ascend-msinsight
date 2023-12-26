@@ -65,6 +65,7 @@ void ChannelCallbacks::WriteCb(uv_write_t *req, int status)
     }
     // note: release req
     free(req);
+    req = nullptr;
 }
 
 void ChannelCallbacks::ShutDownCb(uv_shutdown_t *req, int status)
@@ -73,6 +74,7 @@ void ChannelCallbacks::ShutDownCb(uv_shutdown_t *req, int status)
         return;
     }
     free(req);
+    req = nullptr;
 }
 
 void ChannelCallbacks::CloseCb(uv_handle_t *handle) {}

@@ -84,6 +84,7 @@ bool UvLoopMgr::AllLoopStop()
         }
         if (loopKv.first != defaultId) {
             free(loop);
+            loop = nullptr;
         }
     }
     loopMap.clear();
