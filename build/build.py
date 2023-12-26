@@ -50,9 +50,9 @@ def build_vscode(vscode_version, os_name):
     os.putenv('npm_config_strict_ssl', 'false')
     os.putenv('npm_config_disturl', 'http://mirrors.tools.huawei.com/nodejs')
     os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
-    if os_name == 'win':
+    if os_name.startswith('win'):
         exec_command(['npm.cmd', 'run', 'buildWin'], SCRIPT_PATH)
-    elif os_name == 'darwin':
+    elif os_name.startswith('darwin'):
         exec_command(['npm', 'run', 'buildLinuxDarwin'], SCRIPT_PATH)
         return
     elif os_name.endswith('x86_64'):
@@ -110,8 +110,8 @@ def build_light_package(version, os_name):
                     os.path.join(profiler_path, 'frontend'))
     shutil.copytree(os.path.join(SCRIPT_PATH, 'serverBuild', 'server'),
                     os.path.join(profiler_path, 'server'))
-    cargo_cmd = 'cargo.exe' if os_name == 'win' else 'cargo'
-    task = 'insight-windows' if os_name == 'win' else 'insight-mac'
+    cargo_cmd = 'cargo.exe' if os_name.startswith('win') else 'cargo'
+    task = 'insight-windows' if os_name.startswith('win') else 'insight-mac'
     exec_command([cargo_cmd, 'make', task], package_path)
     package_name = 'Ascend-Insight_' + version + '_' + os_name
     for tmp in os.listdir(os.path.join(package_path, 'preview')):
@@ -138,9 +138,9 @@ def main():
     framework = 'x86_64' if os_info.find('x86_64') > -1 else 'aarch64'
     os_name = 'linux-' + framework
     if os_info.find('Windows') > -1:
-        os_name = 'win'
+        os_name = 'win-' + framework
     elif os_info.find('mac') > -1:
-        os_name = 'darwin'
+        os_name = 'darwin-' + framework
     build_vscode(vscode_version, os_name)
     if platform.system() != 'Darwin':
         build_intellij(idea_version, os_name)
