@@ -6,6 +6,7 @@ import { FilterType, TabState } from '../../entity/tabDependency';
 
 describe('hooks test', () => {
     const unit: InsightUnit = {
+        collapsible: false,
         name: 'unit',
         height: () => 1,
         expandable: false,

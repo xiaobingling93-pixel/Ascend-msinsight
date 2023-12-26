@@ -169,6 +169,8 @@ export interface InsightUnitParams<MetaData, DetailType extends Record<string, u
     notifications?: Array<(metaData: MetaData) => (false | string)>; // false代表无需提示信息 不为false返回提示的信息
     searchConfig?: MenuType;
     buttons?: Array<React.FC<{ session: Session }>>;
+    collapseAction?: (unit: InsightUnit) => void;
+    collapsible?: boolean;
 }
 
 export type InsightUnitClass = { new(metadata: never): InsightUnit };
@@ -267,10 +269,12 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         isDisplay = true;
         detail = transformDetail(params.detail);
         bottomPanelRender = params.bottomPanelRender;
+        collapseAction = params.collapseAction;
         spreadUnits = wrapSpread(params.spreadUnits);
         children?: InsightUnit[] = params.spreadUnits ? [] : undefined;
         phase: UnitPhase = 'configuring';
         searchConfig = params.searchConfig;
+        collapsible = true;
 
         constructor(metadata: T) {
             makeAutoObservable(this, { searchConfig: false });
@@ -301,6 +305,7 @@ Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknow
         name = params.name;
         spreadUnits = wrapSpread(params.spreadUnits);
         phase: UnitPhase = 'configuring';
+        collapsible = true;
 
         constructor(metadata: T) {
             makeAutoObservable(this);

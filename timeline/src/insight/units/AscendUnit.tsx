@@ -1,5 +1,5 @@
 import {
-    chart,
+    chart, ChartDesc,
     InsightUnit,
     LinkDataDesc,
     MetaData,
@@ -36,7 +36,7 @@ import { SelectedDataBase } from '../../components/details/base/SelectedData';
 import { offsetConfig } from './config/offsetConfig';
 import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
-import { StackStatusData } from '../../entity/chart';
+import { ChartType, StackStatusData } from '../../entity/chart';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -127,7 +127,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
     },
     chart: chart({
         type: 'stackStatus',
-        height: UnitHeight.STANDARD,
+        height: UnitHeight.UPPER,
         mapFunc: async (session: Session, metaData: unknown) => {
             const threadMetaData = metaData as ThreadMetaData;
             // 查询泳道chart参数加上时间偏移
@@ -218,6 +218,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
         ]),
         config: {
             rowHeight: UnitHeight.STANDARD,
+            isCollapse: true,
         },
     }),
     bottomPanelRender: (session: Session, triggerEvent: TriggerEvent, metadata) => {
@@ -229,6 +230,16 @@ export const ThreadUnit = unit<ThreadMetaData>({
             };
         }
         return TabPanes({ tabs, commonBottomPanel });
+    },
+    collapseAction: (unit) => {
+        const chart = (unit.chart as ChartDesc<ChartType>);
+        const config = (unit.chart as ChartDesc<ChartType>).config;
+        runInAction(() => {
+            (config as any).isCollapse = !((config as any).isCollapse as boolean);
+            const collapseHeight = UnitHeight.UPPER;
+            const expandedHeight = (config as any).maxDepth * (config as any).rowHeight;
+            chart.height = ((config as any).isCollapse as boolean) ? collapseHeight : expandedHeight;
+        });
     },
 });
 
