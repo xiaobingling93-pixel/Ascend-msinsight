@@ -218,9 +218,10 @@ const ExpandIcon = observer(({ unit, session }: { unit: KeyedInsightUnit; sessio
                 platform.trace(`unfold${unit.name.replace(/\s*/g, '')}`, {});
             }
         });
+        unit.collapseAction?.(unit);
     }, [session]);
-    if (unit.children) {
-        return <div style={{ float: 'left', height: '20px', marginLeft: '6px' }}
+    if (unit.children !== undefined || unit.collapsible) {
+        return <div style={{ float: 'left', height: '20px', marginLeft: '6px', top: 'calc(50% - 10px)', position: 'relative' }}
             onClick={(e: React.MouseEvent<HTMLElement, MouseEvent>) => onExpand(unit)}>
             <Arrow style={{ transform: `rotate(${unit.isExpanded ? 0 : '-90deg'})`, cursor: 'pointer' }}
                 className={`insight-unit-${unit.isExpanded ? 'expanded' : 'fold'}`} />
@@ -246,6 +247,7 @@ interface UnitInfoProps {
     hasExpandIcon: boolean;
     hasPinButton: boolean;
     isPinned: boolean;
+    height: number;
 }
 
 export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon, ...props }: UnitInfoProps): JSX.Element => {

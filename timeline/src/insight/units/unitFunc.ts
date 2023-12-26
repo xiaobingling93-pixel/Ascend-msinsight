@@ -6,8 +6,7 @@ import {
     ThreadMetaData,
     CounterRequest,
 } from '../../entity/data';
-import { ChartDesc, InsightUnit } from '../../entity/insight';
-import { ChartConfig } from '../../entity/chart';
+import { ChartDesc, InsightUnit, UnitHeight } from '../../entity/insight';
 import { CounterUnit, ProcessUnit, ThreadUnit } from './AscendUnit';
 
 const paramsTree = new Map();
@@ -73,18 +72,22 @@ function newLane (insightMetaData: InsightMetaData<any>, parentMetaData: any): I
                 dataSource: paramsTree.get(insightMetaData.metadata).dataSource,
             });
             const chart = threadUnit.chart as ChartDesc<'stackStatus'>;
-            chart.height = Math.max(insightMetaData.metadata.maxDepth * (chart.config as ChartConfig<'stackStatus'>).rowHeight, chart.height);
+            if (insightMetaData.metadata.maxDepth === 1) {
+                chart.height = UnitHeight.STANDARD;
+                (chart.config as any).isCollapse = false;
+                threadUnit.collapsible = false;
+            }
+            (chart.config as any).maxDepth = insightMetaData.metadata.maxDepth;
             return threadUnit;
         }
         case 'counter': {
-            const threadUnit = new CounterUnit({
+            return new CounterUnit({
                 cardId: paramsTree.get(paramsTree.get(insightMetaData.metadata)).cardId,
                 processId: (parentMetaData as ProcessMetaData).processId,
                 threadName: insightMetaData.metadata.threadName,
                 dataType: insightMetaData.metadata.dataType,
                 dataSource: paramsTree.get(insightMetaData.metadata).dataSource,
             });
-            return threadUnit;
         }
         default:
             return undefined;
