@@ -1,7 +1,7 @@
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { Tooltip, Select } from 'antd';
-import { computed, runInAction } from 'mobx';
+import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { ReactComponent as AntdFilterIcon } from '../assets/images/insights/FunnelIcon.svg';
@@ -11,8 +11,6 @@ import { InsightUnit } from '../entity/insight';
 import { SvgType } from './base/rc-table/types';
 import { StyledSelect } from './base/StyledSelect';
 import { CardMetaData, ProcessMetaData } from '../entity/data';
-import { preOrderFlatten } from '../entity/common';
-import { isPinned } from './ChartContainer/unitPin';
 import i18n from 'i18next';
 
 const FilterIcon = AntdFilterIcon as SvgType;
