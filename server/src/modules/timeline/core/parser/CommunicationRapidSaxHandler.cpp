@@ -2,7 +2,6 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-#include "ServerLog.h"
 #include "JsonUtil.h"
 #include "ParserStatusManager.h"
 #include "CommunicationRapidSaxHandler.h"
@@ -10,7 +9,6 @@
 namespace Dic {
 namespace Module {
 namespace Timeline {
-using namespace Dic::Server;
 
 CommunicationRapidSaxHandler::CommunicationRapidSaxHandler()
 {
@@ -28,7 +26,6 @@ bool CommunicationRapidSaxHandler::Bool(bool b)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
     currentObject.AddMember(tempKey, b, currentObject.GetAllocator());
-    Server::ServerLog::Debug("boolean val:", b, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -36,7 +33,6 @@ bool CommunicationRapidSaxHandler::Int(int i)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
     currentObject.AddMember(tempKey, i, currentObject.GetAllocator());
-    Server::ServerLog::Debug("Int val:", i, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -48,7 +44,6 @@ bool CommunicationRapidSaxHandler::Uint(unsigned int u)
         rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
         currentObject.AddMember(tempKey, u, currentObject.GetAllocator());
     }
-    Server::ServerLog::Debug("Uint val:", u, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -56,7 +51,6 @@ bool CommunicationRapidSaxHandler::Int64(int64_t i)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
     currentObject.AddMember(tempKey, i, currentObject.GetAllocator());
-    Server::ServerLog::Debug("Int64 val:", i, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -64,7 +58,6 @@ bool CommunicationRapidSaxHandler::Uint64(uint64_t u)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
     currentObject.AddMember(tempKey, u, currentObject.GetAllocator());
-    Server::ServerLog::Debug("Uint64 val:", u, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -76,7 +69,6 @@ bool CommunicationRapidSaxHandler::Double(double d)
         rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
         currentObject.AddMember(tempKey, d, currentObject.GetAllocator());
     }
-    Server::ServerLog::Debug("Double val:", d, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -85,14 +77,12 @@ bool CommunicationRapidSaxHandler::String(const char *str, rapidjson::SizeType l
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
     rapidjson::Value val(str, currentObject.GetAllocator());
     currentObject.AddMember(tempKey, val, currentObject.GetAllocator());
-    Server::ServerLog::Debug("string val:", str, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
 bool CommunicationRapidSaxHandler::StartObject()
 {
     currentDepth++;
-    Server::ServerLog::Debug("start_object elements:", " depth=", currentDepth, " key=", currentKey);
     if (currentDepth == infoDepthSeven) {
         sizeDistribution = rapidjson::Value(rapidjson::kObjectType);
     }
@@ -101,7 +91,6 @@ bool CommunicationRapidSaxHandler::StartObject()
 
 bool CommunicationRapidSaxHandler::Key(const char *str, rapidjson::SizeType length, bool copy)
 {
-    Server::ServerLog::Debug("key currentDepth:", currentDepth, " key=", currentKey, " val=", str);
     currentKey = str;
     if (currentDepth == stageIdDepth) { stageId = str; }
     if (currentDepth == stepIdDepth) { stepId = str; }
@@ -110,7 +99,6 @@ bool CommunicationRapidSaxHandler::Key(const char *str, rapidjson::SizeType leng
     if (currentDepth == tableFlagDepth) { tableFlag = str; }
     if (currentDepth == infoDepth && std::strcmp("Communication Bandwidth Info", tableFlag.c_str()) == 0) {
         transportType = str;
-        Server::ServerLog::Debug("currentDepth:", currentDepth, " transportType=", str);
     }
     return true;
 }
@@ -123,36 +111,29 @@ bool CommunicationRapidSaxHandler::EndObject(rapidjson::SizeType memberCount)
     auto database = DataBaseManager::Instance().GetClusterDatabase();
     currentDepth--;
     if (currentDepth == infoDepth && std::strcmp(tableFlag.c_str(), "Communication Bandwidth Info") == 0) {
-        Server::ServerLog::Debug("save Communication Bandwidth Info:", memberCount);
         CommunicationBandWidth bandWidth = MapToBandwidth(currentObject);
         database->InsertBandwidth(bandWidth);
         currentObject.RemoveAllMembers();
     }
 
     if (currentDepth == tableFlagDepth && std::strcmp(tableFlag.c_str(), "Communication Time Info") == 0) {
-        Server::ServerLog::Debug("save Communication Time Info:");
         CommunicationTimeInfo timeInfo = MapToTimeInfo(currentObject);
         database->InsertTimeInfo(timeInfo);
         currentObject.RemoveAllMembers();
     }
     if (currentDepth == infoDepthSeven) {
-        Server::ServerLog::Debug("save sizeDistribution :");
         currentObject.AddMember("Size Distribution", sizeDistribution, currentObject.GetAllocator());
     }
-
-    Server::ServerLog::Debug("end object currentDepth:", currentDepth, " key=", currentKey);
     return true;
 }
 
 bool CommunicationRapidSaxHandler::StartArray()
 {
-    Server::ServerLog::Debug("start_array depth:", currentDepth, " key=", currentKey);
     return true;
 }
 
 bool CommunicationRapidSaxHandler::EndArray(rapidjson::SizeType elementCount)
 {
-    Server::ServerLog::Debug("end array depth", currentDepth, " key=", currentKey);
     if (currentDepth == sizeDistributionDepth) {
         rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
         rapidjson::Value array(rapidjson::kArrayType);

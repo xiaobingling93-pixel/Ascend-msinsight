@@ -2,7 +2,6 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-#include "ServerLog.h"
 #include "JsonUtil.h"
 #include "ParserStatusManager.h"
 #include "CommunicationMatrixRapidHandler.h"
@@ -10,7 +9,6 @@
 namespace Dic {
 namespace Module {
 namespace Timeline {
-using namespace Dic::Server;
 CommunicationMatrixRapidHandler::CommunicationMatrixRapidHandler()
 {
     currentObject.SetObject();
@@ -27,7 +25,6 @@ bool CommunicationMatrixRapidHandler::Bool(bool bl)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
     currentObject.AddMember(tempKey, bl, currentObject.GetAllocator());
-    Server::ServerLog::Debug("boolean val:", bl, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -35,7 +32,6 @@ bool CommunicationMatrixRapidHandler::Int(int i)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
     currentObject.AddMember(tempKey, i, currentObject.GetAllocator());
-    Server::ServerLog::Debug("Int val:", i, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -43,7 +39,6 @@ bool CommunicationMatrixRapidHandler::Uint(unsigned int uint)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
     currentObject.AddMember(tempKey, uint, currentObject.GetAllocator());
-    Server::ServerLog::Debug("Uint val:", uint, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -51,7 +46,6 @@ bool CommunicationMatrixRapidHandler::Int64(int64_t i)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
     currentObject.AddMember(tempKey, i, currentObject.GetAllocator());
-    Server::ServerLog::Debug("Int64 val:", i, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -59,7 +53,6 @@ bool CommunicationMatrixRapidHandler::Uint64(uint64_t u)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
     currentObject.AddMember(tempKey, u, currentObject.GetAllocator());
-    Server::ServerLog::Debug("Uint64 val:", u, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -67,7 +60,6 @@ bool CommunicationMatrixRapidHandler::Double(double doubleVal)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
     currentObject.AddMember(tempKey, doubleVal, currentObject.GetAllocator());
-    Server::ServerLog::Debug("Double val:", doubleVal, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
@@ -76,20 +68,17 @@ bool CommunicationMatrixRapidHandler::String(const char *str, rapidjson::SizeTyp
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
     rapidjson::Value val(str, currentObject.GetAllocator());
     currentObject.AddMember(tempKey, val, currentObject.GetAllocator());
-    Server::ServerLog::Debug("string val:", str, " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
 bool CommunicationMatrixRapidHandler::StartObject()
 {
     currentDepth++;
-    Server::ServerLog::Debug("start_object elements:", " depth=", currentDepth, " key=", currentKey);
     return true;
 }
 
 bool CommunicationMatrixRapidHandler::Key(const char *str, rapidjson::SizeType length, bool copy)
 {
-    Server::ServerLog::Debug("key currentDepth:", currentDepth, " key=", currentKey, " val=", str);
     currentKey = str;
     if (currentDepth == groupDepth) { groupId = str; }
     if (currentDepth == stepDepth) { iterationId = str; }
@@ -110,19 +99,16 @@ bool CommunicationMatrixRapidHandler::EndObject(rapidjson::SizeType memberCount)
         database->InsertCommunicationMatrix(matrix);
         currentObject.RemoveAllMembers();
     }
-    Server::ServerLog::Debug("end object currentDepth:", currentDepth, " key=", currentKey);
     return true;
 }
 
 bool CommunicationMatrixRapidHandler::StartArray()
 {
-    Server::ServerLog::Debug("start_array depth:", currentDepth, " key=", currentKey);
     return true;
 }
 
 bool CommunicationMatrixRapidHandler::EndArray(rapidjson::SizeType elementCount)
 {
-    Server::ServerLog::Debug("end array depth", currentDepth, " key=", currentKey);
     return true;
 }
 
