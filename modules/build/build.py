@@ -12,6 +12,7 @@ import os
 import platform
 import shutil
 import subprocess
+import sys
 
 BUILD_DIR = os.path.dirname(os.path.abspath(__file__))
 MODULES_DIR = os.path.dirname(BUILD_DIR)
@@ -25,51 +26,78 @@ MODULES_MAP = {
 }
 
 
+def execute_cmd(module, module_dir, cmd):
+    proc = subprocess.Popen(cmd, cwd=module_dir, stdout=subprocess.PIPE)
+    for line in iter(proc.stdout.readline, b''):
+        logging.info('[%s]%s', MODULES_MAP.get(module), line.decode('utf-8').strip())
+    proc.communicate(timeout=600)
+    return proc.returncode
+
+
 def build_module(module):
-    logging.info('start to build %s', module)
+    """
+    构建单个模块，首先先npm install --force安装依赖，然后npm run build进行编译，最终拷贝结果到framework下的plugins对应目录里
+
+    :param module: 子模块
+    :return: 0 表示构建成功， 1表示构建失败
+    """
+    logging.basicConfig(level=logging.INFO)
+    logging.info('[%s]Start to build %s', MODULES_MAP.get(module), module)
     module_dir = os.path.join(MODULES_DIR, module)
     plugin_dir = os.path.join(PLUGIN_DIR, MODULES_MAP.get(module))
     if os.path.exists(plugin_dir):
         shutil.rmtree(plugin_dir)
 
     npm_cmd = 'npm.cmd' if platform.system() == 'Windows' else 'npm'
-    result = subprocess.run([npm_cmd, 'install', '--force'], cwd=module_dir)
-    if result.returncode != 0:
-        logging.error(result.stderr)
-        logging.error('failed to build %s due to download dependency', module)
-        return
-    result = subprocess.run([npm_cmd, 'run', 'build'], cwd=module_dir)
-    if result.returncode != 0:
-        logging.error(result.stderr)
-        logging.error('failed to build %s due to build project', module)
-        return
+    result = execute_cmd(module, module_dir, [npm_cmd, 'install', '--force'])
+    if result != 0:
+        logging.error('[%s]Failed to install dependencies, %s', MODULES_MAP.get(module), result)
+        return 1
+
+    result = execute_cmd(module, module_dir, [npm_cmd, 'run', 'build'])
+    if result != 0:
+        logging.error('[%s]Failed to build %s, %s', MODULES_MAP.get(module), module, result)
+        return 1
+
     shutil.copytree(os.path.join(module_dir, 'build'), plugin_dir)
-    logging.info('finish to build %s', module)
+    logging.info('[%s]Finish to build %s', MODULES_MAP.get(module), module)
+    return result
 
 
 def parallel_build():
-    modules = list(MODULES_MAP.keys())
+    """
+    采用多进程实现并行构建，
 
+    :return: 0 表示构建成功， 1表示构建失败；如果单个模块（进程）构建失败，则返回modules构建失败
+    """
+    logging.info('Start to build modules')
+    modules = list(MODULES_MAP.keys())
     pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 4))
     results = pool.map(build_module, modules)
-
     pool.close()
     pool.join()
 
-    logging.info("Results: ", results)
+    for _, result in enumerate(results):
+        if result != 0:
+            return 1
+
+    logging.info('Finish to build modules')
+    return 0
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
+    if platform.system() != 'Windows':
+        multiprocessing.set_start_method('fork')
+
     os.putenv('npm_config_build_from_source', 'true')
     os.putenv('npm_config_audit', 'false')
     os.putenv('npm_config_strict_ssl', 'false')
     os.putenv('npm_config_disturl', 'http://mirrors.tools.huawei.com/nodejs')
     os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
 
-    parallel_build()
+    return parallel_build()
 
 
 if __name__ == '__main__':
-    if platform.system() != 'Windows':
-        multiprocessing.set_start_method('fork')
-    main()
+    sys.exit(main())
