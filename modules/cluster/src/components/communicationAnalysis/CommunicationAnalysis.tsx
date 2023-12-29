@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { observer } from 'mobx-react-lite';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Breadcrumb } from 'antd';
 import { Session } from '../../entity/session';
@@ -78,6 +78,13 @@ const CommunicationAnalysis = observer(function ({ session, active = true }: { s
     const isShow = (name: string): boolean => {
         return conditions.type === name;
     };
+
+    useEffect(() => {
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.setAttribute('maxlength', '200');
+        });
+    });
     return <CommunicationAnalysisCom
         session={session}
         handleFilterChange={handleFilterChange} showData={showData}

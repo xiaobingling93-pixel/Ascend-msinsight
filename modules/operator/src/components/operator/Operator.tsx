@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import './Operator.css';
 import { Session } from '../../entity/session';
@@ -18,6 +18,13 @@ const Index = observer(function ({ session }: { session: Session }) {
         const newCondition = { ...condition, ...obj };
         setCondition(newCondition);
     };
+
+    useEffect(() => {
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.setAttribute('maxlength', '200');
+        });
+    }, []);
 
     return <div style={{ height: '100%', width: '100%', overflow: 'auto' }}>
         <HeaderFixedContainer
