@@ -16,6 +16,7 @@ processorMap.set('unit/counter', counterArr);
 
 export class SimpleCache {
     data: Map<string, any>;
+    timePerPx: number = -1;
 
     constructor() {
         this.data = new Map();
@@ -24,11 +25,12 @@ export class SimpleCache {
         this.data.set('unit/threadTracesSummary', new Map<string, Record<string, unknown>>());
     }
 
-    async tryFetchFromCache(method: Method, requestKey: string, params: Record<string, unknown>, metaData?: unknown): Promise<Record<string, unknown> | undefined> {
-        if (this.data.get(method).get(requestKey) === undefined) {
+    tryFetchFromCache = async(method: Method, requestKey: string, params: Record<string, unknown> & { timePerPx: number }, metaData?: unknown): Promise<Record<string, unknown> | undefined> => {
+        if (this.data.get(method).get(requestKey) === undefined || this.timePerPx !== params.timePerPx) {
             try {
                 const result = await handlerMap.get(method)?.(params, metaData);
                 if (result !== undefined && result.length !== 0) {
+                    this.timePerPx = params.timePerPx;
                     this.data.get(method).set(requestKey, result);
                 }
                 if (result !== undefined && result.length === 0) {
@@ -46,7 +48,7 @@ export class SimpleCache {
         return {
             data: processorMap.get(method)?.(params, this.data, requestKey),
         };
-    }
+    };
 
     clear(): void {
         this.data.forEach((key) => {

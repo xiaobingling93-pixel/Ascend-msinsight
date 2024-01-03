@@ -127,10 +127,11 @@ const Interactor = ({ domainStart, domainEnd, endTimeAll, session, interactorMou
     useEffect(() => { resetCanvasSize(normalCanvas, normalRect); resetCanvasSize(hoverCanvas, hoverRect); }, [ normalRect, hoverRect ]);
     useEffect(() => {
         if (!normalCanvas.current) { return; }
+        console.log('rerender');
         draw(normalCanvas.current.getContext('2d'), normalCanvas.current.clientWidth, normalCanvas.current.clientHeight, xReverseScale, xScale, interactorMouseState, session.selectedRange, isNsMode, session, customRenderers, theme);
         const traceAction: string[] = [ 'selectBrushScope', 'dragLane', 'zoomProportion' ];
         traceAction.forEach((item) => { traceEnd(item); });
-    }, [ domainStart, domainEnd, endTimeAll, session.selectedRange, theme, normalRect, session.linkData, session.scrollTop, ...customRenderTriggers ]);
+    }, [ domainStart, domainEnd, endTimeAll, session.selectedRange, theme, normalRect, session.linkData, session.scrollTop, session.renderTrigger, ...customRenderTriggers ]);
     const point = interactorMouseState.lastPos?.current?.x !== undefined ? xScale(interactorMouseState.lastPos?.current?.x) : undefined;
     useImperativeHandle(ref, () => ({
         mouseMoveAction: (interactorMouseState: InteractorMouseState) => {

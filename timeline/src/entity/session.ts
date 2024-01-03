@@ -82,6 +82,7 @@ export class Session {
     linkData?: LinkData;
     linkLines: LinkLines = {};
     totalHeight: number = 0;
+    renderTrigger: boolean = true;
 
     linkFlow?: Record<string, unknown>;
     linkDetail?: Record<string, unknown>;
@@ -106,6 +107,7 @@ export class Session {
             caches: false,
             isNsMode: false,
             printSessionInfo: false,
+            linkLines: false,
         });
         this._name = conf?.name ?? this.id;
         this._interval = 100;

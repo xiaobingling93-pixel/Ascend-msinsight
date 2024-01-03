@@ -84,8 +84,9 @@ const singleSliceDetail = singleData({
             rankId: metadata.cardId,
             pid: metadata.processId,
             tid: metadata.threadId,
-            startTime: selectedSliceData.startTime + timestampOffset,
+            startTime: Math.floor(selectedSliceData.startTime + timestampOffset),
             depth: selectedSliceData.depth,
+            timePerPx: session.domain.timePerPx,
         };
         const result = await window.request(metadata.dataSource, { command: 'unit/threadDetail', params });
         const data: AscendSliceDetail = {
@@ -135,13 +136,14 @@ export const ThreadUnit = unit<ThreadMetaData>({
             const timestampOffset = threadMetaData.cardId !== undefined
                 ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[threadMetaData.cardId] ?? 0
                 : 0;
-            const requestParam = {
+            const requestParam: Record<string, unknown> & { timePerPx: number } = {
                 cardId: threadMetaData.cardId,
                 processId: threadMetaData.processId,
                 threadId: threadMetaData.threadId,
-                startTime: session.domainRange.domainStart + timestampOffset,
-                endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset),
+                startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
+                endTime: Math.ceil(Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset)),
                 dataSource: threadMetaData.dataSource,
+                timePerPx: session.domain.timePerPx,
             };
             const requestKey = createStackStatusParam('unit/threadTraces', requestParam);
             try {
@@ -258,6 +260,7 @@ export const ProcessUnit = unit<ProcessMetaData>({
                 startTime: session.domainRange.domainStart,
                 endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd),
                 dataSource: processMetaData.dataSource,
+                timePerPx: session.domain.timePerPx,
             };
             const requestKey = createStatusParam('unit/threadTracesSummary', requestParam);
             try {
@@ -321,6 +324,7 @@ export const CounterUnit = unit<CounterMetaData>({
                 startTime: session.domainRange.domainStart,
                 endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd),
                 dataSource: countMetaData.dataSource,
+                timePerPx: session.domain.timePerPx,
             };
             const requestKey = createCounterParam('unit/counter', requestParam);
             const request = await session.simpleCache.tryFetchFromCache('unit/counter', requestKey, requestParam, metadata);

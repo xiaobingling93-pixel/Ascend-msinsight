@@ -26,15 +26,12 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
     const { endTimeAll } = session;
     const [ datasState, setDatasState ] = useState<ChartData<T>>([]);
     const requestedWidth = useRef(0);
-    const loadingRef = useRef<NodeJS.Timer>();
     useEffect(() => {
         if (width === 0) {
             setDatasState([]);
             return;
         }
         requestedWidth.current = width;
-        const loading = setTimeout(() => { runInAction(() => { unit.phase = 'loading'; }); }, 300);
-        loadingRef.current = loading;
         mapFunc(session, metadata).then(datas => {
             if (requestedWidth.current !== width) {
                 // drop the data if width has been changed since when request was made
@@ -45,8 +42,6 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
         }).catch(() => {
             Logger('hooks useData', 'mapFunc occurred an exception.');
         }).finally(() => {
-            if (loadingRef.current !== loading) { return; }
-            clearTimeout(loading);
             runInAction(() => { unit.phase = 'download'; });
         });
     }, [ session.phase, domainStart, domainEnd, endTimeAll, width, session.unitsConfig.offsetConfig.timestampOffset ]);

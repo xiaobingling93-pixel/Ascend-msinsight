@@ -1,11 +1,16 @@
 import { throttle } from 'lodash';
 
 type RenderID = number;
+interface Task {
+    action: Function;
+    status: 'pending' | 'fullfilled';
+    type: 'once' | 'always';
+}
 const RENDER_FREQUENCY = 100;
 export class RenderEngine {
-    private readonly _renderTasks: Map<RenderID, Function> = new Map();
-    private _status: 'idle' | 'running' = 'running';
+    private readonly _renderTasks: Map<RenderID, Task> = new Map();
     private _curTaskID: number = 0;
+    private _status: 'running' | 'waiting' = 'running';
 
     constructor() {
         this.run();
@@ -22,11 +27,14 @@ export class RenderEngine {
 
     private flush(): void {
         this._renderTasks.forEach((task) => {
-            if (typeof task !== 'function') {
+            if (typeof task.action !== 'function') {
                 console.warn('render callback is not a function, please check your parameter of draw()');
                 return;
             }
-            task();
+            if (task.status === 'pending') {
+                task.action();
+                task.type === 'once' && (task.status = 'fullfilled');
+            };
         });
     }
 
@@ -35,12 +43,12 @@ export class RenderEngine {
     }
 
     stop(): void {
-        this._status = 'idle';
+        this._status = 'waiting';
     }
 
-    addTask(task: Function): RenderID {
+    addTask(action: Function, type: 'once' | 'always' = 'always'): RenderID {
         const renderID = this._curTaskID;
-        this._renderTasks.set(renderID, task);
+        this._renderTasks.set(renderID, { action, status: 'pending', type });
         this._curTaskID++;
         return renderID;
     }

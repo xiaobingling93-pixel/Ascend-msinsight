@@ -10,9 +10,10 @@ import { SvgType } from './base/rc-table/types';
 import i18n from 'i18next';
 import { StyledCheckbox } from './base/StyledCheckbox';
 import { StyledEmpty } from './base/StyledEmpty';
-import { action, runInAction } from 'mobx';
+import { runInAction } from 'mobx';
 import { InsightUnit, LinkLines } from '../entity/insight';
 import { CardUnit } from '../insight/units/AscendUnit';
+import { customDebounce } from '../utils/customDebounce';
 
 const FilterIcon = AntdFilterIcon as SvgType;
 const MAX_HEIGHT = 200;
@@ -37,24 +38,19 @@ const FilterButtonLine = styled.div`
     margin-top: 7px;
 `;
 
-const FilterItem = observer(({ session, category, fetchLinkLines }: { session: Session; category: string; fetchLinkLines: FetchLinkLines }) => {
+interface FilterItemProps {
+    category: string;
+    checkedCategories: string[];
+    setCheckedCategories: React.Dispatch<React.SetStateAction<string[]>>;
+}
+const FilterItem: React.FC<FilterItemProps> = observer(({ category, checkedCategories, setCheckedCategories }) => {
+    const isChecked = checkedCategories.includes(category);
     return (
         <p style={{ marginBottom: 0 }}>
             <StyledCheckbox
-                checked={session.linkLines[category] !== undefined}
-                onChange={async () => {
-                    if (session.linkLines[category] !== undefined) {
-                        runInAction(() => {
-                            session.linkLines[category] = undefined;
-                            session.linkLines = { ...session.linkLines };
-                        });
-                    } else {
-                        const datas = await fetchLinkLines(session, category);
-                        runInAction(() => {
-                            session.linkLines[category] = datas;
-                            session.linkLines = { ...session.linkLines };
-                        });
-                    }
+                checked={isChecked}
+                onChange={() => {
+                    setCheckedCategories(prev => isChecked ? prev.filter(cat => cat !== category) : prev.concat(category));
                 }}>
                 {category}
             </StyledCheckbox>
@@ -96,20 +92,26 @@ interface CategoryEvents {
     }>;
 };
 
-type FetchLinkLines = (session: Session, category: string) => Promise<CategoryEvents['flowDetailList']>;
-const useFetchLinkLines = (session: Session): FetchLinkLines => {
-    return React.useCallback(async (session: Session, category: string): Promise<CategoryEvents['flowDetailList']> => {
-        const { domainStart, domainEnd } = session.domainRange;
-        let res: CategoryEvents['flowDetailList'] = [];
-        for (const unit of getCardUnits(session.units)) {
-            const { dataSource, cardId } = unit.metadata as { dataSource: DataSource; cardId: string };
-            res = res.concat((await window.request(dataSource,
-                { command: 'flow/categoryEvents', params: { rankId: cardId, startTime: domainStart, endTime: domainEnd, category } }) as CategoryEvents).flowDetailList
-                .map(data => ({ ...data, cardId })));
-        };
-        return res;
-    }, [session]);
-};
+type FetchLinkLines = (session: Session) => Promise<CategoryEvents['flowDetailList']>;
+type UseFetchLinkLines = Map<string, FetchLinkLines>;
+const useFetchLinkLines = (displayCategories: string[]): UseFetchLinkLines => React.useMemo(() => new Map(
+    displayCategories.map(category => [
+        category,
+        customDebounce(async (session: Session): Promise<CategoryEvents['flowDetailList']> => {
+            const { domainStart, domainEnd } = session.domainRange;
+            const { domain: { timePerPx } } = session;
+            let res: CategoryEvents['flowDetailList'] = [];
+            for (const unit of getCardUnits(session.units)) {
+                const { dataSource, cardId } = unit.metadata as { dataSource: DataSource; cardId: string };
+                const params = { rankId: cardId, startTime: Math.floor(domainStart), endTime: Math.ceil(domainEnd), category, timePerPx };
+                res = res.concat((await window.request(dataSource,
+                    { command: 'flow/categoryEvents', params }) as CategoryEvents).flowDetailList
+                    .map(data => ({ ...data, cardId })));
+            };
+            return res;
+        }),
+    ]),
+), [displayCategories]);
 
 const useGetCategories = (session: Session, isSuspend: boolean): string[] => {
     const [ categories, setCategories ] = React.useState<string[]>([]);
@@ -124,7 +126,6 @@ const useGetCategories = (session: Session, isSuspend: boolean): string[] => {
             const { dataSource, cardId } = unit.metadata as { dataSource: DataSource; cardId: string };
             fetchList.push(window.request(dataSource, { command: 'flow/categoryList', params: { rankId: cardId } }));
         }
-
         Promise.all(fetchList).then((results) => {
             const curCategories = new Set<string>();
             results.forEach(({ category }) => {
@@ -143,51 +144,39 @@ const useGetCategories = (session: Session, isSuspend: boolean): string[] => {
     return categories;
 };
 
-const filterDataSize = function<T>(datas: T[], maxDataSize: number): T[] {
-    if (datas.length > maxDataSize) {
-        const split = Math.ceil(datas.length / maxDataSize);
-        const res: T[] = [];
-        datas.forEach((data, index) => {
-            index % split === 0 && (res.push(data));
-        });
-        return res;
-    }
-    return datas;
-};
-
-const TOTAL_MAXIMUM_DATA_SIZE = 1e3;
 const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session; isSuspend: boolean }): JSX.Element => {
-    const fetchLinkLines = useFetchLinkLines(session);
-    const categories = useGetCategories(session, isSuspend);
+    const displayCategories = useGetCategories(session, isSuspend);
+    const fetchLinkLinesMap = useFetchLinkLines(displayCategories);
+    const [ checkedCategories, setCheckedCategories ] = React.useState<string[]>([]);
 
-    const isEmptyData = categories.length === 0;
+    const isEmptyData = displayCategories.length === 0;
+
+    const updateLinkLines = React.useCallback(async () => {
+        const newLines: LinkLines = {};
+        for (const category of checkedCategories) {
+            const datas = await fetchLinkLinesMap.get(category)?.(session);
+            if (datas === undefined) { return; }
+            newLines[category] = datas;
+        }
+        runInAction(() => {
+            session.linkLines = newLines;
+            session.renderTrigger = !session.renderTrigger;
+        });
+    }, [checkedCategories]);
+
+    React.useEffect(() => { updateLinkLines(); }, [ session.domainRange.domainStart, session.domainRange.domainEnd, checkedCategories ]);
     return (
         <FilterContainer>
             <FilterList>
                 {isEmptyData
                     ? <StyledEmpty />
-                    : categories.map((category, index) => <FilterItem key={index} session={session} category={category} fetchLinkLines={fetchLinkLines} />)}
+                    : displayCategories.map((category, index) => <FilterItem key={index} category={category} checkedCategories={checkedCategories} setCheckedCategories={setCheckedCategories}/>)}
             </FilterList>
             {!isEmptyData && <FilterButtonLine>
-                <StyledButton width={50} onClick={async () => {
-                    const newLines: LinkLines = {};
-                    const totalSize = categories.reduce((acc, cur) => acc + cur.length, 0);
-                    for (const category of categories) {
-                        const datas = await fetchLinkLines(session, category);
-                        const maxSize = TOTAL_MAXIMUM_DATA_SIZE * category.length / totalSize;
-                        newLines[category] = filterDataSize(datas, maxSize);
-                    }
-                    session.linkLines = newLines;
-                }}>
+                <StyledButton width={50} onClick={() => setCheckedCategories([...displayCategories])}>
                     All
                 </StyledButton>
-                <StyledButton width={50} onClick={action(() => {
-                    const newLines: Record<string, undefined> = {};
-                    categories.forEach(category => {
-                        session.linkLines[category] = undefined;
-                    });
-                    session.linkLines = { ...newLines };
-                })}>
+                <StyledButton width={50} onClick={(() => setCheckedCategories([]))}>
                     None
                 </StyledButton>
             </FilterButtonLine>}
