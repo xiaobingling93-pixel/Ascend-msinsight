@@ -53,6 +53,10 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to check parameter in QueryOpMoreInfoHandler.");
             return false;
         }
+        if (params.group != Protocol::OP_TYPE_GROUP && params.group != Protocol::INPUT_SHAPE_GROUP) {
+            ServerLog::Error("[Operator]Wrong group type in QueryOpMoreInfoHandler.");
+            return false;
+        }
         if (!params.orderBy.empty()) {
             if (OperatorProtocol::GetDetailColumName(params.orderBy).empty()) {
                 ServerLog::Error("[Operator]Failed to check orderBy in QueryOpMoreInfoHandler.");
