@@ -110,6 +110,7 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     if (!(database->OpenDb(selectedPath + "/cluster.db", true) && database->CreateTable() &&
           database->SetConfig() && database->InitStmt())) {
         ServerLog::Error("Failed to open database. path:", selectedPath);
+        return false;
     }
     // parse communication file
     std::regex patternCommunication(R"(cluster_communication.json)");
@@ -140,6 +141,10 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
         ParseStepStatisticsFile(stepTraceFileList);
         // parse cluster_step_trace_time csv
         SaveClusterBaseInfo(selectedPath);
+    }
+    if (!database->CreateIndex()) {
+        ServerLog::Error("Failed to CreateIndex on cluster database. path:", selectedPath);
+        return false;
     }
     if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
         ServerLog::Warn("Parser Cluster Status Is Terminal");

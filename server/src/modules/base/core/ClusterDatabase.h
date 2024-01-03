@@ -23,6 +23,7 @@ public:
 
     bool SetConfig();
     bool CreateTable();
+    bool CreateIndex();
     bool InitStmt();
     void ReleaseStmt();
     void InsertTimeInfo(CommunicationTimeInfo &timeInfo);
