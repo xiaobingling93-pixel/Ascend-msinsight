@@ -469,7 +469,7 @@ std::vector<std::pair<std::string, std::string>> ImportActionHandler::GetTraceFi
 
 std::string ImportActionHandler::GetDbPath(const std::string &filePath, const int index)
 {
-    std::string path = FileUtil::GetRealPath(filePath);
+    std::string path(filePath);
     std::string suffix = ".db";
     if (index != 1) {
         suffix = "_" + std::to_string(index) + suffix;

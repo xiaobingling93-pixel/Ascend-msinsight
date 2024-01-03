@@ -30,7 +30,6 @@ public:
     void DeleteParseFile(const std::string &fileId);
 
     int64_t GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid);
-    std::string GetFileId(const std::string &filePath);
 private:
     TraceFileParser();
     ~TraceFileParser() override;
@@ -38,8 +37,6 @@ private:
     std::unique_ptr<ThreadPool> threadPool;
     std::map<std::string, std::future<void>> futureMap;
 
-    std::string GetFileIdFromFile(const std::string &filePath);
-    std::string GetFileIdFromPath(const std::string &filePath);
     static const int64_t blockSize = 1024 * 1024 * 50; // 50MB
     static const int bufferLength = 1024 * 10;
     static std::vector<std::pair<int64_t, int64_t>> SplitFile(const std::string &filePath);
