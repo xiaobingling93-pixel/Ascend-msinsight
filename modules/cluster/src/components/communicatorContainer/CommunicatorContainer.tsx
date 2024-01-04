@@ -115,13 +115,13 @@ const CommunicatorHeader = observer(({ session, defaultPPSize }: { session: Sess
                     }]}/>
             </Form.Item>
             <Form.Item name={'ppSize'} label={'PP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
+                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
             <Form.Item name={'tpSize'} label={'TP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
+                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
             <Form.Item name={'dpSize'} label={'DP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
+                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
             <Button style={{ margin: '10px 10px 10px 0' }} onClick={onClick(defaultPPSize)}>Generate</Button>
         </Form>
