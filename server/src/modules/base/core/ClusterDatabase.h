@@ -51,8 +51,7 @@ public:
     bool QueryDistributionData(Protocol::DistributionDataParam &param, Protocol::DistributionResBody &resBody);
     void SaveLastData();
 
-    bool QueryRanksHandler(Protocol::RanksParams &requestParam,
-                           std::vector<Protocol::IterationsOrRanksObject> &responseBody);
+    bool QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody);
     bool QueryOperatorNames(Protocol::OperatorNamesParams &requestParams,
                             std::vector<Protocol::OperatorNamesObject> &responseBody);
     bool QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody);
@@ -81,6 +80,8 @@ private:
 
     sqlite3_stmt *BuildCondition(const Protocol::SummaryTopRankParams &requestParams);
     std::string GetRanksSql(std::vector<std::string> rankList);
+    void GetStepsOrRanksObject(const std::string& jsonStr,
+                               std::vector<Protocol::IterationsOrRanksObject> &responseBody);
 };
 } // end of namespace Module
 } // end of namespace Dic

@@ -787,26 +787,37 @@ bool ClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam &par
     return true;
 }
 
-bool ClusterDatabase::QueryRanksHandler(Protocol::RanksParams &requestParam,
-                                        std::vector<Protocol::IterationsOrRanksObject> &responseBody)
+bool ClusterDatabase::QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
     sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
-    std::string sql = "SELECT DISTINCT rank_id FROM " + timeInfoTable + " WHERE iteration_id = ? ORDER BY rank_id";
+    std::string sql = "SELECT ranks FROM " + baseInfoTable;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryRanksHandler statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_text(stmt, index++, requestParam.iterationId.c_str(), -1, SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        Protocol::IterationsOrRanksObject object;
-        object.iterationOrRankId = sqlite3_column_string(stmt, col++);
-        responseBody.emplace_back(object);
+        std::string ranks = sqlite3_column_string(stmt, col++);
+        GetStepsOrRanksObject(ranks, responseBody);
     }
     sqlite3_finalize(stmt);
     return true;
+}
+
+void ClusterDatabase::GetStepsOrRanksObject(const std::string& jsonStr,
+                                            std::vector<Protocol::IterationsOrRanksObject> &responseBody)
+{
+    rapidjson::Document json;
+    json.Parse(jsonStr.c_str());
+    if (!json.IsArray()) {
+        return;
+    }
+    for (auto &item : json.GetArray()) {
+        Protocol::IterationsOrRanksObject object;
+        object.iterationOrRankId = item.IsString() ? item.GetString() : "";
+        responseBody.emplace_back(object);
+    }
 }
 
 std::string ClusterDatabase::GetRanksSql(std::vector<std::string> rankList)
@@ -837,7 +848,7 @@ bool ClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requestP
     std::string iterationId = requestParams.iterationId;
     std::string stage = requestParams.stage;
     std::string sql = "";
-    if (rankList.size() == 0) {
+    if (rankList.empty()) {
         sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + timeInfoTable +
                 " WHERE iteration_id = ?" +
                 " AND stage_id = ?" +
@@ -869,8 +880,7 @@ bool ClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requestP
 bool ClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
     sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
-    std::string sql = "SELECT DISTINCT iteration_id FROM " + timeInfoTable + " ORDER BY iteration_id";
+    std::string sql = "SELECT steps FROM " + baseInfoTable;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryIterations statement. error:", sqlite3_errmsg(db));
@@ -878,11 +888,10 @@ bool ClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRanksObj
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        Protocol::IterationsOrRanksObject object;
-        object.iterationOrRankId = sqlite3_column_string(stmt, col++);
-        responseBody.emplace_back(object);
+        std::string steps = sqlite3_column_string(stmt, col++);
+        GetStepsOrRanksObject(steps, responseBody);
     }
-    if (responseBody.size() == 0) {
+    if (responseBody.empty()) {
         ServerLog::Error("Failed to obtain the number of iteration ids. At least one id must be contained. "
                      "Check whether communication data files exist in the directory.");
     }
@@ -900,7 +909,7 @@ bool ClusterDatabase::QueryDurationList(Protocol::DurationListParams &requestPar
     std::string stage = requestParams.stage;
     std::string operatorName = requestParams.operatorName;
     std::string sql = "";
-    if (rankList.size() == 0) {
+    if (rankList.empty()) {
         sql = "SELECT rank_id, ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
               "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
               "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
