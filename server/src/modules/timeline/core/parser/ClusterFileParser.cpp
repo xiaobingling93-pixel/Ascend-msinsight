@@ -106,14 +106,13 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
 bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
 {
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::RUNNING);
-    // 导入前清空cluster db
-    DataBaseManager::Instance().ClearClusterDb();
-    auto database = DataBaseManager::Instance().GetClusterDatabase();
-    if (!(database->OpenDb(selectedPath + "/cluster.db", true) && database->CreateTable() &&
-          database->SetConfig() && database->InitStmt())) {
-        ServerLog::Error("Failed to open database. path:", selectedPath);
-        return false;
+    std::string dbPath = selectedPath + "/cluster.db";
+    std::ifstream file(dbPath);
+    if (InitClusterDatabase(selectedPath, file.good()) && file.good()) {
+        ServerLog::Info("cluster db file is already exist, skip parse ");
+        return true;
     }
+    auto database = DataBaseManager::Instance().GetClusterDatabase();
     // parse communication file
     std::regex patternCommunication(R"(cluster_communication.json)");
     std::vector<std::string> communicationFileList =
@@ -153,6 +152,27 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
         return false;
     }
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
+    return true;
+}
+
+bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath, bool dbIsAlreadyExist)
+{
+    // 导入前清空cluster database
+    DataBaseManager::Instance().ClearClusterDb();
+    auto database = DataBaseManager::Instance().GetClusterDatabase();
+    std::string dbPath = selectedPath + "/cluster.db";
+    if (!dbIsAlreadyExist) {
+        if (!(database->OpenDb(dbPath, true) && database->CreateTable() &&
+              database->SetConfig() && database->InitStmt())) {
+            ServerLog::Error("Failed to open database. path:", selectedPath);
+            return false;
+        }
+    } else {
+        if (!(database->OpenDb(dbPath, false) && database->SetConfig() && database->InitStmt())) {
+            ServerLog::Error("Failed to open database. path:", selectedPath);
+            return false;
+        }
+    }
     return true;
 }
 

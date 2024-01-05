@@ -69,9 +69,9 @@ bool ClusterDatabase::CreateIndex()
         ServerLog::Error("Failed to set config. Cluster Database is not open.");
         return false;
     }
-    std::string sql = "CREATE INDEX idx1 on communication_time_info(stage_id);"
-                      "CREATE INDEX idx2 on communication_bandwidth_info(op_name);"
-                      "CREATE INDEX idx3 on communication_matrix(group_id, op_name);";
+    std::string sql = "CREATE INDEX IF NOT EXISTS idx1 on communication_time_info(stage_id);"
+                      "CREATE INDEX IF NOT EXISTS idx2 on communication_bandwidth_info(op_name);"
+                      "CREATE INDEX IF NOT EXISTS idx3 on communication_matrix(op_name);";
     return ExecSql(sql);
 }
 

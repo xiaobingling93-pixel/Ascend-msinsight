@@ -23,6 +23,7 @@ public:
     void ParseCommunicationGroup(const std::string selectedPath, ClusterBaseInfo &baseInfo);
 private:
     void SaxParseJsonFile(const std::string& filePath, int saxHandlerType);
+    bool InitClusterDatabase(const std::string& selectedPath, bool dbIsAlreadyExist);
     StepStatistic MapToStepStatistic(std::vector<std::string> tokens);
     int subStrlen = 2;
 
