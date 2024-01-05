@@ -16,7 +16,7 @@ void CommunicationProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_OPERATOR_DETAILS, ToOperatorDetailsRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_DISTRIBUTION, ToDistributionRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_BANDWIDTH, ToBandwidthDataRequest);
-    jsonToReqFactory.emplace(REQ_RES_COMMUNICATOR_PARSE, ToCommunicatorParserRequest);
+    jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_COMMUNICATOR, ToCommunicatorRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_ITERATIONS, ToIterationsRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, ToOperatorNamesRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_LIST, ToDurationRequest);
@@ -30,7 +30,7 @@ void CommunicationProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_OPERATOR_DETAILS, ToOperatorDetailsResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_DISTRIBUTION, ToDistributionResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_BANDWIDTH, ToBandwidthDataResponse);
-    resToJsonFactory.emplace(REQ_RES_COMMUNICATOR_PARSE, ToCommunicatorParserResponse);
+    resToJsonFactory.emplace(REQ_RES_COMMUNICATION_COMMUNICATOR, ToCommunicatorResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_ITERATIONS, ToIterationsResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_OPERATORNAMES, ToOperatorNamesResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_LIST, ToDurationResponse);
@@ -93,15 +93,13 @@ std::unique_ptr<Request> CommunicationProtocol::ToBandwidthDataRequest(const jso
     return reqPtr;
 }
 
-std::unique_ptr<Request> CommunicationProtocol::ToCommunicatorParserRequest(const Dic::json_t &json,
-                                                                            std::string &error)
+std::unique_ptr<Request> CommunicationProtocol::ToCommunicatorRequest(const Dic::json_t &json, std::string &error)
 {
     std::unique_ptr<CommunicatorGroupRequest> reqPtr = std::make_unique<CommunicatorGroupRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.filePath, json["params"], "filePath");
     return reqPtr;
 }
 
@@ -198,7 +196,7 @@ std::optional<json_t> CommunicationProtocol::ToDistributionResponse(const Respon
     return ToResponseJson<DistributionResponse>(dynamic_cast<const DistributionResponse &>(response));
 }
 
-std::optional<json_t> CommunicationProtocol::ToCommunicatorParserResponse(const Dic::Protocol::Response &response)
+std::optional<json_t> CommunicationProtocol::ToCommunicatorResponse(const Dic::Protocol::Response &response)
 {
     return ToResponseJson<CommunicatorGroupResponse>(dynamic_cast<const CommunicatorGroupResponse &>(response));
 }

@@ -14,6 +14,7 @@
 #include "ExecUtil.h"
 #include "DataBaseManager.h"
 #include "ParserStatusManager.h"
+#include "JsonUtil.h"
 #include "ClusterFileParser.h"
 
 namespace Dic {
@@ -95,6 +96,7 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
     // 转换为毫秒数
     baseInfo.collectStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             now.time_since_epoch()).count();
+    ParseCommunicationGroup(selectedPath, baseInfo);
     auto database = DataBaseManager::Instance().GetClusterDatabase();
     database->InsertClusterBaseInfo(baseInfo);
     ServerLog::Info("end saveClusterBaseInfo data into db ,path:", selectedPath, " collectStartTime=",
@@ -152,6 +154,43 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     }
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
     return true;
+}
+
+void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, ClusterBaseInfo &baseInfo)
+{
+    std::vector<std::string> communicationGroupList =
+            FileUtil::FindFilesByRegex(selectedPath, std::regex(R"(communication_group.json)"));
+    const std::string &filePath = communicationGroupList[0];
+    auto start = std::chrono::high_resolution_clock::now();
+    std::ifstream communicationGroup(filePath, std::ios::binary);
+    if (communicationGroup.good()) {
+        ServerLog::Info("start parseCommunicationGroupFile data into db ,file:", filePath);
+        Document doc;
+        std::string fileContent;
+        std::copy(std::istream_iterator<unsigned char>(communicationGroup), std::istream_iterator<unsigned char>(),
+            back_inserter(fileContent));
+        doc.Parse(fileContent.c_str());
+        auto p2p = doc.FindMember("p2p")->value.GetArray();
+        auto collective = doc.FindMember("collective")->value.GetArray();
+        auto orderByLenDesAndNumAsc = [](const Value& a, const Value& b) {
+            if (a.Size() == b.Size() && a.Size() > 0) {
+                return a[0].GetInt() < b[0].GetInt();
+            }
+            return a.Size() > b.Size();
+        };
+        std::sort(p2p.begin(), p2p.end(), orderByLenDesAndNumAsc);
+        std::sort(collective.begin(), collective.end(), orderByLenDesAndNumAsc);
+        for (int i = 0; i < p2p.Size(); i++) {
+            collective.Erase(std::find(collective.begin(), collective.end(), p2p[i]));
+        }
+        baseInfo.ppStages = JsonUtil::JsonDump(p2p);
+        baseInfo.stages = JsonUtil::JsonDump(collective);
+        auto end = std::chrono::high_resolution_clock::now();
+        ServerLog::Info("end parseCommunicationGroupFile data into db ,file:", filePath, ",cost time:",
+                        (end - start).count());
+    } else {
+        ServerLog::Error("parseCommunicationGroupFile fail, path:", filePath);
+    }
 }
 
 bool ClusterFileParser::AttAnalyze(const std::string& selectedPath)

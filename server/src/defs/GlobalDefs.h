@@ -14,6 +14,7 @@
 
 namespace Dic {
 using json_t = nlohmann::json;
+using namespace rapidjson;
 } // end of namespace Dic
 
 #endif // DATA_INSIGHT_CORE_DEFS_H

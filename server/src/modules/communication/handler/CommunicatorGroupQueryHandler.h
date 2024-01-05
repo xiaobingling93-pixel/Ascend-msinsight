@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#ifndef PROFILER_SERVER_COMMUNICATORGROUPPARSER_H
-#define PROFILER_SERVER_COMMUNICATORGROUPPARSER_H
+#ifndef PROFILER_SERVER_COMMUNICATORGROUPQUERY_H
+#define PROFILER_SERVER_COMMUNICATORGROUPQUERY_H
 
 #include <string>
 #include "ProtocolMessage.h"
@@ -14,17 +14,16 @@
 namespace Dic {
 namespace Module {
 namespace Communication {
-class CommunicatorGroupParserHandler : public CommunicationRequestHandler {
+class CommunicatorGroupQueryHandler : public CommunicationRequestHandler {
 public:
-    CommunicatorGroupParserHandler()
+    CommunicatorGroupQueryHandler()
     {
-        command = Protocol::REQ_RES_COMMUNICATOR_PARSE;
+        command = Protocol::REQ_RES_COMMUNICATION_COMMUNICATOR;
     };
-    static bool ParseCommunicatorGroup(const std::string &, Dic::Protocol::CommunicatorGroupResBody &resBody);
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 } // end of namespace Communication
 } // end of namespace Module
 } // end of namespace Dic
 
-#endif // PROFILER_SERVER_COMMUNICATORGROUPPARSER_H
+#endif // PROFILER_SERVER_COMMUNICATORGROUPQUERY_H

@@ -45,6 +45,7 @@ private:
     std::string iterationId;
     std::string tempOpName;
     std::string tempRank;
+    std::set<std::string> groupIds;
     int groupDepth = 1;
     int stepDepth = 2;
     int opNameDepth = 3;

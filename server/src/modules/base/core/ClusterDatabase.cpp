@@ -47,7 +47,8 @@ bool ClusterDatabase::CreateTable()
             " transit_size double, transit_time double);" +
             "CREATE TABLE " + baseInfoTable +
             " (id INTEGER PRIMARY KEY AUTOINCREMENT, file_path VARCHAR(500), ranks json,"
-            " steps json, collect_start_time DATETIME, collect_duration double, data_size double);" +
+            " steps json, collect_start_time DATETIME, collect_duration double, data_size double, stages json,"
+            " pp_stages json); "
             "CREATE TABLE " + stepTraceTable +
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id VARCHAR(50), step_id VARCHAR(50),"
             " stage_id VARCHAR(50), compute_time double, pure_communication_time double, "
@@ -56,7 +57,9 @@ bool ClusterDatabase::CreateTable()
             "CREATE TABLE " + communicationMatrixTable +
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, group_id VARCHAR(100), iteration_id VARCHAR(50), "
             "op_name VARCHAR(100), group_name VARCHAR(100), src_rank VARCHAR(50), dst_rank VARCHAR(50), "
-            "transport_type VARCHAR(50), transit_size double, transit_time double, bandwidth double);";
+            "transport_type VARCHAR(50), transit_size double, transit_time double, bandwidth double);" +
+            "CREATE TABLE " + groupIdTable +
+            "(id INTEGER PRIMARY KEY AUTOINCREMENT, group_id VARCHAR(100));";
     return ExecSql(sql);
 }
 
@@ -210,6 +213,30 @@ void ClusterDatabase::InsertBandwidth(CommunicationBandWidth &bandWidth)
     }
 }
 
+void ClusterDatabase::InsertGroupId(std::set<std::string> &groupIds)
+{
+    sqlite3_stmt *stmt = nullptr;
+    std::string sql = "INSERT INTO " + groupIdTable +
+                      " (group_id) VALUES (?)";
+    for (int i = 0; i < groupIds.size() - 1; i++) {
+        sql.append(",(?)");
+    }
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare InsertGroupId statement. error:", sqlite3_errmsg(db));
+        return;
+    }
+    int idx = bindStartIndex;
+    for (const auto &groupId: groupIds) {
+        sqlite3_bind_text(stmt, idx++, groupId.c_str(), groupId.length(),
+                          SQLITE_TRANSIENT);
+    }
+    auto result = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    if (result != SQLITE_DONE) {
+        ServerLog::Error("Insert GroupId data fail. ", sqlite3_errmsg(db));
+    }
+}
+
 void ClusterDatabase::InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList)
 {
     if (bandWidthList.empty()) {
@@ -295,12 +322,12 @@ void ClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo)
 {
     sqlite3_stmt *stmt;
     std::string sql = "INSERT INTO " + baseInfoTable +
-                      "(file_path, ranks, steps, collect_start_time,collect_duration,data_size)"
+                      "(file_path, ranks, steps, collect_start_time,collect_duration,data_size,stages,pp_stages)"
                       " VALUES (?, (select json_group_array(rank_id) from "
                       "(select DISTINCT rank_id from step_statistic_info where rank_id !='')), "
                       "(select json_group_array(step_id) from"
                       " (select DISTINCT step_id from step_statistic_info where rank_id !='')) ,"
-                      " ?, ?, ?)";
+                      " ?, ?, ?, ?, ?)";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare baseInfoTable statement. error:", sqlite3_errmsg(db));
         return;
@@ -315,6 +342,9 @@ void ClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo)
     sqlite3_bind_double(stmt, idx++, clusterBaseInfo.collectStartTime);
     sqlite3_bind_double(stmt, idx++, clusterBaseInfo.collectDuration);
     sqlite3_bind_double(stmt, idx++, clusterBaseInfo.dataSize);
+    sqlite3_bind_text(stmt, idx++, clusterBaseInfo.stages.c_str(), clusterBaseInfo.stages.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, idx++, clusterBaseInfo.ppStages.c_str(),
+                      clusterBaseInfo.ppStages.length(), SQLITE_TRANSIENT);
     auto result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert baseInfoTable data fail. ", sqlite3_errmsg(db));
@@ -443,6 +473,34 @@ bool ClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBod
     return true;
 }
 
+bool ClusterDatabase::QueryCommunicationGroup(Document &responseBody)
+{
+    sqlite3_stmt *stmtBaseInfo = nullptr;
+    std::string baseInfoSql =
+            "select stages, pp_stages from " + baseInfoTable;
+    int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
+    if (baseInfoResult != SQLITE_OK) {
+        ServerLog::Error("Query CommunicationGroup info Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    responseBody.SetObject();
+    auto allocator = responseBody.GetAllocator();
+    while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
+        int coll = resultStartIndex;
+        std::string stages(sqlite3_column_string(stmtBaseInfo, coll++));
+        if (!stages.empty()) {
+            responseBody.AddMember("tpOrDpGroups", Document(kArrayType, &allocator).Parse(stages.c_str()), allocator);
+        }
+        std::string ppStages(sqlite3_column_string(stmtBaseInfo, coll++));
+        if (!ppStages.empty()) {
+            responseBody.AddMember("ppGroups", Document(kArrayType, &allocator).Parse(ppStages.c_str()), allocator);
+            responseBody.AddMember("defaultPPSize", responseBody["ppGroups"].Size(), allocator);
+        }
+    }
+    sqlite3_finalize(stmtBaseInfo);
+    return true;
+}
+
 bool ClusterDatabase::GetStepIdList(Protocol::PipelineStepResponseBody &responseBody)
 {
     sqlite3_stmt *stmt = nullptr;
@@ -542,7 +600,7 @@ bool ClusterDatabase::GetGroups(Protocol::MatrixGroupParam param,
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     std::string sql = "SELECT DISTINCT group_id as groupId "
-                      "FROM " + communicationMatrixTable + " WHERE iteration_id = ?";
+                      "FROM " + groupIdTable;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare GetGroups statement. error:", sqlite3_errmsg(db));
         return false;

@@ -59,6 +59,8 @@ struct ClusterBaseInfo {
     std::string filePath;
     std::string ranks;
     std::string steps;
+    std::string ppStages;
+    std::string stages;
     long collectStartTime;
     double collectDuration;
     long long dataSize  =  0;

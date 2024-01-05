@@ -5,7 +5,7 @@
 #ifndef PROFILER_SERVER_CLUSTER_DATABASE_H
 #define PROFILER_SERVER_CLUSTER_DATABASE_H
 
-
+#include <set>
 #include "Database.h"
 #include "ClusterDef.h"
 #include "Protocol.h"
@@ -32,6 +32,7 @@ public:
     void InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList);
     void InsertStepStatisticsInfo(StepStatistic &stepStatistic);
     void InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo);
+    void InsertGroupId(std::set<std::string> &groupIds);
     void InsertCommunicationMatrix(CommunicationMatrixInfo &communicationMatrix);
     void InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo);
     bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
@@ -57,6 +58,7 @@ public:
     bool QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody);
     bool QueryDurationList(Protocol::DurationListParams &requestParams,
                            std::vector<Protocol::Duration> &responseBody);
+    bool QueryCommunicationGroup(Document &responseBody);
 
 private:
     const std::string timeInfoTable = "communication_time_info";
@@ -64,6 +66,7 @@ private:
     const std::string stepTraceTable = "step_statistic_info";
     const std::string baseInfoTable = "cluster_base_info";
     const std::string communicationMatrixTable = "communication_matrix";
+    const std::string groupIdTable = "group_id";
     sqlite3_stmt *insertTimeInfoStmt = nullptr;
     sqlite3_stmt *insertBandwidthStmt = nullptr;
     sqlite3_stmt *stepStmt = nullptr;
