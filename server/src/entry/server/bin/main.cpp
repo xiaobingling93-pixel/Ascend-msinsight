@@ -45,7 +45,6 @@ void PrintAvailablePort(int startPort)
             port++;
         } else {
             std::cout << "Available port: " << port << std::endl;
-            ServerLog::Info("Available port: ", port);
             return;
         }
     }
@@ -61,15 +60,15 @@ int main(int argc, const char *argv[])
     }
     const ParamsOption &option = ParamsParser::Instance().GetOption();
     if (!ParamsParser::Instance().Parse(args)) {
-        ServerLog::Initialize(option.logPath, option.logSize, option.logLevel);
+        ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, "");
         ServerLog::Error(ParamsParser::Instance().GetError());
         return -1;
     }
-    ServerLog::Initialize(option.logPath, option.logSize, option.logLevel);
     if (option.scanPort > 0) {
         PrintAvailablePort(option.scanPort);
         return 0;
     }
+    ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
     ParamsOptionInfo();
     StartServer(option);
     return 0;

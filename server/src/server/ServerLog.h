@@ -13,17 +13,19 @@ namespace Server {
 using namespace Dic;
 class ServerLog {
 public:
-    static inline void Initialize(const std::string &logPath, const int &logSize, const std::string &logLevelStr)
+    static inline void Initialize(const std::string &logPath, const int &logSize, const std::string &logLevelStr,
+                                  std::string wsPort)
     {
         ServerLog &serverLog = Instance();
+        serverLog.wsPort = wsPort;
         if (serverLog.printInstance == nullptr) {
-            serverLog.printInstance = std::make_unique<LogUtil>(LogOutType::TERMINAL, "");
+            serverLog.printInstance = std::make_unique<LogUtil>(LogOutType::TERMINAL, "", wsPort);
         }
         if (serverLog.recordInstance == nullptr) {
             std::string logFileName = logPath + "/profiler_server.log";
-            serverLog.recordInstance = std::make_unique<LogUtil>(LogOutType::FILE, logFileName);
+            serverLog.recordInstance = std::make_unique<LogUtil>(LogOutType::FILE, logFileName, wsPort);
             LogLevel logLevel = LogUtil::GetLogLevel(logLevelStr);
-            serverLog.recordInstance->SetLogLevel(logLevel).SetMaxSize(logSize);
+            serverLog.recordInstance->SetLogLevel(logLevel).SetWsPort(wsPort).SetMaxSize(logSize);
         }
     }
 
@@ -99,13 +101,14 @@ private:
         std::lock_guard<std::mutex> lock(recordInstanceMutex);
         std::string head = GetLogHead(level);
         recordInstance->LogT(level, head, args..., "\n");
+        recordInstance->SetWsPort(wsPort);
     }
 
     template <typename... ARGS> inline void Print(const LogLevel &level, const ARGS... args)
     {
         std::lock_guard<std::mutex> lock(printInstanceMutex);
         if (printInstance == nullptr) {
-            printInstance = std::make_unique<LogUtil>(LogOutType::TERMINAL, "");
+            printInstance = std::make_unique<LogUtil>(LogOutType::TERMINAL, "", wsPort);
         }
         std::string head = GetLogHead(level);
         printInstance->LogT(level, head, args..., "\n");
@@ -115,6 +118,7 @@ private:
     std::unique_ptr<LogUtil> recordInstance = nullptr;
     std::mutex recordInstanceMutex;
     std::mutex printInstanceMutex;
+    std::string wsPort;
 };
 } // end of namespace Server
 } // end of namespace Dic
