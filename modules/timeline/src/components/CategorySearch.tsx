@@ -191,8 +191,8 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     return (
         <CustomDiv theme={theme} onClick={(e) => { e.stopPropagation(); }}>
             { contextHolder}
-            <StyledInput allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor} /> }} disabled={searchingStatus}
-                minwidth={200} height={24} isshow={1} value={searchContent} onChange={onInputChange} onPressEnter={onInputPressEnter}></StyledInput>
+            <StyledInput allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor} /> }} disabled={searchingStatus} maxLength={200}
+                minwidth={200} height={24} isshow={1} value={searchContent} onChange={onInputChange} onPressEnter={onInputPressEnter} ></StyledInput>
             <div className="searchResult">{searchingStatus
                 ? <ImgWithFallback className={'loading'} />
                 : searchIconVisible

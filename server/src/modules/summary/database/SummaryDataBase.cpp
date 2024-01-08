@@ -313,13 +313,13 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         } else {
             group = R"(name || '[' || input_shapes || ']')";
         }
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
+
         std::string sql =
                 " SELECT " + group + " as name, ROUND(sum(duration), 2) as duration" +
                 " FROM " + kernelTable +
-                " WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL'"
+                " WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
                 " GROUP by " + group +
-                " ORDER BY duration DESC LIMIT " + std::to_string(reqParams.topK);
+                " ORDER BY duration DESC LIMIT ?";
         return sql;
     }
 
@@ -333,15 +333,15 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         } else {
             group = R"(name || '[' || input_shapes || ']')";
         }
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
+
         std::string sql =
                 " SELECT accelerator_core as name, ROUND(SUM(duration), 2) as duration"
                 " FROM ("
                 "     SELECT " + group + ", accelerator_core, ROUND(SUM(duration), 2) as duration" +
                 "     FROM " + kernelTable +
-                "     WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
                 "     GROUP BY " + group +
-                "     ORDER BY duration DESC LIMIT " + std::to_string(reqParams.topK) +
+                "     ORDER BY duration DESC LIMIT ?"
                 " ) subquery" +
                 " GROUP by accelerator_core"
                 " ORDER BY duration DESC";
@@ -364,6 +364,11 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             ServerLog::Error("Failed to get Duration Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
+
+        int index = bindStartIndex;
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
+        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, index++, reqParams.topK);
 
         std::vector<Protocol::OperatorDurationRes> res;
         while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -388,15 +393,14 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     bool SummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
     {
         sqlite3_stmt *stmt = nullptr;
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
+        std::string group = reqParams.group == Protocol::OP_TYPE_GROUP ? "op_type" : R"(name || input_shapes)";
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
-                "     SELECT *"
-                "     FROM " + kernelTable +
-                "     WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL'"
-                "     GROUP by " + (reqParams.group == "Operator Type" ? "op_type" : R"(name || input_shapes)") +
-                "     ORDER by duration DESC LIMIT " + std::to_string(reqParams.topK) +
+                "     SELECT * FROM " + kernelTable +
+                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
+                "     GROUP by " + group +
+                "     ORDER by duration DESC LIMIT ?"
                 " ) subquery";
 
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -404,6 +408,11 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             ServerLog::Error("Failed to get Statistic Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
+        int index = bindStartIndex;
+        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, index++, reqParams.topK);
+
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             total = sqlite3_column_int64(stmt, resultStartIndex);
         }
@@ -422,7 +431,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             group = R"(name || input_shapes)";
             name = "name";
         }
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
+
         std::string sql =
                 " SELECT * FROM ("
                 "     SELECT op_type, " + name + " as name, input_shapes, accelerator_core,"
@@ -431,7 +440,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 "     ROUND(max(duration), 2) as max_time,"
                 "     ROUND(min(duration), 2) as min_time"
                 "     FROM " + kernelTable +
-                "     WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
                 "     GROUP by " + group +
                 "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery ";
@@ -440,19 +449,13 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
 
-        sql += " LIMIT " + std::to_string(reqParams.pageSize) +
-                " OFFSET " + std::to_string(reqParams.pageSize * (reqParams.current - 1));
+        sql += " LIMIT ? OFFSET ?";
         return sql;
     }
 
     bool SummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
         Protocol::OperatorStatisticInfoResponse &response)
     {
-        if (reqParams.group != Protocol::OP_TYPE_GROUP && reqParams.group != Protocol::INPUT_SHAPE_GROUP) {
-            ServerLog::Error("[Operator]Wrong group type of Statistic Info. Group: ", reqParams.group);
-            return false;
-        }
-
         if (!QueryStatisticTotalNum(reqParams, response.total)) {
             ServerLog::Error("[Operator]Failed to query total num of statistic info.");
             return false;
@@ -465,6 +468,13 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             ServerLog::Error("Failed to get Statistic Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
+
+        int index = bindStartIndex;
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
+        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
+        sqlite3_bind_int64(stmt, index++, reqParams.pageSize * (reqParams.current - 1));
+
         std::vector<Protocol::OperatorStatisticInfoRes> res;
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             int col = 0;
@@ -488,15 +498,12 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     bool SummaryDataBase::QueryDetailTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
     {
         sqlite3_stmt *stmt = nullptr;
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
-                "     SELECT * "
-                "     FROM " + kernelTable +
-                "     WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL'"
-                "     ORDER BY duration DESC"
-                "     LIMIT " + std::to_string(reqParams.topK) +
+                "     SELECT * FROM " + kernelTable +
+                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
+                "     ORDER BY duration DESC LIMIT ?"
                 " ) subquery";
 
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -504,6 +511,11 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             ServerLog::Error("Failed to get Detail Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
+        int index = bindStartIndex;
+        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, index++, reqParams.topK);
+
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             total = sqlite3_column_int64(stmt, resultStartIndex);
         }
@@ -513,7 +525,6 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
 
     std::string SummaryDataBase::GenerateQueryDetailSql(Protocol::OperatorStatisticReqParams &reqParams)
     {
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         std::string sql =
                 " SELECT rank_id, step_id, name, op_type, accelerator_core,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
@@ -521,14 +532,13 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
-                "     WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL'"
-                "     ORDER by duration DESC LIMIT " +  std::to_string(reqParams.topK) +
+                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
+                "     ORDER by duration DESC LIMIT ?"
                 " ) subquery ";
         if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
-        sql += " LIMIT " + std::to_string(reqParams.pageSize) +
-                " OFFSET " + std::to_string((reqParams.current - 1) * reqParams.pageSize);
+        sql += " LIMIT ? OFFSET ?";
         return sql;
     }
 
@@ -547,8 +557,14 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             return false;
         }
         uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         int index = bindStartIndex;
         sqlite3_bind_int64(stmt, index++, startTime);
+        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, index++, reqParams.topK);
+        sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
+        sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
+
         std::vector<Protocol::OperatorDetailInfoRes> res;
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             int col = 0;
@@ -579,16 +595,14 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     bool SummaryDataBase::QueryMoreInfoTotalNum(Protocol::OperatorMoreInfoReqParams &reqParams, int64_t &total)
     {
         sqlite3_stmt *stmt = nullptr;
-        std::string condition = (reqParams.group == Protocol::OP_TYPE_GROUP) ?
-                                " op_type = '" + reqParams.opType + "'":
-                                " name = '" + reqParams.opName + "' AND input_shapes = '" + reqParams.shape + "'";
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
+        std::string condition =
+                (reqParams.group == Protocol::OP_TYPE_GROUP) ? " op_type = ?" : " name = ? AND input_shapes = ?";
+
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
-                "     SELECT *"
-                "     FROM " + kernelTable +
-                "     WHERE rank_id = '" + rankId + "' AND accelerator_core <> 'HCCL' AND" + condition +
+                "     SELECT * FROM " + kernelTable +
+                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL' AND" + condition +
                 " ) subquery";
 
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -596,6 +610,16 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             ServerLog::Error("Failed to get More Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
+        int index = bindStartIndex;
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
+        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        if (reqParams.group == Protocol::OP_TYPE_GROUP) {
+            sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
+        } else {
+            sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, index++, reqParams.shape.c_str(), -1, SQLITE_TRANSIENT);
+        }
+
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             total = sqlite3_column_int64(stmt, resultStartIndex);
         }
@@ -605,7 +629,6 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
 
     std::string SummaryDataBase::GenerateQueryMoreInfoSql(Protocol::OperatorMoreInfoReqParams &reqParams)
     {
-        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         std::string sql =
                 " SELECT rank_id, step_id, name, op_type, accelerator_core,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
@@ -613,30 +636,25 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
-                "     WHERE rank_id = '" +  rankId + "' AND accelerator_core <> 'HCCL'"
+                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
                 "     ORDER by duration DESC"
                 " ) subquery ";
         if (reqParams.group == Protocol::OP_TYPE_GROUP) {
-            sql += " WHERE op_type = '" + reqParams.opType + "'";
+            sql += " WHERE op_type = ?";
         } else {
-            sql += " WHERE name = '" + reqParams.opName + "' AND input_shapes = '" + reqParams.shape + "'";
+            sql += " WHERE name = ? AND input_shapes = ?";
         }
         if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
 
-        sql += " LIMIT " + std::to_string(reqParams.pageSize) +
-                " OFFSET " + std::to_string((reqParams.current - 1) * reqParams.pageSize);
+        sql += " LIMIT ? OFFSET ?";
         return sql;
     }
 
     bool SummaryDataBase::QueryOperatorMoreInfo(Protocol::OperatorMoreInfoReqParams &reqParams,
         Protocol::OperatorMoreInfoResponse& response)
     {
-        if (reqParams.group != Protocol::OP_TYPE_GROUP && reqParams.group != Protocol::INPUT_SHAPE_GROUP) {
-            ServerLog::Error("[Operator]Wrong group type of More Info. Group: ", reqParams.group);
-            return false;
-        }
         if (!QueryMoreInfoTotalNum(reqParams, response.total)) {
             ServerLog::Error("[Operator]Failed to query total num of more info.");
             return false;
@@ -650,8 +668,18 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             return false;
         }
         uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+        std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         int index = bindStartIndex;
         sqlite3_bind_int64(stmt, index++, startTime);
+        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        if (reqParams.group == Protocol::OP_TYPE_GROUP) {
+            sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
+        } else {
+            sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, index++, reqParams.shape.c_str(), -1, SQLITE_TRANSIENT);
+        }
+        sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
+        sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
 
         std::vector<Protocol::OperatorDetailInfoRes> res;
         while (sqlite3_step(stmt) == SQLITE_ROW) {

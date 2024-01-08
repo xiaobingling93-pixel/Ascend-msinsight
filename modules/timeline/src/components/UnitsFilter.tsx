@@ -311,6 +311,13 @@ export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Elem
     // tooltip显隐控制悬浮效果
     const onTooltipVisibleChange = (visible: boolean): void => {
         updateCustomButtonProps({ ...customButtonProps, isSuspend: visible });
+
+        setTimeout(() => {
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.setAttribute('maxlength', '200');
+            });
+        });
     };
     const ref = useRef<HTMLButtonElement>(null);
     return (

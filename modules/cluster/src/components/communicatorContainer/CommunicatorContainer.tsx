@@ -7,7 +7,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Tabs, Form, InputNumber, Row, Button, message, Select } from 'antd';
 import _ from 'lodash';
 import eventBus, { useEventBus } from '../../utils/eventBus';
-import { queryTopSummary } from '../../utils/RequestUtils';
 import {
     communicator,
     communicatorContainerData,
@@ -21,11 +20,8 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
     useEffect(() => {
         setActiveTab('pp');
         if (session.communicatorData.partitionModes.length === 0) {
-            queryTopSummary({ step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 }).then((result) => {
-                session.rankCount = result.rankCount;
-                getDefaultCommunicatorData(result.filePath).then(value => {
-                    session.communicatorData = value;
-                });
+            getDefaultCommunicatorData().then(value => {
+                session.communicatorData = value;
             });
         }
     }, [session.communicatorData]);
@@ -115,13 +111,13 @@ const CommunicatorHeader = observer(({ session, defaultPPSize }: { session: Sess
                     }]}/>
             </Form.Item>
             <Form.Item name={'ppSize'} label={'PP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
+                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
             <Form.Item name={'tpSize'} label={'TP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
+                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
             <Form.Item name={'dpSize'} label={'DP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }}></InputNumber>
+                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
             <Button style={{ margin: '10px 10px 10px 0' }} onClick={onClick(defaultPPSize)}>Generate</Button>
         </Form>
@@ -141,30 +137,42 @@ const RankId = ({ id, onClick }: { id: number; onClick: () => void }): JSX.Eleme
     );
 };
 
-export async function getDefaultCommunicatorData(filePath: string): Promise<communicatorContainerData> {
+export async function getDefaultCommunicatorData(): Promise<communicatorContainerData> {
     const result = {
         partitionModes: [
             {
                 mode: 'pp',
-                communicators: [],
+                communicators: [] as communicator[],
             },
             {
                 mode: 'tpOrDp',
-                communicators: [],
+                communicators: [] as communicator[],
             },
         ],
         defaultPPSize: 0,
     };
-    const data = await window.requestData('communicator/parse', { filePath }, 'communication');
+    const data = await window.requestData('communication/communicator', {}, 'communication');
     if (data?.ppGroups !== undefined && data?.tpOrDpGroups !== undefined && data?.defaultPPSize !== undefined) {
         result.partitionModes = [
             {
                 mode: 'pp',
-                communicators: data.ppGroups,
+                communicators: _.map(data.ppGroups, (group, key) => {
+                    return {
+                        name: 'stage' + key,
+                        ranks: group,
+                        value: `(${_.join(group, ', ')}` + (group.length > 1 ? ')' : ',)'),
+                    } as communicator;
+                }),
             },
             {
                 mode: 'tpOrDp',
-                communicators: data.tpOrDpGroups,
+                communicators: _.map(data.tpOrDpGroups, (group, key) => {
+                    return {
+                        name: 'tpOrDpStage' + key,
+                        ranks: group,
+                        value: `(${_.join(group, ', ')}` + (group.length > 1 ? ')' : ',)'),
+                    } as communicator;
+                }),
             },
         ];
         result.defaultPPSize = data.defaultPPSize;

@@ -70,7 +70,9 @@ private:
 
 class LogUtil {
 public:
-    LogUtil(const LogOutType &type, const std::string &filePath) : outType(type), originFilePath(filePath)
+    LogUtil(const LogOutType &type, const std::string &filePath, std::string wsPort) : outType(type),
+                                                                                       originFilePath(filePath),
+                                                                                       wsPort(wsPort)
     {
         Initialize();
     }
@@ -80,9 +82,10 @@ public:
         Destroy();
     }
 
-    static std::unique_ptr<LogUtil> NewInstance(const LogOutType &type, const std::string &logFilePath)
+    static std::unique_ptr<LogUtil> NewInstance(const LogOutType &type, const std::string &logFilePath,
+                                                const std::string &wsPort)
     {
-        return std::make_unique<LogUtil>(type, logFilePath);
+        return std::make_unique<LogUtil>(type, logFilePath, wsPort);
     }
 
     inline LogUtil &SetOutType(const LogOutType &type)
@@ -106,6 +109,12 @@ public:
         if (this->level != logLevel) {
             this->level = logLevel;
         }
+        return *this;
+    }
+
+    inline LogUtil &SetWsPort(const std::string &port)
+    {
+        this->wsPort = port;
         return *this;
     }
 
@@ -186,9 +195,15 @@ private:
     {
         filePath = originFilePath;
         std::string::size_type pos = filePath.find_last_of(".");
+        std::string insertPort;
+        if (!wsPort.empty() && wsPort != "-1") {
+            insertPort += "_" + wsPort;
+        }
         if (pos != std::string::npos) {
-            filePath.insert(pos, "_" + std::to_string(++count));
+            filePath.insert(pos, insertPort);
+            filePath.insert(pos + insertPort.size(), "_" + std::to_string(++count));
         } else {
+            filePath += insertPort;
             filePath += ("_" + std::to_string(++count));
         }
         if ((this->outType != LogOutType::TERMINAL) && !this->filePath.empty()) {
@@ -239,6 +254,7 @@ private:
 
     inline void Check()
     {
+        CheckPort();
         if ((currentSize >= maxSize) && ofs.is_open()) {
             ofs.close();
             filePath = originFilePath;
@@ -254,6 +270,18 @@ private:
                 ofs.open(filePath, std::ios::out | std::ios::trunc);
                 currentSize = 0;
             }
+        }
+    }
+
+    inline void CheckPort()
+    {
+        if (!wsPort.empty() && wsPort != "-1" && ofs.is_open()) {
+            ofs.close();
+            filePath = originFilePath;
+            filePath.insert(filePath.find_last_of("."), "_" + wsPort);
+            filePath.insert(filePath.find_last_of("."), "_" + std::to_string(count));
+            currentSize = GetFileSize(filePath);
+            ofs.open(filePath, std::ios::out | std::ios::app);
         }
     }
 
@@ -293,6 +321,7 @@ private:
     std::string filePath;
     LogOutType outType = LogOutType::BOTH;
     LogLevel level = LogLevel::L_INFO;
+    std::string wsPort;
     std::map<LogLevel, std::ostream *> outMap = { { LogLevel::L_INFO, &std::cout },
                                                   { LogLevel::L_WARN, &std::cout },
                                                   { LogLevel::L_DEBUG, &std::cout },

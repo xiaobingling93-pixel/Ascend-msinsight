@@ -62,12 +62,22 @@ export const SystemView = observer((props: any) => {
     };
     return (<Container className={'theme-view'}>
         <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+            <ViewSelect />
             <RankFilter session={props.session} handleChange={handleChange}></RankFilter>
             <SelectList setKey={setKey}></SelectList>
         </Space>
         <Divider type="vertical" />
         <ChartErrorBoundary><SelectContainer><SelectContent className={'SelectContent'} key={key} rankId={conditions.rankId} session={props.session}></SelectContent></SelectContainer></ChartErrorBoundary>
     </Container>);
+});
+
+const ViewSelect = observer(() => {
+    const options = [{ label: 'Stats System View', value: 0 }];
+    return (
+        <div className={'systemViewSelect'}>
+            <Select style={{ width: 180 }} defaultValue={0} options={options}/>
+        </div>
+    );
 });
 
 const RankFilter = observer((props: any): JSX.Element => {

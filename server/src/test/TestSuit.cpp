@@ -18,7 +18,7 @@ protected:
     {
         std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
-        ServerLog::Initialize(option.logPath, option.logSize, option.logLevel);
+        ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
         int index = currPath.find_last_of("server");
         currPath = currPath.substr(0, index + 1);
         Dic::Module::Timeline::DataBaseManager::Instance()

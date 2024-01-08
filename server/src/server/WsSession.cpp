@@ -46,6 +46,12 @@ bool WsSession::CheckMessage(ProtocolMessage &msg)
             ServerLog::Error("The msg is not request. exception:", e.what());
             return false;
         }
+
+        if (this->tokenString.empty()) {
+            ServerLog::Error("Message token generate failed, so that message can not be processed.");
+            return false;
+        }
+
         // first token create request has no token
         msg.token = this->tokenString;
     }

@@ -58,7 +58,7 @@ TEST_F(TestSuit, QueryRanksData)
     requestParam.dbIndex = "0";
     requestParam.iterationId = "2";
     std::vector<Dic::Protocol::IterationsOrRanksObject> responseBody;
-    database->QueryRanksHandler(requestParam, responseBody);
+    database->QueryRanksHandler(responseBody);
     int expectSize = 2;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(responseBody[0].iterationOrRankId, "0");

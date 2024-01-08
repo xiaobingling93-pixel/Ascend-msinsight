@@ -5,7 +5,7 @@
 #ifndef PROFILER_SERVER_CLUSTER_DATABASE_H
 #define PROFILER_SERVER_CLUSTER_DATABASE_H
 
-
+#include <set>
 #include "Database.h"
 #include "ClusterDef.h"
 #include "Protocol.h"
@@ -23,6 +23,7 @@ public:
 
     bool SetConfig();
     bool CreateTable();
+    bool CreateIndex();
     bool InitStmt();
     void ReleaseStmt();
     void InsertTimeInfo(CommunicationTimeInfo &timeInfo);
@@ -31,6 +32,7 @@ public:
     void InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList);
     void InsertStepStatisticsInfo(StepStatistic &stepStatistic);
     void InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo);
+    void InsertGroupId(std::set<std::string> &groupIds);
     void InsertCommunicationMatrix(CommunicationMatrixInfo &communicationMatrix);
     void InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo);
     bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
@@ -50,27 +52,20 @@ public:
     bool QueryDistributionData(Protocol::DistributionDataParam &param, Protocol::DistributionResBody &resBody);
     void SaveLastData();
 
-    bool QueryRanksHandler(Protocol::RanksParams &requestParam,
-                           std::vector<Protocol::IterationsOrRanksObject> &responseBody);
+    bool QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody);
     bool QueryOperatorNames(Protocol::OperatorNamesParams &requestParams,
                             std::vector<Protocol::OperatorNamesObject> &responseBody);
     bool QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody);
     bool QueryDurationList(Protocol::DurationListParams &requestParams,
                            std::vector<Protocol::Duration> &responseBody);
+    bool QueryCommunicationGroup(Document &responseBody);
 
 private:
-    const std::string timeInfoTable = "communication_time_info";
-    const std::string bandwidthTable = "communication_bandwidth_info";
-    const std::string stepTraceTable = "step_statistic_info";
-    const std::string baseInfoTable = "cluster_base_info";
-    const std::string communicationMatrixTable = "communication_matrix";
     sqlite3_stmt *insertTimeInfoStmt = nullptr;
     sqlite3_stmt *insertBandwidthStmt = nullptr;
     sqlite3_stmt *stepStmt = nullptr;
     sqlite3_stmt *matrixStmt = nullptr;
     bool isInitStmt = false;
-    const int cacheSize = 1000;
-    const int mbSize = 1024 * 1024;
     std::vector<CommunicationTimeInfo> timeInfoCache;
     std::vector<CommunicationBandWidth> bandwidthCache;
     std::vector<CommunicationMatrixInfo> matrixCache;
@@ -80,6 +75,8 @@ private:
 
     sqlite3_stmt *BuildCondition(const Protocol::SummaryTopRankParams &requestParams);
     std::string GetRanksSql(std::vector<std::string> rankList);
+    void GetStepsOrRanksObject(const std::string& jsonStr,
+                               std::vector<Protocol::IterationsOrRanksObject> &responseBody);
 };
 } // end of namespace Module
 } // end of namespace Dic

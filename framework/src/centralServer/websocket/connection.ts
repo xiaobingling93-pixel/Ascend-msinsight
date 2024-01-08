@@ -80,7 +80,6 @@ export class Connection {
                     const dataObj = JSON.parse(ev.data);
                     if (dataObj.command === 'token.create') {
                         this._token = dataObj.body.token;
-                        console.info('wsConnector', `handleTokenCreateMsg ${this._token}`);
                         resolve();
                     } else {
                         console.info('wsConnector', 'create token failure', 'warn');
@@ -124,8 +123,6 @@ export class Connection {
             );
             this.request(msg);
             const reqCallback = (res: Response): void => {
-                console.info('----request:', msg);
-                console.info('[connector]', 'received:', res);
                 if (res.result && res.body !== undefined) {
                     // wedge: return cache resolve
                     resolve(res.body);

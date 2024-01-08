@@ -82,27 +82,8 @@ template <> std::optional<document_t> ToResponseJson<CommunicatorGroupResponse>(
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json_t body(kObjectType);
-    JsonUtil::AddMember(body, "defaultPPSize", response.body.defaultPPSize, allocator);
-    json_t ppGroups(kArrayType);
-    for (const auto& item : response.body.ppGroups) {
-        json_t itemJson(kObjectType);
-        JsonUtil::AddMember(itemJson, "name", item.name, allocator);
-        JsonUtil::AddMember(itemJson, "value", item.value, allocator);
-        JsonUtil::AddArrayMember(itemJson, "ranks", item.ranks, allocator);
-        ppGroups.PushBack(itemJson, allocator);
-    }
-    JsonUtil::AddMember(body, "ppGroups", ppGroups, allocator);
-    json_t tpOrDpGroups(kArrayType);
-    for (auto item : response.body.tpOrDpGroups) {
-        json_t itemJson(kObjectType);
-        JsonUtil::AddMember(itemJson, "name", item.name, allocator);
-        JsonUtil::AddMember(itemJson, "value", item.value, allocator);
-        JsonUtil::AddArrayMember(itemJson, "ranks", item.ranks, allocator);
-        tpOrDpGroups.PushBack(itemJson, allocator);
-    }
-    JsonUtil::AddMember(body, "tpOrDpGroups", tpOrDpGroups, allocator);
-    JsonUtil::AddMember(json, "body", body, allocator);
+
+    JsonUtil::AddMember(json, "body", JsonUtil::JsonDump(response.body), allocator);
     return std::move(json);
 }
 

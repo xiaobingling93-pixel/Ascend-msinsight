@@ -14,6 +14,7 @@
 namespace Dic {
 using json_t = rapidjson::Value;
 using document_t = rapidjson::Document;
+using namespace rapidjson;
 } // end of namespace Dic
 
 #endif // DATA_INSIGHT_CORE_DEFS_H
