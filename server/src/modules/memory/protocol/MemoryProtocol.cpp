@@ -35,12 +35,12 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorRequest(const json_t &j
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
-    if (json["params"].contains("startTime")) {
+    if (json["params"].HasMember("startTime")) {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     } else {
         reqPtr->params.startTime = -1;
     }
-    if (json["params"].contains("endTime")) {
+    if (json["params"].HasMember("endTime")) {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     } else {
         reqPtr->params.endTime = -1;
@@ -49,12 +49,12 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
-    if (json["params"].contains("minSize")) {
+    if (json["params"].HasMember("minSize")) {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.minSize, json["params"], "minSize");
     } else {
         reqPtr->params.minSize = -1;
     }
-    if (json["params"].contains("maxSize")) {
+    if (json["params"].HasMember("maxSize")) {
         JsonUtil::SetByJsonKeyValue(reqPtr->params.maxSize, json["params"], "maxSize");
     } else {
         reqPtr->params.maxSize = -1;
@@ -89,17 +89,17 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorSizeRequest(const json_
 
 #pragma region <<Response To Json>>
 
-std::optional<json_t> MemoryProtocol::ToMemoryOperatorResponseJson(const Response &response)
+std::optional<document_t> MemoryProtocol::ToMemoryOperatorResponseJson(const Response &response)
 {
     return ToResponseJson<MemoryOperatorResponse>(dynamic_cast<const MemoryOperatorResponse &>(response));
 }
 
-std::optional<json_t> MemoryProtocol::ToMemoryViewResponseJson(const Response &response)
+std::optional<document_t> MemoryProtocol::ToMemoryViewResponseJson(const Response &response)
 {
     return ToResponseJson<MemoryViewResponse>(dynamic_cast<const MemoryViewResponse &>(response));
 }
 
-std::optional<json_t> MemoryProtocol::ToMemoryOperatorSizeResponseJson(const Response &response)
+std::optional<document_t> MemoryProtocol::ToMemoryOperatorSizeResponseJson(const Response &response)
 {
     return ToResponseJson<MemoryOperatorSizeResponse>(dynamic_cast<const MemoryOperatorSizeResponse &>(response));
 }

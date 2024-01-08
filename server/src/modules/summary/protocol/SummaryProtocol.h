@@ -29,14 +29,14 @@ private:
     static std::unique_ptr<Request> ToRankTimeRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToCommunicationRequest(const json_t &json, std::string &error);
 
-    static std::optional<json_t> ToTopNResponse(const Response &response);
-    static std::optional<json_t> ToStatisticsResponse(const Response &response);
-    static std::optional<json_t> ToComputeDetailResponse(const Response &response);
-    static std::optional<json_t> ToStepResponse(const Response &response);
-    static std::optional<json_t> ToStagesResponse(const Response &response);
-    static std::optional<json_t> ToStageTimeResponse(const Response &response);
-    static std::optional<json_t> ToRankTimeResponse(const Response &response);
-    static std::optional<json_t> ToCommunicationResponse(const Response &response);
+    static std::optional<document_t> ToTopNResponse(const Response &response);
+    static std::optional<document_t> ToStatisticsResponse(const Response &response);
+    static std::optional<document_t> ToComputeDetailResponse(const Response &response);
+    static std::optional<document_t> ToStepResponse(const Response &response);
+    static std::optional<document_t> ToStagesResponse(const Response &response);
+    static std::optional<document_t> ToStageTimeResponse(const Response &response);
+    static std::optional<document_t> ToRankTimeResponse(const Response &response);
+    static std::optional<document_t> ToCommunicationResponse(const Response &response);
     // response to json
 };
 } // namespace Protocol

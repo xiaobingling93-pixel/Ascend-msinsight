@@ -292,65 +292,80 @@ template <> std::optional<document_t> ToResponseJson<UnitCounterResponse>(const 
     return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<SystemViewResponse>(const SystemViewResponse &response)
+template <> std::optional<document_t> ToResponseJson<SystemViewResponse>(const SystemViewResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["systemViewDetails"] = json_t::array();
+    json_t body(kObjectType);
+    json_t systemViewDetails(kArrayType);
     for (const SystemViewDetail& systemView : response.body.systemViewDetail) {
-        json_t itemJson = json_t::object();
-        itemJson["name"] = systemView.name;
-        itemJson["time"] = systemView.time;
-        itemJson["totalTime"] = systemView.totalTime;
-        itemJson["numberCalls"] = systemView.numberCalls;
-        itemJson["avg"] = systemView.avg;
-        itemJson["min"] = systemView.min;
-        itemJson["max"] = systemView.max;
-        json["body"]["systemViewDetails"].emplace_back(itemJson);
+        json_t itemJson(kObjectType);
+        JsonUtil::AddMember(itemJson, "name", systemView.name, allocator);
+        JsonUtil::AddMember(itemJson, "time", systemView.time, allocator);
+        JsonUtil::AddMember(itemJson, "totalTime", systemView.totalTime, allocator);
+        JsonUtil::AddMember(itemJson, "numberCalls", systemView.numberCalls, allocator);
+        JsonUtil::AddMember(itemJson, "avg", systemView.avg, allocator);
+        JsonUtil::AddMember(itemJson, "min", systemView.min, allocator);
+        JsonUtil::AddMember(itemJson, "max", systemView.max, allocator);
+        systemViewDetails.PushBack(itemJson, allocator);
     }
-    json["body"]["count"] = response.body.total;
-    json["body"]["pageSize"] = response.body.pageSize;
-    json["body"]["currentPage"] = response.body.currentPage;
-    return json;
+    JsonUtil::AddMember(body, "systemViewDetails", systemViewDetails, allocator);
+    JsonUtil::AddMember(body, "count", response.body.total, allocator);
+    JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
+    JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<KernelDetailsResponse>(const KernelDetailsResponse &response)
+template <> std::optional<document_t> ToResponseJson<KernelDetailsResponse>(const KernelDetailsResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["kernelDetails"] = json_t::array();
+    json_t body(kObjectType);
+    json_t kernelDetails(kArrayType);
     for (const KernelDetail& detail : response.body.kernelDetails) {
-        json_t itemJson = json_t::object();
-        itemJson["name"] = detail.name;
-        itemJson["type"] = detail.type;
-        itemJson["acceleratorCore"] = detail.acceleratorCore;
-        itemJson["startTime"] = detail.startTime;
-        itemJson["duration"] = detail.duration;
-        itemJson["waitTime"] = detail.waitTime;
-        itemJson["blockDim"] = detail.blockDim;
-        itemJson["inputShapes"] = detail.inputShapes;
-        itemJson["inputDataTypes"] = detail.inputDataTypes;
-        itemJson["inputFormats"] = detail.inputFormats;
-        itemJson["outputShapes"] = detail.outputShapes;
-        itemJson["outputDataTypes"] = detail.outputDataTypes;
-        itemJson["outputFormats"] = detail.outputFormats;
-        json["body"]["kernelDetails"].emplace_back(itemJson);
+        json_t itemJson(kObjectType);
+        JsonUtil::AddMember(itemJson, "name", detail.name, allocator);
+        JsonUtil::AddMember(itemJson, "type", detail.type, allocator);
+        JsonUtil::AddMember(itemJson, "acceleratorCore", detail.acceleratorCore, allocator);
+        JsonUtil::AddMember(itemJson, "startTime", detail.startTime, allocator);
+        JsonUtil::AddMember(itemJson, "duration", detail.duration, allocator);
+        JsonUtil::AddMember(itemJson, "waitTime", detail.waitTime, allocator);
+        JsonUtil::AddMember(itemJson, "blockDim", detail.blockDim, allocator);
+        JsonUtil::AddMember(itemJson, "inputShapes", detail.inputShapes, allocator);
+        JsonUtil::AddMember(itemJson, "inputDataTypes", detail.inputDataTypes, allocator);
+        JsonUtil::AddMember(itemJson, "inputFormats", detail.inputFormats, allocator);
+        JsonUtil::AddMember(itemJson, "outputShapes", detail.outputShapes, allocator);
+        JsonUtil::AddMember(itemJson, "outputDataTypes", detail.outputDataTypes, allocator);
+        JsonUtil::AddMember(itemJson, "outputFormats", detail.outputFormats, allocator);
+        kernelDetails.PushBack(itemJson, allocator);
     }
-    json["body"]["acceleratorCoreList"] = response.body.acceleratorCoreList;
-    json["body"]["count"] = response.body.count;
-    json["body"]["pageSize"] = response.body.pageSize;
-    json["body"]["currentPage"] = response.body.currentPage;
-    return json;
+    JsonUtil::AddMember(body, "kernelDetails", kernelDetails, allocator);
+    json_t acceleratorCoreList(kArrayType);
+    for (const auto &item: response.body.acceleratorCoreList) {
+        acceleratorCoreList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+    }
+    JsonUtil::AddMember(body, "acceleratorCoreList", acceleratorCoreList, allocator);
+    JsonUtil::AddMember(body, "count", response.body.count, allocator);
+    JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
+    JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToResponseJson<OneKernelResponse>(const OneKernelResponse &response)
+template <> std::optional<document_t> ToResponseJson<OneKernelResponse>(const OneKernelResponse &response)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json["body"]["depth"] = response.body.depth;
-    json["body"]["threadId"] = response.body.threadId;
-    json["body"]["pid"] = response.body.pid;
-    return json;
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "depth", response.body.depth, allocator);
+    JsonUtil::AddMember(body, "threadId", response.body.threadId, allocator);
+    JsonUtil::AddMember(body, "pid", response.body.pid, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 #pragma endregion
 
@@ -420,27 +435,34 @@ template <> std::optional<document_t> ToEventJson<ParseFailEvent>(const ParseFai
     return std::move(json);
 }
 
-template <> std::optional<json_t> ToEventJson<ParseClusterCompletedEvent>(const ParseClusterCompletedEvent &event)
+template <> std::optional<document_t> ToEventJson<ParseClusterCompletedEvent>(const ParseClusterCompletedEvent &event)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
-    json["body"]["parseResult"] = event.body.parseResult;
-    return json;
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "parseResult", event.body.parseResult, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
-template <> std::optional<json_t> ToEventJson<ParseMemoryCompletedEvent>(const ParseMemoryCompletedEvent &event)
+template <> std::optional<document_t> ToEventJson<ParseMemoryCompletedEvent>(const ParseMemoryCompletedEvent &event)
 {
-    json_t json;
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
-    json["body"]["isCluster"] = event.isCluster;
-    json["body"]["memoryResult"] = json_t::array();
+    json_t body(kObjectType);
+    json_t memoryResult(kArrayType);
     for (const MemorySuccess &memory: event.memoryResult) {
-        json_t chartJson = json_t::object();
-        chartJson["rankId"] = memory.rankId;
-        chartJson["hasMemory"] = memory.hasFile and memory.parseSuccess;
-        json["body"]["memoryResult"].emplace_back(chartJson);
+        json_t chartJson(kObjectType);
+        JsonUtil::AddMember(chartJson, "rankId", memory.rankId, allocator);
+        JsonUtil::AddMember(chartJson, "hasMemory", memory.hasFile and memory.parseSuccess, allocator);
+        memoryResult.PushBack(chartJson, allocator);
     }
-    return json;
+    JsonUtil::AddMember(body, "isCluster", event.isCluster, allocator);
+    JsonUtil::AddMember(body, "memoryResult", memoryResult, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 
 #pragma endregion

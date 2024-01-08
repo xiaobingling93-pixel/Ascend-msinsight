@@ -148,7 +148,7 @@ bool CommunicationSaxHandler::parse_error(std::size_t position, const std::strin
     return false;
 }
 
-CommunicationBandWidth CommunicationSaxHandler::MapToBandwidth(const json_t &json)
+CommunicationBandWidth CommunicationSaxHandler::MapToBandwidth(const nlohmann::json &json)
 {
     CommunicationBandWidth bandWidth;
     bandWidth.stageId = stageId;
@@ -172,7 +172,7 @@ CommunicationBandWidth CommunicationSaxHandler::MapToBandwidth(const json_t &jso
     return bandWidth;
 }
 
-CommunicationTimeInfo CommunicationSaxHandler::MapToTimeInfo(const json_t &json)
+CommunicationTimeInfo CommunicationSaxHandler::MapToTimeInfo(const nlohmann::json &json)
 {
     CommunicationTimeInfo timeInfo;
     timeInfo.rankId = rankId;

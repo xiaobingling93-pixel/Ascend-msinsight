@@ -119,7 +119,7 @@ bool CommunicationMatrixHandler::parse_error(std::size_t position, const std::st
     return false;
 }
 
-CommunicationMatrixInfo CommunicationMatrixHandler::MapToMatrixInfo(const json_t &json)
+CommunicationMatrixInfo CommunicationMatrixHandler::MapToMatrixInfo(const nlohmann::json &json)
 {
     CommunicationMatrixInfo matrixInfo;
     matrixInfo.groupId = groupId;

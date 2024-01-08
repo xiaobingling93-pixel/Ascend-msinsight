@@ -35,14 +35,14 @@ public:
     bool parse_error(std::size_t position, const std::string &last_token,
                      const nlohmann::detail::exception &ex) override;
 
-    CommunicationBandWidth MapToBandwidth(const json_t &json);
-    CommunicationTimeInfo MapToTimeInfo(const json_t &json);
+    CommunicationBandWidth MapToBandwidth(const nlohmann::json &json);
+    CommunicationTimeInfo MapToTimeInfo(const nlohmann::json &json);
 
 private:
     float tempFloat = 0;
     int tempInt = 0;
-    json_t currentObject;
-    json_t sizeDistribution;
+    nlohmann::json currentObject;
+    nlohmann::json sizeDistribution;
     std::string currentKey;
     std::string rankId;
     std::string stepId;

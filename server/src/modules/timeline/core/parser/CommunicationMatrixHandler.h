@@ -35,13 +35,13 @@ public:
     bool parse_error(std::size_t position, const std::string &last_token,
                      const nlohmann::detail::exception &ex) override;
 
-    CommunicationMatrixInfo MapToMatrixInfo(const json_t &json);
+    CommunicationMatrixInfo MapToMatrixInfo(const nlohmann::json &json);
 
 private:
 
     std::string exception;
     int currentDepth = 0;
-    json_t currentObject;
+    nlohmann::json currentObject;
     std::string currentKey;
     std::string groupId;
     std::string iterationId;

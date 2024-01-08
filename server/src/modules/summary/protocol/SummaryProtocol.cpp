@@ -48,8 +48,16 @@ std::unique_ptr<Request> SummaryProtocol::ToTopNRequest(const json_t &json, std:
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
-    JsonUtil::SetByJsonKeyArrayValue(reqPtr->params.stepIdList, json["params"], "stepIdList");
-    JsonUtil::SetByJsonKeyArrayValue(reqPtr->params.rankIdList, json["params"], "rankIdList");
+    if (json["params"].HasMember("stepIdList") && json["params"]["stepIdList"].IsArray()) {
+        for (const auto &stepId : json["params"]["stepIdList"].GetArray()) {
+            reqPtr->params.stepIdList.emplace_back(stepId.GetString());
+        }
+    }
+    if (json["params"].HasMember("rankIdList") && json["params"]["rankIdList"].IsArray()) {
+        for (const auto &rankId : json["params"]["rankIdList"].GetArray()) {
+            reqPtr->params.rankIdList.emplace_back(rankId.GetString());
+        }
+    }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.limit, json["params"], "limit");
     return reqPtr;
@@ -147,42 +155,42 @@ std::unique_ptr<Request> SummaryProtocol::ToCommunicationRequest(const json_t &j
 
 #pragma region <<Json To Request>>
 
-std::optional<json_t> SummaryProtocol::ToTopNResponse(const Response &response)
+std::optional<document_t> SummaryProtocol::ToTopNResponse(const Response &response)
 {
     return ToResponseJson<SummaryTopRankResponse>(dynamic_cast<const SummaryTopRankResponse &>(response));
 }
 
-std::optional<json_t> SummaryProtocol::ToStatisticsResponse(const Response &response)
+std::optional<document_t> SummaryProtocol::ToStatisticsResponse(const Response &response)
 {
     return ToResponseJson<SummaryStatisticsResponse>(dynamic_cast<const SummaryStatisticsResponse &>(response));
 }
 
-std::optional<json_t> SummaryProtocol::ToComputeDetailResponse(const Response &response)
+std::optional<document_t> SummaryProtocol::ToComputeDetailResponse(const Response &response)
 {
     return ToResponseJson<ComputeDetailResponse>(dynamic_cast<const ComputeDetailResponse &>(response));
 }
 
-std::optional<json_t> SummaryProtocol::ToStepResponse(const Response &response)
+std::optional<document_t> SummaryProtocol::ToStepResponse(const Response &response)
 {
     return ToResponseJson<PipelineStepResponse>(dynamic_cast<const PipelineStepResponse &>(response));
 }
 
-std::optional<json_t> SummaryProtocol::ToStagesResponse(const Response &response)
+std::optional<document_t> SummaryProtocol::ToStagesResponse(const Response &response)
 {
     return ToResponseJson<PipelineStageResponse>(dynamic_cast<const PipelineStageResponse &>(response));
 }
 
-std::optional<json_t> SummaryProtocol::ToStageTimeResponse(const Response &response)
+std::optional<document_t> SummaryProtocol::ToStageTimeResponse(const Response &response)
 {
     return ToResponseJson<PipelineStageTimeResponse>(dynamic_cast<const PipelineStageTimeResponse &>(response));
 }
 
-std::optional<json_t> SummaryProtocol::ToRankTimeResponse(const Response &response)
+std::optional<document_t> SummaryProtocol::ToRankTimeResponse(const Response &response)
 {
     return ToResponseJson<PipelineRankTimeResponse>(dynamic_cast<const PipelineRankTimeResponse &>(response));
 }
 
-std::optional<json_t> SummaryProtocol::ToCommunicationResponse(const Response &response)
+std::optional<document_t> SummaryProtocol::ToCommunicationResponse(const Response &response)
 {
     return ToResponseJson<CommunicationDetailResponse>(dynamic_cast<const CommunicationDetailResponse &>(response));
 }
