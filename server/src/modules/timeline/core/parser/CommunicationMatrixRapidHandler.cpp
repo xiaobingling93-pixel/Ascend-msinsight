@@ -99,6 +99,9 @@ bool CommunicationMatrixRapidHandler::EndObject(rapidjson::SizeType memberCount)
         database->InsertCommunicationMatrix(matrix);
         currentObject.RemoveAllMembers();
     }
+    if (currentDepth == 0) {
+        database->InsertGroupId(groupIds);
+    }
     return true;
 }
 
@@ -115,6 +118,7 @@ bool CommunicationMatrixRapidHandler::EndArray(rapidjson::SizeType elementCount)
 CommunicationMatrixInfo CommunicationMatrixRapidHandler::MapToMatrixInfo(const rapidjson::Document &json)
 {
     CommunicationMatrixInfo matrixInfo;
+    groupIds.insert(groupId);
     matrixInfo.groupId = groupId;
     matrixInfo.iterationId = iterationId;
     matrixInfo.iterationId = iterationId.length() > stepSubLen ? iterationId.substr(stepSubLen) : iterationId;

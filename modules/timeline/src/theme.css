@@ -504,10 +504,10 @@ tr.ant-table-row:hover{
     border-color: var(--grey60);
 }
 .theme_dark .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before{
-    background-color:var(--grey15);
+    background-color:var(--grey50)!important;
 }
 .theme_dark .ant-table-thead > tr > th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan]):hover::before {
-    background-color: var(--grey15) !important;
+    background-color: var(--grey50) !important;
 }
 .theme_dark .ant-select-disabled.ant-select:not(.ant-select-customize-input) .ant-select-selector {
     background: var(--grey60);
@@ -546,13 +546,13 @@ tr.ant-table-row:hover{
 .systemViewRank{
     text-align: left;
     padding-left: 5px;
-    padding-top: 20px;
+    padding-top: 10px;
 }
 
-.systemViewRank>*{
-    height:30px;
-    line-height: 30px;
-    padding: 5px 0;
+.systemViewSelect{
+    text-align: left;
+    padding-left: 15px;
+    padding-top: 20px;
 }
 
 .theme_dark .systemViewRank{
@@ -589,4 +589,8 @@ tr.ant-table-row:hover{
     background: no-repeat center url('./assets/images/un_pin_dark.svg');
     height: 30px;
     width: 20px;
+}
+
+.theme_dark .ant-select-selection-search-input{
+    color: rgb(177, 177, 177);
 }

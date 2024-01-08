@@ -46,12 +46,16 @@ namespace Dic::Module::Operator {
     bool QueryOpStatisticInfoHandler::CheckRequestParam(OperatorStatisticReqParams& params)
     {
         if (params.rankId.empty()) {
-            ServerLog::Error("[Operator]Failed to check rankId in QueryOpStatisticInfoHandler.");
+            ServerLog::Error("[Operator]Failed to check rankId in Query Op Statistic Info.");
+            return false;
+        }
+        if (params.group != Protocol::OP_TYPE_GROUP && params.group != Protocol::INPUT_SHAPE_GROUP) {
+            ServerLog::Error("[Operator]Wrong group type in Query Op Statistic Info.");
             return false;
         }
         if (!params.orderBy.empty()) {
             if (OperatorProtocol::GetStatisticColumName(params.orderBy).empty()) {
-                ServerLog::Error("[Operator]Failed to check orderBy in QueryOpStatisticInfoHandler.");
+                ServerLog::Error("[Operator]Failed to check orderBy in Query Op Statistic Info.");
                 return false;
             }
             params.orderBy = OperatorProtocol::GetStatisticColumName(params.orderBy);

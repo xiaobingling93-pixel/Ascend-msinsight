@@ -18,10 +18,6 @@ public:
 private:
     TokenBuilder() = default;
     ~TokenBuilder() = default;
-
-    static const int maxTokenCode = 0x7dffffff;
-    int tokenCode = 0;
-    std::mutex tokenCodeMutex;
 };
 } // end of namespace Server
 } // end of namespace Dic

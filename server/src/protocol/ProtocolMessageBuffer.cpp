@@ -74,7 +74,7 @@ std::unique_ptr<ProtocolMessage> ProtocolMessageBuffer::Pop()
         buffer = buffer.substr(headPos);
         headPos = 0;
     }
-    uint64_t splitPos = buffer.find_first_of(REQ_DELIMITER);
+    uint64_t splitPos = buffer.find(REQ_DELIMITER);
     if (splitPos == std::string::npos) {
         return nullptr;
     }

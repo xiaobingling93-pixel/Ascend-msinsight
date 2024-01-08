@@ -17,7 +17,7 @@ export function getDetailViewItem(session: Session): any {
 }
 
 const ViewSelect = observer((props: any) => {
-    return (<div className={'title'}>{<span>StatsSystemView</span>}</div>);
+    return (<div className={'title'}>{<span>System View</span>}</div>);
 });
 
 const ViewContainer = observer((props: any) => {

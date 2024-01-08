@@ -42,15 +42,9 @@ struct GroupItem {
     std::string value;
 };
 
-struct CommunicatorGroupResBody {
-    int defaultPPSize;
-    std::vector<GroupItem> ppGroups;
-    std::vector<GroupItem> tpOrDpGroups;
-};
-
 struct CommunicatorGroupResponse : public Response {
-    CommunicatorGroupResponse() : Response(REQ_RES_COMMUNICATOR_PARSE) {}
-    CommunicatorGroupResBody body;
+    CommunicatorGroupResponse() : Response(REQ_RES_COMMUNICATION_COMMUNICATOR) {}
+    Document body;
 };
 
 struct BandwidthDataItem {

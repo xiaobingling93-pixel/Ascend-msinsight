@@ -179,6 +179,7 @@ const opShapeStaticColumns = [
         title: 'Avg Time(μs)',
         dataIndex: 'avgTime',
         sorter: true,
+        ellipsis: true,
     },
     {
         title: 'Max Time(μs)',

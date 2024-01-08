@@ -55,13 +55,8 @@ struct DistributionDataRequest : public Request {
     DistributionDataParam params;
 };
 
-struct CommunicatorGroupParam {
-    std::string filePath;
-};
-
 struct CommunicatorGroupRequest : public Request {
-    CommunicatorGroupRequest() : Request(REQ_RES_COMMUNICATOR_PARSE) {};
-    CommunicatorGroupParam params;
+    CommunicatorGroupRequest() : Request(REQ_RES_COMMUNICATION_COMMUNICATOR) {};
 };
 
 struct RanksParams {
