@@ -12,17 +12,17 @@
 namespace Dic {
 namespace Protocol {
 // response
-template <typename RESPONSE> std::optional<json_t> ToResponseJson(const RESPONSE &response);
-template <> std::optional<json_t> ToResponseJson<OperatorDetailsResponse>(const OperatorDetailsResponse &response);
-template <> std::optional<json_t> ToResponseJson<DistributionResponse>(const DistributionResponse &response);
-template <> std::optional<json_t> ToResponseJson<BandwidthDataResponse>(const BandwidthDataResponse &response);
-template <> std::optional<json_t> ToResponseJson<IterationsOrRanksResponse>(const IterationsOrRanksResponse &response);
-template <> std::optional<json_t> ToResponseJson<OperatorNamesResponse>(const OperatorNamesResponse &response);
-template <> std::optional<json_t> ToResponseJson<DurationResponse>(const DurationResponse &response);
-template <> std::optional<json_t> ToResponseJson<RanksResponse>(const RanksResponse &response);
+template <typename RESPONSE> std::optional<document_t> ToResponseJson(const RESPONSE &response);
+template <> std::optional<document_t> ToResponseJson<OperatorDetailsResponse>(const OperatorDetailsResponse &response);
+template <> std::optional<document_t> ToResponseJson<DistributionResponse>(const DistributionResponse &response);
+template <> std::optional<document_t> ToResponseJson<BandwidthDataResponse>(const BandwidthDataResponse &response);
+template <> std::optional<document_t> ToResponseJson<IterationsOrRanksResponse>(const IterationsOrRanksResponse &response);
+template <> std::optional<document_t> ToResponseJson<OperatorNamesResponse>(const OperatorNamesResponse &response);
+template <> std::optional<document_t> ToResponseJson<DurationResponse>(const DurationResponse &response);
+template <> std::optional<document_t> ToResponseJson<RanksResponse>(const RanksResponse &response);
 
-template <> std::optional<json_t> ToResponseJson<MatrixGroupResponse>(const MatrixGroupResponse &response);
-template <> std::optional<json_t> ToResponseJson<MatrixListResponse>(const MatrixListResponse &response);
+template <> std::optional<document_t> ToResponseJson<MatrixGroupResponse>(const MatrixGroupResponse &response);
+template <> std::optional<document_t> ToResponseJson<MatrixListResponse>(const MatrixListResponse &response);
 } // end of namespace Protocol
 } // end of namespace Dic
 

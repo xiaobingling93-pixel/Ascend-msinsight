@@ -13,11 +13,11 @@
 namespace Dic {
 namespace Protocol {
     // response
-    template<typename RESPONSE>std::optional<json_t> ToResponseJson(const RESPONSE &response);
-    template<>std::optional<json_t> ToResponseJson<MemoryOperatorResponse>(const MemoryOperatorResponse &response);
-    template<>std::optional<json_t> ToResponseJson<MemoryViewResponse>(const MemoryViewResponse &response);
+    template<typename RESPONSE>std::optional<document_t> ToResponseJson(const RESPONSE &response);
+    template<>std::optional<document_t> ToResponseJson<MemoryOperatorResponse>(const MemoryOperatorResponse &response);
+    template<>std::optional<document_t> ToResponseJson<MemoryViewResponse>(const MemoryViewResponse &response);
     template<>
-    std::optional<json_t> ToResponseJson<MemoryOperatorSizeResponse>(const MemoryOperatorSizeResponse &response);
+    std::optional<document_t> ToResponseJson<MemoryOperatorSizeResponse>(const MemoryOperatorSizeResponse &response);
 
 } // end of namespace Protocol
 } // end of namespace Dic

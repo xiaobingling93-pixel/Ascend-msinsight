@@ -183,51 +183,51 @@ std::unique_ptr<Request> CommunicationProtocol::ToOperatorNamesRequest(const jso
 
 #pragma region <<Json To Request>>
 
-std::optional<json_t> CommunicationProtocol::ToOperatorDetailsResponse(const Response &response)
+std::optional<document_t> CommunicationProtocol::ToOperatorDetailsResponse(const Response &response)
 {
     return ToResponseJson<OperatorDetailsResponse>(dynamic_cast<const OperatorDetailsResponse &>(response));
 }
 
-std::optional<json_t> CommunicationProtocol::ToBandwidthDataResponse(const Response &response)
+std::optional<document_t> CommunicationProtocol::ToBandwidthDataResponse(const Response &response)
 {
     return ToResponseJson<BandwidthDataResponse>(dynamic_cast<const BandwidthDataResponse &>(response));
 }
 
-std::optional<json_t> CommunicationProtocol::ToDistributionResponse(const Response &response)
+std::optional<document_t> CommunicationProtocol::ToDistributionResponse(const Response &response)
 {
     return ToResponseJson<DistributionResponse>(dynamic_cast<const DistributionResponse &>(response));
 }
 
-std::optional<json_t> CommunicationProtocol::ToCommunicatorParserResponse(const Dic::Protocol::Response &response)
+std::optional<document_t> CommunicationProtocol::ToCommunicatorParserResponse(const Dic::Protocol::Response &response)
 {
     return ToResponseJson<CommunicatorGroupResponse>(dynamic_cast<const CommunicatorGroupResponse &>(response));
 }
 
-std::optional<json_t> CommunicationProtocol::ToIterationsResponse(const Response &response)
+std::optional<document_t> CommunicationProtocol::ToIterationsResponse(const Response &response)
 {
     return ToResponseJson<IterationsOrRanksResponse>(dynamic_cast<const IterationsOrRanksResponse &>(response));
 }
 
-std::optional<json_t> CommunicationProtocol::ToOperatorNamesResponse(const Response &response)
+std::optional<document_t> CommunicationProtocol::ToOperatorNamesResponse(const Response &response)
 {
     return ToResponseJson<OperatorNamesResponse>(dynamic_cast<const OperatorNamesResponse &>(response));
 }
 
-std::optional<json_t> CommunicationProtocol::ToDurationResponse(const Response &response)
+std::optional<document_t> CommunicationProtocol::ToDurationResponse(const Response &response)
 {
     return ToResponseJson<DurationResponse>(dynamic_cast<const DurationResponse &>(response));
 }
 
-std::optional<json_t> CommunicationProtocol::ToRanksResponse(const Response &response)
+std::optional<document_t> CommunicationProtocol::ToRanksResponse(const Response &response)
 {
     return ToResponseJson<RanksResponse>(dynamic_cast<const RanksResponse &>(response));
 }
-std::optional<json_t> CommunicationProtocol::ToMatrixGroupResponse(const Response &response)
+std::optional<document_t> CommunicationProtocol::ToMatrixGroupResponse(const Response &response)
 {
     return ToResponseJson<MatrixGroupResponse>(dynamic_cast<const MatrixGroupResponse &>(response));
 }
 
-std::optional<json_t> CommunicationProtocol::ToMatrixListResponse(const Response &response)
+std::optional<document_t> CommunicationProtocol::ToMatrixListResponse(const Response &response)
 {
     return ToResponseJson<MatrixListResponse>(dynamic_cast<const MatrixListResponse &>(response));
 }

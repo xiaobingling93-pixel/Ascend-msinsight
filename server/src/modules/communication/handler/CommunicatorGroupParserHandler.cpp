@@ -8,6 +8,7 @@
 #include "CommunicationProtocolRequest.h"
 #include "WsSessionManager.h"
 #include "CommunicatorGroupParserHandler.h"
+#include "json.hpp"
 
 namespace Dic {
 namespace Module {

@@ -24,9 +24,9 @@ private:
     static std::unique_ptr<Request> ToMemoryViewRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToMemoryOperatorSizeRequest(const json_t &json, std::string &error);
     // response to json
-    static std::optional<json_t> ToMemoryOperatorResponseJson(const Response &response);
-    static std::optional<json_t> ToMemoryViewResponseJson(const Response &response);
-    static std::optional<json_t> ToMemoryOperatorSizeResponseJson(const Response &response);
+    static std::optional<document_t> ToMemoryOperatorResponseJson(const Response &response);
+    static std::optional<document_t> ToMemoryViewResponseJson(const Response &response);
+    static std::optional<document_t> ToMemoryOperatorSizeResponseJson(const Response &response);
 };
 
 } // end of namespace Protocol

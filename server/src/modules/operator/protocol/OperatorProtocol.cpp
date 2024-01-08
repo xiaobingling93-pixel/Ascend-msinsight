@@ -114,40 +114,40 @@ namespace Dic::Protocol {
         return reqPtr;
     }
 
-    std::optional<json_t> OperatorProtocol::ToOperatorCategoryInfoResponse(const Response &response)
+    std::optional<document_t> OperatorProtocol::ToOperatorCategoryInfoResponse(const Response &response)
     {
         return ToResponseJson<OperatorCategoryInfoResponse>(
                 dynamic_cast<const OperatorCategoryInfoResponse &>(response));
     }
 
-    std::optional<json_t> OperatorProtocol::ToOperatorComputeUnitInfoResponse(const Response &response)
+    std::optional<document_t> OperatorProtocol::ToOperatorComputeUnitInfoResponse(const Response &response)
     {
         return ToResponseJson<OperatorComputeUnitInfoResponse>(
                 dynamic_cast<const OperatorComputeUnitInfoResponse &>(response));
     }
 
-    std::optional<json_t> OperatorProtocol::ToOperatorStatisticInfoResponse(const Response &response)
+    std::optional<document_t> OperatorProtocol::ToOperatorStatisticInfoResponse(const Response &response)
     {
         return ToResponseJson<OperatorStatisticInfoResponse>(
                 dynamic_cast<const OperatorStatisticInfoResponse &>(response));
     }
 
-    std::optional<json_t> OperatorProtocol::ToOperatorDetailInfoResponse(const Response &response)
+    std::optional<document_t> OperatorProtocol::ToOperatorDetailInfoResponse(const Response &response)
     {
         return ToResponseJson<OperatorDetailInfoResponse>(dynamic_cast<const OperatorDetailInfoResponse &>(response));
     }
 
-    std::optional<json_t> OperatorProtocol::ToOperatorMoreInfoResponse(const Response &response)
+    std::optional<document_t> OperatorProtocol::ToOperatorMoreInfoResponse(const Response &response)
     {
         return ToResponseJson<OperatorMoreInfoResponse>(dynamic_cast<const OperatorMoreInfoResponse &>(response));
     }
 
-    std::optional<json_t> OperatorProtocol::ToOperatorParseStatusEvent(const Event &event)
+    std::optional<document_t> OperatorProtocol::ToOperatorParseStatusEvent(const Event &event)
     {
         return ToEventJson<OperatorParseStatusEvent>(dynamic_cast<const OperatorParseStatusEvent &>(event));
     }
 
-    std::optional<json_t> OperatorProtocol::ToOperatorParseClearEvent(const Event &event)
+    std::optional<document_t> OperatorProtocol::ToOperatorParseClearEvent(const Event &event)
     {
         return ToEventJson<OperatorParseClearEvent>(dynamic_cast<const OperatorParseClearEvent &>(event));
     }
