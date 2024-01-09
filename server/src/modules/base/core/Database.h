@@ -27,12 +27,14 @@ public:
     virtual bool GetTableList(std::vector<std::string> &tableList) const;
     virtual std::unique_ptr<SqlitePreparedStatement> CreatPreparedStatement(const std::string &sql);
     bool DropAllTable();
+    bool IsDatabaseVersionChange();
 
 protected:
     bool ExecSql(const std::string &sql);
     static std::string CheckSqlString(const std::string &src);
     static std::string sqlite3_column_string(sqlite3_stmt *stmt, int iCol);
     std::string GetLastError();
+    static std::string GetDataBaseVersion();
     sqlite3 *db = nullptr;
     bool isOpen = false;
     std::string path;

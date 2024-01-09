@@ -5,6 +5,7 @@
 #include <thread>
 #include "ServerLog.h"
 #include "Database.h"
+#include "TableDefs.h"
 
 namespace Dic {
 namespace Module {
@@ -137,6 +138,38 @@ bool Database::EndTransaction()
 std::string Database::GetDbPath()
 {
     return path;
+}
+
+bool Database::IsDatabaseVersionChange()
+{
+    std::string version;
+    if (!isOpen) {
+        ServerLog::Error("The db file is not opened.");
+        return false;
+    }
+    static const std::string SQL = "PRAGMA user_version";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, SQL.c_str(), -1, &stmt, nullptr);
+    if (result == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            version = sqlite3_column_string(stmt, 0);
+        }
+    } else {
+        sqlite3_finalize(stmt);
+        ServerLog::Error("Fail to get version.", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_finalize(stmt);
+    return std::strcmp(version.c_str(), GetDataBaseVersion().c_str()) != 0;
+}
+
+std::string Database::GetDataBaseVersion()
+{
+    std::stringstream version;
+#ifdef DATABASE_VERSION
+    version << DATABASE_VERSION;
+#endif
+    return version.str();
 }
 
 bool Database::GetTableList(std::vector<std::string> &tableList) const

@@ -213,7 +213,8 @@ const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow:
         const rankRes: {iterationOrRankId: string[] } =
             await queryRanks({ iterationId: conditions.iterationId });
         const stageRanks = _.map(_.split(_.replace(conditions.stage, /[(),]/, ''), ' '),
-            value => Number.parseInt(value)).filter(value => !Number.isNaN(value));
+            value => Number.parseInt(value)).filter(value => !Number.isNaN(value))
+            .sort((a, b) => a - b);
         let rankIds = rankRes.iterationOrRankId.map(item => String(item));
         if (stageRanks.length > 0) {
             rankIds = _.filter(rankIds, value => Number(value) >= stageRanks[0] && Number(value) <= stageRanks[stageRanks.length - 1]);

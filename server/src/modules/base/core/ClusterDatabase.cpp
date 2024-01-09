@@ -25,7 +25,9 @@ bool ClusterDatabase::SetConfig()
         ServerLog::Error("Failed to set config. Database is not open.");
         return false;
     }
-    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
+    std::string dbVersion = GetDataBaseVersion();
+    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " +
+                    dbVersion + ";");
 }
 
 bool ClusterDatabase::CreateTable()

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "ServerLog.h"
 #include "TraceTime.h"
+#include "TableDefs.h"
 #include "TraceDatabase.h"
 
 namespace Dic {
@@ -108,7 +109,9 @@ bool TraceDatabase::SetConfig()
         return false;
     }
     std::unique_lock<std::mutex> lock(mutex);
-    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
+    std::string dbVersion = GetDataBaseVersion();
+    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " +
+                    dbVersion + ";");
 }
 
 bool TraceDatabase::CreateTable()

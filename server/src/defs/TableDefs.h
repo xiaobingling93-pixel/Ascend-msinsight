@@ -16,6 +16,11 @@ namespace Dic {
     const static std::string TABLE_BASE_INFO = "cluster_base_info";
     const static std::string TABLE_COMMUNICATION_MATRIX = "communication_matrix";
     const static std::string TABLE_GROUP_ID = "group_id";
+
+    // database version
+#ifndef DATABASE_VERSION
+#define DATABASE_VERSION 0
+#endif
 } // end of namespace Dic
 
 

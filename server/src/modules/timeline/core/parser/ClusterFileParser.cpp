@@ -168,10 +168,21 @@ bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath, boo
             return false;
         }
     } else {
-        if (!(database->OpenDb(dbPath, false) && database->SetConfig() && database->InitStmt())) {
+        if (!(database->OpenDb(dbPath, false))) {
             ServerLog::Error("Failed to open database. path:", selectedPath);
             return false;
         }
+        // 判断数据库版本是否变更，若变更不能跳过解析
+        auto isChange = database->IsDatabaseVersionChange();
+        if (isChange && !(database->DropAllTable() && database->CreateTable())) {
+            ServerLog::Error("Failed to dropAllTable. path:", selectedPath);
+            return false;
+        }
+        if (!(database->SetConfig() && database->InitStmt())) {
+            ServerLog::Error("Failed to init database. path:", selectedPath);
+            return false;
+        }
+        return !isChange;
     }
     return true;
 }
