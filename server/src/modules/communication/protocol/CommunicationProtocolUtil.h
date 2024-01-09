@@ -16,7 +16,8 @@ template <typename RESPONSE> std::optional<document_t> ToResponseJson(const RESP
 template <> std::optional<document_t> ToResponseJson<OperatorDetailsResponse>(const OperatorDetailsResponse &response);
 template <> std::optional<document_t> ToResponseJson<DistributionResponse>(const DistributionResponse &response);
 template <> std::optional<document_t> ToResponseJson<BandwidthDataResponse>(const BandwidthDataResponse &response);
-template <> std::optional<document_t> ToResponseJson<IterationsOrRanksResponse>(const IterationsOrRanksResponse &response);
+template <>
+std::optional<document_t> ToResponseJson<IterationsOrRanksResponse>(const IterationsOrRanksResponse &response);
 template <> std::optional<document_t> ToResponseJson<OperatorNamesResponse>(const OperatorNamesResponse &response);
 template <> std::optional<document_t> ToResponseJson<DurationResponse>(const DurationResponse &response);
 template <> std::optional<document_t> ToResponseJson<RanksResponse>(const RanksResponse &response);

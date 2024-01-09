@@ -78,7 +78,8 @@ template <> std::optional<document_t> ToResponseJson<BandwidthDataResponse>(cons
     return std::move(json);
 }
 
-template <> std::optional<document_t> ToResponseJson<CommunicatorGroupResponse>(const CommunicatorGroupResponse &response)
+template <>
+std::optional<document_t> ToResponseJson<CommunicatorGroupResponse>(const CommunicatorGroupResponse &response)
 {
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();
@@ -89,7 +90,8 @@ template <> std::optional<document_t> ToResponseJson<CommunicatorGroupResponse>(
     return std::move(json);
 }
 
-template <> std::optional<document_t> ToResponseJson<IterationsOrRanksResponse>(const IterationsOrRanksResponse &response)
+template <>
+std::optional<document_t> ToResponseJson<IterationsOrRanksResponse>(const IterationsOrRanksResponse &response)
 {
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();

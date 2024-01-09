@@ -24,11 +24,6 @@ public:
         SetByJsonKeyValueHelper(src, json, key);
     }
 
-    template <typename T> static inline void SetByJsonKeyArrayValue(T &src, const json_t &json, const std::string &key)
-    {
-        SetByJsonKeyArrayValueHelper(src, json, key);
-    }
-
     template <typename T> static inline void AddMember(json_t &json, std::string_view key, T &&value,
         RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
     {
@@ -41,20 +36,14 @@ public:
         AddMemberHelper(json, key, value, allocator);
     }
 
-    template <typename T> static inline void AddArrayMember(json_t &json, std::string_view key, T &values,
-                                                       RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
-    {
-        AddArrayMemberHelper(json, key, values, allocator);
-    }
-
     static inline std::optional<document_t> TryParse(const std::string &jsonStr, std::string &error)
     {
         document_t doc;
         doc.Parse(jsonStr.c_str(), jsonStr.length());
         if (doc.HasParseError()) {
-            static const size_t PRINT_ERROR_SIZE = 100;
+            const size_t printErrorSize = 100;
             auto offset = doc.GetErrorOffset();
-            auto start = offset >= 100 ? offset - 100 : 0;
+            auto start = offset >= printErrorSize ? offset - printErrorSize : 0;
             error = "Error code:" + std::to_string(doc.GetParseError()) +
                 ". str:" + jsonStr.substr(start, offset - start);
             return std::nullopt;
@@ -184,20 +173,6 @@ private:
         }
     }
 
-    static inline void SetByJsonKeyArrayValueHelper(std::vector<std::string> &src, const json_t &json, std::string_view key)
-    {
-        if (json.HasMember(key.data()) && json[key.data()].IsArray()) {
-            const auto& arrays = json[key.data()].GetArray();
-            std::vector<std::string> vector;
-            for (const auto& item : arrays) {
-                if (item.IsString()) {
-                    vector.emplace_back(item.GetString());
-                }
-            }
-            src = vector;
-        }
-    }
-
     template <typename T> static inline void AddMemberHelper(json_t &json, std::string_view key, T &&value,
         RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
     {
@@ -238,25 +213,6 @@ private:
                        json_t().SetString(value.c_str(), value.length(), allocator), allocator);
     }
 
-    static inline void AddArrayMemberHelper(json_t &json, std::string_view key, const std::vector<std::string> &values,
-                                       RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
-    {
-        json_t array(rapidjson::kArrayType);
-        for (const auto &value : values) {
-            array.PushBack(json_t().SetString(value.c_str(), value.length(), allocator), allocator);
-        }
-        json.AddMember(rapidjson::StringRef(key.data(), key.length()),array, allocator);
-    }
-
-    static inline void AddArrayMemberHelper(json_t &json, std::string_view key, const std::vector<int> &values,
-                                            RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
-    {
-        json_t array(rapidjson::kArrayType);
-        for (const auto &value : values) {
-            array.PushBack(value, allocator);
-        }
-        json.AddMember(rapidjson::StringRef(key.data(), key.length()),array, allocator);
-    }
 };
 } // end of namespace Dic
 

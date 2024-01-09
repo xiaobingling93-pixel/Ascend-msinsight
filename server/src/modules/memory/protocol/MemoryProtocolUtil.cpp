@@ -58,7 +58,8 @@ template <> std::optional<document_t> ToResponseJson<MemoryViewResponse>(const M
     return std::move(json);
 }
 
-template<>std::optional<document_t> ToResponseJson<MemoryOperatorSizeResponse>(const MemoryOperatorSizeResponse &response)
+template<>
+std::optional<document_t> ToResponseJson<MemoryOperatorSizeResponse>(const MemoryOperatorSizeResponse &response)
 {
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();

@@ -93,8 +93,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToBandwidthDataRequest(const jso
     return reqPtr;
 }
 
-std::unique_ptr<Request> CommunicationProtocol::ToCommunicatorRequest(const Dic::json_t &json,
-                                                                            std::string &error)
+std::unique_ptr<Request> CommunicationProtocol::ToCommunicatorRequest(const Dic::json_t &json, std::string &error)
 {
     std::unique_ptr<CommunicatorGroupRequest> reqPtr = std::make_unique<CommunicatorGroupRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {

@@ -58,7 +58,8 @@ template <> std::optional<document_t> ToResponseJson<SummaryTopRankResponse>(con
     return std::move(json);
 }
 
-template <> std::optional<document_t> ToResponseJson<SummaryStatisticsResponse>(const SummaryStatisticsResponse &response)
+template <>
+std::optional<document_t> ToResponseJson<SummaryStatisticsResponse>(const SummaryStatisticsResponse &response)
 {
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();
@@ -137,7 +138,8 @@ template <> std::optional<document_t> ToResponseJson<PipelineStageResponse>(cons
     return std::move(json);
 }
 
-template <> std::optional<document_t> ToResponseJson<PipelineStageTimeResponse>(const PipelineStageTimeResponse &response)
+template <>
+std::optional<document_t> ToResponseJson<PipelineStageTimeResponse>(const PipelineStageTimeResponse &response)
 {
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();
