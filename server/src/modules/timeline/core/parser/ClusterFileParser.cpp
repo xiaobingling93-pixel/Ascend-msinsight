@@ -6,7 +6,6 @@
 
 #include <fstream>
 #include "filereadstream.h"
-#include "json.hpp"
 #include "ServerLog.h"
 #include "CommunicationMatrixRapidHandler.h"
 #include "CommunicationRapidSaxHandler.h"

@@ -20,10 +20,6 @@ message(STATUS "SQLITE_INCLUDE_DIR: ${SQLITE_INCLUDE_DIR}")
 set(LIBUV_INCLUDE_DIR ${THIRD_PARTY_DIR}/libuv/include)
 message(STATUS "LIBUV_INCLUDE_DIR: ${LIBUV_INCLUDE_DIR}")
 
-# json
-set(JSON_INCLUDE_DIR ${THIRD_PARTY_DIR}/json_modern_c++/include)
-message(STATUS "JSON_INCLUDE_DIR: ${JSON_INCLUDE_DIR}")
-
 # rapidjson
 set(RAPIDJSON_INCLUDE_DIR ${THIRD_PARTY_DIR}/rapidjson/include/rapidjson)
 message(STATUS "RAPIDJSON_INCLUDE_DIR: ${RAPIDJSON_INCLUDE_DIR}")
@@ -40,8 +36,7 @@ message(STATUS "U_SOCKETS_SRC_DIR: ${U_SOCKETS_SRC_DIR}")
 set(U_WEBSOCKETS_INCLUDE_DIR ${THIRD_PARTY_DIR}/uWebSockets/src)
 message(STATUS "U_WEBSOCKETS_INCLUDE_DIR: ${U_WEBSOCKETS_INCLUDE_DIR}")
 
-# json_modern_c++ source
-include_directories(${JSON_INCLUDE_DIR})
+# third party include source
 include_directories(${RAPIDJSON_INCLUDE_DIR})
 include_directories(${LIBUV_INCLUDE_DIR})
 include_directories(${U_SOCKETS_INCLUDE_DIR})

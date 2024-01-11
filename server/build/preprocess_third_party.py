@@ -44,11 +44,6 @@ CHECK_FILE_LIST = [
         os.path.join(SQLITE_DIR, 'src', 'sqlite3.c'),
         os.path.join(SQLITE3_AUTOCONF_DIR, 'sqlite3.c'),
         os.path.join(SQLITE3_SRC_DIR, 'build', 'sqlite3.c')
-    ],
-    [
-        os.path.join('json_modern_c++', 'include', 'json.hpp'),
-        os.path.join('json', 'single_include', 'nlohmann', 'json.hpp'),
-        os.path.join('json', 'single_include', 'nlohmann', 'json.hpp')
     ]
 ]
 
