@@ -212,7 +212,6 @@ private:
         json.AddMember(rapidjson::StringRef(key.data(), key.length()),
                        json_t().SetString(value.c_str(), value.length(), allocator), allocator);
     }
-
 };
 } // end of namespace Dic
 
