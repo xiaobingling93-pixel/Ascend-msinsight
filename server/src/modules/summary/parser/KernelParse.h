@@ -17,6 +17,31 @@
 namespace Dic {
 namespace Module {
 namespace Summary {
+// 表头字段-公共部分
+const std::string FIELD_BLOCK_DIM = "Block Dim";
+const std::string FIELD_INPUT_SHAPES = "Input Shapes";
+const std::string FIELD_INPUT_DATA_TYPES = "Input Data Types";
+const std::string FIELD_INPUT_FORMATS = "Input Formats";
+const std::string FIELD_OUTPUT_SHAPES = "Output Shapes";
+const std::string FIELD_OUTPUT_DATA_TYPES = "Output Data Types";
+const std::string FIELD_OUTPUT_FORMATS = "Output Formats";
+
+// 表头字段-Ascend PyTorch Profiler
+const std::string FIELD_NAME = "Name";
+const std::string FIELD_TYPE = "Type";
+const std::string FIELD_ACCELERATOR_CORE = "Accelerator Core";
+const std::string FIELD_START_TIME = "Start Time(us)";
+const std::string FIELD_DURATION = "Duration(us)";
+const std::string FIELD_WAIT_TIME = "Wait Time(us)";
+
+// 表头字段-msprof
+const std::string FIELD_OP_NAME = "Op Name";
+const std::string FIELD_OP_TYPE = "OP Type";
+const std::string FIELD_TASK_TYPE = "Task Type";
+const std::string FIELD_TASK_START_TIME = "Task Start Time(us)";
+const std::string FIELD_TASK_DURATION = "Task Duration(us)";
+const std::string FIELD_TASK_WAIT_TIME = "Task Wait Time(us)";
+
 class KernelParse : public FileParser {
 public:
     static KernelParse &Instance();

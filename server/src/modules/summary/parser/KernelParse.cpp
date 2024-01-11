@@ -108,49 +108,47 @@ bool KernelParse::mapperToKernelDetail(std::map<std::string, int16_t> dataMap,
     std::int16_t startTimeIndex;
     std::int16_t durationIndex;
     std::int16_t waitTimeIndex;
-    if (dataMap.count("Start Time(us)") != 0) {
-        startTimeIndex = dataMap["Start Time(us)"];
-    } else if (dataMap.count("Task Start Time(us)") != 0) {
-        startTimeIndex = dataMap["Task Start Time(us)"];
+    if (dataMap.count(FIELD_START_TIME) != 0) {
+        startTimeIndex = dataMap[FIELD_START_TIME];
+    } else if (dataMap.count(FIELD_TASK_START_TIME) != 0) {
+        startTimeIndex = dataMap[FIELD_TASK_START_TIME];
     } else {
         ServerLog::Error("The file header does not contain 'Start Time(us)' or 'Task Start Time(us)'.");
         return false;
     }
 
-    if (dataMap.find(STEP_ID) != dataMap.end()) {
-        stepIndex = dataMap[STEP_ID];
-        nameIndex = dataMap["Name"];
-        typeIndex = dataMap["Type"];
-        acceleratorIndex = dataMap["Accelerator Core"];
-        durationIndex = dataMap["Duration(us)"];
-        waitTimeIndex = dataMap["Wait Time(us)"];
-    } else if (dataMap.find(DEVICE_ID) != dataMap.end()) {
-        deviceIndex = dataMap[DEVICE_ID];
-        nameIndex = dataMap["Op Name"];
-        typeIndex = dataMap["OP Type"];
-        acceleratorIndex = dataMap["Task Type"];
-        durationIndex = dataMap["Task Duration(us)"];
-        waitTimeIndex = dataMap["Task Wait Time(us)"];
+    if (dataMap.find(FIELD_ACCELERATOR_CORE) != dataMap.end()) {
+        nameIndex = dataMap[FIELD_NAME];
+        typeIndex = dataMap[FIELD_TYPE];
+        acceleratorIndex = dataMap[FIELD_ACCELERATOR_CORE];
+        durationIndex = dataMap[FIELD_DURATION];
+        waitTimeIndex = dataMap[FIELD_WAIT_TIME];
+    } else if (dataMap.find(FIELD_TASK_TYPE) != dataMap.end()) {
+        nameIndex = dataMap[FIELD_OP_NAME];
+        typeIndex = dataMap[FIELD_OP_TYPE];
+        acceleratorIndex = dataMap[FIELD_TASK_TYPE];
+        durationIndex = dataMap[FIELD_TASK_DURATION];
+        waitTimeIndex = dataMap[FIELD_TASK_WAIT_TIME];
     } else {
         ServerLog::Error("The file header does not contain 'Step Id' or 'Device Id'.");
         return false;
     }
 
-    kernel.rankId = dataMap.count(STEP_ID) != 0 ? fileId : row[deviceIndex];
+    kernel.rankId = dataMap.count(DEVICE_ID) != 0 ? row[dataMap[DEVICE_ID]] : fileId;
     kernel.name = row[nameIndex];
-    kernel.stepId = dataMap.count(STEP_ID) != 0 ? row[stepIndex] : "";
+    kernel.stepId = dataMap.count(STEP_ID) != 0 ? row[dataMap[STEP_ID]] : "";
     kernel.type = row[typeIndex];
     kernel.acceleratorCore = row[acceleratorIndex];
     kernel.startTime = atof(row[startTimeIndex].c_str());
     kernel.duration = atof(row[durationIndex].c_str());
     kernel.waitTime = atof(row[waitTimeIndex].c_str());
-    kernel.blockDim = atof(row[dataMap["Block Dim"]].c_str());
-    kernel.inputDataTypes = row[dataMap["Input Data Types"]];
-    kernel.inputShapes = row[dataMap["Input Shapes"]];
-    kernel.inputFormats = row[dataMap["Input Formats"]];
-    kernel.outputDataTypes = row[dataMap["Output Data Types"]];
-    kernel.outputShapes = row[dataMap["Output Shapes"]];
-    kernel.outputFormats = row[dataMap["Output Formats"]];
+    kernel.blockDim = atof(row[dataMap[FIELD_BLOCK_DIM]].c_str());
+    kernel.inputDataTypes = row[dataMap[FIELD_INPUT_DATA_TYPES]];
+    kernel.inputShapes = row[dataMap[FIELD_INPUT_SHAPES]];
+    kernel.inputFormats = row[dataMap[FIELD_INPUT_FORMATS]];
+    kernel.outputDataTypes = row[dataMap[FIELD_OUTPUT_DATA_TYPES]];
+    kernel.outputShapes = row[dataMap[FIELD_OUTPUT_SHAPES]];
+    kernel.outputFormats = row[dataMap[FIELD_OUTPUT_FORMATS]];
     return true;
 }
 
