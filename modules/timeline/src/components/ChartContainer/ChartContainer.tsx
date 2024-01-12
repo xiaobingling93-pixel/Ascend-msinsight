@@ -21,8 +21,8 @@ import { Pos } from '../charts/ChartInteractor/common';
 import { THUMB_WIDTH_PX } from '../base';
 import { MouseDownActionResult } from '../charts/ChartInteractor/actions';
 import { loopActionFactory } from '../../utils/FactoryActions';
-import { RenderManagerContext } from '../../context/context';
-import { renderManager } from '../../renderManager';
+import { RenderEngineContext } from '../../context/context';
+import { renderEngine } from '../../renderEngine';
 import { DragDirection, useDraggableContainerEx } from '../../utils/useDraggableContainerEx';
 import Resizor from '../resize/Resizor';
 
@@ -99,7 +99,7 @@ const ChartBody = observer((props: ChartBodyProps) => {
     return (<>
         {
             view({
-                mainContainer: <RefUnits session={session} height={height} ref={ref} hasPinButton={!!interactive} laneInfoWidth={LANE_INFO_WIDTH_PX.value} />,
+                mainContainer: <RefUnits session={session} height={height} ref={ref} hasPinButton={Boolean(interactive)} laneInfoWidth={LANE_INFO_WIDTH_PX.value} />,
                 draggableContainer: <PinnedUnits session={session} height={pinnedHeight} ref={pinnedRef} laneInfoWidth={LANE_INFO_WIDTH_PX.value} />,
                 id: 'UnitsPage',
             })
@@ -164,7 +164,7 @@ export const ChartContainer = observer((props: Props) => {
         }}
         tabIndex={0}
     >
-        <RenderManagerContext.Provider value={renderManager}>
+        <RenderEngineContext.Provider value={renderEngine}>
             <ChartHeader
                 session={session}
                 laneInfoWidth={LANE_INFO_WIDTH_PX.value}
@@ -172,7 +172,7 @@ export const ChartContainer = observer((props: Props) => {
                 showRecommendation={!props.interactive}
             />
             <ChartBody session={session} interactive={props.interactive} interactorMouseState={interactorMouseState} chartInteractorRef={chartInteractorRef}/>
-        </RenderManagerContext.Provider>
+        </RenderEngineContext.Provider>
         <HorizontalScroller
             session={session}
             leftLaneInfoWidth={LANE_INFO_WIDTH_PX.value}

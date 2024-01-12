@@ -1,5 +1,5 @@
 import {
-    chart,
+    chart, ChartDesc,
     InsightUnit,
     LinkDataDesc,
     MetaData,
@@ -15,11 +15,12 @@ import {
     AscendSliceDetail,
     CardMetaData,
     CounterMetaData,
+    ProcessData,
     ProcessMetaData,
     ThreadMetaData,
     ThreadTrace,
 } from '../../entity/data';
-import { createCounterParam, createStackStatusParam } from './unitFunc';
+import { createCounterParam, createStackStatusParam, createStatusParam } from './unitFunc';
 import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
 import { SelectSimpleTabularDetail } from '../../components/details/SelectSimpleDetail';
 import { renderRadiusBorder } from '../../components/details/utils';
@@ -34,7 +35,7 @@ import { SelectedDataBase } from '../../components/details/base/SelectedData';
 import { offsetConfig } from './config/offsetConfig';
 import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
-import { StackStatusData } from '../../entity/chart';
+import { ChartType, StackStatusData, StatusData } from '../../entity/chart';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -101,8 +102,9 @@ const singleSliceDetail = singleData({
             rankId: metadata.cardId,
             pid: metadata.processId,
             tid: metadata.threadId,
-            startTime: selectedSliceData.startTime + timestampOffset,
+            startTime: Math.floor(selectedSliceData.startTime + timestampOffset),
             depth: selectedSliceData.depth,
+            timePerPx: session.domain.timePerPx,
         };
         const result = await window.request(metadata.dataSource, { command: 'unit/threadDetail', params });
         const data: AscendSliceDetail = {
@@ -131,20 +133,21 @@ export const ThreadUnit = unit<ThreadMetaData>({
     },
     chart: chart({
         type: 'stackStatus',
-        height: UnitHeight.STANDARD,
+        height: UnitHeight.COLL,
         mapFunc: async (session: Session, metaData: unknown) => {
             const threadMetaData = metaData as ThreadMetaData;
             // 查询泳道chart参数加上时间偏移
             const timestampOffset = threadMetaData.cardId !== undefined
                 ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[threadMetaData.cardId] ?? 0
                 : 0;
-            const requestParam = {
+            const requestParam: Record<string, unknown> & { timePerPx: number } = {
                 cardId: threadMetaData.cardId,
                 processId: threadMetaData.processId,
                 threadId: threadMetaData.threadId,
-                startTime: session.domainRange.domainStart + timestampOffset,
-                endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset),
+                startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
+                endTime: Math.ceil(Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset)),
                 dataSource: threadMetaData.dataSource,
+                timePerPx: session.domain.timePerPx,
             };
             const requestKey = createStackStatusParam('unit/threadTraces', requestParam);
             try {
@@ -216,6 +219,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
         ]),
         config: {
             rowHeight: UnitHeight.STANDARD,
+            isCollapse: true,
         },
     }),
     bottomPanelRender: (session: Session, triggerEvent: TriggerEvent, metadata) => {
@@ -231,6 +235,16 @@ export const ThreadUnit = unit<ThreadMetaData>({
             DetailTitle: 'Slices List',
         };
     },
+    collapseAction: (unit) => {
+        const chart = (unit.chart as ChartDesc<ChartType>);
+        const config = (unit.chart as ChartDesc<ChartType>).config;
+        runInAction(() => {
+            (config as any).isCollapse = !((config as any).isCollapse as boolean);
+            const collapseHeight = UnitHeight.COLL;
+            const expandedHeight = (config as any).maxDepth * (config as any).rowHeight;
+            chart.height = ((config as any).isCollapse as boolean) ? collapseHeight : expandedHeight;
+        });
+    },
 });
 
 export const ProcessUnit = unit<ProcessMetaData>({
@@ -240,7 +254,38 @@ export const ProcessUnit = unit<ProcessMetaData>({
     chart: chart({
         type: 'status',
         mapFunc: async (session: Session, metaData: unknown) => {
-            return [];
+            const processMetaData = metaData as ProcessMetaData;
+            const requestParam = {
+                cardId: processMetaData.cardId,
+                processId: processMetaData.processId,
+                startTime: session.domainRange.domainStart,
+                endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd),
+                dataSource: processMetaData.dataSource,
+                timePerPx: session.domain.timePerPx,
+            };
+            const requestKey = createStatusParam('unit/threadTracesSummary', requestParam);
+            try {
+                const request = await session.simpleCache.tryFetchFromCache('unit/threadTracesSummary', requestKey, requestParam);
+                if (request === undefined) {
+                    return [];
+                }
+                const threadTraceList = request.data as ProcessData[];
+                const res: StatusData[] = [];
+                // 泳道chart返回数据减去时间偏移
+                threadTraceList.forEach((data) => {
+                    res.push({
+                        startTime: data.startTime,
+                        duration: data.duration,
+                        name: '',
+                        type: '',
+                        color: '#7d7d7d',
+                    });
+                });
+                return res;
+            } catch (e) {
+                console.warn('request process data failed', e);
+                return [];
+            }
         },
         config: {
             rowHeight: UnitHeight.STANDARD,
@@ -280,6 +325,7 @@ export const CounterUnit = unit<CounterMetaData>({
                 startTime: session.domainRange.domainStart,
                 endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd),
                 dataSource: countMetaData.dataSource,
+                timePerPx: session.domain.timePerPx,
             };
             const requestKey = createCounterParam('unit/counter', requestParam);
             const request = await session.simpleCache.tryFetchFromCache('unit/counter', requestKey, requestParam, metadata);

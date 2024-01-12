@@ -10,6 +10,7 @@ import { StackStatusChart } from './StackStatusChart';
 import { StatusChart } from './StatusChart';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import { Mask } from './Mask';
+import { customDebounce } from '../../utils/customDebounce';
 
 const chartMap: { [K in ChartType]: React.FC<ChartProps<K>> } = {
     filledLine: FilledLineChart,
@@ -46,7 +47,7 @@ export const Chart = observer(<T extends ChartType>(props: {
     const chartConfig = isGetChartConfig(desc.config) ? desc.config(session, metadata) : desc.config;
     const chartProps: ChartProps<T> = {
         session,
-        mapFunc: desc.mapFunc,
+        mapFunc: customDebounce(desc.mapFunc),
         margin: 0,
         title,
         width,

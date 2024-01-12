@@ -141,12 +141,15 @@ export type StackBarConfig = {
 };
 
 export type StatusConfig = {
+    rowHeight: UnitHeight;
 };
 
 export type StackStatusConfig = {
     rowHeight: UnitHeight;
     textConfig?: TextConfig;
     isNeedClamp?: boolean;
+    isCollapse: boolean;
+    maxDepth?: number;
 };
 
 export type ScaleType = 'Linear' | 'SymLog';

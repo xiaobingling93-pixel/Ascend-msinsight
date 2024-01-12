@@ -94,7 +94,7 @@ const findDataByX = (mousePosX: number | undefined, data: StatusData[],
 };
 
 export const StatusChart = observer(({
-    session, margin, mapFunc, unit, metadata, renderTooltip, height, onHover, onClick, decorator, width,
+    session, margin, mapFunc, unit, metadata, renderTooltip, height, onHover, onClick, decorator, width, rowHeight,
 }: StatusChartProps) => {
     const theme = useTheme();
     const canvasContainer = useRef<HTMLDivElement>(null);
@@ -122,7 +122,7 @@ export const StatusChart = observer(({
         }
         const ctx = canvas.current.getContext('2d');
         const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(false);
-        const yScale = (n: number): number => n * height;
+        const yScale = (n: number): number => n * rowHeight;
         ctx?.clearRect(0, 0, width, height);
         draw(ctx, datasState, xScale, yScale, theme);
         drawExt({

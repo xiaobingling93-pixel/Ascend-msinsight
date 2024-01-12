@@ -5,25 +5,29 @@ import React, { useRef } from 'react';
 import './Resizor.css';
 
 // eslint-disable-next-line max-lines-per-function
-const Resizor = (props: any): JSX.Element => {
-    const divRef: any = useRef(null);
+const Resizor = (props: {
+    onResize: Function;
+    style?: object;
+}): JSX.Element => {
+    const divRef = useRef<HTMLDivElement>(null);
     let isDown = false;
     let offsetX: number;
     let initalWidth: number;
     let initalNextWidth: number;
-    function handleMouseDown(event: any): void {
+    const handleMouseDown = (event: React.MouseEvent): void => {
         event.preventDefault();
         if (!isDown) {
             isDown = true;
             offsetX = event.clientX;
-            const dom = divRef.current.parentNode;
-            dom.style.pointerEvents = 'none';
-            initalWidth = dom.offsetWidth;
-            const nextBrother = dom.nextElementSibling;
-            if (nextBrother !== null) {
-                initalNextWidth = nextBrother.offsetWidth;
+            const dom = divRef?.current?.parentNode as HTMLElement;
+            if (dom !== undefined && dom !== null) {
+                dom.style.pointerEvents = 'none';
+                initalWidth = dom.offsetWidth;
+                const nextBrother = dom.nextElementSibling as HTMLElement;
+                if (nextBrother !== null) {
+                    initalNextWidth = nextBrother.offsetWidth;
+                }
             }
-
             window.addEventListener('mousemove', handleMouseMove);
             window.addEventListener('mouseup', handleMouseUp);
             // 如果当前在iframe中
@@ -32,19 +36,20 @@ const Resizor = (props: any): JSX.Element => {
             }
             // 如果页面中有iframe
             if (window.document.querySelectorAll('iframe').length !== 0) {
-                window.document.querySelectorAll('iframe').forEach((item: any) => {
+                window.document.querySelectorAll('iframe').forEach((item: HTMLIFrameElement) => {
+                    // @ts-expect-error:可用格式
                     item.style['pointer-events'] = 'none';
                 });
             }
         }
-    }
-    function handleMouseMove(event: any): void {
+    };
+    function handleMouseMove(event: MouseEvent): void {
         event.preventDefault();
-        if (isDown && divRef?.current as boolean) {
+        if (isDown && Boolean(divRef?.current)) {
             const deltaX = event.clientX - offsetX;
-            const dom = divRef.current.parentNode;
+            const dom = divRef?.current?.parentNode as HTMLElement;
             const width = initalWidth + deltaX;
-            const nextBrother = dom.nextElementSibling;
+            const nextBrother = dom?.nextElementSibling;
             if (nextBrother !== null) {
                 const nextWidth = initalNextWidth - deltaX;
                 props.onResize(deltaX, width, nextWidth);
@@ -53,7 +58,7 @@ const Resizor = (props: any): JSX.Element => {
             props.onResize(deltaX, width);
         }
     }
-    function handleMouseUp(event?: any): void {
+    function handleMouseUp(event?: MouseEvent): void {
         if (event !== undefined) {
             event.preventDefault();
         }
@@ -61,22 +66,25 @@ const Resizor = (props: any): JSX.Element => {
         offsetX = 0;
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
-        const parentNode = divRef.current.parentNode;
-        parentNode.style.pointerEvents = null;
+        const parentNode = divRef?.current?.parentNode as HTMLElement;
+        if (parentNode !== null) {
+            parentNode.style.pointerEvents = 'null';
+        }
         // 如果当前在iframe中
         if (self !== top) {
             window.removeEventListener('message', handleTopWindow);
         }
         // 如果页面中有iframe
         if (window.document.querySelectorAll('iframe').length !== 0) {
-            window.document.querySelectorAll('iframe').forEach((item: any) => {
+            window.document.querySelectorAll('iframe').forEach((item: HTMLIFrameElement) => {
+                // @ts-expect-error:可用格式
                 item.style['pointer-events'] = 'auto';
             });
         }
     }
-    function handleTopWindow(event?: any): void {
+    function handleTopWindow(event?: MessageEvent): void {
         try {
-            if (typeof event.data !== 'string') {
+            if (typeof event?.data !== 'string') {
                 return;
             }
             const data = JSON.parse(event.data);

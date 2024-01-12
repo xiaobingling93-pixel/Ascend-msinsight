@@ -176,7 +176,7 @@ const mouseMoveUpFunc = ([ downX, upX ]: number[], datasState: StackStatusData[]
     });
 };
 
-export const StackStatusChart = observer(({ session, unit, margin, mapFunc, metadata, renderTooltip, height, onHover, onClick, decorator, rowHeight, width, textConfig, isNeedClamp }: StackStatusChartProps) => {
+export const StackStatusChart = observer(({ session, unit, margin, mapFunc, metadata, renderTooltip, height, onHover, onClick, decorator, rowHeight, width, textConfig, isNeedClamp, isCollapse, maxDepth }: StackStatusChartProps) => {
     const theme = useTheme();
     const canvasContainer = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
@@ -189,7 +189,7 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
     const handleMouseMoveUp = ([ downX, upX ]: number[]): void => { mouseMoveUpFunc([ downX, upX ], datasState, rangeAndDomain, session); };
     useEffect(() => onHover?.(hoveredData, session, metadata), [ hoveredData, metadata ]);
     useClick(canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp, handleMouseMoveUp);
-    const yScale = (depth: number): number => depth * rowHeight;
+    const yScale = isCollapse ? d3.scaleLinear().range([ 0, height ]).domain([ 0, maxDepth as number ]) : (depth: number): number => depth * rowHeight;
     useBatchedRender(() => {
         if (canvasContainer.current === null || canvas.current === null || datasState.length === 0 || rangeAndDomain.length === 0 ||
             canvas.current.width === 0 || canvas.current.height === 0) {
@@ -204,7 +204,7 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
             draw: (data, xScale, yScale) => draw(ctx, data, xScale, yScale, theme, session.endTimeAll ?? 0, textConfig),
             findAll: (condition) => datasState.map(it => it.filter(condition)),
         }, xScale, yScale, theme);
-    }, [ datasState, rangeAndDomain, ...triggers, theme ]);
+    }, [ datasState, rangeAndDomain, ...triggers, theme, isCollapse ]);
 
     const tooltipProp: TooltipProps<StackStatusData, StackStatusData[][]> = {
         data: hoveredData,
@@ -216,8 +216,8 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
         renderContent: (data) => renderTooltip?.(data),
     };
 
-    return <CanvasContainer ref={canvasContainer} className={'canvasContainer'} width={width} height={height}>
-        <TooltipComponent {...tooltipProp} />
+    return <CanvasContainer ref={canvasContainer} className={'canvasContainer'} width={width} height={height} style={{ pointerEvents: `${isCollapse ? 'none' : 'auto'}` }}>
+        { !isCollapse && <TooltipComponent {...tooltipProp} /> }
         <Canvas className={'drawCanvas'} ref={canvas} width={width} height={height}/>
     </CanvasContainer>;
 });

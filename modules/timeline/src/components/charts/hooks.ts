@@ -3,7 +3,6 @@ import { ChartData, ChartType, MapFunc } from '../../entity/chart';
 import { Session } from '../../entity/session';
 import { Logger } from '../../utils/Logger';
 import { runInAction } from 'mobx';
-import { useRenderManager } from '../../context/context';
 import { InsightUnit } from '../../entity/insight';
 
 export type Pos = {
@@ -13,7 +12,6 @@ export type Pos = {
 
 export type DataProcessor<T extends ChartType> = (data: ChartData<T>, width: number, domainStart: number, domainEnd: number) => ChartData<T>;
 
-const timeoutMap: any = {};
 /**
  * Manages the data that are to be rendered as a state.
  *
@@ -28,20 +26,12 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
     const { endTimeAll } = session;
     const [ datasState, setDatasState ] = useState<ChartData<T>>([]);
     const requestedWidth = useRef(0);
-    const loadingRef = useRef<NodeJS.Timer>();
     useEffect(() => {
         if (width === 0) {
             setDatasState([]);
             return;
         }
         requestedWidth.current = width;
-        const id = JSON.stringify(unit.metadata);
-        if (timeoutMap[id] as boolean) {
-            clearTimeout(timeoutMap[id]);
-        }
-        const loading = setTimeout(() => { runInAction(() => { unit.phase = 'loading'; }); }, 300);
-        loadingRef.current = loading;
-        timeoutMap[id] = loading;
         mapFunc(session, metadata).then(datas => {
             if (requestedWidth.current !== width) {
                 // drop the data if width has been changed since when request was made
@@ -52,10 +42,7 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
         }).catch(() => {
             Logger('hooks useData', 'mapFunc occurred an exception.');
         }).finally(() => {
-            if (loadingRef.current !== loading) { return; }
-            clearTimeout(loading);
             runInAction(() => { unit.phase = 'download'; });
-            timeoutMap[id] = null;
         });
     }, [ session.phase, domainStart, domainEnd, endTimeAll, width, session.unitsConfig.offsetConfig.timestampOffset ]);
     return datasState;
@@ -76,9 +63,8 @@ export const useRangeAndDomain = (session: Session, width: number, margin: numbe
  * @param deps the dependencies that triggers re-render
  */
 export const useBatchedRender = (renderer: () => void, deps: React.DependencyList): void => {
-    const renderManager = useRenderManager();
     useEffect(() => {
-        renderManager.addTask(renderer);
+        renderer();
     }, deps);
 };
 

@@ -185,6 +185,17 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                 onChange={(val: string[]) => { setSelection(val); handleChange(val); }}
             >
             </Select>
+            <Select
+                size="small"
+                mode="multiple"
+                allowClear
+                className="circle-border"
+                options={completeOptions}
+                style={{ top: '2px', width: '455px', height: '24px' }}
+                value={selection}
+                onChange={(val: string[]) => { setSelection(val); handleChange(val); }}
+            >
+            </Select>
         </CustomDiv>
     );
 };

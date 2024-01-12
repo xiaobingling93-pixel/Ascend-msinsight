@@ -98,6 +98,7 @@ export const Unit = observer(({ unit, session, isVisible, ...props }: UnitProps)
     const selectUnit = useSelectUnit(session);
     return <Lane className={cls('unit', { [UNIT_SELECTED]: isSelected, [UNIT_VISIBLE]: isVisible })} laneHeight={height}>
         <UnitInfo
+            height={height}
             session={session}
             unit={unit}
             {...props}

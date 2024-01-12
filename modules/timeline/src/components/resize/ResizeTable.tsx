@@ -2,14 +2,17 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import React, { cloneElement, useState, useEffect } from 'react';
-import { Table } from 'antd/lib/index';
+import { Table } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import Resizor from './Resizor';
+type ExtendsColumnType = {minWidth?: number};
 
 const ResizableTitle = (
-    props: React.HTMLAttributes<any> & {
+    props: React.HTMLAttributes<HTMLDivElement> & {
         index?: number;
         className: string;
         resizable: boolean;
+        onResize: Function;
     },
 ): JSX.Element => {
     const { onResize, resizable, index, ...restProps } = props;
@@ -23,9 +26,16 @@ const ResizableTitle = (
 };
 
 // eslint-disable-next-line max-lines-per-function
-const ResizeTable = (props: {variableTotalWidth?: boolean;[prop: string]: any}): JSX.Element => {
+const ResizeTable = (props: {
+    [prop: string]: object | number | string | boolean | undefined | object[];
+    id?: string;
+    columns: ColumnsType<object> ;
+    variableTotalWidth?: boolean;
+    minThWidth?: number;
+    style?: object;
+}): JSX.Element => {
     const { columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, ...restProps } = props;
-    const [ columns, setColumns ] = useState<any[]>(propColumns ?? []);
+    const [ columns, setColumns ] = useState < ColumnsType<object>>(propColumns ?? []);
     useEffect(() => {
         setColumns(propColumns ?? []);
     }, [JSON.stringify(propColumns)]);
@@ -37,12 +47,12 @@ const ResizeTable = (props: {variableTotalWidth?: boolean;[prop: string]: any}):
                 const newColumns = [...columns];
                 newColumns[index] = {
                     ...newColumns[index],
-                    width: Math.max(width, minThWidth, columns[index].minWidth ?? 0),
+                    width: Math.max(width, minThWidth, (columns[index] as ExtendsColumnType).minWidth ?? 0),
                 };
                 if (nextWidth !== null && nextWidth !== undefined && !variableTotalWidth) {
                     newColumns[index + 1] = {
                         ...newColumns[index + 1],
-                        width: Math.max(nextWidth, minThWidth, columns[index + 1].minWidth ?? 0),
+                        width: Math.max(nextWidth, minThWidth, (columns[index + 1] as ExtendsColumnType).minWidth ?? 0),
                     };
                 }
                 setColumns(newColumns);

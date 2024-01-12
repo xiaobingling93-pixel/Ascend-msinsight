@@ -35,4 +35,5 @@ declare module 'antd' {
     export type TooltipProps = TooltipProps;
     export type InputRef = InputRef;
     export type AutoCompleteProps = AutoCompleteProps;
+    export const Table;
 }

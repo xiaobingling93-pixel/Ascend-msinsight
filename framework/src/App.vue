@@ -10,31 +10,32 @@ const asideWidth = ref(lastWidth);
 const handleDisplayAside = () => {
     displayAside.value = !displayAside.value;
     asideWidth.value = displayAside.value ? lastWidth : 0;
-}
+};
 const theme = ref('dark-theme');
 
 const forbidDefaultEvent = (e: MouseEvent) => {
     e.preventDefault();
-}
+};
 
 onMounted(() => {
+    // 默认颜色主题
     document.body.className = theme.value;
-    
+    // 禁用文件拖拽
     window.addEventListener('drop', forbidDefaultEvent);
     window.addEventListener('dragover', forbidDefaultEvent);
     // 鼠标在framework滑动
     window.addEventListener('mouseover', () => {
-      for (let i = 0; i < window.frames.length; i++) {
-        window.frames[i].postMessage(JSON.stringify({ from: 'framework', event: 'mouseover' }), '*');
-      }
+        for (let i = 0; i < window.frames.length; i++) {
+            window.frames[i].postMessage(JSON.stringify({ from: 'framework', event: 'mouseover' }), window.origin);
+        }
     });
 });
 
-function resize(deltaX:number, width:number){
-  if(width >= 200 && width <= 1000){
-    asideWidth.value = width;
-    lastWidth = width;
-  }
+function resize(deltaX: number, width: number) {
+    if (width >= 200 && width <= 1000) {
+        asideWidth.value = width;
+        lastWidth = width;
+    }
 }
 </script>
 

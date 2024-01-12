@@ -8,6 +8,7 @@ import { CardInfo } from '../components/ImportSelect';
 import { Session } from '../entity/session';
 import { NotificationHandler } from './defs';
 import connector from '../connection/index';
+import { message } from 'antd';
 
 const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
     if (data[key] === undefined) {
@@ -71,6 +72,7 @@ export const parseFailHandler: NotificationHandler = (data): void => {
         }
         setUnitPhaseByCardId((data as any).rankId, session, 'error');
     });
+    message.error(data.error);
 };
 
 export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {

@@ -712,7 +712,12 @@ export type ThreadTrace = {
     endTime: number;
     depth: number;
     threadId: number;
-    [x:string]: unknown;
+    [x: string]: unknown;
+};
+
+export type ProcessData = {
+    duration: number;
+    startTime: number;
 };
 
 export type CounterData = {
@@ -735,6 +740,14 @@ export type CounterRequest = {
     startTime: number;
     endTime: number;
 };
+
+export type ProcessRequest = {
+    cardId: string;
+    processId: string;
+    startTime: number;
+    endTime: number;
+};
+
 export type AscendSliceDetail = {
     pid?: string;
     tid?: number;
