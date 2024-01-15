@@ -332,7 +332,16 @@ const TimelineAxis = observer(({ session, margin, timelineHeight }: TimelineAxis
     const theme = useTheme();
     const draw = React.useMemo(() => () => {
         if (canvas.current && ref.current?.clientWidth !== 0) {
-            runInAction(() => { session.domain.chartViewWidth = ref.current?.clientWidth ?? 0; });
+            runInAction(() => {
+                if (session.zoom !== undefined) {
+                    session.domain.zoom = {
+                        zoomCount: session.zoom.zoomCount,
+                        zoomPoint: session.zoom.zoomPoint ?? ((session.selectedRange) && ((session.selectedRange[0] + session.selectedRange[1]) / 2)),
+                    };
+                    session.zoom = undefined;
+                }
+                session.domain.chartViewWidth = ref.current?.clientWidth ?? 0;
+            });
             drawTimelineAxis(canvas.current, {
                 domain: [ session.domainRange.domainStart, session.domainRange.domainEnd ],
                 spaceX: margin,
