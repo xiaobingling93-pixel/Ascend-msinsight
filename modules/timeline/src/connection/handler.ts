@@ -141,9 +141,16 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
         if (session.units.length === 0) {
             session.selectedRange = undefined;
         }
+        clearTimeMarkerFlags(session);
     } catch (error) {
         console.error(error);
     }
+};
+
+const clearTimeMarkerFlags = (session: Session): void => {
+    session.timelineMaker.selectedFlag = undefined;
+    session.timelineMaker.refreshTrigger = (session.timelineMaker.refreshTrigger + 1) % 10;
+    session.timelineMaker.timelineFlagList.splice(0);
 };
 
 export const removeSingleRemoteHandler: NotificationHandler = async (data): Promise<void> => {
@@ -193,6 +200,7 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
             });
             session.endTimeAll = remoteMaxTimeStamps;
         }
+        clearTimeMarkerFlags(session);
         connector.send({ event: 'deleteRank', body: { rankId: removeCardIds } });
     } catch (error) {
         console.error(error);
