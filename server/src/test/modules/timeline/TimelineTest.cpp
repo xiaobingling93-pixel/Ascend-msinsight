@@ -187,6 +187,7 @@ TEST_F(TestSuit, QueryFlowCategoryEvents)
     uint64_t ENDTIME = 1695115378743155968;
     requestParams.startTime = STARTTIME;
     requestParams.endTime = ENDTIME;
+    requestParams.timePerPx = 1;
     requestParams.category = "HostToDevice";
     uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
     database->QueryFlowCategoryEvents(requestParams, startTime, flowDetailList);
