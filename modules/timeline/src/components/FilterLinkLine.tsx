@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { Tooltip } from 'antd';
 import { observer } from 'mobx-react';
 import React, { useRef, useState } from 'react';
-import { ReactComponent as AntdFilterIcon } from '../assets/images/insights/FunnelIcon.svg';
+import { ReactComponent as AntdFilterIcon } from '../assets/images/insights/LinkerIcon.svg';
 import { Session } from '../entity/session';
 import { CustomButton, StyledButton } from './base/StyledButton';
 import { SvgType } from './base/rc-table/types';
@@ -205,7 +205,7 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
             color={theme.tooltipBGColor}
             overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
             overlayClassName={'insight-category-search-overlay'} align={{ offset: [ -8, 3 ] }}>
-            <CustomButton tooltip={i18n.t('tooltip:filter')} { ...customButtonProps } ref={ref}/>
+            <CustomButton tooltip={i18n.t('tooltip:linker')} { ...customButtonProps } ref={ref}/>
         </Tooltip>
     );
 });

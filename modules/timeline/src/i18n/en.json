@@ -99,6 +99,7 @@
     "clean": "Clean",
     "filter": "Filter",
     "search": "Search",
+    "linker": "Flow Events",
     "del": "Timeline Zoom Out",
     "add": "Timeline Zoom In"
   },
