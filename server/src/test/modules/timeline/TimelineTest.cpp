@@ -223,6 +223,7 @@ TEST_F(TestSuit, QueryThreadTraces)
     request.startTime = STARTTIME;
     request.endTime = ENDTIME;
     request.threadId = 0;
+    request.timePerPx = 1;
     Dic::Protocol::UnitThreadTracesBody response;
     uint64_t minTimestamp = 0;
     int64_t traceId = 70;
