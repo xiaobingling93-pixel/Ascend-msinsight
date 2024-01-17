@@ -27,7 +27,7 @@ struct Time {
 enum class TimeStyle : int {
     // YYYY-mm-DD HH:MM:SS.sss
     WITH_MILLI_SEC = 0,
-    // YYYYmmDDHHMMSS
+    // YYYYmmDDHHMMSSsss
     WITH_SEC_NO_SPLIT,
 };
 
