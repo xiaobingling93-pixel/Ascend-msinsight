@@ -148,7 +148,7 @@ std::optional<document_t> ToResponseJson<PipelineStageTimeResponse>(const Pipeli
     json_t stageAndBubbleTimes(kArrayType);
     for (const BubbleDetail &action : response.body.bubbleDetails) {
         json_t itemJson(kObjectType);
-        JsonUtil::AddMember(itemJson, "rankId", action.stageOrRankId, allocator);
+        JsonUtil::AddMember(itemJson, "stageId", action.stageOrRankId, allocator);
         JsonUtil::AddMember(itemJson, "stageTime", action.stageTime, allocator);
         JsonUtil::AddMember(itemJson, "bubbleTime", action.bubbleTime, allocator);
         stageAndBubbleTimes.PushBack(itemJson, allocator);
