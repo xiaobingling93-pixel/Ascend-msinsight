@@ -92,8 +92,8 @@ const baseOption: echarts.EChartsOption = {
 
 // eslint-disable-next-line max-lines-per-function
 const DetailChart = observer(function ({ condition, session }: {condition: ConditionType;session: Session}) {
-    const [ opTypeData, setOpTypeData ] = useState([]);
-    const [ computeData, setComputeData ] = useState([]);
+    const [opTypeData, setOpTypeData] = useState([]);
+    const [computeData, setComputeData] = useState([]);
     const updateData = (): void => {
         if (condition.rankId === '') {
             setOpTypeData([]);
@@ -140,7 +140,7 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
     }, [condition]);
     useEffect(() => {
         renderChart();
-    }, [ opTypeData, computeData ]);
+    }, [opTypeData, computeData]);
     useEffect(() => {
         renderChart();
     }, [session.isDark]);

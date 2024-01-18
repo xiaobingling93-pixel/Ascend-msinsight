@@ -13,7 +13,7 @@ import { type ConditionType, defaultCondition } from './Filter';
 
 // eslint-disable-next-line max-lines-per-function
 const Index = observer(function ({ session }: { session: Session }) {
-    const [ condition, setCondition ] = useState<ConditionType>(defaultCondition);
+    const [condition, setCondition] = useState<ConditionType>(defaultCondition);
     const handleFilterChange = (obj: any): void => {
         const newCondition = { ...condition, ...obj };
         setCondition(newCondition);

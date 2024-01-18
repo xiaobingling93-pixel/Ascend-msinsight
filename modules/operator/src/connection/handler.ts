@@ -36,7 +36,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
         if (!session) {
             return;
         }
-        const ids = [ ...session.allRankIds, String(data.rankId) ].sort((a, b) => Number(a) - Number(b));
+        const ids = [...session.allRankIds, String(data.rankId)].sort((a, b) => Number(a) - Number(b));
         session.allRankIds = ids;
     });
 };

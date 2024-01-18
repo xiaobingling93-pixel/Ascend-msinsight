@@ -104,7 +104,7 @@ export const GetPageConfigWhithPageData = (page: { current: number; pageSize: nu
     return {
         ...page,
         showSizeChanger: page.total > 10,
-        pageSizeOptions: [ 10, 20, 50, 100 ],
+        pageSizeOptions: [10, 20, 50, 100],
         showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>),
         hideOnSinglePage: false,
         onChange: (current: number, pageSize: number) => { setPage({ ...page, current, pageSize }); },

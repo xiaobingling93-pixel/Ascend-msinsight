@@ -220,12 +220,13 @@ const defaultSorter = { field: '', order: '' };
 // eslint-disable-next-line max-lines-per-function
 const BaseTable = ({ condition, opType, opName, inputShape, session }:
 {condition: ConditionType;opType?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
-    const [ cols, setCols ] = useState<any[]>(opl0Columns);
-    const [ page, setPage ] = useState(defaultPage);
-    const [ sorter, setSorter ] = useState(defaultSorter);
-    const [ data, setData ] = useState<any[]>([]);
+    const [cols, setCols] = useState<any[]>(opl0Columns);
+    const [page, setPage] = useState(defaultPage);
+    const [sorter, setSorter] = useState(defaultSorter);
+    const [data, setData] = useState<any[]>([]);
     const rowKey = 'rowKey';
-    const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
+    const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
+    const [loading, setLoading] = useState(false);
     const btnCol = {
         title: 'Details',
         width: 115,
@@ -249,7 +250,7 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
         if (group === OPERATOR) {
             return colMap[group][level] ?? colMap[group].l2;
         } else {
-            return [ ...colMap[group] ?? [], btnCol ];
+            return [...colMap[group] ?? [], btnCol];
         }
     };
     const updateData = async(page: any, sorter: any): Promise<void> => {
@@ -273,7 +274,6 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
         data.forEach((item: any, index: number) => {
             item.rowKey = condition.group + String(page.pageSize * page.current + index);
         });
-
         setData(data);
         setPage({ ...page, total });
         const columns = getCols({ group: opType !== undefined ? OPERATOR : condition.group, level });
@@ -281,6 +281,16 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
         runInAction(() => {
             session.total = total;
         });
+    };
+
+    const updateTable = async (): Promise<void> => {
+        try {
+            setLoading(true);
+            await updateData(page, sorter);
+            setExpandedKeys([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -292,13 +302,12 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
             });
             return;
         }
-
-        updateData(page, sorter);
-        setExpandedKeys([]);
-    }, [ page.current, page.pageSize, sorter.field, sorter.order, condition ]);
+        updateTable();
+    }, [page.current, page.pageSize, sorter.field, sorter.order, condition]);
     return <ResizeTable
         size="small"
         minThWidth={50}
+        loading={loading}
         columns={cols}
         dataSource={data}
         pagination={GetPageConfigWhithPageData(page, setPage)}

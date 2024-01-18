@@ -77,7 +77,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
         observe(optionMap, () => {
             setCondition();
         });
-    }, [ ]);
+    }, []);
 
     useEffect(() => {
         const rankIdOptions = session.allRankIds.map((item, index) => (

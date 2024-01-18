@@ -18,14 +18,14 @@ const ResizableTitle = (
         return th;
     }
     return cloneElement(th, {},
-        [ ...th.props.children,
-            <Resizor key={th.props.children.length} onResize={onResize}/> ]);
+        [...th.props.children,
+            <Resizor key={th.props.children.length} onResize={onResize}/>]);
 };
 
 // eslint-disable-next-line max-lines-per-function
 const ResizeTable = (props: {variableTotalWidth?: boolean;[prop: string]: any}): JSX.Element => {
     const { columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, ...restProps } = props;
-    const [ columns, setColumns ] = useState<any[]>(propColumns ?? []);
+    const [columns, setColumns] = useState<any[]>(propColumns ?? []);
     useEffect(() => {
         setColumns(propColumns ?? []);
     }, [JSON.stringify(propColumns)]);
