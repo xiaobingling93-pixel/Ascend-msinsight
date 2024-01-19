@@ -72,9 +72,7 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
             std::getline(stepTraceFileCsv, line)) {
         std::vector<std::string> fields;
         std::string field;
-        std::regex pattern(R"(,(?=(?:[^"]*"[^"]*")*[^"]*$))");
-        std::vector<std::string> tokens(std::sregex_token_iterator(line.begin(), line.end(), pattern, -1),
-                                        std::sregex_token_iterator());
+        std::vector<std::string> tokens = StringUtil::StringSplit(line);
         if (tokens[0] != "Step") {
             StepStatistic statistic = MapToStepStatistic(tokens);
             database->InsertStepStatisticsInfo(statistic);

@@ -25,30 +25,6 @@ KernelParse::KernelParse()
     threadPool = std::make_unique<ThreadPool>(KernelParse::maxThreadNum);
 }
 
-std::vector<std::string> KernelParse::StringSplit(const std::string& str)
-{
-    std::vector<std::string> result;
-    std::string subStr = "";
-    int count = 0;
-    for (char ch : str) {
-        // 根据字符串内 ” 的数量来判断是否是一个完整的字符串，count % 2 = 0 为偶数个，满足要求
-        if (ch == ',' and count % 2 == 0) {
-            if (count != 0) {
-                subStr = '\"' + subStr + '\"';
-            }
-            result.push_back(subStr);
-            subStr = "";
-            count = 0;
-        } else if (ch == '\"') {
-            count++;
-        } else {
-            subStr += ch;
-        }
-    }
-    result.push_back(subStr);
-    return result;
-}
-
 void KernelParse::KernelFileParse(const std::string &parentDir, const std::string &fileId,
                                   std::set<std::string> &devices)
 {
@@ -70,7 +46,7 @@ void KernelParse::KernelFileParse(const std::string &parentDir, const std::strin
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) ==
     Timeline::ParserStatus::FINISH && getline(file, line)) {
         const std::basic_string<char>& basicString(line);
-        std::vector<std::string> rowVector = StringSplit(basicString);
+        std::vector<std::string> rowVector = StringUtil::StringSplit(basicString);
         if (!rowVector.empty() and rowVector[0] == STEP_ID or rowVector[0] == MODEL_ID or rowVector[0] == DEVICE_ID) {
             for (int i = 0; i < rowVector.size(); i++) {
                 dataMap[rowVector[i]] = i;

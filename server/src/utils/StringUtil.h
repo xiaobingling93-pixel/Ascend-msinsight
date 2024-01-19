@@ -181,6 +181,30 @@ public:
         }
         return true;
     }
+
+static std::vector<std::string> StringSplit(const std::string& str)
+{
+    std::vector<std::string> result;
+    std::string subStr = "";
+    int count = 0;
+    for (char ch : str) {
+        // 根据字符串内 ” 的数量来判断是否是一个完整的字符串，count % 2 = 0 为偶数个，满足要求
+        if (ch == ',' and count % 2 == 0) {
+            if (count != 0) {
+                subStr = '\"' + subStr + '\"';
+            }
+            result.push_back(subStr);
+            subStr = "";
+            count = 0;
+        } else if (ch == '\"') {
+            count++;
+        } else {
+            subStr += ch;
+        }
+    }
+    result.push_back(subStr);
+    return result;
+}
 };
 }
 
