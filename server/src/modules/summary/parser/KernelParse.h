@@ -66,7 +66,6 @@ private:
                               std::vector<std::string> row, const std::string &fileId, Kernel &kernel);
 
     bool WaitParseEnd(const std::string &fileId);
-    std::vector<std::string> StringSplit(const std::string& str);
 };
 
 } // end of namespace Summary
