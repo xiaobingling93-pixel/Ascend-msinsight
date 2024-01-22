@@ -94,11 +94,11 @@ const CommunicatorHeader = observer(({ session, defaultPPSize }: { session: Sess
     const [form] = Form.useForm();
     const onClick = (size: number) => () => {
         const values: {ppSize: number; tpSize: number; dpSize: number} = form.getFieldsValue();
-        if (values.dpSize * values.tpSize * values.ppSize !== session.rankCount) {
+        if (values.dpSize * values.tpSize * values.ppSize !== session.unitcount) {
             message.error('The parameter is incorrect.');
             return;
         }
-        session.communicatorData = generateCommunicatorData(values, size, session.rankCount);
+        session.communicatorData = generateCommunicatorData(values, size, session.unitcount);
         eventBus.emit('activeCommunicator', undefined);
     };
     return (
@@ -111,13 +111,13 @@ const CommunicatorHeader = observer(({ session, defaultPPSize }: { session: Sess
                     }]}/>
             </Form.Item>
             <Form.Item name={'ppSize'} label={'PP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
+                <InputNumber min={0} max={session.unitcount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
             <Form.Item name={'tpSize'} label={'TP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
+                <InputNumber min={0} max={session.unitcount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
             <Form.Item name={'dpSize'} label={'DP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.rankCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
+                <InputNumber min={0} max={session.unitcount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
             <Button style={{ margin: '10px 10px 10px 0' }} onClick={onClick(defaultPPSize)}>Generate</Button>
         </Form>
