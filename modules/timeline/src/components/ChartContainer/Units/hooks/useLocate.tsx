@@ -34,6 +34,9 @@ const getTargetUnit = (units: InsightUnit[], matcher: UnitMatcher['target']): In
     runInAction(() => {
         // expand all parent units
         for (const unit of path) {
+            if (unit.collapsible && !unit.isExpanded) {
+                unit.collapseAction?.(unit);
+            }
             unit.isExpanded = true;
         }
     });
