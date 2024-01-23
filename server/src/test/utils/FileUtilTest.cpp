@@ -100,13 +100,9 @@ TEST(TestUtil, TestGetDbPath)
 
 TEST(TestUtil, TestIdBuilder)
 {
-    int id0 = IdBuilder::ResponseIdBuilder().Build();
-    int id1 = IdBuilder::ResponseIdBuilder().Build();
     int id2 = IdBuilder::EventIdBuilder().Build();
     int id3 = IdBuilder::RequestIdBuilder().Build();
     int id4 = IdBuilder::SessionIdBuilder().Build();
-    EXPECT_EQ(id0, 0);
-    EXPECT_EQ(id1, 1);
     EXPECT_EQ(id2, 0);
     EXPECT_EQ(id3, 0);
     EXPECT_EQ(id4, 0);

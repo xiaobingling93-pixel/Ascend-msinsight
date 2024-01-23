@@ -31,12 +31,14 @@ protected:
             {currPath + R"(/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json)"}, "1", "");
         Dic::Module::Timeline::ClusterFileParser clusterFileParser;
         clusterFileParser.ParseClusterFiles(currPath + R"(/src/test/test_data)");
+        int interval = 2000;
         while (true) {
             ParserStatus status0 = ParserStatusManager::Instance().GetParserStatus("0");
             ParserStatus status1 = ParserStatusManager::Instance().GetParserStatus("1");
             if (status0 == ParserStatus::FINISH_ALL && status1 == ParserStatus::FINISH_ALL) {
                 Dic::Server::ServerLog::Info("parse end");
-                return;
+                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+                break;
             }
         }
     }

@@ -107,6 +107,7 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     std::string dbPath = selectedPath + "/cluster.db";
     std::ifstream file(dbPath);
     if (InitClusterDatabase(selectedPath, file.good()) && file.good()) {
+        ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
         ServerLog::Info("cluster db file is already exist, skip parse ");
         return true;
     }
