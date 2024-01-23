@@ -39,10 +39,10 @@ const StylePagination = styled(({ current, total, ...props }: PaginationProps) =
         const parent = document.querySelector('.ant-pagination-simple-pager');
         const input = parent?.querySelector('input');
         setTimeout(() => {
-            input && (input.value = (current - 1).toString());
-            parent?.childNodes[2] && (parent.childNodes[2].textContent = `${total - 1}`);
+            input && (input.value = ((current ?? 0) - 1).toString());
+            parent?.childNodes[2] && (parent.childNodes[2].textContent = `${(total ?? 0) - 1}`);
         });
-    }, [current, total]);
+    });
     return <Pagination current={current} total={total} {...props} />;
 })`
     .ant-pagination-item-link {
@@ -122,7 +122,7 @@ const jumpSlice = async (session: Session, searchContent: string, index: number)
             fixedIndex -= rankCount.count;
         }
     }
-    const slice: SliceData = await window.request(finalDataSource as DataSource, { command: 'search/slice', params: { rankId: finalRankId, searchContent, fixedIndex } });
+    const slice: SliceData = await window.request(finalDataSource as DataSource, { command: 'search/slice', params: { rankId: finalRankId, searchContent, index: fixedIndex } });
     doJumpSlice(session, slice);
 };
 
