@@ -5,6 +5,7 @@
 #include "KernelParse.h"
 #include "DataBaseManager.h"
 #include "FileUtil.h"
+#include "ValidateUtil.h"
 #include "TraceFileParser.h"
 #include "ParserStatusManager.h"
 #include "ServerLog.h"
@@ -112,6 +113,10 @@ bool KernelParse::ParseTask(const std::string &filePath, const std::string &file
     if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(statusId)) {
         ParseEndCallBack(fileId, false, "Failed to set run summary status for file " + filePath);
         ServerLog::Error("Failed to set run summary status for file ", filePath);
+        return false;
+    }
+    if (!ValidateUtil::CheckCsvFile(filePath)) {
+        ParseEndCallBack(fileId, false, "Check file Failed: " + filePath);
         return false;
     }
     auto start = std::chrono::high_resolution_clock::now();
