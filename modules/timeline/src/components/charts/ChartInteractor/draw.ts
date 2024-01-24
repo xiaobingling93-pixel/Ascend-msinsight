@@ -373,7 +373,7 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, xScale: 
                 ctx.moveTo(sourceX, sourceY);
                 ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
                 ctx.stroke();
-                if (targetY >= UNDRAW_HEIGHT) {
+                if (targetY >= UNDRAW_HEIGHT && sourceY >= UNDRAW_HEIGHT) {
                     const len = targetPos.length;
                     let [fromX, fromY] = targetPos.reduce(([prevX, prevY], [x, y]) => [prevX + x + offset, prevY + y], [0, 0]);
                     fromX = fromX / len; fromY = fromY / len;
