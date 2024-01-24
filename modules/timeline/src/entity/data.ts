@@ -702,6 +702,7 @@ export type ProcessMetaData = {
 export type CardMetaData = {
     cardId: string;
     cardName?: string;
+    cardPath: string;
     dataSource: DataSource;
 };
 

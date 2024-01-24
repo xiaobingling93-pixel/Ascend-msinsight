@@ -184,7 +184,7 @@ interface UnitInfoContentProps {
 const InsightLaneInfoContainer = styled.div`
     height: 100%;
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
 `;
 const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentProps): JSX.Element => {
     const info = unit.renderInfo?.(session, unit.metadata, unit) ?? `${unit.name}`;

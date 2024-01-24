@@ -38,6 +38,7 @@ export type CardInfo = {
     cardName: string;
     rankId: string;
     result: boolean;
+    cardPath: string;
 };
 
 export default ImportModeSelect;

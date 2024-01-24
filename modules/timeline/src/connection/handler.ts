@@ -89,7 +89,7 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
             session.phase = 'download';
             session.endTimeAll = 1000000000;
             result.result.forEach((item: CardInfo) => {
-                const unit = new CardUnit({ dataSource, cardId: item.rankId, cardName: item.cardName });
+                const unit = new CardUnit({ dataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
                 if (item.result as boolean) {
                     unit.phase = 'analyzing';
                 } else {

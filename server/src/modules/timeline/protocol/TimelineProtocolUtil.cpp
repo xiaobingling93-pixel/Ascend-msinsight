@@ -31,6 +31,7 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
         json_t actionJson(kObjectType);
         JsonUtil::AddMember(actionJson, "cardName", action.cardName, allocator);
         JsonUtil::AddMember(actionJson, "rankId", action.rankId, allocator);
+        JsonUtil::AddMember(actionJson, "cardPath", action.cardPath, allocator);
         JsonUtil::AddMember(actionJson, "result", action.result, allocator);
         result.PushBack(actionJson, allocator);
     }

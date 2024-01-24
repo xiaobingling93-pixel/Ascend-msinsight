@@ -17,6 +17,7 @@ namespace Protocol {
 struct Action {
     std::string cardName;
     std::string rankId;
+    std::string cardPath;
     bool result = true;
 };
 

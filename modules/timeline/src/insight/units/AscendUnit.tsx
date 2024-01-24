@@ -36,6 +36,7 @@ import { offsetConfig } from './config/offsetConfig';
 import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
 import { ChartType, StackStatusData, StatusData } from '../../entity/chart';
+import { StyledTooltip } from '../../components/base/StyledTooltip';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -301,7 +302,7 @@ export const CardUnit = unit<CardMetaData>({
     name: 'Card',
     configBar: offsetConfig,
     pinType: 'copied',
-    renderInfo: (session: Session, metadata: { cardId: string }) => `${metadata.cardId}`,
+    renderInfo: (session: Session, metadata: { cardId: string; cardPath: string}) => <StyledTooltip placement="leftBottom" title={metadata.cardPath}><span style={{ marginLeft: 8 }}>{metadata.cardId}</span></StyledTooltip>,
     spreadUnits: on(
         'create',
         async (self): Promise<void> => {
