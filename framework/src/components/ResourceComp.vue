@@ -9,7 +9,7 @@ import { useDataSources } from '@/stores/dataSource';
 
 const { confirm } = useDataSources();
 
-const treeRef = ref()
+const treeRef = ref();
 
 const { resourceState, loadFiles, setCurrentPath } = useResource();
 
@@ -81,6 +81,7 @@ const handleExpand = async (data: ResourceItem, node: Node) => {
     defalultExpandedKeysSet.add(data.path)
     state.defalultExpandedKeys = [...defalultExpandedKeysSet];
     updateData(data.path,node);
+    props.changeConfirmButtonState(true);
 }
 
 const hanldeCollapse = (data: ResourceItem, node: Node) => {
@@ -97,10 +98,71 @@ const handleClick = async (data: ResourceItem, node: Node) => {
     }
     state.inputPath = data.path;
     updateData(data.path, node);
+    props.changeConfirmButtonState(true);
 }
 
+let findFile = false;
+let errorAlert = ref(false);
+
+const searchPath = async () => {
+  if (!state.inputPath) {
+    props.changeConfirmButtonState(false);
+    findFile = false;
+    return;
+  }
+  const newData = await loadFiles(state.inputPath);
+  if (!newData.length) {
+    props.changeConfirmButtonState(false);
+    findFile = false;
+    errorAlert.value = true;
+    for (let i = 0; i < treeRef.value.store._getAllNodes().length; i++) {
+      treeRef.value.store._getAllNodes()[i].expanded = false;
+    }
+    return;
+  }
+  if (findFile) {
+    return;
+  }
+  if (newData.length && treeRef.value.getCurrentKey !== state.inputPath) {
+    treeRef.value.filter(state.inputPath);
+    if (!findFile) {
+      await searchPath();
+    }
+  }
+  findFile = false;
+}
+
+
+const filterNode = async (value: string, data: ResourceItem, node: Node): Promise<boolean> => {
+  if (!value) {
+    props.changeConfirmButtonState(false);
+    state.inputPath = value;
+    findFile = false;
+    return true;
+  }
+  if (value === data.path) {
+    await handleExpand(data, node);
+    await handleClick(data, node);
+    state.inputPath = value;
+    treeRef.value.setCurrentKey(value);
+    props.changeConfirmButtonState(true);
+    errorAlert.value = false;
+    findFile = true;
+    return true;
+  }
+  if (value.startsWith(data.path)) {
+    await handleExpand(data, node);
+    return true;
+  }
+  props.changeConfirmButtonState(false);
+  state.inputPath = value;
+  findFile = false;
+  return true;
+}
+
+
 onMounted(() => {
-    loadFiles(resourceState.currentPath)
+    loadFiles(resourceState.currentPath);
 })
 
 const doSetCurrentPath = () => {
@@ -113,7 +175,7 @@ const doSetCurrentPath = () => {
     } else {
         return false;
     }
-}
+};
 
 const getLoadData = async (node: Node, resolve: (data: ResourceItem[]) => void) => {
     const resource = resourceState.startResource;
@@ -122,14 +184,16 @@ const getLoadData = async (node: Node, resolve: (data: ResourceItem[]) => void) 
     }
     const path = node.data.path;
     const newData = await loadFiles(path);
-    resolve(newData || []);
+    return resolve(newData || []);
 }
 
 const doWhileOpenDialog = () => {
     const node = treeRef.value.getCurrentNode();
-    node && updateData(node.path, node);
+    if (node) {
+      updateData(node.path, node);
+    }
 }
-
+const props = defineProps(['changeConfirmButtonState']);
 defineExpose({
     doSetCurrentPath,
     doWhileOpenDialog,
@@ -138,11 +202,14 @@ defineExpose({
 
 <template>
     <div class="tree-wrap">
-        <el-input v-model="state.inputPath" disabled />
+        <el-text v-if="errorAlert.valueOf()" type="danger"> file not found,check the file path</el-text>
+        <el-text v-else type="primary"> Enter the file path and press Enter to search</el-text>
+        <el-input v-if="errorAlert.valueOf()" class= "red-input" v-model="state.inputPath" @keyup.enter="searchPath" />
+        <el-input v-else class= "bule-input" v-model="state.inputPath" @keyup.enter="searchPath" />
         <div class="data-tree">
             <el-tree ref="treeRef" :default-expanded-keys="state.defalultExpandedKeys" :data="resourceState.startResource" :props="defaultProps" :auto-expand-parent="false"
                 node-key="path" @node-click="handleClick" @node-expand="handleExpand" @node-collapse="hanldeCollapse" lazy
-                :load="getLoadData">
+                :load="getLoadData" :filter-node-method = "filterNode">
                 <template #default="{ node, data }">
                     <div class="custom-tree-node">
                         <el-icon :size="16">
@@ -188,11 +255,24 @@ defineExpose({
 
 :deep(.el-input__wrapper) {
     border-radius: 2px;
-    border: 1px solid #656565;
     box-shadow: 0 0 0;
     background-color: transparent !important;
 }
+.red-input {
+    border-radius: 2px;
+    border: 1px solid #F56C6C;
+    box-shadow: 0 0 0;
+    background-color: transparent !important;
+    --el-input-focus-border-color: #F56C6C;
+}
 
+.bule-input {
+  border-radius: 2px;
+  border: 1px solid #409EFF;
+  box-shadow: 0 0 0;
+  background-color: transparent !important;
+  --el-input-focus-border-color: #409EFF;
+}
 :deep(.el-input.is-disabled .el-input__inner) {
     font-size: 12px;
     color: var(--dataTree-background);

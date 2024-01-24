@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onMounted, ref, watch} from 'vue';
+import {onMounted, reactive, ref, watch} from 'vue';
 import AddIcon from '@/components/icons/cross_icon.vue';
 import MenuTree from '@/components/MenuTree/MenuTree.vue';
 import ResourceComp from '@/components/ResourceComp.vue';
@@ -9,6 +9,8 @@ import ProjectMode from "@/components/ProjectMode.vue";
 const isDarkTheme = ref(true);
 
 const resourceComp = ref();
+// 输入文件是否存在
+const fileIsExist = ref(false);
 onMounted(() => {
     connector.addListener('getParseStatus', () => {
       connector.send({
@@ -24,12 +26,16 @@ watch(isDarkTheme, () => {
     });
     document.body.className = document.body.className === 'dark-theme' ? 'light-theme' : 'dark-theme';
 });
-
+const changeConfirmButtonState = (buttonState: boolean) => {
+  fileIsExist.value = buttonState;
+};
 const showModal = ref(false);
 function addRemote(e: MouseEvent) {
     e.stopPropagation();
     showModal.value = true;
-    resourceComp.value && resourceComp.value.doWhileOpenDialog();
+    if (resourceComp.value) {
+      resourceComp.value.doWhileOpenDialog();
+    }
 }
 
 const store = useDataSources();
@@ -50,13 +56,13 @@ const handleConfirm = () => {
         </el-icon>
         <el-switch class="theme-toggle" v-model="isDarkTheme"></el-switch>
         <el-dialog v-model="showModal" title="File Explorer" width="30%" :close-on-click-modal="false">
-            <ResourceComp ref="resourceComp" />
+            <ResourceComp ref="resourceComp" :changeConfirmButtonState = "changeConfirmButtonState" />
             <template #footer>
                 <div class="foot-tip">
                     To refresh a directory, collapse and expand the directory.
                 </div>
                 <span>
-                    <el-button type="primary" @click="handleConfirm">Confirm</el-button>
+                    <el-button :disabled = "!fileIsExist.valueOf()" type="primary" @click="handleConfirm">Confirm</el-button>
                     <el-button @click="showModal = false">Cancel</el-button>
                 </span>
             </template>

@@ -381,6 +381,5 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, xScale: 
                 }
             });
         });
-
     ctx.restore();
 };
