@@ -50,7 +50,7 @@ const std::string TokenBuilder::Build()
     return tokenString;
 #else
     std::string tokenString;
-    tokenString.reserve(TOKEN_LENGTH);
+    tokenString.resize(TOKEN_LENGTH);
 
     int fd = open("/dev/random", O_RDONLY);
     if (fd < 0) {
