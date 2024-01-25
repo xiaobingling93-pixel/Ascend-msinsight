@@ -59,6 +59,10 @@ def build_vscode(vscode_version, os_name):
         exec_command(['npm', 'run', 'buildLinuxX64'], SCRIPT_PATH)
     elif os_name.endswith('aarch64'):
         exec_command(['npm', 'run', 'buildLinuxArm'], SCRIPT_PATH)
+    if not os_name.startswith('win'):
+        if os.getenv('BUILD_VSCODE') is None:
+            return
+        exec_command(['npm', 'run', 'buildExtensionLinux'], SCRIPT_PATH)
     src = os.path.join(SCRIPT_PATH, 'plugins', 'vscode')
     # copy vscode plugin
     dst_file = os.path.join(SCRIPT_PATH, 'out/ascend-insight-extension_' + vscode_version + '_' + os_name + '.vsix')
@@ -95,7 +99,7 @@ def build_intellij(idea_version, os_name):
 
 
 def build_light_package(version, os_name):
-    if os_name.startswith('linux-'):
+    if os_name.startswith('linux-') and os.getenv('BUILD_BIN_PACKAGE') is None:
         logging.warning('Do not build packages on linux now')
         return
     package_path = os.path.join(SCRIPT_PATH, 'opensource', 'package')

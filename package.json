@@ -7,8 +7,8 @@
         "start": "cd .\\framework&&npm start",
         "build": "npm run buildWin",
         "buildWin": "npm run buildServerWin && npm run copyServerWin && npm run buildModulesWin &&npm run buildFrameWorkWin && npm run buildExtensionWin",
-        "buildLinuxX64": "npm run buildServerLinux && npm run copyServerLinux && npm run buildModulesLinux && npm run buildFrameWorkLinux && npm run buildExtensionLinux",
-        "buildLinuxArm": "npm run buildServerLinux && npm run copyServerLinux && npm run buildModulesLinux && npm run buildFrameWorkLinux && npm run buildExtensionLinux",
+        "buildLinuxX64": "npm run buildServerLinux && npm run copyServerLinux && npm run buildModulesLinux && npm run buildFrameWorkLinux",
+        "buildLinuxArm": "npm run buildServerLinux && npm run copyServerLinux && npm run buildModulesLinux && npm run buildFrameWorkLinux",
         "buildLinuxDarwin": "npm run buildServerLinux && npm run copyServerDarwin && npm run buildModulesLinux && npm run buildFrameWorkLinux",
         "buildServerWin": "cd .\\server\\build && python preprocess_third_party.py && python build.py build --release",
         "buildServerLinux": "export PATH=$HOME/.local/bin:$PATH && cd ./server/build && python3 preprocess_third_party.py && python3 build.py build --release",
@@ -20,7 +20,7 @@
         "buildFrameWorkWin": "cd framework && npm install --force && npm run build && npm run copyWin",
         "buildFrameWorkLinux": "cd framework && npm install --force && npm run build && npm run copyLinux",
         "buildExtensionWin": "cd .\\plugins\\vscode && npm install && npm run vsce:package",
-        "buildExtensionLinux": "cd ./plugins/vscode&&npm install&&npm run vsce:package",
+        "buildExtensionLinux": "cd ./plugins/vscode && npm install && npm run vsce:package",
         "test": "cd modules && npm run test"
     }
 }
