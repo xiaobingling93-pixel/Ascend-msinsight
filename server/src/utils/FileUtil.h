@@ -361,13 +361,16 @@ public:
         return path;
     }
 
-    static long long getFileSize(const char* fileName)
+    static long long GetFileSize(const char* fileName)
     {
+        if (strcmp(fileName, "") == 0) {
+            return 0;
+        }
 #ifdef _WIN32
-        FILE *fp = fopen(fileName, "r");
-        fseek(fp, 0L, SEEK_END);
-        long long size = ftell(fp);
-        fclose(fp);
+        std::ifstream in(fileName);
+        in.seekg(0, std::ios_base::end);
+        std::streampos size =  in.tellg();
+        in.close();
         return size;
 #else
         struct stat st;
@@ -404,7 +407,7 @@ public:
             std::string spliceFile = SplicePath(gbkPath, file);
             if (std::strcmp("ascend_insight_data.db", file.c_str()) != 0 &&
                     std::strcmp("cluster.db", file.c_str()) != 0) {
-                size +=  getFileSize(spliceFile.c_str());
+                size +=  GetFileSize(spliceFile.c_str());
             }
         }
     }
@@ -504,7 +507,7 @@ public:
             Server::ServerLog::Error("Cannot get" + filePath +": ", filePath);
             return false;
         }
-        long long size = getFileSize(filePath.c_str());
+        long long size = GetFileSize(filePath.c_str());
         if (size >= MAX_FILE_SIZE_10G) {
             Server::ServerLog::Error("The size of " + filePath + " is too large in path:", filePath);
             return false;

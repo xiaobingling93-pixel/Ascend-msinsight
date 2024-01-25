@@ -6,6 +6,7 @@
 #include "ServerLog.h"
 
 #include "FileUtil.h"
+#include "ValidateUtil.h"
 #include "TraceFileParser.h"
 #include "ParserStatusManager.h"
 #include "DataBaseManager.h"
@@ -45,6 +46,9 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
 {
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Start parse Operator Memory:", filePath);
+    if (!ValidateUtil::CheckCsvFile(filePath)) {
+        return false;
+    }
     auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
     std::ifstream file(FileUtil::PathPreprocess(filePath));
     std::string line;
@@ -147,6 +151,9 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
 {
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Start parse Memory Record: ", filePath);
+    if (!ValidateUtil::CheckCsvFile(filePath)) {
+        return false;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
     std::ifstream file(FileUtil::PathPreprocess(filePath));
     std::string line;

@@ -10,6 +10,7 @@
 #include "CommunicationMatrixRapidHandler.h"
 #include "CommunicationRapidSaxHandler.h"
 #include "FileUtil.h"
+#include "ValidateUtil.h"
 #include "ExecUtil.h"
 #include "ConstantDefs.h"
 #include "DataBaseManager.h"
@@ -64,6 +65,9 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
     const std::string &filePath = filePathList[0];
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("start parseStepStatisticsFile data into db ,file:", filePath);
+    if (!ValidateUtil::CheckCsvFile(filePath)) {
+        return;
+    }
     std::ifstream stepTraceFileCsv(filePath);
     std::string line;
     std::map<std::string, int> indexMap;
