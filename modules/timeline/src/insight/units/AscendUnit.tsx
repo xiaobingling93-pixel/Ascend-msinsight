@@ -302,7 +302,7 @@ export const CardUnit = unit<CardMetaData>({
     name: 'Card',
     configBar: offsetConfig,
     pinType: 'copied',
-    renderInfo: (session: Session, metadata: { cardId: string; cardPath: string}) => <StyledTooltip placement="leftBottom" title={metadata.cardPath}><span style={{ marginLeft: 8 }}>{metadata.cardId}</span></StyledTooltip>,
+    renderInfo: (session: Session, metadata: { cardId: string; cardPath: string}) => <StyledTooltip placement="leftBottom" title={metadata.cardPath}><span style={{ marginLeft: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{metadata.cardId}</span></StyledTooltip>,
     spreadUnits: on(
         'create',
         async (self): Promise<void> => {
