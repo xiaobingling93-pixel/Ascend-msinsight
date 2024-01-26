@@ -67,7 +67,20 @@ public:
             str.replace(index, 1, "");
             str.insert(index + THOUSAND_SUFFIX.length(), ".");
         }
-        return llroundl(std::stold(str));
+        try {
+            return llroundl(std::stold(str));
+        } catch (std::exception &) {
+            return 0;
+        }
+    }
+
+    static inline long double StringToLongDouble(const std::string& usStr)
+    {
+        try {
+            return std::stold(usStr);
+        } catch (std::exception &) {
+            return 0;
+        }
     }
 };
 } // end of namespace Dic

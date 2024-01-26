@@ -109,15 +109,17 @@ Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, size_t> dataM
     size_t durationIndex = dataMap[DURATION];
     anOperator.name = row[nameIndex];
     anOperator.size = atof(row[sizeIndex].c_str());
-    anOperator.allocationTime = NumberUtil::TimestampUsToNs(std::stold(row[allocationTimeIndex].c_str()));
+    anOperator.allocationTime = NumberUtil::TimestampUsToNs(
+        NumberUtil::StringToLongDouble(row[allocationTimeIndex]));
     anOperator.duration = atof(row[durationIndex].c_str());
 
     if (dataMap.count(RELEASE_TIME)) {
         size_t releaseTimeIndex = dataMap[RELEASE_TIME];
-        anOperator.releaseTime = NumberUtil::TimestampUsToNs(std::stold(row[releaseTimeIndex].c_str()));
+        anOperator.releaseTime = NumberUtil::TimestampUsToNs(
+            NumberUtil::StringToLongDouble(row[releaseTimeIndex]));
     } else {
         anOperator.releaseTime = NumberUtil::TimestampUsToNs(
-            std::stold(row[allocationTimeIndex].c_str()) + anOperator.duration);
+            NumberUtil::StringToLongDouble(row[allocationTimeIndex]) + anOperator.duration);
     }
 
     return anOperator;
@@ -129,7 +131,7 @@ Record MemoryParse::mapperToRecordDetail(std::map<std::string, size_t> dataMap, 
     size_t nameIndex = dataMap[COMPONENT];
     size_t timeStampIndex = dataMap[TIMESTAMP];
     record.component = row[nameIndex];
-    record.timesTamp = NumberUtil::TimestampUsToNs(std::stold(row[timeStampIndex].c_str()));
+    record.timesTamp = NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(row[timeStampIndex]));
     // msprof场景
     if (dataMap.count(Dic::DEVICE_ID)) {
         size_t totalAllocatedIndex = dataMap[TOTAL_ALLOCATED_KB];

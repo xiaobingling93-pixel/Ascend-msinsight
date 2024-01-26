@@ -245,7 +245,7 @@ bool KernelParse::mapperToKernelDetail(std::map<std::string, size_t> dataMap,
     kernel.stepId = dataMap.count(STEP_ID) != 0 ? row[dataMap[STEP_ID]] : "";
     kernel.type = row[typeIndex];
     kernel.acceleratorCore = row[acceleratorIndex];
-    kernel.startTime = NumberUtil::TimestampUsToNs(std::stold(row[startTimeIndex].c_str()));
+    kernel.startTime = NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(row[startTimeIndex]));
     kernel.duration = atof(row[durationIndex].c_str());
     kernel.waitTime = atof(row[waitTimeIndex].c_str());
     kernel.blockDim = atof(row[dataMap[FIELD_BLOCK_DIM]].c_str());
