@@ -216,6 +216,12 @@ const ExpandIcon = observer(({ unit, session }: { unit: KeyedInsightUnit; sessio
             unit.isExpanded = !unit.isExpanded;
             if (unit.isExpanded) {
                 platform.trace(`unfold${unit.name.replace(/\s*/g, '')}`, {});
+                unit.children?.forEach(item => {
+                    if (item.collapsible && !item.isExpanded && item.collapseAction !== undefined) {
+                        item.collapseAction?.(item);
+                        item.isExpanded = true;
+                    }
+                });
             }
             session.renderTrigger = !session.renderTrigger;
         });
