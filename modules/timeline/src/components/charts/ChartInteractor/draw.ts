@@ -355,7 +355,6 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, xScale: 
     ctx.rect(-1, clipTop, ctx.canvas.width + 1, ctx.canvas.height + 1);
     ctx.clip();
     ctx.beginPath();
-    const offset = 40;
     Object.values(session.linkLines)
         .forEach(datas => {
             datas?.forEach((data) => {
@@ -370,6 +369,7 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, xScale: 
                 if ((sourceY === undefined || targetY === undefined) || (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT)) { return; }
                 const targetPos: Array<[x: number, y: number]> = [[targetX, targetY]];
                 ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(category, colorPalette.length)]];
+                const offset = ((targetX - sourceX) / 2);
                 ctx.moveTo(sourceX, sourceY);
                 ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
                 ctx.stroke();
