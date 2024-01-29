@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
-
 #include "FileUtil.h"
 #include "FileSelector.h"
 
@@ -9,17 +8,23 @@ namespace Dic {
 namespace Module {
 namespace Global {
 using namespace Protocol;
-
 void FileSelector::GetFoldersAndFiles(const std::string &path,
                                       std::vector<std::unique_ptr<Protocol::Folder>> &childrenFolders,
-                                      std::vector<std::unique_ptr<Protocol::File>> &childrenFiles)
+                                      std::vector<std::unique_ptr<Protocol::File>> &childrenFiles,
+                                      bool &exist)
 {
     std::vector<std::string> folders;
     std::vector<std::string> files;
+    // 防止目录遍历攻击
+    std::string filepath = FileUtil::GetRealPath(path);
     if (path.empty()) {
         folders = FileUtil::GetDiskInfo();
-    } else {
-        FileUtil::FindFolders(path, folders, files);
+        exist = false;
+    } else if (path != filepath) {
+        exist = false;
+        return;
+    } else if (path == filepath) {
+        exist = FileUtil::FindFolders(path, folders, files) || FileUtil::CheckFilePath(path);
     }
     for (const auto &folder : folders) {
         auto folderPtr = std::make_unique<Folder>();

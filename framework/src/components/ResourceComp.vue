@@ -11,7 +11,7 @@ const { confirm } = useDataSources();
 
 const treeRef = ref();
 
-const { resourceState, loadFiles, setCurrentPath } = useResource();
+const { resourceState, loadFiles, setCurrentPath, fileExist } = useResource();
 
 const defaultProps = {
     label: 'name',
@@ -110,8 +110,8 @@ const searchPath = async () => {
     findFile = false;
     return;
   }
-  const newData = await loadFiles(state.inputPath);
-  if (!newData.length) {
+  const exist = await fileExist(state.inputPath);
+  if (!exist) {
     props.changeConfirmButtonState(false);
     findFile = false;
     errorAlert.value = true;
@@ -123,7 +123,7 @@ const searchPath = async () => {
   if (findFile) {
     return;
   }
-  if (newData.length && treeRef.value.getCurrentKey !== state.inputPath) {
+  if (exist && treeRef.value.getCurrentKey !== state.inputPath) {
     treeRef.value.filter(state.inputPath);
     if (!findFile) {
       await searchPath();
@@ -202,8 +202,8 @@ defineExpose({
 
 <template>
     <div class="tree-wrap">
-        <el-text v-if="errorAlert.valueOf()" type="danger"> file not found,check the file path</el-text>
-        <el-text v-else type="primary"> Enter the file path and press Enter to search</el-text>
+        <el-text v-if="errorAlert.valueOf()" type="danger"> File not found, check the file path</el-text>
+        <el-text v-else type="primary"> Enter the file path and press enter to search</el-text>
         <el-input v-if="errorAlert.valueOf()" class= "red-input" v-model="state.inputPath" @keyup.enter="searchPath" />
         <el-input v-else class= "bule-input" v-model="state.inputPath" @keyup.enter="searchPath" />
         <div class="data-tree">

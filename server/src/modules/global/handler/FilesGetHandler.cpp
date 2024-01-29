@@ -25,7 +25,10 @@ void FilesGetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     FilesGetResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     response.body.path = request.params.path;
-    FileSelector::GetFoldersAndFiles(request.params.path, response.body.childrenFolders, response.body.childrenFiles);
+    FileSelector::GetFoldersAndFiles(request.params.path,
+                                     response.body.childrenFolders,
+                                     response.body.childrenFiles,
+                                     response.body.exist);
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

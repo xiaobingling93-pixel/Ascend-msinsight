@@ -101,6 +101,7 @@ template <> std::optional<document_t> ToResponseJson<FilesGetResponse>(const Fil
         childrenFiles.PushBack(jFile, allocator);
     }
     JsonUtil::AddMember(body, "childrenFiles", childrenFiles, allocator);
+    JsonUtil::AddMember(body, "exist", response.body.exist, allocator);
     json_t childrenFolders(kArrayType);
     for (const auto &folder : response.body.childrenFolders) {
         childrenFolders.PushBack(FolderToJson(folder, allocator), allocator);

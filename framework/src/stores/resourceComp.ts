@@ -17,6 +17,7 @@ interface Body {
     path: string;
     childrenFolders: ResourceItem[];
     childrenFiles: ResourceItem[];
+    exist: boolean;
 }
 
 type ResourceTotal = {
@@ -73,9 +74,23 @@ export const useResource = defineStore('resource', () => {
         return setResource(result as Body)
     }
 
-    const setCurrentPath = (path: string) => {
-        resourceState.currentPath = path;
+    const fileExist = async (path: string): Promise<boolean> => {
+        if (path === undefined) {
+            return false;
+        }
+        const result = await request({ remote: LOCAL_HOST, port: PORT, dataPath: [] }, 'global', {
+            command: 'files/get',
+            params: {
+                path,
+            }
+        });
+        const body = result as Body;
+        return body.exist;
     }
 
-    return { resourceState, loadFiles, setCurrentPath }
+    const setCurrentPath = (path: string): void => {
+        resourceState.currentPath = path;
+    };
+
+    return { resourceState, loadFiles, setCurrentPath, fileExist };
 });
