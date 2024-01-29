@@ -136,6 +136,8 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
                         const linkLine = { [raw.cat]: [{ category: raw.cat, ...raw, cardId: rankId }] }
                         runInAction(() => {
                             session.linkLines = linkLine;
+                            session.singleLinkLine = linkLine;
+                            session.renderTrigger = !session.renderTrigger;
                         });
                         return raw;
                     },

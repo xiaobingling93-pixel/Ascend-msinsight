@@ -44,6 +44,7 @@ export type LinkData = {
 export class Session {
     id = '';
     remoteAttrs: Map<string, Record<string, unknown>> = new Map();
+    singleLinkLine: LinkLines = {};
     private _name: string | null;
     private _phase: Phase = 'configuring';
     private _units: InsightUnit[] = [];
@@ -81,6 +82,7 @@ export class Session {
     searchData?: { content: string; [x: string]: unknown };
     linkData?: LinkData;
     linkLines: LinkLines = {};
+
     totalHeight: number = 0;
     renderTrigger: boolean = true;
 

@@ -158,6 +158,15 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
             if (datas === undefined) { return; }
             newLines[category] = datas;
         }
+        Object.values(session.singleLinkLine)
+            .forEach(datas => {
+                datas?.forEach((data) => {
+                    const { category } = data as unknown as FlowEvent;
+                    if (!checkedCategories.includes(category)) {
+                        newLines[category] = session.singleLinkLine[category];
+                    }
+                });
+            });
         runInAction(() => {
             session.linkLines = newLines;
             session.renderTrigger = !session.renderTrigger;
