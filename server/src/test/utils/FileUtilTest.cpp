@@ -89,12 +89,14 @@ TEST(TestUtil, TestGetDbPath)
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find_last_of("server");
     currPath = currPath.substr(0, index + 1);
-    std::string dbPath = FileUtil::GetDbPath(
-            currPath + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/", "1");
 #ifdef _WIN32
-    EXPECT_EQ(dbPath, currPath + "\\src\\test\\test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\1.db");
+    std::string dbPath = FileUtil::GetDbPath(
+            currPath + "\\src\\test\\test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\trace_view.json", "1");
+    EXPECT_EQ(dbPath, currPath + "\\src\\test\\test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\ascend_insight_data.db");
 #else
-    EXPECT_EQ(dbPath, currPath + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/1.db");
+    std::string dbPath = FileUtil::GetDbPath(
+            currPath + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json", "1");
+    EXPECT_EQ(dbPath, currPath + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/ascend_insight_data.db");
 #endif
 }
 

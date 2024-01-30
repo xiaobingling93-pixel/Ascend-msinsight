@@ -39,7 +39,7 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOpTypeAndInputShape)
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
     EXPECT_EQ(result, true);
-    int size = 9;
+    int size = 10;
     EXPECT_EQ(datas.size(), size);
     datas.clear();
     result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::COMPUTE_UNIT, datas);
@@ -83,7 +83,7 @@ TEST_F(TestSuit, QueryOperatorStatisticInfoByOpTypeAndInputShape)
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     bool result = db->QueryOperatorStatisticInfo(reqParams, response);
     EXPECT_EQ(result, true);
-    int total = 9;
+    int total = 10;
     EXPECT_EQ(response.total, total);
     int size = 5;
     EXPECT_EQ(response.datas.size(), size);

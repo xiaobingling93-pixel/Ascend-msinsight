@@ -20,7 +20,7 @@ using namespace Dic::Module::Memory;
 
 
 class TestSuit : public ::testing::Test {
-protected:
+public:
     static void SetUpTestCase()
     {
         std::string currPath = Dic::FileUtil::GetCurrPath();
@@ -34,16 +34,22 @@ protected:
         DataBaseManager::Instance().CreatConnectionPool("1", currPath + refPath1 + "ascend_insight_data.db");
         TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "0", "");
         TraceFileParser::Instance().Parse({currPath + refPath1 + "trace_view.json"}, "1", "");
+        WaitParseEnd({"0", "1"});
         std::string testDataPath = currPath + R"(/src/test/test_data)";
         KernelParse::Instance().Parse({testDataPath}, "");
+        WaitParseEnd({KERNEL_PREFIX + "0", KERNEL_PREFIX + "1"});
         MemoryParse::Instance().Parse({testDataPath}, "");
+        WaitParseEnd({MEMORY_PREFIX + "0", MEMORY_PREFIX + "1"});
 
         ClusterFileParser clusterFileParser;
         clusterFileParser.ParseClusterFiles(testDataPath);
-        int interval = 2000;
+        WaitParseEnd({"0", "1", KERNEL_PREFIX + "0",
+                     KERNEL_PREFIX + "1", MEMORY_PREFIX + "0", MEMORY_PREFIX + "1"});
+    }
+
+    static void WaitParseEnd(std::vector<std::string> statusList)
+    {
         while (true) {
-            std::vector<std::string> statusList = {
-                    "0", "1", KERNEL_PREFIX + "0", KERNEL_PREFIX + "1", MEMORY_PREFIX + "0", MEMORY_PREFIX + "1"};
             int i = 0;
             for (const auto& tmp : statusList) {
                 if (ParserStatusManager::Instance().GetParserStatus(tmp) != ParserStatus::FINISH) {
@@ -56,7 +62,6 @@ protected:
                 continue;
             } else {
                 Dic::Server::ServerLog::Info("parse end");
-                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
                 return;
             }
         }

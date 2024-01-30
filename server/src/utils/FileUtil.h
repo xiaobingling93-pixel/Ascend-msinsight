@@ -341,6 +341,10 @@ public:
     {
 #ifdef _WIN32
         size_t pos = filePath.find_last_of("\\");
+        size_t pos2 = filePath.find_last_of("\\/");
+        if (pos < pos2) {
+            pos = pos2;
+        }
 #else
         size_t pos = filePath.find_last_of("\\/");
 #endif
