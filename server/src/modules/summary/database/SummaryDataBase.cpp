@@ -322,10 +322,11 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         }
 
         std::string sql =
-                " SELECT " + group + " as name, ROUND(sum(duration), 2) as duration" +
+                " SELECT " + group + " as name," + (reqParams.group == Protocol::OPERATOR_GROUP ?
+                " ROUND(duration, 2) as duration" : " ROUND(sum(duration), 2) as duration") +
                 " FROM " + kernelTable +
-                " WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
-                " GROUP by " + group +
+                " WHERE rank_id = ? AND accelerator_core <> 'HCCL'" + (reqParams.group == Protocol::OPERATOR_GROUP ?
+                " " : " GROUP by " + group) +
                 " ORDER BY duration DESC LIMIT ?";
         return sql;
     }
@@ -344,10 +345,11 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         std::string sql =
                 " SELECT accelerator_core as name, ROUND(SUM(duration), 2) as duration"
                 " FROM ("
-                "     SELECT " + group + ", accelerator_core, ROUND(SUM(duration), 2) as duration" +
+                "     SELECT " + group + ", accelerator_core," + (reqParams.group == Protocol::OPERATOR_GROUP ?
+                "     ROUND(duration, 2) as duration" : " ROUND(SUM(duration), 2) as duration") +
                 "     FROM " + kernelTable +
-                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'"
-                "     GROUP BY " + group +
+                "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'" + (reqParams.group == Protocol::OPERATOR_GROUP ?
+                "     " : (" GROUP BY " + group)) +
                 "     ORDER BY duration DESC LIMIT ?"
                 " ) subquery" +
                 " GROUP by accelerator_core"

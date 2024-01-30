@@ -55,12 +55,12 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOperator)
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
     EXPECT_EQ(result, true);
-    int size = 9;
+    int size = 15;
     EXPECT_EQ(datas.size(), size);
     datas.clear();
     result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::COMPUTE_UNIT, datas);
     EXPECT_EQ(result, true);
-    int cnt = 6;
+    int cnt = 5;
     EXPECT_EQ(datas.size(), cnt);
 }
 
