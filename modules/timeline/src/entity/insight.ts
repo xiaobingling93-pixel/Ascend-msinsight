@@ -179,7 +179,9 @@ export enum UnitHeight {
     SUPER_UPPER = 120,
     HIGHTER_UPPER = 105,
     UPPER = 40,
+    // 算子缩略图泳道高度
     COLL = 25,
+    // 展开的算子标准高度
     STANDARD = 20,
     LOWER = 10,
     SUPER_LOWER = 6,

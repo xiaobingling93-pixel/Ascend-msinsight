@@ -100,7 +100,7 @@ const draw = (ctx: CanvasRenderingContext2D | null, datas: StackStatusData[][], 
     }
     // 绘制节点上的文字
     ctx.fillStyle = '#FFFFFFE6';
-    if (height >= FONT_SIZE) {
+    if (height > UnitHeight.STANDARD - 1) {
         textToDraw.forEach(data => {
             const text = getMaxText(data.type, data.width - DFT_PADDING, ctx, overflow);
             ctx.fillText(text, xScale(data.startTime) + (typeof marginLeft === 'number' ? marginLeft : marginLeft(data.width)), yScale(data.depth) + (height - FONT_SIZE) / 2 + 1);
