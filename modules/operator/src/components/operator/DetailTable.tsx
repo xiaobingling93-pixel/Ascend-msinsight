@@ -11,8 +11,17 @@ import { queryOperators, queryOperatorsInStatic, queryOperatorStatic } from '../
 import { runInAction } from 'mobx';
 import { Session } from '../../entity/session';
 
+interface FullConditionType {
+    rankId: string ;
+    group: string;
+    topK: number;
+    current: number;
+    pageSize: number;
+    field: string;
+    order: string;
+};
 const OPERATOR = 'Operator';
-
+const OPERATOR_TYPE = 'Operator Type';
 const opl0Columns = [
     {
         title: 'Name',
@@ -215,8 +224,13 @@ const OperatorTable = ({ condition, opType, opName, inputShape, session }:
     />;
 };
 
+const OperatorTypeTable = ({ condition, session }: {condition: ConditionType;session: Session}): JSX.Element => {
+    return <BaseTable condition={condition} session={session} />;
+};
+
 const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: '', order: '' };
+
 // eslint-disable-next-line max-lines-per-function
 const BaseTable = ({ condition, opType, opName, inputShape, session }:
 {condition: ConditionType;opType?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
@@ -227,6 +241,7 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
     const rowKey = 'rowKey';
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
+    const [fullCondition, setFullCondition] = useState<FullConditionType>({ current: 1, pageSize: 10, field: '', order: '', group: '', rankId: '', topK: 0 });
     const btnCol = {
         title: 'Details',
         width: 115,
@@ -253,19 +268,19 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
             return [...colMap[group] ?? [], btnCol];
         }
     };
-    const updateData = async(page: any, sorter: any): Promise<void> => {
+    const updateData = async(): Promise<void> => {
         let res;
         // 展开算子
         if (opType !== undefined || opName !== undefined) {
             res = await queryOperatorsInStatic(
-                { ...condition, ...page, order: sorter.order, orderBy: sorter.field, opType, opName, shape: inputShape },
+                { ...fullCondition, orderBy: fullCondition.field, opType: opType ?? '', opName, shape: inputShape ?? '' },
             );
         } else if (condition.group === OPERATOR) {
             res = await queryOperators(
-                { ...condition, ...page, order: sorter.order, orderBy: sorter.field });
+                { ...fullCondition, orderBy: fullCondition.field });
         } else {
             res = await queryOperatorStatic(
-                { ...condition, ...page, order: sorter.order, orderBy: sorter.field });
+                { ...fullCondition, orderBy: fullCondition.field });
         }
         if (res === null || res === undefined) {
             return;
@@ -284,26 +299,48 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
     };
 
     const updateTable = async (): Promise<void> => {
+        setLoading(true);
         try {
-            setLoading(true);
-            await updateData(page, sorter);
-            setExpandedKeys([]);
+            await updateData();
         } finally {
+            setExpandedKeys([]);
             setLoading(false);
         }
+    };
+
+    const updateFullCondition = (obj: FullConditionType): void => {
+        setTimeout(() => {
+            const newFullCondition = { ...fullCondition };
+            const keys = ['group', 'rankId', 'topK', 'current', 'pageSize', 'field', 'order'];
+            Object.keys(obj).forEach(key => {
+                if (keys.includes(key)) {
+                    Object.assign(newFullCondition, { [key]: obj[key as keyof FullConditionType] });
+                }
+            });
+            setFullCondition(newFullCondition);
+        });
     };
 
     useEffect(() => {
         if (condition.rankId === '') {
             setData([]);
-            setPage(defaultPage);
             runInAction(() => {
                 session.total = 0;
             });
             return;
         }
         updateTable();
-    }, [page.current, page.pageSize, sorter.field, sorter.order, condition]);
+    }, [JSON.stringify(fullCondition)]);
+
+    useEffect(() => {
+        setSorter(defaultSorter);
+        setPage(defaultPage);
+        updateFullCondition({ ...defaultSorter, ...defaultPage, ...condition });
+    }, [condition.group]);
+
+    useEffect(() => {
+        updateFullCondition({ ...sorter, ...page, ...condition });
+    }, [page.current, page.pageSize, sorter.field, sorter.order, condition.rankId, condition.topK]);
     return <ResizeTable
         size="small"
         minThWidth={50}
@@ -313,7 +350,7 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
         pagination={GetPageConfigWhithPageData(page, setPage)}
         onChange={(pagination: any, filters: any, sorter: any, extra: any) => {
             if (extra.action === 'sort') {
-                setSorter(sorter);
+                setSorter(sorter.order === undefined ? { field: '', order: '' } : sorter);
             }
         }
         }
@@ -335,11 +372,23 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
 };
 
 const DetailTable = ({ condition, session }: {condition: ConditionType;session: Session}): JSX.Element => {
+    let table;
+    switch (condition.group) {
+        case OPERATOR:
+            table = <OperatorTable condition={condition} session={session}/>;
+            break;
+        case OPERATOR_TYPE:
+            table = <OperatorTypeTable condition={condition} session={session}/>;
+            break;
+        default:
+            table = <BaseTable condition={condition} session={session}/>;
+            break;
+    }
     return <Container
         style={{ height: 'auto' }}
         title={'Operator Detail'}
         bodyStyle={{ overflow: 'visible' }}
-        content={<BaseTable condition={condition} session={session}/>}
+        content={table}
     />;
 };
 

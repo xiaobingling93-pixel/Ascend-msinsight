@@ -17,6 +17,7 @@ export type StaticParam = ShortParam & {
 export type DetailParam = StaticParam & {
     opType: string;
     shape: string;
+    opName?: string;
 };
 /**
  * 查询算子类型耗时占比
