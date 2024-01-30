@@ -330,7 +330,6 @@ const BaseTable = ({ condition, opType, opName, inputShape, session }:
             return;
         }
         updateTable();
-        console.log('44444', fullCondition);
     }, [JSON.stringify(fullCondition)]);
 
     useEffect(() => {
