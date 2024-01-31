@@ -65,7 +65,7 @@ const config: PlaywrightTestConfig = {
   webServer: [
     ...([9000, 9001, 9002, 9003, 9004].map(port => (
       {
-        command: `..\\serverBuild\\profiler_server.exe --wsPort=${port}`,
+        command: `..\\server\\output\\build\\server\\profiler_server.exe --wsPort=${port}`,
         reuseExistingServer: !process.env.CI
       }
     ))),

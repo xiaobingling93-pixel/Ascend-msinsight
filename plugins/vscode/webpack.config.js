@@ -50,7 +50,7 @@ const extensionConfig = {
   plugins: [
     new CopyWebpackPlugin({
       patterns: [
-        { from: '../../serverBuild', to: 'profiler' },
+        { from: '../../server/output/build', to: 'profiler' },
         { from: '../../framework/dist', to: 'profiler' }
       ],
     }),

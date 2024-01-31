@@ -100,7 +100,7 @@ task copyFrontendBuild(type: Copy) {
 
 task copyServerBuild(type: Copy) {
     copy {
-        from "../../../../serverBuild"
+        from "../../../../server/output/build"
         into "src/main/resources/profiler"
     }
 }
@@ -165,7 +165,7 @@ clean {
 task copyExeToSandbox() {
     doLast {
         copy {
-            from "${rootDir}/../../serverBuild/server"
+            from "${rootDir}/../../server/output/build/server"
             into "${project.buildDir}/idea-sandbox/plugins/ascend-insight/tools/"
         }
     }

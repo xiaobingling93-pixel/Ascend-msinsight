@@ -15,7 +15,7 @@ build_type=$1
 function init() {
   mkdir -p "${root}"/out && rm -rf "${root}"/out/*
   mkdir -p "${root}"/plugins/vscode/profiler && rm -rf "${root}"/plugins/vscode/profiler/*
-  mkdir -p "${root}"/serverBuild/server && rm -rf "${root}"/serverBuild/server
+  mkdir -p "${root}"/server/output/build/server && rm -rf "${root}"/server/output/build/server
   os=$(uname -s)
   # 优先读取交叉编译设置
   if [ "${build_type}" == 'cross_compile' ]; then
@@ -59,7 +59,7 @@ function build_server() {
   else
     ${python_exe} build.py build --release
   fi
-  cp -fr "${root}"/server/output/"${os_name}"*/bin "${root}"/serverBuild/server
+  cp -fr "${root}"/server/output/"${os_name}"*/bin "${root}"/server/output/build/server
 }
 
 function build_vscode() {
