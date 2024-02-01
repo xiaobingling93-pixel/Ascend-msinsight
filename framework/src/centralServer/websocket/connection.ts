@@ -35,7 +35,7 @@ export class Connection {
         }
         this._msgId = 0;
 
-        let protocol = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//`;
+        let protocol = `${window.location.protocol === 'https:' && window.location.host !== 'wry.localhost' ? 'wss:' : 'ws:'}//`;
         if (!window.location.pathname.includes('\/proxy\/')) {
             this._ws = new WebSocket(`${protocol}${window.location.hostname}:${dataSource.port}`);
         } else {
