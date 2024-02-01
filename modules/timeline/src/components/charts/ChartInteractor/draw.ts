@@ -13,7 +13,7 @@ import { hashToNumber } from '../../../utils/colorUtils';
 import { InsightUnit, UnitHeight } from '../../../entity/insight';
 import { ThreadMetaData } from '../../../entity/data';
 import { colorPalette } from '../../../insight/units/utils';
-
+import * as d3 from 'd3';
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
 
@@ -351,9 +351,6 @@ const getHeight = (session: Session, data: DataBlock, cardId: string): number | 
 const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, xScale: Scale, theme: Theme, pinnedAreaHeight: number): void => {
     ctx.save();
     ctx.beginPath();
-    const clipTop = pinnedAreaHeight + UNDRAW_HEIGHT;
-    ctx.rect(-1, clipTop, ctx.canvas.width + 1, ctx.canvas.height + 1);
-    ctx.clip();
     ctx.beginPath();
     Object.values(session.linkLines)
         .forEach(datas => {
@@ -362,9 +359,11 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, xScale: 
                 const timestampOffset = cardId !== undefined
                     ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0
                     : 0;
-                const targetX = xScale(to.timestamp - timestampOffset);
+                const li = d3.scaleLinear().range([0, ctx.canvas.width])
+                    .domain([session.domainRange.domainStart + timestampOffset, session.domainRange.domainEnd + timestampOffset]);
+                const targetX = li(to.timestamp);
                 const targetY = getHeight(session, to, cardId);
-                const sourceX = xScale(from.timestamp - timestampOffset);
+                const sourceX = li(from.timestamp);
                 const sourceY = getHeight(session, from, cardId);
                 if ((sourceY === undefined || targetY === undefined) || (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT)) { return; }
                 const targetPos: Array<[x: number, y: number]> = [[targetX, targetY]];

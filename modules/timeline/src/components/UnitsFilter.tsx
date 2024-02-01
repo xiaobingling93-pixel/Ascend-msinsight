@@ -202,6 +202,7 @@ const startFilter = (session: Session, inputValue: string[], selectValue: string
             doUnitsFilter(session.units, inputValue);
             break;
     }
+    session.singleLinkLine = {};
 };
 
 const doCardFilter = (flattenUnits: InsightUnit[], selectValues: string[]): void => {

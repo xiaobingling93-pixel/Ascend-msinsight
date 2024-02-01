@@ -103,7 +103,12 @@ const useFetchLinkLines = (displayCategories: string[]): UseFetchLinkLines => Re
             let res: CategoryEvents['flowDetailList'] = [];
             for (const unit of getCardUnits(session.units)) {
                 const { dataSource, cardId } = unit.metadata as { dataSource: DataSource; cardId: string };
-                const params = { rankId: cardId, startTime: Math.floor(domainStart), endTime: Math.ceil(domainEnd), category, timePerPx };
+                const timestampOffset = cardId !== undefined
+                    ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0
+                    : 0;
+                const start = Math.floor(domainStart + timestampOffset);
+                const end = Math.ceil(domainEnd + timestampOffset);
+                const params = { rankId: cardId, startTime: start, endTime: end, category, timePerPx };
                 res = res.concat((await window.request(dataSource,
                     { command: 'flow/categoryEvents', params }) as CategoryEvents).flowDetailList
                     .map(data => ({ ...data, cardId })));
@@ -173,7 +178,11 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
         });
     }, [checkedCategories]);
 
-    React.useEffect(() => { updateLinkLines(); }, [session.domainRange.domainStart, session.domainRange.domainEnd, checkedCategories]);
+    const param = [session.domainRange.domainStart, session.domainRange.domainEnd, checkedCategories, session?.unitsConfig.offsetConfig.timestampOffset];
+    const func = (): void => {
+        updateLinkLines();
+    };
+    React.useEffect(func, param);
     return (
         <FilterContainer>
             <FilterList>
