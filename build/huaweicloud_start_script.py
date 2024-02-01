@@ -54,6 +54,7 @@ def insight_help():
     logging.info(f"Usage: %s [command].", ASCEND_INSIGHT_NAME)
     logging.info(f" %s start [option=arg | option arg]", ASCEND_INSIGHT_NAME)
     logging.info("   --wsPort <port>         Specify the port number on which the service will start.")
+    logging.info("   --wsHost <ip>           Specify the ip address on which the service will start.")
     logging.info("   --logPath <path>        Specify the path where log files will be stored.")
     logging.info("   --logSize <size_in_B>   Specify the maximum size of log files in bytes (B).")
     logging.info("   --logLevel <level>      Specify the level of logging (e.g., INFO, WARN, ERROR, FATAL, DEBUG).")
@@ -73,6 +74,10 @@ def execute_command(command):
         raise Exception(result.stderr)
     return result.stdout
 
+
+if len(sys.argv) <= 1:
+    logging.info("The program startup parameters are not enough.")
+    logging.info("Please try executing '-h or --help' to get more information.")
 
 argvs = sys.argv[1:]
 

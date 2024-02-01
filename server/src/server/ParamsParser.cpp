@@ -5,6 +5,7 @@
 #include <iostream>
 #include "NumberUtil.h"
 #include "StringUtil.h"
+#include "RegexUtil.h"
 #include "ParamsParser.h"
 
 namespace Dic {
@@ -32,6 +33,10 @@ bool ParamsParser::ParseField(const std::string &data)
     std::string::size_type pos = data.find(symbolWsPort);
     if (pos != std::string::npos) {
         return ParseWsPort(data.substr(pos + symbolWsPort.length()));
+    }
+    pos = data.find(symbolWsHost);
+    if (pos != std::string::npos) {
+        return ParseWsHost(data.substr(pos + symbolWsHost.length()));
     }
     pos = data.find(symbolLogPath);
     if (pos != std::string::npos) {
@@ -96,6 +101,16 @@ bool ParamsParser::ParseWsPort(const std::string &wsPortStr)
     }
     option.wsPort = port;
     return true;
+}
+
+bool ParamsParser::ParseWsHost(const std::string &wsHostStr)
+{
+    if (RegexUtil::RegexMatch(wsHostStr, IP_PATTERN)) {
+        option.host = wsHostStr;
+        return true;
+    }
+    error = "ERROR: Host is not valid.";
+    return false;
 }
 
 bool ParamsParser::ParseLogPath(const std::string &logPath)

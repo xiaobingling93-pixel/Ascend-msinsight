@@ -36,6 +36,7 @@ private:
     int TryGetPort(const std::string &portStr) const;
     bool ParseField(const std::string &data);
     bool ParseWsPort(const std::string &wsPortStr);
+    bool ParseWsHost(const std::string &wsHostStr);
     bool ParseLogPath(const std::string &logPath);
     bool ParseLogSize(const std::string &logSize);
     bool ParseLogLevel(const std::string &logLevel);
@@ -43,6 +44,7 @@ private:
     void ParseScan(const std::string &scan);
 
     const string symbolWsPort = "--wsPort=";
+    const string symbolWsHost = "--wsHost=";
     const string symbolLogPath = "--logPath=";
     const string symbolLogSize = "--logSize=";
     const string symbolLogLevel = "--logLevel=";
@@ -53,6 +55,7 @@ private:
 
     const string EQUAL = "=";
     const string SYMBOL_PREFIX = "--";
+    const string IP_PATTERN = "^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})$";
 
     ParamsOption option;
     std::string error;
