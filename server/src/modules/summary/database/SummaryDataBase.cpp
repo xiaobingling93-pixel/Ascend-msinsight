@@ -313,16 +313,20 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     std::string SummaryDataBase::GenerateQueryCategoryDurationSql(Protocol::OperatorDurationReqParams &reqParams)
     {
         std::string group;
+        std::string name;
         if (reqParams.group == Protocol::OP_TYPE_GROUP) {
+            name = "op_type";
             group = "op_type || accelerator_core";
         } else if (reqParams.group == Protocol::OPERATOR_GROUP) {
+            name = "name";
             group = "name || accelerator_core";
         } else {
+            name = R"(name || '[' || input_shapes || ']')";
             group = R"(name || '[' || input_shapes || ']' || accelerator_core)";
         }
 
         std::string sql =
-                " SELECT " + group + " as name," + (reqParams.group == Protocol::OPERATOR_GROUP ?
+                " SELECT " + name + " as name," + (reqParams.group == Protocol::OPERATOR_GROUP ?
                 " ROUND(duration, 2) as duration" : " ROUND(sum(duration), 2) as duration") +
                 " FROM " + kernelTable +
                 " WHERE rank_id = ? AND accelerator_core <> 'HCCL'" + (reqParams.group == Protocol::OPERATOR_GROUP ?
