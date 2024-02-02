@@ -7,14 +7,18 @@ import connector from '@/connection/index';
 export type Timestamp = number;
 export class Session {
     startTime: Timestamp = -1;
-    endTimeAll: Timestamp = -1; 
+    endTimeAll: Timestamp = -1;
     isCluster: boolean = false;
     isReset: boolean = false;
     parseCompleted: boolean = false;
     clusterCompleted: boolean = false;
     unitcount: number = 0;
-    private _sharedState: Record<string, unknown> = {};
     isVscode: boolean = document.location.origin.startsWith('vscode');
+    // Compute
+    isBinary: boolean = false;
+    coreList: string[] = [];
+    sourceList: string[] = [];
+    private _sharedState: Record<string, unknown> = {};
 
     get sharedState(): Record<string, unknown> {
         return this._sharedState;
@@ -27,7 +31,7 @@ export class Session {
             body: this._sharedState,
         });
     }
-    
+
     get hasLocalServer(): boolean {
         return isConnected({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
     }
@@ -41,6 +45,9 @@ export class Session {
         this.parseCompleted = false;
         this.clusterCompleted = false;
         this.unitcount = 0;
+        this.isBinary = false;
+        this.coreList = [];
+        this.sourceList = [];
     }
 };
 

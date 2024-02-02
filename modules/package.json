@@ -14,6 +14,8 @@
         "buildTimelineLinux": "cd ./timeline && npm install --force && npm run build && npm run publishLinux",
         "buildOperatorWin": "cd .\\operator && npm install --force && npm run build && npm run publishWin",
         "buildOperatorLinux": "cd ./operator && npm install --force && npm run build && npm run publishLinux",
+        "buildComputeWin": "cd .\\compute && npm install --force && npm run build && npm run publishWin",
+        "buildComputeLinux": "cd ./compute && npm install --force && npm run build && npm run publishLinux",
         "test": "npm run testMemory && npm run testTimeline",
         "testCluster": "cd cluster && npm install --force && npm run test",
         "testMemory": "cd memory && npm install --force && npm run test",

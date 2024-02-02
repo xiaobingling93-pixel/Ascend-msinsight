@@ -1,10 +1,12 @@
-import type { IframeHTMLAttributes } from "vue";
+import type {IframeHTMLAttributes} from "vue";
 
 export interface ModuleConfig {
     name: string;
     requestName: Lowercase<string>;
     attributes: IframeHTMLAttributes;
     isDefault?: boolean;
+    isCluster?: boolean;
+    isCompute?: boolean;
 };
 
 export const modulesConfig: ModuleConfig[] = [
@@ -15,6 +17,8 @@ export const modulesConfig: ModuleConfig[] = [
             src: './plugins/Timeline/index.html'
         },
         isDefault: true,
+        isCluster: true,
+        isCompute: true,
     },
     {
         name: 'Memory',
@@ -22,7 +26,8 @@ export const modulesConfig: ModuleConfig[] = [
         attributes: {
             src: './plugins/Memory/index.html'
         },
-        isDefault: true
+        isDefault: true,
+        isCluster: true,
     },
     {
         name: 'Operator',
@@ -30,7 +35,8 @@ export const modulesConfig: ModuleConfig[] = [
         attributes: {
             src: './plugins/Operator/index.html'
         },
-        isDefault: true
+        isDefault: true,
+        isCluster: true,
     },
     {
         name: 'Summary',
@@ -38,6 +44,7 @@ export const modulesConfig: ModuleConfig[] = [
         attributes: {
             src: './plugins/Cluster/summary.html'
         },
+        isCluster: true,
     },
     {
         name: 'Communication',
@@ -45,5 +52,14 @@ export const modulesConfig: ModuleConfig[] = [
         attributes: {
             src: './plugins/Cluster/communication.html'
         },
+        isCluster: true,
+    },
+    {
+        name: 'Compute',
+        requestName: 'compute',
+        attributes: {
+            src: './plugins/Compute/index.html',
+        },
+        isCompute: true,
     },
 ];
