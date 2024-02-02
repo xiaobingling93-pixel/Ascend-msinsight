@@ -1,0 +1,373 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
+import React, { useEffect, useState } from 'react';
+import { observer } from 'mobx-react';
+import { Checkbox, Tooltip } from 'antd';
+import type { ColumnsType, ColumnType } from 'antd/es/table';
+import type { CheckboxChangeEvent } from 'antd/es/checkbox';
+import './HotMethod.css';
+import type { Session } from '../../entity/session';
+import Filter from '../Filter';
+import CodeViewer from '../codeViewer/CodeViewer';
+import ResizeTable from '../resize/ResizeTable';
+import Bar from '../Bar';
+import { HeaderFixedContainer, LeftRightContainer, syncScroller, isViewable } from '../Common';
+import type { InstrsColumnType, CodeLineType, JsonFileLineType, JsonInstructionType } from './defs';
+import { queryApiInstr, queryApiLine, querySourceCode } from '../RequestUtils';
+import { runInAction } from 'mobx';
+
+const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
+
+interface ConditionType {
+    core: string;
+    source: string;
+    onlyRelated?: boolean;
+};
+
+const codeColumns: ColumnsType<CodeLineType> = [
+    {
+        title: 'Instructions Executed',
+        dataIndex: 'Instructions Executed',
+        ellipsis: true,
+        width: 155,
+    },
+    {
+        title: 'Cycles',
+        dataIndex: 'Cycles',
+        ellipsis: true,
+        width: 50,
+    },
+];
+
+const instrsColumns: ColumnsType<InstrsColumnType> = [
+    {
+        title: '#',
+        dataIndex: 'index',
+        width: 40,
+        align: 'right',
+        ellipsis: true,
+    },
+    {
+        title: 'Address',
+        dataIndex: 'Address',
+        width: 100,
+        ellipsis: true,
+    },
+    {
+        title: 'Pipe',
+        dataIndex: 'Pipe',
+        width: 100,
+        ellipsis: true,
+    },
+    {
+        title: 'Source',
+        dataIndex: 'Source',
+        ellipsis: { showTitle: false },
+        render: Source => (
+            <Tooltip placement="topLeft" title={Source} >
+                {Source}
+            </Tooltip>
+        ),
+    },
+    {
+        title: 'Instructions Executed',
+        dataIndex: 'Instructions Executed',
+        ellipsis: true,
+        width: 165,
+    },
+    {
+        title: 'Cycles',
+        dataIndex: 'Cycles',
+        width: 150,
+        ellipsis: true,
+        render: (Cycles, record) => {
+            return <Bar value={Cycles} sum={record.maxCycles ?? Cycles}/>;
+        },
+    },
+];
+
+// eslint-disable-next-line max-lines-per-function
+const Index = observer(({ session }: { session: Session }) => {
+    const DomId = 'hotMethod';
+    const [condition, setCondition] = useState<ConditionType>({ core: '', source: '', onlyRelated: false });
+    const [code, setCode] = useState('');
+    const [codeLines, setCodeLines] = useState<CodeLineType[]>([]);
+    const [loggedCodeLines, setLoggedCodeLines] = useState<CodeLineType[]>([]);
+    const [instrsData, setInstrsData] = useState<InstrsColumnType[]>([]);
+    const [selectedline, setSelectedline] = useState<number>(-1);
+    const [tableHeight, setTableHeight] = useState<number>(1000);
+    const [filterInstrsColumns, setFilterInstrsColumns] = useState<ColumnsType<InstrsColumnType>>(instrsColumns);
+
+    const reset = (): void => {
+        // 重置选中行数，-1不选中任一行
+        setSelectedline(-1);
+    };
+    const handleFilterChange = (newConditions: ConditionType): void => {
+        setCondition({ ...condition, ...newConditions });
+    };
+
+    const handleInstrsClick = (instr: InstrsColumnType): void => {
+        const data = loggedCodeLines.find((codeline: CodeLineType) => isRelated(codeline, instr));
+        setSelectedline(data?.Line ?? -1);
+    };
+
+    const getRelatedInstrs = (): InstrsColumnType[] => {
+        return instrsData.filter((record: InstrsColumnType) => isRelatedInstr(record));
+    };
+
+    const isRelatedInstr = (instr: InstrsColumnType): boolean => {
+        if (selectedline > 0 && codeLines.length > 0) {
+            return isRelated(codeLines[selectedline - 1], instr);
+        }
+        return false;
+    };
+    const isRelated = (codeline: CodeLineType, instr: InstrsColumnType): boolean => {
+        // 指令地址是否在代码行地址范围内
+        return Boolean(codeline?.['Address Range']?.find(item => Number(item[0]) <= Number(instr.Address) && Number(item[1]) >= Number(instr.Address)));
+    };
+
+    const srcollToView = (): void => {
+        setTimeout(() => {
+            const nodelist = document.querySelectorAll('#Instructions tr.selected');
+            let visible = false;
+            nodelist.forEach(node => {
+                if (isViewable(node, { fixedtop: document.getElementById('CodeTable')?.getBoundingClientRect().top })) {
+                    visible = true;
+                }
+            });
+            if (nodelist.length > 0 && !visible) {
+                nodelist[0].scrollIntoView();
+            }
+        });
+    };
+
+    const getCurInstrsData = (): InstrsColumnType[] => {
+        return condition.onlyRelated ? getRelatedInstrs() : instrsData;
+    };
+
+    function resizeHeight(): void {
+        const codeTable = document.getElementById('CodeTable');
+        const height = codeTable?.clientHeight ?? 1000;
+        setTableHeight(height);
+    }
+
+    const updateInstrsColumns = (): void => {
+        const newColumns: ColumnsType<InstrsColumnType> = [...instrsColumns];
+        const fields = ['Address', 'Pipe', 'Source', 'Instructions Executed', 'Cycles'];
+        newColumns.forEach((col: ColumnType<InstrsColumnType>) => {
+            if (fields.includes(String(col.dataIndex))) {
+                const items = [...new Set(getCurInstrsData().map(item => item[col.dataIndex as keyof InstrsColumnType]))];
+                const filters = items.map(item => ({
+                    text: item,
+                    value: item,
+                }));
+                Object.assign(col, {
+                    filters,
+                    filterMode: 'tree',
+                    filterSearch: true,
+                    onFilter: (value: string | number, record: InstrsColumnType) => {
+                        if (typeof value === 'string') {
+                            return String(record[col.dataIndex as keyof InstrsColumnType]).startsWith(value);
+                        } else {
+                            return record[col.dataIndex as keyof InstrsColumnType] === value;
+                        }
+                    },
+                });
+            }
+        });
+        setFilterInstrsColumns(newColumns);
+    };
+
+    async function getCode(source: string): Promise<string> {
+        if (source === '') {
+            return '';
+        }
+        const res = await querySourceCode(source);
+        return res.fileContent ?? '';
+    }
+
+    async function getInstrs(core: string): Promise<InstrsColumnType[]> {
+        if (core === '') {
+            return [];
+        }
+        if (session.Instructions.length === 0) {
+            const res = await queryApiInstr();
+            runInAction(() => {
+                session.Instructions = JSON.parse(res.instructions);
+            });
+        }
+        const records = session.Instructions;
+        const list = records.map((item: JsonInstructionType, index: number) => ({
+            ...item,
+            Cycles: item.Cycles[Number(core)],
+            'Instructions Executed': item['Instructions Executed'][Number(core)],
+            index: index + 1,
+            maxCycles: 0,
+        }));
+        let maxCycles = 1;
+        list.forEach(item => {
+            maxCycles = Math.max(maxCycles, item.Cycles);
+        });
+        list.forEach(item => {
+            item.maxCycles = maxCycles;
+        });
+        return list;
+    };
+    async function getLines(source: string, core: string): Promise<CodeLineType[]> {
+        if (source === '' || core === '') {
+            return [];
+        }
+        const res = await queryApiLine({ sourceName: source, coreName: core });
+        const records: JsonFileLineType[] = res.lines ?? [];
+        const list = records.map((item: JsonFileLineType, index: number) => ({
+            ...item,
+            Cycles: item.Cycles[Number(core)],
+            'Instructions Executed': item['Instructions Executed'][Number(core)],
+        }));
+        return list.reverse();
+    };
+    // 初始化
+    useEffect(() => {
+        reset();
+        // 同步滚动条
+        syncScroller(document.getElementById('CodeTable'),
+            document.querySelector('#CodeAttrTable .ant-table-body'));
+        resizeHeight();
+
+        window.addEventListener('resize', event => {
+            resizeHeight();
+        });
+    }, []);
+    useEffect(() => {
+        reset();
+        updateData();
+        async function updateData(): Promise<void> {
+            // 文件源码
+            const newCode: string = await getCode(condition.source);
+            // 指令记录
+            const newInstrlist = await getInstrs(condition.core);
+            // 代码行
+            const newLoggedCodeLines = await getLines(condition.source, condition.core);
+            // 全部代码行
+            const sourceCodeList = newCode === '' ? [] : newCode.split(BREAK_LINE_REGEXP);
+            const sourceCodeLines = sourceCodeList.map((codeItem: string, index: number) => {
+                const Line = index + 1;
+                const lineInfo = newLoggedCodeLines.find((item: CodeLineType) => item.Line === Line) ?? {};
+                return { Line, ...lineInfo };
+            });
+            setCode(newCode);
+            setCodeLines(sourceCodeLines);
+            setLoggedCodeLines(newLoggedCodeLines);
+            setInstrsData(newInstrlist);
+        }
+    }, [condition.core, condition.source, session.renderStatus]);
+
+    useEffect(() => {
+        resizeHeight();
+    }, [code]);
+
+    useEffect(() => {
+        updateInstrsColumns();
+    }, [condition.onlyRelated, instrsData]);
+
+    return <div id={DomId} style={{ height: '100%', width: '100%' }}>
+        <HeaderFixedContainer
+            headerStyle={{ padding: '10px' }}
+            header={
+                <>
+                    <Filter session={session} handleFilterChange={handleFilterChange}/>
+                    <div style={{ width: '50%', float: 'right', padding: '0 10px 0 20px' }}>
+                        <span style={{ color: 'var(--grey10)' }}>
+                            Line :
+                            <span style={{ fontSize: '16px', color: 'var(--grey0)', margin: '0 0 0 5px' }}>
+                                {selectedline >= 0 ? selectedline : ''}
+                            </span>
+                            {' , Related Instructions Count : '}
+                            <span style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--labelblue)', margin: '5px' }}>
+                                {getRelatedInstrs().length}
+                            </span>
+                        </span>
+                        <Checkbox
+                            style={{ float: 'right' }}
+                            checked={condition.onlyRelated}
+                            onChange={(e: CheckboxChangeEvent): void => {
+                                handleFilterChange({ ...condition, onlyRelated: e.target.checked });
+                            }}
+                        >Only Realted Instructions</Checkbox>
+                    </div>
+                </>
+            }
+            body={
+                <LeftRightContainer
+                    left={<div style={{ height: '100%', width: '100%', overflow: 'auto' }}>
+                        <LeftRightContainer
+                            headerStyle={{ flex: '0 0 70%', background: '#272822' }}
+                            bodyStyle={{ flex: '0 0 30%' }}
+                            left={
+                                <HeaderFixedContainer
+                                    header={<div className={'table-header'}>
+                                        <div style={{ width: '45px', textAlign: 'right' }}><span>#</span></div>
+                                        <div><span>Source</span></div>
+                                    </div>}
+                                    bodyProps={{ id: 'CodeTable' }}
+                                    bodyStyle={{ overflowX: 'scroll' }}
+                                    body={
+                                        <CodeViewer
+                                            code={code}
+                                            handleLineClick={(line: number) => {
+                                                setSelectedline(line);
+                                                srcollToView();
+                                            }}
+                                            selectedline={selectedline}
+                                        />
+                                    }
+                                />
+                            }
+                            rightProps={{ id: 'CodeAttrTable' }}
+                            right={
+                                <ResizeTable
+                                    size="small"
+                                    minThWidth={50}
+                                    pagination={false}
+                                    columns={codeColumns}
+                                    dataSource={codeLines}
+                                    rowClassName={(record: CodeLineType, index: number) => (selectedline === index + 1 ? 'selected' : '')}
+                                    onRow={ (record: CodeLineType) => {
+                                        return {
+                                            onClick: (event: React.MouseEvent<HTMLElement>) => {
+                                                setSelectedline(record.Line);
+                                            },
+                                        };
+                                    }}
+                                    scroll={{ y: tableHeight }}
+                                />
+                            }/>
+                    </div>}
+                    right={
+                        <HeaderFixedContainer
+                            id={'Instructions'}
+                            style={{ paddingLeft: '15px' }}
+                            body={<ResizeTable
+                                size="small"
+                                minThWidth={50}
+                                columns={filterInstrsColumns}
+                                dataSource={condition.onlyRelated ? getRelatedInstrs() : instrsData}
+                                rowClassName={(record: InstrsColumnType) => (isRelatedInstr(record) ? 'selected' : '')}
+                                onRow={ (record: InstrsColumnType) => {
+                                    return {
+                                        onClick: () => { handleInstrsClick(record); },
+                                    };
+                                }}
+                                pagination={false}
+                                scroll={{ y: tableHeight }}
+                            />}
+                        />
+                    }
+                />
+            }
+        />
+    </div>;
+});
+
+export default Index;

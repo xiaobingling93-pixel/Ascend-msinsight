@@ -2,14 +2,17 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import { observer } from 'mobx-react';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRootStore } from './context/context';
+import HotMethod from './components/hotMethod/HotMethod';
 
 const App = observer(() => {
-    return <></>;
+    const { sessionStore } = useRootStore();
+    let session = sessionStore.activeSession;
+    useEffect(() => {
+        session = sessionStore.activeSession;
+    }, []);
+    return session !== undefined ? <HotMethod session={session} /> : <></>;
 });
-
-window.setTheme = (isDark: boolean): void => {
-    document.body.className = isDark ? 'theme_dark' : 'theme_light';
-};
 
 export default App;

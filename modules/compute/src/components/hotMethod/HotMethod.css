@@ -1,0 +1,88 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
+.ant-table-tbody > tr{
+    cursor: pointer;
+}
+.ant-table.ant-table-small {
+    font-size: 12px;
+}
+
+.ant-table-cell.ant-table-cell-scrollbar{
+    display: none;
+}
+.ant-table-tbody > tr > td.ant-table-cell-row-hover {
+    background:white;
+}
+
+.ant-table.ant-table-small .ant-table-tbody > tr > td{
+    height:29px;
+    padding: 3px 5px;
+}
+.ant-table-filter-trigger:hover {
+    color: white;
+}
+
+.theme_dark tr.selected {
+    background: var(--middleblue);
+}
+
+.theme_dark tr.selected  td{
+    background: var(--middleblue);
+}
+
+.theme_dark .ant-table-tbody > tr > td.ant-table-cell-row-hover {
+    background:var(--grey80);
+}
+.theme_dark .table-header {
+    background: #2e2f31;
+    display: flex;
+    height: 35px;
+}
+.theme_dark .table-header>div {
+    color: var(--whiteblue);
+    display: inline-block;
+    font-weight: 500;
+    line-height: 26px;
+    height: 26px;
+    border-right: 1px solid var(--grey20);
+    margin: 7px 0 0 0;
+}
+.theme_dark .table-header>div:last-child {
+     flex:1 1;
+}
+.theme_dark .table-header>div>* {
+    display: inline-block;
+    width: 100%;
+    padding: 0 10px;
+}
+.theme_dark .ant-tooltip-inner{
+    background: white;
+    color:black!important;
+}
+.theme_dark .ant-tooltip-arrow-content {
+    --antd-arrow-background-color: linear-gradient(to right bottom, rgba(0, 0, 0, 0),var(--grey0));
+}
+
+.theme_dark .ant-dropdown {
+    box-shadow: 0 0 3px var(--grey20);
+}
+.theme_dark .ant-dropdown *{
+    background:var(--grey90);
+}
+.theme_dark .ant-table-filter-dropdown-tree .ant-tree-treenode-checkbox-checked .ant-tree-node-content-wrapper{
+    background:none;
+}
+.theme_dark .ant-table-filter-dropdown-tree .ant-tree-treenode-checkbox-checked .ant-tree-node-content-wrapper .ant-tree-title{
+    color:var(--lightblue);
+}
+.theme_dark .ant-dropdown .ant-tree-title{
+    background: none;
+}
+.theme_dark .ant-table-filter-dropdown-tree .ant-tree-treenode .ant-tree-node-content-wrapper:hover {
+    background:none;
+}
+.theme_dark .ant-table-filter-dropdown-tree .ant-tree-treenode .ant-tree-node-content-wrapper:hover .ant-tree-title{
+    background: none;
+    color:var(--labelblue);
+}
