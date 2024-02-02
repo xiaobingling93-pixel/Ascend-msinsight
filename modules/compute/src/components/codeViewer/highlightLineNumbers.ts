@@ -28,22 +28,21 @@ export const highlightAllWithNumber = function(set = { showLine: false }): void 
     }
 };
 function splitNode(node: Node): HTMLElement {
-    const list = [];
     const { childNodes } = node;
-    for (let i = 0; i < childNodes.length; i++) {
-        const lines = singleNode2Line([childNodes[i]]);
-        list.push(...lines);
-    }
     const grouplist = [];
     let group = [];
-    for (let i = 0; i < list.length; i++) {
-        if (list[i] !== BREAK) {
-            group.push(list[i]);
-        } else if (list[i] === BREAK && group.length > 0) {
-            grouplist.push(group);
-            group = [];
-        } else { /* empty */ }
+    for (let i = 0; i < childNodes.length; i++) {
+        const lines = singleNode2Line([childNodes[i]]);
+        for (let j = 0; j < lines.length; j++) {
+            if (lines[j] !== BREAK) {
+                group.push(lines[j]);
+            } else if (lines[j] === BREAK && group.length > 0) {
+                grouplist.push(group);
+                group = [];
+            } else { /* empty */ }
+        }
     }
+
     if (group.length > 0) {
         grouplist.push(group);
     }
