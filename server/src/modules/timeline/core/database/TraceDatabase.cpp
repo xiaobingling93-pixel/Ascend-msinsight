@@ -934,7 +934,8 @@ std::vector<std::string> TraceDatabase::GetCounterDataType(const std::string &ar
 
 bool TraceDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
 {
-    std::string sql = "SELECT min(timestamp) as minTimestamp, max(timestamp) as maxTimestamp FROM " + sliceTable;
+    std::string sql = "SELECT min(timestamp) as minTimestamp, max(timestamp) as maxTimestamp FROM "
+                      "(SELECT timestamp FROM " + sliceTable + " UNION SELECT timestamp FROM " + counterTable + ")";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryExtremumTimestamp failed!.");

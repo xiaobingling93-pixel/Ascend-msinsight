@@ -376,8 +376,8 @@ TEST_F(TestSuit, QueryFlowDetail)
 
 TEST_F(TestSuit, QueryExtremumTimestamp)
 {
-    uint64_t expectMin = 1695115378704489800;
-    uint64_t expectMax = 1695115379076630000;
+    uint64_t expectMin = 1695115378653323500;
+    uint64_t expectMax = 1695115379212601200;
     bool expectResult = true;
     uint64_t min;
     uint64_t max;
