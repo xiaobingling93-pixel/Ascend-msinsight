@@ -410,7 +410,13 @@ const drawLinkLines = (ctx: CanvasRenderingContext2D, session: Session, xScale: 
                 });
             });
     }
-    ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber('category', colorPalette.length)]];
-
+    Object.values(session.singleLinkLine)
+        .forEach(datas => {
+            datas?.forEach((data) => {
+                const { category } = data as unknown as FlowEvent;
+                ctx.strokeStyle = theme.colorPalette[colorPalette[hashToNumber(category, colorPalette.length)]];
+                drawSingleLinkLine(data, category, session, ctx, theme);
+            });
+        });
     ctx.restore();
 };
