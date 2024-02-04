@@ -37,6 +37,7 @@ template <> std::optional<document_t> ToResponseJson<MemoryOperatorResponse>(con
         JsonUtil::AddMember(basicJson, "allocationTime", anOperator.allocationTime, allocator);
         JsonUtil::AddMember(basicJson, "releaseTime", anOperator.releaseTime, allocator);
         JsonUtil::AddMember(basicJson, "duration", anOperator.duration, allocator);
+        JsonUtil::AddMember(basicJson, "streamId", anOperator.streamId, allocator);
         operatorDetail.PushBack(basicJson, allocator);
     }
     JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);

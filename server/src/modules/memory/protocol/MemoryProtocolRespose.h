@@ -70,6 +70,7 @@ struct ComponentDto {
     double totalReserved;
     double totalAllocated;
     double totalActivated;
+    std::string streamId;
     double timesTamp;
 };
 

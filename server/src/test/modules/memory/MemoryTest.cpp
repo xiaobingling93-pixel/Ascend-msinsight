@@ -15,6 +15,7 @@ TEST_F(TestSuit, QueryMemoryOperatorData)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.currentPage = 0;
     requestParams.pageSize = 10; // page size = 10
     requestParams.startTime = -1;
@@ -25,7 +26,7 @@ TEST_F(TestSuit, QueryMemoryOperatorData)
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 10;
-    int expectColumnSize = 5;
+    int expectColumnSize = 6;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -35,6 +36,7 @@ TEST_F(TestSuit, QueryMemoryOperatorWithTime)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.currentPage = 0;
     requestParams.pageSize = 100; // page size = 100
     requestParams.startTime = 0;
@@ -45,7 +47,7 @@ TEST_F(TestSuit, QueryMemoryOperatorWithTime)
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 28;
-    int expectColumnSize = 5;
+    int expectColumnSize = 6;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -55,6 +57,7 @@ TEST_F(TestSuit, QueryMemoryOperatorWithSize)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.currentPage = 0;
     requestParams.pageSize = 10; // page size = 10
     requestParams.startTime = -1;
@@ -65,7 +68,49 @@ TEST_F(TestSuit, QueryMemoryOperatorWithSize)
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
     int expectSize = 10;
-    int expectColumnSize = 5;
+    int expectColumnSize = 6;
+    EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
+}
+
+TEST_F(TestSuit, QueryMemoryOperatorByStreamExceptZero)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::MemoryOperatorParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_STREAM_GROUP;
+    requestParams.currentPage = 0;
+    requestParams.pageSize = 100; // page size = 100
+    requestParams.startTime = 0;
+    requestParams.endTime = -1;
+    requestParams.minSize = -1;
+    requestParams.maxSize = -1;
+    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
+    std::vector<Dic::Protocol::MemoryOperator> responseBody;
+    database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
+    int expectSize = 0;
+    int expectColumnSize = 6;
+    EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
+}
+
+TEST_F(TestSuit, QueryMemoryOperatorByStreamExceptSeveral)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("1");
+    Dic::Protocol::MemoryOperatorParams requestParams;
+    requestParams.rankId = "1";
+    requestParams.type = Protocol::MEMORY_STREAM_GROUP;
+    requestParams.currentPage = 0;
+    requestParams.pageSize = 100; // page size = 100
+    requestParams.startTime = -1;
+    requestParams.endTime = -1;
+    requestParams.minSize = -1;
+    requestParams.maxSize = -1;
+    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
+    std::vector<Dic::Protocol::MemoryOperator> responseBody;
+    database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
+    int expectSize = 21;
+    int expectColumnSize = 6;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
@@ -75,6 +120,7 @@ TEST_F(TestSuit, QueryOperatorsTotalNum)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.searchName = "cann::Graph_";
     requestParams.minSize = -1;
     requestParams.maxSize = -1;
@@ -91,6 +137,7 @@ TEST_F(TestSuit, QueryOperatorsTotalNumWithSize)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.searchName = "cann::Graph_";
     requestParams.minSize = 10; // min size = 10
     requestParams.maxSize = 1000; // max size = 1000
@@ -107,6 +154,7 @@ TEST_F(TestSuit, QueryOperatorsTotalNumWithTime)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     requestParams.searchName = "cann::Graph_";
     requestParams.minSize = -1;
     requestParams.maxSize = -1;
@@ -118,14 +166,71 @@ TEST_F(TestSuit, QueryOperatorsTotalNumWithTime)
     EXPECT_EQ(totalNum, expectSize);
 }
 
+TEST_F(TestSuit, QueryOperatorsTotalNumByStreamExpectZero)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::MemoryOperatorParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_STREAM_GROUP;
+    requestParams.minSize = -1;
+    requestParams.maxSize = -1;
+    requestParams.startTime = -1;
+    requestParams.endTime = -1; // end time = 1695120000000
+    int64_t totalNum;
+    database->QueryOperatorsTotalNum(requestParams, totalNum);
+    int expectSize = 0;
+    EXPECT_EQ(totalNum, expectSize);
+}
+
+TEST_F(TestSuit, QueryOperatorsTotalNumByStreamExpectSeveral)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("1");
+    Dic::Protocol::MemoryOperatorParams requestParams;
+    requestParams.rankId = "1";
+    requestParams.type = Protocol::MEMORY_STREAM_GROUP;
+    requestParams.minSize = -1;
+    requestParams.maxSize = -1;
+    requestParams.startTime = -1;
+    requestParams.endTime = -1; // end time = 1695120000000
+    int64_t totalNum;
+    database->QueryOperatorsTotalNum(requestParams, totalNum);
+    int expectSize = 21;
+    EXPECT_EQ(totalNum, expectSize);
+}
+
 TEST_F(TestSuit, QueryMemoryViewData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryComponentParams requestParams;
     requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     Dic::Protocol::MemoryViewData responseBody;
     database->QueryMemoryView(requestParams, responseBody);
     int expectSize = 5;
+    EXPECT_EQ(responseBody.lines.size(), expectSize);
+}
+
+TEST_F(TestSuit, QueryMemoryViewDataByStreamExpectZero)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::MemoryComponentParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_STREAM_GROUP;
+    Dic::Protocol::MemoryViewData responseBody;
+    database->QueryMemoryView(requestParams, responseBody);
+    int expectSize = 0;
+    EXPECT_EQ(responseBody.lines.size(), expectSize);
+}
+
+TEST_F(TestSuit, QueryMemoryViewDataByStreamExpectSeveral)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("1");
+    Dic::Protocol::MemoryComponentParams requestParams;
+    requestParams.rankId = "1";
+    requestParams.type = Protocol::MEMORY_STREAM_GROUP;
+    Dic::Protocol::MemoryViewData responseBody;
+    database->QueryMemoryView(requestParams, responseBody);
+    int expectSize = 1;
     EXPECT_EQ(responseBody.lines.size(), expectSize);
 }
 

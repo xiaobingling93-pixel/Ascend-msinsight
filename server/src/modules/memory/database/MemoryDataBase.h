@@ -58,7 +58,8 @@ private:
         {"Size(KB)", "number", "size"},
         {"Allocation Time(ms)", "number", "allocationTime"},
         {"Release Time(ms)", "number", "releaseTime"},
-        {"Duration(ms)", "number", "duration"}
+        {"Duration(ms)", "number", "duration"},
+        {"Stream", "string", "streamId"}
     };
 
     bool hasInitStmt = false;
@@ -77,11 +78,15 @@ private:
     std::string GetPeakMemory(const Protocol::MemoryPeak &peak);
     void GetLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
         std::vector<std::string> &legends, Protocol::MemoryPeak &peak);
+    void GetStreamLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
+        std::vector<std::string> &legends, Protocol::MemoryPeak &peak);
     const std::string COMPONENT_APP = "APP";
     const std::string COMPONENT_GE = "GE";
     const std::string COMPONENT_PTA = "PTA";
     const std::string COMPONENT_PTA_AND_GE = "PTA+GE";
     bool isInference = false;
+
+    std::vector<std::string> GetStreamLists();
 };
 
 }; // end of namespace Memory

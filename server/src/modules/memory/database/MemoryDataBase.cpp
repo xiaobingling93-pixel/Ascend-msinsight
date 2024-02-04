@@ -192,9 +192,12 @@ std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requ
                       "ROUND((allocation_time- ?) / (1000.0 * 1000.0), 2) END AS allocationTime, "
                       "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - ?) / (1000.0 * 1000.0), 2) "
                       "END AS releaseTime, "
-                      "ROUND(duration / 1000.0, 2) as duration FROM " + operatorTable +
+                      "ROUND(duration / 1000.0, 2) as duration, stream FROM " + operatorTable +
                       " WHERE name LIKE ?";
 
+    if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
+        sql += " AND stream <> ''";
+    }
     if (requestParams.startTime != -1) {
         sql += " AND allocationTime >= " + std::to_string(requestParams.startTime);
     }
@@ -243,6 +246,7 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
         operatorDto.allocationTime = sqlite3_column_string(stmt, col++);
         operatorDto.releaseTime = sqlite3_column_string(stmt, col++);
         operatorDto.duration = sqlite3_column_double(stmt, col++);
+        operatorDto.streamId = sqlite3_column_string(stmt, col++);
         operatorDtoVec.emplace_back(operatorDto);
     }
     opDetails = operatorDtoVec;
@@ -294,14 +298,79 @@ void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, std::vec
     }
 }
 
+std::vector<std::string> MemoryDataBase::GetStreamLists()
+{
+    std::vector<std::string> streams = {};
+    std::string sql =
+        "SELECT stream FROM " + recordTable + " WHERE stream <> '' Group BY stream ORDER BY timestamp ASC";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql to get stream list.", sqlite3_errmsg(db));
+        return streams;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        streams.emplace_back(sqlite3_column_string(stmt, col++));
+    }
+    sqlite3_finalize(stmt);
+    return streams;
+}
+
+void MemoryDataBase::GetStreamLines(const componentDtoVector componentDtoVec,
+    std::vector<std::vector<std::string>> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak)
+{
+    std::vector<std::string> streams = GetStreamLists();
+
+    // 组装图例
+    if (componentDtoVec.empty() && streams.empty()) {
+        legends.insert(legends.end(), baseLegends.begin(), baseLegends.end());
+    } else {
+        legends.emplace_back(baseLegends[0]);
+    }
+    for (const auto& stream : streams) {
+        legends.emplace_back("Operators Allocated of " + stream);
+        legends.emplace_back("Operators Activated of " + stream);
+        legends.emplace_back("Operators Reserved of " + stream);
+    }
+
+    // 组装数据点
+    for (auto &item: componentDtoVec) {
+        std::vector<std::string> points = {};
+        if (item.component != COMPONENT_PTA_AND_GE) {
+            continue;
+        }
+        std::string time = std::to_string(item.timesTamp);
+        points.emplace_back(time.substr(0, time.length() - exLength));
+        std::string streamId = item.streamId;
+        for (const auto& stream : streams) {
+            if (stream == streamId) {
+                std::string allocated = std::to_string(item.totalAllocated);
+                points.emplace_back(allocated.substr(0, allocated.length() - exLength));
+                std::string activated = std::to_string(item.totalActivated);
+                points.emplace_back(activated.substr(0, activated.length() - exLength));
+                std::string reserved = std::to_string(item.totalReserved);
+                points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+            } else {
+                points.insert(points.end(), {"NULL", "NULL", "NULL"});
+            }
+        }
+        lines.emplace_back(points);
+    }
+}
+
 bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
                                      Protocol::MemoryViewData &operatorBody)
 {
     std::string sql = "SELECT component, ROUND((timestamp - ?) / (1000.0 * 1000.0), 2) as timestamp, "
                       "ROUND(total_allocated, 2) as total_allocated, "
                       "ROUND(total_reserve, 2) as total_reserve, "
-                      "ROUND(total_active, 2) as total_active "
-                      "FROM " + recordTable + " ORDER BY timestamp ASC";
+                      "ROUND(total_active, 2) as total_active, "
+                      "stream FROM " + recordTable;
+    if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
+        sql += " WHERE stream <> ''";
+    }
+    sql += " ORDER BY timestamp ASC";
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -309,7 +378,7 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
         return false;
     }
     int index = bindStartIndex;
-    // 1ms = 1000 * 1000 ns
+    // 减去timeline开始的时间作为时间戳
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     sqlite3_bind_int64(stmt, index++, startTime);
     std::string peakMemory;
@@ -318,18 +387,22 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
         int col = resultStartIndex;
         Protocol::ComponentDto componentDto{};
         componentDto.component = sqlite3_column_string(stmt, col++);
-        // 减去timeline开始的时间作为时间戳
         componentDto.timesTamp = sqlite3_column_double(stmt, col++);
         componentDto.totalAllocated = sqlite3_column_double(stmt, col++);
         componentDto.totalReserved = sqlite3_column_double(stmt, col++);
         componentDto.totalActivated = sqlite3_column_double(stmt, col++);
+        componentDto.streamId = sqlite3_column_string(stmt, col++);
         componentDtoVec.emplace_back(componentDto);
     }
-    Protocol::MemoryPeak peak;
-    GetLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak);
-    operatorBody.title = GetPeakMemory(peak);
-
     sqlite3_finalize(stmt);
+
+    Protocol::MemoryPeak peak;
+    if (requestParams.type == Protocol::MEMORY_OVERALL_GROUP) {
+        GetLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak);
+        operatorBody.title = GetPeakMemory(peak);
+    } else {
+        GetStreamLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak);
+    }
     return true;
 }
 
@@ -424,6 +497,9 @@ bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requ
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT count(*) as nums FROM " + operatorTable + " WHERE name LIKE ?";
 
+    if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
+        sql += " AND stream <> ''";
+    }
     if (requestParams.startTime != -1) {
         sql += " AND ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) >= ? ";
     }
