@@ -7,6 +7,7 @@ import {useSession, type Session} from '@/stores/session';
 import {connectRemote} from '@/centralServer/server';
 import {LOCAL_HOST, PORT, setPort} from '@/centralServer/websocket/defs';
 import {useDataSources} from '@/stores/dataSource';
+import {Console} from '@/utils/console';
 
 type SceneType = 'Default' | 'Cluster' | 'Compute';
 const scene = ref<SceneType>('Default');
@@ -27,7 +28,7 @@ onMounted(async () => {
     connector.addListener('updateSession', (e) => {
         const receiver = e.data.body;
         if (!receiver) {
-            console.warn('data.body is undefined, please check your params');
+            Console.warn('data.body is undefined, please check your params');
             return;
         }
         const receivePropKeys = Object.keys(receiver);
@@ -38,7 +39,7 @@ onMounted(async () => {
                 Object.assign(updateState, {[key]: receiver[key]});
                 continue;
             }
-            console.warn(`you just send a invalid data: {${key}: ${receiver[key]}} to update session, please check it`);
+            Console.warn(`you just send a invalid data: {${key}: ${receiver[key]}} to update session, please check it`);
         }
         setSession(updateState);
         setTimeout(() => {
@@ -88,7 +89,7 @@ onMounted(async () => {
     connector.addListener('deleteRank', (e) => {
         const receiver = e.data.body;
         if (!receiver) {
-            console.warn('data.body is undefined, please check your params');
+            Console.warn('data.body is undefined, please check your params');
             return;
         }
         connector.send({event: 'deleteRank', body: receiver});

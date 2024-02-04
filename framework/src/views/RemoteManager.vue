@@ -5,7 +5,7 @@ import MenuTree from '@/components/MenuTree/MenuTree.vue';
 import ResourceComp from '@/components/ResourceComp.vue';
 import { useDataSources } from '@/stores/dataSource';
 import connector from '@/connection';
-import ProjectMode from "@/components/ProjectMode.vue";
+import ProjectMode from '@/components/ProjectMode.vue';
 const isDarkTheme = ref(true);
 
 const resourceComp = ref();

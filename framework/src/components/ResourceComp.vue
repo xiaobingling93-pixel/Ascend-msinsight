@@ -23,7 +23,7 @@ let defalultExpandedKeysSet: Set<string> = new Set();
 
 const state = reactive({
     defalultExpandedKeys: [] as string[],
-    inputPath: "",
+    inputPath: '',
 })
 
 const updateData = async (path: string, node: Node) => {
