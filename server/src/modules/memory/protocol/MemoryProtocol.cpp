@@ -60,7 +60,7 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorRequest(const json_t &j
     } else {
         reqPtr->params.maxSize = -1;
     }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "orderName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
     return reqPtr;
 }
 
