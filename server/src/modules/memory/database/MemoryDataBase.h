@@ -52,6 +52,7 @@ private:
     const std::vector<std::string> baseLegends = {
         "Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved"
     };
+
     const std::string appLegend = "App Reserved";
     const std::vector<Protocol::MemoryTableColumnAttr> tableColumnAttr = {
         {"Name", "string", "name"},
@@ -75,11 +76,11 @@ private:
 
     std::string GetOperatorSql(Protocol::MemoryOperatorParams &requestParams);
 
-    std::string GetPeakMemory(const Protocol::MemoryPeak &peak);
+    std::string GetPeakMemory(const Protocol::MemoryPeak &peak, const std::vector<std::string>& streams);
     void GetLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
-        std::vector<std::string> &legends, Protocol::MemoryPeak &peak);
+        std::vector<std::string> &legends, Protocol::MemoryPeak &peak, const std::vector<std::string>& streams);
     void GetStreamLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
-        std::vector<std::string> &legends, Protocol::MemoryPeak &peak);
+        std::vector<std::string> &legends, Protocol::MemoryPeak &peak, const std::vector<std::string>& streams);
     const std::string COMPONENT_APP = "APP";
     const std::string COMPONENT_GE = "GE";
     const std::string COMPONENT_PTA = "PTA";

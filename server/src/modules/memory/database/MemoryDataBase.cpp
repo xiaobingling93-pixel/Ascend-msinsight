@@ -260,9 +260,15 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
  * 将多个单条线的数据组装成[x,y,y,y,y]的格式，对于x点上不存在的y补为NULL。
  */
 void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
-    std::vector<std::string> &legends, Protocol::MemoryPeak &peak)
+    std::vector<std::string> &legends, Protocol::MemoryPeak &peak, const std::vector<std::string>& streams)
 {
-    legends.insert(legends.end(), baseLegends.begin(), baseLegends.end());
+    for (const auto& legend : baseLegends) {
+        if (streams.empty() && legend == "Operators Activated") { // 实现数据兼容
+            continue;
+        }
+        legends.emplace_back(legend);
+    }
+
     for (auto &item: componentDtoVec) {
         std::vector<std::string> points = {};
         if (item.component == COMPONENT_PTA_AND_GE || (isInference && item.component == COMPONENT_GE)) {
@@ -273,8 +279,10 @@ void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, std::vec
             points.emplace_back(time.substr(0, time.length() - exLength));
             std::string allocated = std::to_string(item.totalAllocated);
             points.emplace_back(allocated.substr(0, allocated.length() - exLength));
-            std::string activated = std::to_string(item.totalActivated);
-            points.emplace_back(activated.substr(0, activated.length() - exLength));
+            if (!streams.empty()) { // 实现数据兼容
+                std::string activated = std::to_string(item.totalActivated);
+                points.emplace_back(activated.substr(0, activated.length() - exLength));
+            }
             std::string reserved = std::to_string(item.totalReserved);
             points.emplace_back(reserved.substr(0, reserved.length() - exLength));
             points.emplace_back("NULL");
@@ -285,7 +293,9 @@ void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, std::vec
             std::string time = std::to_string(item.timesTamp);
             points.emplace_back(time.substr(0, time.length() - exLength));
             points.emplace_back("NULL");
-            points.emplace_back("NULL");
+            if (!streams.empty()) { // 实现数据兼容
+                points.emplace_back("NULL");
+            }
             points.emplace_back("NULL");
             std::string reserved = std::to_string(item.totalReserved);
             points.emplace_back(reserved.substr(0, reserved.length() - exLength));
@@ -318,10 +328,9 @@ std::vector<std::string> MemoryDataBase::GetStreamLists()
 }
 
 void MemoryDataBase::GetStreamLines(const componentDtoVector componentDtoVec,
-    std::vector<std::vector<std::string>> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak)
+    std::vector<std::vector<std::string>> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
+    const std::vector<std::string>& streams)
 {
-    std::vector<std::string> streams = GetStreamLists();
-
     // 组装图例
     if (componentDtoVec.empty() && streams.empty()) {
         legends.insert(legends.end(), baseLegends.begin(), baseLegends.end());
@@ -329,9 +338,9 @@ void MemoryDataBase::GetStreamLines(const componentDtoVector componentDtoVec,
         legends.emplace_back(baseLegends[0]);
     }
     for (const auto& stream : streams) {
-        legends.emplace_back("Operators Allocated of " + stream);
-        legends.emplace_back("Operators Activated of " + stream);
-        legends.emplace_back("Operators Reserved of " + stream);
+        legends.emplace_back("Allocated of " + stream);
+        legends.emplace_back("Activated of " + stream);
+        legends.emplace_back("Reserved of " + stream);
     }
 
     // 组装数据点
@@ -396,17 +405,20 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
     }
     sqlite3_finalize(stmt);
 
+    // 查询是否包含stream信息，如果不包含则不显示stream相关信息，同时也用来判断是否active相关信息
+    std::vector<std::string> streams = GetStreamLists();
+
     Protocol::MemoryPeak peak;
     if (requestParams.type == Protocol::MEMORY_OVERALL_GROUP) {
-        GetLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak);
-        operatorBody.title = GetPeakMemory(peak);
+        GetLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak, streams);
+        operatorBody.title = GetPeakMemory(peak, streams);
     } else {
-        GetStreamLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak);
+        GetStreamLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak, streams);
     }
     return true;
 }
 
-std::string MemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak& peak)
+std::string MemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak& peak, const std::vector<std::string>& streams)
 {
     std::string peakMemory = "Peak Memory Usage: ";
     const size_t decimalPlacesNum = 4;
@@ -415,9 +427,11 @@ std::string MemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak& peak)
         // double转换成string默认生成六位小数，删除后4位小数
         ptaGeAllo = ptaGeAllo.substr(0, ptaGeAllo.length() - decimalPlacesNum);
         peakMemory.append("Operator Allocated： ").append(ptaGeAllo).append("MB");
-        std::string ptaGeActive = std::to_string(peak.ptaGeActivated);
-        ptaGeActive = ptaGeActive.substr(0, ptaGeActive.length() - decimalPlacesNum);
-        peakMemory.append(" | Operator Activated： ").append(ptaGeActive).append("MB");
+        if (!streams.empty()) {
+            std::string ptaGeActive = std::to_string(peak.ptaGeActivated);
+            ptaGeActive = ptaGeActive.substr(0, ptaGeActive.length() - decimalPlacesNum);
+            peakMemory.append(" | Operator Activated： ").append(ptaGeActive).append("MB");
+        }
         std::string ptaGeRe = std::to_string(peak.ptaGeReserved);
         ptaGeRe = ptaGeRe.substr(0, ptaGeRe.length() - decimalPlacesNum);
         peakMemory.append(" | Operator Reserved： ").append(ptaGeRe).append("MB");
