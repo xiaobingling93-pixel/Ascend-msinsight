@@ -26,6 +26,15 @@ interface IColName {
     allocationTime: string;
     releaseTime: string;
     duration: string;
+    activeReleaseTime: string;
+    activeDuration: string;
+    allocationAllocated: string;
+    allocationReserved: string;
+    allocationActive: string;
+    releaseAllocated: string;
+    releaseReserved: string;
+    releaseActive: string;
+    streamId: string;
 }
 
 const orderByColName: IColName = {
@@ -34,6 +43,15 @@ const orderByColName: IColName = {
     allocationTime: 'allocation_time',
     releaseTime: 'release_time',
     duration: 'duration',
+    activeReleaseTime: 'active_release_time',
+    activeDuration: 'active_duration',
+    allocationAllocated: 'allocation_allocated',
+    allocationReserved: 'allocation_reserve',
+    allocationActive: 'allocation_active',
+    releaseAllocated: 'release_allocated',
+    releaseReserved: 'release_reserve',
+    releaseActive: 'release_active',
+    streamId: 'stream',
 };
 
 const getTableColumns = function (
@@ -46,7 +64,7 @@ const getTableColumns = function (
             key: col.key,
             title: col.name,
             sorter: true,
-            width: index === 0 ? '40%' : '15%',
+            width: 300,
         };
     });
 };
@@ -100,6 +118,9 @@ export const AntTableChart: React.FC<IProps> = (props) => {
             columns={columns}
             dataSource={tableData.rows.map((item, index) => { return { ...item, key: `${item.name}_${index}` }; })}
             onChange={onTableChange}
+            scroll={{
+                x: 300 * columns.length,
+            }}
             pagination={{
                 current,
                 pageSize,

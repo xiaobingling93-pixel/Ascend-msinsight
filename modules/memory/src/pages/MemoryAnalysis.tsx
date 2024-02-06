@@ -10,7 +10,7 @@ import { Button, Col, Empty, Input, InputNumber, message, Row, Select, Spin } fr
 import { Session } from '../entity/session';
 import { Graph, MemoryCurve, MemoryTableColumn, OperatorDetail, OperatorMemoryCondition } from '../entity/memory';
 import { memoryCurveGet, operatorsMemoryGet } from '../utils/RequestUtils';
-import { Label } from '../components/Common';
+import { hit, Label } from '../components/Common';
 import i18n from '../i18n';
 import styled from '@emotion/styled';
 
@@ -201,7 +201,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         <div className="memory-analysis-wrapper">
             <MemoryWrapper>
                 <Row style={{ height: 60, alignContent: 'center' }}>
-                    <Col span={6}>
+                    <Col span={4}>
                         <Label name="RankId" />
                         <Select
                             value={rankId}
@@ -215,8 +215,8 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                             })}
                         />
                     </Col>
-                    <Col span={6}>
-                        <Label name="GroupBy" />
+                    <Col span={4}>
+                        <Label name={<span>GroupBy{hit}</span>} />
                         <Select
                             value={groupId}
                             style={{ width: 200 }}
