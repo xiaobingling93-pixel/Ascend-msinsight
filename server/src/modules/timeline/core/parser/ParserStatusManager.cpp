@@ -66,7 +66,7 @@ bool ParserStatusManager::SetFinishStatus(const std::string &fileId)
     if (statusMap.count(fileId) == 0) {
         return false;
     }
-    if (statusMap[fileId] != ParserStatus::RUNNING) {
+    if (statusMap[fileId] != ParserStatus::RUNNING && statusMap[fileId] != ParserStatus::TERMINATE) {
         return false;
     }
     statusMap[fileId] = ParserStatus::FINISH;
