@@ -190,14 +190,15 @@ def main():
     ssh_configs = read_config_file()
     if len(ssh_configs) == 0:
         logging.error('Failed to get ssh config')
-        sys.exit()
+        return -1
     init_local_workspace()
     for arch, ssh_config in ssh_configs.items():
+        logging.info('Start to build Ascend Insight for %s on %s.', arch, ssh_config.host)
         try:
             ssh = create_ssh_connect(ssh_config)
         except Exception as e:
             logging.error('Failed to connect ssh for %s : %s', arch, e)
-            sys.exit()
+            continue
 
         try:
             init_remote_workspace(ssh, ssh_config.workspace)
@@ -205,11 +206,14 @@ def main():
             build_project(ssh, ssh_config.workspace)
             copy_file_back(ssh, ssh_config.workspace)
             clean_remote_workspace(ssh, ssh_config.workspace)
+            logging.info('Finish to build Ascend Insight for %s on %s.', arch, ssh_config.host)
         except SSHException as e:
             logging.error('Failed to build Ascend Insight for %s on %s : %s', arch, ssh_config.host, e)
         finally:
             destroy_ssh_connect(ssh)
 
+    return 0
+
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
