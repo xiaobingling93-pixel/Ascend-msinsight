@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
 import RemoteManager from './views/RemoteManager.vue';
 import Modules from './views/ModulesView.vue';
 import Resizor from '@/utils/Resizor.vue';
+import { useSession, type Session } from '@/stores/session';
 let lastWidth = 300;
 const displayAside = ref(true);
 const asideWidth = ref(lastWidth);
@@ -12,6 +13,7 @@ const handleDisplayAside = () => {
     asideWidth.value = displayAside.value ? lastWidth : 0;
 };
 const theme = ref('dark-theme');
+const { session } = useSession();
 
 const forbidDefaultEvent = (e: MouseEvent) => {
     e.preventDefault();
@@ -40,7 +42,7 @@ function resize(deltaX: number, width: number) {
 </script>
 
 <template>
-    <el-container class="container">
+    <el-container v-loading="session.loading" class="container">
         <el-aside class="aside" :width="`${asideWidth}px`">
           <div :style="`width:${asideWidth}px;height:100%;position:absolute;`">
             <Resizor @onResize="resize"/>
@@ -71,6 +73,10 @@ function resize(deltaX: number, width: number) {
 
 .el-aside {
     background-color: var(--color-background);
+}
+
+.container >>> .el-loading-mask {
+    opacity: 0.7;
 }
 
 .aside-handler {

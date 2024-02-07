@@ -13,11 +13,11 @@
 #include "ThreadPool.h"
 #include "MemoryDef.h"
 #include "FileParser.h"
+#include "ConstantDefs.h"
 
 namespace Dic {
 namespace Module {
 namespace Memory {
-const std::string MEMORY_PREFIX = "[Memory]";
 
 class MemoryParse : public FileParser {
 public:
@@ -57,8 +57,8 @@ private:
     static void ParseCallBack(const std::string &token, const std::string& fileId, bool result, const std::string &msg);
 
     static void PreParseTask(const MemoryFilePair& filePair, const std::string& fileId);
-    static bool ParseTask(const MemoryFilePair& filePair, const std::string& fileId);
-    static bool InitParser(const MemoryFilePair& filePair, const std::string& fileId);
+    static bool ParseTask(const MemoryFilePair& filePair, const std::string& fileId, std::string &message);
+    static bool InitParser(const MemoryFilePair& filePair, const std::string& fileId, std::string &message);
 };
 } // end of namespace Memory
 } // end of namespace Module

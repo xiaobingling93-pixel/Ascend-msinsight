@@ -28,9 +28,7 @@ void RemoteDeleteHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     std::unique_ptr<RemoteDeleteResponse> responsePtr = std::make_unique<RemoteDeleteResponse>();
     RemoteDeleteResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    for (const auto &fileId : request.params.rankId) {
-        TraceFileParser::Instance().DeleteParseFile(fileId);
-    }
+    TraceFileParser::Instance().DeleteParseFiles(request.params.rankId);
     GetUpdateTime(response.body);
     SetResponseResult(response, true);
     // add response to response queue in session

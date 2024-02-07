@@ -23,7 +23,7 @@ public:
     bool Parse(const std::vector<std::string> &filePathArr, const std::string &rankId,
                const std::string &selectedFolder) override;
     void Reset() override;
-    void DeleteParseFile(const std::string &fileId);
+    static void DeleteParseFiles(const std::vector<std::string> &fileIds);
 
     int64_t GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid);
 private:

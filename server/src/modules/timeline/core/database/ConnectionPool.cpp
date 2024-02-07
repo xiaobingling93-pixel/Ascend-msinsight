@@ -87,7 +87,7 @@ void ConnectionPool::Stop()
     ServerLog::Info("Wait all connection released. path:", path, ", idle size:", idlePool.size(),
                     ", active size:", activePool.size());
     while (idlePool.size() != activePool.size()) {
-        cv.wait(lock);
+        cv.wait_for(lock, std::chrono::seconds(maxWaitTime));
     }
     ServerLog::Info("All connection released.");
     for (auto conn : activePool) {

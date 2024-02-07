@@ -8,6 +8,7 @@
 #include "EventUtil.h"
 #include "DataBaseManager.h"
 #include "TraceFileParser.h"
+#include "ParserStatusManager.h"
 #include "EventParser.h"
 
 namespace Dic {
@@ -59,6 +60,9 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
     }
     database = databasePtr;
     for (auto &event : data.value().GetArray()) {
+        if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
+            return false;
+        }
         EventHandle(event);
     }
     database->CommitData();
