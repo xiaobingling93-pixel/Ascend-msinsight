@@ -1,0 +1,53 @@
+[tasks.bundle]
+description = "bundle ascend insight"
+script_runner = "@shell"
+script = '''
+    cargo build --release
+    rm -rf preview || echo Folder preview does not exist.
+    mkdir -p preview 
+    cp target/release/ascend_insight.exe preview/
+    cp dependencies/ preview/
+    cp -rf resources/ preview/resources/
+    cp bundle/installer.nsi preview/
+    cargo make add-profiler
+    ./bundle/nsis/Bin/makensis.exe ./preview/installer.nsi
+'''
+
+[tasks.add-profiler]
+description = "add ascend profiler"
+script_runner = "@shell"
+script = '''
+    mkdir -p preview/resources/profiler/server
+    curl https://dgg.artifactory.cd-cloud-artifact.tools.huawei.com/artifactory/sz-software-snapshot/compiler/snapshot/Ascend-insight-server/0.0.1_win/server.tar.gz -o server.tar.gz -k || exit 1
+    curl https://dgg.artifactory.cd-cloud-artifact.tools.huawei.com/artifactory/sz-software-snapshot/compiler/snapshot/Ascend-insight-framework-service/0.0.1/frontend.tar.gz -o frontend.tar.gz -k || exit 1
+    tar -zxf server.tar.gz -C preview/resources/profiler/server
+    tar -zxf frontend.tar.gz -C preview/resources/profiler
+'''
+
+[tasks.insight-windows]
+description = "build ascend insight in windwos"
+script_runner = "@shell"
+script = '''
+    cargo build --release
+    rm -rf preview || echo Folder preview does not exist.
+    mkdir -p preview
+    cp target/release/ascend_insight.exe preview/
+    cp dependencies/ preview/
+    cp -rf resources/ preview/resources/
+    cp bundle/installer.nsi preview/
+    ./bundle/nsis/Bin/makensis.exe ./preview/installer.nsi
+'''
+
+
+[tasks.insight-mac]
+description = "build ascend insight in mac"
+script_runner = "@shell"
+script = '''
+    cargo build --release
+    rm -rf preview || echo Folder preview does not exist.
+    mkdir -p preview
+    cp target/release/ascend_insight preview/
+    cp -rf resources/ preview/resources/
+    cd ./preview
+    zip -q -r ascend_insight.zip ./
+'''

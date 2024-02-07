@@ -1,0 +1,25 @@
+[package]
+name = "ascend_insight"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+include = ["../resources"]
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+opt-level = 3
+strip = "symbols"
+relocation_model = "pic/pie"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+wry = { version="0.24.3" }
+log = { version = "=0.4.19", features = ["std"] }
+log4rs = { version = "=1.2.0", default-features = false, features = ["all_components", ] }
+dirs-next = "=2.0.0"
+
+[target.'cfg(windows)'.build-dependencies]
+winres = { version = "=0.1.12"}
