@@ -22,7 +22,8 @@ MODULES_MAP = {
     'cluster': 'Cluster',
     'memory': 'Memory',
     'operator': 'Operator',
-    'timeline': 'Timeline'
+    'timeline': 'Timeline',
+    'compute': 'Compute'
 }
 
 
