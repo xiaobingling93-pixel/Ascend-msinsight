@@ -9,22 +9,21 @@
 #include <dirent.h>
 #include <vector>
 #include <algorithm>
-#include "StringUtil.h"
 #include <sys/stat.h>
+#include <fstream>
+#include <libgen.h>
 #include "regex"
 #include "RegexUtil.h"
 #include "ServerLog.h"
 #include "ExecUtil.h"
 #include "FileDef.h"
-#include <fstream>
+#include "StringUtil.h"
 
 #if defined(_WIN32)
-
 #include <windows.h>
 #include <shlwapi.h>
 #include <io.h>
 #include <tchar.h>
-
 #else
 #include <sys/stat.h>
 #include <unistd.h>
@@ -32,6 +31,7 @@
 #endif
 #ifdef __APPLE__
 #include <filesystem>
+#include <mach-o/dyld.h>
 #endif
 
 namespace Dic {
@@ -519,20 +519,7 @@ public:
         return true;
     }
 
-    static std::string GetCurrPath()
-    {
-        char currPath[1024];
-        std::string strCurrPath;
-    #ifdef _WIN32
-            ::GetModuleFileName(NULL, currPath, MAX_PATH);
-            (_tcsrchr(currPath, '\\'))[1] = 0;
-        strCurrPath =  StringUtil::GbkToUtf8(currPath);
-    #else
-            getcwd(currPath, 1024);
-            strCurrPath = currPath;
-    #endif
-        return strCurrPath;
-    }
+    static std::string GetCurrPath();
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_FILEUTIL_H

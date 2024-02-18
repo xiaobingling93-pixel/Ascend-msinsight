@@ -44,7 +44,7 @@ def insight_stop():
     execute_command(["pkill", "-f", frontend_dir])
     execute_command(["pkill", "-f", backend_path])
 
-    shutil.rmtree(AI_TEMP_DIR)
+    shutil.rmtree(AI_TEMP_DIR, ignore_errors=True)
     logging.info(f"%s has stopped.", ASCEND_INSIGHT_NAME)
 
 
@@ -71,13 +71,14 @@ def insight_help():
 def execute_command(command):
     result = subprocess.run(command, shell=False, capture_output=True, text=True)
     if result.returncode != 0:
-        raise Exception(result.stderr)
+        logging.info(result.stderr)
     return result.stdout
 
 
 if len(sys.argv) <= 1:
     logging.info("The program startup parameters are not enough.")
     logging.info("Please try executing '-h or --help' to get more information.")
+    raise Exception
 
 argvs = sys.argv[1:]
 

@@ -77,6 +77,7 @@ std::unique_ptr<Request> GlobalProtocol::ToTokenHeartCheckRequest(const json_t &
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
+    return reqPtr;
 }
 
 std::unique_ptr<Request> GlobalProtocol::ToFilesGetRequest(const json_t &json, std::string &error)
