@@ -175,6 +175,8 @@ template <> std::optional<document_t> ToResponseJson<ResetWindowResponse>(const 
 {
     document_t json(kObjectType);
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(json, "body", body, json.GetAllocator());
     return std::move(json);
 }
 

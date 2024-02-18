@@ -37,7 +37,7 @@ public:
     void Clear();
     void Clear(DatabaseType type);
     void ClearClusterDb();
-    void ReleaseTraceDatabase(const std::string &fileId);
+    void ReleaseDatabase(const std::string &fileId);
     bool HasFileId(DatabaseType type, const std::string &fileId);
     ClusterDatabase *GetClusterDatabase();
 

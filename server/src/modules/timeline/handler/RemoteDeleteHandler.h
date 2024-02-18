@@ -15,6 +15,7 @@ public:
     RemoteDeleteHandler()
     {
         command = Protocol::REQ_RES_REMOTE_DELETE;
+        async = false;
     };
     ~RemoteDeleteHandler() override = default;
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;

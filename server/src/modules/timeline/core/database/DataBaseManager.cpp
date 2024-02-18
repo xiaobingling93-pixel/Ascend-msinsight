@@ -3,6 +3,7 @@
  */
 
 #include "SystemUtil.h"
+#include "FileUtil.h"
 #include "DataBaseManager.h"
 
 namespace Dic {
@@ -62,12 +63,20 @@ Memory::MemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::string &fi
     return memoryDatabaseMap[fileId].get();
 }
 
-void DataBaseManager::ReleaseTraceDatabase(const std::string &fileId)
+void DataBaseManager::ReleaseDatabase(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    auto it = traceDatabaseMap.find(fileId);
-    if (it != traceDatabaseMap.end()) {
-        traceDatabaseMap.erase(it);
+    auto traceDataBase = traceDatabaseMap.find(fileId);
+    if (traceDataBase != traceDatabaseMap.end()) {
+        traceDatabaseMap.erase(traceDataBase);
+    }
+    auto memory = memoryDatabaseMap.find(fileId);
+    if (memory != memoryDatabaseMap.end()) {
+        memoryDatabaseMap.erase(memory);
+    }
+    auto summary = summaryDatabaseMap.find(fileId);
+    if (summary != summaryDatabaseMap.end()) {
+        summaryDatabaseMap.erase(summary);
     }
 }
 

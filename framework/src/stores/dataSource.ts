@@ -63,6 +63,7 @@ export const useDataSources = defineStore('dataSources', () => {
     );
 
     const remove = async (index: number): Promise<void> => {
+        session.loading = true;
         const dataSource = dataSources.value[index];
         if (!dataSource) {
             return;
@@ -78,18 +79,15 @@ export const useDataSources = defineStore('dataSources', () => {
             dataSources.value[index].dataPath = [];
         }
 
-        for (const module of modulesConfig) {
-            // just request reset for displayed module
-            if (module.isDefault || session.isCluster) {
-                await request(dataSource, module.requestName, { command: 'remote/reset', params: {} });
-            }
-        }
+        await request(dataSource, 'timeline', { command: 'remote/reset', params: {} });
         if (dataSource.remote !== LOCAL_HOST) {
             disconnectRemote(dataSource);
         }
+        session.loading = false;
     }
 
     const removeSingle = async (parentIndex: number, index: number): Promise<void> => {
+        session.loading = true;
         const dataSource = dataSources.value[parentIndex];
         if (!dataSource) {
             return;

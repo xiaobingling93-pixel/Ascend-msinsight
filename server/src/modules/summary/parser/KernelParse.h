@@ -13,6 +13,7 @@
 #include "ThreadPool.h"
 #include "SummaryDataBase.h"
 #include "FileParser.h"
+#include "ConstantDefs.h"
 
 namespace Dic {
 namespace Module {
@@ -42,8 +43,6 @@ const std::string FIELD_TASK_START_TIME = "Task Start Time(us)";
 const std::string FIELD_TASK_DURATION = "Task Duration(us)";
 const std::string FIELD_TASK_WAIT_TIME = "Task Wait Time(us)";
 
-const std::string KERNEL_PREFIX = "[Kernel]";
-
 class KernelParse : public FileParser {
 public:
     static KernelParse &Instance();
@@ -67,14 +66,15 @@ private:
 
     std::vector<std::pair<std::string, std::string>> GetKernelFiles(const std::vector<std::string>& paths);
 
-    static bool IsFileValid(const std::string &filePath, const std::string &fileId, const std::string statusId);
+    static bool IsFileValid(const std::string &filePath, const std::string &fileId, const std::string& statusId,
+                            std::string &message);
     static void SetParseCallBack(const std::string& token);
     static void ParseEndCallBack(const std::string& fileId, bool result, const std::string &msg);
     static void ParseCallBack(const std::string &token, const std::string& fileId, bool result, const std::string &msg);
 
     static void PreParseTask(const std::string &filePath, const std::string &fileId);
-    static bool ParseTask(const std::string &filePath, const std::string &fileId);
-    static bool InitParser(const std::string &filePath, const std::string &fileId);
+    static bool ParseTask(const std::string &filePath, const std::string &fileId, std::string &message);
+    static bool InitParser(const std::string &filePath, const std::string &fileId, std::string &message);
 };
 
 } // end of namespace Summary

@@ -8,6 +8,8 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include "vector"
+#include "condition_variable"
 
 namespace Dic {
 namespace Module {
@@ -40,6 +42,8 @@ public:
     // return old status
     ParserStatus SetTerminateStatus(const std::string &fileId);
     void SetClusterParseStatus(ParserStatus parserStatus);
+    void WaitAllFinished(const std::vector<std::string> &fileIds);
+    bool CheckIsFinished(const std::string &fileId);
 
 private:
     ParserStatusManager() = default;
@@ -48,6 +52,7 @@ private:
     std::mutex mutex;
     std::map<std::string, ParserStatus> statusMap;
     ParserStatus clusterParseStatus;
+    std::condition_variable parseCv;
 };
 } // end of namespace Timeline
 } // end of namespace Module

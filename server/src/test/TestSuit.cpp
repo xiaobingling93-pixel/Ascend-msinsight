@@ -69,8 +69,7 @@ public:
 
     static void TearDownTestCase()
     {
-        TraceFileParser::Instance().DeleteParseFile("0");
-        TraceFileParser::Instance().DeleteParseFile("1");
+        TraceFileParser::Instance().DeleteParseFiles({"0", "1"});
         DataBaseManager::Instance().ClearClusterDb();
         std::string tempPath = Dic::FileUtil::GetCurrPath();
         int index = tempPath.find_last_of("server");

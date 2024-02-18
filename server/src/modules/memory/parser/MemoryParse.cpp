@@ -301,6 +301,8 @@ bool MemoryParse::Parse(const std::vector<std::string> &pathList, const std::str
     }
     SetParseCallBack(token);
     for (const auto& memoryFile : memoryFiles) {
+        Timeline::ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + memoryFile.first,
+                                                                  Timeline::ParserStatus::INIT);
         threadPool->AddTask(PreParseTask, memoryFile.second, memoryFile.first);
     }
     return true;
@@ -308,25 +310,29 @@ bool MemoryParse::Parse(const std::vector<std::string> &pathList, const std::str
 
 void MemoryParse::PreParseTask(const MemoryFilePair& filePair, const std::string& fileId)
 {
-    if (!InitParser(filePair, fileId)) {
-        ServerLog::Warn("Failed to parse memory files for fileId:", fileId);
+    std::string message;
+    if (!InitParser(filePair, fileId, message)) {
+        ServerLog::Error("Failed to parse memory files for fileId:", fileId, "reason: ", message);
+        ParseEndCallBack(fileId, false, message);
     }
 }
 
-bool MemoryParse::ParseTask(const MemoryFilePair& filePair, const std::string& fileId)
+bool MemoryParse::ParseTask(const MemoryFilePair& filePair, const std::string& fileId, std::string &message)
 {
-    Timeline::ParserStatusManager::Instance().SetRunningStatus(MEMORY_PREFIX + fileId);
+    if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(MEMORY_PREFIX + fileId)) {
+        message = "Failed to set run memory status for file ";
+        // 如果文件解析信息不存在或状态不为INIT则返回false
+        return false;
+    }
     std::string operatorFile = filePair.operatorFile;
     std::string recordFile = filePair.recordFile;
     if (!MemoryParse::Instance().OperatorParse(operatorFile, fileId)) {
-        ParseEndCallBack(fileId, false, "Failed to parse operator memory file: " + operatorFile);
-        ServerLog::Error("Failed to parse operator memory file, path = ", operatorFile);
+        message = "Failed to parse operator memory file, path = " + operatorFile;
         return false;
     }
 
     if (!MemoryParse::Instance().RecordToParse(recordFile, fileId)) {
-        ParseEndCallBack(fileId, false, "Failed to parse memory record file: " + recordFile);
-        ServerLog::Error("Failed to parse operator record file, path = ", recordFile);
+        message = "Failed to parse operator record file, path = " + recordFile;
         return false;
     }
 
@@ -335,20 +341,17 @@ bool MemoryParse::ParseTask(const MemoryFilePair& filePair, const std::string& f
     return true;
 }
 
-bool MemoryParse::InitParser(const MemoryFilePair& filePair, const std::string& fileId)
+bool MemoryParse::InitParser(const MemoryFilePair& filePair, const std::string& fileId, std::string &message)
 {
-    Timeline::ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId, Timeline::ParserStatus::INIT);
     std::string dbPath = FileUtil::GetDbPath(filePair.operatorFile, fileId);
     auto db = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
     if (!(db->OpenDb(dbPath, false) && db->DropTable() &&
             db->CreateTable() && db->SetConfig() && db->InitStmt())) {
-        ServerLog::Error("Failed to init memory database. Path:", dbPath);
-        ParseEndCallBack(fileId, false, "Failed to init memory database for rank " + fileId);
+        message = "Failed to init memory database. Path:" + dbPath;
         return false;
     }
 
-    if (!ParseTask(filePair, fileId)) {
-        ServerLog::Error("Failed to parse memory file. Path:", dbPath);
+    if (!ParseTask(filePair, fileId, message)) {
         return false;
     }
 
@@ -364,6 +367,7 @@ void MemoryParse::SetParseCallBack(const std::string &token)
 
 void MemoryParse::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
 {
+    Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + fileId);
     // 错误处理逻辑后续增加
     if (!result) {
         return;

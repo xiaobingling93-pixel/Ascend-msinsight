@@ -56,7 +56,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
 {
     if (!ParserStatusManager::Instance().SetRunningStatus(fileId)) {
         ServerLog::Info("Pre task skip this file.");
-        return true;
+        return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
     if (database == nullptr) {
@@ -108,6 +108,7 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
                                    std::shared_ptr<std::vector<std::future<void>>> futures)
 {
     if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
+        ParserStatusManager::Instance().SetFinishStatus(fileId);
         ServerLog::Info("End parse task skip this file. ID:", fileId);
         return;
     }
@@ -119,6 +120,7 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", fileId);
+        ParserStatusManager::Instance().SetFinishStatus(fileId);
         return;
     }
     database->CreateIndex();
@@ -129,11 +131,10 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
 
 void TraceFileParser::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)
 {
-    if (!(result && ParserStatusManager::Instance().SetFinishStatus(fileId))) {
-        result = false;
-    }
+    auto oldStatus = ParserStatusManager::Instance().GetParserStatus(fileId);
+    ParserStatusManager::Instance().SetFinishStatus(fileId);
     auto &instance = TraceFileParser::Instance();
-    if (instance.paserEndCallback != nullptr) {
+    if (instance.paserEndCallback != nullptr && oldStatus != ParserStatus::TERMINATE) {
         instance.paserEndCallback(fileId, result, message);
     }
 }
@@ -281,18 +282,28 @@ void TraceFileParser::DeleteParseFileFromDisk(const std::string &fileId)
     ServerLog::Info("Delete file. id:", fileId);
     ParserStatusManager::Instance().ClearParserStatus(fileId);
     std::string path = DataBaseManager::Instance().GetDbPath(fileId);
-    DataBaseManager::Instance().ReleaseTraceDatabase(fileId);
+    DataBaseManager::Instance().ReleaseDatabase(fileId);
     if (!path.empty()) {
         FileUtil::RemoveFile(path);
     }
 }
 
-void TraceFileParser::DeleteParseFile(const std::string &fileId)
+void TraceFileParser::DeleteParseFiles(const std::vector<std::string> &fileIds)
 {
-    auto oldStatus = ParserStatusManager::Instance().SetTerminateStatus(fileId);
-    ServerLog::Info("Delete file. id:", fileId, ", status:", static_cast<int>(oldStatus));
-    if (oldStatus == ParserStatus::FINISH) {
-        DeleteParseFileFromDisk(fileId);
+    for (const auto &fileId: fileIds) {
+        auto status = ParserStatusManager::Instance().SetTerminateStatus(fileId);
+        auto kernelStatus = ParserStatusManager::Instance().SetTerminateStatus(KERNEL_PREFIX + fileId);
+        auto memoryStatus = ParserStatusManager::Instance().SetTerminateStatus(MEMORY_PREFIX + fileId);
+        ServerLog::Info("Before delete file. id:", fileId, ", status:", static_cast<int>(status), ", kernelStatus:",
+                        static_cast<int>(kernelStatus), ", memoryStatus:", static_cast<int>(memoryStatus));
+    }
+    ParserStatusManager::Instance().WaitAllFinished(fileIds);
+    for (const auto &fileId: fileIds) {
+        auto oldStatus = ParserStatusManager::Instance().GetParserStatus(fileId);
+        ServerLog::Info("Delete file. id:", fileId, ", status:", static_cast<int>(oldStatus));
+        if (oldStatus == ParserStatus::FINISH) {
+            DeleteParseFileFromDisk(fileId);
+        }
     }
 }
 
