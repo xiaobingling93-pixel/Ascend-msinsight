@@ -8,12 +8,60 @@ import {connectRemote} from '@/centralServer/server';
 import {LOCAL_HOST, PORT, setPort} from '@/centralServer/websocket/defs';
 import {useDataSources} from '@/stores/dataSource';
 import {Console} from '@/utils/console';
+import HelpIcon from '@/components/icons/help_icon.vue';
+import VersionInfo from '@/version_info.txt';
 
 type SceneType = 'Default' | 'Cluster' | 'Compute';
 const scene = ref<SceneType>('Default');
 const activeModule = ref(0);
 const moduleRefs = ref<HTMLIFrameElement[] | undefined>();
 const {session, setSession} = useSession();
+const showHelpModal = ref(false);
+
+// Ascend-Insight版本信息
+const version = ref('UNKNOWN');
+// Ascend-Insight最近修改事件
+const modifyTime = ref('UNKNOWN');
+
+/**
+ * 问号图标鼠标点击事件处理函数
+ *
+ * @param e 鼠标事件
+ */
+function questionIconClickHandler(e: MouseEvent) {
+  // 读取文件内容
+  fetch(VersionInfo)
+      .then(response => response.text())
+      .then(text => parseVersionInfo(text));
+  e.stopPropagation();
+  // 显示“帮助”弹框，展示版本信息内容
+  showHelpModal.value = true;
+}
+
+
+/**
+ * 解析版本信息
+ *
+ * @param text 文本内容
+ */
+function parseVersionInfo(text: string) {
+  // 按分行符切割文本，获取行数据列表，每一行数据格式为：“version:XXXXX”，由于不同系统的文件换行符不同，此处使用正则表达式进行切分
+  const lines = text.split(/[\r\n]+/);
+  for (const line of lines) {
+    // 对行内容按等号分割，得到等式两边的数据
+    const kv = line.split('=');
+    if (kv.length !== 2) {
+      continue;
+    }
+    // 判断是否为版本信息或修改事件信息，如果是，把相关信息内容存到ref对象中
+    if (kv[0].trim() === 'version') {
+      version.value = kv[1].trim();
+    }
+    if (kv[0].trim() === 'modifyTime') {
+      modifyTime.value = kv[1].trim();
+    }
+  }
+}
 
 onMounted(async () => {
     connector.resigsterAwaitFetch(async (e) => {
@@ -165,6 +213,9 @@ function toggleTab(index: number): void {
                     </el-menu-item>
                 </template>
             </el-menu>
+            <el-icon class="QuestionIcon" @click="questionIconClickHandler" background-color="var(--color-background)" router>
+              <HelpIcon style="height: 30px; width: 30px; cursor: pointer;"/>
+            </el-icon>
         </div>
         <div class="tab-body">
             <template v-for="(moduleConfig, index) in modulesConfig"
@@ -178,6 +229,19 @@ function toggleTab(index: number): void {
                 ></iframe>
             </template>
         </div>
+        <el-dialog v-model="showHelpModal" title="About Ascend Insight" width="20%" :close-on-click-modal="false" :show-close="true">
+          <ul class="help-ul">
+            <li>
+              Build {{ version.valueOf() }}, build on {{ modifyTime.valueOf() }}
+            </li>
+            <li>
+              Licensed to Huawei Technologies CO.LTD
+            </li>
+            <li>
+              Copyright © 2010-2024 Ascend Insight s.r.0
+            </li>
+          </ul>
+        </el-dialog>
     </div>
 </template>
 
@@ -194,13 +258,29 @@ function toggleTab(index: number): void {
 }
 
 .el-menu {
-    display: flex;
+    display: inline-flex;
     border: none;
     height: 30px;
-    width: 100%;
+    width: 95%;
     line-height: 30px;
     border-bottom: none !important;
     --el-menu-hover-bg-color: var(--color-border-hover) !important;
+}
+
+.QuestionIcon {
+  display: inline-flex;
+  width: 5%;
+  height: 30px;
+  position: absolute;
+  right: 0;
+}
+
+.help-ul {
+  list-style: none;
+}
+
+.help-ul > li {
+  margin-bottom: 10px;
 }
 
 .el-menu-item {

@@ -10,6 +10,8 @@ import os
 import platform
 import shutil
 import subprocess
+import stat
+from datetime import datetime, timezone
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -24,6 +26,10 @@ class Const:
     MODULES_DIR = 'modules'
     SERVER_DIR = 'server'
     BUILD_DIR = 'build'
+    SRC_DIR = 'src'
+    MANIFEST_DIR = 'manifest'
+    DEPENDENCY_DIR = 'dependency'
+    CONFIG_INI = 'config.ini'
     VSCODE_PLUGINS_DIR = os.path.join('plugins', 'vscode')
     INTELLIJ_PLUGINS_DIR = os.path.join('plugins', 'intellij')
     ASCEND_INSIGHT_PREFIX = 'Ascend-Insight'
@@ -247,9 +253,49 @@ def build_huaweicloud_package(version, os_name):
     shutil.make_archive(out_zip, 'zip', dist_dir)
 
 
+# 获取版本信息，将从config.ini中读取到的版本后去掉最后一个后缀
+def get_version_from_config(file_path, default_version):
+    version = default_version
+    with open(file_path, 'r') as file:
+        for line in file:
+            kv = line.split('=')
+            if len(kv) != 2:
+                continue
+            if kv[0].strip() == "version":
+                # 读取到的版本后去掉最后一个后缀
+                version_info = kv[1].strip().split('.')
+                version = '.'.join(version_info[:-1])
+    return version
+
+
+# 加载版本相关信息，参数为默认的版本数据
+def load_version_info(default_version):
+    # 获取config.ini文件路径，该文件位于Ascend-Insight项目同级目录下的/manifest/dependency/config.ini
+    file_path = os.path.join(os.path.dirname(PROJECT_PATH), Const.MANIFEST_DIR, Const.DEPENDENCY_DIR, Const.CONFIG_INI)
+    version = default_version
+    modify_time = datetime.now(tz=timezone.utc).strftime("%Y/%m/%d")
+    # 判断文件是否存在，不存在直接使用默认版本号和修改时间
+    if os.path.exists(file_path):
+        version = get_version_from_config(file_path, default_version)
+    # 创建（覆盖）版本信息文件
+    create_version_info_file(version, modify_time)
+    return version
+
+
+# 创建、修改版本信息文件，文件目录在framework/src/下，文件名为version_info.txt
+def create_version_info_file(version, modify_time):
+    output_path = os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, Const.SRC_DIR, 'version_info.txt')
+    flags = os.O_WRONLY
+    mode = stat.S_IWUSR
+    with os.fdopen(os.open(output_path, flags, mode), "w") as f:
+        lines = ['version=' + version, os.linesep, 'modifyTime=' + modify_time]
+        f.writelines(lines)
+
+
 def main():
-    vscode_version = '7.0.1'
-    idea_version = '7.0.RC1'
+    idea_version = load_version_info('7.0.RC1')
+    # vscode_version不允许存在字母，因此这里做进一步处理，将字母内容去掉
+    vscode_version = ''.join(ch for ch in idea_version if not ch.isalpha())
     init()
     os_info = platform.platform()
     framework = 'x86_64' if os_info.find('x86_64') > -1 else 'aarch64'
