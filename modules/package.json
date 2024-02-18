@@ -4,8 +4,8 @@
     "license": "MIT",
     "private": true,
     "scripts": {
-        "buildModuleWin": "npm run buildTimelineWin && npm run buildMemoryWin && npm run buildClusterWin  && npm run buildOperatorWin",
-        "buildModuleLinux": "npm run buildTimelineLinux && npm run buildMemoryLinux && npm run buildClusterLinux  && npm run buildOperatorLinux",
+        "buildModuleWin": "npm run buildTimelineWin && npm run buildMemoryWin && npm run buildClusterWin  && npm run buildOperatorWin  && npm run buildComputeWin",
+        "buildModuleLinux": "npm run buildTimelineLinux && npm run buildMemoryLinux && npm run buildClusterLinux  && npm run buildOperatorLinux  && npm run buildComputeLinux",
         "buildClusterWin": "cd .\\cluster && npm install --force && npm run build && npm run publishWin",
         "buildClusterLinux": "cd ./cluster && npm install --force && npm run build && npm run publishLinux",
         "buildMemoryWin": "cd .\\memory && npm install --force && npm run build && npm run publishWin",
