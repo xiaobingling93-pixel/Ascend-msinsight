@@ -92,13 +92,13 @@ export class Connection {
                     const dataObj = JSON.parse(ev.data);
                     if (dataObj.command === 'token.create') {
                         this._token = dataObj.body.token;
+                        this.initHeartCheck();
                         resolve();
                     } else {
                         console.info('wsConnector', 'create token failure', 'warn');
                         reject(new Error('create token failure'));
                     }
                 }
-                this.clearHeartCheckTimer();
             };
 
             this._ws.onerror = (ev: Event): void => {
@@ -200,6 +200,13 @@ export class Connection {
     async findServerPort(): Promise<number> {
         // wedge: implement the true logic
         return Promise.resolve(PORT);
+    }
+
+    private initHeartCheck(): void {
+        this.sendHeartCheck();
+        setTimeout(() => {
+            this.initHeartCheck();
+        }, 30 * 1000);
     }
     private setHeartCheck(){
         this.clearHeartCheckTimer();
