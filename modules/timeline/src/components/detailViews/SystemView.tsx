@@ -112,6 +112,7 @@ const RankFilter = observer((props: any): JSX.Element => {
                     label: rankId,
                 };
             })}
+            showSearch={true}
         />
     </div>);
 });

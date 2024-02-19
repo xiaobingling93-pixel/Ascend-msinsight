@@ -108,7 +108,12 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 }
 .rc-virtual-list-holder{
     overflow: auto!important;
+    cursor: pointer;
 }
 .rc-virtual-list-scrollbar-thumb{
+    display: none;
+}
+
+.rc-virtual-list-scrollbar {
     display: none;
 }
