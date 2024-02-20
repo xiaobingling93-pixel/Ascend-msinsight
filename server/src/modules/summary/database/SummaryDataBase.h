@@ -37,6 +37,8 @@ public:
 
     static std::string GetDeviceIdFromCombinationId(const std::string str);
 
+    uint64_t QueryMinStartTime();
+
     bool QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
                                    std::vector<Protocol::ComputeDetail> &computeDetails);
     bool QueryGetTotalNum(std::string name, int64_t &totalNum);

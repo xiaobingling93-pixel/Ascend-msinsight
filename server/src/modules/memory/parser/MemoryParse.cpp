@@ -14,6 +14,7 @@
 #include "NumberUtil.h"
 #include "WsSession.h"
 #include "WsSessionManager.h"
+#include "TraceTime.h"
 
 namespace Dic {
 namespace Module {
@@ -88,6 +89,8 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("End parse Operator Memory: ", filePath, ", cost time: ",
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+    uint64_t minStartTime = memoryDatabase->QueryMinOperatorAllocationTime();
+    Timeline::TraceTime::Instance().UpdateTime(minStartTime, 0);
     return true;
 }
 
@@ -220,6 +223,8 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("End parse Memory Record: ", filePath, ", cost time:",
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+    uint64_t minTimestamp = database->QueryMinRecordTimestamp();
+    Timeline::TraceTime::Instance().UpdateTime(minTimestamp, 0);
     return true;
 }
 

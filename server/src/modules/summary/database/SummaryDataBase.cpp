@@ -159,6 +159,24 @@ sqlite3_stmt *SummaryDataBase::GetKernelStmt(uint64_t paramLen)
     return stmt;
 }
 
+uint64_t SummaryDataBase::QueryMinStartTime()
+{
+    std::string sql = "Select MIN(start_time) FROM " + kernelTable + " WHERE start_time != 0";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql for QueryMinStartTime.", sqlite3_errmsg(db));
+        return 0;
+    }
+    uint64_t min;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        min = sqlite3_column_int64(stmt, col++);
+    }
+    sqlite3_finalize(stmt);
+    return min;
+}
+
 bool SummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
                                                 std::vector<Protocol::ComputeDetail> &computeDetails)
 {

@@ -39,6 +39,8 @@ public:
 
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum);
     bool QueryOperatorSize(double &min, double &max);
+    uint64_t QueryMinOperatorAllocationTime();
+    uint64_t QueryMinRecordTimestamp();
 
     void SetInferenceType(bool inference);
     bool IsInferenceType() const;

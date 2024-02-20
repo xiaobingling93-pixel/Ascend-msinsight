@@ -180,6 +180,42 @@ void MemoryDataBase::insertRecordDetail(const Record &event)
     }
 }
 
+uint64_t MemoryDataBase::QueryMinOperatorAllocationTime()
+{
+    std::string sql = "Select MIN(allocation_time) FROM " + operatorTable + " WHERE allocation_time != 0";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql for QueryMinOperatorAllocationTime.", sqlite3_errmsg(db));
+        return 0;
+    }
+    uint64_t min;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        min = sqlite3_column_int64(stmt, col++);
+    }
+    sqlite3_finalize(stmt);
+    return min;
+}
+
+uint64_t  MemoryDataBase::QueryMinRecordTimestamp()
+{
+    std::string sql = "Select MIN(timestamp) FROM " + recordTable + " WHERE timestamp != 0";
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql for QueryMinRecordTimestamp.", sqlite3_errmsg(db));
+        return 0;
+    }
+    uint64_t min;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        min = sqlite3_column_int64(stmt, col++);
+    }
+    sqlite3_finalize(stmt);
+    return min;
+}
+
 std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requestParams)
 {
     std::string ascend;
@@ -391,10 +427,8 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
                                      Protocol::MemoryViewData &operatorBody)
 {
     std::string sql = "SELECT component, ROUND((timestamp - ?) / (1000.0 * 1000.0), 2) as timestamp, "
-                      "ROUND(total_allocated, 2) as total_allocated, "
-                      "ROUND(total_reserve, 2) as total_reserve, "
-                      "ROUND(total_active, 2) as total_active, "
-                      "stream FROM " + recordTable;
+                      "ROUND(total_allocated, 2) as total_allocated, ROUND(total_reserve, 2) as total_reserve, "
+                      "ROUND(total_active, 2) as total_active, stream FROM " + recordTable;
     if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
         sql += " WHERE stream <> ''";
     }

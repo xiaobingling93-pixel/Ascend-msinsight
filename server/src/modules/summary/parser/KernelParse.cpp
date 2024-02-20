@@ -13,6 +13,7 @@
 #include "WsSession.h"
 #include "WsSessionManager.h"
 #include "OperatorProtocolEvent.h"
+#include "TraceTime.h"
 
 namespace Dic {
 namespace Module {
@@ -148,6 +149,8 @@ bool KernelParse::ParseTask(const std::string &filePath, const std::string &file
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Finish to parse kernel detail, ", filePath, " cost time:",
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+    uint64_t minStartTime = db->QueryMinStartTime();
+    Timeline::TraceTime::Instance().UpdateTime(minStartTime, 0);
     // 判断是否为训练场景
     if (devices.size() == 1 && devices.count(fileId) == 1) {
         ParseEndCallBack(fileId, true, "");
