@@ -171,7 +171,7 @@ export function showMessage(type: MessageLevelType, param: string | ArgsProps): 
     }
 };
 let logindex: number = 0;
-let logRecord: Record<number, unknown>;
+const logRecord: Record<number, unknown> = {};
 export function log(...param: unknown[]): void {
     logRecord[logindex++ % 1000] = param;
 }

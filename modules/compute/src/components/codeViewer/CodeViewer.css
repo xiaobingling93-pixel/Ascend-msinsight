@@ -6,13 +6,13 @@ pre{
     margin:0;
 }
 pre code.hljs {
-    overflow-x: visible;
-    padding: 0;
+    overflow-x: visible!important;
+    padding: 0!important;
 }
 .hljs ul {
-    list-style: none;
+    list-style: none!important;
     margin: 0 0 0 0!important;
-    padding: 0;
+    padding: 0!important;
 }
 .hljs li {
     list-style: none;
@@ -25,24 +25,35 @@ pre code.hljs {
     min-width: 100%;
     font-size: 12px;
 }
-
-.hljs li:hover{
-    background: var(--grey100);
-}
-
 .hljs .index{
     display: inline-block;
     width: 45px;
     padding-right: 10px;
     margin-right: 5px;
     text-align: right;
-    border-right: 2px solid var(--grey60);
+    border-right: 1px solid var(--grey10);
     font-size: 12px;
 }
 
-.theme_dark .hljs li.selected{
-    background: var(--middleblue);
+.hljs li:hover{
+    background: var(--grey5);
+}
+.hljs li.hover{
+    background: var(--blue30);
+}
+.hljs li.selected{
+    background: var(--blue30);
+}
+
+.theme_dark .hljs li:hover{
+    background: var(--grey100);
+}
+.theme_dark .hljs .index{
+    border-right: 2px solid var(--grey60);
 }
 .theme_dark .hljs li.hover{
+    background: var(--middleblue);
+}
+.theme_dark .hljs li.selected{
     background: var(--middleblue);
 }

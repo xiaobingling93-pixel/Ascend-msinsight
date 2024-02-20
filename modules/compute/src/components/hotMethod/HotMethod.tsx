@@ -281,14 +281,14 @@ const Index = observer(({ session }: { session: Session }) => {
             header={
                 <>
                     <Filter session={session} handleFilterChange={handleFilterChange}/>
-                    <div style={{ width: '50%', float: 'right', padding: '0 10px 0 20px' }}>
-                        <span style={{ color: 'var(--grey10)' }}>
+                    <div className="hit-label">
+                        <span>
                             Line :
-                            <span style={{ fontSize: '16px', color: 'var(--grey0)', margin: '0 0 0 5px' }}>
+                            <span>
                                 {selectedline >= 0 ? selectedline : ''}
                             </span>
                             {' , Related Instructions Count : '}
-                            <span style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--labelblue)', margin: '5px' }}>
+                            <span>
                                 {getRelatedInstrs().length}
                             </span>
                         </span>
@@ -306,7 +306,7 @@ const Index = observer(({ session }: { session: Session }) => {
                 <LeftRightContainer
                     left={<div style={{ height: '100%', width: '100%', overflow: 'auto' }}>
                         <LeftRightContainer
-                            headerStyle={{ flex: '0 0 70%', background: '#272822' }}
+                            headerStyle={{ flex: '0 0 70%' }}
                             bodyStyle={{ flex: '0 0 30%' }}
                             left={
                                 <HeaderFixedContainer

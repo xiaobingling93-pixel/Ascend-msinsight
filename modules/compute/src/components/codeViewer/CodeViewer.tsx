@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import React, { useEffect } from 'react';
-import 'highlight.js/styles/monokai.min.css';
+import './highlight.scss';
 import './CodeViewer.css';
 import { addClass, removeClass, isViewable } from '../Common';
 import { highlightAllWithNumber } from './highlightLineNumbers';

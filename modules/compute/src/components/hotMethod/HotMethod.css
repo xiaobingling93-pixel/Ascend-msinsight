@@ -11,9 +11,6 @@
 .ant-table-cell.ant-table-cell-scrollbar{
     display: none;
 }
-.ant-table-tbody > tr > td.ant-table-cell-row-hover {
-    background:white;
-}
 
 .ant-table.ant-table-small .ant-table-tbody > tr > td{
     height:29px;
@@ -21,6 +18,13 @@
 }
 .ant-table-filter-trigger:hover {
     color: white;
+}
+tr.selected {
+    background: var(--blue30);
+}
+
+.theme_light .ant-table-tbody > tr > td.ant-table-cell-row-hover {
+    background:var(--grey5);
 }
 
 .theme_dark tr.selected {
@@ -34,13 +38,14 @@
 .theme_dark .ant-table-tbody > tr > td.ant-table-cell-row-hover {
     background:var(--grey80);
 }
-.theme_dark .table-header {
-    background: #2e2f31;
+.table-header {
+    background: var(--grey5);
+    color: var(--grey80);
     display: flex;
     height: 35px;
 }
-.theme_dark .table-header>div {
-    color: var(--whiteblue);
+.table-header>div {
+    color: var(--grey80);
     display: inline-block;
     font-weight: 500;
     line-height: 26px;
@@ -48,13 +53,20 @@
     border-right: 1px solid var(--grey20);
     margin: 7px 0 0 0;
 }
-.theme_dark .table-header>div:last-child {
-     flex:1 1;
-}
-.theme_dark .table-header>div>* {
+.table-header>div>* {
     display: inline-block;
     width: 100%;
     padding: 0 10px;
+}
+.table-header>div:last-child {
+    flex:1 1;
+}
+.theme_dark .table-header {
+    background: #2e2f31;
+}
+.theme_dark .table-header>div {
+    color: var(--whiteblue);
+    border-right: 1px solid var(--grey20);
 }
 .theme_dark .ant-tooltip-inner{
     background: white;
@@ -85,4 +97,31 @@
 .theme_dark .ant-table-filter-dropdown-tree .ant-tree-treenode .ant-tree-node-content-wrapper:hover .ant-tree-title{
     background: none;
     color:var(--labelblue);
+}
+
+.theme_dark #CodeTable {
+    background: #272822;
+}
+.hit-label {
+    width: 50%;
+    float: right;
+    padding: 0 10px 0 20px;
+}
+.hit-label > span > span:first-child {
+    font-size: 16px;
+    margin:0 5px;
+    color: var(--grey100);
+}
+.hit-label > span > span:last-child{
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--labelblue);
+    margin: 5px;
+}
+
+.theme_dark .hit-label>span{
+    color: var(--grey10);
+}
+.theme_dark .hit-label>span>span:first-child{
+    color: var(--grey0);
 }
