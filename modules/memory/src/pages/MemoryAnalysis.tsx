@@ -106,7 +106,9 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             const operatorDetails = resp.operatorDetail;
             setTotal(resp.totalNum);
             setMemoryTableData(operatorDetails);
-            setMemoryTableHead(resp.columnAttr);
+            if (JSON.stringify(memoryTableHead) !== JSON.stringify(resp.columnAttr)) {
+                setMemoryTableHead(resp.columnAttr);
+            }
             setBtnDisabled(false);
         }).catch(err => {
             message.error(err);

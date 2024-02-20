@@ -1,11 +1,12 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { Table } from 'antd';
+
 import type { TableProps } from 'antd/es/table';
 import { SorterResult } from 'antd/lib/table/interface';
 import * as React from 'react';
 import { MemoryTable, MemoryTableColumn, OperatorDetail } from '../entity/memory';
+import ResizeTable from './resize/ResizeTable';
 
 interface IProps {
     tableData: MemoryTable;
@@ -64,7 +65,6 @@ const getTableColumns = function (
             key: col.key,
             title: col.name,
             sorter: true,
-            width: 300,
         };
     });
 };
@@ -112,14 +112,14 @@ export const AntTableChart: React.FC<IProps> = (props) => {
     };
 
     return (
-        <Table
+        <ResizeTable
             size="small"
             bordered
             columns={columns}
             dataSource={tableData.rows.map((item, index) => { return { ...item, key: `${item.name}_${index}` }; })}
             onChange={onTableChange}
             scroll={{
-                x: 300 * columns.length,
+                x: 150 * columns.length,
             }}
             pagination={{
                 current,
@@ -127,7 +127,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
                 pageSizeOptions: ['10', '20', '30', '50', '100'],
                 onChange,
                 total,
-                showTotal: total => `Total ${total} items`,
+                showTotal: (totalNumber: number) => `Total ${totalNumber} items`,
                 showQuickJumper: true,
             }}
             rowClassName="memory-ant-table-row"
