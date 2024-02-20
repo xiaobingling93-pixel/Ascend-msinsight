@@ -76,6 +76,11 @@ struct ParseClusterCompletedEvent : public Event {
     ParseClusterCompletedEventBody body;
 };
 
+struct ParseClusterStep2CompletedEvent : public Event {
+    ParseClusterStep2CompletedEvent() : Event(EVENT_PARSE_CLUSTER_STEP2_COMPLETED) {}
+    ParseClusterCompletedEventBody body;
+};
+
 struct ParseMemoryCompletedEvent : public Event {
     ParseMemoryCompletedEvent() : Event(EVENT_PARSE_MEMORY_COMPLETED) {}
     bool isCluster = false;

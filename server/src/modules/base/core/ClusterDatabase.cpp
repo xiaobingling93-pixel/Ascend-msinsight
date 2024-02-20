@@ -61,7 +61,8 @@ bool ClusterDatabase::CreateTable()
             "stage_time double, bubble_time double, pure_communication_exclude_receive_time double);" +
             "CREATE TABLE " + TABLE_COMMUNICATION_MATRIX +
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, group_id VARCHAR(100), iteration_id VARCHAR(50), "
-            "op_name VARCHAR(100), group_name VARCHAR(100), src_rank VARCHAR(50), dst_rank VARCHAR(50), "
+            "op_name VARCHAR(100),op_sort VARCHAR(100), group_name VARCHAR(100), src_rank VARCHAR(50), "
+            "dst_rank VARCHAR(50), "
             "transport_type VARCHAR(50), transit_size double, transit_time double, bandwidth double);" +
             "CREATE TABLE " + TABLE_GROUP_ID +
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, group_id VARCHAR(100));";
@@ -76,7 +77,7 @@ bool ClusterDatabase::CreateIndex()
     }
     std::string sql = "CREATE INDEX IF NOT EXISTS idx1 on communication_time_info(stage_id);"
                       "CREATE INDEX IF NOT EXISTS idx2 on communication_bandwidth_info(op_name);"
-                      "CREATE INDEX IF NOT EXISTS idx3 on communication_matrix(op_name);";
+                      "CREATE INDEX IF NOT EXISTS idx3 on communication_matrix(op_sort);";
     return ExecSql(sql);
 }
 
@@ -384,6 +385,8 @@ void ClusterDatabase::InsertCommunicationMatrixInfo(std::vector<CommunicationMat
                           communicationMatrix.iterationId.length(), SQLITE_STATIC);
         sqlite3_bind_text(stmt, idx++, communicationMatrix.opName.c_str(), communicationMatrix.opName.length(),
                           SQLITE_STATIC);
+        sqlite3_bind_text(stmt, idx++, communicationMatrix.sortOp.c_str(), communicationMatrix.sortOp.length(),
+                          SQLITE_STATIC);
         sqlite3_bind_text(stmt, idx++, communicationMatrix.groupName.c_str(), communicationMatrix.groupName.length(),
                           SQLITE_STATIC);
         sqlite3_bind_int(stmt, idx++, communicationMatrix.srcRank);
@@ -412,11 +415,11 @@ sqlite3_stmt *ClusterDatabase::GetMatrixStmtSql(int len)
     }
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "INSERT INTO " + TABLE_COMMUNICATION_MATRIX +
-                      " (group_id, iteration_id, op_name, group_name, src_rank, "
+                      " (group_id, iteration_id, op_name, op_sort, group_name, src_rank, "
                       "dst_rank, transport_type, transit_size, transit_time, bandwidth) "
-                      "VALUES (?,?,?,?,?,?,?,?,?,?)";
+                      "VALUES (?,?,?,?,?,?,?,?,?,?,?)";
     for (int i = 0; i < len - 1; i++) {
-        sql.append(",(?,?,?,?,?,?,?,?,?,?)");
+        sql.append(",(?,?,?,?,?,?,?,?,?,?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare matrix table statement. error:", sqlite3_errmsg(db));
@@ -671,7 +674,7 @@ bool ClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
                       "ROUND(transit_time, 4) as transitTime, "
                       "ROUND(bandwidth, 4) as bandwidth "
                       "FROM " + TABLE_COMMUNICATION_MATRIX +
-                      " WHERE group_id = ? AND iteration_id = ? AND op_name = ? ";
+                      " WHERE group_id = ? AND iteration_id = ? AND op_sort = ? ";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryMatrixList statement. error:", sqlite3_errmsg(db));
         return false;

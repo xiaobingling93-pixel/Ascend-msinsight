@@ -61,6 +61,7 @@ private:
     static std::optional<document_t> ToParseSuccessEventJson(const Event &event);
     static std::optional<document_t> ToParseFailEventJson(const Event &event);
     static std::optional<document_t> ToParseClusterCompletedEventJson(const Event &event);
+    static std::optional<document_t> ToParseClusterStep2CompletedEventJson(const Event &event);
     static std::optional<document_t> ToParseMemoryCompletedEventJson(const Event &event);
 };
 } // namespace Protocol

@@ -38,6 +38,7 @@ private:
     std::vector<std::string> FindAllTraceFile(const std::vector<std::string> &pathList);
     bool IsJsonValid(const std::string &fileName);
     static void ClusterProcess(const std::string &token, const std::string &selectedFolder);
+    static void ClusterProcessAsyncStep(const std::string &token, const std::string &selectedFolder);
     void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
     std::vector<std::pair<std::string, std::string>> GetTraceFiles(const std::vector<std::string> &pathList,
                                                                    ImportActionResBody &body);

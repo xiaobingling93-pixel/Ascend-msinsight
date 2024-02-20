@@ -16,6 +16,7 @@ namespace Timeline {
 class ClusterFileParser {
 public:
     bool ParseClusterFiles(const std::string &selectedPath);
+    bool ParseClusterStep2Files(const std::string &selectedPath);
     bool ParseCommunication(const std::vector<std::string> &filePathList);
     void ParseStepStatisticsFile(const std::vector<std::string> &filePathList);
     void SaveClusterBaseInfo(const std::string& selectedPath);
@@ -27,7 +28,7 @@ private:
     StepStatistic MapToStepStatistic(std::vector<std::string> tokens);
     int subStrlen = 2;
 
-    bool AttAnalyze(const std::string& selectedPath);
+    bool AttAnalyze(const std::string& selectedPath, const std::string& model);
 };
 } // end of namespace Timeline
 } // end of namespace Module

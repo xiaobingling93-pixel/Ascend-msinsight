@@ -60,6 +60,7 @@ void TimelineProtocol::RegisterEventToJsonFuncs()
     eventToJsonFactory.emplace(EVENT_PARSE_SUCCESS, ToParseSuccessEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_FAIL, ToParseFailEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_CLUSTER_COMPLETED, ToParseClusterCompletedEventJson);
+    eventToJsonFactory.emplace(EVENT_PARSE_CLUSTER_STEP2_COMPLETED, ToParseClusterStep2CompletedEventJson);
     eventToJsonFactory.emplace(EVENT_PARSE_MEMORY_COMPLETED, ToParseMemoryCompletedEventJson);
 }
 
@@ -431,6 +432,12 @@ std::optional<document_t> TimelineProtocol::ToParseClusterCompletedEventJson(con
 {
     return ToEventJson<ParseClusterCompletedEvent>(dynamic_cast<const ParseClusterCompletedEvent &>(event));
 }
+
+std::optional<document_t> TimelineProtocol::ToParseClusterStep2CompletedEventJson(const Event &event)
+{
+    return ToEventJson<ParseClusterStep2CompletedEvent>(dynamic_cast<const ParseClusterStep2CompletedEvent &>(event));
+}
+
 std::optional<document_t> TimelineProtocol::ToParseMemoryCompletedEventJson(const Event &event)
 {
     return ToEventJson<ParseMemoryCompletedEvent>(dynamic_cast<const ParseMemoryCompletedEvent &>(event));

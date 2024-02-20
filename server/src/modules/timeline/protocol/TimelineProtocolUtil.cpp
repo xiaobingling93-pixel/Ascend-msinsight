@@ -484,6 +484,18 @@ template <> std::optional<document_t> ToEventJson<ParseClusterCompletedEvent>(co
     return std::move(json);
 }
 
+template <> std::optional<document_t> ToEventJson<ParseClusterStep2CompletedEvent>(const
+        ParseClusterStep2CompletedEvent &event)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "parseResult", event.body.parseResult, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
 template <> std::optional<document_t> ToEventJson<ParseMemoryCompletedEvent>(const ParseMemoryCompletedEvent &event)
 {
     document_t json(kObjectType);

@@ -68,6 +68,7 @@ struct ClusterBaseInfo {
 struct CommunicationMatrixInfo {
     std::string groupId;
     std::string iterationId;
+    std::string sortOp;
     std::string opName;
     std::string groupName;
     int srcRank;

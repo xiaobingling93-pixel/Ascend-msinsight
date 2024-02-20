@@ -127,10 +127,10 @@ CommunicationMatrixInfo CommunicationMatrixRapidHandler::MapToMatrixInfo(const r
     }
     int nameIndex = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
     if (nameIndex > 0) {
-        matrixInfo.opName = tempOpName.substr(0, nameIndex);
+        matrixInfo.sortOp = tempOpName.substr(0, nameIndex);
         matrixInfo.groupName = tempOpName.substr(nameIndex + 1);
     } else {
-        matrixInfo.opName = tempOpName;
+        matrixInfo.sortOp = tempOpName;
     }
     int rankIndex = tempRank.empty() ? 0 : tempRank.find_last_of('-');
     if (rankIndex > 0) {
@@ -143,6 +143,7 @@ CommunicationMatrixInfo CommunicationMatrixRapidHandler::MapToMatrixInfo(const r
     matrixInfo.transitTime = JsonUtil::GetDouble(json, "Transit Time(ms)");
     matrixInfo.transitSize = JsonUtil::GetDouble(json, "Transit Size(MB)");
     matrixInfo.bandwidth = JsonUtil::GetDouble(json, "Bandwidth(GB/s)");
+    matrixInfo.opName = JsonUtil::GetString(json, "op_name");
     return matrixInfo;
 }
 

@@ -102,19 +102,48 @@ void ImportActionHandler::HandleCompute(ImportActionResponse &response, const st
 
 void ImportActionHandler::ClusterProcess(const std::string &token, const std::string &selectedFolder)
 {
-    std::string parseClusterResult = "none";
+    std::string parseClusterResult = PARSE_RESULT_NONE;
     if (ImportActionHandler::curIsCluster) {
         ClusterFileParser clusterFileParser;
         if (clusterFileParser.ParseClusterFiles(selectedFolder)) {
             ServerLog::Info("ParseClusterFiles is success");
-            parseClusterResult = "ok";
+            parseClusterResult = PARSE_RESULT_OK;
+            ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcessAsyncStep,
+                                                                                token, selectedFolder);
         } else {
             ServerLog::Warn("ParseClusterFiles is failed");
-            parseClusterResult = "fail";
+            parseClusterResult = PARSE_RESULT_FAIL;
         }
     }
     // send event
     ImportActionHandler::ParseClusterEndProcess(token, parseClusterResult);
+}
+
+void ImportActionHandler::ClusterProcessAsyncStep(const std::string &token, const std::string &selectedFolder)
+{
+    std::string parseClusterResult;
+    ClusterFileParser clusterFileParser;
+    if (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::FINISH ||
+        clusterFileParser.ParseClusterStep2Files(selectedFolder)) {
+        ServerLog::Info("ParseClusterStep2Files is success");
+        parseClusterResult = PARSE_RESULT_OK;
+    } else {
+        ServerLog::Warn("ParseClusterStep2Files is failed");
+        parseClusterResult = PARSE_RESULT_FAIL;
+    }
+    // send event
+    ServerLog::Info("Parse Cluster File end, send event");
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        ServerLog::Warn("Failed to get session token ");
+        return;
+    }
+    auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
+    event->moduleName = ModuleType::TIMELINE;
+    event->token = token;
+    event->result = true;
+    event->body.parseResult = std::move(parseClusterResult);
+    session->OnEvent(std::move(event));
 }
 
 void ImportActionHandler::SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>> &rankListMap,

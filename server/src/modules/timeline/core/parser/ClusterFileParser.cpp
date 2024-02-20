@@ -118,20 +118,14 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     }
     auto database = DataBaseManager::Instance().GetClusterDatabase();
     // parse communication file
-    std::regex patternCommunication(R"(cluster_communication.json)");
-    std::vector<std::string> communicationFileList =
-            FileUtil::FindFilesByRegex(selectedPath, patternCommunication);
+    std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
+    std::vector<std::string> communicationMatrixFileList =
+            FileUtil::FindFilesByRegex(selectedPath, patternCommunicationMatrix);
     // cluster analysis
-    if (communicationFileList.empty() && !AttAnalyze(selectedPath)) {
+    if (communicationMatrixFileList.empty() && !AttAnalyze(selectedPath, ATT_MODEL_MATRIX)) {
         return false;
     }
-    communicationFileList =
-            FileUtil::FindFilesByRegex(selectedPath, patternCommunication);
-    if (!communicationFileList.empty()) {
-        ParseCommunication(communicationFileList);
-    }
     // matrix
-    std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
     std::vector<std::string> communicationMatrixList =
             FileUtil::FindFilesByRegex(selectedPath, patternCommunicationMatrix);
     if (!communicationMatrixList.empty()) {
@@ -147,6 +141,34 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
         // parse cluster_step_trace_time csv
         SaveClusterBaseInfo(selectedPath);
     }
+    if (!database->CreateIndex()) {
+        ServerLog::Error("Failed to CreateIndex on cluster database. path:", selectedPath);
+        return false;
+    }
+    if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
+        ServerLog::Warn("Parser Cluster Status Is Terminal");
+        return false;
+    }
+    return true;
+}
+
+bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
+{
+    auto database = DataBaseManager::Instance().GetClusterDatabase();
+    // parse communication file
+    std::regex patternCommunication(R"(cluster_communication.json)");
+    std::vector<std::string> communicationFileList =
+            FileUtil::FindFilesByRegex(selectedPath, patternCommunication);
+    // cluster analysis
+    if (communicationFileList.empty() && !AttAnalyze(selectedPath, ATT_MODEL_TIME)) {
+        return false;
+    }
+    communicationFileList =
+            FileUtil::FindFilesByRegex(selectedPath, patternCommunication);
+    if (!communicationFileList.empty()) {
+        ParseCommunication(communicationFileList);
+    }
+    database->SaveLastData();
     if (!database->CreateIndex()) {
         ServerLog::Error("Failed to CreateIndex on cluster database. path:", selectedPath);
         return false;
@@ -234,7 +256,7 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
     }
 }
 
-bool ClusterFileParser::AttAnalyze(const std::string& selectedPath)
+bool ClusterFileParser::AttAnalyze(const std::string& selectedPath, const std::string& model)
 {
     ServerLog::Info("Start execute cluster analysis");
     if (!StringUtil::ValidateCommandFilePathParam(selectedPath)) {
@@ -259,6 +281,9 @@ bool ClusterFileParser::AttAnalyze(const std::string& selectedPath)
     if (!exePathVector.empty()) {
         std::string command = "cd \"" + FileUtil::PathPreprocess(selectedPath) +
                 "\"" + switchCommand + " && \"" + exePathVector[0] + "\" -d .";
+        if (!model.empty()) {
+            command.append(" -m ").append(model);
+        }
         ServerLog::Info("start execute command:", command);
         int result = std::system(command.c_str());
         if (result != 0) {

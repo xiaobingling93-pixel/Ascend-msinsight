@@ -43,6 +43,7 @@ public:
 
         ClusterFileParser clusterFileParser;
         clusterFileParser.ParseClusterFiles(testDataPath);
+        clusterFileParser.ParseClusterStep2Files(testDataPath);
         WaitParseEnd({"0", "1", KERNEL_PREFIX + "0",
                      KERNEL_PREFIX + "1", MEMORY_PREFIX + "0", MEMORY_PREFIX + "1"});
     }
