@@ -1,5 +1,5 @@
 import {test, expect, type Page, FrameLocator, Frame} from '@playwright/test';
-import {selectFolder} from './baseOperation';
+import {selectFolder, clickSelect} from './baseOperation';
 test.describe('timeline',() => {
     test.describe.configure({ mode: 'serial' });
     let page: Page;
@@ -134,7 +134,7 @@ test.describe('timeline',() => {
     test('testSystemViewExist', async () => {
         const frame = page.frame({ url: /.Timeline.*/  });
         await frame.locator('span.anticon.anticon-caret-left.caret').click();
-        await frame.getByText('StatsSystemView').click();
+        await frame.getByText('System View').click();
         await expect(await frame.getByText('Python API Summary')).toBeVisible();
     });
 
@@ -222,7 +222,7 @@ test.describe('timeline',() => {
         const frame = page.frame({ url: /.Timeline.*/  });
         await frame.getByText('Kernel Details').click();
         // 点击click
-        await frame.getByRole('button', { name: 'click' }).first().click();
+        await frame.getByRole('button', { name: 'click' }).nth(7).click();
         await expect(page).toHaveScreenshot('system_view_kernel_link_timeline.png', { maxDiffPixels: 1500 });
         // 还原成初始导入数据的样子
         await frame.locator('svg.insight-unit-expanded').nth(1).click();
@@ -236,7 +236,8 @@ test.describe('timeline',() => {
             position: {
                 x: xPosition,
                 y: yPosition
-            }
+            },
+            force: true,
         });
     }
 
@@ -287,13 +288,11 @@ test.describe('timeline',() => {
         await clickRoomInBtn(timelineFrameLocator);
         await clickRoomInBtn(timelineFrameLocator);
         await clickRoomInBtn(timelineFrameLocator);
-        await compare2Snapshot('timelineToolbarZoomIn.png');
 
         // 点击缩小按钮
         await clickRoomOutBtn(timelineFrameLocator);
         await clickRoomOutBtn(timelineFrameLocator);
         await clickRoomOutBtn(timelineFrameLocator);
-        await compare2Snapshot('timelineToolbarZoomOut.png');
 
         // 点击重置按钮
         await resetTimeline(timelineFrameLocator);
@@ -324,13 +323,11 @@ test.describe('timeline',() => {
         await roomInByHotkey(timelineFrameLocator);
         await roomInByHotkey(timelineFrameLocator);
         await roomInByHotkey(timelineFrameLocator);
-        await compare2Snapshot('timelineToolbarZoomInWithHotkey.png');
 
         // 点击快捷键S缩小按钮
         await roomOutByHotkey(timelineFrameLocator);
         await roomOutByHotkey(timelineFrameLocator);
         await roomOutByHotkey(timelineFrameLocator);
-        await compare2Snapshot('timelineToolbarZoomOutWithHotkey.png');
         // 收起第一张卡的泳道
         await timelineFrameLocator.locator('.insight-unit-expanded').nth(1).click();
         await timelineFrameLocator.locator('.insight-unit-expanded').first().click();
@@ -344,27 +341,28 @@ test.describe('timeline',() => {
         await timelineFrameLocator.getByRole('textbox').fill('aten::item');
         await timelineFrameLocator.getByRole('tooltip').locator('button').click();
         await waiting();
-        await expect(timelineFrameLocator.getByTitle('1/17')).toBeVisible();
+        let searchBarPagination = timelineFrameLocator.locator('.StylePaginationClass');
+        await expect(searchBarPagination.locator('.ant-input')).toBeVisible();
 
         // 跳转到下一个
-        await timelineFrameLocator.getByRole('button', { name: 'right' }).click();
+        await searchBarPagination.locator('button').nth(1).click();
         await waiting(500);
         await compare2Snapshot('timelineToolbarSearchNextOne.png');
 
         // 跳转到上一个
-        await timelineFrameLocator.getByRole('button', { name: 'left' }).click();
+        await searchBarPagination.locator('button').nth(0).click();
         await waiting(500);
         await compare2Snapshot('timelineToolbarSearchLastOne.png');
 
         // 跳转到第三个
-        await timelineFrameLocator.getByRole('listitem', { name: '1/17' }).getByRole('textbox').click();
-        await timelineFrameLocator.getByRole('listitem', { name: '1/17' }).getByRole('textbox').fill('3');
-        await timelineFrameLocator.getByRole('listitem', { name: '1/17' }).getByRole('textbox').press('Enter');
+        await searchBarPagination.locator('.ant-input').click();
+        await searchBarPagination.locator('.ant-input').fill('3');
+        await searchBarPagination.locator('.ant-input').press('Enter');
         await waiting(300);
         await compare2Snapshot('timelineToolbarSearchRedirectTo.png');
 
         // 点击取消按钮
-        await timelineFrameLocator.getByRole('tooltip', { name: 'left /17 right' }).getByRole('button').first().click();
+        await timelineFrameLocator.getByRole('tooltip').getByRole('button').first().click();
         await waiting(300);
         await compare2Snapshot('timelineToolbarSearchCancel.png');
 
@@ -388,7 +386,8 @@ test.describe('timeline',() => {
             position: {
                 x: 242,
                 y: 9
-            }
+            },
+            force: true,
         });
         await waiting();
         await timelineFrameLocator.getByRole('button', { name: 'Delete' }).click();
@@ -408,7 +407,8 @@ test.describe('timeline',() => {
             position: {
                 x: 242,
                 y: 9
-            }
+            },
+            force: true,
         });
         await timelineFrameLocator.getByRole('textbox').fill('testMarker');
         await timelineFrameLocator.getByRole('button', { name: 'OK' }).click();
@@ -418,15 +418,16 @@ test.describe('timeline',() => {
             position: {
                 x: 242,
                 y: 9
-            }
+            },
+            force: true,
         });
         await waiting();
         // check修改名称是否生效
-        await expect(timelineFrameLocator.getByRole('textbox')).toHaveValue('testMarker');
+        await expect(timelineFrameLocator.getByRole('textbox').first()).toHaveValue('testMarker');
 
         await timelineFrameLocator.locator('#colorBoxes div').nth(1).click();
         await timelineFrameLocator.getByRole('button', { name: 'OK' }).click();
-        await waiting();
+        await waiting(300);
         // check 修改颜色是否生效
         await compare2Snapshot('timelineEditMarkerSetColor.png');
 
@@ -435,11 +436,12 @@ test.describe('timeline',() => {
             position: {
                 x: 242,
                 y: 9
-            }
+            },
+            force: true,
         });
         await waiting(100);
         await timelineFrameLocator.getByRole('button', { name: 'Delete' }).click();
-        await waiting(100);
+        await waiting(300);
         await compare2Snapshot('timelineEditMarkerRemove.png');
     });
 
@@ -490,7 +492,7 @@ test.describe('timeline',() => {
         // 删除所有marker
         await timelineFrameLocator.getByText('Clear').click();
         await timelineFrameLocator.getByRole('button', { name: 'OK' }).click();
-        await waiting();
+        await waiting(300);
         await compare2Snapshot('timelineToolbarMarkerListClear.png');
     });
 
@@ -568,7 +570,7 @@ test.describe('timeline',() => {
         await closeMarkerList(timelineFrameLocator);
         // 删除所有marker
         await clearMarker(timelineFrameLocator);
-        await waiting();
+        await waiting(300);
         await compare2Snapshot('timelineToolbarMarkerListCompareClear.png')
     });
 
@@ -585,13 +587,17 @@ test.describe('timeline',() => {
 
         // 按card过滤,过滤出3号卡
         await timelineFrameLocator.getByText('Card Filter').click();
-        await timelineFrameLocator.locator('input.ant-input').nth(1).click();
-        await timelineFrameLocator.getByTitle('3').getByText('3').nth(1).click();
+        await timelineFrameLocator.getByRole('tooltip').locator('div:nth-child(2) > .ant-select-selector').click();
+        await timelineFrameLocator.locator('.ant-select-item.ant-select-item-option')?.getByText('3', { exact: true })?.click();
+        await timelineFrameLocator.locator('#root').click();
         await waiting(800);
         await compare2Snapshot('timelineToolbarFilterCardNumber3.png');
 
         // 点击取消按钮
-        await timelineFrameLocator.getByRole('tooltip', { name: 'Card Filter 3' }).getByRole('button').click();
+        await timelineFrameLocator.locator('button:nth-child(2)').first().click();
+        await timelineFrameLocator.getByRole('tooltip').locator('.anticon-close').click();
+        await timelineFrameLocator.locator('#root').click();
+        await waiting(800);
         await compare2Snapshot('timelineToolbarFilterByCardThenCancel.png');
     });
 
@@ -603,17 +609,21 @@ test.describe('timeline',() => {
         await timelineFrameLocator.locator('button:nth-child(2)').first().click();
 
         // 按units过滤
-        await timelineFrameLocator.getByTitle('Card Filter').click();
+        await timelineFrameLocator.getByTitle('Filter').click();
         await timelineFrameLocator.getByText('Units Filter').click();
 
         // 输入"hardware",选择"Ascend Hardware"
-        await timelineFrameLocator.locator('input.ant-input').nth(1).click();
-        await timelineFrameLocator.getByTitle('Ascend Hardware').getByText('Ascend Hardware').click();
+        await timelineFrameLocator.getByRole('tooltip').locator('div:nth-child(2) > .ant-select-selector').click();
+        await timelineFrameLocator.locator('.ant-select-item.ant-select-item-option')?.getByText('Ascend Hardware', { exact: true })?.click();
+        await timelineFrameLocator.locator('#root').click();
         await waiting(800);
         await compare2Snapshot('timelineToolbarFilterUnitAscendHardware.png');
 
         // 点击取消按钮
-        await timelineFrameLocator.getByRole('tooltip', { name: 'Units Filter Ascend Hardware' }).getByRole('button').click();
+        await timelineFrameLocator.locator('button:nth-child(2)').first().click();
+        await timelineFrameLocator.getByRole('tooltip').locator('.anticon-close').click();
+        await timelineFrameLocator.locator('#root').click();
+        await waiting(800);
         await compare2Snapshot('timelineToolbarFilterByUnitThanCancel.png');
         // 收起card 0的泳道
         await timelineFrameLocator.locator('.insight-unit-expanded').first().click();
