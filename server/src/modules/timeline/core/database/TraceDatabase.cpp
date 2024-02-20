@@ -69,6 +69,9 @@ bool TraceDatabase::InitProcessThreadStmt()
     sql = "INSERT INTO " + processTable + " (pid, process_sort_index) VALUES (?, ?)" +
           "ON CONFLICT (pid) DO UPDATE SET process_sort_index = excluded.process_sort_index;";
     updateProcessSortIndexStmt = CreatPreparedStatement(sql);
+    sql = "INSERT INTO " + threadTable + " (track_id, tid, pid) VALUES (?, ?, ?)" +
+          " ON CONFLICT (track_id) DO UPDATE SET tid = excluded.tid, pid = excluded.pid;";
+    updateThreadInfoStmt = CreatPreparedStatement(sql);
     sql = "INSERT INTO " + threadTable + " (track_id, tid, pid, thread_name) VALUES (?, ?, ?, ?)" +
           " ON CONFLICT (track_id) DO UPDATE " +
           " SET tid = excluded.tid, pid = excluded.pid, thread_name = excluded.thread_name;";
@@ -77,8 +80,8 @@ bool TraceDatabase::InitProcessThreadStmt()
           " ON CONFLICT (track_id) DO UPDATE SET thread_sort_index = excluded.thread_sort_index;";
     updateThreadSortIndexStmt = CreatPreparedStatement(sql);
     if (updateProcessNameStmt == nullptr || updateProcessLabelStmt == nullptr ||
-        updateProcessSortIndexStmt == nullptr || updateThreadNameStmt == nullptr ||
-        updateThreadSortIndexStmt == nullptr) {
+        updateProcessSortIndexStmt == nullptr || updateThreadInfoStmt == nullptr ||
+        updateThreadNameStmt == nullptr || updateThreadSortIndexStmt == nullptr) {
         ServerLog::Error("Failed to prepare process and thread statement.");
         return false;
     }
@@ -96,6 +99,7 @@ void TraceDatabase::ReleaseStmt()
     updateProcessNameStmt = nullptr;
     updateProcessLabelStmt = nullptr;
     updateProcessSortIndexStmt = nullptr;
+    updateThreadInfoStmt = nullptr;
     updateThreadNameStmt = nullptr;
     updateThreadSortIndexStmt = nullptr;
     insertFlowStmt = nullptr;
@@ -124,7 +128,7 @@ bool TraceDatabase::CreateTable()
         "CREATE TABLE " + sliceTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER, duration INTEGER,"
                                        " overlapDuration INTEGER, notOverlapDuration INTEGER,"
                                        " name TEXT, depth INTEGER, track_id INTEGER, cat TEXT, args TEXT);" +
-        "CREATE TABLE " + threadTable + " (track_id INTEGER PRIMARY KEY, tid INTEGER, pid TEXT, thread_name TEXT," +
+        "CREATE TABLE " + threadTable + " (track_id INTEGER PRIMARY KEY, tid TEXT, pid TEXT, thread_name TEXT," +
                                         " thread_sort_index INTEGER);" +
         "CREATE TABLE " + processTable + " (pid TEXT PRIMARY KEY, process_name TEXT, label TEXT," +
                                          " process_sort_index INTEGER);" +
@@ -232,6 +236,34 @@ bool TraceDatabase::UpdateProcessSortIndex(const Trace::MetaData &event)
     std::unique_lock<std::mutex> lock(mutex);
     if (!updateProcessSortIndexStmt->Execute(event.pid, event.args.sortIndex)) {
         ServerLog::Error("Update process sort index fail. ", updateProcessSortIndexStmt->GetErrorMessage());
+        return false;
+    }
+    return true;
+}
+
+bool TraceDatabase::AddThreadCache(const std::tuple<int64_t, std::string, std::string> &threadInfo)
+{
+    threadInfoCache.insert(threadInfo);
+    return true;
+}
+
+bool TraceDatabase::InsertThreadList(const std::set<std::tuple<int64_t, std::string, std::string>> &threadList)
+{
+    for (const auto &item : threadList) {
+        if (!UpdateThreadInfo(item)) {
+            ServerLog::Error("Update thread name fail. pid: ", std::get<2>(item), " tid: ", std::get<1>(item)); // 第2个
+            return false;
+        }
+    }
+    return true;
+}
+
+bool TraceDatabase::UpdateThreadInfo(const std::tuple<int64_t, std::string, std::string> &thread)
+{
+    updateThreadInfoStmt->Reset();
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!updateThreadInfoStmt->Execute(std::get<0>(thread), std::get<1>(thread), std::get<2>(thread))) { // 第2个
+        ServerLog::Error("Update thread info fail. ", updateThreadInfoStmt->GetErrorMessage());
         return false;
     }
     return true;
@@ -759,7 +791,7 @@ bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParam
         flowDetailDto.cat = resultSet->GetString("cat");
         flowDetailDto.flowId = resultSet->GetString("flowId");
         flowDetailDto.pid = resultSet->GetString("pid");
-        flowDetailDto.tid = resultSet->GetInt32("tid");
+        flowDetailDto.tid = resultSet->GetString("tid");
         flowDetailDto.depth = resultSet->GetInt32("depth");
         flowDetailDto.timestamp = resultSet->GetUint64("timestamp");
         flowDetailDto.duration = resultSet->GetUint64("duration");
@@ -860,7 +892,7 @@ bool TraceDatabase::QueryUnitsMetadata(const std::string &fileId,
         metaDataDto.pid = resultSet->GetString("pid");
         metaDataDto.processName = resultSet->GetString("processName");
         metaDataDto.label = resultSet->GetString("label");
-        metaDataDto.threadId = resultSet->GetInt64("tid");
+        metaDataDto.threadId = resultSet->GetString("tid");
         metaDataDto.threadName = resultSet->GetString("threadName");
         metaDataDto.maxDepth = resultSet->GetInt32("maxDepth");
         metaDataDto.name = resultSet->GetString("name");
@@ -964,6 +996,10 @@ void TraceDatabase::CommitData()
     if (!counterCache.empty()) {
         InsertCounterList(counterCache);
         counterCache.clear();
+    }
+    if (!threadInfoCache.empty()) {
+        InsertThreadList(threadInfoCache);
+        threadInfoCache.clear();
     }
 }
 

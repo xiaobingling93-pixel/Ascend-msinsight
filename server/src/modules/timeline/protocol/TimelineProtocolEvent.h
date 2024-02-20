@@ -22,7 +22,7 @@ struct UnitTrackMetaData {
     std::string processId;
     std::string processName; // type = process
     std::string label; // type = process
-    int64_t threadId = 0; // type = thread
+    std::string threadId; // type = thread
     std::string threadName; // type = thread, counter
     int maxDepth = 0; // type = thread
     std::vector<std::string> dataType; // type = counter

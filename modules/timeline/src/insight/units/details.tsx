@@ -84,10 +84,11 @@ const Link = styled.span`
     border-bottom: 2px solid rgb(140, 140, 140);
 `;
 
-export const generateFlowParam = function(metadata: ThreadMetaData, startTime: number, pid?: string, tid?: number): { rankId: string; tid: number; pid: string; startTime: number } {
+export const generateFlowParam = function(metadata: ThreadMetaData, startTime: number, pid?: string, tid?: string):
+{ rankId: string; tid: string; pid: string; startTime: number } {
     return {
         rankId: metadata.cardId ?? '',
-        tid: tid ?? metadata.threadId,
+        tid: tid ?? (metadata.threadId ?? ''),
         pid: pid ?? (metadata.processId ?? ''),
         startTime,
     };

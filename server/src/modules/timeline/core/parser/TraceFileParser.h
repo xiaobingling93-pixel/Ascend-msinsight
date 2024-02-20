@@ -17,6 +17,11 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 
+enum class JsonFormat {
+    JSON_ARRAY_FORMAT = 0,
+    JSON_OBJECT_FORMAT
+};
+
 class TraceFileParser : public FileParser {
 public:
     static TraceFileParser &Instance();
@@ -25,7 +30,7 @@ public:
     void Reset() override;
     static void DeleteParseFiles(const std::vector<std::string> &fileIds);
 
-    int64_t GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid);
+    int64_t GetTrackId(const std::string &fileId, const std::string &pid, const std::string &tid);
 private:
     TraceFileParser();
     ~TraceFileParser() override;
@@ -43,12 +48,13 @@ private:
     static void PreParseTask(const std::vector<std::string> &filePathArr, const std::string &fileId);
     static void ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos);
     static void EndParseTask(const std::string &fileId, const std::vector<std::string> &filePathArr,
-                             std::shared_ptr<std::vector<std::future<void>>> futures);
+                             std::shared_ptr<std::vector<std::future<void>>> futures,
+                             std::chrono::time_point<std::chrono::high_resolution_clock> start);
     static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
     static void DeleteParseFileFromDisk(const std::string &fileId);
 
     std::mutex trackMutex;
-    std::unordered_map<std::string, std::map<std::pair<std::string, int64_t>, int64_t>> trackIdMap;
+    std::unordered_map<std::string, std::map<std::pair<std::string, std::string>, int64_t>> trackIdMap;
     int64_t trackId = 0;
 };
 } // end of namespace Timeline

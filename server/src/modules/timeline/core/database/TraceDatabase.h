@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <set>
 #include "TimelineProtocolRequest.h"
 #include "TimelineProtocolResponse.h"
 #include "TimelineProtocolEvent.h"
@@ -33,9 +34,12 @@ public:
     bool InitStmt();
     void ReleaseStmt();
     bool InsertSlice(const Trace::Slice &event);
+    bool AddThreadCache(const std::tuple<int64_t, std::string, std::string> &threadInfo);
+    bool InsertThreadList(const std::set<std::tuple<int64_t, std::string, std::string>> &threadList);
     bool UpdateProcessName(const Trace::MetaData &event);
     bool UpdateProcessLabel(const Trace::MetaData &event);
     bool UpdateProcessSortIndex(const Trace::MetaData &event);
+    bool UpdateThreadInfo(const std::tuple<int64_t, std::string, std::string> &thread);
     bool UpdateThreadName(const Trace::MetaData &event);
     bool UpdateThreadSortIndex(const Trace::MetaData &event);
     bool InsertFlow(const Trace::Flow &event);
@@ -114,6 +118,7 @@ private:
     std::unique_ptr<SqlitePreparedStatement> updateProcessNameStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateProcessLabelStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateProcessSortIndexStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> updateThreadInfoStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateThreadNameStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateThreadSortIndexStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> insertFlowStmt = nullptr;
@@ -123,6 +128,7 @@ private:
     std::vector<Trace::Slice> sliceCache;
     std::vector<Trace::Flow> flowCache;
     std::vector<Trace::Counter> counterCache;
+    std::set<std::tuple<int64_t, std::string, std::string>> threadInfoCache;
 
     bool InitSliceFlowCounterStmt();
     bool InitProcessThreadStmt();

@@ -6,7 +6,6 @@
 #include "ServerLog.h"
 #include "RegexUtil.h"
 #include "FileUtil.h"
-#include "JsonUtil.h"
 #include "StringUtil.h"
 #include "DataBaseManager.h"
 #include "EventParser.h"
@@ -70,9 +69,10 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
     }
 
     auto &instance = TraceFileParser::Instance();
+    auto start = std::chrono::high_resolution_clock::now();
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     for (const auto &filePath: filePathArr) {
-        ServerLog::Info("start parse. file id:", fileId, ". path:", filePath);
+        ServerLog::Info("Start parse. file id:", fileId, ". path:", filePath);
         auto splitFile = TraceFileParser::SplitFile(filePath);
         if (splitFile.empty()) {
             ServerLog::Error("Failed to split file.");
@@ -85,7 +85,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
             futures->emplace_back(std::move(future));
         }
     }
-    instance.threadPool->AddTask(EndParseTask, fileId, filePathArr, futures);
+    instance.threadPool->AddTask(EndParseTask, fileId, filePathArr, futures, start);
     return true;
 }
 
@@ -105,7 +105,8 @@ void TraceFileParser::ParseTask(const std::string &filePath, const std::string &
 }
 
 void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<std::string> &filePathArr,
-                                   std::shared_ptr<std::vector<std::future<void>>> futures)
+    std::shared_ptr<std::vector<std::future<void>>> futures,
+    std::chrono::time_point<std::chrono::high_resolution_clock> start)
 {
     if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
         ParserStatusManager::Instance().SetFinishStatus(fileId);
@@ -116,7 +117,9 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     for (const auto &future : *futures) {
         future.wait();
     }
-    ServerLog::Info("Parse completed. ID:", fileId);
+    auto end = std::chrono::high_resolution_clock::now();
+    ServerLog::Info("Parse completed. ID:", fileId, " Cost time(ms): ",
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
     auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", fileId);
@@ -161,15 +164,35 @@ std::vector<std::pair<int64_t, int64_t>> TraceFileParser::SplitFile(const std::s
 
 std::vector<std::pair<int64_t, int64_t>> TraceFileParser::GetSplitPosition(std::ifstream &file)
 {
-    std::vector<std::pair<int64_t, int64_t>> result;
-    file.seekg(0, std::ifstream::end);
+    std::vector<std::pair<int64_t, int64_t>> result = {};
+    file.seekg(0, std::ifstream::end); // 将当前位置移动到文件尾，以获取文件大小
     int64_t fileSize = file.tellg();
     file.clear();
+    file.seekg(0, std::ios::beg); // 将当前位置移动到文件开头，正式开始处理
+    // 首先判断Trace文件的格式是JSON Object Format还是JSON Array Format，二者有差异，Object格式实际的数据应该从traceEvents之后开始
+    JsonFormat json =
+        SeekRegexPosition(file, R"(\"traceEvents")") ? JsonFormat::JSON_OBJECT_FORMAT : JsonFormat::JSON_ARRAY_FORMAT;
+
     if (fileSize <= blockSize) {
-        result.emplace_back(0, 0);
+        // 如果是Object类型，则有效数据从 ”traceEvents“: [  的"["之后开始
+        if (json == JsonFormat::JSON_OBJECT_FORMAT) {
+            if (!SeekRegexPosition(file, R"(\[\s*\{)")) {
+                ServerLog::Warn("Failed to find start position of json object format.");
+                return result;
+            }
+            int64_t start = file.tellg();
+            file.seekg(0 - bufferLength, std::ifstream::end);
+            if (SeekRegexPosition(file, R"(\}\s*\]\s*\})")) {
+                int64_t end = file.tellg();
+                result.emplace_back(start + 1, end); // 此处的1表示跳过R"(\[\s*\{)"中的"["
+            }
+        } else {
+            result.emplace_back(0, 0);
+        }
         return result;
     }
-    file.seekg(0, std::ios::beg);
+
+    // 前面获取JsonFormat时，如果是Json Object Format，则已将当前位置移动到traceEvents之后，两种文件处理的逻辑一致
     bool endFlag = false;
     while (!endFlag) {
         if (!SeekCharPosition(file, '{')) {
@@ -184,7 +207,7 @@ std::vector<std::pair<int64_t, int64_t>> TraceFileParser::GetSplitPosition(std::
             endFlag = true;
         } else {
             file.seekg(blockSize, std::ifstream::cur);
-            endRegex = R"(\}\s*,\s\{)";
+            endRegex = R"(\}\s*,\s*\{)";
         }
         if (!SeekRegexPosition(file, endRegex)) {
             ServerLog::Info("Failed to find end position.");
@@ -231,14 +254,14 @@ bool TraceFileParser::SeekRegexPosition(std::ifstream &file, const std::string &
     std::string str(buffer.get(), readCount);
     auto result = RegexUtil::RegexSearch(str, regex);
     if (!result.has_value()) {
-        ServerLog::Error("Failed to find match regex.");
+        ServerLog::Warn("Failed to find match regex:", regex);
         return false;
     }
     file.seekg(result.value().position(), std::ifstream::cur);
     return true;
 }
 
-int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string &pid, int64_t tid)
+int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string &pid, const std::string &tid)
 {
     std::unique_lock<std::mutex> lock(trackMutex);
     auto item = std::make_pair(pid, tid);

@@ -38,7 +38,7 @@ struct ThreadTraces {
     uint64_t startTime = 0;
     uint64_t endTime = 0;
     int32_t depth = 0;
-    int32_t threadId = 0;
+    std::string threadId;
 };
 
 struct UnitThreadTracesBody {
@@ -118,7 +118,7 @@ struct UnitFlowNameResponse : public Response {
 };
 
 struct FlowLocation {
-    int32_t tid = 0;
+    std::string tid;
     int32_t depth = 0;
     uint64_t timestamp = 0;
     uint64_t duration = 0; // slice duration

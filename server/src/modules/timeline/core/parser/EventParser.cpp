@@ -151,6 +151,8 @@ void EventParser::CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     }
     auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
     event.trackId = GetTrackId(event.pid, event.tid);
+    std::tuple<int64_t, std::string, std::string> thread = {event.trackId, event.tid, event.pid};
+    database->AddThreadCache(thread);
     database->InsertSlice(event);
 }
 
@@ -161,6 +163,8 @@ void EventParser::FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     }
     auto &event = dynamic_cast<Trace::Flow &>(*eventPtr);
     event.trackId = GetTrackId(event.pid, event.tid);
+    std::tuple<int64_t, std::string, std::string> thread = {event.trackId, event.tid, event.pid};
+    database->AddThreadCache(thread);
     database->InsertFlow(event);
 }
 
@@ -172,9 +176,9 @@ void EventParser::CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     database->InsertCounter(dynamic_cast<Trace::Counter &>(*eventPtr));
 }
 
-int64_t EventParser::GetTrackId(const std::string &pid, int64_t tid)
+int64_t EventParser::GetTrackId(const std::string &pid, const std::string &tid)
 {
-    std::string str = pid + std::to_string(tid);
+    std::string str = pid + tid;
     if (trackIdMap.count(str) > 0) {
         return trackIdMap.at(str);
     }

@@ -154,7 +154,7 @@ export type ThreadTraceList = {
     startTime: number;
     endTime: number;
     depth: number;
-    threadId: number;
+    threadId: string;
 };
 
 export type ThreadTraceDetail = ThreadTraceList & { relateTraceList?: RelateTrace[] } & { relateFrameDetail?: RelateFrameDetail };
@@ -685,7 +685,7 @@ export type ThreadMetaData = {
     cardId?: string;
     processId?: string;
     processName?: string;
-    threadId: number;
+    threadId?: string;
     threadName: string;
     maxDepth?: number;
     dataSource: DataSource;
@@ -712,7 +712,7 @@ export type ThreadTrace = {
     startTime: number;
     endTime: number;
     depth: number;
-    threadId: number;
+    threadId: string;
     [x: string]: unknown;
 };
 
@@ -729,7 +729,7 @@ export type CounterData = {
 export type ThreadTraceRequest = {
     cardId: string;
     processId: string;
-    threadId: number;
+    threadId: string;
     startTime: number;
     endTime: number;
 };
@@ -751,7 +751,7 @@ export type ProcessRequest = {
 
 export type AscendSliceDetail = {
     pid?: string;
-    tid?: number;
+    tid?: string;
     title?: string;
     startTime?: number;
     depth?: number;

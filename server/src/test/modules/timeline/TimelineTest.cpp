@@ -234,7 +234,7 @@ TEST_F(TestSuit, QueryThreadTraces)
     uint64_t ENDTIME = 1695115378728583500;
     request.startTime = STARTTIME;
     request.endTime = ENDTIME;
-    request.threadId = 0;
+    request.threadId = "0";
     request.timePerPx = 1;
     Dic::Protocol::UnitThreadTracesBody response;
     uint64_t minTimestamp = 0;
@@ -246,7 +246,7 @@ TEST_F(TestSuit, QueryThreadTraces)
     uint64_t expectStartTime = 1695115378713851200;
     uint64_t expectEndTime = expectStartTime + expectDuration;
     int32_t expectDepth = 0;
-    int32_t expectThreadId = request.threadId;
+    std::string expectThreadId = request.threadId;
 
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
     database->QueryThreadTraces(request, response, minTimestamp, traceId);
@@ -345,7 +345,7 @@ TEST_F(TestSuit, QueryFlowDetail)
     uint64_t FROMTIMESTAMP = 1695115378714991500;
     uint64_t TODURATION = 4975266;
     uint64_t FROMDURATION = 468180;
-    uint64_t FROMTID = 1408366;
+    std::string FROMTID = "1408366";
 
     std::string title = "HostToDevice85899345919";
     std::string cat = "HostToDevice";
@@ -358,7 +358,7 @@ TEST_F(TestSuit, QueryFlowDetail)
     from.timestamp = FROMTIMESTAMP;
     Dic::Protocol::FlowLocation to;
     to.duration = TODURATION;
-    to.tid = 0;
+    to.tid = "0";
     to.pid = "14083661400";
     to.name = "hcom_broadcast__483_0";
     to.timestamp = TOTIMESTAMP;

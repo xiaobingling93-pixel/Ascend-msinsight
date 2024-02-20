@@ -26,7 +26,7 @@ struct FlowDetailDto {
     std::string cat;
     std::string flowId;
     std::string pid;
-    int32_t tid = 0;
+    std::string tid;
     int32_t depth = 0;
     uint64_t timestamp = 0;
     uint64_t duration = 0;
@@ -47,7 +47,7 @@ struct MetaDataDto {
     std::string pid;
     std::string processName;
     std::string label;
-    int64_t threadId = 0;
+    std::string threadId;
     std::string threadName;
     int maxDepth = 0;
     std::string name; // ph = C, name
