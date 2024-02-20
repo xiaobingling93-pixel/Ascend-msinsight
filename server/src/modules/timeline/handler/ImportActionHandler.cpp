@@ -18,6 +18,7 @@
 #include "MemoryParse.h"
 #include "OperatorProtocolEvent.h"
 #include "KernelParse.h"
+#include "SourceFileParser.h"
 
 namespace Dic {
 namespace Module {
@@ -48,6 +49,16 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         return;
     }
     std::string selectedFolder = request.params.path[0];
+
+    // 算子开发场景
+    if (Source::SourceFileParser::Instance().CheckOperatorBinary(selectedFolder)) {
+        ServerLog::Info("Import files is binary.Start parse source binary file.");
+        HandleCompute(response, selectedFolder);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
+
+    // 模型调优场景
     auto files = GetTraceFiles(request.params.path, response.body);
     if (files.empty()) {
         ServerLog::Warn("Import files is empty.");
@@ -75,6 +86,18 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
 
     ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token, selectedFolder);
+}
+
+void ImportActionHandler::HandleCompute(ImportActionResponse &response, const std::string &selectedFolder) const
+{
+    Source::SourceFileParser &sourceFileParser = Source::SourceFileParser::Instance();
+    sourceFileParser.Parse(std::vector<std::string>(), "", selectedFolder);
+    sourceFileParser.ConvertToData();
+
+    SetResponseResult(response, true);
+    response.body.isBinary= true;
+    response.body.coreList= sourceFileParser.GetCoreList();
+    response.body.sourceList= sourceFileParser.GetSourceList();
 }
 
 void ImportActionHandler::ClusterProcess(const std::string &token, const std::string &selectedFolder)

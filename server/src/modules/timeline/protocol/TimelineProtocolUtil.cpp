@@ -26,6 +26,20 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "isCluster", response.body.isCluster, allocator);
     JsonUtil::AddMember(body, "reset", response.body.reset, allocator);
+    JsonUtil::AddMember(body, "isBinary", response.body.isBinary, allocator);
+
+    json_t coreList(kArrayType);
+    for (const std::string core: response.body.coreList) {
+        coreList.PushBack(json_t().SetString(core.c_str(), allocator), allocator);
+    }
+    JsonUtil::AddMember(body, "coreList", coreList, allocator);
+
+    json_t sourceList(kArrayType);
+    for (const std::string source: response.body.sourceList) {
+        sourceList.PushBack(json_t().SetString(source.c_str(), allocator), allocator);
+    }
+    JsonUtil::AddMember(body, "sourceList", sourceList, allocator);
+
     json_t result(kArrayType);
     for (const Action& action : response.body.result) {
         json_t actionJson(kObjectType);

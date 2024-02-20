@@ -48,6 +48,8 @@ private:
     const std::string traceViewReg = R"((trace_view|msprof_[0-9]{1,4}_[0-9]{1,4})\.json$)";
     void SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>>& rankListMap,
                                  ImportActionResponse &response);
+
+    void HandleCompute(ImportActionResponse &response, const std::string &selectedFolder) const;
 };
 } // end of namespace Timeline
 } // end of namespace Module

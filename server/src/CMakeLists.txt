@@ -96,6 +96,18 @@ aux_source_directory(${SRC_HOME_DIR}/modules/operator/handler DIC_MODULES_OPERAT
 aux_source_directory(${SRC_HOME_DIR}/modules/operator/parser DIC_MODULES_OPERATOR_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/operator/protocol DIC_MODULES_OPERATOR_PROTOCOL_SRC)
 
+# Source
+include_directories(${SRC_HOME_DIR}/modules/source)
+include_directories(${SRC_HOME_DIR}/modules/source/handler)
+include_directories(${SRC_HOME_DIR}/modules/source/parser)
+include_directories(${SRC_HOME_DIR}/modules/source/protocol)
+
+# Source
+aux_source_directory(${SRC_HOME_DIR}/modules/source  DIC_MODULES_SOURCE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/source/handler DIC_MODULES_SOURCE_HANDLER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/source/parser DIC_MODULES_SOURCE_PARSER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/source/protocol DIC_MODULES_SOURCE_PROTOCOL_SRC)
+
 list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SRC}
         ${DIC_MODULES_BASE_SRC}
@@ -131,7 +143,11 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_OPERATOR_DATABASE_SRC}
         ${DIC_MODULES_OPERATOR_PARSER_SRC}
         ${DIC_MODULES_OPERATOR_HANDLER_SRC}
-        ${DIC_MODULES_OPERATOR_PROTOCOL_SRC})
+        ${DIC_MODULES_OPERATOR_PROTOCOL_SRC}
+        ${DIC_MODULES_SOURCE_SRC}
+        ${DIC_MODULES_SOURCE_PARSER_SRC}
+        ${DIC_MODULES_SOURCE_HANDLER_SRC}
+        ${DIC_MODULES_SOURCE_PROTOCOL_SRC})
 
 add_subdirectory(entry)
 if (${_PROJECT_TYPE} MATCHES "test")

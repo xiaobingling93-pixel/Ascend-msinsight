@@ -18,6 +18,7 @@ const std::string MODULE_SUMMARY = "summary";
 const std::string MODULE_COMMUNICATION = "communication";
 const std::string MODULE_MEMORY = "memory";
 const std::string MODULE_OPERATOR = "operator";
+const std::string MODULE_SOURCE = "source";
 #pragma endregion
 
 #pragma region << Base>>
@@ -105,6 +106,12 @@ const std::string REQ_RES_OPERATOR_MORE_INFO  = "operator/more_info";
 // Operator Event
 const std::string EVENT_PARSE_OPERATOR_STATUS = "parse/operatorCompleted";
 const std::string EVENT_PARSE_OPERATOR_CLEAR = "parse/operatorClear";
+
+
+// Source Request
+const std::string REQ_RES_SOURCE_CODE_FILE = "source/code/file";
+const std::string REQ_RES_SOURCE_API_LINE = "source/api/line";
+const std::string REQ_RES_SOURCE_API_INSTRUCTIONS = "source/api/instructions";
 
 #pragma endregion
 } // end of namespace

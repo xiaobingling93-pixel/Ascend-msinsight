@@ -11,6 +11,7 @@
 #include "SummaryProtocol.h"
 #include "CommunicationProtocol.h"
 #include "OperatorProtocol.h"
+#include "SourceProtocol.h"
 #include "ProtocolManager.h"
 
 namespace Dic {
@@ -42,12 +43,15 @@ void ProtocolManager::Register()
     communicationProtocol->Register();
     auto operatorProtocol = std::make_unique<OperatorProtocol>();
     operatorProtocol->Register();
+    auto sourceProtocol = std::make_unique<SourceProtocol>();
+    sourceProtocol->Register();
     protocolMap.emplace(ModuleType::GLOBAL, std::move(globalProtocol));
     protocolMap.emplace(ModuleType::TIMELINE, std::move(timelineProtocol));
     protocolMap.emplace(ModuleType::MEMORY, std::move(memoryProtocol));
     protocolMap.emplace(ModuleType::SUMMARY, std::move(summaryProtocol));
     protocolMap.emplace(ModuleType::COMMUNICATION, std::move(communicationProtocol));
     protocolMap.emplace(ModuleType::OPERATOR, std::move(operatorProtocol));
+    protocolMap.emplace(ModuleType::SOURCE, std::move(sourceProtocol));
 }
 
 void ProtocolManager::UnRegister()

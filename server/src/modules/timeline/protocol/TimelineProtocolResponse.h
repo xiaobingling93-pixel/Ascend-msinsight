@@ -23,6 +23,9 @@ struct Action {
 
 struct ImportActionResBody {
     std::vector<Action> result;
+    std::vector<std::string> coreList;
+    std::vector<std::string> sourceList;
+    bool isBinary = false;
     bool isCluster = false;
     bool reset = false;
 };
