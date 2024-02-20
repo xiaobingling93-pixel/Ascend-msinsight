@@ -38,8 +38,8 @@ export const slicesListDetail = detail({
             rankId: metadata.cardId,
             tid: metadata.threadId,
             pid: metadata.processId,
-            startTime: startTime + timestampOffset,
-            endTime: endTime + timestampOffset,
+            startTime: Math.floor(startTime + timestampOffset),
+            endTime: Math.ceil(endTime + timestampOffset),
         };
         const raw = await window.request(metadata.dataSource, { command: 'unit/threads', params });
         const res = raw.data;
