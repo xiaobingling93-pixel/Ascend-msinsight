@@ -116,6 +116,7 @@ def build_vscode(vscode_version, os_name):
     os.putenv('npm_config_strict_ssl', 'false')
     os.putenv('npm_config_disturl', 'http://mirrors.tools.huawei.com/nodejs')
     os.putenv('npm_config_registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/npm-central-repo/')
+    os.putenv('npm_config_@cloudsop:registry', 'https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/product_npm')
 
     plugin_path = os.path.join(PROJECT_PATH, Const.VSCODE_PLUGINS_DIR)
     exec_command([Const.NPM, 'install', '--force'], plugin_path)
