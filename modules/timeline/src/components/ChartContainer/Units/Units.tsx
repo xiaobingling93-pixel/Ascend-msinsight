@@ -215,7 +215,8 @@ type ScrollerProps = {
     supportJump: boolean;
 };
 
-export const Scroller = observer(React.forwardRef(function Scroller({ session, children, eventType, orderOptions, unitsArea, supportJump }: ScrollerProps, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element {
+export const Scroller = React.forwardRef(({ session, children, eventType, orderOptions: sorderOptions, unitsArea, supportJump }: ScrollerProps,
+    ref: React.ForwardedRef<HTMLDivElement>): JSX.Element => {
     // 广播滚动事件
     function scroll(e: React.UIEvent<HTMLDivElement>): void {
         const scrollTop = e.currentTarget.scrollTop;
@@ -232,12 +233,13 @@ export const Scroller = observer(React.forwardRef(function Scroller({ session, c
     }, [session]);
 
     // 跳转到指定泳道
-    useJumpTarget(session, unitsArea, supportJump, orderOptions, (ref as React.MutableRefObject<HTMLDivElement | null>).current);
+    useJumpTarget(session, unitsArea, supportJump, sorderOptions, (ref as React.MutableRefObject<HTMLDivElement | null>).current);
 
     return <TableScroller className={`laneWrapper ${eventType === EventType.PINNEDUNITWRAPPERSCROLL ? 'pinnedScrollArea' : ''}`} onScroll={scroll} ref={ref}>
         {children}
     </TableScroller>;
-}));
+});
+Scroller.displayName = 'insight-scroller';
 
 const handleWheel = (event: WheelEvent): void => {
     if (event.ctrlKey) {
@@ -259,5 +261,5 @@ const Units = ({ session, height, hasPinButton, laneInfoWidth }:
     </Scroller>;
 };
 
-export const RefUnits = observer(React.forwardRef(Units));
+export const RefUnits = React.forwardRef(Units);
 RefUnits.displayName = 'Units';

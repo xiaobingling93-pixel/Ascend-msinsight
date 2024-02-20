@@ -52,5 +52,11 @@ module.exports = {
       webpackConfig.plugins.push(...[ new HTMLInlineCSSWebpackPlugin(), new HtmlInlineScriptPlugin(), new ScriptTypePlugin(), new BackgroundSvgInlinePlugin()]);
       return webpackConfig
     },
+    alias: {
+      react: '@cloudsop/horizon', // 新增
+      'react-dom/client': '@cloudsop/horizon', // 兼容react18的用法
+      'react-dom': '@cloudsop/horizon', // 新增
+      'react-is': '@cloudsop/horizon', // 新增
+    },
   },
 };

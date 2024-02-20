@@ -97,4 +97,4 @@ const PUnits = ({ session, height, laneInfoWidth }:
     </Scroller>;
 };
 
-export const PinnedUnits = observer(React.forwardRef(PUnits));
+export const PinnedUnits = React.forwardRef(PUnits);

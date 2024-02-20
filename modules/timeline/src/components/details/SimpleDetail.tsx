@@ -8,7 +8,9 @@ import { DetailTabs } from './TabPanes';
 import { MoreTableProps, TableViewProps } from './types';
 import { selectRow } from './utils';
 
-export const SimpleTabularDetail = observer(React.forwardRef(function Support<T extends CommonStateProto>({ session, height, detail, isTree = true, tabState, commonState, onDataLoaded }: TableViewProps<DetailTabs, T>, ref: ForwardedRef<TableHandle>): JSX.Element {
+function Support<T extends CommonStateProto>(
+    { session, height, detail, isTree = true, tabState, commonState, onDataLoaded }: TableViewProps<DetailTabs, T>,
+    ref: ForwardedRef<TableHandle>): JSX.Element {
     const state = useDetailUpdater(session, detail, tabState, [], onDataLoaded);
     const unit = session.selectedUnits[0];
     return <AutoAdjustedTable
@@ -30,7 +32,9 @@ export const SimpleTabularDetail = observer(React.forwardRef(function Support<T 
             },
         })}
     />;
-})) as <T extends CommonStateProto>(props: React.PropsWithChildren<TableViewProps<DetailTabs, T>> & { ref?: React.Ref<TableHandle> }) => JSX.Element;
+}
+export const SimpleTabularDetail = React.forwardRef(Support) as
+    <T extends CommonStateProto>(props: React.PropsWithChildren<TableViewProps<DetailTabs, T>> & { ref?: React.Ref<TableHandle> }) => JSX.Element;
 
 export const SimpleTabularMore = observer(({ more, session, height, isTree = true }: MoreTableProps) => {
     const state = useMoreUpdater(session, more);

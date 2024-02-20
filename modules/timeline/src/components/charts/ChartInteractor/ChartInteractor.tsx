@@ -6,7 +6,6 @@ import React, {
     useEffect,
     useImperativeHandle,
 } from 'react';
-import { observer } from 'mobx-react';
 import * as d3 from 'd3';
 import { Session } from '../../../entity/session';
 import { traceEnd } from '../../../utils/traceLogger';
@@ -160,5 +159,5 @@ const Interactor = ({ domainStart, domainEnd, endTimeAll, session, interactorMou
         <Overlay ref={hoverCanvas} />
     </>;
 };
-export const ChartInteractor = observer(React.forwardRef(Interactor));
+export const ChartInteractor = React.forwardRef(Interactor);
 ChartInteractor.displayName = 'ChartInteractor';
