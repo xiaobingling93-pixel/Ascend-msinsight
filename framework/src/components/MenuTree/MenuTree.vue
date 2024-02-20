@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { defineProps } from 'vue';
 import type { TreeNodeType } from './types';
 import LocalIcon from '@/components/icons/loaclImport_icon.vue';
 import DeletePopConfirm from '@/components/MenuTree/DeletePopConfirm.vue';

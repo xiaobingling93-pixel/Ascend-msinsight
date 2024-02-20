@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {defineProps, ref, toRaw} from 'vue';
+import {ref, toRaw} from 'vue';
 import type Node from 'element-plus/es/components/tree/src/model/node';
 import type { TreeNodeType } from '@/components/MenuTree/types';
 import { useDataSources } from '@/stores/dataSource';

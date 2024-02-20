@@ -30,7 +30,7 @@ MODULES_MAP = {
 def execute_cmd(module, module_dir, cmd):
     proc = subprocess.Popen(cmd, cwd=module_dir, stdout=subprocess.PIPE)
     for line in iter(proc.stdout.readline, b''):
-        logging.info('[%s]%s', MODULES_MAP.get(module), line.decode('utf-8').strip())
+        logging.info('[%s]%s', module, line.decode('utf-8').strip())
     proc.communicate(timeout=600)
     return proc.returncode
 
@@ -50,12 +50,8 @@ def build_module(module):
         shutil.rmtree(plugin_dir)
 
     npm_cmd = 'npm.cmd' if platform.system() == 'Windows' else 'npm'
-    result = execute_cmd(module, module_dir, [npm_cmd, 'install', '--force'])
-    if result != 0:
-        logging.error('[%s]Failed to install dependencies, %s', MODULES_MAP.get(module), result)
-        return 1
 
-    result = execute_cmd(module, module_dir, [npm_cmd, 'run', 'build'])
+    result = execute_cmd(MODULES_MAP.get(module), module_dir, [npm_cmd, 'run', 'build'])
     if result != 0:
         logging.error('[%s]Failed to build %s, %s', MODULES_MAP.get(module), module, result)
         return 1
@@ -72,6 +68,13 @@ def parallel_build():
     :return: 0 表示构建成功， 1表示构建失败；如果单个模块（进程）构建失败，则返回modules构建失败
     """
     logging.info('Start to build modules')
+
+    npm_cmd = 'npm.cmd' if platform.system() == 'Windows' else 'npm'
+    result = execute_cmd('moudles', MODULES_DIR, [npm_cmd, 'install', '--force'])
+    if result != 0:
+        logging.error('[%s]Failed to install dependencies, %s', result)
+        return 1
+
     modules = list(MODULES_MAP.keys())
     pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 4))
     results = pool.map(build_module, modules)

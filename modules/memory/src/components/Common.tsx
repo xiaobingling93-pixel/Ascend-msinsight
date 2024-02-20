@@ -19,5 +19,5 @@ export const hit = (<Tooltip color={'#2e2f31'} title={
         </div>
     )
 }>
-    <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
+    <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 0 0 10px' }}/>
 </Tooltip>);

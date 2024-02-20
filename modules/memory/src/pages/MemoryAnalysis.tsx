@@ -221,7 +221,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                         <Label name={<span>GroupBy{hit}</span>} />
                         <Select
                             value={groupId}
-                            style={{ width: 200 }}
+                            style={{ width: 180 }}
                             onChange={(value: string): void => setGroupId(value)}
                             options={groupBy.map((type) => {
                                 return {
