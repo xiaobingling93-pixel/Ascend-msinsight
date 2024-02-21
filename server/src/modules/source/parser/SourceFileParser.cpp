@@ -78,10 +78,9 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
         file.seekg(dataSize, std::ios::cur);
     }
     file.close();
-    ServerLog::Info("start parse. file id:", fileId);
     Timeline::ParserStatusManager::Instance().SetParserStatus(fileId, Timeline::ParserStatus::INIT);
+    ServerLog::Info("Start simulation parse. file id: ", fileId);
     threadPool->AddTask(PreParseTask, fileId);
-
     return true;
 }
 
@@ -166,23 +165,28 @@ void SourceFileParser::ParseTask(const std::string &fileId, std::pair<int64_t, i
 }
 std::pair<int64_t, int64_t> SourceFileParser::AdjustPosition(std::ifstream &file, int64_t start, int64_t end)
 {
-    file.seekg(start, std::ios::beg);
-    std::string startLine;
-    int64_t contentStart = 0;
-    int64_t contentEnd = 0;
-    while (file.tellg() < end) {
-        std::getline(file, startLine);
-        for (int64_t i = 0; i < startLine.size(); i++) {
-            if (startLine[i] == '[') {
-                int64_t pos = file.tellg();
-                int64_t lineSize = startLine.size();
-                contentStart = pos - lineSize + i;
-                break;
-            }
+    int64_t contentStart = start;
+    int64_t contentEnd = end;
+    file.seekg(contentStart, std::ios::beg);
+    char startTemp;
+    while (file.get(startTemp)) {
+        if (startTemp == '[') {
+            contentStart++;
+            break;
         }
+        contentStart++;
     }
-    const int contentTailLenth = 4;
-    contentEnd = end - contentTailLenth;
+    file.seekg(contentEnd, std::ios::beg);
+    char endTemp;
+    const int offset = -2;
+    while (file.get(endTemp)) {
+        if (endTemp == ']') {
+            contentEnd--;
+            break;
+        }
+        contentEnd--;
+        file.seekg(offset, std::ifstream::cur);
+    }
     return std::make_pair(contentStart, contentEnd);
 }
 
