@@ -206,6 +206,7 @@ template <> std::optional<document_t> ToResponseJson<MatrixListResponse>(const M
         JsonUtil::AddMember(itemJson, "transitTime", matrix.transitTime, allocator);
         JsonUtil::AddMember(itemJson, "bandwidth", matrix.bandwidth, allocator);
         JsonUtil::AddMember(itemJson, "transitSize", matrix.transitSize, allocator);
+        JsonUtil::AddMember(itemJson, "opName", matrix.opName, allocator);
         matrixList.PushBack(itemJson, allocator);
     }
     JsonUtil::AddMember(body, "matrixList", matrixList, allocator);

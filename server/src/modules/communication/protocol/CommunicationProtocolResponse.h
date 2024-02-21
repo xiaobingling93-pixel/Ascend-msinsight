@@ -121,6 +121,7 @@ struct MatrixList {
     int srcRank;
     int dstRank;
     std::string transportType;
+    std::string opName;
     double transitSize;
     double transitTime;
     double bandwidth;

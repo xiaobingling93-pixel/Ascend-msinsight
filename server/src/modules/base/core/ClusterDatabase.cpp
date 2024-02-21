@@ -672,7 +672,8 @@ bool ClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
                       "transport_type as transportType, "
                       "ROUND(transit_size, 4) as transitSize, "
                       "ROUND(transit_time, 4) as transitTime, "
-                      "ROUND(bandwidth, 4) as bandwidth "
+                      "ROUND(bandwidth, 4) as bandwidth ,"
+                      "op_name as opName "
                       "FROM " + TABLE_COMMUNICATION_MATRIX +
                       " WHERE group_id = ? AND iteration_id = ? AND op_sort = ? ";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -691,6 +692,7 @@ bool ClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
         matrixList.transitSize = sqlite3_column_double(stmt, col++);
         matrixList.transitTime = sqlite3_column_double(stmt, col++);
         matrixList.bandwidth = sqlite3_column_double(stmt, col++);
+        matrixList.opName = sqlite3_column_string(stmt, col++);
         responseBody.matrixList.emplace_back(matrixList);
     }
     sqlite3_finalize(stmt);
