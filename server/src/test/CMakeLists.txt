@@ -13,6 +13,7 @@ aux_source_directory(${TEST_HOME_DIR}/modules/timeline TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/communication TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/operator TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/common TEST)
+aux_source_directory(${TEST_HOME_DIR}/modules/source TEST)
 aux_source_directory(${TEST_HOME_DIR}/performance PERFORMANCE_TEST)
 
 list(APPEND DIC_TEST_LIST
