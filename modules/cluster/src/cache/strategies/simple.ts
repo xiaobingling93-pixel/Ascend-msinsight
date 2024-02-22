@@ -50,7 +50,7 @@ export class SimpleOfflineTimeSeriesCache<K extends KeysMatching<any, unknown[]>
         if (this.data === undefined) {
             throw new Error('fetch data failed in SimpleOfflineTimeSeriesCache');
         }
-        const [ start, end ] = getRange(session);
+        const [start, end] = getRange(session);
         const startIndex = binarySearchLastSmall(this.data as any[], this.getTime, start);
         const endIndex = binarySearchFirstBig(this.data as any[], this.getTime, end);
         return {
@@ -90,7 +90,7 @@ export class SimpleOfflineGroupedTimeSeriesCache<K extends KeysMatching<any, obj
         if (this.data === undefined) {
             throw new Error('fetch data failed in SimpleOfflineGroupedTimeSeriesCache');
         }
-        const [ start, end ] = getRange(session);
+        const [start, end] = getRange(session);
         return {
             [this.key]: this.data.map((it: any[]) => {
                 const startIndex = binarySearchLastSmall(it as Array<ElementType<ElementType<any>>>, this.getTime, start);

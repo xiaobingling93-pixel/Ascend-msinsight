@@ -16,6 +16,7 @@ import { VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails } from '../../utils/RequestUtils';
 import { totalOperator } from './Filter';
 import ResizeTable from '../resize/ResizeTable';
+import type { Session } from '../../entity/session';
 
 export interface DataType {
     'Rank ID': string ;
@@ -73,19 +74,19 @@ const commonColumns: ColumnsType<DataType> = [
         dataIndex: 'idleTime',
         sorter: (a: DataType, b: DataType) => a.idleTime - b.idleTime,
         ellipsis: true,
-    } ];
+    }];
 
 // Total HCCL Opertators表
 const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
     const defaultSorter = { field: 'elapseTime', order: 'descend' };
-    const [ dataSource, setDataSource ] = useState<any[]>([]);
-    const [ page, setPage ] = useState(defaultPage);
-    const [ sorter, setSorter ] = useState(defaultSorter);
+    const [dataSource, setDataSource] = useState<any[]>([]);
+    const [page, setPage] = useState(defaultPage);
+    const [sorter, setSorter] = useState(defaultSorter);
 
     useEffect(() => {
         updateData(page, sorter);
-    }, [ page.current, page.pageSize, sorter.field, sorter.order, conditions.iterationId, record.rankId ]);
+    }, [page.current, page.pageSize, sorter.field, sorter.order, conditions.iterationId, record.rankId]);
     const updateData = async(page: any, sorter: {field: string;order: string}): Promise<void> => {
         const res = await queryOperatorDetails({
             iterationId: conditions.iterationId,
@@ -119,7 +120,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
 };
 
 const getRankColumns = (handleAction: VoidFunction[], conditions: any): any => {
-    const [ showOperator, setExpandedKeys ] = handleAction;
+    const [showOperator, setExpandedKeys] = handleAction;
     return [
         {
             title: 'Rank ID',
@@ -166,9 +167,9 @@ const getRankColumns = (handleAction: VoidFunction[], conditions: any): any => {
 };
 const rowKey = 'index';
 const CommunicationTimeTable = observer(function (props:
-{dataSource?: DataType[];showOperator: (rankid: string) => void;conditions: any;updateSort: VoidFunction}) {
-    const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
-    const columns = getRankColumns([ props.showOperator, setExpandedKeys ], props.conditions);
+{dataSource?: DataType[];showOperator: (rankid: string) => void;conditions: any;updateSort: VoidFunction; session: Session}) {
+    const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
+    const columns = getRankColumns([props.showOperator, setExpandedKeys], props.conditions);
     const dataSource: DataType[] = props.dataSource ?? [];
     useEffect(() => {
         setExpandedKeys([]);
@@ -178,6 +179,7 @@ const CommunicationTimeTable = observer(function (props:
             title={'Data Analysis of Communication Time'}
             style={{ margin: '1rem 0' }}
             content={<ResizeTable
+                loading={!props.session.durationFileCompleted}
                 dataSource={dataSource}
                 columns={columns}
                 expandable={{

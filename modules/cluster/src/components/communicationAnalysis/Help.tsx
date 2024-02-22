@@ -2,12 +2,12 @@ import { Typography } from 'antd';
 import React from 'react';
 import { Container } from '../Common';
 
-const hit = [ {
+const hit = [{
     title: '1. Check whether the Wait Time Ratio of a rank is greater than 0.2 (threshold).',
     contentlist: [
         '(1) If yes, a communication bottleneck exists in this cluster, go to step 2 for further analysis.',
         '(2) If no, it can be preliminarily determined that this iteration does not have a communication ' +
-        'bottleneck. Go to the communication matrix page to check the overall bandwidth usage.' ],
+        'bottleneck. Go to the communication matrix page to check the overall bandwidth usage.'],
 }, {
     title: '2. Check whether the Synchronization Time Ratio Before Transit of the rank with the largest ' +
         'Wait Time Ratio is greater than 0.2 (threshold).',

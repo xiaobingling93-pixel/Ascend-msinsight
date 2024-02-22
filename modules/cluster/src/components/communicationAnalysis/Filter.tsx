@@ -7,14 +7,14 @@ import React, { useEffect } from 'react';
 import { Select, Radio } from 'antd';
 import { Label } from '../Common';
 import { optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
-import { queryIterations, queryOperators, queryRanks, queryStages } from '../../utils/RequestUtils';
+import { queryIterations, queryMatrixOperators, queryOperators, queryRanks, queryStages } from '../../utils/RequestUtils';
 import { Session } from '../../entity/session';
 
 export interface ConditionDataType{
     iterationId: string ;
     rankIds: string[];
     operatorName: string ;
-    type?: string;
+    type: string;
     stage: string;
 }
 export const totalOperator = 'Total Op Info';
@@ -23,7 +23,7 @@ const defaultCondition = {
     stage: '',
     rankIds: [],
     operatorName: '',
-    type: 'CommunicationDurationAnalysis',
+    type: 'CommunicationMatrix',
 };
 const defaultOptionMap = {
     iterationOptions: [],
@@ -49,10 +49,11 @@ const setOptions = async(initObj = {} as ConditionDataType): Promise<void> => {
         optionMap.stageOptions = stageOptions;
         conditions.stage = stage;
     });
+    const type = initObj.type ?? 'CommunicationMatrix';
 
     // Operator Name
     const operatorOptions: optionDataType[] =
-        await getOperatorOptions({ iterationId, rankList: [], stage });
+        await getOperatorOptions({ iterationId, rankList: [], stage, type });
     const operatorName = initObj.operatorName || totalOperator;
     runInAction(() => {
         optionMap.operatorOptions = operatorOptions;
@@ -73,10 +74,12 @@ const getStageOptions = async (iterationId: string): Promise<optionDataType[]> =
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;
 };
-const getOperatorOptions = async ({ iterationId, rankList, stage }: {iterationId: string;
-    rankList: string[]; stage: string;}):
+const getOperatorOptions = async ({ iterationId, rankList, stage, type }: {iterationId: string;
+    rankList: string[]; stage: string;type: string;}):
 Promise<optionDataType[]> => {
-    const res: {operatorName: string[] } = await queryOperators({ iterationId, rankList, stage });
+    const res: {operatorName: string[] } = (type === 'CommunicationDurationAnalysis'
+        ? await queryOperators({ iterationId, rankList, stage })
+        : await queryMatrixOperators({ iterationId, stage }));
     const list = res.operatorName;
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;
@@ -105,9 +108,9 @@ const handleRelatedChange = async (source: string, value: string): Promise<void>
             conditions.stage = stage;
         });
     }
-    if ([ 'iterationId', 'stage' ].includes(source)) {
+    if (['iterationId', 'stage', 'type'].includes(source)) {
         const operatorOptions: optionDataType[] = await getOperatorOptions(
-            { iterationId: conditions.iterationId, rankList: [], stage: conditions.stage });
+            { iterationId: conditions.iterationId, rankList: [], stage: conditions.stage, type: conditions.type });
         runInAction(() => {
             optionMap.operatorOptions = operatorOptions;
             if (!operatorOptions.map(item => item.value).includes(conditions.operatorName)) {
@@ -125,7 +128,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
         observe(conditions, (change) => {
             handleFilterChange(conditions);
         });
-    }, [ ]);
+    }, []);
     useEffect(() => {
         setOptions({ stage: activeCommunicator } as ConditionDataType);
     }, [session.allRankIds]);
@@ -173,8 +176,8 @@ const FilterCom = observer((): JSX.Element => {
         <FormItem content={(
             <Radio.Group value={conditions.type}
                 onChange={(e) => { handleChange('type', e.target.value); }}>
-                <Radio value={'CommunicationDurationAnalysis'}>Communication Duration Analysis</Radio>
                 <Radio value={'CommunicationMatrix'}>Communication Matrix</Radio>
+                <Radio value={'CommunicationDurationAnalysis'}>Communication Duration Analysis</Radio>
             </Radio.Group>)}/>
         <div>
         </div>

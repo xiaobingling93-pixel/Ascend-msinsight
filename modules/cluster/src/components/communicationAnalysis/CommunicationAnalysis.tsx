@@ -44,8 +44,8 @@ const searchData = async (conditions: ConditionDataType): Promise<showDataType> 
 };
 const wrapChartData = (data: tableDataType[]): chartDataType => {
     // 显示字段
-    const fields = [ 'rankId', 'elapseTime', 'transitTime', 'synchronizationTime',
-        'waitTime', 'synchronizationTimeRatio', 'waitTimeRatio' ];
+    const fields = ['rankId', 'elapseTime', 'transitTime', 'synchronizationTime',
+        'waitTime', 'synchronizationTimeRatio', 'waitTimeRatio'];
     const chartData: chartDataType = {} as chartDataType;
     fields.forEach(field => {
         chartData[field] = data.map((item: any) => item[field]);
@@ -54,13 +54,13 @@ const wrapChartData = (data: tableDataType[]): chartDataType => {
 };
 
 const CommunicationAnalysis = observer(function ({ session, active = true }: { session: Session;active?: boolean }) {
-    const [ rankId, setRankId ] = useState('');
-    const [ showData, setShowData ] = useState<showDataType>({
+    const [rankId, setRankId] = useState('');
+    const [showData, setShowData] = useState<showDataType>({
         chartData: {} as chartDataType,
         tableData: [],
     });
-    const [ conditions, setConditions ] = useState<ConditionDataType>(
-        { iterationId: '', rankIds: [], operatorName: '', type: 'CommunicationDurationAnalysis', stage: '' });
+    const [conditions, setConditions] = useState<ConditionDataType>(
+        { iterationId: '', rankIds: [], operatorName: '', type: 'CommunicationMatrix', stage: '' });
     const showOperator = (rankId: string): void => {
         setRankId(rankId);
     };
@@ -85,6 +85,16 @@ const CommunicationAnalysis = observer(function ({ session, active = true }: { s
             input.setAttribute('maxlength', '200');
         });
     });
+    useEffect(() => {
+        search();
+        async function search(): Promise<void> {
+            if (showData.tableData.length === 0 && conditions.type === 'CommunicationDurationAnalysis') {
+                const res = await searchData(conditions);
+                setShowData(res);
+            }
+        }
+    }, [session.durationFileCompleted]);
+
     return <CommunicationAnalysisCom
         session={session}
         handleFilterChange={handleFilterChange} showData={showData}
@@ -108,8 +118,8 @@ const CommunicationAnalysisCom = (props: {isShow:
                 position={'left'}
                 drag={<Help />}
                 main={ <div style={{ padding: '0 16px' }}>
-                    <CommunicationTimeChart dataSource={showData.chartData} active={active}/>
-                    <CommunicationTimeTable showOperator={showOperator} dataSource={showData.tableData}
+                    <CommunicationTimeChart dataSource={showData.chartData} session={session}/>
+                    <CommunicationTimeTable showOperator={showOperator} dataSource={showData.tableData} session={session}
                         conditions={conditions} updateSort={(data) => {
                             setShowData({ ...showData, chartData: wrapChartData(data) });
                         }}/>

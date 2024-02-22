@@ -4,7 +4,8 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import * as echarts from 'echarts';
-import { addResizeEvent, chartVisbilityListener, COLOR, Container } from '../Common';
+import { addResizeEvent, chartVisbilityListener, COLOR, Container, Loading } from '../Common';
+import type { Session } from '../../entity/session';
 
 function InitCharts(data: dataType): void {
     const chartDom = document.getElementById('main');
@@ -18,8 +19,8 @@ function InitCharts(data: dataType): void {
 }
 function wrapData(data: dataType): any {
     baseOption.xAxis[0].data = data.rankId;
-    const order: Array<keyof dataType> = [ 'elapseTime', 'transitTime', 'synchronizationTime',
-        'waitTime', 'synchronizationTimeRatio', 'waitTimeRatio' ];
+    const order: Array<keyof dataType> = ['elapseTime', 'transitTime', 'synchronizationTime',
+        'waitTime', 'synchronizationTimeRatio', 'waitTimeRatio'];
     for (let i = 0; i < 6; i++) {
         baseOption.series[i].data = data[order[i]];
     }
@@ -41,7 +42,7 @@ const baseOption: any = {
     toolbox: {
         feature: {
             dataView: { show: true, readOnly: false },
-            magicType: { show: true, type: [ 'line', 'bar' ] },
+            magicType: { show: true, type: ['line', 'bar'] },
             restore: { show: true },
         },
         top: 20,
@@ -53,7 +54,7 @@ const baseOption: any = {
             { name: 'Synchronization Time', textStyle: { color: COLOR.Grey50 } },
             { name: 'Wait Time', textStyle: { color: COLOR.Grey50 } },
             { name: 'Synchronization Time Ratio', textStyle: { color: COLOR.Grey50 } },
-            { name: 'Wait Time Ratio', textStyle: { color: COLOR.Grey50 } } ],
+            { name: 'Wait Time Ratio', textStyle: { color: COLOR.Grey50 } }],
         tooltip: {
             show: true,
             formatter: function () {
@@ -109,7 +110,7 @@ const baseOption: any = {
                     return value + 'ms';
                 },
             },
-            data: [ ],
+            data: [],
         },
         {
             name: 'Transit Time',
@@ -119,7 +120,7 @@ const baseOption: any = {
                     return value + 'ms';
                 },
             },
-            data: [ ],
+            data: [],
         },
         {
             name: 'Synchronization Time',
@@ -129,7 +130,7 @@ const baseOption: any = {
                     return value + 'ms';
                 },
             },
-            data: [ ],
+            data: [],
         },
         {
             name: 'Wait Time',
@@ -150,7 +151,7 @@ const baseOption: any = {
                     return value;
                 },
             },
-            data: [ ],
+            data: [],
         },
         {
             name: 'Wait Time Ratio',
@@ -161,7 +162,7 @@ const baseOption: any = {
                     return value;
                 },
             },
-            data: [ ],
+            data: [],
         },
     ],
     grid: {
@@ -180,7 +181,7 @@ export interface dataType{
     [name: string]: any;
 }
 
-const CommunicationTimeChart = observer(function ({ dataSource }: {dataSource: dataType;active: boolean}) {
+const CommunicationTimeChart = observer(({ dataSource, session }: {dataSource: dataType; session: Session}) => {
     chartVisbilityListener('main', () => {
         InitCharts(dataSource);
     });
@@ -192,7 +193,9 @@ const CommunicationTimeChart = observer(function ({ dataSource }: {dataSource: d
     return (
         <Container
             title={'Visualized Communication Time'}
-            content={<div id={'main'} style={{ height: '400px' }} ></div> }
+            content={session.durationFileCompleted
+                ? <div id={'main'} style={{ height: '400px' }} ></div>
+                : <div style={{ height: '400px' }}><Loading style={{ margin: '200px auto 0' }}/></div> }
             bodyStyle={{ overflow: 'visible' }}
         />
     );

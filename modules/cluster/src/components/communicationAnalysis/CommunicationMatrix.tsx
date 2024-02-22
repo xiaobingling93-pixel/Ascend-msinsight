@@ -38,7 +38,7 @@ function InitCharts(data: any): void {
     }
 }
 
-const allTransporType = [ 'HCCS', 'PCIE', 'RDMA', 'LOCAL' ];
+const allTransporType = ['HCCS', 'PCIE', 'RDMA', 'LOCAL'];
 function wrapData(dataSource: any): any {
     const { data, rankIds, type } = dataSource;
     const option: any = baseOption;
@@ -66,7 +66,7 @@ function wrapData(dataSource: any): any {
             orient: 'horizontal',
             left: 'center',
             bottom: '15%',
-            inRange: { color: [ COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3 ] },
+            inRange: { color: [COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3] },
             textStyle: { color: COLOR.Grey40 },
         };
         if (data.length > 0) {
@@ -119,7 +119,7 @@ const baseOption: any = {
     xAxis: {
         type: 'category',
         name: 'Src Rank Id',
-        data: [ ],
+        data: [],
         splitArea: {
             show: true,
         },
@@ -127,7 +127,7 @@ const baseOption: any = {
     yAxis: {
         type: 'category',
         name: 'Dst Rank Id',
-        data: [ ],
+        data: [],
         splitArea: {
             show: true,
         },
@@ -139,7 +139,7 @@ const baseOption: any = {
         orient: 'horizontal',
         left: 'center',
         bottom: '15%',
-        inRange: { color: [ COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3 ] },
+        inRange: { color: [COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3] },
         textStyle: { color: COLOR.Grey40 },
     },
     series: [
@@ -185,18 +185,18 @@ const transportTypeOption = {
 };
 
 const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow: boolean;conditions: ConditionDataType}) {
-    const [ dataSource, setDataSource ] = useState<{data: any[];rankIds: any[]}>({ data: [], rankIds: [] });
-    const [ switchCondition, setSwitchCondition ] = useState({ type: 'bandwidth', showInner: false });
+    const [dataSource, setDataSource] = useState<{data: any[];rankIds: any[]}>({ data: [], rankIds: [] });
+    const [switchCondition, setSwitchCondition] = useState({ type: 'bandwidth', showInner: false });
     useEffect(() => {
         if (isShow) {
             updateData(conditions);
         }
-    }, [ isShow, conditions ]);
+    }, [isShow, conditions]);
     useEffect(() => {
         if (isShow) {
             let data: any = dataSource.data.map((item: any) => {
-                return [ String(item.srcRank), String(item.dstRank),
-                    item[switchCondition.type] !== undefined ? item[switchCondition.type] : null ];
+                return [String(item.srcRank), String(item.dstRank),
+                    item[switchCondition.type] !== undefined ? item[switchCondition.type] : null];
             });
             if (!switchCondition.showInner) {
                 data = data.filter((item: any[]) => item[0] !== item[1]);
@@ -205,7 +205,7 @@ const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow:
                 dataSource.rankIds.includes(item[0]) && dataSource.rankIds.includes(item[1]));
             InitCharts({ ...dataSource, data, type: switchCondition.type });
         }
-    }, [ dataSource, switchCondition ]);
+    }, [dataSource, switchCondition]);
     const updateData = async(conditions: ConditionDataType): Promise<void> => {
         const param = { iterationId: conditions.iterationId, stage: conditions.stage, operatorName: conditions.operatorName };
         const res = await queryCommunicationMatrix(param);

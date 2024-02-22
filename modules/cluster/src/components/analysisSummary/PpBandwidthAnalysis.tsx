@@ -21,8 +21,8 @@ import ReactDOM from 'react-dom';
 import _ from 'lodash';
 
 const PpBandwidthAnalysis = observer(function ({ session }: { session: Session }) {
-    const [ allStageIds, setAllStageIds ] = useState<string[]>([]);
-    const [ conditions, setConditions ] = useState<ConditionDataType>(
+    const [allStageIds, setAllStageIds] = useState<string[]>([]);
+    const [conditions, setConditions] = useState<ConditionDataType>(
         { step: '', stage: '' });
 
     return (
@@ -50,7 +50,7 @@ const PPBandwidthChart: React.FC<any> = ({ conditions, allStageIds }: any) => {
             InitCharts('STAGE', conditions.step, conditions.stage, allStageIds);
             InitCharts('RANK', conditions.step, conditions.stage, allStageIds);
         }
-    }, [ conditions, allStageIds ]);
+    }, [conditions, allStageIds]);
     return (
         <div className={'bandwidthChart'}>
             <Row wrap={false}>
@@ -142,7 +142,7 @@ export interface RankDataType {
 
 export const getStepsData = async (): Promise<string[]> => {
     if (isNull(window.requestData)) {
-        return [ '0', '1', '2', '3' ];
+        return ['0', '1', '2', '3'];
     }
     const steps = await window.requestData('parallelism/pipeline/getAllSteps', {}, 'summary');
     return steps.data;

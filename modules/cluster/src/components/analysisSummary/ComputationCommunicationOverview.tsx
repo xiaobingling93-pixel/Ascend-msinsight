@@ -68,11 +68,11 @@ const baseOption: any = {
     xAxis: [
         {
             type: 'category',
-            data: [ ],
+            data: [],
             name: 'Rank',
             nameLocation: 'start',
             nameGap: 15,
-            nameTextStyle: { fontWeight: 'bold', fontSize: '1rem', padding: [ 0, 10, 0, 0 ] },
+            nameTextStyle: { fontWeight: 'bold', fontSize: '1rem', padding: [0, 10, 0, 0] },
             axisLabel: {
                 color: COLOR.Grey40,
             },
@@ -117,7 +117,7 @@ const baseOption: any = {
                     return value + ' μs';
                 },
             },
-            data: [ ],
+            data: [],
         },
         {
             id: 'communicationNotOverLappedTime',
@@ -132,7 +132,7 @@ const baseOption: any = {
                     return value + ' μs';
                 },
             },
-            data: [ ],
+            data: [],
         },
         {
             id: 'communicationOverLappedTime',
@@ -147,7 +147,7 @@ const baseOption: any = {
                     return value + ' μs';
                 },
             },
-            data: [ ],
+            data: [],
         },
         {
             id: 'freeTime',
@@ -162,7 +162,7 @@ const baseOption: any = {
                     return value + ' μs';
                 },
             },
-            data: [ ],
+            data: [],
         },
         {
             name: 'Computing Ratio',
@@ -173,7 +173,7 @@ const baseOption: any = {
                     return value + ' %';
                 },
             },
-            data: [ ],
+            data: [],
         },
         {
             name: 'Communication Ratio',
@@ -184,17 +184,17 @@ const baseOption: any = {
                     return value + ' %';
                 },
             },
-            data: [ ],
+            data: [],
         },
     ],
 };
 function wrapData(data: SummaryDataType[]): any {
     data.forEach(item => {
-        const list = [ 'computingTime', 'communicationNotOverLappedTime', 'communicationOverLappedTime', 'freeTime' ];
+        const list = ['computingTime', 'communicationNotOverLappedTime', 'communicationOverLappedTime', 'freeTime'];
         list.forEach(field => {
             item[field] = Number(item[field].toFixed(4));
         });
-        const totalFields = [ 'computingTime', 'communicationNotOverLappedTime', 'freeTime' ];
+        const totalFields = ['computingTime', 'communicationNotOverLappedTime', 'freeTime'];
         let total = 0;
         totalFields.forEach(field => {
             total += item[field];
@@ -204,8 +204,8 @@ function wrapData(data: SummaryDataType[]): any {
         item.communicationTimeRatio = Number((100 * item.communicationNotOverLappedTime / total).toFixed(2));
     });
     baseOption.xAxis[0].data = data.map(item => item.rankId);
-    const order: Array<keyof SummaryDataType> = [ 'computingTime', 'communicationNotOverLappedTime',
-        'communicationOverLappedTime', 'freeTime', 'computeTimeRatio', 'communicationTimeRatio' ];
+    const order: Array<keyof SummaryDataType> = ['computingTime', 'communicationNotOverLappedTime',
+        'communicationOverLappedTime', 'freeTime', 'computeTimeRatio', 'communicationTimeRatio'];
     for (let i = 0; i < order.length; i++) {
         baseOption.series[i].data = data.map(item => item[order[i]]);
     }
@@ -239,16 +239,16 @@ export const hit = (<Tooltip title={
 </Tooltip>);
 
 const ComputationCommunicationOverview = observer(({ session, active = true }: { session: Session ;active?: boolean}): JSX.Element => {
-    const [ dataSource, setDatasource ] = useState<SummaryDataType[]>([]);
-    const [ allDataSource, setAllDatasource ] = useState<SummaryDataType[]>([]);
-    const [ selected, setSelected ] = useState({ rankId: '', step: '' });
+    const [dataSource, setDatasource] = useState<SummaryDataType[]>([]);
+    const [allDataSource, setAllDatasource] = useState<SummaryDataType[]>([]);
+    const [selected, setSelected] = useState({ rankId: '', step: '' });
     useEffect(() => {
         setTimeout(() => {
             if (active) {
                 initCharts(dataSource, handleClick);
             }
         });
-    }, [ dataSource, active ]);
+    }, [dataSource, active]);
     const handleFilterChange = async (conditions: ConditionDataType, doQuery?: boolean): Promise<void> => {
         if (doQuery === false) {
             let data = [...allDataSource];
@@ -275,7 +275,7 @@ const ComputationCommunicationOverview = observer(({ session, active = true }: {
         : <></>;
 });
 const OverviewCom = ({ handleFilterChange, dataSource, selected, session }: any): JSX.Element => {
-    const [ pipelineVisible, setPipelineVisible ] = useState(true);
+    const [pipelineVisible, setPipelineVisible] = useState(true);
     useEventBus('setActiveTab', (data) => {
         setPipelineVisible(data === 'pp');
     });

@@ -28,7 +28,7 @@ export function preOrderFlatten<T>(tree: Array<TreeNode<T>>, currentLevel: numbe
         } else {
             const self = (options?.exclude?.(node) ?? false) ? [] : [node];
             if (node.children && (options?.when?.(node) ?? true)) {
-                return [ ...self, ...preOrderFlatten(node.children, currentLevel + 1, options) ];
+                return [...self, ...preOrderFlatten(node.children, currentLevel + 1, options)];
             } else {
                 return self;
             }

@@ -440,10 +440,10 @@ const handleDraggableShow = (dragDirection: DragDirection, container: number[], 
 };
 
 const containerMap: Map<DragDirection, typeof ContainerBase> = new Map([
-    [ DragDirection.top, ContainerTop ],
-    [ DragDirection.bottom, ContainerBottom ],
-    [ DragDirection.left, ContainerLeft ],
-    [ DragDirection.right, ContainerRight ],
+    [DragDirection.top, ContainerTop],
+    [DragDirection.bottom, ContainerBottom],
+    [DragDirection.left, ContainerLeft],
+    [DragDirection.right, ContainerRight],
 ]);
 
 /**
@@ -456,19 +456,19 @@ const containerMap: Map<DragDirection, typeof ContainerBase> = new Map([
 export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => JSX.Element), ((needOpen?: boolean) => void) ] => {
     const { draggableWH, dragDirection, open = true } = props;
     const container = useRef<HTMLDivElement>(null); const draggable = useRef<HTMLDivElement>(null);
-    const [ dragWh, setDragWh ] = useState(String(draggableWH));
-    const [ autoPopUp, setAutoPopUp ] = useState(true);
-    const [ containerWH, setContainerWH ] = useState([ 0, 0 ]);
-    useEffect(() => { setDragWh(pxConvert(draggableWH, containerWH, dragDirection)); }, [ draggableWH, containerWH, dragDirection ]);
+    const [dragWh, setDragWh] = useState(String(draggableWH));
+    const [autoPopUp, setAutoPopUp] = useState(true);
+    const [containerWH, setContainerWH] = useState([0, 0]);
+    useEffect(() => { setDragWh(pxConvert(draggableWH, containerWH, dragDirection)); }, [draggableWH, containerWH, dragDirection]);
     const MIN_DRAG_WH = useMemo(() => dragDirection <= 1 ? MIN_VERTICAL_WH : MIN_HORIZONTAL_WH, [dragDirection]);
-    const [ dragTranslate, setDragTranslate ] = useState(open ? 0 : draggableWH); // 可拖动的距离范围。0 | 具体某个值
+    const [dragTranslate, setDragTranslate] = useState(open ? 0 : draggableWH); // 可拖动的距离范围。0 | 具体某个值
     const isOpen = useRef(dragTranslate === 0);
     useEffect(() => {
         const dom = container.current;
         if (dom) {
-            setContainerWH([ dom.clientWidth, dom.clientHeight ]);
+            setContainerWH([dom.clientWidth, dom.clientHeight]);
         }
-    }, [ isOpen.current, setContainerWH ]);
+    }, [isOpen.current, setContainerWH]);
     const movingState = useRef<MovingState>({ stat: 'idle', startX: 0, startY: 0, screenY: 0, screenX: 0 });
     const onMousedown = getHandleMouseDown(dragDirection, draggable, movingState, isOpen);
     const onMousemove = handleMouseMove(container, draggable, movingState, dragDirection, MIN_DRAG_WH);
@@ -495,5 +495,5 @@ export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => 
             {props.slot}
         </Container>;
     };
-    return [ view, handleOpen ];
+    return [view, handleOpen];
 };

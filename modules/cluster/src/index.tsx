@@ -7,7 +7,7 @@ import connector from './connection';
 import { NOTIFICATION_HANDLERS } from './interface';
 import React from 'react';
 
-Object.entries(NOTIFICATION_HANDLERS).forEach(([ event, callback ]) => {
+Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
     connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
         const res = e.data;
         if (res.body === undefined || typeof res.body !== 'object') {

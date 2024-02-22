@@ -7,7 +7,7 @@ describe('eventBus test', () => {
     let testParam: dataType;
     beforeAll(() => {
         const groups = new Map<string, number[]>();
-        groups.set('stage1', [ 0, 1, 2 ]);
+        groups.set('stage1', [0, 1, 2]);
         testParam = {
             rankGroups: groups,
             currentCommunicator: 'stage1',

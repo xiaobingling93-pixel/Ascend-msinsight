@@ -16,7 +16,7 @@ import {
  */
 export const queryIterations = async(): Promise<any> => {
     if (isNull(window.requestData)) {
-        return [ 0, 1, 2, 3 ];
+        return [0, 1, 2, 3];
     }
     return window.requestData('communication/duration/iterations', {});
 };
@@ -40,7 +40,7 @@ export const queryStages = async(param: {iterationId: string }): Promise<any> =>
  */
 export const queryRanks = async(param: {iterationId: string }): Promise<any> => {
     if (isNull(window.requestData)) {
-        return [ 0, 1, 2, 3 ];
+        return [0, 1, 2, 3];
     }
     return window.requestData('communication/duration/ranks', param);
 };
@@ -53,9 +53,22 @@ export const queryRanks = async(param: {iterationId: string }): Promise<any> => 
  */
 export const queryOperators = async(param: {iterationId: string ;rankList: string[];stage: string}): Promise<any> => {
     if (isNull(window.requestData)) {
-        return [ 'op1', 1, 2, 3 ];
+        return ['op1', 1, 2, 3];
     }
     return window.requestData('communication/duration/operatorNames', param);
+};
+
+/**
+ * 查询通信矩阵中所有算子的名称
+ * @param {string} iterationId 迭代ID
+ * @param {string} stage 通信域
+ * @return {[]} 返回算子名数组[0,1,2,3]
+ */
+export const queryMatrixOperators = async(param: {iterationId: string ;stage: string}): Promise<any> => {
+    if (isNull(window.requestData)) {
+        return ['op1', 1, 2, 3];
+    }
+    return window.requestData('communication/matrix/sortOpNames', param);
 };
 
 /**
@@ -120,7 +133,7 @@ export const queryComputeDetail = async (param: {
     rankId: string; timeFlag: string; pageSize: number;currentPage: number;orderBy: string;order: string;
 }): Promise<any> => {
     if (isNull(window.requestData)) {
-        return [ ];
+        return [];
     }
     return window.requestData('summary/queryComputeDetail', param);
 };
@@ -128,7 +141,7 @@ export const queryComputeDetail = async (param: {
 export const queryCommunicationDetail = async (param: {
     rankId: string; pageSize: number;currentPage: number;orderBy: string;order: string;}): Promise<any> => {
     if (isNull(window.requestData)) {
-        return [ ];
+        return [];
     }
     return window.requestData('summary/queryCommunicationDetail', param);
 };

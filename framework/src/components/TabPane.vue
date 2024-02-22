@@ -70,7 +70,7 @@ onMounted(async () => {
         setSession(updateState);
         setTimeout(() => {
             const isSend = updateState.parseCompleted !== undefined || updateState.clusterCompleted !== undefined || updateState.unitcount !== undefined
-                || updateState.isBinary;
+                || updateState.isBinary || updateState.durationFileCompleted;
             if (isSend) {
                 connector.send({
                     event: 'updateSession',
@@ -93,7 +93,8 @@ onMounted(async () => {
                 clusterCompleted: session.clusterCompleted,
                 unitcount: session.unitcount,
                 coreList: session.coreList,
-                sourceList: session.sourceList
+                sourceList: session.sourceList,
+                durationFileCompleted: session.durationFileCompleted,
             },
         });
     });

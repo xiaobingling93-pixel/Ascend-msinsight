@@ -84,7 +84,7 @@ module.exports = {
     'react/prop-types': 0,
     'jsx-quotes': 1,
     'object-curly-spacing': ['error', 'always'],
-    'array-bracket-spacing': ['error', 'always', { 'singleValue': false }],
+    'array-bracket-spacing': ['error', 'never', { 'singleValue': false }],
     'react-hooks/exhaustive-deps': 0,
     '@typescript-eslint/member-delimiter-style': ['error', {
       "multiline": {

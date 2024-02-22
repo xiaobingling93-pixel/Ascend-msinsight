@@ -192,7 +192,7 @@ const colMap: any = {
 const getTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
     const rowKey = rowKeyMap[timeFlag];
     const columns = notNull(colMap[timeFlag]) ? [...colMap[timeFlag]] : [];
-    if ([ 'compute', 'communication' ].includes(timeFlag)) {
+    if (['compute', 'communication'].includes(timeFlag)) {
         const btnCol = {
             title: 'Details',
             ellipsis: true,
@@ -249,13 +249,13 @@ const serachData = async({ rankId, record, page, sorter, name, step }: any): Pro
 const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: '', order: 'descend' };
 const DetailTable = ({ rankId, record, name, step }: any): JSX.Element => {
-    const [ dataSource, setDataSource ] = useState<any[]>([]);
-    const [ page, setPage ] = useState(defaultPage);
-    const [ sorter, setSorter ] = useState(defaultSorter);
+    const [dataSource, setDataSource] = useState<any[]>([]);
+    const [page, setPage] = useState(defaultPage);
+    const [sorter, setSorter] = useState(defaultSorter);
     const { columns, rowKey } = getTableSet(name);
     useEffect(() => {
         updateData(page, sorter);
-    }, [ page.current, page.pageSize, sorter.field, sorter.order, record.acceleratorCore, rankId ]);
+    }, [page.current, page.pageSize, sorter.field, sorter.order, record.acceleratorCore, rankId]);
     const updateData = async(page: any, sorter: any): Promise<void> => {
         const { data, total } = await serachData({ rankId, record, page, sorter, name, step });
         setDataSource(data);
@@ -292,13 +292,13 @@ function getTitle(timeFlag: string): string {
 export const ComputeStatisticsTable = (props: any): JSX.Element => {
     const timeFlag = 'compute';
     const { rankId = '', step = '' } = props;
-    const [ dataSource, setDataSource ] = useState<any[]>([]);
-    const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
+    const [dataSource, setDataSource] = useState<any[]>([]);
+    const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
     const { columns, rowKey } = getTableSet(timeFlag, setExpandedKeys);
     useEffect(() => {
         updateData();
         setExpandedKeys([]);
-    }, [ props.rankId, props.step ]);
+    }, [props.rankId, props.step]);
     const updateData = async (): Promise<void> => {
         const res = await querySummaryStatistics({ timeFlag, rankId, stepId: step === 'All' ? '' : step });
         let data = res.summaryStatisticsItemList ?? [];
@@ -328,16 +328,16 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
 export const CommunicationStatisticsTable = (props: any): JSX.Element => {
     const timeFlag = 'communication';
     const { rankId = '', step = '' } = props;
-    const [ dataSource, setDataSource ] = useState<any[]>([]);
-    const [ expandedRowKeys, setExpandedKeys ] = useState<string[]>([]);
+    const [dataSource, setDataSource] = useState<any[]>([]);
+    const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
     const { columns, rowKey } = getTableSet(timeFlag, setExpandedKeys);
     useEffect(() => {
         updateData();
         setExpandedKeys([]);
-    }, [ props.rankId, props.step ]);
+    }, [props.rankId, props.step]);
     const updateData = async (): Promise<void> => {
         const res = await querySummaryStatistics({ timeFlag, rankId, stepId: step === 'All' ? '' : step });
-        const list: any[] = res.summaryStatisticsItemList ?? [ ];
+        const list: any[] = res.summaryStatisticsItemList ?? [];
         const data = {
             acceleratorCore: 'HCCL',
             Overlapped: list.find(item => item.overlapType === 'Communication(Overlapped)')?.duration,

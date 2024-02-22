@@ -27,10 +27,10 @@ export type tabData = {
 };
 
 export const titleMap = new Map([
-    [ 'pp', 'Pipeline Parallel' ],
-    [ 'tp', 'Tensor Parallel' ],
-    [ 'dp', 'Data Parallel' ],
-    [ 'tpOrDp', 'Tensor/Data Parallel' ],
+    ['pp', 'Pipeline Parallel'],
+    ['tp', 'Tensor Parallel'],
+    ['dp', 'Data Parallel'],
+    ['tpOrDp', 'Tensor/Data Parallel'],
 ]);
 
 export const getPpContainerData = (data: communicatorContainerData, mode: string): any[] => {

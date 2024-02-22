@@ -280,7 +280,7 @@ const SingleSelect = ({ theme, tabState, optionVal, options, style, origin }: Si
 
 // 多选列表
 const MultiSelect = ({ theme, tabState, dftVal, options, style, mode }: MultipleSelectProps): JSX.Element => {
-    const [ dirty, setDirty ] = React.useState(false);
+    const [dirty, setDirty] = React.useState(false);
     return <Select
         className="multiSelect"
         defaultValue={dftVal}
@@ -318,7 +318,7 @@ const checkMutilSelect = (tabState: TabState): any[] => {
         const multiOptions = temp.map((item: string) => ({ value: item, label: item }));
         const filterKeys = tabState.filter?.filterKeys ?? [];
         tabState.filter.options = multiOptions;
-        return [ multiOptions, filterKeys ];
+        return [multiOptions, filterKeys];
     }
     return [];
 };
@@ -341,7 +341,7 @@ const switchChange = (checked: boolean, tabState: TabState): void => {
 };
 
 const SearchContainer = observer(({ initialContent, fieldName, tabState }: { initialContent: string; fieldName: string; tabState: TabState }) => {
-    const [ content, setContent ] = useState(initialContent);
+    const [content, setContent] = useState(initialContent);
 
     const handleInput = (e: React.ChangeEvent<HTMLInputElement>): void => { setContent(e.target.value); };
 
@@ -367,9 +367,9 @@ export const FilterContainer = observer(({ tabState }: {tabState: TabState}) => 
     const { option1, option2 } = tabState?.trigger ?? {};
     const { options1, options2 } = tabState;
     // 多选，通过选项过滤
-    const [ multiOptions, filterKeys ] = tabState?.filter?.type === FilterType.MULTI_FILTER ? checkMutilSelect(tabState) : [];
+    const [multiOptions, filterKeys] = tabState?.filter?.type === FilterType.MULTI_FILTER ? checkMutilSelect(tabState) : [];
     // 搜索内容
-    const [ fieldName, content ] = tabState?.search !== undefined ? [ tabState?.search?.fieldName, tabState?.search?.content ] : [];
+    const [fieldName, content] = tabState?.search !== undefined ? [tabState?.search?.fieldName, tabState?.search?.content] : [];
     // switch开关
     const { checked, tips, changeCallBack } = tabState?.switch ?? {};
 

@@ -231,3 +231,11 @@ export const clusterCompletedHandler: NotificationHandler = (data): void => {
         body: { isCluster: clusterRes, clusterCompleted: clusterRes },
     });
 };
+
+export const clusterDurationCompletedHandler: NotificationHandler = (data): void => {
+    const clusterRes = data?.parseResult === 'ok';
+    connector.send({
+        event: 'updateSession',
+        body: { isCluster: clusterRes, durationFileCompleted: clusterRes },
+    });
+};

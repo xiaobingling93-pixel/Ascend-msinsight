@@ -65,6 +65,7 @@ const getTableColumns = function (
             key: col.key,
             title: col.name,
             sorter: true,
+            ellipsis: true,
         };
     });
 };

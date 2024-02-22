@@ -96,17 +96,17 @@ const initBaseInfo = async (setData: any): Promise<void> => {
 
 const getDisplayItems = (session: Session): any[] => {
     if (session.unitcount === 0) {
-        return list.filter(item => ![ 'collectStartTime', 'collectDuration' ].includes(item.key));
+        return list.filter(item => !['collectStartTime', 'collectDuration'].includes(item.key));
     }
     return list;
 };
 const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
-    const [ data, setData ] = useState<StringMap>({});
+    const [data, setData] = useState<StringMap>({});
     useEffect(() => {
         setTimeout(() => {
             initBaseInfo(setData);
         });
-    }, [ session.parseCompleted, session.renderId ]);
+    }, [session.parseCompleted, session.renderId]);
     const displaylist = getDisplayItems(session);
     return <Container
         title={'Base Info'}

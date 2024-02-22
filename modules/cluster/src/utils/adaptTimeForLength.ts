@@ -4,7 +4,7 @@ import { TimeStamp } from '../entity/common';
 export type TimeUnit = 'ns' | 'μs' | 'ms' | 's' | 'min' | 'hour' | '';
 export type Time = { value: TimeStamp; unit: TimeUnit; length: number };
 const getSplitTime = (timestamp: TimeStamp, startTimeUnit: TimeUnit, isNegative: boolean): { steps: Time[]; padder: Time[] } => {
-    const timeUnits: TimeUnit[] = [ 'ns', 'μs', 'ms', 's', 'min', 'hour' ];
+    const timeUnits: TimeUnit[] = ['ns', 'μs', 'ms', 's', 'min', 'hour'];
     let curUnitIdx = timeUnits.indexOf(startTimeUnit);
     const SPLIT_TIME = timeUnits.indexOf('s');
     let curTimeSys = curUnitIdx < SPLIT_TIME ? 1e3 : 60;
@@ -98,9 +98,9 @@ export const adaptTime = (time: TimeStamp, {
     let splitTime: Time[] = [];
     let timesIdx = 0;
     if (segments !== undefined) {
-        [ splitTime, timesIdx ] = calculateSegments(steps, emptyPadder, segments, getPadder);
+        [splitTime, timesIdx] = calculateSegments(steps, emptyPadder, segments, getPadder);
     } else {
-        [ splitTime, timesIdx ] = calculateMaxCharlen(steps, emptyPadder, maxChars, getLength, getPadder);
+        [splitTime, timesIdx] = calculateMaxCharlen(steps, emptyPadder, maxChars, getLength, getPadder);
     }
     tail = getPrecisieTail(steps, timesIdx) ?? tail;
     return { splitTime, tail };

@@ -53,13 +53,13 @@ export const defaultConditions = { step: 'All', rankIds: [], orderBy: 'computing
 const getStepOptions = async(): Promise<optionDataType[]> => {
     const res = await window.requestData('parallelism/pipeline/getAllSteps', {}, 'summary');
     const list: string[] = res.data;
-    const options: optionDataType[] = [ 'All', ...list ].map(item => ({ value: item, label: item }));
+    const options: optionDataType[] = ['All', ...list].map(item => ({ value: item, label: item }));
     return options;
 };
 
 const Filter = observer((props: any) => {
-    const [ conditions, setConditions ] = useState<ConditionDataType>(defaultConditions);
-    const [ options, setOptions ] = useState<optionMapDataType>({});
+    const [conditions, setConditions] = useState<ConditionDataType>(defaultConditions);
+    const [options, setOptions] = useState<optionMapDataType>({});
     // 初始化
     useEffect(() => {
         initDefault();
@@ -69,7 +69,7 @@ const Filter = observer((props: any) => {
             conditions.rankIds = _.find(options.groupOptions, item => item.value === conditions.group)?.data as string[];
         }
         props.handleFilterChange(conditions);
-    }, [ conditions.step, conditions.orderBy, conditions.group, props.visible ]);
+    }, [conditions.step, conditions.orderBy, conditions.group, props.visible]);
     useEffect(() => {
         props.handleFilterChange(conditions, false);
     }, [conditions.top]);

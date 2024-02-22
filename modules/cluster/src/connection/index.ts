@@ -72,7 +72,7 @@ abstract class BaseConnector {
             reject?.(new Error(errMsg));
             return;
         }
-        body.from = Object.entries(window.parent as Window).findIndex(([ , val ]) => val === window);
+        body.from = Object.entries(window.parent as Window).findIndex(([, val]) => val === window);
         const targetWindows = body.to !== undefined ? [(window.parent as Window)[body.to]] : this._targetWindows;
         targetWindows.forEach(targetWindow => { targetWindow.postMessage(JSON.stringify(body), '*'); });
     }

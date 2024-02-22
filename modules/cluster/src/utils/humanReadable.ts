@@ -105,7 +105,7 @@ export const getDuration = (time: TimeStamp, options: TimeOptions = DEFAULT_DURA
                 padStartIdx--;
             } while ((length as number) < (options.maxChars as number) - 2 && padStartIdx >= 0);
         }
-        return [ splitTime, timesIdx ];
+        return [splitTime, timesIdx];
     };
     const { splitTime: duration, tail } = adaptTime(time, { getLength, getPadder, ...options });
     const removeInvalidNum = (times: Time[]): Time[] => {
@@ -158,7 +158,7 @@ export const getTimestamp = (time: TimeStamp, options: TimeOptions = DEFAULT_TIM
             } while ((length as number) < (mode.maxChars as number) - 2 && padStartIdx >= 0);
             resTime = splitTime;
         }
-        return [ resTime, timesIdx ];
+        return [resTime, timesIdx];
     };
     const { splitTime: timestamp } = adaptTime(time, { getLength, getPadder, ...mode });
     let separator: ':' | '.' = ':';

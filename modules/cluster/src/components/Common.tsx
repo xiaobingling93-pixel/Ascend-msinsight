@@ -56,12 +56,12 @@ export const Loading = ({ size = 20, style = {} }: {size?: number;style?: object
 
 export const MultiSelectWithAll = (props: any): JSX.Element => {
     const { onChange, options = [] } = props;
-    const [ checked, setChecked ] = useState(false);
+    const [checked, setChecked] = useState(false);
     useEffect(() => {
         if (props.value.length > 0 && options.length > 0) {
             setChecked(props.value.length === options.length);
         }
-    }, [ props.value, props.options ]);
+    }, [props.value, props.options]);
     return (
         <Select
             {...props}
@@ -89,10 +89,10 @@ export const MultiSelectWithAll = (props: any): JSX.Element => {
 };
 
 export const PaginationWhithPgaeData = (props: any): JSX.Element => {
-    const [ page, setPage ] = useState({ current: 1, pageSize: 10, total: 0 });
+    const [page, setPage] = useState({ current: 1, pageSize: 10, total: 0 });
     useEffect(() => {
         props.handlePageChange(page);
-    }, [ page.current, page.pageSize ]);
+    }, [page.current, page.pageSize]);
     useEffect(() => {
         setPage({ current: 1, pageSize: 10, total: props.total });
     }, [props.total]);
@@ -100,7 +100,7 @@ export const PaginationWhithPgaeData = (props: any): JSX.Element => {
     return <Pagination
         {...page}
         defaultCurrent={1}
-        pageSizeOptions= {[ 10, 20, 50, 100 ] }
+        pageSizeOptions= {[10, 20, 50, 100] }
         showTotal={(total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>)}
         onChange={(current, pageSize) => { setPage({ ...page, current, pageSize }); }}
         showQuickJumper={page.total / page.pageSize > 5}
@@ -112,7 +112,7 @@ export const GetPageConfigWhithPageData = (page: { current: number; pageSize: nu
     return {
         ...page,
         showSizeChanger: page.total > 10,
-        pageSizeOptions: [ 10, 20, 50, 100 ],
+        pageSizeOptions: [10, 20, 50, 100],
         showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>),
         hideOnSinglePage: false,
         onChange: (current: number, pageSize: number) => { setPage({ ...page, current, pageSize }); },
@@ -124,7 +124,7 @@ export const GetPageConfigWhithAllData = (total: number): object => {
     return {
         total,
         showSizeChanger: total > 10,
-        pageSizeOptions: [ 10, 20, 50, 100 ],
+        pageSizeOptions: [10, 20, 50, 100],
         showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>),
         hideOnSinglePage: false,
     };

@@ -46,6 +46,7 @@ export class Session {
     clusterStatus: boolean = false;
     parseCompleted: boolean = false;
     clusterCompleted: boolean = false;
+    durationFileCompleted: boolean = false;
     unitcount: number = 0;
     renderId: number = 1;
     id = '';
@@ -268,7 +269,7 @@ export class Session {
     }
 
     printSessionInfo(): string {
-        return `${JSON.stringify({ ...omit(this, [ 'caches', 'sharedState', '_units' ]) })}`;
+        return `${JSON.stringify({ ...omit(this, ['caches', 'sharedState', '_units']) })}`;
     }
 
     get parseProgress(): Record<string, unknown> | undefined {

@@ -27,7 +27,7 @@ interface optionMapDataType{
 }
 
 const Filter = observer((props: any) => {
-    const [ options, setOptions ] = useState<optionMapDataType>({});
+    const [options, setOptions] = useState<optionMapDataType>({});
     // 初始化
     useEffect(() => {
         initDefault();

@@ -17,7 +17,7 @@ interface ZoomCenterifyArgs {
     upperBound: TimeStamp;
     point?: TimeStamp;
 };
-const zoomCenterify = ({ domain: [ start, end ], newDuration, upperBound, point }: ZoomCenterifyArgs): [ number, number ] => {
+const zoomCenterify = ({ domain: [start, end], newDuration, upperBound, point }: ZoomCenterifyArgs): [ number, number ] => {
     const centerPoint = validNumber(point) ?? (start + end) / 2;
     const prevDuration = end - start;
     const leftRatio = (centerPoint - start) / prevDuration;
@@ -34,7 +34,7 @@ const zoomCenterify = ({ domain: [ start, end ], newDuration, upperBound, point 
         start = centerPoint - leftDuration;
         end = centerPoint + rightDuration;
     }
-    return [ start, end ];
+    return [start, end];
 };
 
 export class Domain {
@@ -77,7 +77,7 @@ export class Domain {
             this.maxDuration = Math.min(this._UPPER_BOUND, this._endTimeAll * this.BOUNDARY_ZOOM_RATE);
         }
         if (this._endTimeAll > this._domainEnd) {
-            this._realTimeUpdate && ([ this._domainStart, this._domainEnd ] = [ endTimeAll - this.duration, endTimeAll ]);
+            this._realTimeUpdate && ([this._domainStart, this._domainEnd] = [endTimeAll - this.duration, endTimeAll]);
         }
     }
 
@@ -95,8 +95,8 @@ export class Domain {
         const zoomEnd = (this._domainEnd > this._endTimeAll) && zoomCount < 0 ? this._endTimeAll : this._domainEnd;
         const zoomCenterLine = (zoomPoint ?? 0) > zoomEnd ? zoomEnd : zoomPoint;
         const newDuration = clamp(this.duration * Math.pow(this.ZOOM_RATE, zoomCount), this._LOWER_BOUND, this.maxDuration);
-        [ this._domainStart, this._domainEnd ] = zoomCenterify({
-            domain: [ this._domainStart, zoomEnd ],
+        [this._domainStart, this._domainEnd] = zoomCenterify({
+            domain: [this._domainStart, zoomEnd],
             newDuration,
             upperBound: this.maxDuration,
             point: zoomCenterLine,
@@ -112,17 +112,17 @@ export class Domain {
         const positiveEnd = Math.abs(domainEnd);
         if (positiveStart === 0 && positiveEnd === 0) {
             // reset domainRange
-            [ this._domainStart, this._domainEnd ] = [ 0, this._DEFAULT_DURATION ];
+            [this._domainStart, this._domainEnd] = [0, this._DEFAULT_DURATION];
         } else if (positiveEnd - positiveStart < this._LOWER_BOUND || positiveEnd - positiveStart > this.maxDuration) {
             // when domain oversize, zoom adaptably.
             const newDuration = clamp(this.duration, this._LOWER_BOUND, this.maxDuration);
-            [ this._domainStart, this._domainEnd ] = zoomCenterify({
-                domain: [ positiveStart, positiveEnd ],
+            [this._domainStart, this._domainEnd] = zoomCenterify({
+                domain: [positiveStart, positiveEnd],
                 newDuration,
                 upperBound: this.maxDuration,
             });
         } else {
-            [ this._domainStart, this._domainEnd ] = [ domainStart, domainEnd ];
+            [this._domainStart, this._domainEnd] = [domainStart, domainEnd];
         }
     }
 
@@ -153,8 +153,8 @@ export class Domain {
         } else {
             this._chartViewWidth = width;
         }
-        [ this._domainStart, this._domainEnd ] = zoomCenterify({
-            domain: [ this._domainStart, this._domainEnd ],
+        [this._domainStart, this._domainEnd] = zoomCenterify({
+            domain: [this._domainStart, this._domainEnd],
             newDuration: this.timePerPx * width,
             upperBound: this.maxDuration,
         });

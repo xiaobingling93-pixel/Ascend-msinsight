@@ -16,7 +16,7 @@ import {
 } from './ContainerUtils';
 
 export const CommunicatorContainer = observer(({ session }: { session: Session }) => {
-    const [ activeTab, setActiveTab ] = useState<string>('pp');
+    const [activeTab, setActiveTab] = useState<string>('pp');
     useEffect(() => {
         setActiveTab('pp');
         if (session.communicatorData.partitionModes.length === 0) {
@@ -65,7 +65,7 @@ const CommunicatorContent = observer(({ session, partitionData }: { session: Ses
 });
 
 const RankGroup = ({ rankGroup, session }: { rankGroup: communicator; session: Session }): JSX.Element => {
-    const [ active, setActive ] = useState('');
+    const [active, setActive] = useState('');
     useEventBus('activeCommunicator', (data) => {
         if (data === undefined) {
             setActive('');

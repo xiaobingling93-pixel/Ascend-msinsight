@@ -12,6 +12,7 @@ export class Session {
     isReset: boolean = false;
     parseCompleted: boolean = false;
     clusterCompleted: boolean = false;
+    durationFileCompleted: boolean = false;
     loading: boolean = false;
     unitcount: number = 0;
     isVscode: boolean = document.location.origin.startsWith('vscode');
@@ -45,6 +46,7 @@ export class Session {
         this._sharedState = {};
         this.parseCompleted = false;
         this.clusterCompleted = false;
+        this.durationFileCompleted = false;
         this.unitcount = 0;
         this.isBinary = false;
         this.coreList = [];

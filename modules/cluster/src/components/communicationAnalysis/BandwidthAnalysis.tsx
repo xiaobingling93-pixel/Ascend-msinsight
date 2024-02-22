@@ -12,7 +12,7 @@ import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonT
 import { Container, addResizeEvent, COLOR } from '../Common';
 
 const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
-    const [ data, setData ] = useState([]);
+    const [data, setData] = useState([]);
     useEffect(() => {
         updateData();
     }, []);
@@ -45,7 +45,7 @@ function wrapData(data: any): any {
     sdma.largePacketRatio = '/';
     const hp = data.filter((item: any) => item.transportType === 'HCCS' || item.transportType === 'PCIE');
     const rdma = data.find((item: any) => item.transportType === 'RDMA');
-    return [ { ...sdma, children: hp }, rdma ];
+    return [{ ...sdma, children: hp }, rdma];
 }
 
 const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorName: string;
@@ -141,7 +141,7 @@ async function wrapBandwidthData(domId: string, iterationId: number,
         return null;
     }
     const distributionDataJson: Distribution = JSON.parse(distributionData);
-    for (const [ packetSize, values ] of Object.entries(distributionDataJson)
+    for (const [packetSize, values] of Object.entries(distributionDataJson)
         .sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]))) {
         if (values.length !== 2) {
             console.error('The format of distribution data is error');
@@ -184,7 +184,7 @@ const bandwidthOption: echarts.EChartsOption = {
     toolbox: {
         feature: {
             dataView: { show: true, readOnly: false },
-            magicType: { show: true, type: [ 'line', 'bar' ] },
+            magicType: { show: true, type: ['line', 'bar'] },
             restore: { show: true },
         },
         top: 15,
