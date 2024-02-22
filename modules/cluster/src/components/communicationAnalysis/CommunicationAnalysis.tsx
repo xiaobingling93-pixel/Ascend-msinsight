@@ -66,10 +66,6 @@ const CommunicationAnalysis = observer(function ({ session, active = true }: { s
     };
     const returnHome = (): void => { setRankId(''); };
     const handleFilterChange = async(newConditions: ConditionDataType): Promise<void> => {
-        if (conditions.type !== newConditions.type) {
-            setConditions({ ...conditions, ...newConditions });
-            return;
-        }
         setConditions({ ...conditions, ...newConditions });
         const res = await searchData(newConditions);
         setShowData(res);
