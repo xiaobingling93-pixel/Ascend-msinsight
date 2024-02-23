@@ -1015,7 +1015,9 @@ bool TraceDatabase::QueryUnitsMetadata(const std::string &fileId,
     std::string sql = "SELECT pt.pid, pt.process_name AS processName, pt.label, pt.tid, pt.thread_name AS threadName,"
         " s.maxDepth, pt.name, pt.args"
         " FROM ("
-        " SELECT p.pid, p.process_name, p.label, p.process_sort_index, t.tid, t.thread_name,"
+        " SELECT p.pid,"
+        " CASE WHEN p.process_name IS NULL THEN 'Process ' || p.pid ELSE p.process_name END AS process_name, "
+        " p.label, p.process_sort_index, t.tid, t.thread_name,"
         " t.track_id, t.thread_sort_index, c.name, c.args"
         " FROM " +
         processTable + " p LEFT JOIN " + threadTable + " t ON p.pid = t.pid" +
