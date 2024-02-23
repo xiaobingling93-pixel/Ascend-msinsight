@@ -39,6 +39,7 @@ function InitCharts(data: any): void {
 }
 
 const allTransporType = ['HCCS', 'PCIE', 'RDMA', 'LOCAL'];
+// eslint-disable-next-line max-lines-per-function
 function wrapData(dataSource: any): any {
     const { data, rankIds, type } = dataSource;
     const option: any = baseOption;
@@ -57,7 +58,9 @@ function wrapData(dataSource: any): any {
         };
         option.series[0].tooltip.formatter = function (params: any) {
             const { data } = params;
-            return `${data[0]} -> ${data[1]} : ${allTransporType[data[2]]}`;
+            return data[3].length === 0
+                ? `srcRank -> dstRank: ${data[0]} -> ${data[1]} <br/> ${type}: ${allTransporType[data[2]]}`
+                : `operatorName: ${data[3]} <br/> srcRank -> dstRank: ${data[0]} -> ${data[1]} <br/> ${type}: ${allTransporType[data[2]]}`;
         };
     } else {
         option.series[0].data = data;
@@ -83,7 +86,9 @@ function wrapData(dataSource: any): any {
         }
         option.series[0].tooltip.formatter = function (params: any) {
             const { data } = params;
-            return `${data[0]} -> ${data[1]} : ${data[2]}`;
+            return data[3].length === 0
+                ? `srcRank -> dstRank: ${data[0]} -> ${data[1]} <br/> ${type}: ${data[2]}`
+                : `operatorName: ${data[3]} <br/> srcRank -> dstRank: ${data[0]} -> ${data[1]} <br/> ${type}: ${data[2]}`;
         };
     }
     return option;
@@ -196,7 +201,7 @@ const CommunicationMatrix = observer(function ({ isShow, conditions }: { isShow:
         if (isShow) {
             let data: any = dataSource.data.map((item: any) => {
                 return [String(item.srcRank), String(item.dstRank),
-                    item[switchCondition.type] !== undefined ? item[switchCondition.type] : null];
+                    item[switchCondition.type] !== undefined ? item[switchCondition.type] : null, item.opName];
             });
             if (!switchCondition.showInner) {
                 data = data.filter((item: any[]) => item[0] !== item[1]);
