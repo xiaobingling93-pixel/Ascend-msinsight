@@ -44,9 +44,7 @@ function wrapData(dataSource: any): any {
     const option: any = baseOption;
     option.xAxis.data = rankIds;
     option.yAxis.data = rankIds;
-    if (rankIds.length > 16) {
-        option.series[0].label.show = false;
-    }
+    option.series[0].label.show = rankIds.length <= 16;
 
     if (type === 'transportType') {
         data.forEach((item: any[]) => { item[2] = allTransporType.indexOf(item[2]); });
