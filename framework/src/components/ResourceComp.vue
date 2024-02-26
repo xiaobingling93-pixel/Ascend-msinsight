@@ -152,6 +152,8 @@ const filterNode = async (value: string, data: ResourceItem, node: Node): Promis
   }
   if (value.startsWith(data.path)) {
     await handleExpand(data, node);
+    // 展开后需要把搜索内容改回原来的文字
+    state.inputPath = value;
     return true;
   }
   props.changeConfirmButtonState(false);
