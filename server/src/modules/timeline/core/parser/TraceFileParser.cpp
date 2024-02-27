@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
 
 #include <fstream>
@@ -57,7 +57,8 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         ServerLog::Info("Pre task skip this file.");
         return false;
     }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
+        DataBaseManager::Instance().GetTraceDatabase(fileId));
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection.");
         return false;
@@ -120,7 +121,8 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Parse completed. ID:", fileId, " Cost time(ms): ",
         std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-    auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
+        DataBaseManager::Instance().GetTraceDatabase(fileId));
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", fileId);
         ParserStatusManager::Instance().SetFinishStatus(fileId);
@@ -306,7 +308,7 @@ void TraceFileParser::DeleteParseFileFromDisk(const std::string &fileId)
     ParserStatusManager::Instance().ClearParserStatus(fileId);
     std::string path = DataBaseManager::Instance().GetDbPath(fileId);
     DataBaseManager::Instance().ReleaseDatabase(fileId);
-    if (!path.empty()) {
+    if (!path.empty() && fileId != "FullDb") {
         FileUtil::RemoveFile(path);
     }
 }

@@ -8,6 +8,7 @@
 #include <set>
 #include <regex>
 #include "TimelineRequestHandler.h"
+#include "ParserFactory.h"
 #include "FileParser.h"
 
 namespace Dic {
@@ -24,36 +25,7 @@ public:
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 
 private:
-    static bool curIsCluster;
-    std::string curScene;
-
-    static void SetParseCallBack(const std::string &token, FileParser &fileParser);
-    static void ParseEndCallBack(const std::string &token, const std::string &fileId, bool result,
-                                 const std::string &message);
-    static void ParseClusterEndProcess(const std::string token, std::string result);
-    static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
-    static std::string GetFileId(const std::string &filePath);
-    static std::string GetDbPath(const std::string &filePath, const int index);
-    static bool CheckIsCluster(const std::string &filePath);
-    std::vector<std::string> FindTraceFile(const std::string &path);
-    std::vector<std::string> FindAllTraceFile(const std::vector<std::string> &pathList);
-    bool IsJsonValid(const std::string &fileName);
-    static void ClusterProcess(const std::string &token, const std::string &selectedFolder);
-    static void ClusterProcessAsyncStep(const std::string &token, const std::string &selectedFolder);
-    void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
-    std::vector<std::pair<std::string, std::string>> GetTraceFiles(const std::vector<std::string> &pathList,
-                                                                   ImportActionResBody &body);
-    std::vector<std::pair<std::string, std::string>> GetSimulationTraceFiles(const std::string &selectFilePath,
-                                                                   ImportActionResBody &body);
-    static void SendParseSuccessEvent(const std::string &token, const std::string &fileId);
-    static void SendParseFailEvent(const std::string &token, const std::string &fileId, const std::string &message);
-
-    const std::string traceViewFile = "trace_view.json";
-    const std::string traceViewReg = R"((trace_view|msprof_[0-9]{1,4}_[0-9]{1,4})\.json$)";
-    void SetBaseActionOfResponse(const std::map<std::string, std::vector<std::string>>& rankListMap,
-                                 ImportActionResponse &response);
-
-    void HandleCompute(ImportActionResponse &response, const std::string &selectedFolder);
+    static std::pair<std::string, ParserType> GetImportType(const std::vector<std::string> &pathList);
 };
 } // end of namespace Timeline
 } // end of namespace Module

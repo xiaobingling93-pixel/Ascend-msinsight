@@ -9,7 +9,7 @@
 #include "encodings.h"
 #include "reader.h"
 #include "document.h"
-#include "ClusterDatabase.h"
+#include "VirtualClusterDatabase.h"
 #include "GlobalDefs.h"
 #include "DataBaseManager.h"
 

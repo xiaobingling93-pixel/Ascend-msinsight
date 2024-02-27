@@ -21,7 +21,6 @@ static const std::string ATT_MODEL_DEFAULT = "all";
 static const std::string ATT_MODEL_TIME = "communication_time";
 static const std::string ATT_MODEL_MATRIX = "communication_matrix";
 
-
 } // end of namespace Dic
 
 #endif // DATA_INSIGHT_CORE_CONSTANTS_DEFS_H

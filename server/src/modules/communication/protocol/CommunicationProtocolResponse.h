@@ -44,7 +44,7 @@ struct GroupItem {
 
 struct CommunicatorGroupResponse : public Response {
     CommunicatorGroupResponse() : Response(REQ_RES_COMMUNICATION_COMMUNICATOR) {}
-    Document body;
+    rapidjson::Document body;
 };
 
 struct BandwidthDataItem {

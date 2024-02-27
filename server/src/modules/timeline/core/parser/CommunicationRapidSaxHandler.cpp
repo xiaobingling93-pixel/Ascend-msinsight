@@ -1,9 +1,10 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
 #include "JsonUtil.h"
 #include "ParserStatusManager.h"
+#include "JsonClusterDatabase.h"
 #include "CommunicationRapidSaxHandler.h"
 
 namespace Dic {
@@ -108,7 +109,7 @@ bool CommunicationRapidSaxHandler::EndObject(rapidjson::SizeType memberCount)
     if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
         return false;
     }
-    auto database = DataBaseManager::Instance().GetWriteClusterDatabase();
+    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     currentDepth--;
     if (currentDepth == infoDepth && std::strcmp(tableFlag.c_str(), "Communication Bandwidth Info") == 0) {
         CommunicationBandWidth bandWidth = MapToBandwidth(currentObject);

@@ -27,6 +27,7 @@ TEST_F(PerformanceTest, testTraceParser1P2GBTime)
 #else
     std::string rootPath = "/home/";
 #endif
+    DataBaseManager::Instance().SetDataType(DataType::JSON);
     DataBaseManager::Instance().CreatConnectionPool("0",
         rootPath + R"(/ASCEND_PROFILER_OUTPUT/ascend_insight_data.db)");
     TraceFileParser::Instance().Parse({rootPath + R"(/ASCEND_PROFILER_OUTPUT/trace_view.json)"}, "0", "");
@@ -55,6 +56,7 @@ TEST_F(PerformanceTest, testTraceParser1P5GBTime)
 #else
     std::string rootPath = "/home/";
 #endif
+    DataBaseManager::Instance().SetDataType(DataType::JSON);
     DataBaseManager::Instance().CreatConnectionPool("0",
                                                     rootPath + R"(/ASCEND_PROFILER_OUTPUT/ascend_insight_data.db)");
     TraceFileParser::Instance().Parse({rootPath + R"(/ASCEND_PROFILER_OUTPUT/trace_view.json)"}, "0", "");

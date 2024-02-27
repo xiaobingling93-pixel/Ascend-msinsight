@@ -12,12 +12,14 @@
 #include "ParserStatusManager.h"
 #include "KernelParse.h"
 #include "MemoryParse.h"
+#include "FullDbParser.h"
+#include "DbMemoryDataBase.h"
+#include "DbSummaryDataBase.h"
 
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::Summary;
 using namespace Dic::Module::Memory;
-
 
 class TestSuit : public ::testing::Test {
 public:
@@ -30,6 +32,7 @@ public:
         currPath = currPath.substr(0, index + 1);
         std::string refPath0 = R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT/)";
         std::string refPath1 = R"(/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/)";
+        DataBaseManager::Instance().SetDataType(DataType::JSON);
         DataBaseManager::Instance().CreatConnectionPool("0", currPath + refPath0 + "ascend_insight_data.db");
         DataBaseManager::Instance().CreatConnectionPool("1", currPath + refPath1 + "ascend_insight_data.db");
         TraceFileParser::Instance().Parse({currPath + refPath0 + "trace_view.json"}, "0", "");

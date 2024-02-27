@@ -12,6 +12,7 @@ class CommunicationTest : TestSuit {
 
 TEST_F(TestSuit, QueryIterationsData)
 {
+    DataBaseManager::Instance().SetDataType(DataType::JSON);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetWriteClusterDatabase();
     std::vector<Dic::Protocol::IterationsOrRanksObject> responseBody;
     database->QueryIterations(responseBody);

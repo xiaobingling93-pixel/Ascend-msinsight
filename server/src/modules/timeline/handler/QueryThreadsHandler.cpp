@@ -35,7 +35,7 @@ void QueryThreadsHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         return;
     }
     int64_t trackId = TraceFileParser::Instance()
-        .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
+            .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
     bool result = database->QueryThreads(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
     SetResponseResult(response, result);
     // add response to response queue in session

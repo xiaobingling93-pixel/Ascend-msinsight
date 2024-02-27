@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
 #ifndef PROFILER_SERVER_KERNELPARSE_H
@@ -11,7 +11,7 @@
 #include <functional>
 #include "SummaryDef.h"
 #include "ThreadPool.h"
-#include "SummaryDataBase.h"
+#include "JsonSummaryDataBase.h"
 #include "FileParser.h"
 #include "ConstantDefs.h"
 

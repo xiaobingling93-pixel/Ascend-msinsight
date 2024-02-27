@@ -416,19 +416,23 @@ public:
         }
     }
 
-    static inline std::vector<std::string> FindFilesByRegex(const std::string &path, const std::regex &fileRegex)
+    static inline std::vector<std::string> FindFilesAndFoldersByRegex(const std::string &path,
+                                                                      const std::regex &fileRegex, bool needFolder)
     {
         std::vector<std::string> matchedFiles;
         if (!FileUtil::IsFolder(path)) {
-            if (std::regex_match(path, fileRegex)) {
+            if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
                 matchedFiles.emplace_back(PathPreprocess(path));
             }
             return matchedFiles;
         }
-        std::function<void(const std::string &, int)> find = [&find, &matchedFiles, &fileRegex](
+        std::function<void(const std::string &, int)> find = [&find, &matchedFiles, &fileRegex, needFolder](
                 const std::string &path, int depth) {
             if (depth > 5) {
                 return;
+            }
+            if (needFolder && std::regex_match(GetFileName(path), fileRegex)) {
+                matchedFiles.emplace_back(PathPreprocess(path));
             }
             std::vector<std::string> folders;
             std::vector<std::string> files;
@@ -448,6 +452,11 @@ public:
         };
         find(path, 0);
         return matchedFiles;
+    }
+
+    static inline std::vector<std::string> FindFilesByRegex(const std::string &path, const std::regex &fileRegex)
+    {
+        return FindFilesAndFoldersByRegex(path, fileRegex, false);
     }
 
     // 遍历目录，最大不超过5层，优先遍历ASCEND_PROFILER_OUTPUT/mindstudio_profiler_output目录，其存在则跳过其他文件夹

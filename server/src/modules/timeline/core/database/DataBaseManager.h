@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
 
 #ifndef PROFILER_SERVER_DATABASEMANAGER_H
@@ -9,9 +9,10 @@
 #include <memory>
 #include <mutex>
 #include "ConnectionPool.h"
-#include "TraceDatabase.h"
-#include "ClusterDatabase.h"
-#include "MemoryDataBase.h"
+#include "JsonTraceDatabase.h"
+#include "DbTraceDataBase.h"
+#include "JsonClusterDatabase.h"
+#include "VirtualMemoryDataBase.h"
 #include "KernelParse.h"
 
 namespace Dic {
@@ -22,6 +23,10 @@ enum class DatabaseType {
     SUMMARY,
     MEMORY
 };
+enum class DataType {
+    JSON,
+    FULL_DB
+};
 class DataBaseManager {
 public:
     static DataBaseManager &Instance();
@@ -31,7 +36,7 @@ public:
     DataBaseManager &operator=(DataBaseManager &&) = delete;
 
     bool CreatConnectionPool(const std::string &fileId, const std::string &dbPath);
-    std::shared_ptr<TraceDatabase> GetTraceDatabase(const std::string &fileId);
+    std::shared_ptr<VirtualTraceDatabase> GetTraceDatabase(const std::string &fileId);
     std::vector<ConnectionPool *> GetAllTraceDatabase();
     std::vector<std::string> GetAllFileId();
     void Clear();
@@ -39,27 +44,30 @@ public:
     void ClearClusterDb();
     void ReleaseDatabase(const std::string &fileId);
     bool HasFileId(DatabaseType type, const std::string &fileId);
-    ClusterDatabase *GetWriteClusterDatabase();
-    ClusterDatabase *GetReadClusterDatabase();
+    VirtualClusterDatabase *GetWriteClusterDatabase();
+    VirtualClusterDatabase *GetReadClusterDatabase();
 
-    Memory::MemoryDataBase *GetMemoryDatabase(const std::string &fileId);
-    std::vector<Memory::MemoryDataBase *> GetAllMemoryDatabase();
+    Memory::VirtualMemoryDataBase *GetMemoryDatabase(const std::string &fileId);
+    std::vector<Memory::VirtualMemoryDataBase *> GetAllMemoryDatabase();
 
-    Summary::SummaryDataBase *GetSummaryDatabase(const std::string &fileId);
-    std::vector<Summary::SummaryDataBase *> GetAllSummaryDatabase();
+    Summary::VirtualSummaryDataBase *GetSummaryDatabase(const std::string &fileId);
+    std::vector<Summary::VirtualSummaryDataBase *> GetAllSummaryDatabase();
 
     std::string GetDbPath(const std::string &fileId);
+    DataType GetDataType();
+    void SetDataType(DataType type);
 
 private:
     DataBaseManager() = default;
     ~DataBaseManager() = default;
 
     std::mutex mutex;
+    DataType dataType = DataType::JSON;
     std::map<std::string, std::mutex> dbMutexMap;
     std::map<std::string, std::unique_ptr<ConnectionPool>> traceDatabaseMap;
-    std::map<std::string, std::unique_ptr<ClusterDatabase>> clusterDatabaseMap;
-    std::map<std::string, std::unique_ptr<Memory::MemoryDataBase>> memoryDatabaseMap;
-    std::map<std::string, std::unique_ptr<Summary::SummaryDataBase>> summaryDatabaseMap;
+    std::map<std::string, std::unique_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
+    std::map<std::string, std::unique_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
+    std::map<std::string, std::unique_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
 
     std::mutex &GetDbMutex(const std::string &fileId);
 };

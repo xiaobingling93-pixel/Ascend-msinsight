@@ -51,7 +51,8 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
     if (!ValidateUtil::CheckCsvFile(filePath)) {
         return false;
     }
-    auto memoryDatabase = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
+    auto memoryDatabase =
+            dynamic_cast<JsonMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     std::ifstream file(FileUtil::PathPreprocess(filePath));
     std::string line;
     std::map<std::string, size_t> dataMap;
@@ -188,7 +189,8 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
     if (!ValidateUtil::CheckCsvFile(filePath)) {
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
+    auto database =
+            dynamic_cast<JsonMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     std::ifstream file(FileUtil::PathPreprocess(filePath));
     std::string line;
     std::map<std::string, size_t> dataMap;
@@ -236,8 +238,9 @@ void MemoryParse::Reset()
     ServerLog::Info("Memory task completed.");
     auto databaseList = Timeline::DataBaseManager::Instance().GetAllMemoryDatabase();
     for (auto &db: databaseList) {
-        db->ReleaseStmt();
-        db->CloseDb();
+        auto database = dynamic_cast<JsonMemoryDataBase*>(db);
+        database->ReleaseStmt();
+        database->CloseDb();
     }
 
     Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::MEMORY);
@@ -350,7 +353,7 @@ bool MemoryParse::ParseTask(const MemoryFilePair& filePair, const std::string& f
 bool MemoryParse::InitParser(const MemoryFilePair& filePair, const std::string& fileId, std::string &message)
 {
     std::string dbPath = FileUtil::GetDbPath(filePair.operatorFile, fileId);
-    auto db = Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId);
+    auto db = dynamic_cast<JsonMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     if (!(db->OpenDb(dbPath, false) && db->DropTable() &&
             db->CreateTable() && db->SetConfig() && db->InitStmt())) {
         message = "Failed to init memory database. Path:" + dbPath;

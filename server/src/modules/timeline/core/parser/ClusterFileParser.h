@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ *  Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  *
  */
 
@@ -17,18 +17,18 @@ class ClusterFileParser {
 public:
     bool ParseClusterFiles(const std::string &selectedPath);
     bool ParseClusterStep2Files(const std::string &selectedPath);
-    bool ParseCommunication(const std::vector<std::string> &filePathList);
+    static bool ParseCommunication(const std::vector<std::string> &filePathList);
     void ParseStepStatisticsFile(const std::vector<std::string> &filePathList);
-    void SaveClusterBaseInfo(const std::string& selectedPath);
-    void ParseCommunicationMatrix(const std::vector<std::string> &filePathList);
-    void ParseCommunicationGroup(const std::string selectedPath, ClusterBaseInfo &baseInfo);
+    static void SaveClusterBaseInfo(const std::string& selectedPath);
+    static void ParseCommunicationMatrix(const std::vector<std::string> &filePathList);
+    static void ParseCommunicationGroup(const std::string selectedPath, ClusterBaseInfo &baseInfo);
 private:
-    void SaxParseJsonFile(const std::string& filePath, int saxHandlerType);
-    bool InitClusterDatabase(const std::string& selectedPath, bool dbIsAlreadyExist);
+    static void SaxParseJsonFile(const std::string& filePath, int saxHandlerType);
+    static bool InitClusterDatabase(const std::string& selectedPath, bool dbIsAlreadyExist);
     StepStatistic MapToStepStatistic(std::vector<std::string> tokens);
     int subStrlen = 2;
 
-    bool AttAnalyze(const std::string& selectedPath, const std::string& model);
+    static bool AttAnalyze(const std::string& selectedPath, const std::string& model);
 };
 } // end of namespace Timeline
 } // end of namespace Module

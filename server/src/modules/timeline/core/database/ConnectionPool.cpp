@@ -1,27 +1,25 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
 
 #include "ConnectionPool.h"
 
-namespace Dic {
-namespace Module {
-namespace Timeline {
-ConnectionPool::ConnectionPool(std::string dbPath, std::mutex &dbMutex)
-    : path(std::move(dbPath)), insertSqlMutex(dbMutex) {}
+namespace Dic::Module::Timeline {
+ConnectionPool::ConnectionPool(std::string dbPath, std::function<VirtualTraceDatabase*()> call)
+    : path(std::move(dbPath)), databaseCreateCall(std::move(call)) {}
 
 ConnectionPool::~ConnectionPool()
 {
     Stop();
 }
 
-std::shared_ptr<TraceDatabase> ConnectionPool::GetConnection()
+std::shared_ptr<VirtualTraceDatabase> ConnectionPool::GetConnection()
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (!valid) {
         return nullptr;
     }
-    TraceDatabase *conn = nullptr;
+    VirtualTraceDatabase *conn = nullptr;
     if (!idlePool.empty()) {
         conn = idlePool.front();
         idlePool.pop_front();
@@ -39,7 +37,7 @@ std::shared_ptr<TraceDatabase> ConnectionPool::GetConnection()
         ServerLog::Error("Get connection Failed.");
         return nullptr;
     }
-    std::shared_ptr<TraceDatabase> connPtr(conn, [this] (TraceDatabase *conn) {
+    std::shared_ptr<VirtualTraceDatabase> connPtr(conn, [this] (VirtualTraceDatabase *conn) {
         ReleaseConnection(conn);
     });
     return connPtr;
@@ -98,7 +96,7 @@ void ConnectionPool::Stop()
     path = "";
 }
 
-void ConnectionPool::ReleaseConnection(Timeline::TraceDatabase *conn)
+void ConnectionPool::ReleaseConnection(Timeline::VirtualTraceDatabase *conn)
 {
     std::unique_lock<std::mutex> lock(mutex);
     idlePool.emplace_back(conn);
@@ -110,17 +108,16 @@ void ConnectionPool::ReleaseConnection(Timeline::TraceDatabase *conn)
     }
 }
 
-TraceDatabase *ConnectionPool::CreatConnection()
+VirtualTraceDatabase *ConnectionPool::CreatConnection()
 {
     int retryCount = 0;
     while (retryCount < maxRetryAttempts) {
-        TraceDatabase *conn = new TraceDatabase(insertSqlMutex);
+        VirtualTraceDatabase *conn = databaseCreateCall();
         if (!conn->OpenDb(path, false)) {
             delete conn;
             retryCount++;
             continue;
         }
-        conn->SetConfig();
         activePool.emplace_back(conn);
         return conn;
     }
@@ -133,5 +130,5 @@ std::string ConnectionPool::GetDbPath()
     return path;
 }
 } // end of namespace Timeline
-} // end of namespace Module
-} // end of namespace Dic
+// end of namespace Module
+// end of namespace Dic

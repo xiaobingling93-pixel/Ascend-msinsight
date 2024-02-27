@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
 
 #ifndef DATA_INSIGHT_CORE_MODULE_CORE_TRACE_FILE_PARSER_H
@@ -28,6 +28,7 @@ public:
     bool Parse(const std::vector<std::string> &filePathArr, const std::string &rankId,
                const std::string &selectedFolder) override;
     void Reset() override;
+    static void DeleteParseFile(const std::string &fileId);
     static void DeleteParseFiles(const std::vector<std::string> &fileIds);
 
     int64_t GetTrackId(const std::string &fileId, const std::string &pid, const std::string &tid);

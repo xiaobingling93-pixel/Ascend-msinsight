@@ -18,6 +18,8 @@ public:
     void UpdateTime(uint64_t min, uint64_t max);
     uint64_t GetStartTime();
     uint64_t GetDuration();
+    uint64_t GetBaseTime();
+    void SetBaseTime(uint64_t base);
 
 private:
     TraceTime();
@@ -25,6 +27,7 @@ private:
     std::mutex mutex;
     uint64_t maxTimestamp{};
     uint64_t minTimestamp{};
+    uint64_t baseTimestamp{};
 };
 } // end of namespace Timeline
 } // end of namespace Module

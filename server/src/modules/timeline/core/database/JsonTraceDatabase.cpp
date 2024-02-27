@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
 
 #include <algorithm>
@@ -7,23 +7,28 @@
 #include "TraceTime.h"
 #include "TableDefs.h"
 #include "Timer.h"
-#include "TraceDatabase.h"
+#include "TraceFileParser.h"
+#include "TraceDatabaseHelper.h"
+#include "JsonTraceDatabase.h"
 
-
-namespace Dic {
-namespace Module {
-namespace Timeline {
+namespace Dic::Module::Timeline {
 using namespace Dic::Server;
 using namespace Dic::Protocol;
-TraceDatabase::TraceDatabase(std::mutex &sqlMutex) : mutex(sqlMutex) {}
+JsonTraceDatabase::JsonTraceDatabase(std::mutex &sqlMutex) : VirtualTraceDatabase(sqlMutex) {}
 
-TraceDatabase::~TraceDatabase()
+JsonTraceDatabase::~JsonTraceDatabase()
 {
     CommitData();
     ReleaseStmt();
 }
 
-bool TraceDatabase::InitStmt()
+bool JsonTraceDatabase::OpenDb(const std::string &dbPath, bool clearAllTable)
+{
+    Database::OpenDb(dbPath, clearAllTable);
+    SetConfig();
+}
+
+bool JsonTraceDatabase::InitStmt()
 {
     if (initStmt) {
         return true;
@@ -32,7 +37,7 @@ bool TraceDatabase::InitStmt()
     return InitSliceFlowCounterStmt() && InitProcessThreadStmt();
 }
 
-bool TraceDatabase::InitSliceFlowCounterStmt()
+bool JsonTraceDatabase::InitSliceFlowCounterStmt()
 {
     std::string sql = "INSERT INTO " + sliceTable +
         " (timestamp, duration, name, track_id, cat, args, cname) VALUES"
@@ -58,7 +63,7 @@ bool TraceDatabase::InitSliceFlowCounterStmt()
     return true;
 }
 
-bool TraceDatabase::InitProcessThreadStmt()
+bool JsonTraceDatabase::InitProcessThreadStmt()
 {
     std::string sql = "INSERT INTO " + processTable + " (pid, process_name) VALUES (?, ?) " +
         "ON CONFLICT (pid) DO UPDATE SET process_name = excluded.process_name;";
@@ -88,7 +93,7 @@ bool TraceDatabase::InitProcessThreadStmt()
     return true;
 }
 
-void TraceDatabase::ReleaseStmt()
+void JsonTraceDatabase::ReleaseStmt()
 {
     if (!initStmt) {
         return;
@@ -107,7 +112,7 @@ void TraceDatabase::ReleaseStmt()
     insertCounterStmt = nullptr;
 }
 
-bool TraceDatabase::SetConfig()
+bool JsonTraceDatabase::SetConfig()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Database is not open.");
@@ -118,7 +123,7 @@ bool TraceDatabase::SetConfig()
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " + dbVersion + ";");
 }
 
-bool TraceDatabase::CreateTable()
+bool JsonTraceDatabase::CreateTable()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Database is not open.");
@@ -138,14 +143,14 @@ bool TraceDatabase::CreateTable()
     return ExecSql(sql);
 }
 
-bool TraceDatabase::DropTable()
+bool JsonTraceDatabase::DropTable()
 {
     std::vector<std::string> tables = { sliceTable, threadTable, processTable, flowTable, counterTable };
     std::unique_lock<std::mutex> lock(mutex);
     return DropSomeTables(tables);
 }
 
-bool TraceDatabase::CreateIndex()
+bool JsonTraceDatabase::CreateIndex()
 {
     auto start = std::chrono::system_clock::now();
     if (!isOpen) {
@@ -161,7 +166,7 @@ bool TraceDatabase::CreateIndex()
     return true;
 }
 
-bool TraceDatabase::InsertSlice(const Trace::Slice &event)
+bool JsonTraceDatabase::InsertSlice(const Trace::Slice &event)
 {
     sliceCache.emplace_back(event);
     if (sliceCache.size() == cacheSize) {
@@ -171,7 +176,7 @@ bool TraceDatabase::InsertSlice(const Trace::Slice &event)
     return true;
 }
 
-bool TraceDatabase::InsertSimulationSlice(const Trace::Slice &event)
+bool JsonTraceDatabase::InsertSimulationSlice(const Trace::Slice &event)
 {
     InsertSlice(event);
     updateProcessNameStmt->Reset();
@@ -187,7 +192,7 @@ bool TraceDatabase::InsertSimulationSlice(const Trace::Slice &event)
     return true;
 }
 
-bool TraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventList)
+bool JsonTraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventList)
 {
     std::unique_ptr<SqlitePreparedStatement> stmt;
     std::unique_ptr<SqlitePreparedStatement> &refStmt = (eventList.size() == cacheSize) ? insertSliceStmt : stmt;
@@ -211,7 +216,7 @@ bool TraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventList)
     return true;
 }
 
-std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetSliceStmt(uint64_t paramLen)
+std::unique_ptr<SqlitePreparedStatement> JsonTraceDatabase::GetSliceStmt(uint64_t paramLen)
 {
     std::string sql = "INSERT INTO " + sliceTable +
         " (timestamp, duration, name, track_id, cat, args, cname) VALUES "
@@ -222,7 +227,7 @@ std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetSliceStmt(uint64_t pa
     return CreatPreparedStatement(sql);
 }
 
-bool TraceDatabase::UpdateProcessName(const Trace::MetaData &event)
+bool JsonTraceDatabase::UpdateProcessName(const Trace::MetaData &event)
 {
     updateProcessNameStmt->Reset();
     std::unique_lock<std::mutex> lock(mutex);
@@ -233,7 +238,7 @@ bool TraceDatabase::UpdateProcessName(const Trace::MetaData &event)
     return true;
 }
 
-bool TraceDatabase::UpdateProcessLabel(const Trace::MetaData &event)
+bool JsonTraceDatabase::UpdateProcessLabel(const Trace::MetaData &event)
 {
     updateProcessLabelStmt->Reset();
     std::unique_lock<std::mutex> lock(mutex);
@@ -244,7 +249,7 @@ bool TraceDatabase::UpdateProcessLabel(const Trace::MetaData &event)
     return true;
 }
 
-bool TraceDatabase::UpdateProcessSortIndex(const Trace::MetaData &event)
+bool JsonTraceDatabase::UpdateProcessSortIndex(const Trace::MetaData &event)
 {
     updateProcessSortIndexStmt->Reset();
     std::unique_lock<std::mutex> lock(mutex);
@@ -255,13 +260,13 @@ bool TraceDatabase::UpdateProcessSortIndex(const Trace::MetaData &event)
     return true;
 }
 
-bool TraceDatabase::AddThreadCache(const std::tuple<int64_t, std::string, std::string> &threadInfo)
+bool JsonTraceDatabase::AddThreadCache(const std::tuple<int64_t, std::string, std::string> &threadInfo)
 {
     threadInfoCache.insert(threadInfo);
     return true;
 }
 
-bool TraceDatabase::InsertThreadList(const std::set<std::tuple<int64_t, std::string, std::string>> &threadList)
+bool JsonTraceDatabase::InsertThreadList(const std::set<std::tuple<int64_t, std::string, std::string>> &threadList)
 {
     for (const auto &item : threadList) {
         if (!UpdateThreadInfo(item)) {
@@ -272,7 +277,7 @@ bool TraceDatabase::InsertThreadList(const std::set<std::tuple<int64_t, std::str
     return true;
 }
 
-bool TraceDatabase::UpdateThreadInfo(const std::tuple<int64_t, std::string, std::string> &thread)
+bool JsonTraceDatabase::UpdateThreadInfo(const std::tuple<int64_t, std::string, std::string> &thread)
 {
     updateThreadInfoStmt->Reset();
     std::unique_lock<std::mutex> lock(mutex);
@@ -283,7 +288,7 @@ bool TraceDatabase::UpdateThreadInfo(const std::tuple<int64_t, std::string, std:
     return true;
 }
 
-bool TraceDatabase::UpdateThreadName(const Trace::MetaData &event)
+bool JsonTraceDatabase::UpdateThreadName(const Trace::MetaData &event)
 {
     updateThreadNameStmt->Reset();
     std::unique_lock<std::mutex> lock(mutex);
@@ -294,7 +299,7 @@ bool TraceDatabase::UpdateThreadName(const Trace::MetaData &event)
     return true;
 }
 
-bool TraceDatabase::UpdateThreadSortIndex(const Trace::MetaData &event)
+bool JsonTraceDatabase::UpdateThreadSortIndex(const Trace::MetaData &event)
 {
     updateThreadSortIndexStmt->Reset();
     std::unique_lock<std::mutex> lock(mutex);
@@ -305,7 +310,7 @@ bool TraceDatabase::UpdateThreadSortIndex(const Trace::MetaData &event)
     return true;
 }
 
-bool TraceDatabase::InsertFlow(const Trace::Flow &event)
+bool JsonTraceDatabase::InsertFlow(const Trace::Flow &event)
 {
     flowCache.emplace_back(event);
     if (flowCache.size() == cacheSize) {
@@ -315,7 +320,7 @@ bool TraceDatabase::InsertFlow(const Trace::Flow &event)
     return true;
 }
 
-bool TraceDatabase::InsertFlowList(const std::vector<Trace::Flow> &eventList)
+bool JsonTraceDatabase::InsertFlowList(const std::vector<Trace::Flow> &eventList)
 {
     std::unique_ptr<SqlitePreparedStatement> stmt;
     std::unique_ptr<SqlitePreparedStatement> &refStmt = (eventList.size() == cacheSize) ? insertFlowStmt : stmt;
@@ -339,7 +344,7 @@ bool TraceDatabase::InsertFlowList(const std::vector<Trace::Flow> &eventList)
     return true;
 }
 
-std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetFlowStmt(uint64_t paramLen)
+std::unique_ptr<SqlitePreparedStatement> JsonTraceDatabase::GetFlowStmt(uint64_t paramLen)
 {
     std::string sql =
         "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" + " VALUES (?,?,?,?,?,?)";
@@ -349,7 +354,7 @@ std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetFlowStmt(uint64_t par
     return CreatPreparedStatement(sql);
 }
 
-bool TraceDatabase::InsertCounter(const Trace::Counter &event)
+bool JsonTraceDatabase::InsertCounter(const Trace::Counter &event)
 {
     counterCache.emplace_back(event);
     if (counterCache.size() == cacheSize) {
@@ -359,7 +364,7 @@ bool TraceDatabase::InsertCounter(const Trace::Counter &event)
     return true;
 }
 
-bool TraceDatabase::InsertCounterList(const std::vector<Trace::Counter> &eventList)
+bool JsonTraceDatabase::InsertCounterList(const std::vector<Trace::Counter> &eventList)
 {
     std::unique_ptr<SqlitePreparedStatement> stmt;
     std::unique_ptr<SqlitePreparedStatement> &refStmt = (eventList.size() == cacheSize) ? insertCounterStmt : stmt;
@@ -383,7 +388,7 @@ bool TraceDatabase::InsertCounterList(const std::vector<Trace::Counter> &eventLi
     return true;
 }
 
-std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetCounterStmt(uint64_t paramLen)
+std::unique_ptr<SqlitePreparedStatement> JsonTraceDatabase::GetCounterStmt(uint64_t paramLen)
 {
     std::string sql = "INSERT INTO " + counterTable + " (name, pid, timestamp, cat, args)" + " VALUES (?,?,?,?,?)";
     for (int i = 0; i < paramLen - 1; ++i) {
@@ -392,7 +397,7 @@ std::unique_ptr<SqlitePreparedStatement> TraceDatabase::GetCounterStmt(uint64_t 
     return CreatPreparedStatement(sql);
 }
 
-void TraceDatabase::UpdateDepth()
+void JsonTraceDatabase::UpdateDepth()
 {
     ServerLog::Info("UpdateDepth.");
     CreateDepthTempTable();
@@ -401,14 +406,14 @@ void TraceDatabase::UpdateDepth()
     ServerLog::Info("UpdateDepth end.");
 }
 
-void TraceDatabase::UpdateSimulationDepth()
+void JsonTraceDatabase::UpdateSimulationDepth()
 {
     ServerLog::Info("UpdateSimulationSliceDepth.");
     UpdateSimulationDepthByCode();
     ServerLog::Info("UpdateSimulationSliceDepth end.");
 }
 
-void TraceDatabase::UpdateSimulationDepthByCode()
+void JsonTraceDatabase::UpdateSimulationDepthByCode()
 {
     Timer timer("UpdateSimulationDepthByCode");
     std::vector<int32_t> trackIdList = QueryAllTrackId();
@@ -430,7 +435,7 @@ void TraceDatabase::UpdateSimulationDepthByCode()
     ServerLog::Info("UpdateSimulationSliceDepth end.");
 }
 
-void TraceDatabase::ComputeSliceSql(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec)
+void JsonTraceDatabase::ComputeSliceSql(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec)
 {
     sliceDepthHelper.clear();
     for (auto &rowThreadTrace : rowThreadTraceVec) {
@@ -465,7 +470,7 @@ void TraceDatabase::ComputeSliceSql(std::vector<Protocol::RowThreadTrace> &rowTh
     AppendUpdateSliceDepthSql(sliceDepthHelper);
 }
 
-std::vector<Protocol::RowThreadTrace> TraceDatabase::QueryAllSliceByTrackId(const int32_t &trackId)
+std::vector<Protocol::RowThreadTrace> JsonTraceDatabase::QueryAllSliceByTrackId(const int32_t &trackId)
 {
     std::vector<Protocol::RowThreadTrace> rowThreadTraceVec;
     std::string querySliceByTrackId =
@@ -491,7 +496,7 @@ std::vector<Protocol::RowThreadTrace> TraceDatabase::QueryAllSliceByTrackId(cons
     return rowThreadTraceVec;
 }
 
-std::vector<int32_t> TraceDatabase::QueryAllTrackId()
+std::vector<int32_t> JsonTraceDatabase::QueryAllTrackId()
 {
     std::vector<int32_t> trackIdList;
     std::string allTrackIdSql = "select track_id as trackId from thread;";
@@ -511,7 +516,7 @@ std::vector<int32_t> TraceDatabase::QueryAllTrackId()
     return trackIdList;
 }
 
-bool TraceDatabase::AppendUpdateSliceDepthSql(std::list<Protocol::RowThreadTrace> &sliceLinkedList)
+bool JsonTraceDatabase::AppendUpdateSliceDepthSql(std::list<Protocol::RowThreadTrace> &sliceLinkedList)
 {
     for (const auto &singleSlice : sliceLinkedList) {
         updateSliceDepthSql.append("when ");
@@ -522,7 +527,7 @@ bool TraceDatabase::AppendUpdateSliceDepthSql(std::list<Protocol::RowThreadTrace
     }
 }
 
-void TraceDatabase::CreateDepthTempTable()
+void JsonTraceDatabase::CreateDepthTempTable()
 {
     Timer timer("CreateDepthTempTable");
     std::string sql = "CREATE TEMPORARY TABLE temps AS "
@@ -537,7 +542,7 @@ void TraceDatabase::CreateDepthTempTable()
     }
 }
 
-void TraceDatabase::DropDepthTempTable()
+void JsonTraceDatabase::DropDepthTempTable()
 {
     Timer timer("DropDepthTempTable");
     std::string sql = "DROP table temp.temps";
@@ -546,7 +551,7 @@ void TraceDatabase::DropDepthTempTable()
     }
 }
 
-void TraceDatabase::UpdateSliceDepth()
+void JsonTraceDatabase::UpdateSliceDepth()
 {
     Timer timer("UpdateSliceDepth");
     std::string sql = "UPDATE slice AS S SET depth = ("
@@ -560,7 +565,7 @@ void TraceDatabase::UpdateSliceDepth()
     }
 }
 
-bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
+bool JsonTraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
     Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId)
 {
     if (requestParams.timePerPx == 0) {
@@ -590,7 +595,7 @@ bool TraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &re
     return true;
 }
 
-std::vector<RowThreadTrace> TraceDatabase::QuerySliceByCondition(const UnitThreadTracesParams &requestParams,
+std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByCondition(const UnitThreadTracesParams &requestParams,
     uint64_t minTimestamp, int64_t traceId)
 {
     std::string sql = "SELECT id, timestamp - ? as start_time, duration, name, depth, track_id, cname,"
@@ -626,7 +631,7 @@ std::vector<RowThreadTrace> TraceDatabase::QuerySliceByCondition(const UnitThrea
     return rowThreadTraceVec;
 }
 
-bool TraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
+bool JsonTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
     Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp)
 {
     std::string sql = "SELECT timestamp - ? as start_time, duration, timestamp + duration - ? as end_time, "
@@ -661,7 +666,7 @@ bool TraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesSum
     return true;
 }
 
-bool TraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestParams,
+bool JsonTraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestParams,
     Protocol::UnitThreadsBody &responseBody, uint64_t minTimestamp, int64_t traceId)
 {
     uint64_t startTime = requestParams.startTime + minTimestamp;
@@ -672,10 +677,10 @@ bool TraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestParam
         return false;
     }
     std::string sql = "SELECT timestamp, duration, timestamp + duration AS endTime, name, depth"
-        " FROM " +
-        sliceTable +
-        " WHERE track_id = ? AND timestamp <= ? AND timestamp + duration >= ?"
-        " ORDER BY depth ASC, timestamp ASC;";
+                      " FROM " +
+                      sliceTable +
+                      " WHERE track_id = ? AND timestamp <= ? AND timestamp + duration >= ?"
+                      " ORDER BY depth ASC, timestamp ASC;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreads. Failed to prepare sql.");
@@ -706,7 +711,7 @@ bool TraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestParam
     return true;
 }
 
-bool TraceDatabase::QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t startTime, uint64_t endTime,
+bool JsonTraceDatabase::QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t startTime, uint64_t endTime,
     Protocol::ExtremumTimestamp &extremumTimestamp)
 {
     std::string sql = "SELECT min(timestamp) as minTimestamp, max(timestamp + duration) AS maxTimestamp"
@@ -725,7 +730,7 @@ bool TraceDatabase::QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t star
     return true;
 }
 
-bool TraceDatabase::DealLastData(std::vector<Protocol::SimpleSlice> &rows,
+bool JsonTraceDatabase::DealLastData(std::vector<Protocol::SimpleSlice> &rows,
     std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime, uint64_t endTime, uint64_t index)
 {
     while (++index < rows.size()) {
@@ -735,7 +740,7 @@ bool TraceDatabase::DealLastData(std::vector<Protocol::SimpleSlice> &rows,
     }
 }
 
-void TraceDatabase::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
+void JsonTraceDatabase::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
     std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime, uint64_t endTime)
 {
     int32_t i = 0;
@@ -788,7 +793,7 @@ void TraceDatabase::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
     }
 }
 
-void TraceDatabase::AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, const std::string &name,
+void JsonTraceDatabase::AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, const std::string &name,
     uint64_t tmpSelfTime)
 {
     if (selfTimeKeyValue.find(name) != selfTimeKeyValue.end()) {
@@ -798,7 +803,7 @@ void TraceDatabase::AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, c
     }
 }
 
-std::vector<Protocol::SimpleSlice> TraceDatabase::ThreadsInfoFilter(
+std::vector<Protocol::SimpleSlice> JsonTraceDatabase::ThreadsInfoFilter(
     const std::vector<Protocol::SimpleSlice> &simpleSliceVec, uint64_t startTime, uint64_t endTime)
 {
     std::vector<Protocol::SimpleSlice> nRows;
@@ -810,7 +815,7 @@ std::vector<Protocol::SimpleSlice> TraceDatabase::ThreadsInfoFilter(
     return nRows;
 }
 
-void TraceDatabase::ReduceThread(const std::vector<Protocol::SimpleSlice> &rows,
+void JsonTraceDatabase::ReduceThread(const std::vector<Protocol::SimpleSlice> &rows,
     const std::map<std::string, uint64_t> &selfTimeKeyValue, Protocol::UnitThreadsBody &responseBody)
 {
     for (auto &cur : rows) {
@@ -838,7 +843,7 @@ void TraceDatabase::ReduceThread(const std::vector<Protocol::SimpleSlice> &rows,
     }
 }
 
-bool TraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
+bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
     Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId)
 {
     std::string sql = "SELECT id, timestamp, duration, name, depth, track_id, cat, args"
@@ -887,7 +892,7 @@ bool TraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &reques
     return true;
 }
 
-bool TraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::ThreadDetailParams &requestParams,
+bool JsonTraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::ThreadDetailParams &requestParams,
     const std::vector<SliceDto> &rows, std::vector<uint64_t> &nextDepthResult, int64_t trackId)
 {
     if (rows.empty()) {
@@ -909,8 +914,8 @@ bool TraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::ThreadDeta
     return true;
 }
 
-bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody,
-    uint64_t minTimestamp)
+bool JsonTraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParams,
+    Protocol::UnitFlowBody &responseBody, uint64_t minTimestamp)
 {
     std::string sql = "SELECT FL.name, FL.cat, FL.flow_id as flowId, TH.pid, TH.tid, SL.depth, SL.timestamp,"
         " SL.duration, FL.type, SL.name as sliceName"
@@ -949,7 +954,7 @@ bool TraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParam
     return FlowDetailToResponse(flowDetailVec, minTimestamp, responseBody);
 }
 
-bool TraceDatabase::FlowDetailToResponse(const std::vector<FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
+bool JsonTraceDatabase::FlowDetailToResponse(const std::vector<FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
     Protocol::UnitFlowBody &responseBody)
 {
     const static int FLOW_COUNT = 2; // from + to
@@ -981,7 +986,7 @@ bool TraceDatabase::FlowDetailToResponse(const std::vector<FlowDetailDto> &flowD
     return true;
 }
 
-bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestParams,
+bool JsonTraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestParams,
     Protocol::UnitFlowNameBody &responseBody, uint64_t minTimestamp, int64_t trackId)
 {
     std::string sql = "SELECT name, flow_id as flowId, type"
@@ -1009,7 +1014,7 @@ bool TraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &requestPar
     return true;
 }
 
-bool TraceDatabase::QueryUnitsMetadata(const std::string &fileId,
+bool JsonTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     std::string sql = "SELECT pt.pid, pt.process_name AS processName, pt.label, pt.tid, pt.thread_name AS threadName,"
@@ -1058,7 +1063,7 @@ bool TraceDatabase::QueryUnitsMetadata(const std::string &fileId,
     return true;
 }
 
-void TraceDatabase::MetaDataToResponse(const std::vector<MetaDataDto> &metaDataVec, const std::string &fileId,
+void JsonTraceDatabase::MetaDataToResponse(const std::vector<MetaDataDto> &metaDataVec, const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     std::optional<std::string> curPid;
@@ -1095,7 +1100,7 @@ void TraceDatabase::MetaDataToResponse(const std::vector<MetaDataDto> &metaDataV
     }
 }
 
-std::vector<std::string> TraceDatabase::GetCounterDataType(const std::string &args)
+std::vector<std::string> JsonTraceDatabase::GetCounterDataType(const std::string &args)
 {
     std::vector<std::string> type{};
     if (args.empty()) {
@@ -1119,7 +1124,7 @@ std::vector<std::string> TraceDatabase::GetCounterDataType(const std::string &ar
     return type;
 }
 
-bool TraceDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
+bool JsonTraceDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
 {
     std::string sql = "SELECT min(timestamp) as minTimestamp, max(timestamp) as maxTimestamp FROM "
         "(SELECT timestamp FROM " +
@@ -1138,7 +1143,7 @@ bool TraceDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
     return true;
 }
 
-void TraceDatabase::CommitData()
+void JsonTraceDatabase::CommitData()
 {
     if (!sliceCache.empty()) {
         InsertSliceList(sliceCache);
@@ -1158,7 +1163,7 @@ void TraceDatabase::CommitData()
     }
 }
 
-int TraceDatabase::SearchSliceNameCount(const std::string &name)
+int JsonTraceDatabase::SearchSliceNameCount(const std::string &name)
 {
     std::string sql = "SELECT count(*) FROM " + sliceTable + " WHERE name like '%'||?||'%'";
     auto stmt = CreatPreparedStatement(sql);
@@ -1173,7 +1178,7 @@ int TraceDatabase::SearchSliceNameCount(const std::string &name)
     return 0;
 }
 
-bool TraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
+bool JsonTraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
     Protocol::SearchSliceBody &responseBody)
 {
     std::string sql = "SELECT pid, tid, timestamp - ? as startTime, duration, depth"
@@ -1200,7 +1205,7 @@ bool TraceDatabase::SearchSliceName(const std::string &name, int index, uint64_t
     return true;
 }
 
-bool TraceDatabase::QueryFlowCategoryList(std::vector<std::string> &categories)
+bool JsonTraceDatabase::QueryFlowCategoryList(std::vector<std::string> &categories)
 {
     std::string sql = "SELECT cat FROM flow GROUP BY cat";
     auto stmt = CreatPreparedStatement(sql);
@@ -1215,7 +1220,7 @@ bool TraceDatabase::QueryFlowCategoryList(std::vector<std::string> &categories)
     return true;
 }
 
-void TraceDatabase::DeleteInvalidFlowData()
+void JsonTraceDatabase::DeleteInvalidFlowData()
 {
     std::string sql = "DELETE from " + flowTable +
         " Where id IN"
@@ -1226,7 +1231,7 @@ void TraceDatabase::DeleteInvalidFlowData()
     }
 }
 
-bool TraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, uint64_t minTimestamp,
+bool JsonTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, uint64_t minTimestamp,
     std::vector<std::unique_ptr<FlowEvent>> &flowDetailList)
 {
     if (params.timePerPx == 0) {
@@ -1277,7 +1282,7 @@ bool TraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, ui
     return true;
 }
 
-void TraceDatabase::FlowEventsToResponse(const std::vector<FlowCategoryEventsDto> &flowEventsVec,
+void JsonTraceDatabase::FlowEventsToResponse(const std::vector<FlowCategoryEventsDto> &flowEventsVec,
     const std::string &category, std::vector<std::unique_ptr<FlowEvent>> &flowDetailList)
 {
     std::string curFlowId;
@@ -1310,7 +1315,7 @@ void TraceDatabase::FlowEventsToResponse(const std::vector<FlowCategoryEventsDto
     }
 }
 
-bool TraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
+bool JsonTraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
     std::vector<Protocol::UnitCounterData> &dataList)
 {
     std::string sql = "SELECT timestamp - ? as startTime, args"
@@ -1334,7 +1339,7 @@ bool TraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64
     return true;
 }
 
-bool TraceDatabase::QueryComputeStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
+bool JsonTraceDatabase::QueryComputeStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
     Protocol::SummaryStatisticsBody &responseBody)
 {
     std::string stepCondition;
@@ -1371,7 +1376,7 @@ bool TraceDatabase::QueryComputeStatisticsData(const Protocol::SummaryStatisticP
     return true;
 }
 
-bool TraceDatabase::QueryCommunicationStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
+bool JsonTraceDatabase::QueryCommunicationStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
     Protocol::SummaryStatisticsBody &responseBody)
 {
     sqlite3_stmt *stmt = nullptr;
@@ -1418,7 +1423,7 @@ bool TraceDatabase::QueryCommunicationStatisticsData(const Protocol::SummaryStat
     return true;
 }
 
-bool TraceDatabase::QueryStepDuration(const std::string &stepId, uint64_t &min, uint64_t &max)
+bool JsonTraceDatabase::QueryStepDuration(const std::string &stepId, uint64_t &min, uint64_t &max)
 {
     std::string profileName = "ProfilerStep#" + stepId;
     std::string sql = "select timestamp, duration from " + sliceTable + " where name=?";
@@ -1440,7 +1445,7 @@ bool TraceDatabase::QueryStepDuration(const std::string &stepId, uint64_t &min, 
 }
 
 
-bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &requestParams,
+bool JsonTraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &requestParams,
     Protocol::SystemViewBody &responseBody)
 {
     std::string searchName = "%" + requestParams.searchName + "%";
@@ -1487,7 +1492,7 @@ bool TraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &reques
     return true;
 }
 
-LayerStatData TraceDatabase::QueryLayerData(const std::string &layer, const std::string &name)
+LayerStatData JsonTraceDatabase::QueryLayerData(const std::string &layer, const std::string &name)
 {
     LayerStatData layerStatData;
     std::string sql = "SELECT sum(duration) AS totalTime, count(distinct name) FROM slice "
@@ -1507,7 +1512,7 @@ LayerStatData TraceDatabase::QueryLayerData(const std::string &layer, const std:
     return layerStatData;
 }
 
-std::vector<std::string> TraceDatabase::QueryCoreType()
+std::vector<std::string> JsonTraceDatabase::QueryCoreType()
 {
     std::vector<std::string> acceleratorCoreList;
     std::string sql = "SELECT DISTINCT accelerator_core FROM " + kernelDetail + " ORDER BY accelerator_core";
@@ -1524,7 +1529,7 @@ std::vector<std::string> TraceDatabase::QueryCoreType()
     return acceleratorCoreList;
 }
 
-uint64_t TraceDatabase::QueryTotalKernel(const std::string &coreType, const std::string &name)
+uint64_t JsonTraceDatabase::QueryTotalKernel(const std::string &coreType, const std::string &name)
 {
     std::string sql = "SELECT count(*) FROM kernel_detail where name LIKE ?";
     if (!coreType.empty()) {
@@ -1533,7 +1538,7 @@ uint64_t TraceDatabase::QueryTotalKernel(const std::string &coreType, const std:
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryTotalKernel, fail to prepare sql.");
-        return false;
+        return 0;
     }
     if (!coreType.empty()) {
         stmt->BindParams(coreType);
@@ -1546,7 +1551,7 @@ uint64_t TraceDatabase::QueryTotalKernel(const std::string &coreType, const std:
     return total;
 }
 
-bool TraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
+bool JsonTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
     Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp)
 {
     std::string orderBy;
@@ -1586,7 +1591,7 @@ bool TraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParams &r
     return true;
 }
 
-void TraceDatabase::SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
+void JsonTraceDatabase::SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
     Protocol::KernelDetailsBody &responseBody) const
 {
     while (resultSet->Next()) {
@@ -1608,7 +1613,7 @@ void TraceDatabase::SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, 
     }
 }
 
-bool TraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &params,
+bool JsonTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &params,
     Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
     std::string sql = "SELECT depth, track_id FROM " + sliceTable + " WHERE name = ? AND timestamp = ?";
@@ -1629,7 +1634,7 @@ bool TraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &para
     return true;
 }
 
-OneKernelData TraceDatabase::QueryKernelTid(const uint64_t trackId)
+OneKernelData JsonTraceDatabase::QueryKernelTid(const uint64_t trackId)
 {
     std::string sql = "SELECT tid, pid FROM " + threadTable + " WHERE track_id = ? ";
     auto stmt = CreatPreparedStatement(sql);
@@ -1647,5 +1652,5 @@ OneKernelData TraceDatabase::QueryKernelTid(const uint64_t trackId)
     return oneKernel;
 }
 } // end of namespace Timeline
-} // end of namespace Module
-} // end of namespace Dic
+// end of namespace Module
+// end of namespace Dic

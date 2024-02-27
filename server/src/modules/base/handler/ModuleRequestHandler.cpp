@@ -16,7 +16,7 @@ const std::string ModuleRequestHandler::GetError()
     return error;
 }
 
-void ModuleRequestHandler::SetBaseResponse(const Request &request, Response &response) const
+void ModuleRequestHandler::SetBaseResponse(const Request &request, Response &response)
 {
     response.type = ProtocolMessage::Type::RESPONSE;
     response.id = static_cast<uint32_t>(IdBuilder::ResponseIdBuilder().Build());
@@ -30,7 +30,7 @@ void ModuleRequestHandler::SetBaseResponse(const Request &request, Response &res
 }
 
 void ModuleRequestHandler::SetResponseResult(Response &response, bool result, const std::string &errorMsg,
-                                             const ErrorCode &errorCode) const
+                                             const ErrorCode &errorCode)
 {
     response.result = result;
     if (result) {

@@ -6,10 +6,10 @@
 #define PROFILER_SERVER_MOCKTRACEDATABASE_H
 
 #include <gmock/gmock.h>
-#include "TraceDatabase.h"
+#include "VirtualTraceDatabase.h"
 #include "SummaryProtocolRequest.h"
 
-class MockTraceDatabase : public Dic::Module::Timeline::TraceDatabase {
+class MockTraceDatabase : public Dic::Module::Timeline::VirtualTraceDatabase {
 public:
     MOCK_METHOD2(QueryComputeStatisticsData, bool(const Dic::Protocol::SummaryStatisticParams &requestParams,
             Dic::Protocol::SummaryStatisticsBody &responseBody));

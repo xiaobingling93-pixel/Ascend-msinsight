@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ *  Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  *
  *
  */
@@ -23,6 +23,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
+using namespace rapidjson;
 bool ClusterFileParser::ParseCommunication(const std::vector<std::string> &filePathList)
 {
     const std::string &filePath = filePathList[0];
@@ -72,7 +73,7 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
     std::ifstream stepTraceFileCsv(filePath);
     std::string line;
     std::map<std::string, int> indexMap;
-    auto database = DataBaseManager::Instance().GetWriteClusterDatabase();
+    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     while (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::RUNNING &&
             std::getline(stepTraceFileCsv, line)) {
         std::vector<std::string> fields;
@@ -100,7 +101,7 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
     baseInfo.collectStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(
             now.time_since_epoch()).count();
     ParseCommunicationGroup(selectedPath, baseInfo);
-    auto database = DataBaseManager::Instance().GetWriteClusterDatabase();
+    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     database->InsertClusterBaseInfo(baseInfo);
     ServerLog::Info("end saveClusterBaseInfo data into db ,path:", selectedPath, " collectStartTime=",
                     baseInfo.collectStartTime);
@@ -116,7 +117,7 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
         ServerLog::Info("cluster db file is already exist, skip parse ");
         return true;
     }
-    auto database = DataBaseManager::Instance().GetWriteClusterDatabase();
+    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     // parse communication file
     std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
     std::vector<std::string> communicationMatrixFileList =
@@ -154,7 +155,7 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
 
 bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
 {
-    auto database = DataBaseManager::Instance().GetWriteClusterDatabase();
+    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     // parse communication file
     std::regex patternCommunication(R"(cluster_communication.json)");
     std::vector<std::string> communicationFileList =
@@ -186,10 +187,10 @@ bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath, boo
 {
     // 导入前清空cluster database
     DataBaseManager::Instance().ClearClusterDb();
-    auto database = DataBaseManager::Instance().GetWriteClusterDatabase();
+    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     std::string dbPath = selectedPath + "/cluster.db";
     // 查询单独一个连接
-    auto databaseRead = DataBaseManager::Instance().GetReadClusterDatabase();
+    auto databaseRead = dynamic_cast<JsonClusterDatabase *>(DataBaseManager::Instance().GetReadClusterDatabase());
     databaseRead->OpenDb(dbPath, false);
     databaseRead->SetConfig();
     if (!dbIsAlreadyExist) {

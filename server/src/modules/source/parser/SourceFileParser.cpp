@@ -12,6 +12,7 @@
 #include "EventParser.h"
 #include "TraceTime.h"
 #include "FileUtil.h"
+#include "JsonTraceDatabase.h"
 #include "SourceFileParser.h"
 
 namespace Dic {
@@ -19,6 +20,7 @@ namespace Module {
 namespace Source {
 using namespace Dic;
 using namespace Dic::Server;
+using namespace Dic::Module::FullDb;
 
 SourceFileParser &SourceFileParser::Instance()
 {
@@ -97,7 +99,8 @@ bool SourceFileParser::InitParser(const std::string &fileId)
         ServerLog::Info("Pre task skip this file.");
         return true;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
+        DataBaseManager::Instance().GetTraceDatabase(fileId));
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection.");
         return false;
@@ -135,7 +138,8 @@ void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<s
         future.wait();
     }
     ServerLog::Info("Parse completed. ID:", fileId);
-    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(fileId);
+    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
+        DataBaseManager::Instance().GetTraceDatabase(fileId));
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", fileId);
         return;

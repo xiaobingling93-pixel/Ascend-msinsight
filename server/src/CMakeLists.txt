@@ -59,6 +59,10 @@ include_directories(${SRC_HOME_DIR}/modules/operator/database)
 include_directories(${SRC_HOME_DIR}/modules/operator/handler)
 include_directories(${SRC_HOME_DIR}/modules/operator/parser)
 include_directories(${SRC_HOME_DIR}/modules/operator/protocol)
+# full db
+include_directories(${SRC_HOME_DIR}/modules/full_db)
+include_directories(${SRC_HOME_DIR}/modules/full_db/parserAlloc)
+include_directories(${SRC_HOME_DIR}/modules/full_db/database)
 
 # modules for server
 aux_source_directory(${SRC_HOME_DIR}/modules DIC_MODULES_SRC)
@@ -108,6 +112,11 @@ aux_source_directory(${SRC_HOME_DIR}/modules/source/handler DIC_MODULES_SOURCE_H
 aux_source_directory(${SRC_HOME_DIR}/modules/source/parser DIC_MODULES_SOURCE_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/source/protocol DIC_MODULES_SOURCE_PROTOCOL_SRC)
 
+# full db
+aux_source_directory(${SRC_HOME_DIR}/modules/full_db  DIC_MODULES_FULL_DB_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/full_db/parserAlloc  DIC_MODULES_FULL_DB_PARSER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/full_db/database  DIC_MODULES_FULL_DB_DATABASE_SRC)
+
 list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SRC}
         ${DIC_MODULES_BASE_SRC}
@@ -144,6 +153,9 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_OPERATOR_PARSER_SRC}
         ${DIC_MODULES_OPERATOR_HANDLER_SRC}
         ${DIC_MODULES_OPERATOR_PROTOCOL_SRC}
+        ${DIC_MODULES_FULL_DB_SRC}
+        ${DIC_MODULES_FULL_DB_PARSER_SRC}
+        ${DIC_MODULES_FULL_DB_DATABASE_SRC}
         ${DIC_MODULES_SOURCE_SRC}
         ${DIC_MODULES_SOURCE_PARSER_SRC}
         ${DIC_MODULES_SOURCE_HANDLER_SRC}

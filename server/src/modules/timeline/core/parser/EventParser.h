@@ -9,7 +9,7 @@
 #include <map>
 #include <functional>
 #include "GlobalDefs.h"
-#include "TraceDatabase.h"
+#include "JsonTraceDatabase.h"
 
 namespace Dic {
 namespace Module {
@@ -29,7 +29,7 @@ private:
     int parseCount = 0;
     int ignoreCount = 0;
     bool m_isSimulation = false;
-    std::shared_ptr<TraceDatabase> database;
+    std::shared_ptr<JsonTraceDatabase> database;
     std::map<std::string, std::function<void(std::unique_ptr<Trace::Event>)>> eventHandleMap;
 
     std::string ReadBuffer(int64_t startPosition, int64_t endPosition);

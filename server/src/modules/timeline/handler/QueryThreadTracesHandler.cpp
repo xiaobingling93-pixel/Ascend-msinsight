@@ -35,9 +35,9 @@ void QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         return;
     }
     int64_t trackId = TraceFileParser::Instance()
-        .GetTrackId(request.params.cardId, request.params.processId, request.params.threadId);
-    bool result = database->QueryThreadTraces(request.params, response.body, TraceTime::Instance().GetStartTime(),
-                                              trackId);
+            .GetTrackId(request.params.cardId, request.params.processId, request.params.threadId);
+    bool result =
+        database->QueryThreadTraces(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

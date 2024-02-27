@@ -76,6 +76,9 @@ public:
 
     static inline long double StringToLongDouble(const std::string& usStr)
     {
+        if (usStr.empty()) {
+            return 0;
+        }
         try {
             return std::stold(usStr);
         } catch (std::exception &) {

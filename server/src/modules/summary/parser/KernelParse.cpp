@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
 #include "KernelParse.h"
@@ -9,6 +9,7 @@
 #include "TraceFileParser.h"
 #include "ParserStatusManager.h"
 #include "ServerLog.h"
+#include "CommonDefs.h"
 #include "NumberUtil.h"
 #include "WsSession.h"
 #include "WsSessionManager.h"
@@ -92,7 +93,8 @@ void KernelParse::PreParseTask(const std::string &filePath, const std::string &f
 bool KernelParse::InitParser(const std::string& filePath, const std::string& fileId, std::string &message)
 {
     std::string dbPath = FileUtil::GetDbPath(filePath, fileId);
-    auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId);
+    auto database =
+        dynamic_cast<JsonSummaryDataBase *>(Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
     if (database == nullptr) {
         message = "Failed to get summary database, fileId: ." + fileId + " filePath: " + filePath;
         return false;
@@ -123,7 +125,7 @@ bool KernelParse::ParseTask(const std::string &filePath, const std::string &file
     std::string line;
     std::map<std::string, size_t> dataMap;
     std::set<std::string> devices = {};
-    auto db = Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId);
+    auto db = dynamic_cast<JsonSummaryDataBase*>(Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(statusId) ==
            Timeline::ParserStatus::RUNNING && getline(file, line)) {
         const std::basic_string<char>& basicString(line);
@@ -288,8 +290,9 @@ void KernelParse::Reset()
     ServerLog::Info("Summary task completed.");
     auto databaseList = Timeline::DataBaseManager::Instance().GetAllSummaryDatabase();
     for (auto &db: databaseList) {
-        db->ReleaseStmt();
-        db->CloseDb();
+        auto database = dynamic_cast<JsonSummaryDataBase*>(db);
+        database->ReleaseStmt();
+        database->CloseDb();
     }
     Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::SUMMARY);
 }

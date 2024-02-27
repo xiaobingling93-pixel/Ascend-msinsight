@@ -15,6 +15,12 @@ namespace Dic {
 using json_t = rapidjson::Value;
 using document_t = rapidjson::Document;
 using namespace rapidjson;
+
+enum class ParserType {
+    DB = 0,
+    BIN = 1,
+    JSON = 2
+};
 } // end of namespace Dic
 
 #endif // DATA_INSIGHT_CORE_DEFS_H

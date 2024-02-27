@@ -9,7 +9,7 @@
 #include <map>
 #include <functional>
 #include "GlobalDefs.h"
-#include "MemoryDataBase.h"
+#include "JsonMemoryDataBase.h"
 #include "ThreadPool.h"
 #include "MemoryDef.h"
 #include "FileParser.h"
@@ -42,6 +42,7 @@ private:
     std::map<std::string, Protocol::MemorySuccess> ranks;
     bool isCluster;
 
+    std::unique_ptr<JsonMemoryDataBase> database;
     std::unique_ptr<ThreadPool> threadPool;
     std::map<std::string, std::future<void>> futureMap;
 

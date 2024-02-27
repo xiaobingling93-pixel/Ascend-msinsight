@@ -1,21 +1,19 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-#include "SummaryDataBase.h"
+#include "JsonSummaryDataBase.h"
 #include "ServerLog.h"
 #include "SummaryProtocolRequest.h"
 #include "SummaryProtocolResponse.h"
 #include "TraceTime.h"
 #include "OperatorProtocol.h"
 
-namespace Dic {
-namespace Module {
-namespace Summary {
+namespace Dic::Module::Summary {
 using namespace Server;
-SummaryDataBase::SummaryDataBase(std::mutex &sqlMutex) : mutex(sqlMutex) {}
+JsonSummaryDataBase::JsonSummaryDataBase(std::mutex &sqlMutex) : VirtualSummaryDataBase(sqlMutex) {}
 
-SummaryDataBase::~SummaryDataBase()
+JsonSummaryDataBase::~JsonSummaryDataBase()
 {
     if (hasInitStmt) {
         ReleaseStmt();
@@ -23,7 +21,7 @@ SummaryDataBase::~SummaryDataBase()
     CloseDb();
 }
 
-bool SummaryDataBase::SetConfig()
+bool JsonSummaryDataBase::SetConfig()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Database is not open.");
@@ -33,7 +31,7 @@ bool SummaryDataBase::SetConfig()
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
 }
 
-bool SummaryDataBase::CreateTable()
+bool JsonSummaryDataBase::CreateTable()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Database is not open.");
@@ -49,14 +47,14 @@ bool SummaryDataBase::CreateTable()
     return ExecSql(sql);
 }
 
-bool SummaryDataBase::DropTable()
+bool JsonSummaryDataBase::DropTable()
 {
     std::vector<std::string> tables = {kernelTable};
     std::unique_lock<std::mutex> lock(mutex);
     return DropSomeTables(tables);
 }
 
-bool SummaryDataBase::InitStmt()
+bool JsonSummaryDataBase::InitStmt()
 {
     if (hasInitStmt) {
         return true;
@@ -77,14 +75,14 @@ bool SummaryDataBase::InitStmt()
     return true;
 }
 
-void SummaryDataBase::ReleaseStmt()
+void JsonSummaryDataBase::ReleaseStmt()
 {
     if (insertKernelStmt != nullptr) {
         insertKernelStmt = nullptr;
     }
 }
 
-void SummaryDataBase::InsertKernelDetailList(std::vector<Kernel> kernelVec)
+void JsonSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel>& kernelVec)
 {
     sqlite3_stmt *stmt = GetKernelStmt(kernelVec.size());
     if (stmt == nullptr) {
@@ -98,15 +96,18 @@ void SummaryDataBase::InsertKernelDetailList(std::vector<Kernel> kernelVec)
         sqlite3_bind_text(stmt, idx++, event.name.c_str(), event.name.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.type.c_str(), event.type.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.acceleratorCore.c_str(), event.acceleratorCore.length(), SQLITE_TRANSIENT);
+
         sqlite3_bind_int64(stmt, idx++, event.startTime);
         sqlite3_bind_double(stmt, idx++, event.duration);
         sqlite3_bind_double(stmt, idx++, event.waitTime);
         sqlite3_bind_int64(stmt, idx++, event.blockDim);
         sqlite3_bind_text(stmt, idx++, event.inputShapes.c_str(), event.inputShapes.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.inputDataTypes.c_str(), event.inputDataTypes.length(), SQLITE_TRANSIENT);
+
         sqlite3_bind_text(stmt, idx++, event.inputFormats.c_str(), event.inputFormats.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.outputShapes.c_str(), event.outputShapes.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, event.outputDataTypes.c_str(), event.outputDataTypes.length(), SQLITE_TRANSIENT);
+
         sqlite3_bind_text(stmt, idx++, event.outputFormats.c_str(), event.outputFormats.length(), SQLITE_TRANSIENT);
     }
     std::unique_lock<std::mutex> lock(mutex);
@@ -120,7 +121,7 @@ void SummaryDataBase::InsertKernelDetailList(std::vector<Kernel> kernelVec)
     }
 }
 
-void SummaryDataBase::InsertKernelDetail(Kernel kernel)
+void JsonSummaryDataBase::InsertKernelDetail(Kernel kernel)
 {
     kernelCache.emplace_back(kernel);
     if (kernelCache.size() == cacheSize) {
@@ -129,7 +130,7 @@ void SummaryDataBase::InsertKernelDetail(Kernel kernel)
     }
 }
 
-void SummaryDataBase::SaveKernelDetail()
+void JsonSummaryDataBase::SaveKernelDetail()
 {
     if (kernelCache.size() > 0) {
         InsertKernelDetailList(kernelCache);
@@ -137,7 +138,7 @@ void SummaryDataBase::SaveKernelDetail()
     }
 }
 
-sqlite3_stmt *SummaryDataBase::GetKernelStmt(uint64_t paramLen)
+sqlite3_stmt *JsonSummaryDataBase::GetKernelStmt(uint64_t paramLen)
 {
     sqlite3_stmt *stmt = nullptr;
     if (paramLen == cacheSize) {
@@ -159,7 +160,7 @@ sqlite3_stmt *SummaryDataBase::GetKernelStmt(uint64_t paramLen)
     return stmt;
 }
 
-uint64_t SummaryDataBase::QueryMinStartTime()
+uint64_t JsonSummaryDataBase::QueryMinStartTime()
 {
     std::string sql = "Select MIN(start_time) FROM " + kernelTable + " WHERE start_time != 0";
     sqlite3_stmt *stmt = nullptr;
@@ -177,8 +178,8 @@ uint64_t SummaryDataBase::QueryMinStartTime()
     return min;
 }
 
-bool SummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
-                                                std::vector<Protocol::ComputeDetail> &computeDetails)
+bool JsonSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
+                                                    std::vector<Protocol::ComputeDetail> &computeDetails)
 {
     std::string sql = GenComputeSql(params);
     std::string timeFlag = params.timeFlag;
@@ -220,7 +221,7 @@ bool SummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams pa
     return true;
 }
 
-std::string SummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request)
+std::string JsonSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request)
 {
     std::string orderList = request.orderBy;
     double offset = (request.currentPage - 1) * request.pageSize;
@@ -251,7 +252,7 @@ std::string SummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request
     return sql;
 }
 
-bool SummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
+bool JsonSummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
 {
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT count(*) as nums FROM " + kernelTable + " WHERE accelerator_core = ?";
@@ -270,7 +271,7 @@ bool SummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
     return true;
 }
 
-std::string SummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams request)
+std::string JsonSummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams request)
 {
     std::string order = request.orderBy;
     std::string ascend;
@@ -294,8 +295,8 @@ std::string SummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams requ
     return sql;
 }
 
-bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams params,
-                                             std::vector<Protocol::CommunicationDetail> &commDetails)
+bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams params,
+                                                 std::vector<Protocol::CommunicationDetail> &commDetails)
 {
     std::string sql = GetCommSql(params);
     std::string timeFlag = params.timeFlag;
@@ -328,7 +329,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
     return true;
 }
 
-    std::string SummaryDataBase::GenerateQueryCategoryDurationSql(Protocol::OperatorDurationReqParams &reqParams)
+    std::string JsonSummaryDataBase::GenerateQueryCategoryDurationSql(Protocol::OperatorDurationReqParams &reqParams)
     {
         std::string group;
         std::string name;
@@ -353,7 +354,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         return sql;
     }
 
-    std::string SummaryDataBase::GenerateQueryComputeUnitDurationSql(Protocol::OperatorDurationReqParams &reqParams)
+    std::string JsonSummaryDataBase::GenerateQueryComputeUnitDurationSql(Protocol::OperatorDurationReqParams &reqParams)
     {
         std::string group;
         if (reqParams.group == Protocol::OP_TYPE_GROUP) {
@@ -379,8 +380,9 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         return sql;
     }
 
-    bool SummaryDataBase::QueryOperatorDurationInfo(Protocol::OperatorDurationReqParams &reqParams,
-        Protocol::QueryType type, std::vector<Protocol::OperatorDurationRes> &datas)
+    bool JsonSummaryDataBase::QueryOperatorDurationInfo(Protocol::OperatorDurationReqParams &reqParams,
+                                                        Protocol::QueryType type,
+                                                        std::vector<Protocol::OperatorDurationRes> &datas)
     {
         std::string sql;
         if (type == Protocol::QueryType::CATEGORY) {
@@ -409,8 +411,8 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
             one.duration = sqlite3_column_double(stmt, col++);
             // 限制能够显示的最大数目为50
             if (res.size() >= maxCategorySize) {
-                res[maxCategorySize -1].name = "Others";
-                res[maxCategorySize -1].duration += one.duration;
+                res[maxCategorySize - 1].name = "Others";
+                res[maxCategorySize - 1].duration += one.duration;
             } else {
                 res.emplace_back(one);
             }
@@ -421,11 +423,11 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         return true;
     }
 
-    bool SummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
+    bool JsonSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
     {
         sqlite3_stmt *stmt = nullptr;
         std::string group = reqParams.group == Protocol::OP_TYPE_GROUP ?
-                "op_type || accelerator_core" : R"(name || input_shapes || accelerator_core)";
+                            "op_type || accelerator_core" : R"(name || input_shapes || accelerator_core)";
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
@@ -452,7 +454,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         return true;
     }
 
-    std::string SummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStatisticReqParams &reqParams)
+    std::string JsonSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStatisticReqParams &reqParams)
     {
         std::string group;
         std::string name;
@@ -485,8 +487,8 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         return sql;
     }
 
-    bool SummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
-        Protocol::OperatorStatisticInfoResponse &response)
+    bool JsonSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
+                                                         Protocol::OperatorStatisticInfoResponse &response)
     {
         if (!QueryStatisticTotalNum(reqParams, response.total)) {
             ServerLog::Error("[Operator]Failed to query total num of statistic info.");
@@ -527,7 +529,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         return true;
     }
 
-    bool SummaryDataBase::QueryDetailTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
+    bool JsonSummaryDataBase::QueryDetailTotalNum(Protocol::OperatorStatisticReqParams &reqParams, int64_t &total)
     {
         sqlite3_stmt *stmt = nullptr;
         std::string sql =
@@ -555,7 +557,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         return true;
     }
 
-    std::string SummaryDataBase::GenerateQueryDetailSql(Protocol::OperatorStatisticReqParams &reqParams)
+    std::string JsonSummaryDataBase::GenerateQueryDetailSql(Protocol::OperatorStatisticReqParams &reqParams)
     {
         std::string sql =
                 " SELECT rank_id, step_id, name, op_type, accelerator_core,"
@@ -574,8 +576,8 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         return sql;
     }
 
-    bool SummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
-        Protocol::OperatorDetailInfoResponse& response)
+    bool JsonSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
+                                                      Protocol::OperatorDetailInfoResponse &response)
     {
         if (!QueryDetailTotalNum(reqParams, response.total)) {
             ServerLog::Error("[Operator]Failed to query total num of detail info.");
@@ -624,7 +626,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         return true;
     }
 
-    bool SummaryDataBase::QueryMoreInfoTotalNum(Protocol::OperatorMoreInfoReqParams &reqParams, int64_t &total)
+    bool JsonSummaryDataBase::QueryMoreInfoTotalNum(Protocol::OperatorMoreInfoReqParams &reqParams, int64_t &total)
     {
         sqlite3_stmt *stmt = nullptr;
         std::string condition =
@@ -660,7 +662,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         return true;
     }
 
-    std::string SummaryDataBase::GenerateQueryMoreInfoSql(Protocol::OperatorMoreInfoReqParams &reqParams)
+    std::string JsonSummaryDataBase::GenerateQueryMoreInfoSql(Protocol::OperatorMoreInfoReqParams &reqParams)
     {
         std::string sql =
                 " SELECT rank_id, step_id, name, op_type, accelerator_core,"
@@ -685,8 +687,8 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         return sql;
     }
 
-    bool SummaryDataBase::QueryOperatorMoreInfo(Protocol::OperatorMoreInfoReqParams &reqParams,
-        Protocol::OperatorMoreInfoResponse& response)
+    bool JsonSummaryDataBase::QueryOperatorMoreInfo(Protocol::OperatorMoreInfoReqParams &reqParams,
+                                                    Protocol::OperatorMoreInfoResponse &response)
     {
         if (!QueryMoreInfoTotalNum(reqParams, response.total)) {
             ServerLog::Error("[Operator]Failed to query total num of more info.");
@@ -729,7 +731,7 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         return true;
     }
 
-    void SummaryDataBase::BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMoreInfoReqParams &reqParams)
+    void JsonSummaryDataBase::BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMoreInfoReqParams &reqParams)
     {
         uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
@@ -747,36 +749,6 @@ bool SummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams
         sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
     }
 
-    std::string SummaryDataBase::GetFileIdFromCombinationId(const std::string str)
-    {
-        auto len = MSPROF_PREFIX.length();
-        if (str.length() <= len || str.compare(0, len, MSPROF_PREFIX) != 0) {
-            return str;
-        }
-
-        auto index = str.find_last_of(MSPROF_CONNECT);
-        if (index == std::string::npos) {
-            return str;
-        }
-
-        return str.substr(len, index - len - 1);
-    }
-
-    std::string SummaryDataBase::GetDeviceIdFromCombinationId(const std::string str)
-    {
-        auto len = MSPROF_PREFIX.length();
-        if (str.length() <= len || str.compare(0, len, MSPROF_PREFIX) != 0) {
-            return str;
-        }
-
-        auto index = str.find_last_of(MSPROF_CONNECT);
-        if (index == std::string::npos) {
-            return str;
-        }
-
-        return str.substr(index + MSPROF_CONNECT.length() - 1);
-    }
-
 } // end of namespace Summary
-} // end of namespace Module
-} // end of namespace Dic
+// end of namespace Module
+// end of namespace Dic

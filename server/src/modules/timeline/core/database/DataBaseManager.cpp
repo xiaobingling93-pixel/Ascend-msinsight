@@ -1,15 +1,19 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
 
 #include "SystemUtil.h"
+#include "JsonMemoryDataBase.h"
+#include "DbTraceDataBase.h"
+#include "DbMemoryDataBase.h"
+#include "DbSummaryDataBase.h"
 #include "FileUtil.h"
 #include "DataBaseManager.h"
 
 namespace Dic {
 namespace Module {
 namespace Timeline {
-
+using namespace FullDb;
 DataBaseManager &DataBaseManager::Instance()
 {
     static DataBaseManager instance;
@@ -22,7 +26,21 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
     std::unique_lock<std::mutex> lock(mutex);
     if (traceDatabaseMap.count(fileId) == 0) {
         std::mutex &dbMutex = GetDbMutex(fileId);
-        auto conn = std::make_unique<ConnectionPool>(dbPath, dbMutex);
+        std::unique_ptr<ConnectionPool> conn;
+        switch (dataType) {
+            case DataType::JSON:
+                conn = std::make_unique<ConnectionPool>(dbPath, [&dbMutex]() {
+                    return new JsonTraceDatabase(dbMutex);
+                });
+                break;
+            case DataType::FULL_DB:
+                conn = std::make_unique<ConnectionPool>(dbPath, [&dbMutex]() {
+                    return new FullDb::DbTraceDataBase(dbMutex);
+                });
+                break;
+            default:
+                break;
+        }
         conn->SetMaxActiveCount(CPU_CORE_COUNT);
         traceDatabaseMap.emplace(fileId, std::move(conn));
         return true;
@@ -32,10 +50,13 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
     return false;
 }
 
-std::shared_ptr<TraceDatabase> DataBaseManager::GetTraceDatabase(const std::string &fileId)
+std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
     auto it = traceDatabaseMap.find(fileId);
+    if (dataType == DataType::FULL_DB) {
+        it = traceDatabaseMap.find("FullDb");
+    }
     if (it == traceDatabaseMap.end()) {
         ServerLog::Error("Can't find connection pool. fileId:", fileId);
         return nullptr;
@@ -43,22 +64,43 @@ std::shared_ptr<TraceDatabase> DataBaseManager::GetTraceDatabase(const std::stri
     return it->second->GetConnection();
 }
 
-Summary::SummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::string &fileId)
+Summary::VirtualSummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::string &inputId)
 {
     std::unique_lock<std::mutex> lock(mutex);
+    std::string fileId = inputId;
+    if (dataType == DataType::FULL_DB) {
+        fileId = "FullDb";
+    }
     if (summaryDatabaseMap.count(fileId) == 0) {
         std::mutex &dbMutex = GetDbMutex(fileId);
-        summaryDatabaseMap.emplace(fileId, std::make_unique<Summary::SummaryDataBase>(dbMutex));
+        if (this->dataType == DataType::JSON) {
+            summaryDatabaseMap.emplace(fileId, std::make_unique<Summary::JsonSummaryDataBase>(dbMutex));
+        } else if (this->dataType == DataType::FULL_DB) {
+            summaryDatabaseMap.emplace(fileId, std::make_unique<FullDb::DbSummaryDataBase>(dbMutex));
+        }
     }
     return summaryDatabaseMap[fileId].get();
 }
 
-Memory::MemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::string &fileId)
+Memory::VirtualMemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::string &inputId)
 {
     std::unique_lock<std::mutex> lock(mutex);
+    std::string fileId = inputId;
+    if (dataType == DataType::FULL_DB) {
+        fileId = "FullDb";
+    }
     if (memoryDatabaseMap.count(fileId) == 0) {
         std::mutex &dbMutex = GetDbMutex(fileId);
-        memoryDatabaseMap.emplace(fileId, std::make_unique<Memory::MemoryDataBase>(dbMutex));
+        switch (dataType) {
+            case DataType::JSON:
+                memoryDatabaseMap.emplace(fileId, std::make_unique<Memory::JsonMemoryDataBase>(dbMutex));
+                break;
+            case DataType::FULL_DB:
+                memoryDatabaseMap.emplace(fileId, std::make_unique<FullDb::DbMemoryDataBase>(dbMutex));
+                break;
+            default:
+                break;
+        }
     }
     return memoryDatabaseMap[fileId].get();
 }
@@ -110,20 +152,20 @@ std::vector<ConnectionPool *> DataBaseManager::GetAllTraceDatabase()
     return traceDatabases;
 }
 
-std::vector<Memory::MemoryDataBase *> DataBaseManager::GetAllMemoryDatabase()
+std::vector<Memory::VirtualMemoryDataBase *> DataBaseManager::GetAllMemoryDatabase()
 {
     std::unique_lock<std::mutex> lock(mutex);
-    std::vector<Memory::MemoryDataBase *> databases;
+    std::vector<Memory::VirtualMemoryDataBase *> databases;
     for (auto &databaseMap: memoryDatabaseMap) {
         databases.emplace_back(databaseMap.second.get());
     }
     return databases;
 }
 
-std::vector<Summary::SummaryDataBase *> DataBaseManager::GetAllSummaryDatabase()
+std::vector<Summary::VirtualSummaryDataBase *> DataBaseManager::GetAllSummaryDatabase()
 {
     std::unique_lock<std::mutex> lock(mutex);
-    std::vector<Summary::SummaryDataBase *> databases;
+    std::vector<Summary::VirtualSummaryDataBase *> databases;
     for (auto &databaseMap: summaryDatabaseMap) {
         databases.emplace_back(databaseMap.second.get());
     }
@@ -169,20 +211,22 @@ void DataBaseManager::ClearClusterDb()
     clusterDatabaseMap.clear();
 }
 
-ClusterDatabase *DataBaseManager::GetWriteClusterDatabase()
+VirtualClusterDatabase *DataBaseManager::GetWriteClusterDatabase()
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (clusterDatabaseMap.count("cluster_w") == 0) {
-        clusterDatabaseMap.emplace("cluster_w", std::make_unique<ClusterDatabase>());
+        if (this->dataType == DataType::JSON) {
+            clusterDatabaseMap.emplace("cluster_w", std::make_unique<JsonClusterDatabase>());
+        }
     }
     return clusterDatabaseMap["cluster_w"].get();
 }
 
-ClusterDatabase *DataBaseManager::GetReadClusterDatabase()
+VirtualClusterDatabase *DataBaseManager::GetReadClusterDatabase()
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (clusterDatabaseMap.count("cluster_r") == 0) {
-        clusterDatabaseMap.emplace("cluster_r", std::make_unique<ClusterDatabase>());
+        clusterDatabaseMap.emplace("cluster_r", std::make_unique<JsonClusterDatabase>());
     }
     return clusterDatabaseMap["cluster_r"].get();
 }
@@ -211,6 +255,15 @@ std::string DataBaseManager::GetDbPath(const std::string &fileId)
 std::mutex &DataBaseManager::GetDbMutex(const std::string &fileId)
 {
     return dbMutexMap[fileId];
+}
+
+DataType DataBaseManager::GetDataType()
+{
+    return dataType;
+}
+void DataBaseManager::SetDataType(DataType type)
+{
+    dataType = type;
 }
 } // end of namespace Timeline
 } // end of namespace Module

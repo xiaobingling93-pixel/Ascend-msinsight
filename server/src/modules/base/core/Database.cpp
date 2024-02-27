@@ -258,6 +258,15 @@ std::unique_ptr<SqlitePreparedStatement> Database::CreatPreparedStatement(const 
     return stmt;
 }
 
+std::unique_ptr<SqlitePreparedStatement> Database::CreatPreparedStatement()
+{
+    if ((!isOpen)) {
+        ServerLog::Error("Failed prepare sql. Database is closed or sql is empty.");
+        return nullptr;
+    }
+    return std::make_unique<SqlitePreparedStatement>(db);
+}
+
 std::string Database::GetLastError()
 {
     if (!isOpen) {

@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-#include "MemoryDataBase.h"
+#include "JsonMemoryDataBase.h"
 #include <vector>
 #include <cmath>
 #include "ServerLog.h"
@@ -12,9 +12,9 @@ namespace Dic {
 namespace Module {
 namespace Memory {
 using namespace Server;
-MemoryDataBase::MemoryDataBase(std::mutex &sqlMutex) : mutex(sqlMutex) {}
+JsonMemoryDataBase::JsonMemoryDataBase(std::mutex &sqlMutex) : VirtualMemoryDataBase(sqlMutex) {}
 
-MemoryDataBase::~MemoryDataBase()
+JsonMemoryDataBase::~JsonMemoryDataBase()
 {
     if (hasInitStmt) {
         ReleaseStmt();
@@ -23,7 +23,7 @@ MemoryDataBase::~MemoryDataBase()
     CloseDb();
 }
 
-bool MemoryDataBase::SetConfig()
+bool JsonMemoryDataBase::SetConfig()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Database is not open.");
@@ -33,7 +33,7 @@ bool MemoryDataBase::SetConfig()
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
 }
 
-bool MemoryDataBase::CreateTable()
+bool JsonMemoryDataBase::CreateTable()
 {
     if (!isOpen) {
         ServerLog::Error("Failed to set config. Database is not open.");
@@ -52,14 +52,14 @@ bool MemoryDataBase::CreateTable()
     return ExecSql(sql);
 }
 
-bool MemoryDataBase::DropTable()
+bool JsonMemoryDataBase::DropTable()
 {
     std::vector<std::string> tables = {operatorTable, recordTable};
     std::unique_lock<std::mutex> lock(mutex);
     return DropSomeTables(tables);
 }
 
-bool MemoryDataBase::InitStmt()
+bool JsonMemoryDataBase::InitStmt()
 {
     if (hasInitStmt) {
         return true;
@@ -91,7 +91,7 @@ bool MemoryDataBase::InitStmt()
     return true;
 }
 
-void MemoryDataBase::ReleaseStmt()
+void JsonMemoryDataBase::ReleaseStmt()
 {
     if (insertOperatorStmt != nullptr) {
         insertOperatorStmt = nullptr;
@@ -101,7 +101,7 @@ void MemoryDataBase::ReleaseStmt()
     }
 }
 
-void MemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &eventList)
+void JsonMemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &eventList)
 {
     sqlite3_stmt *stmt = GetOperatorStmt(eventList.size());
     if (stmt == nullptr) {
@@ -135,7 +135,7 @@ void MemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &event
     }
 }
 
-void MemoryDataBase::insertOperatorDetail(const Operator &event)
+void JsonMemoryDataBase::insertOperatorDetail(const Operator &event)
 {
     operatorCache.emplace_back(event);
     if (operatorCache.size() == cacheSize) {
@@ -144,7 +144,7 @@ void MemoryDataBase::insertOperatorDetail(const Operator &event)
     }
 }
 
-void MemoryDataBase::InsertRecordDetailList(const std::vector<Record> &eventList)
+void JsonMemoryDataBase::InsertRecordDetailList(const std::vector<Record> &eventList)
 {
     sqlite3_stmt *stmt = GetRecordStmt(eventList.size());
     if (stmt == nullptr) {
@@ -171,7 +171,7 @@ void MemoryDataBase::InsertRecordDetailList(const std::vector<Record> &eventList
     }
 }
 
-void MemoryDataBase::insertRecordDetail(const Record &event)
+void JsonMemoryDataBase::insertRecordDetail(const Record &event)
 {
     recordCache.emplace_back(event);
     if (recordCache.size() == cacheSize) {
@@ -180,7 +180,7 @@ void MemoryDataBase::insertRecordDetail(const Record &event)
     }
 }
 
-uint64_t MemoryDataBase::QueryMinOperatorAllocationTime()
+uint64_t JsonMemoryDataBase::QueryMinOperatorAllocationTime()
 {
     std::string sql = "Select MIN(allocation_time) FROM " + operatorTable + " WHERE allocation_time != 0";
     sqlite3_stmt *stmt = nullptr;
@@ -198,7 +198,7 @@ uint64_t MemoryDataBase::QueryMinOperatorAllocationTime()
     return min;
 }
 
-uint64_t  MemoryDataBase::QueryMinRecordTimestamp()
+uint64_t  JsonMemoryDataBase::QueryMinRecordTimestamp()
 {
     std::string sql = "Select MIN(timestamp) FROM " + recordTable + " WHERE timestamp != 0";
     sqlite3_stmt *stmt = nullptr;
@@ -216,7 +216,7 @@ uint64_t  MemoryDataBase::QueryMinRecordTimestamp()
     return min;
 }
 
-std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requestParams)
+std::string  JsonMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requestParams)
 {
     std::string ascend;
     if (requestParams.order == "ascend") {
@@ -258,7 +258,7 @@ std::string  MemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requ
     return sql;
 }
 
-bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
+bool JsonMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
     std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails)
 {
     std::string sql = GetOperatorSql(requestParams);
@@ -314,8 +314,9 @@ bool MemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &request
 /*
  * 将多个单条线的数据组装成[x,y,y,y,y]的格式，对于x点上不存在的y补为NULL。
  */
-void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
-    std::vector<std::string> &legends, Protocol::MemoryPeak &peak, const std::vector<std::string>& streams)
+void JsonMemoryDataBase::GetLines(const componentDtoVector componentDtoVec,
+    std::vector<std::vector<std::string>> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
+    const std::vector<std::string> &streams)
 {
     for (const auto& legend : baseLegends) {
         if (streams.empty() && legend == "Operators Activated") { // 实现数据兼容
@@ -363,7 +364,7 @@ void MemoryDataBase::GetLines(const componentDtoVector componentDtoVec, std::vec
     }
 }
 
-std::vector<std::string> MemoryDataBase::GetStreamLists()
+std::vector<std::string> VirtualMemoryDataBase::GetStreamLists()
 {
     std::vector<std::string> streams = {};
     std::string sql =
@@ -382,7 +383,7 @@ std::vector<std::string> MemoryDataBase::GetStreamLists()
     return streams;
 }
 
-void MemoryDataBase::GetStreamLines(const componentDtoVector componentDtoVec,
+void JsonMemoryDataBase::GetStreamLines(const componentDtoVector componentDtoVec,
     std::vector<std::vector<std::string>> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
     const std::vector<std::string>& streams)
 {
@@ -423,8 +424,8 @@ void MemoryDataBase::GetStreamLines(const componentDtoVector componentDtoVec,
     }
 }
 
-bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
-                                     Protocol::MemoryViewData &operatorBody)
+bool JsonMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
+    Protocol::MemoryViewData &operatorBody)
 {
     std::string sql = "SELECT component, ROUND((timestamp - ?) / (1000.0 * 1000.0), 2) as timestamp, "
                       "ROUND(total_allocated, 2) as total_allocated, ROUND(total_reserve, 2) as total_reserve, "
@@ -471,7 +472,7 @@ bool MemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestPar
     return true;
 }
 
-std::string MemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak& peak, const std::vector<std::string>& streams)
+std::string JsonMemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak& peak, const std::vector<std::string>& streams)
 {
     std::string peakMemory = "Peak Memory Usage: ";
     const size_t decimalPlacesNum = 4;
@@ -497,7 +498,7 @@ std::string MemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak& peak, cons
     return peakMemory;
 }
 
-void MemoryDataBase::SaveOperatorDetail()
+void JsonMemoryDataBase::SaveOperatorDetail()
 {
     if (operatorCache.size() > 0) {
         InsertOperatorDetailList(operatorCache);
@@ -505,7 +506,7 @@ void MemoryDataBase::SaveOperatorDetail()
     }
 }
 
-void MemoryDataBase::SaveRecordDetail()
+void JsonMemoryDataBase::SaveRecordDetail()
 {
     if (recordCache.size() > 0) {
         InsertRecordDetailList(recordCache);
@@ -513,7 +514,7 @@ void MemoryDataBase::SaveRecordDetail()
     }
 }
 
-sqlite3_stmt *MemoryDataBase::GetOperatorStmt(uint64_t paramLen)
+sqlite3_stmt *JsonMemoryDataBase::GetOperatorStmt(uint64_t paramLen)
 {
     sqlite3_stmt *stmt = nullptr;
     if (paramLen == cacheSize) {
@@ -538,7 +539,7 @@ sqlite3_stmt *MemoryDataBase::GetOperatorStmt(uint64_t paramLen)
     return stmt;
 }
 
-sqlite3_stmt *MemoryDataBase::GetRecordStmt(uint64_t paramLen)
+sqlite3_stmt *JsonMemoryDataBase::GetRecordStmt(uint64_t paramLen)
 {
     sqlite3_stmt *stmt = nullptr;
     if (paramLen == cacheSize) {
@@ -559,7 +560,7 @@ sqlite3_stmt *MemoryDataBase::GetRecordStmt(uint64_t paramLen)
     return stmt;
 }
 
-bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
+bool JsonMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
 {
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT count(*) as nums FROM " + operatorTable + " WHERE name LIKE ?";
@@ -609,7 +610,7 @@ bool MemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requ
     return true;
 }
 
-bool MemoryDataBase::QueryOperatorSize(double &min, double &max)
+bool JsonMemoryDataBase::QueryOperatorSize(double &min, double &max)
 {
     std::string sql = "SELECT min(size) as minSize, max(size) as maxSize FROM " + operatorTable;
     sqlite3_stmt *stmt = nullptr;
@@ -627,12 +628,12 @@ bool MemoryDataBase::QueryOperatorSize(double &min, double &max)
     return true;
 }
 
-void MemoryDataBase::SetInferenceType(bool inference)
+void JsonMemoryDataBase::SetInferenceType(bool inference)
 {
     isInference = inference;
 }
 
-bool MemoryDataBase::IsInferenceType() const
+bool JsonMemoryDataBase::IsInferenceType() const
 {
     return isInference;
 }

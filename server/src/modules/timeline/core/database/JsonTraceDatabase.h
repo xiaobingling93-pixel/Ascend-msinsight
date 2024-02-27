@@ -2,36 +2,27 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
-#ifndef PROFILER_SERVER_TRACE_DATABASE_H
-#define PROFILER_SERVER_TRACE_DATABASE_H
+#ifndef PROFILER_SERVER_JSON_TRACE_DATABASE_H
+#define PROFILER_SERVER_JSON_TRACE_DATABASE_H
 
-#include <memory>
-#include <string>
-#include <vector>
-#include <list>
-#include <set>
-#include "TimelineProtocolRequest.h"
-#include "TimelineProtocolResponse.h"
-#include "TimelineProtocolEvent.h"
-#include "SummaryProtocolRequest.h"
-#include "SummaryProtocolResponse.h"
-#include "Database.h"
-#include "GlobalDefs.h"
-#include "TraceDatabaseDef.h"
-#include "EventDef.h"
+#include "VirtualTraceDatabase.h"
 
 namespace Dic {
 namespace Module {
 namespace Timeline {
-class TraceDatabase : public Database {
+/*
+ * 解析原始的traceView.json文件以及其他csv文件情况下的数据库处理类
+ */
+class JsonTraceDatabase : public VirtualTraceDatabase {
 public:
-    explicit TraceDatabase(std::mutex &sqlMutex);
-    ~TraceDatabase() override;
+    explicit JsonTraceDatabase(std::mutex &sqlMutex);
+    ~JsonTraceDatabase() override;
 
-    bool SetConfig();
+    bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
+
     bool CreateTable();
-    bool DropTable();
     bool CreateIndex();
+    bool DropTable();
     bool InitStmt();
     void ReleaseStmt();
     bool InsertSlice(const Trace::Slice &event);
@@ -60,45 +51,51 @@ public:
 
     // search
     bool QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
-                           Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId);
+        Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
     bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
-                                  Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp);
+        Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp) override;
+
     bool QueryThreads(const Protocol::UnitThreadsParams &requestParams, Protocol::UnitThreadsBody &responseBody,
-                      uint64_t minTimestamp, int64_t traceId);
+        uint64_t minTimestamp, int64_t traceId) override;
     bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
-                           Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId);
+        Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId) override;
+
     bool QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody,
-                         uint64_t minTimestamp);
-    bool QueryUnitsMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
-    bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max);
+        uint64_t minTimestamp) override;
+    bool QueryUnitsMetadata(const std::string &fileId,
+        std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData) override;
+    bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
+
     bool QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody,
-                       uint64_t minTimestamp, int64_t trackId);
-    int SearchSliceNameCount(const std::string &name);
+                       uint64_t minTimestamp, int64_t trackId) override;
+    int SearchSliceNameCount(const std::string &name) override;
     bool SearchSliceName(const std::string &name, int index, uint64_t minTimestamp,
-                         Protocol::SearchSliceBody &responseBody);
-    bool QueryFlowCategoryList(std::vector<std::string> &categories);
+                         Protocol::SearchSliceBody &responseBody) override;
+    bool QueryFlowCategoryList(std::vector<std::string> &categories) override;
     bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
-                                 std::vector<std::unique_ptr<Protocol::FlowEvent>> &flowDetailList);
+                                 std::vector<std::unique_ptr<Protocol::FlowEvent>> &flowDetailList) override;
     bool QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
-                          std::vector<Protocol::UnitCounterData> &dataList);
+                          std::vector<Protocol::UnitCounterData> &dataList) override;
 
     bool QueryComputeStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
-                                    Protocol::SummaryStatisticsBody &responseBody);
+                                    Protocol::SummaryStatisticsBody &responseBody) override;
     bool QueryCommunicationStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
-                                          Protocol::SummaryStatisticsBody &responseBody);
-    bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max);
-    bool QueryPythonViewData(const Protocol::SystemViewParams &requestParams, Protocol::SystemViewBody &responseBody);
-    LayerStatData QueryLayerData(const std::string &layer, const std::string &name);
-    std::vector<std::string> QueryCoreType();
+                                          Protocol::SummaryStatisticsBody &responseBody) override;
+    bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max) override;
+    bool QueryPythonViewData(const Protocol::SystemViewParams &requestParams,
+        Protocol::SystemViewBody &responseBody) override;
+    LayerStatData QueryLayerData(const std::string &layer, const std::string &name) override;
+    std::vector<std::string> QueryCoreType() override;
+
     bool QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
-                                              Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp);
-    uint64_t QueryTotalKernel(const std::string &coreType, const std::string &name);
+                               Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp) override;
+    uint64_t QueryTotalKernel(const std::string &coreType, const std::string &name) override;
+
     bool QueryKernelDepthAndThread(const Protocol::KernelParams &params,
-                                                  Protocol::OneKernelBody &responseBody, uint64_t minTimestamp);
-    OneKernelData QueryKernelTid(const uint64_t trackId);
+                                   Protocol::OneKernelBody &responseBody, uint64_t minTimestamp) override;
+    OneKernelData QueryKernelTid(const uint64_t trackId) override;
 
 private:
-    std::mutex &mutex;
     const std::string sliceTable = "slice";
     const std::string threadTable = "thread";
     const std::string processTable = "process";
@@ -108,6 +105,9 @@ private:
     const std::string trackIdTimeIndex = "track_id_time_index";
     const std::string flowIndex = "flow_id_time_index";
     const std::string kernelDetail = "kernel_detail";
+    const int cacheSize = 1000;
+    const int unit = 1000;
+
     const std::string lineStart = "s";
     const std::string lineEnd = "f";
     const std::string lineEndOptional = "t";
@@ -128,8 +128,7 @@ private:
     std::unique_ptr<SqlitePreparedStatement> insertFlowStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> insertCounterStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateSliceStmt = nullptr;
-    const int cacheSize = 1000;
-    const int unit = 1000;
+
     std::vector<Trace::Slice> sliceCache;
     std::list<Protocol::RowThreadTrace> sliceDepthHelper;
     std::string updateSliceDepthSql = "update slice set depth = case id ";
@@ -137,6 +136,7 @@ private:
     std::vector<Trace::Counter> counterCache;
     std::set<std::tuple<int64_t, std::string, std::string>> threadInfoCache;
 
+    bool SetConfig();
     bool InitSliceFlowCounterStmt();
     bool InitProcessThreadStmt();
     std::unique_ptr<SqlitePreparedStatement> GetSliceStmt(uint64_t paramLen);
@@ -186,4 +186,4 @@ private:
 } // end of namespace Module
 } // end of namespace Dic
 
-#endif // PROFILER_SERVER_TRACE_DATABASE_H
+#endif // PROFILER_SERVER_JSON_TRACE_DATABASE_H

@@ -1,0 +1,82 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
+#ifndef PROFILER_SERVER_COMMUNICATION_DATABASE_H
+#define PROFILER_SERVER_COMMUNICATION_DATABASE_H
+
+#include "VirtualSummaryDataBase.h"
+
+namespace Dic {
+namespace Module {
+namespace Summary {
+using namespace Dic::Protocol;
+class JsonSummaryDataBase : public VirtualSummaryDataBase {
+public:
+    explicit JsonSummaryDataBase(std::mutex &sqlMutex);
+    ~JsonSummaryDataBase() override;
+
+    bool SetConfig();
+    bool CreateTable();
+    bool DropTable();
+    bool InitStmt();
+    void ReleaseStmt();
+
+    void InsertKernelDetailList(const std::vector<Kernel>& kernelVec);
+    void InsertKernelDetail(Kernel kernel);
+    void SaveKernelDetail();
+    uint64_t QueryMinStartTime();
+
+    bool QueryComputeDetailHandler(ComputeDetailParams params, std::vector<ComputeDetail> &computeDetails) override;
+    bool QueryGetTotalNum(std::string name, int64_t &totalNum) override;
+
+    bool QueryCommDetailHandler(CommunicationDetailParams params,
+                                std::vector<CommunicationDetail> &computeDetails) override;
+
+    bool QueryOperatorDurationInfo(OperatorDurationReqParams &reqParams, QueryType type,
+                                   std::vector<OperatorDurationRes> &datas) override;
+
+    bool QueryOperatorStatisticInfo(OperatorStatisticReqParams &reqParams,
+                                    OperatorStatisticInfoResponse &response) override;
+
+    bool QueryOperatorDetailInfo(OperatorStatisticReqParams &reqParams, OperatorDetailInfoResponse& response) override;
+
+    bool QueryOperatorMoreInfo(OperatorMoreInfoReqParams &reqParams, OperatorMoreInfoResponse& response) override;
+
+private:
+    const std::string kernelTable = "kernel_detail";
+    bool hasInitStmt = false;
+    sqlite3_stmt *insertKernelStmt = nullptr;
+    const int cacheSize = 1000;
+    const int maxCategorySize = 50;
+    std::vector<Kernel> kernelCache;
+    std::vector<std::string> kernelFiles = {};
+
+    sqlite3_stmt *GetKernelStmt(uint64_t paramLen);
+    std::string GenComputeSql(Protocol::ComputeDetailParams request);
+    std::string GetCommSql(Protocol::CommunicationDetailParams request);
+
+    std::string GenerateQueryCategoryDurationSql(OperatorDurationReqParams &reqParams);
+
+    std::string GenerateQueryComputeUnitDurationSql(OperatorDurationReqParams &reqParams);
+
+    std::string GenerateQueryStatisticSql(OperatorStatisticReqParams &reqParams);
+
+    std::string GenerateQueryDetailSql(OperatorStatisticReqParams &reqParams);
+
+    std::string GenerateQueryMoreInfoSql(OperatorMoreInfoReqParams &reqParams);
+
+    bool QueryStatisticTotalNum(OperatorStatisticReqParams &reqParams, int64_t &total);
+
+    bool QueryDetailTotalNum(OperatorStatisticReqParams &reqParams, int64_t &total);
+
+    bool QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqParams, int64_t &total);
+
+    void BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMoreInfoReqParams &reqParams);
+};
+
+} // end of namespace Summary
+} // end of namespace Module
+} // end of namespace Dic
+
+#endif // PROFILER_SERVER_SUMMARY_DATABASE_H

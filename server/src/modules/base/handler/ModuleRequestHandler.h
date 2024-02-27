@@ -19,11 +19,11 @@ public:
     virtual void HandleRequest(std::unique_ptr<Request> requestPtr) = 0;
     virtual bool IsAsync();
 
+public:
+    static void SetBaseResponse(const Request &request, Response &response);
+    static void SetResponseResult(Response &response, bool result, const std::string &errorMsg = "",
+                                  const ErrorCode &errorCode = ErrorCode::UNKNOW_ERROR);
 protected:
-    void SetBaseResponse(const Request &request, Response &response) const;
-    void SetResponseResult(Response &response, bool result, const std::string &errorMsg = "",
-                           const ErrorCode &errorCode = ErrorCode::UNKNOW_ERROR) const;
-
     std::string command;
     std::string error;
     ModuleType moduleName = ModuleType::UNKNOWN;

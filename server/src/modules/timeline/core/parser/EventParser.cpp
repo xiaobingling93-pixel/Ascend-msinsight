@@ -36,7 +36,9 @@ void EventParser::InitEventHandle()
 
 bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
 {
-    std::shared_ptr<TraceDatabase> databasePtr = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    std::shared_ptr<JsonTraceDatabase> databasePtr =
+            std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
+                DataBaseManager::Instance().GetTraceDatabase(fileId));
     if (databasePtr == nullptr) {
         error = "Failed to get connection. fileId:" + fileId;
         ServerLog::Error(error);

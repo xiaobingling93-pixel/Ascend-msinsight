@@ -12,6 +12,7 @@ class MemoryTest : TestSuit {
 
 TEST_F(TestSuit, QueryMemoryOperatorData)
 {
+    DataBaseManager::Instance().SetDataType(DataType::JSON);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     Dic::Protocol::MemoryOperatorParams requestParams;
     requestParams.rankId = "0";

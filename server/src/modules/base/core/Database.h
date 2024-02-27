@@ -13,6 +13,16 @@
 
 namespace Dic {
 namespace Module {
+class DatabaseException : public std::exception {
+public:
+    explicit DatabaseException(const char* message): message(message){};
+    const char* What()
+    {
+        return message;
+    };
+private:
+    const char* message;
+};
 class Database {
 public:
     Database() = default;
@@ -26,6 +36,7 @@ public:
     virtual std::string GetDbPath();
     virtual bool GetTableList(std::vector<std::string> &tableList) const;
     virtual std::unique_ptr<SqlitePreparedStatement> CreatPreparedStatement(const std::string &sql);
+    virtual std::unique_ptr<SqlitePreparedStatement> CreatPreparedStatement();
     bool DropSomeTables(const std::vector<std::string>& tableNames);
     bool DropAllTable();
     bool IsDatabaseVersionChange();

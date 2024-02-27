@@ -70,9 +70,8 @@ private:
 
 class LogUtil {
 public:
-    LogUtil(const LogOutType &type, const std::string &filePath, std::string wsPort) : outType(type),
-                                                                                       originFilePath(filePath),
-                                                                                       wsPort(wsPort)
+    LogUtil(const LogOutType &type, const std::string &filePath, const std::string &wsPort)
+        : outType(type), originFilePath(filePath), wsPort(wsPort)
     {
         Initialize();
     }

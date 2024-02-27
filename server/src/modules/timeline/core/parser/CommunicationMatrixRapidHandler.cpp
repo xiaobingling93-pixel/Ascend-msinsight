@@ -1,9 +1,10 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
 #include "JsonUtil.h"
 #include "ParserStatusManager.h"
+#include "JsonClusterDatabase.h"
 #include "CommunicationMatrixRapidHandler.h"
 
 namespace Dic {
@@ -92,7 +93,7 @@ bool CommunicationMatrixRapidHandler::EndObject(rapidjson::SizeType memberCount)
     if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
         return false;
     }
-    auto database = DataBaseManager::Instance().GetWriteClusterDatabase();
+    auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     currentDepth--;
     if (currentDepth == ranksDepth) {
         CommunicationMatrixInfo matrix = MapToMatrixInfo(currentObject);
