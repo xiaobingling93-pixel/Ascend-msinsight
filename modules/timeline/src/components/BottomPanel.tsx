@@ -65,6 +65,9 @@ const Container = styled.div`
             color: ${p => p.theme.fontColor};
         }
     }
+    .ant-tabs-content-holder{
+        height:100%;
+    }
 `;
 
 const StyledCard = styled((props: CardProps & { width?: number}) => <Card {...props}/>)`
@@ -237,7 +240,7 @@ const getFilterContent = (session: Session, bottomPanelComponents?: ReturnType<B
 const DataCard = observer(({ session, height }: DataCardType) => {
     const { detail, moreTitle, more, toolbar } = useBottomPanelReactNodes(session, height);
     const [view] = useDraggableContainer({ dragDirection: DragDirection.right, draggableWH: 590 });
-    return <div style={{ display: 'flex', flexDirection: 'column', width: '100%', zIndex: 3, height: '100%' }}>
+    return <div style={{ width: '100%', zIndex: 3, height: '100%' }}>
         {
             !isEmpty(more)
                 ? view({

@@ -44,3 +44,8 @@ const handleDeleteAll = () => {
         </template>
     </el-dialog>
 </template>
+<style>
+.el-dialog__footer button{
+    padding:0 8px;
+}
+</style>

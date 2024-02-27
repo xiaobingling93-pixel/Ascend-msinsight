@@ -244,7 +244,7 @@ defineExpose({
                             <FileIcon v-if="data.leaf" />
                             <FolderIcon v-else />
                         </el-icon>
-                        <span :id="data.path" :name="data.path.replaceAll(/\\|:/g,'').replaceAll(/\./g, '--dot--')">{{ data.name }}</span>
+                        <span :name="data.path?.replace(/\\|:|\//g,'_').replace(/\./g, '--dot--')">{{ data.name }}</span>
                     </div>
                 </template>
             </el-tree>

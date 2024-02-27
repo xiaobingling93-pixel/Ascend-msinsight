@@ -281,9 +281,10 @@ function toggleTab(index: number): void {
     content: '';
     position: absolute;
     bottom: 0;
-    width: 64px;
+    width: calc(100% - 60px);
     height: 1px;
     background-color: #007aff;
+    left:30px;
 }
 
 @media (min-height: 1024px) {
@@ -294,6 +295,7 @@ function toggleTab(index: number): void {
 
 .tab-body {
     flex-grow: 1;
+    height: calc(100% - 40px);
 }
 
 @media (hover: hover) {

@@ -128,6 +128,7 @@ const ContainerLeft = styled(ContainerBase)`
 `;
 const ContainerRight = styled(ContainerBase)`
     flex-direction: row;
+    height: 100%;
     & > .topC {
         flex: 1;
         flex-flow: row;
