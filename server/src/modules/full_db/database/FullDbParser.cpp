@@ -13,6 +13,7 @@
 #include "DbMemoryDataBase.h"
 #include "DbSummaryDataBase.h"
 #include "FileUtil.h"
+#include "ClusterParseThreadPoolExecutor.h"
 
 namespace Dic::Module::FullDb {
 using namespace Dic::Server;
@@ -78,7 +79,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::string &ra
 
     std::vector<std::string> rankIds = database->QueryRankId();
 
-    if (!database->CheckTableDataInvalid("MEMOR_INFO")) {
+    if (!database->CheckTableDataInvalid(TABLE_MEMORY_RECORD + "," + TABLE_OPERATOR_MEMORY)) {
         FullDb::DbMemoryDataBase::ParserEnd(rankId, false);
         FullDb::DbMemoryDataBase::ParseCallBack(token, rankId, false, "");
         ServerLog::Error("There is no Memory Data in this db file:" + filePath);
@@ -120,6 +121,7 @@ void FullDbParser::InitSummery(std::vector<std::string> rankIds, std::string pat
     for (const std::string& id : rankIds) {
         FullDb::DbSummaryDataBase::ParserEnd(token, id, true, "");
     }
+    ServerLog::Info("Init Summary finish");
 }
 
 void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path, std::string token)
@@ -136,6 +138,23 @@ void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path
         FullDb::DbMemoryDataBase::ParserEnd(id, true);
         FullDb::DbMemoryDataBase::ParseCallBack(token, id, true, "");
     }
+    ServerLog::Info("Init Memory finish");
+}
+
+bool FullDbParser::InitCluster(std::string path, std::string token)
+{
+    auto clusterDatabase = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    if (clusterDatabase == nullptr) {
+        ServerLog::Error("Failed to get Cluster connection.");
+        return false;
+    }
+    if (!clusterDatabase->OpenDb(path, false)) {
+        ServerLog::Error("Failed to open Cluster. rankId:", "FullDb");
+        return false;
+    }
+    clusterDatabase->UpdateClusterParseStatus(FINISH_STATUS);
+    ServerLog::Info("ParseClusterFiles is success");
+    return true;
 }
 
 bool FullDbParser::FindDevicePaths(const std::string &selectedFolder,

@@ -1,0 +1,316 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
+#include "VirtualMemoryDataBase.h"
+#include "ServerLog.h"
+#include "TraceTime.h"
+#include "DataBaseManager.h"
+
+namespace Dic {
+namespace Module {
+namespace Memory {
+using namespace Server;
+using namespace Dic::Module::Timeline;
+
+std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankId)
+{
+    std::vector<std::string> streams = {};
+    DataType type = DataBaseManager::Instance().GetDataType();
+    std::string sql = "";
+    if (type == DataType::JSON) {
+        sql += "SELECT stream FROM " + recordTable + " WHERE stream <> '' Group BY stream ORDER BY timestamp ASC";
+    } else if (type == DataType::FULL_DB) {
+        sql += "SELECT stream_ptr FROM " + TABLE_MEMORY_RECORD + " WHERE rank_id == '" + rankId +
+            "' AND stream <> '' "
+            " Group BY stream_ptr ORDER BY time_stamp ASC";
+    }
+    ServerLog::Error(sql);
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql to get stream list.", sqlite3_errmsg(db));
+        return streams;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        streams.emplace_back(sqlite3_column_string(stmt, col++));
+    }
+    sqlite3_finalize(stmt);
+    return streams;
+}
+
+bool VirtualMemoryDataBase::ExecuteOperatorSize(double &min, double &max, std::string sql)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryOperatorSize failed!. ", sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        min = sqlite3_column_double(stmt, col++);
+        max = sqlite3_column_double(stmt, col++);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool VirtualMemoryDataBase::ExecuteOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum,
+    std::string sql)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    std::string orderName = "%" + requestParams.searchName + "%";
+    sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    if (requestParams.startTime != -1) {
+        sqlite3_bind_int64(stmt, index++, startTime);
+        sqlite3_bind_double(stmt, index++, requestParams.startTime);
+    }
+    if (requestParams.endTime != -1) {
+        sqlite3_bind_int64(stmt, index++, startTime);
+        sqlite3_bind_double(stmt, index++, requestParams.endTime);
+    }
+    if (requestParams.minSize != -1) {
+        sqlite3_bind_double(stmt, index++, requestParams.minSize);
+    }
+    if (requestParams.maxSize != -1) {
+        sqlite3_bind_double(stmt, index++, requestParams.maxSize);
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        totalNum = sqlite3_column_int(stmt, resultStartIndex);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool VirtualMemoryDataBase::ExecuteQueryMemoryView(Protocol::MemoryComponentParams &requestParams,
+                                                   Protocol::MemoryViewData &operatorBody, std::string sql)
+{
+    if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
+        sql += " AND stream <> ''";
+    }
+    sql += " ORDER BY timestamp ASC";
+    ServerLog::Error(sql);
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryMemoryView. Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    // 减去timeline开始的时间作为时间戳
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    sqlite3_bind_int64(stmt, index++, startTime);
+    std::string peakMemory;
+    std::vector<Protocol::ComponentDto> componentDtoVec;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::ComponentDto componentDto{};
+        componentDto.component = sqlite3_column_string(stmt, col++);
+        componentDto.timesTamp = sqlite3_column_double(stmt, col++);
+        componentDto.totalAllocated = sqlite3_column_double(stmt, col++);
+        componentDto.totalReserved = sqlite3_column_double(stmt, col++);
+        componentDto.totalActivated = sqlite3_column_double(stmt, col++);
+        componentDto.streamId = sqlite3_column_string(stmt, col++);
+        componentDtoVec.emplace_back(componentDto);
+    }
+    sqlite3_finalize(stmt);
+
+    // 查询是否包含stream信息，如果不包含则不显示stream相关信息，同时也用来判断是否active相关信息
+    std::vector<std::string> streams = GetStreamLists(requestParams.rankId);
+
+    Protocol::MemoryPeak peak;
+    if (requestParams.type == Protocol::MEMORY_OVERALL_GROUP) {
+        GetLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak, streams);
+        operatorBody.title = GetPeakMemory(peak, streams);
+    } else {
+        GetStreamLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak, streams);
+    }
+    return true;
+}
+
+bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
+                                                  std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
+                                                  std::vector<Protocol::MemoryOperator> &opDetails, std::string sql)
+{
+    int64_t offset = (requestParams.currentPage - 1) * requestParams.pageSize;
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("QueryOperatorDetail. Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    std::string orderName = "%" + requestParams.searchName + "%";
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
+    sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
+    sqlite3_bind_int64(stmt, index++, offset);
+    std::vector<Protocol::MemoryOperator> operatorDtoVec;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        Protocol::MemoryOperator operatorDto{};
+        operatorDto.name = sqlite3_column_string(stmt, col++);
+        operatorDto.size = sqlite3_column_double(stmt, col++);
+        operatorDto.allocationTime = sqlite3_column_string(stmt, col++);
+        operatorDto.releaseTime = sqlite3_column_string(stmt, col++);
+        operatorDto.duration = sqlite3_column_double(stmt, col++);
+        operatorDto.activeReleaseTime = sqlite3_column_string(stmt, col++);
+        operatorDto.activeDuration = sqlite3_column_double(stmt, col++);
+        operatorDto.allocationAllocated = sqlite3_column_double(stmt, col++);
+        operatorDto.allocationReserved = sqlite3_column_double(stmt, col++);
+        operatorDto.allocationActive = sqlite3_column_double(stmt, col++);
+        operatorDto.releaseAllocated = sqlite3_column_double(stmt, col++);
+        operatorDto.releaseReserved = sqlite3_column_double(stmt, col++);
+        operatorDto.releaseActive = sqlite3_column_double(stmt, col++);
+        operatorDto.streamId = sqlite3_column_string(stmt, col++);
+        operatorDtoVec.emplace_back(operatorDto);
+    }
+    sqlite3_finalize(stmt);
+    opDetails = operatorDtoVec;
+    std::vector<std::string> streams = GetStreamLists(requestParams.rankId);
+    std::vector<std::string> columns = activeRelatedColumn;
+    for (const auto& column : tableColumnAttr) {
+        if (streams.empty() && std::find(columns.begin(), columns.end(), column.name) != columns.end()) {
+            continue;
+        }
+        columnAttr.emplace_back(column);
+    }
+    return true;
+}
+
+
+/*
+* 将多个单条线的数据组装成[x,y,y,y,y]的格式，对于x点上不存在的y补为NULL。
+*/
+void VirtualMemoryDataBase::GetLines(const componentDtoVector componentDtoVec,
+    std::vector<std::vector<std::string>> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
+    const std::vector<std::string> &streams)
+{
+    for (const auto& legend : baseLegends) {
+        if (streams.empty() && legend == "Operators Activated") { // 实现数据兼容
+            continue;
+        }
+        legends.emplace_back(legend);
+    }
+
+    for (auto &item: componentDtoVec) {
+        std::vector<std::string> points = {};
+        if (item.component == COMPONENT_PTA_AND_GE || (isInference && item.component == COMPONENT_GE)) {
+            peak.ptaGeAllocated = std::max(peak.ptaGeAllocated, item.totalAllocated);
+            peak.ptaGeReserved = std::max(peak.ptaGeReserved, item.totalReserved);
+            peak.ptaGeActivated = std::max(peak.ptaGeActivated, item.totalActivated);
+            std::string time = std::to_string(item.timesTamp);
+            points.emplace_back(time.substr(0, time.length() - exLength + 1));
+            std::string allocated = std::to_string(item.totalAllocated);
+            points.emplace_back(allocated.substr(0, allocated.length() - exLength));
+            if (!streams.empty()) { // 实现数据兼容
+                std::string activated = std::to_string(item.totalActivated);
+                points.emplace_back(activated.substr(0, activated.length() - exLength));
+            }
+            std::string reserved = std::to_string(item.totalReserved);
+            points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+            points.emplace_back("NULL");
+            peak.hasPtaGe = true;
+            lines.emplace_back(points);
+        } else if (item.component == COMPONENT_APP) {
+            peak.appReserved = std::max(peak.appReserved, item.totalReserved);
+            std::string time = std::to_string(item.timesTamp);
+            points.emplace_back(time.substr(0, time.length() - exLength + 1));
+            points.emplace_back("NULL");
+            if (!streams.empty()) { // 实现数据兼容
+                points.emplace_back("NULL");
+            }
+            points.emplace_back("NULL");
+            std::string reserved = std::to_string(item.totalReserved);
+            points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+            peak.hasApp = true;
+            lines.emplace_back(points);
+        }
+    }
+    if (peak.hasApp) {
+        legends.emplace_back(appLegend);
+    }
+}
+
+void VirtualMemoryDataBase::GetStreamLines(const componentDtoVector componentDtoVec,
+    std::vector<std::vector<std::string>> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
+    const std::vector<std::string> &streams)
+{
+    // 组装图例
+    if (componentDtoVec.empty() && streams.empty()) {
+        legends.insert(legends.end(), baseLegends.begin(), baseLegends.end());
+    } else {
+        legends.emplace_back(baseLegends[0]);
+    }
+    for (const auto& stream : streams) {
+        legends.emplace_back("Allocated of " + stream);
+        legends.emplace_back("Activated of " + stream);
+        legends.emplace_back("Reserved of " + stream);
+    }
+
+    // 组装数据点
+    for (auto &item: componentDtoVec) {
+        std::vector<std::string> points = {};
+        if (item.component != COMPONENT_PTA_AND_GE) {
+            continue;
+        }
+        std::string time = std::to_string(item.timesTamp);
+        points.emplace_back(time.substr(0, time.length() - exLength));
+        std::string streamId = item.streamId;
+        for (const auto& stream : streams) {
+            if (stream == streamId) {
+                std::string allocated = std::to_string(item.totalAllocated);
+                points.emplace_back(allocated.substr(0, allocated.length() - exLength));
+                std::string activated = std::to_string(item.totalActivated);
+                points.emplace_back(activated.substr(0, activated.length() - exLength));
+                std::string reserved = std::to_string(item.totalReserved);
+                points.emplace_back(reserved.substr(0, reserved.length() - exLength));
+            } else {
+                points.insert(points.end(), {"NULL", "NULL", "NULL"});
+            }
+        }
+        lines.emplace_back(points);
+    }
+}
+
+std::string VirtualMemoryDataBase::GetPeakMemory(const Protocol::MemoryPeak &peak,
+    const std::vector<std::string> &streams)
+{
+    std::string peakMemory = "Peak Memory Usage: ";
+    const size_t decimalPlacesNum = 4;
+    if (peak.hasPtaGe) {
+        std::string ptaGeAllo = std::to_string(peak.ptaGeAllocated);
+        // double转换成string默认生成六位小数，删除后4位小数
+        ptaGeAllo = ptaGeAllo.substr(0, ptaGeAllo.length() - decimalPlacesNum);
+        peakMemory.append("Operator Allocated: ").append(ptaGeAllo).append("MB");
+        if (!streams.empty()) {
+            std::string ptaGeActive = std::to_string(peak.ptaGeActivated);
+            ptaGeActive = ptaGeActive.substr(0, ptaGeActive.length() - decimalPlacesNum);
+            peakMemory.append(" | Operator Activated: ").append(ptaGeActive).append("MB");
+        }
+        std::string ptaGeRe = std::to_string(peak.ptaGeReserved);
+        ptaGeRe = ptaGeRe.substr(0, ptaGeRe.length() - decimalPlacesNum);
+        peakMemory.append(" | Operator Reserved: ").append(ptaGeRe).append("MB");
+    }
+    if (peak.hasApp) {
+        std::string appAllo = std::to_string(peak.appReserved);
+        appAllo = appAllo.substr(0, appAllo.length() - decimalPlacesNum);
+        peakMemory.append(" | APP Reserved: ").append(appAllo).append("MB");
+    }
+    return peakMemory;
+}
+}
+}
+}

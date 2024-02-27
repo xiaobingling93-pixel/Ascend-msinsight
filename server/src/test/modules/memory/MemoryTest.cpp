@@ -240,7 +240,7 @@ TEST_F(TestSuit, QueryOperatorSizeData)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
     double min;
     double max;
-    database->QueryOperatorSize(min, max);
+    database->QueryOperatorSize(min, max, "");
     int expectMin = 64;
     int expectMax = 81984;
     EXPECT_EQ(min, expectMin);

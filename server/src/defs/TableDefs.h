@@ -27,6 +27,14 @@ namespace Dic {
     const static std::string TABLE_STRING_IDS = "STRING_IDS";
     const static std::string TABLE_TARGET_INFO_NPU = "TARGET_INFO_NPU";
     const static std::string TABLE_TARGET_INFO_SESSION_TIME = "TARGET_INFO_SESSION_TIME";
+    const static std::string TABLE_MEMORY_RECORD = "MEMORY_RECORD";
+    const static std::string TABLE_OPERATOR_MEMORY = "OPERATOR_MEMORY";
+
+    const static std::string TABLE_STEP_TRACE_TIME = "StepTraceTime";
+    const static std::string TABLE_COMM_ANALYZER_TIME = "CommAnalyzerTime";
+    const static std::string TABLE_COMM_ANALYZER_BANDWIDTH = "CommAnalyzerBandwidth";
+    const static std::string TABLE_COMM_ANALYZER_MATRIX = "CommAnalyzerMatrix";
+    const static std::string TABLE_COMM_GROUP = "CommGroup";
 
     // database version
 #ifndef DATABASE_VERSION

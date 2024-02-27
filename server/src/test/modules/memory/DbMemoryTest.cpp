@@ -238,6 +238,6 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorSizeData)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("2");
     double min;
     double max;
-    auto result = database->QueryOperatorSize(min, max);
+    auto result = database->QueryOperatorSize(min, max, std::__cxx11::string());
     EXPECT_EQ(result, false);
 }

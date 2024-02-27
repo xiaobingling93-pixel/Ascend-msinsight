@@ -22,6 +22,8 @@ private:
     void SetParseCallBack(std::string token);
     void SetBaseActionOfResponse(ImportActionResponse &response, std::string rankId,
                                  std::map<std::string, std::string> devicePaths);
+    static void ClusterProcess(const std::string &token, const std::string &selectedFolder, bool isCluster);
+    static void ClusterProcessAsyncStep(const std::string &token, const std::string &selectedFolder);
 };
 
 } // end of namespace Module

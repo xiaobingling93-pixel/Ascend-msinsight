@@ -215,9 +215,7 @@ VirtualClusterDatabase *DataBaseManager::GetWriteClusterDatabase()
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (clusterDatabaseMap.count("cluster_w") == 0) {
-        if (this->dataType == DataType::JSON) {
-            clusterDatabaseMap.emplace("cluster_w", std::make_unique<JsonClusterDatabase>());
-        }
+        clusterDatabaseMap.emplace("cluster_w", std::make_unique<JsonClusterDatabase>());
     }
     return clusterDatabaseMap["cluster_w"].get();
 }

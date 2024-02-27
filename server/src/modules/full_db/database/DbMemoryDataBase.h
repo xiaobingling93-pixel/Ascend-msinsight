@@ -22,7 +22,7 @@ public:
                              std::vector<Protocol::MemoryOperator> &opDetails);
     bool QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody);
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum);
-    bool QueryOperatorSize(double &min, double &max);
+    bool QueryOperatorSize(double &min, double &max, std::string rankId);
     static void ParserEnd(std::string rankId, bool result);
     static void ParseCallBack(const std::string &token, const std::string &fileId, bool result,
                               const std::string &msg);

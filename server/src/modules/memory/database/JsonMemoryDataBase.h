@@ -41,7 +41,7 @@ public:
     void SaveOperatorDetail();
 
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) override;
-    bool QueryOperatorSize(double &min, double &max) override;
+    bool QueryOperatorSize(double &min, double &max, std::string rankId) override;
     uint64_t QueryMinOperatorAllocationTime();
     uint64_t QueryMinRecordTimestamp();
 
@@ -70,17 +70,6 @@ private:
     const std::string COMPONENT_GE = "GE";
     const std::string COMPONENT_PTA = "PTA";
     const std::string COMPONENT_PTA_AND_GE = "PTA+GE";
-    bool isInference = false;
-
-    void GetLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
-                  std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
-                  const std::vector<std::string> &streams);
-
-    std::string GetPeakMemory(const Protocol::MemoryPeak &peak, const std::vector<std::string> &streams);
-
-    void GetStreamLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
-                        std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
-                        const std::vector<std::string> &streams);
 };
 
 } // end of namespace Memory

@@ -22,6 +22,7 @@ public:
     static void SaveClusterBaseInfo(const std::string& selectedPath);
     static void ParseCommunicationMatrix(const std::vector<std::string> &filePathList);
     static void ParseCommunicationGroup(const std::string selectedPath, ClusterBaseInfo &baseInfo);
+    bool ParserClusterOfDb(const std::string &selectedPath);
 private:
     static void SaxParseJsonFile(const std::string& filePath, int saxHandlerType);
     static bool InitClusterDatabase(const std::string& selectedPath, bool dbIsAlreadyExist);

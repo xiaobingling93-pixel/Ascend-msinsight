@@ -25,12 +25,13 @@ public:
     QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody) = 0;
 
     virtual bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) = 0;
-    virtual bool QueryOperatorSize(double &min, double &max) = 0;
+    virtual bool QueryOperatorSize(double &min, double &max, std::string rankId) = 0;
 protected:
     std::mutex &mutex;
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";
     const int exLength = 4;
+    bool isInference = false;
 
     const std::vector<std::string> baseLegends = {
         "Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved"
@@ -66,7 +67,24 @@ protected:
     const std::string COMPONENT_PTA = "PTA";
     const std::string COMPONENT_PTA_AND_GE = "PTA+GE";
 
-    std::vector<std::string> GetStreamLists();
+    std::vector<std::string> GetStreamLists(std::string rankId);
+
+    bool ExecuteOperatorSize(double &min, double &max, std::string sql);
+    bool ExecuteOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum, std::string sql);
+    bool ExecuteQueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody,
+                                std::string sql);
+    bool ExecuteOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
+        std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails,
+        std::string sql);
+
+private:
+    void GetLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
+                  std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
+                  const std::vector<std::string> &streams);
+    std::string GetPeakMemory(const Protocol::MemoryPeak &peak, const std::vector<std::string> &streams);
+    void GetStreamLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
+                        std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
+                        const std::vector<std::string> &streams);
 };
 
 }; // end of namespace Memory

@@ -336,7 +336,22 @@ StepStatistic ClusterFileParser::MapToStepStatistic(std::vector<std::string> tok
     statistic.pureCommunicationExcludeReceiveTime =
             tokens[index].empty() ? 0 : std::stod(tokens[index]);
     return statistic;
-};
+}
+
+bool ClusterFileParser::ParserClusterOfDb(const std::string& selectedPath)
+{
+    // cluster analysis
+    if (!AttAnalyze(selectedPath, ATT_MODEL_DEFAULT)) {
+        return false;
+    }
+
+    if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
+        ServerLog::Warn("Parser Cluster Status Is Terminal");
+        return false;
+    }
+    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
+    return true;
+}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

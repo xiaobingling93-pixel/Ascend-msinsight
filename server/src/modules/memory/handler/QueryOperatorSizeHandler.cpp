@@ -24,7 +24,7 @@ void QueryOperatorSizeHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     MemoryOperatorSizeResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
-    if (!database->QueryOperatorSize(response.size.minSize, response.size.maxSize)) {
+    if (!database->QueryOperatorSize(response.size.minSize, response.size.maxSize, request.params.rankId)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to query operator size data.");
         session.OnResponse(std::move(responsePtr));

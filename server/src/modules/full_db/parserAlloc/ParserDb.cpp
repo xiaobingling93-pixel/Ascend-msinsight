@@ -12,6 +12,9 @@
 #include "DataBaseManager.h"
 #include "CommonDefs.h"
 #include "TraceTime.h"
+#include "ClusterFileParser.h"
+#include "ClusterParseThreadPoolExecutor.h"
+#include "ParserStatusManager.h"
 
 namespace Dic {
 namespace Module {
@@ -47,6 +50,52 @@ void ParserDb::Parser(const std::string &path, ImportActionRequest &request)
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
     FullDb::FullDbParser::Instance().Parse({path}, "FullDb", token);
+    // 执行集群数据解析
+    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token, path,
+        (rankList.size() > 1));
+}
+
+void ParserDb::ClusterProcess(const std::string &token, const std::string &selectedFolder, bool isCluster)
+{
+    std::string parseClusterResult = PARSE_RESULT_NONE;
+    if (isCluster && FullDb::FullDbParser::Instance().InitCluster(selectedFolder, token)) {
+        ServerLog::Info("ParseClusterFiles is success");
+        parseClusterResult = PARSE_RESULT_OK;
+        ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcessAsyncStep,
+                                                                            token, selectedFolder);
+    } else {
+        ServerLog::Warn("ParseClusterFiles is failed");
+        parseClusterResult = PARSE_RESULT_FAIL;
+    }
+    // send event
+    ParserAlloc::ParseClusterEndProcess(token, parseClusterResult);
+}
+
+void ParserDb::ClusterProcessAsyncStep(const std::string &token, const std::string &selectedFolder)
+{
+    std::string parseClusterResult;
+    ClusterFileParser clusterFileParser;
+    if (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::FINISH ||
+        clusterFileParser.ParserClusterOfDb(selectedFolder)) {
+        ServerLog::Info("ParseClusterDbFiles is success");
+        parseClusterResult = PARSE_RESULT_OK;
+    } else {
+        ServerLog::Warn("ParseClusterDbFiles is failed");
+        parseClusterResult = PARSE_RESULT_FAIL;
+    }
+    // send event
+    ServerLog::Info("Parse Cluster File end, send event");
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        ServerLog::Warn("Failed to get session token ");
+        return;
+    }
+    auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
+    event->moduleName = ModuleType::TIMELINE;
+    event->token = token;
+    event->result = true;
+    event->body.parseResult = std::move(parseClusterResult);
+    session->OnEvent(std::move(event));
 }
 
 std::vector<std::string> ParserDb::GetReportFiles(const std::string &path, ImportActionResBody &body)
