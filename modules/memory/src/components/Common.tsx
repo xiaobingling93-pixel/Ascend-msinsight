@@ -21,3 +21,14 @@ export const hit = (<Tooltip color={'#2e2f31'} title={
 }>
     <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 0 0 10px' }}/>
 </Tooltip>);
+
+export const chartCharacter = (<Tooltip color={'#2e2f31'} title={
+    (
+        <div style={{ background: '#1e1e1e', padding: '1rem' }}>
+            <div>Operator Allocated includes the memory occupied by both PyTorch and GE,
+                while Operator Activated only includes the memory occupied by PyTorch.</div>
+        </div>
+    )
+}>
+    <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
+</Tooltip>);

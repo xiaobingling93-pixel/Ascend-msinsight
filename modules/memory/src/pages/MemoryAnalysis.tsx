@@ -252,7 +252,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                         </Col>
                     </Row>
                 </Spin>
-                <Row style={{ height: 60, alignContent: 'center' }}>
+                <Row style={{ height: 60, alignContent: 'center', marginTop: '75px' }}>
                     <Col span={6}>
                         <Label name={i18n.t('Name')} />
                         <Input

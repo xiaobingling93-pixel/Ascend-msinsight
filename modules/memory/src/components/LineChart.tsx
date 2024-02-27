@@ -6,6 +6,7 @@ import * as React from 'react';
 import { Graph, OperatorDetail } from '../entity/memory';
 import { useResizeEventDependency, binarySearch } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
+import { chartCharacter } from './Common';
 
 interface IProps {
     graph: Graph;
@@ -21,8 +22,7 @@ type T = string | undefined;
 const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: boolean): echarts.EChartsOption => {
     return {
         title: {
-            text: graphTitle,
-            textStyle: { fontSize: 16 },
+            text: '',
         },
         tooltip: {
             trigger: 'axis',
@@ -30,13 +30,13 @@ const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: b
                 let res = `${params?.[0]?.name} <br/>`;
                 for (const item of params) {
                     if (!isNaN(Number(item?.value?.[item?.encode?.y?.[0]]))) {
-                        res += `<span style="background: ${item.color}; 
-                        height:10px; 
-                        width: 10px; 
+                        res += `<span style="background: ${item.color};
+                        height:10px;
+                        width: 10px;
                         border-radius: 50%;
                         display: inline-block;
                         margin-right:10px;">
-                        </span> 
+                        </span>
                         ${item.seriesName}: ${item?.value?.[item?.encode?.y?.[0]]}<br/>`;
                     }
                 }
@@ -214,6 +214,16 @@ export const LineChart: React.FC<IProps> = (props) => {
     }, [graph, record, chartObj]);
 
     return (
-        <div ref={graphRef} style={{ height: '400px' }}></div>
+        <div>
+            {graph.title?.length !== 0
+                ? <div style={{ fontSize: 14, fontWeight: 'bold' } }>
+                    {graph.title}{chartCharacter}
+                </div>
+                : <div style={{ fontSize: 14, fontWeight: 'bold' } }>
+                    {graph.title}
+                </div>
+            }
+            <div ref={graphRef} style={{ height: '400px' }}></div>
+        </div>
     );
 };
