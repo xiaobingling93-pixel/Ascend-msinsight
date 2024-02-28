@@ -178,7 +178,7 @@ void EventParser::CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
             return;
         }
         event.pid = std::to_string(GetPid(event.processName));
-        event.tid = GetTid(event.processName, event.threadName);
+        event.tid = std::to_string(GetTid(event.processName, event.threadName));
         event.trackId = GetTrackId(event.pid, event.tid);
         database->InsertSimulationSlice(event);
     }
