@@ -11,7 +11,7 @@ import {
 } from '../../entity/insight';
 import { Session } from '../../entity/session';
 import { hashToNumber } from '../../utils/colorUtils';
-import {
+import type {
     AscendSliceDetail,
     CardMetaData,
     CounterMetaData,
@@ -85,6 +85,14 @@ export const getDetailTimeDisplay = (startTime: number | undefined): string => {
     return nsToNs(startTime);
 };
 
+export const getDisplay = (val: string | undefined): string => {
+    return val === undefined ? '' : val;
+};
+
+const isHidden = (val: string | undefined): boolean => {
+    return val === undefined;
+};
+
 const singleSliceDetail = singleData({
     name: 'SingleSlice',
     renderFields: [
@@ -92,6 +100,12 @@ const singleSliceDetail = singleData({
         ['Start', data => getTimestamp(data.startTime ?? 0, { precision: 'ns' }), isHiddenStartTime],
         ['Wall Duration', data => getDetailTimeDisplay(data.duration), isHiddenDuration],
         ['Self Time', data => getDetailTimeDisplay(data.selfTime), isHiddenSelfTime],
+        ['Input Shapes', (data: AscendSliceDetail): string => getDisplay(data.inputShapes), (data: AscendSliceDetail): boolean => isHidden(data.inputShapes)],
+        ['Input Data Types', (data: AscendSliceDetail): string => getDisplay(data.inputDataTypes), (data: AscendSliceDetail): boolean => isHidden(data.inputDataTypes)],
+        ['Input Formats', (data: AscendSliceDetail): string => getDisplay(data.inputFormats), (data: AscendSliceDetail): boolean => isHidden(data.inputDataTypes)],
+        ['Output Shapes', (data: AscendSliceDetail): string => getDisplay(data.outputShapes), (data: AscendSliceDetail): boolean => isHidden(data.inputDataTypes)],
+        ['Output Data Types', (data: AscendSliceDetail): string => getDisplay(data.outputDataTypes), (data: AscendSliceDetail): boolean => isHidden(data.inputDataTypes)],
+        ['Output Formats', (data: AscendSliceDetail): string => getDisplay(data.outputFormats), (data: AscendSliceDetail): boolean => isHidden(data.inputDataTypes)],
     ],
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
         const selectedSliceData = session.selectedData as ThreadTrace;
@@ -117,6 +131,12 @@ const singleSliceDetail = singleData({
             duration: result?.data?.duration,
             selfTime: result?.data?.selfTime,
             args: result?.data?.args,
+            inputShapes: result?.data?.inputShapes,
+            inputDataTypes: result?.data?.inputDataTypes,
+            inputFormats: result?.data?.inputFormats,
+            outputShapes: result?.data?.outputShapes,
+            outputDataTypes: result?.data?.outputDataTypes,
+            outputFormats: result?.data?.outputFormats,
         };
         return data;
     },

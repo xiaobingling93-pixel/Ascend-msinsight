@@ -759,6 +759,12 @@ export type AscendSliceDetail = {
     duration?: number;
     selfTime?: number;
     args?: string;
+    inputShapes?: string;
+    inputDataTypes?: string;
+    inputFormats?: string;
+    outputShapes?: string;
+    outputDataTypes?: string;
+    outputFormats?: string;
 };
 
 export type AscendMultiSliceList = {
