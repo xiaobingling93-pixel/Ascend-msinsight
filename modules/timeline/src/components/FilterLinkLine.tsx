@@ -94,7 +94,7 @@ interface CategoryEvents {
 
 type FetchLinkLines = (session: Session) => Promise<CategoryEvents['flowDetailList']>;
 type UseFetchLinkLines = Map<string, FetchLinkLines>;
-const useFetchLinkLines = (displayCategories: string[]): UseFetchLinkLines => React.useMemo(() => new Map(
+const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<string>): UseFetchLinkLines => React.useMemo(() => new Map(
     displayCategories.map(category => [
         category,
         customDebounce(async (session: Session): Promise<CategoryEvents['flowDetailList']> => {
@@ -102,7 +102,14 @@ const useFetchLinkLines = (displayCategories: string[]): UseFetchLinkLines => Re
             const { domain: { timePerPx } } = session;
             let res: CategoryEvents['flowDetailList'] = [];
             for (const unit of getCardUnits(session.units)) {
+                if (!unit.isExpanded) {
+                    continue;
+                }
                 const { dataSource, cardId } = unit.metadata as { dataSource: DataSource; cardId: string };
+                // 如果不在可视范围内就不查询
+                if (!viewedCardIdSet.has(cardId)) {
+                    continue;
+                }
                 const timestampOffset = cardId !== undefined
                     ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0
                     : 0;
@@ -116,7 +123,7 @@ const useFetchLinkLines = (displayCategories: string[]): UseFetchLinkLines => Re
             return res;
         }),
     ]),
-), [displayCategories]);
+), [displayCategories, viewedCardIdSet]);
 
 const useGetCategories = (session: Session, isSuspend: boolean): string[] => {
     const [categories, setCategories] = React.useState<string[]>([]);
@@ -149,18 +156,14 @@ const useGetCategories = (session: Session, isSuspend: boolean): string[] => {
     return categories;
 };
 
-const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session; isSuspend: boolean }): JSX.Element => {
-    const displayCategories = useGetCategories(session, isSuspend);
-    const fetchLinkLinesMap = useFetchLinkLines(displayCategories);
-    const [checkedCategories, setCheckedCategories] = React.useState<string[]>([]);
-
-    const isEmptyData = displayCategories.length === 0;
-
-    const updateLinkLines = React.useCallback(async () => {
+const updateSessionLineData = (checkedCategories: string[], fetchLinkLinesMap: Map<string, FetchLinkLines>, session: Session): any => {
+    return async () => {
         const newLines: LinkLines = {};
         for (const category of checkedCategories) {
             const datas = await fetchLinkLinesMap.get(category)?.(session);
-            if (datas === undefined) { return; }
+            if (datas === undefined) {
+                return;
+            }
             newLines[category] = datas;
         }
         Object.values(session.singleLinkLine)
@@ -177,13 +180,25 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
             session.renderTrigger = !session.renderTrigger;
             session.linkLineCategories = checkedCategories;
         });
-    }, [checkedCategories]);
+    };
+};
 
-    const param = [session.domainRange.domainStart, session.domainRange.domainEnd, checkedCategories, session?.unitsConfig.offsetConfig.timestampOffset];
-    const func = (): void => {
+const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session; isSuspend: boolean }): JSX.Element => {
+    const displayCategories = useGetCategories(session, isSuspend);
+    const [checkedCategories, setCheckedCategories] = React.useState<string[]>([]);
+    const fetchLinkLinesMap = useFetchLinkLines(checkedCategories, session.viewedCardIdSet);
+    const isEmptyData = displayCategories.length === 0;
+    const updateLinkLines = React.useCallback(updateSessionLineData(checkedCategories, fetchLinkLinesMap, session),
+        [checkedCategories, session.viewedCardIdSet]);
+    const dependencyParam = [session.domainRange.domainStart,
+        session.domainRange.domainEnd,
+        checkedCategories,
+        session?.unitsConfig.offsetConfig.timestampOffset,
+        session.viewedCardIdSet];
+    const updateLineData = (): void => {
         updateLinkLines();
     };
-    React.useEffect(func, param);
+    React.useEffect(updateLineData, dependencyParam);
     return (
         <FilterContainer>
             <FilterList>

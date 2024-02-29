@@ -3,6 +3,7 @@ import cls from 'classnames';
 import { computed, runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
+import { useEffect, useRef } from 'react';
 // hooks
 import { useWatchResize } from '../../../utils/useWatchDomResize';
 // support utils/types
@@ -19,8 +20,8 @@ import { UnitInfo } from './UnitInfo';
 import { ChartErrorBoundary } from '../../error/ChartErrorBoundary';
 import eventBus, { EventType, useEventBus } from '../../../utils/eventBus';
 import { Mask } from '../../charts/Mask';
-import { useEffect, useRef } from 'react';
-import { useJumpTarget, OrderOptions } from './hooks';
+import { useJumpTarget } from './hooks';
+import type { OrderOptions } from './hooks';
 
 const Lane = styled.div<{ laneHeight: number; className: string }>`
     display: flex;
@@ -148,13 +149,46 @@ const orderOptions = {
     },
 };
 
+const updateListener = (element: HTMLDivElement): any => {
+    element.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+        element.removeEventListener('wheel', handleWheel);
+    };
+};
+
+const updateSession = (session: Session, totalHeight: number, cardIdSet: Set<string>): void => {
+    session.totalHeight = totalHeight;
+    let isSameSet = true;
+    for (const cardId of cardIdSet) {
+        if (!session.viewedCardIdSet.has(cardId)) {
+            isSameSet = false;
+            break;
+        }
+    }
+    for (const cardId of session.viewedCardIdSet) {
+        if (!cardIdSet.has(cardId)) {
+            isSameSet = false;
+            break;
+        }
+    }
+    if (!isSameSet) {
+        session.viewedCardIdSet = cardIdSet;
+    }
+};
+
+const computeOnScreenCardIdSet = (flattenUnits: InsightUnit[], first: number, last: number): Set<string> => {
+    return new Set(flattenUnits.filter((_, i) => first <= i && i < last).map(insightUnit => {
+        const { cardId } = insightUnit.metadata as { cardId: string };
+        return cardId;
+    }));
+};
+
 const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, eventType }: FlattenUnitsProps): JSX.Element => {
     const [scrollTop, setScrollTop] = React.useState(0);
     // 监听滚动事件，计算虚拟滚动的泳道
     useEventBus(eventType, (value) => setScrollTop(value as number));
     const flattenUnits = computed(() => orderOptions.preOrderFlatten(session.units, 0, orderOptions.options)).get();
-    const [first, last] = React.useMemo(
-        () => computeVisibleUnitRange(flattenUnits, height, scrollTop),
+    const [first, last] = React.useMemo(() => computeVisibleUnitRange(flattenUnits, height, scrollTop),
         [session.pinnedUnits, flattenUnits, height, scrollTop],
     );
     const headOffset = React.useMemo(
@@ -170,15 +204,15 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         [flattenUnits, last],
     );
     const totalHeight = React.useMemo(() => headOffset + visibleUnitsHeight + tailOffset, [headOffset, visibleUnitsHeight, tailOffset]);
-    runInAction(() => { session.totalHeight = totalHeight; });
+    const cardIdSet = computeOnScreenCardIdSet(flattenUnits, first, last);
+    runInAction(() => {
+        updateSession(session, totalHeight, cardIdSet);
+    });
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
         const element = ref.current;
         if (element) {
-            element.addEventListener('wheel', handleWheel, { passive: false });
-            return () => {
-                element.removeEventListener('wheel', handleWheel);
-            };
+            return updateListener(element);
         }
     }, []);
     return <div ref={ref} style={{ display: 'flex', flexDirection: 'column', height: totalHeight }} className="laneView">

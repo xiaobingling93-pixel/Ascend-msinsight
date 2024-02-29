@@ -379,9 +379,11 @@ function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: stri
     const targetPos: Array<[x: number, y: number]> = [[targetX, targetY]];
 
     const offset = ((targetX - sourceX) / 2);
+    ctx.beginPath();
     ctx.moveTo(sourceX, sourceY);
     ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
     ctx.stroke();
+    ctx.closePath();
     if (targetY >= UNDRAW_HEIGHT && sourceY >= UNDRAW_HEIGHT) {
         const len = targetPos.length;
         let [fromX, fromY] = targetPos.reduce(([prevX, prevY], [x, y]) => [prevX + x + offset, prevY + y], [0, 0]);
