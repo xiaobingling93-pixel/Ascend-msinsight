@@ -15,6 +15,7 @@ namespace Dic {
     const static std::string KERNEL_DETAIL_REG = R"((kernel_details|op_summary_[0-9]{1,14})\.csv$)";
     const std::string traceViewReg =
         R"((((trace_view|msprof(_[0-9]{1,15}){1,4})\.json)|(operator_memory|operator_memory_[0-9]{1,14})\.csv)$)";
+    const std::string clusterReg = R"(cluster_analysis_output$)";
     const std::string DBReg = R"((report_[0-9]{1,16})\.db$)";
 }
 

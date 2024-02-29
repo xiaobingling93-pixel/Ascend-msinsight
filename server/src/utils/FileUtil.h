@@ -421,7 +421,7 @@ public:
     {
         std::vector<std::string> matchedFiles;
         if (!FileUtil::IsFolder(path)) {
-            if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
+            if (std::regex_match(path, fileRegex)) {
                 matchedFiles.emplace_back(PathPreprocess(path));
             }
             return matchedFiles;

@@ -58,9 +58,10 @@ std::pair<std::string, ParserType> ImportActionHandler::GetImportType(const std:
     std::pair<std::string, ParserType> result;
     auto dbFiles = FileUtil::FindFilesByRegex(pathList[0], std::regex(DBReg));
     auto traceFiles = FileUtil::FindFilesByRegex(pathList[0], std::regex(traceViewReg));
+    auto clusterPath = FileUtil::FindFilesAndFoldersByRegex(pathList[0], std::regex(clusterReg), true);
     if (!dbFiles.empty()) {
         result = std::make_pair(dbFiles[0], ParserType::DB);
-    } else if (!traceFiles.empty()) {
+    } else if (!traceFiles.empty() or !clusterPath.empty()) {
         result = std::make_pair(pathList[0], ParserType::JSON);
     } else if (!FileUtil::IsFolder(pathList[0])) {
         result = std::make_pair(pathList[0], ParserType::BIN);
