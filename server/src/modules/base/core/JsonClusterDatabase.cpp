@@ -463,88 +463,22 @@ std::string JsonClusterDatabase::GetMatrixStmtSql(int len)
 bool JsonClusterDatabase::QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
     Protocol::SummaryTopRankResBody &responseBody)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
     std::string sql = BuildCondition(requestParams);
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("BuildCondition. Failed to prepare sql.", sqlite3_errmsg(db));
-        return false;
-    }
-    for (const auto &item: requestParams.stepIdList) {
-        sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
-    }
-    for (const auto &item: requestParams.rankIdList) {
-        sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
-    }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        Protocol::SummaryDto summaryDto;
-        summaryDto.rankId = sqlite3_column_string(stmt, col++);
-        summaryDto.computingTime = sqlite3_column_double(stmt, col++);
-        summaryDto.communicationNotOverLappedTime = sqlite3_column_double(stmt, col++);
-        summaryDto.communicationOverLappedTime = sqlite3_column_double(stmt, col++);
-        summaryDto.freeTime = sqlite3_column_double(stmt, col++);
-        responseBody.summaryList.emplace_back(summaryDto);
-    }
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteQuerySummaryData(requestParams, responseBody, sql);
 }
 
 bool JsonClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody)
 {
-    sqlite3_stmt *stmtBaseInfo = nullptr;
     std::string baseInfoSql =
             "select file_path as filePath,ranks,steps,data_size as dataSize from " + TABLE_BASE_INFO;
-    int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
-    if (baseInfoResult != SQLITE_OK) {
-        ServerLog::Error("Query base info Failed to prepare sql.", sqlite3_errmsg(db));
-        return false;
-    }
-    while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
-        int coll = resultStartIndex;
-        responseBody.filePath = sqlite3_column_string(stmtBaseInfo, coll++);
-        std::string ranks = sqlite3_column_string(stmtBaseInfo, coll++);
-        if (!ranks.empty()) {
-            responseBody.rankList = JsonUtil::JsonToVector(ranks);
-        }
-        std::string steps = sqlite3_column_string(stmtBaseInfo, coll++);
-        if (!steps.empty()) {
-            responseBody.stepList = JsonUtil::JsonToVector(steps);
-        }
-        responseBody.dataSize = sqlite3_column_double(stmtBaseInfo, coll++) / MB_SIZE;
-        responseBody.stepNum = responseBody.stepList.size();
-        responseBody.rankCount = responseBody.rankList.size();
-    }
-    sqlite3_finalize(stmtBaseInfo);
-    return true;
+    return ExecuteQueryBaseInfo(responseBody, baseInfoSql);
 }
 
 bool JsonClusterDatabase::QueryCommunicationGroup(Document &responseBody)
 {
-    sqlite3_stmt *stmtBaseInfo = nullptr;
     std::string baseInfoSql =
             "select stages, pp_stages from " + TABLE_BASE_INFO;
-    int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
-    if (baseInfoResult != SQLITE_OK) {
-        ServerLog::Error("Query CommunicationGroup info Failed to prepare sql.", sqlite3_errmsg(db));
-        return false;
-    }
-    responseBody.SetObject();
-    auto allocator = responseBody.GetAllocator();
-    while (sqlite3_step(stmtBaseInfo) == SQLITE_ROW) {
-        int coll = resultStartIndex;
-        std::string stages(sqlite3_column_string(stmtBaseInfo, coll++));
-        if (!stages.empty()) {
-            responseBody.AddMember("tpOrDpGroups", Document(kArrayType, &allocator).Parse(stages.c_str()), allocator);
-        }
-        std::string ppStages(sqlite3_column_string(stmtBaseInfo, coll++));
-        if (!ppStages.empty()) {
-            responseBody.AddMember("ppGroups", Document(kArrayType, &allocator).Parse(ppStages.c_str()), allocator);
-            responseBody.AddMember("defaultPPSize", responseBody["ppGroups"].Size(), allocator);
-        }
-    }
-    sqlite3_finalize(stmtBaseInfo);
-    return true;
+    return ExecuteQueryCommunicationGroup(responseBody, baseInfoSql);
 }
 
 std::string JsonClusterDatabase::QueryParseClusterStatus()
@@ -588,122 +522,51 @@ void JsonClusterDatabase::UpdateClusterParseStatus(std::string status)
 
 bool JsonClusterDatabase::GetStepIdList(Protocol::PipelineStepResponseBody &responseBody)
 {
-    sqlite3_stmt *stmt = nullptr;
     std::string sql = "select distinct step_id as stepId "
                       "FROM " + TABLE_STEP_TRACE +
                       " ORDER BY step_id";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare GetStepIdList statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        std::string res = sqlite3_column_string(stmt, col++);
-        responseBody.stepList.emplace_back(res);
-    }
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteGetStepIdList(responseBody, sql);
 }
 
 bool JsonClusterDatabase::GetStages(Protocol::PipelineStageParam param,
     Protocol::PipelineStageResponseBody &responseBody)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
     std::string sql = "SELECT DISTINCT stage_id as stageId "
                       "FROM " + TABLE_STEP_TRACE + " WHERE stage_id != '' AND step_id = ?";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare GetStages statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    sqlite3_bind_text(stmt, index, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        std::string res = sqlite3_column_string(stmt, col++);
-        responseBody.stageList.emplace_back(res);
-    }
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteGetStages(param, responseBody, sql);
 }
 
 bool JsonClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam param,
     Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
     std::string sql = "SELECT '" + param.stageId + "' as stageId, "
                       "max(ROUND(stage_time, 4)) as stageTime, "
                       "max(ROUND(bubble_time, 4)) as bubbleTime "
                       "FROM " + TABLE_STEP_TRACE + " WHERE rank_id IN" + param.stageId + " AND step_id = ?";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare GetStageAndBubble statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    sqlite3_bind_text(stmt, index, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        Protocol::BubbleDetail bubbleDetail;
-        bubbleDetail.stageOrRankId = sqlite3_column_string(stmt, col++);
-        bubbleDetail.stageTime = sqlite3_column_double(stmt, col++);
-        bubbleDetail.bubbleTime = sqlite3_column_double(stmt, col++);
-        responseBody.bubbleDetails.emplace_back(bubbleDetail);
-    }
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteGetStageAndBubble(param, responseBody, sql);
 }
 
 bool JsonClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam param,
     Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
 {
-    int index = bindStartIndex;
-    sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT rank_id as rankId, "
                       "ROUND(stage_time, 4) as stageTime, "
                       "ROUND(bubble_time, 4) as bubbleTime "
                       " FROM " + TABLE_STEP_TRACE +
                       " WHERE step_id = ? AND rank_id IN" + param.stageId + " ";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare GetRankAndBubble statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    sqlite3_bind_text(stmt, index, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        Protocol::BubbleDetail bubbleDetail;
-        bubbleDetail.stageOrRankId = sqlite3_column_string(stmt, col++);
-        bubbleDetail.stageTime = sqlite3_column_double(stmt, col++);
-        bubbleDetail.bubbleTime = sqlite3_column_double(stmt, col++);
-        responseBody.bubbleDetails.emplace_back(bubbleDetail);
-    }
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteGetRankAndBubble(param, responseBody, sql);
 }
 
 bool JsonClusterDatabase::GetGroups(Protocol::MatrixGroupParam param, Protocol::MatrixGroupResponseBody &responseBody)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
     std::string sql = "SELECT DISTINCT group_id as groupId "
                       "FROM " + TABLE_GROUP_ID;
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare GetGroups statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    sqlite3_bind_text(stmt, index, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        std::string res = sqlite3_column_string(stmt, col++);
-        responseBody.groupList.emplace_back(res);
-    }
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteGetGroups(param, responseBody, sql);
 }
 
 bool JsonClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
     Protocol::MatrixListResponseBody &responseBody)
 {
-    int index = bindStartIndex;
-    sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT src_rank as srcRank, dst_rank as dstRank, "
                       "transport_type as transportType, "
                       "ROUND(transit_size, 4) as transitSize, "
@@ -712,27 +575,7 @@ bool JsonClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
                       "op_name as opName "
                       "FROM " + TABLE_COMMUNICATION_MATRIX +
                       " WHERE group_id = ? AND iteration_id = ? AND op_sort = ? ";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryMatrixList statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index, param.operatorName.c_str(), param.operatorName.length(), SQLITE_TRANSIENT);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        Protocol::MatrixList matrixList;
-        matrixList.srcRank = sqlite3_column_int(stmt, col++);
-        matrixList.dstRank = sqlite3_column_int(stmt, col++);
-        matrixList.transportType = sqlite3_column_string(stmt, col++);
-        matrixList.transitSize = sqlite3_column_double(stmt, col++);
-        matrixList.transitTime = sqlite3_column_double(stmt, col++);
-        matrixList.bandwidth = sqlite3_column_double(stmt, col++);
-        matrixList.opName = sqlite3_column_string(stmt, col++);
-        responseBody.matrixList.emplace_back(matrixList);
-    }
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteQueryMatrixList(param, responseBody, sql);
 }
 
 std::string JsonClusterDatabase::BuildCondition(const Protocol::SummaryTopRankParams &requestParams)
@@ -765,18 +608,6 @@ std::string JsonClusterDatabase::BuildCondition(const Protocol::SummaryTopRankPa
 bool JsonClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
-    std::vector<std::string> orderByFlagVector = {"operatorName", "elapseTime", "synchronizationTime",
-                                                  "waitTime", "idleTime", "transitTime",
-                                                  "synchronizationTimeRatio", "waitTimeRatio"};
-    if (param.orderBy.empty() ||
-        std::find(orderByFlagVector.begin(), orderByFlagVector.end(), param.orderBy) ==
-        orderByFlagVector.end()) {
-        param.orderBy = "elapseTime";
-    }
-    std::string orderBy = " order by " + param.orderBy;
-    std::string order = !param.order.empty() && std::strcmp(param.order.c_str(), "ascend") == 0 ? "ASC" : "DESC";
     std::string sql = "SELECT op_name as operatorName, "
                       " ROUND(elapse_time, 4) as elapseTime, "
                       " ROUND(transit_time, 4) as transitTime,"
@@ -787,113 +618,32 @@ bool JsonClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &para
                       " ROUND(wait_time_ratio, 4) as waitTimeRatio "
                       "FROM " + TABLE_TIME_INFO +
                       " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ?"
-                      " AND op_name != 'Total Op Info' " + orderBy + " " + order + " LIMIT ?, ?";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryAllOperators statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.rankId.c_str(), param.rankId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, index++, (param.currentPage - 1) * param.pageSize);
-    sqlite3_bind_int(stmt, index, param.pageSize);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        Protocol::OperatorItem operatorItem;
-        operatorItem.operatorName = sqlite3_column_string(stmt, col++);
-        operatorItem.elapseTime = sqlite3_column_double(stmt, col++);
-        operatorItem.transitTime = sqlite3_column_double(stmt, col++);
-        operatorItem.synchronizationTime = sqlite3_column_double(stmt, col++);
-        operatorItem.waitTime = sqlite3_column_double(stmt, col++);
-        operatorItem.idleTime = sqlite3_column_double(stmt, col++);
-        operatorItem.synchronizationTimeRatio = sqlite3_column_double(stmt, col++);
-        operatorItem.waitTimeRatio = sqlite3_column_double(stmt, col++);
-        resBody.allOperators.emplace_back(operatorItem);
-    }
-    sqlite3_finalize(stmt);
-    return true;
+                      " AND op_name != 'Total Op Info' ";
+    return ExecuteQueryAllOperators(param, resBody, sql);
 }
 
 bool JsonClusterDatabase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
     std::string sql = "SELECT op_name, count(*) AS nums  from " + TABLE_TIME_INFO + " where 1=1 ";
-    if (!param.iterationId.empty()) {
-        sql.append("and iteration_id = ? ");
-    }
-    if (!param.rankId.empty()) {
-        sql.append(" AND rank_id = ? ");
-    }
-    if (!param.stage.empty()) {
-        sql.append(" AND stage_id = ? ");
-    }
-    sql.append(" group by op_name");
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryOperatorsCount statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    if (!param.iterationId.empty()) {
-        sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_TRANSIENT);
-    }
-    if (!param.rankId.empty()) {
-        sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_TRANSIENT);
-    }
-    if (!param.stage.empty()) {
-        sqlite3_bind_text(stmt, index, param.stage.c_str(), -1, SQLITE_TRANSIENT);
-    }
-    int count = 0;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        std::string opName = sqlite3_column_string(stmt, col++);
-        if (opName != "Total Op Info") {
-            count = count + sqlite3_column_int(stmt, col);
-        }
-    }
-    resBody.count = count;
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteQueryOperatorsCount(param, resBody, sql);
 }
 
 bool JsonClusterDatabase::QueryBandwidthData(Protocol::BandwidthDataParam &param,
     Protocol::BandwidthDataResBody &resBody)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
     std::string sql = "SELECT transport_type,ROUND(transit_size, 4) as transit_size,"
                       "ROUND(transit_time, 4) as transit_time,"
                       "ROUND(bandwidth_size, 4) as bandwidth_size,"
                       "ROUND(large_package_ratio, 4)  as large_package_ratio from "
                       + TABLE_BANDWIDTH +
                       " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ? AND op_name = ? ";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryBandwidthData statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, param.stage.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index, param.operatorName.c_str(), -1, SQLITE_TRANSIENT);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        Protocol::BandwidthDataItem bandwidth;
-        bandwidth.transportType = sqlite3_column_string(stmt, col++);
-        bandwidth.transitSize = sqlite3_column_double(stmt, col++);
-        bandwidth.transitTime = sqlite3_column_double(stmt, col++);
-        bandwidth.bandwidth = sqlite3_column_double(stmt, col++);
-        bandwidth.largePacketRatio = sqlite3_column_double(stmt, col++);
-        resBody.items.emplace_back(bandwidth);
-    }
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteQueryBandwidthData(param, resBody, sql);
 }
 
 bool JsonClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam &param,
     Protocol::DistributionResBody &resBody)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
     std::string sql = "SELECT size_distribution FROM "
                       + TABLE_BANDWIDTH +
                       " WHERE iteration_id = ? "
@@ -901,84 +651,19 @@ bool JsonClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam 
                       "AND stage_id = ? "
                       "AND op_name = ? "
                       "AND transport_type = ? ;";
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryDistributionData statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, index++, param.stage.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, index++, param.operatorName.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, index, param.transportType.c_str(), -1, SQLITE_STATIC);
-    resBody.distributionData = "";
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        resBody.distributionData = sqlite3_column_string(stmt, col);
-    }
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteQueryDistributionData(param, resBody, sql);
 }
 
 bool JsonClusterDatabase::QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
-    sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT ranks FROM " + TABLE_BASE_INFO;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryRanksHandler statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        std::string ranks = sqlite3_column_string(stmt, col++);
-        GetStepsOrRanksObject(ranks, responseBody);
-    }
-    sqlite3_finalize(stmt);
-    return true;
-}
-
-void JsonClusterDatabase::GetStepsOrRanksObject(const std::string &jsonStr,
-    std::vector<Protocol::IterationsOrRanksObject> &responseBody)
-{
-    rapidjson::Document json;
-    json.Parse(jsonStr.c_str());
-    if (!json.IsArray()) {
-        return;
-    }
-    for (auto &item : json.GetArray()) {
-        Protocol::IterationsOrRanksObject object;
-        object.iterationOrRankId = item.IsString() ? item.GetString() : "";
-        responseBody.emplace_back(object);
-    }
-}
-
-std::string JsonClusterDatabase::GetRanksSql(std::vector<std::string> rankList)
-{
-    std::string ranks = "(";
-    if (rankList.empty()) {
-        return "";
-    } else {
-        for (int i = 0; i < rankList.size(); i++) {
-            if (i == rankList.size() - 1) {
-                ranks += rankList[i];
-            } else {
-                ranks += rankList[i];
-                ranks += ", ";
-            }
-        }
-    }
-    ranks += ")";
-    return ranks;
+    return ExecuteQueryRanksHandler(responseBody, sql);
 }
 
 bool JsonClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requestParams,
     std::vector<Protocol::OperatorNamesObject> &responseBody)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
     std::vector<std::string> rankList = requestParams.rankList;
-    std::string iterationId = requestParams.iterationId;
-    std::string stage = requestParams.stage;
     std::string sql;
     if (rankList.empty()) {
         sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + TABLE_TIME_INFO +
@@ -992,82 +677,29 @@ bool JsonClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requ
                 " AND stage_id = ?" +
                 " AND rank_id IN " + ranks + " ORDER BY op_name)";
     }
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryOperatorNames statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        Protocol::OperatorNamesObject object;
-        object.operatorName = sqlite3_column_string(stmt, col++);
-        responseBody.emplace_back(object);
-    }
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteQueryOperatorNames(requestParams, responseBody, sql);
 }
 
 bool JsonClusterDatabase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
     std::vector<Protocol::OperatorNamesObject> &responseBody)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
-    std::string iterationId = requestParams.iterationId;
-    std::string stage = requestParams.stage;
     std::string sql = "SELECT DISTINCT op_sort  FROM " + TABLE_COMMUNICATION_MATRIX +
             " WHERE iteration_id = ?" +
             " AND group_id = ?" +
             " ORDER BY op_sort";
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryMatrixSortOpNames statement. error: ", sqlite3_errmsg(db));
-        return false;
-    }
-    sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        Protocol::OperatorNamesObject object;
-        object.operatorName = sqlite3_column_string(stmt, col++);
-        responseBody.emplace_back(object);
-    }
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteQueryMatrixSortOpNames(requestParams, responseBody, sql);
 }
 
 bool JsonClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
-    sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT steps FROM " + TABLE_BASE_INFO;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryIterations statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        std::string steps = sqlite3_column_string(stmt, col++);
-        GetStepsOrRanksObject(steps, responseBody);
-    }
-    if (responseBody.empty()) {
-        ServerLog::Error("Failed to obtain the number of iteration ids. At least one id must be contained. "
-            "Check whether communication data files exist in the directory.");
-    }
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteQueryIterations(responseBody, sql);
 }
 
 bool JsonClusterDatabase::QueryDurationList(Protocol::DurationListParams &requestParams,
     std::vector<Protocol::Duration> &responseBody)
 {
-    sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
     std::vector<std::string> rankList = requestParams.rankList;
-    std::string iterationId = requestParams.iterationId;
-    std::string stage = requestParams.stage;
-    std::string operatorName = requestParams.operatorName;
     std::string sql;
     if (rankList.empty()) {
         sql = "SELECT rank_id, ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
@@ -1085,29 +717,7 @@ bool JsonClusterDatabase::QueryDurationList(Protocol::DurationListParams &reques
               " AND rank_id IN " + ranks +
               " AND op_name = ?";
     }
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare Query Duration List statement. error:", sqlite3_errmsg(db));
-        return false;
-    }
-    sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, index, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        Protocol::Duration object;
-        object.rankId = sqlite3_column_string(stmt, col++);
-        object.elapseTime = sqlite3_column_double(stmt, col++);
-        object.transitTime = sqlite3_column_double(stmt, col++);
-        object.synchronizationTime = sqlite3_column_double(stmt, col++);
-        object.waitTime = sqlite3_column_double(stmt, col++);
-        object.idleTime = sqlite3_column_double(stmt, col++);
-        object.synchronizationTimeRatio = sqlite3_column_double(stmt, col++);
-        object.waitTimeRatio = sqlite3_column_double(stmt, col++);
-        responseBody.emplace_back(object);
-    }
-    sqlite3_finalize(stmt);
-    return true;
+    return ExecuteQueryDurationList(requestParams, responseBody, sql);
 }
 } // end of namespace Module
 } // end of namespace Dic

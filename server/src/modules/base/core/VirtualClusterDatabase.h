@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
-#ifndef PROFILER_SERVER_CLUSTER_DATABASE_H
-#define PROFILER_SERVER_CLUSTER_DATABASE_H
+#ifndef PROFILER_SERVER_VIRTUAL_CLUSTER_DATABASE_H
+#define PROFILER_SERVER_VIRTUAL_CLUSTER_DATABASE_H
 
 #include <set>
 #include "Database.h"
@@ -51,8 +51,49 @@ public:
     virtual bool QueryDurationList(Protocol::DurationListParams &requestParams,
                            std::vector<Protocol::Duration> &responseBody) = 0;
     virtual bool QueryCommunicationGroup(rapidjson::Document &responseBody) = 0;
+    virtual bool QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
+        std::vector<Protocol::OperatorNamesObject> &responseBody) = 0;
+
+protected:
+    bool ExecuteQuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
+        Protocol::SummaryTopRankResBody &responseBody, std::string sql);
+    bool ExecuteQueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody, std::string sql);
+    bool ExecuteGetStepIdList(Protocol::PipelineStepResponseBody &responseBody, std::string sql);
+    bool ExecuteGetStages(Protocol::PipelineStageParam param, Protocol::PipelineStageResponseBody &responseBody,
+        std::string sql);
+    bool ExecuteGetStageAndBubble(Protocol::PipelineStageTimeParam param,
+        Protocol::PipelineStageOrRankTimeResponseBody &responseBody, std::string sql);
+    bool ExecuteGetRankAndBubble(Protocol::PipelineRankTimeParam param,
+        Protocol::PipelineStageOrRankTimeResponseBody &responseBody, std::string sql);
+    bool ExecuteGetGroups(Protocol::MatrixGroupParam param, Protocol::MatrixGroupResponseBody &responseBody,
+        std::string sql);
+    bool ExecuteQueryMatrixList(Protocol::MatrixBandwidthParam param, Protocol::MatrixListResponseBody &responseBody,
+        std::string sql);
+    bool ExecuteQueryAllOperators(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody,
+        std::string sql);
+    bool ExecuteQueryOperatorsCount(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody,
+        std::string sql);
+    bool ExecuteQueryBandwidthData(Protocol::BandwidthDataParam &param, Protocol::BandwidthDataResBody &resBody,
+        std::string sql);
+    bool ExecuteQueryDistributionData(Protocol::DistributionDataParam &param, Protocol::DistributionResBody &resBody,
+        std::string sql);
+
+    bool ExecuteQueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody, std::string sql);
+    bool ExecuteQueryOperatorNames(Protocol::OperatorNamesParams &requestParams,
+        std::vector<Protocol::OperatorNamesObject> &responseBody, std::string sql);
+    bool ExecuteQueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody, std::string sql);
+    bool ExecuteQueryDurationList(Protocol::DurationListParams &requestParams,
+        std::vector<Protocol::Duration> &responseBody, std::string sql);
+    bool ExecuteQueryCommunicationGroup(rapidjson::Document &responseBody, std::string sql);
+    bool ExecuteQueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
+                                       std::vector<Protocol::OperatorNamesObject> &responseBody, std::string sql);
+    std::string GetRanksSql(std::vector<std::string> rankList);
+
+private:
+    void GetStepsOrRanksObject(const std::string &jsonStr,
+        std::vector<Protocol::IterationsOrRanksObject> &responseBody);
 };
 } // end of namespace Module
 } // end of namespace Dic
 
-#endif // PROFILER_SERVER_CLUSTER_DATABASE_H
+#endif // PROFILER_SERVER_VIRTUAL_CLUSTER_DATABASE_H

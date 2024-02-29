@@ -371,7 +371,20 @@ LayerStatData DbTraceDataBase::QueryLayerData(const std::string &layer, const st
 
 std::vector<std::string> DbTraceDataBase::QueryCoreType()
 {
-    return std::vector<std::string>();
+    std::vector<std::string> acceleratorCoreList;
+    std::string sql = "SELECT DISTINCT TASKTYPE.value as task_type FROM " + TABLE_COMPUTE_TASK_INFO +
+            "JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType ORDER BY task_type";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryCoreType, fail to prepare sql.");
+        return acceleratorCoreList;
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    while (resultSet->Next()) {
+        std::string res = resultSet->GetString("accelerator_core");
+        acceleratorCoreList.emplace_back(res);
+    }
+    return acceleratorCoreList;
 }
 
 OneKernelData DbTraceDataBase::QueryKernelTid(uint64_t trackId)

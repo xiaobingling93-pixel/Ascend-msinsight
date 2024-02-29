@@ -30,7 +30,7 @@ private:
     static void InitMemory(std::vector<std::string> fileId, std::string path, std::string token);
     static void InitSummery(std::vector<std::string> fileId, std::string path, std::string token);
 
-    static void ParserCallBack(std::string rankId, bool result);
+    static void ParserCallBack(std::string fileId, bool result);
 };
 }
 

@@ -2,40 +2,20 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-#ifndef PROFILER_SERVER_JSON_CLUSTER_DATABASE_H
-#define PROFILER_SERVER_JSON_CLUSTER_DATABASE_H
+#ifndef PROFILER_SERVER_DBCLUSTERDATABASE_H
+#define PROFILER_SERVER_DBCLUSTERDATABASE_H
 
-#include <set>
 #include "VirtualClusterDatabase.h"
-#include "ClusterDef.h"
-#include "Protocol.h"
-#include "SummaryProtocolResponse.h"
-#include "SummaryProtocolRequest.h"
-#include "CommunicationProtocolRequest.h"
-#include "CommunicationProtocolResponse.h"
 
 namespace Dic {
 namespace Module {
-class JsonClusterDatabase : public VirtualClusterDatabase {
-public:
-    JsonClusterDatabase() = default;
-    ~JsonClusterDatabase() override;
+namespace FullDb {
 
-    bool SetConfig();
-    bool CreateTable();
-    bool CreateIndex();
-    bool CreateTimeIndex();
-    bool InitStmt();
-    void ReleaseStmt();
-    void InsertTimeInfo(CommunicationTimeInfo &timeInfo);
-    void InsertTimeInfoList(std::vector<CommunicationTimeInfo> &timeInfoList);
-    void InsertBandwidth(CommunicationBandWidth &bandWidth);
-    void InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList);
-    void InsertStepStatisticsInfo(StepStatistic &stepStatistic);
-    void InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo);
-    void InsertGroupId(const std::set<std::string> &groupIds);
-    void InsertCommunicationMatrix(CommunicationMatrixInfo &communicationMatrix);
-    void InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo);
+class DbClusterDataBase : public VirtualClusterDatabase {
+public:
+    DbClusterDataBase() = default;
+    ~DbClusterDataBase() override;
+
     bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
                           Protocol::SummaryTopRankResBody &responseBody) override;
     std::string QueryParseClusterStatus() override;
@@ -53,7 +33,6 @@ public:
     bool QueryOperatorsCount(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody) override;
     bool QueryBandwidthData(Protocol::BandwidthDataParam &param, Protocol::BandwidthDataResBody &resBody) override;
     bool QueryDistributionData(Protocol::DistributionDataParam &param, Protocol::DistributionResBody &resBody) override;
-    void SaveLastData();
 
     bool QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody) override;
     bool QueryOperatorNames(Protocol::OperatorNamesParams &requestParams,
@@ -66,21 +45,10 @@ public:
     bool QueryCommunicationGroup(Document &responseBody) override;
 
 private:
-    sqlite3_stmt *insertTimeInfoStmt = nullptr;
-    sqlite3_stmt *insertBandwidthStmt = nullptr;
-    sqlite3_stmt *stepStmt = nullptr;
-    sqlite3_stmt *matrixStmt = nullptr;
-    bool isInitStmt = false;
-    std::vector<CommunicationTimeInfo> timeInfoCache;
-    std::vector<CommunicationBandWidth> bandwidthCache;
-    std::vector<CommunicationMatrixInfo> matrixCache;
-    std::string GetTimeInfoStmtSql(int len);
-    std::string GetBandwidthStmtSql(int len);
-    std::string GetMatrixStmtSql(int len);
-
-    std::string BuildCondition(const Protocol::SummaryTopRankParams &requestParams);
+    std::string parseStatus = "UN_FINISH";
 };
-} // end of namespace Module
-} // end of namespace Dic
+}
+}
+}
 
-#endif // PROFILER_SERVER_JSON_CLUSTER_DATABASE_H
+#endif // PROFILER_SERVER_DBCLUSTERDATABASE_H

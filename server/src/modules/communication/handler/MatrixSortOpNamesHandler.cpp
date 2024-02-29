@@ -27,7 +27,7 @@ void MatrixSortOpNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     std::unique_ptr<MatrixSortOpNamesResponse> responsePtr = std::make_unique<MatrixSortOpNamesResponse>();
     MatrixSortOpNamesResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    auto database = dynamic_cast<JsonClusterDatabase*>(Timeline::DataBaseManager::Instance().GetReadClusterDatabase());
+    auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryMatrixSortOpNames(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get matrix sort op names response data.");
