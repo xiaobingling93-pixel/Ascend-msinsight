@@ -17,10 +17,11 @@ import {
 
 export const CommunicatorContainer = observer(({ session }: { session: Session }) => {
     const [activeTab, setActiveTab] = useState<string>('pp');
+    const [unitCount, setUnitCount] = useState<number>(0);
     useEffect(() => {
         setActiveTab('pp');
         if (session.communicatorData.partitionModes.length === 0) {
-            getDefaultCommunicatorData().then(value => {
+            getDefaultCommunicatorData(setUnitCount).then(value => {
                 session.communicatorData = value;
             });
         }
@@ -36,7 +37,7 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
     }, [session.communicatorData]);
     return (
         <div style={{ height: '300px', width: '100%', margin: '10px 0' }} className={'CommunicatorContainer'}>
-            {<CommunicatorHeader session={session} defaultPPSize={session.communicatorData.defaultPPSize}></CommunicatorHeader>}
+            {<CommunicatorHeader session={session} defaultPPSize={session.communicatorData.defaultPPSize} unitCount={unitCount}></CommunicatorHeader>}
             <Tabs activeKey={activeTab} onTabClick={(key) => { eventBus.emit('setActiveTab', key); setActiveTab(key); }} style={{ height: '240px' }}>
                 {
                     items.map(item => (
@@ -90,15 +91,15 @@ const RankGroup = ({ rankGroup, session }: { rankGroup: communicator; session: S
     );
 };
 
-const CommunicatorHeader = observer(({ session, defaultPPSize }: { session: Session; defaultPPSize: number }) => {
+const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount }: { session: Session; defaultPPSize: number; unitCount: number }) => {
     const [form] = Form.useForm();
     const onClick = (size: number) => () => {
         const values: {ppSize: number; tpSize: number; dpSize: number} = form.getFieldsValue();
-        if (values.dpSize * values.tpSize * values.ppSize !== session.unitcount) {
+        if (values.dpSize * values.tpSize * values.ppSize !== unitCount) {
             message.error('The parameter is incorrect.');
             return;
         }
-        session.communicatorData = generateCommunicatorData(values, size, session.unitcount);
+        session.communicatorData = generateCommunicatorData(values, size, unitCount);
         eventBus.emit('activeCommunicator', undefined);
     };
     return (
@@ -111,13 +112,13 @@ const CommunicatorHeader = observer(({ session, defaultPPSize }: { session: Sess
                     }]}/>
             </Form.Item>
             <Form.Item name={'ppSize'} label={'PP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.unitcount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
+                <InputNumber min={0} max={unitCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
             <Form.Item name={'tpSize'} label={'TP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.unitcount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
+                <InputNumber min={0} max={unitCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
             <Form.Item name={'dpSize'} label={'DP Size'} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={session.unitcount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
+                <InputNumber min={0} max={unitCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
             </Form.Item>
             <Button style={{ margin: '10px 10px 10px 0' }} onClick={onClick(defaultPPSize)}>Generate</Button>
         </Form>
@@ -137,7 +138,7 @@ const RankId = ({ id, onClick }: { id: number; onClick: () => void }): JSX.Eleme
     );
 };
 
-export async function getDefaultCommunicatorData(): Promise<communicatorContainerData> {
+export async function getDefaultCommunicatorData(setUnitCount: React.Dispatch<React.SetStateAction<number>>): Promise<communicatorContainerData> {
     const result = {
         partitionModes: [
             {
@@ -176,6 +177,9 @@ export async function getDefaultCommunicatorData(): Promise<communicatorContaine
             },
         ];
         result.defaultPPSize = data.defaultPPSize;
+        if (result.partitionModes.length > 0 && result.partitionModes[0].communicators.length > 0) {
+            setUnitCount(data.defaultPPSize * result.partitionModes[0].communicators[0].ranks.length);
+        }
     }
     return result;
 }

@@ -192,6 +192,11 @@ export function addResizeEvent(echart: EChartsType): void {
             echart.resize();
         }
     });
+    window.addEventListener('load', () => {
+        if (checkDomDisplay(echart.getDom())) {
+            echart.resize();
+        }
+    });
 }
 
 export const checkDomDisplay = (dom: HTMLElement): boolean => {
