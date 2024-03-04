@@ -90,7 +90,7 @@ export const getDisplay = (val: string | undefined): string => {
 };
 
 const isHidden = (val: string | undefined): boolean => {
-    return val === undefined;
+    return val === undefined || val === '';
 };
 
 const singleSliceDetail = singleData({
