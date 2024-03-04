@@ -93,6 +93,12 @@ struct ThreadDetail {
     std::string args;
     std::string title;
     std::string cat;
+    std::string inputShapes;
+    std::string inputDataTypes;
+    std::string inputFormats;
+    std::string outputShapes;
+    std::string outputDataTypes;
+    std::string outputFormats;
 };
 
 struct UnitThreadDetailBody {

@@ -95,6 +95,8 @@ public:
                                    Protocol::OneKernelBody &responseBody, uint64_t minTimestamp) override;
     OneKernelData QueryKernelTid(const uint64_t trackId) override;
 
+    KernelShapesDataDto QueryKernelShapes(const std::vector<SliceDto> &rows);
+
 private:
     const std::string sliceTable = "slice";
     const std::string threadTable = "thread";

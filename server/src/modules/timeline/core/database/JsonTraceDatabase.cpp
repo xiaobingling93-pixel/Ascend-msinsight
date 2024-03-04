@@ -879,12 +879,19 @@ bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &re
             selfTime -= item;
         }
     }
+    const KernelShapesDataDto &shapesDataDto = QueryKernelShapes(sliceDtoVec);
     responseBody.emptyFlag = false;
     responseBody.data.selfTime = selfTime;
     responseBody.data.args = sliceDtoVec[0].args;
     responseBody.data.title = sliceDtoVec[0].name;
     responseBody.data.duration = sliceDtoVec[0].duration;
     responseBody.data.cat = sliceDtoVec[0].cat;
+    responseBody.data.inputShapes = shapesDataDto.inputShapes;
+    responseBody.data.inputDataTypes = shapesDataDto.inputDataTypes;
+    responseBody.data.inputFormats = shapesDataDto.inputFormats;
+    responseBody.data.outputShapes = shapesDataDto.outputShapes;
+    responseBody.data.outputDataTypes = shapesDataDto.outputDataTypes;
+    responseBody.data.outputFormats = shapesDataDto.outputFormats;
     return true;
 }
 
@@ -908,6 +915,35 @@ bool JsonTraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::Thread
         nextDepthResult.emplace_back(resultSet->GetUint64("duration"));
     }
     return true;
+}
+
+KernelShapesDataDto JsonTraceDatabase::QueryKernelShapes(const std::vector<SliceDto> &param)
+{
+    KernelShapesDataDto kernelShapesDataDto;
+    if (param.empty()) {
+        ServerLog::Error("sliceDto array is empty!");
+        return kernelShapesDataDto;
+    }
+    std::string sql = "SELECT input_shapes AS inputShapes, input_data_types AS inputDataTypes, "
+                      "input_formats AS inputFormats, output_shapes AS outputShapes, "
+                      "output_data_types AS outputDataTypes, output_formats AS outputFormats "
+                      "FROM " + kernelDetail +
+                      " WHERE name = ? AND start_time = ?";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryKernelShapes. Failed to prepare sql.", sqlite3_errmsg(db));
+        return kernelShapesDataDto;
+    }
+    auto resultSet = stmt->ExecuteQuery(param[0].name, param[0].timestamp);
+    while (resultSet->Next()) {
+        kernelShapesDataDto.inputShapes = resultSet->GetString("inputShapes");
+        kernelShapesDataDto.inputDataTypes = resultSet->GetString("inputDataTypes");
+        kernelShapesDataDto.inputFormats = resultSet->GetString("inputFormats");
+        kernelShapesDataDto.outputShapes = resultSet->GetString("outputShapes");
+        kernelShapesDataDto.outputDataTypes = resultSet->GetString("outputDataTypes");
+        kernelShapesDataDto.outputFormats = resultSet->GetString("outputFormats");
+    }
+    return kernelShapesDataDto;
 }
 
 bool JsonTraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParams,

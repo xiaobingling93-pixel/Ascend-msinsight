@@ -136,6 +136,12 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadDetailResponse>(c
     JsonUtil::AddMember(data, "title", response.body.data.title, allocator);
     JsonUtil::AddMember(data, "duration", response.body.data.duration, allocator);
     JsonUtil::AddMember(data, "cat", response.body.data.cat, allocator);
+    JsonUtil::AddMember(data, "inputShapes", response.body.data.inputShapes, allocator);
+    JsonUtil::AddMember(data, "inputDataTypes", response.body.data.inputDataTypes, allocator);
+    JsonUtil::AddMember(data, "inputFormats", response.body.data.inputFormats, allocator);
+    JsonUtil::AddMember(data, "outputShapes", response.body.data.outputShapes, allocator);
+    JsonUtil::AddMember(data, "outputDataTypes", response.body.data.outputDataTypes, allocator);
+    JsonUtil::AddMember(data, "outputFormats", response.body.data.outputFormats, allocator);
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);

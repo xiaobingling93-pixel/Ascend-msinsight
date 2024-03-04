@@ -321,6 +321,28 @@ TEST_F(TestSuit, QueryThreadDetail)
     EXPECT_EQ(response.data.cat, cat);
 }
 
+TEST_F(TestSuit, QueryKernelShapes)
+{
+    // request parameters
+    std::vector<SliceDto> sliceDtoVec;
+    SliceDto sliceDto;
+    uint64_t STARTTIME = 1695115378713661000;
+    sliceDto.name = "ZerosLike";
+    sliceDto.timestamp = STARTTIME;
+    sliceDtoVec.emplace_back(sliceDto);
+
+    auto database = std::dynamic_pointer_cast<Dic::Module::Timeline::JsonTraceDatabase,
+    Dic::Module::Timeline::VirtualTraceDatabase>(Dic::Module::Timeline::DataBaseManager::Instance().
+    GetTraceDatabase("0"));
+    const KernelShapesDataDto &dto = database->QueryKernelShapes(sliceDtoVec);
+    EXPECT_EQ(dto.inputShapes, "\"232138240\"");
+    EXPECT_EQ(dto.inputFormats, "FORMAT_ND");
+    EXPECT_EQ(dto.inputDataTypes, "FLOAT");
+    EXPECT_EQ(dto.outputShapes, "\"232138240\"");
+    EXPECT_EQ(dto.outputDataTypes, "FLOAT");
+    EXPECT_EQ(dto.outputFormats, "FORMAT_ND");
+}
+
 void assertFlowLocationEqual(Dic::Protocol::FlowLocation &location, Dic::Protocol::FlowLocation &other)
 {
     EXPECT_EQ(location.duration, other.duration);

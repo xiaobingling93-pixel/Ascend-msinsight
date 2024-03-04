@@ -69,6 +69,15 @@ struct LayerStatData {
     uint64_t total = 0;
     double allOperatorTime = 0.1;
 };
+
+struct KernelShapesDataDto {
+    std::string inputShapes;
+    std::string inputDataTypes;
+    std::string inputFormats;
+    std::string outputShapes;
+    std::string outputDataTypes;
+    std::string outputFormats;
+};
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic
