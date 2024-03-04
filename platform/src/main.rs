@@ -14,7 +14,6 @@ use wry::{
     webview::WebViewBuilder,
 };
 use log;
-use log4rs;
 use dirs_next::home_dir;
 
 const SERVER_RELATIVE_LIST: [&str; 4] = ["resources", "profiler", "server", "profiler_server"];
@@ -142,25 +141,6 @@ fn main() {
     let cache_path = home_dir().unwrap().join(".ascend_insight"); //cache folder generated for each user.
     std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", cache_path.as_path());
     let root_path =  std::env::current_exe().unwrap().parent().unwrap().to_path_buf();
-    // Logging to log file.
-    let file_path = cache_path.join("as.log");
-    let logfile = log4rs::append::file::FileAppender::builder()
-        // Pattern: https://docs.rs/log4rs/*/log4rs/encode/pattern/index.html
-        .encoder(Box::new(log4rs::encode::pattern::PatternEncoder::new("{d(%Y-%m-%d %H:%M:%S%.3f)} {h({l:<5})} : {m}\n")))
-        .build(file_path.to_str().unwrap())
-        .unwrap();
-
-    // Log Trace level output to file where trace is the default level
-    // and the programmatically specified level to stderr.
-    let config = log4rs::Config::builder()
-        .appender(log4rs::config::Appender::builder().build("logfile", Box::new(logfile)))
-        .build(
-            log4rs::config::Root::builder()
-                .appender("logfile")
-                .build(log::LevelFilter::Trace),
-        )
-        .unwrap();
-    let _handle = log4rs::init_config(config);
     log::info!("AS Start");
 
     if wry::webview::webview_version().is_err() {

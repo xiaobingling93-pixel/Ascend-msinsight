@@ -18,8 +18,4 @@ relocation_model = "pic/pie"
 [dependencies]
 wry = { version="0.24.3" }
 log = { version = "=0.4.19", features = ["std"] }
-log4rs = { version = "=1.2.0", default-features = false, features = ["all_components", ] }
 dirs-next = "=2.0.0"
-
-[target.'cfg(windows)'.build-dependencies]
-winres = { version = "=0.1.12"}
