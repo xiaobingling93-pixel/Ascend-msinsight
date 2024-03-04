@@ -27,9 +27,17 @@ bool JsonClusterDatabase::SetConfig()
         ServerLog::Error("Failed to set config. Database is not open.");
         return false;
     }
+    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
+}
+
+bool JsonClusterDatabase::SetDbVersion()
+{
+    if (!isOpen) {
+        ServerLog::Error("Failed to set db version. Database is not open.");
+        return false;
+    }
     std::string dbVersion = GetDataBaseVersion();
-    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " +
-                    dbVersion + ";");
+    return ExecSql(" PRAGMA user_version = " + dbVersion + ";");
 }
 
 bool JsonClusterDatabase::CreateTable()
