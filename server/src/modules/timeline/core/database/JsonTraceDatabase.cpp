@@ -408,9 +408,9 @@ void JsonTraceDatabase::UpdateDepth()
 
 void JsonTraceDatabase::UpdateSimulationDepth()
 {
-    ServerLog::Info("UpdateSimulationSliceDepth.");
+    sqlite3_exec(db, "begin;", 0, 0, 0);
     UpdateSimulationDepthByCode();
-    ServerLog::Info("UpdateSimulationSliceDepth end.");
+    sqlite3_exec(db, "commit;", 0, 0, 0);
 }
 
 void JsonTraceDatabase::UpdateSimulationDepthByCode()
@@ -426,16 +426,11 @@ void JsonTraceDatabase::UpdateSimulationDepthByCode()
         if (std::empty(rowThreadTraceVec)) {
             continue;
         }
-        ComputeSliceSql(rowThreadTraceVec);
+        UpdateAllSimulationSliceDepth(rowThreadTraceVec);
     }
-    updateSliceDepthSql.append("end; ");
-    if (!ExecSql(updateSliceDepthSql)) {
-        ServerLog::Error("updateSliceDepthSql fail. ", sqlite3_errmsg(db));
-    }
-    ServerLog::Info("UpdateSimulationSliceDepth end.");
 }
 
-void JsonTraceDatabase::ComputeSliceSql(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec)
+void JsonTraceDatabase::UpdateAllSimulationSliceDepth(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec)
 {
     sliceDepthHelper.clear();
     for (auto &rowThreadTrace : rowThreadTraceVec) {
@@ -467,7 +462,7 @@ void JsonTraceDatabase::ComputeSliceSql(std::vector<Protocol::RowThreadTrace> &r
             }
         }
     }
-    AppendUpdateSliceDepthSql(sliceDepthHelper);
+    UpdateSimulationSliceDepth(sliceDepthHelper);
 }
 
 std::vector<Protocol::RowThreadTrace> JsonTraceDatabase::QueryAllSliceByTrackId(const int32_t &trackId)
@@ -516,14 +511,15 @@ std::vector<int32_t> JsonTraceDatabase::QueryAllTrackId()
     return trackIdList;
 }
 
-bool JsonTraceDatabase::AppendUpdateSliceDepthSql(std::list<Protocol::RowThreadTrace> &sliceLinkedList)
+bool JsonTraceDatabase::UpdateSimulationSliceDepth(std::list<Protocol::RowThreadTrace> &sliceLinkedList)
 {
+    Timer timer("JsonTraceDatabase::UpdateSimulationSliceDepth");
+    std::string updateSql = "Update slice set depth = ? where id = ? ;";
     for (const auto &singleSlice : sliceLinkedList) {
-        updateSliceDepthSql.append("when ");
-        updateSliceDepthSql.append(std::to_string(singleSlice.id));
-        updateSliceDepthSql.append(" then ");
-        updateSliceDepthSql.append(std::to_string(singleSlice.depth));
-        updateSliceDepthSql.append(" ");
+        std::unique_ptr<SqlitePreparedStatement> updateStmt = CreatPreparedStatement(updateSql);
+        if (!updateStmt->Execute(singleSlice.depth, singleSlice.id)) {
+            ServerLog::Error("updateSliceDepthSql fail. ", sqlite3_errmsg(db));
+        }
     }
 }
 
@@ -677,10 +673,10 @@ bool JsonTraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestP
         return false;
     }
     std::string sql = "SELECT timestamp, duration, timestamp + duration AS endTime, name, depth"
-                      " FROM " +
-                      sliceTable +
-                      " WHERE track_id = ? AND timestamp <= ? AND timestamp + duration >= ?"
-                      " ORDER BY depth ASC, timestamp ASC;";
+        " FROM " +
+        sliceTable +
+        " WHERE track_id = ? AND timestamp <= ? AND timestamp + duration >= ?"
+        " ORDER BY depth ASC, timestamp ASC;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreads. Failed to prepare sql.");
@@ -1652,5 +1648,5 @@ OneKernelData JsonTraceDatabase::QueryKernelTid(const uint64_t trackId)
     return oneKernel;
 }
 } // end of namespace Timeline
-// end of namespace Module
-// end of namespace Dic
+  // end of namespace Module
+  // end of namespace Dic

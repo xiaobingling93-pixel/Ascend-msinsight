@@ -169,6 +169,7 @@ void SourceFileParser::ParseTask(const std::string &fileId, std::pair<int64_t, i
 }
 std::pair<int64_t, int64_t> SourceFileParser::AdjustPosition(std::ifstream &file, int64_t start, int64_t end)
 {
+    ServerLog::Info("Start is: ", start, " End is: ", end);
     int64_t contentStart = start;
     int64_t contentEnd = end;
     file.seekg(contentStart, std::ios::beg);

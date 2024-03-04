@@ -131,7 +131,6 @@ private:
 
     std::vector<Trace::Slice> sliceCache;
     std::list<Protocol::RowThreadTrace> sliceDepthHelper;
-    std::string updateSliceDepthSql = "update slice set depth = case id ";
     std::vector<Trace::Flow> flowCache;
     std::vector<Trace::Counter> counterCache;
     std::set<std::tuple<int64_t, std::string, std::string>> threadInfoCache;
@@ -170,13 +169,13 @@ private:
     void SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
                          Protocol::KernelDetailsBody &responseBody) const;
 
-    bool AppendUpdateSliceDepthSql(std::list<Protocol::RowThreadTrace> &sliceLinkedList);
+    bool UpdateSimulationSliceDepth(std::list<Protocol::RowThreadTrace> &sliceLinkedList);
 
     std::vector<int32_t> QueryAllTrackId();
 
     std::vector<Protocol::RowThreadTrace> QueryAllSliceByTrackId(const int32_t &trackId);
 
-    void ComputeSliceSql(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec);
+    void UpdateAllSimulationSliceDepth(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec);
 
     std::vector<Protocol::RowThreadTrace>
     QuerySliceByCondition(const Protocol::UnitThreadTracesParams &requestParams, uint64_t minTimestamp,
