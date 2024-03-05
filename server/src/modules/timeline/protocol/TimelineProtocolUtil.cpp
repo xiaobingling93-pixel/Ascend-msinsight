@@ -412,6 +412,28 @@ template <> std::optional<document_t> ToResponseJson<OneKernelResponse>(const On
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
+
+template <> std::optional<document_t> ToResponseJson<UnitThreadsOperatorsResponse>(const UnitThreadsOperatorsResponse
+        &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t sameOperatorsDetails(kArrayType);
+    for (const SameOperatorsDetails& sameOperators : response.body.sameOperatorsDetails) {
+        json_t itemJson(kObjectType);
+        JsonUtil::AddMember(itemJson, "timestamp", sameOperators.timestamp, allocator);
+        JsonUtil::AddMember(itemJson, "duration", sameOperators.duration, allocator);
+        sameOperatorsDetails.PushBack(itemJson, allocator);
+    }
+    JsonUtil::AddMember(body, "sameOperatorsDetails", sameOperatorsDetails, allocator);
+    JsonUtil::AddMember(body, "count", response.body.count, allocator);
+    JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
+    JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
 #pragma endregion
 
 #pragma region <<Event to json>>

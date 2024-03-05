@@ -163,7 +163,7 @@ std::string ParserAlloc::GetFileId(const std::string &filePath)
         }
         result = fileId + "_" + std::to_string(++i);
     }
-    std::string dbPath = GetDbPath(filePath, i);
+    std::string dbPath = FileUtil::GetDbPath(filePath, result);
     if (!DataBaseManager::Instance().CreatConnectionPool(result, dbPath)) {
         ServerLog::Error("Failed to create connection pool. fileId:", result, ". path:", dbPath);
         return "";

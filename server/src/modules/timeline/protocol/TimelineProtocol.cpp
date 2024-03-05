@@ -31,6 +31,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_UNIT_SYSTEM_VIEW, ToSystemViewRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_KERNEL_DETAILS, ToKernelDetailRequest);
     jsonToReqFactory.emplace(REQ_RES_ONE_KERNEL_DETAILS, ToOneKernelRequest);
+    jsonToReqFactory.emplace(REQ_RES_SAME_OPERATORS_DURATION, ToUnitThreadsOperatorsRequest);
 }
 
 void TimelineProtocol::RegisterResponseToJsonFuncs()
@@ -53,6 +54,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_UNIT_SYSTEM_VIEW, ToSystemViewResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_KERNEL_DETAILS, ToKernelDetailResponseJson);
     resToJsonFactory.emplace(REQ_RES_ONE_KERNEL_DETAILS, ToOneKernelResponseJson);
+    resToJsonFactory.emplace(REQ_RES_SAME_OPERATORS_DURATION, ToUnitThreadsOperatorsResponseJson);
 }
 
 void TimelineProtocol::RegisterEventToJsonFuncs()
@@ -321,6 +323,26 @@ std::unique_ptr<Request> TimelineProtocol::ToOneKernelRequest(const Dic::json_t 
     JsonUtil::SetByJsonKeyValue(reqPtr->params.duration, json["params"], "duration");
     return reqPtr;
 }
+
+std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsOperatorsRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<UnitThreadsOperatorsRequest> reqPtr = std::make_unique<UnitThreadsOperatorsRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.tid, json["params"], "tid");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.name, json["params"], "name");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.current, json["params"], "current");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
+    return reqPtr;
+}
 #pragma endregion
 
 #pragma region <<Response To Json>>
@@ -414,6 +436,11 @@ std::optional<document_t> TimelineProtocol::ToKernelDetailResponseJson(const Dic
 std::optional<document_t> TimelineProtocol::ToOneKernelResponseJson(const Dic::Protocol::Response &response)
 {
     return ToResponseJson<OneKernelResponse>(dynamic_cast<const OneKernelResponse &>(response));
+}
+
+std::optional<document_t> TimelineProtocol::ToUnitThreadsOperatorsResponseJson(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<UnitThreadsOperatorsResponse>(dynamic_cast<const UnitThreadsOperatorsResponse &>(response));
 }
 #pragma endregion
 
