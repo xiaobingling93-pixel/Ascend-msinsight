@@ -157,6 +157,8 @@ interface BottomPanelReactNodes {
     moreTitle: ReactNode;
     more: ReactNode;
     toolbar: ReactNode;
+    moreWh?: number;
+    open?: boolean;
 }
 
 const useTriggerEvent = (session: Session): TriggerEvent => {
@@ -193,6 +195,8 @@ const useBottomPanelReactNodes = (session: Session, height: number): BottomPanel
             // More Container has extra height
             more: getMoreContent(session, contentHeight - MORE_HEADER_HEIGHT_PX, bottomPanelComponents),
             toolbar: getFilterContent(session, bottomPanelComponents),
+            moreWh: bottomPanelComponents?.MoreWh ?? 590,
+            open: bottomPanelComponents?.open ?? true,
         };
     }, [bottomPanelComponents, height]);
 };
@@ -238,8 +242,8 @@ const getFilterContent = (session: Session, bottomPanelComponents?: ReturnType<B
 };
 
 const DataCard = observer(({ session, height }: DataCardType) => {
-    const { detail, moreTitle, more, toolbar } = useBottomPanelReactNodes(session, height);
-    const [view] = useDraggableContainer({ dragDirection: DragDirection.right, draggableWH: 590 });
+    const { detail, moreTitle, more, toolbar, moreWh = 590 } = useBottomPanelReactNodes(session, height);
+    const [view] = useDraggableContainer({ dragDirection: DragDirection.right, draggableWH: moreWh });
     return <div style={{ width: '100%', zIndex: 3, height: '100%' }}>
         {
             !isEmpty(more)

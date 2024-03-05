@@ -139,6 +139,8 @@ export type BottomPanelRender = <Metadata>(session: Session, triggerEvent: Trigg
     More?: React.FC<{ session: Session; height: number }>;
     Toolbar?: React.FC<{ session: Session }>;
     MoreTitle?: React.FC<{ session: Session }> | string;
+    MoreWh?: number;
+    open?: boolean;
 };
 
 export type MenuType = {

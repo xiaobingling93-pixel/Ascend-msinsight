@@ -27,7 +27,7 @@ import { renderRadiusBorder } from '../../components/details/utils';
 import { getTimestamp } from '../../utils/humanReadable';
 import { generateFlowParam, generateLinkDetail, slicesListDetail } from './details';
 import { colorPalette } from './utils';
-import React from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import _ from 'lodash';
 import { runInAction } from 'mobx';
@@ -37,6 +37,8 @@ import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
 import { ChartType, StackStatusData, StatusData } from '../../entity/chart';
 import { StyledTooltip } from '../../components/base/StyledTooltip';
+import ResizeTable from '../../components/resize/ResizeTable';
+import { getDefaultColumData, GetPageData } from '../../components/detailViews/Common';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -256,6 +258,8 @@ export const ThreadUnit = unit<ThreadMetaData>({
         return {
             Detail: ({ session, height }) => <SelectSimpleTabularDetail session={session} height={height} detail={slicesListDetail}></SelectSimpleTabularDetail>,
             DetailTitle: 'Slices List',
+            More: (): JSX.Element => <SliceRightOpDetail session={session} metadata={metadata} />,
+            MoreWh: 320,
         };
     },
     collapseAction: (unit) => {
@@ -441,4 +445,91 @@ const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<R
 export const SliceRight = observer(({ session, detail, metadata }: { session: Session; detail: LinkDataDesc<Record<string, unknown>>; metadata: unknown }) => {
     const renderFields = useSliceRightDataUpdator(session, detail, session.linkFlow, metadata);
     return <SelectedDataBase renderer={renderFields} hasTitle />;
+});
+
+interface OpData {
+    timestamp: number;
+    duration: number;
+}
+
+const colums = [
+    { title: 'timestamp', dataIndex: 'timestamp', ...getDefaultColumData('time') },
+    { title: 'duration', dataIndex: 'duration', ...getDefaultColumData('duration') },
+];
+// eslint-disable-next-line max-lines-per-function
+export const SliceRightOpDetail = observer(({ session, metadata }: { session: Session; metadata: unknown }) => {
+    const defaultPage = { current: 1, pageSize: 10, total: 0 };
+    const defaultSorter = { field: 'duration', order: 'descend' };
+    const [dataSource, setDataSource] = useState<any[]>([]);
+    const [page, setPage] = useState(defaultPage);
+    const [sorter, setSorter] = useState(defaultSorter);
+    const [isLoading, setLoading] = useState(false);
+    const slice = useMemo(() => session.selectedMultiSlice === '' ? undefined : JSON.parse(session.selectedMultiSlice), [session.selectedMultiSlice]);
+
+    const jumpTo = async (record: OpData): Promise<void> => {
+        const params = {
+            rankId: slice.rankId,
+            name: slice.name,
+            timestamp: record.timestamp,
+        };
+        const res = await window.requestData('unit/one/kernelDetail', params, 'timeline');
+        runInAction(() => {
+            session.locateUnit = {
+                target: (iunit: InsightUnit): boolean => {
+                    return (iunit.metadata as MetaData).threadId === res.threadId && (iunit.metadata as MetaData).processId === res.pid;
+                },
+                onSuccess: (): void => {
+                    const selectedMultiSlice = JSON.parse(session.selectedMultiSlice);
+                    session.selectedData = {
+                        startTime: selectedMultiSlice.startTime,
+                        name: selectedMultiSlice.name,
+                        duration: record.duration,
+                        depth: res.depth,
+                        threadId: res.threadId,
+                        startRecordTime: session.startRecordTime,
+                    };
+                },
+            };
+        });
+    };
+
+    useEffect(() => {
+        if (slice === undefined || slice.name === 'Totals') {
+            setDataSource([]);
+            return;
+        }
+        queryDetails();
+        async function queryDetails(): Promise<void> {
+            const params = {
+                ...slice,
+                ...sorter,
+                ...page,
+                orderBy: sorter.field,
+            };
+            const res = await window.requestData('query/all/same/operators/duration', params, 'timeline');
+            const { sameOperatorsDetails, count, currentPage, pageSize } = res;
+            setDataSource(sameOperatorsDetails ?? []);
+            setPage({ total: count, current: currentPage, pageSize });
+            setLoading(false);
+        }
+    }, [slice, sorter.field, sorter.order, page.current, page.pageSize]);
+    return <div style={{ height: '100%', overflow: 'auto', padding: '5px 5px 15px 5px' }}>
+        <ResizeTable
+            onChange={(pagination: unknown, filters: unknown, newsorter: unknown): void => {
+                setSorter(newsorter as typeof sorter);
+            }}
+            pagination={GetPageData(page, setPage)}
+            dataSource={dataSource}
+            columns={colums}
+            size="small"
+            loading = {isLoading}
+            onRow={(record: OpData): {onClick: () => void} => {
+                return {
+                    onClick: (): void => {
+                        jumpTo(record);
+                    },
+                };
+            }}
+        />
+    </div>;
 });

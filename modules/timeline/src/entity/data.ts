@@ -773,4 +773,9 @@ export type AscendMultiSliceList = {
     selfTime?: number;
     avgWallDuration?: number;
     occurrences?: number;
+    rankId?: string;
+    tid?: string;
+    pid?: string;
+    startTime?: number;
+    endTime?: number;
 };

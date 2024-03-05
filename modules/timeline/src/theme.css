@@ -230,9 +230,9 @@ tr.ant-table-row:hover{
     background: var(--grey90);
     border-color: var(--grey60);
 }
-.theme_dark .ant-select-multiple .ant-select-selection-item{
-    background: var(--grey80);
+.theme_dark .ant-select-selection-item{
     border-color: var(--grey60);
+    color:var(--grey5)!important;
 }
 .theme_dark button.ant-btn-link *{
     color: #1890ff!important;
@@ -250,6 +250,12 @@ tr.ant-table-row:hover{
     background-color: black;
 }
 .theme_dark .ant-pagination-item a{
+    color:white;
+}
+.theme_dark .ant-pagination{
+    color:white;
+}
+.theme_dark .ant-empty-description{
     color:white;
 }
 .theme_dark .ant-select-dropdown{
@@ -299,6 +305,14 @@ tr.ant-table-row:hover{
 }
 .theme_dark .ant-pagination-options-quick-jumper input{
     background: var(--grey90);
+    color:var(--grey0);
+}
+.theme_dark .anticon{
+    color:var(--grey0);
+}
+.theme_dark tr.ant-table-row:hover > td.ant-table-cell {
+    color: var(--grey5);
+    background: unset;
 }
 .ant-pagination-jump-prev .ant-pagination-item-container .ant-pagination-item-ellipsis,
 .ant-pagination-jump-next .ant-pagination-item-container .ant-pagination-item-ellipsis {
