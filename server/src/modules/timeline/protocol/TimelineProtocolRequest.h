@@ -225,6 +225,24 @@ struct KernelRequest : public Request {
     KernelParams params;
 };
 
+struct UnitThreadsOperatorsParams {
+    std::string rankId;
+    std::string tid;
+    std::string pid;
+    uint64_t startTime = 0;
+    uint64_t endTime = 0;
+    std::string name;
+    std::string orderBy;
+    std::string order;
+    uint64_t current;
+    uint64_t pageSize;
+};
+
+struct UnitThreadsOperatorsRequest : public Request {
+    UnitThreadsOperatorsRequest() : Request(REQ_RES_SAME_OPERATORS_DURATION) {};
+    UnitThreadsOperatorsParams params;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

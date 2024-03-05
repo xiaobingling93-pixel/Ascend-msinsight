@@ -22,6 +22,7 @@ public:
     ~JsonClusterDatabase() override;
 
     bool SetConfig();
+    bool SetDbVersion();
     bool CreateTable();
     bool CreateIndex();
     bool CreateTimeIndex();

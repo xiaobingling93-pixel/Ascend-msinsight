@@ -339,6 +339,23 @@ struct OneKernelResponse  : public Response {
     OneKernelResponse() : Response(REQ_RES_ONE_KERNEL_DETAILS) {}
     OneKernelBody body;
 };
+
+struct SameOperatorsDetails {
+    uint64_t timestamp = 0;
+    uint64_t duration = 0;
+};
+
+struct UnitThreadsOperatorsBody {
+    std::vector<SameOperatorsDetails> sameOperatorsDetails;
+    uint64_t count;
+    uint64_t pageSize;
+    uint64_t currentPage;
+};
+
+struct UnitThreadsOperatorsResponse  : public Response {
+    UnitThreadsOperatorsResponse() : Response(REQ_RES_SAME_OPERATORS_DURATION) {}
+    UnitThreadsOperatorsBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

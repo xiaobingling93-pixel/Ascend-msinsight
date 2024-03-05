@@ -464,3 +464,38 @@ TEST_F(TestSuit, QueryFlowName)
     EXPECT_EQ(response.flowDetail[0].type, name.type);
     EXPECT_EQ(response.flowDetail[0].title, name.title);
 }
+
+TEST_F(TestSuit, QueryThreadSameOperatorsDetails)
+{
+    // request parameters
+    Protocol::UnitThreadsOperatorsParams requestParam;
+    uint64_t START_TIME = 1695115378713505000;
+    uint64_t END_TIME = 1695115378714916500;
+    uint64_t PAGE_SIZE = 10;
+    requestParam.name = "aten::empty";
+    requestParam.startTime = START_TIME;
+    requestParam.endTime = END_TIME;
+    requestParam.orderBy = "timestamp";
+    requestParam.current = 1;
+    requestParam.pageSize = PAGE_SIZE;
+    Protocol::UnitThreadsOperatorsBody responseBody;
+    uint64_t minTimestamp = 0;
+    int64_t traceId = 82;
+
+    // response data
+    uint64_t TIMESTAMP1 = 1695115378714082800;
+    uint64_t DURATION1 = 27310;
+    uint64_t TIMESTAMP2 = 1695115378714385200;
+    uint64_t DURATION2 = 35710;
+    uint64_t COUNT = 2;
+
+    auto database = std::dynamic_pointer_cast<Dic::Module::Timeline::JsonTraceDatabase,
+            Dic::Module::Timeline::VirtualTraceDatabase>(Dic::Module::Timeline::DataBaseManager::Instance().
+            GetTraceDatabase("0"));
+    database->QueryThreadSameOperatorsDetails(requestParam, responseBody, minTimestamp, traceId);
+    EXPECT_EQ(responseBody.sameOperatorsDetails[0].timestamp, TIMESTAMP1);
+    EXPECT_EQ(responseBody.sameOperatorsDetails[0].duration, DURATION1);
+    EXPECT_EQ(responseBody.sameOperatorsDetails[1].timestamp, TIMESTAMP2);
+    EXPECT_EQ(responseBody.sameOperatorsDetails[1].duration, DURATION2);
+    EXPECT_EQ(responseBody.count, COUNT);
+}

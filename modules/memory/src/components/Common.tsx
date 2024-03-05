@@ -2,16 +2,16 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import React from 'react';
-import { Tooltip } from 'antd';
 import { QuestionCircleFilled } from '@ant-design/icons';
+import { StyledTooltip } from './StyledTooltip';
 
 export const Label = (props: {name: React.ReactNode;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name}{' :'} </span>;
 };
 
-export const hit = (<Tooltip color={'#2e2f31'} title={
+export const hit = (<StyledTooltip title={
     (
-        <div style={{ background: '#1e1e1e', padding: '1rem' }}>
+        <div style={{ padding: '1rem' }}>
             <div>Overall: Displays the memory sizes of operators in the Reserved, Allocated,
                 and Active states and the overall Memory Reserved size of PyTorch.</div>
             <div style={{ marginTop: '2rem' }}>Stream: Displays the memory sizes of operators
@@ -20,15 +20,13 @@ export const hit = (<Tooltip color={'#2e2f31'} title={
     )
 }>
     <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 0 0 10px' }}/>
-</Tooltip>);
+</StyledTooltip>);
 
-export const chartCharacter = (<Tooltip color={'#2e2f31'} title={
-    (
-        <div style={{ background: '#1e1e1e', padding: '1rem' }}>
-            <div>Operator Allocated includes the memory occupied by both PyTorch and GE,
+export const chartCharacter = (<StyledTooltip title={
+    <div style={{ padding: '1rem' }}>
+        <div>Operator Allocated includes the memory occupied by both PyTorch and GE,
                 while Operator Activated only includes the memory occupied by PyTorch.</div>
-        </div>
-    )
+    </div>
 }>
     <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
-</Tooltip>);
+</StyledTooltip>);

@@ -1683,6 +1683,59 @@ OneKernelData JsonTraceDatabase::QueryKernelTid(const uint64_t trackId)
     }
     return oneKernel;
 }
+
+bool JsonTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
+    Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId)
+{
+    uint64_t startTime = requestParams.startTime + minTimestamp;
+    uint64_t endTime = requestParams.endTime + minTimestamp;
+    std::string orderBy;
+    if (requestParams.order == "descend") {
+        orderBy = " ORDER BY " + requestParams.orderBy + " DESC";
+    } else {
+        orderBy = " ORDER BY " + requestParams.orderBy + " ASC";
+    }
+    std::string sql = "SELECT timestamp, duration FROM " + sliceTable +
+                      " WHERE name = ? AND track_id = ? AND timestamp <= ? AND timestamp + duration >= ? "
+                      + orderBy + " limit ? offset ?";
+    uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryThreadSameOperatorsDetails. Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(requestParams.name, traceId, endTime, startTime,
+                                        requestParams.pageSize, offset);
+    while (resultSet->Next()) {
+        int col = resultStartIndex;
+        Protocol::SameOperatorsDetails sameOperatorsDetail{};
+        sameOperatorsDetail.timestamp = resultSet->GetUint64(col++);
+        sameOperatorsDetail.duration = resultSet->GetUint64(col++);
+        responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
+    }
+    responseBody.currentPage = requestParams.current;
+    responseBody.pageSize = requestParams.pageSize;
+    responseBody.count = SameOperatorsCount(requestParams.name, traceId, startTime, endTime);
+    return true;
+}
+
+uint64_t JsonTraceDatabase::SameOperatorsCount(const std::string &name, int64_t &trackId,
+                                               uint64_t &startTime, uint64_t &endTime)
+{
+    std::string sql = "SELECT count(*) FROM "+ sliceTable +
+                      " WHERE name = ? AND track_id = ? AND timestamp <= ? AND timestamp + duration >= ?;";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Fail to prepare sql for SameOperatorsCount.", sqlite3_errmsg(db));
+        return 0;
+    }
+    auto resultSet = stmt->ExecuteQuery(name, trackId, endTime, startTime);
+    uint64_t total = 0;
+    if (resultSet->Next()) {
+        total = resultSet->GetUint64("count(*)");
+    }
+    return total;
+}
 } // end of namespace Timeline
   // end of namespace Module
   // end of namespace Dic

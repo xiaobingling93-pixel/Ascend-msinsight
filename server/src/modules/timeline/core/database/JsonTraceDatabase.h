@@ -97,6 +97,12 @@ public:
 
     KernelShapesDataDto QueryKernelShapes(const std::vector<SliceDto> &rows);
 
+    bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
+         Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId);
+
+    uint64_t SameOperatorsCount(const std::string &name, int64_t &trackId,
+                                uint64_t &startTime, uint64_t &endTime);
+
 private:
     const std::string sliceTable = "slice";
     const std::string threadTable = "thread";

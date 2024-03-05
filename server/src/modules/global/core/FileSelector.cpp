@@ -15,16 +15,18 @@ void FileSelector::GetFoldersAndFiles(const std::string &path,
 {
     std::vector<std::string> folders;
     std::vector<std::string> files;
+    // 处理中文路径
+    std::string tempPath = FileUtil::PathPreprocess(path);
     // 防止目录遍历攻击
-    std::string filepath = FileUtil::GetRealPath(path);
+    std::string filepath = FileUtil::GetRealPath(tempPath);
     if (path.empty()) {
         folders = FileUtil::GetDiskInfo();
         exist = false;
-    } else if (path != filepath) {
+    } else if (tempPath != filepath) {
         exist = false;
         return;
-    } else if (path == filepath) {
-        exist = FileUtil::FindFolders(path, folders, files) || FileUtil::CheckFilePath(path);
+    } else if (tempPath == filepath) {
+        exist = FileUtil::FindFolders(path, folders, files) || FileUtil::CheckFilePath(tempPath);
     }
     for (const auto &folder : folders) {
         auto folderPtr = std::make_unique<Folder>();

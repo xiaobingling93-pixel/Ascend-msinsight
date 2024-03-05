@@ -43,6 +43,8 @@ void ParserBin::Parser(const std::string &path, ImportActionRequest &request)
         HandleCompute(response, selectedFolder);
         SetParseCallBack(token, Source::SourceFileParser::Instance());
         session.OnResponse(std::move(responsePtr));
+    } else {
+        SendParseFailEvent(token, "", selectedFolder + " :content is incorrect");
     }
 }
 

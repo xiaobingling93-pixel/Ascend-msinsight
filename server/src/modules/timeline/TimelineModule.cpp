@@ -21,6 +21,7 @@
 #include "QueryThreadTracesSummaryHandler.h"
 #include "QueryKernelDetailHandler.h"
 #include "QueryOneKernelHandler.h"
+#include "QueryThreadsSameOperatorHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -56,6 +57,7 @@ void TimelineModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_UNIT_SYSTEM_VIEW, std::make_unique<QuerySystemViewHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_KERNEL_DETAILS, std::make_unique<QueryKernelDetailHandler>());
     requestHandlerMap.emplace(REQ_RES_ONE_KERNEL_DETAILS, std::make_unique<QueryOneKernelHandler>());
+    requestHandlerMap.emplace(REQ_RES_SAME_OPERATORS_DURATION, std::make_unique<QueryThreadsSameOperatorHandler>());
 }
 
 void TimelineModule::OnRequest(std::unique_ptr<Protocol::Request> request)
