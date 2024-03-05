@@ -434,6 +434,28 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadsOperatorsRespons
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
+
+template <> std::optional<document_t> ToResponseJson<UploadFileResponse>(const UploadFileResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "isCluster", response.body.isCluster, allocator);
+    JsonUtil::AddMember(body, "reset", response.body.reset, allocator);
+    json_t result(kArrayType);
+    for (const Action &action : response.body.result) {
+        json_t actionJson(kObjectType);
+        JsonUtil::AddMember(actionJson, "cardName", action.cardName, allocator);
+        JsonUtil::AddMember(actionJson, "rankId", action.rankId, allocator);
+        JsonUtil::AddMember(actionJson, "cardPath", action.cardPath, allocator);
+        JsonUtil::AddMember(actionJson, "result", action.result, allocator);
+        result.PushBack(actionJson, allocator);
+    }
+    JsonUtil::AddMember(body, "result", result, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
 #pragma endregion
 
 #pragma region <<Event to json>>

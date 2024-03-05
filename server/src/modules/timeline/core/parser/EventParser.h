@@ -21,6 +21,7 @@ public:
     bool Parse(int64_t startPosition, int64_t endPosition);
     std::string GetError();
     void SetSimulationStatus(const bool &isSimulation);
+    void Parse(int sliceIndex, const std::string &fileContent);
 
 private:
     std::string filePath;

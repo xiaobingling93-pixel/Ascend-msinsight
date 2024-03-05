@@ -40,6 +40,7 @@ template<> std::optional<document_t> ToResponseJson<KernelDetailsResponse>(const
 template<> std::optional<document_t> ToResponseJson<OneKernelResponse>(const OneKernelResponse &response);
 template<> std::optional<document_t> ToResponseJson<UnitThreadsOperatorsResponse>
         (const UnitThreadsOperatorsResponse &response);
+template<> std::optional<document_t> ToResponseJson<UploadFileResponse>(const UploadFileResponse &response);
 // event
 template <typename EVENT> std::optional<document_t> ToEventJson(const EVENT &event);
 template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const ParseSuccessEvent &event);

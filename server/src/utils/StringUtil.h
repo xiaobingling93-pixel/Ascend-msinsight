@@ -12,6 +12,7 @@
 #include <memory>
 #include <iostream>
 #include <sstream>
+#include <chrono>
 #ifdef _WIN32
 #include <winsock2.h>
 #include <windows.h>
@@ -204,6 +205,21 @@ static std::vector<std::string> StringSplit(const std::string& str)
     }
     result.push_back(subStr);
     return result;
+}
+
+static std::string GetHashStrName(const std::string &string)
+{
+    std::hash<std::string> hasher;
+    std::size_t fileHash = hasher(string);
+    std::string fileHashStr = std::to_string(fileHash);
+
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    time_t timestamp = std::chrono::system_clock::to_time_t(now);
+    std::string timestampStr = std::to_string(timestamp);
+
+    std::string dbName =
+            fileHashStr.substr(0, 5) + "_" + timestampStr.substr(timestampStr.length() - 5);
+    return dbName;
 }
 };
 }

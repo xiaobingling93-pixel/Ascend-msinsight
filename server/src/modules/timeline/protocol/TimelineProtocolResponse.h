@@ -356,6 +356,17 @@ struct UnitThreadsOperatorsResponse  : public Response {
     UnitThreadsOperatorsResponse() : Response(REQ_RES_SAME_OPERATORS_DURATION) {}
     UnitThreadsOperatorsBody body;
 };
+
+struct UploadFileResBody {
+    std::vector<Action> result;
+    bool isCluster = false;
+    bool reset = false;
+};
+
+struct UploadFileResponse : public Response {
+    UploadFileResponse() : Response(REQ_RES_UPLOAD_FILE) {}
+    UploadFileResBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

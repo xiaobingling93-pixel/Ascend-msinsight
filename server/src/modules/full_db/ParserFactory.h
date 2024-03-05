@@ -20,15 +20,14 @@ public:
     virtual ~ParserAlloc() = default;
 
     virtual void Parser(const std::string &path, ImportActionRequest &request){};
-
+    static void ParseEndCallBack(const std::string &token, const std::string &fileId, bool result,
+                                 const std::string &message);
 protected:
     static bool curIsCluster;
     static bool curIsDb;
     static bool curIsCompute;
     std::string curScene;
 
-    static void ParseEndCallBack(const std::string &token, const std::string &fileId, bool result,
-        const std::string &message);
     static void ParseClusterEndProcess(const std::string token, std::string result);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
     static std::string GetFileId(const std::string &filePath);

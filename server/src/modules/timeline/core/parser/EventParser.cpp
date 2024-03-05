@@ -80,6 +80,38 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
         m_isSimulation = isSimulation;
     }
 
+/**
+ * 解析文件内容存入DB
+ * @param fileContent
+ */
+void EventParser::Parse(int sliceIndex, const std::string &fileContent)
+{
+    database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
+        DataBaseManager::Instance().GetTraceDatabase(fileId));
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection. fileId:", fileId);
+        return;
+    }
+    database->InitStmt();
+
+    auto jsonContent = JsonUtil::TryParse<kParseNumbersAsStringsFlag>(fileContent, error);
+    if (!jsonContent.has_value()) {
+        ServerLog::Error("EventParser. File is not valid json.");
+        return;
+    }
+    if (!jsonContent.value().IsArray()) {
+        ServerLog::Error("EventParser. json is not an array.");
+        return;
+    }
+    for (auto &event : jsonContent.value().GetArray()) {
+        EventHandle(event);
+    }
+    database->CommitData();
+    database.reset(); // return connection pool
+    ServerLog::Info("EventParser slice index is ", sliceIndex, ". Count:", parseCount,
+        ", ignore Count:", ignoreCount);
+}
+
 std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
 {
 #ifdef _WIN32
