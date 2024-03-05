@@ -9,7 +9,6 @@ import { getSliceTimeDisplay } from './AscendUnit';
 import { getTimestamp } from '../../utils/humanReadable';
 import { colorPalette } from './utils';
 import { hashToNumber } from '../../utils/colorUtils';
-
 export const slicesListDetail = detail({
     name: 'Slices List',
     columns: [
@@ -52,6 +51,11 @@ export const slicesListDetail = detail({
             totalWallDuration += element.wallDuration ?? 0;
             totalSelfTime += element.selfTime ?? 0;
             totalOccurrences += element.occurrences ?? 0;
+            element.rankId = metadata.cardId;
+            element.tid = metadata.threadId;
+            element.pid = metadata.processId;
+            element.startTime = Math.floor(startTime + timestampOffset);
+            element.endTime = Math.ceil(endTime + timestampOffset);
         });
 
         res.push({ title: 'Totals', wallDuration: totalWallDuration, selfTime: totalSelfTime, avgWallDuration: totalWallDuration / totalOccurrences, occurrences: totalOccurrences });
@@ -74,6 +78,20 @@ export const slicesListDetail = detail({
                 session.sharedState.threadTrace = undefined;
             });
         }
+    },
+    clickCallback: async ({ row, session }): Promise<void> => {
+        const data = {
+            rankId: row.rankId,
+            tid: row.tid,
+            pid: row.pid,
+            startTime: row.startTime,
+            endTime: row.endTime,
+            name: row.title,
+            wallDuration: row.wallDuration,
+        };
+        runInAction(() => {
+            session.selectedMultiSlice = JSON.stringify(data);
+        });
     },
 }) as DetailDescriptor<unknown>;
 

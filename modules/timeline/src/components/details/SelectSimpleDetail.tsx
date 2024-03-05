@@ -12,6 +12,7 @@ export const SelectSimpleTabularDetail = observer(function<T extends CommonState
         runInAction(() => {
             session.selectedDetailKeys = [];
             session.selectedDetails = [];
+            session.selectedMultiSlice = '';
         });
     }, [session.selectedRange]);
     const state = useDetailUpdater(session, detail, tabState, depsList);
