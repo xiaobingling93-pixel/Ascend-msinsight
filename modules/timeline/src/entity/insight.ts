@@ -343,6 +343,7 @@ export const recursiveSpreadUnits = async (unit: InsightUnit, session: Session, 
 export type UnitMatcher = {
     target: (ele: InsightUnit) => boolean;
     onSuccess: (ele: InsightUnit) => void;
+    showDetail?: boolean;
 };
 
 export type LinkLine = Array<Record<string, unknown>> | undefined;

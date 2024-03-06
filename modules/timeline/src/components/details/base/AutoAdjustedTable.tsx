@@ -80,6 +80,10 @@ const StyledTable = styled(Table)`
     .insight-table .insight-table-thead > tr > td.insight-table-cell {
         color: rgba(255, 255, 255, 0.9);
     }
+    tr.insight-table-row:hover {
+        color: var(--activeblue);
+        cursor: pointer;
+    }
     .insight-table-header {
         min-height: ${TABLE_ROW_HEIGHT}px;
         span.insight-table-column-sorter.insight-table-column-sorter-full{

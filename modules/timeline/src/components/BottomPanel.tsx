@@ -169,6 +169,9 @@ const useTriggerEvent = (session: Session): TriggerEvent => {
         }
     }, [session.selectedRange]);
     React.useEffect(() => {
+        if (session.selectedData?.showSelectedData === false) {
+            return;
+        }
         if (event !== 'SELECTED_DATA') {
             setEvent('SELECTED_DATA');
         }
@@ -181,7 +184,7 @@ const useBottomPanelReactNodes = (session: Session, height: number): BottomPanel
     const triggerEvent = useTriggerEvent(session);
     const bottomPanelComponents = React.useMemo(() => {
         return sessionUnit?.bottomPanelRender?.(session, triggerEvent, sessionUnit?.metadata);
-    }, [session, selectedUnitKeys, triggerEvent, session.units.length]);
+    }, [session, String(selectedUnitKeys), triggerEvent, session.units.length]);
     const contentHeight = bottomPanelComponents?.Toolbar !== undefined
         ? (height - DETAIL_HEADER_HEIGHT_PX - FILTER_HEIGHT)
         : (height - DETAIL_HEADER_HEIGHT_PX);

@@ -314,6 +314,11 @@ tr.ant-table-row:hover{
     color: var(--grey5);
     background: unset;
 }
+.theme_dark tr.ant-table-row.click-able:hover > td.ant-table-cell {
+    color: var(--activeblue);
+    background: unset;
+    cursor: pointer;
+}
 .ant-pagination-jump-prev .ant-pagination-item-container .ant-pagination-item-ellipsis,
 .ant-pagination-jump-next .ant-pagination-item-container .ant-pagination-item-ellipsis {
     color:var(--grey20);

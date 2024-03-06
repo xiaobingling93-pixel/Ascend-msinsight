@@ -280,4 +280,8 @@ export class Session {
             return aName.length - bName.length;
         });
     }
+
+    setSelectedUnitKeys(value: [string] | []): void {
+        this._selectedUnitKeys = value;
+    };
 }

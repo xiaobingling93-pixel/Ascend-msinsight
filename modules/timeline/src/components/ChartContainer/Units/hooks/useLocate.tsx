@@ -71,7 +71,11 @@ export const useJumpTarget = (session: Session, unitsArea: InsightUnit[], suppor
             if (session.locateUnit === undefined) { return; }
             const targetUnit = getTargetUnit(session.units, session.locateUnit.target);
             if (targetUnit !== undefined) {
-                session.selectedUnitKeys = [getAutoKey(targetUnit)];
+                if (session.locateUnit?.showDetail === false) {
+                    session.setSelectedUnitKeys([getAutoKey(targetUnit)]);
+                } else {
+                    session.selectedUnitKeys = [getAutoKey(targetUnit)];
+                }
                 session.selectedUnits = [targetUnit];
                 session.locateUnit?.onSuccess(targetUnit);
                 const scrollHResult = getNormalUnitHeight(unitsArea, orderOptions, targetUnit);

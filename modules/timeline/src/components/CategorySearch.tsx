@@ -137,7 +137,7 @@ const doJumpSlice = (session: Session, slice: SliceData, isGlobal: boolean): voi
     });
 };
 
-const calculateDomainRange = (session: Session, startTime: number, duration: number): [ number, number ] => {
+export const calculateDomainRange = (session: Session, startTime: number, duration: number): [ number, number ] => {
     let rangeStart = startTime - duration * 9;
     rangeStart = rangeStart > 0 ? rangeStart : 0;
     const rangeEnd = Math.min(startTime + duration * 10, session.endTimeAll ?? Number.MAX_SAFE_INTEGER);

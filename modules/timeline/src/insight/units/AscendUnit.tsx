@@ -39,6 +39,7 @@ import { ChartType, StackStatusData, StatusData } from '../../entity/chart';
 import { StyledTooltip } from '../../components/base/StyledTooltip';
 import ResizeTable from '../../components/resize/ResizeTable';
 import { getDefaultColumData, GetPageData } from '../../components/detailViews/Common';
+import { calculateDomainRange } from '../../components/CategorySearch';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -453,6 +454,7 @@ interface OpData {
 }
 
 const colums = [
+    { title: 'index', dataIndex: 'index', ellipsis: true, width: 60 },
     { title: 'timestamp', dataIndex: 'timestamp', ...getDefaultColumData('time') },
     { title: 'duration', dataIndex: 'duration', ...getDefaultColumData('duration') },
 ];
@@ -467,6 +469,9 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
     const slice = useMemo(() => session.selectedMultiSlice === '' ? undefined : JSON.parse(session.selectedMultiSlice), [session.selectedMultiSlice]);
 
     const jumpTo = async (record: OpData): Promise<void> => {
+        if (slice === undefined) {
+            return;
+        }
         const params = {
             rankId: slice.rankId,
             name: slice.name,
@@ -480,6 +485,8 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
                 },
                 onSuccess: (): void => {
                     const selectedMultiSlice = JSON.parse(session.selectedMultiSlice);
+                    const [rangeStart, rangeEnd] = calculateDomainRange(session, record.timestamp, record.duration);
+                    session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                     session.selectedData = {
                         startTime: record.timestamp,
                         name: selectedMultiSlice.name,
@@ -487,36 +494,49 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
                         depth: res.depth,
                         threadId: res.threadId,
                         startRecordTime: session.startRecordTime,
+                        showSelectedData: false,
                     };
                 },
+                showDetail: false,
             };
         });
     };
 
-    useEffect(() => {
+    async function queryDetails(): Promise<void> {
         if (slice === undefined || slice.name === 'Totals') {
             setDataSource([]);
             return;
         }
-        queryDetails();
-        async function queryDetails(): Promise<void> {
-            const params = {
-                ...slice,
-                ...sorter,
-                ...page,
-                orderBy: sorter.field,
-            };
-            const res = await window.requestData('query/all/same/operators/duration', params, 'timeline');
-            const { sameOperatorsDetails, count, currentPage, pageSize } = res;
-            setDataSource(sameOperatorsDetails ?? []);
-            setPage({ total: count, current: currentPage, pageSize });
-            setLoading(false);
+        const params = {
+            ...slice,
+            ...sorter,
+            ...page,
+            orderBy: sorter.field,
+        };
+        const res = await window.requestData('query/all/same/operators/duration', params, 'timeline');
+        const { sameOperatorsDetails = [], count, currentPage, pageSize } = res;
+        setDataSource((sameOperatorsDetails as OpData[]).map((item, index) => ({ ...item, index: ((currentPage - 1) * pageSize) + index + 1 })));
+        setPage({ total: count, current: currentPage, pageSize });
+        setLoading(false);
+    }
+
+    useEffect(() => {
+        if (page.current !== 1) {
+            setPage({ ...page, current: 1 });
+        } else {
+            queryDetails();
         }
-    }, [slice, sorter.field, sorter.order, page.current, page.pageSize]);
+    }, [slice]);
+
+    useEffect(() => {
+        queryDetails();
+    }, [sorter.field, sorter.order, page.current, page.pageSize]);
     return <div style={{ height: '100%', overflow: 'auto', padding: '5px 5px 15px 5px' }}>
         <ResizeTable
-            onChange={(pagination: unknown, filters: unknown, newsorter: unknown): void => {
-                setSorter(newsorter as typeof sorter);
+            onChange={(pagination: unknown, filters: unknown, newsorter: unknown, extra: {action: string}): void => {
+                if (extra.action === 'sort') {
+                    setSorter(newsorter as typeof sorter);
+                }
             }}
             pagination={GetPageData(page, setPage)}
             dataSource={dataSource}
@@ -530,6 +550,7 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
                     },
                 };
             }}
+            rowClassName={'click-able'}
         />
     </div>;
 });

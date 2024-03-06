@@ -21,6 +21,7 @@ export const SelectSimpleTabularDetail = observer(function<T extends CommonState
         rowSelection={{
             selectedRowKeys: session.selectedDetailKeys,
         }}
+        rowClassName={'click-able'}
         expandable={{ showExpandColumn: false }}
         onRow={row => ({
             onClick: async () => {
