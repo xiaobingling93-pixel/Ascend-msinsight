@@ -14,6 +14,7 @@
 #include "DbSummaryDataBase.h"
 #include "FileUtil.h"
 #include "ClusterParseThreadPoolExecutor.h"
+#include "DbClusterDataBase.h"
 
 namespace Dic::Module::FullDb {
 using namespace Dic::Server;
@@ -72,6 +73,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::string &ra
         Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb"));
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection.");
+        return;
     }
     database->UpdateAllTaskDepth();
     database->InitStringsCache();
@@ -143,7 +145,7 @@ void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path
 
 bool FullDbParser::InitCluster(std::string path, std::string token)
 {
-    auto clusterDatabase = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    auto clusterDatabase = dynamic_cast<DbClusterDataBase*>(DataBaseManager::Instance().GetReadClusterDatabase());
     if (clusterDatabase == nullptr) {
         ServerLog::Error("Failed to get Cluster connection.");
         return false;

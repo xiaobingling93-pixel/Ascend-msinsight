@@ -24,6 +24,7 @@ bool DbSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams 
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
 
+    ServerLog::Error(sql);
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("QueryOperatorDetail failed! Failed to prepare sql.", sqlite3_errmsg(db));
@@ -70,16 +71,16 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
                       "OP_TYPE.value as type, "
                       "CASE WHEN start == 0 THEN 0 ELSE ROUND((start - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
                       "ROUND(end - start, 2) as duration, "
-                      "wait_time as waitTime, "
+                      "'' as waitTime, "
                       "block_dim as blockDim, "
                       "INPUTSHAPES.value as inputShape, "
                       "INPUTDATATYPES.value as inputDataType, "
                       "INPUTFORMATS.value as inputFormat, "
-                      "OUTPUTSHAPES as outputShape, "
-                      "OUTPUTDATATYPES as outputDataType, "
-                      "OUTPUTFORMATS as outputFormat "
+                      "OUTPUTSHAPES.value as outputShape, "
+                      "OUTPUTDATATYPES.value as outputDataType, "
+                      "OUTPUTFORMATS.value as outputFormat "
                       "FROM " + TABLE_COMPUTE_TASK_INFO +
-                      "JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
+                      " JOIN TASK ON COMPUTE_TASK_INFO.correlationId = TASK.correlationId "
                       "JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name "
                       "JOIN STRING_IDS AS OP_TYPE ON OP_TYPE.id = COMPUTE_TASK_INFO.opType "
                       "JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes "
@@ -88,7 +89,8 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
                       "JOIN STRING_IDS AS OUTPUTSHAPES ON OUTPUTSHAPES.id = COMPUTE_TASK_INFO.outputShapes "
                       "JOIN STRING_IDS AS OUTPUTDATATYPES ON OUTPUTDATATYPES.id = COMPUTE_TASK_INFO.outputDataTypes "
                       "JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats "
-                      " WHERE COMPUTE_TASK_INFO.taskType = ? ";
+                      "JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType "
+                      " WHERE TASKTYPE.value = ? ";
     if (!orderList.empty()) {
         sql +=  " ORDER BY " + orderList + " " + ascend;
     }

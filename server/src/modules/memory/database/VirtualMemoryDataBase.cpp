@@ -25,7 +25,6 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankI
             "' AND stream <> '' "
             " Group BY stream_ptr ORDER BY time_stamp ASC";
     }
-    ServerLog::Error(sql);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -98,7 +97,6 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryView(Protocol::MemoryComponentPara
         sql += " AND stream <> ''";
     }
     sql += " ORDER BY timestamp ASC";
-    ServerLog::Error(sql);
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {

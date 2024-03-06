@@ -4,6 +4,7 @@
 
 #include "DbClusterDataBase.h"
 #include "TableDefs.h"
+#include "FileUtil.h"
 
 namespace Dic {
 namespace Module {
@@ -16,25 +17,25 @@ bool DbClusterDataBase::QuerySummaryData(const Protocol::SummaryTopRankParams &r
     std::string stepCondition;
     std::string rankCondition;
     if (!requestParams.stepIdList.empty()) {
-        stepCondition = " and step_id in (?";
+        stepCondition = " and step in (?";
         for (int i = 1; i < requestParams.stepIdList.size(); i++) {
             stepCondition.append(",?");
         }
         stepCondition.append(") ");
     }
     if (!requestParams.rankIdList.empty()) {
-        rankCondition = " and rank_id in (?";
+        rankCondition = " and \"index\" in (?";
         for (int i = 1; i < requestParams.rankIdList.size(); i++) {
             rankCondition.append(",?");
         }
         rankCondition.append(") ");
     }
-    std::string sql = "SELECT rank_id as rankId, sum(ROUND(compute_time,2)) as computingTime,"
-                      "sum(ROUND(pure_communication_time,2)) as communicationNotOverLappedTime,"
-                      "sum(ROUND(overlap_communication_time,2)) as communicationOverLappedTime,"
-                      "sum(ROUND(free_time,2)) as freeTime FROM " + TABLE_STEP_TRACE_TIME +
-                      " WHERE rank_id !='' " + stepCondition + rankCondition
-                      + "group by rank_id order by " + requestParams.orderBy + " desc";
+    std::string sql = "SELECT \"index\" as rankId, sum(ROUND(computing,2)) as computingTime, "
+                      "sum(ROUND(communication_not_overlapped,2)) as communicationNotOverLappedTime, "
+                      "sum(ROUND(overlapped,2)) as communicationOverLappedTime, "
+                      "sum(ROUND(free,2)) as freeTime FROM " + TABLE_STEP_TRACE_TIME +
+                      " WHERE rankId !='' " + stepCondition + rankCondition
+                      + "group by rankId order by " + requestParams.orderBy + " desc";
     return ExecuteQuerySummaryData(requestParams, responseBody, sql);
 }
 
@@ -50,9 +51,9 @@ void DbClusterDataBase::UpdateClusterParseStatus(std::string status)
 
 bool DbClusterDataBase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody)
 {
-    std::string baseInfoSql =
-            "select file_path as filePath,ranks,steps,data_size as dataSize from " + TABLE_BASE_INFO;
-    return ExecuteQueryBaseInfo(responseBody, baseInfoSql);
+    std::string filePath = responseBody.filePath;
+    responseBody.dataSize = FileUtil::GetFileSize(filePath.c_str());
+    return true;
 }
 
 bool DbClusterDataBase::GetStepIdList(Protocol::PipelineStepResponseBody &responseBody)
@@ -74,8 +75,8 @@ bool DbClusterDataBase::GetStageAndBubble(Protocol::PipelineStageTimeParam param
     Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
 {
     std::string sql = "SELECT '" + param.stageId + "' as stageId, "
-                      "max(ROUND(stage_time, 4)) as stageTime, "
-                      "max(ROUND(bubble_time, 4)) as bubbleTime "
+                      "max(ROUND(stage, 4)) as stageTime, "
+                      "max(ROUND(bubble, 4)) as bubbleTime "
                       "FROM " + TABLE_STEP_TRACE_TIME + " WHERE rank IN " + param.stageId + " AND step = ?";
     return ExecuteGetStageAndBubble(param, responseBody, sql);
 }
@@ -83,17 +84,17 @@ bool DbClusterDataBase::GetStageAndBubble(Protocol::PipelineStageTimeParam param
 bool DbClusterDataBase::GetRankAndBubble(Protocol::PipelineRankTimeParam param,
     Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
 {
-    std::string sql = "SELECT rank_id as rankId, "
-                      "ROUND(stage_time, 4) as stageTime, "
-                      "ROUND(bubble_time, 4) as bubbleTime "
+    std::string sql = "SELECT \"index\" as rankId, "
+                      "ROUND(stage, 4) as stageTime, "
+                      "ROUND(bubble, 4) as bubbleTime "
                       " FROM " + TABLE_STEP_TRACE_TIME +
-                      " WHERE step_id = ? AND rank_id IN" + param.stageId + " ";
+                      " WHERE step = ? AND \"index\" IN" + param.stageId + " ";
     return ExecuteGetRankAndBubble(param, responseBody, sql);
 }
 
 bool DbClusterDataBase::GetGroups(Protocol::MatrixGroupParam param, Protocol::MatrixGroupResponseBody &responseBody)
 {
-    std::string sql = "SELECT DISTINCT group_id as groupId FROM " + TABLE_COMM_GROUP;
+    std::string sql = "SELECT DISTINCT rank_set as rank FROM " + TABLE_COMM_ANALYZER_MATRIX;
     return ExecuteGetGroups(param, responseBody, sql);
 }
 
@@ -105,17 +106,17 @@ bool DbClusterDataBase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
                       "ROUND(transit_size, 4) as transitSize, "
                       "ROUND(transit_time, 4) as transitTime, "
                       "ROUND(bandwidth, 4) as bandwidth ,"
-                      "op_name as opName "
+                      "hccl_op_name as opName "
                       "FROM " + TABLE_COMM_ANALYZER_MATRIX +
-                      " WHERE group_id = ? AND iteration_id = ? AND op_sort = ? ";
+                      " WHERE rank_set = ? AND step = ? AND hccl_op_name = ? ";
     return ExecuteQueryMatrixList(param, responseBody, sql);
 }
 
 bool DbClusterDataBase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
-    std::string sql = "SELECT op_name as operatorName, "
-                      " ROUND(elapse_time, 4) as elapseTime, "
+    std::string sql = "SELECT hccl_op_name as operatorName, "
+                      " ROUND(elapsed_time, 4) as elapseTime, "
                       " ROUND(transit_time, 4) as transitTime,"
                       " ROUND(synchronization_time, 4) as synchronizationTime,"
                       " ROUND(wait_time, 4) as waitTime,"
@@ -123,47 +124,47 @@ bool DbClusterDataBase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
                       " ROUND(synchronization_time_ratio, 4) as synchronizationTimeRatio,"
                       " ROUND(wait_time_ratio, 4) as waitTimeRatio "
                       "FROM " + TABLE_COMM_ANALYZER_TIME +
-                      " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ?"
-                      " AND op_name != 'Total Op Info' ";
+                      " WHERE step = ? AND rank_id = ? AND rank_set = ?"
+                      " AND hccl_op_name != 'Total Op Info' ";
     return ExecuteQueryAllOperators(param, resBody, sql);
 }
 
 bool DbClusterDataBase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
-    std::string sql = "SELECT op_name, count(*) AS nums  from " + TABLE_COMM_ANALYZER_TIME + " where 1=1 ";
+    std::string sql = "SELECT hccl_op_name, count(*) AS nums  from " + TABLE_COMM_ANALYZER_TIME + " where 1=1 ";
     return ExecuteQueryOperatorsCount(param, resBody, sql);
 }
 
 bool DbClusterDataBase::QueryBandwidthData(Protocol::BandwidthDataParam &param, Protocol::BandwidthDataResBody &resBody)
 {
-    std::string sql = "SELECT transport_type,ROUND(transit_size, 4) as transit_size,"
+    std::string sql = "SELECT band_type, ROUND(transit_size, 4) as transit_size,"
                       "ROUND(transit_time, 4) as transit_time,"
-                      "ROUND(bandwidth_size, 4) as bandwidth_size,"
-                      "ROUND(large_package_ratio, 4)  as large_package_ratio from "
+                      "ROUND(bandwidth, 4) as bandwidth_size,"
+                      "ROUND(large_packet_ratio, 4)  as large_packet_ratio from "
                       + TABLE_COMM_ANALYZER_BANDWIDTH +
-                      " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ? AND op_name = ? ";
+                      " WHERE step = ? AND rank_id = ? AND rank_set = ? AND hccl_op_name = ? ";
     return ExecuteQueryBandwidthData(param, resBody, sql);
 }
 
 bool DbClusterDataBase::QueryDistributionData(Protocol::DistributionDataParam &param,
     Protocol::DistributionResBody &resBody)
 {
-    std::string sql = "SELECT size_distribution FROM "
+    std::string sql = "SELECT package_size FROM "
                       + TABLE_COMM_ANALYZER_BANDWIDTH +
-                      " WHERE iteration_id = ? "
+                      " WHERE step = ? "
                       "AND rank_id = ? "
-                      "AND stage_id = ? "
-                      "AND op_name = ? "
-                      "AND transport_type = ? ;";
+                      "AND rank_set = ? "
+                      "AND hccl_op_name = ? "
+                      "AND band_type = ? ;";
     return ExecuteQueryDistributionData(param, resBody, sql);
 }
 
 bool DbClusterDataBase::QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
-    std::string sql = "SELECT json_group_array (rank_id) FROM ( "
-                      "SELECT DISTINCT rank_id FROM" + TABLE_STEP_TRACE_TIME +
-                      " WHERE rank_id != '' )";
+    std::string sql = "SELECT json_group_array (\"index\") FROM ( "
+                      "SELECT DISTINCT \"index\" FROM" + TABLE_STEP_TRACE_TIME +
+                      " WHERE \"index\" != '' )";
     return ExecuteQueryRanksHandler(responseBody, sql);
 }
 
@@ -173,25 +174,25 @@ bool DbClusterDataBase::QueryOperatorNames(Protocol::OperatorNamesParams &reques
     std::vector<std::string> rankList = requestParams.rankList;
     std::string sql;
     if (rankList.empty()) {
-        sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + TABLE_COMM_ANALYZER_TIME +
-              " WHERE iteration_id = ?" +
-              " AND stage_id = ?" +
-              " ORDER BY op_name)";
+        sql = "SELECT DISTINCT hccl_op_name FROM (SELECT hccl_op_name FROM " + TABLE_COMM_ANALYZER_TIME +
+              " WHERE step = ?" +
+              " AND rank_set = ?" +
+              " ORDER BY hccl_op_name)";
     } else {
         std::string ranks = GetRanksSql(rankList);
-        sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + TABLE_COMM_ANALYZER_TIME +
-              " WHERE iteration_id = ?" +
-              " AND stage_id = ?" +
-              " AND rank_id IN " + ranks + " ORDER BY op_name)";
+        sql = "SELECT DISTINCT hccl_op_name FROM (SELECT hccl_op_name FROM " + TABLE_COMM_ANALYZER_TIME +
+              " WHERE step = ?" +
+              " AND rank_set = ?" +
+              " AND rank_id IN " + ranks + " ORDER BY hccl_op_name)";
     }
     return ExecuteQueryOperatorNames(requestParams, responseBody, sql);
 }
 
 bool DbClusterDataBase::QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody)
 {
-    std::string sql = "select json_group_array(step_id) from ("
-                      "select DISTINCT step_id from "+ TABLE_STEP_TRACE_TIME +
-                      " where rank_id !='')";
+    std::string sql = "select json_group_array(step) from ("
+                      "select DISTINCT step from "+ TABLE_STEP_TRACE_TIME +
+                      " where \"index\" !='')";
     return ExecuteQueryIterations(responseBody, sql);
 }
 
@@ -201,20 +202,20 @@ bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestP
     std::vector<std::string> rankList = requestParams.rankList;
     std::string sql;
     if (rankList.empty()) {
-        sql = "SELECT rank_id, ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
+        sql = "SELECT rank_id, ROUND(elapsed_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
               "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
               "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
-              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_TIME_INFO +
-              " WHERE iteration_id = ? AND stage_id = ? AND op_name = ?";
+              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_COMM_ANALYZER_TIME +
+              " WHERE step = ? AND rank_set = ? AND hccl_op_name = ?";
     } else {
         std::string ranks = GetRanksSql(rankList);
-        sql = "SELECT rank_id, ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
+        sql = "SELECT rank_id, ROUND(elapsed_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
               "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
               "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
-              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_TIME_INFO +
-              " WHERE iteration_id = ? AND stage_id = ?"
+              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_COMM_ANALYZER_TIME +
+              " WHERE step = ? AND rank_set = ?"
               " AND rank_id IN " + ranks +
-              " AND op_name = ?";
+              " AND hccl_op_name = ?";
     }
     return ExecuteQueryDurationList(requestParams, responseBody, sql);
 }
@@ -222,18 +223,18 @@ bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestP
 bool DbClusterDataBase::QueryCommunicationGroup(Document &responseBody)
 {
     std::string baseInfoSql =
-            "select (select rank_set from " + TABLE_COMM_GROUP + " where type == collection ) as stages, "
-            " (select rank_set from " + TABLE_COMM_GROUP + " where type == p2p ) as pp_stages";
+            "select (select rank_set from " + TABLE_COMM_GROUP + " where type == 'collection' ) as stages, "
+            " (select rank_set from " + TABLE_COMM_GROUP + " where type == 'p2p' ) as pp_stages";
     return ExecuteQueryCommunicationGroup(responseBody, baseInfoSql);
 }
 
 bool DbClusterDataBase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
     std::vector<Protocol::OperatorNamesObject> &responseBody)
 {
-    std::string sql = "SELECT DISTINCT op_sort  FROM " + TABLE_COMM_ANALYZER_MATRIX +
-                      " WHERE iteration_id = ?" +
-                      " AND group_id = ?" +
-                      " ORDER BY op_sort";
+    std::string sql = "SELECT DISTINCT hccl_op_name  FROM " + TABLE_COMM_ANALYZER_MATRIX +
+                      " WHERE step = ?" +
+                      " AND rank_set = ?" +
+                      " ORDER BY hccl_op_name";
     return ExecuteQueryMatrixSortOpNames(requestParams, responseBody, sql);
 }
 }

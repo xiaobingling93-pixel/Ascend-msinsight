@@ -374,7 +374,6 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorNames(Protocol::OperatorNamesPa
     int index = bindStartIndex;
     std::string iterationId = requestParams.iterationId;
     std::string stage = requestParams.stage;
-
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Failed to prepare QueryOperatorNames statement. error:", sqlite3_errmsg(db));

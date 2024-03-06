@@ -7,6 +7,7 @@
 #include "DbTraceDataBase.h"
 #include "DbMemoryDataBase.h"
 #include "DbSummaryDataBase.h"
+#include "DbClusterDataBase.h"
 #include "FileUtil.h"
 #include "DataBaseManager.h"
 
@@ -215,7 +216,11 @@ VirtualClusterDatabase *DataBaseManager::GetWriteClusterDatabase()
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (clusterDatabaseMap.count("cluster_w") == 0) {
-        clusterDatabaseMap.emplace("cluster_w", std::make_unique<JsonClusterDatabase>());
+        if (dataType == DataType::JSON) {
+            clusterDatabaseMap.emplace("cluster_w", std::make_unique<JsonClusterDatabase>());
+        } else if (dataType == DataType::FULL_DB) {
+            clusterDatabaseMap.emplace("cluster_w", std::make_unique<DbClusterDataBase>());
+        }
     }
     return clusterDatabaseMap["cluster_w"].get();
 }
@@ -224,7 +229,11 @@ VirtualClusterDatabase *DataBaseManager::GetReadClusterDatabase()
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (clusterDatabaseMap.count("cluster_r") == 0) {
-        clusterDatabaseMap.emplace("cluster_r", std::make_unique<JsonClusterDatabase>());
+        if (dataType == DataType::JSON) {
+            clusterDatabaseMap.emplace("cluster_r", std::make_unique<JsonClusterDatabase>());
+        } else if (dataType == DataType::FULL_DB) {
+            clusterDatabaseMap.emplace("cluster_r", std::make_unique<DbClusterDataBase>());
+        }
     }
     return clusterDatabaseMap["cluster_r"].get();
 }

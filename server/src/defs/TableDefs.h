@@ -30,11 +30,12 @@ namespace Dic {
     const static std::string TABLE_MEMORY_RECORD = "MEMORY_RECORD";
     const static std::string TABLE_OPERATOR_MEMORY = "OPERATOR_MEMORY";
 
-    const static std::string TABLE_STEP_TRACE_TIME = "StepTraceTime";
-    const static std::string TABLE_COMM_ANALYZER_TIME = "CommAnalyzerTime";
-    const static std::string TABLE_COMM_ANALYZER_BANDWIDTH = "CommAnalyzerBandwidth";
-    const static std::string TABLE_COMM_ANALYZER_MATRIX = "CommAnalyzerMatrix";
-    const static std::string TABLE_COMM_GROUP = "CommGroup";
+    // cluster db table
+    const static std::string TABLE_STEP_TRACE_TIME = "ClusterStepTraceTime";
+    const static std::string TABLE_COMM_ANALYZER_TIME = "ClusterCommAnalyzerTime";
+    const static std::string TABLE_COMM_ANALYZER_BANDWIDTH = "ClusterCommAnalyzerBandwidth";
+    const static std::string TABLE_COMM_ANALYZER_MATRIX = "ClusterCommAnalyzerMatrix";
+    const static std::string TABLE_COMM_GROUP = "CommunicationGroup";
 
     // database version
 #ifndef DATABASE_VERSION

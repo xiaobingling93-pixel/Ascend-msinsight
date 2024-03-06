@@ -21,7 +21,7 @@ struct TASK_INFO {
 class DbTraceDataBase : public VirtualTraceDatabase {
 public:
     explicit DbTraceDataBase(std::mutex &sqlMutex) : VirtualTraceDatabase(sqlMutex) {};
-    virtual ~DbTraceDataBase() {};
+    ~DbTraceDataBase() {};
 
     bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
 

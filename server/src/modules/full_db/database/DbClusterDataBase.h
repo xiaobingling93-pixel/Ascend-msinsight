@@ -44,7 +44,9 @@ public:
                            std::vector<Protocol::Duration> &responseBody) override;
     bool QueryCommunicationGroup(Document &responseBody) override;
 
+    void SetBaseInfo(Protocol::SummaryTopRankResBody responseBody);
 private:
+    Protocol::SummaryTopRankResBody baseInfoResponse;
     std::string parseStatus = "UN_FINISH";
 };
 }
