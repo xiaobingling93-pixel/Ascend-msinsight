@@ -481,7 +481,7 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
                 onSuccess: (): void => {
                     const selectedMultiSlice = JSON.parse(session.selectedMultiSlice);
                     session.selectedData = {
-                        startTime: selectedMultiSlice.startTime,
+                        startTime: record.timestamp,
                         name: selectedMultiSlice.name,
                         duration: record.duration,
                         depth: res.depth,
