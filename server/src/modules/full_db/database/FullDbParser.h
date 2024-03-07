@@ -17,12 +17,13 @@ public:
     FullDbParser();
 
     ~FullDbParser() override;
-    bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
+    bool Parse(const std::vector<std::string> &fileIds, const std::string &filePath,
                const std::string &selectedFolder) override;
     void Reset() override;
     static bool FindDevicePaths(const std::string &selectedFolder,
                                 std::map<std::string, std::string>& devicePaths);
-    static void InitOpenDb(const std::string &filePath, const std::string &rankId, const std::string& token);
+    static void InitOpenDb(const std::string &filePath, const std::vector<std::string> &rankId,
+        const std::string &token);
     bool InitCluster(std::string path, std::string token);
 private:
     std::unique_ptr<ThreadPool> threadPool;

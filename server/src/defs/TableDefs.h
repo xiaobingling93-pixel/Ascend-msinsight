@@ -31,6 +31,7 @@ namespace Dic {
     const static std::string TABLE_MEMORY_RECORD = "MEMORY_RECORD";
     const static std::string TABLE_OPERATOR_MEMORY = "OP_MEMORY";
     const static std::string TABLE_GE_MEMORY = "NPU_OP_MEM";
+    const static std::string TABLE_PYTORCH_INFO = "SESSION_INFO";
 
     // cluster db table
     const static std::string TABLE_STEP_TRACE_TIME = "ClusterStepTraceTime";

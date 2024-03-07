@@ -36,13 +36,15 @@ FullDbParser::~FullDbParser()
     threadPool->ShutDown();
 }
 
-bool FullDbParser::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
+bool FullDbParser::Parse(const std::vector<std::string> &fileIds, const std::string &filePath,
                          const std::string &token)
 {
     ServerLog::Info("start db parse.");
-    Timeline::ParserStatusManager::Instance().SetParserStatus(fileId, Timeline::ParserStatus::INIT);
+    for (auto id:fileIds) {
+        Timeline::ParserStatusManager::Instance().SetParserStatus(id, Timeline::ParserStatus::INIT);
+    }
     auto &instance = FullDbParser::Instance();
-    instance.threadPool->AddTask(InitOpenDb, filePaths[0], fileId, token);
+    instance.threadPool->AddTask(InitOpenDb, filePath, fileIds, token);
     return true;
 }
 
@@ -64,13 +66,17 @@ void FullDbParser::Reset()
     threadPool->Reset();
 }
 
-void FullDbParser::InitOpenDb(const std::string &filePath, const std::string &rankId,
+void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std::string> &rankIds,
                               const std::string& token)
 {
     ServerLog::Info(filePath);
-
+    for (const std::string& id : rankIds) {
+        if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(id, filePath)) {
+            ServerLog::Error("Failed to create connection pool. ", filePath);
+        }
+    }
     auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb"));
+        Timeline::DataBaseManager::Instance().GetTraceDatabase(rankIds[0]));
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection.");
         return;
@@ -80,18 +86,20 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::string &ra
     database->InitStringsCache();
     database->UpdateStartTime();
 
-    std::vector<std::string> rankIds = database->QueryRankId();
-
-    if (!database->CheckTableDataInvalid(TABLE_MEMORY_RECORD + "," + TABLE_OPERATOR_MEMORY)) {
-        FullDb::DbMemoryDataBase::ParserEnd(rankId, false);
-        FullDb::DbMemoryDataBase::ParseCallBack(token, rankId, false, "");
+    if (!database->CheckTableDataInvalid(TABLE_GE_MEMORY)) {
+        for (auto rankId: rankIds) {
+            FullDb::DbMemoryDataBase::ParserEnd(rankId, false);
+            FullDb::DbMemoryDataBase::ParseCallBack(token, rankId, false, "");
+        }
         ServerLog::Error("There is no Memory Data in this db file:" + filePath);
     } else {
         InitMemory(rankIds, filePath, token);
     }
 
     if (!database->CheckTableDataInvalid(TABLE_COMPUTE_TASK_INFO)) {
-        FullDb::DbSummaryDataBase::ParserEnd(token, rankId, false, "");
+        for (auto rankId: rankIds) {
+            FullDb::DbSummaryDataBase::ParserEnd(token, rankId, false, "");
+        }
         ServerLog::Error("There is no Summery Data in this db file:" + filePath);
     } else {
         InitSummery(rankIds, filePath, token);
@@ -138,15 +146,15 @@ void FullDbParser::ParserCallBack(std::string fileId, bool result)
 
 void FullDbParser::InitSummery(std::vector<std::string> rankIds, std::string path, std::string token)
 {
-    auto summeryDatabase = dynamic_cast<FullDb::DbSummaryDataBase *>(
-            Timeline::DataBaseManager::Instance().GetSummaryDatabase("FullDb"));
-    if (summeryDatabase == nullptr) {
-        ServerLog::Error("Failed to get summery connection.");
-    }
-    if (!summeryDatabase->OpenDb(path, false)) {
-        ServerLog::Error("Failed to open SummaryDataBase. rankId:", "FullDb");
-    }
     for (const std::string& id : rankIds) {
+        auto summeryDatabase = dynamic_cast<FullDb::DbSummaryDataBase *>(
+                Timeline::DataBaseManager::Instance().GetSummaryDatabase(id));
+        if (summeryDatabase == nullptr) {
+            ServerLog::Error("Failed to get summery connection.");
+        }
+        if (!summeryDatabase->OpenDb(path, false)) {
+            ServerLog::Error("Failed to open SummaryDataBase. rankId:", "FullDb");
+        }
         FullDb::DbSummaryDataBase::ParserEnd(token, id, true, "");
     }
     ServerLog::Info("Init Summary finish");
@@ -154,16 +162,17 @@ void FullDbParser::InitSummery(std::vector<std::string> rankIds, std::string pat
 
 void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path, std::string token)
 {
-    auto memoryDatabase = dynamic_cast<FullDb::DbMemoryDataBase *>(
-            Timeline::DataBaseManager::Instance().GetMemoryDatabase("FullDb"));
-    if (memoryDatabase == nullptr) {
-        ServerLog::Error("Failed to get memory connection.");
-    }
-    if (!memoryDatabase->OpenDb(path, false)) {
-        ServerLog::Error("Failed to open memoryDatabase. rankId:", "FullDb");
-    }
-    memoryDatabase->SetInferenceType(false);
     for (const std::string& id : rankIds) {
+        auto memoryDatabase = dynamic_cast<FullDb::DbMemoryDataBase *>(
+                Timeline::DataBaseManager::Instance().GetMemoryDatabase(id));
+        if (memoryDatabase == nullptr) {
+            ServerLog::Error("Failed to get memory connection.");
+        }
+        if (!memoryDatabase->OpenDb(path, false)) {
+            ServerLog::Error("Failed to open memoryDatabase. rankId:", "FullDb");
+        }
+        FileType type = DataBaseManager::Instance().GetFileType();
+        memoryDatabase->SetInferenceType(type == FileType::MS_PROF);
         FullDb::DbMemoryDataBase::ParserEnd(id, true);
         FullDb::DbMemoryDataBase::ParseCallBack(token, id, true, "");
     }

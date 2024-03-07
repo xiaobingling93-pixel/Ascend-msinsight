@@ -55,9 +55,6 @@ std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const st
 {
     std::unique_lock<std::mutex> lock(mutex);
     auto it = traceDatabaseMap.find(fileId);
-    if (dataType == DataType::FULL_DB) {
-        it = traceDatabaseMap.find("FullDb");
-    }
     if (it == traceDatabaseMap.end()) {
         ServerLog::Error("Can't find connection pool. fileId:", fileId);
         return nullptr;
@@ -69,9 +66,6 @@ Summary::VirtualSummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::
 {
     std::unique_lock<std::mutex> lock(mutex);
     std::string fileId = inputId;
-    if (dataType == DataType::FULL_DB) {
-        fileId = "FullDb";
-    }
     if (summaryDatabaseMap.count(fileId) == 0) {
         std::mutex &dbMutex = GetDbMutex(fileId);
         if (this->dataType == DataType::JSON) {
@@ -87,9 +81,6 @@ Memory::VirtualMemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::str
 {
     std::unique_lock<std::mutex> lock(mutex);
     std::string fileId = inputId;
-    if (dataType == DataType::FULL_DB) {
-        fileId = "FullDb";
-    }
     if (memoryDatabaseMap.count(fileId) == 0) {
         std::mutex &dbMutex = GetDbMutex(fileId);
         switch (dataType) {

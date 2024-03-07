@@ -37,8 +37,10 @@ void ParserDb::Parser(const std::string &path, ImportActionRequest &request)
     FullDb::FullDbParser::FindDevicePaths(selectedFolder, devicePaths);
     auto rankList = GetReportFiles(path, response.body);
     SetBaseActionOfResponse(response, "Host", devicePaths);
-    for (const auto &rank: rankList) {
-        SetBaseActionOfResponse(response, rank, devicePaths);
+    for (const auto &ranks: rankList) {
+        for (auto rank: ranks.second) {
+            SetBaseActionOfResponse(response, rank, devicePaths);
+        }
     }
 
     SetParseCallBack(token);
@@ -47,7 +49,9 @@ void ParserDb::Parser(const std::string &path, ImportActionRequest &request)
     response.moduleName = Protocol::ModuleType::TIMELINE;
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
-    FullDb::FullDbParser::Instance().Parse({path}, "FullDb", token);
+    for (const auto &ranks: rankList) {
+        FullDb::FullDbParser::Instance().Parse(ranks.second, ranks.first, token);
+    }
     // 执行集群数据解析
     Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token, path,
         (rankList.size() > 1));
@@ -96,30 +100,41 @@ void ParserDb::ClusterProcessAsyncStep(const std::string &token, const std::stri
     session->OnEvent(std::move(event));
 }
 
-std::vector<std::string> ParserDb::GetReportFiles(const std::string &path, ImportActionResBody &body)
+std::map<std::string, std::vector<std::string>> ParserDb::GetReportFiles(const std::string &path,
+    ImportActionResBody &body)
 {
-    std::vector<std::string> reportFiles = FileUtil::FindFilesByRegex(path, std::regex(DBReg));
-    CheckIfClusterAndReset(path, reportFiles.size(), body, true);
-    if (reportFiles.empty()) {
+    std::vector<std::string> pytorchFiles = FileUtil::FindFilesByRegex(path, std::regex(pytorchDBReg));
+    std::vector<std::string> msprofFiles = FileUtil::FindFilesByRegex(path, std::regex(msprofDBReg));
+    CheckIfClusterAndReset(path, pytorchFiles.size(), body, true);
+    if (pytorchFiles.empty() && msprofFiles.empty()) {
         Server::ServerLog::Warn("Failed to find db file.");
         return {};
     }
+    std::vector<std::string> reportFiles = {};
+    if (!pytorchFiles.empty()) {
+        reportFiles = pytorchFiles;
+        DataBaseManager::Instance().SetFileType(FileType::PYTORCH);
+    } else if (!msprofFiles.empty()) {
+        reportFiles = msprofFiles;
+        DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
+    }
     // 只解析找到的第一个report文件
-    if (!Timeline::DataBaseManager::Instance().CreatConnectionPool("FullDb", reportFiles[0])) {
-        ServerLog::Error("Failed to create connection pool. ", reportFiles[0]);
-    }
-    auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb"));
-    if (database == nullptr) {
-        ServerLog::Error("Failed to get connection.");
-    }
-
-    std::vector<std::string> rankIds = database->QueryRankId();
     std::map<std::string, std::vector<std::string>> rankListMap;
-    for (auto rank : rankIds) {
-        rankListMap[rank].push_back(path);
+    for (auto file: reportFiles) {
+        if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(file, file)) {
+            ServerLog::Error("Failed to create connection pool. ", reportFiles[0]);
+        }
+        auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(
+            Timeline::DataBaseManager::Instance().GetTraceDatabase(file));
+        if (database == nullptr) {
+            ServerLog::Error("Failed to get connection.");
+        }
+        std::vector<std::string> rankIds = database->QueryRankId();
+        for (auto rank : rankIds) {
+            rankListMap[file].push_back(rank);
+        }
     }
-    return rankIds;
+    return rankListMap;
 }
 
 void ParserDb::SetParseCallBack(std::string token)

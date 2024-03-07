@@ -9,6 +9,7 @@
 #include "TableDefs.h"
 #include "TraceDatabaseHelper.h"
 #include "CommonDefs.h"
+#include "DataBaseManager.h"
 
 namespace Dic::Module::FullDb {
 using namespace Server;
@@ -390,7 +391,7 @@ std::vector<std::string> DbTraceDataBase::QueryCoreType()
 {
     std::vector<std::string> acceleratorCoreList;
     std::string sql = "SELECT DISTINCT TASKTYPE.value as task_type FROM " + TABLE_COMPUTE_TASK_INFO +
-            "JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType ORDER BY task_type";
+            " JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType ORDER BY task_type";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryCoreType, fail to prepare sql.");
@@ -462,7 +463,13 @@ void DbTraceDataBase::UpdateStartTime()
 std::vector<std::string> DbTraceDataBase::QueryRankId()
 {
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT id FROM " + TABLE_NPU_INFO;
+    std::string sql;
+    FileType type = DataBaseManager::Instance().GetFileType();
+    if (type == FileType::MS_PROF) {
+        sql = "SELECT id FROM " + TABLE_NPU_INFO;
+    } else if (type == FileType::PYTORCH) {
+        sql = "SELECT id FROM " + TABLE_PYTORCH_INFO;
+    }
     std::vector<std::string> rankIds;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {

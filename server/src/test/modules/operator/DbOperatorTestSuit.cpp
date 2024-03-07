@@ -26,7 +26,7 @@ public:
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
         DataBaseManager::Instance().SetDataType(DataType::FULL_DB);
         auto summeryDatabase =
-                dynamic_cast<DbSummaryDataBase *>(DataBaseManager::Instance().GetSummaryDatabase("FullDb"));
+                dynamic_cast<DbSummaryDataBase *>(DataBaseManager::Instance().GetSummaryDatabase("2"));
         summeryDatabase->OpenDb(currPath + dbPath3 + "report_0.db", false);
     }
 
@@ -40,7 +40,7 @@ const std::string GROUP_INPUT_SHAPE = "Input Shape";
 TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorDurationInfoByOpType)
 {
     DataBaseManager::Instance().SetDataType(DataType::FULL_DB);
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("FullDb");
+    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("2");
     Dic::Protocol::OperatorDurationReqParams params = {"2", GROUP_OPERATOR_TYPE, 15};
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);

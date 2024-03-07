@@ -19,7 +19,7 @@ public:
 
     void Parser(const std::string &path, ImportActionRequest &request) final;
 private:
-    std::vector<std::string> GetReportFiles(const std::string &path, ImportActionResBody &body);
+    std::map<std::string, std::vector<std::string>> GetReportFiles(const std::string &path, ImportActionResBody &body);
     void SetParseCallBack(std::string token);
     void SetBaseActionOfResponse(ImportActionResponse &response, std::string rankId,
                                  std::map<std::string, std::string> devicePaths);
