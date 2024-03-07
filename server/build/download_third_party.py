@@ -46,6 +46,11 @@ OPEN_SOURCE = [
         'sqlite3_src',
         '3.40.1',
         'https://szv-open.codehub.huawei.com/OpenSourceCenter/www.sqlite.org/sqlite.git'
+    ],
+    [
+        'att',
+        'v6.0.0-ATT-htrunk1.computing.mindstudio.7.r1',
+        'https://szv-open.codehub.huawei.com/OpenSourceCenter/Ascend/att.git'
     ]
 ]
 
