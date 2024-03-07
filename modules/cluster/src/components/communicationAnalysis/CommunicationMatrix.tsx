@@ -69,6 +69,7 @@ function wrapData(dataSource: any): any {
             bottom: '15%',
             inRange: { color: [COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3] },
             textStyle: { color: COLOR.Grey40 },
+            dimension: 2,
         };
         if (data.length > 0) {
             const max = Math.max(...data.map((item: number[]) => item[2]));
@@ -144,6 +145,7 @@ const baseOption: any = {
         bottom: '15%',
         inRange: { color: [COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3] },
         textStyle: { color: COLOR.Grey40 },
+        dimension: 2,
     },
     series: [
         {
@@ -184,6 +186,7 @@ const transportTypeOption = {
             { value: 3, label: allTransporType[3], color: COLOR.Band3 },
         ],
         textStyle: { color: COLOR.Grey40 },
+        dimension: 2,
     },
 };
 
