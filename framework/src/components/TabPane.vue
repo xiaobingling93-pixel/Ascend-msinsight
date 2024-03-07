@@ -10,6 +10,9 @@ import {useDataSources} from '@/stores/dataSource';
 import {Console} from '@/utils/console';
 import HelpIcon from '@/components/icons/help_icon.vue';
 import VersionInfo from '@/version_info.json';
+import {useResource} from '@/stores/resourceComp';
+const { confirmDrop } = useDataSources();
+const { setCurrentPath } = useResource();
 
 type SceneType = 'Default' | 'Cluster' | 'Compute';
 const scene = ref<SceneType>('Default');
@@ -122,6 +125,14 @@ onMounted(async () => {
         }
         connector.send({event: 'deleteRank', body: receiver});
     });
+
+    connector.addListener('dropFile', (e) => {
+      const res = e.data.body;
+      const path = res.result[0].cardPath;
+      setCurrentPath(path);
+      const dataSource = { remote: LOCAL_HOST, port: PORT, dataPath: [path] };
+      confirmDrop(dataSource, res);
+    })
 
     if (!session.isVscode) {
         await connectRemote({remote: LOCAL_HOST, port: PORT, dataPath: []});

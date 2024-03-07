@@ -8,6 +8,7 @@ import {
     clusterCompletedHandler,
     removeSingleRemoteHandler,
     clusterDurationCompletedHandler,
+    dragImportSuccessHandler,
 } from './connection/handler';
 
 type InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> = {
@@ -29,4 +30,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     setTheme,
     'parse/clusterCompleted': clusterCompletedHandler,
     'parse/clusterStep2Completed': clusterDurationCompletedHandler,
+    'drag/import': dragImportSuccessHandler,
 };

@@ -160,6 +160,49 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
     }
 };
 
+export const dragImportSuccessHandler: NotificationHandler = async (data): Promise<void> => {
+    try {
+        const dataSource = getPropFromData(data, 'dataSource') as DataSource;
+        const result: any = getPropFromData(data, 'result');
+        const { sessionStore } = store;
+        const session = sessionStore.activeSession;
+
+        if (result.result === undefined || result.result === null) {
+            return;
+        }
+        runInAction(() => {
+            if (!session) {
+                return;
+            }
+            (result.reset as boolean) && (session.units = []);
+            session.phase = 'download';
+            session.endTimeAll = undefined;
+            result.result.forEach((item: CardInfo) => {
+                const unit = new CardUnit({ dataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
+                if (item.result as boolean) {
+                    unit.phase = 'analyzing';
+                } else {
+                    unit.phase = 'error';
+                }
+                session.units.push(unit);
+            });
+            session.sortUnits();
+        });
+        connector.send({
+            event: 'updateSession',
+            body: {
+                isCluster: result.isCluster,
+                isReset: result.reset,
+                startTime: 0,
+                endTimeAll: session?.endTimeAll,
+                unitcount: result.result?.length ?? 0,
+            },
+        });
+    } catch (error) {
+        console.error(error);
+    }
+};
+
 const clearTimeMarkerFlags = (session: Session): void => {
     session.timelineMaker.selectedFlag = undefined;
     session.timelineMaker.refreshTrigger = (session.timelineMaker.refreshTrigger + 1) % 10;

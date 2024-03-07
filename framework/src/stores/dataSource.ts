@@ -7,7 +7,7 @@ import connector from '@/connection';
 import { modulesConfig } from '@/moduleConfig';
 import { useSession } from './session';
 
-const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource): boolean => {
+const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource, importMethod?: 'drag', result?: any): boolean => {
     const idx = dataSources.value.findIndex((item) => item.remote === dataSource.remote && item.port === dataSource.port);
     if (idx === -1) {
         dataSources.value.push(dataSource);
@@ -17,7 +17,7 @@ const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource)
     dataSource.dataPath = dataSource.dataPath.filter(path => !dataSources.value[idx].dataPath.includes(path));
     if (dataSource.dataPath.length !== 0) {
         dataSources.value[idx].dataPath.push(...dataSource.dataPath);
-        addDataPath(dataSource);
+        addDataPath(dataSource, importMethod, result);
     }
     return true;
 }
@@ -34,24 +34,46 @@ export const useDataSources = defineStore('dataSources', () => {
         }
     });
 
-    const confirm = async (dataSource: DataSource): Promise<void> => {
+    function checkExistedServer(dataSource: DataSource, importMethod?: 'drag', result?: any): boolean {
         if (session.isReset) {
             session.reset();
             dataSources.value = [{ remote: LOCAL_HOST, port: PORT, dataPath: [] }];
         }
-        const hasExistedServer = mergeDataSource(dataSources, dataSource);
+        const hasExistedServer = mergeDataSource(dataSources, dataSource, importMethod, result);
         if (hasExistedServer) {
             lastDataSource.value = dataSource;
+            return true;
+        }
+        return false;
+    }
+
+    const confirm = async (dataSource: DataSource): Promise<void> => {
+        if (checkExistedServer(dataSource)) {
+            return; 
+        }
+        const isSuccess = await connectRemote(dataSource);
+        if (isSuccess) {
+            connector.send({
+                event: 'remote/import',
+                body: { dataSource },
+            });
+        }
+        lastDataSource.value = dataSource;
+    };
+
+    const confirmDrop = async (dataSource: DataSource, result: any): Promise<void> => {
+        if (checkExistedServer(dataSource, 'drag', result)) {
             return;
         }
-
         const isSuccess = await connectRemote(dataSource);
-        isSuccess && connector.send({
-            event: 'remote/import',
-            body: { dataSource },
-        });
+        if (isSuccess) {
+            connector.send({
+                event: 'drag/import',
+                body: { dataSource, result },
+            });
+        }
         lastDataSource.value = dataSource;
-    }
+    };
 
     const SPLITTER = ': ';
     const menuTree = computed<TreeNodeType[]>(() =>
@@ -104,5 +126,5 @@ export const useDataSources = defineStore('dataSources', () => {
         dataSources.value[parentIndex].dataPath.splice(index, 1);
     }
 
-    return { menuTree, remove, confirm, removeSingle, lastDataSource };
+    return { menuTree, remove, confirm, confirmDrop, removeSingle, lastDataSource };
 });

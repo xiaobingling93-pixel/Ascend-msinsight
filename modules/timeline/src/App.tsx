@@ -1,7 +1,7 @@
 import { ThemeProvider } from '@emotion/react';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AppErrorBoundary } from './components/error/AppErrorBoundary';
 import { SessionPageErrorBoundary } from './components/error/SessionPageErrorBoundary';
 import { useRootStore } from './context/context';
@@ -11,6 +11,9 @@ import { platform } from './platforms';
 import { themeInstance, ThemeItem } from './theme/theme';
 import { getSearchParams } from './utils/localUrl';
 import eventBus, { EventType } from './utils/eventBus';
+import { DragFileImportInit } from './components/dragFile/DragFile';
+import type { CheckResultType } from './components/dragFile/DragFile';
+import connector from './connection';
 
 const Window = styled.div`
     background-color: ${props => props.theme.backgroundColor};
@@ -85,10 +88,28 @@ const StatePopover = observer(() => {
     </Mask>;
 });
 
+function handleDropFile(result: CheckResultType): void {
+    connector.send({
+        event: 'dropFile',
+        body: {
+            isCluster: false,
+            reset: false,
+            result: result.files?.map(file => ({
+                cardName: file.attr.name,
+                rankId: file.attr.path,
+                cardPath: file.attr.path,
+                result: true,
+            })),
+        },
+    });
+}
+
 export const App = observer(() => {
     const { insightStore, sessionStore } = useRootStore();
     let session = sessionStore.activeSession;
     const lang = getSearchParams('language');
+    const initialized = useRef(false);
+
     useEffect(() => {
         insightStore.loadTemplates().then(() => {
             session = sessionStore.activeSession;
@@ -97,6 +118,17 @@ export const App = observer(() => {
         platform.initTheme().then((res: ThemeItem) => {
             window.setTheme(res === 'dark');
         });
+
+        if (!initialized.current) {
+            // 防止严格模式下useEffect渲染两次
+            initialized.current = true;
+            DragFileImportInit({
+                id: 'root',
+                onDrop: (result: any) => {
+                    handleDropFile(result);
+                },
+            });
+        }
     }, []);
     return (
         <ThemeProvider theme={themeInstance.getThemeType()}>

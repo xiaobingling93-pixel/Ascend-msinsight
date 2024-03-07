@@ -40,14 +40,21 @@ export const connectRemote = async function (dataSource: DataSource): Promise<bo
     return true;
 };
 
-export const addDataPath = function(dataSource: DataSource): void {
+export const addDataPath = function(dataSource: DataSource, importMethod?: 'drag', result?: any): void {
     const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
     if (connection) {
         connection.addDataPath(dataSource.dataPath);
-        connector.send({
-            event: 'remote/import',
-            body: { dataSource },
-        });
+        if (importMethod && result) {
+            connector.send({
+                event: 'drag/import',
+                body: { dataSource, result },
+            });
+        } else {
+            connector.send({
+                event: 'remote/import',
+                body: { dataSource },
+            });
+        }
     }
 }
 

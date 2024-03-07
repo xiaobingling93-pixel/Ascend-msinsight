@@ -400,6 +400,13 @@ tr.ant-table-row:hover{
 
 .theme_dark .ant-notification-notice{
     background: var(--grey85);
+    color: var(--grey0);
+}
+.theme_dark .ant-notification-notice-message{
+    color: var(--grey0);
+}
+.theme_dark .ant-notification-notice-close{
+    color: var(--grey10);
 }
 .theme_dark .CommunicatorHeader .ant-input-number-input{
     background-color: var(--grey90);

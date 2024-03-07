@@ -37,4 +37,5 @@ declare module 'antd' {
     export type InputRef = InputRef;
     export type AutoCompleteProps = AutoCompleteProps;
     export const Table;
+    export const notification;
 }
