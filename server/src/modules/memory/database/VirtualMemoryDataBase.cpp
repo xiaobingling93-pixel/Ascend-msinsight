@@ -21,8 +21,7 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankI
     if (type == DataType::JSON) {
         sql += "SELECT stream FROM " + recordTable + " WHERE stream <> '' Group BY stream ORDER BY timestamp ASC";
     } else if (type == DataType::FULL_DB) {
-        sql += "SELECT stream_ptr FROM " + TABLE_MEMORY_RECORD + " WHERE rank_id == '" + rankId +
-            "' AND stream <> '' "
+        sql += "SELECT stream_ptr  FROM " + TABLE_MEMORY_RECORD + " WHERE stream_ptr <> '' "
             " Group BY stream_ptr ORDER BY time_stamp ASC";
     }
     sqlite3_stmt *stmt = nullptr;
@@ -106,7 +105,6 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryView(Protocol::MemoryComponentPara
     int index = bindStartIndex;
     // 减去timeline开始的时间作为时间戳
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    sqlite3_bind_int64(stmt, index++, startTime);
     std::string peakMemory;
     std::vector<Protocol::ComponentDto> componentDtoVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -149,9 +147,7 @@ bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams
     int index = bindStartIndex;
     std::string orderName = "%" + requestParams.searchName + "%";
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    sqlite3_bind_int64(stmt, index++, startTime);
-    sqlite3_bind_int64(stmt, index++, startTime);
-    sqlite3_bind_int64(stmt, index++, startTime);
+
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
     sqlite3_bind_int64(stmt, index++, offset);
@@ -188,6 +184,35 @@ bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams
     return true;
 }
 
+void VirtualMemoryDataBase::AddOperatorSql(Protocol::MemoryOperatorParams requestParams, std::string &sql)
+{
+    std::string ascend;
+    if (requestParams.order == "ascend") {
+        ascend = "ASC";
+    } else {
+        ascend = "DESC";
+    }
+    if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
+        sql += " AND stream <> ''";
+    }
+    if (requestParams.startTime != -1) {
+        sql += " AND allocationTime >= " + std::to_string(requestParams.startTime);
+    }
+    if (requestParams.endTime != -1) {
+        sql += " AND allocationTime <= " + std::to_string(requestParams.endTime);
+    }
+
+    if (requestParams.minSize != -1) {
+        sql += " AND size >= " + std::to_string(requestParams.minSize);
+    }
+    if (requestParams.maxSize != -1) {
+        sql += " AND size <= " + std::to_string(requestParams.maxSize);
+    }
+    if (!requestParams.orderBy.empty()) {
+        sql += " ORDER BY " + requestParams.orderBy + " " + ascend;
+    }
+    sql += " LIMIT ? offset ?";
+}
 
 /*
 * 将多个单条线的数据组装成[x,y,y,y,y]的格式，对于x点上不存在的y补为NULL。

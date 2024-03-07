@@ -29,7 +29,8 @@ namespace Dic {
     const static std::string TABLE_NPU_INFO = "NPU_INFO";
     const static std::string TABLE_SESSION_TIME_INFO = "SESSION_TIME_INFO";
     const static std::string TABLE_MEMORY_RECORD = "MEMORY_RECORD";
-    const static std::string TABLE_OPERATOR_MEMORY = "OPERATOR_MEMORY";
+    const static std::string TABLE_OPERATOR_MEMORY = "OP_MEMORY";
+    const static std::string TABLE_GE_MEMORY = "NPU_OP_MEM";
 
     // cluster db table
     const static std::string TABLE_STEP_TRACE_TIME = "ClusterStepTraceTime";

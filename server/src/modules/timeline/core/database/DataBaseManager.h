@@ -27,6 +27,10 @@ enum class DataType {
     JSON,
     FULL_DB
 };
+enum class FileType {
+    MS_PROF,
+    PYTORCH
+};
 class DataBaseManager {
 public:
     static DataBaseManager &Instance();
@@ -56,6 +60,8 @@ public:
     std::string GetDbPath(const std::string &fileId);
     DataType GetDataType();
     void SetDataType(DataType type);
+    FileType GetFileType();
+    void SetFileType(FileType type);
 
 private:
     DataBaseManager() = default;
@@ -63,6 +69,7 @@ private:
 
     std::mutex mutex;
     DataType dataType = DataType::JSON;
+    FileType fileType = FileType::PYTORCH;
     std::map<std::string, std::mutex> dbMutexMap;
     std::map<std::string, std::unique_ptr<ConnectionPool>> traceDatabaseMap;
     std::map<std::string, std::unique_ptr<VirtualClusterDatabase>> clusterDatabaseMap;

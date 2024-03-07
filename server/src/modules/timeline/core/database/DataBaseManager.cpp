@@ -272,6 +272,15 @@ void DataBaseManager::SetDataType(DataType type)
 {
     dataType = type;
 }
+
+FileType DataBaseManager::GetFileType()
+{
+    return fileType;
+}
+void DataBaseManager::SetFileType(FileType type)
+{
+    fileType = type;
+}
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

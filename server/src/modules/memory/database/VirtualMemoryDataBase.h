@@ -76,6 +76,7 @@ protected:
     bool ExecuteOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
         std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails,
         std::string sql);
+    void AddOperatorSql(Protocol::MemoryOperatorParams requestParams, std::string &sql);
 
 private:
     void GetLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,

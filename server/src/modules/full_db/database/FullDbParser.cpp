@@ -162,6 +162,7 @@ void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path
     if (!memoryDatabase->OpenDb(path, false)) {
         ServerLog::Error("Failed to open memoryDatabase. rankId:", "FullDb");
     }
+    memoryDatabase->SetInferenceType(false);
     for (const std::string& id : rankIds) {
         FullDb::DbMemoryDataBase::ParserEnd(id, true);
         FullDb::DbMemoryDataBase::ParseCallBack(token, id, true, "");

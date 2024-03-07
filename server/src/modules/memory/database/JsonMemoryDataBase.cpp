@@ -220,43 +220,21 @@ uint64_t  JsonMemoryDataBase::QueryMinRecordTimestamp()
 
 std::string  JsonMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &requestParams)
 {
-    std::string ascend;
-    if (requestParams.order == "ascend") {
-        ascend = "ASC";
-    } else {
-        ascend = "DESC";
-    }
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string sql =
         "SELECT name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
-        "ROUND((allocation_time- ?) / (1000.0 * 1000.0), 2) END AS allocationTime, "
-        "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - ?) / (1000.0 * 1000.0), 2) "
-        "END AS releaseTime, ROUND(duration / 1000.0, 2) as duration, "
-        "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - ?) / (1000.0 * 1000.0), 2) "
+        "ROUND((allocation_time - " +
+        std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) END AS allocationTime, "
+        "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " +
+        std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) "
+        "END AS release_time, ROUND(duration / 1000.0, 2) as duration, "
+        "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
+        std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) "
         "END AS activeReleaseTime, ROUND(active_duration / 1000.0, 2) as active_duration, "
         "allocation_allocated, allocation_reserve, allocation_active, release_allocated, release_reserve, "
         "release_active, stream FROM " + operatorTable +
         " WHERE name LIKE ?";
-
-    if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
-        sql += " AND stream <> ''";
-    }
-    if (requestParams.startTime != -1) {
-        sql += " AND allocationTime >= " + std::to_string(requestParams.startTime);
-    }
-    if (requestParams.endTime != -1) {
-        sql += " AND allocationTime <= " + std::to_string(requestParams.endTime);
-    }
-
-    if (requestParams.minSize != -1) {
-        sql += " AND size >= " + std::to_string(requestParams.minSize);
-    }
-    if (requestParams.maxSize != -1) {
-        sql += " AND size <= " + std::to_string(requestParams.maxSize);
-    }
-    if (!requestParams.orderBy.empty()) {
-        sql += " ORDER BY " + requestParams.orderBy + " " + ascend;
-    }
-    sql += " LIMIT ? offset ?";
+    AddOperatorSql(requestParams, sql);
     return sql;
 }
 
@@ -270,9 +248,12 @@ bool JsonMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &req
 bool JsonMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
     Protocol::MemoryViewData &operatorBody)
 {
-    std::string sql = "SELECT component, ROUND((timestamp - ?) / (1000.0 * 1000.0), 2) as timestamp, "
-                      "ROUND(total_allocated, 2) as total_allocated, ROUND(total_reserve, 2) as total_reserve, "
-                      "ROUND(total_active, 2) as total_active, stream FROM " + recordTable + " WHERE 1==1";
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    std::string sql = "SELECT component, ROUND((timestamp - " + std::to_string(startTime) +
+        ") / (1000.0 * 1000.0), 2) as timestamp, "
+        "ROUND(total_allocated, 2) as total_allocated, ROUND(total_reserve, 2) as total_reserve, "
+        "ROUND(total_active, 2) as total_active, stream FROM " +
+        recordTable + " WHERE 1==1";
     return ExecuteQueryMemoryView(requestParams, operatorBody, sql);
 }
 
