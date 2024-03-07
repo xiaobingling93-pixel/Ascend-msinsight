@@ -128,14 +128,107 @@ bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requ
         ServerLog::Error("select slice error!");
         return false;
     }
-
+    uint64_t selfTime = sliceDtoVec.at(0).duration;
+    std::vector<uint64_t> nextDepthResult;
+    QueryDurationFromTaskByTimeRange(requestParams, sliceDtoVec.at(0), nextDepthResult, trackId);
+    if (nextDepthResult.empty()) {
+        selfTime = 0;
+    } else {
+        for (const auto &item : nextDepthResult) {
+            selfTime -= item;
+        }
+    }
     responseBody.emptyFlag = false;
-    responseBody.data.selfTime = 0;
-    responseBody.data.args = sliceDtoVec[0].args;
+    responseBody.data.selfTime = selfTime;
     responseBody.data.title = sliceDtoVec[0].name;
     responseBody.data.duration = sliceDtoVec[0].duration;
     responseBody.data.cat = sliceDtoVec[0].cat;
+    uint64_t id = sliceDtoVec.at(0).id;
+    if (!QueryComputeTaskInfoById(id, responseBody) || !QueryCommunicationTaskInfoById(id, responseBody)) {
+        ServerLog::Error("QueryComputeTaskInfoById or QueryCommunicationTaskInfoById is error!");
+        return false;
+    }
     return true;
+}
+
+bool DbTraceDataBase::QueryComputeTaskInfoById(int64_t id, Protocol::UnitThreadDetailBody &responseBody)
+{
+    auto stmt = CreatPreparedStatement();
+    std::unique_ptr<SqliteResultSet> resultSet;
+    try {
+        resultSet = TraceDatabaseHelper::QueryComputeTaskInfoById(stmt, id);
+    } catch (DatabaseException &e) {
+        ServerLog::Error("QueryComputeTaskInfoById Fail, ", e.What());
+        return false;
+    }
+    while (resultSet->Next()) {
+        int col = resultStartIndex;
+        responseBody.data.inputShapes = stringsCache.at(resultSet->GetInt64(col++));
+        responseBody.data.inputDataTypes = stringsCache.at(resultSet->GetInt64(col++));
+        responseBody.data.inputFormats = stringsCache.at(resultSet->GetInt64(col++));
+        responseBody.data.outputShapes = stringsCache.at(resultSet->GetInt64(col++));
+        responseBody.data.outputDataTypes = stringsCache.at(resultSet->GetInt64(col++));
+        responseBody.data.outputFormats = stringsCache.at(resultSet->GetInt64(col++));
+    }
+    return true;
+}
+
+bool DbTraceDataBase::QueryCommunicationTaskInfoById(int64_t id, Protocol::UnitThreadDetailBody &responseBody)
+{
+    auto stmt = CreatPreparedStatement();
+    std::unique_ptr<SqliteResultSet> resultSet;
+    try {
+        resultSet = TraceDatabaseHelper::QueryCommunicationTaskInfoById(stmt, id);
+    } catch (DatabaseException &e) {
+        ServerLog::Error("QueryCommunicationTaskInfoById Fail, ", e.What());
+        return false;
+    }
+    while (resultSet->Next()) {
+        int col = resultStartIndex;
+        ArgsDto argsDto;
+        argsDto.taskType = stringsCache.at(resultSet->GetInt64(col++));
+        argsDto.planeId = resultSet->GetInt64(col++);
+        argsDto.groupName = stringsCache.at(resultSet->GetInt64(col++));
+        argsDto.notifyId = resultSet->GetInt64(col++);
+        argsDto.rdmaType = stringsCache.at(resultSet->GetInt64(col++));
+        argsDto.srcRank = resultSet->GetInt64(col++);
+        argsDto.dstRank = resultSet->GetInt64(col++);
+        argsDto.transportType = stringsCache.at(resultSet->GetInt64(col++));
+        argsDto.size = resultSet->GetInt64(col++);
+        argsDto.dataType = stringsCache.at(resultSet->GetInt64(col++));
+        argsDto.linkType = stringsCache.at(resultSet->GetInt64(col++));
+        argsDto.opId = resultSet->GetInt64(col++);
+    }
+    return true;
+}
+
+std::string DbTraceDataBase::ArgsDtoToJsonStr(const ArgsDto& argsDto)
+{
+    std::string jsonStr;
+    jsonStr.append("{")
+    .append("\"planeId\":")
+    .append(std::to_string(argsDto.planeId))
+    .append(",\"groupName\":")
+    .append(argsDto.groupName)
+    .append(",\"notifyId\":")
+    .append(std::to_string(argsDto.notifyId))
+    .append(",\"rdmaType\":")
+    .append(argsDto.rdmaType)
+    .append(",\"srcRank\":")
+    .append(std::to_string(argsDto.srcRank))
+    .append(",\"dstRank\":")
+    .append(std::to_string(argsDto.dstRank))
+    .append(",\"transportType\":")
+    .append(argsDto.transportType)
+    .append(",\"size\":")
+    .append(std::to_string(argsDto.size))
+    .append(",\"dataType\":")
+    .append(argsDto.dataType)
+    .append(",\"linkType\":")
+    .append(argsDto.linkType)
+    .append(",\"opId\":")
+    .append(std::to_string(argsDto.opId))
+    .append("}");
 }
 
 bool DbTraceDataBase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParams,
@@ -923,6 +1016,26 @@ bool DbTraceDataBase::GenerateCounterMetadata(const std::string &fileId,
             counter->children.emplace_back(std::move(thread));
         }
         metaData.emplace_back(std::move(counter));
+    }
+    return true;
+}
+
+bool DbTraceDataBase::QueryDurationFromTaskByTimeRange(const Protocol::ThreadDetailParams &requestParams,
+                                                       SliceDto sliceDto, std::vector<uint64_t> &nextDepthResult,
+                                                       int64_t trackId)
+{
+    std::string sql = "SELECT endNs - startNs as duration FROM " + TABLE_TASK +
+                      " WHERE depth = ? AND endNs <= ? AND startNs >= ? AND streamId = ?";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryDurationFromTaskByTimeRange. Failed to prepare sql.", sqlite3_errmsg(db));
+        return false;
+    }
+    auto resultSet =
+            stmt->ExecuteQuery(requestParams.depth + 1, sliceDto.timestamp + sliceDto.duration,
+                               sliceDto.timestamp, trackId);
+    while (resultSet->Next()) {
+        nextDepthResult.emplace_back(resultSet->GetUint64("duration"));
     }
     return true;
 }

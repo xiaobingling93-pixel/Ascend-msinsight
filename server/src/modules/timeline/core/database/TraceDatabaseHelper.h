@@ -149,6 +149,24 @@ public:
         }
     };
 
+static std::unique_ptr<SqliteResultSet> QueryComputeTaskInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
+                                                          uint64_t id)
+{
+    std::string sql = "SELECT inputShapes, inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats"
+                      "  FROM " + TABLE_COMPUTE_TASK_INFO + " where globalTaskId = ?";
+    return ExecuteQuery(stmt, sql, id);
+}
+
+static std::unique_ptr<SqliteResultSet> QueryCommunicationTaskInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
+                                                          uint64_t id)
+{
+    std::string sql = "SELECT com.taskType,com.planeId, com.groupName,com.notifyId ,com.rdmaType,"
+                      "com.srcRank,com.dstRank,com.transportType,com.size,com.dataType, "
+                      "com.linkType ,com.opId "
+                      "  FROM " + TABLE_COMMUNICATION_TASK_INFO + " com where globalTaskId = ?";
+    return ExecuteQuery(stmt, sql, id);
+}
+
     static  std::unique_ptr<SqliteResultSet> QueryThreadTraces(
             std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesParams &requestParams,
             uint64_t minTimestamp)

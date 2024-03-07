@@ -33,6 +33,8 @@ public:
     bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
                            Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp,
                            int64_t trackId) override;
+    bool QueryComputeTaskInfoById(int64_t id, Protocol::UnitThreadDetailBody &responseBody);
+    bool QueryCommunicationTaskInfoById(int64_t id, Protocol::UnitThreadDetailBody &responseBody);
     bool QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitFlowBody &responseBody,
                          uint64_t minTimestamp) override;
     bool QueryUnitsMetadata(const std::string &fileId,
@@ -66,6 +68,9 @@ public:
     OneKernelData QueryKernelTid(uint64_t trackId) override;
     bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
                                   Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp) override;
+    bool QueryDurationFromTaskByTimeRange(const Protocol::ThreadDetailParams &requestParams,
+                                      SliceDto sliceDto, std::vector<uint64_t> &nextDepthResult,
+                                      int64_t streamId);
     bool QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
 
     std::vector<std::string> QueryRankId();
@@ -101,6 +106,7 @@ private:
     void SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
                          Protocol::KernelDetailsBody &responseBody) const;
     std::string GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams);
+    static std::string ArgsDtoToJsonStr(const ArgsDto& argsDto);
     static std::unique_ptr<Protocol::UnitTrack> GenerateBaseUnitTrack(const std::string &type,
         const std::string &cardId, const std::string &processId, const std::string &processName);
 };
