@@ -21,8 +21,18 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankI
     if (type == DataType::JSON) {
         sql += "SELECT stream FROM " + recordTable + " WHERE stream <> '' Group BY stream ORDER BY timestamp ASC";
     } else if (type == DataType::FULL_DB) {
-        sql += "SELECT stream_ptr  FROM " + TABLE_MEMORY_RECORD + " WHERE stream_ptr <> '' "
-            " Group BY stream_ptr ORDER BY time_stamp ASC";
+        FileType fileType = DataBaseManager::Instance().GetFileType();
+        if (fileType == FileType::MS_PROF) {
+            sql += "SELECT addr  FROM " + TABLE_GE_MEMORY + " WHERE addr <> '' AND deviceId = " + rankId +
+                " Group BY addr ORDER BY timestampNs ASC ";
+        } else if (fileType == FileType::PYTORCH) {
+            sql += "SELECT addr  FROM " + TABLE_GE_MEMORY +
+                " WHERE addr <> '' "
+                " Group BY addr ORDER BY timestampNs ASC ";
+                " UNION SELECT stream_ptr  FROM " + TABLE_MEMORY_RECORD +
+                " WHERE stream_ptr <> '' "
+                " Group BY stream_ptr ORDER BY time_stamp ASC";
+        }
     }
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);

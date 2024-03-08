@@ -39,7 +39,9 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
         " RELEASE_.addr = ALLOCATE.addr "
         " JOIN STRING_IDS AS NAME ON NAME.id = ALLOCATE.operatorName"
         " WHERE ALLOCATE.type == (SELECT id FROM ENUM_MEMORY WHERE name = 'allocate')";
-    if (type == FileType::PYTORCH) {
+    if (type == FileType::MS_PROF) {
+        sql += " AND ALLOCATE.deviceId = " + requestParams.rankId;
+    } else if (type == FileType::PYTORCH) {
         sql += "   UNION "
             "SELECT NAME.value AS name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
             "ROUND((allocation_time - " + std::to_string(startTime) +
@@ -71,7 +73,9 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
         "ROUND(totalAllocate, 2) as total_allocated, ROUND(totalReserve, 2) as total_reserve, "
         "'NA' as total_active, addr as stream FROM " +
         TABLE_GE_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = NPU_OP_MEM.component ";
-    if (type == FileType::PYTORCH) {
+    if (type == FileType::MS_PROF) {
+        sql += " AND NPU_OP_MEM.deviceId = " + requestParams.rankId;
+    } else if (type == FileType::PYTORCH) {
         sql += "   UNION "
             "SELECT NAME.value AS component, ROUND((time_stamp - " +
             std::to_string(startTime) +
@@ -90,19 +94,20 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
     if (type == FileType::MS_PROF) {
         sql = "SELECT count(*) as nums FROM "
             " ("
-            "   SELECT NAME.value as name, addr as stream_ptr, timestampNs as allocation_time, size FROM NPU_OP_MEM "
-            "JOIN STRING_IDS AS NAME ON NAME.id = NPU_OP_MEM.operatorName"
-            ") AS combined_table"
-            " WHERE name LIKE ? ";
+            "   SELECT NAME.value as name, addr as stream_ptr, timestampNs as allocation_time, size, deviceId FROM " +
+                TABLE_GE_MEMORY +
+            "   JOIN STRING_IDS AS NAME ON NAME.id = NPU_OP_MEM.operatorName"
+            ") "
+            " WHERE name LIKE ? AND deviceId = " + requestParams.rankId;
     } else if (type == FileType::PYTORCH) {
         sql = "SELECT count(*) as nums FROM "
             " ("
             "   SELECT NAME.value as name, addr as stream_ptr, timestampNs as allocation_time, size FROM NPU_OP_MEM "
-            "JOIN STRING_IDS AS NAME ON NAME.id = NPU_OP_MEM.operatorName"
+            "   JOIN STRING_IDS AS NAME ON NAME.id = NPU_OP_MEM.operatorName"
             "   UNION ALL "
             "   SELECT NAME.value as name, stream_ptr, allocation_time, size FROM OP_MEMORY JOIN STRING_IDS AS NAME ON "
-            "NAME.id = OP_MEMORY.name"
-            ") AS combined_table"
+            "   NAME.id = OP_MEMORY.name"
+            ") "
             " WHERE name LIKE ? ";
     }
 

@@ -189,7 +189,9 @@ bool FullDbParser::InitCluster(std::string path, std::string token)
         ServerLog::Error("Failed to get Cluster connection.");
         return false;
     }
-    if (!clusterDatabase->OpenDb(path, false)) {
+    std::string clusterPath = path + "/cluster_analysis_output/cluster_analysis.db";
+    ServerLog::Error(clusterPath);
+    if (!clusterDatabase->OpenDb(clusterPath, false)) {
         ServerLog::Error("Failed to open Cluster. rankId:", "FullDb");
         return false;
     }
