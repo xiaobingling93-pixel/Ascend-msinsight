@@ -177,73 +177,19 @@ class DragFileImport extends DragFile {
     }
 
     checkFiles(list: FileDataType[]): CheckResultType {
-        if (list.length === 0) {
-            return {
-                usable: false,
-                error: 'No valid files found',
-            };
-        }
-
-        // 检查单文件
         const singleFiles = list.filter((file: FileDataType) => !file.attr.isInFolder);
-        if (singleFiles.length > 1) {
-            return {
-                usable: false,
-                error: 'Only Allow one File Or Folder',
-            };
-        }
-        if (singleFiles.length === 1) {
+        if (list.length === 1 && singleFiles.length === 1) {
             return this.checkFile(singleFiles[0]);
-        }
-        // 检查文件夹
-        const files: FileDataType[] = list.filter(file => this.checkFileName(file.attr.name));
-
-        if (files.length === 0) {
+        } else {
             return {
                 usable: false,
-                error: 'No valid files found',
+                error: 'Only Allow one File',
             };
         }
-
-        let totalSize = 0;
-        files.forEach((file: FileDataType, index: number) => {
-            const timestamp = formatTimestamp(Date.now(), 'MMDDHHmmss.SSS');
-            file.attr.index = index + 1;
-            file.attr.count = files.length;
-            file.attr.isLast = (index + 1) === files.length;
-            file.attr.name = `${file.attr.name}(${timestamp})`;
-            file.attr.path = `${file.attr.path}(${timestamp})`;
-            totalSize += file.data.size;
-        });
-
-        if (!this.checkFileSize(totalSize)) {
-            return {
-                usable: false,
-                error: 'Please select a file smaller than 10GB',
-            };
-        }
-
-        return {
-            usable: true,
-            totalSize,
-            files,
-        };
     }
 
     checkFileSize(size: number): boolean {
         return size <= MAX_FILE_SIZE;
-    }
-
-    checkFileName(name: string, ignore = false): boolean {
-        if (ignore) {
-            return true;
-        }
-        const msprofReg = /^msprof\w{0,100}\.json$/; // 样例：msprof.json msprof_info_0.json
-        // const profilerReg = /^profiler\w{0,100}\.json$/;// 样例：profiler_info_0.json
-        const ALL_ALLOW_FILE = [
-            'trace_view.json',
-        ];
-        return ALL_ALLOW_FILE.includes(name) || msprofReg.test(name);
     }
 
     async handleFile(fileBag: CheckResultType): Promise<any> {
@@ -317,7 +263,7 @@ function getFilelist(files: FileList): any {
         const file = files.item(i);
         allFiles.push({
             data: file,
-            attr: { name: file?.name },
+            attr: { name: file?.name, path: file?.name, isInFolder: file?.type === '' },
         });
     }
     return allFiles;
