@@ -198,6 +198,7 @@ bool DbTraceDataBase::QueryCommunicationTaskInfoById(int64_t id, Protocol::UnitT
         argsDto.dataType = stringsCache.at(resultSet->GetInt64(col++));
         argsDto.linkType = stringsCache.at(resultSet->GetInt64(col++));
         argsDto.opId = resultSet->GetInt64(col++);
+        responseBody.data.args = ArgsDtoToJsonStr(argsDto);
     }
     return true;
 }
@@ -229,6 +230,7 @@ std::string DbTraceDataBase::ArgsDtoToJsonStr(const ArgsDto& argsDto)
     .append(",\"opId\":")
     .append(std::to_string(argsDto.opId))
     .append("}");
+    return jsonStr;
 }
 
 bool DbTraceDataBase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParams,
