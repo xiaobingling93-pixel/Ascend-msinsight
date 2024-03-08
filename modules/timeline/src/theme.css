@@ -200,7 +200,7 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 }
 
 
-tr.ant-table-row:hover{
+.theme_dark tr.ant-table-row:hover{
     background: #4C4C4C;
 }
 
@@ -314,7 +314,11 @@ tr.ant-table-row:hover{
     color: var(--grey5);
     background: unset;
 }
-.theme_dark tr.ant-table-row.click-able:hover > td.ant-table-cell {
+
+.theme_light tr.ant-table-row.click-able:hover{
+    background: rgb(217, 218, 220);
+}
+tr.ant-table-row.click-able:hover > td.ant-table-cell {
     color: var(--activeblue);
     background: unset;
     cursor: pointer;

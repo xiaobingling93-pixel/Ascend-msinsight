@@ -463,9 +463,9 @@ interface OpData {
 }
 
 const colums = [
-    { title: 'index', dataIndex: 'index', ellipsis: true, width: 60 },
-    { title: 'timestamp', dataIndex: 'timestamp', ...getDefaultColumData('time') },
-    { title: 'duration', dataIndex: 'duration', ...getDefaultColumData('duration') },
+    { title: 'Index', dataIndex: 'index', ellipsis: true, width: 60 },
+    { title: 'Timestamp', dataIndex: 'timestamp', ...getDefaultColumData('time') },
+    { title: 'Duration(ns)', dataIndex: 'duration', ...getDefaultColumData('duration') },
 ];
 // eslint-disable-next-line max-lines-per-function
 export const SliceRightOpDetail = observer(({ session, metadata }: { session: Session; metadata: unknown }) => {
@@ -514,6 +514,7 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
     async function queryDetails(): Promise<void> {
         if (slice === undefined || slice.name === 'Totals') {
             setDataSource([]);
+            setPage(defaultPage);
             return;
         }
         const params = {
