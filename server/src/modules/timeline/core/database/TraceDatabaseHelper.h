@@ -13,14 +13,14 @@
 
 namespace Dic::Module::Timeline {
 using namespace Protocol;
-const std::string HBM_UNIT_COUNTER_SQL = "select timestampNs-? as startTime,hbmId||'/'|| case when type=1 then 'Read' "
-         " else 'Write' end as name,  case when type=1 then '{\"Read(MB/s)\":' || bandwidth || '}' "
-         " else '{\"Write(MB/s)\":' || bandwidth || '}' end as args from HBM main "
-         " where device_id= ? and name = ? AND startTime >= ? AND startTime <= ? ORDER BY timestampNs ASC";
+const std::string HBM_UNIT_COUNTER_SQL = "select timestampNs-? as startTime,hbmId||'/'|| case when name='read' then  "
+         " 'Read' else 'Write' end as processName,  case when name='read' then '{\"Read(MB/s)\":' || bandwidth || '}' "
+         " else '{\"Write(MB/s)\":' || bandwidth || '}' end as args from HBM main join ENUM_MEMORY on type = id "
+         " where deviceId= ? and processName = ? AND startTime >= ? AND startTime <= ? ORDER BY timestampNs ASC";
 
 const std::string LLC_UNIT_COUNTER_SQL = "with main as (select timestampNs - ? as startTime, "
-         " format('%s %s', llcId, case when mode=1 then "
-         "'Read' else 'Write' end) as modeName,? as processName,throughput,hitRate from LLC where deviceId = ?"
+         " format('%s %s', llcId, case when name='read' then 'Read' else 'Write' end) as modeName,? as processName, "
+         " throughput,hitRate from LLC join ENUM_MEMORY on mode = id where deviceId = ?"
          " AND startTime >= ? AND startTime <= ? and glob(modeName||'*', processName)) select startTime, "
          " case when glob('*Throughput', processName) then format('{\"Throughput(MB/s)\":%s}', throughput) "
          " else format('{\"Hit Rate(%%)\":%s}', hitRate) end as args from main ORDER BY startTime ASC";

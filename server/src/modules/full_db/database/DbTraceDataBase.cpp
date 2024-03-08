@@ -689,9 +689,8 @@ void DbTraceDataBase::UpdateAllTaskDepth()
     std::vector<int64_t> endList;
     for (auto &deviceData: data) {
         for (auto &task: deviceData.second) {
-            for (task.depth = endList.size() - 1; task.depth >= 0 && endList[task.depth] <= task.start; task.depth--) {
+            for (task.depth = 0; task.depth < endList.size() && endList[task.depth] > task.start; task.depth++) {
             }
-            task.depth++;
             if (task.depth >= endList.size()) {
                 endList.emplace_back(task.end);
             } else {
@@ -724,9 +723,8 @@ void DbTraceDataBase::UpdateAllApiDepth()
     std::vector<int64_t> endList;
     for (auto &deviceData: data) {
         for (auto &task: deviceData.second) {
-            for (task.depth = endList.size() - 1; task.depth >= 0 && endList[task.depth] <= task.start; task.depth--) {
+            for (task.depth = 0; task.depth < endList.size() && endList[task.depth] > task.start; task.depth++) {
             }
-            task.depth++;
             if (task.depth >= endList.size()) {
                 endList.emplace_back(task.end);
             } else {
@@ -815,6 +813,7 @@ bool DbTraceDataBase::SetConfig()
     }
     std::unique_lock<std::mutex> lock(mutex);
     std::string dbVersion = GetDataBaseVersion();
+    ExecSql("create INDEX connectionId on API(connectionId);");
     ExecSql("alter table TASK add depth integer;");
     ExecSql("alter table API add depth integer;");
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " +
@@ -947,16 +946,16 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
         std::string sql;
         switch (type) {
             case PROCESS_TYPE::HBM:
-                sql = "select case when type=1 then 'Read(MB/s)' else 'Write(MB/s)' end as typeName,\n"
-                      "    hbmId || '/' || case when type=1 then 'Read' else 'Write' end as name\n"
-                      "FROM HBM WHERE device_id = ? GROUP BY hbmId, type";
+                sql = "select case when name='read' then 'Read(MB/s)' else 'Write(MB/s)' end as typeName,\n"
+                      "    hbmId || '/' || case when name='read' then 'Read' else 'Write' end as name\n"
+                      "FROM HBM join ENUM_MEMORY on type = id WHERE deviceId = ? GROUP BY hbmId, type";
                 break;
             case PROCESS_TYPE::LLC:
                 sql = "with main as (select llcId, mode from LLC where deviceId = ? group by llcId, mode)"
-                      " select 'Throughput(MB/s)' as typeName, llcId || ' ' || case when mode=1 then 'Read' else"
-                      " 'Write' end || '/Throughput' as name  from main "
-                      " UNION select 'Hit Rate(%)' as typeName, llcId || ' ' || case when mode=1 then 'Read' else"
-                      " 'Write' end || '/Hit Rate' as name  from main ";
+                      " select 'Throughput(MB/s)' as typeName, llcId || ' ' || case when name='read' then 'Read' else"
+                      " 'Write' end || '/Throughput' as name  from main join ENUM_MEMORY on mode = id "
+                      " UNION select 'Hit Rate(%)' as typeName, llcId || ' ' || case when name='read' then 'Read' else"
+                      " 'Write' end || '/Hit Rate' as name  from main join ENUM_MEMORY on mode = id ";
                 break;
         }
         auto stmt = CreatPreparedStatement(sql);
