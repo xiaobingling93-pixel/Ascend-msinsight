@@ -12,21 +12,20 @@ list(APPEND SERVER_SRC_LIST
         ${DIC_CHANNEL_SRC})
 
 add_executable(${PROJECT_NAME} ${SERVER_SRC_LIST})
-target_link_libraries(${PROJECT_NAME}
-        sqlite)
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(${PROJECT_NAME}
-            -static
             uv_a
             userenv
             ws2_32
             iphlpapi
             shlwapi
+            sqlite
             -lssp)
 else()
     target_link_libraries(${PROJECT_NAME}
             uv_a
             pthread
-            dl)
+            dl
+            sqlite)
 endif()
