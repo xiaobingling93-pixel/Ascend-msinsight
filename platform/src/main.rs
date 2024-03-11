@@ -1,6 +1,6 @@
 #![windows_subsystem = "windows"]
 
-use std::{fs::read, process::{Command, Child}, sync::Mutex};
+use std::{env, fs::read, process::{Command, Child}, sync::Mutex};
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
@@ -13,8 +13,6 @@ use wry::{
     http::{header::CONTENT_TYPE, Response},
     webview::WebViewBuilder,
 };
-use log;
-use dirs_next::home_dir;
 
 const SERVER_RELATIVE_LIST: [&str; 4] = ["resources", "profiler", "server", "profiler_server"];
 const NO_WINDOW_FLAG: u32 = 0x08000000;
@@ -28,7 +26,6 @@ fn run_server(root_path: &PathBuf, cache_path: &PathBuf, port: &mut String) -> O
         server_path.set_extension("exe");
     }
     if !server_path.exists() {
-        log::error!("can't find the server path");
         return None;
     }
     let Some(path) = server_path.to_str() else { return None };
@@ -41,7 +38,6 @@ fn run_server(root_path: &PathBuf, cache_path: &PathBuf, port: &mut String) -> O
     if scan_info.len() > 0 && scan_info.starts_with("Available port: "){
         port.push_str(scan_info.replace("Available port: ", "").trim());
     } else {
-        log::error!("Can't find available port");
         return None;
     };
 
@@ -56,11 +52,9 @@ fn run_server(root_path: &PathBuf, cache_path: &PathBuf, port: &mut String) -> O
         .arg(format!("--logPath={}", cache_path.display()))
         .spawn() {
             Ok(child) => {
-                log::info!("server spawn succ");
                 Some(Mutex::new(child))
             }
-            Err(error) => {
-                log::error!("server spawn with error {}", error);
+            _ => {
                 None
             }
         }
@@ -127,7 +121,7 @@ fn run_script(server_process:Mutex<Child>, root_path: &PathBuf, port: &str) -> w
                 event: WindowEvent::CloseRequested,
                 ..
             } => *control_flow = {
-                let _ = server_process.lock().unwrap().kill().map_err(|err| log::info!("kill server process failed {:?}", err));
+                let _ = server_process.lock().unwrap().kill();
                 ControlFlow::Exit
             },
             
@@ -137,21 +131,28 @@ fn run_script(server_process:Mutex<Child>, root_path: &PathBuf, port: &str) -> w
 
 }
 
+fn home_dir() -> Option<PathBuf> {
+    let home: PathBuf;
+    if cfg!(target_os = "windows") && env::var("USERPROFILE").is_ok() {
+        home = PathBuf::from(env::var("USERPROFILE").unwrap());
+    } else {
+        home = PathBuf::from(env::var("HOME").unwrap());
+    }
+    Some(home)
+}
+
 fn main() {
     let cache_path = home_dir().unwrap().join(".ascend_insight"); //cache folder generated for each user.
-    std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", cache_path.as_path());
+    env::set_var("WEBVIEW2_USER_DATA_FOLDER", cache_path.as_path());
     let root_path =  std::env::current_exe().unwrap().parent().unwrap().to_path_buf();
-    log::info!("AS Start");
 
     if wry::webview::webview_version().is_err() {
-        log::error!("Please install the webview runtime first");
         return;
     }
     let mut port : String = String::new();
     // start the server
     if let Some(child) = run_server(&root_path, &cache_path, &mut port) {
         if run_script(child, &root_path, &port.as_str()).is_ok() {
-            log::info!("create as app success");
         }
     }
 }

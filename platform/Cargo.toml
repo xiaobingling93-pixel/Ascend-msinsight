@@ -17,5 +17,3 @@ relocation_model = "pic/pie"
 
 [dependencies]
 wry = { version="0.24.3" }
-log = { version = "=0.4.19", features = ["std"] }
-dirs-next = "=2.0.0"
