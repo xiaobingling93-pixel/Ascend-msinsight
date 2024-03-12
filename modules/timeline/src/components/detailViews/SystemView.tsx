@@ -24,6 +24,7 @@ import ResizeTable from '../resize/ResizeTable';
 import { CardMetaData } from '../../entity/data';
 import { runInAction } from 'mobx';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
+import { calculateDomainRange } from '../CategorySearch';
 
 const Container = styled.div`
     width: 100%;
@@ -275,6 +276,8 @@ const KernelDetails = observer((props: any) => {
                     return unit.metadata.threadId === res.threadId && unit.metadata.processId === res.pid;
                 },
                 onSuccess: () => {
+                    const [rangeStart, rangeEnd] = calculateDomainRange(props.session, rowData.startTime, rowData.duration);
+                    props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                     props.session.selectedData = {
                         startTime: rowData.startTime,
                         name: rowData.name,
