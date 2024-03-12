@@ -60,7 +60,7 @@ void ParserDb::Parser(const std::string &path, ImportActionRequest &request)
 void ParserDb::ClusterProcess(const std::string &token, const std::string &selectedFolder, bool isCluster)
 {
     std::string parseClusterResult = PARSE_RESULT_NONE;
-    if (isCluster && FullDb::FullDbParser::Instance().InitCluster(selectedFolder, token)) {
+    if (isCluster) {
         ServerLog::Info("ParseClusterFiles is success");
         parseClusterResult = PARSE_RESULT_OK;
         ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcessAsyncStep,

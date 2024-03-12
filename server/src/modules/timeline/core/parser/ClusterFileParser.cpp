@@ -17,6 +17,7 @@
 #include "ParserStatusManager.h"
 #include "JsonUtil.h"
 #include "NumDefs.h"
+#include "DbClusterDataBase.h"
 #include "ClusterFileParser.h"
 
 namespace Dic {
@@ -347,10 +348,25 @@ bool ClusterFileParser::ParserClusterOfDb(const std::string& selectedPath)
         return false;
     }
 
-    if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
-        ServerLog::Warn("Parser Cluster Status Is Terminal");
+    std::vector<std::string> clusterPath = FileUtil::FindFilesByRegex(selectedPath, std::regex(clusterDBReg));
+    if (clusterPath.size() == 0) {
         return false;
     }
+    auto clusterDatabase =
+        dynamic_cast<FullDb::DbClusterDataBase *>(DataBaseManager::Instance().GetReadClusterDatabase());
+    if (clusterDatabase == nullptr) {
+        ServerLog::Error("Failed to get Cluster connection.");
+        return false;
+    }
+
+    ServerLog::Error(clusterPath[0]);
+    if (!clusterDatabase->OpenDb(clusterPath[0], false)) {
+        ServerLog::Error("Failed to open Cluster. rankId:", "FullDb");
+        return false;
+    }
+    clusterDatabase->UpdateClusterParseStatus(FINISH_STATUS);
+    ServerLog::Info("ParseClusterFiles is success");
+
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
     return true;
 }

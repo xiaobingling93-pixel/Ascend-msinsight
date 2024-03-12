@@ -181,24 +181,6 @@ void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path
     ServerLog::Info("Init Memory finish");
 }
 
-bool FullDbParser::InitCluster(std::string path, std::string token)
-{
-    auto clusterDatabase = dynamic_cast<DbClusterDataBase*>(DataBaseManager::Instance().GetReadClusterDatabase());
-    if (clusterDatabase == nullptr) {
-        ServerLog::Error("Failed to get Cluster connection.");
-        return false;
-    }
-    std::string clusterPath = path + "/cluster_analysis_output/cluster_analysis.db";
-    ServerLog::Error(clusterPath);
-    if (!clusterDatabase->OpenDb(clusterPath, false)) {
-        ServerLog::Error("Failed to open Cluster. rankId:", "FullDb");
-        return false;
-    }
-    clusterDatabase->UpdateClusterParseStatus(FINISH_STATUS);
-    ServerLog::Info("ParseClusterFiles is success");
-    return true;
-}
-
 bool FullDbParser::FindDevicePaths(const std::string &selectedFolder,
                                    std::map<std::string, std::string> &devicePaths)
 {
