@@ -132,9 +132,6 @@ const baseOption: any = {
         type: 'category',
         name: 'Dst Rank Id',
         data: [],
-        splitArea: {
-            show: true,
-        },
     },
     visualMap: {
         min: 0,
