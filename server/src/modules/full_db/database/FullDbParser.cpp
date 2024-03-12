@@ -152,13 +152,12 @@ void FullDbParser::InitSummery(std::vector<std::string> rankIds, std::string pat
     for (const std::string& id : rankIds) {
         auto summeryDatabase = dynamic_cast<FullDb::DbSummaryDataBase *>(
                 Timeline::DataBaseManager::Instance().GetSummaryDatabase(id));
-        if (summeryDatabase == nullptr) {
-            ServerLog::Error("Failed to get summery connection.");
+        if (summeryDatabase != nullptr && summeryDatabase->OpenDb(path, false)) {
+            FullDb::DbSummaryDataBase::ParserEnd(token, id, true, "");
+        } else {
+            FullDb::DbSummaryDataBase::ParserEnd(token, id, false, "");
+            ServerLog::Error("Failed to connect or open SummeryDatabase. rankId:", "FullDb");
         }
-        if (!summeryDatabase->OpenDb(path, false)) {
-            ServerLog::Error("Failed to open SummaryDataBase. rankId:", "FullDb");
-        }
-        FullDb::DbSummaryDataBase::ParserEnd(token, id, true, "");
     }
     ServerLog::Info("Init Summary finish");
 }
@@ -168,16 +167,16 @@ void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path
     for (const std::string& id : rankIds) {
         auto memoryDatabase = dynamic_cast<FullDb::DbMemoryDataBase *>(
                 Timeline::DataBaseManager::Instance().GetMemoryDatabase(id));
-        if (memoryDatabase == nullptr) {
-            ServerLog::Error("Failed to get memory connection.");
+        if (memoryDatabase != nullptr && memoryDatabase->OpenDb(path, false)) {
+            FileType type = DataBaseManager::Instance().GetFileType();
+            memoryDatabase->SetInferenceType(type == FileType::MS_PROF);
+            FullDb::DbMemoryDataBase::ParserEnd(id, true);
+            FullDb::DbMemoryDataBase::ParseCallBack(token, id, true, "");
+        } else {
+            FullDb::DbMemoryDataBase::ParserEnd(id, false);
+            FullDb::DbMemoryDataBase::ParseCallBack(token, id, false, "");
+            ServerLog::Error("Failed to connect or open memoryDatabase. rankId:", "FullDb");
         }
-        if (!memoryDatabase->OpenDb(path, false)) {
-            ServerLog::Error("Failed to open memoryDatabase. rankId:", "FullDb");
-        }
-        FileType type = DataBaseManager::Instance().GetFileType();
-        memoryDatabase->SetInferenceType(type == FileType::MS_PROF);
-        FullDb::DbMemoryDataBase::ParserEnd(id, true);
-        FullDb::DbMemoryDataBase::ParseCallBack(token, id, true, "");
     }
     ServerLog::Info("Init Memory finish");
 }
