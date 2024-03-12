@@ -40,7 +40,7 @@ private:
     const int operatorTableNum = 5;
     const int recordTableNum = 5;
     std::map<std::string, Protocol::MemorySuccess> ranks;
-    bool isCluster;
+    bool isCluster = false;
 
     std::unique_ptr<JsonMemoryDataBase> database;
     std::unique_ptr<ThreadPool> threadPool;
