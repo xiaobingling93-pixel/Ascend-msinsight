@@ -1,0 +1,6 @@
+[registries.openSources]
+index = "https://szv-open.codehub.huawei.com/cargo/cargo-central-repo.git"
+[source.openSources]
+registry = "https://szv-open.codehub.huawei.com/cargo/cargo-central-repo.git"
+replace-with = 'innersource'
+
