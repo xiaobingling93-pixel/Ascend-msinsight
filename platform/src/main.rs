@@ -19,6 +19,13 @@ const NO_WINDOW_FLAG: u32 = 0x08000000;
 
 fn run_server(root_path: &PathBuf, cache_path: &PathBuf, port: &mut String) -> Option<Mutex<Child>> {
     let mut server_path = root_path.to_path_buf();
+    if cfg!(target_os = "macos") {
+        env::set_var("DYLD_LIBRARY_PATH", server_path.join("resources/profiler/server/:$DYLD_LIBRARY_PATH").as_path());
+    }
+
+    if cfg!(target_os = "linux") {
+        env::set_var("LD_LIBRARY_PATH", server_path.join("resources/profiler/server/:$LD_LIBRARY_PATH").as_path());
+    }
     for tmp in SERVER_RELATIVE_LIST {
         server_path.push(tmp);
     }
