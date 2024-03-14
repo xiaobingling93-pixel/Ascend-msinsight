@@ -77,7 +77,7 @@ bool DbClusterDataBase::GetStageAndBubble(Protocol::PipelineStageTimeParam param
     std::string sql = "SELECT '" + param.stageId + "' as stageId, "
                       "max(ROUND(stage, 4)) as stageTime, "
                       "max(ROUND(bubble, 4)) as bubbleTime "
-                      "FROM " + TABLE_STEP_TRACE_TIME + " WHERE rank IN " + param.stageId + " AND step = ?";
+                      "FROM " + TABLE_STEP_TRACE_TIME + " WHERE \"index\" IN " + param.stageId + " AND step = ?";
     return ExecuteGetStageAndBubble(param, responseBody, sql);
 }
 
@@ -150,14 +150,45 @@ bool DbClusterDataBase::QueryBandwidthData(Protocol::BandwidthDataParam &param, 
 bool DbClusterDataBase::QueryDistributionData(Protocol::DistributionDataParam &param,
     Protocol::DistributionResBody &resBody)
 {
-    std::string sql = "SELECT package_size FROM "
+    std::string sql = "SELECT package_size, count, total_duration FROM "
                       + TABLE_COMM_ANALYZER_BANDWIDTH +
                       " WHERE step = ? "
                       "AND rank_id = ? "
                       "AND rank_set = ? "
                       "AND hccl_op_name = ? "
                       "AND band_type = ? ;";
-    return ExecuteQueryDistributionData(param, resBody, sql);
+    param.iterationId = "step" + param.iterationId;
+    sqlite3_stmt *stmt = nullptr;
+    int index = bindStartIndex;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        Server::ServerLog::Error("Failed to prepare QueryDistributionData statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, index++, param.rankId.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, index++, param.stage.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, index++, param.operatorName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, index, param.transportType.c_str(), -1, SQLITE_STATIC);
+    std::string distribution = "{";
+    int num = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        std::string package_size = sqlite3_column_string(stmt, col++);
+        std::string count = sqlite3_column_string(stmt, col++);
+        std::string total_duration = sqlite3_column_string(stmt, col++);
+        std::string value = "\"" + package_size + "\":[" + count + "," + total_duration + "],";
+        num += 1;
+        distribution += value;
+    }
+    if (num == 0) {
+        distribution = "";
+    } else {
+        distribution.erase(distribution.size() - 1);
+        distribution += "}";
+    }
+    resBody.distributionData = distribution;
+    sqlite3_finalize(stmt);
+    return true;
 }
 
 bool DbClusterDataBase::QueryRanksHandler(std::vector<Protocol::IterationsOrRanksObject> &responseBody)

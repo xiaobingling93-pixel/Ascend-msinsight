@@ -550,7 +550,7 @@ bool JsonClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam par
     std::string sql = "SELECT '" + param.stageId + "' as stageId, "
                       "max(ROUND(stage_time, 4)) as stageTime, "
                       "max(ROUND(bubble_time, 4)) as bubbleTime "
-                      "FROM " + TABLE_STEP_TRACE + " WHERE rank_id IN" + param.stageId + " AND step_id = ?";
+                      "FROM " + TABLE_STEP_TRACE + " WHERE rank_id IN " + param.stageId + " AND step_id = ?";
     return ExecuteGetStageAndBubble(param, responseBody, sql);
 }
 
