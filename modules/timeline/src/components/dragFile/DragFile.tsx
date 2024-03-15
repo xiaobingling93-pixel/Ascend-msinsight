@@ -119,7 +119,7 @@ class DragFile {
             ? await getFilelistByItems(e.dataTransfer.items)
             : getFilelist(e.dataTransfer.files);
         // 2.检查文件
-        const fileBag = this.checkFiles(allFiles);
+        const fileBag = await this.checkFiles(allFiles);
         if (!fileBag.usable) {
             notify('CheckError', fileBag.error);
             return;
@@ -138,7 +138,7 @@ class DragFile {
         return fileBag;
     }
 
-    checkFiles(list: FileDataType[]): CheckResultType {
+    async checkFiles(list: FileDataType[]): Promise<CheckResultType> {
         const files = list;
         let totalSize = 0;
         files.forEach((file: FileDataType, index: number) => {
@@ -157,12 +157,19 @@ class DragFile {
 }
 
 class DragFileImport extends DragFile {
-    // eslint-disable-next-line max-lines-per-function
-    checkFile(file: FileDataType): CheckResultType {
+    async checkFile(file: FileDataType): Promise<CheckResultType> {
         if (!this.checkFileSize(file.data.size)) {
             return {
                 usable: false,
                 error: 'Please select a file smaller than 10GB',
+            };
+        }
+
+        const isValidFormat = await this.checkFileFormat(file);
+        if (!isValidFormat) {
+            return {
+                usable: false,
+                error: 'File format error: Only Trace Event Format is supported',
             };
         }
 
@@ -176,15 +183,43 @@ class DragFileImport extends DragFile {
         };
     }
 
-    checkFiles(list: FileDataType[]): CheckResultType {
+    async checkFiles(list: FileDataType[]): Promise<CheckResultType> {
         const singleFiles = list.filter((file: FileDataType) => !file.attr.isInFolder);
         if (list.length === 1 && singleFiles.length === 1) {
-            return this.checkFile(singleFiles[0]);
+            return await this.checkFile(singleFiles[0]);
         } else {
             return {
                 usable: false,
                 error: 'Only Allow one File',
             };
+        }
+    }
+
+    checkFileFormat(file: FileDataType): Promise<boolean> {
+        return new Promise((resolve, reject): void => {
+            const reader = new FileReader();
+            reader.readAsText(file.data.slice(0, 10 * 1024));
+            reader.onload = (event): void => {
+                const text: any = event.target?.result;
+                resolve(this.isTraceViewFormat(text));
+            };
+            reader.onerror = (): void => {
+                resolve(false);
+            };
+        });
+    }
+
+    isTraceViewFormat(text: string): boolean {
+        // 校验TraceView文件格式
+        const regexArrayFormat = /^\[\{.*"ph":/;
+        const regexObjectFormat = /^\{.*"traceEvents": /;
+        if (regexArrayFormat.test(text)) {
+            return true;
+        } else if (regexObjectFormat.test(text)) {
+            const traceEventsVal = text.split('"traceEvents": ')[1];
+            return regexArrayFormat.test(traceEventsVal);
+        } else {
+            return false;
         }
     }
 
