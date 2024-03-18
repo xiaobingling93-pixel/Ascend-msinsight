@@ -73,7 +73,7 @@ const FilterCom = observer((): JSX.Element => {
             style={{ width: 'calc(30% - 40px)', minWidth: '270px' }}
             content={(<Select
                 value={condition.core}
-                style={{ width: 'calc(100% - 70px)' }}
+                style={{ width: 'calc(100% - 80px)' }}
                 onChange={val => handleChange('core', val)}
                 options={optionMap.coreOptions}
                 showSearch={true}
@@ -84,7 +84,7 @@ const FilterCom = observer((): JSX.Element => {
             style={{ width: 'calc(70% - 300px)', minWidth: '700px' }}
             content={(<Select
                 value={condition.source}
-                style={{ width: 'calc(100% - 70px)' }}
+                style={{ width: 'calc(100% - 80px)' }}
                 onChange={val => handleChange('source', val)}
                 options={optionMap.sourceOptions}
                 showSearch={true}
@@ -101,7 +101,7 @@ const FormItem = (props: {name: string;style?: React.CSSProperties;content: Reac
         margin: '0 20px 10px 0',
         ...props.style ?? {},
     }}>
-        <Label name={props.name} style={{ width: '50px', display: 'inline-block' }}/>
+        <Label name={props.name} style={{ width: '60px', display: 'inline-block' }}/>
         {props.content}
     </div>);
 };
