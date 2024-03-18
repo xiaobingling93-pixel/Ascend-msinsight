@@ -175,3 +175,14 @@ const logRecord: Record<number, unknown> = {};
 export function log(...param: unknown[]): void {
     logRecord[logindex++ % 1000] = param;
 }
+
+export function limitInput(): void {
+    setTimeout(() => {
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            if (input.maxLength < 0) {
+                input.setAttribute('maxlength', '200');
+            }
+        });
+    });
+}

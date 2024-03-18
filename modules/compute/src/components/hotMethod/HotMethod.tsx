@@ -12,7 +12,7 @@ import Filter from '../Filter';
 import CodeViewer from '../codeViewer/CodeViewer';
 import ResizeTable from '../resize/ResizeTable';
 import Bar from '../Bar';
-import { HeaderFixedContainer, LeftRightContainer, syncScroller, isViewable } from '../Common';
+import { HeaderFixedContainer, LeftRightContainer, syncScroller, isViewable, limitInput } from '../Common';
 import type { InstrsColumnType, Iline, Ilinetable, JsonInstructionType } from './defs';
 import { queryApiInstr, queryApiLine, querySourceCode } from '../RequestUtils';
 import { runInAction } from 'mobx';
@@ -82,7 +82,7 @@ const instrsColumns: ColumnsType<InstrsColumnType> = [
         width: 150,
         ellipsis: true,
         render: (Cycles, record) => {
-            return <Bar value={Cycles} sum={record.maxCycles ?? Cycles}/>;
+            return <Bar value={Cycles} max={record.maxCycles ?? Cycles}/>;
         },
     },
 ];
@@ -174,6 +174,11 @@ const Index = observer(({ session }: { session: Session }) => {
                             return record[col.dataIndex as keyof InstrsColumnType] === value;
                         }
                     },
+                    onFilterDropdownOpenChange: (open: boolean) => {
+                        if (open) {
+                            limitInput();
+                        }
+                    },
                 });
             }
         });
@@ -203,14 +208,16 @@ const Index = observer(({ session }: { session: Session }) => {
         const coreIndex = session.coreList.findIndex(item => item === core);
         const list = records.map((item: JsonInstructionType, index: number) => ({
             ...item,
-            Cycles: item.Cycles[coreIndex],
-            'Instructions Executed': item['Instructions Executed'][coreIndex],
+            Cycles: item.Cycles[coreIndex] ?? '',
+            'Instructions Executed': item['Instructions Executed']?.[coreIndex] ?? '',
             index: index + 1,
             maxCycles: 0,
         }));
         let maxCycles = 1;
         list.forEach(item => {
-            maxCycles = Math.max(maxCycles, item.Cycles);
+            if (!isNaN(Number(item.Cycles))) {
+                maxCycles = Math.max(maxCycles, Number(item.Cycles));
+            }
         });
         list.forEach(item => {
             item.maxCycles = maxCycles;
@@ -241,6 +248,7 @@ const Index = observer(({ session }: { session: Session }) => {
         window.addEventListener('resize', event => {
             resizeHeight();
         });
+        limitInput();
     }, []);
     useEffect(() => {
         reset();
