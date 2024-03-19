@@ -188,6 +188,7 @@ CommunicationTimeInfo CommunicationRapidSaxHandler::MapToTimeInfo(const rapidjso
     } else {
         timeInfo.opName = tempOpName;
     }
+    timeInfo.startTime = JsonUtil::GetDouble(json, "Start Timestamp(us)");
     timeInfo.elapseTime = JsonUtil::GetDouble(json, "Elapse Time(ms)");
     timeInfo.idleTime = JsonUtil::GetDouble(json, "Idle Time(ms)");
     timeInfo.synchronizationTimeRatio = JsonUtil::GetDouble(json, "Synchronization Time Ratio");

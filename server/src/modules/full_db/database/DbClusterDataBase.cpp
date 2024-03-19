@@ -114,10 +114,18 @@ bool DbClusterDataBase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
     return ExecuteQueryMatrixList(param, responseBody, sql);
 }
 
+double DbClusterDataBase::QueryMinStartTime()
+{
+    std::string sql = "SELECT MIN(start_timestamp) FROM " + TABLE_COMM_ANALYZER_TIME + " WHERE start_timestamp != 0";
+    return ExecuteQueryMinStartTime(sql);
+}
+
 bool DbClusterDataBase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
+    double startTime = QueryMinStartTime();
     std::string sql = "SELECT hccl_op_name as operatorName, "
+                      " ROUND((start_timestamp - ?) / 1000.0, 4) as start_time,"
                       " ROUND(elapsed_time, 4) as elapseTime, "
                       " ROUND(transit_time, 4) as transitTime,"
                       " ROUND(synchronization_time, 4) as synchronizationTime,"
@@ -128,7 +136,7 @@ bool DbClusterDataBase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
                       "FROM " + TABLE_COMM_ANALYZER_TIME +
                       " WHERE step = ? AND rank_id = ? AND rank_set = ?"
                       " AND hccl_op_name != 'Total Op Info' ";
-    return ExecuteQueryAllOperators(param, resBody, sql);
+    return ExecuteQueryAllOperators(param, resBody, sql, startTime);
 }
 
 bool DbClusterDataBase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
@@ -236,26 +244,23 @@ bool DbClusterDataBase::QueryIterations(std::vector<Protocol::IterationsOrRanksO
 bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestParams,
     std::vector<Protocol::Duration> &responseBody)
 {
+    double startTime = QueryMinStartTime();
     std::vector<std::string> rankList = requestParams.rankList;
-    std::string sql;
+    std::string sql = "SELECT rank_id, "
+            "ROUND((start_timestamp - ?) / 1000.0, 4) as start_time, "
+            "ROUND(elapsed_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
+            "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
+            "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
+            "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_COMM_ANALYZER_TIME +
+            " WHERE step = ? AND rank_set = ?";
     if (rankList.empty()) {
-        sql = "SELECT rank_id, ROUND(elapsed_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
-              "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
-              "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
-              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_COMM_ANALYZER_TIME +
-              " WHERE step = ? AND rank_set = ? AND hccl_op_name = ?";
+        sql += " AND hccl_op_name = ?";
     } else {
         std::string ranks = GetRanksSql(rankList);
-        sql = "SELECT rank_id, ROUND(elapsed_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
-              "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
-              "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
-              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_COMM_ANALYZER_TIME +
-              " WHERE step = ? AND rank_set = ?"
-              " AND rank_id IN " + ranks +
-              " AND hccl_op_name = ?";
+        sql += " AND rank_id IN " + ranks + " AND hccl_op_name = ?";
     }
     requestParams.iterationId = "step" + requestParams.iterationId;
-    return ExecuteQueryDurationList(requestParams, responseBody, sql);
+    return ExecuteQueryDurationList(requestParams, responseBody, sql, startTime);
 }
 
 bool DbClusterDataBase::QueryCommunicationGroup(Document &responseBody)

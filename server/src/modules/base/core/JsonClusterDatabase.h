@@ -65,6 +65,7 @@ public:
     bool QueryDurationList(Protocol::DurationListParams &requestParams,
                            std::vector<Protocol::Duration> &responseBody) override;
     bool QueryCommunicationGroup(Document &responseBody) override;
+    double QueryMinStartTime() override;
 
 private:
     sqlite3_stmt *insertTimeInfoStmt = nullptr;

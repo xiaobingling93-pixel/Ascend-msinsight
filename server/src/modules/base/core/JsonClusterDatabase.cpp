@@ -50,7 +50,7 @@ bool JsonClusterDatabase::CreateTable()
             "CREATE TABLE " + TABLE_TIME_INFO +
             " (id INTEGER PRIMARY KEY AUTOINCREMENT, iteration_id VARCHAR(50),"
             " stage_id VARCHAR(200), rank_id VARCHAR(50), op_name VARCHAR(100),"
-            " op_suffix VARCHAR(100), elapse_time double, synchronization_time_ratio double, "
+            " op_suffix VARCHAR(100), start_time double, elapse_time double, synchronization_time_ratio double, "
             "synchronization_time double, transit_time double, wait_time_ratio double, "
             "wait_time double, idle_time double);"
             "CREATE TABLE " + TABLE_BANDWIDTH +
@@ -126,12 +126,12 @@ bool JsonClusterDatabase::InitStmt()
 std::string JsonClusterDatabase::GetTimeInfoStmtSql(int len)
 {
     std::string sql = "INSERT INTO " + TABLE_TIME_INFO +
-                      " (iteration_id, stage_id, rank_id, op_name, op_suffix, elapse_time,"
+                      " (iteration_id, stage_id, rank_id, op_name, op_suffix, start_time, elapse_time,"
                       " synchronization_time_ratio,"
                       "synchronization_time, transit_time, wait_time_ratio, wait_time, idle_time )"
-                      " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+                      " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
     for (int i = 0; i < len - 1; i++) {
-        sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?)");
+        sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?)");
     }
     return sql;
 }
@@ -217,6 +217,7 @@ void JsonClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> 
         sqlite3_bind_text(stmt, idx++, timeInfo.opName.c_str(), timeInfo.opName.length(), SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, idx++, timeInfo.opSuffix.c_str(), timeInfo.opSuffix.length(),
                           SQLITE_TRANSIENT);
+        sqlite3_bind_double(stmt, idx++, timeInfo.startTime);
         sqlite3_bind_double(stmt, idx++, timeInfo.elapseTime);
         sqlite3_bind_double(stmt, idx++, timeInfo.synchronizationTimeRatio);
         sqlite3_bind_double(stmt, idx++, timeInfo.synchronizationTime);
@@ -613,10 +614,18 @@ std::string JsonClusterDatabase::BuildCondition(const Protocol::SummaryTopRankPa
     return sql;
 }
 
+double JsonClusterDatabase::QueryMinStartTime()
+{
+    std::string sql = "SELECT MIN(start_time) FROM " + TABLE_TIME_INFO + " WHERE start_time != 0";
+    return ExecuteQueryMinStartTime(sql);
+}
+
 bool JsonClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
+    double startTime = QueryMinStartTime();
     std::string sql = "SELECT op_name as operatorName, "
+                      " CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time - ?) / 1000.0, 4) END as startTime,"
                       " ROUND(elapse_time, 4) as elapseTime, "
                       " ROUND(transit_time, 4) as transitTime,"
                       " ROUND(synchronization_time, 4) as synchronizationTime,"
@@ -627,7 +636,7 @@ bool JsonClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &para
                       "FROM " + TABLE_TIME_INFO +
                       " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ?"
                       " AND op_name != 'Total Op Info' ";
-    return ExecuteQueryAllOperators(param, resBody, sql);
+    return ExecuteQueryAllOperators(param, resBody, sql, startTime);
 }
 
 bool JsonClusterDatabase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
@@ -707,25 +716,23 @@ bool JsonClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRank
 bool JsonClusterDatabase::QueryDurationList(Protocol::DurationListParams &requestParams,
     std::vector<Protocol::Duration> &responseBody)
 {
+    double startTime = QueryMinStartTime();
     std::vector<std::string> rankList = requestParams.rankList;
-    std::string sql;
+    std::string sql =
+            "SELECT rank_id, "
+            "CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time - ?) / 1000.0, 4) END as startTime, "
+            "ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
+            "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
+            "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
+            "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_TIME_INFO +
+            " WHERE iteration_id = ? AND stage_id = ?";
     if (rankList.empty()) {
-        sql = "SELECT rank_id, ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
-              "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
-              "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
-              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_TIME_INFO +
-              " WHERE iteration_id = ? AND stage_id = ? AND op_name = ?";
+        sql += " AND op_name = ?";
     } else {
         std::string ranks = GetRanksSql(rankList);
-        sql = "SELECT rank_id, ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
-              "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
-              "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
-              "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_TIME_INFO +
-              " WHERE iteration_id = ? AND stage_id = ?"
-              " AND rank_id IN " + ranks +
-              " AND op_name = ?";
+        sql += " AND rank_id IN " + ranks + " AND op_name = ?";
     }
-    return ExecuteQueryDurationList(requestParams, responseBody, sql);
+    return ExecuteQueryDurationList(requestParams, responseBody, sql, startTime);
 }
 } // end of namespace Module
 } // end of namespace Dic

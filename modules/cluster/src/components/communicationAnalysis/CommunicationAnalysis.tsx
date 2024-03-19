@@ -44,7 +44,7 @@ const searchData = async (conditions: ConditionDataType): Promise<showDataType> 
 };
 const wrapChartData = (data: tableDataType[]): chartDataType => {
     // 显示字段
-    const fields = ['rankId', 'elapseTime', 'transitTime', 'synchronizationTime',
+    const fields = ['rankId', 'startTime', 'elapseTime', 'transitTime', 'synchronizationTime',
         'waitTime', 'synchronizationTimeRatio', 'waitTimeRatio'];
     const chartData: chartDataType = {} as chartDataType;
     fields.forEach(field => {

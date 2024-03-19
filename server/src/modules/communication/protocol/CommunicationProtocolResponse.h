@@ -14,6 +14,7 @@ namespace Dic {
 namespace Protocol {
 struct OperatorItem {
     std::string operatorName;
+    double startTime;
     double elapseTime;
     double transitTime;
     double synchronizationTime;
@@ -104,6 +105,7 @@ struct MatrixSortOpNamesResponse : public Response {
 
 struct Duration {
     std::string rankId;
+    double startTime;
     double elapseTime;
     double transitTime;
     double synchronizationTime;

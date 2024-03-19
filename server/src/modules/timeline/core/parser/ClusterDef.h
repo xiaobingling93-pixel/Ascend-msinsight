@@ -18,6 +18,7 @@ struct CommunicationTimeInfo {
     std::string rankId;
     std::string opName;
     std::string opSuffix;
+    double startTime = 0;
     double elapseTime = 0;
     double synchronizationTimeRatio = 0;
     double synchronizationTime = 0;

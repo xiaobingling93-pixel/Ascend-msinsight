@@ -21,6 +21,7 @@ import type { Session } from '../../entity/session';
 export interface DataType {
     'Rank ID': string ;
     'Operator Name': string ;
+    'Start Timestamp(us)': string | number;
     'Elapse Time(ms)': string | number;
     'Transit Time(ms)': string | number;
     'Synchronization Time(ms)': number;
@@ -33,6 +34,12 @@ export interface DataType {
 }
 
 const commonColumns: ColumnsType<DataType> = [
+    {
+        title: 'Start Time(ms)',
+        dataIndex: 'startTime',
+        sorter: (a: DataType, b: DataType) => a.startTime - b.startTime,
+        ellipsis: true,
+    },
     {
         title: 'Elapse Time(ms)',
         dataIndex: 'elapseTime',

@@ -43,6 +43,7 @@ public:
     bool QueryDurationList(Protocol::DurationListParams &requestParams,
                            std::vector<Protocol::Duration> &responseBody) override;
     bool QueryCommunicationGroup(Document &responseBody) override;
+    double QueryMinStartTime() override;
 
     void SetBaseInfo(Protocol::SummaryTopRankResBody responseBody);
 private:

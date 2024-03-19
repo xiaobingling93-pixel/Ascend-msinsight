@@ -217,11 +217,27 @@ bool VirtualClusterDatabase::ExecuteQueryMatrixList(Protocol::MatrixBandwidthPar
     return true;
 }
 
-bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsParam &param,
-    Protocol::OperatorDetailsResBody &resBody, std::string sql)
+double VirtualClusterDatabase::ExecuteQueryMinStartTime(std::string sql)
 {
     sqlite3_stmt *stmt = nullptr;
-    std::vector<std::string> orderByFlagVector = {"operatorName", "elapseTime", "synchronizationTime",
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare QueryMinStartTime statement. error:", sqlite3_errmsg(db));
+        return 0;
+    }
+    double minStartTime;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        minStartTime = sqlite3_column_double(stmt, col++);
+    }
+    sqlite3_finalize(stmt);
+    return minStartTime;
+}
+
+bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsParam &param,
+    Protocol::OperatorDetailsResBody &resBody, std::string sql, double startTime)
+{
+    sqlite3_stmt *stmt = nullptr;
+    std::vector<std::string> orderByFlagVector = {"operatorName", "startTime", "elapseTime", "synchronizationTime",
                                                   "waitTime", "idleTime", "transitTime",
                                                   "synchronizationTimeRatio", "waitTimeRatio"};
     if (param.orderBy.empty() ||
@@ -237,6 +253,7 @@ bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsP
         return false;
     }
     int index = bindStartIndex;
+    sqlite3_bind_double(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.rankId.c_str(), param.rankId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, param.stage.c_str(), param.stage.length(), SQLITE_TRANSIENT);
@@ -246,6 +263,7 @@ bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsP
         int col = resultStartIndex;
         Protocol::OperatorItem operatorItem;
         operatorItem.operatorName = sqlite3_column_string(stmt, col++);
+        operatorItem.startTime = sqlite3_column_double(stmt, col++);
         operatorItem.elapseTime = sqlite3_column_double(stmt, col++);
         operatorItem.transitTime = sqlite3_column_double(stmt, col++);
         operatorItem.synchronizationTime = sqlite3_column_double(stmt, col++);
@@ -414,7 +432,7 @@ bool VirtualClusterDatabase::ExecuteQueryIterations(std::vector<Protocol::Iterat
 }
 
 bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListParams &requestParams,
-    std::vector<Protocol::Duration> &responseBody, std::string sql)
+    std::vector<Protocol::Duration> &responseBody, std::string sql, double startTime)
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
@@ -427,6 +445,7 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
         ServerLog::Error("Failed to prepare Query Duration List statement. error:", sqlite3_errmsg(db));
         return false;
     }
+    sqlite3_bind_double(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
@@ -434,6 +453,7 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
         int col = resultStartIndex;
         Protocol::Duration object;
         object.rankId = sqlite3_column_string(stmt, col++);
+        object.startTime = sqlite3_column_double(stmt, col++);
         object.elapseTime = sqlite3_column_double(stmt, col++);
         object.transitTime = sqlite3_column_double(stmt, col++);
         object.synchronizationTime = sqlite3_column_double(stmt, col++);

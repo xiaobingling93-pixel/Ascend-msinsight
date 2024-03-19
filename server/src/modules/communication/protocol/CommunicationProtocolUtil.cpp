@@ -28,6 +28,7 @@ template <> std::optional<document_t> ToResponseJson<OperatorDetailsResponse>(co
     for (const OperatorItem& operatorItem : response.body.allOperators) {
         json_t itemJson(kObjectType);
         JsonUtil::AddMember(itemJson, "operatorName", operatorItem.operatorName, allocator);
+        JsonUtil::AddMember(itemJson, "startTime", operatorItem.startTime, allocator);
         JsonUtil::AddMember(itemJson, "elapseTime", operatorItem.elapseTime, allocator);
         JsonUtil::AddMember(itemJson, "transitTime", operatorItem.transitTime, allocator);
         JsonUtil::AddMember(itemJson, "synchronizationTime", operatorItem.synchronizationTime, allocator);
@@ -146,6 +147,7 @@ template <> std::optional<document_t> ToResponseJson<DurationResponse>(const Dur
     for (const Duration& duration : response.body) {
         json_t itemJson(kObjectType);
         JsonUtil::AddMember(itemJson, "rankId", duration.rankId, allocator);
+        JsonUtil::AddMember(itemJson, "startTime", duration.startTime, allocator);
         JsonUtil::AddMember(itemJson, "elapseTime", duration.elapseTime, allocator);
         JsonUtil::AddMember(itemJson, "transitTime", duration.transitTime, allocator);
         JsonUtil::AddMember(itemJson, "synchronizationTime", duration.synchronizationTime, allocator);
