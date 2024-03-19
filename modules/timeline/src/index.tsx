@@ -20,7 +20,7 @@ declare global {
         setTheme: (isDark: boolean) => void;
         request: (dataSource: DataSource, params: { command: string; params: Record<string, unknown> }) => Promise<any>;
         cefQuery: (obj: CefQueryType) => void;
-        requestData: (method: string, params: any, module?: string) => Promise<any>;
+        requestData: (method: string, params: any, module?: string, voidResponse?: boolean) => Promise<any>;
     }
 
     interface DataSource {
@@ -58,10 +58,11 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
     });
 });
 
-window.requestData = async (command, params, module) => {
+window.requestData = async (command, params, module, voidResponse = false): Promise<any> => {
     const data = await connector.fetch({
         args: { command, params },
         module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
+        voidResponse,
     });
     return (data as any).body;
 };

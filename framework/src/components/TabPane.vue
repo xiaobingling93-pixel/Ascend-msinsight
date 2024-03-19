@@ -49,8 +49,8 @@ onMounted(async () => {
         if (!e.data.remote) {
             e.data.remote = useDataSources().lastDataSource;
         }
-        const {remote, args, module} = e.data;
-        const result = await request(remote, module, args);
+        const {remote, args, module, voidResponse} = e.data;
+        const result = await request(remote, module, args, voidResponse);
         return {dataSource: remote, body: result};
     });
 

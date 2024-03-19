@@ -133,6 +133,7 @@ type FetchRequest = {
     id: FetchSequenceID;
     [x: string]: unknown;
 };
+const MAX_MSG_SEQUENCE = 1000;
 class ClientConnector extends BaseConnector {
     private readonly _msgSequence: Map<FetchSequenceID, Function> = new Map();
     private _curFetchSequenceID: FetchSequenceID = 0;
@@ -171,7 +172,17 @@ class ClientConnector extends BaseConnector {
             params.id = this._curFetchSequenceID;
             (params as Record<string, unknown>).event = 'request';
             const body = params as unknown as SendParams<string>;
+            const voidResponse = params?.voidResponse as boolean;
+
             this.send(body, reject);
+
+            if (voidResponse) {
+                return;
+            }
+            if (this._msgSequence.size > MAX_MSG_SEQUENCE) {
+                const firstKey = this._msgSequence.keys().next().value;
+                this._msgSequence.delete(firstKey);
+            }
             this._msgSequence.set(this._curFetchSequenceID++, resolve);
         });
     };

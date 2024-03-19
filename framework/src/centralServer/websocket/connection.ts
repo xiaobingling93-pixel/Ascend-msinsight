@@ -23,6 +23,8 @@ const createRequestHead = function (
     };
 };
 
+const MAX_RESPONSE_HANDLERS = 1000;
+
 export class Connection {
     private _ws: WebSocket | undefined;
     private _dataSource: DataSource;
@@ -116,7 +118,7 @@ export class Connection {
         }) as Promise<void>;
     }
 
-    async fetch(module: ModuleName, dataRequest: DataRequest): Promise<unknown> {
+    async fetch(module: ModuleName, dataRequest: DataRequest, voidResponse: boolean = false): Promise<unknown> {
         if(!this.isConnected){
             ElMessage.error('WebSocket is already in CLOSING or CLOSED state! You are advised to restart Ascend Insight.');
         }
@@ -151,6 +153,13 @@ export class Connection {
                     reject(new Error(message));
                 }
             };
+            if (voidResponse) {
+                return;
+            }
+            if (this._responseHandlers.size > MAX_RESPONSE_HANDLERS) {
+                const firstKey = this._responseHandlers.keys().next().value;
+                this._responseHandlers.delete(firstKey);
+            }
             this._responseHandlers.set(id, reqCallback);
         });
     }

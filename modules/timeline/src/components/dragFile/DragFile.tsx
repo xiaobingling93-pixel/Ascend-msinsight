@@ -113,11 +113,8 @@ class DragFile {
             notify('Processing');
             return;
         }
-        const isWebPage = window.location.href.startsWith('http://');
         // 1.读取文件
-        const allFiles = isWebPage
-            ? await getFilelistByItems(e.dataTransfer.items)
-            : getFilelist(e.dataTransfer.files);
+        const allFiles = await getFilelistByItems(e.dataTransfer.items);
         // 2.检查文件
         const fileBag = await this.checkFiles(allFiles);
         if (!fileBag.usable) {
@@ -255,14 +252,15 @@ class DragFileImport extends DragFile {
         reader.onload = (event): void => {
             const text: any = event.target?.result;
             if (text !== null && text !== undefined) {
+                const isLastSlice = count <= 1 || i === count;
                 try {
                     window.requestData('upload/file', {
                         text,
                         fileAttr: attr,
                         slice: {
-                            isSliced: count > 1, index: i, count, isLast: count <= 1 || i === count,
+                            isSliced: count > 1, index: i, count, isLast: isLastSlice,
                         },
-                    }, 'timeline').then((res: any) => {
+                    }, 'timeline', !isLastSlice).then((res: any) => {
                         resolve({ succeed: true, attr, res });
                     }).catch((error: any) => {
                         resolve({ succeed: false, attr, error });
@@ -291,17 +289,6 @@ class DragFileImport extends DragFile {
             }
         });
     }
-}
-function getFilelist(files: FileList): any {
-    const allFiles = [];
-    for (let i = 0; i < files.length; i++) {
-        const file = files.item(i);
-        allFiles.push({
-            data: file,
-            attr: { name: file?.name, path: file?.name, isInFolder: file?.type === '' },
-        });
-    }
-    return allFiles;
 }
 
 async function getFilelistByItems(items: DataTransferItemList): Promise<any> {
