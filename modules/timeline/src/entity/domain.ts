@@ -20,19 +20,21 @@ interface ZoomCenterifyArgs {
 const zoomCenterify = ({ domain: [start, end], newDuration, upperBound, point }: ZoomCenterifyArgs): [ number, number ] => {
     const centerPoint = validNumber(point) ?? (start + end) / 2;
     const prevDuration = end - start;
-    const leftRatio = (centerPoint - start) / prevDuration;
-    const leftDuration = leftRatio * newDuration;
-    const rightRatio = (end - centerPoint) / prevDuration;
-    const rightDuration = rightRatio * newDuration;
-    if (centerPoint - leftDuration < 0) {
-        start = 0;
-        end = Math.min(newDuration, upperBound);
-    } else if (centerPoint + rightDuration > upperBound) {
-        end = upperBound;
-        start = Math.max(upperBound - newDuration, 0);
-    } else {
-        start = centerPoint - leftDuration;
-        end = centerPoint + rightDuration;
+    if (prevDuration > 0) {
+        const leftRatio = (centerPoint - start) / prevDuration;
+        const leftDuration = leftRatio * newDuration;
+        const rightRatio = (end - centerPoint) / prevDuration;
+        const rightDuration = rightRatio * newDuration;
+        if (centerPoint - leftDuration < 0) {
+            start = 0;
+            end = Math.min(newDuration, upperBound);
+        } else if (centerPoint + rightDuration > upperBound) {
+            end = upperBound;
+            start = Math.max(upperBound - newDuration, 0);
+        } else {
+            start = centerPoint - leftDuration;
+            end = centerPoint + rightDuration;
+        }
     }
     return [start, end];
 };
@@ -73,7 +75,7 @@ export class Domain {
 
     set endTimeAll(endTimeAll: TimeStamp) {
         this._endTimeAll = endTimeAll;
-        if (this.maxDuration / this._endTimeAll < 2 * this.BOUNDARY_ZOOM_RATE) {
+        if (this._endTimeAll > 0 && this.maxDuration / this._endTimeAll < 2 * this.BOUNDARY_ZOOM_RATE) {
             this.maxDuration = Math.min(this._UPPER_BOUND, this._endTimeAll * this.BOUNDARY_ZOOM_RATE);
         }
         if (this._endTimeAll > this._domainEnd) {
@@ -162,6 +164,9 @@ export class Domain {
     }
 
     get timePerPx(): number {
+        if (this._chartViewWidth === 0) {
+            return this.duration;
+        }
         return this.duration / this._chartViewWidth;
     }
 }

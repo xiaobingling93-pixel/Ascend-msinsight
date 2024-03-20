@@ -89,6 +89,9 @@ interface GetTimestamper {
 };
 // get timestamp and its position for each tick
 export const getTimestamper = ({ timeStep, tickSpace, domain: [timeStart], index, originX }: GetTimestamper): { timestamp: number; beginX: number } => {
+    if (timeStep === 0) {
+        return { timestamp: timeStart, beginX: originX + (index * tickSpace) };
+    }
     const integerStart = timeStart - timeStart % timeStep;
     const timeOffset = timeStart - integerStart;
     const stepOffset = tickSpace * timeOffset / timeStep;
@@ -161,8 +164,8 @@ const getAdaptableTickSpaceAndNum = ([start, end]: Domain, timePerPx: number): {
         return base * Math.pow(10, expotential);
     };
     const timeStep = getTimeStep(Math.ceil(duration));
-    const tickSpace = timeStep / timePerPx;
-    const tickNum = Math.floor(duration / timeStep) + 1;
+    const tickSpace = timePerPx === 0 ? 0 : timeStep / timePerPx;
+    const tickNum = timeStep === 0 ? 0 : Math.floor(duration / timeStep) + 1;
     return { timeStep, tickSpace, tickNum };
 };
 

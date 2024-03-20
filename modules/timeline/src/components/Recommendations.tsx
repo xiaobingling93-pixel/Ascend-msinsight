@@ -124,6 +124,9 @@ const TemplatesIcons = ({ left, recommendedTemplates, createSession, templates, 
 };
 
 const transformTimeToLeft = (domainStart: number, domainEnd: number, timestamp: number): number => {
+    if (domainEnd === domainStart) {
+        return 0;
+    }
     return 100 * (timestamp - domainStart) / (domainEnd - domainStart);
 };
 

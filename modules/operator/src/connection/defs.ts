@@ -1,4 +1,6 @@
-
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 export const CONTENT_LENGTH_PREFIX = 'Content-Length';
 export const PORT = 9000;
 

@@ -103,7 +103,7 @@ export const PaginationWhithPgaeData = (props: any): JSX.Element => {
         pageSizeOptions= {[10, 20, 50, 100] }
         showTotal={(total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>)}
         onChange={(current, pageSize) => { setPage({ ...page, current, pageSize }); }}
-        showQuickJumper={page.total / page.pageSize > 5}
+        showQuickJumper={page.total / notZero(page.pageSize) > 5}
         style={{ float: 'right', marginTop: '10px' }}
     />;
 };
@@ -116,7 +116,7 @@ export const GetPageConfigWhithPageData = (page: { current: number; pageSize: nu
         showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>),
         hideOnSinglePage: false,
         onChange: (current: number, pageSize: number) => { setPage({ ...page, current, pageSize }); },
-        showQuickJumper: page.total / page.pageSize > 5,
+        showQuickJumper: page.total / notZero(page.pageSize) > 5,
     };
 };
 
@@ -292,4 +292,9 @@ export const getDecimalCount = (num: number): number => {
         return arr[1].length;
     }
     return 0;
+};
+
+export const notZero = (num: number, replace = 1): number => {
+    const replaceNum = replace === 0 ? 1 : replace;
+    return num === 0 ? replaceNum : num;
 };

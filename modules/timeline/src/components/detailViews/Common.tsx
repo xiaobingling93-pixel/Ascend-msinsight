@@ -91,7 +91,7 @@ export const GetPageData = (page: { current: number; pageSize: number; total: nu
         showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>),
         hideOnSinglePage: false,
         onChange: (current: number, pageSize: number) => { setPage({ ...page, current, pageSize }); },
-        showQuickJumper: page.total / page.pageSize > 5,
+        showQuickJumper: page.total / (page.pageSize === 0 ? 1 : page.pageSize) > 5,
     };
 };
 

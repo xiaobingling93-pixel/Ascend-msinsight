@@ -58,7 +58,13 @@ export const slicesListDetail = detail({
             element.endTime = Math.ceil(endTime + timestampOffset);
         });
 
-        res.push({ title: 'Totals', wallDuration: totalWallDuration, selfTime: totalSelfTime, avgWallDuration: totalWallDuration / totalOccurrences, occurrences: totalOccurrences });
+        res.push({
+            title: 'Totals',
+            wallDuration: totalWallDuration,
+            selfTime: totalSelfTime,
+            avgWallDuration: totalOccurrences === 0 ? totalWallDuration : totalWallDuration / totalOccurrences,
+            occurrences: totalOccurrences,
+        });
 
         return res;
     },

@@ -53,7 +53,7 @@ const useWatchDomainChange = (scrollerRef: React.RefObject<HTMLDivElement>, isMa
     const bias = Math.max(0, (session.endTimeAll ?? 0) - session.maxDuration);
     React.useEffect(() => {
         // upadte scroller position when user is not handling and session is recording
-        if (scrollerRef.current && !isManulHandleRef.current) {
+        if (scrollerRef.current && !isManulHandleRef.current && totalTime > 0) {
             scrollerRef.current.scrollLeft = ((domainStart - bias) / totalTime) * scrollerRef.current.scrollWidth;
         }
     }, [session.endTimeAll, domainStart, domainEnd]);
@@ -104,6 +104,9 @@ const HorizontalScroller = observer((props: ScrollBarProps) => {
 
     const prevPaddingWidthRef = React.useRef(0);
     const paddingWidth = React.useMemo(() => {
+        if (domainEnd === domainStart) {
+            return 0;
+        }
         const width = 100 * totalTime / (domainEnd - domainStart);
         // default scroll to right when the scroller display
         if (width > 100 && prevPaddingWidthRef.current <= 100) {
@@ -121,7 +124,7 @@ const HorizontalScroller = observer((props: ScrollBarProps) => {
 
     const handleScroll = _.throttle(({ currentTarget }: React.UIEvent<HTMLDivElement>): void => {
         runInAction(() => {
-            if (scrollerRef.current && isManulHandleRef.current) {
+            if (scrollerRef.current && isManulHandleRef.current && currentTarget.scrollWidth !== 0) {
                 traceStart('dragLane', { action: 'dragLane' });
                 const bias = Math.max(0, (session.endTimeAll ?? 0) - session.maxDuration);
                 const start = totalTime * (currentTarget.scrollLeft / currentTarget.scrollWidth) + bias;

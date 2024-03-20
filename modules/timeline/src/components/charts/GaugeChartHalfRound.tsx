@@ -34,6 +34,9 @@ const needleThickness = canvasHeight * ratio / 15.6;
 const paddingTop = canvasHeight * ratio / 0.9;
 
 const drawNeedle = (theme: Theme, context: CanvasRenderingContext2D, width: number, maxNumber: number, datas: number): void => {
+    if (maxNumber === 0) {
+        return;
+    }
     context.save();
     context.translate(width / 2, paddingTop);
     context.rotate(Math.PI / 2 + Math.PI * datas / maxNumber);

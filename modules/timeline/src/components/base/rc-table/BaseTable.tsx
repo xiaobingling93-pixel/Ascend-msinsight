@@ -346,7 +346,7 @@ const ForwardBaseTable =  React.forwardRef(function Table<RecordType extends Def
                 ...scrollTableStyle,
                 tableLayout: mergedTableLayout,
                 position: 'relative',
-                top: Math.max(0, Math.floor(scrollTop / rowHeight) - VIRTUAL_TOLERANCE) * rowHeight,
+                top: rowHeight === 0 ? 0 : Math.max(0, Math.floor(scrollTop / rowHeight) - VIRTUAL_TOLERANCE) * rowHeight,
             }}>
                 <ColGroup colWidths={flattenColumns.map(({ width }) => width)} columns={flattenColumns} />
                 <Body<RecordType>

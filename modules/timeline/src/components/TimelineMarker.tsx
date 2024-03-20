@@ -149,6 +149,9 @@ export const drawTimelineFlags = (session: Session, domain: number[], current: H
 };
 
 export const transformTimeToLeft = (domainStart: number, domainEnd: number, timestamp: number, canvasWidth: number): number => {
+    if (domainEnd === domainStart) {
+        return 0;
+    }
     return canvasWidth * (timestamp - domainStart) / (domainEnd - domainStart);
 };
 
@@ -644,6 +647,9 @@ const setSelectFlag = (session: Session, index: number, mouseXOffset: number, xO
 
 export const linearScaleFactory = (from: [number, number], to: [number, number]) => {
     return (x: number) => {
+        if (from[1] === from[0]) {
+            return x;
+        }
         const scale = (to[1] - to[0]) / (from[1] - from[0]);
         return (x - from[0]) * scale + to[0];
     };

@@ -10,7 +10,7 @@ import { Session } from '../../entity/session';
 import { VoidFunction } from '../../utils/interface';
 import { useEventBus } from '../../utils/eventBus';
 import { queryTopSummary } from '../../utils/RequestUtils';
-import { addResizeEvent, COLOR } from '../Common';
+import { addResizeEvent, COLOR, notZero } from '../Common';
 import Filter, { ConditionDataType } from './Filter';
 import StatisticsTable from './StatisticsTable';
 import SummaryTable from './SummaryTable';
@@ -200,8 +200,8 @@ function wrapData(data: SummaryDataType[]): any {
             total += item[field];
         });
         item.computingTime = item.computingTime - item.communicationOverLappedTime;
-        item.computeTimeRatio = Number((100 * item.computingTime / total).toFixed(2));
-        item.communicationTimeRatio = Number((100 * item.communicationNotOverLappedTime / total).toFixed(2));
+        item.computeTimeRatio = Number((100 * item.computingTime / notZero(total)).toFixed(2));
+        item.communicationTimeRatio = Number((100 * item.communicationNotOverLappedTime / notZero(total)).toFixed(2));
     });
     baseOption.xAxis[0].data = data.map(item => item.rankId);
     const order: Array<keyof SummaryDataType> = ['computingTime', 'communicationNotOverLappedTime',
