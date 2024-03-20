@@ -47,6 +47,7 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
             }
             session.memoryRankIds = [];
             session.isCluster = false;
+            session.curRankIdsCount = 0;
         });
     } catch (error) {
         console.error(error);
@@ -80,12 +81,13 @@ export const updateSessionHandler: NotificationHandler = async (data): Promise<v
             if (!session) {
                 return;
             }
-            if (data.isReset === true) {
-                session.memoryRankIds = [];
-                session.isCluster = data.isCluster as boolean;
-                session.rankIdsTotal = data.unitcount as number;
-                session.curRankIdsCount = 0;
-            }
+            type SessionKey = 'isCluster' | 'unitcount';
+            const keys: SessionKey[] = ['isCluster', 'unitcount'];
+            keys.forEach((key: SessionKey) => {
+                if (data[key] !== undefined) {
+                    Object.assign(session, { key: data[key] });
+                }
+            });
         });
     } catch (error) {
         console.error(error);

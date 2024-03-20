@@ -53,10 +53,12 @@ const props = defineProps<{
 
 ::v-deep(.contentNode) {
     position: relative;
-    display: flex;
+    display: contents;
     user-select: none;
     justify-content: space-between;
     flex: 1;
+    line-height: 20px;
+    width: 100%;
 }
 
 ::v-deep(.contentBody) {
@@ -64,6 +66,7 @@ const props = defineProps<{
     align-items: center;
     width: 0;
     flex: 1 1 auto;
+    margin-right: 20px;
 }
 
 ::v-deep(.treeDeleteIcon) {
@@ -91,6 +94,8 @@ const props = defineProps<{
 
 ::v-deep(.deleteIcon) {
     flex: 0 0 auto;
+    position: absolute;
+    right:0;
 }
 
 ::v-deep(.el-popper.is-dark) {

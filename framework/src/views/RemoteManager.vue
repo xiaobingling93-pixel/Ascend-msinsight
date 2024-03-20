@@ -6,11 +6,14 @@ import ResourceComp from '@/components/ResourceComp.vue';
 import { useDataSources } from '@/stores/dataSource';
 import connector from '@/connection';
 import ProjectMode from '@/components/ProjectMode.vue';
+import { ElMessage } from 'element-plus';
 const isDarkTheme = ref(true);
 
 const resourceComp = ref();
 // 输入文件是否存在
 const fileIsExist = ref(false);
+// 按钮是否可点击
+const clickAble = ref(true);
 onMounted(() => {
     connector.addListener('getParseStatus', () => {
       connector.send({
@@ -40,12 +43,27 @@ function addRemote(e: MouseEvent) {
 
 const store = useDataSources();
 
-const handleConfirm = () => {
-    const result = resourceComp.value.doSetCurrentPath();
-    if (result) {
-        showModal.value = false;
+let clicking=false;
+const addClickProtect = (func: () => void): void => {
+    if (!clickAble.value) {
+        return;
     }
-}
+    clickAble.value = false;
+    func();
+    setTimeout(() => {
+        clickAble.value = true;
+    }, 1000);
+};
+
+const handleConfirm = () => {
+    showModal.value = false;
+    setTimeout(() => {
+        const result = resourceComp.value.doSetCurrentPath();
+        if (!result) {
+            ElMessage.error('Error');
+        }
+    }, 100);
+};
 </script>
 
 <template>
@@ -66,7 +84,7 @@ const handleConfirm = () => {
                     To refresh a directory, collapse and expand the directory.
                 </div>
                 <span>
-                    <el-button :disabled = "!fileIsExist.valueOf()" type="primary" @click="handleConfirm">Confirm</el-button>
+                    <el-button :disabled = "!fileIsExist.valueOf() || !clickAble.valueOf()" type="primary" @click="addClickProtect(handleConfirm)">Confirm</el-button>
                     <el-button @click="showModal = false">Cancel</el-button>
                 </span>
             </template>

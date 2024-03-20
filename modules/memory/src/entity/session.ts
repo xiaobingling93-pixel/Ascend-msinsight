@@ -45,6 +45,7 @@ export class Session {
     id = '';
     token = '';
     remoteAttrs: Map<string, Record<string, unknown>> = new Map();
+    unitcount = 0;
     private _name: string | null;
     private _phase: Phase = 'configuring';
     private _units: InsightUnit[] = [];

@@ -13,6 +13,7 @@ export type InterfaceDefs = {
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'parse/memoryCompleted': parseMemoryCompletedHandler,
     'remote/remove': removeRemoteHandler,
+    'remote/reset': removeRemoteHandler,
     updateSession: updateSessionHandler,
     wakeup: wakeUpHandler,
     setTheme,
