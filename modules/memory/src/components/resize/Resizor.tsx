@@ -3,6 +3,7 @@
 */
 import React, { useRef } from 'react';
 import './Resizor.css';
+import { Console as console } from '../../utils/Console';
 
 // eslint-disable-next-line max-lines-per-function
 const Resizor = (props: {
@@ -88,7 +89,13 @@ const Resizor = (props: {
             if (typeof event?.data !== 'string') {
                 return;
             }
-            const data = JSON.parse(event.data);
+            let data = null;
+            try {
+                data = JSON.parse(event.data);
+            } catch (e) {
+                console.warn('invalid JSON format');
+                return;
+            }
             if (data.from === 'framework' && data.event === 'mouseover') {
                 handleMouseUp();
             }

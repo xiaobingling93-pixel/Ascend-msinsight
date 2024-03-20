@@ -35,7 +35,12 @@ abstract class BaseConnector {
             if (typeof event.data !== 'string') {
                 return;
             }
-            res.data = JSON.parse(event.data);
+            try {
+                res.data = JSON.parse(event.data);
+            } catch (e) {
+                console.warn('invalid JSON format');
+                return;
+            }
             const listener = this._listeners.get(res.data.event);
             if (res.data.event === 'request') {
                 this.awaitFetch(res);
