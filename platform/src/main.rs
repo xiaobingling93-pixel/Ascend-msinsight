@@ -148,9 +148,29 @@ fn home_dir() -> Option<PathBuf> {
     Some(home)
 }
 
+#[cfg(windows)]
+#[link(name = "shell32")]
+extern "system" {
+    pub fn IsUserAnAdmin() -> bool;
+}
+
+#[cfg(windows)]
+fn is_admin() -> bool {
+    unsafe {
+        IsUserAnAdmin()
+    }
+}
+
 fn main() {
     let cache_path = home_dir().unwrap().join(".ascend_insight"); //cache folder generated for each user.
-    env::set_var("WEBVIEW2_USER_DATA_FOLDER", cache_path.as_path());
+    std::fs::create_dir_all(cache_path.as_path()).expect("no permission to create cache_path");
+    #[cfg(windows)] {
+        let mut webview_path = cache_path.clone();
+        if is_admin() {
+            webview_path.push("admin");
+        }
+        env::set_var("WEBVIEW2_USER_DATA_FOLDER", webview_path.as_path());
+    }
     let root_path =  std::env::current_exe().unwrap().parent().unwrap().to_path_buf();
 
     if wry::webview::webview_version().is_err() {
