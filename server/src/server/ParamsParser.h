@@ -28,7 +28,6 @@ public:
     const ParamsOption &GetOption() const;
     const std::string &GetError() const;
     const bool Parse(const vector<string> &args);
-
 private:
     ParamsParser() = default;
     ~ParamsParser() = default;
