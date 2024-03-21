@@ -149,7 +149,7 @@ Section "Uninstall"
   RMDir $SMPROGRAMS\ascend_insight
 
   ; Remove Desktop shortcut
-  Delete $DESKTOP\Ascend Insight.lnk
+  Delete "$DESKTOP\Ascend Insight.lnk"
   
   ; Remove control panel entry
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ascend_insight"
