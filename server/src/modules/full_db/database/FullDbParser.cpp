@@ -70,13 +70,8 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
                               const std::string& token)
 {
     ServerLog::Info(filePath);
-    for (const std::string& id : rankIds) {
-        if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(id, filePath)) {
-            ServerLog::Error("Failed to create connection pool. ", filePath);
-        }
-    }
     auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        Timeline::DataBaseManager::Instance().GetTraceDatabase(rankIds[0]));
+        Timeline::DataBaseManager::Instance().GetTraceDatabase(filePath));
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection.");
         return;
@@ -111,7 +106,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     for (auto rankId: rankIds) {
         Timeline::ParserStatusManager::Instance().SetParserStatus(rankId, Timeline::ParserStatus::FINISH_ALL);
     }
-    SendHostEvent(token, rankIds[0]);
+    SendHostEvent(token, filePath);
 }
 
 void FullDbParser::SendHostEvent(const std::string &token, const std::string &fileId)

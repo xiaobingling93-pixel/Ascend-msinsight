@@ -21,8 +21,8 @@ public:
 private:
     std::map<std::string, std::vector<std::string>> GetReportFiles(const std::string &path, ImportActionResBody &body);
     void SetParseCallBack(std::string token);
-    void SetBaseActionOfResponse(ImportActionResponse &response, std::string rankId,
-                                 std::map<std::string, std::string> devicePaths);
+    static void SetBaseActionOfResponse(ImportActionResponse &response, const std::string& rankId,
+                                        std::map<std::string, std::string> devicePaths);
     static void ClusterProcess(const std::string &token, const std::string &selectedFolder, bool isCluster);
     static void ClusterProcessAsyncStep(const std::string &token, const std::string &selectedFolder);
 };

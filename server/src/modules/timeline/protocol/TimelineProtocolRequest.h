@@ -27,6 +27,7 @@ struct UnitThreadTracesParams {
     std::string cardId;
     std::string processId;
     std::string threadId;
+    std::string metaType;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
     double timePerPx = 0; // totalTime / pixel
@@ -40,6 +41,7 @@ struct UnitThreadTracesRequest : public Request {
 struct UnitThreadTracesSummaryParams {
     std::string cardId;
     std::string processId;
+    std::string metaType;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
 };
@@ -53,6 +55,7 @@ struct UnitThreadsParams {
     std::string rankId;
     std::string tid;
     std::string pid;
+    std::string metaType;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
 };
@@ -66,6 +69,8 @@ struct ThreadDetailParams {
     std::string rankId;
     std::string pid;
     std::string tid;
+    std::string id;
+    std::string metaType;
     uint64_t startTime = 0;
     uint32_t depth = 0;
 };
@@ -79,6 +84,8 @@ struct UnitFlowNameParams {
     std::string rankId;
     std::string tid;
     std::string pid;
+    std::string id;
+    std::string metaType;
     uint64_t startTime = 0;
 };
 
@@ -91,6 +98,8 @@ struct UnitFlowParams {
     uint64_t startTime = 0;
     std::string flowId;
     std::string rankId;
+    std::string id;
+    std::string metaType;
     std::string type; // s, f
 };
 
@@ -175,6 +184,7 @@ struct UnitCounterParams {
     std::string processName;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
+    std::string metaType;
 };
 
 struct UnitCounterRequest : public Request {

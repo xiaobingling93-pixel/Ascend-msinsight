@@ -16,12 +16,12 @@ struct TASK_INFO {
     int64_t start = 0;
     int64_t end = 0;
     int64_t depth = 0;
-    int64_t globalTaskId = 0;
+    int64_t id = 0;
 };
 class DbTraceDataBase : public VirtualTraceDatabase {
 public:
     explicit DbTraceDataBase(std::mutex &sqlMutex) : VirtualTraceDatabase(sqlMutex) {};
-    ~DbTraceDataBase() {};
+    ~DbTraceDataBase();
 
     bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
 
@@ -94,13 +94,14 @@ private:
     bool SetConfig();
     bool InitStmt();
 
-    void UpdateTaskDepth(const TASK_INFO &taskInfo, std::unique_ptr<SqlitePreparedStatement> &stmt);
+    void UpdateDepth(const std::string &sql, std::unique_ptr<SqlitePreparedStatement> &updateStmt);
     bool UpdateTaskDepthList(std::unique_ptr<SqlitePreparedStatement> &stmt);
     bool QueryAscendHardwareMetadata(const std::string &fileId,
                                      std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool QueryHcclMetadata(const std::string &fileId,
                            std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool QueryCounterMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
+    bool NeedUpdateDepth(const std::string &table);
     bool GenerateCounterMetadata(const std::string &fileId,
                                  std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     void SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
@@ -108,7 +109,8 @@ private:
     std::string GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams);
     static std::string ArgsDtoToJsonStr(const ArgsDto& argsDto);
     static std::unique_ptr<Protocol::UnitTrack> GenerateBaseUnitTrack(const std::string &type,
-        const std::string &cardId, const std::string &processId, const std::string &processName);
+        const std::string &cardId, const std::string &processId, const std::string &processName,
+        const std::string &metaType);
 };
 }
 

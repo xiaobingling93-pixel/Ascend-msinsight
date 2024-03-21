@@ -55,8 +55,8 @@ std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const st
 {
     std::unique_lock<std::mutex> lock(mutex);
     auto it = traceDatabaseMap.find(fileId);
-    if (std::strcmp(fileId.c_str(), "Host") == 0) {
-        it = traceDatabaseMap.begin();
+    if (it == traceDatabaseMap.end() && dbFilePathMap.count(fileId) != 0) {
+        it = traceDatabaseMap.find(dbFilePathMap[fileId]);
     }
     if (it == traceDatabaseMap.end()) {
         ServerLog::Error("Can't find connection pool. fileId:", fileId);
@@ -174,6 +174,7 @@ void DataBaseManager::Clear()
     memoryDatabaseMap.clear();
     summaryDatabaseMap.clear();
     dbMutexMap.clear();
+    dbFilePathMap.clear();
 }
 
 void DataBaseManager::Clear(DatabaseType type)
@@ -275,6 +276,10 @@ void DataBaseManager::SetFileType(FileType type)
 {
     fileType = type;
 }
+void DataBaseManager::SetDbPathMapping(const std::string &rankId, const std::string &filePath)
+{
+    dbFilePathMap[rankId] = filePath;
+};
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

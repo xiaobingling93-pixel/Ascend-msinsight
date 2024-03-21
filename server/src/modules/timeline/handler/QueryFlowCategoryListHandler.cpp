@@ -29,6 +29,7 @@ void QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
+        SetResponseResult(response, true);
         session.OnResponse(std::move(responsePtr));
         return;
     }

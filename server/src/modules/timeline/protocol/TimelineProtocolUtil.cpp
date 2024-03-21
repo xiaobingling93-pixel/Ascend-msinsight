@@ -73,6 +73,7 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(c
             JsonUtil::AddMember(threadJson, "depth", threadTraces.depth, allocator);
             JsonUtil::AddMember(threadJson, "threadId", threadTraces.threadId, allocator);
             JsonUtil::AddMember(threadJson, "cname", threadTraces.cname, allocator);
+            JsonUtil::AddMember(threadJson, "id", threadTraces.id, allocator);
             threadTracesArray.PushBack(threadJson, allocator);
         }
         data.PushBack(threadTracesArray, allocator);
@@ -175,6 +176,9 @@ json_t FlowLocationToJson(const FlowLocation& flowLocation, RAPIDJSON_DEFAULT_AL
     JsonUtil::AddMember(json, "duration", flowLocation.duration, allocator);
     JsonUtil::AddMember(json, "depth", flowLocation.depth, allocator);
     JsonUtil::AddMember(json, "name", flowLocation.name, allocator);
+    JsonUtil::AddMember(json, "id", flowLocation.id, allocator);
+    JsonUtil::AddMember(json, "metaType", flowLocation.metaType, allocator);
+    JsonUtil::AddMember(json, "rankId", flowLocation.rankId, allocator);
     return std::move(json);
 }
 
@@ -248,6 +252,7 @@ template <> std::optional<document_t> ToResponseJson<SearchSliceResponse>(const 
     JsonUtil::AddMember(body, "rankId", response.body.rankId, allocator);
     JsonUtil::AddMember(body, "pid", response.body.pid, allocator);
     JsonUtil::AddMember(body, "tid", response.body.tid, allocator);
+    JsonUtil::AddMember(body, "id", response.body.id, allocator);
     JsonUtil::AddMember(body, "startTime", response.body.startTime, allocator);
     JsonUtil::AddMember(body, "duration", response.body.duration, allocator);
     JsonUtil::AddMember(body, "depth", response.body.depth, allocator);
@@ -289,6 +294,7 @@ json_t FlowEventLocationToJson(const FlowEventLocation& flowLocation, RAPIDJSON_
     JsonUtil::AddMember(json, "tid", flowLocation.tid, allocator);
     JsonUtil::AddMember(json, "timestamp", flowLocation.timestamp, allocator);
     JsonUtil::AddMember(json, "depth", flowLocation.depth, allocator);
+    JsonUtil::AddMember(json, "rankId", flowLocation.rankId, allocator);
     return std::move(json);
 }
 
@@ -475,6 +481,7 @@ json_t UnitTrackToJson(const UnitTrack &unitTrack, RAPIDJSON_DEFAULT_ALLOCATOR &
     JsonUtil::AddMember(metadata, "label", unitTrack.metaData.label, allocator);
     JsonUtil::AddMember(metadata, "threadId", unitTrack.metaData.threadId, allocator);
     JsonUtil::AddMember(metadata, "threadName", unitTrack.metaData.threadName, allocator);
+    JsonUtil::AddMember(metadata, "metaType", unitTrack.metaData.metaType, allocator);
     JsonUtil::AddMember(metadata, "maxDepth", unitTrack.metaData.maxDepth, allocator);
     json_t dataType(kArrayType);
     for (const auto &type : unitTrack.metaData.dataType) {

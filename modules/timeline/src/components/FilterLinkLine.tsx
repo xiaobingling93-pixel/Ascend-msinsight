@@ -14,6 +14,7 @@ import { runInAction } from 'mobx';
 import { InsightUnit, LinkLines } from '../entity/insight';
 import { CardUnit } from '../insight/units/AscendUnit';
 import { customDebounce } from '../utils/customDebounce';
+import { getTimeOffset } from '../insight/units/utils';
 
 const FilterIcon = AntdFilterIcon as SvgType;
 const MAX_HEIGHT = 200;
@@ -77,6 +78,7 @@ export interface DataBlock {
     timestamp: number;
     depth: number;
     height?: number;
+    rankId?: string;
 };
 export interface FlowEvent {
     category: string;
@@ -110,9 +112,7 @@ const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<str
                 if (!viewedCardIdSet.has(cardId)) {
                     continue;
                 }
-                const timestampOffset = cardId !== undefined
-                    ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0
-                    : 0;
+                const timestampOffset = getTimeOffset(session, cardId);
                 const start = Math.floor(domainStart + timestampOffset);
                 const end = Math.ceil(domainEnd + timestampOffset);
                 const params = { rankId: cardId, startTime: start, endTime: end, category, timePerPx };

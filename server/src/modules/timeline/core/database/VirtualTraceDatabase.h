@@ -71,6 +71,9 @@ public:
 
 protected:
     std::mutex &mutex;
+    const std::string lineStart = "s";
+    const std::string lineEnd = "f";
+    const std::string lineEndOptional = "t";
 };
 }
 #endif // PROFILER_SERVER_TRACE_DATABASE_H

@@ -13,6 +13,9 @@ import { action, runInAction } from 'mobx';
 import { ThreadUnit } from '../insight/units/AscendUnit';
 import i18n from 'i18next';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import type { ThreadMetaData } from '../entity/data';
+import { generateFlowParam } from '../insight/units/details';
+import { getTimeOffset } from '../insight/units/utils';
 
 const SearchIcon = AntdSearchIcon as SvgType;
 const CloseIcon = AntdCloseIcon as SvgType;
@@ -61,6 +64,7 @@ type SliceData = {
     rankId: string;
     pid: string;
     tid: number;
+    id?: string;
     startTime: number;
     duration: number;
     depth: number;
@@ -127,10 +131,20 @@ const doJumpSlice = (session: Session, slice: SliceData, isGlobal: boolean): voi
                 if (isGlobal) {
                     session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
                     session.selectedData = undefined;
+                    session.linkFlow = undefined;
                 } else {
-                    const [rangeStart, rangeEnd] = calculateDomainRange(session, slice.startTime, slice.duration);
+                    const [rangeStart, rangeEnd] = calculateDomainRange(session,
+                        slice.startTime - getTimeOffset(session, (unit.metadata as ThreadMetaData).cardId), slice.duration);
                     session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
-                    session.selectedData = { startTime: slice.startTime, duration: slice.duration, depth: slice.depth, threadId: slice.tid };
+                    session.selectedData = {
+                        startTime: slice.startTime - getTimeOffset(session, (unit.metadata as ThreadMetaData).cardId),
+                        duration: slice.duration,
+                        depth: slice.depth,
+                        threadId: slice.tid,
+                        id: slice.id,
+                        metaType: (unit.metadata as ThreadMetaData).metaType,
+                    };
+                    session.linkFlow = generateFlowParam(unit.metadata as ThreadMetaData, slice);
                 }
             },
         };

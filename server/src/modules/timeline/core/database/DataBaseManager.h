@@ -62,6 +62,7 @@ public:
     void SetDataType(DataType type);
     FileType GetFileType();
     void SetFileType(FileType type);
+    void SetDbPathMapping(const std::string& rankId, const std::string& filePath);
 
 private:
     DataBaseManager() = default;
@@ -71,6 +72,7 @@ private:
     DataType dataType = DataType::JSON;
     FileType fileType = FileType::PYTORCH;
     std::map<std::string, std::mutex> dbMutexMap;
+    std::map<std::string, std::string> dbFilePathMap;
     std::map<std::string, std::unique_ptr<ConnectionPool>> traceDatabaseMap;
     std::map<std::string, std::unique_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
     std::map<std::string, std::unique_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;

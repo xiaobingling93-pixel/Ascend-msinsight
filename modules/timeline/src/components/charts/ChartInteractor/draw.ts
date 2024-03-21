@@ -12,8 +12,9 @@ import { DataBlock, FlowEvent } from '../../FilterLinkLine';
 import { hashToNumber } from '../../../utils/colorUtils';
 import { InsightUnit, UnitHeight } from '../../../entity/insight';
 import { ThreadMetaData } from '../../../entity/data';
-import { colorPalette } from '../../../insight/units/utils';
+import { colorPalette, getTimeOffset } from '../../../insight/units/utils';
 import * as d3 from 'd3';
+import { handlerEmptyString } from '../../../utils/string';
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
 
@@ -361,15 +362,14 @@ function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: stri
     if (category !== checkedCategory) {
         return;
     }
-    const timestampOffset = cardId !== undefined
-        ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0
-        : 0;
+    const targetCardId = handlerEmptyString(to.rankId ?? '', cardId);
+    const sourceCardId = handlerEmptyString(from.rankId ?? '', cardId);
     const li = d3.scaleLinear().range([0, ctx.canvas.width])
-        .domain([session.domainRange.domainStart + timestampOffset, session.domainRange.domainEnd + timestampOffset]);
-    const targetX = li(to.timestamp);
-    const targetY = getHeight(session, to, cardId);
-    const sourceX = li(from.timestamp);
-    const sourceY = getHeight(session, from, cardId);
+        .domain([session.domainRange.domainStart, session.domainRange.domainEnd]);
+    const targetX = li(to.timestamp - getTimeOffset(session, targetCardId));
+    const targetY = getHeight(session, to, targetCardId);
+    const sourceX = li(from.timestamp - getTimeOffset(session, sourceCardId));
+    const sourceY = getHeight(session, from, sourceCardId);
     if ((sourceY === undefined || targetY === undefined)) {
         return;
     }
@@ -384,7 +384,7 @@ function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: stri
     ctx.bezierCurveTo(sourceX + offset, sourceY, targetX - offset, targetY, targetX, targetY);
     ctx.stroke();
     ctx.closePath();
-    if (targetY >= UNDRAW_HEIGHT && sourceY >= UNDRAW_HEIGHT) {
+    if (targetY >= UNDRAW_HEIGHT || sourceY >= UNDRAW_HEIGHT) {
         const len = targetPos.length;
         let [fromX, fromY] = targetPos.reduce(([prevX, prevY], [x, y]) => [prevX + x + offset, prevY + y], [0, 0]);
         fromX = fromX / len;

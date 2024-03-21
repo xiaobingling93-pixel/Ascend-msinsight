@@ -25,7 +25,7 @@ import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPane
 import { SelectSimpleTabularDetail } from '../../components/details/SelectSimpleDetail';
 import { renderRadiusBorder } from '../../components/details/utils';
 import { generateFlowParam, generateLinkDetail, slicesListDetail } from './details';
-import { colorPalette } from './utils';
+import { colorPalette, getTimeOffset } from './utils';
 import React, { useEffect, useState, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import _ from 'lodash';
@@ -111,14 +111,14 @@ const singleSliceDetail = singleData({
     ],
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
         const selectedSliceData = session.selectedData as ThreadTrace;
-        const timestampOffset = metadata.cardId !== undefined
-            ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[metadata.cardId] ?? 0
-            : 0;
+        const timestampOffset = getTimeOffset(session, metadata.cardId);
         // 因为泳道chart数据减去了偏移，所有点选的时候得把偏移加回来
         const params = {
             rankId: metadata.cardId,
+            metaType: metadata.metaType,
             pid: metadata.processId,
             tid: metadata.threadId,
+            id: selectedSliceData.id,
             startTime: Math.floor(selectedSliceData.startTime + timestampOffset),
             depth: selectedSliceData.depth,
             timePerPx: session.domain.timePerPx,
@@ -160,13 +160,12 @@ export const ThreadUnit = unit<ThreadMetaData>({
         mapFunc: async (session: Session, metaData: unknown) => {
             const threadMetaData = metaData as ThreadMetaData;
             // 查询泳道chart参数加上时间偏移
-            const timestampOffset = threadMetaData.cardId !== undefined
-                ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[threadMetaData.cardId] ?? 0
-                : 0;
+            const timestampOffset = getTimeOffset(session, threadMetaData.cardId);
             const requestParam: Record<string, unknown> & { timePerPx: number } = {
                 cardId: threadMetaData.cardId,
                 processId: threadMetaData.processId,
                 threadId: threadMetaData.threadId,
+                metaType: threadMetaData.metaType,
                 startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
                 endTime: Math.ceil(Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset)),
                 dataSource: threadMetaData.dataSource,
@@ -190,6 +189,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                         threadId: data.threadId,
                         cardId: threadMetaData.cardId,
                         cname: data.cname,
+                        id: data.id,
                         cColor: colorPalette[hashToNumber(data.cname, colorPalette.length)],
                     } as StackStatusData;
                 }));
@@ -229,7 +229,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
             runInAction(() => {
                 session.selectedData = { ...data, threadId: (metadata as ThreadMetaData).threadId };
                 session.linkDetail = generateLinkDetail((metadata as ThreadMetaData).threadName.toLowerCase().includes('stream') ? 'Incoming flow' : 'Outgoing flow');
-                session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data.startTime);
+                session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data);
             });
         },
         onHover: (data, session: Session): void => {
@@ -276,13 +276,11 @@ const SummaryChart = chart({
     type: 'status',
     mapFunc: async (session: Session, metaData: unknown) => {
         const processMetaData = metaData as ProcessMetaData;
-        // 查询泳道chart参数加上时间偏移
-        const timestampOffset = processMetaData.cardId !== undefined
-            ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[processMetaData.cardId] ?? 0
-            : 0;
+        const timestampOffset = getTimeOffset(session, processMetaData.cardId);
         const requestParam = {
             cardId: processMetaData.cardId,
             processId: processMetaData.processId,
+            metaType: processMetaData.metaType,
             startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
             endTime: Math.ceil(Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset)),
             dataSource: processMetaData.dataSource,
@@ -323,7 +321,7 @@ export const ProcessUnit = unit<ProcessMetaData>({
     pinType: 'copied',
     chart: SummaryChart,
     renderInfo: (_, metadata: ProcessMetaData, thisUnit) => {
-        return isPinned(thisUnit) && !isSonPinned(thisUnit) ? `${metadata.cardId}_${metadata.processName} (${metadata.processId})` : `${metadata.processName} (${metadata.processId})`;
+        return isPinned(thisUnit) && !isSonPinned(thisUnit) ? `${metadata.cardId}_${metadata.processName}` : `${metadata.processName}`;
     },
 });
 
@@ -361,6 +359,7 @@ export const CounterUnit = unit<CounterMetaData>({
                 rankId: countMetaData.cardId,
                 pid: countMetaData.processId,
                 threadName: countMetaData.threadName,
+                metaType: countMetaData.metaType,
                 processName: countMetaData.processName,
                 startTime: session.domainRange.domainStart,
                 endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd),

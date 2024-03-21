@@ -25,7 +25,7 @@ void SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     std::unique_ptr<SearchCountResponse> responsePtr = std::make_unique<SearchCountResponse>();
     SearchCountResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    if (request.params.rankId.empty()) {
+    if (request.params.rankId.empty() || strcmp(request.params.rankId.c_str(), "Host") == 0) {
         auto fileIdList = DataBaseManager::Instance().GetAllFileId();
         for (const auto &fileId : fileIdList) {
             SearchResult searchResult;

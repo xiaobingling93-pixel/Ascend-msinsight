@@ -678,6 +678,7 @@ export type CounterMetaData = {
     processName?: string;
     threadName: string;
     dataType: string[];
+    metaType?: string;
     dataSource: DataSource;
 };
 
@@ -688,6 +689,7 @@ export type ThreadMetaData = {
     threadId?: string;
     threadName: string;
     maxDepth?: number;
+    metaType?: string;
     dataSource: DataSource;
 };
 
@@ -696,6 +698,7 @@ export type ProcessMetaData = {
     processId: string;
     processName: string;
     label?: string;
+    metaType?: string;
     dataSource: DataSource;
 };
 
@@ -713,6 +716,7 @@ export type ThreadTrace = {
     endTime: number;
     depth: number;
     threadId: string;
+    id?: string;
     [x: string]: unknown;
     cname: string;
 };

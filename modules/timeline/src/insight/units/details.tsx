@@ -5,9 +5,9 @@ import React from 'react';
 import { action, runInAction } from 'mobx';
 import { AscendMultiSliceList, ThreadMetaData, ThreadTrace } from '../../entity/data';
 import { Session } from '../../entity/session';
-import { getSliceTimeDisplay } from './AscendUnit';
+import { getSliceTimeDisplay, ThreadUnit } from './AscendUnit';
 import { getTimestamp } from '../../utils/humanReadable';
-import { colorPalette } from './utils';
+import { colorPalette, getTimeOffset } from './utils';
 import { hashToNumber } from '../../utils/colorUtils';
 export const slicesListDetail = detail({
     name: 'Slices List',
@@ -30,13 +30,12 @@ export const slicesListDetail = detail({
         startTime = startTime < 0 ? 0 : startTime;
         let endTime = session.selectedRange?.[1] ?? 0;
         endTime = endTime < 0 ? 0 : endTime;
-        const timestampOffset = metadata.cardId !== undefined
-            ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[metadata.cardId] ?? 0
-            : 0;
+        const timestampOffset = getTimeOffset(session, metadata.cardId);
         const params = {
             rankId: metadata.cardId,
             tid: metadata.threadId,
             pid: metadata.processId,
+            metaType: metadata.metaType,
             startTime: Math.floor(startTime + timestampOffset),
             endTime: Math.ceil(endTime + timestampOffset),
         };
@@ -108,25 +107,29 @@ const Link = styled.span`
     border-bottom: 2px solid rgb(140, 140, 140);
 `;
 
-export const generateFlowParam = function(metadata: ThreadMetaData, startTime: number, pid?: string, tid?: string):
-{ rankId: string; tid: string; pid: string; startTime: number } {
+export const generateFlowParam = function(metadata: ThreadMetaData, data: any, metaType?: string):
+{ rankId: string; tid: string; pid: string; metaType: string; id: string; startTime: number } {
     return {
         rankId: metadata.cardId ?? '',
-        tid: tid ?? (metadata.threadId ?? ''),
-        pid: pid ?? (metadata.processId ?? ''),
-        startTime,
+        tid: data.tid ?? (metadata.threadId ?? ''),
+        pid: data.pid ?? (metadata.processId ?? ''),
+        id: data.id,
+        metaType: metaType ?? metadata?.metaType ?? '',
+        startTime: data.startTime ?? data.timestamp,
     };
 };
 
-const generateFlowData = function (data: any): any {
+const generateFlowData = function (data: any, timeOffset: number): any {
     return {
-        startTime: data.timestamp,
+        startTime: data.timestamp - timeOffset,
         duration: data.duration,
         name: data.name,
         type: data.name,
         color: colorPalette[hashToNumber(data.name, colorPalette.length)],
         depth: data.depth,
         threadId: data.tid,
+        id: data.id,
+        metaType: data.metaType,
     };
 };
 
@@ -142,14 +145,16 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
                         [ 'Title', (data: any) => data.title ],
                         [ 'Category', (data: any) => data.cat ],
                         [ 'from', (data: any, session, metadata) => <Link onClick={action(() => {
-                            session.selectedData= generateFlowData(data.from);
+                            const rankId = data.from.rankId && data.from.rankId !== '' ? data.from.rankId : (metadata as ThreadMetaData).cardId;
+                            calculateDomainRange(session, data.from, data.to, rankId);
                             session.linkDetail = generateLinkDetail('Outgoing flow');
-                            session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data.from.timestamp, data.from.pid, data.from.tid);
+                            doJumpSlice(session, data.from, rankId);
                         })}>{`Slice ${data.from.name} at ${getTimestamp(data.from.timestamp ?? 0, { precision: 'ns' })}`}</Link>],
                         [ 'to', (data: any, session, metadata) => <Link onClick={action(() => {
-                            session.selectedData= generateFlowData(data.to);
+                            const rankId = data.to.rankId && data.to.rankId !== '' ? data.to.rankId : (metadata as ThreadMetaData).cardId;
+                            calculateDomainRange(session, data.from, data.to, rankId);
                             session.linkDetail = generateLinkDetail('Incoming flow');
-                            session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data.to.timestamp, data.to.pid, data.to.tid);
+                            doJumpSlice(session, data.to, rankId);
                         })}>{`Slice ${data.to.name} at ${getTimestamp(data.to.timestamp ?? 0, { precision: 'ns' })}`}</Link>],
                     ],
                     fetchData: async (session: Session, metadata) => {
@@ -157,7 +162,9 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
                         const flowId = session.linkFlow?.flowId as string;
                         const type = session.linkFlow?.type as string;
                         const rankId = (metadata as Record<string, unknown>)?.cardId;
-                        const raw = await window.request(metadata.dataSource, { command: 'unit/flow', params: { flowId, type, startTime, rankId } } ) as any;
+                        const metaType = (metadata as Record<string, unknown>)?.metaType;
+                        const id = session.selectedData?.id;
+                        const raw = await window.request(metadata.dataSource, { command: 'unit/flow', params: { flowId, type, startTime, rankId, id, metaType } } ) as any;
                         const linkLine = { [raw.cat]: [{ category: raw.cat, ...raw, cardId: rankId }] }
                         runInAction(() => {
                             session.linkLines = linkLine;
@@ -174,5 +181,37 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
             const raw = await window.request(metadata.dataSource, { command: 'unit/flowName', params: session.linkFlow as Record<string, unknown> });
             return raw.flowDetail;
         },
+    });
+};
+
+export const calculateDomainRange = (session: Session, from: any, to: any, rankId: number): void => {
+    const fromRankId = from.rankId && from.rankId !== '' ? from.rankId : rankId;
+    const toRankId = to.rankId && to.rankId !== '' ? to.rankId : rankId;
+    let rangeStart = from.timestamp - getTimeOffset(session, fromRankId);
+    let rangeEnd = to.timestamp - getTimeOffset(session, toRankId);
+    if ( rangeEnd < rangeStart) {
+        [rangeStart, rangeEnd] = [rangeEnd, rangeStart];
+    }
+    rangeStart = rangeStart - (from.duration * 10); //  此出为计算范围，选10作为一个折中的值，无具体含义
+    rangeStart = rangeStart > 0 ? rangeStart : 0;
+    rangeEnd = Math.min(rangeEnd + (to.duration * 10), session.endTimeAll ?? Number.MAX_SAFE_INTEGER);
+    session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
+};
+
+const doJumpSlice = (session: Session, data: any, rankId: string): void => {
+    if (data === undefined) {
+        return;
+    }
+    runInAction(() => {
+        session.locateUnit = {
+            target: (unit): boolean => {
+                return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId.includes(rankId))) &&
+                    unit.metadata.processId === data.pid && unit.metadata.threadId === data.tid;
+            },
+            onSuccess: (unit): void => {
+                session.selectedData = generateFlowData(data, getTimeOffset(session, (unit.metadata as ThreadMetaData).cardId));
+                session.linkFlow = generateFlowParam(unit.metadata as ThreadMetaData, data);
+            },
+        };
     });
 };

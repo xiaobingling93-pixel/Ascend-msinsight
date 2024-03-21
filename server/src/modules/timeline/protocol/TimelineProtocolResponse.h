@@ -43,6 +43,7 @@ struct ThreadTraces {
     uint64_t endTime = 0;
     int32_t depth = 0;
     std::string threadId;
+    std::string id;
     std::string cname;
 };
 
@@ -130,6 +131,9 @@ struct UnitFlowNameResponse : public Response {
 
 struct FlowLocation {
     std::string tid;
+    std::string id;
+    std::string metaType;
+    std::string rankId;
     int32_t depth = 0;
     uint64_t timestamp = 0;
     uint64_t duration = 0; // slice duration
@@ -210,6 +214,7 @@ struct SearchSliceBody {
     std::string rankId;
     std::string pid;
     std::string tid;
+    std::string id;
     uint64_t startTime = 0;
     uint64_t duration = 0;
     int32_t depth = 0;
@@ -245,6 +250,7 @@ struct FlowEventLocation {
     uint64_t timestamp = 0;
     std::string pid;
     std::string type;
+    std::string rankId;
 };
 
 struct FlowEvent {

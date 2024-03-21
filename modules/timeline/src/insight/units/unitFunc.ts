@@ -67,12 +67,14 @@ function newLane (insightMetaData: InsightMetaData<any>, parentMetaData: any): I
         case 'process': {
             const meta = generateMetaData(paramsTree.get(insightMetaData.metadata).cardId, insightMetaData.metadata.processId, insightMetaData.metadata.processName, '', '', paramsTree.get(insightMetaData.metadata).dataSource);
             meta.label = insightMetaData.metadata.label;
+            meta.metaType = insightMetaData.metadata.metaType;
             return new ProcessUnit(meta);
         }
         case 'thread': {
-            const meta = generateMetaData(paramsTree.get(paramsTree.get(insightMetaData.metadata)).cardId, (parentMetaData as ProcessMetaData).processId,
+            const meta = generateMetaData(insightMetaData.metadata.cardId, (parentMetaData as ProcessMetaData).processId,
                 (parentMetaData as ProcessMetaData).processName, insightMetaData.metadata.threadId, insightMetaData.metadata.threadName,
                 paramsTree.get(insightMetaData.metadata).dataSource);
+            meta.metaType = insightMetaData.metadata.metaType;
             const threadUnit = new ThreadUnit(meta);
             const chart = threadUnit.chart as ChartDesc<'stackStatus'>;
             if (insightMetaData.metadata.maxDepth === 1) {
@@ -87,6 +89,7 @@ function newLane (insightMetaData: InsightMetaData<any>, parentMetaData: any): I
             const meta = generateMetaData(paramsTree.get(paramsTree.get(insightMetaData.metadata)).cardId, (parentMetaData as ProcessMetaData).processId,
                 insightMetaData.metadata.processName, '', insightMetaData.metadata.threadName, paramsTree.get(insightMetaData.metadata).dataSource);
             meta.dataType = insightMetaData.metadata.dataType;
+            meta.metaType = insightMetaData.metadata.metaType;
             return new CounterUnit(meta);
         }
         default:

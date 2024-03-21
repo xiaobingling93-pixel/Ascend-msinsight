@@ -38,7 +38,7 @@ void ParserDb::Parser(const std::string &path, ImportActionRequest &request)
     auto rankList = GetReportFiles(path, response.body);
     SetBaseActionOfResponse(response, "Host", devicePaths);
     for (const auto &ranks: rankList) {
-        for (auto rank: ranks.second) {
+        for (const auto& rank: ranks.second) {
             SetBaseActionOfResponse(response, rank, devicePaths);
         }
     }
@@ -130,8 +130,9 @@ std::map<std::string, std::vector<std::string>> ParserDb::GetReportFiles(const s
             continue;
         }
         std::vector<std::string> rankIds = database->QueryRankId();
-        for (auto rank : rankIds) {
+        for (const auto& rank : rankIds) {
             rankListMap[file].push_back(rank);
+            DataBaseManager::Instance().SetDbPathMapping(rank, file);
         }
     }
     return rankListMap;
@@ -144,7 +145,7 @@ void ParserDb::SetParseCallBack(std::string token)
     FullDb::FullDbParser::Instance().SetParseEndCallBack(func);
 }
 
-void ParserDb::SetBaseActionOfResponse(ImportActionResponse &response, std::string rankId,
+void ParserDb::SetBaseActionOfResponse(ImportActionResponse &response, const std::string& rankId,
                                        std::map<std::string, std::string> devicePaths)
 {
     Action action;

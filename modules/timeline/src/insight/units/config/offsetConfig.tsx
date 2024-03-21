@@ -9,6 +9,7 @@ import { StyledTooltip } from '../../../components/base/StyledTooltip';
 import i18n from '../../../i18n';
 import { useTheme } from '@emotion/react';
 import { CardMetaData, ThreadTraceRequest } from '../../../entity/data';
+import { getTimeOffset } from '../utils';
 
 const defaultOffset = '0';
 const minOffset = -Number.MAX_VALUE;
@@ -45,9 +46,7 @@ function checkValue(inputElement: HTMLInputElement, session: Session, setValue: 
     if (!isNaN(inputValue) && (inputValue >= minOffset && inputValue <= maxOffset)) {
         const cardMetaData = (metaData as CardMetaData);
         // preValue = curValue, directly return
-        const preTimestampOffset = cardMetaData.cardId !== undefined
-            ? (session?.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardMetaData.cardId] ?? 0
-            : 0;
+        const preTimestampOffset = getTimeOffset(session, cardMetaData.cardId);
         if (preTimestampOffset === inputValue) {
             return;
         }

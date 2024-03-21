@@ -812,8 +812,8 @@ bool JsonTraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestP
     }
     std::map<std::string, uint64_t> selfTimeKeyValue;
     CalculateSelfTime(simpleSliceVec, selfTimeKeyValue, startTime, endTime);
-    std::vector<Protocol::SimpleSlice> nRows = ThreadsInfoFilter(simpleSliceVec, startTime, endTime);
-    ReduceThread(nRows, selfTimeKeyValue, responseBody);
+    auto nRows = TraceDatabaseHelper::ThreadsInfoFilter(simpleSliceVec, startTime, endTime);
+    TraceDatabaseHelper::ReduceThread(nRows, selfTimeKeyValue, responseBody);
     return true;
 }
 
@@ -895,46 +895,6 @@ void JsonTraceDatabase::AddData(std::map<std::string, uint64_t> &selfTimeKeyValu
         selfTimeKeyValue.at(name) = selfTimeKeyValue.at(name) + tmpSelfTime;
     } else {
         selfTimeKeyValue.emplace(name, tmpSelfTime);
-    }
-}
-
-std::vector<Protocol::SimpleSlice> JsonTraceDatabase::ThreadsInfoFilter(
-    const std::vector<Protocol::SimpleSlice> &simpleSliceVec, uint64_t startTime, uint64_t endTime)
-{
-    std::vector<Protocol::SimpleSlice> nRows;
-    for (auto &row : simpleSliceVec) {
-        if (row.timestamp <= endTime && row.endTime >= startTime) {
-            nRows.emplace_back(row);
-        }
-    }
-    return nRows;
-}
-
-void JsonTraceDatabase::ReduceThread(const std::vector<Protocol::SimpleSlice> &rows,
-    const std::map<std::string, uint64_t> &selfTimeKeyValue, Protocol::UnitThreadsBody &responseBody)
-{
-    for (auto &cur : rows) {
-        int index = -1;
-        for (int i = 0; i < responseBody.data.size(); i++) {
-            if (responseBody.data[i].title == cur.name) {
-                index = i;
-                break;
-            }
-        }
-        if (index == -1) {
-            Protocol::Threads threads{};
-            threads.title = cur.name;
-            threads.wallDuration = cur.duration;
-            threads.occurrences = 1;
-            threads.avgWallDuration = cur.duration;
-            threads.selfTime = selfTimeKeyValue.at(cur.name);
-            responseBody.data.emplace_back(threads);
-        } else {
-            responseBody.data[index].wallDuration += cur.duration;
-            responseBody.data[index].occurrences += 1;
-            responseBody.data[index].avgWallDuration =
-                responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
-        }
     }
 }
 
@@ -1197,7 +1157,7 @@ bool JsonTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
         int col = resultStartIndex;
         MetaDataDto metaDataDto;
         metaDataDto.pid = resultSet->GetString("pid");
-        metaDataDto.processName = resultSet->GetString("processName");
+        metaDataDto.processName = resultSet->GetString("processName") + " (" + metaDataDto.pid + ")";
         metaDataDto.label = resultSet->GetString("label");
         metaDataDto.threadId = resultSet->GetString("tid");
         metaDataDto.threadName = resultSet->GetString("threadName");

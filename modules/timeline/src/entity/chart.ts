@@ -120,6 +120,7 @@ export type StackStatusData = {
     depth: number;
     [x: string]: unknown;
     cname: string;
+    id?: string;
     cColor: keyof Theme['colorPalette'] | Array<[ number, keyof Theme['colorPalette'] ]>;
 };
 

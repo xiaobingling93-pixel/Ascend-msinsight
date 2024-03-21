@@ -96,6 +96,7 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadTracesRequest(const json_
     JsonUtil::SetByJsonKeyValue(reqPtr->params.cardId, json["params"], "cardId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.processId, json["params"], "processId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.threadId, json["params"], "threadId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.timePerPx, json["params"], "timePerPx");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
@@ -112,6 +113,7 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadTracesSummaryRequest(cons
     JsonUtil::SetByJsonKeyValue(reqPtr->params.cardId, json["params"], "cardId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.processId, json["params"], "processId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     return reqPtr;
 }
@@ -128,6 +130,7 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsRequest(const json_t &js
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
     return reqPtr;
 }
 
@@ -143,6 +146,8 @@ std::unique_ptr<Request> TimelineProtocol::ToThreadDetailRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.depth, json["params"], "depth");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.id, json["params"], "id");
     return reqPtr;
 }
 
@@ -157,6 +162,8 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitFlowNameRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.tid, json["params"], "tid");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.id, json["params"], "id");
     return reqPtr;
 }
 
@@ -171,6 +178,8 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitFlowRequest(const json_t &json,
     JsonUtil::SetByJsonKeyValue(reqPtr->params.flowId, json["params"], "flowId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.id, json["params"], "id");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
     return reqPtr;
 }
 
@@ -274,6 +283,7 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitCounterRequest(const json_t &js
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.processName, json["params"], "processName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
     return reqPtr;
 }
 
