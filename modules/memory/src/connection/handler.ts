@@ -81,13 +81,15 @@ export const updateSessionHandler: NotificationHandler = async (data): Promise<v
             if (!session) {
                 return;
             }
-            type SessionKey = 'isCluster' | 'unitcount';
-            const keys: SessionKey[] = ['isCluster', 'unitcount'];
-            keys.forEach((key: SessionKey) => {
+            const keys: string[] = ['isCluster', 'unitcount'];
+            keys.forEach((key: string) => {
                 if (data[key] !== undefined) {
                     Object.assign(session, { key: data[key] });
                 }
             });
+            if (data.isReset === true) {
+                removeRemoteHandler(data);
+            }
         });
     } catch (error) {
         console.error(error);

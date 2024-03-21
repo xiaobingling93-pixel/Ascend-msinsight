@@ -108,6 +108,7 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
             event: 'updateSession',
             body: {
                 isCluster: result.isCluster,
+                isReset: result.reset,
                 startTime: 0,
                 endTimeAll: session?.endTimeAll,
                 unitcount: result.result?.length ?? 0,
