@@ -78,8 +78,7 @@ public:
     bool CheckTableDataInvalid(std::string tableName);
 
     void UpdateStartTime();
-    void UpdateAllTaskDepth();
-    void UpdateAllApiDepth();
+    void UpdateAllDepth();
     void InitStringsCache();
 
 private:
@@ -95,7 +94,7 @@ private:
     bool InitStmt();
 
     void UpdateDepth(const std::string &sql, std::unique_ptr<SqlitePreparedStatement> &updateStmt);
-    bool UpdateTaskDepthList(std::unique_ptr<SqlitePreparedStatement> &stmt);
+    bool UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &stmt);
     bool QueryAscendHardwareMetadata(const std::string &fileId,
                                      std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool QueryHcclMetadata(const std::string &fileId,

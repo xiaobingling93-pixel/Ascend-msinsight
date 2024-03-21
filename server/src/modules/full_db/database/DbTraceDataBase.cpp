@@ -780,23 +780,23 @@ bool DbTraceDataBase::NeedUpdateDepth(const std::string &table)
     return resultSet->GetErrorCode() == SQLITE_OK && resultSet->Next() && resultSet->GetInt64(resultStartIndex) > 0;
 }
 
-void DbTraceDataBase::UpdateAllTaskDepth()
+void DbTraceDataBase::UpdateAllDepth()
 {
-    if (!NeedUpdateDepth(TABLE_TASK)) {
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!IsDatabaseVersionChange() && !NeedUpdateDepth(TABLE_TASK) && !NeedUpdateDepth(TABLE_API)) {
         return;
     }
+    if (!ExecSql("PRAGMA user_version = " + GetDataBaseVersion() + ";")) {
+        ServerLog::Error("fail to update database version");
+        return;
+    }
+
     std::string sql = "select format('%s-%s', deviceId, streamId) as key, globalTaskId as id,startNs, endNs from TASK "
                       "                      order by deviceId, streamId, startNs, globalTaskId;";
     UpdateDepth(sql, updateTaskDepthStmt);
-}
 
-void DbTraceDataBase::UpdateAllApiDepth()
-{
-    if (!NeedUpdateDepth(TABLE_API)) {
-        return;
-    }
-    std::string sql = "select format('%s-%s', globalTid, type) as key, startNs, endNs, connectionId as id from API "
-                      " order by globalTid, type, startNs;";
+    sql = "select format('%s-%s', globalTid, type) as key, startNs, endNs, connectionId as id from API "
+          " where connectionId != 4294967295 and connectionId is not null order by globalTid, type, startNs;";
     UpdateDepth(sql, updateApiDepthStmt);
 }
 
@@ -828,17 +828,16 @@ void DbTraceDataBase::UpdateDepth(const std::string &sql, std::unique_ptr<Sqlite
             }
             taskDepthCache.emplace_back(task);
             if (taskDepthCache.size() == cacheSize) {
-                UpdateTaskDepthList(updateStmt);
+                UpdateDepthList(updateStmt);
             }
         }
         endList.clear();
     }
-    UpdateTaskDepthList(updateStmt);
+    UpdateDepthList(updateStmt);
 }
 
-bool DbTraceDataBase::UpdateTaskDepthList(std::unique_ptr<SqlitePreparedStatement> &stmt)
+bool DbTraceDataBase::UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &stmt)
 {
-    std::unique_lock<std::mutex> lock(mutex);
     if (!StartTransaction()) {
         ServerLog::Error("Failed to start Transaction.");
         return false;
@@ -905,12 +904,9 @@ bool DbTraceDataBase::SetConfig()
         return false;
     }
     std::unique_lock<std::mutex> lock(mutex);
-    std::string dbVersion = GetDataBaseVersion();
-    ExecSql("create INDEX connectionId on API(connectionId);");
     ExecSql("alter table TASK add depth integer;");
     ExecSql("alter table API add depth integer;");
-    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " +
-                   dbVersion + ";");
+    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
 }
 
 bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)

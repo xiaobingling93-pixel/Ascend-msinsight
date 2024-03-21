@@ -76,8 +76,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
         ServerLog::Error("Failed to get connection.");
         return;
     }
-    database->UpdateAllTaskDepth();
-    database->UpdateAllApiDepth();
+    database->UpdateAllDepth();
     database->InitStringsCache();
     database->UpdateStartTime();
 
