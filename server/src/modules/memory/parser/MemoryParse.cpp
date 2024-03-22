@@ -65,7 +65,7 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
         while (getline(ss, cell, ',')) {
             row.push_back(cell);
         }
-        if (row[0] == Dic::NAME || row[0] == Dic::DEVICE_ID) {
+        if (!row.empty() && (row[0] == Dic::NAME || row[0] == Dic::DEVICE_ID)) {
             for (size_t i = 0; i < row.size(); i++) {
                 dataMap[row[i]] = i;
             }
@@ -202,7 +202,7 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
         while (getline(ss, cell, ',')) {
             row.push_back(cell);
         }
-        if (row[0] == Dic::COMPONENT || row[0] == Dic::DEVICE_ID) {
+        if (!row.empty() && (row[0] == Dic::COMPONENT || row[0] == Dic::DEVICE_ID)) {
             for (size_t i = 0; i < row.size(); i++) {
                 dataMap[row[i]] = i;
             }
