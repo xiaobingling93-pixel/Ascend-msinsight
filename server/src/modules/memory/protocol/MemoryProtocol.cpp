@@ -8,6 +8,7 @@
 #include "JsonUtil.h"
 #include "MemoryProtocolRespose.h"
 #include "MemoryProtocolUtil.h"
+#include "TimelineProtocol.h"
 
 namespace Dic {
 namespace Protocol {
@@ -23,6 +24,11 @@ void MemoryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_MEMORY_OPERATOR, ToMemoryOperatorResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMORY_VIEW, ToMemoryViewResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMORY_OPERATOR_MIN_MAX, ToMemoryOperatorSizeResponseJson);
+}
+
+void MemoryProtocol::RegisterEventToJsonFuncs()
+{
+    eventToJsonFactory.emplace(EVENT_MODULE_RESET, TimelineProtocol::ToModuleResetEventJson);
 }
 
 #pragma region <<Json To Request>>

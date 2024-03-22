@@ -6,6 +6,7 @@
 #include "OperatorProtocolRequest.h"
 #include "OperatorProtocolUtil.h"
 #include "ProtocolDefs.h"
+#include "TimelineProtocol.h"
 #include "OperatorProtocol.h"
 
 namespace Dic::Protocol {
@@ -32,6 +33,7 @@ namespace Dic::Protocol {
     {
         eventToJsonFactory.emplace(EVENT_PARSE_OPERATOR_STATUS, ToOperatorParseStatusEvent);
         eventToJsonFactory.emplace(EVENT_PARSE_OPERATOR_CLEAR, ToOperatorParseClearEvent);
+        eventToJsonFactory.emplace(EVENT_MODULE_RESET, TimelineProtocol::ToModuleResetEventJson);
     }
 
     std::unique_ptr<Request> OperatorProtocol::ToOperatorCategoryInfoRequest(const json_t &json, std::string &error)

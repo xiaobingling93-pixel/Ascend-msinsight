@@ -90,7 +90,7 @@ struct ParseMemoryCompletedEvent : public Event {
 };
 
 struct ModuleResetEvent : public Event {
-    ModuleResetEvent() : Event(REQ_RES_RESET_WINDOW) {}
+    ModuleResetEvent() : Event(EVENT_MODULE_RESET) {}
     bool reset = false;
 };
 

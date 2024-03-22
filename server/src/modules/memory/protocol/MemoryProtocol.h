@@ -17,7 +17,7 @@ public:
 private:
     void RegisterJsonToRequestFuncs() override;
     void RegisterResponseToJsonFuncs() override;
-    void RegisterEventToJsonFuncs() override {};
+    void RegisterEventToJsonFuncs() override;
 
     // json to request
     static std::unique_ptr<Request> ToMemoryOperatorRequest(const json_t &json, std::string &error);

@@ -324,6 +324,7 @@ bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::st
 void KernelParse::Reset()
 {
     ServerLog::Info("Summary reset. wait task completed.");
+    ParseEndCallBack("", true, "");
     threadPool->Reset();
     ServerLog::Info("Summary task completed.");
     auto databaseList = Timeline::DataBaseManager::Instance().GetAllSummaryDatabase();

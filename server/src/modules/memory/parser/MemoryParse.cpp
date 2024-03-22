@@ -233,6 +233,7 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
 void MemoryParse::Reset()
 {
     ServerLog::Info("Memory reset. Wait task completed.");
+    ParseEndCallBack("", true, "");
     threadPool->Reset();
     ranks.clear();
     ServerLog::Info("Memory task completed.");
@@ -407,6 +408,7 @@ void MemoryParse::ParseCallBack(const std::string &token, const std::string &fil
 
     // 如果输入fileId
     if (fileId.empty()) {
+        MemoryParse::Instance().ranks.clear();
         auto event = std::make_unique<Protocol::ModuleResetEvent>();
         event->moduleName = Protocol::ModuleType::MEMORY;
         event->token = token;
