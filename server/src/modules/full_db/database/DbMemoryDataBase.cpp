@@ -82,7 +82,7 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
             ") / (1000.0 * 1000.0), 2) as timestamp, "
             "ROUND(total_allocated, 2) as total_allocated, ROUND(total_reserved, 2) as total_reserve, "
             "ROUND(total_active, 2) as total_active, stream_ptr as stream FROM " +
-            TABLE_MEMORY_RECORD + " JOIN STRING_IDS AS NAME ON NAME.id = MEMORY_RECORD.component";
+            TABLE_MEMORY_RECORD + " JOIN STRING_IDS AS NAME ON NAME.id = MEMORY_RECORD.component where 1=1 ";
     }
     return ExecuteQueryMemoryView(requestParams, operatorBody, sql);
 }

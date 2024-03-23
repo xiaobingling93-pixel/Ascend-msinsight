@@ -26,12 +26,11 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankI
             sql += "SELECT addr  FROM " + TABLE_GE_MEMORY + " WHERE addr <> '' AND deviceId = " + rankId +
                 " Group BY addr ORDER BY timestampNs ASC ";
         } else if (fileType == FileType::PYTORCH) {
-            sql += "SELECT addr  FROM " + TABLE_GE_MEMORY +
-                " WHERE addr <> '' "
-                " Group BY addr ORDER BY timestampNs ASC ";
-                " UNION SELECT stream_ptr  FROM " + TABLE_MEMORY_RECORD +
-                " WHERE stream_ptr <> '' "
-                " Group BY stream_ptr ORDER BY time_stamp ASC";
+            sql += "SELECT addr as stream, timestampNs as timestamp FROM " + TABLE_GE_MEMORY +
+                   "     WHERE addr <> ''  Group BY addr "
+                   " UNION SELECT stream_ptr as stream, time_stamp as timestamp FROM " + TABLE_MEMORY_RECORD +
+                   "                 WHERE stream_ptr <> '' "
+                   "                 Group BY stream_ptr order by timestamp";
         }
     }
     sqlite3_stmt *stmt = nullptr;

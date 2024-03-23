@@ -58,16 +58,19 @@ public:
     };
 
     static std::unique_ptr<SqliteResultSet> QueryFlowName(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                                          const Protocol::UnitFlowNameParams &requestParams)
+                                                          const Protocol::UnitFlowNameParams &requestParams,
+                                                          const uint64_t minTimestamp)
     {
         std::string sql;
         auto processType = GetProcessType(requestParams.metaType);
         switch (processType) {
             case PROCESS_TYPE::ASCEND_HARDWARE:
-                return ExecuteQuery(stmt, HARDWARE_FLOW_NAME_SQL,  requestParams.id);
+                return ExecuteQuery(stmt, HARDWARE_FLOW_NAME_SQL, requestParams.id,
+                                    requestParams.startTime + minTimestamp);
             case PROCESS_TYPE::HCCL:
+                stmt->BindParams(requestParams.id, requestParams.tid, requestParams.startTime + minTimestamp);
                 return ExecuteQuery(stmt, HCCL_FLOW_NAME_SQL, requestParams.id, requestParams.tid,
-                                    requestParams.id, requestParams.tid);
+                                    requestParams.startTime + minTimestamp);
             case PROCESS_TYPE::HOST:
                 return ExecuteQuery(stmt, HOST_FLOW_NAME_SQL, requestParams.id, requestParams.id);
             default:
@@ -219,8 +222,8 @@ public:
                                     requestParams.startTime + minTimestamp);
             case PROCESS_TYPE::HOST:
                 sql = "select connectionId as id, startNs, endNs-startNs as duration, depth, name from API"
-                      " where connectionId = ?";
-                return ExecuteQuery(stmt, sql, requestParams.id);
+                      " where connectionId = ? and startNs = ?";
+                return ExecuteQuery(stmt, sql, requestParams.id, requestParams.startTime + minTimestamp);
             default:
                 throw DatabaseException("unsupported type!");
         }

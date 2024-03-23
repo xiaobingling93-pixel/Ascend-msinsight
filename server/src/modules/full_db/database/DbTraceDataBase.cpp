@@ -313,7 +313,7 @@ bool DbTraceDataBase::QueryFlowName(const Protocol::UnitFlowNameParams &requestP
     auto stmt = CreatPreparedStatement();
     std::unique_ptr<SqliteResultSet> resultSet;
     try {
-        resultSet = TraceDatabaseHelper::QueryFlowName(stmt, requestParams);
+        resultSet = TraceDatabaseHelper::QueryFlowName(stmt, requestParams, minTimestamp);
     } catch (DatabaseException &e) {
         ServerLog::Error("QueryFlowName Fail, ", e.What());
         return false;
@@ -796,7 +796,7 @@ void DbTraceDataBase::UpdateAllDepth()
     UpdateDepth(sql, updateTaskDepthStmt);
 
     sql = "select format('%s-%s', globalTid, type) as key, startNs, endNs, connectionId as id from API "
-          " where connectionId != 4294967295 and connectionId is not null order by globalTid, type, startNs;";
+          " order by globalTid, type, startNs;";
     UpdateDepth(sql, updateApiDepthStmt);
 }
 
@@ -845,7 +845,7 @@ bool DbTraceDataBase::UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &
     bool result = true;
     for (const auto &item: taskDepthCache) {
         stmt->Reset();
-        stmt->BindParams(item.depth, item.id);
+        stmt->BindParams(item.depth, item.id, item.start);
         if (!stmt->Execute()) {
             ServerLog::Error("Failed to updateDepth");
             result = false;
@@ -886,9 +886,9 @@ bool DbTraceDataBase::InitStmt()
         return true;
     }
     initStmt = true;
-    std::string sql = "UPDATE " + TABLE_TASK + " set depth = ? where globalTaskId = ?";
+    std::string sql = "UPDATE " + TABLE_TASK + " set depth = ? where globalTaskId = ? and startNs = ?";
     updateTaskDepthStmt = CreatPreparedStatement(sql);
-    sql = "UPDATE " + TABLE_API + " set depth = ? where connectionId = ?";
+    sql = "UPDATE " + TABLE_API + " set depth = ? where connectionId = ? and startNs = ?";
     updateApiDepthStmt = CreatPreparedStatement(sql);
     if (updateTaskDepthStmt == nullptr || updateApiDepthStmt == nullptr) {
         ServerLog::Error("Failed to prepare update statement.");
@@ -904,6 +904,8 @@ bool DbTraceDataBase::SetConfig()
         return false;
     }
     std::unique_lock<std::mutex> lock(mutex);
+    ExecSql("create INDEX connectionId on API(connectionId, startNs);");
+    ExecSql("create INDEX TASK_INDEX on TASK(globalTaskId, startNs);");
     ExecSql("alter table TASK add depth integer;");
     ExecSql("alter table API add depth integer;");
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");

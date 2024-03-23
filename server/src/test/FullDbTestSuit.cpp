@@ -19,6 +19,7 @@ class FullDbTestSuit : public ::testing::Test {
 public:
     static void SetUpTestCase()
     {
+        FullDb::FullDbParser::Instance().Reset();
         std::string currPath = Dic::FileUtil::GetCurrPath();
         const ParamsOption &option = ParamsParser::Instance().GetOption();
         ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
@@ -32,6 +33,9 @@ public:
         FullDb::FullDbParser::Instance().Parse({"FullDb"}, currPath + dbPath3 + "report_0.db", "");
         while (ParserStatusManager::Instance().GetParserStatus("FullDb") != ParserStatus::FINISH_ALL) {
         }
+        auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
+            Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb"));
+        database->UpdateStartTime();
     }
 
     static void TearDownTestCase()
