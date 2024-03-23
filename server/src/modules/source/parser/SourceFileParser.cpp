@@ -89,7 +89,7 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
 void SourceFileParser::PreParseTask(const std::string &fileId)
 {
     if (!InitParser(fileId)) {
-        ParseEndCallBack(fileId, false, "Failed to init trace file parser.");
+        ParseEndCallBack(fileId, false, "Failed to open db. Please delete dbFile and try again.");
     }
 }
 
