@@ -25,13 +25,13 @@ public:
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
         DataBaseManager::Instance().SetDataType(DataType::FULL_DB);
         DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
-        DataBaseManager::Instance().CreatConnectionPool("0", currPath + dbPath3 + "report_0.db");
+        DataBaseManager::Instance().CreatConnectionPool("0", currPath + dbPath3 + "msprof_0.db");
         auto database = std::dynamic_pointer_cast<DbTraceDataBase, VirtualTraceDatabase>(
             DataBaseManager::Instance().GetTraceDatabase("0"));
         database->UpdateStartTime();
         auto summaryDatabase =
                 dynamic_cast<DbSummaryDataBase *>(DataBaseManager::Instance().GetSummaryDatabase("0"));
-        summaryDatabase->OpenDb(currPath + dbPath3 + "report_0.db", false);
+        summaryDatabase->OpenDb(currPath + dbPath3 + "msprof_0.db", false);
     }
     static void TearDownTestCase() {}
 };

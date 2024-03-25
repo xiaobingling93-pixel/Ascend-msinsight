@@ -16,8 +16,8 @@ namespace Dic {
     const std::string traceViewReg =
         R"((((trace_view|msprof(_[0-9]{1,15}){1,4})\.json)|(operator_memory|operator_memory_[0-9]{1,14})\.csv)$)";
     const std::string clusterReg = R"(cluster_analysis_output$)";
-    const std::string DBReg = R"((report_[0-9]{1,16}|ascend_pytorch|cluster_analysis)\.db$)";
-    const std::string msprofDBReg = R"(report_[0-9]{1,16}\.db$)";
+    const std::string DBReg = R"((msprof_[0-9]{1,16}|ascend_pytorch|cluster_analysis)\.db$)";
+    const std::string msprofDBReg = R"(msprof_[0-9]{1,16}\.db$)";
     const std::string pytorchDBReg = R"(ascend_pytorch\.db$)";
     const std::string clusterDBReg = R"(cluster_analysis\.db$)";
     const std::string computeBinSuffix = ".bin";
