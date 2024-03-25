@@ -27,7 +27,7 @@ public:
         DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
         auto memoryDatabase =
                 dynamic_cast<DbMemoryDataBase *>(DataBaseManager::Instance().GetMemoryDatabase("0"));
-        memoryDatabase->OpenDb(currPath + dbPath3 + "report_0.db", false);
+        memoryDatabase->OpenDb(currPath + dbPath3 + "msprof_0.db", false);
         // minTime = 1710490360222620070, maxTime = 1710490361833931450
         TraceTime::Instance().UpdateTime(1710490360222620070, 1710490361833931450);
     }

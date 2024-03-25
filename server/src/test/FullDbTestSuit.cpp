@@ -27,10 +27,10 @@ public:
         currPath = currPath.substr(0, index + 1);
         std::string dbPath3 = R"(/src/test/test_data/full_db/)";
         DataBaseManager::Instance().SetDataType(DataType::FULL_DB);
-        Timeline::DataBaseManager::Instance().CreatConnectionPool(currPath + dbPath3 + "report_0.db",
-                                                                  currPath + dbPath3 + "report_0.db");
-        Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDb", currPath + dbPath3 + "report_0.db");
-        FullDb::FullDbParser::Instance().Parse({"FullDb"}, currPath + dbPath3 + "report_0.db", "");
+        Timeline::DataBaseManager::Instance().CreatConnectionPool(currPath + dbPath3 + "msprof_0.db",
+                                                                  currPath + dbPath3 + "msprof_0.db");
+        Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDb", currPath + dbPath3 + "msprof_0.db");
+        FullDb::FullDbParser::Instance().Parse({"FullDb"}, currPath + dbPath3 + "msprof_0.db", "");
         while (ParserStatusManager::Instance().GetParserStatus("FullDb") != ParserStatus::FINISH_ALL) {
         }
         auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(

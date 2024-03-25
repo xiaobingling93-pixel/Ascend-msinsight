@@ -27,7 +27,7 @@ public:
         DataBaseManager::Instance().SetDataType(DataType::FULL_DB);
         auto summeryDatabase =
                 dynamic_cast<DbSummaryDataBase *>(DataBaseManager::Instance().GetSummaryDatabase("2"));
-        summeryDatabase->OpenDb(currPath + dbPath3 + "report_0.db", false);
+        summeryDatabase->OpenDb(currPath + dbPath3 + "msprof_0.db", false);
     }
 
     static void TearDownTestCase() {}
