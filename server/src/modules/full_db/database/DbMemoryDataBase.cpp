@@ -36,7 +36,9 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
         "RELEASE_.totalReserve as release_reserve, "
         "'NA' as release_active, ALLOCATE.addr as stream FROM " + TABLE_GE_MEMORY + " AS ALLOCATE  "
         " JOIN  NPU_OP_MEM AS RELEASE_ ON RELEASE_.type = (SELECT id FROM ENUM_MEMORY WHERE name = 'release') AND "
-        " RELEASE_.addr = ALLOCATE.addr "
+        " RELEASE_.addr = ALLOCATE.addr AND RELEASE_.timestampNs = ( SELECT min(timestampNs) FROM NPU_OP_MEM WHERE "
+        " type = (SELECT id FROM ENUM_MEMORY WHERE name = 'release' ) "
+        " AND addr = ALLOCATE.addr AND timestampNs > ALLOCATE.timestampNs) "
         " JOIN STRING_IDS AS NAME ON NAME.id = ALLOCATE.operatorName"
         " WHERE ALLOCATE.type == (SELECT id FROM ENUM_MEMORY WHERE name = 'allocate')";
     if (type == FileType::MS_PROF) {
@@ -72,11 +74,12 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
         ") / (1000.0 * 1000.0), 2) as timestamp, "
         "ROUND(totalAllocate, 2) as total_allocated, ROUND(totalReserve, 2) as total_reserve, "
         "'NA' as total_active, addr as stream FROM " +
-        TABLE_GE_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = NPU_OP_MEM.component ";
+        TABLE_GE_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = NPU_OP_MEM.component "
+                          " WHERE NPU_OP_MEM.type = (SELECT id FROM ENUM_MEMORY WHERE name = 'allocate') ";
     if (type == FileType::MS_PROF) {
         sql += " AND NPU_OP_MEM.deviceId = " + requestParams.rankId;
     } else if (type == FileType::PYTORCH) {
-        sql += "   UNION "
+        sql += "   UNION ALL "
             "SELECT NAME.value AS component, ROUND((time_stamp - " +
             std::to_string(startTime) +
             ") / (1000.0 * 1000.0), 2) as timestamp, "
@@ -95,15 +98,18 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
         sql = "SELECT count(*) as nums FROM "
             " ("
             "   SELECT NAME.value as name, addr as stream_ptr, timestampNs as allocation_time, size, deviceId FROM " +
-                TABLE_GE_MEMORY +
+            TABLE_GE_MEMORY +
             "   JOIN STRING_IDS AS NAME ON NAME.id = NPU_OP_MEM.operatorName"
+            "   WHERE NPU_OP_MEM.type = (SELECT id FROM ENUM_MEMORY WHERE name = 'allocate') "
             ") "
-            " WHERE name LIKE ? AND deviceId = " + requestParams.rankId;
+            " WHERE name LIKE ? AND deviceId = " +
+            requestParams.rankId;
     } else if (type == FileType::PYTORCH) {
         sql = "SELECT count(*) as nums FROM "
             " ("
             "   SELECT NAME.value as name, addr as stream_ptr, timestampNs as allocation_time, size FROM NPU_OP_MEM "
             "   JOIN STRING_IDS AS NAME ON NAME.id = NPU_OP_MEM.operatorName"
+            "   WHERE NPU_OP_MEM.type = (SELECT id FROM ENUM_MEMORY WHERE name = 'allocate') "
             "   UNION ALL "
             "   SELECT NAME.value as name, stream_ptr, allocation_time, size FROM OP_MEMORY JOIN STRING_IDS AS NAME ON "
             "   NAME.id = OP_MEMORY.name"
@@ -126,23 +132,19 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
     if (requestParams.maxSize != -1) {
         sql += " AND size <= ? ";
     }
+    ServerLog::Error(sql);
     return ExecuteOperatorsTotalNum(requestParams, totalNum, sql);
 }
 
 bool DbMemoryDataBase::QueryOperatorSize(double &min, double &max, std::string rankId)
 {
-    std::string sql = "IF EXISTS (SELECT * FROM sys.tables WHERE name = 'OP_MEMORY') "
-                      "BEGIN "
-                      "SELECT min(size) as minSize, max(size) as maxSize FROM ( "
-                      "  SELECT size FROM " + TABLE_GE_MEMORY +
-                      "  UNION "
-                      "  SELECT size FROM " + TABLE_OPERATOR_MEMORY +
-                      ") AS combined_table; "
-                      "END "
-                      "ELSE "
-                      "BEGIN "
-                      "SELECT min(size) as minSize, max(size) as maxSize FROM NPU_OP_MEM "
-                      "END";
+    std::string sql = "SELECT min(size) as minSize, max(size) as maxSize FROM ( "
+                      "  SELECT size FROM " + TABLE_GE_MEMORY ;
+    FileType type = DataBaseManager::Instance().GetFileType();
+    if (type == FileType::PYTORCH) {
+        sql += "  UNION SELECT size FROM " + TABLE_OPERATOR_MEMORY ;
+    }
+    sql += " )";
     return ExecuteOperatorSize(min, max, sql);
 }
 

@@ -100,7 +100,8 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
 bool DbSummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
 {
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT count(*) as nums FROM " + TABLE_COMPUTE_TASK_INFO + " WHERE taskType = ?";
+    std::string sql = "SELECT count(*) as nums FROM " + TABLE_COMPUTE_TASK_INFO +
+            " WHERE taskType = (select id from STRING_IDS WHERE value = ?)";
     ServerLog::Debug(sql);
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result == SQLITE_OK) {
@@ -476,7 +477,6 @@ bool DbSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPara
     double offset = (params.currentPage - 1) * params.pageSize;
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
-
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("QueryCommDetailHandler failed! Failed to prepare sql.", sqlite3_errmsg(db));
@@ -521,7 +521,7 @@ std::string DbSummaryDataBase::GetCommSql(const CommunicationDetailParams& reque
                       "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
                       "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
                       "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
-                      "     WHERE task_type = ?"
+                      "     WHERE taskTypes = ?"
                       "     GROUP BY TASK.globalTaskId"
                       " ) subquery ";
     if (!order.empty()) {
