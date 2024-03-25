@@ -216,3 +216,17 @@ TEST_F(TestSuit, QueryAllCommunicationOperatorsDetails)
     EXPECT_EQ(responseBody.allOperators[0].synchronizationTimeRatio, 0.0);
     EXPECT_EQ(responseBody.allOperators[0].waitTimeRatio, 0.0);
 }
+
+TEST_F(TestSuit, QueryMatrixSortOpNames)
+{
+    DataBaseManager::Instance().SetDataType(DataType::JSON);
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetWriteClusterDatabase();
+    std::vector<Dic::Protocol::OperatorNamesObject> responseBody;
+    Dic::Protocol::OperatorNamesParams requestParams;
+    requestParams.iterationId = "2";
+    requestParams.stage = "p2p";
+    requestParams.rankList = {};
+    database->QueryMatrixSortOpNames(requestParams, responseBody);
+    int expectSize = 3;
+    EXPECT_EQ(responseBody.size(), expectSize);
+}

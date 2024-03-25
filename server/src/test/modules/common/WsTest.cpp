@@ -45,7 +45,7 @@ TEST_F(TestSuit, TestAllRequestHandler)
         EXPECT_EQ(err, "");
     }
     file.close();
-    int size = 120;
+    int size = 124;
     EXPECT_EQ(count, size);
 }
 
