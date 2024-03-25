@@ -116,15 +116,6 @@ struct ResetWindowRequest : public Request {
     ResetWindowParams params;
 };
 
-struct UnitChartParams {
-    std::string param;
-};
-
-struct UnitChartRequest : public Request {
-    UnitChartRequest() : Request(REQ_RES_UNIT_CHART) {};
-    UnitChartParams params;
-};
-
 struct SearchCountParams {
     std::string rankId;
     std::string searchContent;

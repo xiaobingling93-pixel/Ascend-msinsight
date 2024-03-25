@@ -26,7 +26,6 @@ std::optional<document_t> ToResponseJson<UnitThreadDetailResponse>(const UnitThr
 template <> std::optional<document_t> ToResponseJson<UnitFlowNameResponse>(const UnitFlowNameResponse &response);
 template <> std::optional<document_t> ToResponseJson<UnitFlowResponse>(const UnitFlowResponse &response);
 template <> std::optional<document_t> ToResponseJson<ResetWindowResponse>(const ResetWindowResponse &response);
-template <> std::optional<document_t> ToResponseJson<UnitChartResponse>(const UnitChartResponse &response);
 template <> std::optional<document_t> ToResponseJson<SearchCountResponse>(const SearchCountResponse &response);
 template <> std::optional<document_t> ToResponseJson<SearchSliceResponse>(const SearchSliceResponse &response);
 template <> std::optional<document_t> ToResponseJson<RemoteDeleteResponse>(const RemoteDeleteResponse &response);

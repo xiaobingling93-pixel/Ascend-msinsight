@@ -10,7 +10,6 @@
 #include "QueryFlowHandler.h"
 #include "QuerySystemViewHandler.h"
 #include "ResetWindowHandler.h"
-#include "QueryChartHandler.h"
 #include "ImportActionHandler.h"
 #include "SearchCountHandler.h"
 #include "SearchSliceHandler.h"
@@ -47,7 +46,6 @@ void TimelineModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_UNIT_FLOW_NAME, std::make_unique<QueryFlowNameHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_FLOW, std::make_unique<QueryFlowHandler>());
     requestHandlerMap.emplace(REQ_RES_RESET_WINDOW, std::make_unique<ResetWindowHandler>());
-    requestHandlerMap.emplace(REQ_RES_UNIT_CHART, std::make_unique<QueryChartHandler>());
     requestHandlerMap.emplace(REQ_RES_IMPORT_ACTION, std::make_unique<ImportActionHandler>());
     requestHandlerMap.emplace(REQ_RES_SEARCH_COUNT, std::make_unique<SearchCountHandler>());
     requestHandlerMap.emplace(REQ_RES_SEARCH_SLICE, std::make_unique<SearchSliceHandler>());

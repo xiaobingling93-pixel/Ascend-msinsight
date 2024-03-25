@@ -206,24 +206,6 @@ template <> std::optional<document_t> ToResponseJson<ResetWindowResponse>(const 
     return std::move(json);
 }
 
-template <> std::optional<document_t> ToResponseJson<UnitChartResponse>(const UnitChartResponse &response)
-{
-    document_t json(kObjectType);
-    auto &allocator = json.GetAllocator();
-    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json_t body(kObjectType);
-    json_t data(kArrayType);
-    for (const Chart& chart: response.body.data) {
-        json_t chartJson(kObjectType);
-        JsonUtil::AddMember(chartJson, "ts", chart.ts, allocator);
-        JsonUtil::AddMember(chartJson, "value", chart.value, allocator);
-        data.PushBack(chartJson, allocator);
-    }
-    JsonUtil::AddMember(body, "data", data, allocator);
-    JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
-}
-
 template <> std::optional<document_t> ToResponseJson<SearchCountResponse>(const SearchCountResponse &response)
 {
     document_t json(kObjectType);

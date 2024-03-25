@@ -158,20 +158,6 @@ struct ResetWindowResponse : public Response {
     ResetWindowResponse() : Response(REQ_RES_RESET_WINDOW) {}
 };
 
-struct Chart {
-    uint32_t ts = 0;
-    uint32_t value = 0;
-};
-
-struct UnitChartBody {
-    std::vector<Chart> data;
-};
-
-struct UnitChartResponse : public Response {
-    UnitChartResponse() : Response(REQ_RES_UNIT_CHART) {}
-    UnitChartBody body;
-};
-
 // struct
 struct RowThreadTrace {
     int64_t id = 0;

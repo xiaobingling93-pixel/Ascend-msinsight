@@ -50,7 +50,6 @@ private:
     static std::optional<document_t> ToUnitFlowNameResponseJson(const Response &response);
     static std::optional<document_t> ToUnitFlowResponseJson(const Response &response);
     static std::optional<document_t> ToResetWindowResponseJson(const Response &response);
-    static std::optional<document_t> ToUnitChartResponseJson(const Response &response);
     static std::optional<document_t> ToSearchCountResponseJson(const Response &response);
     static std::optional<document_t> ToSearchSliceResponseJson(const Response &response);
     static std::optional<document_t> ToRemoteDeleteResponseJson(const Response &response);

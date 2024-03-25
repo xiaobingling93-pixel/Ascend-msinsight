@@ -55,7 +55,6 @@ const std::string REQ_RES_UNIT_THREAD_DETAIL = "unit/threadDetail";
 const std::string REQ_RES_UNIT_FLOW_NAME = "unit/flowName";
 const std::string REQ_RES_UNIT_FLOW = "unit/flow";
 const std::string REQ_RES_RESET_WINDOW = "remote/reset";
-const std::string REQ_RES_UNIT_CHART = "unit/chart";
 const std::string REQ_RES_UNIT_SYSTEM_VIEW = "unit/systemView";
 const std::string REQ_RES_UNIT_KERNEL_DETAILS = "unit/kernelDetails";
 const std::string REQ_RES_ONE_KERNEL_DETAILS = "unit/one/kernelDetail";

@@ -21,7 +21,6 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_UNIT_FLOW_NAME, ToUnitFlowNameRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_FLOW, ToUnitFlowRequest);
     jsonToReqFactory.emplace(REQ_RES_RESET_WINDOW, ToResetWindowRequest);
-    jsonToReqFactory.emplace(REQ_RES_UNIT_CHART, ToUnitChartRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceRequest);
     jsonToReqFactory.emplace(REQ_RES_REMOTE_DELETE, ToRemoteDeleteRequest);
@@ -45,7 +44,6 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_UNIT_FLOW_NAME, ToUnitFlowNameResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_FLOW, ToUnitFlowResponseJson);
     resToJsonFactory.emplace(REQ_RES_RESET_WINDOW, ToResetWindowResponseJson);
-    resToJsonFactory.emplace(REQ_RES_UNIT_CHART, ToUnitChartResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceResponseJson);
     resToJsonFactory.emplace(REQ_RES_REMOTE_DELETE, ToRemoteDeleteResponseJson);
@@ -190,17 +188,6 @@ std::unique_ptr<Request> TimelineProtocol::ToResetWindowRequest(const json_t &js
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
-    return reqPtr;
-}
-
-std::unique_ptr<Request> TimelineProtocol::ToUnitChartRequest(const json_t &json, std::string &error)
-{
-    std::unique_ptr<UnitChartRequest> reqPtr = std::make_unique<UnitChartRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
-        return nullptr;
-    }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.param, json["params"], "param");
     return reqPtr;
 }
 
@@ -425,11 +412,6 @@ std::optional<document_t> TimelineProtocol::ToUnitFlowResponseJson(const Respons
 std::optional<document_t> TimelineProtocol::ToResetWindowResponseJson(const Response &response)
 {
     return ToResponseJson<ResetWindowResponse>(dynamic_cast<const ResetWindowResponse &>(response));
-}
-
-std::optional<document_t> TimelineProtocol::ToUnitChartResponseJson(const Response &response)
-{
-    return ToResponseJson<UnitChartResponse>(dynamic_cast<const UnitChartResponse &>(response));
 }
 
 std::optional<document_t> TimelineProtocol::ToSearchCountResponseJson(const Response &response)
