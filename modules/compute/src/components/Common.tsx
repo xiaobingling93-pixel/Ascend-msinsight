@@ -176,13 +176,38 @@ export function log(...param: unknown[]): void {
     logRecord[logindex++ % 1000] = param;
 }
 
-export function limitInput(): void {
+export function limitInput(maxlength?: string): void {
     setTimeout(() => {
         const inputs = document.querySelectorAll('input');
         inputs.forEach(input => {
             if (input.maxLength < 0) {
-                input.setAttribute('maxlength', '200');
+                input.setAttribute('maxlength', maxlength ?? '200');
             }
         });
     });
 }
+
+export const GetPageConfigWhithPageData = (page: { current: number; pageSize: number; total: number },
+    setPage: unknown, pageSizeOptions?: number[],
+): object => {
+    return {
+        ...page,
+        showSizeChanger: page.total > 10,
+        pageSizeOptions: pageSizeOptions ?? [10, 20, 50, 100],
+        showTotal: (total: number): React.ReactNode => (<div style={{ marginRight: '10px' }}>Total {total} items</div>),
+        hideOnSinglePage: false,
+        onChange: (current: number, pageSize: number): void => {
+            (setPage as (value: unknown) => void)({ ...page, current, pageSize });
+        },
+        showQuickJumper: page.pageSize !== 0 && page.total / page.pageSize > 5,
+    };
+};
+export const GetPageConfigWhithAllData = (total: number): object => {
+    return {
+        total,
+        showSizeChanger: total > 10,
+        pageSizeOptions: [10, 20, 50, 100],
+        showTotal: (value: number) => (<div style={{ marginRight: '10px' }}>Total {value} items</div>),
+        hideOnSinglePage: false,
+    };
+};

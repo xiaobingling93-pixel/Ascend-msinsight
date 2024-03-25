@@ -12,12 +12,21 @@ import Filter from '../Filter';
 import CodeViewer from '../codeViewer/CodeViewer';
 import ResizeTable from '../resize/ResizeTable';
 import Bar from '../Bar';
-import { HeaderFixedContainer, LeftRightContainer, syncScroller, isViewable, limitInput } from '../Common';
+import {
+    HeaderFixedContainer,
+    LeftRightContainer,
+    syncScroller,
+    isViewable,
+    limitInput,
+    GetPageConfigWhithPageData,
+    confrimMessage,
+} from '../Common';
 import type { InstrsColumnType, Iline, Ilinetable, JsonInstructionType } from './defs';
 import { queryApiInstr, queryApiLine, querySourceCode } from '../RequestUtils';
 import { runInAction } from 'mobx';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
+const MAX_INSTRUCTION = 1000000; // 100万
 
 interface ConditionType {
     core: string;
@@ -200,7 +209,11 @@ const Index = observer(({ session }: { session: Session }) => {
         if (renderStatus !== session.renderStatus || session.Instructions.length === 0) {
             const res = await queryApiInstr();
             runInAction(() => {
-                session.Instructions = JSON.parse(res.instructions).Instructions;
+                const list = JSON.parse(res.instructions)?.Instructions;
+                if (list?.length > MAX_INSTRUCTION) {
+                    session.Instructions = list.slice(0, MAX_INSTRUCTION);
+                    confrimMessage('warn', `Only display the first ${MAX_INSTRUCTION} Instructions`);
+                }
             });
             setRenderStatus(session.renderStatus);
         }
@@ -208,7 +221,7 @@ const Index = observer(({ session }: { session: Session }) => {
         const coreIndex = session.coreList.findIndex(item => item === core);
         const list = records.map((item: JsonInstructionType, index: number) => ({
             ...item,
-            Cycles: item.Cycles[coreIndex] ?? '',
+            Cycles: item.Cycles?.[coreIndex] ?? '',
             'Instructions Executed': item['Instructions Executed']?.[coreIndex] ?? '',
             index: index + 1,
             maxCycles: 0,
@@ -362,19 +375,13 @@ const Index = observer(({ session }: { session: Session }) => {
                         <HeaderFixedContainer
                             id={'Instructions'}
                             style={{ paddingLeft: '15px' }}
-                            body={<ResizeTable
-                                size="small"
-                                minThWidth={50}
+                            body={<InstructionTable
+                                tableHeight={tableHeight}
                                 columns={filterInstrsColumns}
                                 dataSource={condition.onlyRelated ? getRelatedInstrs() : instrsData}
-                                rowClassName={(record: InstrsColumnType) => (isRelatedInstr(record) ? 'selected' : '')}
-                                onRow={ (record: InstrsColumnType) => {
-                                    return {
-                                        onClick: () => { handleInstrsClick(record); },
-                                    };
-                                }}
-                                pagination={false}
-                                scroll={{ y: tableHeight }}
+                                isRelatedInstr={isRelatedInstr}
+                                handleInstrsClick={handleInstrsClick}
+                                selectedline={selectedline}
                             />}
                         />
                     }
@@ -383,5 +390,45 @@ const Index = observer(({ session }: { session: Session }) => {
         />
     </div>;
 });
+
+const InstructionTable = ({ columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline }: {
+    columns: ColumnsType<InstrsColumnType>;
+    dataSource: InstrsColumnType[];
+    isRelatedInstr: (instr: InstrsColumnType) => boolean;
+    handleInstrsClick: (instr: InstrsColumnType) => void;
+    tableHeight: number;
+    selectedline: number;
+}): JSX.Element => {
+    const defaultPage = { current: 1, pageSize: 1000, total: dataSource.length };
+    const [page, setPage] = useState(defaultPage);
+    const showPage = dataSource.length > 5000;
+    useEffect(() => {
+        setPage({ ...page, current: 1, total: dataSource.length });
+    }, [dataSource.length]);
+
+    useEffect(() => {
+        if (showPage && page.pageSize !== 0) {
+            const index = dataSource.findIndex(item => isRelatedInstr(item));
+            const onPage = Math.floor(index / page.pageSize) + 1;
+            if (onPage !== page.current) {
+                setPage({ ...page, current: onPage });
+            }
+        }
+    }, [selectedline]);
+    return <ResizeTable
+        size="small"
+        minThWidth={50}
+        columns={columns}
+        dataSource={dataSource}
+        rowClassName={(record: InstrsColumnType) => (isRelatedInstr(record) ? 'selected' : '')}
+        onRow={ (record: InstrsColumnType) => {
+            return {
+                onClick: () => { handleInstrsClick(record); },
+            };
+        }}
+        pagination={showPage ? GetPageConfigWhithPageData(page, setPage, [1000, 5000]) : false}
+        scroll={{ y: showPage ? tableHeight - 50 : tableHeight }}
+    />;
+};
 
 export default Index;
