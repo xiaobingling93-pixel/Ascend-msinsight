@@ -26,6 +26,10 @@ import { queryApiInstr, queryApiLine, querySourceCode } from '../RequestUtils';
 import { runInAction } from 'mobx';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
+const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1M
+const MAX_FILE_SIZE_LABLE = '1MB';
+const MAX_LINE_LENGTH = 10000; // 1万
+const MAX_LINE = 10000; // 1万
 const MAX_INSTRUCTION = 1000000; // 100万
 
 interface ConditionType {
@@ -199,7 +203,37 @@ const Index = observer(({ session }: { session: Session }) => {
             return '';
         }
         const res = await querySourceCode(source);
-        return res.fileContent ?? '';
+        let str: string = res?.fileContent ?? '';
+        let linebreak;
+        if (str.includes('\r\n')) {
+            linebreak = '\r\n';
+        } else if (str.includes('\r')) {
+            linebreak = '\r';
+        } else if (str.includes('\n')) {
+            linebreak = '\n';
+        } else {
+            linebreak = '';
+        }
+        if (str.length > MAX_FILE_SIZE) {
+            str = str.slice(0, MAX_FILE_SIZE);
+            str += `${linebreak}----------【File exceed ${MAX_FILE_SIZE_LABLE} , Hide the rest content.】----------`;
+        }
+        if (str.length > 0) {
+            let splitlines: string[] = str.split(BREAK_LINE_REGEXP);
+            if (splitlines.length > MAX_LINE) {
+                splitlines = splitlines.slice(0, MAX_LINE);
+                splitlines.push(`----------【Exceed ${MAX_LINE} lines , Hide the rest content.】----------`);
+            }
+            splitlines = splitlines.map(codeline => {
+                if (codeline.length > MAX_LINE_LENGTH) {
+                    return `${codeline.slice(0, MAX_LINE_LENGTH)} 【Exceed ${MAX_LINE_LENGTH} , Hide the rest content.】`;
+                } else {
+                    return codeline;
+                }
+            });
+            return splitlines.join(linebreak);
+        }
+        return str;
     }
 
     async function getInstrs(core: string): Promise<InstrsColumnType[]> {
@@ -208,6 +242,9 @@ const Index = observer(({ session }: { session: Session }) => {
         }
         if (renderStatus !== session.renderStatus || session.Instructions.length === 0) {
             const res = await queryApiInstr();
+            if (res === undefined || res === null) {
+                return [];
+            }
             runInAction(() => {
                 const list = JSON.parse(res.instructions)?.Instructions;
                 if (list?.length > MAX_INSTRUCTION) {
