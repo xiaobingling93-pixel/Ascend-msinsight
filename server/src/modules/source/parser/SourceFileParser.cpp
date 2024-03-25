@@ -344,6 +344,7 @@ std::string SourceFileParser::GetSourceByName(std::string sourceName)
 {
     if (sourceFiles.count(sourceName) == 0) {
         ServerLog::Warn("Don't exist the specified file ", sourceName);
+        return "";
     }
     std::pair<int64_t, int64_t> &pos = sourceFiles[sourceName];
     int64_t start = pos.first;
