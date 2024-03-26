@@ -78,7 +78,7 @@ private:
                         std::string &message, std::set<std::string>& devices);
     static bool InitParser(const std::vector<std::string>& filePathList, const std::string &fileId,
                            std::string &message);
-    static bool CheckHeaderField(const std::map<std::string, size_t>& dataMap, const std::string path);
+    static bool CheckHeaderField(const std::map<std::string, size_t>& dataMap);
 };
 
 } // end of namespace Summary

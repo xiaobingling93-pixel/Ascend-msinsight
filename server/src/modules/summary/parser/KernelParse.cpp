@@ -154,22 +154,19 @@ bool KernelParse::ParseTask(const std::vector<std::string>& filePathList, const 
     return true;
 }
 
-bool KernelParse::CheckHeaderField(const std::map<std::string, size_t>& dataMap, const std::string path)
+bool KernelParse::CheckHeaderField(const std::map<std::string, size_t>& dataMap)
 {
-    std::vector<std::string> header;
-    if (dataMap.find(FIELD_OP_NAME) != dataMap.end()) {
-        header = {FIELD_OP_TYPE, FIELD_TASK_TYPE, FIELD_TASK_START_TIME,
-                  FIELD_TASK_DURATION, FIELD_TASK_WAIT_TIME, FIELD_BLOCK_DIM};
-    } else if (dataMap.find(FIELD_NAME) != dataMap.end()) {
-        header = {FIELD_TYPE, FIELD_ACCELERATOR_CORE, FIELD_START_TIME,
-                  FIELD_DURATION, FIELD_WAIT_TIME, FIELD_BLOCK_DIM};
-    } else {
-        ServerLog::Error("The kernel file doesn't contain the op name: ", path);
-        return false;
-    }
-    for (const auto& item : header) {
-        if (dataMap.find(item) == dataMap.end()) {
-            ServerLog::Error("The kernel file doesn't contain ", item, ": ", path);
+    std::vector<std::string> header4Train = {
+        FIELD_OP_NAME, FIELD_OP_TYPE, FIELD_TASK_TYPE, FIELD_TASK_START_TIME,
+        FIELD_TASK_DURATION, FIELD_TASK_WAIT_TIME, FIELD_BLOCK_DIM
+    };
+    std::vector<std::string> header4Msprof = {
+        FIELD_NAME, FIELD_TYPE, FIELD_ACCELERATOR_CORE, FIELD_START_TIME,
+        FIELD_DURATION, FIELD_WAIT_TIME, FIELD_BLOCK_DIM
+    };
+    for (int i = 0; i < header4Train.size(); ++i) {
+        if (dataMap.find(header4Train[i]) == dataMap.end() && dataMap.find(header4Msprof[i]) == dataMap.end()) {
+            ServerLog::Error("The file doesn't contain \"", header4Train[i], "\" or \"" + header4Msprof[i] + "\".");
             return false;
         }
     }
@@ -194,14 +191,14 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
             for (size_t i = 0; i < rowVector.size(); ++i) {
                 dataMap[rowVector[i]] = i;
             }
-            if (!CheckHeaderField(dataMap, filePath)) {
+            if (!CheckHeaderField(dataMap)) {
+                message = "The header is incorrect or incomplete of " + filePath;
                 return false;
             }
             continue;
         }
         Kernel kernel {};
         if (!mapperToKernelDetail(dataMap, rowVector, fileId, kernel)) {
-            message = "The header is incorrect or incomplete of " + filePath;
             return false;
         }
         // 记录有多少device
@@ -296,7 +293,8 @@ bool KernelParse::mapperToKernelDetail(std::map<std::string, size_t> dataMap,
     size_t waitTimeIndex;
 
     if (dataMap.find(FIELD_NAME) != dataMap.end()) {
-        startTimeIndex = dataMap[FIELD_START_TIME];
+        startTimeIndex = dataMap.find(FIELD_START_TIME) != dataMap.end() ?
+                dataMap[FIELD_START_TIME] : dataMap[FIELD_TASK_START_TIME];
         nameIndex = dataMap[FIELD_NAME];
         typeIndex = dataMap[FIELD_TYPE];
         acceleratorIndex = dataMap[FIELD_ACCELERATOR_CORE];
