@@ -24,7 +24,7 @@ export const ButtonGroup = observer(({ session }: { session: Session }) => {
         <TimeMakerButton session={session} />
         <UnitsFilter session={session} />
         <CategorySearch session={session} />
-        <FilterLinkLine session={session}/>
+        {!session.isFullDb && <FilterLinkLine session={session}/>}
         {session.buttons.map((_Button, index) => <_Button session={session} key={`${session.id}-${index}`} />)}
         {unit?.buttons?.map((_Button, index) => <_Button session={session} key={`${unit.name}-${index}`} />)}
     </Container>);
