@@ -103,8 +103,8 @@ void ParserDb::ClusterProcessAsyncStep(const std::string &token, const std::stri
 std::map<std::string, std::vector<std::string>> ParserDb::GetReportFiles(const std::string &path,
     ImportActionResBody &body)
 {
-    std::vector<std::string> pytorchFiles = FileUtil::FindFilesByRegex(path, std::regex(pytorchDBReg));
-    std::vector<std::string> msprofFiles = FileUtil::FindFilesByRegex(path, std::regex(msprofDBReg));
+    std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(path, std::regex(pytorchDBReg));
+    std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(path, std::regex(msprofDBReg));
     CheckIfClusterAndReset(path, pytorchFiles.size(), body, true);
     if (pytorchFiles.empty() && msprofFiles.empty()) {
         Server::ServerLog::Warn("Failed to find db file.");

@@ -10,7 +10,7 @@ namespace Dic::Module::Timeline {
 void TraceDatabaseHelper::QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                             const Protocol::ThreadDetailParams &requestParams,
                                             Protocol::UnitThreadDetailBody &responseBody,
-                                            const std::map<int64_t, std::string> &stringCache)
+                                            std::map<int64_t, std::string> &stringCache)
 {
     auto processType = GetProcessType(requestParams.metaType);
     auto resultSet = QueryTaskCacheInfoById(stmt, requestParams);
@@ -31,8 +31,10 @@ void TraceDatabaseHelper::QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatem
             if (std::find(types.begin(), types.end(), item.first) != types.end()) {
                 continue;
             }
-            JsonUtil::AddConstMember(json, item.first,
-                                     stringCache.at(resultSet->GetInt64(item.second)), allocator);
+            auto id = resultSet->GetInt64(item.second);
+            if (stringCache.count(id) > 0) {
+                JsonUtil::AddConstMember(json, item.first, stringCache.at(id), allocator);
+            }
         }
     }
 
@@ -63,10 +65,10 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryTaskStrInfoById(
                   " where main.ROWID = ?";
             return ExecuteQuery(stmt, sql, requestParams.id);
         case PROCESS_TYPE::API:
-            sql = "SELECT t.name as apiType, connectionId, sequenceNumber, group_concat(stack, '') as CallStack "
-                  " FROM PYTORCH_API main join ENUM_API_TYPE t on t.id = type "
-                  " left join PYTORCH_CALLCHAINS call on call.callchainId = main.callchainId "
-                  " where main.ROWID = ? order by stackDepth";
+            sql = " select group_concat(stack, ';\n') as 'Call stack', sequenceNumber from ( "
+                  "    SELECT stack, sequenceNumber FROM PYTORCH_API main "
+                  "             left join PYTORCH_CALLCHAINS call on call.id = main.callchainId "
+                  "    where main.ROWID = ? order by stackDepth )";
             return ExecuteQuery(stmt, sql, requestParams.id);
         case PROCESS_TYPE::CANN_API:
             sql = "SELECT t.name as apiType, connectionId FROM CANN_API main join ENUM_API_TYPE t on t.id = type "

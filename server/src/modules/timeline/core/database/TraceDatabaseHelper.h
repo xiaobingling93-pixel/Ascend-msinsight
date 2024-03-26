@@ -244,7 +244,7 @@ public:
 
 static void QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
              const Protocol::ThreadDetailParams &requestParams,
-             Protocol::UnitThreadDetailBody &responseBody, const std::map<int64_t, std::string> &stringCache);
+             Protocol::UnitThreadDetailBody &responseBody, std::map<int64_t, std::string> &stringCache);
 
 static std::unique_ptr<SqliteResultSet> QueryTaskStrInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                 const Protocol::ThreadDetailParams &requestParams);
