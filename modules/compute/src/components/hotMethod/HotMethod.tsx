@@ -246,11 +246,12 @@ const Index = observer(({ session }: { session: Session }) => {
                 return [];
             }
             runInAction(() => {
-                const list = JSON.parse(res.instructions)?.Instructions;
+                let list = JSON.parse(res.instructions)?.Instructions;
                 if (list?.length > MAX_INSTRUCTION) {
-                    session.Instructions = list.slice(0, MAX_INSTRUCTION);
+                    list = list.slice(0, MAX_INSTRUCTION);
                     confrimMessage('warn', `Only display the first ${MAX_INSTRUCTION} Instructions`);
                 }
+                session.Instructions = list;
             });
             setRenderStatus(session.renderStatus);
         }
