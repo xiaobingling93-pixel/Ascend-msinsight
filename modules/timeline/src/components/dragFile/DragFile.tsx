@@ -6,6 +6,8 @@ import { notification } from 'antd';
 import './DragFile.css';
 import { formatTimestamp } from '../../utils/humanReadable';
 import { Logger } from '../../utils/Logger';
+import connector from '../../connection';
+import type { NotificationHandler } from '../../connection/defs';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024; // 10G
 const DEFAULT_SLICE_SIZE = 1024 * 1024; // Byte
@@ -48,11 +50,22 @@ interface DragFileParams {
     onDrop?: DropHandler;
 }
 
+interface ImportFileData {
+    isCluster: boolean;
+    reset: boolean;
+    result: Array<{
+        cardName: string;
+        rankId: string;
+        cardPath: string;
+        result: true;
+    }>;
+}
+
 class DragFile {
     onSuccess?: SuccessHandler;
     onDrop?: DropHandler;
+    protected _stopped = false;
     protected _processing = false;
-
     constructor({ id, onSuccess, onDrop }: DragFileParams) {
         const dropZone = id !== undefined ? document.getElementById(id) : document;
         if (dropZone === null) {
@@ -72,10 +85,20 @@ class DragFile {
         this.onDrop = onDrop;
     }
 
+    get isStopped(): boolean {
+        return this._stopped;
+    }
+
     get isProcessing(): boolean {
         return this._processing;
     }
 
+    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
+    set isStopped(val: boolean) {
+        this._stopped = val;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set isProcessing(val: boolean) {
         this._processing = val;
     }
@@ -114,6 +137,7 @@ class DragFile {
             notify('Processing');
             return;
         }
+        this.isStopped = false;
         // 1.读取文件
         const allFiles = await getFilelistByItems(e.dataTransfer.items);
         // 2.检查文件
@@ -155,6 +179,17 @@ class DragFile {
 }
 
 class DragFileImport extends DragFile {
+    NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
+        'remote/remove': this.removeRemoteHandler,
+        'remote/removeSingle': this.removeSingleRemoteHandler,
+    };
+
+    uploadingFileName: string = '';
+    constructor(params: any) {
+        super(params);
+        addListeners(this.NOTIFICATION_HANDLERS, this);
+    }
+
     async checkFile(file: FileDataType): Promise<CheckResultType> {
         if (!this.checkFileSize(file.data.size)) {
             return {
@@ -174,6 +209,7 @@ class DragFileImport extends DragFile {
         const timestamp = formatTimestamp(Date.now(), 'MMDDHHmmss.SSS');
         file.attr.name = `${file.attr.name}(${timestamp})`;
         file.attr.path = `${file.attr.path}(${timestamp})`;
+        this.uploadingFileName = file.attr.name;
         return {
             usable: true,
             totalSize: file.data.size,
@@ -250,50 +286,78 @@ class DragFileImport extends DragFile {
         return resList;
     }
 
-    loadFile(fileBlob: Blob, file: FileDataType, i: number, count: number, resolve: (value: FileDataType) => void): void {
-        const { attr } = file;
-        const reader = new FileReader();
-        reader.readAsText(fileBlob);
-        reader.onload = (event): void => {
-            const text: any = event.target?.result;
-            if (text !== null && text !== undefined) {
-                const isLastSlice = count <= 1 || i === count;
-                try {
+    loadFile(fileBlob: Blob, file: FileDataType, i: number, count: number): Promise<FileDataType> {
+        return new Promise((resolve, reject) => {
+            const { attr } = file;
+            const reader = new FileReader();
+            reader.readAsText(fileBlob);
+            reader.onload = (event): void => {
+                const text: any = event.target?.result;
+                if (text !== null && text !== undefined) {
+                    const isLastSlice = count <= 1 || i === count;
                     window.requestData('upload/file', {
                         text,
                         fileAttr: attr,
                         slice: {
                             isSliced: count > 1, index: i, count, isLast: isLastSlice,
                         },
-                    }, 'timeline', !isLastSlice).then((res: any) => {
-                        resolve({ succeed: true, attr, res });
+                    }, 'timeline', !isLastSlice).then((res: ImportFileData) => {
+                        const isSuccess = res?.result?.[0].result;
+                        resolve({ succeed: isSuccess, attr, res });
                     }).catch((error: any) => {
                         resolve({ succeed: false, attr, error });
                     });
-                } catch (error) {
-                    resolve({ succeed: false, attr, error });
                 }
-            }
-        };
-        reader.onerror = (): void => {
-            resolve({ succeed: false, attr });
-        };
-    }
-
-    readFile(file: FileDataType): Promise<any> {
-        const slicesize = DEFAULT_SLICE_SIZE;
-        return new Promise((resolve, reject) => {
-            const { data } = file;
-            const count = Math.ceil(data.size / slicesize);
-
-            for (let i = 1; i <= count; i++) {
-                const start = (i - 1) * slicesize;
-                const end = Math.min(data.size, i * slicesize);
-                const fileBlob = data.slice(start, end);
-                this.loadFile(fileBlob, file, i, count, resolve);
-            }
+            };
+            reader.onerror = (): void => {
+                resolve({ succeed: false, attr });
+            };
         });
     }
+
+    async readFile(file: FileDataType): Promise<FileDataType> {
+        const slicesize = DEFAULT_SLICE_SIZE;
+        const { data } = file;
+        const count = Math.ceil(data.size / slicesize);
+        let lastRes: FileDataType = { succeed: false, attr: file.attr };
+
+        for (let i = 1; i <= count; i++) {
+            const start = (i - 1) * slicesize;
+            const end = Math.min(data.size, i * slicesize);
+            const fileBlob = data.slice(start, end);
+            if (i === count) {
+                lastRes = await this.loadFile(fileBlob, file, i, count);
+            } else {
+                this.loadFile(fileBlob, file, i, count);
+            }
+            if (i % 20 === 0) {
+                await sleep(900);
+            }
+            if (this.isStopped) {
+                break;
+            }
+        }
+
+        return lastRes;
+    }
+
+    removeRemoteHandler(): void {
+        this.isStopped = true;
+    }
+
+    removeSingleRemoteHandler(data: any): void {
+        if (data.singleDataPath === this.uploadingFileName) {
+            this.isStopped = true;
+        }
+    }
+}
+
+function sleep(duration = 1000): Promise<void> {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve();
+        }, duration);
+    });
 }
 
 async function getFilelistByItems(items: DataTransferItemList): Promise<any> {
@@ -405,4 +469,16 @@ function notify(type: NotifyType, param?: any): void {
 
 export const DragFileImportInit = ({ id, onSuccess, onDrop }: DragFileParams): DragFileImport => {
     return new DragFileImport({ id, onSuccess, onDrop });
+};
+
+const addListeners = (handlers: Record<string, NotificationHandler>, _this: DragFileImport): void => {
+    Object.entries(handlers).forEach(([event, callback]) => {
+        connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
+            const res = e.data;
+            if (typeof res.body !== 'object') {
+                return;
+            }
+            callback.apply(_this, [res.body]);
+        });
+    });
 };
