@@ -154,6 +154,28 @@ bool KernelParse::ParseTask(const std::vector<std::string>& filePathList, const 
     return true;
 }
 
+bool KernelParse::CheckHeaderField(const std::map<std::string, size_t>& dataMap, const std::string path)
+{
+    std::vector<std::string> header;
+    if (dataMap.find(FIELD_OP_NAME) != dataMap.end()) {
+        header = {FIELD_OP_TYPE, FIELD_TASK_TYPE, FIELD_TASK_START_TIME,
+                  FIELD_TASK_DURATION, FIELD_TASK_WAIT_TIME, FIELD_BLOCK_DIM};
+    } else if (dataMap.find(FIELD_NAME) != dataMap.end()) {
+        header = {FIELD_TYPE, FIELD_ACCELERATOR_CORE, FIELD_START_TIME,
+                  FIELD_DURATION, FIELD_WAIT_TIME, FIELD_BLOCK_DIM};
+    } else {
+        ServerLog::Error("The kernel file doesn't contain the op name: ", path);
+        return false;
+    }
+    for (const auto& item : header) {
+        if (dataMap.find(item) == dataMap.end()) {
+            ServerLog::Error("The kernel file doesn't contain ", item, ": ", path);
+            return false;
+        }
+    }
+    return true;
+}
+
 bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string &fileId, const std::string& statusId,
                                  std::string &message, std::set<std::string>& devices)
 {
@@ -172,11 +194,13 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
             for (size_t i = 0; i < rowVector.size(); ++i) {
                 dataMap[rowVector[i]] = i;
             }
+            if (!CheckHeaderField(dataMap, filePath)) {
+                return false;
+            }
             continue;
         }
         Kernel kernel {};
-        if (dataMap.size() < kernelTableNum or !KernelParse::mapperToKernelDetail(dataMap, rowVector,
-                                                                                  fileId, kernel)) {
+        if (!mapperToKernelDetail(dataMap, rowVector, fileId, kernel)) {
             message = "The header is incorrect or incomplete of " + filePath;
             return false;
         }
@@ -270,32 +294,22 @@ bool KernelParse::mapperToKernelDetail(std::map<std::string, size_t> dataMap,
     size_t startTimeIndex;
     size_t durationIndex;
     size_t waitTimeIndex;
-    if (dataMap.count(FIELD_START_TIME) != 0) {
-        startTimeIndex = dataMap[FIELD_START_TIME];
-    } else if (dataMap.count(FIELD_TASK_START_TIME) != 0) {
-        startTimeIndex = dataMap[FIELD_TASK_START_TIME];
-    } else {
-        ServerLog::Error("The file header does not contain 'Start Time(us)' or 'Task Start Time(us)'.");
-        return false;
-    }
 
-    if (dataMap.find(FIELD_ACCELERATOR_CORE) != dataMap.end()) {
+    if (dataMap.find(FIELD_NAME) != dataMap.end()) {
+        startTimeIndex = dataMap[FIELD_START_TIME];
         nameIndex = dataMap[FIELD_NAME];
         typeIndex = dataMap[FIELD_TYPE];
         acceleratorIndex = dataMap[FIELD_ACCELERATOR_CORE];
         durationIndex = dataMap[FIELD_DURATION];
         waitTimeIndex = dataMap[FIELD_WAIT_TIME];
-    } else if (dataMap.find(FIELD_TASK_TYPE) != dataMap.end()) {
+    } else {
+        startTimeIndex = dataMap[FIELD_TASK_START_TIME];
         nameIndex = dataMap[FIELD_OP_NAME];
         typeIndex = dataMap[FIELD_OP_TYPE];
         acceleratorIndex = dataMap[FIELD_TASK_TYPE];
         durationIndex = dataMap[FIELD_TASK_DURATION];
         waitTimeIndex = dataMap[FIELD_TASK_WAIT_TIME];
-    } else {
-        ServerLog::Error("The file header does not contain 'Step Id' or 'Device Id'.");
-        return false;
     }
-
     kernel.rankId = dataMap.count(DEVICE_ID) != 0 ? row[dataMap[DEVICE_ID]] : fileId;
     kernel.name = row[nameIndex];
     kernel.stepId = dataMap.count(STEP_ID) != 0 ? row[dataMap[STEP_ID]] : "";
@@ -305,12 +319,15 @@ bool KernelParse::mapperToKernelDetail(std::map<std::string, size_t> dataMap,
     kernel.duration = atof(row[durationIndex].c_str());
     kernel.waitTime = atof(row[waitTimeIndex].c_str());
     kernel.blockDim = atof(row[dataMap[FIELD_BLOCK_DIM]].c_str());
-    kernel.inputDataTypes = row[dataMap[FIELD_INPUT_DATA_TYPES]];
-    kernel.inputShapes = row[dataMap[FIELD_INPUT_SHAPES]];
-    kernel.inputFormats = row[dataMap[FIELD_INPUT_FORMATS]];
-    kernel.outputDataTypes = row[dataMap[FIELD_OUTPUT_DATA_TYPES]];
-    kernel.outputShapes = row[dataMap[FIELD_OUTPUT_SHAPES]];
-    kernel.outputFormats = row[dataMap[FIELD_OUTPUT_FORMATS]];
+    if (dataMap.find(FIELD_INPUT_SHAPES) != dataMap.end()) { // Level0时无input/output相关数据
+        kernel.inputDataTypes = row[dataMap[FIELD_INPUT_DATA_TYPES]];
+        kernel.inputShapes = row[dataMap[FIELD_INPUT_SHAPES]];
+        kernel.inputFormats = row[dataMap[FIELD_INPUT_FORMATS]];
+        kernel.outputDataTypes = row[dataMap[FIELD_OUTPUT_DATA_TYPES]];
+        kernel.outputShapes = row[dataMap[FIELD_OUTPUT_SHAPES]];
+        kernel.outputFormats = row[dataMap[FIELD_OUTPUT_FORMATS]];
+    }
+
     return true;
 }
 

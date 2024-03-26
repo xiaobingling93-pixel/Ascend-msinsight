@@ -56,7 +56,6 @@ public:
 
 private:
     const int maxThreadNum = 4;
-    static const int kernelTableNum = 15;
     std::unique_ptr<ThreadPool> threadPool;
     std::map<std::string, std::future<void>> futureMap;
     const std::string kernelDetailReg = R"((kernel_details|op_summary[_\d]*)\.csv$)";
@@ -79,6 +78,7 @@ private:
                         std::string &message, std::set<std::string>& devices);
     static bool InitParser(const std::vector<std::string>& filePathList, const std::string &fileId,
                            std::string &message);
+    static bool CheckHeaderField(const std::map<std::string, size_t>& dataMap, const std::string path);
 };
 
 } // end of namespace Summary
