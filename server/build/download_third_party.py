@@ -19,7 +19,7 @@ BUILD_TITLE = '[Download Third Party]'
 OPEN_SOURCE = [
     [
         'googletest',
-        'release-1.12.1',
+        'v1.13.0',
         'https://szv-open.codehub.huawei.com/OpenSourceCenter/google/googletest.git'
     ],
     [
