@@ -29,17 +29,16 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
         std::mutex &dbMutex = GetDbMutex(fileId);
         std::unique_ptr<ConnectionPool> conn;
         switch (dataType) {
-            case DataType::JSON:
-                conn = std::make_unique<ConnectionPool>(dbPath, [&dbMutex]() {
-                    return new JsonTraceDatabase(dbMutex);
-                });
-                break;
             case DataType::FULL_DB:
                 conn = std::make_unique<ConnectionPool>(dbPath, [&dbMutex]() {
                     return new FullDb::DbTraceDataBase(dbMutex);
                 });
                 break;
+            case DataType::JSON:
             default:
+                conn = std::make_unique<ConnectionPool>(dbPath, [&dbMutex]() {
+                    return new JsonTraceDatabase(dbMutex);
+                });
                 break;
         }
         conn->SetMaxActiveCount(CPU_CORE_COUNT);
@@ -87,13 +86,12 @@ Memory::VirtualMemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::str
     if (memoryDatabaseMap.count(fileId) == 0) {
         std::mutex &dbMutex = GetDbMutex(fileId);
         switch (dataType) {
-            case DataType::JSON:
-                memoryDatabaseMap.emplace(fileId, std::make_unique<Memory::JsonMemoryDataBase>(dbMutex));
-                break;
             case DataType::FULL_DB:
                 memoryDatabaseMap.emplace(fileId, std::make_unique<FullDb::DbMemoryDataBase>(dbMutex));
                 break;
+            case DataType::JSON:
             default:
+                memoryDatabaseMap.emplace(fileId, std::make_unique<Memory::JsonMemoryDataBase>(dbMutex));
                 break;
         }
     }

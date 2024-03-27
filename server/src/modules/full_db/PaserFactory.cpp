@@ -35,16 +35,15 @@ std::shared_ptr<ParserAlloc> ParserFactory::ParserImport(ParserType allocType)
 {
     std::shared_ptr<ParserAlloc> alloc;
     switch (allocType) {
+        case ParserType::DB:
+            alloc = std::make_shared<ParserDb>();
+            break;
         case ParserType::BIN:
             alloc = std::make_shared<ParserBin>();
             break;
         case ParserType::JSON:
-            alloc = std::make_shared<ParserJson>();
-            break;
-        case ParserType::DB:
-            alloc = std::make_shared<ParserDb>();
-            break;
         default:
+            alloc = std::make_shared<ParserJson>();
             break;
     }
     return alloc;
