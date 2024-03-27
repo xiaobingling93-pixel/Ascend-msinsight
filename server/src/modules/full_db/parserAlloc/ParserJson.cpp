@@ -120,7 +120,6 @@ std::vector<std::pair<std::string, std::string>> ParserJson::GetTraceFiles(const
                                                                            ImportActionResBody &body)
 {
     std::vector<std::string> traceFiles = FindAllTraceFile(path);
-    ServerLog::Warn(traceFiles.size());
     CheckIfClusterAndReset(path, traceFiles.size(), body, false);
     if (traceFiles.empty()) {
         Server::ServerLog::Warn("Failed to find trace file.");
@@ -135,6 +134,7 @@ std::vector<std::pair<std::string, std::string>> ParserJson::GetTraceFiles(const
         }
         files.emplace_back(file, fileId);
     }
+    ServerLog::Info("Get trace files finish. file size:", files.size());
     return files;
 }
 
