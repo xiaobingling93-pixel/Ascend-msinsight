@@ -206,7 +206,7 @@ class DragFileImport extends DragFile {
             };
         }
 
-        const timestamp = formatTimestamp(Date.now(), 'MMDDHHmmss.SSS');
+        const timestamp = formatTimestamp(Date.now(), 'MM.DD HH:mm:ss');
         file.attr.name = `${file.attr.name}(${timestamp})`;
         file.attr.path = `${file.attr.path}(${timestamp})`;
         this.uploadingFileName = file.attr.name;
