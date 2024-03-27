@@ -11,6 +11,8 @@ aux_source_directory(${TEST_HOME_DIR}/modules/memory TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/summary TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/timeline TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/timeline/handler TEST)
+aux_source_directory(${TEST_HOME_DIR}/modules/timeline/protocol TEST)
+aux_source_directory(${TEST_HOME_DIR}/modules/timeline/database TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/communication TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/operator TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/common TEST)
@@ -36,7 +38,8 @@ list(APPEND DIC_PERFORMANCE_TEST_LIST
         ${DIC_CHANNEL_SRC})
 
 add_executable(insight_test ${DIC_TEST_LIST} modules/summary/SummaryTest.cpp modules/summary/MockTraceDatabase.h TestSuit.cpp
-        FullDbTestSuit.cpp modules/timeline/handler/HandlerTest.cpp)
+        FullDbTestSuit.cpp modules/timeline/handler/HandlerTest.cpp modules/timeline/protocol/ProtocolTest.cpp
+        modules/timeline/database/DatabaseTest.cpp)
 add_executable(insight_performance ${DIC_PERFORMANCE_TEST_LIST})
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")

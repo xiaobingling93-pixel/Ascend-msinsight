@@ -1,0 +1,128 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+#include <gtest/gtest.h>
+#include "DatabaseTest.cpp"
+#include "Database.h"
+#include "JsonTraceDatabase.h"
+
+class JsonTraceDatabaseTest : DatabaseTest {
+};
+
+TEST_F(DatabaseTest, OpenDb)
+{
+    std::mutex sqlMutex;
+    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    database.OpenDb("tttt", true);
+    database.CloseDb();
+}
+TEST_F(DatabaseTest, InitStmt)
+{
+    std::mutex sqlMutex;
+    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    bool success = database.InitStmt();
+    EXPECT_EQ(success, false);
+}
+
+TEST_F(DatabaseTest, CreateTable)
+{
+    std::mutex sqlMutex;
+    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    database.CreateTable();
+
+    database.OpenDb("tttt", true);
+    bool success = database.CreateTable();
+    database.CloseDb();
+    EXPECT_EQ(success, true);
+}
+
+TEST_F(DatabaseTest, DropTable)
+{
+    std::mutex sqlMutex;
+    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    bool success = database.DropTable();
+    EXPECT_EQ(success, false);
+}
+
+TEST_F(DatabaseTest, CreateIndex)
+{
+    std::mutex sqlMutex;
+    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    database.CreateIndex();
+
+    database.OpenDb("tttt", true);
+    bool success = database.CreateIndex();
+    database.CloseDb();
+    EXPECT_EQ(success, true);
+}
+
+TEST_F(DatabaseTest, CreateSimpleSliceIndex)
+{
+    std::mutex sqlMutex;
+    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    database.CreateSimpleSliceIndex();
+
+    database.OpenDb("tttt", true);
+    bool success = database.CreateSimpleSliceIndex();
+    database.CloseDb();
+    EXPECT_EQ(success, true);
+}
+
+TEST_F(DatabaseTest, InsertSlice)
+{
+    std::mutex sqlMutex;
+    const int size = 1000;
+    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    bool success = true;
+    for (int i = 0; i < size; i++) {
+        Dic::Module::Timeline::Trace::Slice event;
+        success = success && database.InsertSlice(event);
+    }
+    EXPECT_EQ(success, true);
+}
+
+
+TEST_F(DatabaseTest, InsertFlow)
+{
+    std::mutex sqlMutex;
+    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    bool success = true;
+    const int size = 1000;
+    for (int i = 0; i < size; i++) {
+        Dic::Module::Timeline::Trace::Flow event;
+        success = success && database.InsertFlow(event);
+    }
+    EXPECT_EQ(success, true);
+}
+
+TEST_F(DatabaseTest, InsertCounter)
+{
+    std::mutex sqlMutex;
+    Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+    bool success = true;
+    const int size = 1000;
+    for (int i = 0; i < size; i++) {
+        Dic::Module::Timeline::Trace::Counter event;
+        success = success && database.InsertCounter(event);
+    }
+    EXPECT_EQ(success, true);
+}
+
+
+TEST_F(DatabaseTest, UpdateDepth)
+{
+    EXPECT_NO_THROW({
+        std::mutex sqlMutex;
+        Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+        database.UpdateDepth();
+    });
+}
+
+TEST_F(DatabaseTest, UpdateSimulationDepth)
+{
+    EXPECT_NO_THROW({
+        std::mutex sqlMutex;
+        Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
+        database.UpdateSimulationDepth();
+    });
+}

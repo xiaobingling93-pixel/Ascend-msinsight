@@ -29,7 +29,6 @@ private:
     static std::unique_ptr<Request> ToUnitFlowNameRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitFlowRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToResetWindowRequest(const json_t &json, std::string &error);
-    static std::unique_ptr<Request> ToUnitChartRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToSearchCountRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToSearchSliceRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToRemoteDeleteRequest(const json_t &json, std::string &error);
