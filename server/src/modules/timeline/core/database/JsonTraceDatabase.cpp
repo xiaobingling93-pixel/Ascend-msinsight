@@ -194,9 +194,17 @@ bool JsonTraceDatabase::InsertSlice(const Trace::Slice &event)
 bool JsonTraceDatabase::InsertSimulationSlice(const Trace::Slice &event)
 {
     InsertSlice(event);
+    if (updateProcessNameStmt == nullptr) {
+        ServerLog::Error("Update process name fail. ");
+        return false;
+    }
     updateProcessNameStmt->Reset();
     if (!updateProcessNameStmt->Execute(event.pid, event.processName)) {
         ServerLog::Error("Update process name fail. ", updateProcessNameStmt->GetErrorMessage());
+        return false;
+    }
+    if (updateThreadNameStmt == nullptr) {
+        ServerLog::Error("Update thread name fail. ");
         return false;
     }
     updateThreadNameStmt->Reset();
@@ -245,6 +253,10 @@ std::unique_ptr<SqlitePreparedStatement> JsonTraceDatabase::GetSliceStmt(uint64_
 
 bool JsonTraceDatabase::UpdateProcessName(const Trace::MetaData &event)
 {
+    if (updateProcessNameStmt == nullptr) {
+        ServerLog::Error("Update process name fail. ");
+        return false;
+    }
     updateProcessNameStmt->Reset();
     std::unique_lock<std::mutex> lock(mutex);
     if (!updateProcessNameStmt->Execute(event.pid, event.args.name)) {
@@ -256,6 +268,10 @@ bool JsonTraceDatabase::UpdateProcessName(const Trace::MetaData &event)
 
 bool JsonTraceDatabase::UpdateProcessLabel(const Trace::MetaData &event)
 {
+    if (updateProcessLabelStmt == nullptr) {
+        ServerLog::Error("Update process label fail. ");
+        return false;
+    }
     updateProcessLabelStmt->Reset();
     std::unique_lock<std::mutex> lock(mutex);
     if (!updateProcessLabelStmt->Execute(event.pid, event.args.labels)) {
@@ -267,6 +283,10 @@ bool JsonTraceDatabase::UpdateProcessLabel(const Trace::MetaData &event)
 
 bool JsonTraceDatabase::UpdateProcessSortIndex(const Trace::MetaData &event)
 {
+    if (updateProcessSortIndexStmt == nullptr) {
+        ServerLog::Error("Update process sort index fail. ");
+        return false;
+    }
     updateProcessSortIndexStmt->Reset();
     std::unique_lock<std::mutex> lock(mutex);
     if (!updateProcessSortIndexStmt->Execute(event.pid, event.args.sortIndex)) {
@@ -295,6 +315,10 @@ bool JsonTraceDatabase::InsertThreadList(const std::set<std::tuple<int64_t, std:
 
 bool JsonTraceDatabase::UpdateThreadInfo(const std::tuple<int64_t, std::string, std::string> &thread)
 {
+    if (updateThreadInfoStmt == nullptr) {
+        ServerLog::Error("Update thread info fail. ");
+        return false;
+    }
     updateThreadInfoStmt->Reset();
     std::unique_lock<std::mutex> lock(mutex);
     if (!updateThreadInfoStmt->Execute(std::get<0>(thread), std::get<1>(thread), std::get<2>(thread))) { // 第2个
@@ -306,6 +330,10 @@ bool JsonTraceDatabase::UpdateThreadInfo(const std::tuple<int64_t, std::string, 
 
 bool JsonTraceDatabase::UpdateThreadName(const Trace::MetaData &event)
 {
+    if (updateThreadNameStmt == nullptr) {
+        ServerLog::Error("Update thread name fail. ");
+        return false;
+    }
     updateThreadNameStmt->Reset();
     std::unique_lock<std::mutex> lock(mutex);
     if (!updateThreadNameStmt->Execute(event.trackId, event.tid, event.pid, event.args.name)) {
@@ -317,6 +345,10 @@ bool JsonTraceDatabase::UpdateThreadName(const Trace::MetaData &event)
 
 bool JsonTraceDatabase::UpdateThreadSortIndex(const Trace::MetaData &event)
 {
+    if (updateThreadSortIndexStmt == nullptr) {
+        ServerLog::Error("Update thread sort index fail. ");
+        return false;
+    }
     updateThreadSortIndexStmt->Reset();
     std::unique_lock<std::mutex> lock(mutex);
     if (!updateThreadSortIndexStmt->Execute(event.trackId, event.args.sortIndex)) {
@@ -533,10 +565,15 @@ bool JsonTraceDatabase::UpdateSimulationSliceDepth(std::list<Protocol::RowThread
     std::string updateSql = "Update slice set depth = ? where id = ? ;";
     for (const auto &singleSlice : sliceLinkedList) {
         std::unique_ptr<SqlitePreparedStatement> updateStmt = CreatPreparedStatement(updateSql);
+        if (updateStmt == nullptr) {
+            ServerLog::Error("Fail to UpdateSimulationSliceDepth.", sqlite3_errmsg(db));
+            return false;
+        }
         if (!updateStmt->Execute(singleSlice.depth, singleSlice.id)) {
             ServerLog::Error("updateSliceDepthSql fail. ", sqlite3_errmsg(db));
         }
     }
+    return true;
 }
 
 void JsonTraceDatabase::CreateDepthTempTable()
@@ -628,6 +665,11 @@ std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByIdList(uint64_t minTi
     }
     sliceSql += " , ? );";
     auto sliceStem = CreatPreparedStatement(sliceSql);
+    if (sliceStem == nullptr) {
+        ServerLog::Error("Fail to QuerySliceByIdList.", sqlite3_errmsg(db));
+        std::vector<RowThreadTrace> temp;
+        return temp;
+    }
     for (const auto &item : ids) {
         sliceStem->BindParams(item);
     }
@@ -1346,6 +1388,11 @@ std::pair<int64_t, int64_t> JsonTraceDatabase::QueryExtremTrackIdPairByPid(std::
     std::string sql =
         "Select max(track_id) As maxTrackId, min(track_id) AS minTrackId from " + threadTable + " where pid = ? ;";
     auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryExtremTrackIdPairByPid failed!.");
+        std::pair<int64_t, int64_t> temp;
+        return temp;
+    }
     auto resultSet = stmt->ExecuteQuery(pid);
     std::pair<int64_t, int64_t> result;
     while (resultSet->Next()) {
