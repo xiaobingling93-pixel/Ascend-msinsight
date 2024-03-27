@@ -296,26 +296,27 @@ bool DbTraceDataBase::SearchSliceName(const std::string &name, int index, uint64
     if (strcmp(responseBody.rankId.c_str(), path.c_str()) == 0) {
         sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%') "
               "SELECT globalTid as pid, type as tid, startNs - ? as startTime,endNs - startNs as duration, "
-              " depth, connectionId as id, 'HOST' as metaType ,? as rankId"
-              " FROM (select globalTid, type, startNs, endNs, depth, connectionId, name from " + TABLE_CANN_API;
+              " depth, api.id, 'HOST' as metaType ,? as rankId"
+              " FROM (select globalTid, type, startNs, endNs, depth, ROWID as id, name from " + TABLE_CANN_API;
         if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
-            sql += "  UNION select globalTid, type, startNs, endNs, depth, connectionId, name from " + TABLE_API;
+            sql += " UNION select globalTid, 'pytorch' as type, startNs, endNs, depth,"
+                   " ROWID as id, name from " + TABLE_API;
         }
-        sql += " ) api join ids on id = api.name ORDER BY startNs LIMIT 1 OFFSET ?";
+        sql += " ) api join ids on ids.id = api.name ORDER BY startNs LIMIT 1 OFFSET ?";
     } else {
         sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%'), minTime as (select ? as value),\n"
-              " tasks as (select globalTaskId, taskType, 'ASCEND HARDWARE' as pid, streamId as tid, "
+              " tasks as (select ROWID, globalTaskId, taskType, 'ASCEND HARDWARE' as pid, streamId as tid, "
               " startNs - minTime.value as startTime, endNs - startNs as duration,depth from TASK join minTime "
               " where deviceId = ? ORDER BY startTime),\n"
-              " com as (select opId, info.globalTaskId, 'HCCL' as pid, planeId as tid, startTime, duration, 0 as depth,"
+              " com as (select opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid, startTime, duration, 0 as depth,"
               " name from COMMUNICATION_TASK_INFO info join tasks on info.globalTaskId=tasks.globalTaskId "
               " ORDER BY startTime)\n"
               " select * from ( select coalesce(compute.name, main.taskType) as name, main.pid, main.pid as metaType,"
-              " main.tid, main.startTime, main.duration, main.depth, main.globalTaskId as id from tasks main\n"
+              " main.tid, main.startTime, main.duration, main.depth, main.ROWID as id from tasks main\n"
               " left join COMPUTE_TASK_INFO compute on compute.globalTaskId = main.globalTaskId union ALL"
-              " select name, pid, pid as meatType, tid, startTime, duration, depth, globalTaskId as id from com "
+              " select name, pid, pid as meatType, tid, startTime, duration, depth, id from com "
               " union ALL select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
-              " startNs - minTime.value as startTime, op.opId as id, endNs - startNs as duration, 0 as depth\n"
+              " startNs - minTime.value as startTime, op.ROWID as id, endNs - startNs as duration, 0 as depth\n"
               " from COMMUNICATION_OP op join minTime join (select opId from com group by opId) a \n"
               " on op.opId = a.opId ORDER BY startTime ) allNames join ids on ids.id = allNames.name LIMIT 1 OFFSET ?";
     }
@@ -460,11 +461,12 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
         Server::ServerLog::Error("QueryKernelDetailData, fail to prepare sql.");
         return false;
     }
+    std::string searchName = "%" + requestParams.searchName + "%";
+    stmt->BindParams(searchName);
     if (!requestParams.coreType.empty()) {
         stmt->BindParams(requestParams.coreType);
     }
-    std::string searchName = "%" + requestParams.searchName + "%";
-    auto resultSet = stmt->ExecuteQuery(searchName, requestParams.pageSize, offset);
+    auto resultSet = stmt->ExecuteQuery(requestParams.pageSize, offset);
     SetKernelDetail(std::move(resultSet), minTimestamp, responseBody);
     responseBody.pageSize = requestParams.pageSize;
     responseBody.currentPage = requestParams.current;
@@ -573,8 +575,8 @@ LayerStatData DbTraceDataBase::QueryLayerData(const std::string &layer, const st
 std::vector<std::string> DbTraceDataBase::QueryCoreType()
 {
     std::vector<std::string> acceleratorCoreList;
-    std::string sql = "SELECT DISTINCT TASKTYPE.value as task_type FROM " + TABLE_COMPUTE_TASK_INFO +
-            " JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType ORDER BY task_type";
+    std::string sql = "SELECT DISTINCT TASKTYPE.value as accelerator_core FROM " + TABLE_COMPUTE_TASK_INFO +
+            " JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType ORDER BY accelerator_core";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryCoreType, fail to prepare sql.");

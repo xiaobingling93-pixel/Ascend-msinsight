@@ -356,7 +356,7 @@ bool ClusterFileParser::ParserClusterOfDb(const std::string& selectedPath)
         return false;
     }
 
-    std::vector<std::string> clusterPath = FileUtil::FindFilesByRegex(selectedPath, std::regex(clusterDBReg));
+    std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(selectedPath, std::regex(clusterDBReg));
     if (clusterPath.size() == 0) {
         return false;
     }
