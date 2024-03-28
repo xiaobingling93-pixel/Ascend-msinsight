@@ -231,7 +231,7 @@ const doUnitsFilter = (flattenUnits: InsightUnit[], selectValues: string[]): voi
             }
             let hasMatchUnit = false;
             unit.children.forEach(processUnit => {
-                const isProcessUnitMatch = selectValues.includes((processUnit.metadata as ProcessMetaData).processName);
+                const isProcessUnitMatch = selectValues.includes((processUnit.metadata as ProcessMetaData).processName.replace(/\(\d{0,12}\)/, ''));
                 processUnit.isDisplay = isProcessUnitMatch || findMatchUnit(processUnit, selectValues);
                 hasMatchUnit = hasMatchUnit || processUnit.isDisplay;
             });
@@ -294,7 +294,7 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
             cardNames.add((unit.metadata as CardMetaData).cardName ?? '');
         }
         if (unit.name === 'Process' || unit.name === 'Label') {
-            unitNames.add((unit.metadata as ProcessMetaData).processName);
+            unitNames.add((unit.metadata as ProcessMetaData).processName.replace(/\(\d{0,12}\)/, ''));
         }
         if (unit.children) {
             for (const child of unit.children) {
