@@ -229,6 +229,10 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
 {
     std::vector<std::string> communicationGroupList =
             FileUtil::FindFilesByRegex(selectedPath, std::regex(R"(communication_group.json)"));
+    if (communicationGroupList.empty()) {
+        ServerLog::Error("Failed to get communicationGroup files");
+        return;
+    }
     const std::string &filePath = communicationGroupList[0];
     auto start = std::chrono::high_resolution_clock::now();
     std::ifstream communicationGroup(filePath, std::ios::binary);
@@ -236,8 +240,12 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
         Document doc;
         std::string fileContent;
         std::copy(std::istream_iterator<unsigned char>(communicationGroup), std::istream_iterator<unsigned char>(),
-            back_inserter(fileContent));
+                  back_inserter(fileContent));
         doc.Parse(fileContent.c_str());
+        if (doc.HasParseError()) {
+            ServerLog::Error("JSON file is invalid.");
+            return;
+        }
         auto p2p = doc.FindMember("p2p")->value.GetArray();
         auto collective = doc.FindMember("collective")->value.GetArray();
         auto orderByLenDesAndNumAsc = [](const Value& a, const Value& b) {
