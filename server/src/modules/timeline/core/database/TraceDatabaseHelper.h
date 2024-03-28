@@ -186,32 +186,7 @@ public:
     };
 
     static std::unique_ptr<SqliteResultSet> QueryUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
-          const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp)
-    {
-        auto processType = GetProcessType(requestParams.metaType);
-        switch (processType) {
-            case PROCESS_TYPE::HBM:
-                return ExecuteQuery(stmt, HBM_UNIT_COUNTER_SQL, minTimestamp, requestParams.rankId,
-                                    requestParams.processName, requestParams.startTime, requestParams.endTime);
-            case PROCESS_TYPE::LLC:
-                return ExecuteQuery(stmt, LLC_UNIT_COUNTER_SQL, minTimestamp, requestParams.processName,
-                                    requestParams.rankId, requestParams.startTime, requestParams.endTime);
-            case PROCESS_TYPE::DDR:
-                return ExecuteQuery(stmt, DDR_UNIT_COUNTER_SQL, minTimestamp, requestParams.processName,
-                                    requestParams.rankId, requestParams.startTime, requestParams.endTime);
-            case PROCESS_TYPE::STARS_SOC:
-                return ExecuteQuery(stmt, SOC_UNIT_COUNTER_SQL, minTimestamp, requestParams.processName,
-                                    requestParams.rankId, requestParams.startTime, requestParams.endTime);
-            case PROCESS_TYPE::ACC_PMU:
-                return ExecuteQuery(stmt, PMU_UNIT_COUNTER_SQL, requestParams.processName, minTimestamp,
-                                    requestParams.rankId, requestParams.startTime, requestParams.endTime);
-            case PROCESS_TYPE::NPU_MEM:
-                return ExecuteQuery(stmt, NPU_UNIT_COUNTER_SQL, requestParams.processName, minTimestamp,
-                                    requestParams.rankId, requestParams.startTime, requestParams.endTime);
-            default:
-                throw DatabaseException("unsupported type!");
-        }
-    };
+          const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp);
 
     static std::unique_ptr<SqliteResultSet> QueryThreadDetail(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                                               const Protocol::ThreadDetailParams &requestParams,

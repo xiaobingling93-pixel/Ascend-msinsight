@@ -321,7 +321,7 @@ TEST_F(FullDbTestSuit, FullDb_of_UnitCounter)
     params.pid = "HBM";
     params.metaType = "HBM";
     params.threadName = "HBM 1/Read";
-    params.processName = "1/Read";
+    params.threadId = "1/Read";
     params.endTime = 400000000; // endTime = 400000000
 
     auto counterData = std::vector<Protocol::UnitCounterData>();
@@ -331,7 +331,7 @@ TEST_F(FullDbTestSuit, FullDb_of_UnitCounter)
     params.pid = "LLC";
     params.metaType = "LLC";
     params.threadName = "LLC 0 Read/Hit Rate";
-    params.processName = "0 Read/Hit Rate";
+    params.threadId = "0 Read/Hit Rate";
     counterData.clear();
     database->QueryUnitCounter(params, minTimestamp, counterData);
     EXPECT_EQ(counterData.size(), 3); // size = 3
@@ -339,7 +339,7 @@ TEST_F(FullDbTestSuit, FullDb_of_UnitCounter)
     params.pid = "DDR";
     params.metaType = "DDR";
     params.threadName = "Read";
-    params.processName = "Read";
+    params.threadId = "Read";
     counterData.clear();
     database->QueryUnitCounter(params, minTimestamp, counterData);
     EXPECT_EQ(counterData.size(), 5); // size = 5

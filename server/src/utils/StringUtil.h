@@ -169,6 +169,23 @@ public:
     }
 
     /**
+     * 替换第一个对应的字符串
+     * @param target 目标字符串
+     * @param replaceStr 被替换的字符串
+     * @param subStr 用于替换的字符串
+     * @return true / false
+     */
+    static std::string ReplaceFirst(const std::string& target, const std::string& replaceStr, const std::string& subStr)
+    {
+        auto result = std::string(target);
+        auto index = target.find(replaceStr);
+        if (index == std::string::npos) {
+            return result;
+        }
+        return result.replace(index, replaceStr.length(), subStr);
+    }
+
+    /**
      * 校验命令行路径参数
      * @param path 路径
      * @return true / false

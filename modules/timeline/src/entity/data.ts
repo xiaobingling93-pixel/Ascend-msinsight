@@ -677,6 +677,7 @@ export type CounterMetaData = {
     processId: string;
     processName?: string;
     threadName: string;
+    threadId?: string;
     dataType: string[];
     metaType?: string;
     dataSource: DataSource;

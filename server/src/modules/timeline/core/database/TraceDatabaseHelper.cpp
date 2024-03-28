@@ -133,4 +133,50 @@ bool TraceDatabaseHelper::isAttrInfoExist(std::unique_ptr<SqlitePreparedStatemen
     return false;
 }
 
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
+    const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp)
+{
+    auto processType = GetProcessType(requestParams.metaType);
+    switch (processType) {
+        case PROCESS_TYPE::HBM:
+            return ExecuteQuery(stmt, HBM_UNIT_COUNTER_SQL, minTimestamp, requestParams.rankId,
+                                requestParams.threadId, requestParams.startTime, requestParams.endTime);
+        case PROCESS_TYPE::LLC:
+            return ExecuteQuery(stmt, LLC_UNIT_COUNTER_SQL, minTimestamp, requestParams.threadId,
+                                requestParams.rankId, requestParams.startTime, requestParams.endTime);
+        case PROCESS_TYPE::DDR:
+            return ExecuteQuery(stmt, DDR_UNIT_COUNTER_SQL, minTimestamp, requestParams.threadId,
+                                requestParams.rankId, requestParams.startTime, requestParams.endTime);
+        case PROCESS_TYPE::STARS_SOC:
+            return ExecuteQuery(stmt, SOC_UNIT_COUNTER_SQL, minTimestamp, requestParams.threadId,
+                                requestParams.rankId, requestParams.startTime, requestParams.endTime);
+        case PROCESS_TYPE::ACC_PMU:
+            return ExecuteQuery(stmt, ACC_PMU_UNIT_COUNTER_SQL, requestParams.threadId, minTimestamp,
+                                requestParams.rankId, requestParams.startTime, requestParams.endTime);
+        case PROCESS_TYPE::NPU_MEM:
+            return ExecuteQuery(stmt, NPU_UNIT_COUNTER_SQL, requestParams.threadId, minTimestamp,
+                                requestParams.rankId, requestParams.startTime, requestParams.endTime);
+        case PROCESS_TYPE::SAMPLE_PMU:
+            return ExecuteQuery(stmt, SAMPLE_PMU_UNIT_COUNTER_SQL, minTimestamp, requestParams.rankId,
+                                requestParams.threadId, requestParams.startTime, requestParams.endTime);
+        case PROCESS_TYPE::ROCE:
+        case PROCESS_TYPE::ROH:
+        case PROCESS_TYPE::NIC:
+            return ExecuteQuery(stmt, StringUtil::ReplaceFirst(NIC_UNIT_COUNTER_SQL, "#", requestParams.metaType),
+                                requestParams.threadId, minTimestamp, requestParams.rankId,
+                                requestParams.startTime, requestParams.endTime);
+        case PROCESS_TYPE::HCCS:
+            return ExecuteQuery(stmt, HCCS_UNIT_COUNTER_SQL, minTimestamp, requestParams.rankId,
+                                requestParams.startTime, requestParams.endTime);
+        case PROCESS_TYPE::PCIE:
+            return ExecuteQuery(stmt, PCIE_UNIT_COUNTER_SQL, minTimestamp, requestParams.threadId,
+                                requestParams.rankId, requestParams.startTime, requestParams.endTime);
+        case PROCESS_TYPE::AI_CORE:
+            return ExecuteQuery(stmt, AI_CORE_UNIT_COUNTER_SQL, minTimestamp,
+                                requestParams.rankId, requestParams.startTime, requestParams.endTime);
+        default:
+            throw DatabaseException("unsupported type!");
+    }
+}
+
 }

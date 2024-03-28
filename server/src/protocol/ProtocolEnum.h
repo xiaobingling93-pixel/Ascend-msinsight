@@ -37,6 +37,13 @@ enum class PROCESS_TYPE {
     ACC_PMU,
     STARS_SOC,
     NPU_MEM,
+    HCCS,
+    PCIE,
+    ROCE,
+    ROH,
+    NIC,
+    SAMPLE_PMU,
+    AI_CORE,
     NONE,
 };
 
