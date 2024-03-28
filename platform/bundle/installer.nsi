@@ -3,12 +3,12 @@
 
 !define PRODUCT_PUBLISHER "huawei"
 
-Outfile "Ascend-Insight_7.0.RC1_win.exe"
+Outfile "Ascend-Insight_7.0.RC2_win.exe"
 InstallDir $PROGRAMFILES\ascend_insight
 Caption "Ascend Insight Setup"
 Name "Ascend Insight"
 
-!define CURRENT_VERSION "7.0.RC1"
+!define CURRENT_VERSION "7.0.RC2"
 
 !define REGKEY "Software\huawei\ascend_insight"
 

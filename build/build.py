@@ -289,7 +289,7 @@ def create_version_info_file(version, modify_time):
 
 
 def main():
-    idea_version = load_version_info('7.0.RC1')
+    idea_version = load_version_info('7.0.RC2')
     # vscode_version不允许存在字母，因此这里做进一步处理，将字母内容去掉
     vscode_version = ''.join(ch for ch in idea_version if not ch.isalpha())
     init()
