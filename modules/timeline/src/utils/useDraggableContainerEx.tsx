@@ -4,7 +4,6 @@
 import styled from '@emotion/styled';
 import { clamp } from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-// import React, { useEffect, useRef, useState } from 'react';
 import { useWatchResize } from './useWatchDomResize';
 
 interface CssProps {
