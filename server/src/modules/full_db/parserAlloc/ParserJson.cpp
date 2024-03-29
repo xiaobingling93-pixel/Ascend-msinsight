@@ -202,7 +202,7 @@ std::vector<std::string> ParserJson::FindTraceFile(const std::string &path)
 
 bool ParserJson::IsJsonValid(const std::string &fileName)
 {
-    static std::string reg = R"((trace_view|msprof.*)\.json$)";
+    static std::string reg = R"(^(trace_view|msprof(_slice)?(_[0-9]{1,15}){1,4})\.json$)";
     auto result = RegexUtil::RegexMatch(fileName, reg);
     return result.has_value();
 }
@@ -241,7 +241,7 @@ void ParserJson::FindAscendFolder(const std::string &path, std::vector<std::stri
     if (!FileUtil::FindFolders(path, folders, files)) {
         return;
     }
-    static std::string reg = R"(PROF_.*)";
+    static std::string reg = R"(PROF_[_\d\w]{0,64})";
     for (const auto &folder : folders) {
         if (!RegexUtil::RegexMatch(folder, reg).has_value()) {
             continue;
