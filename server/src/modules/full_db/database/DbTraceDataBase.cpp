@@ -665,6 +665,7 @@ void DbTraceDataBase::UpdateWaitTime()
             UpdateTaskInfoWaitTime(updateStmt);
         }
     }
+    UpdateTaskInfoWaitTime(updateStmt);
 }
 
 bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &stmt)
