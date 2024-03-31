@@ -100,6 +100,7 @@ onMounted(async () => {
             body: {
                 parseCompleted: session.parseCompleted,
                 clusterCompleted: session.clusterCompleted,
+                isFullDb: session.isFullDb,
                 unitcount: session.unitcount,
                 coreList: session.coreList,
                 sourceList: session.sourceList,

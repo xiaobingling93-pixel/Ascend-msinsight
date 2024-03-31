@@ -441,15 +441,16 @@ public:
                 return;
             }
 
-            std::string ascendDir = FileUtil::SplicePath(path, ASCEND_PROFILER_OUTPUT);
-            if (FileUtil::IsFolder(ascendDir)) {
-                find(ascendDir, depth + 1);
-                return;
-            }
-            std::string mindstudioDir = FileUtil::SplicePath(path, MINDSTUDIO_PROFILER_OUTPUT);
-            if (FileUtil::IsFolder(mindstudioDir)) {
-                find(mindstudioDir, depth + 1);
-                return;
+            auto dirs = {FileUtil::SplicePath(path, ASCEND_PROFILER_OUTPUT),
+                         FileUtil::SplicePath(path, MINDSTUDIO_PROFILER_OUTPUT)};
+            auto preSize = matchedFiles.size();
+            for (const auto &dir: dirs) {
+                if (FileUtil::IsFolder(dir)) {
+                    find(dir, depth + 1);
+                }
+                if (matchedFiles.size() != preSize) {
+                    return;
+                }
             }
 
             for (const auto &folder: folders) {

@@ -686,8 +686,7 @@ bool DbTraceDataBase::NeedUpdateDepth(const std::string &table)
 void DbTraceDataBase::UpdateAllDepth()
 {
     std::unique_lock<std::mutex> lock(mutex);
-    if (!IsDatabaseVersionChange() && !NeedUpdateDepth(TABLE_TASK) &&
-        !NeedUpdateDepth(TABLE_API) && !NeedUpdateDepth(TABLE_CANN_API)) {
+    if (!IsDatabaseVersionChange()) {
         return;
     }
     if (!ExecSql("PRAGMA user_version = " + GetDataBaseVersion() + ";")) {
@@ -800,13 +799,24 @@ bool DbTraceDataBase::InitStmt()
         return true;
     }
     initStmt = true;
-    std::string sql = "UPDATE " + TABLE_TASK + " set depth = ? where ROWID = ?";
-    updateTaskDepthStmt = CreatPreparedStatement(sql);
-    sql = "UPDATE " + TABLE_API + " set depth = ? where ROWID = ?";
-    updateApiDepthStmt = CreatPreparedStatement(sql);
-    sql = "UPDATE " + TABLE_CANN_API + " set depth = ? where ROWID = ?";
-    updateCannApiDepthStmt = CreatPreparedStatement(sql);
-    if (updateTaskDepthStmt == nullptr || updateApiDepthStmt == nullptr || updateCannApiDepthStmt == nullptr) {
+    std::string sql;
+    bool prepareUpdateStmtSuccess = true;
+    if (CheckTableExist(TABLE_TASK)) {
+        sql = "UPDATE " + TABLE_TASK + " set depth = ? where ROWID = ?";
+        updateTaskDepthStmt = CreatPreparedStatement(sql);
+        prepareUpdateStmtSuccess = prepareUpdateStmtSuccess && updateTaskDepthStmt != nullptr;
+    }
+    if (CheckTableExist(TABLE_API)) {
+        sql = "UPDATE " + TABLE_API + " set depth = ? where ROWID = ?";
+        updateApiDepthStmt = CreatPreparedStatement(sql);
+        prepareUpdateStmtSuccess = prepareUpdateStmtSuccess && updateApiDepthStmt != nullptr;
+    }
+    if (CheckTableExist(TABLE_CANN_API)) {
+        sql = "UPDATE " + TABLE_CANN_API + " set depth = ? where ROWID = ?";
+        updateCannApiDepthStmt = CreatPreparedStatement(sql);
+        prepareUpdateStmtSuccess = prepareUpdateStmtSuccess && updateCannApiDepthStmt != nullptr;
+    }
+    if (!prepareUpdateStmtSuccess) {
         ServerLog::Error("Failed to prepare update statement.");
         return false;
     }
