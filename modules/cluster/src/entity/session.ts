@@ -49,6 +49,7 @@ export class Session {
     durationFileCompleted: boolean = false;
     unitcount: number = 0;
     renderId: number = 1;
+    isFullDb: boolean = false;
     id = '';
     remoteAttrs: Map<string, Record<string, unknown>> = new Map();
     private _name: string | null;

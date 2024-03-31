@@ -363,6 +363,7 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
 
 const StatisticsTable = (props: {step: string;rankId: string;session: Session}): JSX.Element => {
     const { rankId = '', step = '', session } = props;
+    const communicationStyle = session.isFullDb ? { marginBottom: '20px', display: 'none' } : { marginBottom: '20px' };
     return notNull(rankId) && session.unitcount > 0
         ? (
             <div>
@@ -375,7 +376,7 @@ const StatisticsTable = (props: {step: string;rankId: string;session: Session}):
                         : <Loading style={{ margin: '10px auto' }}/>
                     }
                 </div>
-                <div style={{ marginBottom: '20px' }}>
+                <div style={communicationStyle}>
                     <div className={'common-title-h2'}>
                         {'Communication Detail'} ( Rank {rankId} )
                     </div>

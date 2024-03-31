@@ -55,7 +55,7 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             if (!(session.units.find(item => item.phase === 'analyzing'))) {
                 connector.send({
                     event: 'updateSession',
-                    body: { parseCompleted: !(session.units.find(item => item.phase === 'analyzing')) },
+                    body: { parseCompleted: !(session.units.find(item => item.phase === 'analyzing')), isFullDb: session.isFullDb },
                 });
             }
             runInAction(() => {

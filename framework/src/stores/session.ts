@@ -15,6 +15,7 @@ export class Session {
     durationFileCompleted: boolean = false;
     loading: boolean = false;
     unitcount: number = 0;
+    isFullDb: boolean = false;
     isVscode: boolean = document.location.origin.startsWith('vscode');
     // Compute
     isBinary: boolean = false;
