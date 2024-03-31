@@ -232,7 +232,7 @@ int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &par
         sql = "with ids as (select id from STRING_IDS where value like '%'||?||'%') "
               " SELECT count(1),? as id FROM (select name from " + TABLE_CANN_API;
         if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
-            sql += " union select name from  " + TABLE_API;
+            sql += " union all select name from  " + TABLE_API;
         }
         sql += ") api join ids on id = api.name";
     } else {
@@ -278,7 +278,7 @@ bool DbTraceDataBase::SearchSliceName(const std::string &name, int index, uint64
               " depth, api.id, 'HOST' as metaType ,? as rankId"
               " FROM (select globalTid, type, startNs, endNs, depth, ROWID as id, name from " + TABLE_CANN_API;
         if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
-            sql += " UNION select globalTid, 'pytorch' as type, startNs, endNs, depth,"
+            sql += " UNION all select globalTid, 'pytorch' as type, startNs, endNs, depth,"
                    " ROWID as id, name from " + TABLE_API;
         }
         sql += " ) api join ids on ids.id = api.name ORDER BY startNs LIMIT 1 OFFSET ?";
