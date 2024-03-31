@@ -376,7 +376,7 @@ const StatisticsTable = (props: {step: string;rankId: string;session: Session}):
                     }
                 </div>
                 {
-                    session.isFullDb
+                    !session.isFullDb
                         ? (
                             <div style={{ marginBottom: '20px' }}>
                                 <div className={'common-title-h2'}>
