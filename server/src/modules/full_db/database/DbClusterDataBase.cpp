@@ -136,9 +136,11 @@ bool DbClusterDataBase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
                       " ROUND(synchronization_time, 4) as synchronizationTime,"
                       " ROUND(wait_time, 4) as waitTime,"
                       " ROUND(idle_time, 4) as idleTime,"
-                      " ROUND(synchronization_time_ratio, 4) as synchronizationTimeRatio,"
-                      " ROUND(wait_time_ratio, 4) as waitTimeRatio "
-                      "FROM " + TABLE_COMM_ANALYZER_TIME +
+                      " CASE WHEN synchronization_time = 0 THEN 0 ELSE ROUND(synchronization_time "
+                      " / (synchronization_time + transit_time), 4) END AS synchronizationTimeRatio,"
+                      " CASE WHEN wait_time = 0 THEN 0 ELSE "
+                      " ROUND(wait_time / (wait_time + transit_time), 4) END AS waitTimeRatio"
+                      " FROM " + TABLE_COMM_ANALYZER_TIME +
                       " WHERE step = ? AND rank_id = ? AND rank_set = ?"
                       " AND hccl_op_name != 'Total Op Info' ";
     return ExecuteQueryAllOperators(param, resBody, sql, startTime);
@@ -159,8 +161,10 @@ bool DbClusterDataBase::QueryBandwidthData(Protocol::BandwidthDataParam &param, 
                       "ROUND(transit_time, 4) as transit_time,"
                       "ROUND(bandwidth, 4) as bandwidth_size,"
                       "ROUND(large_packet_ratio, 4)  as large_packet_ratio from "
+                      "(SELECT*,ROW_NUMBER() OVER (PARTITION BY band_type) AS rn FROM (SELECT * FROM "
                       + TABLE_COMM_ANALYZER_BANDWIDTH +
-                      " WHERE step = ? AND rank_id = ? AND rank_set = ? AND hccl_op_name = ? ";
+                      " WHERE step = ? AND rank_id = ? AND rank_set = ? AND hccl_op_name = ?))t "
+                      "WHERE rn = 1";
     param.iterationId = "step" + param.iterationId;
     return ExecuteQueryBandwidthData(param, resBody, sql);
 }

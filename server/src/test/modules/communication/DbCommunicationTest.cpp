@@ -142,7 +142,7 @@ TEST_F(DbCommunicationTest, QueryBandwidthData)
     requestParams.operatorName = "Total Op Info";
     requestParams.rankId = "1";
     database->QueryBandwidthData(requestParams, responseBody);
-    int expectSize = 8;
+    int expectSize = 2;
     EXPECT_EQ(responseBody.items.size(), expectSize);
     EXPECT_EQ(responseBody.items[0].transportType, "HCCS");
 }
