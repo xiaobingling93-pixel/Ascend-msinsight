@@ -6,31 +6,12 @@ export class SessionStore {
 
     constructor() {
         makeAutoObservable(this);
-        this._activeSession = new Session({
-            id: 'entry',
-            name: 'entry',
-            phase: 'configuring',
-            units: [],
-            availableUnits: [],
-            startRecordTime: 0,
-            endTimeAll: undefined,
-            isNsMode: true,
-        });
+        this._activeSession = new Session();
     }
 
     // creates a new session in the store.
     async newSession(conf?: Partial<Session> | Session): Promise<Session | undefined> {
-        const session = new Session({
-            id: 'entry',
-            name: conf?.name,
-            phase: conf?.phase ?? 'configuring',
-            units: conf?.units ?? [],
-            availableUnits: conf?.availableUnits ?? [],
-            icon: conf?.icon,
-            startRecordTime: conf?.startRecordTime,
-            endTimeAll: conf?.endTimeAll,
-            isNsMode: conf?.isNsMode,
-        });
+        const session = new Session();
         return session;
     }
 

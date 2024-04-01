@@ -1,17 +1,16 @@
-import { InsightStore } from './insight';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import { SessionStore } from './session';
 
 export class RootStore {
-    insightStore: InsightStore;
     sessionStore: SessionStore;
 
     constructor() {
-        this.insightStore = new InsightStore();
         this.sessionStore = new SessionStore();
     }
 
     resetStore = (): void => {
-        this.insightStore = new InsightStore();
         this.sessionStore = new SessionStore();
     };
 }
