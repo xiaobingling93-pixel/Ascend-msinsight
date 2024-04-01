@@ -256,11 +256,15 @@ bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestP
     double startTime = QueryMinStartTime();
     std::vector<std::string> rankList = requestParams.rankList;
     std::string sql = "SELECT rank_id, "
-            "CASE WHEN start_timestamp == 0 THEN 0 ELSE ROUND(start_timestamp - ?, 4) END as start_time, "
+            "CASE WHEN start_timestamp == 0 THEN 0 ELSE ROUND((start_timestamp - ?) / 1000.0, 4) END as start_time, "
             "ROUND(elapsed_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
             "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
-            "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
-            "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_COMM_ANALYZER_TIME +
+            "ROUND(idle_time, 4) as idle_time, "
+            " CASE WHEN synchronization_time = 0 THEN 0 ELSE ROUND(synchronization_time "
+            " / (synchronization_time + transit_time), 4) END AS synchronization_time_ratio,"
+            " CASE WHEN wait_time = 0 THEN 0 ELSE "
+            " ROUND(wait_time / (wait_time + transit_time), 4) END AS wait_time_ratio"
+            " FROM " + TABLE_COMM_ANALYZER_TIME +
             " WHERE step = ? AND rank_set = ?";
     if (rankList.empty()) {
         sql += " AND hccl_op_name = ?";
