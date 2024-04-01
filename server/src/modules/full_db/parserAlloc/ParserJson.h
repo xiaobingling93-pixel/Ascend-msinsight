@@ -27,6 +27,8 @@ private:
     static void ClusterProcessAsyncStep(const std::string &token, const std::string &selectedFolder);
 
     void SetParseCallBack(std::string token);
+
+    static void SendAllParseSuccess(const std::string &token);
 };
 } // end of namespace Module
 } // end of namespace Dic

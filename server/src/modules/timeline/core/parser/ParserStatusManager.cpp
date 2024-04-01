@@ -91,7 +91,7 @@ ParserStatus ParserStatusManager::SetTerminateStatus(const std::string &fileId)
 
 void ParserStatusManager::SetAllTerminateStatus()
 {
-    for (auto &statu: statusMap) {
+    for (auto &statu : statusMap) {
         if (statu.second != ParserStatus::FINISH) {
             statu.second = ParserStatus::TERMINATE;
         }
@@ -104,7 +104,21 @@ void ParserStatusManager::SetClusterParseStatus(ParserStatus parserStatus)
     clusterParseStatus = parserStatus;
 }
 
-bool ParserStatusManager::CheckIsFinished(const std::string &fileId)
+bool ParserStatusManager::IsAllFinished()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    for (const auto &item : statusMap) {
+        if (item.second != ParserStatus::FINISH) {
+            return false;
+        }
+    }
+    if (clusterParseStatus != ParserStatus::FINISH) {
+        return false;
+    }
+    return true;
+}
+
+bool ParserStatusManager::IsFinished(const std::string &fileId)
 {
     return statusMap.count(fileId) == 0 || statusMap[fileId] == ParserStatus::FINISH;
 }
@@ -112,15 +126,14 @@ bool ParserStatusManager::CheckIsFinished(const std::string &fileId)
 void ParserStatusManager::WaitAllFinished(const std::vector<std::string> &fileIds)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    auto func = [this](const std::string& fileId) {
-        return !CheckIsFinished(fileId) || !CheckIsFinished(KERNEL_PREFIX + fileId) ||
-        !CheckIsFinished(MEMORY_PREFIX + fileId);
+    auto func = [this](const std::string &fileId) {
+        return !IsFinished(fileId) || !IsFinished(KERNEL_PREFIX + fileId) ||
+               !IsFinished(MEMORY_PREFIX + fileId);
     };
     while (std::any_of(fileIds.begin(), fileIds.end(), func)) {
         parseCv.wait_for(lock, std::chrono::seconds(2)); // 最长等待时间2秒
     }
 }
-
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

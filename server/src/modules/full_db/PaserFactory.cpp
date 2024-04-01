@@ -72,6 +72,7 @@ void ParserAlloc::ParseClusterEndProcess(const std::string token, std::string re
         return;
     }
     auto event = std::make_unique<ParseClusterCompletedEvent>();
+    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
     event->moduleName = ModuleType::TIMELINE;
     event->token = token;
     event->result = true;

@@ -81,6 +81,9 @@ export const updateSessionHandler: NotificationHandler = async (data): Promise<v
             if (!session) {
                 return;
             }
+            if (data.isAllPageParsed as boolean) {
+                session.isClusterMemoryCompletedSwitch = !session.isClusterMemoryCompletedSwitch;
+            }
             const keys: string[] = ['isCluster', 'unitcount'];
             keys.forEach((key: string) => {
                 if (data[key] !== undefined) {

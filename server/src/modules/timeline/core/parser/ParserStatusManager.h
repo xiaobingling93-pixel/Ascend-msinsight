@@ -43,7 +43,8 @@ public:
     ParserStatus SetTerminateStatus(const std::string &fileId);
     void SetClusterParseStatus(ParserStatus parserStatus);
     void WaitAllFinished(const std::vector<std::string> &fileIds);
-    bool CheckIsFinished(const std::string &fileId);
+    bool IsAllFinished();
+    bool IsFinished(const std::string &fileId);
 
 private:
     ParserStatusManager() = default;

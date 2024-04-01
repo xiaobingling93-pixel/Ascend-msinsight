@@ -143,6 +143,7 @@ bool KernelParse::ParseTask(const std::vector<std::string>& filePathList, const 
         }
     }
     // 判断是否为训练场景
+    Timeline::ParserStatusManager::Instance().SetFinishStatus(KERNEL_PREFIX + fileId);
     if (devices.size() == 1 && devices.count(fileId) == 1) {
         ParseEndCallBack(fileId, true, "");
     } else {
@@ -237,7 +238,7 @@ bool KernelParse::IsFileValid(const std::vector<std::string>& filePathList, cons
 
 void KernelParse::ParseEndCallBack(const std::string &fileId, bool result, const std::string &msg)
 {
-    Timeline::ParserStatusManager::Instance().SetFinishStatus(KERNEL_PREFIX + fileId);
+    ServerLog::Info("KernelParse::ParseEndCallBack: ", fileId);
     // 错误处理逻辑后续增加
     if (!result) {
         return;

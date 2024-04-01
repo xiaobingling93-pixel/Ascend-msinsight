@@ -12,6 +12,7 @@ export class Session {
     isReset: boolean = false;
     parseCompleted: boolean = false;
     clusterCompleted: boolean = false;
+    isAllPageParsed: boolean = false;
     durationFileCompleted: boolean = false;
     loading: boolean = false;
     unitcount: number = 0;

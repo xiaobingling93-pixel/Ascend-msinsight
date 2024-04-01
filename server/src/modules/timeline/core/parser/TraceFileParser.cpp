@@ -12,6 +12,7 @@
 #include "ParserStatusManager.h"
 #include "TraceTime.h"
 #include "ClusterParseThreadPoolExecutor.h"
+#include "EventNotifyThreadPoolExecutor.h"
 #include "TraceFileParser.h"
 
 namespace Dic {
@@ -287,6 +288,7 @@ void TraceFileParser::Reset()
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::TERMINATE);
     threadPool->Reset();
     ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->Reset();
+    EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->Reset();
     ServerLog::Info("Task completed.");
     auto connList = DataBaseManager::Instance().GetAllTraceDatabase();
     for (auto &conn : connList) {

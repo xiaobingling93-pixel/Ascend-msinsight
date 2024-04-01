@@ -17,15 +17,14 @@
 #include "DataBaseManager.h"
 #include "MemoryParse.h"
 #include "ParserStatusManager.h"
+#include "EventNotifyThreadPoolExecutor.h"
 
 namespace Dic {
 namespace Module {
 using namespace Timeline;
-ParserJson::ParserJson() {
-}
+ParserJson::ParserJson() {}
 
-ParserJson::~ParserJson() {
-}
+ParserJson::~ParserJson() {}
 
 void ParserJson::Parser(const std::string &path, ImportActionRequest &request)
 {
@@ -38,7 +37,7 @@ void ParserJson::Parser(const std::string &path, ImportActionRequest &request)
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::JSON);
     auto files = GetTraceFiles(path, response.body);
     std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
-    for (const auto &rankEntry: rankListMap) {
+    for (const auto &rankEntry : rankListMap) {
         SetBaseActionOfResponse(response, rankEntry);
     }
     SetParseCallBack(token);
@@ -47,7 +46,7 @@ void ParserJson::Parser(const std::string &path, ImportActionRequest &request)
     response.moduleName = Protocol::ModuleType::TIMELINE;
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
-    for (const auto &rankEntry: rankListMap) {
+    for (const auto &rankEntry : rankListMap) {
         Timeline::TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, path);
     }
 
@@ -60,12 +59,36 @@ void ParserJson::Parser(const std::string &path, ImportActionRequest &request)
     }
 
     Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token, path);
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess, token);
+}
+
+void ParserJson::SendAllParseSuccess(const std::string &token)
+{
+    while (!ParserStatusManager::Instance().IsAllFinished()) {
+        ServerLog::Info("all parse not finished");
+        const int sleepTime = 2000;
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
+    }
+    ServerLog::Info("Send all parse finished");
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        ServerLog::Warn("Failed to get session token ");
+        return;
+    }
+    auto event = std::make_unique<ParseClusterCompletedEvent>();
+    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
+    event->moduleName = ModuleType::TIMELINE;
+    event->token = token;
+    event->result = true;
+    event->body.parseResult = PARSE_RESULT_OK;
+    event->body.isAllPageParsed = true;
+    session->OnEvent(std::move(event));
 }
 
 void ParserJson::SetParseCallBack(std::string token)
 {
     std::function<void(const std::string, bool, const std::string)> func =
-            std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        std::bind(ParseEndCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     TraceFileParser::Instance().SetParseEndCallBack(func);
 }
 
@@ -78,8 +101,8 @@ void ParserJson::ClusterProcess(const std::string &token, const std::string &sel
         if (clusterFileParser.ParseClusterFiles(selectedFolder)) {
             ServerLog::Info("ParseClusterFiles is success");
             parseClusterResult = PARSE_RESULT_OK;
-            ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcessAsyncStep,
-                                                                                token, selectedFolder);
+            ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcessAsyncStep, token,
+                selectedFolder);
         } else {
             ServerLog::Warn("ParseClusterFiles is failed");
             parseClusterResult = PARSE_RESULT_FAIL;
@@ -117,7 +140,7 @@ void ParserJson::ClusterProcessAsyncStep(const std::string &token, const std::st
 }
 
 std::vector<std::pair<std::string, std::string>> ParserJson::GetTraceFiles(const std::string &path,
-                                                                           ImportActionResBody &body)
+    ImportActionResBody &body)
 {
     std::vector<std::string> traceFiles = FindAllTraceFile(path);
     CheckIfClusterAndReset(path, traceFiles.size(), body, false);
@@ -126,7 +149,7 @@ std::vector<std::pair<std::string, std::string>> ParserJson::GetTraceFiles(const
         return {};
     }
     std::vector<std::pair<std::string, std::string>> files;
-    for (const auto &file: traceFiles) {
+    for (const auto &file : traceFiles) {
         std::string fileId = GetFileId(file);
         if (fileId.empty()) {
             Server::ServerLog::Error("File id is empty. file:", file);
@@ -163,7 +186,7 @@ std::vector<std::string> ParserJson::FindTraceFile(const std::string &path)
         return traceFiles;
     }
     std::function<void(const std::string &, int)> find = [&find, this, &traceFiles](const std::string &path,
-                                                                                    int depth) {
+        int depth) {
         if (depth > 5) {
             return;
         }
@@ -217,7 +240,7 @@ void ParserJson::FindAscendFolder(const std::string &path, std::vector<std::stri
         return;
     }
     std::function<void(const std::string &, int)> find = [&find, this, &traceFiles](const std::string &path,
-                                                                                    int depth) {
+        int depth) {
         if (depth > 5) {
             return;
         }
