@@ -91,7 +91,7 @@ public:
     static bool QueryFlowDetail(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                 Protocol::FlowLocation &flowBody, PROCESS_TYPE processType,
                                 const Protocol::UnitFlowParams &requestParams,
-                                const std::map<int64_t, std::string> &stringCache)
+                                std::map<std::string, std::string> &stringCache)
     {
         std::string sql;
         std::unique_ptr<SqliteResultSet> resultSet;
@@ -119,7 +119,7 @@ public:
         flowBody.timestamp = resultSet->GetInt64("start");
         flowBody.depth = resultSet->GetInt32("depth");
         flowBody.duration = resultSet->GetInt64("dur");
-        flowBody.name = stringCache.at(resultSet->GetInt64("name"));
+        flowBody.name = stringCache[resultSet->GetString("name")];
         if (processType == PROCESS_TYPE::CANN_API) {
             flowBody.pid = resultSet->GetString("pid");
         } else {
@@ -244,7 +244,7 @@ public:
 
 static void QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
              const Protocol::ThreadDetailParams &requestParams,
-             Protocol::UnitThreadDetailBody &responseBody, std::map<int64_t, std::string> &stringCache);
+             Protocol::UnitThreadDetailBody &responseBody, std::map<std::string, std::string> &stringCache);
 
 static std::unique_ptr<SqliteResultSet> QueryTaskStrInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                 const Protocol::ThreadDetailParams &requestParams);

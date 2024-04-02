@@ -10,7 +10,7 @@ namespace Dic::Module::Timeline {
 void TraceDatabaseHelper::QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                             const Protocol::ThreadDetailParams &requestParams,
                                             Protocol::UnitThreadDetailBody &responseBody,
-                                            std::map<int64_t, std::string> &stringCache)
+                                            std::map<std::string, std::string> &stringCache)
 {
     auto processType = GetProcessType(requestParams.metaType);
     auto resultSet = QueryTaskCacheInfoById(stmt, requestParams);
@@ -20,21 +20,18 @@ void TraceDatabaseHelper::QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatem
     auto &allocator = json.GetAllocator();
     if (resultSet.operator bool() && resultSet->Next()) {
         if (processType == PROCESS_TYPE::ASCEND_HARDWARE) {
-            responseBody.data.inputShapes = stringCache.at(resultSet->GetInt64("inputShapes"));
-            responseBody.data.inputDataTypes = stringCache.at(resultSet->GetInt64("inputDataTypes"));
-            responseBody.data.inputFormats = stringCache.at(resultSet->GetInt64("inputFormats"));
-            responseBody.data.outputShapes = stringCache.at(resultSet->GetInt64("outputShapes"));
-            responseBody.data.outputDataTypes = stringCache.at(resultSet->GetInt64("outputDataTypes"));
-            responseBody.data.outputFormats = stringCache.at(resultSet->GetInt64("outputFormats"));
+            responseBody.data.inputShapes = stringCache[resultSet->GetString("inputShapes")];
+            responseBody.data.inputDataTypes = stringCache[resultSet->GetString("inputDataTypes")];
+            responseBody.data.inputFormats = stringCache[resultSet->GetString("inputFormats")];
+            responseBody.data.outputShapes = stringCache[resultSet->GetString("outputShapes")];
+            responseBody.data.outputDataTypes = stringCache[resultSet->GetString("outputDataTypes")];
+            responseBody.data.outputFormats = stringCache[resultSet->GetString("outputFormats")];
         }
         for (auto &item: resultSet->GetColumns()) {
             if (std::find(types.begin(), types.end(), item.first) != types.end()) {
                 continue;
             }
-            auto id = resultSet->GetInt64(item.second);
-            if (stringCache.count(id) > 0) {
-                JsonUtil::AddConstMember(json, item.first, stringCache.at(id), allocator);
-            }
+            JsonUtil::AddConstMember(json, item.first, stringCache[resultSet->GetString(item.second)], allocator);
         }
     }
 

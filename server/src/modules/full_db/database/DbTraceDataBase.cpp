@@ -13,7 +13,7 @@
 
 namespace Dic::Module::FullDb {
 using namespace Server;
-static std::map<std::string, std::map<int64_t, std::string>> stringsCache;
+static std::map<std::string, std::map<std::string, std::string>> stringsCache;
 
 DbTraceDataBase::~DbTraceDataBase()
 {
@@ -46,7 +46,7 @@ bool DbTraceDataBase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &
         rowThreadTrace.id = resultSet->GetInt64("id");
         rowThreadTrace.startTime = resultSet->GetInt64("start_time");
         rowThreadTrace.duration = resultSet->GetInt64("duration");
-        rowThreadTrace.name = stringsCache.at(path).at(resultSet->GetInt64("name"));
+        rowThreadTrace.name = stringsCache.at(path)[resultSet->GetString("name")];
         rowThreadTrace.depth = resultSet->GetInt32("depth");
         rowThreadTraceVec.emplace_back(std::move(rowThreadTrace));
     }
@@ -83,7 +83,7 @@ bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestPar
             simpleSlice.timestamp = resultSet->GetInt64(col++);
             simpleSlice.duration = resultSet->GetInt64(col++);
             simpleSlice.endTime = resultSet->GetInt64(col++);
-            simpleSlice.name = stringsCache.at(path).at(resultSet->GetInt64(col++));
+            simpleSlice.name = stringsCache.at(path)[resultSet->GetString(col++)];
             simpleSlice.depth = resultSet->GetInt32(col++);
             simpleSliceVec.emplace_back(simpleSlice);
         }
@@ -127,7 +127,7 @@ bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requ
         sliceDto.timestamp = resultSet->GetInt64(col++);
         sliceDto.duration = resultSet->GetInt64(col++);
         sliceDto.depth = resultSet->GetInt32(col++);
-        sliceDto.name = stringsCache.at(path).at(resultSet->GetInt64(col++));
+        sliceDto.name = stringsCache.at(path)[resultSet->GetString(col++)];
         sliceDtoVec.emplace_back(sliceDto);
     }
 
@@ -847,7 +847,7 @@ void DbTraceDataBase::InitStringsCache()
     auto stmt = CreatPreparedStatement(sql);
     auto result = stmt->ExecuteQuery();
     while (result->Next()) {
-        stringsCache[path].emplace(result->GetInt64("id"), result->GetString("value"));
+        stringsCache[path].emplace(result->GetString("id"), result->GetString("value"));
     }
 }
 
@@ -914,17 +914,20 @@ bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::Un
             ServerLog::Info("QueryHostMetadata failed, table ", typeName, " Not Exist.");
             continue;
         }
-        std::string sql = " select EAL.name, globalTid, type, max(depth) as maxDepth from " + typeName +
-                          " a join ENUM_API_TYPE EAL on a.type = EAL.id group by type, globalTid order by globalTid";
+        std::string sql;
         switch (type) {
             case PROCESS_TYPE::CANN_API:
                 sql = " select EAL.name, globalTid, type, max(depth) as maxDepth from " + typeName +
-                      " a join ENUM_API_TYPE EAL on a.type = EAL.id group by type, globalTid order by globalTid";
+                      " a join ENUM_API_TYPE EAL on a.type = EAL.id "
+                      " group by type, globalTid order by globalTid, type desc";
                 break;
             case PROCESS_TYPE::API:
                 sql = " select 'pytorch' as name, globalTid, 'pytorch' as type,"
                       " max(depth) as maxDepth from " + typeName +
                       " a group by globalTid order by globalTid";
+                break;
+            default:
+                return false;
         }
         auto stmt = CreatPreparedStatement(sql);
         if (stmt == nullptr) {
@@ -949,19 +952,23 @@ bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::Un
 bool DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
                                        std::map<std::string, std::vector<MetaDataDto>> &threadMap)
 {
-    auto len = threadMap.begin()->first.length() > 8 ? 8 : threadMap.begin()->first.length(); // 取globalTib的前8位做pid
-    std::string curPid = threadMap.begin()->first.substr(0, len);
-    std::unique_ptr<UnitTrack> process = GenerateBaseUnitTrack("process", path, curPid, "process " + curPid, "label");
+    int64_t curPid = 0;
+    std::unique_ptr<UnitTrack> process;
     for (auto &thread: threadMap) {
-        if (!StringUtil::StartWith(thread.first, curPid)) {
-            metaData.emplace_back(std::move(process));
-            len = thread.first.length() > 8 ? 8 : thread.first.length(); // 取globalTib的前8位做pid
-            curPid = thread.first.substr(0, len);
-            process = GenerateBaseUnitTrack("process", path, curPid, "process " + curPid, "label");
+        auto globalTid = atoll(thread.first.c_str());
+        auto pid = globalTid >> 32;
+        auto tid = globalTid & 0XFFFFFFFF;
+        if (curPid != pid) {
+            if (process.operator bool()) {
+                metaData.emplace_back(std::move(process));
+            }
+            process = GenerateBaseUnitTrack("process", path, std::to_string(pid),
+                                            "process " + std::to_string(pid), "label");
+            curPid = pid;
         }
-        auto pid = thread.first.substr(thread.first.length() - 8, 8); // 取globalTib的后8位做tid
         auto threadUnit = GenerateBaseUnitTrack("process", path, thread.first,
-                                                "Thread " + pid, ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
+                                                "Thread " + std::to_string(tid),
+                                                ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
         auto cannApiUnit = GenerateBaseUnitTrack("label", path, thread.first,
                                                  "CANN", ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
         for (const auto &item: thread.second) {
@@ -980,7 +987,9 @@ bool DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::Uni
         }
         process->children.emplace_back(std::move(threadUnit));
     }
-    metaData.emplace_back(std::move(process));
+    if (process.operator bool()) {
+        metaData.emplace_back(std::move(process));
+    }
 }
 
 std::unique_ptr<Protocol::UnitTrack> DbTraceDataBase::GenerateBaseUnitTrack(const std::string &type,
