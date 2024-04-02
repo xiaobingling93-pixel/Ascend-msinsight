@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
 import { makeAutoObservable } from 'mobx';
 import { Session } from '../entity/session';
 
@@ -6,32 +9,7 @@ export class SessionStore {
 
     constructor() {
         makeAutoObservable(this);
-        this._activeSession = new Session({
-            id: 'entry',
-            name: 'entry',
-            phase: 'configuring',
-            units: [],
-            availableUnits: [],
-            startRecordTime: 0,
-            endTimeAll: undefined,
-            isNsMode: true,
-        });
-    }
-
-    // creates a new session in the store.
-    async newSession(conf?: Partial<Session> | Session): Promise<Session | undefined> {
-        const session = new Session({
-            id: 'entry',
-            name: conf?.name,
-            phase: conf?.phase ?? 'configuring',
-            units: conf?.units ?? [],
-            availableUnits: conf?.availableUnits ?? [],
-            icon: conf?.icon,
-            startRecordTime: conf?.startRecordTime,
-            endTimeAll: conf?.endTimeAll,
-            isNsMode: conf?.isNsMode,
-        });
-        return session;
+        this._activeSession = new Session();
     }
 
     /**
@@ -45,5 +23,11 @@ export class SessionStore {
 
     set activeSession(value: Session | undefined) {
         this._activeSession = value;
+    }
+
+    // creates a new session in the store.
+    async newSession(conf?: Partial<Session> | Session): Promise<Session | undefined> {
+        const session = new Session();
+        return session;
     }
 }

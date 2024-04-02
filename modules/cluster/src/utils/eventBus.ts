@@ -6,12 +6,6 @@ import { useEffect } from 'react';
 
 export type EventHandler<T> = (arg?: T) => void;
 
-export enum EventType {
-    UNITWRAPPERSCROLL = 'UNITWRAPPERSCROLL', // 泳道区滚动
-    SCROLLTOLOCATEUNIT = 'SCROLLTOLOCATEUNIT', // 滚动到特定泳道
-    GLOBALSEARCH = 'GLOBALSEARCH', // 键盘输入搜索快捷键
-}
-
 class EventBus<T> {
     private readonly _events: Map<string, Array<EventHandler<T>>>;
     private readonly _maxListeners: number = 10; // 设立监听上限

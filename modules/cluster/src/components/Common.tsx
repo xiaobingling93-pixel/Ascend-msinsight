@@ -7,7 +7,6 @@ import { Checkbox, Divider, Select, Pagination } from 'antd';
 import { DragDirection, useDraggableContainer } from '../utils/useDraggableContainer';
 import { optionDataType, VoidFunction } from '../utils/interface';
 import type { EChartsType } from 'echarts';
-import { Session } from '../entity/session';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? props.name + ' :' : ''} </span>;
@@ -212,16 +211,6 @@ export const COLOR = {
     Band1: '#eac299',
     Band2: '#c7eef5',
     Band3: '#0177ff',
-};
-
-export const isParing = (session: Session): boolean => {
-    let parsing = false;
-    session.units.forEach(unit => {
-        if (unit.phase === 'analyzing') {
-            parsing = true;
-        }
-    });
-    return parsing;
 };
 
 interface AnyFunction {

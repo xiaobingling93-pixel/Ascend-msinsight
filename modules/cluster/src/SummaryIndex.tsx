@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from '@emotion/react';
@@ -8,24 +11,19 @@ import { store } from './store';
 import connector from './connection';
 import { observer } from 'mobx-react';
 import { getSearchParams } from './utils/localUrl';
-import { platform } from './platforms';
-import { themeInstance, ThemeItem } from './theme/theme';
+import { themeInstance } from './theme/theme';
 import AnalysisSummary from './pages/AnalysisSummary';
 import { Loading } from './index';
 
 export const App = observer(() => {
-    const { insightStore, sessionStore } = useRootStore();
+    const { sessionStore } = useRootStore();
     let session = sessionStore.activeSession;
     const lang = getSearchParams('language');
     useEffect(() => {
-        insightStore.loadTemplates().then(() => {
-            session = sessionStore.activeSession;
-        });
+        session = sessionStore.activeSession;
         i18n.changeLanguage(lang === 'zh' ? 'zh' : 'en');
-        platform.initTheme().then((res: ThemeItem) => {
-            themeInstance.setCurrentTheme(res);
-            window.setTheme(res === 'dark');
-        });
+        themeInstance.setCurrentTheme('dark');
+        window.setTheme(true);
         connector.send({ event: 'getParseStatus', body: { } });
     }, []);
     return (<ThemeProvider theme={themeInstance.getThemeType()}>

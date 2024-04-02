@@ -10,24 +10,19 @@ import { store } from './store';
 import connector from './connection';
 import { observer } from 'mobx-react';
 import { getSearchParams } from './utils/localUrl';
-import { platform } from './platforms';
-import { themeInstance, ThemeItem } from './theme/theme';
+import { themeInstance } from './theme/theme';
 import CommunicationAnalysis from './components/communicationAnalysis/CommunicationAnalysis';
 import { Loading } from './index';
 
 export const App = observer(() => {
-    const { insightStore, sessionStore } = useRootStore();
+    const { sessionStore } = useRootStore();
     let session = sessionStore.activeSession;
     const lang = getSearchParams('language');
     useEffect(() => {
-        insightStore.loadTemplates().then(() => {
-            session = sessionStore.activeSession;
-        });
+        session = sessionStore.activeSession;
         i18n.changeLanguage(lang === 'zh' ? 'zh' : 'en');
-        platform.initTheme().then((res: ThemeItem) => {
-            themeInstance.setCurrentTheme(res);
-            window.setTheme(res === 'dark');
-        });
+        themeInstance.setCurrentTheme('dark');
+        window.setTheme(true);
         connector.send({ event: 'getParseStatus', body: { } });
     }, []);
     return (<ThemeProvider theme={themeInstance.getThemeType()}>
