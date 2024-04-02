@@ -737,7 +737,7 @@ export const TimelineMarkerElement = observer(({ session }: TimelineMarkerProps)
             removeEventListener('click', singleClickListener);
             removeEventListener('dblclick', doubleClickListener);
         };
-    }, [width, session.totalHeight, domainStart, domainEnd, session.timelineMaker.refreshTrigger, session.selectedRange]);
+    }, [width, domainStart, domainEnd, session.timelineMaker.refreshTrigger, session.selectedRange]);
     return <CanvasContainer ref={ref}>
         <canvas
             id={ 'timelineFlagCnvas' }
