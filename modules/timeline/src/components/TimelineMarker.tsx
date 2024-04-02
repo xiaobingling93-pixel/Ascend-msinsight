@@ -24,6 +24,7 @@ import { TIME_MARKER_AXIS_HEIGHT } from './TimeMakerAxis';
 import { ReactComponent as CloseIcon } from '../assets/images/insights/UIicon_closeFlagList.svg';
 import { TimeStamp } from '../entity/common';
 const FLAG_DEFAULT_NAME_REG = /default-\d+/;
+const SCROLLBAR_WIDTH = 7;
 
 const drawTimelineFlag = (ctx: CanvasRenderingContext2D, beginX: number, item: TimelineAxisFlag, session: Session, svg: SVGSVGElement): void => {
     svg.style.fill = item.color;
@@ -750,7 +751,7 @@ export const TimelineMarkerElement = observer(({ session }: TimelineMarkerProps)
         <RangeStartFlagSvg style={{ display: 'none' }}/>
         <GCIcon style={{ display: 'none' }} id = "gc_icon" fill = {themeInstance.getThemeType().buttonFontColor}/>
         <canvas ref={flagCursor} width={width} height={TIME_MARKER_AXIS_HEIGHT} style={{ width, height: TIME_MARKER_AXIS_HEIGHT, position: 'absolute', top: 0, left: 0 }} />
-        <canvas ref={vertical} width={width} height={height} style={{ width, height, position: 'absolute', top: 15, left: 0 }} />
+        <canvas ref={vertical} width={width - SCROLLBAR_WIDTH} height={height} style={{ width: width - SCROLLBAR_WIDTH, height, position: 'absolute', top: 15, left: 0 }} />
     </CanvasContainer>;
 });
 
