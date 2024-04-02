@@ -262,6 +262,8 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
                 collective.Erase(pos);
             }
         }
+        auto endIt = std::unique(collective.begin(), collective.end()); // 去重
+        collective.Erase(endIt, collective.End());
         baseInfo.ppStages = JsonUtil::JsonDump(p2p);
         baseInfo.stages = JsonUtil::JsonDump(collective);
         auto end = std::chrono::high_resolution_clock::now();

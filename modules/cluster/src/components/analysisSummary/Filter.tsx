@@ -117,14 +117,23 @@ const Filter = observer((props: any) => {
 
 const FilterCom = (props: any): JSX.Element => {
     const { conditions, handleChange = [], options = {} } = props;
+    const session: Session = props.session;
     return (<div style={ { margin: '0 20px 10px' }}>
-        <Label name="Step" />
-        <Select
-            value={conditions.step}
-            style={{ width: 120 }}
-            onChange={(val: any) => handleChange('step', val)}
-            options={options.stepOptions}
-        />
+        {
+            !(session.isFullDb)
+                ? <Label name="Step" />
+                : <></>
+        }
+        {
+            !(session.isFullDb)
+                ? <Select
+                    value={conditions.step}
+                    style={{ width: 120 }}
+                    onChange={(val: any) => handleChange('step', val)}
+                    options={options.stepOptions}
+                />
+                : <></>
+        }
         <Label name="Rank Group"/>
         <Select
             defaultValue={conditions.group}

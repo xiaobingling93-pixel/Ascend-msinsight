@@ -278,10 +278,11 @@ bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestP
 
 bool DbClusterDataBase::QueryCommunicationGroup(Document &responseBody)
 {
-    std::string baseInfoSql = "select (select REPLACE(REPLACE(rank_set, '(', '['), ')', ']') as stage from " +
-        TABLE_COMM_GROUP +" where type == 'collective' ) as stages, "
-        " (select REPLACE(REPLACE(rank_set, '(', '['), ')', ']') as stage from " +
-        TABLE_COMM_GROUP + " where type == 'p2p' ) as pp_stages";
+    std::string baseInfoSql =
+            " with ComGroup as (select distinct REPLACE(REPLACE(rank_set, '(', '['), ')', ']') as stage, "
+            " type from " + TABLE_COMM_GROUP + ") "
+            " select (select group_concat(stage, ',') from ComGroup where type = 'collective') as stage, "
+            "       (select group_concat(stage, ',') from ComGroup where type = 'p2p') as pp_stages";
     sqlite3_stmt *stmtBaseInfo = nullptr;
     int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
     if (baseInfoResult != SQLITE_OK) {
