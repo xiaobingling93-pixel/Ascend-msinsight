@@ -26,6 +26,7 @@ interface SummaryDataType{
     freeTime: number;
     ComputeTimeRatio?: string | number;
     CommunicationTimeRatio?: string | number;
+    computingTimeTransfer?: string | number;
     [propName: string]: any;
 }
 
@@ -199,12 +200,12 @@ function wrapData(data: SummaryDataType[]): any {
         totalFields.forEach(field => {
             total += item[field];
         });
-        item.computingTime = item.computingTime - item.communicationOverLappedTime;
+        item.computingTimeTransfer = item.computingTime - item.communicationOverLappedTime;
         item.computeTimeRatio = Number((100 * item.computingTime / notZero(total)).toFixed(2));
         item.communicationTimeRatio = Number((100 * item.communicationNotOverLappedTime / notZero(total)).toFixed(2));
     });
     baseOption.xAxis[0].data = data.map(item => item.rankId);
-    const order: Array<keyof SummaryDataType> = ['computingTime', 'communicationNotOverLappedTime',
+    const order: Array<keyof SummaryDataType> = ['computingTimeTransfer', 'communicationNotOverLappedTime',
         'communicationOverLappedTime', 'freeTime', 'computeTimeRatio', 'communicationTimeRatio'];
     for (let i = 0; i < order.length; i++) {
         baseOption.series[i].data = data.map(item => item[order[i]]);
