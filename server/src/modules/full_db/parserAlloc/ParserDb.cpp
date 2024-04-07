@@ -69,7 +69,6 @@ void ParserDb::ClusterProcess(const std::string &token, const std::string &selec
         ServerLog::Warn("ParseClusterFiles is failed");
         parseClusterResult = PARSE_RESULT_FAIL;
     }
-    ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
     // send event
     ParserAlloc::ParseClusterEndProcess(token, parseClusterResult);
 }
