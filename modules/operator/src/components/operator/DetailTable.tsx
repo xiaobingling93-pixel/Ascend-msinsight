@@ -1,7 +1,9 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import ResizeTable from '../resize/ResizeTable';
+// Module Federation组件
+// eslint-disable-next-line import/no-unresolved
+import ResizeTable from 'lib/ResizeTable';
 import React, { useState, useEffect } from 'react';
 import { Button } from 'antd';
 import { DownOutlined } from '@ant-design/icons';

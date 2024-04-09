@@ -6,6 +6,8 @@ const HtmlInlineScriptPlugin = require('html-inline-script-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const fs = require('fs');
 const path = require('path');
+const {ModuleFederationPlugin} = require('webpack').container;
+const {whenDev} = require('@craco/craco');
 
 class ScriptTypePlugin {
   apply(compiler) {
@@ -61,6 +63,20 @@ const htmllist = [
   }), new HTMLInlineCSSWebpackPlugin(), new HtmlInlineScriptPlugin(), new ScriptTypePlugin(), new BackgroundSvgInlinePlugin('cluster'),
 ];
 
+const federationConfig = {
+  filename: 'remoteEntry.js',
+  name: 'operator',
+  remotes: {lib: 'lib@../lib/remoteEntry.js'},
+  shared: {
+    react: {singleton: true, eager: true},
+    'react-dom': {singleton: true, eager: true},
+    '@cloudsop/horizon': {singleton: true, eager: true},
+  },
+};
+whenDev(() => {
+  federationConfig.remotes = {lib: 'lib@http://localhost:8000/remoteEntry.js'};
+});
+
 const webpackCfg = {
   timelineConfigure: (webpackConfig) => {
     // Because CEF has issues with loading source maps properly atm,
@@ -82,6 +98,10 @@ const webpackCfg = {
   },
   memoryConfigure: (webpackConfig) => {
     webpackConfig.plugins.push(...[new HTMLInlineCSSWebpackPlugin(), new HtmlInlineScriptPlugin(), new ScriptTypePlugin()]);
+    return webpackConfig;
+  },
+  operatorConfigure: (webpackConfig) => {
+    webpackConfig.plugins.push(new ModuleFederationPlugin(federationConfig));
     return webpackConfig;
   },
   alias: {

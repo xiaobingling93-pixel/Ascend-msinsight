@@ -26,34 +26,6 @@ code {
 
 @import '~antd/dist/antd.css';
 
-:root {
-    --grey0: white;
-    --grey5: #EEEEEE;
-    --grey6:#ebebeb;
-    --grey8: #dddddd;
-    --grey10: #d1d1d1;
-    --grey15:#bcbcbc;
-    --grey20: #a9a9a9;
-    --grey30: #a3a3a3;
-    --grey40: #939393;
-    --grey50: rgb(128, 128, 128);
-    --grey60: #656565;
-    --grey70: #414141;
-    --grey80: #3C3C3C;
-    --grey83: #2C2C2C;
-    --grey85: #252526;
-    --grey90: #202020;
-    --grey95: #1e1e1e;
-    --grey100: black;
-    --activeblue: #1890ff;
-    --whiteblue:#F4F6FA;
-    --grey80blue:#2E2F31;
-    --grey20blue:#8D98AA;
-    --middleblue:#0c518d;
-    --labelblue:#40a9ff;
-    --lightblue:#318cd7;
-}
-
 /* reset some antd defaults */
 .ant-table {
     background: unset;

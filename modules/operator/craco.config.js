@@ -4,7 +4,7 @@
 const {webpackCfg} = require('../build-config');
 module.exports = {
   webpack: {
-    configure: webpackConfig => webpackConfig,
+    configure: webpackConfig => webpackCfg.operatorConfigure(webpackConfig),
     alias: webpackCfg.alias,
   },
 };

@@ -10,10 +10,13 @@ import { store } from './store';
 import App from './App';
 import { NOTIFICATION_HANDLERS } from './interface';
 import connector from './connection';
+// Module Federation组件
+// eslint-disable-next-line import/no-unresolved
+import 'lib/style/color';
 
 // 禁用右键刷新以及F5、Ctrl+R刷新
-document.oncontextmenu = () => false;
-document.onkeydown = (event) => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
+document.oncontextmenu = (): boolean => false;
+document.onkeydown = (event): boolean => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
 const root = createRoot(document.getElementById('root') as HTMLElement);
 root.render(
     (
@@ -22,12 +25,11 @@ root.render(
         </RootStoreContext.Provider>
     ));
 
-type CefQueryType = {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
+interface CefQueryType {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
 
 declare global {
     interface Window {
-        hljs: Function;
-        setTheme: Function;
+        setTheme: (isDark: boolean) => void;
         requestData: (method: string, params: any, module?: string) => Promise<any>;
         dataSource: DataSource;
         cefQuery: (obj: CefQueryType) => void;
@@ -38,7 +40,7 @@ declare global {
         dataPath: string[];
     }
 };
-window.requestData = async (command, params, module) => {
+window.requestData = async (command, params, module): Promise<unknown> => {
     const data = await connector.fetch({
         args: { command, params },
         module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
@@ -50,7 +52,6 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
     connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
         const res = e.data;
         if (res.body === undefined || typeof res.body !== 'object') {
-            console.error('[notify]', 'Wrong notify format.');
             return;
         }
         callback(res.body);

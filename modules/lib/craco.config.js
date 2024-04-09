@@ -12,18 +12,15 @@ module.exports = {
         filename: 'remoteEntry.js',
         name: 'lib',
         exposes: {
-          './resize': './src/resize',
+          './ResizeTable': './src/resize/ResizeTable.tsx',
           './Simple': './src/Simple',
+          './Resizor': './src/resize/Resizor.tsx',
+          './style/color': './src/style/color.css',
         },
         shared: {
-          react: {
-            singleton: true,
-            eager: true,
-          },
-          'react-dom': {
-            singleton: true,
-            eager: true,
-          },
+          react: {singleton: true},
+          'react-dom': {singleton: true},
+          '@cloudsop/horizon': {singleton: true},
         },
       }));
       webpackConfig.output.publicPath = 'auto';
