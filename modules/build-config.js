@@ -7,7 +7,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const fs = require('fs');
 const path = require('path');
 const {ModuleFederationPlugin} = require('webpack').container;
-const {whenDev} = require('@craco/craco');
 
 class ScriptTypePlugin {
   apply(compiler) {
@@ -73,9 +72,6 @@ const federationConfig = {
     '@cloudsop/horizon': {singleton: true, eager: true},
   },
 };
-whenDev(() => {
-  federationConfig.remotes = {lib: 'lib@http://localhost:8000/remoteEntry.js'};
-});
 
 const webpackCfg = {
   timelineConfigure: (webpackConfig) => {
