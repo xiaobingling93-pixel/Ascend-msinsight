@@ -391,6 +391,9 @@ function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: stri
         fromY = fromY / len;
         const yLen = Math.abs(fromY - targetY);
         const xLen = Math.abs(fromX - targetX);
+        if (xLen === 0 || yLen === 0) {
+            return;
+        }
         drawArrow(ctx, {
             toX: targetX,
             toY: targetY,

@@ -200,7 +200,8 @@ function wrapData(data: SummaryDataType[]): any {
         totalFields.forEach(field => {
             total += item[field];
         });
-        item.computingTimeTransfer = item.computingTime - item.communicationOverLappedTime;
+        item.computingTimeTransfer = Number((item.computingTime - item.communicationOverLappedTime)
+            .toFixed(2));
         item.computeTimeRatio = Number((100 * item.computingTime / notZero(total)).toFixed(2));
         item.communicationTimeRatio = Number((100 * item.communicationNotOverLappedTime / notZero(total)).toFixed(2));
     });

@@ -368,7 +368,11 @@ const handleMouseUp = (container: React.RefObject<HTMLDivElement>, draggable: Re
     const dom = container.current;
     const domDrag = draggable.current;
     const moving = movingState.current;
-    if (moving.stat !== 'moved' || !dom || !domDrag) { moving.stat = 'idle'; return; }
+    const isDomInvalid = !dom || !domDrag || dom.clientHeight === 0 || dom.clientWidth === 0;
+    if (moving.stat !== 'moved' || isDomInvalid) {
+        moving.stat = 'idle';
+        return;
+    }
     let dragWHTmp: number;
     switch (dragDirection) {
         case DragDirection.top:
