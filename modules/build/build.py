@@ -23,7 +23,8 @@ MODULES_MAP = {
     'memory': 'Memory',
     'operator': 'Operator',
     'timeline': 'Timeline',
-    'compute': 'Compute'
+    'compute': 'Compute',
+    'lib': 'lib'
 }
 
 
