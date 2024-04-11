@@ -12,7 +12,7 @@ import {
     getDefaultColumData,
     GetPageData,
     kernelDetails,
-    Label,
+    Label, limitInput,
     Loading,
     pythonApiSummaryColumns,
     queryKernelDetails,
@@ -100,6 +100,9 @@ const RankFilter = observer((props: any): JSX.Element => {
     useEffect(() => {
         props.handleChange(rankId);
     }, [rankId]);
+    useEffect(() => {
+        limitInput();
+    }, []);
     const onRankIdChanged = (value: string): void => {
         setRankId(value);
     };
