@@ -56,12 +56,6 @@ abstract class BaseConnector {
         });
     }
 
-    protected printErrMsg(errMsg: string): string {
-        return `[${this._errMsgType}]: ${errMsg}`;
-    }
-
-    protected abstract awaitFetch(e: MessageEvent): void;
-
     send<T extends EventHanlder>(body: SendParams<T>, reject?: Function): void {
         if (this.invalidFunc) {
             this.invalidFunc();
@@ -76,7 +70,9 @@ abstract class BaseConnector {
         }
         body.from = Object.entries(window.parent as Window).findIndex(([, val]) => val === window);
         const targetWindows = body.to !== undefined ? [(window.parent as Window)[body.to]] : this._targetWindows;
-        targetWindows.forEach(targetWindow => { targetWindow.postMessage(JSON.stringify(body), '*'); });
+        targetWindows.forEach(targetWindow => {
+            targetWindow.postMessage(JSON.stringify(body), this.getTargetOrigin());
+        });
     }
 
     addListener<T extends EventHanlder>(event: T extends ReservedEventHandler ? never : T, callback: ListenerCallback): ListenerHandler {
@@ -101,6 +97,16 @@ abstract class BaseConnector {
             listeners.filter(item => item).length === 0 && this._listeners.delete(event);
         }
     }
+
+    getTargetOrigin(): string {
+        return window.location.origin;
+    }
+
+    protected printErrMsg(errMsg: string): string {
+        return `[${this._errMsgType}]: ${errMsg}`;
+    }
+
+    protected abstract awaitFetch(e: MessageEvent): void;
 };
 
 type FetchSequenceID = number;
