@@ -30,7 +30,7 @@ CMAKE_BUILD_DIR = os.path.join(BUILD_DIR, 'build')
 HOME_DIR = os.path.dirname(BUILD_DIR)
 THIRD_PARTY_DIR = os.path.join(HOME_DIR, 'third_party')
 SRC_DIR = os.path.join(HOME_DIR, 'src')
-CLUSTER_ANALYSE_DIR = os.path.join(THIRD_PARTY_DIR, 'att/profiler/cluster_analyse')
+CLUSTER_ANALYSE_DIR = os.path.join(THIRD_PARTY_DIR, 'att', 'profiler', 'cluster_analyse')
 PROTO_DIR = os.path.join(SRC_DIR, 'protos')
 
 OUTPUT_DIR = os.path.join(HOME_DIR, 'output')
@@ -41,11 +41,19 @@ OUTPUT_EXE_DIR = ''
 LOG_DIR = os.path.join(BUILD_DIR, 'logs')
 LOG_FILE = os.path.join(LOG_DIR, 'build.log')
 
-BUILD_TITLE = '[DIC Server]'
+BUILD_TITLE = '[Server]'
 
 
 def build_log(build_info):
     LOG.info(BUILD_TITLE + build_info)
+
+
+def execute_cmd(cmd, work_path):
+    proc = subprocess.Popen(cmd, cwd=work_path, stdout=subprocess.PIPE)
+    for line in iter(proc.stdout.readline, b''):
+        build_log(line.decode('utf-8').strip())
+    proc.communicate(timeout=600)
+    return proc.returncode
 
 
 def information():
@@ -109,14 +117,17 @@ def build_bin(args):
 
     if args.project_type == 'true':
         build_cmds.append('-DWASM_MJS_ENABLE=ON')
-    output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
-    if not log_output(output):
-        return
+
+    result = execute_cmd(build_cmds, build_dir)
+    if result != 0:
+        build_log('Failed to execute cmake command.')
+        return result
 
     build_cmds = ['cmake', '--build', '.', '-j', str(MAKE_JOBS)]
-    output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
-    if not log_output(output):
-        return
+    result = execute_cmd(build_cmds, build_dir)
+    if result != 0:
+        build_log('Failed to execute cmake build command.')
+        return result
 
     att_dir = os.path.join(OUTPUT_DIR, gxx_type)
     att_bin_dir = os.path.join(att_dir, 'bin')
@@ -128,16 +139,20 @@ def build_bin(args):
         ]
         if not IS_WINDOWS:
             build_att.append('-s')
-        output = subprocess.Popen(build_att, cwd=BUILD_DIR, stdout=subprocess.PIPE)
-        log_output(output)
+        result = execute_cmd(build_att, BUILD_DIR)
+        if result != 0:
+            build_log('Failed to execute build att command.')
+            return result
     else:
         shutil.copytree(CLUSTER_ANALYSE_DIR, os.path.join(att_bin_dir, 'cluster_analyse'), copy_function=shutil.copy2)
 
     build_log('end build.\n')
 
+    return 0
+
 
 def build(args):
-    build_bin(args)
+    return build_bin(args)
 
 
 def clean(args):
@@ -151,6 +166,7 @@ def clean(args):
         if os.path.isfile(abs_file_path):
             os.remove(abs_file_path)
     build_log('end clean.\n')
+    return 0
 
 
 def init_log(name):
@@ -165,10 +181,7 @@ def init_log(name):
     streamhandler.setLevel(logging.DEBUG)
     streamhandler.setFormatter(formatter)
     building_log.addHandler(streamhandler)
-    filehandler = TimedRotatingFileHandler(LOG_FILE,
-                                           when='W6',
-                                           interval=1,
-                                           backupCount=60)
+    filehandler = TimedRotatingFileHandler(LOG_FILE, when='W6', interval=1, backupCount=60)
     filehandler.setLevel(logging.DEBUG)
     filehandler.setFormatter(formatter)
     building_log.addHandler(filehandler)
@@ -189,15 +202,19 @@ def build_test(args):
         '-D_PROJECT_TYPE=' + args.project_type
     ]
 
-    output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
-    if not log_output(output):
-        return
+    result = execute_cmd(build_cmds, build_dir)
+    if result != 0:
+        build_log('Failed to execute cmake command in test.')
+        return result
 
     build_cmds = ['cmake', '--build', '.', '-j', str(MAKE_JOBS)]
-    output = subprocess.Popen(build_cmds, cwd=build_dir, stdout=subprocess.PIPE)
-    if not log_output(output):
-        return
+    result = execute_cmd(build_cmds, build_dir)
+    if result != 0:
+        build_log('Failed to execute cmake build command in test.')
+        return result
+
     build_log('end test build.\n')
+    return 0
 
 
 def main():
@@ -248,10 +265,10 @@ def main():
     if not hasattr(args, 'func'):
         args = parser.parse_args(['build'] + sys.argv[1:])
 
-    args.func(args)
+    return args.func(args)
 
 
 if __name__ == '__main__':
     LOG = init_log('root')
     os.environ['LANG'] = 'C'
-    main()
+    sys.exit(main())
