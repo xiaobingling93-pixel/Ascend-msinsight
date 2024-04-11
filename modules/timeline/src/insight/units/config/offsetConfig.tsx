@@ -141,7 +141,7 @@ const InputOption = observer(({ session, metaData }: { session: Session; metaDat
             <StyledTooltip title={title} visible={visible} overlayInnerStyle={{ borderRadius: 8, color: useTheme().fontColor }}>
                 <InputDiv>
                     <InputSpan>Timestamp Offset(ns):</InputSpan>
-                    <StyledInput minwidth={20} height={18} width={155} isshow={1} value={offset} disabled={session.phase === 'analyzing'} ref={inputRef}
+                    <StyledInput minwidth={20} height={18} width={155} isshow={1} value={offset} disabled={session.phase === 'analyzing'} ref={inputRef} maxLength={500}
                         onChange={(e) => onChange(e, session, setOffset, setVisible, setTitle)}
                         onBlur={(e) => onBlur(e, session, setOffset, setVisible, metaData)}
                         onFocus={onFocus}

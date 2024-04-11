@@ -120,6 +120,47 @@ export const Loading = ({ size = 20, style = {} }: {size?: number;style?: object
         style={{ width: `${size}px`, height: `${size}px`, ...style }}></div>);
 };
 
+const filterDropdownCom = ({ setSelectedKeys, selectedKeys, handleSearch, confirm, dataIndex, clearFilters, handleReset }: {
+    setSelectedKeys: (selectedKeys: React.Key[]) => void;
+    selectedKeys: React.Key[];
+    handleSearch: (selectedKeys: string[], confirm: (param?: FilterConfirmProps) => void, index: string,) => void;
+    confirm: (param?: (FilterConfirmProps | undefined)) => void;
+    dataIndex: string;
+    clearFilters?: () => void;
+    handleReset: (confirm: (param?: FilterConfirmProps) => void, index: string, clearFilters?: () => void,) => void;
+}): JSX.Element => {
+    return (
+        <div style={{ padding: 8 }} onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>): void => { e.stopPropagation(); }}>
+            <Input
+                placeholder="Search by Name"
+                value={selectedKeys[0] !== null && selectedKeys[0] !== undefined ? selectedKeys[0] : ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setSelectedKeys((e.target.value !== null && e.target.value !== undefined) ? [e.target.value] : [])}
+                onPressEnter={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
+                style={{ width: 168, marginBottom: 8, display: 'block' }}
+            />
+            <Space>
+                <Button
+                    type="primary"
+                    onClick={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
+                    icon={<SearchOutlined/>}
+                    size="small"
+                    style={{ width: 80 }}
+                >
+                    Search
+                </Button>
+                <Button
+                    onClick={(): void => { if (clearFilters) { handleReset(confirm, dataIndex, clearFilters); } }}
+                    size="small"
+                    style={{ width: 80 }}
+                >
+                    Reset
+                </Button>
+            </Space>
+        </div>
+    );
+};
+
 // eslint-disable-next-line max-lines-per-function
 export const getColumnSearchProps = ({ dataIndex, setSearchText, searchText, setSearchedColumn, searchedColumn }: SearchData): ColumnType<any> => {
     const handleSearch = (
@@ -132,51 +173,15 @@ export const getColumnSearchProps = ({ dataIndex, setSearchText, searchText, set
         setSearchedColumn(index);
     };
 
-    const handleReset = (clearFilters: (() => void) | undefined,
-        confirm: (param?: FilterConfirmProps) => void,
-        index: string,
-    ): void => {
+    const handleReset = (confirm: (param?: FilterConfirmProps) => void, index: string, clearFilters?: () => void): void => {
         setSearchText('');
         clearFilters?.();
         setSearchedColumn(index);
         confirm();
     };
     return ({
-        filterDropdown: ({
-            setSelectedKeys,
-            selectedKeys,
-            confirm,
-            clearFilters,
-        }) => (
-            <div style={{ padding: 8 }} onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>): void => { e.stopPropagation(); }}>
-                <Input
-                    placeholder="Search by Name"
-                    value={selectedKeys[0] !== null && selectedKeys[0] !== undefined ? selectedKeys[0] : ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        setSelectedKeys((e.target.value !== null && e.target.value !== undefined) ? [e.target.value] : [])}
-                    onPressEnter={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
-                    style={{ width: 168, marginBottom: 8, display: 'block' }}
-                />
-                <Space>
-                    <Button
-                        type="primary"
-                        onClick={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
-                        icon={<SearchOutlined/>}
-                        size="small"
-                        style={{ width: 80 }}
-                    >
-                        Search
-                    </Button>
-                    <Button
-                        onClick={(): void => { if (clearFilters) { handleReset(clearFilters, confirm, dataIndex); } }}
-                        size="small"
-                        style={{ width: 80 }}
-                    >
-                        Reset
-                    </Button>
-                </Space>
-            </div>
-        ),
+        filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) =>
+            filterDropdownCom({ setSelectedKeys, selectedKeys, handleSearch, confirm, dataIndex, clearFilters, handleReset }),
         filterIcon: (filtered: boolean) => (
             <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }}/>
         ),
@@ -186,5 +191,21 @@ export const getColumnSearchProps = ({ dataIndex, setSearchText, searchText, set
                 .toLowerCase()
                 .includes((value as string).toLowerCase()),
         render: (text: string) => (text),
+        onFilterDropdownOpenChange: (open: boolean): void => {
+            if (open) {
+                limitInput();
+            }
+        },
     });
 };
+
+export function limitInput(maxlength?: string): void {
+    setTimeout(() => {
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            if (input.maxLength < 0) {
+                input.setAttribute('maxlength', maxlength ?? '200');
+            }
+        });
+    });
+}
