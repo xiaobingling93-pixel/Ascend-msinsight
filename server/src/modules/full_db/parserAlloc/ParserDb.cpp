@@ -120,14 +120,18 @@ std::map<std::string, std::vector<std::string>> ParserDb::GetReportFiles(const s
     }
     // 只解析找到的第一个report文件
     std::map<std::string, std::vector<std::string>> rankListMap;
-    for (auto file: reportFiles) {
+    for (const auto& file: reportFiles) {
         if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(file, file)) {
             ServerLog::Error("Failed to create connection pool. ", reportFiles[0]);
         }
-        auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-            Timeline::DataBaseManager::Instance().GetTraceDatabase(file));
-        if (database == nullptr) {
+        auto db = Timeline::DataBaseManager::Instance().GetTraceDatabase(file);
+        if (db == nullptr) {
             ServerLog::Error("Failed to get connection.");
+            continue;
+        }
+        auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
+        if (database == nullptr) {
+            ServerLog::Error("Failed to convert VirtualTraceDatabase to DbTraceDataBase in GetReportFiles.");
             continue;
         }
         std::vector<std::string> rankIds = database->QueryRankId();

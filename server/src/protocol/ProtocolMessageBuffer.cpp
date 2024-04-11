@@ -89,6 +89,9 @@ std::unique_ptr<ProtocolMessage> ProtocolMessageBuffer::Pop()
     std::string bodyStr = buffer.substr(bodyPos, bodyLen);
     buffer = buffer.substr(bodyPos + bodyLen); // buffer removes head and body string
     std::unique_ptr<Request> request = ProtocolManager::Instance().FromJson(bodyStr, error);
+    if (request == nullptr) {
+        return nullptr;
+    }
     return std::unique_ptr<ProtocolMessage>(request.release());
 }
 

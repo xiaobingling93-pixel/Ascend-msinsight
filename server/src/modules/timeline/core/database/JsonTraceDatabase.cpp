@@ -669,17 +669,20 @@ std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByIdList(uint64_t minTi
         sliceSql += ", ? ";
     }
     sliceSql += " , ? );";
+    std::vector<RowThreadTrace> ans;
     auto sliceStem = CreatPreparedStatement(sliceSql);
     if (sliceStem == nullptr) {
         ServerLog::Error("Fail to QuerySliceByIdList.", sqlite3_errmsg(db));
-        std::vector<RowThreadTrace> temp;
-        return temp;
+        return ans;
     }
     for (const auto &item : ids) {
         sliceStem->BindParams(item);
     }
     auto sliceResultSet = sliceStem->ExecuteQuery();
-    std::vector<RowThreadTrace> ans;
+    if (sliceResultSet == nullptr) {
+        ServerLog::Error("QuerySliceByIdList. Failed to get result set.", sliceStem->GetErrorMessage());
+        return ans;
+    }
     while (sliceResultSet->Next()) {
         RowThreadTrace rowThreadTrace{};
         rowThreadTrace.id = sliceResultSet->GetInt64("id");
@@ -841,6 +844,10 @@ bool JsonTraceDatabase::QueryThreads(const Protocol::UnitThreadsParams &requestP
     }
     int index = bindStartIndex;
     auto resultSet = stmt->ExecuteQuery(traceId, extremumTimestamp.maxTimestamp, extremumTimestamp.minTimestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryThreads. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     std::vector<Protocol::SimpleSlice> simpleSliceVec;
     while (resultSet->Next()) {
         int col = resultStartIndex;
@@ -876,6 +883,10 @@ bool JsonTraceDatabase::QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t 
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(trackId, endTime, startTime);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryExtremumTimeOfFirstDepth. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     while (resultSet->Next()) {
         extremumTimestamp.minTimestamp = resultSet->GetUint64("minTimestamp");
         extremumTimestamp.maxTimestamp = resultSet->GetUint64("maxTimestamp");
@@ -957,6 +968,10 @@ bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &re
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(requestParams.depth, trackId, requestParams.startTime + minTimestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryThreadDetail. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     std::vector<SliceDto> sliceDtoVec;
     while (resultSet->Next()) {
         SliceDto sliceDto{};
@@ -1032,6 +1047,10 @@ bool JsonTraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::Thread
     }
     auto resultSet =
         stmt->ExecuteQuery(requestParams.depth + 1, rows[0].timestamp + rows[0].duration, rows[0].timestamp, trackId);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryDurationFromSliceByTimeRange. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     while (resultSet->Next()) {
         uint64_t startTime = resultSet->GetUint64("timestamp");
         uint64_t duration = resultSet->GetUint64("duration");
@@ -1058,6 +1077,10 @@ KernelShapesDataDto JsonTraceDatabase::QueryKernelShapes(const std::vector<Slice
         return kernelShapesDataDto;
     }
     auto resultSet = stmt->ExecuteQuery(param[0].name, param[0].timestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryKernelShapes. Failed to get result set.", stmt->GetErrorMessage());
+        return kernelShapesDataDto;
+    }
     while (resultSet->Next()) {
         if (resultSet->GetString("accelerator_core") == hcclType) {
             break;
@@ -1084,6 +1107,10 @@ bool JsonTraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestP
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(requestParams.flowId);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryFlowDetail. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     std::vector<FlowDetailDto> flowDetailVec;
     while (resultSet->Next()) {
         int col = resultStartIndex;
@@ -1128,6 +1155,9 @@ std::map<uint64_t, std::pair<std::string, std::string>> JsonTraceDatabase::Query
         return threadMap;
     }
     auto threadSet = threadStmt->ExecuteQuery();
+    if (threadSet == nullptr) {
+        ServerLog::Error("QueryFlowDetail. Failed to get result set.", threadStmt->GetErrorMessage());
+    }
 
     while (threadSet->Next()) {
         uint64_t trackId = threadSet->GetUint64("trackId");
@@ -1183,6 +1213,10 @@ bool JsonTraceDatabase::QueryFlowName(const Protocol::UnitFlowNameParams &reques
     }
     auto resultSet =
         stmt->ExecuteQuery(requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp, trackId);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryFlowName. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     std::vector<FlowName> flowNameVec;
     while (resultSet->Next()) {
         FlowName flowName;
@@ -1229,12 +1263,15 @@ std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByTimeRange(uint64_t
         ServerLog::Error("QueryFlowName. Failed to prepare sql.");
         return simpleSliceVec;
     }
-    auto SliceSet = sliceStmt->ExecuteQuery(startTime + minTimestamp, endTime + minTimestamp, trackId);
-
-    while (SliceSet->Next()) {
+    auto sliceSet = sliceStmt->ExecuteQuery(startTime + minTimestamp, endTime + minTimestamp, trackId);
+    if (sliceSet == nullptr) {
+        ServerLog::Error("QuerySimpleSliceByTimeRange. Failed to get result set.", sliceStmt->GetErrorMessage());
+        return simpleSliceVec;
+    }
+    while (sliceSet->Next()) {
         SimpleSlice simpleSlice;
-        simpleSlice.timestamp = SliceSet->GetUint64("timestamp");
-        simpleSlice.endTime = SliceSet->GetUint64("endTime");
+        simpleSlice.timestamp = sliceSet->GetUint64("timestamp");
+        simpleSlice.endTime = sliceSet->GetUint64("endTime");
         simpleSliceVec.emplace_back(simpleSlice);
     }
     return simpleSliceVec;
@@ -1252,14 +1289,17 @@ std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByTimePoint(uint64_t
         ServerLog::Error("QueryFlowName. Failed to prepare sql.");
         return simpleSliceVec;
     }
-    auto SliceSet = sliceStmt->ExecuteQuery(startTime, startTime, trackId);
-
-    while (SliceSet->Next()) {
+    auto sliceSet = sliceStmt->ExecuteQuery(startTime, startTime, trackId);
+    if (sliceSet == nullptr) {
+        ServerLog::Error("QuerySimpleSliceByTimePoint. Failed to get result set.", sliceStmt->GetErrorMessage());
+        return simpleSliceVec;
+    }
+    while (sliceSet->Next()) {
         SimpleSlice simpleSlice;
-        simpleSlice.timestamp = SliceSet->GetUint64("timestamp");
-        simpleSlice.endTime = SliceSet->GetUint64("endTime");
-        simpleSlice.depth = SliceSet->GetInt32("depth");
-        simpleSlice.name = SliceSet->GetString("name");
+        simpleSlice.timestamp = sliceSet->GetUint64("timestamp");
+        simpleSlice.endTime = sliceSet->GetUint64("endTime");
+        simpleSlice.depth = sliceSet->GetInt32("depth");
+        simpleSlice.name = sliceSet->GetString("name");
         simpleSliceVec.emplace_back(simpleSlice);
     }
     ServerLog::Info("simpleSliceVec size is: ", simpleSliceVec.size());
@@ -1296,6 +1336,10 @@ bool JsonTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
         return false;
     }
     auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryUnitsMetadata. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     std::vector<MetaDataDto> metaDataVec;
     while (resultSet->Next()) {
         int col = resultStartIndex;
@@ -1387,6 +1431,10 @@ bool JsonTraceDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
         return false;
     }
     auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryExtremumTimestamp. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     while (resultSet->Next()) {
         int col = resultStartIndex;
         min = resultSet->GetUint64("minTimestamp");
@@ -1421,9 +1469,13 @@ int JsonTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &p
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QuerySliceNameCount failed!.");
-        return false;
+        return 0;
     }
     auto resultSet = stmt->ExecuteQuery(params.searchContent);
+    if (resultSet == nullptr) {
+        ServerLog::Error("SearchSliceNameCount. Failed to get result set.", stmt->GetErrorMessage());
+        return 0;
+    }
     if (resultSet->Next()) {
         return resultSet->GetInt32(resultStartIndex);
     }
@@ -1445,6 +1497,10 @@ bool JsonTraceDatabase::SearchSliceName(const std::string &name, int index, uint
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(minTimestamp, name, index);
+    if (resultSet == nullptr) {
+        ServerLog::Error("SearchSliceName. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     if (!resultSet->Next()) {
         return false;
     }
@@ -1466,6 +1522,10 @@ bool JsonTraceDatabase::QueryFlowCategoryList(std::vector<std::string> &categori
         return false;
     }
     auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryFlowCategoryList. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     while (resultSet->Next()) {
         categories.emplace_back(resultSet->GetString(resultStartIndex));
     }
@@ -1485,16 +1545,19 @@ void JsonTraceDatabase::DeleteInvalidFlowData()
 }
 std::pair<int64_t, int64_t> JsonTraceDatabase::QueryExtremTrackIdPairByPid(std::string pid)
 {
+    std::pair<int64_t, int64_t> result;
     std::string sql =
         "Select max(track_id) As maxTrackId, min(track_id) AS minTrackId from " + threadTable + " where pid = ? ;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryExtremTrackIdPairByPid failed!.");
-        std::pair<int64_t, int64_t> temp;
-        return temp;
+        return result;
     }
     auto resultSet = stmt->ExecuteQuery(pid);
-    std::pair<int64_t, int64_t> result;
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryExtremTrackIdPairByPid. Failed to get result set.", stmt->GetErrorMessage());
+        return result;
+    }
     while (resultSet->Next()) {
         int col = resultStartIndex;
         int64_t maxTrackId = resultSet->GetInt64(col++);
@@ -1516,15 +1579,10 @@ bool JsonTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params
         flowTable + " " + "LEFT JOIN " + sliceTable + " USING (track_id, timestamp) " + "JOIN " + threadTable +
         " USING (track_id) "
         "WHERE flow_id IN "
-        "(SELECT flow_id "
-        "from "
-        "(SELECT flow_id, ROUND(flow.timestamp / ?) as rank "
-        "FROM flow "
-        "WHERE flow_id IN "
-        "(SELECT flow_id FROM flow "
-        "WHERE cat = ? "
-        "AND ((timestamp >= ? AND (type = 'f' OR type = 't')) "
-        "OR (timestamp <= ? AND (type = 's' OR type = 't'))"
+        "(SELECT flow_id from "
+        "(SELECT flow_id, ROUND(flow.timestamp / ?) as rank FROM flow WHERE flow_id IN "
+        "(SELECT flow_id FROM flow WHERE cat = ? "
+        "AND ((timestamp >= ? AND (type = 'f' OR type = 't')) OR (timestamp <= ? AND (type = 's' OR type = 't'))"
         ")"
         "GROUP BY flow_id HAVING COUNT(flow_id) >= 2) "
         "GROUP BY track_id, type, rank HAVING max(timestamp)"
@@ -1538,6 +1596,10 @@ bool JsonTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params
     }
     auto resultSet = stmt->ExecuteQuery(minTimestamp, params.timePerPx * lowImage, params.category,
         params.startTime + minTimestamp, params.endTime + minTimestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryFlowCategoryEvents. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     std::vector<FlowCategoryEventsDto> flowEventsVec;
     while (resultSet->Next()) {
         int col = resultStartIndex;
@@ -1603,6 +1665,10 @@ bool JsonTraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, ui
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(minTimestamp, params.pid, params.threadName, params.startTime, params.endTime);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryUnitCounter. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     while (resultSet->Next()) {
         UnitCounterData unitCounterData;
         unitCounterData.timestamp = resultSet->GetUint64("startTime");
@@ -1747,6 +1813,10 @@ bool JsonTraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &re
     }
     auto resultSet =
         stmt->ExecuteQuery(layerOperatorTime, searchName, requestParams.layer, requestParams.pageSize, offset);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryFlowCategoryEvents. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     while (resultSet->Next()) {
         Protocol::SystemViewDetail systemViewDetail;
         int col = resultStartIndex;
@@ -1778,6 +1848,10 @@ LayerStatData JsonTraceDatabase::QueryLayerData(const std::string &layer, const 
         return layerStatData;
     }
     auto resultSet = stmt->ExecuteQuery(name, layer);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryLayerData. Failed to get result set.", stmt->GetErrorMessage());
+        return layerStatData;
+    }
     if (resultSet->Next()) {
         layerStatData.allOperatorTime = resultSet->GetDouble("totalTime");
         layerStatData.total = resultSet->GetUint64("count(distinct name)");
@@ -1795,6 +1869,10 @@ std::vector<std::string> JsonTraceDatabase::QueryCoreType()
         return acceleratorCoreList;
     }
     auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryCoreType. Failed to get result set.", stmt->GetErrorMessage());
+        return acceleratorCoreList;
+    }
     while (resultSet->Next()) {
         std::string res = resultSet->GetString("accelerator_core");
         acceleratorCoreList.emplace_back(res);
@@ -1804,6 +1882,7 @@ std::vector<std::string> JsonTraceDatabase::QueryCoreType()
 
 uint64_t JsonTraceDatabase::QueryTotalKernel(const std::string &coreType, const std::string &name)
 {
+    uint64_t total = 0;
     std::string sql = "SELECT count(*) FROM kernel_detail where name LIKE ?";
     if (!coreType.empty()) {
         sql += " AND accelerator_core = ? ";
@@ -1811,13 +1890,16 @@ uint64_t JsonTraceDatabase::QueryTotalKernel(const std::string &coreType, const 
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryTotalKernel, fail to prepare sql.");
-        return 0;
+        return total;
     }
     if (!coreType.empty()) {
         stmt->BindParams(coreType);
     }
     auto resultSet = stmt->ExecuteQuery(name);
-    uint64_t total = 0;
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryTotalKernel. Failed to get result set.", stmt->GetErrorMessage());
+        return total;
+    }
     if (resultSet->Next()) {
         total = resultSet->GetUint64("count(*)");
     }
@@ -1855,6 +1937,10 @@ bool JsonTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
     }
     std::string searchName = "%" + requestParams.searchName + "%";
     auto resultSet = stmt->ExecuteQuery(searchName, requestParams.pageSize, offset);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryKernelDepthAndThread. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     SetKernelDetail(std::move(resultSet), minTimestamp, responseBody);
     responseBody.pageSize = requestParams.pageSize;
     responseBody.currentPage = requestParams.current;
@@ -1896,6 +1982,10 @@ bool JsonTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(params.name, params.timestamp + minTimestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryKernelDepthAndThread. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     uint64_t trackId = 0;
     if (resultSet->Next()) {
         responseBody.depth = resultSet->GetUint64("depth");
@@ -1917,6 +2007,10 @@ OneKernelData JsonTraceDatabase::QueryKernelTid(const uint64_t trackId)
         return oneKernel;
     }
     auto resultSet = stmt->ExecuteQuery(trackId);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryKernelTid. Failed to get result set.", stmt->GetErrorMessage());
+        return oneKernel;
+    }
     uint64_t tid = 0;
     if (resultSet->Next()) {
         oneKernel.threadId = resultSet->GetString("tid");
@@ -1947,6 +2041,10 @@ bool JsonTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
     }
     auto resultSet =
         stmt->ExecuteQuery(requestParams.name, traceId, endTime, startTime, requestParams.pageSize, offset);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryThreadSameOperatorsDetails. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
     while (resultSet->Next()) {
         int col = resultStartIndex;
         Protocol::SameOperatorsDetails sameOperatorsDetail{};
@@ -1963,15 +2061,19 @@ bool JsonTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
 uint64_t JsonTraceDatabase::SameOperatorsCount(const std::string &name, int64_t &trackId, uint64_t &startTime,
     uint64_t &endTime)
 {
+    uint64_t total = 0;
     std::string sql = "SELECT count(*) FROM " + sliceTable +
         " WHERE name = ? AND track_id = ? AND timestamp <= ? AND timestamp + duration >= ?;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for SameOperatorsCount.", sqlite3_errmsg(db));
-        return 0;
+        return total;
     }
     auto resultSet = stmt->ExecuteQuery(name, trackId, endTime, startTime);
-    uint64_t total = 0;
+    if (resultSet == nullptr) {
+        ServerLog::Error("SameOperatorsCount. Failed to get result set.", stmt->GetErrorMessage());
+        return total;
+    }
     if (resultSet->Next()) {
         total = resultSet->GetUint64("count(*)");
     }

@@ -70,10 +70,14 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
                               const std::string& token)
 {
     ServerLog::Info(filePath);
-    auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        Timeline::DataBaseManager::Instance().GetTraceDatabase(filePath));
-    if (database == nullptr) {
+    auto db = Timeline::DataBaseManager::Instance().GetTraceDatabase(filePath);
+    if (db == nullptr) {
         ServerLog::Error("Failed to get connection.");
+        return;
+    }
+    auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to convert VirtualTraceDatabase to DbTraceDataBase in InitOpenDb.");
         return;
     }
     database->UpdateAllDepth();
@@ -83,7 +87,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
 
     FileType type = DataBaseManager::Instance().GetFileType();
     if (type == FileType::MS_PROF && !database->CheckTableDataInvalid(TABLE_OPERATOR_MEMORY)) {
-        for (auto rankId: rankIds) {
+        for (const auto& rankId: rankIds) {
             FullDb::DbMemoryDataBase::ParserEnd(rankId, false);
             FullDb::DbMemoryDataBase::ParseCallBack(token, rankId, false, "");
         }
@@ -93,7 +97,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     }
 
     if (!database->CheckTableDataInvalid(TABLE_COMPUTE_TASK_INFO)) {
-        for (auto rankId: rankIds) {
+        for (const auto& rankId: rankIds) {
             FullDb::DbSummaryDataBase::ParserEnd(token, rankId, false, "");
         }
         ServerLog::Error("There is no Summery Data in this db file:" + filePath);
@@ -124,10 +128,14 @@ void FullDbParser::SendHostEvent(const std::string &token, const std::string &fi
     event->body.unit.type = "card";
     event->body.unit.metadata.cardId = "Host";
     event->body.isFullDb = true;
-    auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(
-        DataBaseManager::Instance().GetTraceDatabase(fileId));
-    if (database == nullptr) {
+    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (db == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:Host");
+        return;
+    }
+    auto database = std::dynamic_pointer_cast<FullDb::DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to convert VirtualTraceDatabase to DbTraceDataBase in full db SendHostEvent.");
         return;
     }
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();

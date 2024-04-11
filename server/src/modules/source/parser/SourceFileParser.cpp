@@ -99,14 +99,13 @@ bool SourceFileParser::InitParser(const std::string &fileId)
         ServerLog::Info("Pre task skip this file.");
         return true;
     }
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
-        DataBaseManager::Instance().GetTraceDatabase(fileId));
-    if (database == nullptr) {
+    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (db == nullptr) {
         ServerLog::Error("Failed to get connection.");
         return false;
     }
-
-    if (!(database->DropTable() && database->CreateTable())) {
+    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    if (database == nullptr || !(database->DropTable() && database->CreateTable())) {
         ServerLog::Error("Failed to open traceDatabase. rankId:", fileId);
         return false;
     }
@@ -138,10 +137,14 @@ void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<s
         future.wait();
     }
     ServerLog::Info("Parse completed. ID:", fileId);
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
-        DataBaseManager::Instance().GetTraceDatabase(fileId));
-    if (database == nullptr) {
+    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (db == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", fileId);
+        return;
+    }
+    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDataBase in EndParseTask of Source.");
         return;
     }
     database->CreateIndex();

@@ -27,11 +27,15 @@ void QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Re
     UnitThreadsOperatorsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
 
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
-        DataBaseManager::Instance().GetTraceDatabase(request.params.rankId));
-    if (database == nullptr) {
+    auto db = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
+    if (db == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
         session.OnResponse(std::move(responsePtr));
+        return;
+    }
+    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDatabase in same op HandleRequest.");
         return;
     }
     int64_t trackId = TraceFileParser::Instance()

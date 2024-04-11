@@ -156,7 +156,11 @@ std::string ParserAlloc::GetFileId(const std::string &filePath)
     std::string parentDir = FileUtil::GetParentPath(filePath);
     std::string name = FileUtil::GetFileName(filePath);
     while (DataBaseManager::Instance().HasFileId(DatabaseType::TRACE, result)) {
-        std::string dir = FileUtil::GetParentPath(DataBaseManager::Instance().GetTraceDatabase(result)->GetDbPath());
+        auto database = DataBaseManager::Instance().GetTraceDatabase(result);
+        if (database == nullptr) {
+            continue;
+        }
+        std::string dir = FileUtil::GetParentPath(database->GetDbPath());
         if (RegexUtil::RegexMatch(name, R"(^msprof_slice_[0-9_]+\.json$)") && parentDir == dir) {
             return result;
         }

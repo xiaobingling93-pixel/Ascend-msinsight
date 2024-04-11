@@ -123,8 +123,16 @@ void UploadFileParser::ParseLast(std::string fileId, UploadFileRequest request)
     std::string result = strStream.str();
     EventParser("", fileId).Parse(0, result);
 
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
-        DataBaseManager::Instance().GetTraceDatabase(fileId));
+    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (db == nullptr) {
+        ServerLog::Error("Failed to open traceDatabase for ParseLast. rankId:", fileId);
+        return;
+    }
+    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDatabase in ParseLast.");
+        return;
+    }
     database->CreateIndex();
     database->UpdateDepth();
 
@@ -141,13 +149,13 @@ void UploadFileParser::InitDataBase(std::string fileId)
     std::string dbPath = tmpDir + "/" + dbName + ".db";
 
     DataBaseManager::Instance().CreatConnectionPool(fileId, dbPath);
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
-        DataBaseManager::Instance().GetTraceDatabase(fileId));
-    if (database == nullptr) {
+    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (db == nullptr) {
         ServerLog::Error("Failed to get connection,fileId:", fileId);
         return;
     }
-    if (!(database->DropAllTable() && database->CreateTable())) {
+    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    if (database == nullptr || !(database->DropAllTable() && database->CreateTable())) {
         ServerLog::Error("Failed to open traceDatabase. fileId:", fileId);
         ParseEndCallBack(fileId, false, "Failed to open db file. Please try again.");
         return;

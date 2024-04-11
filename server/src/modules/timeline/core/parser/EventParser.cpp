@@ -36,12 +36,17 @@ void EventParser::InitEventHandle()
 
 bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
 {
-    std::shared_ptr<JsonTraceDatabase> databasePtr =
-            std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
-                DataBaseManager::Instance().GetTraceDatabase(fileId));
-    if (databasePtr == nullptr) {
+    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (db == nullptr) {
         error = "Failed to get connection. fileId:" + fileId;
         ServerLog::Error(error);
+        return false;
+    }
+    std::shared_ptr<JsonTraceDatabase> databasePtr =
+            std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    if (databasePtr == nullptr) {
+        error = "Failed to open Database";
+        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDataBase in EventParser.");
         return false;
     }
     databasePtr->InitStmt();
@@ -86,10 +91,14 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
  */
 void EventParser::Parse(int sliceIndex, const std::string &fileContent)
 {
-    database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(
-        DataBaseManager::Instance().GetTraceDatabase(fileId));
-    if (database == nullptr) {
+    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (db == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", fileId);
+        return;
+    }
+    database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDataBase in Parse2 of EventParser.");
         return;
     }
     database->InitStmt();
