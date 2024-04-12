@@ -216,6 +216,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
     uint64_t minStartTime = db->QueryMinStartTime();
     Timeline::TraceTime::Instance().UpdateTime(minStartTime, 0);
+    file.close();
     return true;
 }
 

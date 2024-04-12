@@ -40,6 +40,7 @@ bool FileUtil::CheckFilePath(std::string filePath)
         Server::ServerLog::Error("Cannot get" + filePath +": ", filePath);
         return false;
     }
+    file.close();
     long long size = GetFileSize(filePath.c_str());
     if (size >= MAX_FILE_SIZE_10G) {
         Server::ServerLog::Error("The size of " + filePath + " is too large in path:", filePath);
