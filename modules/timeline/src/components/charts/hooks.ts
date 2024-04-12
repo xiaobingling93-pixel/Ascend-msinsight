@@ -11,6 +11,7 @@ export type Pos = {
 };
 
 export type DataProcessor<T extends ChartType> = (data: ChartData<T>, width: number, domainStart: number, domainEnd: number) => ChartData<T>;
+const CLICK_TOLERANCE = 1;
 
 /**
  * Manages the data that are to be rendered as a state.
@@ -109,11 +110,13 @@ export const useClick = <T extends ChartType>(canvasContainer: RefObject<HTMLEle
             mousedownX = e.offsetX;
             mouseMoved = false;
         };
-        const onMouseMoveListener = (): void => {
-            mouseMoved = true;
+        const onMouseMoveListener = (e: MouseEvent): void => {
+            if (mousedownX !== null && Math.abs(mousedownX - e.offsetX) > CLICK_TOLERANCE) {
+                mouseMoved = true;
+            }
         };
         const onMouseUpListener = (e: MouseEvent): void => {
-            if (mousedownX !== e.offsetX) {
+            if (mousedownX !== null && Math.abs(mousedownX - e.offsetX) > CLICK_TOLERANCE) {
                 runInAction(() => {
                     session.selectedData = undefined;
                 });

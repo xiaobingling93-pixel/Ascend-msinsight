@@ -17,6 +17,7 @@ import * as d3 from 'd3';
 import { handlerEmptyString } from '../../../utils/string';
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
+export const MIN_BRUSH_SIZE = 2;
 
 type DrawArrowOptions = {
     toX: number;
@@ -256,6 +257,10 @@ export const drawOnMove = ({
     ctx, width, height, xReverseScale, xScale, interactorMouseState, selectedRange, isNsMode, session, theme,
 }: DrawArgs): void => {
     if (ctx === null) { return; }
+    const { clickPos: { current: clickPos }, lastPos: { current: mousePosNow } } = interactorMouseState;
+    if (mousePosNow !== undefined && clickPos !== undefined && Math.abs(mousePosNow.x - clickPos.x) < MIN_BRUSH_SIZE) {
+        return;
+    }
     // clear all
     ctx.clearRect(0, 0, width, height);
     // draw mask
@@ -264,7 +269,6 @@ export const drawOnMove = ({
 
     // should filter on data type
     drawSelectedRange(ctx, selectedRange, xReverseScale);
-    const { clickPos: { current: clickPos }, lastPos: { current: mousePosNow } } = interactorMouseState;
     // draw hoverline and timeaxis highlight
     if (clickPos !== undefined) {
         ctx.strokeStyle = '#3778ED';

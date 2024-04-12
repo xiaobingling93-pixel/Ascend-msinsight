@@ -5,12 +5,11 @@ import { Session } from '../../../entity/session';
 import { traceStart } from '../../../utils/traceLogger';
 import { InteractorMouseState, InteractorParams } from './ChartInteractor';
 import { isOnSideline, SINGLE_DRAG_OFFSET } from './common';
-import { draw, drawOnMove, DrawArgs } from './draw';
+import { draw, drawOnMove, MIN_BRUSH_SIZE } from './draw';
+import type { DrawArgs } from './draw';
 import { changeRangeMarkerTimestamp } from '../../TimelineMarker';
 import { GOLDEN_RATE as MOVE_RATE } from '../../../entity/domain';
 import type { Theme } from '@emotion/react';
-
-const MIN_BRUSH_SIZE = 1;
 
 export const resetCanvasSize = (canvas: React.RefObject<HTMLCanvasElement>, rect: DOMRectReadOnly | null): void => {
     if (!canvas.current) { return; }
