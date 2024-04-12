@@ -172,11 +172,16 @@ const filterNode = async (value: string, data: ResourceItem, node: Node): Promis
 }
 
 
-function expandPath(defaultSelectedDir: string) {
-  let paths = defaultSelectedDir.split('/');
-
+function expandPath(defaultSelectedDir: string): void {
+  const paths = defaultSelectedDir.split('/');
   treeRef.value.getNode('/').expand(() => {
+    if(paths[1] === undefined) {
+      return;
+    }
     treeRef.value.getNode('/' + paths[1]).expand(() => {
+      if(paths[2] === undefined) {
+        return;
+      }
       treeRef.value.getNode('/' + paths[1] + '/' + paths[2]).expand(() => {
         let currentNode = treeRef.value.getNode(defaultSelectedDir);
         currentNode.expand();

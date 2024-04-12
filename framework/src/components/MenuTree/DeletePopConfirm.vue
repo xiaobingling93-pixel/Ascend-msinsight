@@ -11,7 +11,7 @@ const store = useDataSources();
 const handleDeleteSingle = () => {
     const parentData = props.node.parent.data;
     const parentIndex = store.menuTree.findIndex(data => data === toRaw(parentData));
-    const dataIndex = store.menuTree[parentIndex].children?.findIndex(data => data === toRaw(props.data));
+    const dataIndex = store.menuTree[parentIndex]?.children?.findIndex(data => data === toRaw(props.data));
     if (dataIndex !== undefined) {
         store.removeSingle(parentIndex, dataIndex);
     }

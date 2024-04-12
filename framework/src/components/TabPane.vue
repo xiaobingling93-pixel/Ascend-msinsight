@@ -135,7 +135,7 @@ onMounted(async () => {
 
     connector.addListener('dropFile', (e) => {
       const res = e.data.body;
-      const path = res.result[0].cardPath;
+      const path = res.result?.[0]?.cardPath;
       const dataSource = { remote: LOCAL_HOST, port: PORT, dataPath: [path] };
       confirmDrop(dataSource, res);
     })
