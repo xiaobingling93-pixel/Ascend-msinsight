@@ -299,6 +299,9 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
         };
     }, [setBottomHeight]);
     useEffect(() => {
+        if (session.selectedData?.showDetail === false) {
+            return;
+        }
         setItem('DataCard');
     }, [session.selectedData, session.selectedRange]);
 

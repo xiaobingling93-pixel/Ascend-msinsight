@@ -291,6 +291,7 @@ const KernelDetails = observer((props: any) => {
                         depth: res.depth,
                         threadId: res.threadId,
                         startRecordTime: props.session.startRecordTime,
+                        showDetail: false,
                     };
                 },
             };
