@@ -62,9 +62,10 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryTaskStrInfoById(
                   " where main.ROWID = ?";
             return ExecuteQuery(stmt, sql, requestParams.id);
         case PROCESS_TYPE::API:
-            sql = " select group_concat(stack, ';\n') as 'Call stack', sequenceNumber from ( "
-                  "    SELECT stack, sequenceNumber FROM PYTORCH_API main "
+            sql = " select group_concat(coalesce(value, stack), ';\n') as 'Call stack', sequenceNumber from ( "
+                  "    SELECT stack, sequenceNumber, strs.value FROM PYTORCH_API main "
                   "             left join PYTORCH_CALLCHAINS call on call.id = main.callchainId "
+                  " left join STRING_IDS strs on strs.id = call.stack"
                   "    where main.ROWID = ? order by stackDepth )";
             return ExecuteQuery(stmt, sql, requestParams.id);
         case PROCESS_TYPE::CANN_API:
