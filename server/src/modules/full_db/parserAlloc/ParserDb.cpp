@@ -36,10 +36,10 @@ void ParserDb::Parser(const std::string &path, ImportActionRequest &request)
     std::map<std::string, std::string> devicePaths;
     FullDb::FullDbParser::FindDevicePaths(selectedFolder, devicePaths);
     auto rankList = GetReportFiles(path, response.body);
-    SetBaseActionOfResponse(response, "Host", devicePaths);
+    SetBaseActionOfResponse(response, "Host", devicePaths, "");
     for (const auto &ranks: rankList) {
         for (const auto& rank: ranks.second) {
-            SetBaseActionOfResponse(response, rank, devicePaths);
+            SetBaseActionOfResponse(response, rank, devicePaths, ranks.first);
         }
     }
 
@@ -151,17 +151,18 @@ void ParserDb::SetParseCallBack(std::string token)
 }
 
 void ParserDb::SetBaseActionOfResponse(ImportActionResponse &response, const std::string& rankId,
-                                       std::map<std::string, std::string> devicePaths)
+                                       std::map<std::string, std::string> devicePaths, const std::string& dbFile)
 {
     Action action;
     action.cardName = rankId;
     action.rankId = rankId;
     action.result = true;
-    if (devicePaths.find(rankId) == devicePaths.end()) {
-        return;
+    if (devicePaths.find(rankId) != devicePaths.end()) {
+        // 将文件所在路径的三级目录名称作为rank的tooltip信息
+        action.cardPath = "Directory: " + devicePaths[rankId];
+    } else if (!dbFile.empty()) {
+        action.cardPath = "Directory: " + FileUtil::GetRankIdFromPath(dbFile);
     }
-    // 将文件所在路径的三级目录名称作为rank的tooltip信息
-    action.cardPath = "Directory: " + devicePaths[rankId];
     response.body.result.emplace_back(action);
 }
 } // Module

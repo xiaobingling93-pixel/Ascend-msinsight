@@ -31,8 +31,7 @@ namespace Dic {
             }
             long long size = FileUtil::GetFileSize(filePath.c_str());
             if (size > MAX_FILE_SIZE_2G) {
-                Server::ServerLog::Error("file is too big, csv file max is 2G, file:", filePath);
-                return false;
+                Server::ServerLog::Warn("file is too big, csv file max is 2G, file:", filePath);
             }
             return true;
         }
