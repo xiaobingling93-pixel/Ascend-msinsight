@@ -29,7 +29,7 @@ declare global {
         requestData: (method: string, params: object, module?: string) => Promise<object>;
     }
 };
-window.requestData = async (command, params, module) => {
+window.requestData = async (command, params, module): Promise<object> => {
     const data = await connector.fetch({
         args: { command, params },
         module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),

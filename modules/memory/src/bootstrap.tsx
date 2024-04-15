@@ -1,15 +1,16 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { RootStoreContext } from './context/context';
-import './i18n';
 import './index.css';
-import './theme.css';
 import { store } from './store';
 import { NOTIFICATION_HANDLERS } from './interface';
 import connector from './connection';
 
-type CefQueryType = {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
+interface CefQueryType {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
 
 declare global {
     interface Window {
@@ -18,9 +19,10 @@ declare global {
             store?: unknown;
         };
         setTheme: (isDark: boolean) => void;
-        request: (dataSource: DataSource, params: { command: string; params: Record<string, unknown> }) => Promise<any>;
+        request: (params: { command: string; params: Record<string, unknown> }) => Promise<any>;
+        _resolve: (value: unknown) => void;
+        _reject: (value?: any) => void;
         cefQuery: (obj: CefQueryType) => void;
-        requestData: (method: string, params: any, module?: string, voidResponse?: boolean) => Promise<any>;
     }
 
     interface DataSource {
@@ -31,8 +33,8 @@ declare global {
 };
 
 // 禁用右键刷新以及F5、Ctrl+R刷新
-document.oncontextmenu = () => false;
-document.onkeydown = (event) => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
+document.oncontextmenu = (): boolean => false;
+document.onkeydown = (event): boolean => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
 
 const root = createRoot(document.getElementById('root') as HTMLElement);
 root.render(
@@ -42,8 +44,8 @@ root.render(
         </RootStoreContext.Provider>
     </React.StrictMode>));
 
-window.request = async (dataSource, params) => {
-    const data = await connector.fetch({ remote: dataSource, args: params });
+window.request = async (params): Promise<any> => {
+    const data = await connector.fetch({ args: params });
     return (data as any).body;
 };
 
@@ -51,18 +53,8 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
     connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
         const res = e.data;
         if (res.body === undefined || typeof res.body !== 'object') {
-            console.error('[notify]', 'Wrong notify format.');
             return;
         }
         callback(res.body);
     });
 });
-
-window.requestData = async (command, params, module, voidResponse = false): Promise<any> => {
-    const data = await connector.fetch({
-        args: { command, params },
-        module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
-        voidResponse,
-    });
-    return (data as any).body;
-};

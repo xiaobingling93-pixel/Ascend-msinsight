@@ -49,6 +49,17 @@ class BackgroundSvgInlinePlugin {
   }
 }
 
+const federationConfig = {
+  filename: 'remoteEntry.js',
+  name: 'host',
+  remotes: {lib: 'lib@../lib/remoteEntry.js'},
+  shared: {
+    react: {singleton: true, eager: true},
+    'react-dom': {singleton: true, eager: true},
+    '@cloudsop/horizon': {singleton: true, eager: true},
+  },
+};
+
 const htmllist = [
   new HtmlWebpackPlugin({
     template: 'public/index.html',
@@ -59,33 +70,24 @@ const htmllist = [
     template: 'public/index.html',
     filename: 'communication.html',
     chunks: ['communication'],
-  }), new HTMLInlineCSSWebpackPlugin(), new HtmlInlineScriptPlugin(), new ScriptTypePlugin(), new BackgroundSvgInlinePlugin('cluster'),
+  }), new HtmlInlineScriptPlugin(), new ScriptTypePlugin(), new BackgroundSvgInlinePlugin('cluster'),
+  new ModuleFederationPlugin(federationConfig),
 ];
-
-const federationConfig = {
-  filename: 'remoteEntry.js',
-  name: 'operator',
-  remotes: {lib: 'lib@../lib/remoteEntry.js'},
-  shared: {
-    react: {singleton: true, eager: true},
-    'react-dom': {singleton: true, eager: true},
-    '@cloudsop/horizon': {singleton: true, eager: true},
-  },
-};
 
 const webpackCfg = {
   timelineConfigure: (webpackConfig) => {
     // Because CEF has issues with loading source maps properly atm,
     // lets use the best we can get in line with `inline-source-map`
     webpackConfig.devtool = 'inline-source-map';
-    webpackConfig.plugins.push(...[new HTMLInlineCSSWebpackPlugin(), new HtmlInlineScriptPlugin(), new ScriptTypePlugin(), new BackgroundSvgInlinePlugin('timeline')]);
+    webpackConfig.plugins.push(...[new HtmlInlineScriptPlugin(), new ScriptTypePlugin(), new BackgroundSvgInlinePlugin('timeline'),
+      new ModuleFederationPlugin(federationConfig)]);
     return webpackConfig;
   },
   clusterConfigure: (webpackConfig) => {
     webpackConfig.entry = {
       main: webpackConfig.entry,
-      summary: './src/SummaryIndex.tsx',
-      communication: './src/CommunicationIndex.tsx',
+      summary: './src/SummaryIndex.ts',
+      communication: './src/CommunicationIndex.ts',
     };
     webpackConfig.output.filename = 'static/js/[name].bundle.js';
     webpackConfig.plugins.splice(0, 1);
@@ -93,10 +95,14 @@ const webpackCfg = {
     return webpackConfig;
   },
   memoryConfigure: (webpackConfig) => {
-    webpackConfig.plugins.push(...[new HTMLInlineCSSWebpackPlugin(), new HtmlInlineScriptPlugin(), new ScriptTypePlugin()]);
+    webpackConfig.plugins.push(...[new HtmlInlineScriptPlugin(), new ScriptTypePlugin(), new ModuleFederationPlugin(federationConfig)]);
     return webpackConfig;
   },
   operatorConfigure: (webpackConfig) => {
+    webpackConfig.plugins.push(new ModuleFederationPlugin(federationConfig));
+    return webpackConfig;
+  },
+  computeConfigure: (webpackConfig) => {
     webpackConfig.plugins.push(new ModuleFederationPlugin(federationConfig));
     return webpackConfig;
   },

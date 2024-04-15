@@ -14,7 +14,7 @@ import { themeInstance } from './theme/theme';
 import CommunicationAnalysis from './components/communicationAnalysis/CommunicationAnalysis';
 import { Loading } from './index';
 
-export const App = observer(() => {
+function App(): JSX.Element {
     const { sessionStore } = useRootStore();
     let session = sessionStore.activeSession;
     const lang = getSearchParams('language');
@@ -28,7 +28,8 @@ export const App = observer(() => {
     return (<ThemeProvider theme={themeInstance.getThemeType()}>
         {session?.clusterCompleted ? <CommunicationAnalysis session={session} /> : Loading}
     </ThemeProvider>);
-});
+} ;
+observer(App);
 
 const root = createRoot(document.getElementById('root') as HTMLElement);
 root.render(
