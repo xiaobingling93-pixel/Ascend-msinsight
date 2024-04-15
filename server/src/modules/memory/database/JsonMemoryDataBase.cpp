@@ -4,10 +4,10 @@
 
 #include "JsonMemoryDataBase.h"
 #include <vector>
-#include <cmath>
 #include "ServerLog.h"
 #include "TraceTime.h"
 #include "VirtualMemoryDataBase.h"
+#include "ConstantDefs.h"
 
 
 namespace Dic {
@@ -31,8 +31,9 @@ bool JsonMemoryDataBase::SetConfig()
         ServerLog::Error("Failed to set config. Database is not open.");
         return false;
     }
+    std::string dbVersion = GetDataBaseVersion();
     std::unique_lock<std::mutex> lock(mutex);
-    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
+    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " + dbVersion + ";");
 }
 
 bool JsonMemoryDataBase::CreateTable()
@@ -180,6 +181,16 @@ void JsonMemoryDataBase::insertRecordDetail(const Record &event)
         InsertRecordDetailList(recordCache);
         recordCache.clear();
     }
+}
+
+bool JsonMemoryDataBase::UpdateParseStatus(const std::string& status)
+{
+    return UpdateValueIntoStatusInfoTable(memoryParseStatus, status, mutex);
+}
+
+bool JsonMemoryDataBase::HasFinishedParseLastTime()
+{
+    return CheckValueFromStatusInfoTable(memoryParseStatus, FINISH_STATUS);
 }
 
 uint64_t JsonMemoryDataBase::QueryMinOperatorAllocationTime()

@@ -300,6 +300,80 @@ bool Database::CheckTableExist(const std::string& tableName)
     return false;
 }
 
+bool Database::CreateStatusInfoTable()
+{
+    if (CheckTableExist(infoTable)) {
+        return true;
+    }
+    std::string sql = "CREATE TABLE " + infoTable + "(id INTEGER PRIMARY KEY AUTOINCREMENT, key TEXT, value TEXT);";
+    return ExecSql(sql);
+}
+
+std::string Database::GetValueFromStatusInfoTable(const std::string& key)
+{
+    std::string value;
+    if (!CheckTableExist(infoTable)) {
+        ServerLog::Error("Failed to get value from info table because table is not exist.");
+        return value;
+    }
+
+    std::string sql = "SELECT value From " + infoTable + " WHERE key = ?";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for GetValueFromStatusInfoTable: ", sqlite3_errmsg(db));
+        return value;
+    }
+    auto results = stmt->ExecuteQuery(key);
+    if (results == nullptr) {
+        ServerLog::Error("Failed to get result set for GetValueFromStatusInfoTable: ", stmt->GetErrorMessage());
+        return value;
+    }
+    if (results->Next()) {
+        value = results->GetString("value");
+    }
+    return value;
+}
+
+bool Database::CheckValueFromStatusInfoTable(const std::string &key, const std::string &refValue)
+{
+    if (key.empty() || refValue.empty()) {
+        ServerLog::Error("Failed to get status for CheckValueFromStatusInfoTable due to empty key or value.");
+        return false;
+    }
+    std::string status = GetValueFromStatusInfoTable(key);
+    if (status.empty() || strcmp(status.c_str(), refValue.c_str()) != 0) {
+        return false;
+    }
+    return true;
+}
+
+bool Database::UpdateValueIntoStatusInfoTable(const std::string& key, const std::string& value, std::mutex &mutex)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!CheckTableExist(infoTable) && !CreateStatusInfoTable()) {
+        ServerLog::Error("Failed to update status info table because table is not exist: key=", key, ", value=", value);
+        return false;
+    }
+    std::string sql;
+    if (GetValueFromStatusInfoTable(key).empty()) {
+        sql = "INSERT INTO " + infoTable + " (value, key) VALUES (?, ?);";
+    } else {
+        sql = "UPDATE " + infoTable + " SET value=? WHERE key=?;";
+    }
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to create prepared stmt: key=", key, ", value=", value);
+        return false;
+    }
+    stmt->BindParams(value, key);
+    if (!stmt->Execute()) {
+        ServerLog::Error("Failed to execute prepared stmt: key=", key, ", value=", value);
+        return false;
+    }
+
+    return true;
+}
+
 std::string Database::GetLastError()
 {
     if (!isOpen) {

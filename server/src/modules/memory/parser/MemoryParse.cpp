@@ -316,6 +316,12 @@ std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::ve
         }
     }
 
+    for (auto &result : results) {
+        std::vector<std::string> files;
+        std::copy(result.second.operatorFiles.begin(), result.second.operatorFiles.end(), std::back_inserter(files));
+        std::copy(result.second.recordFiles.begin(), result.second.recordFiles.end(), std::back_inserter(files));
+        ServerLog::Info("Memory file: ", StringUtil::join(files, ", "), ", FileId: ", result.first);
+    }
     isCluster = (results.size() > 1);
     return results;
 }
@@ -350,17 +356,11 @@ void MemoryParse::PreParseTask(const MemoryFilePairs& filePair, const std::strin
 
 bool MemoryParse::ParseTask(const MemoryFilePairs& filePair, const std::string& fileId, std::string &message)
 {
-    if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(MEMORY_PREFIX + fileId)) {
-        message = "Failed to set run memory status for file ";
-        // 如果文件解析信息不存在或状态不为INIT则返回false
-        return false;
-    }
     std::set<std::string> operatorFiles = filePair.operatorFiles;
     std::set<std::string> recordFiles = filePair.recordFiles;
     std::vector<std::string> files;
     std::copy(operatorFiles.begin(), operatorFiles.end(), std::back_inserter(files));
     std::copy(recordFiles.begin(), recordFiles.end(), std::back_inserter(files));
-    ServerLog::Info("Memory file: ", StringUtil::join(files, ", "), ", FileId: ", fileId);
     if (!ValidateUtil::CheckCsvFileList(files)) {
         message = "Failed to parse memory file: " + fileId + " due to access or file size.";
         return false;
@@ -392,15 +392,33 @@ bool MemoryParse::InitParser(const MemoryFilePairs& filePair, const std::string&
     if (filePair.operatorFiles.empty()) {
         return false;
     }
+    if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(MEMORY_PREFIX + fileId)) {
+        message = "Failed to set run memory status for file ";
+        // 如果文件解析信息不存在或状态不为INIT则返回false
+        return false;
+    }
     std::string dbPath = FileUtil::GetDbPath(*(filePair.operatorFiles.begin()), fileId);
     auto db = dynamic_cast<JsonMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
-    if (!(db->OpenDb(dbPath, false) && db->DropTable() &&
-            db->CreateTable() && db->SetConfig() && db->InitStmt())) {
+    if (!db->OpenDb(dbPath, false)) {
+        message = "Failed to open db file. Please delete the file manually: " + dbPath;
+        return false;
+    }
+
+    if (!db->IsDatabaseVersionChange() && db->HasFinishedParseLastTime()) {
+        Timeline::ParserStatusManager::Instance().SetFinishStatus(MEMORY_PREFIX + fileId);
+        uint64_t minTimestamp = std::min(db->QueryMinRecordTimestamp(), db->QueryMinOperatorAllocationTime());
+        Timeline::TraceTime::Instance().UpdateTime(minTimestamp, 0);
+        ParseEndCallBack(fileId, true, "");
+        return true;
+    }
+
+    if (!db->DropTable() or !db->CreateTable() or !db->SetConfig() or !db->InitStmt() or
+            !db->UpdateParseStatus(NOT_FINISH_STATUS)) {
         message = "Failed to init memory database. Path:" + dbPath;
         return false;
     }
 
-    if (!ParseTask(filePair, fileId, message)) {
+    if (!ParseTask(filePair, fileId, message) or !db->UpdateParseStatus(FINISH_STATUS)) {
         return false;
     }
 

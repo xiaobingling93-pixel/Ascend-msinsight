@@ -102,7 +102,12 @@ public:
     bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
         Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId);
 
+    std::map<uint64_t, std::pair<std::string, std::string>> QueryAllThreadMap();
+
     uint64_t SameOperatorsCount(const std::string &name, int64_t &trackId, uint64_t &startTime, uint64_t &endTime);
+
+    bool UpdateParseStatus(const std::string& status);
+    bool HasFinishedParseLastTime();
 
 private:
     const std::string sliceTable = "slice";
@@ -110,6 +115,7 @@ private:
     const std::string processTable = "process";
     const std::string flowTable = "flow";
     const std::string counterTable = "counter";
+    const std::string timelineParseStatus = "Timeline files parsing status";
     const std::string trackIdTimeIndex = "track_id_timestamp_end_time_index";
     const std::string simpleSliceIndex = "track_id_depth_timestamp_end_time_index";
     const std::string flowIndex = "flow_id_time_index";
@@ -190,8 +196,6 @@ private:
 
     std::vector<Protocol::SimpleSlice> QuerySimpleSliceByTimePoint(uint64_t startTime, uint64_t minTimestamp,
         int64_t trackId);
-
-    std::map<uint64_t, std::pair<std::string, std::string>> QueryAllThreadMap();
 
     void ComputeSimulationSliceDepth(std::vector<Protocol::SimpleSlice> &rowThreadTraceVec);
 };

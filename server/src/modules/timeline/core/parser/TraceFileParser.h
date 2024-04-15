@@ -40,10 +40,13 @@ private:
         std::chrono::time_point<std::chrono::high_resolution_clock> start);
     static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
     static void DeleteParseFileFromDisk(const std::string &fileId);
+    // 用于直接载入ascend_insight_data.db文件时，从thread表中读取trackId，反向更新到trackIdMap中
+    void UpdateTrackIdMap(const std::string &fileId,
+        const std::map<uint64_t, std::pair<std::string, std::string>> &threadMap);
 
     std::mutex trackMutex;
-    std::unordered_map<std::string, std::map<std::pair<std::string, std::string>, int64_t>> trackIdMap;
-    int64_t trackId = 0;
+    std::unordered_map<std::string, std::map<std::pair<std::string, std::string>, uint64_t>> trackIdMap;
+    uint64_t trackId = 0;
 };
 } // end of namespace Timeline
 } // end of namespace Module

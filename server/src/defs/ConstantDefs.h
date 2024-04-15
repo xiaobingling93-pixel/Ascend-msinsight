@@ -9,6 +9,7 @@
 
 namespace Dic {
 static const std::string FINISH_STATUS = "FINISH";
+static const std::string NOT_FINISH_STATUS = "NOT_FINISH";
 static const std::string KERNEL_PREFIX = "[Kernel]";
 static const std::string MEMORY_PREFIX = "[Memory]";
 // cluster parse status

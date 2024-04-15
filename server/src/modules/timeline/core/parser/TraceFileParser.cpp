@@ -65,8 +65,24 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         return false;
     }
     auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
-    if (database == nullptr || !(database->DropTable() && database->CreateTable())) {
+    if (database == nullptr) {
         ServerLog::Error("Failed to open traceDatabase. rankId:", fileId);
+        return false;
+    }
+    if (!database->IsDatabaseVersionChange() && database->HasFinishedParseLastTime()) {
+        uint64_t min = UINT64_MAX;
+        uint64_t max = 0;
+        database->QueryExtremumTimestamp(min, max);
+        auto threadMap = database->QueryAllThreadMap();
+        TraceFileParser::Instance().UpdateTrackIdMap(fileId, threadMap);
+        database->UpdateSimulationDepthWithNoOverlap();
+        Timeline::TraceTime::Instance().UpdateTime(min, 0);
+        ParserStatusManager::Instance().SetFinishStatus(fileId);
+        ParseEndCallBack(fileId, true, "");
+        return true;
+    }
+    if (!database->DropTable()  || !database->CreateTable() || !database->UpdateParseStatus(NOT_FINISH_STATUS)) {
+        ServerLog::Error("Failed to init traceDatabase. rankId:", fileId);
         return false;
     }
 
@@ -135,6 +151,7 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
     }
     database->CreateIndex();
     database->UpdateSimulationDepthWithNoOverlap();
+    database->UpdateParseStatus(FINISH_STATUS);
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true, "");
 }
@@ -156,11 +173,22 @@ int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string
     if (trackIdMap[fileId].count(item) > 0) {
         return trackIdMap[fileId].at(item);
     }
-    if (trackId == INT64_MAX) {
+    if (trackId == UINT64_MAX) {
         trackId = 0;
     }
     trackIdMap[fileId].emplace(item, ++trackId);
     return trackId;
+}
+
+void TraceFileParser::UpdateTrackIdMap(const std::string &fileId,
+    const std::map<uint64_t, std::pair<std::string, std::string>>& threadMap)
+{
+    std::unique_lock<std::mutex> lock(trackMutex);
+    for (auto [key, item] : threadMap) {
+        std::pair<std::string, std::string> tmp = {item.second, item.first};
+        trackIdMap[fileId].emplace(tmp, key);
+        trackId = std::max(trackId, key);
+    }
 }
 
 void TraceFileParser::Reset()

@@ -78,6 +78,7 @@ private:
                         std::string &message, std::set<std::string>& devices);
     static bool InitParser(const std::vector<std::string>& filePathList, const std::string &fileId,
                            std::string &message);
+    static void PostParseTask(const std::set<std::string> &devices, const std::string &fileId);
     static bool CheckHeaderField(const std::map<std::string, size_t>& dataMap);
 };
 

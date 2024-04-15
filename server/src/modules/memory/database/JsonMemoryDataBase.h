@@ -48,9 +48,13 @@ public:
     void SetInferenceType(bool inference);
     bool IsInferenceType() const;
 
+    bool UpdateParseStatus(const std::string& status);
+    bool HasFinishedParseLastTime();
+
 private:
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";
+    const std::string memoryParseStatus = "Memory files parsing status";
     const int exLength = 4;
 
     bool hasInitStmt = false;

@@ -4,7 +4,7 @@
 
 #ifndef PROFILER_SERVER_COMMUNICATION_DATABASE_H
 #define PROFILER_SERVER_COMMUNICATION_DATABASE_H
-
+#include <set>
 #include "VirtualSummaryDataBase.h"
 
 namespace Dic {
@@ -26,6 +26,7 @@ public:
     void InsertKernelDetail(Kernel kernel);
     void SaveKernelDetail();
     uint64_t QueryMinStartTime();
+    std::set<std::string> QueryRankIds();
 
     bool QueryComputeDetailHandler(ComputeDetailParams params, std::vector<ComputeDetail> &computeDetails) override;
     bool QueryGetTotalNum(std::string name, int64_t &totalNum) override;
@@ -43,8 +44,12 @@ public:
 
     bool QueryOperatorMoreInfo(OperatorMoreInfoReqParams &reqParams, OperatorMoreInfoResponse& response) override;
 
+    bool UpdateParseStatus(const std::string& status);
+    bool HasFinishedParseLastTime();
+
 private:
     const std::string kernelTable = "kernel_detail";
+    const std::string kernelParseState = "Kernel files parsing status";
     bool hasInitStmt = false;
     sqlite3_stmt *insertKernelStmt = nullptr;
     const int cacheSize = 1000;

@@ -131,7 +131,6 @@ bool JsonTraceDatabase::CreateTable()
     }
     std::string sql = "CREATE TABLE " + sliceTable +
         " (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp INTEGER, duration INTEGER,"
-        " overlapDuration INTEGER, notOverlapDuration INTEGER,"
         " name TEXT, depth INTEGER, track_id INTEGER, cat TEXT, args TEXT, cname TEXT, end_time INTEGER);" +
         "CREATE TABLE " + threadTable + " (track_id INTEGER PRIMARY KEY, tid TEXT, pid TEXT, thread_name TEXT," +
         " thread_sort_index INTEGER);" + "CREATE TABLE " + processTable +
@@ -2053,6 +2052,16 @@ uint64_t JsonTraceDatabase::SameOperatorsCount(const std::string &name, int64_t 
         total = resultSet->GetUint64("count(*)");
     }
     return total;
+}
+
+bool JsonTraceDatabase::UpdateParseStatus(const std::string& status)
+{
+    return UpdateValueIntoStatusInfoTable(timelineParseStatus, status, mutex);
+}
+
+bool JsonTraceDatabase::HasFinishedParseLastTime()
+{
+    return CheckValueFromStatusInfoTable(timelineParseStatus, FINISH_STATUS);
 }
 } // end of namespace Timeline
   // end of namespace Module

@@ -104,10 +104,28 @@ void KernelParse::PreParseTask(const std::vector<std::string>& filePathList, con
     }
 }
 
+void KernelParse::PostParseTask(const std::set<std::string>& devices, const std::string& fileId)
+{
+    Timeline::ParserStatusManager::Instance().SetFinishStatus(KERNEL_PREFIX + fileId);
+    if (devices.size() == 1 && devices.count(fileId) == 1) {
+        ParseEndCallBack(fileId, true, "");
+    } else {
+        for (const std::string& device : devices) {
+            auto tmpFileId = std::string().append(MSPROF_PREFIX).append(fileId)
+                    .append(MSPROF_CONNECT).append(device);
+            ParseEndCallBack(tmpFileId, true, "");
+        }
+    }
+}
+
 bool KernelParse::InitParser(const std::vector<std::string>& filePathList, const std::string& fileId,
                              std::string &message)
 {
     if (filePathList.empty()) {
+        return false;
+    }
+    if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(KERNEL_PREFIX + fileId)) {
+        ServerLog::Info("Pre task skip this kernel file.");
         return false;
     }
     std::string dbPath = FileUtil::GetDbPath(filePathList[0], fileId);
@@ -117,13 +135,25 @@ bool KernelParse::InitParser(const std::vector<std::string>& filePathList, const
         message = "Failed to get summary database, fileId: ." + fileId + " filePath: " + filePathList[0];
         return false;
     }
-    if (!(database->OpenDb(dbPath, false) && database->DropTable() && database->CreateTable() &&
-          database->SetConfig() && database->InitStmt())) {
+    if (!database->OpenDb(dbPath, false)) {
         message = "Failed to init summary database. fileId: " + fileId + " filePath: " +
                 filePathList[0] + " dbPath: " + dbPath;
         return false;
     }
-    if (!ParseTask(filePathList, fileId, message)) {
+    if (!database->IsDatabaseVersionChange() && database->HasFinishedParseLastTime()) {
+        uint64_t minTimestamp = database->QueryMinStartTime();
+        Timeline::TraceTime::Instance().UpdateTime(minTimestamp, 0);
+        std::set<std::string> devices = database->QueryRankIds();
+        PostParseTask(devices, fileId);
+        return true;
+    }
+    if (!database->DropTable() or !database->CreateTable() or !database->SetConfig() or !database->InitStmt() or
+            !database->UpdateParseStatus(NOT_FINISH_STATUS)) {
+        message = "Failed to init summary database. fileId: " + fileId + " filePath: " +
+                  filePathList[0] + " dbPath: " + dbPath;
+        return false;
+    }
+    if (!ParseTask(filePathList, fileId, message) or !database->UpdateParseStatus(FINISH_STATUS)) {
         return false;
     }
     return true;
@@ -143,16 +173,7 @@ bool KernelParse::ParseTask(const std::vector<std::string>& filePathList, const 
         }
     }
     // 判断是否为训练场景
-    Timeline::ParserStatusManager::Instance().SetFinishStatus(KERNEL_PREFIX + fileId);
-    if (devices.size() == 1 && devices.count(fileId) == 1) {
-        ParseEndCallBack(fileId, true, "");
-    } else {
-        for (const std::string& device : devices) {
-            auto tmpFileId = std::string().append(MSPROF_PREFIX).append(fileId)
-                    .append(MSPROF_CONNECT).append(device);
-            ParseEndCallBack(tmpFileId, true, "");
-        }
-    }
+    PostParseTask(devices, fileId);
     return true;
 }
 
@@ -223,12 +244,6 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
 bool KernelParse::IsFileValid(const std::vector<std::string>& filePathList, const std::string &fileId,
                               const std::string& statusId, std::string &message)
 {
-    // 检查并设置文件状态为RUNNING
-    if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(statusId)) {
-        message = "Failed to set run summary status for file id " + fileId;
-        // 如果文件解析信息不存在或状态不为INIT则返回false
-        return false;
-    }
     // csv文件有效性校验
     if (!ValidateUtil::CheckCsvFileList(filePathList)) {
         message = "Check file Failed: " + fileId;

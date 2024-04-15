@@ -55,6 +55,12 @@ protected:
     const int bindStartIndex = 1;
     const int resultStartIndex = 0;
     const int timeoutMs = 50000;
+    const std::string infoTable = "status_info";
+
+    bool CreateStatusInfoTable(); // 创建表时未加锁，需要在调用处加锁
+    std::string GetValueFromStatusInfoTable(const std::string& key);
+    bool CheckValueFromStatusInfoTable(const std::string &key, const std::string &refValue);
+    bool UpdateValueIntoStatusInfoTable(const std::string &key, const std::string &value, std::mutex &mutex);
 };
 } // end of namespace Module
 } // end of namespace Dic

@@ -8,6 +8,7 @@
 #include "SummaryProtocolResponse.h"
 #include "TraceTime.h"
 #include "OperatorProtocol.h"
+#include "ConstantDefs.h"
 
 namespace Dic::Module::Summary {
 using namespace Server;
@@ -27,8 +28,9 @@ bool JsonSummaryDataBase::SetConfig()
         ServerLog::Error("Failed to set config. Database is not open.");
         return false;
     }
+    std::string dbVersion = GetDataBaseVersion();
     std::unique_lock<std::mutex> lock(mutex);
-    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;");
+    return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " + dbVersion + ";");
 }
 
 bool JsonSummaryDataBase::CreateTable()
@@ -158,6 +160,16 @@ sqlite3_stmt *JsonSummaryDataBase::GetKernelStmt(uint64_t paramLen)
         }
     }
     return stmt;
+}
+
+bool JsonSummaryDataBase::UpdateParseStatus(const std::string& status)
+{
+    return UpdateValueIntoStatusInfoTable(kernelParseState, status, mutex);
+}
+
+bool JsonSummaryDataBase::HasFinishedParseLastTime()
+{
+    return CheckValueFromStatusInfoTable(kernelParseState, FINISH_STATUS);
 }
 
 uint64_t JsonSummaryDataBase::QueryMinStartTime()
@@ -762,6 +774,27 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         }
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
         sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
+    }
+
+    std::set<std::string> JsonSummaryDataBase::QueryRankIds()
+    {
+        std::set<std::string> rankIds = {};
+        std::string sql = "SELECT rank_id FROM " + kernelTable + " GROUP BY rank_id";
+        sqlite3_stmt *stmt = nullptr;
+        int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+        if (result != SQLITE_OK) {
+            ServerLog::Error("Failed to prepare stmt for QueryRankIds. Msg: ", sqlite3_errmsg(db));
+            return rankIds;
+        }
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int col = resultStartIndex;
+
+            std::string rank = sqlite3_column_string(stmt, col++);
+            rankIds.emplace(rank);
+        }
+
+        sqlite3_finalize(stmt);
+        return rankIds;
     }
 
 } // end of namespace Summary
