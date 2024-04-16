@@ -24,6 +24,11 @@ PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 ASCEND_INSIGHT = 'Ascend-Insight'
 ZIP_FILE = 'Ascend-Insight.zip'
 
+MANIFEST_DIR = 'manifest'
+DEPENDENCY_DIR = 'dependency'
+CONFIG_INI = 'config.ini'
+VERSION_CONFIG_FILE = os.path.join(MANIFEST_DIR, DEPENDENCY_DIR, CONFIG_INI)
+
 
 class SshConfig:
     def __init__(self, host, port, name, passwd, workspace):
@@ -110,7 +115,13 @@ def execute_cmd(ssh_client, cmd):
     stdin, stdout, stderr = ssh_client.exec_command(cmd)
     for line in iter(stdout.readline, ""):
         logging.info(line)
-    logging.info('Finish to execute cmd: %s', cmd)
+    exit_status = stdout.channel.recv_exit_status()
+
+    if exit_status != 0:
+        logging.error('Failed to execute cmd: %s', cmd, ', and exit ', exit_status)
+        raise SSHException
+    else:
+        logging.info('Finish to execute cmd: %s', cmd)
 
 
 def transfer_remote_and_unzip(ssh_client, workspace):
@@ -127,8 +138,15 @@ def transfer_remote_and_unzip(ssh_client, workspace):
     sftp.put(local_path, remote_path)
     sftp.close()
     logging.info('Copy local file %s to remote %s', local_path, remote_path)
-    cmd = 'unzip -d ' + workspace + SLASH + ASCEND_INSIGHT + ' ' + remote_path
+    cmd = 'unzip -d ' + workspace + SLASH + ASCEND_INSIGHT + ' ' + remote_path + ' || return 0'
     execute_cmd(ssh_client, cmd)
+    # 拷贝manifest下的config.ini文件，参见 @init_local_workspace 函数
+    ver_config_file = os.path.join(os.path.dirname(PROJECT_PATH), VERSION_CONFIG_FILE)
+    if os.path.exists(ver_config_file):
+        dependency_path = workspace + SLASH + MANIFEST_DIR + SLASH + DEPENDENCY_DIR
+        config_file_path = workspace + SLASH + ASCEND_INSIGHT + SLASH + CONFIG_INI
+        cmd = 'mkdir -p ' + dependency_path + ' && cp ' + config_file_path + ' ' + dependency_path
+        execute_cmd(ssh_client, cmd)
 
 
 def init_remote_workspace(ssh_client, workspace):
@@ -182,6 +200,12 @@ def init_local_workspace():
     local_path = os.path.join(os.path.dirname(PROJECT_PATH), ZIP_FILE)
     if os.path.exists(local_path):
         os.remove(local_path)
+    # B版本配置文件，用于修正发布件版本号
+    ver_config_file = os.path.join(os.path.dirname(PROJECT_PATH), VERSION_CONFIG_FILE)
+    if os.path.exists(ver_config_file):
+        shutil.copyfile(ver_config_file, os.path.join(PROJECT_PATH, CONFIG_INI))
+    else:
+        logging.warning('Can not find config.ini, and use default version configuration.')
     shutil.make_archive(local_path[:-4], 'zip', PROJECT_PATH)
 
 
