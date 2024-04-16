@@ -8,7 +8,7 @@ import static com.huawei.ascend.insight.common.constant.Constant.INSIGHT_NOTIFY;
 
 import com.huawei.ascend.insight.common.EventKey;
 import com.huawei.ascend.insight.common.ProjectContext;
-import com.huawei.ascend.insight.common.constant.URLConstants;
+import com.huawei.ascend.insight.common.constant.UrlConstants;
 import com.huawei.ascend.insight.handlers.SelectFolderHandler;
 import com.huawei.ascend.insight.model.dto.JcefRequest;
 import com.huawei.ascend.insight.resourcehandler.InsightRequestHandler;
@@ -238,7 +238,7 @@ public class InsightWindowFactory implements ToolWindowFactory {
         addPropertyChangeListener(webView);
 
         String homePage =
-            Boolean.getBoolean(USE_DEBUG_HOME_PAGE_KEY) ? URLConstants.DEBUG_HOME_PAGE : URLConstants.HOME_PAGE;
+            Boolean.getBoolean(USE_DEBUG_HOME_PAGE_KEY) ? UrlConstants.DEBUG_HOME_PAGE : UrlConstants.HOME_PAGE;
         String url = homePage + "?language=" + DynamicBundle.getLocale().getLanguage()
                 + "&port=" + ServerHelper.getServerPort();
         webView.loadURL(url);

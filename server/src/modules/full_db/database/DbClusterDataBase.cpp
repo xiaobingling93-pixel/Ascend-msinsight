@@ -40,7 +40,7 @@ bool DbClusterDataBase::QuerySummaryData(const Protocol::SummaryTopRankParams &r
                       " WHERE rankId !='' " + stepCondition + rankCondition
                       + "group by rankId ";
 
-    if (!StringUtil::checkSQLValid(requestParams.orderBy)) {
+    if (!StringUtil::checkSqlValid(requestParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
     } else if (!requestParams.orderBy.empty()) {
         sql += " ORDER by " + requestParams.orderBy + " desc ";

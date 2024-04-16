@@ -4,7 +4,7 @@
 
 package com.huawei.ascend.insight.resourcehandler;
 
-import com.huawei.ascend.insight.common.constant.URLConstants;
+import com.huawei.ascend.insight.common.constant.UrlConstants;
 import com.huawei.ascend.insight.utils.LogPrinter;
 
 import org.cef.browser.CefBrowser;
@@ -26,12 +26,12 @@ public class InsightResourceRequestHandler extends CefResourceRequestHandlerAdap
         if (url == null) {
             return null;
         }
-        if (url.startsWith(URLConstants.PROFILER_ORIGIN)) {
+        if (url.startsWith(UrlConstants.PROFILER_ORIGIN)) {
             return new InsightResourceHandler(url);
-        } else if (url.startsWith(URLConstants.DEBUG_PROFILER_ORIGIN)) {
+        } else if (url.startsWith(UrlConstants.DEBUG_PROFILER_ORIGIN)) {
             return new InsightDebugResourceHandler(url);
         } else {
-            LOGGER.warn("please check URLConstants!!");
+            LOGGER.warn("please check UrlConstants!!");
         }
         return null;
     }

@@ -239,7 +239,7 @@ bool JsonSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParam
 std::string JsonSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request)
 {
     std::string orderBy;
-    if (!StringUtil::checkSQLValid(request.orderBy)) {
+    if (!StringUtil::checkSqlValid(request.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
     } else {
         if (request.order == "descend") {
@@ -292,7 +292,7 @@ bool JsonSummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
 std::string JsonSummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams request)
 {
     std::string orderBy;
-    if (!StringUtil::checkSQLValid(request.orderBy)) {
+    if (!StringUtil::checkSqlValid(request.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
     } else {
         if (request.order == "descend") {
@@ -501,7 +501,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery ";
 
-        if (!StringUtil::checkSQLValid(reqParams.orderBy)) {
+        if (!StringUtil::checkSqlValid(reqParams.orderBy)) {
             ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
         } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
@@ -704,7 +704,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
             sql += " WHERE name = ? AND input_shapes = ?";
         }
 
-        if (!StringUtil::checkSQLValid(reqParams.orderBy)) {
+        if (!StringUtil::checkSqlValid(reqParams.orderBy)) {
             ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
         } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");

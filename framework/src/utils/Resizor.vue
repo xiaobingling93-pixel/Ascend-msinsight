@@ -2,7 +2,7 @@
 import {ref} from 'vue';
 import { Console } from '@/utils/console';
 
-const emit = defineEmits(['onResize'])
+const emit = defineEmits(['onResize']);
 const divRef: any = ref(null);
 let isDown = false;
 let offsetX: number;

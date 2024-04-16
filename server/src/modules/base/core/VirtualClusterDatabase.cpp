@@ -572,7 +572,7 @@ std::string VirtualClusterDatabase::GetRanksSql(std::vector<std::string> rankLis
         return "";
     } else {
         for (int i = 0; i < rankList.size(); i++) {
-            if (!StringUtil::checkSQLValid(rankList[i])) {
+            if (!StringUtil::checkSqlValid(rankList[i])) {
                 ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", rankList[i]);
                 return "";
             }

@@ -88,6 +88,8 @@ public class ShellCommand {
             } catch (IOException e) {
                 LOGGER.warn("Error reading next line!!");
                 return null;
+            } finally {
+                brInputStream.close();
             }
         }
     }

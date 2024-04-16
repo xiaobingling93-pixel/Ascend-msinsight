@@ -4,7 +4,7 @@
 
 package com.huawei.ascend.insight.resourcehandler;
 
-import com.huawei.ascend.insight.common.constant.URLConstants;
+import com.huawei.ascend.insight.common.constant.UrlConstants;
 import com.huawei.ascend.insight.utils.LogPrinter;
 
 import org.cef.callback.CefCallback;
@@ -24,9 +24,9 @@ public class InsightDebugResourceHandler extends InsightResourceHandler {
     private static final LogPrinter LOGGER = LogPrinter.createLogger(InsightDebugResourceHandler.class);
 
     private static final Set<String> DEBUG_DIC_FILES = Set.of(
-        URLConstants.DEBUG_PROFILER_ORIGIN + "static/js/dic_client_wasm.worker.js",
-        URLConstants.DEBUG_PROFILER_ORIGIN + "static/js/dic_client_wasm.wasm",
-        URLConstants.DEBUG_PROFILER_ORIGIN + "static/js/dic_client_wasm.mjs"
+        UrlConstants.DEBUG_PROFILER_ORIGIN + "static/js/dic_client_wasm.worker.js",
+        UrlConstants.DEBUG_PROFILER_ORIGIN + "static/js/dic_client_wasm.wasm",
+        UrlConstants.DEBUG_PROFILER_ORIGIN + "static/js/dic_client_wasm.mjs"
     );
 
     public InsightDebugResourceHandler(String requestUrl) {
@@ -41,11 +41,11 @@ public class InsightDebugResourceHandler extends InsightResourceHandler {
         try {
             URL resourceUrl;
             if (DEBUG_DIC_FILES.contains(requestUrl)) {
-                if (requestUrl.length() < URLConstants.PROFILER_URL_PREFIX.length()) {
+                if (requestUrl.length() < UrlConstants.PROFILER_URL_PREFIX.length()) {
                     return false;
                 }
-                String transformedUrl = requestUrl.substring(URLConstants.PROFILER_URL_PREFIX.length())
-                    .replaceFirst(URLConstants.DEBUG_DOMAIN_NAME, URLConstants.RESOURCE_DIR);
+                String transformedUrl = requestUrl.substring(UrlConstants.PROFILER_URL_PREFIX.length())
+                    .replaceFirst(UrlConstants.DEBUG_DOMAIN_NAME, UrlConstants.RESOURCE_DIR);
                 resourceUrl = getClass().getClassLoader().getResource(transformedUrl);
             } else {
                 resourceUrl = new URL(requestUrl);

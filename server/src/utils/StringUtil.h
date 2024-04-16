@@ -230,7 +230,7 @@ static std::string GetHashStrName(const std::string &string)
     return dbName;
 }
 
-static bool checkSQLValid(const std::string& input)
+static bool checkSqlValid(const std::string& input)
 {
     std::string pattern = "[a-zA-Z0-9_-]";
     std::regex regex(pattern);

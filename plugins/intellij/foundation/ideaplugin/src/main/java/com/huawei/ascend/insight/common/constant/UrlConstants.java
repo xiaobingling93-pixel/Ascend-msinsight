@@ -7,11 +7,11 @@ package com.huawei.ascend.insight.common.constant;
 import com.intellij.openapi.util.text.Strings;
 
 /**
- * URLConstants
+ * UrlConstants
  *
  * @since 2022/04/02
  */
-public final class URLConstants {
+public final class UrlConstants {
     /**
      * PROFILER_SCHEME_NAME
      */
@@ -64,6 +64,6 @@ public final class URLConstants {
     public static final String DEBUG_HOME_PAGE = DEBUG_PROFILER_ORIGIN + "index.html";
 
     // forbid instantiation
-    private URLConstants() {
+    private UrlConstants() {
     }
 }

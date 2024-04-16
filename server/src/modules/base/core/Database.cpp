@@ -180,7 +180,7 @@ std::string Database::GetDataBaseVersion()
 #ifdef DATABASE_VERSION
     version << DATABASE_VERSION;
 #endif
-    if (!StringUtil::checkSQLValid(version.str())) {
+    if (!StringUtil::checkSqlValid(version.str())) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", version.str());
         return "";
     }

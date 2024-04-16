@@ -4,7 +4,7 @@
 
 package com.huawei.ascend.insight.resourcehandler;
 
-import com.huawei.ascend.insight.common.constant.URLConstants;
+import com.huawei.ascend.insight.common.constant.UrlConstants;
 import com.huawei.ascend.insight.utils.LogPrinter;
 
 import org.cef.callback.CefCallback;
@@ -80,11 +80,11 @@ public class InsightResourceHandler extends CefResourceHandlerAdapter {
         if (!requestUrl.equals(request.getURL())) {
             throw new IllegalStateException();
         }
-        if (requestPath == null || requestPath.length() < URLConstants.PROFILER_URL_PREFIX.length()) {
+        if (requestPath == null || requestPath.length() < UrlConstants.PROFILER_URL_PREFIX.length()) {
             return false;
         }
-        String transformedUrl = requestPath.substring(URLConstants.PROFILER_URL_PREFIX.length())
-                .replaceFirst(URLConstants.DOMAIN_NAME, URLConstants.RESOURCE_DIR);
+        String transformedUrl = requestPath.substring(UrlConstants.PROFILER_URL_PREFIX.length())
+                .replaceFirst(UrlConstants.DOMAIN_NAME, UrlConstants.RESOURCE_DIR);
         URL resourceUrl = getClass().getClassLoader().getResource(transformedUrl);
         if (resourceUrl == null) {
             LOGGER.warn("Failed to load resource {}", requestUrl);

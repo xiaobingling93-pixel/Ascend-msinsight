@@ -20,18 +20,18 @@ const defaultProps = {
     label: 'name',
     children: 'children',
     isLeaf: 'leaf',
-}
+};
 let isUpdateLoading = {} as {[key: string]: boolean};
 let defalultExpandedKeysSet: Set<string> = new Set();
 
 const state = reactive({
     defalultExpandedKeys: [] as string[],
     inputPath: '',
-})
+});
 
 watch(() => state.inputPath, () => {
   emit('input-change', state.inputPath.length);
-})
+});
 
 const updateData = async (path: string, node: Node) => {
     if (isUpdateLoading[path]) {
@@ -41,10 +41,10 @@ const updateData = async (path: string, node: Node) => {
     const oldData = resourceState.resourceTotal[path];
     if (oldData) {
         const newData = await loadFiles(path);
-        checkData(newData, oldData, node)
+        checkData(newData, oldData, node);
     }
     isUpdateLoading[path] = false;
-}
+};
 
 const checkData = (newData: ResourceItem[], oldData: ResourceItem[], node: Node) => {
     const newPaths = newData.map(item => item.path);
@@ -52,7 +52,7 @@ const checkData = (newData: ResourceItem[], oldData: ResourceItem[], node: Node)
     const deleteData = oldData.filter(item => !newPaths.includes(item.path));
     deleteData.forEach(item => {
         treeRef.value.remove(item);
-    })
+    });
     newData.forEach((item, i) => {
         if (!oldPaths.includes(item.path)) {
             let findNext = false;
@@ -80,34 +80,34 @@ const checkData = (newData: ResourceItem[], oldData: ResourceItem[], node: Node)
                 treeRef.value.append(item, node);
             }
         }
-    })
-}
+    });
+};
 
 const handleExpand = async (data: ResourceItem, node: Node) => {
     state.inputPath = data.path;
-    defalultExpandedKeysSet.add(data.path)
+    defalultExpandedKeysSet.add(data.path);
     state.defalultExpandedKeys = [...defalultExpandedKeysSet];
     updateData(data.path,node);
     props.changeConfirmButtonState(true);
-}
+};
 
 const hanldeCollapse = (data: ResourceItem, node: Node) => {
     state.inputPath = data.path;
     defalultExpandedKeysSet.delete(data.path);
     state.defalultExpandedKeys = [...defalultExpandedKeysSet];
-}
+};
 
 const handleClick = async (data: ResourceItem, node: Node) => {
     const oldData = resourceState.resourceTotal[data.path];
     if (oldData && oldData.length <= 0) {
-        defalultExpandedKeysSet.add(data.path)
+        defalultExpandedKeysSet.add(data.path);
         state.defalultExpandedKeys = [...defalultExpandedKeysSet];
     }
     state.inputPath = data.path;
     updateData(data.path, node);
     props.changeConfirmButtonState(true);
     errorAlert.value = false;
-}
+};
 
 let findFile = false;
 let errorAlert = ref(false);
@@ -139,7 +139,7 @@ const searchPath = async () => {
     }
   }
   findFile = false;
-}
+};
 
 
 const filterNode = async (value: string, data: ResourceItem, node: Node): Promise<boolean> => {
@@ -169,7 +169,7 @@ const filterNode = async (value: string, data: ResourceItem, node: Node): Promis
   state.inputPath = value;
   findFile = false;
   return true;
-}
+};
 
 
 function expandPath(defaultSelectedDir: string): void {
@@ -203,9 +203,9 @@ onMounted(() => {
 
     loadFiles(resourceState.currentPath).then(() => {
       expandPath(defaultSelectedDir);
-    })
+    });
   }
-})
+});
 
 const doSetCurrentPath = () => {
     const currentkey = treeRef.value.getCurrentKey();
@@ -227,18 +227,18 @@ const getLoadData = async (node: Node, resolve: (data: ResourceItem[]) => void) 
     const path = node.data.path;
     const newData = await loadFiles(path);
     return resolve(newData || []);
-}
+};
 
 const doWhileOpenDialog = () => {
     const node = treeRef.value.getCurrentNode();
     if (node) {
       updateData(node.path, node);
     }
-}
+};
 defineExpose({
     doSetCurrentPath,
     doWhileOpenDialog,
-})
+});
 </script>
 
 <template>

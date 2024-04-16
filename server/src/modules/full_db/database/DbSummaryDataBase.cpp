@@ -84,7 +84,7 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
                       " JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType "
                       " WHERE TASKTYPE.value = ? ";
 
-    if (!StringUtil::checkSQLValid(request.orderBy)) {
+    if (!StringUtil::checkSqlValid(request.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
     } else if (!request.orderBy.empty() && !request.order.empty()) {
         sql += " ORDER by " + request.orderBy + " " + (request.order == "ascend" ? "ASC" : "DESC");
@@ -224,7 +224,7 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
             "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
             "     ) subquery ";
 
-    if (!StringUtil::checkSQLValid(reqParams.orderBy)) {
+    if (!StringUtil::checkSqlValid(reqParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
     } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
@@ -400,7 +400,7 @@ std::string DbSummaryDataBase::GenerateQueryMoreInfoSql(OperatorMoreInfoReqParam
         sql += " WHERE name = ? AND input_shapes = ?";
     }
 
-    if (!StringUtil::checkSQLValid(reqParams.orderBy)) {
+    if (!StringUtil::checkSqlValid(reqParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
     } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
@@ -520,7 +520,7 @@ std::string DbSummaryDataBase::GetCommSql(const CommunicationDetailParams& reque
                       "     GROUP BY TASK.globalTaskId"
                       " ) subquery ";
 
-    if (!StringUtil::checkSQLValid(request.orderBy)) {
+    if (!StringUtil::checkSqlValid(request.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
     } else if (!request.orderBy.empty() && !request.order.empty()) {
         sql += " ORDER by " + request.orderBy + " " + (request.order == "ascend" ? "ASC" : "DESC");
@@ -655,7 +655,7 @@ std::string DbSummaryDataBase::GenerateQueryDetailSql(OperatorStatisticReqParams
             "     ORDER by duration DESC LIMIT ?"
             " ) subquery ";
 
-    if (!StringUtil::checkSQLValid(reqParams.orderBy)) {
+    if (!StringUtil::checkSqlValid(reqParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
     } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");

@@ -29,7 +29,7 @@ onMounted(() => {
         body: { isDark: isDarkTheme.value },
       });
     });
-})
+});
 watch(isDarkTheme, () => {
     connector.send({
         event: 'setTheme',

@@ -91,7 +91,7 @@ onMounted(async () => {
                     },
                 });
             }
-        })
+        });
     });
 
     connector.addListener('getParseStatus', () => {
@@ -119,7 +119,7 @@ onMounted(async () => {
                     {type: 'text/html'}
                 )
             );
-        })
+        });
         session.isVscode = false;
         connectRemote({remote: LOCAL_HOST, port: PORT, dataPath: []});
     });
@@ -138,7 +138,7 @@ onMounted(async () => {
       const path = res.result?.[0]?.cardPath;
       const dataSource = { remote: LOCAL_HOST, port: PORT, dataPath: [path] };
       confirmDrop(dataSource, res);
-    })
+    });
 
     if (!session.isVscode) {
         await connectRemote({remote: LOCAL_HOST, port: PORT, dataPath: []});
