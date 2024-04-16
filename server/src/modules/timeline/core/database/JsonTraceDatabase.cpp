@@ -1750,7 +1750,7 @@ bool JsonTraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &re
     const LayerStatData &data = QueryLayerData(requestParams.layer, searchName);
     double layerOperatorTime = data.allOperatorTime;
     std::string orderBy;
-    if (!StringUtil::checkSqlValid(requestParams.orderBy)) {
+    if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
         return false;
     }
@@ -1874,7 +1874,7 @@ bool JsonTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
 {
     std::string orderBy;
     std::string coreTypes;
-    if (!StringUtil::checkSqlValid(requestParams.orderBy)) {
+    if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
         return false;
     }
@@ -1995,7 +1995,7 @@ bool JsonTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
     uint64_t startTime = requestParams.startTime + minTimestamp;
     uint64_t endTime = requestParams.endTime + minTimestamp;
     std::string orderBy;
-    if (!StringUtil::checkSqlValid(requestParams.orderBy)) {
+    if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
         return false;
     }

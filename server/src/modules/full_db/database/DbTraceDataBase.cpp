@@ -513,7 +513,7 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
                       " )subquery "
                       "where 1=1 and name LIKE ? " + coreTypes;
 
-    if (!StringUtil::checkSqlValid(requestParams.orderBy)) {
+    if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
     } else if (!requestParams.orderBy.empty() && !requestParams.order.empty()) {
         sql += " ORDER by " + requestParams.orderBy + " " + (requestParams.order == "ascend" ? "ASC" : "DESC");
