@@ -1,15 +1,34 @@
-import { clamp, throttle } from 'lodash';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+
+import { clamp, throttle, debounce } from 'lodash';
 import { runInAction } from 'mobx';
 import React from 'react';
 import { Session } from '../../../entity/session';
 import { traceStart } from '../../../utils/traceLogger';
-import { InteractorMouseState, InteractorParams } from './ChartInteractor';
+import type { InteractorMouseState, InteractorParams } from './ChartInteractor';
+import { INTERACTOR_WIDTH } from './ChartInteractor';
 import { isOnSideline, SINGLE_DRAG_OFFSET } from './common';
+import type { Pos } from './common';
 import { draw, drawOnMove, MIN_BRUSH_SIZE } from './draw';
 import type { DrawArgs } from './draw';
 import { changeRangeMarkerTimestamp } from '../../TimelineMarker';
 import { GOLDEN_RATE as MOVE_RATE } from '../../../entity/domain';
 import type { Theme } from '@emotion/react';
+import { setZoomHistory } from '../../ContextMenu';
+
+const dragInitData = {
+    isDragging: false,
+    xPos: 0,
+    domainStart: 0,
+    domainEnd: 0,
+};
+
+let dragData = { ...dragInitData };
+function resetDragInitData(): void {
+    dragData = { ...dragInitData };
+}
 
 export const resetCanvasSize = (canvas: React.RefObject<HTMLCanvasElement>, rect: DOMRectReadOnly | null): void => {
     if (!canvas.current) { return; }
@@ -17,9 +36,13 @@ export const resetCanvasSize = (canvas: React.RefObject<HTMLCanvasElement>, rect
     canvas.current.height = rect?.height ?? 0;
 };
 export const mouseUpAction = (interactorParams: InteractorParams, interactorMouseState: InteractorMouseState, e: MouseEvent): void => {
-    const { normalCanvas: canvas, session, xReverseScale, xScale, isNsMode, customRenderers, theme } = interactorParams;
+    const { normalCanvas: canvas, hoverCanvas, session, xReverseScale, xScale, isNsMode, customRenderers, theme } = interactorParams;
     const clickPos = interactorMouseState.clickPos.current;
     const lastPos = interactorMouseState.lastPos.current;
+    resetDragInitData();
+    if (hoverCanvas.current) {
+        hoverCanvas.current.style.pointerEvents = 'none';
+    }
     if (clickPos === undefined || canvas.current === null || session.endTimeAll === undefined || lastPos === undefined) { return; }
 
     // when selected range changes, the 'more' panel should be cleared (by resetting session.selectedDetailKeys)
@@ -36,6 +59,8 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
         runInAction(() => {
             if (e.altKey) {
                 session.domainRange = { domainStart: newSelected[0], domainEnd: newSelected[1] };
+                session.contextMenu.zoomHistory.push(session.domainRange);
+                setZoomHistory(session, session.domainRange);
             }
             session.selectedRange = newSelected;
             changeRangeMarkerTimestamp(session, newSelected);
@@ -108,6 +133,12 @@ export enum MouseDownActionResult {
     NoNeedToDragOneSide,
 }
 
+export enum MouseButton {
+    LEFT = 0,
+    MIDDLE = 1,
+    RIGHT = 2,
+}
+
 const getOffsetTop = (ele: HTMLElement): number => {
     return (
         ele.offsetTop + (ele.offsetParent ? getOffsetTop(ele.offsetParent as HTMLElement) : 0)
@@ -126,20 +157,44 @@ const isInSplitLineY = (offsetY: number, splitLineRef: React.RefObject<HTMLDivEl
     return false;
 };
 
-export const mouseDownAction = (session: Session, xReverseScale:
-(x: number) => number, interactorMouseState: InteractorMouseState, splitLineRef?: React.RefObject<HTMLDivElement>): MouseDownActionResult => {
-    const lastPos = interactorMouseState.lastPos.current;
-    if (session.endTimeAll === undefined || !lastPos) { return MouseDownActionResult.NoMouseDownRequired; }
+// 点击放置框选标记按钮则屏蔽mouseDownAction，避免当前框选丢失
+const shouldIgnoreRangeMarkerButton = (session: Session, lastPos: Pos, xReverseScale: (x: number) => number): boolean => {
     const rangeButtonCanvasHeight = 30;
     const offsetX = lastPos.x;
-    const offsetY = lastPos.y;
+
     if (session.selectedRange !== undefined && lastPos.y <= rangeButtonCanvasHeight) {
-        // 点击放置框选标记按钮则屏蔽mouseDownAction，避免当前框选丢失
         const rangeMarkerButtonWidth = 18;
         const rangeEndTimestamp = session.selectedRange[0] > session.selectedRange[1] ? session.selectedRange[0] : session.selectedRange[1];
         const rangeEndOffsetX = xReverseScale(rangeEndTimestamp);
-        if (offsetX >= rangeEndOffsetX - rangeMarkerButtonWidth && offsetX <= rangeEndOffsetX) { return MouseDownActionResult.NoMouseDownRequired; }
+        if (offsetX >= rangeEndOffsetX - rangeMarkerButtonWidth && offsetX <= rangeEndOffsetX) {
+            return true;
+        }
     }
+
+    return false;
+};
+
+export const mouseDownAction = (session: Session, xReverseScale: (x: number) => number, interactorMouseState: InteractorMouseState,
+    e: React.MouseEvent, splitLineRef?: React.RefObject<HTMLDivElement>): MouseDownActionResult => {
+    const lastPos = interactorMouseState.lastPos.current;
+    if (e.ctrlKey) {
+        dragData = { isDragging: true, xPos: e.nativeEvent.x, domainStart: session.domainRange.domainStart, domainEnd: session.domainRange.domainEnd };
+        return MouseDownActionResult.NoMouseDownRequired;
+    }
+    if (session.endTimeAll === undefined || !lastPos || e.button === MouseButton.RIGHT) {
+        return MouseDownActionResult.NoMouseDownRequired;
+    }
+
+    if (shouldIgnoreRangeMarkerButton(session, lastPos, xReverseScale)) {
+        return MouseDownActionResult.NoMouseDownRequired;
+    }
+
+    if (session.selectedRange !== undefined && session.contextMenu.isVisible as boolean) {
+        // 点击context menu选项时屏蔽mouseDownAction，避免当前框选丢失
+        return MouseDownActionResult.NoMouseDownRequired;
+    }
+    const offsetX = lastPos.x;
+    const offsetY = lastPos.y;
     if (offsetX > xReverseScale(session.endTimeAll)) {
         runInAction(() => {
             let isSingleLine = false;
@@ -173,13 +228,21 @@ export const mouseDownAction = (session: Session, xReverseScale:
     return needDragOneSide ? MouseDownActionResult.NeedDragOneSide : MouseDownActionResult.NoNeedToDragOneSide;
 };
 
-export const mouseMoveAction = (interactorParams: InteractorParams, interactorMouseState: InteractorMouseState): void => {
+export const mouseMoveAction = (interactorParams: InteractorParams, interactorMouseState: InteractorMouseState, e: React.MouseEvent): void => {
     const { hoverCanvas: canvas, session, xReverseScale, xScale, theme } = interactorParams;
     if (canvas.current === null) { return; }
     const lastPos = interactorMouseState.lastPos.current;
+    if (e.ctrlKey && dragData.isDragging) {
+        moveDomainByDragging(session, dragData.xPos - e.clientX, canvas.current?.clientWidth ?? INTERACTOR_WIDTH);
+        canvas.current.style.cursor = 'grabbing';
+        canvas.current.style.pointerEvents = 'initial';
+        return;
+    }
     if (isOnSideline(lastPos, session.selectedRange, xReverseScale)) {
         canvas.current.style.cursor = 'e-resize';
-    } else { canvas.current.style.cursor = 'default'; }
+    } else {
+        canvas.current.style.cursor = 'default';
+    }
     drawOnMove(getDrawOnMoveArgs({ canvas, session, theme, xReverseScale, xScale, interactorMouseState }));
 };
 
@@ -190,6 +253,12 @@ const handleZoom = throttle((session: Session, accumulativeZoomRef: React.Mutabl
     accumulativeZoomRef.current = 0;
 }, 50);
 
+const setZoomHistoryDebounce = debounce((session) => {
+    runInAction(() => {
+        setZoomHistory(session, session.domainRange);
+    });
+}, 300);
+
 export const mouseWheelAction = (
     session: Session,
     accumulativeZoomRef: React.MutableRefObject<number>,
@@ -199,6 +268,7 @@ export const mouseWheelAction = (
     if (wheelEvent.ctrlKey) {
         accumulativeZoomRef.current += Math.sign(wheelEvent.deltaY);
         handleZoom(session, accumulativeZoomRef, zoomPoint);
+        setZoomHistoryDebounce(session);
     }
 };
 
@@ -206,6 +276,7 @@ const zoomDomain = (session: Session, zoomCount: number, zoomPoint: number | und
     runInAction(() => {
         session.zoom = { zoomCount, zoomPoint };
     });
+    setZoomHistoryDebounce(session);
 };
 
 const moveDomain = (session: Session, direction: number): void => {
@@ -217,6 +288,19 @@ const moveDomain = (session: Session, direction: number): void => {
         session.domainRange = { domainStart: newEnd - timeDuration, domainEnd: newEnd };
     });
 };
+
+const moveDomainByDragging = throttle((session: Session, offset: number, canvasWidth: number): void => {
+    if (!dragData.isDragging) {
+        return;
+    }
+    const { domainRange: { domainStart, domainEnd } } = session;
+    const timeDuration = domainEnd - domainStart;
+    const timeOffset = offset * timeDuration / canvasWidth;
+    const newEnd = clamp(dragData.domainEnd + timeOffset, timeDuration, session.endTimeAll ?? session.domain.defaultDuration);
+    runInAction(() => {
+        session.domainRange = { domainStart: newEnd - timeDuration, domainEnd: newEnd };
+    });
+}, 100);
 
 const zoomOrMoveDirection = {
     upOrRight: 1,

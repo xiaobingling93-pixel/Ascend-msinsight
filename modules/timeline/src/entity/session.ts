@@ -40,6 +40,10 @@ export type LinkData = {
     };
     sources: Array<{ data: LinkDataType; matcher: DataMatcher }>;
 };
+export interface ContextMenu {
+    isVisible: boolean;
+    zoomHistory: Array<{ domainStart: TimeStamp; domainEnd: TimeStamp }>;
+};
 
 export class Session {
     id = '';
@@ -52,6 +56,12 @@ export class Session {
     viewedCardIdSet: Set<string> = new Set<string>();
     selectedMultiSlice: string = '';
     isFullDb: boolean = false;
+    // context menu state
+    contextMenu: ContextMenu = {
+        isVisible: false,
+        zoomHistory: [],
+    };
+
     private _name: string | null;
     private _phase: Phase = 'configuring';
     private _units: InsightUnit[] = [];

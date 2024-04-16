@@ -82,8 +82,8 @@ export interface ChartInteractorProps {
 }
 
 export interface ChartInteractorHandles {
-    mouseMoveAction: (interactorMouseState: InteractorMouseState) => void;
-    mouseDownAction: (interactorMouseState: InteractorMouseState) => MouseDownActionResult;
+    mouseMoveAction: (interactorMouseState: InteractorMouseState, e: React.MouseEvent) => void;
+    mouseDownAction: (interactorMouseState: InteractorMouseState, e: React.MouseEvent) => MouseDownActionResult;
     mouseUpAction: (interactorMouseState: InteractorMouseState, e: MouseEvent) => void;
     mouseWheelAction: (interactorMouseState: InteractorMouseState) => void;
     mouseLeaveAction: (interactorMouseState: InteractorMouseState) => void;
@@ -107,7 +107,7 @@ export type InteractorParams = {
     theme: Theme;
 };
 
-const INTERACTOR_WIDTH = 1153;
+export const INTERACTOR_WIDTH = 1153;
 
 const handleInteractorEvent = (interactorParams: InteractorParams,
     session: Session,
@@ -116,10 +116,11 @@ const handleInteractorEvent = (interactorParams: InteractorParams,
     accumulativeZoomRef: React.MutableRefObject<number>,
     point?: number): any => {
     return () => ({
-        mouseMoveAction: (interactorMouseState: InteractorMouseState): void => {
-            mouseMoveAction(interactorParams, interactorMouseState);
+        mouseMoveAction: (interactorMouseState: InteractorMouseState, e: React.MouseEvent): void => {
+            mouseMoveAction(interactorParams, interactorMouseState, e);
         },
-        mouseDownAction: (interactorMouseState: InteractorMouseState) => mouseDownAction(session, xReverseScale, interactorMouseState, splitLineRef),
+        mouseDownAction: (interactorMouseState: InteractorMouseState, e: React.MouseEvent) =>
+            mouseDownAction(session, xReverseScale, interactorMouseState, e, splitLineRef),
         mouseUpAction: (interactorMouseState: InteractorMouseState, e: MouseEvent): void => {
             mouseUpAction(interactorParams, interactorMouseState, e);
         },

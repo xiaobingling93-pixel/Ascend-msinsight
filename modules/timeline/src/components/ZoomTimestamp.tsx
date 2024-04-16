@@ -52,6 +52,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
                 onClick={() => {
                     runInAction(() => {
                         session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+                        session.contextMenu.zoomHistory = [];
                     });
                 }}
             /></StyledTooltip>

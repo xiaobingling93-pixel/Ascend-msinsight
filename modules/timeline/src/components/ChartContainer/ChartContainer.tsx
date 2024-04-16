@@ -10,6 +10,7 @@ import { Session } from '../../entity/session';
 // components
 import { ChartRow, ChartRowProps } from '../base/ChartRow';
 import { ChartInteractor } from '../charts/ChartInteractor';
+import { ContextMenu } from '../ContextMenu';
 // same level infer
 import { PinnedUnits } from './PinnedUnits';
 import { RefUnits } from './Units';
@@ -121,6 +122,7 @@ const ChartBody = observer((props: ChartBodyProps) => {
                 renderTrigger={session.renderTrigger} scrollTop={session.scrollTop} selectedRange={session.selectedRange}
             />
         </Overlay>
+        <ContextMenu session={session} interactorMouseState={interactorMouseState} chartInteractorRef={chartInteractorRef} />
     </>);
 });
 
@@ -210,7 +212,7 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
         if (!chartInteractorRef.current) {
             return;
         }
-        chartInteractorRef.current.mouseMoveAction(interactorMouseState);
+        chartInteractorRef.current.mouseMoveAction(interactorMouseState, e);
         const rect = e.currentTarget.getBoundingClientRect();
         const offsetX = e.nativeEvent.x - rect.left - LANE_INFO_WIDTH_PX.value;
         const offsetY = e.nativeEvent.y - rect.top;
@@ -227,7 +229,7 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
             interactorMouseState.lastPos.current = undefined;
             return;
         }
-        const needDragOneSide = chartInteractorRef.current.mouseDownAction(interactorMouseState);
+        const needDragOneSide = chartInteractorRef.current.mouseDownAction(interactorMouseState, e);
         if (needDragOneSide === MouseDownActionResult.NoNeedToDragOneSide) {
             interactorMouseState.clickPos.current = interactorMouseState.lastPos.current;
         }
