@@ -14,7 +14,7 @@ import { themeInstance } from './theme/theme';
 import CommunicationAnalysis from './components/communicationAnalysis/CommunicationAnalysis';
 import { Loading } from './index';
 
-function App(): JSX.Element {
+export const App = observer(() => {
     const { sessionStore } = useRootStore();
     let session = sessionStore.activeSession;
     const lang = getSearchParams('language');
@@ -25,11 +25,12 @@ function App(): JSX.Element {
         window.setTheme(true);
         connector.send({ event: 'getParseStatus', body: { } });
     }, []);
+
     return (<ThemeProvider theme={themeInstance.getThemeType()}>
-        {session?.clusterCompleted ? <CommunicationAnalysis session={session} /> : Loading}
+        {session !== undefined && <CommunicationAnalysis session={session} />}
+        <div className={`fullmask ${session?.clusterCompleted ? 'hide' : ''}`}>{Loading}</div>
     </ThemeProvider>);
-} ;
-observer(App);
+});
 
 const root = createRoot(document.getElementById('root') as HTMLElement);
 root.render(

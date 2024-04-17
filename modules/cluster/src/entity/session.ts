@@ -3,7 +3,7 @@ import { communicator, communicatorContainerData } from '../components/communica
 export class Session {
     clusterStatus: boolean = false;
     parseCompleted: boolean = false;
-    clusterCompleted: boolean = true;
+    clusterCompleted: boolean = false;
     durationFileCompleted: boolean = false;
     unitcount: number = 0;
     renderId: number = 1;

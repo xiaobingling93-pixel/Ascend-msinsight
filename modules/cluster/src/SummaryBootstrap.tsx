@@ -15,7 +15,7 @@ import { themeInstance } from './theme/theme';
 import AnalysisSummary from './pages/AnalysisSummary';
 import { Loading } from './index';
 
-function App(): JSX.Element {
+export const App = observer(() => {
     const { sessionStore } = useRootStore();
     let session = sessionStore.activeSession;
     const lang = getSearchParams('language');
@@ -27,10 +27,10 @@ function App(): JSX.Element {
         connector.send({ event: 'getParseStatus', body: { } });
     }, []);
     return (<ThemeProvider theme={themeInstance.getThemeType()}>
-        { session?.clusterCompleted ? <AnalysisSummary session={session} /> : Loading}
+        {session !== undefined && <AnalysisSummary session={session} />}
+        <div className={`fullmask ${session?.clusterCompleted ? 'hide' : ''}`}>{Loading}</div>
     </ThemeProvider>);
-};
-observer(App);
+});
 
 const root = createRoot(document.getElementById('root') as HTMLElement);
 root.render(
