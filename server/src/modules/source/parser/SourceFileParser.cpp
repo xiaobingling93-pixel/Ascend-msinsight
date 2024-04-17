@@ -338,7 +338,7 @@ std::vector<SourceFileLine> SourceFileParser::GetApiLinesByCoreAndSource(std::st
 
 std::string SourceFileParser::GetInstr()
 {
-    std::ifstream file(filePath);
+    std::ifstream file(filePath, std::ios::binary);
     if (!file) {
         ServerLog::Error("Can't open file,please check file exist or not,file name :", filePath);
         return "";
@@ -375,7 +375,7 @@ std::string SourceFileParser::GetSourceByName(std::string sourceName)
     int64_t end = pos.second;
     int64_t dataSize = end - start;
 
-    std::ifstream file(filePath);
+    std::ifstream file(filePath, std::ios::binary);
     if (!file) {
         ServerLog::Error("Can't open file,please check file exist or not,file name :", filePath);
         return "";
