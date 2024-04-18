@@ -22,6 +22,7 @@ struct SliceDto {
 };
 
 struct FlowDetailDto {
+    std::string id;
     std::string name;
     std::string cat;
     std::string flowId;

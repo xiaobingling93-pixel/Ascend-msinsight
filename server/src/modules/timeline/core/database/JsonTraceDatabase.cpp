@@ -1092,6 +1092,7 @@ bool JsonTraceDatabase::QueryFlowDetail(const Protocol::UnitFlowParams &requestP
             continue;
         }
         SimpleSlice simpleSlice = simpliceVec.front();
+        item.id = std::to_string(simpleSlice.id);
         item.depth = simpleSlice.depth;
         item.sliceName = simpleSlice.name;
         item.duration = simpleSlice.endTime - simpleSlice.timestamp;
@@ -1144,12 +1145,14 @@ bool JsonTraceDatabase::FlowDetailToResponse(const std::vector<FlowDetailDto> &f
         from = flowDetailVec[1];
         to = flowDetailVec[0];
     }
+    responseBody.from.id = from.id;
     responseBody.from.pid = from.pid;
     responseBody.from.tid = from.tid;
     responseBody.from.timestamp = from.timestamp - minTimestamp;
     responseBody.from.duration = from.duration;
     responseBody.from.depth = from.depth;
     responseBody.from.name = from.sliceName;
+    responseBody.to.id = to.id;
     responseBody.to.pid = to.pid;
     responseBody.to.tid = to.tid;
     responseBody.to.timestamp = to.timestamp - minTimestamp;
@@ -1258,6 +1261,7 @@ std::vector<SimpleSlice> JsonTraceDatabase::QuerySimpleSliceByTimePoint(uint64_t
     while (sliceSet->Next()) {
         SimpleSlice simpleSlice;
         uint64_t id = sliceSet->GetUint64("id");
+        simpleSlice.id = id;
         simpleSlice.timestamp = sliceSet->GetUint64("timestamp");
         simpleSlice.endTime = sliceSet->GetUint64("endTime");
         simpleSlice.name = sliceSet->GetString("name");
@@ -1472,6 +1476,7 @@ bool JsonTraceDatabase::SearchSliceName(const std::string &name, int index, uint
     }
     int col = resultStartIndex;
     uint64_t id = resultSet->GetUint64("id");
+    responseBody.id = std::to_string(id);
     responseBody.pid = resultSet->GetString("pid");
     responseBody.tid = resultSet->GetString("tid");
     responseBody.startTime = resultSet->GetUint64("startTime");
