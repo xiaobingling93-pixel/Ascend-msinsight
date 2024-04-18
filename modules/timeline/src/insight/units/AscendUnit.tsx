@@ -180,18 +180,23 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 const threadTraceList = request.data as ThreadTrace[][];
                 // 泳道chart返回数据减去时间偏移
                 return _.map(threadTraceList, (it) => _.map(it, (data) => {
+                    let uintColor;
+                    if (session.isSimulation) {
+                        uintColor = colorPalette[hashToNumber(data.cname, colorPalette.length)];
+                    } else {
+                        uintColor = colorPalette[hashToNumber(data.name, colorPalette.length)];
+                    }
                     return {
                         startTime: data.startTime - timestampOffset,
                         duration: data.duration,
                         name: data.name,
                         type: data.name,
-                        color: colorPalette[hashToNumber(data.name, colorPalette.length)],
+                        color: uintColor,
                         depth: data.depth,
                         threadId: data.threadId,
                         cardId: threadMetaData.cardId,
                         cname: data.cname,
                         id: data.id,
-                        cColor: colorPalette[hashToNumber(data.cname, colorPalette.length)],
                     } as StackStatusData;
                 }));
             } catch (e) {
