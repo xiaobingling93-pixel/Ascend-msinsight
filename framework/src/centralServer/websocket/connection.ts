@@ -6,6 +6,7 @@ import type { DataRequest, ModuleName, DataSource, Notification, Response, Reque
 import connector from '@/connection';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Console as console} from '@/utils/console';
+import { connectRemote } from '../server';
 
 const createRequestHead = function (
     id: number,
@@ -114,7 +115,12 @@ export class Connection {
                 reject(new Error('connect failed.'));
             };
             this._ws.onclose  = (ev: Event): void => {
-                ElMessageBox.alert('WebSocket is already in CLOSING or CLOSED state! You are advised to restart Ascend Insight.',{type:'error'});
+                ElMessageBox.alert('WebSocket is already in CLOSING or CLOSED state! Please try to reconnect or restart Ascend Insight.', {
+                    type:'error',
+                    confirmButtonText: 'Reconnect',
+                }).then(() => {
+                    connectRemote(this._dataSource);
+                });
             };
         }) as Promise<void>;
     }
