@@ -7,7 +7,7 @@ import { addResizeEvent, Container, Label, COLOR, getDecimalCount, chartVisbilit
 import { ConditionDataType } from './Filter';
 import { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
-import _ from 'lodash';
+import _, { cloneDeep } from 'lodash';
 import { type Session } from '../../entity/session';
 
 const options: optionDataType[] = [
@@ -100,7 +100,7 @@ function wrapData(dataSource: any): any {
         const repeatDataToolTip: {[key: string]: string} = {};
         const mixData = handleRepeatData(repeatDataToolTip, data);
         option.series[0].data = mixData;
-        option.visualMap = defaultVisualMap;
+        option.visualMap = cloneDeep(defaultVisualMap);
         if (data.length > 0) {
             const max = Math.max(...data.map((item: number[]) => item[2]));
             const min = Math.min(...data.map((item: number[]) => item[2]));
