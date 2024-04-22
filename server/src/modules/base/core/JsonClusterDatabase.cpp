@@ -760,7 +760,7 @@ bool JsonClusterDatabase::QueryOperatorList(Protocol::DurationListParams &reques
     if (requestParams.operatorName != totalOpInfo) {
         sql += " AND op_name = ?";
     }
-    sql += " ORDER by rank_id ASC";
+    sql += " ORDER by CAST(rank_id AS UNSIGNED) ASC";
     uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
     return ExecuteQueryOperatorList(requestParams, responseBody, sql, startTime);
 }

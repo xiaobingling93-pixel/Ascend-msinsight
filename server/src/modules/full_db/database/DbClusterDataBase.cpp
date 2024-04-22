@@ -309,7 +309,7 @@ bool DbClusterDataBase::QueryOperatorList(Protocol::DurationListParams &requestP
     if (requestParams.operatorName != totalOpInfo) {
         sql += " AND hccl_op_name = ?";
     }
-    sql += " ORDER by rank_id ASC";
+    sql += " ORDER by CAST(rank_id AS UNSIGNED) ASC";
     requestParams.iterationId = "step" + requestParams.iterationId;
     uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
     return ExecuteQueryOperatorList(requestParams, responseBody, sql, startTime);
