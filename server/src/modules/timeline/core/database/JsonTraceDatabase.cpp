@@ -1505,11 +1505,8 @@ bool JsonTraceDatabase::SearchSliceName(const Protocol::SearchSliceParams &param
         nameMatch = "lower(name) like lower('%'||?||'%')";
     }
     std::string sql = "SELECT id, pid, tid, timestamp - ? as startTime, duration, track_id AS trackId"
-        " FROM " +
-        sliceTable + " JOIN " + threadTable +
-        " USING (track_id)"
-        " WHERE " + nameMatch +
-        " ORDER BY timestamp LIMIT 1 OFFSET ?";
+        " FROM " + sliceTable + " JOIN " + threadTable +
+        " USING (track_id) WHERE " + nameMatch + " ORDER BY timestamp LIMIT 1 OFFSET ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QuerySliceName failed!.");
@@ -1588,16 +1585,14 @@ bool JsonTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params
         return false;
     }
     std::string sql = "SELECT flow.type, flow.flow_id, thread.pid, thread.tid, slice.id As sliceId, slice.track_id AS "
-        "sTrackId, flow.timestamp - ?"
-        "FROM " +
+        "sTrackId, flow.timestamp - ? FROM " +
         flowTable + " " + "LEFT JOIN " + sliceTable + " USING (track_id, timestamp) " + "JOIN " + threadTable +
         " USING (track_id) WHERE flow_id IN (SELECT flow_id from "
         "(SELECT flow_id, ROUND(flow.timestamp / ?) as rank FROM flow WHERE flow_id IN "
         "(SELECT flow_id FROM flow WHERE cat = ? "
         "AND ((timestamp >= ? AND (type = 'f' OR type = 't')) OR (timestamp <= ? AND (type = 's' OR type = 't'))"
         ") GROUP BY flow_id HAVING COUNT(flow_id) >= 2) "
-        "GROUP BY track_id, type, rank HAVING max(timestamp)))"
-        "ORDER BY flow.flow_id, timestamp;";
+        "GROUP BY track_id, type, rank HAVING max(timestamp))) ORDER BY flow.flow_id, timestamp;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryFlowCategoryEvents failed!.");
@@ -1667,11 +1662,8 @@ bool JsonTraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, ui
     std::vector<Protocol::UnitCounterData> &dataList)
 {
     std::string sql = "SELECT timestamp - ? as startTime, args"
-        " FROM " +
-        counterTable +
-        " WHERE pid = ? AND name = ?"
-        " AND startTime >= ? AND startTime <= ?"
-        " ORDER BY timestamp ASC";
+        " FROM " + counterTable + " WHERE pid = ? AND name = ?"
+        " AND startTime >= ? AND startTime <= ? ORDER BY timestamp ASC";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryUnitCounter failed!.");
@@ -1741,9 +1733,7 @@ bool JsonTraceDatabase::QueryCommunicationStatisticsData(const Protocol::Summary
         timestampCondition = " and timestamp >= ? and timestamp <= ? ";
     }
     std::string sql = "select duration / 1000, t.thread_name as overlapType from (select sum(duration) as duration,"
-        " track_id from " +
-        sliceTable +
-        " where track_id in (select track_id from thread where thread_name "
+        " track_id from " + sliceTable + " where track_id in (select track_id from thread where thread_name "
         " in ('Communication(Not Overlapped)', 'Communication')) " +
         timestampCondition + " group by track_id) s left join thread t on s.track_id=t.track_id";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -1819,9 +1809,7 @@ bool JsonTraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &re
         "min(duration) / 1000.0 as min, max(duration) / 1000.0 as max "
         "FROM slice WHERE lower(name) LIKE lower(?) AND slice.track_id IN ( SELECT track_id "
         "FROM process JOIN thread t ON process.pid = t.pid "
-        "WHERE process_name = ? ) "
-        "GROUP BY name " +
-        orderBy + " limit ? offset ?";
+        "WHERE process_name = ? ) GROUP BY name " + orderBy + " limit ? offset ?";
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -2013,6 +2001,7 @@ bool JsonTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &
         trackId = resultSet->GetUint64("track_id");
         std::unordered_map<uint64_t, int32_t> depthCache =
             SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
+        responseBody.id = std::to_string(id);
         responseBody.depth = depthCache[id];
     }
     const OneKernelData &data = QueryKernelTid(trackId);

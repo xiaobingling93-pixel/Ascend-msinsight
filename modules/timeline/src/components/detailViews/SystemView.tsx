@@ -287,6 +287,7 @@ const KernelDetails = observer((props: any) => {
                     const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
                     props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                     props.session.selectedData = {
+                        id: res.id,
                         startTime,
                         name: rowData.name,
                         duration: Number((rowData.duration * 1000).toFixed(0)),

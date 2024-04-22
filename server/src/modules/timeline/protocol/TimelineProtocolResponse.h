@@ -352,6 +352,7 @@ struct KernelDetailsResponse : public Response {
 };
 
 struct OneKernelBody {
+    std::string id;
     uint64_t depth;
     std::string threadId;
     std::string pid;

@@ -535,6 +535,7 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
                     const [rangeStart, rangeEnd] = calculateDomainRange(session, startTime, record.duration);
                     session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                     session.selectedData = {
+                        id: res.id,
                         startTime,
                         name: selectedMultiSlice.name,
                         duration: record.duration,
