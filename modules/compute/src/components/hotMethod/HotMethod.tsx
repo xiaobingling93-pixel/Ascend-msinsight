@@ -96,6 +96,9 @@ const instrsColumns: ColumnsType<InstrsColumnType> = [
         width: 150,
         ellipsis: true,
         render: (Cycles, record) => {
+            if (Cycles === '') {
+                return '';
+            }
             return <Bar value={Cycles} max={record.maxCycles ?? Cycles}/>;
         },
     },
@@ -112,8 +115,7 @@ const Index = observer(({ session }: { session: Session }) => {
     const [selectedline, setSelectedline] = useState<number>(-1);
     const [tableHeight, setTableHeight] = useState<number>(1000);
     const [filterInstrsColumns, setFilterInstrsColumns] = useState<ColumnsType<InstrsColumnType>>(instrsColumns);
-    const [renderStatus, setRenderStatus] = useState(session.renderStatus);
-
+    const [doneQuery, setDoneQuery] = useState(false);
     const reset = (): void => {
         // 重置选中行数，-1不选中任一行
         setSelectedline(-1);
@@ -238,9 +240,9 @@ const Index = observer(({ session }: { session: Session }) => {
     }
 
     async function getInstrs(core: string): Promise<InstrsColumnType[]> {
-        if (renderStatus !== session.renderStatus || session.Instructions.length === 0) {
+        if (session.parseStatus && !doneQuery) {
             const res = await queryApiInstr();
-            if (res === undefined || res === null) {
+            if (res === undefined || res === null || res.instructions === '') {
                 return [];
             }
             runInAction(() => {
@@ -251,7 +253,7 @@ const Index = observer(({ session }: { session: Session }) => {
                 }
                 session.Instructions = list;
             });
-            setRenderStatus(session.renderStatus);
+            setDoneQuery(true);
         }
         const records = session.Instructions;
         const coreIndex = session.coreList.findIndex(item => item === core);
@@ -286,6 +288,17 @@ const Index = observer(({ session }: { session: Session }) => {
         }));
         return list.reverse();
     };
+
+    function clear(): void {
+        // 文件源码
+        setCode('');
+        // 指令记录
+        setInstrsData([]);
+        // 代码行记录
+        setLoggedCodeLines([]);
+        setCodeLines([]);
+        setDoneQuery(false);
+    }
     // 初始化
     useEffect(() => {
         reset();
@@ -301,17 +314,18 @@ const Index = observer(({ session }: { session: Session }) => {
     }, []);
     useEffect(() => {
         reset();
+        if (!session.parseStatus) {
+            clear();
+            return;
+        }
         updateData();
         async function updateData(): Promise<void> {
             Promise.all([
                 getCode(condition.source),
-                getInstrs(condition.core),
                 getLines(condition.source, condition.core),
-            ]).then(([newCode, newInstrlist, newLoggedCodeLines]) => {
+            ]).then(([newCode, newLoggedCodeLines]) => {
                 // 文件源码
                 setCode(newCode);
-                // 指令记录
-                setInstrsData(newInstrlist);
                 // 代码行记录
                 setLoggedCodeLines(newLoggedCodeLines);
                 // 全部代码行
@@ -323,8 +337,12 @@ const Index = observer(({ session }: { session: Session }) => {
                 });
                 setCodeLines(sourceCodeLines);
             });
+            // 指令记录
+            getInstrs(condition.core).then((newInstrlist) => {
+                setInstrsData(newInstrlist);
+            });
         }
-    }, [condition.core, condition.source, session.renderStatus]);
+    }, [condition.core, condition.source, session.parseStatus, session.updateId]);
 
     useEffect(() => {
         resizeHeight();

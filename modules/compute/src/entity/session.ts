@@ -7,8 +7,8 @@ export class Session {
     coreList: string[] = [];
     sourceList: string[] = [];
     Instructions: JsonInstructionType[] = [];
-    renderStatus: boolean = false;
     parseStatus: boolean = false;
+    updateId: number = 0;
     constructor() {
         makeAutoObservable(this);
     }

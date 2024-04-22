@@ -9,6 +9,10 @@ export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
 };
 
+export const importRemoteHandler = (): void => {
+    reset();
+};
+
 export const updateSessionHandler: NotificationHandler = (data): void => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
@@ -18,24 +22,35 @@ export const updateSessionHandler: NotificationHandler = (data): void => {
         }
         const dataKeys = Object.keys(data);
         const sessionKeys = Object.keys(session);
+        const updateData = {};
         dataKeys.forEach((key: string) => {
             if (sessionKeys.includes(key)) {
-                (session as unknown as Record<string, unknown>)[key] = data[key];
+                Object.assign(updateData, { [key]: data[key] });
             }
         });
-        session.renderStatus = !session.renderStatus;
+        if (Object.keys(updateData).length > 0) {
+            Object.assign(session, {
+                ...updateData,
+                parseStatus: true,
+                updateId: ++session.updateId % 100,
+            });
+        }
     });
 };
 
 export const resetHandler: NotificationHandler = (data): void => {
-    resetStatus();
+    reset();
 };
-const resetStatus = (): void => {
+const reset = (): void => {
     const session = store.sessionStore.activeSession;
     runInAction(() => {
         if (!session) {
             return;
         }
-        session.renderStatus = !session.renderStatus;
+        Object.assign(session, {
+            coreList: [],
+            sourceList: [],
+            parseStatus: false,
+        });
     });
 };

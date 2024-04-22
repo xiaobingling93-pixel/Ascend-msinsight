@@ -2,8 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import { observer } from 'mobx-react';
-import { observable, runInAction, observe } from 'mobx';
-import React, { type ReactElement, useEffect } from 'react';
+import React, { type ReactElement, useEffect, useState } from 'react';
 import { Select } from 'antd';
 import { Label } from './Common';
 import type { optionDataType, optionMapDataType } from '../utils/interface';
@@ -13,8 +12,6 @@ export interface ConditionType {
     core: string ;
     source: string;
 };
-
-export const totalOperator = 'Total Op Info';
 const defaultCondition = {
     core: '',
     source: '',
@@ -23,50 +20,64 @@ const defaultOptionMap = {
     coreOptions: [],
     sourceOptions: [],
 };
-const condition: ConditionType = observable(defaultCondition);
-const optionMap: optionMapDataType = observable(defaultOptionMap);
 
-const setOptions = async(initObj = {} as ConditionType,
-    initOptionMap: optionMapDataType = defaultOptionMap): Promise<void> => {
+const getOptionsAndValue = (initObj: ConditionType, initOptionMap: optionMapDataType):
+{optionMap: optionMapDataType;condition: ConditionType} => {
     // core
     const coreOptions: optionDataType[] = initOptionMap.coreOptions;
-    const core = initObj.core ?? coreOptions[0]?.value as string ?? defaultCondition.core;
+    const core = getUsableVal(initObj.core, coreOptions, defaultCondition.core) as string;
     // source
     const sourceOptions: optionDataType[] = initOptionMap.sourceOptions;
-    const source = initObj.source ?? sourceOptions[0]?.value as string ?? defaultCondition.source;
-    runInAction(() => {
-        optionMap.sourceOptions = sourceOptions;
-        optionMap.coreOptions = coreOptions;
-        condition.source = source;
-        condition.core = core;
-    });
+    const source = getUsableVal(initObj.source, sourceOptions, defaultCondition.source) as string;
+
+    return { optionMap: { coreOptions, sourceOptions }, condition: { core, source } };
 };
 
-const handleChange = (key: keyof ConditionType, val: string): void => {
-    runInAction(() => {
-        condition[key] = val;
-    });
+function getUsableVal<T>(val: T, options: Array<{value: T}>, defaultVal: T): T {
+    if (options.length === 0) {
+        return defaultVal;
+    }
+    if (options.find(item => item.value === val)) {
+        return val;
+    }
+    return options[0].value;
 };
 
 const Filter = observer(({ session, handleFilterChange }:
 {session: Session;handleFilterChange: (condition: ConditionType) => void}) => {
-    // 初始化
+    const [condition, setCondition] = useState(defaultCondition);
+    const [optionMap, setOptionMap] = useState<optionMapDataType>(defaultOptionMap);
+
+    const handleChange = (key: keyof ConditionType, val: string): void => {
+        setCondition({ ...condition, [key]: val });
+    };
     useEffect(() => {
-        setOptions();
-        observe(condition, (change) => {
-            handleFilterChange(condition);
-        });
-    }, []);
+        handleFilterChange(condition);
+    }, [condition]);
+
+    useEffect(() => {
+        if (!session.parseStatus) {
+            setCondition(defaultCondition);
+            setOptionMap(defaultOptionMap);
+        }
+    }, [session.parseStatus]);
 
     useEffect(() => {
         const coreOptions = session.coreList.map((item, index) => ({ label: item, value: item }));
         const sourceOptions = session.sourceList.map(item => ({ label: item, value: item }));
-        setOptions({} as ConditionType, { coreOptions, sourceOptions });
+        const { optionMap: newOptionMap, condition: newCondition } = getOptionsAndValue(condition, { coreOptions, sourceOptions });
+        setCondition(newCondition);
+        setOptionMap(newOptionMap);
     }, [session.coreList, session.sourceList]);
-    return (<FilterCom />);
+    return (<FilterCom handleChange={handleChange} condition={condition} optionMap={optionMap}/>);
 });
 
-const FilterCom = observer((): JSX.Element => {
+interface Iprops {
+    optionMap: optionMapDataType;
+    condition: ConditionType;
+    handleChange: (key: keyof ConditionType, val: string) => void;
+}
+function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element {
     return (<div>
         <FormItem
             name="Core"
@@ -74,7 +85,9 @@ const FilterCom = observer((): JSX.Element => {
             content={(<Select
                 value={condition.core}
                 style={{ width: 'calc(100% - 80px)' }}
-                onChange={val => handleChange('core', val)}
+                onChange={(val): void => {
+                    handleChange('core', val);
+                }}
                 options={optionMap.coreOptions}
                 showSearch={true}
             />
@@ -85,13 +98,15 @@ const FilterCom = observer((): JSX.Element => {
             content={(<Select
                 value={condition.source}
                 style={{ width: 'calc(100% - 80px)' }}
-                onChange={val => handleChange('source', val)}
+                onChange={(val): void => {
+                    handleChange('source', val);
+                }}
                 options={optionMap.sourceOptions}
                 showSearch={true}
             />
             )}/>
     </div>);
-});
+}
 
 const FormItem = (props: {name: string;style?: React.CSSProperties;content: ReactElement}): JSX.Element => {
     return (<div style={{

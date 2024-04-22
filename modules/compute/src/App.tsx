@@ -12,8 +12,8 @@ const App = observer(() => {
     let session = sessionStore.activeSession;
     useEffect(() => {
         session = sessionStore.activeSession;
+        connector.send({ event: 'getParseStatus', body: { } });
     }, []);
-    connector.send({ event: 'getParseStatus', body: { } });
     return session !== undefined ? <HotMethod session={session} /> : <></>;
 });
 
