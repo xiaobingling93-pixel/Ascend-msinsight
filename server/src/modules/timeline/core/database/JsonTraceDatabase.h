@@ -125,6 +125,7 @@ private:
     const std::string hcclType = "HCCL";
     const int cacheSize = 1000;
     const int unit = 1000;
+    const int tolerance = 100; // 匹配算子时的范围为±100
     // 5G size limit 2024.02.01
     const double lowImage = 5.0;
 

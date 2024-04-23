@@ -514,20 +514,20 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
     }
 
     std::vector<std::string> rankLists = {};
-    std::vector<std::vector<Protocol::OperatorItem>> opLists = {};
+    std::vector<std::vector<Protocol::OperatorTimeItem>> opLists = {};
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        Protocol::OperatorItem object;
+        Protocol::OperatorTimeItem object;
         std::string rankId = sqlite3_column_string(stmt, col++);
         if (std::find(rankLists.begin(), rankLists.end(), rankId) == rankLists.end()) {
             rankLists.push_back(rankId);
-            std::vector<Protocol::OperatorItem> list = {};
+            std::vector<Protocol::OperatorTimeItem> list = {};
             opLists.push_back(list);
         }
         object.operatorName = sqlite3_column_string(stmt, col++);
-        object.startTime = sqlite3_column_double(stmt, col++);
-        object.elapseTime = sqlite3_column_double(stmt, col++);
+        object.startTime = sqlite3_column_int64(stmt, col++);
+        object.elapseTime = sqlite3_column_int64(stmt, col++);
         for (int i = 0; i < rankLists.size(); ++ i) {
             if (rankLists[i] == rankId) {
                 opLists[i].push_back(object);

@@ -13,6 +13,12 @@
 
 namespace Dic {
 namespace Protocol {
+struct OperatorTimeItem {
+    std::string operatorName;
+    uint64_t startTime;
+    uint64_t elapseTime;
+};
+
 struct OperatorItem {
     std::string operatorName;
     double startTime;
@@ -122,10 +128,10 @@ struct DurationResponse : public Response {
 };
 
 struct OperatorListsResponseBody {
-    double minTime = DBL_MAX;
-    double maxTime = DBL_MIN;
+    uint64_t minTime = UINT64_MAX;
+    uint64_t maxTime = 0;
     std::vector<std::string> rankLists;
-    std::vector<std::vector<OperatorItem>> opLists;
+    std::vector<std::vector<OperatorTimeItem>> opLists;
 };
 
 struct OperatorListsResponse : public Response {

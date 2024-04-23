@@ -298,8 +298,8 @@ bool DbClusterDataBase::QueryOperatorList(Protocol::DurationListParams &requestP
 {
     std::string sql =
         "SELECT rank_id, hccl_op_name as op_name,"
-        " CASE WHEN start_timestamp == 0 THEN 0 ELSE ROUND((start_timestamp * 1000- ?) / 1000.0, 3) END as start_time, "
-        " ROUND(elapsed_time, 3) as elapse_time From " + TABLE_COMM_ANALYZER_TIME +
+        " CASE WHEN start_timestamp == 0 THEN 0 ELSE (start_timestamp * 1000 - ?) END as start_time, "
+        " (elapsed_time * 1000000) as elapse_time From " + TABLE_COMM_ANALYZER_TIME +
         " WHERE step = ? AND rank_set = ? AND hccl_op_name <> 'Total Op Info'";
     std::vector<std::string> rankList = requestParams.rankList;
     if (!rankList.empty()) {

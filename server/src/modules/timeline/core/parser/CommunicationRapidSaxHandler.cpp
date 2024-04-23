@@ -5,6 +5,7 @@
 #include "JsonUtil.h"
 #include "ParserStatusManager.h"
 #include "JsonClusterDatabase.h"
+#include "NumberUtil.h"
 #include "CommunicationRapidSaxHandler.h"
 
 namespace Dic {
@@ -188,7 +189,7 @@ CommunicationTimeInfo CommunicationRapidSaxHandler::MapToTimeInfo(const rapidjso
     } else {
         timeInfo.opName = tempOpName;
     }
-    timeInfo.startTime = JsonUtil::GetDouble(json, "Start Timestamp(us)");
+    timeInfo.startTime = NumberUtil::TimestampUsToNs(JsonUtil::GetDouble(json, "Start Timestamp(us)"));
     timeInfo.elapseTime = JsonUtil::GetDouble(json, "Elapse Time(ms)");
     timeInfo.idleTime = JsonUtil::GetDouble(json, "Idle Time(ms)");
     timeInfo.synchronizationTimeRatio = JsonUtil::GetDouble(json, "Synchronization Time Ratio");

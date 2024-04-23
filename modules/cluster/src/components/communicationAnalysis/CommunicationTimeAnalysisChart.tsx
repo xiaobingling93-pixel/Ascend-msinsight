@@ -14,6 +14,7 @@ const DEFAULT_INNER_CHART_HEIGHT = 300;
 const DEFAULT_CHART_ZOOM_HEIGHT = 400;
 const MIN_CHART_ITEM_HEIGHT = 30;
 const MAX_CHART_HEIGHT = 800;
+const NS_TO_MS_FACTOR = 0.000001;
 function wrapData(dataSource: AnalysisChartData): any {
     const data: any = [];
     const yAxisData: string[] = [];
@@ -22,8 +23,8 @@ function wrapData(dataSource: AnalysisChartData): any {
         const rankId = dataSource.data[i].rankId;
         yAxisData.push(rankId);
         dataSource.data[i].lists?.forEach((item, _) => {
-            const startTime = usToMs(item.startTime);
-            const duration = usToMs(item.duration);
+            const startTime = nsToMs(item.startTime);
+            const duration = nsToMs(item.duration);
             const endTime = startTime + duration;
             data.push(
                 {
@@ -39,8 +40,8 @@ function wrapData(dataSource: AnalysisChartData): any {
         });
     }
     option.yAxis.data = yAxisData;
-    option.xAxis.min = usToMs(dataSource.minTime);
-    option.xAxis.max = usToMs(dataSource.maxTime);
+    option.xAxis.min = nsToMs(dataSource.minTime);
+    option.xAxis.max = nsToMs(dataSource.maxTime);
     const dataHeight = calculateDataHeight(dataSource);
     option.grid.height = dataHeight;
     option.dataZoom[0].top = dataHeight - DEFAULT_INNER_CHART_HEIGHT + DEFAULT_CHART_ZOOM_HEIGHT;
@@ -80,9 +81,11 @@ function renderItem(params: any, api: any): any {
 function numberToStr(value: number): string {
     return `${value.toFixed(6).replace(/\.?0+$/, '')}`;
 }
-function usToMs(value: number): number {
-    return value * 0.001;
+
+function nsToMs(value: number): number {
+    return value * NS_TO_MS_FACTOR;
 }
+
 function getTipLineStr(name: string, value: string): string {
     let html = `${name}`;
     html += `<strong style="color: black">${safeStr((`${value}`))}</strong><br/>`;
