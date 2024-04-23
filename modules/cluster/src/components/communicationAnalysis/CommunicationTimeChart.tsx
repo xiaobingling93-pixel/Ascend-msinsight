@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import * as echarts from 'echarts';
-import { addResizeEvent, chartVisbilityListener, COLOR, Container, Loading } from '../Common';
+import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, Container, Loading } from '../Common';
 import type { Session } from '../../entity/session';
 
 function InitCharts(data: dataType): void {
@@ -29,14 +29,7 @@ function wrapData(data: dataType): any {
 
 const baseOption: any = {
     tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-            type: 'cross',
-            crossStyle: {
-                color: COLOR.BrightBlue,
-                type: 'solid',
-            },
-        },
+        ...commonEchartsOptions.tooltip,
         confine: true,
     },
     toolbox: {
@@ -93,12 +86,7 @@ const baseOption: any = {
                 formatter: '{value}',
                 color: COLOR.Grey40,
             },
-            splitLine: {
-                lineStyle: {
-                    color: COLOR.Grey20,
-                    type: 'dashed',
-                },
-            },
+            splitLine: commonEchartsOptions.splitLineY,
         },
     ],
     series: [

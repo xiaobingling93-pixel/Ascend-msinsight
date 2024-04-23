@@ -10,7 +10,7 @@ import { Session } from '../../entity/session';
 import { VoidFunction } from '../../utils/interface';
 import { useEventBus } from '../../utils/eventBus';
 import { queryTopSummary } from '../../utils/RequestUtils';
-import { addResizeEvent, chartVisbilityListener, COLOR, notZero } from '../Common';
+import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, notZero } from '../Common';
 import Filter, { ConditionDataType } from './Filter';
 import StatisticsTable from './StatisticsTable';
 import SummaryTable from './SummaryTable';
@@ -30,17 +30,22 @@ interface SummaryDataType{
     [propName: string]: any;
 }
 
-const baseOption: any = {
+const commonSeries: any = {
+    type: 'bar',
+    stack: 'Ad',
+    emphasis: {
+        focus: 'series',
+    },
     tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-            type: 'cross',
-            crossStyle: {
-                color: COLOR.BrightBlue,
-                type: 'solid',
-            },
+        valueFormatter: function (value: any) {
+            return value + ' μs';
         },
     },
+    data: [],
+};
+
+const baseOption: any = {
+    tooltip: commonEchartsOptions.tooltip,
     legend: {
         data: [
             { name: 'Computing', textStyle: { color: COLOR.Grey50 } },
@@ -96,74 +101,29 @@ const baseOption: any = {
                 formatter: '{value}%',
                 color: COLOR.Grey40,
             },
-            splitLine: {
-                lineStyle: {
-                    color: COLOR.Grey20,
-                    type: 'dashed',
-                },
-            },
+            splitLine: commonEchartsOptions.splitLineY,
         },
     ],
     series: [
         {
             id: 'compute',
             name: 'Computing',
-            type: 'bar',
-            stack: 'Ad',
-            emphasis: {
-                focus: 'series',
-            },
-            tooltip: {
-                valueFormatter: function (value: any) {
-                    return value + ' μs';
-                },
-            },
-            data: [],
+            ...commonSeries,
         },
         {
             id: 'communicationNotOverLappedTime',
             name: 'Communication(Not Overlapped)',
-            type: 'bar',
-            stack: 'Ad',
-            emphasis: {
-                focus: 'series',
-            },
-            tooltip: {
-                valueFormatter: function (value: any) {
-                    return value + ' μs';
-                },
-            },
-            data: [],
+            ...commonSeries,
         },
         {
             id: 'communicationOverLappedTime',
             name: 'Communication(Overlapped)',
-            type: 'bar',
-            stack: 'Ad',
-            emphasis: {
-                focus: 'series',
-            },
-            tooltip: {
-                valueFormatter: function (value: any) {
-                    return value + ' μs';
-                },
-            },
-            data: [],
+            ...commonSeries,
         },
         {
             id: 'freeTime',
             name: 'Free',
-            type: 'bar',
-            stack: 'Ad',
-            emphasis: {
-                focus: 'series',
-            },
-            tooltip: {
-                valueFormatter: function (value: any) {
-                    return value + ' μs';
-                },
-            },
-            data: [],
+            ...commonSeries,
         },
         {
             name: 'Computing Ratio',

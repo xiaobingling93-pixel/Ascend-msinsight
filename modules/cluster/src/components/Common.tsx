@@ -299,3 +299,25 @@ export const safeStr = (str: string, ignore?: string): string => {
     }
     return str?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 };
+
+export const commonEchartsOptions: {
+    tooltip: any;
+    splitLineY: any;
+} = {
+    tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+            type: 'cross',
+            crossStyle: {
+                color: COLOR.BrightBlue,
+                type: 'solid',
+            },
+        },
+    },
+    splitLineY: {
+        lineStyle: {
+            color: COLOR.Grey20,
+            type: 'dashed',
+        },
+    },
+};

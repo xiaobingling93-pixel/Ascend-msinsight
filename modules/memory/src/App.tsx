@@ -24,10 +24,12 @@ export const App = observer(() => {
         window.setTheme(true);
     }, []);
 
-    !hasListenerRef.current && connector.addListener('setTheme', (e) => {
-        hasListenerRef.current = true;
-        setThemeDark(e.data.body.isDark);
-    });
+    if (!hasListenerRef.current) {
+        connector.addListener('setTheme', (e: any) => {
+            hasListenerRef.current = true;
+            setThemeDark(e.data.body.isDark);
+        });
+    };
 
     return (
         <ThemeProvider theme={themeInstance.getThemeType()}>

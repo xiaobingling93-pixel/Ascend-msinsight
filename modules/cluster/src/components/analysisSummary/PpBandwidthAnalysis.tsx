@@ -9,6 +9,7 @@ import {
     addResizeEvent,
     chartVisbilityListener,
     COLOR,
+    commonEchartsOptions,
     Container,
     isNull,
     notNullObj,
@@ -173,16 +174,7 @@ async function getRankAndBubbleTimeData (stepId: string, stageId: string): Promi
 }
 
 const bandwidthOption: echarts.EChartsOption = {
-    tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-            type: 'cross',
-            crossStyle: {
-                color: COLOR.BrightBlue,
-                type: 'solid',
-            },
-        },
-    },
+    tooltip: commonEchartsOptions.tooltip,
     toolbox: {
         feature: {
             dataView: { show: true, readOnly: false },

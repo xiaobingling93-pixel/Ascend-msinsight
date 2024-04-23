@@ -9,7 +9,7 @@ import * as echarts from 'echarts';
 import { Col, Layout, Row, Table, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
-import { Container, addResizeEvent, COLOR } from '../Common';
+import { Container, addResizeEvent, COLOR, commonEchartsOptions } from '../Common';
 
 const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
     const [data, setData] = useState([]);
@@ -191,14 +191,7 @@ export interface Distribution {
 
 const bandwidthOption: echarts.EChartsOption = {
     tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-            type: 'cross',
-            crossStyle: {
-                color: COLOR.BrightBlue,
-                type: 'solid',
-            },
-        },
+        ...commonEchartsOptions.tooltip,
         confine: true,
     },
     toolbox: {
@@ -258,12 +251,7 @@ const bandwidthOption: echarts.EChartsOption = {
                 width: 85,
                 overflow: 'break',
             },
-            splitLine: {
-                lineStyle: {
-                    color: COLOR.Grey20,
-                    type: 'dashed',
-                },
-            },
+            splitLine: commonEchartsOptions.splitLineY,
         },
     ],
     series: [
