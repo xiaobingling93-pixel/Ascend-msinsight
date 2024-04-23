@@ -8,7 +8,7 @@ export type Timestamp = number;
 export class Session {
     startTime: Timestamp = -1;
     endTimeAll: Timestamp = -1;
-    isCluster: boolean = false;
+    isCluster: boolean | null = false;
     isReset: boolean = false;
     parseCompleted: boolean = false;
     clusterCompleted: boolean = false;
@@ -18,7 +18,7 @@ export class Session {
     isFullDb: boolean = false;
     isVscode: boolean = document.location.origin.startsWith('vscode');
     // Compute
-    isBinary: boolean = false;
+    isBinary: boolean | null = false;
     coreList: string[] = [];
     sourceList: string[] = [];
     private _sharedState: Record<string, unknown> = {};
@@ -39,19 +39,23 @@ export class Session {
         return isConnected({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
     }
 
-    reset(): void {
+    reset(remove = false): void {
         this.startTime = -1;
         this.endTimeAll = -1;
-        this.isCluster = false;
+        this.isCluster = null;
         this.isReset = false;
         this._sharedState = {};
         this.parseCompleted = false;
         this.clusterCompleted = false;
         this.durationFileCompleted = false;
         this.unitcount = 0;
-        this.isBinary = false;
+        this.isBinary = null;
         this.coreList = [];
         this.sourceList = [];
+        if (remove === true) {
+            this.isCluster = false;
+            this.isBinary = false;
+        }
     }
 };
 

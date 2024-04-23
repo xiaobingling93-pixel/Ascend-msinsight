@@ -94,7 +94,7 @@ export const useDataSources = defineStore('dataSources', () => {
             event: 'remote/remove',
             body: { dataSource },
         });
-        session.reset();
+        session.reset(true);
         if (dataSource.remote !== LOCAL_HOST) {
             dataSources.value.splice(index, 1);
         } else {

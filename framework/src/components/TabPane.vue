@@ -70,7 +70,9 @@ onMounted(async () => {
         const validPropKeys = Object.keys(session);
         const updateState: any = {};
         for (const key of receivePropKeys) {
-            if (validPropKeys.includes(key) && Object.prototype.toString.call(receiver[key]) === Object.prototype.toString.call(session[key as keyof Session])) {
+            // 1.receiver的字段key在session中存在 2.receiver[key]的类型（例如string、boolean)与session[key]也相同，或者session[key]当前为null
+            if (validPropKeys.includes(key) && (Object.prototype.toString.call(receiver[key]) === Object.prototype.toString.call(session[key as keyof Session]) ||
+                session[key as keyof Session] === null)) {
                 Object.assign(updateState, {[key]: receiver[key]});
                 continue;
             }
@@ -145,14 +147,15 @@ onMounted(async () => {
     }
 });
 watch(() => [session.isBinary, session.isCluster], () => {
+    if (session.isBinary === null && session.isCluster === null) {
+        return;
+    }
     updateScene();
 });
 
 function updateScene() {
-    setTimeout(()=>{
-        scene.value = getScene();
-        activeModule.value = getActive();
-    },500);
+    scene.value = getScene();
+    activeModule.value = getActive();
 }
 
 function getScene(): SceneType {
