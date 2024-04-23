@@ -770,18 +770,22 @@ bool JsonTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTrace
     const int64_t maxDataCount = 30000;
     uint64_t unitTime = (requestParams.endTime - requestParams.startTime) / maxDataCount;
     unitTime = unitTime <= 0 ? 1 : unitTime;
-    std::pair<int64_t, int64_t> trackIdPair = QueryExtremTrackIdPairByPid(requestParams.processId);
-    std::string sql = "SELECT timestamp , end_time "
-        "FROM " +
-        sliceTable +
-        " WHERE track_id <= ? AND track_id >= ? "
-        " ORDER BY timestamp;";
+    std::vector<uint64_t> trackIds = QueryAllTrackIdsByPid(requestParams.processId);
+    std::string sql = "SELECT timestamp , end_time FROM "
+        + sliceTable + " WHERE track_id in ( ? ";
+    for (const auto &item : trackIds) {
+        sql += ", ?";
+    }
+    sql += ") ORDER BY timestamp";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", GetLastError());
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(trackIdPair.first, trackIdPair.second);
+    for (const auto &item : trackIds) {
+        stmt->BindParams(item);
+    }
+    auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Error("QueryThreadTracesSummary. Failed to get result set.", stmt->GetErrorMessage());
         return false;
@@ -1553,28 +1557,26 @@ bool JsonTraceDatabase::QueryFlowCategoryList(std::vector<std::string> &categori
     return true;
 }
 
-std::pair<int64_t, int64_t> JsonTraceDatabase::QueryExtremTrackIdPairByPid(std::string pid)
+std::vector<uint64_t> JsonTraceDatabase::QueryAllTrackIdsByPid(std::string pid)
 {
-    std::pair<int64_t, int64_t> result;
-    std::string sql =
-        "Select max(track_id) As maxTrackId, min(track_id) AS minTrackId from " + threadTable + " where pid = ? ;";
+    std::vector<uint64_t> trackIds;
+    std::string sql = "Select track_id AS trackId from " + threadTable + " where pid = ? ;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryExtremTrackIdPairByPid failed!.");
-        return result;
+        ServerLog::Error("QueryAllTrackIdsByPid failed!.");
+        return trackIds;
     }
     auto resultSet = stmt->ExecuteQuery(pid);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryExtremTrackIdPairByPid. Failed to get result set.", stmt->GetErrorMessage());
-        return result;
+        ServerLog::Error("QueryAllTrackIdsByPid. Failed to get result set.", stmt->GetErrorMessage());
+        return trackIds;
     }
     while (resultSet->Next()) {
         int col = resultStartIndex;
-        int64_t maxTrackId = resultSet->GetInt64(col++);
-        int64_t minTrackId = resultSet->GetInt64(col++);
-        result = std::make_pair(maxTrackId, minTrackId);
+        uint64_t trackId = resultSet->GetUint64(col++);
+        trackIds.emplace_back(trackId);
     }
-    return result;
+    return trackIds;
 }
 
 bool JsonTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, uint64_t minTimestamp,

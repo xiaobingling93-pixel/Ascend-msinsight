@@ -49,7 +49,7 @@ public:
     void UpdateSimulationDepthByCodeWithNoOverlap();
     void UpdateAllSimulationSliceDepthWithNoOverlap(std::vector<Protocol::SimpleSlice> &rowThreadTraceVec,
         const uint64_t trackId);
-    std::pair<int64_t, int64_t> QueryExtremTrackIdPairByPid(std::string pid);
+    std::vector<uint64_t> QueryAllTrackIdsByPid(std::string pid);
 
     // search
     bool QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
