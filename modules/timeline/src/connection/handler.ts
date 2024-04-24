@@ -1,14 +1,17 @@
 import { store } from '../store';
-import { CardMetaData } from '../entity/data';
+import type { CardMetaData, ThreadMetaData, ThreadTrace } from '../entity/data';
 import { runInAction } from 'mobx';
 import { handleMap, recursiveExpandUnit } from '../insight/units/unitFunc';
 import { setUnitPhaseByCardId } from '../entity/insight';
-import { CardUnit } from '../insight/units/AscendUnit';
+import type { InsightUnit } from '../entity/insight';
+import { CardUnit, ThreadUnit } from '../insight/units/AscendUnit';
 import { CardInfo } from '../components/ImportSelect';
 import { Session } from '../entity/session';
 import { NotificationHandler } from './defs';
 import connector from '../connection/index';
 import { message } from 'antd';
+import { getTimeOffset } from '../insight/units/utils';
+import { calculateDomainRange } from '../components/CategorySearch';
 
 const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
     if (data[key] === undefined) {
@@ -93,6 +96,7 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
             session.phase = 'download';
             session.endTimeAll = undefined;
             session.isSimulation = result.isSimulation;
+            session.isCluster = result.isCluster;
             result.result.forEach((item: CardInfo) => {
                 const unit = new CardUnit({ dataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
                 if (item.result as boolean) {
@@ -281,5 +285,33 @@ export const clusterDurationCompletedHandler: NotificationHandler = (data): void
     connector.send({
         event: 'updateSession',
         body: { isCluster: clusterRes, durationFileCompleted: clusterRes },
+    });
+};
+
+export const locateUnitHandler: NotificationHandler = (data): void => {
+    const { sessionStore } = store;
+    const session = sessionStore.activeSession as Session;
+    const slice = data as ThreadTrace;
+    runInAction(() => {
+        session.locateUnit = {
+            target: (unit: InsightUnit): boolean => {
+                return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId.includes(slice.rankId))) &&
+                    unit.metadata.processId === slice.processId && unit.metadata.threadId === slice.threadId;
+            },
+            onSuccess: (unit): void => {
+                const startTime = slice.startTime - getTimeOffset(session, (unit.metadata as ThreadMetaData).cardId);
+                const [rangeStart, rangeEnd] = calculateDomainRange(session, startTime, slice.duration);
+                session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
+                session.selectedData = {
+                    id: slice.id,
+                    startTime,
+                    duration: slice.duration,
+                    depth: slice.depth,
+                    threadId: slice.threadId,
+                    metaType: (unit.metadata as ThreadMetaData).metaType,
+                };
+            },
+            showDetail: true,
+        };
     });
 };

@@ -8,6 +8,7 @@ import { LeftRightContainer, addResizeEvent, chartVisbilityListener } from '../C
 import { ConditionType } from './Filter';
 import { queryOperatorCategory, queryOperatorComputeUnit } from '../RequestUtils';
 import { Session } from '../../entity/session';
+import { themeInstance } from '../../theme/theme';
 
 export type dataType = Array<{
     name: string ;
@@ -128,8 +129,9 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
         setComputeData(data);
     };
     function renderChart(): void {
-        InitCharts({ data: opTypeData, domId: 'opTypeChart', isDark: session.isDark, title: `Total Time(μs) Group by ${condition.group}` });
-        InitCharts({ data: computeData, domId: 'computeChart', isDark: session.isDark, title: 'Total Time(μs) Group by Accelerator Core' });
+        const isDark = themeInstance.currentTheme === 'dark';
+        InitCharts({ data: opTypeData, domId: 'opTypeChart', isDark, title: `Total Time(μs) Group by ${condition.group}` });
+        InitCharts({ data: computeData, domId: 'computeChart', isDark, title: 'Total Time(μs) Group by Accelerator Core' });
     }
     // 避免echarts渲染空白
     chartVisbilityListener('opTypeChart', () => {
@@ -143,7 +145,7 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
     }, [opTypeData, computeData]);
     useEffect(() => {
         renderChart();
-    }, [session.isDark]);
+    }, [themeInstance.currentTheme]);
     return (
         <LeftRightContainer
             style={{ height: '500px', padding: '20px 20px 0' }}

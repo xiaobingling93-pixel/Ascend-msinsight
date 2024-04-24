@@ -4,6 +4,8 @@
 import { store } from '../store';
 import { runInAction } from 'mobx';
 import { NotificationHandler } from './defs';
+import { updateData } from '../components/communicationAnalysis/Filter';
+import type { ConditionDataType } from '../components/communicationAnalysis/Filter';
 
 export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
@@ -76,5 +78,16 @@ const resetStatus = (): void => {
         session.parseCompleted = false;
         session.unitcount = 0;
         session.durationFileCompleted = false;
+    });
+};
+
+export const locateHCCL: NotificationHandler = (data): void => {
+    const { iterationId, operatorName, stage } = data as unknown as ConditionDataType;
+    updateData({
+        iterationId,
+        stage,
+        operatorName: iterationId && stage && operatorName,
+        rankIds: [],
+        type: 'CommunicationDurationAnalysis',
     });
 };

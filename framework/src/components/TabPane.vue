@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, onMounted, watch} from 'vue';
+import {ref, onMounted, watch, computed} from 'vue';
 import {request} from '@/centralServer/server';
 import connector from '@/connection';
 import {type ModuleConfig, modulesConfig} from '@/moduleConfig';
@@ -142,10 +142,24 @@ onMounted(async () => {
       confirmDrop(dataSource, res);
     });
 
+    connector.addListener('switchModule', (e) => {
+      const body = e.data.body;
+      const switchTo = body?.switchTo;
+      const index = visibleTabs.value.findIndex((tab) => tab.requestName === switchTo);
+      if (index > -1) {
+        activeModule.value = index;
+        if (body.toModuleEvent) {
+          connector.send({ event: body.toModuleEvent, to: index, body: body.params });
+        }
+      }
+    });
+
     if (!session.isVscode) {
         await connectRemote({remote: LOCAL_HOST, port: PORT, dataPath: []});
     }
 });
+
+const visibleTabs = computed(() => modulesConfig.filter(tab => isShow(tab)));
 watch(() => [session.isBinary, session.isCluster], () => {
     if (session.isBinary === null && session.isCluster === null) {
         return;
@@ -201,10 +215,8 @@ function toggleTab(index: number): void {
     <div class="tab-pane">
         <div class="tab-titles">
             <el-menu class="el-menu-title" mode="horizontal" background-color="var(--color-background)" router>
-                <template v-for="(moduleConfig, index) in modulesConfig">
+                <template v-for="(moduleConfig, index) in visibleTabs" :key="`title_${index}_${moduleConfig.name}`">
                     <el-menu-item
-                        :key="`title_${index}_${moduleConfig.name}`"
-                        v-if="isShow(moduleConfig)"
                         @click="() => toggleTab(index)"
                         :class="index === activeModule && 'active'"
                     >

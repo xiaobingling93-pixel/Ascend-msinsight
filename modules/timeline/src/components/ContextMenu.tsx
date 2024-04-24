@@ -11,6 +11,7 @@ import { runInAction } from 'mobx';
 import type { ThreadTrace } from '../entity/data';
 import { observer } from 'mobx-react';
 import type { TimeStamp } from '../entity/common';
+import connector from '../connection';
 
 export const MAX_ZOOM_COUNT = 10000;
 interface Position {
@@ -85,6 +86,19 @@ function fitToScreen(session: Session): void {
     });
 }
 
+function findInCommunication(session: Session): void {
+    connector.send({
+        event: 'switchModule',
+        body: {
+            switchTo: 'communication',
+            toModuleEvent: 'locateHCCL',
+            params: {
+                operatorName: session.selectedData?.name,
+            },
+        },
+    });
+}
+
 function undoZoom(session: Session, menuItem?: MenuItemModel): void {
     if (menuItem?.disabled) {
         return;
@@ -149,6 +163,11 @@ const getMenuItems = (props: Props): JSX.Element => {
         key: 'fitToScreen',
         event: fitToScreen,
         visible: session.selectedData !== undefined,
+    }, {
+        name: 'Find in Communication',
+        key: 'findInCommunication',
+        event: findInCommunication,
+        visible: ((session.selectedData?.name as string)?.startsWith('hcom_') && session.isCluster) ?? false,
     }, {
         name: 'Zoom into selection',
         key: 'zoomIntoSelection',

@@ -330,3 +330,7 @@ code {
 .theme_dark .ant-input-number-input{
     background: var(--grey85);
 }
+
+.ant-table.ant-table-small .ant-table-tbody .ant-table-wrapper:only-child .ant-table{
+    margin: 8px 8px 0 40px;
+}

@@ -52,6 +52,7 @@ export class Session {
     linkLineCategories: string[] = [];
     // 是否是算子仿真图
     isSimulation: boolean = false;
+    isCluster: boolean = false;
     // 页面可视范围的Card的CardId
     viewedCardIdSet: Set<string> = new Set<string>();
     selectedMultiSlice: string = '';

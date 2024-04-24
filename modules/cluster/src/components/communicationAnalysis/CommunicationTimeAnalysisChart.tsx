@@ -8,6 +8,9 @@ import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { addResizeEvent, chartVisbilityListener, Container, Loading, safeStr } from '../Common';
 import { colorPalette, hashToNumber } from '../../utils/colorUtil';
+import { Dropdown } from 'antd';
+import type { MenuProps } from 'antd';
+import connector from '../../connection';
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;
@@ -73,6 +76,7 @@ function renderItem(params: any, api: any): any {
             type: 'rect',
             transition: ['shape'],
             shape: rectShape,
+            name: 'op',
             style: api.style(),
         }
     );
@@ -84,6 +88,9 @@ function numberToStr(value: number): string {
 
 function nsToMs(value: number): number {
     return value * NS_TO_MS_FACTOR;
+}
+function msToNs(value: number): number {
+    return Math.round(value / NS_TO_MS_FACTOR);
 }
 
 function getTipLineStr(name: string, value: string): string {
@@ -172,13 +179,35 @@ export interface AnalysisChartData {
     maxTime: number;
     data: OperatorTimeInfo[];
 }
-function InitCharts(dataSource: AnalysisChartData): void {
+
+interface OpDetail {
+    name: string;
+    rankId: number;
+    timestamp: number;
+    duration: number;
+}
+let selectedOpDetail: OpDetail | null;
+
+function InitCharts(dataSource: AnalysisChartData, session: Session, setDopDownVisible: (_: boolean) => void): void {
     const chartDom = document.getElementById('hccl');
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
     echarts.init(chartDom).dispose();
     const myChart = echarts.init(chartDom);
+    myChart.on('contextmenu', { element: 'op' }, (e: echarts.ECElementEvent): void => {
+        if (session.unitcount === 0) {
+            return;
+        }
+        const [rankId, timestamp, , duration] = e.value as number[];
+        selectedOpDetail = {
+            name: e.name,
+            rankId,
+            timestamp: msToNs(timestamp),
+            duration: msToNs(duration),
+        };
+        setDopDownVisible(true);
+    });
     if (dataSource !== undefined) {
         myChart.setOption(wrapData(dataSource));
     }
@@ -198,22 +227,84 @@ function getChartHeight(dataSource: AnalysisChartData): number {
     return calculateDataHeight(dataSource) + DEFAULT_CHART_HEIGHT - DEFAULT_INNER_CHART_HEIGHT;
 }
 
+async function redirectToTimeline(): Promise<void> {
+    if (selectedOpDetail === null) {
+        return;
+    }
+    const { name, rankId, timestamp, duration } = selectedOpDetail;
+    const params = {
+        name,
+        rankId: rankId.toString(),
+        timestamp,
+    };
+    const res = await window.requestData('unit/one/kernelDetail', params, 'timeline');
+    connector.send({
+        event: 'switchModule',
+        body: {
+            switchTo: 'timeline',
+            toModuleEvent: 'locateUnit',
+            params: {
+                ...res,
+                ...params,
+                processId: res.pid,
+                startTime: timestamp,
+                duration,
+            },
+        },
+    });
+}
+
+const menuItems: MenuProps['items'] = [
+    {
+        label: 'Find in Timeline',
+        key: 'findInTimeline',
+        onClick: (): void => {
+            redirectToTimeline();
+        },
+    },
+];
+
+function onClickMenu(key: string, setDopDownVisible: (_: boolean) => void): void {
+    if (key === 'findInTimeline') {
+        redirectToTimeline();
+    }
+    setDopDownVisible(false);
+}
+
 const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { dataSource: AnalysisChartData; session: Session}) => {
     const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT);
+    const [dropDownVisible, setDopDownVisible] = useState(false);
     chartVisbilityListener('hccl', () => {
-        InitCharts(dataSource);
+        InitCharts(dataSource, session, setDopDownVisible);
     });
     useEffect(() => {
         setTimeout(() => {
             setChartHeight(getChartHeight(dataSource));
-            InitCharts(dataSource);
+            InitCharts(dataSource, session, setDopDownVisible);
         });
     }, [dataSource]);
     return (
         <Container
             title={'HCCL'}
             content={session.durationFileCompleted
-                ? <div id={'hccl'} style={{ height: `${chartHeight}px` }} ></div>
+                ? <Dropdown
+                    menu={{
+                        items: menuItems,
+                        onClick: ({ key }): void => onClickMenu(key, setDopDownVisible),
+                        onBlur: (e): void => {
+                            const hasItem = menuItems.findIndex(item =>
+                                (e.relatedTarget as HTMLElement)?.dataset?.menuId?.includes(item?.key as string)) !== -1;
+                            if (!hasItem) {
+                                setDopDownVisible(false);
+                            }
+                        },
+                    }}
+                    trigger={['contextMenu']}
+                    open={dropDownVisible}
+                    autoFocus
+                >
+                    <div id={'hccl'} style={{ height: `${chartHeight}px` }} ></div>
+                </Dropdown>
                 : <div style={{ height: '400px' }}><Loading style={{ margin: '200px auto 0' }}/></div> }
             bodyStyle={{ overflow: 'visible' }}
         />

@@ -5,12 +5,14 @@ import { observer } from 'mobx-react';
 import { observable, runInAction, observe } from 'mobx';
 import React, { useEffect } from 'react';
 import { Select, Radio } from 'antd';
-import { Label } from '../Common';
+import { isNull, Label } from '../Common';
 import { optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
 import { queryIterations, queryMatrixOperators, queryOperators, queryRanks, queryStages } from '../../utils/RequestUtils';
 import { Session } from '../../entity/session';
+import { debounce } from 'lodash';
 
 export interface ConditionDataType{
+    [key: string]: string | string[];
     iterationId: string ;
     rankIds: string[];
     operatorName: string ;
@@ -33,6 +35,21 @@ const defaultOptionMap = {
 };
 const conditions: ConditionDataType = observable(defaultCondition);
 const optionMap: optionMapDataType = observable(defaultOptionMap);
+
+export function updateData(filterParams: ConditionDataType): void {
+    runInAction(() => {
+        for (const key in filterParams) {
+            if (!isNull(filterParams[key])) {
+                conditions[key] = filterParams[key];
+            }
+        }
+    });
+    const hasValue = !isNull(filterParams.iterationId) && !isNull(filterParams.stage);
+    const valueChanged = filterParams.iterationId !== conditions.iterationId || filterParams.stage !== conditions.stage;
+    if (hasValue && valueChanged) {
+        handleRelatedChange('iterationId', conditions.iterationId);
+    }
+}
 
 const setOptions = async(initObj = {} as ConditionDataType): Promise<void> => {
     // step
@@ -92,7 +109,7 @@ export const getRankIdOptions = async (iterationId: string): Promise<optionDataT
     return options;
 };
 
-const handleChange = (key: keyof ConditionDataType, val: any): void => {
+const handleChange = (key: string, val: any): void => {
     runInAction(() => {
         conditions[key] = val;
     });
@@ -130,8 +147,9 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     };
     // 初始化
     useEffect(() => {
+        const debouncedHandleFilterChange = debounce(handleFilterChange, 300);
         observe(conditions, (change) => {
-            handleFilterChange(conditions);
+            debouncedHandleFilterChange(conditions);
         });
     }, []);
     useEffect(() => {

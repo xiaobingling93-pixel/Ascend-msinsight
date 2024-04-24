@@ -12,6 +12,7 @@ import { type ConditionType } from './Filter';
 import { queryOperators, queryOperatorsInStatic, queryOperatorStatic } from '../RequestUtils';
 import { runInAction } from 'mobx';
 import { Session } from '../../entity/session';
+import type { ColumnsType } from 'antd/es/table';
 
 interface FullConditionType {
     rankId: string ;
@@ -24,7 +25,7 @@ interface FullConditionType {
 };
 const OPERATOR = 'Operator';
 const OPERATOR_TYPE = 'Operator Type';
-const opl0Columns = [
+const opl0Columns: ColumnsType<any> = [
     {
         title: 'Name',
         dataIndex: 'name',

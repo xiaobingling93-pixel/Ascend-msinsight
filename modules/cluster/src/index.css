@@ -535,6 +535,9 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
 .theme_dark #root{
     background: var(--grey95);
 }
+.theme_dark .ant-dropdown-menu-title-content{
+    color: var(--grey85)
+}
 
 .communication .topC>div{
     min-width: 700px;
