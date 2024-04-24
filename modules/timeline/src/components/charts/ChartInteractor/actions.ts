@@ -17,6 +17,7 @@ import { changeRangeMarkerTimestamp } from '../../TimelineMarker';
 import { GOLDEN_RATE as MOVE_RATE } from '../../../entity/domain';
 import type { Theme } from '@emotion/react';
 import { setZoomHistory } from '../../ContextMenu';
+import { isMac } from '../../../utils/is';
 
 const dragInitData = {
     isDragging: false,
@@ -176,25 +177,22 @@ const shouldIgnoreRangeMarkerButton = (session: Session, lastPos: Pos, xReverseS
 export const mouseDownAction = (session: Session, xReverseScale: (x: number) => number, interactorMouseState: InteractorMouseState,
     e: React.MouseEvent, splitLineRef?: React.RefObject<HTMLDivElement>): MouseDownActionResult => {
     const lastPos = interactorMouseState.lastPos.current;
-    if (e.ctrlKey) {
+    const isPressingKey = (isMac && e.metaKey) || (!isMac && e.ctrlKey);
+    // 点击context menu选项时屏蔽mouseDownAction，避免当前框选丢失
+    const contextMenuVisible = session.selectedRange !== undefined && session.contextMenu.isVisible as boolean;
+    const rightClickOrNoLastPos = session.endTimeAll === undefined || !lastPos || e.button === MouseButton.RIGHT;
+    if (isPressingKey) {
         dragData = { isDragging: true, xPos: e.nativeEvent.x, domainStart: session.domainRange.domainStart, domainEnd: session.domainRange.domainEnd };
         return MouseDownActionResult.NoMouseDownRequired;
     }
-    if (session.endTimeAll === undefined || !lastPos || e.button === MouseButton.RIGHT) {
+
+    if (rightClickOrNoLastPos || shouldIgnoreRangeMarkerButton(session, lastPos, xReverseScale) || contextMenuVisible) {
         return MouseDownActionResult.NoMouseDownRequired;
     }
 
-    if (shouldIgnoreRangeMarkerButton(session, lastPos, xReverseScale)) {
-        return MouseDownActionResult.NoMouseDownRequired;
-    }
-
-    if (session.selectedRange !== undefined && session.contextMenu.isVisible as boolean) {
-        // 点击context menu选项时屏蔽mouseDownAction，避免当前框选丢失
-        return MouseDownActionResult.NoMouseDownRequired;
-    }
     const offsetX = lastPos.x;
     const offsetY = lastPos.y;
-    if (offsetX > xReverseScale(session.endTimeAll)) {
+    if (offsetX > xReverseScale(session.endTimeAll as number)) {
         runInAction(() => {
             let isSingleLine = false;
             Object.values(session.linkLines).forEach((linkLine) => {
@@ -231,7 +229,8 @@ export const mouseMoveAction = (interactorParams: InteractorParams, interactorMo
     const { hoverCanvas: canvas, session, xReverseScale, xScale, theme } = interactorParams;
     if (canvas.current === null) { return; }
     const lastPos = interactorMouseState.lastPos.current;
-    if (e.ctrlKey && dragData.isDragging) {
+    const canDrag = ((isMac && e.metaKey) || (!isMac && e.ctrlKey)) && dragData.isDragging;
+    if (canDrag) {
         moveDomainByDragging(session, dragData.xPos - e.clientX, canvas.current?.clientWidth ?? INTERACTOR_WIDTH);
         canvas.current.style.cursor = 'grabbing';
         canvas.current.style.pointerEvents = 'initial';
