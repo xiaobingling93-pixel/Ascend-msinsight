@@ -309,22 +309,14 @@ bool ClusterFileParser::AttAnalyze(const std::string& selectedPath, const std::s
         switchCommand = " && " + selectedPath.substr(0, INT_TWO);
     }
 #else
-#ifdef __linux__
-    regex = "cluster_analysis.py";
-#else
     regex = "cluster_analysis";
-#endif
 #endif
     ServerLog::Info("Start find cluster analysis executable file in dir: ", currPath);
     std::vector<std::string> exePathVector =
             FileUtil::FindFilesByRegex(currPath, std::regex(regex));
     if (!exePathVector.empty()) {
         std::string command = "cd \"" + FileUtil::PathPreprocess(selectedPath) +
-#ifdef __linux__
-                "\"" + switchCommand + " && python3 \"" + exePathVector[0] + "\" -d .";
-#else
                 "\"" + switchCommand + " && \"" + exePathVector[0] + "\" -d .";
-#endif
         if (!model.empty()) {
             command.append(" -m ").append(model);
         }
