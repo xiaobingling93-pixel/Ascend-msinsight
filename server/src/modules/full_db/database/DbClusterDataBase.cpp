@@ -64,7 +64,7 @@ bool DbClusterDataBase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseB
 {
     std::string filePath = responseBody.filePath;
     double dataSize = FileUtil::GetFileSize(filePath.c_str());
-    std::string baseInfoSql = "(select json_group_array(\"index\") as rank from (select DISTINCT \"index\" from "
+    std::string baseInfoSql = "select (select json_group_array(\"index\") as rank from (select DISTINCT \"index\" from "
         "ClusterStepTraceTime where \"index\" !='' AND type = 'rank')) as rank , (select json_group_array(step) from ("
         "select DISTINCT step from " + TABLE_STEP_TRACE_TIME +
         " where \"index\" !='')) as step, '" + std::to_string(dataSize) + "' as dataSize ";
