@@ -72,6 +72,15 @@ def clean():
             shutil.rmtree(build_dir)
 
 
+def traverse_folder_and_chmod(path, mode):
+    os.chmod(path, mode)
+    for root, dirs, files in os.walk(path):
+        for one in dirs:
+            traverse_folder_and_chmod(os.path.join(root, one), mode)
+        for one in files:
+            os.chmod(os.path.join(root, one), mode)
+
+
 def build_server():
     output_path = os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output')
     if os.path.exists(output_path):
@@ -86,7 +95,13 @@ def build_server():
 
     # 归一化构建产物目录，方便后续其他组件拷贝
     for tmp in os.listdir(output_path):
-        shutil.copytree(os.path.join(output_path, tmp, 'bin'), os.path.join(output_path, Const.BUILD_DIR, 'server'))
+        tmp_path = os.path.join(output_path, Const.BUILD_DIR, 'server')
+        os.makedirs(tmp_path)
+        bin_path = os.path.join(output_path, tmp, 'bin')
+        for file in os.listdir(bin_path):
+            if file.endswith('.a'):  # 跳过.a文件
+                continue
+            shutil.copyfile(os.path.join(bin_path, file), os.path.join(tmp_path, file))
 
 
 def build_frontend():
@@ -164,10 +179,6 @@ def build_intellij(idea_version, os_name):
 
 
 def build_light_package(version, os_name):
-    # MR门禁不跑，同时Linux环境CI尚未打通二进制包，若要编译二进制包，需要设置BUILD_BIN_PACKAGE环境变量
-    if platform.system() == Const.LINUX_OS and os.getenv('BUILD_BIN_PACKAGE') is None:
-        return
-
     platform_path = os.path.join(PROJECT_PATH, 'platform')
     os.putenv('RUSTUP_UPDATE_ROOT', 'http://rust.inhuawei.com/rustup-static/rustup')
     os.putenv('RUSTUP_DIST_SERVER', 'http://rust.inhuawei.com/rustup-static')
@@ -180,6 +191,7 @@ def build_light_package(version, os_name):
     build_cache_paths = [preview_path, target_path]
     for tmp_path in build_cache_paths:
         if os.path.exists(tmp_path):
+            traverse_folder_and_chmod(tmp_path, 0o750)
             shutil.rmtree(tmp_path)
         os.mkdir(tmp_path)
 
@@ -187,12 +199,9 @@ def build_light_package(version, os_name):
     shutil.copytree(os.path.join(platform_path, resource_dir), os.path.join(preview_path, resource_dir))
     profiler_path = os.path.join(preview_path, resource_dir, 'profiler')
     os.mkdir(profiler_path, 0o750)
-    shutil.copytree(os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, 'dist'),
-                    os.path.join(profiler_path, 'frontend'), copy_function=shutil.copy2)
+    shutil.copytree(os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, 'dist'), os.path.join(profiler_path, 'frontend'))
     shutil.copytree(os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output', 'build', 'server'),
-                    os.path.join(profiler_path, 'server'), copy_function=shutil.copy2)
-    shutil.copytree(os.path.join(platform_path, 'config'), os.path.join(preview_path, 'config'),
-                    copy_function=shutil.copy2)
+                    os.path.join(profiler_path, 'server'))
 
     # 构建底座
     cargo_cmd = 'cargo.exe' if platform.system() == Const.WINDOWS_OS else 'cargo'
@@ -204,6 +213,7 @@ def build_light_package(version, os_name):
     package_name = Const.ASCEND_INSIGHT_PREFIX + '_' + version + '_' + os_name + Const.PACKAGE_SUFFIX
     dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, package_name)
     if platform.system() == Const.WINDOWS_OS:
+        shutil.copytree(os.path.join(platform_path, 'config'), os.path.join(preview_path, 'config'))  # 仅Windows需要
         bundle_path = os.path.join(platform_path, 'bundle')
         shutil.copyfile(os.path.join(bundle_path, 'installer.nsi'), os.path.join(preview_path, 'installer.nsi'))
         nsis_cmd = os.path.join('C:\\Program Files (x86)\\NSIS', 'bin', 'makensis.exe')
@@ -214,7 +224,7 @@ def build_light_package(version, os_name):
             shutil.copyfile(os.path.join(preview_path, tmp), dst_file)
             break
     else:
-        os.chmod(os.path.join(preview_path, Const.ASCEND_INSIGHT), 0o750)
+        traverse_folder_and_chmod(preview_path, 0o550)
         shutil.make_archive(dst_file[:-4], 'zip', preview_path)
 
 
