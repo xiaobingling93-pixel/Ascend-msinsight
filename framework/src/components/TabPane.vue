@@ -145,8 +145,8 @@ onMounted(async () => {
     connector.addListener('switchModule', (e) => {
       const body = e.data.body;
       const switchTo = body?.switchTo;
-      const index = visibleTabs.value.findIndex((tab) => tab.requestName === switchTo);
-      if (index > -1) {
+      const index = modulesConfig.findIndex((tab) => tab.requestName === switchTo);
+      if (index > -1 && isShow(modulesConfig[index])) {
         activeModule.value = index;
         if (body.toModuleEvent) {
           connector.send({ event: body.toModuleEvent, to: index, body: body.params });
@@ -159,7 +159,6 @@ onMounted(async () => {
     }
 });
 
-const visibleTabs = computed(() => modulesConfig.filter(tab => isShow(tab)));
 watch(() => [session.isBinary, session.isCluster], () => {
     if (session.isBinary === null && session.isCluster === null) {
         return;
@@ -215,8 +214,10 @@ function toggleTab(index: number): void {
     <div class="tab-pane">
         <div class="tab-titles">
             <el-menu class="el-menu-title" mode="horizontal" background-color="var(--color-background)" router>
-                <template v-for="(moduleConfig, index) in visibleTabs" :key="`title_${index}_${moduleConfig.name}`">
+                <template v-for="(moduleConfig, index) in modulesConfig">
                     <el-menu-item
+                        :key="`title_${index}_${moduleConfig.name}`"
+                        v-if="isShow(moduleConfig)"
                         @click="() => toggleTab(index)"
                         :class="index === activeModule && 'active'"
                     >
