@@ -153,7 +153,7 @@ def init_remote_workspace(ssh_client, workspace):
     """
     在执行机上创建workspace
     """
-    cmd = 'rm -rf ' + workspace + ' && mkdir -p ' + workspace
+    cmd = 'chmod -R +w ' + workspace + ' && rm -rf ' + workspace + ' && mkdir -p ' + workspace
     execute_cmd(ssh_client, cmd)
 
 
@@ -161,7 +161,7 @@ def clean_remote_workspace(ssh_client, workspace):
     """
     构建完成后，清理执行机上的workspace
     """
-    cmd = 'rm -rf ' + workspace
+    cmd = 'chmod -R +w ' + workspace + ' && rm -rf ' + workspace
     execute_cmd(ssh_client, cmd)
 
 
