@@ -104,6 +104,24 @@ const webpackCfg = {
     return webpackConfig;
   },
   computeConfigure: (webpackConfig) => {
+    webpackConfig.entry = {
+      main: webpackConfig.entry,
+      detail: './src/detailIndex.ts',
+      source: './src/sourceIndex.ts',
+    };
+    webpackConfig.output.filename = 'static/js/[name].bundle.js';
+    webpackConfig.plugins.push(
+      new HtmlWebpackPlugin({
+        template: 'public/index.html',
+        filename: 'detail.html',
+        chunks: ['detail'],
+      }),
+      new HtmlWebpackPlugin({
+        template: 'public/index.html',
+        filename: 'source.html',
+        chunks: ['source'],
+      }),
+    );
     webpackConfig.plugins.push(new ModuleFederationPlugin(federationConfig));
     return webpackConfig;
   },

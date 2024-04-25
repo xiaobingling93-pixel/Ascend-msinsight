@@ -1,0 +1,31 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+*/
+.container-box{
+    height:100%;
+    background: var(--grey0);
+}
+.container-header{
+    height:3rem;
+    line-height: 3rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: left;
+    padding-left: 10px;
+}
+.container-body{
+    height:calc(100% - 3rem);
+    background: var(--grey0);
+}
+
+.theme_dark .container-box{
+    color:var(--grey8);
+    background: var(--grey95);
+}
+.theme_dark .container-header{
+    color: var(--whiteblue);
+}
+
+.theme_dark .container-body{
+    background: var(--grey95);
+}

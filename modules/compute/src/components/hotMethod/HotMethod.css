@@ -66,7 +66,7 @@ tr.selected {
 }
 .theme_dark .table-header>div {
     color: var(--whiteblue);
-    border-right: 1px solid var(--grey20);
+    border-right: 1px solid var(--grey60);
 }
 .theme_dark .ant-tooltip-inner{
     background: white;
@@ -124,4 +124,8 @@ tr.selected {
 }
 .theme_dark .hit-label>span>span:first-child{
     color: var(--grey0);
+}
+
+.th35 .ant-table.ant-table-small .ant-table-thead > tr > th{
+    height:35px;
 }

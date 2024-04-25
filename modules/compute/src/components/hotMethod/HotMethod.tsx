@@ -352,7 +352,7 @@ const Index = observer(({ session }: { session: Session }) => {
         updateInstrsColumns();
     }, [condition.onlyRelated, instrsData]);
 
-    return <div id={DomId} style={{ height: '100%', width: '100%' }}>
+    return <div id={DomId} style={{ height: '100%', width: '100%' }} className={'th35'}>
         <HeaderFixedContainer
             headerStyle={{ padding: '10px' }}
             header={

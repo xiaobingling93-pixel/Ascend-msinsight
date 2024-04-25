@@ -10,22 +10,20 @@ import App from './App';
 import connector from './connection';
 import { store } from './store';
 import { NOTIFICATION_HANDLERS } from './interface';
-import { log } from './components/Common';
 
-const root = createRoot(document.getElementById('root') as HTMLElement);
-root.render(
-    (
-        <RootStoreContext.Provider value={store}>
-            <App/>
-        </RootStoreContext.Provider>
-    ));
-
-interface CefQueryType {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
+export function init(page?: string): void {
+    const root = createRoot(document.getElementById('root') as HTMLElement);
+    root.render(
+        (
+            <RootStoreContext.Provider value={store}>
+                <App page={page}/>
+            </RootStoreContext.Provider>
+        ));
+}
 
 declare global {
     interface Window {
         setTheme: (isDark: boolean) => void;
-        cefQuery: (obj: CefQueryType) => void;
         requestData: (method: string, params: object, module?: string) => Promise<object>;
     }
 };
@@ -44,7 +42,6 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
     connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
         const res = e.data;
         if (res.body === undefined || typeof res.body !== 'object') {
-            log('[notify]', 'Wrong notify format.');
             return;
         }
         callback(res.body);

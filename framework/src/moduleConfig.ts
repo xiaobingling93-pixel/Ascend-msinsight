@@ -55,10 +55,18 @@ export const modulesConfig: ModuleConfig[] = [
         isCluster: true,
     },
     {
-        name: 'Compute',
+        name: 'Source',
         requestName: 'compute',
         attributes: {
-            src: './plugins/Compute/index.html',
+            src: './plugins/Compute/source.html',
+        },
+        isCompute: true,
+    },
+    {
+        name: 'Details',
+        requestName: 'compute',
+        attributes: {
+            src: './plugins/Compute/detail.html',
         },
         isCompute: true,
     },

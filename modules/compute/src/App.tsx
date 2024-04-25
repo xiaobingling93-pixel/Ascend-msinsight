@@ -4,17 +4,25 @@
 import { observer } from 'mobx-react';
 import React, { useEffect } from 'react';
 import { useRootStore } from './context/context';
-import HotMethod from './components/hotMethod/HotMethod';
 import connector from './connection';
+import HotMethod from './components/hotMethod/HotMethod';
+import Detail from './components/detail/Index';
 
-const App = observer(() => {
+const app = observer(({ page }: {page?: string}) => {
     const { sessionStore } = useRootStore();
-    let session = sessionStore.activeSession;
+    const session = sessionStore.activeSession;
     useEffect(() => {
-        session = sessionStore.activeSession;
         connector.send({ event: 'getParseStatus', body: { } });
     }, []);
-    return session !== undefined ? <HotMethod session={session} /> : <></>;
+    let dom;
+    if (session === undefined) {
+        dom = <></>;
+    } else if (page === 'detail') {
+        dom = <Detail session={session}/>;
+    } else {
+        dom = <HotMethod session={session} />;
+    }
+    return dom;
 });
 
-export default App;
+export default app;

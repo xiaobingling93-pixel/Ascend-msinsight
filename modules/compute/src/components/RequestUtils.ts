@@ -30,3 +30,12 @@ export const queryApiLine = async(param: {sourceName: string; coreName: string})
 export const queryApiInstr = async(): Promise<any> => {
     return window.requestData('source/api/instructions', {});
 };
+
+/**
+ * 查询算子基本信息
+ *
+ * @return {[x:string]:string|number}
+ */
+export const queryBaseInfo = async(): Promise<any> => {
+    return window.requestData('source/details/baseInfo', {});
+};
