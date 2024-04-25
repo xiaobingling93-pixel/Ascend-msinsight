@@ -134,8 +134,8 @@ const searchPath = async () => {
     setTimeout(() => {
       if (nodeEI) {
         nextTick(() => {
-          nodeEI.scrollIntoView({behavior: "smooth", block: "center"});
-        })
+          nodeEI.scrollIntoView({behavior: 'smooth', block: 'center'});
+        });
       }
     },500);
     return;
