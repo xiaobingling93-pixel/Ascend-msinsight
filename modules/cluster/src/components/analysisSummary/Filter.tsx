@@ -33,6 +33,7 @@ const orderOptions = [
     { label: 'Communication(Not Overlapped)', value: 'communicationNotOverLappedTime' },
     { label: 'Communication(Overlapped)', value: 'communicationOverLappedTime' },
     { label: 'Free', value: 'freeTime' },
+    { label: 'RankId', value: 'rankId' },
 ];
 
 // Top可选项： 1、2、4、8.......n(All)

@@ -20,8 +20,8 @@ import ResizeTable from 'lib/ResizeTable';
 import type { Session } from '../../entity/session';
 
 export interface DataType {
-    'Rank ID': string ;
-    'Operator Name': string ;
+    'Rank ID': string;
+    'Operator Name': string;
     'Start Timestamp(us)': string | number;
     'Elapse Time(ms)': string | number;
     'Transit Time(ms)': string | number;
@@ -134,6 +134,7 @@ const getRankColumns = (handleAction: VoidFunction[], conditions: any): any => {
             title: 'Rank ID',
             dataIndex: 'rankId',
             key: 'rankId',
+            sorter: (a: DataType, b: DataType) => Number(a.rankId) - Number(b.rankId),
             ellipsis: true,
             width: 70,
         },
