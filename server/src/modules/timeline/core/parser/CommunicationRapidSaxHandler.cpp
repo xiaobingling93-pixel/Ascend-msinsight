@@ -74,6 +74,21 @@ bool CommunicationRapidSaxHandler::Double(double d)
     return true;
 }
 
+bool CommunicationRapidSaxHandler::RawNumber(const char *str, SizeType len, bool copy)
+{
+    if (currentDepth != sizeDistributionDepth) {
+        return BaseReaderHandler::RawNumber(str, len, copy);
+    }
+
+    const std::string numberStr(str);
+    if (StringUtil::Contains(numberStr, ".")) {
+        tempTransitSize = std::strtod(str, nullptr);
+    } else {
+        tempInt = std::strtol(str, nullptr, INT_TEN);
+    }
+    return true;
+}
+
 bool CommunicationRapidSaxHandler::String(const char *str, rapidjson::SizeType length, bool copy)
 {
     rapidjson::Value tempKey(currentKey.c_str(), currentObject.GetAllocator());
@@ -189,7 +204,7 @@ CommunicationTimeInfo CommunicationRapidSaxHandler::MapToTimeInfo(const rapidjso
     } else {
         timeInfo.opName = tempOpName;
     }
-    timeInfo.startTime = NumberUtil::TimestampUsToNs(JsonUtil::GetDouble(json, "Start Timestamp(us)"));
+    timeInfo.startTime = NumberUtil::TimestampUsToNs(JsonUtil::GetString(json, "Start Timestamp(us)"));
     timeInfo.elapseTime = JsonUtil::GetDouble(json, "Elapse Time(ms)");
     timeInfo.idleTime = JsonUtil::GetDouble(json, "Idle Time(ms)");
     timeInfo.synchronizationTimeRatio = JsonUtil::GetDouble(json, "Synchronization Time Ratio");

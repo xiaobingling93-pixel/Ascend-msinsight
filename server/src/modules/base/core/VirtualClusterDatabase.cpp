@@ -259,6 +259,28 @@ bool VirtualClusterDatabase::ExecuteQueryExtremumTimestamp(std::string &sql, uin
     return true;
 }
 
+bool VirtualClusterDatabase::ExecuteQueryIterationAndCommunicationGroup(std::string &sql,
+    std::string &opName, uint64_t &startTime, std::string &iteration, std::string &communicationGroup)
+{
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare Cluster::QueryIterationAndCommunicationGroup statement. error:",
+            sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    sqlite3_bind_text(stmt, index++, opName.c_str(), opName.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt, index, startTime);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        iteration = sqlite3_column_type(stmt, col) == SQLITE_NULL ? "" : sqlite3_column_string(stmt, col++);
+        communicationGroup = sqlite3_column_type(stmt, col) == SQLITE_NULL ? "" : sqlite3_column_string(stmt, col++);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody, std::string sql, uint64_t startTime)
 {

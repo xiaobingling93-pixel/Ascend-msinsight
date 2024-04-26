@@ -29,6 +29,7 @@ public:
     bool Int64(int64_t i);
     bool Uint64(uint64_t u) ;
     bool Double(double d) ;
+    bool RawNumber(const Ch* str, SizeType len, bool copy);
     bool String(const char* str, rapidjson::SizeType length, bool copy) ;
     bool StartObject();
     bool Key(const char* str, rapidjson::SizeType length, bool copy) ;

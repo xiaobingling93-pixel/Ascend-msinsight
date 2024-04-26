@@ -61,7 +61,12 @@ public:
         if (us < MAX) {
             return llroundl(us * THOUSAND);
         }
-        auto str = std::to_string(us).append(THOUSAND_SUFFIX);
+        return TimestampUsToNs(std::to_string(us));
+    }
+
+    static inline int64_t TimestampUsToNs(std::string us)
+    {
+        auto str = us.append(THOUSAND_SUFFIX);
         auto index = str.find('.');
         if (index != std::string::npos) {
             str.replace(index, 1, "");

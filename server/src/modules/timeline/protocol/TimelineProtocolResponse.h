@@ -45,6 +45,8 @@ struct ThreadTraces {
     std::string threadId;
     std::string id;
     std::string cname;
+    std::string step;
+    std::string group;
 };
 
 struct UnitThreadTracesBody {

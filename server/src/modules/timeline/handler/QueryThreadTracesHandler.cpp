@@ -38,6 +38,11 @@ void QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
             .GetTrackId(request.params.cardId, request.params.processId, request.params.threadId);
     bool result =
         database->QueryThreadTraces(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
+
+    // 根据通信算子name,startTime查询step、group
+    auto clusterDatabase = DataBaseManager::Instance().GetReadClusterDatabase();
+    clusterDatabase->QueryIterationAndCommunicationGroup(response.body, TraceTime::Instance().GetStartTime());
+
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

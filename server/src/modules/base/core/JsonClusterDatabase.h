@@ -10,6 +10,7 @@
 #include "ClusterDef.h"
 #include "Protocol.h"
 #include "SummaryProtocolResponse.h"
+#include "TimelineProtocolResponse.h"
 #include "SummaryProtocolRequest.h"
 #include "CommunicationProtocolRequest.h"
 #include "CommunicationProtocolResponse.h"
@@ -37,6 +38,7 @@ public:
     void InsertGroupId(const std::set<std::string> &groupIds);
     void InsertCommunicationMatrix(CommunicationMatrixInfo &communicationMatrix);
     void InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo);
+
     bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
                           Protocol::SummaryTopRankResBody &responseBody) override;
     std::string QueryParseClusterStatus() override;
@@ -68,6 +70,8 @@ public:
         Protocol::OperatorListsResponseBody &responseBody) override;
     bool QueryCommunicationGroup(Document &responseBody) override;
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
+    bool QueryIterationAndCommunicationGroup(Protocol::UnitThreadTracesBody &responseBody,
+        uint64_t minTimestamp) override;
 
     void PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds);
 

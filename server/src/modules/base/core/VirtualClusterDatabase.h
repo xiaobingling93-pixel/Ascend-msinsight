@@ -10,6 +10,7 @@
 #include "ClusterDef.h"
 #include "Protocol.h"
 #include "SummaryProtocolResponse.h"
+#include "TimelineProtocolResponse.h"
 #include "SummaryProtocolRequest.h"
 #include "CommunicationProtocolRequest.h"
 #include "CommunicationProtocolResponse.h"
@@ -56,6 +57,8 @@ public:
     virtual bool QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
         std::vector<Protocol::OperatorNamesObject> &responseBody) = 0;
     virtual bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) = 0;
+    virtual bool QueryIterationAndCommunicationGroup(Protocol::UnitThreadTracesBody &responseBody,
+        uint64_t minTimestamp) = 0;
 
 protected:
     const std::string totalOpInfo = "Total Op Info";
@@ -96,6 +99,8 @@ protected:
     std::string GetRanksSql(std::vector<std::string> rankList);
     double ExecuteQueryMinStartTime(std::string sql);
     bool ExecuteQueryExtremumTimestamp(std::string &sql, uint64_t &min, uint64_t &max);
+    bool ExecuteQueryIterationAndCommunicationGroup(std::string &sql,
+        std::string &opName, uint64_t &startTime, std::string &iteration, std::string &communicationGroup);
 
 private:
     void GetStepsOrRanksObject(const std::string &jsonStr,

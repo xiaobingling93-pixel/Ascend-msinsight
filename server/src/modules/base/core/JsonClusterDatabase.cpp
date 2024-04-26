@@ -5,7 +5,9 @@
 #include "JsonClusterDatabase.h"
 #include "ServerLog.h"
 #include "JsonUtil.h"
+#include "CommonDefs.h"
 #include "SummaryProtocolResponse.h"
+#include "TimelineProtocolResponse.h"
 #include "TableDefs.h"
 #include "NumDefs.h"
 #include "TraceTime.h"
@@ -635,6 +637,21 @@ bool JsonClusterDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
     std::string sql = "SELECT MIN(start_time) as minTime, MAX(start_time) as maxTime "
                       "FROM " + TABLE_TIME_INFO + " WHERE start_time != 0";
     return ExecuteQueryExtremumTimestamp(sql, min, max);
+}
+
+bool JsonClusterDatabase::QueryIterationAndCommunicationGroup(Protocol::UnitThreadTracesBody &responseBody,
+                                                              uint64_t minTimestamp)
+{
+    std::string sql = "select iteration_id, stage_id from " + TABLE_TIME_INFO + " where op_name = ? and start_time = ?";
+    for (auto& itemArray : responseBody.data) {
+        for (auto& item : itemArray) {
+            if (!StringUtil::StartWith(item.name, communicationOpNamePrefix))
+                continue;
+            uint64_t reallyStartTime = item.startTime + minTimestamp;
+            ExecuteQueryIterationAndCommunicationGroup(sql, item.name, reallyStartTime, item.step, item.group);
+        }
+    }
+    return true;
 }
 
 bool JsonClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &param,

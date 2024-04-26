@@ -46,6 +46,8 @@ public:
         Protocol::OperatorListsResponseBody &responseBody) override;
     bool QueryCommunicationGroup(Document &responseBody) override;
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
+    bool QueryIterationAndCommunicationGroup(Protocol::UnitThreadTracesBody &responseBody,
+        uint64_t minTimestamp) override;
 
     void SetBaseInfo(Protocol::SummaryTopRankResBody responseBody);
     void PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds);

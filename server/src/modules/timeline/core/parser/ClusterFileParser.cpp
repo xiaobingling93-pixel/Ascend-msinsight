@@ -55,7 +55,7 @@ void ClusterFileParser::SaxParseJsonFile(const std::string& filePath, int saxHan
     rapidjson::Reader reader;
     if (saxHandlerType == 0) {
         CommunicationRapidSaxHandler rapidSaxHandler;
-        reader.Parse(is, rapidSaxHandler);
+        reader.Parse<kParseNumbersAsStringsFlag>(is, rapidSaxHandler);
     } else {
         CommunicationMatrixRapidHandler matrixRapidHandler;
         reader.Parse(is, matrixRapidHandler);

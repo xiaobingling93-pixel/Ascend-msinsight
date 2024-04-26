@@ -74,6 +74,8 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(c
             JsonUtil::AddMember(threadJson, "threadId", threadTraces.threadId, allocator);
             JsonUtil::AddMember(threadJson, "cname", threadTraces.cname, allocator);
             JsonUtil::AddMember(threadJson, "id", threadTraces.id, allocator);
+            JsonUtil::AddMember(threadJson, "step", threadTraces.step, allocator);
+            JsonUtil::AddMember(threadJson, "group", threadTraces.group, allocator);
             threadTracesArray.PushBack(threadJson, allocator);
         }
         data.PushBack(threadTracesArray, allocator);
