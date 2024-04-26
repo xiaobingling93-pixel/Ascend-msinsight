@@ -94,6 +94,8 @@ function findInCommunication(session: Session): void {
             toModuleEvent: 'locateHCCL',
             params: {
                 operatorName: session.selectedData?.name,
+                iterationId: session.selectedData?.step,
+                stage: session.selectedData?.group,
             },
         },
     });
