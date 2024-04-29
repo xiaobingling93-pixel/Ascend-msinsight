@@ -526,9 +526,9 @@ uint64_t DbTraceDataBase::QueryTotalKernel(const std::string &coreType, const st
 bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &params,
                                                 Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
-    // 精度缺失，设置200的浮动区间
+    // 精度缺失，设置500的浮动区间
     std::string sql = "select info.ROWID as id, groupName||'group' as tid from COMMUNICATION_OP info "
-                      " where opName = (select id from STRING_IDS where value = ?) and abs(startNs - ?) < 200";
+                      " where opName = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryKernelDepthAndThread, fail to prepare sql.");

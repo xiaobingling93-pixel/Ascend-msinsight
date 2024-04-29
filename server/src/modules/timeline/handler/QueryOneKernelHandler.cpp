@@ -35,6 +35,20 @@ void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
         SetResponseResult(response, false);
         ServerLog::Error("Failed to query the operator response data.");
     }
+
+    // 根据通信算子name,startTime查询step、group
+    auto clusterDatabase = DataBaseManager::Instance().GetReadClusterDatabase();
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get cluster connection. fileId:", request.params.rankId);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
+    if (!clusterDatabase->QueryIterationAndCommunicationGroup(request.params, response.body,
+        TraceTime::Instance().GetStartTime())) {
+        SetResponseResult(response, false);
+        ServerLog::Error("Failed to query the operator group and step response data.");
+    }
+
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
 }

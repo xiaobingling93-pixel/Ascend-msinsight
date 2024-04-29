@@ -145,30 +145,24 @@ bool DbClusterDataBase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
     return ExecuteQueryExtremumTimestamp(sql, min, max);
 }
 
-bool DbClusterDataBase::QueryIterationAndCommunicationGroup(Protocol::UnitThreadTracesBody &responseBody,
-    uint64_t minTimestamp)
+bool DbClusterDataBase::QueryIterationAndCommunicationGroup(Protocol::KernelParams &params,
+    Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
-    std::string sql =
-        "select step, rank_set from " + TABLE_COMM_ANALYZER_TIME + " where hccl_op_name = ? and start_timestamp = ?";
-    for (auto &itemArray : responseBody.data) {
-        for (auto &item : itemArray) {
-            if (!StringUtil::StartWith(item.name, communicationOpNamePrefix))
-                continue;
+    std::string sql = "select step, rank_set from " + TABLE_COMM_ANALYZER_TIME +
+        " where hccl_op_name = ? and abs(start_timestamp - ? / 1000.0) * 1000 <= 500";
 
-            uint64_t reallyStartTime = item.startTime + minTimestamp;
-            if (!ExecuteQueryIterationAndCommunicationGroup(sql, item.name, reallyStartTime, item.step, item.group)) {
-                return false;
-            }
-
-            // 形如"step0"处理为"0"
-            std::string stepIdPrefix = "step";
-            size_t found = item.step.find(stepIdPrefix);
-            if (found != std::string::npos) {
-                item.step.erase(found, stepIdPrefix.length());
-            }
+    uint64_t reallyStartTime = params.timestamp + minTimestamp;
+    if (ExecuteQueryIterationAndCommunicationGroup(sql, params.name, reallyStartTime, responseBody.step,
+        responseBody.group)) {
+        // 形如"step0"处理为"0"
+        std::string stepIdPrefix = "step";
+        size_t found = responseBody.step.find(stepIdPrefix);
+        if (found != std::string::npos) {
+            responseBody.step.erase(found, stepIdPrefix.length());
         }
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool DbClusterDataBase::QueryAllOperators(Protocol::OperatorDetailsParam &param,

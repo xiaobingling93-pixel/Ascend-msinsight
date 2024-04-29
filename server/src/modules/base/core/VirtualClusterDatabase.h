@@ -11,6 +11,7 @@
 #include "Protocol.h"
 #include "SummaryProtocolResponse.h"
 #include "TimelineProtocolResponse.h"
+#include "TimelineProtocolRequest.h"
 #include "SummaryProtocolRequest.h"
 #include "CommunicationProtocolRequest.h"
 #include "CommunicationProtocolResponse.h"
@@ -57,8 +58,8 @@ public:
     virtual bool QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
         std::vector<Protocol::OperatorNamesObject> &responseBody) = 0;
     virtual bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) = 0;
-    virtual bool QueryIterationAndCommunicationGroup(Protocol::UnitThreadTracesBody &responseBody,
-        uint64_t minTimestamp) = 0;
+    virtual bool QueryIterationAndCommunicationGroup(Protocol::KernelParams &params,
+        Protocol::OneKernelBody &responseBody, uint64_t minTimestamp) = 0;
 
 protected:
     const std::string totalOpInfo = "Total Op Info";

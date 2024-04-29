@@ -74,8 +74,6 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadTracesResponse>(c
             JsonUtil::AddMember(threadJson, "threadId", threadTraces.threadId, allocator);
             JsonUtil::AddMember(threadJson, "cname", threadTraces.cname, allocator);
             JsonUtil::AddMember(threadJson, "id", threadTraces.id, allocator);
-            JsonUtil::AddMember(threadJson, "step", threadTraces.step, allocator);
-            JsonUtil::AddMember(threadJson, "group", threadTraces.group, allocator);
             threadTracesArray.PushBack(threadJson, allocator);
         }
         data.PushBack(threadTracesArray, allocator);
@@ -402,6 +400,8 @@ template <> std::optional<document_t> ToResponseJson<OneKernelResponse>(const On
     JsonUtil::AddMember(body, "depth", response.body.depth, allocator);
     JsonUtil::AddMember(body, "threadId", response.body.threadId, allocator);
     JsonUtil::AddMember(body, "pid", response.body.pid, allocator);
+    JsonUtil::AddMember(body, "step", response.body.step, allocator);
+    JsonUtil::AddMember(body, "group", response.body.group, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }

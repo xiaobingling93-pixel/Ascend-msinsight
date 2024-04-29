@@ -45,8 +45,6 @@ struct ThreadTraces {
     std::string threadId;
     std::string id;
     std::string cname;
-    std::string step;
-    std::string group;
 };
 
 struct UnitThreadTracesBody {
@@ -359,6 +357,8 @@ struct OneKernelBody {
     uint64_t depth;
     std::string threadId;
     std::string pid;
+    std::string step;
+    std::string group;
 };
 
 struct OneKernelResponse : public Response {
