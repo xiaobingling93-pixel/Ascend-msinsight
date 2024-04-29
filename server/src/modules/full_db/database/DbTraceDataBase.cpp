@@ -526,6 +526,29 @@ uint64_t DbTraceDataBase::QueryTotalKernel(const std::string &coreType, const st
 bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &params,
                                                 Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
+    // 精度缺失，设置200的浮动区间
+    std::string sql = "select info.ROWID as id, groupName||'group' as tid from COMMUNICATION_OP info "
+                      " where opName = (select id from STRING_IDS where value = ?) and abs(startNs - ?) < 200";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("QueryKernelDepthAndThread, fail to prepare sql.");
+        return false;
+    }
+    std::unique_ptr<SqliteResultSet> resultSet;
+    uint64_t timestamp = params.timestamp + minTimestamp;
+    resultSet = stmt->ExecuteQuery(params.name, timestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryKernelDepthAndThread. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
+    if (resultSet->Next()) {
+        responseBody.id = resultSet->GetString("id");
+        responseBody.depth = 0;
+        responseBody.threadId = resultSet->GetString("tid");
+        responseBody.pid = "HCCL";
+        return true;
+    }
+    ServerLog::Error("QueryKernelDepthAndThread. Fail to query data. Please check whether the data is correct.");
     return false;
 }
 

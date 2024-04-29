@@ -221,17 +221,16 @@ public:
                       " WHERE main.ROWID = ?";
                 return ExecuteQuery(stmt, sql, requestParams.id);
             case PROCESS_TYPE::HCCL:
-                sql = " with tmp as (select main.globalTaskId, startNs, endNs, info.name, info.planeId,"
+                sql = " with tmp as (select main.globalTaskId, startNs, endNs, info.name,info.planeId,main.ROWID as id,"
                       " info.opId from " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO +
                       " info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
-                      " sub as (select opId as id,startNs,endNs-startNs as duration,opName as name,"
+                      " sub as (select ROWID as id,startNs,endNs-startNs as duration,opName as name,"
                       " groupName||'group' as tid, endNs from " + TABLE_COMMUNICATION_OP +
                       " where opId in (select opId from tmp group by opId) "
-                      " UNION select globalTaskId as id, startNs, endNs-startNs as duration, name, planeId||'' as tid,"
+                      " UNION select id, startNs, endNs-startNs as duration, name, planeId||'' as tid,"
                       " endNs from tmp) select id, startNs, duration, 0 as depth, name from sub "
-                      " where tid = ? AND startNs = ?";
-                return ExecuteQuery(stmt, sql, requestParams.rankId, requestParams.tid,
-                                    requestParams.startTime + minTimestamp);
+                      " where tid = ? AND id = ?";
+                return ExecuteQuery(stmt, sql, requestParams.rankId, requestParams.tid, requestParams.id);
             case PROCESS_TYPE::CANN_API:
             case PROCESS_TYPE::API:
                 sql = "select ROWID as id, startNs, endNs-startNs as duration, depth, name "
