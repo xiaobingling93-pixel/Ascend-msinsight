@@ -13,10 +13,8 @@ void UploadFileHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     UploadFileRequest &request = dynamic_cast<UploadFileRequest &>(*requestPtr.get());
     std::string sessionToken = request.token;
-    ServerLog::Info("File upload start, token = ", StringUtil::AnonymousString(sessionToken));
     if (!WsSessionManager::Instance().CheckSession(sessionToken)) {
-        ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(sessionToken),
-            ", command = ", command);
+        ServerLog::Warn("Failed to check session, command = ", command);
         return;
     }
     UploadFileParser::Instance().Parse(request);

@@ -17,10 +17,8 @@ void QueryFlowNameHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
 {
     UnitFlowNameRequest &request = dynamic_cast<UnitFlowNameRequest &>(*requestPtr.get());
     std::string token = request.token;
-    ServerLog::Info("Query flow name, token = ", StringUtil::AnonymousString(token));
     if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
-                        ", command = ", command);
+        ServerLog::Warn("Failed to check session, command = ", command);
         return;
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
@@ -33,10 +31,10 @@ void QueryFlowNameHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    int64_t trackId = TraceFileParser::Instance()
+    uint64_t trackId = TraceFileParser::Instance()
         .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
-    bool result = database->QueryFlowName(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
-    SetResponseResult(response, result);
+    database->QueryFlowName(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
+    SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
 }

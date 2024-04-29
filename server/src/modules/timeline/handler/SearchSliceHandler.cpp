@@ -16,10 +16,8 @@ void SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
 {
     SearchSliceRequest &request = dynamic_cast<SearchSliceRequest &>(*requestPtr.get());
     std::string token = request.token;
-    ServerLog::Info("Reset window, token = ", StringUtil::AnonymousString(token));
     if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
-                        ", command = ", command);
+        ServerLog::Warn("Failed to check session, command = ", command);
         return;
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);

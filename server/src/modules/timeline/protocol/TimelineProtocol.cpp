@@ -19,6 +19,7 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREADS, ToUnitThreadsRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_THREAD_DETAIL, ToThreadDetailRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_FLOW_NAME, ToUnitFlowNameRequest);
+    jsonToReqFactory.emplace(REQ_RES_UNIT_FLOWS, ToUnitFlowsRequest);
     jsonToReqFactory.emplace(REQ_RES_UNIT_FLOW, ToUnitFlowRequest);
     jsonToReqFactory.emplace(REQ_RES_RESET_WINDOW, ToResetWindowRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountRequest);
@@ -43,6 +44,7 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_UNIT_THREAD_DETAIL, ToThreadDetailResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_FLOW_NAME, ToUnitFlowNameResponseJson);
     resToJsonFactory.emplace(REQ_RES_UNIT_FLOW, ToUnitFlowResponseJson);
+    resToJsonFactory.emplace(REQ_RES_UNIT_FLOWS, ToUnitFlowsResponseJson);
     resToJsonFactory.emplace(REQ_RES_RESET_WINDOW, ToResetWindowResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_COUNT, ToSearchCountResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_SLICE, ToSearchSliceResponseJson);
@@ -163,6 +165,22 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitFlowNameRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.id, json["params"], "id");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> TimelineProtocol::ToUnitFlowsRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<UnitFlowsRequest> reqPtr = std::make_unique<UnitFlowsRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.tid, json["params"], "tid");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pid, json["params"], "pid");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.id, json["params"], "id");
     return reqPtr;
 }
@@ -413,6 +431,11 @@ std::optional<document_t> TimelineProtocol::ToUnitFlowNameResponseJson(const Res
 std::optional<document_t> TimelineProtocol::ToUnitFlowResponseJson(const Response &response)
 {
     return ToResponseJson<UnitFlowResponse>(dynamic_cast<const UnitFlowResponse &>(response));
+}
+
+std::optional<document_t> TimelineProtocol::ToUnitFlowsResponseJson(const Response &response)
+{
+    return ToResponseJson<UnitFlowsResponse>(dynamic_cast<const UnitFlowsResponse &>(response));
 }
 
 std::optional<document_t> TimelineProtocol::ToResetWindowResponseJson(const Response &response)

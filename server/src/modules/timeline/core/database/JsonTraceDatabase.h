@@ -7,10 +7,13 @@
 
 #include "VirtualTraceDatabase.h"
 #include "CacheManager.h"
+#include "ImportActionAnalyzer.h"
+#include "SliceAnalyzer.h"
+#include "FlowAnalyzer.h"
+#include "JsonSqlConstant.h"
 
-namespace Dic {
-namespace Module {
-namespace Timeline {
+
+namespace Dic::Module::Timeline {
 /*
  * 解析原始的traceView.json文件以及其他csv文件情况下的数据库处理类
  */
@@ -47,8 +50,6 @@ public:
     void CommitData();
     void UpdateSimulationDepthWithNoOverlap();
     void UpdateSimulationDepthByCodeWithNoOverlap();
-    void UpdateAllSimulationSliceDepthWithNoOverlap(std::vector<Protocol::SimpleSlice> &rowThreadTraceVec,
-        const uint64_t trackId);
     std::vector<uint64_t> QueryAllTrackIdsByPid(std::string pid);
 
     // search
@@ -68,8 +69,10 @@ public:
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData) override;
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
 
-    bool QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody,
-        uint64_t minTimestamp, int64_t trackId) override;
+    void QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody,
+        uint64_t minTimestamp, uint64_t trackId) override;
+    bool QueryUintFlows(const Protocol::UnitFlowsParams &requestParams, Protocol::UnitFlowsBody &responseBody,
+        uint64_t minTimestamp, uint64_t trackId) override;
     int SearchSliceNameCount(const Protocol::SearchCountParams &params) override;
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
         Protocol::SearchSliceBody &responseBody) override;
@@ -106,7 +109,7 @@ public:
 
     uint64_t SameOperatorsCount(const std::string &name, int64_t &trackId, uint64_t &startTime, uint64_t &endTime);
 
-    bool UpdateParseStatus(const std::string& status);
+    bool UpdateParseStatus(const std::string &status);
     bool HasFinishedParseLastTime();
 
     void SimulationUpdateProcessSortIndex();
@@ -118,12 +121,7 @@ private:
     const std::string flowTable = "flow";
     const std::string counterTable = "counter";
     const std::string timelineParseStatus = "Timeline files parsing status";
-    const std::string trackIdTimeIndex = "track_id_timestamp_end_time_index";
-    const std::string simpleSliceIndex = "track_id_depth_timestamp_end_time_index";
-    const std::string flowIndex = "flow_id_time_index";
-    const std::string kernelDetail = "kernel_detail";
     const std::string hcclType = "HCCL";
-    const int cacheSize = 1000;
     const int unit = 1000;
     const int tolerance = 100; // 匹配算子时的范围为±100
     // 5G size limit 2024.02.01
@@ -148,6 +146,9 @@ private:
     std::set<std::tuple<int64_t, std::string, std::string>> threadInfoCache;
     std::set<Trace::ThreadEvent> simulationThreadInfoCache;
     std::set<Trace::ProcessEvent> simulationProcessInfoCache;
+    std::unique_ptr<ImportActionAnalyzer> importActionAnalyzerPtr = nullptr;
+    std::unique_ptr<SliceAnalyzer> sliceAnalyzerPtr = nullptr;
+    std::unique_ptr<FlowAnalyzer> flowAnalyzerPtr = nullptr;
 
     bool SetConfig();
     bool InitSliceFlowCounterStmt();
@@ -185,9 +186,6 @@ private:
 
     void QueryAllSliceInRangeByTrackId(int64_t &traceId, std::vector<CacheSlice> &cacheSlices);
 
-    static std::set<int64_t> ComputeResultIds(const Protocol::UnitThreadTracesParams &requestParams,
-        uint64_t minTimestamp, std::vector<CacheSlice> &cacheSlices);
-
     std::vector<Protocol::RowThreadTrace> QuerySliceByIdList(uint64_t minTimestamp, int64_t traceId,
         std::set<int64_t> &ids);
 
@@ -197,10 +195,12 @@ private:
     std::vector<Protocol::SimpleSlice> QuerySimpleSliceByTimePoint(uint64_t startTime, uint64_t minTimestamp,
         int64_t trackId);
 
-    void ComputeSimulationSliceDepth(std::vector<Protocol::SimpleSlice> &rowThreadTraceVec);
+    std::vector<Protocol::FlowName> QueryFlowNameByTimeRange(uint64_t startTime, uint64_t endTime, int64_t trackId);
+
+    std::vector<FlowDetailDto> QuerySingleFlowDetail(const std::string &flowId, uint64_t minTimestamp);
 };
 } // end of namespace Timeline
-} // end of namespace Module
-} // end of namespace Dic
+// end of namespace Module
+// end of namespace Dic
 
 #endif // PROFILER_SERVER_JSON_TRACE_DATABASE_H

@@ -46,7 +46,7 @@ bool DbTraceDataBase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &
     }
     std::vector<Protocol::RowThreadTrace> rowThreadTraceVec;
     while (resultSet->Next()) {
-        Protocol::RowThreadTrace rowThreadTrace {};
+        Protocol::RowThreadTrace rowThreadTrace{};
         rowThreadTrace.id = resultSet->GetInt64("id");
         rowThreadTrace.startTime = resultSet->GetInt64("start_time");
         rowThreadTrace.duration = resultSet->GetInt64("duration");
@@ -56,7 +56,7 @@ bool DbTraceDataBase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &
     }
     std::map<int64_t, std::vector<Protocol::ThreadTraces>> threadTracesMap;
     for (auto &item : rowThreadTraceVec) {
-        Protocol::ThreadTraces threadTraces {};
+        Protocol::ThreadTraces threadTraces{};
         threadTraces.name = item.name;
         threadTraces.duration = item.duration;
         threadTraces.startTime = item.startTime;
@@ -87,7 +87,7 @@ bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestPar
         auto resultSet = TraceDatabaseHelper::QueryThreadsByPid(stmt, requestParams, minTimestamp);
         while (resultSet->Next()) {
             int col = resultStartIndex;
-            Protocol::SimpleSlice simpleSlice {};
+            Protocol::SimpleSlice simpleSlice{};
             simpleSlice.timestamp = resultSet->GetInt64(col++);
             simpleSlice.duration = resultSet->GetInt64(col++);
             simpleSlice.endTime = resultSet->GetInt64(col++);
@@ -108,15 +108,14 @@ bool DbTraceDataBase::QueryThreads(const Protocol::UnitThreadsParams &requestPar
 
     std::map<std::string, uint64_t> selfTimeKeyValue;
     TraceDatabaseHelper::CalculateSelfTime(simpleSliceVec, selfTimeKeyValue, startTime, endTime);
-    std::vector<Protocol::SimpleSlice> nRows = TraceDatabaseHelper::ThreadsInfoFilter(simpleSliceVec,
-                                                                                      startTime, endTime);
+    std::vector<Protocol::SimpleSlice> nRows =
+        TraceDatabaseHelper::ThreadsInfoFilter(simpleSliceVec, startTime, endTime);
     TraceDatabaseHelper::ReduceThread(nRows, selfTimeKeyValue, responseBody);
     return true;
 }
 
 bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
-                                        Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp,
-                                        int64_t trackId)
+    Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId)
 {
     auto stmt = CreatPreparedStatement();
     if (stmt == nullptr) {
@@ -134,7 +133,7 @@ bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requ
     std::vector<SliceDto> sliceDtoVec;
     while (resultSet->Next()) {
         int col = resultStartIndex;
-        SliceDto sliceDto {};
+        SliceDto sliceDto{};
         sliceDto.id = resultSet->GetInt64(col++);
         sliceDto.timestamp = resultSet->GetInt64(col++);
         sliceDto.duration = resultSet->GetInt64(col++);
@@ -168,7 +167,7 @@ bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requ
 }
 
 bool DbTraceDataBase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParams,
-                                      Protocol::UnitFlowBody &responseBody, uint64_t minTimestamp)
+    Protocol::UnitFlowBody &responseBody, uint64_t minTimestamp)
 {
     auto stmt = CreatPreparedStatement();
     if (stmt == nullptr) {
@@ -181,25 +180,24 @@ bool DbTraceDataBase::QueryFlowDetail(const Protocol::UnitFlowParams &requestPar
         switch (processType) {
             case PROCESS_TYPE::ASCEND_HARDWARE:
                 TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::ASCEND_HARDWARE,
-                                                     requestParams, stringsCache.at(path));
+                    requestParams, stringsCache.at(path));
                 responseBody.from.rankId = path;
                 break;
             case PROCESS_TYPE::HCCL:
-                TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::HCCL,
-                                                     requestParams, stringsCache.at(path));
+                TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::HCCL, requestParams,
+                    stringsCache.at(path));
                 responseBody.from.rankId = path;
                 break;
             case PROCESS_TYPE::CANN_API:
-            case PROCESS_TYPE::API:
-                {
-                    UnitFlowParams params;
-                    params.flowId = requestParams.id;
-                    params.id = requestParams.flowId;
-                    TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::HCCL,
-                                                         params, stringsCache.at(path));
-                    TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::ASCEND_HARDWARE,
-                                                         params, stringsCache.at(path));
-                }
+            case PROCESS_TYPE::API: {
+                UnitFlowParams params;
+                params.flowId = requestParams.id;
+                params.id = requestParams.flowId;
+                TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::HCCL, params,
+                    stringsCache.at(path));
+                TraceDatabaseHelper::QueryFlowDetail(stmt, responseBody.to, PROCESS_TYPE::ASCEND_HARDWARE, params,
+                    stringsCache.at(path));
+            }
                 responseBody.from.rankId = path;
                 break;
             default:
@@ -218,7 +216,7 @@ bool DbTraceDataBase::QueryFlowDetail(const Protocol::UnitFlowParams &requestPar
 }
 
 bool DbTraceDataBase::QueryUnitsMetadata(const std::string &fileId,
-                                         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+    std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     if (CheckTableExist(TABLE_TASK)) {
         QueryAscendHardwareMetadata(fileId, metaData);
@@ -234,9 +232,13 @@ bool DbTraceDataBase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
     return false;
 }
 
-bool DbTraceDataBase::QueryFlowName(const Protocol::UnitFlowNameParams &requestParams,
-                                    Protocol::UnitFlowNameBody &responseBody, uint64_t minTimestamp,
-                                    int64_t trackId)
+void DbTraceDataBase::QueryFlowName(const Protocol::UnitFlowNameParams &requestParams,
+    Protocol::UnitFlowNameBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
+{
+}
+
+bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
+    Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
 {
     return false;
 }
@@ -256,7 +258,7 @@ int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &par
         return 0;
     }
     if (resultSet->Next()) {
-        result =  resultSet->GetInt32(resultStartIndex);
+        result = resultSet->GetInt32(resultStartIndex);
     }
     return result;
 }
@@ -268,7 +270,7 @@ bool DbTraceDataBase::QueryFlowCategoryList(std::vector<std::string> &categories
 }
 
 bool DbTraceDataBase::SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
-                                      Protocol::SearchSliceBody &responseBody)
+    Protocol::SearchSliceBody &responseBody)
 {
     const std::string &sql = GetSearchSliceNameSql(params.isMatchExact, params.isMatchCase, responseBody.rankId);
     auto stmt = CreatPreparedStatement(sql);
@@ -291,7 +293,7 @@ bool DbTraceDataBase::SearchSliceName(const Protocol::SearchSliceParams &params,
 }
 
 bool DbTraceDataBase::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
-                                              std::vector<std::unique_ptr<Protocol::FlowEvent>> &flowDetailList)
+    std::vector<std::unique_ptr<Protocol::FlowEvent>> &flowDetailList)
 {
     std::map<std::string, std::vector<FlowEventLocation>> from;
     std::map<std::string, std::vector<FlowEventLocation>> to;
@@ -305,12 +307,12 @@ bool DbTraceDataBase::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams
     TraceDatabaseHelper::QueryFlowCategoryEvents(stmt, params, PROCESS_TYPE::ASCEND_HARDWARE, to);
     TraceDatabaseHelper::QueryFlowCategoryEvents(stmt, params, PROCESS_TYPE::HCCL, to);
 
-    for (const auto &item: from) {
-        for (const auto &fromLocation: item.second) {
+    for (const auto &item : from) {
+        for (const auto &fromLocation : item.second) {
             if (to.count(item.first) == 0) {
                 continue;
             }
-            for (const auto &toLocation: to.at(item.first)) {
+            for (const auto &toLocation : to.at(item.first)) {
                 auto event = std::make_unique<FlowEvent>();
                 event->category = "HostToDevice";
                 event->from = FlowEventLocation(fromLocation);
@@ -329,7 +331,7 @@ bool DbTraceDataBase::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams
 }
 
 bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
-                                       std::vector<Protocol::UnitCounterData> &dataList)
+    std::vector<Protocol::UnitCounterData> &dataList)
 {
     auto stmt = CreatPreparedStatement();
     if (stmt == nullptr) {
@@ -353,18 +355,18 @@ bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint
 }
 
 bool DbTraceDataBase::QueryComputeStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
-                                                 Protocol::SummaryStatisticsBody &responseBody)
+    Protocol::SummaryStatisticsBody &responseBody)
 {
     std::string stepCondition;
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
     std::string sql = "SELECT round(sum(endNs - startNs) / 1000.0, 2) as duration, TASKTYPE.value as acceleratorCore "
-                      "  FROM COMPUTE_TASK_INFO"
-                      "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
-                      "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-                      " WHERE acceleratorCore in ('AI_CPU','AI_CORE',"
-                      " 'AI_VECTOR_CORE', 'MIX_AIC', 'MIX_AIV', 'FFTS_PLUS') "
-                      " GROUP BY acceleratorCore";
+        "  FROM COMPUTE_TASK_INFO"
+        "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
+        "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
+        " WHERE acceleratorCore in ('AI_CPU','AI_CORE',"
+        " 'AI_VECTOR_CORE', 'MIX_AIC', 'MIX_AIV', 'FFTS_PLUS') "
+        " GROUP BY acceleratorCore";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         Server::ServerLog::Error("QueryComputeStatisticsData failed!. ", sqlite3_errmsg(db));
@@ -376,10 +378,10 @@ bool DbTraceDataBase::QueryComputeStatisticsData(const Protocol::SummaryStatisti
         int col = resultStartIndex;
         item.duration = static_cast<double>(sqlite3_column_int64(stmt, col++));
         item.acceleratorCore = sqlite3_column_string(stmt, col++);
-        totalDuration +=  item.duration;
+        totalDuration += item.duration;
         responseBody.summaryStatisticsItemList.push_back(item);
     }
-    for (auto &item: responseBody.summaryStatisticsItemList) {
+    for (auto &item : responseBody.summaryStatisticsItemList) {
         item.utilization = totalDuration > 0 ? item.duration / totalDuration : 0;
     }
     sqlite3_finalize(stmt);
@@ -387,7 +389,7 @@ bool DbTraceDataBase::QueryComputeStatisticsData(const Protocol::SummaryStatisti
 }
 
 bool DbTraceDataBase::QueryCommunicationStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
-                                                       Protocol::SummaryStatisticsBody &responseBody)
+    Protocol::SummaryStatisticsBody &responseBody)
 {
     return false;
 }
@@ -398,13 +400,13 @@ bool DbTraceDataBase::QueryStepDuration(const std::string &stepId, uint64_t &min
 }
 
 bool DbTraceDataBase::QueryPythonViewData(const Protocol::SystemViewParams &requestParams,
-                                          Protocol::SystemViewBody &responseBody)
+    Protocol::SystemViewBody &responseBody)
 {
     return false;
 }
 
 bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
-                                            Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp)
+    Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp)
 {
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     std::string sql = GetKernelDetailSql(requestParams);
@@ -440,30 +442,32 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
     }
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     std::string sql = "SELECT name, op_type as type, accelerator_core AS acceleratorCore, start_time AS startTime, "
-                      "duration, wait_time as waitTime, block_dim AS blockDim, input_shapes AS inputShapes, "
-                      "input_data_types AS inputDataTypes, input_formats AS inputFormats, "
-                      "output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
-                      "output_formats AS outputFormats "
-                      " FROM ("
-                      " SELECT  NAME.value AS name,  OPTYPE.value AS op_type,"
-                      "     TASKTYPE.value as accelerator_core, startNs as start_time, endNs - startNs as duration,"
-                      "     block_dim, 0 as wait_time,"
-                      "     INPUTSHAPES.value as input_shapes, INPUTDATATYPES.value as input_data_types, "
-                      "     INPUTFORMATS.value as input_formats, OUTPUTSHAPES.value as output_shapes, "
-                      "     OUTPUTDATATYPES.value as output_data_types, OUTPUTFORMATS.value as output_formats "
-                      "   FROM " + TABLE_COMPUTE_TASK_INFO +
-                      "   JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
-                      "   JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
-                      "   JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
-                      "   JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-                      "   JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
-                      "   JOIN STRING_IDS AS INPUTDATATYPES ON INPUTDATATYPES.id = COMPUTE_TASK_INFO.inputDataTypes"
-                      "   JOIN STRING_IDS AS INPUTFORMATS ON INPUTFORMATS.id = COMPUTE_TASK_INFO.inputFormats"
-                      "   JOIN STRING_IDS AS OUTPUTSHAPES ON OUTPUTSHAPES.id = COMPUTE_TASK_INFO.outputShapes"
-                      "   JOIN STRING_IDS AS OUTPUTDATATYPES ON OUTPUTDATATYPES.id = COMPUTE_TASK_INFO.outputDataTypes"
-                      "   JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats"
-                      " )subquery "
-                      "where 1=1 and name LIKE ? " + coreTypes;
+        "duration, wait_time as waitTime, block_dim AS blockDim, input_shapes AS inputShapes, "
+        "input_data_types AS inputDataTypes, input_formats AS inputFormats, "
+        "output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
+        "output_formats AS outputFormats "
+        " FROM ("
+        " SELECT  NAME.value AS name,  OPTYPE.value AS op_type,"
+        "     TASKTYPE.value as accelerator_core, startNs as start_time, endNs - startNs as duration,"
+        "     block_dim, 0 as wait_time,"
+        "     INPUTSHAPES.value as input_shapes, INPUTDATATYPES.value as input_data_types, "
+        "     INPUTFORMATS.value as input_formats, OUTPUTSHAPES.value as output_shapes, "
+        "     OUTPUTDATATYPES.value as output_data_types, OUTPUTFORMATS.value as output_formats "
+        "   FROM " +
+        TABLE_COMPUTE_TASK_INFO +
+        "   JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
+        "   JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
+        "   JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
+        "   JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
+        "   JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
+        "   JOIN STRING_IDS AS INPUTDATATYPES ON INPUTDATATYPES.id = COMPUTE_TASK_INFO.inputDataTypes"
+        "   JOIN STRING_IDS AS INPUTFORMATS ON INPUTFORMATS.id = COMPUTE_TASK_INFO.inputFormats"
+        "   JOIN STRING_IDS AS OUTPUTSHAPES ON OUTPUTSHAPES.id = COMPUTE_TASK_INFO.outputShapes"
+        "   JOIN STRING_IDS AS OUTPUTDATATYPES ON OUTPUTDATATYPES.id = COMPUTE_TASK_INFO.outputDataTypes"
+        "   JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats"
+        " )subquery "
+        "where 1=1 and name LIKE ? " +
+        coreTypes;
 
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
@@ -476,7 +480,7 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
 }
 
 void DbTraceDataBase::SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
-                                      Protocol::KernelDetailsBody &responseBody) const
+    Protocol::KernelDetailsBody &responseBody) const
 {
     while (resultSet->Next()) {
         Protocol::KernelDetail detail;
@@ -524,7 +528,7 @@ uint64_t DbTraceDataBase::QueryTotalKernel(const std::string &coreType, const st
 }
 
 bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &params,
-                                                Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
+    Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
     // 精度缺失，设置500的浮动区间
     std::string sql = "select info.ROWID as id, groupName||'group' as tid from COMMUNICATION_OP info "
@@ -561,7 +565,7 @@ std::vector<std::string> DbTraceDataBase::QueryCoreType()
 {
     std::vector<std::string> acceleratorCoreList;
     std::string sql = "SELECT DISTINCT TASKTYPE.value as accelerator_core FROM " + TABLE_COMPUTE_TASK_INFO +
-            " JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType ORDER BY accelerator_core";
+        " JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType ORDER BY accelerator_core";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryCoreType, fail to prepare sql.");
@@ -585,8 +589,7 @@ OneKernelData DbTraceDataBase::QueryKernelTid(uint64_t trackId)
 }
 
 bool DbTraceDataBase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
-                                               Protocol::UnitThreadTracesSummaryBody &responseBody,
-                                               uint64_t minTimestamp)
+    Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp)
 {
     auto stmt = CreatPreparedStatement();
     if (stmt == nullptr) {
@@ -645,9 +648,9 @@ void DbTraceDataBase::UpdateWaitTime()
     }
     // 查询数据
     std::string sql = "SELECT deviceId, startNs, endNs,'compute' AS type, CTI.ROWID AS id FROM TASK main JOIN "
-                      "main.COMPUTE_TASK_INFO CTI ON main.globalTaskId = CTI.globalTaskId UNION SELECT deviceId, "
-                      "opInfo.startNs, opInfo.endNs, 'communication' AS type, opInfo.ROWID AS id FROM COMMUNICATION_OP "
-                      "opInfo JOIN TASK ON TASK.connectionId = opInfo.connectionId ORDER BY startNs;";
+        "main.COMPUTE_TASK_INFO CTI ON main.globalTaskId = CTI.globalTaskId UNION SELECT deviceId, "
+        "opInfo.startNs, opInfo.endNs, 'communication' AS type, opInfo.ROWID AS id FROM COMMUNICATION_OP "
+        "opInfo JOIN TASK ON TASK.connectionId = opInfo.connectionId ORDER BY startNs;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("UpdateWaitTime, fail to prepare sql.");
@@ -695,7 +698,7 @@ bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedState
         ServerLog::Error("Failed to start Transaction.");
         return false;
     }
-    for (const auto &item: taskWaitTimeCache) {
+    for (const auto &item : taskWaitTimeCache) {
         stmt->Reset();
         stmt->BindParams(item.waitTime, item.id);
         if (!stmt->Execute()) {
@@ -786,19 +789,19 @@ void DbTraceDataBase::UpdateAllDepth()
     }
 
     std::string sql = "select format('%s-%s', deviceId, streamId) as key, ROWID as id,startNs, endNs from TASK "
-                      "                      order by deviceId, streamId, startNs, globalTaskId;";
+        "                      order by deviceId, streamId, startNs, globalTaskId;";
     if (CheckTableExist(TABLE_TASK) && NeedUpdateDepth(TABLE_TASK)) {
         UpdateDepth(sql, updateTaskDepthStmt);
     }
 
     sql = "select format('%s-', globalTid) as key, startNs, endNs, ROWID as id from " + TABLE_API +
-          " order by globalTid, startNs;";
+        " order by globalTid, startNs;";
     if (CheckTableExist(TABLE_API) && NeedUpdateDepth(TABLE_API)) {
         UpdateDepth(sql, updateApiDepthStmt);
     }
 
     sql = "select format('%s-%s', globalTid, type) as key, startNs, endNs, ROWID as id from " + TABLE_CANN_API +
-          " order by globalTid, type, startNs;";
+        " order by globalTid, type, startNs;";
     if (CheckTableExist(TABLE_CANN_API) && NeedUpdateDepth(TABLE_CANN_API)) {
         UpdateDepth(sql, updateCannApiDepthStmt);
     }
@@ -829,8 +832,8 @@ void DbTraceDataBase::UpdateDepth(const std::string &sql, std::unique_ptr<Sqlite
         data[key].push_back(task);
     }
     std::vector<int64_t> endList;
-    for (auto &deviceData: data) {
-        for (auto &task: deviceData.second) {
+    for (auto &deviceData : data) {
+        for (auto &task : deviceData.second) {
             for (task.depth = 0; task.depth < endList.size() && endList[task.depth] > task.start; task.depth++) {
             }
             if (task.depth >= endList.size()) {
@@ -855,7 +858,7 @@ bool DbTraceDataBase::UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &
         return false;
     }
     bool result = true;
-    for (const auto &item: taskDepthCache) {
+    for (const auto &item : taskDepthCache) {
         stmt->Reset();
         stmt->BindParams(item.depth, item.id);
         if (!stmt->Execute()) {
@@ -957,7 +960,7 @@ bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::Un
 {
     PROCESS_TYPE types[] = {PROCESS_TYPE::CANN_API, PROCESS_TYPE::API};
     std::map<std::string, std::vector<MetaDataDto>> threadMap;
-    for (const auto &type: types) {
+    for (const auto &type : types) {
         auto typeName = ENUM_TO_STR(type).value_or("");
         if (!CheckTableExist(typeName)) {
             ServerLog::Info("QueryHostMetadata failed, table ", typeName, " Not Exist.");
@@ -967,13 +970,13 @@ bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::Un
         switch (type) {
             case PROCESS_TYPE::CANN_API:
                 sql = " select EAL.name, globalTid, type, max(depth) as maxDepth from " + typeName +
-                      " a join ENUM_API_TYPE EAL on a.type = EAL.id "
-                      " group by type, globalTid order by globalTid, type desc";
+                    " a join ENUM_API_TYPE EAL on a.type = EAL.id "
+                    " group by type, globalTid order by globalTid, type desc";
                 break;
             case PROCESS_TYPE::API:
                 sql = " select 'pytorch' as name, globalTid, 'pytorch' as type,"
-                      " max(depth) as maxDepth from " + typeName +
-                      " a group by globalTid order by globalTid";
+                    " max(depth) as maxDepth from " +
+                    typeName + " a group by globalTid order by globalTid";
                 break;
             default:
                 return false;
@@ -1003,11 +1006,11 @@ bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::Un
 }
 
 bool DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
-                                       std::map<std::string, std::vector<MetaDataDto>> &threadMap)
+    std::map<std::string, std::vector<MetaDataDto>> &threadMap)
 {
     int64_t curPid = 0;
     std::unique_ptr<UnitTrack> process;
-    for (auto &thread: threadMap) {
+    for (auto &thread : threadMap) {
         auto globalTid = atoll(thread.first.c_str());
         auto pid = globalTid >> 32;
         auto tid = globalTid & 0XFFFFFFFF;
@@ -1015,17 +1018,15 @@ bool DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::Uni
             if (process.operator bool()) {
                 metaData.emplace_back(std::move(process));
             }
-            process = GenerateBaseUnitTrack("process", path, std::to_string(pid),
-                                            "process " + std::to_string(pid),
-                                            ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
+            process = GenerateBaseUnitTrack("process", path, std::to_string(pid), "process " + std::to_string(pid),
+                ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
             curPid = pid;
         }
-        auto threadUnit = GenerateBaseUnitTrack("process", path, thread.first,
-                                                "Thread " + std::to_string(tid),
-                                                ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
-        auto cannApiUnit = GenerateBaseUnitTrack("label", path, thread.first,
-                                                 "CANN", ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
-        for (const auto &item: thread.second) {
+        auto threadUnit = GenerateBaseUnitTrack("process", path, thread.first, "Thread " + std::to_string(tid),
+            ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
+        auto cannApiUnit =
+            GenerateBaseUnitTrack("label", path, thread.first, "CANN", ENUM_TO_STR(PROCESS_TYPE::CANN_API).value());
+        for (const auto &item : thread.second) {
             auto level = GenerateBaseUnitTrack("thread", path, thread.first, "", item.metaType);
             level->metaData.threadId = item.threadId;
             level->metaData.threadName = item.threadName;
@@ -1047,8 +1048,8 @@ bool DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::Uni
 }
 
 std::unique_ptr<Protocol::UnitTrack> DbTraceDataBase::GenerateBaseUnitTrack(const std::string &type,
-    const std::string &cardId, const std::string &processId,
-    const std::string &processName, const std::string &metaType)
+    const std::string &cardId, const std::string &processId, const std::string &processName,
+    const std::string &metaType)
 {
     std::unique_ptr<Protocol::UnitTrack> unitTrack = std::make_unique<Protocol::UnitTrack>();
     unitTrack->type = type;
@@ -1060,10 +1061,10 @@ std::unique_ptr<Protocol::UnitTrack> DbTraceDataBase::GenerateBaseUnitTrack(cons
 }
 
 bool DbTraceDataBase::QueryAscendHardwareMetadata(const std::string &fileId,
-                                                  std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+    std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     std::string sql = "select globalPid, streamId, max(depth) as maxDepth from " + TABLE_TASK +
-                      " where deviceId = ? group by globalPid, streamId";
+        " where deviceId = ? group by globalPid, streamId";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryAscendHardwareMetadata failed!.");
@@ -1075,11 +1076,9 @@ bool DbTraceDataBase::QueryAscendHardwareMetadata(const std::string &fileId,
         return "";
     }
     auto metaType = ENUM_TO_STR(PROCESS_TYPE::ASCEND_HARDWARE).value_or("");
-    auto ascendHardware = GenerateBaseUnitTrack("process", fileId,
-                                                metaType, "Ascend Hardware", metaType);
+    auto ascendHardware = GenerateBaseUnitTrack("process", fileId, metaType, "Ascend Hardware", metaType);
     while (resultSet->Next()) {
-        auto thread = GenerateBaseUnitTrack("thread", fileId,
-                                            ascendHardware->metaData.processId, "", metaType);
+        auto thread = GenerateBaseUnitTrack("thread", fileId, ascendHardware->metaData.processId, "", metaType);
         thread->metaData.threadId = resultSet->GetString("streamId");
         thread->metaData.threadName = "Stream " + thread->metaData.threadId;
         thread->metaData.maxDepth = resultSet->GetInt32("maxDepth") + 1;
@@ -1090,14 +1089,15 @@ bool DbTraceDataBase::QueryAscendHardwareMetadata(const std::string &fileId,
 }
 
 bool DbTraceDataBase::QueryHcclMetadata(const std::string &fileId,
-                                        std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+    std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     std::string sql = "with main as (select planeId, op.groupName from " + TABLE_COMMUNICATION_TASK_INFO +
-            " info join " + TABLE_TASK + " task on task.globalTaskId = info.globalTaskId "
-            " join COMMUNICATION_OP op on op.opId = info.opId where deviceId = ?)\n"
-            " select 'Plane ' || planeId as name, planeId as id  from main group by planeId\n"
-            " union select 'Group ' || row_number() over () || ' Communication' as name, groupName||'group' as id "
-            " from main group by groupName";
+        " info join " + TABLE_TASK +
+        " task on task.globalTaskId = info.globalTaskId "
+        " join COMMUNICATION_OP op on op.opId = info.opId where deviceId = ?)\n"
+        " select 'Plane ' || planeId as name, planeId as id  from main group by planeId\n"
+        " union select 'Group ' || row_number() over () || ' Communication' as name, groupName||'group' as id "
+        " from main group by groupName";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryHcclMetadata failed!.");
@@ -1109,11 +1109,9 @@ bool DbTraceDataBase::QueryHcclMetadata(const std::string &fileId,
         return "";
     }
     auto metaType = ENUM_TO_STR(PROCESS_TYPE::HCCL).value_or("");
-    auto hccl = GenerateBaseUnitTrack("process", fileId,
-                                      metaType, "HCCL", metaType);
+    auto hccl = GenerateBaseUnitTrack("process", fileId, metaType, "HCCL", metaType);
     while (resultSet->Next()) {
-        auto thread = GenerateBaseUnitTrack("thread", fileId,
-                                            hccl->metaData.processId, "", metaType);
+        auto thread = GenerateBaseUnitTrack("thread", fileId, hccl->metaData.processId, "", metaType);
         thread->metaData.threadId = resultSet->GetString("id");
         thread->metaData.threadName = resultSet->GetString("name");
         thread->metaData.maxDepth = 1;
@@ -1124,10 +1122,10 @@ bool DbTraceDataBase::QueryHcclMetadata(const std::string &fileId,
 }
 
 bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
-                                           std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+    std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     PROCESS_TYPE types[] = {PROCESS_TYPE::HBM, PROCESS_TYPE::LLC};
-    for (const auto &type: types) {
+    for (const auto &type : types) {
         auto typeName = ENUM_TO_STR(type).value_or("");
         if (!CheckTableExist(typeName)) {
             ServerLog::Info("QueryCounterMetadata failed, table ", typeName, " Not Exist.");
@@ -1139,15 +1137,15 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
         switch (type) {
             case PROCESS_TYPE::HBM:
                 sql = "select case when value='read' then 'Read(B/s)' else 'Write(B/s)' end as typeName,\n"
-                      "    hbmId || '/' || case when value='read' then 'Read' else 'Write' end as name\n"
-                      "FROM HBM join STRING_IDS on type = id WHERE deviceId = ? GROUP BY hbmId, type";
+                    "    hbmId || '/' || case when value='read' then 'Read' else 'Write' end as name\n"
+                    "FROM HBM join STRING_IDS on type = id WHERE deviceId = ? GROUP BY hbmId, type";
                 break;
             case PROCESS_TYPE::LLC:
                 sql = "with main as (select llcId, mode from LLC where deviceId = ? group by llcId, mode)"
-                      " select 'Throughput(B/s)' as typeName, llcId || ' ' || case when value='read' then 'Read' else"
-                      " 'Write' end || '/Throughput' as name  from main join STRING_IDS on mode = id "
-                      " UNION select 'Hit Rate(%)' as typeName, llcId || ' ' || case when value='read' then 'Read' else"
-                      " 'Write' end || '/Hit Rate' as name  from main join STRING_IDS on mode = id ";
+                    " select 'Throughput(B/s)' as typeName, llcId || ' ' || case when value='read' then 'Read' else"
+                    " 'Write' end || '/Throughput' as name  from main join STRING_IDS on mode = id "
+                    " UNION select 'Hit Rate(%)' as typeName, llcId || ' ' || case when value='read' then 'Read' else"
+                    " 'Write' end || '/Hit Rate' as name  from main join STRING_IDS on mode = id ";
                 break;
         }
         auto stmt = CreatPreparedStatement(sql);
@@ -1161,8 +1159,7 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
             return "";
         }
         while (resultSet->Next()) {
-            auto thread = GenerateBaseUnitTrack("counter", fileId, typeName,
-                                                resultSet->GetString("name"), typeName);
+            auto thread = GenerateBaseUnitTrack("counter", fileId, typeName, resultSet->GetString("name"), typeName);
             thread->metaData.threadName = typeName + " " + thread->metaData.processName;
             thread->metaData.dataType = StringUtil::Split(resultSet->GetString("typeName"), ",");
             counter->children.emplace_back(std::move(thread));
@@ -1173,10 +1170,10 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
 }
 
 bool DbTraceDataBase::GenerateCounterMetadata(const std::string &fileId,
-                                              std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+    std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     PROCESS_TYPE types[] = {PROCESS_TYPE::ACC_PMU, PROCESS_TYPE::DDR, PROCESS_TYPE::STARS_SOC, PROCESS_TYPE::NPU_MEM};
-    for (const auto &type: types) {
+    for (const auto &type : types) {
         auto typeName = ENUM_TO_STR(type).value_or("");
         if (!CheckTableExist(typeName)) {
             ServerLog::Info("GenerateCounterMetadata failed, table ", typeName, " Not Exist.");
@@ -1187,26 +1184,25 @@ bool DbTraceDataBase::GenerateCounterMetadata(const std::string &fileId,
         std::vector<std::vector<std::string>> dataTypes;
         switch (type) {
             case PROCESS_TYPE::ACC_PMU:
-                units = {"readBwLevel", "readOstLevel", "writeBwLevel", "writeOstLevel"};
-                dataTypes = {{"value", "acc_id"}};
+                units = { "readBwLevel", "readOstLevel", "writeBwLevel", "writeOstLevel" };
+                dataTypes = { { "value", "acc_id" } };
                 break;
             case PROCESS_TYPE::DDR:
-                units = {"Read", "Write"};
-                dataTypes = {{"Read(B/s)"}, {"Write(B/s)"}};
+                units = { "Read", "Write" };
+                dataTypes = { { "Read(B/s)" }, { "Write(B/s)" } };
                 break;
             case PROCESS_TYPE::STARS_SOC:
                 counter->metaData.processName = "Stars Soc";
-                units = {"L2 Buffer Bw Level", "Mata Bw Level"};
-                dataTypes = {{"L2 Buffer Bw Level"}, {"Mata Bw Level"}};
+                units = { "L2 Buffer Bw Level", "Mata Bw Level" };
+                dataTypes = { { "L2 Buffer Bw Level" }, { "Mata Bw Level" } };
                 break;
             case PROCESS_TYPE::NPU_MEM:
-                units = {"APP/DDR", "APP/HBM", "APP/MEMORY", "Device/DDR", "Device/HBM", "Device/MEMORY"};
-                dataTypes = {{"B"}};
+                units = { "APP/DDR", "APP/HBM", "APP/MEMORY", "Device/DDR", "Device/HBM", "Device/MEMORY" };
+                dataTypes = { { "B" } };
                 break;
         }
         for (int index = 0; index < units.size(); index++) {
-            auto thread = GenerateBaseUnitTrack("counter", fileId, typeName,
-                                                units.at(index), typeName);
+            auto thread = GenerateBaseUnitTrack("counter", fileId, typeName, units.at(index), typeName);
             thread->metaData.threadName = thread->metaData.processName;
             auto dataType = dataTypes.size() == 1 ? dataTypes[0] : dataTypes[index];
             thread->metaData.dataType.insert(thread->metaData.dataType.end(), dataType.begin(), dataType.end());
@@ -1218,18 +1214,17 @@ bool DbTraceDataBase::GenerateCounterMetadata(const std::string &fileId,
 }
 
 bool DbTraceDataBase::QueryDurationFromTaskByTimeRange(const Protocol::ThreadDetailParams &requestParams,
-                                                       SliceDto sliceDto, std::vector<uint64_t> &nextDepthResult,
-                                                       int64_t trackId)
+    SliceDto sliceDto, std::vector<uint64_t> &nextDepthResult, int64_t trackId)
 {
     std::string sql = "SELECT endNs - startNs as duration FROM " + TABLE_TASK +
-                      " WHERE depth = ? AND endNs <= ? AND startNs >= ? AND streamId = ?";
+        " WHERE depth = ? AND endNs <= ? AND startNs >= ? AND streamId = ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryDurationFromTaskByTimeRange. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(requestParams.depth + 1,
-        sliceDto.timestamp + sliceDto.duration, sliceDto.timestamp, trackId);
+    auto resultSet = stmt->ExecuteQuery(requestParams.depth + 1, sliceDto.timestamp + sliceDto.duration,
+        sliceDto.timestamp, trackId);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryDurationFromTaskByTimeRange. Failed to get result set.", stmt->GetErrorMessage());
         return false;
@@ -1254,31 +1249,35 @@ std::string DbTraceDataBase::GetSearchSliceNameSql(bool isMatchExact, bool isMat
         nameMatch = "select id from STRING_IDS where lower(value) like lower('%'||?||'%')";
     }
     if (strcmp(rankId.c_str(), path.c_str()) == 0) {
-        sql = "with ids as (" + nameMatch + ") "
-              "SELECT globalTid as pid, type as tid, startNs - ? as startTime,endNs - startNs as duration, "
-              " depth, api.id, 'HOST' as metaType ,? as rankId"
-              " FROM (select globalTid, type, startNs, endNs, depth, ROWID as id, name from " + TABLE_CANN_API;
+        sql = "with ids as (" + nameMatch +
+            ") "
+            "SELECT globalTid as pid, type as tid, startNs - ? as startTime,endNs - startNs as duration, "
+            " depth, api.id, 'HOST' as metaType ,? as rankId"
+            " FROM (select globalTid, type, startNs, endNs, depth, ROWID as id, name from " +
+            TABLE_CANN_API;
         if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
             sql += " UNION all select globalTid, 'pytorch' as type, startNs, endNs, depth,"
-                   " ROWID as id, name from " + TABLE_API;
+                " ROWID as id, name from " +
+                TABLE_API;
         }
         sql += " ) api join ids on ids.id = api.name ORDER BY startNs LIMIT 1 OFFSET ?";
     } else {
-        sql = "with ids as (" + nameMatch + "), minTime as (select ? as value),\n"
-              " tasks as (select ROWID, globalTaskId, taskType, 'ASCEND HARDWARE' as pid, streamId as tid, "
-              " startNs - minTime.value as startTime, endNs - startNs as duration,depth from TASK join minTime "
-              " where deviceId = ? ORDER BY startTime),\n"
-              " com as (select opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid, startTime, duration, 0 as depth,"
-              " name from COMMUNICATION_TASK_INFO info join tasks on info.globalTaskId=tasks.globalTaskId "
-              " ORDER BY startTime)\n"
-              " select * from ( select coalesce(compute.name, main.taskType) as name, main.pid, main.pid as metaType,"
-              " main.tid, main.startTime, main.duration, main.depth, main.ROWID as id from tasks main\n"
-              " left join COMPUTE_TASK_INFO compute on compute.globalTaskId = main.globalTaskId union ALL"
-              " select name, pid, pid as meatType, tid, startTime, duration, depth, id from com "
-              " union ALL select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
-              " startNs - minTime.value as startTime, op.ROWID as id, endNs - startNs as duration, 0 as depth\n"
-              " from COMMUNICATION_OP op join minTime join (select opId from com group by opId) a \n"
-              " on op.opId = a.opId ORDER BY startTime ) allNames join ids on ids.id = allNames.name LIMIT 1 OFFSET ?";
+        sql = "with ids as (" + nameMatch +
+            "), minTime as (select ? as value),\n"
+            " tasks as (select ROWID, globalTaskId, taskType, 'ASCEND HARDWARE' as pid, streamId as tid, "
+            " startNs - minTime.value as startTime, endNs - startNs as duration,depth from TASK join minTime "
+            " where deviceId = ? ORDER BY startTime),\n"
+            " com as (select opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid, startTime, duration, 0 as depth,"
+            " name from COMMUNICATION_TASK_INFO info join tasks on info.globalTaskId=tasks.globalTaskId "
+            " ORDER BY startTime)\n"
+            " select * from ( select coalesce(compute.name, main.taskType) as name, main.pid, main.pid as metaType,"
+            " main.tid, main.startTime, main.duration, main.depth, main.ROWID as id from tasks main\n"
+            " left join COMPUTE_TASK_INFO compute on compute.globalTaskId = main.globalTaskId union ALL"
+            " select name, pid, pid as meatType, tid, startTime, duration, depth, id from com "
+            " union ALL select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
+            " startNs - minTime.value as startTime, op.ROWID as id, endNs - startNs as duration, 0 as depth\n"
+            " from COMMUNICATION_OP op join minTime join (select opId from com group by opId) a \n"
+            " on op.opId = a.opId ORDER BY startTime ) allNames join ids on ids.id = allNames.name LIMIT 1 OFFSET ?";
     }
     return sql;
 }
@@ -1297,26 +1296,29 @@ std::string DbTraceDataBase::GetSearchSliceNameCountSql(bool isMatchExact, bool 
         nameMatch = "select id from STRING_IDS where lower(value) like lower('%'||?||'%')";
     }
     if (strcmp(rankId.c_str(), "Host") == 0) {
-        sql = "with ids as (" + nameMatch + ") "
-                                            " SELECT count(1),? as id FROM (select name from " + TABLE_CANN_API;
+        sql = "with ids as (" + nameMatch +
+            ") "
+            " SELECT count(1),? as id FROM (select name from " +
+            TABLE_CANN_API;
         if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
             sql += " union all select name from  " + TABLE_API;
         }
         sql += ") api join ids on id = api.name";
     } else {
-        sql = "with ids as (" + nameMatch + "), "
-              "     tasks as (select globalTaskId, taskType from TASK where deviceId = ?), "
-              "     com as (select opId, info.globalTaskId, name from COMMUNICATION_TASK_INFO info join tasks "
-              " on  info.globalTaskId = tasks.globalTaskId), "
-              "     compute as (select info.globalTaskId, name from COMPUTE_TASK_INFO info join tasks "
-              " on  info.globalTaskId = tasks.globalTaskId) "
-              "select count(1) from ( "
-              "    select coalesce(compute.name, main.taskType) as name from tasks main "
-              "         left join compute on compute.globalTaskId = main.globalTaskId "
-              "    union ALL select name from com "
-              "    union ALL select opName as name from COMMUNICATION_OP op join (select opId from com group by opId) a"
-              " on op.opId = a.opId "
-              ") allNames join ids on id = allNames.name;";
+        sql = "with ids as (" + nameMatch +
+            "), "
+            "     tasks as (select globalTaskId, taskType from TASK where deviceId = ?), "
+            "     com as (select opId, info.globalTaskId, name from COMMUNICATION_TASK_INFO info join tasks "
+            " on  info.globalTaskId = tasks.globalTaskId), "
+            "     compute as (select info.globalTaskId, name from COMPUTE_TASK_INFO info join tasks "
+            " on  info.globalTaskId = tasks.globalTaskId) "
+            "select count(1) from ( "
+            "    select coalesce(compute.name, main.taskType) as name from tasks main "
+            "         left join compute on compute.globalTaskId = main.globalTaskId "
+            "    union ALL select name from com "
+            "    union ALL select opName as name from COMMUNICATION_OP op join (select opId from com group by opId) a"
+            " on op.opId = a.opId "
+            ") allNames join ids on id = allNames.name;";
     }
     return sql;
 }

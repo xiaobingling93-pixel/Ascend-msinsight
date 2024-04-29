@@ -28,6 +28,7 @@ private:
     static std::unique_ptr<Request> ToUnitThreadsRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToThreadDetailRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitFlowNameRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToUnitFlowsRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitFlowRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToResetWindowRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToSearchCountRequest(const json_t &json, std::string &error);
@@ -49,6 +50,7 @@ private:
     static std::optional<document_t> ToThreadDetailResponseJson(const Response &response);
     static std::optional<document_t> ToUnitFlowNameResponseJson(const Response &response);
     static std::optional<document_t> ToUnitFlowResponseJson(const Response &response);
+    static std::optional<document_t> ToUnitFlowsResponseJson(const Response &response);
     static std::optional<document_t> ToResetWindowResponseJson(const Response &response);
     static std::optional<document_t> ToSearchCountResponseJson(const Response &response);
     static std::optional<document_t> ToSearchSliceResponseJson(const Response &response);

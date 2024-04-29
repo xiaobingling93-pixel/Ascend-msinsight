@@ -292,8 +292,10 @@ export const drawOnMove = ({
 };
 
 const heightMap = new Map();
-// 是否是缩略图
+// 是否是线程缩略图
 const threadIsCol: Map<string, boolean> = new Map();
+// 是否是进程缩略图
+const processIsCol: Map<string, boolean> = new Map();
 const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
     const height = pinnedAreaHeight;
 
@@ -303,6 +305,9 @@ const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
                 continue;
             }
             const metadata = unit.metadata as ThreadMetaData;
+            if (metadata.processId !== undefined) {
+                heightMap.set(`${metadata.cardId}-${metadata.processId}`, height);
+            }
             if (metadata.threadId !== undefined && metadata.processId !== undefined) {
                 heightMap.set(`${metadata.cardId}-${metadata.processId}-${metadata.threadId}`, height);
                 if (unit.collapsible && !unit.isExpanded) {
@@ -340,6 +345,7 @@ export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height
 
     heightMap.clear();
     threadIsCol.clear();
+    processIsCol.clear();
     const pinnedScrollArea = document.getElementsByClassName('pinnedScrollArea');
     const pinnedAreaHeight = pinnedScrollArea[0]?.clientHeight ?? 0;
     updateUnitHeight(session, pinnedAreaHeight);
@@ -350,8 +356,15 @@ const UNDRAW_HEIGHT = 45;
 const getHeight = (session: Session, data: DataBlock, cardId: string): number | undefined => {
     let height;
     const unitHeight = heightMap.get(`${cardId}-${data.pid}-${data.tid}`);
+    if (unitHeight === undefined) {
+        // 进程折叠的情况
+        const processUnitHeight = heightMap.get(`${cardId}-${data.pid}`);
+        height = UNDRAW_HEIGHT + processUnitHeight - session.scrollTop + (0.5 * UnitHeight.UPPER);
+        processIsCol.set(`${cardId}-${data.pid}`, true);
+        return height;
+    }
     const isCol = threadIsCol.get(`${cardId}-${data.pid}-${data.tid}`);
-    if (unitHeight !== undefined && isCol) {
+    if (isCol) {
         // 缩略泳道连线位置
         height = UNDRAW_HEIGHT + unitHeight - session.scrollTop + (0.5 * UnitHeight.COLL);
     } else {
@@ -374,6 +387,9 @@ function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: stri
     const targetY = getHeight(session, to, targetCardId);
     const sourceX = li(from.timestamp - getTimeOffset(session, sourceCardId));
     const sourceY = getHeight(session, from, sourceCardId);
+    if (processIsCol.get(`${targetCardId}-${to.pid}`) && processIsCol.get(`${sourceCardId}-${from.pid}`)) {
+        return;
+    }
     if ((sourceY === undefined || targetY === undefined)) {
         return;
     }
@@ -395,7 +411,7 @@ function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: stri
         fromY = fromY / len;
         const yLen = Math.abs(fromY - targetY);
         const xLen = Math.abs(fromX - targetX);
-        if (xLen === 0 || yLen === 0) {
+        if (xLen === 0) {
             return;
         }
         drawArrow(ctx, {

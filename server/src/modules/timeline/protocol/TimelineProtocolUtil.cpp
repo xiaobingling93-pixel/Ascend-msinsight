@@ -199,6 +199,35 @@ template <> std::optional<document_t> ToResponseJson<UnitFlowResponse>(const Uni
     return std::move(json);
 }
 
+template <> std::optional<document_t> ToResponseJson<UnitFlowsResponse>(const UnitFlowsResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t unitAllFlows(kArrayType);
+    for (const auto &item: response.body.unitAllFlows) {
+        json_t unitCatFlows(kObjectType);
+        JsonUtil::AddMember(unitCatFlows, "cat", item.cat, allocator);
+        json_t flows(kArrayType);
+        for (const auto &flow: item.flows) {
+            json_t flowJson(kObjectType);
+            JsonUtil::AddMember(flowJson, "title", flow.title, allocator);
+            JsonUtil::AddMember(flowJson, "cat", flow.cat, allocator);
+            JsonUtil::AddMember(flowJson, "id", flow.id, allocator);
+            JsonUtil::AddMember(flowJson, "from", FlowLocationToJson(flow.from, allocator), allocator);
+            JsonUtil::AddMember(flowJson, "to", FlowLocationToJson(flow.to, allocator), allocator);
+            flows.PushBack(flowJson, allocator);
+        }
+        JsonUtil::AddMember(unitCatFlows, "flows", flows, allocator);
+        unitAllFlows.PushBack(unitCatFlows, allocator);
+    }
+    JsonUtil::AddMember(body, "unitAllFlows", unitAllFlows, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
+
 template <> std::optional<document_t> ToResponseJson<ResetWindowResponse>(const ResetWindowResponse &response)
 {
     document_t json(kObjectType);

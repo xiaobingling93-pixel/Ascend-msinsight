@@ -17,10 +17,8 @@ void QueryThreadDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
 {
     ThreadDetailRequest &request = dynamic_cast<ThreadDetailRequest &>(*requestPtr.get());
     std::string token = request.token;
-    ServerLog::Info("Query thread detail, token = ", StringUtil::AnonymousString(token));
     if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
-                        ", command = ", command);
+        ServerLog::Warn("Failed to check session, command = ", command);
         return;
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);

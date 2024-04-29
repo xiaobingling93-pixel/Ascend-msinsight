@@ -20,10 +20,8 @@ void RemoteDeleteHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
 {
     RemoteDeleteRequest &request = dynamic_cast<RemoteDeleteRequest &>(*requestPtr.get());
     std::string token = request.token;
-    ServerLog::Info("Reset window, token = ", StringUtil::AnonymousString(token));
     if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
-                        ", command = ", command);
+        ServerLog::Warn("Failed to check session, command = ", command);
         return;
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);

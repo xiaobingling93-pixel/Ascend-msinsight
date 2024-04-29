@@ -154,6 +154,28 @@ struct UnitFlowResponse : public Response {
     UnitFlowBody body;
 };
 
+struct UnitSingleFlow {
+    std::string title;
+    std::string cat;
+    std::string id;
+    FlowLocation from;
+    FlowLocation to;
+};
+
+struct UnitCatFlows {
+    std::string cat;
+    std::vector<UnitSingleFlow> flows;
+};
+
+struct UnitFlowsBody {
+    std::vector<UnitCatFlows> unitAllFlows;
+};
+
+struct UnitFlowsResponse : public Response {
+    UnitFlowsResponse() : Response(REQ_RES_UNIT_FLOWS) {}
+    UnitFlowsBody body;
+};
+
 struct ResetWindowResponse : public Response {
     ResetWindowResponse() : Response(REQ_RES_RESET_WINDOW) {}
 };
@@ -167,7 +189,7 @@ struct RowThreadTrace {
     int64_t traceId = 0;
     std::string name;
     std::string cname;
-    bool operator < (const RowThreadTrace& right) const
+    bool operator < (const RowThreadTrace &right) const
     {
         if (depth < right.depth) {
             return true;
@@ -191,7 +213,7 @@ struct SimpleSlice {
     uint64_t endTime = 0;
     int32_t depth = 0;
     std::string name;
-    bool operator < (const SimpleSlice& right) const
+    bool operator < (const SimpleSlice &right) const
     {
         if (depth < right.depth) {
             return true;
@@ -202,7 +224,7 @@ struct SimpleSlice {
         return false;
     }
 
-    bool operator > (const SimpleSlice& right) const
+    bool operator > (const SimpleSlice &right) const
     {
         if (depth > right.depth) {
             return true;

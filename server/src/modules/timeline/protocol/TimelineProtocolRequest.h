@@ -19,7 +19,7 @@ struct ImportActionParams {
 };
 
 struct ImportActionRequest : public Request {
-    ImportActionRequest() : Request(REQ_RES_IMPORT_ACTION) {};
+    ImportActionRequest() : Request(REQ_RES_IMPORT_ACTION){};
     ImportActionParams params;
 };
 
@@ -34,7 +34,7 @@ struct UnitThreadTracesParams {
 };
 
 struct UnitThreadTracesRequest : public Request {
-    UnitThreadTracesRequest() : Request(REQ_RES_UNIT_THREAD_TRACES) {};
+    UnitThreadTracesRequest() : Request(REQ_RES_UNIT_THREAD_TRACES){};
     UnitThreadTracesParams params;
 };
 
@@ -47,7 +47,7 @@ struct UnitThreadTracesSummaryParams {
 };
 
 struct UnitThreadTracesSummaryRequest : public Request {
-    UnitThreadTracesSummaryRequest() : Request(REQ_RES_UNIT_THREAD_TRACES_SUMMARY) {};
+    UnitThreadTracesSummaryRequest() : Request(REQ_RES_UNIT_THREAD_TRACES_SUMMARY){};
     UnitThreadTracesSummaryParams params;
 };
 
@@ -61,7 +61,7 @@ struct UnitThreadsParams {
 };
 
 struct UnitThreadsRequest : public Request {
-    UnitThreadsRequest() : Request(REQ_RES_UNIT_THREADS) {};
+    UnitThreadsRequest() : Request(REQ_RES_UNIT_THREADS){};
     UnitThreadsParams params;
 };
 
@@ -76,7 +76,7 @@ struct ThreadDetailParams {
 };
 
 struct ThreadDetailRequest : public Request {
-    ThreadDetailRequest() : Request(REQ_RES_UNIT_THREAD_DETAIL) {};
+    ThreadDetailRequest() : Request(REQ_RES_UNIT_THREAD_DETAIL){};
     ThreadDetailParams params;
 };
 
@@ -91,8 +91,22 @@ struct UnitFlowNameParams {
 };
 
 struct UnitFlowNameRequest : public Request {
-    UnitFlowNameRequest() : Request(REQ_RES_UNIT_FLOW_NAME) {};
+    UnitFlowNameRequest() : Request(REQ_RES_UNIT_FLOW_NAME){};
     UnitFlowNameParams params;
+};
+
+struct UnitFlowsParams {
+    std::string rankId;
+    std::string tid;
+    std::string pid;
+    std::string id;
+    uint64_t startTime = 0;
+    uint64_t endTime = 0;
+};
+
+struct UnitFlowsRequest : public Request {
+    UnitFlowsRequest() : Request(REQ_RES_UNIT_FLOWS){};
+    UnitFlowsParams params;
 };
 
 struct UnitFlowParams {
@@ -105,15 +119,14 @@ struct UnitFlowParams {
 };
 
 struct UnitFlowRequest : public Request {
-    UnitFlowRequest() : Request(REQ_RES_UNIT_FLOW) {};
+    UnitFlowRequest() : Request(REQ_RES_UNIT_FLOW){};
     UnitFlowParams params;
 };
 
-struct ResetWindowParams {
-};
+struct ResetWindowParams {};
 
 struct ResetWindowRequest : public Request {
-    ResetWindowRequest() : Request(REQ_RES_RESET_WINDOW) {};
+    ResetWindowRequest() : Request(REQ_RES_RESET_WINDOW){};
     ResetWindowParams params;
 };
 
@@ -125,7 +138,7 @@ struct SearchCountParams {
 };
 
 struct SearchCountRequest : public Request {
-    SearchCountRequest() : Request(REQ_RES_SEARCH_COUNT) {};
+    SearchCountRequest() : Request(REQ_RES_SEARCH_COUNT){};
     SearchCountParams params;
 };
 
@@ -138,7 +151,7 @@ struct SearchSliceParams {
 };
 
 struct SearchSliceRequest : public Request {
-    SearchSliceRequest() : Request(REQ_RES_SEARCH_SLICE) {};
+    SearchSliceRequest() : Request(REQ_RES_SEARCH_SLICE){};
     SearchSliceParams params;
 };
 
@@ -147,7 +160,7 @@ struct RemoteDeleteParams {
 };
 
 struct RemoteDeleteRequest : public Request {
-    RemoteDeleteRequest() : Request(REQ_RES_REMOTE_DELETE) {};
+    RemoteDeleteRequest() : Request(REQ_RES_REMOTE_DELETE){};
     RemoteDeleteParams params;
 };
 
@@ -156,7 +169,7 @@ struct FlowCategoryListParams {
 };
 
 struct FlowCategoryListRequest : public Request {
-    FlowCategoryListRequest() : Request(REQ_RES_FLOW_CATEGORY_LIST) {};
+    FlowCategoryListRequest() : Request(REQ_RES_FLOW_CATEGORY_LIST){};
     FlowCategoryListParams params;
 };
 
@@ -169,7 +182,7 @@ struct FlowCategoryEventsParams {
 };
 
 struct FlowCategoryEventsRequest : public Request {
-    FlowCategoryEventsRequest() : Request(REQ_RES_FLOW_CATEGORY_EVENTS) {};
+    FlowCategoryEventsRequest() : Request(REQ_RES_FLOW_CATEGORY_EVENTS){};
     FlowCategoryEventsParams params;
 };
 
@@ -184,7 +197,7 @@ struct UnitCounterParams {
 };
 
 struct UnitCounterRequest : public Request {
-    UnitCounterRequest() : Request(REQ_RES_UNIT_COUNTER) {};
+    UnitCounterRequest() : Request(REQ_RES_UNIT_COUNTER){};
     UnitCounterParams params;
 };
 struct SystemViewParams {
@@ -201,7 +214,7 @@ struct SystemViewParams {
 };
 
 struct SystemViewRequest : public Request {
-    SystemViewRequest() : Request(REQ_RES_UNIT_SYSTEM_VIEW) {};
+    SystemViewRequest() : Request(REQ_RES_UNIT_SYSTEM_VIEW){};
     SystemViewParams params;
 };
 
@@ -216,7 +229,7 @@ struct KernelDetailsParams {
 };
 
 struct KernelDetailsRequest : public Request {
-    KernelDetailsRequest() : Request(REQ_RES_UNIT_KERNEL_DETAILS) {};
+    KernelDetailsRequest() : Request(REQ_RES_UNIT_KERNEL_DETAILS){};
     KernelDetailsParams params;
 };
 
@@ -228,7 +241,7 @@ struct KernelParams {
 };
 
 struct KernelRequest : public Request {
-    KernelRequest() : Request(REQ_RES_ONE_KERNEL_DETAILS) {};
+    KernelRequest() : Request(REQ_RES_ONE_KERNEL_DETAILS){};
     KernelParams params;
 };
 
@@ -246,7 +259,7 @@ struct UnitThreadsOperatorsParams {
 };
 
 struct UnitThreadsOperatorsRequest : public Request {
-    UnitThreadsOperatorsRequest() : Request(REQ_RES_SAME_OPERATORS_DURATION) {};
+    UnitThreadsOperatorsRequest() : Request(REQ_RES_SAME_OPERATORS_DURATION){};
     UnitThreadsOperatorsParams params;
 };
 
@@ -278,7 +291,6 @@ struct UploadFileRequest : public Request {
     UploadFileRequest() : Request(REQ_RES_UPLOAD_FILE) {}
     UploadFileParams params;
 };
-
 } // end of namespace Protocol
 } // end of namespace Dic
 

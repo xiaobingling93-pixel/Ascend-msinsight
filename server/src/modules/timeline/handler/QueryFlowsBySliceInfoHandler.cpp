@@ -1,42 +1,42 @@
-/*
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
- */
-
+//
+// * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+//
 #include "ServerLog.h"
 #include "WsSessionManager.h"
-#include "TraceTime.h"
 #include "DataBaseManager.h"
-#include "QueryFlowCategoryListHandler.h"
-
+#include "TraceFileParser.h"
+#include "TraceTime.h"
+#include "QueryFlowsBySliceInfoHandler.h"
 namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+void QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    FlowCategoryListRequest &request = dynamic_cast<FlowCategoryListRequest &>(*requestPtr.get());
+    UnitFlowsRequest &request = dynamic_cast<UnitFlowsRequest &>(*requestPtr.get());
     std::string token = request.token;
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Warn("Failed to check session, command = ", command);
         return;
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
-    std::unique_ptr<FlowCategoryListResponse> responsePtr = std::make_unique<FlowCategoryListResponse>();
-    FlowCategoryListResponse &response = *responsePtr.get();
+    std::unique_ptr<UnitFlowsResponse> responsePtr = std::make_unique<UnitFlowsResponse>();
+    UnitFlowsResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
-        SetResponseResult(response, true);
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    bool result = database->QueryFlowCategoryList(response.body.category);
+    uint64_t trackId =
+        TraceFileParser::Instance().GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
+    bool result =
+        database->QueryUintFlows(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
 }
-
 } // Timeline
 } // Module
 } // Dic

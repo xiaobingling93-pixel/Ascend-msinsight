@@ -16,10 +16,8 @@ void QueryFlowCategoryEventsHandler::HandleRequest(std::unique_ptr<Protocol::Req
 {
     FlowCategoryEventsRequest &request = dynamic_cast<FlowCategoryEventsRequest &>(*requestPtr.get());
     std::string token = request.token;
-    ServerLog::Info("Query flow category event, token = ", StringUtil::AnonymousString(token));
     if (!WsSessionManager::Instance().CheckSession(token)) {
-        ServerLog::Warn("Failed to check session, token = ", StringUtil::AnonymousString(token),
-                        ", command = ", command);
+        ServerLog::Warn("Failed to check session, command = ", command);
         return;
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);

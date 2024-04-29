@@ -10,6 +10,12 @@
 
 namespace Dic {
 namespace Protocol {
+#pragma region <<JsonDataBase>>
+const std::string LINE_START = "s";
+const std::string LINE_END = "f";
+const std::string LINE_END_OPTIONAL = "t";
+#pragma region <<JsonDataBase>>
+
 #pragma region <<Module>>
 const std::string MODULE_UNKNOWN = "unknown";
 const std::string MODULE_GLOBAL = "global";
@@ -55,6 +61,7 @@ const std::string REQ_RES_UNIT_THREADS = "unit/threads";
 const std::string REQ_RES_UNIT_THREAD_DETAIL = "unit/threadDetail";
 const std::string REQ_RES_UNIT_FLOW_NAME = "unit/flowName";
 const std::string REQ_RES_UNIT_FLOW = "unit/flow";
+const std::string REQ_RES_UNIT_FLOWS = "unit/flows";
 const std::string REQ_RES_RESET_WINDOW = "remote/reset";
 const std::string REQ_RES_UNIT_SYSTEM_VIEW = "unit/systemView";
 const std::string REQ_RES_UNIT_KERNEL_DETAILS = "unit/kernelDetails";

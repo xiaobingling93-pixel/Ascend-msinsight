@@ -1,7 +1,7 @@
 import {
     chart, ChartDesc,
     InsightUnit,
-    LinkDataDesc,
+    LinkDataDesc, LinkLine, LinkLines,
     MetaData,
     on,
     singleData,
@@ -142,6 +142,29 @@ const EmptyJSXElement = (): JSX.Element | null => {
     return <></>;
 };
 
+interface FlowPoint {
+    depth: number;
+    duration: number;
+    id: string;
+    name: string;
+    pid: string;
+    tid: string;
+    timestamp: number;
+}
+
+interface FlowEvent {
+    cat: string;
+    from: FlowPoint;
+    to: FlowPoint;
+    id: string;
+    title: string;
+}
+
+interface CategoryFlows {
+    cat: string;
+    flows: FlowEvent[];
+}
+
 export const ThreadUnit = unit<ThreadMetaData>({
     name: 'Thread',
     pinType: 'copied',
@@ -223,11 +246,30 @@ export const ThreadUnit = unit<ThreadMetaData>({
         },
         onClick: async (data, session, metadata) => {
             if (data === undefined) { return; }
+            const linkFlow = generateFlowParam(metadata as ThreadMetaData, data);
+            const raw = await window.request((metadata as ThreadMetaData).dataSource as DataSource, { command: 'unit/flows', params: linkFlow as Record<string, unknown> }) as any;
+            const categoryFlowEvents = raw.unitAllFlows as CategoryFlows[] ?? [];
+            const newLines: LinkLines = {};
+            for (const categoryFlowEvent of categoryFlowEvents) {
+                const cat = categoryFlowEvent.cat;
+                const singleCatLinkLine: LinkLine = [];
+                for (const flow of categoryFlowEvent.flows) {
+                    const singleLine: Record<string, unknown> = {
+                        category: flow.cat,
+                        cardId: linkFlow.rankId,
+                        from: flow.from,
+                        to: flow.to,
+                    };
+                    singleCatLinkLine.push(singleLine);
+                }
+                newLines[cat] = singleCatLinkLine;
+            }
             runInAction(() => {
                 session.selectedData = { ...data, threadId: (metadata as ThreadMetaData).threadId };
                 if (!session.isSimulation) {
-                    session.linkDetail = generateLinkDetail((metadata as ThreadMetaData).threadName.toLowerCase().includes('stream') ? 'Incoming flow' : 'Outgoing flow');
-                    session.linkFlow = generateFlowParam(metadata as ThreadMetaData, data);
+                    session.linkLines = newLines;
+                    session.singleLinkLine = newLines;
+                    session.renderTrigger = !session.renderTrigger;
                 }
             });
         },
