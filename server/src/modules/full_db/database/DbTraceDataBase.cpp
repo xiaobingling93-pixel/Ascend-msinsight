@@ -18,6 +18,10 @@ static std::map<std::string, std::map<std::string, std::string>> stringsCache;
 DbTraceDataBase::~DbTraceDataBase()
 {
     stringsCache.erase(path);
+    updateCannApiDepthStmt = nullptr;
+    insertOverlapStmt = nullptr;
+    updateApiDepthStmt = nullptr;
+    updateTaskDepthStmt = nullptr;
 }
 
 bool DbTraceDataBase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
@@ -142,11 +146,16 @@ bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requ
         sliceDtoVec.emplace_back(sliceDto);
     }
 
-    if (sliceDtoVec.size() != 1) {
+    if (sliceDtoVec.empty()) {
         ServerLog::Error("select slice error!");
         return false;
     }
     uint64_t selfTime = sliceDtoVec.at(0).duration;
+    responseBody.data.title = sliceDtoVec[0].name;
+    responseBody.data.duration = sliceDtoVec[0].duration;
+    if (requestParams.metaType == TABLE_OVERLAP_ANALYSIS) {
+        return true;
+    }
     std::vector<uint64_t> nextDepthResult;
     QueryDurationFromTaskByTimeRange(requestParams, sliceDtoVec.at(0), nextDepthResult, trackId);
     if (nextDepthResult.empty()) {
@@ -158,8 +167,6 @@ bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requ
     }
     responseBody.emptyFlag = false;
     responseBody.data.selfTime = selfTime;
-    responseBody.data.title = sliceDtoVec[0].name;
-    responseBody.data.duration = sliceDtoVec[0].duration;
     responseBody.data.cat = sliceDtoVec[0].cat;
     uint64_t id = sliceDtoVec.at(0).id;
     TraceDatabaseHelper::QueryTaskInfoById(stmt, requestParams, responseBody, stringsCache.at(path));
@@ -221,10 +228,29 @@ bool DbTraceDataBase::QueryUnitsMetadata(const std::string &fileId,
     if (CheckTableExist(TABLE_TASK)) {
         QueryAscendHardwareMetadata(fileId, metaData);
         QueryHcclMetadata(fileId, metaData);
+        GenerateOverlapAnalysisMetadata(fileId, metaData);
     }
     QueryCounterMetadata(fileId, metaData);
     GenerateCounterMetadata(fileId, metaData);
     return false;
+}
+
+bool DbTraceDataBase::GenerateOverlapAnalysisMetadata(const std::string &fileId,
+                                                      std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+{
+    auto metaType = ENUM_TO_STR(PROCESS_TYPE::OVERLAP_ANALYSIS).value_or("");
+    auto overlap_analysis = GenerateBaseUnitTrack("process", fileId, metaType, metaType, metaType);
+    for (int index = 0; index < OVERLAP_TYPES.size(); index++) {
+        auto thread = GenerateBaseUnitTrack("thread", fileId,
+                                            overlap_analysis->metaData.processId, "", metaType);
+        thread->metaData.threadId = std::to_string(index);
+        thread->metaData.threadName = OVERLAP_TYPES[index];
+        thread->metaData.maxDepth = 1;
+        overlap_analysis->children.emplace_back(std::move(thread));
+        stringsCache.at(path).emplace(metaType + std::to_string(index), OVERLAP_TYPES[index]);
+    }
+    metaData.emplace_back(std::move(overlap_analysis));
+    return true;
 }
 
 bool DbTraceDataBase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
@@ -640,19 +666,143 @@ void DbTraceDataBase::UpdateStartTime()
     sqlite3_finalize(stmt);
 }
 
+void DbTraceDataBase::GenerateOverlapAnalysis()
+{
+    if (!CheckTableExist(TABLE_OVERLAP_ANALYSIS)) {
+        Server::ServerLog::Error("GenerateOverlapAnalysis:Table OVERLAP_ANALYSIS is not exist.");
+        return;
+    }
+    if (CheckValueFromStatusInfoTable(OVERLAP_ANALYSIS_STATUS, FINISH_STATUS)) {
+        Server::ServerLog::Info("GenerateOverlapAnalysis already finish. skip");
+        return;
+    }
+    {
+        std::unique_lock<std::recursive_mutex> lockGuard(mutex);
+        ExecSql("delete from OVERLAP_ANALYSIS where 1 = 1");
+    }
+    auto rankIds = QueryRankId();
+    for (const auto &rankId: rankIds) {
+        std::vector<OVERLAP_INFO> timeInfoList; // 包含computing,Communication 覆盖数据
+        QueryTaskTimeInfo(true, timeInfoList, rankId);
+        QueryTaskTimeInfo(false, timeInfoList, rankId);
+        if (timeInfoList.empty()) {
+            continue;
+        }
+        std::sort(timeInfoList.begin(), timeInfoList.end(), std::less<OVERLAP_INFO>());
+        std::vector<OVERLAP_INFO> overlapInfoList;
+        OVERLAP_INFO curBlock = OVERLAP_INFO(timeInfoList.begin()->startNs, timeInfoList.begin()->endNs,
+                                             timeInfoList.begin()->type); // 记录当前最大截结束时间对应的覆盖区块
+        for (const auto &timeInfo: timeInfoList) {
+            if (curBlock.type == 1) { // Communication = 1
+                overlapInfoList.emplace_back(curBlock.startNs,  // Communication(Not Overlapped) = 2
+                                             timeInfo.startNs > curBlock.endNs ? curBlock.endNs : timeInfo.startNs, 2);
+            }
+            if (timeInfo.startNs > curBlock.endNs) {
+                overlapInfoList.emplace_back(curBlock.endNs, timeInfo.startNs, 3); // Free = 3
+                curBlock.endNs = timeInfo.endNs;
+                curBlock.type = timeInfo.type;
+                curBlock.startNs = timeInfo.startNs;
+            } else {
+                curBlock.type = timeInfo.endNs > curBlock.endNs ? timeInfo.type : curBlock.type;
+                curBlock.startNs = timeInfo.endNs > curBlock.endNs ? curBlock.endNs : timeInfo.endNs;
+                curBlock.endNs = timeInfo.endNs > curBlock.endNs ? timeInfo.endNs : curBlock.endNs;
+            }
+        }
+        if (InsertOverlapAnalysisInfo(timeInfoList, rankId) && InsertOverlapAnalysisInfo(overlapInfoList, rankId)) {
+            Server::ServerLog::Info("GenerateOverlapAnalysis success");
+        } else {
+            Server::ServerLog::Error("GenerateOverlapAnalysis fail");
+            return;
+        }
+    }
+    UpdateValueIntoStatusInfoTable(OVERLAP_ANALYSIS_STATUS, FINISH_STATUS);
+}
+
+bool DbTraceDataBase::InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> &overlapInfoList,
+                                                const std::string &rankId)
+{
+    std::lock_guard<std::recursive_mutex> lockGuard(mutex);
+    int64_t size = overlapInfoList.size();
+    int64_t count = size / cacheSize;
+    bool result = true;
+    for (int64_t index = 0; index <= count; ++index) {
+        int64_t start = index * cacheSize;
+        int64_t length = cacheSize;
+        if (size - start < cacheSize) {
+            length = size - start;
+        }
+        if (!StartTransaction()) {
+            ServerLog::Error("Failed to start Transaction.");
+            return false;
+        }
+        for (int64_t tmpIndex = start; tmpIndex < start + length; tmpIndex++) {
+            insertOverlapStmt->Reset();
+            insertOverlapStmt->BindParams(rankId, overlapInfoList[tmpIndex].startNs,
+                                          overlapInfoList[tmpIndex].endNs, overlapInfoList[tmpIndex].type);
+            if (!insertOverlapStmt->Execute()) {
+                ServerLog::Error("Failed to InsertOverlap");
+                result = false;
+                break;
+            }
+        }
+        if (!EndTransaction()) {
+            ServerLog::Error("Failed to end Transaction.");
+            return false;
+        }
+    }
+    return result;
+}
+
+void DbTraceDataBase::QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_INFO> &timeInfoList,
+                                        const std::string &rankId)
+{
+    std::string sql;
+    if (isComputing) {
+        sql = "select startNs, endNs from TASK main join COMPUTE_TASK_INFO info "
+              " on info.globalTaskId = main.globalTaskId where deviceId=? and startNs != endNs order by startNs, endNs";
+    } else {
+        sql = "select startNs, endNs from TASK main join COMMUNICATION_TASK_INFO info "
+              " on info.globalTaskId = main.globalTaskId where deviceId=? and startNs != endNs order by startNs, endNs";
+    }
+    auto stmt = CreatPreparedStatement();
+    try {
+        auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, rankId);
+        OVERLAP_INFO curInfo {};
+        bool hasCurInfo = false;
+        while (resultSet->Next()) { // Computing = 0, Communication = 1
+            auto info = OVERLAP_INFO(resultSet->GetInt64("startNs"), resultSet->GetInt64("endNs"), isComputing ? 0 : 1);
+            if (!hasCurInfo) {
+                curInfo = info;
+                hasCurInfo = true;
+            } else if (info.startNs <= curInfo.endNs) {
+                curInfo.endNs = info.endNs;
+            } else {
+                timeInfoList.emplace_back(curInfo);
+                curInfo = info;
+            }
+        }
+        if (hasCurInfo) {
+            timeInfoList.emplace_back(curInfo);
+        }
+    } catch (DatabaseException &e) {
+        ServerLog::Error("QueryTaskTimeInfo Fail, ", e.What());
+        return;
+    }
+}
+
 void DbTraceDataBase::UpdateWaitTime()
 {
     if (!CheckTableExist(TABLE_COMPUTE_TASK_INFO) || !CheckTableExist(TABLE_COMMUNICATION_OP) ||
         !CheckTableDataInvalid(TABLE_TASK)) {
         Server::ServerLog::Error("UpdateWaitTime:Table is not exist.");
+        return;
     }
-    // 查询数据
-    std::string sql = "SELECT deviceId, startNs, endNs,'compute' AS type, CTI.ROWID AS id FROM TASK main JOIN "
-        "main.COMPUTE_TASK_INFO CTI ON main.globalTaskId = CTI.globalTaskId UNION SELECT deviceId, "
-        "opInfo.startNs, opInfo.endNs, 'communication' AS type, opInfo.ROWID AS id FROM COMMUNICATION_OP "
-        "opInfo JOIN TASK ON TASK.connectionId = opInfo.connectionId ORDER BY startNs;";
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
+    if (CheckValueFromStatusInfoTable(WAIT_TIME_STATUS, FINISH_STATUS)) { // 已更新数据，跳过更新
+        return;
+    }
+    auto stmt = CreatPreparedStatement(FULL_DB_UPDATE_TIME); // 查询数据
+    auto updateStmt = CreatPreparedStatement("UPDATE COMPUTE_TASK_INFO SET waitNs = ? WHERE ROWID = ?;");
+    if (stmt == nullptr || updateStmt == nullptr) {
         ServerLog::Error("UpdateWaitTime, fail to prepare sql.");
         return;
     }
@@ -661,16 +811,10 @@ void DbTraceDataBase::UpdateWaitTime()
         ServerLog::Error("UpdateWaitTime. Failed to get result set.", stmt->GetErrorMessage());
         return;
     }
-    std::string updateSql = "UPDATE COMPUTE_TASK_INFO SET waitNs = ? WHERE ROWID = ?;";
-    auto updateStmt = CreatPreparedStatement(updateSql);
-    if (stmt == nullptr) {
-        ServerLog::Error("UpdateWaitTime. Failed to prepare update sql.", sqlite3_errmsg(db));
-        return;
-    }
     std::map<int32_t, int64_t> prevTime;
+    std::lock_guard<std::recursive_mutex> lockGuard(mutex);
     while (resultSet->Next()) {
         std::string type = resultSet->GetString("type");
-        int64_t id = resultSet->GetInt64("id");
         int64_t startNs = resultSet->GetInt64("startNs");
         int64_t endNs = resultSet->GetInt64("endNs");
         int64_t deviceId = resultSet->GetInt32("deviceId");
@@ -681,29 +825,37 @@ void DbTraceDataBase::UpdateWaitTime()
         prevTime[deviceId] = endNs;
         if (type == "compute") {
             WAIT_TIME task;
-            task.id = id;
+            task.id = resultSet->GetInt64("id");
             task.waitTime = waitNs;
             taskWaitTimeCache.push_back(task);
         }
-        if (taskWaitTimeCache.size() == cacheSize) {
-            UpdateTaskInfoWaitTime(updateStmt);
+        if (taskWaitTimeCache.size() == cacheSize && !UpdateTaskInfoWaitTime(updateStmt)) {
+            ServerLog::Error("UpdateWaitTime. Failed to update data.");
+            return;
         }
     }
-    UpdateTaskInfoWaitTime(updateStmt);
+    if (!UpdateTaskInfoWaitTime(updateStmt)) {
+        ServerLog::Error("UpdateWaitTime. Failed to update last data.");
+        return;
+    }
+    UpdateValueIntoStatusInfoTable(WAIT_TIME_STATUS, FINISH_STATUS);
 }
 
 bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &stmt)
 {
+    std::lock_guard<std::recursive_mutex> lockGuard(mutex);
     if (!StartTransaction()) {
         ServerLog::Error("Failed to start Transaction.");
         return false;
     }
+    auto result = true;
     for (const auto &item : taskWaitTimeCache) {
         stmt->Reset();
         stmt->BindParams(item.waitTime, item.id);
         if (!stmt->Execute()) {
             ServerLog::Error("Failed to UpdateTaskInfoWaitTime");
-            return false;
+            result = false;
+            break;
         }
     }
     taskWaitTimeCache.clear();
@@ -711,7 +863,7 @@ bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedState
         ServerLog::Error("Failed to end UpdateTaskInfoWaitTime.");
         return false;
     }
-    return true;
+    return result;
 }
 
 std::vector<std::string> DbTraceDataBase::QueryRankId()
@@ -779,15 +931,6 @@ bool DbTraceDataBase::NeedUpdateDepth(const std::string &table)
 
 void DbTraceDataBase::UpdateAllDepth()
 {
-    std::unique_lock<std::mutex> lock(mutex);
-    if (!IsDatabaseVersionChange()) {
-        return;
-    }
-    if (!ExecSql("PRAGMA user_version = " + GetDataBaseVersion() + ";")) {
-        ServerLog::Error("fail to update database version");
-        return;
-    }
-
     std::string sql = "select format('%s-%s', deviceId, streamId) as key, ROWID as id,startNs, endNs from TASK "
         "                      order by deviceId, streamId, startNs, globalTaskId;";
     if (CheckTableExist(TABLE_TASK) && NeedUpdateDepth(TABLE_TASK)) {
@@ -832,6 +975,7 @@ void DbTraceDataBase::UpdateDepth(const std::string &sql, std::unique_ptr<Sqlite
         data[key].push_back(task);
     }
     std::vector<int64_t> endList;
+    std::lock_guard<std::recursive_mutex> lockGuard(mutex);
     for (auto &deviceData : data) {
         for (auto &task : deviceData.second) {
             for (task.depth = 0; task.depth < endList.size() && endList[task.depth] > task.start; task.depth++) {
@@ -842,17 +986,21 @@ void DbTraceDataBase::UpdateDepth(const std::string &sql, std::unique_ptr<Sqlite
                 endList[task.depth] = task.end;
             }
             taskDepthCache.emplace_back(task);
-            if (taskDepthCache.size() == cacheSize) {
-                UpdateDepthList(updateStmt);
+            if (taskDepthCache.size() == cacheSize && !UpdateDepthList(updateStmt)) {
+                ServerLog::Error("UpdateDepth. Failed to update data.");
+                return;
             }
         }
         endList.clear();
     }
-    UpdateDepthList(updateStmt);
+    if (!UpdateDepthList(updateStmt)) {
+        ServerLog::Error("UpdateDepth. Failed to update last data.");
+    }
 }
 
 bool DbTraceDataBase::UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &stmt)
 {
+    std::lock_guard<std::recursive_mutex> lockGuard(mutex);
     if (!StartTransaction()) {
         ServerLog::Error("Failed to start Transaction.");
         return false;
@@ -914,7 +1062,10 @@ bool DbTraceDataBase::InitStmt()
     if (CheckTableExist(TABLE_TASK)) {
         sql = "UPDATE " + TABLE_TASK + " set depth = ? where ROWID = ?";
         updateTaskDepthStmt = CreatPreparedStatement(sql);
-        prepareUpdateStmtSuccess = prepareUpdateStmtSuccess && updateTaskDepthStmt != nullptr;
+        sql = "INSERT INTO " + TABLE_OVERLAP_ANALYSIS + " (deviceId, startNs, endNs, type) VALUES (?,?,?,?)";
+        insertOverlapStmt = CreatPreparedStatement(sql);
+        prepareUpdateStmtSuccess = prepareUpdateStmtSuccess && updateTaskDepthStmt != nullptr &&
+                insertOverlapStmt != nullptr;
     }
     if (CheckTableExist(TABLE_API)) {
         sql = "UPDATE " + TABLE_API + " set depth = ? where ROWID = ?";
@@ -939,21 +1090,34 @@ bool DbTraceDataBase::SetConfig()
         ServerLog::Error("Failed to set config. Database is not open.");
         return false;
     }
-    std::unique_lock<std::mutex> lock(mutex);
 
-    if (CheckTableExist(TABLE_TASK)) {
-        ExecSql("alter table TASK add depth integer;");
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+
+    if (IsDatabaseVersionChange()) {
+        UpdateValueIntoStatusInfoTable(CONFIG_STATUS, NOT_FINISH_STATUS);
+        UpdateValueIntoStatusInfoTable(OVERLAP_ANALYSIS_STATUS, NOT_FINISH_STATUS);
+        UpdateValueIntoStatusInfoTable(WAIT_TIME_STATUS, NOT_FINISH_STATUS);
     }
-    if (CheckTableExist(TABLE_API)) {
-        ExecSql("alter table PYTORCH_API add depth integer;");
+
+    if (!CheckValueFromStatusInfoTable(CONFIG_STATUS, FINISH_STATUS)) {
+        if (CheckTableExist(TABLE_TASK)) {
+            ExecSql("alter table TASK add depth integer;");
+            ExecSql(" create table if not exists OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    " deviceId integer, startNs integer, endNs integer, type integer);");
+        }
+        if (CheckTableExist(TABLE_API)) {
+            ExecSql("alter table PYTORCH_API add depth integer;");
+        }
+        if (CheckTableExist(TABLE_CANN_API)) {
+            ExecSql("alter table CANN_API add depth integer;");
+        }
+        if (CheckTableExist(TABLE_COMPUTE_TASK_INFO)) {
+            ExecSql("alter table COMPUTE_TASK_INFO add column waitNs INTEGER;");
+        }
+        UpdateValueIntoStatusInfoTable(CONFIG_STATUS, FINISH_STATUS);
     }
-    if (CheckTableExist(TABLE_CANN_API)) {
-        ExecSql("alter table CANN_API add depth integer;");
-    }
-    if (CheckTableExist(TABLE_COMPUTE_TASK_INFO)) {
-        ExecSql("alter table COMPUTE_TASK_INFO add column waitNs INTEGER;");
-    }
-    return ExecSql("PRAGMA synchronous = OFF; PRAGMA case_sensitive_like=1; PRAGMA journal_mode = MEMORY;");
+    return ExecSql("PRAGMA synchronous = OFF; PRAGMA case_sensitive_like=1; PRAGMA journal_mode = MEMORY;"
+                   " PRAGMA user_version = " + GetDataBaseVersion() + ";");
 }
 
 bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)

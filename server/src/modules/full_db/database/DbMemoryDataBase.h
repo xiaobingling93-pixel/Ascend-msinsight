@@ -14,7 +14,7 @@ namespace Module {
 namespace FullDb {
 class DbMemoryDataBase : public Memory::VirtualMemoryDataBase {
 public:
-    explicit DbMemoryDataBase(std::mutex &sqlMutex) : Memory::VirtualMemoryDataBase(sqlMutex) {};
+    explicit DbMemoryDataBase(std::recursive_mutex &sqlMutex) : Memory::VirtualMemoryDataBase(sqlMutex) {};
     virtual ~DbMemoryDataBase() {};
 
     bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,

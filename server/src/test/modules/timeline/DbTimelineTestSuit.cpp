@@ -274,7 +274,7 @@ TEST_F(FullDbTestSuit, FullDb_of_UnitMetaData)
     auto metaData = std::vector<std::unique_ptr<Protocol::UnitTrack>>();
     database->QueryUnitsMetadata("2", metaData);
 
-    EXPECT_EQ(metaData.size(), 5); // size = 5
+    EXPECT_EQ(metaData.size(), 6); // size = 6
     EXPECT_EQ(metaData[0]->children.size(), 3); // size = 3
 }
 

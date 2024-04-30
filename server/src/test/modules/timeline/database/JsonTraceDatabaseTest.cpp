@@ -11,14 +11,14 @@ class JsonTraceDatabaseTest : DatabaseTest {
 
 TEST_F(DatabaseTest, OpenDb)
 {
-    std::mutex sqlMutex;
+    std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
     database.OpenDb("tttt", true);
     database.CloseDb();
 }
 TEST_F(DatabaseTest, InitStmt)
 {
-    std::mutex sqlMutex;
+    std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
     bool success = database.InitStmt();
     EXPECT_EQ(success, false);
@@ -26,7 +26,7 @@ TEST_F(DatabaseTest, InitStmt)
 
 TEST_F(DatabaseTest, CreateTable)
 {
-    std::mutex sqlMutex;
+    std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
     database.CreateTable();
 
@@ -38,7 +38,7 @@ TEST_F(DatabaseTest, CreateTable)
 
 TEST_F(DatabaseTest, DropTable)
 {
-    std::mutex sqlMutex;
+    std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
     bool success = database.DropTable();
     EXPECT_EQ(success, false);
@@ -46,7 +46,7 @@ TEST_F(DatabaseTest, DropTable)
 
 TEST_F(DatabaseTest, CreateIndex)
 {
-    std::mutex sqlMutex;
+    std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
     database.CreateIndex();
 
@@ -58,7 +58,7 @@ TEST_F(DatabaseTest, CreateIndex)
 
 TEST_F(DatabaseTest, InsertSlice)
 {
-    std::mutex sqlMutex;
+    std::recursive_mutex sqlMutex;
     const int size = 1000;
     Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
     bool success = true;
@@ -72,7 +72,7 @@ TEST_F(DatabaseTest, InsertSlice)
 
 TEST_F(DatabaseTest, InsertFlow)
 {
-    std::mutex sqlMutex;
+    std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
     bool success = true;
     const int size = 1000;
@@ -85,7 +85,7 @@ TEST_F(DatabaseTest, InsertFlow)
 
 TEST_F(DatabaseTest, InsertCounter)
 {
-    std::mutex sqlMutex;
+    std::recursive_mutex sqlMutex;
     Dic::Module::Timeline::JsonTraceDatabase database(sqlMutex);
     bool success = true;
     const int size = 1000;

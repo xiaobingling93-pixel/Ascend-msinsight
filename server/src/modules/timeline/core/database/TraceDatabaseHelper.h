@@ -61,6 +61,12 @@ public:
                       " ORDER BY depth ASC, startNs ASC;";
                 return ExecuteQuery(stmt, sql, requestParams.pid,
                                     requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
+            case PROCESS_TYPE::OVERLAP_ANALYSIS:
+                sql = "select startNs, endNs - startNs as duration, endNs, 'OVERLAP_ANALYSIS'||type as name, "
+                      " 0 as depth from " + TABLE_OVERLAP_ANALYSIS + " where deviceId = ? and type = ? "
+                      " and endNs >= ? AND startNs <= ? ORDER BY startNs;";
+                return ExecuteQuery(stmt, sql, requestParams.rankId, requestParams.tid,
+                                    requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
             default:
                 throw DatabaseException("unsupported type!");
         }
@@ -236,6 +242,10 @@ public:
                 sql = "select ROWID as id, startNs, endNs-startNs as duration, depth, name "
                       " from " + requestParams.metaType + " where ROWID = ? and startNs = ?";
                 return ExecuteQuery(stmt, sql, requestParams.id, requestParams.startTime + minTimestamp);
+            case PROCESS_TYPE::OVERLAP_ANALYSIS:
+                sql = "select id, startNs, endNs - startNs as duration, 0 as depth, "
+                      " 'OVERLAP_ANALYSIS'||type as name from " + TABLE_OVERLAP_ANALYSIS + " where id = ?;";
+                return ExecuteQuery(stmt, sql, requestParams.id);
             default:
                 throw DatabaseException("unsupported type!");
         }
@@ -295,6 +305,12 @@ static bool isAttrInfoExist(std::unique_ptr<SqlitePreparedStatement> &stmt);
                       " GROUP BY depth, rank, duration HAVING max(start_time) ORDER BY depth, start_time;";
                 return ExecuteQuery(stmt, sql, minTimestamp, requestParams.timePerPx,
                                     requestParams.processId, requestParams.startTime, requestParams.endTime);
+            case PROCESS_TYPE::OVERLAP_ANALYSIS:
+                sql = "select 'OVERLAP_ANALYSIS'||type as name, ROWID as id, startNs - ? as start_time,"
+                      " endNs - startNs as duration, 0 as depth from " + TABLE_OVERLAP_ANALYSIS + " where deviceId = ? "
+                      " and type = ? and start_time + duration >= ? AND start_time < ? ORDER BY start_time;";
+                return ExecuteQuery(stmt, sql, minTimestamp, requestParams.cardId, requestParams.threadId,
+                                    requestParams.startTime, requestParams.endTime);
             default:
                 throw DatabaseException("unsupported type!");
         }
@@ -444,6 +460,9 @@ static bool isAttrInfoExist(std::unique_ptr<SqlitePreparedStatement> &stmt);
         stmt->Reset();
         stmt->BindParams(std::forward<Args>(args)...);
         auto result = stmt->ExecuteQuery();
+        if (result == nullptr) {
+            throw DatabaseException("Failed to ExecuteQuery.");
+        }
         return result;
     };
 

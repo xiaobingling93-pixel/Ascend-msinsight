@@ -25,7 +25,7 @@ private:
 };
 class Database {
 public:
-    Database() = default;
+    explicit Database(std::recursive_mutex  &sqlMutex) : mutex(sqlMutex) {};
     virtual ~Database();
     virtual bool OpenDb(const std::string &dbPath, bool clearAllTable);
     virtual bool AttachDb(const std::string &dbPath);
@@ -50,6 +50,7 @@ protected:
     std::string GetLastError();
     static std::string GetDataBaseVersion();
     sqlite3 *db = nullptr;
+    std::recursive_mutex &mutex;
     bool isOpen = false;
     std::string path;
     const int bindStartIndex = 1;
@@ -60,7 +61,7 @@ protected:
     bool CreateStatusInfoTable(); // 创建表时未加锁，需要在调用处加锁
     std::string GetValueFromStatusInfoTable(const std::string& key);
     bool CheckValueFromStatusInfoTable(const std::string &key, const std::string &refValue);
-    bool UpdateValueIntoStatusInfoTable(const std::string &key, const std::string &value, std::mutex &mutex);
+    bool UpdateValueIntoStatusInfoTable(const std::string &key, const std::string &value);
 };
 } // end of namespace Module
 } // end of namespace Dic

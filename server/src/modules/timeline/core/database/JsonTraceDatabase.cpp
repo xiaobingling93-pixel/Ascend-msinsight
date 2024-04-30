@@ -14,7 +14,7 @@
 namespace Dic::Module::Timeline {
 using namespace Dic::Server;
 using namespace Dic::Protocol;
-JsonTraceDatabase::JsonTraceDatabase(std::mutex &sqlMutex) : VirtualTraceDatabase(sqlMutex)
+JsonTraceDatabase::JsonTraceDatabase(std::recursive_mutex &sqlMutex) : VirtualTraceDatabase(sqlMutex)
 {
     if (importActionAnalyzerPtr == nullptr) {
         importActionAnalyzerPtr = std::make_unique<ImportActionAnalyzer>();
@@ -117,7 +117,7 @@ bool JsonTraceDatabase::SetConfig()
         return false;
     }
     std::string dbVersion = GetDataBaseVersion();
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     // PRAGMA case_sensitive_like=1; 设置数据库大小写敏感。
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; "
         "PRAGMA case_sensitive_like=1; PRAGMA user_version = " +
@@ -131,14 +131,14 @@ bool JsonTraceDatabase::CreateTable()
         return false;
     }
     std::string sql = CREATE_TABLE_SQL;
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
 }
 
 bool JsonTraceDatabase::DropTable()
 {
     std::vector<std::string> tables = { sliceTable, threadTable, processTable, flowTable, counterTable };
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     return DropSomeTables(tables);
 }
 
@@ -150,7 +150,7 @@ bool JsonTraceDatabase::CreateIndex()
         return false;
     }
     std::string sql = CREATE_INDEX_SQL;
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     ExecSql(sql);
     auto dur = std::chrono::duration<double, std::milli>(std::chrono::system_clock::now() - start);
     ServerLog::Info("CreateIndex end. time:", dur.count());
@@ -185,7 +185,7 @@ bool JsonTraceDatabase::InsertSliceList(const std::vector<Trace::Slice> &eventLi
         refStmt->BindParams(event.ts, event.dur, event.name, event.trackId, event.cat, event.args, event.cname,
             event.end);
     }
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!refStmt->Execute()) {
         ServerLog::Error("Insert slice data fail. ", refStmt->GetErrorMessage());
         return false;
@@ -210,7 +210,7 @@ bool JsonTraceDatabase::UpdateProcessName(const Trace::MetaData &event)
         return false;
     }
     updateProcessNameStmt->Reset();
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!updateProcessNameStmt->Execute(event.pid, event.args.name)) {
         ServerLog::Error("Update process name fail. ", updateProcessNameStmt->GetErrorMessage());
         return false;
@@ -225,7 +225,7 @@ bool JsonTraceDatabase::UpdateProcessLabel(const Trace::MetaData &event)
         return false;
     }
     updateProcessLabelStmt->Reset();
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!updateProcessLabelStmt->Execute(event.pid, event.args.labels)) {
         ServerLog::Error("Update process label fail. ", updateProcessLabelStmt->GetErrorMessage());
         return false;
@@ -240,7 +240,7 @@ bool JsonTraceDatabase::UpdateProcessSortIndex(const Trace::MetaData &event)
         return false;
     }
     updateProcessSortIndexStmt->Reset();
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!updateProcessSortIndexStmt->Execute(event.pid, event.args.sortIndex)) {
         ServerLog::Error("Update process sort index fail. ", updateProcessSortIndexStmt->GetErrorMessage());
         return false;
@@ -285,7 +285,7 @@ bool JsonTraceDatabase::InsertSimulationThreadList()
     }
     for (const auto &item : simulationThreadInfoCache) {
         simulationInsertThreadNameStmt->Reset();
-        std::unique_lock<std::mutex> lock(mutex);
+        std::unique_lock<std::recursive_mutex> lock(mutex);
         if (!simulationInsertThreadNameStmt->Execute(item.trackId, item.tid, item.pid, item.threadName,
             item.threadSortIndex)) {
             ServerLog::Error("Insert thread info fail. ", simulationInsertThreadNameStmt->GetErrorMessage());
@@ -303,7 +303,7 @@ bool JsonTraceDatabase::InsertSimulationProcessList()
     }
     for (const auto &item : simulationProcessInfoCache) {
         updateProcessNameStmt->Reset();
-        std::unique_lock<std::mutex> lock(mutex);
+        std::unique_lock<std::recursive_mutex> lock(mutex);
         if (!updateProcessNameStmt->Execute(item.pid, item.processName)) {
             ServerLog::Error("Update process info fail. ", updateProcessNameStmt->GetErrorMessage());
             return false;
@@ -319,7 +319,7 @@ bool JsonTraceDatabase::UpdateThreadInfo(const std::tuple<int64_t, std::string, 
         return false;
     }
     updateThreadInfoStmt->Reset();
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!updateThreadInfoStmt->Execute(std::get<0>(thread), std::get<1>(thread), std::get<2>(thread))) { // 第2个
         ServerLog::Error("Update thread info fail. ", updateThreadInfoStmt->GetErrorMessage());
         return false;
@@ -334,7 +334,7 @@ bool JsonTraceDatabase::UpdateThreadName(const Trace::MetaData &event)
         return false;
     }
     updateThreadNameStmt->Reset();
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!updateThreadNameStmt->Execute(event.trackId, event.tid, event.pid, event.args.name)) {
         ServerLog::Error("Update thread name fail. ", updateThreadNameStmt->GetErrorMessage());
         return false;
@@ -349,7 +349,7 @@ bool JsonTraceDatabase::UpdateThreadSortIndex(const Trace::MetaData &event)
         return false;
     }
     updateThreadSortIndexStmt->Reset();
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!updateThreadSortIndexStmt->Execute(event.trackId, event.args.sortIndex)) {
         ServerLog::Error("Update thread sort index fail. ", updateThreadSortIndexStmt->GetErrorMessage());
         return false;
@@ -383,7 +383,7 @@ bool JsonTraceDatabase::InsertFlowList(const std::vector<Trace::Flow> &eventList
     for (const auto &event : eventList) {
         refStmt->BindParams(event.flowId, event.name, event.trackId, event.ts, event.cat, event.type);
     }
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!refStmt->Execute()) {
         ServerLog::Error("Insert flow fail. ", refStmt->GetErrorMessage());
         return false;
@@ -427,7 +427,7 @@ bool JsonTraceDatabase::InsertCounterList(const std::vector<Trace::Counter> &eve
     for (const auto &event : eventList) {
         refStmt->BindParams(event.name, event.pid, event.ts, event.cat, event.args);
     }
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!refStmt->Execute()) {
         ServerLog::Error("Insert counter data fail. ", sqlite3_errmsg(db));
         return false;
@@ -1881,7 +1881,7 @@ uint64_t JsonTraceDatabase::SameOperatorsCount(const std::string &name, int64_t 
 
 bool JsonTraceDatabase::UpdateParseStatus(const std::string &status)
 {
-    return UpdateValueIntoStatusInfoTable(timelineParseStatus, status, mutex);
+    return UpdateValueIntoStatusInfoTable(timelineParseStatus, status);
 }
 
 bool JsonTraceDatabase::HasFinishedParseLastTime()

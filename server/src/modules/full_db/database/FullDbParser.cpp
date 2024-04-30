@@ -14,7 +14,6 @@
 #include "DbSummaryDataBase.h"
 #include "FileUtil.h"
 #include "ClusterParseThreadPoolExecutor.h"
-#include "DbClusterDataBase.h"
 
 namespace Dic::Module::FullDb {
 using namespace Dic::Server;
@@ -66,10 +65,18 @@ void FullDbParser::Reset()
     threadPool->Reset();
 }
 
+// 此方法为私有方法，调用前需保证不会出现空指针的情况
+std::shared_ptr<DbTraceDataBase> FullDbParser::GetTraceDatabase(const std::string &filePath)
+{
+    auto db = Timeline::DataBaseManager::Instance().GetTraceDatabase(filePath);
+    return std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(db);
+}
+
 void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std::string> &rankIds,
                               const std::string& token)
 {
     ServerLog::Info(filePath);
+    auto start = std::chrono::high_resolution_clock::now();
     auto db = Timeline::DataBaseManager::Instance().GetTraceDatabase(filePath);
     if (db == nullptr) {
         ServerLog::Error("Failed to get connection.");
@@ -80,10 +87,16 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
         ServerLog::Error("Failed to convert VirtualTraceDatabase to DbTraceDataBase in InitOpenDb.");
         return;
     }
-    database->UpdateAllDepth();
-    database->InitStringsCache();
+    auto &threadPool = FullDbParser::Instance().threadPool;
+    std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
+    futures->emplace_back(threadPool->AddTask([filePath]() { GetTraceDatabase(filePath)->InitStringsCache(); }));
+    futures->emplace_back(threadPool->AddTask([filePath]() { GetTraceDatabase(filePath)->UpdateAllDepth(); }));
+    futures->emplace_back(threadPool->AddTask([filePath]() { GetTraceDatabase(filePath)->UpdateWaitTime(); }));
+    futures->emplace_back(threadPool->AddTask([filePath]() { GetTraceDatabase(filePath)->GenerateOverlapAnalysis(); }));
+
+    threadPool->AddTask(EndParseTask, rankIds, filePath, futures, token, start);
+
     database->UpdateStartTime();
-    database->UpdateWaitTime();
 
     FileType type = DataBaseManager::Instance().GetFileType();
     if (type == FileType::MS_PROF && !database->CheckTableDataInvalid(TABLE_OPERATOR_MEMORY)) {
@@ -104,6 +117,15 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     } else {
         InitSummery(rankIds, filePath, token);
     }
+}
+
+void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const std::string &filePath,
+    const std::shared_ptr<std::vector<std::future<void>>>& futures, const std::string& token,
+    std::chrono::time_point<std::chrono::high_resolution_clock> start)
+{
+    for (const auto &future : *futures) {
+        future.wait();
+    }
 
     for (const std::string& id : rankIds) {
         ParserCallBack(id, true);
@@ -111,6 +133,11 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     for (auto rankId: rankIds) {
         Timeline::ParserStatusManager::Instance().SetParserStatus(rankId, Timeline::ParserStatus::FINISH_ALL);
     }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    ServerLog::Info("Parse completed. path:", filePath,
+                    " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+    ParserCallBack(filePath, true);
     SendHostEvent(token, filePath);
 }
 

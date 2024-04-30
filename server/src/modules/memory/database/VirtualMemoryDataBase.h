@@ -16,7 +16,7 @@ namespace Memory {
 using componentDtoVector = std::vector<Protocol::ComponentDto>;
 class VirtualMemoryDataBase : public Database {
 public:
-    explicit VirtualMemoryDataBase(std::mutex &sqlMutex) : mutex(sqlMutex) {};;
+    explicit VirtualMemoryDataBase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};;
     ~VirtualMemoryDataBase() override = default;
     virtual bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                                      std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
@@ -27,7 +27,6 @@ public:
     virtual bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum) = 0;
     virtual bool QueryOperatorSize(double &min, double &max, std::string rankId) = 0;
 protected:
-    std::mutex &mutex;
     const std::string operatorTable = "operator";
     const std::string recordTable = "record";
     const int exLength = 4;

@@ -28,6 +28,7 @@ enum class LinkType : int {
 enum class PROCESS_TYPE {
     ASCEND_HARDWARE,
     HCCL,
+    OVERLAP_ANALYSIS,
     CANN_API,
     API,
     HBM,

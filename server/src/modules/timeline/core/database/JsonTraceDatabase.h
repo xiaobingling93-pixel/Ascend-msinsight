@@ -19,7 +19,7 @@ namespace Dic::Module::Timeline {
  */
 class JsonTraceDatabase : public VirtualTraceDatabase {
 public:
-    explicit JsonTraceDatabase(std::mutex &sqlMutex);
+    explicit JsonTraceDatabase(std::recursive_mutex &sqlMutex);
     ~JsonTraceDatabase() override;
 
     bool OpenDb(const std::string &dbPath, bool clearAllTable) override;

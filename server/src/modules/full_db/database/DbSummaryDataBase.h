@@ -11,7 +11,7 @@ namespace Dic::Module::FullDb {
 using namespace Dic::Protocol;
 class DbSummaryDataBase : public Summary::VirtualSummaryDataBase {
 public:
-    explicit DbSummaryDataBase(std::mutex &sqlMutex) : Summary::VirtualSummaryDataBase(sqlMutex) {};
+    explicit DbSummaryDataBase(std::recursive_mutex &sqlMutex) : Summary::VirtualSummaryDataBase(sqlMutex) {};
     virtual ~DbSummaryDataBase() {};
 
     bool QueryComputeDetailHandler(Protocol::ComputeDetailParams params,

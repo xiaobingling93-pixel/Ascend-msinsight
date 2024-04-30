@@ -17,6 +17,11 @@ static const std::string PARSE_RESULT_NONE = "none";
 static const std::string PARSE_RESULT_OK = "ok";
 static const std::string PARSE_RESULT_FAIL = "fail";
 
+// dbTrace database status key
+static const std::string CONFIG_STATUS = "CONFIG_STATUS";
+static const std::string OVERLAP_ANALYSIS_STATUS = "OVERLAP_ANALYSIS_STATUS";
+static const std::string WAIT_TIME_STATUS = "WAIT_TIME_STATUS";
+
 // att model
 static const std::string ATT_MODEL_DEFAULT = "all";
 static const std::string ATT_MODEL_TIME = "communication_time";

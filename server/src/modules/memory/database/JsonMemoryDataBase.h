@@ -17,7 +17,7 @@ using memoryLines = std::vector<std::vector<std::string>>;
 using componentDtoVector = std::vector<Protocol::ComponentDto>;
 class JsonMemoryDataBase : public VirtualMemoryDataBase {
 public:
-    explicit JsonMemoryDataBase(std::mutex &sqlMutex);
+    explicit JsonMemoryDataBase(std::recursive_mutex &sqlMutex);
     ~JsonMemoryDataBase() override;
 
     bool SetConfig();

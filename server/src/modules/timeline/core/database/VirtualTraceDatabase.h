@@ -25,7 +25,7 @@ namespace Dic::Module::Timeline {
  */
 class VirtualTraceDatabase : public Database {
 public:
-    explicit VirtualTraceDatabase(std::mutex &sqlMutex) : mutex(sqlMutex) {};
+    explicit VirtualTraceDatabase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};
     ~VirtualTraceDatabase() override = default;
 
     // search
@@ -70,9 +70,6 @@ public:
     virtual bool QueryKernelDepthAndThread(const Protocol::KernelParams &params,
                                    Protocol::OneKernelBody &responseBody, uint64_t minTimestamp) = 0;
     virtual OneKernelData QueryKernelTid(uint64_t trackId) = 0;
-
-protected:
-    std::mutex &mutex;
 };
 }
 #endif // PROFILER_SERVER_TRACE_DATABASE_H

@@ -71,14 +71,14 @@ private:
     std::mutex mutex;
     DataType dataType = DataType::JSON;
     FileType fileType = FileType::PYTORCH;
-    std::map<std::string, std::mutex> dbMutexMap;
+    std::map<std::string, std::recursive_mutex> dbMutexMap;
     std::map<std::string, std::string> dbFilePathMap;
     std::map<std::string, std::unique_ptr<ConnectionPool>> traceDatabaseMap;
     std::map<std::string, std::unique_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
     std::map<std::string, std::unique_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
     std::map<std::string, std::unique_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
 
-    std::mutex &GetDbMutex(const std::string &fileId);
+    std::recursive_mutex &GetDbMutex(const std::string &fileId);
 };
 } // end of namespace Timeline
 } // end of namespace Module

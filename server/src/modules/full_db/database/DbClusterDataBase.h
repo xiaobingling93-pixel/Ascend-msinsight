@@ -13,7 +13,7 @@ namespace FullDb {
 
 class DbClusterDataBase : public VirtualClusterDatabase {
 public:
-    DbClusterDataBase() = default;
+    explicit DbClusterDataBase(std::recursive_mutex &sqlMutex) : VirtualClusterDatabase(sqlMutex) {};
     ~DbClusterDataBase() override;
 
     bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,

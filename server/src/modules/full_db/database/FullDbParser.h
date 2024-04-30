@@ -9,6 +9,7 @@
 #include "ThreadPool.h"
 #include "map"
 #include "WsSessionManager.h"
+#include "DbTraceDataBase.h"
 
 namespace Dic::Module::FullDb {
 class FullDbParser : public FileParser {
@@ -33,6 +34,10 @@ private:
 
     static void ParserCallBack(std::string fileId, bool result);
     static void SendHostEvent(const std::string &token, const std::string &fileId);
+    static std::shared_ptr<DbTraceDataBase> GetTraceDatabase(const std::string &filePath);
+    static void EndParseTask(const std::vector<std::string> &rankIds, const std::string &filePath,
+                             const std::shared_ptr<std::vector<std::future<void>>>& futures, const std::string& token,
+                             std::chrono::time_point<std::chrono::high_resolution_clock> start);
 };
 }
 

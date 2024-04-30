@@ -26,7 +26,7 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
     const static int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
     std::unique_lock<std::mutex> lock(mutex);
     if (traceDatabaseMap.count(fileId) == 0) {
-        std::mutex &dbMutex = GetDbMutex(fileId);
+        std::recursive_mutex &dbMutex = GetDbMutex(fileId);
         std::unique_ptr<ConnectionPool> conn;
         switch (dataType) {
             case DataType::FULL_DB:
@@ -69,7 +69,7 @@ Summary::VirtualSummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::
     std::unique_lock<std::mutex> lock(mutex);
     std::string fileId = inputId;
     if (summaryDatabaseMap.count(fileId) == 0) {
-        std::mutex &dbMutex = GetDbMutex(fileId);
+        std::recursive_mutex &dbMutex = GetDbMutex(fileId);
         if (this->dataType == DataType::JSON) {
             summaryDatabaseMap.emplace(fileId, std::make_unique<Summary::JsonSummaryDataBase>(dbMutex));
         } else if (this->dataType == DataType::FULL_DB) {
@@ -84,7 +84,7 @@ Memory::VirtualMemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::str
     std::unique_lock<std::mutex> lock(mutex);
     std::string fileId = inputId;
     if (memoryDatabaseMap.count(fileId) == 0) {
-        std::mutex &dbMutex = GetDbMutex(fileId);
+        std::recursive_mutex &dbMutex = GetDbMutex(fileId);
         switch (dataType) {
             case DataType::FULL_DB:
                 memoryDatabaseMap.emplace(fileId, std::make_unique<FullDb::DbMemoryDataBase>(dbMutex));
@@ -210,9 +210,9 @@ VirtualClusterDatabase *DataBaseManager::GetWriteClusterDatabase()
     std::unique_lock<std::mutex> lock(mutex);
     if (clusterDatabaseMap.count("cluster_w") == 0) {
         if (dataType == DataType::JSON) {
-            clusterDatabaseMap.emplace("cluster_w", std::make_unique<JsonClusterDatabase>());
+            clusterDatabaseMap.emplace("cluster_w", std::make_unique<JsonClusterDatabase>(GetDbMutex("cluster_w")));
         } else if (dataType == DataType::FULL_DB) {
-            clusterDatabaseMap.emplace("cluster_w", std::make_unique<DbClusterDataBase>());
+            clusterDatabaseMap.emplace("cluster_w", std::make_unique<DbClusterDataBase>(GetDbMutex("cluster_w")));
         }
     }
     return clusterDatabaseMap["cluster_w"].get();
@@ -223,9 +223,9 @@ VirtualClusterDatabase *DataBaseManager::GetReadClusterDatabase()
     std::unique_lock<std::mutex> lock(mutex);
     if (clusterDatabaseMap.count("cluster_r") == 0) {
         if (dataType == DataType::JSON) {
-            clusterDatabaseMap.emplace("cluster_r", std::make_unique<JsonClusterDatabase>());
+            clusterDatabaseMap.emplace("cluster_r", std::make_unique<JsonClusterDatabase>(GetDbMutex("cluster_r")));
         } else if (dataType == DataType::FULL_DB) {
-            clusterDatabaseMap.emplace("cluster_r", std::make_unique<DbClusterDataBase>());
+            clusterDatabaseMap.emplace("cluster_r", std::make_unique<DbClusterDataBase>(GetDbMutex("cluster_r")));
         }
     }
     return clusterDatabaseMap["cluster_r"].get();
@@ -252,7 +252,7 @@ std::string DataBaseManager::GetDbPath(const std::string &fileId)
     return it->second->GetDbPath();
 }
 
-std::mutex &DataBaseManager::GetDbMutex(const std::string &fileId)
+std::recursive_mutex &DataBaseManager::GetDbMutex(const std::string &fileId)
 {
     return dbMutexMap[fileId];
 }

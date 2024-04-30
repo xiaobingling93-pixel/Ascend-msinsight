@@ -19,7 +19,7 @@
 namespace Dic::Module::Summary {
 class VirtualSummaryDataBase : public Database {
 public:
-    explicit VirtualSummaryDataBase(std::mutex &sqlMutex) : mutex(sqlMutex) {};
+    explicit VirtualSummaryDataBase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};
     ~VirtualSummaryDataBase() override = default;
 
     virtual bool QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
@@ -70,9 +70,6 @@ public:
 
         return str.substr(index + MSPROF_CONNECT.length() - 1);
     }
-
-protected:
-    std::mutex &mutex;
 };
 }
 

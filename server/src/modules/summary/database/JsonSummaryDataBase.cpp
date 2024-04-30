@@ -12,7 +12,7 @@
 
 namespace Dic::Module::Summary {
 using namespace Server;
-JsonSummaryDataBase::JsonSummaryDataBase(std::mutex &sqlMutex) : VirtualSummaryDataBase(sqlMutex) {}
+JsonSummaryDataBase::JsonSummaryDataBase(std::recursive_mutex &sqlMutex) : VirtualSummaryDataBase(sqlMutex) {}
 
 JsonSummaryDataBase::~JsonSummaryDataBase()
 {
@@ -29,7 +29,7 @@ bool JsonSummaryDataBase::SetConfig()
         return false;
     }
     std::string dbVersion = GetDataBaseVersion();
-    std::unique_lock<std::mutex> lock(mutex);
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " + dbVersion + ";");
 }
 
@@ -45,14 +45,14 @@ bool JsonSummaryDataBase::CreateTable()
         "block_dim INTEGER, input_shapes TEXT, input_data_types TEXT, input_formats TEXT, output_shapes TEXT, " +
         "output_data_types TEXT, output_formats TEXT);" +
         "CREATE INDEX rank_index ON " + kernelTable + " (rank_id);";
-    std::unique_lock<std::mutex> lock(mutex);
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
 }
 
 bool JsonSummaryDataBase::DropTable()
 {
     std::vector<std::string> tables = {kernelTable};
-    std::unique_lock<std::mutex> lock(mutex);
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     return DropSomeTables(tables);
 }
 
@@ -112,7 +112,7 @@ void JsonSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel>& kern
 
         sqlite3_bind_text(stmt, idx++, event.outputFormats.c_str(), event.outputFormats.length(), SQLITE_TRANSIENT);
     }
-    std::unique_lock<std::mutex> lock(mutex);
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     auto result = sqlite3_step(stmt);
     if (kernelVec.size() != cacheSize) {
         sqlite3_finalize(stmt);
@@ -164,7 +164,7 @@ sqlite3_stmt *JsonSummaryDataBase::GetKernelStmt(uint64_t paramLen)
 
 bool JsonSummaryDataBase::UpdateParseStatus(const std::string& status)
 {
-    return UpdateValueIntoStatusInfoTable(kernelParseState, status, mutex);
+    return UpdateValueIntoStatusInfoTable(kernelParseState, status);
 }
 
 bool JsonSummaryDataBase::HasFinishedParseLastTime()

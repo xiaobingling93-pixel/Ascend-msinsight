@@ -23,9 +23,28 @@ struct WAIT_TIME {
     int64_t waitTime = 0;
     int64_t id = 0;
 };
+
+struct OVERLAP_INFO {
+    OVERLAP_INFO() = default;
+    OVERLAP_INFO(int64_t startNs, int64_t endNs, int64_t type) : startNs(startNs), endNs(endNs),
+        type(type) {};
+    int64_t startNs;
+    int64_t endNs;
+    int64_t type; // Computing = 0, Communication = 1, Communication(Not Overlapped) = 2, Free = 3
+    bool operator < (const OVERLAP_INFO& right) const
+    {
+        if (startNs < right.startNs) {
+            return true;
+        }
+        if (startNs == right.startNs && endNs < right.endNs) {
+            return true;
+        }
+        return false;
+    }
+};
 class DbTraceDataBase : public VirtualTraceDatabase {
 public:
-    explicit DbTraceDataBase(std::mutex &sqlMutex) : VirtualTraceDatabase(sqlMutex) {};
+    explicit DbTraceDataBase(std::recursive_mutex &sqlMutex) : VirtualTraceDatabase(sqlMutex) {};
     ~DbTraceDataBase();
 
     bool OpenDb(const std::string &dbPath, bool clearAllTable) override;
@@ -86,17 +105,20 @@ public:
     void UpdateAllDepth();
     void InitStringsCache();
     void UpdateWaitTime();
+    void GenerateOverlapAnalysis();
 
 private:
-    const int cacheSize = 1000;
+    const int cacheSize = 5000;
     bool initStmt = false;
 
     std::unique_ptr<SqlitePreparedStatement> updateTaskDepthStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateApiDepthStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateCannApiDepthStmt = nullptr;
+    std::unique_ptr<SqlitePreparedStatement> insertOverlapStmt = nullptr;
 
     std::vector<TASK_INFO> taskDepthCache;
     std::vector<WAIT_TIME> taskWaitTimeCache;
+    std::vector<OVERLAP_INFO> timeInfoCache;
 
     bool SetConfig();
     bool InitStmt();
@@ -107,6 +129,8 @@ private:
                                      std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool QueryHcclMetadata(const std::string &fileId,
                            std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
+    bool GenerateOverlapAnalysisMetadata(const std::string &fileId,
+                                         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool QueryCounterMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool NeedUpdateDepth(const std::string &table);
     bool GenerateCounterMetadata(const std::string &fileId,
@@ -122,6 +146,8 @@ private:
     bool UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &stmt);
     std::string GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId);
     std::string GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, std::string rankId);
+    void QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_INFO> &timeInfoList, const std::string &rankId);
+    bool InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> &overlapInfoList, const std::string &rankId);
 };
 }
 

@@ -14,7 +14,7 @@ namespace Dic {
 namespace Module {
 namespace Memory {
 using namespace Server;
-JsonMemoryDataBase::JsonMemoryDataBase(std::mutex &sqlMutex) : VirtualMemoryDataBase(sqlMutex) {}
+JsonMemoryDataBase::JsonMemoryDataBase(std::recursive_mutex &sqlMutex) : VirtualMemoryDataBase(sqlMutex) {}
 
 JsonMemoryDataBase::~JsonMemoryDataBase()
 {
@@ -32,7 +32,7 @@ bool JsonMemoryDataBase::SetConfig()
         return false;
     }
     std::string dbVersion = GetDataBaseVersion();
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY; PRAGMA user_version = " + dbVersion + ";");
 }
 
@@ -51,14 +51,14 @@ bool JsonMemoryDataBase::CreateTable()
         "CREATE TABLE " + recordTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, component TEXT, " +
         "total_allocated INTEGER, total_reserve INTEGER, total_active INTEGER, "
         "device_type TEXT, stream TEXT, timestamp INTEGER);";
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
 }
 
 bool JsonMemoryDataBase::DropTable()
 {
     std::vector<std::string> tables = {operatorTable, recordTable};
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     return DropSomeTables(tables);
 }
 
@@ -128,7 +128,7 @@ void JsonMemoryDataBase::InsertOperatorDetailList(const std::vector<Operator> &e
         sqlite3_bind_double(stmt, idx++, event.releaseActive);
         sqlite3_bind_text(stmt, idx++, event.streamId.c_str(), event.streamId.length(), SQLITE_TRANSIENT);
     }
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     auto result = sqlite3_step(stmt);
     if (eventList.size() != cacheSize) {
         sqlite3_finalize(stmt);
@@ -164,7 +164,7 @@ void JsonMemoryDataBase::InsertRecordDetailList(const std::vector<Record> &event
         sqlite3_bind_text(stmt, idx++, event.streamId.c_str(), event.streamId.length(), SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, idx++, event.timesTamp);
     }
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     auto result = sqlite3_step(stmt);
     if (eventList.size() != cacheSize) {
         sqlite3_finalize(stmt);
@@ -185,7 +185,7 @@ void JsonMemoryDataBase::insertRecordDetail(const Record &event)
 
 bool JsonMemoryDataBase::UpdateParseStatus(const std::string& status)
 {
-    return UpdateValueIntoStatusInfoTable(memoryParseStatus, status, mutex);
+    return UpdateValueIntoStatusInfoTable(memoryParseStatus, status);
 }
 
 bool JsonMemoryDataBase::HasFinishedParseLastTime()

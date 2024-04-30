@@ -77,6 +77,12 @@ const static std::string HCCL_FLOW_DETAIL_SQL = "select name, planeId as tid, st
 const static std::string HARDWARE_FLOW_DETAIL_SQL = "select name, streamId as tid, startNs as start,"
         " endNs - startNs as dur, main.globalTaskId as id, depth, deviceId from TASK main join COMPUTE_TASK_INFO info "
         " on main.globalTaskId = info.globalTaskId where connectionId = ? and main.ROWID = ?;";
+
+const static std::string FULL_DB_UPDATE_TIME =
+        "SELECT deviceId, startNs, endNs,'compute' AS type, CTI.ROWID AS id FROM TASK main JOIN "
+        "main.COMPUTE_TASK_INFO CTI ON main.globalTaskId = CTI.globalTaskId UNION SELECT deviceId, "
+        "opInfo.startNs, opInfo.endNs, 'communication' AS type, opInfo.ROWID AS id FROM COMMUNICATION_OP "
+        "opInfo JOIN TASK ON TASK.connectionId = opInfo.connectionId ORDER BY startNs;";
 };
 
 #endif // PROFILER_SERVER_DBSQLDEFS_H

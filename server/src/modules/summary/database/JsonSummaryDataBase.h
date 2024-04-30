@@ -13,7 +13,7 @@ namespace Summary {
 using namespace Dic::Protocol;
 class JsonSummaryDataBase : public VirtualSummaryDataBase {
 public:
-    explicit JsonSummaryDataBase(std::mutex &sqlMutex);
+    explicit JsonSummaryDataBase(std::recursive_mutex &sqlMutex);
     ~JsonSummaryDataBase() override;
 
     bool SetConfig();

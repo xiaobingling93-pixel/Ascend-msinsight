@@ -347,9 +347,9 @@ bool Database::CheckValueFromStatusInfoTable(const std::string &key, const std::
     return true;
 }
 
-bool Database::UpdateValueIntoStatusInfoTable(const std::string& key, const std::string& value, std::mutex &mutex)
+bool Database::UpdateValueIntoStatusInfoTable(const std::string& key, const std::string& value)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!CheckTableExist(infoTable) && !CreateStatusInfoTable()) {
         ServerLog::Error("Failed to update status info table because table is not exist: key=", key, ", value=", value);
         return false;
