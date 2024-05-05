@@ -44,6 +44,9 @@ const PPBandwidthChart: React.FC<any> = ({ conditions, allStageIds, session }: {
         if (session.clusterCompleted && notNullObj(conditions)) {
             InitCharts('STAGE', conditions.step, conditions.stage, allStageIds);
             InitCharts('RANK', conditions.step, conditions.stage, allStageIds);
+        } else {
+            renderEmpty('STAGE');
+            renderEmpty('RANK');
         }
     }
     chartVisbilityListener('STAGE', () => {
@@ -69,6 +72,15 @@ const PPBandwidthChart: React.FC<any> = ({ conditions, allStageIds, session }: {
         </div>
     );
 };
+
+function renderEmpty(domId: string): void {
+    const chartDom = document.getElementById(domId);
+    if (chartDom === null || chartDom.offsetParent === null) {
+        return;
+    }
+    echarts.getInstanceByDom(chartDom)?.dispose();
+    ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
+}
 
 async function InitCharts(domId: string, stepId: string, stage: string, allStageIds: string[]): Promise<void> {
     const chartDom = document.getElementById(domId);

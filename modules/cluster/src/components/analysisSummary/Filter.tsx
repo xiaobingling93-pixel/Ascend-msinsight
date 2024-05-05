@@ -67,6 +67,8 @@ const Filter = observer((props: any) => {
     // 初始化
     useEffect(() => {
         if (!session.clusterCompleted) {
+            setConditions(defaultConditions);
+            setOptions({ ...options, stepOptions: [], topOptions: [], groupOptions: [] });
             return;
         }
         initDefault();

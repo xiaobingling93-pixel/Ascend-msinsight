@@ -215,6 +215,9 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
     }, [dataSource]);
     const handleFilterChange = async (conditions: ConditionDataType, doQuery?: boolean): Promise<void> => {
         if (!session.clusterCompleted) {
+            setAllDatasource([]);
+            setDatasource([]);
+            setSelected({ rankId: '', step: '' });
             return;
         }
         if (doQuery === false) {

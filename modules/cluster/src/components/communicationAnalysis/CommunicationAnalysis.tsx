@@ -13,7 +13,7 @@ import CommunicationTimeChart, { dataType as chartDataType }
     from './CommunicationTimeChart';
 import CommunicationMatrix from './CommunicationMatrix';
 import BandwidthAnalysis from './BandwidthAnalysis';
-import { Space, Tan } from '../Common';
+import { notNullObj, Space, Tan } from '../Common';
 import { queryCommunication, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
 import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
 import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
@@ -39,6 +39,9 @@ interface showDataType{
 }
 
 const searchData = async (conditions: ConditionDataType): Promise<showDataType> => {
+    if (!notNullObj(conditions)) {
+        return { chartData: wrapChartData([]), analysisChartData: { minTime: 0, maxTime: 0, data: [] }, tableData: [] };
+    }
     const communicationOperatorData = await queryCommunicationOperatorLists(conditions);
     const res = await queryCommunication(conditions);
     const { items: data = [] } = res;

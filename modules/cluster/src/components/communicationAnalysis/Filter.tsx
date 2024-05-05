@@ -141,6 +141,16 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     const activeCommunicator = session.activeCommunicator?.value;
     const Update = (initObj = {} as ConditionDataType): void => {
         if (!session.clusterCompleted) {
+            runInAction(() => {
+                conditions.iterationId = '';
+                conditions.stage = '';
+                conditions.rankIds = [];
+                conditions.operatorName = '';
+                optionMap.iterationOptions = [];
+                optionMap.operatorOptions = [];
+                optionMap.rankIdOptions = [];
+                optionMap.stageOptions = [];
+            });
             return;
         }
         setOptions(initObj);

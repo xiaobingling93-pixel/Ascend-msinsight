@@ -30,7 +30,9 @@ const Filter = observer((props: any) => {
     const [options, setOptions] = useState<optionMapDataType>({});
     // 初始化
     useEffect(() => {
-        if (props.session?.clusterCompleted !== true) {
+        if (props.session?.clusterCompleted === false) {
+            setOptions({ stepOptions: [], stageOptions: [] });
+            props.setConditions({ step: '', stage: '' });
             return;
         }
         initDefault();
