@@ -28,7 +28,6 @@ type CefQueryType = {request: string; onSuccess: (response: string) => void; onF
 
 export const Loading = (<div style={{ textAlign: 'center', top: '50%', position: 'absolute', width: '50px', left: 'calc(50% - 25px)' }}>
     <div className={'loading'} style={{ marginLeft: '15px' }}></div>
-    <div style={{ color: '#dddddd' }}>waiting</div>
 </div>);
 
 declare global {

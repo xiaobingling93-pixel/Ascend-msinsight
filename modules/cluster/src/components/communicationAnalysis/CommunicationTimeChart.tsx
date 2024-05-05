@@ -4,7 +4,8 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import * as echarts from 'echarts';
-import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, Container, Loading } from '../Common';
+import { Spin } from 'antd';
+import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, Container } from '../Common';
 import type { Session } from '../../entity/session';
 
 function InitCharts(data: dataType): void {
@@ -22,7 +23,7 @@ function wrapData(data: dataType): any {
     const order: Array<keyof dataType> = ['elapseTime', 'transitTime', 'synchronizationTime',
         'waitTime', 'synchronizationTimeRatio', 'waitTimeRatio'];
     for (let i = 0; i < 6; i++) {
-        baseOption.series[i].data = data[order[i]];
+        baseOption.series[i].data = data[order[i]] ?? [];
     }
     return baseOption;
 }
@@ -181,9 +182,11 @@ const CommunicationTimeChart = observer(({ dataSource, session }: {dataSource: d
     return (
         <Container
             title={'Visualized Communication Time'}
-            content={session.durationFileCompleted
-                ? <div id={'main'} style={{ height: '400px' }} ></div>
-                : <div style={{ height: '400px' }}><Loading style={{ margin: '200px auto 0' }}/></div> }
+            content={
+                <Spin spinning={session.clusterCompleted && !session.durationFileCompleted } tip="">
+                    <div id={'main'} style={{ height: '400px' }} ></div>
+                </Spin>
+            }
             bodyStyle={{ overflow: 'visible' }}
         />
     );

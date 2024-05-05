@@ -104,6 +104,7 @@ const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
     const [data, setData] = useState<StringMap>({});
     useEffect(() => {
         if (!session.clusterCompleted) {
+            setData({});
             return;
         }
         setTimeout(() => {
@@ -122,7 +123,7 @@ const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
                         <div>{item.label}:</div>
                         <div>
                             {
-                                item.key === 'collectDuration' && !session.parseCompleted
+                                item.key === 'collectDuration' && session.clusterCompleted && !session.parseCompleted
                                     ? <Loading style={{ marginTop: '10px' }}/>
                                     : data[item.key]
                             }

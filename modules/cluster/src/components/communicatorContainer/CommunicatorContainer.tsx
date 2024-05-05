@@ -20,6 +20,7 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
     const [unitCount, setUnitCount] = useState<number>(0);
     useEffect(() => {
         if (!session.clusterCompleted) {
+            session.communicatorData = { partitionModes: [], defaultPPSize: 0 };
             return;
         }
         getDefaultCommunicatorData(setUnitCount).then(value => {

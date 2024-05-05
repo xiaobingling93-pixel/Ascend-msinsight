@@ -232,18 +232,15 @@ const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow:
     const [switchCondition, setSwitchCondition] = useState({ type: 'bandwidth', showInner: false });
 
     const updateCharts = (): void => {
-        if (session.clusterCompleted && isShow) {
-            let data: any = dataSource.data.map((item: any) => {
-                return [String(item.srcRank), String(item.dstRank),
-                    item[switchCondition.type] !== undefined ? item[switchCondition.type] : null, item.opName];
-            });
-            if (!switchCondition.showInner) {
-                data = data.filter((item: any[]) => item[0] !== item[1]);
-            }
-            data = data.filter((item: any[]) =>
-                dataSource.rankIds.includes(item[0]) && dataSource.rankIds.includes(item[1]));
-            InitCharts({ ...dataSource, data, type: switchCondition.type });
+        let data: any = dataSource.data.map((item: any) => {
+            return [String(item.srcRank), String(item.dstRank),
+                item[switchCondition.type] !== undefined ? item[switchCondition.type] : null, item.opName];
+        });
+        if (!switchCondition.showInner) {
+            data = data.filter((item: any[]) => item[0] !== item[1]);
         }
+        data = data.filter((item: any[]) => dataSource.rankIds.includes(item[0]) && dataSource.rankIds.includes(item[1]));
+        InitCharts({ ...dataSource, data, type: switchCondition.type });
     };
 
     chartVisbilityListener('matrixchart', () => {
@@ -252,6 +249,10 @@ const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow:
     useEffect(() => {
         if (session.clusterCompleted && isShow) {
             updateData(conditions);
+        } else if (isShow) {
+            setDataSource({ data: [], rankIds: [] });
+        } else {
+            // stay the same
         }
     }, [isShow, conditions]);
     useEffect(() => {
