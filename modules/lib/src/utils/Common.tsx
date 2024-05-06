@@ -45,4 +45,10 @@ export function getUsableVal<T>(val: T, options: Array<{value: T}>, defaultVal: 
     return options[0].value;
 };
 
+export const delayExecute = (doFunc: () => void, timeout = 500): void => {
+    setTimeout(() => {
+        doFunc();
+    }, timeout);
+};
+
 export { BaseContainer, BaseDescription, COLOR, chartVisbilityListener, getResizeEcharts };

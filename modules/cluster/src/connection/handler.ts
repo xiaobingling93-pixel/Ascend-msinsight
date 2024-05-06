@@ -34,22 +34,11 @@ export const parseClusterSuccessHandler: NotificationHandler = (data): void => {
         if (!session) {
             return;
         }
-        session.clusterStatus = true;
         session.clusterCompleted = true;
         session.renderId = ++session.renderId % 1000;
     });
 };
 
-export const moduleMessageHandler: NotificationHandler = (data): void => {
-    const { sessionStore } = store;
-    const session = sessionStore.activeSession;
-    runInAction(() => {
-        if (!session) {
-            return;
-        }
-        session.clusterStatus = true;
-    });
-};
 export const updateSessionHandler: NotificationHandler = (data): void => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;

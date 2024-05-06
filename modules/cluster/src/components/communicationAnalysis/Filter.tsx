@@ -6,7 +6,7 @@ import { observable, runInAction, observe } from 'mobx';
 import React, { useEffect, useState } from 'react';
 import { Select, Radio } from 'antd';
 // eslint-disable-next-line import/no-unresolved
-import { getUsableVal } from 'lib/CommonUtils';
+import { getUsableVal, delayExecute } from 'lib/CommonUtils';
 import { isNull, Label } from '../Common';
 import { optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
 import { queryIterations, queryMatrixOperators, queryOperators, queryStages } from '../../utils/RequestUtils';
@@ -123,8 +123,12 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     };
     const updateCondition = async (initObj: ConditionDataType, key?: keyof ConditionDataType, val?: any): Promise<void> => {
         if (!session.clusterCompleted) {
-            setCondition({ ...defaultCondition, type: condition.type });
-            setOptionMap(defaultOptionMap);
+            delayExecute(() => {
+                if (!session.clusterCompleted) {
+                    setCondition({ ...defaultCondition, type: condition.type });
+                    setOptionMap(defaultOptionMap);
+                }
+            });
             return;
         }
         const { condition: newCondition, optionMap: newOptionMap } = await getOptionsAndValue(initObj, optionMap, key, val);
@@ -137,10 +141,9 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
             updateCondition({ ...condition, ...observeCondition.value });
         });
     }, []);
-
     useEffect(() => {
         updateCondition(condition);
-    }, [session.renderId]);
+    }, [session.clusterCompleted]);
     useEffect(() => {
         setTimeout(() => {
             if (activeCommunicator !== undefined && activeCommunicator !== condition.stage) {
@@ -150,7 +153,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     }, [activeCommunicator]);
     useEffect(() => {
         handleFilterChange(condition);
-    }, [JSON.stringify(condition)]);
+    }, [condition]);
 
     return (<FilterCom handleChange={handleChange} condition={condition} optionMap={optionMap}/>);
 });

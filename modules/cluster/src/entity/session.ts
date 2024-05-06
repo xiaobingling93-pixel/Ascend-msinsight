@@ -1,7 +1,6 @@
 import { makeAutoObservable } from 'mobx';
 import { communicator, communicatorContainerData } from '../components/communicatorContainer/ContainerUtils';
 export class Session {
-    clusterStatus: boolean = false;
     parseCompleted: boolean = false;
     clusterCompleted: boolean = false;
     durationFileCompleted: boolean = false;
