@@ -21,8 +21,8 @@ const baseOption = {
         axisPointer: {
             type: 'shadow',
         },
-        valueFormatter: function (value: any): string {
-            return `Cycles:${value}`;
+        formatter: function (params: any): string {
+            return `Cycles:${Number(params[0]?.data?.originValue)}`;
         },
     },
     legend: {
@@ -38,6 +38,7 @@ const baseOption = {
         type: 'value',
         boundaryGap: [0, 0.01],
         axisLabel: {
+            formatter: '{value}%',
             color: COLOR.Grey40,
         },
     },
@@ -53,7 +54,7 @@ const baseOption = {
         {
             name: 'Pipe Utilization',
             type: 'bar',
-            data: [] as Array<string | number>,
+            data: [] as unknown[],
             itemStyle: {
                 color: COLOR.LIGHT_BLUE,
                 borderColor: 'white',
@@ -77,7 +78,7 @@ function wrapData(data: IblockData[]): any {
     const option = { ...baseOption };
     data.sort((a, b) => sortFunc(a.value, b.value));
     const namelist = data.map(item => `${item.blockType?.toUpperCase()}_${item.name.replaceAll(' ', '_')}`);
-    const valuelist = data.map(item => item.value);
+    const valuelist = data.map(item => ({ value: item.value, originValue: item.originValue }));
     option.yAxis.data = namelist;
     option.series[0].data = valuelist;
     // 左边距
@@ -87,7 +88,7 @@ function wrapData(data: IblockData[]): any {
             maxLength = item.length;
         }
     });
-    option.grid.left = String(maxLength * 8);
+    option.grid.left = String(maxLength * 9);
     return option;
 }
 function sortFunc<T>(a: T, b: T): number {

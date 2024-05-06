@@ -116,7 +116,7 @@ export function FormItem(props: {name: string;style?: React.CSSProperties;conten
         margin: '0 20px 10px 0',
         ...props.style ?? {},
     }}>
-        <Label name={props.name} style={{ width: '60px', display: 'inline-block' }}/>
+        <Label name={props.name} style={{ width: '80px', display: 'inline-block' }}/>
         {props.content}
     </div>);
 };

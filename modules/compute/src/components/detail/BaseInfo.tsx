@@ -137,7 +137,7 @@ function BlockDetail({ opType = '', blockDetail = [] }: Ibaseinfo): JSX.Element 
             columns={col}
             dataSource={dataset}
             scroll={dataset.length > 10 ? { y: 400 } : false}
-            pagination={{ showTotal: true, size: 'small', hideOnSinglePage: true }}
+            pagination={{ showTotal: () => true, size: 'small', hideOnSinglePage: true }}
         />
     </div>);
 }

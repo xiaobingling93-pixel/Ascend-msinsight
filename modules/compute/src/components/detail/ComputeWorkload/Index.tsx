@@ -35,15 +35,15 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
 
     const getBaseInfo = async (): Promise<void> => {
         const res = await queryComputeWorkload();
-        if (res === null) {
+        if (res === null || res === undefined) {
             return;
         }
         const renderData = {
-            blockIdList: res.blockIdList,
-            chartData: res.chartData.detailDataList,
-            tableData: res.tableData.detailDataList,
+            blockIdList: res.blockIdList ?? [],
+            chartData: res.chartData?.detailDataList ?? [],
+            tableData: res.tableData?.detailDataList ?? [],
         };
-        setData(renderData ?? defaultData);
+        setData(renderData);
     };
     const handleFilterChange = (newCondition: Icondition): void => {
         setCondition({ ...condition, ...newCondition });
