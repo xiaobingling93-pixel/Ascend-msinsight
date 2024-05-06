@@ -69,7 +69,7 @@ bool JsonClusterDatabase::CreateTable()
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id VARCHAR(50), step_id VARCHAR(50),"
             " stage_id VARCHAR(50), compute_time double, pure_communication_time double, "
             "overlap_communication_time double, communication_time double, free_time double, "
-            "stage_time double, bubble_time double, pure_communication_exclude_receive_time double);" +
+            "stage_time double, bubble_time double, pure_communication_exclude_receive_time double, preparing double); "
             "CREATE TABLE " + TABLE_COMMUNICATION_MATRIX +
             "(id INTEGER PRIMARY KEY AUTOINCREMENT, group_id VARCHAR(100), iteration_id VARCHAR(50), "
             "op_name VARCHAR(100),op_sort VARCHAR(100), group_name VARCHAR(100), src_rank VARCHAR(50), "
@@ -328,8 +328,8 @@ void JsonClusterDatabase::InsertStepStatisticsInfo(StepStatistic &stepStatistic)
         std::string sql = "INSERT INTO " + TABLE_STEP_TRACE +
                           "(rank_id, step_id, stage_id, compute_time,pure_communication_time,"
                           " overlap_communication_time,communication_time, free_time, stage_time,"
-                          " bubble_time,pure_communication_exclude_receive_time) "
-                          " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                          " bubble_time,pure_communication_exclude_receive_time,preparing) "
+                          " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stepStmt, nullptr) != SQLITE_OK) {
             ServerLog::Error("Failed to prepare stepTraceTable statement. error:", sqlite3_errmsg(db));
             return;
@@ -355,7 +355,8 @@ void JsonClusterDatabase::InsertStepStatisticsInfo(StepStatistic &stepStatistic)
     sqlite3_bind_double(stepStmt, idx++, stepStatistic.freeTime);
     sqlite3_bind_double(stepStmt, idx++, stepStatistic.stageTime);
     sqlite3_bind_double(stepStmt, idx++, stepStatistic.bubbleTime);
-    sqlite3_bind_double(stepStmt, idx, stepStatistic.pureCommunicationExcludeReceiveTime);
+    sqlite3_bind_double(stepStmt, idx++, stepStatistic.pureCommunicationExcludeReceiveTime);
+    sqlite3_bind_double(stepStmt, idx, stepStatistic.prepareTime);
     auto result = sqlite3_step(stepStmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert bandwidth data fail. ", sqlite3_errmsg(db));
@@ -599,6 +600,10 @@ std::string JsonClusterDatabase::BuildCondition(const Protocol::SummaryTopRankPa
 {
     std::string stepCondition;
     std::string rankCondition;
+    std::string prepareTimeCondition;
+    if (HasColumn(TABLE_STEP_TRACE, "preparing")) {
+        prepareTimeCondition = ",sum(ROUND(preparing,2)) as prepareTime ";
+    }
     if (!requestParams.stepIdList.empty()) {
         stepCondition = " and step_id in (?";
         for (int i = 1; i < requestParams.stepIdList.size(); i++) {
@@ -616,7 +621,9 @@ std::string JsonClusterDatabase::BuildCondition(const Protocol::SummaryTopRankPa
     std::string sql = "SELECT rank_id as rankId, sum(ROUND(compute_time,2)) as computingTime,"
                       "sum(ROUND(pure_communication_time,2)) as communicationNotOverLappedTime,"
                       "sum(ROUND(overlap_communication_time,2)) as communicationOverLappedTime,"
-                      "sum(ROUND(free_time,2)) as freeTime FROM " + TABLE_STEP_TRACE +
+                      "sum(ROUND(free_time,2)) as freeTime "
+                      + prepareTimeCondition +
+                      "FROM " + TABLE_STEP_TRACE +
                       " WHERE rank_id !='' " + stepCondition + rankCondition
                       + "group by rank_id ";
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {

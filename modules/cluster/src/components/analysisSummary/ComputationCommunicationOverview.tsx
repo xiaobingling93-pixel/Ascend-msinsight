@@ -19,7 +19,9 @@ import { CommunicatorContainer } from '../communicatorContainer/CommunicatorCont
 import PpBandwidthAnalysis from './PpBandwidthAnalysis';
 
 interface SummaryDataType{
+    [propName: string]: any;
     rankId: string ;
+    prepareTime: number;
     computingTime: number;
     communicationNotOverLappedTime: number;
     communicationOverLappedTime: number;
@@ -27,8 +29,17 @@ interface SummaryDataType{
     ComputeTimeRatio?: string | number;
     CommunicationTimeRatio?: string | number;
     computingTimeTransfer?: string | number;
-    [propName: string]: any;
 }
+
+const baseOptionLegendData = [
+    { name: 'Preparing', textStyle: { color: COLOR.Grey50 } },
+    { name: 'Computing', textStyle: { color: COLOR.Grey50 } },
+    { name: 'Communication(Not Overlapped)', textStyle: { color: COLOR.Grey50 } },
+    { name: 'Communication(Overlapped)', textStyle: { color: COLOR.Grey50 } },
+    { name: 'Free', textStyle: { color: COLOR.Grey50 } },
+    { name: 'Computing Ratio', textStyle: { color: COLOR.Grey50 } },
+    { name: 'Communication Ratio', textStyle: { color: COLOR.Grey50 } },
+];
 
 const commonSeries: any = {
     type: 'bar',
@@ -44,17 +55,60 @@ const commonSeries: any = {
     data: [],
 };
 
+const baseOptionSeries = [
+    {
+        id: 'preparing',
+        name: 'Preparing',
+        ...commonSeries,
+    },
+    {
+        id: 'compute',
+        name: 'Computing',
+        ...commonSeries,
+    },
+    {
+        id: 'communicationNotOverLappedTime',
+        name: 'Communication(Not Overlapped)',
+        ...commonSeries,
+    },
+    {
+        id: 'communicationOverLappedTime',
+        name: 'Communication(Overlapped)',
+        ...commonSeries,
+    },
+    {
+        id: 'freeTime',
+        name: 'Free',
+        ...commonSeries,
+    },
+    {
+        name: 'Computing Ratio',
+        type: 'line',
+        yAxisIndex: 1,
+        tooltip: {
+            valueFormatter: function (value: any) {
+                return value + ' %';
+            },
+        },
+        data: [],
+    },
+    {
+        name: 'Communication Ratio',
+        type: 'line',
+        yAxisIndex: 1,
+        tooltip: {
+            valueFormatter: function (value: any) {
+                return value + ' %';
+            },
+        },
+        data: [],
+    },
+];
+
 const baseOption: any = {
     tooltip: commonEchartsOptions.tooltip,
     legend: {
-        data: [
-            { name: 'Computing', textStyle: { color: COLOR.Grey50 } },
-            { name: 'Communication(Not Overlapped)', textStyle: { color: COLOR.Grey50 } },
-            { name: 'Communication(Overlapped)', textStyle: { color: COLOR.Grey50 } },
-            { name: 'Free', textStyle: { color: COLOR.Grey50 } },
-            { name: 'Computing Ratio', textStyle: { color: COLOR.Grey50 } },
-            { name: 'Communication Ratio', textStyle: { color: COLOR.Grey50 } },
-        ],
+        data: [],
         tooltip: {
             show: true,
             formatter: function () {
@@ -104,58 +158,24 @@ const baseOption: any = {
             splitLine: commonEchartsOptions.splitLineY,
         },
     ],
-    series: [
-        {
-            id: 'compute',
-            name: 'Computing',
-            ...commonSeries,
-        },
-        {
-            id: 'communicationNotOverLappedTime',
-            name: 'Communication(Not Overlapped)',
-            ...commonSeries,
-        },
-        {
-            id: 'communicationOverLappedTime',
-            name: 'Communication(Overlapped)',
-            ...commonSeries,
-        },
-        {
-            id: 'freeTime',
-            name: 'Free',
-            ...commonSeries,
-        },
-        {
-            name: 'Computing Ratio',
-            type: 'line',
-            yAxisIndex: 1,
-            tooltip: {
-                valueFormatter: function (value: any) {
-                    return value + ' %';
-                },
-            },
-            data: [],
-        },
-        {
-            name: 'Communication Ratio',
-            type: 'line',
-            yAxisIndex: 1,
-            tooltip: {
-                valueFormatter: function (value: any) {
-                    return value + ' %';
-                },
-            },
-            data: [],
-        },
-    ],
+    series: [],
 };
 function wrapData(data: SummaryDataType[]): any {
+    const list = ['prepareTime', 'computingTime', 'communicationNotOverLappedTime', 'communicationOverLappedTime', 'freeTime'];
+    const totalFields = ['prepareTime', 'computingTime', 'communicationNotOverLappedTime', 'freeTime'];
+    let isContainsFieldPreparing = true;
+    if (data.length > 0 && data[0].prepareTime < 0) { // 后台返回的预处理时间小于零，说明是旧版本数据，移除预处理时间相关的字段，兼容一个版本，后续可删除
+        isContainsFieldPreparing = false;
+        list.shift();
+        totalFields.shift();
+    }
     data.forEach(item => {
-        const list = ['computingTime', 'communicationNotOverLappedTime', 'communicationOverLappedTime', 'freeTime'];
+        if (!isContainsFieldPreparing) {
+            item.prepareTime = 0;
+        }
         list.forEach(field => {
             item[field] = Number(item[field].toFixed(4));
         });
-        const totalFields = ['computingTime', 'communicationNotOverLappedTime', 'freeTime'];
         let total = 0;
         totalFields.forEach(field => {
             total += item[field];
@@ -166,8 +186,17 @@ function wrapData(data: SummaryDataType[]): any {
         item.communicationTimeRatio = Number((100 * item.communicationNotOverLappedTime / notZero(total)).toFixed(2));
     });
     baseOption.xAxis[0].data = data.map(item => item.rankId);
-    const order: Array<keyof SummaryDataType> = ['computingTimeTransfer', 'communicationNotOverLappedTime',
+    const order: Array<keyof SummaryDataType> = ['prepareTime', 'computingTimeTransfer', 'communicationNotOverLappedTime',
         'communicationOverLappedTime', 'freeTime', 'computeTimeRatio', 'communicationTimeRatio'];
+    const legendDataTemp = [...baseOptionLegendData];
+    const seriesTemp = [...baseOptionSeries];
+    if (!isContainsFieldPreparing) { // 如果不包含预处理字段，移除相关的图标和tooltips信息
+        order.shift();
+        legendDataTemp.shift();
+        seriesTemp.shift();
+    }
+    baseOption.legend.data = legendDataTemp;
+    baseOption.series = seriesTemp;
     for (let i = 0; i < order.length; i++) {
         baseOption.series[i].data = data.map(item => item[order[i]]);
     }

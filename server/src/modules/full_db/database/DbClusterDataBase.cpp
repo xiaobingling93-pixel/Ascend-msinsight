@@ -20,6 +20,10 @@ bool DbClusterDataBase::QuerySummaryData(const Protocol::SummaryTopRankParams &r
 {
     std::string stepCondition;
     std::string rankCondition;
+    std::string prepareTimeCondition;
+    if (HasColumn(TABLE_STEP_TRACE_TIME, "preparing")) {
+        prepareTimeCondition = ",sum(ROUND(preparing,2)) as prepareTime ";
+    }
     if (!requestParams.stepIdList.empty()) {
         stepCondition = " and step in (?";
         for (int i = 1; i < requestParams.stepIdList.size(); i++) {
@@ -36,8 +40,9 @@ bool DbClusterDataBase::QuerySummaryData(const Protocol::SummaryTopRankParams &r
     }
     std::string sql = "SELECT \"index\" as rankId, sum(ROUND(computing,2)) as computingTime, "
                       "sum(ROUND(communication_not_overlapped,2)) as communicationNotOverLappedTime, "
-                      "sum(ROUND(overlapped,2)) as communicationOverLappedTime, "
-                      "sum(ROUND(free,2)) as freeTime FROM " + TABLE_STEP_TRACE_TIME +
+                      "sum(ROUND(overlapped,2)) as communicationOverLappedTime, sum(ROUND(free,2)) as freeTime "+
+                      prepareTimeCondition +
+                      "FROM " + TABLE_STEP_TRACE_TIME +
                       " WHERE rankId !='' " + stepCondition + rankCondition
                       + "group by rankId ";
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {

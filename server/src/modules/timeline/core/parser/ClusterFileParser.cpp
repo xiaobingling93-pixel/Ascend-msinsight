@@ -366,6 +366,12 @@ StepStatistic ClusterFileParser::MapToStepStatistic(std::vector<std::string> tok
     index++;
     statistic.pureCommunicationExcludeReceiveTime =
             tokens[index].empty() ? 0 : std::stod(tokens[index]);
+    index++;
+    if (index >= tokens.size()) {
+        statistic.prepareTime = -1; // 代表csv文件中没有Preparing字段
+    } else {
+        statistic.prepareTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
+    }
     return statistic;
 }
 

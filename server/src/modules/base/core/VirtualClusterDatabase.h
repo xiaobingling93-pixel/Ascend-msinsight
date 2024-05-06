@@ -63,6 +63,7 @@ public:
 
 protected:
     const std::string totalOpInfo = "Total Op Info";
+    bool HasColumn(const std::string &tableName, const std::string &columnName);
     bool ExecuteQuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
         Protocol::SummaryTopRankResBody &responseBody, std::string sql);
     bool ExecuteQueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody, std::string sql);

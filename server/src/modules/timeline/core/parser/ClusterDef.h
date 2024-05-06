@@ -53,6 +53,7 @@ struct StepStatistic {
     double stageTime = 0;
     double bubbleTime = 0;
     double pureCommunicationExcludeReceiveTime = 0;
+    double prepareTime = 0;
 };
 
 struct ClusterBaseInfo {

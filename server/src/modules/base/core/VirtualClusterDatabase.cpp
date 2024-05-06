@@ -35,6 +35,32 @@ bool VirtualClusterDatabase::ExecuteQueryCommunicationGroup(rapidjson::Document 
     return true;
 }
 
+bool VirtualClusterDatabase::HasColumn(const std::string &tableName, const std::string &columnName)
+{
+    if (!Database::CheckTableExist(tableName)) {
+        ServerLog::Error("Failed to check table: ", tableName);
+        return false;
+    }
+    std::string sql = "PRAGMA table_info(" + tableName + ")";
+    sqlite3_stmt *stmt;
+    bool result = false;
+
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare statement. error:", sqlite3_errmsg(db));
+        return result;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const unsigned char *name = sqlite3_column_text(stmt, 1);
+        if (columnName == reinterpret_cast<const char *>(name)) {
+            result = true;
+            break;
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    return result;
+}
+
 bool VirtualClusterDatabase::ExecuteQuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
     Protocol::SummaryTopRankResBody &responseBody, std::string sql)
 {
@@ -50,6 +76,7 @@ bool VirtualClusterDatabase::ExecuteQuerySummaryData(const Protocol::SummaryTopR
     for (const auto &item: requestParams.rankIdList) {
         sqlite3_bind_text(stmt, index++, item.c_str(), -1, SQLITE_TRANSIENT);
     }
+    bool isContainsFieldPreparing = (sql.find("preparing") != std::string::npos);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::SummaryDto summaryDto;
@@ -58,6 +85,11 @@ bool VirtualClusterDatabase::ExecuteQuerySummaryData(const Protocol::SummaryTopR
         summaryDto.communicationNotOverLappedTime = sqlite3_column_double(stmt, col++);
         summaryDto.communicationOverLappedTime = sqlite3_column_double(stmt, col++);
         summaryDto.freeTime = sqlite3_column_double(stmt, col++);
+        if (isContainsFieldPreparing) {
+            summaryDto.prepareTime = sqlite3_column_double(stmt, col++);
+        } else {
+            summaryDto.prepareTime = -1; // 代表不存在Preparing字段
+        }
         responseBody.summaryList.emplace_back(summaryDto);
     }
     sqlite3_finalize(stmt);

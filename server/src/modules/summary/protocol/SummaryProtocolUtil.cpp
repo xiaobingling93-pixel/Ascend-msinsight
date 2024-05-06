@@ -51,6 +51,7 @@ template <> std::optional<document_t> ToResponseJson<SummaryTopRankResponse>(con
         JsonUtil::AddMember(summaryDtoJson, "communicationNotOverLappedTime",
                             summaryDto.communicationNotOverLappedTime, allocator);
         JsonUtil::AddMember(summaryDtoJson, "freeTime", summaryDto.freeTime, allocator);
+        JsonUtil::AddMember(summaryDtoJson, "prepareTime", summaryDto.prepareTime, allocator);
         summaryList.PushBack(summaryDtoJson, allocator);
     }
     JsonUtil::AddMember(body, "summaryList", summaryList, allocator);

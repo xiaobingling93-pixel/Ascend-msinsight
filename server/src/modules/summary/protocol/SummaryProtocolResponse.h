@@ -20,6 +20,7 @@ struct SummaryDto {
     double communicationOverLappedTime;
     double communicationNotOverLappedTime;
     double freeTime;
+    double prepareTime;
 };
 
 struct SummaryTopRankResBody {
