@@ -87,7 +87,7 @@ public:
     bool QueryCommunicationStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
         Protocol::SummaryStatisticsBody &responseBody) override;
     bool QueryStepDuration(const std::string &stepId, uint64_t &min, uint64_t &max) override;
-    bool QueryPythonViewData(const Protocol::SystemViewParams &requestParams,
+    bool QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
         Protocol::SystemViewBody &responseBody) override;
     LayerStatData QueryLayerData(const std::string &layer, const std::string &name) override;
     std::vector<std::string> QueryCoreType() override;

@@ -133,6 +133,56 @@ bool TraceDatabaseHelper::isAttrInfoExist(std::unique_ptr<SqlitePreparedStatemen
     return false;
 }
 
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QuerySystemViewData(
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::SystemViewParams &requestParams)
+{
+    std::string searchName = "%" + requestParams.searchName + "%";
+    std::string orderBy;
+    if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
+        throw DatabaseException("There is an SQL injection attack on this parameter.");
+    }
+    if (requestParams.order == "descend") {
+        orderBy = " ORDER BY " + requestParams.orderBy + " DESC";
+    } else {
+        orderBy = " ORDER BY " + requestParams.orderBy + " ASC";
+    }
+    std::string mainSql;
+    auto sql = " total as (select sum(duration) as totalTime, count(distinct name) as num from main) "
+       " select name, round(sum(duration)*100.0/total.totalTime, 4) as time, sum(duration) / 1000.0 as totalTime, "
+       "       count(1) as numberCalls, round(avg(duration) / 1000.0, 2) as avg, min(duration) / 1000.0 as min, "
+       "       max(duration) / 1000.0 as max, total.num from main join total group by name ";
+    auto limitSql = " limit ? offset ?";
+
+    if (requestParams.layer == "Ascend Hardware") {
+        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
+                  "     main as (select realName as name, endNs - startNs as duration from TASK task "
+                  " join COMPUTE_TASK_INFO info on info.globalTaskId = task.globalTaskId join nameIds on name = id "
+                  " where deviceId = ?),";
+    } else if (requestParams.layer == "HCCL") {
+        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
+              "     main as (select realName as name, endNs - startNs as duration from TASK task "
+              " join COMMUNICATION_TASK_INFO info on info.globalTaskId = task.globalTaskId join nameIds on name = id "
+              " where deviceId = ?),";
+    } else if (requestParams.layer == "CANN") {
+        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
+                  "     tmp as (select globalPid from TASK where deviceId = ? group by globalPid), "
+                  "     main as (select realName as name, endNs - startNs as duration from CANN_API api "
+                  " join tmp on api.globalTid >> 32 = tmp.globalPid join nameIds on name = id),";
+    } else if (requestParams.layer == "Python") {
+        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
+                  "     tmp as (select globalPid from TASK where deviceId = ? group by globalPid), "
+                  "     main as (select realName as name, endNs - startNs as duration from PYTORCH_API api "
+                  " join tmp on api.globalTid >> 32 = tmp.globalPid join nameIds on name = id),";
+    } else if (requestParams.layer == "Overlap Analysis") {
+        mainSql = " with main as (select case type when 0 then 'Computing' when 1 then 'Communication' "
+                  "        when 2 then 'Communication(Not Overlapped)' else 'Free' end as name, "
+                  "  endNs - startNs as duration from OVERLAP_ANALYSIS task where name like ? and deviceId = ?),";
+    } else {
+            throw DatabaseException("unsupported type!");
+    }
+    return ExecuteQuery(stmt, mainSql + sql + orderBy + limitSql, searchName, requestParams.rankId,
+                        requestParams.pageSize, (requestParams.current - 1) * requestParams.pageSize);
+}
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
     const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp)
 {

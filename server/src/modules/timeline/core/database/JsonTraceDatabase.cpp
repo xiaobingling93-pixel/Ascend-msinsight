@@ -1597,7 +1597,7 @@ bool JsonTraceDatabase::QueryStepDuration(const std::string &stepId, uint64_t &m
 }
 
 
-bool JsonTraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &requestParams,
+bool JsonTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
     Protocol::SystemViewBody &responseBody)
 {
     std::string searchName = "%" + requestParams.searchName + "%";
@@ -1611,7 +1611,7 @@ bool JsonTraceDatabase::QueryPythonViewData(const Protocol::SystemViewParams &re
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryPythonViewData, fail to prepare sql.");
+        ServerLog::Error("QuerySystemViewData, fail to prepare sql.");
         return false;
     }
     auto resultSet =

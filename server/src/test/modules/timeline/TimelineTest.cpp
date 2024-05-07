@@ -11,7 +11,7 @@
 class TimelineTest : TestSuit {
 };
 
-TEST_F(TestSuit, QueryPythonViewData)
+TEST_F(TestSuit, QuerySystemViewData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
     Dic::Protocol::SystemViewParams requestParams;
@@ -22,7 +22,7 @@ TEST_F(TestSuit, QueryPythonViewData)
     requestParams.order = "descend";
     requestParams.orderBy = "name";
     requestParams.pageSize = PAGE;
-    database->QueryPythonViewData(requestParams, responseBody);
+    database->QuerySystemViewData(requestParams, responseBody);
     int expectSize = 10;
     EXPECT_EQ(responseBody.systemViewDetail.size(), expectSize);
 }
@@ -39,7 +39,7 @@ TEST_F(TestSuit, QueryPythonViewWithTotalNum)
     requestParams.orderBy = "name";
     requestParams.pageSize = PAGE;
     requestParams.isQueryTotal = true;
-    database->QueryPythonViewData(requestParams, responseBody);
+    database->QuerySystemViewData(requestParams, responseBody);
     int expectSize = 162;
     EXPECT_EQ(responseBody.total, expectSize);
 }

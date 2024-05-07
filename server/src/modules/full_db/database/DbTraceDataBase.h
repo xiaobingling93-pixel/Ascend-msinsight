@@ -22,6 +22,7 @@ struct TASK_INFO {
 struct WAIT_TIME {
     int64_t waitTime = 0;
     int64_t id = 0;
+    std::string type;
 };
 
 struct OVERLAP_INFO {
@@ -80,7 +81,7 @@ public:
     bool QueryCommunicationStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
                                           Protocol::SummaryStatisticsBody &responseBody) override;
     bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max) override;
-    bool QueryPythonViewData(const Protocol::SystemViewParams &requestParams,
+    bool QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
                              Protocol::SystemViewBody &responseBody) override;
     LayerStatData QueryLayerData(const std::string &layer, const std::string &name) override;
     std::vector<std::string> QueryCoreType() override;
@@ -135,19 +136,19 @@ private:
     bool NeedUpdateDepth(const std::string &table);
     void GenerateCounterMetadata(const std::string &fileId,
                                  std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
-    void SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
-                         Protocol::KernelDetailsBody &responseBody) const;
     std::string GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams);
     static std::unique_ptr<Protocol::UnitTrack> GenerateBaseUnitTrack(const std::string &type,
         const std::string &cardId, const std::string &processId, const std::string &processName,
         const std::string &metaType);
     bool DealHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
                           std::map<std::string, std::vector<MetaDataDto>> &threadMap);
-    bool UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &stmt);
+    bool UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &updateComputeStmt,
+                                std::unique_ptr<SqlitePreparedStatement> &updateCommunicationStmt);
     std::string GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId);
     std::string GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, std::string rankId);
     void QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_INFO> &timeInfoList, const std::string &rankId);
     bool InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> &overlapInfoList, const std::string &rankId);
+    static std::string GetStringCacheValue(const std::string& path, std::string key);
     void GetCounterUnitsAndDataTypes(Protocol::PROCESS_TYPE type, std::vector<std::string> &units,
          std::vector<std::vector<std::string>> &dataTypes, std::unique_ptr<Protocol::UnitTrack> &counter);
 };

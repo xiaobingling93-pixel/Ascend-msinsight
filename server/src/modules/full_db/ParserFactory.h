@@ -22,6 +22,10 @@ public:
     virtual void Parser(const std::string &path, ImportActionRequest &request){};
     static void ParseEndCallBack(const std::string &token, const std::string &fileId, bool result,
                                  const std::string &message);
+    static bool IsCluster()
+    {
+        return curIsCluster;
+    }
 protected:
     static bool curIsCluster;
     static bool curIsDb;

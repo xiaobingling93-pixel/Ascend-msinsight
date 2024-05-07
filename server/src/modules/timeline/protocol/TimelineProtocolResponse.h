@@ -335,7 +335,7 @@ struct SystemViewDetail {
 
 struct SystemViewBody {
     std::vector<SystemViewDetail> systemViewDetail;
-    uint64_t total;
+    uint64_t total = 0;
     uint64_t pageSize;
     uint64_t currentPage;
 };
@@ -364,7 +364,7 @@ struct KernelDetail {
 struct KernelDetailsBody {
     std::vector<std::string> acceleratorCoreList;
     std::vector<KernelDetail> kernelDetails;
-    uint64_t count;
+    uint64_t count = 0;
     uint64_t pageSize;
     uint64_t currentPage;
 };

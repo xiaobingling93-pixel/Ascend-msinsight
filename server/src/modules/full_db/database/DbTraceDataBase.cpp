@@ -425,10 +425,35 @@ bool DbTraceDataBase::QueryStepDuration(const std::string &stepId, uint64_t &min
     return false;
 }
 
-bool DbTraceDataBase::QueryPythonViewData(const Protocol::SystemViewParams &requestParams,
+bool DbTraceDataBase::QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
     Protocol::SystemViewBody &responseBody)
 {
-    return false;
+    auto stmt = CreatPreparedStatement(); // 这里不需要判断空指针，TraceDatabaseHelper里面统一进行了判空操作
+    std::unique_ptr<SqliteResultSet> resultSet;
+    try {
+        resultSet = TraceDatabaseHelper::QuerySystemViewData(stmt, requestParams);
+    } catch (DatabaseException &e) {
+        ServerLog::Error("QuerySystemViewData Fail, ", e.What());
+        return false;
+    }
+    while (resultSet->Next()) {
+        Protocol::SystemViewDetail systemViewDetail;
+        int col = resultStartIndex;
+        systemViewDetail.name = resultSet->GetString(col++);
+        systemViewDetail.time = resultSet->GetDouble(col++);
+        systemViewDetail.totalTime = resultSet->GetDouble(col++);
+        systemViewDetail.numberCalls = resultSet->GetUint64(col++);
+        systemViewDetail.avg = resultSet->GetDouble(col++);
+        systemViewDetail.min = resultSet->GetDouble(col++);
+        systemViewDetail.max = resultSet->GetDouble(col++);
+        if (responseBody.total == 0) {
+            responseBody.total = resultSet->GetInt64(col++);
+        }
+        responseBody.systemViewDetail.emplace_back(systemViewDetail);
+    }
+    responseBody.pageSize = requestParams.pageSize;
+    responseBody.currentPage = requestParams.current;
+    return true;
 }
 
 bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
@@ -442,58 +467,69 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
         return false;
     }
     std::string searchName = "%" + requestParams.searchName + "%";
-    stmt->BindParams(searchName);
-    if (!requestParams.coreType.empty()) {
-        stmt->BindParams(requestParams.coreType);
-    }
+    stmt->BindParams(searchName, requestParams.rankId);
     auto resultSet = stmt->ExecuteQuery(requestParams.pageSize, offset);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryKernelDetailData. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
-    SetKernelDetail(std::move(resultSet), minTimestamp, responseBody);
+    while (resultSet->Next()) {
+        Protocol::KernelDetail detail;
+        detail.name = resultSet->GetString("name");
+        detail.type = GetStringCacheValue(path, resultSet->GetString("type"));
+        detail.acceleratorCore = GetStringCacheValue(path, resultSet->GetString("acceleratorCore"));
+        detail.startTime = resultSet->GetInt64("startTime") - minTimestamp;
+        detail.duration = resultSet->GetDouble("duration");
+        detail.waitTime = resultSet->GetDouble("waitTime");
+        detail.blockDim = resultSet->GetInt64("blockDim");
+        detail.inputShapes = GetStringCacheValue(path, resultSet->GetString("inputShapes"));
+        detail.inputDataTypes = GetStringCacheValue(path, resultSet->GetString("inputDataTypes"));
+        detail.inputFormats = GetStringCacheValue(path, resultSet->GetString("inputFormats"));
+        detail.outputShapes = GetStringCacheValue(path, resultSet->GetString("outputShapes"));
+        detail.outputDataTypes = GetStringCacheValue(path, resultSet->GetString("outputDataTypes"));
+        detail.outputFormats = GetStringCacheValue(path, resultSet->GetString("outputFormats"));
+        if (responseBody.count == 0) {
+            responseBody.count = resultSet->GetInt64("num");
+        }
+        responseBody.kernelDetails.emplace_back(detail);
+    }
     responseBody.pageSize = requestParams.pageSize;
     responseBody.currentPage = requestParams.current;
     const std::vector<std::string> cores = QueryCoreType();
     responseBody.acceleratorCoreList = cores;
-    responseBody.count = QueryTotalKernel(requestParams.coreType, searchName);
     return true;
+}
+
+std::string DbTraceDataBase::GetStringCacheValue(const std::string& path, std::string key)
+{
+    if (stringsCache.at(path).count(key) == 0) {
+        return key;
+    }
+    return stringsCache.at(path)[key];
 }
 
 std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams)
 {
-    std::string coreTypes;
-    if (!requestParams.coreType.empty()) {
-        coreTypes = " AND accelerator_core = ? ";
-    }
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
-    std::string sql = "SELECT name, op_type as type, accelerator_core AS acceleratorCore, start_time AS startTime, "
-        "duration, wait_time as waitTime, block_dim AS blockDim, input_shapes AS inputShapes, "
-        "input_data_types AS inputDataTypes, input_formats AS inputFormats, "
-        "output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
-        "output_formats AS outputFormats "
-        " FROM ("
-        " SELECT  NAME.value AS name,  OPTYPE.value AS op_type,"
-        "     TASKTYPE.value as accelerator_core, startNs as start_time, endNs - startNs as duration,"
-        "     block_dim, 0 as wait_time,"
-        "     INPUTSHAPES.value as input_shapes, INPUTDATATYPES.value as input_data_types, "
-        "     INPUTFORMATS.value as input_formats, OUTPUTSHAPES.value as output_shapes, "
-        "     OUTPUTDATATYPES.value as output_data_types, OUTPUTFORMATS.value as output_formats "
-        "   FROM " +
-        TABLE_COMPUTE_TASK_INFO +
-        "   JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
-        "   JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
-        "   JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
-        "   JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
-        "   JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
-        "   JOIN STRING_IDS AS INPUTDATATYPES ON INPUTDATATYPES.id = COMPUTE_TASK_INFO.inputDataTypes"
-        "   JOIN STRING_IDS AS INPUTFORMATS ON INPUTFORMATS.id = COMPUTE_TASK_INFO.inputFormats"
-        "   JOIN STRING_IDS AS OUTPUTSHAPES ON OUTPUTSHAPES.id = COMPUTE_TASK_INFO.outputShapes"
-        "   JOIN STRING_IDS AS OUTPUTDATATYPES ON OUTPUTDATATYPES.id = COMPUTE_TASK_INFO.outputDataTypes"
-        "   JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats"
-        " )subquery "
-        "where 1=1 and name LIKE ? " +
-        coreTypes;
+    std::string sql = "with nameIds as (select id, value as realName from STRING_IDS where lower(value) like ?),\n"
+      "     main as ("
+      "     select nameIds.realName as name, substr(realName, 0, instr(realName, '__') + 1) as opType,"
+      "       'HCCL' as taskType, info.startNs, round((info.endNs - info.startNs)/1000.0, 3) as duration,\n"
+      "       0 as block_dim, round(waitNs/1000.0, 3) as wait_time, 'N/A' as inputShapes, 'N/A' as inputDataTypes,"
+      "       'N/A' as inputFormats, 'N/A' as outputShapes, 'N/A' as outputDataTypes, 'N/A' as outputFormats"
+      "       from COMMUNICATION_OP info JOIN TASK ON info.connectionId = TASK.connectionId "
+      "       join nameIds on opName = nameIds.id group by info.opName\n"
+      "     UNION all"
+      "     select nameIds.realName as name, opType, info.taskType, startNs,"
+      "            round((endNs - startNs)/1000.0, 3) as duration,\n"
+      "            block_dim, round(waitNs/1000.0, 3) as wait_time, inputShapes, inputDataTypes, inputFormats,\n"
+      "            outputShapes, outputDataTypes, outputFormats  from COMPUTE_TASK_INFO info "
+      "      JOIN TASK ON info.globalTaskId = TASK.globalTaskId join nameIds on name = nameIds.id where deviceId = ?), "
+      "    total as (select count(1) as num from main)\n"
+      "SELECT total.num, name, opType as type, taskType AS acceleratorCore, startNs AS startTime, duration ,\n"
+      "       wait_time as waitTime, block_dim AS blockDim, inputShapes,\n"
+      "       inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats\n"
+      "FROM main join total";
 
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
@@ -505,31 +541,9 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
     return sql;
 }
 
-void DbTraceDataBase::SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
-    Protocol::KernelDetailsBody &responseBody) const
-{
-    while (resultSet->Next()) {
-        Protocol::KernelDetail detail;
-        detail.name = resultSet->GetString("name");
-        detail.type = resultSet->GetString("type");
-        detail.acceleratorCore = resultSet->GetString("acceleratorCore");
-        detail.startTime = resultSet->GetInt64("startTime") - minTimestamp;
-        detail.duration = resultSet->GetDouble("duration");
-        detail.waitTime = resultSet->GetDouble("waitTime");
-        detail.blockDim = resultSet->GetInt64("blockDim");
-        detail.inputShapes = resultSet->GetString("inputShapes");
-        detail.inputDataTypes = resultSet->GetString("inputDataTypes");
-        detail.inputFormats = resultSet->GetString("inputFormats");
-        detail.outputShapes = resultSet->GetString("outputShapes");
-        detail.outputDataTypes = resultSet->GetString("outputDataTypes");
-        detail.outputFormats = resultSet->GetString("outputFormats");
-        responseBody.kernelDetails.emplace_back(detail);
-    }
-}
-
 uint64_t DbTraceDataBase::QueryTotalKernel(const std::string &coreType, const std::string &name)
 {
-    std::string sql = "SELECT count(*) FROM " + TABLE_COMPUTE_TASK_INFO + " where name LIKE ?";
+    std::string sql = "SELECT count(1) as num FROM " + TABLE_COMPUTE_TASK_INFO + " where name LIKE ?";
     if (!coreType.empty()) {
         sql += " AND accelerator_core = ? ";
     }
@@ -548,7 +562,7 @@ uint64_t DbTraceDataBase::QueryTotalKernel(const std::string &coreType, const st
     }
     uint64_t total = 0;
     if (resultSet->Next()) {
-        total = resultSet->GetInt64("count(1)");
+        total = resultSet->GetInt64("num");
     }
     return total;
 }
@@ -557,8 +571,13 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
     Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
     // 精度缺失，设置500的浮动区间
-    std::string sql = "select info.ROWID as id, groupName||'group' as tid from COMMUNICATION_OP info "
-                      " where opName = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500";
+    std::string sql = "select info.ROWID as id, groupName||'group' as tid, opName as name, 'HCCL' as pid,"
+          " 0 as depth from COMMUNICATION_OP info "
+          " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500 "
+          " UNION all "
+          " select info.ROWID as id, T.streamId as tid, name, 'ASCEND HARDWARE' as pid, depth "
+          " from COMPUTE_TASK_INFO info join TASK T on info.globalTaskId = T.globalTaskId "
+          " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryKernelDepthAndThread, fail to prepare sql.");
@@ -566,16 +585,16 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
     }
     std::unique_ptr<SqliteResultSet> resultSet;
     uint64_t timestamp = params.timestamp + minTimestamp;
-    resultSet = stmt->ExecuteQuery(params.name, timestamp);
+    resultSet = stmt->ExecuteQuery(params.name, timestamp, params.name, timestamp);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryKernelDepthAndThread. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     if (resultSet->Next()) {
         responseBody.id = resultSet->GetString("id");
-        responseBody.depth = 0;
+        responseBody.depth = resultSet->GetInt64("depth");
         responseBody.threadId = resultSet->GetString("tid");
-        responseBody.pid = "HCCL";
+        responseBody.pid = resultSet->GetString("pid");
         return true;
     }
     ServerLog::Error("QueryKernelDepthAndThread. Fail to query data. Please check whether the data is correct.");
@@ -801,8 +820,9 @@ void DbTraceDataBase::UpdateWaitTime()
         return;
     }
     auto stmt = CreatPreparedStatement(FULL_DB_UPDATE_TIME); // 查询数据
-    auto updateStmt = CreatPreparedStatement("UPDATE COMPUTE_TASK_INFO SET waitNs = ? WHERE ROWID = ?;");
-    if (stmt == nullptr || updateStmt == nullptr) {
+    auto updateComputeStmt = CreatPreparedStatement("UPDATE COMPUTE_TASK_INFO SET waitNs = ? WHERE ROWID = ?;");
+    auto updateCommunicationStmt = CreatPreparedStatement("UPDATE COMMUNICATION_OP SET waitNs = ? WHERE ROWID = ?;");
+    if (stmt == nullptr || updateComputeStmt == nullptr || updateCommunicationStmt == nullptr) {
         ServerLog::Error("UpdateWaitTime, fail to prepare sql.");
         return;
     }
@@ -823,25 +843,26 @@ void DbTraceDataBase::UpdateWaitTime()
         }
         int64_t waitNs = startNs > prevTime[deviceId] ? startNs - prevTime[deviceId] : 0;
         prevTime[deviceId] = endNs;
-        if (type == "compute") {
-            WAIT_TIME task;
-            task.id = resultSet->GetInt64("id");
-            task.waitTime = waitNs;
-            taskWaitTimeCache.push_back(task);
-        }
-        if (taskWaitTimeCache.size() == cacheSize && !UpdateTaskInfoWaitTime(updateStmt)) {
+        WAIT_TIME task;
+        task.id = resultSet->GetInt64("id");
+        task.waitTime = waitNs;
+        task.type = type;
+        taskWaitTimeCache.push_back(task);
+        if (taskWaitTimeCache.size() == cacheSize &&
+            !UpdateTaskInfoWaitTime(updateComputeStmt, updateCommunicationStmt)) {
             ServerLog::Error("UpdateWaitTime. Failed to update data.");
             return;
         }
     }
-    if (!UpdateTaskInfoWaitTime(updateStmt)) {
+    if (!UpdateTaskInfoWaitTime(updateComputeStmt, updateCommunicationStmt)) {
         ServerLog::Error("UpdateWaitTime. Failed to update last data.");
         return;
     }
     UpdateValueIntoStatusInfoTable(WAIT_TIME_STATUS, FINISH_STATUS);
 }
 
-bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &stmt)
+bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &updateComputeStmt,
+                                             std::unique_ptr<SqlitePreparedStatement> &updateCommunicationStmt)
 {
     std::lock_guard<std::recursive_mutex> lockGuard(mutex);
     if (!StartTransaction()) {
@@ -850,9 +871,11 @@ bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedState
     }
     auto result = true;
     for (const auto &item : taskWaitTimeCache) {
-        stmt->Reset();
-        stmt->BindParams(item.waitTime, item.id);
-        if (!stmt->Execute()) {
+        std::unique_ptr<SqlitePreparedStatement> &refStmt = item.type == "compute" ?
+                updateComputeStmt : updateCommunicationStmt;
+        refStmt->Reset();
+        refStmt->BindParams(item.waitTime, item.id);
+        if (!refStmt->Execute()) {
             ServerLog::Error("Failed to UpdateTaskInfoWaitTime");
             result = false;
             break;
@@ -1113,6 +1136,9 @@ bool DbTraceDataBase::SetConfig()
         }
         if (CheckTableExist(TABLE_COMPUTE_TASK_INFO)) {
             ExecSql("alter table COMPUTE_TASK_INFO add column waitNs INTEGER;");
+        }
+        if (CheckTableExist(TABLE_COMMUNICATION_OP)) {
+            ExecSql("alter table COMMUNICATION_OP add column waitNs INTEGER;");
         }
         UpdateValueIntoStatusInfoTable(CONFIG_STATUS, FINISH_STATUS);
     }

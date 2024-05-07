@@ -60,7 +60,7 @@ public:
     virtual bool QueryCommunicationStatisticsData(const Protocol::SummaryStatisticParams &requestParams,
                                           Protocol::SummaryStatisticsBody &responseBody) = 0;
     virtual bool QueryStepDuration(const std::string& stepId, uint64_t &min, uint64_t &max) = 0;
-    virtual bool QueryPythonViewData(const Protocol::SystemViewParams &requestParams,
+    virtual bool QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
         Protocol::SystemViewBody &responseBody) = 0;
     virtual LayerStatData QueryLayerData(const std::string &layer, const std::string &name) = 0;
     virtual std::vector<std::string> QueryCoreType() = 0;

@@ -31,7 +31,7 @@ void QuerySystemViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    if (!database->QueryPythonViewData(request.params, response.body)) {
+    if (!database->QuerySystemViewData(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get timeline table response data.");
     }

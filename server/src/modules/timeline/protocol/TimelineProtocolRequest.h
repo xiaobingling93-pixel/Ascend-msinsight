@@ -205,7 +205,7 @@ struct SystemViewParams {
     std::string order;
     uint64_t current;
     uint64_t pageSize;
-    uint64_t type;
+    std::string type;
     std::string rankId;
     uint64_t endTime;
     bool isQueryTotal = false;

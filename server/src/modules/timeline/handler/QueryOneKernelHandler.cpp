@@ -7,6 +7,7 @@
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
 #include "TraceTime.h"
+#include "ParserFactory.h"
 
 namespace Dic {
 namespace Module {
@@ -34,6 +35,11 @@ void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     if (!database->QueryKernelDepthAndThread(request.params, response.body, TraceTime::Instance().GetStartTime())) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to query the operator response data.");
+    }
+
+    if (!ParserAlloc::IsCluster()) {
+        session.OnResponse(std::move(responsePtr));
+        return;
     }
 
     // 根据通信算子name,startTime查询step、group

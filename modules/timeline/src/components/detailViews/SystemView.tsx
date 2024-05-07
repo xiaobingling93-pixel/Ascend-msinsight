@@ -25,8 +25,9 @@ import type { CardMetaData, ThreadMetaData } from '../../entity/data';
 import { runInAction } from 'mobx';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
 import { calculateDomainRange } from '../CategorySearch';
-import { getTimeOffset } from '../../insight/units/utils';
+import { colorPalette, getTimeOffset } from '../../insight/units/utils';
 import type { InsightUnit } from '../../entity/insight';
+import { hashToNumber } from '../../utils/colorUtils';
 
 const Container = styled.div`
     width: 100%;
@@ -91,7 +92,10 @@ const RankFilter = observer((props: any): JSX.Element => {
     useEffect(() => {
         const rankList: any[] = [];
         for (const unit of props.session.units) {
-            rankList.push((unit.metadata as CardMetaData).cardId);
+            const cardId = (unit.metadata as CardMetaData).cardId;
+            if (cardId !== 'Host') {
+                rankList.push(cardId);
+            }
         }
         setRankIdList(rankList.sort((a: any, b: any) => Number(a) - Number(b)));
         setRankId(rankList[0]);
@@ -288,10 +292,12 @@ const KernelDetails = observer((props: any) => {
                         id: res.id,
                         startTime,
                         name: rowData.name,
+                        color: colorPalette[hashToNumber(rowData.name, colorPalette.length)],
                         duration: Number((rowData.duration * 1000).toFixed(0)),
                         depth: res.depth,
                         threadId: res.threadId,
                         startRecordTime: props.session.startRecordTime,
+                        metaType: res.pid,
                         showDetail: false,
                     };
                 },

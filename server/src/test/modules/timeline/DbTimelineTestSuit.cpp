@@ -299,6 +299,7 @@ TEST_F(FullDbTestSuit, FullDb_of_QueryKernelDetailData)
     requestParams.orderBy = "name";
     requestParams.coreType = "AI_VECTOR_CORE";
     requestParams.searchName = "aclnn";
+    requestParams.rankId = "2";
     Dic::Protocol::KernelDetailsBody responseBody;
     const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
