@@ -61,6 +61,8 @@ void FullDbParser::Reset()
     Timeline::TraceTime::Instance().Reset();
     FileParser::Reset();
     Timeline::ParserStatusManager::Instance().ClearAllParserStatus();
+    FullDb::DbMemoryDataBase::Reset();
+    FullDb::DbSummaryDataBase::Reset();
     ServerLog::Info("End Reset trace Parser");
     threadPool->Reset();
 }

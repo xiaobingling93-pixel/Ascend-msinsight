@@ -113,7 +113,8 @@ void DbMemoryDataBase::ParserEnd(std::string rankId, bool result)
     if (!result) {
         return;
     }
-    Server::ServerLog::Error(&"[Memory] ParserEnd"[ranks.size()]);
+
+    Server::ServerLog::Info("[Memory] ParserEnd, RankId: ", rankId);
     if (ranks.count(rankId) == 0) {
         Protocol::MemorySuccess success;
         success.rankId = rankId;
@@ -126,6 +127,7 @@ void DbMemoryDataBase::ParserEnd(std::string rankId, bool result)
     }
 }
 
+// 输入rankId为空时，会清空历史结果
 void DbMemoryDataBase::ParseCallBack(const std::string &token, const std::string &fileId, bool result,
                                      const std::string &msg)
 {
@@ -135,22 +137,47 @@ void DbMemoryDataBase::ParseCallBack(const std::string &token, const std::string
         return;
     }
 
-    auto event = std::make_unique<Protocol::ParseMemoryCompletedEvent>();
-    event->moduleName = Protocol::ModuleType::TIMELINE;
-    event->token = token;
-    event->result = result;
-    event->isCluster = true;
-    std::vector<Protocol::MemorySuccess> memoryResult;
-    for (const auto &[rank, info]: ranks) {
-        memoryResult.push_back(info);
+    if (fileId.empty()) {
+        ranks.clear();
+        auto event = std::make_unique<Protocol::ModuleResetEvent>();
+        event->moduleName = Protocol::ModuleType::MEMORY;
+        event->token = token;
+        event->result = true;
+        event->reset = true;
+        session->OnEvent(std::move(event));
+    } else {
+        auto event = std::make_unique<Protocol::ParseMemoryCompletedEvent>();
+        event->moduleName = Protocol::ModuleType::TIMELINE;
+        event->token = token;
+        event->result = result;
+        event->isCluster = true;
+        std::vector<Protocol::MemorySuccess> memoryResult;
+        for (const auto &[rank, info] : ranks) {
+            memoryResult.push_back(info);
+        }
+        event->memoryResult = memoryResult;
+        session->OnEvent(std::move(event));
     }
-    event->memoryResult = memoryResult;
-    session->OnEvent(std::move(event));
 }
 
 std::map<std::string, Protocol::MemorySuccess> DbMemoryDataBase::GetRanks()
 {
     return ranks;
+}
+
+void DbMemoryDataBase::Reset()
+{
+    ServerLog::Info("Memory reset. Wait task completed.");
+    ranks.clear();
+    ServerLog::Info("Memory task completed.");
+    auto databaseList = Timeline::DataBaseManager::Instance().GetAllMemoryDatabase();
+    for (auto &db: databaseList) {
+        auto database = dynamic_cast<DbMemoryDataBase*>(db);
+        if (database != nullptr) {
+            database->CloseDb();
+        }
+    }
+    Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::MEMORY);
 }
 
 }

@@ -27,7 +27,7 @@ public:
     static void ParseCallBack(const std::string &token, const std::string &fileId, bool result,
                               const std::string &msg);
     std::map<std::string, Protocol::MemorySuccess> GetRanks();
-
+    static void Reset();
 private:
     static std::map<std::string, Protocol::MemorySuccess> ranks;
     bool isCluster;

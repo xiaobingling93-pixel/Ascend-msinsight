@@ -20,6 +20,7 @@
 #include "MemoryParse.h"
 #include "OperatorProtocolEvent.h"
 #include "FullDbParser.h"
+#include "DbMemoryDataBase.h"
 
 namespace Dic {
 namespace Module {
@@ -217,9 +218,13 @@ bool ParserAlloc::CheckIfClusterAndReset(const std::string &path, int filesSize,
     curIsCluster = isCluster;
     curIsDb = isDb;
     if (reset) {
-        TraceFileParser::Instance().Reset();
-        Summary::KernelParse::Instance().Reset();
-        Memory::MemoryParse::Instance().Reset();
+        if (isDb) {
+            FullDb::FullDbParser::Instance().Reset();
+        } else {
+            TraceFileParser::Instance().Reset();
+            Summary::KernelParse::Instance().Reset();
+            Memory::MemoryParse::Instance().Reset();
+        }
         body.reset = true;
     }
     body.isCluster = isCluster;

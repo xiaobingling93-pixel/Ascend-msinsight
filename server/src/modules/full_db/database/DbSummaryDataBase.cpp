@@ -10,6 +10,7 @@
 #include "WsSessionManager.h"
 #include "OperatorProtocolEvent.h"
 #include "TraceTime.h"
+#include "DataBaseManager.h"
 
 namespace Dic::Module::FullDb {
 using namespace Server;
@@ -672,14 +673,37 @@ void DbSummaryDataBase::ParserEnd(const std::string &token, const std::string &f
         ServerLog::Error("Failed to get session token for summary callback.");
         return;
     }
-    auto event = std::make_unique<Protocol::OperatorParseStatusEvent>();
-    event->moduleName = Protocol::ModuleType::OPERATOR;
-    event->token = token;
-    event->result = true;
-    event->data.rankId = fileId;
-    event->data.status = result;
-    event->data.error = msg;
-    session->OnEvent(std::move(event));
+    if (fileId.empty()) {
+        auto event = std::make_unique<Protocol::ModuleResetEvent>();
+        event->moduleName = Protocol::ModuleType::OPERATOR;
+        event->token = token;
+        event->result = true;
+        event->reset = true;
+        session->OnEvent(std::move(event));
+    } else {
+        auto event = std::make_unique<Protocol::OperatorParseStatusEvent>();
+        event->moduleName = Protocol::ModuleType::OPERATOR;
+        event->token = token;
+        event->result = true;
+        event->data.rankId = fileId;
+        event->data.status = result;
+        event->data.error = msg;
+        session->OnEvent(std::move(event));
+    }
+}
+
+void DbSummaryDataBase::Reset()
+{
+    ServerLog::Info("Summary reset. wait task completed.");
+    ServerLog::Info("Summary task completed.");
+    auto databaseList = Timeline::DataBaseManager::Instance().GetAllSummaryDatabase();
+    for (auto &db: databaseList) {
+        auto database = dynamic_cast<DbSummaryDataBase*>(db);
+        if (database != nullptr) {
+            database->CloseDb();
+        }
+    }
+    Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::SUMMARY);
 }
 
 }

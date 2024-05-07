@@ -239,10 +239,12 @@ void MemoryParse::Reset()
     ranks.clear();
     ServerLog::Info("Memory task completed.");
     auto databaseList = Timeline::DataBaseManager::Instance().GetAllMemoryDatabase();
-    for (auto &db: databaseList) {
-        auto database = dynamic_cast<JsonMemoryDataBase*>(db);
-        database->ReleaseStmt();
-        database->CloseDb();
+    for (auto &item: databaseList) {
+        auto db = dynamic_cast<JsonMemoryDataBase*>(item);
+        if (db != nullptr) {
+            db->ReleaseStmt();
+            db->CloseDb();
+        }
     }
 
     Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::MEMORY);

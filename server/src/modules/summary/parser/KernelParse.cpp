@@ -364,8 +364,10 @@ void KernelParse::Reset()
     auto databaseList = Timeline::DataBaseManager::Instance().GetAllSummaryDatabase();
     for (auto &db: databaseList) {
         auto database = dynamic_cast<JsonSummaryDataBase*>(db);
-        database->ReleaseStmt();
-        database->CloseDb();
+        if (database != nullptr) {
+            database->ReleaseStmt();
+            database->CloseDb();
+        }
     }
     Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::SUMMARY);
 }
