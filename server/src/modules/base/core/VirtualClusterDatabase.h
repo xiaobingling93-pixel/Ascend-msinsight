@@ -20,7 +20,7 @@ namespace Dic {
 namespace Module {
 class VirtualClusterDatabase : public Database {
 public:
-    VirtualClusterDatabase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};
+    explicit VirtualClusterDatabase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};
     ~VirtualClusterDatabase() override = default;
 
     virtual std::string QueryParseClusterStatus() = 0;
