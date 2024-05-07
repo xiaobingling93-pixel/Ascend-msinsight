@@ -25,7 +25,7 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
     FileType type = DataBaseManager::Instance().GetFileType();
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     if (type == FileType::PYTORCH) {
-        sql += "SELECT NAME.value AS name, ROUND(size / 1024.0, 2) as size, "
+        sql += "SELECT NAME.value AS realName, ROUND(size / 1024.0, 2) as size, "
                " CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
             "ROUND((allocation_time - " + std::to_string(startTime) +
             ") / (1000.0 * 1000.0), 2) END AS allocationTime, "
@@ -41,13 +41,7 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
             "ROUND(release_total_reserved / (1024.0 * 1024.0), 11) as release_reserve, "
             "ROUND(release_total_active / (1024.0 * 1024.0), 11) as release_active, stream_ptr as stream FROM " +
             TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name"
-            " WHERE name LIKE ? ";
-    }
-    if (requestParams.maxSize > 0) {
-        requestParams.maxSize *= KB_SIZE;
-    }
-    if (requestParams.minSize > 0) {
-        requestParams.minSize *= KB_SIZE;
+            " WHERE realName LIKE ? ";
     }
     AddOperatorSql(requestParams, sql);
     return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql);
@@ -79,7 +73,7 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
         sql = "SELECT count(*) as nums FROM "
             " ("
             "   SELECT NAME.value as name, stream_ptr, allocation_time,"
-            " ROUND(size / 1024.0, 2) as size FROM OP_MEMORY JOIN STRING_IDS AS NAME ON "
+            " ROUND(size / 1024.0, 2) as size, size as realSize FROM OP_MEMORY JOIN STRING_IDS AS NAME ON "
             "   NAME.id = OP_MEMORY.name"
             ") "
             " WHERE name LIKE ? ";
@@ -95,10 +89,10 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
         sql += " AND ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) <= ? ";
     }
     if (requestParams.minSize != -1) {
-        sql += " AND size >= ? ";
+        sql += " AND realSize >= ? ";
     }
     if (requestParams.maxSize != -1) {
-        sql += " AND size <= ? ";
+        sql += " AND realSize <= ? ";
     }
     return ExecuteOperatorsTotalNum(requestParams, totalNum, sql);
 }

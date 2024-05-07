@@ -90,8 +90,8 @@ TEST_F(DbMemoryTest, FullDb_of_QueryMemoryOperatorWithSize)
     requestParams.pageSize = 10; // page size = 10
     requestParams.startTime = -1;
     requestParams.endTime = -1;
-    requestParams.minSize = 10; // min size = 10
-    requestParams.maxSize = 64; // min size = 64
+    requestParams.minSize = 10 * 1024; // min size = 10*1024
+    requestParams.maxSize = 64 * 1024; // min size = 64*1024
     std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> responseBody;
     auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);

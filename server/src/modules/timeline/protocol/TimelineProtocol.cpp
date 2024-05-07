@@ -293,7 +293,7 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitCounterRequest(const json_t &js
     JsonUtil::SetByJsonKeyValue(reqPtr->params.threadName, json["params"], "threadName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.processName, json["params"], "processName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.threadId, json["params"], "threadId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
     return reqPtr;
 }

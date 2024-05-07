@@ -87,7 +87,8 @@ function newLane (insightMetaData: InsightMetaData<any>, parentMetaData: any): I
         }
         case 'counter': {
             const meta = generateMetaData(paramsTree.get(paramsTree.get(insightMetaData.metadata)).cardId, (parentMetaData as ProcessMetaData).processId,
-                insightMetaData.metadata.processName, '', insightMetaData.metadata.threadName, paramsTree.get(insightMetaData.metadata).dataSource);
+                insightMetaData.metadata.processName, insightMetaData.metadata.threadId, insightMetaData.metadata.threadName,
+                paramsTree.get(insightMetaData.metadata).dataSource);
             meta.dataType = insightMetaData.metadata.dataType;
             meta.metaType = insightMetaData.metadata.metaType;
             return new CounterUnit(meta);
