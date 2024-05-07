@@ -174,7 +174,7 @@ function wrapData(data: SummaryDataType[]): any {
             item.prepareTime = 0;
         }
         list.forEach(field => {
-            item[field] = Number(item[field].toFixed(4));
+            item[field] = isNaN(item[field]) ? 0 : Number(item[field].toFixed(4));
         });
         let total = 0;
         totalFields.forEach(field => {
