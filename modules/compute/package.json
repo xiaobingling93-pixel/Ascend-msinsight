@@ -11,7 +11,7 @@
     "mobx-react": "9.0.0",
     "react-i18next": "12.1.4",
     "i18next": "23.4.6",
-    "@cloudsop/horizon": "0.0.76",
+    "@cloudsop/horizon": "0.0.77",
     "highlight.js": "11.4.0"
   },
   "scripts": {
