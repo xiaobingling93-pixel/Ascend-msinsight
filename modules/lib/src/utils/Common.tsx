@@ -51,4 +51,33 @@ export const delayExecute = (doFunc: () => void, timeout = 500): void => {
     }, timeout);
 };
 
+export function sortFunc<T>(a: T, b: T, sorter = 'asc'): number {
+    const aNum = Number(a);
+    const bNum = Number(b);
+    if (isNaN(aNum) && isNaN(bNum)) {
+        // a、b不是数字，不变
+        return 0;
+    } else if (isNaN(aNum)) {
+        // a不是数字，b是数字，a放后面
+        return 1;
+    } else if (isNaN(bNum)) {
+        // a是数字，b不是数字，不变
+        return 0;
+    } else {
+        return sorter === 'asc' ? (aNum - bNum) : (bNum - aNum);
+    }
+}
+
+export const safeStr = (str: string, ignore?: string): string => {
+    if (str === undefined || str === null) {
+        return str;
+    }
+    if (ignore !== undefined && ignore !== null && ignore !== '') {
+        const list = str.split(ignore);
+        const safelist = list.map(item => item.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+        return safelist.join(ignore);
+    }
+    return str?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+};
+
 export { BaseContainer, BaseDescription, COLOR, chartVisbilityListener, getResizeEcharts };

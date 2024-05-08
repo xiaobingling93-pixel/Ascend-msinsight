@@ -1,10 +1,11 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import * as echarts from 'echarts';
 import { type IblockData } from './Index';
-import { COLOR, getResizeEcharts, chartVisbilityListener } from 'lib/CommonUtils';
+import { COLOR, getResizeEcharts, chartVisbilityListener, safeStr, sortFunc } from 'lib/CommonUtils';
+import { LimitHit } from '../../LimitSet';
 interface Iprops {
     blockId: string;
     data: IblockData[];
@@ -21,8 +22,9 @@ const baseOption = {
         axisPointer: {
             type: 'shadow',
         },
+        confine: true,
         formatter: function (params: any): string {
-            return `Cycles:${Number(params[0]?.data?.originValue)}`;
+            return `${safeStr(params[0]?.name)} <br/>${params[0]?.marker} Cycles:${Number(params[0]?.data?.originValue)}`;
         },
     },
     legend: {
@@ -77,7 +79,7 @@ function InitCharts(data: IblockData[]): void {
 function wrapData(data: IblockData[]): any {
     const option = { ...baseOption };
     data.sort((a, b) => sortFunc(a.value, b.value));
-    const namelist = data.map(item => `${item.blockType?.toUpperCase()}_${item.name.replaceAll(' ', '_')}`);
+    const namelist = data.map(item => `${item.blockType?.toUpperCase()}_${String(item.name).replaceAll(' ', '_')}`);
     const valuelist = data.map(item => ({ value: item.value, originValue: item.originValue }));
     option.yAxis.data = namelist;
     option.series[0].data = valuelist;
@@ -91,24 +93,19 @@ function wrapData(data: IblockData[]): any {
     option.grid.left = String(maxLength * 9);
     return option;
 }
-function sortFunc<T>(a: T, b: T): number {
-    const aNum = Number(a);
-    const bNum = Number(b);
-    if (isNaN(aNum)) {
-        return -1;
-    } else if (isNaN(bNum)) {
-        return 1;
-    } else {
-        return aNum - bNum;
-    }
-}
 
 const chartID = 'ComputeWorkload';
 function ComputeWorkloadChart({ blockId, data }: Iprops): JSX.Element {
-    const showData = useMemo(() => data.filter(item => item.blockId === blockId), [blockId, data]);
+    const [limit, setLimit] = useState({ maxSize: 5000, overlimit: true, current: 0 });
+    const allData = useMemo(() => data.filter(item => item.blockId === blockId), [blockId, data]);
+    const showData = useMemo(() => data.filter(item => item.blockId === blockId).slice(0, limit.maxSize), [blockId, data]);
     chartVisbilityListener(chartID, () => {
         InitCharts(showData);
     });
+
+    useEffect(() => {
+        setLimit({ ...limit, overlimit: allData.length > limit.maxSize, current: allData.length });
+    }, [allData]);
     useEffect(() => {
         setTimeout(() => {
             InitCharts(showData);
@@ -116,6 +113,7 @@ function ComputeWorkloadChart({ blockId, data }: Iprops): JSX.Element {
     }, [showData]);
     return (
         <div style={{ padding: '20px' }}>
+            {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`Current Count (${limit.current})`}/>}
             <div id={chartID} style={{ height: '400px' }} ></div>
         </div>
     );

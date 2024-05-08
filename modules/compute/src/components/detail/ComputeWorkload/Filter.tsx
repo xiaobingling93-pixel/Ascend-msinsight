@@ -3,7 +3,8 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Select } from 'antd';
-import { FormItem, getUsableVal } from '../../Filter';
+import { sortFunc } from 'lib/CommonUtils';
+import { FormItem, getUsableVal } from '../../hotMethod/Filter';
 import type { optionDataType, optionMapDataType } from '../../../utils/interface';
 import { limitInput } from '../../Common';
 
@@ -42,6 +43,7 @@ function Filter({ blockIdList, handleFilterChange }: {blockIdList: string[];hand
         limitInput();
     }, []);
     useEffect(() => {
+        blockIdList.sort((a, b) => sortFunc(a, b, 'asc'));
         const blockIdOptions = blockIdList.map((item, index) => ({ label: item, value: item }));
         const { optionMap: newOptionMap, condition: newCondition } = getOptionsAndValue(condition, { blockIdOptions });
         setCondition(newCondition);

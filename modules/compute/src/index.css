@@ -19,13 +19,21 @@ code {
 tr.ant-table-row:hover > td.ant-table-cell *{
     color:unset;
 }
-.ant-table.ant-table-small .ant-table-thead > tr > th{
+#root .ant-table.ant-table-small {
+    font-size: 12px;
+}
+#root .ant-table.ant-table-small .ant-table-thead > tr > th{
     height:35px;
 }
 
 .ant-tree .ant-tree-treenode:not(.ant-tree .ant-tree-treenode-disabled).filter-node .ant-tree-title {
     font-weight: 700;
     color: #7ec1ff;
+}
+
+#root .ant-table.ant-table-small .ant-table-tbody > tr > td{
+    height:29px;
+    padding: 3px 5px;
 }
 
 .theme_dark #root{

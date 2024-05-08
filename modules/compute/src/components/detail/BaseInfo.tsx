@@ -2,12 +2,14 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { type ReactNode, useEffect, useState, useMemo } from 'react';
+import { Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { observer } from 'mobx-react';
 import { BaseContainer, BaseDescription } from 'lib/CommonUtils';
 import ResizeTable from 'lib/ResizeTable';
 import { type Session } from '../../entity/session';
 import { queryBaseInfo } from '../RequestUtils';
+import { LimitHit } from '../LimitSet';
 interface Iprops {
     session: Session;
 }
@@ -99,45 +101,52 @@ const mixBlockCol: ColumnsType<IblockDuration> = [
         width: 100,
     },
     {
-        title: 'AIC Duration (μs)',
+        title: 'CUBE0 Duration (μs)',
         dataIndex: 'aicDuration',
         ellipsis: true,
     },
     {
-        title: 'AIV0 Duration (μs)',
+        title: 'VECTOR0 Duration (μs)',
         dataIndex: 'aiv0Duration',
         ellipsis: true,
     },
     {
-        title: 'AIV1 Duration (μs)',
+        title: 'VECTOR1 Duration (μs)',
         dataIndex: 'aiv1Duration',
         ellipsis: true,
     },
 ];
 function BlockDetail({ opType = '', blockDetail = [] }: Ibaseinfo): JSX.Element {
+    const [limit, setLimit] = useState({ maxSize: 10000, overlimit: false, current: 0 });
+
     const dataset = useMemo(() => {
+        const list = blockDetail.slice(0, limit.maxSize);
         if (opType?.toLowerCase() === 'mix') {
-            return blockDetail.map(item => ({
+            return list.map(item => ({
                 ...item,
                 aicDuration: item?.duration?.[0],
                 aiv0Duration: item?.duration?.[1],
                 aiv1Duration: item?.duration?.[2],
             }));
         } else {
-            return blockDetail.map(item => ({
+            return list.map(item => ({
                 ...item,
                 duration: item?.duration?.[0],
             }));
         }
     }, [blockDetail]);
+    useEffect(() => {
+        setLimit({ ...limit, overlimit: blockDetail.length > limit.maxSize, current: blockDetail.length });
+    }, [blockDetail]);
     const col = useMemo(() => opType?.toLowerCase() === 'mix' ? mixBlockCol : blockCol, [opType]);
     return (<div style={{ width: '600px' }}>
+        {limit.overlimit && (<LimitHit maxSize={limit.maxSize} name={`Block Detail Records (${limit.current})`}/>)}
         <ResizeTable
             size="small"
             columns={col}
             dataSource={dataset}
             scroll={dataset.length > 10 ? { y: 400 } : false}
-            pagination={{ showTotal: () => true, size: 'small', hideOnSinglePage: true }}
+            pagination={false}
         />
     </div>);
 }
@@ -149,7 +158,16 @@ const getInfoItem = (item: Ilabel, dataObj: Ibaseinfo): Record<string, unknown> 
             value: <BlockDetail {...dataObj}/>,
         };
     } else {
-        return { ...item, value: dataObj[item.key as keyof Ibaseinfo] ?? '' };
+        let text = (dataObj[item.key as keyof Ibaseinfo] ?? '') as string;
+        const maxSize = 10000; // 1万
+        if (text.length > maxSize) {
+            text = `${text.slice(0, maxSize)} 【Exceed ${maxSize} , Hide the rest content.】`;
+        }
+        let node: ReactNode = text;
+        if (text.length > 50) {
+            node = (<Tooltip placement="topLeft" title={<div style={{ maxWidth: '800px', maxHeight: '400px', overflow: 'auto' }}>{text}</div>}>{text}</Tooltip>);
+        }
+        return { ...item, value: node };
     }
 };
 
