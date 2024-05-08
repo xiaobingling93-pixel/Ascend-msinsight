@@ -176,7 +176,7 @@ private:
         Protocol::KernelDetailsBody &responseBody) const;
     std::vector<int32_t> QueryAllTrackId();
 
-    std::vector<Protocol::SimpleSlice> QueryAllSliceByTrackId(const int32_t &trackId);
+    void QueryAllSliceByTrackId(const int32_t &trackId, std::vector<Protocol::SimpleSlice> &simpleSliceVec);
 
     std::vector<Protocol::RowThreadTrace> QuerySliceByCondition(const Protocol::UnitThreadTracesParams &requestParams,
         uint64_t minTimestamp, int64_t traceId);

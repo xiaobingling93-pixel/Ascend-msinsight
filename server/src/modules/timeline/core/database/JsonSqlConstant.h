@@ -98,10 +98,11 @@ const std::string QUERY_UNITS_META_SQL =
     " GROUP BY "
     " name, pid ) c ON c.pid = p.pid ) AS pt WHERE pt.process_name IS NOT NULL "
     " ORDER BY pt.process_sort_index ASC, pt.thread_sort_index ASC, pt.name ASC;";
-const std::string QUERY_EXETREME_TIME_SQL =
-    "SELECT min(timestamp) as minTimestamp, max(timestamp) as maxTimestamp FROM "
-    "(SELECT timestamp FROM " +
-    SLICE_TABLE + " UNION SELECT timestamp FROM " + COUNTER_TABLE + ")";
+const std::string QUERY_EXETREME_TIME_SQL = "SELECT  min(minTimestamp) AS totalMinTimestamp, max(maxTimestamp) AS "
+                                            "totalMaxTimestamp FROM (SELECT min(timestamp) "
+    "as minTimestamp, max(timestamp) as maxTimestamp FROM " +
+    SLICE_TABLE + " UNION SELECT min(timestamp) as minTimestamp, max(timestamp) as maxTimestamp FROM " + COUNTER_TABLE +
+    ")";
 const std::string QUERY_FLOWCATEGORY_EVENTS_SQL =
     "SELECT flow.type, flow.flow_id, thread.pid, thread.tid, slice.id As sliceId, slice.track_id AS "
     "sTrackId, flow.timestamp - ? FROM " +

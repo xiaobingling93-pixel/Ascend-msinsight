@@ -5,7 +5,6 @@
 #include "ServerLog.h"
 #include "TraceTime.h"
 #include "TableDefs.h"
-#include "Timer.h"
 #include "TraceFileParser.h"
 #include "TraceDatabaseHelper.h"
 #include "SliceDepthCacheManager.h"
@@ -480,8 +479,12 @@ void JsonTraceDatabase::UpdateSimulationDepthByCodeWithNoOverlap()
         return;
     }
     ServerLog::Info("trackIdList size: ", trackIdList.size());
+    std::vector<Protocol::SimpleSlice> rowThreadTraceVec;
+    const uint32_t vectorSize = 5000000;
+    rowThreadTraceVec.reserve(vectorSize);
     for (const auto &item : trackIdList) {
-        std::vector<Protocol::SimpleSlice> rowThreadTraceVec = QueryAllSliceByTrackId(item);
+        rowThreadTraceVec.clear();
+        QueryAllSliceByTrackId(item, rowThreadTraceVec);
         if (std::empty(rowThreadTraceVec)) {
             continue;
         }
@@ -489,28 +492,27 @@ void JsonTraceDatabase::UpdateSimulationDepthByCodeWithNoOverlap()
     }
 }
 
-std::vector<Protocol::SimpleSlice> JsonTraceDatabase::QueryAllSliceByTrackId(const int32_t &trackId)
+void JsonTraceDatabase::QueryAllSliceByTrackId(const int32_t &trackId,
+    std::vector<Protocol::SimpleSlice> &simpleSliceVec)
 {
-    std::vector<Protocol::SimpleSlice> simpleSliceVec;
     std::string querySliceByTrackId = QUERY_SLICE_BY_TRACKID_SQL;
     auto sliceStmt = CreatPreparedStatement(querySliceByTrackId);
     if (sliceStmt == nullptr) {
         ServerLog::Error("querySliceByTrackId. Failed to prepare sql.", GetLastError());
-        return simpleSliceVec;
+        return;
     }
     auto sliceResultSet = sliceStmt->ExecuteQuery(trackId);
     if (sliceResultSet == nullptr) {
         ServerLog::Error("querySliceByTrackId. Failed to get result set.", sliceStmt->GetErrorMessage());
-        return simpleSliceVec;
+        return;
     }
     while (sliceResultSet->Next()) {
         SimpleSlice simpleSlice;
         simpleSlice.id = sliceResultSet->GetInt64("id");
         simpleSlice.timestamp = sliceResultSet->GetUint64("timestamp");
         simpleSlice.endTime = sliceResultSet->GetUint64("endTime");
-        simpleSliceVec.emplace_back(simpleSlice);
+        simpleSliceVec.emplace_back(std::move(simpleSlice));
     }
-    return simpleSliceVec;
 }
 
 std::vector<int32_t> JsonTraceDatabase::QueryAllTrackId()
@@ -1283,8 +1285,8 @@ bool JsonTraceDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
     }
     while (resultSet->Next()) {
         int col = resultStartIndex;
-        min = resultSet->GetUint64("minTimestamp");
-        max = resultSet->GetUint64("maxTimestamp");
+        min = resultSet->GetUint64("totalMinTimestamp");
+        max = resultSet->GetUint64("totalMaxTimestamp");
     }
     return true;
 }

@@ -5,7 +5,6 @@
 #include "ParserStatusManager.h"
 #include "ConstantDefs.h"
 #include "algorithm"
-#include "ServerLog.h"
 
 namespace Dic {
 namespace Module {

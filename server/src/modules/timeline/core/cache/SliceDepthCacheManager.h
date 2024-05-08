@@ -9,6 +9,7 @@
 #include <list>
 #include <vector>
 #include <mutex>
+#include "Timer.h"
 
 
 namespace Dic {
@@ -34,17 +35,9 @@ public:
     }
 
     void PutSliceDepthCacheStructByFileIdAndTrackId(const uint64_t trackId,
-        const std::unordered_map<uint64_t, int32_t> &sliceIdAndDepthMap)
+                                                    SliceDepthCacheStruct &sliceDepthCacheStruct)
     {
-        int32_t maxDepth = 0;
-        SliceDepthCacheStruct sliceDepthCacheStruct = depthCache[trackId];
-        for (const auto &item : sliceIdAndDepthMap) {
-            sliceDepthCacheStruct.sliceIdAndDepthMap[item.first] = item.second;
-            maxDepth = std::max(item.second, maxDepth);
-        }
-        sliceDepthCacheStruct.trackId = trackId;
-        sliceDepthCacheStruct.maxDepTh = maxDepth;
-        depthCache[trackId] = sliceDepthCacheStruct;
+        depthCache[trackId] = std::move(sliceDepthCacheStruct);
     }
 
     int32_t QueryMaxDepthByTrackId(const uint64_t trackId)

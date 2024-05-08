@@ -10,7 +10,6 @@
 #include "TraceFileParser.h"
 #include "SourceFileParser.h"
 #include "ParserStatusManager.h"
-#include "Timer.h"
 #include "EventParser.h"
 
 namespace Dic {

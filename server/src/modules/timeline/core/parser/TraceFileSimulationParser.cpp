@@ -11,7 +11,6 @@
 #include "ParserStatusManager.h"
 #include "TraceTime.h"
 #include "SliceDepthCacheManager.h"
-#include "Timer.h"
 #include "TraceFileSimulationParser.h"
 
 namespace Dic {
