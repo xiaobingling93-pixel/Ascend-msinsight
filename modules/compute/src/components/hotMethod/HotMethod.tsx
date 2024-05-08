@@ -8,10 +8,10 @@ import type { ColumnsType, ColumnType } from 'antd/es/table';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import './HotMethod.css';
 import type { Session } from '../../entity/session';
-import Filter from '../Filter';
+import Filter from './Filter';
 import CodeViewer from '../codeViewer/CodeViewer';
 import ResizeTable from 'lib/ResizeTable';
-import Bar from '../Bar';
+import Bar from './Bar';
 import {
     HeaderFixedContainer,
     LeftRightContainer,

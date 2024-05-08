@@ -4,9 +4,9 @@
 import { observer } from 'mobx-react';
 import React, { type ReactElement, useEffect, useState } from 'react';
 import { Select } from 'antd';
-import { Label } from './Common';
-import type { optionDataType, optionMapDataType } from '../utils/interface';
-import type { Session } from '../entity/session';
+import { Label } from '../Common';
+import type { optionDataType, optionMapDataType } from '../../utils/interface';
+import type { Session } from '../../entity/session';
 
 interface ConditionType {
     core: string ;
@@ -84,7 +84,7 @@ function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element 
             style={{ width: 'calc(30% - 40px)', minWidth: '270px' }}
             content={(<Select
                 value={condition.core}
-                style={{ width: 'calc(100% - 80px)' }}
+                style={{ width: 'calc(100% - 100px)' }}
                 onChange={(val): void => {
                     handleChange('core', val);
                 }}
@@ -97,7 +97,7 @@ function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element 
             style={{ width: 'calc(70% - 300px)', minWidth: '700px' }}
             content={(<Select
                 value={condition.source}
-                style={{ width: 'calc(100% - 80px)' }}
+                style={{ width: 'calc(100% - 100px)' }}
                 onChange={(val): void => {
                     handleChange('source', val);
                 }}

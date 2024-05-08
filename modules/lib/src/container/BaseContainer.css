@@ -17,6 +17,15 @@
     height:calc(100% - 3rem);
     background: var(--grey0);
 }
+.container-box .container-body .ant-descriptions-view > table{
+    table-layout: fixed!important;
+}
+.container-body td.ant-descriptions-item-content{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: keep-all;
+}
 
 .theme_dark .container-box{
     color:var(--grey8);

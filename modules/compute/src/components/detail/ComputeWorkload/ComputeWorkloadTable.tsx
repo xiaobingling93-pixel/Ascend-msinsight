@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { type IblockData } from './Index';
 import ResizeTable from 'lib/ResizeTable';
 import { getSet, firstLetterUpper } from 'lib/CommonUtils';
+import { LimitHit } from '../../LimitSet';
 
 interface Iprops {
     blockId: string;
@@ -41,9 +42,12 @@ function getFullCols(blockType: string, blockTypeData: IblockData[]): any[] {
 
 function Index({ blockId, data }: Iprops): JSX.Element {
     const [tablelist, setTablelist] = useState<ItableConfig[]>([]);
+    const [limit, setLimit] = useState({ overlimit: false, maxSize: 5000, current: 0 });
 
     const updateTable = (): void => {
-        const showData = data.filter(item => item.blockId === blockId);
+        const allData = data.filter(item => item.blockId === blockId);
+        setLimit({ ...limit, overlimit: allData.length > limit.maxSize, current: allData.length });
+        const showData = allData.slice(0, limit.maxSize);
         // 按照blockType分表
         const blockTypeSet = getSet(showData, 'blockType') as string[];
         const dataGroupByBlockType = blockTypeSet.map(blockType => {
@@ -66,21 +70,18 @@ function Index({ blockId, data }: Iprops): JSX.Element {
     }, [blockId, data]);
     return (
         <div style={{ padding: '0 20px' }}>
-            {tablelist.length === 0 &&
-                (<div style={{ textAlign: 'center', color: 'var(--grey15) ' }}>No data</div>)
-            }
-            {
-                tablelist.map(item => (
-                    <ResizeTable
-                        key={item.blockType}
-                        size="small"
-                        columns={item.cols ?? []}
-                        dataSource={item.dataset ?? []}
-                        scroll={item.dataset.length > 10 ? { y: 500 } : false}
-                        pagination={{ defaultPageSize: item.dataset.length, showSizeChanger: false, hideOnSinglePage: true }}
-                    />
-                ))
-            }
+            {tablelist.length === 0 && (<div style={{ textAlign: 'center', color: 'var(--grey15) ' }}>No data</div>) }
+            {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`All Instruction Records (${limit.current})`}/>}
+            {tablelist.map(item => (
+                <ResizeTable
+                    key={item.blockType}
+                    size="small"
+                    columns={item.cols ?? []}
+                    dataSource={item.dataset ?? []}
+                    scroll={item.dataset.length > 10 ? { y: 500 } : false}
+                    pagination={false}
+                />
+            ))}
         </div>
     );
 }
