@@ -26,9 +26,11 @@ export const defaultCondition = {
 const defaultOptionMap = {
     rankIdOptions: [],
     groupOptions: [
-        { label: 'Operator', value: 'Operator' },
-        { label: 'Operator Type', value: 'Operator Type' },
-        { label: 'Operator Name and Input Shape', value: 'Input Shape' },
+        { label: 'Computing Operator', value: 'Operator' },
+        { label: 'Computing Operator Type', value: 'Operator Type' },
+        { label: 'Computing Operator Name and Input Shape', value: 'Input Shape' },
+        { label: 'HCCL Operator', value: 'HCCL Operator' },
+        { label: 'HCCL Operator Type', value: 'HCCL Operator Type' },
     ],
     topKOptions: [
         { label: '15', value: 15 },

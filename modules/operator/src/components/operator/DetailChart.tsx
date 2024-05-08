@@ -106,6 +106,9 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
         // 计算单元占比：饼图
         updateComputeData();
     };
+    const isHideRight = (): boolean => {
+        return condition.group === 'HCCL Operator Type' || condition.group === 'HCCL Operator';
+    };
     const updateOpTypeData = async (): Promise<void> => {
         const res = await queryOperatorCategory(condition);
         if (res === null || res === undefined) {
@@ -131,7 +134,9 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
     function renderChart(): void {
         const isDark = themeInstance.currentTheme === 'dark';
         InitCharts({ data: opTypeData, domId: 'opTypeChart', isDark, title: `Total Time(μs) Group by ${condition.group}` });
-        InitCharts({ data: computeData, domId: 'computeChart', isDark, title: 'Total Time(μs) Group by Accelerator Core' });
+        if (!isHideRight()) {
+            InitCharts({ data: computeData, domId: 'computeChart', isDark, title: 'Total Time(μs) Group by Accelerator Core' });
+        }
     }
     // 避免echarts渲染空白
     chartVisbilityListener('opTypeChart', () => {
@@ -152,7 +157,7 @@ const DetailChart = observer(function ({ condition, session }: {condition: Condi
             headerStyle={{ overflow: 'visible' }}
             bodyStyle={{ overflow: 'visible' }}
             left={<div id={'opTypeChart'} style={{ height: '100%', width: '100%' }} ></div>}
-            right={<div id={'computeChart'} style={{ height: '100%', width: '100%' }} ></div>}
+            right={isHideRight() ? <></> : <div id={'computeChart'} style={{ height: '100%', width: '100%' }} ></div>}
         />
     );
 });

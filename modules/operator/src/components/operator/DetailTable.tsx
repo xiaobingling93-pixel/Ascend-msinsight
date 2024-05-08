@@ -20,9 +20,12 @@ interface FullConditionType {
     pageSize: number;
     field: string;
     order: string;
-};
+}
 const OPERATOR = 'Operator';
 const OPERATOR_TYPE = 'Operator Type';
+const INPUT_SHAPE = 'Input Shape';
+const HCCL_OPERATOR = 'HCCL Operator';
+const HCCL_OPERATOR_TYPE = 'HCCL Operator Type';
 const opl0Columns: ColumnsType<any> = [
     {
         title: 'Name',
@@ -204,14 +207,90 @@ const opShapeStaticColumns = [
         ellipsis: true,
     },
 ];
+const hcclOpColumns = [
+    {
+        title: 'Name',
+        dataIndex: 'name',
+        sorter: true,
+        ellipsis: true,
+    },
+    {
+        title: 'Type',
+        dataIndex: 'type',
+        sorter: true,
+        ellipsis: true,
+    },
+    {
+        title: 'Start Time(ms)',
+        dataIndex: 'startTime',
+        sorter: true,
+        ellipsis: true,
+    },
+    {
+        title: 'Duration(μs)',
+        dataIndex: 'duration',
+        sorter: true,
+        ellipsis: true,
+    },
+    {
+        title: 'Wait Time(μs)',
+        dataIndex: 'waitTime',
+        sorter: true,
+        ellipsis: true,
+    },
+];
+
+const hcclOpTypeColumns = [
+    {
+        title: 'Type',
+        dataIndex: 'opType',
+        sorter: true,
+        ellipsis: true,
+    },
+    {
+        title: 'Count',
+        dataIndex: 'count',
+        sorter: true,
+        ellipsis: true,
+    },
+    {
+        title: 'Total Time(μs)',
+        dataIndex: 'totalTime',
+        sorter: true,
+        ellipsis: true,
+    },
+    {
+        title: 'Avg Time(μs)',
+        dataIndex: 'avgTime',
+        sorter: true,
+        ellipsis: true,
+    },
+    {
+        title: 'Max Time(μs)',
+        dataIndex: 'maxTime',
+        sorter: true,
+        ellipsis: true,
+    },
+    {
+        title: 'Min Time(μs)',
+        dataIndex: 'minTime',
+        sorter: true,
+        ellipsis: true,
+    },
+];
 const colMap: any = {
-    Operator: {
+    [OPERATOR]: {
         l0: opl0Columns,
         l1: opl2Columns,
         l2: opl2Columns,
     },
-    'Operator Type': opStaticColumns,
-    'Input Shape': opShapeStaticColumns,
+    [OPERATOR_TYPE]: opStaticColumns,
+    [INPUT_SHAPE]: opShapeStaticColumns,
+    [HCCL_OPERATOR]: hcclOpColumns,
+    [HCCL_OPERATOR_TYPE]: {
+        l0: hcclOpTypeColumns,
+        l1: hcclOpColumns,
+    },
 };
 
 const OperatorTable = ({ condition, opType, accCore, opName, inputShape, session }:
@@ -263,26 +342,35 @@ const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
             }}>see more<DownOutlined/></Button>),
     };
 
-    const getCols = ({ group, level }: any): any[] => {
-        if (group === OPERATOR) {
-            return colMap[group][level] ?? colMap[group].l2;
-        } else {
-            return [...colMap[group] ?? [], btnCol];
+    const getCols = ({ group, columnLevel }: any): any[] => {
+        switch (group) {
+            case OPERATOR:
+                return colMap[group][columnLevel] ?? colMap[group].l2;
+            case HCCL_OPERATOR:
+                return colMap[group];
+            case HCCL_OPERATOR_TYPE:
+                if (columnLevel === undefined) {
+                    return [...colMap[group].l0 ?? [], btnCol];
+                }
+                return colMap[group][columnLevel];
+            default:
+                return [...colMap[group] ?? [], btnCol];
         }
     };
     const updateData = async(): Promise<void> => {
         let res;
+        let isExpend = false;
         // 展开算子
         if (opType !== undefined || opName !== undefined || accCore !== undefined) {
-            res = await queryOperatorsInStatic(
-                { ...fullCondition, orderBy: fullCondition.field, opType: opType ?? '', opName, shape: inputShape ?? '', accCore: accCore ?? '' },
-            );
-        } else if (condition.group === OPERATOR) {
-            res = await queryOperators(
-                { ...fullCondition, orderBy: fullCondition.field });
+            const param = { ...fullCondition, orderBy: fullCondition.field, opType: opType ?? '', opName, shape: inputShape ?? '', accCore: accCore ?? '' };
+            isExpend = true;
+            res = await queryOperatorsInStatic(param);
+        } else if (condition.group === OPERATOR || condition.group === HCCL_OPERATOR) {
+            const param = { ...fullCondition, orderBy: fullCondition.field };
+            res = await queryOperators(param);
         } else {
-            res = await queryOperatorStatic(
-                { ...fullCondition, orderBy: fullCondition.field });
+            const param = { ...fullCondition, orderBy: fullCondition.field };
+            res = await queryOperatorStatic(param);
         }
         if (res === null || res === undefined) {
             return;
@@ -293,7 +381,13 @@ const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
         });
         setData(data);
         setPage({ ...page, total });
-        const columns = getCols({ group: opType !== undefined ? OPERATOR : condition.group, level });
+        let group = opType !== undefined ? OPERATOR : condition.group;
+        let columnLevel = level;
+        if (condition.group === HCCL_OPERATOR_TYPE && isExpend) {
+            group = HCCL_OPERATOR_TYPE;
+            columnLevel = 'l1';
+        }
+        const columns = getCols({ group, columnLevel });
         setCols(columns);
         runInAction(() => {
             session.total = total;
@@ -357,7 +451,7 @@ const BaseTable = ({ condition, opType, accCore, opName, inputShape, session }:
         }
         }
         rowKey={rowKey}
-        expandable={condition.group !== OPERATOR
+        expandable={condition.group !== OPERATOR && condition.group !== HCCL_OPERATOR
             ? {
                 expandedRowRender: (record: any) => <OperatorTable
                     condition={condition}
@@ -378,9 +472,11 @@ const DetailTable = ({ condition, session }: {condition: ConditionType;session: 
     let table;
     switch (condition.group) {
         case OPERATOR:
+        case HCCL_OPERATOR:
             table = <OperatorTable condition={condition} session={session}/>;
             break;
         case OPERATOR_TYPE:
+        case HCCL_OPERATOR_TYPE:
             table = <OperatorTypeTable condition={condition} session={session}/>;
             break;
         default:
