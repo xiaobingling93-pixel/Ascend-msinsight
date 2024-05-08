@@ -154,15 +154,18 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QuerySystemViewData(
     auto limitSql = " limit ? offset ?";
 
     if (requestParams.layer == "Ascend Hardware") {
-        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
-                  "     main as (select realName as name, endNs - startNs as duration from TASK task "
-                  " join COMPUTE_TASK_INFO info on info.globalTaskId = task.globalTaskId join nameIds on name = id "
-                  " where deviceId = ?),";
+        mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?),\n"
+          "  main as (select coalesce(a.realName, b.realName) as name, endNs - startNs as duration from TASK task\n"
+          "     left join COMPUTE_TASK_INFO info on info.globalTaskId = task.globalTaskId "
+          "     left join nameIds a on name = a.id left join nameIds b on task.taskType = b.id where deviceId = ?),";
     } else if (requestParams.layer == "HCCL") {
         mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
-              "     main as (select realName as name, endNs - startNs as duration from TASK task "
-              " join COMMUNICATION_TASK_INFO info on info.globalTaskId = task.globalTaskId join nameIds on name = id "
-              " where deviceId = ?),";
+      "     rankId as (select ? as deviceId),\n"
+      "  main as (select realName as name, endNs - startNs as duration from TASK task join rankId "
+      "  join COMMUNICATION_TASK_INFO info on info.globalTaskId = task.globalTaskId join nameIds on info.taskType = id "
+      "  where task.deviceId = rankId.deviceId UNION ALL select realName as name, op.endNs - op.startNs as duration "
+      "  from COMMUNICATION_OP op join nameIds on op.opName = id join rankId\n"
+      "  join TASK task on task.connectionId = op.connectionId where task.deviceId = rankId.deviceId group by opId),";
     } else if (requestParams.layer == "CANN") {
         mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?), "
                   "     tmp as (select globalPid from TASK where deviceId = ? group by globalPid), "

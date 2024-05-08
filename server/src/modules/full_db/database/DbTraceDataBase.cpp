@@ -780,8 +780,8 @@ void DbTraceDataBase::QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_IN
         sql = "select startNs, endNs from TASK main join COMPUTE_TASK_INFO info "
               " on info.globalTaskId = main.globalTaskId where deviceId=? and startNs != endNs order by startNs, endNs";
     } else {
-        sql = "select startNs, endNs from TASK main join COMMUNICATION_TASK_INFO info "
-              " on info.globalTaskId = main.globalTaskId where deviceId=? and startNs != endNs order by startNs, endNs";
+        sql = "select op.startNs, op.endNs from COMMUNICATION_OP op join TASK task "
+              " on task.connectionId = op.connectionId where deviceId=? group by opId  order by op.startNs, op.endNs";
     }
     auto stmt = CreatPreparedStatement();
     try {
