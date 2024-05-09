@@ -33,8 +33,6 @@
         "ascend-lib": "./lib"
     },
     "devDependencies": {
-        "@types/react": "18.2.0",
-        "@types/react-dom": "18.2.7",
         "@craco/craco": "7.1.0",
         "@playwright/test": "1.36.0",
         "@testing-library/jest-dom": "5.17.0",
@@ -47,6 +45,9 @@
         "@types/jest": "27.5.2",
         "@types/lodash": "4.14.197",
         "@types/node": "18.14.1",
+        "@types/pako": "2.0.3",
+        "@types/react": "18.2.0",
+        "@types/react-dom": "18.2.7",
         "@types/shallowequal": "1.1.1",
         "@typescript-eslint/eslint-plugin": "5.62.0",
         "@typescript-eslint/parser": "5.62.0",
@@ -59,13 +60,13 @@
         "eslint-plugin-promise": "6.1.1",
         "eslint-plugin-react": "7.33.2",
         "eslint-plugin-react-hooks": "4.6.0",
-        "react-scripts": "5.0.1",
         "html-inline-css-webpack-plugin": "^1.11.2",
         "html-inline-script-webpack-plugin": "^3.2.1",
         "html-webpack-inline-source-plugin": "^0.0.10",
         "html-webpack-plugin": "^5.5.3",
+        "react-scripts": "5.0.1",
+        "resize-observer-polyfill": "1.5.1",
         "typescript": "4.9.5",
-        "typescript-plugin-css-modules": "3.4.0",
-        "resize-observer-polyfill": "1.5.1"
+        "typescript-plugin-css-modules": "3.4.0"
     }
 }
