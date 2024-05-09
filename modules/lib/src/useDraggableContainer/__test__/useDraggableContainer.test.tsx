@@ -3,18 +3,25 @@ import { render, fireEvent } from '@testing-library/react';
 import { useDraggableContainer, ViewProps } from '../useDraggableContainer';
 import { renderHook } from '@testing-library/react-hooks';
 import '@testing-library/jest-dom/extend-expect';
+const light = {
+    contentBackgroundColor: '#F1F3F5',
+    closeDragContainerBG: 'rgb(229, 230, 232)',
+    switchIconColor: '#18181A',
+    dividerColor: '#fff',
+    maskColor: 'rgb(255, 255, 255, 0.55)',
+};
 
 describe('DraggableContainer test', () => {
     const viewProps: ViewProps = {
         mainContainer: React.createElement('div', null, 'Mock main Element'),
         draggableContainer: React.createElement('div', null, 'Mock draggable Element'),
         slot: React.createElement('div', null, 'Mock slot Element'),
-        id: 'Mock Draggable'
-    }
+        id: 'Mock Draggable',
+    };
     for (let i = 0; i < 4; i++) {
         it('should pass when view Rendering correctly', function () {
-            const { result } = renderHook(() => useDraggableContainer({ dragDirection: i, draggableWH: 300, open: true }));
-            const [ view, handleOpen ] = result.current;
+            const { result } = renderHook(() => useDraggableContainer({ dragDirection: i, draggableWH: 300, open: true, theme: light }));
+            const [view] = result.current;
             const { container } = render(view(viewProps));
             const draggableContainer = container.querySelector('div');
             const draggableButton = container.querySelector('.buttonShow');
@@ -23,16 +30,16 @@ describe('DraggableContainer test', () => {
             expect(caretButton).toBeInTheDocument();
             expect(draggableContainer).toBeInTheDocument();
             if (draggableContainer) {
-                fireEvent.mouseDown(draggableContainer)
-                fireEvent.mouseMove(draggableContainer)
-                fireEvent.mouseUp(draggableContainer)
+                fireEvent.mouseDown(draggableContainer);
+                fireEvent.mouseMove(draggableContainer);
+                fireEvent.mouseUp(draggableContainer);
             }
             if (draggableButton) {
-                fireEvent.click(draggableButton)
+                fireEvent.click(draggableButton);
             }
             if (caretButton) {
-                fireEvent.click(caretButton)
+                fireEvent.click(caretButton);
             }
         });
     }
-})
+});

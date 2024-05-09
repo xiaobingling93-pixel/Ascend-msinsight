@@ -19,6 +19,7 @@ module.exports = {
           './style/index': './src/style/index.css',
           './CommonUtils': './src/utils/Common.tsx',
           './Connector': './src/connection/index',
+          './useDraggableContainer': './src/useDraggableContainer/useDraggableContainer.tsx',
         },
         shared: {
           react: {singleton: true},

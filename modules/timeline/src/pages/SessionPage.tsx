@@ -5,7 +5,8 @@ import { BottomPanel } from '../components/BottomPanel';
 import { ChartContainer } from '../components/ChartContainer';
 import { Session } from '../entity/session';
 import { stateTexts } from '../utils/constant';
-import { DragDirection, useDraggableContainer } from '../utils/useDraggableContainer';
+import { DragDirection, useDraggableContainer } from 'lib/useDraggableContainer';
+import { themeInstance } from '../theme/theme';
 
 const ImgWithFallback = ({
     className = '',
@@ -61,7 +62,12 @@ const StatePopover = observer(({ session }: { session: Session }) => {
 
 export const BOTTOM_HEIGHT = 332;
 export const SessionPage = observer(function SessionPage({ session }: { session: Session }) {
-    const [view, handleOpen] = useDraggableContainer({ draggableWH: BOTTOM_HEIGHT, dragDirection: DragDirection.bottom, open: false });
+    const [view, handleOpen] = useDraggableContainer({
+        draggableWH: BOTTOM_HEIGHT,
+        dragDirection: DragDirection.bottom,
+        open: false,
+        theme: themeInstance.getThemeType(),
+    });
     useEffect(() => {
         if (session.selectedUnitKeys.length > 0 && (session.selectedRange !== undefined || session.selectedData !== undefined)) {
             handleOpen(true);

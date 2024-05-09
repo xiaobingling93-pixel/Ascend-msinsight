@@ -7,12 +7,13 @@ import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import { BottomPanelRender, TriggerEvent } from '../entity/insight';
 import { Session } from '../entity/session';
 import { BOTTOM_HEIGHT } from '../pages/SessionPage';
-import { DragDirection, useDraggableContainer } from '../utils/useDraggableContainer';
+import { DragDirection, useDraggableContainer } from 'lib/useDraggableContainer';
 import { SimpleTabularDetail } from './details/SimpleDetail';
 import { ChartErrorBoundary } from './error/ChartErrorBoundary';
 import { FILTER_HEIGHT } from './FilterContainer';
 import eventBus, { useEventBus } from '../utils/eventBus';
 import { getDetailViewItem } from './detailViews/DetailView';
+import { themeInstance } from '../theme/theme';
 import { getFindDetail } from './detailViews/FindInWindow';
 
 interface CssProps {
@@ -247,7 +248,7 @@ const getFilterContent = (session: Session, bottomPanelComponents?: ReturnType<B
 
 const DataCard = observer(({ session, height }: DataCardType) => {
     const { detail, moreTitle, more, toolbar, moreWh = 590 } = useBottomPanelReactNodes(session, height);
-    const [view] = useDraggableContainer({ dragDirection: DragDirection.right, draggableWH: moreWh });
+    const [view] = useDraggableContainer({ dragDirection: DragDirection.right, draggableWH: moreWh, theme: themeInstance.getThemeType() });
     return <div style={{ width: '100%', zIndex: 3, height: '100%' }}>
         {
             !isEmpty(more)

@@ -1,11 +1,15 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
+import { ThemeProvider } from '@emotion/react';
+import type { Theme } from '@emotion/react';
 import { CaretLeftOutlined, CaretRightOutlined } from '@ant-design/icons';
 import styled from '@emotion/styled';
 import { clamp } from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ReactComponent as DrawerButton } from '../assets/images/toggle_bg_light.svg';
+import { ReactComponent as DrawerButtonSvg } from './icons/toggle_bg_light.svg';
+
+const DrawerButton = DrawerButtonSvg as React.ElementType;
 
 interface CssProps {
     column: boolean;
@@ -36,11 +40,12 @@ export enum DragDirection {
 interface DCProps {
     dragDirection: DragDirection;
     draggableWH: number;
+    theme: Theme;
     open?: boolean;
 }
 
 const MIN_HORIZONTAL_WH = 14;
-const MIN_VERTICAL_WH = 32;
+const MIN_VERTICAL_WH = 36;
 
 const ContainerBase = styled.div<CssProps>`
     display: flex;
@@ -128,6 +133,7 @@ const ContainerLeft = styled(ContainerBase)`
 `;
 const ContainerRight = styled(ContainerBase)`
     flex-direction: row;
+    height: 100%;
     & > .topC {
         flex: 1;
         flex-flow: row;
@@ -458,7 +464,7 @@ const containerMap: Map<DragDirection, typeof ContainerBase> = new Map([
  * handleOpen：显示/隐藏可拖动容器；
  */
 export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => JSX.Element), ((needOpen?: boolean) => void) ] => {
-    const { draggableWH, dragDirection, open = true } = props;
+    const { draggableWH, dragDirection, open = true, theme } = props;
     const container = useRef<HTMLDivElement>(null); const draggable = useRef<HTMLDivElement>(null);
     const [dragWh, setDragWh] = useState(String(draggableWH));
     const [autoPopUp, setAutoPopUp] = useState(true);
@@ -487,17 +493,22 @@ export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => 
         }
     });
     const view = (props: ViewProps): JSX.Element => {
-        return <Container key={props.id} ref={container} column translateXY={dragTranslate} draggableWH={open ? dragWh : pxConvert(MIN_DRAG_WH, containerWH, dragDirection)} dragDirection={dragDirection} minWH={MIN_DRAG_WH}
-            onMouseUp={e => onMouseup(e.nativeEvent)} onMouseDown={e => onMousedown(e.nativeEvent)} onMouseMove={e => onMousemove(e.nativeEvent)}>
-            <div className={'topC'}> {props.mainContainer} </div>
-            <div className={'bottomC'} ref={draggable}>
-                <div className={'dragContainer'} aria-disabled={dragTranslate !== 0}>{props.draggableContainer}</div>
-                <DrawerButton className={'buttonShow'} onClick={() => showDraggable()} />
-                {dragTranslate ? <CaretLeftOutlined onClick={() => showDraggable()} className={'caret'}/> : <CaretRightOutlined onClick={() => showDraggable()} className={'caret'}/>}
-                <div className={'splitLine'} aria-disabled={dragTranslate !== 0} />
-            </div>
-            {props.slot}
-        </Container>;
+        return <ThemeProvider theme={theme}>
+            <Container
+                key={props.id} ref={container} column translateXY={dragTranslate}
+                draggableWH={open ? dragWh : pxConvert(MIN_DRAG_WH, containerWH, dragDirection)}
+                dragDirection={dragDirection} minWH={MIN_DRAG_WH}
+                onMouseUp={e => onMouseup(e.nativeEvent)} onMouseDown={e => onMousedown(e.nativeEvent)} onMouseMove={e => onMousemove(e.nativeEvent)}>
+                <div className={'topC'}> {props.mainContainer} </div>
+                <div className={'bottomC'} ref={draggable}>
+                    <div className={'dragContainer'} aria-disabled={dragTranslate !== 0}>{props.draggableContainer}</div>
+                    <DrawerButton className={'buttonShow'} onClick={() => showDraggable()} />
+                    {dragTranslate ? <CaretLeftOutlined onClick={() => showDraggable()} className={'caret'}/> : <CaretRightOutlined onClick={() => showDraggable()} className={'caret'}/>}
+                    <div className={'splitLine'} aria-disabled={dragTranslate !== 0} />
+                </div>
+                {props.slot}
+            </Container>
+        </ThemeProvider>;
     };
     return [view, handleOpen];
 };

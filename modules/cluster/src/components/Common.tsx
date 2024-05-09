@@ -4,9 +4,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { Checkbox, Divider, Select, Pagination } from 'antd';
-import { DragDirection, useDraggableContainer } from '../utils/useDraggableContainer';
+import { DragDirection, useDraggableContainer } from 'lib/useDraggableContainer';
 import { optionDataType, VoidFunction } from '../utils/interface';
 import type { EChartsType } from 'echarts';
+import { themeInstance } from '../theme/theme';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? props.name + ' :' : ''} </span>;
@@ -35,7 +36,12 @@ export const Container = (props: {title?: JSX.Element | string; content?: JSX.El
 
 export const Tan = (props: {position: string;main: JSX.Element;drag: JSX.Element;
     id: string;dragSize?: number;style?: object;className?: string;}): JSX.Element => {
-    const [view] = useDraggableContainer({ draggableWH: props.dragSize ?? 300, dragDirection: DragDirection.left, open: true });
+    const [view] = useDraggableContainer({
+        draggableWH: props.dragSize ?? 300,
+        dragDirection: DragDirection.left,
+        open: true,
+        theme: themeInstance.getThemeType(),
+    });
     const { style = {}, className } = props;
     return <div style={{ display: 'block', userSelect: 'text', ...style }} className={className ?? ''}>
         <div style={{ display: 'flex', height: '100%', overflow: 'auto' }} className={'tan-box'}>
