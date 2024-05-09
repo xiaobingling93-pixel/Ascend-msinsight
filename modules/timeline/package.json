@@ -4,7 +4,7 @@
   "private": true,
   "homepage": "./",
   "dependencies": {
-    "@cloudsop/horizon": "0.0.76",
+    "@cloudsop/horizon": "0.0.77",
     "@emotion/react": "11.11.0",
     "@emotion/styled": "11.11.0",
     "antd": "4.24.13",

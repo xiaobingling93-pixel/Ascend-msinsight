@@ -13,7 +13,7 @@
     "i18next": "23.4.6",
     "highlight.js": "11.4.0",
     "echarts": "5.4.3",
-    "@cloudsop/horizon": "0.0.76"
+    "@cloudsop/horizon": "0.0.77"
   },
   "scripts": {
     "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
