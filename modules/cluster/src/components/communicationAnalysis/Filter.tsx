@@ -2,11 +2,11 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { observer } from 'mobx-react';
-import { observable, runInAction, observe } from 'mobx';
+import { observable, observe } from 'mobx';
 import React, { useEffect, useState } from 'react';
 import { Select, Radio } from 'antd';
 import { getUsableVal, delayExecute } from 'lib/CommonUtils';
-import { isNull, Label } from '../Common';
+import { Label } from '../Common';
 import { optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
 import { queryIterations, queryMatrixOperators, queryOperators, queryStages } from '../../utils/RequestUtils';
 import { Session } from '../../entity/session';
@@ -35,18 +35,7 @@ const defaultOptionMap = {
 const observeCondition = observable({ value: defaultCondition });
 
 export function updateData(filterParams: ConditionDataType): void {
-    const condition: any = {};
-    for (const key in filterParams) {
-        if (!isNull(filterParams[key])) {
-            condition[key] = filterParams[key];
-        }
-    }
-    const hasValue = !isNull(filterParams.iterationId) && !isNull(filterParams.stage);
-    if (hasValue) {
-        runInAction(() => {
-            observeCondition.value = condition;
-        });
-    }
+    observeCondition.value = filterParams;
 }
 
 const getOptionsAndValue = async (initObj: ConditionDataType, initOptionMap: optionMapDataType, key?: keyof ConditionDataType, val?: any):

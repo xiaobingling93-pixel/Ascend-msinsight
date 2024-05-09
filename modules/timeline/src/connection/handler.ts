@@ -274,6 +274,8 @@ export const setTheme: NotificationHandler = (data): void => {
 
 export const clusterCompletedHandler: NotificationHandler = (data): void => {
     const clusterRes = data?.parseResult === 'ok';
+    const session = store.sessionStore.activeSession as Session;
+    session.isCluster = clusterRes;
     connector.send({
         event: 'updateSession',
         body: { isCluster: clusterRes, clusterCompleted: clusterRes },
