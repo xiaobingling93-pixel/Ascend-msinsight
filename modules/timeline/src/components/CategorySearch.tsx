@@ -190,9 +190,9 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     const [isMatchExact, setIsMatchExact] = useState(false);
 
     useEffect(action(() => {
-        setSearchIconVisible(true); setSearchContent('');
+        setSearchIconVisible(true); setSearchContent(''); setIsMatchCase(false); setIsMatchExact(false);
         updatePaginationData({ current: 0, total: 0 }); session.searchData = undefined;
-    }), [session]);
+    }), [session, session.units]);
     const onPageChange = (current: number): void => {
         updatePaginationData(prevState => ({ current, total: prevState.total }));
         jumpSlice(session, searchContent, current, isMatchCase, isMatchExact);

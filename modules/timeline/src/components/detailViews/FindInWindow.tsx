@@ -103,6 +103,8 @@ const FindDetail = observer((props: any) => {
             return;
         }
         if (prop.session.searchData === undefined || prop.session.searchData?.content === '') {
+            setDataSource([]);
+            setPage(defaultPage);
             return;
         }
         setLoading(true);
