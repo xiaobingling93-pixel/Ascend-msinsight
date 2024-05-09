@@ -8,6 +8,7 @@ import { DragDirection, useDraggableContainer } from 'lib/useDraggableContainer'
 import { optionDataType, VoidFunction } from '../utils/interface';
 import type { EChartsType } from 'echarts';
 import { themeInstance } from '../theme/theme';
+import { observer } from 'mobx-react';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? props.name + ' :' : ''} </span>;
@@ -34,7 +35,7 @@ export const Container = (props: {title?: JSX.Element | string; content?: JSX.El
     </div>;
 };
 
-export const Tan = (props: {position: string;main: JSX.Element;drag: JSX.Element;
+export const Tan = observer((props: {position: string;main: JSX.Element;drag: JSX.Element;
     id: string;dragSize?: number;style?: object;className?: string;}): JSX.Element => {
     const [view] = useDraggableContainer({
         draggableWH: props.dragSize ?? 300,
@@ -52,7 +53,7 @@ export const Tan = (props: {position: string;main: JSX.Element;drag: JSX.Element
             })}
         </div>
     </div>;
-};
+});
 
 export const Loading = ({ size = 20, style = {} }: {size?: number;style?: object}): JSX.Element => {
     return (<div className={'loading'}
