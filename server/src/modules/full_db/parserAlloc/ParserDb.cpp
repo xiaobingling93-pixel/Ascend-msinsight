@@ -86,9 +86,11 @@ void ParserDb::ClusterProcessAsyncStep(const std::string &token, const std::stri
     if (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::FINISH ||
         clusterFileParser.ParserClusterOfDb(selectedFolder)) {
         ServerLog::Info("ParseClusterDbFiles is success");
+        ParserDb::curIsCluster = true;
         parseClusterResult = PARSE_RESULT_OK;
     } else {
         ServerLog::Warn("ParseClusterDbFiles is failed");
+        ParserDb::curIsCluster = false;
         parseClusterResult = PARSE_RESULT_FAIL;
     }
     // send event
