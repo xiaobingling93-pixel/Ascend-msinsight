@@ -10,6 +10,7 @@
 #include "CommunicationModule.h"
 #include "OperatorModule.h"
 #include "SourceModule.h"
+#include "AdvisorModule.h"
 #include "ModuleManager.h"
 
 namespace Dic {
@@ -42,6 +43,7 @@ void ModuleManager::Register()
     std::unique_ptr<CommunicationModule> communicationModule = std::make_unique<CommunicationModule>();
     std::unique_ptr<OperatorModule> operatorModule = std::make_unique<OperatorModule>();
     std::unique_ptr<SourceModule> sourceModule = std::make_unique<SourceModule>();
+    std::unique_ptr<AdvisorModule> advisorModule = std::make_unique<AdvisorModule>();
     global->RegisterRequestHandlers();
     timelineModule->RegisterRequestHandlers();
     memoryModule->RegisterRequestHandlers();
@@ -49,6 +51,7 @@ void ModuleManager::Register()
     communicationModule->RegisterRequestHandlers();
     operatorModule->RegisterRequestHandlers();
     sourceModule->RegisterRequestHandlers();
+    advisorModule->RegisterRequestHandlers();
     moduleMap.emplace(ModuleType::GLOBAL, std::move(global));
     moduleMap.emplace(ModuleType::TIMELINE, std::move(timelineModule));
     moduleMap.emplace(ModuleType::SUMMARY, std::move(summaryModule));
@@ -56,6 +59,7 @@ void ModuleManager::Register()
     moduleMap.emplace(ModuleType::COMMUNICATION, std::move(communicationModule));
     moduleMap.emplace(ModuleType::OPERATOR, std::move(operatorModule));
     moduleMap.emplace(ModuleType::SOURCE, std::move(sourceModule));
+    moduleMap.emplace(ModuleType::ADVISOR, std::move(advisorModule));
 }
 
 void ModuleManager::UnRegister()

@@ -31,7 +31,9 @@ const EnumStrMap<Protocol::ModuleType> MODULE_TYPE_ES = {{Protocol::ModuleType::
                                                          {Protocol::ModuleType::COMMUNICATION, MODULE_COMMUNICATION },
                                                          {Protocol::ModuleType::MEMORY, MODULE_MEMORY },
                                                          {Protocol::ModuleType::OPERATOR, MODULE_OPERATOR },
-                                                         {Protocol::ModuleType::SOURCE, MODULE_SOURCE }};
+                                                         {Protocol::ModuleType::SOURCE, MODULE_SOURCE },
+                                                         {Protocol::ModuleType::ADVISOR, MODULE_ADVISOR }
+                                                         };
 
 const EnumStrMap<Protocol::LinkType> LINK_TYPE_ES = { { Protocol::LinkType::WEBSOCKET, "websocket" },
                                                       { Protocol::LinkType::SOCKET, "socket" } };

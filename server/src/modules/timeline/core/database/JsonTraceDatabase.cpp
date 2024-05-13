@@ -1881,6 +1881,34 @@ uint64_t JsonTraceDatabase::SameOperatorsCount(const std::string &name, int64_t 
     return total;
 }
 
+bool JsonTraceDatabase::QueryAffinityOptimizer(const std::string &optimizers,
+    std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp)
+{
+    std::string sql = "Select (s.timestamp - ?) as timestamp, s.duration, s.name, t.pid, t.tid "
+        "From " + sliceTable + " s Join " + threadTable + " t ON s.track_id = t.track_id "
+        "WHERE s.name IN (" + optimizers + ") order by s.timestamp asc";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Fail to prepare sql for QueryAffinityOptimizer.", sqlite3_errmsg(db));
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(minTimestamp);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for QueryAffinityOptimizer.", stmt->GetErrorMessage());
+        return false;
+    }
+    while (resultSet->Next()) {
+        Protocol::ThreadTraces one{};
+        one.startTime = resultSet->GetUint64("timestamp");
+        one.name = resultSet->GetString("name");
+        one.duration = resultSet->GetUint64("duration");
+        one.threadId = resultSet->GetString("tid");
+        one.id = resultSet->GetString("pid");
+        data.emplace_back(one);
+    }
+    return true;
+}
+
 bool JsonTraceDatabase::UpdateParseStatus(const std::string &status)
 {
     return UpdateValueIntoStatusInfoTable(timelineParseStatus, status);

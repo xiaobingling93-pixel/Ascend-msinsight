@@ -65,6 +65,15 @@ include_directories(${SRC_HOME_DIR}/modules/operator/protocol)
 include_directories(${SRC_HOME_DIR}/modules/full_db)
 include_directories(${SRC_HOME_DIR}/modules/full_db/parserAlloc)
 include_directories(${SRC_HOME_DIR}/modules/full_db/database)
+# advisor
+include_directories(${SRC_HOME_DIR}/modules/advisor)
+include_directories(${SRC_HOME_DIR}/modules/advisor/handler)
+include_directories(${SRC_HOME_DIR}/modules/advisor/protocol)
+include_directories(${SRC_HOME_DIR}/modules/advisor/process)
+aux_source_directory(${SRC_HOME_DIR}/modules/advisor DIC_MODULES_ADVISOR_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/advisor/handler DIC_MODULES_ADVISOR_HANDLER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/advisor/process DIC_MODULES_ADVISOR_PROCESS_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/advisor/protocol DIC_MODULES_ADVISOR_PROTOCOL_SRC)
 
 # modules for server
 aux_source_directory(${SRC_HOME_DIR}/modules DIC_MODULES_SRC)
@@ -165,7 +174,9 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SOURCE_SRC}
         ${DIC_MODULES_SOURCE_PARSER_SRC}
         ${DIC_MODULES_SOURCE_HANDLER_SRC}
-        ${DIC_MODULES_SOURCE_PROTOCOL_SRC})
+        ${DIC_MODULES_SOURCE_PROTOCOL_SRC}
+        ${DIC_MODULES_ADVISOR_SRC} ${DIC_MODULES_ADVISOR_HANDLER_SRC}
+        ${DIC_MODULES_ADVISOR_PROTOCOL_SRC} ${DIC_MODULES_ADVISOR_PROCESS_SRC})
 
 add_subdirectory(entry)
 if (${_PROJECT_TYPE} MATCHES "test")

@@ -104,6 +104,9 @@ public:
 
     std::vector<std::string> QueryRankId();
 
+    bool QueryAffinityOptimizer(const std::string &optimizers,
+        std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp) override;
+
     bool CheckTableDataInvalid(std::string tableName);
 
     void UpdateStartTime();

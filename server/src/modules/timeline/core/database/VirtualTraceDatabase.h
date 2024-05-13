@@ -72,6 +72,8 @@ public:
     virtual OneKernelData QueryKernelTid(uint64_t trackId) = 0;
     virtual bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params,
                                         Protocol::SearchAllSlicesBody &body, uint64_t minTimestamp) = 0;
+    virtual bool QueryAffinityOptimizer(const std::string &optimizers, std::vector<Protocol::ThreadTraces> &data,
+                                        uint64_t minTimestamp) = 0;
 };
 }
 #endif // PROFILER_SERVER_TRACE_DATABASE_H
