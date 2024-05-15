@@ -118,6 +118,8 @@ public:
 private:
     const int cacheSize = 5000;
     bool initStmt = false;
+    bool isExistPytorch = false;
+    bool isExistCann = false;
 
     std::unique_ptr<SqlitePreparedStatement> updateTaskDepthStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateApiDepthStmt = nullptr;

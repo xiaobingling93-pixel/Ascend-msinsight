@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <mutex>
+#include "ServerLog.h"
 #include "sqlite3.h"
 #include "SqlitePreparedStatement.h"
 
@@ -16,11 +17,21 @@ namespace Module {
 class DatabaseException : public std::exception {
 public:
     explicit DatabaseException(const char* message): message(message){};
+    DatabaseException(const char* message, bool isError): message(message), isError(isError){};
     const char* What()
     {
         return message;
     };
+    void Log(std::string prefix)
+    {
+        if (isError) {
+            Server::ServerLog::Error(prefix, message);
+        } else {
+            Server::ServerLog::Warn(prefix, message);
+        }
+    }
 private:
+    bool isError = true;
     const char* message;
 };
 class Database {

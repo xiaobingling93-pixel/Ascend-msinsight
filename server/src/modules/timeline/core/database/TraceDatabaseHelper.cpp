@@ -6,6 +6,38 @@
 
 
 namespace Dic::Module::Timeline {
+std::optional<std::string> TraceDatabaseHelper::QueryConnectionId(std::unique_ptr<SqlitePreparedStatement> &stmt,
+    const Protocol::UnitFlowsParams &requestParams)
+{
+    std::string sql;
+    auto processType = GetProcessType(requestParams.metaType);
+    std::unique_ptr<SqliteResultSet> resultSet;
+    switch (processType) {
+        case PROCESS_TYPE::ASCEND_HARDWARE:
+            sql = "select connectionId from TASK where ROWID = ?";
+            resultSet = ExecuteQuery(stmt, sql, requestParams.id);
+            break;
+        case PROCESS_TYPE::HCCL:
+            sql = "select connectionId from COMMUNICATION_OP where ROWID = ? and groupName||'group' = ?";
+            resultSet = ExecuteQuery(stmt, sql, requestParams.id, requestParams.tid);
+            break;
+        case PROCESS_TYPE::CANN_API:
+            sql = "select connectionId from CANN_API where ROWID = ?";
+            resultSet = ExecuteQuery(stmt, sql, requestParams.id);
+            break;
+        case PROCESS_TYPE::API:
+            sql = " select ids.connectionId from PYTORCH_API api "
+                  " join CONNECTION_IDS ids on api.connectionId = ids.id where api.ROWID = ?";
+            resultSet = ExecuteQuery(stmt, sql, requestParams.id);
+            break;
+        default:
+            return std::nullopt;
+    }
+    if (!resultSet->Next()) {
+        return std::nullopt;
+    }
+    return resultSet->GetString("connectionId");
+}
 
 void TraceDatabaseHelper::QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                             const Protocol::ThreadDetailParams &requestParams,

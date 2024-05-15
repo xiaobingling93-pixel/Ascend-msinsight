@@ -184,6 +184,7 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitFlowsRequest(const json_t &json
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.id, json["params"], "id");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
     return reqPtr;
 }
 

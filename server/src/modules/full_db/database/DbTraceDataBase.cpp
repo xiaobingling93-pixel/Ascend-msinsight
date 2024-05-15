@@ -266,7 +266,53 @@ void DbTraceDataBase::QueryFlowName(const Protocol::UnitFlowNameParams &requestP
 bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
     Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
 {
-    return false;
+    if (!isExistPytorch && !isExistCann) {
+        throw DatabaseException("QueryUintFlows Fail, invalid data."); // 异常退出，在接口中处理
+    }
+    auto stmt = CreatPreparedStatement();
+    std::string sql = "with constValue as (select ? as minTime, ? as connectionId)\n";
+    sql = isExistPytorch ? sql + PYTORCH_UNIT_FLOW_SQL + " union all " : sql;
+    sql = isExistCann ? sql + CANN_UNIT_FLOW_SQL + " union all " : sql;
+    sql += TASK_UNIT_FLOW_SQL;
+    auto connectionId = TraceDatabaseHelper::QueryConnectionId(stmt, requestParams);
+    if (!connectionId.has_value()) {
+        return false;
+    }
+    auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, minTimestamp, connectionId.value());
+    std::vector<FlowLocation> flowLocations;
+    while (resultSet->Next()) {
+        auto metaType = resultSet->GetString("metaType");
+        auto rankId = metaType == TABLE_API || metaType == TABLE_CANN_API ? path : resultSet->GetString("deviceId");
+        FlowLocation location {
+            .tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
+            .metaType = metaType, .rankId = rankId, .depth = resultSet->GetInt32("depth"),
+            .timestamp = resultSet->GetUint64("startTime"), .duration = resultSet->GetUint64("duration"),
+            .pid = resultSet->GetString("pid"), .name = stringsCache.at(path)[resultSet->GetString("name")]
+        };
+        flowLocations.push_back(location);
+    }
+    if (flowLocations.size() < 2) { // 小于2表示没有连线
+        return false;
+    }
+    std::map<std::string, std::vector<UnitSingleFlow>> flowMap;
+    for (int index = 1; index < flowLocations.size(); index++) {
+        UnitSingleFlow singleFlow;
+        singleFlow.id = connectionId.value();
+        singleFlow.from = flowLocations[index - 1];
+        singleFlow.to = flowLocations[index];
+        if (singleFlow.from.metaType == singleFlow.to.metaType && singleFlow.from.metaType == TABLE_API) {
+            singleFlow.cat = singleFlow.from.name == "Enqueue" ? "async_task_queue" : "fwdbwd";
+        }
+        singleFlow.cat = singleFlow.from.metaType == TABLE_CANN_API ? "HostToDevice" : singleFlow.cat;
+        if (singleFlow.from.metaType == TABLE_API && singleFlow.to.metaType == TABLE_CANN_API) {
+            singleFlow.cat = "async_npu";
+        }
+        flowMap[singleFlow.cat].push_back(singleFlow);
+    }
+    for (const auto &item: flowMap) {
+        responseBody.unitAllFlows.push_back({ .cat = item.first, .flows = item.second });
+    }
+    return true;
 }
 
 int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &params)
@@ -1115,6 +1161,8 @@ bool DbTraceDataBase::SetConfig()
     }
 
     std::lock_guard<std::recursive_mutex> lock(mutex);
+    isExistPytorch = CheckTableExist(TABLE_API);
+    isExistCann = CheckTableExist(TABLE_CANN_API);
 
     if (IsDatabaseVersionChange()) {
         UpdateValueIntoStatusInfoTable(CONFIG_STATUS, NOT_FINISH_STATUS);
@@ -1128,10 +1176,10 @@ bool DbTraceDataBase::SetConfig()
             ExecSql(" create table if not exists OVERLAP_ANALYSIS (id INTEGER PRIMARY KEY AUTOINCREMENT,"
                     " deviceId integer, startNs integer, endNs integer, type integer);");
         }
-        if (CheckTableExist(TABLE_API)) {
+        if (isExistPytorch) {
             ExecSql("alter table PYTORCH_API add depth integer;");
         }
-        if (CheckTableExist(TABLE_CANN_API)) {
+        if (isExistCann) {
             ExecSql("alter table CANN_API add depth integer;");
         }
         if (CheckTableExist(TABLE_COMPUTE_TASK_INFO)) {

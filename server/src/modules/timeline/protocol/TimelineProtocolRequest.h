@@ -100,6 +100,7 @@ struct UnitFlowsParams {
     std::string tid;
     std::string pid;
     std::string id;
+    std::string metaType;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
 };

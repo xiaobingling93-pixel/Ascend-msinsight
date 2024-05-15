@@ -21,6 +21,8 @@ using namespace Protocol;
 
 class TraceDatabaseHelper {
 public:
+static std::optional<std::string> QueryConnectionId(std::unique_ptr<SqlitePreparedStatement> &stmt,
+                                                    const Protocol::UnitFlowsParams &requestParams);
     static std::unique_ptr<SqliteResultSet> QueryThreadsByPid(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                                               const Protocol::UnitThreadsParams &requestParams,
                                                               uint64_t minTimestamp)

@@ -31,8 +31,14 @@ void QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     }
     uint64_t trackId =
         TraceFileParser::Instance().GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
-    bool result =
-        database->QueryUintFlows(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
+    bool result;
+    try {
+        result = database->QueryUintFlows(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
+    }  catch (DatabaseException &e) {
+        e.Log("QueryFlowsBySliceInfoHandler Fail, ");
+        result = false;
+    }
+
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
