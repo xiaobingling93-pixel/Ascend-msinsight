@@ -38,6 +38,7 @@ struct AffinityAPIData {
     BaseInfo baseInfo;
     std::string originAPI;
     std::string replaceAPI;
+    std::string note;
 };
 
 struct AffinityAPIResBody {
@@ -55,6 +56,7 @@ struct OperatorFusionData {
     std::string name; // 用来定位timeline上的算子
     std::string originOpList; // 可融合的系列算子
     std::string fusedOp;
+    std::string note;
 };
 
 struct OperatorFusionResBody {
@@ -71,6 +73,7 @@ struct AICpuOperatorData {
     BaseInfo baseInfo;
     std::string opName;
     std::string replaceOp;
+    std::string note;
 };
 
 struct AICpuOperatorResBody {
@@ -86,6 +89,7 @@ struct AICpuOperatorResponse : public Response {
 struct AclnnOperatorData {
     BaseInfo baseInfo;
     std::string opName;
+    std::string note;
 };
 
 struct AclnnOperatorResBody {
@@ -95,6 +99,7 @@ struct AclnnOperatorResBody {
 
 struct AclnnOperatorResponse : public Response {
     AclnnOperatorResponse() : Response(REQ_RES_ADVISOR_ACLNN_OPERATORS) {};
+    AclnnOperatorResBody body;
 };
 }
 

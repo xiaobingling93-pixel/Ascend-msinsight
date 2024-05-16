@@ -4,29 +4,28 @@
 
 #include "AdvisorProtocolRequest.h"
 #include "AdvisorProtocolResponse.h"
-#include "AffinityOptimizerAdvisor.h"
+#include "AICpuOpAdvisor.h"
 #include "ServerLog.h"
 #include "WsSessionManager.h"
-#include "QueryAffinityOptimizerAdvice.h"
+#include "QueryAiCpuOpAdviceHandler.h"
 
 namespace Dic::Module::Advisor {
 using namespace Dic::Server;
-void QueryAffinityOptimizerAdvice::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+void QueryAiCpuOpAdviceHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    auto &request = dynamic_cast<AffinityOptimizerRequest &>(*requestPtr);
+    auto &request = dynamic_cast<AICpuOperatorRequest &>(*requestPtr);
     std::string token = request.token;
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
-    std::unique_ptr<AffinityOptimizerResponse> responsePtr = std::make_unique<AffinityOptimizerResponse>();
-    AffinityOptimizerResponse &response = *responsePtr;
+    std::unique_ptr<AICpuOperatorResponse> responsePtr = std::make_unique<AICpuOperatorResponse>();
+    AICpuOperatorResponse &response = *responsePtr;
     SetBaseResponse(request, response);
-    if (!AffinityOptimizerAdvisor::Process(request.params, response.body)) {
-        ServerLog::Warn("Failed to Query Affinity Optimizer Advice");
+    SetResponseResult(response, true);
+    if (!AICpuOpAdvisor::Process(request.params, response.body)) {
+        ServerLog::Warn("Failed to Query AI CPU Operator Advice");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;
     }
-
-    SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
 }
 } // Dic::Module::Advisor

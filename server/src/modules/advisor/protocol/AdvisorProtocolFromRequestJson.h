@@ -10,6 +10,7 @@
 #include "AdvisorProtocolRequest.h"
 
 namespace Dic::Protocol {
+template<typename RequestType> std::unique_ptr<Request> ToRequest(const Dic::json_t& json, std::string& error);
 class AdvisorProtocolFromRequestJson {
 public:
 static std::unique_ptr<Request> ToAffinityOptimizerRequest(const json_t &json, std::string &error);

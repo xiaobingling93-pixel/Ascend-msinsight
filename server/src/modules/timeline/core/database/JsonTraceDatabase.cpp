@@ -1909,6 +1909,35 @@ bool JsonTraceDatabase::QueryAffinityOptimizer(const std::string &optimizers,
     return true;
 }
 
+bool JsonTraceDatabase::QueryAICpuOpDurationExceedThreshold(const Protocol::KernelDetailsParams &params,
+    uint64_t threshold, std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
+{
+    if (!CheckTableExist(sliceTable) || !CheckTableExist(TABLE_KERNEL)) {
+        return false;
+    }
+    auto stmt = CreatPreparedStatement(QUERY_AICPU_OP_EXCEED_THRESHOLD_SQL);
+    if (stmt == nullptr) {
+        ServerLog::Error("Fail to prepare sql for AICpuOpExceedThreshold.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, threshold);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for AICpuOpExceedThreshold.", stmt->GetErrorMessage());
+        return false;
+    }
+    while (resultSet->Next()) {
+        Protocol::KernelBaseInfo one{};
+        one.name = resultSet->GetString("name");
+        one.type = resultSet->GetString("type");
+        one.startTime = resultSet->GetUint64("startTime");
+        one.duration = resultSet->GetUint64("duration");
+        one.pid = resultSet->GetString("pid");
+        one.tid = resultSet->GetString("tid");
+        data.emplace_back(one);
+    }
+    return true;
+}
+
 bool JsonTraceDatabase::UpdateParseStatus(const std::string &status)
 {
     return UpdateValueIntoStatusInfoTable(timelineParseStatus, status);

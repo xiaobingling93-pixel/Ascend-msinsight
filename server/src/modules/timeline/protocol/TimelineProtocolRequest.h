@@ -222,8 +222,8 @@ struct SystemViewRequest : public Request {
 struct KernelDetailsParams {
     std::string orderBy;
     std::string order;
-    uint64_t current;
-    uint64_t pageSize;
+    uint64_t current{};
+    uint64_t pageSize{};
     std::string rankId;
     std::string coreType;
     std::string searchName;

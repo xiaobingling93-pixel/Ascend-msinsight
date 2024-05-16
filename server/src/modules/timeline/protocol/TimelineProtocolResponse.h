@@ -383,6 +383,16 @@ struct OneKernelBody {
     std::string group;
 };
 
+struct KernelBaseInfo {
+    std::string rankId;
+    std::string name;
+    std::string type;
+    uint64_t startTime{};
+    uint64_t duration{};
+    std::string pid;
+    std::string tid;
+};
+
 struct OneKernelResponse : public Response {
     OneKernelResponse() : Response(REQ_RES_ONE_KERNEL_DETAILS) {}
     OneKernelBody body;

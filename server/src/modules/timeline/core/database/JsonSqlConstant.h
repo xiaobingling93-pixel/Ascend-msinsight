@@ -124,6 +124,14 @@ const std::string QUERY_LAYER_DATA_SQL = "SELECT sum(duration) AS totalTime, cou
 const std::string QUERY_QUERY_TYPE_SQL =
     "SELECT DISTINCT accelerator_core FROM " + KERNEL_DETAIL + " ORDER BY accelerator_core";
 
+const std::string QUERY_AICPU_OP_EXCEED_THRESHOLD_SQL =
+        "SELECT s.name as name, kd.op_type as type, s.timestamp - ? as startTime, s.duration as duration, "
+        "t.pid as pid, t.tid as tid FROM ( "
+        "    SELECT name, timestamp, duration, track_id FROM " + SLICE_TABLE +
+        "    WHERE args LIKE '%Task Type%AI_CPU%' AND duration > ?) s "
+        "JOIN " + KERNEL_DETAIL + " kd ON s.name = kd.name AND s.timestamp = kd.start_time "
+        "JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id";
+
 class JsonSqlConstant {
 public:
     static std::string GetInsertSliceSql()

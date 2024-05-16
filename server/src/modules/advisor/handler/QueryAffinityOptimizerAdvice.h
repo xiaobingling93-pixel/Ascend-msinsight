@@ -18,6 +18,6 @@ public:
     ~QueryAffinityOptimizerAdvice() override = default;
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
-} // Advisor
+} // Dic::Module::Advisor
 
 #endif // PROFILER_SERVER_QUERYAFFINITYOPTIMIZERADVICE_H

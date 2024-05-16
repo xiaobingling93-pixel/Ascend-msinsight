@@ -8,40 +8,48 @@
 #include "AdvisorProtocolFromRequestJson.h"
 
 namespace Dic::Protocol {
-std::unique_ptr<Request> AdvisorProtocolFromRequestJson::ToAffinityOptimizerRequest(
-    const Dic::json_t &json, std::string &error)
+template<typename RequestType> std::unique_ptr<Request> ToRequest(const Dic::json_t& json, std::string& error)
 {
-    std::unique_ptr<AffinityOptimizerRequest> reqPtr = std::make_unique<AffinityOptimizerRequest>();
+    std::unique_ptr<RequestType> reqPtr = std::make_unique<RequestType>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
-
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "currentPage");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderType, json["params"], "orderType");
     return reqPtr;
+}
+
+std::unique_ptr<Request> AdvisorProtocolFromRequestJson::ToAffinityOptimizerRequest(
+    const Dic::json_t &json, std::string &error)
+{
+    return ToRequest<AffinityOptimizerRequest>(json, error);
 }
 
 std::unique_ptr<Request> AdvisorProtocolFromRequestJson::ToAffinityAPIRequest(
     const Dic::json_t &json, std::string &error)
 {
-    return {};
+    return ToRequest<AffinityAPIRequest>(json, error);
 }
 
 std::unique_ptr<Request> AdvisorProtocolFromRequestJson::ToOperatorFusionRequest(
     const json_t &json, std::string &error)
 {
-    return {};
+    return ToRequest<OperatorFusionRequest>(json, error);
 }
 
 std::unique_ptr<Request> AdvisorProtocolFromRequestJson::ToAICpuOperatorRequest(
     const json_t &json, std::string &error)
 {
-    return {};
+    return ToRequest<AICpuOperatorRequest>(json, error);
 }
 
 std::unique_ptr<Request> AdvisorProtocolFromRequestJson::ToAclnnOperatorRequest(
     const json_t &json, std::string &error)
 {
-    return {};
+    return ToRequest<AclnnOperatorRequest>(json, error);
 }
 }

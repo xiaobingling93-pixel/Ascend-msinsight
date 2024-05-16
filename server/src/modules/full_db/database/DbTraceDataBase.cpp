@@ -1673,4 +1673,10 @@ bool DbTraceDataBase::QueryAffinityOptimizer(const std::string &optimizers,
 {
     return false;
 }
+
+bool DbTraceDataBase::QueryAICpuOpDurationExceedThreshold(const Protocol::KernelDetailsParams &params,
+    uint64_t threshold, std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
+{
+    return false;
+}
 }
