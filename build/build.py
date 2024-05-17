@@ -72,13 +72,13 @@ def clean():
             shutil.rmtree(build_dir)
 
 
-def traverse_folder_and_chmod(path, mode):
-    os.chmod(path, mode)
+def traverse_folder_and_chmod(path, dir_mode, file_mode):
+    os.chmod(path, dir_mode)
     for root, dirs, files in os.walk(path):
         for one in dirs:
-            traverse_folder_and_chmod(os.path.join(root, one), mode)
+            traverse_folder_and_chmod(os.path.join(root, one), dir_mode, file_mode)
         for one in files:
-            os.chmod(os.path.join(root, one), mode)
+            os.chmod(os.path.join(root, one), file_mode)
 
 
 def build_server():
@@ -191,7 +191,7 @@ def build_light_package(version, os_name):
     build_cache_paths = [preview_path, target_path]
     for tmp_path in build_cache_paths:
         if os.path.exists(tmp_path):
-            traverse_folder_and_chmod(tmp_path, 0o750)
+            traverse_folder_and_chmod(tmp_path, 0o750, 0o750)
             shutil.rmtree(tmp_path)
         os.mkdir(tmp_path)
 
@@ -224,7 +224,9 @@ def build_light_package(version, os_name):
             shutil.copyfile(os.path.join(preview_path, tmp), dst_file)
             break
     else:
-        traverse_folder_and_chmod(preview_path, 0o550)
+        traverse_folder_and_chmod(preview_path, 0o750, 0o640)  # 1、统一修改为文件夹750，文件640
+        traverse_folder_and_chmod(os.path.join(profiler_path, Const.SERVER_DIR), 0o750, 0o550)  # 2、server下的文件550
+        os.chmod(os.path.join(preview_path, bin_file), 0o550)  # 3、ascend_insight 550
         shutil.make_archive(dst_file[:-4], 'zip', preview_path)
 
 
