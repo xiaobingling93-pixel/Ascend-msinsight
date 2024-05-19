@@ -3,10 +3,11 @@
  */
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
+import { runInAction } from 'mobx';
 import ComputeWorkloadChart from './ComputeWorkloadChart';
 import ComputeWorkloadTable from './ComputeWorkloadTable';
 import { type Session } from '../../../entity/session';
-import { BaseContainer } from 'lib/CommonUtils';
+import { BaseContainer, sortFunc } from 'lib/CommonUtils';
 import Filter, { defaultCondition, type Icondition } from './Filter';
 import { queryComputeWorkload } from '../../RequestUtils';
 
@@ -42,7 +43,8 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
             blockIdList: res.blockIdList ?? [],
             chartData: res.chartData?.detailDataList ?? [],
             tableData: res.tableData?.detailDataList ?? [],
-        };
+        } as Idata;
+        renderData.blockIdList.sort((a, b) => sortFunc(a, b, 'asc'));
         setData(renderData);
     };
     const handleFilterChange = (newCondition: Icondition): void => {
@@ -51,6 +53,11 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
     useEffect(() => {
         getBaseInfo();
     }, [session.updateId]);
+    useEffect(() => {
+        runInAction(() => {
+            session.blockIdList = data.blockIdList;
+        });
+    }, [data.blockIdList]);
     return (
         <BaseContainer
             header="Compute Workload Analysis"

@@ -3,14 +3,15 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Select } from 'antd';
-import { FormItem, getUsableVal } from 'lib/CommonUtils';
+import { getUsableVal, FormItem } from 'lib/CommonUtils';
 import type { optionDataType, optionMapDataType } from '../../../utils/interface';
 import { limitInput } from '../../Common';
 
 export interface Icondition {
     blockId: string ;
+    showAs: string;
 };
-interface Iprops {
+interface IcomProps {
     optionMap: optionMapDataType;
     condition: Icondition;
     handleChange: (key: keyof Icondition, val: string) => void;
@@ -18,9 +19,14 @@ interface Iprops {
 
 export const defaultCondition = {
     blockId: '',
+    showAs: 'request',
 };
 const defaultOptionMap = {
     blockIdOptions: [],
+    showAsOptions: [
+        { label: 'Num of Request', value: 'request' },
+        { label: 'Num of Bytes', value: 'requestPerByte' },
+    ],
 };
 
 const getOptionsAndValue = (initObj: Icondition, initOptionMap: optionMapDataType):
@@ -29,7 +35,10 @@ const getOptionsAndValue = (initObj: Icondition, initOptionMap: optionMapDataTyp
     const blockIdOptions: optionDataType[] = initOptionMap.blockIdOptions;
     const blockId = getUsableVal(initObj.blockId, blockIdOptions, defaultCondition.blockId) as string;
 
-    return { optionMap: { blockIdOptions }, condition: { blockId } };
+    // showAs
+    const showAsOptions: optionDataType[] = defaultOptionMap.showAsOptions;
+    const showAs = getUsableVal(initObj.showAs, showAsOptions, defaultCondition.showAs) as string;
+    return { optionMap: { blockIdOptions, showAsOptions }, condition: { blockId, showAs } };
 };
 
 function Filter({ blockIdList, handleFilterChange }: {blockIdList: string[];handleFilterChange: (condition: Icondition) => void}): JSX.Element {
@@ -42,7 +51,7 @@ function Filter({ blockIdList, handleFilterChange }: {blockIdList: string[];hand
         limitInput();
     }, []);
     useEffect(() => {
-        const blockIdOptions = blockIdList.map(item => ({ label: item, value: item }));
+        const blockIdOptions = blockIdList.map((item, index) => ({ label: item, value: item }));
         const { optionMap: newOptionMap, condition: newCondition } = getOptionsAndValue(condition, { blockIdOptions });
         setCondition(newCondition);
         setOptionMap(newOptionMap);
@@ -52,8 +61,7 @@ function Filter({ blockIdList, handleFilterChange }: {blockIdList: string[];hand
     }, [condition]);
     return (<FilterCom handleChange={handleChange} condition={condition} optionMap={optionMap}/>);
 }
-
-function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element {
+function FilterCom({ condition, optionMap, handleChange }: IcomProps): JSX.Element {
     return (<div>
         <FormItem
             name="Block ID"
@@ -64,6 +72,18 @@ function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element 
                     handleChange('blockId', val);
                 }}
                 options={optionMap.blockIdOptions}
+                showSearch={true}
+            />
+            )}/>
+        <FormItem
+            name="Show as"
+            content={(<Select
+                value={condition.showAs}
+                style={{ width: '150px' }}
+                onChange={(val): void => {
+                    handleChange('showAs', val);
+                }}
+                options={optionMap.showAsOptions}
                 showSearch={true}
             />
             )}/>

@@ -6,6 +6,7 @@ import { observer } from 'mobx-react';
 import { type Session } from '../../entity/session';
 import BaseInfo from './BaseInfo';
 import ComputeWorkload from './ComputeWorkload/Index';
+import MemoryWorkload from './MemoryWorkload/Index';
 
 const index = observer(({ session }: { session: Session }): JSX.Element => {
     return (
@@ -13,6 +14,7 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
             <div>
                 <BaseInfo session={session}/>
                 <ComputeWorkload session={session}/>
+                <MemoryWorkload session={session}/>
             </div>
         </div>
     );

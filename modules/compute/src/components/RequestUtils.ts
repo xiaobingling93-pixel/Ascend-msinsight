@@ -48,3 +48,51 @@ export const queryBaseInfo = async(): Promise<any> => {
 export const queryComputeWorkload = async(): Promise<any> => {
     return window.requestData('source/details/computeworkload', {});
 };
+
+/**
+ * 查询内存负载表
+ *
+ * @param {blockId}
+ * @return {
+ * memoryTable:[{
+ *     blockId:string;
+ *     tableDetail:[{
+ *       headerName:string[];
+ *       row:{
+ *         name:string;
+ *         value:string[];
+ *       }
+ *     }]
+ *   }]
+ * }
+ */
+export const queryMemoryTable = async(param: {blockId: string}): Promise<any> => {
+    return window.requestData('source/details/memoryTable', param);
+};
+
+/**
+ * 查询内存流量图
+ *
+ * @param {blockId}
+ * @return {
+ * coreMemory:[{
+ *     blockId:string;
+ *     blockType:string;
+ *     chipType:string;
+ *     memoryUnit:[{
+ *       memoryPath:string;
+ *       request:string;
+ *       requestPerByte:string;
+ *     }];
+ *     L2catch:{
+ *         hit:string;
+ *         miss:string,
+ *         totalRequest:string;
+ *         hitRatio:string;
+ *     }
+ *   }]
+ * }
+ */
+export const queryMemoryGraph = async(param: {blockId: string}): Promise<any> => {
+    return window.requestData('source/details/memoryGraph', param);
+};

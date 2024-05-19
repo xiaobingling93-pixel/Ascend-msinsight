@@ -9,6 +9,7 @@ export class Session {
     Instructions: JsonInstructionType[] = [];
     parseStatus: boolean = false;
     updateId: number = 0;
+    blockIdList: string[] = [];
     constructor() {
         makeAutoObservable(this);
     }

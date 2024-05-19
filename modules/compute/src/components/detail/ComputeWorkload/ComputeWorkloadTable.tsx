@@ -69,7 +69,7 @@ function Index({ blockId, data }: Iprops): JSX.Element {
         updateTable();
     }, [blockId, data]);
     return (
-        <div style={{ padding: '0 20px' }}>
+        <div style={{ padding: '0 20px 20px' }}>
             {tablelist.length === 0 && (<div style={{ textAlign: 'center', color: 'var(--grey15) ' }}>No data</div>) }
             {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`All Instruction Records (${limit.current})`}/>}
             {tablelist.map(item => (

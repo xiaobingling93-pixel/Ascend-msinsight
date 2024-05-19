@@ -6,6 +6,9 @@ import BaseContainer from '../container/BaseContainer';
 import BaseDescription from '../descriptions/BaseDescription';
 import COLOR from './Color';
 import { chartVisbilityListener, getResizeEcharts } from './EchartUtils';
+
+export { BaseContainer, BaseDescription, COLOR, chartVisbilityListener, getResizeEcharts };
+
 export function limitInput(maxlength?: string): void {
     setTimeout(() => {
         const inputs = document.querySelectorAll('input');
@@ -80,4 +83,15 @@ export const safeStr = (str: string, ignore?: string): string => {
     return str?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 };
 
-export { BaseContainer, BaseDescription, COLOR, chartVisbilityListener, getResizeEcharts };
+export function FormItem(props: {name: string;style?: React.CSSProperties;content: React.ReactElement}): JSX.Element {
+    return (<div style={{
+        display: 'inline-block',
+        height: '30px',
+        lineHeight: '30px',
+        margin: '0 20px 10px 0',
+        ...props.style ?? {},
+    }}>
+        <Label name={props.name} style={{ width: '80px', display: 'inline-block' }}/>
+        {props.content}
+    </div>);
+};
