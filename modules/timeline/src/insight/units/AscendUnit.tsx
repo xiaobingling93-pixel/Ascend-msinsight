@@ -539,6 +539,11 @@ interface OpData {
     startTime: string;
     timestamp: number;
     duration: number;
+    id: string;
+    depth: number;
+    tid: string;
+    pid: string;
+    metaType?: string;
 }
 
 const colums = [
@@ -560,16 +565,10 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
         if (slice === undefined) {
             return;
         }
-        const params = {
-            rankId: slice.rankId,
-            name: slice.name,
-            timestamp: record.timestamp,
-        };
-        const res = await window.requestData('unit/one/kernelDetail', params, 'timeline');
         runInAction(() => {
             session.locateUnit = {
                 target: (iunit: InsightUnit): boolean => {
-                    return (iunit.metadata as MetaData).threadId === res.threadId && (iunit.metadata as MetaData).processId === res.pid;
+                    return (iunit.metadata as MetaData).threadId === record.tid && (iunit.metadata as MetaData).processId === record.pid;
                 },
                 onSuccess: (iunit): void => {
                     const selectedMultiSlice = JSON.parse(session.selectedMultiSlice);
@@ -577,12 +576,13 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
                     const [rangeStart, rangeEnd] = calculateDomainRange(session, startTime, record.duration);
                     session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                     session.selectedData = {
-                        id: res.id,
+                        id: record.id,
                         startTime,
                         name: selectedMultiSlice.name,
+                        color: colorPalette[hashToNumber(selectedMultiSlice.name, colorPalette.length)],
                         duration: record.duration,
-                        depth: res.depth,
-                        threadId: res.threadId,
+                        depth: record.depth,
+                        threadId: record.tid,
                         startRecordTime: session.startRecordTime,
                         showSelectedData: false,
                     };
@@ -605,10 +605,15 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
             orderBy: sorter.field === 'startTime' ? 'timestamp' : sorter.field,
         };
         const res = await window.requestData('query/all/same/operators/duration', params, 'timeline');
-        const { count, currentPage, pageSize } = res;
-        const data = changeDataType(res.sameOperatorsDetails);
+        const { currentPage, pageSize, sameOperatorsDetails } = res;
+        const data = sameOperatorsDetails as OpData[];
+        data.forEach(item => {
+            item.startTime = getDetailTimeDisplay(item.timestamp);
+            item.tid = slice.tid;
+            item.pid = slice.pid;
+        });
         setDataSource((data).map((item, index) => ({ ...item, index: ((currentPage - 1) * pageSize) + index + 1 })));
-        setPage({ total: count, current: currentPage, pageSize });
+        setPage({ total: slice.count, current: currentPage, pageSize });
         setLoading(false);
     }
 
@@ -646,10 +651,3 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
         />
     </div>;
 });
-
-function changeDataType(data: OpData[]): OpData[] {
-    return data.map(item => {
-        item.startTime = getDetailTimeDisplay(item.timestamp);
-        return item;
-    });
-}

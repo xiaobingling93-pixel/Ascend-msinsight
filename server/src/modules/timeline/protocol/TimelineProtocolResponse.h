@@ -401,6 +401,8 @@ struct OneKernelResponse : public Response {
 struct SameOperatorsDetails {
     uint64_t timestamp = 0;
     uint64_t duration = 0;
+    std::string id;
+    uint64_t depth;
 };
 
 struct UnitThreadsOperatorsBody {

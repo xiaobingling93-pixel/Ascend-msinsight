@@ -1667,7 +1667,6 @@ std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, boo
     return sql;
 }
 
-
 bool DbTraceDataBase::QueryAffinityOptimizer(const std::string &optimizers,
     std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp)
 {
@@ -1678,5 +1677,30 @@ bool DbTraceDataBase::QueryAICpuOpDurationExceedThreshold(const Protocol::Kernel
     uint64_t threshold, std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
 {
     return false;
+}
+
+bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
+    Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId)
+{
+    auto stmt = CreatPreparedStatement();
+    std::unique_ptr <SqliteResultSet> resultSet;
+    try {
+        resultSet = TraceDatabaseHelper::QueryThreadSameOperatorsDetails(stmt, requestParams, minTimestamp);
+    } catch (DatabaseException &e) {
+        ServerLog::Error("QueryThreadSameOperatorsDetails Fail, ", e.What());
+        return false;
+    }
+    while (resultSet->Next()) {
+        int col = resultStartIndex;
+        Protocol::SameOperatorsDetails sameOperatorsDetail{};
+        sameOperatorsDetail.timestamp = resultSet->GetUint64(col++);
+        sameOperatorsDetail.duration = resultSet->GetUint64(col++);
+        sameOperatorsDetail.depth = resultSet->GetUint64(col++);
+        sameOperatorsDetail.id = resultSet->GetString(col++);
+        responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
+    }
+    responseBody.currentPage = requestParams.current;
+    responseBody.pageSize = requestParams.pageSize;
+    return true;
 }
 }

@@ -96,6 +96,8 @@ public:
 
     bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,
                                 uint64_t minTimestamp) override;
+    bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
+         Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
 
     bool QueryDurationFromTaskByTimeRange(const Protocol::ThreadDetailParams &requestParams,
                                       SliceDto sliceDto, std::vector<uint64_t> &nextDepthResult,

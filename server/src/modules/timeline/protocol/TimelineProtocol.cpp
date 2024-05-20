@@ -394,6 +394,7 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsOperatorsRequest(const D
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.current, json["params"], "current");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
     return reqPtr;
 }
 

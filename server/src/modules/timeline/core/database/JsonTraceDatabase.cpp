@@ -1874,6 +1874,8 @@ bool JsonTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
         Protocol::SameOperatorsDetails sameOperatorsDetail{};
         sameOperatorsDetail.timestamp = resultSet->GetUint64(col++) - minTimestamp;
         sameOperatorsDetail.duration = resultSet->GetUint64(col++);
+        sameOperatorsDetail.id = resultSet->GetString(col++);
+        sameOperatorsDetail.depth = resultSet->GetUint64(col++);
         responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
     }
     responseBody.currentPage = requestParams.current;

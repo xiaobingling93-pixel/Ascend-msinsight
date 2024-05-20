@@ -250,6 +250,7 @@ struct UnitThreadsOperatorsParams {
     std::string rankId;
     std::string tid;
     std::string pid;
+    std::string metaType;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
     std::string name;

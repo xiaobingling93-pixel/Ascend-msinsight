@@ -784,4 +784,5 @@ export type AscendMultiSliceList = {
     pid?: string;
     startTime?: number;
     endTime?: number;
+    metaType?: string;
 };

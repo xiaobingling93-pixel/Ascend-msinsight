@@ -55,6 +55,7 @@ export const slicesListDetail = detail({
             element.pid = metadata.processId;
             element.startTime = Math.floor(startTime + timestampOffset);
             element.endTime = Math.ceil(endTime + timestampOffset);
+            element.metaType = metadata.metaType;
         });
 
         res.push({
@@ -93,6 +94,8 @@ export const slicesListDetail = detail({
             endTime: row.endTime,
             name: row.title,
             wallDuration: row.wallDuration,
+            metaType: row.metaType,
+            count: row.occurrences,
         };
         runInAction(() => {
             session.selectedMultiSlice = JSON.stringify(data);

@@ -106,7 +106,7 @@ public:
     KernelShapesDataDto QueryKernelShapes(const std::vector<SliceDto> &rows);
 
     bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
-        Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId);
+        Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
 
     std::map<uint64_t, std::pair<std::string, std::string>> QueryAllThreadMap();
 

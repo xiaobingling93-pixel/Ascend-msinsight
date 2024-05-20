@@ -259,7 +259,7 @@ public:
         } else {
             orderBy = " ORDER BY " + orderByField + " ASC";
         }
-        std::string sql = "SELECT timestamp, duration FROM " + SLICE_TABLE +
+        std::string sql = "SELECT timestamp, duration, id, coalesce(depth, 0) as depth FROM " + SLICE_TABLE +
             " WHERE name = ? AND track_id = ? AND timestamp <= ? AND timestamp + duration >= ? " + orderBy +
             " limit ? offset ?";
         return sql;

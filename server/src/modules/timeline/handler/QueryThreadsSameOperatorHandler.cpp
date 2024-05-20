@@ -33,15 +33,10 @@ void QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Re
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
-    if (database == nullptr) {
-        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDatabase in same op HandleRequest.");
-        return;
-    }
     int64_t trackId = TraceFileParser::Instance()
             .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
-    bool result = database->QueryThreadSameOperatorsDetails(request.params, response.body,
-                                                            TraceTime::Instance().GetStartTime(), trackId);
+    bool result = db->QueryThreadSameOperatorsDetails(request.params, response.body,
+                                                      TraceTime::Instance().GetStartTime(), trackId);
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
