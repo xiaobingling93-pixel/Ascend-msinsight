@@ -265,7 +265,7 @@ static bool CheckSqlValid(const std::string& input)
 static std::optional<std::string> Decompress(const std::string &str)
 {
     // 解压后的数据不能大于50M
-    const size_t MAX_DECOMPRESSED_SIZE = 1024 * 1024 * 50;
+    const static size_t MAX_DECOMPRESSED_SIZE = 1024 * 1024 * 50;
 
     z_stream zs;
     if (inflateInit2(&zs, MAX_WBITS) != Z_OK) {

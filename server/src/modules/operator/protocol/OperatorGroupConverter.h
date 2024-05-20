@@ -33,7 +33,7 @@ public:
     static OperatorGroup ToEnum(const std::string &type)
     {
         InitTypeMap();
-        auto it = typeMap.find(type);
+        const auto it = typeMap.find(type);
         if (it != typeMap.end()) {
             return it->second.group;
         }
@@ -43,7 +43,7 @@ public:
     static bool IsHccl(const std::string &type)
     {
         InitTypeMap();
-        auto it = typeMap.find(type);
+        const auto it = typeMap.find(type);
         if (it != typeMap.end()) {
             return it->second.hccl;
         }
