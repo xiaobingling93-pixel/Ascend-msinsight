@@ -38,11 +38,13 @@ struct FlowDetailDto {
 };
 
 struct FlowCategoryEventsDto {
+    uint64_t id;
+    uint64_t trackId;
     std::string type;
     std::string flowId;
     std::string pid;
     std::string tid;
-    int32_t depth = 0;
+    uint32_t depth = 0;
     uint64_t timestamp = 0;
 };
 

@@ -195,21 +195,25 @@ TEST_F(TestSuit, QueryFlowCategoryEvents)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
     Dic::Protocol::FlowCategoryEventsParams requestParams;
     std::vector<std::unique_ptr<Dic::Protocol::FlowEvent>> flowDetailList;
-    uint64_t STARTTIME = 1695115378713661000;
-    uint64_t ENDTIME = 1695115378725106800;
+    uint64_t STARTTIME = 9171200;
+    uint64_t ENDTIME = 20617000;
     requestParams.startTime = STARTTIME;
     requestParams.endTime = ENDTIME;
     requestParams.timePerPx = 1;
     requestParams.category = "HostToDevice";
-    database->QueryFlowCategoryEvents(requestParams, 0, flowDetailList);
+    uint64_t minTimestamp = 1695115378704489800;
+    const int expectSize = 4;
+    const uint64_t expectFromTimestamp = 17654000;
+    const uint64_t expectToTimestamp = 17902700;
+    database->QueryFlowCategoryEvents(requestParams, minTimestamp, flowDetailList);
     std::string EXPECT_FROM_TID = "1408366";
-    EXPECT_EQ(flowDetailList.size(), 5); // flowDetailList size = 5
+    EXPECT_EQ(flowDetailList.size(), expectSize); // flowDetailList size = 5
     EXPECT_EQ(flowDetailList[0]->category, "HostToDevice");
-    EXPECT_EQ(flowDetailList[0]->from.timestamp, 1695115378722143800); // timestamp = 1695115378722143800
+    EXPECT_EQ(flowDetailList[0]->from.timestamp, expectFromTimestamp); // timestamp = 1695115378722143800
     EXPECT_EQ(flowDetailList[0]->from.pid, "140836602");
     EXPECT_EQ(flowDetailList[0]->from.depth, 0);
     EXPECT_EQ(flowDetailList[0]->from.tid, EXPECT_FROM_TID); // from.tid = 1408366
-    EXPECT_EQ(flowDetailList[0]->to.timestamp, 1695115378722392500); // to.timestamp = 1695115378722392500
+    EXPECT_EQ(flowDetailList[0]->to.timestamp, expectToTimestamp); // to.timestamp = 1695115378722392500
     EXPECT_EQ(flowDetailList[0]->to.pid, "14083661400");
     EXPECT_EQ(flowDetailList[0]->to.depth, 0);
     EXPECT_EQ(flowDetailList[0]->to.tid, "0"); // to.tid = 0

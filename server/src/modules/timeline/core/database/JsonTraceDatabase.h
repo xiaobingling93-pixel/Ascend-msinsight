@@ -100,8 +100,8 @@ public:
         uint64_t minTimestamp) override;
     OneKernelData QueryKernelTid(const uint64_t trackId) override;
 
-    bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params,
-                                Protocol::SearchAllSlicesBody &body, uint64_t minTimestamp) override;
+    bool SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params, Protocol::SearchAllSlicesBody &body,
+        uint64_t minTimestamp) override;
 
     KernelShapesDataDto QueryKernelShapes(const std::vector<SliceDto> &rows);
 
@@ -131,8 +131,6 @@ private:
     const std::string hcclType = "HCCL";
     const int unit = 1000;
     const int tolerance = 500; // 匹配算子时的范围为±500
-    // 5G size limit 2024.02.01
-    const double lowImage = 5.0;
 
     bool initStmt = false;
     std::unique_ptr<SqlitePreparedStatement> insertSliceStmt = nullptr;
@@ -191,7 +189,7 @@ private:
     uint64_t ComputeSingleSliceSelfTime(const Protocol::ThreadDetailParams &requestParams, int64_t trackId,
         std::vector<SliceDto> &sliceDtoVec);
 
-    void QueryAllSliceInRangeByTrackId(int64_t &traceId, std::vector<CacheSlice> &cacheSlices);
+    void QueryAllSliceInRangeByTrackId(uint64_t traceId, std::vector<CacheSlice> &cacheSlices);
 
     std::vector<Protocol::RowThreadTrace> QuerySliceByIdList(uint64_t minTimestamp, int64_t traceId,
         std::set<int64_t> &ids);
@@ -205,6 +203,9 @@ private:
     std::vector<Protocol::FlowName> QueryFlowNameByTimeRange(uint64_t startTime, uint64_t endTime, int64_t trackId);
 
     std::vector<FlowDetailDto> QuerySingleFlowDetail(const std::string &flowId, uint64_t minTimestamp);
+
+    void QueryFlowPointByCategory(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
+        std::vector<FlowCategoryEventsDto> &flowEventsVec);
 };
 } // end of namespace Timeline
 // end of namespace Module

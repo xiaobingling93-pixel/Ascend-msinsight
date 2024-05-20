@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
 #include <SliceAnalyzer.h>
 namespace Dic::Module::Timeline {
 SliceAnalyzer::SliceAnalyzer() = default;
@@ -66,4 +65,46 @@ std::set<int64_t> SliceAnalyzer::ComputeResultIds(uint64_t startTime, uint64_t e
     ids.emplace(tempId);
     return ids;
 }
+
+void SliceAnalyzer::SortByTimestampASC(std::vector<CacheSlice> &cacheSlices)
+{
+    std::sort(cacheSlices.begin(), cacheSlices.end(), SliceAnalyzer::CompareTimestampASC);
+}
+
+uint32_t SliceAnalyzer::ComputeFlowPointDepth(std::vector<CacheSlice> &cacheSlices, std::string &type,
+    uint64_t timestamp)
+{
+    CacheSlice cacheSlice;
+    cacheSlice.timestamp = timestamp;
+    cacheSlice.id = 0;
+    if (type == Protocol::LINE_START) {
+        auto it = std::lower_bound(cacheSlices.begin(), cacheSlices.end(), cacheSlice, CompareTimestampASC);
+        if (it != cacheSlices.end() && it->timestamp == timestamp) {
+            return it->depth;
+        }
+
+        if (it != cacheSlices.end() && it > cacheSlices.begin()) {
+            return (it--)->depth;
+        }
+    }
+    if (type == Protocol::LINE_END || type == Protocol::LINE_END_OPTIONAL) {
+        auto it = std::lower_bound(cacheSlices.begin(), cacheSlices.end(), cacheSlice, CompareTimestampASC);
+        if (it != cacheSlices.end()) {
+            return it->depth;
+        }
+    }
+    return 0;
+}
+
+bool SliceAnalyzer::CompareTimestampASC(const CacheSlice &first, const CacheSlice &second)
+{
+    if (first.timestamp < second.timestamp) {
+        return true;
+    }
+    if (first.timestamp == second.timestamp && first.id < second.id) {
+        return true;
+    }
+    return false;
+}
+
 }

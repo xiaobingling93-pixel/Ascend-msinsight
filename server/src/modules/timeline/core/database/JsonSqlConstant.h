@@ -47,8 +47,7 @@ const std::string CREATE_TABLE_SQL = "CREATE TABLE " + SLICE_TABLE +
     " (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pid TEXT," + "timestamp INTEGER, cat TEXT, args TEXT);";
 
 const std::string CREATE_INDEX_SQL = "CREATE INDEX " + TRACKID_TIME_INDEX + " ON " + SLICE_TABLE +
-    " (track_id, timestamp, end_time);" + "CREATE INDEX " + FLOW_INDEX + " ON " + FLOW_TABLE +
-    " (track_id, timestamp);";
+    " (track_id, timestamp, end_time);" + "CREATE INDEX " + FLOW_INDEX + " ON " + FLOW_TABLE + " (cat);";
 const std::string QUERY_SLICE_BY_TRACKID_SQL =
     "select id, timestamp, end_time as endTime from slice where track_id = ? order by timestamp;";
 const std::string QUERY_ALL_TRACKID_SQL = "select track_id as trackId from thread;";
@@ -99,20 +98,13 @@ const std::string QUERY_UNITS_META_SQL =
     " name, pid ) c ON c.pid = p.pid ) AS pt WHERE pt.process_name IS NOT NULL "
     " ORDER BY pt.process_sort_index ASC, pt.thread_sort_index ASC, pt.name ASC;";
 const std::string QUERY_EXETREME_TIME_SQL = "SELECT  min(minTimestamp) AS totalMinTimestamp, max(maxTimestamp) AS "
-                                            "totalMaxTimestamp FROM (SELECT min(timestamp) "
+    "totalMaxTimestamp FROM (SELECT min(timestamp) "
     "as minTimestamp, max(timestamp) as maxTimestamp FROM " +
     SLICE_TABLE + " UNION SELECT min(timestamp) as minTimestamp, max(timestamp) as maxTimestamp FROM " + COUNTER_TABLE +
     ")";
-const std::string QUERY_FLOWCATEGORY_EVENTS_SQL =
-    "SELECT flow.type, flow.flow_id, thread.pid, thread.tid, slice.id As sliceId, slice.track_id AS "
-    "sTrackId, flow.timestamp - ? FROM " +
-    FLOW_TABLE + " " + "LEFT JOIN " + SLICE_TABLE + " USING (track_id, timestamp) " + "JOIN " + THREAD_TABLE +
-    " USING (track_id) WHERE flow_id IN (SELECT flow_id from "
-    "(SELECT flow_id, ROUND(flow.timestamp / ?) as rank FROM flow WHERE flow_id IN "
-    "(SELECT flow_id FROM flow WHERE cat = ? "
-    "AND ((timestamp >= ? AND (type = 'f' OR type = 't')) OR (timestamp <= ? AND (type = 's' OR type = 't'))"
-    ") GROUP BY flow_id HAVING COUNT(flow_id) >= 2) "
-    "GROUP BY track_id, type, rank HAVING max(timestamp))) ORDER BY flow.flow_id, timestamp;";
+const std::string QUERY_FLOWCATEGORY_EVENTS_FAST_SQL =
+    "select id,track_id AS trackId,timestamp,flow_id AS flowId ,type from " + FLOW_TABLE +
+    " WHERE cat = ? ORDER BY trackId, timestamp;";
 const std::string QUERY_UNIT_COUNTER_SQL = "SELECT timestamp - ? as startTime, args"
     " FROM " +
     COUNTER_TABLE +
@@ -169,6 +161,7 @@ public:
         sliceSql += " , ? );";
         return sliceSql;
     }
+
     static std::string GetSummarySliceSql(uint64_t size)
     {
         std::string sql = "SELECT timestamp , end_time FROM " + SLICE_TABLE + " WHERE track_id in ( ? ";
@@ -287,8 +280,8 @@ public:
         return nameMatch;
     }
 
-    static std::string GetSearchSliceDetailSql(bool isMatchExact, bool isMatchCase,
-                                               std::string order, std::string orderByField)
+    static std::string GetSearchSliceDetailSql(bool isMatchExact, bool isMatchCase, std::string order,
+        std::string orderByField)
     {
         std::string orderBy;
         if (order == "descend") {
@@ -297,8 +290,8 @@ public:
             orderBy = " ORDER BY " + orderByField + " ASC";
         }
         std::string nameMatch = GetSearchNameSqlSuffix(isMatchExact, isMatchCase);
-        std::string sql = "SELECT name, timestamp, duration FROM " +
-                          SLICE_TABLE + " WHERE " + nameMatch +  orderBy + " limit ? offset ?";
+        std::string sql = "SELECT name, timestamp, duration FROM " + SLICE_TABLE + " WHERE " + nameMatch + orderBy +
+            " limit ? offset ?";
         return sql;
     }
 };

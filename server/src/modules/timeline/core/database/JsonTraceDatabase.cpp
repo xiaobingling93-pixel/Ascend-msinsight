@@ -567,6 +567,7 @@ std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByCondition(const UnitT
     std::vector<CacheSlice> cacheSlices = CacheManager::Instance().Get(sliceCacheKey);
     if (std::empty(cacheSlices)) {
         QueryAllSliceInRangeByTrackId(traceId, cacheSlices);
+        std::sort(cacheSlices.begin(), cacheSlices.end(), std::less<CacheSlice>());
         if (cacheSlices.size() > minCacheSizeLimit) {
             CacheManager::Instance().Put(sliceCacheKey, cacheSlices);
         }
@@ -614,7 +615,7 @@ std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByIdList(uint64_t minTi
     return ans;
 }
 
-void JsonTraceDatabase::QueryAllSliceInRangeByTrackId(int64_t &traceId, std::vector<CacheSlice> &cacheSlices)
+void JsonTraceDatabase::QueryAllSliceInRangeByTrackId(uint64_t traceId, std::vector<CacheSlice> &cacheSlices)
 {
     Timer timer("JsonTraceDatabase::QueryAllSliceInRangeByTrackId");
     // 此处sql需全部走索引且禁止触发回表
@@ -639,7 +640,6 @@ void JsonTraceDatabase::QueryAllSliceInRangeByTrackId(int64_t &traceId, std::vec
         cacheSlice.depth = depthCache[cacheSlice.id];
         cacheSlices.emplace_back(cacheSlice);
     }
-    std::sort(cacheSlices.begin(), cacheSlices.end(), std::less<CacheSlice>());
 }
 
 bool JsonTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
@@ -1414,41 +1414,64 @@ std::vector<uint64_t> JsonTraceDatabase::QueryAllTrackIdsByPid(std::string pid)
 bool JsonTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, uint64_t minTimestamp,
     std::vector<std::unique_ptr<FlowEvent>> &flowDetailList)
 {
-    if (params.timePerPx == 0) {
-        ServerLog::Error("QueryFlowCategoryEvents. timePerPx is zero.");
-        return false;
+    Timer timer("JsonTraceDatabase::QueryFlowCategoryEvents");
+    std::vector<FlowCategoryEventsDto> flowPointResult;
+    std::vector<FlowCategoryEventsDto> flowEventsVec;
+    QueryFlowPointByCategory(params, minTimestamp, flowEventsVec);
+    flowAnalyzerPtr->ComputeScreenFlowPoint(flowEventsVec, params.startTime, params.endTime, flowPointResult);
+    ServerLog::Info("flowPointResult size is: ", flowPointResult.size());
+    std::map<uint64_t, std::pair<std::string, std::string>> threadMap = QueryAllThreadMap();
+    flowAnalyzerPtr->SortByTrackIdASC(flowPointResult);
+    uint64_t curTrackId = 0;
+    std::vector<CacheSlice> cacheSlices;
+    for (auto &item : flowPointResult) {
+        if (item.trackId != curTrackId) {
+            cacheSlices.clear();
+            std::string sliceCacheKey =
+                params.rankId + "_" + std::to_string(item.trackId) + "_JsonTraceDatabase::QuerySliceByCondition";
+            cacheSlices = CacheManager::Instance().Get(sliceCacheKey);
+            if (std::empty(cacheSlices)) {
+                QueryAllSliceInRangeByTrackId(item.trackId, cacheSlices);
+            }
+            curTrackId = item.trackId;
+            sliceAnalyzerPtr->SortByTimestampASC(cacheSlices);
+        }
+        item.depth = sliceAnalyzerPtr->ComputeFlowPointDepth(cacheSlices, item.type, item.timestamp + minTimestamp);
+        item.tid = threadMap[item.trackId].first;
+        item.pid = threadMap[item.trackId].second;
     }
-    std::string sql = QUERY_FLOWCATEGORY_EVENTS_SQL;
+    flowAnalyzerPtr->SortByFlowIdAndTimestampASC(flowPointResult);
+    FlowEventsToResponse(flowPointResult, params.category, flowDetailList);
+    ServerLog::Info("Query flow category events. size:", flowDetailList.size());
+    return true;
+}
+
+void JsonTraceDatabase::QueryFlowPointByCategory(FlowCategoryEventsParams &params, uint64_t minTimestamp,
+    std::vector<FlowCategoryEventsDto> &flowEventsVec)
+{
+    std::string sql = QUERY_FLOWCATEGORY_EVENTS_FAST_SQL;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QueryFlowCategoryEvents failed!.");
-        return false;
+        return;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, params.timePerPx * lowImage, params.category,
-        params.startTime + minTimestamp, params.endTime + minTimestamp);
+    auto resultSet = stmt->ExecuteQuery(params.category);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryFlowCategoryEvents. Failed to get result set.", stmt->GetErrorMessage());
-        return false;
+        return;
     }
-    std::vector<FlowCategoryEventsDto> flowEventsVec;
+    const uint64_t flowInitSize = 5000000;
+    flowEventsVec.reserve(flowInitSize);
     while (resultSet->Next()) {
         int col = resultStartIndex;
         FlowCategoryEventsDto flowCategoryEventsDto;
-        flowCategoryEventsDto.type = resultSet->GetString(col++);
+        flowCategoryEventsDto.id = resultSet->GetInt64(col++);
+        flowCategoryEventsDto.trackId = resultSet->GetInt64(col++);
+        flowCategoryEventsDto.timestamp = resultSet->GetInt64(col++) - minTimestamp;
         flowCategoryEventsDto.flowId = resultSet->GetString(col++);
-        flowCategoryEventsDto.pid = resultSet->GetString(col++);
-        flowCategoryEventsDto.tid = resultSet->GetString(col++);
-        uint64_t sliceId = resultSet->GetInt64(col++);
-        uint64_t sTrackId = resultSet->GetInt64(col++);
-        flowCategoryEventsDto.timestamp = resultSet->GetUint64(col++);
-        std::unordered_map<uint64_t, int32_t> depthCache =
-            SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(sTrackId).sliceIdAndDepthMap;
-        flowCategoryEventsDto.depth = depthCache[sliceId];
+        flowCategoryEventsDto.type = resultSet->GetString(col++);
         flowEventsVec.emplace_back(flowCategoryEventsDto);
     }
-    FlowEventsToResponse(flowEventsVec, params.category, flowDetailList);
-    ServerLog::Info("Query flow category events. size:", flowDetailList.size());
-    return true;
 }
 
 void JsonTraceDatabase::FlowEventsToResponse(const std::vector<FlowCategoryEventsDto> &flowEventsVec,
@@ -1949,10 +1972,10 @@ bool JsonTraceDatabase::HasFinishedParseLastTime()
 }
 
 bool JsonTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params,
-                                               Protocol::SearchAllSlicesBody &body, uint64_t minTimestamp)
+    Protocol::SearchAllSlicesBody &body, uint64_t minTimestamp)
 {
-    std::string sql = JsonSqlConstant::GetSearchSliceDetailSql(params.isMatchExact,
-                                                               params.isMatchCase, params.order, params.orderBy);
+    std::string sql =
+        JsonSqlConstant::GetSearchSliceDetailSql(params.isMatchExact, params.isMatchCase, params.order, params.orderBy);
     uint64_t offset = (params.current - 1) * params.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
