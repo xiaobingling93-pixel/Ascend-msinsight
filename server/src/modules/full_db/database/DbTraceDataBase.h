@@ -108,7 +108,8 @@ public:
 
     bool QueryAffinityOptimizer(const std::string &optimizers,
         std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp) override;
-    bool QueryAICpuOpDurationExceedThreshold(const Protocol::KernelDetailsParams &params, uint64_t threshold,
+    bool QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsParams &params,
+        const std::vector<std::string> &replace, const std::map<std::string, Timeline::AICpuCheckDataType> &dataType,
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) override;
     bool QueryAclnnOpCountExceedThreshold(const Protocol::KernelDetailsParams &params, uint64_t threshold,
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) override;
@@ -171,8 +172,8 @@ private:
     std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase,
                                              const std::string& order, const std::string& orderByField);
     void QueryFlowLocation(const std::string& sql,
-                           std::map<std::string, std::map<std::string, FlowLocation>>& startFlowLocations,
-                           std::map<std::string, std::map<std::string, std::vector<FlowLocation>>>& endFlowLocations);
+        std::map<std::string, std::map<std::string, Protocol::FlowLocation>>& startFlowLocations,
+        std::map<std::string, std::map<std::string, std::vector<Protocol::FlowLocation>>>& endFlowLocations);
 };
 }
 

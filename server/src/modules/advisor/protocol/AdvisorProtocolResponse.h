@@ -36,6 +36,7 @@ struct AffinityOptimizerResponse : public Response {
 
 struct AffinityAPIData {
     BaseInfo baseInfo;
+    std::string name; // 用来定位timeline上的算子
     std::string originAPI;
     std::string replaceAPI;
     std::string note;

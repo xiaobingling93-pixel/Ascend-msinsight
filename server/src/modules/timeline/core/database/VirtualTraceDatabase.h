@@ -20,7 +20,7 @@
 #include "EventDef.h"
 
 namespace Dic::Module::Timeline {
-using namespace Dic::Protocol;
+const uint64_t AICPU_OP_DURATION_THRESHOLD = 20000; // 20us
 /*
  * timeline数据库抽象类，定义所有查询接口调用的数据库查询纯虚函数，
  */
@@ -77,7 +77,8 @@ public:
                                         uint64_t minTimestamp) = 0;
     virtual bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
             Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId) = 0;
-    virtual bool QueryAICpuOpDurationExceedThreshold(const Protocol::KernelDetailsParams &params, uint64_t threshold,
+    virtual bool QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsParams &params,
+        const std::vector<std::string> &replace, const std::map<std::string, Timeline::AICpuCheckDataType> &dataType,
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) = 0;
     virtual bool QueryAclnnOpCountExceedThreshold(const Protocol::KernelDetailsParams &params, uint64_t threshold,
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) = 0;

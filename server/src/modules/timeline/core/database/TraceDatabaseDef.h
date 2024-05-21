@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_TRACE_DATABASE_DEF_H
 
 #include <string>
+#include <vector>
 
 namespace Dic {
 namespace Module {
@@ -77,6 +78,12 @@ struct KernelShapesDataDto {
     std::string outputShapes;
     std::string outputDataTypes;
     std::string outputFormats;
+};
+
+struct AICpuCheckDataType {
+    std::vector<std::string> input;
+    std::vector<std::string> output;
+    std::string note;
 };
 } // end of namespace Timeline
 } // end of namespace Module

@@ -1934,18 +1934,20 @@ bool JsonTraceDatabase::QueryAffinityOptimizer(const std::string &optimizers,
     return true;
 }
 
-bool JsonTraceDatabase::QueryAICpuOpDurationExceedThreshold(const Protocol::KernelDetailsParams &params,
-    uint64_t threshold, std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
+bool JsonTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsParams &params,
+    const std::vector<std::string> &replace, const std::map<std::string, Timeline::AICpuCheckDataType> &dataType,
+    std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
 {
     if (!CheckTableExist(sliceTable) || !CheckTableExist(TABLE_KERNEL)) {
         return false;
     }
-    auto stmt = CreatPreparedStatement(QUERY_AICPU_OP_EXCEED_THRESHOLD_SQL);
+    std::string sql = JsonSqlConstant::GenerateAICpuQuerySql(replace, dataType);
+    auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for AICpuOpExceedThreshold.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, threshold);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, AICPU_OP_DURATION_THRESHOLD);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for AICpuOpExceedThreshold.", stmt->GetErrorMessage());
         return false;

@@ -5,6 +5,7 @@
 #ifndef PROFILER_SERVER_JSONSQLCONSTANT_H
 #define PROFILER_SERVER_JSONSQLCONSTANT_H
 #include <string>
+#include "StringUtil.h"
 
 namespace Dic::Module::Timeline {
 const int CACHE_SIZE = 1000;
@@ -116,13 +117,6 @@ const std::string QUERY_LAYER_DATA_SQL = "SELECT sum(duration) AS totalTime, cou
 const std::string QUERY_QUERY_TYPE_SQL =
     "SELECT DISTINCT accelerator_core FROM " + KERNEL_DETAIL + " ORDER BY accelerator_core";
 
-const std::string QUERY_AICPU_OP_EXCEED_THRESHOLD_SQL =
-        "SELECT s.name as name, kd.op_type as type, s.timestamp - ? as startTime, s.duration as duration, "
-        "t.pid as pid, t.tid as tid FROM ( "
-        "    SELECT name, timestamp, duration, track_id FROM " + SLICE_TABLE +
-        "    WHERE args LIKE '%Task Type%AI_CPU%' AND duration > ?) s "
-        "JOIN " + KERNEL_DETAIL + " kd ON s.name = kd.name AND s.timestamp = kd.start_time "
-        "JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id";
 const std::string QUERY_ACLNN_OP_CNT_EXCEED_THRESHOLD_SQL =
     "SELECT s.name as name, s.timestamp - ? as startTime, s.duration as duration, t.pid as pid, t.tid as tid "
     "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
@@ -298,6 +292,55 @@ public:
         std::string nameMatch = GetSearchNameSqlSuffix(isMatchExact, isMatchCase);
         std::string sql = "SELECT name, timestamp, duration FROM " + SLICE_TABLE + " WHERE " + nameMatch + orderBy +
             " limit ? offset ?";
+        return sql;
+    }
+
+    static std::string GenerateAICpuQuerySql(const std::vector<std::string> &replace,
+        const std::map<std::string, Timeline::AICpuCheckDataType> &dataTypeMap)
+    {
+        std::vector<std::string> opTypeList{};
+        for (const auto &item : dataTypeMap) { // 获取除other以外的算子类型列表
+            if (item.first != "other") {
+                opTypeList.emplace_back(item.first);
+            }
+        }
+        std::vector<std::string> dataTypeCheck{};
+        for (const auto &item : dataTypeMap) {
+            std::string opType = item.first;
+            if (item.first == "other") { // 对于other，使用Not IN排除opTypeList以外的算子类型
+                opType = StringUtil::Join4SqlGroup(opTypeList);
+            }
+            dataTypeCheck.emplace_back(GenerateAICpuOpFilterSql(opType, item.second));
+        }
+        std::string dataTypeCheckSql = StringUtil::join(dataTypeCheck, "OR");
+
+        std::string sql =
+            "SELECT kd.name as name, kd.op_type as type, kd.start_time - ? as startTime, kd.duration as duration, "
+            "t.pid as pid, t.tid as tid "
+            "FROM " + KERNEL_DETAIL + " kd "
+            "JOIN " + SLICE_TABLE + " s ON kd.name = s.name AND kd.start_time = s.timestamp "
+            "JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
+            "WHERE kd.accelerator_core='AI_CPU' AND ("
+            "    lower(kd.op_type) IN (" + StringUtil::Join4SqlGroup(replace) + ") " // 特定类型的算子可以修改代码
+            "    OR ("
+            "    " + dataTypeCheckSql + // 检查数据类型是否符合要求
+            "    ) OR "
+            "    kd.duration >= ?" // 执行时间超过20us
+            ") ";
+        return sql;
+    }
+
+private:
+    static std::string GenerateAICpuOpFilterSql(const std::string& opType, const Timeline::AICpuCheckDataType& dataType)
+    {
+        std::string sql = " ( ";
+        if (std::find(opType.begin(), opType.end(), ',') == opType.end()) { // 输入为单个算子类型
+            sql += "lower(kd.op_type) = '" + opType + "' AND ";
+        } else { // 输入为算子类型组
+            sql += "lower(kd.op_type) NOT IN ( " + opType + " ) AND ";
+        }
+        sql += "lower(kd.input_data_types) NOT IN ( " + StringUtil::Join4SqlGroup(dataType.input) + " ) AND "
+               "lower(kd.output_data_types) NOT IN ( " + StringUtil::Join4SqlGroup(dataType.output) + " )) ";
         return sql;
     }
 };

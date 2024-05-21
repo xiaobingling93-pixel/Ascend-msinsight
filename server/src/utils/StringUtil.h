@@ -150,6 +150,21 @@ public:
         return ss.str();
     }
 
+    static std::string Join4SqlGroup(std::vector<std::string> list)
+    {
+        std::stringstream ss;
+        for (int i = 0; i < list.size(); i++) {
+            if (list.at(i).empty()) {
+                continue;
+            }
+            if (i != 0) {
+                ss << ",";
+            }
+            ss << ("'" + list.at(i) + "'");
+        }
+        return ss.str();
+    }
+
     static bool StartWith(const std::string& str, const std::string& start)
     {
         int srcLen = str.size();

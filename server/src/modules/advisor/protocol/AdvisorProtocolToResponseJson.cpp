@@ -56,6 +56,7 @@ template <> std::optional<document_t> ToResponseJson<AffinityAPIResponse>(const 
         JsonUtil::AddMember(dataJson, "duration", item.baseInfo.duration, allocator);
         JsonUtil::AddMember(dataJson, "pid", item.baseInfo.pid, allocator);
         JsonUtil::AddMember(dataJson, "tid", item.baseInfo.tid, allocator);
+        JsonUtil::AddMember(dataJson, "name", item.name, allocator);
         JsonUtil::AddMember(dataJson, "originAPI", item.originAPI, allocator);
         JsonUtil::AddMember(dataJson, "replaceAPI", item.replaceAPI, allocator);
         JsonUtil::AddMember(dataJson, "note", item.note, allocator);

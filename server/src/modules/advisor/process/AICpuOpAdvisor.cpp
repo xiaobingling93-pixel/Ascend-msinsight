@@ -20,7 +20,8 @@ bool AICpuOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::AI
     std::vector<Protocol::KernelBaseInfo> data{};
     Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
                                            .current = params.currentPage, .pageSize = params.pageSize};
-    if (!database->QueryAICpuOpDurationExceedThreshold(param, AICPU_OP_DURATION_THRESHOLD, data, startTime)) {
+    if (!database->QueryAICpuOpCanBeOptimized(param, AICPU_OP_EQUIVALENT_REPLACE,
+                                              AICPU_OP_DATATYPE_RULE, data, startTime)) {
         ServerLog::Error("Failed to Query Long Time AI CPU Op from database.");
         return false;
     }
