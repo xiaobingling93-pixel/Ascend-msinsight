@@ -17,6 +17,13 @@ void FileSelector::GetFoldersAndFiles(const std::string &path,
     std::vector<std::string> files;
     // 处理中文路径
     std::string tempPath = FileUtil::PathPreprocess(path);
+#ifdef _WIN32
+    // windows环境下无需处理
+#else
+    if (tempPath.length() > 0 && tempPath[tempPath.length() - 1] == '/') {
+        tempPath = tempPath.substr(0, tempPath.length() - 1);
+    }
+#endif
     // 防止目录遍历攻击
     std::string filepath = FileUtil::GetRealPath(tempPath);
     if (path.empty()) {
