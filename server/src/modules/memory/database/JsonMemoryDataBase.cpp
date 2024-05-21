@@ -235,7 +235,7 @@ std::string  JsonMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &
     std::string sql =
         "SELECT name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
         "ROUND((allocation_time - " +
-        std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) END AS allocationTime, "
+        std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) END AS allocationTimestamp, "
         "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " +
         std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) "
         "END AS release_time, ROUND(duration / 1000.0, 2) as duration, "

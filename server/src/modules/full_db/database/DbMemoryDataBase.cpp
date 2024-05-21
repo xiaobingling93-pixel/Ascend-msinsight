@@ -33,7 +33,7 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
         sql += "SELECT NAME.value AS realName, ROUND(size / 1024.0, 2) as size, "
                " CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
             "ROUND((allocation_time - " + std::to_string(startTime) +
-            ") / (1000.0 * 1000.0), 2) END AS allocationTime, "
+            ") / (1000.0 * 1000.0), 2) END AS allocationTimestamp, "
             "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " + std::to_string(startTime) +
             ") / (1000.0 * 1000.0), 2) END AS release_time, ROUND(duration / (1000.0 * 1000.0), 2) as duration, "
             "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +

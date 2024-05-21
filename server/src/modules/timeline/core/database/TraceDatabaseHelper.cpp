@@ -90,9 +90,9 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryTaskStrInfoById(
     std::unique_ptr<SqliteResultSet> resultSet;
     switch (processType) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
-            sql = "SELECT block_dim, mixBlockDim "
+            sql.append("SELECT ").append(metaVersion.empty() ? "block_dim" : "blockDim").append(", mixBlockDim "
                   " FROM TASK main join COMPUTE_TASK_INFO CTI on main.globalTaskId = CTI.globalTaskId"
-                  "  where main.ROWID = ?";
+                  "  where main.ROWID = ?");
             return ExecuteQuery(stmt, sql, requestParams.id);
         case PROCESS_TYPE::HCCL:
             sql = "SELECT com.planeId, com.notifyId ,com.srcRank ,com.dstRank, com.size, com.opId ";

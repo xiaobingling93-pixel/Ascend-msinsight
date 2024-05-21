@@ -208,10 +208,10 @@ void VirtualMemoryDataBase::AddOperatorSql(Protocol::MemoryOperatorParams reques
         sql += " AND stream <> ''";
     }
     if (requestParams.startTime != -1) {
-        sql += " AND allocationTime >= " + std::to_string(requestParams.startTime);
+        sql += " AND allocationTimestamp >= " + std::to_string(requestParams.startTime);
     }
     if (requestParams.endTime != -1) {
-        sql += " AND allocationTime <= " + std::to_string(requestParams.endTime);
+        sql += " AND allocationTimestamp <= " + std::to_string(requestParams.endTime);
     }
 
     if (requestParams.minSize != -1) {
@@ -221,7 +221,8 @@ void VirtualMemoryDataBase::AddOperatorSql(Protocol::MemoryOperatorParams reques
         sql += " AND size <= " + std::to_string(requestParams.maxSize);
     }
     if (!requestParams.orderBy.empty()) {
-        sql += " ORDER BY " + requestParams.orderBy + " " + ascend;
+        auto columnName = isLowCamel ? StringUtil::ToCamelCase(requestParams.orderBy) : requestParams.orderBy;
+        sql += " ORDER BY " + columnName + " " + ascend;
     }
     sql += " LIMIT ? offset ?";
 }
