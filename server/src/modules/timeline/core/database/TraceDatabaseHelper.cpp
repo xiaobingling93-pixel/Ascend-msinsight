@@ -274,49 +274,49 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryUnitCounter(std::uniq
 
 std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsDetails(
     std::unique_ptr <SqlitePreparedStatement> &stmt, const Protocol::UnitThreadsOperatorsParams &requestParams,
-    uint64_t minTimestamp)
+    uint64_t minTimestamp, const std::string& orderBy)
 {
     auto processType = GetProcessType(requestParams.metaType);
     std::string sql;
     switch (processType) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
             sql = "with nameIds as (select id, value as realName from STRING_IDS where value = ?)\n"
-              "select startNs - ? as start_time, endNs - startNs as duration, depth, main.ROWID as id from TASK  main "
+              "select startNs - ? as timestamp, endNs - startNs as duration, depth, main.ROWID as id from TASK  main "
               "     left join COMPUTE_TASK_INFO c on c.globalTaskId = main.globalTaskId\n"
               "     join nameIds on coalesce(c.name, main.taskType) = id  where deviceId = ? and streamId = ? "
-              " and start_time + duration >= ? AND start_time <= ? ORDER BY startNs;";
+              " and timestamp + duration >= ? AND timestamp <= ? " + orderBy;
             return ExecuteQuery(stmt, sql, requestParams.name, minTimestamp, requestParams.rankId, requestParams.tid,
                                 requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::HCCL:
             sql = "with nameIds as (select id, ? as minTime, ? as rankId, ? as startTime, ? as endTime,"
               "                  ? as tid from STRING_IDS where value = ?) "
-              "select startNs-minTime as start_time,endNs-startNs as duration,0 as depth,c.ROWID as id from  TASK main "
+              "select startNs-minTime as timestamp,endNs-startNs as duration,0 as depth,c.ROWID as id from  TASK main "
               "   join COMMUNICATION_TASK_INFO c on c.globalTaskId = main.globalTaskId join nameIds on c.name = id "
-              " where deviceId=rankId and planeId=tid and start_time+duration >= startTime AND start_time <= endTime "
-              " UNION ALL select op.startNs - minTime as start_time, op.endNs - op.startNs as duration, 0 as depth, "
+              " where deviceId=rankId and planeId=tid and timestamp+duration >= startTime AND timestamp <= endTime "
+              " UNION ALL select op.startNs - minTime as timestamp, op.endNs - op.startNs as duration, 0 as depth, "
               " op.ROWID as id from COMMUNICATION_OP op join TASK CA on op.connectionId = CA.connectionId "
               " join  nameIds on op.opName = id where deviceId = rankId and op.groupName||'group' = tid "
-              " and start_time + duration >= startTime AND start_time <= endTime group by opId ORDER BY start_time;";
+              " and timestamp + duration >= startTime AND timestamp <= endTime group by opId " + orderBy;
             return ExecuteQuery(stmt, sql, minTimestamp, requestParams.rankId, requestParams.startTime,
                                 requestParams.endTime, requestParams.tid, requestParams.name);
         case PROCESS_TYPE::CANN_API:
             sql = "with nameIds as (select id from STRING_IDS where value = ?)\n"
-                  "select startNs - ? as start_time, endNs - startNs as duration, depth, main.ROWID as id "
+                  "select startNs - ? as timestamp, endNs - startNs as duration, depth, main.ROWID as id "
                   " from CANN_API main join  nameIds on name = id where globalTid = ? and type = ? "
-                  " and start_time + duration >= ? AND start_time <= ? ORDER BY startNs;";
+                  " and timestamp + duration >= ? AND timestamp <= ? " + orderBy;
             return ExecuteQuery(stmt, sql, requestParams.name, minTimestamp, requestParams.pid, requestParams.tid,
                                 requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::API:
             sql = "with nameIds as (select id from STRING_IDS where value = ?)\n"
-                  " select startNs - ? as start_time, endNs - startNs as duration, depth, main.ROWID as id "
+                  " select startNs - ? as timestamp, endNs - startNs as duration, depth, main.ROWID as id "
                   " from PYTORCH_API main join  nameIds on name = id\n"
-                  "     where globalTid = ? and start_time + duration >= ? AND start_time <= ? ORDER BY startNs;";
+                  "     where globalTid = ? and timestamp + duration >= ? AND timestamp <= ? " + orderBy;
             return ExecuteQuery(stmt, sql, requestParams.name, minTimestamp, requestParams.pid,
                                 requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::OVERLAP_ANALYSIS:
-            sql = "select startNs - ? as start_time, endNs - startNs as duration, 0 as depth, "
+            sql = "select startNs - ? as timestamp, endNs - startNs as duration, 0 as depth, "
                   " main.ROWID as id from OVERLAP_ANALYSIS main "
-              " where deviceId = ? and type = ? and start_time + duration >= ? AND start_time <= ? ORDER BY startNs;";
+              " where deviceId = ? and type = ? and timestamp + duration >= ? AND timestamp <= ? " + orderBy;
             return ExecuteQuery(stmt, sql, minTimestamp, requestParams.rankId, requestParams.tid,
                                 requestParams.startTime, requestParams.endTime);
         default:

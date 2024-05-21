@@ -342,7 +342,7 @@ static std::unique_ptr<SqliteResultSet> QuerySystemViewData(std::unique_ptr<Sqli
         return processType.value();
     }
 static std::unique_ptr<SqliteResultSet> QueryThreadSameOperatorsDetails(std::unique_ptr<SqlitePreparedStatement> &stmt,
-     const Protocol::UnitThreadsOperatorsParams &requestParams, uint64_t minTimestamp);
+     const Protocol::UnitThreadsOperatorsParams &requestParams, uint64_t minTimestamp, const std::string& orderBy);
 
 private:
     static inline bool DealLastData(std::vector<Protocol::SimpleSlice> &rows,
