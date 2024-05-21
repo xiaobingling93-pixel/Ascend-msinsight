@@ -17,6 +17,11 @@ using namespace Dic::Module::Timeline;
 
 std::map<std::string, Protocol::MemorySuccess> FullDb::DbMemoryDataBase::ranks = {};
 
+bool DbMemoryDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
+{
+    return Database::OpenDb(dbPath, clearAllTable) && GetMetaVersion();
+}
+
 bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                                            std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                            std::vector<Protocol::MemoryOperator> &opDetails)
@@ -39,8 +44,9 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
             "ROUND(allocation_total_active / (1024.0 * 1024.0), 11) as allocation_active, "
             " ROUND(release_total_allocated / (1024.0 * 1024.0), 11) as release_allocated, "
             "ROUND(release_total_reserved / (1024.0 * 1024.0), 11) as release_reserve, "
-            "ROUND(release_total_active / (1024.0 * 1024.0), 11) as release_active, stream_ptr as stream FROM " +
-            TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name"
+            "ROUND(release_total_active / (1024.0 * 1024.0), 11) as release_active, stream_ptr as stream FROM ";
+        sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
+        sql += TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name"
             " WHERE realName LIKE ? ";
     }
     AddOperatorSql(requestParams, sql);
@@ -59,8 +65,9 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
             ") / (1000.0 * 1000.0), 2) as timestamp, "
             "ROUND(total_allocated / (1024.0 * 1024.0), 11) as total_allocated, "
             " ROUND(total_reserved / (1024.0 * 1024.0), 11) as total_reserve, "
-            "ROUND(total_active / (1024.0 * 1024.0), 11) as total_active, stream_ptr as stream FROM " +
-            TABLE_MEMORY_RECORD + " JOIN STRING_IDS AS NAME ON NAME.id = MEMORY_RECORD.component where 1=1 ";
+            "ROUND(total_active / (1024.0 * 1024.0), 11) as total_active, stream_ptr as stream FROM ";
+        sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
+        sql += TABLE_MEMORY_RECORD + " JOIN STRING_IDS AS NAME ON NAME.id = MEMORY_RECORD.component where 1=1 ";
     }
     return ExecuteQueryMemoryView(requestParams, operatorBody, sql);
 }
@@ -72,21 +79,24 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
     if (type == FileType::PYTORCH) {
         sql = "SELECT count(*) as nums FROM "
             " ("
-            "   SELECT NAME.value as name, stream_ptr, allocation_time,"
-            " ROUND(size / 1024.0, 2) as size, size as realSize FROM OP_MEMORY JOIN STRING_IDS AS NAME ON "
+            "   SELECT NAME.value as name, ";
+        sql.append(isLowCamel ? "streamPtr, allocationTime," : "stream_ptr, allocation_time,");
+        sql.append(" ROUND(size / 1024.0, 2) as size, size as realSize FROM OP_MEMORY JOIN STRING_IDS AS NAME ON "
             "   NAME.id = OP_MEMORY.name"
             ") "
-            " WHERE name LIKE ? ";
+            " WHERE name LIKE ? ");
     }
 
     if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
-        sql += " AND stream_ptr <> ''";
+        sql.append(isLowCamel ? " AND streamPtr <> ''" : " AND stream_ptr <> ''");
     }
     if (requestParams.startTime != -1) {
-        sql += " AND ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) >= ? ";
+        sql.append(" AND ROUND((").append(isLowCamel ? "allocationTime" : "allocation_time")
+            .append(" - ?) / (1000.0 * 1000.0), 2) >= ? ");
     }
     if (requestParams.endTime != -1) {
-        sql += " AND ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) <= ? ";
+        sql.append(" AND ROUND((").append(isLowCamel ? "allocationTime" : "allocation_time")
+            .append(" - ?) / (1000.0 * 1000.0), 2) <= ? ");
     }
     if (requestParams.minSize != -1) {
         sql += " AND realSize >= ? ";

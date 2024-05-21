@@ -61,8 +61,8 @@ const static std::string ACC_PMU_UNIT_COUNTER_SQL =
      " where deviceId = ? and startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
 const static std::string NPU_UNIT_COUNTER_SQL = "with pn as (select ? as value) select timestampNs - ? as startTime, "
      " case type when 0 then 'APP*'  else 'Device*' end as typeName, format('{\"B\":%s}',"
-     " case when glob('*DDR', pn.value) then ddrUsage when glob('*HBM', pn.value) then "
-     " hbmUsage else hbmUsage + ddrUsage end) as args from NPU_MEM join pn where deviceId = ? and "
+     " case when glob('*DDR', pn.value) then ddr when glob('*HBM', pn.value) then "
+     " hbm else hbm + ddr end) as args from NPU_MEM join pn where deviceId = ? and "
      " glob(typeName, pn.value) and startTime >= ? AND startTime <= ? ORDER BY startTime ASC;";
 const static std::string SAMPLE_PMU_UNIT_COUNTER_SQL =
         "select timestampNs - ? as startTime, "

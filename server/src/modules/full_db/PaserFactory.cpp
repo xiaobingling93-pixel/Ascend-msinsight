@@ -212,8 +212,6 @@ bool ParserAlloc::CheckIfClusterAndReset(const std::string &path, int filesSize,
     bool reset = isCluster || DataBaseManager::Instance().curIsCluster || isDb || DataBaseManager::Instance().curIsDb;
     ServerLog::Info("new Cluster:", isCluster, ", old Cluster:", DataBaseManager::Instance().curIsCluster,
                     ", reset:", reset);
-    DataBaseManager::Instance().curIsCluster = isCluster;
-    DataBaseManager::Instance().curIsDb = isDb;
     if (reset) {
         if (isDb) {
             FullDb::FullDbParser::Instance().Reset();
@@ -224,6 +222,8 @@ bool ParserAlloc::CheckIfClusterAndReset(const std::string &path, int filesSize,
         }
         body.reset = true;
     }
+    DataBaseManager::Instance().curIsCluster = isCluster;
+    DataBaseManager::Instance().curIsDb = isDb;
     body.isCluster = isCluster;
 }
 } // Module

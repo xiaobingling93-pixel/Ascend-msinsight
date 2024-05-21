@@ -173,7 +173,7 @@ bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requ
     responseBody.data.selfTime = selfTime;
     responseBody.data.cat = sliceDtoVec[0].cat;
     uint64_t id = sliceDtoVec.at(0).id;
-    TraceDatabaseHelper::QueryTaskInfoById(stmt, requestParams, responseBody, stringsCache.at(path));
+    TraceDatabaseHelper::QueryTaskInfoById(stmt, requestParams, responseBody, stringsCache.at(path), metaVersion);
     return true;
 }
 
@@ -897,7 +897,8 @@ std::vector<std::string> DbTraceDataBase::QueryRankId()
         sql = "SELECT id FROM " + TABLE_NPU_INFO;
     } else if (type == FileType::PYTORCH) {
         if (CheckTableDataInvalid(TABLE_PYTORCH_INFO)) {
-            sql = "SELECT DISTINCT rank_id FROM " + TABLE_PYTORCH_INFO;
+            std::string columnNames = isLowCamel ? "rankId" : "rank_id";
+            sql = "SELECT DISTINCT " + columnNames + " FROM " + TABLE_PYTORCH_INFO;
         } else {
             sql = "SELECT DISTINCT id FROM " + TABLE_NPU_INFO;
         }
@@ -1046,9 +1047,7 @@ bool DbTraceDataBase::UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &
 
 bool DbTraceDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
-    Database::OpenDb(dbPath, clearAllTable);
-    SetConfig();
-    InitStmt();
+    return Database::OpenDb(dbPath, clearAllTable) && GetMetaVersion() && SetConfig() && InitStmt();
 }
 
 void DbTraceDataBase::InitFlowCache()

@@ -42,11 +42,11 @@ std::optional<std::string> TraceDatabaseHelper::QueryConnectionId(std::unique_pt
 void TraceDatabaseHelper::QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                             const Protocol::ThreadDetailParams &requestParams,
                                             Protocol::UnitThreadDetailBody &responseBody,
-                                            std::map<std::string, std::string> &stringCache)
+                                            std::map<std::string, std::string> &stringCache, std::string& metaVersion)
 {
     auto processType = GetProcessType(requestParams.metaType);
     bool attrInfoExist = isAttrInfoExist(stmt);
-    auto resultSet = QueryTaskCacheInfoById(stmt, requestParams, attrInfoExist);
+    auto resultSet = QueryTaskCacheInfoById(stmt, requestParams, attrInfoExist, metaVersion);
     std::vector<std::string> types = {"inputShapes", "inputDataTypes", "inputFormats",
                                       "outputShapes", "outputDataTypes", "outputFormats", "attrInfo"};
     document_t json(kObjectType);
@@ -72,7 +72,7 @@ void TraceDatabaseHelper::QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatem
         }
     }
 
-    resultSet = QueryTaskStrInfoById(stmt, requestParams);
+    resultSet = QueryTaskStrInfoById(stmt, requestParams, metaVersion);
     if (resultSet.operator bool() && resultSet->Next()) {
         for (auto &item: resultSet->GetColumns()) {
             JsonUtil::AddConstMember(json, item.first, resultSet->GetString(item.second), allocator);
@@ -82,7 +82,8 @@ void TraceDatabaseHelper::QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatem
 }
 
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryTaskStrInfoById(
-    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::ThreadDetailParams &requestParams)
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::ThreadDetailParams &requestParams,
+    std::string& metaVersion)
 {
     auto processType = GetProcessType(requestParams.metaType);
     std::string sql;
@@ -94,9 +95,15 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryTaskStrInfoById(
                   "  where main.ROWID = ?";
             return ExecuteQuery(stmt, sql, requestParams.id);
         case PROCESS_TYPE::HCCL:
-            sql = "SELECT com.planeId, com.notifyId ,com.srcRank ,com.dstRank, com.size, com.opId "
-                  "      FROM TASK main join COMMUNICATION_TASK_INFO com on main.globalTaskId = com.globalTaskId "
-                  " where main.ROWID = ?";
+            sql = "SELECT com.planeId, com.notifyId ,com.srcRank ,com.dstRank, com.size, com.opId ";
+            sql.append(metaVersion.empty() ? "" : ", rdma.name as rdmaType, tran.name as transportType,"
+                                                  " data.name as dataType, link.name as linkType");
+            sql.append("  FROM TASK main join COMMUNICATION_TASK_INFO com on main.globalTaskId = com.globalTaskId ");
+            sql.append(metaVersion.empty() ? "" : "join ENUM_HCCL_DATA_TYPE data on data.id = com.dataType "
+                                                  " join ENUM_HCCL_RDMA_TYPE rdma on rdma.id = com.rdmaType "
+                                                  " join ENUM_HCCL_TRANSPORT_TYPE tran on tran.id = com.transportType "
+                                                  " join ENUM_HCCL_LINK_TYPE link on link.id = com.linkType");
+            sql.append(" where main.ROWID = ?");
             return ExecuteQuery(stmt, sql, requestParams.id);
         case PROCESS_TYPE::API:
             sql = " select group_concat(coalesce(value, stack), ';\n') as 'Call stack', sequenceNumber from ( "
@@ -116,7 +123,7 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryTaskStrInfoById(
 
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryTaskCacheInfoById(
     std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::ThreadDetailParams &requestParams,
-    bool attrInfoExist)
+    bool attrInfoExist, std::string& metaVersion)
 {
     auto processType = GetProcessType(requestParams.metaType);
     std::string sql;
@@ -135,9 +142,10 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryTaskCacheInfoById(
             }
             return ExecuteQuery(stmt, sql, requestParams.id);
         case PROCESS_TYPE::HCCL:
-            sql = "SELECT com.taskType, com.groupName ,com.rdmaType,com.transportType, com.dataType, com.linkType "
-                  "      FROM TASK main join COMMUNICATION_TASK_INFO com on main.globalTaskId = com.globalTaskId "
-                  " where main.ROWID = ?";
+            sql = "SELECT com.taskType, com.groupName ";
+            sql.append(metaVersion.empty() ? ",com.rdmaType,com.transportType, com.dataType, com.linkType " : "");
+            sql.append("      FROM TASK main join COMMUNICATION_TASK_INFO com on main.globalTaskId = com.globalTaskId "
+                  " where main.ROWID = ?");
             return ExecuteQuery(stmt, sql, requestParams.id);
         case PROCESS_TYPE::API:
             sql = "SELECT inputDtypes, inputShapes FROM PYTORCH_API main "

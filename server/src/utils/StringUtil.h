@@ -14,6 +14,7 @@
 #include <sstream>
 #include <chrono>
 #include <zlib.h>
+#include "algorithm"
 #ifdef _WIN32
 #include <winsock2.h>
 #include <windows.h>
@@ -230,6 +231,23 @@ static std::vector<std::string> StringSplit(const std::string& str)
         }
     }
     result.push_back(subStr);
+    return result;
+}
+
+static std::string ToCamelCase(const std::string& str)
+{
+    std::string result(str);
+    bool isNeedChange = false;
+    for (auto it = result.begin(); it != result.end(); it ++) {
+        while (it != result.end() && *it == '_') {
+            it = result.erase(it);
+            isNeedChange = true;
+        }
+        if (isNeedChange && it != result.end()) {
+            *it = std::toupper(*it); // 转大写
+            isNeedChange = false;
+        }
+    };
     return result;
 }
 

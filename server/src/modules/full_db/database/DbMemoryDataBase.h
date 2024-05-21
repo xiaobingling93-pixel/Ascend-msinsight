@@ -17,6 +17,7 @@ public:
     explicit DbMemoryDataBase(std::recursive_mutex &sqlMutex) : Memory::VirtualMemoryDataBase(sqlMutex) {};
     virtual ~DbMemoryDataBase() {};
 
+    bool OpenDb(const std::string &dbPath, bool clearAllTable);
     bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                              std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                              std::vector<Protocol::MemoryOperator> &opDetails);

@@ -17,6 +17,11 @@ TEST(StringUtil, IntToString) {
     EXPECT_EQ(StringUtil::IntToString(100, 2), "100");
 }
 
+TEST(StringUtil, ToCamelCase) {
+    EXPECT_EQ(StringUtil::ToCamelCase("rank_id"), "rankId");
+    EXPECT_EQ(StringUtil::ToCamelCase("rank_id, device_Id"), "rankId, deviceId");
+}
+
 TEST(StringUtil, Split) {
     EXPECT_EQ(StringUtil::Split("a,a", ",")[0], "a");
     EXPECT_EQ(StringUtil::Split("a,a", ",")[1], "a");

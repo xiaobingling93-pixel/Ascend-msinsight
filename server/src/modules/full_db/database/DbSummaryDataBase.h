@@ -16,6 +16,7 @@ public:
     explicit DbSummaryDataBase(std::recursive_mutex &sqlMutex) : Summary::VirtualSummaryDataBase(sqlMutex) {};
     virtual ~DbSummaryDataBase() {};
 
+    bool OpenDb(const std::string &dbPath, bool clearAllTable);
     bool QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
                                    std::vector<Protocol::ComputeDetail> &computeDetails);
     bool QueryGetTotalNum(std::string name, int64_t &totalNum);
@@ -39,7 +40,7 @@ private:
     static std::string GenerateQueryCategoryDurationSql(OperatorDurationReqParams &reqParams);
     static std::string GenerateQueryComputeUnitDurationSql(OperatorDurationReqParams &reqParams);
     bool QueryDetailTotalNum(OperatorStatisticReqParams &reqParams, int64_t &total);
-    static std::string GenerateQueryDetailSql(OperatorStatisticReqParams &reqParams);
+    std::string GenerateQueryDetailSql(OperatorStatisticReqParams &reqParams);
     bool QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqParams, int64_t &total);
     std::string GenerateQueryMoreInfoSql(OperatorMoreInfoReqParams &reqParams);
     std::string GetCommSql(const CommunicationDetailParams& request);
@@ -50,6 +51,7 @@ private:
     static std::string GenerateQueryCategoryDurationSqlForHCCL(
         const Dic::Protocol::OperatorGroupConverter::OperatorGroup &operatorGroup);
     std::string &GenerateQueryMoreInfoSqlForHCCL(std::string &sql) const;
+    std::string blockDimColumnName;
 };
 
 }

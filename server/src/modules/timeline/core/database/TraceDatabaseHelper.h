@@ -117,13 +117,14 @@ static std::optional<std::string> QueryConnectionId(std::unique_ptr<SqlitePrepar
 
 static void QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
              const Protocol::ThreadDetailParams &requestParams,
-             Protocol::UnitThreadDetailBody &responseBody, std::map<std::string, std::string> &stringCache);
+             Protocol::UnitThreadDetailBody &responseBody, std::map<std::string, std::string> &stringCache,
+             std::string& metaVersion);
 
 static std::unique_ptr<SqliteResultSet> QueryTaskStrInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                const Protocol::ThreadDetailParams &requestParams);
+                                const Protocol::ThreadDetailParams &requestParams, std::string& metaVersion);
 
 static std::unique_ptr<SqliteResultSet> QueryTaskCacheInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                    const Protocol::ThreadDetailParams &requestParams, bool attrInfoExist);
+       const Protocol::ThreadDetailParams &requestParams, bool attrInfoExist, std::string& metaVersion);
 static bool isAttrInfoExist(std::unique_ptr<SqlitePreparedStatement> &stmt);
 
 static std::unique_ptr<SqliteResultSet> QuerySystemViewData(std::unique_ptr<SqlitePreparedStatement> &stmt,

@@ -23,9 +23,11 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankI
     } else if (type == DataType::FULL_DB) {
         FileType fileType = DataBaseManager::Instance().GetFileType();
         if (fileType == FileType::PYTORCH) {
-            sql += "SELECT stream_ptr FROM " + TABLE_MEMORY_RECORD +
-                " WHERE stream_ptr <> ''"
-                " Group BY stream_ptr ORDER BY time_stamp ASC";
+            std::string streamPtrColumnName = isLowCamel ? "streamPtr" : "stream_ptr";
+            std::string timeColumnName = isLowCamel ? "timestamp" : "time_stamp";
+            sql += "SELECT " + streamPtrColumnName + " FROM " + TABLE_MEMORY_RECORD +
+                " WHERE " + streamPtrColumnName + " <> ''"
+                " Group BY " + streamPtrColumnName + " ORDER BY " + timeColumnName + " ASC";
         }
     }
     sqlite3_stmt *stmt = nullptr;

@@ -52,6 +52,7 @@ public:
     bool DropSomeTables(const std::vector<std::string>& tableNames);
     bool DropAllTable();
     bool IsDatabaseVersionChange();
+    bool GetMetaVersion();
 
 protected:
     bool ExecSql(const std::string &sql);
@@ -68,11 +69,30 @@ protected:
     const int resultStartIndex = 0;
     const int timeoutMs = 50000;
     const std::string infoTable = "status_info";
+    bool isLowCamel = false;
+    std::string metaVersion;
 
     bool CreateStatusInfoTable(); // 创建表时未加锁，需要在调用处加锁
     std::string GetValueFromStatusInfoTable(const std::string& key);
     bool CheckValueFromStatusInfoTable(const std::string &key, const std::string &refValue);
     bool UpdateValueIntoStatusInfoTable(const std::string &key, const std::string &value);
+    template <typename... Args> static inline std::unique_ptr<SqliteResultSet> ExecuteQuery(
+            std::unique_ptr<SqlitePreparedStatement> &stmt, const std::string &sql, Args&&... args)
+    {
+        if (stmt == nullptr) {
+            throw DatabaseException("Failed to prepare sql.");
+        }
+        if (!stmt->Prepare(sql)) {
+            throw DatabaseException("Failed to prepare sql.");
+        }
+        stmt->Reset();
+        stmt->BindParams(std::forward<Args>(args)...);
+        auto result = stmt->ExecuteQuery();
+        if (result == nullptr) {
+            throw DatabaseException("Failed to ExecuteQuery.");
+        }
+        return result;
+    };
 };
 } // end of namespace Module
 } // end of namespace Dic

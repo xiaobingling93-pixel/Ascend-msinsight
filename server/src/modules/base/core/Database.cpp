@@ -151,6 +151,25 @@ void Database::SetDbPath(const std::string& dbPath)
     path = dbPath;
 }
 
+bool Database::GetMetaVersion()
+{
+    if (CheckTableExist(TABLE_META_DATA)) {
+        isLowCamel = true;
+        auto sql = "select value as version from " + TABLE_META_DATA + " where name = ?";
+        auto stmt = CreatPreparedStatement();
+        try {
+            auto resultSet = ExecuteQuery(stmt, sql, "SCHEMA_VERSION");
+            if (resultSet->Next()) {
+                metaVersion = resultSet->GetString(resultStartIndex);
+            }
+        } catch (DatabaseException &e) {
+            ServerLog::Error("Get Meta Version Fail, ", e.What());
+            return false;
+        }
+    }
+    return true;
+}
+
 bool Database::IsDatabaseVersionChange()
 {
     std::string version;

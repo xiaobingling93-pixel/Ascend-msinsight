@@ -34,6 +34,7 @@ namespace Dic {
     const static std::string TABLE_GE_MEMORY = "NPU_OP_MEM";
     const static std::string TABLE_PYTORCH_INFO = "RANK_DEVICE_MAP";
     const static std::string TABLE_OVERLAP_ANALYSIS = "OVERLAP_ANALYSIS";
+    const static std::string TABLE_META_DATA = "META_DATA";
 
     // cluster db table
     const static std::string TABLE_STEP_TRACE_TIME = "ClusterStepTraceTime";
