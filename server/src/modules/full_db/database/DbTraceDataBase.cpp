@@ -507,23 +507,24 @@ std::string DbTraceDataBase::GetStringCacheValue(const std::string& path, std::s
 std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams)
 {
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
+    std::string blockDimColumnName = isLowCamel ? "blockDim" : "block_dim";
     std::string sql = "with nameIds as (select id, value as realName from STRING_IDS where lower(value) like ?),\n"
       "     main as ("
       "     select nameIds.realName as name, substr(realName, 0, instr(realName, '__') + 1) as opType,"
       "       'HCCL' as taskType, info.startNs, round((info.endNs - info.startNs)/1000.0, 3) as duration,\n"
-      "       0 as block_dim, round(waitNs/1000.0, 3) as wait_time, 'N/A' as inputShapes, 'N/A' as inputDataTypes,"
-      "       'N/A' as inputFormats, 'N/A' as outputShapes, 'N/A' as outputDataTypes, 'N/A' as outputFormats"
+      " 0 as " + blockDimColumnName + ",round(waitNs/1000.0, 3) as wait_time,'N/A' as inputShapes, 'N/A' as "
+      " inputDataTypes,'N/A' as inputFormats, 'N/A' as outputShapes, 'N/A' as outputDataTypes, 'N/A' as outputFormats"
       "       from COMMUNICATION_OP info JOIN TASK ON info.connectionId = TASK.connectionId "
       "       join nameIds on opName = nameIds.id group by info.opName\n"
       "     UNION all"
       "     select nameIds.realName as name, opType, info.taskType, startNs,"
       "            round((endNs - startNs)/1000.0, 3) as duration,\n"
-      "            block_dim, round(waitNs/1000.0, 3) as wait_time, inputShapes, inputDataTypes, inputFormats,\n"
+      "" + blockDimColumnName + ", round(waitNs/1000.0, 3) as wait_time, inputShapes, inputDataTypes, inputFormats,\n"
       "            outputShapes, outputDataTypes, outputFormats  from COMPUTE_TASK_INFO info "
       "      JOIN TASK ON info.globalTaskId = TASK.globalTaskId join nameIds on name = nameIds.id where deviceId = ?), "
       "    total as (select count(1) as num from main)\n"
       "SELECT total.num, name, opType as type, taskType AS acceleratorCore, startNs AS startTime, duration ,\n"
-      "       wait_time as waitTime, block_dim AS blockDim, inputShapes,\n"
+      "       wait_time as waitTime, " + blockDimColumnName + " AS blockDim, inputShapes,\n"
       "       inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats\n"
       "FROM main join total";
 
