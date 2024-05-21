@@ -30,6 +30,8 @@ void ParserBin::Parser(const std::string &path, ImportActionRequest &request)
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
 
+    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::JSON);
+
     ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = Protocol::ModuleType::TIMELINE;
