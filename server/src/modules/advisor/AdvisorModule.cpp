@@ -6,6 +6,7 @@
 #include "QueryAffinityAPIAdvice.h"
 #include "QueryAiCpuOpAdviceHandler.h"
 #include "QueryAclnnOpAdvisorHandler.h"
+#include "QueryFusedOpAdviceHandler.h"
 #include "AdvisorModule.h"
 
 namespace Dic::Module {
@@ -26,6 +27,7 @@ void AdvisorModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_ADVISOR_AFFINITY_API, std::make_unique<QueryAffinityAPIAdvice>());
     requestHandlerMap.emplace(REQ_RES_ADVISOR_AICPU_OPERATORS, std::make_unique<QueryAiCpuOpAdviceHandler>());
     requestHandlerMap.emplace(REQ_RES_ADVISOR_ACLNN_OPERATORS, std::make_unique<QueryAclnnOpAdvisorHandler>());
+    requestHandlerMap.emplace(REQ_RES_ADVISOR_OPERATORS_FUSION, std::make_unique<QueryFusedOpAdviceHandler>());
 }
 
 void AdvisorModule::OnRequest(std::unique_ptr<Protocol::Request> request)
