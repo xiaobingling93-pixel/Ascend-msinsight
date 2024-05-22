@@ -187,8 +187,7 @@ bool DbTraceDataBase::QueryUnitsMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     if (CheckTableExist(TABLE_TASK)) {
-        QueryAscendHardwareMetadata(fileId, metaData);
-        QueryHcclMetadata(fileId, metaData);
+        QueryOperateMetadata(fileId, metaData);
         GenerateOverlapAnalysisMetadata(fileId, metaData);
     }
     QueryCounterMetadata(fileId, metaData);
@@ -227,23 +226,22 @@ void DbTraceDataBase::QueryFlowName(const Protocol::UnitFlowNameParams &requestP
 bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
     Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
 {
-    if (!isExistPytorch && !isExistCann) {
-        throw DatabaseException("QueryUintFlows Fail, invalid data."); // 异常退出，在接口中处理
-    }
     auto stmt = CreatPreparedStatement();
-    std::string sql = "with constValue as (select ? as minTime, ? as connectionId)\n";
-    sql = isExistPytorch ? sql + PYTORCH_UNIT_FLOW_SQL + " union all " : sql;
-    sql = isExistCann ? sql + CANN_UNIT_FLOW_SQL + " union all " : sql;
-    sql += TASK_UNIT_FLOW_SQL;
     auto connectionId = TraceDatabaseHelper::QueryConnectionId(stmt, requestParams);
     if (!connectionId.has_value()) {
         return false;
     }
+    std::string sql = "with constValue as (select ? as minTime, ? as connectionId)\n";
+    sql += PYTORCH_UNIT_FLOW_SQL + " union all ";
+    sql += CANN_UNIT_FLOW_SQL + " union all ";
+    sql += TASK_UNIT_FLOW_SQL + " union all " + MSTX_UNIT_FLOW_SQL;
+    sql += " order by startTime ";
     auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, minTimestamp, connectionId.value());
     std::vector<FlowLocation> flowLocations;
     while (resultSet->Next()) {
         auto metaType = resultSet->GetString("metaType");
-        auto rankId = metaType == TABLE_API || metaType == TABLE_CANN_API ? path : resultSet->GetString("deviceId");
+        auto rankId = resultSet->GetString("deviceId");
+        rankId = rankId.empty() ? path : rankId;
         FlowLocation location {
             .tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
             .metaType = metaType, .rankId = rankId, .depth = resultSet->GetInt32("depth"),
@@ -265,6 +263,7 @@ bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestPar
             singleFlow.cat = singleFlow.from.name == "Enqueue" ? "async_task_queue" : "fwdbwd";
         }
         singleFlow.cat = singleFlow.from.metaType == TABLE_CANN_API ? "HostToDevice" : singleFlow.cat;
+        singleFlow.cat = singleFlow.from.metaType == TABLE_MSTX_EVENTS ? "MsTx" : singleFlow.cat;
         if (singleFlow.from.metaType == TABLE_API && singleFlow.to.metaType == TABLE_CANN_API) {
             singleFlow.cat = "async_npu";
         }
@@ -308,7 +307,8 @@ bool DbTraceDataBase::QueryFlowCategoryList(std::vector<std::string> &categories
 bool DbTraceDataBase::SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
     Protocol::SearchSliceBody &responseBody)
 {
-    const std::string &sql = GetSearchSliceNameSql(params.isMatchExact, params.isMatchCase, responseBody.rankId);
+    const std::string &sql = GetSearchSliceNameSql(params.isMatchExact, params.isMatchCase, responseBody.rankId,
+                                                   "descend", "timestamp");
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("QuerySliceName failed!.");
@@ -572,7 +572,7 @@ bool DbTraceDataBase::QueryKernelDepthAndThread(const Protocol::KernelParams &pa
           " 0 as depth from COMMUNICATION_OP info "
           " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500 "
           " UNION all "
-          " select info.ROWID as id, T.streamId as tid, name, 'ASCEND HARDWARE' as pid, depth "
+          " select info.ROWID as id, T.streamId as tid, name, 'Ascend Hardware' as pid, depth "
           " from COMPUTE_TASK_INFO info join TASK T on info.globalTaskId = T.globalTaskId "
           " where name = (select id from STRING_IDS where value = ?) and abs(startNs - ?) <= 500";
     auto stmt = CreatPreparedStatement(sql);
@@ -962,21 +962,28 @@ void DbTraceDataBase::UpdateAllDepth()
 
     sql = "select format('%s-', globalTid) as key, startNs, endNs, ROWID as id from " + TABLE_API +
         " order by globalTid, startNs;";
-    if (CheckTableExist(TABLE_API) && NeedUpdateDepth(TABLE_API)) {
+    if (isExistPytorch && NeedUpdateDepth(TABLE_API)) {
         UpdateDepth(sql, updateApiDepthStmt);
     }
 
     sql = "select format('%s-%s', globalTid, type) as key, startNs, endNs, ROWID as id from " + TABLE_CANN_API +
         " order by globalTid, type, startNs;";
-    if (CheckTableExist(TABLE_CANN_API) && NeedUpdateDepth(TABLE_CANN_API)) {
+    if (isExistCann && NeedUpdateDepth(TABLE_CANN_API)) {
         UpdateDepth(sql, updateCannApiDepthStmt);
+    }
+
+    sql = "select format('%s-%s', globalTid, eventType) as key, startNs, endNs, ROWID as id from " + TABLE_MSTX_EVENTS +
+          " order by globalTid, eventType, startNs;";
+    if (isExistMstx && NeedUpdateDepth(TABLE_MSTX_EVENTS)) {
+        auto stmt = CreatPreparedStatement("UPDATE " + TABLE_MSTX_EVENTS + " set depth = ? where ROWID = ?");
+        UpdateDepth(sql, stmt);
     }
 }
 
 void DbTraceDataBase::UpdateDepth(const std::string &sql, std::unique_ptr<SqlitePreparedStatement> &updateStmt)
 {
     auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
+    if (stmt == nullptr || updateStmt == nullptr) {
         ServerLog::Error("UpdateDepth. Failed to prepare sql.", sqlite3_errmsg(db));
         return;
     }
@@ -1056,13 +1063,13 @@ void DbTraceDataBase::InitFlowCache()
     {
         std::lock_guard<std::recursive_mutex> lockGuard(mutex);
         if (!ExecSql("CREATE TEMPORARY TABLE IF NOT EXISTS connectionCats as " +
-                        DbSqlDefs::GetConnectionCatSql(isExistCann, isExistPytorch))) {
+                        DbSqlDefs::GetConnectionCatSql())) {
             return;
         }
     }
     std::map<std::string, std::map<std::string, FlowLocation>> startFlowLocations; // 连线起始节点
     std::map<std::string, std::map<std::string, std::vector<FlowLocation>>> endFlowLocations; // 连线结束节点
-    QueryFlowLocation(DbSqlDefs::GetQueryApiLocationSql(isExistCann, isExistPytorch),
+    QueryFlowLocation(DbSqlDefs::GetQueryApiLocationSql(),
                       startFlowLocations, endFlowLocations);
     QueryFlowLocation(QUERY_DEVICE_LOCATION_SQL, startFlowLocations, endFlowLocations);
     auto dealLineData = [](const std::string &cat,  const std::string &connectionId, const FlowLocation &startLocation,
@@ -1095,8 +1102,10 @@ void DbTraceDataBase::QueryFlowLocation(const std::string& sql,
         auto deviceId = resultSet->GetString("deviceId");
         auto cat = resultSet->GetString("cat");
         auto connectionId = resultSet->GetString("connectionId");
+        auto rankId = metaType == TABLE_API || metaType == TABLE_CANN_API || metaType == TABLE_MSTX_EVENTS ?
+                path : deviceId;
         FlowLocation location {.tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),
-                .metaType = metaType, .rankId = metaType == TABLE_API || metaType == TABLE_CANN_API ? path : deviceId,
+                .metaType = metaType, .rankId = rankId,
                 .depth = resultSet->GetInt32("depth"), .timestamp = resultSet->GetUint64("startTime"),
                 .duration = resultSet->GetUint64("duration"), .pid = resultSet->GetString("pid"),
                 .name = resultSet->GetString("name"), .deviceId=deviceId};
@@ -1175,6 +1184,13 @@ bool DbTraceDataBase::SetConfig()
     std::lock_guard<std::recursive_mutex> lock(mutex);
     isExistPytorch = CheckTableExist(TABLE_API);
     isExistCann = CheckTableExist(TABLE_CANN_API);
+    isExistMstx = CheckTableExist(TABLE_MSTX_EVENTS);
+    // 初始化所有全量查询功能需要的表，空表不影响展示，方便sql扩展
+    for (const auto &item: FULL_DB_TABLE_MAP) {
+        if (!CheckTableExist(item.first)) {
+            ExecSql(item.second);
+        }
+    }
     QueryRankId();
 
     if (IsDatabaseVersionChange()) {
@@ -1195,6 +1211,9 @@ bool DbTraceDataBase::SetConfig()
         if (isExistCann) {
             ExecSql("alter table CANN_API add depth integer;");
         }
+        if (isExistMstx) {
+            ExecSql("alter table " + TABLE_MSTX_EVENTS + " add depth integer;");
+        }
         if (CheckTableExist(TABLE_COMPUTE_TASK_INFO)) {
             ExecSql("alter table COMPUTE_TASK_INFO add column waitNs INTEGER;");
         }
@@ -1209,14 +1228,10 @@ bool DbTraceDataBase::SetConfig()
 
 bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
-    PROCESS_TYPE types[] = {PROCESS_TYPE::CANN_API, PROCESS_TYPE::API};
+    PROCESS_TYPE types[] = {PROCESS_TYPE::CANN_API, PROCESS_TYPE::API, PROCESS_TYPE::MS_TX};
     std::map<std::string, std::vector<MetaDataDto>> threadMap;
     for (const auto &type : types) {
         auto typeName = ENUM_TO_STR(type).value_or("");
-        if (!CheckTableExist(typeName)) {
-            ServerLog::Info("QueryHostMetadata failed, table ", typeName, " Not Exist.");
-            continue;
-        }
         std::string sql;
         switch (type) {
             case PROCESS_TYPE::CANN_API:
@@ -1229,27 +1244,28 @@ bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::Un
                     " max(depth) as maxDepth from " +
                     typeName + " a group by globalTid order by globalTid";
                 break;
+            case PROCESS_TYPE::MS_TX:
+                sql = "select 'MsTx' as name, globalTid,'MsTx' as type, max(depth) as maxDepth from MSTX_EVENTS a "
+                      " group by globalTid order by globalTid";
+                break;
             default:
                 return false;
         }
-        auto stmt = CreatPreparedStatement(sql);
-        if (stmt == nullptr) {
-            ServerLog::Error("QueryHostMetadata failed!.");
+        auto stmt = CreatPreparedStatement();
+        try {
+            auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql);
+            while (resultSet->Next()) {
+                MetaDataDto metadata;
+                metadata.pid = resultSet->GetString("globalTid");
+                metadata.metaType = typeName;
+                metadata.threadId = resultSet->GetString("type");
+                metadata.threadName = resultSet->GetString("name");
+                metadata.maxDepth = resultSet->GetInt32("maxDepth") + 1;
+                threadMap[metadata.pid].emplace_back(metadata);
+            }
+        } catch (DatabaseException &e) {
+            ServerLog::Error("QueryHostMetadata, MetaType: ", typeName, " reason: ", e.What());
             return false;
-        }
-        auto resultSet = stmt->ExecuteQuery();
-        if (resultSet == nullptr) {
-            ServerLog::Error("QueryHostMetadata. Failed to get result set.", stmt->GetErrorMessage());
-            return false;
-        }
-        while (resultSet->Next()) {
-            MetaDataDto metadata;
-            metadata.pid = resultSet->GetString("globalTid");
-            metadata.metaType = typeName;
-            metadata.threadId = resultSet->GetString("type");
-            metadata.threadName = resultSet->GetString("name");
-            metadata.maxDepth = resultSet->GetInt32("maxDepth") + 1;
-            threadMap[metadata.pid].emplace_back(metadata);
         }
     }
     DealHostMetadata(metaData, threadMap);
@@ -1311,64 +1327,46 @@ std::unique_ptr<Protocol::UnitTrack> DbTraceDataBase::GenerateBaseUnitTrack(cons
     return unitTrack;
 }
 
-bool DbTraceDataBase::QueryAscendHardwareMetadata(const std::string &fileId,
+bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
-    std::string sql = "select globalPid, streamId, max(depth) as maxDepth from " + TABLE_TASK +
-        " where deviceId = ? group by globalPid, streamId";
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("QueryAscendHardwareMetadata failed!.");
-        return "";
+    PROCESS_TYPE types[] = {PROCESS_TYPE::ASCEND_HARDWARE, PROCESS_TYPE::HCCL};
+    for (const auto &type : types) {
+        std::string sql;
+        switch (type) {
+            case PROCESS_TYPE::ASCEND_HARDWARE:
+                sql = "select streamId as tid, max(depth) as maxDepth,'Stream '||streamId as name from " + TABLE_TASK +
+                      " where deviceId = ? group by streamId";
+                break;
+            case PROCESS_TYPE::HCCL:
+                sql = "with main as (select planeId, op.groupName from " + TABLE_COMMUNICATION_TASK_INFO +
+                      " info join " + TABLE_TASK + " task on task.globalTaskId = info.globalTaskId "
+                      " join COMMUNICATION_OP op on op.opId = info.opId where deviceId = ?) "
+                      " select 'Plane ' || planeId as name, planeId as tid, 0 as maxDepth  from main group by planeId "
+                      " union select 'Group ' || row_number() over () || ' Communication' as name, "
+                      " groupName||'group' as tid, 0 as maxDepth from main group by groupName";
+                break;
+        }
+        auto stmt = CreatPreparedStatement();
+        auto metaType = ENUM_TO_STR(type).value_or("");
+        auto process = GenerateBaseUnitTrack("process", fileId, metaType, metaType, metaType);
+        try {
+            auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, fileId);
+            while (resultSet->Next()) {
+                auto thread = GenerateBaseUnitTrack("thread", fileId, process->metaData.processId, "", metaType);
+                thread->metaData.threadId = resultSet->GetString("tid");
+                thread->metaData.threadName = resultSet->GetString("name");
+                thread->metaData.maxDepth = resultSet->GetInt32("maxDepth") + 1;
+                process->children.emplace_back(std::move(thread));
+            }
+        } catch (DatabaseException &e) {
+            ServerLog::Error("QueryOperateMetadata, MetaType: ", metaType, " reason: ", e.What());
+            return false;
+        }
+        if (!process->children.empty()) {
+            metaData.emplace_back(std::move(process));
+        }
     }
-    auto resultSet = stmt->ExecuteQuery(fileId);
-    if (resultSet == nullptr) {
-        ServerLog::Error("QueryAscendHardwareMetadata. Failed to get result set.", stmt->GetErrorMessage());
-        return "";
-    }
-    auto metaType = ENUM_TO_STR(PROCESS_TYPE::ASCEND_HARDWARE).value_or("");
-    auto ascendHardware = GenerateBaseUnitTrack("process", fileId, metaType, "Ascend Hardware", metaType);
-    while (resultSet->Next()) {
-        auto thread = GenerateBaseUnitTrack("thread", fileId, ascendHardware->metaData.processId, "", metaType);
-        thread->metaData.threadId = resultSet->GetString("streamId");
-        thread->metaData.threadName = "Stream " + thread->metaData.threadId;
-        thread->metaData.maxDepth = resultSet->GetInt32("maxDepth") + 1;
-        ascendHardware->children.emplace_back(std::move(thread));
-    }
-    metaData.emplace_back(std::move(ascendHardware));
-    return true;
-}
-
-bool DbTraceDataBase::QueryHcclMetadata(const std::string &fileId,
-    std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
-{
-    std::string sql = "with main as (select planeId, op.groupName from " + TABLE_COMMUNICATION_TASK_INFO +
-        " info join " + TABLE_TASK +
-        " task on task.globalTaskId = info.globalTaskId "
-        " join COMMUNICATION_OP op on op.opId = info.opId where deviceId = ?)\n"
-        " select 'Plane ' || planeId as name, planeId as id  from main group by planeId\n"
-        " union select 'Group ' || row_number() over () || ' Communication' as name, groupName||'group' as id "
-        " from main group by groupName";
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("QueryHcclMetadata failed!.");
-        return "";
-    }
-    auto resultSet = stmt->ExecuteQuery(fileId);
-    if (resultSet == nullptr) {
-        ServerLog::Error("QueryHcclMetadata. Failed to get result set.", stmt->GetErrorMessage());
-        return "";
-    }
-    auto metaType = ENUM_TO_STR(PROCESS_TYPE::HCCL).value_or("");
-    auto hccl = GenerateBaseUnitTrack("process", fileId, metaType, "HCCL", metaType);
-    while (resultSet->Next()) {
-        auto thread = GenerateBaseUnitTrack("thread", fileId, hccl->metaData.processId, "", metaType);
-        thread->metaData.threadId = resultSet->GetString("id");
-        thread->metaData.threadName = resultSet->GetString("name");
-        thread->metaData.maxDepth = 1;
-        hccl->children.emplace_back(std::move(thread));
-    }
-    metaData.emplace_back(std::move(hccl));
     return true;
 }
 
@@ -1509,49 +1507,45 @@ bool DbTraceDataBase::QueryDurationFromTaskByTimeRange(const Protocol::ThreadDet
     return true;
 }
 
-std::string DbTraceDataBase::GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId)
+std::string DbTraceDataBase::GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId,
+                                                   const std::string &order, const std::string &orderByField)
 {
     std::string sql;
-    std::string nameMatch;
-    if (isMatchExact && isMatchCase) {
-        nameMatch = "select id from STRING_IDS where value like ?";
-    } else if (isMatchExact) {
-        nameMatch = "select id from STRING_IDS where lower(value) like lower(?)";
-    } else if (isMatchCase) {
-        nameMatch = "select id from STRING_IDS where value like '%'||?||'%'";
-    } else {
-        nameMatch = "select id from STRING_IDS where lower(value) like lower('%'||?||'%')";
-    }
+    std::string nameMatch = " select id from STRING_IDS where ";
+    std::string orderKey = orderByField == "timestamp" ? "startTime" : orderByField;
+    std::string orderBy = " ORDER BY " + orderKey + (order == "descend" ? " DESC" : "ASC");
+    nameMatch.append(isMatchCase ? " value like " : "lower(value) like lower(");
+    nameMatch.append(isMatchExact ? "?" : "'%'||?||'%'");
+    nameMatch.append(isMatchCase ? " " : ")");
     if (strcmp(rankId.c_str(), path.c_str()) == 0) {
-        sql = "with ids as (" + nameMatch +
-            ") "
+        sql = "with ids as (" + nameMatch + ") "
             "SELECT globalTid as pid, type as tid, startNs - ? as startTime,endNs - startNs as duration, "
             " depth, api.id, 'HOST' as metaType ,? as rankId"
-            " FROM (select globalTid, type, startNs, endNs, depth, ROWID as id, name from " +
-            TABLE_CANN_API;
-        if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
-            sql += " UNION all select globalTid, 'pytorch' as type, startNs, endNs, depth,"
-                " ROWID as id, name from " +
-                TABLE_API;
-        }
-        sql += " ) api join ids on ids.id = api.name ORDER BY startNs LIMIT 1 OFFSET ?";
+            " FROM (select globalTid, type, startNs, endNs, depth, ROWID as id, name "
+            " from " + TABLE_CANN_API + " api join ids on ids.id = api.name "
+            " Union all select globalTid, 'MsTx' as type, startNs, endNs, depth, ROWID as id, message as name "
+            " from " + TABLE_MSTX_EVENTS + " api join ids on ids.id = api.message "
+            " UNION all select globalTid, 'pytorch' as type, startNs, endNs, depth, ROWID as id, name "
+            " from " + TABLE_API + " api join ids on ids.id = api.name) api " + orderBy + " LIMIT 1 OFFSET ?";
     } else {
         sql = "with ids as (" + nameMatch +
             "), minTime as (select ? as value),\n"
-            " tasks as (select ROWID, globalTaskId, taskType, 'ASCEND HARDWARE' as pid, streamId as tid, "
+            " tasks as (select ROWID, globalTaskId, taskType, 'Ascend Hardware' as pid, streamId as tid, "
             " startNs - minTime.value as startTime, endNs - startNs as duration,depth from TASK join minTime "
             " where deviceId = ? ORDER BY startTime),\n"
             " com as (select opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid, startTime, duration, 0 as depth,"
-            " name from COMMUNICATION_TASK_INFO info join tasks on info.globalTaskId=tasks.globalTaskId "
-            " ORDER BY startTime)\n"
+            " info.taskType as name from COMMUNICATION_TASK_INFO info "
+            " join tasks on info.globalTaskId=tasks.globalTaskId ORDER BY startTime)\n"
             " select * from ( select coalesce(compute.name, main.taskType) as name, main.pid, main.pid as metaType,"
             " main.tid, main.startTime, main.duration, main.depth, main.ROWID as id from tasks main\n"
-            " left join COMPUTE_TASK_INFO compute on compute.globalTaskId = main.globalTaskId union ALL"
-            " select name, pid, pid as meatType, tid, startTime, duration, depth, id from com "
+            " left join COMPUTE_TASK_INFO compute on compute.globalTaskId = main.globalTaskId "
+            " join ids on ids.id = coalesce(compute.name, main.taskType) "
+            " union ALL select name, pid, pid as meatType, tid, startTime, duration, depth, com.id from com "
+            " join ids on ids.id = com.name "
             " union ALL select opName as name,'HCCL' as pid, 'HCCL' as metaType, groupName||'group' as tid,"
             " startNs - minTime.value as startTime, op.ROWID as id, endNs - startNs as duration, 0 as depth\n"
             " from COMMUNICATION_OP op join minTime join (select opId from com group by opId) a \n"
-            " on op.opId = a.opId ORDER BY startTime ) allNames join ids on ids.id = allNames.name LIMIT 1 OFFSET ?";
+            " on op.opId = a.opId join ids on ids.id = opName ) allNames " + orderBy + " LIMIT 1 OFFSET ?";
     }
     return sql;
 }
@@ -1571,19 +1565,14 @@ std::string DbTraceDataBase::GetSearchSliceNameCountSql(bool isMatchExact, bool 
     }
     if (strcmp(rankId.c_str(), "Host") == 0) {
         sql = "with ids as (" + nameMatch +
-            ") "
-            " SELECT count(1),? as id FROM (select name from " +
-            TABLE_CANN_API;
-        if (DataBaseManager::Instance().GetFileType() == FileType::PYTORCH) {
-            sql += " union all select name from  " + TABLE_API;
-        }
-        sql += ") api join ids on id = api.name";
+            ") SELECT count(1),? as id FROM (select name from " + TABLE_CANN_API +
+            " union all select message from  " + TABLE_MSTX_EVENTS +
+            " union all select name from  " + TABLE_API + ") api join ids on id = api.name";
     } else {
-        sql = "with ids as (" + nameMatch +
-            "), "
+        sql = "with ids as (" + nameMatch + "), "
             "     tasks as (select globalTaskId, taskType from TASK where deviceId = ?), "
-            "     com as (select opId, info.globalTaskId, name from COMMUNICATION_TASK_INFO info join tasks "
-            " on  info.globalTaskId = tasks.globalTaskId), "
+            "     com as (select opId, info.globalTaskId,info.taskType as name from COMMUNICATION_TASK_INFO info "
+            " join tasks on  info.globalTaskId = tasks.globalTaskId), "
             "     compute as (select info.globalTaskId, name from COMPUTE_TASK_INFO info join tasks "
             " on  info.globalTaskId = tasks.globalTaskId) "
             "select count(1) from ( "
@@ -1657,13 +1646,12 @@ std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, boo
     } else {
         nameMatch = "select id, value from STRING_IDS where lower(value) like lower('%'||?||'%')";
     }
-    sql = "with ids as (" + nameMatch +
-          "), minTime as (select ? as value),\n"
-          " tasks as (select TASK.ROWID, globalTaskId, taskType, 'ASCEND HARDWARE' as pid, streamId as tid, "
+    sql = "with ids as (" + nameMatch + "), minTime as (select ? as value),\n"
+          " tasks as (select TASK.ROWID, globalTaskId, taskType, 'Ascend Hardware' as pid, streamId as tid, "
           " startNs - minTime.value as startTime, endNs - startNs as duration,depth from TASK join minTime "
           " where deviceId = ? ORDER BY startTime),\n"
           " com as (select opId, tasks.ROWID as id, 'HCCL' as pid, planeId as tid, startTime, duration, 0 as depth,"
-          " name from COMMUNICATION_TASK_INFO info join tasks on info.globalTaskId=tasks.globalTaskId "
+          " info.taskType as name from COMMUNICATION_TASK_INFO info join tasks on info.globalTaskId=tasks.globalTaskId "
           " ORDER BY startTime)\n"
           " select * from ( select coalesce(compute.name, main.taskType) as name, main.pid, main.pid as metaType,"
           " main.tid, main.startTime, main.duration, main.depth, main.ROWID as id from tasks main\n"

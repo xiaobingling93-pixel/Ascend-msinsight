@@ -46,6 +46,7 @@ enum class PROCESS_TYPE {
     NIC,
     SAMPLE_PMU,
     AI_CORE,
+    MS_TX,
     NONE,
 };
 

@@ -9,6 +9,34 @@
 #include <string>
 
 namespace Dic {
+    // init full db
+const static std::map<std::string, std::string> FULL_DB_TABLE_MAP = {
+    {TABLE_TASK, "create TEMPORARY table if not exists TASK( startNs INTEGER, endNs INTEGER, deviceId INTEGER, "
+                 " connectionId INTEGER, globalTaskId INTEGER, globalPid INTEGER, taskType INTEGER,contextId INTEGER, "
+                 " streamId INTEGER, taskId INTEGER, modelId INTEGER, depth integer);"},
+    {TABLE_CANN_API, "create TEMPORARY table if not exists CANN_API(startNs INTEGER, endNs INTEGER, type INTEGER, "
+                     " globalTid INTEGER, connectionId INTEGER primary key, name INTEGER, depth integer);  "},
+    {TABLE_COMMUNICATION_OP, "create TEMPORARY table if not exists COMMUNICATION_OP( opName INTEGER, startNs INTEGER, "
+                 " endNs INTEGER, connectionId INTEGER, groupName INTEGER, opId INTEGER primary key, "
+                 " relay INTEGER, retry INTEGER, dataType INTEGER, algType INTEGER, count NUMERIC, waitNs INTEGER);  "},
+    {TABLE_COMMUNICATION_TASK_INFO, "create TEMPORARY table if not exists COMMUNICATION_TASK_INFO( name INTEGER, "
+                 " globalTaskId INTEGER, taskType INTEGER, planeId INTEGER, groupName INTEGER, notifyId INTEGER,"
+                 " rdmaType INTEGER, srcRank INTEGER, dstRank INTEGER, transportType INTEGER, size INTEGER, "
+                 " dataType INTEGER, linkType INTEGER, opId INTEGER);  "},
+    {TABLE_COMPUTE_TASK_INFO, "create TEMPORARY table if not exists COMPUTE_TASK_INFO( name INTEGER, "
+                 " globalTaskId INTEGER primary key, blockDim INTEGER, mixBlockDim INTEGER, taskType INTEGER, "
+                 " opType INTEGER, inputFormats INTEGER, inputDataTypes INTEGER, inputShapes INTEGER, "
+                 " outputFormats INTEGER, outputDataTypes INTEGER, outputShapes INTEGER, attrInfo INTEGER, "
+                 " waitNs INTEGER);  "},
+    {TABLE_CONNECTION_IDS, "create TEMPORARY table if not exists CONNECTION_IDS( id INTEGER, connectionId INTEGER);  "},
+    {TABLE_ENUM_API_TYPE, "create TEMPORARY table if not exists ENUM_API_TYPE( id INTEGER primary key, name TEXT);  "},
+    {TABLE_API, "create TEMPORARY table if not exists PYTORCH_API(startNs TEXT, endNs TEXT,globalTid INTEGER, "
+                " connectionId INTEGER, name INTEGER, sequenceNumber INTEGER, fwdThreadId INTEGER,inputDtypes INTEGER, "
+                " inputShapes INTEGER, callchainId INTEGER, depth integer);  "},
+    {TABLE_MSTX_EVENTS, "create TEMPORARY table if not exists MSTX_EVENTS(startNs INTEGER,endNs INTEGER, "
+                        " eventType INTEGER,rangeId INTEGER, category INTEGER, message INTEGER, globalTid INTEGER, "
+                        " endGlobalTid INTEGER, domainId INTEGER, connectionId INTEGER, depth integer); "},
+};
 
     // sql of metadata counter
 const static std::string HBM_MEAT_DATA_SQL =
@@ -99,6 +127,25 @@ const static std::string AI_CORE_UNIT_COUNTER_SQL =
     "select timestampNs - ? as startTime, json_object('Mhz',round(freq, 4)) as args "
     "     from AICORE_FREQ where deviceId = ? and startTime >= ? AND startTime <= ? ORDER BY startTime;";
 
+// sql of same operate detail
+const static std::string ASCEND_SAME_NAME_DETAIL_SQL =
+    "with nameIds as (select id, value as realName from STRING_IDS where value = ?) "
+    "select startNs - ? as timestamp, endNs - startNs as duration, depth, main.ROWID as id from TASK  main "
+    "     left join COMPUTE_TASK_INFO c on c.globalTaskId = main.globalTaskId "
+    "     join nameIds on coalesce(c.name, main.taskType) = id  where deviceId = ? and streamId = ? "
+    " and timestamp + duration >= ? AND timestamp <= ? ";
+
+const static std::string HCCL_SAME_NAME_DETAIL_SQL =
+    "with nameIds as (select id, ? as minTime, ? as rankId, ? as startTime, ? as endTime,"
+    "                  ? as tid from STRING_IDS where value = ?) "
+    "select startNs-minTime as timestamp,endNs-startNs as duration,0 as depth,c.ROWID as id from  TASK main "
+    "   join COMMUNICATION_TASK_INFO c on c.globalTaskId = main.globalTaskId join nameIds on c.name = id "
+    " where deviceId=rankId and planeId=tid and timestamp+duration >= startTime AND timestamp <= endTime "
+    " UNION ALL select op.startNs - minTime as timestamp, op.endNs - op.startNs as duration, 0 as depth, "
+    " op.ROWID as id from COMMUNICATION_OP op join TASK CA on op.connectionId = CA.connectionId "
+    " join  nameIds on op.opName = id where deviceId = rankId and op.groupName||'group' = tid "
+    " and timestamp + duration >= startTime AND timestamp <= endTime group by opId ";
+
 // sql of singleUnitFlow
 const static std::string PYTORCH_UNIT_FLOW_SQL =
       " select api.ROWID as id, 'pytorch' as tid, depth, startNs - constValue.minTime as startTime, "
@@ -110,58 +157,102 @@ const static std::string CANN_UNIT_FLOW_SQL =
       "     endNs - startNs as duration, globalTid as pid, 'CANN_API' as metaType, name, "
       "     '' as deviceId from CANN_API api join constValue "
       "     where api.connectionId = constValue.connectionId ";
+const static std::string MSTX_UNIT_FLOW_SQL =
+        " select api.ROWID as id, 'MsTx' as tid, depth, startNs - constValue.minTime as startTime, "
+        "     endNs - startNs as duration, globalTid as pid, 'MSTX_EVENTS' as metaType, message as name, "
+        "     '' as deviceId from MSTX_EVENTS api join constValue "
+        "     where api.connectionId = constValue.connectionId and api.connectionId != 4294967295";
 const static std::string TASK_UNIT_FLOW_SQL =
       " select task.ROWID as id, streamId as tid, depth, startNs - constValue.minTime as startTime, "
-      "     endNs - startNs as duration, 'ASCEND HARDWARE' as pid, 'ASCEND HARDWARE' as metaType, name, "
+      "     endNs - startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, name, "
       "     deviceId from TASK task join constValue join COMPUTE_TASK_INFO CTI "
       "     on task.globalTaskId = CTI.globalTaskId where task.connectionId = constValue.connectionId "
       "union all select op.ROWID as id,groupName||'group' as tid,0 as depth,op.startNs-constValue.minTime as startTime,"
       "     op.endNs - op.startNs as duration, 'HCCL' as pid, 'HCCL' as metaType, opName as name, "
       "     deviceId from COMMUNICATION_OP op join constValue join TASK task on task.connectionId = op.connectionId "
-      "     where op.connectionId = constValue.connectionId group by opId "
-      "order by startTime;";
+      "     where op.connectionId = constValue.connectionId group by opId ";
 
-// sql of timeline unit/flowName
-const static std::string HOST_FLOW_NAME_SQL = " with tmp as (select * from TASK where connectionId = ?) "
-      " select tmp.globalTaskId as flowId, info.name, 's' as type from COMPUTE_TASK_INFO info "
-      " join tmp on info.globalTaskId = tmp.globalTaskId "
-      " UNION select tmp.globalTaskId as flowId, info.name, 's' as type from COMMUNICATION_TASK_INFO info "
-      " join tmp on info.globalTaskId = tmp.globalTaskId "
-      " UNION select info.opId as flowId, info.opName as name, 's' as type from COMMUNICATION_OP info "
-      " where info.ROWID = ?;";
+// sql of timeline threadTraces
+const static std::string ASCEND_THREAD_TRACES =
+        "SELECT main.ROWID as id, startNs - ? as start_time, endNs - startNs as duration,"
+        " coalesce(c.name, main.taskType) as name, depth, ROUND(startNs / ?) as rank FROM " + TABLE_TASK + " main "
+        " left join " + TABLE_COMPUTE_TASK_INFO + " c "
+        " on c.globalTaskId = main.globalTaskId where deviceId = ? and streamId = ?"
+        " and start_time + duration >= ? AND start_time < ?"
+        " GROUP BY depth, rank, duration HAVING max(start_time) ORDER BY depth, start_time;";
 
-const static std::string HCCL_FLOW_NAME_SQL = "SELECT main.connectionId as flowId, api.name,'f' as type FROM TASK main "
-      " join COMMUNICATION_TASK_INFO CTI on CTI.globalTaskId = main.globalTaskId "
-      " join api on api.connectionId = main.connectionId "
-      " WHERE main.ROWID = ? and CTI.planeId = ? and main.startNs = ? UNION "
-      " SELECT main.connectionId as flowId, api.name, 'f' as type  FROM COMMUNICATION_OP main join " + TABLE_CANN_API +
-      " api on api.connectionId= main.connectionId WHERE main.ROWID = ? "
-      " and main.groupName||'group' = ? and main.startNs = ?";
+const static std::string HCCL_THREAD_TRACES =
+        "with tmp as (select main.globalTaskId, startNs, endNs, info.taskType,info.planeId,main.ROWID as id,"
+        " info.opId from " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO +
+        " info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
+        " sub as (select startNs,endNs-startNs as duration,opName as name,groupName||'group' as tid,endNs,"
+        " ROWID as id from " + TABLE_COMMUNICATION_OP + " where opId in (select opId from tmp group by opId) "
+        " UNION select startNs,endNs-startNs as duration,taskType as name, planeId||'' as tid, endNs, "
+        " id from tmp) select id, startNs-? as start_time,duration, name, 0 as depth, "
+        " ROUND(startNs / ?) as rank from sub "
+        " where tid = ? and start_time + duration >= ? AND start_time < ? "
+        " GROUP BY rank, duration HAVING max(start_time) ORDER BY start_time;";
 
-const static std::string HARDWARE_FLOW_NAME_SQL = "select c.name, c.connectionId as flowId, 'f' as type"
-      " from " + TABLE_TASK + " main "
-      " join " + TABLE_CANN_API + " c on c.connectionId = main.connectionId"
-      " where main.ROWID = ? and main.startNs = ?;";
+const static std::string CANN_API_THREAD_TRACES =
+    "select name, ROWID as id, startNs - ? as start_time, endNs - startNs as duration, depth,"
+    " ROUND(startNs / ?) as rank from " + TABLE_CANN_API + " a "
+    " where type = ? and globalTid = ? and start_time + duration >= ? AND start_time < ? "
+    " GROUP BY depth, rank, duration HAVING max(start_time) ORDER BY depth, start_time;";
 
-// sql of timeline unit/flowDetail
-const static std::string HOST_FLOW_DETAIL_SQL = " select name, type as tid, startNs as start, endNs - startNs as dur,"
-       " connectionId as id, depth, globalTid as pid from " + TABLE_CANN_API + " where ROWID = ?;";
+const static std::string PYTORCH_API_THREAD_TRACES =
+    "select name, ROWID as id, startNs - ? as start_time, endNs - startNs as duration, depth,"
+    " ROUND(startNs / ?) as rank from " + TABLE_API + " a "
+    " where globalTid = ? and start_time + duration >= ? AND start_time < ? "
+    " GROUP BY depth, rank, duration HAVING max(start_time) ORDER BY depth, start_time;";
 
-const static std::string HCCL_FLOW_DETAIL_SQL = "select name, planeId as tid, startNs as start, endNs - startNs as dur,"
-        " main.globalTaskId as id, depth, deviceId from TASK main join COMMUNICATION_TASK_INFO info "
-        " on main.globalTaskId = info.globalTaskId where connectionId = ? and main.ROWID = ? "
-        " UNION select opName as name, op.groupName||'group' as tid, op.startNs as start, op.endNs - op.startNs as dur,"
-        " op.opId as id, 0 as depth, TASK.deviceId from COMMUNICATION_OP op join COMMUNICATION_TASK_INFO info "
-        " on info.opId = op.opId join TASK on info.globalTaskId = TASK.globalTaskId "
-        " where op.connectionId = ? and op.ROWID = ? group by op.opId;";
+const static std::string OVERLAP_THREAD_TRACES =
+    "select 'OVERLAP_ANALYSIS'||type as name, ROWID as id, startNs - ? as start_time,"
+    " endNs - startNs as duration, 0 as depth from " + TABLE_OVERLAP_ANALYSIS + " where deviceId = ? "
+    " and type = ? and start_time + duration >= ? AND start_time < ? ORDER BY start_time;";
 
-const static std::string HARDWARE_FLOW_DETAIL_SQL = "select name, streamId as tid, startNs as start,"
-        " endNs - startNs as dur, main.globalTaskId as id, depth, deviceId from TASK main join COMPUTE_TASK_INFO info "
-        " on main.globalTaskId = info.globalTaskId where connectionId = ? and main.ROWID = ?;";
+const static std::string MSTX_THREAD_TRACES =
+    "select message as name, mstx.ROWID as id, startNs - ? as start_time, endNs - startNs as duration, "
+    " depth from " + TABLE_MSTX_EVENTS + "  mstx  "
+    "    where globalTid = ? and start_time + duration >= ? AND start_time < ? ORDER BY start_time;";
 
+// sql of timeline threadDetail
+const static std::string ASCEND_THREAD_DETAIL =
+        "SELECT main.ROWID as id, startNs, endNs - startNs as duration,"
+        " depth, coalesce(CTI.name, main.taskType) as name FROM " + TABLE_TASK + " main "
+        " left join " + TABLE_COMPUTE_TASK_INFO + " CTI on CTI.globalTaskId = main.globalTaskId"
+        " WHERE main.ROWID = ?";
+
+const static std::string HCCL_THREAD_DETAIL =
+        " with tmp as (select main.globalTaskId, startNs, endNs, info.taskType,info.planeId,main.ROWID as id,"
+        " info.opId from " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO +
+        " info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
+        " sub as (select ROWID as id,startNs,endNs-startNs as duration,opName as name,"
+        " groupName||'group' as tid, endNs from " + TABLE_COMMUNICATION_OP +
+        " where opId in (select opId from tmp group by opId) "
+        " UNION select id, startNs, endNs-startNs as duration, taskType as name, planeId||'' as tid,"
+        " endNs from tmp) select id, startNs, duration, 0 as depth, name from sub "
+        " where tid = ? AND id = ?";
+
+const static std::string CANN_API_THREAD_DETAIL =
+        "select ROWID as id, startNs, endNs-startNs as duration, depth, name "
+        " from " + TABLE_CANN_API + " where ROWID = ? and startNs = ?";
+
+const static std::string PYTORCH_API_THREAD_DETAIL =
+        "select ROWID as id, startNs, endNs-startNs as duration, depth, name "
+        " from " + TABLE_API + " where ROWID = ? and startNs = ?";
+
+const static std::string OVERLAP_THREAD_DETAIL =
+        "select id, startNs, endNs - startNs as duration, 0 as depth, "
+        " 'OVERLAP_ANALYSIS'||type as name from " + TABLE_OVERLAP_ANALYSIS + " where id = ?;";
+
+const static std::string MSTX_THREAD_DETAIL =
+        "select ROWID as id, startNs, endNs - startNs as duration, depth, message as name from " + TABLE_MSTX_EVENTS +
+        " mstx where ROWID = ?;";
+
+// full_db_update_wait_time
 const static std::string FULL_DB_UPDATE_TIME =
         "SELECT deviceId, startNs, endNs,'compute' AS type, CTI.ROWID AS id FROM TASK main JOIN "
-        "main.COMPUTE_TASK_INFO CTI ON main.globalTaskId = CTI.globalTaskId UNION SELECT deviceId, "
+        " COMPUTE_TASK_INFO CTI ON main.globalTaskId = CTI.globalTaskId UNION SELECT deviceId, "
         "opInfo.startNs, opInfo.endNs, 'communication' AS type, opInfo.ROWID AS id FROM COMMUNICATION_OP "
         "opInfo JOIN TASK ON TASK.connectionId = opInfo.connectionId ORDER BY startNs;";
 
@@ -169,8 +260,8 @@ const static std::string FULL_DB_UPDATE_TIME =
 const static std::string QUERY_DEVICE_LOCATION_SQL =
         " with constValue as (select ? as minTime) "
         " select connectionCats.cat, connectionCats.connectionId, task.ROWID as id, streamId as tid, depth,"
-        " startNs - constValue.minTime as startTime, endNs - startNs as duration, 'ASCEND HARDWARE' as pid, "
-        " 'ASCEND HARDWARE' as metaType, name, deviceId from TASK task join constValue join COMPUTE_TASK_INFO CTI "
+        " startNs - constValue.minTime as startTime, endNs - startNs as duration, 'Ascend Hardware' as pid, "
+        " 'Ascend Hardware' as metaType, name, deviceId from TASK task join constValue join COMPUTE_TASK_INFO CTI "
         " on task.globalTaskId = CTI.globalTaskId join connectionCats on task.connectionId=connectionCats.connectionId "
         " union all select connectionCats.cat, connectionCats.connectionId, op.ROWID as id, groupName||'group' as tid, "
         " 0 as depth,op.startNs-constValue.minTime as startTime, op.endNs - op.startNs as duration, 'HCCL' as pid, "
@@ -181,48 +272,48 @@ const static std::string QUERY_DEVICE_LOCATION_SQL =
 
 class DbSqlDefs {
 public:
-static std::string GetConnectionCatSql(bool isExistCann, bool isExistPytorch)
+static std::string GetConnectionCatSql()
 {
     std::string sql =
                "with operateConnIds as (select op.connectionId from COMMUNICATION_OP op "
                "   UNION all select connectionId from TASK task "
                " join COMPUTE_TASK_INFO CTI on task.globalTaskId = CTI.globalTaskId) ";
-    if (isExistCann) {
-        sql.append(" select api.connectionId, 'HostToDevice' as cat  from CANN_API api "
-                   " join operateConnIds on api.connectionId = operateConnIds.connectionId ");
-        sql.append(isExistPytorch ? " union " : "");
-    }
-    if (isExistPytorch) {
-        sql.append(" select api.connectionId, 'async_npu' as cat from CONNECTION_IDS api "
-                   " join operateConnIds on api.connectionId = operateConnIds.connectionId "
-                   " union select conn.connectionId, case ids.value when 'Enqueue' then 'async_task_queue'"
-                   " else 'fwdbwd' end as cat from CONNECTION_IDS conn join main.PYTORCH_API PA "
-                   " on conn.id = PA.connectionId join STRING_IDS ids on ids.id = PA.name ");
-    }
-    sql.append(" group by conn.connectionId having count(1) > 1 ");
+    sql.append(" select api.connectionId, 'HostToDevice' as cat  from CANN_API api " // cann侧
+               " join operateConnIds on api.connectionId = operateConnIds.connectionId ");
+    sql.append(" union select api.connectionId, 'async_npu' as cat from CONNECTION_IDS api " // pytorch侧
+               " join operateConnIds on api.connectionId = operateConnIds.connectionId "
+               " union select conn.connectionId, case ids.value when 'Enqueue' then 'async_task_queue'"
+               " else 'fwdbwd' end as cat from CONNECTION_IDS conn join PYTORCH_API PA "
+               " on conn.id = PA.connectionId join STRING_IDS ids on ids.id = PA.name "
+               " group by conn.connectionId having count(1) > 1 ");
+    sql.append(" union select api.connectionId, 'MsTx' as cat  from MSTX_EVENTS api " // 打点侧
+               "      join operateConnIds on api.connectionId = operateConnIds.connectionId ");
     return sql;
 }
 
-static std::string GetQueryApiLocationSql(bool isExistCann, bool isExistPytorch)
+static std::string GetQueryApiLocationSql()
 {
     std::string sql = "with constValue as (select ? as minTime), "
                       "     rankIds as (select deviceId, globalPid from TASK group by globalPid) ";
-    if (isExistCann) {
-        sql.append(" select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, api.type as tid,"
-                   " depth, startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid, "
-                   " 'CANN_API' as metaType, name, deviceId from " + TABLE_CANN_API + " api join constValue "
-                   " join connectionCats on api.connectionId = connectionCats.connectionId and cat != 'async_npu' "
-                   " join rankIds on api.globalTid >> 32 = rankIds.globalPid ");
-        sql.append(isExistPytorch ? " union all " : "");
-    }
-    if (isExistPytorch) {
-        sql.append(" select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, 'pytorch' as tid, depth,"
-                   " startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid,"
-                   " 'PYTORCH_API' as metaType, name, rankIds.deviceId from PYTORCH_API api join constValue "
-                   " join CONNECTION_IDS ids on api.connectionId = ids.id "
-                   " join connectionCats on ids.connectionId = connectionCats.connectionId and cat != 'HostToDevice' "
-                   " join rankIds on api.globalTid >> 32 = rankIds.globalPid ");
-    }
+    sql.append(" select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, api.type as tid,"
+               " depth, startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid, "
+               " 'CANN_API' as metaType, name, deviceId from " + TABLE_CANN_API + " api join constValue "
+               " join connectionCats on api.connectionId = connectionCats.connectionId "
+               " join rankIds on api.globalTid >> 32 = rankIds.globalPid "
+               "  where cat = 'HostToDevice'");
+    sql.append(" union select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, 'pytorch' as tid,depth,"
+               " startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid,"
+               " 'PYTORCH_API' as metaType, name, deviceId from PYTORCH_API api join constValue "
+               " join CONNECTION_IDS ids on api.connectionId = ids.id "
+               " join connectionCats on ids.connectionId = connectionCats.connectionId "
+               " join rankIds on api.globalTid >> 32 = rankIds.globalPid "
+               " where cat = 'async_task_queue' or cat = 'fwdbwd' or cat = 'async_npu' ");
+    sql.append(" union select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, 'MsTx' as tid, "
+               "  depth, startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid, "
+               "       'MSTX_EVENTS' as metaType, message as name, '' as deviceId from MSTX_EVENTS api join constValue "
+               "        join connectionCats on api.connectionId = connectionCats.connectionId "
+               " join rankIds on api.globalTid >> 32 = rankIds.globalPid "
+               " where cat = 'MsTx'");
     sql.append(" order by startTime;");
     return sql;
 }

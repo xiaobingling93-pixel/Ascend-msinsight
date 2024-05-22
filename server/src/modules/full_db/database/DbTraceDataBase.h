@@ -136,6 +136,7 @@ private:
     bool initStmt = false;
     bool isExistPytorch = false;
     bool isExistCann = false;
+    bool isExistMstx = false;
 
     std::unique_ptr<SqlitePreparedStatement> updateTaskDepthStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateApiDepthStmt = nullptr;
@@ -152,10 +153,8 @@ private:
 
     void UpdateDepth(const std::string &sql, std::unique_ptr<SqlitePreparedStatement> &updateStmt);
     bool UpdateDepthList(std::unique_ptr<SqlitePreparedStatement> &stmt);
-    bool QueryAscendHardwareMetadata(const std::string &fileId,
-                                     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
-    bool QueryHcclMetadata(const std::string &fileId,
-                           std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
+    bool QueryOperateMetadata(const std::string &fileId,
+                              std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool GenerateOverlapAnalysisMetadata(const std::string &fileId,
                                          std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     bool QueryCounterMetadata(const std::string &fileId, std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
@@ -170,7 +169,8 @@ private:
                           std::map<std::string, std::vector<MetaDataDto>> &threadMap);
     bool UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &updateComputeStmt,
                                 std::unique_ptr<SqlitePreparedStatement> &updateCommunicationStmt);
-    std::string GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId);
+    std::string GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId,
+                                      const std::string &order, const std::string &orderByField);
     std::string GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, std::string rankId);
     void QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_INFO> &timeInfoList, const std::string &rankId);
     bool InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> &overlapInfoList, const std::string &rankId);

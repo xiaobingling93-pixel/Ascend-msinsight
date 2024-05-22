@@ -21,6 +21,8 @@ import { StyledTooltip } from './base/StyledTooltip';
 const SearchIcon = AntdSearchIcon as SvgType;
 const CloseIcon = AntdCloseIcon as SvgType;
 
+const RANGE_MULTIPLE = 10;
+
 const CustomDiv = styled.div`
     display: flex;
     align-items: center;
@@ -156,9 +158,10 @@ const doJumpSlice = (session: Session, slice: SliceData, isGlobal: boolean): voi
 };
 
 export const calculateDomainRange = (session: Session, startTime: number, duration: number): [ number, number ] => {
-    let rangeStart = startTime - duration * 9;
+    const range = duration === 0 ? 1 : duration;
+    let rangeStart = startTime - (range * (RANGE_MULTIPLE - 1));
     rangeStart = rangeStart > 0 ? rangeStart : 0;
-    const rangeEnd = Math.min(startTime + duration * 10, session.endTimeAll ?? Number.MAX_SAFE_INTEGER);
+    const rangeEnd = Math.min(startTime + (range * RANGE_MULTIPLE), session.endTimeAll ?? Number.MAX_SAFE_INTEGER);
     return [rangeStart, rangeEnd];
 };
 

@@ -10,7 +10,7 @@ class DbTimelineTestSuit : FullDbTestSuit {
 TEST_F(FullDbTestSuit, FullDb_of_SearchSliceNameCountWithFuzzyMatch)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
-    int expectCount = 9;
+    int expectCount = 1;
     Dic::Protocol::SearchCountParams params;
     params.searchContent = "hcom";
     params.rankId = "2"; // cardId = 2
@@ -69,7 +69,7 @@ TEST_F(FullDbTestSuit, FullDb_of_SearchSliceName)
     Dic::Protocol::SearchSliceBody body;
 
     body.rankId = "2"; // cardId = 2
-    std::string expectPid = "ASCEND HARDWARE";
+    std::string expectPid = "Ascend Hardware";
     std::string expectTid = "8";
     uint64_t expectStartTime = 181306181;
     int32_t expectDepth = 0;
@@ -92,8 +92,8 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTraces)
     Dic::Protocol::UnitThreadTracesParams params;
     params.startTime = 0;
     params.cardId = "2";
-    params.processId = "ASCEND HARDWARE";
-    params.metaType = "ASCEND HARDWARE";
+    params.processId = "Ascend Hardware";
+    params.metaType = "Ascend Hardware";
     params.threadId = "8";
     params.endTime = 400000000; // endTime = 400000000
     params.timePerPx = 1;
@@ -116,7 +116,7 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTraces)
     EXPECT_EQ(body.data[0][0].startTime, 175902293); // startTime = 175902293
     EXPECT_EQ(body.data[0][0].endTime, 175903813); // endTime = 175903813
     EXPECT_EQ(body.data[0][0].id, "46919");
-    EXPECT_EQ(body.data[0][0].name, "hcom_allGather__305_879_1");
+    EXPECT_EQ(body.data[0][0].name, "Memcpy");
 
     body.data.clear();
     params.metaType = "CANN_API";
@@ -154,8 +154,8 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesSummary)
     Dic::Protocol::UnitThreadTracesSummaryParams params;
     params.startTime = 0;
     params.cardId = "2";
-    params.processId = "ASCEND HARDWARE";
-    params.metaType = "ASCEND HARDWARE";
+    params.processId = "Ascend Hardware";
+    params.metaType = "Ascend Hardware";
     params.endTime = 400000000; // endTime = 400000000
 
     database->QueryThreadTracesSummary(params, body, minTimestamp);
@@ -190,8 +190,8 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesList)
     Dic::Protocol::UnitThreadsParams params;
     params.startTime = 0;
     params.rankId = "2";
-    params.pid = "ASCEND HARDWARE";
-    params.metaType = "ASCEND HARDWARE";
+    params.pid = "Ascend Hardware";
+    params.metaType = "Ascend Hardware";
     params.tid = "8";
     params.endTime = 400000000; // endTime = 400000000
 
@@ -207,7 +207,7 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTracesList)
 
     database->QueryThreads(params, body, minTimestamp, 0);
     EXPECT_EQ(body.data.size(), 1);
-    EXPECT_EQ(body.data[0].title, "hcom_allGather__305_879_1");
+    EXPECT_EQ(body.data[0].title, "Memcpy");
     EXPECT_EQ(body.data[0].selfTime, 1520); // selfTime = 1520
     EXPECT_EQ(body.data[0].occurrences, 1);
 
@@ -235,8 +235,8 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTraceDetail)
     Dic::Protocol::ThreadDetailParams params;
     params.startTime = 39828694; // startTime = 39828694
     params.rankId = "2";
-    params.pid = "ASCEND HARDWARE";
-    params.metaType = "ASCEND HARDWARE";
+    params.pid = "Ascend Hardware";
+    params.metaType = "Ascend Hardware";
     params.tid = "8";
     params.id = "0";
 
@@ -250,7 +250,7 @@ TEST_F(FullDbTestSuit, FullDb_of_ThreadTraceDetail)
     params.startTime = 175902293; // startTime = 175902293
 
     database->QueryThreadDetail(params, body, minTimestamp, 0);
-    EXPECT_EQ(body.data.title, "hcom_allGather__305_879_1");
+    EXPECT_EQ(body.data.title, "Memcpy");
     EXPECT_EQ(body.data.duration, 1520); // duration = 1520
 
     params.metaType = "CANN_API";
@@ -274,7 +274,7 @@ TEST_F(FullDbTestSuit, FullDb_of_UnitMetaData)
     auto metaData = std::vector<std::unique_ptr<Protocol::UnitTrack>>();
     database->QueryUnitsMetadata("2", metaData);
 
-    EXPECT_EQ(metaData.size(), 6); // size = 6
+    EXPECT_EQ(metaData.size(), 5); // size = 5
     EXPECT_EQ(metaData[0]->children.size(), 3); // size = 3
 }
 
@@ -345,6 +345,6 @@ TEST_F(FullDbTestSuit, FullDb_of_UnitCounter)
     database->QueryUnitCounter(params, minTimestamp, counterData);
     EXPECT_EQ(counterData.size(), 5); // size = 5
 
-    params.metaType = "ASCEND HARDWARE";
+    params.metaType = "Ascend Hardware";
     EXPECT_EQ(database->QueryUnitCounter(params, minTimestamp, counterData), false);
 }

@@ -38,7 +38,7 @@ const EnumStrMap<Protocol::ModuleType> MODULE_TYPE_ES = {{Protocol::ModuleType::
 const EnumStrMap<Protocol::LinkType> LINK_TYPE_ES = { { Protocol::LinkType::WEBSOCKET, "websocket" },
                                                       { Protocol::LinkType::SOCKET, "socket" } };
 
-const EnumStrMap<PROCESS_TYPE> PROCESS_TYPE_ES = { { PROCESS_TYPE::ASCEND_HARDWARE, "ASCEND HARDWARE" },
+const EnumStrMap<PROCESS_TYPE> PROCESS_TYPE_ES = { { PROCESS_TYPE::ASCEND_HARDWARE, "Ascend Hardware" },
                                                    { PROCESS_TYPE::HCCL, "HCCL" },
                                                    { PROCESS_TYPE::OVERLAP_ANALYSIS, "OVERLAP_ANALYSIS"},
                                                    { PROCESS_TYPE::CANN_API, "CANN_API" },
@@ -55,6 +55,7 @@ const EnumStrMap<PROCESS_TYPE> PROCESS_TYPE_ES = { { PROCESS_TYPE::ASCEND_HARDWA
                                                    { PROCESS_TYPE::AI_CORE, "AICORE_FREQ" },
                                                    { PROCESS_TYPE::NPU_MEM, "NPU_MEM" },
                                                    { PROCESS_TYPE::STARS_SOC, "SOC_BANDWIDTH_LEVEL" },
+                                                   { PROCESS_TYPE::MS_TX, "MSTX_EVENTS" },
                                                    { PROCESS_TYPE::HBM, "HBM" } };
 
 #pragma endregion

@@ -22,6 +22,8 @@ namespace Dic {
     const static std::string TABLE_TASK = "TASK";
     const static std::string TABLE_API = "PYTORCH_API";
     const static std::string TABLE_CANN_API = "CANN_API";
+    const static std::string TABLE_MSTX_EVENTS = "MSTX_EVENTS";
+    const static std::string TABLE_ENUM_MSTX_EVENTS = "ENUM_MSTX_EVENT_TYPE";
     const static std::string TABLE_COMMUNICATION_TASK_INFO = "COMMUNICATION_TASK_INFO";
     const static std::string TABLE_COMMUNICATION_OP = "COMMUNICATION_OP";
     const static std::string TABLE_COMPUTE_TASK_INFO = "COMPUTE_TASK_INFO";
@@ -35,6 +37,8 @@ namespace Dic {
     const static std::string TABLE_PYTORCH_INFO = "RANK_DEVICE_MAP";
     const static std::string TABLE_OVERLAP_ANALYSIS = "OVERLAP_ANALYSIS";
     const static std::string TABLE_META_DATA = "META_DATA";
+    const static std::string TABLE_CONNECTION_IDS = "CONNECTION_IDS";
+    const static std::string TABLE_ENUM_API_TYPE = "ENUM_API_TYPE";
 
     // cluster db table
     const static std::string TABLE_STEP_TRACE_TIME = "ClusterStepTraceTime";

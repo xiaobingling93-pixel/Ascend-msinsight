@@ -19,6 +19,7 @@ const FONT_SIZE = 12;
 const DFT_PADDING = 8;
 const MIN_WIDTH = 8;
 const MAX_RADIUS = 4;
+const DOTTED_RANGE = 6;
 
 const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2D, overflow: OverflowType): string => {
     if (ctx.measureText(text).width <= maxWidth) { return text; }
@@ -61,6 +62,21 @@ const drawRect = (ctx: CanvasRenderingContext2D, dataObj: { data: StackStatusDat
         ctx.fillRect(startTime, 1, width, UnitHeight.COLL - 2);
         return;
     }
+    if (data.duration === 0) {
+        const startHeight = yScale(data.depth) + 1;
+        const image = ctx.getImageData(startTime - 2, startHeight + (height / 2), 4, 1);
+        if (image.data.every((value) => value === 0)) { // 当duration为0且两侧没有色块，择展示为三角箭头
+            ctx.beginPath();
+            ctx.moveTo(startTime, startHeight);
+            ctx.lineTo(startTime - DOTTED_RANGE, startHeight + height - 2);
+            ctx.lineTo(startTime, startHeight + (height / 2));
+            ctx.lineTo(startTime + DOTTED_RANGE, startHeight + height - 2);
+            ctx.lineTo(startTime, startHeight);
+            ctx.closePath();
+            ctx.fill();
+            return;
+        }
+    }
     // leave 1px space in both top and bottom
     if (radius < 1) {
         ctx.fillRect(startTime, yScale(data.depth) + 1, width, height - 2);
@@ -71,6 +87,25 @@ const drawRect = (ctx: CanvasRenderingContext2D, dataObj: { data: StackStatusDat
         ctx.fill();
     }
 };
+
+function dealDataColor(theme: Theme, dataColor: Map<keyof Theme['colorPalette'], StackStatusData[]>,
+    zeroDataColor: Map<keyof Theme['colorPalette'], StackStatusData[]>,
+    dataMultiColor: StackStatusData[], datas: StackStatusData[][]): void {
+    Object.keys(theme.colorPalette).forEach(key => {
+        dataColor.set(key as keyof Theme['colorPalette'], []);
+        zeroDataColor.set(key as keyof Theme['colorPalette'], []);
+    });
+    datas.forEach(it => it.forEach(data => {
+        // 目前只支持最多2种背景颜色的情况，下面绘制多色背景时for循环两次也是这样原因
+        if (data.color instanceof Array) {
+            if (data.color.length === 2) {
+                dataMultiColor.push(data);
+            }
+        } else {
+            data.duration === 0 ? zeroDataColor.get(data.color)?.push(data) : dataColor.get(data.color)?.push(data);
+        }
+    }));
+}
 
 const draw = (ctx: CanvasRenderingContext2D | null,
     datas: StackStatusData[][],
@@ -86,35 +121,26 @@ const draw = (ctx: CanvasRenderingContext2D | null,
     // draw by color order
     // change fillstyle as less as possible
     const dataColor = new Map<keyof Theme['colorPalette'], StackStatusData[]>();
+    const zeroDataColor = new Map<keyof Theme['colorPalette'], StackStatusData[]>();
     const dataMultiColor: StackStatusData[] = [];
-    Object.keys(theme.colorPalette).forEach(key => { dataColor.set(key as keyof Theme['colorPalette'], []); });
-    datas.forEach(it => it.forEach(data => {
-        // 目前只支持最多2种背景颜色的情况，下面绘制多色背景时for循环两次也是这样原因
-        data.color instanceof Array ? (data.color.length === 2 && dataMultiColor.push(data)) : dataColor.get(data.color)?.push(data);
-    }));
+    dealDataColor(theme, dataColor, zeroDataColor, dataMultiColor, datas);
     const height = yScale(1) - yScale(0);
     const textToDraw: DrawTextType = [];
-    // 绘制一个背景的节点
-    dataColor.forEach((arr, key) => {
+    const func = (arr: StackStatusData[], key: keyof Theme['colorPalette']): void => {
         ctx.fillStyle = theme.colorPalette[key];
         arr.forEach(data => {
             drawRect(ctx, { data, textToDraw }, { height, right, xScale, yScale, overflow, minTextWidth }, isSimulation);
         });
-    });
+    };
+    // 绘制一个背景的节点
+    dataColor.forEach(func);
+    zeroDataColor.forEach(func);
     // 绘制有多个背景色的节点
     if (dataMultiColor.length > 0) {
         for (let i = 0; i < 2; i++) {
             ctx.fillStyle = theme.colorPalette[dataMultiColor[0].color[i][1] as keyof Theme['colorPalette']];
             dataMultiColor.forEach(data => {
-                drawRect(ctx, { data, textToDraw }, {
-                    height,
-                    right,
-                    xScale,
-                    yScale,
-                    overflow,
-                    minTextWidth,
-                    order: i,
-                }, isSimulation);
+                drawRect(ctx, { data, textToDraw }, { height, right, xScale, yScale, overflow, minTextWidth, order: i }, isSimulation);
             });
         }
     }
@@ -131,16 +157,19 @@ const draw = (ctx: CanvasRenderingContext2D | null,
 
 const findDataByXY = (mousePos: {x: number; y: number} | undefined, datas: StackStatusData[][],
     rangeAndDomain: Array<[ number, number ]>, depthHeight: number, endTime: number): StackStatusData | undefined => {
-    if (mousePos === undefined || datas.length === 0 || rangeAndDomain.length === 0) {
+    if (mousePos === undefined || datas.length === 0 || rangeAndDomain.length > 1) {
         return undefined;
     }
     const mouseTime = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false)(mousePos.x);
+    const range = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false)(DOTTED_RANGE);
     const depth = Math.floor(mousePos.y / depthHeight);
     const data = datas[depth];
     if (data === undefined || data.length === 0) {
         return undefined;
     }
-    if (data[0].startTime > mouseTime || endTime < mouseTime || (data[data.length - 1].duration > 0 && (data[data.length - 1].startTime + data[data.length - 1].duration < mouseTime))) {
+    let rangeTime = data[0].duration === 0 ? range - rangeAndDomain[1][0] : 0;
+    if (data[0].startTime - rangeTime > mouseTime || endTime + rangeTime < mouseTime ||
+        (data[data.length - 1].startTime + data[data.length - 1].duration + rangeTime < mouseTime)) {
         return undefined;
     }
 
@@ -149,9 +178,10 @@ const findDataByXY = (mousePos: {x: number; y: number} | undefined, datas: Stack
     while (lo < hi) {
         const mid = Math.floor((lo + hi) / 2);
         const elem = data[mid];
-        if (mouseTime < elem.startTime) {
+        rangeTime = elem.duration === 0 ? range - rangeAndDomain[1][0] : 0;
+        if (mouseTime < elem.startTime - rangeTime) {
             hi = mid;
-        } else if ((elem.duration >= 0 && mouseTime > elem.startTime + elem.duration)) {
+        } else if ((elem.duration >= 0 && mouseTime > elem.startTime + elem.duration + rangeTime)) {
             lo = mid + 1;
         } else {
             return elem;
@@ -217,7 +247,7 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
         if (noRender) {
             return;
         }
-        const ctx = canvas.current.getContext('2d');
+        const ctx = canvas.current.getContext('2d', { willReadFrequently: true });
         const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(isNeedClamp ?? true);
         ctx?.clearRect(0, 0, width, height);
         draw(ctx, datasState, xScale, yScale, theme, session.endTimeAll ?? 0, session.isSimulation, textConfig);
