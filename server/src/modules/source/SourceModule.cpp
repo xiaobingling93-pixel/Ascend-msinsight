@@ -9,6 +9,8 @@
 #include "QueryApiInstructionsHandler.h"
 #include "QueryDetailsBaseInfoHandler.h"
 #include "QueryDetailsLoadInfoHandler.h"
+#include "QueryDetailsMemoryGraphHandler.h"
+#include "QueryDetailsMemoryTableHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -31,6 +33,10 @@ void SourceModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS, std::make_unique<QueryApiInstructionsHandler>());
     requestHandlerMap.emplace(REQ_RES_DETAILS_BASE_INFO, std::make_unique<QueryDetailsBaseInfoHandler>());
     requestHandlerMap.emplace(REQ_RES_DETAILS_COMPUTE_LOAD_INFO, std::make_unique<QueryDetailsLoadInfoHandler>());
+    requestHandlerMap.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH,
+                              std::make_unique<QueryDetailsMemoryGraphHandler>());
+    requestHandlerMap.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE,
+                              std::make_unique<QueryDetailsMemoryTableHandler>());
 }
 
 void SourceModule::OnRequest(std::unique_ptr<Protocol::Request> request)

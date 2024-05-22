@@ -165,9 +165,9 @@ std::optional<document_t> ToResponseJson<DetailsMemoryGraphResponse>(const Detai
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
-    json_t coreMemory;
+    json_t coreMemory(kArrayType);
     for (const auto &item: response.body.coreMemory) {
-        json_t singleCoreMemory;
+        json_t singleCoreMemory(kObjectType);
         JsonUtil::AddMember(singleCoreMemory, "advice", item.advice, allocator);
         JsonUtil::AddMember(singleCoreMemory, "blockId", item.blockId, allocator);
         json_t l2CacheJson(kObjectType);
@@ -192,6 +192,7 @@ std::optional<document_t> ToResponseJson<DetailsMemoryGraphResponse>(const Detai
         coreMemory.PushBack(singleCoreMemory, allocator);
     }
     JsonUtil::AddMember(body, "coreMemory", coreMemory, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
 
@@ -218,7 +219,7 @@ std::optional<document_t> ToResponseJson<DetailsMemoryTableResponse>(const Detai
             for (const auto &rowItem: tableDetailItem.row) {
                 json_t oneRow(kObjectType);
                 JsonUtil::AddMember(oneRow, "name", rowItem.name, allocator);
-                JsonUtil::AddMember(oneRow, "name", rowItem.value, allocator);
+                JsonUtil::AddMember(oneRow, "value", rowItem.value, allocator);
                 rowJson.PushBack(oneRow, allocator);
             }
             JsonUtil::AddMember(tableDetailJson, "row", rowJson, allocator);
@@ -228,6 +229,7 @@ std::optional<document_t> ToResponseJson<DetailsMemoryTableResponse>(const Detai
         memoryTable.PushBack(singleMemoryTable, allocator);
     }
     JsonUtil::AddMember(body, "memoryTable", memoryTable, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
 

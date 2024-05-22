@@ -63,7 +63,7 @@ struct DetailsMemoryGraphRequest: public Request {
 };
 
 struct DetailsMemoryTableRequest: public Request {
-    DetailsMemoryTableRequest() : Request(REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH) {};
+    DetailsMemoryTableRequest() : Request(REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE) {};
     DetailsMemoryInfoParams params;
 };
 

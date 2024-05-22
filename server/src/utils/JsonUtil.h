@@ -43,8 +43,8 @@ public:
         AddMemberHelper(json, key, value, allocator);
     }
 
-    template <class T> static inline void AddMember(json_t &json, std::string_view key, std::vector<T> value,
-                                                    RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+    template <typename T> static inline void AddMember(json_t &json, std::string_view key, std::vector<T> value,
+                                                       RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
     {
         json_t temp(kArrayType);
         for (const T item: value) {
