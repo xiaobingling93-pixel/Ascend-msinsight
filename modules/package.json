@@ -31,6 +31,7 @@
         "ascend-memory": "./memory",
         "ascend-operator": "./operator",
         "ascend-timeline": "./timeline",
+        "ascend-jupyter": "./jupyter",
         "ascend-lib": "./lib"
     },
     "devDependencies": {

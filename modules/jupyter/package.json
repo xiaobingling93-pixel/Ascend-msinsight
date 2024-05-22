@@ -1,0 +1,84 @@
+{
+  "name": "ascend-jupyter",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "./",
+  "dependencies": {
+    "@emotion/react": "11.11.0",
+    "@emotion/styled": "11.11.0",
+    "antd": "4.24.13",
+    "mobx": "6.10.0",
+    "mobx-react": "9.0.0",
+    "react-i18next": "12.1.4",
+    "i18next": "23.4.6",
+    "@cloudsop/horizon": "0.0.77",
+    "highlight.js": "11.4.0"
+  },
+  "scripts": {
+    "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
+    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production GENERATE_SOURCEMAP=false CI=false craco build",
+    "build:dev": "cross-env GENERATE_SOURCEMAP=true CI=false craco build",
+    "test": "set REACT_APP_TEST=1&&set CI=true&&react-scripts test --watchAll=false  --coverage",
+    "test:dev": "set REACT_APP_TEST=1&&react-scripts test",
+    "eject": "react-scripts eject",
+    "lint": "eslint src --fix",
+    "dt": "set BROWSER=none&&set REACT_APP_TEST=1&&react-scripts start",
+    "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\Jupyter\\ /E /I /Y",
+    "publishLinux": "cp -rf ./build/* ../../framework/plugins/Jupyter"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "/node_modules/(?!d3|d3-array)"
+    ],
+    "clearMocks": true,
+    "coverageReporters": [
+      "json",
+      "lcov",
+      "text",
+      "text-summary"
+    ],
+    "collectCoverageFrom": [
+      "**/src/**/*.{ts,tsx}"
+    ],
+    "coveragePathIgnorePatterns": [
+      "<rootDir>/src/i18n",
+      "<rootDir>/src/style",
+      "<rootDir>/src/insight",
+      "<rootDir>/src/tests",
+      ".d.ts",
+      ".type.ts",
+      ".const.ts",
+      ".mock.[ts,tsx]",
+      "index.[ts,tsx]",
+      "types.ts",
+      "__mocks__",
+      "__snapshots__"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 0,
+        "branches": 0,
+        "functions": 0,
+        "lines": 0
+      }
+    }
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

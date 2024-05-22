@@ -96,6 +96,7 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
             session.phase = 'download';
             session.endTimeAll = undefined;
             session.isSimulation = result.isSimulation;
+            session.isIpynb = result.isIpynb;
             session.isCluster = result.isCluster;
             result.result.forEach((item: CardInfo) => {
                 const unit = new CardUnit({ dataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
@@ -113,6 +114,8 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
             body: {
                 isCluster: result.isCluster,
                 isReset: result.reset,
+                isIpynb: result.isIpynb,
+                ipynbUrl: '',
                 startTime: 0,
                 endTimeAll: session?.endTimeAll,
                 unitcount: result.result?.length ?? 0,
@@ -124,6 +127,15 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
     } catch (error) {
         console.error(error);
     }
+};
+
+const clearIpynbInfo = (session: Session): void => {
+    session.isIpynb = false;
+    session.ipynbUrl = '';
+    connector.send({
+        event: 'updateSession',
+        body: { isIpynb: session.isIpynb, ipynbUrl: session.ipynbUrl },
+    });
 };
 
 export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
@@ -160,6 +172,7 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
         if (session.units.length === 0) {
             session.selectedRange = undefined;
         }
+        clearIpynbInfo(session);
         clearTimeMarkerFlags(session);
     } catch (error) {
         console.error(error);
@@ -214,6 +227,19 @@ const clearTimeMarkerFlags = (session: Session): void => {
     session.timelineMaker.timelineFlagList.splice(0);
 };
 
+const remoteDeleteRequest = async (session: Session, dataSource: DataSource, removeCardIds: any[]): Promise<void> => {
+    const result = await window.request(dataSource, { command: 'remote/delete', params: { rankId: removeCardIds } });
+    if (result?.startTimeUpdated as boolean) {
+        session.remoteAttrs.set(dataSource.remote, { maxTimeStamp: result.maxTimeStamp });
+
+        let remoteMaxTimeStamps = 0;
+        session.remoteAttrs.forEach((attrs) => {
+            remoteMaxTimeStamps = Math.max(<number>attrs.maxTimeStamp, remoteMaxTimeStamps);
+        });
+        session.endTimeAll = remoteMaxTimeStamps;
+    }
+};
+
 export const removeSingleRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
@@ -251,17 +277,9 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
             const metadata = unit.metadata as any;
             return metadata.dataSource.remote !== dataSource.remote || !(metadata.dataSource.dataPath as string[]).includes(singleDataPath);
         });
-        const result = await window.request(dataSource, { command: 'remote/delete', params: { rankId: removeCardIds } });
-        if (result?.startTimeUpdated as boolean) {
-            session.remoteAttrs.set(dataSource.remote, { maxTimeStamp: result.maxTimeStamp });
-
-            let remoteMaxTimeStamps = 0;
-            session.remoteAttrs.forEach((attrs) => {
-                remoteMaxTimeStamps = Math.max(<number>attrs.maxTimeStamp, remoteMaxTimeStamps);
-            });
-            session.endTimeAll = remoteMaxTimeStamps;
-        }
+        await remoteDeleteRequest(session, dataSource, removeCardIds);
         clearTimeMarkerFlags(session);
+        clearIpynbInfo(session);
         connector.send({ event: 'deleteRank', body: { rankId: removeCardIds } });
     } catch (error) {
         console.error(error);
@@ -316,4 +334,18 @@ export const locateUnitHandler: NotificationHandler = (data): void => {
             showDetail: true,
         };
     });
+};
+
+export const jupyterCompletedHandler: NotificationHandler = (data): void => {
+    const isIpynb = data?.parseResult === 'ok';
+    const session = store.sessionStore.activeSession as Session;
+    session.isIpynb = isIpynb;
+    session.ipynbUrl = data.url as string;
+    connector.send({
+        event: 'updateSession',
+        body: { isIpynb: isIpynb, ipynbUrl: data.url as string },
+    });
+    if (!isIpynb) {
+        message.error('Jupyter launch error!');
+    }
 };

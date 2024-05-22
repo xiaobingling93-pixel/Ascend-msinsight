@@ -75,6 +75,11 @@ aux_source_directory(${SRC_HOME_DIR}/modules/advisor/handler DIC_MODULES_ADVISOR
 aux_source_directory(${SRC_HOME_DIR}/modules/advisor/process DIC_MODULES_ADVISOR_PROCESS_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/advisor/protocol DIC_MODULES_ADVISOR_PROTOCOL_SRC)
 
+# jupyter
+include_directories(${SRC_HOME_DIR}/modules/jupyter)
+include_directories(${SRC_HOME_DIR}/modules/jupyter/parser)
+include_directories(${SRC_HOME_DIR}/modules/jupyter/protocol)
+
 # modules for server
 aux_source_directory(${SRC_HOME_DIR}/modules DIC_MODULES_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/base DIC_MODULES_BASE_SRC)
@@ -130,6 +135,11 @@ aux_source_directory(${SRC_HOME_DIR}/modules/full_db  DIC_MODULES_FULL_DB_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/full_db/parserAlloc  DIC_MODULES_FULL_DB_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/full_db/database  DIC_MODULES_FULL_DB_DATABASE_SRC)
 
+# jupyter
+aux_source_directory(${SRC_HOME_DIR}/modules/jupyter DIC_MODULES_JUPYTER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/jupyter/parser DIC_MODULES_JUPYTER_PARSER_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/jupyter/protocol DIC_MODULES_JUPYTER_PROTOCOL_SRC)
+
 list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SRC}
         ${DIC_MODULES_BASE_SRC}
@@ -168,6 +178,9 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_OPERATOR_PARSER_SRC}
         ${DIC_MODULES_OPERATOR_HANDLER_SRC}
         ${DIC_MODULES_OPERATOR_PROTOCOL_SRC}
+        ${DIC_MODULES_JUPYTER_SRC}
+        ${DIC_MODULES_JUPYTER_PARSER_SRC}
+        ${DIC_MODULES_JUPYTER_PROTOCOL_SRC}
         ${DIC_MODULES_FULL_DB_SRC}
         ${DIC_MODULES_FULL_DB_PARSER_SRC}
         ${DIC_MODULES_FULL_DB_DATABASE_SRC}

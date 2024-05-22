@@ -10,6 +10,8 @@ export class Session {
     startTime: Timestamp = -1;
     endTimeAll: Timestamp = -1;
     isCluster: boolean | null = false;
+    isIpynb: boolean = false;
+    ipynbUrl: string = '';
     isReset: boolean = false;
     parseCompleted: boolean = false;
     clusterCompleted: boolean = false;
@@ -44,6 +46,7 @@ export class Session {
         this.startTime = -1;
         this.endTimeAll = -1;
         this.isCluster = null;
+        this.isIpynb = false;
         this.isReset = false;
         this._sharedState = {};
         this.parseCompleted = false;

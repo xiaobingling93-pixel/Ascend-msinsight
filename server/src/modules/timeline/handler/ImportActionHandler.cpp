@@ -12,6 +12,10 @@
 #include "ParserStatusManager.h"
 #include "OperatorProtocolEvent.h"
 #include "CommonDefs.h"
+#include "KernelParse.h"
+#include "SourceFileParser.h"
+#include "JupyterServerManager.h"
+#include "JupyterFileParser.h"
 
 namespace Dic {
 namespace Module {
@@ -58,6 +62,8 @@ std::pair<std::string, ParserType> ImportActionHandler::GetImportType(const std:
         result = std::make_pair(pathList[0], ParserType::JSON);
     } else if (StringUtil::EndWith(pathList[0], computeBinSuffix)) {
         result = std::make_pair(pathList[0], ParserType::BIN);
+    } else if (StringUtil::EndWith(pathList[0], ipynbSuffix)) {
+        result = std::make_pair(pathList[0], ParserType::IPYNB);
     } else {
         result = std::make_pair(pathList[0], ParserType::JSON); // 默认情况下也按JSON方式解析
     }

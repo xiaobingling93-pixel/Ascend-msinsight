@@ -23,6 +23,7 @@ public:
     static void ParseEndCallBack(const std::string &token, const std::string &fileId, bool result,
                                  const std::string &message);
 protected:
+    static bool curIsIpynb;
     std::string curScene;
 
     static void ParseClusterEndProcess(const std::string token, std::string result);

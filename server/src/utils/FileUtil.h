@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <libgen.h>
+#include <numeric>
 #include "regex"
 #include "RegexUtil.h"
 #include "ServerLog.h"
@@ -508,8 +509,10 @@ public:
 
     static bool CheckFilePath(std::string filePath);
     static bool CheckFilePathLength(std::string filePath);
-
     static std::string GetCurrPath();
+    static std::string GetRootPath(const std::string& filePath);
+    static std::shared_ptr<std::string> GetRelativePath(const std::string& targetFilePath,
+                                                        const std::string& sourceFilePath);
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_FILEUTIL_H

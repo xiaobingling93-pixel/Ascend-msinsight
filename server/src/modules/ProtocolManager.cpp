@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
+#include "ProtocolManager.h"
 #include "ServerLog.h"
 #include "JsonUtil.h"
 #include "GlobalProtocol.h"
@@ -13,7 +14,7 @@
 #include "OperatorProtocol.h"
 #include "SourceProtocol.h"
 #include "AdvisorProtocolUtil.h"
-#include "ProtocolManager.h"
+#include "JupyterProtocol.h"
 
 namespace Dic {
 namespace Protocol {
@@ -48,6 +49,8 @@ void ProtocolManager::Register()
     sourceProtocol->Register();
     auto advisorProtocol = std::make_unique<AdvisorProtocolUtil>();
     advisorProtocol->Register();
+    auto jupyterProtocol = std::make_unique<JupyterProtocol>();
+    jupyterProtocol->Register();
     protocolMap.emplace(ModuleType::GLOBAL, std::move(globalProtocol));
     protocolMap.emplace(ModuleType::TIMELINE, std::move(timelineProtocol));
     protocolMap.emplace(ModuleType::MEMORY, std::move(memoryProtocol));
@@ -56,6 +59,7 @@ void ProtocolManager::Register()
     protocolMap.emplace(ModuleType::OPERATOR, std::move(operatorProtocol));
     protocolMap.emplace(ModuleType::SOURCE, std::move(sourceProtocol));
     protocolMap.emplace(ModuleType::ADVISOR, std::move(advisorProtocol));
+    protocolMap.emplace(ModuleType::JUPYTER, std::move(jupyterProtocol));
 }
 
 void ProtocolManager::UnRegister()

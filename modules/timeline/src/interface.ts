@@ -10,8 +10,10 @@ import {
     clusterDurationCompletedHandler,
     dragImportSuccessHandler,
     locateUnitHandler,
+    jupyterCompletedHandler,
 } from './connection/handler';
 
+const JUPYTER_COMPLETED = 'parse/jupyterCompleted';
 type InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> = {
     request: Request;
     response: Response;
@@ -33,4 +35,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'parse/clusterStep2Completed': clusterDurationCompletedHandler,
     'drag/import': dragImportSuccessHandler,
     locateUnit: locateUnitHandler,
+    [JUPYTER_COMPLETED]: jupyterCompletedHandler,
 };

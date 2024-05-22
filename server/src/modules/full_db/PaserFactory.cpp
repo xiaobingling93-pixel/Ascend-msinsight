@@ -5,6 +5,7 @@
 #include "ParserFactory.h"
 #include "ParserBin.h"
 #include "ParserJson.h"
+#include "ParserIpynb.h"
 #include "ParserDb.h"
 #include "ServerLog.h"
 #include "ExecUtil.h"
@@ -39,6 +40,11 @@ std::shared_ptr<ParserAlloc> ParserFactory::ParserImport(ParserType allocType)
             alloc = std::make_shared<ParserBin>();
             break;
         case ParserType::JSON:
+            alloc = std::make_shared<ParserJson>();
+            break;
+        case ParserType::IPYNB:
+            alloc = std::make_shared<ParserIpynb>();
+            break;
         default:
             alloc = std::make_shared<ParserJson>();
             break;

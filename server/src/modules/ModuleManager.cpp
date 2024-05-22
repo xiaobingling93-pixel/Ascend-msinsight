@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
  */
 
+#include "ModuleManager.h"
 #include "ServerLog.h"
 #include "GlobalModule.h"
 #include "TimelineModule.h"
@@ -11,7 +12,7 @@
 #include "OperatorModule.h"
 #include "SourceModule.h"
 #include "AdvisorModule.h"
-#include "ModuleManager.h"
+#include "JupyterModule.h"
 
 namespace Dic {
 namespace Module {
@@ -44,6 +45,7 @@ void ModuleManager::Register()
     std::unique_ptr<OperatorModule> operatorModule = std::make_unique<OperatorModule>();
     std::unique_ptr<SourceModule> sourceModule = std::make_unique<SourceModule>();
     std::unique_ptr<AdvisorModule> advisorModule = std::make_unique<AdvisorModule>();
+    std::unique_ptr<JupyterModule> jupyterModule = std::make_unique<JupyterModule>();
     global->RegisterRequestHandlers();
     timelineModule->RegisterRequestHandlers();
     memoryModule->RegisterRequestHandlers();
@@ -52,6 +54,7 @@ void ModuleManager::Register()
     operatorModule->RegisterRequestHandlers();
     sourceModule->RegisterRequestHandlers();
     advisorModule->RegisterRequestHandlers();
+    jupyterModule->RegisterRequestHandlers();
     moduleMap.emplace(ModuleType::GLOBAL, std::move(global));
     moduleMap.emplace(ModuleType::TIMELINE, std::move(timelineModule));
     moduleMap.emplace(ModuleType::SUMMARY, std::move(summaryModule));
@@ -60,6 +63,7 @@ void ModuleManager::Register()
     moduleMap.emplace(ModuleType::OPERATOR, std::move(operatorModule));
     moduleMap.emplace(ModuleType::SOURCE, std::move(sourceModule));
     moduleMap.emplace(ModuleType::ADVISOR, std::move(advisorModule));
+    moduleMap.emplace(ModuleType::JUPYTER, std::move(jupyterModule));
 }
 
 void ModuleManager::UnRegister()

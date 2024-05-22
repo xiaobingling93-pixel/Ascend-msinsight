@@ -19,7 +19,8 @@ using namespace rapidjson;
 enum class ParserType {
     DB = 0,
     BIN = 1,
-    JSON = 2
+    JSON = 2,
+    IPYNB = 3
 };
 } // end of namespace Dic
 

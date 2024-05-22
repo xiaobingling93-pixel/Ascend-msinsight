@@ -103,6 +103,10 @@ const webpackCfg = {
     webpackConfig.plugins.push(new ModuleFederationPlugin(federationConfig));
     return webpackConfig;
   },
+  jupyterConfigure: (webpackConfig) => {
+    webpackConfig.plugins.push(new ModuleFederationPlugin(federationConfig));
+    return webpackConfig;
+  },
   computeConfigure: (webpackConfig) => {
     webpackConfig.entry = {
       main: webpackConfig.entry,

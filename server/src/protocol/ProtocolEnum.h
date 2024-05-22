@@ -19,6 +19,7 @@ enum class ModuleType : int {
     OPERATOR = 6,
     SOURCE = 7,
     ADVISOR = 8,
+    JUPYTER = 9,
 };
 
 enum class LinkType : int {

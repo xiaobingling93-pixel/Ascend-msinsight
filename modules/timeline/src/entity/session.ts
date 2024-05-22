@@ -57,6 +57,9 @@ export class Session {
     viewedCardIdSet: Set<string> = new Set<string>();
     selectedMultiSlice: string = '';
     isFullDb: boolean = false;
+    // 是否是ipynb文件
+    isIpynb: boolean = false;
+    ipynbUrl: string = '';
     // context menu state
     contextMenu: ContextMenu = {
         isVisible: false,

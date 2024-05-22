@@ -24,6 +24,7 @@ MODULES_MAP = {
     'operator': 'Operator',
     'timeline': 'Timeline',
     'compute': 'Compute',
+    'jupyter': 'Jupyter',
     'lib': 'lib'
 }
 

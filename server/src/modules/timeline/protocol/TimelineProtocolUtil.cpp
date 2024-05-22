@@ -28,6 +28,7 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
     JsonUtil::AddMember(body, "reset", response.body.reset, allocator);
     JsonUtil::AddMember(body, "isSimulation", response.body.isSimulation, allocator);
     JsonUtil::AddMember(body, "isBinary", response.body.isBinary, allocator);
+    JsonUtil::AddMember(body, "isIpynb", response.body.isIpynb, allocator);
 
     json_t coreList(kArrayType);
     for (const std::string core : response.body.coreList) {

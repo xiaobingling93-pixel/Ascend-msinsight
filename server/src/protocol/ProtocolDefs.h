@@ -26,6 +26,7 @@ const std::string MODULE_MEMORY = "memory";
 const std::string MODULE_OPERATOR = "operator";
 const std::string MODULE_SOURCE = "source";
 const std::string MODULE_ADVISOR = "advisor";
+const std::string MODULE_JUPYTER = "jupyter";
 #pragma endregion
 
 #pragma region << Base>>
@@ -138,6 +139,9 @@ const std::string REQ_RES_ADVISOR_AFFINITY_API = "advisor/affinity_api";
 const std::string REQ_RES_ADVISOR_OPERATORS_FUSION = "advisor/operator_fusion";
 const std::string REQ_RES_ADVISOR_AICPU_OPERATORS = "advisor/aicpu_operator";
 const std::string REQ_RES_ADVISOR_ACLNN_OPERATORS = "advisor/aclnn_operator";
+
+// jupyter
+const std::string EVENT_PARSE_JUPYTER_COMPLETED = "parse/jupyterCompleted";
 
 #pragma endregion
 } // end of namespace

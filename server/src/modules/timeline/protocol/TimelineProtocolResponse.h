@@ -29,6 +29,7 @@ struct ImportActionResBody {
     bool isCluster = false;
     bool reset = false;
     bool isSimulation = false;
+    bool isIpynb = false;
 };
 
 struct ImportActionResponse : public Response {

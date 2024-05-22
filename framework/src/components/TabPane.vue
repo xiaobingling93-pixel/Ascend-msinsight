@@ -19,7 +19,7 @@ import useWatchTranslation from '@/hooks/useWatchTranslation';
 
 const { confirmDrop } = useDataSources();
 
-type SceneType = 'Default' | 'Cluster' | 'Compute';
+type SceneType = 'Default' | 'Cluster' | 'Compute' | 'Jupyter';
 const scene = ref<SceneType>('Default');
 const activeModule = ref(0);
 const moduleRefs = ref<HTMLIFrameElement[] | undefined>();
@@ -99,7 +99,7 @@ onMounted(async () => {
 });
 
 watch(
-    () => [session.isBinary, session.isCluster],
+    () => [session.isBinary, session.isCluster, session.isIpynb],
     () => {
         if (session.isBinary === null && session.isCluster === null) {
             return;
@@ -149,7 +149,9 @@ function registerEventListeners() {
                 updateState.clusterCompleted !== undefined ||
                 updateState.unitcount !== undefined ||
                 updateState.isBinary ||
-                updateState.durationFileCompleted;
+                updateState.durationFileCompleted ||
+                updateState.isIpynb ||
+                updateState.ipynbUrl !== '';
             if (isSend) {
                 connector.send({
                     event: 'updateSession',
@@ -165,6 +167,12 @@ function registerEventListeners() {
     });
 
     connector.addListener('getParseStatus', () => {
+        if (session.isIpynb === true) {
+            connector.send({
+              event: 'module.reset',
+              body: {}
+            });
+        }
         connector.send({
             event: 'updateSession',
             body: {
@@ -175,6 +183,8 @@ function registerEventListeners() {
                 coreList: session.coreList,
                 sourceList: session.sourceList,
                 durationFileCompleted: session.durationFileCompleted,
+                isIpynb: session.isIpynb,
+                ipynbUrl: session.ipynbUrl,
             },
         });
     });
@@ -239,6 +249,8 @@ function getScene(): SceneType {
         scen = 'Compute';
     } else if (session.isCluster) {
         scen = 'Cluster';
+    } else if (session.isIpynb) {
+        scen = 'Jupyter';
     } else {
         scen = 'Default';
     }
@@ -250,16 +262,31 @@ function isShow(moduleConfig: ModuleConfig): Boolean {
 }
 
 function getActive(): number {
-    const validIndexlist = modulesConfig.reduce((pre, cur, index) => {
-        if (isShow(cur)) {
-            pre.push(index);
-        }
-        return pre;
-    }, [] as number[]);
-    if (!validIndexlist.includes(activeModule.value)) {
-        return validIndexlist[0];
+    const validIndexMap = modulesConfig.reduce((pre, cur, index) => {
+      if (isShow(cur)) {
+        pre.set(index, cur);
+      }
+      return pre;
+    }, new Map<number, ModuleConfig>());
+    const jupyterIndex = findIndexByName(validIndexMap, 'Jupyter');
+    if (session.isIpynb && jupyterIndex !== -1) {
+      return jupyterIndex;
+    } else if (!validIndexMap.has(activeModule.value)) {
+      return validIndexMap.entries().next().value[0];
+    } else {
+      return activeModule.value;
     }
-    return activeModule.value;
+}
+
+function findIndexByName(validIndexMap: Map<number, ModuleConfig>, name: string) : number {
+    // 默认值-1，表示要查找的页签不存在
+    let result = -1;
+    validIndexMap.forEach((value, key) => {
+      if (value.name === name) {
+        result = key;
+      }
+    });
+    return result;
 }
 
 function toggleTab(index: number): void {

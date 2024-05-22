@@ -125,4 +125,62 @@ std::string FileUtil::GetProfilerFileId(const std::string &filePath)
 
     return fileId;
 }
+
+std::string FileUtil::GetRootPath(const std::string& filePath)
+{
+    std::string suffix;
+#ifdef _WIN32
+    size_t pos = filePath.find_first_of("\\");
+    size_t pos2 = filePath.find_first_of("\\/");
+    if (pos > pos2) {
+        pos = pos2;
+    }
+    suffix = "\\";
+#else
+    size_t pos = filePath.find_first_of("\\/");
+suffix = "/";
+#endif
+    if (pos != std::string::npos) {
+        return filePath.substr(0, pos) + suffix;
+    }
+    return "";
+}
+
+std::shared_ptr<std::string> FileUtil::GetRelativePath(const std::string& targetFilePath,
+                                                       const std::string& sourceFilePath)
+{
+    // 注意：返回结果可能为空指针，需要进行判断
+    std::shared_ptr<std::string> result = nullptr;
+    // 对文件目录进行切割，获取两个路径列表
+    std::vector<std::string> targetPath = StringUtil::Split(targetFilePath, "[\\\\/]");
+    std::vector<std::string> sourcePath = StringUtil::Split(sourceFilePath, "[\\\\/]");
+    // 去除列表中空字符串
+    targetPath.erase(std::remove_if(targetPath.begin(), targetPath.end(),
+        [](const std::string &str) {return str.empty();}), targetPath.end());
+    sourcePath.erase(std::remove_if(sourcePath.begin(), sourcePath.end(),
+        [](const std::string &str) {return str.empty();}), sourcePath.end());
+
+    // 如果目标路径层级比源路径小，说明目标路径不包含源路径，返回空指针
+    if (targetPath.size() < sourcePath.size()) {
+        return result;
+    }
+
+    // 遍历每层源路径，判断是否和目标路径相等
+    int i = 0;
+    for (; i < sourcePath.size(); ++i) {
+        if (targetPath[i] != sourcePath[i]) {
+            break;
+        }
+    }
+
+    if (i == sourcePath.size()) {
+        targetPath.erase(targetPath.begin(), targetPath.begin() + i);
+        result = std::make_shared<std::string>(std::accumulate(targetPath.begin(),
+            targetPath.end(), std::string(),
+            [&](const std::string &a, const std::string &b) -> std::string {
+                return a.empty() ? b : a + "/" + b;
+            }));
+    }
+    return result;
+}
 }

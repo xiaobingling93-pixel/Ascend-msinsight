@@ -561,6 +561,7 @@ std::optional<document_t> TimelineProtocol::ToModuleResetEventJson(const Event &
 {
     return ToEventJson<ModuleResetEvent>(dynamic_cast<const ModuleResetEvent &>(event));
 }
+
 #pragma endregion
 } // namespace Protocol
 } // namespace Dic

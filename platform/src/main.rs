@@ -4,7 +4,10 @@
 
 #![windows_subsystem = "windows"]
 
-use std::{env, fs::read, process::{Command, Child}, sync::Mutex};
+use std::{env, fs::read, io, process::{Command, Child, Stdio}, sync::Mutex};
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+use std::collections::{HashMap, VecDeque};
+
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
@@ -21,6 +24,7 @@ use wry::{
 mod webview2err;
 #[cfg(windows)]
 use webview2err::show_webview_err_message;
+use std::io::{BufRead, BufReader};
 
 const SERVER_RELATIVE_LIST: [&str; 4] = ["resources", "profiler", "server", "profiler_server"];
 const NO_WINDOW_FLAG: u32 = 0x08000000;
@@ -136,7 +140,20 @@ fn run_script(server_process:Mutex<Child>, root_path: &PathBuf, port: &str) -> w
                 event: WindowEvent::CloseRequested,
                 ..
             } => *control_flow = {
-                let _ = server_process.lock().unwrap().kill();
+                let mut server_process_process = server_process.lock().unwrap();
+                let pid = server_process_process.id();
+                match query_child_pids(pid) {
+                    Ok(child_pids) => {
+                        for child_pid in child_pids {
+                            match kill_process_tree(child_pid) {
+                                Ok(()) => {}
+                                Err(_err) => {}
+                            }
+                        }
+                    }
+                    Err(_err) => {}
+                }
+                let _ = server_process_process.kill();
                 ControlFlow::Exit
             },
 
@@ -144,6 +161,118 @@ fn run_script(server_process:Mutex<Child>, root_path: &PathBuf, port: &str) -> w
         }
     });
 
+}
+
+fn query_child_pids(parent_pid: u32) -> io::Result<Vec<String>> {
+    #[cfg(windows)]
+    {
+        let wmic_output = Command::new("wmic")
+            .arg("process")
+            .arg("where")
+            .arg(format!("ParentProcessId={}", parent_pid))
+            .arg("get")
+            .arg("ProcessId")
+            .creation_flags(0x08000000)
+            .stdout(Stdio::piped())
+            .spawn();
+
+        let mut child_pids = Vec::new();
+        match wmic_output {
+            Ok(child) => {
+                if let Some(stdout) = child.stdout {
+                    let reader = BufReader::new(stdout);
+                    for line in reader.lines().skip(1) {
+                        match line {
+                            Ok(line) => {
+                                let line_trim = line.trim();
+                                if !line_trim.is_empty() {
+                                    child_pids.push(line_trim.to_string());
+                                }
+                            },
+                            Err(_err) => {},
+                        }
+                    }
+                }
+            }
+            Err(_err) => {}
+        }
+        Ok(child_pids)
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    {
+        let ps_output = Command::new("ps")
+            .arg("-o")
+            .arg("ppid,pid")
+            .stdout(Stdio::piped())
+            .spawn();
+        let mut child_pids = Vec::new();
+        let mut pid_map: HashMap<String, Vec<String>> = HashMap::new();
+        match ps_output {
+            Ok(pair) => {
+                if let Some(stdout) = pair.stdout {
+                    let reader = BufReader::new(stdout);
+                    for line in reader.lines().skip(1) {
+                        let line_str = line.unwrap();
+                        let parts: Vec<&str> = line_str.split_whitespace().collect();
+                        if parts.len() == 2 {
+                            let key = parts.get(0).unwrap().to_string();
+                            let value = parts.get(1).unwrap().to_string();
+                            if let Some(vec) = pid_map.get_mut(&key) {
+                                vec.push(value);
+                            } else {
+                                let mut new_vec = Vec::new();
+                                new_vec.push(value);
+                                pid_map.insert(key, new_vec);
+                            }
+                        }
+                    }
+                }
+            },
+            Err(_err) => {}
+        }
+
+        let mut deque = VecDeque::new();
+        deque.push_back(parent_pid.to_string());
+        while !deque.is_empty() {
+            let cur = deque.pop_back();
+            if let Some(vec) = pid_map.get_mut(&cur.unwrap().to_string()) {
+                for item in vec {
+                    child_pids.push(item.to_string());
+                    deque.push_back(item.to_string());
+                }
+            }
+        }
+
+        Ok(child_pids)
+    }
+}
+
+fn kill_process_tree(parent_pid: String) -> io::Result<()> {
+    #[cfg(windows)]
+    {
+        // Windows 下使用 taskkill 命令
+        Command::new("taskkill")
+            .arg("/f")
+            .arg("/t") // 终止包括子进程在内的所有进程
+            .arg("/im")
+            .arg(parent_pid.to_string())
+            .creation_flags(0x08000000)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .output()?;
+    }
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    {
+        Command::new("kill")
+            .arg("-9")
+            .arg(parent_pid.to_string())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()?;
+    }
+
+    Ok(())
 }
 
 fn home_dir() -> Option<PathBuf> {

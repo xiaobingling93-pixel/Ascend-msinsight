@@ -7,6 +7,7 @@ export interface ModuleConfig {
     isDefault?: boolean;
     isCluster?: boolean;
     isCompute?: boolean;
+    isJupyter?: boolean;
 };
 
 export const modulesConfig: ModuleConfig[] = [
@@ -19,6 +20,7 @@ export const modulesConfig: ModuleConfig[] = [
         isDefault: true,
         isCluster: true,
         isCompute: true,
+        isJupyter: true,
     },
     {
         name: 'Memory',
@@ -28,6 +30,7 @@ export const modulesConfig: ModuleConfig[] = [
         },
         isDefault: true,
         isCluster: true,
+        isJupyter: true,
     },
     {
         name: 'Operator',
@@ -37,6 +40,7 @@ export const modulesConfig: ModuleConfig[] = [
         },
         isDefault: true,
         isCluster: true,
+        isJupyter: true,
     },
     {
         name: 'Summary',
@@ -69,5 +73,13 @@ export const modulesConfig: ModuleConfig[] = [
             src: './plugins/Compute/detail.html',
         },
         isCompute: true,
+    },
+    {
+        name: 'Jupyter',
+        requestName: 'jupyter',
+        attributes: {
+            src: './plugins/Jupyter/index.html',
+        },
+        isJupyter: true,
     },
 ];
