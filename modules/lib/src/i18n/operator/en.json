@@ -1,0 +1,50 @@
+{
+  "operator": {
+    "sessionTitle": {
+      "TotalTimeGroupByCriteria": "Total Time(μs) Group by {{criteria}}",
+      "Operator": "Operator",
+      "Operator Type": "Operator Type",
+      "Input Shape": "Input Shape",
+      "HCCL Operator": "HCCL Operator",
+      "HCCL Operator Type": "HCCL Operator Type",
+      "Accelerator Core": "Accelerator Core",
+      "OperatorDetail": "Operator Detail"
+    },
+    "searchCriteria": {
+      "Group By": "Group By",
+      "Rank ID": "Rank ID",
+      "Top": "Top",
+      "Computing Operator": "Computing Operator",
+      "Computing Operator Type": "Computing Operator Type",
+      "Computing Operator Name and Input Shape": "Computing Operator Name and Input Shape",
+      "HCCL Operator": "HCCL Operator",
+      "HCCL Operator Type": "HCCL Operator Type",
+      "All": "All",
+      "Custom": "Custom",
+      "15": "15"
+    },
+    "tableHead": {
+      "Name": "Name",
+      "Type": "Type",
+      "AcceleratorCore": "Accelerator Core",
+      "Count": "Count",
+      "TotalTime": "Total Time",
+      "AvgTime": "Avg Time",
+      "MaxTime": "Max Time",
+      "MinTime": "Min Time",
+      "Details": "Details",
+      "SeeMore": "see more",
+      "StartTime": "Start Time",
+      "WaitTime": "Wait Time",
+      "Duration": "Duration",
+      "BlockDim": "Block Dim",
+      "InputShapes": "Input Shapes",
+      "InputDataTypes": "Input Data Types",
+      "InputFormats": "Input Formats",
+      "OutputShapes": "Output Shapes",
+      "OutputDataTypes": "Output Data Types",
+      "OutputFormats": "Output Formats",
+      "Shape": "Shape"
+    }
+  }
+}

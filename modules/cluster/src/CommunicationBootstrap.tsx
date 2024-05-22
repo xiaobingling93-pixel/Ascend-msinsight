@@ -1,15 +1,14 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { SharedConfigProvider } from 'lib/SharedConfigProvider';
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from '@emotion/react';
 import { RootStoreContext, useRootStore } from './context/context';
-import i18n from './i18n';
 import { store } from './store';
 import connector from './connection';
 import { observer } from 'mobx-react';
-import { getSearchParams } from './utils/localUrl';
 import { themeInstance } from './theme/theme';
 import CommunicationAnalysis from './components/communication/CommunicationAnalysis';
 import { Loading } from './index';
@@ -17,18 +16,33 @@ import { Loading } from './index';
 export const App = observer(() => {
     const { sessionStore } = useRootStore();
     let session = sessionStore.activeSession;
-    const lang = getSearchParams('language');
+    const [locale, setLocale] = useState<'zhCN' | 'enUS'>('zhCN');
+
+    useEffect(() => {
+        if (session) {
+            setLocale(session.language);
+        }
+    }, [session?.language]);
+
     useEffect(() => {
         session = sessionStore.activeSession;
-        i18n.changeLanguage(lang === 'zh' ? 'zh' : 'en');
+        getLanguage();
         themeInstance.setCurrentTheme('dark');
         window.setTheme(true);
         connector.send({ event: 'getParseStatus', body: { } });
     }, []);
 
+    const getLanguage = (): void => {
+        connector.send({
+            event: 'getLanguage',
+        });
+    };
+
     return (<ThemeProvider theme={themeInstance.getThemeType()}>
-        {session !== undefined && <CommunicationAnalysis session={session} />}
-        <div className={`fullmask ${session?.clusterCompleted ? 'hide' : ''}`}>{Loading}</div>
+        <SharedConfigProvider locale={locale}>
+            {session !== undefined && <CommunicationAnalysis session={session} />}
+            <div className={`fullmask ${session?.clusterCompleted ? 'hide' : ''}`}>{Loading}</div>
+        </SharedConfigProvider>
     </ThemeProvider>);
 });
 

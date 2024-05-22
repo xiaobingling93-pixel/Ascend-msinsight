@@ -1,0 +1,20 @@
+{
+  "details": {
+    "Name": "名称",
+    "Soc": "芯片",
+    "OpType": "算子类型",
+    "BlockDim": "Block数量",
+    "BlockDetail": "Block详情",
+    "BlockID": "Block ID",
+    "CoreType": "计算核类型",
+    "Duration": "时长",
+    "ComputeWorkloadAnalysis": "计算工作负载分析",
+    "PipeUtilization": "指令队列利用率",
+    "Instructions": "指令数",
+    "Data Volume(byte)": "数据搬运量(byte)",
+    "Duration(μs)": "时长(μs)",
+    "Byte": "字节",
+    "MixBlockDim": "混合Block数量",
+    "MixBlockDetail": "混合Block详情"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "operator": {
+    "sessionTitle": {
+      "TotalTimeGroupByCriteria": "按{{criteria}}分组总耗时（μs）",
+      "Operator": "算子",
+      "Operator Type": "算子类型",
+      "Input Shape": "输入Shape",
+      "HCCL Operator": "通信算子",
+      "HCCL Operator Type": "通信算子类型",
+      "Accelerator Core": "加速器核",
+      "OperatorDetail": "算子详情"
+    },
+    "searchCriteria": {
+      "Group By": "分组方式",
+      "Rank ID": "卡序号",
+      "Top": "前",
+      "Computing Operator": "计算算子",
+      "Computing Operator Type": "计算算子类型",
+      "Computing Operator Name and Input Shape": "计算算子名称和输入shape",
+      "HCCL Operator": "通信算子",
+      "HCCL Operator Type": "通信算子类型",
+      "All": "全部",
+      "Custom": "自定义",
+      "15": "15"
+    },
+    "tableHead": {
+      "Name": "名称",
+      "Type": "类型",
+      "AcceleratorCore": "加速器核",
+      "Count": "数量",
+      "TotalTime": "总耗时",
+      "AvgTime": "平均耗时",
+      "MaxTime": "最大耗时",
+      "MinTime": "最小耗时",
+      "Details": "详情",
+      "SeeMore": "查看更多",
+      "StartTime": "开始时间",
+      "WaitTime": "等待时间",
+      "Duration": "时长",
+      "BlockDim": "Block数量",
+      "InputShapes": "输入Shapes",
+      "InputDataTypes": "输入数据类型",
+      "InputFormats": "输入格式",
+      "OutputShapes": "输出Shapes",
+      "OutputDataTypes": "输出数据类型",
+      "OutputFormats": "输出格式",
+      "Shape": "Shape"
+    }
+  }
+}

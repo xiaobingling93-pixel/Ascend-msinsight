@@ -46,6 +46,7 @@ export interface ContextMenu {
 };
 
 export class Session {
+    language: 'zhCN' | 'enUS' = 'enUS';
     id = '';
     remoteAttrs: Map<string, Record<string, unknown>> = new Map();
     singleLinkLine: LinkLines = {};

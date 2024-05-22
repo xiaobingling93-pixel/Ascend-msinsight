@@ -2,7 +2,14 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { NotificationHandler } from './connection/defs';
-import { setTheme, updateSessionHandler, parseSuccessHandler, resetHandler, deleteRankHandler } from './connection/handler';
+import {
+    setTheme,
+    updateSessionHandler,
+    parseSuccessHandler,
+    resetHandler,
+    deleteRankHandler,
+    switchLanguageHandler,
+} from './connection/handler';
 
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     setTheme,
@@ -12,4 +19,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'remote/reset': resetHandler,
     'module.reset': resetHandler,
     deleteRank: deleteRankHandler,
+    switchLanguage: switchLanguageHandler,
 };

@@ -3,6 +3,7 @@
  */
 import { makeAutoObservable } from 'mobx';
 export class Session {
+    language: 'zhCN' | 'enUS' = 'enUS';
     allRankIds: string[] = [];
     renderId: number = 0;
     total: number = 0;

@@ -3,21 +3,41 @@
  */
 import { ThemeProvider } from '@emotion/react';
 import { observer } from 'mobx-react';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { SharedConfigProvider } from 'lib/SharedConfigProvider';
 import { useRootStore } from './context/context';
 import Operator from './components/operator/Operator';
 import { themeInstance } from './theme/theme';
+import connector from './connection';
 
 const App = observer(() => {
     const { sessionStore } = useRootStore();
     let session = sessionStore.activeSession;
+    const [locale, setLocale] = useState<'zhCN' | 'enUS'>('zhCN');
+
+    useEffect(() => {
+        if (session) {
+            setLocale(session.language);
+        }
+    }, [session?.language]);
+
     useEffect(() => {
         session = sessionStore.activeSession;
         window.setTheme(true);
+        getLanguage();
     }, []);
+
+    const getLanguage = (): void => {
+        connector.send({
+            event: 'getLanguage',
+        });
+    };
+
     return session !== undefined
         ? <ThemeProvider theme={themeInstance.getThemeType()}>
-            <Operator session={session} />
+            <SharedConfigProvider locale={locale}>
+                <Operator session={session} />
+            </SharedConfigProvider>
         </ThemeProvider>
         : <></>;
 });

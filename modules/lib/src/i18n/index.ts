@@ -1,0 +1,49 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+import en from './en.json';
+import zh from './zh.json';
+import communicationEn from './communication/en.json';
+import communicationZh from './communication/zh.json';
+import sourceEn from './source/en.json';
+import sourceZh from './source/zh.json';
+import detailsEn from './details/en.json';
+import detailsZh from './details/zh.json';
+import operatorEn from './operator/en.json';
+import operatorZh from './operator/zh.json';
+import summaryEn from './summary/en.json';
+import summaryZh from './summary/zh.json';
+import memoryEn from './memory/en.json';
+import memoryZh from './memory/zh.json';
+import timelineEn from './timeline/en.json';
+import timelineZh from './timeline/zh.json';
+export const resources = {
+    enUS: {
+        ...en,
+        ...communicationEn,
+        ...sourceEn,
+        ...detailsEn,
+        ...operatorEn,
+        ...summaryEn,
+        ...memoryEn,
+        ...timelineEn,
+    },
+    zhCN: {
+        ...zh,
+        ...communicationZh,
+        ...sourceZh,
+        ...detailsZh,
+        ...operatorZh,
+        ...summaryZh,
+        ...memoryZh,
+        ...timelineZh,
+    },
+};
+
+export const options = {
+    resources,
+    lng: 'enUS',
+    interpolation: {
+        escapeValue: false, // react already safes from xss
+    },
+};

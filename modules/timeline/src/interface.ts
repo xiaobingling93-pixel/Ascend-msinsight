@@ -11,6 +11,7 @@ import {
     dragImportSuccessHandler,
     locateUnitHandler,
     jupyterCompletedHandler,
+    switchLanguageHandler,
 } from './connection/handler';
 
 const JUPYTER_COMPLETED = 'parse/jupyterCompleted';
@@ -36,4 +37,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'drag/import': dragImportSuccessHandler,
     locateUnit: locateUnitHandler,
     [JUPYTER_COMPLETED]: jupyterCompletedHandler,
+    switchLanguage: switchLanguageHandler,
 };

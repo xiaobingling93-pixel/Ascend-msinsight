@@ -1,0 +1,13 @@
+{
+  "source": {
+    "Core": "Core",
+    "Source": "Source",
+    "InstructionsExecuted": "Instructions Executed",
+    "Cycles": "Cycles",
+    "Address": "Address",
+    "Pipe": "Pipe",
+    "OnlyRelatedInstructions": "Only Related Instructions",
+    "Line": "Line",
+    "RelatedInstructionsCount": "Related Instructions Count"
+  }
+}

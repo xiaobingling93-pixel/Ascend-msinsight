@@ -1,0 +1,20 @@
+{
+  "details": {
+    "Name": "Name",
+    "Soc": "Soc",
+    "OpType": "Op Type",
+    "BlockDim": "Block Dim",
+    "BlockDetail": "Block Detail",
+    "BlockID": "Block ID",
+    "CoreType": "Core Type",
+    "Duration": "Duration",
+    "ComputeWorkloadAnalysis": "Compute Workload Analysis",
+    "PipeUtilization": "Pipe Utilization",
+    "Instructions": "Instructions",
+    "Data Volume(byte)": "Data Volume(byte)",
+    "Duration(μs)": "Duration(μs)",
+    "Byte": "Byte",
+    "MixBlockDim": "Mix Block Dim",
+    "MixBlockDetail": "Mix Block Detail"
+  }
+}

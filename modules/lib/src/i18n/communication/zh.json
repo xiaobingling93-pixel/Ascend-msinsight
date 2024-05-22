@@ -1,0 +1,63 @@
+{
+  "communication": {
+    "Guidance": "指引",
+    "GuidanceContent": [
+      {
+        "title": "1. 查看是否存在某卡的等待时间占比大于0.2（阈值）",
+        "contentList": [
+          "(1) 若存在，则此集群场景存在通信瓶颈，请继续步骤2；",
+          "(2) 否则，初步断定此迭代不存在通信瓶颈，可去通信矩阵页面进一步查看总体带宽使用率情况。"
+        ]
+      },{
+        "title": "2. 查看等待时间占比最大卡的传输前的同步时间占比是否大于0.2(阈值)",
+        "contentList": [
+          "(1) 如果大于，则存在慢卡（等待时间占比最小的卡），请查看慢卡的前向反向计算时间；若该慢卡的前向反向计算时间远大于其他卡，则需要检查负载是否均衡和芯片故障；若该卡的前向反向计算时间基本和其他卡相同，则检查数据预处理时间；",
+          "(2) 否则，存在链路异常情况，请点击传输时长最长的卡的链路详情，查看是否有链路故障或者通信量过小的情况。"
+        ]
+      },{
+        "title": "注：",
+        "contentList": [
+          "(1) 等待时间占比 = 等待时间 / (等待时间 + 传输时间)，等待时间比例越大代表这张卡的等待时间占总通信时间越长，通信效率越低；",
+          "(2) 传输前的同步时间占比 = 同步时间 / (同步时间 + 传输时间)，同步时间是指第一次传输数据前的等待时间，同步时间比例大代表通信效率降低是因为存在慢卡而造成的；",
+          "(3) 0.2是工具当前设置的用于判断等待时间比例是否过大的一个阈值；"
+        ]
+      }
+    ],
+    "sessionTitle": {
+      "MatrixModel": "通信矩阵",
+      "VisualizedCommunicationTime": "通信时长",
+      "DataAnalysisCommunicationTime": "通信时长数据分析",
+      "PacketDistribution": "通信包分析",
+      "BandwidthAnalysis":"带宽分析"
+    },
+    "searchCriteria": {
+      "Step": "迭代ID",
+      "CommunicationGroup": "通信域",
+      "OperatorName": "算子名称",
+      "CommunicationMatrix": "通信矩阵",
+      "CommunicationDurationAnalysis": "通信耗时分析",
+      "CommunicationMatrixType": "通信矩阵类型",
+      "ShowInnerCommunication": "显示卡内通信",
+      "VisibleRange": "筛选范围",
+      "Bandwidth": "带宽",
+      "TransitSize": "传输大小",
+      "TransportType": "链路方式",
+      "TransitTime": "传输时长"
+    },
+    "tableHead": {
+      "RankID": "卡序号",
+      "StartTime": "开始时间",
+      "ElapseTime": "总时间",
+      "TransitTime":"传输时间",
+      "SynchronizationTime": "同步时间",
+      "WaitTime":"等待时间",
+      "SynchronizationTimeRatio": "同步时间占比",
+      "WaitTimeRatio":"等待时间占比",
+      "IdleTime": "空闲时间",
+      "BandwidthAnalysis":"带宽分析",
+      "LargePacketRatio": "大通信包占比",
+      "CommunicationOperatorsDetails": "通信算子详情",
+      "see more": "查看更多"
+    }
+  }
+}

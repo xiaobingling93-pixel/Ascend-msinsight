@@ -1,0 +1,36 @@
+{
+  "memory": {
+    "Invalid Size Warning": "Invalid Condition: The \"Max Size\" cannot be smaller than the \"Min Size\"",
+    "searchCriteria": {
+      "RankId": "Rank ID",
+      "GroupBy": "Group By",
+      "Overall": "Overall",
+      "OverallDescribe": "Displays the memory sizes of operators in the Reserved, Allocated, and Active states and the overall Memory Reserved size of PyTorch.",
+      "Stream": "Stream",
+      "StreamDescribe": "Displays the memory sizes of operators in the Reserved, Allocated, and Active states by stream.",
+      "PeakMemoryUsage": "Peak Memory Usage",
+      "OperatorAllocated": "Operator Allocated",
+      "OperatorReserved": "Operator Reserved",
+      "APPReserved": "APP Reserved",
+      "MemoryUsage": "Memory Usage",
+      "OperatorAllocatedDescribe": "Operator Allocated includes the memory occupied by both PyTorch and GE, while Operator Activated only includes the memory occupied by PyTorch.",
+      "Name": "Name",
+      "Min Size": "Min Size(KB)",
+      "Max Size": "Max Size(KB)",
+      "Button Query": "Query",
+      "Button Reset": "Reset",
+      "Search by Name": "Search by Name"
+    },
+    "tableHead": {
+      "Name": "Name",
+      "Size(KB)": "Size(KB)",
+      "Allocation Time(ms)": "Allocation Time(ms)",
+      "Release Time(ms)": "Release Time(ms)",
+      "Duration(ms)": "Duration(ms)",
+      "Allocation Total Allocated(MB)": "Allocation Total Allocated(MB)",
+      "Allocation Total Reserved(MB)": "Allocation Total Reserved(MB)",
+      "Release Total Allocated(MB)": "Release Total Allocated(MB)",
+      "Release Total Reserved(MB)": "Release Total Reserved(MB)"
+    }
+  }
+}

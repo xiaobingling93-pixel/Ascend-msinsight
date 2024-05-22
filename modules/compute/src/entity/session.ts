@@ -4,6 +4,7 @@
 import { makeAutoObservable } from 'mobx';
 import type { JsonInstructionType } from '../components/hotMethod/defs';
 export class Session {
+    language: 'zhCN' | 'enUS' = 'enUS';
     coreList: string[] = [];
     sourceList: string[] = [];
     Instructions: JsonInstructionType[] = [];

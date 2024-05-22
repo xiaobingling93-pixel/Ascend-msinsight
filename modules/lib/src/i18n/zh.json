@@ -36,7 +36,14 @@
     "Multiply": " x",
     "Seconds Time Unit": "秒",
     "Comparison Base": "源",
-    "Comparison Target": "目标快照"
+    "Comparison Target": "目标快照",
+    "BaseInfo": "基本信息",
+    "All": "全部",
+    "GroupBy": "分组方式",
+    "Rank": "卡",
+    "Custom": "自定义",
+    "PaginationTotal": "共 {{total}} 条",
+    "Details": "详情"
   },
   "headerButtonTooltip": {
     "Title": "选择性能分析类型",
@@ -101,7 +108,9 @@
     "search": "搜索",
     "linker": "连线事件",
     "del": "时间轴缩小",
-    "add": "时间轴放大"
+    "add": "时间轴放大",
+    "Match case": "区分大小写",
+    "Words": "全词匹配"
   },
   "snapshot": {
     "Tooltip": "可通过窗口访问的用户对象"
@@ -129,5 +138,11 @@
   },
   "laneNotify": {
     "frameNoRenderService": "Render Service无渲染数据，请在Frame Insight录制期间进行亮屏操作."
+  },
+  "buttonText": {
+    "Confirm": "确认",
+    "SeeMore": "查看更多",
+    "Generate": "生成",
+    "Open in Find Window": "在发现窗口打开"
   }
 }

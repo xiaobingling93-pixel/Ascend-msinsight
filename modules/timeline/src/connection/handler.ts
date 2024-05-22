@@ -12,6 +12,7 @@ import connector from '../connection/index';
 import { message } from 'antd';
 import { getTimeOffset } from '../insight/units/utils';
 import { calculateDomainRange } from '../components/CategorySearch';
+import i18n from '../i18n';
 
 const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
     if (data[key] === undefined) {
@@ -348,4 +349,15 @@ export const jupyterCompletedHandler: NotificationHandler = (data): void => {
     if (!isIpynb) {
         message.error('Jupyter launch error!');
     }
+};
+
+export const switchLanguageHandler: NotificationHandler = (data): void => {
+    const session = store.sessionStore.activeSession;
+    const lang = data.lang as 'zhCN' | 'enUS';
+    if (session) {
+        runInAction(() => {
+            session.language = lang;
+        });
+    }
+    i18n.changeLanguage(lang);
 };

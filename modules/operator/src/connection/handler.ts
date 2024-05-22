@@ -4,6 +4,7 @@
 import { store } from '../store';
 import { runInAction } from 'mobx';
 import { NotificationHandler } from './defs';
+import i18n from '../i18n';
 
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
@@ -61,4 +62,15 @@ export const deleteRankHandler: NotificationHandler = (data): void => {
             session.allRankIds = rankIds;
         }
     });
+};
+
+export const switchLanguageHandler: NotificationHandler = (data): void => {
+    const session = store.sessionStore.activeSession;
+    const lang = data.lang as 'zhCN' | 'enUS';
+    if (session) {
+        runInAction(() => {
+            session.language = lang;
+        });
+    }
+    i18n.changeLanguage(lang);
 };

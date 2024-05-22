@@ -4,22 +4,28 @@
 import { ThemeProvider } from '@emotion/react';
 import { observer } from 'mobx-react';
 import React, { useEffect, useState, useRef } from 'react';
+import { SharedConfigProvider } from 'lib/SharedConfigProvider';
 import { useRootStore } from './context/context';
 import { themeInstance } from './theme/theme';
 import MemoryAnalysis from './pages/MemoryAnalysis';
 import connector from './connection';
-import { getSearchParams } from './utils/localUrl';
-import i18n from './i18n';
 
 export const App = observer(() => {
     const { sessionStore } = useRootStore();
     const [themeDark, setThemeDark] = useState<boolean>(true);
     const hasListenerRef = useRef<boolean>(false);
     let session = sessionStore.activeSession;
-    const lang = getSearchParams('language');
+    const [locale, setLocale] = useState<'zhCN' | 'enUS'>('zhCN');
+
+    useEffect(() => {
+        if (session) {
+            setLocale(session.language);
+        }
+    }, [session?.language]);
+
     useEffect(() => {
         session = sessionStore.activeSession;
-        i18n.changeLanguage(lang === 'zh' ? 'zh' : 'en');
+        getLanguage();
         themeInstance.setCurrentTheme('dark');
         window.setTheme(true);
     }, []);
@@ -31,9 +37,17 @@ export const App = observer(() => {
         });
     };
 
+    const getLanguage = (): void => {
+        connector.send({
+            event: 'getLanguage',
+        });
+    };
+
     return (
         <ThemeProvider theme={themeInstance.getThemeType()}>
-            {session !== undefined ? <MemoryAnalysis session={session} isDark={themeDark} /> : <></>}
+            <SharedConfigProvider locale={locale}>
+                {session !== undefined ? <MemoryAnalysis session={session} isDark={themeDark} /> : <></>}
+            </SharedConfigProvider>
         </ThemeProvider>
     );
 });

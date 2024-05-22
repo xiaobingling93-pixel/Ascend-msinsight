@@ -1,0 +1,13 @@
+{
+  "source": {
+    "Core": "计算核",
+    "Source": "源码",
+    "InstructionsExecuted": "执行指令数",
+    "Cycles": "时钟周期",
+    "Address": "地址",
+    "Pipe": "指令队列",
+    "OnlyRelatedInstructions": "仅查看关联指令",
+    "Line": "行数",
+    "RelatedInstructionsCount": "关联指令数"
+  }
+}

@@ -5,6 +5,7 @@
 import { makeAutoObservable } from 'mobx';
 
 export class Session {
+    language: 'zhCN' | 'enUS' = 'enUS';
     token = '';
     unitcount = 0;
     memoryRankIds: string[] = [];

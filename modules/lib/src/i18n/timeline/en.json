@@ -1,0 +1,75 @@
+{
+  "timeline": {
+    "Align to Start": "Align to Start",
+    "Timestamp Offset": "Timestamp Offset",
+    "Slice Detail": "Slice Detail",
+    "Slices List": "Slice List",
+    "Find": "Find",
+    "Details": "Details",
+    "System View": "System View",
+    "Rank ID": "Rank ID",
+    "Offset": "Offset",
+    "contextMenu": {
+      "Fit to screen": "Fit to screen",
+      "Find in Communication": "Find in Communication",
+      "Zoom into selection": "Zoom into selection",
+      "Undo Zoom": "Undo Zoom",
+      "Reset Zoom": "Reset Zoom",
+      "Hide": "隐藏",
+      "Show All Hidden": "显示全部已隐藏泳道"
+    },
+    "sliceDetail": {
+      "Slice Detail": "Slice Detail",
+      "Title": "Title",
+      "Start": "Start",
+      "Wall Duration": "Wall Duration",
+      "Self Time": "Self Time",
+      "Args": "Args",
+      "Sequence number": "Sequence number",
+      "Fwd thread id": "Fwd thread id",
+      "Call stack": "Call stack",
+      "more": "more",
+      "Event(s)": "Event(s)",
+      "Link": "Link",
+      "Input Dims": "Input Dims",
+      "Input type": "Input type"
+    },
+    "sliceList": {
+      "Slices List": "Slice List",
+      "Name": "Name",
+      "Occurrences": "Occurrences",
+      "Wall Duration": "Wall Duration",
+      "Average Wall Duration": "Average Wall Duration",
+      "Self Time": "Self Time",
+      "Index": "Index",
+      "Timestamp": "Timestamp",
+      "Duration": "Duration",
+      "Duration(ns)": "Duration(ns)"
+    },
+    "systemView": {
+      "System View": "System View",
+      "Stats System View": "Stats System View",
+      "Rank Id": "Rank Id",
+      "Num Calls": "Num Calls",
+      "Python API Summary": "Python API Summary",
+      "CANN API Summary": "CANN API Summary",
+      "Ascend HardWare Task Summary": "Ascend HardWare Task Summary",
+      "HCCL Summary": "HCCL Summary",
+      "Overlap Analysis": "Overlap Analysis",
+      "Kernel Details": "Kernel Details"
+    },
+    "tableHead": {
+      "Name": "Name",
+      "Time(%)": "Time(%)",
+      "Total Time(us)": "Total Time(us)",
+      "Num Calls": "Num Calls",
+      "Avg(us)": "Avg(us)",
+      "Min(us)": "Min(us)",
+      "Max(us)": "Max(us)",
+      "Click To Timeline": "Click To Timeline",
+      "Click": "Click",
+      "Start Time": "Start Time",
+      "Duration(ns)": "Duration(ns)"
+    }
+  }
+}

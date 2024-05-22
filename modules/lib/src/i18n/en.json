@@ -36,7 +36,14 @@
     "Multiply": " x",
     "Seconds Time Unit": "sec",
     "Comparison Base": "Base",
-    "Comparison Target": "Target"
+    "Comparison Target": "Target",
+    "BaseInfo": "Base Info",
+    "All": "All",
+    "GroupBy": "Group By",
+    "Rank": "Rank",
+    "Custom": "Custom",
+    "PaginationTotal": "Total {{total}} items",
+    "Details": "Details"
   },
   "sessionList": {
     "Template": "Template",
@@ -87,8 +94,8 @@
     "SnapshotDescribe": "ArkTS heap snapshot interval",
     "TakeHeapSnapshot": "Take heap Snapshot",
     "CollectGarbage": "Collect garbage",
-    "PinButton": "Pinned unit" ,
-    "UnpinButton": "Unpinned unit"
+    "PinButton": "Pin to top" ,
+    "UnpinButton": "Unpin"
   },
   "tooltip": {
     "Name": "Name",
@@ -99,8 +106,11 @@
     "clean": "Clean",
     "filter": "Filter",
     "search": "Search",
+    "linker": "Flow Events",
     "del": "Timeline Zoom Out",
-    "add": "Timeline Zoom In"
+    "add": "Timeline Zoom In",
+    "Match case": "Match case",
+    "Words": "Words"
   },
   "snapshot": {
     "Tooltip": "User object reachable from window"
@@ -128,5 +138,11 @@
   },
   "laneNotify": {
     "frameNoRenderService": "No rendering data available. Turn on the device screen for the Render Service to properly render frames."
+  },
+  "buttonText": {
+    "Confirm": "Confirm",
+    "SeeMore": "See more",
+    "Generate": "Generate",
+    "Open in Find Window": "Open in Find Window"
   }
 }

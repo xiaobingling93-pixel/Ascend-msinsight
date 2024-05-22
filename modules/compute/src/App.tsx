@@ -2,7 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import { observer } from 'mobx-react';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { SharedConfigProvider } from 'lib/SharedConfigProvider';
 import { useRootStore } from './context/context';
 import connector from './connection';
 import HotMethod from './components/hotMethod/HotMethod';
@@ -11,9 +12,25 @@ import Detail from './components/detail/Index';
 const app = observer(({ page }: {page?: string}) => {
     const { sessionStore } = useRootStore();
     const session = sessionStore.activeSession;
+    const [locale, setLocale] = useState<'zhCN' | 'enUS'>('zhCN');
+
+    useEffect(() => {
+        if (session) {
+            setLocale(session.language);
+        }
+    }, [session?.language]);
+
     useEffect(() => {
         connector.send({ event: 'getParseStatus', body: { } });
+        getLanguage();
     }, []);
+
+    const getLanguage = (): void => {
+        connector.send({
+            event: 'getLanguage',
+        });
+    };
+
     let dom;
     if (session === undefined) {
         dom = <></>;
@@ -22,7 +39,9 @@ const app = observer(({ page }: {page?: string}) => {
     } else {
         dom = <HotMethod session={session} />;
     }
-    return dom;
+    return <SharedConfigProvider locale={locale}>
+        {dom}
+    </SharedConfigProvider>;
 });
 
 export default app;

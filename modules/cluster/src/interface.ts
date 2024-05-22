@@ -2,7 +2,14 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import { NotificationHandler } from './connection/defs';
-import { removeRemoteHandler, parseClusterSuccessHandler, setTheme, updateSessionHandler, locateHCCL } from './connection/handler';
+import {
+    removeRemoteHandler,
+    parseClusterSuccessHandler,
+    setTheme,
+    updateSessionHandler,
+    locateHCCL,
+    switchLanguageHandler,
+} from './connection/handler';
 
 type InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> = {
     request: Request;
@@ -21,4 +28,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'parse/clusterCompleted': parseClusterSuccessHandler,
     updateSession: updateSessionHandler,
     locateHCCL,
+    switchLanguage: switchLanguageHandler,
 };

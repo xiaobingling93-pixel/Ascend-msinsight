@@ -1,0 +1,75 @@
+{
+  "timeline": {
+    "Align to Start": "对齐到起始位置",
+    "Timestamp Offset": "时间戳偏移",
+    "Slice Detail": "选中详情",
+    "Slices List": "选中列表",
+    "Find": "发现",
+    "Details": "详情",
+    "System View": "系统视图",
+    "Rank ID": "卡序号",
+    "Offset": "偏移量",
+    "contextMenu": {
+      "Fit to screen": "整屏显示",
+      "Find in Communication": "在通信中查找",
+      "Zoom into selection": "放大所选内容",
+      "Undo Zoom": "撤消缩放",
+      "Reset Zoom": "重置缩放",
+      "Hide": "隐藏",
+      "Show All Hidden": "显示全部已隐藏泳道"
+    },
+    "sliceDetail": {
+      "Slice Detail": "选中详情",
+      "Title": "标题",
+      "Start": "开始",
+      "Wall Duration": "持续时间",
+      "Self Time": "自用时间",
+      "Args": "参数",
+      "Sequence number": "序列号",
+      "Fwd thread id": "转发线程ID",
+      "Call stack": "调用栈",
+      "more": "更多",
+      "Event(s)": "事件",
+      "Link": "连接",
+      "Input Dims": "输入数量",
+      "Input type": "输入类型"
+    },
+    "sliceList": {
+      "Slices List": "选中列表",
+      "Name": "名称",
+      "Occurrences": "发生次数",
+      "Wall Duration": "持续时间",
+      "Average Wall Duration": "平均持续时间",
+      "Self Time": "自用时间",
+      "Index": "索引",
+      "Timestamp": "时间戳",
+      "Duration": "时长",
+      "Duration(ns)": "时长(ns)"
+    },
+    "systemView": {
+      "System View": "系统视图",
+      "Stats System View": "统计系统视图",
+      "Rank Id": "卡序号",
+      "Num Calls": "调用数",
+      "Python API Summary": "Python API 汇总",
+      "CANN API Summary": "CANN API 汇总",
+      "Ascend HardWare Task Summary": "Ascend HardWare Task 汇总",
+      "HCCL Summary": "HCCL 汇总",
+      "Overlap Analysis": "覆盖分析",
+      "Kernel Details": "算子详情"
+    },
+    "tableHead": {
+      "Name": "名称",
+      "Time(%)": "时间(%)",
+      "Total Time(us)": "总时间(us)",
+      "Num Calls": "调用数",
+      "Avg(us)": "平均(us)",
+      "Min(us)": "最小(us)",
+      "Max(us)": "最大(us)",
+      "Click To Timeline": "点击跳转Timeline",
+      "Click": "点击",
+      "Start Time": "开始时间",
+      "Duration(ns)": "时长(ns)"
+    }
+  }
+}

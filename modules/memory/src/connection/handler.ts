@@ -2,6 +2,7 @@ import { store } from '../store';
 import { runInAction } from 'mobx';
 import { NotificationHandler } from './defs';
 import { RankInfo } from '../entity/memory';
+import i18n from '../i18n';
 
 export const parseMemoryCompletedHandler: NotificationHandler = async (data): Promise<void> => {
     try {
@@ -126,4 +127,15 @@ export const deleteRankHandler: NotificationHandler = async (data): Promise<void
     } catch (error) {
         console.error(error);
     }
+};
+
+export const switchLanguageHandler: NotificationHandler = (data): void => {
+    const session = store.sessionStore.activeSession;
+    const lang = data.lang as 'zhCN' | 'enUS';
+    if (session) {
+        runInAction(() => {
+            session.language = lang;
+        });
+    }
+    i18n.changeLanguage(lang);
 };

@@ -1,15 +1,14 @@
 import { ThemeProvider } from '@emotion/react';
+import { SharedConfigProvider } from 'lib/SharedConfigProvider';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AppErrorBoundary } from './components/error/AppErrorBoundary';
 import { SessionPageErrorBoundary } from './components/error/SessionPageErrorBoundary';
 import { useRootStore } from './context/context';
-import i18n from './i18n';
 import { SessionPage } from './pages/SessionPage';
 import { platform } from './platforms';
 import { themeInstance, ThemeItem } from './theme/theme';
-import { getSearchParams } from './utils/localUrl';
 import eventBus, { EventType } from './utils/eventBus';
 import { DragFileImportInit } from './components/dragFile/DragFile';
 import type { CheckResultType } from './components/dragFile/DragFile';
@@ -107,21 +106,36 @@ function handleDropFile(result: CheckResultType): void {
 export const App = observer(() => {
     const { insightStore, sessionStore } = useRootStore();
     let session = sessionStore.activeSession;
-    const lang = getSearchParams('language');
-    const initialized = useRef(false);
+    const isInitialized = useRef(false);
+    const [locale, setLocale] = useState<'zhCN' | 'enUS'>('zhCN');
+
+    useEffect(() => {
+        if (session) {
+            setLocale(session.language);
+        }
+    }, [session?.language]);
 
     useEffect(() => {
         insightStore.loadTemplates().then(() => {
             session = sessionStore.activeSession;
         });
-        i18n.changeLanguage(lang === 'zh' ? 'zh' : 'en');
         platform.initTheme().then((res: ThemeItem) => {
             window.setTheme(res === 'dark');
         });
+        getLanguage();
+        initDragFile();
+    }, []);
 
-        if (!initialized.current) {
+    const getLanguage = (): void => {
+        connector.send({
+            event: 'getLanguage',
+        });
+    };
+
+    const initDragFile = (): void => {
+        if (!isInitialized.current) {
             // 防止严格模式下useEffect渲染两次
-            initialized.current = true;
+            isInitialized.current = true;
             DragFileImportInit({
                 id: 'root',
                 onDrop: (result: any) => {
@@ -129,13 +143,15 @@ export const App = observer(() => {
                 },
             });
         }
-    }, []);
+    };
     return (
         <ThemeProvider theme={themeInstance.getThemeType()}>
             <Window>
                 <AppErrorBoundary>
                     <SessionPageErrorBoundary>
-                        {session !== undefined ? <SessionPage session={session} /> : <StatePopover/>}
+                        <SharedConfigProvider locale={locale}>
+                            {session !== undefined ? <SessionPage session={session} /> : <StatePopover/>}
+                        </SharedConfigProvider>
                     </SessionPageErrorBoundary>
                 </AppErrorBoundary>
             </Window>

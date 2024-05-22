@@ -20,11 +20,16 @@ module.exports = {
           './CommonUtils': './src/utils/Common.tsx',
           './Connector': './src/connection/index',
           './useDraggableContainer': './src/useDraggableContainer/useDraggableContainer.tsx',
+          './i18n': './src/i18n/index.ts',
+          './SharedConfigProvider': './src/SharedConfigProvider/index.tsx',
         },
         shared: {
           react: {singleton: true},
           'react-dom': {singleton: true},
           '@cloudsop/horizon': {singleton: true},
+          i18next: {singleton: true},
+          'react-i18next': {singleton: true},
+          antd: {singleton: true},
         },
       }));
       webpackConfig.output.publicPath = 'auto';
