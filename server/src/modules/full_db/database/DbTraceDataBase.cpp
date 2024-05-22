@@ -1697,10 +1697,16 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsPa
 bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
     Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId)
 {
+    if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
+        return false;
+    }
+    std::string orderBy = " ORDER BY " + requestParams.orderBy;
+    orderBy.append(requestParams.order == "descend" ? " DESC " : " ASC ");
     auto stmt = CreatPreparedStatement();
     std::unique_ptr <SqliteResultSet> resultSet;
     try {
-        resultSet = TraceDatabaseHelper::QueryThreadSameOperatorsDetails(stmt, requestParams, minTimestamp);
+        resultSet = TraceDatabaseHelper::QueryThreadSameOperatorsDetails(stmt, requestParams, minTimestamp, orderBy);
     } catch (DatabaseException &e) {
         ServerLog::Error("QueryThreadSameOperatorsDetails Fail, ", e.What());
         return false;
