@@ -1987,12 +1987,12 @@ bool JsonTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSlicePar
 bool JsonTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams &params, uint64_t threshold,
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
 {
-    auto stmt = CreatPreparedStatement(QUERY_ACLNN_OP_CNT_EXCEED_THRESHOLD_SQL);
+    auto stmt = CreatPreparedStatement(JsonSqlConstant::GenerateAclnnQuerySql(params));
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for Aclnn Op Exceed Threshold.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, threshold, params.orderBy, params.order);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, threshold);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for Aclnn Op Exceed Threshold.", stmt->GetErrorMessage());
         return false;

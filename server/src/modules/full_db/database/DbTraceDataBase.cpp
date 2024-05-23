@@ -1788,13 +1788,13 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
         "    JOIN " + TABLE_STRING_IDS + " str ON info.name = str.id "
         "    WHERE str.value LIKE 'AscendCL@aclnn%' AND str.value NOT LIKE '%GetWorkspaceSize' "
         "    GROUP BY str.value HAVING COUNT(str.value) >= ?"
-        ") ORDER BY ? ?";
+        ") ORDER BY " + params.orderBy + " " + params.order;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Fail to prepare sql for Aclnn Op Exceed Threshold.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(minTimestamp, threshold, params.orderBy, params.order);
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, threshold);
     if (resultSet == nullptr) {
         ServerLog::Error("Failed to get result set for Aclnn Op Exceed Threshold.", stmt->GetErrorMessage());
         return false;

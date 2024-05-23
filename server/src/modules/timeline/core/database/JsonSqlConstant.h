@@ -117,12 +117,6 @@ const std::string QUERY_LAYER_DATA_SQL = "SELECT sum(duration) AS totalTime, cou
 const std::string QUERY_QUERY_TYPE_SQL =
     "SELECT DISTINCT accelerator_core FROM " + KERNEL_DETAIL + " ORDER BY accelerator_core";
 
-const std::string QUERY_ACLNN_OP_CNT_EXCEED_THRESHOLD_SQL =
-    "SELECT s.name as name, s.timestamp - ? as startTime, s.duration as duration, t.pid as pid, t.tid as tid "
-    "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
-    "WHERE s.name IN ( "
-    "    SELECT name FROM " + SLICE_TABLE + " WHERE name LIKE 'AscendCL@aclnn%' AND name NOT LIKE '%GetWorkspaceSize' "
-    "    GROUP BY name HAVING COUNT(name) >= ? ) ORDER BY ? ?";
 const std::string QUERY_AFFINITY_API_SQL =
     "SELECT s.track_id as track, s.id as id, s.name as name, s.timestamp - ? as startTime, s.duration as duration, "
     "t.pid as pid, t.tid as tid FROM " + SLICE_TABLE + " s "
@@ -297,6 +291,19 @@ public:
         std::string nameMatch = GetSearchNameSqlSuffix(isMatchExact, isMatchCase);
         std::string sql = "SELECT name, timestamp, duration FROM " + SLICE_TABLE + " WHERE " + nameMatch + orderBy +
             " limit ? offset ?";
+        return sql;
+    }
+
+    static std::string GenerateAclnnQuerySql(const Protocol::KernelDetailsParams &params)
+    {
+        std::string sql =
+            "SELECT s.name as name, s.timestamp - ? as startTime, s.duration as duration, t.pid as pid, t.tid as tid "
+            "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
+            "WHERE s.name IN ( "
+            "    SELECT name FROM " + SLICE_TABLE +
+            "    WHERE name LIKE 'AscendCL@aclnn%' AND name NOT LIKE '%GetWorkspaceSize' "
+            "    GROUP BY name HAVING COUNT(name) >= ? "
+            ") ORDER BY " + params.orderBy + " " + params.order;
         return sql;
     }
 
