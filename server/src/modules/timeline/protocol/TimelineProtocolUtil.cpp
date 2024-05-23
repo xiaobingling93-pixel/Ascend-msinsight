@@ -393,7 +393,7 @@ template <> std::optional<document_t> ToResponseJson<EventsViewResponse>(const E
     for (const auto &item: response.body.eventDetailList) {
         json_t itemJson(kObjectType);
         JsonUtil::AddMember(itemJson, "name", item->name, allocator);
-        JsonUtil::AddMember(itemJson, "startTime", item->startTime, allocator);
+        JsonUtil::AddMember(itemJson, "start", item->startTime, allocator);
         JsonUtil::AddMember(itemJson, "duration", item->duration, allocator);
         if (dynamic_cast<HostEventDetail*>(item.get())) {
             auto detail = dynamic_cast<HostEventDetail*>(item.get());

@@ -16,7 +16,7 @@ std::map<std::string, Protocol::PROCESS_TYPE> TraceDatabaseHelper::metaTypeMap =
 
 const Protocol::EventsViewColumnAttr columnName = {"Name", "string", "name"};
 const Protocol::EventsViewColumnAttr columnStart = {"Start", "number", "start"};
-const Protocol::EventsViewColumnAttr columnDuration = {"Duration", "number", "duration"};
+const Protocol::EventsViewColumnAttr columnDuration = {"Duration(ns)", "number", "duration"};
 const Protocol::EventsViewColumnAttr columnTid = {"TID", "string", "tid"};
 const Protocol::EventsViewColumnAttr columnPid = {"PID", "string", "pid"};
 const Protocol::EventsViewColumnAttr columnRankId = {"Rank ID", "string", "rankId"};
