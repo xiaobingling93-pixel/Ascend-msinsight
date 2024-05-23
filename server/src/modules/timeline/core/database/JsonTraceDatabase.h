@@ -130,6 +130,9 @@ public:
 
     void SimulationUpdateProcessSortIndex();
 
+    bool QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
+        uint64_t minTimestamp) override;
+
 private:
     const std::string sliceTable = "slice";
     const std::string threadTable = "thread";
@@ -140,7 +143,6 @@ private:
     const std::string hcclType = "HCCL";
     const int unit = 1000;
     const int tolerance = 500; // 匹配算子时的范围为±500
-
     bool initStmt = false;
     std::unique_ptr<SqlitePreparedStatement> insertSliceStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateProcessNameStmt = nullptr;

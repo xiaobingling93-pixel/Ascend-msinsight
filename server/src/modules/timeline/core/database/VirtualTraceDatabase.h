@@ -88,6 +88,8 @@ public:
         std::map<uint64_t, std::vector<uint32_t>> &indexs) = 0;
     virtual bool QueryFuseableOpData(const Protocol::KernelDetailsParams &params, const Timeline::FuseableOpRule &rule,
         std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp) = 0;
+    virtual bool QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
+        uint64_t minTimestamp) = 0;
 };
 }
 #endif // PROFILER_SERVER_TRACE_DATABASE_H

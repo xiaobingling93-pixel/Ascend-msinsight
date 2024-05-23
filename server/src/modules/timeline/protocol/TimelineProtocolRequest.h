@@ -201,6 +201,7 @@ struct UnitCounterRequest : public Request {
     UnitCounterRequest() : Request(REQ_RES_UNIT_COUNTER){};
     UnitCounterParams params;
 };
+
 struct SystemViewParams {
     std::string orderBy;
     std::string order;
@@ -217,6 +218,24 @@ struct SystemViewParams {
 struct SystemViewRequest : public Request {
     SystemViewRequest() : Request(REQ_RES_UNIT_SYSTEM_VIEW){};
     SystemViewParams params;
+};
+
+struct EventsViewParams {
+    std::string orderBy;
+    std::string order;
+    uint64_t currentPage;
+    uint64_t pageSize;
+    std::string rankId;
+    std::string pid;
+    std::string processName;
+    std::string tid;
+    std::string threadName;
+    std::string metaType;
+};
+
+struct EventsViewRequest : public Request {
+    EventsViewRequest() : Request(REQ_RES_UNIT_EVENTS_VIEW){};
+    EventsViewParams params;
 };
 
 struct KernelDetailsParams {

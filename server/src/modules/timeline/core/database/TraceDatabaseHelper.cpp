@@ -6,6 +6,36 @@
 
 
 namespace Dic::Module::Timeline {
+std::map<std::string, Protocol::PROCESS_TYPE> TraceDatabaseHelper::metaTypeMap = {
+    {"Python", Protocol::PROCESS_TYPE::API},
+    {"CANN", Protocol::PROCESS_TYPE::CANN_API},
+    {"Ascend Hardware", Protocol::PROCESS_TYPE::ASCEND_HARDWARE},
+    {"HCCL", Protocol::PROCESS_TYPE::HCCL},
+    {"Overlap Analysis", Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS},
+};
+
+const Protocol::EventsViewColumnAttr columnName = {"Name", "string", "name"};
+const Protocol::EventsViewColumnAttr columnStart = {"Start", "number", "start"};
+const Protocol::EventsViewColumnAttr columnDuration = {"Duration", "number", "duration"};
+const Protocol::EventsViewColumnAttr columnTid = {"TID", "string", "tid"};
+const Protocol::EventsViewColumnAttr columnPid = {"PID", "string", "pid"};
+const Protocol::EventsViewColumnAttr columnRankId = {"Rank ID", "string", "rankId"};
+const Protocol::EventsViewColumnAttr columnStreamName = {"Stream Name", "string", "threadName"};
+const Protocol::EventsViewColumnAttr columnGroupName = {"Group Name", "string", "threadName"};
+const Protocol::EventsViewColumnAttr columnAnalysisType = {"Analysis Type", "string", "threadName"};
+
+std::map<Protocol::PROCESS_TYPE, std::vector<Protocol::EventsViewColumnAttr>>
+    TraceDatabaseHelper::eventsViewColumnsMap = {
+    {Protocol::PROCESS_TYPE::API, {columnName, columnStart, columnDuration, columnTid, columnPid}},
+    {Protocol::PROCESS_TYPE::CANN_API, {columnName, columnStart, columnDuration, columnTid, columnPid}},
+    {Protocol::PROCESS_TYPE::ASCEND_HARDWARE,
+        {columnName, columnStart, columnDuration, columnStreamName, columnRankId}},
+    {Protocol::PROCESS_TYPE::HCCL, {columnName, columnStart, columnDuration, columnGroupName, columnRankId}},
+    {Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS,
+        {columnName, columnStart, columnDuration, columnAnalysisType, columnRankId}},
+};
+
+/* Functions for BbTraceDataBase */
 std::optional<std::string> TraceDatabaseHelper::QueryConnectionId(std::unique_ptr<SqlitePreparedStatement> &stmt,
     const Protocol::UnitFlowsParams &requestParams)
 {
@@ -324,4 +354,140 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
     }
 }
 
+/* Functions for JsonTraceDataBase */
+std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryEventsViewData4Text(
+    std::unique_ptr <SqlitePreparedStatement> &stmt, const Protocol::EventsViewParams &params)
+{
+    // 检查入参合法性
+    if (params.pid.empty()) {
+        ServerLog::Error("Can not to query events view data while process id is empty.");
+        return nullptr;
+    }
+    std::string orderBy = params.orderBy.empty() ? "start" : params.orderBy;
+    if (!StringUtil::CheckSqlValid(orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", orderBy);
+        return nullptr;
+    }
+    auto metaType = GetProcessTypeByProcessName(params.processName);
+    std::string baseSql;
+    switch (metaType) {
+        case Protocol::PROCESS_TYPE::API:
+        case Protocol::PROCESS_TYPE::CANN_API:
+            baseSql = "SELECT name, timestamp AS start, duration FROM slice AS s "
+                      "LEFT JOIN thread AS t ON s.track_id = t.track_id ";
+            break;
+        case Protocol::PROCESS_TYPE::HCCL:
+            baseSql = "SELECT name, timestamp AS start, duration, thread_name AS threadName FROM slice AS s "
+                      "LEFT JOIN thread AS t ON s.track_id = t.track_id AND threadName NOT LIKE 'Plane%' ";
+            break;
+        case Protocol::PROCESS_TYPE::ASCEND_HARDWARE:
+        case Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS:
+            baseSql = "SELECT name, timestamp AS start, duration, thread_name AS threadName FROM slice AS s "
+                      "LEFT JOIN thread AS t ON s.track_id = t.track_id ";
+            break;
+        default:
+            ServerLog::Error("QueryEventsViewData4Text. Unsupported process type.");
+            return nullptr;
+    }
+
+    // 拼接SQL语句
+    baseSql.append("WHERE t.pid = ? ");
+    params.tid.empty() ? baseSql : baseSql.append("AND t.tid = ? ");
+    std::string order = params.order == "descend" ? "DESC" : "ASC";
+    baseSql.append("ORDER BY " + orderBy + " " + order + " LIMIT ? OFFSET ?");
+    uint64_t limit = params.pageSize;
+    uint64_t currentPage = params.currentPage > 0 ? params.currentPage : 1;
+    uint64_t offset = (currentPage - 1) * limit;
+
+    // 查询数据库
+    try {
+        if (params.tid.empty()) {
+            return ExecuteQuery(stmt, baseSql, params.pid, limit, offset);
+        } else {
+            return ExecuteQuery(stmt, baseSql, params.pid, params.tid, limit, offset);
+        }
+    } catch (DatabaseException &e) {
+        ServerLog::Error("QueryEventsViewData4Text. Execute query failed: ", e.What());
+        return nullptr;
+    }
+}
+
+void TraceDatabaseHelper::ResolveEventsViewResultSet(std::unique_ptr<SqliteResultSet> &resultSet,
+    const Protocol::EventsViewParams &params, EventsViewBody &body, uint64_t minTimestamp)
+{
+    // 封装结果
+    auto metaType = GetProcessTypeByProcessName(params.processName);
+    while (resultSet->Next()) {
+        auto ptr = std::make_unique<EventDetail>();
+        if (metaType == PROCESS_TYPE::API || metaType == PROCESS_TYPE::CANN_API) {
+            auto hostPtr = std::make_unique<HostEventDetail>();
+            hostPtr->tid = params.tid;
+            hostPtr->pid = params.pid;
+            ptr = std::move(hostPtr);
+        } else {
+            auto devicePtr = std::make_unique<DeviceEventDetail>();
+            devicePtr->threadName = resultSet->GetString("threadName");
+            devicePtr->rankId = params.rankId;
+            ptr = std::move(devicePtr);
+        }
+        ptr->name = resultSet->GetString("name");
+        ptr->startTime = resultSet->GetUint64("start") - minTimestamp;
+        ptr->duration = resultSet->GetUint64("duration");
+        body.eventDetailList.emplace_back(std::move(ptr));
+    }
+    body.count = body.eventDetailList.size();
+    body.currentPage = params.currentPage;
+    body.pageSize = params.pageSize;
+    for (const auto &item: eventsViewColumnsMap.at(metaType)) {
+        body.columnList.emplace_back(item);
+    }
+}
+
+void TraceDatabaseHelper::QueryThreadTracesHelper(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec,
+    const Protocol::UnitThreadTracesParams &requestParams, Protocol::UnitThreadTracesBody &responseBody)
+{
+    for (auto &item : rowThreadTraceVec) {
+        Protocol::ThreadTraces threadTraces{};
+        threadTraces.id = std::to_string(item.id);
+        threadTraces.name = item.name;
+        threadTraces.duration = item.duration;
+        threadTraces.startTime = item.startTime;
+        threadTraces.endTime = item.startTime + item.duration;
+        threadTraces.depth = item.depth;
+        threadTraces.threadId = requestParams.threadId;
+        threadTraces.cname = item.cname;
+        while (responseBody.data.size() <= item.depth) {
+            responseBody.data.emplace_back();
+        }
+        responseBody.data[item.depth].emplace_back(threadTraces);
+    }
+}
+
+void TraceDatabaseHelper::QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<SqliteResultSet> &resultSet,
+    uint64_t unitTime, uint64_t minTimestamp, Protocol::UnitThreadTracesSummaryBody &responseBody)
+{
+    uint64_t tempStartTime = 0;
+    uint64_t tempEndTime = 0;
+    uint64_t maxTime = 0;
+    while (resultSet->Next()) {
+        uint64_t curStartTime = resultSet->GetUint64("timestamp");
+        uint64_t curEndTime = resultSet->GetUint64("end_time");
+        if (tempEndTime + unitTime >= curStartTime) {
+            tempEndTime = tempEndTime > curEndTime ? tempEndTime : curEndTime;
+            maxTime = tempEndTime;
+            continue;
+        }
+        ThreadTracesSummary summary;
+        summary.startTime = tempStartTime - minTimestamp;
+        summary.duration = tempEndTime - tempStartTime;
+        tempStartTime = curStartTime;
+        tempEndTime = curEndTime;
+        responseBody.data.emplace_back(summary);
+    }
+    ThreadTracesSummary summary;
+    summary.startTime = tempStartTime - minTimestamp;
+    summary.duration = tempEndTime - tempStartTime;
+    responseBody.data.emplace_back(summary);
+    ServerLog::Info("Summery Size is: ", responseBody.data.size());
+}
 }

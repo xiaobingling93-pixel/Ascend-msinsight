@@ -325,6 +325,45 @@ struct SystemViewResponse : public Response {
     SystemViewBody body;
 };
 
+class EventDetail {
+public:
+    virtual void Base() {}
+    std::string name;
+    uint64_t startTime = 0;
+    uint64_t duration = 0;
+};
+
+class HostEventDetail : public EventDetail {
+public:
+    std::string tid;
+    std::string pid;
+};
+
+class DeviceEventDetail : public EventDetail {
+public:
+    std::string threadName;
+    std::string rankId;
+};
+
+struct EventsViewColumnAttr {
+    std::string name;
+    std::string type;
+    std::string key;
+};
+
+struct EventsViewBody {
+    std::vector<EventsViewColumnAttr> columnList;
+    std::vector<std::unique_ptr<EventDetail>> eventDetailList;
+    uint64_t count;
+    uint64_t pageSize;
+    uint64_t currentPage;
+};
+
+struct EventsViewResponse : public Response {
+    EventsViewResponse() : Response(REQ_RES_UNIT_EVENTS_VIEW) {}
+    EventsViewBody body;
+};
+
 struct KernelDetail {
     std::string name;
     std::string type;

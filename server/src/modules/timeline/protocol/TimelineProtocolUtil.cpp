@@ -383,6 +383,49 @@ template <> std::optional<document_t> ToResponseJson<SystemViewResponse>(const S
     return std::move(json);
 }
 
+template <> std::optional<document_t> ToResponseJson<EventsViewResponse>(const EventsViewResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    json_t eventsDetailList(kArrayType);
+    for (const auto &item: response.body.eventDetailList) {
+        json_t itemJson(kObjectType);
+        JsonUtil::AddMember(itemJson, "name", item->name, allocator);
+        JsonUtil::AddMember(itemJson, "startTime", item->startTime, allocator);
+        JsonUtil::AddMember(itemJson, "duration", item->duration, allocator);
+        if (dynamic_cast<HostEventDetail*>(item.get())) {
+            auto detail = dynamic_cast<HostEventDetail*>(item.get());
+            JsonUtil::AddMember(itemJson, "tid", detail->tid, allocator);
+            JsonUtil::AddMember(itemJson, "pid", detail->pid, allocator);
+        } else if (dynamic_cast<DeviceEventDetail*>(item.get())) {
+            auto detail = dynamic_cast<DeviceEventDetail*>(item.get());
+            JsonUtil::AddMember(itemJson, "threadName", detail->threadName, allocator);
+            JsonUtil::AddMember(itemJson, "rankId", detail->rankId, allocator);
+        } else {
+            ServerLog::Warn("Events View Response.dynamic cast failed.");
+            continue;
+        }
+        eventsDetailList.PushBack(itemJson, allocator);
+    }
+    json_t columnList(kArrayType);
+    for (const auto &item: response.body.columnList) {
+        json_t itemJson(kObjectType);
+        JsonUtil::AddMember(itemJson, "name", item.name, allocator);
+        JsonUtil::AddMember(itemJson, "type", item.type, allocator);
+        JsonUtil::AddMember(itemJson, "key", item.key, allocator);
+        columnList.PushBack(itemJson, allocator);
+    }
+    JsonUtil::AddMember(body, "eventDetails", eventsDetailList, allocator);
+    JsonUtil::AddMember(body, "columnList", columnList, allocator);
+    JsonUtil::AddMember(body, "count", response.body.count, allocator);
+    JsonUtil::AddMember(body, "pageSize", response.body.pageSize, allocator);
+    JsonUtil::AddMember(body, "currentPage", response.body.currentPage, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
 template <> std::optional<document_t> ToResponseJson<KernelDetailsResponse>(const KernelDetailsResponse &response)
 {
     document_t json(kObjectType);

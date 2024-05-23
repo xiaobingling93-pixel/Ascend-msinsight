@@ -539,23 +539,10 @@ bool JsonTraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams
 {
     std::vector<Protocol::RowThreadTrace> rowThreadTraceVec =
         QuerySliceByCondition(requestParams, minTimestamp, traceId);
-    for (auto &item : rowThreadTraceVec) {
-        Protocol::ThreadTraces threadTraces{};
-        threadTraces.id = std::to_string(item.id);
-        threadTraces.name = item.name;
-        threadTraces.duration = item.duration;
-        threadTraces.startTime = item.startTime;
-        threadTraces.endTime = item.startTime + item.duration;
-        threadTraces.depth = item.depth;
-        threadTraces.threadId = requestParams.threadId;
-        threadTraces.cname = item.cname;
-        while (responseBody.data.size() <= item.depth) {
-            responseBody.data.emplace_back();
-        }
-        responseBody.data[item.depth].emplace_back(threadTraces);
-    }
+    TraceDatabaseHelper::QueryThreadTracesHelper(rowThreadTraceVec, requestParams, responseBody);
     return true;
 }
+
 std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByCondition(const UnitThreadTracesParams &requestParams,
     uint64_t minTimestamp, int64_t traceId)
 {
@@ -663,29 +650,7 @@ bool JsonTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTrace
         ServerLog::Error("QueryThreadTracesSummary. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
-    uint64_t tempStartTime = 0;
-    uint64_t tempEndTime = 0;
-    uint64_t maxTime = 0;
-    while (resultSet->Next()) {
-        uint64_t curStartTime = resultSet->GetUint64("timestamp");
-        uint64_t curEndTime = resultSet->GetUint64("end_time");
-        if (tempEndTime + unitTime >= curStartTime) {
-            tempEndTime = tempEndTime > curEndTime ? tempEndTime : curEndTime;
-            maxTime = tempEndTime;
-            continue;
-        }
-        ThreadTracesSummary summary;
-        summary.startTime = tempStartTime - minTimestamp;
-        summary.duration = tempEndTime - tempStartTime;
-        tempStartTime = curStartTime;
-        tempEndTime = curEndTime;
-        responseBody.data.emplace_back(summary);
-    }
-    ThreadTracesSummary summary;
-    summary.startTime = tempStartTime - minTimestamp;
-    summary.duration = tempEndTime - tempStartTime;
-    responseBody.data.emplace_back(summary);
-    ServerLog::Info("Summery Size is: ", responseBody.data.size());
+    TraceDatabaseHelper::QueryAllSliceInRangeByTrackIdHelper(resultSet, unitTime, minTimestamp, responseBody);
     return true;
 }
 
@@ -1613,6 +1578,23 @@ bool JsonTraceDatabase::QueryStepDuration(const std::string &stepId, uint64_t &m
     return true;
 }
 
+bool JsonTraceDatabase::QueryEventsViewData(const EventsViewParams &params, EventsViewBody &body,
+    uint64_t minTimestamp)
+{
+    auto stmt = CreatPreparedStatement();
+    if (stmt == nullptr) {
+        return false;
+    }
+    std::unique_ptr<SqliteResultSet> resultSet = TraceDatabaseHelper::QueryEventsViewData4Text(stmt, params);
+    if (resultSet == nullptr) {
+        ServerLog::Error("QueryEventsViewData. Failed to get result set.", stmt->GetErrorMessage());
+        return false;
+    }
+
+    // 封装结果
+    TraceDatabaseHelper::ResolveEventsViewResultSet(resultSet, params, body, minTimestamp);
+    return true;
+}
 
 bool JsonTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &requestParams,
     Protocol::SystemViewBody &responseBody)

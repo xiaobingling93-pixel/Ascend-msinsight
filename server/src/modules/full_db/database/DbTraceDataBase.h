@@ -119,6 +119,8 @@ public:
         std::map<uint64_t, std::vector<uint32_t>> &indexs) override;
     bool QueryFuseableOpData(const Protocol::KernelDetailsParams &params, const Timeline::FuseableOpRule &rule,
         std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp) override;
+    bool QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
+        uint64_t minTimestamp) override;
 
     bool CheckTableDataInvalid(std::string tableName);
 

@@ -38,6 +38,7 @@ private:
     static std::unique_ptr<Request> ToFlowCategoryEventsRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitCounterRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToSystemViewRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToEventsViewRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToKernelDetailRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToOneKernelRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitThreadsOperatorsRequest(const json_t &json, std::string &error);
@@ -60,6 +61,7 @@ private:
     static std::optional<document_t> ToFlowCategoryEventsResponse(const Response &response);
     static std::optional<document_t> ToUnitCounterResponse(const Response &response);
     static std::optional<document_t> ToSystemViewResponseJson(const Response &response);
+    static std::optional<document_t> ToEventsViewResponseJson(const Response &response);
     static std::optional<document_t> ToKernelDetailResponseJson(const Response &response);
     static std::optional<document_t> ToOneKernelResponseJson(const Response &response);
     static std::optional<document_t> ToUnitThreadsOperatorsResponseJson(const Response &response);

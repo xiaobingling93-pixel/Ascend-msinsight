@@ -1883,4 +1883,10 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
 
     return true;
 }
+
+bool DbTraceDataBase::QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
+    uint64_t minTimestamp)
+{
+    return false;
+}
 }

@@ -66,6 +66,7 @@ const std::string REQ_RES_UNIT_FLOW = "unit/flow";
 const std::string REQ_RES_UNIT_FLOWS = "unit/flows";
 const std::string REQ_RES_RESET_WINDOW = "remote/reset";
 const std::string REQ_RES_UNIT_SYSTEM_VIEW = "unit/systemView";
+const std::string REQ_RES_UNIT_EVENTS_VIEW = "unit/eventView";
 const std::string REQ_RES_UNIT_KERNEL_DETAILS = "unit/kernelDetails";
 const std::string REQ_RES_ONE_KERNEL_DETAILS = "unit/one/kernelDetail";
 const std::string REQ_RES_SEARCH_COUNT = "search/count";

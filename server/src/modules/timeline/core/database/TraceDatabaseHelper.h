@@ -21,6 +21,7 @@ using namespace Protocol;
 
 class TraceDatabaseHelper {
 public:
+/* Functions for BbTraceDataBase */
 static std::optional<std::string> QueryConnectionId(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                                     const Protocol::UnitFlowsParams &requestParams);
     static std::unique_ptr<SqliteResultSet> QueryThreadsByPid(std::unique_ptr<SqlitePreparedStatement> &stmt,
@@ -344,7 +345,30 @@ static std::unique_ptr<SqliteResultSet> QuerySystemViewData(std::unique_ptr<Sqli
 static std::unique_ptr<SqliteResultSet> QueryThreadSameOperatorsDetails(std::unique_ptr<SqlitePreparedStatement> &stmt,
      const Protocol::UnitThreadsOperatorsParams &requestParams, uint64_t minTimestamp, const std::string& orderBy);
 
+/* Functions for JsonTraceDataBase */
+static std::unique_ptr<SqliteResultSet> QueryEventsViewData4Text(std::unique_ptr <SqlitePreparedStatement> &stmt,
+    const Protocol::EventsViewParams &params);
+static void ResolveEventsViewResultSet(std::unique_ptr<SqliteResultSet> &resultSet,
+    const Protocol::EventsViewParams &params, EventsViewBody &body, uint64_t minTimestamp);
+static void QueryThreadTracesHelper(std::vector<Protocol::RowThreadTrace> &rowThreadTraceVec,
+    const Protocol::UnitThreadTracesParams &requestParams, Protocol::UnitThreadTracesBody &responseBody);
+static void QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<SqliteResultSet> &resultSet,
+    uint64_t unitTime, uint64_t minTimestamp, Protocol::UnitThreadTracesSummaryBody &responseBody);
 private:
+/* Functions for JsonTraceDataBase */
+    static std::map<std::string, Protocol::PROCESS_TYPE> metaTypeMap;
+    static std::map<Protocol::PROCESS_TYPE, std::vector<Protocol::EventsViewColumnAttr>> eventsViewColumnsMap;
+    static inline Protocol::PROCESS_TYPE GetProcessTypeByProcessName(const std::string &processName)
+    {
+        for (const auto &item: metaTypeMap) {
+            if (StringUtil::StartWith(processName, item.first)) {
+                return item.second;
+            }
+        }
+        return PROCESS_TYPE::NONE;
+    }
+
+/* Functions for BbTraceDataBase */
     static inline bool DealLastData(std::vector<Protocol::SimpleSlice> &rows,
                              std::map<std::string, uint64_t> &selfTimeKeyValue,
                              uint64_t startTime, uint64_t endTime, uint64_t index)
