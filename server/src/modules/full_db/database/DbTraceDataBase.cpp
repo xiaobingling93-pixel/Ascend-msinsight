@@ -1755,7 +1755,39 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
 bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams &params, uint64_t threshold,
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
 {
-    return false;
+    std::string sql =
+        "SELECT s1.value as name, s2.value as op_type, task.taskType, task.startNs - ? as startTime, "
+        "task.endNs - task.startNs as duration, task.globalPid as pid "
+        "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
+        "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
+        "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
+        "JOIN " + TABLE_STRING_IDS + " s2 ON info.opType = s2.id "
+        "WHERE s1.value IN ("
+        "    SELECT str.value FROM " + TABLE_COMPUTE_TASK_INFO + " info "
+        "    JOIN " + TABLE_STRING_IDS + " str ON info.name = str.id "
+        "    WHERE str.value LIKE 'AscendCL@aclnn%' AND str.value NOT LIKE '%GetWorkspaceSize' "
+        "    GROUP BY str.value HAVING COUNT(str.value) >= ?"
+        ")";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Fail to prepare sql for Aclnn Op Exceed Threshold.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, threshold);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for Aclnn Op Exceed Threshold.", stmt->GetErrorMessage());
+        return false;
+    }
+    while (resultSet->Next()) {
+        Protocol::KernelBaseInfo one{};
+        one.name = resultSet->GetString("name");
+        one.startTime = resultSet->GetUint64("startTime");
+        one.duration = resultSet->GetUint64("duration");
+        one.pid = resultSet->GetString("pid");
+        one.tid = "";
+        data.emplace_back(one);
+    }
+    return true;
 }
 
 bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &params,
