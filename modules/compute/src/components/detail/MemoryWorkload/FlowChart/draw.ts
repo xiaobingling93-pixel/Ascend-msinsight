@@ -814,7 +814,7 @@ const colorConfig: Record<string, Record<string, any>> = {
         rectLabel: '#fff',
         label: '#7b7a7a',
         memory: '#40a9ff',
-        range: ['#4c008a', '#c42627', '#ff5f03', '#ffc55b', '#fcc95e', '#ffffff'],
+        range: ['#4c008a', '#c42627', '#ff5f03', '#ffc55b', '#fcc95e', '#e9e9e9'],
     },
     dark: {
         container: 'rgb(43,43,43)',
@@ -1021,7 +1021,7 @@ const addLegend = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): v
     g.append('text')
         .attr('x', 0)
         .attr('y', 0)
-        .text('Peak')
+        .text('Peak(%)')
         .style('font-size', '12px')
         .style('font-family', 'Micro Yahei')
         .style('fill', COLOR.label);

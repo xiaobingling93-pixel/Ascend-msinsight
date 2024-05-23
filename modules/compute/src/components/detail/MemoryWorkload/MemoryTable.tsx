@@ -42,9 +42,10 @@ function wrapData(data: ItableDetail[], limit: Ilimit): { tablelist: ItableConfi
     let count = 0;
     const tablelist = data.reduce<ItableConfig[]>((pre, tableDetail) => {
         if (count > limit.maxSize) {
+            count += tableDetail?.row?.length ?? 0;
             return pre;
         }
-        const { headerName, row, tableName } = tableDetail;
+        const { headerName = [], row = [], tableName = '' } = tableDetail ?? {};
         headerName[0] = tableName;
         const cols = getFullCols(headerName);
         let dataset = row.map(item => {
@@ -64,12 +65,12 @@ function wrapData(data: ItableDetail[], limit: Ilimit): { tablelist: ItableConfi
         return pre;
     }, []);
 
-    return { tablelist, limit: { ...limit, current: count } };
+    return { tablelist, limit: { ...limit, current: count, overlimit: count > limit.maxSize } };
 }
 
 function Table({ condition }: {condition: Icondition}): JSX.Element {
     const [tablelist, setTablelist] = useState<ItableConfig[]>([]);
-    const [limit, setLimit] = useState<Ilimit>({ overlimit: false, maxSize: 5000, current: 0 });
+    const [limit, setLimit] = useState<Ilimit>({ overlimit: false, maxSize: 1000, current: 0 });
 
     const updateData = async(): Promise<void> => {
         const res = await queryMemoryTable(condition);
@@ -85,7 +86,7 @@ function Table({ condition }: {condition: Icondition}): JSX.Element {
     return (
         <div style={{ padding: '0 20px 20px' }}>
             {tablelist.length === 0 && (<div style={{ textAlign: 'center', color: 'var(--grey15) ' }}>No data</div>) }
-            {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`All Instruction Records (${limit.current})`}/>}
+            {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`Memory Workload Table Records(${limit.current})`}/>}
             {tablelist.map((item, index) => (
                 <ResizeTable
                     key={`memoryTable${index}`}
