@@ -342,6 +342,45 @@ public:
         return sql;
     }
 
+    static std::string GenerateAICpuQuerySqlDB(const std::vector<std::string> &replace,
+        const std::map<std::string, Timeline::AICpuCheckDataType> &dataTypeMap)
+    {
+        std::vector<std::string> opTypeList{};
+        for (const auto &item : dataTypeMap) { // 获取除other以外的算子类型列表
+            if (item.first != "other") {
+                opTypeList.emplace_back(item.first);
+            }
+        }
+        std::vector<std::string> dataTypeCheck{};
+        for (const auto &item : dataTypeMap) {
+            std::string opType = item.first;
+            if (item.first == "other") { // 对于other，使用Not IN排除opTypeList以外的算子类型
+                opType = StringUtil::Join4SqlGroup(opTypeList);
+            }
+            dataTypeCheck.emplace_back(GenerateAICpuOpFilterSqlDB(opType, item.second));
+        }
+        std::string dataTypeCheckSql = StringUtil::join(dataTypeCheck, "OR");
+
+        std::string sql =
+            "SELECT s2.value as name, s1.value as type, s0.value as unit, t.startNs - ? as startTime, "
+            "t.endNs - t.startNs as duration, t.globalPid as pid "
+            "FROM COMPUTE_TASK_INFO info "
+            "JOIN STRING_IDS s0 ON info.taskType = s0.id "
+            "JOIN TASK t ON info.globalTaskId = t.globalTaskId "
+            "JOIN STRING_IDS s1 ON info.opType = s1.id "
+            "JOIN STRING_IDS s2 ON info.name = s2.id "
+            "JOIN STRING_IDS s3 ON info.inputDataTypes = s3.id "
+            "JOIN STRING_IDS s4 ON info.outputDataTypes = s4.id "
+            "WHERE s0.value ='AI_CPU' AND ("
+            "    lower(s1.value) IN (" + StringUtil::Join4SqlGroup(replace) + ") " // 特定类型的算子可以修改代码
+            "    OR ("
+            "    " + dataTypeCheckSql + // 检查数据类型是否符合要求
+            "    ) OR "
+            "    duration >= ?" // 执行时间超过20us
+            ") ";
+        return sql;
+    }
+
     static std::string GenerateFuseableOpFilterSql(const Timeline::FuseableOpRule &rule)
     {
         std::string sql = "WITH data AS ( "
@@ -372,6 +411,20 @@ private:
         }
         sql += "lower(kd.input_data_types) NOT IN ( " + StringUtil::Join4SqlGroup(dataType.input) + " ) AND "
                "lower(kd.output_data_types) NOT IN ( " + StringUtil::Join4SqlGroup(dataType.output) + " )) ";
+        return sql;
+    }
+
+    static std::string GenerateAICpuOpFilterSqlDB(const std::string& opType,
+        const Timeline::AICpuCheckDataType& dataType)
+    {
+        std::string sql = " ( ";
+        if (std::find(opType.begin(), opType.end(), ',') == opType.end()) { // 输入为单个算子类型
+            sql += "lower(s1.value) = '" + opType + "' AND ";
+        } else { // 输入为算子类型组
+            sql += "lower(s1.value) NOT IN ( " + opType + " ) AND ";
+        }
+        sql += "lower(s3.value) NOT IN ( " + StringUtil::Join4SqlGroup(dataType.input) + " ) AND "
+               "lower(s4.value) NOT IN ( " + StringUtil::Join4SqlGroup(dataType.output) + " )) ";
         return sql;
     }
 };

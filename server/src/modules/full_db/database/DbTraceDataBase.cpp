@@ -1718,7 +1718,28 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsPa
     const std::vector<std::string> &replace, const std::map<std::string, Timeline::AICpuCheckDataType> &dataType,
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
 {
-    return false;
+    std::string sql = JsonSqlConstant::GenerateAICpuQuerySqlDB(replace, dataType);
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Fail to prepare sql for AICpuOpCanBeOptimized.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(minTimestamp, AICPU_OP_DURATION_THRESHOLD);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to get result set for AICpuOpCanBeOptimized.", stmt->GetErrorMessage());
+        return false;
+    }
+    while (resultSet->Next()) {
+        Protocol::KernelBaseInfo one{};
+        one.name = resultSet->GetString("name");
+        one.type = resultSet->GetString("type");
+        one.startTime = resultSet->GetUint64("startTime");
+        one.duration = resultSet->GetUint64("duration");
+        one.pid = resultSet->GetString("pid");
+        one.tid = "";
+        data.emplace_back(one);
+    }
+    return true;
 }
 
 bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
