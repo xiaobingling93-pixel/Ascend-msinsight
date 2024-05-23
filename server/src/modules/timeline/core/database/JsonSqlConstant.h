@@ -345,7 +345,7 @@ public:
     static std::string GenerateFuseableOpFilterSql(const Timeline::FuseableOpRule &rule)
     {
         std::string sql = "WITH data AS ( "
-            "SELECT kd.rank_id, kd.name, kd.op_type, kd.accelerator_core, kd.start_time - ?, kd.duration, "
+            "SELECT kd.rank_id, kd.name, kd.op_type, kd.accelerator_core, kd.start_time - ?, s.duration, "
             "t.pid, t.tid, ROW_NUMBER() OVER (ORDER BY s.track_id ASC, s.timestamp ASC) AS row_num "
             "FROM " + KERNEL_DETAIL + " kd "
             "JOIN " + SLICE_TABLE + " s ON kd.name = s.name AND kd.start_time = s.timestamp "
