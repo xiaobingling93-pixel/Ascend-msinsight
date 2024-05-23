@@ -3,10 +3,11 @@
  */
 
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Graph, OperatorDetail } from '../entity/memory';
-import { useResizeEventDependency, binarySearch } from '../utils/memoryUtils';
+import { binarySearch, useResizeEventDependency } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
-import { useChartCharacter, safeStr } from './Common';
+import { safeStr, useChartCharacter } from './Common';
 
 interface IProps {
     graph: Graph;
@@ -197,6 +198,12 @@ const _handleEvents = (chartObj: echarts.ECharts | undefined, props: IProps,
     }
 };
 
+const useTitle = (title: string): string => {
+    const { t } = useTranslation('memory', { keyPrefix: 'searchCriteria' });
+    const regex = /Peak Memory Usage|Operator Allocated|Operator Reserved|APP Reserved/g;
+    const translatedMessage = title.replace(regex, match => t(match));
+    return translatedMessage;
+};
 export const LineChart: React.FC<IProps> = (props) => {
     const { graph, record, isDark, isWakeup, onSelectionChanged } = props;
     const graphRef = React.useRef<HTMLDivElement>(null);
@@ -204,6 +211,7 @@ export const LineChart: React.FC<IProps> = (props) => {
     const [chartObj, setChartObj] = React.useState<echarts.ECharts | undefined>();
     const selectedPoints = React.useRef<number[]>([]);
     const chartCharacter = useChartCharacter();
+    const title = useTitle(graph.title ?? '');
 
     React.useLayoutEffect(() => {
         const element = graphRef.current;
@@ -230,10 +238,10 @@ export const LineChart: React.FC<IProps> = (props) => {
         <div>
             {graph.title?.length !== 0
                 ? <div style={{ fontSize: 14, fontWeight: 'bold' } }>
-                    {graph.title}{chartCharacter}
+                    {title}{chartCharacter}
                 </div>
                 : <div style={{ fontSize: 14, fontWeight: 'bold' } }>
-                    {graph.title}
+                    {title}
                 </div>
             }
             <div ref={graphRef} style={{ height: '400px' }}></div>

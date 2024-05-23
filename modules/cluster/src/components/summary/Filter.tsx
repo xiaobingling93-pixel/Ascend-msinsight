@@ -34,7 +34,7 @@ const orderOptions = [
     { label: 'Communication(Not Overlapped)', value: 'communicationNotOverLappedTime' },
     { label: 'Communication(Overlapped)', value: 'communicationOverLappedTime' },
     { label: 'Free', value: 'freeTime' },
-    { label: 'RankId', value: 'rankId' },
+    { label: 'Rank ID', value: 'rankId' },
 ];
 
 // Top可选项： 1、2、4、8.......n(All)
@@ -123,6 +123,12 @@ const FilterCom = (props: any): JSX.Element => {
     const { conditions, handleChange = [], options = {} } = props;
     const session: Session = props.session;
     const { t } = useTranslation('summary');
+    const tOrderOptions = options?.orderOptions?.map((item: any) => {
+        return {
+            ...item,
+            label: t(item.label),
+        };
+    });
     return (<div style={ { margin: '0 20px 10px' }}>
         {
             !(session.isFullDb)
@@ -152,9 +158,9 @@ const FilterCom = (props: any): JSX.Element => {
             value={conditions.orderBy}
             style={{ width: 280 }}
             onChange={(val: any) => handleChange('orderBy', val)}
-            options={options.orderOptions}
+            options={tOrderOptions}
         />
-        <Label name="Top"/>
+        <Label name={t('Top')}/>
         <Select
             value={conditions.top}
             style={{ width: 120 }}

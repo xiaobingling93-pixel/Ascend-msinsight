@@ -11,7 +11,7 @@
         "DeleteItemConfirmDescribe": "您确认要删除此项吗？",
         "File Explorer": "文件资源管理器",
         "FileSearchDescribe": "输入文件路径，然后按回车键进行搜索",
-        "RefreshDirectoryDescribe": "请展开并折叠该目录以进行刷新。",
+        "RefreshDirectoryDescribe": "请折叠再展开目录以进行刷新。",
         "FileNotFundDescribe": "文件未找到，请检查文件路径",
         "About": "关于",
         "Confirm": "确认",

@@ -23,6 +23,7 @@
         ]
       }
     ],
+    "Find in Timeline": "跳转至Timeline",
     "sessionTitle": {
       "MatrixModel": "通信矩阵",
       "VisualizedCommunicationTime": "通信时长",

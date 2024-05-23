@@ -5,6 +5,7 @@ import * as echarts from 'echarts';
 
 import type { Session } from '../../entity/session';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import { addResizeEvent, chartVisbilityListener, Container, Loading, safeStr } from '../Common';
 import { colorPalette, hashToNumber } from '../../utils/colorUtil';
@@ -254,19 +255,23 @@ async function redirectToTimeline(): Promise<void> {
     });
 }
 
-const menuItems: MenuProps['items'] = [
-    {
-        label: 'Find in Timeline',
-        key: 'findInTimeline',
-        onClick: (): void => {
-            redirectToTimeline();
+const useMenuItems = (): MenuProps['items'] => {
+    const { t } = useTranslation('communication');
+    return [
+        {
+            label: t('Find in Timeline'),
+            key: 'findInTimeline',
+            onClick: (): void => {
+                redirectToTimeline();
+            },
         },
-    },
-];
+    ];
+};
 
 const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { dataSource: AnalysisChartData; session: Session}) => {
     const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT);
     const [dropDownVisible, setDopDownVisible] = useState(false);
+    const menuItems = useMenuItems();
     chartVisbilityListener('hccl', () => {
         InitCharts(dataSource, session, setDopDownVisible);
     });
@@ -285,7 +290,7 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { data
                         items: menuItems,
                         onClick: (): void => setDopDownVisible(false),
                         onBlur: (e): void => {
-                            const hasItem = menuItems.findIndex(item =>
+                            const hasItem = menuItems?.findIndex(item =>
                                 (e.relatedTarget as HTMLElement)?.dataset?.menuId?.includes(item?.key as string)) !== -1;
                             if (!hasItem) {
                                 setDopDownVisible(false);
