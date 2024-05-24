@@ -60,8 +60,8 @@ struct DetailsBaseInfoResBody {
     std::string name;
     std::string soc;
     std::string opType;
-    int64_t blockDim;
-    int64_t mixBlockDim;
+    std::string blockDim;
+    std::string mixBlockDim;
     std::string duration;
     std::vector<BlockDetailBody> blockDetail;
     std::vector<std::string> advice;

@@ -405,7 +405,8 @@ bool SourceFileParser::GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &resp
     std::string baseInfo = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_BASE_INFO);
     file.close();
     if (baseInfo.empty()) {
-        return false;
+        ServerLog::Info("Details base info data does not exist.");
+        return true;
     }
     try {
         std::string error;
@@ -417,10 +418,9 @@ bool SourceFileParser::GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &resp
         responseBody.name = JsonUtil::GetString(d.value(), "name");
         responseBody.soc = JsonUtil::GetString(d.value(), "soc");
         responseBody.opType = JsonUtil::GetString(d.value(), "op_type");
-        responseBody.blockDim = JsonUtil::GetInteger(d.value(), "block_dim");
-        responseBody.mixBlockDim = JsonUtil::GetInteger(d.value(), "mix_block_dim");
+        responseBody.blockDim = JsonUtil::GetString(d.value(), "block_dim");
+        responseBody.mixBlockDim = JsonUtil::GetString(d.value(), "mix_block_dim");
         responseBody.duration = JsonUtil::GetString(d.value(), "duration");
-        responseBody.blockDim = JsonUtil::GetInteger(d.value(), "block_dim");
         Value &blockDetailsValue =
                 responseBody.opType == "mix" ? d.value()["mix_block_detail"] : d.value()["block_detail"];
         std::vector<Protocol::BlockDetailBody> blockDetailList;
@@ -447,8 +447,8 @@ bool SourceFileParser::GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody & res
     std::string loadTable = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_COMPUTE_LOAD_TABLE);
     file.close();
     if (loadGraph.empty() && loadTable.empty()) {
-        ServerLog::Warn("Details load data does not exist.");
-        return false;
+        ServerLog::Info("Details load data does not exist.");
+        return true;
     }
 
     std::optional<Protocol::SubBlockData> blockData = ConvertStrToSubBlockData(loadGraph);
@@ -476,16 +476,16 @@ bool SourceFileParser::GetDetailsMemoryGraph(const std::string& targetBlockId,
                                              Protocol::DetailsMemoryGraphResBody &responseBody)
 {
     if (targetBlockId.empty()) {
-        ServerLog::Error("Block id is empty, get memory graph data failed.");
-        return false;
+        ServerLog::Error("Block id is empty.");
+        return true;
     }
     // 读取内存表数据
     std::ifstream file(filePath, std::ios::binary);
     std::string memoryGraph = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_MEMORY_GRAPH);
     file.close();
     if (memoryGraph.empty()) {
-        ServerLog::Warn("Details memory graph data does not exist.");
-        return false;
+        ServerLog::Info("Details memory graph data does not exist.");
+        return true;
     }
     try {
         std::string error;
@@ -552,15 +552,15 @@ bool SourceFileParser::GetDetailsMemoryTable(const std::string& targetBlockId,
                                              Protocol::DetailsMemoryTableResBody &responseBody)
 {
     if (targetBlockId.empty()) {
-        ServerLog::Error("Block id is empty, get memory table data failed.");
-        return false;
+        ServerLog::Info("Block id is empty.");
+        return true;
     }
     std::ifstream file(filePath, std::ios::binary);
     std::string memoryTable = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_MEMORY_TABLE);
     file.close();
     if (memoryTable.empty()) {
-        ServerLog::Warn("Details memory table data does not exist.");
-        return false;
+        ServerLog::Info("Details memory table data does not exist.");
+        return true;
     }
     try {
         std::string error;
