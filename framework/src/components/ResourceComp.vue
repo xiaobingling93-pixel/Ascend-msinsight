@@ -159,11 +159,12 @@ const filterNode = async (value: string, data: ResourceItem, node: Node): Promis
     findFile = false;
     return true;
   }
-  if (value === data.path) {
+  const realFilePath = removeTrailingSlashes(value);
+  if (realFilePath === data.path) {
     await handleExpand(data, node);
     await handleClick(data, node);
-    state.inputPath = value;
-    treeRef.value.setCurrentKey(value);
+    state.inputPath = realFilePath;
+    treeRef.value.setCurrentKey(realFilePath);
     props.changeConfirmButtonState(true);
     errorAlert.value = false;
     findFile = true;
@@ -180,6 +181,10 @@ const filterNode = async (value: string, data: ResourceItem, node: Node): Promis
   findFile = false;
   return true;
 };
+
+function removeTrailingSlashes(str: string) {
+  return str.replace(/[\/\\]+$/, '');
+}
 
 
 function expandPath(defaultSelectedDir: string): void {
