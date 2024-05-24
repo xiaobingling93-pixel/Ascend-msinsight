@@ -107,18 +107,18 @@ const cubeCore: Inode = {
             id: 'CUBE_TO_L0C',
             label: 'CUBE_TO_L0C',
             x: 590,
-            y: 75,
+            y: 135,
             length: 59,
-            orient: 'bottom',
+            orient: 'top',
             labelPosition: 'left',
         },
         {
             id: 'L0C_TO_CUBE',
             label: 'L0C_TO_CUBE',
             x: 610,
-            y: 135,
+            y: 75,
             length: 59,
-            orient: 'top',
+            orient: 'bottom',
             labelPosition: 'right',
         },
         {
@@ -247,14 +247,14 @@ const mixCore: Inode = {
         },
         {
             top: 120,
-            left: -300,
-            width: 100,
+            left: -350,
+            width: 350,
             height: 50,
             label: 'Vec',
         },
         {
-            top: 120,
-            left: -450,
+            top: 121,
+            left: -649,
             width: 650,
             height: 100,
             label: 'UB',
@@ -343,40 +343,40 @@ const mixCore: Inode = {
             length: 99,
         },
         {
-            id: 'L0C_TO_CUBE',
-            label: 'L0C_TO_CUBE',
-            x: 770,
+            id: 'L0C_TO_VEC',
+            label: 'L0C_TO_VEC',
+            x: 790,
             y: 95,
-            length: 189,
+            length: 69,
             orient: 'bottom',
-            labelPosition: 'left',
+            labelPosition: 'right',
         },
         {
-            id: 'CUBE_TO_L0C',
-            label: 'CUBE_TO_L0C',
-            x: 790,
-            y: 285,
-            length: 189,
+            id: 'VEC_TO_L0C',
+            label: 'VEC_TO_L0C',
+            x: 770,
+            y: 165,
+            length: 69,
             orient: 'top',
-            labelPosition: 'right',
+            labelPosition: 'left',
         },
         {
             id: 'VEC_TO_UB',
             label: 'VEC_TO_UB',
-            x: 570,
+            x: 590,
             y: 215,
             length: 69,
             orient: 'bottom',
-            labelPosition: 'left',
+            labelPosition: 'right',
         },
         {
-            id: ' UB_TO_VEC',
+            id: 'UB_TO_VEC',
             label: 'UB_TO_VEC',
-            x: 590,
+            x: 570,
             y: 285,
             length: 69,
             orient: 'top',
-            labelPosition: 'right',
+            labelPosition: 'left',
         },
     ],
 };
@@ -1007,7 +1007,7 @@ const addLegend = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): v
 
     const g = svg.append('g')
         .attr('class', 'legend')
-        .attr('transform', 'translate(1130,10)');
+        .attr('transform', 'translate(1150,10)');
     // 创建渐变色的矩形
     const size = { width: 15, height: 380 };
     g.append('rect')
