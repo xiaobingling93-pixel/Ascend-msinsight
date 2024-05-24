@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import React from 'react';
+import i18n from '../../i18n';
 import pako from 'pako';
 import { notification } from 'antd';
 import './DragFile.css';
@@ -195,7 +195,7 @@ class DragFileImport extends DragFile {
         if (!this.checkFileSize(file.data.size)) {
             return {
                 usable: false,
-                error: 'Please select a file smaller than 10GB',
+                error: i18n.t('timeline:dragFile:FileSizeLimitWarning'),
             };
         }
 
@@ -203,7 +203,7 @@ class DragFileImport extends DragFile {
         if (!isValidFormat) {
             return {
                 usable: false,
-                error: 'File format error: Only Trace Event Format is supported',
+                error: i18n.t('timeline:dragFile:FileFormatError'),
             };
         }
 
@@ -225,7 +225,7 @@ class DragFileImport extends DragFile {
         } else {
             return {
                 usable: false,
-                error: 'Only Allow one File',
+                error: i18n.t('timeline:dragFile:OneFileOnlyWarning'),
             };
         }
     }
@@ -426,49 +426,19 @@ function readEntries(resolve: any, reader: any, list: any = []): void {
     );
 }
 
-type NotifyType = 'Processing' | 'ReadFile' | 'CheckError' | 'StartUpload' | 'UploadSucceed' | 'UploadFailed' |
-'success' | 'info' | 'error' | 'warning' ;
+type NotifyType = 'Processing' | 'CheckError';
 function notify(type: NotifyType, param?: any): void {
     switch (type) {
-        case 'ReadFile':
-            notification.info({ className: 'drag-file-hit', message: 'Read File', duration: 5 });
-            break;
         case 'CheckError':
-            notification.error({ className: 'drag-file-hit', message: 'Error', description: param, placement: 'top' });
+            notification.error({ className: 'drag-file-hit', message: i18n.t('timeline:dragFile:Error'), description: param, placement: 'top' });
             break;
         case 'Processing':
             notification.error({
                 className: 'drag-file-hit',
-                message: 'Warn',
-                description: 'Files are processing, Please wait for a while',
+                message: i18n.t('timeline:dragFile:Warn'),
+                description: i18n.t('timeline:dragFile:FileIsProcessingWarning'),
                 duration: 5,
                 placement: 'top',
-            });
-            break;
-        case 'UploadSucceed':
-            notification.success({
-                className: 'drag-file-hit',
-                message: 'Succeed:',
-                description: (<div>
-                    {
-                        param.map((fileInfo: FileDataType) =>
-                            (<div key={fileInfo.attr.index}>{`【${((fileInfo.succeed as boolean) ? 'Succeed' : 'Failed')}】${fileInfo.attr.path}`}</div>))
-                    }
-                </div>),
-                duration: 5,
-            });
-            break;
-        case 'UploadFailed':
-            notification.error({
-                className: 'drag-file-hit',
-                message: 'Error:',
-                duration: null,
-                description: (<div>
-                    {
-                        param.map((fileInfo: FileDataType) =>
-                            (<div key={fileInfo.attr.index}>{`【${((fileInfo.succeed as boolean) ? 'Succeed' : 'Failed')}】${fileInfo.attr.path}`}</div>))
-                    }
-                </div>),
             });
             break;
         default:

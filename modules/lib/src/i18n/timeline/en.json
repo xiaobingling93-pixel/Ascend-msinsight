@@ -49,6 +49,7 @@
     "systemView": {
       "System View": "System View",
       "Stats System View": "Stats System View",
+      "Expert System View": "Expert System View",
       "Rank Id": "Rank Id",
       "Num Calls": "Num Calls",
       "Python API Summary": "Python API Summary",
@@ -56,7 +57,12 @@
       "Ascend HardWare Task Summary": "Ascend HardWare Task Summary",
       "HCCL Summary": "HCCL Summary",
       "Overlap Analysis": "Overlap Analysis",
-      "Kernel Details": "Kernel Details"
+      "Kernel Details": "Kernel Details",
+      "Affinity API": "Affinity API",
+      "Affinity Optimizer": "Affinity Optimizer",
+      "AICPU Operators": "AICPU Operators",
+      "ACLNN Operators": "ACLNN Operators",
+      "Operators Fusion": "Operators Fusion"
     },
     "tableHead": {
       "Name": "Name",
@@ -69,7 +75,26 @@
       "Click To Timeline": "Click To Timeline",
       "Click": "Click",
       "Start Time": "Start Time",
-      "Duration(ns)": "Duration(ns)"
+      "Duration(ns)": "Duration(ns)",
+      "Duration(us)": "Duration(us)",
+      "Process Id": "Process Id",
+      "Thread Id": "Thread Id",
+      "Origin API": "Origin API",
+      "Replacement API": "Replacement API",
+      "Notes": "Notes",
+      "Origin Optimizer": "Origin Optimizer",
+      "Replacement Optimizer": "Replacement Optimizer",
+      "Replacement Operator": "Replacement Operator",
+      "Origin Operators": "Origin Operators",
+      "Fused Operator": "Fused Operator"
+    },
+    "dragFile": {
+      "FileFormatError": "File format error: Only Trace Event Format is supported",
+      "FileIsProcessingWarning": "Files are processing, Please wait for a while",
+      "OneFileOnlyWarning": "Only Allow one File",
+      "FileSizeLimitWarning": "Please select a file smaller than 10GB",
+      "Error": "Error",
+      "Warn": "Warn"
     }
   }
 }

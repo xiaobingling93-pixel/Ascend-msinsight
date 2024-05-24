@@ -49,6 +49,7 @@
     "systemView": {
       "System View": "系统视图",
       "Stats System View": "统计系统视图",
+      "Expert System View": "专家系统视图",
       "Rank Id": "卡序号",
       "Num Calls": "调用数",
       "Python API Summary": "Python API 汇总",
@@ -56,7 +57,12 @@
       "Ascend HardWare Task Summary": "Ascend HardWare Task 汇总",
       "HCCL Summary": "HCCL 汇总",
       "Overlap Analysis": "覆盖分析",
-      "Kernel Details": "算子详情"
+      "Kernel Details": "算子详情",
+      "Affinity API": "亲和 API",
+      "Affinity Optimizer": "亲和优化器",
+      "AICPU Operators": "AICPU 算子",
+      "ACLNN Operators": "ACLNN 算子",
+      "Operators Fusion": "算子融合"
     },
     "tableHead": {
       "Name": "名称",
@@ -69,7 +75,26 @@
       "Click To Timeline": "点击跳转Timeline",
       "Click": "点击",
       "Start Time": "开始时间",
-      "Duration(ns)": "时长(ns)"
+      "Duration(ns)": "时长(ns)",
+      "Duration(us)": "时长(us)",
+      "Process Id": "进程Id",
+      "Thread Id": "线程Id",
+      "Origin API": "原始API",
+      "Replacement API": "替换API",
+      "Notes": "备注",
+      "Origin Optimizer": "原始优化器",
+      "Replacement Optimizer": "替换优化器",
+      "Replacement Operator": "替换算子",
+      "Origin Operators": "原始算子",
+      "Fused Operator": "融合算子"
+    },
+    "dragFile": {
+      "FileFormatError": "仅支持上传Trace Event类型的文件",
+      "FileIsProcessingWarning": "文件正在上传，请稍候",
+      "OneFileOnlyWarning": "仅支持拖拽单文件",
+      "FileSizeLimitWarning": "请选择小于10GB的文件",
+      "Error": "错误",
+      "Warn": "警告"
     }
   }
 }

@@ -100,7 +100,7 @@ export const SystemView = observer((props: any) => {
 const ViewSelect = observer((props: any) => {
     const { viewOption, handleViewChange } = props;
     const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
-    const options = [{ label: t('Stats System View'), value: 0 }, { label: 'Expert System View', value: 1 }];
+    const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }];
     return (
         <div className={'systemViewSelect'}>
             <Select style={{ width: 180 }} value={viewOption} onChange={handleViewChange} options={options}/>
@@ -152,6 +152,7 @@ export const RankFilter = observer((props: any): JSX.Element => {
 
 const SelectList = observer((props: any) => {
     const [selectedKey, setSelectedKey] = useState(0);
+    const { t } = useTranslation('timeline', { keyPrefix: 'systemView' });
     const handleClick = (key: number): void => {
         props.setKey(key);
         setSelectedKey(key);
@@ -168,7 +169,7 @@ const SelectList = observer((props: any) => {
                     key={index}
                     onClick={(): void => handleClick(index)}
                 >
-                    {item}
+                    {t(item)}
                 </div>
                 ))
         }
@@ -188,25 +189,30 @@ const BaseSummary = observer((props: any) => {
     const [searchText, setSearchText] = useState('');
     const [searchedColumn, setSearchedColumn] = useState('');
     const [rowData, setRowData] = useState<any>({});
+    const { t } = useTranslation('timeline', { keyPrefix: 'tableHead' });
     const status = props.session.units.find((unit: any) => (unit.metadata as CardMetaData).cardId === props.rankId)?.phase;
-    let columns = props.columns;
+    let columns = props.columns?.map((col: any) => ({
+        ...col,
+        title: t(col.title),
+    }));
+
     if (isStats) {
         columns = [{
-            title: 'Name',
+            title: t('Name'),
             dataIndex: 'name',
             ...getDefaultColumData('name'),
             ...getColumnSearchProps({ dataIndex: 'name', setSearchText, searchText, setSearchedColumn, searchedColumn }),
         }, ...columns];
     } else {
         columns = [...columns, {
-            title: 'Click To Timeline',
+            title: t('Click To Timeline'),
             dataIndex: 'click',
             key: 'click',
             ellipsis: true,
             render: (_: any, record: any) => (<Button type="link"
                 onClick={() => {
                     setRowData({ name: record.name ?? record.originOptimizer, startTime: record.startTime, duration: record.duration });
-                }}>click</Button>),
+                }}>{t('Click')}</Button>),
         }];
     }
     const updateData = async(searchName: string, pages: any, sorters: {field: string;order: string}, prop: any): Promise<void> => {
