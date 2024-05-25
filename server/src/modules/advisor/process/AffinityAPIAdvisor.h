@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_AFFINITYAPIADVISOR_H
 
 #include <map>
+#include <set>
 #include <vector>
 #include "TimelineProtocolResponse.h"
 #include "AdvisorProtocolRequest.h"
@@ -20,29 +21,101 @@ struct AffinityApiData {
 };
 
 const std::vector<AffinityApiData> AFFINITY_API_RULE = {
-    { std::vector<std::string>{ "gelu" }, "torch_npu.fast_gelu", "" },
-    { std::vector<std::string>{ "linear" }, "torch_npu.npu_linear", "" },
-    { std::vector<std::string>{ "mish" }, "torch_npu.npu_mish / torch_npu.contrib.module.Mish", "" },
-    { std::vector<std::string>{ "silu" }, "torch_npu.npu_silu / torch_npu.contrib.module.SiLU", "" },
-    { std::vector<std::string>{ "mul", "sigmoid" }, "torch_npu.npu_silu / torch_npu.contrib.module.SiLU", "" },
-    { std::vector<std::string>{ "sigmoid", "mul" }, "torch_npu.npu_silu / torch_npu.contrib.module.SiLU", "" },
-    { std::vector<std::string>{ "add", "reciprocal", "mul" }, "optimizer.clip_grad_norm_fused_", "" },
-    { std::vector<std::string>{ "slice", "gelu", "mul" }, "torch_npu.npu_geglu", "" },
-    { std::vector<std::string>{ "chunk", "gelu", "mul" }, "torch_npu.npu_geglu", "" },
-    { std::vector<std::string>{ "slice", "mul", "gelu" }, "torch_npu.npu_geglu", "" },
-    { std::vector<std::string>{ "chunk", "mul", "gelu" }, "torch_npu.npu_geglu", "" },
+    { { "aten::gelu" }, "torch_npu.fast_gelu", "" },
+    { { "aten::linear" }, "torch_npu.npu_linear", "" },
+    { { "aten::mish" }, "torch_npu.npu_mish / torch_npu.contrib.module.Mish", "" },
+    { { "aten::silu" }, "torch_npu.npu_silu / torch_npu.contrib.module.SiLU", "" },
+    { { "aten::mul", "aten::sigmoid" }, "torch_npu.npu_silu / torch_npu.contrib.module.SiLU", "" },
+    { { "aten::sigmoid", "aten::mul" }, "torch_npu.npu_silu / torch_npu.contrib.module.SiLU", "" },
+    { { "aten::add", "aten::reciprocal", "aten::mul" }, "optimizer.clip_grad_norm_fused_", "" },
+    // softmax-(mul){0,1}-(masked_fill_|add)
+    { { "aten::softmax", "aten::masked_fill_|aten::add" }, "torch_npu.npu_scaled_masked_softmax", "" },
+    { { "aten::softmax", "aten::mul", "aten::masked_fill_|aten::add" }, "torch_npu.npu_scaled_masked_softmax", "" },
+    // "(permute|transpose)-(contiguous){0,1}-(reshape|view)", "(reshape|view)-(contiguous){0,1}-(permute|transpose)"
+    { { "aten::permute|aten::transpose", "aten::reshape|aten::view" }, "torch_npu.npu_confusion_transpose", "" },
+    { { "aten::permute|aten::transpose", "aten::contiguous", "aten::reshape|aten::view" },
+        "torch_npu.npu_confusion_transpose", "" },
+    { { "aten::reshape|aten::view", "aten::permute|aten::transpose" }, "torch_npu.npu_confusion_transpose", "" },
+    { { "aten::reshape|aten::view", "aten::contiguous", "aten::permute|aten::transpose" },
+        "torch_npu.npu_confusion_transpose", "" },
+
+    // (chunk|slice)-neg-cat-(mul){0,2}-add
+    { { "aten::chunk|aten::slice", "aten::neg", "aten::cat", "aten::add" }, "torch_npu.npu_rotary_mul", "CANN 7.0+" },
+    { { "aten::chunk|aten::slice", "aten::neg", "aten::cat", "aten::mul", "aten::add" },
+        "torch_npu.npu_rotary_mul", "CANN 7.0+" },
+    { { "aten::chunk|aten::slice", "aten::neg", "aten::cat", "aten::mul", "aten::mul", "aten::add" },
+        "torch_npu.npu_rotary_mul", "CANN 7.0+" },
+    // "matmul-(add){0,1}-(mul){0,1}-(masked_fill_|add){0,1}-softmax-(dropout){0,1}-matmul"
+    { { "aten::matmul", "aten::softmax", "aten::matmul" }, "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::add", "aten::softmax", "aten::matmul" }, "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::mul", "aten::softmax", "aten::matmul" }, "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::add", "aten::mul", "aten::softmax", "aten::matmul" },
+	    "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::masked_fill_softmax", "aten::matmul" }, "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::add", "aten::masked_fill_softmax", "aten::matmul" },
+        "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::mul", "aten::masked_fill_softmax", "aten::matmul" },
+        "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::add", "aten::mul", "aten::masked_fill_softmax", "aten::matmul" },
+        "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "dropout", "aten::softmax", "aten::matmul" }, "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::add", "dropout", "aten::softmax", "aten::matmul" },
+        "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::mul", "dropout", "aten::softmax", "aten::matmul" },
+        "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::add", "aten::mul", "dropout", "aten::softmax", "aten::matmul" },
+        "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::masked_fill_dropout", "aten::softmax", "aten::matmul" },
+        "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::add", "aten::masked_fill_dropout", "aten::softmax", "aten::matmul" },
+        "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::mul", "aten::masked_fill_dropout", "aten::softmax", "aten::matmul" },
+        "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    { { "aten::matmul", "aten::add", "aten::mul", "aten::masked_fill_dropout", "aten::softmax", "aten::matmul" },
+        "torch_npu.npu_fusion_attention", "CANN 7.0+" },
+    // (pow){0,1}-(mean){0,1}-(add){0,1}-rsqrt-mul-(type_as){0,1}
+    { { "aten::rsqrt", "aten::mul" }, "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::pow", "aten::rsqrt", "aten::mul" }, "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::mean", "aten::rsqrt", "aten::mul" }, "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::pow", "aten::mean", "aten::rsqrt", "aten::mul" }, "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::add", "aten::rsqrt", "aten::mul" }, "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::pow", "aten::add", "aten::rsqrt", "aten::mul" }, "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::mean", "aten::add", "aten::rsqrt", "aten::mul" }, "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::pow", "aten::mean", "aten::add", "aten::rsqrt", "aten::mul" }, "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::rsqrt", "aten::mul", "aten::type_as" }, "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::pow", "aten::rsqrt", "aten::mul", "aten::type_as" }, "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::mean", "aten::rsqrt", "aten::mul", "aten::type_as" }, "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::pow", "aten::mean", "aten::rsqrt", "aten::mul", "aten::type_as" },
+        "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::add", "aten::rsqrt", "aten::mul", "aten::type_as" }, "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::pow", "aten::add", "aten::rsqrt", "aten::mul", "aten::type_as" },
+        "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::mean", "aten::add", "aten::rsqrt", "aten::mul", "aten::type_as" },
+        "torch_npu.npu_rms_norm", "CANN 7.0+" },
+    { { "aten::pow", "aten::mean", "aten::add", "aten::rsqrt", "aten::mul", "aten::type_as" },
+        "torch_npu.npu_rms_norm", "CANN 7.0+" },
+
+    // "(slice|chunk)-silu-mul", "(slice|chunk)-mul-silu", "(slice|chunk)-sigmoid-mul-mul", \
+    // "(slice|chunk)-mul-sigmoid-mul", "(slice|chunk)-mul-mul-sigmoid"
+    { { "aten::slice|aten::chunk", "aten::silu", "aten::mul" }, "torch_npu.npu_swiglu", "CANN 7.0+" },
+    { { "aten::slice|aten::chunk", "aten::mul", "aten::silu" }, "torch_npu.npu_swiglu", "CANN 7.0+" },
+    { { "aten::slice|aten::chunk", "aten::sigmoid", "aten::mul", "aten::mul" }, "torch_npu.npu_swiglu", "CANN 7.0+" },
+    { { "aten::slice|aten::chunk", "aten::mul", "aten::sigmoid", "aten::mul" }, "torch_npu.npu_swiglu", "CANN 7.0+" },
+    { { "aten::slice|aten::chunk", "aten::mul", "aten::mul", "aten::sigmoid" }, "torch_npu.npu_swiglu", "CANN 7.0+" },
+    // (slice|chunk)-gelu-mul, (slice|chunk)-mul-gelu
+    { { "aten::slice|aten::chunk", "aten::gelu", "aten::mul" }, "torch_npu.npu_geglu", "CANN 8.0+" },
+    { { "aten::slice|aten::chunk", "aten::mul", "aten::gelu" }, "torch_npu.npu_geglu", "CANN 8.0+" },
 };
 
-const std::vector<std::string> AFFINITY_API_ORDER_BY_NAME_LIST = {
-    "startTime", "duration", "pid", "tid", "name"
-};
+const std::vector<std::string> AFFINITY_API_ORDER_BY_NAME_LIST = { "startTime", "duration", "pid", "tid", "name" };
 
 class AffinityAPIAdvisor {
 public:
     static bool Process(const Protocol::APITypeParams &params, Protocol::AffinityAPIResBody &resBody);
 
 private:
-    static std::vector<std::string> GetFirstApiList(const std::vector<AffinityApiData> &affinityApiData);
+    static std::set<std::string> GetFirstApiList(const std::vector<AffinityApiData> &affinityApiData);
+    static std::vector<uint32_t> FilterPossibleRules(const std::string &name);
     static void FilterAffinityApiData(const Protocol::APITypeParams &params,
         std::vector<Protocol::FlowLocation> &dataList, const std::vector<uint32_t> &indexList,
         std::vector<Protocol::FlowLocation> &result);

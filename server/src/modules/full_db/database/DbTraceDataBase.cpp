@@ -1812,7 +1812,7 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
 }
 
 bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &params,
-    const std::vector<std::string> &pattern, uint64_t minTimestamp, std::map<uint64_t,
+    const std::set<std::string> &pattern, uint64_t minTimestamp, std::map<uint64_t,
     std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexs)
 {
     std::string sql = "SELECT str.value as name, py.startNs - ? as startTime, py.endNs - py.startNs as duration, "
@@ -1845,11 +1845,8 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
             indexMap.emplace(trackId, 0);
             indexs.emplace(trackId, std::vector<uint32_t>{});
         }
-        if (StringUtil::StartWith(one.name, "aten::")) {
-            std::string name = one.name.substr(strlen("aten::"), one.name.length());
-            if (std::find(pattern.begin(), pattern.end(), name) != pattern.end()) {
-                indexs[trackId].emplace_back(indexMap[trackId]); // 记录所有可能的索引值，加速后续处理速度
-            }
+        if (pattern.find(one.name) != pattern.end()) {
+            indexs[trackId].emplace_back(indexMap[trackId]); // 记录所有可能的索引值，加速后续处理速度
         }
         indexMap[trackId] = indexMap[trackId] + 1;
         data[trackId].emplace_back(one);

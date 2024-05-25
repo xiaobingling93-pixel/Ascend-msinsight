@@ -59,9 +59,9 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
     return true;
 }
 
-std::vector<std::string> AffinityAPIAdvisor::GetFirstApiList(const std::vector<AffinityApiData> &affinityApiData)
+std::set<std::string> AffinityAPIAdvisor::GetFirstApiList(const std::vector<AffinityApiData> &affinityApiData)
 {
-    std::vector<std::string> apiList{};
+    std::set<std::string> apiList{};
     if (affinityApiData.empty()) {
         return apiList;
     }
@@ -69,12 +69,28 @@ std::vector<std::string> AffinityAPIAdvisor::GetFirstApiList(const std::vector<A
         if (item.apiList.empty()) {
             continue;
         }
-        if (std::count(apiList.begin(), apiList.end(), item.apiList[0]) != 0) {
-            continue;
+        std::vector list = StringUtil::Split(item.apiList[0], "\\|"); // 按"|"分割api
+        for (const auto& one : list) {
+            apiList.insert(one);
         }
-        apiList.emplace_back(item.apiList[0]);
     }
     return apiList;
+}
+
+// 给定一个API，过滤所有rule.apiList[0]中包含给定API
+std::vector<uint32_t> AffinityAPIAdvisor::FilterPossibleRules(const std::string &name)
+{
+    std::vector<uint32_t> possible{};
+    if (name.empty()) {
+        return possible;
+    }
+    for (uint32_t i = 0; i < AFFINITY_API_RULE.size(); ++i) {
+        std::vector<std::string> list = StringUtil::Split(AFFINITY_API_RULE[i].apiList[0], "\\|");
+        if (std::find(list.begin(), list.end(), name) != list.end()) {
+            possible.emplace_back(i);
+        }
+    }
+    return possible;
 }
 
 // 匹配连续的api
@@ -86,13 +102,21 @@ void AffinityAPIAdvisor::FilterAffinityApiData(const Protocol::APITypeParams &pa
         return;
     }
 
-    for (auto index : indexList) { //
-        for (const auto& rule : AFFINITY_API_RULE) {
+    for (auto index : indexList) { // 遍历索引
+        if (index >= dataList.size()) {
+            continue;
+        }
+        std::vector<uint32_t> possible = FilterPossibleRules(dataList[index].name); // 先过滤可能的rule，以提高效率
+        if (possible.empty()) {
+            continue;
+        }
+        for (auto ruleIndex : possible) {
+            auto rule = AFFINITY_API_RULE[ruleIndex];
             Protocol::AffinityAPIData one{};
             if (!CheckApiSeqWithRule(rule.apiList, dataList, index)) {
                 continue;
             }
-            dataList[index].type = StringUtil::join(rule.apiList, ",");
+            dataList[index].type = StringUtil::join(rule.apiList, ", ");
             dataList[index].metaType = rule.affinityApi;
             dataList[index].deviceId = rule.note;
             result.emplace_back(dataList[index]);
@@ -100,11 +124,13 @@ void AffinityAPIAdvisor::FilterAffinityApiData(const Protocol::APITypeParams &pa
     }
 }
 
+// 给定匹配条件，检查api序列是否匹配相关条件
 bool AffinityAPIAdvisor::CheckApiSeqWithRule(const std::vector<std::string> &rule,
     const std::vector<Protocol::FlowLocation> &dataList, uint32_t index)
 {
     std::string name = dataList[index].name;
-    if (name.substr(name.find(API_SEP) + API_SEP.length(), name.length()) != rule[0]) {
+    std::vector<std::string> list0 = StringUtil::Split(rule[0], "\\|");
+    if (std::find(list0.begin(), list0.end(), name) == list0.end()) {
         return false; // 匹配rule中第一个API，不匹配规则时跳过
     }
     if (index + rule.size() >= dataList.size()) {
@@ -113,8 +139,9 @@ bool AffinityAPIAdvisor::CheckApiSeqWithRule(const std::vector<std::string> &rul
 
     for (int i = 1; i < rule.size(); ++i) { // 上文已匹配索引为0的数据
         std::string tmp = dataList[index + i].name;
-        if (tmp.substr(tmp.find(API_SEP) + API_SEP.length(), tmp.length()) != rule[i]) {
-            return false; // 不完全匹配，则跳过
+        std::vector<std::string> list = StringUtil::Split(rule[i], "\\|");
+        if (std::find(list.begin(), list.end(), tmp) == list.end()) { // 不完全匹配，则跳过
+            return false;
         }
     }
 

@@ -114,7 +114,7 @@ public:
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) override;
     bool QueryAclnnOpCountExceedThreshold(const Protocol::KernelDetailsParams &params, uint64_t threshold,
         std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp) override;
-    bool QueryAffinityAPIData(const Protocol::KernelDetailsParams &params, const std::vector<std::string> &pattern,
+    bool QueryAffinityAPIData(const Protocol::KernelDetailsParams &params, const std::set<std::string> &pattern,
         uint64_t minTimestamp, std::map<uint64_t, std::vector<Protocol::FlowLocation>> &data,
         std::map<uint64_t, std::vector<uint32_t>> &indexs) override;
     bool QueryFuseableOpData(const Protocol::KernelDetailsParams &params, const Timeline::FuseableOpRule &rule,
