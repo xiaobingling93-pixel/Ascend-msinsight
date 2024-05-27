@@ -157,7 +157,7 @@ const draw = (ctx: CanvasRenderingContext2D | null,
 
 const findDataByXY = (mousePos: {x: number; y: number} | undefined, datas: StackStatusData[][],
     rangeAndDomain: Array<[ number, number ]>, depthHeight: number, endTime: number): StackStatusData | undefined => {
-    if (mousePos === undefined || datas.length === 0 || rangeAndDomain.length > 1) {
+    if (mousePos === undefined || datas.length === 0 || rangeAndDomain.length < 2) {
         return undefined;
     }
     const mouseTime = d3.scaleLinear().range(rangeAndDomain[1]).domain(rangeAndDomain[0]).clamp(false)(mousePos.x);
