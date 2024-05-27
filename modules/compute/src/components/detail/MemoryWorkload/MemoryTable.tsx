@@ -3,6 +3,7 @@
 */
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
+import { useTranslation } from 'react-i18next';
 import { type Icondition } from './Filter';
 import { queryMemoryTable } from '../../RequestUtils';
 import { LimitHit } from '../../LimitSet';
@@ -30,17 +31,17 @@ interface Ilimit {
     current: number;
 }
 
-function getFullCols(headerName: string[]): any[] {
+function getFullCols(headerName: string[], tDetails: any): any[] {
     return headerName.map((item, index) => (
         {
-            title: index === 0 ? item : firstLetterUpper(item),
+            title: index === 0 ? item : tDetails(firstLetterUpper(item)),
             dataIndex: item,
             ellipsis: true,
         }
     ));
 }
 
-function wrapData(data: ItableDetail[], limit: Ilimit): { tablelist: ItableConfig[] ;limit: Ilimit} {
+function wrapData(data: ItableDetail[], limit: Ilimit, tDetails: any): { tablelist: ItableConfig[] ;limit: Ilimit} {
     let count = 0;
     const tablelist = data.reduce<ItableConfig[]>((pre, tableDetail) => {
         if (count > limit.maxSize) {
@@ -49,7 +50,7 @@ function wrapData(data: ItableDetail[], limit: Ilimit): { tablelist: ItableConfi
         }
         const { headerName = [], row = [], tableName = '' } = tableDetail ?? {};
         headerName[0] = tableName;
-        const cols = getFullCols(headerName);
+        const cols = getFullCols(headerName, tDetails);
         let dataset = row.map(item => {
             const arr = [item.name, ...item.value];
             const obj: Record<string, string> = {};
@@ -72,15 +73,15 @@ function wrapData(data: ItableDetail[], limit: Ilimit): { tablelist: ItableConfi
 
 const defaultLimit = { overlimit: false, maxSize: 1000, current: 0 };
 const memoryTable = observer(({ condition, session }: {condition: Icondition;session: Session}): JSX.Element => {
+    const [data, setData] = useState<ItableDetail[]>([]);
     const [tablelist, setTablelist] = useState<ItableConfig[]>([]);
     const [limit, setLimit] = useState<Ilimit>(defaultLimit);
+    const { t: tDetails } = useTranslation('details');
 
     const updateData = async(): Promise<void> => {
         const res = await queryMemoryTable(condition);
-        const data = (res?.memoryTable?.[0]?.tableDetail ?? []) as ItableDetail[];
-        const { tablelist: newTablelist, limit: newLimit } = wrapData(data, limit);
-        setTablelist(newTablelist);
-        setLimit(newLimit);
+        const newData = (res?.memoryTable?.[0]?.tableDetail ?? []) as ItableDetail[];
+        setData(newData);
     };
 
     useEffect(() => {
@@ -95,6 +96,11 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
         }
         updateData();
     }, [condition.blockId, session.parseStatus]);
+    useEffect(() => {
+        const { tablelist: newTablelist, limit: newLimit } = wrapData(data, limit, tDetails);
+        setTablelist(newTablelist);
+        setLimit(newLimit);
+    }, [data, tDetails]);
     return (
         <div style={{ padding: '0 20px 20px' }}>
             {tablelist.length === 0 && (<div style={{ textAlign: 'center', color: 'var(--grey15) ' }}>No data</div>) }

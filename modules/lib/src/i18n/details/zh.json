@@ -15,6 +15,19 @@
     "Duration(μs)": "时长(μs)",
     "Byte": "字节",
     "MixBlockDim": "混合Block数量",
-    "MixBlockDetail": "混合Block详情"
+    "MixBlockDetail": "混合Block详情",
+    "Memory Workload Analysis": "内存负载分析",
+    "Peak(%)": "峰值(最大带宽占比)(%)",
+    "Peak": "峰值",
+    "Hit": "命中次数",
+    "Miss": "未命中次数",
+    "Total": "总次数",
+    "Hit Rate": "命中率",
+    "Hit Rate(%)": "命中率(%)",
+    "Requests": "请求数",
+    "Throughput": "吞吐量",
+    "Cycle": "时钟周期",
+    "Wait Cycles": "等待周期",
+    "Active Rate(%)": "活跃率（%）"
   }
 }

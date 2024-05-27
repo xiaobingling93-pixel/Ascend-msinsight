@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import * as d3 from 'd3';
+import type { TFunction } from 'i18next';
 import type { Igraph, Inode, InodePosition, IlinePosition, Ibox, IdrawGraph, IdrawNode, IdrawLine, IdrawRect, Iline, Irect, IrectPosition, Ixy, IdrawLabel } from './flowType';
 import type { ImemoryData } from '../MemoryChart';
 import type { Icondition } from '../Filter';
@@ -493,7 +494,7 @@ const defaultBox = {
     width: 0,
     height: 0,
 };
-function getDrawConfig(originData: Igraph): IdrawGraph {
+function getDrawConfig(originData: Igraph, tDetails: TFunction): IdrawGraph {
     let lastNodeBox = JSON.parse(JSON.stringify(defaultBox));
     const data = originData.map((originNode, index) => {
         const node = { ...originNode, ...transformNode(originNode, lastNodeBox) };
@@ -530,7 +531,11 @@ function getDrawConfig(originData: Igraph): IdrawGraph {
 
             const labelXy = transRectLabel(originRect, rectPosition);
             const labels = transRectLabels(originRect, rectPosition);
-            return { ...originRect, ...rectPosition, labelXy, labels };
+            labels?.forEach(item => {
+                item.value = tDetails(item.value ?? '');
+            });
+            const label = originRect.label !== undefined ? tDetails(originRect.label) : undefined;
+            return { ...originRect, ...rectPosition, labelXy, labels, label };
         });
         const allRectBox = getAllRectBox(rect);
         // line
@@ -983,7 +988,7 @@ const computeColor = (d: number): string => {
     return COLOR.line;
 };
 
-const addLegend = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): void => {
+const addLegend = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, title: string): void => {
     // 定义渐变色的比例尺
     const colorScale = d3.scaleLinear()
         .domain([0, COLOR.range.length - 1])
@@ -1021,7 +1026,7 @@ const addLegend = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): v
     g.append('text')
         .attr('x', 0)
         .attr('y', 0)
-        .text('Peak(%)')
+        .text(title)
         .style('font-size', '12px')
         .style('font-family', 'Micro Yahei')
         .style('fill', COLOR.label);
@@ -1041,11 +1046,11 @@ const addLegend = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): v
 export const clear = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): void => {
     svg.selectAll('*').remove();
 };
-export const drawGraph = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, config: Igraph, theme: string): void => {
+export const drawGraph = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, config: Igraph, theme: string, tDetails: TFunction): void => {
     clear(svg);
     COLOR = colorConfig[theme];
-    addLegend(svg);
-    const graph = getDrawConfig(config);
+    addLegend(svg, `${tDetails('Peak')}(%)`);
+    const graph = getDrawConfig(config, tDetails);
     const nodes = drawNode(svg, graph);
     drawContainer(nodes);
     drawRect(nodes);
@@ -1053,7 +1058,8 @@ export const drawGraph = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, a
     addMarker(svg);
 };
 
-export const drawFlowChart = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition & {theme: string}): void => {
+export const drawFlowChart = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition & {theme: string},
+    tDetails: TFunction): void => {
     const { blockType = '', chipType = '', theme = 'dark' } = data;
     let graphConfig: Igraph;
     if (flow[blockType + (chipType.includes('910') ? '910' : '')] !== undefined) {
@@ -1063,7 +1069,7 @@ export const drawFlowChart = (svg: d3.Selection<d3.BaseType, unknown, HTMLElemen
     } else {
         graphConfig = [];
     }
-    drawGraph(svg, graphConfig, theme);
+    drawGraph(svg, graphConfig, theme, tDetails);
     updateData(svg, data);
 };
 

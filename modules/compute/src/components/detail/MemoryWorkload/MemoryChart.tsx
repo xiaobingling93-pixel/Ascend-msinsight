@@ -3,6 +3,7 @@
 */
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { drawFlowChart } from './FlowChart/draw';
 import * as d3 from 'd3';
 import { type Icondition } from './Filter';
@@ -46,6 +47,7 @@ const chartId = 'memory';
 const chart = observer(({ condition, session }: {condition: Icondition;session: Session}): JSX.Element => {
     const [data, setData] = useState<ImemoryData>(defaultData);
     const [style, setStyle] = useState({ height: '420px' });
+    const { t: tDetails } = useTranslation('details');
     const updateData = async (): Promise<void> => {
         const res = await queryMemoryGraph(condition);
         const newData = (res?.coreMemory?.[0] ?? defaultData) as ImemoryData;
@@ -65,8 +67,8 @@ const chart = observer(({ condition, session }: {condition: Icondition;session: 
     }, [condition.blockId, session.parseStatus]);
     useEffect(() => {
         const svg = d3.select(`#${chartId}>svg`);
-        drawFlowChart(svg, { ...data, ...condition, theme: session.theme });
-    }, [data, condition, session.theme]);
+        drawFlowChart(svg, { ...data, ...condition, theme: session.theme }, tDetails);
+    }, [data, condition, session.theme, tDetails]);
     useEffect(() => {
         let newStyle;
         const { blockType, chipType } = data;
