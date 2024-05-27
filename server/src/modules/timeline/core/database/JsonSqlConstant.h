@@ -200,7 +200,7 @@ public:
     static std::string GetCommunicationStatisticsSql(const std::string &stepId)
     {
         std::string timestampCondition;
-        if (stepId.empty()) {
+        if (!stepId.empty()) {
             timestampCondition = " and timestamp >= ? and timestamp <= ? ";
         }
         std::string sql = "select duration / 1000, t.thread_name as overlapType from (select sum(duration) as duration,"
