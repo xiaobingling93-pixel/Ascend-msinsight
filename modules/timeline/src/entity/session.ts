@@ -114,6 +114,7 @@ export class Session {
     timelineMaker: TimeLineMaker = TIME_MAKER_DEFAULT;
 
     zoom: {zoomCount: number; zoomPoint?: number | undefined} | undefined;
+    doReset: boolean = false;
     private readonly _domain: Domain;
     private _selectedUnitKeys: [string] | [] = [];
     // Relative to the startTimeOffset, which means that it will start from 0.

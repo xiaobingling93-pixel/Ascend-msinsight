@@ -72,13 +72,13 @@ export const EventDetail = observer((props: any) => {
     const [isLoading, setLoading] = useState(false);
     const [eventColum, setEventColum] = useState<string[]>([]);
     const [rowData, setRowData] = useState<any>({});
-    const [allCondition, setAllCondition] = useState({ showEvent: props.session.showEvent, page, sorter, selectedUnits: props.session.selectedUnits });
+    const [allCondition, setAllCondition] = useState({ showEvent: props.session.showEvent, page, sorter });
 
     useEffect(() => {
-        setAllCondition({ ...allCondition, page, sorter, selectedUnits: props.session.selectedUnits });
-    }, [sorter, page.current, page.pageSize, props.session.selectedUnits]);
+        setAllCondition({ ...allCondition, page, sorter });
+    }, [sorter, page.current, page.pageSize]);
     useEffect(() => {
-        setAllCondition({ ...allCondition, showEvent: props.session.showEvent, page: defaultPage, selectedUnits: props.session.selectedUnits });
+        setAllCondition({ ...allCondition, showEvent: props.session.showEvent, page: defaultPage });
     }, [props.session.showEvent]);
 
     useEffect(() => {
@@ -87,12 +87,12 @@ export const EventDetail = observer((props: any) => {
             setPage(defaultPage);
             setSorter(defaultSorter);
             setEventColum([]);
-            setAllCondition({ ...allCondition, page: defaultPage, sorter: defaultSorter, selectedUnits: props.session.selectedUnits });
+            setAllCondition({ ...allCondition, page: defaultPage, sorter: defaultSorter });
             return;
         }
         updateData({ pages: allCondition.page, sorters: allCondition.sorter, props, setLoading, setDataSource, setPage, setEventColum });
     }, [allCondition.showEvent, allCondition.page.current, allCondition.page.pageSize,
-        allCondition.sorter.field, allCondition.sorter.order, allCondition.selectedUnits]);
+        allCondition.sorter.field, allCondition.sorter.order, props.session.doReset]);
 
     useEffect(() => {
         if (rowData.name !== null && rowData.name !== undefined) {
