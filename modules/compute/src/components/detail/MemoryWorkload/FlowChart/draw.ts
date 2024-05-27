@@ -1055,7 +1055,14 @@ export const drawGraph = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, a
 
 export const drawFlowChart = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition & {theme: string}): void => {
     const { blockType = '', chipType = '', theme = 'dark' } = data;
-    const graphConfig = flow[blockType + chipType.slice(0, 3)] ?? flow.mix310;
+    let graphConfig: Igraph;
+    if (flow[blockType + (chipType.includes('910') ? '910' : '')] !== undefined) {
+        graphConfig = flow[`${blockType}910`];
+    } else if (chipType.includes('310')) {
+        graphConfig = flow.mix310;
+    } else {
+        graphConfig = [];
+    }
     drawGraph(svg, graphConfig, theme);
     updateData(svg, data);
 };

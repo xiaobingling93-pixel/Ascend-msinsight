@@ -61,6 +61,7 @@ const reset = (): void => {
             coreList: [],
             sourceList: [],
             parseStatus: false,
+            blockIdList: [],
         });
     });
 };

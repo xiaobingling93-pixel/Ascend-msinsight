@@ -2,11 +2,13 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import React, { useEffect, useState } from 'react';
+import { observer } from 'mobx-react';
 import { type Icondition } from './Filter';
 import { queryMemoryTable } from '../../RequestUtils';
 import { LimitHit } from '../../LimitSet';
 import ResizeTable from 'lib/ResizeTable';
 import { firstLetterUpper } from 'lib/CommonUtils';
+import { type Session } from '../../../entity/session';
 
 interface ItableDetail {
     tableName: string;
@@ -68,9 +70,10 @@ function wrapData(data: ItableDetail[], limit: Ilimit): { tablelist: ItableConfi
     return { tablelist, limit: { ...limit, current: count, overlimit: count > limit.maxSize } };
 }
 
-function Table({ condition }: {condition: Icondition}): JSX.Element {
+const defaultLimit = { overlimit: false, maxSize: 1000, current: 0 };
+const memoryTable = observer(({ condition, session }: {condition: Icondition;session: Session}): JSX.Element => {
     const [tablelist, setTablelist] = useState<ItableConfig[]>([]);
-    const [limit, setLimit] = useState<Ilimit>({ overlimit: false, maxSize: 1000, current: 0 });
+    const [limit, setLimit] = useState<Ilimit>(defaultLimit);
 
     const updateData = async(): Promise<void> => {
         const res = await queryMemoryTable(condition);
@@ -81,8 +84,17 @@ function Table({ condition }: {condition: Icondition}): JSX.Element {
     };
 
     useEffect(() => {
+        if (!session.parseStatus) {
+            setTimeout(() => {
+                if (!session.parseStatus) {
+                    setTablelist([]);
+                    setLimit(defaultLimit);
+                }
+            }, 200);
+            return;
+        }
         updateData();
-    }, [condition.blockId]);
+    }, [condition.blockId, session.parseStatus]);
     return (
         <div style={{ padding: '0 20px 20px' }}>
             {tablelist.length === 0 && (<div style={{ textAlign: 'center', color: 'var(--grey15) ' }}>No data</div>) }
@@ -99,6 +111,6 @@ function Table({ condition }: {condition: Icondition}): JSX.Element {
             ))}
         </div>
     );
-};
+});
 
-export default Table;
+export default memoryTable;

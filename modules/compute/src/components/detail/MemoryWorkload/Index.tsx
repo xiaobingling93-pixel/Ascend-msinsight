@@ -21,7 +21,7 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
             body={<>
                 <Filter blockIdList={session.blockIdList} handleFilterChange={handleFilterChange}/>
                 <MemoryChart condition={condition} session={session}/>
-                <MemoryTable condition={condition} />
+                <MemoryTable condition={condition} session={session}/>
             </>
             }
         />

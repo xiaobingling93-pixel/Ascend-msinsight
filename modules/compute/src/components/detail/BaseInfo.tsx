@@ -184,15 +184,25 @@ const getInfoItem = (item: Ilabel, dataObj: Ibaseinfo): Record<string, unknown> 
     }
 };
 
+const defaultData: Ibaseinfo = {
+    name: '',
+    soc: '',
+    opType: '',
+    blockDim: '',
+    mixBlockDim: '',
+    duration: '',
+    blockDetail: [],
+};
+
 const index = observer(({ session }: Iprops): JSX.Element => {
-    const [data, setData] = useState<Ibaseinfo>({});
+    const [data, setData] = useState<Ibaseinfo>(defaultData);
     const [items, setItems] = useState<Array<Record<string, unknown>>>([]);
     const { t } = useTranslation();
     const { t: tDetails } = useTranslation('details');
 
     const getBaseInfo = async (): Promise<void> => {
         const res = await queryBaseInfo();
-        setData(res ?? {});
+        setData(res ?? defaultData);
     };
 
     const showBaseInfo = (dataObj: Ibaseinfo): void => {
@@ -202,8 +212,16 @@ const index = observer(({ session }: Iprops): JSX.Element => {
     };
 
     useEffect(() => {
+        if (!session.parseStatus) {
+            setTimeout(() => {
+                if (!session.parseStatus) {
+                    setData(defaultData);
+                }
+            }, 100);
+            return;
+        }
         getBaseInfo();
-    }, [session.updateId]);
+    }, [session.updateId, session.parseStatus]);
     useEffect(() => {
         showBaseInfo(data);
     }, [JSON.stringify(data), t]);

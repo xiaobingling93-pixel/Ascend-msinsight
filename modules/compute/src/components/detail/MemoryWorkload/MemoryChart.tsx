@@ -53,8 +53,16 @@ const chart = observer(({ condition, session }: {condition: Icondition;session: 
     };
 
     useEffect(() => {
+        if (!session.parseStatus) {
+            setTimeout(() => {
+                if (!session.parseStatus) {
+                    setData(defaultData);
+                }
+            }, 200);
+            return;
+        }
         updateData();
-    }, [condition.blockId]);
+    }, [condition.blockId, session.parseStatus]);
     useEffect(() => {
         const svg = d3.select(`#${chartId}>svg`);
         drawFlowChart(svg, { ...data, ...condition, theme: session.theme });
