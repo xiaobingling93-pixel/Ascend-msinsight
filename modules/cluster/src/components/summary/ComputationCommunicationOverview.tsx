@@ -250,6 +250,7 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
     const [dataSource, setDatasource] = useState<SummaryDataType[]>([]);
     const [allDataSource, setAllDatasource] = useState<SummaryDataType[]>([]);
     const [selected, setSelected] = useState({ rankId: '', step: '' });
+    const [chartRankId, setChartRankId] = useState('');
 
     chartVisbilityListener('overview-chart', () => {
         initCharts(dataSource, handleClick);
@@ -259,6 +260,9 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
             initCharts(dataSource, handleClick);
         });
     }, [dataSource]);
+    useEffect(() => {
+        setSelected({ ...selected, rankId: chartRankId });
+    }, [chartRankId]);
     const handleFilterChange = async (conditions: ConditionDataType, doQuery?: boolean): Promise<void> => {
         if (!session.clusterCompleted) {
             setAllDatasource([]);
@@ -287,7 +291,7 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
 
     const handleClick = (param: any): void => {
         const { name: rankId } = param;
-        setSelected({ ...selected, rankId });
+        setChartRankId(rankId);
     };
     return session.renderId > 0
         ? (<OverviewCom handleFilterChange={handleFilterChange} session={session}
