@@ -276,7 +276,7 @@ private:
                 count = 0;
                 isAppend = false;
             }
-            filePath.insert(filePath.find_last_of("."), "_" + std::to_string(++count));
+            filePath.insert(filePath.find_last_of("."), "_" + wsPort + "_" + std::to_string(++count));
             if (isAppend) {
                 currentSize = GetFileSize(filePath);
                 ofs.open(filePath, std::ios::out | std::ios::app);
