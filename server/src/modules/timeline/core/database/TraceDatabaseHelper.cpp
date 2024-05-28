@@ -620,10 +620,9 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Group(std::unique_ptr <SqliteP
         "from COMMUNICATION_OP LEFT JOIN STRING_IDS AS si ON si.id = opName "
         "where opId in (select opId from tmp group by opId)) "
         "select name, startNs as start, duration, 0 as depth, 'HCCL' as processId, groupName||'group' as threadId, "
-        "'Group '||(DENSE_RANK() OVER (ORDER BY groupName))||' Communication' AS threadName, "
-        "? AS rankId from sub WHERE groupName||'group' = ? ";
+        "? AS threadName, ? AS rankId from sub WHERE groupName||'group' = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition),
-        params.rankId, params.rankId, params.tid);
+        params.rankId, params.threadName, params.rankId, params.tid);
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Overlap(std::unique_ptr <SqlitePreparedStatement> &stmt,
