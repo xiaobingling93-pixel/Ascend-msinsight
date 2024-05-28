@@ -160,28 +160,14 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
                         })}>{`Slice ${data.to.name} at ${getTimestamp(data.to.timestamp ?? 0, { precision: 'ns' })}`}</Link>],
                     ],
                     fetchData: async (session: Session, metadata) => {
-                        const startTime = session.selectedData?.startTime;
-                        const flowId = session.linkFlow?.flowId as string;
-                        const type = session.linkFlow?.type as string;
-                        const rankId = (metadata as Record<string, unknown>)?.cardId;
-                        const metaType = (metadata as Record<string, unknown>)?.metaType;
-                        const id = session.selectedData?.id;
-                        const raw = await window.request(metadata.dataSource, { command: 'unit/flow', params: { flowId, type, startTime, rankId, id, metaType } } ) as any;
-                        const linkLine = { [raw.cat]: [{ category: raw.cat, ...raw, cardId: rankId }] }
-                        runInAction(() => {
-                            session.linkLines = linkLine;
-                            session.singleLinkLine = linkLine;
-                            session.renderTrigger = !session.renderTrigger;
-                        });
-                        return raw;
+                        return {};
                     },
                 });
                 session.linkFlow = data;
             });
         }}>{data.title}</Link> ],
         fetchData: async (session: Session, metadata) => {
-            const raw = await window.request(metadata.dataSource, { command: 'unit/flowName', params: session.linkFlow as Record<string, unknown> });
-            return raw.flowDetail;
+            return {};
         },
     });
 };

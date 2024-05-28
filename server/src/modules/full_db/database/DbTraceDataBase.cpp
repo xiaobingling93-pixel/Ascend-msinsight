@@ -177,12 +177,6 @@ bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requ
     return true;
 }
 
-bool DbTraceDataBase::QueryFlowDetail(const Protocol::UnitFlowParams &requestParams,
-    Protocol::UnitSingleFlow &responseBody, uint64_t minTimestamp)
-{
-    return false;
-}
-
 bool DbTraceDataBase::QueryUnitsMetadata(const std::string &fileId,
     std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
@@ -216,11 +210,6 @@ bool DbTraceDataBase::GenerateOverlapAnalysisMetadata(const std::string &fileId,
 bool DbTraceDataBase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
 {
     return false;
-}
-
-void DbTraceDataBase::QueryFlowName(const Protocol::UnitFlowNameParams &requestParams,
-    Protocol::UnitFlowNameBody &responseBody, uint64_t minTimestamp, uint64_t trackId)
-{
 }
 
 bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,

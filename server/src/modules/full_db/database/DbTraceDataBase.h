@@ -59,13 +59,9 @@ public:
     bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
                            Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp,
                            int64_t trackId) override;
-    bool QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitSingleFlow &responseBody,
-                         uint64_t minTimestamp) override;
     bool QueryUnitsMetadata(const std::string &fileId,
                             std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData) override;
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
-    void QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody,
-                       uint64_t minTimestamp, uint64_t trackId) override;
     bool QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
                         Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId) override;
     int SearchSliceNameCount(const Protocol::SearchCountParams &params) override;

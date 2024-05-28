@@ -25,15 +25,6 @@ void QueryFlowNameHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
     std::unique_ptr<UnitFlowNameResponse> responsePtr = std::make_unique<UnitFlowNameResponse>();
     UnitFlowNameResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
-    if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
-        session.OnResponse(std::move(responsePtr));
-        return;
-    }
-    uint64_t trackId = TraceFileParser::Instance()
-        .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
-    database->QueryFlowName(request.params, response.body, TraceTime::Instance().GetStartTime(), trackId);
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

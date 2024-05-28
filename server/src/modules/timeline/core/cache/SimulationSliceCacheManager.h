@@ -1,0 +1,85 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
+#ifndef PROFILER_SERVER_SIMULATIONSLICECACHEMANAGER_H
+#define PROFILER_SERVER_SIMULATIONSLICECACHEMANAGER_H
+#include <unordered_map>
+#include <unordered_set>
+#include <list>
+#include <vector>
+#include <mutex>
+#include "EventDef.h"
+
+namespace Dic {
+namespace Module {
+namespace Timeline {
+class SimulationSliceCacheManager {
+public:
+    static SimulationSliceCacheManager &Instance();
+    SimulationSliceCacheManager(const SimulationSliceCacheManager &) = delete;
+    SimulationSliceCacheManager &operator = (const SimulationSliceCacheManager &) = delete;
+    SimulationSliceCacheManager(SimulationSliceCacheManager &&) = delete;
+    SimulationSliceCacheManager &operator = (SimulationSliceCacheManager &&) = delete;
+    std::vector<Trace::Slice> GetCompeteSlice(const std::map<std::string, Trace::Slice> setFlagSliceMap,
+        std::map<std::string, Trace::Slice> waitFlagSliceMap, std::string field)
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        std::vector<Trace::Slice> result;
+        std::map<std::string, Trace::Slice> filedSetFlagSliceMap = allSetFlagSliceMap[field];
+        std::map<std::string, Trace::Slice> filedWaitFlagSliceMap = allWaitFlagSliceMap[field];
+        ProcessFlagMap(setFlagSliceMap, result, filedSetFlagSliceMap);
+        ProcessFlagMap(waitFlagSliceMap, result, filedWaitFlagSliceMap);
+        allSetFlagSliceMap[field] = filedSetFlagSliceMap;
+        allWaitFlagSliceMap[field] = filedWaitFlagSliceMap;
+        return result;
+    }
+
+    void ClearAll()
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        allSetFlagSliceMap.clear();
+        allWaitFlagSliceMap.clear();
+    }
+
+    void ClearCacheByFileId(const std::string &fileId)
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        allSetFlagSliceMap.erase(fileId);
+        allWaitFlagSliceMap.erase(fileId);
+    }
+protected:
+    void ProcessFlagMap(const std::map<std::string, Trace::Slice> &flagSliceMap, std::vector<Trace::Slice> &result,
+        std::map<std::string, Trace::Slice> &filedFlagSliceMap) const
+    {
+        for (const auto &item : flagSliceMap) {
+            if (filedFlagSliceMap.count(item.first) == 0) {
+                filedFlagSliceMap[item.first] = item.second;
+                return;
+            }
+            if (item.second.type == "SB") {
+                Trace::Slice slice = item.second;
+                slice.dur = filedFlagSliceMap[item.first].ts - slice.ts;
+                result.emplace_back(slice);
+                filedFlagSliceMap.erase(item.first);
+            }
+            if (item.second.type == "SE") {
+                Trace::Slice slice = filedFlagSliceMap[item.first];
+                slice.dur = slice.ts - filedFlagSliceMap[item.first].ts;
+                result.emplace_back(slice);
+                filedFlagSliceMap.erase(item.first);
+            }
+        }
+    }
+private:
+    SimulationSliceCacheManager() = default;
+    ~SimulationSliceCacheManager() = default;
+
+    std::map<std::string, std::map<std::string, Trace::Slice>> allSetFlagSliceMap;
+    std::map<std::string, std::map<std::string, Trace::Slice>> allWaitFlagSliceMap;
+    std::mutex mutex;
+};
+}
+}
+}
+#endif // PROFILER_SERVER_SIMULATIONSLICECACHEMANAGER_H

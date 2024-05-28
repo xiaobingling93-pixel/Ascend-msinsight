@@ -40,8 +40,11 @@ private:
     std::optional<JsonToEventFunc> GetJsonToEventFunc(const std::string &type);
     static std::unique_ptr<Event> ToSliceEvent(const json_t &json);
     static std::unique_ptr<Event> ToSimulationSliceEvent(const json_t &json);
+    static std::unique_ptr<Event> ToSimulationBeginSliceEvent(const json_t &json);
+    static std::unique_ptr<Event> ToSimulationEndSliceEvent(const json_t &json);
     static std::unique_ptr<Event> ToMetaDataEvent(const json_t &json);
     static std::unique_ptr<Event> ToFlowEvent(const json_t &json);
+    static std::unique_ptr<Event> ToSimulationFlowEvent(const json_t &json);
     static std::unique_ptr<Event> ToCounterEvent(const json_t &json);
 };
 } // end of namespace Timeline

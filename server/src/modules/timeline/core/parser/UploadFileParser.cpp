@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
+#include "SimulationSliceCacheManager.h"
 #include "UploadFileParser.h"
 
 namespace Dic {
@@ -138,7 +138,7 @@ void UploadFileParser::ParseLast(std::string fileId, UploadFileRequest request)
     }
     database->CreateIndex();
     database->UpdateSimulationDepthWithNoOverlap();
-
+    SimulationSliceCacheManager::Instance().ClearCacheByFileId(fileId);
     // 根据是否重置发送解析完成消息
     bool reset = singleFileData.reset.load();
     ParseEndSendResp(fileId, request, !reset);

@@ -18,6 +18,8 @@ public:
     virtual void SortByTimestampASC(std::vector<CacheSlice> &cacheSlices) = 0;
     virtual uint32_t ComputeFlowPointDepth(std::vector<CacheSlice> &cacheSlices, std::string &type,
         uint64_t timestamp) = 0;
+    virtual void CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
+        std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime, uint64_t endTime) = 0;
 };
 
 class SliceAnalyzer : public VirtualSliceAnalyzer {
@@ -29,8 +31,15 @@ public:
     void SortByTimestampASC(std::vector<CacheSlice> &cacheSlices) override;
     uint32_t ComputeFlowPointDepth(std::vector<CacheSlice> &cacheSlices, std::string &type,
         uint64_t timestamp) override;
+    void CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows, std::map<std::string, uint64_t> &selfTimeKeyValue,
+        uint64_t startTime, uint64_t endTime) override;
+
 private:
     static bool CompareTimestampASC(const CacheSlice &first, const CacheSlice &second);
+    static void AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, const std::string &name,
+        uint64_t tmpSelfTime);
+    static void ComputeSmallScreenSliceIds(uint64_t startTime, uint64_t endTime, uint64_t minTimestamp,
+        std::vector<CacheSlice> &cacheSlices, std::set<int64_t> &ids);
 };
 }
 #endif // PROFILER_SERVER_SLICEANALYZER_H

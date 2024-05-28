@@ -11,6 +11,7 @@
 #include "ParserStatusManager.h"
 #include "TraceTime.h"
 #include "SliceDepthCacheManager.h"
+#include "SimulationSliceCacheManager.h"
 #include "TraceFileSimulationParser.h"
 
 namespace Dic {
@@ -136,6 +137,7 @@ void TraceFileSimulationParser::EndParseTask(const std::string &fileId, const st
     database->CreateIndex();
     database->UpdateSimulationDepthWithNoOverlap();
     database->SimulationUpdateProcessSortIndex();
+    SimulationSliceCacheManager::Instance().ClearCacheByFileId(fileId);
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true, "");
 }
@@ -187,6 +189,7 @@ void TraceFileSimulationParser::Reset()
     ParserStatusManager::Instance().ClearAllParserStatus();
     CacheManager::Instance().Clear();
     SliceDepthCacheManager::Instance().ClearAllCache();
+    SimulationSliceCacheManager::Instance().ClearAll();
     ServerLog::Info("End Reset trace Parser");
 }
 

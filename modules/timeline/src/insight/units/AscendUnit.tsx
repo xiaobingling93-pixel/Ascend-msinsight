@@ -248,6 +248,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
         onClick: async (data, session, metadata) => {
             if (data === undefined) { return; }
             const linkFlow = generateFlowParam(metadata as ThreadMetaData, data);
+            linkFlow.isSimulation = session.isSimulation;
             const raw = await window.request((metadata as ThreadMetaData).dataSource as DataSource, { command: 'unit/flows', params: linkFlow as Record<string, unknown> }) as any;
             const categoryFlowEvents = raw.unitAllFlows as CategoryFlows[] ?? [];
             const newLines: LinkLines = {};
@@ -267,11 +268,9 @@ export const ThreadUnit = unit<ThreadMetaData>({
             }
             runInAction(() => {
                 session.selectedData = { ...data, threadId: (metadata as ThreadMetaData).threadId };
-                if (!session.isSimulation) {
-                    session.linkLines = newLines;
-                    session.singleLinkLine = newLines;
-                    session.renderTrigger = !session.renderTrigger;
-                }
+                session.linkLines = newLines;
+                session.singleLinkLine = newLines;
+                session.renderTrigger = !session.renderTrigger;
             });
         },
         onHover: (data, session: Session): void => {

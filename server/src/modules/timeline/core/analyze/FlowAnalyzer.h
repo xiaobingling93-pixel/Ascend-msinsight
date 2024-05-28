@@ -50,6 +50,8 @@ public:
     virtual void SortByFlowIdAndTimestampASC(std::vector<FlowCategoryEventsDto> &FlowCategoryEventsDtoVec) = 0;
     virtual void ComputeScreenFlowPoint(const std::vector<FlowCategoryEventsDto> &flowEventsVec, uint64_t startTime,
         uint64_t endTime, std::vector<FlowCategoryEventsDto> &flowIdResult) = 0;
+    virtual void ComputeUintFlows(const std::vector<FlowCategoryEventsDto> &flowEventsVec, const std::string &category,
+                          std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) = 0;
 };
 
 class FlowAnalyzer : public VirtualFlowAnalyzer {
@@ -66,6 +68,8 @@ public:
     void SortByFlowIdAndTimestampASC(std::vector<FlowCategoryEventsDto> &flowCategoryEventsDtoVec) override;
     void ComputeScreenFlowPoint(const std::vector<FlowCategoryEventsDto> &flowEventsVec, uint64_t startTime,
         uint64_t endTime, std::vector<FlowCategoryEventsDto> &flowIdResult) override;
+    void ComputeUintFlows(const std::vector<FlowCategoryEventsDto> &flowEventsVec, const std::string &category,
+        std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) override;
 
 private:
     static bool CompareTrackIdASC(const FlowCategoryEventsDto &first, const FlowCategoryEventsDto &second);
@@ -75,9 +79,8 @@ private:
     static void ComputePointOnScreen(FlowPointSampleStruct &flowPointSampleStruct, uint64_t uintTime,
         const FlowCategoryEventsDto &flowPoint);
     void OfferFlowPointPair(const std::vector<FlowCategoryEventsDto> &flowEventsVec,
-                            std::vector<FlowCategoryEventsDto> &flowIdResult,
-                            FlowPointSampleStruct &flowPointSampleStruct,
-                            const std::string &flowId) const;
+        std::vector<FlowCategoryEventsDto> &flowIdResult, FlowPointSampleStruct &flowPointSampleStruct,
+        const std::string &flowId) const;
 };
 }
 

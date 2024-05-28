@@ -2,11 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
  */
 
-#include <fstream>
 #include "ServerLog.h"
-#include "RegexUtil.h"
 #include "FileUtil.h"
-#include "StringUtil.h"
 #include "DataBaseManager.h"
 #include "EventParser.h"
 #include "ParserStatusManager.h"
@@ -14,6 +11,7 @@
 #include "ClusterParseThreadPoolExecutor.h"
 #include "EventNotifyThreadPoolExecutor.h"
 #include "SliceDepthCacheManager.h"
+#include "SimulationSliceCacheManager.h"
 #include "TraceFileParser.h"
 
 namespace Dic {
@@ -216,6 +214,7 @@ void TraceFileParser::Reset()
     ParserStatusManager::Instance().ClearAllParserStatus();
     CacheManager::Instance().Clear();
     SliceDepthCacheManager::Instance().ClearAllCache();
+    SimulationSliceCacheManager::Instance().ClearAll();
     ServerLog::Info("End Reset trace Parser");
 }
 

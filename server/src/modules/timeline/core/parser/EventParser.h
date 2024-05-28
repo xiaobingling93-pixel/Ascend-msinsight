@@ -39,15 +39,22 @@ private:
     void InitEventHandle();
     void MetaDataHandle(std::unique_ptr<Trace::Event> eventPtr);
     void CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
+    void SimulationBeginEventHandle(std::unique_ptr<Trace::Event> eventPtr);
+    void SimulationEndEventHandle(std::unique_ptr<Trace::Event> eventPtr);
     void SimulationEventHandle(std::unique_ptr<Trace::Event> eventPtr);
     void FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
+    void SimulationFlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
     void CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr);
     std::map<std::string, int64_t> trackIdMap;
+    std::map<std::string, Trace::Slice> setFlagSliceMap;
+    std::map<std::string, Trace::Slice> waitFlagSliceMap;
     int64_t GetTrackId(const std::string &pid, const std::string &tid);
     std::map<std::string, int64_t> simulationProcessMap;
     std::map<std::string, int64_t> simulationThreadMap;
     int64_t GetPid(const std::string &processName);
     int64_t GetTid(const std::string &processName, const std::string &threadName);
+
+    void ProcessLastFlagSlice();
 };
 } // end of namespace Timeline
 } // end of namespace Module

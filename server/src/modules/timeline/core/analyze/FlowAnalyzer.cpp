@@ -130,6 +130,45 @@ void FlowAnalyzer::ComputeScreenFlowPoint(const std::vector<FlowCategoryEventsDt
     }
 }
 
+/**
+ * 根据连线点组装连线
+ * @param flowEventsVec 连线点
+ * @param category 连线类别
+ * @param flowDetailList 结果集
+ */
+void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowCategoryEventsDto> &flowEventsVec,
+    const std::string &category, std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList)
+{
+    std::string curFlowId;
+    Protocol::FlowLocation location;
+    Protocol::FlowLocation *locationPtr = &location;
+    for (const auto &flow : flowEventsVec) {
+        std::string type = flow.type;
+        std::string flowId = flow.flowId;
+        if (type == Protocol::LINE_START || flowId != curFlowId) {
+            location.pid = flow.pid;
+            location.tid = flow.tid;
+            location.depth = flow.depth;
+            location.timestamp = flow.timestamp;
+            location.type = type;
+            locationPtr = &location;
+        } else if ((type == Protocol::LINE_END || type == Protocol::LINE_END_OPTIONAL) && flowId == curFlowId) {
+            auto flowEvent = std::make_unique<Protocol::UnitSingleFlow>();
+            flowEvent->cat = category;
+            flowEvent->from = *locationPtr;
+            flowEvent->to.pid = flow.pid;
+            flowEvent->to.tid = flow.tid;
+            flowEvent->to.depth = flow.depth;
+            flowEvent->to.timestamp = flow.timestamp;
+            locationPtr = &(flowEvent->to);
+            if (flowEvent->from.type == Protocol::LINE_START) {
+                flowDetailList.emplace_back(std::move(flowEvent));
+            }
+        }
+        curFlowId = flowId;
+    }
+}
+
 void FlowAnalyzer::OfferFlowPointPair(const std::vector<FlowCategoryEventsDto> &flowEventsVec,
     std::vector<FlowCategoryEventsDto> &flowIdResult, FlowPointSampleStruct &flowPointSampleStruct,
     const std::string &flowId) const
@@ -159,9 +198,6 @@ void FlowAnalyzer::GroupSampleFlowPoint(const std::vector<FlowCategoryEventsDto>
     int64_t index = -1;
     // 此处500是把屏幕平均分成500份，以一份屏幕的宽度为采集连线点的最小步长
     uint64_t uintTime = (endTime - startTime) / 500;
-    if (uintTime < 1) {
-        uintTime = 1;
-    }
     for (const auto &item : flowEventsVec) {
         index++;
         if (curTrackId != item.trackId) {
@@ -180,6 +216,12 @@ void FlowAnalyzer::GroupSampleFlowPoint(const std::vector<FlowCategoryEventsDto>
             (item.type == Protocol::LINE_END || item.type == Protocol::LINE_END_OPTIONAL)) {
             flowPointSampleStruct.endPointMap[item.flowId] = index;
         }
+        if (uintTime == 0 && item.timestamp < startTime) {
+            continue;
+        }
+        if (uintTime == 0 && item.timestamp > endTime) {
+            continue;
+        }
         ComputePointOnScreen(flowPointSampleStruct, uintTime, item);
     }
 }
@@ -187,6 +229,14 @@ void FlowAnalyzer::GroupSampleFlowPoint(const std::vector<FlowCategoryEventsDto>
 void FlowAnalyzer::ComputePointOnScreen(FlowPointSampleStruct &flowPointSampleStruct, uint64_t uintTime,
     const FlowCategoryEventsDto &flowPoint)
 {
+    if (uintTime == 0 && flowPoint.type == Protocol::LINE_START) {
+        flowPointSampleStruct.startPointResultSet.emplace(flowPoint.flowId);
+        return;
+    }
+    if (uintTime == 0 && (flowPoint.type == Protocol::LINE_END || flowPoint.type == Protocol::LINE_END_OPTIONAL)) {
+        flowPointSampleStruct.endPointResultSet.emplace(flowPoint.flowId);
+        return;
+    }
     // 计算可能需要展示在屏幕上的开始点
     if (flowPoint.type == Protocol::LINE_START) {
         while (flowPoint.timestamp >= flowPointSampleStruct.curBeginLimitTime) {

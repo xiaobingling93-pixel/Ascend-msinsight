@@ -31,6 +31,7 @@ struct Slice : public Event {
     std::string cname;
     std::optional<std::string> cat;
     std::optional<std::string> args;
+    std::string flagId;
 };
 
 struct MetaDataArgs {

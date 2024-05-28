@@ -172,7 +172,6 @@ const findDataByXY = (mousePos: {x: number; y: number} | undefined, datas: Stack
         (data[data.length - 1].startTime + data[data.length - 1].duration + rangeTime < mouseTime)) {
         return undefined;
     }
-
     let lo = 0;
     let hi = data.length;
     while (lo < hi) {

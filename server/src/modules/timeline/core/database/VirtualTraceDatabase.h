@@ -38,13 +38,9 @@ public:
                            Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId) = 0;
     virtual bool QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
                                   Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp) = 0;
-    virtual bool QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitSingleFlow &responseBody,
-                         uint64_t minTimestamp) = 0;
     virtual bool QueryUnitsMetadata(const std::string &fileId,
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData) = 0;
     virtual bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) = 0;
-    virtual void QueryFlowName(const Protocol::UnitFlowNameParams &requestParams,
-        Protocol::UnitFlowNameBody &responseBody, uint64_t minTimestamp, uint64_t trackId) = 0;
     virtual bool QueryUintFlows(const Protocol::UnitFlowsParams &requestParams,
                                Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp, uint64_t trackId) = 0;
     virtual int SearchSliceNameCount(const Protocol::SearchCountParams &params) = 0;

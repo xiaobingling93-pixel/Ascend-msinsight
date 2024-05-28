@@ -103,6 +103,7 @@ struct UnitFlowsParams {
     std::string metaType;
     uint64_t startTime = 0;
     uint64_t endTime = 0;
+    bool isSimulation = false;
 };
 
 struct UnitFlowsRequest : public Request {
@@ -180,6 +181,7 @@ struct FlowCategoryEventsParams {
     uint64_t startTime = 0;
     uint64_t endTime = 0;
     double timePerPx = 0;
+    bool isSimulation = false;
 };
 
 struct FlowCategoryEventsRequest : public Request {

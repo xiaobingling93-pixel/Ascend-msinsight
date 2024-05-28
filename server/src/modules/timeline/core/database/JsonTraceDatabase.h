@@ -63,21 +63,15 @@ public:
         uint64_t minTimestamp, int64_t traceId) override;
     bool QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
         Protocol::UnitThreadDetailBody &responseBody, uint64_t minTimestamp, int64_t trackId) override;
-
-    bool QueryFlowDetail(const Protocol::UnitFlowParams &requestParams, Protocol::UnitSingleFlow &responseBody,
-        uint64_t minTimestamp) override;
     bool QueryUnitsMetadata(const std::string &fileId,
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData) override;
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
-
-    void QueryFlowName(const Protocol::UnitFlowNameParams &requestParams, Protocol::UnitFlowNameBody &responseBody,
-        uint64_t minTimestamp, uint64_t trackId) override;
     bool QueryUintFlows(const Protocol::UnitFlowsParams &requestParams, Protocol::UnitFlowsBody &responseBody,
         uint64_t minTimestamp, uint64_t trackId) override;
     int SearchSliceNameCount(const Protocol::SearchCountParams &params) override;
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
         Protocol::SearchSliceBody &responseBody) override;
-    bool QueryFlowCategoryList(std::vector<std::string> &categories, const std::string& rankId) override;
+    bool QueryFlowCategoryList(std::vector<std::string> &categories, const std::string &rankId) override;
     bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
         std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) override;
     bool QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
@@ -175,16 +169,9 @@ private:
 
     bool QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t startTime, uint64_t endTime,
         Protocol::ExtremumTimestamp &extremumTimestamp);
-    void CalculateSelfTime(std::vector<Protocol::SimpleSlice> &simpleSliceVec,
-        std::map<std::string, uint64_t> &selfTimeKeyValue, uint64_t startTime, uint64_t endTime);
-    void AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, const std::string &name, uint64_t tmpSelfTime);
     bool QueryDurationFromSliceByTimeRange(const Protocol::ThreadDetailParams &requestParams,
         const std::vector<SliceDto> &rows, std::vector<std::pair<uint64_t, uint64_t>> &nextDepthResult,
         int64_t trackId);
-    bool FlowDetailToResponse(const std::vector<FlowDetailDto> &flowDetailVec, uint64_t minTimestamp,
-        Protocol::UnitSingleFlow &responseBody);
-    void FlowEventsToResponse(const std::vector<FlowCategoryEventsDto> &flowEventsVec, const std::string &category,
-        std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList);
     void MetaDataToResponse(const std::vector<MetaDataDto> &metaDataVec, const std::string &fileId,
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     std::vector<std::string> GetCounterDataType(const std::string &args);
@@ -210,13 +197,23 @@ private:
 
     std::vector<Protocol::SimpleSlice> QuerySimpleSliceByTimePoint(uint64_t startTime, uint64_t minTimestamp,
         int64_t trackId);
+    std::vector<Protocol::SimpleSlice> QuerySimpleSliceByFlagAndTrackId(const std::string &flagId, uint64_t trackId);
 
     std::vector<Protocol::FlowName> QueryFlowNameByTimeRange(uint64_t startTime, uint64_t endTime, int64_t trackId);
 
-    std::vector<FlowDetailDto> QuerySingleFlowDetail(const std::string &flowId, uint64_t minTimestamp);
+    std::vector<FlowDetailDto> QuerySingleFlowDetail(const std::string &flowId);
 
     void QueryFlowPointByCategory(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
         std::vector<FlowCategoryEventsDto> &flowEventsVec);
+    void ComputeUintFlowResponse(Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp,
+        std::set<std::string> &flowIdSet);
+    bool QuerySliceDtoById(const std::string &sliceId, SliceDto &sliceDto);
+
+    void ComputePosition(uint64_t minTimestamp, std::vector<FlowDetailDto> &flowDetailVec);
+
+    void QuerySimulationUintFlows(const Protocol::UnitFlowsParams &requestParams, Protocol::UnitFlowsBody &responseBody,
+        uint64_t minTimestamp);
+    void QueryAllFlagSlice(std::unordered_map<std::string, uint32_t> &simpleSliceMap, uint64_t trackId);
 };
 } // end of namespace Timeline
 // end of namespace Module

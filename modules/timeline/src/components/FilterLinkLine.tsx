@@ -115,7 +115,7 @@ const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<str
                 const timestampOffset = getTimeOffset(session, cardId);
                 const start = Math.floor(domainStart + timestampOffset);
                 const end = Math.ceil(domainEnd + timestampOffset);
-                const params = { rankId: cardId, startTime: start, endTime: end, category, timePerPx };
+                const params = { rankId: cardId, startTime: start, endTime: end, category, timePerPx, isSimulation: session.isSimulation };
                 res = res.concat((await window.request(dataSource,
                     { command: 'flow/categoryEvents', params }) as CategoryEvents).flowDetailList
                     .map(data => ({ ...data, cardId })));

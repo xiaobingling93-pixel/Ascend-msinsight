@@ -10,6 +10,7 @@
 #include "TraceFileParser.h"
 #include "SourceFileParser.h"
 #include "ParserStatusManager.h"
+#include "SimulationSliceCacheManager.h"
 #include "EventParser.h"
 
 namespace Dic {
@@ -32,6 +33,10 @@ void EventParser::InitEventHandle()
     eventHandleMap.emplace("t", std::bind(&EventParser::FlowEventsHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("f", std::bind(&EventParser::FlowEventsHandle, this, std::placeholders::_1));
     eventHandleMap.emplace("SX", std::bind(&EventParser::SimulationEventHandle, this, std::placeholders::_1));
+    eventHandleMap.emplace("SB", std::bind(&EventParser::SimulationBeginEventHandle, this, std::placeholders::_1));
+    eventHandleMap.emplace("SE", std::bind(&EventParser::SimulationEndEventHandle, this, std::placeholders::_1));
+    eventHandleMap.emplace("Ss", std::bind(&EventParser::SimulationFlowEventsHandle, this, std::placeholders::_1));
+    eventHandleMap.emplace("St", std::bind(&EventParser::SimulationFlowEventsHandle, this, std::placeholders::_1));
 }
 
 bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
@@ -43,7 +48,7 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
         return false;
     }
     std::shared_ptr<JsonTraceDatabase> databasePtr =
-            std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
+        std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
     if (databasePtr == nullptr) {
         error = "Failed to open Database";
         ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDataBase in EventParser.");
@@ -74,11 +79,23 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
         }
         EventHandle(event);
     }
+    ProcessLastFlagSlice();
     database->CommitData();
     database.reset(); // return connection pool
     ServerLog::Info("EventParser. fileId:", fileId, " Parse ", startPosition, " to ", endPosition,
         ". Count:", parseCount, ", ignore Count:", ignoreCount);
     return true;
+}
+
+void EventParser::ProcessLastFlagSlice()
+{
+    if (!waitFlagSliceMap.empty() || !setFlagSliceMap.empty()) {
+        std::vector<Slice> sliceVec =
+            SimulationSliceCacheManager::Instance().GetCompeteSlice(setFlagSliceMap, waitFlagSliceMap, fileId);
+        for (const auto &item : sliceVec) {
+            database->InsertSlice(item);
+        }
+    }
 }
 
 
@@ -117,6 +134,7 @@ void EventParser::Parse(int sliceIndex, const std::string &fileContent)
     for (auto &event : jsonContent.value().GetArray()) {
         EventHandle(event);
     }
+    ProcessLastFlagSlice();
     database->CommitData();
     database.reset(); // return connection pool
     ServerLog::Info("EventParser slice index is ", sliceIndex, ". Count:", parseCount, ", ignore Count:", ignoreCount);
@@ -160,7 +178,7 @@ void EventParser::EventHandle(const json_t &json)
 {
     std::string type = EventUtil::Type(json);
     if (m_isSimulation) {
-        type = "SX";
+        type = "S" + type;
     }
     if (type.empty()) {
         ServerLog::Error("EventHandle. event type is empty. ", JsonUtil::JsonDump(json));
@@ -210,6 +228,64 @@ void EventParser::CompleteEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     database->InsertSlice(event);
 }
 
+void EventParser::SimulationBeginEventHandle(std::unique_ptr<Trace::Event> eventPtr)
+{
+    if (eventPtr == nullptr) {
+        return;
+    }
+    auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
+    if (event.name == "SET_FLAG" && setFlagSliceMap.count(event.flagId) == 0) {
+        setFlagSliceMap[event.flagId] = event;
+        return;
+    }
+    if (event.name == "SET_FLAG" && setFlagSliceMap.count(event.flagId) > 0) {
+        event.dur = setFlagSliceMap[event.flagId].ts - event.ts;
+        SimulationEventHandle(std::move(eventPtr));
+        setFlagSliceMap.erase(event.flagId);
+        return;
+    }
+    if (event.name == "WAIT_FLAG" && waitFlagSliceMap.count(event.flagId) == 0) {
+        waitFlagSliceMap[event.flagId] = event;
+        return;
+    }
+    if (event.name == "WAIT_FLAG" && waitFlagSliceMap.count(event.flagId) > 0) {
+        event.dur = waitFlagSliceMap[event.flagId].ts - event.ts;
+        SimulationEventHandle(std::move(eventPtr));
+        waitFlagSliceMap.erase(event.flagId);
+        return;
+    }
+}
+
+void EventParser::SimulationEndEventHandle(std::unique_ptr<Trace::Event> eventPtr)
+{
+    if (eventPtr == nullptr) {
+        return;
+    }
+    auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
+    if (event.name == "SET_FLAG" && setFlagSliceMap.count(event.flagId) == 0) {
+        setFlagSliceMap[event.flagId] = event;
+        return;
+    }
+    if (event.name == "SET_FLAG" && setFlagSliceMap.count(event.flagId) > 0) {
+        Trace::Slice beginSlice = setFlagSliceMap[event.flagId];
+        beginSlice.dur = event.ts - beginSlice.ts;
+        SimulationEventHandle(std::make_unique<Trace::Slice>(beginSlice));
+        setFlagSliceMap.erase(event.flagId);
+        return;
+    }
+    if (event.name == "WAIT_FLAG" && waitFlagSliceMap.count(event.flagId) == 0) {
+        waitFlagSliceMap[event.flagId] = event;
+        return;
+    }
+    if (event.name == "WAIT_FLAG" && waitFlagSliceMap.count(event.flagId) > 0) {
+        Trace::Slice beginSlice = waitFlagSliceMap[event.flagId];
+        beginSlice.dur = event.ts - beginSlice.ts;
+        SimulationEventHandle(std::make_unique<Trace::Slice>(beginSlice));
+        waitFlagSliceMap.erase(event.flagId);
+        return;
+    }
+}
+
 void EventParser::SimulationEventHandle(std::unique_ptr<Trace::Event> eventPtr)
 {
     if (eventPtr == nullptr) {
@@ -248,6 +324,31 @@ void EventParser::FlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     std::tuple<int64_t, std::string, std::string> thread = { event.trackId, event.tid, event.pid };
     database->AddThreadCache(thread);
     database->InsertFlow(event);
+}
+
+void EventParser::SimulationFlowEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
+{
+    if (eventPtr == nullptr) {
+        return;
+    }
+    auto &event = dynamic_cast<Trace::Flow &>(*eventPtr);
+    std::string processName = event.pid;
+    std::string threadName = event.tid;
+    event.pid = std::to_string(GetPid(processName));
+    event.tid = std::to_string(GetTid(processName, threadName));
+    event.trackId = GetTrackId(event.pid, event.tid);
+    ThreadEvent threadEvent;
+    threadEvent.trackId = event.trackId;
+    threadEvent.tid = event.tid;
+    threadEvent.pid = event.pid;
+    threadEvent.threadName = threadName;
+    threadEvent.SetThreadSortIndex();
+    ProcessEvent processEvent;
+    processEvent.pid = event.pid;
+    processEvent.processName = processName;
+    database->InsertFlow(event);
+    database->AddSimulationProcessCache(processEvent);
+    database->AddSimulationThreadCache(threadEvent);
 }
 
 void EventParser::CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr)

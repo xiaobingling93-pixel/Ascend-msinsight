@@ -354,49 +354,6 @@ void assertFlowLocationEqual(Dic::Protocol::FlowLocation &location, Dic::Protoco
     EXPECT_EQ(location.timestamp, other.timestamp);
 }
 
-TEST_F(TestSuit, QueryFlowDetail)
-{
-    // request parameters
-    Dic::Protocol::UnitFlowParams request;
-    request.flowId = "85899345919";
-    request.startTime = 0;
-    request.type = "s";
-    uint64_t minTimestamp = 0;
-
-    // expected data
-    uint64_t TOTIMESTAMP = 1695115378715400200;
-    uint64_t FROMTIMESTAMP = 1695115378714991500;
-    uint64_t TODURATION = 4975266;
-    uint64_t FROMDURATION = 468180;
-    std::string FROMTID = "1408366";
-
-    std::string title = "HostToDevice85899345919";
-    std::string cat = "HostToDevice";
-    std::string id = "85899345919";
-    Dic::Protocol::FlowLocation from;
-    from.duration = FROMDURATION;
-    from.tid = FROMTID;
-    from.pid = "140836602";
-    from.name = "AscendCL@hcom_broadcast_";
-    from.timestamp = FROMTIMESTAMP;
-    Dic::Protocol::FlowLocation to;
-    to.duration = TODURATION;
-    to.tid = "0";
-    to.pid = "14083661400";
-    to.name = "hcom_broadcast__483_0";
-    to.timestamp = TOTIMESTAMP;
-
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
-    Dic::Protocol::UnitSingleFlow response;
-    database->QueryFlowDetail(request, response, minTimestamp);
-
-    EXPECT_EQ(response.title, title);
-    EXPECT_EQ(response.cat, cat);
-    EXPECT_EQ(response.id, id);
-    assertFlowLocationEqual(response.from, from);
-    assertFlowLocationEqual(response.to, to);
-}
-
 TEST_F(TestSuit, QueryExtremumTimestamp)
 {
     uint64_t expectMin = 1695115378653323500;
@@ -481,27 +438,6 @@ TEST_F(TestSuit, SearchSliceName)
     EXPECT_EQ(body.startTime, expectStartTime);
     EXPECT_EQ(body.depth, expectDepth);
     EXPECT_EQ(body.duration, expectDuration);
-}
-
-TEST_F(TestSuit, QueryFlowName)
-{
-    // request parameters
-    Dic::Protocol::UnitFlowNameParams request;
-    uint64_t START_TIME = 1695115378713661000;
-    request.startTime = START_TIME;
-    uint64_t MIN_TIMESTAMP = 0;
-    int64_t trackId = 7;
-
-    // expected data
-    int size = 0;
-    Dic::Protocol::FlowName name;
-    name.title = "torch_to_npu";
-    name.flowId = "1695115378713661.0";
-    name.type = "f";
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
-    Dic::Protocol::UnitFlowNameBody response;
-    database->QueryFlowName(request, response, MIN_TIMESTAMP, trackId);
-    EXPECT_EQ(response.flowDetail.size(), size);
 }
 
 TEST_F(TestSuit, QueryThreadSameOperatorsDetails)

@@ -26,6 +26,10 @@ void EventUtil::Register()
     jsonToEventFactory.emplace("M", ToMetaDataEvent);
     jsonToEventFactory.emplace("X", ToSliceEvent);
     jsonToEventFactory.emplace("SX", ToSimulationSliceEvent);
+    jsonToEventFactory.emplace("SB", ToSimulationBeginSliceEvent);
+    jsonToEventFactory.emplace("SE", ToSimulationEndSliceEvent);
+    jsonToEventFactory.emplace("Ss", ToFlowEvent);
+    jsonToEventFactory.emplace("St", ToFlowEvent);
     jsonToEventFactory.emplace("s", ToFlowEvent);
     jsonToEventFactory.emplace("f", ToFlowEvent);
     jsonToEventFactory.emplace("t", ToFlowEvent);
@@ -81,19 +85,43 @@ std::unique_ptr<Event> EventUtil::ToSliceEvent(const json_t &json)
     return event;
 }
 
-    std::unique_ptr<Event> EventUtil::ToSimulationSliceEvent(const json_t &json)
-    {
-        std::unique_ptr<Slice> event = std::make_unique<Slice>();
-        event->type = "SX";
-        event->ts = NumberUtil::TimestampUsToNs(JsonUtil::GetLongDouble(json, "ts"));
-        event->dur = NumberUtil::TimestampUsToNs(JsonUtil::GetDouble(json, "dur"));
-        event->name = JsonUtil::GetString(json, "name");
-        event->threadName = JsonUtil::GetString(json, "tid");
-        event->processName = JsonUtil::GetString(json, "pid");
-        event->cname = JsonUtil::GetString(json, "cname");
-        event->args = JsonUtil::GetOptionalString(json, "args");
-        return event;
-    }
+std::unique_ptr<Event> EventUtil::ToSimulationSliceEvent(const json_t &json)
+{
+    std::unique_ptr<Slice> event = std::make_unique<Slice>();
+    event->type = "SX";
+    event->ts = NumberUtil::TimestampUsToNs(JsonUtil::GetLongDouble(json, "ts"));
+    event->dur = NumberUtil::TimestampUsToNs(JsonUtil::GetDouble(json, "dur"));
+    event->name = JsonUtil::GetString(json, "name");
+    event->threadName = JsonUtil::GetString(json, "tid");
+    event->processName = JsonUtil::GetString(json, "pid");
+    event->cname = JsonUtil::GetString(json, "cname");
+    event->args = JsonUtil::GetOptionalString(json, "args");
+    return event;
+}
+
+std::unique_ptr<Event> EventUtil::ToSimulationBeginSliceEvent(const json_t &json)
+{
+    std::unique_ptr<Slice> event = std::make_unique<Slice>();
+    event->type = "SB";
+    event->ts = NumberUtil::TimestampUsToNs(JsonUtil::GetLongDouble(json, "ts"));
+    event->name = JsonUtil::GetString(json, "name");
+    event->threadName = JsonUtil::GetString(json, "tid");
+    event->processName = JsonUtil::GetString(json, "pid");
+    event->cname = JsonUtil::GetString(json, "cname");
+    event->args = JsonUtil::GetOptionalString(json, "args");
+    event->flagId = JsonUtil::GetDumpString(json, "id");
+    return event;
+}
+
+std::unique_ptr<Event> EventUtil::ToSimulationEndSliceEvent(const json_t &json)
+{
+    std::unique_ptr<Slice> event = std::make_unique<Slice>();
+    event->type = "SE";
+    event->ts = NumberUtil::TimestampUsToNs(JsonUtil::GetLongDouble(json, "ts"));
+    event->name = JsonUtil::GetString(json, "name");
+    event->flagId = JsonUtil::GetDumpString(json, "id");
+    return event;
+}
 
 std::unique_ptr<Event> EventUtil::ToMetaDataEvent(const json_t &json)
 {
@@ -111,6 +139,19 @@ std::unique_ptr<Event> EventUtil::ToMetaDataEvent(const json_t &json)
 }
 
 std::unique_ptr<Event> EventUtil::ToFlowEvent(const json_t &json)
+{
+    std::unique_ptr<Flow> event = std::make_unique<Flow>();
+    event->type = Type(json);
+    event->ts = NumberUtil::TimestampUsToNs(JsonUtil::GetLongDouble(json, "ts"));
+    event->tid = JsonUtil::GetDumpString(json, "tid");
+    event->pid = JsonUtil::GetDumpString(json, "pid");
+    event->flowId = JsonUtil::GetDumpString(json, "id");
+    event->name = JsonUtil::GetString(json, "name");
+    event->cat = JsonUtil::GetOptionalString(json, "cat");
+    return event;
+}
+
+std::unique_ptr<Event> EventUtil::ToSimulationFlowEvent(const json_t &json)
 {
     std::unique_ptr<Flow> event = std::make_unique<Flow>();
     event->type = Type(json);
