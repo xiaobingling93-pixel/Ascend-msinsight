@@ -11,6 +11,7 @@ import { Col, Layout, Row, Table, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import { Container, addResizeEvent, COLOR, commonEchartsOptions } from '../Common';
+import i18n from '../../i18n';
 
 const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
     const [data, setData] = useState([]);
@@ -214,7 +215,7 @@ const bandwidthOption: echarts.EChartsOption = {
             formatter: function () {
                 const div = document.createElement('div');
                 div.className = 'legend-tooltip';
-                div.append('Click to Switch Chart Display and Hide');
+                div.append(i18n.t('chart:switchTooltip'));
                 return div;
             },
         },

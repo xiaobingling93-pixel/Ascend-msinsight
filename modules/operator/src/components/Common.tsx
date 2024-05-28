@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import React from 'react';
+import i18n from '../i18n';
 import { Col, Row } from 'antd';
 import type { EChartsType } from 'echarts';
 
@@ -105,7 +106,7 @@ export const GetPageConfigWhithPageData = (page: { current: number; pageSize: nu
         ...page,
         showSizeChanger: page.total > 10,
         pageSizeOptions: [10, 20, 50, 100],
-        showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>),
+        showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>{i18n.t('PaginationTotal', { total })}</div>),
         hideOnSinglePage: false,
         onChange: (current: number, pageSize: number) => { setPage({ ...page, current, pageSize }); },
         showQuickJumper: page.pageSize !== 0 && page.total / page.pageSize > 5,

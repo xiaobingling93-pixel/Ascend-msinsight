@@ -8,6 +8,7 @@ import * as echarts from 'echarts';
 import { Spin } from 'antd';
 import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, Container } from '../Common';
 import type { Session } from '../../entity/session';
+import i18n from '../../i18n';
 
 function InitCharts(data: dataType): void {
     const chartDom = document.getElementById('main');
@@ -55,7 +56,7 @@ const baseOption: any = {
             formatter: function () {
                 const div = document.createElement('div');
                 div.className = 'legend-tooltip';
-                div.append('Click to Switch Chart Display and Hide');
+                div.append(i18n.t('chart:switchTooltip'));
                 return div;
             },
         },

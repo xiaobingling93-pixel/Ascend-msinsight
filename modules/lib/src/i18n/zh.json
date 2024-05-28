@@ -144,5 +144,8 @@
     "SeeMore": "查看更多",
     "Generate": "生成",
     "Open in Find Window": "在发现窗口打开"
+  },
+  "chart": {
+    "switchTooltip": "点击切换对应图表的显示与隐藏"
   }
 }

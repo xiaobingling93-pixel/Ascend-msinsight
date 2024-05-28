@@ -10,6 +10,7 @@ import { Space } from 'antd/lib/index';
 import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnType } from 'antd/es/table';
 import { limitInput } from 'lib/CommonUtils';
+import i18n from '../../i18n';
 interface ColumData {
     title: string;
     dataIndex: string;
@@ -154,7 +155,7 @@ export const GetPageData = (page: { current: number; pageSize: number; total: nu
         ...page,
         showSizeChanger: page.total > 10,
         pageSizeOptions: [10, 20, 50, 100],
-        showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>),
+        showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>{i18n.t('PaginationTotal', { total })}</div>),
         hideOnSinglePage: false,
         onChange: (current: number, pageSize: number) => { setPage({ ...page, current, pageSize }); },
         showQuickJumper: page.total / (page.pageSize === 0 ? 1 : page.pageSize) > 5,

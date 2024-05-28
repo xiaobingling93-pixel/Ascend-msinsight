@@ -18,6 +18,7 @@ import SummaryTable from './SummaryTable';
 import BaseInfo from './BaseInfo';
 import { CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
 import PpBandwidthAnalysis from './PpBandwidthAnalysis';
+import i18n from '../../i18n';
 
 interface SummaryDataType{
     [propName: string]: any;
@@ -115,7 +116,7 @@ const baseOption: any = {
             formatter: function () {
                 const div = document.createElement('div');
                 div.className = 'legend-tooltip';
-                div.append('Click to Switch Display and Hide');
+                div.append(i18n.t('chart:switchTooltip'));
                 return div;
             },
         },

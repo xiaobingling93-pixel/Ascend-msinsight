@@ -144,5 +144,8 @@
     "SeeMore": "See more",
     "Generate": "Generate",
     "Open in Find Window": "Open in Find Window"
+  },
+  "chart": {
+    "switchTooltip": "Click to Switch Chart Display and Hide"
   }
 }

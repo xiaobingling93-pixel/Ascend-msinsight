@@ -7,6 +7,7 @@ import { SorterResult } from 'antd/lib/table/interface';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
+import i18n from '../i18n';
 import { MemoryTable, MemoryTableColumn, OperatorDetail } from '../entity/memory';
 import ResizeTable from 'lib/ResizeTable';
 
@@ -132,7 +133,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
                 pageSizeOptions: ['10', '20', '30', '50', '100'],
                 onChange,
                 total,
-                showTotal: (totalNumber: number) => `Total ${totalNumber} items`,
+                showTotal: (totalNum: number): string => i18n.t('PaginationTotal', { total: totalNum }),
                 showQuickJumper: true,
             }}
             rowClassName="memory-ant-table-row"

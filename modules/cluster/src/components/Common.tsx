@@ -9,6 +9,7 @@ import { optionDataType, VoidFunction } from '../utils/interface';
 import type { EChartsType } from 'echarts';
 import { themeInstance } from '../theme/theme';
 import { observer } from 'mobx-react';
+import i18n from '../i18n';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? props.name + ' :' : ''} </span>;
@@ -107,7 +108,7 @@ export const PaginationWhithPgaeData = (props: any): JSX.Element => {
         {...page}
         defaultCurrent={1}
         pageSizeOptions= {[10, 20, 50, 100] }
-        showTotal={(total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>)}
+        showTotal={(total: number): React.ReactElement => (<div style={{ marginRight: '10px' }}>{i18n.t('PaginationTotal', { total })}</div>)}
         onChange={(current, pageSize) => { setPage({ ...page, current, pageSize }); }}
         showQuickJumper={page.total / notZero(page.pageSize) > 5}
         style={{ float: 'right', marginTop: '10px' }}
@@ -119,7 +120,7 @@ export const GetPageConfigWhithPageData = (page: { current: number; pageSize: nu
         ...page,
         showSizeChanger: page.total > 10,
         pageSizeOptions: [10, 20, 50, 100],
-        showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>),
+        showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>{i18n.t('PaginationTotal', { total })}</div>),
         hideOnSinglePage: false,
         onChange: (current: number, pageSize: number) => { setPage({ ...page, current, pageSize }); },
         showQuickJumper: page.total / notZero(page.pageSize) > 5,
@@ -131,7 +132,7 @@ export const GetPageConfigWhithAllData = (total: number): object => {
         total,
         showSizeChanger: total > 10,
         pageSizeOptions: [10, 20, 50, 100],
-        showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>Total {total} items</div>),
+        showTotal: (totalNum: number): React.ReactElement => (<div style={{ marginRight: '10px' }}>{i18n.t('PaginationTotal', { total: totalNum })}</div>),
         hideOnSinglePage: false,
     };
 };
