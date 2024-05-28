@@ -356,7 +356,11 @@ void EventParser::CounterEventsHandle(std::unique_ptr<Trace::Event> eventPtr)
     if (eventPtr == nullptr) {
         return;
     }
-    database->InsertCounter(dynamic_cast<Trace::Counter &>(*eventPtr));
+    auto &event = dynamic_cast<Trace::Counter &>(*eventPtr);
+    if (event.ts == 0) {
+        return;
+    }
+    database->InsertCounter(event);
 }
 
 int64_t EventParser::GetTrackId(const std::string &pid, const std::string &tid)
