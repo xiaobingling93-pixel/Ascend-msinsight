@@ -14,6 +14,8 @@ import { colorPalette, getTimeOffset } from '../../insight/units/utils';
 import { calculateDomainRange } from '../CategorySearch';
 import { hashToNumber } from '../../utils/colorUtils';
 import { runInAction } from 'mobx';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 
 export interface EventTableData {
     eventDetails: EventDetails[];
@@ -53,11 +55,11 @@ const getColumns = (tableColumns: EventTableColumn[]): any => {
     const result = [];
     for (const tableColumn of tableColumns) {
         if (tableColumn.key === 'rankId') {
-            result.push({ title: tableColumn.name, dataIndex: tableColumn.key });
+            result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: tableColumn.key });
         } else if (tableColumn.key === 'start') {
-            result.push({ title: tableColumn.name, dataIndex: 'startTime', ...getDefaultColumData('startTime') });
+            result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: 'startTime', ...getDefaultColumData('startTime') });
         } else {
-            result.push({ title: tableColumn.name, dataIndex: tableColumn.key, ...getDefaultColumData(tableColumn.key) });
+            result.push({ title: i18n.t(`timeline:tableHead.${tableColumn.name}`), dataIndex: tableColumn.key, ...getDefaultColumData(tableColumn.key) });
         }
     }
     return result;
@@ -73,6 +75,7 @@ export const EventDetail = observer((props: any) => {
     const [eventColum, setEventColum] = useState<string[]>([]);
     const [rowData, setRowData] = useState<any>({});
     const [allCondition, setAllCondition] = useState({ showEvent: props.session.showEvent, page, sorter });
+    const { t } = useTranslation();
 
     useEffect(() => {
         setAllCondition({ ...allCondition, page, sorter });
@@ -92,7 +95,7 @@ export const EventDetail = observer((props: any) => {
         }
         updateData({ pages: allCondition.page, sorters: allCondition.sorter, props, setLoading, setDataSource, setPage, setEventColum });
     }, [allCondition.showEvent, allCondition.page.current, allCondition.page.pageSize,
-        allCondition.sorter.field, allCondition.sorter.order, props.session.doReset]);
+        allCondition.sorter.field, allCondition.sorter.order, props.session.doReset, t]);
 
     useEffect(() => {
         if (rowData.name !== null && rowData.name !== undefined) {
@@ -110,12 +113,7 @@ export const EventDetail = observer((props: any) => {
                         setSorter(newsorter as typeof sorter);
                     }
                 }}
-                pagination={GetPageData(page, setPage)}
-                dataSource={dataSource}
-                columns={eventColumns}
-                size="small"
-                loading={isLoading}
-                rowClassName={'click-able'}
+                pagination={GetPageData(page, setPage)} dataSource={dataSource} columns={eventColumns} size="small" loading={isLoading} rowClassName={'click-able'}
             />
         </div>
     );
@@ -147,12 +145,12 @@ const generateEventColumns = (
 ): any[] => [
     ...eventColum,
     {
-        title: 'Click To Timeline',
+        title: i18n.t('timeline:tableHead.Click To Timeline'),
         dataIndex: 'click',
         key: 'click',
         ellipsis: true,
         render: (_: any, record: any) => (
-            <Button type="link" onClick={(): void => setRowData(record)}>click</Button>
+            <Button type="link" onClick={(): void => setRowData(record)}>{i18n.t('timeline:tableHead.Click')}</Button>
         ),
     },
 ];

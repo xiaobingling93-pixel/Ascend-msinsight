@@ -88,7 +88,14 @@
       "Replacement Optimizer": "Replacement Optimizer",
       "Replacement Operator": "Replacement Operator",
       "Origin Operators": "Origin Operators",
-      "Fused Operator": "Fused Operator"
+      "Fused Operator": "Fused Operator",
+      "Start": "Start",
+      "TID": "TID",
+      "PID": "PID",
+      "Stream Name": "Stream Name",
+      "Group Name": "Group Name",
+      "Analysis Type": "Analysis Type",
+      "Rank ID": "Rank ID"
     },
     "dragFile": {
       "FileFormatError": "File format error: Only Trace Event Format is supported",

@@ -88,7 +88,14 @@
       "Replacement Optimizer": "替换优化器",
       "Replacement Operator": "替换算子",
       "Origin Operators": "原始算子",
-      "Fused Operator": "融合算子"
+      "Fused Operator": "融合算子",
+      "Start": "开始时间",
+      "TID": "线程ID",
+      "PID": "进程ID",
+      "Stream Name": "任务流名称",
+      "Group Name": "通信域名称",
+      "Analysis Type": "分析算子类型",
+      "Rank ID": "卡序号"
     },
     "dragFile": {
       "FileFormatError": "仅支持上传Trace Event类型的文件",
