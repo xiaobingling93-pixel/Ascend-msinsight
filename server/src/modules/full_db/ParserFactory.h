@@ -25,7 +25,6 @@ public:
     static void ParseProgressCallBack(const std::string &token, const std::string &fileId, uint64_t parsedSize,
         uint64_t totalSize, int progress);
 protected:
-    static bool curIsIpynb;
     std::string curScene;
 
     static void ParseClusterEndProcess(const std::string token, std::string result);
@@ -39,6 +38,7 @@ protected:
     void SetBaseActionOfResponse(ImportActionResponse &response,
         std::pair<std::string, std::vector<std::string>> rankEntry);
     bool CheckIfClusterAndReset(const std::string &path, int filesSize, ImportActionResBody &body, bool isDb);
+    static void Reset();
 };
 
 class ParserFactory {

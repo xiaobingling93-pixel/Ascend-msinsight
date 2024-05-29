@@ -66,6 +66,7 @@ public:
 
     bool curIsCluster = false;
     bool curIsDb = false;
+    bool curIsBin = false;
 
 private:
     DataBaseManager() = default;

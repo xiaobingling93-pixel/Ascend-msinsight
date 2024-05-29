@@ -234,7 +234,8 @@ std::string ParserAlloc::GetDbPath(const std::string &filePath, const int index)
 bool ParserAlloc::CheckIfClusterAndReset(const std::string &path, int filesSize, ImportActionResBody &body, bool isDb)
 {
     bool isCluster = (filesSize > 1 && std::strcmp(curScene.c_str(), "train") == 0) || CheckIsCluster(path);
-    bool reset = isCluster || DataBaseManager::Instance().curIsCluster || isDb || DataBaseManager::Instance().curIsDb;
+    bool reset = isCluster || DataBaseManager::Instance().curIsCluster || isDb || DataBaseManager::Instance().curIsDb
+            || DataBaseManager::Instance().curIsBin;
     ServerLog::Info("new Cluster:", isCluster, ", old Cluster:", DataBaseManager::Instance().curIsCluster,
                     ", reset:", reset);
     if (reset) {
@@ -249,7 +250,17 @@ bool ParserAlloc::CheckIfClusterAndReset(const std::string &path, int filesSize,
     }
     DataBaseManager::Instance().curIsCluster = isCluster;
     DataBaseManager::Instance().curIsDb = isDb;
+    DataBaseManager::Instance().curIsBin = false;
     body.isCluster = isCluster;
 }
+
+void ParserAlloc::Reset()
+{
+    FullDb::FullDbParser::Instance().Reset();
+    TraceFileParser::Instance().Reset();
+    Summary::KernelParse::Instance().Reset();
+    Memory::MemoryParse::Instance().Reset();
+}
+
 } // Module
 } // Dic

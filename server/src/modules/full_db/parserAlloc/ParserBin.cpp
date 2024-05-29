@@ -29,6 +29,7 @@ void ParserBin::Parser(const std::string &path, ImportActionRequest &request)
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
+    Reset();
 
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::JSON);
 

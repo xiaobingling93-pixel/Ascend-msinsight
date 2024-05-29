@@ -43,6 +43,7 @@ SourceFileParser::~SourceFileParser()
 bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
     const std::string &selectedFile)
 {
+    DataBaseManager::Instance().curIsBin = true;
     std::ifstream file(FileUtil::PathPreprocess(selectedFile), std::ios::binary);
     if (!file) {
         ServerLog::Warn("Failed to open file: ", selectedFile);
