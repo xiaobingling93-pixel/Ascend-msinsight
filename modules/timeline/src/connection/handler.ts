@@ -198,6 +198,9 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
             if (session.selectedUnits[0] !== undefined && !session.units.includes(session.selectedUnits[0])) {
                 session.selectedUnits = [];
             }
+            if (session.eventUnits[0] !== undefined) {
+                session.eventUnits = [];
+            }
             if (session.units.length === 0) {
                 session.selectedRange = undefined;
             }

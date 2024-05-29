@@ -769,6 +769,7 @@ bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePrepared
     }
     // 解析查询结果，并封装到Response body中
     ResolveEventsViewResultSet4Db(resultSet, params, body, minTimestamp);
+    return true;
 }
 
 /* Functions for JsonTraceDataBase */

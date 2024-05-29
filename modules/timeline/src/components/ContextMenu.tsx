@@ -323,6 +323,7 @@ function showInEventsView(session: Session, menuItem?: MenuItemModel): void {
     }
     runInAction(() => {
         session.showEvent = true;
+        session.eventUnits = session.selectedUnits;
         session.contextMenu.isVisible = false;
     });
     setTimeout(() => {

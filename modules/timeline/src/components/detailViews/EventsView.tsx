@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import { eventViewData, getDefaultColumData, GetPageData } from './Common';
 import ResizeTable from 'lib/ResizeTable';
-import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
+import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
 import type { ThreadMetaData } from '../../entity/data';
 import { Button } from 'antd';
 import type { InsightUnit } from '../../entity/insight';
@@ -85,7 +85,7 @@ export const EventDetail = observer((props: any) => {
     }, [props.session.showEvent]);
 
     useEffect(() => {
-        if (props.session.selectedUnits === undefined || props.session.selectedUnits.length === 0) {
+        if (props.session.eventUnits === undefined || props.session.eventUnits.length === 0) {
             setDataSource([]);
             setPage(defaultPage);
             setSorter(defaultSorter);
@@ -156,10 +156,13 @@ const generateEventColumns = (
 ];
 
 const handleSelected = async(rowData: any, props: any): Promise<void> => {
+    const rankId = props.session.eventUnits[0].metadata.cardId;
     runInAction(() => {
         props.session.locateUnit = {
             target: (unit: any): boolean => {
-                return unit.metadata.threadId === rowData.threadId && unit.metadata.processId === rowData.processId;
+                // 能否跳转到某个算子：判断是否是ThreadUnit、卡号能否对上、线程号、进程号是否一致，如果都能对上，说明在timeline上找到了
+                return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId === rankId)) &&
+                    unit.metadata.threadId === rowData.threadId && unit.metadata.processId === rowData.processId;
             },
             onSuccess: (unit: InsightUnit): void => {
                 const startTime = rowData.start - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
@@ -181,7 +184,7 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
 };
 
 const searchData = async(pages: any, sorters: {field: string;order: string}, prop: any): Promise<EventTableData> => {
-    const requestData = prop.session.selectedUnits?.[0]?.metadata as ThreadMetaData;
+    const requestData = prop.session.eventUnits?.[0]?.metadata as ThreadMetaData;
     return await eventViewData({
         rankId: requestData.cardId as string,
         pageSize: pages.pageSize,

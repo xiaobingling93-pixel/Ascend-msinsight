@@ -117,6 +117,7 @@ export class Session {
     doReset: boolean = false;
     memoryRankIds: string[] = [];
     operatorRankIds: string[] = [];
+    eventUnits: [InsightUnit] | [] = [];
     private readonly _domain: Domain;
     private _selectedUnitKeys: [string] | [] = [];
     // Relative to the startTimeOffset, which means that it will start from 0.
