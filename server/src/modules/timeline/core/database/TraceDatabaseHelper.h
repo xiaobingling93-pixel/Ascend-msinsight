@@ -26,14 +26,13 @@ static std::optional<std::string> QueryConnectionId(std::unique_ptr<SqlitePrepar
                                                     const Protocol::UnitFlowsParams &requestParams);
 static std::unique_ptr<SqliteResultSet> QueryThreadsByPid(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                                           const Protocol::UnitThreadsParams &requestParams,
-                                                          uint64_t minTimestamp);
+                                                          const std::string &rankId, uint64_t minTimestamp);
 
 static std::unique_ptr<SqliteResultSet> QueryUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
       const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp);
 
-static std::unique_ptr<SqliteResultSet> QueryThreadDetail(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                                          const Protocol::ThreadDetailParams &requestParams,
-                                                          uint64_t minTimestamp);
+static std::optional<SliceDto> QueryThreadDetail(std::unique_ptr<SqlitePreparedStatement> &stmt,
+                                                 const Protocol::ThreadDetailParams &requestParams);
 
 static void QueryTaskInfoById(std::unique_ptr<SqlitePreparedStatement> &stmt,
              const Protocol::ThreadDetailParams &requestParams,
@@ -48,14 +47,15 @@ static std::unique_ptr<SqliteResultSet> QueryTaskCacheInfoById(std::unique_ptr<S
 static bool isAttrInfoExist(std::unique_ptr<SqlitePreparedStatement> &stmt);
 
 static std::unique_ptr<SqliteResultSet> QuerySystemViewData(std::unique_ptr<SqlitePreparedStatement> &stmt,
-                                                            const Protocol::SystemViewParams &requestParams);
+                                                            const Protocol::SystemViewParams &requestParams,
+                                                            const std::string& rankId);
 static  std::unique_ptr<SqliteResultSet> QueryThreadTraces(
         std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesParams &requestParams,
-        uint64_t minTimestamp);
+        const std::string& rankId, uint64_t minTimestamp);
 
 static  std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(
         std::unique_ptr<SqlitePreparedStatement> &stmt,
-        const Protocol::UnitThreadTracesSummaryParams &requestParams, uint64_t minTimestamp);
+        const Protocol::UnitThreadTracesSummaryParams &requestParams, const std::string& rankId, uint64_t minTimestamp);
 
     static  void CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
                                    std::map<std::string, uint64_t> &selfTimeKeyValue,
@@ -194,9 +194,11 @@ static  std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(
         return processType.value();
     }
 static std::unique_ptr<SqliteResultSet> QueryThreadSameOperatorsDetails(std::unique_ptr<SqlitePreparedStatement> &stmt,
-     const Protocol::UnitThreadsOperatorsParams &requestParams, uint64_t minTimestamp, const std::string& orderBy);
+     const Protocol::UnitThreadsOperatorsParams &requestParams, const std::string& rankId,
+     uint64_t minTimestamp, const std::string& orderBy);
 static bool QueryEventsViewData4Db(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp);
+    const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp,
+    const std::string& rankId);
 /* Functions for JsonTraceDataBase */
 static bool QueryEventsViewData4Text(std::unique_ptr <SqlitePreparedStatement> &stmt,
     const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp);

@@ -705,8 +705,13 @@ export type ProcessMetaData = {
 
 export type CardMetaData = {
     cardId: string;
-    cardName?: string;
+    cardName: string;
     cardPath: string;
+    dataSource: DataSource;
+};
+
+export interface HostMetaData {
+    host: string;
     dataSource: DataSource;
 };
 

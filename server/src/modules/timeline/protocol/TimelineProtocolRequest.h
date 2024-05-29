@@ -179,6 +179,7 @@ struct FlowCategoryListRequest : public Request {
 
 struct FlowCategoryEventsParams {
     std::string rankId;
+    std::string host;
     std::string category;
     uint64_t startTime = 0;
     uint64_t endTime = 0;

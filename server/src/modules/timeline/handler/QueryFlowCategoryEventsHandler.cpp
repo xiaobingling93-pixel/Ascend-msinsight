@@ -26,8 +26,8 @@ void QueryFlowCategoryEventsHandler::HandleRequest(std::unique_ptr<Protocol::Req
     SetBaseResponse(request, response);
     bool result = false;
     std::vector<std::string> fileIdList;
-    if (request.params.rankId.empty() || strcmp(request.params.rankId.c_str(), "Host") == 0) {
-        fileIdList = DataBaseManager::Instance().GetAllFileId();
+    if (request.params.rankId.empty() || !DataBaseManager::Instance().GetDbPathByHost(request.params.rankId).empty()) {
+        fileIdList = DataBaseManager::Instance().GetDbPathByHost(request.params.rankId);
     } else {
         fileIdList.emplace_back(request.params.rankId);
     }

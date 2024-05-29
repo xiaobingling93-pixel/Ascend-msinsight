@@ -295,7 +295,7 @@ export class Session {
     }
 
     sortUnits(): void {
-        this.units.sort((a, b) => {
+        const sorter = (a: InsightUnit, b: InsightUnit): number => {
             const aName = (a.metadata as any).cardId;
             const bName = (b.metadata as any).cardId;
             if (aName === 'Host' || bName === 'Host') {
@@ -305,6 +305,10 @@ export class Session {
                 return aName.localeCompare(bName);
             }
             return aName.length - bName.length;
+        };
+        this.units.sort(sorter);
+        this.units.forEach(unit => {
+            unit.children?.sort(sorter);
         });
     }
 

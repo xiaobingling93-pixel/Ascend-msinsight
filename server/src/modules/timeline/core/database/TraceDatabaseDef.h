@@ -21,6 +21,10 @@ struct SliceDto {
     std::string args;
     std::string cat;
     std::string flagId;
+    std::string pid;
+    std::string tid;
+    std::string cardId;
+    std::string metaType;
 };
 
 struct FlowDetailDto {

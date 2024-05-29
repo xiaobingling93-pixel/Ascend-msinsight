@@ -54,6 +54,7 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
             dataPathList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
         }
         JsonUtil::AddMember(actionJson, "dataPathList", dataPathList, allocator);
+        JsonUtil::AddMember(actionJson, "host", action.host, allocator);
         result.PushBack(actionJson, allocator);
     }
     JsonUtil::AddMember(body, "result", result, allocator);

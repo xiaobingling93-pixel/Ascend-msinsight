@@ -41,8 +41,11 @@ void SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     }
     auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
-        return;
+        database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);
+        if (database == nullptr) {
+            ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
+            return;
+        }
     }
     if (!request.params.timeFlag.empty() && request.params.timeFlag.find("compute") != std::string::npos) {
         if (!database->QueryComputeStatisticsData(request.params, response.body)) {

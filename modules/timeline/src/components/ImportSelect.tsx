@@ -39,6 +39,7 @@ export type CardInfo = {
     rankId: string;
     result: boolean;
     cardPath: string;
+    host?: string;
     dataPathList: string[];
 };
 

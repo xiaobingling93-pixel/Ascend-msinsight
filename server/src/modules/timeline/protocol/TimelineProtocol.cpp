@@ -283,6 +283,7 @@ std::unique_ptr<Request> TimelineProtocol::ToFlowCategoryEventsRequest(const jso
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.host, json["params"], "host");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.category, json["params"], "category");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.timePerPx, json["params"], "timePerPx");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isSimulation, json["params"], "isSimulation");

@@ -15,6 +15,7 @@ import { InsightUnit, LinkLines } from '../entity/insight';
 import { CardUnit } from '../insight/units/AscendUnit';
 import { customDebounce } from '../utils/customDebounce';
 import { getTimeOffset } from '../insight/units/utils';
+import { type HostMetaData } from '../entity/data';
 
 const FilterIcon = AntdFilterIcon as SvgType;
 const MAX_HEIGHT = 200;
@@ -115,7 +116,8 @@ const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<str
                 const timestampOffset = getTimeOffset(session, cardId);
                 const start = Math.floor(domainStart + timestampOffset);
                 const end = Math.ceil(domainEnd + timestampOffset);
-                const params = { rankId: cardId, startTime: start, endTime: end, category, timePerPx, isSimulation: session.isSimulation };
+                const host = (unit.parent?.metadata as HostMetaData)?.host ?? '';
+                const params = { rankId: cardId, startTime: start, endTime: end, category, timePerPx, isSimulation: session.isSimulation, host };
                 res = res.concat((await window.request(dataSource,
                     { command: 'flow/categoryEvents', params }) as CategoryEvents).flowDetailList
                     .map(data => ({ ...data, cardId })));

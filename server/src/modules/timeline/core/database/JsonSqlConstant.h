@@ -65,8 +65,7 @@ const std::string QUERY_EXTREMETIME_OF_FIRST_DEPTH_SQL =
     " FROM " +
     SLICE_TABLE + " WHERE track_id = ? AND timestamp <= ? AND end_time >= ? ;";
 const std::string QUERY_SLICE_DETAIL_SQL = "SELECT id, timestamp, duration, name, track_id, cat, args"
-    " FROM " +
-    SLICE_TABLE + " WHERE id = ? AND track_id = ? AND abs(timestamp - ?) <= 500 Order by duration DESC";
+    " FROM " + SLICE_TABLE + " WHERE id = ?";
 const std::string QUERY_DURATION_FROM_SLICE_BY_TIME_RANGE_SQL = "SELECT id, timestamp, duration FROM " + SLICE_TABLE +
     " WHERE end_time <= ? AND timestamp >= ? AND track_id = ? Order by timestamp";
 const std::string QUERY_KERNAL_SHAPE_SQL =

@@ -102,6 +102,8 @@ public:
     bool QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
 
     std::vector<std::string> QueryRankId();
+    std::string QueryHostInfo();
+    std::string GetRealRankId(const std::string& fileId);
 
     bool QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,
         std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp) override;
@@ -126,6 +128,7 @@ public:
     void InitFlowCache();
     void UpdateWaitTime();
     void GenerateOverlapAnalysis();
+    static std::string GetStringCacheValue(const std::string& path, std::string key);
 
 private:
     const int cacheSize = 5000;
@@ -133,6 +136,8 @@ private:
     bool isExistPytorch = false;
     bool isExistCann = false;
     bool isExistMstx = false;
+
+    std::string host;
 
     std::unique_ptr<SqlitePreparedStatement> updateTaskDepthStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateApiDepthStmt = nullptr;
@@ -170,7 +175,6 @@ private:
     std::string GetSearchSliceNameCountSql(bool isMatchExact, bool isMatchCase, std::string rankId);
     void QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_INFO> &timeInfoList, const std::string &rankId);
     bool InsertOverlapAnalysisInfo(const std::vector<OVERLAP_INFO> &overlapInfoList, const std::string &rankId);
-    static std::string GetStringCacheValue(const std::string& path, std::string key);
     void GetCounterUnitsAndDataTypes(Protocol::PROCESS_TYPE type, std::vector<std::string> &units,
          std::vector<std::vector<std::string>> &dataTypes, std::unique_ptr<Protocol::UnitTrack> &counter);
     std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase,

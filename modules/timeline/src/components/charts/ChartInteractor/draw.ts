@@ -299,29 +299,30 @@ const processIsCol: Map<string, boolean> = new Map();
 const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
     const height = pinnedAreaHeight;
 
-    const computeUnitHeight = (units: InsightUnit[], height: number): number => {
-        for (const unit of units) {
+    const computeUnitHeight = (props: {units: InsightUnit[]; height: number}): number => {
+        for (const unit of props.units) {
             if (!unit.isDisplay) {
                 continue;
             }
             const metadata = unit.metadata as ThreadMetaData;
             if (metadata.processId !== undefined) {
-                heightMap.set(`${metadata.cardId}-${metadata.processId}`, height);
+                heightMap.set(`${metadata.cardId}-${metadata.processId}`, props.height);
             }
             if (metadata.threadId !== undefined && metadata.processId !== undefined) {
-                heightMap.set(`${metadata.cardId}-${metadata.processId}-${metadata.threadId}`, height);
+                heightMap.set(`${metadata.cardId}-${metadata.processId}-${metadata.threadId}`, props.height);
                 if (unit.collapsible && !unit.isExpanded) {
                     threadIsCol.set(`${metadata.cardId}-${metadata.processId}-${metadata.threadId}`, true);
                 }
             }
-            height += unit.height() + 1;
+            props.height += unit.height() + 1;
             if (unit.children && unit.isExpanded) {
-                height = computeUnitHeight(unit.children, height);
+                props.height = computeUnitHeight({ ...props, units: unit.children });
             }
         }
-        return height;
+        return props.height;
     };
-    computeUnitHeight(session.units, height);
+    const rootUnits = Array.from(new Set<InsightUnit>(session.units.flatMap(unit => unit.parent ?? unit)));
+    computeUnitHeight({ units: rootUnits, height });
 };
 let lastTime = 0;
 const FRAME_TIME = 16;

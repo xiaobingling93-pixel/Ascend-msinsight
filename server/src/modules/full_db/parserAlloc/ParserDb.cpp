@@ -34,16 +34,17 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::FULL_DB);
 
     std::string selectedFolder = FileUtil::GetParentPath(path);
-    std::map<std::string, std::string> devicePaths;
-    FullDb::FullDbParser::FindDevicePaths(selectedFolder, devicePaths);
-    auto rankList = GetReportFiles(path, response.body);
-    if (!rankList.empty()) {
-        // 如果rank列表为空，则Timeline页面不展示Host
-        SetBaseActionOfResponse(response, "Host", devicePaths, "");
-    }
-    for (const auto &ranks: rankList) {
-        for (const auto& rank: ranks.second) {
-            SetBaseActionOfResponse(response, rank, devicePaths, ranks.first);
+    auto hostInfoMap = GetReportFiles(path, response.body);
+    for (auto &hostInfo: hostInfoMap) {
+        if (!hostInfo.second.empty()) {
+            // 如果rank列表为空，则Timeline页面不展示Host
+            SetBaseActionOfResponse(response, "Host", hostInfo.first, "");
+        }
+        for (auto &ranks: hostInfo.second) {
+            for (auto& rank: ranks.second) {
+                SetBaseActionOfResponse(response, rank, hostInfo.first, ranks.first);
+                rank = hostInfo.first + rank;
+            }
         }
     }
 
@@ -53,12 +54,16 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     response.moduleName = Protocol::ModuleType::TIMELINE;
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
-    for (const auto &ranks: rankList) {
-        FullDb::FullDbParser::Instance().Parse(ranks.second, ranks.first, token);
+    int rankCount = 0;
+    for (const auto &hostInfo: hostInfoMap) {
+        for (const auto &ranks: hostInfo.second) {
+            FullDb::FullDbParser::Instance().Parse(ranks.second, ranks.first, token);
+            rankCount += ranks.second.size();
+        }
     }
     std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(path, std::regex(clusterDBReg));
     // 如果rank的数据大于1个或导入的为cluster_analysis.db单文件，则判断需要进行集群分析
-    bool isCluster = (rankList.size() > 1) || (rankList.empty() && (clusterPath.size() > 0));
+    bool isCluster = (rankCount > 1) || (rankCount == 0 && (clusterPath.size() > 0));
     // 执行集群数据解析
     Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token, path,
                                                                                   isCluster);
@@ -109,8 +114,7 @@ void ParserDb::ClusterProcessAsyncStep(const std::string &token, const std::stri
     session->OnEvent(std::move(event));
 }
 
-std::map<std::string, std::vector<std::string>> ParserDb::GetReportFiles(const std::string &path,
-    ImportActionResBody &body)
+std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::string &path, ImportActionResBody &body)
 {
     std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(path, std::regex(pytorchDBReg));
     std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(path, std::regex(msprofDBReg));
@@ -128,7 +132,7 @@ std::map<std::string, std::vector<std::string>> ParserDb::GetReportFiles(const s
         DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
     }
     // 只解析找到的第一个report文件
-    std::map<std::string, std::vector<std::string>> rankListMap;
+    std::map<std::string, HostInfo> hostMap;
     for (const auto& file: reportFiles) {
         if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(file, file)) {
             ServerLog::Error("Failed to create connection pool. ", reportFiles[0]);
@@ -144,12 +148,13 @@ std::map<std::string, std::vector<std::string>> ParserDb::GetReportFiles(const s
             continue;
         }
         std::vector<std::string> rankIds = database->QueryRankId();
+        auto host = database->QueryHostInfo();
         for (const auto& rank : rankIds) {
-            rankListMap[file].push_back(rank);
-            DataBaseManager::Instance().SetDbPathMapping(rank, file);
+            hostMap[host][file].push_back(rank);
+            DataBaseManager::Instance().SetDbPathMapping(host + rank, file, host + "Host");
         }
     }
-    return rankListMap;
+    return hostMap;
 }
 
 void ParserDb::SetParseCallBack(std::string token)
@@ -160,16 +165,14 @@ void ParserDb::SetParseCallBack(std::string token)
 }
 
 void ParserDb::SetBaseActionOfResponse(ImportActionResponse &response, const std::string& rankId,
-                                       std::map<std::string, std::string> devicePaths, const std::string& dbFile)
+                                       const std::string& host, const std::string& dbFile)
 {
     Action action;
     action.cardName = rankId;
-    action.rankId = rankId;
+    action.rankId = host + rankId;
+    action.host = host.length() >= 1 ? host.substr(0, host.length() - 1) : "";
     action.result = true;
-    if (devicePaths.find(rankId) != devicePaths.end()) {
-        // 将文件所在路径的三级目录名称作为rank的tooltip信息
-        action.cardPath = "Directory: " + devicePaths[rankId];
-    } else if (!dbFile.empty()) {
+    if (!dbFile.empty()) {
         action.cardPath = "Directory: " + FileUtil::GetRankIdFromPath(dbFile);
     }
     response.body.result.emplace_back(action);

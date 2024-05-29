@@ -118,7 +118,7 @@
 {"id":310,"moduleName":"summary","type":"request","command":"parallelism/pipeline/getAllStages","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":311,"moduleName":"summary","type":"request","command":"summary/statistic","params":{"token":"Rd``OTxPVKtcJPt]","timeFlag":"communication"}}
 {"id":312,"moduleName":"summary","type":"request","command":"summary/statistic","params":{"token":"Rd``OTxPVKtcJPt]","timeFlag":"compute","rankId":"0","stepId":"2"}}
-{"id":313,"moduleName":"communication","type":"request","command":"communication/operatorDetails","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","rankId":"1","stage":"p2p","current":1,"pageSize":10}}
-{"id":314,"moduleName":"communication","type":"request","command":"communication/operatorDetails","params":{"token":"Rd``OTxPVKtcJPt]"}}
+{"id":313,"moduleName":"communication","type":"request","command":"communication/operatorDetails","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","rankId":"1","stage":"p2p","currentPage":1,"pageSize":10}}
+{"id":314,"moduleName":"communication","type":"request","command":"communication/operatorDetails","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","rankId":"1","stage":"p2p","currentPage":1,"pageSize":10}}
 {"id":315,"moduleName":"communication","type":"request","command":"communication/matrix/sortOpNames","params":{"token":"Rd``OTxPVKtcJPt]","iterationId":"2","rankList":{},"stage":"p2p"}}
 {"id":316,"moduleName":"communication","type":"request","command":"communication/matrix/sortOpNames","params":{"token":"Rd``OTxPVKtcJPt]"}}

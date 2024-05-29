@@ -13,6 +13,7 @@
     "searchCriteria": {
       "Group By": "Group By",
       "Rank ID": "Rank ID",
+      "Host": "Host Name",
       "Top": "Top",
       "Computing Operator": "Computing Operator",
       "Computing Operator Type": "Computing Operator Type",

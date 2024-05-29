@@ -325,7 +325,7 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     const items = [
         getDataCardItem(bottomHeight, session),
         getDetailViewItem(session, bottomHeight),
-        useFindDetail(session),
+        useFindDetail(session, bottomHeight),
     ];
 
     return (<Container ref={ref} className="bottomPanelContainer">

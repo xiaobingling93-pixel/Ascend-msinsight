@@ -2,6 +2,9 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
+import { type InsightUnit } from '../entity/insight';
+import { forEach } from 'lodash';
+
 export const getOperatingSystem = function (): string {
     const userAgent = navigator.userAgent.toLowerCase();
 
@@ -14,4 +17,18 @@ export const getOperatingSystem = function (): string {
     } else {
         return 'Unknown';
     }
+};
+
+export const getRootUnit = (units: InsightUnit[]): InsightUnit[] => {
+    const result: InsightUnit[] = [];
+    forEach(units, (unit) => {
+        if (unit.parent) {
+            if (!result.includes(unit.parent)) {
+                result.push(unit.parent);
+            }
+        } else {
+            result.push(unit);
+        }
+    });
+    return result;
 };

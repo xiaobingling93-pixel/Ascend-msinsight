@@ -219,7 +219,8 @@ bool TraceDatabaseHelper::isAttrInfoExist(std::unique_ptr<SqlitePreparedStatemen
 }
 
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QuerySystemViewData(
-    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::SystemViewParams &requestParams)
+    std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::SystemViewParams &requestParams,
+    const std::string& rankId)
 {
     std::string searchName = "%" + requestParams.searchName + "%";
     std::string orderBy;
@@ -268,7 +269,7 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QuerySystemViewData(
     } else {
             throw DatabaseException("unsupported type!");
     }
-    return ExecuteQuery(stmt, mainSql + sql + orderBy + limitSql, searchName, requestParams.rankId,
+    return ExecuteQuery(stmt, mainSql + sql + orderBy + limitSql, searchName, rankId,
                         requestParams.pageSize, (requestParams.current - 1) * requestParams.pageSize);
 }
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
@@ -319,17 +320,16 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryUnitCounter(std::uniq
 
 std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsDetails(
     std::unique_ptr <SqlitePreparedStatement> &stmt, const Protocol::UnitThreadsOperatorsParams &requestParams,
-    uint64_t minTimestamp, const std::string& orderBy)
+    const std::string& rankId, uint64_t minTimestamp, const std::string& orderBy)
 {
     auto processType = GetProcessType(requestParams.metaType);
     std::string sql;
     switch (processType) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
             Prepare(stmt, ASCEND_SAME_NAME_DETAIL_SQL + orderBy)->BindParams(requestParams.name, minTimestamp);
-            return Execute(stmt, requestParams.rankId, requestParams.tid,
-                           requestParams.startTime, requestParams.endTime);
+            return Execute(stmt, rankId, requestParams.tid, requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::HCCL:
-            Prepare(stmt, HCCL_SAME_NAME_DETAIL_SQL + orderBy)->BindParams(minTimestamp, requestParams.rankId);
+            Prepare(stmt, HCCL_SAME_NAME_DETAIL_SQL + orderBy)->BindParams(minTimestamp, rankId);
             return Execute(stmt, requestParams.startTime, requestParams.endTime, requestParams.tid, requestParams.name);
         case PROCESS_TYPE::CANN_API:
             sql = "with nameIds as (select id from STRING_IDS where value = ?)\n"
@@ -356,7 +356,7 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
             sql = "select startNs - ? as timestamp, endNs - startNs as duration, 0 as depth, "
                   " main.ROWID as id from OVERLAP_ANALYSIS main "
               " where deviceId = ? and type = ? and timestamp + duration >= ? AND timestamp <= ? " + orderBy;
-            return ExecuteQuery(stmt, sql, minTimestamp, requestParams.rankId, requestParams.tid,
+            return ExecuteQuery(stmt, sql, minTimestamp, rankId, requestParams.tid,
                                 requestParams.startTime, requestParams.endTime);
         default:
             throw DatabaseException("unsupported type!");
@@ -364,17 +364,17 @@ std::unique_ptr <SqliteResultSet> TraceDatabaseHelper::QueryThreadSameOperatorsD
 }
 
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTraces(std::unique_ptr<SqlitePreparedStatement> &stmt,
-    const Protocol::UnitThreadTracesParams &requestParams,  uint64_t minTimestamp)
+    const Protocol::UnitThreadTracesParams &requestParams, const std::string& rankId, uint64_t minTimestamp)
 {
     std::string sql;
     auto processType = GetProcessType(requestParams.metaType);
     switch (processType) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
             Prepare(stmt, ASCEND_THREAD_TRACES)->BindParams(minTimestamp, requestParams.timePerPx,
-                                                            requestParams.cardId);
+                                                            rankId);
             return Execute(stmt, requestParams.threadId, requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::HCCL:
-            Prepare(stmt, HCCL_THREAD_TRACES)->BindParams(requestParams.cardId, minTimestamp, requestParams.timePerPx);
+            Prepare(stmt, HCCL_THREAD_TRACES)->BindParams(rankId, minTimestamp, requestParams.timePerPx);
             return Execute(stmt, requestParams.threadId, requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::CANN_API:
             Prepare(stmt, CANN_API_THREAD_TRACES)->BindParams(minTimestamp, requestParams.timePerPx,
@@ -384,7 +384,7 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTraces(std::uni
             Prepare(stmt, PYTORCH_API_THREAD_TRACES)->BindParams(minTimestamp, requestParams.timePerPx);
             return Execute(stmt, requestParams.processId, requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::OVERLAP_ANALYSIS:
-            Prepare(stmt, OVERLAP_THREAD_TRACES)->BindParams(minTimestamp, requestParams.cardId);
+            Prepare(stmt, OVERLAP_THREAD_TRACES)->BindParams(minTimestamp, rankId);
             return Execute(stmt, requestParams.threadId, requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::MS_TX:
             Prepare(stmt, MSTX_THREAD_TRACES)->BindParams(minTimestamp, requestParams.processId);
@@ -394,33 +394,55 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTraces(std::uni
     }
 }
 
-std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadDetail(std::unique_ptr<SqlitePreparedStatement> &stmt,
-    const Protocol::ThreadDetailParams &requestParams, uint64_t minTimestamp)
+std::optional<SliceDto> TraceDatabaseHelper::QueryThreadDetail(std::unique_ptr<SqlitePreparedStatement> &stmt,
+    const Protocol::ThreadDetailParams &requestParams)
 {
     std::string sql;
     auto processType = GetProcessType(requestParams.metaType);
+    std::unique_ptr<SqliteResultSet> resultSet;
     switch (processType) {
         case PROCESS_TYPE::ASCEND_HARDWARE:
-            return ExecuteQuery(stmt, ASCEND_THREAD_DETAIL, requestParams.id);
+            resultSet = ExecuteQuery(stmt, ASCEND_THREAD_DETAIL, requestParams.id);
+            break;
         case PROCESS_TYPE::HCCL:
-            return ExecuteQuery(stmt, HCCL_THREAD_DETAIL, requestParams.rankId, requestParams.tid, requestParams.id);
+            resultSet = ExecuteQuery(stmt, HCCL_THREAD_DETAIL, requestParams.id, requestParams.tid,
+                                     requestParams.id, requestParams.tid);
+            break;
         case PROCESS_TYPE::CANN_API:
-            return ExecuteQuery(stmt, CANN_API_THREAD_DETAIL, requestParams.id, requestParams.startTime + minTimestamp);
+            resultSet = ExecuteQuery(stmt, CANN_API_THREAD_DETAIL, requestParams.id);
+            break;
         case PROCESS_TYPE::API:
-            return ExecuteQuery(stmt, PYTORCH_API_THREAD_DETAIL, requestParams.id,
-                                requestParams.startTime + minTimestamp);
+            resultSet = ExecuteQuery(stmt, PYTORCH_API_THREAD_DETAIL, requestParams.id);
+            break;
         case PROCESS_TYPE::OVERLAP_ANALYSIS:
-            return ExecuteQuery(stmt, OVERLAP_THREAD_DETAIL, requestParams.id);
+            resultSet = ExecuteQuery(stmt, OVERLAP_THREAD_DETAIL, requestParams.id);
+            break;
         case PROCESS_TYPE::MS_TX:
-            return ExecuteQuery(stmt, MSTX_THREAD_DETAIL, requestParams.id);
+            resultSet = ExecuteQuery(stmt, MSTX_THREAD_DETAIL, requestParams.id);
+            break;
         default:
             throw DatabaseException("unsupported type!");
     }
+    if (resultSet->Next()) {
+        SliceDto sliceDto{};
+        sliceDto.cardId = requestParams.rankId;
+        sliceDto.metaType = requestParams.metaType;
+        sliceDto.id = resultSet->GetInt64("id");
+        sliceDto.timestamp = resultSet->GetInt64("startNs");
+        sliceDto.duration = resultSet->GetInt64("duration");
+        sliceDto.depth = resultSet->GetInt32("depth");
+        sliceDto.pid = resultSet->GetString("pid");
+        sliceDto.tid = resultSet->GetString("tid");
+        auto path = DataBaseManager::Instance().GetDbPath(requestParams.rankId);
+        sliceDto.name = FullDb::DbTraceDataBase::GetStringCacheValue(path, resultSet->GetString("name"));
+        return sliceDto;
+    }
+    return std::nullopt;
 }
 
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
     std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadTracesSummaryParams &requestParams,
-    uint64_t minTimestamp)
+    const std::string& rankId, uint64_t minTimestamp)
 {
     std::string sql;
     auto processType = GetProcessType(requestParams.metaType);
@@ -429,14 +451,14 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
             sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
                   "FROM " + TABLE_TASK + " WHERE deviceId = ? AND start_time >= ? "
                   "AND start_time <= ? AND depth = 0 ORDER BY startNs;";
-            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.cardId,
+            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId,
                                 requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::HCCL:
             sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
                   "FROM " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO + " info "
                   " on main.globalTaskId = info.globalTaskId"
                   " WHERE deviceId = ? AND start_time >= ? AND start_time <= ? ORDER BY startNs;";
-            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, requestParams.cardId,
+            return ExecuteQuery(stmt, sql, minTimestamp, minTimestamp, rankId,
                                 requestParams.startTime, requestParams.endTime);
         case PROCESS_TYPE::CANN_API:
             sql = "SELECT startNs - ? as start_time, endNs - startNs as duration, endNs - ? as end_time "
@@ -454,7 +476,7 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadTracesSummary(
 }
 
 std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadsByPid(std::unique_ptr<SqlitePreparedStatement> &stmt,
-    const Protocol::UnitThreadsParams &requestParams, uint64_t minTimestamp)
+    const Protocol::UnitThreadsParams &requestParams, const std::string &rankId, uint64_t minTimestamp)
 {
     std::string sql;
     auto processType = GetProcessType(requestParams.metaType);
@@ -465,7 +487,7 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadsByPid(std::uni
                   " c on c.globalTaskId = main.globalTaskId"
                   " where deviceId = ? and streamId = ? and endNs >= ? AND startNs <= ?"
                   " ORDER BY depth ASC, startNs ASC;";
-            return ExecuteQuery(stmt, sql, requestParams.rankId, requestParams.tid,
+            return ExecuteQuery(stmt, sql, rankId, requestParams.tid,
                                 requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
         case PROCESS_TYPE::HCCL:
             sql = "with sub as ("
@@ -475,7 +497,7 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadsByPid(std::uni
                    " UNION select startNs,endNs-startNs as duration,endNs,opInfo.opName from COMMUNICATION_OP opInfo"
                    " where groupName||'group' = ?) select * from sub where sub.endNs >= ? "
                    " and sub.startNs <= ?;";
-            return ExecuteQuery(stmt, sql, requestParams.rankId, requestParams.tid, requestParams.tid,
+            return ExecuteQuery(stmt, sql, rankId, requestParams.tid, requestParams.tid,
                                 requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
         case PROCESS_TYPE::CANN_API:
             sql = "select startNs, endNs - startNs as duration, endNs, name, depth from " + requestParams.metaType +
@@ -493,7 +515,7 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QueryThreadsByPid(std::uni
             sql = "select startNs, endNs - startNs as duration, endNs, 'OVERLAP_ANALYSIS'||type as name, "
                   " 0 as depth from " + TABLE_OVERLAP_ANALYSIS + " where deviceId = ? and type = ? "
                   " and endNs >= ? AND startNs <= ? ORDER BY startNs;";
-            return ExecuteQuery(stmt, sql, requestParams.rankId, requestParams.tid,
+            return ExecuteQuery(stmt, sql, rankId, requestParams.tid,
                                 requestParams.startTime + minTimestamp, requestParams.endTime + minTimestamp);
         case PROCESS_TYPE::MS_TX:
             sql = "select startNs, endNs - startNs as duration,endNs,message as name,depth from " + TABLE_MSTX_EVENTS +
@@ -575,18 +597,18 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4SubCANN(std::unique_ptr <Sqlit
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Hardware(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& rankId)
 {
     std::string sql = "SELECT si.value AS name, startNs AS start, endNs - startNs as duration, "
         "'Stream '||streamId as threadName, depth, 'Ascend Hardware' as processId, streamId as threadId, "
         "deviceId AS rankId FROM  TASK AS main LEFT JOIN COMPUTE_TASK_INFO AS CTI "
         "on CTI.globalTaskId = main.globalTaskId "
         "LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, main.taskType) WHERE main.deviceId = ? ";
-    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId);
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId);
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& rankId)
 {
     std::string sql = "SELECT si.value AS name, startNs AS start, endNs - startNs as duration, "
         "'Stream '||streamId as threadName, deviceId AS rankId, depth, 'Ascend Hardware' as processId, "
@@ -594,11 +616,11 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <Sqlite
         "LEFT JOIN COMPUTE_TASK_INFO AS CTI on CTI.globalTaskId = main.globalTaskId "
         "LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, main.taskType) "
         "WHERE main.deviceId = ? AND main.streamId = ? ";
-    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId, params.tid);
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId, params.tid);
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4DeviceHCCL(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& rankId)
 {
     std::string sql = "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
         "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
@@ -608,11 +630,11 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4DeviceHCCL(std::unique_ptr <Sq
         "select name, startNs as start, duration, 0 as depth, 'HCCL' as processId, groupName||'group' as threadId, "
         "'Group '||(DENSE_RANK() OVER (ORDER BY groupName))||' Communication' AS threadName, "
         "? AS rankId from sub ";
-    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), params.rankId, params.rankId);
+    return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId, rankId);
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Group(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    std::string &orderByCondition, const Protocol::EventsViewParams &params)
+    std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& rankId)
 {
     std::string sql = "with tmp as (select * from TASK main join COMMUNICATION_TASK_INFO "
         "info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
@@ -622,7 +644,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Group(std::unique_ptr <SqliteP
         "select name, startNs as start, duration, 0 as depth, 'HCCL' as processId, groupName||'group' as threadId, "
         "? AS threadName, ? AS rankId from sub WHERE groupName||'group' = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition),
-        params.rankId, params.threadName, params.rankId, params.tid);
+        params.rankId, params.threadName, rankId, params.tid);
 }
 
 std::unique_ptr <SqliteResultSet> QueryEventsView4Overlap(std::unique_ptr <SqlitePreparedStatement> &stmt,
@@ -718,7 +740,8 @@ void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
 }
 
 bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePreparedStatement> &stmt,
-    const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp)
+    const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp,
+    const std::string& rankId)
 {
     std::string orderBy = params.orderBy.empty() ? "start" : params.orderBy;
     if (!StringUtil::CheckSqlValid(orderBy)) {
@@ -740,16 +763,16 @@ bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePrepared
                 break;
             case Protocol::PROCESS_TYPE::ASCEND_HARDWARE:
                 if (params.tid.empty() && params.threadName.empty()) {
-                    resultSet = QueryEventsView4Hardware(stmt, orderByCondition, params);
+                    resultSet = QueryEventsView4Hardware(stmt, orderByCondition, params, rankId);
                 } else {
-                    resultSet = QueryEventsView4Stream(stmt, orderByCondition, params);
+                    resultSet = QueryEventsView4Stream(stmt, orderByCondition, params, rankId);
                 }
                 break;
             case Protocol::PROCESS_TYPE::HCCL:
                 if (params.tid.empty() && params.threadName.empty()) {
-                    resultSet = QueryEventsView4DeviceHCCL(stmt, orderByCondition, params);
+                    resultSet = QueryEventsView4DeviceHCCL(stmt, orderByCondition, params, rankId);
                 } else {
-                    resultSet = QueryEventsView4Group(stmt, orderByCondition, params);
+                    resultSet = QueryEventsView4Group(stmt, orderByCondition, params, rankId);
                 }
                 break;
             case Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS:

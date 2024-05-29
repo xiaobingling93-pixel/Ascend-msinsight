@@ -173,6 +173,7 @@ void DataBaseManager::Clear()
     summaryDatabaseMap.clear();
     dbMutexMap.clear();
     dbFilePathMap.clear();
+    host2DbPath.clear();
     curIsCluster = false;
     curIsDb = false;
 }
@@ -247,11 +248,30 @@ std::string DataBaseManager::GetDbPath(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
     auto it = traceDatabaseMap.find(fileId);
+    if (it == traceDatabaseMap.end() && dbFilePathMap.count(fileId) != 0) {
+        it = traceDatabaseMap.find(dbFilePathMap[fileId]);
+    }
     if (it == traceDatabaseMap.end()) {
         ServerLog::Error("Can't find db path for rank ", fileId);
         return "";
     }
     return it->second->GetDbPath();
+}
+
+std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabaseWithOutHost(const std::string &fileId)
+{
+    std::vector<std::string> ids;
+    for (const auto &hostInfo: host2DbPath) {
+        ids.push_back(StringUtil::ReplaceFirst(hostInfo.first, "Host", fileId));
+    }
+    std::shared_ptr<VirtualTraceDatabase> database;
+    for (const auto &id: ids) {
+        database = GetTraceDatabase(id);
+        if (database != nullptr) {
+            break;
+        }
+    }
+    return database;
 }
 
 std::recursive_mutex &DataBaseManager::GetDbMutex(const std::string &fileId)
@@ -276,10 +296,13 @@ void DataBaseManager::SetFileType(FileType type)
 {
     fileType = type;
 }
-void DataBaseManager::SetDbPathMapping(const std::string &rankId, const std::string &filePath)
+void DataBaseManager::SetDbPathMapping(const std::string &rankId, const std::string &filePath,
+                                       const std::string& hostId)
 {
+    std::lock_guard<std::mutex> lock(mutex);
     dbFilePathMap[rankId] = filePath;
-}
+    host2DbPath[hostId].push_back(filePath);
+};
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

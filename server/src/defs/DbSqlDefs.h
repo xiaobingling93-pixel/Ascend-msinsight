@@ -139,7 +139,7 @@ const static std::string HCCL_SAME_NAME_DETAIL_SQL =
     "with nameIds as (select id, ? as minTime, ? as rankId, ? as startTime, ? as endTime,"
     "                  ? as tid from STRING_IDS where value = ?) "
     "select startNs-minTime as timestamp,endNs-startNs as duration,0 as depth,c.ROWID as id from  TASK main "
-    "   join COMMUNICATION_TASK_INFO c on c.globalTaskId = main.globalTaskId join nameIds on c.name = id "
+    "   join COMMUNICATION_TASK_INFO c on c.globalTaskId = main.globalTaskId join nameIds on c.taskType = id "
     " where deviceId=rankId and planeId=tid and timestamp+duration >= startTime AND timestamp <= endTime "
     " UNION ALL select op.startNs - minTime as timestamp, op.endNs - op.startNs as duration, 0 as depth, "
     " op.ROWID as id from COMMUNICATION_OP op join TASK CA on op.connectionId = CA.connectionId "
@@ -221,36 +221,33 @@ const static std::string MSTX_THREAD_TRACES =
 
 // sql of timeline threadDetail
 const static std::string ASCEND_THREAD_DETAIL =
-        "SELECT main.ROWID as id, startNs, endNs - startNs as duration,"
+        "SELECT main.ROWID as id, startNs, endNs - startNs as duration, streamId as tid, 'Ascend Hardware' as pid, "
         " depth, coalesce(CTI.name, main.taskType) as name FROM " + TABLE_TASK + " main "
         " left join " + TABLE_COMPUTE_TASK_INFO + " CTI on CTI.globalTaskId = main.globalTaskId"
         " WHERE main.ROWID = ?";
 
 const static std::string HCCL_THREAD_DETAIL =
-        " with tmp as (select main.globalTaskId, startNs, endNs, info.taskType,info.planeId,main.ROWID as id,"
-        " info.opId from " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO +
-        " info on info.globalTaskId = main.globalTaskId where main.deviceId = ?), "
-        " sub as (select ROWID as id,startNs,endNs-startNs as duration,opName as name,"
-        " groupName||'group' as tid, endNs from " + TABLE_COMMUNICATION_OP +
-        " where opId in (select opId from tmp group by opId) "
-        " UNION select id, startNs, endNs-startNs as duration, taskType as name, planeId||'' as tid,"
-        " endNs from tmp) select id, startNs, duration, 0 as depth, name from sub "
-        " where tid = ? AND id = ?";
+        "select ROWID as id,startNs,endNs-startNs as duration,opName as name, 'HCCL' as pid, 0 as depth, "
+        "       groupName||'group' as tid, endNs from " + TABLE_COMMUNICATION_OP + " where id = ? and tid = ? "
+        "UNION select main.ROWID as id,startNs,endNs-startNs as duration, info.taskType as name, 0 as depth, "
+        "   planeId as tid, 'HCCL' as pid, endNs from " + TABLE_TASK + " main join " + TABLE_COMMUNICATION_TASK_INFO +
+        "    info on info.globalTaskId = main.globalTaskId where id = ? and tid = ?";
 
 const static std::string CANN_API_THREAD_DETAIL =
-        "select ROWID as id, startNs, endNs-startNs as duration, depth, name "
-        " from " + TABLE_CANN_API + " where ROWID = ? and startNs = ?";
+        "select ROWID as id, startNs, endNs-startNs as duration, depth, name, type as tid, globalTid as pid "
+        " from " + TABLE_CANN_API + " where ROWID = ?";
 
 const static std::string PYTORCH_API_THREAD_DETAIL =
-        "select ROWID as id, startNs, endNs-startNs as duration, depth, name "
-        " from " + TABLE_API + " where ROWID = ? and startNs = ?";
+        "select ROWID as id, startNs, endNs-startNs as duration, depth, name, 'pytorch' as tid, globalTid as pid "
+        " from " + TABLE_API + " where ROWID = ?";
 
 const static std::string OVERLAP_THREAD_DETAIL =
-        "select id, startNs, endNs - startNs as duration, 0 as depth, "
+        "select id, startNs, endNs - startNs as duration, 0 as depth, type as tid, 'OVERLAP_ANALYSIS' as pid, "
         " 'OVERLAP_ANALYSIS'||type as name from " + TABLE_OVERLAP_ANALYSIS + " where id = ?;";
 
 const static std::string MSTX_THREAD_DETAIL =
-        "select ROWID as id, startNs, endNs - startNs as duration, depth, message as name from " + TABLE_MSTX_EVENTS +
+        "select ROWID as id, startNs, endNs - startNs as duration, depth, message as name, "
+        " 'MsTx' as tid, globalTid as pid from " + TABLE_MSTX_EVENTS +
         " mstx where ROWID = ?;";
 
 // full_db_update_wait_time

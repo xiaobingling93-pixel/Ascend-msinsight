@@ -71,7 +71,7 @@ void DbClusterDataBase::UpdateClusterParseStatus(std::string status)
 bool DbClusterDataBase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody)
 {
     std::string filePath = responseBody.filePath;
-    double dataSize = FileUtil::GetFileSize(filePath.c_str());
+    int64_t dataSize = FileUtil::GetFileSize(filePath.c_str());
     std::string baseInfoSql = "select (select json_group_array(\"index\") as rank from (select DISTINCT \"index\" from "
         "ClusterStepTraceTime where \"index\" !='' AND type = 'rank')) as rank , (select json_group_array(step) from ("
         "select DISTINCT step from " + TABLE_STEP_TRACE_TIME +

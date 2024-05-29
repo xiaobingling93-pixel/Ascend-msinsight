@@ -23,6 +23,8 @@ import { Mask } from '../../charts/Mask';
 import { useJumpTarget } from './hooks';
 import type { OrderOptions } from './hooks';
 import { UnitProgress } from '../../charts/UnitProgress';
+import { CardUnit } from '../../../insight/units/AscendUnit';
+import { getRootUnit } from '../../../utils';
 
 const Lane = styled.div<{ laneHeight: number; className: string }>`
     display: flex;
@@ -73,7 +75,7 @@ const ChartView = observer(({ unit, session, width, height }: {unit: KeyedInsigh
             unit={unit} desc={unit.chart} key={getAutoKey(unit)} serial={getAutoKey(unit)}
             title={unit.name} session={session} metadata={unit.metadata} width={width} phase={unit.phase} />;
     }
-    if (unit.phase === 'analyzing' || unit.phase === 'download') {
+    if (unit instanceof CardUnit && (unit.phase === 'analyzing' || unit.phase === 'download')) {
         return <ChartErrorBoundary height={height} width={width} phase={unit.phase}>
             <UnitProgress realProgress={unit.progress} showProgress={unit.showProgress}/>
         </ChartErrorBoundary>;
@@ -198,7 +200,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
     const [scrollTop, setScrollTop] = React.useState(0);
     // 监听滚动事件，计算虚拟滚动的泳道
     useEventBus(eventType, (value) => setScrollTop(value as number));
-    const flattenUnitsAll = computed(() => orderOptions.preOrderFlatten(session.units, 0, orderOptions.options)).get();
+    const flattenUnitsAll = computed(() => orderOptions.preOrderFlatten(getRootUnit(session.units), 0, orderOptions.options)).get();
     const flattenUnits = computed(() => flattenUnitsAll.filter(unit => unit.isUnitVisible)).get();
     const [first, last] = React.useMemo(() => computeVisibleUnitRange(flattenUnits, height, scrollTop),
         [session.pinnedUnits, flattenUnits, height, scrollTop],

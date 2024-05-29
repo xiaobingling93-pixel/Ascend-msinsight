@@ -337,7 +337,7 @@ const isShowEventMenu = (session: Session): boolean => {
     if (!selectUnit) {
         return false;
     }
-    if (['Empty', 'Card', 'Counter'].includes(selectUnit.name)) {
+    if (['Empty', 'Card', 'Counter', 'Root'].includes(selectUnit.name)) {
         return false;
     }
     if (selectUnit.children) {

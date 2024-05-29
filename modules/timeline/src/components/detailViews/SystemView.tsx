@@ -35,7 +35,7 @@ import {
     eventViewData,
 } from './Common';
 import ResizeTable from 'lib/ResizeTable';
-import { Label, limitInput } from 'lib/CommonUtils';
+import { limitInput, GroupRankIdsByHost, FormItem } from 'lib/CommonUtils';
 import type { CardMetaData, ThreadMetaData } from '../../entity/data';
 import { runInAction } from 'mobx';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
@@ -43,7 +43,7 @@ import { calculateDomainRange } from '../CategorySearch';
 import { colorPalette, getTimeOffset } from '../../insight/units/utils';
 import type { InsightUnit } from '../../entity/insight';
 import { hashToNumber } from '../../utils/colorUtils';
-import { ThreadUnit, getDetailTimeDisplay } from '../../insight/units/AscendUnit';
+import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
 import { EventDetail } from './EventsView';
 
 export const DETAIL_HEADER_HEIGHT_ETC_PX = 130;
@@ -75,6 +75,12 @@ const SelectContainer = styled.div`
         height: 100%;
     }
 `;
+
+interface ConditionType {
+    options: string[];
+    value: string;
+    ranks?: Map<string, string[]>;
+}
 
 export const SystemView = observer((props: any) => {
     const [viewOption, setViewOption] = useState(0);
@@ -116,44 +122,67 @@ const ViewSelect = observer((props: any) => {
 });
 
 export const RankFilter = observer((props: any): JSX.Element => {
-    const [rankId, setRankId] = useState<string | undefined>(undefined);
-    const [rankIdList, setRankIdList] = useState<string[]>([]);
+    const [rankIdCondition, setRankIdCondition] = useState<ConditionType>({ options: [], value: '' });
+    const [hostCondition, setHostCondition] = useState<ConditionType>({ options: [], value: '' });
     const { t } = useTranslation('timeline');
     useEffect(() => {
         const rankList: any[] = [];
         for (const unit of props.session.units) {
             const cardId = (unit.metadata as CardMetaData).cardId;
-            if (cardId !== 'Host') {
+            if (!cardId.endsWith('Host')) {
                 rankList.push(cardId);
             }
         }
-        setRankIdList(rankList.sort((a: any, b: any) => Number(a) - Number(b)));
-        setRankId(rankList[0]);
+        const { hosts, ranks }: { hosts: string[]; ranks: Map<string, string[]> } = GroupRankIdsByHost(rankList);
+        setHostCondition({ options: hosts, value: hosts[0] ?? '', ranks });
     }, [props.session.units.length]);
 
     useEffect(() => {
-        props.handleChange(rankId);
-    }, [rankId]);
+        const rankIdOptions = hostCondition.ranks?.get(hostCondition.value) ?? [];
+        setRankIdCondition({ options: rankIdOptions, value: rankIdOptions[0] ?? '' });
+    }, [hostCondition]);
+
+    useEffect(() => {
+        props.handleChange(rankIdCondition.value);
+    }, [rankIdCondition]);
     useEffect(() => {
         limitInput();
     }, []);
     const onRankIdChanged = (value: string): void => {
-        setRankId(value);
+        setRankIdCondition({ ...rankIdCondition, value });
     };
     return (<div className={'systemViewRank'} >
-        <Label name={t('Rank ID')} />
-        <Select
-            value={rankId}
-            style={{ width: 120 }}
-            onChange={onRankIdChanged}
-            options={rankIdList.map((rankId) => {
-                return {
-                    value: rankId,
-                    label: rankId,
-                };
-            })}
-            showSearch={true}
-        />
+        {hostCondition.options.length > 0
+            ? <FormItem
+                name={t('Host')}
+                nameStyle={{ width: '90px', margin: '0px 0px 0px 10px' }}
+                style={{ margin: '0px 10px 10px 0px' }}
+                content={(<Select
+                    value={hostCondition.value}
+                    style={{ width: 120 }}
+                    onChange={(value: string): void => setHostCondition({ ...hostCondition, value })}
+                    options={hostCondition.options.map((host) => ({ value: host, label: host }))}
+                />
+                )}/>
+            : <div></div>
+        }
+        <FormItem
+            name={t('Rank ID')}
+            nameStyle={{ width: '90px', margin: '0px 0px 0px 10px' }}
+            style={{ margin: '0px 10px 10px 0px' }}
+            content={(<Select
+                value={rankIdCondition.value}
+                style={{ width: 120 }}
+                onChange={onRankIdChanged}
+                options={rankIdCondition.options.map((rankId) => {
+                    return {
+                        value: rankId,
+                        label: rankId.replace(`${hostCondition.value} `, ''),
+                    };
+                })}
+                showSearch={true}
+            />
+            )}/>
     </div>);
 });
 
@@ -337,7 +366,8 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
             },
             onSuccess: (unit: InsightUnit): void => {
                 const startTime = rowData.startTime - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
-                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
+                // 此处duration单位为us,计算和跳转时需要转换为ns
+                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, Number((rowData.duration * 1000).toFixed(0)));
                 props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                 props.session.selectedData = {
                     id: res.id,

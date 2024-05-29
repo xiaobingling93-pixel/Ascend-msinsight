@@ -10,6 +10,7 @@ export interface VoidFunction {
 }
 
 export interface optionDataType{
+    data?: any;
     key?: string;
     label: React.ReactNode;
     value: string | number ;

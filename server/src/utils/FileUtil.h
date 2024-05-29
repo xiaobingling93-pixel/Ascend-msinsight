@@ -393,7 +393,7 @@ public:
             return 0;
         }
 #ifdef _WIN32
-        std::ifstream in(fileName);
+        std::ifstream in(PathPreprocess(fileName));
         in.seekg(0, std::ios_base::end);
         std::streampos size =  in.tellg();
         in.close();

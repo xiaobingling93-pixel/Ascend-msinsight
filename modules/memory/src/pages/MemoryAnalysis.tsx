@@ -13,10 +13,17 @@ import { Graph, MemoryCurve, MemoryTableColumn, OperatorDetail, OperatorMemoryCo
 import { memoryCurveGet, operatorsMemoryGet } from '../utils/RequestUtils';
 import { useHit, Label } from '../components/Common';
 import styled from '@emotion/styled';
+import { GroupRankIdsByHost } from 'lib/CommonUtils';
 
 interface SelectedRange {
     startTs: number;
     endTs: number;
+}
+
+interface ConditionType {
+    options: string[];
+    value: string;
+    ranks?: Map<string, string[]>;
 }
 
 const MemoryWrapper = styled.div`
@@ -48,15 +55,15 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     const [maxSize, setMaxSize] = useState<number>(1000000);
     const [curveSpin, setCurveSpin] = useState<boolean>(false);
     const [tableSpin, setTableSpin] = useState<boolean>(false);
-    const [rankId, setRankId] = useState<string | undefined>(undefined);
     const [groupId, setGroupId] = useState<string>('Overall');
-    const [rankIdList, setRankIdList] = useState<string[]>([]);
     const [current, setCurrent] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(10);
     const [total, setTotal] = useState<number>(0);
     const [orderBy, setOrderBy] = useState<string | undefined>(undefined);
     const [order, setOrder] = useState<string | undefined>(undefined);
     const [isBtnDisabled, setBtnDisabled] = useState<boolean>(true);
+    const [hostCondition, setHostCondition] = useState<ConditionType>({ options: [], value: '' });
+    const [rankIdCondition, setRankIdCondition] = useState<ConditionType>({ options: [], value: '' });
     // 监听窗口唤醒状态以重绘echarts
     const [isWakeup, setIsWakeup] = useState<boolean>(false);
     const { t } = useTranslation('memory');
@@ -79,7 +86,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     };
 
     const onSearch = (searchName: string, minimumSize: number, maximumSize: number, resetCurrent = false): void => {
-        if (rankId === undefined) {
+        if (rankIdCondition.value === undefined) {
             return;
         }
         if (maximumSize < minimumSize) {
@@ -91,7 +98,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             tempCurrent = 1; setCurrent(1);
         }
         let param: OperatorMemoryCondition = {
-            rankId,
+            rankId: rankIdCondition.value,
             type: groupId,
             currentPage: tempCurrent,
             pageSize,
@@ -124,7 +131,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     };
 
     const onRankIdChanged = (value: string): void => {
-        setRankId(value);
+        setRankIdCondition({ ...rankIdCondition, value });
         setSelectedRange(undefined);
         setSearchEventOperatorName('');
         setCurrent(1);
@@ -166,10 +173,10 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
 
     useEffect(() => {
         onSearch(searchEventOperatorName, minSize, maxSize);
-    }, [selectedRange, rankId, current, pageSize, order, orderBy, session.isClusterMemoryCompletedSwitch, groupId]);
+    }, [selectedRange, rankIdCondition.value, current, pageSize, order, orderBy, session.isClusterMemoryCompletedSwitch, groupId]);
 
     useEffect(() => {
-        if (rankId === undefined) {
+        if (rankIdCondition.value === undefined) {
             setBtnDisabled(true);
             setLineChartData(undefined);
             setMemoryCurveData(undefined);
@@ -180,7 +187,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             return;
         }
         setCurveSpin(true);
-        memoryCurveGet({ rankId, type: groupId }).then((resp) => {
+        memoryCurveGet({ rankId: rankIdCondition.value, type: groupId }).then((resp) => {
             // Reset the select range to null when rankId changes
             setSelectedRange(undefined);
             setMemoryCurveData(resp);
@@ -194,17 +201,18 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         }).finally(() => {
             setCurveSpin(false);
         });
-    }, [rankId, session.isClusterMemoryCompletedSwitch, groupId, t]);
+    }, [rankIdCondition, session.isClusterMemoryCompletedSwitch, groupId, t]);
+
+    useEffect(() => {
+        const { hosts, ranks } = GroupRankIdsByHost(session.memoryRankIds);
+        setHostCondition({ options: hosts, value: hosts[0] ?? '', ranks });
+    }, [JSON.stringify(session.memoryRankIds)]);
 
     useEffect(() => {
         // 只对RandId为数字做排序，不能转为数字的字符串则不排序
-        setRankIdList(JSON.parse(JSON.stringify(session.memoryRankIds)).sort((a: any, b: any) => Number(a) - Number(b)));
-        if (session.memoryRankIds.length === 0) {
-            setRankId(undefined);
-        } else {
-            setRankId(session.memoryRankIds[0]);
-        }
-    }, [JSON.stringify(session.memoryRankIds)]);
+        const rankIdOptions = JSON.parse(JSON.stringify(hostCondition.ranks?.get(hostCondition.value) ?? [])).sort((a: any, b: any) => Number(a) - Number(b));
+        setRankIdCondition({ options: rankIdOptions, value: rankIdOptions[0] });
+    }, [hostCondition.options, hostCondition.value, hostCondition.ranks]);
 
     useEffect(() => {
         setIsWakeup(session.isWakeup);
@@ -214,16 +222,30 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         <div className="memory-analysis-wrapper">
             <MemoryWrapper>
                 <Row style={{ height: 60, alignContent: 'center' }}>
+                    {hostCondition.options.length > 0
+                        ? <Col span={4}>
+                            <Label name={t('searchCriteria.Host')} />
+                            <Select
+                                value={hostCondition.value}
+                                style={{ width: 200 }}
+                                onChange={(value: string): void => setHostCondition({ ...hostCondition, value })}
+                                options={hostCondition.options.map((host) => {
+                                    return { value: host, label: host };
+                                })}
+                            />
+                        </Col>
+                        : <div></div>
+                    }
                     <Col span={4}>
                         <Label name={t('searchCriteria.RankId')} />
                         <Select
-                            value={rankId}
+                            value={rankIdCondition.value}
                             style={{ width: 200 }}
                             onChange={onRankIdChanged}
-                            options={rankIdList.map((rankId) => {
+                            options={rankIdCondition.options.map((rankId) => {
                                 return {
                                     value: rankId,
-                                    label: rankId,
+                                    label: rankId.replace(`${hostCondition.value} `, ''),
                                 };
                             })}
                         />

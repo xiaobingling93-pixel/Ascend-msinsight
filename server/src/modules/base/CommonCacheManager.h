@@ -30,15 +30,19 @@ public:
 
     const std::vector<UnitSingleFlow> GetFlowCache(const std::string &rankId, const std::string &cat)
     {
-        std::unique_lock<std::mutex> lock(mutex);
-        flowCv.wait(lock, [this, rankId]() { return flowCacheState[rankId]; });
+        if (!flowCacheState[rankId]) {
+            std::unique_lock<std::mutex> lock(mutex);
+            flowCv.wait(lock, [this, rankId]() { return flowCacheState[rankId]; });
+        }
         return flowCache[rankId][cat];
     }
 
     void GetCategoryList(const std::string &rankId, std::vector<std::string> &categories)
     {
-        std::unique_lock<std::mutex> lock(mutex);
-        flowCv.wait(lock, [this, rankId]() { return flowCacheState[rankId]; });
+        if (!flowCacheState[rankId]) {
+            std::unique_lock<std::mutex> lock(mutex);
+            flowCv.wait(lock, [this, rankId]() { return flowCacheState[rankId]; });
+        }
         for (const auto &catGroup: flowCache[rankId]) {
             categories.emplace_back(catGroup.first);
         }
@@ -54,12 +58,14 @@ public:
     {
         std::lock_guard<std::mutex> lock(mutex);
         flowCacheState[rankId] = state;
+        flowCv.notify_all();
     }
 
     void Clear()
     {
         std::lock_guard<std::mutex> lock(mutex);
         flowCache.clear();
+        flowCacheState.clear();
     }
 
     void EraseFlowByRank(const std::string &rankId)
@@ -70,6 +76,7 @@ public:
             flowCache.erase(iter);
         }
         flowCacheState[rankId] = false;
+        flowCv.notify_all();
     }
 
 private:

@@ -250,6 +250,7 @@ async function redirectToTimeline(): Promise<void> {
                 ...params,
                 processId: res.pid,
                 startTime: timestamp,
+                rankId: res.rankId,
                 duration,
             },
         },

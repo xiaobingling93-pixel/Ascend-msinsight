@@ -143,7 +143,6 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Parse completed. path:", filePath,
                     " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-    ParserCallBack(filePath, true);
     SendHostEvent(token, filePath);
 }
 
@@ -159,7 +158,6 @@ void FullDbParser::SendHostEvent(const std::string &token, const std::string &fi
     event->token = token;
     event->result = true;
     event->body.unit.type = "card";
-    event->body.unit.metadata.cardId = "Host";
     event->body.isFullDb = true;
     auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
     if (db == nullptr) {
@@ -171,6 +169,7 @@ void FullDbParser::SendHostEvent(const std::string &token, const std::string &fi
         ServerLog::Error("Failed to convert VirtualTraceDatabase to DbTraceDataBase in full db SendHostEvent.");
         return;
     }
+    event->body.unit.metadata.cardId = database->QueryHostInfo()+"Host";
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
     database->QueryHostMetadata(event->body.unit.children);
     session->OnEvent(std::move(event));

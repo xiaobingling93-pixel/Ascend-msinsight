@@ -39,6 +39,7 @@ namespace Dic {
     const static std::string TABLE_META_DATA = "META_DATA";
     const static std::string TABLE_CONNECTION_IDS = "CONNECTION_IDS";
     const static std::string TABLE_ENUM_API_TYPE = "ENUM_API_TYPE";
+    const static std::string TABLE_HOST_INFO = "HOST_INFO";
 
     // cluster db table
     const static std::string TABLE_STEP_TRACE_TIME = "ClusterStepTraceTime";

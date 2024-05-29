@@ -11,6 +11,7 @@ import { runInAction } from 'mobx';
 import { getDefaultColumData, GetPageData, searchAllSlices } from './Common';
 import ResizeTable from 'lib/ResizeTable';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';
+import styled from '@emotion/styled';
 import { RankFilter } from './SystemView';
 import { Space } from 'antd/lib/index';
 import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
@@ -20,6 +21,13 @@ import { hashToNumber } from '../../utils/colorUtils';
 import type { ThreadMetaData } from '../../entity/data';
 import { calculateDomainRange } from '../CategorySearch';
 
+const CONTAINER = styled.div`
+    height: calc(100% - 50px);
+    padding: 5px 5px 15px 5px;
+    .ant-table-wrapper {
+        height: 100%;
+    }
+`;
 export interface SearchTableData {
     /**
      *
@@ -87,12 +95,12 @@ export interface SearchAllSlicesDetails {
     depth: number;
 }
 
-export function useFindDetail(session: Session): any {
+export function useFindDetail(session: Session, bottomHeight: number): any {
     const { t } = useTranslation('timeline');
     return {
         label: <div className={'title'}><span>{t('Find')}</span></div>,
         key: 'Find',
-        children: <FindDetailView session={session}/>,
+        children: <FindDetailView session={session} bottomHeight={bottomHeight}/>,
     };
 }
 
@@ -114,7 +122,8 @@ export const FindDetailView = observer((props: any) => {
         <><Space direction="vertical" size="middle" style={{ display: 'flex' }}>
             <RankFilter session={props.session} handleChange={handleChange}></RankFilter>
         </Space>
-        <ChartErrorBoundary><FindDetail rankId={conditions.rankId} session={props.session}></FindDetail></ChartErrorBoundary></>
+        <ChartErrorBoundary><FindDetail rankId={conditions.rankId} session={props.session} bottomHeight={props.bottomHeight}>
+        </FindDetail></ChartErrorBoundary></>
     );
 });
 
@@ -181,7 +190,7 @@ const FindDetail = observer((props: any) => {
         setDataSource(data);
         setPage({ ...page, total: res.count });
     };
-    return <div style={{ height: '100%', overflow: 'auto', padding: '5px 5px 15px 5px' }}>
+    return <CONTAINER>
         <ResizeTable
             onChange={(pagination: unknown, filters: unknown, newsorter: unknown, extra: {action: string}): void => {
                 if (extra.action === 'sort') {
@@ -191,11 +200,12 @@ const FindDetail = observer((props: any) => {
             pagination={GetPageData(page, setPage)}
             dataSource={dataSource}
             columns={columns}
+            scroll={{ y: props.bottomHeight - 180 }}
             size="small"
             loading = {isLoading}
             rowClassName={'click-able'}
         />
-    </div>;
+    </CONTAINER>;
 });
 
 const searchData = async(pages: any, sorters: {field: string;order: string}, prop: any): Promise<SearchTableData> => {

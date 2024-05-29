@@ -10,6 +10,7 @@
     "searchCriteria": {
       "RankId": "Rank ID",
       "GroupBy": "Group By",
+      "Host": "Host Name",
       "Overall": "Overall",
       "OverallDescribe": "Displays the memory sizes of operators in the Reserved, Allocated, and Active states and the overall Memory Reserved size of PyTorch.",
       "Stream": "Stream",

@@ -97,3 +97,18 @@ export function FormItem({ name, style, content, nameStyle }:
         {content}
     </div>);
 };
+
+export function GroupRankIdsByHost(rankIds: string[]): { hosts: string[]; ranks: Map<string, string[]> } {
+    const host = new Set<string>();
+    const ranks = new Map<string, string[]>();
+    rankIds.forEach(item => {
+        const list = item.split(' ');
+        if (list.length > 1) {
+            host.add(list[0]);
+            ranks.set(list[0], [...ranks.get(list[0]) ?? [], item]);
+        } else {
+            ranks.set('', [...ranks.get('') ?? [], item]);
+        }
+    });
+    return { hosts: Array.from(host), ranks };
+};

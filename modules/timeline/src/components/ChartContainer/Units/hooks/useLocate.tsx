@@ -4,6 +4,7 @@ import { PreOrderFlattenOptions, TreeNode } from '../../../../entity/common';
 import { InsightUnit, UnitMatcher } from '../../../../entity/insight';
 import { Session } from '../../../../entity/session';
 import { getAutoKey } from '../../../../utils/dataAutoKey';
+import { getRootUnit } from '../../../../utils';
 /**
  * Searches a list of given @param units recursively in pre-order, comparing them with @param matcher, and save the result path in @path
  *
@@ -74,7 +75,7 @@ export const useJumpTarget = (session: Session, unitsArea: InsightUnit[], suppor
         () => {
             if (dom === null || !supportJump) { return; }
             if (session.locateUnit === undefined) { return; }
-            const targetUnit = getTargetUnit(session.units, session.locateUnit.target);
+            const targetUnit = getTargetUnit(getRootUnit(session.units), session.locateUnit.target);
             if (targetUnit !== undefined) {
                 if (session.locateUnit?.showDetail === false) {
                     session.setSelectedUnitKeys([getAutoKey(targetUnit)]);

@@ -29,7 +29,8 @@ public:
         DataBaseManager::Instance().SetDataType(DataType::FULL_DB);
         Timeline::DataBaseManager::Instance().CreatConnectionPool(currPath + dbPath3,
                                                                   currPath + dbPath3);
-        Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDb", currPath + dbPath3);
+        Timeline::DataBaseManager::Instance().SetDbPathMapping("FullDb", currPath + dbPath3, "");
+        Timeline::DataBaseManager::Instance().SetDbPathMapping("2", currPath + dbPath3, "");
         FullDb::FullDbParser::Instance().Parse({"FullDb"}, currPath + dbPath3, "");
         while (ParserStatusManager::Instance().GetParserStatus("FullDb") != ParserStatus::FINISH_ALL) {
         }

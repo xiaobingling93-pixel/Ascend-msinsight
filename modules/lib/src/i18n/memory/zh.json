@@ -10,6 +10,7 @@
     "searchCriteria": {
       "RankId": "卡序号",
       "GroupBy": "分组方式",
+      "Host": "机器名称",
       "Overall": "全局",
       "OverallDescribe": "展示“保留”、“已分配”和“持有”状态下算子的内存大小，以及PyTorch总体保留内存的大小。",
       "Stream": "流",

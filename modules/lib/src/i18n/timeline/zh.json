@@ -8,6 +8,7 @@
     "Details": "详情",
     "System View": "系统视图",
     "Rank ID": "卡序号",
+    "Host": "机器名称",
     "Offset": "偏移量",
     "contextMenu": {
       "Fit to screen": "整屏显示",

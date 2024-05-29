@@ -22,7 +22,7 @@ import type {
     ProcessData,
     ProcessMetaData,
     ThreadMetaData,
-    ThreadTrace,
+    ThreadTrace, HostMetaData,
 } from '../../entity/data';
 import { createCounterParam, createStatusParam } from './unitFunc';
 import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
@@ -438,11 +438,18 @@ export const CardUnit = unit<CardMetaData>({
     name: 'Card',
     configBar: offsetConfig,
     pinType: 'copied',
-    renderInfo: (session: Session, metadata: { cardId: string; cardPath: string}) => <StyledTooltip placement="leftBottom" title={metadata.cardPath}><span style={{ marginLeft: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{metadata.cardId}</span></StyledTooltip>,
+    renderInfo: (session: Session, metadata: { cardName: string; cardPath: string }) => <StyledTooltip placement="leftBottom" title={metadata.cardPath}><span style={{ marginLeft: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{metadata.cardName}</span></StyledTooltip>,
     spreadUnits: on(
         'create',
         async (self): Promise<void> => {
         }),
+});
+
+export const ROOT_UNIT = unit<HostMetaData>({
+    name: 'Root',
+    configBar: offsetConfig,
+    pinType: 'copied',
+    renderInfo: (session: Session, metadata: { host: string }) => metadata.host,
 });
 
 export const CounterUnit = unit<CounterMetaData>({
@@ -591,7 +598,8 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
         runInAction(() => {
             session.locateUnit = {
                 target: (iunit: InsightUnit): boolean => {
-                    return (iunit.metadata as MetaData).threadId === record.tid && (iunit.metadata as MetaData).processId === record.pid;
+                    return iunit instanceof ThreadUnit && (Boolean(iunit.metadata.cardId === (metadata as MetaData).cardId)) &&
+                    (iunit.metadata as MetaData).threadId === record.tid && (iunit.metadata as MetaData).processId === record.pid;
                 },
                 onSuccess: (iunit): void => {
                     const selectedMultiSlice = JSON.parse(session.selectedMultiSlice);

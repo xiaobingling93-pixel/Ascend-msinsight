@@ -6,7 +6,7 @@ import { observable, runInAction, observe } from 'mobx';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select, InputNumber } from 'antd';
-import { Label } from 'lib/CommonUtils';
+import { GroupRankIdsByHost, Label } from 'lib/CommonUtils';
 import { optionMapType, VoidFunction } from '../../utils/interface';
 import { Session } from '../../entity/session';
 const OPERATOR_TYPE = 'Operator Type';
@@ -16,6 +16,7 @@ export interface ConditionType {
     group: string;
     topK: number;
     custom: number;
+    host: string;
 }
 
 export const defaultCondition = {
@@ -23,6 +24,7 @@ export const defaultCondition = {
     group: OPERATOR_TYPE,
     topK: 15,
     custom: 0,
+    host: '',
 };
 
 export interface FilterType {
@@ -43,6 +45,7 @@ export const defaultFilterType = {
 
 const defaultOptionMap = {
     rankIdOptions: [],
+    hostsOptions: [],
     groupOptions: [
         { label: 'Computing Operator', value: 'Operator' },
         { label: 'Computing Operator Type', value: 'Operator Type' },
@@ -73,6 +76,9 @@ const setCondition = (initCondition: ConditionType = {} as ConditionType): void 
         keys.forEach(key => {
             (condition as any)[key] = (initCondition as any)[key];
         });
+        if (condition.host === '' || !optionMap.hostsOptions.find(item => item.value === condition.host)) {
+            condition.host = optionMap.hostsOptions[0]?.value as string ?? '';
+        }
         if (condition.rankId === '' || !optionMap.rankIdOptions.find(item => item.value === condition.rankId)) {
             condition.rankId = optionMap.rankIdOptions[0]?.value as string ?? '';
         }
@@ -100,15 +106,28 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     }, []);
 
     useEffect(() => {
-        const rankIdOptions = session.allRankIds.map((item, index) => (
-            { label: !item.startsWith('[MSPROF]') ? item : item.substring(item.lastIndexOf('__') + 2), value: item }
+        const { hosts, ranks }: { hosts: string[]; ranks: Map<string, string[]> } = GroupRankIdsByHost(session.allRankIds);
+        const hostsOptions = hosts.map(item => (
+            { label: item, value: item, data: ranks.get(item) }
         ));
-        setOptions({ rankIdOptions });
+        const host = hosts[0] ?? '';
+        const rankIdOptions = (ranks.get(host) ?? []).map((item, index) => (
+            { label: (!item.startsWith('[MSPROF]') ? item : item.substring(item.lastIndexOf('__') + 2)).replace(`${host} `, ''), value: item }
+        ));
+        setOptions({ hostsOptions, rankIdOptions });
         if (session.allRankIds.length === 0) {
             setOptions(defaultOptionMap);
             setCondition(defaultCondition);
         }
     }, [session.allRankIds]);
+
+    useEffect(() => {
+        const hostOption = optionMap.hostsOptions.find(item => item.value === condition.host);
+        const rankIdOptions = (hostOption?.data ?? [] as string[]).map((item: string) => (
+            { label: (!item.startsWith('[MSPROF]') ? item : item.substring(item.lastIndexOf('__') + 2)).replace(`${condition.host} `, ''), value: item }
+        ));
+        setOptions({ rankIdOptions });
+    }, [condition.host]);
 
     useEffect(() => {
         const { total } = session;
@@ -136,6 +155,19 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
         label: t(item.label),
     }));
     return (<div>
+        {
+            optionMap.hostsOptions.length > 0
+                ? <FormItem
+                    name={t('Host')}
+                    content={(<Select
+                        value={condition.host}
+                        style={{ width: 250 }}
+                        onChange={(val): void => handleChange('host', val)}
+                        options={optionMap.hostsOptions}
+                    />
+                    )}/>
+                : <div></div>
+        }
         <FormItem
             name={t('Group By')}
             content={(<Select

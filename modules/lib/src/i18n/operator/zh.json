@@ -13,6 +13,7 @@
     "searchCriteria": {
       "Group By": "分组方式",
       "Rank ID": "卡序号",
+      "Host": "机器名称",
       "Top": "前",
       "Computing Operator": "计算算子",
       "Computing Operator Type": "计算算子类型",

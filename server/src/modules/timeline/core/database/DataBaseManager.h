@@ -58,11 +58,16 @@ public:
     std::vector<Summary::VirtualSummaryDataBase *> GetAllSummaryDatabase();
 
     std::string GetDbPath(const std::string &fileId);
+    std::shared_ptr<VirtualTraceDatabase> GetTraceDatabaseWithOutHost(const std::string &fileId);
     DataType GetDataType();
     void SetDataType(DataType type);
     FileType GetFileType();
     void SetFileType(FileType type);
-    void SetDbPathMapping(const std::string& rankId, const std::string& filePath);
+    void SetDbPathMapping(const std::string& rankId, const std::string& filePath, const std::string& hostId);
+    inline std::vector<std::string> GetDbPathByHost(const std::string& id)
+    {
+        return host2DbPath[id];
+    }
 
     bool curIsCluster = false;
     bool curIsDb = false;
@@ -77,6 +82,7 @@ private:
     FileType fileType = FileType::PYTORCH;
     std::map<std::string, std::recursive_mutex> dbMutexMap;
     std::map<std::string, std::string> dbFilePathMap;
+    std::map<std::string, std::vector<std::string>> host2DbPath;
     std::map<std::string, std::unique_ptr<ConnectionPool>> traceDatabaseMap;
     std::map<std::string, std::unique_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
     std::map<std::string, std::unique_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;

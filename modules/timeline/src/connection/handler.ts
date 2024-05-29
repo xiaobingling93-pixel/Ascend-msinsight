@@ -4,7 +4,7 @@ import { runInAction } from 'mobx';
 import { handleMap, recursiveExpandUnit } from '../insight/units/unitFunc';
 import { setUnitPhaseByCardId, setUnitProgressByFileId } from '../entity/insight';
 import type { InsightUnit } from '../entity/insight';
-import { CardUnit, ThreadUnit } from '../insight/units/AscendUnit';
+import { CardUnit, ROOT_UNIT, ThreadUnit } from '../insight/units/AscendUnit';
 import { CardInfo } from '../components/ImportSelect';
 import { Session } from '../entity/session';
 import { NotificationHandler } from './defs';
@@ -13,7 +13,7 @@ import { message } from 'antd';
 import { getTimeOffset } from '../insight/units/utils';
 import { calculateDomainRange } from '../components/CategorySearch';
 import i18n from '../i18n';
-import { cloneDeep } from 'lodash';
+import { forEach, groupBy, isEmpty, cloneDeep } from 'lodash';
 
 const DEFAULT_EXPAND_UNIT_NUMBER = 1;
 const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
@@ -107,6 +107,7 @@ export const parseFailHandler: NotificationHandler = (data): void => {
     });
     message.error(data.error);
 };
+
 const initUnitInfo = (session: Session | undefined, result: any, dataSource: DataSource): void => {
     if (!session) {
         return;
@@ -117,26 +118,40 @@ const initUnitInfo = (session: Session | undefined, result: any, dataSource: Dat
     session.isSimulation = result.isSimulation;
     session.isIpynb = result.isIpynb;
     session.isCluster = result.isCluster;
-    result.result.forEach((item: CardInfo) => {
-        const curDataSource = cloneDeep(dataSource);
-        curDataSource.dataPath = item.dataPathList;
-        const unit = new CardUnit({ dataSource: curDataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
-        if (item.result as boolean) {
-            unit.phase = 'analyzing';
-            unit.progress = 0;
-            unit.showProgress = true;
-        } else {
-            unit.phase = 'error';
+    const hostInfo = groupBy(result.result, (item: CardInfo) => item.host ?? '');
+    forEach(hostInfo, (cards, host) => {
+        const unit = isEmpty(host) ? undefined : new ROOT_UNIT({ dataSource, host });
+        const cardUnits: InsightUnit[] = [];
+        forEach(cards, (item: CardInfo) => {
+            const curDataSource = cloneDeep(dataSource);
+            curDataSource.dataPath = item.dataPathList;
+            const cardUnit = new CardUnit({ dataSource: curDataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
+            if (item.result as boolean) {
+                cardUnit.phase = 'analyzing';
+                cardUnit.progress = 0;
+                cardUnit.showProgress = true;
+            } else {
+                cardUnit.phase = 'error';
+            }
+            if (session.units.length < DEFAULT_EXPAND_UNIT_NUMBER) {
+                cardUnit.isExpanded = true;
+            }
+            cardUnits.push(cardUnit);
+            session.units.push(cardUnit);
+        });
+        if (unit) {
+            unit.isExpanded = cardUnits.length > 0 ? cardUnits[0].isExpanded : false;
+            unit.children = cardUnits;
         }
-        if (session.units.length < DEFAULT_EXPAND_UNIT_NUMBER) {
-            unit.isExpanded = true;
-        }
-        session.units.push(unit);
     });
     session.sortUnits();
     if (result.reset === true) {
         session.memoryRankIds = [];
         session.operatorRankIds = [];
+        if (session.eventUnits[0] !== undefined) {
+            session.eventUnits = [];
+        }
+        session.doReset = !session.doReset;
     }
 };
 

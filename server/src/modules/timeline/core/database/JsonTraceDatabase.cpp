@@ -728,7 +728,7 @@ bool JsonTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &re
         ServerLog::Error("QueryThreadDetail. Failed to prepare sql.");
         return false;
     }
-    auto resultSet = stmt->ExecuteQuery(requestParams.id, trackId, requestParams.startTime + minTimestamp);
+    auto resultSet = stmt->ExecuteQuery(requestParams.id);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryThreadDetail. Failed to get result set.", stmt->GetErrorMessage());
         return false;
@@ -1758,6 +1758,7 @@ bool JsonTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &
     const OneKernelData &data = QueryKernelTid(trackId);
     responseBody.threadId = data.threadId;
     responseBody.pid = data.pid;
+    responseBody.rankId = params.rankId;
     return true;
 }
 

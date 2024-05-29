@@ -18,6 +18,7 @@ struct Action {
     std::string cardName;
     std::string rankId;
     std::string cardPath;
+    std::string host;
     bool result = true;
     std::vector<std::string> dataPathList;
 };
@@ -406,6 +407,7 @@ struct OneKernelBody {
     std::string pid;
     std::string step;
     std::string group;
+    std::string rankId;
 };
 
 struct KernelBaseInfo {
