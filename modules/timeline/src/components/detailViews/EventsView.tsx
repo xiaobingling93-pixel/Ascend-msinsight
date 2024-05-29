@@ -81,7 +81,7 @@ export const EventDetail = observer((props: any) => {
         setAllCondition({ ...allCondition, page, sorter });
     }, [sorter, page.current, page.pageSize]);
     useEffect(() => {
-        setAllCondition({ ...allCondition, showEvent: props.session.showEvent, page: defaultPage });
+        setAllCondition({ ...allCondition, showEvent: props.session.showEvent, page: defaultPage, sorter: defaultSorter });
     }, [props.session.showEvent]);
 
     useEffect(() => {
