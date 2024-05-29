@@ -148,6 +148,11 @@ Section "Uninstall"
   Delete $INSTDIR\ascend_insight.exe
   RMDir /r $INSTDIR\resources
   RMDir /r $INSTDIR\.ascend_insight
+    ${If} $RemoveCacheData == 1
+        StrCpy $1 $APPDATA
+        ; Remove User Cache
+        RMDir /r $PROFILE\.ascend_insight
+    ${EndIf}
 
   ; Remove Start Menu shortcut
   Delete $SMPROGRAMS\ascend_insight\ascend_insight.lnk

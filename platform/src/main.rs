@@ -25,6 +25,7 @@ mod webview2err;
 #[cfg(windows)]
 use webview2err::show_webview_err_message;
 use std::io::{BufRead, BufReader};
+use std::path::MAIN_SEPARATOR;
 
 const SERVER_RELATIVE_LIST: [&str; 4] = ["resources", "profiler", "server", "profiler_server"];
 const NO_WINDOW_FLAG: u32 = 0x08000000;
@@ -298,6 +299,18 @@ fn is_admin() -> bool {
     }
 }
 
+#[cfg(windows)]
+fn compare_first_segment(s1: &str, s2: &str) -> bool {
+    let s1_segments: Vec<&str> = s1.split(MAIN_SEPARATOR).collect();
+    let s2_segments: Vec<&str> = s2.split(MAIN_SEPARATOR).collect();
+
+    if s1_segments.is_empty() || s2_segments.is_empty() {
+        return false;
+    }
+
+    s1_segments[0] == s2_segments[0]
+}
+
 fn main() {
     let mut cache_path = home_dir().unwrap().join(".ascend_insight"); //cache folder generated for each user.
     let root_path =  std::env::current_exe().unwrap().parent().unwrap().to_path_buf();
@@ -307,6 +320,10 @@ fn main() {
     std::fs::create_dir_all(cache_path.as_path()).expect("no permission to create cache_path");
     #[cfg(windows)] {
         let mut webview_path = cache_path.clone();
+        let usr_path = home_dir().unwrap().join(".ascend_insight");
+        if compare_first_segment(usr_path.to_str().unwrap(), root_path.to_str().unwrap()) {
+            webview_path = usr_path;
+        }
         if is_admin() {
             webview_path.push("admin");
         }
