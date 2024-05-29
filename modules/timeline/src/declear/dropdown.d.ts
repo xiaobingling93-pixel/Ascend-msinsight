@@ -38,4 +38,5 @@ declare module 'antd' {
     export type AutoCompleteProps = AutoCompleteProps;
     export const Table;
     export const notification;
+    export const Progress;
 }

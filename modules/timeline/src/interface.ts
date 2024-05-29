@@ -1,6 +1,7 @@
 import { NotificationHandler } from './connection/defs';
 import {
     parseSuccessHandler,
+    parseProgressHandler,
     parseFailHandler,
     importRemoteHandler,
     removeRemoteHandler,
@@ -34,6 +35,7 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     'remote/reset': removeRemoteHandler,
     'remote/removeSingle': removeSingleRemoteHandler,
     'parse/success': parseSuccessHandler,
+    'parse/progress': parseProgressHandler,
     'parse/fail': parseFailHandler,
     setTheme,
     'parse/clusterCompleted': clusterCompletedHandler,

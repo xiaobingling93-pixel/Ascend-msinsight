@@ -15,6 +15,8 @@ describe('hooks test', () => {
         isUnitVisible: true,
         type: 'basic',
         phase: 'download',
+        progress: 0,
+        showProgress: true,
         metadata: {},
     };
     const expectedTablestate = {

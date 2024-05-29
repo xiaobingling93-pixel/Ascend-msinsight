@@ -22,6 +22,7 @@ import eventBus, { EventType, useEventBus } from '../../../utils/eventBus';
 import { Mask } from '../../charts/Mask';
 import { useJumpTarget } from './hooks';
 import type { OrderOptions } from './hooks';
+import { UnitProgress } from '../../charts/UnitProgress';
 
 const Lane = styled.div<{ laneHeight: number; className: string }>`
     display: flex;
@@ -72,11 +73,17 @@ const ChartView = observer(({ unit, session, width, height }: {unit: KeyedInsigh
             unit={unit} desc={unit.chart} key={getAutoKey(unit)} serial={getAutoKey(unit)}
             title={unit.name} session={session} metadata={unit.metadata} width={width} phase={unit.phase} />;
     }
-    return <ChartErrorBoundary height={height} width={width} phase={unit.phase}>
-        <Mask unitPhase={unit.phase} isShowMask={session.id !== 'HomePage' && session.phase !== 'error' && unit.phase !== 'configuring' && unit.phase !== 'download' && unit.phase !== 'error'}>
-            <div className="chart-empty" style={{ width, height }}/>
-        </Mask>
-    </ChartErrorBoundary>;
+    if (unit.phase === 'analyzing' || unit.phase === 'download') {
+        return <ChartErrorBoundary height={height} width={width} phase={unit.phase}>
+            <UnitProgress realProgress={unit.progress} showProgress={unit.showProgress}/>
+        </ChartErrorBoundary>;
+    } else {
+        return <ChartErrorBoundary height={height} width={width} phase={unit.phase}>
+            <Mask unitPhase={unit.phase} isShowMask={session.id !== 'HomePage' && session.phase !== 'error' && unit.phase !== 'configuring' && unit.phase !== 'download' && unit.phase !== 'error'}>
+                <div className="chart-empty" style={{ width, height }}/>
+            </Mask>
+        </ChartErrorBoundary>;
+    }
 });
 
 interface UnitProps {

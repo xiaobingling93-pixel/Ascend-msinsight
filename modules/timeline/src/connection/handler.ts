@@ -2,7 +2,7 @@ import { store } from '../store';
 import type { CardMetaData, ThreadMetaData, ThreadTrace } from '../entity/data';
 import { runInAction } from 'mobx';
 import { handleMap, recursiveExpandUnit } from '../insight/units/unitFunc';
-import { setUnitPhaseByCardId } from '../entity/insight';
+import { setUnitPhaseByCardId, setUnitProgressByFileId } from '../entity/insight';
 import type { InsightUnit } from '../entity/insight';
 import { CardUnit, ThreadUnit } from '../insight/units/AscendUnit';
 import { CardInfo } from '../components/ImportSelect';
@@ -33,6 +33,8 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
                 return;
             }
             session.isFullDb = unitData.isFullDb;
+            // parse suceess之后关闭进度条
+            setUnitProgressByFileId(unitData, session);
             session.units.forEach((unit) => {
                 if ((unit.metadata as CardMetaData).cardId === unitData.unit.metadata.cardId) {
                     handleMap(unitData.unit, (unit.metadata as CardMetaData).dataSource);
@@ -64,6 +66,27 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             }
             runInAction(() => {
                 session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
+            });
+        });
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+export const parseProgressHandler: NotificationHandler = (data): void => {
+    try {
+        const unitData = data as any;
+        const { sessionStore } = store;
+        const session = sessionStore.activeSession;
+        runInAction(() => {
+            if (!session) {
+                return;
+            }
+            session.units.forEach((unit) => {
+                if ((unit.metadata as CardMetaData).cardId === unitData.fileId) {
+                    unit.progress = unitData.progress;
+                    unit.showProgress = true;
+                }
             });
         });
     } catch (error) {

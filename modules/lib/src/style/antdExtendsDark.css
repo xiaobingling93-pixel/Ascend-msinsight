@@ -86,6 +86,17 @@
 }
 
 /*
+ * progress组件相关配置
+ */
+ .theme_dark .ant-progress.ant-progress-line {
+    width: 200px;
+ }
+
+ .theme_dark .ant-progress .ant-progress-text {
+    color: #40a9ff;
+ }
+
+/*
  * table组件相关配置
  */
 .theme_dark tr.ant-table-expanded-row > td, .theme_dark tr.ant-table-expanded-row:hover > td {

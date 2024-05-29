@@ -203,6 +203,8 @@ export interface InsightUnit extends InsightUnitParams<unknown, Record<string, u
     phase: string;
     isUnitVisible: boolean;
     parent?: InsightUnit;
+    progress: number; // 解析进度：实际解析进度
+    showProgress: boolean; // 解析进度：是否显示进度条
 }
 // 增加rendering状态，用于unit analyze完成后、session变为download之前的状态设置(主要是进行await recursiveSpreadUnits)
 // 增加initializing状态，用于用户点击session start按钮后，unit plugin start完成之前的状态设置
@@ -282,7 +284,8 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         phase: UnitPhase = 'configuring';
         searchConfig = params.searchConfig;
         collapsible = true;
-
+        progress: number = 0; // 解析进度：实际解析进度
+        showProgress: boolean = true; // 解析进度：是否显示进度条
         constructor(metadata: T) {
             makeAutoObservable(this, { searchConfig: false });
             this.metadata = metadata;
@@ -322,6 +325,8 @@ export const transparentUnit = <T extends { dataSource: DataSource } = { dataSou
 Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'name' | 'spreadUnits' | 'pinType' | 'description' | 'buttons'>): typeof TransparentUnit => {
     const TransparentUnit = class implements InsightUnit {
         isUnitVisible = true;
+        progress: number = 0; // 解析进度：实际解析进度
+        showProgress: boolean = true; // 解析进度：是否显示进度条
         type = 'transparent' as const;
         description = params.description;
         pinType = params.pinType ?? 'copied';
@@ -463,5 +468,19 @@ export function setUnitPhaseByCardId(cardId: string, session: Session, phase: Un
         }
         setUnitPhase(unit, phase);
         return unit;
+    });
+}
+
+/**
+ * 设置每个卡的进度条组件是否显示
+ * @param unitData
+ * @param session
+ */
+export function setUnitProgressByFileId(unitData: any, session: Session): void {
+    session.units.forEach((sessionUnit) => {
+        if ((sessionUnit.metadata as CardMetaData).cardId === unitData.unit.metadata.cardId) {
+            sessionUnit.progress = 100;
+            sessionUnit.showProgress = false;
+        }
     });
 }
