@@ -167,6 +167,10 @@ const static std::string TASK_UNIT_FLOW_SQL =
       "     endNs - startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, name, "
       "     deviceId from TASK task join constValue join COMPUTE_TASK_INFO CTI "
       "     on task.globalTaskId = CTI.globalTaskId where task.connectionId = constValue.connectionId "
+      " union all select task.ROWID as id, streamId as tid, task.depth,task.startNs - constValue.minTime as startTime, "
+      " task.endNs - task.startNs as duration, 'Ascend Hardware' as pid, 'Ascend Hardware' as metaType, taskType, "
+      "         deviceId from TASK task join constValue join MSTX_EVENTS CTI "
+      "         on task.connectionId = CTI.connectionId where task.connectionId = constValue.connectionId  "
       "union all select op.ROWID as id,groupName||'group' as tid,0 as depth,op.startNs-constValue.minTime as startTime,"
       "     op.endNs - op.startNs as duration, 'HCCL' as pid, 'HCCL' as metaType, opName as name, "
       "     deviceId from COMMUNICATION_OP op join constValue join TASK task on task.connectionId = op.connectionId "
@@ -263,6 +267,11 @@ const static std::string QUERY_DEVICE_LOCATION_SQL =
         " startNs - constValue.minTime as startTime, endNs - startNs as duration, 'Ascend Hardware' as pid, "
         " 'Ascend Hardware' as metaType, name, deviceId from TASK task join constValue join COMPUTE_TASK_INFO CTI "
         " on task.globalTaskId = CTI.globalTaskId join connectionCats on task.connectionId=connectionCats.connectionId "
+        " union all select connectionCats.cat, connectionCats.connectionId, task.ROWID as id, streamId as tid, "
+        "  task.depth, task.startNs - constValue.minTime as startTime, task.endNs - task.startNs as duration, "
+        "  'Ascend Hardware' as pid,'Ascend Hardware' as metaType, taskType, deviceId from TASK task join constValue "
+        " join MSTX_EVENTS CTI on task.connectionId = CTI.connectionId "
+        " join connectionCats on task.connectionId=connectionCats.connectionId "
         " union all select connectionCats.cat, connectionCats.connectionId, op.ROWID as id, groupName||'group' as tid, "
         " 0 as depth,op.startNs-constValue.minTime as startTime, op.endNs - op.startNs as duration, 'HCCL' as pid, "
         " 'HCCL' as metaType, opName as name, deviceId from COMMUNICATION_OP op join constValue "
@@ -287,7 +296,7 @@ static std::string GetConnectionCatSql()
                " on conn.id = PA.connectionId join STRING_IDS ids on ids.id = PA.name "
                " group by conn.connectionId having count(1) > 1 ");
     sql.append(" union select api.connectionId, 'MsTx' as cat  from MSTX_EVENTS api " // 打点侧
-               "      join operateConnIds on api.connectionId = operateConnIds.connectionId ");
+               "      join Task task on api.connectionId = task.connectionId where api.connectionId != 4294967295 ");
     return sql;
 }
 
@@ -310,7 +319,7 @@ static std::string GetQueryApiLocationSql()
                " where cat = 'async_task_queue' or cat = 'fwdbwd' or cat = 'async_npu' ");
     sql.append(" union select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, 'MsTx' as tid, "
                "  depth, startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid, "
-               "       'MSTX_EVENTS' as metaType, message as name, '' as deviceId from MSTX_EVENTS api join constValue "
+               "       'MSTX_EVENTS' as metaType, message as name, deviceId from MSTX_EVENTS api join constValue "
                "        join connectionCats on api.connectionId = connectionCats.connectionId "
                " join rankIds on api.globalTid >> 32 = rankIds.globalPid "
                " where cat = 'MsTx'");

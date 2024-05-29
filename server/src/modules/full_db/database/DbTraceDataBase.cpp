@@ -286,9 +286,6 @@ int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &par
 
 bool DbTraceDataBase::QueryFlowCategoryList(std::vector<std::string> &categories, const std::string& rankId)
 {
-    if (!isExistCann && !isExistPytorch) {
-        return false;
-    }
     CommonCacheManager::Instance().GetCategoryList(rankId, categories);
     return true;
 }
@@ -1051,15 +1048,13 @@ void DbTraceDataBase::InitFlowCache()
 {
     {
         std::lock_guard<std::recursive_mutex> lockGuard(mutex);
-        if (!ExecSql("CREATE TEMPORARY TABLE IF NOT EXISTS connectionCats as " +
-                        DbSqlDefs::GetConnectionCatSql())) {
+        if (!ExecSql("CREATE TEMPORARY TABLE IF NOT EXISTS connectionCats as " + DbSqlDefs::GetConnectionCatSql())) {
             return;
         }
     }
     std::map<std::string, std::map<std::string, FlowLocation>> startFlowLocations; // 连线起始节点
     std::map<std::string, std::map<std::string, std::vector<FlowLocation>>> endFlowLocations; // 连线结束节点
-    QueryFlowLocation(DbSqlDefs::GetQueryApiLocationSql(),
-                      startFlowLocations, endFlowLocations);
+    QueryFlowLocation(DbSqlDefs::GetQueryApiLocationSql(), startFlowLocations, endFlowLocations);
     QueryFlowLocation(QUERY_DEVICE_LOCATION_SQL, startFlowLocations, endFlowLocations);
     auto dealLineData = [](const std::string &cat,  const std::string &connectionId, const FlowLocation &startLocation,
             std::map<std::string, std::map<std::string, std::vector<FlowLocation>>>& endFlowLocations) {
