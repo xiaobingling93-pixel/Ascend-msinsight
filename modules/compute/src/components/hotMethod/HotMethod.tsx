@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { Checkbox, Tooltip } from 'antd';
@@ -17,7 +17,6 @@ import {
     HeaderFixedContainer,
     LeftRightContainer,
     syncScroller,
-    isViewable,
     limitInput,
     GetPageConfigWhithPageData,
     confrimMessage,
@@ -133,30 +132,15 @@ const Index = observer(({ session }: { session: Session }) => {
         return instrsData.filter((record: InstrsColumnType) => isRelatedInstr(record));
     };
 
-    const isRelatedInstr = (instr: InstrsColumnType): boolean => {
+    const isRelatedInstr = useCallback((instr: InstrsColumnType): boolean => {
         if (selectedline > 0 && codeLines.length > 0) {
             return isRelated(codeLines[selectedline - 1], instr);
         }
         return false;
-    };
+    }, [selectedline, codeLines]);
     const isRelated = (codeline: Ilinetable, instr: InstrsColumnType): boolean => {
         // 指令地址是否在代码行地址范围内
         return Boolean(codeline?.['Address Range']?.find(item => Number(item[0]) <= Number(instr.Address) && Number(item[1]) >= Number(instr.Address)));
-    };
-
-    const srcollToView = (): void => {
-        setTimeout(() => {
-            const nodelist = document.querySelectorAll('#Instructions tr.selected');
-            let visible = false;
-            nodelist.forEach(node => {
-                if (isViewable(node, { fixedtop: document.getElementById('CodeTable')?.getBoundingClientRect().top })) {
-                    visible = true;
-                }
-            });
-            if (nodelist.length > 0 && !visible) {
-                nodelist[0].scrollIntoView();
-            }
-        });
     };
 
     const getCurInstrsData = (): InstrsColumnType[] => {
@@ -398,7 +382,6 @@ const Index = observer(({ session }: { session: Session }) => {
                                             code={code}
                                             handleLineClick={(line: number) => {
                                                 setSelectedline(line);
-                                                srcollToView();
                                             }}
                                             selectedline={selectedline}
                                         />
@@ -432,6 +415,7 @@ const Index = observer(({ session }: { session: Session }) => {
                             body={<InstructionTable
                                 tableHeight={tableHeight}
                                 columns={filterInstrsColumns}
+                                condition={condition}
                                 dataSource={condition.onlyRelated ? getRelatedInstrs() : instrsData}
                                 isRelatedInstr={isRelatedInstr}
                                 handleInstrsClick={handleInstrsClick}
@@ -445,43 +429,76 @@ const Index = observer(({ session }: { session: Session }) => {
     </div>;
 });
 
-const InstructionTable = ({ columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline }: {
+interface IinstrProp {
+    condition: ConditionType;
     columns: ColumnsType<InstrsColumnType>;
     dataSource: InstrsColumnType[];
     isRelatedInstr: (instr: InstrsColumnType) => boolean;
     handleInstrsClick: (instr: InstrsColumnType) => void;
     tableHeight: number;
     selectedline: number;
-}): JSX.Element => {
-    const defaultPage = { current: 1, pageSize: 1000, total: dataSource.length };
-    const [page, setPage] = useState(defaultPage);
-    const showPage = dataSource.length > 5000;
-    useEffect(() => {
-        setPage({ ...page, current: 1, total: dataSource.length });
-    }, [dataSource.length]);
+}
+const pagelimit = 500000;
+const rowHeight = 29;
+const srcollToView = ({ condition, selectedline, showDataSource, isRelatedInstr }:
+{
+    condition: ConditionType;
+    selectedline: number;
+    showDataSource: InstrsColumnType[];
+    isRelatedInstr: (instr: InstrsColumnType) => boolean;
+},
+): void => {
+    if (condition.onlyRelated === true || selectedline < 0) {
+        return;
+    }
+    const index = showDataSource.findIndex(isRelatedInstr);
+    if (index < 0) {
+        return;
+    }
+    const top = index * rowHeight;
+    const parentNode = document.querySelector('#Instructions .ant-table-body') as HTMLElement;
+    parentNode.scrollTo({ top });
+};
 
+function InstructionTable({ columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, condition }: IinstrProp): JSX.Element {
+    const [page, setPage] = useState({ current: 1, pageSize: pagelimit, total: dataSource.length });
+    const isShowPage = dataSource.length > pagelimit;
+    const showDataSource = useMemo(() => {
+        const pageDataSource = dataSource.slice((page.current - 1) * page.pageSize, page.current * page.pageSize);
+        return isShowPage ? pageDataSource : dataSource;
+    }, [dataSource, isShowPage, page.current, page.pageSize]);
     useEffect(() => {
-        if (showPage && page.pageSize !== 0) {
-            const index = dataSource.findIndex(item => isRelatedInstr(item));
+        if (isShowPage) {
+            setPage({ ...page, current: 1, total: dataSource.length });
+        }
+    }, [dataSource.length]);
+    useEffect(() => {
+        if (isShowPage) {
+            const index = dataSource.findIndex(isRelatedInstr);
             const onPage = Math.floor(index / page.pageSize) + 1;
-            if (onPage !== page.current) {
+            if (index > 0 && onPage !== page.current) {
                 setPage({ ...page, current: onPage });
             }
         }
     }, [selectedline]);
+    useEffect(() => {
+        srcollToView({ condition, selectedline, showDataSource, isRelatedInstr });
+    }, [selectedline, showDataSource]);
+
     return <ResizeTable
         size="small"
         minThWidth={50}
         columns={columns}
-        dataSource={dataSource}
-        rowClassName={(record: InstrsColumnType) => (isRelatedInstr(record) ? 'selected' : '')}
-        onRow={ (record: InstrsColumnType) => {
-            return {
-                onClick: () => { handleInstrsClick(record); },
-            };
-        }}
-        pagination={showPage ? GetPageConfigWhithPageData(page, setPage, [1000, 5000]) : false}
-        scroll={{ y: showPage ? tableHeight - 50 : tableHeight }}
+        dataSource={showDataSource}
+        rowClassName={(record: InstrsColumnType): string => (isRelatedInstr(record) ? 'selected' : '')}
+        onRow={ (record: InstrsColumnType): { onClick: () => void } => ({
+            onClick: (): void => {
+                handleInstrsClick(record);
+            },
+        })}
+        pagination={isShowPage ? GetPageConfigWhithPageData(page, setPage, [pagelimit, pagelimit / 2]) : false}
+        scroll={{ y: isShowPage ? tableHeight - 50 : tableHeight, rowHeight }}
+        virtual={true}
     />;
 };
 
