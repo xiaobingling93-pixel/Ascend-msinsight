@@ -568,8 +568,11 @@ std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByIdList(uint64_t minTi
     std::set<int64_t> &ids)
 {
     Timer timer3("JsonTraceDatabase::QuerySliceByIdList");
-    std::string sliceSql = JsonSqlConstant::GetSliceByIdListSql(ids.size());
     std::vector<RowThreadTrace> ans;
+    if (std::empty(ids)) {
+        return ans;
+    }
+    std::string sliceSql = JsonSqlConstant::GetSliceByIdListSql(ids.size());
     auto sliceStem = CreatPreparedStatement(sliceSql);
     if (sliceStem == nullptr) {
         ServerLog::Error("Fail to QuerySliceByIdList.", sqlite3_errmsg(db));

@@ -173,7 +173,7 @@ public:
         for (int i = 0; i < idSetSize - 1; ++i) {
             sliceSql += ", ? ";
         }
-        sliceSql += " , ? );";
+        sliceSql += " );";
         return sliceSql;
     }
 
