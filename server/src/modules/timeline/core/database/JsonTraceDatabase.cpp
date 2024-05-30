@@ -480,8 +480,6 @@ void JsonTraceDatabase::UpdateSimulationDepthByCodeWithNoOverlap()
     }
     ServerLog::Info("trackIdList size: ", trackIdList.size());
     std::vector<Protocol::SimpleSlice> rowThreadTraceVec;
-    const uint32_t vectorSize = 5000000;
-    rowThreadTraceVec.reserve(vectorSize);
     for (const auto &item : trackIdList) {
         rowThreadTraceVec.clear();
         QueryAllSliceByTrackId(item, rowThreadTraceVec);
@@ -1424,8 +1422,6 @@ void JsonTraceDatabase::QueryFlowPointByCategory(FlowCategoryEventsParams &param
         ServerLog::Error("QueryFlowCategoryEvents. Failed to get result set.", stmt->GetErrorMessage());
         return;
     }
-    const uint64_t flowInitSize = 5000000;
-    flowEventsVec.reserve(flowInitSize);
     while (resultSet->Next()) {
         int col = resultStartIndex;
         FlowCategoryEventsDto flowCategoryEventsDto;
