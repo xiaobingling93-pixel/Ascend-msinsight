@@ -14,6 +14,7 @@ import { getTimeOffset } from '../insight/units/utils';
 import { calculateDomainRange } from '../components/CategorySearch';
 import i18n from '../i18n';
 
+const DEFAULT_EXPAND_UNIT_NUMBER = 1;
 const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
     if (data[key] === undefined) {
         console.warn(`cannot get ${key.toString()} of `, data);
@@ -131,6 +132,9 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
                     unit.showProgress = true;
                 } else {
                     unit.phase = 'error';
+                }
+                if (session.units.length < DEFAULT_EXPAND_UNIT_NUMBER) {
+                    unit.isExpanded = true;
                 }
                 session.units.push(unit);
             });
@@ -250,6 +254,7 @@ export const dragImportSuccessHandler: NotificationHandler = async (data): Promi
                 } else {
                     unit.phase = 'error';
                 }
+                unit.isExpanded = true;
                 session.units.push(unit);
             });
         });
