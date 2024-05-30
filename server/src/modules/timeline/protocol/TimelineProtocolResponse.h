@@ -413,6 +413,7 @@ struct KernelBaseInfo {
     uint64_t duration{};
     std::string pid;
     std::string tid;
+    uint64_t depth{};
 };
 
 struct OneKernelResponse : public Response {

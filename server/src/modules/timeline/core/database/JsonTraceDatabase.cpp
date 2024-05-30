@@ -1886,13 +1886,19 @@ bool JsonTraceDatabase::QueryAffinityOptimizer(const Protocol::KernelDetailsPara
         ServerLog::Error("Failed to get result set for QueryAffinityOptimizer.", stmt->GetErrorMessage());
         return false;
     }
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, int32_t>> depthMap;
     while (resultSet->Next()) {
         Protocol::ThreadTraces one{};
         one.startTime = resultSet->GetUint64("startTime");
-        one.name = resultSet->GetString("originOptimizer");
+        one.name = resultSet->GetString("name");
         one.duration = resultSet->GetUint64("duration");
         one.threadId = resultSet->GetString("tid");
         one.id = resultSet->GetString("pid");
+        auto track_id = resultSet->GetUint64("track_id");
+        if (depthMap.count(track_id) == 0) {
+            depthMap.emplace(track_id,
+                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(track_id).sliceIdAndDepthMap);
+        }
         data.emplace_back(one);
     }
     return true;
@@ -1916,6 +1922,7 @@ bool JsonTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetails
         ServerLog::Error("Failed to get result set for AICpuOpExceedThreshold.", stmt->GetErrorMessage());
         return false;
     }
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, int32_t>> depthMap;
     while (resultSet->Next()) {
         Protocol::KernelBaseInfo one{};
         one.name = resultSet->GetString("name");
@@ -1924,6 +1931,12 @@ bool JsonTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetails
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
         one.tid = resultSet->GetString("tid");
+        auto track_id = resultSet->GetUint64("track_id");
+        if (depthMap.count(track_id) == 0) {
+            depthMap.emplace(track_id,
+                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(track_id).sliceIdAndDepthMap);
+        }
+        one.depth = depthMap[track_id][resultSet->GetUint64("id")];
         data.emplace_back(one);
     }
     return true;
@@ -1987,6 +2000,7 @@ bool JsonTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsPara
         ServerLog::Error("Failed to get result set for Aclnn Op Exceed Threshold.", stmt->GetErrorMessage());
         return false;
     }
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, int32_t>> depthMap;
     while (resultSet->Next()) {
         Protocol::KernelBaseInfo one{};
         one.name = resultSet->GetString("name");
@@ -1994,6 +2008,12 @@ bool JsonTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsPara
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
         one.tid = resultSet->GetString("tid");
+        auto track_id = resultSet->GetUint64("track_id");
+        if (depthMap.count(track_id) == 0) {
+            depthMap.emplace(track_id,
+                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(track_id).sliceIdAndDepthMap);
+        }
+        one.depth = depthMap[track_id][resultSet->GetUint64("id")];
         data.emplace_back(one);
     }
     return true;
@@ -2031,6 +2051,7 @@ bool JsonTraceDatabase::QueryAffinityAPIData(const Protocol::KernelDetailsParams
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
         one.tid = resultSet->GetString("tid");
+        one.depth = depthCacheMap[trackId][id];
 
         if (data.count(trackId) == 0) {
             data.emplace(trackId, std::vector<Protocol::FlowLocation>{});
@@ -2060,6 +2081,7 @@ bool JsonTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, c
         ServerLog::Error("Failed to get result set for query Fuseable Operator.", stmt->GetErrorMessage());
         return false;
     }
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, int32_t>> depthMap;
     while (resultSet->Next()) {
         Protocol::FlowLocation one{};
         one.name = resultSet->GetString("name");
@@ -2070,6 +2092,12 @@ bool JsonTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, c
         one.type = StringUtil::join(rule.opList, ", ");
         one.metaType = rule.fusedOp;
         one.id = rule.note;
+        auto track_id = resultSet->GetUint64("track_id");
+        if (depthMap.count(track_id) == 0) {
+            depthMap.emplace(track_id,
+                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(track_id).sliceIdAndDepthMap);
+        }
+        one.depth = depthMap[track_id][resultSet->GetUint64("id")];
         data.emplace_back(one);
     }
     return true;

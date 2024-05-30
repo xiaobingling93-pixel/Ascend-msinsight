@@ -38,6 +38,7 @@ bool AICpuOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::AI
         one.baseInfo.duration = item.duration;
         one.baseInfo.pid = item.pid;
         one.baseInfo.tid = item.tid;
+        one.baseInfo.depth = item.depth;
         one.opName = item.name;
         one.note = "";
         resBody.datas.emplace_back(one);

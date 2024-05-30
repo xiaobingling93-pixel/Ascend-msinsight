@@ -45,6 +45,7 @@ bool FusedOpAdvisor::Process(const Protocol::APITypeParams &params, Protocol::Op
         one.baseInfo.duration = item.duration;
         one.baseInfo.pid = item.pid;
         one.baseInfo.tid = item.tid;
+        one.baseInfo.depth = item.depth;
         one.name = item.name;
         one.originOpList = item.type;
         one.fusedOp = item.metaType;

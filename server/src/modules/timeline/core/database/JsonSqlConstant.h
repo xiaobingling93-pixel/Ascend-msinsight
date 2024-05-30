@@ -313,13 +313,11 @@ public:
     static std::string GenerateAclnnQuerySql(const Protocol::KernelDetailsParams &params)
     {
         std::string sql =
-            "SELECT s.name as name, s.timestamp - ? as startTime, s.duration as duration, t.pid as pid, t.tid as tid "
-            "FROM " +
-            SLICE_TABLE + " s JOIN " + THREAD_TABLE +
-            " t on s.track_id = t.track_id "
+            "SELECT s.id as id, s.name as name, s.timestamp - ? as startTime, s.duration as duration, "
+            "t.pid as pid, t.tid as tid, t.track_id as track_id "
+            "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
             "WHERE s.name IN ( "
-            "    SELECT name FROM " +
-            SLICE_TABLE +
+            "    SELECT name FROM " + SLICE_TABLE +
             "    WHERE name LIKE 'AscendCL@aclnn%' AND name NOT LIKE '%GetWorkspaceSize' "
             "    GROUP BY name HAVING COUNT(name) >= ? "
             ") ORDER BY " +
@@ -349,23 +347,15 @@ public:
 
         std::string sql =
             "SELECT kd.name as name, kd.op_type as type, kd.start_time - ? as startTime, kd.duration as duration, "
-            "t.pid as pid, t.tid as tid "
-            "FROM " +
-            KERNEL_DETAIL +
-            " kd "
-            "JOIN " +
-            SLICE_TABLE +
-            " s ON kd.name = s.name AND kd.start_time = s.timestamp "
-            "JOIN " +
-            THREAD_TABLE +
-            " t ON s.track_id = t.track_id "
+            "t.pid as pid, t.tid as tid, t.track_id as track_id, s.id as id "
+            "FROM " + KERNEL_DETAIL + " kd "
+            "JOIN " + SLICE_TABLE + " s ON kd.name = s.name AND kd.start_time = s.timestamp "
+            "JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
             "WHERE kd.accelerator_core='AI_CPU' AND ("
-            "    lower(kd.op_type) IN (" +
-            StringUtil::Join4SqlGroup(replace) +
+            "    lower(kd.op_type) IN (" + StringUtil::Join4SqlGroup(replace) +
             ") " // 特定类型的算子可以修改代码
             "    OR ("
-            "    " +
-            dataTypeCheckSql + // 检查数据类型是否符合要求
+            "    " + dataTypeCheckSql + // 检查数据类型是否符合要求
             "    ) OR "
             "    kd.duration >= ?" // 执行时间超过20us
             ") ORDER BY " +
@@ -394,7 +384,7 @@ public:
         std::string dataTypeCheckSql = StringUtil::join(dataTypeCheck, "OR");
 
         std::string sql = "SELECT s2.value as name, s1.value as type, s0.value as unit, t.startNs - ? as startTime, "
-            "t.endNs - t.startNs as duration, t.globalPid as pid, t.streamId as tid "
+            "t.endNs - t.startNs as duration, 'Ascend Hardware' as pid, t.streamId as tid, t.depth as depth "
             "FROM COMPUTE_TASK_INFO info "
             "JOIN STRING_IDS s0 ON info.taskType = s0.id "
             "JOIN TASK t ON info.globalTaskId = t.globalTaskId "
@@ -421,7 +411,7 @@ public:
     {
         std::string sql = "WITH data AS ( "
             "SELECT kd.rank_id, kd.name as name, kd.op_type, kd.accelerator_core, kd.start_time - ? as startTime, "
-            "s.duration as duration, t.pid as pid, t.tid as tid, "
+            "s.duration as duration, t.pid as pid, t.tid as tid, s.id as id, s.track_id as track_id, "
             "ROW_NUMBER() OVER (ORDER BY s.track_id ASC, s.timestamp ASC) AS row_num "
             "FROM " +
             KERNEL_DETAIL +
@@ -446,12 +436,10 @@ public:
     static std::string QueryAffinityOptimizerSql(const std::string &optimizers, const std::string &orderBy,
                                                  const std::string &order)
     {
-        std::string sql = "Select (s.timestamp - ?) as startTime, s.duration, s.name as originOptimizer, t.pid, t.tid "
-                          "From " +
-                          SLICE_TABLE + " s Join " + THREAD_TABLE +
-                          " t ON s.track_id = t.track_id "
-                          "WHERE s.name IN (" +
-                          optimizers + ") order by " + orderBy + " " + order;
+        std::string sql =
+            "Select (s.timestamp - ?) as startTime, s.duration, s.name, t.pid, t.tid, s.id, t.track_id "
+            "From " + SLICE_TABLE + " s Join " + THREAD_TABLE + " t ON s.track_id = t.track_id "
+            "WHERE s.name IN (" + optimizers + ") order by " + orderBy + " " + order;
         return sql;
     }
 

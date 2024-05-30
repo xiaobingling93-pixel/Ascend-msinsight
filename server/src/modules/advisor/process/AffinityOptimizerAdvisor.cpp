@@ -45,6 +45,7 @@ bool AffinityOptimizerAdvisor::Process(const Protocol::APITypeParams& params,
         one.baseInfo.duration = item.duration;
         one.baseInfo.pid = item.id;
         one.baseInfo.tid = item.threadId;
+        one.baseInfo.depth = item.depth;
         one.originOptimizer = item.name;
         one.replaceOptimizer = OPTIMIZER_MAP.at(item.name); // 上面的查询逻辑能够保证key-value一定存在
         resBody.datas.emplace_back(one);

@@ -32,6 +32,7 @@ template
         JsonUtil::AddMember(dataJson, "duration", item.baseInfo.duration, allocator);
         JsonUtil::AddMember(dataJson, "pid", item.baseInfo.pid, allocator);
         JsonUtil::AddMember(dataJson, "tid", item.baseInfo.tid, allocator);
+        JsonUtil::AddMember(dataJson, "depth", item.baseInfo.depth, allocator);
         JsonUtil::AddMember(dataJson, "originOptimizer", item.originOptimizer, allocator);
         JsonUtil::AddMember(dataJson, "replaceOptimizer", item.replaceOptimizer, allocator);
         dataList.PushBack(dataJson, allocator);
@@ -56,6 +57,7 @@ template <> std::optional<document_t> ToResponseJson<AffinityAPIResponse>(const 
         JsonUtil::AddMember(dataJson, "duration", item.baseInfo.duration, allocator);
         JsonUtil::AddMember(dataJson, "pid", item.baseInfo.pid, allocator);
         JsonUtil::AddMember(dataJson, "tid", item.baseInfo.tid, allocator);
+        JsonUtil::AddMember(dataJson, "depth", item.baseInfo.depth, allocator);
         JsonUtil::AddMember(dataJson, "name", item.name, allocator);
         JsonUtil::AddMember(dataJson, "originAPI", item.originAPI, allocator);
         JsonUtil::AddMember(dataJson, "replaceAPI", item.replaceAPI, allocator);
@@ -82,6 +84,7 @@ template <> std::optional<document_t> ToResponseJson<OperatorFusionResponse>(con
         JsonUtil::AddMember(dataJson, "duration", item.baseInfo.duration, allocator);
         JsonUtil::AddMember(dataJson, "pid", item.baseInfo.pid, allocator);
         JsonUtil::AddMember(dataJson, "tid", item.baseInfo.tid, allocator);
+        JsonUtil::AddMember(dataJson, "depth", item.baseInfo.depth, allocator);
         JsonUtil::AddMember(dataJson, "name", item.name, allocator);
         JsonUtil::AddMember(dataJson, "originOpList", item.originOpList, allocator);
         JsonUtil::AddMember(dataJson, "fusedOp", item.fusedOp, allocator);
@@ -108,6 +111,7 @@ template <> std::optional<document_t> ToResponseJson<AICpuOperatorResponse>(cons
         JsonUtil::AddMember(dataJson, "duration", item.baseInfo.duration, allocator);
         JsonUtil::AddMember(dataJson, "pid", item.baseInfo.pid, allocator);
         JsonUtil::AddMember(dataJson, "tid", item.baseInfo.tid, allocator);
+        JsonUtil::AddMember(dataJson, "depth", item.baseInfo.depth, allocator);
         JsonUtil::AddMember(dataJson, "name", item.opName, allocator);
         JsonUtil::AddMember(dataJson, "replaceOp", item.replaceOp, allocator);
         JsonUtil::AddMember(dataJson, "note", item.note, allocator);
@@ -133,6 +137,7 @@ template <> std::optional<document_t> ToResponseJson<AclnnOperatorResponse>(cons
         JsonUtil::AddMember(dataJson, "duration", item.baseInfo.duration, allocator);
         JsonUtil::AddMember(dataJson, "pid", item.baseInfo.pid, allocator);
         JsonUtil::AddMember(dataJson, "tid", item.baseInfo.tid, allocator);
+        JsonUtil::AddMember(dataJson, "depth", item.baseInfo.depth, allocator);
         JsonUtil::AddMember(dataJson, "name", item.opName, allocator);
         JsonUtil::AddMember(dataJson, "note", item.note, allocator);
         dataList.PushBack(dataJson, allocator);

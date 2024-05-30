@@ -14,8 +14,9 @@ struct BaseInfo {
     std::string rankId;
     uint64_t startTime;
     uint64_t duration;
-    std::string pid;
-    std::string tid;
+    std::string pid{};
+    std::string tid{};
+    uint64_t depth{};
 };
 
 struct AffinityOptimizerData {

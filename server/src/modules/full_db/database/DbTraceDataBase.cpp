@@ -1661,7 +1661,7 @@ bool DbTraceDataBase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams
         return false;
     }
     std::string sql = "SELECT py.startNs - ? as startTime, py.endNs - py.startNs as duration, "
-        "str.value as originOptimizer, py.globalTid as pid, 'pytorch' as tid "
+        "str.value as originOptimizer, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
         "FROM " + TABLE_STRING_IDS + " str JOIN " + TABLE_API + " py ON py.name = str.id "
         "WHERE str.value IN (" + optimizers + ") ORDER BY " + params.orderBy + " " + params.order;
     auto stmt = CreatPreparedStatement(sql);
@@ -1681,6 +1681,7 @@ bool DbTraceDataBase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams
         one.duration = resultSet->GetUint64("duration");
         one.threadId = resultSet->GetString("tid");
         one.id = resultSet->GetString("pid");
+        one.depth = resultSet->GetUint64("depth");
         data.emplace_back(one);
     }
     return true;
@@ -1708,7 +1709,8 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsPa
         one.startTime = resultSet->GetUint64("startTime");
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
-        one.tid = "Stream " + resultSet->GetString("tid");
+        one.tid = resultSet->GetString("tid");
+        one.depth = resultSet->GetUint64("depth");
         data.emplace_back(one);
     }
     return true;
@@ -1750,7 +1752,7 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
 {
     std::string sql =
         "SELECT s1.value as name, s2.value as op_type, task.taskType, task.startNs - ? as startTime, "
-        "task.endNs - task.startNs as duration, task.globalPid as pid, task.streamId as tid "
+        "task.endNs - task.startNs as duration, 'Ascend Hardware' as pid, task.streamId as tid, task.depth as depth "
         "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
         "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
         "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
@@ -1777,7 +1779,8 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
         one.startTime = resultSet->GetUint64("startTime");
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
-        one.tid = "Stream " + resultSet->GetString("tid");
+        one.tid = resultSet->GetString("tid");
+        one.depth = resultSet->GetUint64("depth");
         data.emplace_back(one);
     }
     return true;
@@ -1788,7 +1791,7 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
     std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexs)
 {
     std::string sql = "SELECT str.value as name, py.startNs - ? as startTime, py.endNs - py.startNs as duration, "
-        "py.globalTid as pid, 'pytorch' as tid "
+        "py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
         "FROM " + TABLE_API + " py JOIN " + TABLE_STRING_IDS + " str ON py.name = str.id "
         "WHERE py.depth = 1 ORDER BY py.globalTid ASC, py.startNs ASC ";
     auto stmt = CreatPreparedStatement(sql);
@@ -1811,6 +1814,7 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
         one.tid = resultSet->GetString("tid");
+        one.depth = resultSet->GetUint64("depth");
 
         if (data.count(trackId) == 0) {
             data.emplace(trackId, std::vector<Protocol::FlowLocation>{});
@@ -1833,8 +1837,9 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
     std::string sql =
         "WITH data AS ( "
         "SELECT task.deviceId as deviceId, s1.value as name, s2.value as op_type, task.taskType, "
-        "task.startNs - ? as startTime, task.endNs - task.startNs as duration, task.globalPid as pid, "
-        "task.streamId as tid, ROW_NUMBER() OVER (ORDER BY task.globalPid ASC, task.startNs ASC) AS row_num "
+        "task.startNs - ? as startTime, (task.endNs - task.startNs) as duration, 'Ascend Hardware' as pid, "
+        "task.streamId as tid, task.depth as depth, "
+        "ROW_NUMBER() OVER (ORDER BY task.globalPid ASC, task.startNs ASC) AS row_num "
         "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
         "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
         "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
@@ -1846,7 +1851,7 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
         sql += "JOIN data " + table + " ON " + table + ".row_num = d0.row_num + " + std::to_string(i) +
                " AND " + table + ".op_type = '" + rule.opList.at(i) + "' ";
     }
-    sql += "WHERE d0.op_type = '" +  rule.opList.at(0) + "' ORDER " + params.orderBy + " " + params.order;
+    sql += "WHERE d0.op_type = '" +  rule.opList.at(0) + "' ORDER BY " + params.orderBy + " " + params.order;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for query Fusionable Operator.");
@@ -1864,7 +1869,8 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
         one.timestamp = resultSet->GetUint64("startTime");
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
-        one.tid = "Stream " + resultSet->GetString("tid");
+        one.tid = resultSet->GetString("tid");
+        one.depth = resultSet->GetUint64("depth");
         one.type = StringUtil::join(rule.opList, ", ");
         one.metaType = rule.fusedOp;
         one.id = rule.note;

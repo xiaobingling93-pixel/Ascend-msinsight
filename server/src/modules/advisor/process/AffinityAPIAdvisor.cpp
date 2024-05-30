@@ -50,6 +50,7 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
         one.baseInfo.tid = item.tid;
         one.baseInfo.startTime = item.timestamp;
         one.baseInfo.duration = item.duration;
+        one.baseInfo.depth = item.depth;
         one.originAPI = item.type;
         one.replaceAPI = item.metaType;
         one.note = item.deviceId;
