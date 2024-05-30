@@ -84,6 +84,7 @@ export const FindDetailView = observer((props: any) => {
 const defaultPage = { current: 1, pageSize: 10, total: 0 };
 const defaultSorter = { field: 'duration', order: 'descend' };
 
+// eslint-disable-next-line max-lines-per-function
 const FindDetail = observer((props: any) => {
     const [dataSource, setDataSource] = useState<any[]>([]);
     const [page, setPage] = useState(defaultPage);
@@ -100,9 +101,17 @@ const FindDetail = observer((props: any) => {
     }, [props.session.doContextSearch, props.rankId]);
     useEffect(() => {
         updateData(allCondition.page, allCondition.sorter, props);
-    }, [allCondition.sorter, allCondition.selectRank, allCondition.page.current, allCondition.page.pageSize, allCondition.doContextSearch]);
+    }, [allCondition.sorter, allCondition.selectRank, allCondition.page.current,
+        allCondition.page.pageSize, allCondition.doContextSearch, props.session.doReset]);
     const updateData = async(pages: any, sorters: {field: string;order: string}, prop: any): Promise<void> => {
-        if (props.rankId === undefined || props.rankId === '' || prop.session.searchData?.content === '') {
+        if (props.rankId === undefined || props.rankId === '') {
+            setDataSource([]);
+            setPage(defaultPage);
+            setSorter(defaultSorter);
+            setAllCondition({ ...allCondition, page: defaultPage, sorter: defaultSorter });
+            return;
+        }
+        if (prop.session.searchData === undefined || prop.session.searchData?.content === '') {
             setDataSource([]);
             setPage(defaultPage);
             setSorter(defaultSorter);
@@ -125,12 +134,7 @@ const FindDetail = observer((props: any) => {
                     setSorter(newsorter as typeof sorter);
                 }
             }}
-            pagination={GetPageData(page, setPage)}
-            dataSource={dataSource}
-            columns={useColumns()}
-            size="small"
-            loading = {isLoading}
-            rowClassName={'click-able'}
+            pagination={GetPageData(page, setPage)} dataSource={dataSource} columns={useColumns()} size="small" loading = {isLoading} rowClassName={'click-able'}
         />
     </div>;
 });

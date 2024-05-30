@@ -36,6 +36,7 @@ export const useDataSources = defineStore('dataSources', () => {
 
     function checkExistedServer(dataSource: DataSource, importMethod?: 'drag', result?: any): boolean {
         if (session.isReset) {
+            remove(0);
             session.reset();
             dataSources.value = [{ remote: LOCAL_HOST, port: PORT, dataPath: [] }];
         }

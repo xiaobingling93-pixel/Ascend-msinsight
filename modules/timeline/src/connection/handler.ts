@@ -138,26 +138,34 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
             if (result.reset === true) {
                 session.memoryRankIds = [];
                 session.operatorRankIds = [];
+                if (session.eventUnits[0] !== undefined) {
+                    session.eventUnits = [];
+                }
+                session.doReset = !session.doReset;
             }
         });
-        connector.send({
-            event: 'updateSession',
-            body: {
-                isCluster: result.isCluster,
-                isReset: result.reset,
-                isIpynb: result.isIpynb,
-                ipynbUrl: '',
-                startTime: 0,
-                endTimeAll: session?.endTimeAll,
-                unitcount: result.result?.length ?? 0,
-                isBinary: result.isBinary,
-                coreList: result.coreList,
-                sourceList: result.sourceList,
-            },
-        });
+        sendSessionUpdate(result, session);
     } catch (error) {
         console.error(error);
     }
+};
+
+const sendSessionUpdate = (result: any, session: any): void => {
+    connector.send({
+        event: 'updateSession',
+        body: {
+            isCluster: result.isCluster,
+            isReset: result.reset,
+            isIpynb: result.isIpynb,
+            ipynbUrl: '',
+            startTime: 0,
+            endTimeAll: session?.endTimeAll,
+            unitcount: result.result?.length ?? 0,
+            isBinary: result.isBinary,
+            coreList: result.coreList,
+            sourceList: result.sourceList,
+        },
+    });
 };
 
 const clearIpynbInfo = (session: Session): void => {
@@ -284,17 +292,8 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
         const singleDataPath = getPropFromData(data, 'singleDataPath') as string;
         const session = store.sessionStore.activeSession as Session;
-
-        const removeUnits = session.units.filter((unit) => {
-            const metadata = unit.metadata as any;
-            const isSameDataPath = metadata.dataSource.dataPath.includes(singleDataPath);
-            return metadata.dataSource.remote === dataSource.remote && isSameDataPath;
-        });
-
-        const removeCardIds = removeUnits.map((unit) => {
-            const metadata = unit.metadata as any;
-            return metadata.cardId;
-        });
+        const removeUnits = getRemoveUnits(session, dataSource, singleDataPath);
+        const removeCardIds = getRemoveCardIds(removeUnits);
         session.units = session?.units.filter((unit) => {
             const metadata = unit.metadata as any;
             return metadata.dataSource.remote !== dataSource.remote || !(metadata.dataSource.dataPath as string[]).includes(singleDataPath);
@@ -305,6 +304,10 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
         if (session.units.length === 0) {
             session.selectedRange = undefined;
         }
+        if (session.eventUnits[0] !== undefined) {
+            session.eventUnits = [];
+        }
+        session.doReset = !session.doReset;
         for (const unit of removeUnits) {
             const metadata = unit.metadata as any;
             const remote = metadata.dataSource.remote;
@@ -330,6 +333,21 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
     } catch (error) {
         console.error(error);
     }
+};
+
+const getRemoveUnits = (session: Session, dataSource: DataSource, singleDataPath: string): InsightUnit[] => {
+    return session.units.filter((unit) => {
+        const metadata = unit.metadata as any;
+        const isSameDataPath = metadata.dataSource.dataPath.includes(singleDataPath);
+        return metadata.dataSource.remote === dataSource.remote && isSameDataPath;
+    });
+};
+
+const getRemoveCardIds = (removeUnits: any[]): any[] => {
+    return removeUnits.map((unit) => {
+        const metadata = unit.metadata as any;
+        return metadata.cardId;
+    });
 };
 
 export const setTheme: NotificationHandler = (data): void => {
