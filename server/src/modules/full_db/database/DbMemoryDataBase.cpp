@@ -29,6 +29,13 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
     std::string sql = "";
     FileType type = DataBaseManager::Instance().GetFileType();
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    // 单位转换， KB -> B
+    if (requestParams.minSize > 0) {
+        requestParams.minSize *= KB_SIZE;
+    }
+    if (requestParams.maxSize > 0) {
+        requestParams.maxSize *= KB_SIZE;
+    }
     if (type == FileType::PYTORCH) {
         sql += "SELECT NAME.value AS realName, ROUND(size / 1024.0, 2) as size, "
                " CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
@@ -74,6 +81,13 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
 
 bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
 {
+    // 单位转换， KB -> B
+    if (requestParams.minSize > 0) {
+        requestParams.minSize *= KB_SIZE;
+    }
+    if (requestParams.maxSize > 0) {
+        requestParams.maxSize *= KB_SIZE;
+    }
     std::string sql = "";
     FileType type = DataBaseManager::Instance().GetFileType();
     if (type == FileType::PYTORCH) {

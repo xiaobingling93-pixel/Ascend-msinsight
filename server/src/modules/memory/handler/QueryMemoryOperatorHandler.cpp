@@ -25,13 +25,6 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
     std::unique_ptr<MemoryOperatorResponse> responsePtr = std::make_unique<MemoryOperatorResponse>();
     MemoryOperatorResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    // 单位转换， KB -> B
-    if (request.params.minSize > 0) {
-        request.params.minSize *= KB_SIZE;
-    }
-    if (request.params.maxSize > 0) {
-        request.params.maxSize *= KB_SIZE;
-    }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!database->QueryOperatorDetail(request.params, response.columnAttr, response.operatorDetails) or
         !database->QueryOperatorsTotalNum(request.params, response.totalNum)) {
