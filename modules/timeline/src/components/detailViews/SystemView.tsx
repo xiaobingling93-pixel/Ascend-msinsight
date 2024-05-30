@@ -196,6 +196,31 @@ const SelectList = observer((props: any) => {
     );
 });
 
+const handleAdvisorSelected = async(rowData: any, props: any): Promise<void> => {
+    const queryName = rowData.name ?? rowData.originOptimizer;
+    runInAction(() => {
+        props.session.locateUnit = {
+            target: (unit: any): boolean => {
+                return unit.metadata.threadId === rowData.tid && unit.metadata.processId === rowData.pid;
+            },
+            onSuccess: (unit: InsightUnit): void => {
+                const startTime = rowData.startTime - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
+                const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
+                props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
+                props.session.selectedData = {
+                    startTime,
+                    name: queryName,
+                    color: colorPalette[hashToNumber(queryName, colorPalette.length)],
+                    duration: rowData.duration,
+                    threadId: rowData.tid,
+                    startRecordTime: props.session.startRecordTime,
+                    showDetail: false,
+                };
+            },
+        };
+    });
+};
+
 // eslint-disable-next-line max-lines-per-function
 const BaseSummary = observer((props: any) => {
     const isStats = props.isStats as boolean;
@@ -230,7 +255,7 @@ const BaseSummary = observer((props: any) => {
             ellipsis: true,
             render: (_: any, record: any) => (<Button type="link"
                 onClick={() => {
-                    setRowData({ name: record.name ?? record.originOptimizer, startTime: record.startTime, duration: record.duration });
+                    setRowData({ name: record.name ?? record.originOptimizer, ...record });
                 }}>{t('Click')}</Button>),
         }];
     }
@@ -277,7 +302,7 @@ const BaseSummary = observer((props: any) => {
         if (rowData.name === null || rowData.name === undefined) {
             return;
         }
-        handleSelected(rowData, props);
+        handleAdvisorSelected(rowData, props);
     }, [rowData]);
 
     return (

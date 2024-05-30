@@ -140,7 +140,7 @@ export const statsSystemViewItems: string[] = [
     'Kernel Details',
 ];
 
-export const layerTypes: string[] = ['Python', 'CANN', 'Ascend Hardware', 'Overlap Analysis', 'HCCL'];
+export const layerTypes: string[] = ['Python', 'CANN', 'Ascend Hardware', 'HCCL', 'Overlap Analysis'];
 
 export const expertSystemViewItems: string[] = [
     'Affinity API',
