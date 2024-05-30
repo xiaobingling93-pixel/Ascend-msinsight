@@ -67,7 +67,7 @@ const getTableColumns = function (
         return {
             dataIndex: col.key,
             key: col.key,
-            title: t(col.name),
+            title: t(col.name, { defaultValue: col.name }),
             sorter: true,
             ellipsis: true,
         };
