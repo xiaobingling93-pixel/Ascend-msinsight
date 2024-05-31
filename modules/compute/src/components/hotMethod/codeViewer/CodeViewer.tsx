@@ -18,19 +18,6 @@ const CodeViewer = ({ code, selectedline, hoverline, style, className = '', hand
 }): JSX.Element => {
     useEffect(() => {
         highlightAllWithNumber({ showLine: true });
-        setCssWidth();
-        function setCssWidth(): void {
-            const list = document.querySelectorAll('code li');
-            if (list.length > 0) {
-                let maxWidth = list[0].clientWidth;
-                list.forEach(li => {
-                    maxWidth = Math.max(maxWidth, li.clientWidth);
-                });
-                list.forEach(li => {
-                    (li as HTMLElement).style.width = `${maxWidth}px`;
-                });
-            }
-        }
     }, [code]);
 
     useEffect(() => {
