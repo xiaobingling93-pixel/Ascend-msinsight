@@ -74,7 +74,6 @@ struct OperatorFusionResponse : public Response {
 struct AICpuOperatorData {
     BaseInfo baseInfo;
     std::string opName;
-    std::string replaceOp;
     std::string note;
 };
 

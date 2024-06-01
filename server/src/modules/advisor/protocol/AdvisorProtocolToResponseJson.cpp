@@ -113,7 +113,6 @@ template <> std::optional<document_t> ToResponseJson<AICpuOperatorResponse>(cons
         JsonUtil::AddMember(dataJson, "tid", item.baseInfo.tid, allocator);
         JsonUtil::AddMember(dataJson, "depth", item.baseInfo.depth, allocator);
         JsonUtil::AddMember(dataJson, "name", item.opName, allocator);
-        JsonUtil::AddMember(dataJson, "replaceOp", item.replaceOp, allocator);
         JsonUtil::AddMember(dataJson, "note", item.note, allocator);
         dataList.PushBack(dataJson, allocator);
     }

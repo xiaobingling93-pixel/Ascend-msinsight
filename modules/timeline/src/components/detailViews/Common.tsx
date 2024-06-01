@@ -112,7 +112,6 @@ export const affinityOptimizerColumns: ColumData[] = [
 
 export const aicpuOperatorColumns: ColumData[] = [
     { title: 'Name', dataIndex: 'name', ...getDefaultColumData('name') },
-    { title: 'Replacement Operator', dataIndex: 'replaceOp', ...getDefaultColumData('replaceOp', false) },
     ...commonExpertColums,
     { title: 'Notes', dataIndex: 'note', ...getDefaultColumData('note', false) },
 ];
