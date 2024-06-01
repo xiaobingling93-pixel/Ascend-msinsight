@@ -1660,7 +1660,7 @@ bool DbTraceDataBase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams
         ServerLog::Warn("The PYTORCH_API table isn't exist.");
         return false;
     }
-    std::string sql = "SELECT py.startNs - ? as startTime, py.endNs - py.startNs as duration, "
+    std::string sql = "SELECT py.startNs - ? as startTime, (py.endNs - py.startNs) / 1000 as duration, "
         "str.value as originOptimizer, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
         "FROM " + TABLE_STRING_IDS + " str JOIN " + TABLE_API + " py ON py.name = str.id "
         "WHERE str.value IN (" + optimizers + ") ORDER BY " + params.orderBy + " " + params.order;
@@ -1752,7 +1752,8 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
 {
     std::string sql =
         "SELECT s1.value as name, s2.value as op_type, task.taskType, task.startNs - ? as startTime, "
-        "task.endNs - task.startNs as duration, 'Ascend Hardware' as pid, task.streamId as tid, task.depth as depth "
+        "(task.endNs - task.startNs) / 1000 as duration, 'Ascend Hardware' as pid, task.streamId as tid,"
+        " task.depth as depth "
         "FROM " + TABLE_COMPUTE_TASK_INFO + " info "
         "JOIN " + TABLE_TASK + " task ON info.globalTaskId = task.globalTaskId "
         "JOIN " + TABLE_STRING_IDS + " s1 ON info.name = s1.id "
@@ -1790,8 +1791,8 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
     const std::set<std::string> &pattern, uint64_t minTimestamp, std::map<uint64_t,
     std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexs)
 {
-    std::string sql = "SELECT str.value as name, py.startNs - ? as startTime, py.endNs - py.startNs as duration, "
-        "py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
+    std::string sql = "SELECT str.value as name, py.startNs - ? as startTime, "
+        "(py.endNs - py.startNs) / 1000 as duration, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
         "FROM " + TABLE_API + " py JOIN " + TABLE_STRING_IDS + " str ON py.name = str.id "
         "WHERE py.depth = 1 ORDER BY py.globalTid ASC, py.startNs ASC ";
     auto stmt = CreatPreparedStatement(sql);
@@ -1837,7 +1838,7 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
     std::string sql =
         "WITH data AS ( "
         "SELECT task.deviceId as deviceId, s1.value as name, s2.value as op_type, task.taskType, "
-        "task.startNs - ? as startTime, (task.endNs - task.startNs) as duration, 'Ascend Hardware' as pid, "
+        "task.startNs - ? as startTime, (task.endNs - task.startNs) / 1000 as duration, 'Ascend Hardware' as pid, "
         "task.streamId as tid, task.depth as depth, "
         "ROW_NUMBER() OVER (ORDER BY task.globalPid ASC, task.startNs ASC) AS row_num "
         "FROM " + TABLE_COMPUTE_TASK_INFO + " info "

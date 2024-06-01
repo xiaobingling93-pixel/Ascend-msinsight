@@ -130,13 +130,9 @@ const std::string QUERY_QUERY_TYPE_SQL =
     "SELECT DISTINCT accelerator_core FROM " + KERNEL_DETAIL + " ORDER BY accelerator_core";
 
 const std::string QUERY_AFFINITY_API_SQL =
-    "SELECT s.track_id as track, s.id as id, s.name as name, s.timestamp - ? as startTime, s.duration as duration, "
-    "t.pid as pid, t.tid as tid FROM " +
-    SLICE_TABLE +
-    " s "
-    "JOIN " +
-    THREAD_TABLE +
-    " t on s.track_id = t.track_id "
+    "SELECT s.track_id as track, s.id as id, s.name as name, s.timestamp - ? as startTime,"
+    " s.duration / 1000 as duration, t.pid as pid, t.tid as tid FROM " +
+    SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
     "WHERE s.name LIKE 'aten::%' OR s.name LIKE 'npu::%' ORDER BY s.track_id ASC, s.timestamp ASC";
 
 class JsonSqlConstant {
@@ -313,7 +309,7 @@ public:
     static std::string GenerateAclnnQuerySql(const Protocol::KernelDetailsParams &params)
     {
         std::string sql =
-            "SELECT s.id as id, s.name as name, s.timestamp - ? as startTime, s.duration as duration, "
+            "SELECT s.id as id, s.name as name, s.timestamp - ? as startTime, s.duration / 1000 as duration, "
             "t.pid as pid, t.tid as tid, t.track_id as track_id "
             "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
             "WHERE s.name IN ( "
@@ -384,7 +380,7 @@ public:
         std::string dataTypeCheckSql = StringUtil::join(dataTypeCheck, "OR");
 
         std::string sql = "SELECT s2.value as name, s1.value as type, s0.value as unit, t.startNs - ? as startTime, "
-            "t.endNs - t.startNs as duration, 'Ascend Hardware' as pid, t.streamId as tid, t.depth as depth "
+            "(t.endNs - t.startNs) / 1000 as duration, 'Ascend Hardware' as pid, t.streamId as tid, t.depth as depth "
             "FROM COMPUTE_TASK_INFO info "
             "JOIN STRING_IDS s0 ON info.taskType = s0.id "
             "JOIN TASK t ON info.globalTaskId = t.globalTaskId "
@@ -411,7 +407,7 @@ public:
     {
         std::string sql = "WITH data AS ( "
             "SELECT kd.rank_id, kd.name as name, kd.op_type, kd.accelerator_core, kd.start_time - ? as startTime, "
-            "s.duration as duration, t.pid as pid, t.tid as tid, s.id as id, s.track_id as track_id, "
+            "s.duration / 1000 as duration, t.pid as pid, t.tid as tid, s.id as id, s.track_id as track_id, "
             "ROW_NUMBER() OVER (ORDER BY s.track_id ASC, s.timestamp ASC) AS row_num "
             "FROM " +
             KERNEL_DETAIL +
@@ -437,7 +433,7 @@ public:
                                                  const std::string &order)
     {
         std::string sql =
-            "Select (s.timestamp - ?) as startTime, s.duration, s.name, t.pid, t.tid, s.id, t.track_id "
+            "Select (s.timestamp - ?) as startTime, s.duration / 1000, s.name, t.pid, t.tid, s.id, t.track_id "
             "From " + SLICE_TABLE + " s Join " + THREAD_TABLE + " t ON s.track_id = t.track_id "
             "WHERE s.name IN (" + optimizers + ") order by " + orderBy + " " + order;
         return sql;
