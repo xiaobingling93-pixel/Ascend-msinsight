@@ -433,7 +433,8 @@ public:
                                                  const std::string &order)
     {
         std::string sql =
-            "Select (s.timestamp - ?) as startTime, s.duration / 1000, s.name, t.pid, t.tid, s.id, t.track_id "
+            "Select (s.timestamp - ?) as startTime, (s.duration / 1000) as duration, s.name as name, "
+            "t.pid as pid, t.tid as tid, s.id as id, t.track_id as track_id "
             "From " + SLICE_TABLE + " s Join " + THREAD_TABLE + " t ON s.track_id = t.track_id "
             "WHERE s.name IN (" + optimizers + ") order by " + orderBy + " " + order;
         return sql;
