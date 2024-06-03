@@ -31,8 +31,7 @@
         "ascend-memory": "./memory",
         "ascend-operator": "./operator",
         "ascend-timeline": "./timeline",
-        "ascend-jupyter": "./jupyter",
-        "ascend-lib": "./lib"
+        "ascend-jupyter": "./jupyter"
     },
     "devDependencies": {
         "@craco/craco": "7.1.0",

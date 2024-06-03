@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
+// This is for Compute Module
 declare module 'lib/ResizeTable';
 declare module 'lib/Resizor';
 declare module 'lib/Simple';

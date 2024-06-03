@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
+// Compute Module
 import { createContext, useContext } from 'react';
 import { type RootStore } from '../store';
 export const RootStoreContext = createContext<RootStore | undefined>(undefined);
