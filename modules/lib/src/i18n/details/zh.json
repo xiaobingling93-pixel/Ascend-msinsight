@@ -6,8 +6,9 @@
     "BlockDim": "Block数量",
     "BlockDetail": "Block详情",
     "BlockID": "Block ID",
-    "CoreType": "计算核类型",
+    "Core Type": "计算核类型",
     "Duration": "时长",
+    "Duration (μs)": "时长(μs)",
     "ComputeWorkloadAnalysis": "计算工作负载分析",
     "PipeUtilization": "指令队列利用率",
     "Instructions": "指令数",
@@ -28,6 +29,10 @@
     "Throughput": "吞吐量",
     "Cycle": "时钟周期",
     "Wait Cycles": "等待周期",
-    "Active Rate(%)": "活跃率（%）"
+    "Active Rate(%)": "活跃率（%）",
+    "Cube0 Duration (μs)": "Cube0时长(μs)",
+    "Vector0 Duration (μs)": "Vector0时长(μs)",
+    "Vector1 Duration (μs)": "Vector1时长(μs)",
+    "NAHit": "NA : 展示多核平均值"
   }
 }

@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { Select } from 'antd';
 import { getUsableVal, FormItem } from 'lib/CommonUtils';
 import type { optionDataType, optionMapDataType } from '../../../utils/interface';
-import { limitInput } from '../../Common';
+import { limitInput, useHit } from '../../Common';
 
 export interface Icondition {
     blockId: string ;
@@ -64,7 +64,8 @@ function Filter({ blockIdList, handleFilterChange }: {blockIdList: string[];hand
 function FilterCom({ condition, optionMap, handleChange }: IcomProps): JSX.Element {
     return (<div>
         <FormItem
-            name="Block ID"
+            name={<><span>Block ID</span>{useHit()}</>}
+            nameStyle={{ width: '90px' }}
             content={(<Select
                 value={condition.blockId}
                 style={{ width: '150px' }}

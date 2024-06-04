@@ -6,7 +6,7 @@
     "BlockDim": "Block Dim",
     "BlockDetail": "Block Detail",
     "BlockID": "Block ID",
-    "CoreType": "Core Type",
+    "Core Type": "Core Type",
     "Duration": "Duration",
     "ComputeWorkloadAnalysis": "Compute Workload Analysis",
     "PipeUtilization": "Pipe Utilization",
@@ -15,6 +15,7 @@
     "Duration(μs)": "Duration(μs)",
     "Byte": "Byte",
     "MixBlockDim": "Mix Block Dim",
-    "MixBlockDetail": "Mix Block Detail"
+    "MixBlockDetail": "Mix Block Detail",
+    "NAHit": "NA : displays the multi-core average."
   }
 }

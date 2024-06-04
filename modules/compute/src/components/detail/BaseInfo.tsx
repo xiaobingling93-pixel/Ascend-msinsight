@@ -5,7 +5,6 @@ import React, { type ReactNode, useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Tooltip } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
 import { observer } from 'mobx-react';
 import { BaseContainer, BaseDescription } from 'lib/CommonUtils';
 import ResizeTable from 'lib/ResizeTable';
@@ -20,10 +19,9 @@ interface Ilabel {
     key: string;
     isMix?: boolean;
 }
-interface IblockDuration {
-    blockId: string ;
-    coreType?: string;
-    duration: string[];
+interface IblockDetail {
+    headerName: string[] ;
+    row: Array<{value: string[]}>;
 }
 interface Ibaseinfo {
     name?: string;
@@ -31,7 +29,7 @@ interface Ibaseinfo {
     opType?: string;
     duration?: string ;
     blockDim?: string ;
-    blockDetail?: IblockDuration[] ;
+    blockDetail?: IblockDetail ;
     mixBlockDim?: string ;
 
 }
@@ -80,95 +78,51 @@ const getLabellist = (dataObj: Ibaseinfo, t: TFunction): Ilabel[] => {
     const allLabellist = getAllLabellist(t);
     return allLabellist.filter(label => label.isMix === undefined || label.isMix === (dataObj.opType?.toLowerCase() === 'mix'));
 };
-const useBlockCol = (): ColumnsType<IblockDuration> => {
-    const { t } = useTranslation('details');
-    return [{
-        title: t('BlockID'),
-        dataIndex: 'blockId',
-        ellipsis: true,
-        width: 100,
-    },
-    {
-        title: t('CoreType'),
-        dataIndex: 'coreType',
-        ellipsis: true,
-    },
-    {
-        title: `${t('Duration')} (μs)`,
-        dataIndex: 'duration',
-        ellipsis: true,
-    },
-    ];
-};
 
-const useMixBlockCol = (): ColumnsType<IblockDuration> => {
-    const { t } = useTranslation('details');
-    return [
-        {
-            title: t('BlockID'),
-            dataIndex: 'blockId',
-            ellipsis: true,
-            width: 100,
-        },
-        {
-            title: `CUBE0 ${t('Duration')} (μs)`,
-            dataIndex: 'aicDuration',
-            ellipsis: true,
-        },
-        {
-            title: `VECTOR0 ${t('Duration')} (μs)`,
-            dataIndex: 'aiv0Duration',
-            ellipsis: true,
-        },
-        {
-            title: `VECTOR1 ${t('Duration')} (μs)`,
-            dataIndex: 'aiv1Duration',
-            ellipsis: true,
-        },
-    ];
-};
-function BlockDetail({ opType = '', blockDetail = [] }: Ibaseinfo): JSX.Element {
+function BlockDetail({ blockDetail = { headerName: [], row: [] }, translate }: Ibaseinfo & {translate: any}): JSX.Element {
     const [limit, setLimit] = useState({ maxSize: 10000, overlimit: false, current: 0 });
-
-    const dataset = useMemo(() => {
-        const list = blockDetail.slice(0, limit.maxSize);
-        if (opType?.toLowerCase() === 'mix') {
-            return list.map(item => ({
-                ...item,
-                aicDuration: item?.duration?.[0],
-                aiv0Duration: item?.duration?.[1],
-                aiv1Duration: item?.duration?.[2],
-            }));
-        } else {
-            return list.map(item => ({
-                ...item,
-                duration: item?.duration?.[0],
-            }));
-        }
+    const tableset = useMemo(() => {
+        const { headerName = [], row = [] } = blockDetail ?? {};
+        const cols = getFullCols(headerName, translate);
+        const dataset = row.slice(0, limit.maxSize).map(item => {
+            const arr = item.value;
+            const obj: Record<string, string> = {};
+            headerName.forEach((header, index) => {
+                obj[header] = arr[index];
+            });
+            return obj;
+        });
+        return { cols, dataset };
     }, [blockDetail]);
     useEffect(() => {
-        setLimit({ ...limit, overlimit: blockDetail.length > limit.maxSize, current: blockDetail.length });
+        setLimit({ ...limit, overlimit: blockDetail.row.length > limit.maxSize, current: blockDetail.row.length });
     }, [blockDetail]);
-    const mixBlockCol = useMixBlockCol();
-    const blockCol = useBlockCol();
-    const col = useMemo(() => opType?.toLowerCase() === 'mix' ? mixBlockCol : blockCol, [opType]);
     return (<div style={{ width: '600px' }}>
         {limit.overlimit && (<LimitHit maxSize={limit.maxSize} name={`Block Detail Records (${limit.current})`}/>)}
         <ResizeTable
             size="small"
-            columns={col}
-            dataSource={dataset}
-            scroll={dataset.length > 10 ? { y: 400 } : false}
+            columns={tableset.cols}
+            dataSource={tableset.dataset}
+            scroll={tableset.dataset.length > 10 ? { y: 400 } : false}
             pagination={false}
         />
     </div>);
 }
+function getFullCols(headerName: string[], tanslate: any): any[] {
+    return headerName.map((item, index) => (
+        {
+            title: tanslate(item),
+            dataIndex: item,
+            ellipsis: true,
+        }
+    ));
+}
 
-const getInfoItem = (item: Ilabel, dataObj: Ibaseinfo): Record<string, unknown> => {
+const getInfoItem = (item: Ilabel, dataObj: Ibaseinfo, translate: any): Record<string, unknown> => {
     if (item.key === 'blockDetail') {
         return {
             ...item,
-            value: <BlockDetail {...dataObj}/>,
+            value: <BlockDetail {...dataObj} translate={translate}/>,
         };
     } else {
         let text = (dataObj[item.key as keyof Ibaseinfo] ?? '') as string;
@@ -191,7 +145,7 @@ const defaultData: Ibaseinfo = {
     blockDim: '',
     mixBlockDim: '',
     duration: '',
-    blockDetail: [],
+    blockDetail: { headerName: [], row: [] },
 };
 
 const index = observer(({ session }: Iprops): JSX.Element => {
@@ -207,7 +161,7 @@ const index = observer(({ session }: Iprops): JSX.Element => {
 
     const showBaseInfo = (dataObj: Ibaseinfo): void => {
         const labellist = getLabellist(dataObj, tDetails);
-        const disaplayList = labellist.map(item => getInfoItem(item, dataObj));
+        const disaplayList = labellist.map(labelItem => getInfoItem(labelItem, dataObj, tDetails));
         setItems(disaplayList);
     };
 

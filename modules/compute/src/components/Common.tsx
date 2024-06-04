@@ -2,9 +2,10 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import React from 'react';
-import { Col, Modal, Row, message } from 'antd';
-import { ExclamationCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Col, Modal, Row, message, Tooltip } from 'antd';
+import { ExclamationCircleOutlined, InfoCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { type ArgsProps } from 'antd/lib/message';
+import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? `${props.name} :` : ''} </span>;
@@ -203,12 +204,10 @@ export const GetPageConfigWhithPageData = (page: { current: number; pageSize: nu
         showQuickJumper: page.pageSize !== 0 && page.total / page.pageSize > 5,
     };
 };
-export const GetPageConfigWhithAllData = (total: number): object => {
-    return {
-        total,
-        showSizeChanger: total > 10,
-        pageSizeOptions: [10, 20, 50, 100],
-        showTotal: (value: number) => (<div style={{ marginRight: '10px' }}>{i18n.t('PaginationTotal', { total })}</div>),
-        hideOnSinglePage: false,
-    };
+
+export const useHit = (): JSX.Element => {
+    const { t } = useTranslation('details');
+    return (<Tooltip title={t('NAHit')}>
+        <QuestionCircleOutlined style={{ cursor: 'pointer', margin: '0 3px' }}/>
+    </Tooltip>);
 };

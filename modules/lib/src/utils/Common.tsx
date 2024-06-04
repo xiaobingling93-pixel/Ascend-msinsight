@@ -26,8 +26,8 @@ export function log(...param: unknown[]): void {
     logRecord[logindex++ % 1000] = param;
 }
 
-export const Label = (props: {name: string;style?: object }): JSX.Element => {
-    return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? `${props.name} :` : ''} </span>;
+export function Label({ name, style }: {name: React.ReactNode;style?: object }): JSX.Element {
+    return <span style={{ margin: '0 10px', ...(style ?? {}) }}>{name}{name !== undefined && ':'} </span>;
 };
 
 export function getSet<T extends object>(list: T[], field: keyof T): unknown[] {
@@ -84,15 +84,16 @@ export const safeStr = (str: string, ignore?: string): string => {
     return str?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 };
 
-export function FormItem(props: {name: string;style?: React.CSSProperties;content: React.ReactElement}): JSX.Element {
+export function FormItem({ name, style, content, nameStyle }:
+{name: React.ReactNode;nameStyle?: React.CSSProperties;style?: React.CSSProperties;content: React.ReactElement}): JSX.Element {
     return (<div style={{
         display: 'inline-block',
         height: '30px',
         lineHeight: '30px',
         margin: '0 20px 10px 0',
-        ...props.style ?? {},
+        ...style ?? {},
     }}>
-        <Label name={props.name} style={{ width: '80px', display: 'inline-block' }}/>
-        {props.content}
+        <Label name={name} style={{ width: '80px', display: 'inline-block', ...nameStyle ?? {} }}/>
+        {content}
     </div>);
 };
