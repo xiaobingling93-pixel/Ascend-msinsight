@@ -414,6 +414,9 @@ struct KernelBaseInfo {
     std::string pid;
     std::string tid;
     uint64_t depth{};
+    std::string inputType;
+    std::string outputType;
+    std::string note;
 };
 
 struct OneKernelResponse : public Response {

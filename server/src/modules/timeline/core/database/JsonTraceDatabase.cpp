@@ -1937,6 +1937,8 @@ bool JsonTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetails
                 SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(track_id).sliceIdAndDepthMap);
         }
         one.depth = depthMap[track_id][resultSet->GetUint64("id")];
+        one.inputType = resultSet->GetString("input");
+        one.outputType = resultSet->GetString("output");
         data.emplace_back(one);
     }
     return true;

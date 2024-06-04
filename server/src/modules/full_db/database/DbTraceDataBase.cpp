@@ -1711,6 +1711,8 @@ bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsPa
         one.pid = resultSet->GetString("pid");
         one.tid = resultSet->GetString("tid");
         one.depth = resultSet->GetUint64("depth");
+        one.inputType = resultSet->GetString("input");
+        one.outputType = resultSet->GetString("output");
         data.emplace_back(one);
     }
     return true;

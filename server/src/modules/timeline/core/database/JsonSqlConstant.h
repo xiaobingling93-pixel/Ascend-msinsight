@@ -343,7 +343,8 @@ public:
 
         std::string sql =
             "SELECT kd.name as name, kd.op_type as type, kd.start_time - ? as startTime, kd.duration as duration, "
-            "t.pid as pid, t.tid as tid, t.track_id as track_id, s.id as id "
+            "t.pid as pid, t.tid as tid, t.track_id as track_id, s.id as id, "
+            "lower(kd.input_data_types) as input,  lower(kd.output_data_types) as output "
             "FROM " + KERNEL_DETAIL + " kd "
             "JOIN " + SLICE_TABLE + " s ON kd.name = s.name AND kd.start_time = s.timestamp "
             "JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
@@ -380,7 +381,8 @@ public:
         std::string dataTypeCheckSql = StringUtil::join(dataTypeCheck, "OR");
 
         std::string sql = "SELECT s2.value as name, s1.value as type, s0.value as unit, t.startNs - ? as startTime, "
-            "(t.endNs - t.startNs) / 1000 as duration, 'Ascend Hardware' as pid, t.streamId as tid, t.depth as depth "
+            "(t.endNs - t.startNs) / 1000 as duration, 'Ascend Hardware' as pid, t.streamId as tid, t.depth as depth, "
+            "lower(s3.value) as input, lower(s4.value) as output "
             "FROM COMPUTE_TASK_INFO info "
             "JOIN STRING_IDS s0 ON info.taskType = s0.id "
             "JOIN TASK t ON info.globalTaskId = t.globalTaskId "

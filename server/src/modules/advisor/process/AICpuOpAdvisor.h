@@ -83,6 +83,9 @@ const std::vector<std::string> AICPU_OP_ORDER_BY_NAME_LIST = {
 class AICpuOpAdvisor {
 public:
     static bool Process(const Protocol::APITypeParams& params, Protocol::AICpuOperatorResBody& resBody);
+
+private:
+    static std::string GenerateAICpuOperatorNote(const Protocol::KernelBaseInfo& info);
 };
 
 } // Dic::Module::Advisor
