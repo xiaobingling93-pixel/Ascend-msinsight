@@ -299,24 +299,34 @@ bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestP
     std::vector<Protocol::Duration> &responseBody)
 {
     uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
-    std::vector<std::string> rankList = requestParams.rankList;
-    std::string sql = "SELECT rank_id, "
+    std::string rankSql;
+    std::string rankSqlTime;
+    if (!requestParams.rankList.empty()) {
+        std::string ranks = GetRanksSql(requestParams.rankList);
+        rankSql = " AND rank_id IN " + ranks;
+        rankSqlTime = " AND t.rank_id IN " + ranks;
+    }
+
+    std::string sql = "SELECT t.rank_id as rank_id, "
         "CASE WHEN start_timestamp == 0 THEN 0 ELSE ROUND((start_timestamp - ?/1000.0) / 1000.0, 4) END, "
         "ROUND(elapsed_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
         "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
         "ROUND(idle_time, 4) as idle_time, "
-        " CASE WHEN synchronization_time = 0 THEN 0 ELSE ROUND(synchronization_time "
-        " / (synchronization_time + transit_time), 4) END AS synchronization_time_ratio,"
-        " CASE WHEN wait_time = 0 THEN 0 ELSE "
-        " ROUND(wait_time / (wait_time + transit_time), 4) END AS wait_time_ratio"
-        " FROM " + TABLE_COMM_ANALYZER_TIME +
-        " WHERE step = ? AND rank_set = ?";
-    if (rankList.empty()) {
-        sql += " AND hccl_op_name = ?";
-    } else {
-        std::string ranks = GetRanksSql(rankList);
-        sql += " AND rank_id IN " + ranks + " AND hccl_op_name = ?";
-    }
+        "CASE WHEN synchronization_time = 0 THEN 0 ELSE ROUND(synchronization_time "
+        " / (synchronization_time + transit_time), 4) END AS synchronization_time_ratio, "
+        "CASE WHEN wait_time = 0 THEN 0 ELSE "
+        " ROUND(wait_time / (wait_time + transit_time), 4) END AS wait_time_ratio, "
+        "bw.sdma_bw as sdma_bw, bw.rdma_bw as rdma_bw "
+        "FROM " + TABLE_COMM_ANALYZER_TIME + " t "
+        "JOIN ("
+        "    SELECT rank_id, "
+        "    MAX(CASE WHEN band_type = 'SDMA' THEN bandwidth ELSE 0 END) AS sdma_bw, "
+        "    MAX(CASE WHEN band_type = 'RDMA' THEN bandwidth ELSE 0 END) AS rdma_bw "
+        "    FROM " + TABLE_COMM_ANALYZER_BANDWIDTH +
+        "    WHERE step = ? AND rank_set = ? AND hccl_op_name = ? " + rankSql +
+        "    GROUP BY rank_id "
+        ") bw ON t.rank_id = bw.rank_id "
+        " WHERE t.step = ? AND t.rank_set = ? AND t.hccl_op_name = ? " + rankSqlTime;
     requestParams.iterationId = "step" + requestParams.iterationId;
     return ExecuteQueryDurationList(requestParams, responseBody, sql, startTime);
 }

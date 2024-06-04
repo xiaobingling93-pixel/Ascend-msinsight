@@ -547,6 +547,9 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
     sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
@@ -560,6 +563,8 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
         object.idleTime = sqlite3_column_double(stmt, col++);
         object.synchronizationTimeRatio = sqlite3_column_double(stmt, col++);
         object.waitTimeRatio = sqlite3_column_double(stmt, col++);
+        object.sdmaBw = sqlite3_column_double(stmt, col++);
+        object.rdmaBw = sqlite3_column_double(stmt, col++);
         responseBody.emplace_back(object);
     }
     sqlite3_finalize(stmt);

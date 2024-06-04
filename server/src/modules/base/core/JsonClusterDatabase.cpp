@@ -752,21 +752,30 @@ bool JsonClusterDatabase::QueryDurationList(Protocol::DurationListParams &reques
     std::vector<Protocol::Duration> &responseBody)
 {
     uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
-    std::vector<std::string> rankList = requestParams.rankList;
+    std::string rankSql;
+    std::string rankSqlTime;
+    if (!requestParams.rankList.empty()) {
+        std::string ranks = GetRanksSql(requestParams.rankList);
+        rankSql = " AND rank_id IN " + ranks;
+        rankSqlTime = " AND t.rank_id IN " + ranks;
+    }
     std::string sql =
-        "SELECT rank_id, "
+        "SELECT t.rank_id as rank_id, "
         "CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time - ?) / 1000000.0, 4) END as startTime, "
         "ROUND(elapse_time, 4) as elapse_time, ROUND(transit_time, 4) as transit_time, "
         "ROUND(synchronization_time, 4) as synchronization_time, ROUND(wait_time, 4) as wait_time, "
         "ROUND(idle_time, 4) as idle_time, ROUND(synchronization_time_ratio, 4) as synchronization_time_ratio, "
-        "ROUND(wait_time_ratio, 4) as wait_time_ratio FROM " + TABLE_TIME_INFO +
-        " WHERE iteration_id = ? AND stage_id = ?";
-    if (rankList.empty()) {
-        sql += " AND op_name = ?";
-    } else {
-        std::string ranks = GetRanksSql(rankList);
-        sql += " AND rank_id IN " + ranks + " AND op_name = ?";
-    }
+        "ROUND(wait_time_ratio, 4) as wait_time_ratio, bw.sdma_bw as sdma_bw, bw.rdma_bw as rdma_bw "
+        "FROM " + TABLE_TIME_INFO + " t "
+        "JOIN ( "
+        "    SELECT rank_id, "
+        "    MAX(CASE WHEN transport_type = 'SDMA' THEN bandwidth_size ELSE 0 END) AS sdma_bw, "
+        "    MAX(CASE WHEN transport_type = 'RDMA' THEN bandwidth_size ELSE 0 END) AS rdma_bw "
+        "    FROM " + TABLE_BANDWIDTH + " "
+        "    WHERE iteration_id = ? AND stage_id = ? AND op_name = ? " + rankSql +
+        "    GROUP BY rank_id "
+        ") bw ON t.rank_id = bw.rank_id "
+        " WHERE t.iteration_id = ? AND t.stage_id = ? AND t.op_name = ? " + rankSqlTime;
     return ExecuteQueryDurationList(requestParams, responseBody, sql, startTime);
 }
 
