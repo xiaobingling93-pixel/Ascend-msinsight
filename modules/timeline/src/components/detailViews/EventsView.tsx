@@ -163,7 +163,7 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
         props.session.locateUnit = {
             target: (unit: any): boolean => {
                 // 能否跳转到某个算子：判断是否是ThreadUnit、卡号能否对上、线程号、进程号是否一致，如果都能对上，说明在timeline上找到了
-                return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId === rankId)) &&
+                return unit instanceof ThreadUnit && unit.metadata.cardId === rankId &&
                     unit.metadata.threadId === rowData.threadId && unit.metadata.processId === rowData.processId;
             },
             onSuccess: (unit: InsightUnit): void => {

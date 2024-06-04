@@ -43,7 +43,7 @@ import { calculateDomainRange } from '../CategorySearch';
 import { colorPalette, getTimeOffset } from '../../insight/units/utils';
 import type { InsightUnit } from '../../entity/insight';
 import { hashToNumber } from '../../utils/colorUtils';
-import { getDetailTimeDisplay } from '../../insight/units/AscendUnit';
+import { ThreadUnit, getDetailTimeDisplay } from '../../insight/units/AscendUnit';
 import { EventDetail } from './EventsView';
 
 export const DETAIL_HEADER_HEIGHT_ETC_PX = 130;
@@ -201,7 +201,8 @@ const handleAdvisorSelected = async(rowData: any, props: any): Promise<void> => 
     runInAction(() => {
         props.session.locateUnit = {
             target: (unit: any): boolean => {
-                return unit.metadata.threadId === rowData.tid && unit.metadata.processId === rowData.pid;
+                return unit instanceof ThreadUnit && unit.metadata.cardId === props.rankId &&
+                    unit.metadata.threadId === rowData.tid && unit.metadata.processId === rowData.pid;
             },
             onSuccess: (unit: InsightUnit): void => {
                 const startTime = rowData.startTime - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
@@ -331,7 +332,8 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
     runInAction(() => {
         props.session.locateUnit = {
             target: (unit: any) => {
-                return unit.metadata.threadId === res.threadId && unit.metadata.processId === res.pid;
+                return unit instanceof ThreadUnit && unit.metadata.cardId === props.rankId &&
+                    unit.metadata.threadId === res.threadId && unit.metadata.processId === res.pid;
             },
             onSuccess: (unit: InsightUnit): void => {
                 const startTime = rowData.startTime - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
