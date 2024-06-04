@@ -8,28 +8,12 @@
 #include <list>
 #include <vector>
 #include <mutex>
+#include "DomainObject.h"
 
 
 namespace Dic {
 namespace Module {
 namespace Timeline {
-struct CacheSlice {
-    int64_t id = 0;
-    uint64_t timestamp = 0;
-    uint64_t duration = 0;
-    uint64_t endTime = 0;
-    int32_t depth = 0;
-    bool operator < (const CacheSlice& right) const
-    {
-        if (depth < right.depth) {
-            return true;
-        }
-        if (depth == right.depth && timestamp < right.timestamp) {
-            return true;
-        }
-        return false;
-    }
-};
 class CacheManager {
 public:
     static CacheManager &Instance();
@@ -37,19 +21,19 @@ public:
     CacheManager &operator = (const CacheManager &) = delete;
     CacheManager(CacheManager &&) = delete;
     CacheManager &operator = (CacheManager &&) = delete;
-    std::vector<CacheSlice> Get(const std::string &key)
+    std::vector<SliceDomain> Get(const std::string &key)
     {
         std::unique_lock<std::mutex> lock(mutex);
         auto it = cache.find(key);
         if (it == cache.end()) {
-            std::vector<CacheSlice> emptyValue;
+            std::vector<SliceDomain> emptyValue;
             return emptyValue;
         }
         Touch(it);
         return it->second.first;
     }
 
-    void Put(const std::string &key, const std::vector<CacheSlice> &value)
+    void Put(const std::string &key, const std::vector<SliceDomain> &value)
     {
         std::unique_lock<std::mutex> lock(mutex);
         auto it = cache.find(key);
@@ -65,24 +49,42 @@ public:
         cache[key] = { value, used.begin() };
     }
 
+    bool HavePythonFunction(const uint64_t trackId)
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        if (trackIdAndPythonFunctionMap.count(trackId) > 0) {
+            return trackIdAndPythonFunctionMap[trackId];
+        }
+        return true;
+    }
+
+    void SetPythonFunctionStatus(const uint64_t trackId, bool status)
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+        trackIdAndPythonFunctionMap[trackId] = status;
+    }
+
     void Clear()
     {
         std::unique_lock<std::mutex> lock(mutex);
         cache.clear();
         used.clear();
+        trackIdAndPythonFunctionMap.clear();
     }
 
 private:
     CacheManager() = default;
     ~CacheManager() = default;
     using VisitOrderList = std::list<std::string>;
-    using CacheValue = std::pair<std::vector<CacheSlice>, VisitOrderList::iterator>;
+    using CacheValue = std::pair<std::vector<SliceDomain>, VisitOrderList::iterator>;
     using CacheMap = std::unordered_map<std::string, CacheValue>;
 
     CacheMap cache;
     VisitOrderList used;
     std::mutex mutex;
     int m_capacity = 10;
+
+    std::unordered_map<uint64_t, bool> trackIdAndPythonFunctionMap;
 
     void Touch(CacheMap::iterator it)
     {

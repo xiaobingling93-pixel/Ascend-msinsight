@@ -16,6 +16,7 @@ const std::string PROCESS_TABLE = "process";
 const std::string FLOW_TABLE = "flow";
 const std::string COUNTER_TABLE = "counter";
 const std::string TRACKID_TIME_INDEX = "track_id_timestamp_end_time_index";
+const std::string TRACKID_CAT_INDEX = "track_id_cat_index";
 const std::string FLOW_INDEX = "flow_id_time_index";
 const std::string KERNEL_DETAIL = "kernel_detail";
 
@@ -49,7 +50,8 @@ const std::string CREATE_TABLE_SQL = "CREATE TABLE " + SLICE_TABLE +
     " (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, pid TEXT," + "timestamp INTEGER, cat TEXT, args TEXT);";
 
 const std::string CREATE_INDEX_SQL = "CREATE INDEX " + TRACKID_TIME_INDEX + " ON " + SLICE_TABLE +
-    " (track_id, timestamp, end_time);" + "CREATE INDEX " + FLOW_INDEX + " ON " + FLOW_TABLE + " (cat);";
+    " (track_id, timestamp, end_time);" + "CREATE INDEX " + TRACKID_CAT_INDEX + " ON " + SLICE_TABLE +
+    " (track_id, cat);" + "CREATE INDEX " + FLOW_INDEX + " ON " + FLOW_TABLE + " (cat);";
 const std::string QUERY_SLICE_BY_TRACKID_SQL =
     "select id, timestamp, end_time as endTime from slice where track_id = ? order by timestamp;";
 const std::string QUERY_ALL_TRACKID_SQL = "select track_id as trackId from thread;";
@@ -132,7 +134,8 @@ const std::string QUERY_QUERY_TYPE_SQL =
 const std::string QUERY_AFFINITY_API_SQL =
     "SELECT s.track_id as track, s.id as id, s.name as name, s.timestamp - ? as startTime,"
     " s.duration / 1000 as duration, t.pid as pid, t.tid as tid FROM " +
-    SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
+    SLICE_TABLE + " s JOIN " + THREAD_TABLE +
+    " t on s.track_id = t.track_id "
     "WHERE s.name LIKE 'aten::%' OR s.name LIKE 'npu::%' ORDER BY s.track_id ASC, s.timestamp ASC";
 
 class JsonSqlConstant {
@@ -311,9 +314,12 @@ public:
         std::string sql =
             "SELECT s.id as id, s.name as name, s.timestamp - ? as startTime, s.duration / 1000 as duration, "
             "t.pid as pid, t.tid as tid, t.track_id as track_id "
-            "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t on s.track_id = t.track_id "
+            "FROM " +
+            SLICE_TABLE + " s JOIN " + THREAD_TABLE +
+            " t on s.track_id = t.track_id "
             "WHERE s.name IN ( "
-            "    SELECT name FROM " + SLICE_TABLE +
+            "    SELECT name FROM " +
+            SLICE_TABLE +
             "    WHERE name LIKE 'AscendCL@aclnn%' AND name NOT LIKE '%GetWorkspaceSize' "
             "    GROUP BY name HAVING COUNT(name) >= ? "
             ") ORDER BY " +
@@ -349,10 +355,12 @@ public:
             "JOIN " + SLICE_TABLE + " s ON kd.name = s.name AND kd.start_time = s.timestamp "
             "JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
             "WHERE kd.accelerator_core='AI_CPU' AND ("
-            "    lower(kd.op_type) IN (" + StringUtil::Join4SqlGroup(replace) +
+            "    lower(kd.op_type) IN (" +
+            StringUtil::Join4SqlGroup(replace) +
             ") " // 特定类型的算子可以修改代码
             "    OR ("
-            "    " + dataTypeCheckSql + // 检查数据类型是否符合要求
+            "    " +
+            dataTypeCheckSql + // 检查数据类型是否符合要求
             "    ) OR "
             "    kd.duration >= ?" // 执行时间超过20us
             ") ORDER BY " +
@@ -432,13 +440,15 @@ public:
     }
 
     static std::string QueryAffinityOptimizerSql(const std::string &optimizers, const std::string &orderBy,
-                                                 const std::string &order)
+        const std::string &order)
     {
-        std::string sql =
-            "Select (s.timestamp - ?) as startTime, (s.duration / 1000) as duration, s.name as name, "
+        std::string sql = "Select (s.timestamp - ?) as startTime, (s.duration / 1000) as duration, s.name as name, "
             "t.pid as pid, t.tid as tid, s.id as id, t.track_id as track_id "
-            "From " + SLICE_TABLE + " s Join " + THREAD_TABLE + " t ON s.track_id = t.track_id "
-            "WHERE s.name IN (" + optimizers + ") order by " + orderBy + " " + order;
+            "From " +
+            SLICE_TABLE + " s Join " + THREAD_TABLE +
+            " t ON s.track_id = t.track_id "
+            "WHERE s.name IN (" +
+            optimizers + ") order by " + orderBy + " " + order;
         return sql;
     }
 

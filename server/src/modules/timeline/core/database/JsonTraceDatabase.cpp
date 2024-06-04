@@ -8,6 +8,7 @@
 #include "TraceFileParser.h"
 #include "TraceDatabaseHelper.h"
 #include "SliceDepthCacheManager.h"
+#include "SliceTable.h"
 #include "JsonTraceDatabase.h"
 
 namespace Dic::Module::Timeline {
@@ -536,36 +537,35 @@ std::vector<int32_t> JsonTraceDatabase::QueryAllTrackId()
 bool JsonTraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
     Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId)
 {
-    std::vector<Protocol::RowThreadTrace> rowThreadTraceVec =
-        QuerySliceByCondition(requestParams, minTimestamp, traceId);
+    Timer timer("JsonTraceDatabase::QuerySliceByCondition");
+    SliceQuery sliceQuery;
+    sliceQuery.db = db;
+    sliceQuery.startTime = requestParams.startTime;
+    sliceQuery.endTime = requestParams.endTime;
+    sliceQuery.minTimestamp = minTimestamp;
+    sliceQuery.isFilterPythonFunction = requestParams.isFilterPythonFunction;
+    sliceQuery.cat = "python_function";
+    sliceQuery.trackId = traceId;
+    sliceQuery.cardId = requestParams.cardId;
+    uint64_t maxDepth = 0;
+    bool havePythonFunction = false;
+    std::set<uint64_t> ids;
+    std::map<uint64_t, int32_t> depthMap;
+    sliceAnalyzerPtr->ComputeScreenSliceIds(sliceQuery, ids, maxDepth, havePythonFunction, depthMap);
+    ServerLog::Info("ids size is: ", ids.size());
+    std::vector<Protocol::RowThreadTrace> rowThreadTraceVec = QuerySliceByIdList(minTimestamp, traceId, ids);
+    std::sort(rowThreadTraceVec.begin(), rowThreadTraceVec.end(), std::less<RowThreadTrace>());
+    for (auto &item : rowThreadTraceVec) {
+        item.depth = depthMap[item.id];
+    }
     TraceDatabaseHelper::QueryThreadTracesHelper(rowThreadTraceVec, requestParams, responseBody);
+    responseBody.maxDepth = maxDepth;
+    responseBody.havePythonFunction = havePythonFunction;
     return true;
 }
 
-std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByCondition(const UnitThreadTracesParams &requestParams,
-    uint64_t minTimestamp, int64_t traceId)
-{
-    Timer timer("JsonTraceDatabase::QuerySliceByCondition");
-    constexpr int minCacheSizeLimit = 200000;
-    std::string sliceCacheKey =
-        requestParams.cardId + "_" + std::to_string(traceId) + "_JsonTraceDatabase::QuerySliceByCondition";
-    std::vector<CacheSlice> cacheSlices = CacheManager::Instance().Get(sliceCacheKey);
-    if (std::empty(cacheSlices)) {
-        QueryAllSliceInRangeByTrackId(traceId, cacheSlices);
-        std::sort(cacheSlices.begin(), cacheSlices.end(), std::less<CacheSlice>());
-        if (cacheSlices.size() > minCacheSizeLimit) {
-            CacheManager::Instance().Put(sliceCacheKey, cacheSlices);
-        }
-    }
-    std::set<int64_t> ids =
-        sliceAnalyzerPtr->ComputeResultIds(requestParams.startTime, requestParams.endTime, minTimestamp, cacheSlices);
-    std::vector<RowThreadTrace> ans = QuerySliceByIdList(minTimestamp, traceId, ids);
-    ServerLog::Info("Ans Size is: ", ans.size());
-    return ans;
-}
-
 std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByIdList(uint64_t minTimestamp, int64_t traceId,
-    std::set<int64_t> &ids)
+    std::set<uint64_t> &ids)
 {
     Timer timer3("JsonTraceDatabase::QuerySliceByIdList");
     std::vector<RowThreadTrace> ans;
@@ -586,8 +586,6 @@ std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByIdList(uint64_t minTi
         ServerLog::Error("QuerySliceByIdList. Failed to get result set.", sliceStem->GetErrorMessage());
         return ans;
     }
-    std::unordered_map<uint64_t, int32_t> depthCache =
-        SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(traceId).sliceIdAndDepthMap;
     while (sliceResultSet->Next()) {
         RowThreadTrace rowThreadTrace{};
         rowThreadTrace.id = sliceResultSet->GetInt64("id");
@@ -596,14 +594,12 @@ std::vector<RowThreadTrace> JsonTraceDatabase::QuerySliceByIdList(uint64_t minTi
         rowThreadTrace.name = sliceResultSet->GetString("name");
         rowThreadTrace.traceId = traceId;
         rowThreadTrace.cname = sliceResultSet->GetString("cname");
-        rowThreadTrace.depth = depthCache[rowThreadTrace.id];
         ans.emplace_back(rowThreadTrace);
     }
-    std::sort(ans.begin(), ans.end(), std::less<RowThreadTrace>());
     return ans;
 }
 
-void JsonTraceDatabase::QueryAllSliceInRangeByTrackId(uint64_t traceId, std::vector<CacheSlice> &cacheSlices)
+void JsonTraceDatabase::QueryAllSliceInRangeByTrackId(uint64_t traceId, std::vector<SliceDomain> &cacheSlices)
 {
     // 此处sql需全部走索引且禁止触发回表
     std::string sql = QUERY_ALL_SLICE_IN_RANGE_BY_TRACKID_SQL;
@@ -620,10 +616,9 @@ void JsonTraceDatabase::QueryAllSliceInRangeByTrackId(uint64_t traceId, std::vec
     std::unordered_map<uint64_t, int32_t> depthCache =
         SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(traceId).sliceIdAndDepthMap;
     while (resultSet->Next()) {
-        CacheSlice cacheSlice{};
-        cacheSlice.id = resultSet->GetInt64("id");
+        SliceDomain cacheSlice{};
+        cacheSlice.id = resultSet->GetUint64("id");
         cacheSlice.timestamp = resultSet->GetUint64("timestamp");
-        cacheSlice.duration = resultSet->GetUint64("end_time") - cacheSlice.timestamp;
         cacheSlice.depth = depthCache[cacheSlice.id];
         cacheSlices.emplace_back(cacheSlice);
     }
@@ -1388,7 +1383,7 @@ bool JsonTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params
         return true;
     }
     uint64_t curTrackId = 0;
-    std::vector<CacheSlice> cacheSlices;
+    std::vector<SliceDomain> cacheSlices;
     for (auto &item : flowPointResult) {
         if (item.trackId != curTrackId) {
             cacheSlices.clear();
@@ -1840,7 +1835,7 @@ bool JsonTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
         sameOperatorsDetail.id = resultSet->GetString(col++);
         auto trackId = resultSet->GetUint64("track_id");
         std::unordered_map<uint64_t, int32_t> depthCache =
-                SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
+            SliceDepthCacheManager::Instance().GetSliceDepthCacheStructByTrackId(trackId).sliceIdAndDepthMap;
         sameOperatorsDetail.depth = depthCache[std::atoll(sameOperatorsDetail.id.c_str())];
         responseBody.sameOperatorsDetails.emplace_back(sameOperatorsDetail);
     }

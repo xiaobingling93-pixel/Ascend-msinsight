@@ -12,20 +12,13 @@
 #include "SliceDepthCacheManager.h"
 
 namespace Dic::Module::Timeline {
-class VirtualImportActionAnalyzer {
-public:
-    explicit VirtualImportActionAnalyzer() = default;
-    ~VirtualImportActionAnalyzer() = default;
-    virtual void UpdateAllSimulationSliceDepthWithNoOverlap(std::vector<Protocol::SimpleSlice> &rowThreadTraceVec,
-        uint64_t trackId) = 0;
-};
 
-class ImportActionAnalyzer : public VirtualImportActionAnalyzer {
+class ImportActionAnalyzer {
 public:
     explicit ImportActionAnalyzer();
     ~ImportActionAnalyzer() = default;
     void UpdateAllSimulationSliceDepthWithNoOverlap(std::vector<Protocol::SimpleSlice> &rowThreadTraceVec,
-        uint64_t trackId) override;
+        uint64_t trackId);
 private:
     static void ComputeSimulationSliceDepth(std::vector<Protocol::SimpleSlice> &rowThreadTraceVec,
         SliceDepthCacheStruct &sliceDepthCacheStruct);

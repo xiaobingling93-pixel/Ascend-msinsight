@@ -36,40 +36,23 @@ struct FlowPointSampleStruct {
     // 结束点所在区间最小时间
     uint64_t curEndStartTime = 0;
 };
-class VirtualFlowAnalyzer {
-public:
-    explicit VirtualFlowAnalyzer() = default;
-    ~VirtualFlowAnalyzer() = default;
-    virtual std::vector<Protocol::FlowName> ComputeFlowBySliceVec(const std::vector<Protocol::FlowName> &flowNameVec,
-        std::vector<Protocol::SimpleSlice> &sliceVec) = 0;
-    virtual void ComputeCategoryAndFlowMap(const std::vector<FlowDetailDto> &flowDetailVec,
-        std::map<std::string, std::vector<Protocol::UnitSingleFlow>> &flowMap, uint64_t minTimestamp) = 0;
-    virtual void ComputeSingleFlowDetail(const std::vector<Protocol::SimpleSlice> &simpliceVec,
-        FlowDetailDto &flowDetailDto) = 0;
-    virtual void SortByTrackIdASC(std::vector<FlowCategoryEventsDto> &FlowCategoryEventsDtoVec) = 0;
-    virtual void SortByFlowIdAndTimestampASC(std::vector<FlowCategoryEventsDto> &FlowCategoryEventsDtoVec) = 0;
-    virtual void ComputeScreenFlowPoint(const std::vector<FlowCategoryEventsDto> &flowEventsVec, uint64_t startTime,
-        uint64_t endTime, std::vector<FlowCategoryEventsDto> &flowIdResult) = 0;
-    virtual void ComputeUintFlows(const std::vector<FlowCategoryEventsDto> &flowEventsVec, const std::string &category,
-                          std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) = 0;
-};
 
-class FlowAnalyzer : public VirtualFlowAnalyzer {
+class FlowAnalyzer {
 public:
     explicit FlowAnalyzer();
     ~FlowAnalyzer() = default;
     std::vector<Protocol::FlowName> ComputeFlowBySliceVec(const std::vector<Protocol::FlowName> &flowNameVec,
-        std::vector<Protocol::SimpleSlice> &sliceVec) override;
+        std::vector<Protocol::SimpleSlice> &sliceVec);
     void ComputeCategoryAndFlowMap(const std::vector<FlowDetailDto> &flowDetailVec,
-        std::map<std::string, std::vector<Protocol::UnitSingleFlow>> &flowMap, uint64_t minTimestamp) override;
+        std::map<std::string, std::vector<Protocol::UnitSingleFlow>> &flowMap, uint64_t minTimestamp);
     void ComputeSingleFlowDetail(const std::vector<Protocol::SimpleSlice> &simpliceVec,
-        FlowDetailDto &flowDetailDto) override;
-    void SortByTrackIdASC(std::vector<FlowCategoryEventsDto> &FlowCategoryEventsDtoVec) override;
-    void SortByFlowIdAndTimestampASC(std::vector<FlowCategoryEventsDto> &flowCategoryEventsDtoVec) override;
+        FlowDetailDto &flowDetailDto);
+    void SortByTrackIdASC(std::vector<FlowCategoryEventsDto> &FlowCategoryEventsDtoVec);
+    void SortByFlowIdAndTimestampASC(std::vector<FlowCategoryEventsDto> &flowCategoryEventsDtoVec);
     void ComputeScreenFlowPoint(const std::vector<FlowCategoryEventsDto> &flowEventsVec, uint64_t startTime,
-        uint64_t endTime, std::vector<FlowCategoryEventsDto> &flowIdResult) override;
+        uint64_t endTime, std::vector<FlowCategoryEventsDto> &flowIdResult);
     void ComputeUintFlows(const std::vector<FlowCategoryEventsDto> &flowEventsVec, const std::string &category,
-        std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) override;
+        std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList);
 
 private:
     static bool CompareTrackIdASC(const FlowCategoryEventsDto &first, const FlowCategoryEventsDto &second);

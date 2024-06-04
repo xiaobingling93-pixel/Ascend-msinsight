@@ -1,9 +1,22 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-#include <SliceAnalyzer.h>
+#include "ServerLog.h"
+#include "SliceAnalyzer.h"
 namespace Dic::Module::Timeline {
-SliceAnalyzer::SliceAnalyzer() = default;
+SliceAnalyzer::SliceAnalyzer()
+{
+    if (repository == nullptr) {
+        repository = std::make_unique<Repository>();
+    }
+};
+
+SliceAnalyzer::~SliceAnalyzer()
+{
+    if (repository != nullptr) {
+        repository = nullptr;
+    }
+};
 /**
  * 对前端要展示的算子进行取样
  * @param startTime 页面开始时间
@@ -12,53 +25,53 @@ SliceAnalyzer::SliceAnalyzer() = default;
  * @param cacheSlices 当前泳道内的所有算子数据，按照depth排序，depth相同则按照timestamp排序
  * @return
  */
-std::set<int64_t> SliceAnalyzer::ComputeResultIds(uint64_t startTime, uint64_t endTime, uint64_t minTimestamp,
-    std::vector<CacheSlice> &cacheSlices)
+std::set<uint64_t> SliceAnalyzer::ComputeResultIds(uint64_t startTime, uint64_t endTime,
+    std::vector<std::vector<SliceDomain>> &depthSlicesDomainVec)
 {
     // 根据开始时间结束时间把屏幕平均分成1000份
     const int maxDataCount = 1000;
     uint64_t unitTime = (endTime - startTime) / maxDataCount;
-    std::set<int64_t> ids;
-    if (unitTime == 0) {
-        ComputeSmallScreenSliceIds(startTime, endTime, minTimestamp, cacheSlices, ids);
-        return ids;
+    std::set<uint64_t> ids;
+    for (auto &item : depthSlicesDomainVec) {
+        ComputeDepthResultIds(startTime, endTime, item, unitTime, ids);
     }
-    int32_t curDepth = -1;
+    return ids;
+}
+
+void SliceAnalyzer::ComputeDepthResultIds(uint64_t startTime, uint64_t endTime,
+    const std::vector<SliceDomain> &slicesDomainVec, uint64_t unitTime, std::set<uint64_t> &ids)
+{
+    if (unitTime == 0) {
+        ComputeSmallScreenSliceIds(startTime, endTime, slicesDomainVec, ids);
+        return;
+    }
     // 第一份屏幕的截至时间
-    uint64_t curLimitTime = startTime + unitTime + minTimestamp;
-    int64_t tempId = 0;
+    uint64_t curLimitTime = startTime + unitTime;
+    uint64_t tempId = 0;
     uint64_t tempDuration = 0;
-    for (const auto &item : cacheSlices) {
+    for (const auto &item : slicesDomainVec) {
         // 算子结束时间小于屏幕最小时间，过滤
-        if (item.timestamp + item.duration < startTime + minTimestamp) {
+        if (item.endTime < startTime) {
             continue;
         }
         // 算子开始时间大于屏幕最大时间，过滤
-        if (item.timestamp > endTime + minTimestamp) {
+        if (item.timestamp > endTime) {
             continue;
         }
-        // 算子深度大于当前深度，则把tempId加进结果集，重置tempId
-        if (item.depth > curDepth) {
-            ids.emplace(tempId);
-            tempId = 0;
-            tempDuration = 0;
-            curLimitTime = startTime + unitTime + minTimestamp;
-            curDepth = item.depth;
-        }
         // 算子开始时间大于当前份屏幕时间，则把tempId加进结果集，重置tempId，进入下一份屏幕采样
-        while (item.timestamp > curLimitTime && curLimitTime <= endTime + minTimestamp) {
+        while (item.timestamp > curLimitTime && curLimitTime <= endTime) {
             ids.emplace(tempId);
             tempId = 0;
             tempDuration = 0;
             curLimitTime += unitTime;
         }
         // 更新tempId
-        if (tempDuration <= item.duration) {
+        if (tempDuration <= item.endTime - item.timestamp) {
             tempId = item.id;
-            tempDuration = item.duration;
+            tempDuration = item.endTime - item.timestamp;
         }
         // 如果算子很长，则找下一份屏幕的截至时间
-        while (item.timestamp + item.duration >= curLimitTime && curLimitTime <= endTime + minTimestamp) {
+        while (item.endTime >= curLimitTime && curLimitTime <= endTime) {
             ids.emplace(tempId);
             tempId = 0;
             tempDuration = 0;
@@ -66,7 +79,6 @@ std::set<int64_t> SliceAnalyzer::ComputeResultIds(uint64_t startTime, uint64_t e
         }
     }
     ids.emplace(tempId);
-    return ids;
 }
 
 /**
@@ -77,31 +89,27 @@ std::set<int64_t> SliceAnalyzer::ComputeResultIds(uint64_t startTime, uint64_t e
  * @param cacheSlices
  * @param ids
  */
-void SliceAnalyzer::ComputeSmallScreenSliceIds(uint64_t startTime, uint64_t endTime, uint64_t minTimestamp,
-    std::vector<CacheSlice> &cacheSlices, std::set<int64_t> &ids)
+void SliceAnalyzer::ComputeSmallScreenSliceIds(uint64_t startTime, uint64_t endTime,
+    const std::vector<SliceDomain> &cacheSlices, std::set<uint64_t> &ids)
 {
     for (const auto &item : cacheSlices) {
-        // 算子结束时间小于屏幕最小时间，过滤
-        if (item.timestamp + item.duration < startTime + minTimestamp) {
-            continue;
-        }
-        // 算子开始时间大于屏幕最大时间，过滤
-        if (item.timestamp > endTime + minTimestamp) {
+        // 算子结束时间小于屏幕最小时间或者算子开始时间大于屏幕最大时间，过滤
+        if (item.endTime < startTime || item.timestamp > endTime) {
             continue;
         }
         ids.emplace(item.id);
     }
 }
 
-void SliceAnalyzer::SortByTimestampASC(std::vector<CacheSlice> &cacheSlices)
+void SliceAnalyzer::SortByTimestampASC(std::vector<SliceDomain> &cacheSlices)
 {
     std::sort(cacheSlices.begin(), cacheSlices.end(), SliceAnalyzer::CompareTimestampASC);
 }
 
-uint32_t SliceAnalyzer::ComputeFlowPointDepth(std::vector<CacheSlice> &cacheSlices, std::string &type,
+uint32_t SliceAnalyzer::ComputeFlowPointDepth(std::vector<SliceDomain> &cacheSlices, std::string &type,
     uint64_t timestamp)
 {
-    CacheSlice cacheSlice;
+    SliceDomain cacheSlice;
     cacheSlice.timestamp = timestamp;
     cacheSlice.id = 0;
     if (type == Protocol::LINE_START) {
@@ -172,6 +180,65 @@ void SliceAnalyzer::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
     }
 }
 
+void SliceAnalyzer::ComputeDepth(std::vector<SliceDomain> &sliceDomainVec, const std::set<uint64_t> &pythonFunctionIds,
+    std::vector<std::vector<SliceDomain>> &depthCacheSlice, std::map<uint64_t, int32_t> &depthMap)
+{
+    for (auto &item : sliceDomainVec) {
+        if (!std::empty(pythonFunctionIds) && pythonFunctionIds.count(item.id) > 0) {
+            continue;
+        }
+        bool isEmplace = false;
+        size_t size = depthCacheSlice.size();
+        for (int i = 0; i < size; ++i) {
+            if (depthCacheSlice[i].back().endTime < item.timestamp) {
+                depthMap[item.id] = i;
+                depthCacheSlice[i].emplace_back(item);
+                isEmplace = true;
+                break;
+            }
+        }
+        if (!isEmplace) {
+            std::vector<SliceDomain> temp;
+            depthMap[item.id] = size;
+            temp.emplace_back(item);
+            depthCacheSlice.emplace_back(temp);
+        }
+    }
+}
+
+void SliceAnalyzer::ComputeScreenSliceIds(const SliceQuery &sliceQuery, std::set<uint64_t> &ids, uint64_t &maxDepth,
+    bool &havePythonFunction, std::map<uint64_t, int32_t> &depthMap)
+{
+    // 泳道下数据量大于20万则放入缓存，否则仍从数据库查询
+    constexpr int minCacheSizeLimit = 200000;
+    std::string sliceCacheKey =
+        sliceQuery.cardId + "_" + std::to_string(sliceQuery.trackId) + "_SliceAnalyzer::ComputeScreenSliceIds";
+    auto &instance = CacheManager::Instance();
+    std::vector<SliceDomain> sliceDomainVec = instance.Get(sliceCacheKey);
+    std::set<uint64_t> pythonFunctionIds;
+    if (instance.HavePythonFunction(sliceQuery.trackId)) {
+        repository->QuerySliceIdsByCat(sliceQuery, pythonFunctionIds);
+        if (std::empty(pythonFunctionIds)) {
+            instance.SetPythonFunctionStatus(sliceQuery.trackId, false);
+        }
+    }
+    if (!sliceQuery.isFilterPythonFunction) {
+        pythonFunctionIds.clear();
+    }
+    if (std::empty(sliceDomainVec)) {
+        repository->QuerySimpleSliceWithOutNameByTrackId(sliceQuery, sliceDomainVec);
+        if (sliceDomainVec.size() > minCacheSizeLimit) {
+            CacheManager::Instance().Put(sliceCacheKey, sliceDomainVec);
+        }
+    }
+    std::vector<std::vector<SliceDomain>> depthSliceVec;
+    ComputeDepth(sliceDomainVec, pythonFunctionIds, depthSliceVec, depthMap);
+    ids = ComputeResultIds(sliceQuery.startTime + sliceQuery.minTimestamp, sliceQuery.endTime + sliceQuery.minTimestamp,
+        depthSliceVec);
+    maxDepth = depthSliceVec.size();
+    havePythonFunction = instance.HavePythonFunction(sliceQuery.trackId);
+}
+
 void SliceAnalyzer::AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, const std::string &name,
     uint64_t tmpSelfTime)
 {
@@ -182,7 +249,7 @@ void SliceAnalyzer::AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, c
     }
 }
 
-bool SliceAnalyzer::CompareTimestampASC(const CacheSlice &first, const CacheSlice &second)
+bool SliceAnalyzer::CompareTimestampASC(const SliceDomain &first, const SliceDomain &second)
 {
     if (first.timestamp < second.timestamp) {
         return true;
