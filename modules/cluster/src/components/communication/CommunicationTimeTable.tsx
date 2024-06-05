@@ -39,47 +39,48 @@ const useCommonColumns = (): ColumnsType<DataType> => {
     const { t } = useTranslation('communication');
     return [
         { title: `${t('tableHead.Start Time')}(ms)`, dataIndex: 'startTime', sorter: (a: DataType, b: DataType) => a.startTime - b.startTime, ellipsis: true },
-        {
-            title: `${t('tableHead.Elapse Time')}(ms)`,
-            dataIndex: 'elapseTime',
-            sorter: (a: DataType, b: DataType) => a.elapseTime - b.elapseTime,
-            ellipsis: true,
-        },
+        { title: `${t('tableHead.Elapse Time')}(ms)`, dataIndex: 'elapseTime', sorter: (a: DataType, b: DataType) => a.elapseTime - b.elapseTime, ellipsis: true, showSorterTooltip: { title: `${t('tableHeadTooltip.Elapse Time')}` } },
         {
             title: `${t('tableHead.Transit Time')}(ms)`,
             dataIndex: 'transitTime',
             sorter: (a: DataType, b: DataType) => a.transitTime - b.transitTime,
             ellipsis: true,
+            showSorterTooltip: { title: `${t('tableHeadTooltip.Transit Time')}` },
         },
         {
             title: `${t('tableHead.Synchronization Time')}(ms)`,
             dataIndex: 'synchronizationTime',
             sorter: (a: DataType, b: DataType) => a.synchronizationTime - b.synchronizationTime,
             ellipsis: true,
+            showSorterTooltip: { title: `${t('tableHeadTooltip.Synchronization Time')}` },
         },
         {
             title: `${t('tableHead.Wait Time')}(ms)`,
             dataIndex: 'waitTime',
             sorter: (a: DataType, b: DataType) => a.waitTime - b.waitTime,
             ellipsis: true,
+            showSorterTooltip: { title: `${t('tableHeadTooltip.Wait Time')}` },
         },
         {
             title: `${t('tableHead.Synchronization Time Ratio')}`,
             dataIndex: 'synchronizationTimeRatio',
             sorter: (a: DataType, b: DataType) => a.synchronizationTimeRatio - b.synchronizationTimeRatio,
             ellipsis: true,
+            showSorterTooltip: { title: `${t('tableHeadTooltip.Synchronization Time Ratio')}` },
         },
         {
             title: `${t('tableHead.Wait Time Ratio')}`,
             dataIndex: 'waitTimeRatio',
             sorter: (a: DataType, b: DataType) => a.waitTimeRatio - b.waitTimeRatio,
             ellipsis: true,
+            showSorterTooltip: { title: `${t('tableHeadTooltip.Wait Time Ratio')}` },
         },
         {
             title: `${t('tableHead.Idle Time')}(ms)`,
             dataIndex: 'idleTime',
             sorter: (a: DataType, b: DataType) => a.idleTime - b.idleTime,
             ellipsis: true,
+            showSorterTooltip: { title: `${t('tableHeadTooltip.Idle Time')}` },
         }];
 };
 // Total HCCL Opertators表

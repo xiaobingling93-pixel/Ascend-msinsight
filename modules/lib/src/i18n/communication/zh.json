@@ -68,6 +68,15 @@
       "Large Packet Ratio": "大通信包占比",
       "Communication Operators Details": "通信算子详情",
       "see more": "查看更多"
+    },
+    "tableHeadTooltip": {
+      "Elapse Time": "通信算子所有事件消耗时间之和。公式：总时间 = 通信Events时间之和",
+      "Transit Time":"统计SDMA链路（server内通信）和RDMA链路（server间通信）的通信算子总耗时。通信时间 = ReduceInline + Memcpy + RDMA通信时间",
+      "Synchronization Time": "卡间第一次通信前的同步时间，用来区分等待时间过长是慢节点还是慢链路造成的。公式：通信开始前等待时间：第一次SDMA或者RDMA通信前的NotifyWait相加",
+      "Wait Time":"卡间进行通信前，首先会进行同步，确保通信的两张卡同步完成，再进行通信。等待时间计算方式为统计所有Notify Wait算子总耗时并减去RDMA链路通信时间中的Notify Wait算子耗时。公式：等待时间 = NotifyWait– RDMA通信时间中的NotifyWait",
+      "Synchronization Time Ratio": "同步时间占比 = (同步时间)/(传输时间 + 同步时间)",
+      "Wait Time Ratio":"等待时间占比 = (等待时间)/(传输时间 + 等待时间)",
+      "Idle Time": "空闲时间 = 总时间 – 传输时间 – 等待时间"
     }
   }
 }

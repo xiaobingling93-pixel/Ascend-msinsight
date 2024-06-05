@@ -20,7 +20,12 @@
       "Operator Activated": "Operator Activated",
       "APP Reserved": "APP Reserved",
       "MemoryUsage": "Memory Usage",
-      "OperatorAllocatedDescribe": "Operator Allocated includes the memory occupied by both PyTorch and GE, while Operator Activated only includes the memory occupied by PyTorch.",
+      "CurveDescribe": [
+        "Operators Allocated: This curve illustrates the device memory trend derived from data collected from operators during memory allocation, encompassing the total memory usage of all operators. The memory data presented here is requested by PTA and GE",
+        "Operators Activated: This curve illustrates the total device memory requested, encompassing unreleased memory reused by other pipelines. The collected memory data is requested by pipelines in PTA",
+        "Operators Reserved: This curve illustrates the device memory trend derived from data collected from operators during memory release, encompassing the total reserved memory of all operators. The memory data presented here is requested by PTA and GE",
+        "App Reserved: This curve depicts the device memory allocation trend of the entire process"
+      ],
       "Name": "Name",
       "Min Size": "Min Size(KB)",
       "Max Size": "Max Size(KB)",
@@ -43,6 +48,19 @@
       "Release Total Reserved(MB)": "Release Total Reserved(MB)",
       "Release Total Active(MB)": "Release Total Active(MB)",
       "Stream": "Stream"
+    },
+    "tableHeadTooltip": {
+      "Allocation Time(ms)": "Tensor memory allocation time",
+      "Release Time(ms)": "Tensor memory release time",
+      "Duration(ms)": "Memory occupation duration (Release time – Allocation time)",
+      "Active Release Time(ms)": "Actual time for returning memory to the memory pool",
+      "Active Duration(ms)": "Actual memory occupation duration (Active release time – Allocation time)",
+      "Allocation Total Allocated(MB)": "Total memory allocated to PTA and GE during operator memory allocation",
+      "Allocation Total Reserved(MB)": "Total memory occupied by PTA and GE during operator memory allocation",
+      "Allocation Total Active(MB)": "Total memory requested by the current pipeline during operator memory allocation (including the unreleased memory reused by other pipelines)",
+      "Release Total Allocated(MB)": "Total memory allocated to PTA and GE during operator memory release",
+      "Release Total Reserved(MB)": "Total memory occupied by PTA and GE during operator memory release",
+      "Release Total Active(MB)": "Total PTA and GE memory reused by other pipelines during operator memory release"
     }
   }
 }

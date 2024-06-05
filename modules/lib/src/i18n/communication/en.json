@@ -68,6 +68,15 @@
       "Large Packet Ratio": "Large Packet Ratio",
       "Communication Operators Details": "Communication Operators Details",
       "see more": "see more"
+    },
+    "tableHeadTooltip": {
+      "Elapse Time": "Total time consumed by all events of communication operators. Formula: Elapse time = Sum of communication event time",
+      "Transit Time":"Total time consumed by communication operators on SDMA links (for intra-server communication) and RDMA links (for inter-server communication). Formula: Communication time = ReduceInline + Memcpy + RDMA communication time",
+      "Synchronization Time": "Synchronization time before the first communication between cards, which is used to determine whether the prolonged wait time is caused by slow nodes or slow links. Formula: Wait time before communication = Sum of NotifyWait time before the first SDMA or RDMA communication",
+      "Wait Time":"Synchronization is performed before two cards communicate with each other. The wait time is calculated by subtracting the time consumed by NotifyWait operators in RDMA communication time from the total time consumption of all NotifyWait operators. Formula: Wait time = NotifyWait – NotifyWait in RDMA communication time",
+      "Synchronization Time Ratio": "Synchronization time ratio = (Synchronization time)/(Transit time + Synchronization time)",
+      "Wait Time Ratio":"Wait Time ratio = (Wait time)/(Transit time + Wait time)",
+      "Idle Time": "Idle time = Elapse time – Transmit time – Wait time"
     }
   }
 }

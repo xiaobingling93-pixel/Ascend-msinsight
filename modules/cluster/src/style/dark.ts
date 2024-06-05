@@ -9,6 +9,9 @@ export const dark: Theme = {
     switchIconColor: '#959595', // 模板下拉按钮颜色
     dividerColor: '#000',
     maskColor: 'rgb(0, 0, 0, 0.55)', // 录制、分析等蒙层颜色
+    tooltipBGColor: '#404040',
+    tooltipFontColor: 'rgba(255, 255, 255, .9)',
+    tooltipBoxShadow: '0 4px 16px 0 rgba( 0, 0, 0, .32 )',
     colorPalette: {
         slateblue: '#6259DE',
         royalblue: '#317AF7',

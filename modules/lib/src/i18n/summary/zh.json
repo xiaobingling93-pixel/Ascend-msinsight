@@ -23,7 +23,7 @@
       "计算比例 = 计算时间/总时间",
       "通信比例 = 通信时间（未被覆盖）/总时间"
     ],
-    "Computation/CommunicationLastDescribe": "点击柱状图显示单节点计算/通信详情。",
+    "Computation/CommunicationLastDescribe": "点击柱状图显示单节点计算/通信详情",
     "Step": "迭代ID",
     "RankGroup":"通信域",
     "OrderBy": "排序方式",
@@ -45,6 +45,10 @@
     "CommunicationDurationsOverlapped": "通信时长（被覆盖）",
     "CommunicationDurationsNotOverlapped": "通信时长（未被覆盖）",
     "OverlappedDurations":"被覆盖时长",
-    "NotOverlappedDurations":"未被覆盖时长"
+    "NotOverlappedDurations":"未被覆盖时长",
+    "StageTimeAndBubbleTimeDescribe": [
+      "Stage Time: pp并行时，stage时间代表除recieve算子时间外的其他耗时",
+      "Bubble Time: Bubble时间，指receive时间的总和"
+    ]
   }
 }

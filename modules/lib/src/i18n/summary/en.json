@@ -45,6 +45,10 @@
     "CommunicationDurationsOverlapped": "Communication(Overlapped) Durations",
     "CommunicationDurationsNotOverlapped": "Communication(Not Overlapped) Durations",
     "OverlappedDurations":"Overlapped Durations",
-    "NotOverlappedDurations":"Not Overlapped Durations"
+    "NotOverlappedDurations":"Not Overlapped Durations",
+    "StageTimeAndBubbleTimeDescribe": [
+      "Stage Time: Time excluding the portion consumed by the receive operator under pipeline parallelism",
+      "Bubble Time: Total time consumed by the receive operator"
+    ]
   }
 }

@@ -6,9 +6,10 @@ import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select } from 'antd';
-import { Label } from '../Common';
+import { Label, StyledTooltip } from '../Common';
 import { getStepsData } from './PpBandwidthAnalysis';
 import { getAllPpStageIds, getPpContainerData } from '../communicatorContainer/ContainerUtils';
+import { QuestionCircleFilled } from '@ant-design/icons';
 
 export interface ConditionDataType {
     step: string;
@@ -65,7 +66,7 @@ const Filter = observer((props: any) => {
 const FilterCom = (props: any): JSX.Element => {
     const { conditions, handleChange = [], options = {} } = props;
     const { t } = useTranslation('summary');
-    return (<div style={ { margin: '0 20px 10px', textAlign: 'left' }}>
+    return (<div style={ { margin: '0 20px 10px', textAlign: 'left', display: 'flex', alignItems: 'center' }}>
         <Label name={t('Step')} />
         <Select
             value={conditions.step}
@@ -80,7 +81,22 @@ const FilterCom = (props: any): JSX.Element => {
             onChange={val => handleChange('stage', val)}
             options={options.stageOptions}
         />
+        <div>{useHit()}</div>
     </div>);
+};
+
+export const useHit = (): React.ReactElement => {
+    const { t } = useTranslation('summary');
+    const hit = t('StageTimeAndBubbleTimeDescribe', { returnObjects: true });
+    return (<StyledTooltip title={
+        (
+            <div style={{ padding: '1rem' }}>
+                {hit?.map((item: string, index: number) => <div style={{ padding: '3px 0' }} key={index}>{item}</div>)}
+            </div>
+        )
+    }>
+        <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
+    </StyledTooltip>);
 };
 
 export default Filter;

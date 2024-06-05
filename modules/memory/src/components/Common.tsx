@@ -26,9 +26,10 @@ export const useHit = (): React.ReactElement => {
 
 export const useChartCharacter = (): React.ReactElement => {
     const { t } = useTranslation('memory');
+    const hit = t('searchCriteria.CurveDescribe', { returnObjects: true });
     return <StyledTooltip title={
         <div style={{ padding: '1rem' }}>
-            <div>{t('searchCriteria.OperatorAllocatedDescribe')}</div>
+            {hit?.map((item: string, index: number) => <div style={{ padding: '3px 0' }} key={index}>{item}</div>)}
         </div>
     }>
         <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>

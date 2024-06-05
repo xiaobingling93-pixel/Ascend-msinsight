@@ -67,16 +67,17 @@ const getTableColumns = function (
         return {
             dataIndex: col.key,
             key: col.key,
-            title: t(col.name, { defaultValue: col.name }),
+            title: t(col.name, { defaultValue: col.name, keyPrefix: 'tableHead' }),
             sorter: true,
             ellipsis: true,
+            showSorterTooltip: t(col.name, { keyPrefix: 'tableHeadTooltip', defaultValue: '' }) === '' ? true : { title: t(col.name, { keyPrefix: 'tableHeadTooltip' }) },
         };
     });
 };
 
 // eslint-disable-next-line max-lines-per-function
 export const AntTableChart: React.FC<IProps> = (props) => {
-    const { t } = useTranslation('memory', { keyPrefix: 'tableHead' });
+    const { t } = useTranslation('memory');
     const {
         tableData, sortColumn, onRowSelected, current, pageSize,
         onCurrentChange, onPageSizeChange, total, onOrderChange, onOrderByChange,

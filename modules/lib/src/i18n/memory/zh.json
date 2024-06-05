@@ -20,7 +20,12 @@
       "Operator Activated": "算子持有",
       "APP Reserved": "进程保留",
       "MemoryUsage": "内存使用",
-      "OperatorAllocatedDescribe": "已分配的算子包含PyTorch和GE所占内存，而持有的算子只包含PyTorch所占内存。",
+      "CurveDescribe": [
+        "算子分配: 算子分配曲线表示算子在申请device内存时采集到的内存信息随采集时间的变化趋势，代表所有算子总的占用内存，此处采集到的device内存数据由PTA和GE申请",
+        "算子持有: 算子持有曲线表示所申请的总device内存，包括被其他流复用未释放的内存，此处采集到的内存数据由PTA中的流的申请",
+        "算子保留: 算子保留曲线表示算子在释放device内存时采集到的内存信息随采集时间的变化趋势，代表所有算子总的保留内存，此处采集到的内存数据由PTA和GE申请",
+        "进程保留: 进程保留曲线表示整个进程申请的device内存趋势"
+      ],
       "Name": "名称",
       "Min Size": "最小值(KB)",
       "Max Size": "最大值(KB)",
@@ -43,6 +48,19 @@
       "Release Total Reserved(MB)": "总释放保留内存(MB)",
       "Release Total Active(MB)": "总释放持有内存(MB)",
       "Stream": "流"
+    },
+    "tableHeadTooltip": {
+      "Allocation Time(ms)": "Tensor内存分配时间",
+      "Release Time(ms)": "Tensor内存释放时间",
+      "Duration(ms)": "内存占用时间（释放时间 - 分配时间）",
+      "Active Release Time(ms)": "内存实际归还内存池时间",
+      "Active Duration(ms)": "内存实际占用时间（持有内存释放时间 - 分配时间）",
+      "Allocation Total Allocated(MB)": "算子内存分配时PTA和GE内存分配总额",
+      "Allocation Total Reserved(MB)": "算子内存分配时PTA和GE内存占用总额",
+      "Allocation Total Active(MB)": "算子内存分配时，当前流所申请的总内存（包括被其他流复用的未释放的内存）",
+      "Release Total Allocated(MB)": "算子内存释放时PTA和GE内存分配总额",
+      "Release Total Reserved(MB)": "算子内存释放时PTA和GE内存占用总额",
+      "Release Total Active(MB)": "算子内存释放时PTA和GE内存中被其他Stream复用的内存总额"
     }
   }
 }

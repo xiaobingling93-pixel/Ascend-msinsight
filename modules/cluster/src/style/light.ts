@@ -9,6 +9,9 @@ export const light: Theme = {
     switchIconColor: '#18181A',
     dividerColor: '#fff',
     maskColor: 'rgb(255, 255, 255, 0.55)',
+    tooltipBGColor: 'rgb(255, 255, 255)',
+    tooltipFontColor: 'rgba(0, 0, 0, .6)',
+    tooltipBoxShadow: '0 4px 16px 0 rgba( 0, 0, 0, .16 )',
     colorPalette: {
         slateblue: '#6259DE',
         royalblue: '#317AF7',

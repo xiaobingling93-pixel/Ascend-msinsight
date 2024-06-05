@@ -4,14 +4,13 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
-import { Tooltip } from 'antd';
 import { observer } from 'mobx-react';
 import { QuestionCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
 import { Session } from '../../entity/session';
 import { VoidFunction } from '../../utils/interface';
 import { useEventBus } from '../../utils/eventBus';
 import { queryTopSummary } from '../../utils/RequestUtils';
-import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, notZero } from '../Common';
+import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, notZero, StyledTooltip } from '../Common';
 import Filter, { ConditionDataType } from './Filter';
 import StatisticsTable from './StatisticsTable';
 import SummaryTable from './SummaryTable';
@@ -231,9 +230,9 @@ async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
 export const useHit = (): React.ReactElement => {
     const { t } = useTranslation('summary');
     const hit = t('Computation/CommunicationDescribe', { returnObjects: true });
-    return (<Tooltip title={
+    return (<StyledTooltip title={
         (
-            <div style={{ background: 'var(--grey100)', padding: '1rem' }}>
+            <div style={{ padding: '1rem' }}>
                 {hit?.map((item: string, index: number) => <div key={index}>{item}</div>)}
                 <div style={{ marginTop: '2rem' }}>
                     <ExclamationCircleFilled style={{ marginRight: '10px' }}/>
@@ -242,7 +241,7 @@ export const useHit = (): React.ReactElement => {
         )
     }>
         <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
-    </Tooltip>);
+    </StyledTooltip>);
 };
 
 async function GetTopSummary(conditions: ConditionDataType): Promise<SummaryDataType[]> {

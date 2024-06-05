@@ -3,13 +3,15 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Checkbox, Divider, Select, Pagination } from 'antd';
+import { Checkbox, Divider, Select, Pagination, Tooltip } from 'antd';
 import { DragDirection, useDraggableContainer } from 'lib/useDraggableContainer';
 import { optionDataType, VoidFunction } from '../utils/interface';
 import type { EChartsType } from 'echarts';
 import { themeInstance } from '../theme/theme';
 import { observer } from 'mobx-react';
 import i18n from '../i18n';
+import type { TooltipProps } from 'antd/lib/tooltip';
+import { useTheme } from '@emotion/react';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? props.name + ' :' : ''} </span>;
@@ -328,4 +330,24 @@ export const commonEchartsOptions: {
             type: 'dashed',
         },
     },
+};
+
+export const StyledTooltip: React.FC<TooltipProps> = ({ children, overlayInnerStyle, ...props }: TooltipProps) => {
+    const theme = useTheme();
+    return <Tooltip
+        color={theme.tooltipBGColor}
+        overlayInnerStyle={
+            {
+                borderRadius: '12px',
+                color: theme.tooltipFontColor,
+                boxShadow: theme.tooltipBoxShadow,
+                whiteSpace: 'pre-wrap',
+                fontSize: 14,
+            }
+        }
+        mouseEnterDelay={0.3}
+        {...props}
+    >
+        {children}
+    </Tooltip>;
 };
