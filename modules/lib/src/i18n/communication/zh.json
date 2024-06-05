@@ -8,13 +8,15 @@
           "(1) 若存在，则此集群场景存在通信瓶颈，请继续步骤2；",
           "(2) 否则，初步断定此迭代不存在通信瓶颈，可去通信矩阵页面进一步查看总体带宽使用率情况。"
         ]
-      },{
+      },
+      {
         "title": "2. 查看等待时间占比最大卡的传输前的同步时间占比是否大于0.2(阈值)",
         "contentList": [
           "(1) 如果大于，则存在慢卡（等待时间占比最小的卡），请查看慢卡的前向反向计算时间；若该慢卡的前向反向计算时间远大于其他卡，则需要检查负载是否均衡和芯片故障；若该卡的前向反向计算时间基本和其他卡相同，则检查数据预处理时间；",
           "(2) 否则，存在链路异常情况，请点击传输时长最长的卡的链路详情，查看是否有链路故障或者通信量过小的情况。"
         ]
-      },{
+      },
+      {
         "title": "注：",
         "contentList": [
           "(1) 等待时间占比 = 等待时间 / (等待时间 + 传输时间)，等待时间比例越大代表这张卡的等待时间占总通信时间越长，通信效率越低；",
@@ -37,7 +39,7 @@
       "VisualizedCommunicationTime": "通信时长",
       "DataAnalysisCommunicationTime": "通信时长数据分析",
       "PacketDistribution": "通信包分析",
-      "BandwidthAnalysis":"带宽分析"
+      "BandwidthAnalysis": "带宽分析"
     },
     "searchCriteria": {
       "Step": "迭代ID",
@@ -58,25 +60,33 @@
       "Rank ID": "卡序号",
       "Start Time": "开始时间",
       "Elapse Time": "总时间",
-      "Transit Time":"传输时间",
+      "Transit Time": "传输时间",
       "Synchronization Time": "同步时间",
-      "Wait Time":"等待时间",
+      "Wait Time": "等待时间",
       "Synchronization Time Ratio": "同步时间占比",
-      "Wait Time Ratio":"等待时间占比",
+      "Wait Time Ratio": "等待时间占比",
       "Idle Time": "空闲时间",
-      "Bandwidth Analysis":"带宽分析",
+      "Bandwidth Analysis": "带宽分析",
       "Large Packet Ratio": "大通信包占比",
       "Communication Operators Details": "通信算子详情",
       "see more": "查看更多"
     },
     "tableHeadTooltip": {
       "Elapse Time": "通信算子所有事件消耗时间之和。公式：总时间 = 通信Events时间之和",
-      "Transit Time":"统计SDMA链路（server内通信）和RDMA链路（server间通信）的通信算子总耗时。通信时间 = ReduceInline + Memcpy + RDMA通信时间",
+      "Transit Time": "统计SDMA链路（server内通信）和RDMA链路（server间通信）的通信算子总耗时。通信时间 = ReduceInline + Memcpy + RDMA通信时间",
       "Synchronization Time": "卡间第一次通信前的同步时间，用来区分等待时间过长是慢节点还是慢链路造成的。公式：通信开始前等待时间：第一次SDMA或者RDMA通信前的NotifyWait相加",
-      "Wait Time":"卡间进行通信前，首先会进行同步，确保通信的两张卡同步完成，再进行通信。等待时间计算方式为统计所有Notify Wait算子总耗时并减去RDMA链路通信时间中的Notify Wait算子耗时。公式：等待时间 = NotifyWait– RDMA通信时间中的NotifyWait",
+      "Wait Time": "卡间进行通信前，首先会进行同步，确保通信的两张卡同步完成，再进行通信。等待时间计算方式为统计所有Notify Wait算子总耗时并减去RDMA链路通信时间中的Notify Wait算子耗时。公式：等待时间 = NotifyWait– RDMA通信时间中的NotifyWait",
       "Synchronization Time Ratio": "同步时间占比 = (同步时间)/(传输时间 + 同步时间)",
-      "Wait Time Ratio":"等待时间占比 = (等待时间)/(传输时间 + 等待时间)",
+      "Wait Time Ratio": "等待时间占比 = (等待时间)/(传输时间 + 等待时间)",
       "Idle Time": "空闲时间 = 总时间 – 传输时间 – 等待时间"
-    }
+    },
+    "Advice": "专家建议",
+    "AdviceTip": "此处带宽为通信数据大小与通信时间的比值，非物理带宽",
+    "Overall": "总览",
+    "OverallDuration": "{{type}}总耗时为{{time}}毫秒。",
+    "MoreFocus": "请关注{{type}}。",
+    "CommunicationAdvice": "{{type}}带宽(GB/秒)：平均值为{{avg}}GB/秒，最大值为{{max}}GB/秒，最小值为{{min}}GB/秒，差值为{{diff}}GB/秒。{{issue}}，请关注上方表格带宽分析列。",
+    "BandwidthIssue": "带宽是瓶颈",
+    "CommunicationIssue": "通信效率低"
   }
 }

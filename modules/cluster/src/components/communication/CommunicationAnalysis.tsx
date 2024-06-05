@@ -4,8 +4,8 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Breadcrumb } from 'antd';
+import { ArrowLeftOutlined, QuestionCircleFilled } from '@ant-design/icons';
+import { Breadcrumb, Tooltip } from 'antd';
 import { Session } from '../../entity/session';
 import Help from './Help';
 import Filter, { ConditionDataType } from './Filter';
@@ -34,22 +34,32 @@ const Operators = ({ returnHome, rankId, operatorName, iterationId, stage }: any
     );
 };
 
+interface CommunicationAdvice {
+    type: string;
+    max: number;
+    min: number;
+    avg: number;
+    diff: number;
+    time: number;
+}
+
 interface showDataType{
     chartData: chartDataType;
     analysisChartData: AnalysisChartData;
     tableData: [];
+    adviceData: CommunicationAdvice[];
 }
 
 const searchData = async (conditions: ConditionDataType): Promise<showDataType> => {
     if (!notNullObj(conditions)) {
-        return { chartData: wrapChartData([]), analysisChartData: { minTime: 0, maxTime: 0, data: [] }, tableData: [] };
+        return { chartData: wrapChartData([]), analysisChartData: { minTime: 0, maxTime: 0, data: [] }, tableData: [], adviceData: [] };
     }
     const communicationOperatorData = await queryCommunicationOperatorLists(conditions);
     const res = await queryCommunication(conditions);
-    const { items: data = [] } = res;
+    const { advice, items: data = [] } = res;
     data.forEach((item: any, index: number) => { item.index = index; });
     data.sort((a: DataType, b: DataType) => b.elapseTime - a.elapseTime);
-    return { chartData: wrapChartData(data), analysisChartData: communicationOperatorData, tableData: data };
+    return { chartData: wrapChartData(data), analysisChartData: communicationOperatorData, tableData: data, adviceData: advice };
 };
 const wrapChartData = (data: tableDataType[]): chartDataType => {
     // 显示字段
@@ -68,6 +78,7 @@ const CommunicationAnalysis = observer(function ({ session, active = true }: { s
         chartData: {} as chartDataType,
         analysisChartData: {} as AnalysisChartData,
         tableData: [],
+        adviceData: [],
     });
     const [conditions, setConditions] = useState<ConditionDataType>(
         { iterationId: '', rankIds: [], operatorName: '', type: 'CommunicationMatrix', stage: '' });
@@ -111,6 +122,55 @@ const CommunicationAnalysis = observer(function ({ session, active = true }: { s
     />;
 });
 
+const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element => {
+    const { t } = useTranslation('communication');
+    const { adviceData } = props;
+    let overAllText = '';
+    const issueList: Array<{title: string; content: string }> = [];
+    const sdmaData = adviceData.find(item => item.type === 'SDMA');
+    const rdmaData = adviceData.find(item => item.type === 'RDMA');
+    adviceData.forEach(data => {
+        overAllText += t('OverallDuration', { type: data.type, time: data.time });
+        // 比较经验带宽（最大带宽的0.8）与平均带宽
+        const isBandwidthIssue = data.avg >= data.max * 0.8;
+        issueList.push({
+            title: data.type,
+            content: t('CommunicationAdvice', { ...data, issue: isBandwidthIssue ? t('BandwidthIssue') : t('CommunicationIssue') }),
+        });
+    });
+    if (sdmaData && rdmaData) {
+        overAllText += t('MoreFocus', { type: sdmaData.time >= rdmaData.time ? sdmaData.type : rdmaData.type });
+    }
+    return (
+        <div style={{ marginBottom: '20px' }}>
+            <div className={'communication-advice-title'}>
+                {t('Advice')}
+                <Tooltip title={
+                    (
+                        <div style={{ background: 'var(--grey100)', padding: '1rem' }}>
+                            {t('AdviceTip')}
+                        </div>
+                    )
+                }>
+                    <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
+                </Tooltip>
+            </div>
+            <div className="communication-advice-header">{t('Overall')}</div>
+            <div className="communication-advice-content">{overAllText}</div>
+            {
+                issueList.map(item => {
+                    return (
+                        <>
+                            <div className="communication-advice-header">{item.title}</div>
+                            <div className="communication-advice-content">{item.content}</div>
+                        </>
+                    );
+                })
+            }
+        </div>
+    );
+};
+
 const CommunicationAnalysisCom = (props: {isShow:
 (name: string) => boolean;session: Session;[propName: string]: any;}): JSX.Element => {
     const {
@@ -132,6 +192,7 @@ const CommunicationAnalysisCom = (props: {isShow:
                         conditions={conditions} updateSort={(data) => {
                             setShowData({ ...showData, chartData: wrapChartData(data) });
                         }}/>
+                    { showData.adviceData.length > 0 && <AdviceLabel adviceData={showData.adviceData} /> }
                 </div>
                 }
                 dragSize={400}

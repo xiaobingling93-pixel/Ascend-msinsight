@@ -12,6 +12,7 @@ import { notNull, GetPageConfigWhithPageData, Loading } from '../Common';
 import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } from '../../utils/RequestUtils';
 import ResizeTable from 'lib/ResizeTable';
 import { Session } from '../../entity/session';
+import { type AdviceInfo } from './ComputationCommunicationOverview';
 
 const useComputingStatisticsColumns = (): ColumnsType => {
     const { t } = useTranslation('summary');
@@ -354,12 +355,35 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
     />;
 };
 
-const StatisticsTable = (props: {step: string;rankId: string;session: Session}): JSX.Element => {
-    const { rankId = '', step = '', session } = props;
+const AdviceLabel = (props: {advice: AdviceInfo}): JSX.Element => {
+    const { t } = useTranslation('summary');
+    const { advice } = props;
+    let adviceText = '';
+    for (const [key, value] of Object.entries(advice)) {
+        const capitalKey = key.charAt(0).toUpperCase() + key.slice(1);
+        if (value !== 0) {
+            adviceText += t('SummaryAdvice', { type: t(capitalKey), time: value });
+        }
+    }
+    return (
+        <div style={{ marginBottom: '20px' }}>
+            <div className={'common-title-h2'}>
+                {t('Advice')}
+            </div>
+            <div className="summary-advice-content">{adviceText}</div>
+        </div>
+    );
+};
+
+const StatisticsTable = (props: {step: string; rankId: string;session: Session; advice: AdviceInfo}): JSX.Element => {
+    const { rankId = '', step = '', session, advice } = props;
     const { t } = useTranslation('summary');
     return notNull(rankId) && session.unitcount > 0
         ? (
             <div>
+                {advice.communication + advice.compute + advice.free !== 0 &&
+                    <AdviceLabel advice={advice} />
+                }
                 <div style={{ marginBottom: '20px' }}>
                     <div className={'common-title-h2'}>
                         {getTitle('compute', t)} ( Rank {rankId} )

@@ -90,6 +90,47 @@ code {
     border-top: 2px dashed var(--grey50);
 }
 
+.summary-advice-content {
+    background-color: var(--grey5);
+    padding: 10px 0;
+    font-weight: bold;
+}
+
+.communication-advice-title {
+    font-weight: bold;
+    line-height: 3rem;
+    font-size: 1.5rem;
+    padding-left: 10px;
+    margin: 0 0 10px 0;
+    background-color: var(--grey5);
+}
+
+.communication-advice-header {
+    padding: 8px;
+    font-weight: bold;
+}
+
+.communication-advice-content {
+    color: var(--grey60);
+    padding: 0 12px;
+}
+
+.theme_dark .communication-advice-title {
+    background-color: var(--grey70);
+}
+
+.theme_dark .summary-advice-header {
+    background-color: var(--grey80blue);
+}
+
+.theme_dark .communication-advice-content {
+    color: white;
+}
+
+.theme_dark .summary-advice-content {
+    background-color: var(--grey80blue);
+}
+
 .theme_dark .ant-input-number-input {
     background-color: var(--grey90);
 }

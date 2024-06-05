@@ -8,13 +8,15 @@
           "(1) If yes, a communication bottleneck exists in this cluster, go to step 2 for further analysis.",
           "(2) If no, it can be preliminarily determined that this iteration does not have a communication bottleneck. Go to the communication matrix page to check the overall bandwidth usage."
         ]
-      },{
+      },
+      {
         "title": "2. Check whether the Synchronization Time Ratio Before Transit of the rank with the largest Wait Time Ratio is greater than 0.2 (threshold).",
         "contentList": [
           "(1) If yes, a slow rank (the rank with the smallest Wait Time Ratio) exists. Check its forward and backward propagation time. If the forward and backward propagation time is much longer than that of other ranks, check whether the computation load is balanced and whether the processor is faulty. If the forward and backward propagation time is basically the same as that of other ranks, check the data preprocessing time.",
           "(2) If no, communication links are probably in low efficiency. View the communication link details of the rank with the longest Transit Time to check whether the link is faulty or the traffic volume is too small."
         ]
-      },{
+      },
+      {
         "title": "Note:",
         "contentList": [
           "(1) Wait Time Ratio = Wait Time / (Wait Time + Transit Time): The larger the Wait Time Ratio, the longer the Wait Time of the rank to the total communication time, and the lower the communication efficiency.",
@@ -37,7 +39,7 @@
       "VisualizedCommunicationTime": "Visualized Communication Time",
       "DataAnalysisCommunicationTime": "Data Analysis of Communication Time",
       "PacketDistribution": "Packet Distribution",
-      "BandwidthAnalysis":"Bandwidth Analysis"
+      "BandwidthAnalysis": "Bandwidth Analysis"
     },
     "searchCriteria": {
       "Step": "Step",
@@ -58,25 +60,33 @@
       "Rank ID": "Rank ID",
       "Start Time": "Start Time",
       "Elapse Time": "Elapse Time",
-      "Transit Time":"Transit Time",
+      "Transit Time": "Transit Time",
       "Synchronization Time": "Synchronization Time",
-      "Wait Time":"Wait Time",
+      "Wait Time": "Wait Time",
       "Synchronization Time Ratio": "Synchronization Time Ratio",
-      "Wait Time Ratio":"Wait Time Ratio",
+      "Wait Time Ratio": "Wait Time Ratio",
       "Idle Time": "Idle Time",
-      "Bandwidth Analysis":"Bandwidth Analysis",
+      "Bandwidth Analysis": "Bandwidth Analysis",
       "Large Packet Ratio": "Large Packet Ratio",
       "Communication Operators Details": "Communication Operators Details",
       "see more": "see more"
     },
     "tableHeadTooltip": {
       "Elapse Time": "Total time consumed by all events of communication operators. Formula: Elapse time = Sum of communication event time",
-      "Transit Time":"Total time consumed by communication operators on SDMA links (for intra-server communication) and RDMA links (for inter-server communication). Formula: Communication time = ReduceInline + Memcpy + RDMA communication time",
+      "Transit Time": "Total time consumed by communication operators on SDMA links (for intra-server communication) and RDMA links (for inter-server communication). Formula: Communication time = ReduceInline + Memcpy + RDMA communication time",
       "Synchronization Time": "Synchronization time before the first communication between cards, which is used to determine whether the prolonged wait time is caused by slow nodes or slow links. Formula: Wait time before communication = Sum of NotifyWait time before the first SDMA or RDMA communication",
-      "Wait Time":"Synchronization is performed before two cards communicate with each other. The wait time is calculated by subtracting the time consumed by NotifyWait operators in RDMA communication time from the total time consumption of all NotifyWait operators. Formula: Wait time = NotifyWait – NotifyWait in RDMA communication time",
+      "Wait Time": "Synchronization is performed before two cards communicate with each other. The wait time is calculated by subtracting the time consumed by NotifyWait operators in RDMA communication time from the total time consumption of all NotifyWait operators. Formula: Wait time = NotifyWait – NotifyWait in RDMA communication time",
       "Synchronization Time Ratio": "Synchronization time ratio = (Synchronization time)/(Transit time + Synchronization time)",
-      "Wait Time Ratio":"Wait Time ratio = (Wait time)/(Transit time + Wait time)",
+      "Wait Time Ratio": "Wait Time ratio = (Wait time)/(Transit time + Wait time)",
       "Idle Time": "Idle time = Elapse time – Transmit time – Wait time"
-    }
+    },
+    "Advice": "Advice",
+    "AdviceTip": "The bandwidth is the ratio of the communication data size to the communication time, not the physical bandwidth.",
+    "Overall": "Overall",
+    "OverallDuration": "The total duration of {{type}} is {{time}}ms. ",
+    "MoreFocus": "Please pay attention to {{type}}.",
+    "CommunicationAdvice": "{{type}} bandwidth(GB/s): the average is {{avg}}GB/s, while the maximum is {{max}}GB/s and the minimum is {{min}}GB/s. The difference is {{diff}}GB/s. {{issue}}, please pay attention to the Bandwidth Analysis column in the table above.",
+    "BandwidthIssue": "Bandwidth is the bottleneck",
+    "CommunicationIssue": "Communication efficiency is low"
   }
 }

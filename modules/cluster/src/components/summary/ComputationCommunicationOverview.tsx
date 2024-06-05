@@ -32,6 +32,17 @@ interface SummaryDataType{
     computingTimeTransfer?: string | number;
 }
 
+export interface AdviceInfo {
+    communication: number;
+    compute: number;
+    free: number;
+};
+
+interface AdviceAndSummary {
+    advice: AdviceInfo;
+    summaryList: SummaryDataType[];
+}
+
 const baseOptionLegendData = [
     { name: 'Preparing', textStyle: { color: COLOR.Grey50 } },
     { name: 'Computing', textStyle: { color: COLOR.Grey50 } },
@@ -244,14 +255,14 @@ export const useHit = (): React.ReactElement => {
     </StyledTooltip>);
 };
 
-async function GetTopSummary(conditions: ConditionDataType): Promise<SummaryDataType[]> {
+async function GetTopSummary(conditions: ConditionDataType): Promise<AdviceAndSummary> {
     const res: any = await queryTopSummary(conditions);
-    const { summaryList } = res;
+    const { advice, summaryList } = res;
     if (conditions.orderBy === 'computingTime') {
         summaryList.sort((a: any, b: any) =>
             b.computingTime - b.communicationOverLappedTime - a.computingTime + a.communicationOverLappedTime);
     }
-    return summaryList;
+    return { advice, summaryList };
 };
 
 const ComputationCommunicationOverview = observer(({ session }: { session: Session }): JSX.Element => {
@@ -259,6 +270,7 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
     const [allDataSource, setAllDatasource] = useState<SummaryDataType[]>([]);
     const [selected, setSelected] = useState({ rankId: '', step: '' });
     const [chartRankId, setChartRankId] = useState('');
+    const [slowAdvice, setSlowAdvice] = useState<AdviceInfo>({ communication: 0, compute: 0, free: 0 });
     const { t } = useTranslation('summary');
 
     chartVisbilityListener('overview-chart', () => {
@@ -286,9 +298,10 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
             setChartRankId(data[0]?.rankId);
             return;
         }
-        const summaryList: any = await GetTopSummary(conditions);
+        const { advice, summaryList } = await GetTopSummary(conditions);
         const data = [...summaryList];
         setAllDatasource(data);
+        setSlowAdvice(advice);
         setDatasource(conditions.top === 0 ? summaryList : summaryList.slice(0, conditions.top));
         setSelected({ ...selected, step: conditions.step, rankId: data[0]?.rankId });
         setChartRankId(data[0]?.rankId);
@@ -300,10 +313,10 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
     };
     return session.renderId > 0
         ? (<OverviewCom handleFilterChange={handleFilterChange} session={session}
-            dataSource={dataSource} selected={selected}/>)
+            dataSource={dataSource} advice={slowAdvice} selected={selected}/>)
         : <></>;
 });
-const OverviewCom = ({ handleFilterChange, dataSource, selected, session }: any): JSX.Element => {
+const OverviewCom = ({ handleFilterChange, dataSource, selected, advice, session }: any): JSX.Element => {
     const [pipelineVisible, setPipelineVisible] = useState(true);
     const { t } = useTranslation('summary');
     useEventBus('setActiveTab', (data) => {
@@ -321,7 +334,7 @@ const OverviewCom = ({ handleFilterChange, dataSource, selected, session }: any)
             </div>
             <div style={{ padding: '0 3rem' }}>
                 <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
-                <StatisticsTable {...selected} session={session}/>
+                <StatisticsTable {...selected} advice={advice} session={session}/>
             </div>
         </div>
         <div className={pipelineVisible ? '' : 'hide'}>
