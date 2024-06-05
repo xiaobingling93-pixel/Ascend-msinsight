@@ -1,63 +1,100 @@
-import { ref, computed, watch, type Ref } from 'vue';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+import { ref, computed, type Ref } from 'vue';
 import { defineStore } from 'pinia';
-import { type DataSource, LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
+import { type DataSource, LOCAL_HOST, PORT, type ProjectDirectory } from '@/centralServer/websocket/defs';
 import type { TreeNodeType } from '@/components/MenuTree/types';
-import { addDataPath, connectRemote, disconnectRemote, request } from '@/centralServer/server';
+import {addDataPath, connectRemote, disconnectRemote, isExistedRemote, request} from '@/centralServer/server';
 import connector from '@/connection';
-import { modulesConfig } from '@/moduleConfig';
 import { useSession } from './session';
+import { Console as console } from '@/utils/console';
 
-const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource, importMethod?: 'drag', result?: any): boolean => {
-    const idx = dataSources.value.findIndex((item) => item.remote === dataSource.remote && item.port === dataSource.port);
+const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource, isConflict: boolean): boolean => {
+    const idx = dataSources.value.findIndex((item) =>
+        item.remote === dataSource.remote && item.port === dataSource.port &&
+        item.projectName === dataSource.projectName);
     if (idx === -1) {
         dataSources.value.push(dataSource);
         return false;
     }
-    // remove duplicated path
-    dataSource.dataPath = dataSource.dataPath.filter(path => !dataSources.value[idx].dataPath.includes(path));
-    if (dataSource.dataPath.length !== 0) {
+
+    if (isConflict) {
+        dataSources.value[idx].dataPath = dataSource.dataPath;
+        return true;
+    }
+    const dataPathIdx = dataSource.dataPath.findIndex(path =>
+        dataSources.value[idx].dataPath.includes(path));
+    if (dataPathIdx === -1) {
         dataSources.value[idx].dataPath.push(...dataSource.dataPath);
-        addDataPath(dataSource, importMethod, result);
     }
     return true;
-}
+};
+
+const checkExistedDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource): boolean => {
+    const idx = dataSources.value.findIndex((item) =>
+        item.remote === dataSource.remote && item.port === dataSource.port &&
+        item.projectName === dataSource.projectName);
+    if (idx === -1) {
+        return false;
+    }
+    const dataPathIdx = dataSource.dataPath.findIndex(path =>
+        dataSources.value[idx].dataPath.includes(path));
+    return dataPathIdx !== -1;
+};
 
 export const useDataSources = defineStore('dataSources', () => {
     const { session } = useSession();
-    const dataSources = ref<DataSource[]>([{ remote: LOCAL_HOST, port: PORT, dataPath: [] }]);
-    const lastDataSource = ref<DataSource>({ remote: LOCAL_HOST, port: PORT, dataPath: [] })
-
-    watch(session, () => {
-        if (session.isReset) {
-            dataSources.value = [JSON.parse(JSON.stringify(lastDataSource.value))];
-            dataSources.value[0].dataPath.splice(0, dataSources.value[0].dataPath.length - 1);
-        }
-    });
-
+    const dataSources = ref<DataSource[]>([{ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] }]);
+    const lastDataSource = ref<DataSource>({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
     function checkExistedServer(dataSource: DataSource, importMethod?: 'drag', result?: any): boolean {
         if (session.isReset) {
-            remove(0);
             session.reset();
-            dataSources.value = [{ remote: LOCAL_HOST, port: PORT, dataPath: [] }];
         }
-        const hasExistedServer = mergeDataSource(dataSources, dataSource, importMethod, result);
-        if (hasExistedServer) {
-            lastDataSource.value = dataSource;
-            return true;
+        if (lastDataSource.value?.projectName !== dataSource.projectName) {
+            return false;
         }
-        return false;
-    }
+        return dataSource.dataPath.length > 0 && lastDataSource.value?.dataPath.includes(dataSource.dataPath[0]);
+    };
 
-    const confirm = async (dataSource: DataSource): Promise<void> => {
+    const checkConflict = async (dataSource: DataSource): Promise<boolean> => {
+        if (checkExistedDataSource(dataSources, dataSource)) {
+            // 检查文件是否已经存在，如果存在直接结束,视为无冲突
+            return false;
+        }
+        try {
+            const res = await request(dataSource, 'global', {
+                command: 'files/checkProjectConflict',
+                params: {
+                    projectName: dataSource.projectName,
+                    dataPath: dataSource.dataPath,
+                },
+            });
+            return (res as {isConflict: false}).isConflict;
+        } catch {
+            console.log('checkConflict error');
+            return false;
+        }
+    };
+
+    const confirm = async (dataSource: DataSource, isConflict: boolean): Promise<void> => {
+        if (dataSource.projectName === lastDataSource.value?.projectName && dataSource.dataPath.length === 0) {
+            return;
+        }
         if (checkExistedServer(dataSource)) {
             return; 
         }
-        const isSuccess = await connectRemote(dataSource);
-        if (isSuccess) {
-            connector.send({
-                event: 'remote/import',
-                body: { dataSource },
-            });
+        mergeDataSource(dataSources, dataSource, isConflict);
+        if (isExistedRemote(dataSource)) {
+            addDataPath(dataSource);
+        } else {
+            const isSuccess = await connectRemote(dataSource);
+            if (isSuccess) {
+                connector.send({
+                    event: 'remote/import',
+                    body: { dataSource },
+                });
+            }
         }
         lastDataSource.value = dataSource;
     };
@@ -66,23 +103,32 @@ export const useDataSources = defineStore('dataSources', () => {
         if (checkExistedServer(dataSource, 'drag', result)) {
             return;
         }
-        const isSuccess = await connectRemote(dataSource);
-        if (isSuccess) {
-            connector.send({
-                event: 'drag/import',
-                body: { dataSource, result },
-            });
+        mergeDataSource(dataSources, dataSource, false);
+        if (isExistedRemote(dataSource)) {
+            addDataPath(dataSource, 'drag', result);
+        } else {
+            const isSuccess = await connectRemote(dataSource);
+            if (isSuccess) {
+                connector.send({
+                    event: 'drag/import',
+                    body: { dataSource, result },
+                });
+            }
         }
         lastDataSource.value = dataSource;
     };
 
-    const SPLITTER = ': ';
-    const menuTree = computed<TreeNodeType[]>(() =>
-        dataSources.value.filter(dataSource => dataSource.dataPath.length !== 0).map(dataSource => ({
-            label: `${dataSource.remote}${SPLITTER}${dataSource.port}`,
-            children: dataSource.dataPath.map(data => ({label: data })),
-            cancelable: true,
-        }))
+    const menuTree = computed<TreeNodeType[]>(() => {
+            // 树状目录索引值，从1开始计
+            let index = 1;
+            return dataSources.value.filter(dataSource => dataSource.dataPath.length !== 0).map(dataSource => ({
+                id: index++,
+                projectName: '',
+                label: dataSource.projectName,
+                children: dataSource.dataPath.map(data => ({ id:index++, projectName: dataSource.projectName, label: data})),
+                cancelable: true,
+            }));
+        }
     );
 
     const remove = async (index: number): Promise<void> => {
@@ -91,23 +137,30 @@ export const useDataSources = defineStore('dataSources', () => {
         if (!dataSource) {
             return;
         }
-        connector.send({
-            event: 'remote/remove',
-            body: { dataSource },
-        });
-        session.reset(true);
-        if (dataSource.remote !== LOCAL_HOST) {
+        try {
+            // 如果当前文件在删除项目中，则需要对当前页面进行清空处理
+            if (lastDataSource.value?.projectName === dataSource.projectName) {
+                connector.send({
+                    event: 'remote/remove',
+                    body: { dataSource },
+                });
+                session.reset(true);
+                await request(dataSource, 'timeline', { command: 'remote/reset', params: {} });
+                lastDataSource.value = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
+            }
+            // 发送请求给后端，清空该项目目录数据
+            await request(dataSource, 'global', {command: 'files/deleteProjectExplorer',
+                params: {projectName: dataSource.projectName, dataPath: []}});
+            // dataSource内容更新
             dataSources.value.splice(index, 1);
-        } else {
-            dataSources.value[index].dataPath = [];
+            if (dataSource.remote !== LOCAL_HOST) {
+                disconnectRemote(dataSource);
+            }
+            session.loading = false;
+        } catch {
+            console.log('remove error');
         }
-
-        await request(dataSource, 'timeline', { command: 'remote/reset', params: {} });
-        if (dataSource.remote !== LOCAL_HOST) {
-            disconnectRemote(dataSource);
-        }
-        session.loading = false;
-    }
+    };
 
     const removeSingle = async (parentIndex: number, index: number): Promise<void> => {
         session.loading = true;
@@ -124,8 +177,49 @@ export const useDataSources = defineStore('dataSources', () => {
             event: 'remote/removeSingle',
             body: { dataSource, singleDataPath },
         });
+        try {
+            await request(dataSource, 'global', {command: 'files/deleteProjectExplorer',
+                params: {projectName: dataSource.projectName, dataPath: [singleDataPath]}});
+        } catch {
+            console.log('removeSingle error');
+        }
         dataSources.value[parentIndex].dataPath.splice(index, 1);
+    };
+
+    const updateProjectName = async (oldProjectName: string, newProjectName: string): Promise<void> => {
+        try {
+            // 请求后端 更新数据
+            await request({ remote: LOCAL_HOST, port: PORT, projectName: oldProjectName, dataPath: [] }, 'global', {
+                command: 'files/updateProjectExplorer',
+                params: {
+                    oldProjectName,
+                    newProjectName,
+                },
+            });
+        } catch {
+            console.log('updateProjectName error');
+            return;
+        }
+
+        const idx = dataSources.value.findIndex((item) =>
+            item.projectName === oldProjectName);
+        if (idx !== -1) {
+            dataSources.value[idx].projectName = newProjectName;
+        }
+        if (lastDataSource.value.projectName === oldProjectName) {
+            lastDataSource.value.projectName = newProjectName;
+        }
+    };
+
+    const initProjectName = async (projectDirectoryList: ProjectDirectory[]): Promise<void> => {
+        dataSources.value = [];
+        projectDirectoryList.forEach(item => {
+            let source: DataSource = {
+                remote: LOCAL_HOST, port: PORT, projectName: item.projectName, dataPath: item.fileName,
+            };
+            dataSources.value.push(source);
+        });
     }
 
-    return { menuTree, remove, confirm, confirmDrop, removeSingle, lastDataSource };
+    return { menuTree, remove, confirm, confirmDrop, removeSingle, lastDataSource, updateProjectName, initProjectName, checkConflict };
 });

@@ -8,6 +8,7 @@
 #include "ParamsParser.h"
 #include "SocketUtil.h"
 #include "WsServer.h"
+#include "ProjectExplorerManager.h"
 
 using namespace std;
 using namespace Dic;
@@ -69,6 +70,7 @@ int main(int argc, const char *argv[])
         return 0;
     }
     ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
+    Dic::Module::Global::ProjectExplorerManager::Instance().InitSystemMemoryDbPath(option.logPath);
     ParamsOptionInfo();
     StartServer(option);
     return 0;

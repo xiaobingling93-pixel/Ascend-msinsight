@@ -21,7 +21,7 @@ ParserBin::ParserBin() {}
 
 ParserBin::~ParserBin() {}
 
-void ParserBin::Parser(const std::string &path, ImportActionRequest &request)
+void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
     std::string token = request.token;
 
@@ -38,13 +38,14 @@ void ParserBin::Parser(const std::string &path, ImportActionRequest &request)
     response.moduleName = Protocol::ModuleType::TIMELINE;
     response.body.reset = true;
 
-    std::string selectedFolder = request.params.path[0];
+    std::string selectedFolder = projectInfos[0].fileName;
 
     // compute
     if (FileUtil::CheckFilePathLength(selectedFolder) &&
         Source::SourceFileParser::Instance().CheckOperatorBinary(selectedFolder)) {
         ServerLog::Info("Import file is binary.Start parse source binary file.");
         HandleCompute(response, selectedFolder);
+        SaveDbPath(projectInfos[0].projectName, dataPathToDbMap);
         SetParseCallBack(token, Source::SourceFileParser::Instance());
         session.OnResponse(std::move(responsePtr));
     } else {
@@ -77,7 +78,7 @@ std::vector<std::pair<std::string, std::string>> ParserBin::GetSimulationTraceFi
 {
     body.isCluster = false;
     std::vector<std::pair<std::string, std::string>> files;
-    std::string fileId = GetFileId(selectFilePath);
+    std::string fileId = GetFileId(selectFilePath, selectFilePath);
     if (fileId.empty()) {
         ServerLog::Error("File id is empty. file:", selectFilePath);
         return files;
@@ -97,6 +98,11 @@ void ParserBin::SetParseCallBack(const std::string &token, FileParser &fileParse
         std::bind(ParseProgressCallBack, token, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
         std::placeholders::_4);
     fileParser.SetParseProgressCallBack(progressFunc);
+}
+
+ProjectTypeEnum ParserBin::GetProjectType(const std::vector<std::string> &dataPath)
+{
+    return ProjectTypeEnum::BIN;
 }
 } // Module
 } // Dic

@@ -49,6 +49,11 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
         JsonUtil::AddMember(actionJson, "rankId", action.rankId, allocator);
         JsonUtil::AddMember(actionJson, "cardPath", action.cardPath, allocator);
         JsonUtil::AddMember(actionJson, "result", action.result, allocator);
+        json_t dataPathList(kArrayType);
+        for (const auto &item: action.dataPathList) {
+            dataPathList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+        }
+        JsonUtil::AddMember(actionJson, "dataPathList", dataPathList, allocator);
         result.PushBack(actionJson, allocator);
     }
     JsonUtil::AddMember(body, "result", result, allocator);

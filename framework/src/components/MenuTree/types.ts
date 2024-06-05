@@ -1,4 +1,6 @@
 export type TreeNodeType = {
+    id: number;
+    projectName: string;
     label: string;
     cancelable?: boolean;
     children?: TreeNodeType[];

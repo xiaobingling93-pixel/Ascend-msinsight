@@ -18,11 +18,12 @@ public:
     ParserBin();
     virtual ~ParserBin();
 
-    void Parser(const std::string &path, ImportActionRequest &request) final;
+    void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
+    ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
 
 private:
     void HandleCompute(ImportActionResponse &response, const std::string &selectedFolder);
-    static std::vector<std::pair<std::string, std::string>> GetSimulationTraceFiles(const std::string &selectFilePath,
+    std::vector<std::pair<std::string, std::string>> GetSimulationTraceFiles(const std::string &selectFilePath,
         ImportActionResBody &body);
     static void SetParseCallBack(const std::string &token, FileParser &fileParser);
 };

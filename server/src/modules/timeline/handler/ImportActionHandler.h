@@ -25,8 +25,9 @@ public:
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 
 private:
-    static std::pair<std::string, ParserType> GetImportType(const std::vector<std::string> &pathList);
     static void SendParseFailEvent(const std::string &token, const std::string &message);
+    static bool TransferProject(ImportActionRequest &request);
+    static bool ImportFile(ImportActionRequest &request);
 };
 } // end of namespace Timeline
 } // end of namespace Module

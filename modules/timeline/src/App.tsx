@@ -92,7 +92,7 @@ function handleDropFile(result: CheckResultType): void {
         event: 'dropFile',
         body: {
             isCluster: false,
-            reset: false,
+            reset: true,
             result: result.files?.map(file => ({
                 cardName: file.attr.name,
                 rankId: file.attr.path,

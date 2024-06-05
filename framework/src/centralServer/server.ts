@@ -43,7 +43,6 @@ export const connectRemote = async function (dataSource: DataSource): Promise<bo
 export const addDataPath = function(dataSource: DataSource, importMethod?: 'drag', result?: any): void {
     const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
     if (connection) {
-        connection.addDataPath(dataSource.dataPath);
         if (importMethod && result) {
             connector.send({
                 event: 'drag/import',
@@ -61,7 +60,6 @@ export const addDataPath = function(dataSource: DataSource, importMethod?: 'drag
 export const deleteDataPath = function(dataSource: DataSource): void {
     const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
     if (connection) {
-        connection.deleteDataPath(dataSource.dataPath);
         connector.send({
             event: 'remote/remove',
             body: { dataSource },

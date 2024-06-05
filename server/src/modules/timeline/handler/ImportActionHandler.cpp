@@ -5,17 +5,11 @@
 #include "ImportActionHandler.h"
 #include "ServerLog.h"
 #include "ExecUtil.h"
-#include "FileDef.h"
-#include "FileUtil.h"
-#include "RegexUtil.h"
 #include "WsSessionManager.h"
-#include "ParserStatusManager.h"
 #include "OperatorProtocolEvent.h"
-#include "CommonDefs.h"
-#include "KernelParse.h"
+#include "ProjectExplorerManager.h"
 #include "SourceFileParser.h"
 #include "JupyterServerManager.h"
-#include "JupyterFileParser.h"
 
 namespace Dic {
 namespace Module {
@@ -36,38 +30,29 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    if (request.params.path.empty()) {
-        ServerLog::Warn("Import path is empty.");
+    if (request.params.projectName.empty()) {
+        ServerLog::Warn("Import project is empty.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;
     }
 
-    std::pair<std::string, ParserType> parserType = GetImportType(request.params.path);
-    ParserType allocType = parserType.second;
-    std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(allocType);
-    factory->Parser(parserType.first, request);
-}
-
-
-std::pair<std::string, ParserType> ImportActionHandler::GetImportType(const std::vector<std::string> &pathList)
-{
-    std::pair<std::string, ParserType> result;
-    auto dbFiles = FileUtil::FindFilesByRegex(pathList[0], std::regex(DBReg));
-    auto traceFiles = FileUtil::FindFilesByRegex(pathList[0], std::regex(traceViewReg));
-    auto clusterPath = FileUtil::FindFilesAndFoldersByRegex(pathList[0], std::regex(clusterReg), true);
-    if (!dbFiles.empty()) {
-        result = std::make_pair(pathList[0], ParserType::DB);
-    } else if (!traceFiles.empty() or !clusterPath.empty()) {
-        result = std::make_pair(pathList[0], ParserType::JSON);
-    } else if (StringUtil::EndWith(pathList[0], computeBinSuffix)) {
-        result = std::make_pair(pathList[0], ParserType::BIN);
-    } else if (StringUtil::EndWith(pathList[0], ipynbSuffix)) {
-        result = std::make_pair(pathList[0], ParserType::IPYNB);
+    std::shared_ptr<ParserAlloc> factory;
+    if (!request.params.path.empty()) {
+        // 如果入参的文件内容不为空，则为导入新的文件
+        if (!ImportFile(request)) {
+            SetResponseResult(response, false);
+            session.OnResponse(std::move(responsePtr));
+            return;
+        }
     } else {
-        result = std::make_pair(pathList[0], ParserType::JSON); // 默认情况下也按JSON方式解析
+        // 如果入参的文件内容为空，则为项目切换
+        if (!TransferProject(request)) {
+            SetResponseResult(response, false);
+            session.OnResponse(std::move(responsePtr));
+            return;
+        }
     }
-    return result;
 }
 
 void ImportActionHandler::SendParseFailEvent(const std::string &token, const std::string &message)
@@ -83,6 +68,53 @@ void ImportActionHandler::SendParseFailEvent(const std::string &token, const std
     event->result = false;
     event->body.error = message;
     session->OnEvent(std::move(event));
+}
+
+
+bool ImportActionHandler::TransferProject(ImportActionRequest &request)
+{
+    std::vector<Global::ProjectExplorerInfo> projectExplorerInfo = Global::ProjectExplorerManager::Instance()
+            .QueryProjectExplorer(request.params.projectName, std::vector<std::string>());
+    if (projectExplorerInfo.empty()) {
+        ServerLog::Warn("params error, project explorer info is not existed.");
+        return false;
+    }
+
+    auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectExplorerInfo[0].projectType);
+    ParserType parserType = coverProjectTypeToParserType(projectTypeEnum);
+    std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(parserType);
+    factory->Reset();
+    factory->Parser(projectExplorerInfo, request);
+    return true;
+}
+
+bool ImportActionHandler::ImportFile(ImportActionRequest &request)
+{
+    // 如果入参的文件内容不为空，则通过文件判断文件类型获取工厂
+    std::pair<std::string, ParserType> parserType = ParserFactory::GetImportType(request.params.path);
+    ParserType allocType = parserType.second;
+    std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(allocType);
+    // 路径列表不为空，需要进行文件目录的新增、覆盖
+    ProjectTypeEnum projectType = factory->GetProjectType(request.params.path);
+    if (!Global::ProjectExplorerManager::Instance().SaveProjectExplorer(request.params.projectName,
+                                                                        request.params.path[0], projectType,
+                                                                        "import", std::vector<std::string>())) {
+        ServerLog::Warn("Save file path failed.");
+        return false;
+    }
+
+    std::vector<Global::ProjectExplorerInfo> projectExplorerInfo = Global::ProjectExplorerManager::Instance()
+            .QueryProjectExplorer(request.params.projectName, std::vector<std::string>());
+    if (projectExplorerInfo.empty()) {
+        return false;
+    }
+    std::vector<std::string> filePathUnderProject;
+    for (const auto &item: projectExplorerInfo) {
+        filePathUnderProject.push_back(item.fileName);
+    }
+    factory->Reset();
+    factory->Parser(projectExplorerInfo, request);
+    return true;
 }
 
 } // Timeline

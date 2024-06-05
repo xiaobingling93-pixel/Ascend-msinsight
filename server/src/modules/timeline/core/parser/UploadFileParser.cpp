@@ -1,8 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-#include "SimulationSliceCacheManager.h"
 #include "UploadFileParser.h"
+#include "SimulationSliceCacheManager.h"
+#include "ProjectExplorerManager.h"
+#include "TraceFileParser.h"
+#include "MemoryParse.h"
+#include "SourceFileParser.h"
+
 
 namespace Dic {
 namespace Module {
@@ -30,6 +35,16 @@ bool UploadFileParser::Parse(const std::vector<std::string> &filePaths, const st
 
 void UploadFileParser::Parse(UploadFileRequest request)
 {
+    TraceFileParser::Instance().Reset();
+    Summary::KernelParse::Instance().Reset();
+    Memory::MemoryParse::Instance().Reset();
+    UploadFileParser::Instance().ResetAllFiles();
+    Source::SourceFileParser::Instance().Reset();
+    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::JSON);
+    Global::ProjectExplorerManager::Instance().SaveProjectExplorer(request.params.fileAttr.path,
+                                                                   request.params.fileAttr.path,
+                                                                   ProjectTypeEnum::TRACE, "drag",
+                                                                   std::vector<std::string>());
     threadPool->AddTask([this, request]() { return this->ParseTask(request); });
 }
 
@@ -76,8 +91,16 @@ void UploadFileParser::ParseTask(UploadFileRequest request)
 {
     std::string fileId = FileUtil::PathPreprocess(request.params.fileAttr.path);
     if (!DataBaseManager::Instance().HasFileId(DatabaseType::TRACE, fileId)) {
-        InitDataBase(fileId);
+        std::string dbPath = InitDataBase(fileId);
+        std::map<std::string, std::vector<std::string>> dataPathToDbMap;
+        dataPathToDbMap[request.params.fileAttr.path].push_back(dbPath);
+        Global::ProjectExplorerManager::Instance().UpdateProjectDbPath(request.params.fileAttr.path, dataPathToDbMap);
     }
+    ParseSliceData(request, fileId);
+}
+
+void UploadFileParser::ParseSliceData(const UploadFileRequest& request, const std::string& fileId)
+{
     if (singleFileDataMap.count(fileId) == 0) {
         singleFileDataMap[fileId];
     }
@@ -175,7 +198,7 @@ void UploadFileParser::ParseLast(std::string fileId, UploadFileRequest request)
     ParserAlloc::ParseEndCallBack(request.token, fileId, true, "");
 }
 
-void UploadFileParser::InitDataBase(std::string fileId)
+std::string UploadFileParser::InitDataBase(std::string fileId)
 {
     std::string tmpDir = SystemUtil::GetTempDir();
     std::string dbName = StringUtil::GetHashStrName(fileId);
@@ -185,14 +208,15 @@ void UploadFileParser::InitDataBase(std::string fileId)
     auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
     if (db == nullptr) {
         ServerLog::Error("Failed to get connection,fileId:", fileId);
-        return;
+        return "";
     }
     auto database = std::dynamic_pointer_cast<JsonTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr || !(database->DropAllTable() && database->CreateTable())) {
         ServerLog::Error("Failed to open traceDatabase. fileId:", fileId);
         ParseEndCallBack(fileId, false, "Failed to open db file. Please try again.");
-        return;
+        return "";
     }
+    return dbPath;
 }
 
 void UploadFileParser::ParseEndSendResp(const std::string &fileId, const UploadFileRequest &request,

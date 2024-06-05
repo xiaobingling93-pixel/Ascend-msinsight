@@ -26,77 +26,147 @@ ParserJson::ParserJson() {}
 
 ParserJson::~ParserJson() {}
 
-void ParserJson::Parser(const std::string &path, ImportActionRequest &request)
+void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
+    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::JSON);
+    if (projectInfos[0].importType == "drag") {
+        ReloadDbPath(projectInfos, request);
+        return;
+    }
     std::string token = request.token;
     Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
+    response.command = Protocol::REQ_RES_IMPORT_ACTION;
+    response.moduleName = Protocol::ModuleType::TIMELINE;
 
-    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::JSON);
-    auto files = GetTraceFiles(path, response.body);
-    std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
-    for (const auto &rankEntry : rankListMap) {
-        SetBaseActionOfResponse(response, rankEntry);
-    }
-    bool simulation = false;
-    if (!std::empty(rankListMap) && !std::empty(rankListMap.begin()->second)) {
-        std::string firstfilePath = rankListMap.begin()->second.front();
-        simulation = isSimulation(firstfilePath);
-    }
-    if (simulation) {
+    std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap(response, projectInfos);
+    auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos[0].projectType);
+    if (projectTypeEnum == ProjectTypeEnum::SIMULATION) {
         SetParseCallBack(token, Timeline::TraceFileSimulationParser::Instance());
         ModuleRequestHandler::SetResponseResult(response, true);
-        response.command = Protocol::REQ_RES_IMPORT_ACTION;
-        response.moduleName = Protocol::ModuleType::TIMELINE;
-        response.body.isSimulation = simulation;
+        response.body.isSimulation = true;
         session.OnResponse(std::move(responsePtr));
         for (const auto &rankEntry : rankListMap) {
-            Timeline::TraceFileSimulationParser::Instance().Parse(rankEntry.second, rankEntry.first, path);
+            Timeline::TraceFileSimulationParser::Instance().Parse(rankEntry.second, rankEntry.first,
+                                                                  rankEntry.second[0]);
         }
         return;
+    } else if (projectTypeEnum == ProjectTypeEnum::CLUSTER) {
+        DataBaseManager::Instance().curIsCluster = true;
     }
     SetParseCallBack(token, Timeline::TraceFileParser::Instance());
+    ModuleRequestHandler::SetResponseResult(response, true);
+    // add response to response queue in session
+    session.OnResponse(std::move(responsePtr));
+    ParserTraceData(rankListMap, projectInfos, request);
+}
+
+std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(
+    ImportActionResponse &response, const std::vector<Global::ProjectExplorerInfo> &projectInfos)
+{
+    std::vector<std::pair<std::string, std::string>> files;
+    std::vector<std::string> fileList;
+    std::map<std::string, std::vector<std::string>> rankToSourceFileMap;
+    for (const auto &item: projectInfos) {
+        auto traceFiles = GetTraceFiles(item.fileName, response.body);
+        for (const auto &traceFile: traceFiles) {
+            rankToSourceFileMap[traceFile.second].push_back(item.fileName);
+        }
+        files.insert(files.end(), traceFiles.begin(), traceFiles.end());
+        fileList.push_back(item.fileName);
+    }
+    std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
+    for (const auto &rankEntry : rankToSourceFileMap) {
+        SetBaseActionOfResponse(response, rankEntry);
+    }
+    return rankListMap;
+}
+
+void ParserJson::ParserTraceData(const std::map<std::string, std::vector<std::string>>& rankListMap,
+                                 const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                                 ImportActionRequest &request)
+{
+    std::string token = request.token;
+    std::vector<std::string> fileList;
+    for (const auto &item: projectInfos) {
+        fileList.push_back(item.fileName);
+    }
+    for (const auto &rankEntry : rankListMap) {
+        Timeline::TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, rankEntry.second[0]);
+    }
+    if (!Summary::KernelParse::Instance().Parse(fileList, token)) {
+        ServerLog::Warn("Failed to parse kernel files.");
+    }
+
+    if (!Memory::MemoryParse::Instance().Parse(fileList, token)) {
+        ServerLog::Warn("Failed to parse memory files.");
+    }
+
+    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token,
+                                                                                  projectInfos[0].fileName,
+                                                                                  dataPathToDbMap,
+                                                                                  projectInfos[0].projectName);
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess, token);
+}
+
+void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo>& projectInfos,
+                              const ImportActionRequest &request)
+{
+    if (projectInfos.empty()) {
+        return;
+    }
+    Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession(request.token);
+    std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
+    ImportActionResponse &response = *responsePtr.get();
+    ModuleRequestHandler::SetBaseResponse(request, response);
+    std::map<std::string, std::vector<std::string>> rankToSourceFileMap;
+    for (const auto &item: projectInfos) {
+        rankToSourceFileMap[item.fileName].push_back(item.fileName);
+    }
+    for (const auto &rankEntry : rankToSourceFileMap) {
+        SetBaseActionOfResponse(response, rankEntry);
+    }
     ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = Protocol::ModuleType::TIMELINE;
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
-    for (const auto &rankEntry : rankListMap) {
-        Timeline::TraceFileParser::Instance().Parse(rankEntry.second, rankEntry.first, path);
+    for (const auto &item: projectInfos) {
+        std::string fileId = FileUtil::PathPreprocess(item.fileName);
+        if (item.dbPath.empty()) {
+            ParseEndCallBack(request.token, item.fileName, false,
+                             "Failed to get db file. Please delete and upload again.");
+        }
+        if (DataBaseManager::Instance().HasFileId(DatabaseType::TRACE, fileId)) {
+            return;
+        }
+        DataBaseManager::Instance().CreatConnectionPool(fileId, item.dbPath[0]);
+        ParseEndCallBack(request.token, item.fileName, true, "");
     }
-    if (!Summary::KernelParse::Instance().Parse(request.params.path, token)) {
-        ServerLog::Warn("Failed to parse kernel files.");
-    }
-
-    if (!Memory::MemoryParse::Instance().Parse(request.params.path, token)) {
-        ServerLog::Warn("Failed to parse memory files.");
-    }
-
-    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, token, path);
-    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess, token);
 }
-    bool ParserJson::isSimulation(std::string filePath)
-    {
-        std::ifstream file(FileUtil::PathPreprocess(filePath), std::ios::in);
-        std::string headerString;
-        int64_t contentStart = 0;
-        file.seekg(contentStart, std::ios::beg);
-        char startTemp;
-        while (file.get(startTemp)) {
-            headerString += startTemp;
-            if (startTemp == '[') {
-                break;
-            }
-            contentStart++;
+
+bool ParserJson::isSimulation(std::string filePath)
+{
+    std::ifstream file(FileUtil::PathPreprocess(filePath), std::ios::in);
+    std::string headerString;
+    int64_t contentStart = 0;
+    file.seekg(contentStart, std::ios::beg);
+    char startTemp;
+    while (file.get(startTemp)) {
+        headerString += startTemp;
+        if (startTemp == '[') {
+            break;
         }
-        ServerLog::Info("Import first file header is: ", headerString);
-        if (headerString.find("profilingType") != std::string::npos && headerString.find("op") != std::string::npos) {
-            return true;
-        }
-        return false;
+        contentStart++;
     }
+    ServerLog::Info("Import first file header is: ", headerString);
+    if (headerString.find("profilingType") != std::string::npos && headerString.find("op") != std::string::npos) {
+        return true;
+    }
+    return false;
+}
 
 void ParserJson::SendAllParseSuccess(const std::string &token)
 {
@@ -134,7 +204,9 @@ void ParserJson::SetParseCallBack(std::string token, FileParser &fileParser)
 }
 
 
-void ParserJson::ClusterProcess(const std::string &token, const std::string &selectedFolder)
+void ParserJson::ClusterProcess(const std::string &token, const std::string &selectedFolder,
+                                std::map<std::string, std::vector<std::string>> &dataPathToDbMap,
+                                const std::string &projectName)
 {
     std::string parseClusterResult = PARSE_RESULT_NONE;
     if (DataBaseManager::Instance().curIsCluster) {
@@ -142,6 +214,7 @@ void ParserJson::ClusterProcess(const std::string &token, const std::string &sel
         if (clusterFileParser.ParseClusterFiles(selectedFolder)) {
             ServerLog::Info("ParseClusterFiles is success");
             parseClusterResult = PARSE_RESULT_OK;
+            dataPathToDbMap[selectedFolder].push_back(clusterFileParser.GetClusterDbPath());
             ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcessAsyncStep, token,
                 selectedFolder);
         } else {
@@ -151,6 +224,7 @@ void ParserJson::ClusterProcess(const std::string &token, const std::string &sel
     }
     // send event
     ParserAlloc::ParseClusterEndProcess(token, parseClusterResult);
+    SaveDbPath(projectName, dataPathToDbMap);
 }
 
 void ParserJson::ClusterProcessAsyncStep(const std::string &token, const std::string &selectedFolder)
@@ -191,7 +265,7 @@ std::vector<std::pair<std::string, std::string>> ParserJson::GetTraceFiles(const
     }
     std::vector<std::pair<std::string, std::string>> files;
     for (const auto &file : traceFiles) {
-        std::string fileId = GetFileId(file);
+        std::string fileId = GetFileId(file, path);
         if (fileId.empty()) {
             Server::ServerLog::Error("File id is empty. file:", file);
             continue;
@@ -318,5 +392,20 @@ void ParserJson::FindAscendFolder(const std::string &path, std::vector<std::stri
         break;
     }
 }
+
+ProjectTypeEnum ParserJson::GetProjectType(const std::vector<std::string> &dataPath)
+{
+    std::vector<std::string> traceFiles = FindAllTraceFile(dataPath[0]);
+    bool isCluster = (traceFiles.size() > 1 && std::strcmp(curScene.c_str(), "train") == 0) ||
+            CheckIsCluster(dataPath[0]);
+    if (isCluster) {
+        return ProjectTypeEnum::CLUSTER;
+    }
+    if (!std::empty(traceFiles) && isSimulation(traceFiles[0])) {
+        return ProjectTypeEnum::SIMULATION;
+    }
+    return ProjectTypeEnum::TRACE;
+}
+
 } // Module
 } // Dic

@@ -61,7 +61,13 @@ export type ModuleName = string;
 export type DataSource = {
     remote: string;
     port: number;
+    projectName: string;
     dataPath: string[];
+};
+
+export interface ProjectDirectory {
+    projectName: string;
+    fileName: string[];
 };
 
 export type ResponseHandler = (res: Response) => void;

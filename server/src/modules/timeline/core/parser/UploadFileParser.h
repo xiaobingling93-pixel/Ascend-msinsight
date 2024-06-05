@@ -61,10 +61,11 @@ private:
     std::unique_ptr<ThreadPool> threadPool;
     std::map<std::string, SingleFileData> singleFileDataMap;
 
-    void InitDataBase(std::string fileId);
+    std::string InitDataBase(std::string fileId);
     static bool CheckParseTask(UploadFileRequest request, int sliceIndex, SingleFileData &singleFileData,
                                std::string fileId);
     void ParseTask(UploadFileRequest request);
+    void ParseSliceData(const UploadFileRequest& request, const std::string& fileId);
     void ParseLast(std::string fileId, UploadFileRequest request);
     void ParseEndSendResp(const std::string &fileId, const UploadFileRequest &request, const bool result) const;
     std::tuple<std::string, std::string, std::string> SplitValidJsonStr(const std::string &fileContent);

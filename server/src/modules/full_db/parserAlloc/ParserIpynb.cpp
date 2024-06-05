@@ -20,8 +20,9 @@ ParserIpynb::ParserIpynb() = default;
 
 ParserIpynb::~ParserIpynb() = default;
 
-void ParserIpynb::Parser(const std::string &path, ImportActionRequest &request)
+void ParserIpynb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
+    std::string path = projectInfos[0].fileName;
     // 检查jupyter服务是否存在
     std::string jupyterVersionResult;
     if (CmdUtil::ExecuteCmdWithResult("jupyter-lab --version", jupyterVersionResult)
@@ -79,6 +80,11 @@ void ParserIpynb::SendJupyterInfo(const std::string &token, std::string url)
     }
     event->body.url = std::move(url);
     session->OnEvent(std::move(event));
+}
+
+ProjectTypeEnum ParserIpynb::GetProjectType(const std::vector<std::string> &dataPath)
+{
+    return ProjectTypeEnum::IPYNB;
 }
 }
 }

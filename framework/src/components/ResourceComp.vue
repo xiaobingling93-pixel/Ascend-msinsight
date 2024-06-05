@@ -7,11 +7,12 @@ import { useResource, type ResourceItem } from '@/stores/resourceComp';
 import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import { useDataSources } from '@/stores/dataSource';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
+import {Console as console} from '@/utils/console';
 
 const props = defineProps<{ maxPathLen: number, changeConfirmButtonState: (arg0: boolean) => void }>();
 const emit = defineEmits(['input-change']);
 
-const { confirm } = useDataSources();
+const { confirm, checkConflict } = useDataSources();
 
 const treeRef = ref();
 
@@ -222,13 +223,36 @@ onMounted(() => {
   }
 });
 
-const doSetCurrentPath = () => {
-    const currentkey = treeRef.value.getCurrentKey();
-    if (currentkey && (currentkey === state.inputPath || `${currentkey}\\` === state.inputPath)) {
+const doCheckFileConflict = async (projectName: string) => {
+    const currentkey = treeRef.value.getCurrentKey().replace(/[\\/]+$/, '');
+    const curProjectName = projectName === '' ? currentkey : projectName;
+    if (currentkey && currentkey === state.inputPath) {
         setCurrentPath(currentkey);
-        const dataSource = { remote: LOCAL_HOST, port: PORT, dataPath: [currentkey] };
-        confirm(dataSource);
-        return true;
+        const dataSource = { remote: LOCAL_HOST, port: PORT, projectName: curProjectName, dataPath: [currentkey] };
+        try {
+          return await checkConflict(dataSource);
+        } catch {
+          console.log('doCheckFileConflict error.');
+          return false;
+        }
+    } else {
+        return false;
+    }
+};
+
+const doSetCurrentPath = (projectName: string, isConflict: boolean) => {
+    const currentkey = treeRef.value.getCurrentKey().replace(/[\\/]+$/, '');
+    const curProjectName = projectName === '' ? currentkey : projectName;
+    if (currentkey && currentkey === state.inputPath) {
+        setCurrentPath(currentkey);
+        const dataSource = { remote: LOCAL_HOST, port: PORT, projectName: curProjectName, dataPath: [currentkey] };
+        try {
+          confirm(dataSource, isConflict);
+          return true;
+        } catch {
+          console.log('doSetCurrentPath error.');
+          return false;
+        }
     } else {
         return false;
     }
@@ -253,6 +277,7 @@ const doWhileOpenDialog = () => {
 defineExpose({
     doSetCurrentPath,
     doWhileOpenDialog,
+    doCheckFileConflict,
 });
 </script>
 

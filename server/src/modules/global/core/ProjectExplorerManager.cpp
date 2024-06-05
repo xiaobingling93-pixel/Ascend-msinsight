@@ -137,8 +137,12 @@ void ProjectExplorerManager::CheckProjectConflict(const std::string &projectName
     if (projectName.empty() || filePathList.empty()) {
         return;
     }
-    // yqs-第二部分代码合入时改回去
-    ProjectTypeEnum projectTypeEnum = ProjectTypeEnum::TRACE;
+
+    std::pair<std::string, ParserType> parserType = ParserFactory::GetImportType(filePathList);
+    ParserType allocType = parserType.second;
+    std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(allocType);
+    ProjectTypeEnum projectTypeEnum = factory->GetProjectType(filePathList);
+
     if (!InitSystemMemoryDb()) {
         Server::ServerLog::Error("Failed to open database. path:", systemMemoryDbPath);
         return;

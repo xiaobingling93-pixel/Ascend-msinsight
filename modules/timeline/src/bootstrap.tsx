@@ -29,6 +29,7 @@ declare global {
     interface DataSource {
         remote: string;
         port: number;
+        projectName: string;
         dataPath: string[];
     }
 

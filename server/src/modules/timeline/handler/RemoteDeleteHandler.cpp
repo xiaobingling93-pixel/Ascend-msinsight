@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
 
+#include "RemoteDeleteHandler.h"
 #include "ServerLog.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
@@ -11,7 +12,6 @@
 #include "ParserStatusManager.h"
 #include "UploadFileParser.h"
 #include "FullDbParser.h"
-#include "RemoteDeleteHandler.h"
 
 namespace Dic {
 namespace Module {

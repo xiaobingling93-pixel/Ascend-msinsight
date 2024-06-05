@@ -17,7 +17,8 @@ public:
     ParserDb();
     virtual ~ParserDb();
 
-    void Parser(const std::string &path, ImportActionRequest &request) final;
+    void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
+    ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
 private:
     std::map<std::string, std::vector<std::string>> GetReportFiles(const std::string &path, ImportActionResBody &body);
     void SetParseCallBack(std::string token);

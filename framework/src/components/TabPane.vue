@@ -5,7 +5,7 @@ import connector from '@/connection';
 import { type ModuleConfig, modulesConfig } from '@/moduleConfig';
 import { useSession, type Session } from '@/stores/session';
 import { connectRemote } from '@/centralServer/server';
-import { LOCAL_HOST, PORT, setPort } from '@/centralServer/websocket/defs';
+import { LOCAL_HOST, PORT, type ProjectDirectory, setPort } from '@/centralServer/websocket/defs';
 import { useDataSources } from '@/stores/dataSource';
 import { Console } from '@/utils/console';
 import HelpIcon from '@/components/icons/help_icon.vue';
@@ -16,8 +16,7 @@ import { useLanguage, Languages } from '@/hooks/useLanguage';
 import { t } from '@/i18n';
 import { localStorageService, LocalStorageKeys } from '@/utils/local-storage';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
-
-const { confirmDrop } = useDataSources();
+const { confirmDrop, initProjectName } = useDataSources();
 
 type SceneType = 'Default' | 'Cluster' | 'Compute' | 'Jupyter';
 const scene = ref<SceneType>('Default');
@@ -94,8 +93,14 @@ onMounted(async () => {
     registerEventListeners();
 
     if (!session.isVscode) {
-        await connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
+        await connectRemote({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
     }
+
+    const result: any = await request({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] }, 'global', {
+      command: 'files/getProjectExplorer',
+      params: {}
+    });
+    await initProjectName(result.projectDirectoryList as ProjectDirectory[]);
 });
 
 watch(
@@ -219,7 +224,7 @@ function registerEventListeners() {
             );
         });
         session.isVscode = false;
-        connectRemote({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
+        connectRemote({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
     });
     connector.addListener('deleteRank', (e) => {
         const receiver = e.data.body;
@@ -232,10 +237,10 @@ function registerEventListeners() {
     });
 
     connector.addListener('dropFile', (e) => {
-        const res = e.data.body;
-        const path = res.result?.[0]?.cardPath;
-        const dataSource = { remote: LOCAL_HOST, port: PORT, dataPath: [path] };
-        confirmDrop(dataSource, res);
+      const res = e.data.body;
+      const path = res.result?.[0]?.cardPath;
+      const dataSource = { remote: LOCAL_HOST, port: PORT, projectName: path, dataPath: [path] };
+      confirmDrop(dataSource, res);
     });
 
     connector.addListener('switchModule', (e) => {

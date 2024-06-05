@@ -1,28 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import AddIcon from '@/components/icons/cross_icon.vue';
 import MenuTree from '@/components/MenuTree/MenuTree.vue';
-import ResourceComp from '@/components/ResourceComp.vue';
 import { useDataSources } from '@/stores/dataSource';
 import connector from '@/connection';
 import ProjectMode from '@/components/ProjectMode.vue';
-import { ElMessage } from 'element-plus';
-import { isWindows } from '@/utils/is';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
-
-const MAX_FILE_PATH_LENGTH_WINDOWS = 260;
-const MAX_FILE_PATH_LENGTH_LINUX = 4096;
+import ResourceDialog from '@/components/ResourceDialog.vue';
 
 const isDarkTheme = ref(true);
-const resourceComp = ref();
-// 输入文件是否存在
-const fileIsExist = ref(false);
-// 按钮是否可点击
-const clickAble = ref(true);
-const maxPathLen = isWindows ? MAX_FILE_PATH_LENGTH_WINDOWS : MAX_FILE_PATH_LENGTH_LINUX;
-const inputLen = ref(0);
 
-const isDisabled = computed(() => !fileIsExist.value || !clickAble.value || inputLen.value > maxPathLen);
 onMounted(() => {
     connector.addListener('getParseStatus', () => {
       connector.send({
@@ -38,47 +25,17 @@ watch(isDarkTheme, () => {
     });
     document.body.className = document.body.className === 'dark-theme' ? 'light-theme' : 'dark-theme';
 });
-const [ImportData, SwitchTheme, Confirm, Cancel, FileExplorer, RefreshDirectoryDescribe] = useWatchTranslation(['Import Data','Switch Theme', 'Confirm', 'Cancel', 'File Explorer', 'RefreshDirectoryDescribe']);
+const [ImportData, SwitchTheme] = useWatchTranslation(['Import Data','Switch Theme']);
 
-const changeConfirmButtonState = (buttonState: boolean) => {
-  fileIsExist.value = buttonState;
-};
 const showModal = ref(false);
+
 function addRemote(e: MouseEvent) {
     e.stopPropagation();
     showModal.value = true;
-    if (resourceComp.value) {
-      resourceComp.value.doWhileOpenDialog();
-    }
 }
 
 const store = useDataSources();
 
-let clicking=false;
-const addClickProtect = (func: () => void): void => {
-    if (!clickAble.value) {
-        return;
-    }
-    clickAble.value = false;
-    func();
-    setTimeout(() => {
-        clickAble.value = true;
-    }, 1000);
-};
-
-const handleConfirm = () => {
-    showModal.value = false;
-    setTimeout(() => {
-        const result = resourceComp.value.doSetCurrentPath();
-        if (!result) {
-            ElMessage.error('Error');
-        }
-    }, 100);
-};
-
-function onInputChange(val:number) {
-  inputLen.value = val;
-}
 </script>
 
 <template>
@@ -92,18 +49,7 @@ function onInputChange(val:number) {
         <el-tooltip :content="SwitchTheme" :effect="isDarkTheme ? 'light' : 'dark'">
           <el-switch class="theme-toggle" v-model="isDarkTheme"></el-switch>
         </el-tooltip>
-        <el-dialog v-model="showModal" :title="FileExplorer" width="30%" :close-on-click-modal="false">
-            <ResourceComp ref="resourceComp" :max-path-len="maxPathLen" @input-change="onInputChange" :changeConfirmButtonState = "changeConfirmButtonState" />
-            <template #footer>
-                <div class="foot-tip">
-                    {{RefreshDirectoryDescribe}}
-                </div>
-                <span>
-                    <el-button :disabled="isDisabled" type="primary" @click="addClickProtect(handleConfirm)">{{ Confirm }}</el-button>
-                    <el-button @click="showModal = false">{{ Cancel }}</el-button>
-                </span>
-            </template>
-        </el-dialog>
+        <ResourceDialog v-model:showModal=showModal project-name=""></ResourceDialog>
     </header>
     <div class="container">
         <MenuTree :dataSource="store.menuTree" :is-dark-theme="isDarkTheme"></MenuTree>
@@ -143,12 +89,5 @@ header {
 
 .header .icon-container {
     margin-right: 0.5rem;
-}
-
-.foot-tip {
-  font-size: 14px;
-  padding-bottom: 10px;
-  text-align: left;
-  color: var(--el-color-warning);
 }
 </style>

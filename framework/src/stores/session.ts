@@ -41,7 +41,7 @@ export class Session {
     }
 
     get hasLocalServer(): boolean {
-        return isConnected({ remote: LOCAL_HOST, port: PORT, dataPath: [] });
+        return isConnected({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
     }
 
     reset(remove = false): void {

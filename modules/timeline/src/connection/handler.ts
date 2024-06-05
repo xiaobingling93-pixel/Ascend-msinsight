@@ -13,6 +13,7 @@ import { message } from 'antd';
 import { getTimeOffset } from '../insight/units/utils';
 import { calculateDomainRange } from '../components/CategorySearch';
 import i18n from '../i18n';
+import { cloneDeep } from 'lodash';
 
 const DEFAULT_EXPAND_UNIT_NUMBER = 1;
 const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
@@ -106,47 +107,47 @@ export const parseFailHandler: NotificationHandler = (data): void => {
     });
     message.error(data.error);
 };
+const initUnitInfo = (session: Session | undefined, result: any, dataSource: DataSource): void => {
+    if (!session) {
+        return;
+    }
+    (result.reset as boolean) && (session.units = []);
+    session.phase = 'download';
+    session.endTimeAll = undefined;
+    session.isSimulation = result.isSimulation;
+    session.isIpynb = result.isIpynb;
+    session.isCluster = result.isCluster;
+    result.result.forEach((item: CardInfo) => {
+        const curDataSource = cloneDeep(dataSource);
+        curDataSource.dataPath = item.dataPathList;
+        const unit = new CardUnit({ dataSource: curDataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
+        if (item.result as boolean) {
+            unit.phase = 'analyzing';
+            unit.progress = 0;
+            unit.showProgress = true;
+        } else {
+            unit.phase = 'error';
+        }
+        if (session.units.length < DEFAULT_EXPAND_UNIT_NUMBER) {
+            unit.isExpanded = true;
+        }
+        session.units.push(unit);
+    });
+    session.sortUnits();
+    if (result.reset === true) {
+        session.memoryRankIds = [];
+        session.operatorRankIds = [];
+    }
+};
 
-// eslint-disable-next-line max-lines-per-function
 export const importRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
-        const result = await window.request(dataSource, { command: 'import/action', params: { path: dataSource.dataPath } });
+        const result = await window.request(dataSource, { command: 'import/action', params: { projectName: dataSource.projectName, path: dataSource.dataPath } });
         runInAction(() => {
-            if (!session) {
-                return;
-            }
-            (result.reset as boolean) && (session.units = []);
-            session.phase = 'download';
-            session.endTimeAll = undefined;
-            session.isSimulation = result.isSimulation;
-            session.isIpynb = result.isIpynb;
-            session.isCluster = result.isCluster;
-            result.result.forEach((item: CardInfo) => {
-                const unit = new CardUnit({ dataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
-                if (item.result as boolean) {
-                    unit.phase = 'analyzing';
-                    unit.progress = 0;
-                    unit.showProgress = true;
-                } else {
-                    unit.phase = 'error';
-                }
-                if (session.units.length < DEFAULT_EXPAND_UNIT_NUMBER) {
-                    unit.isExpanded = true;
-                }
-                session.units.push(unit);
-            });
-            session.sortUnits();
-            if (result.reset === true) {
-                session.memoryRankIds = [];
-                session.operatorRankIds = [];
-                if (session.eventUnits[0] !== undefined) {
-                    session.eventUnits = [];
-                }
-                session.doReset = !session.doReset;
-            }
+            initUnitInfo(session, result, dataSource);
         });
         sendSessionUpdate(result, session);
     } catch (error) {

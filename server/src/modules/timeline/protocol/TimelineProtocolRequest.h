@@ -15,6 +15,7 @@
 namespace Dic {
 namespace Protocol {
 struct ImportActionParams {
+    std::string projectName;
     std::vector<std::string> path;
 };
 

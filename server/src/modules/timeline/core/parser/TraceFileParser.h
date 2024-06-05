@@ -24,6 +24,7 @@ public:
         const std::string &selectedFolder) override;
     void Reset() override;
     static void DeleteParseFiles(const std::vector<std::string> &fileIds);
+    static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
 
     int64_t GetTrackId(const std::string &fileId, const std::string &pid, const std::string &tid);
 
@@ -39,7 +40,6 @@ private:
     static void EndParseTask(const std::string &fileId, const std::vector<std::string> &filePathArr,
         std::shared_ptr<std::vector<std::future<void>>> futures,
         std::chrono::time_point<std::chrono::high_resolution_clock> start);
-    static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
     static void DeleteParseFileFromDisk(const std::string &fileId);
     // 用于直接载入ascend_insight_data.db文件时，从thread表中读取trackId，反向更新到trackIdMap中
     void UpdateTrackIdMap(const std::string &fileId,

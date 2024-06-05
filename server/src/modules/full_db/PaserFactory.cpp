@@ -17,17 +17,36 @@
 #include "ClusterParseThreadPoolExecutor.h"
 #include "TraceTime.h"
 #include "TraceFileParser.h"
-#include "ClusterFileParser.h"
 #include "MemoryParse.h"
 #include "OperatorProtocolEvent.h"
 #include "FullDbParser.h"
-#include "DbMemoryDataBase.h"
+#include "ProjectExplorerManager.h"
 
 namespace Dic {
 namespace Module {
 using namespace Dic;
 using namespace Dic::Server;
 using namespace Dic::Module::Timeline;
+
+std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::vector<std::string> &pathList)
+{
+    std::pair<std::string, ParserType> result;
+    auto dbFiles = FileUtil::FindFilesByRegex(pathList[0], std::regex(DBReg));
+    auto traceFiles = FileUtil::FindFilesByRegex(pathList[0], std::regex(traceViewReg));
+    auto clusterPath = FileUtil::FindFilesAndFoldersByRegex(pathList[0], std::regex(clusterReg), true);
+    if (!dbFiles.empty()) {
+        result = std::make_pair(pathList[0], ParserType::DB);
+    } else if (!traceFiles.empty() or !clusterPath.empty()) {
+        result = std::make_pair(pathList[0], ParserType::JSON);
+    } else if (StringUtil::EndWith(pathList[0], computeBinSuffix)) {
+        result = std::make_pair(pathList[0], ParserType::BIN);
+    } else if (StringUtil::EndWith(pathList[0], ipynbSuffix)) {
+        result = std::make_pair(pathList[0], ParserType::IPYNB);
+    } else {
+        result = std::make_pair(pathList[0], ParserType::JSON); // 默认情况下也按JSON方式解析
+    }
+    return result;
+}
 
 std::shared_ptr<ParserAlloc> ParserFactory::ParserImport(ParserType allocType)
 {
@@ -64,6 +83,7 @@ void ParserAlloc::SetBaseActionOfResponse(ImportActionResponse &response,
         ServerLog::Warn("CardPath is empty, rankId is: ", rankId);
         return;
     }
+    action.dataPathList = rankEntry.second;
     // 将文件所在路径的三级目录名称作为rank的tooltip信息
     action.cardPath = "Directory: " + FileUtil::GetRankIdFromPath(rankEntry.second[0]);
     response.body.result.emplace_back(action);
@@ -173,7 +193,7 @@ void ParserAlloc::SearchMetaData(const std::string &fileId, std::vector<std::uni
     database->QueryUnitsMetadata(fileId, metaData);
 }
 
-std::string ParserAlloc::GetFileId(const std::string &filePath)
+std::string ParserAlloc::GetFileId(const std::string &filePath, const std::string &importPath)
 {
     std::string fileId = FileUtil::GetRankIdFromFile(filePath);
     int i = 1;
@@ -196,6 +216,7 @@ std::string ParserAlloc::GetFileId(const std::string &filePath)
         ServerLog::Error("Failed to create connection pool. fileId:", result, ". path:", dbPath);
         return "";
     }
+    dataPathToDbMap[importPath].push_back(dbPath);
     return result;
 }
 
@@ -260,6 +281,12 @@ void ParserAlloc::Reset()
     TraceFileParser::Instance().Reset();
     Summary::KernelParse::Instance().Reset();
     Memory::MemoryParse::Instance().Reset();
+}
+
+void ParserAlloc::SaveDbPath(const std::string &curProjectName,
+                             std::map<std::string, std::vector<std::string>> &dataPathToDbMap)
+{
+    Global::ProjectExplorerManager::Instance().UpdateProjectDbPath(curProjectName, dataPathToDbMap);
 }
 
 } // Module

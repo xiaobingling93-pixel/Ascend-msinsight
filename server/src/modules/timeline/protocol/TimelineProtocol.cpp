@@ -89,6 +89,7 @@ std::unique_ptr<Request> TimelineProtocol::ToImportActionRequest(const json_t &j
             reqPtr->params.path.emplace_back(path.GetString());
         }
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.projectName, json["params"], "projectName");
     return reqPtr;
 }
 

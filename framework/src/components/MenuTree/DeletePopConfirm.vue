@@ -38,8 +38,8 @@ const handleDeleteAll = () => {
             <Delete />
         </template>
     </el-popconfirm>
-    <Delete v-if="isDeleteAll" @click="dialogVisible = true" />
-    <el-dialog v-model="dialogVisible" :title="DeleteAll" width="20%" :show-close="false" :align-center="true">
+    <Delete v-if="isDeleteAll" @click.stop="dialogVisible = true" />
+    <el-dialog v-model="dialogVisible" :title="DeleteAll" width="20%" :show-close="false" :align-center="true" append-to-body>
         <span>{{ DeleteAllConfirmDescribe }}</span>
         <template #footer>
             <span class="dialog-footer">

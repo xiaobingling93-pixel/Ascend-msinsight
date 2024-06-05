@@ -22,8 +22,9 @@ ParserDb::ParserDb() {
 ParserDb::~ParserDb() {
 }
 
-void ParserDb::Parser(const std::string &path, ImportActionRequest &request)
+void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
+    std::string path = projectInfos[0].fileName;
     std::string token = request.token;
     Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
@@ -172,6 +173,11 @@ void ParserDb::SetBaseActionOfResponse(ImportActionResponse &response, const std
         action.cardPath = "Directory: " + FileUtil::GetRankIdFromPath(dbFile);
     }
     response.body.result.emplace_back(action);
+}
+
+ProjectTypeEnum ParserDb::GetProjectType(const std::vector<std::string> &dataPath)
+{
+    return ProjectTypeEnum::DB;
 }
 } // Module
 } // Dic

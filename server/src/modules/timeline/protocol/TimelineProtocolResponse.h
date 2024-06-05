@@ -19,6 +19,7 @@ struct Action {
     std::string rankId;
     std::string cardPath;
     bool result = true;
+    std::vector<std::string> dataPathList;
 };
 
 struct ImportActionResBody {
@@ -27,7 +28,7 @@ struct ImportActionResBody {
     std::vector<std::string> sourceList;
     bool isBinary = false;
     bool isCluster = false;
-    bool reset = false;
+    bool reset = true;
     bool isSimulation = false;
     bool isIpynb = false;
 };
