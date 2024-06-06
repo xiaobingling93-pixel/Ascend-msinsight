@@ -22,7 +22,7 @@ public:
     std::vector<ProjectExplorerInfo> QueryProjectExplorerData(const std::string &projectName,
                                                               const std::vector<std::string>& fileNameList);
     bool SaveProjectExplorerData(ProjectExplorerInfo projectExplorerInfo);
-    bool UpdateProjectName(const std::string &projectName, const std::string &newProjectName);
+    bool UpdateProjectName(const std::string &oldProjectName, const std::string &newProjectName);
     bool UpdateProjectDbPath(const std::string &projectName, const std::string &fileName, const std::string &dbPath);
     bool DropTable();
     bool DeleteFileMenu(const std::string &projectName, const std::vector<std::string>& fileNameList);
