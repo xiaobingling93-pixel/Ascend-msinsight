@@ -312,8 +312,19 @@ bool Database::CheckTableContainData(const std::string& tableName)
         return false;
     }
     auto result = stmt->ExecuteQuery(tableName);
-    if (result->GetErrorCode() == SQLITE_OK && result->Next()) {
-        return result->GetInt64("count(*)");
+    if (result != nullptr && result->Next()) {
+        if (result->GetInt64("count(*)") > 0) {
+            sql = "SELECT count(*) FROM " + tableName + ";";
+            stmt = CreatPreparedStatement(sql);
+            if (stmt == nullptr) {
+                ServerLog::Error("Failed prepare sql. ");
+                return false;
+            }
+            result = stmt->ExecuteQuery();
+            if (result != nullptr && result->Next()) {
+                return result->GetInt64("count(*)") > 0;
+            }
+        }
     }
     return false;
 }
