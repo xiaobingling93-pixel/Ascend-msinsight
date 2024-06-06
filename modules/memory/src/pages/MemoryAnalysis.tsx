@@ -88,7 +88,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     const { t } = useTranslation('memory');
 
     const fetchMemoryType = (memoryRankId: string | undefined): void => {
-        if (memoryRankId === undefined) {
+        if (memoryRankId === undefined || memoryRankId === '') {
             return;
         }
         memoryTypeGet({ rankId: memoryRankId }).then((resp) => {
@@ -153,7 +153,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     };
 
     const onSearch = (searchName: string, minimumSize: number, maximumSize: number, resetCurrent = false): void => {
-        if (rankIdCondition.value === undefined) {
+        if (rankIdCondition.value === undefined || rankIdCondition.value === '') {
             return;
         }
         if (maximumSize < minimumSize) {
@@ -190,7 +190,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     };
 
     const onStaticSearch = (searchName: string, minimumSize: number, maximumSize: number, resetCurrent = false): void => {
-        if (rankIdCondition.value === undefined || memoryGraphId === undefined) {
+        if (rankIdCondition.value === undefined || rankIdCondition.value === '' || memoryGraphId === undefined) {
             return;
         }
         if (maximumSize < minimumSize) {
@@ -307,7 +307,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     }, [selectedRange, rankIdCondition.value, current, pageSize, order, orderBy, session.isClusterMemoryCompletedSwitch, groupId, memoryGraphId, t]);
 
     useEffect(() => {
-        if (rankIdCondition.value === undefined) {
+        if (rankIdCondition.value === undefined || rankIdCondition.value === '') {
             setBtnDisabled(true);
             setLineChartData(undefined);
             setMemoryCurveData(undefined);
@@ -340,7 +340,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     }, [JSON.stringify(session.memoryRankIds)]);
 
     useEffect(() => {
-        if (rankIdCondition.value === undefined || memoryGraphId === undefined) {
+        if (rankIdCondition.value === undefined || rankIdCondition.value === '' || memoryGraphId === undefined) {
             setBtnDisabled(true);
             setStaticLineChartData(undefined);
             setMemoryStaticCurveData(undefined);
