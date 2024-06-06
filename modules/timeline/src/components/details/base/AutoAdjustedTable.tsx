@@ -92,27 +92,27 @@ const StyledTable = styled(Table)`
         }
 
         .insight-table-cell svg {
-            g g g path:nth-child(even) {
+            g g g path:nth-of-type(even) {
                 fill: #7A7A7A;
             }
         }
 
         .insight-table-cell[aria-sort="ascending"] svg {
-            g g g path:nth-child(odd) {
+            g g g path:nth-of-type(odd) {
                 fill: #526ECC;
             }
 
-            g g g path:nth-child(even) {
+            g g g path:nth-of-type(even) {
                 fill: #7A7A7A;
             }
         }
 
         .insight-table-cell[aria-sort="descending"] svg {
-            g g g path:nth-child(even) {
+            g g g path:nth-of-type(even) {
                 fill: #526ECC;
             }
 
-            g g g path:nth-child(odd) {
+            g g g path:nth-of-type(odd) {
                 fill: #7A7A7A;
             }
         }

@@ -89,7 +89,7 @@ export const SetUnits = observer(({ session }: { session: Session }): JSX.Elemen
             trigger="click"
             color={theme.tooltipBGColor}
             overlayInnerStyle={{ color: theme.tooltipFontColor }}
-            onVisibleChange={onToolTipVisibleChange}
+            onOpenChange={onToolTipVisibleChange}
             placement="bottomLeft"
             align={{ offset: [0, 3] }}>
             <CustomButton icon={funnelIcon} isDisabled={session.phase !== 'configuring'} isSuspend={isSuspend} disabled={session.phase !== 'configuring'} />

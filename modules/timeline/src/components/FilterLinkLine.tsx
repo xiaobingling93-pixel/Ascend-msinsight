@@ -240,7 +240,7 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
             title={<LinkLineFilterBody session={session} isSuspend={customButtonProps.isSuspend} />}
             trigger="click"
             placement="right"
-            onVisibleChange={onTooltipVisibleChange}
+            onOpenChange={onTooltipVisibleChange}
             color={theme.tooltipBGColor}
             overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
             overlayClassName={'insight-category-search-overlay'} align={{ offset: [-8, 3] }}>

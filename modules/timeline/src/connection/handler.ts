@@ -238,9 +238,9 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
             clearIpynbInfo(session);
             clearTimeMarkerFlags(session);
             session.doReset = !session.doReset;
+            session.memoryRankIds = [];
+            session.operatorRankIds = [];
         });
-        session.memoryRankIds = [];
-        session.operatorRankIds = [];
     } catch (error) {
         console.error(error);
     }
