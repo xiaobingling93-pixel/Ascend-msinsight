@@ -90,6 +90,21 @@ public:
             return 0;
         }
     }
+
+    // 只处理1~6位小数位的截尾
+    static inline double DoubleReservedNDigits(double data, int n)
+    {
+        if (n <= 0 || n > 6) { // 最多处理6位小数位
+            return data;
+        }
+
+        int ratio = 1;
+        for (int i = 0; i < n; ++i) {
+            ratio *= 10; // 10进制
+        }
+        long double temp = data;
+        return (double)(std::round(data * ratio) / ratio);
+    }
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_NUMBER_UTIL_H

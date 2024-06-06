@@ -3,6 +3,7 @@
  */
 #include "ServerLog.h"
 #include "JsonUtil.h"
+#include "NumberUtil.h"
 #include "ProtocolEnumUtil.h"
 #include "SummaryProtocol.h"
 #include "SummaryProtocolUtil.h"
@@ -55,9 +56,12 @@ template <> std::optional<document_t> ToResponseJson<SummaryTopRankResponse>(con
         summaryList.PushBack(summaryDtoJson, allocator);
     }
     json_t adviceJson(kObjectType);
-    JsonUtil::AddMember(adviceJson, "compute", response.body.traceStatistic.computeDiff, allocator);
-    JsonUtil::AddMember(adviceJson, "communication", response.body.traceStatistic.communicationDiff, allocator);
-    JsonUtil::AddMember(adviceJson, "free", response.body.traceStatistic.freeDiff, allocator);
+    TraceStatistic stat = response.body.traceStatistic;
+    int digit = 2;
+    JsonUtil::AddMember(adviceJson, "compute", NumberUtil::DoubleReservedNDigits(stat.computeDiff, digit), allocator);
+    JsonUtil::AddMember(adviceJson, "communication",
+                        NumberUtil::DoubleReservedNDigits(stat.communicationDiff, digit), allocator);
+    JsonUtil::AddMember(adviceJson, "free", NumberUtil::DoubleReservedNDigits(stat.freeDiff, digit), allocator);
 
     JsonUtil::AddMember(body, "summaryList", summaryList, allocator);
     JsonUtil::AddMember(body, "advice", adviceJson, allocator);

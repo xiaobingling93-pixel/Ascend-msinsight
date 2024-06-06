@@ -3,6 +3,7 @@
  */
 #include "ServerLog.h"
 #include "JsonUtil.h"
+#include "NumberUtil.h"
 #include "NumDefs.h"
 #include "VirtualClusterDatabase.h"
 
@@ -553,14 +554,18 @@ void VirtualClusterDatabase::GetBandwidthStatisticResult(std::vector<Protocol::B
     if (responseBody.durationList.empty()) {
         return;
     }
+    int digit = 4;
     for (auto &item : bwStat) {
         if (item.avgBw == 0) {
             continue;
         }
-        item.avgBw = item.avgBw / responseBody.durationList.size();
+        item.avgBw = NumberUtil::DoubleReservedNDigits(item.avgBw / responseBody.durationList.size(), digit);
         if (item.minBw != DBL_MAX) {
-            item.diffBw = item.maxBw - item.minBw;
+            item.diffBw = NumberUtil::DoubleReservedNDigits(item.maxBw - item.minBw, digit);
         }
+        item.maxBw = NumberUtil::DoubleReservedNDigits(item.maxBw, digit);
+        item.minBw = NumberUtil::DoubleReservedNDigits(item.minBw, digit);
+        item.allTime = NumberUtil::DoubleReservedNDigits(item.allTime, digit);
         responseBody.bwStatistics.emplace_back(item);
     }
 }

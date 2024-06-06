@@ -39,3 +39,10 @@ TEST(NumberUtil, TimestampUsToNs) {
     EXPECT_EQ(1695297849996490053, NumberUtil::TimestampUsToNs(stold("1695297849996490.053011100000")));
     EXPECT_EQ(1695297849996490000, NumberUtil::TimestampUsToNs(1695297849996490));
 }
+
+TEST(NumberUtil, DoubleReservedNDigits) {
+    double a = stod("490.053849996");
+    EXPECT_EQ(NumberUtil::DoubleReservedNDigits(a, 0), a);
+    EXPECT_EQ(NumberUtil::DoubleReservedNDigits(a, 7), a);
+    EXPECT_EQ(NumberUtil::DoubleReservedNDigits(a, 5), stod("490.05385"));
+}
