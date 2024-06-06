@@ -5,7 +5,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Graph, OperatorDetail } from '../entity/memory';
+import type { Graph } from '../entity/memory';
 import { binarySearch, useResizeEventDependency } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
 import { safeStr, useChartCharacter } from './Common';
@@ -15,7 +15,7 @@ interface IProps {
     hAxisTitle?: string;
     vAxisTitle?: string;
     onSelectionChanged?: (start: number, end: number) => void;
-    record?: OperatorDetail;
+    record?: any;
     isDark: boolean;
     isWakeup: boolean;
 }
@@ -172,8 +172,8 @@ const _handleEvents = (chartObj: echarts.ECharts | undefined, props: IProps,
     const compareFun = (key: number, mid: Array<number | string>): number => key - parseFloat(mid[0] as string);
     if (chartObj) {
         if (record !== undefined) {
-            const startId = binarySearch(graph.rows, record.allocationTime, compareFun);
-            const endId = binarySearch(graph.rows, record.releaseTime, compareFun);
+            const startId = binarySearch(graph.rows, record?.allocationTime | record?.nodeIndexStart, compareFun);
+            const endId = binarySearch(graph.rows, record?.releaseTime | record?.nodeIndexEnd, compareFun);
             const selection = [];
             startId >= 0 && selection.push(startId);
             endId >= 0 && selection.push(endId);
@@ -238,13 +238,11 @@ export const LineChart: React.FC<IProps> = (props) => {
 
     return (
         <div>
-            {graph.title?.length !== 0
+            {graph.title !== undefined
                 ? <div style={{ fontSize: 14, fontWeight: 'bold' } }>
                     {title}{chartCharacter}
                 </div>
-                : <div style={{ fontSize: 14, fontWeight: 'bold' } }>
-                    {title}
-                </div>
+                : null
             }
             <div ref={graphRef} style={{ height: '400px' }}></div>
         </div>

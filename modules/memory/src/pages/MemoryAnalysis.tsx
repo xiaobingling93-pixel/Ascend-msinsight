@@ -9,8 +9,11 @@ import { AntTableChart } from '../components/AntTableChart';
 import { LineChart } from '../components/LineChart';
 import { Button, Col, Empty, Input, InputNumber, message, Row, Select, Spin } from 'antd';
 import { Session } from '../entity/session';
-import { Graph, MemoryCurve, MemoryTableColumn, OperatorDetail, OperatorMemoryCondition } from '../entity/memory';
-import { memoryCurveGet, operatorsMemoryGet } from '../utils/RequestUtils';
+import type {
+    Graph, MemoryCurve, OperatorDetail, StaticOperatorCurve,
+    StaticOperatorListDetail, OperatorMemoryCondition, StaticMemoryCondition,
+} from '../entity/memory';
+import { memoryTypeGet, staticOpMemoryGraphGet, staticOpMemoryListGet, memoryCurveGet, operatorsMemoryGet } from '../utils/RequestUtils';
 import { useHit, Label } from '../components/Common';
 import styled from '@emotion/styled';
 import { GroupRankIdsByHost } from 'lib/CommonUtils';
@@ -38,12 +41,28 @@ const groupBy = [
     { label: 'Stream', value: 'Stream' },
 ];
 
+const memoryGraphType = {
+    dynamic: 'dynamic',
+    static: 'static',
+    mix: 'mix',
+};
+
 // eslint-disable-next-line max-lines-per-function
 const MemoryAnalysis = observer(function({ session, isDark }: { session: Session; isDark: boolean }) {
+    // memory数据类型，默认为dynamic
+    const [memoryType, setMemoryType] = useState<string>(memoryGraphType.dynamic);
+    // 静态图graphId
+    const [memoryGraphId, setMemoryGraphId] = useState<string | undefined>(undefined);
+    // 静态图graphIdList
+    const [memoryGraphIdList, setMemoryGraphIdList] = useState<string[]>([]);
+    // 静态图曲线数据源
+    const [memoryStaticCurveData, setMemoryStaticCurveData] = useState<StaticOperatorCurve | undefined>(undefined);
+    // 静态图曲线绘制数据
+    const [staticLineChartData, setStaticLineChartData] = useState<Graph | undefined>(undefined);
     // 算子表格内存信息
-    const [memoryTableData, setMemoryTableData] = useState<OperatorDetail[]>([]);
+    const [memoryTableData, setMemoryTableData] = useState<any>([]);
     // 算子表格表头信息
-    const [memoryTableHead, setMemoryTableHead] = useState<MemoryTableColumn[]>([]);
+    const [memoryTableHead, setMemoryTableHead] = useState<any>([]);
     // 内存曲线数据源
     const [memoryCurveData, setMemoryCurveData] = useState<MemoryCurve | undefined>(undefined);
     // 内存曲线绘制数据
@@ -68,13 +87,40 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     const [isWakeup, setIsWakeup] = useState<boolean>(false);
     const { t } = useTranslation('memory');
 
+    const fetchMemoryType = (memoryRankId: string | undefined): void => {
+        if (memoryRankId === undefined) {
+            return;
+        }
+        memoryTypeGet({ rankId: memoryRankId }).then((resp) => {
+            const type = resp.type;
+            const graphIdList = resp.graphId;
+            setMemoryType(type);
+            if (graphIdList.length > 0) {
+                setMemoryGraphId(graphIdList[0]);
+            }
+            setMemoryGraphIdList(graphIdList);
+        }).catch(err => {
+            message.error(err);
+        });
+    };
+
     const onSearchEventOperatorChanged: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
         setSearchEventOperatorName(event.target.value as string);
     };
 
     const [selectedRecord, setSelectedRecord] = useState<OperatorDetail | undefined>();
-    const onRowSelected = (record?: OperatorDetail, rowIndex?: number): void => {
-        setSelectedRecord(record);
+    const [selectedStaticRecord, setSelectedStaticRecord] = useState<StaticOperatorListDetail | undefined>();
+    const onRowSelected = (record?: any, rowIndex?: number): void => {
+        switch (memoryType) {
+            case memoryGraphType.dynamic:
+                setSelectedRecord(record);
+                break;
+            case memoryGraphType.static:
+                setSelectedStaticRecord(record);
+                break;
+            default:
+                break;
+        }
     };
 
     const onFilterEventMinSizeInputChanged = (value: number | null): void => {
@@ -85,6 +131,27 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         setMaxSize(value as number);
     };
 
+    const setTempCurrent = (resetCurrent = false): number => {
+        let tempCurrent = current;
+        if (resetCurrent) {
+            tempCurrent = 1;
+            setCurrent(1);
+        }
+        return tempCurrent;
+    };
+
+    const setParamOtherCondition = (param: any): any => {
+        let newParam = param;
+        if (order !== undefined) {
+            newParam = { order, orderBy, ...param };
+        }
+
+        setTableSpin(true);
+        setBtnDisabled(true);
+
+        return newParam;
+    };
+
     const onSearch = (searchName: string, minimumSize: number, maximumSize: number, resetCurrent = false): void => {
         if (rankIdCondition.value === undefined) {
             return;
@@ -93,10 +160,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             message.warning(t('Invalid Size Warning'));
             return;
         }
-        let tempCurrent = current;
-        if (resetCurrent) {
-            tempCurrent = 1; setCurrent(1);
-        }
+        const tempCurrent = setTempCurrent(resetCurrent);
         let param: OperatorMemoryCondition = {
             rankId: rankIdCondition.value,
             type: groupId,
@@ -109,12 +173,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         if (selectedRange) {
             param.startTime = selectedRange.startTs; param.endTime = selectedRange.endTs;
         }
-        if (order !== undefined) {
-            param = { order, orderBy, ...param };
-        }
-
-        setTableSpin(true);
-        setBtnDisabled(true);
+        param = setParamOtherCondition(param);
         operatorsMemoryGet(param).then((resp) => {
             const operatorDetails = resp.operatorDetail;
             setTotal(resp.totalNum);
@@ -130,8 +189,44 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         });
     };
 
-    const onRankIdChanged = (value: string): void => {
-        setRankIdCondition({ ...rankIdCondition, value });
+    const onStaticSearch = (searchName: string, minimumSize: number, maximumSize: number, resetCurrent = false): void => {
+        if (rankIdCondition.value === undefined || memoryGraphId === undefined) {
+            return;
+        }
+        if (maximumSize < minimumSize) {
+            message.warning(t('Invalid Size Warning'));
+            return;
+        }
+        const tempCurrent = setTempCurrent(resetCurrent);
+        let param: StaticMemoryCondition = {
+            rankId: rankIdCondition.value,
+            graphId: memoryGraphId,
+            currentPage: tempCurrent,
+            pageSize,
+            searchName,
+            minSize: minimumSize,
+            maxSize: maximumSize,
+        };
+        if (selectedRange) {
+            param.startNodeIndex = selectedRange.startTs; param.endNodeIndex = selectedRange.endTs;
+        }
+        param = setParamOtherCondition(param);
+        staticOpMemoryListGet(param).then((resp) => {
+            const staticOperatorListDetails = resp.staticOperatorListDetail;
+            setTotal(resp.totalNum);
+            setMemoryTableData(staticOperatorListDetails);
+            if (JSON.stringify(memoryTableHead) !== JSON.stringify(resp.columnAttr)) {
+                setMemoryTableHead(resp.columnAttr);
+            }
+            setBtnDisabled(false);
+        }).catch(err => {
+            message.error(err);
+        }).finally(() => {
+            setTableSpin(false);
+        });
+    };
+
+    const onBaseChanged = (): void => {
         setSelectedRange(undefined);
         setSearchEventOperatorName('');
         setCurrent(1);
@@ -140,11 +235,30 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         setMaxSize(1000000);
     };
 
+    const onRankIdChanged = (value: string): void => {
+        setRankIdCondition({ ...rankIdCondition, value });
+        onBaseChanged();
+    };
+
+    const onMemoryGraphIdChanged = (value: string): void => {
+        setMemoryGraphId(value);
+        onBaseChanged();
+    };
+
     const onReset = (): void => {
         setSearchEventOperatorName('');
         setMinSize(0);
         setMaxSize(1000000);
-        onSearch('', 0, 1000000);
+        switch (memoryType) {
+            case memoryGraphType.dynamic:
+                onSearch('', 0, 1000000);
+                break;
+            case memoryGraphType.static:
+                onStaticSearch('', 0, 1000000);
+                break;
+            default:
+                break;
+        };
     };
 
     const onSelectedRangeChanged = (start: number, end: number): void => {
@@ -152,7 +266,11 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
             setSelectedRange(undefined);
             return;
         }
-        const allDataSet = new Set(memoryCurveData.lines
+        const curveData = memoryType === memoryGraphType.dynamic ? memoryCurveData : memoryStaticCurveData;
+        if (curveData === undefined) {
+            return;
+        }
+        const allDataSet = new Set(curveData.lines
             .map(item => {
                 return parseFloat(item[0] as string);
             }).sort((a, b) => a - b));
@@ -172,8 +290,21 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     }));
 
     useEffect(() => {
-        onSearch(searchEventOperatorName, minSize, maxSize);
-    }, [selectedRange, rankIdCondition.value, current, pageSize, order, orderBy, session.isClusterMemoryCompletedSwitch, groupId]);
+        fetchMemoryType(rankIdCondition.value);
+    }, [rankIdCondition.value]);
+
+    useEffect(() => {
+        switch (memoryType) {
+            case memoryGraphType.dynamic:
+                onSearch(searchEventOperatorName, minSize, maxSize);
+                break;
+            case memoryGraphType.static:
+                onStaticSearch(searchEventOperatorName, minSize, maxSize);
+                break;
+            default:
+                break;
+        }
+    }, [selectedRange, rankIdCondition.value, current, pageSize, order, orderBy, session.isClusterMemoryCompletedSwitch, groupId, memoryGraphId, t]);
 
     useEffect(() => {
         if (rankIdCondition.value === undefined) {
@@ -207,6 +338,33 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         const { hosts, ranks } = GroupRankIdsByHost(session.memoryRankIds);
         setHostCondition({ options: hosts, value: hosts[0] ?? '', ranks });
     }, [JSON.stringify(session.memoryRankIds)]);
+
+    useEffect(() => {
+        if (rankIdCondition.value === undefined || memoryGraphId === undefined) {
+            setBtnDisabled(true);
+            setStaticLineChartData(undefined);
+            setMemoryStaticCurveData(undefined);
+            setMemoryTableData([]);
+            setTotal(0);
+            setCurrent(1);
+            setPageSize(10);
+            return;
+        }
+        setCurveSpin(true);
+        staticOpMemoryGraphGet({ rankId: rankIdCondition.value, graphId: memoryGraphId }).then((resp) => {
+            // Reset the select range to null when rankId changes
+            setSelectedRange(undefined);
+            setMemoryStaticCurveData(resp);
+            setStaticLineChartData({
+                columns: resp.legends?.map(legend => t(legend)),
+                rows: resp.lines,
+            });
+        }).catch(err => {
+            message.error(err);
+        }).finally(() => {
+            setCurveSpin(false);
+        });
+    }, [rankIdCondition.value, session.isClusterMemoryCompletedSwitch, memoryGraphId, t]);
 
     useEffect(() => {
         // 只对RandId为数字做排序，不能转为数字的字符串则不排序
@@ -280,6 +438,46 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                         </Col>
                     </Row>
                 </Spin>
+                { memoryType === memoryGraphType.static
+                    ? <div>
+                        <Row style={{ height: 60, alignContent: 'center' }}>
+                            <Col span={4}>
+                                <Label name={t('searchCriteria.GraphId')} />
+                                <Select
+                                    value={memoryGraphId}
+                                    style={{ width: 180 }}
+                                    onChange={onMemoryGraphIdChanged}
+                                    options={memoryGraphIdList.map((graphId) => {
+                                        return {
+                                            value: graphId,
+                                            label: graphId,
+                                        };
+                                    })}
+                                />
+                            </Col>
+                        </Row>
+                        <Spin spinning={curveSpin} tip="loading...">
+                            <Row style={{ height: 400 }}>
+                                <Col span={24}>
+
+                                    { staticLineChartData
+                                        ? <LineChart
+                                            hAxisTitle={t('Node Index')}
+                                            vAxisTitle={t('Memory Usage (MB)')}
+                                            graph={staticLineChartData}
+                                            onSelectionChanged={onSelectedRangeChanged}
+                                            record={selectedStaticRecord}
+                                            isDark={isDark}
+                                            isWakeup={isWakeup}
+                                        />
+                                        : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ marginTop: 160 }} />
+                                    }
+
+                                </Col>
+                            </Row>
+                        </Spin>
+                    </div>
+                    : null }
                 <Row style={{ height: 60, alignContent: 'center', marginTop: '75px' }}>
                     <Col span={6}>
                         <Label name={t('searchCriteria.Name')} />
@@ -317,7 +515,9 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                     </Col>
                     <Col span={6}>
                         <Button
-                            onClick={() => onSearch(searchEventOperatorName, minSize, maxSize, true)}
+                            onClick={(): void => memoryType === memoryGraphType.dynamic
+                                ? onSearch(searchEventOperatorName, minSize, maxSize, true)
+                                : onStaticSearch(searchEventOperatorName, minSize, maxSize, true)}
                             type="primary"
                             style={{ marginRight: 10, width: 100 }}
                             disabled={isBtnDisabled}

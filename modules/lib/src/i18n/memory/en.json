@@ -2,14 +2,18 @@
   "memory": {
     "Invalid Size Warning": "Invalid Condition: The \"Max Size\" cannot be smaller than the \"Min Size\"",
     "Time (ms)": "Time (ms)",
+    "Node Index": "Node Index",
     "Memory Usage (MB)": "Memory Usage (MB)",
     "Operators Allocated": "Operators Allocated",
     "Operators Reserved": "Operators Reserved",
     "Operators Activated": "Operators Activated",
+    "Size": "Size",
+    "Total Size": "Total Size",
     "App Reserved": "App Reserved",
     "searchCriteria": {
       "RankId": "Rank ID",
       "GroupBy": "Group By",
+      "GraphId": "Graph ID",
       "Host": "Host Name",
       "Overall": "Overall",
       "OverallDescribe": "Displays the memory sizes of operators in the Reserved, Allocated, and Active states and the overall Memory Reserved size of PyTorch.",
@@ -35,7 +39,10 @@
       "Search by Name": "Search by Name"
     },
     "tableHead": {
+      "Device ID": "Device ID",
       "Name": "Name",
+      "Node Index Start": "Node Index Start",
+      "Node Index End": "Node Index End",
       "Size(KB)": "Size(KB)",
       "Allocation Time(ms)": "Allocation Time(ms)",
       "Release Time(ms)": "Release Time(ms)",

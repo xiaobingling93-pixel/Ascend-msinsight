@@ -25,7 +25,11 @@ interface IProps {
 }
 
 interface IColName {
+    deviceId: string;
     name: string;
+    opName: string;
+    nodeIndexStart: string;
+    nodeIndexEnd: string;
     size: string;
     allocationTime: string;
     releaseTime: string;
@@ -42,7 +46,11 @@ interface IColName {
 }
 
 const orderByColName: IColName = {
+    deviceId: 'device_id',
     name: 'name',
+    opName: 'op_name',
+    nodeIndexStart: 'node_index_start',
+    nodeIndexEnd: 'node_index_end',
     size: 'size',
     allocationTime: 'allocation_time',
     releaseTime: 'release_time',
