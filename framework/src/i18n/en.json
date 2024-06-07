@@ -11,7 +11,7 @@
         "DeleteItemConfirmDescribe": "Are you sure to delete this?",
         "File Explorer": "File Explorer",
         "FileSearchDescribe": "Enter the file path and press enter to search",
-        "RefreshDirectoryDescribe": "To refresh a directory, collapse and expand the directory.",
+        "RefreshDirectory": "Refresh directory",
         "FileNotFundDescribe": "File not found, check the file path",
         "About": "About",
         "Confirm": "Confirm",

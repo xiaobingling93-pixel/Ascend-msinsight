@@ -36,6 +36,13 @@ function addRemote(e: MouseEvent) {
 
 const store = useDataSources();
 
+function handleThemeChange(isDark: boolean) {
+  if (isDark) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+}
 </script>
 
 <template>
@@ -47,9 +54,9 @@ const store = useDataSources();
           </el-icon>
         </el-tooltip>
         <el-tooltip :content="SwitchTheme" :effect="isDarkTheme ? 'light' : 'dark'">
-          <el-switch class="theme-toggle" v-model="isDarkTheme"></el-switch>
+          <el-switch class="theme-toggle" v-model="isDarkTheme" @change="handleThemeChange"></el-switch>
         </el-tooltip>
-        <ResourceDialog v-model:showModal=showModal project-name=""></ResourceDialog>
+        <ResourceDialog v-model:showModal="showModal" project-name=""></ResourceDialog>
     </header>
     <div class="container">
         <MenuTree :dataSource="store.menuTree" :is-dark-theme="isDarkTheme"></MenuTree>

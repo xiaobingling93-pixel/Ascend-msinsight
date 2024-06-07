@@ -1,6 +1,5 @@
 .el-dialog {
   background-color: var(--color-background);
-  box-shadow: 0 0 30px 0 #101214;
   --el-dialog-border-radius: var(--el-border-radius-base);
 }
 
@@ -32,9 +31,8 @@
   line-height: 24px;
   border-radius: 2px;
   font-size: 12px;
-  color: var(--color-text);
 }
 
 .icon {
-  fill: var(--SvgFillColor) !important;
+  fill: var(--SvgFillColor);
 }

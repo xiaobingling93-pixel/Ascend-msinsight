@@ -3,13 +3,14 @@ import {ref, reactive, onMounted, computed, watch, nextTick} from 'vue';
 import type Node from 'element-plus/es/components/tree/src/model/node';
 import FolderIcon from '@/components/icons/folder_icon.vue';
 import FileIcon from '@/components/icons/file_icon.vue';
+import RefreshIcon from '@/components/icons/refresh.vue';
 import { useResource, type ResourceItem } from '@/stores/resourceComp';
 import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import { useDataSources } from '@/stores/dataSource';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
 import {Console as console} from '@/utils/console';
 
-const props = defineProps<{ maxPathLen: number, changeConfirmButtonState: (arg0: boolean) => void }>();
+const props = defineProps<{ maxPathLen: number, changeConfirmButtonState: (arg0: boolean) => void, show: boolean }>();
 const emit = defineEmits(['input-change']);
 
 const { confirm, checkConflict } = useDataSources();
@@ -33,6 +34,12 @@ const state = reactive({
 
 watch(() => state.inputPath, () => {
   emit('input-change', state.inputPath.length);
+});
+
+watch(() => props.show, (value) => {
+  if(value) {
+    handleMounted();
+  }
 });
 
 const updateData = async (path: string, node: Node) => {
@@ -113,7 +120,7 @@ const handleClick = async (data: ResourceItem, node: Node) => {
 
 let findFile = false;
 let errorAlert = ref(false);
-const [FileSearchDescribe, FileNotFundDescribe] = useWatchTranslation(['FileSearchDescribe', 'FileNotFundDescribe']);
+const [FileSearchDescribe, FileNotFundDescribe, RefreshDirectory] = useWatchTranslation(['FileSearchDescribe', 'FileNotFundDescribe', 'RefreshDirectory']);
 const inputErrorText = computed(() => errorAlert.value ? FileNotFundDescribe.value : FileSearchDescribe.value);
 
 const searchPath = async () => {
@@ -210,7 +217,10 @@ function expandPath(defaultSelectedDir: string): void {
 }
 
 onMounted(() => {
-    loadFiles(resourceState.currentPath);
+  handleMounted();
+});
+
+const handleMounted = () => {
   if (!window.location.pathname.includes('\/proxy\/')) {
     loadFiles(resourceState.currentPath);
   } else {
@@ -221,7 +231,18 @@ onMounted(() => {
       expandPath(defaultSelectedDir);
     });
   }
-});
+  // 选中并滚动至当前节点
+  setTimeout(() => {
+    const node = treeRef.value.getNode(state.inputPath);
+    if(node) {
+      treeRef.value.setCurrentKey(node.key);
+      nextTick(() => {
+        const nodeEl = treeRef.value.el$.querySelector('.is-current > .el-tree-node__content');
+        nodeEl?.scrollIntoView({behavior:'smooth',block: 'center'});
+      });
+    }
+  }, 400);
+};
 
 const doCheckFileConflict = async (projectName: string) => {
     const currentkey = treeRef.value.getCurrentKey().replace(/[\\/]+$/, '');
@@ -284,7 +305,15 @@ defineExpose({
 <template>
     <div class="tree-wrap">
         <el-text :type="errorAlert ? 'danger' : 'primary'"> {{ inputErrorText }} </el-text>
-        <el-input :class= "errorAlert ? 'red-input' : 'blue-input'" v-model="state.inputPath" :maxlength="props.maxPathLen" show-word-limit @keyup.enter="searchPath" />
+
+        <div class="input-wrapper">
+          <el-input :class= "errorAlert ? 'red-input' : 'blue-input'" v-model="state.inputPath" :maxlength="props.maxPathLen" show-word-limit @keyup.enter="searchPath" />
+          <div class="icon-refresh">
+            <el-tooltip :content="RefreshDirectory">
+              <el-icon :size="16" @click="handleMounted"><RefreshIcon /></el-icon>
+            </el-tooltip>
+          </div>
+        </div>
         <div class="data-tree">
             <el-tree ref="treeRef" :default-expanded-keys="state.defalultExpandedKeys" :data="resourceState.startResource" :props="defaultProps" :auto-expand-parent="false"
                 node-key="path" @node-click="handleClick" @node-expand="handleExpand" @node-collapse="hanldeCollapse" lazy
@@ -376,8 +405,24 @@ defineExpose({
 .el-tree{
   width: fit-content;
   min-width: 100%;
+  background: transparent;
 }
 .el-tree-node{
   width: fit-content;
+}
+
+.input-wrapper{
+  display: flex;
+  align-items: center;
+}
+.btn-refresh{
+  color:var(--SvgFillColor);
+}
+.icon-refresh{
+  cursor: pointer;
+  margin-left: 8px;
+}
+.icon-refresh:hover .icon{
+  fill: var(--el-color-primary)
 }
 </style>

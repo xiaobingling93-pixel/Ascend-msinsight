@@ -77,15 +77,12 @@ const handleCoverVisible = (value: boolean) => {
 
 <template>
   <el-dialog :model-value="showModal" :title="FileExplorer" width="30%" :close-on-click-modal="false" @close="emit('update:showModal', false)">
-    <el-tooltip :content="projectName">
-      <span class="project-name-span" v-if="projectName !== ''">{{ CurProject }} ：{{ projectName }}</span>
+    <el-tooltip v-if="projectName" :content="projectName">
+      <span class="project-name-span">{{ CurProject }} ：{{ projectName }}</span>
     </el-tooltip>
     <FileConflictDialog :dialog-cover-visible="dialogCoverVisible" :project-name="projectName" @cover-file="handleCoverVisible"></FileConflictDialog>
-    <ResourceComp ref="resourceComp" :max-path-len="maxPathLen" @input-change="onInputChange" :changeConfirmButtonState = "changeConfirmButtonState" />
+    <ResourceComp ref="resourceComp" :show="showModal" :max-path-len="maxPathLen" @input-change="onInputChange" :changeConfirmButtonState = "changeConfirmButtonState" />
     <template #footer>
-      <div class="foot-tip">
-          {{RefreshDirectoryDescribe}}
-      </div>
       <span>
           <el-button :disabled="isDisabled" type="primary" @click="addClickProtect(handleConfirm)">{{ Confirm }}</el-button>
           <el-button @click="emit('update:showModal', false)">{{ Cancel }}</el-button>
@@ -95,7 +92,6 @@ const handleCoverVisible = (value: boolean) => {
 </template>
 
 <style scoped>
-
 .project-name-span {
   display: flow;
   white-space: nowrap;
@@ -103,11 +99,5 @@ const handleCoverVisible = (value: boolean) => {
   overflow: hidden;
   font-weight: 700;
   padding-bottom: 10px;
-}
-.foot-tip {
-  font-size: 14px;
-  padding-bottom: 10px;
-  text-align: left;
-  color: var(--el-color-warning);
 }
 </style>
