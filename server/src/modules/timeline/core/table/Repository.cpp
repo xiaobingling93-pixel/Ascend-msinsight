@@ -21,16 +21,26 @@ void Repository::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQue
     }
 }
 
-void Repository::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::set<uint64_t> &sliceIds)
+void Repository::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector<uint64_t> &sliceIds)
 {
     SliceTable sliceTable;
     std::vector<SlicePO> slicePOVec;
     sliceTable.Select(SliceColumn::ID)
         .Eq(SliceColumn::TRACKID, sliceQuery.trackId)
         .Eq(SliceColumn::CAT, sliceQuery.cat)
+        .OrderBy(SliceColumn::ID, TableOrder::ASC)
         .ExcuteQuery(sliceQuery.db, slicePOVec);
     for (const auto &item : slicePOVec) {
-        sliceIds.emplace(item.id);
+        sliceIds.emplace_back(item.id);
     }
+}
+
+uint64_t Repository::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuery)
+{
+    SliceTable sliceTable;
+    uint64_t count = sliceTable.Eq(SliceColumn::TRACKID, sliceQuery.trackId)
+        .Eq(SliceColumn::CAT, sliceQuery.cat)
+        .Count(sliceQuery.db);
+    return count;
 }
 }

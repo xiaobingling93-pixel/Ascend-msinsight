@@ -17,88 +17,95 @@ SliceAnalyzer::~SliceAnalyzer()
         repository = nullptr;
     }
 };
-/**
- * 对前端要展示的算子进行取样
- * @param startTime 页面开始时间
- * @param endTime 页面结束时间
- * @param minTimestamp 最小时间
- * @param cacheSlices 当前泳道内的所有算子数据，按照depth排序，depth相同则按照timestamp排序
- * @return
- */
-std::set<uint64_t> SliceAnalyzer::ComputeResultIds(uint64_t startTime, uint64_t endTime,
-    std::vector<std::vector<SliceDomain>> &depthSlicesDomainVec)
+
+std::set<std::pair<uint64_t, uint32_t>> SliceAnalyzer::ComputeResultIds(uint64_t startTime, uint64_t endTime,
+    std::vector<SliceDomain> &sliceDomain, std::vector<DepthHelper> &endList,
+    const std::vector<uint64_t> &pythonFunctionIds)
 {
     // 根据开始时间结束时间把屏幕平均分成1000份
     const int maxDataCount = 1000;
     uint64_t unitTime = (endTime - startTime) / maxDataCount;
-    std::set<uint64_t> ids;
-    for (auto &item : depthSlicesDomainVec) {
-        ComputeDepthResultIds(startTime, endTime, item, unitTime, ids);
+    if (unitTime == 0) {
+        return ComputeSmallScreenIds(startTime, endTime, sliceDomain, endList, pythonFunctionIds);
+    }
+    std::set<std::pair<uint64_t, uint32_t>> ids;
+    for (auto &item : sliceDomain) {
+        if (!std::empty(pythonFunctionIds) &&
+            std::binary_search(pythonFunctionIds.begin(), pythonFunctionIds.end(), item.id)) {
+            continue;
+        }
+        for (item.depth = 0; item.depth < endList.size() && endList[item.depth].endTime > item.timestamp;
+            item.depth++) {
+        }
+        if (item.depth < endList.size()) {
+            endList[item.depth].endTime = item.endTime;
+            // 不在屏幕中的算子只参与深度计算，不参与采样过程
+            if (!(item.endTime >= startTime && item.timestamp <= endTime)) {
+                continue;
+            }
+            // 算子开始时间大于当前份屏幕时间，则把tempId加进结果集，重置tempId，进入下一份屏幕采样
+            if (item.timestamp > endList[item.depth].curLimitTime && endList[item.depth].curLimitTime <= endTime) {
+                ids.emplace(endList[item.depth].tempId, item.depth);
+                endList[item.depth].tempId = 0;
+                endList[item.depth].tempDuration = 0;
+                endList[item.depth].curLimitTime = item.timestamp + unitTime;
+            }
+            // 更新tempId
+            if (endList[item.depth].tempDuration <= item.endTime - item.timestamp) {
+                endList[item.depth].tempId = item.id;
+                endList[item.depth].tempDuration = item.endTime - item.timestamp;
+            }
+        } else {
+            DepthHelper depthHelper;
+            depthHelper.endTime = item.endTime;
+            depthHelper.curLimitTime = startTime + unitTime;
+            if (item.endTime >= startTime && item.timestamp <= endTime) {
+                depthHelper.tempId = item.id;
+                depthHelper.tempDuration = item.endTime - item.timestamp;
+            }
+            endList.emplace_back(depthHelper);
+        }
+    }
+    for (int i = 0; i < endList.size(); ++i) {
+        ids.emplace(endList[i].tempId, i);
     }
     return ids;
 }
 
-void SliceAnalyzer::ComputeDepthResultIds(uint64_t startTime, uint64_t endTime,
-    const std::vector<SliceDomain> &slicesDomainVec, uint64_t unitTime, std::set<uint64_t> &ids)
-{
-    if (unitTime == 0) {
-        ComputeSmallScreenSliceIds(startTime, endTime, slicesDomainVec, ids);
-        return;
-    }
-    // 第一份屏幕的截至时间
-    uint64_t curLimitTime = startTime + unitTime;
-    uint64_t tempId = 0;
-    uint64_t tempDuration = 0;
-    for (const auto &item : slicesDomainVec) {
-        // 算子结束时间小于屏幕最小时间，过滤
-        if (item.endTime < startTime) {
-            continue;
-        }
-        // 算子开始时间大于屏幕最大时间，过滤
-        if (item.timestamp > endTime) {
-            continue;
-        }
-        // 算子开始时间大于当前份屏幕时间，则把tempId加进结果集，重置tempId，进入下一份屏幕采样
-        while (item.timestamp > curLimitTime && curLimitTime <= endTime) {
-            ids.emplace(tempId);
-            tempId = 0;
-            tempDuration = 0;
-            curLimitTime += unitTime;
-        }
-        // 更新tempId
-        if (tempDuration <= item.endTime - item.timestamp) {
-            tempId = item.id;
-            tempDuration = item.endTime - item.timestamp;
-        }
-        // 如果算子很长，则找下一份屏幕的截至时间
-        while (item.endTime >= curLimitTime && curLimitTime <= endTime) {
-            ids.emplace(tempId);
-            tempId = 0;
-            tempDuration = 0;
-            curLimitTime += unitTime;
-        }
-    }
-    ids.emplace(tempId);
-}
-
 /**
- * 当屏幕范围小于1000ns时的采集方式
+ * 屏幕范围小于1000ns的计算方式
  * @param startTime
  * @param endTime
- * @param minTimestamp
- * @param cacheSlices
- * @param ids
+ * @param sliceDomain
+ * @param endList
+ * @param pythonFunctionIds
+ * @return
  */
-void SliceAnalyzer::ComputeSmallScreenSliceIds(uint64_t startTime, uint64_t endTime,
-    const std::vector<SliceDomain> &cacheSlices, std::set<uint64_t> &ids)
+std::set<std::pair<uint64_t, uint32_t>> SliceAnalyzer::ComputeSmallScreenIds(uint64_t startTime, uint64_t endTime,
+    std::vector<SliceDomain> &sliceDomain, std::vector<DepthHelper> &endList,
+    const std::vector<uint64_t> &pythonFunctionIds)
 {
-    for (const auto &item : cacheSlices) {
-        // 算子结束时间小于屏幕最小时间或者算子开始时间大于屏幕最大时间，过滤
-        if (item.endTime < startTime || item.timestamp > endTime) {
+    std::set<std::pair<uint64_t, uint32_t>> ids;
+    for (auto &item : sliceDomain) {
+        if (!std::empty(pythonFunctionIds) &&
+            std::binary_search(pythonFunctionIds.begin(), pythonFunctionIds.end(), item.id)) {
             continue;
         }
-        ids.emplace(item.id);
+        for (item.depth = 0; item.depth < endList.size() && endList[item.depth].endTime > item.timestamp;
+            item.depth++) {
+        }
+        if (item.depth < endList.size()) {
+            endList[item.depth].endTime = item.endTime;
+            if (item.endTime >= startTime && item.timestamp <= endTime) {
+                ids.emplace(item.id, item.depth);
+            }
+        } else {
+            DepthHelper depthHelper;
+            depthHelper.endTime = item.endTime;
+            endList.emplace_back(depthHelper);
+        }
     }
+    return ids;
 }
 
 void SliceAnalyzer::SortByTimestampASC(std::vector<SliceDomain> &cacheSlices)
@@ -180,62 +187,47 @@ void SliceAnalyzer::CalculateSelfTime(std::vector<Protocol::SimpleSlice> &rows,
     }
 }
 
-void SliceAnalyzer::ComputeDepth(std::vector<SliceDomain> &sliceDomainVec, const std::set<uint64_t> &pythonFunctionIds,
-    std::vector<std::vector<SliceDomain>> &depthCacheSlice, std::map<uint64_t, int32_t> &depthMap)
-{
-    for (auto &item : sliceDomainVec) {
-        if (!std::empty(pythonFunctionIds) && pythonFunctionIds.count(item.id) > 0) {
-            continue;
-        }
-        bool isEmplace = false;
-        size_t size = depthCacheSlice.size();
-        for (int i = 0; i < size; ++i) {
-            if (depthCacheSlice[i].back().endTime < item.timestamp) {
-                depthMap[item.id] = i;
-                depthCacheSlice[i].emplace_back(item);
-                isEmplace = true;
-                break;
-            }
-        }
-        if (!isEmplace) {
-            std::vector<SliceDomain> temp;
-            depthMap[item.id] = size;
-            temp.emplace_back(item);
-            depthCacheSlice.emplace_back(temp);
-        }
-    }
-}
 
 void SliceAnalyzer::ComputeScreenSliceIds(const SliceQuery &sliceQuery, std::set<uint64_t> &ids, uint64_t &maxDepth,
     bool &havePythonFunction, std::map<uint64_t, int32_t> &depthMap)
 {
-    // 泳道下数据量大于20万则放入缓存，否则仍从数据库查询
-    constexpr int minCacheSizeLimit = 200000;
+    // 泳道下数据量大于10万则放入缓存，否则仍从数据库查询,这里20万改为10万是因为从数据库查询20万数据时间略长
+    constexpr int minCacheSizeLimit = 100000;
     std::string sliceCacheKey =
         sliceQuery.cardId + "_" + std::to_string(sliceQuery.trackId) + "_SliceAnalyzer::ComputeScreenSliceIds";
     auto &instance = CacheManager::Instance();
-    std::vector<SliceDomain> sliceDomainVec = instance.Get(sliceCacheKey);
-    std::set<uint64_t> pythonFunctionIds;
-    if (instance.HavePythonFunction(sliceQuery.trackId)) {
-        repository->QuerySliceIdsByCat(sliceQuery, pythonFunctionIds);
-        if (std::empty(pythonFunctionIds)) {
-            instance.SetPythonFunctionStatus(sliceQuery.trackId, false);
-        }
-    }
-    if (!sliceQuery.isFilterPythonFunction) {
-        pythonFunctionIds.clear();
-    }
+    std::vector<SliceDomain> sliceDomainVec = instance.GetSliceDomainVec(sliceCacheKey);
     if (std::empty(sliceDomainVec)) {
         repository->QuerySimpleSliceWithOutNameByTrackId(sliceQuery, sliceDomainVec);
         if (sliceDomainVec.size() > minCacheSizeLimit) {
-            CacheManager::Instance().Put(sliceCacheKey, sliceDomainVec);
+            instance.Put(sliceCacheKey, sliceDomainVec);
         }
     }
-    std::vector<std::vector<SliceDomain>> depthSliceVec;
-    ComputeDepth(sliceDomainVec, pythonFunctionIds, depthSliceVec, depthMap);
-    ids = ComputeResultIds(sliceQuery.startTime + sliceQuery.minTimestamp, sliceQuery.endTime + sliceQuery.minTimestamp,
-        depthSliceVec);
-    maxDepth = depthSliceVec.size();
+
+    if (instance.HavePythonFunction(sliceQuery.trackId)) {
+        uint64_t count = repository->QueryPythonFunctionCountByTrackId(sliceQuery);
+        if (count == 0) {
+            instance.SetPythonFunctionStatus(sliceQuery.trackId, false);
+        }
+    }
+    std::vector<uint64_t> pythonFunctionIds;
+    if (sliceQuery.isFilterPythonFunction && instance.HavePythonFunction(sliceQuery.trackId)) {
+        std::string pythonFunctionKey =
+            sliceQuery.cardId + "_" + std::to_string(sliceQuery.trackId) + "_SliceAnalyzer::PythonFunctionIds";
+        pythonFunctionIds = instance.GetPythonFunctionIdVec(pythonFunctionKey);
+        if (std::empty(pythonFunctionIds)) {
+            repository->QuerySliceIdsByCat(sliceQuery, pythonFunctionIds);
+            instance.PutPythonFunctionIdVec(pythonFunctionKey, pythonFunctionIds);
+        }
+    }
+    std::vector<DepthHelper> endList;
+    std::set<std::pair<uint64_t, uint32_t>> idPairVec = ComputeResultIds(sliceQuery.startTime + sliceQuery.minTimestamp,
+        sliceQuery.endTime + sliceQuery.minTimestamp, sliceDomainVec, endList, pythonFunctionIds);
+    for (const auto &item : idPairVec) {
+        ids.emplace(item.first);
+        depthMap[item.first] = item.second;
+    }
+    maxDepth = endList.size();
     havePythonFunction = instance.HavePythonFunction(sliceQuery.trackId);
 }
 

@@ -552,7 +552,6 @@ bool JsonTraceDatabase::QueryThreadTraces(const Protocol::UnitThreadTracesParams
     std::set<uint64_t> ids;
     std::map<uint64_t, int32_t> depthMap;
     sliceAnalyzerPtr->ComputeScreenSliceIds(sliceQuery, ids, maxDepth, havePythonFunction, depthMap);
-    ServerLog::Info("ids size is: ", ids.size());
     std::vector<Protocol::RowThreadTrace> rowThreadTraceVec = QuerySliceByIdList(minTimestamp, traceId, ids);
     std::sort(rowThreadTraceVec.begin(), rowThreadTraceVec.end(), std::less<RowThreadTrace>());
     for (auto &item : rowThreadTraceVec) {
@@ -1389,7 +1388,7 @@ bool JsonTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params
             cacheSlices.clear();
             std::string sliceCacheKey =
                 params.rankId + "_" + std::to_string(item.trackId) + "_JsonTraceDatabase::QuerySliceByCondition";
-            cacheSlices = CacheManager::Instance().Get(sliceCacheKey);
+            cacheSlices = CacheManager::Instance().GetSliceDomainVec(sliceCacheKey);
             if (std::empty(cacheSlices)) {
                 QueryAllSliceInRangeByTrackId(item.trackId, cacheSlices);
             }

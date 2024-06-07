@@ -14,9 +14,7 @@
 #include "SqliteResultSet.h"
 #include "sqlite3.h"
 #include "ServerLog.h"
-namespace Dic {
-namespace Module {
-namespace Timeline {
+namespace Dic::Module::Timeline {
 using namespace Dic::Server;
 enum class TableOrder {
     ASC,
@@ -56,66 +54,42 @@ public:
 
     Table &Eq(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        if (std::empty(conditionStr)) {
-            conditionStr = str + " = ? ";
-        } else {
-            conditionStr += " AND " + str + " = ? ";
-        }
+        conditionStr += " AND " + str + " = ? ";
         values.emplace_back(value);
         return *this;
     }
 
     Table &NotEq(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        if (std::empty(conditionStr)) {
-            conditionStr = str + " != ? ";
-        } else {
-            conditionStr += " AND " + str + " != ? ";
-        }
+        conditionStr += " AND " + str + " != ? ";
         values.emplace_back(value);
         return *this;
     }
 
     Table &Less(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        if (std::empty(conditionStr)) {
-            conditionStr = str + " < ? ";
-        } else {
-            conditionStr += " AND " + str + " < ? ";
-        }
+        conditionStr += " AND " + str + " < ? ";
         values.emplace_back(value);
         return *this;
     }
 
     Table &LessEq(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        if (std::empty(conditionStr)) {
-            conditionStr = str + " <= ? ";
-        } else {
-            conditionStr += " AND " + str + " <= ? ";
-        }
+        conditionStr += " AND " + str + " <= ? ";
         values.emplace_back(value);
         return *this;
     }
 
     Table &Greater(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        if (std::empty(conditionStr)) {
-            conditionStr = str + " > ? ";
-        } else {
-            conditionStr += " AND " + str + " > ? ";
-        }
+        conditionStr += " AND " + str + " > ? ";
         values.emplace_back(value);
         return *this;
     }
 
     Table &GreaterEq(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        if (std::empty(conditionStr)) {
-            conditionStr = str + " >= ? ";
-        } else {
-            conditionStr += " AND " + str + " >= ? ";
-        }
+        conditionStr += " AND " + str + " >= ? ";
         values.emplace_back(value);
         return *this;
     }
@@ -137,13 +111,12 @@ public:
 
     void ExcuteQuery(sqlite3 *db, std::vector<T> &result)
     {
-        sql = selectStr + " FROM " + GetTableName() + " WHERE " + conditionStr + orderByStr;
+        sql = selectStr + " FROM " + GetTableName() + " WHERE 1 = 1 " + conditionStr + orderByStr;
         auto stmt = CreatPreparedStatement(db);
         if (stmt == nullptr) {
             ServerLog::Error(GetTableName() + " Failed to prepare sql.");
             return;
         }
-        size_t valueSize = values.size();
         for (const auto &item : values) {
             // 访问 variant 中存储的值
             if (std::holds_alternative<uint32_t>(item)) {
@@ -167,6 +140,37 @@ public:
             result.emplace_back(t);
         }
         ClearThreadLocal();
+    }
+
+    uint64_t Count(sqlite3 *db)
+    {
+        uint64_t count = 0;
+        sql = "SELECT COUNT(*) AS count FROM " + GetTableName() + " WHERE 1 = 1 " + conditionStr;
+        auto stmt = CreatPreparedStatement(db);
+        if (stmt == nullptr) {
+            ServerLog::Error(GetTableName() + " Failed to prepare sql.");
+            return count;
+        }
+        for (const auto &item : values) {
+            // 访问 variant 中存储的值
+            if (std::holds_alternative<uint32_t>(item)) {
+                stmt->BindParams(std::get<uint32_t>(item));
+            } else if (std::holds_alternative<uint64_t>(item)) {
+                stmt->BindParams(std::get<uint64_t>(item));
+            } else if (std::holds_alternative<std::string>(item)) {
+                stmt->BindParams(std::get<std::string>(item));
+            }
+        }
+        auto resultSet = stmt->ExecuteQuery();
+        if (resultSet == nullptr) {
+            ServerLog::Error(GetTableName() + " Failed to get result set.", stmt->GetErrorMessage());
+            return count;
+        }
+        if (resultSet->Next()) {
+            count = resultSet->GetUint64("count");
+        }
+        ClearThreadLocal();
+        return count;
     }
 
 protected:
@@ -208,6 +212,6 @@ protected:
     virtual std::string &GetTableName() = 0;
 };
 }
-}
-}
+
+
 #endif // PROFILER_SERVER_TABLE_H

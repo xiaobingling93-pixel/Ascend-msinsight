@@ -12,6 +12,12 @@
 #include "Repository.h"
 #include "CacheManager.h"
 namespace Dic::Module::Timeline {
+struct DepthHelper {
+    uint64_t endTime = 0;
+    uint64_t tempId = 0;
+    uint64_t tempDuration = 0;
+    uint64_t curLimitTime = 0;
+};
 class SliceAnalyzer {
 public:
     SliceAnalyzer();
@@ -28,14 +34,12 @@ private:
     static bool CompareTimestampASC(const SliceDomain &first, const SliceDomain &second);
     static void AddData(std::map<std::string, uint64_t> &selfTimeKeyValue, const std::string &name,
         uint64_t tmpSelfTime);
-    static void ComputeSmallScreenSliceIds(uint64_t startTime, uint64_t endTime,
-        const std::vector<SliceDomain> &cacheSlices, std::set<uint64_t> &ids);
-    static void ComputeDepthResultIds(uint64_t startTime, uint64_t endTime,
-        const std::vector<SliceDomain> &slicesDomainVec, uint64_t unitTime, std::set<uint64_t> &ids);
-    static void ComputeDepth(std::vector<SliceDomain> &sliceDomainVec, const std::set<uint64_t> &pythonFunctionIds,
-        std::vector<std::vector<SliceDomain>> &depthCacheSlice, std::map<uint64_t, int32_t> &depthMap);
-    static std::set<uint64_t> ComputeResultIds(uint64_t startTime, uint64_t endTime,
-        std::vector<std::vector<SliceDomain>> &depthSlicesDomainVec);
+    static std::set<std::pair<uint64_t, uint32_t>> ComputeResultIds(uint64_t startTime, uint64_t endTime,
+        std::vector<SliceDomain> &sliceDomain, std::vector<DepthHelper> &endList,
+        const std::vector<uint64_t> &pythonFunctionIds);
+    static std::set<std::pair<uint64_t, uint32_t>> ComputeSmallScreenIds(uint64_t startTime, uint64_t endTime,
+        std::vector<SliceDomain> &sliceDomain, std::vector<DepthHelper> &endList,
+        const std::vector<uint64_t> &pythonFunctionIds);
 };
 }
 #endif // PROFILER_SERVER_SLICEANALYZER_H
