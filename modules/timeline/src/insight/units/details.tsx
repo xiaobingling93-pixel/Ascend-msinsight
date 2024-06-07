@@ -19,7 +19,7 @@ export const slicesListDetail = detail({
         ['Occurrences', data => `${data.occurrences ?? 0}`, 180],
     ],
     actions: [
-        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => a.title?.localeCompare(b?.title ?? '') ?? 0 },
+        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => a.title?.localeCompare(b?.title ?? '') ?? 0, filterKey: 'title' },
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => (a.wallDuration ?? 0) - (b.wallDuration ?? 0) },
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => (a.selfTime ?? 0) - (b.selfTime ?? 0) },
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => (a.avgWallDuration ?? 0) - (b.avgWallDuration ?? 0) },
