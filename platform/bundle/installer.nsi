@@ -146,12 +146,17 @@ Section "Uninstall"
 
   ; Remove files
   Delete $INSTDIR\ascend_insight.exe
+  RMDir /r $INSTDIR\config
+  ; remove all except logs
+  RMDir /r $INSTDIR\.ascend_insight\admin
+  RMDir /r $INSTDIR\.ascend_insight\EBWebView
   RMDir /r $INSTDIR\resources
-  RMDir /r $INSTDIR\.ascend_insight
     ${If} $RemoveCacheData == 1
         StrCpy $1 $APPDATA
-        ; Remove User Cache
+        ; remove all logs and install dir
+        RMDir /r $INSTDIR\.ascend_insight
         RMDir /r $PROFILE\.ascend_insight
+        RMDir /r $INSTDIR
     ${EndIf}
 
   ; Remove Start Menu shortcut
@@ -171,5 +176,9 @@ Section "Uninstall"
 
   ; Remove installation directory
   Delete "$INSTDIR\uninstall.exe"
+  StrCpy $2 $INSTDIR 3
+  StrCmp $2 "C:\" 0 +4
   RMDir /r $INSTDIR
+  RMDir /r $PROFILE\.ascend_insight\admin
+  RMDir /r $PROFILE\.ascend_insight\EBWebView
 SectionEnd
