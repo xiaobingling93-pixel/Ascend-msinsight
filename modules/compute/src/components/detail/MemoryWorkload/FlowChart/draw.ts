@@ -288,6 +288,7 @@ const mixCore: Inode = {
                 { value: 'Ratio :', x: 630, y: 200 },
                 { id: 'vectorRatio', x: 690, y: 200, value: '0%' },
             ],
+            name: 'Vector',
         },
         {
             top: 121,
@@ -295,6 +296,7 @@ const mixCore: Inode = {
             width: 650,
             height: 100,
             label: 'UB',
+            name: 'UB',
         },
     ],
     line: [
