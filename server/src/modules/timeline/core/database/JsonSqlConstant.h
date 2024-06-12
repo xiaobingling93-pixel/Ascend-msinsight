@@ -422,23 +422,17 @@ public:
             "SELECT kd.rank_id, kd.name as name, kd.op_type, kd.accelerator_core, kd.start_time - ? as startTime, "
             "s.duration / 1000 as duration, t.pid as pid, t.tid as tid, s.id as id, s.track_id as track_id, "
             "ROW_NUMBER() OVER (ORDER BY s.track_id ASC, s.timestamp ASC) AS row_num "
-            "FROM " +
-            KERNEL_DETAIL +
-            " kd "
-            "JOIN " +
-            SLICE_TABLE +
-            " s ON kd.name = s.name AND kd.start_time = s.timestamp "
-            "JOIN " +
-            THREAD_TABLE +
-            " t ON s.track_id = t.track_id "
+            "FROM " + KERNEL_DETAIL + " kd "
+            "JOIN " + SLICE_TABLE + " s ON kd.name = s.name AND kd.start_time = s.timestamp "
+            "JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id "
             "WHERE kd.accelerator_core != 'HCCL' ) "
             "SELECT d0.* FROM data d0 ";
         for (int i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
             std::string table = "d" + std::to_string(i);
             sql += "JOIN data " + table + " ON " + table + ".row_num = d0.row_num + " + std::to_string(i) + " AND " +
-                table + ".name = '" + rule.opList.at(i) + "' ";
+                table + ".op_type = '" + rule.opList.at(i) + "' ";
         }
-        sql += "WHERE d0.name = '" + rule.opList.at(0) + "' ORDER BY " + params.orderBy + " " + params.order;
+        sql += "WHERE d0.op_type = '" + rule.opList.at(0) + "' ORDER BY " + params.orderBy + " " + params.order;
         return sql;
     }
 
