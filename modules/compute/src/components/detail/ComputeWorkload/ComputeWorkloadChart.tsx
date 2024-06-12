@@ -79,7 +79,7 @@ function InitCharts(data: IblockData[]): void {
 function wrapData(data: IblockData[]): any {
     const option = { ...baseOption };
     data.sort((a, b) => sortFunc(a.value, b.value));
-    const namelist = data.map(item => `${item.blockType?.toUpperCase()}_${String(item.name).replaceAll(' ', '_')}`);
+    const namelist = data.map(item => item.name);
     const valuelist = data.map(item => ({ value: item.value, originValue: item.originValue }));
     option.yAxis.data = namelist;
     option.series[0].data = valuelist;
