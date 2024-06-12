@@ -67,6 +67,7 @@ interface Ilabel {
     value?: string;
     x?: number;
     y?: number;
+    top?: number | string;
 }
 export type IdrawGraph = IdrawNode[];
 export interface IdrawNode {

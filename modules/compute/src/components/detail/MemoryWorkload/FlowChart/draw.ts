@@ -6,6 +6,7 @@ import type { TFunction } from 'i18next';
 import type { Igraph, Inode, InodePosition, IlinePosition, Ibox, IdrawGraph, IdrawNode, IdrawLine, IdrawRect, Iline, Irect, IrectPosition, Ixy, IdrawLabel } from './flowType';
 import type { ImemoryData } from '../MemoryChart';
 import type { Icondition } from '../Filter';
+import { getFormatNum } from '../../../Common';
 
 const cubeCore: Inode = {
     name: '',
@@ -47,7 +48,12 @@ const cubeCore: Inode = {
             left: 100,
             width: 150,
             height: 120,
-            label: 'Cube',
+            labels: [
+                { value: 'Cube' },
+                { value: '' },
+                { value: 'Ratio :' },
+                { id: 'cubeRatio', value: '0%' },
+            ],
         },
         {
             top: -110,
@@ -64,14 +70,14 @@ const cubeCore: Inode = {
             x: 0,
             y: 155,
             orient: 'right',
-            length: 139,
+            length: 138,
         },
         {
             id: 'L1_TO_L2',
             label: 'L1_TO_L2',
             x: 140,
             y: 180,
-            length: 139,
+            length: 138,
             orient: 'left',
             labelPosition: 'bottom',
         },
@@ -93,7 +99,7 @@ const cubeCore: Inode = {
             x: 420,
             y: 150,
             orient: 'right',
-            length: 99,
+            length: 97,
             labelPosition: 'bottom',
         },
         {
@@ -102,14 +108,14 @@ const cubeCore: Inode = {
             x: 420,
             y: 240,
             orient: 'right',
-            length: 99,
+            length: 97,
         },
         {
             id: 'CUBE_TO_L0C',
             label: 'CUBE_TO_L0C',
             x: 590,
             y: 135,
-            length: 59,
+            length: 58,
             orient: 'top',
             labelPosition: 'left',
         },
@@ -118,20 +124,20 @@ const cubeCore: Inode = {
             label: 'L0C_TO_CUBE',
             x: 610,
             y: 75,
-            length: 59,
+            length: 58,
             orient: 'bottom',
             labelPosition: 'right',
         },
         {
             id: 'L0C_TO_L1',
             label: 'L0C_TO_L1',
-            points: '545,65 180,65 180,100',
+            points: '545,65 180,65 181,100',
             labelXy: { x: 210, y: 50 },
         },
         {
             id: 'L0C_TO_L2',
             label: 'L0C_TO_L2',
-            points: '600,25 600,10 0,10',
+            points: '600,25 600,10 1,10',
             labelXy: { x: 60, y: 25 },
         },
     ],
@@ -155,13 +161,20 @@ const vectorCore: Inode = {
             width: 150,
             height: 110,
             label: 'UB',
+            name: 'UB',
         },
         {
             top: 0,
             left: 120,
             width: 200,
             height: 110,
-            label: 'Vec',
+            name: 'Vector',
+            labels: [
+                { value: 'Vector' },
+                { value: '' },
+                { value: 'Ratio :' },
+                { id: 'vectorRatio', value: '0%' },
+            ],
         },
     ],
     line: [
@@ -203,6 +216,20 @@ const vectorCore: Inode = {
 };
 const vectorCore2: Inode = {
     ...vectorCore,
+    rect: (vectorCore.rect ?? []).map(item => {
+        if (item.name === 'Vector') {
+            return {
+                ...item,
+                labels: [
+                    { value: 'Vector' },
+                    { value: '' },
+                    { value: 'Ratio :' },
+                    { id: 'vector1Ratio', value: '0%' },
+                ],
+            };
+        }
+        return item;
+    }),
     line: (vectorCore.line ?? []).map(item => ({ ...item, id: `${item.id}_2`, label: `${item.label}_2` })),
 };
 const mixCore: Inode = {
@@ -237,7 +264,12 @@ const mixCore: Inode = {
             left: 100,
             width: 150,
             height: 120,
-            label: 'Cube',
+            labels: [
+                { value: 'Cube' },
+                { value: '' },
+                { value: 'Ratio :' },
+                { id: 'cubeRatio', value: '0%' },
+            ],
         },
         {
             top: 15,
@@ -251,7 +283,11 @@ const mixCore: Inode = {
             left: -350,
             width: 350,
             height: 50,
-            label: 'Vec',
+            labels: [
+                { value: 'Vector', x: 655, y: 180 },
+                { value: 'Ratio :', x: 630, y: 200 },
+                { id: 'vectorRatio', x: 690, y: 200, value: '0%' },
+            ],
         },
         {
             top: 121,
@@ -408,7 +444,7 @@ const common: Inode[] = [
                 labels: [
                     { value: 'L2 Cache' },
                     { value: '' },
-                    { value: 'Hit Rate' },
+                    { value: 'Hit Rate:' },
                     { id: 'hitRatio', value: '0%' },
                 ],
             },
@@ -420,15 +456,15 @@ const common: Inode[] = [
                 x: 0,
                 top: '46%-10',
                 orient: 'right',
-                length: 118,
+                length: 117,
             },
             {
                 id: 'L2_TO_HBM',
                 label: 'L2_TO_HBM',
-                x: 120,
+                x: 119,
                 top: '46%+10',
                 orient: 'left',
-                length: 118,
+                length: 117,
                 labelPosition: 'bottom',
             },
         ],
@@ -445,8 +481,8 @@ const vector: Igraph = [
 const mix: Igraph = [
     ...common,
     cubeCore,
-    { ...vectorCore, x: 275, y: 320 },
-    { ...vectorCore2, x: 275, y: 500 },
+    { ...vectorCore, x: 276, y: 330 },
+    { ...vectorCore2, x: 276, y: 500 },
 ];
 const mix310: Igraph = [
     ...common.map(item => ({ ...item, rect: (item.rect ?? []).map(rectItem => ({ ...rectItem, height: 390 })) })),
@@ -653,12 +689,23 @@ const transRectLabels = (origin: Irect, rectPosition: IdrawRect): undefined | Id
     const centerX = x + (width * 0.5);
     const centerY = y + (height * 0.46);
     const length = labels.length;
-    const baseY = centerY - Math.floor((length - 1) / 2 * 20);
-    return labels.map((item, index) => ({
-        ...item,
-        x: centerX,
-        y: baseY + (index * 20),
-    }));
+    let baseY = centerY - Math.floor((length - 1) / 2 * 20);
+    return labels.reduce<IdrawLabel[]>((pre, cur, index) => {
+        let curY;
+        if (cur.top !== undefined) {
+            curY = y + transLeftTop(cur.top, height);
+        } else {
+            curY = baseY + 20;
+        }
+        const label = {
+            x: centerX,
+            y: curY,
+            ...cur,
+        };
+        baseY = curY;
+        pre.push(label);
+        return pre;
+    }, []);
 };
 const transformLine = (origin: IlinePosition, box: Ibox): IdrawLine => {
     if (origin.points !== undefined) {
@@ -812,23 +859,25 @@ const getNodeBox = (node: Ixy, boxlist: Ibox[]): Ibox => {
 
 const colorConfig: Record<string, Record<string, any>> = {
     light: {
-        container: 'rgb(255,255,255)',
-        rect: '#89c35e',
-        rectStroke: '#a9a9a9',
+        container: '#f7fbff',
+        rectStroke: '#d9d9d9',
         line: '#000000',
         rectLabel: '#fff',
         label: '#7b7a7a',
-        memory: '#40a9ff',
+        memory: '#0062DC',
+        rect: '#279C6E',
+        aiv: '#75A105',
         range: ['#4c008a', '#c42627', '#ff5f03', '#ffc55b', '#fcc95e', '#e9e9e9'],
     },
     dark: {
-        container: 'rgb(43,43,43)',
-        rect: '#89c35e',
+        container: '#2b2b2b',
         rectStroke: '#696969',
         line: '#808080',
         rectLabel: '#fff',
         label: '#fff',
-        memory: '#40a9ff',
+        memory: '#0062DC',
+        rect: '#279C6E',
+        aiv: '#75A105',
         range: ['#4c008a', '#c42627', '#ff5f03', '#ffc55b', '#fcc95e', '#ffffff'],
     },
 };
@@ -874,9 +923,21 @@ const drawRect = (nodes: d3.Selection<SVGGElement, IdrawNode, d3.BaseType, unkno
         .attr('height', d => d.height)
         .attr('rx', 1)
         .attr('ry', 1)
-        .attr('fill', d => ['HBM', 'L2Catch', 'L1'].includes(d.name ?? '') ? COLOR.memory : COLOR.rect)
+        .attr('fill', d => {
+            const name = d.name ?? '';
+            if (['HBM', 'L2Catch'].includes(name)) {
+                return COLOR.memory;
+            } else if (['UB', 'Vector'].includes(name)) {
+                return COLOR.aiv;
+            } else {
+                return COLOR.rect;
+            }
+        })
         .style('stroke', COLOR.rectStroke);
 
+    drawRectLabel(nodes);
+};
+const drawRectLabel = (nodes: d3.Selection<SVGGElement, IdrawNode, d3.BaseType, unknown>): void => {
     nodes.selectAll('text.rect-label')
         .data((d, i) => {
             return d.rect ?? [];
@@ -1079,14 +1140,16 @@ export const updateData = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, 
 };
 
 const updateHitRatio = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition): void => {
+    const dic: Record<string, string | number> = {
+        hitRatio: getFormatNum(data?.l2Cache?.hitRatio),
+        vectorRatio: getFormatNum(data?.vector?.ratio),
+        vector1Ratio: getFormatNum(data?.vector1?.ratio),
+        cubeRatio: getFormatNum(data?.cube?.ratio),
+    };
     svg.selectAll('text.rect-labels')
         .text((d: any) => {
-            if (d.id === 'hitRatio') {
-                let hitRatio = Number(data?.l2Cache?.hitRatio);
-                if (!isNaN(hitRatio)) {
-                    hitRatio = Number(hitRatio.toFixed(2));
-                }
-                return `${hitRatio}%`;
+            if (Object.keys(dic).includes(d.id)) {
+                return `${dic[d.id]}%`;
             }
             return d.value ?? '';
         });
@@ -1097,7 +1160,11 @@ const updatePath = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, d
     const peakDic: Record<string, number> = {};
     const peakSet = new Set<number>();
     memoryUnit.forEach(unit => {
-        labelDic[unit.memoryPath] = unit[showAs];
+        let label = String(getFormatNum(unit[showAs]));
+        if (showAs === 'bandwidth') {
+            label = `${label} GB/s`;
+        }
+        labelDic[unit.memoryPath] = label;
         const peak = Number(unit.peakRatio);
         if (!isNaN(peak)) {
             peakDic[unit.memoryPath] = peak;

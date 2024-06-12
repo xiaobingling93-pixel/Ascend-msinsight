@@ -21,6 +21,15 @@ export interface ImemoryData {
         totalRequest: string;
         hitRatio: string;
     };
+    vector?: Icore;
+    vector1?: Icore;
+    cube?: Icore;
+}
+
+export interface Icore {
+    cycle: string;
+    totalCycles: string;
+    ratio: string;
 }
 export interface ImemoryUnit {
     [prop: string]: string;

@@ -23,7 +23,7 @@
     "Hit": "命中次数",
     "Miss": "未命中次数",
     "Total": "总次数",
-    "Hit Rate": "命中率",
+    "Hit Rate:": "命中率:",
     "Hit Rate(%)": "命中率(%)",
     "Requests": "请求数",
     "Throughput": "吞吐量",
@@ -33,6 +33,10 @@
     "Cube0 Duration (μs)": "Cube0时长(μs)",
     "Vector0 Duration (μs)": "Vector0时长(μs)",
     "Vector1 Duration (μs)": "Vector1时长(μs)",
-    "NAHit": "NA : 展示多核平均值"
+    "NAHit": "NA : 展示多核平均值",
+    "Show As": "显示为",
+    "Num of Request": "请求数",
+    "Bandwidth": "带宽",
+    "Ratio :": "利用率:"
   }
 }

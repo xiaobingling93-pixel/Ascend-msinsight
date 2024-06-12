@@ -211,3 +211,14 @@ export const useHit = (): JSX.Element => {
         <QuestionCircleOutlined style={{ cursor: 'pointer', margin: '0 3px' }}/>
     </Tooltip>);
 };
+
+export const getFormatNum = (str?: string | number): number | string => {
+    const num = Number(str);
+    if (!isNaN(num)) {
+        if (num !== 0 && Number(num.toFixed(2)) === 0) {
+            return num;
+        }
+        return Number(num.toFixed(2));
+    }
+    return str ?? '';
+};
