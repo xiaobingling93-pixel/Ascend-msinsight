@@ -50,19 +50,20 @@ export function binarySearch(arr: any[][], key: any, compareFun: Function): numb
             // 可能存在多个arr[mid][0]等于key，只有arr[mid][1]（Allocated项）不为null时才是真正要找的项
             if (arr[mid][1] !== null) {
                 return mid;
-            } else {
-                let step = 1;
-                while ((mid - step >= 0 && arr[mid - step][0] === `${key}`) ||
-                    (mid + step <= arr.length - 1 && arr[mid + step][0] === `${key}`)) {
-                    if (mid - step >= 0 && arr[mid - step][1] !== null) {
-                        return mid - step;
-                    }
-                    if (mid + step <= arr.length - 1 && arr[mid + step][1] !== null) {
-                        return mid + step;
-                    }
-                    step += 1;
-                }
             }
+
+            let step = 1;
+            while ((mid - step >= 0 && arr[mid - step][0] === `${key}`) ||
+                (mid + step <= arr.length - 1 && arr[mid + step][0] === `${key}`)) {
+                if (mid - step >= 0 && arr[mid - step][0] === `${key}` && arr[mid - step][1] !== null) {
+                    return mid - step;
+                }
+                if (mid + step <= arr.length - 1 && arr[mid + step][0] === `${key}` && arr[mid + step][1] !== null) {
+                    return mid + step;
+                }
+                step += 1;
+            }
+            return -1;
         }
     }
     return -1;

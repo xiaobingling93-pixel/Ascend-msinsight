@@ -69,6 +69,10 @@
         "functions": 0,
         "lines": 0
       }
+    },
+    "moduleNameMapper": {
+      "lib/i18n": "<rootDir>/../lib/src/i18n/index.ts",
+      "lib/ResizeTable": "<rootDir>/../lib/src/resize/ResizeTable.tsx"
     }
   },
   "browserslist": {
