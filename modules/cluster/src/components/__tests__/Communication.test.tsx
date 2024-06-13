@@ -8,13 +8,14 @@ import React from 'react';
 import CommunicationTimeChart from '../communication/CommunicationTimeChart';
 import { chartData } from '../__mock__/communication.mock';
 
-it('Filter test', () => {
+it('testCommunicationFilterComponent', () => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
     if (session === undefined) {
         return;
     }
     render(<Filter session={session} handleFilterChange={(): void => {}}/>);
+    // 查看筛选条件选项是否都在
     expect(screen.queryAllByText('Step')).toBeDefined();
     expect(screen.queryAllByText('Communication Group')).toBeDefined();
     expect(screen.queryAllByText('Operator Name')).toBeDefined();
@@ -22,13 +23,14 @@ it('Filter test', () => {
     expect(screen.getByText('Communication Duration Analysis')).toBeDefined();
 });
 
-it('Matrix test', () => {
+it('testCommunicationMatrixComponentByMockdata', () => {
     const { sessionStore } = store;
     const session = sessionStore.activeSession;
     if (session === undefined) {
         return;
     }
     render(<CommunicationTimeChart session={session} dataSource={chartData} />);
+    // 查看mockData渲染的页面数据是否正确
     expect(screen.queryAllByText('17.7497')).toBeDefined();
     expect(screen.queryAllByText('19.2835')).toBeDefined();
 });
