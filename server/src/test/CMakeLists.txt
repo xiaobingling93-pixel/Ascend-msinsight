@@ -47,26 +47,16 @@ add_executable(insight_performance ${DIC_PERFORMANCE_TEST_LIST})
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(insight_test
-            -static
-            gtest_main
-            gmock_main
-            uv_a
-            userenv
-            ws2_32
-            iphlpapi
-            shlwapi
-            sqlite
-            -lssp
-            z)
-    target_link_libraries(insight_performance gtest_main gmock_main uv_a userenv ws2_32 iphlpapi shlwapi sqlite -lssp z)
+            gtest_main gmock_main
+            uv_a userenv ws2_32 iphlpapi shlwapi -lssp z
+            ${EXECUTABLE_OUTPUT_PATH}/libsqlite.dll)
+    target_link_libraries(insight_performance
+            gtest_main gmock_main
+            uv_a userenv ws2_32 iphlpapi shlwapi -lssp z
+            ${EXECUTABLE_OUTPUT_PATH}/libsqlite.dll)
 else()
     target_link_libraries(insight_test
-            gtest_main
-            gmock_main
-            uv_a
-            pthread
-            dl
-            sqlite
-            z)
+            gtest_main gmock_main
+            uv_a pthread dl sqlite z)
     target_link_libraries(insight_performance gtest_main gmock_main uv_a pthread dl sqlite z)
 endif()
