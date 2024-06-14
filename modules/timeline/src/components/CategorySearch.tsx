@@ -186,7 +186,8 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     const { t } = useTranslation();
     const [messageApi, contextHolder] = message.useMessage();
     const theme = useTheme();
-    const [paginationData, updatePaginationData] = useState({ current: 0, total: 0 });
+    // paginationData记录了当前搜索的算子的下标以及一共搜索到多少个算子、默认搜索第1个算子
+    const [paginationData, updatePaginationData] = useState({ current: 1, total: 0 });
     const [searchIconVisible, setSearchIconVisible] = useState(true);
     const [searchContent, setSearchContent] = useState('');
     const [searchingStatus, setSearchingStatus] = useState(false);
@@ -195,7 +196,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
 
     useEffect(action(() => {
         setSearchIconVisible(true); setSearchContent(''); setIsMatchCase(false); setIsMatchExact(false);
-        updatePaginationData({ current: 0, total: 0 }); session.searchData = undefined;
+        updatePaginationData({ current: 1, total: 0 }); session.searchData = undefined;
     }), [session, session.units]);
     const onPageChange = (current: number): void => {
         updatePaginationData(prevState => ({ current, total: prevState.total }));
@@ -206,8 +207,8 @@ const CategorySearchContent = (session: Session): JSX.Element => {
         setSearchingStatus(true);
         const totalCnt = await queryDataCount(session, searchContent, isMatchCase, isMatchExact);
         if (totalCnt > 0) {
-            updatePaginationData({ current: 0, total: totalCnt });
-            jumpSlice(session, searchContent, 0, isMatchCase, isMatchExact);
+            updatePaginationData({ current: 1, total: totalCnt });
+            jumpSlice(session, searchContent, 1, isMatchCase, isMatchExact);
             setSearchIconVisible(false);
         } else {
             messageApi.warning(t('notify:SearchEmpty'));
@@ -316,7 +317,7 @@ interface Props {
     total: number;
 }
 const StylePagination = ({ onChange, current, total }: Props): JSX.Element => {
-    const [searchNumber, setSearchNumber] = useState(0);
+    const [searchNumber, setSearchNumber] = useState(1);
     const [currentValue, setCurrentValue] = useState<string | number>(current);
     const handleSearch = (inputNumber: number): void => {
         setCurrentValue(inputNumber);
@@ -326,7 +327,7 @@ const StylePagination = ({ onChange, current, total }: Props): JSX.Element => {
         setCurrentValue(current);
     }, [current]);
     return (<div className={'StylePaginationClass'}>
-        <Button size="middle" disabled={current === 0} icon={<LeftOutlined />} onClick={(): void => onChange(current - 1) }/>
+        <Button size="middle" disabled={current === 1} icon={<LeftOutlined />} onClick={(): void => onChange(current - 1) }/>
         <span><Input
             size="small"
             value={currentValue}
@@ -337,7 +338,7 @@ const StylePagination = ({ onChange, current, total }: Props): JSX.Element => {
                     setSearchNumber(1);
                     return;
                 }
-                if (Number(val) > total || Number(val) < 0) {
+                if (Number(val) > total || Number(val) < 1) {
                     return;
                 }
                 setCurrentValue(Number(val));
