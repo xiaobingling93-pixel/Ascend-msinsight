@@ -71,21 +71,17 @@ std::shared_ptr<ParserAlloc> ParserFactory::ParserImport(ParserType allocType)
     return alloc;
 }
 
-void ParserAlloc::SetBaseActionOfResponse(ImportActionResponse &response,
-    std::pair<std::string, std::vector<std::string>> rankEntry)
+void ParserAlloc::SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
+    const std::string &cardPath, std::vector<std::string> dataPath)
 {
     Action action;
-    std::string rankId = rankEntry.first;
     action.cardName = rankId;
     action.rankId = rankId;
     action.result = true;
-    if (std::empty(rankEntry.second)) {
-        ServerLog::Warn("CardPath is empty, rankId is: ", rankId);
-        return;
-    }
-    action.dataPathList = rankEntry.second;
+    // 路径信息，与rankId对应，用于页面上删除时，能够正确找到要删除的甬道信息（目前只有导入单卡数据需要这个信息）
+    action.dataPathList = std::move(dataPath);
     // 将文件所在路径的三级目录名称作为rank的tooltip信息
-    action.cardPath = "Directory: " + FileUtil::GetRankIdFromPath(rankEntry.second[0]);
+    action.cardPath = "Directory: " + cardPath;
     response.body.result.emplace_back(action);
 }
 
@@ -277,10 +273,10 @@ bool ParserAlloc::CheckIfClusterAndReset(const std::string &path, int filesSize,
 
 void ParserAlloc::Reset()
 {
-    FullDb::FullDbParser::Instance().Reset();
     TraceFileParser::Instance().Reset();
     Summary::KernelParse::Instance().Reset();
     Memory::MemoryParse::Instance().Reset();
+    FullDb::FullDbParser::Instance().Reset();
 }
 
 void ParserAlloc::SaveDbPath(const std::string &curProjectName,

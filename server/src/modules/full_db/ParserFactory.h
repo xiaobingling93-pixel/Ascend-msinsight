@@ -39,8 +39,8 @@ protected:
     static void SendParseSuccessEvent(const std::string &token, const std::string &fileId);
     static void SendParseFailEvent(const std::string &token, const std::string &fileId, const std::string &message);
 
-    void SetBaseActionOfResponse(ImportActionResponse &response,
-        std::pair<std::string, std::vector<std::string>> rankEntry);
+    void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
+                                 const std::string &cardPath, std::vector<std::string> dataPath);
     bool CheckIfClusterAndReset(const std::string &path, int filesSize, ImportActionResBody &body, bool isDb);
     static void SaveDbPath(const std::string &curProjectName,
                            std::map<std::string, std::vector<std::string>> &dataPathToDbMap);

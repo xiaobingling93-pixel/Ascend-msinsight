@@ -81,8 +81,12 @@ std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(Impor
         fileList.push_back(item.fileName);
     }
     std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
-    for (const auto &rankEntry : rankToSourceFileMap) {
-        SetBaseActionOfResponse(response, rankEntry);
+    for (const auto &rankEntry : rankListMap) {
+        if (rankEntry.second.empty()) {
+            continue;
+        }
+        std::string cardPath = FileUtil::GetRankIdFromPath(rankEntry.second[0]);
+        SetBaseActionOfResponse(response, rankEntry.first, cardPath, rankToSourceFileMap[rankEntry.first]);
     }
     return rankListMap;
 }
@@ -126,7 +130,8 @@ void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &pr
         rankToSourceFileMap[item.fileName].push_back(item.fileName);
     }
     for (const auto &rankEntry : rankToSourceFileMap) {
-        SetBaseActionOfResponse(response, rankEntry);
+        // 拖拽文件不存在文件路径信息，因此cardPath直接使用rankId
+        SetBaseActionOfResponse(response, rankEntry.first, rankEntry.first, rankEntry.second);
     }
     ModuleRequestHandler::SetResponseResult(response, true);
     response.command = Protocol::REQ_RES_IMPORT_ACTION;

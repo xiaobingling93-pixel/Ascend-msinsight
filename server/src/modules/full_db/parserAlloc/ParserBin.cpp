@@ -9,7 +9,6 @@
 #include "WsSessionManager.h"
 #include "ModuleRequestHandler.h"
 #include "TraceFileParser.h"
-#include "FullDbParser.h"
 #include "CommonDefs.h"
 #include "DataBaseManager.h"
 #include "SourceFileParser.h"
@@ -65,7 +64,11 @@ void ParserBin::HandleCompute(ImportActionResponse &response, const std::string 
     sourceFileParser.Parse(empty, files.front().second, selectedFolder);
     sourceFileParser.ConvertToData();
     for (const auto &rankEntry : rankListMap) {
-        SetBaseActionOfResponse(response, rankEntry);
+        if (rankEntry.second.empty()) {
+            continue;
+        }
+        std::string cardPath = FileUtil::GetRankIdFromPath(rankEntry.second[0]);
+        SetBaseActionOfResponse(response, rankEntry.first, cardPath, std::vector<std::string>{});
     }
     ModuleRequestHandler::SetResponseResult(response, true);
     response.body.isBinary = true;
