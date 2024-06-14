@@ -105,7 +105,7 @@ const std::string QUERY_UNITS_META_SQL =
     COUNTER_TABLE +
     " GROUP BY "
     " name, pid ) c ON c.pid = p.pid ) AS pt WHERE pt.process_name IS NOT NULL "
-    " ORDER BY pt.process_sort_index ASC, pt.thread_sort_index ASC, pt.name ASC;";
+    " ORDER BY pt.process_sort_index ASC,pt.process_name ASC, pt.thread_sort_index ASC, pt.name ASC;";
 const std::string QUERY_EXETREME_TIME_SQL = "SELECT  min(minTimestamp) AS totalMinTimestamp, max(maxTimestamp) AS "
     "totalMaxTimestamp FROM (SELECT min(timestamp) "
     "as minTimestamp, max(timestamp) as maxTimestamp FROM " +
