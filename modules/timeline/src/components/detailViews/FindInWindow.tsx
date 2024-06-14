@@ -183,8 +183,9 @@ const FindDetail = observer((props: any) => {
         }
         setLoading(true);
         const res = await searchData(pages, sorters, prop).finally(() => setLoading(false));
+        const timestampoffset = getTimeOffset(props.session, props.rankId);
         const data = res.searchAllSlicesDetails.map(item => {
-            item.startTime = getDetailTimeDisplay(item.timestamp);
+            item.startTime = getDetailTimeDisplay(item.timestamp - timestampoffset);
             return item;
         });
         setDataSource(data);

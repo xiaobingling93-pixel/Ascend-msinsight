@@ -312,8 +312,9 @@ const BaseSummary = observer((props: any) => {
         if (_isStats) {
             setDataSource(res.systemViewDetails);
         } else {
+            const timestampoffset = getTimeOffset(props.session, props.rankId);
             const data = res.data.map((item: any) => {
-                item.startTimeLabel = getDetailTimeDisplay(item.startTime);
+                item.startTimeLabel = getDetailTimeDisplay(item.startTime - timestampoffset);
                 return item;
             });
             setDataSource(data);
@@ -423,10 +424,11 @@ const KernelDetails = observer((props: any) => {
             coreType: '',
             searchName,
         });
+        const timestampoffset = getTimeOffset(props.session, props.rankId);
         const data = res.kernelDetails.map((item: {
             startTimeLabel: string;
             startTime: number;}) => {
-            item.startTimeLabel = getDetailTimeDisplay(item.startTime);
+            item.startTimeLabel = getDetailTimeDisplay(item.startTime - timestampoffset);
             return item;
         });
         setDataSource(data);

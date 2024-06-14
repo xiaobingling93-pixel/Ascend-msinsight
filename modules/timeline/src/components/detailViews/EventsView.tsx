@@ -132,8 +132,10 @@ const updateData = async ({
 }: UpdateDatas): Promise<void> => {
     setLoading(true);
     const res = await searchData(pages, sorters, props).finally(() => setLoading(false));
+    const requestData = props.session.eventUnits?.[0]?.metadata as ThreadMetaData;
+    const timestampoffset = getTimeOffset(props.session, requestData.cardId as string);
     const data = res.eventDetails.map((item: any) => {
-        item.startTime = getDetailTimeDisplay(item.start);
+        item.startTime = getDetailTimeDisplay(item.start - timestampoffset);
         return item;
     });
     setEventColum(getColumns(res.columnList));

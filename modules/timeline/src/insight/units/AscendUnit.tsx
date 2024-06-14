@@ -638,8 +638,9 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
         const res = await window.requestData('query/all/same/operators/duration', params, 'timeline');
         const { currentPage, pageSize, sameOperatorsDetails } = res;
         const data = sameOperatorsDetails as OpData[];
+        const timestampoffset = getTimeOffset(session, (metadata as ThreadMetaData).cardId);
         data.forEach(item => {
-            item.startTime = getDetailTimeDisplay(item.timestamp);
+            item.startTime = getDetailTimeDisplay(item.timestamp - timestampoffset);
             item.tid = slice.tid;
             item.pid = slice.pid;
         });
