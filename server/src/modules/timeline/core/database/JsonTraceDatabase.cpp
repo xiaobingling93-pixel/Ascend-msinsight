@@ -1662,11 +1662,24 @@ std::vector<std::string> JsonTraceDatabase::QueryCoreType()
     return acceleratorCoreList;
 }
 
-uint64_t JsonTraceDatabase::QueryTotalKernel(const std::string &coreType, const std::string &name)
+uint64_t JsonTraceDatabase::QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams)
 {
     uint64_t total = 0;
-    std::string sql = "SELECT count(*) FROM kernel_detail where lower(name) LIKE lower(?)";
-    if (!coreType.empty()) {
+    std::string sql = "SELECT count(*) "
+        "FROM ("
+        "    SELECT name, op_type AS type, accelerator_core AS acceleratorCore, "
+        "    input_shapes AS inputShapes, input_data_types AS inputDataTypes, input_formats AS inputFormats, "
+        "    output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
+        "    output_formats AS outputFormats FROM kernel_detail"
+        ") subquery WHERE 1=1 ";
+    for (const auto &filter: requestParams.filters) {
+        if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
+            Server::ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
+            return total;
+        }
+        sql += " AND lower(" + filter.first + ") LIKE lower('%" + filter.second + "%') ";
+    }
+    if (!requestParams.coreType.empty()) {
         sql += " AND accelerator_core = ? ";
     }
     auto stmt = CreatPreparedStatement(sql);
@@ -1674,10 +1687,10 @@ uint64_t JsonTraceDatabase::QueryTotalKernel(const std::string &coreType, const 
         ServerLog::Error("QueryTotalKernel, fail to prepare sql.");
         return total;
     }
-    if (!coreType.empty()) {
-        stmt->BindParams(coreType);
+    if (!requestParams.coreType.empty()) {
+        stmt->BindParams(requestParams.coreType);
     }
-    auto resultSet = stmt->ExecuteQuery(name);
+    auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Error("QueryTotalKernel. Failed to get result set.", stmt->GetErrorMessage());
         return total;
@@ -1695,8 +1708,8 @@ bool JsonTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
         return false;
     }
-    std::string sql =
-        JsonSqlConstant::GetKernelDetailSql(requestParams.order, requestParams.orderBy, requestParams.coreType);
+    std::string sql = JsonSqlConstant::GetKernelDetailSql(requestParams.order, requestParams.orderBy,
+                                                          requestParams.coreType, requestParams.filters);
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -1707,7 +1720,7 @@ bool JsonTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
         stmt->BindParams(requestParams.coreType);
     }
     std::string searchName = "%" + requestParams.searchName + "%";
-    auto resultSet = stmt->ExecuteQuery(searchName, requestParams.pageSize, offset);
+    auto resultSet = stmt->ExecuteQuery(requestParams.pageSize, offset);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryKernelDepthAndThread. Failed to get result set.", stmt->GetErrorMessage());
         return false;
@@ -1717,7 +1730,7 @@ bool JsonTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
     responseBody.currentPage = requestParams.current;
     const std::vector<std::string> cores = QueryCoreType();
     responseBody.acceleratorCoreList = cores;
-    responseBody.count = QueryTotalKernel(requestParams.coreType, searchName);
+    responseBody.count = QueryTotalKernel(requestParams);
     return true;
 }
 

@@ -363,6 +363,17 @@ std::unique_ptr<Request> TimelineProtocol::ToKernelDetailRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.coreType, json["params"], "coreType");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
+    if (json["params"].HasMember("filterCondition") && json["params"]["filterCondition"].IsArray()) {
+        for (const auto &filter : json["params"]["filterCondition"].GetArray()) {
+            if (filter.IsString()) {
+                std::pair<std::string, std::string> pFilter("", "");
+                auto fil = JsonUtil::TryParse(filter.GetString(), error);
+                pFilter.first = JsonUtil::GetString(fil->GetObj(), "columnName");
+                pFilter.second = JsonUtil::GetString(fil->GetObj(), "value");
+                reqPtr->params.filters.emplace_back(pFilter);
+            }
+        }
+    }
     return reqPtr;
 }
 

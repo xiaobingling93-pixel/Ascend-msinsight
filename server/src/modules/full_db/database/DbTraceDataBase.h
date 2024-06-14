@@ -84,7 +84,8 @@ public:
     std::vector<std::string> QueryCoreType() override;
     bool QueryKernelDetailData(const Protocol::KernelDetailsParams &requestParams,
                                Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp) override;
-    uint64_t QueryTotalKernel(const std::string &coreType, const std::string &name) override;
+    bool GetKernelDetailFilterSql(std::string& sql, const Protocol::KernelDetailsParams &requestParams);
+    uint64_t QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams) override;
     bool QueryKernelDepthAndThread(const Protocol::KernelParams &params,
                                    Protocol::OneKernelBody &responseBody, uint64_t minTimestamp) override;
     OneKernelData QueryKernelTid(uint64_t trackId) override;

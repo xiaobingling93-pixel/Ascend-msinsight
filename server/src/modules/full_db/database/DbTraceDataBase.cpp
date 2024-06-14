@@ -429,8 +429,7 @@ bool DbTraceDataBase::QueryKernelDetailData(const Protocol::KernelDetailsParams 
         Server::ServerLog::Error("QueryKernelDetailData, fail to prepare sql.");
         return false;
     }
-    std::string searchName = "%" + requestParams.searchName + "%";
-    stmt->BindParams(searchName, GetRealRankId(requestParams.rankId));
+    stmt->BindParams(GetRealRankId(requestParams.rankId));
     auto resultSet = stmt->ExecuteQuery(requestParams.pageSize, offset);
     if (resultSet == nullptr) {
         ServerLog::Error("QueryKernelDetailData. Failed to get result set.", stmt->GetErrorMessage());
@@ -471,11 +470,37 @@ std::string DbTraceDataBase::GetStringCacheValue(const std::string& path, std::s
     return stringsCache.at(path)[key];
 }
 
+bool DbTraceDataBase::GetKernelDetailFilterSql(std::string& sql, const Protocol::KernelDetailsParams &requestParams)
+{
+    if (!requestParams.filters.empty()) {
+        sql += " WHERE ";
+    }
+    for (int64_t index = 0; index < requestParams.filters.size(); index++) {
+        std::pair<std::string, std::string> filter = requestParams.filters[index];
+        if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
+            ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
+            sql.clear();
+            return false;
+        }
+        if (index != 0) {
+            sql += " AND ";
+        }
+        if (filter.first == "name") {
+            sql += " lower(" + filter.first + ") LIKE lower('%" + filter.second + "%') ";
+        } else {
+            sql += filter.first + " IN ("
+                   "    SELECT id FROM STRING_IDS WHERE lower(value) LIKE lower('%" + filter.second + "%')"
+                   ")";
+        }
+    }
+    return true;
+}
+
 std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams)
 {
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     std::string blockDimColumnName = isLowCamel ? "blockDim" : "block_dim";
-    std::string sql = "with nameIds as (select id, value as realName from STRING_IDS where lower(value) like ?),\n"
+    std::string sql = "with nameIds as (select id, value as realName from STRING_IDS),\n"
       "     main as ("
       "     select nameIds.realName as name, substr(realName, 0, instr(realName, '__') + 1) as opType,"
       "       'HCCL' as taskType, info.startNs, round((info.endNs - info.startNs)/1000.0, 3) as duration,\n"
@@ -489,11 +514,23 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
       "" + blockDimColumnName + ", round(waitNs/1000.0, 3) as wait_time, inputShapes, inputDataTypes, inputFormats,\n"
       "            outputShapes, outputDataTypes, outputFormats  from COMPUTE_TASK_INFO info "
       "      JOIN TASK ON info.globalTaskId = TASK.globalTaskId join nameIds on name = nameIds.id where deviceId = ?), "
-      "    total as (select count(1) as num from main)\n"
+      "    total as (select count(*) as num "
+      "    from ("
+      "        SELECT name, opType as type, taskType AS acceleratorCore, startNs AS startTime, duration ,\n"
+      "        wait_time as waitTime, " + blockDimColumnName + " AS blockDim, inputShapes,\n"
+      "        inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats FROM main"
+      "    ) subquery ";
+    if (!GetKernelDetailFilterSql(sql, requestParams)) {
+        return sql;
+    }
+    sql += " )\n"
       "SELECT total.num, name, opType as type, taskType AS acceleratorCore, startNs AS startTime, duration ,\n"
       "       wait_time as waitTime, " + blockDimColumnName + " AS blockDim, inputShapes,\n"
       "       inputDataTypes, inputFormats, outputShapes, outputDataTypes, outputFormats\n"
-      "FROM main join total";
+      "FROM main join total ";
+    if (!GetKernelDetailFilterSql(sql, requestParams)) {
+        return sql;
+    }
 
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
@@ -505,10 +542,10 @@ std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsPar
     return sql;
 }
 
-uint64_t DbTraceDataBase::QueryTotalKernel(const std::string &coreType, const std::string &name)
+uint64_t DbTraceDataBase::QueryTotalKernel(const Protocol::KernelDetailsParams &requestParams)
 {
-    std::string sql = "SELECT count(1) as num FROM " + TABLE_COMPUTE_TASK_INFO + " where name LIKE ?";
-    if (!coreType.empty()) {
+    std::string sql = "SELECT count(1) as num FROM " + TABLE_COMPUTE_TASK_INFO;
+    if (!requestParams.coreType.empty()) {
         sql += " AND accelerator_core = ? ";
     }
     auto stmt = CreatPreparedStatement(sql);
@@ -516,10 +553,10 @@ uint64_t DbTraceDataBase::QueryTotalKernel(const std::string &coreType, const st
         Server::ServerLog::Error("QueryTotalKernel, fail to prepare sql.");
         return 0;
     }
-    if (!coreType.empty()) {
-        stmt->BindParams(coreType);
+    if (!requestParams.coreType.empty()) {
+        stmt->BindParams(requestParams.coreType);
     }
-    auto resultSet = stmt->ExecuteQuery(name);
+    auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
         ServerLog::Error("QueryTotalKernel. Failed to get result set.", stmt->GetErrorMessage());
         return 0;

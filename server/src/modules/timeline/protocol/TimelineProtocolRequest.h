@@ -251,6 +251,7 @@ struct KernelDetailsParams {
     std::string rankId;
     std::string coreType;
     std::string searchName;
+    std::vector<std::pair<std::string, std::string>> filters;
 };
 
 struct KernelDetailsRequest : public Request {

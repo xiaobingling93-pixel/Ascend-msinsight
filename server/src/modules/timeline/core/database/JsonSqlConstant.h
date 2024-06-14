@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_JSONSQLCONSTANT_H
 #include <string>
 #include "StringUtil.h"
+#include "ServerLog.h"
 #include "TimelineProtocolRequest.h"
 
 namespace Dic::Module::Timeline {
@@ -243,7 +244,7 @@ public:
         return sql;
     }
     static std::string GetKernelDetailSql(const std::string &order, const std::string &orderByField,
-        const std::string &coreType)
+        const std::string &coreType, std::vector<std::pair<std::string, std::string>> filters)
     {
         std::string orderBy;
         std::string coreTypes;
@@ -255,13 +256,21 @@ public:
         if (!coreType.empty()) {
             coreTypes = " AND accelerator_core = ? ";
         }
-        std::string sql = "SELECT name, op_type as type, accelerator_core AS acceleratorCore, start_time AS startTime, "
-            "duration, wait_time as waitTime, block_dim AS blockDim, input_shapes AS inputShapes, "
+        std::string sql = "SELECT name, op_type AS type, accelerator_core AS acceleratorCore, start_time AS startTime, "
+            "duration, wait_time AS waitTime, block_dim AS blockDim, input_shapes AS inputShapes, "
             "input_data_types AS inputDataTypes, input_formats AS inputFormats, "
             "output_shapes AS outputShapes, output_data_types AS outputDataTypes, "
             "output_formats AS outputFormats FROM kernel_detail "
-            "where 1=1 and lower(name) LIKE lower(?) " +
-            coreTypes + orderBy + " limit ? offset ?";
+            "WHERE 1=1";
+        for (const auto &filter: filters) {
+            if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
+                Server::ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
+                sql.clear();
+                return sql;
+            }
+            sql += " AND lower(" + filter.first + ") LIKE lower('%" + filter.second + "%') ";
+        }
+        sql += coreTypes + orderBy + " limit ? offset ?";
         return sql;
     }
     static std::string GetThreadSameOperatorsDetailsSql(const std::string &order, const std::string &orderByField)
