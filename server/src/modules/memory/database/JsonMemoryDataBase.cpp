@@ -495,7 +495,7 @@ bool JsonMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &
 bool JsonMemoryDataBase::QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams,
                                                       int64_t &totalNum)
 {
-    std::string sql = "SELECT count(*) as nums FROM " + staticOpTable + " WHERE op_name <> 'TOTAL'";
+    std::string sql = "SELECT count(*) as nums FROM " + staticOpTable + " WHERE op_name LIKE ? AND op_name <> 'TOTAL'";
     if (!requestParams.graphId.empty()) {
         sql += " AND graph_id = ?";
     }

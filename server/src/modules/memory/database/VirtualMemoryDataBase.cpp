@@ -48,6 +48,7 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankI
 bool VirtualMemoryDataBase::ExecuteMemoryType(std::vector<std::string> &graphId, std::string &type)
 {
     if (!Database::CheckTableContainData(TABLE_STATIC_OPERATOR)) {
+        type = Module::Memory::MEMORY_TYPE_DYNAMIC;
         return true;
     }
     type = Module::Memory::MEMORY_TYPE_STATIC;
@@ -129,7 +130,8 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorListTotalNum(Protocol::StaticOp
         return false;
     }
     int index = bindStartIndex;
-
+    std::string searchName = "%" + requestParams.searchName + "%";
+    sqlite3_bind_text(stmt, index++, searchName.c_str(), searchName.length(), nullptr);
     if (!requestParams.graphId.empty()) {
         sqlite3_bind_text(stmt, index++, requestParams.graphId.c_str(), requestParams.graphId.length(), nullptr);
     }
@@ -410,8 +412,8 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorDetail(Protocol::StaticOperator
         return false;
     }
     int index = bindStartIndex;
-    std::string orderName = "%" + requestParams.searchName + "%";
-    sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
+    std::string searchName = "%" + requestParams.searchName + "%";
+    sqlite3_bind_text(stmt, index++, searchName.c_str(), searchName.length(), nullptr);
     if (!requestParams.graphId.empty()) {
         sqlite3_bind_text(stmt, index++, requestParams.graphId.c_str(), requestParams.graphId.length(), nullptr);
     }
