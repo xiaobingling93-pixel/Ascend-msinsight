@@ -90,7 +90,7 @@ bool JupyterServerManager::Start(const std::string& path)
     // 获取路径的根目录，在根目录下启动
     std::shared_ptr<std::string> cmd = std::make_shared<std::string>(("jupyter-lab " + path +
                 " --ServerApp.tornado_settings=\"{'headers': {'Content-Security-Policy': 'frame-ancestors "
-                "\"self\" *'}}\" --ServerApp.cookie_options=\"{'Secure': True}\""
+                "\"self\" wry://localhost'}}\" --ServerApp.cookie_options=\"{'Secure': True}\""
                 " --no-browser --port 4000 --allow-root > " + jupyterLogPath + " 2>&1"));
 
     // 开启子进程启动jupyter服务

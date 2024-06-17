@@ -118,7 +118,7 @@ def execute_cmd(ssh_client, cmd):
     exit_status = stdout.channel.recv_exit_status()
 
     if exit_status != 0:
-        logging.error('Failed to execute cmd: %s', cmd, ', and exit ', exit_status)
+        logging.error('Failed to execute cmd: %s, and exit: %s', cmd, exit_status)
         raise SSHException
     else:
         logging.info('Finish to execute cmd: %s', cmd)

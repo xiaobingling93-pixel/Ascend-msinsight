@@ -127,7 +127,12 @@ fn run_script(server_process:Mutex<Child>, root_path: &PathBuf, port: &str) -> w
             } else {
                 unimplemented!();
             };
-            Response::builder()
+
+            let mut res_builder = Response::builder();
+            for (k, v) in request.headers() {
+                res_builder = res_builder.header(k, v)
+            }
+            res_builder
                 .header(CONTENT_TYPE, mimetype)
                 .body(content)
                 .map_err(Into::into)
@@ -338,7 +343,6 @@ fn main() {
     let mut port : String = String::new();
     // start the server
     if let Some(child) = run_server(&root_path, &cache_path, &mut port) {
-        if run_script(child, &root_path, &port.as_str()).is_ok() {
-        }
+        let _ = run_script(child, &root_path, &port.as_str());
     }
 }
