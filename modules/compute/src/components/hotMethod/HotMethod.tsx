@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { Checkbox, Tooltip } from 'antd';
@@ -110,6 +110,7 @@ const Index = observer(({ session }: { session: Session }) => {
     const [loggedCodeLines, setLoggedCodeLines] = useState<Ilinetable[]>([]);
     const [instrsData, setInstrsData] = useState<InstrsColumnType[]>([]);
     const [selectedline, setSelectedline] = useState<number>(-1);
+    const [lineClickListener, setLineClickListener] = useState<number>(0);
     const [tableHeight, setTableHeight] = useState<number>(1000);
     const instrsColumns = useInstrsColumns();
     const [filterInstrsColumns, setFilterInstrsColumns] = useState<ColumnsType<InstrsColumnType>>(instrsColumns);
@@ -167,13 +168,6 @@ const Index = observer(({ session }: { session: Session }) => {
                     filters,
                     filterMode: 'tree',
                     filterSearch: true,
-                    onFilter: (value: string | number, record: InstrsColumnType) => {
-                        if (typeof value === 'string') {
-                            return String(record[col.dataIndex as keyof InstrsColumnType]).startsWith(value);
-                        } else {
-                            return record[col.dataIndex as keyof InstrsColumnType] === value;
-                        }
-                    },
                     onFilterDropdownOpenChange: (open: boolean) => {
                         if (open) {
                             limitInput();
@@ -334,7 +328,7 @@ const Index = observer(({ session }: { session: Session }) => {
 
     useEffect(() => {
         updateInstrsColumns();
-    }, [condition.onlyRelated, instrsData, t]);
+    }, [instrsData, t]);
 
     return <div id={DomId} style={{ height: '100%', width: '100%' }} className={'th35'}>
         <HeaderFixedContainer
@@ -382,6 +376,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                             code={code}
                                             handleLineClick={(line: number) => {
                                                 setSelectedline(line);
+                                                setLineClickListener((lineClickListener + 1) % 100);
                                             }}
                                             selectedline={selectedline}
                                         />
@@ -401,6 +396,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                         return {
                                             onClick: (event: React.MouseEvent<HTMLElement>) => {
                                                 setSelectedline(record.Line);
+                                                setLineClickListener((lineClickListener + 1) % 100);
                                             },
                                         };
                                     }}
@@ -420,6 +416,8 @@ const Index = observer(({ session }: { session: Session }) => {
                                 isRelatedInstr={isRelatedInstr}
                                 handleInstrsClick={handleInstrsClick}
                                 selectedline={selectedline}
+                                lineClickListener={lineClickListener}
+                                isShowPage ={instrsData.length > PAGE_LIMIT}
                             />}
                         />
                     }
@@ -437,8 +435,10 @@ interface IinstrProp {
     handleInstrsClick: (instr: InstrsColumnType) => void;
     tableHeight: number;
     selectedline: number;
+    lineClickListener: number;
+    isShowPage?: boolean;
 }
-const pagelimit = 500000;
+const PAGE_LIMIT = 500000;
 const rowHeight = 29;
 const srcollToView = ({ condition, selectedline, showDataSource, isRelatedInstr }:
 {
@@ -448,42 +448,75 @@ const srcollToView = ({ condition, selectedline, showDataSource, isRelatedInstr 
     isRelatedInstr: (instr: InstrsColumnType) => boolean;
 },
 ): void => {
-    if (condition.onlyRelated === true || selectedline < 0) {
-        return;
-    }
-    const index = showDataSource.findIndex(isRelatedInstr);
-    if (index < 0) {
-        return;
-    }
-    const top = index * rowHeight;
-    const parentNode = document.querySelector('#Instructions .ant-table-body') as HTMLElement;
-    parentNode.scrollTo({ top });
+    setTimeout(() => {
+        if (condition.onlyRelated === true || selectedline < 0) {
+            return;
+        }
+        const index = showDataSource.findIndex(isRelatedInstr);
+        if (index < 0) {
+            return;
+        }
+        const top = index * rowHeight;
+        const parentNode = document.querySelector('#Instructions .ant-table-body') as HTMLElement;
+        parentNode.scrollTo({ top });
+    });
 };
 
-function InstructionTable({ columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, condition }: IinstrProp): JSX.Element {
-    const [page, setPage] = useState({ current: 1, pageSize: pagelimit, total: dataSource.length });
-    const isShowPage = dataSource.length > pagelimit;
-    const showDataSource = useMemo(() => {
-        const pageDataSource = dataSource.slice((page.current - 1) * page.pageSize, page.current * page.pageSize);
-        return isShowPage ? pageDataSource : dataSource;
-    }, [dataSource, isShowPage, page.current, page.pageSize]);
+function InstructionTable({
+    columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, condition, lineClickListener, isShowPage,
+}: IinstrProp): JSX.Element {
+    return isShowPage
+        ? <InstructionTablePage
+            tableHeight={tableHeight}
+            columns={columns}
+            condition={condition}
+            dataSource={dataSource}
+            isRelatedInstr={isRelatedInstr}
+            handleInstrsClick={handleInstrsClick}
+            selectedline={selectedline}
+            lineClickListener={lineClickListener}
+        />
+        : <InstructionTableNopage
+            tableHeight={tableHeight}
+            columns={columns}
+            condition={condition}
+            dataSource={dataSource}
+            isRelatedInstr={isRelatedInstr}
+            handleInstrsClick={handleInstrsClick}
+            selectedline={selectedline}
+            lineClickListener={lineClickListener}/>;
+};
+
+function InstructionTableNopage({
+    columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, lineClickListener, condition,
+}: IinstrProp): JSX.Element {
+    const [showDataSource, setShowDataSource] = useState(dataSource);
+    const [filters, setFilters] = useState<Record<string, any[]>>({});
+
     useEffect(() => {
-        if (isShowPage) {
-            setPage({ ...page, current: 1, total: dataSource.length });
+        let newDataSource = dataSource;
+        // 筛选条件
+        const fields = Object.keys(filters).filter(field => filters[field] !== null);
+        if (fields.length > 0) {
+            newDataSource = dataSource.filter(row => {
+                let res = true;
+                for (let i = 0; i < fields.length; i++) {
+                    const field = fields[i];
+                    const value = (row as any)[field];
+                    res = res && filters[field].find((filterValue: string | number) => filterValue === value);
+                    if (!res) {
+                        break;
+                    }
+                }
+                return res;
+            });
         }
-    }, [dataSource.length]);
-    useEffect(() => {
-        if (isShowPage) {
-            const index = dataSource.findIndex(isRelatedInstr);
-            const onPage = Math.floor(index / page.pageSize) + 1;
-            if (index > 0 && onPage !== page.current) {
-                setPage({ ...page, current: onPage });
-            }
-        }
-    }, [selectedline]);
+        setShowDataSource(newDataSource);
+    }, [dataSource, filters]);
+
     useEffect(() => {
         srcollToView({ condition, selectedline, showDataSource, isRelatedInstr });
-    }, [selectedline, showDataSource]);
+    }, [selectedline, lineClickListener, showDataSource]);
 
     return <ResizeTable
         size="small"
@@ -496,10 +529,84 @@ function InstructionTable({ columns, dataSource, isRelatedInstr, handleInstrsCli
                 handleInstrsClick(record);
             },
         })}
-        pagination={isShowPage ? GetPageConfigWhithPageData(page, setPage, [pagelimit, pagelimit / 2]) : false}
-        scroll={{ y: isShowPage ? tableHeight - 50 : tableHeight, rowHeight }}
+        pagination={false}
+        scroll={{ y: tableHeight, rowHeight, scrollToFirstRowOnChange: false }}
         virtual={true}
+        onChange={(pagination: any, newFilters: {[p: string]: any[]}, sorter: any, extra: any): void => {
+            if (extra.action === 'filter') {
+                setFilters(newFilters);
+            }
+        }}
     />;
-};
+}
+// eslint-disable-next-line max-lines-per-function
+function InstructionTablePage({
+    columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, lineClickListener, condition,
+}: IinstrProp): JSX.Element {
+    const [showDataSource, setShowDataSource] = useState<InstrsColumnType[]>([]);
+    const [filters, setFilters] = useState<Record<string, any[]>>({});
+    const [page, setPage] = useState({ current: 1, pageSize: PAGE_LIMIT, total: dataSource.length });
+    const [pageData, setPageData] = useState(showDataSource.slice((page.current - 1) * page.pageSize, page.current * page.pageSize));
+
+    useEffect(() => {
+        let newDataSource = dataSource;
+        // 筛选条件
+        const fields = Object.keys(filters).filter(field => filters[field] !== null);
+        if (fields.length > 0) {
+            newDataSource = dataSource.filter(row => {
+                let res = true;
+                for (let i = 0; i < fields.length; i++) {
+                    const field = fields[i];
+                    const value = (row as any)[field];
+                    res = res && filters[field].find((filterValue: string | number) => filterValue === value);
+                    if (!res) {
+                        break;
+                    }
+                }
+                return res;
+            });
+        }
+        setShowDataSource(newDataSource);
+    }, [dataSource, filters]);
+    useEffect(() => {
+        setPage({ ...page, total: showDataSource.length });
+    }, [showDataSource]);
+    useEffect(() => {
+        const index = showDataSource.findIndex(isRelatedInstr);
+        const onPage = Math.floor(index / page.pageSize) + 1;
+        if (index > 0 && onPage !== page.current) {
+            setPage({ ...page, current: onPage, total: showDataSource.length });
+        }
+    }, [showDataSource, selectedline, lineClickListener]);
+
+    useEffect(() => {
+        const curPageData = showDataSource.slice((page.current - 1) * page.pageSize, page.current * page.pageSize);
+        setPageData(curPageData);
+    }, [showDataSource, page.pageSize, page.current]);
+    useEffect(() => {
+        srcollToView({ condition, selectedline, showDataSource: pageData, isRelatedInstr });
+    }, [selectedline, lineClickListener, pageData, page.current]);
+
+    return <ResizeTable
+        size="small"
+        minThWidth={50}
+        columns={columns}
+        dataSource={pageData}
+        rowClassName={(record: InstrsColumnType): string => (isRelatedInstr(record) ? 'selected' : '')}
+        onRow={ (record: InstrsColumnType): { onClick: () => void } => ({
+            onClick: (): void => {
+                handleInstrsClick(record);
+            },
+        })}
+        pagination={ GetPageConfigWhithPageData(page, setPage, [PAGE_LIMIT]) }
+        scroll={{ y: tableHeight - 50, rowHeight }}
+        virtual={true}
+        onChange={(pagination: any, newFilters: {[p: string]: any[]}, sorter: any, extra: any): void => {
+            if (extra.action === 'filter') {
+                setFilters(newFilters);
+            }
+        }}
+    />;
+}
 
 export default Index;

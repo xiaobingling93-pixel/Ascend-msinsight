@@ -98,7 +98,7 @@ const addVirtualEvent = ({ virtual, divRef, tableRef, scrollEvent, height }:
 },
 ) : (() => void) => {
     const voidFun = (): void => {};
-    if (!virtual || divRef.current === null || height === 0) {
+    if (!virtual || divRef.current === null) {
         return voidFun;
     }
     const parentNode = (divRef.current as HTMLElement).querySelector('.ant-table-body') as HTMLElement;
@@ -112,7 +112,11 @@ const addVirtualEvent = ({ virtual, divRef, tableRef, scrollEvent, height }:
     placeholderWrapper.style.height = `${height}px`;
     parentNode.appendChild(placeholderWrapper);
     parentNode.style.position = 'relative';
-    Object.assign(table.style, { position: 'absolute', top: '0', left: '0' });
+    if (height === 0) {
+        Object.assign(table.style, { position: 'relative' });
+    } else {
+        Object.assign(table.style, { position: 'absolute', top: '0', left: '0' });
+    }
     // 添加滚动事件
     parentNode.addEventListener('scroll', scrollEvent);
     parentNode.scrollTo({ top: 0 });
