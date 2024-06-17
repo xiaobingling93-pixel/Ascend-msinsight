@@ -230,35 +230,6 @@ private:
             selfTimeKeyValue.emplace(name, tmpSelfTime);
         }
     }
-
-    static  void QueryExtremumTimeOfFirstDepth(
-            std::unique_ptr<SqlitePreparedStatement> &stmt, const Protocol::UnitThreadsParams &requestParams,
-            uint64_t minTimestamp, Protocol::ExtremumTimestamp &extremumTimestamp)
-    {
-        std::string sql;
-        uint64_t startTime = requestParams.startTime + minTimestamp;
-        uint64_t endTime = requestParams.endTime + minTimestamp;
-        auto processType = GetProcessType(requestParams.metaType);
-        std::unique_ptr<SqliteResultSet> resultSet;
-        switch (processType) {
-            case PROCESS_TYPE::ASCEND_HARDWARE:
-                sql = "select min(startNs) as minStart, max(endNs) AS maxEnd from " + TABLE_TASK +
-                      " where deviceId = ? and streamId = ? and endNs >= ? AND startNs <= ?"
-                      " AND depth = 0";
-                resultSet = ExecuteQuery(stmt, sql, requestParams.rankId, requestParams.tid,
-                                         startTime, endTime);
-                break;
-            case PROCESS_TYPE::HCCL:
-
-            default:
-                throw DatabaseException("unsupported type!");
-        }
-        while (resultSet->Next()) {
-            extremumTimestamp.minTimestamp = floor(resultSet->GetDouble("minStart"));
-            extremumTimestamp.maxTimestamp = ceil(resultSet->GetDouble("maxEnd"));
-        }
-        stmt->Reset();
-    }
 };
 }
 
