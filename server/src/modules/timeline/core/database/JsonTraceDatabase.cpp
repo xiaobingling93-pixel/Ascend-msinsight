@@ -1143,7 +1143,7 @@ bool JsonTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
         metaDataDto.name = resultSet->GetString("name");
         metaDataDto.args = resultSet->GetString("args");
         uint64_t trackId = resultSet->GetUint64("trackId");
-        metaDataDto.maxDepth = SliceDepthCacheManager::Instance().QueryMaxDepthByTrackId(trackId) + 1;
+        metaDataDto.maxDepth = SliceDepthCacheManager::Instance().QueryMaxDepthByTrackId(trackId);
         metaDataVec.emplace_back(metaDataDto);
     }
     ServerLog::Info("Query units meta data. size:", metaDataVec.size());
