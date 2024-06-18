@@ -481,6 +481,7 @@ template <> std::optional<document_t> ToResponseJson<OneKernelResponse>(const On
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "id", response.body.id, allocator);
+    JsonUtil::AddMember(body, "rankId", response.body.rankId, allocator);
     JsonUtil::AddMember(body, "depth", response.body.depth, allocator);
     JsonUtil::AddMember(body, "threadId", response.body.threadId, allocator);
     JsonUtil::AddMember(body, "pid", response.body.pid, allocator);
