@@ -139,12 +139,6 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorListTotalNum(Protocol::StaticOp
         std::string modelName = "%" + requestParams.modelName + "%";
         sqlite3_bind_text(stmt, index++, modelName.c_str(), modelName.length(), nullptr);
     }
-    if (requestParams.startNodeIndex >= 0) {
-        sqlite3_bind_int64(stmt, index++, requestParams.startNodeIndex);
-    }
-    if (requestParams.endNodeIndex >= 0) {
-        sqlite3_bind_int64(stmt, index++, requestParams.endNodeIndex);
-    }
     if (requestParams.minSize >= 0) {
         sqlite3_bind_int64(stmt, index++, requestParams.minSize);
     }
