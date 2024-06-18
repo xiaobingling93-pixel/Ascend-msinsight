@@ -119,7 +119,7 @@ const static std::string PCIE_UNIT_COUNTER_SQL =
         " case ? when 'PCIe_post' then json_object('txAvg(B/s)',round(txPostAvg, 4),'rxAvg(B/s)',round(rxPostAvg, 4)) "
         "  when 'PCIe_nonpost' then json_object('txAvg(B/s)',round(txNonpostAvg,4),'rxAvg(B/s)',round(rxNonpostAvg,4)) "
         "   when 'PCIe_cpl' then json_object('txAvg(B/s)', round(txCplAvg, 4), 'rxAvg(B/s)', round(rxCplAvg, 4)) "
-        "   else json_object('txAvg(B/s)', round(txNonpostLatencyAvg, 4), 'rxAvg(B/s)', round(rxNonpostLatencyAvg, 4)) "
+        "   else json_object('txAvg(B/s)', round(txNonpostLatencyAvg, 4)) "
         " end as args"
         " from PCIE where deviceId = ? and startTime >= ? AND startTime <= ? ORDER BY startTime;";
 

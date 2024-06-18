@@ -29,7 +29,7 @@ static std::unique_ptr<SqliteResultSet> QueryThreadsByPid(std::unique_ptr<Sqlite
                                                           const std::string &rankId, uint64_t minTimestamp);
 
 static std::unique_ptr<SqliteResultSet> QueryUnitCounter(std::unique_ptr<SqlitePreparedStatement> &stmt,
-      const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp);
+      const Protocol::UnitCounterParams &requestParams, uint64_t minTimestamp, const std::string& rankId);
 
 static std::optional<SliceDto> QueryThreadDetail(std::unique_ptr<SqlitePreparedStatement> &stmt,
                                                  const Protocol::ThreadDetailParams &requestParams);

@@ -329,7 +329,7 @@ bool DbTraceDataBase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint
     }
     std::unique_ptr<SqliteResultSet> resultSet;
     try {
-        resultSet = TraceDatabaseHelper::QueryUnitCounter(stmt, params, minTimestamp);
+        resultSet = TraceDatabaseHelper::QueryUnitCounter(stmt, params, minTimestamp, GetRealRankId(params.rankId));
     } catch (DatabaseException &e) {
         ServerLog::Error("QueryUnitCounter Fail, ", e.What());
         return false;
