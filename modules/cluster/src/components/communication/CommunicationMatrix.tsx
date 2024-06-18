@@ -5,7 +5,7 @@ import type { TFunction } from 'i18next';
 import { Select, Checkbox, InputNumber, Button, message } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import * as echarts from 'echarts';
-import { addResizeEvent, Container, Label, COLOR, getDecimalCount, chartVisbilityListener, safeStr } from '../Common';
+import { addResizeEvent, Container, Label, COLOR, getDecimalCount, safeStr } from '../Common';
 import { ConditionDataType } from './Filter';
 import { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
@@ -284,16 +284,13 @@ const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow:
             data = data.filter((item: any[]) =>
                 typeof item[2] === 'number' && item[2] >= filterInfo.min && item[2] <= filterInfo.max);
         }
-        const max = Math.max(...data.map((item: number[]) => item[2]));
-        const min = Math.min(...data.map((item: number[]) => item[2]));
+        const min = data.length > 0 ? Math.min(...data.map((item: number[]) => item[2])) : 0;
+        const max = data.length > 0 ? Math.max(...data.map((item: number[]) => item[2])) : 0;
         if (shouldUpdateRange) {
             setRange({ minRange: min, maxRange: max });
         }
         InitCharts({ ...dataSource, data, type: switchCondition.type, min: filterInfo?.min ?? min, max: filterInfo?.max ?? max }, t);
     };
-    chartVisbilityListener('matrixchart', () => {
-        updateCharts(true);
-    });
     useEffect(() => {
         if (isShow) {
             if (session.clusterCompleted) {
