@@ -14,9 +14,9 @@ BLOCK "000004b0"
 {
 VALUE "FileVersion", "0.1.0"
 VALUE "ProductVersion", "0.1.0"
-VALUE "FileDescription", "ascend_insight"
+VALUE "FileDescription", "MindStudio Insight"
 VALUE "LegalCopyright", "Copyright (c) Huawei Technologies Co., Ltd. 2021-2024. All rights reserved."
-VALUE "ProductName", "ascend_insight"
+VALUE "ProductName", "MindStudio Insight"
 }
 }
 BLOCK "VarFileInfo" {

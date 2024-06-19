@@ -36,8 +36,8 @@ class Const:
     CONFIG_INI = 'config.ini'
     VSCODE_PLUGINS_DIR = os.path.join('plugins', 'vscode')
     INTELLIJ_PLUGINS_DIR = os.path.join('plugins', 'intellij')
-    ASCEND_INSIGHT_PREFIX = 'Ascend-Insight'
-    ASCEND_INSIGHT = 'ascend_insight'
+    ASCEND_INSIGHT_PREFIX = 'MindStudio_Insight'
+    ASCEND_INSIGHT = 'MindStudio_Insight'
     BIN_SUFFIX = '.exe' if platform.system() == WINDOWS_OS else ''
     PACKAGE_SUFFIX = '.exe' if platform.system() == WINDOWS_OS else '.zip'
     PYTHON = 'python' if platform.system() == WINDOWS_OS else 'python3'
@@ -159,14 +159,14 @@ def build_vscode(vscode_version, os_name):
         return 1
 
     # copy vscode plugin to out directory
-    plugin_name = 'ascend-insight-extension_' + vscode_version + '_' + os_name + '.vsix'
+    plugin_name = 'mindstudio-insight-extension_' + vscode_version + '_' + os_name + '.vsix'
     dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, plugin_name)
     for file in os.listdir(plugin_path):
         if file.endswith('.vsix'):
             shutil.copy(os.path.join(plugin_path, file), dst_file)
 
     # zip server and frontend files for huaweicloud
-    zip_name = 'ascend-insight_' + vscode_version + '_' + os_name
+    zip_name = 'mindstudio-insight_' + vscode_version + '_' + os_name
     dst_file = os.path.join(PROJECT_PATH, Const.PRODUCT_DIR, zip_name)
     profiler_path = os.path.join(plugin_path, 'dist', 'profiler')
     shutil.make_archive(dst_file, 'zip', profiler_path)
@@ -198,7 +198,7 @@ def build_intellij(idea_version, os_name):
     if result != 0:
         return 1
 
-    result = exec_command([gradlew, 'ascend-insight:copyFrontendBuild'], plugins_path, module_name)
+    result = exec_command([gradlew, 'mindstudio-insight:copyFrontendBuild'], plugins_path, module_name)
     if result != 0:
         return 1
 
@@ -207,7 +207,7 @@ def build_intellij(idea_version, os_name):
         return 1
 
     distributions_path = os.path.join(PROJECT_PATH, Const.INTELLIJ_PLUGINS_DIR, Const.BUILD_DIR, 'distributions')
-    plugin_name = 'ascend-insight-plugin_' + idea_version + '_' + os_name + '.zip'
+    plugin_name = 'mindstudio-insight-plugin_' + idea_version + '_' + os_name + '.zip'
     dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, plugin_name)
     for file in os.listdir(distributions_path):
         if file.endswith('.zip'):
@@ -243,12 +243,13 @@ def build_light_package(version, os_name):
 
     # 构建底座
     cargo_cmd = 'cargo.exe' if platform.system() == Const.WINDOWS_OS else 'cargo'
-    bin_file = 'ascend_insight.exe' if platform.system() == Const.WINDOWS_OS else 'ascend_insight'
+    bin_file = 'MindStudio_Insight.exe' if platform.system() == Const.WINDOWS_OS else 'MindStudio_Insight'
+    target_file = 'MindStudio Insight.exe' if platform.system() == Const.WINDOWS_OS else 'MindStudio Insight'
     result = exec_command([cargo_cmd, 'build', '--release'], platform_path, 'bin_package')
     if result != 0:
         return 1
 
-    shutil.copyfile(os.path.join(target_path, 'release', bin_file), os.path.join(preview_path, bin_file))
+    shutil.copyfile(os.path.join(target_path, 'release', bin_file), os.path.join(preview_path, target_file))
 
     # 打包
     package_name = Const.ASCEND_INSIGHT_PREFIX + '_' + version + '_' + os_name + Const.PACKAGE_SUFFIX
@@ -262,14 +263,14 @@ def build_light_package(version, os_name):
         if result != 0:
             return 1
         for tmp in os.listdir(preview_path):
-            if not tmp.startswith(Const.ASCEND_INSIGHT_PREFIX):
+            if not tmp.startswith(Const.ASCEND_INSIGHT_PREFIX + '_'):
                 continue
             shutil.copyfile(os.path.join(preview_path, tmp), dst_file)
             break
     else:
         traverse_folder_and_chmod(preview_path, 0o750, 0o640)  # 1、统一修改为文件夹750，文件640
         traverse_folder_and_chmod(os.path.join(profiler_path, Const.SERVER_DIR), 0o750, 0o550)  # 2、server下的文件550
-        os.chmod(os.path.join(preview_path, bin_file), 0o550)  # 3、ascend_insight 550
+        os.chmod(os.path.join(preview_path, target_file), 0o550)  # 3、ascend_insight 550
         shutil.make_archive(dst_file[:-4], 'zip', preview_path)
 
     return 0
@@ -305,13 +306,13 @@ def build_huaweicloud_package(version, os_name):
     shutil.copy(script_path, tmp)
 
     result = exec_command(
-        ["pyinstaller", "--name", "ascend_insight", "--add-data", "frontend:./server/frontend", "--add-data",
+        ["pyinstaller", "--name", "MindStudio Insight", "--add-data", "frontend:./server/frontend", "--add-data",
          "backend:./server/backend", "-F", "./huaweicloud_start_script.py"], tmp, "python_package")
     if result != 0:
         return 1
 
     dist_dir = os.path.join(tmp, "dist")
-    out_zip = os.path.join(PROJECT_PATH, "out", f"ascend_insight_huaweicloud_{version}_{os_name}")
+    out_zip = os.path.join(PROJECT_PATH, "out", f"mindstudio_insight_huaweicloud_{version}_{os_name}")
     shutil.make_archive(out_zip, 'zip', dist_dir)
     return 0
 

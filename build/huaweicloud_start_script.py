@@ -11,9 +11,9 @@ import sys
 import subprocess
 import logging
 
-ASCEND_INSIGHT_NAME = "ascend_insight"
+ASCEND_INSIGHT_NAME = "MindStudio Insight"
 PY_MEI_DIR = getattr(sys, '_MEIPASS', None)
-AI_TEMP_DIR = os.path.join(os.path.dirname(PY_MEI_DIR), "AscendInsightTemp")
+AI_TEMP_DIR = os.path.join(os.path.dirname(PY_MEI_DIR), "MindStudioInsightTemp")
 FIX_FRONTEND_PORT = 8085
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')

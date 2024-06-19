@@ -24,7 +24,7 @@ public class ExecutableUtils {
      */
     private static final String DIC_SERVER_PATH_WINDOWS = "profiler/server/profiler_server.exe";
 
-    private static final String INSIGHT_PATH = "/ascend-insight";
+    private static final String INSIGHT_PATH = "/mindstudio-insight";
 
     /**
      * get server install path

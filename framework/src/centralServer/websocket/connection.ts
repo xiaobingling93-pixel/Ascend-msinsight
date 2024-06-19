@@ -110,12 +110,12 @@ export class Connection {
             };
 
             this._ws.onerror = (ev: Event): void => {
-                ElMessage.error('WebSocket connection failed! You are advised to restart Ascend Insight.');
+                ElMessage.error('WebSocket connection failed! You are advised to restart MindStudio Insight.');
                 console.error('[connector]', ev);
                 reject(new Error('connect failed.'));
             };
             this._ws.onclose  = (ev: Event): void => {
-                ElMessageBox.alert('WebSocket is already in CLOSING or CLOSED state! Please try to reconnect or restart Ascend Insight.', {
+                ElMessageBox.alert('WebSocket is already in CLOSING or CLOSED state! Please try to reconnect or restart MindStudio Insight.', {
                     type:'error',
                     confirmButtonText: 'Reconnect',
                 }).then(() => {
@@ -127,7 +127,7 @@ export class Connection {
 
     async fetch(module: ModuleName, dataRequest: DataRequest, voidResponse: boolean = false, bufferField?: string): Promise<unknown> {
         if(!this.isConnected){
-            ElMessage.error('WebSocket is already in CLOSING or CLOSED state! You are advised to restart Ascend Insight.');
+            ElMessage.error('WebSocket is already in CLOSING or CLOSED state! You are advised to restart MindStudio Insight.');
         }
         if (this._ws === undefined) {
             return Promise.reject(new Error('connection not initialized'));

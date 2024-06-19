@@ -377,7 +377,7 @@ function handleToggleLang(): void {
         </div>
         <el-dialog
             v-model="showHelpModal"
-            :title="`${t('About')} Ascend Insight`"
+            :title="`${t('About')} MindStudio Insight`"
             width="20%"
             :show-close="true"
         >

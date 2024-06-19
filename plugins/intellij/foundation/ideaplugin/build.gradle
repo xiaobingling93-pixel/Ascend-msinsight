@@ -166,7 +166,7 @@ task copyExeToSandbox() {
     doLast {
         copy {
             from "${rootDir}/../../server/output/build/server"
-            into "${project.buildDir}/idea-sandbox/plugins/ascend-insight/tools/"
+            into "${project.buildDir}/idea-sandbox/plugins/mindstudio-insight/tools/"
         }
     }
 }

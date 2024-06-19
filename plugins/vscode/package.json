@@ -1,6 +1,6 @@
 {
-    "name": "ascend-insight-extension",
-    "displayName": "ascend-insight-extension",
+    "name": "mindstudio-insight-extension",
+    "displayName": "mindstudio-insight-extension",
     "description": "",
     "version": "7.0.1",
     "extensionKind": [
@@ -20,16 +20,16 @@
     "contributes": {
         "commands": [
             {
-                "command": "ascend-insight.start",
-                "title": "ascend-insight.start"
+                "command": "mindstudio-insight.start",
+                "title": "mindstudio-insight.start"
             }
         ],
         "menus": {
             "editor/context": [
                 {
-                    "command": "ascend-insight.start",
+                    "command": "mindstudio-insight.start",
                     "when": "editorTextFocus && !editorReadonly",
-                    "title": "ascend-insight.start"
+                    "title": "mindstudio-insight.start"
                 }
             ]
         }

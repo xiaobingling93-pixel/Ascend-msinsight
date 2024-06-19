@@ -78,12 +78,12 @@ public class ServerHelper {
             if (++tryRestartTime <= 5) {
                 LOGGER.info("try to start server again!");
                 BalloonNotification.show(
-                    "[Ascend Insight]: server is dead,try to restart now, tryTime: " + tryRestartTime,
+                    "[MindStudio Insight]: server is dead,try to restart now, tryTime: " + tryRestartTime,
                     NotificationType.WARNING);
                 executeStartServerCommand();
                 return;
             }
-            BalloonNotification.show("[Ascend Insight]: server restart failed", NotificationType.ERROR);
+            BalloonNotification.show("[MindStudio Insight]: server restart failed", NotificationType.ERROR);
             startServerHook.cancel(true);
             return;
         }
@@ -95,7 +95,7 @@ public class ServerHelper {
         if (hasBeenDead) {
             hasBeenDead = false;
             tryRestartTime = 0;
-            BalloonNotification.show("[Ascend Insight]: server has been started, please clear and try again",
+            BalloonNotification.show("[MindStudio Insight]: server has been started, please clear and try again",
                 NotificationType.INFORMATION);
         }
     }
@@ -103,7 +103,8 @@ public class ServerHelper {
     private static void executeStartServerCommand() {
         destroy();
         String lineSeparator = StringUtil.FILE_SEPARATOR;
-        String pluginsPath = PathManager.getPluginsPath() + lineSeparator + "ascend-insight" + lineSeparator + "tools";
+        String pluginsPath = PathManager.getPluginsPath() + lineSeparator
+            + "mindstudio-insight" + lineSeparator + "tools";
         List<String> processArgs = new ArrayList<>();
         try {
             if (SystemInfo.isWindows) {

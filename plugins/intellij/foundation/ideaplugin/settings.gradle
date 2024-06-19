@@ -5,5 +5,5 @@ pluginManagement {
         }
     }
 }
-rootProject.name = 'ascend-insight'
+rootProject.name = 'mindstudio-insight'
 

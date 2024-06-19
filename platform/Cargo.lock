@@ -3,6 +3,13 @@
 version = 3
 
 [[package]]
+name = "MindStudio_Insight"
+version = "0.1.0"
+dependencies = [
+ "wry",
+]
+
+[[package]]
 name = "adler"
 version = "1.0.2"
 source = "registry+https://szv-open.codehub.huawei.com/cargo/cargo-central-repo.git"
@@ -22,13 +29,6 @@ name = "anyhow"
 version = "1.0.80"
 source = "registry+https://szv-open.codehub.huawei.com/cargo/cargo-central-repo.git"
 checksum = "5ad32ce52e4161730f7098c077cd2ed6229b5804ccf99e5366be1ab72a98b4e1"
-
-[[package]]
-name = "ascend_insight"
-version = "0.1.0"
-dependencies = [
- "wry",
-]
 
 [[package]]
 name = "atk"
