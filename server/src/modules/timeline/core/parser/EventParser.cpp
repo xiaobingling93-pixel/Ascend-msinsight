@@ -293,7 +293,7 @@ void EventParser::SimulationEventHandle(std::unique_ptr<Trace::Event> eventPtr)
     }
     auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
     if (event.processName.empty() || event.threadName.empty()) {
-        ServerLog::Error("processName and threadName is empty");
+        ServerLog::Error("processName or threadName is empty");
         return;
     }
     event.pid = std::to_string(GetPid(event.processName));

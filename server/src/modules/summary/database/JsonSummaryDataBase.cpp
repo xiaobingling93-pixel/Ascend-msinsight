@@ -8,7 +8,6 @@
 #include "SummaryProtocolResponse.h"
 #include "TraceTime.h"
 #include "OperatorProtocol.h"
-#include "OperatorGroupConverter.h"
 #include "ConstantDefs.h"
 
 namespace Dic::Module::Summary {
@@ -237,19 +236,24 @@ bool JsonSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParam
     return true;
 }
 
+std::string JsonSummaryDataBase::GenSortSql(std::string orderBy, std::string order)
+{
+    std::string orderBySql;
+    if (!StringUtil::CheckSqlValid(orderBy)) {
+        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", orderBy);
+        return orderBySql;
+    }
+    if (order == "descend") {
+        orderBySql = " ORDER BY " + orderBy + " DESC";
+    } else {
+        orderBySql = " ORDER BY " + orderBy + " ASC";
+    }
+    return orderBySql;
+}
+
 std::string JsonSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams request)
 {
-    std::string orderBy;
-    if (!StringUtil::CheckSqlValid(request.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
-    } else {
-        if (request.order == "descend") {
-            orderBy = " ORDER BY " + request.orderBy + " DESC";
-        } else {
-            orderBy = " ORDER BY " + request.orderBy + " ASC";
-        }
-    }
-
+    std::string orderBy = GenSortSql(request.orderBy, request.order);
     std::string sql;
     if (request.orderBy.size() == 0) {
         sql = "SELECT name, op_type as type, "
@@ -292,17 +296,7 @@ bool JsonSummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
 
 std::string JsonSummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams request)
 {
-    std::string orderBy;
-    if (!StringUtil::CheckSqlValid(request.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
-    } else {
-        if (request.order == "descend") {
-            orderBy = " ORDER BY " + request.orderBy + " DESC";
-        } else {
-            orderBy = " ORDER BY " + request.orderBy + " ASC";
-        }
-    }
-
+    std::string orderBy = GenSortSql(request.orderBy, request.order);
     std::string sql;
     if (request.orderBy.size() == 0) {
         sql = "SELECT name, op_type as type, CASE WHEN start_time == 0 THEN 'NA' "
@@ -371,8 +365,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         } else {
             std::string name;
             std::string group;
-            if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
-                operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+            if (IsOperatorGroupInType(operatorGroup)) {
                 name = "op_type";
                 group = "op_type || accelerator_core";
             } else {
@@ -461,8 +454,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
 
         std::string group;
-        if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
-            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+        if (IsOperatorGroupInType(operatorGroup)) {
             group = "op_type || accelerator_core";
         } else {
             group = R"(name || '[' || input_shapes || ']' || accelerator_core)";
@@ -506,8 +498,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
         std::string name;
         std::string group;
-        if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
-            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+        if (IsOperatorGroupInType(operatorGroup)) {
             group = "op_type || accelerator_core";
             name = "''";
         } else {
@@ -705,8 +696,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
     {
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
         std::string condition;
-        if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
-            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+        if (IsOperatorGroupInType(operatorGroup)) {
             condition = " op_type = ?";
         } else {
             condition = " name = ? AND input_shapes = ?";
@@ -732,8 +722,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), -1, SQLITE_TRANSIENT);
-        if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
-            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+        if (IsOperatorGroupInType(operatorGroup)) {
             sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
         } else {
             sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), -1, SQLITE_TRANSIENT);
@@ -761,8 +750,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 " ) subquery ";
 
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
-        if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
-            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+        if (IsOperatorGroupInType(operatorGroup)) {
             sql += " WHERE op_type = ?";
         } else {
             sql += " WHERE name = ? AND input_shapes = ?";
@@ -844,8 +832,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), -1, SQLITE_TRANSIENT);
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
-        if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
-            operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP) {
+        if (IsOperatorGroupInType(operatorGroup)) {
             sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
         } else {
             sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), -1, SQLITE_TRANSIENT);
@@ -896,6 +883,12 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
         sqlite3_finalize(stmt);
         return rankIds;
+    }
+
+    bool JsonSummaryDataBase::IsOperatorGroupInType(OperatorGroupConverter::OperatorGroup operatorGroup)
+    {
+        return operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ||
+               operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP;
     }
 
 } // end of namespace Summary

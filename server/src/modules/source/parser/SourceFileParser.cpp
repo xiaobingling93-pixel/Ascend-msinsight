@@ -57,7 +57,7 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
     const int filePathLen = 4096;
 
     while (!file.eof()) {
-        int64_t dataSize;
+        uint64_t dataSize;
         uint8_t dataType;
         uint8_t paddingLength;
 
@@ -364,7 +364,12 @@ std::string SourceFileParser::GetInstr()
     }
     int64_t start = apiInstrPos.first;
     int64_t end = apiInstrPos.second;
-    int64_t dataSize = end - start;
+    if (end < start) {
+        ServerLog::Error("The dataSize parameter is error. The value of end is smaller than start.");
+        file.close();
+        return "";
+    }
+    uint64_t dataSize = end - start;
 
     file.seekg(start, std::ios::beg);
 

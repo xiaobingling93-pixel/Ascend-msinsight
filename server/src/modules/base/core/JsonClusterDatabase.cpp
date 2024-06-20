@@ -627,12 +627,12 @@ std::string JsonClusterDatabase::BuildCondition(const Protocol::SummaryTopRankPa
                       + "group by rank_id ";
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
         ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
+        return sql;
+    }
+    if (requestParams.orderBy == "rankId") {
+        sql += " ORDER by CAST(rankId AS UNSIGNED) asc";
     } else {
-        if (requestParams.orderBy == "rankId") {
-            sql += " ORDER by CAST(rankId AS UNSIGNED) asc";
-        } else {
-            sql += " ORDER by " + requestParams.orderBy + " desc";
-        }
+        sql += " ORDER by " + requestParams.orderBy + " desc";
     }
     return sql;
 }

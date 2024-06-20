@@ -79,7 +79,6 @@ std::shared_ptr<DbTraceDataBase> FullDbParser::GetTraceDatabase(const std::strin
 void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std::string> &rankIds,
                               const std::string& token)
 {
-    ServerLog::Info(filePath);
     auto start = std::chrono::high_resolution_clock::now();
     auto db = Timeline::DataBaseManager::Instance().GetTraceDatabase(filePath);
     if (db == nullptr) {

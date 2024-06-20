@@ -584,7 +584,7 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
         ServerLog::Error("Failed to prepare Query Duration List statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_zeroblob64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
@@ -629,7 +629,7 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
         ServerLog::Error("Failed to prepare Query Operator List statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_int64(stmt, index++, startTime);
+    sqlite3_bind_zeroblob64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
     if (requestParams.operatorName != totalOpInfo) {

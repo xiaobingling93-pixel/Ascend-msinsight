@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_COMMUNICATION_DATABASE_H
 #include <set>
 #include "VirtualSummaryDataBase.h"
+#include "OperatorGroupConverter.h"
 
 namespace Dic {
 namespace Module {
@@ -58,6 +59,7 @@ private:
     std::vector<std::string> kernelFiles = {};
 
     sqlite3_stmt *GetKernelStmt(uint64_t paramLen);
+    std::string GenSortSql(std::string orderBy, std::string order);
     std::string GenComputeSql(Protocol::ComputeDetailParams request);
     std::string GetCommSql(Protocol::CommunicationDetailParams request);
 
@@ -81,6 +83,8 @@ private:
 
     template <typename T>
     bool GenerateQueryFiltersSql(T &reqParams, std::string &sql);
+
+    bool IsOperatorGroupInType(OperatorGroupConverter::OperatorGroup operatorGroup);
 };
 
 } // end of namespace Summary

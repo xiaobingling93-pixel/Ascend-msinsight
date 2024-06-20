@@ -15,7 +15,7 @@ public:
     {
         FILE *pipe = popen(cmd.c_str(), "r");
         if (!pipe) {
-            Server::ServerLog::Info("popen cmd error, cmd: ", cmd);
+            Server::ServerLog::Error("popen cmd error, cmd: ", cmd);
             return false;
         }
 
