@@ -17,7 +17,6 @@ using namespace Dic::Server;
 
 void BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    ServerLog::Info("request to Communication BandwidthHandler");
     Protocol::BandwidthDataRequest &request =
             dynamic_cast<Protocol::BandwidthDataRequest &>(*requestPtr.get());
     std::string token = request.token;

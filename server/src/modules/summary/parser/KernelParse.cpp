@@ -255,7 +255,7 @@ bool KernelParse::IsFileValid(const std::vector<std::string>& filePathList, cons
 
 void KernelParse::ParseEndCallBack(const std::string &fileId, bool result, const std::string &msg)
 {
-    ServerLog::Info("KernelParse::ParseEndCallBack: ", fileId);
+    ServerLog::Info("Parse kernel file end: ", fileId);
     // 错误处理逻辑后续增加
     if (!result) {
         return;

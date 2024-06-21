@@ -17,7 +17,6 @@ using namespace Dic::Server;
 
 void CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    ServerLog::Info("request to Communication CommunicationOperatorDetailsHandler");
     Protocol::OperatorDetailsRequest &request =
             dynamic_cast<Protocol::OperatorDetailsRequest &>(*requestPtr.get());
     std::string token = request.token;

@@ -13,7 +13,6 @@ using namespace Dic::Server;
 using namespace Dic::Protocol;
 void CommunicatorGroupQueryHandler::HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr)
 {
-    ServerLog::Info("request to Communication CommunicationGroupQueryHandler");
     auto &request = dynamic_cast<Protocol::CommunicatorGroupRequest &>(*requestPtr);
     std::string token = request.token;
     if (!WsSessionManager::Instance().CheckSession(token)) {

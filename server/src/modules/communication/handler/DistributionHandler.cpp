@@ -17,7 +17,6 @@ using namespace Dic::Server;
 
 void DistributionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    ServerLog::Info("request to Communication DistributionHandler");
     Protocol::DistributionDataRequest &request =
             dynamic_cast<Protocol::DistributionDataRequest &>(*requestPtr.get());
     std::string token = request.token;

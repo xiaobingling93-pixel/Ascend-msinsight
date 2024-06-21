@@ -205,7 +205,7 @@ bool JsonSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParam
 
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("QueryOperatorDetail failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Query operator detail failed! Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_int64(stmt, index++, startTime);
@@ -350,7 +350,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
     {
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
         if (operatorGroup == OperatorGroupConverter::OperatorGroup::UNKNOWN) {
-            ServerLog::Error("GenerateQueryCategoryDurationSql failed, unknown operator group.");
+            ServerLog::Error("Category duration sql generate failed, unknown operator group.");
             return "";
         }
         bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);

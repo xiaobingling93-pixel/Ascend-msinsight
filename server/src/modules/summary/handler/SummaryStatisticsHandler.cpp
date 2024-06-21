@@ -18,7 +18,6 @@ using namespace Dic::Server;
 
 void SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    ServerLog::Info("request to summary summaryStatisticHandler");
     Protocol::SummaryStatisticRequest &request =
             dynamic_cast<Protocol::SummaryStatisticRequest &>(*requestPtr.get());
     std::string token = request.token;
@@ -49,15 +48,15 @@ void SummaryStatisticsHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     }
     if (!request.params.timeFlag.empty() && request.params.timeFlag.find("compute") != std::string::npos) {
         if (!database->QueryComputeStatisticsData(request.params, response.body)) {
-            ServerLog::Warn("QueryComputeStatisticsData is failed");
-            SetResponseResult(response, false, "QueryComputeStatisticsData failed");
+            ServerLog::Warn("Query compute statistics data is failed");
+            SetResponseResult(response, false, "Query compute statistics data failed");
             session.OnResponse(std::move(responsePtr));
             return;
         }
     } else {
         if (!database->QueryCommunicationStatisticsData(request.params, response.body)) {
-            ServerLog::Warn("QueryCommunicationStatisticsData is failed");
-            SetResponseResult(response, false, "QueryCommunicationStatisticsData failed");
+            ServerLog::Warn("Query communication statistics data is failed");
+            SetResponseResult(response, false, "Query communication statistics data failed");
             session.OnResponse(std::move(responsePtr));
             return;
         }

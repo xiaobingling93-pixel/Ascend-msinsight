@@ -15,7 +15,6 @@ using namespace Dic::Server;
 
 void GroupHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    ServerLog::Info("request to Communication Matrix Group");
     MatrixGroupRequest &request =
             dynamic_cast<MatrixGroupRequest &>(*requestPtr.get());
     if (!WsSessionManager::Instance().CheckSession(request.token)) {

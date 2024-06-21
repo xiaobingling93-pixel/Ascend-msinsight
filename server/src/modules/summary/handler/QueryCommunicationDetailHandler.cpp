@@ -26,7 +26,7 @@ void QueryCommunicationDetailHandler::HandleRequest(std::unique_ptr<Protocol::Re
     auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(request.params.rankId);
     if (!database->QueryCommDetailHandler(request.params, response.commDetails) or
         !database->QueryGetTotalNum(request.params.timeFlag, response.totalNum)) {
-        ServerLog::Warn("QueryCommDetailHandler or QueryGetTotalNum is failed");
+        ServerLog::Warn("query communication detail or get total num is failed");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;

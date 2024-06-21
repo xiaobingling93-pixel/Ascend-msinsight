@@ -19,7 +19,6 @@ using namespace Dic::Server;
 
 void SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    ServerLog::Info("request to summaryHandler");
     SummaryTopRankRequest &request = dynamic_cast<SummaryTopRankRequest &>(*requestPtr.get());
     std::string token = request.token;
     if (!WsSessionManager::Instance().CheckSession(token)) {
@@ -43,7 +42,7 @@ void SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     response.body.filePath = database->GetDbPath();
     if (!database->QuerySummaryData(request.params, response.body) ||
         !database->QueryBaseInfo(response.body)) {
-        ServerLog::Warn("QuerySummaryData or QueryBaseInfo is failed");
+        ServerLog::Warn("Query summary data or query base info is failed");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;
