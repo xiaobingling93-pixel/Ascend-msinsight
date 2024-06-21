@@ -8,7 +8,9 @@ import type { TreeNodeType } from '@/components/MenuTree/types';
 import {addDataPath, connectRemote, disconnectRemote, isExistedRemote, request} from '@/centralServer/server';
 import connector from '@/connection';
 import { useSession } from './session';
+import {ElMessage} from 'element-plus';
 import { Console as console } from '@/utils/console';
+import { t } from '@/i18n';
 
 const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource, isConflict: boolean): boolean => {
     const idx = dataSources.value.findIndex((item) =>
@@ -186,8 +188,13 @@ export const useDataSources = defineStore('dataSources', () => {
         dataSources.value[parentIndex].dataPath.splice(index, 1);
     };
 
-    const updateProjectName = async (oldProjectName: string, newProjectName: string): Promise<void> => {
+    const updateProjectName = async (oldProjectName: string, newProjectName: string): Promise<boolean> => {
         try {
+            const projectNameIdx = dataSources.value.findIndex((item) => item.projectName === newProjectName);
+            if (projectNameIdx !== -1) {
+                ElMessage.warning(t('Duplicate Project') as string);
+                return false;
+            }
             // 请求后端 更新数据
             await request({ remote: LOCAL_HOST, port: PORT, projectName: oldProjectName, dataPath: [] }, 'global', {
                 command: 'files/updateProjectExplorer',
@@ -196,18 +203,18 @@ export const useDataSources = defineStore('dataSources', () => {
                     newProjectName,
                 },
             });
+            const idx = dataSources.value.findIndex((item) =>
+                item.projectName === oldProjectName);
+            if (idx !== -1) {
+                dataSources.value[idx].projectName = newProjectName;
+            }
+            if (lastDataSource.value.projectName === oldProjectName) {
+                lastDataSource.value.projectName = newProjectName;
+            }
+            return true;
         } catch {
-            console.log('updateProjectName error');
-            return;
-        }
-
-        const idx = dataSources.value.findIndex((item) =>
-            item.projectName === oldProjectName);
-        if (idx !== -1) {
-            dataSources.value[idx].projectName = newProjectName;
-        }
-        if (lastDataSource.value.projectName === oldProjectName) {
-            lastDataSource.value.projectName = newProjectName;
+            ElMessage.warning(t('Update Project Name Failed') as string);
+            return false;
         }
     };
 

@@ -22,7 +22,7 @@ const MAX_FILE_PATH_LENGTH_LINUX = 4096;
 const maxPathLen = isWindows ? MAX_FILE_PATH_LENGTH_WINDOWS : MAX_FILE_PATH_LENGTH_LINUX;
 const isDisabled = computed(() => !fileIsExist.value || !clickAble.value || inputLen.value > maxPathLen);
 
-const [Confirm, Cancel, FileExplorer, RefreshDirectoryDescribe, CurProject] = useWatchTranslation(['Confirm', 'Cancel', 'File Explorer', 'RefreshDirectoryDescribe', 'Cur Project']);
+const [Confirm, Cancel, FileExplorer, RefreshDirectoryDescribe, CurProject] = useWatchTranslation(['Confirm', 'Cancel', 'File Explorer', 'RefreshDirectoryDescribe', 'Current Project']);
 
 onMounted(() => {
   if (resourceComp.value) {

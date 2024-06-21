@@ -18,7 +18,9 @@
         "Cancel": "Cancel",
         "FileConflict": "File Conflict",
         "FileConflictContent": "The imported file conflicts with the original file of the project. Continuing to import will overwrite the original file",
-        "Cur Project": "Cur Project"
+        "Current Project": "Current Project",
+        "Duplicate Project": "Project name already exists, modification of project name failed",
+        "Update Project Name Failed": "Update project name failed"
     },
     "tabs": {
         "Timeline": "Timeline",

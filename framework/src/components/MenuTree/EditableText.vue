@@ -15,7 +15,7 @@ const showEditBox = () => {
   editing.value = true;
 };
 
-const hideEditBox = () => {
+const hideEditBox = async () => {
   if (editText.value === '') {
     editing.value = false;
     editText.value = props.treeNode.label;
@@ -23,7 +23,11 @@ const hideEditBox = () => {
   }
   if (props.treeNode.label !== editText.value) {
     // 更新dataSource
-    useDataSources().updateProjectName(props.treeNode.label, editText.value);
+    const res = await useDataSources().updateProjectName(props.treeNode.label, editText.value);
+    if (!res) {
+      editing.value = false;
+      editText.value = props.treeNode.label;
+    }
   }
   editing.value = false;
 };
@@ -35,12 +39,16 @@ const handleContextMenu = (event: { preventDefault: () => void; }) => {
   });
 };
 
+const blurInput = () => {
+  inputRef.value.blur();
+};
+
 </script>
 
 <template>
   <div>
     <span v-show="!editing" @contextmenu="handleContextMenu" class="contentText">{{ editText }}</span>
-    <input v-show="editing" ref="inputRef" type="text" v-model="editText" @click.stop @blur="hideEditBox" @keyup.enter="hideEditBox" maxlength="500" autofocus>
+    <input v-show="editing" ref="inputRef" type="text" v-model="editText" @click.stop @blur="hideEditBox" @keyup.enter="blurInput" maxlength="500" autofocus>
   </div>
 </template>
 

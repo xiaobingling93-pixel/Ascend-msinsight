@@ -18,7 +18,9 @@
         "Cancel": "取消",
         "FileConflict": "文件冲突",
         "FileConflictContent": "导入文件与该项目原始文件冲突，继续导入将覆盖原始文件",
-        "Cur Project": "当前项目"
+        "Current Project": "当前项目",
+        "Duplicate Project": "项目名已存在，修改项目名失败",
+        "Update Project Name Failed": "更新项目名失败"
     },
     "tabs": {
         "Timeline": "时间线",
