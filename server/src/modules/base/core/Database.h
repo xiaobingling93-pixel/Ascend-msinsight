@@ -38,6 +38,7 @@ class Database {
 public:
     explicit Database(std::recursive_mutex  &sqlMutex) : mutex(sqlMutex) {};
     virtual ~Database();
+    virtual bool CreateDbIfNotExist(const std::string &dbPath);
     virtual bool OpenDb(const std::string &dbPath, bool clearAllTable);
     virtual bool AttachDb(const std::string &dbPath);
     virtual bool IsOpen() const;

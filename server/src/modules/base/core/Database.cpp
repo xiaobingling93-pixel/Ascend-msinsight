@@ -7,6 +7,7 @@
 #include "Database.h"
 #include "TableDefs.h"
 #include "FileUtil.h"
+#include "sys/stat.h"
 
 namespace Dic {
 namespace Module {
@@ -18,10 +19,36 @@ Database::~Database()
     }
 }
 
+bool Database::CreateDbIfNotExist(const std::string &dbPath)
+{
+    struct stat st = {0};
+    std::string dbPathStr = CheckSqlString(dbPath);
+    if (stat(dbPathStr.c_str(), &st) == -1) {
+        int result = sqlite3_open(dbPathStr.c_str(), &db);
+        if (result) {
+            sqlite3_close(db); // 异常后关闭数据库
+            ServerLog::Error("open db fail. path:", dbPath);
+            return false;
+        }
+        sqlite3_close(db); // 修改权限前先关闭数据库
+        mode_t mode = S_IWUSR | S_IRUSR | S_IRGRP; // 业务数据权限要求设置为0640 （rw-r-----）
+        result = chmod(dbPathStr.c_str(), mode);
+        if (result) {
+            ServerLog::Error("Can't set file permissions. path:", dbPath);
+            return false;
+        }
+    }
+    return true;
+}
+
 bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
     if (!FileUtil::CheckFilePathLength(dbPath)) {
         ServerLog::Error("This db path is illegal : " + dbPath);
+        return false;
+    }
+    if (!Database::CreateDbIfNotExist(dbPath)) {
+        ServerLog::Error("Create db fail. path:", dbPath);
         return false;
     }
     if (isOpen) {
@@ -29,7 +56,7 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
         return false;
     }
     int result = sqlite3_open_v2(CheckSqlString(dbPath).c_str(), &db,
-        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX, nullptr);
+        SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX, nullptr);
     if (result == SQLITE_OK) {
         isOpen = true;
         this->path = dbPath;
