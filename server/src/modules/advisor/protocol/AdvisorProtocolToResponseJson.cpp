@@ -12,7 +12,7 @@ namespace Dic::Protocol {
 using namespace Dic::Server;
 template <typename RESPONSE> std::optional<document_t> ToResponseJson(const RESPONSE &response)
 {
-    ServerLog::Warn("ToResponseJson is not implemented. command:", response.command);
+    ServerLog::Warn("Invalid response parameters, type error. command:", response.command);
     return std::nullopt;
 }
 
