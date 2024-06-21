@@ -1,13 +1,30 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import React from 'react';
+import * as React from 'react';
 import BaseContainer from '../container/BaseContainer';
 import BaseDescription from '../descriptions/BaseDescription';
 import COLOR from './Color';
 import { chartVisbilityListener, getResizeEcharts } from './EchartUtils';
+import { Empty } from 'antd';
+import { useTheme } from '@emotion/react';
 
 export { BaseContainer, BaseDescription, COLOR, chartVisbilityListener, getResizeEcharts };
+
+export const StyledEmpty = ({ descriptor, style, translation }:
+{ descriptor: string; style?: object; translation: any}): JSX.Element => {
+    const theme = useTheme();
+    return (
+        <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            style={style}
+            description={
+                <span style={{ color: theme.fontColor }}>
+                    {translation(descriptor ?? 'No Data')}
+                </span>}>
+        </Empty>
+    );
+};
 
 export function limitInput(maxlength?: string): void {
     setTimeout(() => {

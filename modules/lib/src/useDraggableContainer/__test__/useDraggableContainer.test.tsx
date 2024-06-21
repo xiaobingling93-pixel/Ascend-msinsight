@@ -9,6 +9,7 @@ const light = {
     switchIconColor: '#18181A',
     dividerColor: '#fff',
     maskColor: 'rgb(255, 255, 255, 0.55)',
+    fontColor: '#fff',
 };
 
 describe('DraggableContainer test', () => {

@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import { AntTableChart } from '../components/AntTableChart';
 import { LineChart } from '../components/LineChart';
-import { Button, Col, Empty, Input, InputNumber, message, Row, Select, Spin } from 'antd';
+import { Button, Col, Input, InputNumber, message, Row, Select, Spin } from 'antd';
 import { Session } from '../entity/session';
 import type {
     Graph, MemoryCurve, OperatorDetail, StaticOperatorCurve,
@@ -16,8 +16,7 @@ import type {
 import { memoryTypeGet, staticOpMemoryGraphGet, staticOpMemoryListGet, memoryCurveGet, operatorsMemoryGet } from '../utils/RequestUtils';
 import { useHit, Label } from '../components/Common';
 import styled from '@emotion/styled';
-import { GroupRankIdsByHost } from 'lib/CommonUtils';
-
+import { GroupRankIdsByHost, StyledEmpty } from 'lib/CommonUtils';
 interface SelectedRange {
     startTs: number;
     endTs: number;
@@ -432,7 +431,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                                     isDark={isDark}
                                     isWakeup={isWakeup}
                                 />
-                                : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ marginTop: 160 }} />
+                                : <StyledEmpty style={{ marginTop: 160 }} translation={t}/>
                             }
 
                         </Col>
@@ -470,7 +469,7 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                                             isDark={isDark}
                                             isWakeup={isWakeup}
                                         />
-                                        : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ marginTop: 160 }} />
+                                        : <StyledEmpty style={{ marginTop: 160 }} translation={t}/>
                                     }
 
                                 </Col>

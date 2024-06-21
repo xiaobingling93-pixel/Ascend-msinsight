@@ -9,5 +9,6 @@ declare module '@emotion/react' {
         switchIconColor: string; // 模板下拉按钮颜色
         dividerColor: string; // 界面面板分割线颜色
         closeDragContainerBG: string; // 关闭按钮背景色
+        fontColor: string; // 字体颜色
     }
 }
