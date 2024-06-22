@@ -78,7 +78,7 @@ function newLane (insightMetaData: InsightMetaData<any>, parentMetaData: any): I
             meta.metaType = insightMetaData.metadata.metaType;
             const threadUnit = new ThreadUnit(meta);
             const chart = threadUnit.chart as ChartDesc<'stackStatus'>;
-            if (insightMetaData.metadata.maxDepth === 1) {
+            if (insightMetaData.metadata.maxDepth === 1 || insightMetaData.metadata.maxDepth === 0) {
                 chart.height = UnitHeight.STANDARD;
                 (chart.config as any).isCollapse = false;
                 threadUnit.collapsible = false;
