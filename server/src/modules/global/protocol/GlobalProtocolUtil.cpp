@@ -14,7 +14,7 @@ using namespace rapidjson;
 #pragma region <<Response to json>>
 template <typename RESPONSE> std::optional<document_t> ToResponseJson(const RESPONSE &response)
 {
-    ServerLog::Warn("ToResponseJson is not implemented. command:", response.command);
+    ServerLog::Warn("To_Response_Json is not implemented. command:", response.command);
     return std::nullopt;
 }
 

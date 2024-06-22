@@ -298,7 +298,7 @@ bool VirtualClusterDatabase::ExecuteQueryExtremumTimestamp(std::string &sql, uin
 {
     sqlite3_stmt *stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare Cluster::QueryExtremumTimestamp statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare querying ExtremumTimestamp statement. error:", sqlite3_errmsg(db));
         return false;
     }
 
@@ -316,7 +316,7 @@ bool VirtualClusterDatabase::ExecuteQueryIterationAndCommunicationGroup(std::str
 {
     sqlite3_stmt *stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare Cluster::QueryIterationAndCommunicationGroup statement. error:",
+        ServerLog::Error("Failed to prepare Querying IterationAndCommunicationGroup statement. error:",
             sqlite3_errmsg(db));
         return false;
     }

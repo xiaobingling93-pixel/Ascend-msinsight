@@ -396,12 +396,12 @@ std::string Database::GetValueFromStatusInfoTable(const std::string& key)
     std::string sql = "SELECT value From " + infoTable + " WHERE key = ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("Failed to prepare sql for GetValueFromStatusInfoTable: ", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare sql for getting value from StatusInfoTable: ", sqlite3_errmsg(db));
         return value;
     }
     auto results = stmt->ExecuteQuery(key);
     if (results == nullptr) {
-        ServerLog::Error("Failed to get result set for GetValueFromStatusInfoTable: ", stmt->GetErrorMessage());
+        ServerLog::Error("Failed to get result set for getting value from StatusInfoTable: ", stmt->GetErrorMessage());
         return value;
     }
     if (results->Next()) {
@@ -413,7 +413,7 @@ std::string Database::GetValueFromStatusInfoTable(const std::string& key)
 bool Database::CheckValueFromStatusInfoTable(const std::string &key, const std::string &refValue)
 {
     if (key.empty() || refValue.empty()) {
-        ServerLog::Error("Failed to get status for CheckValueFromStatusInfoTable due to empty key or value.");
+        ServerLog::Error("Failed to get status for checking value from StatusInfoTable due to empty key or value.");
         return false;
     }
     std::string status = GetValueFromStatusInfoTable(key);

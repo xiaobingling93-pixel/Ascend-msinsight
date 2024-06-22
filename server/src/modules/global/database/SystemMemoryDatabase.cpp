@@ -47,7 +47,7 @@ bool SystemMemoryDatabase::DropTable()
 bool SystemMemoryDatabase::SaveProjectExplorerData(ProjectExplorerInfo projectExplorerInfo)
 {
     if (projectExplorerInfo.projectName.empty() || projectExplorerInfo.fileName.empty()) {
-        ServerLog::Error("SaveFileMenuData failed ,params is invalid.");
+        ServerLog::Error("Failed to save FileMenuData, params is invalid.");
         return false;
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
@@ -55,7 +55,7 @@ bool SystemMemoryDatabase::SaveProjectExplorerData(ProjectExplorerInfo projectEx
                                                               " VALUES(?, ?, ?, ?, ?);";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("Failed to SaveFileMenuData, prepared statement failed: projectName=",
+        ServerLog::Error("Failed to save FileMenuData, prepared statement failed: projectName=",
                          projectExplorerInfo.projectName, ", fileName=", projectExplorerInfo.fileName);
         return false;
     }
@@ -63,7 +63,7 @@ bool SystemMemoryDatabase::SaveProjectExplorerData(ProjectExplorerInfo projectEx
     stmt->BindParams(projectExplorerInfo.projectName, projectExplorerInfo.fileName,
                      projectExplorerInfo.projectType, projectExplorerInfo.importType, dbPath);
     if (!stmt->Execute()) {
-        ServerLog::Error("Failed to SaveFileMenuData, stmt execute failed: projectName=",
+        ServerLog::Error("Failed to save FileMenuData, stmt execute failed: projectName=",
                          projectExplorerInfo.projectName, ", fileName=", projectExplorerInfo.fileName);
         return false;
     }
@@ -74,11 +74,11 @@ bool SystemMemoryDatabase::UpdateProjectName(const std::string &oldProjectName, 
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     if (oldProjectName.empty() || newProjectName.empty()) {
-        ServerLog::Error("UpdateProjectName failed, param is invalid.");
+        ServerLog::Error("Failed to update project name, param is invalid.");
         return false;
     }
     if (!CheckTableExist(projectExplorerTable)) {
-        ServerLog::Error("UpdateProjectName failed, table is not exist.");
+        ServerLog::Error("Failed to update project name, table is not exist.");
         return false;
     }
     std::string sql = "Update " + projectExplorerTable + " SET projectName = ? WHERE projectName = ?;";
@@ -113,7 +113,7 @@ std::vector<ProjectExplorerInfo> SystemMemoryDatabase::QueryProjectExplorerData(
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("QueryFileMenuData failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to query FileMenuData ! Failed to prepare sql.", sqlite3_errmsg(db));
         return res;
     }
     int index = bindStartIndex;
@@ -141,11 +141,11 @@ bool SystemMemoryDatabase::DeleteFileMenu(const std::string &projectName, const 
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     if (projectName.empty()) {
-        ServerLog::Error("DeleteByProjectName failed, param is invalid.");
+        ServerLog::Error("Failed to delete by project name, param is invalid.");
         return false;
     }
     if (!CheckTableExist(projectExplorerTable)) {
-        ServerLog::Error("DeleteByProjectName failed, table is not exist.");
+        ServerLog::Error("Failed to delete by project name, table is not exist.");
         return false;
     }
     std::string sql = "DELETE FROM " + projectExplorerTable + " WHERE projectName = ?";
@@ -155,7 +155,7 @@ bool SystemMemoryDatabase::DeleteFileMenu(const std::string &projectName, const 
     sql += ";";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("DeleteByProjectName failed, failed to create prepared stmt: projectName=", projectName);
+        ServerLog::Error("Failed to delete by project name, failed to create prepared stmt: projectName=", projectName);
         return false;
     }
     if (fileNameList.empty()) {
@@ -176,11 +176,11 @@ bool SystemMemoryDatabase::UpdateProjectDbPath(const std::string &projectName, c
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     if (projectName.empty() || fileName.empty()) {
-        ServerLog::Error("UpdateProjectDbPath failed, param is invalid.");
+        ServerLog::Error("Failed to update ProjectDbPath, param is invalid.");
         return false;
     }
     if (!CheckTableExist(projectExplorerTable)) {
-        ServerLog::Error("UpdateProjectName failed, table is not exist.");
+        ServerLog::Error("Failed to update ProjectName failed, table is not exist.");
         return false;
     }
     std::string sql = "Update " + projectExplorerTable + " SET dbPath = ? WHERE projectName = ? AND fileName = ?;";

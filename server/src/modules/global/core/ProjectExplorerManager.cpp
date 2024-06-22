@@ -61,7 +61,7 @@ bool ProjectExplorerManager::SaveProjectExplorer(const std::string& projectName,
     }
     // 如果文件已存在 则直接返回
     if (std::find(fileNameList.begin(), fileNameList.end(), filePath) != fileNameList.end()) {
-        Server::ServerLog::Info("SaveProjectExplorer success, file already exist:", filePath);
+        Server::ServerLog::Info("Save project explorer success, file already exist:", filePath);
         db->EndTransaction();
         return true;
     }

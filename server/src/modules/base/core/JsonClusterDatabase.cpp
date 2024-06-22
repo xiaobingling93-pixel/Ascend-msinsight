@@ -108,17 +108,17 @@ bool JsonClusterDatabase::InitStmt()
     }
     std::string timeInfoSql = GetTimeInfoStmtSql(TABLE_CACHE_SIZE);
     if (sqlite3_prepare_v2(db, timeInfoSql.c_str(), -1, &insertTimeInfoStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare GetTimeInfoStmtSql statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare getting TimeInfoStmtSql statement. error:", sqlite3_errmsg(db));
         return false;
     }
     std::string bandSql = GetBandwidthStmtSql(TABLE_CACHE_SIZE);
     if (sqlite3_prepare_v2(db, bandSql.c_str(), -1, &insertBandwidthStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare InsertBandwidth statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare inserting bandwidth statement. error:", sqlite3_errmsg(db));
         return false;
     }
     std::string matrixSql = GetMatrixStmtSql(TABLE_CACHE_SIZE);
     if (sqlite3_prepare_v2(db, matrixSql.c_str(), -1, &matrixStmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare GetMatrixStmtSql statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare getting MatrixStmtSql statement. error:", sqlite3_errmsg(db));
         return false;
     }
     isInitStmt = true;
@@ -165,7 +165,7 @@ void JsonClusterDatabase::ReleaseStmt()
 
 void JsonClusterDatabase::SaveLastData()
 {
-    ServerLog::Info("SaveLastData ");
+    ServerLog::Info("Save_Last_Data ");
     if (!timeInfoCache.empty()) {
         InsertTimeInfoList(timeInfoCache);
         timeInfoCache.clear();
@@ -201,7 +201,7 @@ void JsonClusterDatabase::InsertTimeInfoList(std::vector<CommunicationTimeInfo> 
     } else {
         std::string sql = GetTimeInfoStmtSql(timeInfoList.size());
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare InsertTimeInfoList statement. error:", sqlite3_errmsg(db));
+            ServerLog::Error("Failed to prepare Inserting TimeInfoList statement. error:", sqlite3_errmsg(db));
             return;
         }
     }
@@ -256,7 +256,7 @@ void JsonClusterDatabase::InsertGroupId(const std::set<std::string> &groupIds)
         sql.append(",(?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare InsertGroupId statement. error:", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare inserting GroupId statement. error:", sqlite3_errmsg(db));
         return;
     }
     int idx = bindStartIndex;
@@ -283,7 +283,7 @@ void JsonClusterDatabase::InsertBandwidthList(std::vector<CommunicationBandWidth
     } else {
         std::string sql = GetBandwidthStmtSql(bandWidthList.size());
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare InsertBandwidth statement. error:", sqlite3_errmsg(db));
+            ServerLog::Error("Failed to prepare inserting bandwidth statement. error:", sqlite3_errmsg(db));
             return;
         }
     }
@@ -513,7 +513,7 @@ std::string JsonClusterDatabase::QueryParseClusterStatus()
 
 void JsonClusterDatabase::UpdateClusterParseStatus(std::string status)
 {
-    ServerLog::Info("UpdateClusterParseStatus status: ", status);
+    ServerLog::Info("Update_Cluster_Parse_Status status: ", status);
     sqlite3_stmt *stmtBaseInfo = nullptr;
     int index = bindStartIndex;
     std::string baseInfoSql =
@@ -527,7 +527,7 @@ void JsonClusterDatabase::UpdateClusterParseStatus(std::string status)
     auto result = sqlite3_step(stmtBaseInfo);
     sqlite3_finalize(stmtBaseInfo);
     if (result != SQLITE_DONE) {
-        ServerLog::Error("UpdateClusterParseStatus fail. ", sqlite3_errmsg(db));
+        ServerLog::Error("Fail to update clusterParseStatus. ", sqlite3_errmsg(db));
     }
 }
 
