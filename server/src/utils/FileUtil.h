@@ -514,6 +514,7 @@ public:
     static std::string GetRootPath(const std::string& filePath);
     static std::shared_ptr<std::string> GetRelativePath(const std::string& targetFilePath,
                                                         const std::string& sourceFilePath);
+    static bool ModifyFilePermissions(const std::string &filePath, const mode_t &mode);
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_FILEUTIL_H

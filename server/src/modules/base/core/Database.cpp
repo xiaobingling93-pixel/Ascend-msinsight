@@ -32,7 +32,7 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
         }
         sqlite3_close(db); // 修改权限前先关闭数据库
         mode_t mode = 0640; // 业务数据权限要求设置为0640 （rw-r-----）
-        result = chmod(dbPathStr.c_str(), mode);
+        result = FileUtil::ModifyFilePermissions(dbPathStr, mode);
         if (result) {
             ServerLog::Error("Can't set file permissions. path:", dbPath);
             return false;

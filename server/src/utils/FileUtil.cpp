@@ -193,4 +193,15 @@ std::shared_ptr<std::string> FileUtil::GetRelativePath(const std::string& target
     }
     return result;
 }
+
+bool FileUtil::ModifyFilePermissions(const std::string &filePath, const mode_t &mode)
+{
+    std::string tmpPath(filePath);
+#ifdef _WIN32
+    if (StringUtil::IsUtf8String(filePath)) {
+        tmpPath = StringUtil::Utf8ToGbk(filePath.c_str());
+    }
+#endif
+    return chmod(tmpPath.c_str(), mode);
+}
 }
