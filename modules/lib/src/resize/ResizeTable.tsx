@@ -5,6 +5,7 @@ import React, { cloneElement, useState, useEffect, useRef, useCallback, useMemo 
 import { Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import Resizor from './Resizor';
+import { limitInput } from '../utils/Common';
 interface ExtendsColumnType {minWidth?: number};
 
 interface IResizableTitleProps extends React.ReactElement {
@@ -35,6 +36,7 @@ interface Iprop<T> {
     style?: object;
     virtual?: boolean;
     scroll?: {x?: number;y?: number;rowHeight?: number};
+    pagination?: {showSizeChanger: boolean};
 }
 
 // ============================ Resize ============================
@@ -159,6 +161,13 @@ function ResizeTable<T extends object>(prop: Iprop<T>): JSX.Element {
         return addVirtualEvent({ virtual, divRef: myRef, tableRef, scrollEvent, height: totalHeight });
     }, [scrollEvent, totalHeight, virtual]);
     const renderList = useMemo(() => dataSource.slice(...range), [dataSource, range]);
+
+    // 出现分页跳转输入框
+    useEffect(() => {
+        if (prop.pagination?.showSizeChanger) {
+            limitInput();
+        }
+    }, [prop.pagination]);
 
     return (
         <div id={id} style={{ ...style ?? {} }} ref={myRef}>
