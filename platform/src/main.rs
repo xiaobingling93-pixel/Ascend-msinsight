@@ -4,58 +4,93 @@
 
 #![windows_subsystem = "windows"]
 
-use std::{env, fs::read, io, process::{Command, Child, Stdio}, sync::Mutex};
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 use std::collections::{HashMap, VecDeque};
-
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
-use std::path::PathBuf;
+use std::{
+    env,
+    env::current_exe,
+    fs::{create_dir_all, read},
+    io,
+    io::{BufRead, BufReader},
+    path::PathBuf,
+    process::{Child, Command, Stdio},
+    sync::Mutex,
+};
+
+#[cfg(windows)]
+use webview2err::show_webview_err_message;
 use wry::{
     application::{
         event::{Event, WindowEvent},
         event_loop::{ControlFlow, EventLoop},
-        window::{Icon, WindowBuilder}
+        window::{Icon, Window, WindowBuilder},
     },
     http::{header::CONTENT_TYPE, Response},
-    webview::WebViewBuilder,
+    webview::{webview_version, WebViewBuilder},
 };
+
 #[cfg(windows)]
 mod webview2err;
-#[cfg(windows)]
-use webview2err::show_webview_err_message;
-use std::io::{BufRead, BufReader};
-use std::path::MAIN_SEPARATOR;
 
-const SERVER_RELATIVE_LIST: [&str; 4] = ["resources", "profiler", "server", "profiler_server"];
+const SERVER_RELATIVE_LIST: [&str; 4] =
+    ["resources", "profiler", "server", "profiler_server"];
 const NO_WINDOW_FLAG: u32 = 0x08000000;
+const MIMETYPE_HTML: &str = "text/html";
 
-fn run_server(root_path: &PathBuf, cache_path: &PathBuf, port: &mut String) -> Option<Mutex<Child>> {
+fn run_server(
+    root_path: &PathBuf,
+    cache_path: &PathBuf,
+    port: &mut String,
+) -> Option<Mutex<Child>> {
     let mut server_path = root_path.to_path_buf();
-    if cfg!(target_os = "macos") {
-        env::set_var("DYLD_LIBRARY_PATH", server_path.join("resources/profiler/server/:$DYLD_LIBRARY_PATH").as_path());
+
+    #[cfg(target_os = "macos")]
+    {
+        env::set_var(
+            "DYLD_LIBRARY_PATH",
+            server_path
+                .join("resources/profiler/server/:$DYLD_LIBRARY_PATH")
+                .as_path(),
+        );
     }
 
-    if cfg!(target_os = "linux") {
-        env::set_var("LD_LIBRARY_PATH", server_path.join("resources/profiler/server/:$LD_LIBRARY_PATH").as_path());
+    #[cfg(target_os = "linux")]
+    {
+        env::set_var(
+            "LD_LIBRARY_PATH",
+            server_path
+                .join("resources/profiler/server/:$LD_LIBRARY_PATH")
+                .as_path(),
+        );
     }
+
     for tmp in SERVER_RELATIVE_LIST {
         server_path.push(tmp);
     }
-    if cfg!(target_os = "windows") {
+
+    #[cfg(windows)]
+    {
         server_path.set_extension("exe");
     }
+
     if !server_path.exists() {
         return None;
     }
-    let Some(path) = server_path.to_str() else { return None };
+    let Some(path) = server_path.to_str() else {
+        return None;
+    };
 
-    let output = Command::new(path).arg("--scan=9000")
-        .arg(format!("--logPath={}", cache_path.display())).output().unwrap();
+    let output = Command::new(path)
+        .arg("--scan=9000")
+        .arg(format!("--logPath={}", cache_path.display()))
+        .output()
+        .expect("Failed to start MindStudio Insight server");
 
     let scan_info = String::from_utf8_lossy(&output.stdout).to_string();
 
-    if scan_info.len() > 0 && scan_info.starts_with("Available port: "){
+    if scan_info.len() > 0 && scan_info.starts_with("Available port: ") {
         port.push_str(scan_info.replace("Available port: ", "").trim());
     } else {
         return None;
@@ -64,54 +99,58 @@ fn run_server(root_path: &PathBuf, cache_path: &PathBuf, port: &mut String) -> O
     let mut server_command = Command::new(path);
 
     #[cfg(windows)]
-    if cfg!(target_os = "windows") {
+    {
         server_command.creation_flags(NO_WINDOW_FLAG);
     }
 
-    match server_command.arg(format!("--wsPort={}", port))
+    match server_command
+        .arg(format!("--wsPort={}", port))
         .arg(format!("--logPath={}", cache_path.display()))
-        .spawn() {
-            Ok(child) => {
-                Some(Mutex::new(child))
-            }
-            _ => {
-                None
-            }
-        }
+        .spawn()
+    {
+        Ok(child) => Some(Mutex::new(child)),
+        _ => None,
+    }
 }
 
 // run script
-fn run_script(server_process:Mutex<Child>, root_path: &PathBuf, port: &str) -> wry::Result<()> {
+fn run_script(
+    server_process: Mutex<Child>,
+    root_path: &PathBuf,
+    port: &str,
+) -> wry::Result<()> {
     let event_loop = EventLoop::new();
 
     let resource_path = root_path.to_path_buf();
-    let window: wry::application::window::Window = WindowBuilder::new()
+    let window: Window = WindowBuilder::new()
         .with_title("MindStudio Insight")
         .with_maximized(true)
         .build(&event_loop)
-        .unwrap();
+        .expect("Error occurred when create App window");
 
     #[cfg(windows)]
     {
         use wry::application::platform::windows::IconExtWindows;
-        window.set_window_icon(Icon::from_path(resource_path.join("resources/images/icons/mindstudio.ico"), None).ok());
+
+        window.set_window_icon(
+            Icon::from_path(
+                resource_path.join("resources/images/icons/mindstudio.ico"),
+                None,
+            )
+            .ok(),
+        );
     }
 
     let _webview = WebViewBuilder::new(window)
-        .unwrap()
+        .expect("Failed to create webview builder")
         .with_custom_protocol("wry".into(), move |request| {
-            let _a = request.uri().to_string();
             let path = request.uri().path();
             let content = match read(resource_path.join(&path[1..]).as_path()) {
                 Ok(a) => a.into(),
-                Err(_e) => {
-                    return Err(wry::Error::DuplicateCustomProtocol("".to_string()));
-                }
+                Err(e) => return Err(wry::Error::Io(e)),
             };
 
-            // Return asset contents and mime types based on file extensions
-            // If you don't want to do this manually, there are some crates for you.
-            // Such as `infer` and `mime_guess`.
+            // TODO: 简洁性有待提升，换成match表达式或者HashMap方式
             let mimetype = if path.ends_with(".html") || path == "/" {
                 "text/html"
             } else if path.ends_with(".js") {
@@ -125,48 +164,49 @@ fn run_script(server_process:Mutex<Child>, root_path: &PathBuf, port: &str) -> w
             } else if path.ends_with(".svg") {
                 "image/svg+xml"
             } else {
-                unimplemented!();
+                MIMETYPE_HTML
             };
 
-            let mut res_builder = Response::builder();
-            for (k, v) in request.headers() {
-                res_builder = res_builder.header(k, v)
-            }
-            res_builder
-                .header(CONTENT_TYPE, mimetype)
-                .body(content)
-                .map_err(Into::into)
+            Response::builder().header(CONTENT_TYPE, mimetype).body(content).map_err(Into::into)
         })
-        .with_url(format!("wry://localhost/resources/profiler/frontend/index.html?port={}", port).as_str())?
-        .build()?;
+        .with_url(
+            format!("wry://localhost/resources/profiler/frontend/index.html?port={}", port)
+                .as_str(),
+        )?
+        .build()
+        .expect("Failed to create webview");
+
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
         match event {
             Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => *control_flow = {
-                let mut server_process_process = server_process.lock().unwrap();
-                let pid = server_process_process.id();
-                match query_child_pids(pid) {
-                    Ok(child_pids) => {
-                        for child_pid in child_pids {
-                            match kill_process_tree(child_pid) {
-                                Ok(()) => {}
-                                Err(_err) => {}
+                event: WindowEvent::CloseRequested, ..
+            } => {
+                *control_flow = {
+                    let mut server_process_guard = server_process
+                        .lock()
+                        .expect("Failed to lock server-process mutex");
+                    let pid = server_process_guard.id();
+                    match query_child_pids(pid) {
+                        Ok(child_pids) => {
+                            for child_pid in child_pids {
+                                if let Err(e) = kill_process_tree(child_pid) {
+                                    eprintln!("Err when kill process: {e}")
+                                }
                             }
                         }
+                        Err(e) => eprintln!("Err when query child pids {e}"),
                     }
-                    Err(_err) => {}
+                    server_process_guard
+                        .kill()
+                        .expect("server process could not be killed");
+                    ControlFlow::Exit
                 }
-                let _ = server_process_process.kill();
-                ControlFlow::Exit
-            },
+            }
 
             _ => (),
         }
     });
-
 }
 
 fn query_child_pids(parent_pid: u32) -> io::Result<Vec<String>> {
@@ -186,21 +226,16 @@ fn query_child_pids(parent_pid: u32) -> io::Result<Vec<String>> {
         match wmic_output {
             Ok(child) => {
                 if let Some(stdout) = child.stdout {
-                    let reader = BufReader::new(stdout);
-                    for line in reader.lines().skip(1) {
-                        match line {
-                            Ok(line) => {
-                                let line_trim = line.trim();
-                                if !line_trim.is_empty() {
-                                    child_pids.push(line_trim.to_string());
-                                }
-                            },
-                            Err(_err) => {},
-                        }
-                    }
+                    BufReader::new(stdout)
+                        .lines()
+                        .skip(1)
+                        .filter_map(|line| line.ok())
+                        .map(|line| line.trim().to_string())
+                        .filter(|s| !s.is_empty())
+                        .for_each(|pid| child_pids.push(pid));
                 }
             }
-            Err(_err) => {}
+            Err(e) => eprintln!("wmic command failed: {e}"),
         }
         Ok(child_pids)
     }
@@ -215,35 +250,31 @@ fn query_child_pids(parent_pid: u32) -> io::Result<Vec<String>> {
         let mut child_pids = Vec::new();
         let mut pid_map: HashMap<String, Vec<String>> = HashMap::new();
         match ps_output {
-            Ok(pair) => {
-                if let Some(stdout) = pair.stdout {
+            Ok(pairs) => {
+                if let Some(stdout) = pairs.stdout {
                     let reader = BufReader::new(stdout);
                     for line in reader.lines().skip(1) {
-                        let line_str = line.unwrap();
-                        let parts: Vec<&str> = line_str.split_whitespace().collect();
-                        if parts.len() == 2 {
-                            let key = parts.get(0).unwrap().to_string();
-                            let value = parts.get(1).unwrap().to_string();
-                            if let Some(vec) = pid_map.get_mut(&key) {
-                                vec.push(value);
-                            } else {
-                                let mut new_vec = Vec::new();
-                                new_vec.push(value);
-                                pid_map.insert(key, new_vec);
+                        if let Ok(line) = line {
+                            let parts: Vec<&str> =
+                                line.split_whitespace().collect();
+                            if let [key, value] = parts.as_slice() {
+                                pid_map
+                                    .entry(key.to_string())
+                                    .and_modify(|v| v.push(value.to_string()))
+                                    .or_insert(vec![value.to_string()]);
                             }
                         }
                     }
                 }
-            },
-            Err(_err) => {}
+            }
+            Err(e) => eprintln!("ps command failed: {e}"),
         }
 
         let mut deque = VecDeque::new();
         deque.push_back(parent_pid.to_string());
-        while !deque.is_empty() {
-            let cur = deque.pop_back();
-            if let Some(vec) = pid_map.get_mut(&cur.unwrap().to_string()) {
-                for item in vec {
+        while let Some(cur) = deque.pop_back() {
+            if let Some(children) = pid_map.get(&cur) {
+                for item in children {
                     child_pids.push(item.to_string());
                     deque.push_back(item.to_string());
                 }
@@ -266,7 +297,8 @@ fn kill_process_tree(parent_pid: String) -> io::Result<()> {
             .creation_flags(0x08000000)
             .stdout(Stdio::null())
             .stderr(Stdio::null())
-            .output()?;
+            .output()
+            .expect("Failed to execute taskkill command");
     }
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
@@ -275,20 +307,23 @@ fn kill_process_tree(parent_pid: String) -> io::Result<()> {
             .arg(parent_pid.to_string())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
-            .status()?;
+            .status()
+            .expect("Failed to execute kill command");
     }
 
     Ok(())
 }
 
 fn home_dir() -> Option<PathBuf> {
-    let home: PathBuf;
-    if cfg!(target_os = "windows") && env::var("USERPROFILE").is_ok() {
-        home = PathBuf::from(env::var("USERPROFILE").unwrap());
-    } else {
-        home = PathBuf::from(env::var("HOME").unwrap());
+    #[cfg(target_os = "windows")]
+    {
+        env::var("USERPROFILE").ok().map(PathBuf::from)
     }
-    Some(home)
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        env::var("HOME").ok().map(PathBuf::from)
+    }
 }
 
 #[cfg(windows)]
@@ -299,32 +334,36 @@ extern "system" {
 
 #[cfg(windows)]
 fn is_admin() -> bool {
-    unsafe {
-        IsUserAnAdmin()
-    }
+    unsafe { IsUserAnAdmin() }
 }
 
 #[cfg(windows)]
-fn compare_first_segment(s1: &str, s2: &str) -> bool {
-    let s1_segments: Vec<&str> = s1.split(MAIN_SEPARATOR).collect();
-    let s2_segments: Vec<&str> = s2.split(MAIN_SEPARATOR).collect();
-
-    if s1_segments.is_empty() || s2_segments.is_empty() {
-        return false;
+fn eq_prefix(lhs: &PathBuf, rhs: &PathBuf) -> bool {
+    match (lhs.components().next(), rhs.components().next()) {
+        (Some(l), Some(r)) => l == r,
+        _ => false,
     }
-
-    s1_segments[0] == s2_segments[0]
 }
 
 fn main() {
-    let mut cache_path = home_dir().unwrap().join(".mindstudio_insight"); //cache folder generated for each user.
-    let root_path =  std::env::current_exe().unwrap().parent().unwrap().to_path_buf();
-    std::fs::create_dir_all(cache_path.as_path()).expect("no permission to create cache_path");
-    #[cfg(windows)] {
-        //当用户安装在C盘时，使用user目录
+    let mut cache_path = home_dir()
+        .expect("Home dir not exists, check your env variable")
+        .join(".mindstudio_insight"); //cache folder generated for each user.
+    let root_path = current_exe()
+        .expect("Failed to get current exe path")
+        .parent()
+        .expect("Failed to get parent path of  current exe")
+        .to_path_buf();
+
+    create_dir_all(cache_path.as_path())
+        .expect("no permission to create cache_path");
+
+    #[cfg(windows)]
+    {
+        // 当用户安装在C盘时，使用user目录
         let mut webview_path = cache_path.clone();
-        //当用户安装在C盘外时，使用安装目录
-        if !compare_first_segment(cache_path.to_str().unwrap(), root_path.to_str().unwrap()) {
+        // 当用户安装在C盘外时，使用安装目录
+        if !eq_prefix(&cache_path, &root_path) {
             cache_path = root_path.join(".mindstudio_insight");
             webview_path = cache_path.clone();
         }
@@ -334,13 +373,15 @@ fn main() {
         env::set_var("WEBVIEW2_USER_DATA_FOLDER", webview_path.as_path());
     }
 
-    if wry::webview::webview_version().is_err() {
-        #[cfg(windows)] {
+    if webview_version().is_err() {
+        #[cfg(windows)]
+        {
             show_webview_err_message();
         }
         return;
     }
-    let mut port : String = String::new();
+
+    let mut port: String = String::new();
     // start the server
     if let Some(child) = run_server(&root_path, &cache_path, &mut port) {
         let _ = run_script(child, &root_path, &port.as_str());
