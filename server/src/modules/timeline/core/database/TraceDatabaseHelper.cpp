@@ -783,11 +783,11 @@ bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePrepared
                 }
         }
     } catch (DatabaseException &de) {
-        ServerLog::Error("QueryEventsViewData4Db. Execute query failed: ", de.What());
+        ServerLog::Error("Query events view data for DB. Execute query failed: ", de.What());
         return false;
     }
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryEventsViewData4Db. Sqlite result set is null.");
+        ServerLog::Error("Query events view data for DB. Sqlite result set is null.");
         return false;
     }
     // 解析查询结果，并封装到Response body中
@@ -828,7 +828,7 @@ std::string GetSql4QueryEventsViewDetailsInText(const Protocol::EventsViewParams
                       "LEFT JOIN thread AS t ON s.track_id = t.track_id ";
             break;
         default:
-            ServerLog::Error("QueryEventsViewData4Text. Unsupported process type.");
+            ServerLog::Error("Query events view data for text. Unsupported process type.");
     }
     return baseSql;
 }
@@ -915,7 +915,7 @@ bool TraceDatabaseHelper::QueryEventsViewData4Text(std::unique_ptr <SqlitePrepar
             resultSet = ExecuteQuery(stmt, sql4Details, params.pid, params.tid);
         }
     } catch (DatabaseException &e) {
-        ServerLog::Error("QueryEventsViewData4Text. Execute query failed: ", e.What());
+        ServerLog::Error("Query events view data for text. Execute query failed: ", e.What());
         return false;
     }
     ResolveEventsViewResultSet(resultSet, params, body, minTimestamp);
