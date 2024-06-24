@@ -573,7 +573,7 @@ function InstructionTablePage({
     }, [showDataSource]);
     useEffect(() => {
         const index = showDataSource.findIndex(isRelatedInstr);
-        const onPage = Math.floor(index / page.pageSize) + 1;
+        const onPage = Number(page.pageSize) > 0 ? Math.floor(index / page.pageSize) + 1 : 1;
         if (index > 0 && onPage !== page.current) {
             setPage({ ...page, current: onPage, total: showDataSource.length });
         }
