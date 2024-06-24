@@ -19,6 +19,8 @@
 namespace Dic::Module::Summary {
 class VirtualSummaryDataBase : public Database {
 public:
+    bool levelIsL0 = true;
+
     explicit VirtualSummaryDataBase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};
     ~VirtualSummaryDataBase() override = default;
 
@@ -40,6 +42,7 @@ public:
 
     virtual bool QueryOperatorMoreInfo(Protocol::OperatorMoreInfoReqParams &reqParams,
                                Protocol::OperatorMoreInfoResponse& response) = 0;
+
     uint64_t QueryMinStartTime();
     static inline std::string GetFileIdFromCombinationId(const std::string& str)
     {
@@ -69,6 +72,21 @@ public:
         }
 
         return str.substr(index + MSPROF_CONNECT.length() - 1);
+    }
+
+    std::string OperatorGetLevel(const std::vector<Protocol::OperatorDetailInfoRes> &res)
+    {
+        std::string level;
+        if (res.empty()) {
+            level = levelIsL0 ? "l0" : "l1";
+        } else if (res.at(0).inputShape.empty()) {
+            level = "l0";
+            levelIsL0 = true;
+        } else {
+            level = "l1";
+            levelIsL0 = false;
+        }
+        return level;
     }
 };
 }

@@ -138,7 +138,7 @@ TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorMoreInfoByOpType)
     int64_t total = 0;
     int64_t size = 0;
     EXPECT_EQ(response.total, total);
-    EXPECT_EQ(response.level, "l0");
+    EXPECT_EQ(response.level, "l1");
     EXPECT_EQ(response.datas.size(), size);
 }
 
@@ -153,6 +153,6 @@ TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorMoreInfoByInputShape)
     EXPECT_EQ(result, true);
     int total = 0;
     EXPECT_EQ(response.total, total);
-    EXPECT_EQ(response.level, "l0");
+    EXPECT_EQ(response.level, "l1");
     EXPECT_EQ(response.datas.size(), total);
 }

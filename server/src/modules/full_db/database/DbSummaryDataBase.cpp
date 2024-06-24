@@ -342,7 +342,7 @@ bool DbSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqPa
         one.outputFormat = sqlite3_column_string(stmt, col++);
         res.emplace_back(one);
     }
-    response.level = (res.empty() || res.at(0).inputShape.empty()) ? "l0" : "l1";
+    response.level = OperatorGetLevel(res);
     response.datas = res;
     sqlite3_finalize(stmt);
     return true;
@@ -463,7 +463,7 @@ bool DbSummaryDataBase::QueryOperatorMoreInfo(OperatorMoreInfoReqParams &reqPara
         one.outputFormat = sqlite3_column_string(stmt, col++);
         res.emplace_back(one);
     }
-    response.level = (res.empty() || res.at(0).inputShape.empty()) ? "l0" : "l1";
+    response.level = OperatorGetLevel(res);
     response.datas = res;
     sqlite3_finalize(stmt);
     return true;

@@ -129,6 +129,6 @@ TEST_F(TestSuit, QueryOperatorMoreInfoByInputShape)
     EXPECT_EQ(result, true);
     int total = 0;
     EXPECT_EQ(response.total, total);
-    EXPECT_EQ(response.level, "l0");
+    EXPECT_EQ(response.level, "l1");
     EXPECT_EQ(response.datas.size(), total);
 }
