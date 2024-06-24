@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
+import { Console as console } from '@/utils/console';
 export enum LocalStorageKeys {
     LANGUAGE = 'language',
     THEME = 'theme',
@@ -8,12 +9,21 @@ export enum LocalStorageKeys {
 
 class LocalStorageService {
     getItem(key: LocalStorageKeys): any {
-        const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : null;
+        try {
+            const item = localStorage.getItem(key);
+            return item ? JSON.parse(item) : null;
+        } catch (error) {
+            console.log(error);
+            return null;
+        }
     }
 
     setItem(key: LocalStorageKeys, value: any): void {
-        localStorage.setItem(key, JSON.stringify(value));
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     removeItem(key: LocalStorageKeys): void {

@@ -79,7 +79,7 @@ const handleScrollEvent = (e: any, { virtual, itemHeight, visibleCount, tableRef
     setRange: React.Dispatch<React.SetStateAction<[number, number]>>;
 },
 ): void => {
-    if (!virtual) {
+    if (!virtual || itemHeight === 0) {
         return;
     }
     const startIdx = Math.floor(e.target.scrollTop / itemHeight);
