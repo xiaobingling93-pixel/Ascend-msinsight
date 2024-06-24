@@ -4,8 +4,9 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import * as echarts from 'echarts';
-import { LeftRightContainer, addResizeEvent, chartVisbilityListener } from '../Common';
+import type * as echarts from 'echarts';
+import { LeftRightContainer } from '../Common';
+import { getResizeEcharts, chartVisbilityListener } from 'lib/CommonUtils';
 import { ConditionType } from './Filter';
 import { queryOperatorCategory, queryOperatorComputeUnit } from '../RequestUtils';
 import { Session } from '../../entity/session';
@@ -16,15 +17,15 @@ export type dataType = Array<{
     value: number;
     [name: string]: any;
 }>;
+
+let myChart: echarts.ECharts;
 function InitCharts({ data, domId, isDark, title }: {data: dataType; domId: string; isDark: boolean;title: string}): void {
     const chartDom = document.getElementById(domId);
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
-    echarts.init(chartDom).dispose();
-    const myChart = echarts.init(chartDom);
+    myChart = getResizeEcharts(chartDom, myChart);
     myChart.setOption(wrapData({ data, domId, isDark, title }));
-    addResizeEvent(myChart);
 }
 function wrapData({ data, domId, isDark, title }: {data: dataType; domId: string; isDark: boolean;title: string}): any {
     const option = getOption({ isDark, title });

@@ -4,7 +4,6 @@
 import React from 'react';
 import i18n from '../i18n';
 import { Col, Row } from 'antd';
-import type { EChartsType } from 'echarts';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? props.name + ' :' : ''} </span>;
@@ -111,67 +110,4 @@ export const GetPageConfigWhithPageData = (page: { current: number; pageSize: nu
         onChange: (current: number, pageSize: number) => { setPage({ ...page, current, pageSize }); },
         showQuickJumper: page.pageSize !== 0 && page.total / page.pageSize > 5,
     };
-};
-
-export const checkDomDisplay = (dom: HTMLElement): boolean => {
-    return dom?.offsetParent !== null;
-};
-export function addResizeEvent(echart: EChartsType): void {
-    window.addEventListener('resize', function () {
-        if (checkDomDisplay(echart.getDom())) {
-            echart.resize();
-        }
-    });
-}
-
-class DomVisibilityListener {
-    private _visible: boolean = false;
-    private readonly _target: HTMLElement | null;
-    private _listener: any;
-    private readonly _onVisibleChange: Function | undefined;
-    static ListenerMap: {[props: string]: any} = {};
-    constructor(dom: string, onVisibleChange?: Function) {
-        if (DomVisibilityListener.ListenerMap[dom] !== undefined && DomVisibilityListener.ListenerMap[dom] !== null) {
-            DomVisibilityListener.ListenerMap[dom].clear();
-            DomVisibilityListener.ListenerMap[dom] = null;
-        }
-        DomVisibilityListener.ListenerMap[dom] = this;
-        this._target = document.getElementById(dom);
-        this.visible = this._target?.offsetParent !== null;
-        this._onVisibleChange = onVisibleChange;
-        this.add();
-    }
-
-    add(): void {
-        this._listener = setTimeout(() => {
-            const newStatus = this._target?.offsetParent !== null;
-            if (newStatus !== this.visible && this._onVisibleChange !== undefined) {
-                this._onVisibleChange(newStatus);
-            }
-            this.visible = newStatus;
-            this.add();
-        }, 100);
-    }
-
-    clear(): void {
-        if (this._listener !== null) {
-            clearTimeout(this._listener);
-        }
-    }
-
-    get visible(): boolean {
-        return this._visible;
-    }
-
-    set visible(value: boolean) {
-        this._visible = value;
-    }
-}
-
-export const chartVisbilityListener = (dom: string, onVisibleChange?: Function): DomVisibilityListener => {
-    return new DomVisibilityListener(dom, (status: boolean) => {
-        if (status && onVisibleChange !== undefined) {
-            onVisibleChange();
-        }
-    });
 };
