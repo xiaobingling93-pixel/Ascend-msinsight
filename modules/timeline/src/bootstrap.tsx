@@ -81,7 +81,7 @@ window.requestData = async (command, params, module, voidResponse = false): Prom
 async function requestWithMultiParams(command: string, params: any, module?: string, voidResponse = false): Promise<any> {
     const data = await connector.fetch({
         args: { command, params },
-        module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
+        module: module !== undefined ? module : String(command).split('/')[0]?.toLowerCase(),
         voidResponse,
     });
     return (data as any).body;
@@ -90,7 +90,7 @@ async function requestWithMultiParams(command: string, params: any, module?: str
 async function requestWithOptions({ command, params, module, voidResponse = false, keepRawData = false, bufferField }: RequestParams): Promise<any> {
     const data = await connector.fetch({
         args: { command, params },
-        module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
+        module: module !== undefined ? module : String(command).split('/')[0]?.toLowerCase(),
         voidResponse,
         keepRawData,
         bufferField,

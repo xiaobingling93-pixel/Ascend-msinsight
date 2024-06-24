@@ -31,7 +31,7 @@ declare global {
 window.requestData = async (command, params, module): Promise<object> => {
     const data = await connector.fetch({
         args: { command, params },
-        module: module !== undefined ? module : command?.split('/')[0]?.toLowerCase(),
+        module: module !== undefined ? module : String(command).split('/')[0]?.toLowerCase(),
     });
     return (data as {body: object})?.body;
 };
