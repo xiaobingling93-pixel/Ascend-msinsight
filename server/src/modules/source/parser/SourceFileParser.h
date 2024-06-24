@@ -88,6 +88,7 @@ private:
     std::optional<Protocol::SubBlockData> ConvertStrToSubBlockData(const std::string& str);
     std::string GetContentStr(std::ifstream &file, const std::pair<int64_t, int64_t> &pair) const;
     std::string GetUnitType(int64_t unitTypeNumber);
+    bool IsDataSizeExceedUpperLimit(uint64_t realSize, uint64_t upperLimit) const;
     static Protocol::MemoryGraph ParseJsonToMemoryGraph(const json_t &json);
     static Protocol::MemoryTable ParseJsonToMemoryTable(const json_t &json);
     static Protocol::UtilizationRate ParseJsonToUtilizationRate(const json_t &json);

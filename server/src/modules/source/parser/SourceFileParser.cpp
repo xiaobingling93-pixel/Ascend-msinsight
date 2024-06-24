@@ -379,6 +379,11 @@ std::string SourceFileParser::GetInstr()
         return "";
     }
     uint64_t dataSize = end - start;
+    constexpr uint64_t maxDataSize = 1024 * 1024 * 200; // limit data size to 200MB
+    if (IsDataSizeExceedUpperLimit(dataSize, maxDataSize)) {
+        ServerLog::Error("Data size of instruction exceeds max upper limit.");
+        return "";
+    }
 
     file.seekg(start, std::ios::beg);
 
@@ -407,6 +412,11 @@ std::string SourceFileParser::GetSourceByName(std::string sourceName)
     int64_t start = pos.first;
     int64_t end = pos.second;
     int64_t dataSize = end - start;
+    constexpr uint64_t maxDataSize = 1024 * 1024 * 100; // limit data size to 100MB
+    if (IsDataSizeExceedUpperLimit(dataSize, maxDataSize)) {
+        ServerLog::Error("Data size of source file exceeds max upper limit.");
+        return "";
+    }
 
     std::ifstream file(filePath, std::ios::binary);
     if (!file) {
@@ -914,6 +924,11 @@ std::string SourceFileParser::GetContentStr(std::ifstream &file, const std::pair
     int64_t start = pair.first;
     int64_t end = pair.second;
     int64_t dataSize = end - start;
+    constexpr uint64_t maxDataSize = 1024 * 1024 * 100; // limit data size to 100MB
+    if (IsDataSizeExceedUpperLimit(dataSize, maxDataSize)) {
+        ServerLog::Error("Data size of content exceeds max upper limit.");
+        return "";
+    }
 
     file.seekg(start, std::ios::beg);
 
@@ -935,6 +950,11 @@ std::string SourceFileParser::GetUnitType(int64_t unitTypeNumber)
         ServerLog::Error("Unknown unit type.");
         return "";
     }
+}
+
+bool SourceFileParser::IsDataSizeExceedUpperLimit(uint64_t realSize, uint64_t upperLimit) const
+{
+    return realSize > upperLimit;
 }
 } // end of namespace Memory
 } // end of namespace Module
