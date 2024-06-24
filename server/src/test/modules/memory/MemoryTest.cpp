@@ -76,6 +76,14 @@ TEST_F(TestSuit, QueryMemoryTypeStatic)
     EXPECT_EQ(graphId.size(), expectSize);
 }
 
+TEST_F(TestSuit, QueryMemoryResourceTypePytorch)
+{
+    auto database = DataBaseManager::Instance().GetMemoryDatabase("1");
+    std::string type = Module::Memory::MEMORY_RESOURCE_TYPE_MIND_SPORE;
+    database->QueryMemoryResourceType(type);
+    EXPECT_EQ(type, Module::Memory::MEMORY_RESOURCE_TYPE_PYTORCH);
+}
+
 TEST_F(TestSuit, QueryStaticOperatorListParamsException)
 {
     auto database = DataBaseManager::Instance().GetMemoryDatabase("0");

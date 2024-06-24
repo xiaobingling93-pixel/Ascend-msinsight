@@ -67,6 +67,23 @@ bool VirtualMemoryDataBase::ExecuteMemoryType(std::vector<std::string> &graphId,
     return true;
 }
 
+bool VirtualMemoryDataBase::ExecuteMemoryResourceType(std::string &type, std::string sql)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Query operator size failed!. ", sqlite3_errmsg(db));
+        return false;
+    }
+    int64_t totalNum = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        totalNum = sqlite3_column_int(stmt, resultStartIndex);
+    }
+    type = (totalNum > 0) ? MEMORY_RESOURCE_TYPE_MIND_SPORE : MEMORY_RESOURCE_TYPE_PYTORCH;
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 bool VirtualMemoryDataBase::ExecuteOperatorSize(double &min, double &max, std::string sql)
 {
     sqlite3_stmt *stmt = nullptr;

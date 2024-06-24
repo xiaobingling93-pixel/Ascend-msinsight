@@ -118,6 +118,18 @@ std::optional<document_t> ToResponseJson<MemoryTypeResponse>(const MemoryTypeRes
 }
 
 template<>
+std::optional<document_t> ToResponseJson<MemoryResourceTypeResponse>(const MemoryResourceTypeResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "type", response.type, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
+template<>
 std::optional<document_t> ToResponseJson<MemoryStaticOperatorGraphResponse>
         (const MemoryStaticOperatorGraphResponse &response)
 {

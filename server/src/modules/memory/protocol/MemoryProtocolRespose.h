@@ -63,6 +63,11 @@ struct MemoryTypeResponse : public Response {
     std::vector<std::string> graphId;
 };
 
+struct MemoryResourceTypeResponse : public Response {
+    MemoryResourceTypeResponse() : Response(REQ_RES_MEMORY_RESOURCE_TYPE) {}
+    std::string type = Module::Memory::MEMORY_RESOURCE_TYPE_PYTORCH;
+};
+
 struct MemoryOperatorResponse : public Response {
     MemoryOperatorResponse() : Response(REQ_RES_MEMORY_OPERATOR) {}
     std::vector<MemoryTableColumnAttr> columnAttr;

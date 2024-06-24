@@ -27,6 +27,12 @@ bool DbMemoryDataBase::QueryMemoryType(std::string &type, std::vector<std::strin
     return ExecuteMemoryType(graphId, type);
 }
 
+bool DbMemoryDataBase::QueryMemoryResourceType(std::string &type)
+{
+    type = "Pytorch";
+    return true;
+}
+
 bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                                            std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                            std::vector<Protocol::MemoryOperator> &opDetails)

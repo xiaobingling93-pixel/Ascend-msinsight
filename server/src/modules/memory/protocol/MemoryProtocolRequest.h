@@ -54,6 +54,11 @@ struct MemoryTypeRequest : public Request {
     std::string rankId;
 };
 
+struct MemoryResourceTypeRequest : public Request {
+    MemoryResourceTypeRequest() : Request(REQ_RES_MEMORY_RESOURCE_TYPE) {};
+    std::string rankId;
+};
+
 struct MemoryOperatorRequest : public Request {
     MemoryOperatorRequest() : Request(REQ_RES_MEMORY_OPERATOR) {};
     MemoryOperatorParams params;

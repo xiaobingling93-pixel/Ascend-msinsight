@@ -60,6 +60,10 @@ const std::string MEMORY_TYPE_DYNAMIC = "dynamic"; // 纯动态图数据
 const std::string MEMORY_TYPE_STATIC = "static"; // 纯静态图数据
 const std::string MEMORY_TYPE_MIX = "mix"; // 存在动态图数据以及静态子图数据
 
+// Resource Type类型字段
+const std::string MEMORY_RESOURCE_TYPE_PYTORCH = "Pytorch";
+const std::string MEMORY_RESOURCE_TYPE_MIND_SPORE = "MindSpore";
+
 // field in operator_memory
 const std::string ALLOCATION_TIME = "Allocation Time(us)";
 const std::string RELEASE_TIME = "Release Time(us)";

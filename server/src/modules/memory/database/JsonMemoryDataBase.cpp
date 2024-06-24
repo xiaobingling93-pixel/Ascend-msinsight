@@ -340,6 +340,12 @@ bool JsonMemoryDataBase::QueryMemoryType(std::string &type, std::vector<std::str
     return ExecuteMemoryType(graphId, type);
 }
 
+bool JsonMemoryDataBase::QueryMemoryResourceType(std::string &type)
+{
+    std::string sql = "SELECT count(*) as nums FROM " + recordTable + " WHERE component = 'MindSpore'";
+    return ExecuteMemoryResourceType(type, sql);
+}
+
 bool JsonMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
     std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails)
 {

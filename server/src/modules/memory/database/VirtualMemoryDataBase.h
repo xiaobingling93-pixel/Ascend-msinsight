@@ -19,6 +19,7 @@ public:
     explicit VirtualMemoryDataBase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};;
     ~VirtualMemoryDataBase() override = default;
     virtual bool QueryMemoryType(std::string &type, std::vector<std::string> &graphId) = 0;
+    virtual bool QueryMemoryResourceType(std::string &type) = 0;
     virtual bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                                      std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                      std::vector<Protocol::MemoryOperator> &opDetails) = 0;
@@ -95,6 +96,7 @@ protected:
 
     std::vector<std::string> GetStreamLists(std::string rankId);
     bool ExecuteMemoryType(std::vector<std::string> &graphId, std::string &type);
+    bool ExecuteMemoryResourceType(std::string &type, std::string sql);
     bool ExecuteOperatorSize(double &min, double &max, std::string sql);
     bool ExecuteOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum, std::string sql);
     bool ExecuteStaticOperatorListTotalNum(Protocol::StaticOperatorListParams &requestParams,

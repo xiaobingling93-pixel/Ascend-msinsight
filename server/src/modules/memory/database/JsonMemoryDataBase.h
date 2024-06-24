@@ -34,6 +34,7 @@ public:
     void insertStaticOpDetail(const StaticOp &event);
 
     bool QueryMemoryType(std::string &type, std::vector<std::string> &graphId) override;
+    bool QueryMemoryResourceType(std::string &type) override;
     bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                              std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                              std::vector<Protocol::MemoryOperator> &opDetails) override;
