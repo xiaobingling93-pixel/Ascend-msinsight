@@ -45,7 +45,7 @@ interface AdviceAndSummary {
 
 const baseOptionLegendData = [
     { name: 'Preparing', textStyle: { color: COLOR.Grey50 } },
-    { name: 'Computing', textStyle: { color: COLOR.Grey50 } },
+    { name: 'Pure Computing', textStyle: { color: COLOR.Grey50 } },
     { name: 'Communication(Not Overlapped)', textStyle: { color: COLOR.Grey50 } },
     { name: 'Communication(Overlapped)', textStyle: { color: COLOR.Grey50 } },
     { name: 'Free', textStyle: { color: COLOR.Grey50 } },
@@ -71,8 +71,8 @@ const getBaseOptionSeries = (): any[] => {
     return [
         { id: 'preparing', name: i18n.t('Preparing', { ns: 'summary' }), ...commonSeries },
         {
-            id: 'compute',
-            name: i18n.t('Computing', { ns: 'summary' }),
+            id: 'purecompute',
+            name: i18n.t('Pure Computing', { ns: 'summary' }),
             ...commonSeries,
         },
         {
@@ -241,24 +241,29 @@ async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
 export const useHit = (): React.ReactElement => {
     const { t } = useTranslation('summary');
     const hit = t('Computation/CommunicationDescribe', { returnObjects: true }) as string[];
-    return (<StyledTooltip title={
-        (
-            <div style={{ padding: '1rem' }}>
-                {hit?.map((item: string, index: number) => <div key={index}>{item}</div>)}
-                <div style={{ marginTop: '2rem' }}>
-                    <ExclamationCircleFilled style={{ marginRight: '10px' }}/>
-                    {t('Computation/CommunicationLastDescribe')}</div>
-            </div>
-        )
-    }>
+    return (<StyledTooltip
+        overlayClassName={'width-auto'}
+        title={
+            (
+                <div style={{ padding: '1rem' }}>
+                    {hit?.map((item: string, index: number) => <div key={index}>{item}</div>)}
+                    <div style={{ marginTop: '2rem' }}>
+                        <ExclamationCircleFilled style={{ marginRight: '10px' }}/>
+                        {t('Computation/CommunicationLastDescribe')}</div>
+                </div>
+            )
+        }>
         <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
     </StyledTooltip>);
 };
 
 async function GetTopSummary(conditions: ConditionDataType): Promise<AdviceAndSummary> {
-    const res: any = await queryTopSummary(conditions);
+    const res: any = await queryTopSummary({
+        ...conditions,
+        orderBy: conditions.orderBy === 'pureComputingTime' ? 'computingTime' : conditions.orderBy,
+    });
     const { advice = {}, summaryList = [] } = res ?? {};
-    if (conditions.orderBy === 'computingTime') {
+    if (conditions.orderBy === 'pureComputingTime') {
         summaryList.sort((a: any, b: any) =>
             b.computingTime - b.communicationOverLappedTime - a.computingTime + a.communicationOverLappedTime);
     }

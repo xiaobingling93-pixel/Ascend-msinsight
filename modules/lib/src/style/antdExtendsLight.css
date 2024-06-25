@@ -152,3 +152,8 @@ div.ant-tooltip-inner {
     color: rgba(0, 0, 0, .6);
     max-width: 400px;
 }
+
+.width-auto .ant-tooltip-inner {
+    width: auto;
+    max-width: none!important;
+}

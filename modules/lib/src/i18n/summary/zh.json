@@ -18,8 +18,9 @@
     "Generate": "生成",
     "Computation/CommunicationOverview": "计算/通信概览",
     "Computation/CommunicationDescribe": [
-      "计算时间 = NPU上的内核时间总和 – 通信时间（被覆盖）",
-      "总时间 = 计算时间 + 通信时间（被覆盖） + 通信时间（未被覆盖）+ 间隙时间",
+      "总计算时间 = NPU上的内核时间总和",
+      "纯计算时间 = 总计算时间 – 通信时间（被覆盖）",
+      "总时间 = 纯计算时间 + 通信时间（被覆盖） + 通信时间（未被覆盖）+ 间隙时间",
       "计算比例 = 计算时间/总时间",
       "通信比例 = 通信时间（未被覆盖）/总时间"
     ],
@@ -29,7 +30,8 @@
     "OrderBy": "排序方式",
     "Top": "前",
     "preparing": "预处理",
-    "Computing": "计算时间",
+    "Pure Computing": "纯计算时间",
+    "Total Computing": "总计算时间",
     "Communication(Overlapped)": "通信时间(被覆盖)",
     "Communication(Not Overlapped)": "通信时间(未被覆盖)",
     "Communication": "通信时间",
