@@ -84,7 +84,7 @@ function FilterCom({ condition, optionMap, handleChange, t }: IcomProps): JSX.El
             nameStyle={{ width: '70px' }}
             content={(<Select
                 value={condition.showAs}
-                style={{ width: '150px' }}
+                style={{ width: '170px' }}
                 onChange={(val): void => {
                     handleChange('showAs', val);
                 }}

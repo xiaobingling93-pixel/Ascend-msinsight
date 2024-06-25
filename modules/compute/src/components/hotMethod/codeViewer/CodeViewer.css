@@ -5,6 +5,7 @@ pre{
     overflow:visible;
     margin:0!important;
     width: fit-content;
+    min-width: 100%;
 }
 pre code.hljs {
     overflow-x: visible!important;
