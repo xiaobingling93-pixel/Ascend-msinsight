@@ -522,7 +522,7 @@ function InstructionTableNopage({
 
     useEffect(() => {
         srcollToView({ condition, selectedline, showDataSource, isRelatedInstr });
-    }, [selectedline, lineClickListener, showDataSource]);
+    }, [lineClickListener, showDataSource]);
 
     return <ResizeTable
         size="small"
@@ -591,7 +591,7 @@ function InstructionTablePage({
     }, [showDataSource, page.pageSize, page.current]);
     useEffect(() => {
         srcollToView({ condition, selectedline, showDataSource: pageData, isRelatedInstr });
-    }, [selectedline, lineClickListener, pageData, page.current]);
+    }, [lineClickListener, pageData, page.current]);
 
     return <ResizeTable
         size="small"
