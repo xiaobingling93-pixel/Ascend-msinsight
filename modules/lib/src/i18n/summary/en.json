@@ -18,8 +18,9 @@
     "Generate": "Generate",
     "Computation/CommunicationOverview": "Computation/Communication Overview",
     "Computation/CommunicationDescribe": [
-      "Computing = Sum of kernel time on NPU - Communication(Overlapped)",
-      "Total Time = Computing + Communication(Overlapped) + Communication(Not Overlapped) + Free",
+      "Total Computing = Sum of kernel time on NPU",
+      "Pure Computing = Total Computing - Communication(Overlapped)",
+      "Total Time = Pure Computing + Communication(Overlapped) + Communication(Not Overlapped) + Free",
       "Computing Ratio = Computing / Total Time",
       "Communication Ratio = Communication(Not Overlapped) / Total Time"
     ],
@@ -30,6 +31,8 @@
     "Top": "Top",
     "preparing": "preparing",
     "Computing": "Computing",
+    "Pure Computing": "Pure Computing",
+    "Total Computing": "Total Computing",
     "Communication(Overlapped)": "Communication(Overlapped)",
     "Communication(Not Overlapped)": "Communication(Not Overlapped)",
     "Communication": "Communication",
