@@ -151,6 +151,9 @@ const Index = observer(({ session }: { session: Session }) => {
     function resizeHeight(): void {
         const codeTable = document.getElementById('CodeTable');
         const height = codeTable?.clientHeight ?? 1000;
+        if (height === 0) {
+            return;
+        }
         setTableHeight(height);
     }
 
