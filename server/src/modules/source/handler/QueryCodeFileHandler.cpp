@@ -16,7 +16,7 @@ using namespace Dic::Server;
 
 void QueryCodeFileHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    SourceCodeFileRequest &request = dynamic_cast<SourceCodeFileRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<SourceCodeFileRequest &>(*requestPtr);
     std::string token = request.token;
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Error("Failed to check session token , command = ", command);
@@ -24,7 +24,7 @@ void QueryCodeFileHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<SourceCodeFileResponse> responsePtr = std::make_unique<SourceCodeFileResponse>();
-    SourceCodeFileResponse &response = *responsePtr.get();
+    SourceCodeFileResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     const std::string &fileContent = SourceFileParser::Instance().GetSourceByName(request.params.sourceName);
     response.body.fileContent = fileContent;

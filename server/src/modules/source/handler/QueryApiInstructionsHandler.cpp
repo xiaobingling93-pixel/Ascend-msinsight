@@ -16,7 +16,7 @@ using namespace Dic::Server;
 
 void QueryApiInstructionsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    SourceApiInstrRequest &request = dynamic_cast<SourceApiInstrRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<SourceApiInstrRequest &>(*requestPtr);
     std::string token = request.token;
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Error("Failed to check session token , command = ", command);
@@ -24,7 +24,7 @@ void QueryApiInstructionsHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<SourceApiInstrResponse> responsePtr = std::make_unique<SourceApiInstrResponse>();
-    SourceApiInstrResponse &response = *responsePtr.get();
+    SourceApiInstrResponse &response = *responsePtr;
     SetBaseResponse(request, response);
 
     const std::string &instr = SourceFileParser::Instance().GetInstr();

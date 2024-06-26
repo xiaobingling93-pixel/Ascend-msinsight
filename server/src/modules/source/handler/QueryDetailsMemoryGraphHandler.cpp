@@ -14,7 +14,7 @@ using namespace Dic::Server;
 
 void QueryDetailsMemoryGraphHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    DetailsMemoryGraphRequest &request = dynamic_cast<DetailsMemoryGraphRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<DetailsMemoryGraphRequest &>(*requestPtr);
     std::string token = request.token;
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Error("Failed to check session token , command = ", command);
@@ -22,7 +22,7 @@ void QueryDetailsMemoryGraphHandler::HandleRequest(std::unique_ptr<Protocol::Req
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<DetailsMemoryGraphResponse> responsePtr = std::make_unique<DetailsMemoryGraphResponse>();
-    DetailsMemoryGraphResponse &response = *responsePtr.get();
+    DetailsMemoryGraphResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     bool result = SourceFileParser::Instance().GetDetailsMemoryGraph(request.params.blockId, response.body);
     SetResponseResult(response, result);

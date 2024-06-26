@@ -16,7 +16,7 @@ using namespace Dic::Server;
 
 void QueryApiLineHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    SourceApiLineRequest &request = dynamic_cast<SourceApiLineRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<SourceApiLineRequest &>(*requestPtr);
     std::string token = request.token;
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Error("Failed to check session token , command = ", command);
@@ -24,7 +24,7 @@ void QueryApiLineHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<SourceApiLineResponse> responsePtr = std::make_unique<SourceApiLineResponse>();
-    SourceApiLineResponse &response = *responsePtr.get();
+    SourceApiLineResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     const std::vector<SourceFileLine> &lines = SourceFileParser::Instance().GetApiLinesByCoreAndSource(
         request.params.coreName, request.params.sourceName);

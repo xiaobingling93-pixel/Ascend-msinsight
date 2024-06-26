@@ -16,7 +16,7 @@ using namespace Dic::Server;
 
 void QueryDetailsLoadInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    SourceDetailsLoadInfoRequest &request = dynamic_cast<SourceDetailsLoadInfoRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<SourceDetailsLoadInfoRequest &>(*requestPtr);
     std::string token = request.token;
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Error("Failed to check session token , command = ", command);

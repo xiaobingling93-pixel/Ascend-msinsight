@@ -15,7 +15,7 @@ using namespace Dic::Server;
 
 void QueryDetailsMemoryTableHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    DetailsMemoryTableRequest &request = dynamic_cast<DetailsMemoryTableRequest &>(*requestPtr.get());
+    auto &request = dynamic_cast<DetailsMemoryTableRequest &>(*requestPtr);
     std::string token = request.token;
     if (!WsSessionManager::Instance().CheckSession(token)) {
         ServerLog::Error("Failed to check session token , command = ", command);
@@ -24,7 +24,7 @@ void QueryDetailsMemoryTableHandler::HandleRequest(std::unique_ptr<Protocol::Req
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<DetailsMemoryTableResponse> responsePtr =
             std::make_unique<DetailsMemoryTableResponse>();
-    DetailsMemoryTableResponse &response = *responsePtr.get();
+    DetailsMemoryTableResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     bool result = SourceFileParser::Instance().GetDetailsMemoryTable(request.params.blockId,
                                                                      response.body);

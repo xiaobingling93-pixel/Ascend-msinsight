@@ -71,6 +71,10 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
         dataType = static_cast<int>(dataType);
         paddingLength = static_cast<int>(paddingLength);
         if (dataType == static_cast<int>(DataTypeEnum::SOURCE)) {
+            if (INT64_MAX - filePathLen < dataSize) { // 溢出防护
+                ServerLog::Error("Data unit in selected file is invalid which data size is :", dataSize);
+                return false;
+            }
             dataSize = dataSize + filePathLen;
         }
 
@@ -80,6 +84,10 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
         file.seekg(reserveLen, std::ios::cur); // 跳转到实际数据的开始
 
         int64_t startPos = file.tellg();
+        if (startPos + dataSize - paddingLength >= INT64_MAX) {  // 溢出防
+            ServerLog::Error("Data unit in selected file is invalid which data size is :", dataSize);
+            return false;
+        }
         int64_t endPos = startPos + dataSize - paddingLength;
 
         dataBlockMap[dataType].emplace_back(startPos, endPos);
@@ -339,7 +347,7 @@ std::vector<SourceFileLine> SourceFileParser::GetApiLinesByCoreAndSource(std::st
         ServerLog::Error("Can't find the specified core name : ", core);
         return result;
     }
-    int index = std::distance(apiCores.begin(), it);
+    ptrdiff_t index = std::distance(apiCores.begin(), it);
 
     if (apiFiles.find(sourceName) == apiFiles.end()) {
         ServerLog::Warn("The specified file doesn't exist in api files, and source name is:", sourceName);
@@ -353,7 +361,7 @@ std::vector<SourceFileLine> SourceFileParser::GetApiLinesByCoreAndSource(std::st
 
         SourceFileLine output;
         for (const auto &pair : line.addressRange) {
-            output.addressRange.emplace_back(std::make_pair(pair.first, pair.second));
+            output.addressRange.emplace_back(pair.first, pair.second);
         }
         output.cycles.emplace_back(line.cycles[index]);
         output.instructionsExecuted.emplace_back(line.instructionsExecuted[index]);
