@@ -413,7 +413,9 @@ void JsonMemoryDataBase::SaveStaticOpDetail()
 sqlite3_stmt *JsonMemoryDataBase::GetOperatorStmt(uint64_t paramLen)
 {
     sqlite3_stmt *stmt = nullptr;
-    if (paramLen == cacheSize) {
+    if (paramLen == 0) {
+        return stmt;
+    } else if (paramLen == cacheSize) {
         if (!hasInitStmt) {
             InitStmt();
         }
@@ -424,7 +426,7 @@ sqlite3_stmt *JsonMemoryDataBase::GetOperatorStmt(uint64_t paramLen)
                 "active_release_time, active_duration, allocation_allocated, allocation_reserve, allocation_active, "
                 "release_allocated, release_reserve, release_active, stream)"
                           " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-        for (int i = 0; i < paramLen - 1; ++i) {
+        for (uint64_t i = 0; i < paramLen - 1; ++i) {
             sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -438,14 +440,16 @@ sqlite3_stmt *JsonMemoryDataBase::GetOperatorStmt(uint64_t paramLen)
 sqlite3_stmt *JsonMemoryDataBase::GetRecordStmt(uint64_t paramLen)
 {
     sqlite3_stmt *stmt = nullptr;
-    if (paramLen == cacheSize) {
+    if (paramLen == 0) {
+        return stmt;
+    } else if (paramLen == cacheSize) {
         stmt = insertRecordStmt;
         sqlite3_reset(stmt);
     } else {
         std::string sql = "INSERT INTO " + recordTable +
                 " (component, total_allocated, total_reserve, total_active, device_type, stream, timestamp)"
                 " VALUES (?,?,?,?,?,?,?)";
-        for (int i = 0; i < paramLen - 1; ++i) {
+        for (uint64_t i = 0; i < paramLen - 1; ++i) {
             sql.append(",(?,?,?,?,?,?,?)");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -459,14 +463,16 @@ sqlite3_stmt *JsonMemoryDataBase::GetRecordStmt(uint64_t paramLen)
 sqlite3_stmt *JsonMemoryDataBase::GetStaticOpStmt(uint64_t paramLen)
 {
     sqlite3_stmt *stmt = nullptr;
-    if (paramLen == cacheSize) {
+    if (paramLen == 0) {
+        return stmt;
+    } else if (paramLen == cacheSize) {
         stmt = insertStaticOpStmt;
         sqlite3_reset(stmt);
     } else {
         std::string sql = "INSERT INTO " + staticOpTable +
                           " (device_id, op_name, model_name, graph_id, node_index_start, node_index_end, size)"
                           " VALUES (?,?,?,?,?,?,?)";
-        for (int i = 0; i < paramLen - 1; ++i) {
+        for (uint64_t i = 0; i < paramLen - 1; ++i) {
             sql.append(",(?,?,?,?,?,?,?)");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {

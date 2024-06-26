@@ -42,6 +42,8 @@ protected:
     const int exLength = 4;
     const int defaultPageSize = 10;
     const int64_t maxUnsignedInt = 4294967295;
+    const int64_t maxPageSize = 1000;
+    const int64_t maxCurrentPage = 10000000000;
     const double kbSizeDouble = 1024.0;
     const double staticDefaultTotalSize = -1.0; // 静态表TOTAL字段默认赋值异常值
     bool isInference = false;

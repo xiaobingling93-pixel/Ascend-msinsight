@@ -222,7 +222,14 @@ bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams
                                                   std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                                   std::vector<Protocol::MemoryOperator> &opDetails, std::string sql)
 {
-    int64_t offset = (requestParams.currentPage - 1) * requestParams.pageSize;
+    int64_t pageSize = requestParams.pageSize == 0 ? defaultPageSize : requestParams.pageSize;
+    int64_t currentPage = requestParams.currentPage - 1;
+    currentPage = currentPage < 0 ? 0 : currentPage;
+    if (pageSize > maxPageSize || currentPage > maxCurrentPage) {
+        ServerLog::Error("Error param: pageSize or currentPage");
+        return false;
+    }
+    int64_t offset = currentPage * pageSize;
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -231,7 +238,6 @@ bool VirtualMemoryDataBase::ExecuteOperatorDetail(Protocol::MemoryOperatorParams
     }
     int index = bindStartIndex;
     std::string orderName = "%" + requestParams.searchName + "%";
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
 
     sqlite3_bind_text(stmt, index++, orderName.c_str(), orderName.length(), nullptr);
     sqlite3_bind_int64(stmt, index++, requestParams.pageSize);
@@ -413,6 +419,10 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorDetail(Protocol::StaticOperator
     int64_t currentPage = requestParams.currentPage - 1;
     if (currentPage < 0) {
         currentPage = 0;
+    }
+    if (pageSize > maxPageSize || currentPage > maxCurrentPage) {
+        ServerLog::Error("Error param: pageSize or currentPage");
+        return false;
     }
     int64_t offset = currentPage * pageSize;
     sqlite3_stmt *stmt = nullptr;
