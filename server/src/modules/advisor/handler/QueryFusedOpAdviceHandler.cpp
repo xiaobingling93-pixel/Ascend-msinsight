@@ -15,6 +15,10 @@ void QueryFusedOpAdviceHandler::HandleRequest(std::unique_ptr<Protocol::Request>
 {
     auto &request = dynamic_cast<OperatorFusionRequest &>(*requestPtr);
     std::string token = request.token;
+    if (!WsSessionManager::Instance().CheckSession(token)) {
+        ServerLog::Warn("Failed to check session fused op");
+        return;
+    }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<OperatorFusionResponse> responsePtr = std::make_unique<OperatorFusionResponse>();
     OperatorFusionResponse &response = *responsePtr;

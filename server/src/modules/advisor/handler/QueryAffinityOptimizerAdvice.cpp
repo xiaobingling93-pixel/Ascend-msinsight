@@ -15,6 +15,10 @@ void QueryAffinityOptimizerAdvice::HandleRequest(std::unique_ptr<Protocol::Reque
 {
     auto &request = dynamic_cast<AffinityOptimizerRequest &>(*requestPtr);
     std::string token = request.token;
+    if (!WsSessionManager::Instance().CheckSession(token)) {
+        ServerLog::Warn("Failed to check session affinity op");
+        return;
+    }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<AffinityOptimizerResponse> responsePtr = std::make_unique<AffinityOptimizerResponse>();
     AffinityOptimizerResponse &response = *responsePtr;

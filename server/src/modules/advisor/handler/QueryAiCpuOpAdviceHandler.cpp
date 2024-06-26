@@ -15,6 +15,10 @@ void QueryAiCpuOpAdviceHandler::HandleRequest(std::unique_ptr<Protocol::Request>
 {
     auto &request = dynamic_cast<AICpuOperatorRequest &>(*requestPtr);
     std::string token = request.token;
+    if (!WsSessionManager::Instance().CheckSession(token)) {
+        ServerLog::Warn("Failed to check session ai cpu op");
+        return;
+    }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<AICpuOperatorResponse> responsePtr = std::make_unique<AICpuOperatorResponse>();
     AICpuOperatorResponse &response = *responsePtr;

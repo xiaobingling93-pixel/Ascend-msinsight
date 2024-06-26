@@ -15,6 +15,10 @@ void QueryAffinityAPIAdvice::HandleRequest(std::unique_ptr<Protocol::Request> re
 {
     auto &request = dynamic_cast<AffinityAPIRequest &>(*requestPtr);
     std::string token = request.token;
+    if (!WsSessionManager::Instance().CheckSession(token)) {
+        ServerLog::Warn("Failed to check session affinity Api");
+        return;
+    }
     WsSession &session = *WsSessionManager::Instance().GetSession(token);
     std::unique_ptr<AffinityAPIResponse> responsePtr = std::make_unique<AffinityAPIResponse>();
     AffinityAPIResponse &response = *responsePtr;
