@@ -136,3 +136,14 @@ tr.selected {
 .th35 .ant-table.ant-table-small .ant-table-thead > tr > th{
     height:35px;
 }
+
+.theme_dark .ant-dropdown-menu-item:hover .ant-dropdown-menu-title-content *{
+    background: none;
+    color:var(--labelblue);
+}
+.theme_dark .ant-dropdown-menu-item.ant-dropdown-menu-item-selected .ant-dropdown-menu-title-content *{
+    color:var(--lightblue);
+}
+.theme_dark .ant-dropdown-menu-item.ant-dropdown-menu-item-active{
+    background: var(--grey95);
+}

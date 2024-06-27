@@ -169,7 +169,7 @@ const Index = observer(({ session }: { session: Session }) => {
                 }));
                 Object.assign(col, {
                     filters,
-                    filterMode: 'tree',
+                    filterMode: 'menu',
                     filterSearch: true,
                     onFilterDropdownOpenChange: (open: boolean) => {
                         if (open) {
