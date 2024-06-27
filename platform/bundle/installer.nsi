@@ -71,9 +71,15 @@ FunctionEnd
 
 
 Function .onInit
+  nsProcessW::_FindProcess "ascend_insight.exe" $R0
+  Pop $0
+  ${If} $0 = "0"
+    MessageBox MB_OK "ascend_insight.exe is running. Please close it first."
+    Abort
+  ${EndIf}
   nsProcessW::_FindProcess "MindStudio-Insight.exe" $R0
   Pop $0
-  ${If} $0 = "0" 
+  ${If} $0 = "0"
     MessageBox MB_OK "MindStudio-Insight.exe is running. Please close it first."
     Abort
   ${EndIf}
@@ -107,7 +113,7 @@ Section "MindStudio Insight" Secascend_insight
   File /r "config\*"
 
   SetOutPath $INSTDIR
-  
+
   ; Create Start Menu shortcut
   CreateDirectory "$SMPROGRAMS\MindStudio Insight"
   CreateShortCut "$SMPROGRAMS\MindStudio Insight\MindStudio Insight.lnk" "$INSTDIR\MindStudio-Insight.exe"
@@ -115,6 +121,15 @@ Section "MindStudio Insight" Secascend_insight
   CreateShortCut "$DESKTOP\MindStudio Insight.lnk" "$INSTDIR\MindStudio-Insight.exe"
 
   ; Add to control panel
+  ; 如果旧版本已安装，则删除旧版本的启动菜单文件以及注册表项
+  ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ascend_insight" "UninstallString"
+  ${If} $R0 != ""
+    ; Remove ascend_insight Start Menu shortcut
+    Delete $SMPROGRAMS\ascend_insight\ascend_insight.lnk
+    RMDir /r "$SMPROGRAMS\ascend_insight"
+    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ascend_insight"
+    DeleteRegKey HKLM "Software\huawei\ascend_insight"
+  ${EndIf}
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MindStudio Insight" "DisplayName" "MindStudio Insight"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MindStudio Insight" "UninstallString" "$INSTDIR\Uninstall.exe"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\MindStudio Insight" "DisplayVersion" "${CURRENT_VERSION}"
