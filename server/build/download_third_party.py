@@ -49,7 +49,7 @@ OPEN_SOURCE = [
     ],
     [
         'att',
-        'v6.0.0-ATT-htrunk1.computing.mindstudio.7.r4',
+        'v6.0.0-ATT-htrunk3',
         'https://szv-open.codehub.huawei.com/OpenSourceCenter/Ascend/att.git'
     ]
 ]

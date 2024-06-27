@@ -589,7 +589,7 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
         ServerLog::Error("Failed to prepare Query Duration List statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_zeroblob64(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
@@ -634,7 +634,7 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
         ServerLog::Error("Failed to prepare Query Operator List statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_zeroblob64(stmt, index++, startTime);
+    sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, index++, stage.c_str(), stage.length(), SQLITE_TRANSIENT);
     if (requestParams.operatorName != totalOpInfo) {
@@ -646,7 +646,7 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        Protocol::OperatorTimeItem object;
+        Protocol::OperatorTimeItem object{};
         std::string rankId = sqlite3_column_string(stmt, col++);
         if (std::find(rankLists.begin(), rankLists.end(), rankId) == rankLists.end()) {
             rankLists.push_back(rankId);
@@ -656,7 +656,7 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
         object.operatorName = sqlite3_column_string(stmt, col++);
         object.startTime = sqlite3_column_int64(stmt, col++);
         object.elapseTime = sqlite3_column_int64(stmt, col++);
-        for (int i = 0; i < rankLists.size(); ++ i) {
+        for (int i = 0; i < rankLists.size(); ++i) {
             if (rankLists[i] == rankId) {
                 opLists[i].push_back(object);
                 break;
