@@ -29,6 +29,15 @@ std::string FileUtil::GetCurrPath()
     return strCurrPath;
 }
 
+bool FileUtil::CheckFilePathExist(const std::string& filePath)
+{
+    if (access(filePath.c_str(), R_OK) == -1) {
+        Server::ServerLog::Error("Cannot read filePath: ", filePath);
+        return false;
+    }
+    return true;
+}
+
 bool FileUtil::CheckFilePath(const std::string& filePath)
 {
     if (access(filePath.c_str(), R_OK) == -1) {

@@ -10,6 +10,7 @@
 #include "ProjectExplorerManager.h"
 #include "SourceFileParser.h"
 #include "JupyterServerManager.h"
+#include "FileUtil.h"
 
 namespace Dic {
 namespace Module {
@@ -55,6 +56,36 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
 }
 
+void ImportActionHandler::SendParseFailEvent(const std::string &token, const std::string &message)
+{
+    if (!WsSessionManager::Instance().CheckSession(token)) {
+        ServerLog::Warn("Failed to check session when send parseFailEvent.");
+        return;
+    }
+    WsSession *session = WsSessionManager::Instance().GetSession(token);
+    if (session == nullptr) {
+        return;
+    }
+    auto event = std::make_unique<ParseFailEvent>();
+    event->moduleName = ModuleType::TIMELINE;
+    event->token = token;
+    event->result = false;
+    event->body.error = message;
+    session->OnEvent(std::move(event));
+}
+
+void ImportActionHandler::LogIfFileNotExist(const std::vector<Global::ProjectExplorerInfo> &projectExplorerInfo,
+                                            std::string token)
+{
+    for (auto file: projectExplorerInfo) {
+        if (!FileUtil::CheckFilePathExist(file.fileName)) {
+            string message = "paths do not exist: " + file.fileName;
+            SendParseFailEvent(token, message);
+            ServerLog::Warn(message);
+        }
+    }
+}
+
 bool ImportActionHandler::TransferProject(ImportActionRequest &request)
 {
     std::vector<Global::ProjectExplorerInfo> projectExplorerInfo = Global::ProjectExplorerManager::Instance()
@@ -63,6 +94,7 @@ bool ImportActionHandler::TransferProject(ImportActionRequest &request)
         ServerLog::Warn("params error, project explorer info is not existed.");
         return false;
     }
+    LogIfFileNotExist(projectExplorerInfo, request.token);
 
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectExplorerInfo[0].projectType);
     ParserType parserType = coverProjectTypeToParserType(projectTypeEnum);
@@ -92,6 +124,7 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request)
     if (projectExplorerInfo.empty()) {
         return false;
     }
+    LogIfFileNotExist(projectExplorerInfo, request.token);
     std::vector<std::string> filePathUnderProject;
     for (const auto &item: projectExplorerInfo) {
         filePathUnderProject.push_back(item.fileName);

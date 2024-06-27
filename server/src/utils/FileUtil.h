@@ -507,6 +507,7 @@ public:
         return matchedFiles;
     }
 
+    static bool CheckFilePathExist(const std::string& filePath);
     static bool CheckFilePath(const std::string& filePath);
     static bool CheckFilePathLength(const std::string& filePath);
     static uint32_t GetFilePathLengthLimit();
