@@ -30,10 +30,10 @@ interface optionMapDataType{
     [props: string]: optionDataType[];
 }
 const orderOptions = [
-    { label: 'Pure Computing', value: 'pureComputingTime' },
     { label: 'Total Computing', value: 'computingTime' },
-    { label: 'Communication(Not Overlapped)', value: 'communicationNotOverLappedTime' },
+    { label: 'Pure Computing', value: 'pureComputingTime' },
     { label: 'Communication(Overlapped)', value: 'communicationOverLappedTime' },
+    { label: 'Communication(Not Overlapped)', value: 'communicationNotOverLappedTime' },
     { label: 'Free', value: 'freeTime' },
     { label: 'Rank ID', value: 'rankId' },
 ];
@@ -52,7 +52,7 @@ const getTopOptions = (count: number): optionDataType[] => {
     return topOptions;
 };
 
-export const defaultConditions = { step: 'All', rankIds: [], orderBy: 'pureComputingTime', top: 0 };
+export const defaultConditions = { step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 };
 
 const getStepOptions = async(): Promise<optionDataType[]> => {
     const res = await window.requestData('parallelism/pipeline/getAllSteps', {}, 'summary');

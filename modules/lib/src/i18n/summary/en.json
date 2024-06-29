@@ -21,7 +21,7 @@
       "Total Computing = Sum of kernel time on NPU",
       "Pure Computing = Total Computing - Communication(Overlapped)",
       "Total Time = Pure Computing + Communication(Overlapped) + Communication(Not Overlapped) + Free",
-      "Computing Ratio = Computing / Total Time",
+      "Total Computing Ratio = Total Computing / Total Time",
       "Communication Ratio = Communication(Not Overlapped) / Total Time"
     ],
     "Computation/CommunicationLastDescribe": "Click Bar Chart Display The Single Rank Computation / Communication Detail",
@@ -30,6 +30,7 @@
     "OrderBy": "Order By",
     "Top": "Top",
     "preparing": "preparing",
+    "Preparing": "Preparing",
     "Computing": "Computing",
     "Pure Computing": "Pure Computing",
     "Total Computing": "Total Computing",
@@ -38,6 +39,7 @@
     "Communication": "Communication",
     "Free": "Free",
     "Rank ID": "Rank ID",
+    "Total Computing Ratio": "Total Computing Ratio",
     "Computing Ratio": "Computing Ratio",
     "Communication Ratio": "Communication Ratio",
     "ComputingDetail": "Computing Detail",
@@ -51,7 +53,7 @@
     "OverlappedDurations": "Overlapped Durations",
     "NotOverlappedDurations": "Not Overlapped Durations",
     "Advice": "Advice",
-    "SummaryAdvice": "{{type}} has some issues in the cluster, because the max difference of {{type}} time has reached {{time}}ms. ",
+    "SummaryAdvice": "{{type}} has some issues in the cluster, because the max difference of {{type}} time has reached {{time}}μs. ",
     "StageTimeAndBubbleTimeDescribe": [
       "Stage Time: Time excluding the portion consumed by the receive operator under pipeline parallelism",
       "Bubble Time: Total time consumed by the receive operator"
