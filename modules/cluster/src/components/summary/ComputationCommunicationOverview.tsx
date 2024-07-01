@@ -29,7 +29,7 @@ interface SummaryDataType{
     freeTime: number;
     ComputeTimeRatio?: string | number;
     CommunicationTimeRatio?: string | number;
-    computingTimeTransfer?: string | number;
+    pureComputingTime?: string | number;
 }
 
 export interface AdviceInfo {
@@ -46,10 +46,10 @@ interface AdviceAndSummary {
 const baseOptionLegendData = [
     { name: 'Preparing', textStyle: { color: COLOR.Grey50 } },
     { name: 'Pure Computing', textStyle: { color: COLOR.Grey50 } },
-    { name: 'Communication(Not Overlapped)', textStyle: { color: COLOR.Grey50 } },
     { name: 'Communication(Overlapped)', textStyle: { color: COLOR.Grey50 } },
+    { name: 'Communication(Not Overlapped)', textStyle: { color: COLOR.Grey50 } },
     { name: 'Free', textStyle: { color: COLOR.Grey50 } },
-    { name: 'Computing Ratio', textStyle: { color: COLOR.Grey50 } },
+    { name: 'Total Computing Ratio', textStyle: { color: COLOR.Grey50 } },
     { name: 'Communication Ratio', textStyle: { color: COLOR.Grey50 } },
 ];
 
@@ -67,53 +67,64 @@ const commonSeries: any = {
     data: [],
 };
 
-const getBaseOptionSeries = (): any[] => {
-    return [
-        { id: 'preparing', name: i18n.t('Preparing', { ns: 'summary' }), ...commonSeries },
-        {
-            id: 'purecompute',
-            name: i18n.t('Pure Computing', { ns: 'summary' }),
-            ...commonSeries,
+const baseSeries = [
+    { id: 'preparing', name: 'Preparing', ...commonSeries },
+    {
+        id: 'computingTime',
+        name: 'Total Computing',
+        type: 'custom',
+        renderItem: (): string => {
+            return '';
         },
-        {
-            id: 'communicationNotOverLappedTime',
-            name: i18n.t('Communication(Not Overlapped)', { ns: 'summary' }),
-            ...commonSeries,
-        },
-        {
-            id: 'communicationOverLappedTime',
-            name: i18n.t('Communication(Overlapped)', { ns: 'summary' }),
-            ...commonSeries,
-        },
-        {
-            id: 'freeTime',
-            name: i18n.t('Free', { ns: 'summary' }),
-            ...commonSeries,
-        },
-        {
-            name: i18n.t('Computing Ratio', { ns: 'summary' }),
-            type: 'line',
-            yAxisIndex: 1,
-            tooltip: {
-                valueFormatter: function (value: any): string {
-                    return `${value} %`;
-                },
+        tooltip: {
+            valueFormatter: (value: string | number): string => {
+                return `${value} μs`;
             },
-            data: [],
         },
-        {
-            name: i18n.t('Communication Ratio', { ns: 'summary' }),
-            type: 'line',
-            yAxisIndex: 1,
-            tooltip: {
-                valueFormatter: function (value: any): string {
-                    return `${value} %`;
-                },
+    },
+    {
+        id: 'purecompute',
+        name: 'Pure Computing',
+        ...commonSeries,
+    },
+    {
+        id: 'communicationOverLappedTime',
+        name: 'Communication(Overlapped)',
+        ...commonSeries,
+    },
+    {
+        id: 'communicationNotOverLappedTime',
+        name: 'Communication(Not Overlapped)',
+        ...commonSeries,
+    },
+    {
+        id: 'freeTime',
+        name: 'Free',
+        ...commonSeries,
+    },
+    {
+        name: 'Total Computing Ratio',
+        type: 'line',
+        yAxisIndex: 1,
+        tooltip: {
+            valueFormatter: function (value: any): string {
+                return `${value} %`;
             },
-            data: [],
         },
-    ];
-};
+        data: [],
+    },
+    {
+        name: 'Communication Ratio',
+        type: 'line',
+        yAxisIndex: 1,
+        tooltip: {
+            valueFormatter: function (value: any): string {
+                return `${value} %`;
+            },
+        },
+        data: [],
+    },
+];
 
 const baseOption: any = {
     tooltip: commonEchartsOptions.tooltip,
@@ -171,6 +182,16 @@ const baseOption: any = {
     series: [],
 };
 
+const getLegendData = (): any[] => {
+    return baseOptionLegendData.map(legendItem => ({ ...legendItem, name: i18n.t(legendItem.name, { ns: 'summary' }) }));
+};
+const getBaseOptionSeries = (): any[] => {
+    return baseSeries.map(serieItem => ({
+        ...serieItem,
+        name: i18n.t(serieItem.name, { ns: 'summary' }),
+    }));
+};
+
 function checkIfContainsFieldPreparing(data: SummaryDataType[]): boolean {
     if (data.length === 0 || data[0].prepareTime < 0) { // 后台返回的预处理时间小于零，说明是旧版本数据，移除预处理时间相关的字段，兼容一个版本，后续可删除
         return false;
@@ -204,15 +225,16 @@ function wrapData(data: SummaryDataType[]): any {
         totalFields.forEach(field => {
             total += item[field];
         });
-        item.computingTimeTransfer = Number((item.computingTime - item.communicationOverLappedTime)
+        item.pureComputingTime = Number((item.computingTime - item.communicationOverLappedTime)
             .toFixed(2));
         item.computeTimeRatio = Number((100 * item.computingTime / notZero(total)).toFixed(2));
         item.communicationTimeRatio = Number((100 * item.communicationNotOverLappedTime / notZero(total)).toFixed(2));
     });
     baseOption.xAxis[0].data = data.map(item => item.rankId);
-    const order: Array<keyof SummaryDataType> = ['prepareTime', 'computingTimeTransfer', 'communicationNotOverLappedTime',
-        'communicationOverLappedTime', 'freeTime', 'computeTimeRatio', 'communicationTimeRatio'];
-    const legendDataTemp = [...baseOptionLegendData];
+    // computingTime为总计算时间
+    const order: Array<keyof SummaryDataType> = ['prepareTime', 'computingTime', 'pureComputingTime', 'communicationOverLappedTime',
+        'communicationNotOverLappedTime', 'freeTime', 'computeTimeRatio', 'communicationTimeRatio'];
+    const legendDataTemp = getLegendData();
     const seriesTemp = [...getBaseOptionSeries()];
     if (!isContainsFieldPreparing) { // 如果不包含预处理字段，移除相关的图标和tooltips信息
         order.shift();

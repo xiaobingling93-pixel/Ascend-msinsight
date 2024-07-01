@@ -21,8 +21,8 @@
       "总计算时间 = NPU上的内核时间总和",
       "纯计算时间 = 总计算时间 – 通信时间（被覆盖）",
       "总时间 = 纯计算时间 + 通信时间（被覆盖） + 通信时间（未被覆盖）+ 间隙时间",
-      "计算比例 = 计算时间/总时间",
-      "通信比例 = 通信时间（未被覆盖）/总时间"
+      "总计算占比 = 总计算时间/总时间",
+      "通信占比 = 通信时间（未被覆盖）/总时间"
     ],
     "Computation/CommunicationLastDescribe": "点击柱状图显示单节点计算/通信详情",
     "Step": "迭代ID",
@@ -30,6 +30,7 @@
     "OrderBy": "排序方式",
     "Top": "前",
     "preparing": "预处理",
+    "Preparing": "预处理",
     "Pure Computing": "纯计算时间",
     "Total Computing": "总计算时间",
     "Communication(Overlapped)": "通信时间(被覆盖)",
@@ -37,6 +38,7 @@
     "Communication": "通信时间",
     "Free": "空闲时间",
     "Rank ID": "卡序号",
+    "Total Computing Ratio": "总计算占比",
     "Computing Ratio": "计算占比",
     "Communication Ratio": "通信占比",
     "ComputingDetail": "计算详情",
@@ -50,7 +52,7 @@
     "OverlappedDurations": "被覆盖时长",
     "NotOverlappedDurations": "未被覆盖时长",
     "Advice": "专家建议",
-    "SummaryAdvice": "此集群中{{type}}存在一些问题，因为{{type}}的最大差值达到了{{time}}毫秒。",
+    "SummaryAdvice": "此集群中{{type}}存在一些问题，因为{{type}}的最大差值达到了{{time}}微秒。",
     "StageTimeAndBubbleTimeDescribe": [
       "Stage Time: pp并行时，stage时间代表除recieve算子时间外的其他耗时",
       "Bubble Time: Bubble时间，指receive时间的总和"
