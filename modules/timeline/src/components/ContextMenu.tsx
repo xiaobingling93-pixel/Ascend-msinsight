@@ -149,6 +149,7 @@ function hideUnit(session: Session, menuItem?: MenuItemModel): void {
     hideUnits(session, session.selectedUnits);
     runInAction(() => {
         session.contextMenu.isVisible = false;
+        session.renderTrigger = !session.renderTrigger;
     });
 }
 
@@ -159,6 +160,7 @@ function showHidedUnit(session: Session, menuItem?: MenuItemModel): void {
     showAllHidedUnits(session);
     runInAction(() => {
         session.contextMenu.isVisible = false;
+        session.renderTrigger = !session.renderTrigger;
     });
 }
 

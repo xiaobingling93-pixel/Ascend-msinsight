@@ -15,6 +15,7 @@ import { ThreadMetaData } from '../../../entity/data';
 import { colorPalette, getTimeOffset } from '../../../insight/units/utils';
 import * as d3 from 'd3';
 import { handlerEmptyString } from '../../../utils/string';
+import { isNil } from 'lodash';
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
 export const MIN_BRUSH_SIZE = 2;
@@ -296,6 +297,24 @@ const heightMap = new Map();
 const threadIsCol: Map<string, boolean> = new Map();
 // 是否是进程缩略图
 const processIsCol: Map<string, boolean> = new Map();
+// 泳道是否已隐藏
+const unitIsHidden: Map<string, boolean> = new Map();
+
+const setHiddenUnit = (unit: InsightUnit, metadata: ThreadMetaData): void => {
+    if (isNil(metadata.cardId) || metadata.cardId === '') {
+        return;
+    }
+    if (!unit.isUnitVisible) {
+        let key = metadata.cardId;
+        if (!isNil(metadata.processId) && metadata.processId !== '') {
+            key += `-${metadata.processId}`;
+        }
+        if (!isNil(metadata.threadId) && metadata.threadId !== '') {
+            key += `-${metadata.threadId}`;
+        }
+        unitIsHidden.set(key, true);
+    }
+};
 const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
     const height = pinnedAreaHeight;
 
@@ -314,10 +333,13 @@ const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
                     threadIsCol.set(`${metadata.cardId}-${metadata.processId}-${metadata.threadId}`, true);
                 }
             }
-            props.height += unit.height() + 1;
+            if (unit.isUnitVisible) {
+                props.height += unit.height() + 1;
+            }
             if (unit.children && unit.isExpanded) {
                 props.height = computeUnitHeight({ ...props, units: unit.children });
             }
+            setHiddenUnit(unit, metadata);
         }
         return props.height;
     };
@@ -347,6 +369,7 @@ export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height
     heightMap.clear();
     threadIsCol.clear();
     processIsCol.clear();
+    unitIsHidden.clear();
     const pinnedScrollArea = document.getElementsByClassName('pinnedScrollArea');
     const pinnedAreaHeight = pinnedScrollArea[0]?.clientHeight ?? 0;
     updateUnitHeight(session, pinnedAreaHeight);
@@ -375,19 +398,40 @@ const getHeight = (session: Session, data: DataBlock, cardId: string): number | 
     return height;
 };
 
+function sourceOrTargetLinkUnitIsHidden(
+    { targetCardId, sourceCardId, to, from }: {targetCardId: string; sourceCardId: string; to: DataBlock; from: DataBlock},
+): boolean {
+    const unitKeys = [
+        targetCardId,
+        `${targetCardId}-${to.pid}`,
+        `${targetCardId}-${to.pid}-${to.tid}`,
+        sourceCardId,
+        `${sourceCardId}-${from.pid}`,
+        `${sourceCardId}-${from.pid}-${from.tid}`,
+    ];
+
+    for (const key of unitKeys) {
+        if (unitIsHidden.get(key)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: string, session: Session, ctx: CanvasRenderingContext2D, theme: Theme): void {
     const { category, from, to, cardId } = data as unknown as FlowEvent;
     if (category !== checkedCategory) {
         return;
     }
-    const targetCardId = handlerEmptyString(to.rankId ?? '', cardId);
-    const sourceCardId = handlerEmptyString(from.rankId ?? '', cardId);
-    const li = d3.scaleLinear().range([0, ctx.canvas.width])
-        .domain([session.domainRange.domainStart, session.domainRange.domainEnd]);
-    const targetX = li(to.timestamp - getTimeOffset(session, targetCardId));
-    const targetY = getHeight(session, to, targetCardId);
-    const sourceX = li(from.timestamp - getTimeOffset(session, sourceCardId));
-    const sourceY = getHeight(session, from, sourceCardId);
+    const li = d3.scaleLinear().range([0, ctx.canvas.width]).domain([session.domainRange.domainStart, session.domainRange.domainEnd]);
+    const [targetCardId, sourceCardId] = [handlerEmptyString(to.rankId ?? '', cardId), handlerEmptyString(from.rankId ?? '', cardId)];
+    const [targetX, targetY] = [li(to.timestamp - getTimeOffset(session, targetCardId)), getHeight(session, to, targetCardId)];
+    const [sourceX, sourceY] = [li(from.timestamp - getTimeOffset(session, sourceCardId)), getHeight(session, from, sourceCardId)];
+
+    if (sourceOrTargetLinkUnitIsHidden({ targetCardId, sourceCardId, to, from })) {
+        return;
+    }
     if (processIsCol.get(`${targetCardId}-${to.pid}`) && processIsCol.get(`${sourceCardId}-${from.pid}`)) {
         return;
     }

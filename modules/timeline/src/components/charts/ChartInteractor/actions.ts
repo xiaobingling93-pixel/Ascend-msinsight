@@ -46,6 +46,9 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
     }
     if (clickPos === undefined || canvas.current === null || session.endTimeAll === undefined || lastPos === undefined) { return; }
 
+    if (session.contextMenu.isVisible) {
+        return;
+    }
     // when selected range changes, the 'more' panel should be cleared (by resetting session.selectedDetailKeys)
     runInAction(() => {
         session.selectedDetailKeys = [];
@@ -178,8 +181,8 @@ export const mouseDownAction = (session: Session, xReverseScale: (x: number) => 
     e: React.MouseEvent, splitLineRef?: React.RefObject<HTMLDivElement>): MouseDownActionResult => {
     const lastPos = interactorMouseState.lastPos.current;
     const isPressingKey = (isMac && e.metaKey) || (!isMac && e.ctrlKey);
-    // 点击context menu选项时屏蔽mouseDownAction，避免当前框选丢失
-    const contextMenuVisible = session.selectedRange !== undefined && session.contextMenu.isVisible as boolean;
+    // 点击context menu选项时屏蔽mouseDownAction
+    const contextMenuVisible = session.contextMenu.isVisible as boolean;
     const rightClickOrNoLastPos = session.endTimeAll === undefined || !lastPos || e.button === MouseButton.RIGHT;
     if (isPressingKey) {
         dragData = { isDragging: true, xPos: e.nativeEvent.x, domainStart: session.domainRange.domainStart, domainEnd: session.domainRange.domainEnd };
