@@ -24,6 +24,13 @@
       "Total Computing Ratio = Total Computing / Total Time",
       "Communication Ratio = Communication(Not Overlapped) / Total Time"
     ],
+    "Computation/CommunicationDescribeWithPreparing": [
+      "Total Computing = Sum of kernel time on NPU",
+      "Pure Computing = Total Computing - Communication(Overlapped)",
+      "Total Time = Preparing + Pure Computing + Communication(Overlapped) + Communication(Not Overlapped) + Free",
+      "Total Computing Ratio = Total Computing / Total Time",
+      "Communication Ratio = Communication(Not Overlapped) / Total Time"
+    ],
     "Computation/CommunicationLastDescribe": "Click Bar Chart Display The Single Rank Computation / Communication Detail",
     "Step": "Step",
     "RankGroup": "Rank Group",

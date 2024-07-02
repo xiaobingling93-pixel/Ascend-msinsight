@@ -20,7 +20,14 @@
     "Computation/CommunicationDescribe": [
       "总计算时间 = NPU上的内核时间总和",
       "纯计算时间 = 总计算时间 – 通信时间（被覆盖）",
-      "总时间 = 纯计算时间 + 通信时间（被覆盖） + 通信时间（未被覆盖）+ 间隙时间",
+      "总时间 = 纯计算时间 + 通信时间（被覆盖） + 通信时间（未被覆盖）+ 空闲时间",
+      "总计算占比 = 总计算时间/总时间",
+      "通信占比 = 通信时间（未被覆盖）/总时间"
+    ],
+    "Computation/CommunicationDescribeWithPreparing": [
+      "总计算时间 = NPU上的内核时间总和",
+      "纯计算时间 = 总计算时间 – 通信时间（被覆盖）",
+      "总时间 = 预处理时间 + 纯计算时间 + 通信时间（被覆盖） + 通信时间（未被覆盖）+ 空闲时间",
       "总计算占比 = 总计算时间/总时间",
       "通信占比 = 通信时间（未被覆盖）/总时间"
     ],
@@ -30,7 +37,7 @@
     "OrderBy": "排序方式",
     "Top": "前",
     "preparing": "预处理",
-    "Preparing": "预处理",
+    "Preparing": "预处理时间",
     "Pure Computing": "纯计算时间",
     "Total Computing": "总计算时间",
     "Communication(Overlapped)": "通信时间(被覆盖)",
@@ -54,7 +61,7 @@
     "Advice": "专家建议",
     "SummaryAdvice": "此集群中{{type}}存在一些问题，因为{{type}}的最大差值达到了{{time}}微秒。",
     "StageTimeAndBubbleTimeDescribe": [
-      "Stage Time: pp并行时，stage时间代表除recieve算子时间外的其他耗时",
+      "Stage Time: pp并行时，stage时间代表除receive算子时间外的其他耗时",
       "Bubble Time: Bubble时间，指receive时间的总和"
     ]
   }

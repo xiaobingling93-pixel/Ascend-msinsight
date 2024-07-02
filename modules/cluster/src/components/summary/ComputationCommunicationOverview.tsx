@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
 import { observer } from 'mobx-react';
@@ -260,9 +260,10 @@ async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
     myChart.on('click', handleClick);
     addResizeEvent(myChart);
 }
-export const useHit = (): React.ReactElement => {
+export const useHit = (containsPreparing: boolean): React.ReactElement => {
     const { t } = useTranslation('summary');
-    const hit = t('Computation/CommunicationDescribe', { returnObjects: true }) as string[];
+    const hit = t(containsPreparing ? 'Computation/CommunicationDescribeWithPreparing' : 'Computation/CommunicationDescribe',
+        { returnObjects: true }) as string[];
     return (<StyledTooltip
         overlayClassName={'width-auto'}
         title={
@@ -298,6 +299,7 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
     const [selected, setSelected] = useState({ rankId: '', step: '' });
     const [chartRankId, setChartRankId] = useState('');
     const [slowAdvice, setSlowAdvice] = useState<AdviceInfo>({ communication: 0, compute: 0, free: 0 });
+    const containsPreparing = useMemo(() => checkIfContainsFieldPreparing(dataSource), [dataSource]);
     const { t } = useTranslation('summary');
 
     chartVisbilityListener('overview-chart', () => {
@@ -340,10 +342,10 @@ const ComputationCommunicationOverview = observer(({ session }: { session: Sessi
     };
     return session.renderId > 0
         ? (<OverviewCom handleFilterChange={handleFilterChange} session={session}
-            dataSource={dataSource} advice={slowAdvice} selected={selected}/>)
+            dataSource={dataSource} advice={slowAdvice} selected={selected} containsPreparing={containsPreparing}/>)
         : <></>;
 });
-const OverviewCom = ({ handleFilterChange, dataSource, selected, advice, session }: any): JSX.Element => {
+function OverviewCom({ handleFilterChange, dataSource, selected, advice, session, containsPreparing }: any): JSX.Element {
     const [pipelineVisible, setPipelineVisible] = useState(true);
     const { t } = useTranslation('summary');
     useEventBus('setActiveTab', (data) => {
@@ -355,7 +357,7 @@ const OverviewCom = ({ handleFilterChange, dataSource, selected, advice, session
         <CommunicatorContainer session={session}></CommunicatorContainer>
         <div className={pipelineVisible ? 'hide' : ''}>
             <div>
-                <div className={'common-title-bottom'}>{t('Computation/CommunicationOverview')}{useHit()}</div>
+                <div className={'common-title-bottom'}>{t('Computation/CommunicationOverview')}{useHit(containsPreparing)}</div>
                 <Filter handleFilterChange={handleFilterChange} session={session} visible={!pipelineVisible}/>
                 <div id={'overview-chart'} style={{ height: '400px' }} ></div>
             </div>
