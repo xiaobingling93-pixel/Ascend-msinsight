@@ -9,7 +9,9 @@ export function useWatchDomResize<T extends Element>(): [
     const ref = React.useRef<T>(null);
     React.useEffect(() => {
         const observer = new ResizeObserver(([entry]) => {
-            setRect(entry.contentRect);
+            window.requestAnimationFrame(() => {
+                setRect(entry.contentRect);
+            });
         });
         if (ref.current) {
             observer.observe(ref.current);
