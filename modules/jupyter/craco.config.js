@@ -4,6 +4,10 @@
 const {webpackCfg} = require('../build-config');
 
 module.exports = {
+  devServer: {
+    port: 3005,
+    open: false,
+  },
   webpack: {
     configure: (webpackConfig) => webpackCfg.jupyterConfigure(webpackConfig),
     alias: webpackCfg.alias,

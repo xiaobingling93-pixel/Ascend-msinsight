@@ -4,6 +4,10 @@
 const {webpackCfg} = require('../build-config');
 
 module.exports = {
+  devServer: {
+    port: 3001,
+    open: false,
+  },
   webpack: {
     configure: (webpackConfig) => webpackCfg.memoryConfigure(webpackConfig),
     alias: webpackCfg.alias,

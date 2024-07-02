@@ -98,7 +98,7 @@ abstract class BaseConnector {
     }
 
     getTargetOrigin(): string {
-        return window.location.origin;
+        return import.meta.env.DEV ? '*' : window.location.origin;
     }
 
     protected printErrMsg(errMsg: string): string {

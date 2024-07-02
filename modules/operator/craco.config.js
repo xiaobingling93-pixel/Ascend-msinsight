@@ -3,6 +3,10 @@
  */
 const {webpackCfg} = require('../build-config');
 module.exports = {
+  devServer: {
+    port: 3002,
+    open: false,
+  },
   webpack: {
     configure: webpackConfig => webpackCfg.operatorConfigure(webpackConfig),
     alias: webpackCfg.alias,

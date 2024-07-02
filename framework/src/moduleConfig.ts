@@ -15,7 +15,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Timeline',
         requestName: 'timeline',
         attributes: {
-            src: './plugins/Timeline/index.html'
+            src: import.meta.env.DEV ? 'http://localhost:3000/' : './plugins/Timeline/index.html',
         },
         isDefault: true,
         isCluster: true,
@@ -26,7 +26,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Memory',
         requestName: 'memory',
         attributes: {
-            src: './plugins/Memory/index.html'
+            src: import.meta.env.DEV ? 'http://localhost:3001/' : './plugins/Memory/index.html',
         },
         isDefault: true,
         isCluster: true,
@@ -36,7 +36,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Operator',
         requestName: 'operator',
         attributes: {
-            src: './plugins/Operator/index.html'
+            src: import.meta.env.DEV ? 'http://localhost:3002/' : './plugins/Operator/index.html',
         },
         isDefault: true,
         isCluster: true,
@@ -46,7 +46,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Summary',
         requestName: 'summary',
         attributes: {
-            src: './plugins/Cluster/summary.html'
+            src: import.meta.env.DEV ? 'http://localhost:3003/summary.html' : './plugins/Cluster/summary.html',
         },
         isCluster: true,
     },
@@ -54,7 +54,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Communication',
         requestName: 'communication',
         attributes: {
-            src: './plugins/Cluster/communication.html'
+            src: import.meta.env.DEV ? 'http://localhost:3003/communication.html' : './plugins/Cluster/communication.html',
         },
         isCluster: true,
     },
@@ -62,7 +62,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Source',
         requestName: 'compute',
         attributes: {
-            src: './plugins/Compute/source.html',
+            src: import.meta.env.DEV ? 'http://localhost:3004/source.html' : './plugins/Compute/source.html',
         },
         isCompute: true,
     },
@@ -70,7 +70,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Details',
         requestName: 'compute',
         attributes: {
-            src: './plugins/Compute/detail.html',
+            src: import.meta.env.DEV ? 'http://localhost:3004/detail.html' : './plugins/Compute/detail.html',
         },
         isCompute: true,
     },
@@ -78,7 +78,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Jupyter',
         requestName: 'jupyter',
         attributes: {
-            src: './plugins/Jupyter/index.html',
+            src: import.meta.env.DEV ? 'http://localhost:3005/' : './plugins/Jupyter/index.html',
         },
         isJupyter: true,
     },

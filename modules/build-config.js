@@ -7,7 +7,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const fs = require('fs');
 const path = require('path');
 const {ModuleFederationPlugin} = require('webpack').container;
-const {whenDev} = require('@craco/craco');
 
 class ScriptTypePlugin {
   apply(compiler) {
@@ -53,7 +52,7 @@ class BackgroundSvgInlinePlugin {
 const federationConfig = {
   filename: 'remoteEntry.js',
   name: 'host',
-  remotes: {lib: 'lib@../lib/remoteEntry.js'},
+  remotes: {lib: process.env.NODE_ENV === 'development' ? 'lib@http://localhost:8000/remoteEntry.js' : 'lib@../lib/remoteEntry.js'},
   shared: {
     react: {singleton: true, eager: true},
     'react-dom': {singleton: true, eager: true},

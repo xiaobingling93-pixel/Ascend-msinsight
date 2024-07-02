@@ -4,6 +4,10 @@
 const {webpackCfg} = require('../build-config');
 
 module.exports = {
+  devServer: {
+    port: 3000,
+    open: false,
+  },
   webpack: {
     configure: (webpackConfig) => webpackCfg.timelineConfigure(webpackConfig),
     alias: webpackCfg.alias,
