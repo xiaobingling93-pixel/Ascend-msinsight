@@ -145,12 +145,15 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     box-shadow: none;
 }
 
-div.ant-tooltip-inner {
+.ant-tooltip-inner {
     border-radius: 12px;
     background-color: rgb(255, 255, 255);
     box-shadow: 0 4px 16px 0 rgba( 0, 0, 0, .16 );
     color: rgba(0, 0, 0, .6);
     max-width: 400px;
+}
+.ant-tooltip-arrow-content {
+    --antd-arrow-background-color: #FFFFFF;
 }
 
 .width-auto .ant-tooltip-inner {

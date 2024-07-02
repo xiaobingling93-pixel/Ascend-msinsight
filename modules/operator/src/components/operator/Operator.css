@@ -56,9 +56,6 @@
     width: 100%;
     padding: 0 10px;
 }
-.theme_dark .ant-tooltip-arrow-content {
-    --antd-arrow-background-color: linear-gradient(to right bottom, rgba(0, 0, 0, 0),var(--grey0));
-}
 
 .theme_dark .ant-dropdown {
     box-shadow: 0 0 3px var(--grey20);

@@ -135,14 +135,12 @@
     background-color: var(--grey80);
 }
 
-.theme_dark div.ant-tooltip-inner {
-    border-radius: 12px;
+.theme_dark .ant-tooltip-inner {
     background-color: #404040;
     box-shadow: 0 4px 16px 0 rgba(0, 0, 0, .32);
     color: rgba(255, 255, 255, .9);
-    max-width: 400px;
 }
 
-.theme_dark .ant-tooltip-arrow-content:before {
-    background: rgba(255, 255, 255, .9);
+.theme_dark .ant-tooltip-arrow-content {
+    --antd-arrow-background-color: #404040;
 }
