@@ -25,6 +25,7 @@ module.exports = {
           './SharedConfigProvider': './src/SharedConfigProvider/index.tsx',
           './ColumnFilter': './src/resize/ColumnFilter.tsx',
           './ThemeStore': './src/utils/ThemeStore.ts',
+          './theme': './src/theme/index.ts',
         },
         shared: {
           react: {singleton: true},

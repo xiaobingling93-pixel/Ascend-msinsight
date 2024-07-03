@@ -71,7 +71,7 @@
       }
     },
     "moduleNameMapper": {
-      "^lib/i18n$": "<rootDir>/__mocks__/lib/i18n.js"
+      "lib/i18n": "<rootDir>/../lib/src/i18n/index.ts"
     }
   },
   "browserslist": {

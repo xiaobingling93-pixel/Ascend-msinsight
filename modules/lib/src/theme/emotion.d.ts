@@ -1,5 +1,8 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import '@emotion/react';
-import React from 'react';
 
 declare module '@emotion/react' {
 
@@ -22,7 +25,6 @@ declare module '@emotion/react' {
     };
     export interface Theme {
         backgroundColor: string; // 主界面背景色
-        mainPageIcon: React.FC; // 首页图标
         timeInsightIcon: string; // time Insight 图标颜色
         allocationInsightIcon: string; // allocation Insight 图标颜色
         contentBackgroundColor: string; // 区域内容背景色
@@ -42,7 +44,6 @@ declare module '@emotion/react' {
         tableRowSelect: string; // 卡片表格tr选中色
         devicePullDown: string; // 设备下拉按钮颜色
         switchIconColor: string; // 模板下拉按钮颜色
-        maskColor: string; // 录制、分析等蒙层颜色
         selectedChartColor: string; // 泳道选择区域左右两边背景色
         frameRelativeLineColor: string; // frame 连线颜色
         selectJankColor: string; // 异常帧选中之后的边框颜色
@@ -127,5 +128,75 @@ declare module '@emotion/react' {
         otherColor: string;
         switchOpen: string;
         switchClose: string;
+        primaryColor: string; // 主色/品牌色
+        primaryColorLight1: string;
+        primaryColorLight2: string;
+        primaryColorLight3: string;
+        primaryColorLight4: string;
+        primaryColorLight5: string;
+        primaryColorDark: string;
+        successColor: string; // 成功色
+        successColorLight1: string;
+        successColorLight2: string;
+        successColorLight3: string;
+        successColorLight4: string;
+        successColorLight5: string;
+        successColorDark: string;
+        warningColor: string; // 报警色
+        warningColorLight1: string;
+        warningColorLight2: string;
+        warningColorLight3: string;
+        warningColorLight4: string;
+        warningColorLight5: string;
+        warningColorDark: string;
+        dangerColor: string; // 错误色
+        dangerColorLight1: string;
+        dangerColorLight2: string;
+        dangerColorLight3: string;
+        dangerColorLight4: string;
+        dangerColorLight5: string;
+        dangerColorDark: string;
+        infoColor: string; // 信息色
+        infoColorLight1: string;
+        infoColorLight2: string;
+        infoColorLight3: string;
+        infoColorLight4: string;
+        infoColorLight5: string;
+        infoColorDark: string;
+        majorColor: string; // 主要色
+        majorColorLight1: string;
+        bgColor: string; // 背景色
+        bgColorDark: string;
+        bgColorLight: string;
+        bgColorLighter: string;
+        textColorPrimary: string; // 文字主色
+        textColorSecondary: string; // 文字次级色
+        textColorTertiary: string; // 文字三级色
+        textColorFourth: string; // 文字四级色
+        textColorPlaceholder: string;
+        textColorPlaceholderLight: string;
+        textColorDisabled: string; // 文字禁用色
+        borderColor: string; // 边框色
+        borderColorLight: string;
+        borderColorLighter: string;
+        borderColorExtraLight: string;
+        boxShadow: string; // 阴影色
+        boxShadowLight: string;
+        boxShadowLighter: string;
+        boxShadowDark: string;
+        maskColor: string; // 遮罩层色
+        maskColorExtraLight: string;
+        borderColorHover: string;
+        fontSizeExtraLarge: string; // 超大字号
+        fontSizeLarge: string; // 大字号
+        fontSizeMedium: string; // 中字号
+        fontSizeBase: string; // 基础字号
+        fontSizeSmall: string; // 小字号
+        fontSizeExtraSmall: string; // 超小字号
+        fontFamily: string;
+        borderRadiusBase: string; // 基础圆角
+        borderRadiusSmall: string;
+        borderRadiusRound: string;
+        borderRadiusCircle: string;
     }
 }

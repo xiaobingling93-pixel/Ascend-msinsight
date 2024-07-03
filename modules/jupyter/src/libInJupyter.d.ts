@@ -3,4 +3,5 @@
  */
 declare module 'lib/Connector';
 declare module 'lib/style/index';
+declare module 'lib/theme';
 declare module 'lib/i18n';

@@ -3,6 +3,7 @@ import { render, fireEvent } from '@testing-library/react';
 import { useDraggableContainer, ViewProps } from '../useDraggableContainer';
 import { renderHook } from '@testing-library/react-hooks';
 import '@testing-library/jest-dom/extend-expect';
+import type { Theme } from '@emotion/react';
 const light = {
     contentBackgroundColor: '#F1F3F5',
     closeDragContainerBG: 'rgb(229, 230, 232)',
@@ -10,7 +11,7 @@ const light = {
     dividerColor: '#fff',
     maskColor: 'rgb(255, 255, 255, 0.55)',
     fontColor: '#fff',
-};
+} as Theme;
 
 describe('DraggableContainer test', () => {
     const viewProps: ViewProps = {

@@ -1,9 +1,6 @@
 import type { Theme } from '@emotion/react';
-import { ReactComponent as HomePageDarkImage } from '../assets/images/ic_user_experience_rate_filled_dark.svg';
-
 export const dark: Theme = {
     backgroundColor: 'rgb(30, 30, 30)', // 主界面背景色
-    mainPageIcon: HomePageDarkImage, // 首页图标
     timeInsightIcon: '#86AD53', // time Insight 图标颜色
     allocationInsightIcon: '#9E644F', // allocation Insight 图标颜色
     contentBackgroundColor: 'rgb(30, 30, 30)', // 区域内容背景色
@@ -23,7 +20,6 @@ export const dark: Theme = {
     tableRowSelect: '#4C4C4C', // 卡片表格tr选中色
     devicePullDown: '#EBEBEB', // 设备下拉按钮颜色
     switchIconColor: '#959595', // 模板下拉按钮颜色
-    maskColor: 'rgb(0, 0, 0, 0.55)', // 录制、分析等蒙层颜色
     selectedChartColor: 'white', // 泳道选择区域左右两边背景色
     frameRelativeLineColor: 'rgb(255, 255, 255, 0.5)', // frame 连线颜色
     selectJankColor: '#FFDDEB', // 异常帧选中之后的边框颜色
@@ -139,5 +135,76 @@ export const dark: Theme = {
     otherColor: 'grey',
     switchOpen: '#5291FF',
     switchClose: '#1A1A1A',
+
+    primaryColor: '#0077FF',
+    primaryColorLight1: '#3375b9',
+    primaryColorLight2: '#2a598a',
+    primaryColorLight3: '#213d5b',
+    primaryColorLight4: '#1d3043',
+    primaryColorLight5: '#18222c',
+    primaryColorDark: '#66b1ff',
+    successColor: '#24AB36',
+    successColorLight1: '#4e8e2f',
+    successColorLight2: '#3e6b27',
+    successColorLight3: '#2d481f',
+    successColorLight4: '#25371c',
+    successColorLight5: '#1c2518',
+    successColorDark: '#85ce61',
+    warningColor: '#EBAF00',
+    warningColorLight1: '#a77730',
+    warningColorLight2: '#7d5b28',
+    warningColorLight3: '#533f20',
+    warningColorLight4: '#3e301c',
+    warningColorLight5: '#292218',
+    warningColorDark: '#ebb563',
+    dangerColor: '#E32020',
+    dangerColorLight1: '#b25252',
+    dangerColorLight2: '#854040',
+    dangerColorLight3: '#582e2e',
+    dangerColorLight4: '#412626',
+    dangerColorLight5: '#2b1d1d',
+    dangerColorDark: '#f78989',
+    infoColor: '#576372',
+    infoColorLight1: '#6b6d71',
+    infoColorLight2: '#525457',
+    infoColorLight3: '#393a3c',
+    infoColorLight4: '#2d2d2f',
+    infoColorLight5: '#202121',
+    infoColorDark: '#a6a9ad',
+    majorColor: '#F97611',
+    majorColorLight1: '#FBA25D',
+    bgColor: '#1f2329',
+    bgColorDark: '#181b20',
+    bgColorLight: '#2a2f37',
+    bgColorLighter: '#343a43',
+    textColorPrimary: '#ffffff',
+    textColorSecondary: '#d3dce9',
+    textColorTertiary: '#8D98AA',
+    textColorFourth: '#ffffff',
+    textColorPlaceholder: '#626d7c',
+    textColorPlaceholderLight: '#272c33',
+    textColorDisabled: '#6C6E72',
+    borderColor: '#363c46',
+    borderColorLight: '#3e4551',
+    borderColorLighter: '#576372',
+    borderColorExtraLight: '#fffefe',
+    boxShadow: '0px 12px 32px 4px rgba(0, 0, 0, 0.36), 0px 8px 20px rgba(0, 0, 0, 0.72)',
+    boxShadowLight: '0px 0px 12px rgba(0, 0, 0, 0.72)',
+    boxShadowLighter: '0px 0px 6px rgba(0, 0, 0, 0.72)',
+    boxShadowDark: '0px 16px 48px 16px rgba(0, 0, 0, 0.72), 0px 12px 32px #000000, 0px 8px 16px -8px #000000',
+    maskColor: 'rgb(0, 0, 0, 0.55)',
+    maskColorExtraLight: 'rgba(0, 0, 0, 0.3)',
+    borderColorHover: '#6C6E72',
+    fontSizeExtraLarge: '20px',
+    fontSizeLarge: '18px',
+    fontSizeMedium: '16px',
+    fontSizeBase: '14px',
+    fontSizeSmall: '13px',
+    fontSizeExtraSmall: '12px',
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, \'Fira Sans\', \'Droid Sans\', sans-serif',
+    borderRadiusBase: '4px',
+    borderRadiusSmall: '2px',
+    borderRadiusRound: '20px',
+    borderRadiusCircle: '100%',
     // 把新加的字段同时加到light.ts文件、以及emotion.d.ts文件...........
 };

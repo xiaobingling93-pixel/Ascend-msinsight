@@ -3,11 +3,13 @@
 */
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
+import { ThemeProvider } from '@emotion/react';
 import { SharedConfigProvider } from 'lib/SharedConfigProvider';
 import { useRootStore } from './context/context';
 import connector from './connection';
 import HotMethod from './components/hotMethod/HotMethod';
 import Detail from './components/detail/Index';
+import { themeInstance } from './theme/theme';
 
 const app = observer(({ page }: {page?: string}) => {
     const { sessionStore } = useRootStore();
@@ -39,9 +41,11 @@ const app = observer(({ page }: {page?: string}) => {
     } else {
         dom = <HotMethod session={session} />;
     }
-    return <SharedConfigProvider locale={locale}>
-        {dom}
-    </SharedConfigProvider>;
+    return <ThemeProvider theme={themeInstance.getThemeType()}>
+        <SharedConfigProvider locale={locale}>
+            {dom}
+        </SharedConfigProvider>;
+    </ThemeProvider>;
 });
 
 export default app;
