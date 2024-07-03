@@ -40,18 +40,18 @@
 namespace Dic {
 class FileUtil {
 public:
-    static inline bool CheckDirectoryExist(const std::string &path)
+    static inline bool CheckDirAccess(const std::string &path, const int &mode = 0)
     {
 #ifdef _WIN32
         std::string tmpPath(path);
         if (StringUtil::IsUtf8String(path)) {
             tmpPath = StringUtil::Utf8ToGbk(path.c_str());
         }
-        if (_access(tmpPath.c_str(), 0) == -1) {
+        if (_access(tmpPath.c_str(), mode) == -1) {
             return false;
         }
 #else
-        if (access(path.c_str(), 0) == -1) {
+        if (access(path.c_str(), mode) == -1) {
             return false;
         }
 #endif
@@ -507,15 +507,20 @@ public:
         return matchedFiles;
     }
 
+    static bool IsSoftLink(const std::string &path);
+    static bool IsAbsolutePath(const std::string &path);
+    static bool CheckDirValid(const std::string &path);
     static bool CheckFilePathExist(const std::string& filePath);
     static bool CheckFilePath(const std::string& filePath);
     static bool CheckFilePathLength(const std::string& filePath);
     static uint32_t GetFilePathLengthLimit();
+    static std::string GetAbsPath(const std::string &path);
     static std::string GetCurrPath();
     static std::string GetRootPath(const std::string& filePath);
     static std::shared_ptr<std::string> GetRelativePath(const std::string& targetFilePath,
                                                         const std::string& sourceFilePath);
     static bool ModifyFilePermissions(const std::string &filePath, const mode_t &mode);
+    static bool ConvertToRealPath(std::string &errorMsg, std::vector<std::string> &path);
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_FILEUTIL_H

@@ -20,7 +20,8 @@ enum class ParserType {
     DB = 0,
     BIN = 1,
     JSON = 2,
-    IPYNB = 3
+    IPYNB = 3,
+    OTHER = 20
 };
 
 enum class ProjectTypeEnum {

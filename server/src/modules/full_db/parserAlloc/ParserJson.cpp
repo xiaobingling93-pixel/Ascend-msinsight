@@ -370,7 +370,8 @@ void ParserJson::FindAscendFolder(const std::string &path, std::vector<std::stri
     std::string traceFilePath = FileUtil::SplicePath(path, ASCEND_PROFILER_OUTPUT);
     traceFilePath = FileUtil::SplicePath(traceFilePath, "trace_view.json");
     ServerLog::Info("FindAscendFolder. ", traceFilePath);
-    if (FileUtil::CheckDirectoryExist(traceFilePath)) {
+    // 检查traceFilePath是否存在
+    if (FileUtil::CheckDirAccess(traceFilePath, 0)) {
         traceFiles.emplace_back(traceFilePath);
         return;
     }

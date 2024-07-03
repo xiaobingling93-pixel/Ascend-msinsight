@@ -8,6 +8,7 @@
 
 #include <string>
 #include <optional>
+#include "FileUtil.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 
@@ -90,6 +91,10 @@ struct ProjectExplorerInfoDeleteRequest : public Request {
 struct ProjectConflictCheckParams {
     std::string projectName;
     std::vector<std::string> dataPath;
+    bool ConvertToRealPath(std::string &errorMsg)
+    {
+        return FileUtil::ConvertToRealPath(errorMsg, dataPath);
+    }
 };
 
 struct ProjectConflictCheckRequest : public Request {

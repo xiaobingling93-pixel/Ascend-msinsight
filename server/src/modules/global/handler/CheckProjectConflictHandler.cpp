@@ -25,6 +25,13 @@ void Dic::Module::CheckProjectConflictHandler::HandleRequest(std::unique_ptr<Req
             std::make_unique<ProjectConflictCheckResponse>();
     ProjectConflictCheckResponse &response = *responsePtr;
     SetBaseResponse(request, response);
+    std::string errorMsg;
+    if (!request.params.ConvertToRealPath(errorMsg)) {
+        ServerLog::Error("[Operator]Failed to check request parameter. ", errorMsg);
+        SetResponseResult(response, false, errorMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     ProjectExplorerManager::Instance().CheckProjectConflict(request.params.projectName,
                                                             request.params.dataPath, response.body);
     SetResponseResult(response, true);

@@ -4,6 +4,17 @@
 #include "FileUtil.h"
 
 namespace Dic {
+namespace {
+const std::unordered_map<std::string, std::string> INVALID_CHAR = {
+    {"\n", "\\n"}, {"\f", "\\f"}, {"\r", "\\r"}, {"\b", "\\b"},
+    {"\t", "\\t"}, {"\v", "\\v"}, {"\x7F", "\\x7F"}
+};
+#ifdef _WIN32
+const std::string MSVP_SLASH = "\\";
+#else
+const std::string MSVP_SLASH = "/";
+#endif
+}
 std::string FileUtil::GetCurrPath()
 {
     char currPath[1024];
@@ -27,6 +38,98 @@ std::string FileUtil::GetCurrPath()
 #endif
 #endif
     return strCurrPath;
+}
+
+bool FileUtil::IsAbsolutePath(const std::string &path)
+{
+#ifdef _WIN32
+    if (path.length() < 2) { // 2表示两个字符 d: 小于两个就一定不是绝对路径
+        return false;
+    }
+    // 判断是否以盘符开头
+    if (isalpha(path[0]) && path[1] == ':') {
+        return true;
+    }
+#else
+    if (path[0] == '/') {
+        return true;
+    }
+#endif
+    return false;
+}
+
+// 这里需要修改，windows和linux下不一样，另外日志也不太能帮助定义，
+std::string FileUtil::GetAbsPath(const std::string &path)
+{
+    if (path.empty()) {
+        return "";
+    }
+    if (IsAbsolutePath(path)) {
+        return std::string(path);
+    }
+    std::string curPath = GetCurrPath();
+    if (curPath.empty()) {
+        Server::ServerLog::Error("Failed to retrieve the current path.");
+        return "";
+    }
+    return curPath + MSVP_SLASH + path;
+}
+ 
+bool FileUtil::IsSoftLink(const std::string &path)
+{
+#ifdef _WIN32
+    std::wstring widePath(path.begin(), path.end());
+    DWORD attributes = GetFileAttributesW(widePath.c_str());
+    return (attributes != INVALID_FILE_ATTRIBUTES) &&
+           (attributes & FILE_ATTRIBUTE_REPARSE_POINT);
+#else
+    struct stat fileStat;
+    if (lstat(path.c_str(), &fileStat) != 0) {
+        Server::ServerLog::Error("The file lstat failed.");
+        return false;
+    }
+    return S_ISLNK(fileStat.st_mode);
+#endif
+}
+ 
+bool FileUtil::CheckDirValid(const std::string &path)
+{
+    if (path.empty()) {
+        Server::ServerLog::Error("The path is empty. ");
+        return false;
+    }
+    std::string dir = GetAbsPath(path);
+    if (dir.empty()) {
+        Server::ServerLog::Error("Failed to retrieve the absolute path. path: ", path);
+        return false;
+    }
+ 
+    if (!CheckFilePathLength(dir)) {
+        return false;
+    }
+ 
+    for (auto &item: INVALID_CHAR) {
+        if (dir.find(item.first) != std::string::npos) {
+            Server::ServerLog::Error("The path: ", dir, " contains invalid character: ", item.second);
+            return false;
+        }
+    }
+ 
+    if (!CheckDirAccess(dir, 0)) {
+        Server::ServerLog::Error("The directory path not exists. path: ", dir);
+        return false;
+    }
+ 
+    if (IsSoftLink(dir)) {
+        Server::ServerLog::Error("The path is soft link. path: ", dir);
+        return false;
+    }
+ 
+    if (!CheckDirAccess(dir, R_OK)) {
+        Server::ServerLog::Error("The path have no read access. path: ", dir);
+        return false;
+    }
+    return true;
 }
 
 bool FileUtil::CheckFilePathExist(const std::string& filePath)
@@ -219,4 +322,22 @@ bool FileUtil::ModifyFilePermissions(const std::string &filePath, const mode_t &
 #endif
     return chmod(tmpPath.c_str(), mode);
 }
+
+bool FileUtil::ConvertToRealPath(std::string &errorMsg, std::vector<std::string> &path)
+{
+    for (auto it = path.begin(); it != path.end(); ++it) {
+        if (!FileUtil::CheckDirValid(*it)) {
+            errorMsg = *it + "is invalid path";
+            return false;
+        }
+        std::string realPath = GetRealPath(*it);
+        if (realPath.empty()) {
+            errorMsg = "The conversion of the " + *it +
+                        "test path to an absolute path has failed.";
+            return false;
+        }
+        *it = realPath;
+    }
+    return true;
 }
+} // Dic

@@ -31,9 +31,10 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    if (request.params.projectName.empty()) {
-        ServerLog::Warn("Import project is empty.");
-        SetResponseResult(response, false);
+    std::string warnMsg;
+    if (!request.params.CommonCheck(warnMsg)) {
+        ServerLog::Warn(warnMsg);
+        SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
         return;
     }
@@ -41,6 +42,11 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     std::shared_ptr<ParserAlloc> factory;
     if (!request.params.path.empty()) {
         // 如果入参的文件内容不为空，则为导入新的文件
+        if (!request.params.ConvertToRealPath(warnMsg)) {
+            SetResponseResult(response, false, warnMsg);
+            session.OnResponse(std::move(responsePtr));
+            return;
+        }
         if (!ImportFile(request)) {
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));

@@ -9,6 +9,7 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include "FileUtil.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 
@@ -17,6 +18,18 @@ namespace Protocol {
 struct ImportActionParams {
     std::string projectName;
     std::vector<std::string> path;
+    bool CommonCheck(std::string &errorMsg)
+    {
+        if (this->projectName.empty()) {
+            errorMsg = "Import project is empty.";
+            return false;
+        }
+        return true;
+    }
+    bool ConvertToRealPath(std::string &errorMsg)
+    {
+        return FileUtil::ConvertToRealPath(errorMsg, this->path);
+    }
 };
 
 struct ImportActionRequest : public Request {
