@@ -25,9 +25,11 @@ namespace Dic::Module::Operator {
         std::unique_ptr<OperatorDetailInfoResponse> responsePtr = std::make_unique<OperatorDetailInfoResponse>();
         OperatorDetailInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);
-        if (!CheckRequestParam(request.params)) {
+        std::string errorMsg;
+        if (!request.params.CommonCheck(errorMsg)) {
+            ServerLog::Error(errorMsg);
             ServerLog::Error("[Operator]Failed to check request parameter in query op detail info.");
-            SetResponseResult(response, false);
+            SetResponseResult(response, false, errorMsg);
             session.OnResponse(std::move(responsePtr));
             return;
         }
@@ -41,22 +43,5 @@ namespace Dic::Module::Operator {
         }
         SetResponseResult(response, true);
         session.OnResponse(std::move(responsePtr));
-    }
-
-    bool QueryOpDetailInfoHandler::CheckRequestParam(OperatorStatisticReqParams& params)
-    {
-        if (params.rankId.empty()) {
-            ServerLog::Error("[Operator]Failed to check rankId in query op detail info.");
-            return false;
-        }
-        if (!params.orderBy.empty()) {
-            if (OperatorProtocol::GetDetailColumName(params.orderBy).empty()) {
-                ServerLog::Error("[Operator]Failed to check orderBy in query op detail info.");
-                return false;
-            }
-            params.orderBy = OperatorProtocol::GetDetailColumName(params.orderBy);
-        }
-
-        return true;
     }
 }

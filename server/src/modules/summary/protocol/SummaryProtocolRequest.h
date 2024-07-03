@@ -80,6 +80,10 @@ struct ComputeDetailParams {
     int64_t pageSize = 0;
     std::string orderBy;
     std::string order;
+    bool CommonCheck(std::string &errorMsg)
+    {
+        return CheckPageValid(this->pageSize, this->currentPage, errorMsg);
+    }
 };
 
 struct ComputeDetailRequest : public Request {
@@ -94,6 +98,10 @@ struct CommunicationDetailParams {
     int64_t pageSize = 0;
     std::string orderBy;
     std::string order;
+    bool CommonCheck(std::string &errorMsg)
+    {
+        return CheckPageValid(this->pageSize, this->currentPage, errorMsg);
+    }
 };
 
 struct CommunicationDetailRequest : public Request {

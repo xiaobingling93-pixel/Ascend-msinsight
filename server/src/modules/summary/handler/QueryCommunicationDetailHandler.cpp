@@ -23,6 +23,13 @@ void QueryCommunicationDetailHandler::HandleRequest(std::unique_ptr<Protocol::Re
     std::unique_ptr<CommunicationDetailResponse> responsePtr = std::make_unique<CommunicationDetailResponse>();
     CommunicationDetailResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+    std::string errorMsg;
+    if (!request.params.CommonCheck(errorMsg)) {
+        ServerLog::Error("[Operator]Failed to check request parameter.", errorMsg);
+        SetResponseResult(response, false, errorMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(request.params.rankId);
     if (!database->QueryCommDetailHandler(request.params, response.commDetails) or
         !database->QueryGetTotalNum(request.params.timeFlag, response.totalNum)) {

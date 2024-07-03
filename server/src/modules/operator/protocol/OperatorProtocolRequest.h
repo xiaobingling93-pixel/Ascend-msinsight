@@ -8,7 +8,8 @@
 #include <string>
 #include <vector>
 #include "ProtocolDefs.h"
-#include "ProtocolMessage.h"
+#include "OperatorProtocol.h"
+#include "OperatorGroupConverter.h"
 
 namespace Dic::Protocol {
 
@@ -34,6 +35,35 @@ namespace Dic::Protocol {
         std::string orderBy;
         std::string order;
         std::vector<std::pair<std::string, std::string>> filters;
+        bool CommonCheck(std::string &errorMsg)
+        {
+            if (!CheckPageValid(this->pageSize, this->current, errorMsg)) {
+                return false;
+            }
+            if (this->rankId.empty()) {
+                errorMsg = "[Operator]Failed to check rankId in Query Op Statistic Info.";
+                return false;
+            }
+            if (!this->orderBy.empty()) {
+                if (OperatorProtocol::GetStatisticColumName(this->orderBy).empty()) {
+                    errorMsg = "[Operator]Failed to check orderBy in Query Op Statistic Info.";
+                    return false;
+                }
+                this->orderBy = OperatorProtocol::GetStatisticColumName(this->orderBy);
+            }
+            return true;
+        }
+        bool StatisticGroupCheck(std::string &errorMsg)
+        {
+            OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(this->group);
+            if (operatorGroup != OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP &&
+                operatorGroup != OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP &&
+                operatorGroup != OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP) {
+                errorMsg = "[Operator]Wrong group type in Query Op Statistic Info.";
+                return false;
+            }
+            return true;
+        }
     };
 
     // Operator Type、Operator Name + Input Shape类型时See More的请求参数

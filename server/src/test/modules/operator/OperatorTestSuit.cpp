@@ -68,7 +68,7 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOperator)
 TEST_F(TestSuit, QueryOperatorStatisticInfoByOpType)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
-    Dic::Protocol::OperatorStatisticReqParams reqParams = {"0", GROUP_OPERATOR_TYPE, 15, 0, 10, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {"0", GROUP_OPERATOR_TYPE, 15, 1, 10, "", ""};
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     bool result = db->QueryOperatorStatisticInfo(reqParams, response);
     EXPECT_EQ(result, true);
@@ -80,7 +80,7 @@ TEST_F(TestSuit, QueryOperatorStatisticInfoByOpType)
 TEST_F(TestSuit, QueryOperatorStatisticInfoByOpTypeAndInputShape)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
-    Dic::Protocol::OperatorStatisticReqParams reqParams = {"0", GROUP_INPUT_SHAPE, 15, 0, 5, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {"0", GROUP_INPUT_SHAPE, 15, 1, 5, "", ""};
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     bool result = db->QueryOperatorStatisticInfo(reqParams, response);
     EXPECT_EQ(result, true);
@@ -93,7 +93,7 @@ TEST_F(TestSuit, QueryOperatorStatisticInfoByOpTypeAndInputShape)
 TEST_F(TestSuit, QueryOperatorDetailInfoByOperator)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
-    Dic::Protocol::OperatorStatisticReqParams reqParams = {"0", GROUP_OPERATOR, 15, 0, 10, "", ""};
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {"0", GROUP_OPERATOR, 15, 1, 10, "", ""};
     Dic::Protocol::OperatorDetailInfoResponse response = {};
     bool result = db->QueryOperatorDetailInfo(reqParams, response);
     EXPECT_EQ(result, true);
@@ -108,7 +108,7 @@ TEST_F(TestSuit, QueryOperatorMoreInfoByOpType)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
     Dic::Protocol::OperatorMoreInfoReqParams reqParams = {
-        "0", GROUP_OPERATOR_TYPE, 15, "Cast", "", "", "AI_CORE", 0, 10, "", ""};
+        "0", GROUP_OPERATOR_TYPE, 15, "Cast", "", "", "AI_CORE", 1, 10, "", ""};
     Dic::Protocol::OperatorMoreInfoResponse response = {};
     bool result = db->QueryOperatorMoreInfo(reqParams, response);
     EXPECT_EQ(result, true);
@@ -122,7 +122,7 @@ TEST_F(TestSuit, QueryOperatorMoreInfoByInputShape)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
     Dic::Protocol::OperatorMoreInfoReqParams reqParams = {
-        "0", GROUP_INPUT_SHAPE, 15, "", "NonZero", R"("""16""")", "MIX_AIV", 0, 10, "", ""
+        "0", GROUP_INPUT_SHAPE, 15, "", "NonZero", R"("""16""")", "MIX_AIV", 1, 10, "", ""
     };
     Dic::Protocol::OperatorMoreInfoResponse response = {};
     bool result = db->QueryOperatorMoreInfo(reqParams, response);

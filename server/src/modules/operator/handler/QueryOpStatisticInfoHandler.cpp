@@ -26,9 +26,11 @@ namespace Dic::Module::Operator {
         std::unique_ptr<OperatorStatisticInfoResponse> responsePtr = std::make_unique<OperatorStatisticInfoResponse>();
         OperatorStatisticInfoResponse &response = *responsePtr;
         SetBaseResponse(request, response);
-        if (!CheckRequestParam(request.params)) {
+        std::string errorMsg;
+        // (~A||~B) = ~(A&&B) 短路与errorMsg是第一个错误信息
+        if (!(request.params.CommonCheck(errorMsg) && request.params.StatisticGroupCheck(errorMsg))) {
             ServerLog::Error("[Operator]Failed to check request parameter in query op statistic info.");
-            SetResponseResult(response, false);
+            SetResponseResult(response, false, errorMsg);
             session.OnResponse(std::move(responsePtr));
             return;
         }
@@ -42,30 +44,6 @@ namespace Dic::Module::Operator {
         }
         SetResponseResult(response, true);
         session.OnResponse(std::move(responsePtr));
-    }
-
-    bool QueryOpStatisticInfoHandler::CheckRequestParam(OperatorStatisticReqParams& params)
-    {
-        if (params.rankId.empty()) {
-            ServerLog::Error("[Operator]Failed to check rankId in Query Op Statistic Info.");
-            return false;
-        }
-        OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(params.group);
-        if (operatorGroup != OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP &&
-            operatorGroup != OperatorGroupConverter::OperatorGroup::HCCL_TYPE_GROUP &&
-            operatorGroup != OperatorGroupConverter::OperatorGroup::OP_INPUT_SHAPE_GROUP) {
-            ServerLog::Error("[Operator]Wrong group type in Query Op Statistic Info.");
-            return false;
-        }
-        if (!params.orderBy.empty()) {
-            if (OperatorProtocol::GetStatisticColumName(params.orderBy).empty()) {
-                ServerLog::Error("[Operator]Failed to check orderBy in Query Op Statistic Info.");
-                return false;
-            }
-            params.orderBy = OperatorProtocol::GetStatisticColumName(params.orderBy);
-        }
-
-        return true;
     }
 
 }

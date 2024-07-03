@@ -13,6 +13,22 @@
 namespace Dic {
 namespace Protocol {
 #pragma region << Base Protocol>>
+const int64_t MIN_PAGESIZE = 0;
+const int64_t MAX_PAGESIZE = 1000;
+const int64_t MIN_CURRENT_PAGE = 0;
+const int64_t MAX_CURRENT_PAGE = 10000000000;
+inline bool CheckPageValid(int64_t pageSize, int64_t currentPage, std::string &errorMsg)
+{
+    if (pageSize <= MIN_PAGESIZE || pageSize > MAX_PAGESIZE) {
+        errorMsg = "pageSize:" + std::to_string(pageSize) + " is invaild";
+        return false;
+    }
+    if (currentPage <= MIN_CURRENT_PAGE || currentPage > MAX_CURRENT_PAGE) {
+        errorMsg = "currentPage" + std::to_string(currentPage) + " is invaild";
+        return false;
+    }
+    return true;
+}
 
 struct ErrorMessage {
     int code = 0;

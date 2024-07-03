@@ -51,7 +51,7 @@ TEST_F(TestSuit, QueryCommunicationDetailData)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
     Dic::Protocol::CommunicationDetailParams requestParams;
     requestParams.rankId = "0";
-    requestParams.currentPage = 0;
+    requestParams.currentPage = 1;
     requestParams.pageSize = 10; // page size = 10
     Dic::Protocol::CommunicationDetailResponse responseBody;
     database->QueryCommDetailHandler(requestParams, responseBody.commDetails);
@@ -78,7 +78,7 @@ TEST_F(TestSuit, QueryComputeDetailData)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("0");
     Dic::Protocol::ComputeDetailParams requestParams;
     requestParams.rankId = "0";
-    requestParams.currentPage = 0;
+    requestParams.currentPage = 1;
     requestParams.pageSize = 10; // page size = 10
     requestParams.timeFlag = "AI_CORE";
     std::vector<Dic::Protocol::ComputeDetail> responseBody;

@@ -23,6 +23,14 @@ void QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Requ
     std::unique_ptr<ComputeDetailResponse> responsePtr = std::make_unique<ComputeDetailResponse>();
     ComputeDetailResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
+
+    std::string errorMsg;
+    if (!request.params.CommonCheck(errorMsg)) {
+        ServerLog::Error("[Operator]Failed to check request parameter.", errorMsg);
+        SetResponseResult(response, false, errorMsg);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(request.params.rankId);
     if (!database->QueryComputeDetailHandler(request.params, response.computeDetails) or
         !database->QueryGetTotalNum(request.params.timeFlag, response.totalNum)) {

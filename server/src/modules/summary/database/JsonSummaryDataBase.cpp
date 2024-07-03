@@ -70,6 +70,7 @@ bool JsonSummaryDataBase::InitStmt()
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertKernelStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare insert kernel detail statement. error:", sqlite3_errmsg(db));
+        sqlite3_finalize(insertKernelStmt);
         return false;
     }
 
@@ -119,6 +120,7 @@ void JsonSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel>& kern
     }
     if (result != SQLITE_DONE) {
         ServerLog::Error("Insert kernel detail fail. ", sqlite3_errmsg(db));
+        sqlite3_exec(db, "ROLLBACK", nullptr, nullptr, nullptr);
         return;
     }
 }
@@ -156,6 +158,7 @@ sqlite3_stmt *JsonSummaryDataBase::GetKernelStmt(uint64_t paramLen)
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
             ServerLog::Error("Failed to prepare insert Kernel stat. error:", sqlite3_errmsg(db));
+            sqlite3_finalize(stmt);
             return nullptr;
         }
     }
@@ -178,10 +181,11 @@ uint64_t JsonSummaryDataBase::QueryMinStartTime()
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
+        sqlite3_finalize(stmt);
         ServerLog::Error("Failed to prepare sql for QueryMinStartTime.", sqlite3_errmsg(db));
         return 0;
     }
-    uint64_t min;
+    uint64_t min = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         min = sqlite3_column_int64(stmt, col++);
@@ -199,19 +203,20 @@ bool JsonSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParam
     std::string sql = GenComputeSql(params);
     std::string timeFlag = params.timeFlag;
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    double offset = (params.currentPage - 1) * params.pageSize;
+    int64_t offset = (params.currentPage - 1) * params.pageSize;
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
 
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("Query operator detail failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
         return false;
     }
     sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, params.timeFlag.c_str(), params.timeFlag.length(), nullptr);
-    sqlite3_bind_double(stmt, index++, params.pageSize);
-    sqlite3_bind_double(stmt, index++, offset);
+    sqlite3_bind_int64(stmt, index++, params.pageSize);
+    sqlite3_bind_int64(stmt, index++, offset);
     std::vector<Protocol::ComputeDetail> computeVec;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
@@ -285,6 +290,7 @@ bool JsonSummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
         sqlite3_bind_text(stmt, index++, name.c_str(), name.length(), nullptr);
     } else {
         ServerLog::Error("Get total num failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
         return false;
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -318,19 +324,20 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
     std::string sql = GetCommSql(params);
     std::string timeFlag = params.timeFlag;
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    double offset = (params.currentPage - 1) * params.pageSize;
+    int64_t offset = (params.currentPage - 1) * params.pageSize;
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
 
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
+        sqlite3_finalize(stmt);
         ServerLog::Error("QueryCommDetailHandler failed! Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_int64(stmt, index++, startTime);
     sqlite3_bind_text(stmt, index++, params.timeFlag.c_str(), params.timeFlag.length(), nullptr);
-    sqlite3_bind_double(stmt, index++, params.pageSize);
-    sqlite3_bind_double(stmt, index++, offset);
+    sqlite3_bind_int64(stmt, index++, params.pageSize);
+    sqlite3_bind_int64(stmt, index++, offset);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::CommunicationDetail computeDetail{};
@@ -420,12 +427,13 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Duration Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            sqlite3_finalize(stmt);
             return false;
         }
 
         int index = bindStartIndex;
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
-        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, index++, reqParams.topK);
 
         std::vector<Protocol::OperatorDurationRes> res;
@@ -477,6 +485,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Statistic Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            sqlite3_finalize(stmt);
             return false;
         }
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
@@ -554,7 +563,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
         int index = bindStartIndex;
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
-        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize * (reqParams.current - 1));
 
@@ -597,6 +606,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Detail Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            sqlite3_finalize(stmt);
             return false;
         }
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
@@ -654,13 +664,13 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Detail Info. Cmd: ", sql, " Msg:", sqlite3_errmsg(db), " ", result);
+            sqlite3_finalize(stmt);
             return false;
         }
-        uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         int index = bindStartIndex;
-        sqlite3_bind_int64(stmt, index++, startTime);
-        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(stmt, index++, Timeline::TraceTime::Instance().GetStartTime());
+        sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
         sqlite3_bind_int64(stmt, index++, reqParams.topK);
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
         sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
@@ -716,17 +726,18 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get More Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            sqlite3_finalize(stmt);
             return false;
         }
         int index = bindStartIndex;
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
-        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), reqParams.accCore.length(), SQLITE_TRANSIENT);
         if (IsOperatorGroupInType(operatorGroup)) {
-            sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), reqParams.opType.length(), SQLITE_TRANSIENT);
         } else {
-            sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), -1, SQLITE_TRANSIENT);
-            sqlite3_bind_text(stmt, index++, reqParams.shape.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), reqParams.opName.length(), SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, index++, reqParams.shape.c_str(), reqParams.shape.length(), SQLITE_TRANSIENT);
         }
 
         while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -792,6 +803,11 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
             ServerLog::Error("Failed to get Op More Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            sqlite3_finalize(stmt);
+            return false;
+        }
+        if (reqParams.current <= 0) {
+            ServerLog::Error("The current page is less than or equal to 0");
             return false;
         }
         BindSqliteParam(stmt, reqParams);
@@ -829,14 +845,14 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         int index = bindStartIndex;
         sqlite3_bind_int64(stmt, index++, startTime);
-        sqlite3_bind_text(stmt, index++, rankId.c_str(), -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, index++, reqParams.accCore.c_str(), reqParams.accCore.length(), SQLITE_TRANSIENT);
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
         if (IsOperatorGroupInType(operatorGroup)) {
-            sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, index++, reqParams.opType.c_str(), reqParams.opType.length(), SQLITE_TRANSIENT);
         } else {
-            sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), -1, SQLITE_TRANSIENT);
-            sqlite3_bind_text(stmt, index++, reqParams.shape.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, index++, reqParams.opName.c_str(), reqParams.opName.length(), SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, index++, reqParams.shape.c_str(), reqParams.shape.length(), SQLITE_TRANSIENT);
         }
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
         sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
