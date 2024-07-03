@@ -7,7 +7,7 @@ import { StyledEmpty } from './StyledEmpty';
 
 const StyledPullDownIcon = styled((props: React.SVGProps<SVGSVGElement>) => <PullDownIcon {...props}/>)`
     use {
-        fill: ${(props) => props.theme.devicePullDown};
+        fill: ${(props): string => props.theme.devicePullDown};
     }
 `;
 
@@ -29,7 +29,7 @@ export const StyledSelect = styled((props: SelectProps &
         <Select
             suffixIcon={<StyledPullDownIcon/>}
             notFoundContent={<StyledEmpty/>}
-            getPopupContainer={(trigger: HTMLElement) => trigger.parentNode}
+            getPopupContainer={(trigger: HTMLElement): ParentNode | null => trigger.parentNode}
             {...props}
         />
     </ArrowController>)`
@@ -37,31 +37,31 @@ export const StyledSelect = styled((props: SelectProps &
             border-radius: 4px !important;
             border: none !important;
             box-shadow: none !important;
-            background-color: ${(props) => props.backgroundColor ?? props.theme.unitTagInfoBackgroundColor} !important;
+            background-color: ${(props): string => props.backgroundColor ?? props.theme.unitTagInfoBackgroundColor} !important;
             padding: 0 11px 0 0 !important;
 
             .ant-select-selection-item {
-                padding-left: ${(props) => props.itemPaddingLeft ?? 15}px;
-                padding-right: ${(props) => props.itemPaddingRight ?? 0}px;
-                line-height: ${(props) => props.height}px;
+                padding-left: ${(props): number => props.itemPaddingLeft ?? 15}px;
+                padding-right: ${(props): number => props.itemPaddingRight ?? 0}px;
+                line-height: ${(props): number => props.height}px;
             }
 
-            height: ${(props) => props.height}px !important;
+            height: ${(props): number => props.height}px !important;
 
             .ant-select-selection-placeholder {
-                line-height: ${(props) => props.height}px;
+                line-height: ${(props): number => props.height}px;
             }
         }
 
         .ant-select-dropdown {
-            background-color: ${(props) => props.theme.contentBackgroundColor};
+            background-color: ${(props): string => props.theme.contentBackgroundColor};
             border-radius: 14px;
             .ant-select-item-option-content {
-                color: ${(props) => props.theme.fontColor};
+                color: ${(props): string => props.theme.fontColor};
             }
             width: unset !important;
             .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
-                background-color: ${(props) => props.theme.tableRowSelect};
+                background-color: ${(props): string => props.theme.tableRowSelect};
             }
             .ant-select-item-option-selected {
                 background-color: transparent;
@@ -69,10 +69,10 @@ export const StyledSelect = styled((props: SelectProps &
         }
 
         input {
-            height: ${(props) => props.height}px !important;
+            height: ${(props): number => props.height}px !important;
         }
 
-        color: ${(props) => props.theme.fontColor};
-        width: ${(props) => props.width}px;
-        height: ${(props) => props.height}px;
+        color: ${(props): string => props.theme.fontColor};
+        width: ${(props): number => props.width}px;
+        height: ${(props): number => props.height}px;
 `;

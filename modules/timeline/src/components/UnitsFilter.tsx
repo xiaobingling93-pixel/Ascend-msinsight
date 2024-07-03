@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 const FilterIcon = AntdFilterIcon as SvgType;
 
 const ChildrenContainer = styled.div`
-    color: ${props => props.theme.fontColor};
+    color: ${(props): string => props.theme.fontColor};
     text-align: left;
     padding-left: 20px;
     user-select: none;
@@ -29,7 +29,7 @@ const CustomDiv = styled.div`
     border-radius: 18px;
     padding: 1px 7px 1px 10px;
     min-width: 600px;
-    background: ${props => props.theme.tooltipBGColor};
+    background: ${(props): string => props.theme.tooltipBGColor};
     .chooseResult {
         display: flex;
         margin-bottom: 0;
@@ -42,21 +42,21 @@ const CustomDiv = styled.div`
             padding-right: 8px;
             font-size: 14px;
             white-space: nowrap;
-            color: ${props => props.theme.deviceProcessContentFontColor};
-            background: ${props => props.theme.multiSelectBgColor};
+            color: ${(props): string => props.theme.deviceProcessContentFontColor};
+            background: ${(props): string => props.theme.multiSelectBgColor};
             border-radius: 12px;
             margin: 0 5px;
             .icon {
                 width: 12px;
                 height: 12px;
                 margin-left: 5px;
-                fill: ${props => props.theme.buttonColor.enableClickColor};
+                fill: ${(props): string => props.theme.buttonColor.enableClickColor};
             }
             & > div {
                 padding-left: 8px;
             }
             .ant-select {
-                color: ${props => props.theme.deviceProcessContentFontColor};
+                color: ${(props): string => props.theme.deviceProcessContentFontColor};
                 .ant-select-selector {
                     height: 24px;
                     border: none;
@@ -74,7 +74,7 @@ const CustomDiv = styled.div`
                 }
                 // select禁用的时候颜色不变
                 &.ant-select-disabled .ant-select-selector {
-                    color: ${props => props.theme.deviceProcessContentFontColor};
+                    color: ${(props): string => props.theme.deviceProcessContentFontColor};
                 }
                 // 去掉下拉三角按钮
                 .ant-select-arrow {
@@ -84,15 +84,15 @@ const CustomDiv = styled.div`
                     width: 200px!important;
                     border-radius: 16px;
                     left: -7px !important;
-                    background: ${props => props.theme.deviceProcessBackgroundColor};
+                    background: ${(props): string => props.theme.deviceProcessBackgroundColor};
                     .rc-virtual-list-holder-inner {
                         & > div {
                             border-radius: 10px;
-                            color: ${props => props.theme.filterColor};
+                            color: ${(props): string => props.theme.filterColor};
                         }
                         .ant-select-item-option-active {
-                            color: ${props => props.theme.filterColor} !important;
-                            background-color: ${props => props.theme.filterSelectActiveBgColor} !important;
+                            color: ${(props): string => props.theme.filterColor} !important;
+                            background-color: ${(props): string => props.theme.filterSelectActiveBgColor} !important;
                         }
                     }
                 }
@@ -100,7 +100,7 @@ const CustomDiv = styled.div`
         }
     }
     .searchResult {
-        color: ${(props) => props.theme.svgBackgroundColor};
+        color: ${(props): string => props.theme.svgBackgroundColor};
         font-size: 12px;
         white-space: nowrap;
     }
@@ -120,11 +120,11 @@ const useAutoCompleteHandles = (session: Session): [ selectValue: string, dropdo
     function dropdownRender(): JSX.Element {
         return (
             <ChildrenContainer>
-                <div key={'file'} onClick={() => {
+                <div key={'file'} onClick={(): void => {
                     setSelectValue('Card Filter');
                     setIsOpen(false);
                 }}>Card Filter</div>
-                <div key={'folder'} onClick={() => {
+                <div key={'folder'} onClick={(): void => {
                     setSelectValue('Units Filter');
                     setIsOpen(false);
                 }}>Units Filter</div>
@@ -170,7 +170,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                 style={{ top: 2 }}
                 value={selectValue}
                 dropdownRender={dropdownRender}
-                onDropdownVisibleChange={open => setIsOpen(open)}
+                onDropdownVisibleChange={(open): void => setIsOpen(open)}
                 open={isOpen}
                 height={24} width={120} itemPaddingLeft={20}>
             </StyledSelect>
@@ -182,7 +182,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                 options={completeOptions}
                 style={{ top: '2px', width: '455px', height: '24px' }}
                 value={selection}
-                onChange={(val: string[]) => { setSelection(val); handleChange(val); }}
+                onChange={(val: string[]): void => { setSelection(val); handleChange(val); }}
             >
             </Select>
         </CustomDiv>

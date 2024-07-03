@@ -51,12 +51,12 @@ const StyledTable = styled(Table)`
     }
     .insight-table .insight-table-thead > tr > th {
         .active {
-            color: ${p => p.theme.buttonFontColor};
+            color: ${(p): string => p.theme.buttonFontColor};
         }
     }
     .insight-table .insight-table-thead > tr > .insight-table-column-has-sorters[aria-sort] {
-        color: ${p => p.theme.fontColor};
-        border-bottom: 2px solid ${p => p.theme.buttonFontColor};
+        color: ${(p): string => p.theme.fontColor};
+        border-bottom: 2px solid ${(p): string => p.theme.buttonFontColor};
     }
     .insight-table {
         font-size: 1rem;
@@ -64,17 +64,17 @@ const StyledTable = styled(Table)`
     }
     .insight-table .insight-table-thead > tr > .insight-table-cell-fix-right {
         padding-left: 16px;
-        background: ${props => props.theme.contentBackgroundColor};
+        background: ${(props): string => props.theme.contentBackgroundColor};
     }
     .insight-table-tbody > tr.insight-table-row-selected > td {
-        background: ${props => props.theme.tableRowSelect};
+        background: ${(props): string => props.theme.tableRowSelect};
     }
     .insight-table-tbody > tr > td.insight-table-cell-row-hover, tr.insight-table-row:hover > td.insight-table-cell {
-        background: ${props => props.theme.tableRowSelect};
+        background: ${(props): string => props.theme.tableRowSelect};
         transition: none;
     }
     .insight-table .insight-table-thead > tr > th.insight-table-cell {
-        color: ${props => props.theme.tableHeadFontColor};
+        color: ${(props): string => props.theme.tableHeadFontColor};
         font-weight: 500;
         height: ${TABLE_ROW_HEIGHT}px;
     }
@@ -130,7 +130,7 @@ const StyledTable = styled(Table)`
         }
         ::-webkit-scrollbar-thumb {
             border-radius: 8px;
-            background: ${props => props.theme.scrollbarColor};
+            background: ${(props): string => props.theme.scrollbarColor};
         }
         ::-webkit-scrollbar-corner {
             background: transparent;
@@ -138,20 +138,20 @@ const StyledTable = styled(Table)`
     }
     td > div > .expanded {
         g use {
-            fill: ${props => props.theme.fontColor};
+            fill: ${(props): string => props.theme.fontColor};
         }
     }
     td > div > .unexpanded {
         g use {
-            fill: ${props => props.theme.arrowUnexpandedBgColor};
+            fill: ${(props): string => props.theme.arrowUnexpandedBgColor};
         }
     }
     .ant-empty .ant-empty-description {
-        color: ${props => props.theme.fontColor};
+        color: ${(props): string => props.theme.fontColor};
     }
 
     .ant-spin {
-        background-color: ${props => props.theme.contentBackgroundColor};
+        background-color: ${(props): string => props.theme.contentBackgroundColor};
         transition: none;
     }
     .ant-spin-container {
@@ -162,7 +162,7 @@ const StyledTable = styled(Table)`
     }
     .filterIcon {
         path {
-            fill: ${props => props.theme.filterIconColor};
+            fill: ${(props): string => props.theme.filterIconColor};
         }
     }
 `;
@@ -186,7 +186,7 @@ export const AutoAdjustedTable = React.forwardRef(function Support(props: AutoAd
         isLoading = { isLoading }
         expandable={{
             ...props.expandable,
-            expandIcon: ({ expanded, onExpand, record }) => {
+            expandIcon: ({ expanded, onExpand, record }): JSX.Element => {
                 const node = record as TreeNode<object>;
                 if (!node.children) {
                     return <div style={{ float: 'left', width: '10px', height: '16px', margin: '0 4px 0 0' }}/>;
@@ -196,7 +196,7 @@ export const AutoAdjustedTable = React.forwardRef(function Support(props: AutoAd
                         expanded,
                         unexpanded: !expanded,
                     })}
-                    onClick={(e: React.MouseEvent<HTMLElement, MouseEvent>) => onExpand(record, e)}>
+                    onClick={(e: React.MouseEvent<HTMLElement, MouseEvent>): void => onExpand(record, e)}>
                     <ExpandIcon
                         style={{ transform: `rotate(${expanded ? 0 : '-90deg'}) translate(${expanded ? '-2' : '1'}px, ${expanded ? '0' : '-2'}px)`, cursor: 'pointer' }}/>
                 </div>;

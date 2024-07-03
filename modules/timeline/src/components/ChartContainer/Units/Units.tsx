@@ -30,19 +30,19 @@ const Lane = styled.div<{ laneHeight: number; className: string }>`
     display: flex;
     box-sizing: border-box;
     flex-direction: row;
-    height: ${props => props.laneHeight}px;
-    border-bottom: solid 1px ${props => props.theme.tableBorderColor};
+    height: ${(props): number => props.laneHeight}px;
+    border-bottom: solid 1px ${(props): string => props.theme.tableBorderColor};
     .unit-info {
-        background-color: ${props => props.className.includes(UNIT_SELECTED) ? props.theme.selectedChartBackgroundColor : props.theme.contentBackgroundColor};
+        background-color: ${(props): string => props.className.includes(UNIT_SELECTED) ? props.theme.selectedChartBackgroundColor : props.theme.contentBackgroundColor};
         div svg g use {
-            fill: ${props => props.theme.fontColor};
+            fill: ${(props): string => props.theme.fontColor};
         }
     }
     .empty.unit-info{
         background-color: ${(props): string => props.className.includes(UNIT_SELECTED) ? props.theme.selectedChartBackgroundColor : props.theme.buttonBackgroundColor};
      }
     .chart-selected {
-        box-shadow: 0 0 0 3px ${props => props.theme.selectedChartBorderColor} inset;
+        box-shadow: 0 0 0 3px ${(props): string => props.theme.selectedChartBorderColor} inset;
     }
 `;
 
@@ -53,7 +53,7 @@ const UNIT_VISIBLE = 'unit-visible';
 const Splitter = styled.div`
     width: 100%;
     height: 1px;
-    background-color: ${props => props.theme.tableBorderColor};
+    background-color: ${(props): string => props.theme.tableBorderColor};
 `;
 
 const Join = (props: { joiner: React.FC; children: JSX.Element[] }): JSX.Element => (
@@ -118,7 +118,7 @@ export const Unit = observer(({ unit, session, isVisible, ...props }: UnitProps)
             {...props}
         />
         <div className={isSelected ? 'chart-selected' : 'chart'} ref={ref}
-            onMouseDown={() => {
+            onMouseDown={(): void => {
                 selectUnit(unit);
                 traceSingle('selectLane', [unit.name]);
             }}
@@ -156,9 +156,9 @@ type FlattenUnitsProps = {
 const orderOptions = {
     preOrderFlatten,
     options: {
-        when: (unit: TreeNode<InsightUnit>) => unit.isExpanded,
-        bypass: (unit: TreeNode<InsightUnit>) => unit.type === 'transparent',
-        exclude: (unit: TreeNode<InsightUnit>) => (unit.pinType === 'move' && isPinned(unit)) || !unit.isDisplay,
+        when: (unit: TreeNode<InsightUnit>): boolean => unit.isExpanded,
+        bypass: (unit: TreeNode<InsightUnit>): boolean => unit.type === 'transparent',
+        exclude: (unit: TreeNode<InsightUnit>): boolean => (unit.pinType === 'move' && isPinned(unit)) || !unit.isDisplay,
     },
 };
 
@@ -251,7 +251,7 @@ const TableScroller = styled.div`
     flex-grow: 1;
     overflow-y: overlay;
     overflow-x: hidden;
-    border-top: solid 1px ${props => props.theme.tableBorderColor};
+    border-top: solid 1px ${(props): string => props.theme.tableBorderColor};
 `;
 
 type ScrollerProps = {

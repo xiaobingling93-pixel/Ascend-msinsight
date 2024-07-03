@@ -58,7 +58,7 @@ const DefaultInfoContainer = styled.div`
 
             .insight-lane-info-tag-text {
                 padding: 1px 8px;
-                background-color: ${props => props.theme.unitTagInfoBackgroundColor};
+                background-color: ${(props): string => props.theme.unitTagInfoBackgroundColor};
                 border-radius: 4px;
             }
         }
@@ -125,19 +125,19 @@ const PinButton = observer(({ session, unit, isHovered, hasPinButton, isPinned }
                 <StyledButton
                     style={style}
                     icon={isPinned ? <div className={'icon_un_pin'}/> : <div className={'icon_pin_to_top'}/>}
-                    onClick={(e: React.MouseEvent) => {
+                    onClick={(e: React.MouseEvent): void => {
                         e.stopPropagation();
                         e.preventDefault();
                         let execute = (): void => {};
                         const { pinnedUnits } = session;
                         if (!isPinned) {
-                            execute = () => {
+                            execute = (): void => {
                                 platform.trace('stickyLane', {});
                                 pinnedUnits.unshift(unit);
                                 session.pinnedUnits = [...pinnedUnits];
                             };
                         } else {
-                            execute = () => {
+                            execute = (): void => {
                                 pinnedUnits.splice(pinnedUnits.indexOf(unit), 1);
                                 session.pinnedUnits = [...pinnedUnits];
                             };
@@ -230,7 +230,7 @@ const ExpandIcon = observer(({ unit, session }: { unit: KeyedInsightUnit; sessio
     }, [session]);
     if (unit.children !== undefined || (unit.collapsible && unit.collapseAction)) {
         return <div style={{ float: 'left', height: '20px', marginLeft: '6px', top: 'calc(50% - 10px)', position: 'relative' }}
-            onClick={(e: React.MouseEvent<HTMLElement, MouseEvent>) => onExpand(unit)}>
+            onClick={(e: React.MouseEvent<HTMLElement, MouseEvent>): Promise<void> => onExpand(unit)}>
             <Arrow style={{ transform: `rotate(${unit.isExpanded ? 0 : '-90deg'})`, cursor: 'pointer' }}
                 className={`insight-unit-${unit.isExpanded ? 'expanded' : 'fold'}`} />
         </div>;
@@ -241,10 +241,10 @@ const ExpandIcon = observer(({ unit, session }: { unit: KeyedInsightUnit; sessio
 const UnitInfoContainer = styled.div<{ unit: InsightUnit; laneInfoWidth: number }>`
     flex-grow: 0;
     flex-shrink: 0;
-    width: ${props => props.laneInfoWidth}px;
-    flex-basis: ${props => props.laneInfoWidth}px;
-    height: ${props => props.unit.height()}px;
-    padding-left: ${props => 36 * ((props.unit as any)[level] ?? 0)}px;
+    width: ${(props): number => props.laneInfoWidth}px;
+    flex-basis: ${(props): number => props.laneInfoWidth}px;
+    height: ${(props): number => props.unit.height()}px;
+    padding-left: ${(props): number => 36 * ((props.unit as any)[level] ?? 0)}px;
     text-align: left;
 `;
 
@@ -266,8 +266,12 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         className={`unit-info ${className ?? ''}`}
         unit={unit}
         laneInfoWidth={laneInfoWidth}
-        onMouseOver={() => { !isHovered && setIsHovered(true); }}
-        onMouseLeave={() => { setIsHovered(false); }}
+        onMouseOver={(): void => {
+            if (!isHovered) {
+                setIsHovered(true);
+            }
+        }}
+        onMouseLeave={(): void => { setIsHovered(false); }}
         onMouseDown={(): void => {
             selectUnit(unit);
             traceSingle('selectLane', [unit.name]);
