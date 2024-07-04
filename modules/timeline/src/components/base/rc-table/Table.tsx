@@ -13,6 +13,7 @@ import { DefaultRecordType } from './types';
 import { customizeFilterData } from './utils/filterUtil';
 import { ColumnsType as AntdColumnsType } from 'antd/lib/table/interface';
 import { ColumnsType as TypesColumnsType } from './types';
+import type { EmotionJSX } from '@emotion/react/types/jsx-namespace';
 
 export type { ColumnsType };
 
@@ -33,13 +34,13 @@ function expandIconFor(locale: TableLocale) {
         record,
         expanded,
         expandable,
-    }: DefaultExpandIconProps<RecordType>) {
+    }: DefaultExpandIconProps<RecordType>): EmotionJSX.Element {
         const iconPrefix = `${prefixCls}-row-expand-icon`;
 
         return (
             <button
                 type="button"
-                onClick={e => {
+                onClick={(e): void => {
                     onExpand(record, e);
                     e.stopPropagation();
                 }}
@@ -111,7 +112,7 @@ export interface TableProps<RecordType>
 function InternalTable<RecordType extends DefaultRecordType>(
     props: TableProps<RecordType>,
     ref: React.MutableRefObject<TableHandle>,
-) {
+): EmotionJSX.Element {
     const {
         prefixCls: customizePrefixCls,
         className,
@@ -139,7 +140,7 @@ function InternalTable<RecordType extends DefaultRecordType>(
         if (typeof rowKey === 'function') {
             return rowKey;
         }
-        return (record: RecordType) => (record as any)?.[rowKey as string];
+        return (record: RecordType): Key => (record as any)?.[rowKey as string];
     }, [rowKey]);
 
     // ============================ Sort ============================
@@ -177,7 +178,7 @@ function InternalTable<RecordType extends DefaultRecordType>(
 
     const selectedKeySet = useSelection<RecordType>(rowSelection);
 
-    const internalRowClassName = (record: RecordType, index: number, level: number) =>
+    const internalRowClassName = (record: RecordType, index: number, level: number): string =>
         classNames(
             {
                 [`${prefixCls}-row-selected`]: selectedKeySet.has(getRowKey(record, index)),

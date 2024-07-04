@@ -6,13 +6,14 @@ import { PerfContext, PerfRecord, useBodyContext, useResizeContext, useTableCont
 import { TreeViewModel } from './hooks/useOrderStatisticTree';
 import { GetComponentProps, GetRowKey, Key } from './types';
 import { getColumnsKey } from './utils/valueUtil';
+import type { EmotionJSX } from '@emotion/react/types/jsx-namespace';
 
 interface MeasureCellProps {
     columnKey: React.Key;
     onColumnResize: (key: React.Key, width: number) => void;
 }
 
-function MeasureCell({ columnKey, onColumnResize }: MeasureCellProps) {
+function MeasureCell({ columnKey, onColumnResize }: MeasureCellProps): EmotionJSX.Element {
     const ref = React.useRef<HTMLTableCellElement>(null);
     React.useEffect(() => {
         if (ref.current) {
@@ -35,11 +36,11 @@ interface MeasureRowProps {
     columnKeys: React.Key[];
 }
 
-export function MeasureRow({ prefixCls, columnKeys, onColumnResize }: MeasureRowProps) {
+export function MeasureRow({ prefixCls, columnKeys, onColumnResize }: MeasureRowProps): EmotionJSX.Element {
     return (
         <tr className={`${prefixCls}-measure-row`} style={{ height: 0, fontSize: 0 }}>
             <ResizeObserver.Collection
-                onBatchResize={infoList => {
+                onBatchResize={(infoList): void => {
                     infoList.forEach(({ data: columnKey, size }) => {
                         onColumnResize(columnKey, size.offsetWidth);
                     });
@@ -69,7 +70,7 @@ interface BodyRowProps<RecordType> {
 
 function BodyRow<RecordType extends Record<string, unknown>>(
     props: BodyRowProps<RecordType>,
-) {
+): EmotionJSX.Element {
     const {
         className, style, record, index, rowKey,
         expandedKeys, onRow, indent = 0,
@@ -180,7 +181,7 @@ export function Body<RecordType extends Record<string, unknown>>({
     onRow,
     childrenColumnName,
     rowHeight,
-}: BodyProps<RecordType>) {
+}: BodyProps<RecordType>): EmotionJSX.Element {
     const { onColumnResize } = useResizeContext();
     const { prefixCls } = useTableContext();
     const { flattenColumns } = useBodyContext();

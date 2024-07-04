@@ -18,6 +18,7 @@ import { TableHandle } from './interface';
 import { ColumnsType, ColumnType, DefaultRecordType, ExpandableConfig, ExpandIconProps, GetComponentProps, GetRowKey, Key, RowClassName, TableLayout, TriggerEventHandler } from './types';
 import { getCellFixedInfo } from './utils/fixUtil';
 import { getColumnsKey, isValidValue } from './utils/valueUtil';
+import type { EmotionJSX } from '@emotion/react/types/jsx-namespace';
 
 const VIRTUAL_TOLERANCE = 4;
 
@@ -114,7 +115,7 @@ function renderExpandIcon<RecordType>({
     onExpand,
     expanded,
     expandable,
-}: ExpandIconProps<RecordType>) {
+}: ExpandIconProps<RecordType>): EmotionJSX.Element {
     const iconClassName = `${prefixCls}-row-expand-icon`;
 
     if (!expandable) {
@@ -315,13 +316,13 @@ const ForwardBaseTable =  React.forwardRef(function Table<RecordType extends Def
                 bodyTableRef.current.scrollTo({top: scrollTop});
             }
         },
-        appendExpandedKeys: res => {
+        appendExpandedKeys: (res): void => {
             const keysToAdd = res.filter((it) => !expandedKeySet.has(it));
             if (keysToAdd.length > 0) {
-                setExpandedKeys([ ...expandedKeySet, ...keysToAdd ]);
+                setExpandedKeys([...expandedKeySet, ...keysToAdd]);
             }
         },
-        selectFirstRoot: () => {
+        selectFirstRoot: (): void => {
             if (bodyTableRef.current === null) {
                 return;
             }
@@ -408,7 +409,7 @@ const ForwardBaseTable =  React.forwardRef(function Table<RecordType extends Def
                     className={`${prefixCls}-header`}
                     ref={headerTableRef}
                 >
-                    {props => (<Header {...props} />)}
+                    {(headerProps): React.ReactElement => (<Header {...headerProps} />)}
                 </FixedHolder>
             )}
             {bodyContent}
@@ -487,7 +488,7 @@ const ForwardBaseTable =  React.forwardRef(function Table<RecordType extends Def
 ForwardBaseTable.defaultProps = {
     rowKey: 'key',
     prefixCls: INSIGHT_TABLE_PREFIX,
-    emptyText: () => (
+    emptyText: (): React.ReactNode => (
         <div style={{
             display: 'flex',
             justifyContent: 'center',

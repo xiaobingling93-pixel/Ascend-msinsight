@@ -103,7 +103,7 @@ const onPressEnter = (session: Session, setValue: React.Dispatch<React.SetStateA
 const InputContainer = styled.div`
     width: 380px;
     padding: 5px 10px 5px 10px;
-    color: ${props => props.theme.fontColor}
+    color: ${(props): string => props.theme.fontColor}
 `;
 
 const InputDiv = styled.div`
@@ -111,7 +111,7 @@ const InputDiv = styled.div`
     justify-content: space-between;
     display: flex;
     .ant-input-disabled {
-        background-color: ${props => props.theme.templateBackgroundColor};
+        background-color: ${(props): string => props.theme.templateBackgroundColor};
         border: none;
     }
 `;
@@ -143,15 +143,15 @@ const InputOption = observer(({ session, metaData }: { session: Session; metaDat
         width={100}
         height={18}
         value={t('Offset', { ns: 'timeline' })}
-        dropdownRender={() => <InputContainer>
+        dropdownRender={(): React.ReactElement => <InputContainer>
             <StyledTooltip title={title} visible={visible} overlayInnerStyle={{ borderRadius: 8, color: useTheme().fontColor }}>
                 <InputDiv>
                     <InputSpan>{t('Timestamp Offset', { ns: 'timeline' })}(ns):</InputSpan>
                     <StyledInput minwidth={20} height={18} width={155} isshow={1} value={offset} disabled={session.phase === 'analyzing'} ref={inputRef} maxLength={500}
                         onChange={(e): void => onChange({ e, session, setOffset, setVisible, setTitle, t })}
-                        onBlur={(e) => onBlur(e, session, setOffset, setVisible, metaData)}
+                        onBlur={(e): void => onBlur(e, session, setOffset, setVisible, metaData)}
                         onFocus={onFocus}
-                        onPressEnter={(e) => onPressEnter(session, setOffset, setVisible, e, metaData)}/>
+                        onPressEnter={(e): void => onPressEnter(session, setOffset, setVisible, e, metaData)}/>
                     <CustomButton tooltip={t('Align to Start', { ns: 'timeline' })} icon={AlignIcon} type="primary" onClick={(): void => handleAlignStart(inputRef, session, setOffset)} />
                 </InputDiv>
             </StyledTooltip>

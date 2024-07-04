@@ -23,22 +23,22 @@ export const SelectSimpleTabularDetail = observer(function<T extends CommonState
         }}
         rowClassName={'click-able'}
         expandable={{ showExpandColumn: false }}
-        onRow={row => ({
-            onClick: async () => {
+        onRow={(row): React.HTMLAttributes<any> => ({
+            onClick: async (): Promise<void> => {
                 detail?.clickCallback?.({ row, session, detail, unit, commonState });
                 selectRow(row, session, state);
                 if (detail?.fetchMoreData !== undefined && detail.more?.field !== undefined) {
                     row[detail.more?.field] = await detail?.fetchMoreData(session, row).catch(() => []);
                 }
             },
-            onDoubleClick: () => {
+            onDoubleClick: (): void => {
                 selectRow(row, session, state);
                 detail?.doubleClickCallback?.({ row, session, detail, unit, commonState });
             },
-            onMouseEnter: () => {
+            onMouseEnter: (): void => {
                 detail?.mouseEnterCallback?.({ session, row });
             },
-            onMouseLeave: () => {
+            onMouseLeave: (): void => {
                 detail?.mouseLeaveCallback?.({ session, row });
             },
         })}

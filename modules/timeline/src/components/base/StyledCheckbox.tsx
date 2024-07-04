@@ -5,20 +5,20 @@ import { CheckboxProps } from 'antd/lib/checkbox';
 
 export const StyledCheckbox = styled((props: CheckboxProps & { fontSize?: number }) => <Checkbox {...props}/>)`
     & > span {
-        color: ${(props) => props.disabled ? props.theme.disabledFontColor : props.theme.fontColor} !important;
-        font-size: ${(props) => props.fontSize === undefined ? 12 : props.fontSize}px;
+        color: ${(props): string => props.disabled ? props.theme.disabledFontColor : props.theme.fontColor} !important;
+        font-size: ${(props): number => props.fontSize === undefined ? 12 : props.fontSize}px;
     }
 
     .ant-checkbox-checked > .ant-checkbox-inner {
-        border-color: ${props => props.disabled ? 'transparent' : '#1890ff'} !important;
-        background-color: ${props => props.disabled ? props.theme.templateBackgroundColor : '#1890ff'};
+        border-color: ${(props): string => props.disabled ? 'transparent' : '#1890ff'} !important;
+        background-color: ${(props): string => props.disabled ? props.theme.templateBackgroundColor : '#1890ff'};
     }
 
     .ant-checkbox-inner {
         &:focus {
             box-shadow: unset;
         }
-        background-color: ${(props) => props.theme.deviceProcessBackgroundColor};
-        border: 1px solid ${(props) => props.theme.enclosureBorder};
+        background-color: ${(props): string => props.theme.deviceProcessBackgroundColor};
+        border: 1px solid ${(props): string => props.theme.enclosureBorder};
     }
 `;

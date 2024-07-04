@@ -10,13 +10,13 @@ interface timeDetailProps {
 
 const StyledSliceDetailDiv = styled.div`
     flex: 1;
-    color: ${props => props.theme.fontColor};
+    color: ${(props): string => props.theme.fontColor};
     font-size: 12px;
 
     .sliceDetailTitle {
         text-align: start;
         font-weight: bold;
-        background: ${props => props.theme.contentBackgroundColor};
+        background: ${(props): string => props.theme.contentBackgroundColor};
     }
     .sliceDetail {
         display: flex;
@@ -38,10 +38,10 @@ const StyledSliceDetailDiv = styled.div`
                     margin: 2px 8px 0 5px;
                     g {
                         #Rectangle {
-                            fill: ${props => props.theme.svgPlayBackgroundColor};
+                            fill: ${(props): string => props.theme.svgPlayBackgroundColor};
                         }
                         path {
-                            fill: ${props => props.theme.selectedChartColor};
+                            fill: ${(props): string => props.theme.selectedChartColor};
                         }
                     }
                 }
@@ -49,7 +49,7 @@ const StyledSliceDetailDiv = styled.div`
         }
     }
     .sliceDetail: hover {
-        background-color: ${props => props.theme.tableRowSelect};
+        background-color: ${(props): string => props.theme.tableRowSelect};
     }
 `;
 

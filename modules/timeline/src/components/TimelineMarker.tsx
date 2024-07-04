@@ -34,7 +34,7 @@ const drawTimelineFlag = (ctx: CanvasRenderingContext2D, beginX: number, item: T
     const svgData = 'data:image/svg+xml;base64,' + btoa(svgString);
     const icon = new Image();
     icon.src = svgData;
-    icon.onload = () => {
+    icon.onload = (): void => {
         ctx.drawImage(icon, beginX - 3, 0);
     };
 };
@@ -86,10 +86,10 @@ const drawRangeFlag = (ctx: CanvasRenderingContext2D, rangStartX: number, rangeE
     const rangeEndIcon = new Image();
     rangeStartIcon.src = rangStartSvgData;
     rangeEndIcon.src = rangEndSvgData;
-    rangeStartIcon.onload = () => {
+    rangeStartIcon.onload = (): void => {
         ctx.drawImage(rangeStartIcon, rangStartX - 3, 0);
     };
-    rangeEndIcon.onload = () => {
+    rangeEndIcon.onload = (): void => {
         ctx.drawImage(rangeEndIcon, rangeEndX - 3, 0);
     };
 };
@@ -563,7 +563,7 @@ const handleNewColor = (theme: Theme, session: Session, newColor: string, timeli
     newColorBox.style.marginRight = '6px';
     newColorBox.style.border = theme.colorSelectedBorder;
     newColorBox.id = newColor;
-    newColorBox.onclick = (e) => colorBoxClickListener;
+    newColorBox.onclick = (e): (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void => colorBoxClickListener;
     runInAction(() => {
         if (session.timelineMaker.timelineFlagColorList.length >= 23) {
             const removeColor = session.timelineMaker.timelineFlagColorList[0];
@@ -659,7 +659,7 @@ const setSelectFlag = (session: Session, index: number, mouseXOffset: number, xO
 };
 
 export const linearScaleFactory = (from: [number, number], to: [number, number]) => {
-    return (x: number) => {
+    return (x: number): number => {
         if (from[1] === from[0]) {
             return x;
         }

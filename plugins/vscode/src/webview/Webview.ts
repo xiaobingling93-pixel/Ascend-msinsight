@@ -17,7 +17,7 @@ export abstract class Webview {
         this.webviewManger = manager;
     }
 
-    newPanel() {
+    newPanel(): void {
         this.panel = vscode.window.createWebviewPanel(this.viewType, this.title, {
             viewColumn: vscode.ViewColumn.One,
             preserveFocus: true,
@@ -36,8 +36,8 @@ export abstract class Webview {
         this.activeMessageLinstener();
     }
 
-    activeMessageLinstener() {
-        const openChooseDialog = async (canSelectFolders: boolean, canSelectFiles: boolean) => {
+    activeMessageLinstener(): void {
+        const openChooseDialog = async (canSelectFolders: boolean, canSelectFiles: boolean): Promise<void> => {
             const options: vscode.OpenDialogOptions = {
                 canSelectMany: false,
                 canSelectFolders: canSelectFolders,
@@ -71,7 +71,7 @@ export abstract class Webview {
         );
     }
 
-    active() {
+    active(): void {
         if (this.panel !== undefined) {
             this.panel.reveal(vscode.ViewColumn.One, true);
             return;
@@ -79,7 +79,7 @@ export abstract class Webview {
         this.newPanel();
     }
 
-    dispose() {
+    dispose(): void {
         console.log('profiler is closed');
     }
 }

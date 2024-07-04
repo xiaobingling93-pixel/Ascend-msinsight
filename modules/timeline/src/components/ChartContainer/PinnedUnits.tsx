@@ -14,7 +14,7 @@ import { isPinned, isSonPinned } from './unitPin';
 import { EventType, useEventBus } from '../../utils/eventBus';
 
 const PinnedUnitsContainer = styled.div`
-    box-shadow: 1px 2px 11px 1px ${props => props.theme.shadowBackgroundColor};
+    box-shadow: 1px 2px 11px 1px ${(props): string => props.theme.shadowBackgroundColor};
     z-index: 1;
     flex-grow: 1;
 `;
@@ -30,10 +30,10 @@ const INVISIBLE_UNITS_PLACEHOLDER = 'invisible-units-placeholder';
 const orderOptions = {
     preOrderFlatten: preOrderPinnedFlatten,
     options: {
-        when: (unit: TreeNode<InsightUnit>) => unit.isExpanded,
-        bypass: (unit: TreeNode<InsightUnit>) => unit.type === 'transparent',
-        exclude: (unit: TreeNode<InsightUnit>) => !unit.isDisplay,
-        excludeEx: (unit: TreeNode<InsightUnit>) => isSonPinned(unit),
+        when: (unit: TreeNode<InsightUnit>): boolean => unit.isExpanded,
+        bypass: (unit: TreeNode<InsightUnit>): boolean => unit.type === 'transparent',
+        exclude: (unit: TreeNode<InsightUnit>): boolean => !unit.isDisplay,
+        excludeEx: (unit: TreeNode<InsightUnit>): boolean => isSonPinned(unit),
     },
 };
 

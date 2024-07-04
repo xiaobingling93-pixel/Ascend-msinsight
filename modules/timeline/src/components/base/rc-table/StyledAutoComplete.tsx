@@ -12,15 +12,15 @@ export const StyledAutoComplete = styled(AutoComplete)`
             .rc-virtual-list-holder-inner {
                 & > div {
                     font-size: 1rem;
-                    background: ${props => props.theme.deviceProcessBackgroundColor};
-                    color: ${props => props.theme.filterColor};
+                    background: ${(props): string => props.theme.deviceProcessBackgroundColor};
+                    color: ${(props): string => props.theme.filterColor};
                 }
                 .ant-select-item-option-active {
-                    color: ${props => props.theme.filterColor} !important;
-                    background-color: ${props => props.theme.flagListHoverColor} !important;
+                    color: ${(props): string => props.theme.filterColor} !important;
+                    background-color: ${(props): string => props.theme.flagListHoverColor} !important;
                     svg {
                         g {
-                            fill: ${props => props.theme.deviceProcessActiveFontColor};
+                            fill: ${(props): string => props.theme.deviceProcessActiveFontColor};
                         }
                     }
                 }
@@ -29,7 +29,7 @@ export const StyledAutoComplete = styled(AutoComplete)`
                 }
             }
             .rc-virtual-list-scrollbar-thumb {
-                background-color: ${props => props.theme.deviceProcessNotActiveFontColor} !important; /* 设置滚动条滑块的颜色为红色 */
+                background-color: ${(props): string => props.theme.deviceProcessNotActiveFontColor} !important; /* 设置滚动条滑块的颜色为红色 */
             }
         }
 `

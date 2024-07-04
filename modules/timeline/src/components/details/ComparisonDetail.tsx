@@ -20,12 +20,12 @@ const CONTROLLERBAR_HEIGHT = 48;
 
 const ControllerBar = styled((props: RowProps) => <Row {...props}/>)`
     height: ${CONTROLLERBAR_HEIGHT}px;
-    background-color: ${(props) => props.theme.controllerBarBackgroundColor};
-    color: ${(props) => props.theme.thumbIconBackgroundColor};
+    background-color: ${(props): string => props.theme.controllerBarBackgroundColor};
+    color: ${(props): string => props.theme.thumbIconBackgroundColor};
 `;
 
 const ArrowIcon = styled((props: { width: number; height: number }) => <Arrow {...props}/>)`
-    fill: ${(props) => props.theme.thumbIconBackgroundColor};
+    fill: ${(props): string => props.theme.thumbIconBackgroundColor};
 `;
 
 const StaticTable = function<T extends CommonStateProto>({ session, height, detail, state, commonState }: TableViewProps<DetailTabs, T> & { state: TableState }): JSX.Element {
@@ -37,12 +37,12 @@ const StaticTable = function<T extends CommonStateProto>({ session, height, deta
             selectedRowKeys: session.selectedDetailKeys,
         }}
         expandable={{ onExpand: state.onExpand }}
-        onRow={row => ({
-            onClick: () => {
+        onRow={(row): React.HTMLAttributes<any> => ({
+            onClick: (): void => {
                 selectRow(row, session, state);
                 detail?.clickCallback?.({ row, session, detail, unit, commonState });
             },
-            onDoubleClick: () => {
+            onDoubleClick: (): void => {
                 selectRow(row, session, state);
                 detail?.doubleClickCallback?.({ row, session, detail, unit, commonState });
             },

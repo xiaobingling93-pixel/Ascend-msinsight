@@ -107,8 +107,8 @@ const baseOption: any = {
             name: 'Elapse Time',
             type: 'bar',
             tooltip: {
-                valueFormatter: function (value: any) {
-                    return value + 'ms';
+                valueFormatter: (value: any): string => {
+                    return `${value}ms`;
                 },
             },
             data: [],
@@ -117,8 +117,8 @@ const baseOption: any = {
             name: 'Transit Time',
             type: 'bar',
             tooltip: {
-                valueFormatter: function (value: any) {
-                    return value + 'ms';
+                valueFormatter: (value: any): string => {
+                    return `${value}ms`;
                 },
             },
             data: [],
@@ -127,8 +127,8 @@ const baseOption: any = {
             name: 'Synchronization Time',
             type: 'bar',
             tooltip: {
-                valueFormatter: function (value: any) {
-                    return value + 'ms';
+                valueFormatter: (value: any): string => {
+                    return `${value}ms`;
                 },
             },
             data: [],
@@ -137,8 +137,8 @@ const baseOption: any = {
             name: 'Wait Time',
             type: 'bar',
             tooltip: {
-                valueFormatter: function (value: any) {
-                    return value + 'ms';
+                valueFormatter: (value: any): string => {
+                    return `${value}ms`;
                 },
             },
             data: [],
@@ -148,7 +148,7 @@ const baseOption: any = {
             type: 'line',
             yAxisIndex: 1,
             tooltip: {
-                valueFormatter: function (value: any) {
+                valueFormatter: (value: any): string => {
                     return value;
                 },
             },
@@ -159,7 +159,7 @@ const baseOption: any = {
             type: 'line',
             yAxisIndex: 1,
             tooltip: {
-                valueFormatter: function (value: any) {
+                valueFormatter: (value: any): string => {
                     return value;
                 },
             },
