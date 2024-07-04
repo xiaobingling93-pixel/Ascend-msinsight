@@ -359,6 +359,11 @@ std::vector<SourceFileLine> SourceFileParser::GetApiLinesByCoreAndSource(std::st
             continue;
         }
 
+        // filter lines without instruction executed
+        if (line.instructionsExecuted[index] == 0 && line.cycles[index] == 0) {
+            continue;
+        }
+
         SourceFileLine output;
         for (const auto &pair : line.addressRange) {
             output.addressRange.emplace_back(pair.first, pair.second);
