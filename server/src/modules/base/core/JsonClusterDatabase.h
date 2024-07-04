@@ -35,7 +35,7 @@ public:
     void InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList);
     void InsertStepStatisticsInfo(StepStatistic &stepStatistic);
     void InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo);
-    void InsertGroupId(const std::set<std::string> &groupIds);
+    void InsertGroupId(const std::unordered_map<std::string, int64_t> &groupIds);
     void InsertCommunicationMatrix(CommunicationMatrixInfo &communicationMatrix);
     void InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo);
 
@@ -74,6 +74,7 @@ public:
         uint64_t minTimestamp) override;
 
     void PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds);
+    std::unordered_map<std::string, int64_t> GetAllGroupMap();
 
 private:
     sqlite3_stmt *insertTimeInfoStmt = nullptr;

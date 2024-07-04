@@ -62,6 +62,7 @@ private:
     int infoDepthSeven = 7;
     int sizeDistributionDepth = 8;
     std::string exception;
+    std::unordered_map<std::string, int64_t> groupIdsMap;
 };
 } // end of namespace Timeline
 } // end of namespace Module

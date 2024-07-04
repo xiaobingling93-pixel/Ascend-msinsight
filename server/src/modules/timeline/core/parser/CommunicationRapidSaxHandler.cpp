@@ -125,6 +125,11 @@ bool CommunicationRapidSaxHandler::EndObject(rapidjson::SizeType memberCount)
     if (ParserStatusManager::Instance().GetClusterParserStatus() != ParserStatus::RUNNING) {
         return false;
     }
+    // 获取所有的groupId映射关系
+    auto databaseRead = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetReadClusterDatabase());
+    if (groupIdsMap.empty()) {
+        groupIdsMap = databaseRead->GetAllGroupMap();
+    }
     auto database = dynamic_cast<JsonClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     currentDepth--;
     if (currentDepth == infoDepth && std::strcmp(tableFlag.c_str(), "Communication Bandwidth Info") == 0) {
@@ -166,7 +171,7 @@ bool CommunicationRapidSaxHandler::EndArray(rapidjson::SizeType elementCount)
 CommunicationBandWidth CommunicationRapidSaxHandler::MapToBandwidth(const rapidjson::Document &json)
 {
     CommunicationBandWidth bandWidth;
-    bandWidth.stageId = stageId;
+    bandWidth.stageId = std::to_string(groupIdsMap[stageId]);
     bandWidth.iterationId = stepId.length() > stepSubLen ? stepId.substr(stepSubLen) : stepId;
     if (std::strcmp(stepId.c_str(), "step") == 0) {
         bandWidth.iterationId = "0";
@@ -196,7 +201,7 @@ CommunicationTimeInfo CommunicationRapidSaxHandler::MapToTimeInfo(const rapidjso
     if (std::strcmp(stepId.c_str(), "step") == 0) {
         timeInfo.iterationId = "0";
     }
-    timeInfo.stageId = stageId;
+    timeInfo.stageId = std::to_string(groupIdsMap[stageId]);
     int index = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
     if (index != std::string::npos) {
         timeInfo.opName = tempOpName.substr(0, index);

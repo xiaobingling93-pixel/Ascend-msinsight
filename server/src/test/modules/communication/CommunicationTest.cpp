@@ -171,8 +171,8 @@ TEST_F(TestSuit, GetCommunicationGroups)
     database->GetGroups(requestParams, responseBody);
     int expectSize = 2;
     EXPECT_EQ(responseBody.groupList.size(), expectSize);
-    EXPECT_EQ(responseBody.groupList[1], "p2p");
-    EXPECT_EQ(responseBody.groupList[0], "(0, 1, 2, 3, 4, 5, 6, 7)");
+    EXPECT_EQ(responseBody.groupList[0], "p2p");
+    EXPECT_EQ(responseBody.groupList[1], "(0, 1, 2, 3, 4, 5, 6, 7)");
 }
 
 TEST_F(TestSuit, QueryMatrixData)

@@ -247,13 +247,17 @@ void JsonClusterDatabase::InsertBandwidth(CommunicationBandWidth &bandWidth)
     }
 }
 
-void JsonClusterDatabase::InsertGroupId(const std::set<std::string> &groupIds)
+void JsonClusterDatabase::InsertGroupId(const std::unordered_map<std::string, int64_t> &groupIds)
 {
+    if (groupIds.empty()) {
+        ServerLog::Error("Group id is empty");
+        return;
+    }
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "INSERT INTO " + TABLE_GROUP_ID +
-                      " (group_id) VALUES (?)";
+                      " (id, group_id) VALUES (?, ?)";
     for (size_t i = 0; i < groupIds.size() - 1; ++i) {
-        sql.append(",(?)");
+        sql.append(",(?, ?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare inserting GroupId statement. error:", sqlite3_errmsg(db));
@@ -261,7 +265,8 @@ void JsonClusterDatabase::InsertGroupId(const std::set<std::string> &groupIds)
     }
     int idx = bindStartIndex;
     for (const auto &groupId: groupIds) {
-        sqlite3_bind_text(stmt, idx++, groupId.c_str(), groupId.length(),
+        sqlite3_bind_int64(stmt, idx++, groupId.second);
+        sqlite3_bind_text(stmt, idx++, groupId.first.c_str(), groupId.first.length(),
                           SQLITE_TRANSIENT);
     }
     auto result = sqlite3_step(stmt);
@@ -581,6 +586,26 @@ bool JsonClusterDatabase::GetGroups(Protocol::MatrixGroupParam param, Protocol::
     return ExecuteGetGroups(param, responseBody, sql);
 }
 
+std::unordered_map<std::string, int64_t> JsonClusterDatabase::GetAllGroupMap()
+{
+    std::string sql = "SELECT id, group_id FROM " + TABLE_GROUP_ID;
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        ServerLog::Error("Failed to Get Groups info. error: ", sqlite3_errmsg(db));
+        return {};
+    }
+    std::unordered_map<std::string, int64_t> res;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        int64_t id = sqlite3_column_int64(stmt, col++);
+        std::string groupId = sqlite3_column_string(stmt, col++);
+        res.insert(std::make_pair(groupId, id));
+    }
+    sqlite3_finalize(stmt);
+    return res;
+}
+
 bool JsonClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
     Protocol::MatrixListResponseBody &responseBody)
 {
@@ -590,8 +615,9 @@ bool JsonClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
                       "ROUND(transit_time, 4) as transitTime, "
                       "ROUND(bandwidth, 4) as bandwidth ,"
                       "op_name as opName "
-                      "FROM " + TABLE_COMMUNICATION_MATRIX +
-                      " WHERE group_id = ? AND iteration_id = ? AND op_sort = ? ";
+                      "FROM " + TABLE_COMMUNICATION_MATRIX + " CM"
+                      " LEFT JOIN " + TABLE_GROUP_ID + " g ON cm.group_id = g.id"
+                      " WHERE g.group_id = ? AND iteration_id = ? AND op_sort = ? ";
     return ExecuteQueryMatrixList(param, responseBody, sql);
 }
 
@@ -647,7 +673,8 @@ bool JsonClusterDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
 bool JsonClusterDatabase::QueryIterationAndCommunicationGroup(Protocol::KernelParams &params,
     Protocol::OneKernelBody &responseBody, uint64_t minTimestamp)
 {
-    std::string sql = "select iteration_id, stage_id from " + TABLE_TIME_INFO +
+    std::string sql = "select iteration_id, tg.group_id as stage_id from " + TABLE_TIME_INFO + " t"
+        " LEFT JOIN " + TABLE_GROUP_ID + " tg ON t.stage_id = tg.id"
         " where op_name = ? and abs(start_time - ? ) <= 500";
     uint64_t reallyStartTime = params.timestamp + minTimestamp;
     return ExecuteQueryIterationAndCommunicationGroup(sql, params.name, reallyStartTime, responseBody.step,
@@ -674,18 +701,24 @@ bool JsonClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &para
         "    SELECT op_name, "
         "    MAX(CASE WHEN transport_type = 'SDMA' THEN bandwidth_size ELSE 0 END) AS sdma_bw, "
         "    MAX(CASE WHEN transport_type = 'RDMA' THEN bandwidth_size ELSE 0 END) AS rdma_bw "
-        "    FROM " + TABLE_BANDWIDTH + " "
-        "    WHERE iteration_id = ? AND rank_id = ? AND stage_id = ? AND op_name != 'Total Op Info' "
+        "    FROM " + TABLE_BANDWIDTH + " b "
+        "    LEFT JOIN " + TABLE_GROUP_ID + " g ON b.stage_id = g.id"
+        "    WHERE iteration_id = ? AND rank_id = ? AND g.group_id = ? AND op_name != 'Total Op Info' "
         "    GROUP BY op_name "
         ") bw ON t.op_name = bw.op_name "
-        " WHERE t.iteration_id = ? AND t.rank_id = ? AND t.stage_id = ? AND t.op_name != 'Total Op Info'";
+        " LEFT JOIN " + TABLE_GROUP_ID + " tg ON t.stage_id = tg.id"
+        " WHERE t.iteration_id = ? AND t.rank_id = ? AND tg.group_id = ? AND t.op_name != 'Total Op Info'";
     return ExecuteQueryAllOperators(param, resBody, sql, startTime);
 }
 
 bool JsonClusterDatabase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
-    std::string sql = "SELECT op_name, count(*) AS nums  from " + TABLE_TIME_INFO + " where 1=1 ";
+    std::string sql = "SELECT op_name, count(*) AS nums  from "
+    " (SELECT t.op_name as op_name, g.group_id as stage_id, t.iteration_id as iteration_id, t.rank_id as rank_id FROM "
+    + TABLE_TIME_INFO + " t"
+    " LEFT JOIN " + TABLE_GROUP_ID + " g ON t.stage_id = g.id)"
+    " where 1=1 ";
     return ExecuteQueryOperatorsCount(param, resBody, sql);
 }
 
@@ -696,8 +729,9 @@ bool JsonClusterDatabase::QueryBandwidthData(Protocol::BandwidthDataParam &param
                       "ROUND(transit_time, 4) as transit_time,"
                       "ROUND(bandwidth_size, 4) as bandwidth_size,"
                       "ROUND(large_package_ratio, 4)  as large_package_ratio from "
-                      + TABLE_BANDWIDTH +
-                      " WHERE iteration_id = ? AND rank_id = ? AND stage_id = ? AND op_name = ? ";
+                      + TABLE_BANDWIDTH + " b "
+                      " LEFT JOIN " + TABLE_GROUP_ID + " g ON b.stage_id = g.id"
+                      " WHERE iteration_id = ? AND rank_id = ? AND g.group_id = ? AND op_name = ? ";
     return ExecuteQueryBandwidthData(param, resBody, sql);
 }
 
@@ -705,10 +739,11 @@ bool JsonClusterDatabase::QueryDistributionData(Protocol::DistributionDataParam 
     Protocol::DistributionResBody &resBody)
 {
     std::string sql = "SELECT size_distribution FROM "
-                      + TABLE_BANDWIDTH +
+                      + TABLE_BANDWIDTH + " b"
+                      " LEFT JOIN " + TABLE_GROUP_ID + " g ON b.stage_id = g.id"
                       " WHERE iteration_id = ? "
                       "AND rank_id = ? "
-                      "AND stage_id = ? "
+                      "AND g.group_id = ? "
                       "AND op_name = ? "
                       "AND transport_type = ? ;";
     return ExecuteQueryDistributionData(param, resBody, sql);
@@ -726,15 +761,17 @@ bool JsonClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requ
     std::vector<std::string> rankList = requestParams.rankList;
     std::string sql;
     if (rankList.empty()) {
-        sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + TABLE_TIME_INFO +
+        sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + TABLE_TIME_INFO + " t"
+                " LEFT JOIN " + TABLE_GROUP_ID + " tg ON t.stage_id = tg.id"
                 " WHERE iteration_id = ?" +
-                " AND stage_id = ?" +
+                " AND tg.group_id = ?" +
                 " ORDER BY op_name)";
     } else {
         std::string ranks = GetRanksSql(rankList);
-        sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + TABLE_TIME_INFO +
+        sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + TABLE_TIME_INFO + " t"
+                " LEFT JOIN " + TABLE_GROUP_ID + " tg ON t.stage_id = tg.id"
                 " WHERE iteration_id = ?" +
-                " AND stage_id = ?" +
+                " AND tg.group_id = ?" +
                 " AND rank_id IN " + ranks + " ORDER BY op_name)";
     }
     return ExecuteQueryOperatorNames(requestParams, responseBody, sql);
@@ -743,9 +780,10 @@ bool JsonClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requ
 bool JsonClusterDatabase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
     std::vector<Protocol::OperatorNamesObject> &responseBody)
 {
-    std::string sql = "SELECT DISTINCT op_sort  FROM " + TABLE_COMMUNICATION_MATRIX +
+    std::string sql = "SELECT DISTINCT op_sort  FROM " + TABLE_COMMUNICATION_MATRIX + " cm"
+            " LEFT JOIN " + TABLE_GROUP_ID + " g ON cm.group_id = g.id"
             " WHERE iteration_id = ?" +
-            " AND group_id = ?" +
+            " AND g.group_id = ?" +
             " ORDER BY op_sort";
     return ExecuteQueryMatrixSortOpNames(requestParams, responseBody, sql);
 }
@@ -782,11 +820,13 @@ bool JsonClusterDatabase::QueryDurationList(Protocol::DurationListParams &reques
         "    MAX(CASE WHEN transport_type = 'RDMA' THEN bandwidth_size ELSE 0 END) AS rdma_bw, "
         "    MAX(CASE WHEN transport_type = 'SDMA' THEN transit_time ELSE 0 END) AS sdma_time, "
         "    MAX(CASE WHEN transport_type = 'RDMA' THEN transit_time ELSE 0 END) AS rdma_time "
-        "    FROM " + TABLE_BANDWIDTH + " "
-        "    WHERE iteration_id = ? AND stage_id = ? AND op_name = ? " + rankSql +
+        "    FROM " + TABLE_BANDWIDTH + " b "
+        "    LEFT JOIN " + TABLE_GROUP_ID + " g ON b.stage_id = g.id"
+        "    WHERE iteration_id = ? AND g.group_id = ? AND op_name = ? " + rankSql +
         "    GROUP BY rank_id "
-        ") bw ON t.rank_id = bw.rank_id "
-        " WHERE t.iteration_id = ? AND t.stage_id = ? AND t.op_name = ? " + rankSqlTime;
+        ") bw ON t.rank_id = bw.rank_id"
+        " LEFT JOIN " + TABLE_GROUP_ID + " tg ON t.stage_id = tg.id"
+        " WHERE t.iteration_id = ? AND tg.group_id = ? AND t.op_name = ? " + rankSqlTime;
     return ExecuteQueryDurationList(requestParams, responseBody, sql, startTime);
 }
 
@@ -796,8 +836,9 @@ bool JsonClusterDatabase::QueryOperatorList(Protocol::DurationListParams &reques
     std::string sql =
         "SELECT rank_id, op_name,"
         " CASE WHEN start_time = 0 THEN 0 ELSE (start_time - ?) END as startTime,"
-        " (elapse_time * 1000000) as elapse_time From " + TABLE_TIME_INFO +
-        " WHERE iteration_id = ? AND stage_id = ? AND op_name <> 'Total Op Info'";
+        " (elapse_time * 1000000) as elapse_time From " + TABLE_TIME_INFO + " T"
+        " LEFT JOIN " + TABLE_GROUP_ID + " tg ON t.stage_id = tg.id"
+        " WHERE iteration_id = ? AND tg.group_id = ? AND op_name <> 'Total Op Info'";
     std::vector<std::string> rankList = requestParams.rankList;
     if (!rankList.empty()) {
         std::string ranks = GetRanksSql(rankList);
