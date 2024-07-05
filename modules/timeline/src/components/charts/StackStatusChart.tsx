@@ -230,7 +230,7 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
     const theme = useTheme();
     const canvasContainer = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
-    const { action: drawExt = () => {}, triggers = [] } = decorator?.(session, metadata) ?? {};
+    const { action: drawExt = (): void => {}, triggers = [] } = decorator?.(session, metadata) ?? {};
     const datasState = useData(session, mapFunc, unit, metadata, width, (data, width, start, end) =>
         data.map(row => zipStatusData(row, width, start, end)));
     const rangeAndDomain = useRangeAndDomain(session, width, margin); const mousePos = useHoverPos(canvasContainer);

@@ -6,7 +6,7 @@ export interface ColGroupProps<RecordType> {
     columCount?: number;
 }
 
-export function ColGroup<RecordType>({ colWidths, columns, columCount }: ColGroupProps<RecordType>) {
+export function ColGroup<RecordType>({ colWidths, columns, columCount }: ColGroupProps<RecordType>): JSX.Element {
     const cols: React.ReactElement[] = [];
     const len = columCount || columns!.length;
   

@@ -263,9 +263,9 @@ const DetailTable = ({ rankId, record, name, step }: any): JSX.Element => {
             rowKey={rowKey}
             size="small"
             pagination={GetPageConfigWhithPageData(page, setPage)}
-            onChange={(pagination: any, filters: any, sorter: any, extra: any) => {
+            onChange={(pagination: any, filters: any, mySorter: any, extra: any): void => {
                 if (extra.action === 'sort') {
-                    setSorter(sorter);
+                    setSorter(mySorter);
                 }
             }
             }

@@ -19,7 +19,7 @@ function HeaderRow<RecordType>({
     columns,
     onHeaderRow,
     index,
-}: RowProps<RecordType>) {
+}: RowProps<RecordType>): JSX.Element {
     const { prefixCls } = useTableContext();
 
     let rowProps: React.HTMLAttributes<HTMLElement> = {};

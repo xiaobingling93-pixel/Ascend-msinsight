@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { StickyOffsets } from '../types';
 
-export function useStickyOffsets(colWidths: number[], columnCount: number) {
+export function useStickyOffsets(colWidths: number[], columnCount: number): StickyOffsets {
     const stickyOffsets: StickyOffsets = useMemo(() => {
         const leftOffsets: number[] = [];
         const rightOffsets: number[] = [];

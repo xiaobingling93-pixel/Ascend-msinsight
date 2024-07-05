@@ -22,7 +22,7 @@ export class Session {
             partitionModes: [],
             defaultPPSize: 0,
         };
-        window.closeWaiting = () => {
+        window.closeWaiting = (): void => {
             this.clusterCompleted = true;
             this.parseCompleted = true;
         };

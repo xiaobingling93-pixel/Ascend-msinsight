@@ -189,7 +189,7 @@ const CommunicationAnalysisCom = (props: {isShow:
                     <CommunicationTimeAnalysisChart dataSource={showData.analysisChartData} session={session}/>
                     <CommunicationTimeChart dataSource={showData.chartData} session={session}/>
                     <CommunicationTimeTable showOperator={showOperator} dataSource={showData.tableData} session={session}
-                        conditions={conditions} updateSort={(data) => {
+                        conditions={conditions} updateSort={(data): void => {
                             setShowData({ ...showData, chartData: wrapChartData(data) });
                         }}/>
                     { showData.adviceData.length > 0 && <AdviceLabel adviceData={showData.adviceData} /> }

@@ -12,7 +12,8 @@ export class WebviewManager {
         }
         return this.webview;
     }
-    dispose() {
+    
+    dispose(): void {
         this.webview = undefined;
     }
 }

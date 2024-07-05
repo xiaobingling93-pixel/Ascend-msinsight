@@ -41,7 +41,7 @@ const extractTitle = ({
     ellipsis,
     rowType,
     children,
-}: Pick<CellProps<any>, 'ellipsis' | 'rowType' | 'children'>) => {
+}: Pick<CellProps<any>, 'ellipsis' | 'rowType' | 'children'>): string => {
     const ellipsisConfig = ellipsis === true ? { showTitle: true } : ellipsis;
     if (ellipsisConfig && (ellipsisConfig.showTitle || rowType === 'header')) {
         if (typeof children === 'string' || typeof children === 'number') {

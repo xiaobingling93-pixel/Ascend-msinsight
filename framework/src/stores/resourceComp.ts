@@ -43,7 +43,7 @@ export const useResource = defineStore('resource', () => {
         return [...(newResource.childrenFolders ? newResource.childrenFolders : []), ...(newResource.childrenFiles ? newResource.childrenFiles : [])];
     }
 
-    const setResource = (body: Body) => {
+    const setResource = (body: Body): ResourceItem[] => {
         const { name, path, childrenFolders, childrenFiles } = body;
         const newResource: ResourceItem = {
             path,

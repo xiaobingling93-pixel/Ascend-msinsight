@@ -194,7 +194,7 @@ export const GetPageData = (page: { current: number; pageSize: number; total: nu
         pageSizeOptions: [10, 20, 50, 100],
         showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>{i18n.t('PaginationTotal', { total })}</div>),
         hideOnSinglePage: false,
-        onChange: (current: number, pageSize: number) => { setPage({ ...page, current, pageSize }); },
+        onChange: (current: number, pageSize: number): void => { setPage({ ...page, current, pageSize }); },
         showQuickJumper: page.total / (page.pageSize === 0 ? 1 : page.pageSize) > 5,
     };
 };

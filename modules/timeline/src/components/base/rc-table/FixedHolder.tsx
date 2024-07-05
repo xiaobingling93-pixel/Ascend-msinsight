@@ -4,7 +4,7 @@ import { useTableContext } from './contexts';
 import { HeaderProps } from './Header';
 import { ColumnsType, ColumnType } from './types';
 
-function useColumnWidth(colWidths: readonly number[], columnCount: number) {
+function useColumnWidth(colWidths: readonly number[], columnCount: number): number[] | null {
     return useMemo(() => {
         const cloneColumns: number[] = [];
         for (let i = 0; i < columnCount; i++) {

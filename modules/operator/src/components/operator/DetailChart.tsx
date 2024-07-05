@@ -76,7 +76,7 @@ const baseOption: echarts.EChartsOption = {
             label: {
                 show: true,
                 position: 'inside',
-                formatter(param) {
+                formatter(param): string {
                     // correct the percentage
                     return `${param.percent}%`;
                 },

@@ -30,7 +30,7 @@ export const Mask: React.FC<{ unitPhase: string; isShowMask: boolean } & { child
         height: 100%;
         justify-content: center;
         align-items: center;
-        background-color: ${props => props.theme.maskColor};
+        background-color: ${(p): string => p.theme.maskColor};
     `;
     const Info = styled.div`
         border-radius: 4px;

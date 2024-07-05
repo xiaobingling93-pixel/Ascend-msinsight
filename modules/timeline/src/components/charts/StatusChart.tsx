@@ -99,7 +99,7 @@ export const StatusChart = observer(({
     const theme = useTheme();
     const canvasContainer = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
-    const { action: drawExt = () => {}, triggers = [] } = decorator?.(session, metadata) ?? {};
+    const { action: drawExt = (): void => {}, triggers = [] } = decorator?.(session, metadata) ?? {};
 
     const datasState = useData(session, mapFunc, unit, metadata, width, zipStatusData);
     const rangeAndDomain = useRangeAndDomain(session, width, margin);

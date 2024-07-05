@@ -69,7 +69,7 @@ export class Session {
 
 export const useSession = defineStore('session', () => {
     const session = reactive(new Session());
-    const setSession = function<T extends keyof Session>(curState: Record<T, Session[T]> | ((prevState: typeof session) => Record<T, Session[T]>)) {
+    const setSession = function<T extends keyof Session>(curState: Record<T, Session[T]> | ((prevState: typeof session) => Record<T, Session[T]>)): void {
         Object.assign(session, typeof curState !== 'function' ? curState : curState(session));
     }
     return { session, setSession };

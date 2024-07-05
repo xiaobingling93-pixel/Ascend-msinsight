@@ -39,7 +39,7 @@ const StatePopover = observer(({ session }: { session: Session }) => {
         height: 100%;
         justify-content: center;
         align-items: center;
-        background-color: ${props => props.theme.maskColor};
+        background-color: ${(props): string => props.theme.maskColor};
     `;
     const Info = styled.div`
         border-radius: 4px;

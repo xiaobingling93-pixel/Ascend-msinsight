@@ -49,7 +49,7 @@ registerCrossUnitRenderer({
 });
 
 const Overlay = styled.canvas`
-    border-left: 1px solid ${props => props.theme.tableBorderColor};
+    border-left: 1px solid ${(props): string => props.theme.tableBorderColor};
     position: absolute;
     top: 0;
     bottom: 0;

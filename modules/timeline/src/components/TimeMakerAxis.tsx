@@ -12,7 +12,7 @@ const ChartRowContainer = styled.div`
     display: flex;
     align-items: center;
     height: 15px;
-    border-top: solid 1px ${props => props.theme.tableBorderColor};
+    border-top: solid 1px ${(props): string => props.theme.tableBorderColor};
 `;
 export const TIME_MARKER_AXIS_HEIGHT = 15;
 export interface ChartRowProps extends RowProps {

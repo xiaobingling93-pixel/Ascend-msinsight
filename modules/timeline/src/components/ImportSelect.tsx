@@ -5,7 +5,7 @@ import { StyledSelect } from './base/StyledSelect';
 import { observer } from 'mobx-react';
 
 const ChildrenContainer = styled.div`
-    color: ${props => props.theme.fontColor};
+    color: ${(props): string => props.theme.fontColor};
     text-align: left;
     padding-left: 20px;
     user-select: none;

@@ -9,7 +9,7 @@ import { getDuration, getTimestamp } from '../utils/humanReadable';
 
 const StyledSliceMoreDiv = styled.div`
     width: 100%;
-    color: ${props => props.theme.fontColor};
+    color: ${(props): string => props.theme.fontColor};
     display: flex;
     flex-direction: column;
     font-size: 12px;

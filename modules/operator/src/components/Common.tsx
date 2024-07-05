@@ -107,7 +107,7 @@ export const GetPageConfigWhithPageData = (page: { current: number; pageSize: nu
         pageSizeOptions: [10, 20, 50, 100],
         showTotal: (total: number) => (<div style={{ marginRight: '10px' }}>{i18n.t('PaginationTotal', { total })}</div>),
         hideOnSinglePage: false,
-        onChange: (current: number, pageSize: number) => { setPage({ ...page, current, pageSize }); },
+        onChange: (current: number, pageSize: number): void => { setPage({ ...page, current, pageSize }); },
         showQuickJumper: page.pageSize !== 0 && page.total / page.pageSize > 5,
     };
 };
