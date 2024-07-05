@@ -10,12 +10,13 @@ export interface ModuleConfig {
     isJupyter?: boolean;
 };
 
+const isDev = import.meta.env.MODE === 'development';
 export const modulesConfig: ModuleConfig[] = [
     {
         name: 'Timeline',
         requestName: 'timeline',
         attributes: {
-            src: import.meta.env.DEV ? 'http://localhost:3000/' : './plugins/Timeline/index.html',
+            src: isDev ? 'http://localhost:3000/' : './plugins/Timeline/index.html',
         },
         isDefault: true,
         isCluster: true,
@@ -26,7 +27,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Memory',
         requestName: 'memory',
         attributes: {
-            src: import.meta.env.DEV ? 'http://localhost:3001/' : './plugins/Memory/index.html',
+            src: isDev ? 'http://localhost:3001/' : './plugins/Memory/index.html',
         },
         isDefault: true,
         isCluster: true,
@@ -36,7 +37,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Operator',
         requestName: 'operator',
         attributes: {
-            src: import.meta.env.DEV ? 'http://localhost:3002/' : './plugins/Operator/index.html',
+            src: isDev ? 'http://localhost:3002/' : './plugins/Operator/index.html',
         },
         isDefault: true,
         isCluster: true,
@@ -46,7 +47,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Summary',
         requestName: 'summary',
         attributes: {
-            src: import.meta.env.DEV ? 'http://localhost:3003/summary.html' : './plugins/Cluster/summary.html',
+            src: isDev ? 'http://localhost:3003/summary.html' : './plugins/Cluster/summary.html',
         },
         isCluster: true,
     },
@@ -54,7 +55,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Communication',
         requestName: 'communication',
         attributes: {
-            src: import.meta.env.DEV ? 'http://localhost:3003/communication.html' : './plugins/Cluster/communication.html',
+            src: isDev ? 'http://localhost:3003/communication.html' : './plugins/Cluster/communication.html',
         },
         isCluster: true,
     },
@@ -62,7 +63,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Source',
         requestName: 'compute',
         attributes: {
-            src: import.meta.env.DEV ? 'http://localhost:3004/source.html' : './plugins/Compute/source.html',
+            src: isDev ? 'http://localhost:3004/source.html' : './plugins/Compute/source.html',
         },
         isCompute: true,
     },
@@ -70,7 +71,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Details',
         requestName: 'compute',
         attributes: {
-            src: import.meta.env.DEV ? 'http://localhost:3004/detail.html' : './plugins/Compute/detail.html',
+            src: isDev ? 'http://localhost:3004/detail.html' : './plugins/Compute/detail.html',
         },
         isCompute: true,
     },
@@ -78,7 +79,7 @@ export const modulesConfig: ModuleConfig[] = [
         name: 'Jupyter',
         requestName: 'jupyter',
         attributes: {
-            src: import.meta.env.DEV ? 'http://localhost:3005/' : './plugins/Jupyter/index.html',
+            src: isDev ? 'http://localhost:3005/' : './plugins/Jupyter/index.html',
         },
         isJupyter: true,
     },
