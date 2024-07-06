@@ -143,7 +143,7 @@ function wrapData(dataSource: any, t: TFunction): any {
             }
             return data[2];
         };
-        option.series[0].tooltip.formatter = function (params: any) {
+        option.series[0].tooltip.formatter = function (params: any): string {
             const datalist = params?.data;
             const str = datalist?.[3]?.length === 0
                 ? `srcRank -> dstRank: ${datalist?.[0]} -> ${datalist?.[1]} <br/> ${t(type)}: ${datalist?.[2]}`
@@ -210,7 +210,7 @@ const baseOption: any = {
             type: 'heatmap',
             tooltip: {
                 show: true,
-                formatter: function (params: any) {
+                formatter: function (params: any): string {
                     const { data } = params;
                     return `${data[0]} -> ${data[1]} : ${data[2]}`;
                 },
@@ -367,7 +367,7 @@ const CommunicationMatrixCom = ({ isShow, handleChange, switchCondition, range, 
                     <Select
                         defaultValue="0"
                         style={{ width: 200, marginRight: '20px' }}
-                        onChange={val => {
+                        onChange={(val): void => {
                             handleChange('type', val);
                         }}
                         options={useOptions()}

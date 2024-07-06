@@ -230,7 +230,7 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
             return;
         }
         const needDragOneSide = chartInteractorRef.current.mouseDownAction(interactorMouseState, e);
-        if (needDragOneSide === MouseDownActionResult.NoNeedToDragOneSide) {
+        if (needDragOneSide === MouseDownActionResult.NO_NEED_TO_DRAG_ONE_SIDE) {
             interactorMouseState.clickPos.current = interactorMouseState.lastPos.current;
         }
     };

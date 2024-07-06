@@ -20,8 +20,8 @@ Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
 });
 
 // 禁用右键刷新以及F5、Ctrl+R刷新
-document.oncontextmenu = () => false;
-document.onkeydown = (event) => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
+document.oncontextmenu = (): boolean => false;
+document.onkeydown = (event): boolean => event.key !== 'F5' && !(event.key === 'r' && event.ctrlKey);
 
 type CefQueryType = {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
 
@@ -60,7 +60,7 @@ declare global {
     }
 };
 
-window.requestData = async (command, params, module) => {
+window.requestData = async (command, params, module): Promise<any> => {
     const data = await connector.fetch({
         args: { command, params },
         module: module !== undefined ? module : String(command).split('/')[0]?.toLowerCase(),

@@ -14,7 +14,7 @@ const HeaderToolbar = styled.div<{ width?: number }>`
     justify-content: space-between;
     padding-left: 10px;
     padding-right: 10px;
-    width: ${(props) => props.width}px;
+    width: ${(props): number | undefined => props.width}px;
     margin-top: 4px;
     .title {
         font-size: 12px;
@@ -34,7 +34,7 @@ const HeaderLeft = observer(({ session, laneInfoWidth }: { session: Session; lan
 const RightHeader = observer(({ session, showRecommendation, timelineHeight }:
 { session: Session; showRecommendation: boolean; timelineHeight: number }): JSX.Element => {
     return (
-        <div onMouseMove={(e) => handleMouseMove(e)} onMouseLeave={(e) => handleMouseLeave(e)}>
+        <div onMouseMove = { handleMouseMove } onMouseLeave = { handleMouseLeave }>
             <TimelineAxis session={session} margin={2} timelineHeight={timelineHeight} />
             { showRecommendation ? <Recommendations session={session}/> : <></> }
         </div>

@@ -17,14 +17,14 @@ interface DetailProps<T extends Record<string, unknown>> {
 
 const StyledSliceDetailDiv = styled.div`
     width: 100%;
-    color: ${props => props.theme.fontColor};
+    color: ${(props): string => props.theme.fontColor};
     display: flex;
     font-size: 12px;
 `;
 
 const StyledSliceArgsDiv = styled.div`
     width: 100%;
-    color: ${props => props.theme.fontColor};
+    color: ${(props): string => props.theme.fontColor};
     text-align: left;
     font-size: 12px;
 `;
@@ -50,7 +50,7 @@ const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element =>
         return <div>
             <StyledSliceArgsDiv>
                 <ExpandIcon
-                    onClick={ () => setHidden(!isHiddenArgs) } style={{ margin: '-2px 0 0 8px', float: 'left', transform: `rotate(${!isHiddenArgs ? 0 : '-90deg'}) translate(${!isHiddenArgs ? '-2' : '1'}px, ${!isHiddenArgs ? '0' : '-2'}px)`, cursor: 'pointer' }}/>
+                    onClick={ (): void => setHidden(!isHiddenArgs) } style={{ margin: '-2px 0 0 8px', float: 'left', transform: `rotate(${!isHiddenArgs ? 0 : '-90deg'}) translate(${!isHiddenArgs ? '-2' : '1'}px, ${!isHiddenArgs ? '0' : '-2'}px)`, cursor: 'pointer' }}/>
                 <div style={{ fontWeight: 'bold', margin: '8px 0 0 8px' }}>{t('Args')}</div>
                 {!isHiddenArgs
                     ? Object.keys(args).map(key => {

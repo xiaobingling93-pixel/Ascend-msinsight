@@ -21,12 +21,12 @@ function Support<T extends CommonStateProto>(
             selectedRowKeys: session.selectedDetailKeys,
         }}
         expandable={{ onExpand: state.onExpand, showExpandColumn: isTree }}
-        onRow={row => ({
-            onClick: () => {
+        onRow={(row): {onClick: () => void; onDoubleClick: () => void} => ({
+            onClick: (): void => {
                 selectRow(row, session, state);
                 detail?.clickCallback?.({ row, session, detail, unit, commonState });
             },
-            onDoubleClick: () => {
+            onDoubleClick: (): void => {
                 selectRow(row, session, state);
                 detail?.doubleClickCallback?.({ row, session, detail, unit, commonState });
             },

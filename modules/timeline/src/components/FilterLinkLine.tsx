@@ -51,7 +51,7 @@ const FilterItem: React.FC<FilterItemProps> = observer(({ category, checkedCateg
         <p style={{ marginBottom: 0 }}>
             <StyledCheckbox
                 checked={isChecked}
-                onChange={() => {
+                onChange={(): void => {
                     setCheckedCategories(prev => isChecked ? prev.filter(cat => cat !== category) : prev.concat(category));
                 }}>
                 {category}
@@ -211,10 +211,10 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
                     : displayCategories.map((category, index) => <FilterItem key={index} category={category} checkedCategories={checkedCategories} setCheckedCategories={setCheckedCategories}/>)}
             </FilterList>
             {!isEmptyData && <FilterButtonLine>
-                <StyledButton width={50} onClick={() => setCheckedCategories([...displayCategories])}>
+                <StyledButton width={50} onClick={(): void => setCheckedCategories([...displayCategories])}>
                     All
                 </StyledButton>
-                <StyledButton width={50} onClick={(() => setCheckedCategories([]))}>
+                <StyledButton width={50} onClick={((): void => setCheckedCategories([]))}>
                     None
                 </StyledButton>
             </FilterButtonLine>}

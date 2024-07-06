@@ -8,7 +8,7 @@ interface ResizeContextProps {
 
 export const ResizeContext = React.createContext<ResizeContextProps | null>(null);
 
-export const useResizeContext = () => {
+export const useResizeContext = (): ResizeContextProps => {
     const ctx = React.useContext(ResizeContext);
     if (!ctx) {
         throw new Error('No ResizeContext provided');
@@ -19,15 +19,13 @@ export const useResizeContext = () => {
 export interface TableContextProps {
     // Table context
     prefixCls: string;
-  
     scrollbarSize: number;
-  
     fixedInfoList: readonly FixedInfo[];
 }
 
 export const TableContext = React.createContext<TableContextProps | null>(null);
 
-export const useTableContext = () => {
+export const useTableContext = (): TableContextProps => {
     const ctx = React.useContext(TableContext);
     if (!ctx) {
         throw new Error('No TableContext provided');
@@ -47,7 +45,7 @@ export interface BodyContextProps<RecordType = DefaultRecordType> {
 
 export const BodyContext = React.createContext<BodyContextProps<any> | null>(null);
 
-export const useBodyContext = () => {
+export const useBodyContext = (): BodyContextProps<any> => {
     const ctx = React.useContext(BodyContext);
     if (!ctx) {
         throw new Error('No BodyContext provided!');
@@ -58,7 +56,6 @@ export const useBodyContext = () => {
 export interface PerfRecord {
     renderWithProps: boolean;
 }
-  
 export const PerfContext = React.createContext<PerfRecord>({
     renderWithProps: false,
 });

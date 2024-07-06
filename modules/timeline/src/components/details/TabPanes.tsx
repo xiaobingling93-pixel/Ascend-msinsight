@@ -104,7 +104,7 @@ export const TabPanes = ({ tabs, commonBottomPanel, isShowFilter, sharedState }:
     return {
         DetailTitle: ({ session }): JSX.Element => <TabTitles session={session} {...tabsPaneProps} />,
         Detail: tabs[commonState.activeKey].bottomPanel?.Detail ?? commonBottomPanel?.Detail
-            ? ({ session, height }) => <TabDetail
+            ? ({ session, height }): JSX.Element => <TabDetail
                 Detail={commonBottomPanel?.Detail}
                 detailProps={commonBottomPanel?.detailProps}
                 session={session}
@@ -112,7 +112,7 @@ export const TabPanes = ({ tabs, commonBottomPanel, isShowFilter, sharedState }:
                 {...tabsPaneProps} />
             : undefined,
         More: tabs[commonState.activeKey].bottomPanel?.More ?? commonBottomPanel?.More
-            ? ({ session, height }) => <TabMore
+            ? ({ session, height }): JSX.Element => <TabMore
                 More={commonBottomPanel?.More}
                 moreProps={commonBottomPanel}
                 session={session}
@@ -121,7 +121,7 @@ export const TabPanes = ({ tabs, commonBottomPanel, isShowFilter, sharedState }:
             : undefined,
         Toolbar: isShowFilter ? observer((): JSX.Element => (<FilterContainer tabState={tabs[commonState.activeKey].tabState as TabState} />)) : undefined,
         MoreTitle: (tabs[commonState.activeKey].bottomPanel?.MoreTitle ?? commonBottomPanel?.MoreTitle) !== undefined
-            ? ({ session }) => <TabMoreTitle
+            ? ({ session }): JSX.Element => <TabMoreTitle
                 session={session}
                 MoreTitle={commonBottomPanel?.MoreTitle}
                 {...tabsPaneProps} />

@@ -131,9 +131,9 @@ export const mouseLeaveAction = (interactorParams: InteractorParams, interactorM
 };
 
 export enum MouseDownActionResult {
-    NoMouseDownRequired,
-    NeedDragOneSide,
-    NoNeedToDragOneSide,
+    NO_MOUSEDOWN_REQUIRED = 0,
+    NEED_DRAG_ONE_SIDE = 1,
+    NO_NEED_TO_DRAG_ONE_SIDE = 2,
 }
 
 export enum MouseButton {
@@ -186,11 +186,11 @@ export const mouseDownAction = (session: Session, xReverseScale: (x: number) => 
     const rightClickOrNoLastPos = session.endTimeAll === undefined || !lastPos || e.button === MouseButton.RIGHT;
     if (isPressingKey) {
         dragData = { isDragging: true, xPos: e.nativeEvent.x, domainStart: session.domainRange.domainStart, domainEnd: session.domainRange.domainEnd };
-        return MouseDownActionResult.NoMouseDownRequired;
+        return MouseDownActionResult.NO_MOUSEDOWN_REQUIRED;
     }
 
     if (rightClickOrNoLastPos || shouldIgnoreRangeMarkerButton(session, lastPos, xReverseScale) || contextMenuVisible) {
-        return MouseDownActionResult.NoMouseDownRequired;
+        return MouseDownActionResult.NO_MOUSEDOWN_REQUIRED;
     }
 
     const offsetX = lastPos.x;
@@ -209,10 +209,10 @@ export const mouseDownAction = (session: Session, xReverseScale: (x: number) => 
             session.selectedRange = undefined;
             session.timelineMaker.oldMarkedRange = undefined;
         });
-        return MouseDownActionResult.NoMouseDownRequired;
+        return MouseDownActionResult.NO_MOUSEDOWN_REQUIRED;
     }
     if (isInSplitLineY(offsetY, splitLineRef)) {
-        return MouseDownActionResult.NoMouseDownRequired;
+        return MouseDownActionResult.NO_MOUSEDOWN_REQUIRED;
     }
     let needDragOneSide = false;
     if (session.selectedRange !== undefined && isOnSideline(lastPos, session.selectedRange, xReverseScale)) {
@@ -225,7 +225,7 @@ export const mouseDownAction = (session: Session, xReverseScale: (x: number) => 
         session.timelineMaker.oldMarkedRange = undefined;
     }
     runInAction(() => { session.selectedRange = undefined; });
-    return needDragOneSide ? MouseDownActionResult.NeedDragOneSide : MouseDownActionResult.NoNeedToDragOneSide;
+    return needDragOneSide ? MouseDownActionResult.NEED_DRAG_ONE_SIDE : MouseDownActionResult.NO_NEED_TO_DRAG_ONE_SIDE;
 };
 
 export const mouseMoveAction = (interactorParams: InteractorParams, interactorMouseState: InteractorMouseState, e: React.MouseEvent): void => {

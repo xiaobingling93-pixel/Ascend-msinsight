@@ -63,11 +63,11 @@ export const FetchDataMore = observer(function<T extends Record<string, unknown>
     const state = useMoreUpdater(session, fetchData, { columns, actions });
     return <AutoAdjustedTable {...state} height={height}
         expandable={{ onExpand: state.onExpand, showExpandColumn: isTree }}
-        onRow={row => ({
-            onClick: () => {
+        onRow={(row): {onClick: () => void; onDoubleClick: () => void} => ({
+            onClick: (): void => {
                 clickCallback?.({ row, session, unit: session.selectedUnits[0] });
             },
-            onDoubleClick: () => {
+            onDoubleClick: (): void => {
                 doubleClickCallback?.({ row, session, unit: session.selectedUnits[0] });
             },
         })}

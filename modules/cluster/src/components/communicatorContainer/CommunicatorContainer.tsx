@@ -51,7 +51,7 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
     return (
         <div style={{ height: '300px', width: '100%', margin: '10px 0' }} className={'CommunicatorContainer'}>
             {<CommunicatorHeader session={session} defaultPPSize={session.communicatorData.defaultPPSize} unitCount={unitCount}></CommunicatorHeader>}
-            <Tabs activeKey={activeTab} onTabClick={(key) => { eventBus.emit('setActiveTab', key); setActiveTab(key); }} style={{ height: '240px' }}>
+            <Tabs activeKey={activeTab} onTabClick={(key): void => { eventBus.emit('setActiveTab', key); setActiveTab(key); }} style={{ height: '240px' }}>
                 {
                     items.map(item => (
                         <Tabs.TabPane tab={t(item.tab)} key={item.key} style={{ height: '140px' }}>
@@ -96,7 +96,7 @@ const RankGroup = ({ rankGroup, session }: { rankGroup: communicator; session: S
             <Row className={active === rankGroup.name ? 'activeRank' : active} wrap={false} >
                 {
                     _.map(rankGroup.ranks, (value) => (
-                        <RankId key={value} id={value} onClick={() => { selectRankGroup(rankGroup); }}></RankId>
+                        <RankId key={value} id={value} onClick={(): void => { selectRankGroup(rankGroup); }}></RankId>
                     ))
                 }
             </Row>
@@ -107,7 +107,7 @@ const RankGroup = ({ rankGroup, session }: { rankGroup: communicator; session: S
 const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount }: { session: Session; defaultPPSize: number; unitCount: number }) => {
     const [form] = Form.useForm();
     const { t } = useTranslation('summary');
-    const onClick = (size: number) => () => {
+    const onClick = (size: number) => (): void => {
         const values: {ppSize: number; tpSize: number; dpSize: number} = form.getFieldsValue();
         if (values.dpSize * values.tpSize * values.ppSize !== unitCount) {
             message.error('The parameter is incorrect.');

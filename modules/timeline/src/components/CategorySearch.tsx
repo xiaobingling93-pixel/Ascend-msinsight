@@ -130,10 +130,10 @@ const doJumpSlice = (session: Session, slice: SliceData, isGlobal: boolean): voi
     }
     runInAction(() => {
         session.locateUnit = {
-            target: (unit) => {
+            target: (unit): boolean => {
                 return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId.includes(slice.rankId))) && unit.metadata.processId === slice.pid && unit.metadata.threadId === slice.tid;
             },
-            onSuccess: (unit) => {
+            onSuccess: (unit): void => {
                 if (isGlobal) {
                     session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
                     session.selectedData = undefined;
@@ -256,7 +256,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     };
 
     return (
-        <CustomDiv theme={theme} onClick={(e) => { e.stopPropagation(); }}>
+        <CustomDiv theme={theme} onClick={(e): void => { e.stopPropagation(); }}>
             { contextHolder}
             <StyledInput allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor} /> }} disabled={searchingStatus} maxLength={200}
                 minwidth={200} height={24} isshow={1} value={searchContent} onChange={onInputChange} onPressEnter={onInputPressEnter} ></StyledInput>

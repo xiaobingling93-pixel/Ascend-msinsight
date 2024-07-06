@@ -15,14 +15,14 @@ import type { CheckResultType } from './components/dragFile/DragFile';
 import connector from './connection';
 
 const Window = styled.div`
-    background-color: ${props => props.theme.backgroundColor};
+    background-color: ${(props): string => props.theme.backgroundColor};
     text-align: center;
     height: 100vh;
     overflow: hidden;
     user-select: none;
     display: flex;
     width: 100vw;
-    color: ${props => props.theme.fontColor};
+    color: ${(props): string => props.theme.fontColor};
     font-family: Microsoft YaHei;
 `;
 
@@ -68,7 +68,7 @@ const StatePopover = observer(() => {
         height: 100%;
         justify-content: center;
         align-items: center;
-        background-color: ${props => props.theme.maskColor};
+        background-color: ${(props): string => props.theme.maskColor};
     `;
     const Info = styled.div`
         border-radius: 4px;
