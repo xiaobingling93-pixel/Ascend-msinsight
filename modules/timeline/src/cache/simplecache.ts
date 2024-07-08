@@ -102,7 +102,8 @@ async function requestCounterData(requestParam: Record<string, unknown>, metadat
             const res = [];
             res.push(item.timestamp);
             (metadata as CounterMetaData).dataType.forEach(type => {
-                res.push(item.value[type]);
+                const val = Number(item.value[type]);
+                res.push(isNaN(val) ? 0 : val);
             });
             return res;
         });

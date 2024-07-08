@@ -481,8 +481,16 @@ export const CounterUnit = unit<CounterMetaData>({
         },
         config: (session: Session, metadata) => {
             const palette: Array<keyof Theme['colorPalette']> = [];
-            (metadata as CounterMetaData).dataType.forEach(item => {
-                palette.push(colorPalette[hashToNumber(item + (metadata as CounterMetaData).threadName, colorPalette.length)]);
+            const countMetaData = metadata as CounterMetaData;
+            countMetaData.dataType.forEach((item, index): void => {
+                const colorIndex = hashToNumber(`${item}${countMetaData.threadName}`, colorPalette.length);
+                const color = colorPalette[colorIndex];
+                if (color === palette[index - 1]) {
+                    // 相邻色值不能相同，否则堆叠图无法区分数据
+                    palette.push(colorPalette[(colorIndex + 1) % colorPalette.length]);
+                } else {
+                    palette.push(color);
+                }
             });
             return {
                 palette,
