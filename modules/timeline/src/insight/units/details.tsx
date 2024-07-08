@@ -12,18 +12,18 @@ import { hashToNumber } from '../../utils/colorUtils';
 export const slicesListDetail = detail({
     name: 'Slices List',
     columns: [
-        ['Name', data => `${isEmpty(data.title) ? 'null' : data.title}`, 'max-content', 'scroll'],
-        ['Wall Duration', data => getSliceTimeDisplay(data.wallDuration), 180],
-        ['Self Time', data => getSliceTimeDisplay(data.selfTime), 180],
-        ['Average Wall Duration', data => getSliceTimeDisplay(data.avgWallDuration), 180],
-        ['Occurrences', data => `${data.occurrences ?? 0}`, 180],
+        ['Name', (data): string => `${isEmpty(data.title) ? 'null' : data.title}`, 'max-content', 'scroll'],
+        ['Wall Duration', (data): string => getSliceTimeDisplay(data.wallDuration), 180],
+        ['Self Time', (data): string => getSliceTimeDisplay(data.selfTime), 180],
+        ['Average Wall Duration', (data): string => getSliceTimeDisplay(data.avgWallDuration), 180],
+        ['Occurrences', (data): string => `${data.occurrences ?? 0}`, 180],
     ],
     actions: [
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => a.title?.localeCompare(b?.title ?? '') ?? 0, filterKey: 'title' },
-        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => (a.wallDuration ?? 0) - (b.wallDuration ?? 0) },
-        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => (a.selfTime ?? 0) - (b.selfTime ?? 0) },
-        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => (a.avgWallDuration ?? 0) - (b.avgWallDuration ?? 0) },
-        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList) => (a.occurrences ?? 0) - (b.occurrences ?? 0) },
+        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => (a.wallDuration ?? 0) - (b.wallDuration ?? 0) },
+        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => (a.selfTime ?? 0) - (b.selfTime ?? 0) },
+        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => (a.avgWallDuration ?? 0) - (b.avgWallDuration ?? 0) },
+        { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => (a.occurrences ?? 0) - (b.occurrences ?? 0) },
     ],
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
         let startTime = session.selectedRange?.[0] ?? 0;
@@ -139,20 +139,20 @@ const generateFlowData = function (data: any, timeOffset: number): any {
 export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, unknown>> => {
     return linkData({
         renderFields: [],
-        templateField: [ field, (data: any, session) => <Link onClick={() => {
+        templateField: [field, (dataset: any, tempFieldSession):JSX.Element => <Link onClick={():void => {
             runInAction(() => {
-                session.linkDetail = linkData({
+                tempFieldSession.linkDetail = linkData({
                     renderFields: [
-                        [ 'ID', (data: any) => data.id ],
-                        [ 'Title', (data: any) => data.title ],
-                        [ 'Category', (data: any) => data.cat ],
-                        [ 'from', (data: any, session, metadata) => <Link onClick={action(() => {
+                        ['ID', (data: any):string => data.id],
+                        ['Title', (data: any):string => data.title],
+                        ['Category', (data: any):string => data.cat],
+                        ['from', (data: any, session, metadata):JSX.Element => <Link onClick={action(() => {
                             const rankId = data.from.rankId && data.from.rankId !== '' ? data.from.rankId : (metadata as ThreadMetaData).cardId;
                             calculateDomainRange(session, data.from, data.to, rankId);
                             session.linkDetail = generateLinkDetail('Outgoing flow');
                             doJumpSlice(session, data.from, rankId);
                         })}>{`Slice ${data.from.name} at ${getTimestamp(data.from.timestamp ?? 0, { precision: 'ns' })}`}</Link>],
-                        [ 'to', (data: any, session, metadata) => <Link onClick={action(() => {
+                        ['to', (data: any, session, metadata):JSX.Element => <Link onClick={action(() => {
                             const rankId = data.to.rankId && data.to.rankId !== '' ? data.to.rankId : (metadata as ThreadMetaData).cardId;
                             calculateDomainRange(session, data.from, data.to, rankId);
                             session.linkDetail = generateLinkDetail('Incoming flow');
@@ -163,9 +163,9 @@ export const generateLinkDetail = (field: string): LinkDataDesc<Record<string, u
                         return {};
                     },
                 });
-                session.linkFlow = data;
+                tempFieldSession.linkFlow = dataset;
             });
-        }}>{data.title}</Link> ],
+        }}>{dataset.title}</Link>],
         fetchData: async (session: Session, metadata) => {
             return {};
         },

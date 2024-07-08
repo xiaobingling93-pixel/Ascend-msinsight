@@ -7,9 +7,10 @@ type HoverContainerProps = React.ClassAttributes<HTMLDivElement>
 & React.HTMLAttributes<HTMLDivElement>
 & { css?: Interpolation<Theme> }
 & { childrenStyle?: string };
-const HoverContainer = styled(React.forwardRef(function Support(props: HoverContainerProps, ref: React.ForwardedRef<HTMLDivElement>) {
+function Support(props: HoverContainerProps, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element {
     return <div {...props} ref={ref}/>;
-}))`
+}
+const HoverContainer = styled(React.forwardRef(Support))`
     position: relative;
 `;
 
@@ -19,20 +20,20 @@ type CircleIconProps = React.ClassAttributes<HTMLDivElement>
 & { width: number; height: number; top: number; left: number; hidden?: boolean };
 
 const CircleIcon = styled((props: CircleIconProps) => <div {...props}/>)`
-    width: ${props => props.width}px;
-    height: ${props => props.height}px;
-    display: ${props => props.hidden ? 'none' : 'unset'};
-    border-radius: ${props => props.height / 2}px;
+    width: ${(props): number => props.width}px;
+    height: ${(props): number => props.height}px;
+    display: ${(props): string => props.hidden ? 'none' : 'unset'};
+    border-radius: ${(props): number => props.height / 2}px;
     overflow: hidden;
     position: absolute;
-    top: ${props => props.top}px;
-    left: ${props => props.left}px;
+    top: ${(props): number => props.top}px;
+    left: ${(props): number => props.left}px;
     z-index: 6;
     transition: width 0.2s 0.6s;
-    background-color: ${(props) => props.theme.contentBackgroundColor} !important;
-    box-shadow: 1px 3px 5px 5px ${props => props.theme.toolTipShadowColor},
-        0 4px 5px 2px ${props => props.theme.toolTipShadowColor},
-        0 4px 5px 2px ${props => props.theme.toolTipShadowColor};
+    background-color: ${(props): string => props.theme.contentBackgroundColor} !important;
+    box-shadow: 1px 3px 5px 5px ${(props): string => props.theme.toolTipShadowColor},
+        0 4px 5px 2px ${(props): string => props.theme.toolTipShadowColor},
+        0 4px 5px 2px ${(props): string => props.theme.toolTipShadowColor};
 `;
 
 interface HoverTipProps {
@@ -51,17 +52,17 @@ export const HoverTip: React.FC<HoverTipProps> = (props) => {
     const DefaultBoundary = 100;
     return (
         <HoverContainer
-            onMouseMove={(e) => {
+            onMouseMove={(e): void => {
                 isDragRef.current &&
                 setPosition(({ left, top }) => ({
                     left: Math.max(0, Math.min((rect?.width ?? DefaultBoundary) - props.width, left + e.movementX)),
                     top: Math.max(0, Math.min((rect?.height ?? DefaultBoundary) - props.height, top + e.movementY)),
                 }));
             }}
-            onMouseLeave={() => {
+            onMouseLeave={(): void => {
                 isDragRef.current = false;
             }}
-            onMouseUp={() => {
+            onMouseUp={(): void => {
                 isDragRef.current = false;
             }}
             ref={ref}
@@ -70,13 +71,13 @@ export const HoverTip: React.FC<HoverTipProps> = (props) => {
                 hidden={props.hidden}
                 width={circleWidth}
                 height={props.height}
-                onMouseEnter={() => {
+                onMouseEnter={(): void => {
                     setTimeout(() => {
                         !isDragRef.current && setCircleWidth(props.width);
                     }, 100);
                 }}
-                onMouseLeave={() => { setCircleWidth(props.height); }}
-                onMouseDown={() => {
+                onMouseLeave={(): void => { setCircleWidth(props.height); }}
+                onMouseDown={(): void => {
                     isDragRef.current = true;
                 }}
                 {...position}

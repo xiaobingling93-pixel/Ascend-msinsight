@@ -21,10 +21,10 @@ export interface ViewProps {
 }
 
 export enum DragDirection {
-    'top',
-    'bottom',
-    'left',
-    'right',
+    'TOP' = 0,
+    'BOTTOM' = 1,
+    'LEFT' = 2,
+    'RIGHT' = 3,
 }
 
 /**
@@ -44,24 +44,24 @@ const MIN_VERTICAL_WH = 10;
 
 const ContainerBase = styled.div<CssProps>`
     display: flex;
-    background-color: ${p => p.theme.contentBackgroundColor};
+    background-color: ${(p): string => p.theme.contentBackgroundColor};
     flex-grow: 1;
     overflow: hidden;
     width: 100%;
 
     .bottomC {
-        background-color: ${p => p.theme.contentBackgroundColor};
+        background-color: ${(p): string => p.theme.contentBackgroundColor};
         svg + .buttonShow {
             position: absolute;
             g {
-                fill: ${props => props.theme.closeDragContainerBG};
+                fill: ${(p): string => p.theme.closeDragContainerBG};
             }
             .caret {
                 position: absolute;
                 cursor: pointer;
                 top: 50%;
                 right: 0;
-                color: ${p => p.theme.switchIconColor};
+                color: ${(p): string => p.theme.switchIconColor};
                 svg {
                     width: 10px;
                 }
@@ -80,13 +80,13 @@ const ContainerLeft = styled(ContainerBase)`
         flex-flow: row;
         overflow: hidden;
         position: relative;
-        width: ${p => p.draggableWH};
+        width: ${(p): string => p.draggableWH};
         & > .dragContainer {
             height: 100%;
             z-index: 1;
         }
         & > .dragContainer[aria-disabled=true] {
-            border-right: ${p => p.theme.dividerColor} 2px solid;
+            border-right: ${(p): string => p.theme.dividerColor} 2px solid;
             padding-right: 15px;
         }
         & > .splitLine {
@@ -97,7 +97,7 @@ const ContainerLeft = styled(ContainerBase)`
             right: 0;
             z-index: 1;
             background-color: transparent;
-            border-right: ${p => p.theme.dividerColor} 0 solid;
+            border-right: ${(p): string => p.theme.dividerColor} 0 solid;
             &:hover[aria-disabled=true] {
                 border-right-width: 3px;
                 cursor: e-resize;
@@ -117,13 +117,13 @@ const ContainerRight = styled(ContainerBase)`
         flex-flow: row;
         overflow: hidden;
         position: relative;
-        width: ${p => p.draggableWH};
+        width: ${(p): string => p.draggableWH};
         & > .dragContainer {
             height: 100%;
             z-index: 1;
         }
         & > .dragContainer[aria-disabled=true] {
-            border-left: ${p => p.theme.dividerColor} 2px solid;
+            border-left: ${(p): string => p.theme.dividerColor} 2px solid;
             padding-left: 15px;
         }
         & > .splitLine {
@@ -134,7 +134,7 @@ const ContainerRight = styled(ContainerBase)`
             left: 0;
             z-index: 1;
             background-color: transparent;
-            border-left: ${p => p.theme.dividerColor} 0 solid;
+            border-left: ${(p): string => p.theme.dividerColor} 0 solid;
             &:hover[aria-disabled=true] {
                 border-left-width: 3px;
                 cursor: e-resize;
@@ -152,7 +152,7 @@ const ContainerBottom = styled(ContainerBase)`
     flex-direction: column-reverse;
     & > .topC {
         width: 100%;
-        height: ${p => p.draggableWH};
+        height: ${(p): string => p.draggableWH};
         position: relative;
 
         & > .dragContainer {
@@ -163,11 +163,11 @@ const ContainerBottom = styled(ContainerBase)`
         & > .splitLine {
             position: absolute;
             z-index: 3;
-            height: ${p => p.splitLineH};
+            height: ${(p): string => p.splitLineH};
             width: 100%;
             top: 0;
             background-color: transparent;
-            border-top: ${p => p.theme.dividerColor} 0 solid;
+            border-top: ${(p): string => p.theme.dividerColor} 0 solid;
             &:hover[aria-disabled=true] {
                 border-top-width: 1px;
                 cursor: n-resize;
@@ -177,7 +177,7 @@ const ContainerBottom = styled(ContainerBase)`
 
     & > .bottomC {
         width: 100%;
-        border-bottom: ${p => p.theme.dividerColor} 2px solid;
+        border-bottom: ${(p): string => p.theme.dividerColor} 2px solid;
         flex: 1;
         flex-flow: row;
         overflow: hidden;
@@ -193,7 +193,7 @@ const ContainerTop = styled(ContainerBase)`
     flex-direction: column;
     & > .topC {
         width: 100%;
-        height: ${p => p.draggableWH};
+        height: ${(p): string => p.draggableWH};
         position: relative;
 
         & > .dragContainer {
@@ -204,11 +204,11 @@ const ContainerTop = styled(ContainerBase)`
         & > .splitLine {
             position: absolute;
             z-index: 3;
-            height: ${p => p.splitLineH};
+            height: ${(p): string => p.splitLineH};
             width: 100%;
             bottom: 0;
             background-color: transparent;
-            border-bottom: ${p => p.theme.dividerColor} 0 solid;
+            border-bottom: ${(p): string => p.theme.dividerColor} 0 solid;
             &:hover[aria-disabled=true] {
                 border-bottom-width: 1px;
                 cursor: n-resize;
@@ -218,7 +218,7 @@ const ContainerTop = styled(ContainerBase)`
 
     & > .bottomC {
         width: 100%;
-        border-top: ${p => p.theme.dividerColor} 2px solid;
+        border-top: ${(p): string => p.theme.dividerColor} 2px solid;
         flex: 1;
         flex-flow: row;
         overflow: hidden;
@@ -245,7 +245,7 @@ const getHandleMouseDown = (dragDirection: DragDirection, draggable: React.RefOb
     let offset; const baseMS: MovingState = { stat: 'movable', startX: 0, startY: 0, screenX: e.screenX, screenY: e.screenY };
     const domDragRect = domDrag.getBoundingClientRect();
     switch (dragDirection) {
-        case DragDirection.top:
+        case DragDirection.TOP:
             offset = domDragRect.bottom - e.clientY;
             if (offset <= 10 && offset > 0 && isOpen.current) {
                 movingState.current = {
@@ -255,7 +255,7 @@ const getHandleMouseDown = (dragDirection: DragDirection, draggable: React.RefOb
                 };
             }
             break;
-        case DragDirection.bottom:
+        case DragDirection.BOTTOM:
             offset = e.clientY - domDragRect.top;
             if (offset <= 10 && offset > 0 && isOpen.current) {
                 movingState.current = {
@@ -265,7 +265,7 @@ const getHandleMouseDown = (dragDirection: DragDirection, draggable: React.RefOb
                 };
             }
             break;
-        case DragDirection.left:
+        case DragDirection.LEFT:
             offset = domDragRect.right - e.clientX;
             if (offset <= 10 && offset > 0 && isOpen.current) {
                 movingState.current = {
@@ -302,21 +302,22 @@ const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: 
     if (!dom || !domDrag) { return; }
     if (moving.stat === 'idle') { return; }
     if (Math.abs(e.screenY - moving.screenY) < 2 && Math.abs(e.screenX - moving.screenX) < 2) { return; }
-    let offsetY: number, offsetX: number;
+    let offsetY: number;
+    let offsetX: number;
     switch (dragDirection) {
-        case DragDirection.bottom:
+        case DragDirection.BOTTOM:
             offsetY = e.y - moving.startY;
             if (Math.abs(offsetY) >= 5) {
                 domDrag.style.height = `${clamp(dom.clientHeight - e.y + containerOffsetTop, MIN_DRAG_WH, dom.clientHeight - MIN_DRAG_WH)}px`;
             }
             break;
-        case DragDirection.top:
+        case DragDirection.TOP:
             offsetY = e.y - moving.startY;
             if (Math.abs(offsetY) >= 5) {
                 domDrag.style.height = `${clamp(e.y - containerOffsetTop, MIN_DRAG_WH, dom.clientHeight - MIN_DRAG_WH)}px`;
             }
             break;
-        case DragDirection.left:
+        case DragDirection.LEFT:
             offsetX = e.x - moving.startX;
             if (Math.abs(offsetX) >= 5) {
                 domDrag.style.width = `${clamp(e.x, 245, dom.clientWidth * 0.4)}px`;
@@ -344,22 +345,22 @@ const handleMouseUp = (container: React.RefObject<HTMLDivElement>, draggable: Re
     }
     let dragWHTmp: number;
     switch (dragDirection) {
-        case DragDirection.top:
+        case DragDirection.TOP:
             dragWHTmp = clamp(e.y - containerOffsetTop, MIN_DRAG_WH, dom.clientHeight - MIN_DRAG_WH);
             domDrag.style.height = `${dragWHTmp / dom.clientHeight * 100}%`;
             window.dispatchEvent(new Event('topResize'));
             break;
-        case DragDirection.bottom:
+        case DragDirection.BOTTOM:
             dragWHTmp = clamp(dom.clientHeight - e.y + containerOffsetTop, MIN_DRAG_WH, dom.clientHeight - MIN_DRAG_WH);
             domDrag.style.height = `${dragWHTmp / dom.clientHeight * 100}%`;
             window.dispatchEvent(new Event('bottomResize'));
             break;
-        case DragDirection.left:
+        case DragDirection.LEFT:
             dragWHTmp = clamp(e.clientX, 245, dom.clientWidth * 0.4);
             domDrag.style.width = `${dragWHTmp / dom.clientWidth * 100}%`;
             window.dispatchEvent(new Event('leftResize'));
             break;
-        case DragDirection.right:
+        case DragDirection.RIGHT:
             dragWHTmp = clamp(moving.startX - e.clientX, MIN_DRAG_WH, dom.clientWidth * RIGHT_PERCENT);
             domDrag.style.width = `${dragWHTmp / dom.clientWidth * 100}%`;
             window.dispatchEvent(new Event('rightResize'));
@@ -389,10 +390,10 @@ const pxConvert = (px: number, container: number[], dragDirection: DragDirection
 };
 
 const containerMap: Map<DragDirection, typeof ContainerBase> = new Map([
-    [DragDirection.top, ContainerTop],
-    [DragDirection.bottom, ContainerBottom],
-    [DragDirection.left, ContainerLeft],
-    [DragDirection.right, ContainerRight],
+    [DragDirection.TOP, ContainerTop],
+    [DragDirection.BOTTOM, ContainerBottom],
+    [DragDirection.LEFT, ContainerLeft],
+    [DragDirection.RIGHT, ContainerRight],
 ]);
 
 const getOffsetTop = (ele: HTMLElement): number => {
@@ -474,7 +475,8 @@ export const useDraggableContainerEx = (props: DCProps): [ ((props: ViewProps) =
     const view = (props: ViewProps): JSX.Element => {
         return <Container key={props.id} ref={container} column draggableWH={open ? dragWh : '0px'}
             splitLineH={open ? '10px' : '0px'} dragDirection={dragDirection} minWH={MIN_DRAG_WH}
-            onMouseUp={e => onMouseup(e.nativeEvent)} onMouseDown={e => onMousedown(e.nativeEvent)} onMouseMove={e => onMousemove(e.nativeEvent)}>
+            onMouseUp={(e): void => onMouseup(e.nativeEvent)} onMouseDown={(e): void => onMousedown(e.nativeEvent)}
+            onMouseMove={(e): void => onMousemove(e.nativeEvent)}>
             <div className={'topC'} ref={draggable}>
                 <div className={'dragContainer'} aria-disabled={isOpen.current}>{props.draggableContainer}</div>
                 <div className={'splitLine'} aria-disabled={isOpen.current} ref={splitLineRef} />

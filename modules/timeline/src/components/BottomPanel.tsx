@@ -41,7 +41,7 @@ const Container = styled.div`
     color: lightgray;
     height: 100%;
     width: 100%;
-    border-bottom: 1px solid ${props => props.theme.backgroundColor};
+    border-bottom: 1px solid ${(props): string => props.theme.backgroundColor};
     transition: height 0.5s;
     flex-shrink: 0;
     z-index: 3; // to cover tooltip, z-index of tooltip equals 2
@@ -60,7 +60,7 @@ const Container = styled.div`
     }
     .title {
         text-align: start;
-        border-bottom: 1px solid ${p => p.theme.solidLine};
+        border-bottom: 1px solid ${(p): string => p.theme.solidLine};
         height: ${DETAIL_HEADER_HEIGHT_PX - 2}px; // 2: draggable border-top width
         &>span {
             margin: 0 8px;
@@ -83,7 +83,7 @@ const StyledCard = styled((props: CardProps & { width?: number}) => <Card {...pr
     .empty {
         margin: 0 auto;
         align-self: center;
-        color: ${props => props.theme.fontColor};
+        color: ${(props): string => props.theme.fontColor};
     }
     .ant-card-head-title {
         padding: 0;
@@ -92,17 +92,17 @@ const StyledCard = styled((props: CardProps & { width?: number}) => <Card {...pr
       position: relative;
       font-weight: normal;
       display: flex;
-      border-bottom: 1px solid ${p => p.theme.solidLine};
+      border-bottom: 1px solid ${(p): string => p.theme.solidLine};
       padding: 0 16px;
-      background-color: ${p => p.theme.cardHeadBackgroundColor};
-      color: ${p => p.theme.fontColor};
+      background-color: ${(p): string => p.theme.cardHeadBackgroundColor};
+      color: ${(p): string => p.theme.fontColor};
       font-size: 0.875rem;
       width: 100%;
 
     }
     .ant-card-body {
         display: flex;
-        background-color: ${p => p.theme.contentBackgroundColor};
+        background-color: ${(p): string => p.theme.contentBackgroundColor};
         height: 100%;
         width: 100%;
         padding: 0;
@@ -110,22 +110,22 @@ const StyledCard = styled((props: CardProps & { width?: number}) => <Card {...pr
 `;
 
 const StyledMoreCard = styled(StyledCard)`
-    background-color: ${p => p.theme.contentBackgroundColor};
+    background-color: ${(p): string => p.theme.contentBackgroundColor};
     & > .ant-card-head {
         min-height: 0;
         font-size: 1rem;
-        background-color: ${p => p.theme.contentBackgroundColor};
-        border-left: ${p => p.theme.dividerColor} 1px solid;
+        background-color: ${(p): string => p.theme.contentBackgroundColor};
+        border-left: ${(p): string => p.theme.dividerColor} 1px solid;
     }
     .ant-card-body {
-        border-left: ${p => p.theme.dividerColor} 1px solid;
-        border-top: 1px solid ${p => p.theme.solidLine};
+        border-left: ${(p): string => p.theme.dividerColor} 1px solid;
+        border-top: 1px solid ${(p): string => p.theme.solidLine};
     }
     .ant-card-head-wrapper {
-        background-color: ${p => p.theme.contentBackgroundColor};
+        background-color: ${(p): string => p.theme.contentBackgroundColor};
     }
     .ant-card-head-title {
-        background-color: ${p => p.theme.contentBackgroundColor};
+        background-color: ${(p): string => p.theme.contentBackgroundColor};
         height: ${MORE_HEADER_HEIGHT_PX}px;
         padding-top: 3px;
         text-align: start;
@@ -301,7 +301,7 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
         const bottomResize = (): void => setBottomHeight(ref.current?.clientHeight ?? BOTTOM_HEIGHT);
         window.addEventListener('resize', bottomResize);
         window.addEventListener('bottomResize', bottomResize);
-        return () => {
+        return (): void => {
             window.removeEventListener('bottomResize', bottomResize);
             window.removeEventListener('resize', bottomResize);
         };
@@ -329,7 +329,7 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     ];
 
     return (<Container ref={ref} className="bottomPanelContainer">
-        <Tabs style={{ width: '100%' }} items={items} activeKey={item} onTabClick={key => setItem(key)}/>
+        <Tabs style={{ width: '100%' }} items={items} activeKey={item} onTabClick={(key): void => setItem(key)}/>
     </Container>);
 });
 
