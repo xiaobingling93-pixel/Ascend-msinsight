@@ -92,11 +92,12 @@ TEST(TestUtil, TestGetDbPath)
 #ifdef _WIN32
     std::string dbPath = FileUtil::GetDbPath(
             currPath + "\\src\\test\\test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\trace_view.json", "1");
-    EXPECT_EQ(dbPath, currPath + "\\src\\test\\test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\ascend_insight_data.db");
+    EXPECT_EQ(dbPath,
+            currPath + "\\src\\test\\test_data\\test_rank_1\\ASCEND_PROFILER_OUTPUT\\mindstudio_insight_data.db");
 #else
     std::string dbPath = FileUtil::GetDbPath(
             currPath + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/trace_view.json", "1");
-    EXPECT_EQ(dbPath, currPath + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/ascend_insight_data.db");
+    EXPECT_EQ(dbPath, currPath + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db");
 #endif
 }
 

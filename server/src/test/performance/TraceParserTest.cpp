@@ -29,7 +29,7 @@ TEST_F(PerformanceTest, testTraceParser1P2GBTime)
 #endif
     DataBaseManager::Instance().SetDataType(DataType::JSON);
     DataBaseManager::Instance().CreatConnectionPool("0",
-        rootPath + R"(/ASCEND_PROFILER_OUTPUT/ascend_insight_data.db)");
+        rootPath + R"(/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db)");
     TraceFileParser::Instance().Parse({rootPath + R"(/ASCEND_PROFILER_OUTPUT/trace_view.json)"}, "0", "");
     while (true) {
         ParserStatus status = ParserStatusManager::Instance().GetParserStatus("0");
@@ -58,7 +58,7 @@ TEST_F(PerformanceTest, testTraceParser1P5GBTime)
 #endif
     DataBaseManager::Instance().SetDataType(DataType::JSON);
     DataBaseManager::Instance().CreatConnectionPool("0",
-                                                    rootPath + R"(/ASCEND_PROFILER_OUTPUT/ascend_insight_data.db)");
+                                                    rootPath + R"(/ASCEND_PROFILER_OUTPUT/mindstudio_insight_data.db)");
     TraceFileParser::Instance().Parse({rootPath + R"(/ASCEND_PROFILER_OUTPUT/trace_view.json)"}, "0", "");
     while (true) {
         ParserStatus status = ParserStatusManager::Instance().GetParserStatus("0");

@@ -36,7 +36,7 @@ const std::string MSPROF_SLICE_FILE_REG = R"(^msprof_slice_[0-9_]+\.json$)";
 const std::string JSON_FILE_SUFFIX = ".json";
 const std::string DB_FILE_SUFFIX = ".db";
 
-const std::string DATABASE_FILE_NAME = "ascend_insight_data.db";
+const std::string DATABASE_FILE_NAME = "mindstudio_insight_data.db";
 
 const std::string SLICE_STR = "_slice";
 

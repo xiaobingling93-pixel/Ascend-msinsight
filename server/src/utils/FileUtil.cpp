@@ -215,7 +215,7 @@ void FileUtil::CalculateDirSize(const std::string &path, long long int &size, in
 #endif
     for (std::string& file: files) {
         std::string spliceFile = SplicePath(gbkPath, file);
-        if (std::strcmp("ascend_insight_data.db", file.c_str()) != 0 &&
+        if (std::strcmp(DATABASE_FILE_NAME.c_str(), file.c_str()) != 0 &&
             std::strcmp("cluster.db", file.c_str()) != 0) {
             size += GetFileSize(spliceFile.c_str());
         }

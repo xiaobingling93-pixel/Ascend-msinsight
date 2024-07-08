@@ -352,7 +352,7 @@ public:
         std::string dbPath = GetDbPath(filePath);
         std::string tmpFileId = GetProfilerFileId(filePath);
         if (tmpFileId.length() < fileId.length() && fileId.find(tmpFileId) == 0) {
-            // 修改db文件名为ascend_insight_data_xxx.db
+            // 修改db文件名为mindstudio_insight_data_xxx.db
             dbPath = dbPath.substr(0, dbPath.length() - DB_FILE_SUFFIX.length()) +
                      fileId.substr(tmpFileId.length()) + DB_FILE_SUFFIX;
         }
