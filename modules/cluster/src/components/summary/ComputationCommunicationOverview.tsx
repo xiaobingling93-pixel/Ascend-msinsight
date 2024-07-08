@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
 import { observer } from 'mobx-react';
-import { QuestionCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
+import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Session } from '../../entity/session';
 import { VoidFunction } from '../../utils/interface';
 import { useEventBus } from '../../utils/eventBus';
@@ -18,6 +18,7 @@ import BaseInfo from './BaseInfo';
 import { CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
 import PpBandwidthAnalysis from './PpBandwidthAnalysis';
 import i18n from '../../i18n';
+import { HelpIcon } from 'lib/Icon';
 
 interface SummaryDataType{
     [propName: string]: any;
@@ -276,7 +277,7 @@ export const useHit = (containsPreparing: boolean): React.ReactElement => {
                 </div>
             )
         }>
-        <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
+        <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
     </StyledTooltip>);
 };
 

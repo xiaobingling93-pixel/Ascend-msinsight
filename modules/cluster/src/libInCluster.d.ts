@@ -12,3 +12,4 @@ declare module 'lib/i18n';
 declare module 'lib/SharedConfigProvider';
 declare module 'lib/ThemeStore';
 declare module 'lib/theme';
+declare module 'lib/Icon';

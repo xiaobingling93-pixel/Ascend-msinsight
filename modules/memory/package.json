@@ -73,7 +73,8 @@
     "moduleNameMapper": {
       "lib/i18n": "<rootDir>/../lib/src/i18n/index.ts",
       "lib/ResizeTable": "<rootDir>/../lib/src/resize/ResizeTable.tsx",
-      "lib/theme": "<rootDir>/../lib/src/theme/index.ts"
+      "lib/theme": "<rootDir>/../lib/src/theme/index.ts",
+      "lib/Icon": "<rootDir>/../lib/src/icon/Icon.tsx"
     }
   },
   "browserslist": {

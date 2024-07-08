@@ -26,6 +26,7 @@ module.exports = {
           './ColumnFilter': './src/resize/ColumnFilter.tsx',
           './ThemeStore': './src/utils/ThemeStore.ts',
           './theme': './src/theme/index.ts',
+          './Icon': './src/icon/Icon.tsx',
         },
         shared: {
           react: {singleton: true},

@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeftOutlined, QuestionCircleFilled } from '@ant-design/icons';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Breadcrumb } from 'antd';
 import { Session } from '../../entity/session';
 import Help from './Help';
@@ -18,6 +18,7 @@ import { notNullObj, Space, StyledTooltip, Tan } from '../Common';
 import { queryCommunication, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
 import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
 import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
+import { HelpIcon } from 'lib/Icon';
 
 const Operators = ({ returnHome, rankId, operatorName, iterationId, stage }: any): JSX.Element => {
     const { t } = useTranslation('communication');
@@ -152,7 +153,7 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
                         </div>
                     )
                 }>
-                    <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
+                    <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
                 </StyledTooltip>
             </div>
             <div className="communication-advice-header">{t('Overall')}</div>

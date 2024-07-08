@@ -9,8 +9,8 @@ import { Select } from 'antd';
 import { Label, StyledTooltip } from '../Common';
 import { getStepsData } from './PpBandwidthAnalysis';
 import { getAllPpStageIds, getPpContainerData } from '../communicatorContainer/ContainerUtils';
-import { QuestionCircleFilled } from '@ant-design/icons';
 import type { Session } from '../../entity/session';
+import { HelpIcon } from 'lib/Icon';
 
 type ValueType = string | number | string[];
 
@@ -97,7 +97,7 @@ function FilterCom(props: FilterComProps): JSX.Element {
 
 export const useHit = (): React.ReactElement => {
     const { t } = useTranslation('summary');
-    const hit = t('StageTimeAndBubbleTimeDescribe', { returnObjects: true });
+    const hit: string[] = t('StageTimeAndBubbleTimeDescribe', { returnObjects: true }) ?? [];
     return (<StyledTooltip title={
         (
             <div style={{ padding: '1rem' }}>
@@ -105,7 +105,7 @@ export const useHit = (): React.ReactElement => {
             </div>
         )
     }>
-        <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
+        <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
     </StyledTooltip>);
 };
 

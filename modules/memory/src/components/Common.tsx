@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { QuestionCircleFilled } from '@ant-design/icons';
+import { HelpIcon } from 'lib/Icon';
 import { StyledTooltip } from './StyledTooltip';
 
 export const Label = (props: {name: React.ReactNode;style?: object }): JSX.Element => {
@@ -20,7 +20,7 @@ export const useHit = (): React.ReactElement => {
             </div>
         )
     }>
-        <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 0 0 10px' }}/>
+        <HelpIcon style={{ cursor: 'pointer' }} height={20} width={20}/>
     </StyledTooltip>;
 };
 
@@ -34,7 +34,7 @@ export const useChartCharacter = (): React.ReactElement => {
             }
         </div>
     }>
-        <QuestionCircleFilled style={{ cursor: 'pointer', margin: '0 10px' }}/>
+        <HelpIcon style={{ cursor: 'pointer' }} height={20} width={20}/>
     </StyledTooltip>;
 };
 
