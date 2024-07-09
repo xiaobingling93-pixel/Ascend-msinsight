@@ -10,8 +10,7 @@
 #include "EventParser.h"
 #include "ParserStatusManager.h"
 #include "TraceTime.h"
-#include "SliceDepthCacheManager.h"
-#include "SimulationSliceCacheManager.h"
+#include "CacheManager.h"
 #include "TraceFileSimulationParser.h"
 
 namespace Dic {
@@ -142,9 +141,9 @@ void TraceFileSimulationParser::EndParseTask(const std::string &fileId, const st
         return;
     }
     database->CreateIndex();
-    database->UpdateSimulationDepthWithNoOverlap();
+    database->UpdateSimulationDepthByCodeWithNoOverlap(fileId);
     database->SimulationUpdateProcessSortIndex();
-    SimulationSliceCacheManager::Instance().ClearCacheByFileId(fileId);
+    CacheManager::Instance().ClearCacheByFileId(fileId);
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true, "");
 }
@@ -194,9 +193,7 @@ void TraceFileSimulationParser::Reset()
     TraceTime::Instance().Reset();
     FileParser::Reset();
     ParserStatusManager::Instance().ClearAllParserStatus();
-    CacheManager::Instance().Clear();
-    SliceDepthCacheManager::Instance().ClearAllCache();
-    SimulationSliceCacheManager::Instance().ClearAll();
+    CacheManager::Instance().ClearAll();
     ServerLog::Info("End Reset trace Parser");
 }
 
@@ -225,7 +222,7 @@ void TraceFileSimulationParser::DeleteParseFiles(const std::vector<std::string> 
         if (oldStatus == ParserStatus::FINISH) {
             DeleteParseFileFromDisk(fileId);
         }
-        SliceDepthCacheManager::Instance().ClearCacheByFileId(fileId);
+        CacheManager::Instance().ClearCacheByFileId(fileId);
     }
 }
 } // end of namespace Timeline

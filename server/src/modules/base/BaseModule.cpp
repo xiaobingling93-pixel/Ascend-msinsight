@@ -12,7 +12,8 @@ using namespace Dic::Server;
 using namespace Dic::Protocol;
 void BaseModule::OnRequest(std::unique_ptr<Protocol::Request> request)
 {
-    const int maxThreadNum = 4;
+    int maxThreadNum = 20;
+    maxThreadNum = std::max(maxThreadNum, SystemUtil::GetCpuCoreCount());
     static ThreadPool threadPool(maxThreadNum);
     std::string command = request->command;
     if (requestHandlerMap.count(command) == 0) {
@@ -23,7 +24,7 @@ void BaseModule::OnRequest(std::unique_ptr<Protocol::Request> request)
     }
     auto &requestHandler = requestHandlerMap.at(command);
     if (requestHandler->IsAsync()) {
-        threadPool.AddTask([&requestHandler, requestPtr = request.release()] () {
+        threadPool.AddTask([&requestHandler, requestPtr = request.release()]() {
             requestHandler->HandleRequest(std::unique_ptr<Protocol::Request>(requestPtr));
         });
     } else {

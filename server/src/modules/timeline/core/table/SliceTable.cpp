@@ -19,7 +19,7 @@ void SliceTable::EndTimeHandle(SlicePO &slicePo, const std::unique_ptr<SqliteRes
 }
 void SliceTable::DurationHandle(SlicePO &slicePo, const std::unique_ptr<SqliteResultSet> &resultSet)
 {
-    slicePo.duration = resultSet->GetUint64(SliceColumn::ENDTIME);
+    slicePo.duration = resultSet->GetUint64(SliceColumn::DURATION);
 }
 void SliceTable::NameHandle(SlicePO &slicePo, const std::unique_ptr<SqliteResultSet> &resultSet)
 {

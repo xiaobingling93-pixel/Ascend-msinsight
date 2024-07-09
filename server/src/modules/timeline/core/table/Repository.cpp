@@ -40,8 +40,30 @@ uint64_t Repository::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQu
 {
     SliceTable sliceTable;
     uint64_t count = sliceTable.Eq(SliceColumn::TRACKID, sliceQuery.trackId)
-        .Eq(SliceColumn::CAT, sliceQuery.cat)
-        .Count(sliceQuery.db);
+                         .Eq(SliceColumn::CAT, sliceQuery.cat)
+                         .Count(sliceQuery.db);
     return count;
+}
+
+void Repository::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
+    std::vector<CompeteSliceDomain> &sliceVec)
+{
+    SliceTable sliceTable;
+    std::vector<SlicePO> slicePOVec;
+    sliceTable.Select(SliceColumn::ID, SliceColumn::TIMESTAMP)
+        .Select(SliceColumn::DURATION, SliceColumn::ENDTIME, SliceColumn::NAME)
+        .Eq(SliceColumn::TRACKID, sliceQuery.trackId)
+        .LessEq(SliceColumn::TIMESTAMP, sliceQuery.endTime + sliceQuery.minTimestamp)
+        .Greater(SliceColumn::ENDTIME, sliceQuery.startTime + sliceQuery.minTimestamp)
+        .ExcuteQuery(sliceQuery.db, slicePOVec);
+    for (const auto &item : slicePOVec) {
+        CompeteSliceDomain temp;
+        temp.id = item.id;
+        temp.timestamp = item.timestamp;
+        temp.duration = item.duration;
+        temp.endTime = item.endTime;
+        temp.name = item.name;
+        sliceVec.emplace_back(std::move(temp));
+    }
 }
 }

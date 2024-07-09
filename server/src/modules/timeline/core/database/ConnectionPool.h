@@ -41,7 +41,7 @@ private:
     std::condition_variable cv;
     std::string path;
     bool valid = true;
-    int maxActiveConnections = 10;
+    int maxActiveConnections = 20;
     int maxRetryAttempts = 3;
     int maxWaitTime = 2; // seconds
     std::deque<VirtualTraceDatabase*> idlePool;

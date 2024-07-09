@@ -15,7 +15,7 @@
 #include "TraceTime.h"
 #include "FileUtil.h"
 #include "JsonTraceDatabase.h"
-#include "SimulationSliceCacheManager.h"
+#include "CacheManager.h"
 #include "SourceProtocolResponse.h"
 
 namespace Dic {
@@ -177,9 +177,9 @@ void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<s
         return;
     }
     database->CreateIndex();
-    database->UpdateSimulationDepthWithNoOverlap();
+    database->UpdateSimulationDepthByCodeWithNoOverlap(fileId);
     database->SimulationUpdateProcessSortIndex();
-    SimulationSliceCacheManager::Instance().ClearCacheByFileId(fileId);
+    CacheManager::Instance().ClearCacheByFileId(fileId);
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true, "");
 }

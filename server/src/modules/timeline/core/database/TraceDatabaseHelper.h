@@ -140,6 +140,35 @@ static  std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(
         }
     }
 
+    static  void ReduceThread(const std::vector<CompeteSliceDomain> &rows,
+                              const std::map<std::string, uint64_t> &selfTimeKeyValue,
+                              Protocol::UnitThreadsBody &responseBody)
+    {
+        for (auto &cur : rows) {
+            int index = -1;
+            for (int i = 0; i < responseBody.data.size(); i++) {
+                if (responseBody.data[i].title == cur.name) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index == -1) {
+                Protocol::Threads threads {};
+                threads.title = cur.name;
+                threads.wallDuration = cur.duration;
+                threads.occurrences = 1;
+                threads.avgWallDuration = cur.duration;
+                threads.selfTime = selfTimeKeyValue.at(cur.name);
+                responseBody.data.emplace_back(threads);
+            } else {
+                responseBody.data[index].wallDuration += cur.duration;
+                responseBody.data[index].occurrences += 1;
+                responseBody.data[index].avgWallDuration =
+                        responseBody.data[index].wallDuration / responseBody.data[index].occurrences;
+            }
+        }
+    }
+
     static inline std::vector<Protocol::SimpleSlice> ThreadsInfoFilter(
             const std::vector<Protocol::SimpleSlice> &simpleSliceVec, uint64_t startTime, uint64_t endTime)
     {

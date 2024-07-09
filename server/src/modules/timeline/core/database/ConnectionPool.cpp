@@ -50,7 +50,7 @@ std::shared_ptr<VirtualTraceDatabase> ConnectionPool::GetConnection()
  */
 void ConnectionPool::SetMaxActiveCount(int count)
 {
-    maxActiveConnections = count;
+    maxActiveConnections = std::max(maxActiveConnections, count);
 }
 
 /**

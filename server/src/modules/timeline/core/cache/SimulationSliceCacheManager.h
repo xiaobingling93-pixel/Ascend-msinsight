@@ -10,13 +10,16 @@
 #include <vector>
 #include <mutex>
 #include "EventDef.h"
+#include "SpinLockGuard.h"
 
-namespace Dic {
-namespace Module {
-namespace Timeline {
+namespace Dic::Module::Timeline {
 class SimulationSliceCacheManager {
 public:
-    static SimulationSliceCacheManager &Instance();
+    static SimulationSliceCacheManager &Instance()
+    {
+        static SimulationSliceCacheManager simulationSliceCacheManager;
+        return simulationSliceCacheManager;
+    }
     SimulationSliceCacheManager(const SimulationSliceCacheManager &) = delete;
     SimulationSliceCacheManager &operator = (const SimulationSliceCacheManager &) = delete;
     SimulationSliceCacheManager(SimulationSliceCacheManager &&) = delete;
@@ -24,7 +27,7 @@ public:
     std::vector<Trace::Slice> GetCompeteSlice(const std::map<std::string, Trace::Slice> setFlagSliceMap,
         std::map<std::string, Trace::Slice> waitFlagSliceMap, std::string field)
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        SpinLockGuard lock(mutex);
         std::vector<Trace::Slice> result;
         std::map<std::string, Trace::Slice> filedSetFlagSliceMap = allSetFlagSliceMap[field];
         std::map<std::string, Trace::Slice> filedWaitFlagSliceMap = allWaitFlagSliceMap[field];
@@ -37,14 +40,14 @@ public:
 
     void ClearAll()
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        SpinLockGuard lock(mutex);
         allSetFlagSliceMap.clear();
         allWaitFlagSliceMap.clear();
     }
 
     void ClearCacheByFileId(const std::string &fileId)
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        SpinLockGuard lock(mutex);
         allSetFlagSliceMap.erase(fileId);
         allWaitFlagSliceMap.erase(fileId);
     }
@@ -77,9 +80,9 @@ private:
 
     std::map<std::string, std::map<std::string, Trace::Slice>> allSetFlagSliceMap;
     std::map<std::string, std::map<std::string, Trace::Slice>> allWaitFlagSliceMap;
-    std::mutex mutex;
+    SpinLock mutex;
 };
 }
-}
-}
+
+
 #endif // PROFILER_SERVER_SIMULATIONSLICECACHEMANAGER_H

@@ -6,7 +6,7 @@
 #define PROFILER_SERVER_JSON_TRACE_DATABASE_H
 
 #include "VirtualTraceDatabase.h"
-#include "CacheManager.h"
+#include "SliceCacheManager.h"
 #include "ImportActionAnalyzer.h"
 #include "SliceAnalyzer.h"
 #include "FlowAnalyzer.h"
@@ -49,8 +49,7 @@ public:
     bool InsertFlowList(const std::vector<Trace::Flow> &eventList);
     bool InsertCounterList(const std::vector<Trace::Counter> &eventList);
     void CommitData();
-    void UpdateSimulationDepthWithNoOverlap();
-    void UpdateSimulationDepthByCodeWithNoOverlap();
+    void UpdateSimulationDepthByCodeWithNoOverlap(const std::string &fileId);
     std::vector<uint64_t> QueryAllTrackIdsByPid(std::string pid);
 
     // search
@@ -166,18 +165,13 @@ private:
     std::unique_ptr<SqlitePreparedStatement> GetSliceStmt(uint64_t paramLen);
     std::unique_ptr<SqlitePreparedStatement> GetFlowStmt(uint64_t paramLen);
     std::unique_ptr<SqlitePreparedStatement> GetCounterStmt(uint64_t paramLen);
-
-    bool QueryExtremumTimeOfFirstDepth(int64_t trackId, uint64_t startTime, uint64_t endTime,
-        Protocol::ExtremumTimestamp &extremumTimestamp);
     bool QueryDurationFromSliceByTimeRange(const Protocol::ThreadDetailParams &requestParams,
         const std::vector<SliceDto> &rows, std::vector<std::pair<uint64_t, uint64_t>> &nextDepthResult,
         int64_t trackId);
     void MetaDataToResponse(const std::vector<MetaDataDto> &metaDataVec, const std::string &fileId,
         std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
     std::vector<std::string> GetCounterDataType(const std::string &args);
-    void SetKernelDetail(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,
-        Protocol::KernelDetailsBody &responseBody) const;
-    std::vector<int32_t> QueryAllTrackId();
+    std::vector<uint64_t> QueryAllTrackId();
 
     void QueryAllSliceByTrackId(const int32_t &trackId, std::vector<Protocol::SimpleSlice> &simpleSliceVec);
 

@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "UploadFileParser.h"
-#include "SimulationSliceCacheManager.h"
+#include "CacheManager.h"
 #include "ProjectExplorerManager.h"
 #include "TraceFileParser.h"
 #include "MemoryParse.h"
@@ -183,8 +183,8 @@ void UploadFileParser::ParseLast(std::string fileId, UploadFileRequest request)
         return;
     }
     database->CreateIndex();
-    database->UpdateSimulationDepthWithNoOverlap();
-    SimulationSliceCacheManager::Instance().ClearCacheByFileId(fileId);
+    database->UpdateSimulationDepthByCodeWithNoOverlap(fileId);
+    CacheManager::Instance().ClearCacheByFileId(fileId);
 
     // 发送当前解析进度
     std::unique_ptr<FileProgress> &curFileProgress = fileProgressMap[fileId];

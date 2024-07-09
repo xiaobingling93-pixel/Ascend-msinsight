@@ -14,7 +14,7 @@
 #include "TimelineProtocolResponse.h"
 #include "TraceDatabaseDef.h"
 #include "ServerLog.h"
-#include "CacheManager.h"
+#include "SliceCacheManager.h"
 namespace Dic::Module::Timeline {
 struct FlowPointSampleStruct {
     // 连线去重集合

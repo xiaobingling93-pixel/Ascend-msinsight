@@ -10,8 +10,7 @@
 #include "TraceTime.h"
 #include "ClusterParseThreadPoolExecutor.h"
 #include "EventNotifyThreadPoolExecutor.h"
-#include "SliceDepthCacheManager.h"
-#include "SimulationSliceCacheManager.h"
+#include "CacheManager.h"
 #include "TraceFileParser.h"
 
 namespace Dic {
@@ -81,7 +80,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         database->QueryExtremumTimestamp(min, max);
         auto threadMap = database->QueryAllThreadMap();
         TraceFileParser::Instance().UpdateTrackIdMap(fileId, threadMap);
-        database->UpdateSimulationDepthWithNoOverlap();
+        database->UpdateSimulationDepthByCodeWithNoOverlap(fileId);
         Timeline::TraceTime::Instance().UpdateTime(min, 0);
         ParserStatusManager::Instance().SetFinishStatus(fileId);
         ParseEndCallBack(fileId, true, "");
@@ -163,7 +162,7 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
         return;
     }
     database->CreateIndex();
-    database->UpdateSimulationDepthWithNoOverlap();
+    database->UpdateSimulationDepthByCodeWithNoOverlap(fileId);
     database->UpdateParseStatus(FINISH_STATUS);
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true, "");
@@ -224,9 +223,7 @@ void TraceFileParser::Reset()
     TraceTime::Instance().Reset();
     FileParser::Reset();
     ParserStatusManager::Instance().ClearAllParserStatus();
-    CacheManager::Instance().Clear();
-    SliceDepthCacheManager::Instance().ClearAllCache();
-    SimulationSliceCacheManager::Instance().ClearAll();
+    CacheManager::Instance().ClearAll();
     ServerLog::Info("End Reset trace Parser");
 }
 
@@ -258,7 +255,7 @@ void TraceFileParser::DeleteParseFiles(const std::vector<std::string> &fileIds)
         if (oldStatus == ParserStatus::FINISH) {
             DeleteParseFileFromDisk(fileId);
         }
-        SliceDepthCacheManager::Instance().ClearCacheByFileId(fileId);
+        CacheManager::Instance().ClearCacheByFileId(fileId);
     }
 }
 } // end of namespace Timeline

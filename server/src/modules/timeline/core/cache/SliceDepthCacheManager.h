@@ -9,12 +9,9 @@
 #include <list>
 #include <vector>
 #include <mutex>
+#include "SpinLockGuard.h"
 #include "Timer.h"
-
-
-namespace Dic {
-namespace Module {
-namespace Timeline {
+namespace Dic::Module::Timeline {
 struct SliceDepthCacheStruct {
     uint64_t trackId = 0;
     int32_t maxDepTh = 0;
@@ -22,14 +19,18 @@ struct SliceDepthCacheStruct {
 };
 class SliceDepthCacheManager {
 public:
-    static SliceDepthCacheManager &Instance();
+    static SliceDepthCacheManager &Instance()
+    {
+        static SliceDepthCacheManager sliceDepthCacheManager;
+        return sliceDepthCacheManager;
+    }
     SliceDepthCacheManager(const SliceDepthCacheManager &) = delete;
     SliceDepthCacheManager &operator = (const SliceDepthCacheManager &) = delete;
     SliceDepthCacheManager(SliceDepthCacheManager &&) = delete;
     SliceDepthCacheManager &operator = (SliceDepthCacheManager &&) = delete;
     SliceDepthCacheStruct GetSliceDepthCacheStructByTrackId(const uint64_t trackId)
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        SpinLockGuard lock(mutex);
         SliceDepthCacheStruct sliceDepthCacheStruct = depthCache[trackId];
         return sliceDepthCacheStruct;
     }
@@ -48,14 +49,14 @@ public:
 
     void ClearAllCache()
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        SpinLockGuard lock(mutex);
         fileIdAndTrackIdsCache.clear();
         depthCache.clear();
     }
 
     void ClearCacheByFileId(const std::string &fileId)
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        SpinLockGuard lock(mutex);
         std::unordered_set<uint64_t> trackIds = fileIdAndTrackIdsCache[fileId];
         for (const auto &item : trackIds) {
             depthCache.erase(item);
@@ -71,9 +72,9 @@ private:
 
     SlingTrackDepthMap depthCache;
     std::unordered_map<std::string, std::unordered_set<uint64_t>> fileIdAndTrackIdsCache;
-    std::mutex mutex;
+    SpinLock mutex;
 };
 }
-}
-}
+
+
 #endif // PROFILER_SERVER_SLICEDEPTHCACHEMANAGER_H
