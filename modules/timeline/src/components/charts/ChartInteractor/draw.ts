@@ -1,17 +1,23 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import type { Theme } from '@emotion/react';
-import { CustomCrossRenderer } from './custom';
-import { Session } from '../../../entity/session';
-import { Pos, getTimeDifference } from './common';
+import type { CustomCrossRenderer } from './custom';
+import type { Session } from '../../../entity/session';
+import { getTimeDifference } from './common';
+import type { Pos } from './common';
 import { drawRoundedRect } from '../common';
-import { InteractorMouseState } from './ChartInteractor';
+import type { InteractorMouseState } from './ChartInteractor';
 import { THUMB_WIDTH_PX } from '../../base';
 import { getTextParser } from '../TimelineAxis';
-import { Scale } from '../../../entity/chart';
+import type { Scale } from '../../../entity/chart';
 import { TIME_LINE_AXIS_HEIGHT_PX } from '../../ChartContainer/ChartContainer';
-import { DataBlock, FlowEvent } from '../../FilterLinkLine';
+import type { DataBlock, FlowEvent } from '../../FilterLinkLine';
 import { hashToNumber } from '../../../utils/colorUtils';
-import { InsightUnit, UnitHeight } from '../../../entity/insight';
-import { ThreadMetaData } from '../../../entity/data';
+import { UnitHeight } from '../../../entity/insight';
+import type { InsightUnit } from '../../../entity/insight';
+import type { ThreadMetaData } from '../../../entity/data';
 import { colorPalette, getTimeOffset } from '../../../insight/units/utils';
 import * as d3 from 'd3';
 import { handlerEmptyString } from '../../../utils/string';
@@ -20,7 +26,7 @@ const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
 export const MIN_BRUSH_SIZE = 2;
 
-type DrawArrowOptions = {
+interface DrawArrowOptions {
     toX: number;
     toY: number;
     fromX: number;
@@ -31,10 +37,10 @@ type DrawArrowOptions = {
 };
 export const drawArrow = (ctx: CanvasRenderingContext2D, { toX, toY, fromX, fromY, length, angle, color }: DrawArrowOptions): void => {
     const a = Math.atan2((toY - fromY), (toX - fromX));
-    const xC = toX - length * Math.cos(a + angle * Math.PI / 180);
-    const yC = toY - length * Math.sin(a + angle * Math.PI / 180);
-    const xD = toX - length * Math.cos(a - angle * Math.PI / 180);
-    const yD = toY - length * Math.sin(a - angle * Math.PI / 180);
+    const xC = toX - (length * Math.cos(a + (angle * Math.PI / 180)));
+    const yC = toY - (length * Math.sin(a + (angle * Math.PI / 180)));
+    const xD = toX - (length * Math.cos(a - (angle * Math.PI / 180)));
+    const yD = toY - (length * Math.sin(a - (angle * Math.PI / 180)));
     ctx.save();
     ctx.beginPath();
     ctx.fillStyle = color;
@@ -47,8 +53,19 @@ export const drawArrow = (ctx: CanvasRenderingContext2D, { toX, toY, fromX, from
     ctx.restore();
 };
 
-const drawTimeDiff = (ctx: CanvasRenderingContext2D | null, maskRange: number[], xScale: (posX: number) => number,
-    isNsMode: boolean, theme: Theme, selectedRange: [number, number] | undefined): void => {
+interface DrawTimeDiffArgs {
+    ctx: CanvasRenderingContext2D | null;
+    maskRange: number[];
+    xScale: (posX: number) => number;
+    isNsMode: boolean;
+    theme: Theme;
+    selectedRange?: [number, number];
+}
+const drawTimeDiff = (props: DrawTimeDiffArgs): void => {
+    const {
+        ctx, maskRange, xScale,
+        isNsMode, theme, selectedRange,
+    } = props;
     if (!ctx) {
         return;
     }
@@ -107,14 +124,14 @@ const drawHoverTimeRect = (ctx: CanvasRenderingContext2D,
         return;
     }
 
-    if (mousePosNow.x >= width - roundRectWidth / 2 && mousePosNow.x <= ctx.canvas.clientWidth - THUMB_WIDTH_PX) {
+    if (mousePosNow.x >= width - (roundRectWidth / 2) && mousePosNow.x <= ctx.canvas.clientWidth - THUMB_WIDTH_PX) {
         drawRoundedRect([width - roundRectWidth, 0, roundRectWidth, roundRectHeight], ctx, rouned);
         ctx.fill();
         ctx.fillStyle = 'white';
-        ctx.fillText(displayText, width - roundRectWidth / 2, 3);
+        ctx.fillText(displayText, width - (roundRectWidth / 2), 3);
         return;
     }
-    drawRoundedRect([mousePosNow.x - roundRectWidth / 2, 0, roundRectWidth, roundRectHeight], ctx, rouned);
+    drawRoundedRect([mousePosNow.x - (roundRectWidth / 2), 0, roundRectWidth, roundRectHeight], ctx, rouned);
     ctx.fill();
     ctx.fillStyle = 'white';
     ctx.fillText(displayText, mousePosNow.x, 3);
@@ -132,8 +149,8 @@ export const drawTimeDiffText = (ctx: CanvasRenderingContext2D, timeString: stri
 
         ctx.beginPath();
         ctx.moveTo((maskRange[1] + maskRange[0]) / 2, (UP_LINE + DOWN_LINE) / 2);
-        ctx.lineTo((maskRange[1] + maskRange[0]) / 2 - 5, DOWN_LINE);
-        ctx.lineTo((maskRange[1] + maskRange[0]) / 2 + 5, DOWN_LINE);
+        ctx.lineTo(((maskRange[1] + maskRange[0]) / 2) - 5, DOWN_LINE);
+        ctx.lineTo(((maskRange[1] + maskRange[0]) / 2) + 5, DOWN_LINE);
         ctx.fillStyle = theme.timeDiffBackgroundColor;
         ctx.fill();
         // back
@@ -155,13 +172,13 @@ export const drawTimeDiffText = (ctx: CanvasRenderingContext2D, timeString: stri
         // text
         ctx.fillStyle = theme.fontColor;
         ctx.font = '12px sans-serif';
-        ctx.fillText(timeString, (maskRange[1] + maskRange[0]) / 2, (UP_LINE + DOWN_LINE) / 2 - 5);
+        ctx.fillText(timeString, (maskRange[1] + maskRange[0]) / 2, ((UP_LINE + DOWN_LINE) / 2) - 5);
         // line
         ctx.beginPath();
         ctx.moveTo(maskRange[0], (UP_LINE + DOWN_LINE) / 2);
-        ctx.lineTo((maskRange[0] + maskRange[1]) / 2 - textLength / 2, (UP_LINE + DOWN_LINE) / 2);
+        ctx.lineTo(((maskRange[0] + maskRange[1]) / 2) - (textLength / 2), (UP_LINE + DOWN_LINE) / 2);
         ctx.moveTo(maskRange[1], (UP_LINE + DOWN_LINE) / 2);
-        ctx.lineTo((maskRange[0] + maskRange[1]) / 2 + textLength / 2, (UP_LINE + DOWN_LINE) / 2);
+        ctx.lineTo(((maskRange[0] + maskRange[1]) / 2) + (textLength / 2), (UP_LINE + DOWN_LINE) / 2);
         ctx.strokeStyle = theme.timeDiffPictureColor;
         ctx.stroke();
     }
@@ -214,6 +231,8 @@ const drawMaskRange = ({
         // 2nd priority
         // not brushing now but has selected range
         maskRange = [xReverseScale(selectedRange[0]), xReverseScale(selectedRange[1])];
+    } else {
+        maskRange = undefined;
     }
     const elements = document.getElementsByClassName('chart-selected');
     if (maskRange !== undefined) {
@@ -238,7 +257,7 @@ const drawMaskRange = ({
             ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, maskRange[0], height);
             ctx.fillRect(maskRange[1], TIME_LINE_AXIS_HEIGHT_PX, width - maskRange[1], height);
         }
-        drawTimeDiff(ctx, maskRange, xScale, isNsMode, theme, selectedRange);
+        drawTimeDiff({ ctx, maskRange, xScale, isNsMode, theme, selectedRange });
     }
 };
 
@@ -249,7 +268,7 @@ export interface DrawArgs {
     xReverseScale: (ts: number) => number;
     xScale: (posX: number) => number;
     interactorMouseState: InteractorMouseState;
-    selectedRange: undefined | [number, number];
+    selectedRange?: [number, number];
     isNsMode: boolean;
     session: Session;
     theme: Theme;
@@ -264,8 +283,8 @@ export const drawOnMove = ({
     }
     // clear all
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    // draw mask
 
+    // draw mask
     drawMaskRange({ ctx, width, height, xReverseScale, xScale, interactorMouseState, selectedRange, isNsMode, session, theme });
 
     // should filter on data type
@@ -348,10 +367,26 @@ const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
 };
 let lastTime = 0;
 const FRAME_TIME = 16;
-export const draw = (ctx: CanvasRenderingContext2D | null, width: number, height: number,
-    xReverseScale: (ts: number) => number, xScale: (posX: number) => number,
-    interactorMouseState: InteractorMouseState, selectedRange: undefined | [number, number], isNsMode: boolean,
-    session: Session, customRenderers: CustomCrossRenderer[], theme: Theme): void => {
+export interface DrawCanvasArgs {
+    ctx: CanvasRenderingContext2D | null;
+    width: number;
+    height: number;
+    xReverseScale: (ts: number) => number;
+    xScale: (posX: number) => number;
+    interactorMouseState: InteractorMouseState;
+    selectedRange?: [number, number];
+    isNsMode: boolean;
+    session: Session;
+    customRenderers: CustomCrossRenderer[];
+    theme: Theme;
+}
+export const draw = (props: DrawCanvasArgs): void => {
+    const {
+        ctx, width, height,
+        xReverseScale, xScale,
+        interactorMouseState, selectedRange, isNsMode,
+        session, theme,
+    } = props;
     const now = new Date().valueOf();
     // 如果距离上次渲染的时间小于一帧的时间就不渲染
     if (now - lastTime < FRAME_TIME) {
@@ -393,7 +428,7 @@ const getHeight = (session: Session, data: DataBlock, cardId: string): number | 
         height = UNDRAW_HEIGHT + unitHeight - session.scrollTop + (0.5 * UnitHeight.COLL);
     } else {
         // 展开泳道连线位置
-        height = UNDRAW_HEIGHT + unitHeight - session.scrollTop + (data.depth + 0.5) * UnitHeight.STANDARD;
+        height = UNDRAW_HEIGHT + unitHeight - session.scrollTop + ((data.depth + 0.5) * UnitHeight.STANDARD);
     }
     return height;
 };

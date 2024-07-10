@@ -83,7 +83,7 @@ export class Session {
 
     // some params for selected value which is not a range.
     selectedParams: SelectedParams = { baseRawId: undefined, curRawId: undefined };
-    selectedRange: undefined | [ TimeStamp, TimeStamp ];
+    selectedRange?: [ TimeStamp, TimeStamp ];
     scrollTop: number = 0;
     expandedUnitKeys: string[] | [] = [];
     selectedUnits: [InsightUnit] | [] = []; // redundant for reducing extra computation

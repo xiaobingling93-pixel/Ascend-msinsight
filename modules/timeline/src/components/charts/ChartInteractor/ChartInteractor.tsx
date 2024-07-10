@@ -13,6 +13,7 @@ import { useWatchDomResize } from '../../../utils/useWatchDomResize';
 import { CustomCrossRenderer, registerCrossUnitRenderer, useCustomRenderers } from './custom';
 import { Pos } from './common';
 import { draw } from './draw';
+import type { DrawCanvasArgs } from './draw';
 import {
     resetCanvasSize,
     mouseDownAction,
@@ -166,7 +167,20 @@ ref: Ref<ChartInteractorHandles>): JSX.Element => {
     useEffect(() => { resetCanvasSize(normalCanvas, normalRect); resetCanvasSize(hoverCanvas, hoverRect); }, [normalRect, hoverRect]);
     useEffect(() => {
         if (!normalCanvas.current) { return; }
-        draw(normalCanvas.current.getContext('2d'), normalCanvas.current.clientWidth, normalCanvas.current.clientHeight, xReverseScale, xScale, interactorMouseState, session.selectedRange, isNsMode, session, customRenderers, theme);
+        const drawArgs: DrawCanvasArgs = {
+            ctx: normalCanvas.current.getContext('2d'),
+            width: normalCanvas.current.clientWidth,
+            height: normalCanvas.current.clientHeight,
+            xReverseScale,
+            xScale,
+            interactorMouseState,
+            selectedRange: session.selectedRange,
+            isNsMode,
+            session,
+            customRenderers,
+            theme,
+        };
+        draw(drawArgs);
         const traceAction: string[] = ['selectBrushScope', 'dragLane', 'zoomProportion'];
         traceAction.forEach((item) => { traceEnd(item); });
     }, [domainStart, domainEnd, endTimeAll, selectedRange, theme, normalRect,

@@ -12,7 +12,7 @@ import { INTERACTOR_WIDTH } from './ChartInteractor';
 import { isOnSideline, SINGLE_DRAG_OFFSET } from './common';
 import type { Pos } from './common';
 import { draw, drawOnMove, MIN_BRUSH_SIZE } from './draw';
-import type { DrawArgs } from './draw';
+import type { DrawArgs, DrawCanvasArgs } from './draw';
 import { changeRangeMarkerTimestamp } from '../../TimelineMarker';
 import { GOLDEN_RATE as MOVE_RATE } from '../../../entity/domain';
 import type { Theme } from '@emotion/react';
@@ -77,8 +77,20 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
         });
     }
 
-    interactorMouseState.clickPos.current = undefined;
-    draw(canvas.current.getContext('2d'), canvas.current.clientWidth, canvas.current.clientHeight, xReverseScale, xScale, interactorMouseState, session.selectedRange, isNsMode, session, customRenderers, theme);
+    const drawArgs: DrawCanvasArgs = {
+        ctx: canvas.current.getContext('2d'),
+        width: canvas.current.clientWidth,
+        height: canvas.current.clientHeight,
+        xReverseScale,
+        xScale,
+        interactorMouseState,
+        selectedRange: session.selectedRange,
+        isNsMode,
+        session,
+        customRenderers,
+        theme,
+    };
+    draw(drawArgs);
 };
 
 type GetDrawOnMoveArgs = {
