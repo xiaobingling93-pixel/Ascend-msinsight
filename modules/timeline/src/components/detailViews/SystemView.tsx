@@ -231,7 +231,7 @@ const handleAdvisorSelected = async(rowData: any, props: any): Promise<void> => 
     runInAction(() => {
         props.session.locateUnit = {
             target: (unit: any): boolean => {
-                return unit instanceof ThreadUnit && unit.metadata.cardId === props.rankId &&
+                return unit instanceof ThreadUnit && unit.metadata.cardId === rowData.rankId &&
                     unit.metadata.threadId === rowData.tid && unit.metadata.processId === rowData.pid;
             },
             onSuccess: (unit: InsightUnit): void => {

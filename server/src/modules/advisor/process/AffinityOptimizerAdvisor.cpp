@@ -37,10 +37,11 @@ bool AffinityOptimizerAdvisor::Process(const Protocol::APITypeParams& params,
         return false;
     }
     uint64_t start = param.pageSize * (param.current - 1);
+    auto dbType = Timeline::DataBaseManager::Instance().GetDataType();
     for (uint64_t i = start; i < start + param.pageSize && i < data.size(); ++i) {
         auto item = data.at(i);
         Protocol::AffinityOptimizerData one{};
-        one.baseInfo.rankId = params.rankId;
+        one.baseInfo.rankId = dbType == Timeline::DataType::JSON ? params.rankId : database->GetDbPath();
         one.baseInfo.startTime = item.startTime;
         one.baseInfo.duration = item.duration;
         one.baseInfo.pid = item.id;

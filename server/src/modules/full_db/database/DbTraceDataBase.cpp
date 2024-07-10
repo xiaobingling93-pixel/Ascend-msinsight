@@ -1856,7 +1856,7 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
     std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexes)
 {
     std::string sql = "SELECT str.value as name, py.startNs - ? as startTime, "
-        "py.endNs - ? as endTime, py.globalTid as pid, 'pytorch' as tid "
+        "py.endNs - ? as endTime, py.globalTid as pid, 'pytorch' as tid, py.depth as depth "
         "FROM " + TABLE_API + " py JOIN " + TABLE_STRING_IDS + " str ON py.name = str.id "
         "WHERE str.value LIKE 'aten::%' OR str.value LIKE 'npu::%' ORDER BY py.globalTid ASC, py.startNs ASC ";
     auto stmt = CreatPreparedStatement(sql);
@@ -1881,6 +1881,7 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
         one.duration = resultSet->GetUint64("endTime");
         one.pid = resultSet->GetString("pid");
         one.tid = resultSet->GetString("tid");
+        one.depth = resultSet->GetUint64("depth");
 
         if (data.count(trackId) == 0) {
             filterData.emplace(trackId, std::vector<Protocol::FlowLocation>{});

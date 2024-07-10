@@ -43,10 +43,12 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
     }
     AdvisorProcessUtil::SortFlowLocationData(results, param);
     uint64_t start = param.pageSize * (param.current - 1);
+    auto dbType = Timeline::DataBaseManager::Instance().GetDataType();
     for (uint64_t i = start; i < start + param.pageSize && i < results.size(); ++i) {
         auto item = results.at(i);
         Protocol::AffinityAPIData one{};
         one.name = item.name;
+        one.baseInfo.rankId = dbType == Timeline::DataType::JSON ? params.rankId : database->GetDbPath();
         one.baseInfo.pid = item.pid;
         one.baseInfo.tid = item.tid;
         one.baseInfo.startTime = item.timestamp;
