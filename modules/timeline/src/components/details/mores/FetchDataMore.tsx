@@ -50,7 +50,7 @@ export type FetchDataMoreProps<T extends Record<string, unknown>> = {
     clickCallback?: ({ row, session, unit }: { row: T; session: Session; unit?: InsightUnit }) => void;
     doubleClickCallback?: ({ row, session, unit }: { row: T; session: Session; unit?: InsightUnit }) => void;
 } & TableDataAdapter<T>;
-export const FetchDataMore = observer(function<T extends Record<string, unknown>>({
+export const FetchDataMore = observer(<T extends Record<string, unknown>>({
     session,
     height,
     isTree = false,
@@ -59,7 +59,7 @@ export const FetchDataMore = observer(function<T extends Record<string, unknown>
     actions,
     clickCallback,
     doubleClickCallback,
-}: FetchDataMoreProps<T>): JSX.Element {
+}: FetchDataMoreProps<T>): JSX.Element => {
     const state = useMoreUpdater(session, fetchData, { columns, actions });
     return <AutoAdjustedTable {...state} height={height}
         expandable={{ onExpand: state.onExpand, showExpandColumn: isTree }}

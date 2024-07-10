@@ -30,7 +30,7 @@ const updateHierarchyInfo = <T extends Record<string, unknown>>(parent: TreeNode
     return parent;
 };
 
-export const CallTree = observer(function CallTree <T extends CommonStateProto>(props: TableViewProps<DetailTabs, T> & { detail: DetailDescriptor<unknown> }): JSX.Element {
+export const CallTree = observer(<T extends CommonStateProto>(props: TableViewProps<DetailTabs, T> & { detail: DetailDescriptor<unknown> }): JSX.Element => {
     // Used to link More and Details
     const ref = useRef<TableHandle>(null);
     let detail = props.detail;
@@ -119,8 +119,8 @@ export type CallStackViewProps<T extends Record<string, unknown>> = {
     onNavigate?: ({ row }: { row: T }) => void;
 } & TableDataAdapter<T>;
 
-export const CallStackView = observer(function CallStackView<T extends Record<string, unknown>>(
-    { session, height, compare, columns, onNavigate }: CallStackViewProps<T>): JSX.Element {
+export const CallStackView = observer(<T extends Record<string, unknown>>(
+    { session, height, compare, columns, onNavigate }: CallStackViewProps<T>): JSX.Element => {
     const state = useStackUpdater(session, compare, { columns });
     return <AutoAdjustedTable {...state} height={height} expandable={{ showExpandColumn: false }}
                               onRow={(row): {onClick:() => void; onDoubleClick:() => void | undefined} => ({

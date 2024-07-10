@@ -3,11 +3,13 @@ import styled from '@emotion/styled';
 import { Input } from 'antd';
 import { InputProps, InputRef } from 'antd/lib/input';
 
-export const StyledInput = styled(React.forwardRef(
-    function Support(props: InputProps & { minwidth: number; isshow: number; width?: number }, ref: React.ForwardedRef<InputRef>) {
+const Support = React.forwardRef(
+    (props: InputProps & { minwidth: number; isshow: number; width?: number }, ref: React.ForwardedRef<InputRef>) => {
         return <Input {...props} ref={ref} />;
     },
-))`
+);
+Support.displayName = 'Support';
+export const StyledInput = styled(Support)`
     border-radius: 20px;
     min-width: ${(props): number => props.minwidth}px;
     width: ${(props): number => props.width as number}px;

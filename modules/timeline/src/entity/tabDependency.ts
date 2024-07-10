@@ -4,8 +4,8 @@ export type OptionType = { value: number | string; label: string };
 
 // 筛选类型
 export enum FilterType {
-    MULTI_FILTER,
-    INPUT_FILTER,
+    MULTI_FILTER = 0,
+    INPUT_FILTER = 1,
 };
 
 export class TabState {

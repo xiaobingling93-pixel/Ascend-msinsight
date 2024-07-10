@@ -22,7 +22,6 @@ export const createCaches = (session: ValidSession): Caches => {
     return {};
 };
 
-// Array<keyof SampleParameter>
 const msAbsoluteTimeInterfaces: any[] = [];
 
 export default class DicCachedEngine {

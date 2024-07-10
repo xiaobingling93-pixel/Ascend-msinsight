@@ -97,8 +97,8 @@ const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorNa
     );
 };
 
-const BandwidthAnalysis = observer(function (props:
-{ iterationId: string; rankId: number; operatorName: string; stage: string }) {
+const BandwidthAnalysis = observer((props:
+{ iterationId: string; rankId: number; operatorName: string; stage: string }) => {
     const { t } = useTranslation('communication');
     return (
         <Layout>

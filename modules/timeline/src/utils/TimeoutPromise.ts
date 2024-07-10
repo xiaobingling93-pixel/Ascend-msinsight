@@ -14,7 +14,7 @@ export class TimeoutPromise {
     }
 
     private timeoutPromise(promise: Promise<unknown>, delay: number, msg?: string): Promise<unknown> {
-        const timeout = this.delayPromise(delay).then(function () {
+        const timeout = this.delayPromise(delay).then((): void => {
             throw new Error(msg ?? 'Operation timed out');
         });
         return Promise.race([promise, timeout]);
@@ -25,7 +25,7 @@ export class TimeoutPromise {
     }
 
     private abortPromise(promise: Promise<unknown>, ms: number, msg?: string): AbortPromise {
-        const timeout = this.delayPromise(ms).then(function () {
+        const timeout = this.delayPromise(ms).then((): void => {
             throw new Error(msg ?? 'Operation timed out');
         });
         const abortP = {} as AbortPromise;

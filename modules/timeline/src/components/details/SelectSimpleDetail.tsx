@@ -7,7 +7,8 @@ import { selectRow } from './utils';
 import { AutoAdjustedTable } from './base/AutoAdjustedTable';
 import { CommonStateProto, TabProto } from './base/Tabs';
 
-export const SelectSimpleTabularDetail = observer(function<T extends CommonStateProto>({ session, height, detail, tabState, commonState, depsList }: TableViewProps<TabProto, T>) {
+export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
+    { session, height, detail, tabState, commonState, depsList }: TableViewProps<TabProto, T>) => {
     useEffect(() => {
         runInAction(() => {
             session.selectedDetailKeys = [];

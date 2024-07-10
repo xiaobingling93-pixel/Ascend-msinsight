@@ -16,7 +16,8 @@ export interface MoreTabs<T extends object> extends TabProto {
 };
 
 type MoreComponentProps<T extends object, MoreTabsState extends CommonStateProto> = TabComponentProps<MoreTabs<T>, MoreTabsState> & { height: number };
-const Mores = observer(function <T extends object, MoreTabsState extends CommonStateProto>({ tabs, commonState: { activeKey }, session, height }: MoreComponentProps<T, MoreTabsState>): JSX.Element {
+const Mores = observer(<T extends object, MoreTabsState extends CommonStateProto>(
+    { tabs, commonState: { activeKey }, session, height }: MoreComponentProps<T, MoreTabsState>): JSX.Element => {
     const tab = tabs[activeKey];
     const props = Object.assign(tab.render.moreProps, {
         session,
@@ -25,8 +26,9 @@ const Mores = observer(function <T extends object, MoreTabsState extends CommonS
     return <tab.render.More { ...props } />;
 });
 
-const MoreTitles = observer(function<T extends object, MoreTabsState extends CommonStateProto>({ tabs, commonState: { activeKey }, interactorProps: { createdToggleProps }, session }:
-TabComponentProps<MoreTabs<T>, MoreTabsState>): JSX.Element {
+const MoreTitles = observer(<T extends object, MoreTabsState extends CommonStateProto>(
+    { tabs, commonState: { activeKey }, interactorProps: { createdToggleProps }, session }:
+    TabComponentProps<MoreTabs<T>, MoreTabsState>): JSX.Element => {
     const theme = useTheme();
     return (<>
         {tabs.map((tab: MoreTabs<T>, index: number) => (

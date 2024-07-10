@@ -4,7 +4,7 @@ import { cleanup as reactCleanup } from '@testing-library/react';
 import { cleanup as reactHooksCleanup } from '@testing-library/react-hooks';
 
 declare global {
-    var session: Session;
+    const session: Session;
 }
 
 beforeEach(() => {

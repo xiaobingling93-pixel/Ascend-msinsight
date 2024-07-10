@@ -3,9 +3,13 @@ import React from 'react';
 import AntdTable, { TableProps } from './rc-table';
 import { TableHandle } from './rc-table/interface';
 
-export const Table = styled(React.forwardRef(function Support(props: TableProps<any>, ref: React.Ref<TableHandle>) {
-    return <AntdTable { ...props } ref={ref} />;
-}))`
+const Support = React.forwardRef(
+    (props: TableProps<any>, ref: React.Ref<TableHandle>) => {
+        return <AntdTable { ...props } ref={ref} />;
+    },
+);
+Support.displayName = 'table';
+export const Table = styled(Support)`
     .insight-table-body::-webkit-scrollbar {
         width: 7px;
         transition: opacity 120ms ease-out;

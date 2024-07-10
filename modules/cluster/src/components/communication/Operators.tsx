@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 
-const Operators = observer(function ({ rankId }: { rankId: string }) {
+const Operators = observer(({ rankId }: { rankId: string }) => {
     return (
         <div>
             <div>Advisor</div>

@@ -213,7 +213,7 @@ const addNewFlag = (session: Session, timeStamp: number, timeDisplay: string): v
         };
         session.timelineMaker.timelineFlagList.push(session.timelineMaker.selectedFlag);
         platform.trace('useTag', {});
-        session.timelineMaker.timelineFlagList.sort((a, b) => {
+        session.timelineMaker.timelineFlagList.sort((a, b): number => {
             return a.timeStamp - b.timeStamp;
         });
         // 通知时间轴进行标记绘图更新
@@ -239,7 +239,7 @@ export const addRangeFlag = (session: Session, rangeStartTimeStamp: number, rang
             anotherTimeStamp: rangeEndTimeStamp,
         };
         session.timelineMaker.timelineFlagList.push(rangeStartFlag);
-        session.timelineMaker.timelineFlagList.sort((a, b) => {
+        session.timelineMaker.timelineFlagList.sort((a, b): number => {
             return a.timeStamp - b.timeStamp;
         });
         // 通知时间轴进行标记绘图更新

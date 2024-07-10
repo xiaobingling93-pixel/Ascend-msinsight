@@ -53,7 +53,7 @@ const StyledSliceDetailDiv = styled.div`
     }
 `;
 
-export const SelectedDataBase = observer(function SelectedDataBase(props: timeDetailProps): JSX.Element {
+export const SelectedDataBase = observer((props: timeDetailProps): JSX.Element => {
     const { renderer, hasTitle = false } = props;
     const { t } = useTranslation('timeline', { keyPrefix: 'sliceDetail' });
     return <StyledSliceDetailDiv>

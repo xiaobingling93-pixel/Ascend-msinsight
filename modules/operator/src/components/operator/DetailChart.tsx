@@ -94,7 +94,7 @@ const baseOption: echarts.EChartsOption = {
 };
 
 // eslint-disable-next-line max-lines-per-function
-const DetailChart = observer(function ({ condition, session }: {condition: ConditionType;session: Session}) {
+const DetailChart = observer(({ condition, session }: {condition: ConditionType;session: Session}) => {
     const [opTypeData, setOpTypeData] = useState([]);
     const [computeData, setComputeData] = useState([]);
     const { t } = useTranslation('operator', { keyPrefix: 'sessionTitle' });

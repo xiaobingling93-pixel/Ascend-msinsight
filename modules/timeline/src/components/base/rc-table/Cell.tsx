@@ -52,7 +52,7 @@ const extractTitle = ({
     }
     return '';
 };
-  
+
 function Cell<RecordType extends DefaultRecordType>({
     prefixCls,
     record,
@@ -88,7 +88,7 @@ function Cell<RecordType extends DefaultRecordType>({
         const value = getPathValue<Record<string, unknown> | React.ReactNode, RecordType>(record, dataIndex);
 
         let returnChildNode = value as ReactNode;
-        let cellProps: CellType<RecordType> | undefined = undefined;
+        let cellProps: CellType<RecordType> | undefined;
 
         if (render) {
             const renderData = render(value, record!, index!);

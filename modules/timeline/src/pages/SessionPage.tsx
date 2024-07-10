@@ -61,7 +61,7 @@ const StatePopover = observer(({ session }: { session: Session }) => {
 });
 
 export const BOTTOM_HEIGHT = 332;
-export const SessionPage = observer(function SessionPage({ session }: { session: Session }) {
+export const SessionPage = observer(({ session }: { session: Session }): any => {
     const [view, handleOpen] = useDraggableContainer({
         draggableWH: BOTTOM_HEIGHT,
         dragDirection: DragDirection.BOTTOM,

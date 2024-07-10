@@ -137,7 +137,8 @@ function renderExpandIcon<RecordType>({
 }
 
 /* eslint-disable max-lines-per-function */
-const ForwardBaseTable =  React.forwardRef(function Table<RecordType extends DefaultRecordType>(props: TableProps<RecordType>, ref: ForwardedRef<TableHandle>): JSX.Element {
+const ForwardBaseTable = React.forwardRef(<RecordType extends DefaultRecordType>(
+    props: TableProps<RecordType>, ref: ForwardedRef<TableHandle>): JSX.Element => {
     const {
         prefixCls = INSIGHT_TABLE_PREFIX,
         className,
@@ -483,8 +484,8 @@ const ForwardBaseTable =  React.forwardRef(function Table<RecordType extends Def
         </TableContext.Provider>
     );
 });
-/* eslint-enable max-lines-per-function */
 
+/* eslint-enable max-lines-per-function */
 ForwardBaseTable.defaultProps = {
     rowKey: 'key',
     prefixCls: INSIGHT_TABLE_PREFIX,
@@ -501,4 +502,5 @@ ForwardBaseTable.defaultProps = {
     ),
 };
 
-export default ForwardBaseTable as <RecordType extends object = any>(props: React.PropsWithChildren<TableProps<RecordType>> & { ref?: React.Ref<TableHandle> }) => React.ReactElement;
+export default ForwardBaseTable as <RecordType extends object = any>(
+    props: React.PropsWithChildren<TableProps<RecordType>> & { ref?: React.Ref<TableHandle> }) => React.ReactElement;

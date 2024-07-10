@@ -20,7 +20,7 @@ import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonT
 import ReactDOM from 'react-dom';
 import _ from 'lodash';
 
-const PpBandwidthAnalysis = observer(function ({ session }: { session: Session }) {
+const PpBandwidthAnalysis = observer(({ session }: { session: Session }) => {
     const [allStageIds, setAllStageIds] = useState<string[]>([]);
     const [conditions, setConditions] = useState<ConditionDataType>(
         { step: '', stage: '' });

@@ -95,7 +95,8 @@ type CallbackFunc = {
 
 type ComparisonDetailProps<T extends CommonStateProto> = TableViewProps<DetailTabs, T> & CallbackFunc;
 
-export const ComparisonDetail = observer(function<T extends CommonStateProto>({ session, height, detail, processDisplayValue, filterListValues, createSelectOption }: ComparisonDetailProps<T>): JSX.Element {
+export const ComparisonDetail = observer(<T extends CommonStateProto>(
+    { session, height, detail, processDisplayValue, filterListValues, createSelectOption }: ComparisonDetailProps<T>): JSX.Element => {
     const { t } = useTranslation();
     const state = useComparisonUpdater(session, detail);
     const [handleBase, handleCur] = getHandleFuncs(session, Object.keys(session.selectedParams) as unknown as Array<keyof SelectedParams>);

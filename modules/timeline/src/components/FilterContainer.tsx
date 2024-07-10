@@ -30,8 +30,8 @@ type MultipleSelectProps = {
 };
 
 enum Origin {
-    'OPTION1',
-    'OPTION2',
+    'OPTION1' = 0,
+    'OPTION2' = 1,
 }
 
 export const FILTER_HEIGHT = 31;

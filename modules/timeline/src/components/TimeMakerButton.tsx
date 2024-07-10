@@ -49,7 +49,7 @@ export const RangeMarkerButtonCanvas = observer(({ session, timelineHeight }: Ra
     const [width, ref] = useWatchResize<HTMLDivElement>('width');
     React.useEffect(() => {
         if (!canvas.current) {
-            return;
+            return () => {};
         }
         const singleClickListener = (e: MouseEvent): void => handleSingleClick(e, session, range, domainStart, domainEnd);
         if (session.name !== t('Realtime Monitor')) {

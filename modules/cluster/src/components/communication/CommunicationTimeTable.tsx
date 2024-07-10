@@ -176,8 +176,8 @@ const useRankColumns = (handleAction: VoidFunction[], conditions: any, t: TFunct
     ].filter((item: any) => item.display !== false);
 };
 const rowKey = 'index';
-const CommunicationTimeTable = observer(function (props:
-{dataSource?: DataType[];showOperator: (rankid: string) => void;conditions: any;updateSort: VoidFunction; session: Session}) {
+const CommunicationTimeTable = observer((props:
+{dataSource?: DataType[];showOperator: (rankid: string) => void;conditions: any;updateSort: VoidFunction; session: Session}) => {
     const { t } = useTranslation('communication');
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
     const columns = useRankColumns([props.showOperator, setExpandedKeys], props.conditions, t);

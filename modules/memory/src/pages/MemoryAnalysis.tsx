@@ -60,7 +60,7 @@ const dataResourceType = {
 };
 
 // eslint-disable-next-line max-lines-per-function
-const MemoryAnalysis = observer(function({ session, isDark }: { session: Session; isDark: boolean }) {
+const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark: boolean }) => {
     // memory数据类型，默认为dynamic
     const [memoryType, setMemoryType] = useState<string>(memoryGraphType.dynamic);
     // memory数据来源，默认为pytorch

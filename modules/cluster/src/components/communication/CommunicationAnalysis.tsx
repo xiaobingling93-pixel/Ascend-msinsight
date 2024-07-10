@@ -71,7 +71,7 @@ const wrapChartData = (data: tableDataType[]): chartDataType => {
     return chartData;
 };
 
-const CommunicationAnalysis = observer(function ({ session, active = true }: { session: Session;active?: boolean }) {
+const CommunicationAnalysis = observer(({ session, active = true }: { session: Session;active?: boolean }) => {
     const [rankId, setRankId] = useState('');
     const [showData, setShowData] = useState<showDataType>({
         chartData: {} as chartDataType,

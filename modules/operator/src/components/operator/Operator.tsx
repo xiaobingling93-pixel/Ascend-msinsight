@@ -12,7 +12,7 @@ import BaseTable from './DetailTable';
 import { type ConditionType, defaultCondition, type FilterType, defaultFilterType } from './Filter';
 
 // eslint-disable-next-line max-lines-per-function
-const Index = observer(function ({ session }: { session: Session }) {
+const Index = observer(({ session }: { session: Session }) => {
     const [condition, setCondition] = useState<ConditionType>(defaultCondition);
     const [filterType] = useState<FilterType>(defaultFilterType);
     const handleFilterChange = (obj: any): void => {

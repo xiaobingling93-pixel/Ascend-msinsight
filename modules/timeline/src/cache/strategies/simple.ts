@@ -39,7 +39,6 @@ export class SimpleOfflineTimeSeriesCache<K extends KeysMatching<any, unknown[]>
     async getData<T extends any>(session: ValidSession, params: any): Promise<any> {
         if (this.data === undefined) {
             try {
-                // this.data = (await dataFunc(session, getRange, params))[this.key];
                 this.data = [];
             } catch (e) {
                 // wedge e: ErrorRes

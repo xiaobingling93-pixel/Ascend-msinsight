@@ -70,7 +70,7 @@ const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element =>
     }
 });
 
-export const SelectedDataBottomPanel = observer(function SelectedDataDetail<T extends Record<string, unknown>>(props: DetailProps<T>): JSX.Element {
+export const SelectedDataBottomPanel = observer(<T extends Record<string, unknown>>(props: DetailProps<T>): JSX.Element => {
     const { session, detail } = props;
     const { renderFields, data } = useSelectedDataDetailUpdater(session, detail, session.selectedData);
     const sliceDetailData = data as AscendSliceDetail;
