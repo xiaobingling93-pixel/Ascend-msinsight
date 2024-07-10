@@ -98,8 +98,6 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
     const [isBtnDisabled, setBtnDisabled] = useState<boolean>(true);
     const [hostCondition, setHostCondition] = useState<ConditionType>({ options: [], value: '' });
     const [rankIdCondition, setRankIdCondition] = useState<ConditionType>({ options: [], value: '' });
-    // 监听窗口唤醒状态以重绘echarts
-    const [isWakeup, setIsWakeup] = useState<boolean>(false);
     const { t } = useTranslation('memory');
     const hit = useHit();
 
@@ -401,10 +399,6 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
         setRankIdCondition({ options: rankIdOptions, value: rankIdOptions[0] });
     }, [hostCondition.options, hostCondition.value, hostCondition.ranks]);
 
-    useEffect(() => {
-        setIsWakeup(session.isWakeup);
-    }, [session.isWakeup]);
-
     return (
         <div className="memory-analysis-wrapper">
             <MemoryWrapper>
@@ -463,7 +457,6 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                                     onSelectionChanged={onSelectedRangeChanged}
                                     record={selectedRecord}
                                     isDark={isDark}
-                                    isWakeup={isWakeup}
                                 />
                                 : <StyledEmpty style={{ marginTop: 160 }} translation={t}/>
                             }
@@ -501,7 +494,6 @@ const MemoryAnalysis = observer(function({ session, isDark }: { session: Session
                                             onSelectionChanged={onSelectedRangeChanged}
                                             record={selectedStaticRecord}
                                             isDark={isDark}
-                                            isWakeup={isWakeup}
                                         />
                                         : <StyledEmpty style={{ marginTop: 160 }} translation={t}/>
                                     }

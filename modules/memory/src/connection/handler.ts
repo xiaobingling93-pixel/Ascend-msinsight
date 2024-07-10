@@ -58,21 +58,6 @@ export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
 };
 
-export const wakeUpHandler: NotificationHandler = async (data): Promise<void> => {
-    try {
-        const { sessionStore } = store;
-        const session = sessionStore.activeSession;
-        runInAction(() => {
-            if (!session) {
-                return;
-            }
-            session.isWakeup = !session.isWakeup;
-        });
-    } catch (error) {
-        console.error(error);
-    }
-};
-
 export const updateSessionHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const { sessionStore } = store;

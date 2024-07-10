@@ -8,7 +8,6 @@ export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     unitcount = 0;
     memoryRankIds: string[] = [];
-    isWakeup: boolean = false;
     isCluster: boolean = false;
     isClusterMemoryCompletedSwitch: boolean = false;
     curRankIdsCount = 0;

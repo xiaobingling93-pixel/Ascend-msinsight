@@ -7,7 +7,7 @@ import type { Session } from '../../entity/session';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
-import { addResizeEvent, chartVisbilityListener, Container, Loading, safeStr } from '../Common';
+import { addResizeEvent, Container, Loading, safeStr } from '../Common';
 import { colorPalette, hashToNumber } from '../../utils/colorUtil';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
@@ -190,9 +190,9 @@ interface OpDetail {
 }
 let selectedOpDetail: OpDetail | null;
 
-function InitCharts(dataSource: AnalysisChartData, session: Session, setDopDownVisible: (_: boolean) => void): void {
+function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDownVisible: (_: boolean) => void): void {
     const chartDom = document.getElementById('hccl');
-    if (chartDom === null || chartDom.offsetParent === null) {
+    if (chartDom === null) {
         return;
     }
     echarts.init(chartDom).dispose();
@@ -208,7 +208,7 @@ function InitCharts(dataSource: AnalysisChartData, session: Session, setDopDownV
             timestamp: msToNs(timestamp),
             duration: msToNs(duration),
         };
-        setDopDownVisible(true);
+        setDropDownVisible(true);
     });
     if (dataSource !== undefined) {
         myChart.setOption(wrapData(dataSource));
@@ -273,15 +273,12 @@ const useMenuItems = (): MenuProps['items'] => {
 
 const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { dataSource: AnalysisChartData; session: Session}) => {
     const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT);
-    const [dropDownVisible, setDopDownVisible] = useState(false);
+    const [dropDownVisible, setDropDownVisible] = useState(false);
     const menuItems = useMenuItems();
-    chartVisbilityListener('hccl', () => {
-        InitCharts(dataSource, session, setDopDownVisible);
-    });
     useEffect(() => {
         setTimeout(() => {
             setChartHeight(getChartHeight(dataSource));
-            InitCharts(dataSource, session, setDopDownVisible);
+            InitCharts(dataSource, session, setDropDownVisible);
         });
     }, [dataSource]);
     return (
@@ -291,12 +288,12 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { data
                 ? <Dropdown
                     menu={{
                         items: menuItems,
-                        onClick: (): void => setDopDownVisible(false),
+                        onClick: (): void => setDropDownVisible(false),
                         onBlur: (e): void => {
                             const hasItem = menuItems?.findIndex(item =>
                                 (e.relatedTarget as HTMLElement)?.dataset?.menuId?.includes(item?.key as string)) !== -1;
                             if (!hasItem) {
-                                setDopDownVisible(false);
+                                setDropDownVisible(false);
                             }
                         },
                     }}
@@ -304,7 +301,7 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { data
                     open={dropDownVisible}
                     autoFocus
                 >
-                    <div id={'hccl'} style={{ height: `${chartHeight}px` }} ></div>
+                    <div id={'hccl'} style={{ width: 'calc(100vw - 40px)', height: chartHeight }} ></div>
                 </Dropdown>
                 : <div style={{ height: '400px' }}><Loading style={{ margin: '200px auto 0' }}/></div> }
             bodyStyle={{ overflow: 'visible' }}

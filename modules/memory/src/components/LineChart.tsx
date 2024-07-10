@@ -17,7 +17,6 @@ interface IProps {
     onSelectionChanged?: (start: number, end: number) => void;
     record?: any;
     isDark: boolean;
-    isWakeup: boolean;
 }
 
 type T = string | undefined;
@@ -206,7 +205,7 @@ const useTitle = (title: string): string => {
     return translatedMessage;
 };
 export const LineChart: React.FC<IProps> = (props) => {
-    const { graph, record, isDark, isWakeup, onSelectionChanged } = props;
+    const { graph, record, isDark, onSelectionChanged } = props;
     const graphRef = React.useRef<HTMLDivElement>(null);
     const [resizeEventDependency] = useResizeEventDependency();
     const [chartObj, setChartObj] = React.useState<echarts.ECharts | undefined>();
@@ -230,7 +229,7 @@ export const LineChart: React.FC<IProps> = (props) => {
         return () => {
             myChart.dispose();
         };
-    }, [graph, resizeEventDependency, isDark, isWakeup]);
+    }, [graph, resizeEventDependency, isDark]);
 
     React.useEffect(() => {
         _handleEvents(chartObj, props, selectedPoints, graph, t);
@@ -244,7 +243,7 @@ export const LineChart: React.FC<IProps> = (props) => {
                 </div>
                 : null
             }
-            <div ref={graphRef} style={{ height: '400px' }}></div>
+            <div ref={graphRef} style={{ width: 'calc(100vw - 40px)', height: '400px' }}></div>
         </div>
     );
 };
