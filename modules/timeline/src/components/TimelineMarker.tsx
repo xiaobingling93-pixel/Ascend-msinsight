@@ -24,6 +24,8 @@ import { useTranslation } from 'react-i18next';
 import { TIME_MARKER_AXIS_HEIGHT } from './TimeMakerAxis';
 import { ReactComponent as CloseIcon } from '../assets/images/insights/UIicon_closeFlagList.svg';
 import { TimeStamp } from '../entity/common';
+import { adaptDpr } from 'lib/CommonUtils';
+
 const FLAG_DEFAULT_NAME_REG = /default-\d+/;
 const SCROLLBAR_WIDTH = 7;
 
@@ -110,10 +112,11 @@ export const drawTimelineFlags = ({ session, domain, current, range, vertical, t
     if (!ctx || !verticalCtx || session.name === t('Realtime Monitor')) {
         return;
     }
+    const { canvasWidth } = adaptDpr(current, ctx);
+    adaptDpr(vertical, verticalCtx);
     // 清空画布
     ctx.clearRect(0, 0, current.width, current.height);
     verticalCtx.clearRect(0, 0, vertical.width, vertical.height);
-    const canvasWidth = ctx.canvas.width;
     const flagList = session.timelineMaker.timelineFlagList;
     let pointSvg: SVGSVGElement | undefined;
     let rangeStartSvg: SVGSVGElement | undefined;
@@ -290,7 +293,7 @@ export const handleMouseMove = (e: MouseEvent, session: Session, current: HTMLCa
         return;
     }
     const mouse = getMouse(e, current);
-
+    adaptDpr(current, ctx);
     // 清空画布
     ctx.clearRect(0, 0, current.width, current.height);
 

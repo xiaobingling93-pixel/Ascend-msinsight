@@ -263,7 +263,7 @@ export const drawOnMove = ({
         return;
     }
     // clear all
-    ctx.clearRect(0, 0, width, height);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     // draw mask
 
     drawMaskRange({ ctx, width, height, xReverseScale, xScale, interactorMouseState, selectedRange, isNsMode, session, theme });

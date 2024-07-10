@@ -10,6 +10,7 @@ import { TimeUnit } from '../../utils/adaptTimeForLength';
 import { getTimestamp } from '../../utils/humanReadable';
 import { useWatchResize } from '../../utils/useWatchDomResize';
 import { RangeMarkerButtonCanvas } from '../TimeMakerButton';
+import { adaptDpr } from 'lib/CommonUtils';
 
 export const BASE_TICKS_SPACE_PX = 50;
 export const BASE_DOMAIN_STEP = 1;
@@ -264,9 +265,8 @@ const drawTimelineAxis = (canvas: HTMLCanvasElement, {
 }: DrawAxisOptions = DEFAULT_DRAW_TIMELINE_AXIS_OPTIONS): void => {
     const ctx = canvas.getContext('2d');
     if (!ctx) { return; }
+    const { canvasWidth, canvasHeight } = adaptDpr(canvas, ctx);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const canvasWidth = ctx.canvas.width;
-    const canvasHeight = ctx.canvas.height;
     const originX = spaceX;
     const originY = canvasHeight - spaceY;
     const distanceX = canvasWidth - 2 * spaceX;

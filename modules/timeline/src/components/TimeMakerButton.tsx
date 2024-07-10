@@ -14,6 +14,7 @@ import { addRangeFlag, deleteRangeFlag, linearScaleFactory, transformTimeToLeft 
 import { runInAction } from 'mobx';
 import { getTimestamp } from '../utils/humanReadable';
 import { SvgType } from './base/rc-table/types';
+import { adaptDpr } from 'lib/CommonUtils';
 
 const PlaceFlagButtonSvg = AntdPlaceFlagButtonSvg as SvgType;
 const FlagIcon = AntdFlagIcon as SvgType;
@@ -81,9 +82,9 @@ const drawPlaceRangeButton = (session: Session, current: HTMLCanvasElement, doma
     document.querySelectorAll('svg').forEach(svgItem => {
         if (svgItem.id === 'ic_place_flag') { buttonSvg = svgItem; }
     });
+    const { canvasWidth } = adaptDpr(current, ctx);
     ctx.clearRect(0, 0, current.width, current.height);
     if (buttonSvg === undefined || selectedRange === undefined) { return; }
-    const canvasWidth = ctx.canvas.width;
     const rangeEndTimeStamp = selectedRange[0] > selectedRange[1] ? selectedRange[0] : selectedRange[1];
     const buttonWith = 18;
     const beginX = transformTimeToLeft(domain[0], domain[1], rangeEndTimeStamp, canvasWidth) - buttonWith;

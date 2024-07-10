@@ -18,6 +18,7 @@ import { GOLDEN_RATE as MOVE_RATE } from '../../../entity/domain';
 import type { Theme } from '@emotion/react';
 import { setZoomHistory } from '../../ContextMenu';
 import { isMac } from '../../../utils/is';
+import { adaptDpr } from 'lib/CommonUtils';
 
 const dragInitData = {
     isDragging: false,
@@ -94,10 +95,12 @@ const getDrawOnMoveArgs = ({
     ...props
 }: GetDrawOnMoveArgs): DrawArgs => {
     if (!canvas.current) { throw Error('missed canvas'); }
+    const ctx = canvas.current.getContext('2d');
+    const { canvasWidth, canvasHeight } = adaptDpr(canvas.current, ctx);
     return {
-        ctx: canvas.current.getContext('2d'),
-        width: canvas.current.clientWidth,
-        height: canvas.current.clientHeight,
+        ctx,
+        width: canvasWidth,
+        height: canvasHeight,
         isNsMode: session.isNsMode,
         selectedRange: session.selectedRange,
         session,

@@ -129,3 +129,17 @@ export function GroupRankIdsByHost(rankIds: string[]): { hosts: string[]; ranks:
     });
     return { hosts: Array.from(host), ranks };
 };
+
+interface AdaptDprResult {
+    canvasWidth: number;
+    canvasHeight: number;
+}
+export const adaptDpr = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): AdaptDprResult => {
+    const dpr = window.devicePixelRatio;
+    const canvasWidth = canvas.clientWidth;
+    const canvasHeight = canvas.clientHeight;
+    canvas.width = canvasWidth * dpr;
+    canvas.height = canvasHeight * dpr;
+    ctx.scale(dpr, dpr);
+    return { canvasWidth, canvasHeight };
+};
