@@ -206,7 +206,7 @@ const useBottomPanelReactNodes = (session: Session, height: number): BottomPanel
             // More Container has extra height
             more: getMoreContent(session, contentHeight - MORE_HEADER_HEIGHT_PX, bottomPanelComponents),
             toolbar: getFilterContent(session, bottomPanelComponents),
-            moreWh: bottomPanelComponents?.MoreWh ?? 590,
+            moreWh: bottomPanelComponents?.moreWh ?? 590,
             open: bottomPanelComponents?.open ?? true,
         };
     }, [bottomPanelComponents, height, t]);

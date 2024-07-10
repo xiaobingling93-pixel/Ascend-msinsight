@@ -1,8 +1,12 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 import 'antd/lib/index';
 declare module 'antd' {
     import type { InputRef, TooltipProps } from 'antd';
-    import { DropDownProps } from 'antd/lib/dropdown/dropdown';
-    import { ReactNode } from 'react';
+    import type { DropDownProps } from 'antd/lib/dropdown/dropdown';
+    import type { ReactNode } from 'react';
     import DropdownButton from 'antd/lib/dropdown/dropdown-button';
 
     type MyDropDownProps = DropDownProps & {

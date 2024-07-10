@@ -4,7 +4,7 @@ import { Caches } from '../cache/cache';
 import { toLocalTimeString } from '../utils/humanReadable';
 import { TimeStamp } from './common';
 import { Domain } from './domain';
-import { InsightUnit, UnitMatcher, LinkLines } from './insight';
+import type { InsightUnit, UnitMatcher, LinkLines, LinkDataDesc } from './insight';
 import { TimeLineMaker, TIME_MAKER_DEFAULT } from './timeMaker';
 import { omit } from 'lodash';
 import { platform } from '../platforms';
@@ -100,7 +100,7 @@ export class Session {
     renderTrigger: boolean = true;
 
     linkFlow?: Record<string, unknown>;
-    linkDetail?: Record<string, unknown>;
+    linkDetail?: LinkDataDesc<Record<string, unknown>>;
     buttons: Array<React.FC<{ session: Session }>>;
 
     // set this field with a new matcher to trigger jump-to-target-lane

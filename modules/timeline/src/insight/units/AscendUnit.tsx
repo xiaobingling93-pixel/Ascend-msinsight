@@ -310,7 +310,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 session={session} height={height} detail={slicesListDetail}></SelectSimpleTabularDetail>,
             DetailTitle: 'Slices List',
             More: (): JSX.Element => <SliceRightOpDetail session={newSession} metadata={metadata} />,
-            MoreWh: 320,
+            moreWh: 320,
         };
     },
     collapseAction: (insightUnit) => {
@@ -554,7 +554,7 @@ const useSliceRightDataUpdator = (session: Session, originDetail: LinkDataDesc<R
     const [renderFields, setRenderFields] = React.useState<Array<[string, string | JSX.Element]>>();
     const { selectedUnits } = session;
     const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
-    const detail = (session.linkDetail as LinkDataDesc<Record<string, unknown>>) ?? originDetail;
+    const detail = (session.linkDetail as unknown as LinkDataDesc<Record<string, unknown>>) ?? originDetail;
     const fetchData = session.phase === 'error' ? undefined : detail?.fetchData;
     const onDataFetched = React.useMemo(() => ([selectedUnits, linkFlow].filter(_.isEmpty).length === 0
         ? fetchData?.(session, selectedUnit?.metadata as MetaData)

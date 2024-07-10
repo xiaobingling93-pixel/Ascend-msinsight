@@ -1,11 +1,14 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import { makeAutoObservable, runInAction } from 'mobx';
-import React from 'react';
-import { CommonStateProto } from '../components/details/base/Tabs';
-import { ChartConfig, ChartDecorator, ChartReaction, ChartType, GetChartConfig, MapFunc, RenderTooltip } from './chart';
-import { ElementType, TreeNode } from './common';
-import { Session } from './session';
-import { TabState } from './tabDependency';
-import { CardMetaData } from './data';
+import type React from 'react';
+import type { CommonStateProto } from '../components/details/base/Tabs';
+import type { ChartConfig, ChartDecorator, ChartReaction, ChartType, GetChartConfig, MapFunc, RenderTooltip } from './chart';
+import type { ElementType, TreeNode } from './common';
+import type { Session } from './session';
+import type { TabState } from './tabDependency';
+import type { CardMetaData } from './data';
 
 // #region chart desc
 /**
@@ -41,7 +44,7 @@ export const chart = <T extends ChartType>(param: ChartDesc<T>): ChartDesc<Chart
 // #region detail desc
 export type MoreDescriptor = MoreDesc<Record<string, unknown>, string>;
 
-type MoreDesc<DataType extends object, Field extends keyof DataType> = {
+interface MoreDesc<DataType extends object, Field extends keyof DataType> {
     field: Field;
     columns: Array<ColumnDef<ElementType<DataType[Field]>>>;
     childrenColumnName?: string;
@@ -56,35 +59,42 @@ export type ColumnDef<DataType> = // name, renderer, width?, fixed?
     [string, CellRenderer<DataType>, ColumnWidth] |
     [string, CellRenderer<DataType>, ColumnWidth, FixedType];
 
-export type TableDataAdapter<DataType extends Record<string, unknown>> = {
+export interface TableDataAdapter<DataType extends Record<string, unknown>> {
     columns: Array<ColumnDef<DataType>>;
     actions?: Array<FilterDef<DataType> & SorterDef<DataType>>;
 };
 
-type FilterDef<DataType extends Record<string, unknown>> = {
+interface FilterDef<DataType extends Record<string, unknown>> {
     filterKey?: keyof DataType | Array<keyof DataType>;
 };
 
-export type SorterDef<DataType extends Record<string, unknown>> = {
+export interface SorterDef<DataType extends Record<string, unknown>> {
     sorter?: (a: DataType, b: DataType) => number | boolean;
 };
 
-export type MetaData = Record<string, unknown> & { dataSource: DataSource };
+export type MetaDataBase = Record<string, unknown> & { dataSource: DataSource };
+export { type MetaDataBase as MetaData };
 
-type TabularClickCacallbackArgs<CommonState extends CommonStateProto, DataType> = {
+interface TabularClickCacallbackArgs<CommonState extends CommonStateProto, DataType> {
     row: DataType;
     session: Session;
-    detail: DetailDescriptor<MetaData>;
+    detail: DetailDescriptor<MetaDataBase>;
     commonState?: CommonState;
     unit?: InsightUnit;
 };
 
-type TabularEnterCacallbackArgs<DataType> = {
+interface TabularEnterCacallbackArgs<DataType> {
     row: DataType;
     session: Session;
 };
 
-type DetailDesc<DataType extends Record<string, unknown>, ExtraDataType extends Record<string, unknown>, MoreDataType extends Record<string, unknown>, MetaData, Field extends keyof DataType> = {
+type DetailDesc<
+    DataType extends Record<string, unknown>,
+    ExtraDataType extends Record<string, unknown>,
+    MoreDataType extends Record<string, unknown>,
+    MetaData,
+    Field extends keyof DataType,
+> = {
     childrenColumnName?: string;
     name?: string;
     fetchData: (session: Session, metadata: MetaData) => Promise<DataType[]>;
@@ -93,7 +103,8 @@ type DetailDesc<DataType extends Record<string, unknown>, ExtraDataType extends 
     onExpand?: (session: Session, data: TreeNode<DataType>) => Promise<TreeNode<DataType> | undefined>; // if data is not updated, return promise of undefined
     rowKey?: (data: DataType) => string;
     more?: MoreDesc<DataType, Field>;
-    clickCallback?: <CommonState extends CommonStateProto>(args: TabularClickCacallbackArgs<CommonState, DataType>) => void; // execute statement in onClick event
+    clickCallback?: <CommonState extends CommonStateProto>(args: TabularClickCacallbackArgs<CommonState, DataType>) =>
+    void; // execute statement in onClick event
     doubleClickCallback?: <CommonState extends CommonStateProto>(args: TabularClickCacallbackArgs<CommonState, DataType>) => void;
     mouseEnterCallback?: (args: TabularEnterCacallbackArgs<DataType>) => void;
     mouseLeaveCallback?: (args: TabularEnterCacallbackArgs<DataType>) => void;
@@ -103,28 +114,35 @@ export type renderFieldsType<DataType> =
 [string, (data: DataType, session: Session, metadata?: unknown) => (string | JSX.Element), (data: DataType) => boolean ] |
 [string, (data: DataType, session: Session, metadata?: unknown) => (string | JSX.Element) ];
 
-export type SingleDataDesc<DataType extends Record<string, unknown>, MetaData> = {
+export interface SingleDataDesc<DataType extends Record<string, unknown>, MetaData> {
     name?: string;
     fetchData: (session: Session, metadata: MetaData) => Promise<DataType>;
     renderFields: Array<renderFieldsType<DataType>>;
     clickCallback?: (args: SingleDataDesc<Record<string, unknown>, unknown>) => void; // execute statement in onClick event
 };
 
-export type LinkDataDesc<DataType extends Record<string, unknown>> = {
-    fetchData: (session: Session, metadata: MetaData) => Promise<DataType[] | DataType>;
+export interface LinkDataDesc<DataType extends Record<string, unknown>> {
+    fetchData: (session: Session, metadata: MetaDataBase) => Promise<DataType[] | DataType>;
     templateField?: renderFieldsType<DataType>;
     renderFields: Array<renderFieldsType<DataType>>;
     onDestroy?: (session: Session) => void;
 };
 
-export const linkData = <T extends Record<string, unknown>>(desc: LinkDataDesc<T>): LinkDataDesc<Record<string, unknown>> => desc as unknown as LinkDataDesc<Record<string, unknown>>;
+export const linkData = <T extends Record<string, unknown>>(desc: LinkDataDesc<T>): LinkDataDesc<Record<string, unknown>> =>
+    desc as unknown as LinkDataDesc<Record<string, unknown>>;
 
-export const singleData = <T extends Record<string, unknown>, MetaData>(desc: SingleDataDesc<T, MetaData>): SingleDataDesc<Record<string, unknown>, unknown> => desc as unknown as SingleDataDesc<Record<string, unknown>, unknown>;
+export const singleData = <T extends Record<string, unknown>, MetaData>(desc: SingleDataDesc<T, MetaData>): SingleDataDesc<Record<string, unknown>, unknown> =>
+    desc as unknown as SingleDataDesc<Record<string, unknown>, unknown>;
 
 export type DetailDescriptor<UnitInfo> = DetailDesc<Record<string, unknown>, Record<string, unknown>, Record<string, unknown>, UnitInfo, string>;
 
-export function detail<T extends Record<string, unknown>, K extends Record<string, unknown>, V extends Record<string, unknown>, MetaData, Field extends keyof T>(desc: DetailDesc<T, K, V, MetaData, Field>):
-DetailDescriptor<MetaData> {
+export function detail<
+    T extends Record<string, unknown>,
+    K extends Record<string, unknown>,
+    V extends Record<string, unknown>,
+    MetaData,
+    Field extends keyof T,
+>(desc: DetailDesc<T, K, V, MetaData, Field>): DetailDescriptor<MetaData> {
     return {
         ...desc,
         childrenColumnName: desc.childrenColumnName ?? 'children',
@@ -139,11 +157,11 @@ export type BottomPanelRender = <Metadata>(session: Session, triggerEvent: Trigg
     More?: React.FC<{ session: Session; height: number }>;
     Toolbar?: React.FC<{ session: Session }>;
     MoreTitle?: React.FC<{ session: Session }> | string;
-    MoreWh?: number;
+    moreWh?: number;
     open?: boolean;
 };
 
-export type MenuType = {
+export interface MenuType {
     value?: string; // 传给服务端的值
     showValue?: string; // 下拉列表显示的值
     key?: string; // 传给服务端的键
@@ -152,10 +170,14 @@ export type MenuType = {
     isTrigger?: boolean; // 当前节点是否触发搜索
     type?: 'number' | 'string';
     mode?: 'key' | 'value' | 'input' | 'keyValue';
-};
-// #endregion
+}; // #endregion
 
-export interface InsightUnitParams<MetaData, DetailType extends Record<string, unknown>, ExtraDataType extends Record<string, unknown>, MoreDataType extends Record<string, unknown>> {
+export interface InsightUnitParams<
+    MetaData,
+    DetailType extends Record<string, unknown>,
+    ExtraDataType extends Record<string, unknown>,
+    MoreDataType extends Record<string, unknown>,
+> {
     name: string;
     pinType?: 'move' | 'copied';
     configBar?: (session: Session, metadata: MetaData) => JSX.Element;
@@ -176,7 +198,7 @@ export interface InsightUnitParams<MetaData, DetailType extends Record<string, u
     alignStartTimestamp?: number;
 }
 
-export type InsightUnitClass = { new(metadata: never): InsightUnit };
+export interface InsightUnitClass { new(metadata: never): InsightUnit };
 
 export enum UnitHeight {
     SUPER_UPPER = 120,
@@ -221,24 +243,23 @@ const heightOf = (chartDesc: InsightUnit['chart']): number => {
 // #region spreadUnits desc
 export type SpreadPhase = 'create' | 'analyze' | 'expand';
 
-type SpreadDesc = {
+interface SpreadDesc {
     phase: SpreadPhase;
     action: (self: InsightUnit, session?: Session) => Promise<void>;
 };
 
 // factory method to capture SpreadDesc
-export const on = (phase: SpreadPhase, action: (self: InsightUnit, session?: Session) => Promise<void>): SpreadDesc => ({ phase, action });
-// #endregion
+export const on = (phase: SpreadPhase, action: (self: InsightUnit, session?: Session) => Promise<void>): SpreadDesc => ({ phase, action }); // #endregion
 
-const transformDetail = <T>(detail?: DetailDesc<Record<string, unknown>, Record<string, unknown>, Record<string, unknown>, T, string>):
+const transformDetail = <T>(detailDesc?: DetailDesc<Record<string, unknown>, Record<string, unknown>, Record<string, unknown>, T, string>):
 DetailDesc<Record<string, unknown>, Record<string, unknown>, Record<string, unknown>, unknown, string> | undefined => {
-    return detail
+    return detailDesc
         ? {
-            ...detail,
+            ...detailDesc,
             // coerce the signature of fetchData to a set of more general types
-            fetchData: detail.fetchData as (session: Session, metadata: unknown) => Promise<Array<Record<string, unknown>>>,
-            fetchExtraData: detail?.fetchExtraData as (session: Session, metadata: unknown) => Promise<Array<Record<string, unknown>>>,
-            fetchMoreData: detail?.fetchMoreData as (session: Session, metadata: unknown) => Promise<Array<Record<string, unknown>>>,
+            fetchData: detailDesc.fetchData as (session: Session, metadata: unknown) => Promise<Array<Record<string, unknown>>>,
+            fetchExtraData: detailDesc?.fetchExtraData as (session: Session, metadata: unknown) => Promise<Array<Record<string, unknown>>>,
+            fetchMoreData: detailDesc?.fetchMoreData as (session: Session, metadata: unknown) => Promise<Array<Record<string, unknown>>>,
         }
         : undefined;
 };
@@ -257,9 +278,9 @@ const wrapSpread = (original?: SpreadDesc): SpreadDesc | undefined => {
 };
 
 // eslint-disable-next-line max-lines-per-function
-export const unit = <T extends { dataSource: DataSource } = { dataSource: DataSource }>(params:
-Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'metadata'>): typeof BasicUnit => {
-    const BasicUnit = class implements InsightUnit {
+export const unitBase = <T extends { dataSource: DataSource } = { dataSource: DataSource }>(params:
+Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'metadata'>): typeof basicUnitClass => {
+    const basicUnitClass = class implements InsightUnit {
         parent?: InsightUnit;
         _children?: InsightUnit[];
         isUnitVisible = true;
@@ -320,12 +341,14 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
 
         height = (): number => heightOf(this.chart);
     };
-    return BasicUnit;
+    return basicUnitClass;
 };
 
+export { unitBase as unit };
+
 export const transparentUnit = <T extends { dataSource: DataSource } = { dataSource: DataSource }>(params:
-Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'name' | 'spreadUnits' | 'pinType' | 'description' | 'buttons'>): typeof TransparentUnit => {
-    const TransparentUnit = class implements InsightUnit {
+Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknown>, Record<string, unknown>>, 'name' | 'spreadUnits' | 'pinType' | 'description' | 'buttons'>): typeof transparentUnitClass => {
+    const transparentUnitClass = class implements InsightUnit {
         isUnitVisible = true;
         progress: number = 0; // 解析进度：实际解析进度
         showProgress: boolean = false; // 解析进度：是否显示进度条
@@ -334,10 +357,6 @@ Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknow
         pinType = params.pinType ?? 'copied';
         buttons = params.buttons ?? [];
         expandable = true;
-        height(): number {
-            return 0;
-        }
-
         children?: InsightUnit[] = params.spreadUnits ? [] : undefined;
         metadata: T;
         isExpanded = false;
@@ -353,8 +372,12 @@ Pick<InsightUnitParams<undefined, Record<string, unknown>, Record<string, unknow
             const spreadUnits = params.spreadUnits;
             if (spreadUnits?.phase === 'create') { spreadUnits.action(this); }
         }
+
+        height(): number {
+            return 0;
+        }
     };
-    return TransparentUnit;
+    return transparentUnitClass;
 };
 
 /**
@@ -375,25 +398,25 @@ export const recursiveSpreadUnits = async (unit: InsightUnit, session: Session, 
     }
 };
 
-export type UnitMatcher = {
+export interface UnitMatcher {
     target: (ele: InsightUnit) => boolean;
     onSuccess: (ele: InsightUnit) => void;
     showDetail?: boolean;
 };
 
-export type LinkLine = Array<Record<string, unknown>> | undefined;
-export type LinkLines = {
-    [x: string]: LinkLine;
+export type LinkLine = Array<Record<string, unknown>>;
+export interface LinkLines {
+    [x: string]: LinkLine | undefined;
 };
 
 /**
  * @member source the source file defining this template
  */
-export type InsightTemplate = {
+export interface InsightTemplate {
     id: string;
     name: string;
     source: '<internal>' | string;
-    icon: JSX.Element | undefined;
+    icon?: JSX.Element;
     description: string;
     units: InsightUnitClass[];
     availableUnits: InsightUnitClass[];
