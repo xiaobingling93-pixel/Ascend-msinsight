@@ -103,8 +103,8 @@ const singleSliceDetail = singleData({
     renderFields: [
         ['Title', (data): string => data.title === undefined ? '' : `${data.title}`, isHiddenTitle],
         ['Start', (data: AscendSliceDetail): string => getDetailTimeDisplay(data.startTime ?? 0), isHiddenStartTime],
-        ['Wall Duration', (data): string => getDetailTimeDisplay(data.duration), isHiddenDuration],
-        ['Self Time', (data): string => getDetailTimeDisplay(data.selfTime), isHiddenSelfTime],
+        ['Wall Duration', (data): string => getDetailTimeDisplay(data.duration as number), isHiddenDuration],
+        ['Self Time', (data): string => getDetailTimeDisplay(data.selfTime as number), isHiddenSelfTime],
         ['Input Shapes', (data: AscendSliceDetail): string => getDisplay(data.inputShapes), (data: AscendSliceDetail): boolean => isHidden(data.inputShapes)],
         ['Input Data Types', (data: AscendSliceDetail): string => getDisplay(data.inputDataTypes), (data: AscendSliceDetail): boolean => isHidden(data.inputDataTypes)],
         ['Input Formats', (data: AscendSliceDetail): string => getDisplay(data.inputFormats), (data: AscendSliceDetail): boolean => isHidden(data.inputDataTypes)],

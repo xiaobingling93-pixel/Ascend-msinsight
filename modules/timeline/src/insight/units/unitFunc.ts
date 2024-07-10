@@ -121,16 +121,16 @@ function checkMetaData<T extends keyof MetaData>(unitMetaData: any, paramMetaDat
 }
 
 export function createStatusParam(method: string, params: Record<string, unknown>): string {
-    const processParams = params as ThreadTraceRequest;
+    const processParams = params as unknown as ThreadTraceRequest;
     return `cardId${processParams.cardId}&processId${processParams.processId}`;
 }
 
 export function createStackStatusParam(method: string, params: Record<string, unknown>): string {
-    const threadTracesParams = params as ThreadTraceRequest;
+    const threadTracesParams = params as unknown as ThreadTraceRequest;
     return `cardId${threadTracesParams.cardId}&processId${threadTracesParams.processId}&threadId${threadTracesParams.threadId}`;
 }
 
 export function createCounterParam(method: string, params: Record<string, unknown>): string {
-    const counterParams = params as CounterRequest;
+    const counterParams = params as unknown as CounterRequest;
     return `cardId${counterParams.rankId}&processId${counterParams.pid}&threadId${counterParams.threadName}`;
 }

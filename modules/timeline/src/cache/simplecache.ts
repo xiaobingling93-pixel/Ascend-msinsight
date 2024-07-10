@@ -114,7 +114,7 @@ async function requestCounterData(requestParam: Record<string, unknown>, metadat
 }
 
 function processArr(params: Record<string, unknown>, data: Map<string, unknown>, paramsKey: string): unknown {
-    const requestParams = params as ProcessRequest;
+    const requestParams = params as unknown as ProcessRequest;
     const start = requestParams.startTime;
     const end = requestParams.endTime;
 
@@ -128,7 +128,7 @@ function processArr(params: Record<string, unknown>, data: Map<string, unknown>,
 }
 
 function counterArr(params: Record<string, unknown>, data: Map<string, unknown>, paramsKey: string): unknown {
-    const requestParams = params as CounterRequest;
+    const requestParams = params as unknown as CounterRequest;
     const start = requestParams.startTime;
     const end = requestParams.endTime;
 
