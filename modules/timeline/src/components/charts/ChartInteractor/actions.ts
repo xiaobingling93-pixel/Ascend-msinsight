@@ -77,6 +77,7 @@ export const mouseUpAction = (interactorParams: InteractorParams, interactorMous
         });
     }
 
+    interactorMouseState.clickPos.current = undefined;
     const drawArgs: DrawCanvasArgs = {
         ctx: canvas.current.getContext('2d'),
         width: canvas.current.clientWidth,
