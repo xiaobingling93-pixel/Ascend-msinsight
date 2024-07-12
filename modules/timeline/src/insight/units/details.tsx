@@ -13,10 +13,10 @@ export const slicesListDetail = detail({
     name: 'Slices List',
     columns: [
         ['Name', (data): string => `${isEmpty(data.title) ? 'null' : data.title}`, 'max-content', 'scroll'],
-        ['Wall Duration', (data): string => getSliceTimeDisplay(data.wallDuration), 180],
-        ['Self Time', (data): string => getSliceTimeDisplay(data.selfTime), 180],
-        ['Average Wall Duration', (data): string => getSliceTimeDisplay(data.avgWallDuration), 180],
-        ['Occurrences', (data): string => `${data.occurrences ?? 0}`, 180],
+        ['Wall Duration', (data): string => getSliceTimeDisplay(data.wallDuration as number), 180],
+        ['Self Time', (data): string => getSliceTimeDisplay(data.selfTime as number), 180],
+        ['Average Wall Duration', (data): string => getSliceTimeDisplay(data.avgWallDuration as number), 180],
+        ['Occurrences', (data): string => `${(data.occurrences as string) ?? 0}`, 180],
     ],
     actions: [
         { sorter: (a: AscendMultiSliceList, b: AscendMultiSliceList): number => a.title?.localeCompare(b?.title ?? '') ?? 0, filterKey: 'title' },

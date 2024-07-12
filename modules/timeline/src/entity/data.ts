@@ -1,22 +1,19 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 // #region cputime
-export type ThreadInfo = {
+export interface ThreadInfo {
     tid: number;
     name: string;
 };
 
-export type ProcessInfo = {
-    pid: number;
-    name: string;
-    CpuCores: number;
-};
-
-export type FrameProcessInfo = {
+export interface FrameProcessInfo {
     processId: number;
     processName: string;
     tag: boolean;
 };
 
-export type UserTraceSliceList = {
+export interface UserTraceSliceList {
     name: string;
     timestamp: number;
     duration: number;
@@ -25,13 +22,13 @@ export type UserTraceSliceList = {
     taskName: string;
 };
 
-export type UserTraceMetadata = {
+export interface UserTraceMetadata {
     taskNameList: string[];
     maxDepthList: number[];
     pidList: number[];
 };
 
-export type UserTraceList = {
+export interface UserTraceList {
     id: number;
     task: string;
     startTime: number;
@@ -39,7 +36,7 @@ export type UserTraceList = {
     duration: number;
 };
 
-export type UserTraceStatistics = {
+export interface UserTraceStatistics {
     taskName: string;
     occurrences: number;
     wallDuration: number;
@@ -48,12 +45,12 @@ export type UserTraceStatistics = {
     minDuration: number;
 };
 
-export type ProcessLaneCpuUsage = {
+export interface ProcessLaneCpuUsage {
     duration: number;
     startTime: number;
 };
 
-export type CpuMultiSliceProcessDetail = {
+export interface CpuMultiSliceProcessDetail {
     name: string;
     id: number;
     type: 'PROCESS' | 'THREAD';
@@ -64,10 +61,10 @@ export type CpuMultiSliceProcessDetail = {
     children: CpuMultiSliceProcessDetail[];
 };
 
-export type CpuStateProcessThreadDetail = {
+export interface CpuStateProcessThreadDetail {
     avgDuration: number;
     type: 'PROCESS' | 'THREAD' | 'STATE';
-    children?: CpuStateProcessThreadDetail[] | undefined;
+    children?: CpuStateProcessThreadDetail[];
     duration: number;
     id: number;
     maxDuration: number;
@@ -76,10 +73,10 @@ export type CpuStateProcessThreadDetail = {
     occurrences: number;
 };
 
-export type CpuProcessThreadStateDetail = {
+export interface CpuProcessThreadStateDetail {
     avgDuration: number;
     type: 'PROCESS' | 'THREAD' | 'STATE';
-    children?: CpuProcessThreadStateDetail[] | undefined;
+    children?: CpuProcessThreadStateDetail[];
     duration: number;
     id: number;
     maxDuration: number;
@@ -88,7 +85,7 @@ export type CpuProcessThreadStateDetail = {
     occurrences: number;
 };
 
-export type CpuMultiSliceList = {
+export interface CpuMultiSliceList {
     cpu: number;
     duration: number;
     endState: string;
@@ -103,13 +100,13 @@ export type CpuMultiSliceList = {
     threadName: string;
 };
 
-export type ThreadTraceMetadata = {
+export interface ThreadTraceMetadata {
     threadNameList: string[];
     tidList: number[];
     maxDepthList: number[];
 };
 
-export type ThreadStateList = {
+export interface ThreadStateList {
     cpu: number;
     duration: number;
     endTime: number;
@@ -121,20 +118,20 @@ export type ThreadStateList = {
     threadId: number;
 };
 
-export type ThreadWakeUpFrom = {
+export interface ThreadWakeUpFrom {
     threadId: number;
     cpu: number;
     startTime: number;
     processId: number;
 };
 
-export type ThreadWakeUpList = {
+export interface ThreadWakeUpList {
     threadId: number;
     startTime: number;
     processId: number;
 };
 
-export type ThreadStateDetail = {
+export interface ThreadStateDetail {
     cpu: number;
     duration: number;
     endTime: number;
@@ -144,11 +141,11 @@ export type ThreadStateDetail = {
     state: string;
     thread: string;
     threadId: number;
-    threadWakeUpFrom?: ThreadWakeUpFrom | undefined;
-    threadWakeUpList?: ThreadWakeUpList[] | undefined;
+    threadWakeUpFrom?: ThreadWakeUpFrom;
+    threadWakeUpList?: ThreadWakeUpList[];
 };
 
-export type ThreadTraceList = {
+export interface ThreadTraceList {
     name: string;
     duration: number;
     startTime: number;
@@ -159,7 +156,7 @@ export type ThreadTraceList = {
 
 export type ThreadTraceDetail = ThreadTraceList & { relateTraceList?: RelateTrace[] } & { relateFrameDetail?: RelateFrameDetail };
 
-export type RelateTrace = {
+export interface RelateTrace {
     relateKey: string;
     name: string;
     startTime: number;
@@ -168,7 +165,7 @@ export type RelateTrace = {
     threadId: number;
 };
 
-export type RelateFrameDetail = {
+export interface RelateFrameDetail {
     processId: number;
     startTime: number;
     duration: number;
@@ -178,7 +175,7 @@ export type RelateFrameDetail = {
     frameNo: number;
 };
 
-export type ThreadStateStatistics = {
+export interface ThreadStateStatistics {
     avgDuration: number;
     occurrences: number;
     processId: number;
@@ -191,14 +188,14 @@ export type ThreadStateStatistics = {
     minDuration: number;
 };
 
-export type ThreadTraceStatistics = {
+export interface ThreadTraceStatistics {
     name: string;
     wallDuration: number;
     avgDuration: number;
     occurrences: number;
 };
 
-export type ProfileNode = {
+export interface ProfileNode extends NativeCall {
     name: string;
     globalTotal: number;
     self: number;
@@ -214,8 +211,7 @@ export type ProfileNode = {
     columnNumber?: number;
     children?: ProfileNode[];
     category?: 'js' | 'system' | 'napi' | 'native';
-} & NativeCall;
-// #endregion
+} ; // #endregion
 
 interface SysEventBase {
     id: number;
@@ -227,7 +223,7 @@ interface SysEventBase {
     timestamp: number;
 }
 
-export interface KeyEventInfo extends SysEventBase{
+export interface KeyEventInfo extends SysEventBase {
     happenTime: number;
     upTime?: string;
     duration: number;
@@ -245,7 +241,7 @@ export interface EnergyMonitorDetails {
     totalEnergy: number;
 }
 
-export interface AbilityEvent extends SysEventBase{
+export interface AbilityEvent extends SysEventBase {
     userId: number;
     appId: number;
     bundleName: string;
@@ -254,7 +250,7 @@ export interface AbilityEvent extends SysEventBase{
     processName: string;
 }
 
-export type NativeCall = {
+export interface NativeCall {
     functionName?: string;
     threadName?: string;
     tid: number;
@@ -269,7 +265,7 @@ export type NativeCall = {
     children?: NativeCall[];
 };
 
-export type JsDetailMemory = {
+export interface JsDetailMemory {
     id?: number;
     className: string;
     childrenCount: number;
@@ -282,11 +278,11 @@ export type JsDetailMemory = {
     reachableFromWindow?: boolean;
     parentId?: number;
     pathNode?: number[];
-    retainerNodes: JsDetailMemory[] | undefined;
+    retainerNodes: JsDetailMemory[];
     children?: JsDetailMemory[];
 };
 
-export type AssignStack = {
+export interface AssignStack {
     column: number;
     functionInfoIndex: number;
     line: number;
@@ -296,7 +292,7 @@ export type AssignStack = {
     traceNodeId: number;
 };
 
-export type StatisticMemory = {
+export interface StatisticMemory {
     total: number;
     js: number;
     native: number;
@@ -306,20 +302,20 @@ export type StatisticMemory = {
     category: string;
 };
 
-export type NativeThread = {
+export interface NativeThread {
     threadUsage: number;
     state: number;
     timestamp: number;
 };
 
 // Native Memory实时主泳道区域数据
-export type NativeMemory = {
+export interface NativeMemory {
     timestamp: number;
     total: number;
 };
 
 // Native Memory详情数据，三个tab下的每条数据定义
-export type NativeMemoryStatistics = {
+export interface NativeMemoryStatistics {
     idList: number;
     laneType: number;
     eventType: string;
@@ -331,7 +327,7 @@ export type NativeMemoryStatistics = {
     freeNumber: number; // 释放的内存次数
 };
 
-export type NativeMemoryCallInfo = {
+export interface NativeMemoryCallInfo {
     laneType: number;
     symbolName: string; // 内存分配的调用栈
     size: number; // 分配的大小
@@ -342,7 +338,7 @@ export type NativeMemoryCallInfo = {
     offset: number;
 };
 
-export type NativeMemoryObj = {
+export interface NativeMemoryObj {
     index: number;
     id: number;
     laneType: number;
@@ -356,7 +352,7 @@ export type NativeMemoryObj = {
     callStack: NativeMemoryCallStack[];
 };
 
-export type NativeMemoryCallStack = {
+export interface NativeMemoryCallStack {
     frameSeqId: number;
     lib: string;
     caller: string;
@@ -364,7 +360,7 @@ export type NativeMemoryCallStack = {
     offset: number;
 };
 
-export type JSCpuState = {
+export interface JSCpuState {
     timestamp: number;
     duration: number;
     name: string;
@@ -372,13 +368,13 @@ export type JSCpuState = {
     dataKey: 'jsCpuState';
 };
 
-export type JsHeapMemory = {
+export interface JsHeapMemory {
     timestamp: number;
     usedSize: number;
     totalSize: number;
 };
 
-export type AppMemory = {
+export interface AppMemory {
     timestamp: number;
     total: number;
     native: number;
@@ -388,7 +384,7 @@ export type AppMemory = {
     others: number;
 };
 
-export type HeapSnapshotInfo = {
+export interface HeapSnapshotInfo {
     id: number;
     rawId: number;
     timestamp: number;
@@ -398,7 +394,7 @@ export type HeapSnapshotInfo = {
 
 export type TotalHeapSnapshot = HeapSnapshotInfo;
 
-export type HeapDiffNode = {
+export interface HeapDiffNode {
     name: string;
     addedCount: number;
     removedCount: number;
@@ -415,13 +411,13 @@ export type HeapDiffNode = {
     reachableFromWindow?: boolean;
     parentId?: number;
     pathNode?: number[];
-    retainerNodes: JsDetailMemory[] | undefined;
+    retainerNodes: JsDetailMemory[];
     className: string;
     id?: number;
     children?: HeapDiffNode[];
 };
 
-export type CpuInsightMetadata = {
+export interface CpuInsightMetadata {
     processTraceMetadata: {
         nameList: string[];
         idList: number[];
@@ -437,12 +433,12 @@ export type CpuInsightMetadata = {
     };
 };
 
-export type CpuUsageLaneData = {
+export interface CpuUsageLaneData {
     timestamp: number;
     coreUsage: number;
 };
 
-export type CpuSingleSliceDetail = {
+export interface CpuSingleSliceDetail {
     processName: string;
     processId: number;
     threadName: string;
@@ -456,7 +452,7 @@ export type CpuSingleSliceDetail = {
     schedulingData?: CpuSingleSliceSchedulingData;
 };
 
-export type FrameSliceDetail = {
+export interface FrameSliceDetail {
     frameNo: number;
     vsync: number;
     gpuDuration: number;
@@ -473,7 +469,7 @@ export type FrameSliceDetail = {
     otherAppFrameList?: RelateFrame[]; // 为app帧时 存放可能存在的其余app侧的数据（多对一的情况)
 };
 
-export type FrameRelateTrace = {
+export interface FrameRelateTrace {
     name: string;
     threadId: number;
     threadName: string;
@@ -482,7 +478,7 @@ export type FrameRelateTrace = {
     depth: number;
 };
 
-export type RelateFrame = {
+export interface RelateFrame {
     frameNo: number;
     vsync: number;
     processId: number;
@@ -493,7 +489,7 @@ export type RelateFrame = {
     isJank: boolean;
 };
 
-export type CpuSingleSliceSchedulingData = {
+export interface CpuSingleSliceSchedulingData {
     wakeUpTime: number;
     cpu: number;
     processName: string;
@@ -503,14 +499,14 @@ export type CpuSingleSliceSchedulingData = {
     schedulingLatency: number;
 };
 
-export type FrameTraceMetadata = {
+export interface FrameTraceMetadata {
     processId: number;
     processName: string;
     depth: number;
     isRenderService: boolean;
 };
 
-export type FrameLaneData = {
+export interface FrameLaneData {
     frameNo: string;
     vsync: number;
     startTime: number;
@@ -522,7 +518,7 @@ export type FrameLaneData = {
     isJank: boolean;
 };
 
-export type FrameAppStatistics = {
+export interface FrameAppStatistics {
     frameNo: number;
     vsync: number;
     startTime: number;
@@ -533,7 +529,7 @@ export type FrameAppStatistics = {
     jankType: string;
 };
 
-export type FrameRenderServiceStatistics = {
+export interface FrameRenderServiceStatistics {
     frameNo: number;
     vsync: number;
     startTime: number;
@@ -542,7 +538,7 @@ export type FrameRenderServiceStatistics = {
     jankType: string;
 };
 
-export type FrameTotalStatistics = {
+export interface FrameTotalStatistics {
     processId: number;
     processName: string;
     jankRate: number;
@@ -553,7 +549,7 @@ export type FrameTotalStatistics = {
     avgNormalDuration: number;
 };
 
-export type FrameSliceList = {
+export interface FrameSliceList {
     processId: number;
     processName: string;
     startTime: number;
@@ -564,17 +560,17 @@ export type FrameSliceList = {
     vsync: number;
 };
 
-export type FrameMetadata = {
+export interface FrameMetadata {
     hasRenderService: boolean;
     idList: number[];
 };
 
-export type HiperfStopResult = {
+export interface HiperfStopResult {
     result: boolean;
     body: string;
 };
 
-export type EnergyDetailsMap = {
+export interface EnergyDetailsMap {
     cpu: EnergyMonitorDetails;
     display: EnergyMonitorDetails;
     gpu: EnergyMonitorDetails;
@@ -586,7 +582,7 @@ export type EnergyDetailsMap = {
     wifiscan: EnergyMonitorDetails;
 };
 
-export type ProcessSearchResultType = {
+export interface ProcessSearchResultType {
     type: string;
     startTime: number;
     duration: number;
@@ -597,7 +593,7 @@ export type ProcessSearchResultType = {
     cookie: number;
 };
 
-export type FrameSearchResultType = {
+export interface FrameSearchResultType {
     processId: number;
     startTime: number;
     endTime: number;
@@ -605,7 +601,7 @@ export type FrameSearchResultType = {
     isJank: boolean;
 };
 
-export type CPUCoreReqParams = {
+export interface CPUCoreReqParams {
     unit?: string;
     index?: number;
     endTimeAll?: number;
@@ -615,14 +611,14 @@ export type CPUCoreReqParams = {
     threadName?: string;
 };
 
-export type ProcessReqParams = {
+export interface ProcessReqParams {
     unit?: string;
     index?: number;
     functionName?: string;
     endTimeAll?: number;
 };
 
-export type FrameReqParams = {
+export interface FrameReqParams {
     unit?: string;
     index?: number;
     startTimeAll?: number;
@@ -632,7 +628,7 @@ export type FrameReqParams = {
     jankType?: string;
 };
 
-export type ArkTSReqParams = {
+export interface ArkTSReqParams {
     unit?: string;
     index: number;
     startTimeAll: number;
@@ -641,7 +637,7 @@ export type ArkTSReqParams = {
     functionName?: string;
 };
 
-export type NativeReqParams = {
+export interface NativeReqParams {
     unit?: string;
     index: number;
     threadId?: number;
@@ -651,7 +647,7 @@ export type NativeReqParams = {
     functionName?: string;
 };
 
-export type CpuSliceWakeType = {
+export interface CpuSliceWakeType {
     currentCpu: number;
     wakeUpCpu: number;
     wakeUpTime: number;
@@ -659,20 +655,20 @@ export type CpuSliceWakeType = {
     schedulingLatency: number;
 };
 
-export type MetaData = {
+export interface MetaData {
     card: CardMetaData;
     process: ProcessMetaData;
     thread: ThreadMetaData;
 };
 
-export type InsightMetaData <T extends keyof MetaData> = {
+export interface InsightMetaData <T extends keyof MetaData> {
     type: T;
     metadata: MetaData[T];
     children?: Array<InsightMetaData<keyof MetaData>>;
     dataSource: DataSource;
 };
 
-export type CounterMetaData = {
+export interface CounterMetaData {
     cardId: string;
     processId: string;
     processName?: string;
@@ -683,7 +679,7 @@ export type CounterMetaData = {
     dataSource: DataSource;
 };
 
-export type ThreadMetaData = {
+export interface ThreadMetaData {
     cardId?: string;
     processId?: string;
     processName?: string;
@@ -694,7 +690,7 @@ export type ThreadMetaData = {
     dataSource: DataSource;
 };
 
-export type ProcessMetaData = {
+export interface ProcessMetaData {
     cardId?: string;
     processId: string;
     processName: string;
@@ -703,7 +699,7 @@ export type ProcessMetaData = {
     dataSource: DataSource;
 };
 
-export type CardMetaData = {
+export interface CardMetaData {
     cardId: string;
     cardName: string;
     cardPath: string;
@@ -715,7 +711,8 @@ export interface HostMetaData {
     dataSource: DataSource;
 };
 
-export type ThreadTrace = {
+export interface ThreadTrace {
+    [x: string]: unknown;
     name: string;
     duration: number;
     startTime: number;
@@ -723,21 +720,20 @@ export type ThreadTrace = {
     depth: number;
     threadId: string;
     id?: string;
-    [x: string]: unknown;
     cname: string;
 };
 
-export type ProcessData = {
+export interface ProcessData {
     duration: number;
     startTime: number;
 };
 
-export type CounterData = {
+export interface CounterData {
     timestamp: number;
     value: any;
 };
 
-export type ThreadTraceRequest = {
+export interface ThreadTraceRequest {
     cardId: string;
     processId: string;
     threadId: string;
@@ -745,7 +741,7 @@ export type ThreadTraceRequest = {
     endTime: number;
 };
 
-export type CounterRequest = {
+export interface CounterRequest {
     rankId: string;
     pid: string;
     threadName: number;
@@ -753,14 +749,14 @@ export type CounterRequest = {
     endTime: number;
 };
 
-export type ProcessRequest = {
+export interface ProcessRequest {
     cardId: string;
     processId: string;
     startTime: number;
     endTime: number;
 };
 
-export type AscendSliceDetail = {
+export interface AscendSliceDetail extends Record<string, unknown> {
     pid?: string;
     tid?: string;
     title?: string;
@@ -778,7 +774,7 @@ export type AscendSliceDetail = {
     attrInfo?: string;
 };
 
-export type AscendMultiSliceList = {
+export interface AscendMultiSliceList {
     title?: string;
     wallDuration?: number;
     selfTime?: number;

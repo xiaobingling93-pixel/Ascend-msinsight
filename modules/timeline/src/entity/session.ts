@@ -1,20 +1,23 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import { makeAutoObservable, runInAction, when } from 'mobx';
 import React from 'react';
-import { Caches } from '../cache/cache';
+import { type Caches } from '../cache/cache';
 import { toLocalTimeString } from '../utils/humanReadable';
-import { TimeStamp } from './common';
+import { type TimeStamp } from './common';
 import { Domain } from './domain';
 import type { InsightUnit, UnitMatcher, LinkLines, LinkDataDesc } from './insight';
 import { TimeLineMaker, TIME_MAKER_DEFAULT } from './timeMaker';
 import { omit } from 'lodash';
 import { platform } from '../platforms';
 import i18n from '../i18n';
-import { Phase, stateTexts } from '../utils/constant';
+import { type Phase, stateTexts } from '../utils/constant';
 import { SimpleCache } from '../cache/simplecache';
 
 export interface SelectedParams {
-    baseRawId: undefined | number;
-    curRawId: undefined | number;
+    baseRawId?: number;
+    curRawId?: number;
 }
 
 export type SelectedData = Record<string, unknown> & {
@@ -22,7 +25,7 @@ export type SelectedData = Record<string, unknown> & {
 };
 
 export type DataWithHeight<T> = T & { height?: number };
-export type LinkedDataWithHeight<T> = {
+export interface LinkedDataWithHeight<T> {
     data: DataWithHeight<T>;
     datas: Array<DataWithHeight<T>>;
 };
@@ -33,7 +36,7 @@ export function isValidSession(session?: Session): session is ValidSession {
 }
 export type LinkDataType<T extends Record<string, unknown> = Record<string, unknown>> = T & { startTime: number; height: number; duration: number };
 export type DataMatcher = (unit: InsightUnit) => boolean;
-export type LinkData = {
+export interface LinkData {
     target: {
         data: LinkDataType;
         matcher: DataMatcher;
@@ -68,7 +71,7 @@ export class Session {
     };
 
     pinnedUnits: InsightUnit[] = [];
-    icon: JSX.Element | undefined;
+    icon?: JSX.Element;
     caches: Caches | null = null;
     simpleCache: SimpleCache;
 
@@ -113,7 +116,7 @@ export class Session {
     // timeline flag data source
     timelineMaker: TimeLineMaker = TIME_MAKER_DEFAULT;
 
-    zoom: {zoomCount: number; zoomPoint?: number | undefined} | undefined;
+    zoom?: {zoomCount: number; zoomPoint?: number };
     doReset: boolean = false;
     memoryRankIds: string[] = [];
     operatorRankIds: string[] = [];
@@ -207,7 +210,7 @@ export class Session {
         if (this.phase === 'configuring') {
             return 'Idle';
         } else if (this.phase === 'download' && this.startRecordTime !== undefined) {
-            return 'Recorded at: ' + toLocalTimeString(this.startRecordTime);
+            return `Recorded at: ${toLocalTimeString(this.startRecordTime)}`;
         } else {
             return stateTexts[this.phase];
         }
