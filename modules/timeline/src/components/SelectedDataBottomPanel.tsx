@@ -8,6 +8,7 @@ import { SingleDataDesc } from '../entity/insight';
 import { useSelectedDataDetailUpdater } from './details/hooks';
 import { AscendSliceDetail } from '../entity/data';
 import { ReactComponent as ExpandIcon } from '../assets/images/insights/PullDownIcon.svg';
+import { Col, Row } from 'antd';
 
 interface DetailProps<T extends Record<string, unknown>> {
     session: Session;
@@ -47,6 +48,7 @@ const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element =>
     }
     try {
         const args = JSON.parse(argsJson);
+        const breakKeys = ['Call stack', 'code'];
         return <div>
             <StyledSliceArgsDiv>
                 <ExpandIcon
@@ -54,12 +56,12 @@ const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element =>
                 <div style={{ fontWeight: 'bold', margin: '8px 0 0 8px' }}>{t('Args')}</div>
                 {!isHiddenArgs
                     ? Object.keys(args).map(key => {
-                        return <div style={{ marginLeft: '24px', height: '32px', lineHeight: '32px' }} key={key}>
-                            <div style={{ minWidth: '110px', width: '150px', float: 'left', display: 'flex', whiteSpace: 'nowrap' }}>{key}</div>
-                            <div style={{ float: 'left' }}>
-                                { key === 'Call stack' ? createContentWithBreaks(args[key]) : args[key] }
-                            </div>
-                        </div>;
+                        return <Row key={key} style={{ marginLeft: '24px', lineHeight: '32px' }} >
+                            <Col flex="150px" style={{ whiteSpace: 'nowrap' }}>{key}</Col>
+                            <Col flex="auto" style={{ wordBreak: 'break-all' }}>
+                                { breakKeys.includes(key) ? createContentWithBreaks(args[key]) : args[key] }
+                            </Col>
+                        </Row>;
                     })
                     : <></>}
             </StyledSliceArgsDiv>
