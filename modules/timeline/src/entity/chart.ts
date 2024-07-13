@@ -1,20 +1,23 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 import type { Theme } from '@emotion/react';
-import { Readable } from '../utils/humanReadable';
-import { AtomicObjectElementType } from './common';
-import { Session } from './session';
-import { InsightUnit, UnitHeight } from './insight';
+import type { Readable } from '../utils/humanReadable';
+import type { AtomicObjectElementType } from './common';
+import type { Session } from './session';
+import type { InsightUnit, UnitHeight } from './insight';
 
 export type SizePx = number;
 
-type ChartDataType<T, U> = {
+interface ChartDataType<T, U> {
     config: T; // type of chart configuration data, used when creating the chart component, such as color mapping
     data: U; // type of chart data, used for drawing the chart
 };
 
-type ChartDataDefinition = {
+interface ChartDataDefinition {
     filledLine: ChartDataType<FilledLineConfig, number[][]>;
     stackedBar: ChartDataType<StackBarConfig, Array<{ timestamp: number; values: number[] }>>;
-    keyEvent: ChartDataType<{}, EventData[]>;
+    keyEvent: ChartDataType<Record<string, unknown>, EventData[]>;
     status: ChartDataType<StatusConfig, StatusData[]>;
     stackStatus: ChartDataType<StackStatusConfig, StackStatusData[][]>; // data is grouped by depth
     // to be extended...
@@ -58,7 +61,7 @@ export type ChartReaction<T extends ChartType> = (data: AtomicObjectElementType<
 
 export type CustomChartDraw<T extends ChartType> = (handle: ChartHandle<T>, xScale: Scale, yScale: Scale, theme: Theme) => void;
 
-export type TextConfig = { overflow: 'hidden' | 'ellipsis'; textMarginLeft: number | ((num: number) => number); textAlign: 'start' | 'center' };
+export interface TextConfig { overflow: 'hidden' | 'ellipsis'; textMarginLeft: number | ((num: number) => number); textAlign: 'start' | 'center' };
 
 export type ChartDecorator<T extends ChartType> = (session: Session, metadata: unknown) => {
     action: CustomChartDraw<T>;
@@ -89,41 +92,41 @@ export interface RenderTooltip<T extends ChartType> {
 }
 
 // #region chart-specific data types
-export type BarEvent = {
+export interface BarEvent {
     yVal: number;
     event: string;
 };
 
-export type EventData = {
+export interface EventData {
     name: string;
     duration: number;
     happenTime: number;
     endTime: number;
 };
 
-export type StatusData = {
+export interface StatusData {
+    [x: string]: string | number | undefined | object;
     startTime: number;
     duration: number;
     name: string;
     type: string;
     color: string;
     subName?: string;
-    [x: string]: string | number | undefined | object;
 };
 
-export type StackStatusData = {
+export interface StackStatusData {
+    [x: string]: unknown;
     startTime: number;
     duration: number;
     name: string;
     type: string;
     color: keyof Theme['colorPalette'] | Array<[ number, keyof Theme['colorPalette'] ]>;
     depth: number;
-    [x: string]: unknown;
     cname: string;
     id?: string;
 };
 
-export type FilledLineConfig = {
+export interface FilledLineConfig {
     legend?: string[];
     valueRange?: [ number, number ];
     valueFormat?: Readable;
@@ -131,22 +134,22 @@ export type FilledLineConfig = {
     palette: Array<keyof Theme['colorPalette']>;
 };
 
-export type StackBarConfig = {
+export interface StackBarConfig {
     radius: number;
     auxiliaryValue?: number;
     yScaleType: ScaleType;
     // number - bar width stand for ms
     // string - '100px' fixed bar width
     barWidth: number | string;
-    valueRange?: [ number, number ] | undefined;
+    valueRange?: [ number, number ] ;
     palette?: string[];
 };
 
-export type StatusConfig = {
+export interface StatusConfig {
     rowHeight: UnitHeight;
 };
 
-export type StackStatusConfig = {
+export interface StackStatusConfig {
     rowHeight: UnitHeight;
     textConfig?: TextConfig;
     isNeedClamp?: boolean;

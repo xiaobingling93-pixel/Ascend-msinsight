@@ -1,5 +1,8 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ */
 import { clamp } from 'lodash';
-import { TimeStamp } from '../entity/common';
+import type { TimeStamp } from '../entity/common';
 import { adaptTime, getLastValue, isLowerUnit } from './adaptTimeForLength';
 import type { GetLength, GetPadder, Time, TimeOptions } from './adaptTimeForLength';
 
@@ -69,10 +72,8 @@ export const getTextualDuration = (endTimeAll: number | undefined): string => {
     } else {
         mesc = `${millisecond}`;
     }
-    return (hour < 10 ? `0${hour}` : `${hour}`) + ':' +
-        (minute < 10 ? `0${minute}` : `${minute}`) + ':' +
-        (second < 10 ? `0${second}` : `${second}`) + '.' +
-        mesc;
+
+    return `${hour < 10 ? (`0${hour}`) : hour}:${minute < 10 ? (`0${minute}`) : minute}:${second < 10 ? (`0${second}`) : second}.${mesc}`;
 };
 
 /**
@@ -91,21 +92,31 @@ const DEFAULT_DURATION_OPTIONS: TimeOptions = {
     maxChars: Number.MAX_SAFE_INTEGER,
 };
 export const getDuration = (time: TimeStamp, options: TimeOptions = DEFAULT_DURATION_OPTIONS): string => {
-    const getLength: GetLength = (time) => {
-        const timeLength = time?.length ?? 0;
-        const timeUnitLength = time?.unit.length ?? 0;
+    const getLength: GetLength = (timeItem) => {
+        const timeLength = timeItem?.length ?? 0;
+        const timeUnitLength = timeItem?.unit.length ?? 0;
         return timeLength + timeUnitLength + 1;
     };
-    const getPadder: GetPadder = (splitTime, emptyPadder, padStartIdx, timesIdx, length) => {
+    const getPadder: GetPadder = (splitTime, emptyPadder, orginPadStartIdx, timesIdx, originLength) => {
+        let padStartIdx = orginPadStartIdx;
+        let length = originLength;
+        const handleEmptyPadder = (index: number): void => {
+            if (emptyPadder[index] !== undefined) {
+                splitTime.unshift(emptyPadder[index]);
+            }
+        };
         if (options?.segments !== undefined) {
-            padStartIdx !== 0 && splitTime.unshift(...emptyPadder.slice(-padStartIdx).map(item => item));
+            if (padStartIdx !== 0) {
+                splitTime.unshift(...emptyPadder.slice(-padStartIdx).map(item => item));
+            }
         } else {
             do {
-                emptyPadder[padStartIdx] !== undefined && splitTime.unshift(emptyPadder[padStartIdx]);
+                handleEmptyPadder(padStartIdx);
                 (length as number) += getLength(emptyPadder[padStartIdx]);
                 padStartIdx--;
             } while ((length as number) < (options.maxChars as number) - 2 && padStartIdx >= 0);
         }
+
         return [splitTime, timesIdx];
     };
     const { splitTime: duration, tail } = adaptTime(time, { getLength, getPadder, ...options });
@@ -136,27 +147,38 @@ const getLength = (time?: Time): number => {
     return length + Math.max(0, padderLength - length);
 };
 
-export const getTimestamp = (time: TimeStamp, options: TimeOptions = DEFAULT_TIMESTAMP_OPTIONS): string => {
+export const getTimestamp = (originTime: TimeStamp, options: TimeOptions = DEFAULT_TIMESTAMP_OPTIONS): string => {
+    let time = originTime;
     const sign = time < 0 ? '-' : '';
     time = Math.abs(time);
     const mode = options?.maxChars === undefined
         ? { segments: 6, ...options }
         : options;
-    const getPadder: GetPadder = (splitTime, emptyPadder, padStartIdx, timesIdx, length) => {
+    const getPadder: GetPadder = (splitTime, originEmptyPadder, originPadStartIdx, originTimesIdx, originLength) => {
+        let emptyPadder = originEmptyPadder;
+        let padStartIdx = originPadStartIdx;
+        let timesIdx = originTimesIdx;
+        let length = originLength;
         let resTime: Time[] = [];
+        const handleEmptyPadder = (index: number): void => {
+            if (emptyPadder[index] !== undefined) {
+                splitTime.unshift(emptyPadder[index]);
+            }
+        };
         if (mode?.segments !== undefined) {
             emptyPadder = emptyPadder.reverse();
             for (let i = 0; i <= padStartIdx || isLowerUnit(splitTime[0]) || splitTime[0]?.unit === 's'; i++) {
-                emptyPadder[i] !== undefined && splitTime.unshift(emptyPadder[i]);
+                handleEmptyPadder(i);
             }
             resTime = splitTime.slice(0, mode.segments);
             timesIdx = clamp(splitTime.length - resTime.length, 0, splitTime.length) - timesIdx;
         } else {
             do {
-                emptyPadder[padStartIdx] !== undefined && splitTime.unshift(emptyPadder[padStartIdx]);
+                handleEmptyPadder(padStartIdx);
                 (length as number) += getLength(emptyPadder[padStartIdx]);
                 padStartIdx--;
             } while ((length as number) < (mode.maxChars as number) - 2 && padStartIdx >= 0);
+
             resTime = splitTime;
         }
         return [resTime, timesIdx];
@@ -171,9 +193,7 @@ export const getTimestamp = (time: TimeStamp, options: TimeOptions = DEFAULT_TIM
         }
         const isInvalidHour = item.unit === 'hour' && item.value === 0;
         const splitter = index === 0 || isInvalidHour ? '' : separator;
-        const res = isInvalidHour
-            ? ''
-            : acc += `${splitter}${item.value.toString().padStart(maxLength, '0')}`;
+        const res = isInvalidHour ? '' : `${acc}${splitter}${item.value.toString().padStart(maxLength, '0')}`;
         return res;
     }, '');
 };
@@ -184,9 +204,8 @@ export const getTimestamp = (time: TimeStamp, options: TimeOptions = DEFAULT_TIM
  */
 export function toLocalTimeString(timestamp: number): string {
     const date = new Date(timestamp);
-    return date.toLocaleDateString('zh', { hour12: false }).replaceAll('/', '-') +
-        ' ' +
-        date.toLocaleTimeString('zh', { hour12: false }).replaceAll('/', '-');
+    return `${date.toLocaleDateString('zh', { hour12: false }).replaceAll('/', '-')
+    } ${date.toLocaleTimeString('zh', { hour12: false }).replaceAll('/', '-')}`;
 }
 
 /**

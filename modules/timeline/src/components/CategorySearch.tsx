@@ -1,14 +1,17 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
+ */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { Tooltip, message, Button, Input } from 'antd';
 import { observer } from 'mobx-react';
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { type ChangeEvent, useEffect, useState } from 'react';
 import { ReactComponent as AntdSearchIcon } from '../assets/images/insights/ic_search_lined.svg';
 import { ReactComponent as AntdCloseIcon } from '../assets/images/insights/ic_close_filled.svg';
-import { Session } from '../entity/session';
+import type { Session } from '../entity/session';
 import { CustomButton, PressButton, StyledButton } from './base/StyledButton';
 import { StyledInput } from './base/StyledInput';
-import { SvgType } from './base/rc-table/types';
+import type { SvgType } from './base/rc-table/types';
 import { action, runInAction } from 'mobx';
 import { ThreadUnit } from '../insight/units/AscendUnit';
 import { useTranslation } from 'react-i18next';
@@ -56,17 +59,17 @@ const CustomDiv = styled.div`
     }
 `;
 
-type RankCount = {
+interface RankCount {
     rankId: string;
     count: number;
 };
 
-type RemoteCount = {
+interface RemoteCount {
     dataSource: DataSource;
     countList: RankCount[];
 };
 
-type SliceData = {
+interface SliceData {
     rankId: string;
     pid: string;
     tid: number;
@@ -126,12 +129,14 @@ const jumpSlice = async (session: Session, searchContent: string, index: number,
 
 const doJumpSlice = (session: Session, slice: SliceData, isGlobal: boolean): void => {
     if (slice === undefined) {
-        console.error('slice is undefined.');
+        // slice is undefined.
+        return;
     }
     runInAction(() => {
         session.locateUnit = {
             target: (unit): boolean => {
-                return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId.includes(slice.rankId))) && unit.metadata.processId === slice.pid && unit.metadata.threadId === slice.tid;
+                return unit instanceof ThreadUnit && (Boolean(unit.metadata.cardId.includes(slice.rankId))) &&
+                    unit.metadata.processId === slice.pid && unit.metadata.threadId === slice.tid;
             },
             onSuccess: (unit): void => {
                 if (isGlobal) {

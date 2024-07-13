@@ -9,18 +9,18 @@ export type communicatorContainerData = {
     defaultPPSize: number;
 };
 
-export type partitionMode = {
+export interface partitionMode {
     mode: string;
     communicators: communicator[];
 };
 
-export type communicator = {
+export interface communicator {
     name: string;
     ranks: number[];
     value?: string;
 };
 
-export type tabData = {
+export interface tabData {
     tab: string;
     key: string;
     content: JSX.Element;
@@ -54,7 +54,8 @@ export const getAllPpStageIds = (data: communicatorContainerData): string[] => {
     return tmp?.communicators.map(item => item.value as string);
 };
 
-export const generateCommunicatorData = (values: {ppSize: number; tpSize: number; dpSize: number}, defaultPPSize: number, rankNum: number): communicatorContainerData => {
+export const generateCommunicatorData = (values: {ppSize: number; tpSize: number; dpSize: number},
+    defaultPPSize: number, rankNum: number): communicatorContainerData => {
     const partitionModes: partitionMode[] = [
         { mode: 'pp', communicators: [] },
         { mode: 'tp', communicators: [] },
@@ -67,14 +68,14 @@ export const generateCommunicatorData = (values: {ppSize: number; tpSize: number
         for (let i = 0; i < pipelineCount; i++) {
             partitionModes[0].communicators.push({
                 ranks: _.range(i * pipelineSize, (i + 1) * pipelineSize),
-                name: 'stage' + i.toString(),
-                value: `(${_.range(i * pipelineSize, (i + 1) * pipelineSize).join(', ')}` + (pipelineSize > 1 ? ')' : ',)'),
+                name: `stage${i}`,
+                value: `(${_.range(i * pipelineSize, (i + 1) * pipelineSize).join(', ')}${pipelineSize > 1 ? ')' : ',)'}`,
             });
             for (let j = 0; j < values.tpSize; j++) {
                 partitionModes[2].communicators.push({
-                    ranks: _.range(i * pipelineSize + j, (i + 1) * pipelineSize + j, values.tpSize),
-                    name: 'data' + (i * values.tpSize + j).toString(),
-                    value: `(${_.range(i * pipelineSize + j, (i + 1) * pipelineSize + j, values.tpSize).join(', ')}` + (values.dpSize > 1 ? ')' : ',)'),
+                    ranks: _.range((i * pipelineSize) + j, ((i + 1) * pipelineSize) + j, values.tpSize),
+                    name: `data${(i * values.tpSize) + j}`,
+                    value: `(${_.range((i * pipelineSize) + j, ((i + 1) * pipelineSize) + j, values.tpSize).join(', ')}${values.dpSize > 1 ? ')' : ',)'}`,
                 });
             }
         }

@@ -290,8 +290,16 @@ const getHandleMouseDown = (dragDirection: DragDirection, draggable: React.RefOb
 
 const RIGHT_PERCENT = 0.99;
 
-const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: React.RefObject<HTMLDivElement>, movingState: React.MutableRefObject<MovingState>,
-    dragDirection: DragDirection, MIN_DRAG_WH: number, containerOffsetTop: number) => (e: MouseEvent): void => {
+interface ImouseAction {
+    container: React.RefObject<HTMLDivElement>;
+    draggable: React.RefObject<HTMLDivElement>;
+    movingState: React.MutableRefObject<MovingState>;
+    dragDirection: DragDirection;
+    MIN_DRAG_WH: number;
+    containerOffsetTop: number;
+}
+const handleMouseMove = (params: ImouseAction) => (e: MouseEvent): void => {
+    const { container, draggable, movingState, dragDirection, MIN_DRAG_WH, containerOffsetTop } = params;
     const dom = container.current;
     const domDrag = draggable.current;
     const moving = movingState.current;
@@ -333,8 +341,8 @@ const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: 
     moving.stat = 'moved';
 };
 
-const handleMouseUp = (container: React.RefObject<HTMLDivElement>, draggable: React.RefObject<HTMLDivElement>, movingState: React.MutableRefObject<MovingState>,
-    dragDirection: DragDirection, MIN_DRAG_WH: number, containerOffsetTop: number) => (e: MouseEvent): void => {
+const handleMouseUp = (params: ImouseAction) => (e: MouseEvent): void => {
+    const { container, draggable, movingState, dragDirection, MIN_DRAG_WH, containerOffsetTop } = params;
     const dom = container.current;
     const domDrag = draggable.current;
     const moving = movingState.current;
@@ -379,13 +387,14 @@ const handleMouseUp = (container: React.RefObject<HTMLDivElement>, draggable: Re
 };
 
 // 主容器宽高未确定时,初始化为设定的px值,主容器挂载结束后,后续宽高设置为百分比
-const pxConvert = (px: number, container: number[], dragDirection: DragDirection): string => {
-    if (container[0] === 0 || container[1] === 0) { return String(px) + 'px'; }
+const pxConvert = (originPx: number, container: number[], dragDirection: DragDirection): string => {
+    let px = originPx;
+    if (container[0] === 0 || container[1] === 0) { return `${px}px`; }
     if (dragDirection <= 1) {
         if (dragDirection === 1) { px += 4; } // bottom面板需要加上分割线的宽度
-        return String(px / container[1] * 100) + '%';
+        return `${px / container[1] * 100}%`;
     } else {
-        return String(px / container[0] * 100) + '%';
+        return `${px / container[0] * 100}%`;
     }
 };
 
@@ -402,8 +411,19 @@ const getOffsetTop = (ele: HTMLElement): number => {
     );
 };
 
-const switchOpen = (dragDirection: DragDirection, containerWH: number[], isOpen: React.MutableRefObject<boolean>, MIN_DRAG_WH: number, draggable: React.RefObject<HTMLDivElement>,
-    dragTranslate: number, setDragTranslate: React.Dispatch<React.SetStateAction<number>>, needOpen: boolean): void => {
+interface Iswitch {
+    dragDirection: DragDirection;
+    containerWH: number[];
+    isOpen: React.MutableRefObject<boolean>;
+    MIN_DRAG_WH: number;
+    draggable: React.RefObject<HTMLDivElement>;
+    dragTranslate: number;
+    setDragTranslate: React.Dispatch<React.SetStateAction<number>>;
+    needOpen: boolean;
+}
+
+const switchOpen = (params: Iswitch): void => {
+    const { dragDirection, containerWH, isOpen, MIN_DRAG_WH, draggable, dragTranslate, setDragTranslate, needOpen } = params;
     const domDrag = draggable.current; if (!domDrag) { return; }
     if (dragDirection <= 1) {
         if (needOpen) {
@@ -466,23 +486,32 @@ export const useDraggableContainerEx = (props: DCProps): [ ((props: ViewProps) =
     }, [setContainerOffsetTop]);
     const movingState = useRef<MovingState>({ stat: 'idle', startX: 0, startY: 0, screenY: 0, screenX: 0 });
     const onMousedown = getHandleMouseDown(dragDirection, draggable, movingState, isOpen);
-    const onMousemove = handleMouseMove(container, draggable, movingState, dragDirection, MIN_DRAG_WH, containerOffsetTop);
-    const onMouseup = handleMouseUp(container, draggable, movingState, dragDirection, MIN_DRAG_WH, containerOffsetTop);
+    const onMousemove = handleMouseMove({ container, draggable, movingState, dragDirection, MIN_DRAG_WH, containerOffsetTop });
+    const onMouseup = handleMouseUp({ container, draggable, movingState, dragDirection, MIN_DRAG_WH, containerOffsetTop });
     const handleSwitchOpen = (needOpen: boolean): void => {
-        switchOpen(dragDirection, containerWH, isOpen, MIN_DRAG_WH, draggable, dragTranslate, setDragTranslate, needOpen);
+        switchOpen({
+            dragDirection,
+            containerWH,
+            isOpen,
+            MIN_DRAG_WH,
+            draggable,
+            dragTranslate,
+            setDragTranslate,
+            needOpen,
+        });
     };
     const Container = containerMap.get(dragDirection) as typeof ContainerBase;
-    const view = (props: ViewProps): JSX.Element => {
-        return <Container key={props.id} ref={container} column draggableWH={open ? dragWh : '0px'}
+    const view = (vProps: ViewProps): JSX.Element => {
+        return <Container key={vProps.id} ref={container} column draggableWH={open ? dragWh : '0px'}
             splitLineH={open ? '10px' : '0px'} dragDirection={dragDirection} minWH={MIN_DRAG_WH}
             onMouseUp={(e): void => onMouseup(e.nativeEvent)} onMouseDown={(e): void => onMousedown(e.nativeEvent)}
             onMouseMove={(e): void => onMousemove(e.nativeEvent)}>
             <div className={'topC'} ref={draggable}>
-                <div className={'dragContainer'} aria-disabled={isOpen.current}>{props.draggableContainer}</div>
+                <div className={'dragContainer'} aria-disabled={isOpen.current}>{vProps.draggableContainer}</div>
                 <div className={'splitLine'} aria-disabled={isOpen.current} ref={splitLineRef} />
             </div>
-            <div className={'bottomC'}> {props.mainContainer} </div>
-            {props.slot}
+            <div className={'bottomC'}> {vProps.mainContainer} </div>
+            {vProps.slot}
         </Container>;
     };
     return [view, handleSwitchOpen];

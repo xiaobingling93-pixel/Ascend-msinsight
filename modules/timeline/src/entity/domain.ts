@@ -1,6 +1,9 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import { clamp } from 'lodash';
 import { makeAutoObservable } from 'mobx';
-import { TimeStamp } from './common';
+import type { TimeStamp } from './common';
 
 export const GOLDEN_RATE = 0.1236;
 
@@ -17,7 +20,9 @@ interface ZoomCenterifyArgs {
     upperBound: TimeStamp;
     point?: TimeStamp;
 };
-const zoomCenterify = ({ domain: [start, end], newDuration, upperBound, point }: ZoomCenterifyArgs): [ number, number ] => {
+const zoomCenterify = ({ domain: [originStart, originEnd], newDuration, upperBound, point }: ZoomCenterifyArgs): [ number, number ] => {
+    let start = originStart;
+    let end = originEnd;
     const centerPoint = validNumber(point) ?? (start + end) / 2;
     const prevDuration = end - start;
     if (prevDuration > 0) {
@@ -40,6 +45,9 @@ const zoomCenterify = ({ domain: [start, end], newDuration, upperBound, point }:
 };
 
 export class Domain {
+    maxDuration: TimeStamp;
+    readonly ZOOM_RATE: number = 1 + GOLDEN_RATE;
+    readonly BOUNDARY_ZOOM_RATE: number = 1 + GOLDEN_RATE * 10;
     private readonly _DEFAULT_DURATION: TimeStamp;
     private readonly _UPPER_BOUND: TimeStamp = Number.MAX_VALUE;
     private readonly _LOWER_BOUND: TimeStamp;
@@ -49,10 +57,6 @@ export class Domain {
     private _endTimeAll: TimeStamp;
     private _realTimeUpdate: boolean = true;
     private _chartViewWidth: number = 0;
-
-    readonly ZOOM_RATE: number = 1 + GOLDEN_RATE;
-    readonly BOUNDARY_ZOOM_RATE: number = 1 + GOLDEN_RATE * 10;
-    maxDuration: TimeStamp;
 
     constructor(isNsMode: boolean, endTimeAll: TimeStamp | undefined) {
         makeAutoObservable(this);
@@ -73,6 +77,37 @@ export class Domain {
         return this._LOWER_BOUND;
     }
 
+    get defaultDuration(): TimeStamp {
+        return this._DEFAULT_DURATION;
+    }
+
+    get duration(): TimeStamp {
+        return this._domainEnd - this._domainStart;
+    }
+
+    get domainRange(): { domainStart: TimeStamp; domainEnd: TimeStamp } {
+        return { domainStart: this._domainStart, domainEnd: this._domainEnd };
+    }
+
+    get realTimeUpdate(): boolean {
+        return this._realTimeUpdate;
+    }
+
+    get isLowerBound(): boolean {
+        return this.duration === this._LOWER_BOUND;
+    }
+
+    get isUpperBound(): boolean {
+        return this.duration >= this.maxDuration;
+    }
+
+    get timePerPx(): number {
+        if (this._chartViewWidth === 0) {
+            return this.duration;
+        }
+        return this.duration / this._chartViewWidth;
+    }
+
     set endTimeAll(endTimeAll: TimeStamp) {
         this._endTimeAll = endTimeAll;
         if (this._endTimeAll > 0 && this.maxDuration / this._endTimeAll < 2 * this.BOUNDARY_ZOOM_RATE) {
@@ -83,17 +118,12 @@ export class Domain {
         }
     }
 
-    get defaultDuration(): TimeStamp {
-        return this._DEFAULT_DURATION;
-    }
-
-    get duration(): TimeStamp {
-        return this._domainEnd - this._domainStart;
-    }
-
     set zoom({ zoomCount, zoomPoint }: { zoomCount: number; zoomPoint?: TimeStamp }) {
         // deprecate once operation when the domain is up to boundary and this operation is invalid.
-        if ((this.duration === this.maxDuration && zoomCount > 0) || (this.duration === this._LOWER_BOUND && zoomCount < 0)) { return; }
+        const notFit = (this.duration === this.maxDuration && zoomCount > 0) || (this.duration === this._LOWER_BOUND && zoomCount < 0);
+        if (notFit) {
+            return;
+        }
         const zoomEnd = (this._domainEnd > this._endTimeAll) && zoomCount < 0 ? this._endTimeAll : this._domainEnd;
         const zoomCenterLine = (zoomPoint ?? 0) > zoomEnd ? zoomEnd : zoomPoint;
         const newDuration = clamp(this.duration * Math.pow(this.ZOOM_RATE, zoomCount), this._LOWER_BOUND, this.maxDuration);
@@ -128,24 +158,8 @@ export class Domain {
         }
     }
 
-    get domainRange(): { domainStart: TimeStamp; domainEnd: TimeStamp } {
-        return { domainStart: this._domainStart, domainEnd: this._domainEnd };
-    }
-
     set realTimeUpdate(realTimeUpdate: boolean) {
         this._realTimeUpdate = realTimeUpdate;
-    }
-
-    get realTimeUpdate(): boolean {
-        return this._realTimeUpdate;
-    }
-
-    get isLowerBound(): boolean {
-        return this.duration === this._LOWER_BOUND;
-    }
-
-    get isUpperBound(): boolean {
-        return this.duration >= this.maxDuration;
     }
 
     set chartViewWidth(width: number) {
@@ -161,12 +175,5 @@ export class Domain {
             upperBound: this.maxDuration,
         });
         this._chartViewWidth = width;
-    }
-
-    get timePerPx(): number {
-        if (this._chartViewWidth === 0) {
-            return this.duration;
-        }
-        return this.duration / this._chartViewWidth;
     }
 }

@@ -1,14 +1,17 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import { warning } from 'rc-util/lib/warning';
 import * as React from 'react';
 import type { GetRowKey, Key } from '../types';
 
-export type TreeViewModel<T> = {
+export interface TreeViewModel<T> {
     data: T;
     depth: number;
     subtreeSize: number;
-    children: TreeViewModel<T>[];
-    parent: TreeViewModel<T> | undefined;
-}
+    children: Array<TreeViewModel<T>>;
+    parent?: TreeViewModel<T>;
+};
 
 /**
  * Inserts a view model for a given data to a given view model, without touching the original data structure.
@@ -24,7 +27,7 @@ export function insert<T extends Record<string, unknown>>(
     expandedKeys: Set<Key>,
     getRowKey: GetRowKey<T>
 ): void {
-    const vm = treeMap(child, node.depth + 1, childrenColumnName, expandedKeys, getRowKey, node);
+    const vm = treeMap({record:child, depth:node.depth + 1, childrenColumnName, expandedKeys, getRowKey, parent:node});
     node.children.push(vm);
     let cur: TreeViewModel<T> | undefined = node;
     while (cur) {
@@ -54,19 +57,22 @@ export function remove<T>(
     }
 }
 
-function treeMap<T extends Record<string, unknown>>(
-    record: T,
-    depth: number,
-    childrenColumnName: string,
-    expandedKeys: Set<Key>,
-    getRowKey: GetRowKey<T>,
-    parent?: TreeViewModel<T>
-): TreeViewModel<T> {
+interface Itree<T> {
+    record: T;
+    depth: number;
+    childrenColumnName: string;
+    expandedKeys: Set<Key>;
+    getRowKey: GetRowKey<T>;
+    parent?: TreeViewModel<T>;
+}
+
+function treeMap<T extends Record<string, unknown>>(treeSet:Itree<T>): TreeViewModel<T> {
+    const {record, depth, childrenColumnName, expandedKeys, getRowKey, parent} = treeSet;
     const rootVm = {
         data: record,
         depth,
         subtreeSize: 1,
-        children: [] as TreeViewModel<T>[],
+        children: [] as Array<TreeViewModel<T>>,
         parent,
     };
 
@@ -75,7 +81,14 @@ function treeMap<T extends Record<string, unknown>>(
 
     const childRecords = record[childrenColumnName];
     if (record && Array.isArray(childRecords) && expanded) {
-        rootVm.children = childRecords.map(it => treeMap(it, depth + 1, childrenColumnName, expandedKeys, getRowKey, rootVm));
+        rootVm.children = childRecords.map(it => treeMap({
+            record:it,
+            depth:depth + 1,
+            childrenColumnName,
+            expandedKeys,
+            getRowKey,
+            parent:rootVm,
+        }));
         rootVm.subtreeSize = rootVm.children.reduce((prev, cur) => prev + cur.subtreeSize, 1);
     }
 
@@ -91,24 +104,25 @@ export function useOrderStatisticTree<T extends Record<string, unknown>>(
     return React.useMemo(() => {
         let tree;
         if (Array.isArray(data)) {
-            tree = data.map(it => treeMap(it, 0, childrenColumnName, expandedKeys, getRowKey));
+            tree = data.map(it => treeMap({record:it, depth:0, childrenColumnName, expandedKeys, getRowKey}));
         } else {
-            tree = treeMap(data as T, 0, childrenColumnName, expandedKeys, getRowKey);
+            tree = treeMap({record:data as T, depth:0, childrenColumnName, expandedKeys, getRowKey});
         }
         return new OrderStatisticTree(tree);
-    }, [data, childrenColumnName, expandedKeys, getRowKey])
+    }, [data, childrenColumnName, expandedKeys, getRowKey]);
 }
 
 export class OrderStatisticTree<T> {
-    private vm: TreeViewModel<T> | TreeViewModel<T>[];
+    private vm: TreeViewModel<T> | Array<TreeViewModel<T>>;
 
-    constructor(tree: TreeViewModel<T> | TreeViewModel<T>[]) {
+    constructor(tree: TreeViewModel<T> | Array<TreeViewModel<T>>) {
         this.vm = tree;
     }
 
     findNodeIndex(selectedNode: T): number {
         let resultIndex = 0;
-        const recursiveNodeIndex = (node: TreeViewModel<T>[], subTreeIndex: number): number => {
+        const recursiveNodeIndex = (node: Array<TreeViewModel<T>>, originSubTreeIndex: number): number => {
+            let subTreeIndex = originSubTreeIndex;
             node.forEach(item => {
                 if (item.data === selectedNode) {
                     resultIndex = subTreeIndex;
@@ -119,7 +133,7 @@ export class OrderStatisticTree<T> {
                         subTreeIndex = recursiveNodeIndex(item.children, subTreeIndex);
                     }
                 }
-            })
+            });
             return subTreeIndex;
         };
         let initTreeLength = 0;
@@ -133,7 +147,7 @@ export class OrderStatisticTree<T> {
 
     // could be optimized by linking tree nodes in order
     getVisibleData(scrollTop: number, vpHeight: number, rowHeight: number, tolerance: number = 0): Array<TreeViewModel<T>> {
-        if (!this.vm || Array.isArray(this.vm) && this.vm.length === 0) {
+        if (!this.vm || (Array.isArray(this.vm) && this.vm.length === 0)) {
             return [];
         }
         const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - tolerance);
@@ -161,7 +175,7 @@ export class OrderStatisticTree<T> {
         return this.getTotalCount() * rowHeight;
     }
 
-    private findNode(tree: TreeViewModel<T> | TreeViewModel<T>[], index: number): TreeViewModel<T> | undefined {
+    private findNode(tree: TreeViewModel<T> | Array<TreeViewModel<T>>, index: number): TreeViewModel<T> | undefined {
         if (Array.isArray(tree)) {
             let subTreeIndex = index;
             for (let i = 0; i < tree.length; i++) {
@@ -171,18 +185,18 @@ export class OrderStatisticTree<T> {
                 }
                 subTreeIndex -= subtree.subtreeSize;
             }
-            console.log('findNode returning undefined for tree exausted, tree length: ', tree.length, ', index: ', index);
+            // findNode returning undefined for tree exausted, tree length: ', tree.length, ', index: ', index
             return undefined;
         }
         if (index >= tree.subtreeSize) {
-            console.log('findNode returning undefined for index >= tree.subtreeSize');
+            // findNode returning undefined for index >= tree.subtreeSize
             return undefined;
         }
-        if (index  === 0) {
+        if (index === 0) {
             return tree;
         }
         if (!tree.children || tree.children.length === 0) {
-            ('findNode returning undefined for empty children');
+            // findNode returning undefined for empty children
             return undefined;
         }
         let subTreeIndex = index - 1; // skipped the root
@@ -194,7 +208,7 @@ export class OrderStatisticTree<T> {
             }
             subTreeIndex -= subTree.subtreeSize;
         }
-        console.log('findNode returning undefined');
+        // findNode returning undefined
         return undefined;
     }
 }

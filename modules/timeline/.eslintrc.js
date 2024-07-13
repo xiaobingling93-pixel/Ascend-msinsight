@@ -112,6 +112,7 @@ module.exports = {
     }],
     '@typescript-eslint/no-unnecessary-type-assertion': ['off'],
     '@typescript-eslint/no-var-requires': 0,
+    '@typescript-eslint/adjacent-overload-signatures':['warn'],
     'import/no-unresolved':['error', { "ignore": ["lib"] }],
   },
   overrides: [

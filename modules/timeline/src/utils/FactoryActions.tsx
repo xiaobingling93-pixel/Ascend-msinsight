@@ -1,7 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-export const loopActionFactory = (callBackFunc: Function, msPerTime: number, msDelay: number = 0): { beginLoop: Function; clearLoop: Function } => {
+export const loopActionFactory = (callBackFunc: (args: any) => void, msPerTime: number, msDelay: number = 0):
+{ beginLoop: (e?: React.KeyboardEvent<HTMLDivElement>) => void; clearLoop: () => void } => {
     let lastTime = 0;
     let isZoomInning = true;
     let delay = msDelay;

@@ -1,14 +1,17 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 /** @jsxImportSource @emotion/react */
 import { observer } from 'mobx-react';
 import React, { useRef } from 'react';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import styled from '@emotion/styled';
 import { useAsyncEffect } from '../../utils/useEffectHooks';
 import { useTheme } from '@emotion/react';
 import type { Theme } from '@emotion/react';
 import { Logger } from '../../utils/Logger';
 
-type GaugeChartHalfRoundProps = {
+interface GaugeChartHalfRoundProps {
     session: Session;
     splits: Array<[number, string]>;
     mapFunc: () => Promise<number>;
@@ -39,18 +42,26 @@ const drawNeedle = (theme: Theme, context: CanvasRenderingContext2D, width: numb
     }
     context.save();
     context.translate(width / 2, paddingTop);
-    context.rotate(Math.PI / 2 + Math.PI * datas / maxNumber);
+    context.rotate((Math.PI / 2) + (Math.PI * datas / maxNumber));
     context.beginPath();
-    context.moveTo(-needleThickness / 2, radius + thickness / 2 - needleHeight);
-    context.lineTo(needleThickness / 2, radius + thickness / 2 - needleHeight);
-    context.lineTo(0, radius + thickness / 2);
+    context.moveTo(-needleThickness / 2, (radius + (thickness / 2)) - needleHeight);
+    context.lineTo(needleThickness / 2, (radius + (thickness / 2)) - needleHeight);
+    context.lineTo(0, radius + (thickness / 2));
     context.closePath();
     context.fillStyle = theme.fpsPointersColor;
     context.fill();
     context.restore();
 };
-
-const drawText = (type: string, theme: Theme, context: CanvasRenderingContext2D, width: number, datas: number, getDisplayNumber: Formatter): void => {
+interface Iparams {
+    type: string;
+    theme: Theme;
+    context: CanvasRenderingContext2D;
+    width: number;
+    datas: number;
+    getDisplayNumber: Formatter;
+}
+const drawText = (params: Iparams): void => {
+    const { type, theme, context, width, datas, getDisplayNumber } = params;
     context.textAlign = 'center';
     context.textBaseline = 'bottom';
     context.font = '22px -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif';
@@ -72,12 +83,11 @@ const drawLegend = (context: CanvasRenderingContext2D, {
     width,
     maxNumber,
     splits,
-    canvasHeight,
 }: DrawLengendParams): void => {
     let lastStartAngle = Math.PI;
     splits.forEach((d, index) => {
         context.beginPath();
-        const endAngle = Math.PI + Math.PI * d[0] / maxNumber;
+        const endAngle = Math.PI + (Math.PI * d[0] / maxNumber);
         if (index === splits.length - 1) {
             // last one don't need padding
             context.arc(width / 2, paddingTop, radius, lastStartAngle, endAngle);
@@ -88,7 +98,7 @@ const drawLegend = (context: CanvasRenderingContext2D, {
         context.lineWidth = thickness;
         context.stroke();
         context.beginPath();
-        context.arc(width / 2, paddingTop, radius - (handleThickness - thickness) / 2, lastStartAngle, lastStartAngle + handleRadius);
+        context.arc(width / 2, paddingTop, radius - ((handleThickness - thickness) / 2), lastStartAngle, lastStartAngle + handleRadius);
         context.lineWidth = handleThickness;
         context.stroke();
         lastStartAngle = endAngle;
@@ -120,7 +130,7 @@ export const GaugeChartHalfRound = observer(({ session, splits, mapFunc, type, g
         // draw needle
         drawNeedle(theme, context, width, maxNumber, datas);
         // draw text
-        drawText(type, theme, context, width, datas, getDisplayNumber);
+        drawText({ type, theme, context, width, datas, getDisplayNumber });
     };
     useAsyncEffect(draw, [session.endTimeAll, theme]);
     return <CanvasChart ref={canvas} width={400} height={canvasHeight} />;

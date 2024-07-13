@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
 import styled from '@emotion/styled';
 import cls from 'classnames';
 import { computed, runInAction } from 'mobx';
@@ -7,15 +10,15 @@ import { useEffect, useRef } from 'react';
 // hooks
 import { useWatchResize } from '../../../utils/useWatchDomResize';
 // support utils/types
-import { preOrderFlatten, TreeNode } from '../../../entity/common';
-import { InsightUnit } from '../../../entity/insight';
-import { Session } from '../../../entity/session';
+import { preOrderFlatten, type TreeNode } from '../../../entity/common';
+import type { InsightUnit } from '../../../entity/insight';
+import type { Session } from '../../../entity/session';
 import { getAutoKey } from '../../../utils/dataAutoKey';
 import { traceSingle } from '../../../utils/traceLogger';
 import { Chart } from '../../charts';
 import { isPinned, isSonPinned } from '../unitPin';
 import { useSelectUnit } from './hooks/useSelectUnit';
-import { KeyedInsightUnit } from './types';
+import type { KeyedInsightUnit } from './types';
 import { UnitInfo } from './UnitInfo';
 import { ChartErrorBoundary } from '../../error/ChartErrorBoundary';
 import eventBus, { EventType, useEventBus } from '../../../utils/eventBus';
@@ -70,7 +73,8 @@ const ChartView = observer(({ unit, session, width, height }: {unit: KeyedInsigh
                     title={unit.name} session={session} metadata={unit.metadata} width={width} phase={unit.phase} />,
             )}
         </Join>;
-    } else if (unit.chart !== undefined) {
+    }
+    if (unit.chart !== undefined) {
         return <Chart
             unit={unit} desc={unit.chart} key={getAutoKey(unit)} serial={getAutoKey(unit)}
             title={unit.name} session={session} metadata={unit.metadata} width={width} phase={unit.phase} />;
@@ -145,7 +149,7 @@ export const computeVisibleUnitRange = (units: InsightUnit[], viewportHeight: nu
     return [start, end + 1];
 };
 
-type FlattenUnitsProps = {
+interface FlattenUnitsProps {
     session: Session;
     height: number;
     laneInfoWidth: number;
@@ -254,7 +258,7 @@ const TableScroller = styled.div`
     border-top: solid 1px ${(props): string => props.theme.tableBorderColor};
 `;
 
-type ScrollerProps = {
+interface ScrollerProps {
     children: JSX.Element | null;
     session: Session;
     eventType: string;
@@ -299,7 +303,8 @@ const INVISIBLE_UNITS_PLACEHOLDER = 'invisible-units-placeholder';
 
 const Units = ({ session, height, hasPinButton, laneInfoWidth }:
 { session: Session; height: number; hasPinButton: boolean; laneInfoWidth: number }, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element => {
-    return <Scroller session={session} unitsArea={session.units} supportJump={true} ref={ref} orderOptions={orderOptions} eventType={EventType.UNITWRAPPERSCROLL}>
+    return <Scroller session={session} unitsArea={session.units} supportJump={true}
+        ref={ref} orderOptions={orderOptions} eventType={EventType.UNITWRAPPERSCROLL}>
         <FlattenUnits
             session={session}
             height={height}

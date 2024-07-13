@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 import type { Theme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
@@ -6,9 +9,9 @@ import { observable, runInAction } from 'mobx';
 // hooks
 import { useWatchResize } from '../../utils/useWatchDomResize';
 // support utils/types
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 // components
-import { ChartRow, ChartRowProps } from '../base/ChartRow';
+import { ChartRow, type ChartRowProps } from '../base/ChartRow';
 import { ChartInteractor } from '../charts/ChartInteractor';
 import { ContextMenu } from '../ContextMenu';
 // same level infer
@@ -17,8 +20,8 @@ import { RefUnits } from './Units';
 // common constant variable
 import ChartHeader from './ChartHeader';
 import HorizontalScroller from './HorizontalScrollbar';
-import { ChartInteractorHandles, InteractorMouseState } from '../charts/ChartInteractor/ChartInteractor';
-import { Pos } from '../charts/ChartInteractor/common';
+import type { ChartInteractorHandles, InteractorMouseState } from '../charts/ChartInteractor/ChartInteractor';
+import type { Pos } from '../charts/ChartInteractor/common';
 import { THUMB_WIDTH_PX } from '../base';
 import { MouseDownActionResult } from '../charts/ChartInteractor/actions';
 import { loopActionFactory } from '../../utils/FactoryActions';
@@ -104,7 +107,8 @@ const ChartBody = observer((props: ChartBodyProps) => {
     return (<>
         {
             view({
-                mainContainer: <RefUnits session={session} height={height} ref={ref} hasPinButton={Boolean(interactive)} laneInfoWidth={LANE_INFO_WIDTH_PX.value} />,
+                mainContainer: <RefUnits session={session} height={height} ref={ref}
+                    hasPinButton={Boolean(interactive)} laneInfoWidth={LANE_INFO_WIDTH_PX.value} />,
                 draggableContainer: <PinnedUnits session={session} height={pinnedHeight} ref={pinnedRef} laneInfoWidth={LANE_INFO_WIDTH_PX.value} />,
                 id: 'UnitsPage',
             })
@@ -127,10 +131,10 @@ const ChartBody = observer((props: ChartBodyProps) => {
     </>);
 });
 
-const addKeyEvent = (keyHoldAction: { beginLoop: Function; clearLoop: Function }): void => {
+const addKeyEvent = (keyHoldAction: { beginLoop: (event: React.KeyboardEvent<HTMLDivElement>) => void; clearLoop: () => void }): void => {
     document.addEventListener('keydown', (e) => {
         if (!e.repeat) {
-            keyHoldAction.beginLoop(e);
+            keyHoldAction.beginLoop(e as unknown as React.KeyboardEvent<HTMLDivElement>);
         }
     });
     document.addEventListener('keyup', (e) => {
