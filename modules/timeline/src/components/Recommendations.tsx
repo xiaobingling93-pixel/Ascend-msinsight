@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+*/
 import type { Theme } from '@emotion/react';
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
@@ -8,8 +11,8 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as ThumbIcon } from '../assets/images/chartHeader/thumbIcon.svg';
 import { useRootStore } from '../context/context';
-import { InsightTemplate } from '../entity/insight';
-import { Session } from '../entity/session';
+import type { InsightTemplate } from '../entity/insight';
+import type { Session } from '../entity/session';
 import { platform } from '../platforms';
 import { getAutoKey } from '../utils/dataAutoKey';
 import { Logger } from '../utils/Logger';
@@ -19,7 +22,7 @@ interface ThumbTipProps {
     left: number;
 }
 
-type RecommendedTemplateData = {
+interface RecommendedTemplateData {
     timestamp: number;
     templates: string[];
 };
@@ -73,7 +76,10 @@ const ThumbEntranceBar = styled.div`
 
 const EmptyIcon = (): JSX.Element => <div>?</div>;
 
-const Icon = React.forwardRef(({ children, ...props }: { children?: React.ReactElement } & React.HTMLAttributes<unknown>, ref?: React.ForwardedRef<HTMLDivElement>): JSX.Element => {
+const Icon = React.forwardRef((
+    { children, ...props }: { children?: React.ReactElement } & React.HTMLAttributes<unknown>,
+    ref?: React.ForwardedRef<HTMLDivElement>,
+): JSX.Element => {
     // render ? as placeholder when the children is undefined
     return <IconContainer {...props} ref={ref}>
         {React.cloneElement(children ?? <EmptyIcon />, { style: { width: 15, height: 15 } })}
@@ -199,7 +205,7 @@ const Recommendations = observer(({ session }: { session: Session }): JSX.Elemen
 
     const { domainRange: { domainStart, domainEnd }, endTimeAll } = session;
     // Fetch wedge
-    const fetch = async (session: Session): Promise<RecommendedTemplateData[]> => [];
+    const fetch = async (_session: Session): Promise<RecommendedTemplateData[]> => [];
 
     // useState to manage data, watch domain, endTimeAll change to update RecommendedTemplate
     const [recommandedTemplateData, setRecommandedTemplateData] = React.useState<RecommendedTemplateData[]>([]);

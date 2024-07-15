@@ -11,27 +11,16 @@ import { DownOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {
     Container,
-    GetPageConfigWhithAllData,
-    GetPageConfigWhithPageData,
+    getPageConfigWithAllData,
+    getPageConfigWithPageData,
 } from '../Common';
-import { VoidFunction } from '../../utils/interface';
+import type { VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails } from '../../utils/RequestUtils';
 import { totalOperator } from './Filter';
 import ResizeTable from 'lib/ResizeTable';
 import type { Session } from '../../entity/session';
 
 export interface DataType {
-    'Rank ID': string;
-    'Operator Name': string;
-    'Start Timestamp(us)': string | number;
-    'Elapse Time(ms)': string | number;
-    'Transit Time(ms)': string | number;
-    'Synchronization Time(ms)': number;
-    'Wait Time(ms)': string | number;
-    'Synchronization Time Ratio': string | number;
-    'Wait Time Ratio': string | number;
-    'Idle Time(ms)': string | number;
-    'Communication Bandwidth Info'?: any;
     [prop: string]: any;
 }
 
@@ -96,18 +85,18 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     useEffect(() => {
         updateData(page, sorter);
     }, [page.current, page.pageSize, sorter.field, sorter.order, conditions.iterationId, record.rankId]);
-    const updateData = async(page: any, sorter: {field: string;order: string}): Promise<void> => {
+    const updateData = async(_page: any, _sorter: {field: string;order: string}): Promise<void> => {
         const res = await queryOperatorDetails({
             iterationId: conditions.iterationId,
             rankId: record.rankId,
-            currentPage: page.current,
-            pageSize: page.pageSize,
-            orderBy: sorter.field,
-            order: sorter.order,
+            currentPage: _page.current,
+            pageSize: _page.pageSize,
+            orderBy: _sorter.field,
+            order: _sorter.order,
             stage: conditions.stage,
         });
         setDataSource(res?.allOperators ?? []);
-        setPage({ ...page, total: res?.count ?? 0 });
+        setPage({ ..._page, total: res?.count ?? 0 });
     };
 
     const columns: TableColumnsType<DataType> = [
@@ -118,7 +107,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     ];
     return <div>
         <ResizeTable columns={columns} dataSource={dataSource} size="small"
-            pagination={GetPageConfigWhithPageData(page, setPage)}
+            pagination={getPageConfigWithPageData(page, setPage)}
             onChange={(pagination: any, filters: any, newSorter: any, extra: any): void => {
                 if (extra.action === 'sort') {
                     setSorter(newSorter);
@@ -201,7 +190,7 @@ const CommunicationTimeTable = observer((props:
                     expandIcon: (): JSX.Element => (<></>),
                 }}
                 rowKey={rowKey}
-                pagination={GetPageConfigWhithAllData(dataSource.length)}
+                pagination={getPageConfigWithAllData(dataSource.length)}
                 size="small"
                 onChange={(pagination: any, filters: any, sorter: any, extra: any): void => {
                     if (extra.action === 'sort') {

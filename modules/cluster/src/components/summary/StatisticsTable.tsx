@@ -7,11 +7,11 @@ import { DownOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { StringMap } from '../../utils/interface';
-import { notNull, GetPageConfigWhithPageData, Loading } from '../Common';
+import type { StringMap } from '../../utils/interface';
+import { notNull, getPageConfigWithPageData, Loading } from '../Common';
 import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } from '../../utils/RequestUtils';
 import ResizeTable from 'lib/ResizeTable';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import { type AdviceInfo } from './ComputationCommunicationOverview';
 
 const useComputingStatisticsColumns = (): ColumnsType => {
@@ -250,10 +250,10 @@ const DetailTable = ({ rankId, record, name, step }: any): JSX.Element => {
     useEffect(() => {
         updateData(page, sorter);
     }, [page.current, page.pageSize, sorter.field, sorter.order, record.acceleratorCore, rankId]);
-    const updateData = async(page: any, sorter: any): Promise<void> => {
-        const { data, total } = await serachData({ rankId, record, page, sorter, name, step });
+    const updateData = async(_page: any, _sorter: any): Promise<void> => {
+        const { data, total } = await serachData({ rankId, record, _page, _sorter, name, step });
         setDataSource(data);
-        setPage({ ...page, total });
+        setPage({ ..._page, total });
     };
 
     return <div>
@@ -262,7 +262,7 @@ const DetailTable = ({ rankId, record, name, step }: any): JSX.Element => {
             columns={columns}
             rowKey={rowKey}
             size="small"
-            pagination={GetPageConfigWhithPageData(page, setPage)}
+            pagination={getPageConfigWithPageData(page, setPage)}
             onChange={(pagination: any, filters: any, mySorter: any, extra: any): void => {
                 if (extra.action === 'sort') {
                     setSorter(mySorter);
@@ -309,7 +309,7 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
         columns={columns}
         expandable={{
             expandedRowRender: (record: any) => <DetailTable record={record}
-                name={timeFlag + 'Detail' } rankId={ rankId} step={step}/>,
+                name={`${timeFlag}Detail`} rankId={ rankId} step={step}/>,
             expandedRowKeys,
             expandIcon: () => (<></>),
         }}

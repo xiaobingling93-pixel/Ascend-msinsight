@@ -3,7 +3,7 @@
  */
 import { Table } from 'antd';
 import React from 'react';
-import { GetPageConfigWhithAllData } from '../Common';
+import { getPageConfigWithAllData } from '../Common';
 
 const columns = [
     {
@@ -41,7 +41,7 @@ const SummaryTable = (props: any): JSX.Element => {
         style={style}
         dataSource={dataSource}
         columns={columns}
-        pagination={GetPageConfigWhithAllData(dataSource.length)}
+        pagination={getPageConfigWithAllData(dataSource.length)}
         size="small"
     />);
 };

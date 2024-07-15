@@ -1,17 +1,20 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import type { Theme } from '@emotion/react';
 import { useTheme } from '@emotion/react';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import React, { useMemo, useRef } from 'react';
-import { ChartProps, EventData } from '../../entity/chart';
+import type { ChartProps, EventData } from '../../entity/chart';
 import { Canvas, CanvasContainer } from './common';
-import { Pos, useBatchedRender, useData, useHoverPos, useRangeAndDomain } from './hooks';
+import { type Pos, useBatchedRender, useData, useHoverPos, useRangeAndDomain } from './hooks';
 import { TooltipComponent, TooltipProps } from './TooltipComp';
 
 type EventChartProps = ChartProps<'keyEvent'>;
-const ExtendArea = 80; // 鼠标点击图形区域
+const EXTEND_AREA = 80; // 鼠标点击图形区域
 const ICON_SIZE = 5; // 菱形对角线的一半、圆半径
-const YDistances = 5; // 图形距离y轴距离
+const Y_DISTANCES = 5; // 图形距离y轴距离
 const RECT_HEIGHT = 10; // Hover Rect宽度
 const borderWidth = 2;
 
@@ -34,22 +37,22 @@ function drawData(context: CanvasRenderingContext2D, happenTime: number, endTime
 
 function drawCircle(theme: Theme, context: CanvasRenderingContext2D, x: number): void {
     context.beginPath();
-    context.arc(x, ICON_SIZE + YDistances, 5, 0, 2 * Math.PI);
+    context.arc(x, ICON_SIZE + Y_DISTANCES, 5, 0, 2 * Math.PI);
     context.fillStyle = theme.systemEventColor;
     context.fill();
 }
 function drawSquares(theme: Theme, context: CanvasRenderingContext2D, x: number): void {
     context.fillStyle = theme.systemEventColor;
-    context.fillRect(x - ICON_SIZE, YDistances, 2 * ICON_SIZE, 2 * ICON_SIZE);
+    context.fillRect(x - ICON_SIZE, Y_DISTANCES, 2 * ICON_SIZE, 2 * ICON_SIZE);
     context.strokeStyle = theme.contentBackgroundColor;
-    context.strokeRect(x - ICON_SIZE - borderWidth, YDistances - borderWidth, 2 * ICON_SIZE + borderWidth, 2 * ICON_SIZE + borderWidth);
+    context.strokeRect(x - ICON_SIZE - borderWidth, Y_DISTANCES - borderWidth, (2 * ICON_SIZE) + borderWidth, (2 * ICON_SIZE) + borderWidth);
 }
 function drawRhombus(theme: Theme, context: CanvasRenderingContext2D, x: number): void {
     context.beginPath();
-    context.moveTo(x, YDistances);
-    context.lineTo(x + ICON_SIZE, YDistances + ICON_SIZE);
-    context.lineTo(x, YDistances + (2 * ICON_SIZE));
-    context.lineTo(x - ICON_SIZE, YDistances + ICON_SIZE);
+    context.moveTo(x, Y_DISTANCES);
+    context.lineTo(x + ICON_SIZE, Y_DISTANCES + ICON_SIZE);
+    context.lineTo(x, Y_DISTANCES + (2 * ICON_SIZE));
+    context.lineTo(x - ICON_SIZE, Y_DISTANCES + ICON_SIZE);
     context.closePath();
     context.fillStyle = theme.systemEventColor;
     context.fill();
@@ -66,15 +69,19 @@ function draw(ctx: CanvasRenderingContext2D | null, dataState: EventData[], rang
 
 function drawRect(theme: Theme, context: CanvasRenderingContext2D, rectStart: number, rectEnd: number): void {
     context.fillStyle = theme.systemEventColor;
-    context.fillRect(rectStart, YDistances, rectEnd - rectStart, RECT_HEIGHT);
+    context.fillRect(rectStart, Y_DISTANCES, rectEnd - rectStart, RECT_HEIGHT);
 }
 
 const drawRectByXY = (context: CanvasRenderingContext2D | null, dataState: EventData[], rangeAndDomain: Array<[number, number]>,
     mousePos: Pos | undefined, theme: Theme): void => {
-    if (!context || rangeAndDomain.length === 0 || dataState.length === 0 ||
-        mousePos === undefined || mousePos.y < 8 || mousePos.y > 20) {
+    const isContextInvalid = !context;
+    const isRangeOrDataEmpty = rangeAndDomain.length === 0 || dataState.length === 0;
+    const isMousePosInvalid = mousePos === undefined || mousePos.y < 8 || mousePos.y > 20;
+
+    if (isContextInvalid || isRangeOrDataEmpty || isMousePosInvalid) {
         return;
     }
+
     const [domainStart, domainEnd] = rangeAndDomain[1];
     const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(true);
     context.globalAlpha = 0.3;
@@ -106,11 +113,14 @@ const findDataByX = (mousePosX: number | undefined, dataState: EventData[],
     for (let i = 0; i < dataState.length; i++) {
         const happenTime = dataState[i].happenTime;
         const endTime = dataState[i].endTime;
-        const startLeft = happenTime - ExtendArea;
-        const startRight = happenTime + ExtendArea;
-        const endLeft = endTime - ExtendArea;
-        const endRight = endTime + ExtendArea;
-        if ((mouseTimestamp >= startLeft && mouseTimestamp <= startRight) || (mouseTimestamp >= endLeft && mouseTimestamp <= endRight)) {
+        const startLeft = happenTime - EXTEND_AREA;
+        const startRight = happenTime + EXTEND_AREA;
+        const endLeft = endTime - EXTEND_AREA;
+        const endRight = endTime + EXTEND_AREA;
+        const isWithinStartRange = mouseTimestamp >= startLeft && mouseTimestamp <= startRight;
+        const isWithinEndRange = mouseTimestamp >= endLeft && mouseTimestamp <= endRight;
+
+        if (isWithinStartRange || isWithinEndRange) {
             return dataState[i];
         }
     }
@@ -127,9 +137,12 @@ export const EventChart = observer(({ margin, session, mapFunc, metadata, height
     const mousePos = useHoverPos(canvasContainer);
     const hoveredData = useMemo(() => findDataByX(mousePos?.x, dataState, rangeAndDomain), [mousePos, dataState, rangeAndDomain]);
 
+    const isCanvasInvalid = !canvasContainer.current || !canvas.current;
+    const isDataOrRangeEmpty = dataState.length === 0 || rangeAndDomain.length === 0;
+    const isCanvasSizeZero = canvas.current && (canvas.current.width === 0 || canvas.current.height === 0);
+
     useBatchedRender(() => {
-        if (canvasContainer.current === null || canvas.current === null || dataState.length === 0 || rangeAndDomain.length === 0 ||
-            canvas.current.width === 0 || canvas.current.height === 0) {
+        if (isCanvasInvalid || isDataOrRangeEmpty || isCanvasSizeZero) {
             return;
         }
         const ctx = canvas.current.getContext('2d');

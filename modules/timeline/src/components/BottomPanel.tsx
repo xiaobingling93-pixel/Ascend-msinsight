@@ -1,13 +1,16 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+*/
 import styled from '@emotion/styled';
 import { Card, Tabs } from 'antd/lib/index';
-import { CardProps } from 'antd/lib/card';
+import type { CardProps } from 'antd/lib/card';
 import { isEmpty } from 'lodash';
 import { observer } from 'mobx-react';
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import React, { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { BottomPanelRender, TriggerEvent } from '../entity/insight';
-import { Session } from '../entity/session';
+import type { BottomPanelRender, TriggerEvent } from '../entity/insight';
+import type { Session } from '../entity/session';
 import { BOTTOM_HEIGHT } from '../pages/SessionPage';
 import { DragDirection, useDraggableContainer } from 'lib/useDraggableContainer';
 import { SimpleTabularDetail } from './details/SimpleDetail';
@@ -26,7 +29,7 @@ interface BottomPanelProps {
     session: Session;
 }
 
-type DataCardType = {
+interface DataCardType {
     height: number;
     session: Session;
 };

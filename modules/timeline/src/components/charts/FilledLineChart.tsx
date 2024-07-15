@@ -1,13 +1,16 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+*/
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import React, { useMemo, useRef, useState } from 'react';
-import { ChartProps, Scale } from '../../entity/chart';
-import { Readable } from '../../utils/humanReadable';
+import type { ChartProps, Scale } from '../../entity/chart';
+import type { Readable } from '../../utils/humanReadable';
 import { Canvas, CanvasContainer, LegendArea, search, zipTimeSeriesData } from './common';
 import { useBatchedRender, useData, useHoverPosX, useRangeAndDomain } from './hooks';
-import { TooltipComponent, TooltipProps } from './TooltipComp';
+import { TooltipComponent, type TooltipProps } from './TooltipComp';
 
 type FilledLineChartProps = ChartProps<'filledLine'>;
 
@@ -38,9 +41,18 @@ const drawAuxiliaryLine = (context: CanvasRenderingContext2D, yScale: Scale,
     context.stroke();
 };
 
-const drawArea = (context: CanvasRenderingContext2D, datas: number[][], minHeight: number, maxHeight: number,
-    xScale: (n: number) => number, yScale: (n: number) => number,
-    palette: string[], width: number): (undefined | number[]) => {
+interface DrawAreaParams {
+    context: CanvasRenderingContext2D;
+    datas: number[][];
+    minHeight: number;
+    maxHeight: number;
+    xScale: (n: number) => number;
+    yScale: (n: number) => number;
+    palette: string[];
+    width: number;
+}
+
+const drawArea = ({ context, datas, minHeight, maxHeight, xScale, yScale, palette, width }: DrawAreaParams): (undefined | number[]) => {
     if (datas.length === 0) { return; }
 
     const x = [...datas.map(it => xScale(it[0])), 1 + xScale(datas[datas.length - 1][0])];
@@ -60,13 +72,25 @@ const drawArea = (context: CanvasRenderingContext2D, datas: number[][], minHeigh
     };
 };
 
-const draw = (ctx: CanvasRenderingContext2D | null, datas: number[][], width: number, height: number,
-    palette: string[], rangeAndDomain: Array<[ number, number ]>, hideLayer: number[],
-    valueRange?: [ number, number ], auxiliaryValue?: number, legend?: string[], valueFormat?: Readable): (HTMLCanvasElement | undefined) => {
+interface DrawParams {
+    ctx: CanvasRenderingContext2D | null;
+    datas: number[][];
+    width: number;
+    height: number;
+    palette: string[];
+    rangeAndDomain: Array<[ number, number ]>;
+    hideLayer: number[];
+    valueRange?: [ number, number ];
+    auxiliaryValue?: number;
+    legend?: string[];
+    valueFormat?: Readable;
+}
+
+const draw = ({ ctx, datas, width, height, palette, rangeAndDomain, hideLayer, valueRange, auxiliaryValue, legend, valueFormat }: DrawParams):
+(HTMLCanvasElement | undefined) => {
     if (!ctx) { return; }
     if (datas.length === 0 || datas[0].length > palette.length + 1) { return; }
-    let drawDatas: number[][];
-    [drawDatas, palette] = removeHideLayerDatas(datas, palette, hideLayer);
+    const [drawDatas, newPalette] = removeHideLayerDatas(datas, palette, hideLayer);
     let minHeight = 0;
     let maxHeight = 0;
     [minHeight, maxHeight] = valueRange ?? findHeights(drawDatas);
@@ -75,7 +99,7 @@ const draw = (ctx: CanvasRenderingContext2D | null, datas: number[][], width: nu
     const yScale = d3.scaleLinear().range([height, 0]).domain([minHeight, maxHeight]);
     if (auxiliaryValue !== undefined) { drawAuxiliaryLine(ctx, yScale, auxiliaryValue, width); }
     // draw line and area
-    drawArea(ctx, drawDatas, minHeight, maxHeight, xScale, yScale, palette, width);
+    drawArea({ context: ctx, datas: drawDatas, minHeight, maxHeight, xScale, yScale, palette: newPalette, width });
 };
 
 const findDataByX = (mousePosX: number | undefined, datasState: number[][],
@@ -108,14 +132,14 @@ const flipLayerBit = (flipBit: number, hideLayer: number[],
     setHideLayer(ret);
 };
 
-type LegendProps = {
-    legend: string[] | undefined;
+interface LegendProps {
+    legend?: string[];
     palette: string[];
     hideLayer: number[];
     setHideLayer: React.Dispatch<React.SetStateAction<number[]>>;
 };
 
-type ColorBlockProps = {
+interface ColorBlockProps {
     bgColor: string;
     isHiding: boolean;
 };
@@ -156,11 +180,11 @@ const removeHideLayerDatas = (datas: number[][], palette: string[], hideLayer: n
         const newRow = [...row];
         ret.push(newRow);
     });
-    hideLayer = hideLayer.sort((x, y) => x - y);
+    const sortedHideLayer = hideLayer.sort((x, y) => x - y);
     // for each row delete indexs in hideLayer
     // the 1st column is timestamp
-    ret.forEach((row, index, array) => { array[index] = row.filter((elem, index) => !hideLayer.includes(index - 1)); });
-    newPalette = palette.filter((elem, index) => !hideLayer.includes(index));
+    ret.forEach((row, index, array) => { array[index] = row.filter((elem, elemIndex) => !sortedHideLayer.includes(elemIndex - 1)); });
+    newPalette = palette.filter((elem, index) => !sortedHideLayer.includes(index));
     return [ret, newPalette];
 };
 
@@ -180,14 +204,17 @@ export const FilledLineChart = observer(({
     const hoveredData = useMemo(() => findDataByX(mousePosX, dataState, rangeAndDomain), [mousePosX, dataState, rangeAndDomain]);
     const colorPalette = useMemo(() => palette.map(d => theme.colorPalette[d]), [palette, theme]);
 
+    const isCanvasOrContainerInvalid = canvasContainer.current === null || canvas.current === null;
+    const isDataOrRangeEmpty = dataState.length === 0 || rangeAndDomain.length === 0;
+    const isCanvasSizeZero = canvas.current && (canvas.current.width === 0 || canvas.current.height === 0);
+
     useBatchedRender(() => {
-        if (canvasContainer.current === null || canvas.current === null || dataState.length === 0 || rangeAndDomain.length === 0 ||
-            canvas.current.width === 0 || canvas.current.height === 0) {
+        if (isCanvasOrContainerInvalid || isDataOrRangeEmpty || isCanvasSizeZero) {
             return;
         }
         const ctx = canvas.current.getContext('2d');
         ctx?.clearRect(0, 0, width, height);
-        draw(ctx, dataState, width, height, colorPalette, rangeAndDomain, hideLayer, valueRange, auxiliaryValue, legend, valueFormat);
+        draw({ ctx, datas: dataState, width, height, palette: colorPalette, rangeAndDomain, hideLayer, valueRange, auxiliaryValue, legend, valueFormat });
     }, [dataState, rangeAndDomain, theme, valueRange, hideLayer, colorPalette]);
 
     const tooltipProp: TooltipProps<number[], number[][]> = {

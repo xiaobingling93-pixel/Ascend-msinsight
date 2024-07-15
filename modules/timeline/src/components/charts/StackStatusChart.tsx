@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import type { Theme } from '@emotion/react';
 import { useTheme } from '@emotion/react';
 import * as d3 from 'd3';
@@ -6,10 +9,10 @@ import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 import type { ChartProps, ChartReaction, Scale, StackStatusData, TextConfig } from '../../entity/chart';
 import { UnitHeight } from '../../entity/insight';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import { Canvas, CanvasContainer, drawMultiBgRoundedRect, drawRoundedRect, zipStatusData } from './common';
 import { useBatchedRender, useClick, useData, useHoverPos, useRangeAndDomain } from './hooks';
-import { TooltipComponent, TooltipProps } from './TooltipComp';
+import { TooltipComponent, type TooltipProps } from './TooltipComp';
 
 type StackStatusChartProps = ChartProps<'stackStatus'>;
 type OverflowType = 'hidden' | 'ellipsis';
@@ -29,14 +32,14 @@ const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2
     let mid = 0;
     while (left < right) {
         mid = Math.floor((left + right) / 2);
-        if (ctx.measureText(text.slice(0, mid) + '...').width > maxWidth) {
+        if (ctx.measureText(`${text.slice(0, mid)}...`).width > maxWidth) {
             right = mid;
         } else {
             if (left === mid) { break; }
             left = mid;
         }
     }
-    return text.slice(0, mid) + '...';
+    return `${text.slice(0, mid)}...`;
 };
 
 // 计算当前节点宽度及圆角半径大小，同时将需要写的文字提前放入数组保存
@@ -107,12 +110,21 @@ function dealDataColor(theme: Theme, dataColor: Map<keyof Theme['colorPalette'],
     }));
 }
 
-const draw = (ctx: CanvasRenderingContext2D | null,
-    datas: StackStatusData[][],
-    xScale: Scale,
-    yScale: Scale,
-    theme: Theme, right: number, isSimulation: boolean, textConfig?: TextConfig): void => {
-    if (!ctx) return;
+interface DrawParams {
+    ctx: CanvasRenderingContext2D | null;
+    datas: StackStatusData[][];
+    xScale: Scale;
+    yScale: Scale;
+    theme: Theme;
+    right: number;
+    isSimulation: boolean;
+    textConfig?: TextConfig;
+}
+
+const draw = ({ ctx, datas, xScale, yScale, theme, right, isSimulation, textConfig }: DrawParams): void => {
+    if (!ctx) {
+        return;
+    }
     const { overflow, textAlign } = textConfig ?? { overflow: 'ellipsis', textAlign: 'start' };
     ctx.font = `${FONT_SIZE}px -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif`;
     ctx.textAlign = textAlign;
@@ -191,7 +203,8 @@ const findDataByXY = (mousePos: {x: number; y: number} | undefined, datas: Stack
 
 const findDataByXXRange = ([downX, upX]: number[], datas: StackStatusData[][],
     rangeAndDomain: Array<[number, number]>): StackStatusData[] | undefined => {
-    if (downX === undefined || upX === undefined || datas.length === 0 || rangeAndDomain.length === 0) {
+    const isUndefinedOrEmpty = downX === undefined || upX === undefined || datas.length === 0 || rangeAndDomain.length === 0;
+    if (isUndefinedOrEmpty) {
         return undefined;
     }
     const sX = Math.min(downX, upX);
@@ -210,7 +223,15 @@ const findDataByXXRange = ([downX, upX]: number[], datas: StackStatusData[][],
     return result.length > 0 ? result : undefined;
 };
 
-const mouseUpFunc = (e: MouseEvent, datasState: StackStatusData[][], rangeAndDomain: Array<[number, number]>, rowHeight: UnitHeight, session: Session, metadata: unknown, onClick: ChartReaction<'stackStatus'> | undefined): void => {
+interface MouseUpFuncParams {
+    e: MouseEvent;
+    datasState: StackStatusData[][];
+    rangeAndDomain: Array<[number, number]>;
+    rowHeight: UnitHeight; session: Session;
+    metadata: unknown;
+    onClick?: ChartReaction<'stackStatus'>;
+}
+const mouseUpFunc = ({ e, datasState, rangeAndDomain, rowHeight, session, metadata, onClick }: MouseUpFuncParams): void => {
     const clickedData = findDataByXY({ x: e.offsetX, y: e.offsetY }, datasState, rangeAndDomain, rowHeight, session.endTimeAll ?? 0);
     runInAction(() => {
         session.selectedData = clickedData;
@@ -226,16 +247,32 @@ const mouseMoveUpFunc = ([downX, upX]: number[], datasState: StackStatusData[][]
     });
 };
 
-export const StackStatusChart = observer(({ session, unit, margin, mapFunc, metadata, renderTooltip, height, onHover, onClick, decorator, rowHeight, width, textConfig, isNeedClamp, isCollapse, maxDepth }: StackStatusChartProps) => {
+export const StackStatusChart = observer(({
+    session, unit, margin, mapFunc, metadata, renderTooltip, height, onHover, onClick, decorator,
+    rowHeight, width, textConfig, isNeedClamp, isCollapse, maxDepth,
+}: StackStatusChartProps) => {
     const theme = useTheme();
     const canvasContainer = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
     const { action: drawExt = (): void => {}, triggers = [] } = decorator?.(session, metadata) ?? {};
-    const datasState = useData(session, mapFunc, unit, metadata, width, (data, width, start, end) =>
-        data.map(row => zipStatusData(row, width, start, end)));
+    const datasState = useData(session, mapFunc, unit, metadata, width, (data, processedWidth, start, end) =>
+        data.map(row => zipStatusData(row, processedWidth, start, end)));
     const rangeAndDomain = useRangeAndDomain(session, width, margin); const mousePos = useHoverPos(canvasContainer);
-    const hoveredData = useMemo(() => findDataByXY(mousePos, datasState, rangeAndDomain, rowHeight, session.endTimeAll ?? 0), [mousePos, datasState, rangeAndDomain]);
-    const handleMouseUp = (e: MouseEvent): void => { mouseUpFunc(e, datasState, rangeAndDomain, rowHeight, session, metadata, onClick); };
+    const hoveredData = useMemo(
+        () => findDataByXY(mousePos, datasState, rangeAndDomain, rowHeight, session.endTimeAll ?? 0),
+        [mousePos, datasState, rangeAndDomain],
+    );
+    const handleMouseUp = (e: MouseEvent): void => {
+        mouseUpFunc({
+            e,
+            datasState,
+            rangeAndDomain,
+            rowHeight,
+            session,
+            metadata,
+            onClick,
+        });
+    };
     const handleMouseMoveUp = ([downX, upX]: number[]): void => { mouseMoveUpFunc([downX, upX], datasState, rangeAndDomain, session); };
     useEffect(() => onHover?.(hoveredData, session, metadata), [hoveredData, metadata]);
     useClick(canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp, handleMouseMoveUp);
@@ -249,10 +286,19 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
         const ctx = canvas.current.getContext('2d', { willReadFrequently: true });
         const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(isNeedClamp ?? true);
         ctx?.clearRect(0, 0, width, height);
-        draw(ctx, datasState, xScale, yScale, theme, session.endTimeAll ?? 0, session.isSimulation, textConfig);
+        draw({ ctx, datas: datasState, xScale, yScale, theme, right: session.endTimeAll ?? 0, isSimulation: session.isSimulation, textConfig });
         drawExt({
             context: ctx,
-            draw: (data, xScaleExt, yScaleExt) => draw(ctx, data, xScaleExt, yScaleExt, theme, session.endTimeAll ?? 0, session.isSimulation, textConfig),
+            draw: (data, xScaleExt, yScaleExt) => draw({
+                ctx,
+                datas: data,
+                xScale: xScaleExt,
+                yScale: yScaleExt,
+                theme,
+                right: session.endTimeAll ?? 0,
+                isSimulation: session.isSimulation,
+                textConfig,
+            }),
             findAll: (condition) => datasState.map(it => it.filter(condition)),
         }, xScale, yScale, theme);
     }, [datasState, rangeAndDomain, ...triggers, theme, isCollapse]);
@@ -262,7 +308,7 @@ export const StackStatusChart = observer(({ session, unit, margin, mapFunc, meta
         mouseX: mousePos?.x ?? null,
         session,
         dataset: datasState,
-        calcHeight: (data) => data.depth * rowHeight + rowHeight / 2,
+        calcHeight: (data) => (data.depth * rowHeight) + (rowHeight / 2),
         dom: canvasContainer,
         renderContent: (data) => renderTooltip?.(data),
     };

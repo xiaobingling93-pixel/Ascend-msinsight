@@ -1,12 +1,15 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 import { useRenderEngine } from '../../context/context';
-import { SizePx } from '../../entity/chart';
-import { Session } from '../../entity/session';
-import { TimeUnit } from '../../utils/adaptTimeForLength';
+import type { SizePx } from '../../entity/chart';
+import type { Session } from '../../entity/session';
+import type { TimeUnit } from '../../utils/adaptTimeForLength';
 import { getTimestamp } from '../../utils/humanReadable';
 import { useWatchResize } from '../../utils/useWatchDomResize';
 import { RangeMarkerButtonCanvas } from '../TimeMakerButton';
@@ -93,11 +96,11 @@ export const getTimestamper = ({ timeStep, tickSpace, domain: [timeStart], index
     if (timeStep === 0) {
         return { timestamp: timeStart, beginX: originX + (index * tickSpace) };
     }
-    const integerStart = timeStart - timeStart % timeStep;
+    const integerStart = timeStart - (timeStart % timeStep);
     const timeOffset = timeStart - integerStart;
     const stepOffset = tickSpace * timeOffset / timeStep;
-    const timestamp = integerStart + timeStep * index;
-    return { timestamp, beginX: originX + index * tickSpace - stepOffset };
+    const timestamp = integerStart + (timeStep * index);
+    return { timestamp, beginX: originX + (index * tickSpace) - stepOffset };
 };
 
 interface CommonTickArgs {
@@ -269,7 +272,7 @@ const drawTimelineAxis = (canvas: HTMLCanvasElement, {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const originX = spaceX;
     const originY = canvasHeight - spaceY;
-    const distanceX = canvasWidth - 2 * spaceX;
+    const distanceX = canvasWidth - (2 * spaceX);
 
     // draw stable line, includes a horizontal main axis, and vertical ticks for both terminal point
     drawHorizontallLine(ctx, { beginX: originX, beginY: originY, length: distanceX, lineWidth, color: lineColor });
@@ -301,7 +304,7 @@ const CanvasContainer = styled.div`
     width: 100%;
 `;
 
-type TimelineAxisProps = {
+interface TimelineAxisProps {
     session: Session;
     margin: SizePx;
     timelineHeight: number;

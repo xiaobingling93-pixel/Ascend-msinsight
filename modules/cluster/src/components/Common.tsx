@@ -4,14 +4,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { Checkbox, Divider, Select, Pagination, Tooltip } from 'antd';
-import { optionDataType, VoidFunction } from '../utils/interface';
+import type { optionDataType, VoidFunction } from '../utils/interface';
 import type { EChartsType } from 'echarts';
 import i18n from '../i18n';
 import type { TooltipProps } from 'antd/lib/tooltip';
 import { useTheme } from '@emotion/react';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
-    return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? props.name + ' :' : ''} </span>;
+    return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? `${props.name} :` : ''} </span>;
 };
 
 export const Space = (props: {length: string | number }): JSX.Element => {
@@ -19,7 +19,7 @@ export const Space = (props: {length: string | number }): JSX.Element => {
 };
 
 export const Container = (props: {title?: JSX.Element | string; content?: JSX.Element;
-    style?: any;type?: String;titleClassName?: string;
+    style?: any;type?: string;titleClassName?: string;
     headerStyle?: object;bodyStyle?: object;
 }): JSX.Element => {
     if (props.type === 'headerfixed') {
@@ -93,7 +93,7 @@ export const PaginationWhithPgaeData = (props: any): JSX.Element => {
         style={{ float: 'right', marginTop: '10px' }}
     />;
 };
-export const GetPageConfigWhithPageData = (page: { current: number; pageSize: number; total: number },
+export const getPageConfigWithPageData = (page: { current: number; pageSize: number; total: number },
     setPage: VoidFunction): object => {
     return {
         ...page,
@@ -106,7 +106,7 @@ export const GetPageConfigWhithPageData = (page: { current: number; pageSize: nu
     };
 };
 
-export const GetPageConfigWhithAllData = (total: number): object => {
+export const getPageConfigWithAllData = (total: number): object => {
     return {
         total,
         showSizeChanger: total > 10,
@@ -157,19 +157,9 @@ function padTo2Digits(num: number): string {
 }
 
 export function formatDate(date: Date): string {
-    return (
-        [
-            date.getFullYear(),
-            padTo2Digits(date.getMonth() + 1),
-            padTo2Digits(date.getDate()),
-        ].join('-') +
-        ' ' +
-        [
-            padTo2Digits(date.getHours()),
-            padTo2Digits(date.getMinutes()),
-            padTo2Digits(date.getSeconds()),
-        ].join(':')
-    );
+    const dateStr = [date.getFullYear(), padTo2Digits(date.getMonth() + 1), padTo2Digits(date.getDate())].join('-');
+    const timeStr = [padTo2Digits(date.getHours()), padTo2Digits(date.getMinutes()), padTo2Digits(date.getSeconds())].join(':');
+    return `${dateStr} ${timeStr}`;
 }
 
 export function addResizeEvent(echart: EChartsType): void {
@@ -204,7 +194,7 @@ interface AnyFunction {
     (...rest: any[]): any;
 }
 
-const ListenerMap: {[props: string]: any} = {};
+const listenerMap: {[props: string]: any} = {};
 
 class DomVisibilityListener {
     private _visible: boolean = false;
@@ -214,15 +204,23 @@ class DomVisibilityListener {
 
     private readonly _onVisibleChange: AnyFunction | undefined;
     constructor(dom: string, onVisibleChange?: AnyFunction) {
-        if (ListenerMap[dom] !== undefined && ListenerMap[dom] !== null) {
-            ListenerMap[dom].clear();
-            ListenerMap[dom] = null;
+        if (listenerMap[dom] !== undefined && listenerMap[dom] !== null) {
+            listenerMap[dom].clear();
+            listenerMap[dom] = null;
         }
-        ListenerMap[dom] = this;
+        listenerMap[dom] = this;
         this._target = document.getElementById(dom);
         this.visible = this._target?.offsetParent !== null;
         this._onVisibleChange = onVisibleChange;
         this.add();
+    }
+
+    get visible(): boolean {
+        return this._visible;
+    }
+
+    set visible(value: boolean) {
+        this._visible = value;
     }
 
     add(): void {
@@ -242,14 +240,6 @@ class DomVisibilityListener {
         if (this._listener !== null) {
             clearTimeout(this._listener);
         }
-    }
-
-    get visible(): boolean {
-        return this._visible;
-    }
-
-    set visible(value: boolean) {
-        this._visible = value;
     }
 }
 

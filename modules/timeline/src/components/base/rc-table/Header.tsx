@@ -1,15 +1,18 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import React from 'react';
 import { RefCell as Cell } from './Cell';
 import { useTableContext } from './contexts';
-import { CellType, ColumnsType, ColumnType, GetComponentProps, StickyOffsets } from './types';
+import type { CellType, ColumnsType, ColumnType, GetComponentProps, StickyOffsets } from './types';
 import { getCellFixedInfo } from './utils/fixUtil';
 import { getColumnsKey } from './utils/valueUtil';
 
 interface RowProps<RecordType> {
-    cells: readonly CellType<RecordType>[];
+    cells: ReadonlyArray<CellType<RecordType>>;
     stickyOffsets: StickyOffsets;
-    columns: readonly ColumnType<RecordType>[];
-    onHeaderRow?: GetComponentProps<readonly ColumnType<RecordType>[]>;
+    columns: ReadonlyArray<ColumnType<RecordType>>;
+    onHeaderRow?: GetComponentProps<ReadonlyArray<ColumnType<RecordType>>>;
     index: number;
 }
 
@@ -25,26 +28,26 @@ function HeaderRow<RecordType>({
     let rowProps: React.HTMLAttributes<HTMLElement> = {};
     if (onHeaderRow) {
         rowProps = onHeaderRow(
-            cells.map(cell => cell.column!),
+            cells.map(cell => cell.column as ColumnType<RecordType>),
             index,
         );
     }
-  
-    const columnsKey = getColumnsKey(cells.map(cell => cell.column!));
-  
+
+    const columnsKey = getColumnsKey(cells.map(cell => cell.column as ColumnType<RecordType>));
+
     return (
         <tr {...rowProps}>
             {cells.map((cell: CellType<RecordType>, cellIndex) => {
                 const { column } = cell;
                 const fixedInfo = getCellFixedInfo(
-                    cell.colStart!,
-                    cell.colEnd!,
+                    cell.colStart as number,
+                    cell.colEnd as number,
                     columns,
                     stickyOffsets,
                 );
-        
+
                 let additionalProps: React.HTMLAttributes<HTMLElement> = column?.onHeaderCell?.(column) ?? {};
-        
+
                 return (
                     <Cell
                         {...cell}
@@ -63,13 +66,13 @@ function HeaderRow<RecordType>({
     );
 }
 
-function parseHeaderRows<RecordType>(columns: ColumnsType<RecordType>): CellType<RecordType>[] {
-    const rows: CellType<RecordType>[] = [];
+function parseHeaderRows<RecordType>(columns: ColumnsType<RecordType>): Array<CellType<RecordType>> {
+    const rows: Array<CellType<RecordType>> = [];
     let currentColIndex = 0;
     columns.forEach(column => {
         const cell: CellType<RecordType> = {
             key: column.key,
-            className: column.className || '',
+            className: column.className ?? '',
             children: column.title,
             column,
             colStart: currentColIndex, // inclusive
@@ -86,7 +89,7 @@ function parseHeaderRows<RecordType>(columns: ColumnsType<RecordType>): CellType
 export interface HeaderProps<RecordType> {
     columns: ColumnsType<RecordType>;
     stickyOffsets: StickyOffsets;
-    onHeaderRow?: GetComponentProps<readonly ColumnType<RecordType>[]>;
+    onHeaderRow?: GetComponentProps<ReadonlyArray<ColumnType<RecordType>>>;
 }
 
 export function Header<RecordType>({
@@ -95,8 +98,8 @@ export function Header<RecordType>({
     onHeaderRow,
 }: HeaderProps<RecordType>): React.ReactElement {
     const { prefixCls } = useTableContext();
-    const row: CellType<RecordType>[] = React.useMemo(() => parseHeaderRows(columns), [columns]);
-  
+    const row: Array<CellType<RecordType>> = React.useMemo(() => parseHeaderRows(columns), [columns]);
+
     return (
         <thead className={`${prefixCls}-thead`}>
             <HeaderRow

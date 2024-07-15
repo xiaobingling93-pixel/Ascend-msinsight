@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import * as React from 'react';
 import styled from '@emotion/styled';
 import cls from 'classnames';
@@ -7,9 +10,9 @@ import { observer } from 'mobx-react';
 // support utils/types
 import { useTranslation } from 'react-i18next';
 import { level } from '../../../entity/common';
-import { Session } from '../../../entity/session';
-import { KeyedInsightUnit } from './types';
-import { InsightUnit } from '../../../entity/insight';
+import type { Session } from '../../../entity/session';
+import type { KeyedInsightUnit } from './types';
+import type { InsightUnit } from '../../../entity/insight';
 import { getAutoKey } from '../../../utils/dataAutoKey';
 // assets
 import { ReactComponent as Arrow } from '../../../assets/images/insights/PullDownIcon.svg';
@@ -21,9 +24,9 @@ import { platform } from '../../../platforms';
 import { traceSingle } from '../../../utils/traceLogger';
 // common constant variable
 import { isPinned, switchPinned } from '../unitPin';
-import { useSelectUnit } from './hooks/useSelectUnit';
+import { useSelectUnit } from './hooks';
 import { ReactComponent as Supported } from '../../../assets/images/insights/Supported.svg';
-import { StyledTooltip } from '../../../components/base/StyledTooltip';
+import { StyledTooltip } from '../../base/StyledTooltip';
 
 const DefaultInfoContainer = styled.div`
     display: flex;
@@ -104,8 +107,8 @@ const DefaultInfo = observer(({ unit, name, session, ...props }: DefaultInfoProp
     </DefaultInfoContainer>;
 });
 
-const shouldDisplayStickyButton = (session: Session, isHovered: boolean, hasPinButton: boolean, isPinned: boolean): boolean => {
-    return session.phase === 'download' && ((hasPinButton && isHovered) || isPinned);
+const shouldDisplayStickyButton = (session: Session, isHovered: boolean, hasPinButton: boolean, _isPinned: boolean): boolean => {
+    return session.phase === 'download' && ((hasPinButton && isHovered) || _isPinned);
 };
 
 interface PinButtonProps {
@@ -208,16 +211,16 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
 });
 
 const ExpandIcon = observer(({ unit, session }: { unit: KeyedInsightUnit; session: Session }): JSX.Element | null => {
-    const onExpand = React.useCallback(async (unit: KeyedInsightUnit) => {
-        const spreadUnits = unit.spreadUnits;
+    const onExpand = React.useCallback(async (_unit: KeyedInsightUnit) => {
+        const spreadUnits = _unit.spreadUnits;
         if (spreadUnits?.phase === 'expand') {
-            await spreadUnits.action?.(unit, session);
+            await spreadUnits.action?.(_unit, session);
         }
         runInAction(() => {
-            unit.isExpanded = !unit.isExpanded;
-            if (unit.isExpanded) {
-                platform.trace(`unfold${unit.name.replace(/\s*/g, '')}`, {});
-                unit.children?.forEach(item => {
+            _unit.isExpanded = !_unit.isExpanded;
+            if (_unit.isExpanded) {
+                platform.trace(`unfold${_unit.name.replace(/\s*/g, '')}`, {});
+                _unit.children?.forEach(item => {
                     if (item.collapsible && !item.isExpanded && item.collapseAction !== undefined) {
                         item.collapseAction?.(item);
                         item.isExpanded = true;
@@ -226,7 +229,7 @@ const ExpandIcon = observer(({ unit, session }: { unit: KeyedInsightUnit; sessio
             }
             session.renderTrigger = !session.renderTrigger;
         });
-        unit.collapseAction?.(unit);
+        _unit.collapseAction?.(_unit);
     }, [session]);
     if (unit.children !== undefined || (unit.collapsible && unit.collapseAction)) {
         return <div style={{ float: 'left', height: '20px', marginLeft: '6px', top: 'calc(50% - 10px)', position: 'relative' }}

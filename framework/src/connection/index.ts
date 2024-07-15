@@ -1,19 +1,18 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
-import { Console as console} from '@/utils/console';
+import { Console as console } from '@/utils/console';
 type ReservedEventHandler = 'request';
 type EventHanlder = string;
-type SendParams<T extends EventHanlder> = {
+interface SendParams<T extends EventHanlder> {
+    [x: string]: unknown;
     to?: SendTargetKey;
     module?: TypeForConnector;
     event: T extends ReservedEventHandler ? never : T;
-    [x: string]: unknown;
 };
 type SendTargetKey = number;
 type ListenerCallback = (res: MessageEvent) => void;
-type ListenerHandler = { event: EventHanlder; sequence: number };
+interface ListenerHandler { event: EventHanlder; sequence: number };
 type TargetWindow = Window;
 type GetTragetWindows = () => TargetWindow[];
 abstract class BaseConnector {
@@ -27,7 +26,9 @@ abstract class BaseConnector {
         if (typeof window !== 'object') {
             const errMsg = 'cannot find global Window object, please check your runtime environment';
             console.error(this.printErrMsg(errMsg));
-            this.invalidFunc = (): void => { throw new Error(this.printErrMsg(errMsg)); };
+            this.invalidFunc = (): void => {
+                throw new Error(this.printErrMsg(errMsg));
+            };
         }
         this._getTargetWindows = getTargetWindow;
 
@@ -42,7 +43,7 @@ abstract class BaseConnector {
             if (res.data.event === 'request') {
                 this.awaitFetch(res);
             } else if (listener) {
-                listener.forEach(cb => cb?.(res));
+                listener.forEach((cb) => cb?.(res));
             } else {
                 console.warn(this.printErrMsg('missed [event] in your message, please check your params, or maybe have an invalid send'));
             }
@@ -50,26 +51,27 @@ abstract class BaseConnector {
         Object.defineProperty(window, 'onmessage', {
             configurable: false,
             set: () => {
-                console.warn(this.printErrMsg('the property \'window.onmessage\' in used, reassign it is invalid'));
+                console.warn(this.printErrMsg("the property 'window.onmessage' in used, reassign it is invalid"));
             },
         });
     }
 
-    send<T extends EventHanlder>(body: SendParams<T>, reject?: Function): void {
+    send<T extends EventHanlder>(body: SendParams<T>, reject?: (value: unknown) => void): void {
         if (this.invalidFunc) {
             this.invalidFunc();
             return;
         }
         this._targetWindows = this._getTargetWindows();
-        if ((body.to !== undefined && window !== null && window[body.to]?.postMessage === undefined) || this._targetWindows.length === 0) {
+        const isMissingPostMessage = body.to !== undefined && window !== null && window[body.to]?.postMessage === undefined;
+        if (isMissingPostMessage || this._targetWindows.length === 0) {
             const errMsg = 'missed postMessage function, please check your iframe element';
             console.warn(this.printErrMsg(errMsg));
             reject?.(new Error(errMsg));
             return;
         }
-        body.from = Object.entries(window as Window).findIndex(([ , val ]) => val === window);
+        body.from = Object.entries(window as Window).findIndex(([, val]) => val === window);
         const targetWindows = body.to !== undefined ? [(window as Window)[body.to]] : this._targetWindows;
-        targetWindows.forEach(targetWindow => {
+        targetWindows.forEach((targetWindow) => {
             targetWindow.postMessage(JSON.stringify(body), this.getTargetOrigin());
         });
     }
@@ -93,7 +95,9 @@ abstract class BaseConnector {
         const listeners = this._listeners.get(event);
         if (listeners) {
             listeners[sequence] = null;
-            listeners.filter(item => item).length === 0 && this._listeners.delete(event);
+            if (listeners.filter((item) => item).length === 0) {
+                this._listeners.delete(event);
+            }
         }
     }
 
@@ -106,7 +110,7 @@ abstract class BaseConnector {
     }
 
     protected abstract awaitFetch(e: MessageEvent): void;
-};
+}
 
 type FetchSequenceID = number;
 type Response = (res: MessageEvent) => Promise<Record<string, unknown>>;
@@ -124,49 +128,36 @@ class ServerConnector extends BaseConnector {
             return;
         }
         const res = await this._responseForFetch(event);
-        this.send({ event: 'request', to: event.data.from, id: event.data.id, ...res } as SendParams<EventHanlder>);
+        this.send({
+            event: 'request',
+            to: event.data.from,
+            id: event.data.id,
+            ...res,
+        } as SendParams<EventHanlder>);
     }
-};
+}
 
-type FetchParams = {
-    event?: never;
+interface FetchParams {
     [x: string]: unknown;
-};
-type FetchRequest = {
+    event?: never;
+}
+interface FetchRequest {
+    [x: string]: unknown;
     event: 'request';
     from: SendTargetKey;
     id: FetchSequenceID;
-    [x: string]: unknown;
-};
+}
 class ClientConnector extends BaseConnector {
-    private readonly _msgSequence: Map<FetchSequenceID, Function> = new Map();
+    private readonly _msgSequence: Map<FetchSequenceID, (value: unknown) => void> = new Map();
     private _curFetchSequenceID: FetchSequenceID = 0;
     private readonly _module: TypeForConnector;
 
-    constructor({
-        getTargetWindow,
-        module,
-    }: {
-        getTargetWindow: GetTragetWindows;
-        module: TypeForConnector;
-    }) {
+    constructor({ getTargetWindow, module }: { getTargetWindow: GetTragetWindows; module: TypeForConnector }) {
         super(getTargetWindow);
         this._module = module;
     }
 
-    protected awaitFetch(res: MessageEvent<FetchRequest>): void {
-        const _resolve = this._msgSequence.get(res.data.id);
-        if (!_resolve) {
-            console.warn(this.printErrMsg(
-                'cannot find relative resolve for this fetch, this maybe cause omission of message, please check your connection',
-            ));
-            return;
-        }
-        _resolve(res.data);
-        this._msgSequence.delete(res.data.id);
-    }
-
-    send<T extends EventHanlder>(body: SendParams<T>, reject?: Function): void {
+    send<T extends EventHanlder>(body: SendParams<T>, reject?: (value: unknown) => void): void {
         body.module = body.module ?? this._module;
         super.send(body, reject);
     }
@@ -179,20 +170,32 @@ class ClientConnector extends BaseConnector {
             this.send(body, reject);
             this._msgSequence.set(this._curFetchSequenceID++, resolve);
         });
-    };
-};
+    }
+
+    protected awaitFetch(res: MessageEvent<FetchRequest>): void {
+        const _resolve = this._msgSequence.get(res.data.id);
+        if (!_resolve) {
+            console.warn(this.printErrMsg('cannot find relative resolve for this fetch, this maybe cause omission of message, please check your connection'));
+            return;
+        }
+        _resolve(res.data);
+        this._msgSequence.delete(res.data.id);
+    }
+}
 
 type TypeForConnector = 'framework' | string;
 type ConnectorType<T extends TypeForConnector> = T extends 'framework' ? ServerConnector : ClientConnector;
 export default (function connectorFactory<T extends TypeForConnector>(connectorType: T): ConnectorType<T> {
-    return (connectorType === 'framework'
-        ? new ServerConnector(() => {
-            const res: TargetWindow[] = [];
-            document?.querySelectorAll('iframe')?.forEach(item => item.contentWindow && res.push(item.contentWindow));
-            return res;
-        })
-        : new ClientConnector({
-            getTargetWindow: () => window.parent ? [window.parent] : [],
-            module: connectorType,
-        })) as ConnectorType<T>;
+    return (
+        connectorType === 'framework'
+            ? new ServerConnector(() => {
+                  const res: TargetWindow[] = [];
+                  document?.querySelectorAll('iframe')?.forEach((item) => item.contentWindow && res.push(item.contentWindow));
+                  return res;
+              })
+            : new ClientConnector({
+                  getTargetWindow: () => (window.parent ? [window.parent] : []),
+                  module: connectorType,
+              })
+    ) as ConnectorType<T>;
 })('framework');

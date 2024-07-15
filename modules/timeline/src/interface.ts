@@ -1,4 +1,7 @@
-import { NotificationHandler } from './connection/defs';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+import type { NotificationHandler } from './connection/defs';
 import {
     parseSuccessHandler,
     parseProgressHandler,
@@ -17,33 +20,44 @@ import {
     parseMemorySuccessHandler,
 } from './connection/handler';
 
-const JUPYTER_COMPLETED = 'parse/jupyterCompleted';
-type InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> = {
+interface InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> {
     request: Request;
     response: Response;
 };
 
-export type InterfaceDefs = {
-    'chart/cpu': InsightInterface<{ chartId: number }, { data: Array<{ ts: number; value: number }>}>;
+const CHART_CPU = 'chart/cpu';
+export interface InterfaceDefs {
+    [CHART_CPU]: InsightInterface<{ chartId: number }, { data: Array<{ ts: number; value: number }>}>;
 };
 
+const JUPYTER_COMPLETED = 'parse/jupyterCompleted';
 const MEMORY_COMPLETED = 'parse/memoryCompleted';
 const OPERATOR_COMPLETED = 'parse/operatorCompleted';
+const REMOTE_IMPORT = 'remote/import';
+const REMOTE_REMOVE = 'remote/remove';
+const REMOTE_RESET = 'remote/reset';
+const REMOTE_REMOVE_SINGLE = 'remote/removeSingle';
+const PARSE_SUCCESS = 'parse/success';
+const PARSE_PROGRESS = 'parse/progress';
+const PARSE_FAIL = 'parse/fail';
+const PARSE_CLUSTER_COMPLETED = 'parse/clusterCompleted';
+const PARSE_CLUSTER_STEP2_COMPLETED = 'parse/clusterStep2Completed';
+const DRAG_IMPORT = 'drag/import';
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
-    'remote/import': importRemoteHandler,
-    'remote/remove': removeRemoteHandler,
-    'remote/reset': removeRemoteHandler,
-    'remote/removeSingle': removeSingleRemoteHandler,
-    'parse/success': parseSuccessHandler,
-    'parse/progress': parseProgressHandler,
-    'parse/fail': parseFailHandler,
-    setTheme,
-    'parse/clusterCompleted': clusterCompletedHandler,
-    'parse/clusterStep2Completed': clusterDurationCompletedHandler,
-    'drag/import': dragImportSuccessHandler,
-    locateUnit: locateUnitHandler,
+    [REMOTE_IMPORT]: importRemoteHandler,
+    [REMOTE_REMOVE]: removeRemoteHandler,
+    [REMOTE_RESET]: removeRemoteHandler,
+    [REMOTE_REMOVE_SINGLE]: removeSingleRemoteHandler,
+    [PARSE_SUCCESS]: parseSuccessHandler,
+    [PARSE_PROGRESS]: parseProgressHandler,
+    [PARSE_FAIL]: parseFailHandler,
+    [PARSE_CLUSTER_COMPLETED]: clusterCompletedHandler,
+    [PARSE_CLUSTER_STEP2_COMPLETED]: clusterDurationCompletedHandler,
+    [DRAG_IMPORT]: dragImportSuccessHandler,
     [JUPYTER_COMPLETED]: jupyterCompletedHandler,
-    switchLanguage: switchLanguageHandler,
     [MEMORY_COMPLETED]: parseMemorySuccessHandler,
     [OPERATOR_COMPLETED]: parseOperatorSuccessHandler,
+    setTheme,
+    locateUnit: locateUnitHandler,
+    switchLanguage: switchLanguageHandler,
 };

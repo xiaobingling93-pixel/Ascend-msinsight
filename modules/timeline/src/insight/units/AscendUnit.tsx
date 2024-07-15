@@ -245,7 +245,14 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     ctx.strokeStyle = theme.fontColor;
                     const duration = selectedData.duration < 0 ? session.endTimeAll as number : selectedData.startTime + selectedData.duration;
                     const bottomRight = xScale(duration) - xScale(selectedData.startTime);
-                    renderRadiusBorder(xScale(selectedData.startTime), yScale(0), bottomRight, yScale(1), selectedData.depth, ctx);
+                    renderRadiusBorder({
+                        topLeft: xScale(selectedData.startTime),
+                        topRight: yScale(0),
+                        bottomRight,
+                        bottomLeft: yScale(1),
+                        depth: selectedData.depth,
+                        ctx,
+                    });
                 },
                 triggers: [
                     session.selectedData,

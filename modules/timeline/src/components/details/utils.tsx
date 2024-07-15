@@ -1,16 +1,20 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ */
+
 import { runInAction } from 'mobx';
 import * as React from 'react';
-import { TreeNode } from '../../entity/common';
-import { SorterDef, TableDataAdapter } from '../../entity/insight';
-import { Session } from '../../entity/session';
-import { TabState } from '../../entity/tabDependency';
-import { AutoKey, getAutoKey } from '../../utils/dataAutoKey';
+import type { TreeNode } from '../../entity/common';
+import type { SorterDef, TableDataAdapter } from '../../entity/insight';
+import type { Session } from '../../entity/session';
+import type { TabState } from '../../entity/tabDependency';
+import { type AutoKey, getAutoKey } from '../../utils/dataAutoKey';
 import { getOrigin } from '../../utils/traceOrigin';
-import { ColumnsType } from '../base/rc-table';
-import { FixedType } from '../base/rc-table/types';
+import type { ColumnsType } from '../base/rc-table';
+import type { FixedType } from '../base/rc-table/types';
 import { Abbreviature } from './base/Abbreviature';
 import { parseFilterDef } from './tableFilter';
-import { TableState } from './types';
+import type { TableState } from './types';
 import { drawRoundedRect } from '../charts/common';
 
 const parseSorterDef = <T extends Record<string, unknown>>(sorterDef?: SorterDef<T>): Record<string, unknown> => {
@@ -20,7 +24,11 @@ const parseSorterDef = <T extends Record<string, unknown>>(sorterDef?: SorterDef
     return {};
 };
 
-export const parseColDef = <T extends Record<string, unknown>>(def: TableDataAdapter<T>, session: Session, tabState?: TabState | undefined): ColumnsType<object> => {
+export const parseColDef = <T extends Record<string, unknown>>(
+    def: TableDataAdapter<T>,
+    session: Session,
+    tabState?: TabState | undefined,
+): ColumnsType<object> => {
     if (def.columns.every(col => typeof (col[2]) === 'number')) {
         throw new Error('columnsWidth at least one of the columns should have width "max-content" or "auto"');
     }
@@ -92,14 +100,23 @@ export const onExpandForChildren = (session: Session, onExpand: OnExpandConfig |
     };
 };
 
-export const renderRadiusBorder = (topLeft: number, topRight: number, bottomRight: number, bottomLeft: number, depth: number, ctx: CanvasRenderingContext2D): void => {
+interface RenderRadiusBorderParams {
+    topLeft: number;
+    topRight: number;
+    bottomRight: number;
+    bottomLeft: number;
+    depth: number;
+    ctx: CanvasRenderingContext2D;
+}
+
+export const renderRadiusBorder = ({ topLeft, topRight, bottomRight, bottomLeft, depth, ctx }: RenderRadiusBorderParams): void => {
     const halfLine = 1;
     ctx.lineWidth = halfLine * 2;
     let width = bottomRight;
     width = Math.max(1, Math.floor(width));
     const height = Math.floor(bottomLeft - halfLine - 1);
     const beginX = topLeft;
-    const beginY = topRight + (halfLine * 2 + height) * depth;
+    const beginY = topRight + (((halfLine * 2) + height) * depth);
     const radius = width >= 8 ? 4 : width / 2;
     if (radius < 1) {
         ctx.strokeRect(beginX, beginY, bottomRight, Math.floor(bottomLeft - halfLine - 1));
