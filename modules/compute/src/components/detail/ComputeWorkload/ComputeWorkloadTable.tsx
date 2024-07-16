@@ -37,6 +37,7 @@ function getFullCols(blockType: string, blockTypeData: IblockData[], t: TFunctio
             title: t(firstLetterUpper(item)),
             dataIndex: item,
             ellipsis: true,
+            render: (text: string): string | number => (isNaN(Number(text)) ? text : Number(text)),
         }
     ));
     return [firstCol, ...restCols];
