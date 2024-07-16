@@ -3,7 +3,7 @@
 
 !define PRODUCT_PUBLISHER "huawei"
 
-Outfile "MindStudio_Insight_7.0.RC2_win.exe"
+Outfile "MindStudio-Insight_7.0.RC2_win.exe"
 InstallDir "$PROGRAMFILES\MindStudio Insight"
 Caption "MindStudio Insight Setup"
 Name "MindStudio Insight"

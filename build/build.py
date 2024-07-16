@@ -36,7 +36,7 @@ class Const:
     CONFIG_INI = 'config.ini'
     VSCODE_PLUGINS_DIR = os.path.join('plugins', 'vscode')
     INTELLIJ_PLUGINS_DIR = os.path.join('plugins', 'intellij')
-    ASCEND_INSIGHT_PREFIX = 'MindStudio_Insight'
+    ASCEND_INSIGHT_PREFIX = 'MindStudio-Insight'
     ASCEND_INSIGHT = 'MindStudio_Insight'
     BIN_SUFFIX = '.exe' if platform.system() == WINDOWS_OS else ''
     PACKAGE_SUFFIX = '.exe' if platform.system() == WINDOWS_OS else '.zip'
