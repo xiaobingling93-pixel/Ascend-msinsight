@@ -1,17 +1,20 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { Tooltip } from 'antd';
 import { observer } from 'mobx-react';
 import React, { useRef, useState } from 'react';
 import { ReactComponent as AntdFilterIcon } from '../assets/images/insights/LinkerIcon.svg';
-import { Session } from '../entity/session';
+import type { Session } from '../entity/session';
 import { CustomButton, StyledButton } from './base/StyledButton';
-import { SvgType } from './base/rc-table/types';
+import type { SvgType } from './base/rc-table/types';
 import { useTranslation } from 'react-i18next';
 import { StyledCheckbox } from './base/StyledCheckbox';
 import { StyledEmpty } from './base/StyledEmpty';
 import { runInAction } from 'mobx';
-import { InsightUnit, LinkLines } from '../entity/insight';
+import type { InsightUnit, LinkLines } from '../entity/insight';
 import { CardUnit } from '../insight/units/AscendUnit';
 import { customDebounce } from '../utils/customDebounce';
 import { getTimeOffset } from '../insight/units/utils';
@@ -29,7 +32,7 @@ const FilterContainer = styled.div`
 `;
 
 const FilterList = styled.div`
-    max-height: ${MAX_HEIGHT - MAX_HEIGHT * 2 * PADDING_RATIO_TO_MAX_HEIGHT}px;
+    max-height: ${MAX_HEIGHT - (MAX_HEIGHT * 2 * PADDING_RATIO_TO_MAX_HEIGHT)}px;
     overflow-y: scroll;
 `;
 
@@ -208,7 +211,12 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
             <FilterList>
                 {isEmptyData
                     ? <StyledEmpty />
-                    : displayCategories.map((category, index) => <FilterItem key={index} category={category} checkedCategories={checkedCategories} setCheckedCategories={setCheckedCategories}/>)}
+                    : displayCategories.map((category, index) => <FilterItem
+                        key={index}
+                        category={category}
+                        checkedCategories={checkedCategories}
+                        setCheckedCategories={setCheckedCategories}
+                    />)}
             </FilterList>
             {!isEmptyData && <FilterButtonLine>
                 <StyledButton width={50} onClick={(): void => setCheckedCategories([...displayCategories])}>

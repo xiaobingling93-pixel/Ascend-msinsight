@@ -116,13 +116,13 @@ const BandwidthAnalysis = observer((props:
     );
 });
 
-async function getTableData (iterationId: number, rankId: number, operatorName: string, stage: string): Promise<any> {
+async function getTableData(iterationId: number, rankId: number, operatorName: string, stage: string): Promise<any> {
     const bandwidthDetails = await window.requestData('communication/bandwidth',
         { iterationId, rankId, operatorName, stage });
     return bandwidthDetails?.items ?? [];
 }
 
-async function getChartData (domId: string, iterationId: number, rankId: number,
+async function getChartData(domId: string, iterationId: number, rankId: number,
     operatorName: string, stage: string): Promise<any> {
     const distributions = await window.requestData('communication/distribution',
         { iterationId, rankId, operatorName, transportType: domId, stage });
@@ -167,8 +167,7 @@ async function wrapBandwidthData(domId: string, iterationId: number,
         }
     }
 
-    if (distributionData === '{}' || distributionData === null ||
-        distributionData === undefined || distributionData === 'null' || distributionData === '') {
+    if (['{}', null, undefined, 'null', ''].includes(distributionData)) {
         return null;
     }
     const distributionDataJson: Distribution = JSON.parse(distributionData);
@@ -303,12 +302,12 @@ const bandwidthOption: echarts.EChartsOption = {
 
 interface DataType {
     key: React.ReactNode;
-    TransportType: string;
-    TransitSize: number;
-    TransitTime: number;
-    Bandwidth: number;
-    BandwidthUtilization: number;
-    LargePacketRatio: number;
+    transportType: string;
+    transitSize: number;
+    transitTime: number;
+    bandwidth: number;
+    bandwidthUtilization: number;
+    largePacketRatio: number;
     children?: DataType[];
 }
 

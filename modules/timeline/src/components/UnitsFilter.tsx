@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { Tooltip, Select } from 'antd';
@@ -5,12 +8,12 @@ import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { ReactComponent as AntdFilterIcon } from '../assets/images/insights/FunnelIcon.svg';
-import { Session } from '../entity/session';
+import type { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
-import { InsightUnit } from '../entity/insight';
-import { SvgType } from './base/rc-table/types';
+import type { InsightUnit } from '../entity/insight';
+import type { SvgType } from './base/rc-table/types';
 import { StyledSelect } from './base/StyledSelect';
-import { CardMetaData, ProcessMetaData } from '../entity/data';
+import type { CardMetaData, ProcessMetaData } from '../entity/data';
 import { useTranslation } from 'react-i18next';
 
 const FilterIcon = AntdFilterIcon as SvgType;
@@ -107,7 +110,7 @@ const CustomDiv = styled.div`
 `;
 
 const useAutoCompleteHandles = (session: Session): [ selectValue: string, dropdownRenderr: () => JSX.Element, isOpen: boolean,
-    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>, completeOptions: Array<{value: string}>, handleChange: Function ] => {
+    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>, completeOptions: Array<{value: string}>, handleChange: (value: string[]) => void ] => {
     const [selectValue, setSelectValue] = useState<string>('Filter');
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const { cardNames, unitNames } = useUnitsNameSet(session);
@@ -201,6 +204,8 @@ const startFilter = (session: Session, inputValue: string[], selectValue: string
         case 'Units Filter':
             doUnitsFilter(session.units, inputValue);
             break;
+        default:
+            break;
     }
     session.singleLinkLine = {};
 };
@@ -211,9 +216,9 @@ const doCardFilter = (flattenUnits: InsightUnit[], selectValues: string[]): void
             const isTargetUnit = selectValues.includes((unit.metadata as CardMetaData).cardName as string);
             unit.isDisplay = isTargetUnit;
             if (isTargetUnit) {
-                unit.children?.forEach(unit => {
-                    unit.isDisplay = true;
-                    unit.children?.forEach(processUnit => {
+                unit.children?.forEach(unitChild => {
+                    unitChild.isDisplay = true;
+                    unitChild.children?.forEach(processUnit => {
                         processUnit.isDisplay = true;
                     });
                 });

@@ -1,8 +1,11 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import React, { useMemo } from 'react';
 import { ColGroup } from './ColGroup';
 import { useTableContext } from './contexts';
-import { HeaderProps } from './Header';
-import { ColumnsType, ColumnType } from './types';
+import type { HeaderProps } from './Header';
+import type { ColumnsType, ColumnType } from './types';
 
 function useColumnWidth(colWidths: readonly number[], columnCount: number): number[] | null {
     return useMemo(() => {
@@ -50,15 +53,15 @@ export const FixedHolder = React.forwardRef<HTMLDivElement, FixedHeaderProps<unk
         };
 
         const columnsWithScrollbar = useMemo<ColumnsType<unknown>>(
-            () => (scrollbarSize > 0 ? [ ...columns, scrollBarColumn ] : columns),
-            [ scrollbarSize, columns ],
+            () => (scrollbarSize > 0 ? [...columns, scrollBarColumn] : columns),
+            [scrollbarSize, columns],
         );
 
         const headerStickyOffsets = useMemo(() => {
             const { right } = stickyOffsets;
             return {
                 ...stickyOffsets,
-                right: [ ...right.map(width => width + scrollbarSize), 0 ],
+                right: [...right.map(width => width + scrollbarSize), 0],
             };
         }, [scrollbarSize, stickyOffsets]);
 
@@ -78,7 +81,7 @@ export const FixedHolder = React.forwardRef<HTMLDivElement, FixedHeaderProps<unk
                 >
                     {/* 解决搜索内容为空时，表头字段位置会改变导致过滤按钮被隐藏的问题，去掉了ColGroup外层的判断条件{(hasData || !maxContentScroll || isAllWidthSet) && (<ColGroup... )} */}
                     <ColGroup
-                        colWidths={mergedColumnWidth ? [ ...mergedColumnWidth, scrollbarSize ] : []}
+                        colWidths={mergedColumnWidth ? [...mergedColumnWidth, scrollbarSize] : []}
                         columCount={columCount + 1}
                         columns={columnsWithScrollbar}
                         />

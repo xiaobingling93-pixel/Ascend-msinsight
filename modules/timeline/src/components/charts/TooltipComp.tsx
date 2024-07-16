@@ -1,11 +1,14 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import styled from '@emotion/styled';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import { CHARTINTERACTOR_NAME } from '../ChartContainer/ChartContainer';
 import { EventType, useEventBus } from '../../utils/eventBus';
 
-export type TooltipArg = {
+export interface TooltipArg {
     x: number;
     y: number;
     /* Map<PropertyName, Value>
@@ -85,8 +88,8 @@ const TooltipComp = (tooltipArg: TooltipArg): JSX.Element => {
     );
 };
 
-export interface TooltipProps<F, T>{
-    data: F | undefined;
+export interface TooltipProps<F, T> {
+    data?: F;
     session: Session;
     x?: (data: F) => number;
     mouseX: number | null;
@@ -105,11 +108,11 @@ export function TooltipComponent<F, T>({ data, session, x, calcHeight, mouseX, d
         if (data === undefined || mouseX === null) {
             return [null];
         }
-        const left = x ? x(data) : mouseX;
-        const top = calcHeight(data);
+        const _left = x ? x(data) : mouseX;
+        const _top = calcHeight(data);
         const rect = dom.current?.getBoundingClientRect();
 
-        return [left, (rect?.top ?? 0) + top];
+        return [_left, (rect?.top ?? 0) + _top];
     }, [domainStart, domainEnd, mouseX, dataset, scrollTop]);
 
     const content = data !== undefined ? renderContent(data) : undefined;

@@ -224,10 +224,16 @@ export const StackedBarChart = observer(({
     const canvas = useRef<HTMLCanvasElement>(null);
     const rangeAndDomain = useRangeAndDomain(session, width, margin);
     const barWidthStamp = getBarWidthStamp(barWidth, rangeAndDomain);
-    const datas = useData(session, mapFunc, unit, metadata, width,
-        (data) => data.filter(item => {
+    const datas = useData({
+        session,
+        mapFunc,
+        unit,
+        metadata,
+        width,
+        processor: (data) => data.filter(item => {
             return item.timestamp + (barWidthStamp / 2) >= rangeAndDomain[1][0] && item.timestamp - (barWidthStamp / 2) <= rangeAndDomain[1][1];
-        }));
+        }),
+    });
     const mousePosX = useHoverPosX(canvasContainer);
     const theme = useTheme();
     const defaultPalette = ['#4183a2', '#549251', '#b09239', '#bb5f43', theme.colorPalette.otherColor];
@@ -235,9 +241,7 @@ export const StackedBarChart = observer(({
     useBatchedRender(() => {
         const isCanvasInvalid = canvasContainer.current === null || canvas.current === null || rangeAndDomain.length === 0 ||
             canvas.current.width === 0 || canvas.current.height === 0;
-        if (isCanvasInvalid) {
-            return;
-        }
+        if (isCanvasInvalid) { return; }
         const ctx = canvas.current.getContext('2d');
         ctx?.clearRect(0, 0, width, height);
         const drawPalette = palette ?? defaultPalette;

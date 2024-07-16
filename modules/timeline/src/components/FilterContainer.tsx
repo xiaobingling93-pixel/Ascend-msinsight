@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { Checkbox, Input, Row, Select, Switch } from 'antd';
@@ -8,10 +11,10 @@ import { ReactComponent as PullDownIcon } from '../assets/images/insights/PullDo
 import { ReactComponent as SearchIcon } from '../assets/images/insights/SearchIcon.svg';
 import { ReactComponent as CancelIcon } from '../assets/images/insights/CancelIcon.svg';
 import type { Theme } from '@emotion/react';
-import { FilterType, OptionType, TabState } from '../entity/tabDependency';
+import { FilterType, type OptionType, type TabState } from '../entity/tabDependency';
 import { Abbreviature } from './details/base/Abbreviature';
 
-type SingleSelectProps = {
+interface SingleSelectProps {
     theme: Theme;
     tabState: TabState;
     optionVal: unknown;
@@ -20,13 +23,13 @@ type SingleSelectProps = {
     origin: Origin;
 };
 
-type MultipleSelectProps = {
+interface MultipleSelectProps {
     theme: Theme;
     tabState: TabState;
     dftVal: string[];
     options: OptionType[];
     style: React.CSSProperties;
-    mode?: 'multiple' | undefined;
+    mode?: 'multiple';
 };
 
 enum Origin {
@@ -237,7 +240,9 @@ const Container = styled.div`
 // 单选，选择了对应value
 const selectVal = (value: any, tabState: TabState, origin: Origin): void => {
     runInAction(() => {
-        if (tabState === undefined) return;
+        if (tabState === undefined) {
+            return;
+        }
         // 改变选项
         if (tabState.trigger !== undefined && (origin === Origin.OPTION1 || origin === Origin.OPTION2)) {
             const key = origin === Origin.OPTION1 ? 'option1' : 'option2';
@@ -312,7 +317,11 @@ const checkMutilSelect = (tabState: TabState): any[] => {
     const field = tabState?.filter?.field;
     const data = tabState?.data;
     if (tabState.filter !== undefined && data?.length > 1 && field !== undefined) {
-        data.forEach((item: any) => { !temp.includes(item[field]) && temp.push(item[field]); });
+        data.forEach((item: any) => {
+            if (!temp.includes(item[field])) {
+                temp.push(item[field]);
+            }
+        });
         const multiOptions = temp.map((item: string) => ({ value: item, label: item }));
         const filterKeys = tabState.filter?.filterKeys ?? [];
         tabState.filter.options = multiOptions;

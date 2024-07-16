@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import { store } from '../store';
 import type { CardMetaData, ThreadMetaData, ThreadTrace } from '../entity/data';
 import { runInAction } from 'mobx';
@@ -5,9 +8,9 @@ import { handleMap, recursiveExpandUnit } from '../insight/units/unitFunc';
 import { setUnitPhaseByCardId, setUnitProgressByFileId } from '../entity/insight';
 import type { InsightUnit } from '../entity/insight';
 import { CardUnit, ROOT_UNIT, ThreadUnit } from '../insight/units/AscendUnit';
-import { CardInfo } from '../components/ImportSelect';
-import { Session } from '../entity/session';
-import { NotificationHandler } from './defs';
+import type { CardInfo } from '../components/ImportSelect';
+import type { Session } from '../entity/session';
+import type { NotificationHandler } from './defs';
 import connector from '../connection/index';
 import { message } from 'antd';
 import { getTimeOffset } from '../insight/units/utils';
@@ -332,7 +335,7 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
         for (const unit of removeUnits) {
             const metadata = unit.metadata as any;
             const remote = metadata.dataSource.remote;
-            if (session.remoteAttrs.has(remote) && !session.units.find(unit => (unit.metadata as any)?.dataSource.remote === remote)) {
+            if (session.remoteAttrs.has(remote) && !session.units.find(item => (item.metadata as any)?.dataSource.remote === remote)) {
                 session.remoteAttrs.delete(remote);
             }
         }

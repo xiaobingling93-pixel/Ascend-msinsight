@@ -1,20 +1,23 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { TreeNode } from '../../entity/common';
-import { DetailDescriptor, TableDataAdapter } from '../../entity/insight';
-import { Session } from '../../entity/session';
+import type { TreeNode } from '../../entity/common';
+import type { DetailDescriptor, TableDataAdapter } from '../../entity/insight';
+import type { Session } from '../../entity/session';
 import { getAutoKey } from '../../utils/dataAutoKey';
-import { TableHandle } from '../base/rc-table/interface';
+import type { TableHandle } from '../base/rc-table/interface';
 import { AutoAdjustedTable } from './base/AutoAdjustedTable';
-import { CommonStateProto } from './base/Tabs';
+import type { CommonStateProto } from './base/Tabs';
 import { SimpleTabularDetail } from './SimpleDetail';
-import { DetailTabs } from './TabPanes';
-import { EMPTY_TABLE_STATE, TableState, TableViewProps } from './types';
+import type { DetailTabs } from './TabPanes';
+import { EMPTY_TABLE_STATE, type TableState, type TableViewProps } from './types';
 import { parseColDef } from './utils';
 
 const PARENT = Symbol('parent');
 
-type Traceable<T> = { [PARENT]: Traceable<T> | undefined; ref: React.RefObject<TableHandle> };
+interface Traceable<T> { [PARENT]?: Traceable<T>; ref: React.RefObject<TableHandle> };
 
 export type Comparator<T> = (l: T, r: T) => boolean;
 
@@ -123,18 +126,18 @@ export const CallStackView = observer(<T extends Record<string, unknown>>(
     { session, height, compare, columns, onNavigate }: CallStackViewProps<T>): JSX.Element => {
     const state = useStackUpdater(session, compare, { columns });
     return <AutoAdjustedTable {...state} height={height} expandable={{ showExpandColumn: false }}
-                              onRow={(row): {onClick:() => void; onDoubleClick:() => void | undefined} => ({
-        onDoubleClick: () => onNavigate?.({ row }),
-        onClick: (): void => {
-            session.selectedDetailKeys = [getAutoKey(row)];
-            // need combine two functions
-            ((state.data[0] as unknown as Traceable<T>).ref)?.current?.appendExpandedKeys(state.data.map(getAutoKey));
-            setTimeout(() => {
-                ((state.data[0] as unknown as Traceable<T>).ref)?.current?.scrollTo(row);
-            }, 0);
-        },
-    })}
-    rowSelection={{
-        selectedRowKeys: session.selectedDetailKeys,
-    }}/>;
+        onRow={(row): {onClick: () => void; onDoubleClick: () => void | undefined} => ({
+            onDoubleClick: () => onNavigate?.({ row }),
+            onClick: (): void => {
+                session.selectedDetailKeys = [getAutoKey(row)];
+                // need combine two functions
+                ((state.data[0] as unknown as Traceable<T>).ref)?.current?.appendExpandedKeys(state.data.map(getAutoKey));
+                setTimeout(() => {
+                    ((state.data[0] as unknown as Traceable<T>).ref)?.current?.scrollTo(row);
+                }, 0);
+            },
+        })}
+        rowSelection={{
+            selectedRowKeys: session.selectedDetailKeys,
+        }}/>;
 });

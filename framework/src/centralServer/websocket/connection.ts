@@ -33,7 +33,7 @@ export class Connection {
     private readonly _responseHandlers: Map<number, ResponseHandler> = new Map();
     private _token?: string;
     private _fetchFlag: boolean = true;
-    private _heartCheckTimer:any;
+    private _heartCheckTimer: any;
 
     constructor(dataSource: DataSource) {
         console.info('[connector]', 'init');
@@ -47,10 +47,10 @@ export class Connection {
             const hostname = location.hostname && location.hostname !== '' ? location.hostname : LOCAL_HOST;
             this._ws = new WebSocket(`${protocol}${hostname}:${dataSource.port}`);
         } else {
-            const {location} = window;
-            const {host} = location;
+            const { location } = window;
+            const { host } = location;
             let path = `${window.location.pathname}`.replace(/proxy\/\d{4}/, `proxy/${dataSource.port}`);
-            const {search} = location;
+            const { search } = location;
             let uri = protocol + host + path + search;
 
             this._ws = new WebSocket(uri);
@@ -58,9 +58,16 @@ export class Connection {
         this._dataSource = dataSource;
     }
 
+    get isConnected(): boolean {
+        return this._ws?.readyState === WebSocket.OPEN;
+    }
+
     addDataPath(dataPath: string[] | string): void {
-        !Array.isArray(dataPath) && (dataPath = [dataPath]);
-        this._dataSource.dataPath.push(...dataPath);
+        let tempPath = dataPath;
+        if (!Array.isArray(dataPath)) {
+            tempPath = [dataPath];
+        }
+        this._dataSource.dataPath.push(...tempPath);
     }
 
     deleteDataPath(dataPath: string[] | string): void {
@@ -77,7 +84,7 @@ export class Connection {
             new Error('connection is not initialized');
             return;
         }
-        this._ws.close()
+        this._ws.close();
     }
 
     async connect(): Promise<void> {
@@ -114,9 +121,9 @@ export class Connection {
                 console.error('[connector]', ev);
                 reject(new Error('connect failed.'));
             };
-            this._ws.onclose  = (ev: Event): void => {
+            this._ws.onclose = (ev: Event): void => {
                 ElMessageBox.alert('WebSocket is already in CLOSING or CLOSED state! Please try to reconnect or restart MindStudio Insight.', {
-                    type:'error',
+                    type: 'error',
                     confirmButtonText: 'Reconnect',
                 }).then(() => {
                     connectRemote(this._dataSource);
@@ -126,7 +133,7 @@ export class Connection {
     }
 
     async fetch(module: ModuleName, dataRequest: DataRequest, voidResponse: boolean = false, bufferField?: string): Promise<unknown> {
-        if(!this.isConnected){
+        if (!this.isConnected) {
             ElMessage.error('WebSocket is already in CLOSING or CLOSED state! You are advised to restart MindStudio Insight.');
         }
         if (this._ws === undefined) {
@@ -203,6 +210,11 @@ export class Connection {
         callback(msg);
     };
 
+    async findServerPort(): Promise<number> {
+        // wedge: implement the true logic
+        return Promise.resolve(PORT);
+    }
+
     private async request(msg: Request, bufferField?: string): Promise<void> {
         let arrayBufferData: ArrayBuffer | null = null;
         if (bufferField !== undefined && Object.prototype.hasOwnProperty.call(msg.params, bufferField)) {
@@ -225,15 +237,6 @@ export class Connection {
         this.setHeartCheck();
     }
 
-    get isConnected(): boolean {
-        return this._ws?.readyState === WebSocket.OPEN;
-    }
-
-    async findServerPort(): Promise<number> {
-        // wedge: implement the true logic
-        return Promise.resolve(PORT);
-    }
-
     private initHeartCheck(): void {
         this.sendHeartCheck();
         setTimeout(() => {
@@ -243,13 +246,13 @@ export class Connection {
 
     private setHeartCheck(): void {
         this.clearHeartCheckTimer();
-        this._heartCheckTimer = setTimeout(()=>{
+        this._heartCheckTimer = setTimeout(() => {
             this.sendHeartCheck();
-        },60*1000)
+        }, 60 * 1000);
     }
 
     private clearHeartCheckTimer(): void {
-        if(this._heartCheckTimer){
+        if (this._heartCheckTimer) {
             clearTimeout(this._heartCheckTimer);
             this._heartCheckTimer = undefined;
         }

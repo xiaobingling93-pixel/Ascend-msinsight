@@ -1,10 +1,13 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import classNames from 'classnames';
 import ResizeObserver from 'rc-resize-observer';
 import React, { useMemo } from 'react';
 import { RefCell as Cell } from './Cell';
-import { PerfContext, PerfRecord, useBodyContext, useResizeContext, useTableContext } from './contexts';
-import { TreeViewModel } from './hooks/useOrderStatisticTree';
-import { GetComponentProps, GetRowKey, Key } from './types';
+import { PerfContext, type PerfRecord, useBodyContext, useResizeContext, useTableContext } from './contexts';
+import type { TreeViewModel } from './hooks/useOrderStatisticTree';
+import type { GetComponentProps, GetRowKey, Key } from './types';
 import { getColumnsKey } from './utils/valueUtil';
 import type { EmotionJSX } from '@emotion/react/types/jsx-namespace';
 
@@ -82,13 +85,13 @@ function BodyRow<RecordType extends Record<string, unknown>>(
         rowClassName, indentSize, expandIcon, expandIconColumnIndex,
     } = useBodyContext();
 
-    const expanded = expandedKeys && expandedKeys.has(props.recordKey);
+    const expanded = expandedKeys?.has(props.recordKey);
 
     const hasNestChildren = childrenColumnName !== '' && record && record[childrenColumnName] !== undefined;
 
     const rowProps: React.HTMLAttributes<HTMLElement> = useMemo(
         () => onRow?.(record, index) ?? {},
-        [ onRow, record, index ]
+        [onRow, record, index]
     );
 
     const computedRowClassName = useMemo(() => {
@@ -99,7 +102,7 @@ function BodyRow<RecordType extends Record<string, unknown>>(
             return rowClassName(record, index, indent);
         }
         return '';
-    }, [ rowClassName, record, indent, index ]);
+    }, [rowClassName, record, indent, index]);
 
     const columnsKey = getColumnsKey(flattenColumns);
     return (
@@ -111,7 +114,7 @@ function BodyRow<RecordType extends Record<string, unknown>>(
                 `${prefixCls}-row`,
                 `${prefixCls}-row-level-${indent}`,
                 computedRowClassName,
-                rowProps && rowProps.className,
+                rowProps?.className,
             )}
             style={{
                 ...style,
@@ -143,7 +146,7 @@ function BodyRow<RecordType extends Record<string, unknown>>(
                     );
                 }
 
-                const additionalProps = useMemo(() => column.onCell?.(record, index), [ column, record, index ]);
+                const additionalProps = useMemo(() => column.onCell?.(record, index), [column, record, index]);
 
                 return (<Cell
                     ellipsis={column.ellipsis}
@@ -166,7 +169,7 @@ function BodyRow<RecordType extends Record<string, unknown>>(
 }
 
 export interface BodyProps<RecordType extends Record<string, unknown>> {
-    viewModel: TreeViewModel<RecordType>[];
+    viewModel: Array<TreeViewModel<RecordType>>;
     getRowKey: GetRowKey<RecordType>;
     expandedKeys: Set<Key>;
     onRow?: GetComponentProps<RecordType>;
@@ -193,7 +196,6 @@ export function Body<RecordType extends Record<string, unknown>>({
   
     // ====================== Render ======================
     const bodyNode = React.useMemo(() => {
-
         const columnsKey = getColumnsKey(flattenColumns);
     
         return (

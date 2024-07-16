@@ -1,6 +1,9 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import React from 'react';
-import { ColumnType, DefaultRecordType, RenderExpandIcon, RowClassName, TableLayout, TriggerEventHandler } from './types';
-import { FixedInfo } from './utils/fixUtil';
+import type { ColumnType, DefaultRecordType, RenderExpandIcon, RowClassName, TableLayout, TriggerEventHandler } from './types';
+import type { FixedInfo } from './utils/fixUtil';
 
 interface ResizeContextProps {
     onColumnResize: (columnKey: React.Key, width: number) => void;
@@ -14,7 +17,7 @@ export const useResizeContext = (): ResizeContextProps => {
         throw new Error('No ResizeContext provided');
     }
     return ctx;
-}
+};
 
 export interface TableContextProps {
     // Table context
@@ -31,11 +34,11 @@ export const useTableContext = (): TableContextProps => {
         throw new Error('No TableContext provided');
     }
     return ctx;
-}
+};
 
 export interface BodyContextProps<RecordType = DefaultRecordType> {
     rowClassName?: string | RowClassName<RecordType>;
-    flattenColumns: readonly ColumnType<RecordType>[];
+    flattenColumns: ReadonlyArray<ColumnType<RecordType>>;
     tableLayout?: TableLayout;
     indentSize: number;
     expandIcon?: RenderExpandIcon<RecordType>;
@@ -51,7 +54,7 @@ export const useBodyContext = (): BodyContextProps<any> => {
         throw new Error('No BodyContext provided!');
     }
     return ctx;
-}
+};
 
 export interface PerfRecord {
     renderWithProps: boolean;

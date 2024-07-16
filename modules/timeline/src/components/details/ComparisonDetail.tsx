@@ -1,20 +1,23 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import * as React from 'react';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import { Row, Col, Select } from 'antd';
-import { RowProps } from 'antd/lib/row';
+import type { RowProps } from 'antd/lib/row';
 import styled from '@emotion/styled';
 import _ from 'lodash';
 import { useTranslation } from 'react-i18next';
-import { TableViewProps, TableState } from './types';
-import { Session, SelectedParams } from '../../entity/session';
+import type { TableViewProps, TableState } from './types';
+import type { Session, SelectedParams } from '../../entity/session';
 import { selectRow } from './utils';
 import { AutoAdjustedTable } from './base/AutoAdjustedTable';
 import { useSelectedParamsDetailUpdater, useExtraDataUpdater } from './hooks';
 import { StyledSelect } from '../base/StyledSelect';
 import { ReactComponent as Arrow } from '../../assets/images/comparisonArrow.svg';
-import { CommonStateProto } from './base/Tabs';
-import { DetailTabs } from './TabPanes';
+import type { CommonStateProto } from './base/Tabs';
+import type { DetailTabs } from './TabPanes';
 
 const CONTROLLERBAR_HEIGHT = 48;
 
@@ -28,7 +31,9 @@ const ArrowIcon = styled((props: { width: number; height: number }) => <Arrow {.
     fill: ${(props): string => props.theme.thumbIconBackgroundColor};
 `;
 
-const StaticTable = function<T extends CommonStateProto>({ session, height, detail, state, commonState }: TableViewProps<DetailTabs, T> & { state: TableState }): JSX.Element {
+const StaticTable = function<T extends CommonStateProto>({
+    session, height, detail, state, commonState,
+}: TableViewProps<DetailTabs, T> & { state: TableState }): JSX.Element {
     const unit = session.selectedUnits[0];
     return <AutoAdjustedTable
         height={height - CONTROLLERBAR_HEIGHT}
@@ -59,13 +64,13 @@ const useComparisonUpdater = <T extends CommonStateProto>(session: Session, deta
 
 const getHandleFuncs = (session: Session, selectedParams: Array<keyof SelectedParams>): Array<(rawId: string) => void> => {
     return selectedParams.map((curSelectedParam) => (rawId: string) => {
-        _.debounce((rawId) => {
+        _.debounce((debounceRowId) => {
             runInAction(() => {
                 session.selectedDetailKeys = [];
                 session.selectedDetails = [];
-                selectedParams.filter((selectedParam) => selectedParam !== curSelectedParam && session.selectedParams[selectedParam] === Number(rawId))
+                selectedParams.filter((selectedParam) => selectedParam !== curSelectedParam && session.selectedParams[selectedParam] === Number(debounceRowId))
                     .forEach((selectedParam) => { session.selectedParams[selectedParam] = undefined; });
-                session.selectedParams[curSelectedParam] = Number(rawId);
+                session.selectedParams[curSelectedParam] = Number(debounceRowId);
             });
         }, 300)(rawId);
     });
@@ -87,7 +92,7 @@ const useFilterListValues = (comparisonInfos: unknown[], callbackFunc: CallbackF
     return [baseListValues, curListValues];
 };
 
-type CallbackFunc = {
+interface CallbackFunc {
     processDisplayValue: (session: Session, info: unknown[], isBase: boolean) => [(string | undefined), (number | undefined)];
     filterListValues: (info: unknown[], id?: number) => () => unknown[];
     createSelectOption: (info: unknown) => [ number, string ];

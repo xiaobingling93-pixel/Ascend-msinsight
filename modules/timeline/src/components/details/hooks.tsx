@@ -1,13 +1,16 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import _ from 'lodash';
 import { autorun, runInAction } from 'mobx';
 import * as React from 'react';
-import { DetailDescriptor, MoreDescriptor, SingleDataDesc } from '../../entity/insight';
-import { SelectedParams, Session } from '../../entity/session';
-import { TabState } from '../../entity/tabDependency';
+import type { DetailDescriptor, InsightUnit, MoreDescriptor, SingleDataDesc } from '../../entity/insight';
+import type { SelectedParams, Session } from '../../entity/session';
+import type { TabState } from '../../entity/tabDependency';
 import { useTranslation } from 'react-i18next';
 import { platform } from '../../platforms';
 import { logger } from '../../utils/Logger';
-import { EMPTY_TABLE_STATE, TableState } from './types';
+import { EMPTY_TABLE_STATE, type TableState } from './types';
 import { onExpandForChildren, parseColDef, treeAttachInfo } from './utils';
 import i18n from '../../i18n';
 
@@ -38,8 +41,44 @@ const useFilterDeps = (selectedDetailKeys: Session['selectedDetailKeys'], trigge
     return triggerHook;
 };
 
-// eslint-disable-next-line max-lines-per-function
-export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unknown> | undefined, tabState: TabState | undefined, dep: unknown = [], onDataLoaded?: (data: unknown[]) => void): TableState => {
+interface HandleFetchDataParams {
+    result: Array<Record<string, unknown>>;
+    session: Session;
+    recentUnits: React.MutableRefObject<[InsightUnit] | []>;
+    recentRange: React.MutableRefObject<[number, number] | undefined>;
+    tabState?: TabState;
+    selectedUnit?: InsightUnit;
+    detail: DetailDescriptor<unknown>;
+    setState: React.Dispatch<React.SetStateAction<TableState>>;
+    onDataLoaded?: (data: unknown[]) => void;
+}
+
+const handleFetchedData = ({
+    result, session, recentUnits, recentRange, tabState, selectedUnit, detail, setState, onDataLoaded,
+}: HandleFetchDataParams): void => {
+    const { selectedUnits, selectedRange } = session;
+    if (recentUnits.current !== selectedUnits || recentRange.current !== selectedRange) { return; }
+    result.forEach(treeAttachInfo);
+    if (tabState?.data !== undefined && tabState?.filter !== undefined) {
+        runInAction(() => { tabState.data = result; });
+    } else {
+        const columns = parseColDef(detail, session, tabState ?? selectedUnit?.tabState).map(col => ({
+            ...col,
+            title: i18n.t(`sliceList.${col.title}`, { ns: 'timeline', defaultValue: col.title }),
+        }));
+        setState({
+            data: result,
+            columns,
+            rowKey: (detail.rowKey ?? undefined) as (row: object) => string,
+            onExpand: onExpandForChildren(session, detail.onExpand, setState),
+            isLoading: false,
+        });
+        onDataLoaded?.(result);
+    }
+};
+
+export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unknown> | undefined, tabState: TabState | undefined,
+    dep: unknown = [], onDataLoaded?: (data: unknown[]) => void): TableState => {
     const [state, setState] = React.useState<TableState>(EMPTY_TABLE_STATE);
     const { selectedUnits, selectedRange, selectedDetailKeys } = session;
     const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
@@ -62,24 +101,7 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
             logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
             setState({ ...EMPTY_TABLE_STATE, isLoading: true });
             onDataFetched?.then(result => {
-                if (recentUnits.current !== selectedUnits || recentRange.current !== selectedRange) return;
-                result.forEach(treeAttachInfo);
-                if (tabState?.data !== undefined && tabState?.filter !== undefined) {
-                    runInAction(() => { tabState.data = result; });
-                } else {
-                    const columns = parseColDef(detail, session, tabState ?? selectedUnit?.tabState).map(col => ({
-                        ...col,
-                        title: i18n.t(`sliceList.${col.title}`, { ns: 'timeline', defaultValue: col.title }),
-                    }));
-                    setState({
-                        data: result,
-                        columns,
-                        rowKey: (detail.rowKey ?? undefined) as (row: object) => string,
-                        onExpand: onExpandForChildren(session, detail.onExpand, setState),
-                        isLoading: false,
-                    });
-                    onDataLoaded?.(result);
-                }
+                handleFetchedData({ result, session, recentUnits, recentRange, tabState, selectedUnit, detail, setState, onDataLoaded });
             }).catch(() => {
                 setState(EMPTY_TABLE_STATE);
                 platform.dialog(i18n.t('error:4004'));
@@ -93,7 +115,7 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
     // 需要进行多选过滤的才会执行下面的代码
     React.useEffect(() =>
         autorun(() => {
-            if (detail === undefined || tabState?.filter === undefined) return;
+            if (detail === undefined || tabState?.filter === undefined) { return; }
             setState({
                 data: tabState.getFilterData(),
                 columns: parseColDef(detail, session, tabState),
@@ -138,7 +160,7 @@ TableState => {
     const loadData = (): void => {
         const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
         const fetchData = detail?.fetchData;
-        if (detail && fetchData && hasDependencies && session.phase === 'download') {
+        if (fetchData && hasDependencies && session.phase === 'download') {
             logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
             platform.trace('useComparison', {});
             setState({ ...EMPTY_TABLE_STATE, isLoading: true });
@@ -163,7 +185,9 @@ TableState => {
     return state;
 };
 
-export const useExtraDataUpdater = <T extends DetailDescriptor<unknown>>(session: Session, detail: T | undefined): T['fetchExtraData'] | {} => {
+export const useExtraDataUpdater = <T extends DetailDescriptor<unknown>>(
+    session: Session, detail: T | undefined,
+): Record<string, unknown> => {
     const [state, setState] = React.useState({});
     const { selectedUnits, endTimeAll } = session;
     const selectedUnit = selectedUnits.length > 0 ? selectedUnits[0] : undefined;
@@ -188,7 +212,7 @@ export const useExtraDataUpdater = <T extends DetailDescriptor<unknown>>(session
 };
 
 export const useSelectedDataDetailUpdater = (session: Session, detail: SingleDataDesc<Record<string, unknown>, unknown>, selectedData: unknown):
-{ renderFields: Array<[string, string | JSX.Element]> | undefined; data: Record<string, unknown> } => {
+{ renderFields?: Array<[string, string | JSX.Element]>; data: Record<string, unknown> } => {
     const [renderFields, setRenderFields] = React.useState<Array<[string, string | JSX.Element]>>();
     const [state, setState] = React.useState<Record<string, unknown>>({});
     const { selectedUnits } = session;
@@ -207,7 +231,7 @@ export const useSelectedDataDetailUpdater = (session: Session, detail: SingleDat
         if (onDataFetched !== undefined && selectedData !== undefined && session.phase === 'download') {
             logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
             onDataFetched?.then(result => {
-                if (recentUnits.current !== selectedUnits || recentData.current !== selectedData) return;
+                if (recentUnits.current !== selectedUnits || recentData.current !== selectedData) { return; }
                 setState(result);
                 const renderField: Array<[string, string | JSX.Element]> = [];
                 detail.renderFields.forEach(item => {

@@ -196,7 +196,7 @@ export const FilledLineChart = observer(({
     const canvasContainer = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
 
-    const dataState = useData(session, mapFunc, unit, metadata, width, zipTimeSeriesData);
+    const dataState = useData({ session, mapFunc, unit, metadata, width, processor: zipTimeSeriesData });
     const rangeAndDomain = useRangeAndDomain(session, width, margin);
 
     const [hideLayer, setHideLayer] = useState<number[]>([]);

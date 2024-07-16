@@ -4,14 +4,14 @@
 import { customConsole as console } from '../utils/Console';
 type ReservedEventHandler = 'request';
 type EventHanlder = string;
-type SendParams<T extends EventHanlder> = {
+interface SendParams<T extends EventHanlder> {
+    [x: string]: unknown;
     to?: SendTargetKey;
     module?: string;
     event: T extends ReservedEventHandler ? never : T;
-    [x: string]: unknown;
 };
 type ListenerCallback = (res: MessageEvent) => void;
-type ListenerHandler = { event: EventHanlder; sequence: number };
+interface ListenerHandler { event: EventHanlder; sequence: number };
 type TargetWindow = Window;
 type GetTragetWindows = () => TargetWindow[];
 type SendTargetKey = number;
@@ -59,13 +59,14 @@ abstract class BaseConnector {
         });
     }
 
-    send<T extends EventHanlder>(body: SendParams<T>, reject?: Function): void {
+    send<T extends EventHanlder>(body: SendParams<T>, reject?: (err: Error) => void): void {
         if (this.invalidFunc) {
             this.invalidFunc();
             return;
         }
         this._targetWindows = this._getTargetWindows();
-        if ((body.to !== undefined && window.parent !== null && window.parent[body.to]?.postMessage === undefined) || this._targetWindows.length === 0) {
+        const isPostMessageInvalid = body.to !== undefined && window.parent !== null && window.parent[body.to]?.postMessage === undefined;
+        if (isPostMessageInvalid || this._targetWindows.length === 0) {
             const errMsg = 'missed postMessage function, please check your iframe element';
             console.warn(this.printErrMsg(errMsg));
             reject?.(new Error(errMsg));
@@ -98,7 +99,9 @@ abstract class BaseConnector {
         const listeners = this._listeners.get(event);
         if (listeners) {
             listeners[sequence] = null;
-            listeners.filter(item => item).length === 0 && this._listeners.delete(event);
+            if (listeners.filter(item => item).length === 0) {
+                this._listeners.delete(event);
+            }
         }
     }
 
@@ -115,11 +118,11 @@ abstract class BaseConnector {
 
 type FetchSequenceID = number;
 
-type FetchParams = {
-    event?: never;
+interface FetchParams {
     [x: string]: unknown;
+    event?: never;
 };
-type FetchRequest = {
+interface FetchRequest {
     [x: string]: any;
     event: 'request';
     from: SendTargetKey;
@@ -141,20 +144,7 @@ export class ClientConnector extends BaseConnector {
         this._module = module;
     }
 
-    protected awaitFetch(res: MessageEvent<FetchRequest>): void {
-        const result = this._msgSequence.get(res.data.id);
-        if (result !== undefined) {
-            const { resolve, reject } = result;
-            if (res.data.body?.error !== null && res.data.body?.error !== undefined) {
-                reject(res.data.body.error);
-            } else {
-                resolve(res.data);
-            }
-            this._msgSequence.delete(res.data.id);
-        }
-    }
-
-    send<T extends EventHanlder>(body: SendParams<T>, reject?: Function): void {
+    send<T extends EventHanlder>(body: SendParams<T>, reject?: (err: Error) => void): void {
         body.module = body.module ?? this._module;
         super.send(body, reject);
     }
@@ -172,4 +162,17 @@ export class ClientConnector extends BaseConnector {
             this._msgSequence.set(this._curFetchSequenceID++, { resolve, reject });
         });
     };
+
+    protected awaitFetch(res: MessageEvent<FetchRequest>): void {
+        const result = this._msgSequence.get(res.data.id);
+        if (result !== undefined) {
+            const { resolve, reject } = result;
+            if (res.data.body?.error !== null && res.data.body?.error !== undefined) {
+                reject(res.data.body.error);
+            } else {
+                resolve(res.data);
+            }
+            this._msgSequence.delete(res.data.id);
+        }
+    }
 };

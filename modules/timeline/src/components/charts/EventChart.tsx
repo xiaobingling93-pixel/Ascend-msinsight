@@ -131,7 +131,7 @@ export const EventChart = observer(({ margin, session, mapFunc, metadata, height
     const theme = useTheme();
     const canvasContainer = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
-    const dataState = useData(session, mapFunc, unit, metadata, width);
+    const dataState = useData({ session, mapFunc, unit, metadata, width });
     const rangeAndDomain = useRangeAndDomain(session, width, margin);
 
     const mousePos = useHoverPos(canvasContainer);

@@ -6,7 +6,7 @@ import { binarySearchFirstBig, binarySearchLastSmall } from './strategies/utils'
 
 type Method = 'unit/threadTraces' | 'unit/counter' | 'unit/threadTracesSummary'; // store methodKey
 type Handler = (params: Record<string, unknown>, metaData?: unknown) => Promise<ThreadTrace[][] | number[][] | ProcessData[] | undefined>;
-const processorMap = new Map<Method, Function>();
+const processorMap = new Map<Method, (params: Record<string, unknown>, data: Map<string, unknown>, paramsKey: string) => unknown>();
 const handlerMap = new Map<Method, Handler>();
 handlerMap.set('unit/counter', requestCounterData);
 handlerMap.set('unit/threadTracesSummary', requestProcessData);
@@ -24,7 +24,9 @@ export class SimpleCache {
         this.data.set('unit/threadTracesSummary', new Map<string, Record<string, unknown>>());
     }
 
-    tryFetchFromCache = async(method: Method, requestKey: string, params: Record<string, unknown> & { timePerPx: number }, metaData?: unknown): Promise<Record<string, unknown> | undefined> => {
+    tryFetchFromCache = async (
+        method: Method, requestKey: string, params: Record<string, unknown> & { timePerPx: number }, metaData?: unknown,
+    ): Promise<Record<string, unknown> | undefined> => {
         const cacheData = this.data.get(method).get(requestKey);
         if (method === 'unit/threadTracesSummary' && cacheData !== undefined) {
             return { data: cacheData };
@@ -85,8 +87,8 @@ async function requestCounterData(requestParam: Record<string, unknown>, metadat
         param.startTime = 0;
         param.endTime = session?.endTimeAll ?? 0;
         const request = await window.request(requestParam.dataSource as DataSource, { command: 'unit/counter', params: param });
-        const acc = (request.data as CounterData[]).reduce((acc: CounterData[], cur) => {
-            const existItem = acc.find(item => item.timestamp === cur.timestamp);
+        const acc = (request.data as CounterData[]).reduce((dataList: CounterData[], cur) => {
+            const existItem = dataList.find(item => item.timestamp === cur.timestamp);
             if (existItem !== undefined) {
                 (metadata as CounterMetaData).dataType.forEach(type => {
                     if (cur.value[type] > existItem.value[type]) {
@@ -94,9 +96,9 @@ async function requestCounterData(requestParam: Record<string, unknown>, metadat
                     }
                 });
             } else {
-                acc.push(cur);
+                dataList.push(cur);
             }
-            return acc;
+            return dataList;
         }, []);
         return acc.map((item): number[] => {
             const res = [];
@@ -122,8 +124,8 @@ function processArr(params: Record<string, unknown>, data: Map<string, unknown>,
     if (result === undefined) {
         return [[]];
     }
-    const startIndex = binarySearchLastSmall(result, (data: number[]) => data[0], start);
-    const endIndex = binarySearchFirstBig(result, (data: number[]) => data[0], end);
+    const startIndex = binarySearchLastSmall(result, (arr: number[]) => arr[0], start);
+    const endIndex = binarySearchFirstBig(result, (arr: number[]) => arr[0], end);
     return result.slice(startIndex === 0 ? startIndex : startIndex - 1, endIndex + 2);
 }
 
@@ -136,7 +138,7 @@ function counterArr(params: Record<string, unknown>, data: Map<string, unknown>,
     if (result === undefined) {
         return [[]];
     }
-    const startIndex = binarySearchLastSmall(result, (data: number[]) => data[0], start);
-    const endIndex = binarySearchFirstBig(result, (data: number[]) => data[0], end);
+    const startIndex = binarySearchLastSmall(result, (arr: number[]) => arr[0], start);
+    const endIndex = binarySearchFirstBig(result, (arr: number[]) => arr[0], end);
     return result.slice(startIndex === 0 ? startIndex : startIndex - 1, endIndex + 2);
 }

@@ -247,6 +247,7 @@ const mouseMoveUpFunc = ([downX, upX]: number[], datasState: StackStatusData[][]
     });
 };
 
+// eslint-disable-next-line max-lines-per-function
 export const StackStatusChart = observer(({
     session, unit, margin, mapFunc, metadata, renderTooltip, height, onHover, onClick, decorator,
     rowHeight, width, textConfig, isNeedClamp, isCollapse, maxDepth,
@@ -255,8 +256,14 @@ export const StackStatusChart = observer(({
     const canvasContainer = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
     const { action: drawExt = (): void => {}, triggers = [] } = decorator?.(session, metadata) ?? {};
-    const datasState = useData(session, mapFunc, unit, metadata, width, (data, processedWidth, start, end) =>
-        data.map(row => zipStatusData(row, processedWidth, start, end)));
+    const datasState = useData({
+        session,
+        mapFunc,
+        unit,
+        metadata,
+        width,
+        processor: (data, processedWidth, start, end) => data.map(row => zipStatusData(row, processedWidth, start, end)),
+    });
     const rangeAndDomain = useRangeAndDomain(session, width, margin); const mousePos = useHoverPos(canvasContainer);
     const hoveredData = useMemo(
         () => findDataByXY(mousePos, datasState, rangeAndDomain, rowHeight, session.endTimeAll ?? 0),
@@ -275,7 +282,7 @@ export const StackStatusChart = observer(({
     };
     const handleMouseMoveUp = ([downX, upX]: number[]): void => { mouseMoveUpFunc([downX, upX], datasState, rangeAndDomain, session); };
     useEffect(() => onHover?.(hoveredData, session, metadata), [hoveredData, metadata]);
-    useClick(canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp, handleMouseMoveUp);
+    useClick({ canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp, handleMouseMoveUp });
     const yScale = isCollapse ? d3.scaleLinear().range([0, height]).domain([0, maxDepth as number]) : (depth: number): number => depth * rowHeight;
     useBatchedRender(() => {
         const noRender = canvasContainer.current === null || canvas.current === null || rangeAndDomain.length === 0 ||

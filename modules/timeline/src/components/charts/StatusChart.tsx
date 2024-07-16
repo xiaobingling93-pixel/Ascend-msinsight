@@ -1,13 +1,16 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import type { Theme } from '@emotion/react';
 import { useTheme } from '@emotion/react';
 import * as d3 from 'd3';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { ChartProps, Scale, StatusData } from '../../entity/chart';
+import type { ChartProps, Scale, StatusData } from '../../entity/chart';
 import { Canvas, CanvasContainer, drawRoundedRect, zipStatusData } from './common';
 import { useBatchedRender, useClick, useData, useHoverPosX, useRangeAndDomain } from './hooks';
-import { TooltipComponent, TooltipProps } from './TooltipComp';
+import { TooltipComponent, type TooltipProps } from './TooltipComp';
 
 type StatusChartProps = ChartProps<'status'>;
 
@@ -18,14 +21,14 @@ const getMaxText = (text: string, maxWidth: number, ctx: CanvasRenderingContext2
     let mid = 0;
     while (left < right) {
         mid = Math.floor((left + right) / 2);
-        if (ctx.measureText(text.slice(0, mid) + '...').width > maxWidth) {
+        if (ctx.measureText(`${text.slice(0, mid)}...`).width > maxWidth) {
             right = mid;
         } else {
             if (left === mid) { break; }
             left = mid;
         }
     }
-    return [text.slice(0, mid) + '...', ctx.measureText(text.slice(0, mid) + '...').width];
+    return [`${text.slice(0, mid)}...`, ctx.measureText(`${text.slice(0, mid)}...`).width];
 };
 
 const draw = (ctx: CanvasRenderingContext2D | null, datas: StatusData[], xScale: Scale, yScale: Scale, theme: Theme): void => {
@@ -48,7 +51,7 @@ const draw = (ctx: CanvasRenderingContext2D | null, datas: StatusData[], xScale:
         if (width < minTextWidth) { return; }
         ctx.fillStyle = theme.fontColor;
         const xOffset = (textWidth: number): number => {
-            return xScale(data.startTime) + (xScale(data.startTime + data.duration) - xScale(data.startTime) - textWidth) / 2;
+            return xScale(data.startTime) + ((xScale(data.startTime + data.duration) - xScale(data.startTime) - textWidth) / 2);
         };
         if (data.subName !== undefined) {
             const [subNameText, subNameWidth] = getMaxText(data.subName, width - 8, ctx);
@@ -101,7 +104,7 @@ export const StatusChart = observer(({
     const canvas = useRef<HTMLCanvasElement>(null);
     const { action: drawExt = (): void => {}, triggers = [] } = decorator?.(session, metadata) ?? {};
 
-    const datasState = useData(session, mapFunc, unit, metadata, width, zipStatusData);
+    const datasState = useData({ session, mapFunc, unit, metadata, width, processor: zipStatusData });
     const rangeAndDomain = useRangeAndDomain(session, width, margin);
 
     const mousePosX = useHoverPosX(canvasContainer);
@@ -114,12 +117,11 @@ export const StatusChart = observer(({
         });
     };
     useEffect(() => onHover?.(hoveredData, session, metadata), [hoveredData, metadata]);
-    useClick(canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp);
+    useClick({ canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp });
     useBatchedRender(() => {
-        if (canvasContainer.current === null || canvas.current === null || rangeAndDomain.length === 0 ||
-            canvas.current.width === 0 || canvas.current.height === 0) {
-            return;
-        }
+        const isCanvasInvalid = canvasContainer.current === null || canvas.current === null || rangeAndDomain.length === 0 ||
+            canvas.current.width === 0 || canvas.current.height === 0;
+        if (isCanvasInvalid) { return; }
         const ctx = canvas.current.getContext('2d');
         const xScale = d3.scaleLinear().range(rangeAndDomain[0]).domain(rangeAndDomain[1]).clamp(false);
         const yScale = (n: number): number => n * rowHeight;
@@ -127,7 +129,7 @@ export const StatusChart = observer(({
         draw(ctx, datasState, xScale, yScale, theme);
         drawExt({
             context: ctx,
-            draw: (data, xScale, yScale) => draw(ctx, data, xScale, yScale, theme),
+            draw: (data, scaleX, scaleY) => draw(ctx, data, scaleX, scaleY, theme),
             findAll: (condition) => datasState.filter(condition),
         }, xScale, yScale, theme);
     }, [datasState, rangeAndDomain, ...triggers, theme]);

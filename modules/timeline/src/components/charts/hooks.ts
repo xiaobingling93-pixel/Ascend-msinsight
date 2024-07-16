@@ -1,17 +1,30 @@
-import React, { RefObject, useEffect, useMemo, useRef, useState } from 'react';
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
+import type React from 'react';
+import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { ChartData, ChartType, MapFunc } from '../../entity/chart';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import { logger } from '../../utils/Logger';
 import { runInAction } from 'mobx';
-import { InsightUnit } from '../../entity/insight';
+import type { InsightUnit } from '../../entity/insight';
 
-export type Pos = {
+export interface Pos {
     x: number;
     y: number;
 };
 
 export type DataProcessor<T extends ChartType> = (data: ChartData<T>, width: number, domainStart: number, domainEnd: number) => ChartData<T>;
 const CLICK_TOLERANCE = 1;
+
+interface UseDataParams<T extends ChartType> {
+    session: Session;
+    mapFunc: MapFunc<T>;
+    unit: InsightUnit;
+    metadata: unknown;
+    width: number;
+    processor?: DataProcessor<T>;
+}
 
 /**
  * Manages the data that are to be rendered as a state.
@@ -22,7 +35,7 @@ const CLICK_TOLERANCE = 1;
  * @param width width
  * @returns the data that this chart is currently rendering
  */
-export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<T>, unit: InsightUnit, metadata: unknown, width: number, processor?: DataProcessor<T>): ChartData<T> => {
+export const useData = <T extends ChartType>({ session, mapFunc, unit, metadata, width, processor }: UseDataParams<T>): ChartData<T> => {
     const { domainStart, domainEnd } = session.domainRange;
     const { endTimeAll } = session;
     const [datasState, setDatasState] = useState<ChartData<T>>([]);
@@ -54,7 +67,7 @@ export const useData = <T extends ChartType>(session: Session, mapFunc: MapFunc<
 export const useRangeAndDomain = (session: Session, width: number, margin: number): Array<[number, number]> => {
     const { domainStart, domainEnd } = session.domainRange;
     return useMemo<Array<[number, number]>>(
-        () => [[margin, width - 2 * margin], [domainStart, domainEnd]],
+        () => [[margin, width - (2 * margin)], [domainStart, domainEnd]],
         [domainStart, domainEnd, width, margin],
     );
 };
@@ -87,7 +100,7 @@ export const useHoverPos = (ref: React.RefObject<HTMLElement>): Pos | undefined 
     const onMouseOut = (e: MouseEvent): void => { setMousePos(undefined); };
     useEffect(() => {
         if (ref.current === null) {
-            return;
+            return () => { };
         }
         ref.current.addEventListener('mousemove', onMouseMove);
         ref.current.addEventListener('mouseout', onMouseOut);
@@ -99,12 +112,22 @@ export const useHoverPos = (ref: React.RefObject<HTMLElement>): Pos | undefined 
     return mousePos;
 };
 
-export const useClick = <T extends ChartType>(canvasContainer: RefObject<HTMLElement>, datasState: ChartData<T>,
-    rangeAndDomain: Array<[number, number]>, session: Session, metadata: unknown, handleMouseUp: (e: MouseEvent) => void,
-    handleMouseMoveUp?: (xArr: number[]) => void): void => {
+interface UseClickParams<T extends ChartType> {
+    canvasContainer: RefObject<HTMLElement>;
+    datasState: ChartData<T>;
+    rangeAndDomain: Array<[number, number]>;
+    session: Session;
+    metadata: unknown;
+    handleMouseUp: (e: MouseEvent) => void;
+    handleMouseMoveUp?: (xArr: number[]) => void;
+}
+
+export const useClick = <T extends ChartType>({
+    canvasContainer, datasState, rangeAndDomain, session, metadata, handleMouseUp, handleMouseMoveUp,
+}: UseClickParams<T>): void => {
     useEffect(() => {
         if (canvasContainer.current === null) {
-            return;
+            return () => { };
         }
         let mousedownX: number | null = null;
         let mouseMoved = false;

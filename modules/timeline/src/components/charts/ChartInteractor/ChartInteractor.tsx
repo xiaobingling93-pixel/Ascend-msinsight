@@ -1,17 +1,20 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ */
 import { useTheme } from '@emotion/react';
 import type { Theme } from '@emotion/react';
 import styled from '@emotion/styled';
 import React, {
-    Ref,
+    type Ref,
     useEffect,
     useImperativeHandle,
 } from 'react';
 import * as d3 from 'd3';
-import { Session } from '../../../entity/session';
+import type { Session } from '../../../entity/session';
 import { traceEnd } from '../../../utils/traceLogger';
 import { useWatchDomResize } from '../../../utils/useWatchDomResize';
-import { CustomCrossRenderer, registerCrossUnitRenderer, useCustomRenderers } from './custom';
-import { Pos } from './common';
+import { type CustomCrossRenderer, registerCrossUnitRenderer, useCustomRenderers } from './custom';
+import type { Pos } from './common';
 import { draw } from './draw';
 import type { DrawCanvasArgs } from './draw';
 import {
@@ -22,7 +25,7 @@ import {
     mouseWheelAction,
     mouseMoveAction,
     keyDownAction,
-    MouseDownActionResult,
+    type MouseDownActionResult,
 } from './actions';
 import type { TimeStamp } from '../../../entity/common';
 registerCrossUnitRenderer({
@@ -69,7 +72,7 @@ interface TimeStampCallbackFunc {
 export interface ChartInteractorProps {
     domainStart: number;
     domainEnd: number;
-    endTimeAll: number | undefined;
+    endTimeAll?: number;
     session: Session;
     interactorMouseState: InteractorMouseState;
     onTimeStamp?: TimeStampCallbackFunc;
@@ -91,13 +94,13 @@ export interface ChartInteractorHandles {
     keyDownAction: (e: React.KeyboardEvent<HTMLDivElement>, interactorMouseState: InteractorMouseState) => void;
 }
 
-export type InteractorMouseState = {
+export interface InteractorMouseState {
     clickPos: React.MutableRefObject<Pos | undefined>;
     lastPos: React.MutableRefObject<Pos | undefined>;
     wheelEvent?: { ctrlKey: boolean; deltaY: number };
 };
 
-export type InteractorParams = {
+export interface InteractorParams {
     normalCanvas: React.RefObject<HTMLCanvasElement>;
     hoverCanvas: React.RefObject<HTMLCanvasElement>;
     xReverseScale: (x: number) => number;
@@ -110,12 +113,18 @@ export type InteractorParams = {
 
 export const INTERACTOR_WIDTH = 1153;
 
-const handleInteractorEvent = (interactorParams: InteractorParams,
-    session: Session,
-    xReverseScale: d3.ScaleLinear<number, number>,
-    splitLineRef: React.RefObject<HTMLDivElement>,
-    accumulativeZoomRef: React.MutableRefObject<number>,
-    point?: number): any => {
+interface InteractorEventParams {
+    interactorParams: InteractorParams;
+    session: Session;
+    xReverseScale: d3.ScaleLinear<number, number>;
+    splitLineRef: React.RefObject<HTMLDivElement>;
+    accumulativeZoomRef: React.MutableRefObject<number>;
+    point?: number;
+}
+
+const handleInteractorEvent = ({
+    interactorParams, session, xReverseScale, splitLineRef, accumulativeZoomRef, point,
+}: InteractorEventParams): any => {
     return () => ({
         mouseMoveAction: (interactorMouseState: InteractorMouseState, e: React.MouseEvent): void => {
             mouseMoveAction(interactorParams, interactorMouseState, e);
@@ -140,18 +149,8 @@ const handleInteractorEvent = (interactorParams: InteractorParams,
 };
 
 const Interactor = ({
-    domainStart,
-    domainEnd,
-    endTimeAll,
-    session,
-    interactorMouseState,
-    isNsMode,
-    splitLineRef,
-    renderTrigger,
-    scrollTop,
-    selectedRange,
-}: ChartInteractorProps,
-ref: Ref<ChartInteractorHandles>): JSX.Element => {
+    domainStart, domainEnd, endTimeAll, session, interactorMouseState, isNsMode, splitLineRef, renderTrigger, scrollTop, selectedRange,
+}: ChartInteractorProps, ref: Ref<ChartInteractorHandles>): JSX.Element => {
     const theme = useTheme();
     const accumulativeZoomRef = React.useRef(0);
     const [customRenderers, customRenderTriggers] = useCustomRenderers(session);
@@ -188,7 +187,7 @@ ref: Ref<ChartInteractorHandles>): JSX.Element => {
     const point = interactorMouseState.lastPos?.current?.x !== undefined
         ? xScale(interactorMouseState.lastPos?.current?.x)
         : undefined;
-    useImperativeHandle(ref, handleInteractorEvent(interactorParams, session, xReverseScale, splitLineRef, accumulativeZoomRef, point));
+    useImperativeHandle(ref, handleInteractorEvent({ interactorParams, session, xReverseScale, splitLineRef, accumulativeZoomRef, point }));
     return <>
         <Overlay ref={normalCanvas} />
         <Overlay ref={hoverCanvas} />

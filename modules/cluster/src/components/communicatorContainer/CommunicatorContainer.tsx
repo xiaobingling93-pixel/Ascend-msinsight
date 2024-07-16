@@ -2,18 +2,18 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { observer } from 'mobx-react';
-import { Session } from '../../entity/session';
+import type { Session } from '../../entity/session';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, Form, InputNumber, Row, Button, message, Select } from 'antd';
 import _ from 'lodash';
 import eventBus, { useEventBus } from '../../utils/eventBus';
 import {
-    communicator,
-    communicatorContainerData,
+    type communicator,
+    type communicatorContainerData,
     generateCommunicatorData,
-    partitionMode,
-    tabData, titleMap,
+    type partitionMode,
+    type tabData, titleMap,
 } from './ContainerUtils';
 
 export const CommunicatorContainer = observer(({ session }: { session: Session }) => {
@@ -70,8 +70,8 @@ const CommunicatorContent = observer(({ session, partitionData }: { session: Ses
     return (
         <Row>
             {
-                _.map(partitionData.communicators, (communicator) => (
-                    <RankGroup key={communicator.name} rankGroup={communicator} session={session}></RankGroup>
+                _.map(partitionData.communicators, (item) => (
+                    <RankGroup key={item.name} rankGroup={item} session={session}></RankGroup>
                 ))
             }
         </Row>
@@ -173,9 +173,9 @@ export async function getDefaultCommunicatorData(setUnitCount: React.Dispatch<Re
                 mode: 'pp',
                 communicators: _.map(data.ppGroups, (group, key) => {
                     return {
-                        name: 'stage' + key,
+                        name: `stage${key}`,
                         ranks: group,
-                        value: `(${_.join(group, ', ')}` + (group.length > 1 ? ')' : ',)'),
+                        value: `(${_.join(group, ', ')}${(group.length > 1 ? ')' : ',)')}`,
                     } as communicator;
                 }),
             },
@@ -183,9 +183,9 @@ export async function getDefaultCommunicatorData(setUnitCount: React.Dispatch<Re
                 mode: 'tpOrDp',
                 communicators: _.map(data.tpOrDpGroups, (group, key) => {
                     return {
-                        name: 'tpOrDpStage' + key,
+                        name: `tpOrDpStage${key}`,
                         ranks: group,
-                        value: `(${_.join(group, ', ')}` + (group.length > 1 ? ')' : ',)'),
+                        value: `(${_.join(group, ', ')}${(group.length > 1 ? ')' : ',)')}`,
                     } as communicator;
                 }),
             },
