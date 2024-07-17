@@ -71,8 +71,11 @@ export class Connection {
     }
 
     deleteDataPath(dataPath: string[] | string): void {
-        !Array.isArray(dataPath) && (dataPath = [dataPath]);
-        this._dataSource.dataPath = this._dataSource.dataPath.filter(item => !dataPath.includes(item));
+        let tempPath = dataPath;
+        if (!Array.isArray(dataPath)) {
+            tempPath = [dataPath];
+        }
+        this._dataSource.dataPath = this._dataSource.dataPath.filter(item => !tempPath.includes(item));
     }
 
     async reset(): Promise<void> {

@@ -14,6 +14,7 @@ import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonT
 import { Container, addResizeEvent, COLOR, commonEchartsOptions } from '../Common';
 import i18n from '../../i18n';
 import { cloneDeep } from 'lodash';
+import { CustomConsole as console } from 'lib/CommonUtils';
 
 const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
     const [data, setData] = useState([]);

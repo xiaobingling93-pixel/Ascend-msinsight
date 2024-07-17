@@ -3,7 +3,7 @@
  */
 import type React from 'react';
 import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
-import { ChartData, ChartType, MapFunc } from '../../entity/chart';
+import type { ChartData, ChartType, MapFunc } from '../../entity/chart';
 import type { Session } from '../../entity/session';
 import { logger } from '../../utils/Logger';
 import { runInAction } from 'mobx';

@@ -17,6 +17,7 @@ import { getTimeOffset } from '../insight/units/utils';
 import { calculateDomainRange } from '../components/CategorySearch';
 import i18n from '../i18n';
 import { forEach, groupBy, isEmpty, cloneDeep } from 'lodash';
+import { CustomConsole as console } from 'lib/CommonUtils';
 
 const DEFAULT_EXPAND_UNIT_NUMBER = 1;
 const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
