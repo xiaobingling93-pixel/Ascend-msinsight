@@ -260,23 +260,40 @@ const CategorySearchContent = (session: Session): JSX.Element => {
         });
     };
 
+    let dom;
+    if (searchingStatus) {
+        dom = <ImgWithFallback className={'loading'} />;
+    } else {
+        if (searchIconVisible) {
+            dom = <div className={'search_icon_css'}>
+                <StyledTooltip title={t('Match case', { ns: 'tooltip' })}>
+                    <StyledButton icon={isMatchCase
+                        ? <div className={'icon_selected_case_match'}/>
+                        : <div className={'icon_case_match'}/>}
+                    onClick={(): void => changeMatchCaseStatus()}></StyledButton>
+                </StyledTooltip>
+                <StyledTooltip title={t('Words', { ns: 'tooltip' })}>
+                    <StyledButton icon={isMatchExact
+                        ? <div className={'icon_selected_exact_match'}/>
+                        : <div className={'icon_exact_match'}/>} onClick={(): void => changeMatchExactStatus()}></StyledButton>
+                </StyledTooltip>
+                <CustomButton icon={SearchIcon} onClick={onInputPressEnter}></CustomButton>
+            </div>;
+        } else {
+            dom = <div className={'search_icon_css'}>
+                <StylePagination {...paginationData} onChange={onPageChange} />
+                <PressButton size="small" onClick={doSearchList}>{t('Open in Find Window', { ns: 'buttonText' })}</PressButton>
+            </div>;
+        }
+    }
+
     return (
         <CustomDiv theme={theme} onClick={(e): void => { e.stopPropagation(); }}>
             { contextHolder}
             <StyledInput allowClear={{ clearIcon: <CloseIcon fill={theme.buttonColor.enableClickColor} /> }} disabled={searchingStatus} maxLength={200}
                 minwidth={200} height={24} isshow={1} value={searchContent} onChange={onInputChange} onPressEnter={onInputPressEnter} ></StyledInput>
-            <div className="searchResult">{searchingStatus
-                ? <ImgWithFallback className={'loading'} />
-                : searchIconVisible
-                    ? <div className={'search_icon_css'}>
-                        <StyledTooltip title={t('Match case', { ns: 'tooltip' })}><StyledButton icon={isMatchCase ? <div className={'icon_selected_case_match'}/> : <div className={'icon_case_match'}/>} onClick={(): void => changeMatchCaseStatus()}></StyledButton></StyledTooltip>
-                        <StyledTooltip title={t('Words', { ns: 'tooltip' })}><StyledButton icon={isMatchExact ? <div className={'icon_selected_exact_match'}/> : <div className={'icon_exact_match'}/>} onClick={(): void => changeMatchExactStatus()}></StyledButton></StyledTooltip>
-                        <CustomButton icon={SearchIcon} onClick={onInputPressEnter}></CustomButton>
-                    </div>
-                    : <div className={'search_icon_css'}>
-                        <StylePagination {...paginationData} onChange={onPageChange} />
-                        <PressButton size="small" onClick={doSearchList}>{t('Open in Find Window', { ns: 'buttonText' })}</PressButton>
-                    </div> }
+            <div className="searchResult">
+                {dom}
             </div>
         </CustomDiv>
     );

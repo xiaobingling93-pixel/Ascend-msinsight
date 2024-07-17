@@ -41,7 +41,7 @@ const Container = styled.div`
     position: relative;
     display: flex;
     flex-direction: column;
-    background-color: ${props => props.theme.contentBackgroundColor};
+    background-color: ${(props): string => props.theme.contentBackgroundColor};
 
     .mask {
         position: absolute;
@@ -50,7 +50,7 @@ const Container = styled.div`
     /* container header - timeline axis area */
     .timeStamp {
         display: flex;
-        background-color: ${props => props.theme.contentBackgroundColor};
+        background-color: ${(props): string => props.theme.contentBackgroundColor};
         height: ${TIME_LINE_AXIS_HEIGHT_PX}px;
     }
 
@@ -154,25 +154,25 @@ export const ChartContainer = observer((props: Props) => {
         useInteractorMouseState(chartInteractorRef, scrollerRef, session, !!props.interactive);
     useEffect(() => {
         if (containerDom === undefined) {
-            return;
+            return (): void => {};
         }
         document.addEventListener('mouseup', onMouseUp);
-        return () => {
+        return (): void => {
             document.removeEventListener('mouseup', onMouseUp);
         };
     }, [containerDom]);
     const keyHoldAction = useMemo(() => loopActionFactory((e: React.KeyboardEvent<HTMLDivElement>) => onKeyDown(e), 40, 100), [session]);
     addKeyEvent(keyHoldAction);
     return <Container
-        onKeyDown={(e) => {
+        onKeyDown={(e): void => {
             if (!e.repeat) {
                 keyHoldAction.beginLoop(e);
             }
         }}
-        onKeyUp={() => { keyHoldAction.clearLoop(); }}
-        onBlur={() => { keyHoldAction.clearLoop(); }}
+        onKeyUp={(): void => { keyHoldAction.clearLoop(); }}
+        onBlur={(): void => { keyHoldAction.clearLoop(); }}
         {...otherInteractors}
-        ref={(dom) => {
+        ref={(dom): void => {
             setContainerDom(dom ?? undefined);
         }}
         tabIndex={0}
@@ -262,7 +262,7 @@ const useInteractorMouseState = (chartInteractorRef: React.RefObject<ChartIntera
     return { onMouseMove, onMouseDown, onWheel, onMouseLeave, onMouseUp, onKeyDown, interactorMouseState };
 };
 
-type InteractorMouseHandlers = {
+interface InteractorMouseHandlers {
     onMouseUp: (e: MouseEvent) => void;
     onMouseMove: (e: React.MouseEvent) => void;
     onMouseLeave: () => void;

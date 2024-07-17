@@ -232,6 +232,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         if (element) {
             return updateListener(element);
         }
+        return (): void => {};
     }, []);
     return <div ref={ref} style={{ display: 'flex', flexDirection: 'column', height: totalHeight }} className="laneView">
         <div className={INVISIBLE_UNITS_PLACEHOLDER} style={{ height: headOffset }} />

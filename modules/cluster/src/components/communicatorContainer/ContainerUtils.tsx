@@ -4,7 +4,7 @@
 
 import _ from 'lodash';
 
-export type communicatorContainerData = {
+export interface communicatorContainerData {
     partitionModes: partitionMode[];
     defaultPPSize: number;
 };
@@ -82,8 +82,8 @@ export const generateCommunicatorData = (values: {ppSize: number; tpSize: number
         for (let i = 0; i < modelCount; i++) {
             partitionModes[1].communicators.push({
                 ranks: _.range(i * values.tpSize, (i + 1) * values.tpSize),
-                name: 'model' + i.toString(),
-                value: `(${_.range(i * values.tpSize, (i + 1) * values.tpSize).join(', ')}` + (values.tpSize > 1 ? ')' : ',)'),
+                name: `model${i}`,
+                value: `(${_.range(i * values.tpSize, (i + 1) * values.tpSize).join(', ')}${values.tpSize > 1 ? ')' : ',)'}`,
             });
         }
     }

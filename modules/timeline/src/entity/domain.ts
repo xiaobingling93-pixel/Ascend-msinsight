@@ -47,7 +47,7 @@ const zoomCenterify = ({ domain: [originStart, originEnd], newDuration, upperBou
 export class Domain {
     maxDuration: TimeStamp;
     readonly ZOOM_RATE: number = 1 + GOLDEN_RATE;
-    readonly BOUNDARY_ZOOM_RATE: number = 1 + GOLDEN_RATE * 10;
+    readonly BOUNDARY_ZOOM_RATE: number = 1 + (GOLDEN_RATE * 10);
     private readonly _DEFAULT_DURATION: TimeStamp;
     private readonly _UPPER_BOUND: TimeStamp = Number.MAX_VALUE;
     private readonly _LOWER_BOUND: TimeStamp;

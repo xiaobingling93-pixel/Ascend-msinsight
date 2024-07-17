@@ -2,13 +2,13 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import { makeAutoObservable, runInAction, when } from 'mobx';
-import React from 'react';
+import type { FC } from 'react';
 import { type Caches } from '../cache/cache';
 import { toLocalTimeString } from '../utils/humanReadable';
 import { type TimeStamp } from './common';
 import { Domain } from './domain';
 import type { InsightUnit, UnitMatcher, LinkLines, LinkDataDesc } from './insight';
-import { TimeLineMaker, TIME_MAKER_DEFAULT } from './timeMaker';
+import { type TimeLineMaker, TIME_MAKER_DEFAULT } from './timeMaker';
 import { omit } from 'lodash';
 import { platform } from '../platforms';
 import i18n from '../i18n';
@@ -104,7 +104,7 @@ export class Session {
 
     linkFlow?: Record<string, unknown>;
     linkDetail?: LinkDataDesc<Record<string, unknown>>;
-    buttons: Array<React.FC<{ session: Session }>>;
+    buttons: Array<FC<{ session: Session }>>;
 
     // set this field with a new matcher to trigger jump-to-target-lane
     locateUnit?: UnitMatcher;
@@ -181,11 +181,6 @@ export class Session {
         );
     }
 
-    set endTimeAll(endTimeAll: TimeStamp | undefined) {
-        this._endTimeAll = endTimeAll;
-        this._domain !== undefined && (this._domain.endTimeAll = endTimeAll ?? this.domain.maxDuration);
-    }
-
     get endTimeAll(): TimeStamp | undefined {
         return this._endTimeAll;
     }
@@ -194,16 +189,8 @@ export class Session {
         return this._name;
     }
 
-    set name(value: string | null) {
-        this._name = value;
-    }
-
     get phase(): Phase {
         return this._phase;
-    }
-
-    set phase(value: Phase) {
-        this._phase = value;
     }
 
     get statusInfo(): string {
@@ -220,30 +207,13 @@ export class Session {
         return this._selectedUnitKeys;
     }
 
-    set selectedUnitKeys(value: [string] | []) {
-        this._selectedUnitKeys = value;
-        // 'More' panel should be cleared when selected unit is changed
-        runInAction(() => {
-            this.selectedDetailKeys = [];
-            this.selectedDetails = [];
-        });
-    }
-
     get domainRange(): { domainStart: TimeStamp; domainEnd: TimeStamp } {
         const { domainStart, domainEnd } = this._domain.domainRange;
         return { domainStart, domainEnd };
     }
 
-    set domainRange(domainRange: { domainStart: TimeStamp; domainEnd: TimeStamp }) {
-        this._domain.domainRange = domainRange;
-    }
-
     get realTimeUpdate(): boolean {
         return this._domain.realTimeUpdate && this.phase === 'recording';
-    }
-
-    set realTimeUpdate(realTime: boolean) {
-        this._domain.realTimeUpdate = realTime && this.phase === 'recording';
     }
 
     get domain(): Domain {
@@ -254,28 +224,62 @@ export class Session {
         return this._interval;
     }
 
-    set interval(value: number) {
-        this._interval = value;
-    }
-
     get units(): InsightUnit[] {
         return this._units;
-    }
-
-    set units(units: InsightUnit[]) {
-        this._units = units;
     }
 
     get availableUnits(): InsightUnit[] {
         return this._availableUnits;
     }
 
-    set availableUnits(availableUnits: InsightUnit[]) {
-        this._availableUnits = availableUnits;
-    }
-
     get selectedData(): Record<string, unknown> | undefined {
         return this._selectedData;
+    }
+
+    get selectedRangeData(): Array<Record<string, unknown>> | undefined {
+        return this._selectedRangeData;
+    }
+
+    set endTimeAll(endTimeAll: TimeStamp | undefined) {
+        this._endTimeAll = endTimeAll;
+        this._domain !== undefined && (this._domain.endTimeAll = endTimeAll ?? this.domain.maxDuration);
+    }
+
+    set name(value: string | null) {
+        this._name = value;
+    }
+
+    set phase(value: Phase) {
+        this._phase = value;
+    }
+
+    set selectedUnitKeys(value: [string] | []) {
+        this._selectedUnitKeys = value;
+        // 'More' panel should be cleared when selected unit is changed
+        runInAction(() => {
+            this.selectedDetailKeys = [];
+            this.selectedDetails = [];
+        });
+    }
+
+    set domainRange(domainRange: { domainStart: TimeStamp; domainEnd: TimeStamp }) {
+        this._domain.domainRange = domainRange;
+    }
+
+    set realTimeUpdate(realTime: boolean) {
+        this._domain.realTimeUpdate = realTime && this.phase === 'recording';
+    }
+
+    set interval(value: number) {
+        this._interval = value;
+    }
+
+    set units(units: InsightUnit[]) {
+        this._units = units;
+    }
+
+    set availableUnits(availableUnits: InsightUnit[]) {
+        this._availableUnits = availableUnits;
     }
 
     set selectedData(data: Record<string, unknown> | undefined) {
@@ -283,10 +287,6 @@ export class Session {
         this.linkFlow = undefined;
         this.linkData = undefined;
         this.linkDetail = undefined;
-    }
-
-    get selectedRangeData(): Array<Record<string, unknown>> | undefined {
-        return this._selectedRangeData;
     }
 
     set selectedRangeData(data: Array<Record<string, unknown>> | undefined) {
