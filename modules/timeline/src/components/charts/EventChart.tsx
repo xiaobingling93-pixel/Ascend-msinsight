@@ -9,7 +9,7 @@ import React, { useMemo, useRef } from 'react';
 import type { ChartProps, EventData } from '../../entity/chart';
 import { Canvas, CanvasContainer } from './common';
 import { type Pos, useBatchedRender, useData, useHoverPos, useRangeAndDomain } from './hooks';
-import { TooltipComponent, TooltipProps } from './TooltipComp';
+import { TooltipComponent, type TooltipProps } from './TooltipComp';
 
 type EventChartProps = ChartProps<'keyEvent'>;
 const EXTEND_AREA = 80; // 鼠标点击图形区域

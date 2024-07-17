@@ -69,7 +69,7 @@ const Container = styled.div`
             margin: 0 8px;
             line-height: ${DETAIL_HEADER_HEIGHT_PX - 2}px;
             font-size: 1.14295rem;
-            color: ${p => p.theme.fontColor};
+            color: ${(p): string => p.theme.fontColor};
         }
     }
     .ant-tabs-content-holder{

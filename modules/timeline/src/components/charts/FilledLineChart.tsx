@@ -162,7 +162,7 @@ const LegendJSX = ({ legend, palette, hideLayer, setHideLayer }: LegendProps): J
     if (legend === undefined) { return <></>; }
     const table: JSX.Element[] = [];
     legend.forEach((name, index): void => {
-        table.push(<div style={{ marginRight: '16px', padding: 0, height: '12px' }} key={`legend_${index}`} onClick={() => {
+        table.push(<div style={{ marginRight: '16px', padding: 0, height: '12px' }} key={`legend_${index}`} onClick={(): void => {
             flipLayerBit(index, hideLayer, setHideLayer);
         }} className={'clickable'}>
             <ColorBlock isHiding={hideLayer.includes(index)} bgColor={palette[index]} key={`rect_${index}`}/>
