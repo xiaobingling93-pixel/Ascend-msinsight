@@ -91,14 +91,14 @@ const useCommunicationStatisticsColumns = (): ColumnsType => {
         },
         {
             title: `${t('CommunicationDurationsNotOverlapped')}(μs)`,
-            dataIndex: 'NotOverlapped',
-            key: 'NotOverlapped',
+            dataIndex: 'notOverlapped',
+            key: 'notOverlapped',
             ellipsis: true,
         },
         {
             title: `${t('CommunicationDurationsOverlapped')}(μs)`,
-            dataIndex: 'Overlapped',
-            key: 'Overlapped',
+            dataIndex: 'overlapped',
+            key: 'overlapped',
             ellipsis: true,
         },
     ];
@@ -176,9 +176,9 @@ const useColMap = (): any => ({
     compute: useComputingStatisticsColumns(),
     computeDetail: useComputingDetailColumns(),
     communication: useCommunicationStatisticsColumns(),
-    CommunicationDetail: useCommunicationDetailColumns(),
-    'Communication(Overlapped)Detail': useCommunicationOverlappedDetailColumns(),
-    'Communication(Not Overlapped)Detail': useCommunicationNotOverlappedDetailColumns(),
+    communicationDetail: useCommunicationDetailColumns(),
+    communicationOverlappedDetail: useCommunicationOverlappedDetailColumns(),
+    communicationNotOverlappedDetail: useCommunicationNotOverlappedDetailColumns(),
 });
 
 const useTableSet = (timeFlag: string, setExpandedKeys?: any): any => {
@@ -334,8 +334,8 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
         const list: any[] = res?.summaryStatisticsItemList ?? [];
         const data = {
             acceleratorCore: 'HCCL',
-            Overlapped: list.find(item => item.overlapType === 'Communication(Overlapped)')?.duration,
-            NotOverlapped: list.find(item => item.overlapType === 'Communication(Not Overlapped)')?.duration,
+            overlapped: list.find(item => item.overlapType === 'Communication(Overlapped)')?.duration,
+            notOverlapped: list.find(item => item.overlapType === 'Communication(Not Overlapped)')?.duration,
         };
         setDataSource([data]);
     };
@@ -345,7 +345,7 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
         columns={columns}
         expandable={{
             expandedRowRender: (record: any) => <DetailTable record={record}
-                name={'CommunicationDetail' } rankId={ rankId} step={step}/>,
+                name={'communicationDetail' } rankId={ rankId} step={step}/>,
             expandedRowKeys,
             expandIcon: () => (<></>),
         }}
