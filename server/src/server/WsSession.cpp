@@ -214,8 +214,13 @@ void WsSession::OnRequestMessage(const std::string &data)
 
 void PrintResponseInfo(const Protocol::Response &response)
 {
-    ServerLog::Info("send response: ", response.command, ", result = ", response.result, ", request id = ",
-                    response.requestId, ", response id = ", response.id, "\n");
+    if (response.result) {
+        ServerLog::Info("send response success: ", response.command, ", request id = ",
+                        response.requestId, ", response id = ", response.id, "\n");
+    } else {
+        ServerLog::Info("send response failure: ", response.command, ", request id = ",
+                        response.requestId, ", response id = ", response.id, "\n");
+    }
 }
 
 void WsSession::OnResponse(std::unique_ptr<Protocol::Response> responsePtr)
@@ -286,7 +291,11 @@ void WsSession::SendEvent(Protocol::Event &event)
         Send(eventStr);
         ServerLog::Info("send event end.");
     });
-    ServerLog::Info("send event: ", event.event, ", result = ", event.result, ", event id = ", event.id);
+    if (event.result) {
+        ServerLog::Info("send event success: ", event.event, ", event id = ", event.id);
+    } else {
+        ServerLog::Info("send event failure: ", event.event, ", event id = ", event.id);
+    }
 }
 
 void WsSession::Start()
