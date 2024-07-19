@@ -43,6 +43,11 @@ const std::string FIELD_TASK_START_TIME = "Task Start Time(us)";
 const std::string FIELD_TASK_DURATION = "Task Duration(us)";
 const std::string FIELD_TASK_WAIT_TIME = "Task Wait Time(us)";
 
+const std::string ASCEND_PYTORCH_PROF = "AscendPyTorchprof";
+const std::string MSPROF = "Msprof";
+const std::string L1 = "L1";
+const std::string L0 = "L0";
+
 class KernelParse : public FileParser {
 public:
     static KernelParse &Instance();
@@ -58,12 +63,13 @@ private:
     const int maxThreadNum = 4;
     std::unique_ptr<ThreadPool> threadPool;
     std::map<std::string, std::future<void>> futureMap;
+    static std::map<std::string, std::function<void(const std::map<std::string, size_t> &dataMap,
+            const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> kernelParseMap;
     const std::string kernelDetailReg = R"((kernel_details|op_summary[_\d]*)\.csv$)";
 
-    static bool mapperToKernelDetail(std::map<std::string, size_t> dataMap,
-                              std::vector<std::string> row, const std::string &fileId, Kernel &kernel);
+    static void InitkernelParseMap();
 
-    std::map<std::string, std::vector<std::string>> GetKernelFiles(const std::vector<std::string>& paths);
+    static std::map<std::string, std::vector<std::string>> GetKernelFiles(const std::vector<std::string>& paths);
 
     static bool IsFileValid(const std::vector<std::string>& filePathList, const std::string &fileId,
                             const std::string& statusId, std::string &message);
@@ -74,8 +80,22 @@ private:
     static void PreParseTask(const std::vector<std::string>& filePathList, const std::string &fileId);
     static bool ParseTask(const std::vector<std::string>& filePathList, const std::string &fileId,
                           std::string &message);
+
+    static void ParseMsprofKernel(const std::map<std::string, size_t> &dataMap, const std::vector<std::string> &rows,
+                                  const std::string &fileId, Kernel &kernel);
+    static void ParseAscendPyTorchprofKernel(const std::map<std::string, size_t> &dataMap,
+                                             const std::vector<std::string> &rows, const std::string &fileId,
+                                             Kernel &kernel);
+    static void ParseMsprofKernelL0(const std::map<std::string, size_t> &dataMap,
+                                    const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
+    static void ParseAscendPyTorchprofKernelL0(const std::map<std::string, size_t> &dataMap,
+                                               const std::vector<std::string> &rows, const std::string &fileId,
+                                               Kernel &kernel);
+    static void ParsePublicNotL0(const std::map<std::string, size_t> &dataMap, const std::vector<std::string> &rows,
+                                 Kernel &kernel);
     static bool ParseKernelCsv(const std::string& filePath, const std::string &fileId, const std::string& statusId,
                         std::string &message, std::set<std::string>& devices);
+
     static bool InitParser(const std::vector<std::string>& filePathList, const std::string &fileId,
                            std::string &message);
     static void PostParseTask(const std::set<std::string> &devices, const std::string &fileId);

@@ -17,6 +17,10 @@ namespace Module {
 namespace Summary {
 using namespace Dic::Server;
 
+
+std::map<std::string, std::function<void(const std::map<std::string, size_t> &dataMap,
+        const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> KernelParse::kernelParseMap;
+
 KernelParse &KernelParse::Instance()
 {
     static KernelParse instance;
@@ -26,6 +30,7 @@ KernelParse &KernelParse::Instance()
 KernelParse::KernelParse()
 {
     threadPool = std::make_unique<ThreadPool>(KernelParse::maxThreadNum);
+    InitkernelParseMap();
 }
 
 KernelParse::~KernelParse()
@@ -33,6 +38,21 @@ KernelParse::~KernelParse()
     threadPool->ShutDown();
 }
 
+void KernelParse::InitkernelParseMap()
+{
+    kernelParseMap.emplace(ASCEND_PYTORCH_PROF + L1, std::bind(&KernelParse::ParseAscendPyTorchprofKernel,
+                                                               std::placeholders::_1, std::placeholders::_2,
+                                                               std::placeholders::_3, std::placeholders::_4));
+    kernelParseMap.emplace(MSPROF + L1, std::bind(&KernelParse::ParseMsprofKernel,
+                                                  std::placeholders::_1, std::placeholders::_2,
+                                                  std::placeholders::_3, std::placeholders::_4));
+    kernelParseMap.emplace(ASCEND_PYTORCH_PROF + L0, std::bind(&KernelParse::ParseAscendPyTorchprofKernelL0,
+                                                               std::placeholders::_1, std::placeholders::_2,
+                                                               std::placeholders::_3, std::placeholders::_4));
+    kernelParseMap.emplace(MSPROF + L0, std::bind(&KernelParse::ParseMsprofKernelL0,
+                                                  std::placeholders::_1, std::placeholders::_2,
+                                                  std::placeholders::_3, std::placeholders::_4));
+}
 
 std::map<std::string, std::vector<std::string>> KernelParse::GetKernelFiles(const std::vector<std::string> &paths)
 {
@@ -201,6 +221,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     std::map<std::string, size_t> dataMap;
     auto db = dynamic_cast<JsonSummaryDataBase*>(Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
     bool isHeader = true;
+    std::string type;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(statusId) ==
            Timeline::ParserStatus::RUNNING && getline(file, line)) {
         const std::basic_string<char>& basicString(line);
@@ -213,15 +234,19 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
                 message = "The header is incorrect or incomplete of " + filePath;
                 return false;
             }
+            type = dataMap.find(FIELD_NAME) != dataMap.end() ? ASCEND_PYTORCH_PROF : MSPROF;
+            type += dataMap.find(FIELD_INPUT_SHAPES) != dataMap.end() ? L1 : L0;
+            if (kernelParseMap.find(type) == kernelParseMap.end()) {
+                ServerLog::Error("Kernel detail type is empty. ");
+                return false;
+            }
             isHeader = false;
             continue;
         }
         Kernel kernel {};
-        if (!mapperToKernelDetail(dataMap, rowVector, fileId, kernel)) {
-            return false;
-        }
+        kernelParseMap[type](dataMap, rowVector, fileId, kernel);
         // 记录有多少device
-        devices.emplace(dataMap.count(DEVICE_ID) > 0 ? rowVector[dataMap[DEVICE_ID]] : fileId);
+        devices.emplace(dataMap.find(DEVICE_ID) != dataMap.end() ? rowVector[dataMap[DEVICE_ID]] : fileId);
         // 读取每一行数据写入kernel内
         db->InsertKernelDetail(kernel);
     }
@@ -295,52 +320,64 @@ void KernelParse::SetParseCallBack(const std::string& token)
     KernelParse::Instance().SetParseEndCallBack(func);
 }
 
-
-bool KernelParse::mapperToKernelDetail(std::map<std::string, size_t> dataMap,
-                                       std::vector<std::string> row, const std::string &fileId, Kernel &kernel)
+inline void KernelParse::ParseAscendPyTorchprofKernel(const std::map<std::string, size_t> &dataMap,
+                                                      const std::vector<std::string> &rows, const std::string &fileId,
+                                                      Kernel &kernel)
 {
-    size_t nameIndex;
-    size_t typeIndex;
-    size_t acceleratorIndex;
-    size_t startTimeIndex;
-    size_t durationIndex;
-    size_t waitTimeIndex;
+    ParseAscendPyTorchprofKernelL0(dataMap, rows, fileId, kernel);
+    ParsePublicNotL0(dataMap, rows, kernel); // 非Level0时才有input/output相关数据
+}
 
-    if (dataMap.find(FIELD_NAME) != dataMap.end()) {
-        startTimeIndex = dataMap.find(FIELD_START_TIME) != dataMap.end() ?
-                dataMap[FIELD_START_TIME] : dataMap[FIELD_TASK_START_TIME];
-        nameIndex = dataMap[FIELD_NAME];
-        typeIndex = dataMap[FIELD_TYPE];
-        acceleratorIndex = dataMap[FIELD_ACCELERATOR_CORE];
-        durationIndex = dataMap[FIELD_DURATION];
-        waitTimeIndex = dataMap[FIELD_WAIT_TIME];
-    } else {
-        startTimeIndex = dataMap[FIELD_TASK_START_TIME];
-        nameIndex = dataMap[FIELD_OP_NAME];
-        typeIndex = dataMap[FIELD_OP_TYPE];
-        acceleratorIndex = dataMap[FIELD_TASK_TYPE];
-        durationIndex = dataMap[FIELD_TASK_DURATION];
-        waitTimeIndex = dataMap[FIELD_TASK_WAIT_TIME];
-    }
-    kernel.rankId = dataMap.count(DEVICE_ID) != 0 ? row[dataMap[DEVICE_ID]] : fileId;
-    kernel.name = row[nameIndex];
-    kernel.stepId = dataMap.count(STEP_ID) != 0 ? row[dataMap[STEP_ID]] : "";
-    kernel.type = row[typeIndex];
-    kernel.acceleratorCore = row[acceleratorIndex];
-    kernel.startTime = NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(row[startTimeIndex]));
-    kernel.duration = atof(row[durationIndex].c_str());
-    kernel.waitTime = atof(row[waitTimeIndex].c_str());
-    kernel.blockDim = atof(row[dataMap[FIELD_BLOCK_DIM]].c_str());
-    if (dataMap.find(FIELD_INPUT_SHAPES) != dataMap.end()) { // Level0时无input/output相关数据
-        kernel.inputDataTypes = row[dataMap[FIELD_INPUT_DATA_TYPES]];
-        kernel.inputShapes = row[dataMap[FIELD_INPUT_SHAPES]];
-        kernel.inputFormats = row[dataMap[FIELD_INPUT_FORMATS]];
-        kernel.outputDataTypes = row[dataMap[FIELD_OUTPUT_DATA_TYPES]];
-        kernel.outputShapes = row[dataMap[FIELD_OUTPUT_SHAPES]];
-        kernel.outputFormats = row[dataMap[FIELD_OUTPUT_FORMATS]];
-    }
+inline void KernelParse::ParseMsprofKernel(const std::map<std::string, size_t> &dataMap,
+                                           const std::vector<std::string> &rows, const std::string &fileId,
+                                           Kernel &kernel)
+{
+    ParseMsprofKernelL0(dataMap, rows, fileId, kernel);
+    ParsePublicNotL0(dataMap, rows, kernel); // 非Level0时才有input/output相关数据
+}
 
-    return true;
+inline void KernelParse::ParseAscendPyTorchprofKernelL0(const std::map<std::string, size_t> &dataMap,
+                                                        const std::vector<std::string> &rows, const std::string &fileId,
+                                                        Kernel &kernel)
+{
+    size_t startTimeIndex = dataMap.find(FIELD_START_TIME) != dataMap.end() ?
+            dataMap.at(FIELD_START_TIME) : dataMap.at(FIELD_TASK_START_TIME);
+    kernel.rankId = dataMap.find(DEVICE_ID) != dataMap.end() ? rows[dataMap.at(DEVICE_ID)] : fileId;
+    kernel.name = rows[dataMap.at(FIELD_NAME)];
+    kernel.stepId = dataMap.find(STEP_ID) != dataMap.end() ? rows[dataMap.at(STEP_ID)] : "";
+    kernel.type = rows[dataMap.at(FIELD_TYPE)];
+    kernel.acceleratorCore = rows[dataMap.at(FIELD_ACCELERATOR_CORE)];
+    kernel.startTime = NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(rows[startTimeIndex]));
+    kernel.duration = atof(rows[dataMap.at(FIELD_DURATION)].c_str());
+    kernel.waitTime = atof(rows[dataMap.at(FIELD_WAIT_TIME)].c_str());
+    kernel.blockDim = atof(rows[dataMap.at(FIELD_BLOCK_DIM)].c_str());
+}
+
+inline void KernelParse::ParseMsprofKernelL0(const std::map<std::string, size_t> &dataMap,
+                                             const std::vector<std::string> &rows, const std::string &fileId,
+                                             Kernel &kernel)
+{
+    kernel.rankId = dataMap.find(DEVICE_ID) != dataMap.end() ? rows[dataMap.at(DEVICE_ID)] : fileId;
+    kernel.name = rows[dataMap.at(FIELD_OP_NAME)];
+    kernel.stepId = dataMap.find(STEP_ID) != dataMap.end() ? rows[dataMap.at(STEP_ID)] : "";
+    kernel.type = rows[dataMap.at(FIELD_OP_TYPE)];
+    kernel.acceleratorCore = rows[dataMap.at(FIELD_TASK_TYPE)];
+    kernel.startTime = NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(
+        rows[dataMap.at(FIELD_TASK_START_TIME)]));
+    kernel.duration = atof(rows[dataMap.at(FIELD_TASK_DURATION)].c_str());
+    kernel.waitTime = atof(rows[dataMap.at(FIELD_TASK_WAIT_TIME)].c_str());
+    kernel.blockDim = atof(rows[dataMap.at(FIELD_BLOCK_DIM)].c_str());
+}
+
+inline void KernelParse::ParsePublicNotL0(const std::map<std::string, size_t> &dataMap,
+                                          const std::vector<std::string> &rows, Kernel &kernel)
+{
+    kernel.inputDataTypes = rows[dataMap.at(FIELD_INPUT_DATA_TYPES)];
+    kernel.inputShapes = rows[dataMap.at(FIELD_INPUT_SHAPES)];
+    kernel.inputFormats = rows[dataMap.at(FIELD_INPUT_FORMATS)];
+    kernel.outputDataTypes = rows[dataMap.at(FIELD_OUTPUT_DATA_TYPES)];
+    kernel.outputShapes = rows[dataMap.at(FIELD_OUTPUT_SHAPES)];
+    kernel.outputFormats = rows[dataMap.at(FIELD_OUTPUT_FORMATS)];
 }
 
 bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
