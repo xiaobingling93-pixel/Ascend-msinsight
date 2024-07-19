@@ -469,6 +469,7 @@ export const ROOT_UNIT = unit<HostMetaData>({
 export const CounterUnit = unit<CounterMetaData>({
     name: 'Counter',
     pinType: 'move',
+    collapsible: false,
     renderInfo: (session: Session, metadata) => `${metadata.threadName}`,
     chart: chart({
         type: 'filledLine',

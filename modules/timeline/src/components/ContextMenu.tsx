@@ -14,9 +14,9 @@ import type { ChartInteractorHandles, InteractorMouseState } from './charts/Char
 import type { ThreadTrace, ThreadMetaData, CardMetaData } from '../entity/data';
 import type { TimeStamp } from '../entity/common';
 import connector from '../connection';
-import { unit } from '../entity/insight';
-import type { InsightUnit } from '../entity/insight';
+import { type ChartDesc, type InsightUnit, unit } from '../entity/insight';
 import { StyledTooltip } from './base/StyledTooltip';
+import type { StackStatusConfig } from '../entity/chart';
 export const MAX_ZOOM_COUNT = 10000;
 interface Position {
     left: string;
@@ -391,7 +391,70 @@ const getShowPythonFunctionButtonText = (session: Session, t: TFunction): string
         isFilteredPythonFunction = (session.unitsConfig.filterConfig.pythonFunction as Record<string, boolean>)?.[`${metadata.cardId}_${metadata.threadName}`] ?? false;
     }
 
-    return isFilteredPythonFunction ? t('Show python function') : t('Hide python function');
+    return isFilteredPythonFunction ? t('Show python call stack') : t('Hide python call stack');
+};
+
+const expandUnits = (_unit: InsightUnit, shouldExpand: boolean): void => {
+    if (_unit.children && _unit.children?.length > 0) {
+        _unit?.children?.forEach(childUnit => {
+            expandUnits(childUnit, shouldExpand);
+            childUnit.isExpanded = shouldExpand;
+            if (childUnit.name === 'Thread' && childUnit.collapsible) {
+                const chart = childUnit.chart as ChartDesc<'stackStatus'>;
+                (chart.config as StackStatusConfig).isCollapse = shouldExpand;
+                childUnit.collapseAction?.(childUnit);
+            }
+        });
+    }
+};
+const collapseOrExpandAll = (session: Session, menuItem?: MenuItemModel): void => {
+    const selectedUnit = session.selectedUnits[0];
+    const shouldExpand = menuItem?.key === 'expandAll';
+    runInAction(() => {
+        if (selectedUnit !== undefined) {
+            expandUnits(selectedUnit, shouldExpand);
+            selectedUnit.isExpanded = true;
+        }
+        session.renderTrigger = !session.renderTrigger;
+        session.contextMenu.isVisible = false;
+    });
+};
+
+const haveExpandedChildren = (_unit: InsightUnit): boolean => {
+    if (!_unit.collapsible || !_unit.children || _unit.children.length === 0) {
+        return false;
+    }
+
+    return _unit.children.some(child => (child.collapsible !== undefined && child.collapsible && child.isExpanded) || haveExpandedChildren(child));
+};
+
+const haveCollapsedChildren = (_unit: InsightUnit): boolean => {
+    if (!_unit.collapsible || !_unit.children || _unit.children.length === 0) {
+        return false;
+    }
+
+    return _unit.children.some(child => (child.collapsible !== undefined && child.collapsible && !child.isExpanded) || haveCollapsedChildren(child));
+};
+
+const isCollapseAllVisible = (session: Session): boolean => {
+    const selectedUnit = session.selectedUnits?.[0];
+    if (selectedUnit) {
+        return haveExpandedChildren(selectedUnit);
+    }
+    return false;
+};
+
+const isExpandAllVisible = (session: Session): boolean => {
+    const selectedUnit = session.selectedUnits?.[0];
+    if (selectedUnit) {
+        const isCollapsed = selectedUnit.collapsible && !selectedUnit.isExpanded;
+        const haveChildUnits = selectedUnit.children && selectedUnit.children.length > 0;
+        if (isCollapsed && haveChildUnits) {
+            return true;
+        }
+        return haveCollapsedChildren(selectedUnit);
+    }
+    return false;
 };
 
 function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
@@ -428,6 +491,8 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
         { name: t('Show All Hidden'), key: 'showAllHidden', event: showHidedUnit, disabled: false, visible: isShowHideText(session) },
         { name: t('Show in events view'), key: 'showInEventsView', event: showInEventsView, disabled: false, visible: isShowEventMenu(session) },
         { name: getShowPythonFunctionButtonText(session, t), key: 'showPythonFunction', event: showPythonFunction, disabled: false, visible: isShowPythonFunction(session) },
+        { name: t('Collapse all'), key: 'collapseAll', event: collapseOrExpandAll, disabled: false, visible: isCollapseAllVisible(session) },
+        { name: t('Expand all'), key: 'expandAll', event: collapseOrExpandAll, disabled: false, visible: isExpandAllVisible(session) },
     ];
 
     return <>

@@ -305,7 +305,7 @@ Omit<InsightUnitParams<T, Record<string, unknown>, Record<string, unknown>, Reco
         spreadUnits = wrapSpread(params.spreadUnits);
         phase: UnitPhase = 'configuring';
         searchConfig = params.searchConfig;
-        collapsible = true;
+        collapsible = params.collapsible ?? true;
         progress: number = 0; // 解析进度：实际解析进度
         showProgress: boolean = false; // 解析进度：是否显示进度条
         havePythonFunction: boolean = false; // 是否采集了调用栈信息

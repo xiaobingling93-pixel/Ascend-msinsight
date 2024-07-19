@@ -19,8 +19,10 @@
       "Hide": "Hide",
       "Show All Hidden": "Show All Hidden",
       "Show in events view": "Show in events view",
-      "Show python function": "Show python function",
-      "Hide python function": "Hide python function"
+      "Show python call stack": "Show python call stack",
+      "Hide python call stack": "Hide python call stack",
+      "Collapse all": "Collapse all",
+      "Expand all": "Expand all"
     },
     "sliceDetail": {
       "Slice Detail": "Slice Detail",
