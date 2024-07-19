@@ -9,7 +9,7 @@ export abstract class BasePlatform {
 };
 
 export const removeAndAddEventListener = (
-    resolve: Function,
+    resolve: (params: any) => void,
 ): void => {
     function onMessage(event: MessageEvent): void {
         const message = event.data;

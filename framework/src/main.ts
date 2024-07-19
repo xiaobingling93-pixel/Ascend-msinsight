@@ -33,6 +33,5 @@ document.onkeydown = (event): boolean => event.key !== 'F5' && !(event.key === '
 declare global {
     interface Window {
         cefQuery: (obj: CefQueryType) => void;
-        request: Function;
     }
 }

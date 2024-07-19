@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
 */
-
 import { BasePlatform, removeAndAddEventListener } from './BasePlatform';
 
 export class VsCodePlatform extends BasePlatform {
@@ -25,6 +24,7 @@ export class VsCodePlatform extends BasePlatform {
             removeAndAddEventListener(resolve);
         });
     }
+
     sendMessage = (ceq: any): void => {};
 
     private getAbsolutePath(path: string): string {

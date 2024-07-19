@@ -18,7 +18,7 @@ export class TabState {
     search?: { fieldName: string; content?: string };
     options1?: OptionType[];
     options2?: OptionType[];
-    switch?: { checked: boolean; tips: string; changeCallBack: Function };
+    switch?: { checked: boolean; tips: string; changeCallBack: (params: boolean) => void };
 
     constructor(conf?: Partial<TabState>) {
         makeAutoObservable(this, { data: observable.ref });

@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
 */
-
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import * as React from 'react';

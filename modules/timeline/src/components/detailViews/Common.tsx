@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
 */
-
 import type { CompareFn, FilterConfirmProps } from 'antd/es/table/interface';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

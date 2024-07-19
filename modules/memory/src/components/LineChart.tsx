@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -12,23 +11,22 @@ import { convertTime, safeStr, useChartCharacter } from './Common';
 
 interface IProps {
     graph: Graph;
-    hAxisTitle?: string;
-    vAxisTitle?: string;
+    hAxisTitle: string;
+    vAxisTitle: string;
     onSelectionChanged?: (start: number, end: number) => void;
     record?: any;
     isDark: boolean;
     isStatic: boolean;
 }
 
-type T = string | undefined;
-const _getOriginOption = (graphTitle: T, hAxisTitle: T, vAxisTitle: T, isDark: boolean, isStatic: boolean): echarts.EChartsOption => {
+const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolean, isStatic: boolean): echarts.EChartsOption => {
     return {
         title: {
             text: '',
         },
         tooltip: {
             trigger: 'axis',
-            formatter: function (params: any): string {
+            formatter: (params: any): string => {
                 let res = `${isStatic ? safeStr(params?.[0]?.name) : convertTime(params?.[0]?.name)} <br/>`;
                 for (const item of params) {
                     if (!isNaN(Number(item?.value?.[item?.encode?.y?.[0]]))) {
@@ -92,7 +90,7 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
             },
         },
     };
-    option = {
+    const newOption = {
         ...option,
         color: [
             '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de',
@@ -112,14 +110,14 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
         },
         series: Array(graph.columns.length - 1).fill(lineSerie),
     };
-    return option;
+    return newOption;
 };
 
 const _showGraph = (myChart: echarts.ECharts, selectedPoints: React.MutableRefObject<number[]>,
     props: IProps, isDark: boolean, isStatic: boolean): void => {
     const { graph, hAxisTitle, vAxisTitle, onSelectionChanged } = props;
 
-    let option = _getOriginOption(graph.title, hAxisTitle, vAxisTitle, isDark, isStatic);
+    let option = _getOriginOption(hAxisTitle, vAxisTitle, isDark, isStatic);
     option = _handleOption(option, graph);
 
     myChart.setOption(option, true);
@@ -175,8 +173,12 @@ const _handleEvents = (chartObj: echarts.ECharts | undefined, props: IProps,
             const startId = binarySearch(graph.rows, Number(record?.allocationTime ?? record?.nodeIndexStart), compareFun);
             const endId = binarySearch(graph.rows, Number(record?.releaseTime ?? record?.nodeIndexEnd), compareFun);
             const selection = [];
-            startId >= 0 && selection.push(startId);
-            endId >= 0 && selection.push(endId);
+            if (startId >= 0) {
+                selection.push(startId);
+            }
+            if (endId >= 0) {
+                selection.push(endId);
+            }
             chartObj.dispatchAction({
                 type: 'downplay',
                 seriesName: t('Operators Allocated'),
@@ -218,7 +220,7 @@ export const LineChart: React.FC<IProps> = (props) => {
     React.useLayoutEffect(() => {
         const element = graphRef.current;
         if (!element) {
-            return;
+            return () => {};
         }
         element.oncontextmenu = (): boolean => { return false; };
 

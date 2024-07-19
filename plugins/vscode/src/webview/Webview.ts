@@ -1,7 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-
 import path = require('path');
 import * as vscode from 'vscode';
 import type { WebviewManager } from './WebviewManager';
@@ -82,9 +81,5 @@ export abstract class Webview {
             return;
         }
         this.newPanel();
-    }
-
-    dispose(): void {
-        console.log('profiler is closed');
     }
 }

@@ -106,6 +106,7 @@ const handleDelete = ({ event, deleteSignal, uid, props, setDeleteSignal, setTim
     event?.stopPropagation();
     const flagList = props.session.timelineMaker.timelineFlagList;
     const selectedFlag = props.session.timelineMaker.selectedFlag;
+    const newDeleteSignal = (deleteSignal + 1) % 10;
     if (selectedFlag?.uid === uid) {
         runInAction(() => {
             props.session.timelineMaker.selectedFlag = undefined;
@@ -126,8 +127,7 @@ const handleDelete = ({ event, deleteSignal, uid, props, setDeleteSignal, setTim
         }
         flagList.splice(i, 1);
     }
-    deleteSignal = (deleteSignal + 1) % 10;
-    setDeleteSignal(deleteSignal);
+    setDeleteSignal(newDeleteSignal);
     runInAction(() => {
         props.session.timelineMaker.refreshTrigger += 1;
     });

@@ -99,7 +99,7 @@ declare module '@emotion/react' {
         colorPalette: ColorPalette & {
             transparentMask: string;
         };
-        schedulingBorderColorPalette: ColorPalette;// 点选时延信息边框色系
+        schedulingBorderColorPalette: ColorPalette; // 点选时延信息边框色系
         grayscaleColor: string; // 泳道元素的灰度颜色
         filterColor: string; // 过滤模块字体颜色
         filterTipColor: string; // 过滤模块提示文字字体颜色

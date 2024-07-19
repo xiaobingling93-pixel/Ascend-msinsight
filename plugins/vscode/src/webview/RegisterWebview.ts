@@ -98,7 +98,6 @@ export class RegisterWebview extends Webview {
     }
 
     dispose(): void {
-        console.log('profiler is closed!');
         clearInterval(this.serverCheckSchedule);
         this.server?.kill();
         this.webviewManger.dispose();
