@@ -29,8 +29,9 @@ public:
         sql = "";
         orderByStr = "";
     }
-    Table &Select(const std::string &str)
+    Table &Select(std::string_view strView)
     {
+        std::string str{strView};
         if (std::empty(selectStr)) {
             selectStr = "SELECT " + str;
         } else {
@@ -40,8 +41,9 @@ public:
         return *this;
     }
 
-    template <typename... Args> Table &Select(const std::string &str, const Args &... args)
+    template <typename... Args> Table &Select(std::string_view strView, Args ... args)
     {
+        std::string str{strView};
         if (std::empty(selectStr)) {
             selectStr = "SELECT " + str;
         } else {
@@ -52,8 +54,9 @@ public:
         return *this;
     }
 
-    Table &Eq(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &Eq(std::string_view strView, std::variant<uint32_t, uint64_t, std::string> value)
     {
+        std::string str{strView};
         conditionStr += " AND " + str + " = ? ";
         values.emplace_back(value);
         return *this;
@@ -73,15 +76,17 @@ public:
         return *this;
     }
 
-    Table &LessEq(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &LessEq(std::string_view strView, std::variant<uint32_t, uint64_t, std::string> value)
     {
+        std::string str{strView};
         conditionStr += " AND " + str + " <= ? ";
         values.emplace_back(value);
         return *this;
     }
 
-    Table &Greater(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &Greater(std::string_view strView, std::variant<uint32_t, uint64_t, std::string> value)
     {
+        std::string str{strView};
         conditionStr += " AND " + str + " > ? ";
         values.emplace_back(value);
         return *this;
@@ -94,12 +99,13 @@ public:
         return *this;
     }
 
-    Table &OrderBy(const std::string &columnName, TableOrder order)
+    Table &OrderBy(std::string_view columnName, TableOrder order)
     {
+        std::string strColumnName{columnName};
         if (std::empty(orderByStr)) {
-            orderByStr = " ORDER BY " + columnName;
+            orderByStr = " ORDER BY " + strColumnName;
         } else {
-            orderByStr += " , " + columnName;
+            orderByStr += " , " + strColumnName;
         }
         if (order == TableOrder::DESC) {
             orderByStr += " DESC ";
@@ -208,7 +214,7 @@ protected:
         orderByStr.clear();
     }
 
-    virtual std::unordered_map<std::string, assign> &GetAssignMap() = 0;
+    virtual std::unordered_map<std::string_view, assign> &GetAssignMap() = 0;
     virtual std::string &GetTableName() = 0;
 };
 }

@@ -31,7 +31,7 @@ public:
         AddMemberHelper(json, key, std::forward<T>(value), allocator);
     }
 
-    template <typename T> static inline void AddConstMember(json_t &json, const std::string &key, T &&value,
+    template <typename T> static inline void AddConstMember(json_t &json, std::string_view key, T &&value,
                                                        RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
     {
         AddConstMemberHelper(json, key, std::forward<T>(value), allocator);
@@ -279,10 +279,11 @@ private:
                        json_t().SetString(value.c_str(), value.length(), allocator), allocator);
     }
 
-    static inline void AddConstMemberHelper(json_t &json, const std::string &key, const std::string &value,
+    static inline void AddConstMemberHelper(json_t &json, std::string_view key, const std::string &value,
                                        RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
     {
-        json.AddMember(Value(key.c_str(), allocator),
+        std::string strKey{key};
+        json.AddMember(Value(strKey.c_str(), allocator),
                        json_t().SetString(value.c_str(), value.length(), allocator), allocator);
     }
 };

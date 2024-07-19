@@ -10,16 +10,16 @@ namespace Module {
 namespace Timeline {
 #pragma region << Slice Table Info>>
 namespace SliceColumn {
-const std::string ID = "id";
-const std::string TIMESTAMP = "timestamp";
-const std::string DURATION = "duration";
-const std::string NAME = "name";
-const std::string TRACKID = "track_id";
-const std::string CAT = "cat";
-const std::string ARGS = "args";
-const std::string CNAME = "cname";
-const std::string ENDTIME = "end_time";
-const std::string FLAGID = "flag_id";
+constexpr std::string_view ID = "id";
+constexpr std::string_view TIMESTAMP = "timestamp";
+constexpr std::string_view DURATION = "duration";
+constexpr std::string_view NAME = "name";
+constexpr std::string_view TRACKID = "track_id";
+constexpr std::string_view CAT = "cat";
+constexpr std::string_view ARGS = "args";
+constexpr std::string_view CNAME = "cname";
+constexpr std::string_view ENDTIME = "end_time";
+constexpr std::string_view FLAGID = "flag_id";
 }
 #pragma endregion
 }

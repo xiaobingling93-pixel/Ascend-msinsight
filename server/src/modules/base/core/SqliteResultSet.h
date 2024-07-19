@@ -21,7 +21,7 @@ public:
     ~SqliteResultSet() = default;
     int GetErrorCode() const;
     std::string GetErrorMessage() const;
-    const std::unordered_map<std::string, int> GetColumns() const;
+    const std::unordered_map<std::string_view, int> GetColumns() const;
 
     /**
      * 将光标移动到下一行，如果没有下一行，返回false，需要先调用next()，再读数据
@@ -71,7 +71,7 @@ public:
         return sqlite3_column_double(stmt, index);
     }
 
-    inline std::string GetString(const std::string &columnName)
+    inline std::string GetString(std::string_view columnName)
     {
         return GetString(columns.at(columnName));
     }
@@ -91,7 +91,7 @@ public:
         return GetUint32(columns.at(columnName));
     }
 
-    inline uint64_t GetUint64(const std::string &columnName)
+    inline uint64_t GetUint64(std::string_view columnName)
     {
         return GetUint64(columns.at(columnName));
     }
@@ -103,7 +103,7 @@ public:
 
 private:
     sqlite3_stmt *stmt = nullptr;
-    std::unordered_map<std::string, int> columns;
+    std::unordered_map<std::string_view, int> columns;
     int lastErrorCode = SQLITE_OK;
 };
 } // end of namespace Module

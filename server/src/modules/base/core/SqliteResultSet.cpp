@@ -26,7 +26,7 @@ std::string SqliteResultSet::GetErrorMessage() const
     return sqlite3_errmsg(sqlite3_db_handle(stmt));
 }
 
-const std::unordered_map<std::string, int> SqliteResultSet::GetColumns() const
+const std::unordered_map<std::string_view, int> SqliteResultSet::GetColumns() const
 {
     return columns;
 }
