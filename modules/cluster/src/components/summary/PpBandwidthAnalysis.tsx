@@ -4,7 +4,7 @@
 
 import { observer } from 'mobx-react-lite';
 import type { Session } from '../../entity/session';
-import { Col, Empty, Layout, Row } from 'antd';
+import { Col, Empty, Row } from 'antd';
 import {
     addResizeEvent,
     chartVisbilityListener,
@@ -26,7 +26,7 @@ const PpBandwidthAnalysis = observer(({ session }: { session: Session }) => {
         { step: '', stage: '' });
 
     return (
-        <Layout>
+        <div>
             <Container
                 content={ <Filter session={session} setAllStageIds={setAllStageIds} conditions={conditions} setConditions={setConditions}/>}
             />
@@ -34,7 +34,7 @@ const PpBandwidthAnalysis = observer(({ session }: { session: Session }) => {
                 style={{ minWidth: '630px' }}
                 content={ <PPBandwidthChart conditions={conditions} allStageIds={allStageIds} session={session}/>}
             />
-        </Layout>
+        </div>
     );
 });
 

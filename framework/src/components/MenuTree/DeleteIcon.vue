@@ -5,6 +5,6 @@ import { indent } from './types';
 </script>
 <template>
     <IconContainer :width="indent">
-        <BinIcon/>
+        <BinIcon class="mi-icon" />
     </IconContainer>
 </template>

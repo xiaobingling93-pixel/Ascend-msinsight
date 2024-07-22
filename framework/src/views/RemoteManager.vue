@@ -77,21 +77,12 @@ header {
     align-items: center;
     min-width: 80px;
     padding: 0 15px 0 5px;
-    background-color: var(--header-background-color);
+    background: var(--mi-bg-color-light);
 }
 
 .theme-toggle {
     --el-switch-off-color: rgb(141, 141, 141);
     --el-switch-on-color: rgb(60, 60, 60);
-}
-
-.container {
-    flex-grow: 1;
-    background-color: var(--color-background);
-}
-
-.icon-button {
-    border-radius: var(--border-radius);
 }
 
 .icon-button:hover {

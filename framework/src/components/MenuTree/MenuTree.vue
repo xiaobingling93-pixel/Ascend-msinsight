@@ -55,7 +55,7 @@ function addRemoteUnderProject(node:any, e: MouseEvent) {
                 <div :class="['contentNode', {activateNode:data.id === activateNodeId}]">
                     <span class="contentBody">
                         <LocalIcon v-if="node.level === 1" style="flex: none"/>
-                        <el-tooltip :content="node.label" effect="light">
+                        <el-tooltip :content="node.label" effect="light" :show-after="200">
                             <EditableText  v-if="node.level === 1" :tree-node="node" :key="data.id + data.label"></EditableText>
                             <span v-else class="contentNodeText">{{ node.label }} </span>
                         </el-tooltip>
@@ -85,15 +85,12 @@ function addRemoteUnderProject(node:any, e: MouseEvent) {
     padding: 0.5rem 0.8rem;
 }
 
-.el-tree {
-    --el-tree-node-hover-bg-color: var(--color-border-hover);
-    color: var(--dataPath-color) !important;
-}
-::v-deep(.activateNode) {
-  background-color:var(--treeNode-onclick);
+
+:deep(.el-tree-node__content:has(.activateNode)) {
+  background-color: var(--mi-bg-color-light);
 }
 
-::v-deep(.contentNode) {
+.contentNode {
     position: relative;
     display: flex;
     user-select: none;
@@ -103,29 +100,28 @@ function addRemoteUnderProject(node:any, e: MouseEvent) {
     width: calc(100% - 18px);
 }
 
-::v-deep(.contentBody) {
+.contentBody {
     display: flex;
     align-items: center;
     width: 0;
     flex: 1 1 auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
-::v-deep(.contentNodeText) {
+.contentNodeText {
     padding: 0 0 0 2px;
     font-size: 12px;
-    color: var(--treeNode-color);
+    color: var(--mi-text-color-tertiary);
     font-weight: 400;
     overflow: hidden;
     white-space: nowrap;
+    text-overflow: ellipsis;
 }
-
-
-::v-deep(.el-popper.is-dark) {
-    color: red;
+:deep(.el-tree-node__children .el-tree-node:focus > .el-tree-node__content) {
+    background-color: transparent;
 }
-
+:deep(.el-tree-node__children .el-tree-node__content:hover) {
+    background-color: transparent;
+}
 .btn-box{
   display: flex;
   align-items: center;

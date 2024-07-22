@@ -43,4 +43,5 @@ declare module 'antd' {
     export const Table;
     export const notification;
     export const Progress;
+    export const Tabs;
 }

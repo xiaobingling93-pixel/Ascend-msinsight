@@ -3,10 +3,10 @@
  */
 import type { Theme } from '@emotion/react';
 export const dark: Theme = {
-    backgroundColor: 'rgb(30, 30, 30)', // 主界面背景色
+    backgroundColor: '#1f2329', // 主界面背景色
     timeInsightIcon: '#86AD53', // time Insight 图标颜色
     allocationInsightIcon: '#9E644F', // allocation Insight 图标颜色
-    contentBackgroundColor: 'rgb(30, 30, 30)', // 区域内容背景色
+    contentBackgroundColor: '#1f2329', // 区域内容背景色
     buttonBackgroundColor: '#4C4C4C', // 模板、按钮背景色
     okBackgroundColor: '#5391FF', // ok按钮背景色
     selectBackgroundColor: '#4c4c4c', // session选中背景色

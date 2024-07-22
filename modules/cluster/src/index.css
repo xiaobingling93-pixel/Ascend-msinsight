@@ -1,19 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-code {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
-
-::-webkit-scrollbar-thumb {
-    background-color: rgba(127, 127, 127, .5);
-    z-index: 100;
-    border-radius: 5px;
-    transition: .3s background-color;
-}
-
-
 .theme_dark *:not(path,svg) {
     color: white;
 }
@@ -35,10 +22,6 @@ code {
     background-color: var(--grey60) !important;
 }
 
-
-.theme_dark .bandwidthChart > div {
-    background: var(--grey95);
-}
 
 .theme_dark .ant-table-tbody > tr > td {
     border-bottom: 1px solid var(--grey85);

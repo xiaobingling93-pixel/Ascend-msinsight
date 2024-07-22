@@ -1,0 +1,97 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
+:root,
+html.dark {
+    --el-color-primary: var(--mi-color-primary);
+    --el-color-success: var(--mi-color-success);
+    --el-color-warning: var(--mi-color-warning);
+    --el-color-danger: var(--mi-color-danger);
+    --el-color-info: var(--mi-color-info);
+    --el-bg-color: var(--mi-bg-color);
+    --el-text-color-primary: var(--mi-text-color-primary);
+    --el-text-color-secondary: var(--mi-text-color-secondary);
+    --el-text-color-placeholder: var(--mi-text-color-placeholder);
+    --el-border-color: var(--mi-border-color);
+    --el-border-color-light: var(--mi-border-color-light);
+    --el-border-color-lighter: var(--mi-border-color-lighter);
+    --el-border-color-extra-light: var(--mi-border-color-extra-light);
+    --el-font-family: var(--mi-font-family);
+}
+
+.el-dialog {
+    --el-dialog-title-font-size: var(--el-font-size-medium);
+    --el-dialog-padding-primary: 24px;
+    --el-dialog-border-radius: var(--el-border-radius-base);
+}
+.el-dialog__body {
+    padding: var(--el-dialog-padding-primary);
+}
+.el-dialog__header {
+    padding-top: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--el-border-color);
+    margin-right: 0;
+}
+.el-dialog__headerbtn {
+    top: 2px;
+}
+.el-dialog__title {
+    font-weight: 500;
+}
+.el-dialog__footer {
+    text-align: center;
+}
+
+.el-popper {
+    --el-popper-border-radius: var(--el-border-radius-small);
+}
+.el-popper.is-light,
+.el-popper.is-dark,
+.el-popover.el-popper {
+    background: var(--mi-bg-color-light);
+    color: var(--el-text-color);
+    border-color: var(--el-border-color);
+}
+.el-popper.is-light .el-popper__arrow::before,
+.el-popper.is-dark .el-popper__arrow::before {
+    border: 1px solid var(--el-border-color);
+    background: var(--mi-bg-color-light);
+}
+
+.el-tree {
+    --el-tree-node-hover-bg-color: var(--mi-bg-color-light);
+    --el-tree-text-color: var(--el-text-color-secondary);
+    background: transparent;
+}
+
+.el-menu-item {
+    margin-right: 1px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 30px;
+    user-select: none;
+}
+.el-menu--horizontal.el-menu {
+    border-bottom: none;
+}
+.el-menu--horizontal > .el-menu-item.active {
+    color: var(--mi-color-primary);
+}
+.el-menu-item.active:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: calc(100% - 60px);
+    height: 1px;
+    background-color: #007aff;
+    left: 30px;
+}
+
+.el-menu--horizontal .el-menu-item:not(.is-disabled):focus,
+.el-menu--horizontal .el-menu-item:not(.is-disabled):hover {
+    color: var(--el-color-primary);
+    background-color: var(--mi-bg-color-dark);
+}

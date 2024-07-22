@@ -18,7 +18,7 @@ export const UnitProgress = ({ realProgress, showProgress }: { realProgress: num
             setIsShowProgress(showProgress);
         }
     }, [realProgress, showProgress]);
-    return <div >
+    return <div style={{ textAlign: 'center' }}>
         {isShowProgress ? <Progress percent={progress} type="line" size="small"></Progress> : null}
     </div>;
 };

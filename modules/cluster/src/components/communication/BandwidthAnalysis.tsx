@@ -8,7 +8,7 @@ import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
 import type { PlainLegendComponentOption } from 'echarts';
-import { Col, Layout, Row, Table, Empty } from 'antd';
+import { Col, Row, Table, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import { Container, addResizeEvent, COLOR, commonEchartsOptions } from '../Common';
@@ -102,7 +102,7 @@ const BandwidthAnalysis = observer((props:
 { iterationId: string; rankId: number; operatorName: string; stage: string }) => {
     const { t } = useTranslation('communication');
     return (
-        <Layout>
+        <div>
             <Container
                 style={{ minWidth: '1000px' }}
                 title={t('sessionTitle.PacketDistribution')}
@@ -113,7 +113,7 @@ const BandwidthAnalysis = observer((props:
                 title={t('sessionTitle.BandwidthAnalysis')}
                 content={ <BandwidthTable {...props}/> }
             />
-        </Layout>
+        </div>
     );
 });
 

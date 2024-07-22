@@ -1,11 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-/*子模块共用dark样式*/
-.theme_dark #root {
-    background: var(--grey95);
-}
-
 .theme_dark .h5 {
     color: var(--whiteblue) !important;
 }
@@ -27,35 +22,19 @@
     box-shadow: rgba(0, 0, 0, 0.3) 1px 2px 10px;
 }
 
-.theme_dark .common-tabcontent {
-    background: var(--grey85);
-}
-
 .theme_dark .common-title-bottom {
     color: var(--whiteblue) !important;
 }
 
 
 .theme_dark .fullbox {
-    background: var(--grey95);
+    background: var(--mi-bg-color);
 }
 
 .theme_dark .tan-box > div > .bottomC, .theme_dark .tan-box > div {
     background: none;
 }
 
-.theme_dark .container-box {
-    background: var(--grey95);
-}
-
 .theme_dark .container-header {
     background: var(--grey70);
-}
-
-.theme_dark .container-body {
-    background: var(--grey95);
-}
-
-.theme_dark .chartDiv {
-    background: var(--grey95);
 }

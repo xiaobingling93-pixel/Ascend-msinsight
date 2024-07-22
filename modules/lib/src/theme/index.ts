@@ -6,7 +6,7 @@ import { light } from './light';
 import { dark } from './dark';
 import ThemeStore from '../utils/ThemeStore';
 import './emotion.d';
-
+export { GlobalStyles } from './Global';
 declare global {
     interface Window {
         setTheme: (isDark: boolean) => void;

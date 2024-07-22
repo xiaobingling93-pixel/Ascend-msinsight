@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Divider } from 'antd/lib/index';
 import styled from '@emotion/styled';
-import { Button, Select } from 'antd';
+import { Button } from 'antd';
 import {
     getColumnSearchProps,
     getDefaultColumData,
@@ -44,6 +44,7 @@ import type { InsightUnit } from '../../entity/insight';
 import { hashToNumber } from '../../utils/colorUtils';
 import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
 import { EventDetail } from './EventsView';
+import { StyledSelect } from '../base/StyledSelect';
 
 export const DETAIL_HEADER_HEIGHT_ETC_PX = 130;
 const Container = styled.div`
@@ -75,6 +76,21 @@ const SelectContainer = styled.div`
     }
 `;
 
+const AsideSelectList = styled.div`
+    padding: 5px 15px;
+
+    & .aside-select-item {
+        cursor: pointer;
+        color: ${(props): string => props.theme.textColorPrimary};
+        + .aside-select-item {
+            margin-top: 4px;
+        }
+        &.selected{
+            color: ${(props): string => props.theme.primaryColor};
+        }
+    }
+`;
+
 interface ConditionType {
     options: string[];
     value: string;
@@ -98,7 +114,7 @@ export const SystemView = observer((props: any) => {
             setViewOption(2);
         }
     }, [props.session.showEvent]);
-    return (<Container className={'theme-view'}>
+    return (<Container>
         <div style={{ display: 'flex', flexDirection: 'column', overflow: 'auto', width: '250px' }}>
             <ViewSelect viewOption={viewOption} handleViewChange={handleViewChange}/>
             {viewOption !== 2 && (<RankFilter session={props.session} viewOption={viewOption} handleChange={handleChange}></RankFilter>)}
@@ -115,7 +131,7 @@ const ViewSelect = observer((props: any) => {
     const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }];
     return (
         <div className={'systemViewSelect'}>
-            <Select style={{ width: 180 }} value={viewOption} onChange={handleViewChange} options={options}/>
+            <StyledSelect width={180} value={viewOption} onChange={handleViewChange} options={options}/>
         </div>
     );
 });
@@ -157,9 +173,9 @@ export const RankFilter = observer((props: any): JSX.Element => {
                 name={t('Host')}
                 nameStyle={{ width: '90px', margin: '0px 0px 0px 10px' }}
                 style={{ margin: '0px 10px 10px 0px' }}
-                content={(<Select
+                content={(<StyledSelect
                     value={hostCondition.value}
-                    style={{ width: 120 }}
+                    width={120}
                     onChange={(value: string): void => setHostCondition({ ...hostCondition, value })}
                     options={hostCondition.options.map((host) => ({ value: host, label: host }))}
                 />
@@ -170,9 +186,9 @@ export const RankFilter = observer((props: any): JSX.Element => {
             name={t('Rank ID')}
             nameStyle={{ width: '90px', margin: '0px 0px 0px 10px' }}
             style={{ margin: '0px 10px 10px 0px' }}
-            content={(<Select
+            content={(<StyledSelect
                 value={rankIdCondition.value}
-                style={{ width: 120 }}
+                width={120}
                 onChange={onRankIdChanged}
                 options={rankIdCondition.options.map((rankId) => {
                     return {
@@ -209,11 +225,11 @@ const SelectList = observer((props: any) => {
         default:
             break;
     }
-    return (<div className={'selectLayer'}>
+    return (<AsideSelectList>
         {
             systemViewItems.map((item, index) =>
                 (<div
-                    className={selectedKey === index ? 'selected' : ''}
+                    className={`aside-select-item ${selectedKey === index ? 'selected' : ''}`}
                     key={index}
                     onClick={(): void => handleClick(index)}
                 >
@@ -221,7 +237,7 @@ const SelectList = observer((props: any) => {
                 </div>
                 ))
         }
-    </div>
+    </AsideSelectList>
     );
 });
 

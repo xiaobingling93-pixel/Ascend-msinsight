@@ -28,7 +28,7 @@ const ArrowController = styled.div`
 `;
 
 export const StyledSelect = styled((props: SelectProps &
-{ width: number; height: number; backgroundColor?: string; itemPaddingLeft?: number; itemPaddingRight?: number }) =>
+{ width: number; height?: number; backgroundColor?: string; itemPaddingLeft?: number; itemPaddingRight?: number }) =>
     <ArrowController>
         <Select
             suffixIcon={<StyledPullDownIcon/>}
@@ -39,29 +39,27 @@ export const StyledSelect = styled((props: SelectProps &
     </ArrowController>)`
         .ant-select-selector {
             border-radius: 4px !important;
-            border: none !important;
             box-shadow: none !important;
-            background-color: ${(props): string => props.backgroundColor ?? props.theme.unitTagInfoBackgroundColor} !important;
+            background-color: ${(props): string => props.backgroundColor ?? props.theme.bgColor} !important;
             padding: 0 11px 0 0 !important;
 
             .ant-select-selection-item {
                 padding-left: ${(props): number => props.itemPaddingLeft ?? 15}px;
                 padding-right: ${(props): number => props.itemPaddingRight ?? 0}px;
-                line-height: ${(props): number => props.height}px;
+                line-height: ${(props): number => props.height ?? 32}px;
             }
 
-            height: ${(props): number => props.height}px !important;
+            height: ${(props): number => props.height ?? 32}px !important;
 
             .ant-select-selection-placeholder {
-                line-height: ${(props): number => props.height}px;
+                line-height: ${(props): number => props.height ?? 32}px;
             }
         }
 
         .ant-select-dropdown {
-            background-color: ${(props): string => props.theme.contentBackgroundColor};
-            border-radius: 14px;
+            background-color: ${(props): string => props.theme.bgColor};
             .ant-select-item-option-content {
-                color: ${(props): string => props.theme.fontColor};
+                color: ${(props): string => props.theme.textColorPrimary};
             }
             width: unset !important;
             .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
@@ -73,10 +71,10 @@ export const StyledSelect = styled((props: SelectProps &
         }
 
         input {
-            height: ${(props): number => props.height}px !important;
+            height: ${(props): number => props.height ?? 32}px !important;
         }
 
-        color: ${(props): string => props.theme.fontColor};
+        color: ${(props): string => props.theme.textColorPrimary};
         width: ${(props): number => props.width}px;
-        height: ${(props): number => props.height}px;
+        height: ${(props): number => props.height ?? 32}px;
 `;

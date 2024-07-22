@@ -77,14 +77,6 @@
     border-bottom: 1px solid var(--grey95);
 }
 
-.theme_dark .ant-tabs-nav {
-    background: var(--grey83);
-}
-
-.theme_dark .ant-tabs.ant-tabs-top {
-    background: var(--grey85);
-}
-
 /*
  * progress组件相关配置
  */

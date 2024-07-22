@@ -46,12 +46,20 @@ const blurInput = () => {
 </script>
 
 <template>
-  <div>
-    <span v-show="!editing" @contextmenu="handleContextMenu" class="contentText">{{ editText }}</span>
+  <div class="title-box">
+    <div v-show="!editing" @contextmenu="handleContextMenu" class="content-text">{{ editText }}</div>
     <input v-show="editing" ref="inputRef" type="text" v-model="editText" @click.stop @blur="hideEditBox" @keyup.enter="blurInput" maxlength="500" autofocus>
   </div>
 </template>
 
 <style scoped>
-
+.title-box {
+    overflow: hidden;
+}
+.content-text {
+    color: var(--mi-text-color-primary);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 </style>

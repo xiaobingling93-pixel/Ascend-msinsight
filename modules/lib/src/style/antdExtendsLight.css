@@ -36,10 +36,6 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     border-bottom: 1px solid var(--grey0);
 }
 
-.ant-tabs .ant-tabs-nav {
-    background: var(--grey5);
-}
-
 .ant-tabs-top > .ant-tabs-nav {
     margin: 0;
 }

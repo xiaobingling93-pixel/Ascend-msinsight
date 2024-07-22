@@ -65,7 +65,7 @@ const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolea
                 restore: {},
             },
         },
-        backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
+        backgroundColor: 'transparent',
     };
 };
 
@@ -241,9 +241,7 @@ export const LineChart: React.FC<IProps> = (props) => {
     return (
         <div>
             {graph.title !== undefined && graph.title?.length !== 0
-                ? <div style={{ fontSize: 14, fontWeight: 'bold' } }>
-                    {title}{chartCharacter}
-                </div>
+                ? <div>{title}{chartCharacter}</div>
                 : null
             }
             <div ref={graphRef} style={{ width: 'calc(100vw - 40px)', height: '400px' }}></div>

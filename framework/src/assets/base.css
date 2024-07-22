@@ -1,140 +1,94 @@
-:root {
-    --vt-c-white: #ffffff;
-    --vt-c-white-soft: rgb(121, 121, 121);
-    --vt-c-white-mute: #f2f2f2;
-
-    --vt-c-medium: rgb(100, 100, 100);
-    --vt-c-medium-active: rgba(100, 100, 100, 0.8);
-
-    --vt-c-black: #181818;
-    --vt-c-black-soft: #222222;
-    --vt-c-black-mute: #282828;
-
-    --vt-c-indigo: #2c3e50;
-
-    --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-    --vt-c-divider-light-2: rgba(255, 255, 255, 0.4);
-    --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-    --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
-
-    --vt-c-text-light-1: var(--vt-c-indigo);
-    --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-    --vt-c-text-dark-1: var(--vt-c-white);
-    --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+* {
+    margin: 0;
 }
 
-/* semantic color variables for this project */
-:root {
-    --color-background-soft: rgb(121, 121, 121);
-    --color-background-mute: #f2f2f2;
-    --color-background-medium: rgb(100, 100, 100);
-    --color-background-medium-active: rgba(100, 100, 100, 0.8);
-
-    --color-border: var(--vt-c-divider-light-2);
-    --color-border-hover: var(--vt-c-divider-light-1);
-
-    --color-heading: var(--vt-c-text-light-1);
-    --color-text: var(--vt-c-text-dark-2);
-
-    --section-gap: 160px;
-
-    --header-height: 30px;
-
-    --border-style-hover: 1px solid var(--color-border-hover);
-    --border-radius: 0.3rem;
-
-    --color-background: rgb(37, 37, 38);
-    --header-background-color: rgb(44, 44, 44);
-}
-
-.dark-theme {
-    --color-background-soft: rgb(121, 121, 121);
-    --color-background-mute: #f2f2f2;
-    --color-background-medium: rgb(100, 100, 100);
-    --color-background-medium-active: rgba(100, 100, 100, 0.8);
-
-    --color-border: var(--vt-c-divider-light-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
-
-    --color-heading: var(--vt-c-text-light-1);
-    --color-text: var(--vt-c-text-dark-2);
-
-    --section-gap: 160px;
-
-    --header-height: 30px;
-
-    --border-style-hover: 1px solid var(--color-border-hover);
-    --border-radius: 0.3rem;
-    --SvgFillColor: #D1D1D1;
-    --color-background: #252526;
-    --header-background-color: rgb(44, 44, 44);
-    --treeContent-color: #f4f6fa;
-    --treeNode-color: #bcbcbc;
-    --dataPath-color: #F4F6FA;
-    --dataTree-background: #0a0a0a;
-    --dataTree-onclick: #2c2c2c;
-    --treeNode-onclick: #4a4a52;
-}
-
-.light-theme {
-    --color-background-soft: rgb(134, 134, 134);
-    --color-background-mute: #f2f2f2;
-    --color-background-medium: rgb(155, 155, 155);
-    --color-background-medium-active: rgba(100, 100, 100, 0.8);
-    --SvgFillColor: #595959;
-
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: #d3d3d3;
-
-    --color-heading: var(--vt-c-divider-dark-1);
-    --color-text: var(--vt-c-text-light-2);
-
-    --section-gap: 160px;
-
-    --header-height: 30px;
-
-    --border-style-hover: 1px solid var(--color-border-hover);
-    --border-radius: 0.3rem;
-
-    --color-background: #ffffff;
-    --header-background-color: #f2f2f2;
-    --treeContent-color: #3C3C3C;
-    --treeNode-color: #656565;
-    --dataPath-color: #0B0905;
-    --dataTree-background: #f5f5f5;
-    --dataTree-onclick: var(--vt-c-divider-light-1);
-    --treeNode-onclick: #ceced0;
-}
 *,
 *::before,
 *::after {
     box-sizing: border-box;
-    margin: 0;
-    font-weight: normal;
+}
+
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+    transition: opacity 120ms ease-out;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(127, 127, 127, 0.5);
+    z-index: 100;
+    border-radius: 5px;
+    transition: 0.3s background-color;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: transparent;
+    z-index: 100;
 }
 
 body {
     min-height: 100vh;
-    color: var(--color-text);
-    background: var(--color-background);
+    color: var(--mi-text-color-primary);
+    background: var(--mi-bg-color);
     transition:
         color 0.5s,
         background-color 0.5s;
-    font-family:
-        Inter,
-        -apple-system,
-        BlinkMacSystemFont,
-        'Segoe UI',
-        Roboto,
-        Oxygen,
-        Ubuntu,
-        Cantarell,
-        'Fira Sans',
-        'Droid Sans',
-        'Helvetica Neue',
-        sans-serif;
+    font-family: var(--mi-font-family);
     font-size: 16px;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+    --mi-font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+        Cantarell, 'Fira Sans', 'Droid Sans', sans-serif;
+    --mi-border-radius-base: 4px;
+    --mi-border-radius-small: 2px;
+    --mi-color-primary: #0077ff;
+    --mi-color-success: #24ab36;
+    --mi-color-warning: #ebaf00;
+    --mi-color-danger: #e32020;
+    --mi-color-info: #576372;
+    --mi-color-major: #f97611;
+    --mi-color-major-light3: #fba25d;
+    --mi-bg-color: #fdfeff;
+    --mi-bg-color-dark: #ebeff6;
+    --mi-bg-color-light: #f4f6fa;
+    --mi-bg-color-lighter: #ffffff;
+    --mi-text-color-primary: #000000;
+    --mi-text-color-secondary: #4e5865;
+    --mi-text-color-tertiary: #8d98aa;
+    --mi-text-color-fourth: #ffffff;
+    --mi-text-color-placeholder: #bfc7d7;
+    --mi-text-color-placeholder-light: #ebedf3;
+    --mi-text-color-disabled: #c0c4cc;
+    --mi-border-color: #e4eaf1;
+    --mi-border-color-light: #dfe5ef;
+    --mi-border-color-lighter: #c3cedf;
+    --mi-border-color-extra-light: #b3bfd3;
+    --mi-mask-color: rgba(0, 0, 0, 0.8);
+    --mi-mask-color-extra-light: rgba(0, 0, 0, 0.3);
+    --header-height: 36px;
+}
+
+html.dark {
+    --mi-bg-color-page: #0a0a0a;
+    --mi-bg-color: #1f2329;
+    --mi-bg-color-dark: #181b20;
+    --mi-bg-color-light: #2a2f37;
+    --mi-bg-color-lighter: #343a43;
+    --mi-text-color-primary: #ffffff;
+    --mi-text-color-secondary: #d3dce9;
+    --mi-text-color-placeholder: #626d7c;
+    --mi-text-color-placeholder-light: #272c33;
+    --mi-text-color-disabled: #6c6e72;
+    --mi-border-color: #363c46;
+    --mi-border-color-light: #3e4551;
+    --mi-border-color-lighter: #576372;
+    --mi-border-color-extra-light: #fffefe;
 }

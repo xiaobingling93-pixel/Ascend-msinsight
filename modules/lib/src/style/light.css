@@ -9,9 +9,6 @@
 
 body {
     margin: 0;
-    font-family: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Arial Narrow', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
     height: 100vh;
     letter-spacing: .5px;
 }
@@ -104,10 +101,6 @@ html {
     font-size: 1.3rem;
 }
 
-.container-box {
-    background: var(--grey0);
-}
-
 .container-header {
     font-weight: bold;
     background: rgb(250, 250, 250);
@@ -116,10 +109,6 @@ html {
     padding-left: 10px;
     margin: 0 0 10px 0;
     background: var(--grey5);
-}
-
-.container-body {
-    background: var(--grey0);
 }
 
 .hide {
@@ -131,13 +120,8 @@ html {
     text-align: left;
 }
 
-.bandwidthChart > div {
-    background: #ffffff;
-}
-
 .bandwidthChart > div > div > div {
     border: 1px solid #b0aeae;
-    background: white;
     margin: 10px;
 }
 

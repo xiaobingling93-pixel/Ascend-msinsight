@@ -204,7 +204,6 @@ const MarkerListBody = styled.div`
     padding-top: 11px;
     box-shadow: 0 10px 100px 0 rgba(0,0,0,0.50);
     border-radius: 16px;
-    fontFamily: MicrosoftYaHei;
 `;
 
 const TitleText = styled.text`
@@ -233,7 +232,6 @@ const ListTitleText = styled.div`
     padding-left: 7%;
     margin-top: 20px;
     font-size: 16px;
-    font-family: MicrosoftYaHei;
     height: 19px;
     line-height: 19px;
     text-align: center;
@@ -249,7 +247,6 @@ const ConfirmButton = styled.button`
     border-radius: 20px;
     text-align: center;
     font-size: 12px;
-    font-family: MicrosoftYaHei;
     line-height: 28px;
 `;
 
@@ -262,7 +259,6 @@ const CancelButton = styled.button`
     border-radius: 20px;
     text-align: center;
     font-size: 12px;
-    font-family: MicrosoftYaHei;
     line-height: 28px;
 `;
 

@@ -415,7 +415,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                                 })}
                             />
                         </FlexDiv>
-                        : <div></div>
+                        : <></>
                     }
                     <FlexDiv>
                         <Label name={t('searchCriteria.RankId')} />

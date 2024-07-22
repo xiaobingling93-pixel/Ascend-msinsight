@@ -395,7 +395,6 @@ const SingleFlagEditDiv = styled.div`
 const Describe = styled.div`
     margin-left: 19px;
     font-size: 12px;
-    font-family: MicrosoftYaHei;
     height: 19px;
     line-height: 19px;
 `;
@@ -410,7 +409,6 @@ const EditInput = styled.input`
     width: 220px;
     border-radius: 3px;
     font-size: 12px;
-    font-family: MicrosoftYaHei;
     line-height: 19px;
     float: left
 `;
@@ -419,7 +417,6 @@ const ColorText = styled.div`
     margin-left: 19px;
     margin-top: 11px;
     font-size: 12px;
-    font-family: MicrosoftYaHei;
     height: 19px;
     line-height: 19px;
 `;
@@ -434,7 +431,6 @@ const ConfirmButton = styled.button`
     border-radius: 20px;
     text-align: center;
     font-size: 12px;
-    font-family: MicrosoftYaHei;
     line-height: 28px;
 `;
 const DeleteButton = styled.button`
@@ -447,7 +443,6 @@ const DeleteButton = styled.button`
     border-radius: 20px;
     text-align: center;
     font-size: 12px;
-    font-family: MicrosoftYaHei;
     line-height: 28px;
 `;
 

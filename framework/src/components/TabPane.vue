@@ -337,7 +337,7 @@ function handleToggleLang(): void {
 <template>
     <div class="tab-pane">
         <div class="tab-titles">
-            <el-menu class="el-menu-title" mode="horizontal" router>
+            <el-menu class="el-menu-title" mode="horizontal" :ellipsis="false" router>
                 <template v-for="(moduleConfig, index) in modulesConfig">
                     <el-menu-item
                         :key="`title_${index}_${moduleConfig.name}`"
@@ -402,6 +402,7 @@ function handleToggleLang(): void {
     align-items: center;
     justify-content: space-between;
     height: var(--header-height);
+    background: var(--mi-bg-color-light);
 }
 
 .tab-titles .right-tool-box {
@@ -426,13 +427,8 @@ function handleToggleLang(): void {
 }
 
 .el-menu {
-    display: inline-flex;
-    border: none;
-    height: 30px;
-    width: 95%;
-    line-height: 30px;
-    border-bottom: none !important;
-    --el-menu-hover-bg-color: var(--color-border-hover) !important;
+    border-bottom: none;
+    background-color: transparent;
 }
 
 .help-ul {
@@ -445,39 +441,9 @@ function handleToggleLang(): void {
     line-height: 1.5em;
 }
 
-.el-menu-item {
-    margin-right: 1px;
-    text-align: center;
-    font-size: 14px;
-    font-weight: bold;
-    color: var(--treeContent-color) !important;
-    line-height: 30px;
-    user-select: none;
-}
-
-.el-menu-item.active {
-    color: #007aff !important;
-}
-
-.el-menu-item.active:after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    width: calc(100% - 60px);
-    height: 1px;
-    background-color: #007aff;
-    left: 30px;
-}
-
 .tab-body {
     flex-grow: 1;
     height: calc(100% - 40px);
-}
-
-@media (hover: hover) {
-    a:hover {
-        background-color: var(--color-background-medium-active);
-    }
 }
 
 iframe {

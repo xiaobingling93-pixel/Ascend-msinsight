@@ -20,7 +20,6 @@ const [DataManager] =  useWatchTranslation(['Data Manager']);
   align-items: center;
   margin-right: auto;
   font-size: 12px;
-  color: var(--color-text);
   line-height: 18px;
   font-weight: 400;
 }

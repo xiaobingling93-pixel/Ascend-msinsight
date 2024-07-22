@@ -18,17 +18,16 @@ import eventBus, { EventType } from './utils/eventBus';
 import { dragFileImportInit } from './components/dragFile/DragFile';
 import type { CheckResultType } from './components/dragFile/DragFile';
 import connector from './connection';
+import { GlobalStyles } from 'lib/theme';
 
 const Window = styled.div`
-    background-color: ${(props): string => props.theme.backgroundColor};
-    text-align: center;
+    background-color: ${(props): string => props.theme.bgColor};
     height: 100vh;
     overflow: hidden;
     user-select: none;
     display: flex;
     width: 100vw;
     color: ${(props): string => props.theme.fontColor};
-    font-family: Microsoft YaHei;
 `;
 
 // 全局新增监听搜索快捷键输入
@@ -113,6 +112,7 @@ export const App = observer(() => {
     let session = sessionStore.activeSession;
     const isInitialized = useRef(false);
     const [locale, setLocale] = useState<'zhCN' | 'enUS'>('zhCN');
+    const theme = themeInstance.getThemeType();
 
     useEffect(() => {
         if (session) {
@@ -150,7 +150,8 @@ export const App = observer(() => {
         }
     };
     return (
-        <ThemeProvider theme={themeInstance.getThemeType()}>
+        <ThemeProvider theme={theme}>
+            <GlobalStyles theme={theme} />
             <Window>
                 <AppErrorBoundary>
                     <SessionPageErrorBoundary>

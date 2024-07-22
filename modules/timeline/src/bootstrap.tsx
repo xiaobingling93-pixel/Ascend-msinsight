@@ -7,7 +7,6 @@ import { App } from './App';
 import { RootStoreContext } from './context/context';
 import 'lib/i18n';
 import 'lib/style/index';
-import './index.css';
 import './theme.css';
 import { store } from './store';
 import { NOTIFICATION_HANDLERS } from './interface';

@@ -3,7 +3,7 @@
  */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip, Select } from 'antd';
+import { Tooltip } from 'antd';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useRef, useState } from 'react';
@@ -30,7 +30,7 @@ const CustomDiv = styled.div`
     align-items: center;
     justify-content: space-between;
     border-radius: 18px;
-    padding: 1px 7px 1px 10px;
+    padding: 3px 7px 1px 10px;
     min-width: 600px;
     background: ${(props): string => props.theme.tooltipBGColor};
     .chooseResult {
@@ -109,12 +109,24 @@ const CustomDiv = styled.div`
     }
 `;
 
-const useAutoCompleteHandles = (session: Session): [ selectValue: string, dropdownRenderr: () => JSX.Element, isOpen: boolean,
-    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>, completeOptions: Array<{value: string}>, handleChange: (value: string[]) => void ] => {
+interface CompleteOptionProps {
+    label: string;
+    value: string;
+}
+
+type UseAutoCompleteHandlesReturnType = [
+    selectValue: string,
+    dropdownRenderr: () => JSX.Element,
+    isOpen: boolean,
+    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>,
+    completeOptions: CompleteOptionProps[],
+    handleChange: (value: string[]) => void,
+];
+const useAutoCompleteHandles = (session: Session): UseAutoCompleteHandlesReturnType => {
     const [selectValue, setSelectValue] = useState<string>('Filter');
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const { cardNames, unitNames } = useUnitsNameSet(session);
-    const [completeOptions, setCompleteOptions] = useState<Array<{value: string}>>([]);
+    const [completeOptions, setCompleteOptions] = useState<CompleteOptionProps[]>([]);
 
     useEffect(() => {
         handleSearch('');
@@ -136,7 +148,7 @@ const useAutoCompleteHandles = (session: Session): [ selectValue: string, dropdo
     };
 
     const handleSearch = (value: string): void => {
-        const result: Array<{value: string}> = [];
+        const result: CompleteOptionProps[] = [];
         let targetSet = new Set<string>();
         if (selectValue === 'Units Filter') {
             targetSet = unitNames;
@@ -146,7 +158,7 @@ const useAutoCompleteHandles = (session: Session): [ selectValue: string, dropdo
         }
         targetSet.forEach((cardName) => {
             if (cardName.toLowerCase().includes(value.toLowerCase())) {
-                result.push({ value: cardName });
+                result.push({ label: cardName, value: cardName });
             }
         });
         setCompleteOptions(result);
@@ -170,24 +182,22 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     return (
         <CustomDiv theme={theme}>
             <StyledSelect
-                style={{ top: 2 }}
                 value={selectValue}
                 dropdownRender={dropdownRender}
                 onDropdownVisibleChange={(open): void => setIsOpen(open)}
                 open={isOpen}
                 height={24} width={120} itemPaddingLeft={20}>
             </StyledSelect>
-            <Select
-                size="small"
+            <StyledSelect
                 mode="multiple"
                 allowClear
-                className="circle-border"
                 options={completeOptions}
-                style={{ top: '2px', width: '455px', height: '24px' }}
+                width={455}
+                height={24}
                 value={selection}
                 onChange={(val: string[]): void => { setSelection(val); handleChange(val); }}
             >
-            </Select>
+            </StyledSelect>
         </CustomDiv>
     );
 };

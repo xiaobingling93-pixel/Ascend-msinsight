@@ -19,6 +19,6 @@ defineProps<{ width: number; boxShadow?: string }>();
 }
 
 .icon-container:hover {
-    background-color: var(--color-background-medium);
+    background-color: var(--mi-bg-color-dark);
 }
 </style>

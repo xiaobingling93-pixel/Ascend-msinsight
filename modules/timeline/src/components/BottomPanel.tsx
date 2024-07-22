@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
 */
 import styled from '@emotion/styled';
-import { Card, Tabs } from 'antd/lib/index';
+import { Card } from 'antd/lib/index';
 import type { CardProps } from 'antd/lib/card';
 import { isEmpty } from 'lodash';
 import { observer } from 'mobx-react';
@@ -20,6 +20,7 @@ import eventBus, { useEventBus } from '../utils/eventBus';
 import { getDetailViewItem } from './detailViews/DetailView';
 import { themeInstance } from '../theme/theme';
 import { useFindDetail } from './detailViews/FindInWindow';
+import { StyledTabs } from './base/StyledTabs';
 
 interface CssProps {
     className?: string;
@@ -51,6 +52,9 @@ const Container = styled.div`
     .ant-card, .ant-card-head {
         border-radius: 0;
         line-height: 1.2;
+    }
+    .ant-tabs-nav {
+        background: ${(props): string => props.theme.bgColor};
     }
     .ant-tabs-tab {
         padding: 0 2px;
@@ -332,7 +336,7 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     ];
 
     return (<Container ref={ref} className="bottomPanelContainer">
-        <Tabs style={{ width: '100%' }} items={items} activeKey={item} onTabClick={(key): void => setItem(key)}/>
+        <StyledTabs style={{ width: '100%' }} items={items} activeKey={item} onTabClick={(key): void => setItem(key)}/>
     </Container>);
 });
 

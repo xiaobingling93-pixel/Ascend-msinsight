@@ -304,10 +304,10 @@ defineExpose({
 
 <template>
     <div class="tree-wrap">
-        <el-text :type="errorAlert ? 'danger' : 'primary'"> {{ inputErrorText }} </el-text>
+        <el-text size="default" :type="errorAlert ? 'danger' : 'primary'"> {{ inputErrorText }} </el-text>
 
         <div class="input-wrapper">
-          <el-input :class= "errorAlert ? 'red-input' : 'blue-input'" v-model="state.inputPath" :maxlength="props.maxPathLen" show-word-limit @keyup.enter="searchPath" />
+          <el-input :class= "errorAlert ? 'red-input' : 'blue-input'" v-model="state.inputPath" size="default" :maxlength="props.maxPathLen" show-word-limit @keyup.enter="searchPath" />
           <div class="icon-refresh">
             <el-tooltip :content="RefreshDirectory">
               <el-icon :size="16" @click="handleMounted"><RefreshIcon /></el-icon>
@@ -333,32 +333,22 @@ defineExpose({
 </template>
 
 <style scoped>
-.tree-wrap {}
-
-.data-path {
-    border: 1px solid #656565;
-    border-radius: 2px;
-    font-size: 12px;
-    color: var(--dataPath-color);
-    line-height: 14px;
-    font-weight: 400;
-    height: 32px;
-    padding: 8px 16px;
+.el-tree{
+  width: fit-content;
+  min-width: 100%;
 }
 
-.el-tree {
-  --el-tree-node-hover-bg-color: var(--color-border-hover);
-  color: var(--dataPath-color) !important;
+:deep(.el-tree-node.is-current > .el-tree-node__content) {
+  background-color: var(--mi-bg-color-light);
+  color: var(--mi-text-color-primary)
 }
 
 .data-tree {
     margin-top: 24px;
     height: 310px;
     overflow-y: auto;
-    background: var(--dataTree-background);
-    color: var(--dataPath-color) !important;
+    background: var(--mi-bg-color-dark);
     padding: 10px 0;
-    border-radius: 4px;
 }
 
 :deep(.el-input__wrapper) {
@@ -381,13 +371,6 @@ defineExpose({
   background-color: transparent !important;
   --el-input-focus-border-color: #409EFF;
 }
-:deep(.el-input.is-disabled .el-input__inner) {
-    font-size: 12px;
-    color: var(--dataTree-background);
-    -webkit-text-fill-color: var(--dataPath-color);
-    font-weight: 400;
-    cursor: auto;
-}
 
 .custom-tree-node {
     flex: 1 1 auto;
@@ -397,18 +380,6 @@ defineExpose({
 
 .custom-tree-node span {
     padding-left: 4px;
-}
-
-:deep(.el-tree-node.is-current > .el-tree-node__content) {
-    background-color: var(--dataTree-onclick);
-}
-.el-tree{
-  width: fit-content;
-  min-width: 100%;
-  background: transparent;
-}
-.el-tree-node{
-  width: fit-content;
 }
 
 .input-wrapper{

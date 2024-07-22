@@ -3,7 +3,6 @@
 */
 .container-box{
     height:100%;
-    background: var(--grey0);
 }
 .container-header{
     height:3rem;
@@ -15,7 +14,6 @@
 }
 .container-body{
     height:calc(100% - 3rem);
-    background: var(--grey0);
 }
 .container-box .container-body .ant-descriptions-view > table{
     table-layout: fixed!important;
@@ -29,12 +27,7 @@
 
 .theme_dark .container-box{
     color:var(--grey8);
-    background: var(--grey95);
 }
 .theme_dark .container-header{
     color: var(--whiteblue);
-}
-
-.theme_dark .container-body{
-    background: var(--grey95);
 }

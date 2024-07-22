@@ -84,14 +84,17 @@ const handleCoverVisible = (value: boolean) => {
     <ResourceComp ref="resourceComp" :show="showModal" :max-path-len="maxPathLen" @input-change="onInputChange" :changeConfirmButtonState = "changeConfirmButtonState" />
     <template #footer>
       <span>
-          <el-button :disabled="isDisabled" type="primary" @click="addClickProtect(handleConfirm)">{{ Confirm }}</el-button>
-          <el-button @click="emit('update:showModal', false)">{{ Cancel }}</el-button>
+          <el-button class="btn" :disabled="isDisabled" type="primary" @click="addClickProtect(handleConfirm)">{{ Confirm }}</el-button>
+          <el-button class="btn" @click="emit('update:showModal', false)">{{ Cancel }}</el-button>
       </span>
     </template>
   </el-dialog>
 </template>
 
 <style scoped>
+.btn {
+  min-width: 56px;
+}
 .project-name-span {
   display: flow;
   white-space: nowrap;

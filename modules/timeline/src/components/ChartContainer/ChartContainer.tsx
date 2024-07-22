@@ -175,7 +175,7 @@ export const ChartContainer = observer((props: Props) => {
         ref={(dom): void => {
             setContainerDom(dom ?? undefined);
         }}
-        tabIndex={0}
+        tabIndex={-1}
     >
         <RenderEngineContext.Provider value={renderEngine}>
             <ChartHeader

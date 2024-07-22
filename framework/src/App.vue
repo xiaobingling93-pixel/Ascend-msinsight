@@ -87,7 +87,8 @@ function resize(deltaX: number, width: number) {
 }
 
 .el-aside {
-    background-color: var(--color-background);
+    background-color: var(--mi-bg-color);
+    border-right: 1px solid var(--mi-bg-color-dark);
 }
 
 .container :deep(.el-loading-mask) {
