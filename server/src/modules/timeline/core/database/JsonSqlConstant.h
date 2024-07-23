@@ -169,7 +169,7 @@ public:
     static std::string GetSliceByIdListSql(uint64_t idSetSize)
     {
         std::string sliceSql = "SELECT id, timestamp, end_time, name, cname from slice where id in ( ? ";
-        for (int i = 0; i < idSetSize - 1; ++i) {
+        for (uint64_t i = 0; i < idSetSize - 1; ++i) {
             sliceSql += ", ? ";
         }
         sliceSql += " );";
@@ -179,7 +179,7 @@ public:
     static std::string GetSummarySliceSql(uint64_t size)
     {
         std::string sql = "SELECT timestamp , end_time FROM " + SLICE_TABLE + " WHERE track_id in ( ? ";
-        for (int i = 0; i < size; ++i) {
+        for (uint64_t i = 0; i < size; ++i) {
             sql += ", ? ";
         }
         sql += ") ORDER BY timestamp";
