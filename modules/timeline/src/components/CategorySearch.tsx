@@ -6,7 +6,7 @@ import styled from '@emotion/styled';
 import { Tooltip, message, Button, Input } from 'antd';
 import { observer } from 'mobx-react';
 import React, { type ChangeEvent, useEffect, useState } from 'react';
-import { ReactComponent as AntdSearchIcon } from '../assets/images/insights/ic_search_lined.svg';
+import { SearchIcon } from 'lib/Icon';
 import { ReactComponent as AntdCloseIcon } from '../assets/images/insights/ic_close_filled.svg';
 import type { Session } from '../entity/session';
 import { CustomButton, PressButton, StyledButton } from './base/StyledButton';
@@ -21,7 +21,6 @@ import { generateFlowParam } from '../insight/units/details';
 import { getTimeOffset } from '../insight/units/utils';
 import { StyledTooltip } from './base/StyledTooltip';
 
-const SearchIcon = AntdSearchIcon as SvgType;
 const CloseIcon = AntdCloseIcon as SvgType;
 
 const RANGE_MULTIPLE = 10;
@@ -306,7 +305,6 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
         isEmphasize: false,
         isDisabled: false,
         isSuspend: false,
-        icon: SearchIcon,
     });
     const searchDataRef = React.useRef<Session['searchData']>();
     // tooltip显隐控制悬浮效果
@@ -318,6 +316,7 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
             searchDataRef.current = session.searchData;
         }
     };
+
     return (
         <Tooltip overlayStyle={{ maxWidth: 1000 }}
             title={CategorySearchContent(session)}
@@ -328,7 +327,7 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
             overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
             overlayClassName={'insight-category-search-overlay'}
             align={{ offset: [-8, 3] }}>
-            <CustomButton tooltip={t('tooltip:search')} { ...customButtonProps }/>
+            <CustomButton tooltip={t('tooltip:search')} icon={SearchIcon} { ...customButtonProps }/>
         </Tooltip>
     );
 });

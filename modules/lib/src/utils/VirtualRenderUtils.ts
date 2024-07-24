@@ -77,7 +77,8 @@ export const useWatchVirtualRender = <T>({ visibleHeight, itemHeight, dataSource
     const targetRef = useRef(null);
 
     const [range, setRange] = useState<[number, number]>([0, 0]);
-    const { visibleCount, totalHeight } = useMemo(() => getSize({ visibleHeight, itemHeight, count: dataSource.length }), [dataSource.length]);
+    const { visibleCount, totalHeight } = useMemo(() => getSize({ visibleHeight, itemHeight, count: dataSource.length }),
+        [visibleHeight, itemHeight, dataSource.length]);
     const scrollEvent = useCallback((e: Event) => {
         setPostion(e, { itemHeight, visibleCount, setRange, targetElement: targetRef.current });
     }, [visibleCount, totalHeight, targetRef.current]);

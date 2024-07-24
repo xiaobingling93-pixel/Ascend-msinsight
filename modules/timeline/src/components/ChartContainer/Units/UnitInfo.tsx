@@ -28,7 +28,7 @@ import { useSelectUnit } from './hooks';
 import { ReactComponent as Supported } from '../../../assets/images/insights/Supported.svg';
 import { StyledTooltip } from '../../base/StyledTooltip';
 import { CardUnit } from '../../../insight/units/AscendUnit';
-import { StartIcon } from 'lib/Icon';
+import { StartIcon, PinIcon, UnPinIcon } from 'lib/Icon';
 import { UnitProgress } from '../../charts/UnitProgress';
 import { type ParseCardsParam, parseCards } from '../../../api/Request';
 import { message } from 'antd';
@@ -132,7 +132,7 @@ const PinButton = observer(({ session, unit, isHovered, hasPinButton, isPinned }
             ? <StyledTooltip title={t(`headerButtonTooltip:${isPinned ? 'UnpinButton' : 'PinButton'}`)}>
                 <StyledButton
                     style={style}
-                    icon={isPinned ? <div className={'icon_un_pin'}/> : <div className={'icon_pin_to_top'}/>}
+                    icon={isPinned ? <PinIcon/> : <UnPinIcon/>}
                     onClick={(e: React.MouseEvent): void => {
                         e.stopPropagation();
                         e.preventDefault();

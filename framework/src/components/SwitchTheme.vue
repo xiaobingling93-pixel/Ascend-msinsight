@@ -3,6 +3,9 @@ import useWatchTranslation from '@/hooks/useWatchTranslation';
 import { onMounted, ref } from 'vue';
 import { LocalStorageKeys, localStorageService } from '@/utils/local-storage';
 import connector from '@/connection';
+import {useSession} from '@/stores/session';
+
+const { session, setSession } = useSession();
 
 const [SwitchTheme] = useWatchTranslation(['Switch Theme']);
 const isDarkTheme = ref(localStorageService.getItem(LocalStorageKeys.THEME) === 'dark');
@@ -15,6 +18,7 @@ onMounted(() => {
             body: { isDark: isDarkTheme.value },
         });
     });
+    setSession({theme: localStorageService.getItem(LocalStorageKeys.THEME)});
 });
 
 function changeElementTheme(isDark: boolean) {
@@ -33,6 +37,7 @@ function handleThemeChange(isDark: boolean) {
         body: { isDark: isDark },
     });
     document.body.className = isDark ? 'dark-theme' : 'light-theme';
+    setSession({theme});
 }
 </script>
 

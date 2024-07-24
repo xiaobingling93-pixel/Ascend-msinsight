@@ -4,12 +4,9 @@
 
 import * as React from 'react';
 import styled from '@emotion/styled';
-import { useTheme } from '@emotion/react';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
-import { ReactComponent as Reset } from '../assets/images/reset.svg';
-import { ReactComponent as Del } from '../assets/images/zoomTimestamp_delete.svg';
-import { ReactComponent as Add } from '../assets/images/zoomTimestamp_add.svg';
+import { ResetIcon, PlusIcon as Add, MinusIcon as Del } from 'lib/Icon';
 import type { Session } from '../entity/session';
 import { traceStart } from '../utils/traceLogger';
 import { getDuration } from '../utils/humanReadable';
@@ -24,6 +21,8 @@ const Container = styled.div`
     text-align: center;
     font-size: ${FONT_SIZE}px;
     margin-right: 1em;
+    line-height: 20px;
+    height:32px;
     svg {
         cursor: pointer;
     }
@@ -34,14 +33,7 @@ const Percentage = styled.span`
     width: ${TEXT_WIDTH}px;
 `;
 
-const StyledReset = styled(Reset)<{ pathfill: string }>`
-    path {
-        fill: ${(props): string => props.pathfill};
-    }
-`;
-
 export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
-    const theme = useTheme();
     const { t } = useTranslation();
     const { zoom, isLowerBound, isUpperBound, shouldResetDisable } = React.useMemo(() => ({
         zoom: getDuration(session.domain.duration, { precision: session.isNsMode ? 'ns' : 'ms', maxChars: TEXT_WIDTH / FONT_SIZE }),
@@ -51,8 +43,8 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
     }), [session.domain.duration, session.endTimeAll]);
     return <Container>
         <Container>
-            <StyledTooltip title={t('tooltip:reset')}><StyledReset
-                pathfill={shouldResetDisable ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
+            <StyledTooltip title={t('tooltip:reset')}><ResetIcon
+                disabled={shouldResetDisable}
                 onClick={(): void => {
                     runInAction(() => {
                         session.domainRange = { domainStart: 0, domainEnd: session.endTimeAll ?? session.domain.defaultDuration };
@@ -63,7 +55,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
         </Container>
         <StyledTooltip title={t('tooltip:del')}>
             <Del
-                fill={isUpperBound ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
+                disabled={isUpperBound}
                 onClick={(): void => {
                     runInAction(() => {
                         traceStart('zoomProportion', { action: 'zoomProportion' });
@@ -77,7 +69,7 @@ export const ZoomTimestamp = observer(({ session }: { session: Session }) => {
         </StyledTooltip>
         <StyledTooltip title={t('tooltip:add')}>
             <Add
-                fill={isLowerBound ? theme.disableButtonBackgroundColor : theme.activeButtonBackgroundColor}
+                disabled={isLowerBound}
                 onClick={(): void => {
                     runInAction(() => {
                         traceStart('zoomProportion', { action: 'zoomProportion' });

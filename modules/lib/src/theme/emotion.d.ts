@@ -211,5 +211,6 @@ declare module '@emotion/react' {
         borderRadiusRound: string;
         borderRadiusCircle: string;
         pagePadding: string;
+        icon: string; // 图标颜色
     }
 }

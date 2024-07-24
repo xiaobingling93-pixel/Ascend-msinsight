@@ -7,16 +7,13 @@ import { Tooltip } from 'antd';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useRef, useState } from 'react';
-import { ReactComponent as AntdFilterIcon } from '../assets/images/insights/FunnelIcon.svg';
+import { FilterIcon } from 'lib/Icon';
 import type { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
 import type { InsightUnit } from '../entity/insight';
-import type { SvgType } from './base/rc-table/types';
 import { StyledSelect } from './base/StyledSelect';
 import type { CardMetaData, ProcessMetaData } from '../entity/data';
 import { useTranslation } from 'react-i18next';
-
-const FilterIcon = AntdFilterIcon as SvgType;
 
 const ChildrenContainer = styled.div`
     color: ${(props): string => props.theme.fontColor};
@@ -329,7 +326,6 @@ export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Elem
     const [customButtonProps, updateCustomButtonProps] = useState({
         isEmphasize: false,
         isSuspend: false,
-        icon: FilterIcon,
     });
     // tooltip显隐控制悬浮效果
     const onTooltipVisibleChange = (visible: boolean): void => {
@@ -353,7 +349,7 @@ export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Elem
             color={theme.tooltipBGColor}
             overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
             overlayClassName={'insight-category-search-overlay'} align={{ offset: [-8, 3] }}>
-            <CustomButton tooltip={t('tooltip:filter')} { ...customButtonProps } ref={ref}/>
+            <CustomButton tooltip={t('tooltip:filter')} icon={FilterIcon} { ...customButtonProps } ref={ref}/>
         </Tooltip>
     );
 });

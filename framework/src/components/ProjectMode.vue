@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import ProjectIcon from '@/components/icons/project_icon.vue';
+import ProjectDarkIcon from '@/components/icons/project_dark_icon.vue';
+import ProjectLightIcon from '@/components/icons/project_light_icon.vue';
 import {useWatchTranslation} from '@/hooks/useWatchTranslation';
+import {useSession} from '@/stores/session';
 
+const { session } = useSession();
 const [DataManager] =  useWatchTranslation(['Data Manager']);
 </script>
 
 <template>
   <div class="projectMode">
     <el-icon class="projectModeIcon" :size="16">
-      <ProjectIcon/>
+        <ProjectDarkIcon v-if="session.theme=='dark'"/>
+        <ProjectLightIcon v-else/>
     </el-icon>
     <span class="modeName">{{ DataManager }}</span>
   </div>

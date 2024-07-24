@@ -206,5 +206,6 @@ export const dark: Theme = {
     borderRadiusRound: '20px',
     borderRadiusCircle: '100%',
     pagePadding: '16px',
+    icon: '#D1D1D1',
     // 把新加的字段同时加到light.ts文件、以及emotion.d.ts文件...........
 };

@@ -206,4 +206,5 @@ export const light: Theme = {
     borderRadiusRound: '20px',
     borderRadiusCircle: '100%',
     pagePadding: '16px',
+    icon: '#8D98AA',
 };
