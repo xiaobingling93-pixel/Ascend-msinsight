@@ -8,6 +8,11 @@ import type { Graph } from '../entity/memory';
 import { binarySearch, useResizeEventDependency } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
 import { convertTime, safeStr, useChartCharacter } from './Common';
+import styled from '@emotion/styled';
+
+const ChartDesc = styled.div`
+    color: ${(props): string => props.theme.textColorTertiary}
+`;
 
 interface IProps {
     graph: Graph;
@@ -241,10 +246,10 @@ export const LineChart: React.FC<IProps> = (props) => {
     return (
         <div>
             {graph.title !== undefined && graph.title?.length !== 0
-                ? <div>{title}{chartCharacter}</div>
+                ? <ChartDesc>{title}{chartCharacter}</ChartDesc>
                 : null
             }
-            <div ref={graphRef} style={{ width: 'calc(100vw - 40px)', height: '400px' }}></div>
+            <div ref={graphRef} style={{ width: 'calc(100vw - 80px)', height: '400px' }}></div>
         </div>
     );
 };

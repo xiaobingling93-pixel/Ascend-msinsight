@@ -20,6 +20,8 @@ import { CommunicatorContainer } from '../communicatorContainer/CommunicatorCont
 import PpBandwidthAnalysis from './PpBandwidthAnalysis';
 import i18n from 'lib/i18n';
 import { HelpIcon } from 'lib/Icon';
+import Layout from 'lib/Layout';
+import CollapsiblePanel from 'lib/CollapsiblePanel';
 
 interface SummaryDataType {
     [propName: string]: any;
@@ -353,25 +355,27 @@ function OverviewCom({ handleFilterChange, dataSource, selected, advice, session
     useEventBus('setActiveTab', (data) => {
         setPipelineVisible(data === 'pp');
     });
-    return <div className={'text-selectable'}
-        style={{ textAlign: 'left', padding: '0 20px', overflow: 'auto', height: '100%', width: '100%' }}>
+    return <Layout padding={0}>
         <BaseInfo session={session}/>
-        <CommunicatorContainer session={session}></CommunicatorContainer>
-        <div className={pipelineVisible ? 'hide' : ''}>
-            <div>
-                <div className={'common-title-bottom'}>{t('Computation/CommunicationOverview')}{useHit(containsPreparing)}</div>
-                <Filter handleFilterChange={handleFilterChange} session={session} visible={!pipelineVisible}/>
-                <div id={'overview-chart'} style={{ height: '400px' }} ></div>
+
+        <CollapsiblePanel title={'Details'}>
+            <CommunicatorContainer session={session}></CommunicatorContainer>
+            <div className={pipelineVisible ? 'hide' : ''}>
+                <div>
+                    <div className={'common-title-bottom'}>{t('Computation/CommunicationOverview')}{useHit(containsPreparing)}</div>
+                    <Filter handleFilterChange={handleFilterChange} session={session} visible={!pipelineVisible}/>
+                    <div id={'overview-chart'} style={{ height: '400px' }} ></div>
+                </div>
+                <div style={{ padding: '0 3rem' }}>
+                    <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
+                    <StatisticsTable {...selected} advice={advice} session={session}/>
+                </div>
             </div>
-            <div style={{ padding: '0 3rem' }}>
-                <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
-                <StatisticsTable {...selected} advice={advice} session={session}/>
+            <div className={pipelineVisible ? '' : 'hide'}>
+                <PpBandwidthAnalysis session={session}></PpBandwidthAnalysis>
             </div>
-        </div>
-        <div className={pipelineVisible ? '' : 'hide'}>
-            <PpBandwidthAnalysis session={session}></PpBandwidthAnalysis>
-        </div>
-    </div>;
+        </CollapsiblePanel>
+    </Layout>;
 };
 
 export default ComputationCommunicationOverview;

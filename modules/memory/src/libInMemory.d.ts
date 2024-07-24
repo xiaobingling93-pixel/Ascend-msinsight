@@ -11,4 +11,6 @@ declare module 'lib/i18n';
 declare module 'lib/SharedConfigProvider';
 declare module 'lib/ThemeStore';
 declare module 'lib/theme';
+declare module 'lib/CollapsiblePanel';
 declare module 'lib/Icon';
+declare module 'lib/Layout';

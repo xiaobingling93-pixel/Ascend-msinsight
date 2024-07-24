@@ -20,19 +20,33 @@ import { queryCommunication, queryCommunicationOperatorLists } from '../../utils
 import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
 import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
 import { HelpIcon } from 'lib/Icon';
+import Layout from 'lib/Layout';
+import styled from '@emotion/styled';
+
+const FixedBox = styled.div`
+    z-index: 10;
+    position: fixed;
+    top: ${(props): string => props.theme.pagePadding};
+    left: ${(props): string => props.theme.pagePadding};
+    right: ${(props): string => props.theme.pagePadding};
+    bottom: ${(props): string => props.theme.pagePadding};
+    background: ${(props): string => props.theme.bgColor};
+    overflow: auto;
+    border-radius: ${(props): string => props.theme.borderRadiusBase};
+`;
 
 const Operators = ({ returnHome, rankId, operatorName, iterationId, stage }: any): JSX.Element => {
     const { t } = useTranslation('communication');
     return (
-        <div className={'fullbox'} style={{ padding: '0 20px', overflow: 'auto' }}>
-            <Breadcrumb>
-                <Breadcrumb.Item onClick={returnHome }>
+        <FixedBox>
+            <Breadcrumb style={{ margin: '10px 24px' }}>
+                <Breadcrumb.Item onClick={returnHome}>
                     <a><ArrowLeftOutlined /><Space length={10}/><span>{t('searchCriteria.CommunicationDurationAnalysis')}</span></a>
                 </Breadcrumb.Item>
                 <Breadcrumb.Item>{operatorName}(RankId {rankId})</Breadcrumb.Item>
             </Breadcrumb>
             <BandwidthAnalysis iterationId={iterationId} rankId={rankId} operatorName={operatorName} stage={stage}/>
-        </div>
+        </FixedBox>
     );
 };
 
@@ -180,11 +194,11 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any;
         setShowData, conditions, isShow, rankId, returnHome,
     } = props;
     return (
-        <div style={{ textAlign: 'left', paddingTop: '20px' }} className={'header-fixed-content-scroll'}>
+        <Layout>
             {/* 筛选条件 */}
             <Filter handleFilterChange={handleFilterChange} session={session} />
             {/* 通信用时分析 */}
-            <div className={'communication'} style={{ padding: '0 16px', display: isShow('CommunicationDurationAnalysis') ? 'block' : 'none' }}>
+            <div className={'communication'} style={{ display: isShow('CommunicationDurationAnalysis') ? 'block' : 'none' }}>
                 <div>
                     <CommunicationTimeAnalysisChart dataSource={showData.analysisChartData} session={session}/>
                     <CommunicationTimeChart dataSource={showData.chartData} session={session}/>
@@ -201,7 +215,7 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any;
             { rankId !== '' && <Operators iterationId={conditions.iterationId} rankId={rankId}
                 session={session} returnHome={returnHome}
                 operatorName={conditions.operatorName} stage={conditions.stage} /> }
-        </div>
+        </Layout>
     );
 };
 

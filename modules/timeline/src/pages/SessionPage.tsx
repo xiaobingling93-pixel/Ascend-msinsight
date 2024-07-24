@@ -10,7 +10,6 @@ import { ChartContainer } from '../components/ChartContainer';
 import type { Session } from '../entity/session';
 import { stateTexts } from '../utils/constant';
 import { DragDirection, useDraggableContainer } from 'lib/useDraggableContainer';
-import { themeInstance } from '../theme/theme';
 
 const ImgWithFallback = ({
     className = '',
@@ -70,7 +69,6 @@ export const SessionPage = observer(({ session }: { session: Session }): any => 
         draggableWH: BOTTOM_HEIGHT,
         dragDirection: DragDirection.BOTTOM,
         open: false,
-        theme: themeInstance.getThemeType(),
     });
     useEffect(() => {
         if (session.selectedUnitKeys.length > 0 && (session.selectedRange !== undefined || session.selectedData !== undefined)) {
@@ -89,5 +87,6 @@ export const SessionPage = observer(({ session }: { session: Session }): any => 
         draggableContainer: <BottomPanel session={session} />,
         slot: <StatePopover session={session} />,
         id: 'SessionPage',
+        padding: 16,
     });
 });

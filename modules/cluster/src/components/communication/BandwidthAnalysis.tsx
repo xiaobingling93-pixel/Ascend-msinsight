@@ -11,10 +11,11 @@ import type { PlainLegendComponentOption } from 'echarts';
 import { Col, Row, Table, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
-import { Container, addResizeEvent, COLOR, commonEchartsOptions } from '../Common';
+import { addResizeEvent, COLOR, commonEchartsOptions } from '../Common';
 import i18n from 'lib/i18n';
 import { cloneDeep } from 'lodash';
 import { CustomConsole as console } from 'lib/CommonUtils';
+import CollapsiblePanel from 'lib/CollapsiblePanel';
 
 const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
     const [data, setData] = useState([]);
@@ -103,16 +104,12 @@ const BandwidthAnalysis = observer((props:
     const { t } = useTranslation('communication');
     return (
         <div>
-            <Container
-                style={{ minWidth: '1000px' }}
-                title={t('sessionTitle.PacketDistribution')}
-                content={ <BandwidthChart {...props}/>}
-            />
-            <Container
-                style={{ minWidth: '1000px' }}
-                title={t('sessionTitle.BandwidthAnalysis')}
-                content={ <BandwidthTable {...props}/> }
-            />
+            <CollapsiblePanel title={t('sessionTitle.PacketDistribution')}>
+                <BandwidthChart {...props}/>
+            </CollapsiblePanel>
+            <CollapsiblePanel title={t('sessionTitle.BandwidthAnalysis')}>
+                <BandwidthTable {...props}/>
+            </CollapsiblePanel>
         </div>
     );
 });

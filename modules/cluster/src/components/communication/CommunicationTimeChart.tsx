@@ -6,10 +6,11 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
 import { Spin } from 'antd';
-import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, Container } from '../Common';
+import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions } from '../Common';
 import type { Session } from '../../entity/session';
 import i18n from 'lib/i18n';
 import { cloneDeep } from 'lodash';
+import CollapsiblePanel from 'lib/CollapsiblePanel';
 
 function InitCharts(data: dataType): void {
     const chartDom = document.getElementById('main');
@@ -193,15 +194,11 @@ const CommunicationTimeChart = observer(({ dataSource, session }: {dataSource: d
         });
     }, [dataSource, t]);
     return (
-        <Container
-            title={t('sessionTitle.VisualizedCommunicationTime')}
-            content={
-                <Spin spinning={session.clusterCompleted && !session.durationFileCompleted } tip="">
-                    <div id={'main'} style={{ height: '400px' }} ></div>
-                </Spin>
-            }
-            bodyStyle={{ overflow: 'visible' }}
-        />
+        <CollapsiblePanel title={t('sessionTitle.VisualizedCommunicationTime')}>
+            <Spin spinning={session.clusterCompleted && !session.durationFileCompleted } tip="">
+                <div id={'main'} style={{ height: '400px' }} ></div>
+            </Spin>
+        </CollapsiblePanel>
     );
 });
 

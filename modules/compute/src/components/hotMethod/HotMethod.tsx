@@ -23,6 +23,7 @@ import {
 import type { InstrsColumnType, Iline, Ilinetable, JsonInstructionType } from './defs';
 import { queryApiInstr, queryApiLine, querySourceCode } from '../RequestUtils';
 import { runInAction } from 'mobx';
+import Layout from 'lib/Layout';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 const MAX_FILE_SIZE = 1000000; // 100,0000
@@ -353,108 +354,110 @@ const Index = observer(({ session }: { session: Session }) => {
     }, [t]);
 
     return <div id={domId} style={{ height: '100%', width: '100%' }} className={'th35'}>
-        <HeaderFixedContainer
-            headerStyle={{ padding: '10px' }}
-            header={
-                <>
-                    <Filter session={session} handleFilterChange={handleFilterChange}/>
-                    <LeftRightContainer right={
-                        <>
-                            <div className="hit-label">
-                                <span>
-                                    {t('Line')} :
+        <Layout padding={0}>
+            <HeaderFixedContainer
+                headerStyle={{ padding: '10px' }}
+                header={
+                    <>
+                        <Filter session={session} handleFilterChange={handleFilterChange}/>
+                        <LeftRightContainer right={
+                            <>
+                                <div className="hit-label">
                                     <span>
-                                        {selectedline >= 0 ? selectedline : ''},
+                                        {t('Line')} :
+                                        <span>
+                                            {selectedline >= 0 ? selectedline : ''},
+                                        </span>
+                                        {t('RelatedInstructionsCount')} :
+                                        <span>
+                                            {getRelatedInstrs().length}
+                                        </span>
                                     </span>
-                                    {t('RelatedInstructionsCount')} :
-                                    <span>
-                                        {getRelatedInstrs().length}
-                                    </span>
-                                </span>
-                                <Checkbox
-                                    style={{ float: 'right' }}
-                                    checked={condition.onlyRelated}
-                                    onChange={(e: CheckboxChangeEvent): void => {
-                                        handleFilterChange({ ...condition, onlyRelated: e.target.checked });
-                                    }}
-                                > {t('OnlyRelatedInstructions')}</Checkbox>
-                            </div>
-                            { instrLimit.overlimit
-                                ? (<div style={{ color: 'red', padding: '0 10px 0 20px' }} >
-                                    {t('ExceedInstructions', { max: instrLimit.maxSize })}
-                                </div>)
-                                : <></> }
-                        </>
-                    }/>
-                </>
-            }
-            body={
-                <LeftRightContainer
-                    left={<div style={{ height: '100%', width: '100%', overflow: 'auto' }}>
-                        <LeftRightContainer
-                            headerStyle={{ flex: '0 0 70%' }}
-                            bodyStyle={{ flex: '0 0 30%' }}
-                            left={
-                                <HeaderFixedContainer
-                                    header={<div className={'table-header'}>
-                                        <div style={{ width: '45px', textAlign: 'right' }}><span>#</span></div>
-                                        <div><span>{t('Source')}</span></div>
-                                    </div>}
-                                    bodyProps={{ id: 'CodeTable' }}
-                                    bodyStyle={{ overflowX: 'scroll' }}
-                                    body={
-                                        <CodeViewer
-                                            code={code}
-                                            handleLineClick={(line: number): void => {
-                                                setSelectedline(line);
-                                                setLineClickListener((lineClickListener + 1) % 100);
-                                            }}
-                                            selectedline={selectedline}
-                                        />
-                                    }
-                                />
-                            }
-                            rightProps={{ id: 'CodeAttrTable' }}
-                            right={
-                                <ResizeTable
-                                    size="small"
-                                    minThWidth={50}
-                                    pagination={false}
-                                    columns={useCodeColumns()}
-                                    dataSource={codeLines}
-                                    rowClassName={(record: Ilinetable, index: number): string => (selectedline === index + 1 ? 'selected' : '')}
-                                    onRow={ (record: Ilinetable): {onClick: (event: React.MouseEvent<HTMLElement>) => void} => {
-                                        return {
-                                            onClick: (event: React.MouseEvent<HTMLElement>): void => {
-                                                setSelectedline(record.Line);
-                                                setLineClickListener((lineClickListener + 1) % 100);
-                                            },
-                                        };
-                                    }}
-                                    scroll={{ y: tableHeight }}
-                                />
-                            }/>
-                    </div>}
-                    right={
-                        <HeaderFixedContainer
-                            id={'Instructions'}
-                            style={{ paddingLeft: '15px' }}
-                            body={<InstructionTable
-                                tableHeight={tableHeight}
-                                columns={filterInstrsColumns}
-                                condition={condition}
-                                dataSource={condition.onlyRelated ? getRelatedInstrs() : instrsData}
-                                isRelatedInstr={isRelatedInstr}
-                                handleInstrsClick={handleInstrsClick}
-                                selectedline={selectedline}
-                                lineClickListener={lineClickListener}
-                                isShowPage ={instrsData.length > PAGE_LIMIT}
-                            />}
-                        />
-                    }
-                />
-            }
-        />
+                                    <Checkbox
+                                        style={{ float: 'right' }}
+                                        checked={condition.onlyRelated}
+                                        onChange={(e: CheckboxChangeEvent): void => {
+                                            handleFilterChange({ ...condition, onlyRelated: e.target.checked });
+                                        }}
+                                    > {t('OnlyRelatedInstructions')}</Checkbox>
+                                </div>
+                                { instrLimit.overlimit
+                                    ? (<div style={{ color: 'red', padding: '0 10px 0 20px' }} >
+                                        {t('ExceedInstructions', { max: instrLimit.maxSize })}
+                                    </div>)
+                                    : <></> }
+                            </>
+                        }/>
+                    </>
+                }
+                body={
+                    <LeftRightContainer
+                        left={<div style={{ height: '100%', width: '100%', overflow: 'auto' }}>
+                            <LeftRightContainer
+                                headerStyle={{ flex: '0 0 70%' }}
+                                bodyStyle={{ flex: '0 0 30%' }}
+                                left={
+                                    <HeaderFixedContainer
+                                        header={<div className={'table-header'}>
+                                            <div style={{ width: '45px', textAlign: 'right' }}><span>#</span></div>
+                                            <div><span>{t('Source')}</span></div>
+                                        </div>}
+                                        bodyProps={{ id: 'CodeTable' }}
+                                        bodyStyle={{ overflowX: 'scroll' }}
+                                        body={
+                                            <CodeViewer
+                                                code={code}
+                                                handleLineClick={(line: number): void => {
+                                                    setSelectedline(line);
+                                                    setLineClickListener((lineClickListener + 1) % 100);
+                                                }}
+                                                selectedline={selectedline}
+                                            />
+                                        }
+                                    />
+                                }
+                                rightProps={{ id: 'CodeAttrTable' }}
+                                right={
+                                    <ResizeTable
+                                        size="small"
+                                        minThWidth={50}
+                                        pagination={false}
+                                        columns={useCodeColumns()}
+                                        dataSource={codeLines}
+                                        rowClassName={(record: Ilinetable, index: number): string => (selectedline === index + 1 ? 'selected' : '')}
+                                        onRow={ (record: Ilinetable): {onClick: (event: React.MouseEvent<HTMLElement>) => void} => {
+                                            return {
+                                                onClick: (event: React.MouseEvent<HTMLElement>): void => {
+                                                    setSelectedline(record.Line);
+                                                    setLineClickListener((lineClickListener + 1) % 100);
+                                                },
+                                            };
+                                        }}
+                                        scroll={{ y: tableHeight }}
+                                    />
+                                }/>
+                        </div>}
+                        right={
+                            <HeaderFixedContainer
+                                id={'Instructions'}
+                                style={{ paddingLeft: '15px' }}
+                                body={<InstructionTable
+                                    tableHeight={tableHeight}
+                                    columns={filterInstrsColumns}
+                                    condition={condition}
+                                    dataSource={condition.onlyRelated ? getRelatedInstrs() : instrsData}
+                                    isRelatedInstr={isRelatedInstr}
+                                    handleInstrsClick={handleInstrsClick}
+                                    selectedline={selectedline}
+                                    lineClickListener={lineClickListener}
+                                    isShowPage ={instrsData.length > PAGE_LIMIT}
+                                />}
+                            />
+                        }
+                    />
+                }
+            />
+        </Layout>
     </div>;
 });
 

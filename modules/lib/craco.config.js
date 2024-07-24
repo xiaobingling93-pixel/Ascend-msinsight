@@ -27,6 +27,8 @@ module.exports = {
           './ThemeStore': './src/utils/ThemeStore.ts',
           './theme': './src/theme/index.ts',
           './Icon': './src/icon/Icon.tsx',
+          './CollapsiblePanel': './src/CollapsiblePanel/index.tsx',
+          './Layout': './src/Layout/index.tsx',
         },
         shared: {
           react: {singleton: true},
@@ -35,6 +37,8 @@ module.exports = {
           i18next: {singleton: true},
           'react-i18next': {singleton: true},
           antd: {singleton: true},
+          '@emotion/react': {singleton: true},
+          '@emotion/styled': {singleton: true},
         },
       }));
       webpackConfig.output.publicPath = 'auto';

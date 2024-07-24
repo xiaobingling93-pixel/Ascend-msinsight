@@ -3,7 +3,7 @@
 */
 import * as React from 'react';
 import BaseContainer from '../container/BaseContainer';
-import BaseDescription from '../descriptions/BaseDescription';
+import { MIDescriptions } from '../MIDescriptions';
 import COLOR from './Color';
 import { chartVisbilityListener, getResizeEcharts } from './EchartUtils';
 import { Empty } from 'antd';
@@ -11,7 +11,7 @@ import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 export { customConsole } from './Console';
 
-export { BaseContainer, BaseDescription, COLOR, chartVisbilityListener, getResizeEcharts };
+export { BaseContainer, MIDescriptions, COLOR, chartVisbilityListener, getResizeEcharts };
 
 export const StyledEmpty = ({ descriptor, style }:
 { descriptor: string; style?: object; translation: any}): JSX.Element => {
@@ -47,7 +47,7 @@ export function log(...param: unknown[]): void {
 }
 
 export function Label({ name, style }: {name: React.ReactNode;style?: object }): JSX.Element {
-    return <span style={{ margin: '0 10px', ...(style ?? {}) }}>{name}{name !== undefined && ':'} </span>;
+    return <span style={{ marginRight: 10, ...(style ?? {}) }}>{name}{name !== undefined && ':'} </span>;
 };
 
 export function getSet<T extends object>(list: T[], field: keyof T): unknown[] {

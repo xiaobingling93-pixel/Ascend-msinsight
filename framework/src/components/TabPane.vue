@@ -16,6 +16,7 @@ import { useLanguage, Languages } from '@/hooks/useLanguage';
 import { t } from '@/i18n';
 import { localStorageService, LocalStorageKeys } from '@/utils/local-storage';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
+import SwitchTheme from '@/components/SwitchTheme.vue';
 const { confirmDrop, initProjectName } = useDataSources();
 
 type SceneType = 'Default' | 'Cluster' | 'Compute' | 'Jupyter';
@@ -351,6 +352,7 @@ function handleToggleLang(): void {
             </el-menu>
 
             <div class="right-tool-box">
+                <SwitchTheme class="tool-item" />
                 <el-tooltip content="中文/English" effect="light">
                     <el-icon class="tool-item" @click="handleToggleLang">
                         <LangEnIcon class="icon" v-if="isChinese" />

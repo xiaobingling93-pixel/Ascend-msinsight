@@ -6,9 +6,20 @@ import type { Session } from '../../entity/session';
 import type { CardMetaData } from '../../entity/data';
 import type { InsightUnit } from '../../entity/insight';
 
-export const colorPalette: Array<keyof Theme['colorPalette']> = ['slateblue', 'royalblue', 'skyblue', 'turquoise', 'olivedrab', 'yellowgreen',
-    'gold', 'orange', 'coral', 'orangered', 'palevioletred', 'mediumorchid'];
-
+export const colorPalette: Array<keyof Theme['colorPalette']> = [
+    'deepBlue',
+    'coralRed',
+    'tealGreen',
+    'aquaBlue',
+    'raspberryPink',
+    'vividBlue',
+    'vividRed',
+    'royalPurple',
+    'skyBlue',
+    'sunsetOrange',
+    'amethystPurple',
+    'limeGreen',
+];
 export function getTimeOffset(session: Session, cardId?: string): number {
     const unit = session.units.find(value => containCardId(value, cardId ?? ''));
     const realCardId = unit ? (unit.metadata as CardMetaData).cardId : 'Host';

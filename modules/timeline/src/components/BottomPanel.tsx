@@ -18,7 +18,6 @@ import { ChartErrorBoundary } from './error/ChartErrorBoundary';
 import { FILTER_HEIGHT } from './FilterContainer';
 import eventBus, { useEventBus } from '../utils/eventBus';
 import { getDetailViewItem } from './detailViews/DetailView';
-import { themeInstance } from '../theme/theme';
 import { useFindDetail } from './detailViews/FindInWindow';
 import { StyledTabs } from './base/StyledTabs';
 
@@ -35,14 +34,13 @@ interface DataCardType {
     session: Session;
 };
 
-export const DETAIL_HEADER_HEIGHT_PX = 38;
+export const DETAIL_HEADER_HEIGHT_PX = 36;
 const MORE_HEADER_HEIGHT_PX = 22;
 
 const Container = styled.div`
     display: flex;
     justify-content: flex-start;
     overflow: hidden;
-    color: lightgray;
     height: 100%;
     width: 100%;
     border-bottom: 1px solid ${(props): string => props.theme.backgroundColor};
@@ -53,31 +51,9 @@ const Container = styled.div`
         border-radius: 0;
         line-height: 1.2;
     }
-    .ant-tabs-nav {
-        background: ${(props): string => props.theme.bgColor};
-    }
-    .ant-tabs-tab {
-        padding: 0 2px;
-    }
-    .ant-tabs-content {
-        height: 100%;
-    }
-    .ant-tabs-tabpane {
-        height: 100%;
-    }
     .title {
-        text-align: start;
-        border-bottom: 1px solid ${(p): string => p.theme.solidLine};
         height: ${DETAIL_HEADER_HEIGHT_PX - 2}px; // 2: draggable border-top width
-        &>span {
-            margin: 0 8px;
-            line-height: ${DETAIL_HEADER_HEIGHT_PX - 2}px;
-            font-size: 1.14295rem;
-            color: ${(p): string => p.theme.fontColor};
-        }
-    }
-    .ant-tabs-content-holder{
-        height:100%;
+        line-height: ${DETAIL_HEADER_HEIGHT_PX - 2}px;
     }
 `;
 
@@ -261,7 +237,7 @@ const getFilterContent = (session: Session, bottomPanelComponents?: ReturnType<B
 
 const DataCard = observer(({ session, height }: DataCardType) => {
     const { detail, moreTitle, more, toolbar, moreWh = 590 } = useBottomPanelReactNodes(session, height);
-    const [view] = useDraggableContainer({ dragDirection: DragDirection.RIGHT, draggableWH: moreWh, theme: themeInstance.getThemeType() });
+    const [view] = useDraggableContainer({ dragDirection: DragDirection.RIGHT, draggableWH: moreWh });
     return <div style={{ width: '100%', zIndex: 3, height: '100%' }}>
         {
             !isEmpty(more)

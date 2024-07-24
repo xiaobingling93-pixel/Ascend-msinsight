@@ -10,7 +10,6 @@ import {
     chartVisbilityListener,
     COLOR,
     commonEchartsOptions,
-    Container,
     notNullObj,
 } from '../Common';
 import React, { useEffect, useState } from 'react';
@@ -27,13 +26,8 @@ const PpBandwidthAnalysis = observer(({ session }: { session: Session }) => {
 
     return (
         <div>
-            <Container
-                content={ <Filter session={session} setAllStageIds={setAllStageIds} conditions={conditions} setConditions={setConditions}/>}
-            />
-            <Container
-                style={{ minWidth: '630px' }}
-                content={ <PPBandwidthChart conditions={conditions} allStageIds={allStageIds} session={session}/>}
-            />
+            <Filter session={session} setAllStageIds={setAllStageIds} conditions={conditions} setConditions={setConditions}/>
+            <PPBandwidthChart conditions={conditions} allStageIds={allStageIds} session={session}/>
         </div>
     );
 });

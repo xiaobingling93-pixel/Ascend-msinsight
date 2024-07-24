@@ -74,6 +74,7 @@ html.dark {
     line-height: 30px;
     user-select: none;
 }
+
 .el-menu--horizontal.el-menu {
     border-bottom: none;
 }
@@ -90,8 +91,9 @@ html.dark {
     left: 30px;
 }
 
+.el-menu-item:hover,
 .el-menu--horizontal .el-menu-item:not(.is-disabled):focus,
 .el-menu--horizontal .el-menu-item:not(.is-disabled):hover {
     color: var(--el-color-primary);
-    background-color: var(--mi-bg-color-dark);
+    background-color: unset;
 }

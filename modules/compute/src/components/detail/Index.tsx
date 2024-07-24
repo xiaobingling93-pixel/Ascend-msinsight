@@ -7,16 +7,15 @@ import { type Session } from '../../entity/session';
 import BaseInfo from './BaseInfo';
 import ComputeWorkload from './ComputeWorkload/Index';
 import MemoryWorkload from './MemoryWorkload/Index';
+import Layout from 'lib/Layout';
 
 const index = observer(({ session }: { session: Session }): JSX.Element => {
     return (
-        <div style={{ padding: '0 20px', height: '100%', overflow: 'auto' }}>
-            <div>
-                <BaseInfo session={session}/>
-                <ComputeWorkload session={session}/>
-                <MemoryWorkload session={session}/>
-            </div>
-        </div>
+        <Layout padding={0}>
+            <BaseInfo session={session}/>
+            <ComputeWorkload session={session}/>
+            <MemoryWorkload session={session}/>
+        </Layout>
     );
 });
 

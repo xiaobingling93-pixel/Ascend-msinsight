@@ -8,9 +8,10 @@ import { runInAction } from 'mobx';
 import ComputeWorkloadChart from './ComputeWorkloadChart';
 import ComputeWorkloadTable from './ComputeWorkloadTable';
 import { type Session } from '../../../entity/session';
-import { BaseContainer, sortFunc } from 'lib/CommonUtils';
+import { sortFunc } from 'lib/CommonUtils';
 import Filter, { defaultCondition, type Icondition } from './Filter';
 import { queryComputeWorkload } from '../../RequestUtils';
+import CollapsiblePanel from 'lib/CollapsiblePanel';
 
 export interface IblockData {
     blockId: string;
@@ -66,14 +67,11 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
         });
     }, [data.blockIdList]);
     return (
-        <BaseContainer
-            header={t('ComputeWorkloadAnalysis')}
-            body={<div style={{ padding: '10px 20px' }}>
-                <Filter handleFilterChange={handleFilterChange} blockIdList={data.blockIdList}/>
-                <ComputeWorkloadChart blockId={condition.blockId} data={data.chartData}/>
-                <ComputeWorkloadTable blockId={condition.blockId} data={data.tableData}/>
-            </div>}
-        />
+        <CollapsiblePanel title={t('ComputeWorkloadAnalysis')}>
+            <Filter handleFilterChange={handleFilterChange} blockIdList={data.blockIdList}/>
+            <ComputeWorkloadChart blockId={condition.blockId} data={data.chartData}/>
+            <ComputeWorkloadTable blockId={condition.blockId} data={data.tableData}/>
+        </CollapsiblePanel>
     );
 });
 

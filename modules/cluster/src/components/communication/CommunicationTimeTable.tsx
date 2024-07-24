@@ -9,16 +9,13 @@ import { Button } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import {
-    Container,
-    getPageConfigWithAllData,
-    getPageConfigWithPageData,
-} from '../Common';
+import { getPageConfigWithAllData, getPageConfigWithPageData } from '../Common';
 import type { VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails } from '../../utils/RequestUtils';
 import { totalOperator } from './Filter';
 import ResizeTable from 'lib/ResizeTable';
 import type { Session } from '../../entity/session';
+import CollapsiblePanel from 'lib/CollapsiblePanel';
 
 export interface DataType {
     [prop: string]: any;
@@ -175,10 +172,8 @@ const CommunicationTimeTable = observer((props:
         setExpandedKeys([]);
     }, [props.dataSource]);
     return (
-        <Container
-            title={t('sessionTitle.DataAnalysisCommunicationTime')}
-            style={{ margin: '1rem 0' }}
-            content={<ResizeTable
+        <CollapsiblePanel title={t('sessionTitle.DataAnalysisCommunicationTime')}>
+            <ResizeTable
                 loading={!props.session.durationFileCompleted}
                 dataSource={dataSource}
                 columns={columns}
@@ -200,9 +195,7 @@ const CommunicationTimeTable = observer((props:
                 }
                 }
             />
-            }
-        />
-
+        </CollapsiblePanel>
     );
 });
 

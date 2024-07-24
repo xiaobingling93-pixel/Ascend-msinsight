@@ -6,11 +6,13 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Tooltip } from 'antd';
 import { observer } from 'mobx-react';
-import { BaseContainer, BaseDescription } from 'lib/CommonUtils';
+import { MIDescriptions } from 'lib/CommonUtils';
 import ResizeTable from 'lib/ResizeTable';
 import { type Session } from '../../entity/session';
 import { queryBaseInfo } from '../RequestUtils';
 import { LimitHit } from '../LimitSet';
+import CollapsiblePanel from 'lib/CollapsiblePanel';
+
 interface Iprops {
     session: Session;
 }
@@ -181,10 +183,15 @@ const index = observer(({ session }: Iprops): JSX.Element => {
     }, [JSON.stringify(data), t]);
 
     return (
-        <BaseContainer
-            header={t('BaseInfo')}
-            body={<BaseDescription items={items}/>}
-        />
+        <CollapsiblePanel title={t('BaseInfo')}>
+            <MIDescriptions column={1}>
+                {
+                    items.map((item, itemIndex) => <MIDescriptions.Item key={itemIndex} label={item.label}>
+                        {item.value}
+                    </MIDescriptions.Item>)
+                }
+            </MIDescriptions>
+        </CollapsiblePanel>
     );
 });
 

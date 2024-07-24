@@ -6,6 +6,7 @@ import React, { type ReactNode } from 'react';
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/es/locale/zh_CN';
 import enUS from 'antd/es/locale/en_US';
+import { light } from '../theme/light';
 
 interface SharedConfigProviderProps {
     locale: 'zhCN' | 'enUS';
@@ -17,6 +18,15 @@ const locales = {
     enUS,
 };
 
+ConfigProvider.config({
+    theme: {
+        primaryColor: light.primaryColor,
+        errorColor: light.dangerColor,
+        warningColor: light.warningColor,
+        successColor: light.successColor,
+        infoColor: light.infoColor,
+    },
+});
 export const SharedConfigProvider: React.FC<SharedConfigProviderProps> = ({ locale, children }) => (
     <ConfigProvider locale={locales[locale]}>
         {children}

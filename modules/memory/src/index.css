@@ -14,10 +14,6 @@
     border-color: var(--grey60);
 }
 
-.theme_dark .bandwidthChart>div {
-    background: var(--grey80);
-}
-
 .theme_dark .container-header {
     background: var(--grey85);
     color: var(--whiteblue);
@@ -57,10 +53,4 @@
 }
 .memory-ant-table-row{
     word-wrap: break-word;
-}
-.memory-analysis-wrapper{
-    flex-grow: 1;
-    padding: 0 20px;
-    height: 100%;
-    overflow-y: auto;
 }

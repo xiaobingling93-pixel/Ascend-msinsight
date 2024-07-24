@@ -76,22 +76,27 @@ interface FilterComProps {
 function FilterCom(props: FilterComProps): JSX.Element {
     const { conditions, handleChange, options = {} } = props;
     const { t } = useTranslation('summary');
-    return (<div style={ { margin: '0 20px 10px', textAlign: 'left', display: 'flex', alignItems: 'center' }}>
-        <Label name={t('Step')} />
-        <Select
-            value={conditions.step}
-            style={{ width: 120 }}
-            onChange={(val: any): void => handleChange('step', val)}
-            options={options.stepOptions}
-        />
-        <Label name={t('Stage')}/>
-        <Select
-            value={conditions.stage}
-            style={{ width: 200 }}
-            onChange={(val: any): void => handleChange('stage', val)}
-            options={options.stageOptions}
-        />
-        <div>{useHit()}</div>
+    return (<div className={'mi-search-box'} style={{ padding: 0 }}>
+        <div className="flex items-center">
+            <Label name={t('Step')} />
+            <Select
+                value={conditions.step}
+                style={{ width: 120 }}
+                onChange={(val: any): void => handleChange('step', val)}
+                options={options.stepOptions}
+            />
+        </div>
+
+        <div className="flex items-center">
+            <Label name={t('Stage')}/>
+            <Select
+                value={conditions.stage}
+                style={{ width: 200 }}
+                onChange={(val: any): void => handleChange('stage', val)}
+                options={options.stageOptions}
+            />
+            <div>{useHit()}</div>
+        </div>
     </div>);
 };
 

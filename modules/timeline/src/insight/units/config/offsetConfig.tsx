@@ -3,7 +3,6 @@
 */
 import type { InputRef } from 'antd';
 import { StyledInput } from '../../../components/base/StyledInput';
-import { StyledSelect } from '../../../components/base/StyledSelect';
 import React, { useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { observer } from 'mobx-react-lite';
@@ -100,24 +99,18 @@ const onPressEnter = (session: Session, setValue: React.Dispatch<React.SetStateA
 };
 
 const InputContainer = styled.div`
-    width: 380px;
-    padding: 5px 10px 5px 10px;
+    padding: 5px 10px;
     color: ${(props): string => props.theme.fontColor}
 `;
 
 const InputDiv = styled.div`
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     display: flex;
     .ant-input-disabled {
         background-color: ${(props): string => props.theme.templateBackgroundColor};
         border: none;
     }
-`;
-
-const InputSpan = styled.span`
-    text-align: right;
-    width: 170px;
 `;
 
 function handleAlignStart(inputRef: InputRef, session: Session, setValue: React.Dispatch<React.SetStateAction<string>>): void {
@@ -138,24 +131,29 @@ const InputOption = observer(({ session, metaData }: { session: Session; metaDat
     const [title, setTitle] = useState('Please enter a proper value');
     const inputRef = useRef<InputRef>(null);
     const { t } = useTranslation();
-    return <StyledSelect
-        width={100}
-        height={18}
-        value={t('Offset', { ns: 'timeline' })}
-        dropdownRender={(): React.ReactElement => <InputContainer>
-            <StyledTooltip title={title} visible={visible} overlayInnerStyle={{ borderRadius: 8, color: useTheme().fontColor }}>
+    return <StyledTooltip
+        trigger={'click'}
+        placement={'bottom'}
+        title={
+            <InputContainer>
                 <InputDiv>
-                    <InputSpan>{t('Timestamp Offset', { ns: 'timeline' })}(ns):</InputSpan>
-                    <StyledInput minwidth={20} height={18} width={155} isshow={1} value={offset} disabled={session.phase === 'analyzing'} ref={inputRef} maxLength={500}
-                        onChange={(e): void => onChange({ e, session, setOffset, setVisible, setTitle, t })}
-                        onBlur={(e): void => onBlur(e, session, setOffset, setVisible, metaData)}
-                        onFocus={onFocus}
-                        onPressEnter={(e): void => onPressEnter(session, setOffset, setVisible, e, metaData)}/>
+                    <div className="flex-none">{t('Timestamp Offset', { ns: 'timeline' })}(ns):</div>
+                    <div>
+                        <StyledInput minwidth={20} height={18} width={155} isshow={1} value={offset} disabled={session.phase === 'analyzing'} ref={inputRef} maxLength={500}
+                            onChange={(e): void => onChange({ e, session, setOffset, setVisible, setTitle, t })}
+                            onBlur={(e): void => onBlur(e, session, setOffset, setVisible, metaData)}
+                            onFocus={onFocus}
+                            onPressEnter={(e): void => onPressEnter(session, setOffset, setVisible, e, metaData)}
+                        />
+                        {visible && <div>{title}</div>}
+                    </div>
                     <CustomButton tooltip={t('Align to Start', { ns: 'timeline' })} icon={AlignIcon} type="primary" onClick={(): void => handleAlignStart(inputRef, session, setOffset)} />
                 </InputDiv>
-            </StyledTooltip>
-        </InputContainer>}>
-    </StyledSelect>;
+            </InputContainer>}
+        overlayInnerStyle={{ borderRadius: 8, color: useTheme().fontColor }}>
+        <div>{t('Offset', { ns: 'timeline' })}</div>
+    </StyledTooltip>
+    ;
 });
 
 export const offsetConfig = (session: Session, metadata: any): JSX.Element => {

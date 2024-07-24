@@ -8,13 +8,13 @@
 /*默认dark样式*/
 @import 'dark.css';
 /*默认antd组件css依赖*/
-@import '~antd/dist/antd.css';
+@import '~antd/dist/antd.variable.min.css';
 @import "antdExtendsLight.css";
 @import "antdExtendsDark.css";
 @import 'base.css';
 
 #root {
-    background: var(--mi-bg-color);
+    background: var(--mi-bg-color-dark);
     color: var(--mi-text-color-primary);
 }
 

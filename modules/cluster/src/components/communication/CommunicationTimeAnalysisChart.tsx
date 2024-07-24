@@ -7,11 +7,12 @@ import type { Session } from '../../entity/session';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
-import { addResizeEvent, Container, Loading, safeStr } from '../Common';
+import { addResizeEvent, Loading, safeStr } from '../Common';
 import { colorPalette, hashToNumber } from '../../utils/colorUtil';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import connector from '../../connection';
+import CollapsiblePanel from 'lib/CollapsiblePanel';
 import i18n from 'lib/i18n';
 
 const DEFAULT_CHART_HEIGHT = 460;
@@ -281,32 +282,29 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { data
             InitCharts(dataSource, session, setDropDownVisible);
         });
     }, [dataSource]);
-    return (
-        <Container
-            title={'HCCL'}
-            content={session.durationFileCompleted
-                ? <Dropdown
-                    menu={{
-                        items: menuItems,
-                        onClick: (): void => setDropDownVisible(false),
-                        onBlur: (e): void => {
-                            const hasItem = menuItems?.findIndex(item =>
-                                (e.relatedTarget as HTMLElement)?.dataset?.menuId?.includes(item?.key as string)) !== -1;
-                            if (!hasItem) {
-                                setDropDownVisible(false);
-                            }
-                        },
-                    }}
-                    trigger={['contextMenu']}
-                    open={dropDownVisible}
-                    autoFocus
-                >
-                    <div id={'hccl'} style={{ width: 'calc(100vw - 40px)', height: chartHeight }} ></div>
-                </Dropdown>
-                : <div style={{ height: '400px' }}><Loading style={{ margin: '200px auto 0' }}/></div> }
-            bodyStyle={{ overflow: 'visible' }}
-        />
-    );
+
+    return <CollapsiblePanel title={'HCCL'}>
+        {session.durationFileCompleted
+            ? <Dropdown
+                menu={{
+                    items: menuItems,
+                    onClick: (): void => setDropDownVisible(false),
+                    onBlur: (e): void => {
+                        const hasItem = menuItems?.findIndex(item =>
+                            (e.relatedTarget as HTMLElement)?.dataset?.menuId?.includes(item?.key as string)) !== -1;
+                        if (!hasItem) {
+                            setDropDownVisible(false);
+                        }
+                    },
+                }}
+                trigger={['contextMenu']}
+                open={dropDownVisible}
+                autoFocus
+            >
+                <div id={'hccl'} style={{ width: 'calc(100vw - 80px)', height: chartHeight }}></div>
+            </Dropdown>
+            : <div style={{ height: '400px' }}><Loading style={{ margin: '200px auto 0' }}/></div>}
+    </CollapsiblePanel>;
 });
 
 export default CommunicationTimeAnalysisChart;

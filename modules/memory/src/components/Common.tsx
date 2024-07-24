@@ -12,7 +12,7 @@ const SECOND_TO_MICROSECOND = 1000 * 1000;
 const MILLISECOND_TO_MICROSECONTD = 1000;
 
 export const Label = (props: {name: React.ReactNode;style?: object }): JSX.Element => {
-    return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name}{' :'} </span>;
+    return <span style={{ marginRight: 8, ...(props.style ?? {}) }}>{props.name}{' :'} </span>;
 };
 
 export const useHit = (): React.ReactElement => {

@@ -25,6 +25,7 @@ import { isNil } from 'lodash';
 const UP_LINE: number = 30;
 const DOWN_LINE: number = 45;
 export const MIN_BRUSH_SIZE = 2;
+const PAGE_PADDING = 16;
 
 interface DrawArrowOptions {
     toX: number;
@@ -245,8 +246,10 @@ const drawMaskRange = ({
                     const rect = element.getBoundingClientRect();
                     const scrollContainer = getParentNodeByClassName(element, 'laneWrapper');
                     const containerRect = scrollContainer?.getBoundingClientRect();
-                    const top = containerRect ? Math.max(rect.top, containerRect.top) : rect.top;
-                    const bottom = containerRect ? Math.min(rect.bottom, containerRect.bottom) : rect.bottom;
+                    let top = containerRect ? Math.max(rect.top, containerRect.top) : rect.top;
+                    let bottom = containerRect ? Math.min(rect.bottom, containerRect.bottom) : rect.bottom;
+                    top = top - PAGE_PADDING;
+                    bottom = bottom - PAGE_PADDING;
                     if (bottom > top) {
                         const maskRangeTemp = maskRange as number[];
                         ctx.clearRect(maskRangeTemp[0], top, maskRangeTemp[1] - maskRangeTemp[0], bottom - top);

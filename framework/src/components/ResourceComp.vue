@@ -304,16 +304,20 @@ defineExpose({
 
 <template>
     <div class="tree-wrap">
-        <el-text size="default" :type="errorAlert ? 'danger' : 'primary'"> {{ inputErrorText }} </el-text>
-
         <div class="input-wrapper">
-          <el-input :class= "errorAlert ? 'red-input' : 'blue-input'" v-model="state.inputPath" size="default" :maxlength="props.maxPathLen" show-word-limit @keyup.enter="searchPath" />
-          <div class="icon-refresh">
-            <el-tooltip :content="RefreshDirectory">
-              <el-icon :size="16" @click="handleMounted"><RefreshIcon /></el-icon>
-            </el-tooltip>
-          </div>
+          <el-form ref="formRef" class="form" :model="state" @submit.prevent="searchPath">
+            <el-form-item prop="inputPath" :validate-status="errorAlert ? 'error' : 'success'">
+              <el-input v-model="state.inputPath" size="default" :maxlength="props.maxPathLen" show-word-limit :placeholder="FileSearchDescribe">
+                <template #suffix>
+                  <el-tooltip :content="RefreshDirectory">
+                    <el-icon :size="16" @click="handleMounted" class="icon-refresh"><RefreshIcon /></el-icon>
+                  </el-tooltip>
+                </template>
+              </el-input>
+            </el-form-item>
+          </el-form>
         </div>
+        <el-text size="default" :type="errorAlert ? 'danger' : 'primary'"> {{ inputErrorText }} </el-text>
         <div class="data-tree">
             <el-tree ref="treeRef" :default-expanded-keys="state.defalultExpandedKeys" :data="resourceState.startResource" :props="defaultProps" :auto-expand-parent="false"
                 node-key="path" @node-click="handleClick" @node-expand="handleExpand" @node-collapse="hanldeCollapse" lazy
@@ -343,33 +347,20 @@ defineExpose({
   color: var(--mi-text-color-primary)
 }
 
+.form{
+  width: 100%;
+}
+
+.el-form-item--small{
+  margin-bottom: 8px;
+}
+
 .data-tree {
     margin-top: 24px;
     height: 310px;
     overflow-y: auto;
     background: var(--mi-bg-color-dark);
     padding: 10px 0;
-}
-
-:deep(.el-input__wrapper) {
-    border-radius: 2px;
-    box-shadow: 0 0 0;
-    background-color: transparent !important;
-}
-.red-input {
-    border-radius: 2px;
-    border: 1px solid #F56C6C;
-    box-shadow: 0 0 0;
-    background-color: transparent !important;
-    --el-input-focus-border-color: #F56C6C;
-}
-
-.blue-input {
-  border-radius: 2px;
-  border: 1px solid #409EFF;
-  box-shadow: 0 0 0;
-  background-color: transparent !important;
-  --el-input-focus-border-color: #409EFF;
 }
 
 .custom-tree-node {
@@ -389,7 +380,6 @@ defineExpose({
 
 .icon-refresh{
   cursor: pointer;
-  margin-left: 8px;
 }
 .icon-refresh:hover .icon{
   fill: var(--el-color-primary)

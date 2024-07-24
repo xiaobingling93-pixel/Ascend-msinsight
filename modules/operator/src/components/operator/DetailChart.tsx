@@ -5,12 +5,28 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type * as echarts from 'echarts';
-import { LeftRightContainer } from '../Common';
 import { getResizeEcharts, chartVisbilityListener } from 'lib/CommonUtils';
 import type { ConditionType } from './Filter';
 import { queryOperatorCategory, queryOperatorComputeUnit } from '../RequestUtils';
 import type { Session } from '../../entity/session';
 import { themeInstance } from '../../theme/theme';
+import styled from '@emotion/styled';
+
+const ChartsContainer = styled.div`
+  display: flex;
+  align-items: center;
+  height: 500px;
+  padding: 0 24px;
+  margin-bottom: 24px;
+  gap: 24px;
+
+  & .chart-item{
+    flex: 1;
+    padding: 16px 24px;
+    height: 100%;
+    border: 1px solid ${(props): string => props.theme.borderColor};
+  }
+`;
 
 export type dataType = Array<{
     [name: string]: any;
@@ -155,13 +171,14 @@ const DetailChart = observer(({ condition, session }: {condition: ConditionType;
         renderChart();
     }, [themeInstance.currentTheme, t]);
     return (
-        <LeftRightContainer
-            style={{ height: '500px', padding: '20px 20px 0' }}
-            headerStyle={{ overflow: 'visible' }}
-            bodyStyle={{ overflow: 'visible' }}
-            left={<div id={'opTypeChart'} style={{ height: '100%', width: '100%' }} ></div>}
-            right={isHideRight() ? <></> : <div id={'computeChart'} style={{ height: '100%', width: '100%' }} ></div>}
-        />
+        <ChartsContainer>
+            <div className="chart-item">
+                <div id={'opTypeChart'} style={{ height: '100%', width: '100%' }} ></div>
+            </div>
+            <div className="chart-item">
+                {isHideRight() ? <></> : <div id={'computeChart'} style={{ height: '100%', width: '100%' }}></div>}
+            </div>
+        </ChartsContainer>
     );
 });
 

@@ -92,7 +92,7 @@
  * table组件相关配置
  */
 .theme_dark tr.ant-table-expanded-row > td, .theme_dark tr.ant-table-expanded-row:hover > td {
-    background: var(--grey95);
+    background: var(--mi-bg-color);
 }
 
 .theme_dark .ant-table-column-sorter-up.active svg, .theme_dark .ant-table-column-sorter-down.active svg {

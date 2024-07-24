@@ -4,11 +4,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Container, formatDate, Loading } from '../Common';
+import { formatDate, Loading } from '../Common';
 import type { StringMap } from '../../utils/interface';
 import type { Session } from '../../entity/session';
 import { queryTopSummary } from '../../utils/RequestUtils';
 import { defaultConditions } from './Filter';
+import CollapsiblePanel from 'lib/CollapsiblePanel';
+import { MIDescriptions } from 'lib/CommonUtils';
 
 export interface BaseInfoDataType {
     [prop: string]: any;
@@ -126,27 +128,20 @@ const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
         });
     }, [session.parseCompleted, session.renderId]);
     const displaylist = useDisplayItems(session);
-    return <Container
-        title={t('BaseInfo')}
-        titleClassName={'common-title-bottom'}
-        style={{ height: 'auto' }}
-        content={(<div className={'baseinfo'}>
+
+    return <CollapsiblePanel title={t('BaseInfo')}>
+        <MIDescriptions column={1}>
             {
-                displaylist.map(item => (
-                    <div key={item.key}>
-                        <div>{item.label}:</div>
-                        <div>
-                            {
-                                item.key === 'collectDuration' && session.clusterCompleted && !session.parseCompleted
-                                    ? <Loading style={{ marginTop: '10px' }}/>
-                                    : data[item.key]
-                            }
-                        </div>
-                    </div>
-                ))
+                displaylist.map((item, index) => <MIDescriptions.Item key={index} label={item.label}>
+                    {
+                        item.key === 'collectDuration' && session.clusterCompleted && !session.parseCompleted
+                            ? <Loading style={{ marginTop: '10px' }}/>
+                            : data[item.key]
+                    }
+                </MIDescriptions.Item>)
             }
-        </div>)}
-    />;
+        </MIDescriptions>
+    </CollapsiblePanel>;
 };
 
 export default BaseInfo;

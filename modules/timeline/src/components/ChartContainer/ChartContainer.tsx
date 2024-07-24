@@ -41,7 +41,8 @@ const Container = styled.div`
     position: relative;
     display: flex;
     flex-direction: column;
-    background-color: ${(props): string => props.theme.contentBackgroundColor};
+    background-color: ${(props): string => props.theme.bgColor};
+    border-radius: ${(props): string => props.theme.borderRadiusBase};
 
     .mask {
         position: absolute;

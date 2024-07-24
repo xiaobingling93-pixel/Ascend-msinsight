@@ -76,7 +76,7 @@ const handleCoverVisible = (value: boolean) => {
 </script>
 
 <template>
-  <el-dialog :model-value="showModal" :title="FileExplorer" width="30%" :close-on-click-modal="false" @close="emit('update:showModal', false)">
+  <el-dialog :model-value="showModal" :title="FileExplorer" width="800px" :close-on-click-modal="false" @close="emit('update:showModal', false)">
     <el-tooltip v-if="projectName" :content="projectName">
       <span class="project-name-span">{{ CurProject }} ：{{ projectName }}</span>
     </el-tooltip>

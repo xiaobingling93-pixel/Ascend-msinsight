@@ -7,13 +7,14 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
-import { Container, getPageConfigWithPageData } from '../Common';
+import { getPageConfigWithPageData } from '../Common';
 import { type ConditionType, type FilterType } from './Filter';
 import { queryOperators, queryOperatorsInStatic, queryOperatorStatic } from '../RequestUtils';
 import { runInAction } from 'mobx';
 import type { Session } from '../../entity/session';
 import type { ColumnsType } from 'antd/es/table';
 import i18n from 'lib/i18n';
+import CollapsiblePanel from 'lib/CollapsiblePanel';
 
 interface FullConditionType {
     rankId: string ;
@@ -543,12 +544,9 @@ const DetailTable = ({ condition, filterType, session }: {condition: ConditionTy
             table = <BaseTable condition={condition} filterType={filterType} session={session}/>;
             break;
     }
-    return <Container
-        style={{ height: 'auto' }}
-        title={t('sessionTitle.OperatorDetail')}
-        bodyStyle={{ overflow: 'visible' }}
-        content={table}
-    />;
+    return <CollapsiblePanel title={t('sessionTitle.OperatorDetail')} secondary>
+        {table}
+    </CollapsiblePanel>;
 };
 
 export default DetailTable;

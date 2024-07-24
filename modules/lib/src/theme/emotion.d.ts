@@ -21,6 +21,18 @@ declare module '@emotion/react' {
         pink: string;
         otherColor: string;
         yellow: string;
+        coralRed: string;
+        deepBlue: string;
+        tealGreen: string;
+        aquaBlue: string;
+        vividBlue: string;
+        vividRed: string;
+        raspberryPink: string;
+        skyBlue: string;
+        royalPurple: string;
+        sunsetOrange: string;
+        amethystPurple: string;
+        limeGreen: string;
     };
     export interface Theme {
         backgroundColor: string; // 主界面背景色
@@ -99,7 +111,6 @@ declare module '@emotion/react' {
         colorPalette: ColorPalette & {
             transparentMask: string;
         };
-        schedulingBorderColorPalette: ColorPalette; // 点选时延信息边框色系
         grayscaleColor: string; // 泳道元素的灰度颜色
         filterColor: string; // 过滤模块字体颜色
         filterTipColor: string; // 过滤模块提示文字字体颜色
@@ -198,5 +209,6 @@ declare module '@emotion/react' {
         borderRadiusSmall: string;
         borderRadiusRound: string;
         borderRadiusCircle: string;
+        pagePadding: string;
     }
 }

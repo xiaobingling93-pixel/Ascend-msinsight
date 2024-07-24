@@ -21,7 +21,6 @@ import connector from './connection';
 import { GlobalStyles } from 'lib/theme';
 
 const Window = styled.div`
-    background-color: ${(props): string => props.theme.bgColor};
     height: 100vh;
     overflow: hidden;
     user-select: none;
@@ -151,7 +150,7 @@ export const App = observer(() => {
     };
     return (
         <ThemeProvider theme={theme}>
-            <GlobalStyles theme={theme} />
+            <GlobalStyles />
             <Window>
                 <AppErrorBoundary>
                     <SessionPageErrorBoundary>

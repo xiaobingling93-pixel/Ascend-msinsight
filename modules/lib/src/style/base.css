@@ -180,3 +180,11 @@ body.theme_dark {
 .justify-between{justify-content: space-between;}
 .justify-around{justify-content: space-around;}
 .justify-evenly{justify-content: space-evenly;}
+
+.mb-20{margin-bottom: 20px}
+.mb-30{margin-bottom: 30px}
+.mi-page {padding: 16px;height: 100vh;min-width: 900px;background: var(--mi-bg-color-dark);}
+.mi-page .mi-page-content{position:relative;border-radius: var(--mi-border-radius-base);height: calc(100vh - 32px);background: var(--mi-bg-color);padding: 16px 0;overflow: auto;}
+.mi-page .mi-page-content .mi-search-box{ display: flex;align-items: center;flex-wrap: wrap;gap: 24px;padding: 0 24px; margin-bottom: 20px;}
+.mi-section-title{font-size: 16px;font-weight: 500;margin-bottom: 24px}
+

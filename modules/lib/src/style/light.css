@@ -38,16 +38,13 @@ html {
 }
 
 .fullbox {
+    z-index: 10;
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
-}
-
-.fullbox {
-    background: white;
-    z-index: 10;
+    background: var(--mi-bg-color);
 }
 
 .text-selectable {

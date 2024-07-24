@@ -5,11 +5,11 @@ import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import './Operator.css';
 import type { Session } from '../../entity/session';
-import { HeaderFixedContainer } from '../Common';
 import Filter from './Filter';
 import DetailChart from './DetailChart';
 import BaseTable from './DetailTable';
 import { type ConditionType, defaultCondition, type FilterType, defaultFilterType } from './Filter';
+import Layout from 'lib/Layout';
 
 // eslint-disable-next-line max-lines-per-function
 const Index = observer(({ session }: { session: Session }) => {
@@ -27,19 +27,13 @@ const Index = observer(({ session }: { session: Session }) => {
         });
     }, []);
 
-    return <div style={{ height: '100%', width: '100%', overflow: 'auto' }}>
-        <HeaderFixedContainer
-            style={{ minWidth: '800px' }}
-            headerStyle={{ padding: '10px' }}
-            header={<Filter session={session} handleFilterChange={handleFilterChange}/>}
-            bodyStyle={{ overflow: 'visible' }}
-            body={ <>
-                <DetailChart condition={condition} session={session}/>
-                <BaseTable condition={condition} filterType={filterType} session={session}/>
-            </>
-            }
-        />
-    </div>;
+    return <Layout>
+        <div className="mi-search-box">
+            <Filter session={session} handleFilterChange={handleFilterChange}/>
+        </div>
+        <DetailChart condition={condition} session={session}/>
+        <BaseTable condition={condition} filterType={filterType} session={session}/>
+    </Layout>;
 });
 
 export default Index;

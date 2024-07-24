@@ -26,11 +26,6 @@
     color: var(--whiteblue) !important;
 }
 
-
-.theme_dark .fullbox {
-    background: var(--mi-bg-color);
-}
-
 .theme_dark .tan-box > div > .bottomC, .theme_dark .tan-box > div {
     background: none;
 }

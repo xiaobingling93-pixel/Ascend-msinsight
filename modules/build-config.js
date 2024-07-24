@@ -60,6 +60,8 @@ const federationConfig = {
     i18next: {singleton: true},
     'react-i18next': {singleton: true},
     antd: {singleton: true},
+    '@emotion/react': {singleton: true},
+    '@emotion/styled': {singleton: true},
   },
 };
 

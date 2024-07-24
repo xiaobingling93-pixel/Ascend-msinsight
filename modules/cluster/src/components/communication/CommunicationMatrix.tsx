@@ -9,12 +9,13 @@ import type { TFunction } from 'i18next';
 import { Select, Checkbox, InputNumber, Button, message } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import * as echarts from 'echarts';
-import { addResizeEvent, Container, Label, COLOR, getDecimalCount, safeStr } from '../Common';
+import { addResizeEvent, Label, COLOR, getDecimalCount, safeStr } from '../Common';
 import type { ConditionDataType } from './Filter';
 import type { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
 import _, { cloneDeep } from 'lodash';
 import { type Session } from '../../entity/session';
+import CollapsiblePanel from 'lib/CollapsiblePanel';
 
 interface FilterInfos {
     min: number;
@@ -363,37 +364,29 @@ const RangeFilter = ({ range, changeFilter }: { range: RangeInfo; changeFilter: 
 
 const CommunicationMatrixCom = ({ isShow, handleChange, switchCondition, range, setFilter }: ICommunicationMatrixProps): JSX.Element => {
     const { t } = useTranslation('communication');
-    return (<div style={{ display: isShow ? 'block' : 'none', overflow: 'auto' }}>
-        <Container
-            type={'headerfixed'}
-            title={t('sessionTitle.MatrixModel')}
-            style={{ margin: '0 20px' }}
-            content={<div>
-                <div>
-                    <Label name={t('searchCriteria.CommunicationMatrixType')}/>
-                    <Select
-                        defaultValue="0"
-                        style={{ width: 200, marginRight: '20px' }}
-                        onChange={(val): void => {
-                            handleChange('type', val);
-                        }}
-                        options={useOptions()}
-                        value={switchCondition.type}
-                    />
-                    <Checkbox checked={switchCondition.showInner}
-                        onChange={(e: CheckboxChangeEvent): void => {
-                            handleChange('showInner', e.target.checked);
-                        }}
-                    >{t('searchCriteria.ShowInnerCommunication')}</Checkbox>
-                    {switchCondition.type !== 'transportType' && <RangeFilter range={range} changeFilter={setFilter} />}
-                </div>
-                <div>
-                    <div id={'matrixchart'} style={{ width: 'calc(100vw - 40px)', height: '800px' }}></div>
-                </div>
-            </div>}
-        />
-    </div>
-    );
+    return <CollapsiblePanel style={{ display: isShow ? 'block' : 'none' }} title={t('sessionTitle.MatrixModel')} padding={'16px 24px'}>
+        <div>
+            <Label name={t('searchCriteria.CommunicationMatrixType')}/>
+            <Select
+                defaultValue="0"
+                style={{ width: 200, marginRight: '20px' }}
+                onChange={(val): void => {
+                    handleChange('type', val);
+                }}
+                options={useOptions()}
+                value={switchCondition.type}
+            />
+            <Checkbox checked={switchCondition.showInner}
+                onChange={(e: CheckboxChangeEvent): void => {
+                    handleChange('showInner', e.target.checked);
+                }}
+            >{t('searchCriteria.ShowInnerCommunication')}</Checkbox>
+            {switchCondition.type !== 'transportType' && <RangeFilter range={range} changeFilter={setFilter} />}
+        </div>
+        <div>
+            <div id={'matrixchart'} style={{ width: 'calc(100vw - 80px)', height: '800px' }}></div>
+        </div>
+    </CollapsiblePanel>;
 };
 
 export default CommunicationMatrix;

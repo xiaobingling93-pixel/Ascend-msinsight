@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import { AntTableChart } from '../components/AntTableChart';
 import { LineChart } from '../components/LineChart';
-import { Button, Col, Input, InputNumber, message, Row, Select, Spin } from 'antd';
+import { Button, Input, InputNumber, message, Select, Spin } from 'antd';
 import type { Session } from '../entity/session';
 import type {
     Graph, MemoryCurve, OperatorDetail, StaticOperatorCurve,
@@ -20,6 +20,7 @@ import {
 import { useHit, Label } from '../components/Common';
 import styled from '@emotion/styled';
 import { GroupRankIdsByHost, StyledEmpty } from 'lib/CommonUtils';
+import Layout from 'lib/Layout';
 interface SelectedRange {
     startTs: number;
     endTs: number;
@@ -31,16 +32,15 @@ interface ConditionType {
     ranks?: Map<string, string[]>;
 }
 
-const MemoryWrapper = styled.div`
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      height: 100%;
-    `;
-
 const FlexDiv = styled.div`
     display: flex;
     align-items: center;
+`;
+
+const SearchBox = styled(FlexDiv)`
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 24px;
 `;
 
 const groupBy = [
@@ -400,9 +400,9 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
     }, [hostCondition.options, hostCondition.value, hostCondition.ranks]);
 
     return (
-        <div className="memory-analysis-wrapper">
-            <MemoryWrapper>
-                <FlexDiv style={{ flexWrap: 'wrap', gap: '10px', padding: '14px', alignContent: 'center' }}>
+        <Layout padding={'16px 24px'}>
+            <div className="mb-30">
+                <SearchBox>
                     {hostCondition.options.length > 0
                         ? <FlexDiv>
                             <Label name={t('searchCriteria.Host')} />
@@ -444,69 +444,61 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                             </FlexDiv>
                             : null
                     }
-                </FlexDiv>
+                </SearchBox>
                 <Spin spinning={curveSpin} tip="loading...">
-                    <Row style={{ height: 400 }}>
-                        <Col span={24}>
-
-                            { lineChartData
-                                ? <LineChart
-                                    hAxisTitle={t('Time (ms)')}
-                                    vAxisTitle={t('Memory Usage (MB)')}
-                                    graph={lineChartData}
-                                    onSelectionChanged={onSelectedRangeChanged}
-                                    record={selectedRecord}
-                                    isDark={isDark}
-                                    isStatic={false}
-                                />
-                                : <StyledEmpty style={{ marginTop: 160 }} />
-                            }
-
-                        </Col>
-                    </Row>
+                    { lineChartData
+                        ? <LineChart
+                            hAxisTitle={t('Time (ms)')}
+                            vAxisTitle={t('Memory Usage (MB)')}
+                            graph={lineChartData}
+                            onSelectionChanged={onSelectedRangeChanged}
+                            record={selectedRecord}
+                            isDark={isDark}
+                            isStatic={false}
+                        />
+                        : <StyledEmpty style={{ marginTop: 160 }} />
+                    }
                 </Spin>
-                { memoryType === memoryGraphType.static
-                    ? <div>
-                        <Row style={{ height: 60, alignContent: 'center' }}>
-                            <Col span={4}>
-                                <Label name={t('searchCriteria.GraphId')} />
-                                <Select
-                                    value={memoryGraphId}
-                                    style={{ width: 180 }}
-                                    onChange={onMemoryGraphIdChanged}
-                                    options={memoryGraphIdList.map((graphId) => {
-                                        return {
-                                            value: graphId,
-                                            label: graphId,
-                                        };
-                                    })}
-                                />
-                            </Col>
-                        </Row>
-                        <Spin spinning={staticCurveSpin} tip="loading...">
-                            <Row style={{ height: 400 }}>
-                                <Col span={24}>
+            </div>
 
-                                    { staticLineChartData
-                                        ? <LineChart
-                                            hAxisTitle={t('Node Index')}
-                                            vAxisTitle={t('Memory Usage (MB)')}
-                                            graph={staticLineChartData}
-                                            onSelectionChanged={onSelectedRangeChanged}
-                                            record={selectedStaticRecord}
-                                            isDark={isDark}
-                                            isStatic={true}
-                                        />
-                                        : <StyledEmpty style={{ marginTop: 160 }} />
-                                    }
+            { memoryType === memoryGraphType.static
+                ? <div className="mb-30">
+                    <SearchBox>
+                        <div className="flex items-center">
+                            <Label name={t('searchCriteria.GraphId')} />
+                            <Select
+                                value={memoryGraphId}
+                                style={{ width: 180 }}
+                                onChange={onMemoryGraphIdChanged}
+                                options={memoryGraphIdList.map((graphId) => {
+                                    return {
+                                        value: graphId,
+                                        label: graphId,
+                                    };
+                                })}
+                            />
+                        </div>
+                    </SearchBox>
+                    <Spin spinning={staticCurveSpin} tip="loading...">
+                        { staticLineChartData
+                            ? <LineChart
+                                hAxisTitle={t('Node Index')}
+                                vAxisTitle={t('Memory Usage (MB)')}
+                                graph={staticLineChartData}
+                                onSelectionChanged={onSelectedRangeChanged}
+                                record={selectedStaticRecord}
+                                isDark={isDark}
+                                isStatic={true}
+                            />
+                            : <StyledEmpty style={{ marginTop: 160 }} translation={t}/>
+                        }
+                    </Spin>
+                </div>
+                : null }
 
-                                </Col>
-                            </Row>
-                        </Spin>
-                    </div>
-                    : null }
-                <Row style={{ height: 60, alignContent: 'center', marginTop: '75px' }}>
-                    <Col span={6}>
+            <div className="mb-30">
+                <SearchBox>
+                    <div className="flex items-center">
                         <Label name={t('searchCriteria.Name')} />
                         <Input
                             value={searchEventOperatorName}
@@ -516,8 +508,8 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                             allowClear
                             maxLength={200}
                         />
-                    </Col>
-                    <Col span={6}>
+                    </div>
+                    <div className="flex items-center">
                         <Label name={t('searchCriteria.Min Size')} />
                         <InputNumber
                             value={minSize}
@@ -527,8 +519,8 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                             max={4294967295}
                             formatter={(value): string => `${Number(value)}`}
                         />
-                    </Col>
-                    <Col span={6}>
+                    </div>
+                    <div className="flex items-center">
                         <Label name={t('searchCriteria.Max Size')} />
                         <InputNumber
                             value={maxSize}
@@ -539,8 +531,8 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                             minLength={1}
                             formatter={(value): string => `${Number(value)}`}
                         />
-                    </Col>
-                    <Col span={6}>
+                    </div>
+                    <div className="flex items-center">
                         <Button
                             onClick={(): void => memoryType === memoryGraphType.dynamic
                                 ? onSearch(searchEventOperatorName, minSize, maxSize, true)
@@ -558,30 +550,26 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                         >
                             {t('searchCriteria.Button Reset')}
                         </Button>
-                    </Col>
-                </Row>
-                <Row style={{ flex: 1, height: 0 }}>
-                    <Col span={24}>
-                        <Spin spinning={tableSpin} tip="loading...">
-                            <AntTableChart
-                                tableData={{
-                                    columns: memoryTableHead,
-                                    rows: memoryTableData,
-                                }}
-                                onRowSelected={onRowSelected}
-                                current={current}
-                                pageSize={pageSize}
-                                onCurrentChange={setCurrent}
-                                onPageSizeChange={setPageSize}
-                                onOrderChange={setOrder}
-                                onOrderByChange={setOrderBy}
-                                total={total}
-                            />
-                        </Spin>
-                    </Col>
-                </Row>
-            </MemoryWrapper>
-        </div>
+                    </div>
+                </SearchBox>
+                <Spin spinning={tableSpin} tip="loading...">
+                    <AntTableChart
+                        tableData={{
+                            columns: memoryTableHead,
+                            rows: memoryTableData,
+                        }}
+                        onRowSelected={onRowSelected}
+                        current={current}
+                        pageSize={pageSize}
+                        onCurrentChange={setCurrent}
+                        onPageSizeChange={setPageSize}
+                        onOrderChange={setOrder}
+                        onOrderByChange={setOrderBy}
+                        total={total}
+                    />
+                </Spin>
+            </div>
+        </Layout>
     );
 });
 export default MemoryAnalysis;

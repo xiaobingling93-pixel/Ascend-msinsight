@@ -1,8 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
 */
-import { ThemeProvider } from '@emotion/react';
-import type { Theme } from '@emotion/react';
 import { CaretLeftOutlined, CaretRightOutlined } from '@ant-design/icons';
 import styled from '@emotion/styled';
 import { clamp } from 'lodash';
@@ -17,12 +15,14 @@ interface CssProps {
     draggableWH: string;
     dragDirection: DragDirection;
     minWH: number;
+    padding: number | string;
 }
 export interface ViewProps {
     mainContainer: JSX.Element;
     draggableContainer?: JSX.Element;
     slot?: JSX.Element;
     id: string;
+    padding?: number | string;
 }
 
 export enum DragDirection {
@@ -50,7 +50,6 @@ export interface DraggableContext {
 interface DCProps {
     dragDirection: DragDirection;
     draggableWH: number;
-    theme: Theme;
     open?: boolean;
 }
 
@@ -59,7 +58,6 @@ const MIN_VERTICAL_WH = 36;
 
 const ContainerBase = styled.div<CssProps>`
     display: flex;
-    background-color: ${(p): string => p.theme.contentBackgroundColor};
     flex-grow: 1;
     overflow: hidden;
     width: 100%;
@@ -206,6 +204,7 @@ const ContainerBottom = styled(ContainerBase)`
         flex: 1;
         flex-flow: row;
         overflow: hidden;
+        padding: ${(p): number | string => p.padding ?? 0}px;
     }
 
     & > .bottomC {
@@ -476,7 +475,7 @@ const containerMap: Map<DragDirection, typeof ContainerBase> = new Map([
  * handleOpen：显示/隐藏可拖动容器；
  */
 export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => JSX.Element), ((needOpen?: boolean) => void) ] => {
-    const { draggableWH, dragDirection, open = true, theme } = props;
+    const { draggableWH, dragDirection, open = true } = props;
     const container = useRef<HTMLDivElement>(null); const draggable = useRef<HTMLDivElement>(null);
     const [dragWh, setDragWh] = useState(String(draggableWH));
     const [autoPopUp, setAutoPopUp] = useState(true);
@@ -507,23 +506,22 @@ export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => 
         }
     });
     const view = (viewProps: ViewProps): JSX.Element => {
-        return <ThemeProvider theme={theme}>
-            <Container
-                key={viewProps.id} ref={container} column translateXY={dragTranslate}
-                draggableWH={open ? dragWh : pxConvert(MIN_DRAG_WH, containerWH, dragDirection)}
-                dragDirection={dragDirection} minWH={MIN_DRAG_WH}
-                onMouseUp={(e): void => onMouseup(e.nativeEvent)} onMouseDown={(e): void => onMousedown(e.nativeEvent)}
-                onMouseMove={(e): void => onMousemove(e.nativeEvent)}>
-                <div className={'topC'}> {viewProps.mainContainer} </div>
-                <div className={'bottomC'} ref={draggable}>
-                    <div className={'dragContainer'} aria-disabled={dragTranslate !== 0}>{viewProps.draggableContainer}</div>
-                    <DrawerButton className={'buttonShow'} onClick={(): void => showDraggable()} />
-                    {dragTranslate ? <CaretLeftOutlined onClick={(): void => showDraggable()} className={'caret'}/> : <CaretRightOutlined onClick={(): void => showDraggable()} className={'caret'}/>}
-                    <div className={'splitLine'} aria-disabled={dragTranslate !== 0} />
-                </div>
-                {viewProps.slot}
-            </Container>
-        </ThemeProvider>;
+        return <Container
+            key={viewProps.id} ref={container} column translateXY={dragTranslate}
+            draggableWH={open ? dragWh : pxConvert(MIN_DRAG_WH, containerWH, dragDirection)}
+            dragDirection={dragDirection} minWH={MIN_DRAG_WH}
+            padding={viewProps.padding ?? 0}
+            onMouseUp={(e): void => onMouseup(e.nativeEvent)} onMouseDown={(e): void => onMousedown(e.nativeEvent)}
+            onMouseMove={(e): void => onMousemove(e.nativeEvent)}>
+            <div className={'topC'}> {viewProps.mainContainer} </div>
+            <div className={'bottomC'} ref={draggable}>
+                <div className={'dragContainer'} aria-disabled={dragTranslate !== 0}>{viewProps.draggableContainer}</div>
+                <DrawerButton className={'buttonShow'} onClick={(): void => showDraggable()} />
+                {dragTranslate ? <CaretLeftOutlined onClick={(): void => showDraggable()} className={'caret'}/> : <CaretRightOutlined onClick={(): void => showDraggable()} className={'caret'}/>}
+                <div className={'splitLine'} aria-disabled={dragTranslate !== 0} />
+            </div>
+            {viewProps.slot}
+        </Container>;
     };
     return [view, handleOpen];
 };

@@ -18,7 +18,6 @@ const activateNodeId = ref(0);
 const [DeleteAll, DeleteItem, Cancel, Confirm, ImportData] = useWatchTranslation(['Delete All', 'Delete Item', 'Cancel', 'Confirm', 'Import Data']);
 const props = defineProps<{
     dataSource: TreeNodeType[];
-    isDarkTheme: boolean;
 }>();
 
 watch(
@@ -52,12 +51,12 @@ function addRemoteUnderProject(node:any, e: MouseEvent) {
     <div class="menu-tree">
         <el-tree :data="props.dataSource" node-key="id" :default-expand-all="true" :expand-on-click-node="false" :current-node-key="2" @node-click="handleNodeClick">
             <template #default="{ node, data }">
-                <div :class="['contentNode', {activateNode:data.id === activateNodeId}]">
-                    <span class="contentBody">
+                <div :class="['content-node', {'activate-node':data.id === activateNodeId}]">
+                    <span class="content-body">
                         <LocalIcon v-if="node.level === 1" style="flex: none"/>
                         <el-tooltip :content="node.label" effect="light" :show-after="200">
                             <EditableText  v-if="node.level === 1" :tree-node="node" :key="data.id + data.label"></EditableText>
-                            <span v-else class="contentNodeText">{{ node.label }} </span>
+                            <span v-else class="content-node-text">{{ node.label }} </span>
                         </el-tooltip>
                     </span>
 
@@ -86,11 +85,11 @@ function addRemoteUnderProject(node:any, e: MouseEvent) {
 }
 
 
-:deep(.el-tree-node__content:has(.activateNode)) {
+:deep(.el-tree-node__content:has(.activate-node)) {
   background-color: var(--mi-bg-color-light);
 }
 
-.contentNode {
+.content-node {
     position: relative;
     display: flex;
     user-select: none;
@@ -100,14 +99,19 @@ function addRemoteUnderProject(node:any, e: MouseEvent) {
     width: calc(100% - 18px);
 }
 
-.contentBody {
+.content-node:hover .btn-box,
+.content-node.activate-node .btn-box{
+    display: flex;
+}
+
+.content-body {
     display: flex;
     align-items: center;
     width: 0;
     flex: 1 1 auto;
 }
 
-.contentNodeText {
+.content-node-text {
     padding: 0 0 0 2px;
     font-size: 12px;
     color: var(--mi-text-color-tertiary);
@@ -123,7 +127,7 @@ function addRemoteUnderProject(node:any, e: MouseEvent) {
     background-color: transparent;
 }
 .btn-box{
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: end;
   width: 40px;
