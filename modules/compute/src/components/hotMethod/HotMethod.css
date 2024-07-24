@@ -12,29 +12,45 @@ tr.selected {
 .theme_dark tr.selected  td{
     background: var(--middleblue);
 }
-
 .table-header {
-    background: var(--grey5);
-    color: var(--grey80);
+    background: rgb(244, 246, 250);
+    color: rgb(78, 88, 101);
     display: flex;
-    height: 35px;
+    height: 32px;
+    line-height: 16px;
+    font-size: 12px;
 }
-.table-header>div {
-    color: var(--grey80);
+.table-header > div {
     display: inline-block;
-    font-weight: 500;
-    line-height: 26px;
-    height: 26px;
-    border-right: 1px solid var(--grey20);
-    margin: 7px 0 0 0;
+    position: absolute;
+    line-height: 32px;
+    height: 16px;
 }
-.table-header>div>* {
+.table-header > div::before {
+    background-color: #DFE5EF;
+    content: "";
+    height: 1.6em;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transition: background-color .3s;
+    width: 1px;
+}
+.table-header > div > * {
     display: inline-block;
-    width: 100%;
     padding: 0 10px;
 }
-.table-header>div:last-child {
-    flex:1 1;
+.table-header > div:last-child {
+    padding-left: 55px;
+    position: relative;
+    flex: 1 1;
+}
+.theme_dark .table-header {
+    background: rgb(42, 47, 55);
+    color: rgb(211, 220, 233);
+}
+.theme_dark .table-header > div::before {
+    background-color: #3e4551;
 }
 .theme_dark .ant-tooltip-inner{
     background: var(--grey50);
