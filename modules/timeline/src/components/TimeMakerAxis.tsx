@@ -81,7 +81,7 @@ export const TimeMakerAxis = observer(({ session, laneInfoWidth, showRecommendat
         { session.isPending
             ? <StartParseButton
                 type="primary"
-                icon={ <StartIcon style={{ marginRight: '4px' }} color={theme.textColorPrimary} height={14} width={14}></StartIcon> }
+                icon={ <StartIcon style={{ marginRight: '4px' }} color="#ffffff" height={14} width={14}></StartIcon> }
                 loading={session.isParserLoading}
                 onClick={(): void => handleStartClick()}
             >
