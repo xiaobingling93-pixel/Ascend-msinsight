@@ -147,6 +147,8 @@ declare module '@emotion/react' {
         primaryColorLight5: string;
         primaryColorLight6: string;
         primaryColorDark: string;
+        primaryColorHover: string;
+        primaryColorDisabled: string;
         successColor: string; // 成功色
         successColorLight1: string;
         successColorLight2: string;
@@ -181,6 +183,7 @@ declare module '@emotion/react' {
         bgColorDark: string;
         bgColorLight: string;
         bgColorLighter: string;
+        bgColorDisabled: string; // 组件禁用后背景色
         textColorPrimary: string; // 文字主色
         textColorSecondary: string; // 文字次级色
         textColorTertiary: string; // 文字三级色
@@ -192,6 +195,7 @@ declare module '@emotion/react' {
         borderColorLight: string;
         borderColorLighter: string;
         borderColorExtraLight: string;
+        borderColorDisabled: string;
         boxShadow: string; // 阴影色
         boxShadowLight: string;
         boxShadowLighter: string;
