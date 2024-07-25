@@ -13,14 +13,13 @@ const createRequestHead = function (
     module: string,
     command: string,
     args: Request['params'],
-    token?: string
 ): Request {
     return {
         id,
         moduleName: module,
         type: 'request',
         command,
-        params: { token, ...args },
+        params: { ...args },
     };
 };
 
@@ -31,7 +30,6 @@ export class Connection {
     private _dataSource: DataSource;
     private _msgId: number = 0;
     private readonly _responseHandlers: Map<number, ResponseHandler> = new Map();
-    private _token?: string;
     private _fetchFlag: boolean = true;
     private _heartCheckTimer: any;
 
@@ -99,24 +97,12 @@ export class Connection {
             }
             this._ws.onopen = (ev: Event): void => {
                 console.info('[connector]', 'onopen');
-                // token Create
-                const msg: Request = createRequestHead(0, 'global', 'token.create', { token: '' });
-                msg.params.deadTime = -1;
-                this.request(msg);
+                // 开始心跳检查
+                this.initHeartCheck();
             };
 
             this._ws.onmessage = (ev: MessageEvent<string>): void => {
-                if (!ev.data.startsWith('Content-Length')) {
-                    const dataObj = JSON.parse(ev.data);
-                    if (dataObj.command === 'token.create') {
-                        this._token = dataObj.body.token;
-                        this.initHeartCheck();
-                        resolve();
-                    } else {
-                        console.info('wsConnector', 'create token failure', 'warn');
-                        reject(new Error('create token failure'));
-                    }
-                }
+                resolve();
             };
 
             this._ws.onerror = (ev: Event): void => {
@@ -154,7 +140,6 @@ export class Connection {
                 module,
                 dataRequest.command,
                 dataRequest.params,
-                this._token
             );
             this.request(msg, bufferField);
             const reqCallback = (res: Response): void => {
@@ -262,7 +247,7 @@ export class Connection {
     }
 
     private sendHeartCheck(): void {
-        const msg: Request = createRequestHead(this._msgId++, 'global', 'token.heartCheck', { token: this._token });
+        const msg: Request = createRequestHead(this._msgId++, 'global', 'heartCheck', {});
         this.request(msg);
     }
 }
