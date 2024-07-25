@@ -36,3 +36,9 @@
 .theme_dark .ant-input-number-input{
     background: var(--grey85);
 }
+#root .ant-table-tbody > tr.ant-table-expanded-row > td .ant-table-wrapper .ant-table.ant-table-small .ant-table-tbody > tr > td {
+    padding: 8px;
+}
+#root .ant-table.ant-table-small .ant-table-tbody > tr > td {
+    padding: 16px;
+}

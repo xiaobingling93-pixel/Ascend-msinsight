@@ -315,7 +315,6 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
         }}
         rowKey={rowKey}
         pagination={false}
-        size="small"
     />;
 };
 
@@ -351,7 +350,6 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
         }}
         rowKey={rowKey}
         pagination={false}
-        size="small"
     />;
 };
 

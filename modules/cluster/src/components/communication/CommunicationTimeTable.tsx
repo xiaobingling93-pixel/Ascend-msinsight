@@ -186,7 +186,6 @@ const CommunicationTimeTable = observer((props:
                 }}
                 rowKey={rowKey}
                 pagination={getPageConfigWithAllData(dataSource.length)}
-                size="small"
                 onChange={(pagination: any, filters: any, sorter: any, extra: any): void => {
                     if (extra.action === 'sort') {
                         setExpandedKeys([]);
