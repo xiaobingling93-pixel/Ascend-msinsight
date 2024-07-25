@@ -29,6 +29,7 @@ import { CardUnit } from '../../../insight/units/AscendUnit';
 import { getRootUnit } from '../../../utils';
 
 const Lane = styled.div<{ laneHeight: number; className: string }>`
+    position: relative;
     display: flex;
     box-sizing: border-box;
     flex-direction: row;
