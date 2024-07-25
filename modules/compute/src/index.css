@@ -1,10 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-.theme_dark ::-webkit-scrollbar-thumb {
-    background-color: rgb(106, 106, 106);
-}
-
 .ant-tree .ant-tree-treenode:not(.ant-tree .ant-tree-treenode-disabled).filter-node .ant-tree-title {
     font-weight: 700;
     color: #7ec1ff;

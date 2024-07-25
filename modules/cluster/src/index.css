@@ -56,13 +56,12 @@
 }
 
 .communication-advice-header {
-    padding: 8px;
+    margin-bottom: 8px;
     font-weight: bold;
 }
 
 .communication-advice-content {
-    color: var(--grey60);
-    padding: 0 12px;
+    padding: 0 12px 20px;
 }
 
 .theme_dark .communication-advice-title {

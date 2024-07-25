@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Tooltip } from 'lib/components';
+import { Tooltip } from 'lib/components';
 import type { Session } from '../../entity/session';
 import Filter from './Filter';
 import type { ConditionDataType } from './Filter';
@@ -15,13 +15,14 @@ import CommunicationTimeChart from './CommunicationTimeChart';
 import type { dataType as chartDataType } from './CommunicationTimeChart';
 import CommunicationMatrix from './CommunicationMatrix';
 import BandwidthAnalysis from './BandwidthAnalysis';
-import { notNullObj, Space } from '../Common';
+import { notNullObj } from '../Common';
 import { queryCommunication, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
 import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
 import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
 import { HelpIcon } from 'lib/Icon';
 import Layout from 'lib/Layout';
 import styled from '@emotion/styled';
+import CollapsiblePanel from 'lib/CollapsiblePanel';
 
 const FixedBox = styled.div`
     z-index: 10;
@@ -35,16 +36,34 @@ const FixedBox = styled.div`
     border-radius: ${(props): string => props.theme.borderRadiusBase};
 `;
 
+const BreadcrumbBox = styled.div`
+    display: flex;
+    align-items: center;
+    padding: 16px 24px;
+    .btn-back{
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: ${(props): string => props.theme.primaryColor};
+        cursor: pointer;
+    }
+    .delimiter{
+        padding: 0 8px;
+    }
+`;
+
 const Operators = ({ returnHome, rankId, operatorName, iterationId, stage }: any): JSX.Element => {
     const { t } = useTranslation('communication');
     return (
         <FixedBox>
-            <Breadcrumb style={{ margin: '10px 24px' }}>
-                <Breadcrumb.Item onClick={returnHome}>
-                    <a><ArrowLeftOutlined /><Space length={10}/><span>{t('Back')}</span></a>
-                </Breadcrumb.Item>
-                <Breadcrumb.Item>{operatorName}(RankId {rankId})</Breadcrumb.Item>
-            </Breadcrumb>
+            <BreadcrumbBox>
+                <div className={'btn-back'} onClick={returnHome}>
+                    <ArrowLeftOutlined />
+                    <div>{t('Back')}</div>
+                </div>
+                <div className="delimiter">|</div>
+                <div>{operatorName}(RankId {rankId})</div>
+            </BreadcrumbBox>
             <BandwidthAnalysis iterationId={iterationId} rankId={rankId} operatorName={operatorName} stage={stage}/>
         </FixedBox>
     );
@@ -159,7 +178,7 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
     }
     return (
         <div style={{ marginBottom: '20px' }}>
-            <div className={'communication-advice-title'}>
+            <CollapsiblePanel title={<div>
                 {t('Advice')}
                 <Tooltip title={
                     (
@@ -170,19 +189,20 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
                 }>
                     <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
                 </Tooltip>
-            </div>
-            <div className="communication-advice-header">{t('Overall')}</div>
-            <div className="communication-advice-content">{overAllText}</div>
-            {
-                issueList.map(item => {
-                    return (
-                        <>
-                            <div className="communication-advice-header">{item.title}</div>
-                            <div className="communication-advice-content">{item.content}</div>
-                        </>
-                    );
-                })
-            }
+            </div>}>
+                <div className="communication-advice-header">{t('Overall')}</div>
+                <div className="communication-advice-content">{overAllText}</div>
+                {
+                    issueList.map(item => {
+                        return (
+                            <>
+                                <div className="communication-advice-header">{item.title}</div>
+                                <div className="communication-advice-content">{item.content}</div>
+                            </>
+                        );
+                    })
+                }
+            </CollapsiblePanel>
         </div>
     );
 };

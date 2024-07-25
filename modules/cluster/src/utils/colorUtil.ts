@@ -2,8 +2,20 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import type { Theme } from '@emotion/react';
-export const colorPalette: Array<keyof Theme['colorPalette']> = ['slateblue', 'royalblue', 'skyblue', 'turquoise', 'olivedrab', 'yellowgreen',
-    'gold', 'orange', 'coral', 'orangered', 'palevioletred', 'mediumorchid'];
+export const colorPalette: Array<keyof Theme['colorPalette']> = [
+    'deepBlue',
+    'coralRed',
+    'tealGreen',
+    'aquaBlue',
+    'raspberryPink',
+    'vividBlue',
+    'vividRed',
+    'royalPurple',
+    'skyBlue',
+    'sunsetOrange',
+    'amethystPurple',
+    'limeGreen',
+];
 // hash func
 // normal output: [0, maxIndex)
 export const hashToNumber = (input: string, maxIndex: number): number => {

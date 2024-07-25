@@ -19,6 +19,7 @@ import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonT
 import ReactDOM from 'react-dom';
 import _ from 'lodash';
 import styled from '@emotion/styled';
+import { chartColors } from 'lib/CommonUtils';
 
 const ChartsContainer = styled.div`
   display: flex;
@@ -179,6 +180,7 @@ async function getRankAndBubbleTimeData(stepId: string, stageId: string): Promis
 }
 
 const bandwidthOption: echarts.EChartsOption = {
+    color: chartColors,
     tooltip: commonEchartsOptions.tooltip,
     toolbox: {
         feature: {

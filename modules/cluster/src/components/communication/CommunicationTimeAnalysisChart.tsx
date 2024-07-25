@@ -14,6 +14,7 @@ import type { MenuProps } from 'antd';
 import connector from '../../connection';
 import CollapsiblePanel from 'lib/CollapsiblePanel';
 import i18n from 'lib/i18n';
+import { themeInstance } from 'lib/theme';
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;
@@ -25,6 +26,7 @@ function wrapData(dataSource: AnalysisChartData): any {
     const data: any = [];
     const yAxisData: string[] = [];
     const dataLength = Math.max(dataSource?.data?.length, 0);
+    const theme = themeInstance.getThemeType();
     for (let i = dataLength - 1; i >= 0; --i) {
         const rankId = dataSource.data[i].rankId;
         yAxisData.push(rankId);
@@ -38,7 +40,7 @@ function wrapData(dataSource: AnalysisChartData): any {
                     value: [rankId, startTime, endTime, duration],
                     itemStyle: {
                         normal: {
-                            color: colorPalette[hashToNumber(item.operatorName, colorPalette.length)],
+                            color: theme.colorPalette[colorPalette[hashToNumber(item.operatorName, colorPalette.length)]],
                         },
                     },
                 },

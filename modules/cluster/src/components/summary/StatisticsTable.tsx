@@ -13,6 +13,7 @@ import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } 
 import ResizeTable from 'lib/ResizeTable';
 import type { Session } from '../../entity/session';
 import { type AdviceInfo } from './ComputationCommunicationOverview';
+import CollapsiblePanel from 'lib/CollapsiblePanel';
 
 const useComputingStatisticsColumns = (): ColumnsType => {
     const { t } = useTranslation('summary');
@@ -365,10 +366,14 @@ const AdviceLabel = (props: {advice: AdviceInfo}): JSX.Element => {
     }
     return (
         <div style={{ marginBottom: '20px' }}>
-            <div className={'common-title-h2'}>
-                {t('Advice')}
-            </div>
-            <div className="summary-advice-content">{adviceText}</div>
+            <CollapsiblePanel
+                secondary
+                title={t('Advice')}
+                headerStyle={{ padding: 0 }}
+                contentStyle={{ paddingLeft: 0, paddingRight: 0 }}
+            >
+                <div className="summary-advice-content">{adviceText}</div>
+            </CollapsiblePanel>
         </div>
     );
 };
@@ -383,25 +388,33 @@ const StatisticsTable = (props: {step: string; rankId: string;session: Session; 
                     <AdviceLabel advice={advice} />
                 }
                 <div style={{ marginBottom: '20px' }}>
-                    <div className={'common-title-h2'}>
-                        {getTitle('compute', t)} ( Rank {rankId} )
-                    </div>
-                    {session.parseCompleted
-                        ? (<ComputeStatisticsTable rankId={rankId} step={step} session={session}/>)
-                        : <Loading style={{ margin: '10px auto' }}/>
-                    }
+                    <CollapsiblePanel
+                        secondary
+                        title={`${getTitle('compute', t)} ( Rank ${rankId} )`}
+                        headerStyle={{ padding: 0 }}
+                        contentStyle={{ paddingLeft: 0, paddingRight: 0 }}
+                    >
+                        {session.parseCompleted
+                            ? (<ComputeStatisticsTable rankId={rankId} step={step} session={session}/>)
+                            : <Loading style={{ margin: '10px auto' }}/>
+                        }
+                    </CollapsiblePanel>
                 </div>
                 {
                     !session.isFullDb
                         ? (
                             <div style={{ marginBottom: '20px' }}>
-                                <div className={'common-title-h2'}>
-                                    {t('CommunicationDetail')} ( Rank {rankId} )
-                                </div>
-                                {session.parseCompleted
-                                    ? <CommunicationStatisticsTable rankId={rankId} step={step} session={session}/>
-                                    : <Loading style={{ margin: '10px auto' }}/>
-                                }
+                                <CollapsiblePanel
+                                    secondary
+                                    title={`${t('CommunicationDetail')} ( Rank ${rankId} )`}
+                                    headerStyle={{ padding: 0 }}
+                                    contentStyle={{ paddingLeft: 0, paddingRight: 0 }}
+                                >
+                                    {session.parseCompleted
+                                        ? <CommunicationStatisticsTable rankId={rankId} step={step} session={session}/>
+                                        : <Loading style={{ margin: '10px auto' }}/>
+                                    }
+                                </CollapsiblePanel>
                             </div>
                         )
                         : <></>

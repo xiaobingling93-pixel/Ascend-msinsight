@@ -11,6 +11,8 @@ interface CollapsiblePanelProps {
     children: ReactNode;
     secondary?: boolean; // 次级标题
     style?: CSSProperties;
+    headerStyle?: CSSProperties;
+    contentStyle?: CSSProperties;
 }
 
 const PanelContainer = styled.div<Partial<CollapsiblePanelProps>>`
@@ -28,7 +30,7 @@ const PanelContainer = styled.div<Partial<CollapsiblePanelProps>>`
   }
 `;
 export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = (props): JSX.Element => {
-    const { title, collapsible = false, secondary = false, children, style } = props;
+    const { title, collapsible = false, secondary = false, children, style, headerStyle, contentStyle } = props;
     const [isOpen, setIsOpen] = useState(true);
 
     const togglePanel = (): void => {
@@ -39,10 +41,10 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = (props): JSX.El
 
     return (
         <PanelContainer secondary={secondary} style={style}>
-            <div className="panel-header" onClick={togglePanel}>
+            <div className="panel-header" onClick={togglePanel} style={headerStyle}>
                 {title}
             </div>
-            {isOpen && <div className="panel-content">{children}</div>}
+            {isOpen && <div className="panel-content" style={contentStyle}>{children}</div>}
         </PanelContainer>
     );
 };

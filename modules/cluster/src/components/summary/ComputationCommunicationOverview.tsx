@@ -363,14 +363,16 @@ function OverviewCom({ handleFilterChange, dataSource, selected, advice, session
         <CollapsiblePanel title={t('Parallel Strategy Analysis')}>
             <CommunicatorContainer session={session}></CommunicatorContainer>
             <div className={pipelineVisible ? 'hide' : ''}>
-                <div>
-                    <div className={'common-title-bottom'}>{t('Computation/CommunicationOverview')}{useHit(containsPreparing)}</div>
+                <CollapsiblePanel
+                    secondary
+                    title={<div className={'flex items-center'}>{t('Computation/CommunicationOverview')}{useHit(containsPreparing)}</div>}
+                    headerStyle={{ padding: 0 }}
+                    contentStyle={{ paddingLeft: 0, paddingRight: 0 }}
+                >
                     <Filter handleFilterChange={handleFilterChange} session={session} visible={!pipelineVisible}/>
                     <div id={'overview-chart'} style={{ height: '400px' }} ></div>
-                </div>
-                <div>
                     <StatisticsTable {...selected} advice={advice} session={session}/>
-                </div>
+                </CollapsiblePanel>
             </div>
             <div className={pipelineVisible ? '' : 'hide'}>
                 <PpBandwidthAnalysis session={session}></PpBandwidthAnalysis>
