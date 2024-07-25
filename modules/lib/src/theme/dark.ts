@@ -212,5 +212,6 @@ export const dark: Theme = {
     borderRadiusCircle: '100%',
     pagePadding: '16px',
     icon: '#D1D1D1',
+    tableTextColor: '#8D98AA',
     // 把新加的字段同时加到light.ts文件、以及emotion.d.ts文件...........
 };

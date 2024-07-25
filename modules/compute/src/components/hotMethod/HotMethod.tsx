@@ -31,7 +31,7 @@ const MAX_LINE_LENGTH = 10000; // 10000
 const MAX_LINE = 10000;
 const MAX_INSTRUCTION = 1000000; // 100,0000
 const PAGE_LIMIT = 500000; // 50,0000
-const ROW_HEIGHT = 29;
+const ROW_HEIGHT = 32;
 
 interface ConditionType {
     core: string;

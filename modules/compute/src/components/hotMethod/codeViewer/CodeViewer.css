@@ -21,8 +21,8 @@ pre code.hljs {
     margin: 0!important;
     width: fit-content;
     box-sizing: border-box;
-    height: 29px;
-    line-height: 29px;
+    height: 32px;
+    line-height: 32px;
     cursor: pointer;
     min-width: 100%;
     font-size: 12px;
@@ -37,9 +37,6 @@ pre code.hljs {
     font-size: 12px;
 }
 
-.hljs li:hover{
-    background: var(--grey5);
-}
 .hljs li.hover{
     background: var(--blue30);
 }
@@ -47,9 +44,6 @@ pre code.hljs {
     background: var(--blue30);
 }
 
-.theme_dark .hljs li:hover{
-    background: var(--grey100);
-}
 .theme_dark .hljs .index{
     border-right: 2px solid var(--grey60);
 }

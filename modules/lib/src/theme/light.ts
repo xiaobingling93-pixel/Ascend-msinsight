@@ -212,4 +212,5 @@ export const light: Theme = {
     borderRadiusCircle: '100%',
     pagePadding: '16px',
     icon: '#8D98AA',
+    tableTextColor: '#000000',
 };

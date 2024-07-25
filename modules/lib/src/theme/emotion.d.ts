@@ -217,5 +217,6 @@ declare module '@emotion/react' {
         borderRadiusCircle: string;
         pagePadding: string;
         icon: string; // 图标颜色
+        tableTextColor: string; // 表格颜色
     }
 }

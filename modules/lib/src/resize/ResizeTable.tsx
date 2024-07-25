@@ -16,13 +16,14 @@ const StyledTable = styled(Table)`
     .ant-table {
         background-color: unset;
         font-size: 12px;
-        color: ${(p): string => p.theme.textColorTertiary};
+        color: ${(p): string => p.theme.tableTextColor};
     }
 
     //表头 
     .ant-table-thead > tr > th {
         background-color: ${(p): string => p.theme.bgColorLight};
         color: ${(p): string => p.theme.textColorSecondary};
+        box-shadow: inset 0 -1px 0 0 ${(p): string => p.theme.borderColorLight};
         border-bottom: none;
     }
 
@@ -69,7 +70,6 @@ const StyledTable = styled(Table)`
     }
 
     tr.ant-table-row.click-able:hover > td.ant-table-cell {
-        color: ${(p): string => p.theme.primaryColorLight1};
         background: ${(p): string => p.theme.bgColorLight};
         cursor: pointer;
     }
@@ -92,6 +92,10 @@ const StyledTable = styled(Table)`
     //分页
     .ant-pagination {
         color: ${(p): string => p.theme.textColorSecondary};
+    }
+
+    .ant-pagination * {
+        font-size: 12px;
     }
 
     .ant-pagination-item {
@@ -157,6 +161,15 @@ const StyledTable = styled(Table)`
     .ant-table.ant-table-small .ant-table-tbody .ant-table-wrapper:only-child .ant-table {
         margin:0;
     }
+
+    //按钮
+    .ant-btn-link {
+        padding: 0;
+        height: 16px;
+        line-height: 16px;
+        font-size: 12px;
+        border: none;
+    }
 `;
 interface ExtendsColumnType {minWidth?: number};
 
@@ -189,6 +202,7 @@ interface Iprop<T> {
     virtual?: boolean;
     scroll?: {x?: number;y?: number;rowHeight?: number};
     pagination?: false | TablePaginationConfig;
+    onChange: (...p: any) => void;
 }
 type TablePaginationPosition = 'topLeft' | 'topCenter' | 'topRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';
 
@@ -250,10 +264,21 @@ const getFullExpandable = (expandable?: any): any => {
     return { expandIcon, ...expandable };
 };
 
+// ============================ 安全防护 ============================
+const handleChangeSafe = (onChange: (...p: any) => void, ...params: any): void => {
+    const [,,,action] = params;
+    if (['paginate', 'filter'].includes(action?.action)) {
+        limitInput();
+    }
+    if (onChange !== null && onChange !== undefined) {
+        onChange(...params);
+    }
+};
+
 function ResizeTable<T extends object>(prop: Iprop<T>): JSX.Element {
     const {
         columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, style, virtual = false,
-        scroll, dataSource, pagination, expandable, ...restProps
+        scroll, dataSource, pagination, expandable, onChange, ...restProps
     } = prop;
     const [columns, setColumns] = useState<ColumnsType<T>>([]);
 
@@ -299,6 +324,7 @@ function ResizeTable<T extends object>(prop: Iprop<T>): JSX.Element {
         <div id={id} style={{ ...(style ?? {}) }} ref={ref}>
             <StyledTable
                 { ...restProps }
+                onChange={(...params: any): void => { handleChangeSafe(onChange, ...params); }}
                 pagination={fullPagination}
                 expandable={fullExpandable}
                 scroll={scroll}
