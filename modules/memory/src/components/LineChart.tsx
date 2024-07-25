@@ -11,7 +11,8 @@ import { convertTime, safeStr, useChartCharacter } from './Common';
 import styled from '@emotion/styled';
 
 const ChartDesc = styled.div`
-    color: ${(props): string => props.theme.textColorTertiary}
+    color: ${(props): string => props.theme.textColorTertiary};
+    margin-bottom: 24px;
 `;
 
 interface IProps {
@@ -48,10 +49,8 @@ const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolea
                 return res;
             },
         },
-        legend: {
-            type: 'scroll',
-            bottom: 0,
-        },
+        legend: { type: 'scroll' },
+        grid: { left: '100', right: '100', bottom: 40 },
         xAxis: {
             type: 'category',
             boundaryGap: false,

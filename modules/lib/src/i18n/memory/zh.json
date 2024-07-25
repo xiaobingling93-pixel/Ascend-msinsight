@@ -1,6 +1,8 @@
 {
   "memory": {
     "Invalid Size Warning": "无效查询条件：“最大值”不能小于“最小值”",
+    "Memory Analysis": "内存分析",
+    "Memory Allocation/Release Details": "内存申请/释放详情",
     "No Data": "暂无数据",
     "Time (ms)": "时间 (ms)",
     "Node Index": "节点索引",

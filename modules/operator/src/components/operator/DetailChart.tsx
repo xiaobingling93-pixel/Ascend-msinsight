@@ -21,7 +21,7 @@ const ChartsContainer = styled.div`
   gap: 24px;
 
   & .chart-item{
-    flex: 1;
+    width: 50%;
     padding: 16px 24px;
     height: 100%;
     border: 1px solid ${(props): string => props.theme.borderColor};
@@ -34,14 +34,17 @@ export type dataType = Array<{
     value: number;
 }>;
 
-let myChart: echarts.ECharts;
+const chartsInstanceMap: Map<string, echarts.ECharts> = new Map();
 function InitCharts({ data, domId, isDark, title }: {data: dataType; domId: string; isDark: boolean;title: string}): void {
     const chartDom = document.getElementById(domId);
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
-    myChart = getResizeEcharts(chartDom, myChart);
+
+    const chatInstance = chartsInstanceMap.get(domId);
+    const myChart: echarts.ECharts = getResizeEcharts(chartDom, chatInstance);
     myChart.setOption(wrapData({ data, domId, isDark, title }));
+    chartsInstanceMap.set(domId, myChart);
 }
 function wrapData({ data, domId, isDark, title }: {data: dataType; domId: string; isDark: boolean;title: string}): any {
     const option = getOption({ isDark, title });
@@ -175,9 +178,11 @@ const DetailChart = observer(({ condition, session }: {condition: ConditionType;
             <div className="chart-item">
                 <div id={'opTypeChart'} style={{ height: '100%', width: '100%' }} ></div>
             </div>
-            <div className="chart-item">
-                {isHideRight() ? <></> : <div id={'computeChart'} style={{ height: '100%', width: '100%' }}></div>}
-            </div>
+            {isHideRight()
+                ? <></>
+                : <div className="chart-item">
+                    <div id={'computeChart'} style={{ height: '100%', width: '100%' }}></div>
+                </div>}
         </ChartsContainer>
     );
 });

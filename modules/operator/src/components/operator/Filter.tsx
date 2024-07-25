@@ -210,7 +210,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
 
 const FormItem = (props: any): JSX.Element => {
     return (<div style={{ display: 'inline-block', height: '30px', lineHeight: '30px', margin: '0 20px 10px 0' }}>
-        <Label name={props.name} style={{ minWidth: '50px', display: 'inline-block' }}/>
+        <Label name={props.name} style={{ display: 'inline-block' }}/>
         {props.content}
     </div>);
 };

@@ -64,6 +64,7 @@
     "MoreFocus": "请关注{{type}}。",
     "CommunicationAdvice": "{{type}}带宽(GB/秒)：平均值为{{avg}}GB/秒，最大值为{{max}}GB/秒，最小值为{{min}}GB/秒，差值为{{diff}}GB/秒。{{issue}}，请关注上方表格带宽分析列。",
     "BandwidthIssue": "带宽是瓶颈",
-    "CommunicationIssue": "通信效率低"
+    "CommunicationIssue": "通信效率低",
+    "Back": "返回"
   }
 }

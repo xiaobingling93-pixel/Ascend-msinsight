@@ -544,7 +544,7 @@ const DetailTable = ({ condition, filterType, session }: {condition: ConditionTy
             table = <BaseTable condition={condition} filterType={filterType} session={session}/>;
             break;
     }
-    return <CollapsiblePanel title={t('sessionTitle.OperatorDetail')} secondary>
+    return <CollapsiblePanel title={t('sessionTitle.OperatorDetails')} secondary>
         {table}
     </CollapsiblePanel>;
 };

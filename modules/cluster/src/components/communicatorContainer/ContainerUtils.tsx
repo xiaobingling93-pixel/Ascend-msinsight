@@ -21,9 +21,9 @@ export interface communicator {
 };
 
 export interface tabData {
-    tab: string;
+    label: string;
     key: string;
-    content: JSX.Element;
+    children: JSX.Element;
 };
 
 export const titleMap = new Map([

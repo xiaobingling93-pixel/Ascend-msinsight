@@ -68,7 +68,7 @@
 }
 
 .summary-advice-content {
-    background-color: var(--grey5);
+    background-color: var(--mi-bg-color-light);
     padding: 10px;
     font-weight: bold;
 }
@@ -102,10 +102,6 @@
 
 .theme_dark .communication-advice-content {
     color: white;
-}
-
-.theme_dark .summary-advice-content {
-    background-color: var(--grey80blue);
 }
 
 .theme_dark .ant-input-number-input {

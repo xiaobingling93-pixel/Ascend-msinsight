@@ -41,7 +41,7 @@ const Operators = ({ returnHome, rankId, operatorName, iterationId, stage }: any
         <FixedBox>
             <Breadcrumb style={{ margin: '10px 24px' }}>
                 <Breadcrumb.Item onClick={returnHome}>
-                    <a><ArrowLeftOutlined /><Space length={10}/><span>{t('searchCriteria.CommunicationDurationAnalysis')}</span></a>
+                    <a><ArrowLeftOutlined /><Space length={10}/><span>{t('Back')}</span></a>
                 </Breadcrumb.Item>
                 <Breadcrumb.Item>{operatorName}(RankId {rankId})</Breadcrumb.Item>
             </Breadcrumb>

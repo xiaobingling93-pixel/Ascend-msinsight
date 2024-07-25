@@ -21,6 +21,8 @@ import { useHit, Label } from '../components/Common';
 import styled from '@emotion/styled';
 import { GroupRankIdsByHost, StyledEmpty } from 'lib/CommonUtils';
 import Layout from 'lib/Layout';
+import CollapsiblePanel from 'lib/CollapsiblePanel';
+
 interface SelectedRange {
     startTs: number;
     endTs: number;
@@ -38,7 +40,7 @@ const FlexDiv = styled.div`
 `;
 
 const SearchBox = styled(FlexDiv)`
-    margin-bottom: 20px;
+    margin: 0 24px 20px;
     flex-wrap: wrap;
     gap: 24px;
 `;
@@ -400,7 +402,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
     }, [hostCondition.options, hostCondition.value, hostCondition.ranks]);
 
     return (
-        <Layout padding={'16px 24px'}>
+        <Layout>
             <div className="mb-30">
                 <SearchBox>
                     {hostCondition.options.length > 0
@@ -445,20 +447,22 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                             : null
                     }
                 </SearchBox>
-                <Spin spinning={curveSpin} tip="loading...">
-                    { lineChartData
-                        ? <LineChart
-                            hAxisTitle={t('Time (ms)')}
-                            vAxisTitle={t('Memory Usage (MB)')}
-                            graph={lineChartData}
-                            onSelectionChanged={onSelectedRangeChanged}
-                            record={selectedRecord}
-                            isDark={isDark}
-                            isStatic={false}
-                        />
-                        : <StyledEmpty style={{ marginTop: 160 }} />
-                    }
-                </Spin>
+                <CollapsiblePanel title={t('Memory Analysis')}>
+                    <Spin spinning={curveSpin} tip="loading...">
+                        { lineChartData
+                            ? <LineChart
+                                hAxisTitle={t('Time (ms)')}
+                                vAxisTitle={t('Memory Usage (MB)')}
+                                graph={lineChartData}
+                                onSelectionChanged={onSelectedRangeChanged}
+                                record={selectedRecord}
+                                isDark={isDark}
+                                isStatic={false}
+                            />
+                            : <StyledEmpty style={{ marginTop: 160 }} />
+                        }
+                    </Spin>
+                </CollapsiblePanel>
             </div>
 
             { memoryType === memoryGraphType.static
@@ -496,7 +500,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                 </div>
                 : null }
 
-            <div className="mb-30">
+            <CollapsiblePanel title={t('Memory Allocation/Release Details')} secondary>
                 <SearchBox>
                     <div className="flex items-center">
                         <Label name={t('searchCriteria.Name')} />
@@ -568,7 +572,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                         total={total}
                     />
                 </Spin>
-            </div>
+            </CollapsiblePanel>
         </Layout>
     );
 });

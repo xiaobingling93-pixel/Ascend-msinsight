@@ -64,6 +64,7 @@
     "MoreFocus": "Please pay attention to {{type}}.",
     "CommunicationAdvice": "{{type}} bandwidth(GB/s): the average is {{avg}}GB/s, while the maximum is {{max}}GB/s and the minimum is {{min}}GB/s. The difference is {{diff}}GB/s. {{issue}}, please pay attention to the Bandwidth Analysis column in the table above.",
     "BandwidthIssue": "Bandwidth is the bottleneck",
-    "CommunicationIssue": "Communication efficiency is low"
+    "CommunicationIssue": "Communication efficiency is low",
+    "Back": "Back"
   }
 }

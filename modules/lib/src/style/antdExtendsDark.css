@@ -73,10 +73,6 @@
     color: var(--grey0);
 }
 
-.theme_dark .ant-tabs-top > .ant-tabs-nav::before {
-    border-bottom: 1px solid var(--grey95);
-}
-
 /*
  * progress组件相关配置
  */

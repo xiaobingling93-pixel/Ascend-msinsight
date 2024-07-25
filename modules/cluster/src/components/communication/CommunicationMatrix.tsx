@@ -110,10 +110,11 @@ const defaultVisualMap = {
     calculable: true,
     orient: 'horizontal',
     left: 'center',
-    bottom: '15%',
+    bottom: '0',
     inRange: { color: [COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3] },
     textStyle: { color: COLOR.Grey40 },
     dimension: 2,
+    itemHeight: 300, // 调整宽度
 };
 function wrapData(dataSource: any, t: TFunction): any {
     const { data, rankIds, type, min, max } = dataSource;
@@ -186,7 +187,9 @@ const baseOption: any = {
         position: 'top',
     },
     grid: {
-        height: '50%',
+        left: '100',
+        right: '100',
+        height: '80%',
         top: '10%',
     },
     xAxis: {
@@ -208,7 +211,7 @@ const baseOption: any = {
         calculable: true,
         orient: 'horizontal',
         left: 'center',
-        bottom: '15%',
+        bottom: '0',
         inRange: { color: [COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3] },
         textStyle: { color: COLOR.Grey40 },
         dimension: 2,
@@ -243,7 +246,7 @@ const transportTypeOption = {
         calculable: true,
         orient: 'horizontal',
         left: 'center',
-        bottom: '15%',
+        bottom: '0',
         splitNumber: 1,
         pieces: [
             { value: 0, label: allTransporType[0], color: COLOR.Band0 },

@@ -358,7 +358,7 @@ function OverviewCom({ handleFilterChange, dataSource, selected, advice, session
     return <Layout padding={0}>
         <BaseInfo session={session}/>
 
-        <CollapsiblePanel title={'Details'}>
+        <CollapsiblePanel title={t('Parallel Strategy Analysis')}>
             <CommunicatorContainer session={session}></CommunicatorContainer>
             <div className={pipelineVisible ? 'hide' : ''}>
                 <div>

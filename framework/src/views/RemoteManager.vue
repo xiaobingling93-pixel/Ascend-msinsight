@@ -55,6 +55,7 @@ header {
     background: var(--mi-bg-color-light);
     border-radius: var(--mi-border-radius-small);
     cursor: pointer;
+    font-size: 12px;
 }
 
 .btn-import:hover{

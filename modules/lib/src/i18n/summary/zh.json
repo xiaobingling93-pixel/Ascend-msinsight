@@ -1,6 +1,7 @@
 {
   "summary": {
     "BaseInfo": "基本信息",
+    "Parallel Strategy Analysis": "并行策略分析",
     "ReportFile": "文件路径",
     "ReportSize": "文件大小",
     "ReportCaptureTime": "文件采集时间",

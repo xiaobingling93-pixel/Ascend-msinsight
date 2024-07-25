@@ -8,7 +8,7 @@
       "HCCL Operator": "HCCL Operator",
       "HCCL Operator Type": "HCCL Operator Type",
       "Accelerator Core": "Accelerator Core",
-      "OperatorDetail": "Operator Detail"
+      "OperatorDetails": "Operator Details"
     },
     "searchCriteria": {
       "Group By": "Group By",

@@ -8,7 +8,7 @@
       "HCCL Operator": "通信算子",
       "HCCL Operator Type": "通信算子类型",
       "Accelerator Core": "加速器核",
-      "OperatorDetail": "算子详情"
+      "OperatorDetails": "算子详情"
     },
     "searchCriteria": {
       "Group By": "分组方式",

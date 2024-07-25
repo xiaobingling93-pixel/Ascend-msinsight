@@ -112,16 +112,6 @@ html {
     display: none;
 }
 
-
-.bandwidthChart {
-    text-align: left;
-}
-
-.bandwidthChart > div > div > div {
-    border: 1px solid #b0aeae;
-    margin: 10px;
-}
-
 .bandwidthHeader {
     background: #f3f7f7;
 }

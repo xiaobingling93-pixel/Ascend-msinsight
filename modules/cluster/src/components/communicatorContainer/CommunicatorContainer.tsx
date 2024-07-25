@@ -5,7 +5,7 @@ import { observer } from 'mobx-react';
 import type { Session } from '../../entity/session';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tabs, Form, InputNumber, Row, Button, message, Select } from 'antd';
+import { Tabs, Form, InputNumber, Button, message, Select } from 'antd';
 import _ from 'lodash';
 import eventBus, { useEventBus } from '../../utils/eventBus';
 import {
@@ -15,6 +15,29 @@ import {
     type partitionMode,
     type tabData, titleMap,
 } from './ContainerUtils';
+import styled from '@emotion/styled';
+
+const RankItem = styled.div`
+    text-align: center;
+    .rank_icon{
+        margin: auto;
+    }
+`;
+
+const RankGroupItem = styled.div`
+    display: flex;
+    cursor: pointer;
+`;
+
+const RankGroupContainer = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    padding: 16px;
+    max-height: 240px;
+    overflow: auto;
+    background: ${(p): string => p.theme.bgColorLight}
+`;
 
 export const CommunicatorContainer = observer(({ session }: { session: Session }) => {
     const [activeTab, setActiveTab] = useState<string>('pp');
@@ -42,39 +65,32 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
     const items = useMemo(() => {
         return _.map(session.communicatorData.partitionModes, (value: partitionMode): tabData => {
             return {
-                tab: titleMap.get(value.mode) as string,
+                label: t(titleMap.get(value.mode) as string),
                 key: value.mode,
-                content: <CommunicatorContent session={session} partitionData={value}/>,
+                children: <CommunicatorContent session={session} partitionData={value}/>,
             };
         });
-    }, [session.communicatorData]);
+    }, [session.communicatorData, t]);
     return (
-        <div style={{ height: '300px', width: '100%', margin: '10px 0' }} className={'CommunicatorContainer'}>
+        <div style={{ marginBottom: 24 }}>
             {<CommunicatorHeader session={session} defaultPPSize={session.communicatorData.defaultPPSize} unitCount={unitCount}></CommunicatorHeader>}
-            <Tabs activeKey={activeTab} onTabClick={(key): void => { eventBus.emit('setActiveTab', key); setActiveTab(key); }} style={{ height: '240px' }}>
-                {
-                    items.map(item => (
-                        <Tabs.TabPane tab={t(item.tab)} key={item.key} style={{ height: '140px' }}>
-                            <div style={{ width: '100%', height: '100%', overflow: 'auto' }} className={'common-tabcontent'}>
-                                {item.content}
-                            </div>
-                        </Tabs.TabPane>
-                    ))
-                }
-            </Tabs>
+            <Tabs activeKey={activeTab}
+                onTabClick={(key): void => { eventBus.emit('setActiveTab', key); setActiveTab(key); }}
+                items={items}
+            ></Tabs>
         </div>
     );
 });
 
 const CommunicatorContent = observer(({ session, partitionData }: { session: Session; partitionData: partitionMode }) => {
     return (
-        <Row>
+        <RankGroupContainer>
             {
                 _.map(partitionData.communicators, (item) => (
                     <RankGroup key={item.name} rankGroup={item} session={session}></RankGroup>
                 ))
             }
-        </Row>
+        </RankGroupContainer>
     );
 });
 
@@ -90,17 +106,15 @@ const RankGroup = ({ rankGroup, session }: { rankGroup: communicator; session: S
             session.activeCommunicator = selectCommunicator;
         }
     });
-    const width = (rankGroup.ranks.length * 85).toString().concat('px');
+
     return (
-        <div style={{ width, margin: '0 10px', cursor: 'pointer' }}>
-            <Row className={active === rankGroup.name ? 'activeRank' : active} wrap={false} >
-                {
-                    _.map(rankGroup.ranks, (value) => (
-                        <RankId key={value} id={value} onClick={(): void => { selectRankGroup(rankGroup); }}></RankId>
-                    ))
-                }
-            </Row>
-        </div>
+        <RankGroupItem className={active === rankGroup.name ? 'activeRank' : active}>
+            {
+                _.map(rankGroup.ranks, (value) => (
+                    <RankId key={value} id={value} onClick={(): void => { selectRankGroup(rankGroup); }}></RankId>
+                ))
+            }
+        </RankGroupItem>
     );
 };
 
@@ -141,14 +155,10 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount }: { se
 
 const RankId = ({ id, onClick }: { id: number; onClick: () => void }): JSX.Element => {
     return (
-        <div style={{ height: '75px', width: '65px' }}>
-            <Row justify={'center'} onClick={onClick}>
-                <div className={'rank_icon'}></div>
-            </Row>
-            <Row justify={'center'} onClick={onClick}>
-                <span>rank {id}</span>
-            </Row>
-        </div>
+        <RankItem onClick={onClick}>
+            <div className={'rank_icon'}></div>
+            <div>rank {id}</div>
+        </RankItem>
     );
 };
 

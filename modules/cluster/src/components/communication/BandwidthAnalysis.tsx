@@ -8,7 +8,7 @@ import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
 import type { PlainLegendComponentOption } from 'echarts';
-import { Col, Row, Empty } from 'antd';
+import { Empty } from 'antd';
 import ResizeTable from 'lib/ResizeTable';
 import type { ColumnsType } from 'antd/es/table';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
@@ -17,6 +17,29 @@ import i18n from 'lib/i18n';
 import { cloneDeep } from 'lodash';
 import { CustomConsole as console } from 'lib/CommonUtils';
 import CollapsiblePanel from 'lib/CollapsiblePanel';
+import styled from '@emotion/styled';
+
+const ChartsContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  .chart-item{
+    flex: 1;
+    padding: 16px 24px;
+    border: 1px solid ${(props): string => props.theme.borderColor};
+
+      .chart-title{
+          margin-bottom: 10px;
+          font-size: 16px;
+      }
+
+      .chart{
+          display: flex;
+          height: 400px;
+      }
+  }
+`;
 
 const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
     const [data, setData] = useState([]);
@@ -69,34 +92,27 @@ const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorNa
         InitPacketAndBandwidthCharts('SIO', props.iterationId, props.rankId, props.operatorName, props.stage);
     }, [t]);
     return (
-        <div className={'bandwidthChart'}>
-            <Row wrap={false}>
-                <Col span={8}>
-                    <div className={'chartDiv'}>
-                        <div style={{ margin: '20px', fontSize: ' 2rem' }}>HCCS</div>
-                        <div id={'HCCS'} style={{ height: '400px', width: '100%', display: 'inline-block' }}/>
-                    </div>
-                </Col>
-                <Col span={8}>
-                    <div className={'chartDiv'}>
-                        <div style={{ margin: '20px', fontSize: ' 2rem' }}>PCIE</div>
-                        <div id={'PCIE'} style={{ height: '400px', width: '100%', display: 'inline-block' }}/>
-                    </div>
-                </Col>
-                <Col span={8}>
-                    <div className={'chartDiv'}>
-                        <div style={{ margin: '20px', fontSize: ' 2rem' }}>RDMA</div>
-                        <div id={'RDMA'} style={{ height: '400px', width: '100%', display: 'inline-block' }}/>
-                    </div>
-                </Col>
-                <Col span={8}>
-                    <div className={'chartDiv'}>
-                        <div style={{ margin: '20px', fontSize: ' 2rem' }}>SIO</div>
-                        <div id={'SIO'} style={{ height: '400px', width: '100%', display: 'inline-block' }}/>
-                    </div>
-                </Col>
-            </Row>
-        </div>
+        <ChartsContainer>
+            <div className={'chart-item'}>
+                <div className={'chart-title'}>HCCS</div>
+                <div id={'HCCS'} className={'chart'} />
+            </div>
+
+            <div className={'chart-item'}>
+                <div className={'chart-title'}>PCIE</div>
+                <div id={'PCIE'} className={'chart'} />
+            </div>
+
+            <div className={'chart-item'}>
+                <div className={'chart-title'}>RDMA</div>
+                <div id={'RDMA'} className={'chart'} />
+            </div>
+
+            <div className={'chart-item'}>
+                <div className={'chart-title'}>SIO</div>
+                <div id={'SIO'} className={'chart'} />
+            </div>
+        </ChartsContainer>
     );
 };
 
@@ -134,7 +150,7 @@ async function InitPacketAndBandwidthCharts(domId: string, iterationId: number,
     if (chartDom !== null) {
         const res = await wrapBandwidthData(domId, iterationId, rankId, operatorName, stage);
         if (res === null || res === undefined) {
-            ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
+            ReactDOM.render((<Empty style={{ margin: 'auto' }} image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
         } else {
             const myChart = echarts.init(chartDom);
             myChart.setOption(res);
@@ -160,7 +176,7 @@ async function wrapBandwidthData(domId: string, iterationId: number,
     // 如果返回内容为空字符串，说明数据库中不存在数据，此时，对应的带宽图做隐藏处理
     if (distributionData === '') {
         const chartDom = document.getElementById(domId);
-        const chartParentDom = chartDom?.parentElement?.parentElement;
+        const chartParentDom = chartDom?.parentElement;
         if (chartParentDom) {
             (chartParentDom as HTMLElement).style.display = 'none';
         }

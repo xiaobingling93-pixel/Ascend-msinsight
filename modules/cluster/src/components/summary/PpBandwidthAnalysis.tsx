@@ -4,7 +4,7 @@
 
 import { observer } from 'mobx-react-lite';
 import type { Session } from '../../entity/session';
-import { Col, Empty, Row } from 'antd';
+import { Empty } from 'antd';
 import {
     addResizeEvent,
     chartVisbilityListener,
@@ -18,6 +18,19 @@ import Filter, { type ConditionDataType } from './PpBandwidthFilter';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import ReactDOM from 'react-dom';
 import _ from 'lodash';
+import styled from '@emotion/styled';
+
+const ChartsContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  .chart-item{
+    flex: 1;
+    padding: 16px 24px;
+    border: 1px solid ${(props): string => props.theme.borderColor};
+  }
+`;
 
 const PpBandwidthAnalysis = observer(({ session }: { session: Session }) => {
     const [allStageIds, setAllStageIds] = useState<string[]>([]);
@@ -49,20 +62,14 @@ const PPBandwidthChart: React.FC<any> = ({ conditions, allStageIds, session }: {
         init();
     }, [conditions, allStageIds]);
     return (
-        <div className={'bandwidthChart'}>
-            <Row wrap={false}>
-                <Col span={12}>
-                    <div className={'chartDiv'}>
-                        <div id={'STAGE'} style={{ height: '600px', width: '100%', display: 'inline-block' }}/>
-                    </div>
-                </Col>
-                <Col span={12}>
-                    <div className={'chartDiv'}>
-                        <div id={'RANK'} style={{ height: '600px', width: '100%', display: 'inline-block' }}/>
-                    </div>
-                </Col>
-            </Row>
-        </div>
+        <ChartsContainer>
+            <div className={'chart-item'}>
+                <div id={'STAGE'} style={{ height: '600px', width: '100%' }}/>
+            </div>
+            <div className={'chart-item'}>
+                <div id={'RANK'} style={{ height: '600px', width: '100%' }}/>
+            </div>
+        </ChartsContainer>
     );
 };
 
