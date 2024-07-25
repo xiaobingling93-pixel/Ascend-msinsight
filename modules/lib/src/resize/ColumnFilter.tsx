@@ -3,11 +3,12 @@
 */
 import React from 'react';
 import type { ColumnType } from 'antd/es/table';
-import { Input, Button, Space } from 'antd';
+import { Input, Button } from '../components/index';
 import { FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
 import { limitInput } from '../utils/Common';
 import i18n from '../i18n';
+import { ButtonGroup } from './ColumnFilterWithSelection';
 
 const state = {
     searchText: '',
@@ -48,17 +49,17 @@ export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: str
                     onPressEnter={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
                     style={{ marginBottom: 8, display: 'block' }}
                 />
-                <Space>
+                <ButtonGroup>
                     <Button
                         type="primary"
                         onClick={(): void => handleSearch(selectedKeys as string[], confirm, dataIndex)}
-                        icon={<SearchOutlined />} size="small" style={{ width: 90 }}
+                        icon={<SearchOutlined />} size="small" style={{ marginRight: 8 }}
                     >{i18n.t('buttonText:Search')}</Button>
                     <Button
                         onClick={(): void => clearFilters && handleReset(clearFilters, confirm, selectedKeys as string[], dataIndex)}
-                        size="small" style={{ width: 90 }}
+                        size="small"
                     >{i18n.t('buttonText:Reset')}</Button>
-                </Space>
+                </ButtonGroup>
             </div>
         ),
         filterIcon: (filtered: boolean) => (

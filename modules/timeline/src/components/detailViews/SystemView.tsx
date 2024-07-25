@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Divider } from 'antd/lib/index';
 import styled from '@emotion/styled';
-import { Button } from 'antd';
+import { Button, Select } from 'lib/components';
 import {
     getColumnSearchProps,
     getDefaultColumData,
@@ -44,7 +44,6 @@ import type { InsightUnit } from '../../entity/insight';
 import { hashToNumber } from '../../utils/colorUtils';
 import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
 import { EventDetail } from './EventsView';
-import { StyledSelect } from '../base/StyledSelect';
 
 export const DETAIL_HEADER_HEIGHT_ETC_PX = 130;
 const Container = styled.div`
@@ -131,7 +130,7 @@ const ViewSelect = observer((props: any) => {
     const options = [{ label: t('Stats System View'), value: 0 }, { label: t('Expert System View'), value: 1 }, { label: t('Events View'), value: 2 }];
     return (
         <div className={'systemViewSelect'}>
-            <StyledSelect width={180} value={viewOption} onChange={handleViewChange} options={options}/>
+            <Select width={180} value={viewOption} onChange={handleViewChange} options={options}/>
         </div>
     );
 });
@@ -173,7 +172,7 @@ export const RankFilter = observer((props: any): JSX.Element => {
                 name={t('Host')}
                 nameStyle={{ width: '90px', margin: '0px 0px 0px 10px' }}
                 style={{ margin: '0px 10px 10px 0px' }}
-                content={(<StyledSelect
+                content={(<Select
                     value={hostCondition.value}
                     width={120}
                     onChange={(value: string): void => setHostCondition({ ...hostCondition, value })}
@@ -186,7 +185,7 @@ export const RankFilter = observer((props: any): JSX.Element => {
             name={t('Rank ID')}
             nameStyle={{ width: '90px', margin: '0px 0px 0px 10px' }}
             style={{ margin: '0px 10px 10px 0px' }}
-            content={(<StyledSelect
+            content={(<Select
                 value={rankIdCondition.value}
                 width={120}
                 onChange={onRankIdChanged}

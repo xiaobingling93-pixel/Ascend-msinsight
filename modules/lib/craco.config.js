@@ -29,6 +29,7 @@ module.exports = {
           './Icon': './src/icon/Icon.tsx',
           './CollapsiblePanel': './src/CollapsiblePanel/index.tsx',
           './Layout': './src/Layout/index.tsx',
+          './components': './src/components/index.ts',
         },
         shared: {
           react: {singleton: true},

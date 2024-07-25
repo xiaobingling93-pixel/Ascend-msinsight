@@ -3,7 +3,7 @@
  */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip } from 'antd';
+import { Tooltip, Select } from 'lib/components';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useRef, useState } from 'react';
@@ -11,7 +11,6 @@ import { FilterIcon } from 'lib/Icon';
 import type { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
 import type { InsightUnit } from '../entity/insight';
-import { StyledSelect } from './base/StyledSelect';
 import type { CardMetaData, ProcessMetaData } from '../entity/data';
 import { useTranslation } from 'react-i18next';
 
@@ -25,11 +24,9 @@ const ChildrenContainer = styled.div`
 const CustomDiv = styled.div`
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    border-radius: 18px;
-    padding: 3px 7px 1px 10px;
-    min-width: 600px;
-    background: ${(props): string => props.theme.tooltipBGColor};
+    border-radius: 2px;
+    padding: 0 8px;
+    background: ${(props): string => props.theme.bgColorLight};
     .chooseResult {
         display: flex;
         margin-bottom: 0;
@@ -178,23 +175,23 @@ const CategorySearchContent = (session: Session): JSX.Element => {
 
     return (
         <CustomDiv theme={theme}>
-            <StyledSelect
+            <Select
                 value={selectValue}
                 dropdownRender={dropdownRender}
-                onDropdownVisibleChange={(open): void => setIsOpen(open)}
+                onDropdownVisibleChange={(open: boolean): void => setIsOpen(open)}
                 open={isOpen}
-                height={24} width={120} itemPaddingLeft={20}>
-            </StyledSelect>
-            <StyledSelect
+                height={32} width={120}>
+            </Select>
+            <Select
                 mode="multiple"
                 allowClear
                 options={completeOptions}
-                width={455}
-                height={24}
+                width={280}
+                height={32}
                 value={selection}
                 onChange={(val: string[]): void => { setSelection(val); handleChange(val); }}
             >
-            </StyledSelect>
+            </Select>
         </CustomDiv>
     );
 };
@@ -322,7 +319,6 @@ const useUnitsNameSet = (session: Session): { cardNames: Set<string>; unitNames:
 };
 
 export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Element | null => {
-    const theme = useTheme();
     const [customButtonProps, updateCustomButtonProps] = useState({
         isEmphasize: false,
         isSuspend: false,
@@ -346,9 +342,10 @@ export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Elem
             trigger="click"
             placement="right"
             onOpenChange={onTooltipVisibleChange}
-            color={theme.tooltipBGColor}
-            overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
-            overlayClassName={'insight-category-search-overlay'} align={{ offset: [-8, 3] }}>
+            overlayClassName="insight-category-search-overlay"
+            align={{ offset: [-8, 3] }}
+            zIndex={1040}
+        >
             <CustomButton tooltip={t('tooltip:filter')} icon={FilterIcon} { ...customButtonProps } ref={ref}/>
         </Tooltip>
     );

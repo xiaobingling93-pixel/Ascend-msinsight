@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
 */
 import React from 'react';
-import { Col, Modal, Row, message, Tooltip } from 'antd';
+import { Col, Modal, Row, message, Tooltip } from 'lib/components';
 import { ExclamationCircleOutlined, InfoCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { type ArgsProps } from 'antd/lib/message';
 import { useTranslation } from 'react-i18next';

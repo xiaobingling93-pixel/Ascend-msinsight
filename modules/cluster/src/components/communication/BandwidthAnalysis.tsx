@@ -8,7 +8,7 @@ import ReactDOM from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
 import type { PlainLegendComponentOption } from 'echarts';
-import { Empty } from 'antd';
+import { Empty } from 'lib/components';
 import ResizeTable from 'lib/ResizeTable';
 import type { ColumnsType } from 'antd/es/table';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';

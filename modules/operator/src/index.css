@@ -29,7 +29,6 @@
     background:none;
 }
 
-
 .theme_dark .rc-virtual-list-scrollbar-thumb{
     background-color:var(--grey60)!important;
 }

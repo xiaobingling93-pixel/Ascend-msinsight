@@ -4,7 +4,7 @@
 
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Checkbox, Tooltip } from 'antd';
+import { Checkbox, Tooltip } from 'lib/components';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { observer } from 'mobx-react';
 import React, { Fragment, useState } from 'react';

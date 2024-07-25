@@ -3,7 +3,7 @@
  */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Checkbox, Input, Row, Select, Switch } from 'antd';
+import { Checkbox, Input, Row, Select, Switch } from 'lib/components';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useState } from 'react';

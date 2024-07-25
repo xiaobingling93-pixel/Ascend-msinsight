@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import React, { useEffect, useState, useMemo, type CSSProperties } from 'react';
-import { Checkbox } from 'antd';
+import { Checkbox } from '../components/index';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import i18n from '../i18n';
 import { useWatchVirtualRender } from './VirtualRenderUtils';

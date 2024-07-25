@@ -4,7 +4,7 @@
 import type { CompareFn, FilterConfirmProps } from 'antd/es/table/interface';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input } from 'antd';
+import { Button, Input } from 'lib/components';
 import { Space } from 'antd/lib/index';
 import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnType } from 'antd/es/table';

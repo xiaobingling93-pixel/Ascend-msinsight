@@ -31,7 +31,7 @@ import { CardUnit } from '../../../insight/units/AscendUnit';
 import { StartIcon, PinIcon, UnPinIcon } from 'lib/Icon';
 import { UnitProgress } from '../../charts/UnitProgress';
 import { type ParseCardsParam, parseCards } from '../../../api/Request';
-import { message } from 'antd';
+import { message } from 'lib/components';
 
 const DefaultInfoContainer = styled.div`
     display: flex;

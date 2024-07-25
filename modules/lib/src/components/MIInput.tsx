@@ -18,12 +18,21 @@ const sizeOption = {
     middle: 160,
     large: 240,
 };
-
-const StyledInput = styled(Input)`
+export const MIInput = styled((props: InputProps & React.RefAttributes<InputRef>) => {
+    const { t } = useTranslation('lib');
+    return (
+        <Input
+            maxLength={DEFAULT_MAX_LENGTH}
+            placeholder={t('Please enter')}
+            {...props}
+        />
+    );
+})`
     width: ${(props): number => (props.size && sizeOption[props.size]) ?? sizeOption.middle}px;
     height: ${(props): number | string => (props.height ?? 32)}px;
     background-color: ${(props): string => props.theme.bgColor};
     border-color: ${(props): string => props.theme.borderColorLighter};
+    font-size: 12px;
 
     &:not(.ant-input-affix-wrapper-disabled):hover, &.ant-input-affix-wrapper-focused {
         border-color: ${(props): string => props.theme.primaryColor};
@@ -45,23 +54,28 @@ const StyledInput = styled(Input)`
     }
 `;
 
-export const MIInput: React.FC<InputProps & React.RefAttributes<InputRef>> = (props) => {
-    const { t } = useTranslation('lib');
+type ValueType = string | number;
+export const MIInputNumber = styled((props: InputNumberProps<ValueType> & {
+    children?: React.ReactNode;
+} & {
+    ref?: React.Ref<HTMLInputElement>;
+}) => {
     return (
-        <StyledInput
+        <InputNumber
+            min={DEFAULT_MIN_INPUT_NUMBER}
+            max={DEFAULT_MAX_INPUT_NUMBER}
             maxLength={DEFAULT_MAX_LENGTH}
-            placeholder={t('Please enter')}
+            formatter={(value): string => `${Number(value)}`}
             {...props}
         />
     );
-};
-
-const StyledInputNumber = styled(InputNumber)`
+})`
     width: ${(props): number => (props.size && sizeOption[props.size]) ?? sizeOption.middle}px;
     height: ${(props): number | string => (props.height ?? 32)}px;
     background-color: ${(props): string => props.theme.bgColor};
     border-color: ${(props): string => props.theme.borderColorLighter};
     color: ${(props): string => props.theme.textColorPrimary};
+    font-size: 12px;
 
     &:hover, &.ant-input-number-focused {
         border-color: ${(props): string => props.theme.primaryColor};
@@ -86,22 +100,3 @@ const StyledInputNumber = styled(InputNumber)`
         }
     }
 `;
-
-type ValueType = string | number;
-export const MIInputNumber: ((props: InputNumberProps<ValueType> & {
-    children?: React.ReactNode;
-} & {
-    ref?: React.Ref<HTMLInputElement>;
-}) => React.ReactElement) & {
-    displayName?: string;
-} = (props) => {
-    return (
-        <StyledInputNumber
-            min={DEFAULT_MIN_INPUT_NUMBER}
-            max={DEFAULT_MAX_INPUT_NUMBER}
-            maxLength={DEFAULT_MAX_LENGTH}
-            formatter={(value): string => `${Number(value)}`}
-            {...props}
-        />
-    );
-};

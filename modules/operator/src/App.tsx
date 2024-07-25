@@ -9,6 +9,7 @@ import { useRootStore } from './context/context';
 import Operator from './components/operator/Operator';
 import { themeInstance } from './theme/theme';
 import connector from './connection';
+import { GlobalStyles } from 'lib/theme';
 
 const App = observer(() => {
     const { sessionStore } = useRootStore();
@@ -36,6 +37,7 @@ const App = observer(() => {
 
     return session !== undefined
         ? <ThemeProvider theme={themeInstance.getThemeType()}>
+            <GlobalStyles />
             <SharedConfigProvider locale={locale}>
                 <Operator session={session} />
             </SharedConfigProvider>

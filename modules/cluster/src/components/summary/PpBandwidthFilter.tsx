@@ -5,8 +5,8 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Select } from 'antd';
-import { Label, StyledTooltip } from '../Common';
+import { Select, Tooltip } from 'lib/components';
+import { Label } from '../Common';
 import { getStepsData } from './PpBandwidthAnalysis';
 import { getAllPpStageIds, getPpContainerData } from '../communicatorContainer/ContainerUtils';
 import type { Session } from '../../entity/session';
@@ -103,7 +103,7 @@ function FilterCom(props: FilterComProps): JSX.Element {
 export const useHit = (): React.ReactElement => {
     const { t } = useTranslation('summary');
     const hit: string[] = t('StageTimeAndBubbleTimeDescribe', { returnObjects: true }) ?? [];
-    return (<StyledTooltip title={
+    return (<Tooltip title={
         (
             <div style={{ padding: '1rem' }}>
                 {hit?.map((item: string, index: number) => <div style={{ padding: '3px 0' }} key={index}>{item}</div>)}
@@ -111,7 +111,7 @@ export const useHit = (): React.ReactElement => {
         )
     }>
         <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
-    </StyledTooltip>);
+    </Tooltip>);
 };
 
 export default Filter;

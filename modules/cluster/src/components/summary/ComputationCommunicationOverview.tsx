@@ -10,11 +10,10 @@ import type { Session } from '../../entity/session';
 import type { VoidFunction } from '../../utils/interface';
 import { useEventBus } from '../../utils/eventBus';
 import { queryTopSummary } from '../../utils/RequestUtils';
-import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, notZero, StyledTooltip } from '../Common';
+import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, notZero } from '../Common';
 import Filter from './Filter';
 import type { ConditionDataType } from './Filter';
 import StatisticsTable from './StatisticsTable';
-import SummaryTable from './SummaryTable';
 import BaseInfo from './BaseInfo';
 import { CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
 import PpBandwidthAnalysis from './PpBandwidthAnalysis';
@@ -22,6 +21,7 @@ import i18n from 'lib/i18n';
 import { HelpIcon } from 'lib/Icon';
 import Layout from 'lib/Layout';
 import CollapsiblePanel from 'lib/CollapsiblePanel';
+import { Tooltip } from 'lib/components';
 
 interface SummaryDataType {
     [propName: string]: any;
@@ -268,7 +268,7 @@ export const useHit = (containsPreparing: boolean): React.ReactElement => {
     const { t } = useTranslation('summary');
     const hit = t(containsPreparing ? 'Computation/CommunicationDescribeWithPreparing' : 'Computation/CommunicationDescribe',
         { returnObjects: true }) as string[];
-    return (<StyledTooltip
+    return (<Tooltip
         overlayClassName={'width-auto'}
         title={
             (
@@ -281,7 +281,7 @@ export const useHit = (containsPreparing: boolean): React.ReactElement => {
             )
         }>
         <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
-    </StyledTooltip>);
+    </Tooltip>);
 };
 
 async function GetTopSummary(conditions: ConditionDataType): Promise<AdviceAndSummary> {
@@ -367,7 +367,6 @@ function OverviewCom({ handleFilterChange, dataSource, selected, advice, session
                     <div id={'overview-chart'} style={{ height: '400px' }} ></div>
                 </div>
                 <div style={{ padding: '0 3rem' }}>
-                    <SummaryTable dataSource={dataSource} style={{ display: 'none' }}/>
                     <StatisticsTable {...selected} advice={advice} session={session}/>
                 </div>
             </div>

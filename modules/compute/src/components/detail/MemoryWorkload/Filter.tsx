@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
-import { Select } from 'antd';
+import { Select } from 'lib/components';
 import { useTranslation } from 'react-i18next';
 import { getUsableVal, FormItem } from 'lib/CommonUtils';
 import type { optionDataType, optionMapDataType } from '../../../utils/interface';
@@ -72,7 +72,7 @@ function FilterCom({ condition, optionMap, handleChange, t }: IcomProps): JSX.El
             content={(<Select
                 value={condition.blockId}
                 style={{ width: '150px' }}
-                onChange={(val): void => {
+                onChange={(val: string): void => {
                     handleChange('blockId', val);
                 }}
                 options={optionMap.blockIdOptions}
@@ -85,7 +85,7 @@ function FilterCom({ condition, optionMap, handleChange, t }: IcomProps): JSX.El
             content={(<Select
                 value={condition.showAs}
                 style={{ width: '170px' }}
-                onChange={(val): void => {
+                onChange={(val: string): void => {
                     handleChange('showAs', val);
                 }}
                 options={optionMap.showAsOptions}

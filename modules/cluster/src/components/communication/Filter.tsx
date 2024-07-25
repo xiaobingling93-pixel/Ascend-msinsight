@@ -5,7 +5,8 @@ import { observer } from 'mobx-react';
 import { observable, observe } from 'mobx';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Select, Radio } from 'antd';
+import { Select, Radio } from 'lib/components';
+import type { RadioChangeEvent } from 'antd';
 import { getUsableVal, delayExecute } from 'lib/CommonUtils';
 import { Label } from '../Common';
 import type { optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
@@ -160,7 +161,7 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
             content={(<Select
                 value={condition.iterationId}
                 style={{ width: 120 }}
-                onChange={(val): void => {
+                onChange={(val: string): void => {
                     handleChange('iterationId', val);
                 }}
                 options={optionMap.iterationOptions}
@@ -171,7 +172,7 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
             content={(<Select
                 value={condition.stage}
                 style={{ width: 200 }}
-                onChange={(val): void => {
+                onChange={(val: string): void => {
                     handleChange('stage', val);
                 }}
                 options={optionMap.stageOptions}
@@ -183,7 +184,7 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
                 <Select
                     value={condition.operatorName}
                     style={{ width: 300 }}
-                    onChange={(val): void => {
+                    onChange={(val: string): void => {
                         handleChange('operatorName', val);
                     }}
                     options={optionMap.operatorOptions}
@@ -191,7 +192,7 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
                 />)}/>
         <FormItem content={(
             <Radio.Group value={condition.type}
-                onChange={(e): void => {
+                onChange={(e: RadioChangeEvent): void => {
                     handleChange('type', e.target.value);
                 }}>
                 <Radio value={'CommunicationMatrix'}>{t('searchCriteria.CommunicationMatrix')}</Radio>

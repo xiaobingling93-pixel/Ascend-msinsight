@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
-import { Row, Col, Select } from 'antd';
+import { Row, Col, Select } from 'lib/components';
 import type { RowProps } from 'antd/lib/row';
 import styled from '@emotion/styled';
 import _ from 'lodash';

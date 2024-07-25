@@ -5,7 +5,7 @@ import { observer } from 'mobx-react';
 import type { Session } from '../../entity/session';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tabs, Form, InputNumber, Button, message, Select } from 'antd';
+import { Tabs, Form, InputNumber, Button, message, Select } from 'lib/components';
 import _ from 'lodash';
 import eventBus, { useEventBus } from '../../utils/eventBus';
 import {
@@ -75,7 +75,7 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
         <div style={{ marginBottom: 24 }}>
             {<CommunicatorHeader session={session} defaultPPSize={session.communicatorData.defaultPPSize} unitCount={unitCount}></CommunicatorHeader>}
             <Tabs activeKey={activeTab}
-                onTabClick={(key): void => { eventBus.emit('setActiveTab', key); setActiveTab(key); }}
+                onTabClick={(key: string): void => { eventBus.emit('setActiveTab', key); setActiveTab(key); }}
                 items={items}
             ></Tabs>
         </div>
@@ -132,23 +132,23 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount }: { se
     };
     return (
         <Form form={form} labelAlign={'left'} layout="inline" className={'CommunicatorHeader'}>
-            <Form.Item name={'algorithm'} label={t('Algorithm')} style={{ margin: '10px 10px 10px 0' }}>
+            <Form.Item name={'algorithm'} label={t('Algorithm')} style={{ margin: '10px 24px 10px 0' }}>
                 <Select defaultValue="Megatron" disabled={true} style={{ width: '120px' }} options={[
                     {
                         value: 'Megatron',
                         label: 'Megatron',
                     }]}/>
             </Form.Item>
-            <Form.Item name={'ppSize'} label={t('PPSize')} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={unitCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
+            <Form.Item name={'ppSize'} label={t('PPSize')} style={{ margin: '10px 24px 10px 0' }}>
+                <InputNumber min={0} max={unitCount} style={{ width: '120px' }} maxLength={200}></InputNumber>
             </Form.Item>
-            <Form.Item name={'tpSize'} label={t('TPSize')} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={unitCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
+            <Form.Item name={'tpSize'} label={t('TPSize')} style={{ margin: '10px 24px 10px 0' }}>
+                <InputNumber min={0} max={unitCount} style={{ width: '120px' }} maxLength={200}></InputNumber>
             </Form.Item>
-            <Form.Item name={'dpSize'} label={t('DPSize')} style={{ margin: '10px 10px 10px 0' }}>
-                <InputNumber min={0} max={unitCount} style={{ width: '120px', margin: '0 0 0 10px' }} maxLength={200}></InputNumber>
+            <Form.Item name={'dpSize'} label={t('DPSize')} style={{ margin: '10px 24px 10px 0' }}>
+                <InputNumber min={0} max={unitCount} style={{ width: '120px' }} maxLength={200}></InputNumber>
             </Form.Item>
-            <Button style={{ margin: '10px 10px 10px 0' }} onClick={onClick(defaultPPSize)}>{t('Generate')}</Button>
+            <Button type="primary" style={{ margin: '10px 32px 10px 0' }} onClick={onClick(defaultPPSize)}>{t('Generate')}</Button>
         </Form>
     );
 });

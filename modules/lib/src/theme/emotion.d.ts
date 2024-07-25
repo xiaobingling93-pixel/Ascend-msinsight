@@ -200,6 +200,7 @@ declare module '@emotion/react' {
         boxShadowLight: string;
         boxShadowLighter: string;
         boxShadowDark: string;
+        boxShadowDropDown: string;
         maskColor: string; // 遮罩层色
         maskColorExtraLight: string;
         borderColorHover: string;

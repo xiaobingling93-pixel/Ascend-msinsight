@@ -8,7 +8,7 @@ import { eventViewData, getDefaultColumData, getPageData } from './Common';
 import ResizeTable from 'lib/ResizeTable';
 import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
 import type { ThreadMetaData } from '../../entity/data';
-import { Button } from 'antd';
+import { Button } from 'lib/components';
 import type { InsightUnit } from '../../entity/insight';
 import { colorPalette, getTimeOffset } from '../../insight/units/utils';
 import { calculateDomainRange } from '../CategorySearch';

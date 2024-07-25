@@ -3,7 +3,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import type { KeyedInsightUnit } from '../ChartContainer/Units/types';
-import { Progress } from 'antd';
+import { Progress } from 'lib/components';
 import { useTheme } from '@emotion/react';
 
 export const UnitProgress = ({ unit, realProgress, showProgress }: { unit: KeyedInsightUnit; realProgress: number; showProgress: boolean }): JSX.Element => {

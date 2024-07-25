@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import { addResizeEvent, Loading, safeStr } from '../Common';
 import { colorPalette, hashToNumber } from '../../utils/colorUtil';
-import { Dropdown } from 'antd';
+import { Dropdown } from 'lib/components';
 import type { MenuProps } from 'antd';
 import connector from '../../connection';
 import CollapsiblePanel from 'lib/CollapsiblePanel';
@@ -289,7 +289,7 @@ const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { data
                 menu={{
                     items: menuItems,
                     onClick: (): void => setDropDownVisible(false),
-                    onBlur: (e): void => {
+                    onBlur: (e: React.FocusEvent<HTMLUListElement, Element>): void => {
                         const hasItem = menuItems?.findIndex(item =>
                             (e.relatedTarget as HTMLElement)?.dataset?.menuId?.includes(item?.key as string)) !== -1;
                         if (!hasItem) {

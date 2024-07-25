@@ -10,6 +10,7 @@ import connector from './connection';
 import HotMethod from './components/hotMethod/HotMethod';
 import Detail from './components/detail/Index';
 import { themeInstance } from './theme/theme';
+import { GlobalStyles } from 'lib/theme';
 
 const app = observer(({ page }: {page?: string}) => {
     const { sessionStore } = useRootStore();
@@ -42,6 +43,7 @@ const app = observer(({ page }: {page?: string}) => {
         dom = <HotMethod session={session} />;
     }
     return <ThemeProvider theme={themeInstance.getThemeType()}>
+        <GlobalStyles />
         <SharedConfigProvider locale={locale}>
             {dom}
         </SharedConfigProvider>;

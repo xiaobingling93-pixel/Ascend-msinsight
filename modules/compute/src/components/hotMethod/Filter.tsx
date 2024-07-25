@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react';
 import React, { type ReactElement, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Select } from 'antd';
+import { Select } from 'lib/components';
 import { Label } from '../Common';
 import type { optionDataType, optionMapDataType } from '../../utils/interface';
 import type { Session } from '../../entity/session';
@@ -87,7 +87,7 @@ function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element 
             content={(<Select
                 value={condition.core}
                 style={{ width: 'calc(100% - 100px)' }}
-                onChange={(val): void => {
+                onChange={(val: string): void => {
                     handleChange('core', val);
                 }}
                 options={optionMap.coreOptions}
@@ -100,7 +100,7 @@ function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element 
             content={(<Select
                 value={condition.source}
                 style={{ width: 'calc(100% - 100px)' }}
-                onChange={(val): void => {
+                onChange={(val: string): void => {
                     handleChange('source', val);
                 }}
                 options={optionMap.sourceOptions}

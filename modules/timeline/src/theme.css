@@ -2,23 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-.theme_dark .ant-select-selection-item{
-    border-color: var(--grey60);
-    color:var(--grey5)!important;
-}
 .theme_dark .ant-pagination{
     color:white;
-}
-.theme_dark .ant-empty-description{
-    color:white;
-}
-
-.theme_dark .ant-select-item-option-selected:not(.ant-select-item-option-disabled){
-    background-color: var(--grey80);
-}
-
-.theme_dark .anticon{
-    color:var(--grey0);
 }
 
 .theme_dark .ant-notification-notice{
@@ -30,10 +15,6 @@
 }
 .theme_dark .ant-notification-notice-close{
     color: var(--grey10);
-}
-
-.ant-select:not(.ant-select-customize-input) .ant-select-selector{
-    border-color:var(--grey15);
 }
 
 .systemViewRank{
@@ -71,10 +52,6 @@
     background: no-repeat center url('./assets/images/un_pin_dark.svg');
     height: 30px;
     width: 20px;
-}
-
-.theme_dark .ant-select-multiple .ant-select-selection-item {
-    background:var(--grey60);
 }
 
 .icon_case_match{

@@ -3,12 +3,11 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Checkbox, Divider, Select, Pagination, Tooltip } from 'antd';
+import { Checkbox, Divider, Select, Pagination } from 'lib/components';
 import type { optionDataType, VoidFunction } from '../utils/interface';
 import type { EChartsType } from 'echarts';
 import i18n from 'lib/i18n';
-import type { TooltipProps } from 'antd/lib/tooltip';
-import { useTheme } from '@emotion/react';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? `${props.name} :` : ''} </span>;
@@ -52,14 +51,14 @@ export const MultiSelectWithAll = (props: any): JSX.Element => {
         <Select
             {...props}
             mode="multiple"
-            dropdownRender={(menu): JSX.Element => (
+            dropdownRender={(menu: React.ReactElement<any, string | React.JSXElementConstructor<any>>): JSX.Element => (
                 <div>
                     {menu}
                     <Divider style={{ margin: '2px 0' }} />
                     <div style={{ padding: '4px 8px 8px 8px' }}>
                         <Checkbox
                             checked={checked}
-                            onChange={(event): void => {
+                            onChange={(event: CheckboxChangeEvent): void => {
                                 setChecked(event.target.checked);
                                 if (event?.target.checked) {
                                     onChange(options.map((item: optionDataType) => item.value));
@@ -88,7 +87,7 @@ export const PaginationWhithPgaeData = (props: any): JSX.Element => {
         defaultCurrent={1}
         pageSizeOptions= {[10, 20, 50, 100] }
         showTotal={(total: number): React.ReactElement => (<div style={{ marginRight: '10px' }}>{i18n.t('PaginationTotal', { total })}</div>)}
-        onChange={(current, pageSize): void => { setPage({ ...page, current, pageSize }); }}
+        onChange={(current: number, pageSize: number): void => { setPage({ ...page, current, pageSize }); }}
         showQuickJumper={page.total / notZero(page.pageSize) > 5}
         style={{ float: 'right', marginTop: '10px' }}
     />;
@@ -297,24 +296,4 @@ export const commonEchartsOptions: {
             type: 'dashed',
         },
     },
-};
-
-export const StyledTooltip: React.FC<TooltipProps> = ({ children, overlayInnerStyle, ...props }: TooltipProps) => {
-    const theme = useTheme();
-    return <Tooltip
-        color={theme.tooltipBGColor}
-        overlayInnerStyle={
-            {
-                borderRadius: '12px',
-                color: theme.tooltipFontColor,
-                boxShadow: theme.tooltipBoxShadow,
-                whiteSpace: 'pre-wrap',
-                fontSize: 14,
-            }
-        }
-        mouseEnterDelay={0.3}
-        {...props}
-    >
-        {children}
-    </Tooltip>;
 };

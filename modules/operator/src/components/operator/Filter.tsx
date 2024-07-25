@@ -5,7 +5,7 @@ import { observer } from 'mobx-react';
 import { observable, runInAction, observe } from 'mobx';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Select, InputNumber } from 'antd';
+import { Select, InputNumber } from 'lib/components';
 import { GroupRankIdsByHost, Label } from 'lib/CommonUtils';
 import type { optionMapType, VoidFunction } from '../../utils/interface';
 import type { Session } from '../../entity/session';
@@ -162,7 +162,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
                     content={(<Select
                         value={condition.host}
                         style={{ width: 250 }}
-                        onChange={(val): void => handleChange('host', val)}
+                        onChange={(val: string): void => handleChange('host', val)}
                         options={optionMap.hostsOptions}
                     />
                     )}/>
@@ -173,7 +173,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
             content={(<Select
                 value={condition.group}
                 style={{ width: 250 }}
-                onChange={(val): void => handleChange('group', val)}
+                onChange={(val: string): void => handleChange('group', val)}
                 options={groupOptions}
             />
             )}/>
@@ -182,7 +182,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
             content={(<Select
                 value={condition.rankId}
                 style={{ width: 200 }}
-                onChange={(val): void => handleChange('rankId', val)}
+                onChange={(val: string): void => handleChange('rankId', val)}
                 options={optionMap.rankIdOptions}
                 showSearch={true}
             />
@@ -192,14 +192,14 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
             content={(<><Select
                 value={condition.topK}
                 style={{ width: 100 }}
-                onChange={(val): void => handleChange('topK', val)}
+                onChange={(val: string): void => handleChange('topK', val)}
                 options={topKOptions}
             />
             <InputNumber
                 min={0}
                 max={100000000}
                 value={condition.custom}
-                onChange={(val): void => handleChange('custom', val)}
+                onChange={(val: string): void => handleChange('custom', val)}
                 controls={false}
                 precision={0}
                 style={{ marginLeft: '10px', width: '80px', display: condition.topK === 0 ? 'inline-block' : 'none' }} />

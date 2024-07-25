@@ -5,7 +5,7 @@ import ResizeTable from 'lib/ResizeTable';
 import { fetchColumnFilterProps } from 'lib/ColumnFilter';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from 'antd';
+import { Button } from 'lib/components';
 import { DownOutlined } from '@ant-design/icons';
 import { getPageConfigWithPageData } from '../Common';
 import { type ConditionType, type FilterType } from './Filter';

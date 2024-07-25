@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
-import { Select } from 'antd';
+import { Select } from 'lib/components';
 import { FormItem, getUsableVal } from 'lib/CommonUtils';
 import type { optionDataType, optionMapDataType } from '../../../utils/interface';
 import { limitInput, useHit } from '../../Common';
@@ -61,7 +61,7 @@ function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element 
             content={(<Select
                 value={condition.blockId}
                 style={{ width: '150px' }}
-                onChange={(val): void => {
+                onChange={(val: string): void => {
                     handleChange('blockId', val);
                 }}
                 options={optionMap.blockIdOptions}

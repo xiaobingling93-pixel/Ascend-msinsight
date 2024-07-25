@@ -18,7 +18,7 @@ import { getTimeOffset } from '../utils';
 import { CustomButton } from '../../../components/base/StyledButton';
 import type { SvgType } from '../../../components/base/rc-table/types';
 import { ReactComponent as AlignStartIcon } from '../../../assets/images/timeline/ic_align_start.svg';
-import { message } from 'antd';
+import { message } from 'lib/components';
 const AlignIcon = AlignStartIcon as SvgType;
 const defaultOffset = '0';
 const minOffset = -Number.MAX_VALUE;

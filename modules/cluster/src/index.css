@@ -1,37 +1,13 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-.theme_dark *:not(path,svg,.ant-table-wrapper *) {
-    color: white;
-}
 
 .theme_dark .tan-box > div > .bottomC, .tan-box > div {
     background: none;
 }
 
-.theme_dark .ant-breadcrumb a * {
-    color: var(--grey10);
-}
-
-.theme_dark .ant-select-multiple .ant-select-selection-item {
-    background: var(--grey80);
-    border-color: var(--grey60);
-}
-
 .theme_dark .rc-virtual-list-scrollbar-thumb {
     background-color: var(--grey60) !important;
-}
-
-.theme_dark .ant-notification-notice {
-    background: var(--grey85);
-}
-
-.theme_dark .ant-form-item-label > label {
-    color: #ffffff;
-}
-
-.theme_dark .ant-dropdown-menu-title-content {
-    color: var(--grey85)
 }
 
 .communication .topC > div {
@@ -49,10 +25,7 @@
 /*Communicator相关的配置*/
 .CommunicatorHeader {
     min-width: 600px;
-}
-
-.CommunicatorHeader .ant-btn {
-    background: var(--grey10);
+    align-items: center;
 }
 
 .CommunicatorHeader .ant-form-item-control {
@@ -102,19 +75,6 @@
 
 .theme_dark .communication-advice-content {
     color: white;
-}
-
-.theme_dark .ant-input-number-input {
-    background-color: var(--grey90);
-}
-
-.theme_dark .ant-input-number .ant-input-number-handler-wrap {
-    background-color: var(--grey90);
-}
-
-.theme_dark .CommunicatorHeader .ant-btn {
-    background: var(--grey50);
-    border-color: var(--grey60);
 }
 
 .theme_dark .CommunicatorContainer .st0 {

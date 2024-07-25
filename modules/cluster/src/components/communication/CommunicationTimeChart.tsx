@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
-import { Spin } from 'antd';
+import { Spin } from 'lib/components';
 import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions } from '../Common';
 import type { Session } from '../../entity/session';
 import i18n from 'lib/i18n';

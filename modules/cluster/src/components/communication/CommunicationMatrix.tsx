@@ -6,7 +6,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Select, Checkbox, InputNumber, Button, message } from 'antd';
+import { Select, Checkbox, InputNumber, Button, message } from 'lib/components';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import * as echarts from 'echarts';
 import { addResizeEvent, Label, COLOR, getDecimalCount, safeStr } from '../Common';
@@ -356,11 +356,11 @@ const RangeFilter = ({ range, changeFilter }: { range: RangeInfo; changeFilter: 
         <>
             <Label name={t('searchCriteria.VisibleRange', { ns: 'communication' })} />
             <InputNumber value={minValue} style={{ width: 100, marginRight: 10 }} min={minRange} max={maxRange}
-                onChange={(value): void => changeInput(value as number, 'min')} status={isValid ? '' : 'error'} step={0.1} />
+                onChange={(value: number | null): void => changeInput(value as number, 'min')} status={isValid ? '' : 'error'} step={0.1} />
             ~
             <InputNumber value={maxValue} style={{ width: 100, margin: '0 10px' }} min={minRange} max={maxRange}
-                onChange={(value): void => changeInput(value as number, 'max')} status={isValid ? '' : 'error'} step={0.1} />
-            <Button onClick={onConfirm} type="primary" style={{ height: 30, width: 100 }}>{t('Confirm', { ns: 'buttonText' })}</Button>
+                onChange={(value: number | null): void => changeInput(value as number, 'max')} status={isValid ? '' : 'error'} step={0.1} />
+            <Button onClick={onConfirm} type="primary" size="middle">{t('Confirm', { ns: 'buttonText' })}</Button>
         </>
     );
 };
@@ -373,7 +373,7 @@ const CommunicationMatrixCom = ({ isShow, handleChange, switchCondition, range, 
             <Select
                 defaultValue="0"
                 style={{ width: 200, marginRight: '20px' }}
-                onChange={(val): void => {
+                onChange={(val: string): void => {
                     handleChange('type', val);
                 }}
                 options={useOptions()}

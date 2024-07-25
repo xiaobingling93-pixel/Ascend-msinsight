@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Breadcrumb } from 'antd';
+import { Breadcrumb, Tooltip } from 'lib/components';
 import type { Session } from '../../entity/session';
 import Filter from './Filter';
 import type { ConditionDataType } from './Filter';
@@ -15,7 +15,7 @@ import CommunicationTimeChart from './CommunicationTimeChart';
 import type { dataType as chartDataType } from './CommunicationTimeChart';
 import CommunicationMatrix from './CommunicationMatrix';
 import BandwidthAnalysis from './BandwidthAnalysis';
-import { notNullObj, Space, StyledTooltip } from '../Common';
+import { notNullObj, Space } from '../Common';
 import { queryCommunication, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
 import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
 import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
@@ -161,7 +161,7 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
         <div style={{ marginBottom: '20px' }}>
             <div className={'communication-advice-title'}>
                 {t('Advice')}
-                <StyledTooltip title={
+                <Tooltip title={
                     (
                         <div style={{ padding: '1rem' }}>
                             {t('AdviceTip')}
@@ -169,7 +169,7 @@ const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element =>
                     )
                 }>
                     <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
-                </StyledTooltip>
+                </Tooltip>
             </div>
             <div className="communication-advice-header">{t('Overall')}</div>
             <div className="communication-advice-content">{overAllText}</div>

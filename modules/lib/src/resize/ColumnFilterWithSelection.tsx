@@ -3,13 +3,19 @@
 */
 import React, { useEffect, useState } from 'react';
 import { FilterOutlined } from '@ant-design/icons';
-import { Button, Input, Space } from 'antd';
+import { Button, Input } from '../components/index';
 import { limitInput } from '../utils/Common';
 import type { ColumnType } from 'antd/es/table';
 import type { FilterDropdownProps, ColumnFilterItem } from 'antd/es/table/interface';
 import VirtalUl from '../utils/VirtualUl';
 import type { CheckItem, ValueType } from '../utils/VirtualUl';
 import i18n from '../i18n';
+import styled from '@emotion/styled';
+
+export const ButtonGroup = styled.div`
+    display: flex;
+    justify-content: center;
+`;
 
 function FilterDropdown({ setSelectedKeys, selectedKeys, confirm, clearFilters, close, filters: originFilters }: FilterDropdownProps): JSX.Element {
     const [filters, setFilters] = useState<ColumnFilterItem[]>(originFilters ?? []);
@@ -36,13 +42,13 @@ function FilterDropdown({ setSelectedKeys, selectedKeys, confirm, clearFilters, 
             <div><Input allowClear maxLength={200} value={searchText} onChange={(e): void => setSearchText(e.target.value)} />
             </div>
             {filters.length > 0 && <VirtalUl items={filters as CheckItem[]} onChange={handleSelectedChange} searchText={searchText}/>}
-            <Space>
-                <Button type="primary" size="small" style={{ width: 90 }} onClick={(): void => {
+            <ButtonGroup>
+                <Button type="primary" size="small" style={{ marginRight: 8 }} onClick={(): void => {
                     setSelectedKeys(selection);
                     confirm();
                 }}>{i18n.t('buttonText:Search')}</Button>
-                <Button size="small" style={{ width: 90 }} onClick={(): void => { reset(); }} >{i18n.t('buttonText:Reset')}</Button>
-            </Space>
+                <Button size="small" onClick={(): void => { reset(); }} >{i18n.t('buttonText:Reset')}</Button>
+            </ButtonGroup>
         </div>
     );
 }

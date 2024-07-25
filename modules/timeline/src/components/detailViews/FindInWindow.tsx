@@ -6,7 +6,7 @@ import type { Session } from '../../entity/session';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
-import { Button } from 'antd';
+import { Button } from 'lib/components';
 import { runInAction } from 'mobx';
 import { getDefaultColumData, getPageData, searchAllSlices } from './Common';
 import ResizeTable from 'lib/ResizeTable';

@@ -13,7 +13,7 @@ export const MITooltip: React.FC<TooltipProps> = ({ children, overlayInnerStyle,
         color={theme.bgColorLight}
         overlayInnerStyle={
             {
-                borderRadius: '12px',
+                borderRadius: 4,
                 borderColor: theme.borderColorLight,
                 color: theme.textColorPrimary,
                 boxShadow: theme.boxShadow,

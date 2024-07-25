@@ -12,3 +12,4 @@ declare module 'lib/SharedConfigProvider';
 declare module 'lib/theme';
 declare module 'lib/CollapsiblePanel';
 declare module 'lib/Layout';
+declare module 'lib/components';

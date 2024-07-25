@@ -13,7 +13,7 @@ import { ReactComponent as RangeStartFlagSvg } from '../assets/images/timeline/i
 import { ReactComponent as GCIcon } from '../assets/images/insights/ark_gc.svg';
 import type { TimelineAxisFlag } from '../entity/timeMaker';
 import { ReactComponent as BrushIcon } from '../assets/images/timeline/ic_brush_black_lined.svg';
-import { Modal } from 'antd';
+import { Modal } from 'lib/components';
 import { runInAction } from 'mobx';
 import { platform } from '../platforms';
 import styled from '@emotion/styled';

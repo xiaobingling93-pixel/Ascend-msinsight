@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { Button } from 'antd';
+import { Button } from 'lib/components';
 import type { ColumnsType } from 'antd/es/table';
 import { DownOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';

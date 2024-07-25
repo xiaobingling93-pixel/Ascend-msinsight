@@ -4,7 +4,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { HelpIcon } from 'lib/Icon';
-import { StyledTooltip } from './StyledTooltip';
+import { Tooltip } from 'lib/components';
 
 const HOUR_TO_MICROSECOND = 1000 * 1000 * 60 * 60;
 const MINUTE_TO_MICROSECOND = 1000 * 1000 * 60;
@@ -17,7 +17,7 @@ export const Label = (props: {name: React.ReactNode;style?: object }): JSX.Eleme
 
 export const useHit = (): React.ReactElement => {
     const { t } = useTranslation('memory');
-    return <StyledTooltip title={
+    return <Tooltip title={
         (
             <div style={{ padding: '1rem' }}>
                 <div>{safeStr(t('searchCriteria.Overall'))}: {safeStr(t('searchCriteria.OverallDescribe'))}</div>
@@ -26,13 +26,13 @@ export const useHit = (): React.ReactElement => {
         )
     }>
         <HelpIcon style={{ cursor: 'pointer' }} height={20} width={20}/>
-    </StyledTooltip>;
+    </Tooltip>;
 };
 
 export const useChartCharacter = (): React.ReactElement => {
     const { t } = useTranslation('memory');
     const hit = t('searchCriteria.CurveDescribe', { returnObjects: true }) as [];
-    return <StyledTooltip title={
+    return <Tooltip title={
         <div style={{ padding: '1rem' }}>
             {hit?.map((item: string, index: number) =>
                 <div style={{ padding: '3px 0' }} key={index}>{safeStr(item)}</div>)
@@ -40,7 +40,7 @@ export const useChartCharacter = (): React.ReactElement => {
         </div>
     }>
         <HelpIcon style={{ cursor: 'pointer' }} height={20} width={20}/>
-    </StyledTooltip>;
+    </Tooltip>;
 };
 
 export const safeStr = (str: string, ignore?: string): string => {

@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import { AntTableChart } from '../components/AntTableChart';
 import { LineChart } from '../components/LineChart';
-import { Button, Input, InputNumber, message, Select, Spin } from 'antd';
+import { Button, Input, InputNumber, message, Select, Spin } from 'lib/components';
 import type { Session } from '../entity/session';
 import type {
     Graph, MemoryCurve, OperatorDetail, StaticOperatorCurve,
@@ -410,7 +410,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                             <Label name={t('searchCriteria.Host')} />
                             <Select
                                 value={hostCondition.value}
-                                style={{ width: 200 }}
+                                size="middle"
                                 onChange={(value: string): void => setHostCondition({ ...hostCondition, value })}
                                 options={hostCondition.options.map((host) => {
                                     return { value: host, label: host };
@@ -423,7 +423,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                         <Label name={t('searchCriteria.RankId')} />
                         <Select
                             value={rankIdCondition.value}
-                            style={{ width: 200 }}
+                            size="middle"
                             onChange={onRankIdChanged}
                             options={rankIdCondition.options.map((rankId) => {
                                 return {
@@ -472,7 +472,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                             <Label name={t('searchCriteria.GraphId')} />
                             <Select
                                 value={memoryGraphId}
-                                style={{ width: 180 }}
+                                size="middle"
                                 onChange={onMemoryGraphIdChanged}
                                 options={memoryGraphIdList.map((graphId) => {
                                     return {
@@ -506,7 +506,6 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                         <Label name={t('searchCriteria.Name')} />
                         <Input
                             value={searchEventOperatorName}
-                            style={{ width: 200 }}
                             onChange={onSearchEventOperatorChanged}
                             placeholder={t('searchCriteria.Search by Name')}
                             allowClear
@@ -517,23 +516,19 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                         <Label name={t('searchCriteria.Min Size')} />
                         <InputNumber
                             value={minSize}
-                            style={{ width: 200 }}
                             onChange={onFilterEventMinSizeInputChanged}
                             min={0}
                             max={4294967295}
-                            formatter={(value): string => `${Number(value)}`}
                         />
                     </div>
                     <div className="flex items-center">
                         <Label name={t('searchCriteria.Max Size')} />
                         <InputNumber
                             value={maxSize}
-                            style={{ width: 200 }}
                             onChange={onFilterEventMaxSizeInputChanged}
                             min={0}
                             max={4294967295}
                             minLength={1}
-                            formatter={(value): string => `${Number(value)}`}
                         />
                     </div>
                     <div className="flex items-center">
@@ -542,14 +537,13 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                                 ? onSearch(searchEventOperatorName, minSize, maxSize, true)
                                 : onStaticSearch(searchEventOperatorName, minSize, maxSize, true)}
                             type="primary"
-                            style={{ marginRight: 10, width: 100 }}
+                            style={{ marginRight: 8 }}
                             disabled={isBtnDisabled}
                         >
                             {t('searchCriteria.Button Query')}
                         </Button>
                         <Button
                             onClick={onReset}
-                            style={{ width: 100 }}
                             disabled={isBtnDisabled}
                         >
                             {t('searchCriteria.Button Reset')}

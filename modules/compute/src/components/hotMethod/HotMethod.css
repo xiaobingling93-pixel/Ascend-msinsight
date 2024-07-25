@@ -52,33 +52,11 @@ tr.selected {
 .theme_dark .table-header > div::before {
     background-color: #3e4551;
 }
-.theme_dark .ant-tooltip-inner{
-    background: var(--grey50);
-    color:var(--grey0);
-}
 .theme_dark .ant-tooltip-arrow-content {
     --antd-arrow-background-color: linear-gradient(to right bottom, var(--grey50),var(--grey50));
 }
-.theme_dark .ant-tooltip-inner > *{
-    color:var(--grey0);
-}
-.ant-tooltip-inner{
-    background: var(--grey8);
-    color:var(--grey100);
-}
 .ant-tooltip-arrow-content {
     --antd-arrow-background-color: linear-gradient(to right bottom, var(--grey8),var(--grey8));
-}
-.ant-tooltip-inner > *{
-    background: none;
-    color:var(--grey100);
-}
-
-.theme_dark .ant-dropdown {
-    box-shadow: 0 0 3px var(--grey20);
-}
-.theme_dark .ant-dropdown *{
-    background:var(--grey90);
 }
 
 .theme_dark .ant-dropdown .ant-tree-title{

@@ -3,7 +3,7 @@
  */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip } from 'antd';
+import { Tooltip } from 'lib/components';
 import { observer } from 'mobx-react';
 import React, { useRef, useState } from 'react';
 import { LinkIcon } from 'lib/Icon';

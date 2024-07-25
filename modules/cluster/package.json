@@ -76,7 +76,8 @@
       "lib/ThemeStore": "<rootDir>/../lib/src/utils/ThemeStore.ts",
       "lib/CommonUtils": "<rootDir>/../lib/src/utils/Common.tsx",
       "lib/ResizeTable": "<rootDir>/../lib/src/resize/ResizeTable.tsx",
-      "lib/Connector": "<rootDir>/../lib/src/connection/index"
+      "lib/Connector": "<rootDir>/../lib/src/connection/index",
+      "lib/components": "<rootDir>/../lib/src/components/index.ts"
     }
   },
   "browserslist": {

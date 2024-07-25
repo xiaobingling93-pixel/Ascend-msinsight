@@ -10,10 +10,6 @@
     line-height: 36px;
 }
 
-.ant-select:not(.ant-select-customize-input) .ant-select-selector {
-    border-color: var(--grey15);
-}
-
 .ant-pagination-jump-prev .ant-pagination-item-container .ant-pagination-item-ellipsis,
 .ant-pagination-jump-next .ant-pagination-item-container .ant-pagination-item-ellipsis {
     color: var(--grey20);
@@ -55,13 +51,6 @@ body > div > div > .ant-dropdown > .insight-table-filter-dropdown {
     display: none!important;
 }
 
-.ant-tooltip-inner {
-    border-radius: 12px;
-    background-color: rgb(255, 255, 255);
-    box-shadow: 0 4px 16px 0 rgba( 0, 0, 0, .16 );
-    color: rgba(0, 0, 0, .6);
-    max-width: 400px;
-}
 .ant-tooltip-arrow-content {
     --antd-arrow-background-color: #FFFFFF;
 }

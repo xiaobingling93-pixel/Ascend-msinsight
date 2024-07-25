@@ -72,7 +72,8 @@
     },
     "moduleNameMapper": {
       "lib/i18n": "<rootDir>/../lib/src/i18n/index.ts",
-      "lib/CommonUtils": "<rootDir>/../lib/src/utils/Common.tsx"
+      "lib/CommonUtils": "<rootDir>/../lib/src/utils/Common.tsx",
+      "lib/components": "<rootDir>/../lib/src/components/index.ts"
     }
   },
   "browserslist": {

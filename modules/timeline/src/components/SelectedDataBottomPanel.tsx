@@ -12,7 +12,7 @@ import type { SingleDataDesc } from '../entity/insight';
 import { useSelectedDataDetailUpdater } from './details/hooks';
 import type { AscendSliceDetail } from '../entity/data';
 import { ReactComponent as ExpandIcon } from '../assets/images/insights/PullDownIcon.svg';
-import { Col, Row } from 'antd';
+import { Col, Row } from 'lib/components';
 import { customConsole as console } from 'lib/CommonUtils';
 
 interface DetailProps<T extends Record<string, unknown>> {

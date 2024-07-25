@@ -13,6 +13,7 @@ import { observer } from 'mobx-react';
 import { themeInstance } from './theme/theme';
 import AnalysisSummary from './pages/AnalysisSummary';
 import { Loading } from './index';
+import { GlobalStyles } from 'lib/theme';
 
 export const App = observer(() => {
     const { sessionStore } = useRootStore();
@@ -40,6 +41,7 @@ export const App = observer(() => {
     };
 
     return (<ThemeProvider theme={themeInstance.getThemeType()}>
+        <GlobalStyles />
         <SharedConfigProvider locale={locale}>
             {session !== undefined && <AnalysisSummary session={session} />}
             <div className={`fullmask ${session?.clusterCompleted ? 'hide' : ''}`}>{Loading}</div>

@@ -4,7 +4,7 @@
 
 import { observer } from 'mobx-react-lite';
 import type { Session } from '../../entity/session';
-import { Empty } from 'antd';
+import { Empty } from 'lib/components';
 import {
     addResizeEvent,
     chartVisbilityListener,

@@ -195,6 +195,7 @@ export const dark: Theme = {
     boxShadowLight: '0px 0px 12px rgba(0, 0, 0, 0.72)',
     boxShadowLighter: '0px 0px 6px rgba(0, 0, 0, 0.72)',
     boxShadowDark: '0px 16px 48px 16px rgba(0, 0, 0, 0.72), 0px 12px 32px #000000, 0px 8px 16px -8px #000000',
+    boxShadowDropDown: '0 8px 16px 0 rgba(0, 0, 0, 0.10)',
     maskColor: 'rgb(0, 0, 0, 0.55)',
     maskColorExtraLight: 'rgba(0, 0, 0, 0.3)',
     borderColorHover: '#6C6E72',

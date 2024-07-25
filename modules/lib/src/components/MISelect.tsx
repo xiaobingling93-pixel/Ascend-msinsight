@@ -19,14 +19,13 @@ const NoDataContent = styled.div`
     color: ${(props): string => props.theme.textColorPlaceholder};
 `;
 
-export const MISelect = styled((props: SelectProps & { width: number; height?: number }): JSX.Element => {
+export const MISelect = styled((props: SelectProps & { width?: number; height?: number }): JSX.Element => {
     const { t } = useTranslation('lib');
-    const isDisabled = (props.options?.length ?? 0) <= 1;
     const { size, ...restProps } = props;
     return <Select
         suffixIcon={<CaretDownIcon width={12} height={12}/>}
         placeholder={t('No data')}
-        disabled={isDisabled}
+        dropdownMatchSelectWidth={false}
         notFoundContent={<NoDataContent>{t('No data')}</NoDataContent>}
         {...restProps}
     />;
@@ -34,6 +33,7 @@ export const MISelect = styled((props: SelectProps & { width: number; height?: n
     height: ${(props): number => props.height ?? 32}px;
     width: ${(props): number => props.width ?? (props.size && sizeOption[props.size]) ?? sizeOption.middle}px;
     color: ${(props): string => props.theme.textColorPrimary};
+    font-size: 12px;
 
     &:not(.ant-select-customize-input) .ant-select-selector {
         background-color: ${(props): string => props.theme.bgColor};
@@ -46,17 +46,32 @@ export const MISelect = styled((props: SelectProps & { width: number; height?: n
         }
     }
 
-    &.ant-select-disabled:not(.ant-select-customize-input) .ant-select-selector{
+    &.ant-select-disabled:not(.ant-select-customize-input) .ant-select-selector {
         color: ${(props): string => props.theme.borderColorDisabled};
         background-color: ${(props): string => props.theme.bgColorDisabled};
         border-color: ${(props): string => props.theme.textColorPlaceholder};
+    }
+
+    &.ant-select-open > .ant-select-arrow > span > svg {
+        transform: rotate(180deg);
+    }
+
+    &.ant-select-multiple .ant-select-selection-item {
+        background-color: ${(props): string => props.theme.borderColorLight};
+        min-width: 48px;
+        padding: 0 8px;
+        justify-content: space-between;
     }
 
     .ant-select-selection-placeholder {
         color: ${(props): string => props.theme.textColorPlaceholder};
     }
 
-    &.ant-select-open > .ant-select-arrow > span > svg {
-        transform: rotate(180deg);
+    .ant-select-clear {
+        color: ${(props): string => props.theme.textColorTertiary};
+        background-color: transparent;
+        &:hover {
+            color: ${(props): string => props.theme.textColorPrimary};
+        }
     }
 `;

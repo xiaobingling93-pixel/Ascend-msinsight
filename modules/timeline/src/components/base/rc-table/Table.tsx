@@ -1,7 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import { Spin, type TooltipProps } from 'antd';
+import type { TooltipProps } from 'antd';
+import { Spin } from 'lib/components';
 import useFilter from 'antd/lib/table/hooks/useFilter';
 import useSorter, { getSortData } from 'antd/lib/table/hooks/useSorter';
 import useTitleColumns from 'antd/lib/table/hooks/useTitleColumns';

@@ -6,7 +6,7 @@ import BaseContainer from '../container/BaseContainer';
 import { MIDescriptions } from '../MIDescriptions';
 import COLOR from './Color';
 import { chartVisbilityListener, getResizeEcharts } from './EchartUtils';
-import { Empty } from 'antd';
+import { Empty } from '../components/index';
 import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 export { customConsole } from './Console';

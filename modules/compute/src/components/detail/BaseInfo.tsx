@@ -4,7 +4,7 @@
 import React, { type ReactNode, useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Tooltip } from 'antd';
+import { Tooltip } from 'lib/components';
 import { observer } from 'mobx-react';
 import { MIDescriptions } from 'lib/CommonUtils';
 import ResizeTable from 'lib/ResizeTable';

@@ -14,3 +14,4 @@ declare module 'lib/theme';
 declare module 'lib/CollapsiblePanel';
 declare module 'lib/Icon';
 declare module 'lib/Layout';
+declare module 'lib/components';

@@ -4,7 +4,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
-import { Checkbox, Tooltip } from 'antd';
+import { Checkbox, Tooltip } from 'lib/components';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import './HotMethod.css';

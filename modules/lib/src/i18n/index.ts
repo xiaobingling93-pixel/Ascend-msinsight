@@ -21,6 +21,8 @@ import timelineEn from './timeline/en.json';
 import timelineZh from './timeline/zh.json';
 import jupyterEn from './jupyter/en.json';
 import jupyterZh from './jupyter/zh.json';
+import libEn from './lib/en.json';
+import libZh from './lib/zh.json';
 export const resources = {
     enUS: {
         ...en,
@@ -32,6 +34,7 @@ export const resources = {
         ...memoryEn,
         ...timelineEn,
         ...jupyterEn,
+        ...libEn,
     },
     zhCN: {
         ...zh,
@@ -43,6 +46,7 @@ export const resources = {
         ...memoryZh,
         ...timelineZh,
         ...jupyterZh,
+        ...libZh,
     },
 };
 

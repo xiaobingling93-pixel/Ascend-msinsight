@@ -1,10 +1,6 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-.theme_dark button.ant-btn-link * {
-    color: #1890ff !important;
-}
-
 
 .theme_dark .ant-pagination-prev .ant-pagination-item-link, .theme_dark .ant-pagination-next .ant-pagination-item-link {
     background-color: var(--grey80);
@@ -22,11 +18,6 @@
     color: white;
 }
 
-.theme_dark .ant-select:not(.ant-select-customize-input) .ant-select-selector {
-    background: var(--grey90);
-    border-color: var(--grey60);
-}
-
 .theme_dark .ant-breadcrumb a:hover * {
     color: #40a9ff;
 }
@@ -36,28 +27,8 @@
     color: var(--grey20);
 }
 
-.theme_dark .ant-select-disabled.ant-select:not(.ant-select-customize-input) .ant-select-selector {
-    background: var(--grey60);
-}
-
-.theme_dark .ant-input-number {
-    border-color: var(--grey60);
-}
-
 .theme_dark .ant-layout {
     background: var(--grey80);
-}
-
-.theme_dark .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
-    background-color: var(--grey80);
-}
-
-.theme_dark .ant-select-dropdown {
-    background-color: black;
-}
-
-.theme_dark .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
-    background-color: var(--grey70);
 }
 
 .theme_dark .ant-notification-notice {
@@ -87,16 +58,6 @@
  .theme_dark .ant-progress .ant-progress-text {
     color: #40a9ff;
  }
-
-.theme_dark .ant-select-selector {
-    background-color: var(--grey80);
-}
-
-.theme_dark .ant-tooltip-inner {
-    background-color: #404040;
-    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, .32);
-    color: rgba(255, 255, 255, .9);
-}
 
 .theme_dark .ant-tooltip-arrow-content {
     --antd-arrow-background-color: #404040;
