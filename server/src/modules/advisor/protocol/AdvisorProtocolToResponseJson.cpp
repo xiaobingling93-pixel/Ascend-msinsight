@@ -4,6 +4,7 @@
 
 #include "ProtocolEnumUtil.h"
 #include "ProtocolUtil.h"
+#include "JsonUtil.h"
 #include "AdvisorProtocolToResponseJson.h"
 
 namespace Dic::Protocol {
