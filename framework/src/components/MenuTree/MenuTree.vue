@@ -3,13 +3,16 @@ import type { TreeNodeType } from './types';
 import LocalIcon from '@/components/icons/loaclImport_icon.vue';
 import DeletePopConfirm from '@/components/MenuTree/DeletePopConfirm.vue';
 import EditableText from '@/components/MenuTree/EditableText.vue';
-import AddIcon from '@/components/icons/cross_icon.vue';
+import AddLightIcon from '@/components/icons/add_light_icon.vue';
+import AddDarkIcon from '@/components/icons/add_dark_icon.vue';
 import {ref, watch} from 'vue';
 import {useDataSources} from '@/stores/dataSource';
 import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
 import ResourceDialog from '@/components/ResourceDialog.vue';
+import {useSession} from '@/stores/session';
 
+const { session } = useSession();
 const showModal = ref(false);
 const projectName = ref('');
 const activateNodeId = ref(0);
@@ -63,7 +66,8 @@ function addRemoteUnderProject(node:any, e: MouseEvent) {
                     <div class="btn-box">
                       <el-tooltip v-if="node.level === 1" :content="ImportData" effect="light">
                           <el-icon class="icon-button" @click.stop="addRemoteUnderProject(node, $event)">
-                            <AddIcon />
+                              <AddDarkIcon  v-if="session.theme=='dark'"/>
+                              <AddLightIcon v-else/>
                           </el-icon>
                       </el-tooltip>
 

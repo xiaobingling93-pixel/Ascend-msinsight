@@ -3,7 +3,10 @@ import {computed, onMounted, ref} from 'vue';
 import { ElConfigProvider } from 'element-plus';
 import zhCN from 'element-plus/es/locale/lang/zh-cn';
 import enUS from 'element-plus/es/locale/lang/en';
-import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
+import ArrowLeftDarkIcon from '@/components/icons/arrow_left_dark_icon.vue';
+import ArrowLeftLightIcon from '@/components/icons/arrow_left_light_icon.vue';
+import ArrowRightDarkIcon from '@/components/icons/arrow_right_dark_icon.vue';
+import ArrowRightLightIcon from '@/components/icons/arrow_right_light_icon.vue';
 import RemoteManager from './views/RemoteManager.vue';
 import Modules from './views/ModulesView.vue';
 import Resizor from '@/utils/Resizor.vue';
@@ -67,10 +70,14 @@ function resize(deltaX: number, width: number) {
                 :style="{ left: `${Math.max(0, asideWidth - 20)}px` }"
                 @click="handleDisplayAside"
             >
-                <el-icon>
-                    <ArrowLeft v-if="displayAside"/>
-                    <ArrowRight v-else/>
-                </el-icon>
+                <template v-if="displayAside">
+                    <ArrowLeftDarkIcon v-if="session.theme=='dark'"/>
+                    <ArrowLeftLightIcon v-else/>
+                </template>
+                <template v-else>
+                    <ArrowRightDarkIcon v-if="session.theme=='dark'"/>
+                    <ArrowRightLightIcon v-else/>
+                </template>
             </div>
         </el-aside>
         <el-main class="main">
@@ -103,11 +110,9 @@ function resize(deltaX: number, width: number) {
     top: 50%;
     height: 50px;
     width: 20px;
+    cursor: pointer;
 }
 
-.aside-handler:hover {
-    background-color: rgb(90, 90, 90);
-}
 
 main {
     padding: 0;

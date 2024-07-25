@@ -6,10 +6,9 @@ import styled from '@emotion/styled';
 import { Tooltip } from 'antd';
 import { observer } from 'mobx-react';
 import React, { useRef, useState } from 'react';
-import { ReactComponent as AntdFilterIcon } from '../assets/images/insights/LinkerIcon.svg';
+import { LinkIcon } from 'lib/Icon';
 import type { Session } from '../entity/session';
 import { CustomButton, StyledButton } from './base/StyledButton';
-import type { SvgType } from './base/rc-table/types';
 import { useTranslation } from 'react-i18next';
 import { StyledCheckbox } from './base/StyledCheckbox';
 import { StyledEmpty } from './base/StyledEmpty';
@@ -20,7 +19,6 @@ import { customDebounce } from '../utils/customDebounce';
 import { getTimeOffset } from '../insight/units/utils';
 import { type HostMetaData } from '../entity/data';
 
-const FilterIcon = AntdFilterIcon as SvgType;
 const MAX_HEIGHT = 200;
 const PADDING_RATIO_TO_MAX_HEIGHT = 0.1;
 const FilterContainer = styled.div`
@@ -236,7 +234,6 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
     const [customButtonProps, updateCustomButtonProps] = useState({
         isEmphasize: false,
         isSuspend: false,
-        icon: FilterIcon,
     });
     // tooltip显隐控制悬浮效果
     const onTooltipVisibleChange = (visible: boolean): void => {
@@ -252,7 +249,7 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
             color={theme.tooltipBGColor}
             overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
             overlayClassName={'insight-category-search-overlay'} align={{ offset: [-8, 3] }}>
-            <CustomButton tooltip={t('tooltip:linker')} { ...customButtonProps } ref={ref}/>
+            <CustomButton tooltip={t('tooltip:linker')} icon={LinkIcon} { ...customButtonProps } ref={ref}/>
         </Tooltip>
     );
 });

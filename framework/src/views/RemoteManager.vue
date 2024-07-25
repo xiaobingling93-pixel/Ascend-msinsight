@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import AddIcon from '@/components/icons/cross_icon.vue';
+import ImportLightIcon from '@/components/icons/import_light_icon.vue';
+import ImportDarkIcon from '@/components/icons/import_dark_icon.vue';
 import MenuTree from '@/components/MenuTree/MenuTree.vue';
 import { useDataSources } from '@/stores/dataSource';
 import ProjectMode from '@/components/ProjectMode.vue';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
 import ResourceDialog from '@/components/ResourceDialog.vue';
+import { useSession } from '@/stores/session';
+const { session } = useSession();
 
 const showModal = ref(false);
 const store = useDataSources();
@@ -24,7 +27,8 @@ function addRemote(e: MouseEvent) {
     <div class="container">
         <div class="btn-import" @click="addRemote">
             <el-icon class="icon-button" :size="16">
-                <AddIcon />
+                <Import-dark-icon v-if="session.theme=='dark'"/>
+                <Import-light-icon v-else/>
             </el-icon>
             <span>{{ ImportData }}</span>
         </div>

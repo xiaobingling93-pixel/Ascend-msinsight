@@ -10,6 +10,7 @@ import connector from '@/connection/index';
 export type Timestamp = number;
 export class Session {
     language = 'enUS';
+    theme = 'dark';
     startTime: Timestamp = -1;
     endTimeAll: Timestamp = -1;
     isCluster: boolean | null = false;
