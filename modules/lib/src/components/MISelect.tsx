@@ -52,7 +52,7 @@ export const MISelect = styled((props: SelectProps & { width?: number; height?: 
         border-color: ${(props): string => props.theme.textColorPlaceholder};
     }
 
-    &.ant-select-open > .ant-select-arrow > span > svg {
+    &.ant-select-open > .ant-select-arrow > div > svg {
         transform: rotate(180deg);
     }
 
