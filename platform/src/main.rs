@@ -355,8 +355,20 @@ fn main() {
         .expect("Failed to get parent path of  current exe")
         .to_path_buf();
 
+    #[cfg(windows)]
     create_dir_all(cache_path.as_path())
         .expect("no permission to create cache_path");
+
+    #[cfg(unix)]
+    {
+        use std::{fs::DirBuilder, os::unix::fs::DirBuilderExt};
+
+        DirBuilder::new()
+            .recursive(false)
+            .mode(0o750)
+            .create(cache_path.as_path())
+            .expect("no permission to create cache_path");
+    }
 
     #[cfg(windows)]
     {

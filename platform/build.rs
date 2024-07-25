@@ -1,5 +1,4 @@
-use std::{env, io, process};
-use std::path::{PathBuf};
+use std::{env, io, path::PathBuf, process};
 
 fn main() -> io::Result<()> {
     if env::var("CARGO_CFG_TARGET_ARCH").is_ok() {
@@ -10,8 +9,10 @@ fn main() -> io::Result<()> {
             let mut command = process::Command::new("windres");
 
             let status = command
-                .arg("-i").arg(format!("{}", input.display()))
-                .arg("-o").arg(format!("{}", output.display()))
+                .arg("-i")
+                .arg(format!("{}", input.display()))
+                .arg("-o")
+                .arg(format!("{}", output.display()))
                 .output()?;
 
             if !status.status.success() {
@@ -23,7 +24,6 @@ fn main() -> io::Result<()> {
 
             println!("cargo:rustc-link-search=native={}", "./bundle/");
             println!("cargo:rustc-link-lib=dylib=main");
-
         }
     }
     Ok(())

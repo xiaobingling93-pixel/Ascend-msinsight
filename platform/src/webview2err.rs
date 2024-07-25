@@ -12,7 +12,12 @@ const MB_ICONERROR: u32 = 0x00000010;
 
 extern "system" {
     #[allow(non_snake_case)]
-    fn MessageBoxA(hWnd: *mut HWND__, lpText: *const i8, lpCaption: *const i8, uType: u32) -> i32;
+    fn MessageBoxA(
+        hWnd: *mut HWND__,
+        lpText: *const i8,
+        lpCaption: *const i8,
+        uType: u32,
+    ) -> i32;
 }
 
 const RUNTIME_URL_CONFIG_PATH: &str = "config/runtime_url_config";
@@ -26,8 +31,8 @@ pub fn show_webview_err_message() {
                 return;
             }
             runtime_url = content
-        },
-        Err(e) => eprintln!("read webview2 runtime url config failed: {e}")
+        }
+        Err(e) => eprintln!("read webview2 runtime url config failed: {e}"),
     }
 
     let message = format!("Please install from {}", runtime_url);
