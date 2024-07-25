@@ -88,7 +88,6 @@ const StyledTable = styled(Table)`
         color: ${(props): string => props.theme.textColorTertiary};
     }
     tr.insight-table-row:hover {
-        color: ${(props): string => props.theme.primaryColorLight1};
         cursor: pointer;
     }
     .insight-table-header {
