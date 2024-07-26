@@ -19,7 +19,6 @@ export {
     Tabs,
     Form,
     Radio,
-    Modal,
     notification,
     Progress,
     Switch,

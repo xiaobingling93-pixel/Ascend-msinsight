@@ -218,5 +218,6 @@ declare module '@emotion/react' {
         pagePadding: string;
         icon: string; // 图标颜色
         tableTextColor: string; // 表格颜色
+        radioSelectedColor: string; // 单选框选中填充颜色
     }
 }

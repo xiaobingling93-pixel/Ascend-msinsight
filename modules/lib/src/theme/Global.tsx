@@ -4,6 +4,24 @@
 import { Global, css, useTheme, type Theme, type SerializedStyles } from '@emotion/react';
 import React from 'react';
 
+const antdRadioCss = (theme: Theme): SerializedStyles => css`
+    .ant-radio-wrapper {
+        color: ${theme.textColorPrimary};
+        .ant-radio-inner {
+            background-color: ${theme.bgColor};
+            border-color: ${theme.borderColorLighter};
+        }
+    }
+    .ant-radio-checked {
+        .ant-radio-inner {
+            border-color: ${theme.radioSelectedColor};
+            &:after {
+                background-color: ${theme.radioSelectedColor};
+            }
+        }
+    }
+`;
+
 const antdTooltipCss = (theme: Theme): SerializedStyles => css`
     .ant-tooltip-arrow-content {
         --antd-arrow-background-color: ${theme.bgColorLight};
@@ -50,9 +68,7 @@ export const GlobalStyles = (): JSX.Element => {
             .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
                 color: ${theme.primaryColor};
             }
-            .ant-radio-wrapper {
-                color: ${theme.textColorPrimary};
-            }
+            ${antdRadioCss(theme)};
             .ant-empty-description{
                 color: ${theme.textColorPrimary};
             }

@@ -9,4 +9,14 @@ import type { CheckboxProps } from 'antd/lib/checkbox';
 
 export const MICheckbox = styled((props: CheckboxProps & React.RefAttributes<HTMLInputElement>) => <Checkbox {...props} />)`
     color: ${(props): string => props.theme.textColorPrimary};
+
+    .ant-checkbox-inner {
+        background-color: ${(props): string => props.theme.bgColor};
+        border-color: ${(props): string => props.theme.borderColorLighter};
+    }
+
+    &.ant-checkbox-wrapper-checked .ant-checkbox-inner {
+        background-color: ${(props): string => props.theme.primaryColor};
+        border-color: ${(props): string => props.theme.primaryColor};
+    }
 `;

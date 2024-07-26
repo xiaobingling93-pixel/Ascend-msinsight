@@ -213,5 +213,6 @@ export const dark: Theme = {
     pagePadding: '16px',
     icon: '#D1D1D1',
     tableTextColor: '#8D98AA',
+    radioSelectedColor: '#007AFF',
     // 把新加的字段同时加到light.ts文件、以及emotion.d.ts文件...........
 };

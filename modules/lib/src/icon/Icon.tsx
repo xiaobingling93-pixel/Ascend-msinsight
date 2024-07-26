@@ -24,7 +24,6 @@ import { ReactComponent as LinkLightIcon } from './img/link_light.svg';
 import { ReactComponent as ResetDarkIcon } from './img/reset_dark.svg';
 import { ReactComponent as ResetLightIcon } from './img/reset_light.svg';
 import { themeInstance } from '../theme';
-import { ReactComponent as SelectRemoveSvg } from './img/select_multiple_remove.svg';
 
 interface ISVGProps extends React.SVGProps< SVGSVGElement > {
     active?: boolean;
@@ -149,8 +148,4 @@ export function ResetIcon(props: ISVGProps): JSX.Element {
 
 export function StartIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'start'} {...props }/>;
-}
-
-export function SelectRemoveIcon(props: ISVGProps): JSX.Element {
-    return <Icon svgElement={SelectRemoveSvg} {...props }/>;
 }

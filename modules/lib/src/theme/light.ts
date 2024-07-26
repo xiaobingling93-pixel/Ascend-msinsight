@@ -213,4 +213,5 @@ export const light: Theme = {
     pagePadding: '16px',
     icon: '#8D98AA',
     tableTextColor: '#000000',
+    radioSelectedColor: '#007AFF',
 };

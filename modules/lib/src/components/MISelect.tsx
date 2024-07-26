@@ -5,7 +5,8 @@
 import * as React from 'react';
 import { Select } from 'antd';
 import styled from '@emotion/styled';
-import { CaretDownIcon } from '../icon/Icon';
+import caretDownIcon from '../icon/img/caret-down.svg';
+import removeIcon from '../icon/img/select_multiple_remove.svg';
 import type { SelectProps } from 'antd/lib/select';
 import { useTranslation } from 'react-i18next';
 
@@ -19,11 +20,26 @@ const NoDataContent = styled.div`
     color: ${(props): string => props.theme.textColorPlaceholder};
 `;
 
+const StyledSuffixIcon = styled.div`
+    height: 12px;
+    width: 12px;
+    background-image: url(${caretDownIcon});
+    background-size: cover;
+`;
+
+const StyledRemoveIcon = styled.div`
+    height: 16px;
+    width: 16px;
+    background-image: url(${removeIcon});
+    background-size: cover;
+`;
+
 export const MISelect = styled((props: SelectProps & { width?: number; height?: number }): JSX.Element => {
     const { t } = useTranslation('lib');
     const { size, ...restProps } = props;
     return <Select
-        suffixIcon={<CaretDownIcon width={12} height={12}/>}
+        suffixIcon={<StyledSuffixIcon />}
+        removeIcon={<StyledRemoveIcon />}
         placeholder={t('No data')}
         dropdownMatchSelectWidth={false}
         notFoundContent={<NoDataContent>{t('No data')}</NoDataContent>}
@@ -52,7 +68,7 @@ export const MISelect = styled((props: SelectProps & { width?: number; height?: 
         border-color: ${(props): string => props.theme.textColorPlaceholder};
     }
 
-    &.ant-select-open > .ant-select-arrow > div > svg {
+    &.ant-select-open > .ant-select-arrow > div {
         transform: rotate(180deg);
     }
 
