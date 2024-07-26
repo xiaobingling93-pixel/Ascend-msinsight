@@ -3,7 +3,8 @@
  */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip, message, Button, Input } from 'lib/components';
+import { Tooltip, Button, Input } from 'lib/components';
+import { message } from 'antd';
 import { observer } from 'mobx-react';
 import React, { type ChangeEvent, useEffect, useState } from 'react';
 import { SearchIcon } from 'lib/Icon';

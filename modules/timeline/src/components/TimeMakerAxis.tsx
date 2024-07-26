@@ -5,7 +5,8 @@
 import * as React from 'react';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
-import { Button, message } from 'lib/components';
+import { Button } from 'lib/components';
+import { message } from 'antd';
 import type { RowProps } from 'antd/lib/grid';
 import type { Session } from '../entity/session';
 import { ChartRowLeft, ChartRowRight } from './base/ChartRow';

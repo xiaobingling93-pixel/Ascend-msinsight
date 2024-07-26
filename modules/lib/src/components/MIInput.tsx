@@ -33,6 +33,7 @@ export const MIInput = styled((props: InputProps & React.RefAttributes<InputRef>
     height: ${(props): number | string => (props.height ?? 32)}px;
     background-color: ${(props): string => props.theme.bgColor};
     border-color: ${(props): string => props.theme.borderColorLighter};
+    color: ${(props): string => props.theme.textColorPrimary};
     font-size: 12px;
 
     &:not(.ant-input-affix-wrapper-disabled):hover, &.ant-input-affix-wrapper-focused {

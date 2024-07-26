@@ -12,7 +12,6 @@ export {
     Col,
     Row,
     Spin,
-    message,
     Divider,
     Empty,
     Breadcrumb,

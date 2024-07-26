@@ -7,7 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import { AntTableChart } from '../components/AntTableChart';
 import { LineChart } from '../components/LineChart';
-import { Button, Input, InputNumber, message, Select, Spin } from 'lib/components';
+import { Button, Input, InputNumber, Select, Spin } from 'lib/components';
+import { message } from 'antd';
 import type { Session } from '../entity/session';
 import type {
     Graph, MemoryCurve, OperatorDetail, StaticOperatorCurve,

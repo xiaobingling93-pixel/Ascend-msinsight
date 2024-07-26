@@ -5,7 +5,8 @@ import { observer } from 'mobx-react';
 import type { Session } from '../../entity/session';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tabs, Form, InputNumber, Button, message, Select } from 'lib/components';
+import { Tabs, Form, InputNumber, Button, Select } from 'lib/components';
+import { message } from 'antd';
 import _ from 'lodash';
 import eventBus, { useEventBus } from '../../utils/eventBus';
 import {

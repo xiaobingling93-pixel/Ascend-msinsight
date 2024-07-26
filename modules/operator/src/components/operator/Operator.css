@@ -12,6 +12,3 @@
 .theme_dark .ant-dropdown {
     box-shadow: 0 0 3px var(--grey20);
 }
-.theme_dark .ant-dropdown *{
-    background:var(--grey90);
-}

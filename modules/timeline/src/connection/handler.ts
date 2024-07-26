@@ -12,7 +12,7 @@ import type { CardInfo } from '../components/ImportSelect';
 import type { Session } from '../entity/session';
 import type { NotificationHandler } from './defs';
 import connector from '../connection/index';
-import { message } from 'lib/components';
+import { message } from 'antd';
 import { getTimeOffset } from '../insight/units/utils';
 import { calculateDomainRange } from '../components/CategorySearch';
 import i18n from 'lib/i18n';
