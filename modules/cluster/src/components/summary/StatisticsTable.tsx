@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { StringMap } from '../../utils/interface';
-import { notNull, getPageConfigWithPageData, Loading } from '../Common';
+import { notNull, getPageConfigWithPageData } from '../Common';
 import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } from '../../utils/RequestUtils';
 import ResizeTable from 'lib/ResizeTable';
 import type { Session } from '../../entity/session';
@@ -396,7 +396,7 @@ const StatisticsTable = (props: {step: string; rankId: string;session: Session; 
                     >
                         {session.parseCompleted
                             ? (<ComputeStatisticsTable rankId={rankId} step={step} session={session}/>)
-                            : <Loading style={{ margin: '10px auto' }}/>
+                            : <div style={{ textAlign: 'center' }}>{ t('Timeline not fully parsed') }</div>
                         }
                     </CollapsiblePanel>
                 </div>
@@ -412,7 +412,7 @@ const StatisticsTable = (props: {step: string; rankId: string;session: Session; 
                                 >
                                     {session.parseCompleted
                                         ? <CommunicationStatisticsTable rankId={rankId} step={step} session={session}/>
-                                        : <Loading style={{ margin: '10px auto' }}/>
+                                        : <div style={{ textAlign: 'center' }}>{ t('Timeline not fully parsed') }</div>
                                     }
                                 </CollapsiblePanel>
                             </div>

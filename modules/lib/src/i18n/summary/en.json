@@ -65,6 +65,7 @@
     "StageTimeAndBubbleTimeDescribe": [
       "Stage Time: Time excluding the portion consumed by the receive operator under pipeline parallelism",
       "Bubble Time: Total time consumed by the receive operator"
-    ]
+    ],
+    "Timeline not fully parsed": "Timeline not fully parsed"
   }
 }

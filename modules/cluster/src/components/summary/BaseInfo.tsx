@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatDate, Loading } from '../Common';
+import { formatDate } from '../Common';
 import type { StringMap } from '../../utils/interface';
 import type { Session } from '../../entity/session';
 import { queryTopSummary } from '../../utils/RequestUtils';
@@ -133,11 +133,7 @@ const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
         <MIDescriptions>
             {
                 displaylist.map((item, index) => <MIDescriptionsItem key={index} label={item.label}>
-                    {
-                        item.key === 'collectDuration' && session.clusterCompleted && !session.parseCompleted
-                            ? <Loading style={{ marginTop: '10px' }}/>
-                            : data[item.key]
-                    }
+                    { data[item.key] }
                 </MIDescriptionsItem>)
             }
         </MIDescriptions>

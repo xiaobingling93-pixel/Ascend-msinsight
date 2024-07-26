@@ -64,6 +64,7 @@
     "StageTimeAndBubbleTimeDescribe": [
       "Stage Time: pp并行时，stage时间代表除receive算子时间外的其他耗时",
       "Bubble Time: Bubble时间，指receive时间的总和"
-    ]
+    ],
+    "Timeline not fully parsed": "时间线未完全解析"
   }
 }
