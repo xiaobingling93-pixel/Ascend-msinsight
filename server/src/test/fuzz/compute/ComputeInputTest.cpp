@@ -118,23 +118,35 @@ TEST(TestInputFile, JsonParseErr)
 }
 
 
-TEST(TestInputFilesPath, CheckPath)
+TEST(TestCompute, SourceFileParserCheckPath)
 {
-    char testApi[] = "test_api_input_file_path";
+    char testApi[] = "test_source_file_parser_check_path";
     DT_FUZZ_START(0, g_fuzzRunTime, testApi, 0)
                 {
-                    char* filePath = DTSetGetString(&g_Element[0], 5, PATH_MAX, "path", "LENTH");
-                    EXPECT_TRUE(Dic::FileUtil::CheckFilePathLength(filePath));
+                    char* filePath = DTSetGetString(&g_Element[0], 5, PATH_MAX, "path", "selectedFile");
                     printf("file path is %s\n", filePath);
-                    char* realPath = "execute_fuzz_test.sh";
-                    int ret = symlink(realPath, filePath);
-                    if (ret) {
-                        EXPECT_TRUE(Dic::FileUtil::IsSoftLink(filePath));
-                        unlink(filePath);
-                        printf("unlink\n");
-                    } else {
-                        perror("symlink");
-                    }
+                    std::vector<std::string> filePaths = {};
+                    std::string fileId(filePath);
+                    SourceFileParser::Instance().Parse(filePaths, fileId, filePath);
+                }
+    DT_FUZZ_END()
+}
+
+TEST(TestCompute, SourceFileParserParseRandomContent)
+{
+    char testApi[] = "test_source_file_parser_parse_random_content";
+    DT_FUZZ_START(0, g_fuzzRunTime, testApi, 0)
+                {
+                    std::string binFilePath = "./test_source_file_parser_parse_random_content_visualize_data.bin";
+                    std::ofstream binFile(binFilePath, std::ios::binary | std::ios::trunc);
+
+                    char* fileContent = DT_SetGetBlob(&g_Element[1], 2, UINT32_MAX, "a");
+                    int fileSize = DT_GET_MutatedValueLen(&g_Element[1]);
+                    binFile.write(fileContent, fileSize);
+                    binFile.close();
+
+                    Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
+                    parser.Parse(std::vector<std::string>(), binFilePath, binFilePath);
                 }
     DT_FUZZ_END()
 }
