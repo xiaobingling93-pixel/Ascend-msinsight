@@ -14,6 +14,8 @@ import os
 import shutil
 import sys
 from enum import Enum
+import threading
+import queue
 
 import paramiko
 from paramiko.ssh_exception import SSHException
@@ -209,6 +211,31 @@ def init_local_workspace():
     shutil.make_archive(local_path[:-4], 'zip', PROJECT_PATH)
 
 
+def build_mac(arch, ssh_config, result_queue):
+    result = 0
+    logging.info('Start to build Ascend Insight for %s on %s.', arch, ssh_config.host)
+    try:
+        ssh = create_ssh_connect(ssh_config)
+    except Exception as e:
+        logging.error('Failed to connect ssh for %s : %s', arch, e)
+        result_queue.put(-1)
+        return
+
+    try:
+        init_remote_workspace(ssh, ssh_config.workspace)
+        transfer_remote_and_unzip(ssh, ssh_config.workspace)
+        build_project(ssh, ssh_config.workspace)
+        copy_file_back(ssh, ssh_config.workspace)
+        clean_remote_workspace(ssh, ssh_config.workspace)
+        logging.info('Finish to build Ascend Insight for %s on %s.', arch, ssh_config.host)
+    except SSHException as e:
+        logging.error('Failed to build Ascend Insight for %s on %s : %s', arch, ssh_config.host, e)
+        result = -1
+    finally:
+        destroy_ssh_connect(ssh)
+    result_queue.put(result)
+
+
 def main():
     logging.basicConfig(level=logging.INFO)
     ssh_configs = read_config_file()
@@ -216,26 +243,20 @@ def main():
         logging.error('Failed to get ssh config')
         return -1
     init_local_workspace()
+    # 创建一个队列用于存放结果
+    result_queue = queue.Queue()
+    # 创建线程列表
+    threads = []
     for arch, ssh_config in ssh_configs.items():
-        logging.info('Start to build Ascend Insight for %s on %s.', arch, ssh_config.host)
-        try:
-            ssh = create_ssh_connect(ssh_config)
-        except Exception as e:
-            logging.error('Failed to connect ssh for %s : %s', arch, e)
-            continue
-
-        try:
-            init_remote_workspace(ssh, ssh_config.workspace)
-            transfer_remote_and_unzip(ssh, ssh_config.workspace)
-            build_project(ssh, ssh_config.workspace)
-            copy_file_back(ssh, ssh_config.workspace)
-            clean_remote_workspace(ssh, ssh_config.workspace)
-            logging.info('Finish to build Ascend Insight for %s on %s.', arch, ssh_config.host)
-        except SSHException as e:
-            logging.error('Failed to build Ascend Insight for %s on %s : %s', arch, ssh_config.host, e)
-        finally:
-            destroy_ssh_connect(ssh)
-
+        thread = threading.Thread(target=build_mac, args=(arch, ssh_config, result_queue))
+        thread.start()
+        threads.append(thread)
+    # 等待所有线程完成
+    for thread in threads:
+        thread.join()
+    while not result_queue.empty():
+        if result_queue.get() != 0:
+            return -1
     return 0
 
 
