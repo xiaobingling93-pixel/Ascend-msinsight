@@ -23,11 +23,12 @@ const Container = styled.div`
 
 export const ButtonGroup = observer(({ session }: { session: Session }) => {
     const unit = session.selectedUnits[0];
+    const isRenderLink = !(session.isSimulation && session.areFlagEventsHidden);
     return (<Container>
         <TimeMakerButton session={session} />
         <UnitsFilter session={session} />
         <CategorySearch session={session} />
-        <FilterLinkLine session={session}/>
+        {isRenderLink && <FilterLinkLine session={session}/>}
         {session.buttons.map((_Button, index) => <_Button session={session} key={`${session.id}-${index}`} />)}
         {unit?.buttons?.map((_Button, index) => <_Button session={session} key={`${unit.name}-${index}`} />)}
     </Container>);

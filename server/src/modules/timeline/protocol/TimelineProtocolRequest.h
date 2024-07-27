@@ -53,6 +53,7 @@ struct UnitThreadTracesParams {
     uint64_t endTime = 0;
     double timePerPx = 0; // totalTime / pixel
     bool isFilterPythonFunction = false;
+    bool isHideFlagEvents = false;
 };
 
 struct UnitThreadTracesRequest : public Request {

@@ -192,6 +192,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                 dataSource: threadMetaData.dataSource,
                 timePerPx: session.domain.timePerPx,
                 isFilterPythonFunction,
+                isHideFlagEvents: session.areFlagEventsHidden,
             };
             try {
                 const request = await window.request(requestParam.dataSource as DataSource, { command: 'unit/threadTraces', params: requestParam });

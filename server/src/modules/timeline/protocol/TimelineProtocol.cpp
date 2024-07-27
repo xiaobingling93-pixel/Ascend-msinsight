@@ -121,6 +121,7 @@ std::unique_ptr<Request> TimelineProtocol::ToUnitThreadTracesRequest(const json_
     JsonUtil::SetByJsonKeyValue(reqPtr->params.metaType, json["params"], "metaType");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.timePerPx, json["params"], "timePerPx");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isFilterPythonFunction, json["params"], "isFilterPythonFunction");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isHideFlagEvents, json["params"], "isHideFlagEvents");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.startTime, json["params"], "startTime");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.endTime, json["params"], "endTime");
     return reqPtr;

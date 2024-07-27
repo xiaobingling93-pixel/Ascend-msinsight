@@ -921,6 +921,10 @@ void TraceDatabaseHelper::QueryThreadTracesHelper(std::vector<Protocol::RowThrea
     const Protocol::UnitThreadTracesParams &requestParams, Protocol::UnitThreadTracesBody &responseBody)
 {
     for (auto &item : rowThreadTraceVec) {
+        bool isHide = requestParams.isHideFlagEvents && (item.name == "SET_FLAG" || item.name == "WAIT_FLAG");
+        if (isHide) {
+            continue;
+        }
         Protocol::ThreadTraces threadTraces{};
         threadTraces.id = std::to_string(item.id);
         threadTraces.name = item.name;

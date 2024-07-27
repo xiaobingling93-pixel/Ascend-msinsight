@@ -22,7 +22,9 @@
       "Show python call stack": "Show python call stack",
       "Hide python call stack": "Hide python call stack",
       "Collapse all": "Collapse all",
-      "Expand all": "Expand all"
+      "Expand all": "Expand all",
+      "Hide flag events": "Hide SET/WAIT events",
+      "Show flag events": "Show SET/WAIT events"
     },
     "sliceDetail": {
       "Slice Detail": "Slice Detail",

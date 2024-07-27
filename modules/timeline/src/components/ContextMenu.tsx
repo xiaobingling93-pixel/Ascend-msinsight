@@ -423,6 +423,21 @@ const collapseOrExpandAll = (session: Session, menuItem?: MenuItemModel): void =
     });
 };
 
+const hideOrShowFlagEvents = (session: Session, menuItem?: MenuItemModel): void => {
+    if (!session.isSimulation) {
+        return;
+    }
+    runInAction(() => {
+        session.areFlagEventsHidden = !session.areFlagEventsHidden;
+        if (session.areFlagEventsHidden) {
+            session.singleLinkLine = {};
+            session.linkLines = {};
+            session.renderTrigger = !session.renderTrigger;
+        }
+        session.contextMenu.isVisible = false;
+    });
+};
+
 const haveExpandedChildren = (_unit: InsightUnit): boolean => {
     if (!_unit.collapsible || !_unit.children || _unit.children.length === 0) {
         return false;
@@ -441,10 +456,10 @@ const haveCollapsedChildren = (_unit: InsightUnit): boolean => {
 
 const isCollapseAllVisible = (session: Session): boolean => {
     const selectedUnit = session.selectedUnits?.[0];
-    if (selectedUnit === undefined || !selectedUnit.isExpanded) {
-        return false;
+    if (selectedUnit) {
+        return haveExpandedChildren(selectedUnit);
     }
-    return haveExpandedChildren(selectedUnit);
+    return false;
 };
 
 const isExpandAllVisible = (session: Session): boolean => {
@@ -458,6 +473,14 @@ const isExpandAllVisible = (session: Session): boolean => {
         return haveCollapsedChildren(selectedUnit);
     }
     return false;
+};
+
+const isShowFlagEventsVisible = (session: Session): boolean => {
+    return session.isSimulation && session.areFlagEventsHidden;
+};
+
+const isHideFlagEventsVisible = (session: Session): boolean => {
+    return session.isSimulation && !session.areFlagEventsHidden;
 };
 
 function adjustMenuPosition({ menu, setPosition, xPos, yPos }: {
@@ -496,6 +519,8 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
         { name: getShowPythonFunctionButtonText(session, t), key: 'showPythonFunction', event: showPythonFunction, disabled: false, visible: isShowPythonFunction(session) },
         { name: t('Collapse all'), key: 'collapseAll', event: collapseOrExpandAll, disabled: false, visible: isCollapseAllVisible(session) },
         { name: t('Expand all'), key: 'expandAll', event: collapseOrExpandAll, disabled: false, visible: isExpandAllVisible(session) },
+        { name: t('Hide flag events'), key: 'hideFlagEvents', event: hideOrShowFlagEvents, disabled: false, visible: isHideFlagEventsVisible(session) },
+        { name: t('Show flag events'), key: 'showFlagEvents', event: hideOrShowFlagEvents, disabled: false, visible: isShowFlagEventsVisible(session) },
     ];
 
     return <>

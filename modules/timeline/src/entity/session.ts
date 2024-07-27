@@ -60,6 +60,8 @@ export class Session {
     isParserLoading: boolean = false;
     // 是否是算子仿真图
     isSimulation: boolean = false;
+    // 是否隐藏了算子调优flag事件
+    areFlagEventsHidden: boolean = false;
     isCluster: boolean = false;
     // 页面可视范围的Card的CardId
     viewedCardIdSet: Set<string> = new Set<string>();
