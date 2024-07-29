@@ -10,6 +10,11 @@ message("fuzz start")
 
 message(STATUS "[fuzz dir is] ${FUZZ_HOME_DIR}")
 
+include_directories(${FUZZ_HOME_DIR})
+
+include_directories(${FUZZ_HOME_DIR}/timeline)
+aux_source_directory(${FUZZ_HOME_DIR}/timeline FUZZ_TIMELINE_TEST)
+
 include_directories(${FUZZ_HOME_DIR}/compute)
 aux_source_directory(${FUZZ_HOME_DIR}/compute FUZZ_COMPUTE_TEST)
 
@@ -17,6 +22,7 @@ include_directories(${FUZZ_HOME_DIR}/common)
 aux_source_directory(${FUZZ_HOME_DIR}/common FUZZ_COMMON_TEST)
 
 list(APPEND DIC_TEST_LIST
+		${FUZZ_TIMELINE_TEST}
         ${FUZZ_COMPUTE_TEST}
         ${FUZZ_COMMON_TEST}
 		${SRC_HOME_DIR}/utils/

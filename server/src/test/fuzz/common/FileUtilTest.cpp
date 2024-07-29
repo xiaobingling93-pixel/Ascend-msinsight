@@ -3,8 +3,10 @@
  */
 
 #include <fstream>
-#include "../FuzzDefs.h"
+#include "FuzzDefs.h"
+#include "FuzzFileUtil.h"
 #include "FileUtil.h"
+#include "JsonUtil.h"
 
 using namespace Dic;
 
@@ -45,6 +47,33 @@ TEST(TestFileUtil, PathPreprocess)
                 {
                     char* filePath = DT_SetGetString(&g_Element[0], 4, PATH_MAX, "./a");
                     FileUtil::PathPreprocess(filePath);
+                }
+    DT_FUZZ_END()
+}
+
+TEST(JsonUtil, TryParse)
+{
+    char testApi[] = "test_json_util_try_parse";
+    DT_FUZZ_START(0, FUZZ_RUN_TIMES, testApi, 0)
+                {
+                    std::string outputFilePath = "./" + std::string(testApi) + ".json";
+                    std::string inputFilePath = "./test_data/trace_view_tiny.json";
+
+                    char* fileContent = nullptr;
+                    int fileContentSize = 0;
+                    if (GenerateFileMutation(inputFilePath, &fileContent, fileContentSize) == 0) {
+                        std::ofstream outputFile(outputFilePath, std::ios::trunc);
+                        if (!outputFile) {
+                            std::cout << "open output file failed: " << outputFilePath << std::endl;
+                            return;
+                        }
+                        outputFile.write(fileContent, fileContentSize);
+                        outputFile.close();
+                        std::string errMsg;
+                        JsonUtil::TryParse(fileContent, errMsg);
+                    } else {
+                        std::cout << "Generate mutation file failed." << std::endl;
+                    }
                 }
     DT_FUZZ_END()
 }

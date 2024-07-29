@@ -26,6 +26,7 @@ if [ -d ${dir_build_fuzz}/report ]; then
 fi
 mkdir ${dir_build_fuzz}/report
 cd ${dir_build_fuzz}/report
+cp -r ${dir_build_fuzz}/../src/test/fuzz/test_data ${dir_build_fuzz}/report
 echo "*************** RUN insight_fuzz... "
 system_arch=$(arch)
 ${dir_build_fuzz}/../output/linux-${system_arch}/bin/insight_fuzz > insight_fuzz_test_details.log
