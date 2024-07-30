@@ -4,6 +4,7 @@
 import type { DataRequest, ModuleName, DataSource } from './websocket/defs';
 import { Connection } from '@/centralServer/websocket/connection';
 import connector from '@/connection';
+import { useLoading } from '@/hooks/useLoading';
 
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
@@ -46,6 +47,7 @@ export const connectRemote = async function (dataSource: DataSource): Promise<bo
 export const addDataPath = function(dataSource: DataSource, importMethod?: 'drag', result?: any): void {
     const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
     if (connection) {
+        useLoading().open({});
         if (importMethod && result) {
             connector.send({
                 event: 'drag/import',

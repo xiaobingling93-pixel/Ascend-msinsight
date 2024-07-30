@@ -11,6 +11,7 @@ import { useSession } from './session';
 import {ElMessage} from 'element-plus';
 import { console } from '@/utils/console';
 import { t } from '@/i18n';
+import { useLoading } from '@/hooks/useLoading';
 
 const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource, isConflict: boolean): boolean => {
     const idx = dataSources.value.findIndex((item) =>
@@ -92,6 +93,7 @@ export const useDataSources = defineStore('dataSources', () => {
         } else {
             const isSuccess = await connectRemote(dataSource);
             if (isSuccess) {
+                useLoading().open({});
                 connector.send({
                     event: 'remote/import',
                     body: { dataSource },
@@ -111,6 +113,7 @@ export const useDataSources = defineStore('dataSources', () => {
         } else {
             const isSuccess = await connectRemote(dataSource);
             if (isSuccess) {
+                useLoading().open({});
                 connector.send({
                     event: 'drag/import',
                     body: { dataSource, result },

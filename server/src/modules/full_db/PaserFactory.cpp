@@ -23,6 +23,8 @@ using namespace Dic;
 using namespace Dic::Server;
 using namespace Dic::Module::Timeline;
 
+// 静态变量 锁初始化
+std::mutex ParserFactory::mutex;
 std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::vector<std::string> &pathList)
 {
     std::pair<std::string, ParserType> result;
@@ -64,6 +66,15 @@ std::shared_ptr<ParserAlloc> ParserFactory::ParserImport(ParserType allocType)
             break;
     }
     return alloc;
+}
+
+void ParserFactory::Reset()
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    TraceFileParser::Instance().Reset();
+    Summary::KernelParse::Instance().Reset();
+    Memory::MemoryParse::Instance().Reset();
+    FullDb::FullDbParser::Instance().Reset();
 }
 
 void ParserAlloc::SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
@@ -280,14 +291,6 @@ void ParserAlloc::SendAllParseSuccess()
     event->result = true;
     event->body.isAllPageParsed = true;
     session->OnEvent(std::move(event));
-}
-
-void ParserAlloc::Reset()
-{
-    TraceFileParser::Instance().Reset();
-    Summary::KernelParse::Instance().Reset();
-    Memory::MemoryParse::Instance().Reset();
-    FullDb::FullDbParser::Instance().Reset();
 }
 
 void ParserAlloc::SaveDbPath(const std::string &curProjectName,

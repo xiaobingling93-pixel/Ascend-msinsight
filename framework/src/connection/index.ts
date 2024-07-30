@@ -2,6 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import { console } from '@/utils/console';
+import {INTERCEPTOR_HANDLERS} from '@/connection/interceptor';
+
 type ReservedEventHandler = 'request';
 type EventHanlder = string;
 interface SendParams<T extends EventHanlder> {
@@ -128,6 +130,11 @@ class ServerConnector extends BaseConnector {
             return;
         }
         const res = await this._responseForFetch(event);
+        // 判断是否对该命令的返回内容进行了拦截配置，如果有配置，则先执行拦截方法逻辑
+        const callback = INTERCEPTOR_HANDLERS[event.data.args.command];
+        if (callback) {
+            callback(res);
+        }
         this.send({
             event: 'request',
             to: event.data.from,

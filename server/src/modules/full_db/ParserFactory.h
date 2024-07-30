@@ -25,7 +25,6 @@ public:
     static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
     static void ParseProgressCallBack(const std::string &fileId, uint64_t parsedSize, uint64_t totalSize, int progress);
     static void SendAllParseSuccess();
-    static void Reset();
 protected:
     std::string curScene;
     std::map<std::string, std::vector<std::string>> dataPathToDbMap;
@@ -49,6 +48,9 @@ class ParserFactory {
 public:
     static std::shared_ptr<ParserAlloc> ParserImport(ParserType allocType);
     static std::pair<std::string, ParserType> GetImportType(const std::vector<std::string> &pathList);
+    static void Reset();
+private:
+    static std::mutex mutex;
 };
 } // end of namespace Module
 } // end of namespace Dic

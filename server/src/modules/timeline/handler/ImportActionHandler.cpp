@@ -96,7 +96,7 @@ bool ImportActionHandler::TransferProject(ImportActionRequest &request)
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectExplorerInfo[0].projectType);
     ParserType parserType = coverProjectTypeToParserType(projectTypeEnum);
     std::shared_ptr<ParserAlloc> factory = ParserFactory::ParserImport(parserType);
-    factory->Reset();
+    ParserFactory::Reset();
     factory->Parser(projectExplorerInfo, request);
     return true;
 }
@@ -126,7 +126,7 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request)
     for (const auto &item: projectExplorerInfo) {
         filePathUnderProject.push_back(item.fileName);
     }
-    factory->Reset();
+    ParserFactory::Reset();
     factory->Parser(projectExplorerInfo, request);
     return true;
 }
