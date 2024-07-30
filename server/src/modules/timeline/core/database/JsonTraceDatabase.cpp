@@ -1326,6 +1326,7 @@ bool JsonTraceDatabase::QueryComputeStatisticsData(const Protocol::SummaryStatis
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("QueryComputeStatisticsData failed!. ", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
         return false;
     }
     if (!requestParams.stepId.empty() && requestParams.stepId != "ALL") {
@@ -1361,6 +1362,7 @@ bool JsonTraceDatabase::QueryCommunicationStatisticsData(const Protocol::Summary
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("QueryCommunicationStatisticsData failed!. ", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
         return false;
     }
     if (!requestParams.stepId.empty()) {
@@ -1396,6 +1398,7 @@ bool JsonTraceDatabase::QueryStepDuration(const std::string &stepId, uint64_t &m
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         ServerLog::Error("QueryStepDuration failed!. ", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
         return false;
     }
     sqlite3_bind_text(stmt, index++, profileName.c_str(), -1, SQLITE_STATIC);

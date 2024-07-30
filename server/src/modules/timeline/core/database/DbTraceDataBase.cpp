@@ -356,6 +356,7 @@ bool DbTraceDataBase::QueryComputeStatisticsData(const Protocol::SummaryStatisti
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         Server::ServerLog::Error("Query compute statistics data failed!. ", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
         return false;
     }
     double totalDuration = 0;
@@ -670,6 +671,7 @@ void DbTraceDataBase::UpdateStartTime()
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         Server::ServerLog::Error("Failed to Update Start Time. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        sqlite3_finalize(stmt);
         return;
     }
 
@@ -905,6 +907,7 @@ std::string DbTraceDataBase::QueryHostInfo()
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
+        sqlite3_finalize(stmt);
         return host;
     }
 
@@ -936,6 +939,7 @@ std::vector<std::string> DbTraceDataBase::QueryRankId()
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         Server::ServerLog::Error("Failed to get Statistic Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        sqlite3_finalize(stmt);
         return rankIds;
     }
 
@@ -958,6 +962,7 @@ bool DbTraceDataBase::CheckTableDataInvalid(std::string tableName)
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         Server::ServerLog::Error("Failed to get Memory Data. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        sqlite3_finalize(stmt);
         return false;
     }
     int64_t count;
