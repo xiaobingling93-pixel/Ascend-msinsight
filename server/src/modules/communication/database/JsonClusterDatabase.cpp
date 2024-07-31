@@ -160,6 +160,9 @@ void JsonClusterDatabase::ReleaseStmt()
     if (matrixStmt != nullptr) {
         sqlite3_finalize(matrixStmt);
     }
+    if (stepStmt != nullptr) {
+        sqlite3_finalize(stepStmt);
+    }
 }
 
 void JsonClusterDatabase::SaveLastData()

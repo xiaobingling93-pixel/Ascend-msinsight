@@ -133,6 +133,7 @@ std::vector<ProjectExplorerInfo> SystemMemoryDatabase::QueryProjectExplorerData(
         info.dbPath = StringUtil::Split(sqlite3_column_string(stmt, col++), ",");
         res.emplace_back(info);
     }
+    sqlite3_finalize(stmt);
     return res;
 }
 

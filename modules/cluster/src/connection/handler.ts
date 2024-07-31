@@ -69,6 +69,9 @@ const resetStatus = (): void => {
         session.parseCompleted = false;
         session.unitcount = 0;
         session.durationFileCompleted = false;
+        session.allRankIds = [];
+        session.communicatorData = { partitionModes: [], defaultPPSize: 0 };
+        session.activeCommunicator = undefined;
     });
 };
 
