@@ -58,7 +58,7 @@ const useCodeColumns = (): ColumnsType<Ilinetable> => {
 const useInstrsColumns = (): ColumnsType<InstrsColumnType> => {
     const { t } = useTranslation('source');
     return [
-        { title: '#', dataIndex: 'index', width: 40, align: 'right', ellipsis: true },
+        { title: '#', dataIndex: 'index', width: 50, align: 'right', ellipsis: true },
         {
             title: t('Address'),
             dataIndex: 'Address',

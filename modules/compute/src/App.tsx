@@ -46,7 +46,7 @@ const app = observer(({ page }: {page?: string}) => {
         <GlobalStyles />
         <SharedConfigProvider locale={locale}>
             {dom}
-        </SharedConfigProvider>;
+        </SharedConfigProvider>
     </ThemeProvider>;
 });
 
