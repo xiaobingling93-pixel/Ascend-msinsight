@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <OperatorProtocol.h>
 #include <GlobalDefs.h>
+#include <OperatorProtocolRequest.h>
 #include "ProtocolDefs.h"
 #include "OperatorProtocolUtil.h"
 #include "OperatorProtocolResponse.h"
@@ -57,6 +58,99 @@ protected:
 
     Dic::Protocol::OperatorProtocol operatorProtocol;
 };
+
+TEST_F(OperatorProtocolUtilTest, ToOperatorCategoryInfoRequestTest)
+{
+    std::string reqJson = R"({"id": 2, "moduleName": "operator", "type": "request", "command": "operator/category",
+        "resultCallbackId": 0, "params": {"rankId": "1", "group": "Operator", "topK": 15}})";
+    OperatorDurationReqParams expect = {"1", "Operator", 15};
+    Dic::document_t json;
+    json.Parse(reqJson.c_str());
+    std::string err;
+    auto result = dynamic_cast<OperatorCategoryInfoRequest &>(*(operatorProtocol.FromJson(json, err))).params;
+    EXPECT_EQ(result.rankId, expect.rankId);
+    EXPECT_EQ(result.group, expect.group);
+    EXPECT_EQ(result.topK, expect.topK);
+}
+
+TEST_F(OperatorProtocolUtilTest, ToOperatorComputeUnitInfoRequestTest)
+{
+    std::string reqJson = R"({"id": 4, "moduleName": "operator", "type": "request", "command": "operator/compute_unit",
+        "resultCallbackId": 0, "params": {"rankId": "2", "group": "Operator Type", "topK": -1}})";
+    OperatorDurationReqParams expect = {"2", "Operator Type", -1};
+    Dic::document_t json;
+    json.Parse(reqJson.c_str());
+    std::string err;
+    auto result = dynamic_cast<OperatorComputeUnitInfoRequest &>(*(operatorProtocol.FromJson(json, err))).params;
+    EXPECT_EQ(result.rankId, expect.rankId);
+    EXPECT_EQ(result.group, expect.group);
+    EXPECT_EQ(result.topK, expect.topK);
+}
+
+TEST_F(OperatorProtocolUtilTest, ToOperatorStatisticInfoRequestTest)
+{
+    std::string reqJson = R"(
+        {"id": 4, "moduleName": "operator", "type": "request", "command": "operator/statistic", "resultCallbackId": 0,
+        "params": {"rankId": "2", "group": "Input Shape", "topK": -1, "current": 2, "pageSize": 20,
+        "orderBy": "avg_time", "order": "Asc", "filters": [{"columnName": "name", "value": "MatMul"}]}})";
+    OperatorStatisticReqParams expect = {"2", "Input Shape", -1, 2, 20, "avg_time",  "Asc", {{"name", "MatMul"}}};
+    Dic::document_t json;
+    json.Parse(reqJson.c_str());
+    std::string err;
+    auto result = dynamic_cast<OperatorStatisticInfoRequest &>(*(operatorProtocol.FromJson(json, err))).params;
+    EXPECT_EQ(result.rankId, expect.rankId);
+    EXPECT_EQ(result.group, expect.group);
+    EXPECT_EQ(result.topK, expect.topK);
+    EXPECT_EQ(result.current, expect.current);
+    EXPECT_EQ(result.pageSize, expect.pageSize);
+    EXPECT_EQ(result.orderBy, expect.orderBy);
+    EXPECT_EQ(result.order, expect.order);
+}
+
+TEST_F(OperatorProtocolUtilTest, ToOperatorDetailInfoRequestTest)
+{
+    std::string reqJson = R"({"id": 4, "moduleName": "operator", "type": "request", "command": "operator/details",
+        "resultCallbackId": 0, "params": {"rankId": "2", "group": "Operator Type", "topK": 100, "current": 3,
+        "pageSize": 50, "orderBy": "cnt", "order": "Desc", "filters": [{"columnName": "opType", "value": "MatMul"}]}})";
+    OperatorStatisticReqParams expect = {"2", "Operator Type", 100, 3, 50, "cnt",  "Desc", {{"op_type", "MatMul"}}};
+    Dic::document_t json;
+    json.Parse(reqJson.c_str());
+    std::string err;
+    auto result = dynamic_cast<OperatorDetailInfoRequest &>(*(operatorProtocol.FromJson(json, err))).params;
+    EXPECT_EQ(result.rankId, expect.rankId);
+    EXPECT_EQ(result.group, expect.group);
+    EXPECT_EQ(result.topK, expect.topK);
+    EXPECT_EQ(result.current, expect.current);
+    EXPECT_EQ(result.pageSize, expect.pageSize);
+    EXPECT_EQ(result.orderBy, expect.orderBy);
+    EXPECT_EQ(result.order, expect.order);
+}
+
+TEST_F(OperatorProtocolUtilTest, ToOperatorMoreInfoRequestTest)
+{
+    std::string reqJson = R"({"id": 4, "moduleName": "operator", "type": "request", "command": "operator/more_info",
+        "resultCallbackId": 0, "params": {"rankId": "2", "group": "Operator Type", "topK": 100,
+        "opType": "MatMul", "opName": "MatMul", "shape": "", "accCore": "AI_CORE",
+        "current": 3, "pageSize": 50, "orderBy": "cnt", "order": "Desc", "filters": []}})";
+    OperatorMoreInfoReqParams expect = {
+        "2", "Operator Type", 100, "MatMul", "MatMul", "", "AI_CORE", 3, 50, "cnt",  "Desc", {}
+    };
+    Dic::document_t json;
+    json.Parse(reqJson.c_str());
+    std::string err;
+    auto result = dynamic_cast<OperatorMoreInfoRequest &>(*(operatorProtocol.FromJson(json, err))).params;
+    EXPECT_EQ(result.rankId, expect.rankId);
+    EXPECT_EQ(result.group, expect.group);
+    EXPECT_EQ(result.topK, expect.topK);
+    EXPECT_EQ(result.opType, expect.opType);
+    EXPECT_EQ(result.opName, expect.opName);
+    EXPECT_EQ(result.shape, expect.shape);
+    EXPECT_EQ(result.accCore, expect.accCore);
+    EXPECT_EQ(result.current, expect.current);
+    EXPECT_EQ(result.pageSize, expect.pageSize);
+    EXPECT_EQ(result.orderBy, expect.orderBy);
+    EXPECT_EQ(result.order, expect.order);
+}
 
 TEST_F(OperatorProtocolUtilTest, ToOperatorCategoryInfoResponseTest)
 {
