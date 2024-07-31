@@ -28,7 +28,7 @@ void ProtocolUtil::UnRegister()
 std::unique_ptr<Request> ProtocolUtil::FromJson(const json_t &requestJson, std::string &error)
 {
     if (!IsRequest(requestJson)) {
-        ServerLog::Warn("json type is not request.", JsonUtil::JsonDump(requestJson));
+        ServerLog::Warn("Json is not request type. json=", JsonUtil::JsonDump(requestJson));
         return nullptr;
     }
     const std::string command = Command(requestJson);

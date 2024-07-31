@@ -98,7 +98,7 @@ public:
             } else if constexpr (std::is_same_v<T, std::string>) {
                 vec.push_back(item.GetString());
             } else {
-                Server::ServerLog::Error("get vector from json error: Unsupported type!");
+                Server::ServerLog::Error("Get vector from json error: unsupported type!");
             }
         }
         return vec;

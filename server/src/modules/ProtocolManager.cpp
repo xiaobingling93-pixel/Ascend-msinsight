@@ -74,12 +74,12 @@ std::unique_ptr<Request> ProtocolManager::FromJson(const std::string &requestStr
         return nullptr;
     }
     if (!JsonUtil::IsJsonKeyValid(requestJson.value(), "moduleName")) {
-        ServerLog::Warn("Failed to get module type from json. ", requestStr);
+        ServerLog::Warn(R"(Json Key "moduleName" is invaild, request=)", requestStr);
         return nullptr;
     }
     auto moduleName = STR_TO_ENUM<ModuleType>(JsonUtil::GetString(requestJson.value(), "moduleName"));
     if (!moduleName.has_value()) {
-        ServerLog::Warn("Failed to get module type from json. ", requestStr);
+        ServerLog::Warn("Unknown module name, request=", requestStr);
         return nullptr;
     }
     std::unique_lock<std::mutex> lock(mutex);

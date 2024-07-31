@@ -121,7 +121,7 @@ void WsServer::OnOpenCb(WsChannel *ws)
 
 void WsServer::OnCloseCb(WsChannel *ws, int code, std::string_view message)
 {
-    ServerLog::Info("session close, channel = ", ws, ", code = ", code, ", message = ", message);
+    ServerLog::Info("Session close, channel = ", ws, ", code = ", code, ", message = ", message);
     if (ws == nullptr) {
         return;
     }
@@ -130,7 +130,7 @@ void WsServer::OnCloseCb(WsChannel *ws, int code, std::string_view message)
         session->SetStatus(WsSession::Status::CLOSED);
         session->WaitForExit();
         WsSessionManager::Instance().RemoveSession();
-        ServerLog::Info("session remove ok.");
+        ServerLog::Info("Session remove ok.");
     }
 }
 
@@ -141,7 +141,7 @@ void WsServer::OnMessageCb(WsChannel *ws, std::string_view message, uWS::OpCode 
     }
     WsSession *session = WsSessionManager::Instance().GetSession(ws);
     if (session == nullptr) {
-        ServerLog::Error("session is not valid, it will be closed at server.");
+        ServerLog::Error("Session is not valid, it will be closed at server.");
         return;
     }
     session->OnRequestMessage(std::string(message));

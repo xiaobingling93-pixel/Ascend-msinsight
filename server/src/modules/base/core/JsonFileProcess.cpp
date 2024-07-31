@@ -19,7 +19,7 @@ std::vector<std::pair<int64_t, int64_t>> JsonFileProcess::SplitFile(const std::s
     std::ifstream file(filePath, std::ios::in | std::ios::binary);
 #endif
     if (!file.is_open()) {
-        Dic::Server::ServerLog::Error("Failed to open file. ", filePath);
+        Dic::Server::ServerLog::Error("Failed to open json file. ", filePath);
         return {};
     }
     std::vector<std::pair<int64_t, int64_t>> result = GetSplitPosition(file);
@@ -48,7 +48,7 @@ std::vector<std::pair<int64_t, int64_t>> JsonFileProcess::GetSplitPosition(std::
     bool endFlag = false;
     while (!endFlag) {
         if (!SeekCharPosition(file, '{')) {
-            Dic::Server::ServerLog::Info("Failed to find start position.");
+            Dic::Server::ServerLog::Info("Failed to find json format start position.");
             break;
         }
         int64_t start = file.tellg();
@@ -62,7 +62,7 @@ std::vector<std::pair<int64_t, int64_t>> JsonFileProcess::GetSplitPosition(std::
             endRegex = R"(\}\s*,\s*\{)";
         }
         if (!SeekRegexPosition(file, endRegex)) {
-            Dic::Server::ServerLog::Info("Failed to find end position.");
+            Dic::Server::ServerLog::Info("Failed to find json format end position.");
             break;
         }
         int64_t end = file.tellg();

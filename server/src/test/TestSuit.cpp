@@ -81,9 +81,9 @@ public:
         int index = tempPath.find_last_of("server");
         tempPath = tempPath.substr(0, index + 1);
         if (std::remove((tempPath + R"(/src/test/test_data)" + "/cluster.db").c_str()) != 0) {
-            Dic::Server::ServerLog::Info("无法删除文件");
+            Dic::Server::ServerLog::Info("Delete file failed");
         } else {
-            Dic::Server::ServerLog::Info("文件已成功删除");
+            Dic::Server::ServerLog::Info("Delete file success");
         }
     }
 

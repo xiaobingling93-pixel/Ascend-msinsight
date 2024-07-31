@@ -24,14 +24,14 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
         int result = sqlite3_open(dbPathStr.c_str(), &db);
         if (result) {
             sqlite3_close(db); // 异常后关闭数据库
-            ServerLog::Error("open db fail. path:", dbPath);
+            ServerLog::Error("Open db fail when create Db. path:", dbPath);
             return false;
         }
         sqlite3_close(db); // 修改权限前先关闭数据库
         mode_t mode = 0640; // 业务数据权限要求设置为0640 （rw-r-----）
         result = FileUtil::ModifyFilePermissions(dbPathStr, mode);
         if (result) {
-            ServerLog::Error("Can't set file permissions. path:", dbPath);
+            ServerLog::Error("Can't set db file permissions. path:", dbPath);
             return false;
         }
     }
@@ -63,7 +63,7 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
         sqlite3_busy_timeout(db, timeoutMs);
         return true;
     }
-    ServerLog::Error("open db fail. path:", dbPath);
+    ServerLog::Error("Faild when open existed Db. path:", dbPath);
     return false;
 }
 
