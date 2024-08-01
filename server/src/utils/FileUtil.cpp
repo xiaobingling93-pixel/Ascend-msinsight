@@ -12,9 +12,9 @@ const std::unordered_map<std::string, std::string> INVALID_CHAR = {
     {"\t", "\\t"}, {"\v", "\\v"}, {"\x7F", "\\x7F"}
 };
 #ifdef _WIN32
-const std::string MSVP_SLASH = "\\";
+const std::string_view MSVP_SLASH = "\\";
 #else
-const std::string MSVP_SLASH = "/";
+const std::string_view MSVP_SLASH = "/";
 #endif
 }
 std::string FileUtil::GetCurrPath()
@@ -74,7 +74,7 @@ std::string FileUtil::GetAbsPath(const std::string &path)
         Server::ServerLog::Error("Failed to retrieve the current path.");
         return "";
     }
-    return curPath + MSVP_SLASH + path;
+    return curPath + std::string(MSVP_SLASH) + path;
 }
  
 bool FileUtil::IsSoftLink(const std::string &path)
@@ -341,5 +341,68 @@ bool FileUtil::ConvertToRealPath(std::string &errorMsg, std::vector<std::string>
         *it = realPath;
     }
     return true;
+}
+
+bool FileUtil::FindIfDbTypeByRegex(const std::string &path, const std::regex &jsonRegex,
+                                   const std::regex &dbRegex)
+{
+    int dbFound = 2;
+    return FileUtil::FindDbOrJsonType(path, 0, jsonRegex, dbRegex) == dbFound;
+}
+
+int FileUtil::FindDbOrJsonType(const std::string &path, int depth,
+                               const std::regex &jsonRegex, const std::regex &dbRegex)
+{
+    int jsonFound = 1;
+    int dbFound = 2;
+    int maxDepth = 5;
+    if (depth > maxDepth) {
+        return jsonFound;
+    }
+    std::vector<std::string> folders;
+    std::vector<std::string> files;
+    if (!FileUtil::FindFolders(path, folders, files)) {
+        return jsonFound;
+    }
+    sort(files.begin(), files.end(), std::greater<std::string>());
+    for (const auto &file: files) {
+        if (std::regex_match(file, dbRegex)) {
+            return dbFound;
+        } else if (std::regex_match(file, jsonRegex)) {
+            return jsonFound;
+        }
+    }
+    for (const auto &folder: folders) {
+        std::string tmpPath = FileUtil::SplicePath(path, folder);
+        int result = FindDbOrJsonType(tmpPath, depth + 1, jsonRegex, dbRegex);
+        if (result != 0) {
+            return result;
+        }
+    }
+    return 0;
+}
+
+
+// 递归查找函数
+std::vector<std::string> FileUtil::FindFirstByRegex(const fs::path &path, int depth, const std::regex &fileRegex)
+{
+    std::vector<std::string> matchedFiles;
+    int maxDepth = 5;
+    if (depth > maxDepth) {
+        return matchedFiles;
+    }
+    for (const auto &entry: fs::directory_iterator(path)) {
+        if (fs::is_directory(entry.path())) {
+            auto foundFiles = FindFirstByRegex(entry, depth + 1, fileRegex);
+            if (!foundFiles.empty()) {
+                matchedFiles.insert(matchedFiles.end(), foundFiles.begin(), foundFiles.end());
+                return matchedFiles;
+            }
+        } else if (std::regex_match(entry.path().filename().string(), fileRegex)) {
+            matchedFiles.push_back(fs::absolute(entry.path()).string());
+            return matchedFiles;
+        }
+    }
+    return matchedFiles;
 }
 } // Dic

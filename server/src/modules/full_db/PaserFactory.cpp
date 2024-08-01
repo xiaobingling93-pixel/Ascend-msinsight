@@ -27,20 +27,17 @@ using namespace Dic::Module::Timeline;
 std::mutex ParserFactory::mutex;
 std::pair<std::string, ParserType> ParserFactory::GetImportType(const std::vector<std::string> &pathList)
 {
+    if (StringUtil::EndWith(pathList[0], computeBinSuffix)) {
+        return std::make_pair(pathList[0], ParserType::BIN);
+    }
+    if (StringUtil::EndWith(pathList[0], ipynbSuffix)) {
+        return std::make_pair(pathList[0], ParserType::IPYNB);
+    }
     std::pair<std::string, ParserType> result;
-    auto dbFiles = FileUtil::FindFilesByRegex(pathList[0], std::regex(DBReg));
-    auto traceFiles = FileUtil::FindFilesByRegex(pathList[0], std::regex(traceViewReg));
-    auto clusterPath = FileUtil::FindFilesAndFoldersByRegex(pathList[0], std::regex(clusterReg), true);
-    if (!dbFiles.empty()) {
+    if (FileUtil::FindIfDbTypeByRegex(pathList[0], std::regex(traceViewReg), std::regex(DBReg))) {
         result = std::make_pair(pathList[0], ParserType::DB);
-    } else if (!traceFiles.empty() or !clusterPath.empty()) {
-        result = std::make_pair(pathList[0], ParserType::JSON);
-    } else if (StringUtil::EndWith(pathList[0], computeBinSuffix)) {
-        result = std::make_pair(pathList[0], ParserType::BIN);
-    } else if (StringUtil::EndWith(pathList[0], ipynbSuffix)) {
-        result = std::make_pair(pathList[0], ParserType::IPYNB);
     } else {
-        result = std::make_pair(pathList[0], ParserType::JSON); // 默认情况下也按JSON方式解析
+        result = std::make_pair(pathList[0], ParserType::JSON);
     }
     return result;
 }

@@ -13,6 +13,7 @@
 #include "NumDefs.h"
 #include "DbClusterDataBase.h"
 #include "TraceTime.h"
+#include "FileUtil.h"
 #include "ClusterFileParser.h"
 
 namespace Dic {
@@ -130,14 +131,14 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     // parse communication file
     std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
     std::vector<std::string> communicationMatrixFileList =
-            FileUtil::FindFilesByRegex(selectedPath, patternCommunicationMatrix);
+            FileUtil::FindFirstFileByRegex(selectedPath, patternCommunicationMatrix);
     // cluster analysis
     if (communicationMatrixFileList.empty() && !AttAnalyze(selectedPath, ATT_MODEL_MATRIX)) {
         return false;
     }
     // matrix
     std::vector<std::string> communicationMatrixList =
-            FileUtil::FindFilesByRegex(selectedPath, patternCommunicationMatrix);
+            FileUtil::FindFirstFileByRegex(selectedPath, patternCommunicationMatrix);
     if (!communicationMatrixList.empty()) {
         ParseCommunicationMatrix(communicationMatrixList);
     }
@@ -145,7 +146,7 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     database->SaveLastData();
     // parse cluster_step_trace_time csv
     std::regex patternStepTrace(R"(cluster_step_trace_time.csv)");
-    std::vector<std::string> stepTraceFileList = FileUtil::FindFilesByRegex(selectedPath, patternStepTrace);
+    std::vector<std::string> stepTraceFileList = FileUtil::FindFirstFileByRegex(selectedPath, patternStepTrace);
     if (!stepTraceFileList.empty()) {
         ParseStepStatisticsFile(stepTraceFileList);
         // parse cluster_step_trace_time csv
@@ -167,10 +168,10 @@ bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
     // parse communication file
     std::regex patternCommunication(R"(cluster_communication.json)");
     std::vector<std::string> communicationFileList =
-            FileUtil::FindFilesByRegex(selectedPath, patternCommunication);
+            FileUtil::FindFirstFileByRegex(selectedPath, patternCommunication);
     std::regex patternCommunicationMatrix(R"(cluster_communication_matrix.json)");
     std::vector<std::string> communicationMatrixFileList =
-            FileUtil::FindFilesByRegex(selectedPath, patternCommunicationMatrix);
+            FileUtil::FindFirstFileByRegex(selectedPath, patternCommunicationMatrix);
     bool isCopyMatrixFile = false;
     std::string tempFilePath = FileUtil::SplicePath(selectedPath, "tmp_matrix.json");
     // cluster_communication_matrix存在，但cluster_communication不存在时，将matrix文件复制到selectedPath下的临时文件中
@@ -206,7 +207,7 @@ bool ClusterFileParser::TransCommunicationToDb(const std::string &selectedPath, 
         return false;
     }
     std::vector<std::string> communicationFileList =
-            FileUtil::FindFilesByRegex(selectedPath, patternCommunication);
+            FileUtil::FindFirstFileByRegex(selectedPath, patternCommunication);
     if (!communicationFileList.empty()) {
         ParseCommunication(communicationFileList);
     }
@@ -271,7 +272,7 @@ bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath)
 void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, ClusterBaseInfo &baseInfo)
 {
     std::vector<std::string> communicationGroupList =
-            FileUtil::FindFilesByRegex(selectedPath, std::regex(R"(communication_group.json)"));
+            FileUtil::FindFirstFileByRegex(selectedPath, std::regex(R"(communication_group.json)"));
     if (communicationGroupList.empty()) {
         ServerLog::Error("Failed to get communicationGroup files");
         return;

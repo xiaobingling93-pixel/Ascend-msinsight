@@ -13,6 +13,7 @@
 #include <fstream>
 #include <libgen.h>
 #include <numeric>
+#include <experimental/filesystem>
 #include "regex"
 #include "RegexUtil.h"
 #include "ServerLog.h"
@@ -42,6 +43,7 @@
 #define FILE_SEPARATOR '/'
 #endif
 
+namespace fs = std::experimental::filesystem;
 namespace Dic {
 class FileUtil {
 public:
@@ -513,6 +515,20 @@ public:
         return matchedFiles;
     }
 
+    // 寻找目录下的第一份符合条件的文件
+    static inline std::vector<std::string> FindFirstFileByRegex(const std::string &path, const std::regex &fileRegex)
+    {
+        std::vector<std::string> matchedFiles;
+        if (!FileUtil::IsFolder(path)) {
+            if (std::regex_match(FileUtil::GetFileName(path), fileRegex)) {
+                matchedFiles.emplace_back(FileUtil::PathPreprocess(path));
+            }
+            return matchedFiles;
+        }
+        fs::path dirPath = fs::path(path);
+        return FileUtil::FindFirstByRegex(dirPath, 0, fileRegex);
+    }
+
     static bool IsSoftLink(const std::string &path);
     static bool IsAbsolutePath(const std::string &path);
     static bool CheckDirValid(const std::string &path);
@@ -527,6 +543,12 @@ public:
                                                         const std::string& sourceFilePath);
     static bool ModifyFilePermissions(const std::string &filePath, const mode_t &mode);
     static bool ConvertToRealPath(std::string &errorMsg, std::vector<std::string> &path);
+    // 寻找目录下的第一份符合条件的Db或Json数据，Db: true Json: false，集群数据仅需找到一份文件来判断
+    static bool FindIfDbTypeByRegex(const std::string &path, const std::regex &jsonRegex,
+                                    const std::regex &dbRegex);
+    static int FindDbOrJsonType(const std::string &path, int depth,
+                                const std::regex &jsonRegex, const std::regex &dbRegex);
+    static std::vector<std::string> FindFirstByRegex(const fs::path &path, int depth, const std::regex &fileRegex);
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_FILEUTIL_H
