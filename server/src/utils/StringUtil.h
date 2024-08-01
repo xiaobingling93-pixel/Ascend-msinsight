@@ -140,25 +140,25 @@ public:
 
 static inline const std::wstring String2WString(const std::string& s)
 {
-    const size_t buffer_size = s.size() + 1;
-    if (buffer_size > PATH_MAX) { // 超过最大长度返回空字符串
+    const size_t bufferSize = s.size() + 1;
+    if (bufferSize > PATH_MAX) { // 超过最大长度返回空字符串
         return std::wstring();
     }
-    wchar_t dst_wstr[PATH_MAX] = {0};
-    mbstowcs(dst_wstr, s.c_str(), buffer_size);
-    std::wstring result = dst_wstr;
+    wchar_t dstWstr[PATH_MAX] = {0};
+    mbstowcs(dstWstr, s.c_str(), bufferSize);
+    std::wstring result = dstWstr;
     return result;
 }
 
 static inline const std::string WString2String(const std::wstring& ws)
 {
-    size_t buffer_size = ws.size() * 4 + 1;
+    size_t bufferSize = ws.size() * 4 + 1;
     if (ws.size() + 1 > PATH_MAX) {
         return std::string();
     }
-    char dst_str[PATH_MAX] = {0};
-    wcstombs(dst_str, ws.c_str(), buffer_size);
-    std::string result = dst_str;
+    char dstStr[PATH_MAX] = {0};
+    wcstombs(dstStr, ws.c_str(), bufferSize);
+    std::string result = dstStr;
     return result;
 }
 
