@@ -384,7 +384,7 @@ def build_product_parallel(vscode_version, idea_version, os_name):
 
 
 def main():
-    idea_version = load_version_info('7.0.RC2')
+    idea_version = load_version_info('7.0.RC3')
     # vscode_version不允许存在字母，因此这里做进一步处理，将字母内容去掉
     vscode_version = ''.join(ch for ch in idea_version if not ch.isalpha())
     init()
