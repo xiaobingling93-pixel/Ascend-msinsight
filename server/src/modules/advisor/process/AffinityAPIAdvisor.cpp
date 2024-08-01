@@ -138,7 +138,7 @@ bool AffinityAPIAdvisor::CheckApiSeqWithRule(const std::vector<std::string> &rul
         return false;  // 真实数据长度 < 预期数据长度，无法匹配
     }
 
-    for (int i = 1; i < rule.size(); ++i) { // 上文已匹配索引为0的数据
+    for (size_t i = 1; i < rule.size(); ++i) { // 上文已匹配索引为0的数据
         std::string tmp = dataList[index + i].name;
         std::vector<std::string> list = StringUtil::Split(rule[i], "\\|");
         if (std::find(list.begin(), list.end(), tmp) == list.end()) { // 不完全匹配，则跳过

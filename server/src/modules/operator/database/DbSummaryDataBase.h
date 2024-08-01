@@ -44,7 +44,7 @@ private:
     std::string GenerateQueryMoreInfoSql(OperatorMoreInfoReqParams &reqParams);
     std::string GetCommSql(const CommunicationDetailParams& request);
 
-    const int maxCategorySize = 50;
+    const uint32_t maxCategorySize = 50;
 
     void BindSqliteParam(sqlite3_stmt *stmt, OperatorMoreInfoReqParams &reqParams);
     static std::string GenerateQueryCategoryDurationSqlForHCCL(

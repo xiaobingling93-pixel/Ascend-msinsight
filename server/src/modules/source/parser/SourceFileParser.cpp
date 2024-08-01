@@ -337,7 +337,8 @@ std::vector<std::string> SourceFileParser::GetSourceList()
     return sourceList;
 }
 
-std::vector<SourceFileLine> SourceFileParser::GetApiLinesByCoreAndSource(std::string core, std::string sourceName)
+std::vector<SourceFileLine> SourceFileParser::GetApiLinesByCoreAndSource(const std::string &core,
+                                                                         const std::string &sourceName)
 {
     std::vector<SourceFileLine> result;
 
@@ -346,7 +347,8 @@ std::vector<SourceFileLine> SourceFileParser::GetApiLinesByCoreAndSource(std::st
         ServerLog::Error("Can't find the specified core name : ", core);
         return result;
     }
-    ptrdiff_t index = std::distance(apiCores.begin(), it);
+    // never below zero
+    size_t index = std::distance(apiCores.begin(), it);
 
     if (apiFiles.find(sourceName) == apiFiles.end()) {
         ServerLog::Warn("The specified file doesn't exist in api files, and source name is:", sourceName);

@@ -92,7 +92,7 @@ const WsChannel *WsSession::GetChannel() const
     return channel;
 }
 
-const WsSession::Status WsSession::GetStatus() const
+WsSession::Status WsSession::GetStatus() const
 {
     return status;
 }
@@ -104,17 +104,17 @@ void WsSession::SetStatus(Status sessionStatus)
     }
 }
 
-const uint32_t WsSession::GetCreateTime() const
+uint32_t WsSession::GetCreateTime() const
 {
     return createTime;
 }
 
-const uint32_t WsSession::GetStartTime() const
+uint32_t WsSession::GetStartTime() const
 {
     return startTime;
 }
 
-const uint32_t WsSession::GetStopTime() const
+uint32_t WsSession::GetStopTime() const
 {
     return stopTime;
 }
@@ -124,7 +124,7 @@ void WsSession::SetDeadTime(const uint32_t time)
     this->deadTime = time;
 }
 
-const uint32_t WsSession::GetDeadTime() const
+uint32_t WsSession::GetDeadTime() const
 {
     return this->deadTime;
 }

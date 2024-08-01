@@ -60,7 +60,7 @@ bool ParamsParser::ParseField(const std::string &data)
     return false;
 }
 
-const bool ParamsParser::Parse(const vector<string> &args)
+bool ParamsParser::Parse(const vector<string> &args)
 {
     if (args.size() <= 1) {
         error = "ERROR: Startup parameter count is not enough.";

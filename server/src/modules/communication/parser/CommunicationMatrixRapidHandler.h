@@ -38,7 +38,7 @@ public:
 
 private:
     std::string exception;
-    int currentDepth = 0;
+    uint32_t currentDepth = 0;
     rapidjson::Document currentObject;
     std::string currentKey;
     std::string groupId;
@@ -47,11 +47,11 @@ private:
     std::string tempRank;
     int64_t groupIdNumber = 1;
     std::unordered_map<std::string, int64_t> groupIdsMap;
-    int groupDepth = 1;
-    int stepDepth = 2;
-    int opNameDepth = 3;
-    int ranksDepth = 4;
-    int stepSubLen = 4;
+    uint32_t groupDepth = 1;
+    uint32_t stepDepth = 2;
+    uint32_t opNameDepth = 3;
+    uint32_t ranksDepth = 4;
+    uint32_t stepSubLen = 4;
 };
 
 } // end of namespace Timeline

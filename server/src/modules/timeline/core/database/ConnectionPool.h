@@ -29,7 +29,7 @@ public:
     ConnectionPool &operator=(ConnectionPool &&) = delete;
 
     std::shared_ptr<VirtualTraceDatabase> GetConnection();
-    void SetMaxActiveCount(int count);
+    void SetMaxActiveCount(unsigned int count);
     void SetMaxRetryCount(int count);
     void SetMaxWaitTime(int seconds);
     std::string GetDbPath();
@@ -41,7 +41,7 @@ private:
     std::condition_variable cv;
     std::string path;
     bool valid = true;
-    int maxActiveConnections = 20;
+    unsigned int  maxActiveConnections = 20;
     int maxRetryAttempts = 3;
     int maxWaitTime = 2; // seconds
     std::deque<VirtualTraceDatabase*> idlePool;

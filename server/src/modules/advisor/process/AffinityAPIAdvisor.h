@@ -95,8 +95,8 @@ const std::vector<AffinityApiData> AFFINITY_API_RULE = {
     { { "aten::pow", "aten::mean", "aten::add", "aten::rsqrt", "aten::mul", "aten::type_as" },
         "torch_npu.npu_rms_norm", "CANN 7.0+" },
 
-    // "(slice|chunk)-silu-mul", "(slice|chunk)-mul-silu", "(slice|chunk)-sigmoid-mul-mul", \
-    // "(slice|chunk)-mul-sigmoid-mul", "(slice|chunk)-mul-mul-sigmoid"
+    /* "(slice|chunk)-silu-mul", "(slice|chunk)-mul-silu", "(slice|chunk)-sigmoid-mul-mul",
+     "(slice|chunk)-mul-sigmoid-mul", "(slice|chunk)-mul-mul-sigmoid" */
     { { "aten::slice|aten::chunk", "aten::silu", "aten::mul" }, "torch_npu.npu_swiglu", "CANN 7.0+" },
     { { "aten::slice|aten::chunk", "aten::mul", "aten::silu" }, "torch_npu.npu_swiglu", "CANN 7.0+" },
     { { "aten::slice|aten::chunk", "aten::sigmoid", "aten::mul", "aten::mul" }, "torch_npu.npu_swiglu", "CANN 7.0+" },

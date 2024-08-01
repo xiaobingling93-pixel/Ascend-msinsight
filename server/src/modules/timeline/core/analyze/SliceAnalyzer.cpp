@@ -71,7 +71,7 @@ std::set<std::pair<uint64_t, uint32_t>> SliceAnalyzer::ComputeResultIds(uint64_t
             endList.emplace_back(depthHelper);
         }
     }
-    for (int i = 0; i < endList.size(); ++i) {
+    for (size_t i = 0; i < endList.size(); ++i) {
         ids.emplace(endList[i].tempId, i);
     }
     return ids;
@@ -154,7 +154,7 @@ void SliceAnalyzer::CalculateSelfTime(std::vector<CompeteSliceDomain> &rows,
     size_t length = rows.size();
     // offset变量用来优化性能
     uint64_t offset = 0;
-    for (int i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; i++) {
         uint32_t curDepth = rows[i].depth;
         uint64_t selfTime = rows[i].duration;
         uint64_t curSliceStartTime = rows[i].timestamp;

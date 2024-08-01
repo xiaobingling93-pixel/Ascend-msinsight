@@ -267,6 +267,7 @@ bool ParserAlloc::CheckIfClusterAndReset(const std::string &path, int filesSize,
     DataBaseManager::Instance().curIsDb = isDb;
     DataBaseManager::Instance().curIsBin = false;
     body.isCluster = isCluster;
+    return true;
 }
 
 void ParserAlloc::SendAllParseSuccess()

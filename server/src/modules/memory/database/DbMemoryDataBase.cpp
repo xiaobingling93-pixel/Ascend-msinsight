@@ -201,8 +201,8 @@ void DbMemoryDataBase::ParseCallBack(const std::string &fileId, bool result, con
         event->result = result;
         event->isCluster = true;
         std::vector<Protocol::MemorySuccess> memoryResult;
-        for (const auto &[rank, info] : ranks) {
-            memoryResult.push_back(info);
+        for (const auto& pair : ranks) {
+            memoryResult.push_back(pair.second);
         }
         event->memoryResult = memoryResult;
         session->OnEvent(std::move(event));

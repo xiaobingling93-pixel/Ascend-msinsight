@@ -27,7 +27,7 @@ public:
     static ParamsParser &Instance();
     const ParamsOption &GetOption() const;
     const std::string &GetError() const;
-    const bool Parse(const vector<string> &args);
+    bool Parse(const vector<string> &args);
 private:
     ParamsParser() = default;
     ~ParamsParser() = default;

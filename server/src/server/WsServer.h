@@ -23,7 +23,7 @@ public:
 
     bool Start() override;
     bool Stop() override;
-    const bool IsStart() const;
+    bool IsStart() const;
 
 protected:
     static void ListenThreadFunc(WsServer &server);

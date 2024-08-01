@@ -186,7 +186,7 @@ struct RowThreadTrace {
     int64_t id = 0;
     uint64_t startTime = 0;
     uint64_t duration = 0;
-    int32_t depth = 0;
+    uint32_t depth = 0;
     int64_t traceId = 0;
     std::string name;
     std::string cname;
@@ -212,7 +212,7 @@ struct SimpleSlice {
     uint64_t timestamp = 0;
     uint64_t duration = 0;
     uint64_t endTime = 0;
-    int32_t depth = 0;
+    uint32_t depth = 0;
     std::string name;
     bool operator < (const SimpleSlice &right) const
     {

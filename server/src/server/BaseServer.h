@@ -20,7 +20,7 @@ public:
     {
         return host;
     }
-    const int GetPort() const
+    int GetPort() const
     {
         return port;
     };

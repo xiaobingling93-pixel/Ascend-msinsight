@@ -72,7 +72,7 @@ bool JsonMemoryDataBase::InitStmt()
           "active_release_time, active_duration, allocation_allocated, allocation_reserve, allocation_active, "
           "release_allocated, release_reserve, release_active, stream)" +
           " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    for (int i = 0; i < cacheSize - 1; ++i) {
+    for (size_t i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertOperatorStmt, nullptr) != SQLITE_OK) {
@@ -82,7 +82,7 @@ bool JsonMemoryDataBase::InitStmt()
     sql = "INSERT INTO " + recordTable +
             " (component, total_allocated, total_reserve, total_active, device_type, stream, timestamp)" +
             " VALUES (?,?,?,?,?,?,?)";
-    for (int i = 0; i < cacheSize - 1; ++i) {
+    for (size_t i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,?,?,?,?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertRecordStmt, nullptr) != SQLITE_OK) {
@@ -92,7 +92,7 @@ bool JsonMemoryDataBase::InitStmt()
     sql = "INSERT INTO " + staticOpTable +
             " (device_id, op_name, model_name, graph_id, node_index_start, node_index_end, size)" +
             " VALUES (?,?,?,?,?,?,?)";
-    for (int i = 0; i < cacheSize - 1; ++i) {
+    for (size_t i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,?,?,?,?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertStaticOpStmt, nullptr) != SQLITE_OK) {
@@ -254,7 +254,7 @@ uint64_t JsonMemoryDataBase::QueryMinOperatorAllocationTime()
         ServerLog::Error("Failed to prepare sql for query min operator allocation time.", sqlite3_errmsg(db));
         return 0;
     }
-    uint64_t min;
+    uint64_t min = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         min = sqlite3_column_int64(stmt, col++);
@@ -272,7 +272,7 @@ uint64_t  JsonMemoryDataBase::QueryMinRecordTimestamp()
         ServerLog::Error("Failed to prepare sql for query min record timestamp.", sqlite3_errmsg(db));
         return 0;
     }
-    uint64_t min;
+    uint64_t min  = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         min = sqlite3_column_int64(stmt, col++);

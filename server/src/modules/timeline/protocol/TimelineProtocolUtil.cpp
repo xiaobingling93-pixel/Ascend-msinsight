@@ -31,13 +31,13 @@ template <> std::optional<document_t> ToResponseJson<ImportActionResponse>(const
     JsonUtil::AddMember(body, "isPending", response.body.isPending, allocator);
 
     json_t coreList(kArrayType);
-    for (const std::string core : response.body.coreList) {
+    for (const auto &core : response.body.coreList) {
         coreList.PushBack(json_t().SetString(core.c_str(), allocator), allocator);
     }
     JsonUtil::AddMember(body, "coreList", coreList, allocator);
 
     json_t sourceList(kArrayType);
-    for (const std::string source : response.body.sourceList) {
+    for (const auto &source : response.body.sourceList) {
         sourceList.PushBack(json_t().SetString(source.c_str(), allocator), allocator);
     }
     JsonUtil::AddMember(body, "sourceList", sourceList, allocator);

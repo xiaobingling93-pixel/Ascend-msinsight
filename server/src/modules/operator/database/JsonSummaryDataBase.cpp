@@ -64,7 +64,7 @@ bool JsonSummaryDataBase::InitStmt()
             "INSERT INTO " + kernelTable + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
             "duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, output_shapes, " +
             "output_data_types, output_formats)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    for (int i = 0; i < cacheSize - 1; ++i) {
+    for (size_t i = 0; i < cacheSize - 1; ++i) {
         sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertKernelStmt, nullptr) != SQLITE_OK) {
@@ -152,7 +152,7 @@ sqlite3_stmt *JsonSummaryDataBase::GetKernelStmt(uint64_t paramLen)
                 "INSERT INTO " + kernelTable + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
                 "duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, output_shapes, " +
                 "output_data_types, output_formats)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-        for (int i = 0; i < paramLen - 1; ++i) {
+        for (uint64_t i = 0; i < paramLen - 1; ++i) {
             sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -855,7 +855,7 @@ bool JsonSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
             return true;
         }
         sql += " WHERE ";
-        for (int64_t index = 0; index < reqParams.filters.size(); index++) {
+        for (uint64_t index = 0; index < reqParams.filters.size(); index++) {
             std::pair<std::string, std::string> filter = reqParams.filters[index];
             if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
                 ServerLog::Error("There is an SQL injection attack on this parameter. param: (",

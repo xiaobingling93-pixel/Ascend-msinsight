@@ -296,7 +296,7 @@ std::shared_ptr<std::string> FileUtil::GetRelativePath(const std::string& target
     }
 
     // 遍历每层源路径，判断是否和目标路径相等
-    int i = 0;
+    size_t i = 0;
     for (; i < sourcePath.size(); ++i) {
         if (targetPath[i] != sourcePath[i]) {
             break;

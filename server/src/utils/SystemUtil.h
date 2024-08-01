@@ -16,7 +16,7 @@
 namespace Dic {
 class SystemUtil {
 public:
-    static int GetCpuCoreCount()
+    static unsigned int GetCpuCoreCount()
     {
 #ifdef _WIN32
         SYSTEM_INFO sysInfo;

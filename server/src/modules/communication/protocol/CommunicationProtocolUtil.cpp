@@ -183,7 +183,7 @@ template <> std::optional<document_t> ToResponseJson<OperatorListsResponse>(cons
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     json_t dataArray(kArrayType);
-    for (int i = 0; i < response.body.rankLists.size(); ++i) {
+    for (size_t i = 0; i < response.body.rankLists.size(); ++i) {
         json_t oneRankJson(kObjectType);
         JsonUtil::AddMember(oneRankJson, "rankId", response.body.rankLists[i], allocator);
         json_t opListJson(kArrayType);

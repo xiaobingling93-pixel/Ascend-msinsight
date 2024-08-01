@@ -546,16 +546,16 @@ bool JsonClusterDatabase::GetStepIdList(Protocol::PipelineStepResponseBody &resp
     return ExecuteGetStepIdList(responseBody, sql);
 }
 
-bool JsonClusterDatabase::GetStages(Protocol::PipelineStageParam param,
-    Protocol::PipelineStageResponseBody &responseBody)
+bool JsonClusterDatabase::GetStages(Protocol::PipelineStageParam &param,
+                                    Protocol::PipelineStageResponseBody &responseBody)
 {
     std::string sql = "SELECT DISTINCT stage_id as stageId "
                       "FROM " + TABLE_STEP_TRACE + " WHERE stage_id != '' AND step_id = ?";
     return ExecuteGetStages(param, responseBody, sql);
 }
 
-bool JsonClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam param,
-    Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
+bool JsonClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam &param,
+                                            Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
 {
     std::string sql = "SELECT max(ROUND(stage_time, 4)) as stageTime, "
                       "max(ROUND(bubble_time, 4)) as bubbleTime "
@@ -567,8 +567,8 @@ bool JsonClusterDatabase::GetStageAndBubble(Protocol::PipelineStageTimeParam par
     return ExecuteGetStageAndBubble(param, stageIds, responseBody, sql);
 }
 
-bool JsonClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam param,
-    Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
+bool JsonClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
+                                           Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
 {
     std::string sql = "SELECT rank_id as rankId, "
                       "ROUND(stage_time, 4) as stageTime, "
@@ -578,10 +578,10 @@ bool JsonClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam param
     std::vector<std::string> stageIds;
     PrepareForStageId(param.stageId, sql, stageIds);
 
-    return ExecuteGetRankAndBubble(param, stageIds, responseBody, sql);
+    return ExecuteGetRankAndBubble(param, std::move(stageIds), responseBody, std::move(sql));
 }
 
-bool JsonClusterDatabase::GetGroups(Protocol::MatrixGroupParam param, Protocol::MatrixGroupResponseBody &responseBody)
+bool JsonClusterDatabase::GetGroups(Protocol::MatrixGroupParam &param, Protocol::MatrixGroupResponseBody &responseBody)
 {
     std::string sql = "SELECT DISTINCT group_id as groupId "
                       "FROM " + TABLE_GROUP_ID;
@@ -608,8 +608,8 @@ std::unordered_map<std::string, int64_t> JsonClusterDatabase::GetAllGroupMap()
     return res;
 }
 
-bool JsonClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
-    Protocol::MatrixListResponseBody &responseBody)
+bool JsonClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,
+                                          Protocol::MatrixListResponseBody &responseBody)
 {
     std::string sql = "SELECT src_rank as srcRank, dst_rank as dstRank, "
                       "transport_type as transportType, "
@@ -633,14 +633,14 @@ std::string JsonClusterDatabase::BuildCondition(const Protocol::SummaryTopRankPa
     }
     if (!requestParams.stepIdList.empty()) {
         stepCondition = " and step_id in (?";
-        for (int i = 1; i < requestParams.stepIdList.size(); i++) {
+        for (size_t i = 1; i < requestParams.stepIdList.size(); i++) {
             stepCondition.append(",?");
         }
         stepCondition.append(") ");
     }
     if (!requestParams.rankIdList.empty()) {
         rankCondition = " and rank_id in (?";
-        for (int i = 1; i < requestParams.rankIdList.size(); i++) {
+        for (size_t i = 1; i < requestParams.rankIdList.size(); i++) {
             rankCondition.append(",?");
         }
         rankCondition.append(") ");
@@ -870,7 +870,7 @@ void JsonClusterDatabase::PrepareForStageId(std::string &stageIdStr, std::string
     }
 
     std::string rankSql;
-    for (int i = 0; i < stageIds.size(); i++) {
+    for (size_t i = 0; i < stageIds.size(); i++) {
         if (i == 0) {
             rankSql.append("?");
         }

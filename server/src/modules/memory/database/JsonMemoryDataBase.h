@@ -69,7 +69,7 @@ private:
     const int exLength = 4;
 
     bool hasInitStmt = false;
-    const int cacheSize = 100;
+    const uint32_t cacheSize = 100;
     std::vector<Operator> operatorCache;
     std::vector<Record> recordCache;
     std::vector<StaticOp> staticOpCache;

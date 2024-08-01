@@ -222,6 +222,7 @@ bool FullDbParser::FindDevicePaths(const std::string &selectedFolder,
         auto deviceId = folderName.substr(index + 1);
         devicePaths[deviceId] = FileUtil::GetParentPath(folder);
     }
+    return true;
 }
 
 bool FullDbParser::Parse(const std::vector<std::string> &fileIds, const std::string &filePath,

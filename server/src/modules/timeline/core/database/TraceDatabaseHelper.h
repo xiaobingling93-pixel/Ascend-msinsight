@@ -61,8 +61,8 @@ static  std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(
                                    std::map<std::string, uint64_t> &selfTimeKeyValue,
                                    uint64_t startTime, uint64_t endTime)
     {
-        int32_t i = 0;
-        int32_t j = 0;
+        size_t i = 0;
+        size_t j = 0;
         if (rows.empty()) {
             Server::ServerLog::Error("simpleSlice array size is zero!");
             return;
@@ -116,14 +116,15 @@ static  std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(
                              Protocol::UnitThreadsBody &responseBody)
     {
         for (auto &cur : rows) {
-            int index = -1;
-            for (int i = 0; i < responseBody.data.size(); i++) {
-                if (responseBody.data[i].title == cur.name) {
-                    index = i;
+            size_t index = 0;
+            bool find = false;
+            for (; index < responseBody.data.size(); index++) {
+                if (responseBody.data[index].title == cur.name) {
+                    find = true;
                     break;
                 }
             }
-            if (index == -1) {
+            if (!find) {
                 Protocol::Threads threads {};
                 threads.title = cur.name;
                 threads.wallDuration = cur.duration;
@@ -145,14 +146,15 @@ static  std::unique_ptr<SqliteResultSet> QueryThreadTracesSummary(
                               Protocol::UnitThreadsBody &responseBody)
     {
         for (auto &cur : rows) {
-            int index = -1;
-            for (int i = 0; i < responseBody.data.size(); i++) {
-                if (responseBody.data[i].title == cur.name) {
-                    index = i;
+            size_t index = 0;
+            bool find = false;
+            for (; index < responseBody.data.size(); index++) {
+                if (responseBody.data[index].title == cur.name) {
+                    find = true;
                     break;
                 }
             }
-            if (index == -1) {
+            if (!find) {
                 Protocol::Threads threads {};
                 threads.title = cur.name;
                 threads.wallDuration = cur.duration;
@@ -242,9 +244,9 @@ static void FilterTopLevelApi(std::vector<Protocol::FlowLocation> &originData, c
 
 private:
 /* Functions for BbTraceDataBase */
-    static inline bool DealLastData(std::vector<Protocol::SimpleSlice> &rows,
-                             std::map<std::string, uint64_t> &selfTimeKeyValue,
-                             uint64_t startTime, uint64_t endTime, uint64_t index)
+    static inline void DealLastData(std::vector<Protocol::SimpleSlice> &rows,
+                                    std::map<std::string, uint64_t> &selfTimeKeyValue,
+                                    uint64_t startTime, uint64_t endTime, uint64_t index)
     {
         while (++index < rows.size()) {
             if (rows.at(index).timestamp <= endTime && rows.at(index).endTime >= startTime) {
@@ -262,6 +264,8 @@ private:
             selfTimeKeyValue.emplace(name, tmpSelfTime);
         }
     }
+
+    static std::string GetOrderByCondition(const EventsViewParams &params);
 };
 }
 

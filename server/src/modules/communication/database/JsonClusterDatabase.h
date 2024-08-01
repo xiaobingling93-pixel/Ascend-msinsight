@@ -45,13 +45,14 @@ public:
     void UpdateClusterParseStatus(std::string status) override;
     bool QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody) override;
     bool GetStepIdList(Protocol::PipelineStepResponseBody &responseBody) override;
-    bool GetStages(Protocol::PipelineStageParam param, Protocol::PipelineStageResponseBody &responseBody) override;
-    bool GetStageAndBubble(Protocol::PipelineStageTimeParam param,
+    bool GetStages(Protocol::PipelineStageParam &param, Protocol::PipelineStageResponseBody &responseBody) override;
+    bool GetStageAndBubble(Protocol::PipelineStageTimeParam &param,
                            Protocol::PipelineStageOrRankTimeResponseBody &responseBody) override;
-    bool GetRankAndBubble(Protocol::PipelineRankTimeParam param,
+    bool GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
                           Protocol::PipelineStageOrRankTimeResponseBody &responseBody) override;
-    bool GetGroups(Protocol::MatrixGroupParam param, Protocol::MatrixGroupResponseBody &responseBody) override;
-    bool QueryMatrixList(Protocol::MatrixBandwidthParam param, Protocol::MatrixListResponseBody &responseBody) override;
+    bool GetGroups(Protocol::MatrixGroupParam &param, Protocol::MatrixGroupResponseBody &responseBody) override;
+    bool QueryMatrixList(Protocol::MatrixBandwidthParam &param,
+                         Protocol::MatrixListResponseBody &responseBody) override;
     bool QueryAllOperators(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody) override;
     bool QueryOperatorsCount(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody) override;
     bool QueryBandwidthData(Protocol::BandwidthDataParam &param, Protocol::BandwidthDataResBody &resBody) override;

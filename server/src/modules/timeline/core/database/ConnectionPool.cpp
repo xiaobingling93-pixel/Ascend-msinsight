@@ -6,7 +6,7 @@
 
 namespace Dic::Module::Timeline {
 ConnectionPool::ConnectionPool(std::string dbPath, std::function<VirtualTraceDatabase*()> call)
-    : path(std::move(dbPath)), databaseCreateCall(std::move(call)) {}
+    : databaseCreateCall(std::move(call)), path(std::move(dbPath)) {}
 
 ConnectionPool::~ConnectionPool()
 {
@@ -48,7 +48,7 @@ std::shared_ptr<VirtualTraceDatabase> ConnectionPool::GetConnection()
  *
  * @param count max active connections.
  */
-void ConnectionPool::SetMaxActiveCount(int count)
+void ConnectionPool::SetMaxActiveCount(unsigned int count)
 {
     maxActiveConnections = std::max(maxActiveConnections, count);
 }

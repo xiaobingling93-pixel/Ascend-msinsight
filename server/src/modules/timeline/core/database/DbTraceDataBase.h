@@ -14,10 +14,10 @@
 namespace Dic::Module::FullDb {
 using namespace Dic::Module::Timeline;
 struct TASK_INFO {
-    int64_t start = 0;
-    int64_t end = 0;
-    int64_t depth = 0;
-    int64_t id = 0;
+    uint64_t start = 0;
+    uint64_t end = 0;
+    uint64_t depth = 0;
+    uint64_t id = 0;
 };
 
 struct WAIT_TIME {
@@ -132,7 +132,7 @@ public:
     static std::string GetStringCacheValue(const std::string& path, std::string key);
 
 private:
-    const int cacheSize = 5000;
+    const uint32_t cacheSize = 5000;
     bool initStmt = false;
     bool isExistPytorch = false;
     bool isExistCann = false;
@@ -167,7 +167,7 @@ private:
     static std::unique_ptr<Protocol::UnitTrack> GenerateBaseUnitTrack(const std::string &type,
         const std::string &cardId, const std::string &processId, const std::string &processName,
         const std::string &metaType);
-    bool DealHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
+    void DealHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
                           std::map<std::string, std::vector<MetaDataDto>> &threadMap);
     bool UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedStatement> &updateComputeStmt,
                                 std::unique_ptr<SqlitePreparedStatement> &updateCommunicationStmt);

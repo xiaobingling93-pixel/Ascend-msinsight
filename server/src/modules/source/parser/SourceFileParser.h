@@ -59,7 +59,7 @@ public:
     static std::pair<int64_t, int64_t> AdjustPosition(std::ifstream &file, int64_t start, int64_t end);
     std::vector<std::string> GetCoreList();
     std::vector<std::string> GetSourceList();
-    std::vector<SourceFileLine> GetApiLinesByCoreAndSource(std::string core, std::string sourceName);
+    std::vector<SourceFileLine> GetApiLinesByCoreAndSource(const std::string &core, const std::string &sourceName);
     std::string GetInstr();
     std::string GetSourceByName(std::string sourceName);
     bool GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &responseBody);

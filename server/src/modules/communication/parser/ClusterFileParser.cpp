@@ -300,12 +300,12 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
         };
         std::sort(p2p.Begin(), p2p.End(), orderByLenDesAndNumAsc);
         std::sort(collective.Begin(), collective.End(), orderByLenDesAndNumAsc);
-        for (int i = 0; i < p2p.Size(); i++) {
-            auto pos = std::find(collective.begin(), collective.end(), p2p[i]);
-            if (pos >= collective.Begin() && pos < collective.End()) {
+        std::for_each(p2p.begin(), p2p.end(), [&collective](auto& item) {
+            auto pos = std::find(collective.begin(), collective.end(), item);
+            if (pos != collective.end()) {
                 collective.Erase(pos);
             }
-        }
+        });
         auto endIt = std::unique(collective.begin(), collective.end()); // 去重
         if (!collective.Empty()) {
             collective.Erase(endIt, collective.End());
@@ -365,7 +365,7 @@ bool ClusterFileParser::AttAnalyze(const std::string& selectedPath, const std::s
 StepStatistic ClusterFileParser::MapToStepStatistic(std::vector<std::string> tokens)
 {
     StepStatistic statistic;
-    int index = 0;
+    size_t index = 0;
     statistic.stepId = tokens[index].empty() ? "0" : tokens[index];
     index++;
     std::string flag = tokens[index++];

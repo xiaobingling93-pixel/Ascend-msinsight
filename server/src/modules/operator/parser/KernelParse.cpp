@@ -202,7 +202,7 @@ bool KernelParse::CheckHeaderField(const std::map<std::string, size_t>& dataMap)
         FIELD_NAME, FIELD_TYPE, FIELD_ACCELERATOR_CORE, FIELD_START_TIME,
         FIELD_DURATION, FIELD_WAIT_TIME, FIELD_BLOCK_DIM
     };
-    for (int i = 0; i < header4Train.size(); ++i) {
+    for (size_t i = 0; i < header4Train.size(); ++i) {
         if (dataMap.find(header4Train[i]) == dataMap.end() && dataMap.find(header4Msprof[i]) == dataMap.end()) {
             ServerLog::Error("The file doesn't contain \"", header4Train[i], "\" or \"" + header4Msprof[i] + "\".");
             return false;

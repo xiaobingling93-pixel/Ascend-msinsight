@@ -31,7 +31,7 @@ bool WsServer::Stop()
     return true;
 }
 
-const bool WsServer::IsStart() const
+bool WsServer::IsStart() const
 {
     return listenStart;
 }

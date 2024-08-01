@@ -8,6 +8,7 @@
 
 #include <mutex>
 #include <memory>
+#include <limits>
 #include "ProtocolMessage.h"
 
 namespace Dic {
@@ -27,7 +28,8 @@ private:
 
     const std::string REQ_DELIMITER = "\r\n\r\n";
     const std::string HEAD_START = "Content-Length:";
-    const int matchMinNum = 2;
+    const uint32_t matchMinNum = 2;
+    const uint64_t invalidBodyLen = std::numeric_limits<uint64_t>::max();
     std::mutex mutex;
     std::string buffer;
     std::string error;

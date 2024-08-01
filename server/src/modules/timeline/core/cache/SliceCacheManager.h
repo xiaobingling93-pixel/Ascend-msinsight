@@ -183,7 +183,7 @@ private:
     // 算子调用栈id缓存使用记录
     VisitOrderList pythonFunctionIdUsed;
     // 算子调用栈id缓存大小
-    int pythonCapacity = 3;
+    const size_t pythonCapacity = 3;
     // 过滤了python function的trackId集合
     std::set<std::string> pythonFilterSet;
 

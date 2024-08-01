@@ -22,7 +22,7 @@ DataBaseManager &DataBaseManager::Instance()
 
 bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::string &dbPath)
 {
-    const static int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
+    const static unsigned int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
     std::unique_lock<std::mutex> lock(mutex);
     if (traceDatabaseMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);

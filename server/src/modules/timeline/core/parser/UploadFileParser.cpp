@@ -30,7 +30,10 @@ UploadFileParser::~UploadFileParser()
 }
 
 bool UploadFileParser::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
-    const std::string &selectedFile) {}
+    const std::string &selectedFile)
+{
+    return false;
+}
 
 void UploadFileParser::Parse(UploadFileRequest request)
 {
@@ -62,7 +65,7 @@ bool UploadFileParser::ResetAllFiles()
 bool UploadFileParser::CheckParseTask(UploadFileRequest request, int sliceIndex, SingleFileData &singleFileData,
                                       std::string fileId)
 {
-    if (sliceIndex > singleFileData.stringArray.size()) {
+    if (static_cast<size_t>(sliceIndex) > singleFileData.stringArray.size()) {
         ServerLog::Error("Failed to parser upload file ", fileId, ",current index is ", sliceIndex, "max size is ",
                          singleFileData.stringArray.size());
         return false;
@@ -131,6 +134,7 @@ void UploadFileParser::ParseSliceData(const UploadFileRequest& request, const st
     // 剩余字段存入array
     std::shared_lock<std::shared_mutex> lock(singleFileData.readWriteMutex);
     auto [firstElement, secondElement, thirdElement] = tuple;
+    (void)secondElement;    // unused variable
     singleFileData.stringArray[sliceIndex] = firstElement + thirdElement;
     ++singleFileData.currentSize;
     lock.unlock();

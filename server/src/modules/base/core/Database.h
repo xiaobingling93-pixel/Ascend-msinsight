@@ -17,7 +17,7 @@ namespace Module {
 class DatabaseException : public std::exception {
 public:
     explicit DatabaseException(const char* message): message(message){};
-    DatabaseException(const char* message, bool isError): message(message), isError(isError){};
+    DatabaseException(const char* message, bool isError): isError(isError), message(message){};
     const char* What()
     {
         return message;

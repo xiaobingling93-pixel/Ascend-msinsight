@@ -176,7 +176,7 @@ CommunicationBandWidth CommunicationRapidSaxHandler::MapToBandwidth(const rapidj
         bandWidth.iterationId = "0";
     }
     bandWidth.rankId = rankId;
-    int index = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
+    size_t index = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
     if (index != std::string::npos) {
         bandWidth.opName = tempOpName.substr(0, index);
         bandWidth.opSuffix = tempOpName.substr(index + 1);
@@ -201,7 +201,7 @@ CommunicationTimeInfo CommunicationRapidSaxHandler::MapToTimeInfo(const rapidjso
         timeInfo.iterationId = "0";
     }
     timeInfo.stageId = std::to_string(groupIdsMap[stageId]);
-    int index = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
+    size_t index = tempOpName.empty() ? 0 : tempOpName.find_last_of('@');
     if (index != std::string::npos) {
         timeInfo.opName = tempOpName.substr(0, index);
         timeInfo.opSuffix = tempOpName.substr(index + 1);

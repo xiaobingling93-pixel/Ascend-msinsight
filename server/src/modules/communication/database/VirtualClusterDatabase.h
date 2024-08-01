@@ -30,14 +30,14 @@ public:
                           Protocol::SummaryTopRankResBody &responseBody) = 0;
     virtual bool QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody) = 0;
     virtual bool GetStepIdList(Protocol::PipelineStepResponseBody &responseBody) = 0;
-    virtual bool GetStages(Protocol::PipelineStageParam param, Protocol::PipelineStageResponseBody &responseBody) = 0;
-    virtual bool GetStageAndBubble(Protocol::PipelineStageTimeParam param,
-                           Protocol::PipelineStageOrRankTimeResponseBody &responseBody) = 0;
-    virtual bool GetRankAndBubble(Protocol::PipelineRankTimeParam param,
-                          Protocol::PipelineStageOrRankTimeResponseBody &responseBody) = 0;
-    virtual bool GetGroups(Protocol::MatrixGroupParam param, Protocol::MatrixGroupResponseBody &responseBody) = 0;
-    virtual bool QueryMatrixList(Protocol::MatrixBandwidthParam param,
-        Protocol::MatrixListResponseBody &responseBody) = 0;
+    virtual bool GetStages(Protocol::PipelineStageParam &param, Protocol::PipelineStageResponseBody &responseBody) = 0;
+    virtual bool GetStageAndBubble(Protocol::PipelineStageTimeParam &param,
+                                   Protocol::PipelineStageOrRankTimeResponseBody &responseBody) = 0;
+    virtual bool GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
+                                  Protocol::PipelineStageOrRankTimeResponseBody &responseBody) = 0;
+    virtual bool GetGroups(Protocol::MatrixGroupParam &param, Protocol::MatrixGroupResponseBody &responseBody) = 0;
+    virtual bool QueryMatrixList(Protocol::MatrixBandwidthParam &param,
+                                 Protocol::MatrixListResponseBody &responseBody) = 0;
     virtual bool QueryAllOperators(Protocol::OperatorDetailsParam &param,
         Protocol::OperatorDetailsResBody &resBody) = 0;
     virtual bool QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
@@ -73,8 +73,8 @@ protected:
         std::string sql);
     bool ExecuteGetStageAndBubble(Protocol::PipelineStageTimeParam param, std::vector<std::string> stageIds,
         Protocol::PipelineStageOrRankTimeResponseBody &responseBody, std::string sql);
-    bool ExecuteGetRankAndBubble(Protocol::PipelineRankTimeParam param, std::vector<std::string> stageIds,
-        Protocol::PipelineStageOrRankTimeResponseBody &responseBody, std::string sql);
+    bool ExecuteGetRankAndBubble(const Protocol::PipelineRankTimeParam &param, std::vector<std::string> &&stageIds,
+                                 Protocol::PipelineStageOrRankTimeResponseBody &responseBody, std::string &&sql);
     bool ExecuteGetGroups(Protocol::MatrixGroupParam param, Protocol::MatrixGroupResponseBody &responseBody,
         std::string sql);
     bool ExecuteQueryMatrixList(Protocol::MatrixBandwidthParam param, Protocol::MatrixListResponseBody &responseBody,
@@ -99,8 +99,8 @@ protected:
     bool ExecuteQueryCommunicationGroup(rapidjson::Document &responseBody, std::string sql);
     bool ExecuteQueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
                                        std::vector<Protocol::OperatorNamesObject> &responseBody, std::string sql);
-    std::string GetRanksSql(std::vector<std::string> rankList);
-    double ExecuteQueryMinStartTime(std::string sql);
+    std::string GetRanksSql(const std::vector<std::string> &rankList);
+
     bool ExecuteQueryExtremumTimestamp(std::string &sql, uint64_t &min, uint64_t &max);
     bool ExecuteQueryIterationAndCommunicationGroup(std::string &sql,
         std::string &opName, uint64_t &startTime, std::string &iteration, std::string &communicationGroup);

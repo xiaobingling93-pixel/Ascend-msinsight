@@ -183,7 +183,7 @@ bool VirtualClusterDatabase::ExecuteGetStageAndBubble(Protocol::PipelineStageTim
         return false;
     }
     sqlite3_bind_text(stmt, index++, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
-    for (int i = 0; i < stageIds.size(); ++i) {
+    for (size_t i = 0; i < stageIds.size(); ++i) {
         sqlite3_bind_text(stmt, index++, stageIds[i].c_str(), stageIds[i].length(), SQLITE_TRANSIENT);
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -198,10 +198,10 @@ bool VirtualClusterDatabase::ExecuteGetStageAndBubble(Protocol::PipelineStageTim
     return true;
 }
 
-bool VirtualClusterDatabase::ExecuteGetRankAndBubble(Protocol::PipelineRankTimeParam param,
-                                                     std::vector<std::string> stageIds,
+bool VirtualClusterDatabase::ExecuteGetRankAndBubble(const Protocol::PipelineRankTimeParam &param,
+                                                     std::vector<std::string> &&stageIds,
                                                      Protocol::PipelineStageOrRankTimeResponseBody &responseBody,
-                                                     std::string sql)
+                                                     std::string &&sql)
 {
     int index = bindStartIndex;
     sqlite3_stmt *stmt = nullptr;
@@ -210,7 +210,7 @@ bool VirtualClusterDatabase::ExecuteGetRankAndBubble(Protocol::PipelineRankTimeP
         return false;
     }
     sqlite3_bind_text(stmt, index++, param.stepId.c_str(), param.stepId.length(), SQLITE_TRANSIENT);
-    for (int i = 0; i < stageIds.size(); ++i) {
+    for (size_t i = 0; i < stageIds.size(); ++i) {
         sqlite3_bind_text(stmt, index++, stageIds[i].c_str(), stageIds[i].length(), SQLITE_TRANSIENT);
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -272,23 +272,7 @@ bool VirtualClusterDatabase::ExecuteQueryMatrixList(Protocol::MatrixBandwidthPar
     return true;
 }
 
-double VirtualClusterDatabase::ExecuteQueryMinStartTime(std::string sql)
-{
-    sqlite3_stmt *stmt = nullptr;
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare QueryMinStartTime statement. error:", sqlite3_errmsg(db));
-        return 0;
-    }
-    double minStartTime;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
-        minStartTime = sqlite3_column_double(stmt, col++);
-    }
-    sqlite3_finalize(stmt);
-    return minStartTime;
-}
-
-bool VirtualClusterDatabase::ExecuteQueryExtremumTimestamp(std::string &sql, uint64_t &min, uint64_t &max)
+    bool VirtualClusterDatabase::ExecuteQueryExtremumTimestamp(std::string &sql, uint64_t &min, uint64_t &max)
 {
     sqlite3_stmt *stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
@@ -650,7 +634,7 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
         object.operatorName = sqlite3_column_string(stmt, col++);
         object.startTime = sqlite3_column_int64(stmt, col++);
         object.elapseTime = sqlite3_column_int64(stmt, col++);
-        for (int i = 0; i < rankLists.size(); ++i) {
+        for (size_t i = 0; i < rankLists.size(); ++i) {
             if (rankLists[i] == rankId) {
                 opLists[i].push_back(object);
                 break;
@@ -704,13 +688,13 @@ bool VirtualClusterDatabase::ExecuteQueryMatrixSortOpNames(Protocol::OperatorNam
     return true;
 }
 
-std::string VirtualClusterDatabase::GetRanksSql(std::vector<std::string> rankList)
+std::string VirtualClusterDatabase::GetRanksSql(const std::vector<std::string> &rankList)
 {
     std::string ranks = "(";
     if (rankList.empty()) {
         return "";
     } else {
-        for (int i = 0; i < rankList.size(); i++) {
+        for (size_t i = 0; i < rankList.size(); i++) {
             if (!StringUtil::CheckSqlValid(rankList[i])) {
                 ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", rankList[i]);
                 return "";

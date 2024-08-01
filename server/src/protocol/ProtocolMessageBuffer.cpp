@@ -18,17 +18,17 @@ uint64_t ProtocolMessageBuffer::GetBodyLength(const uint64_t &headPosition, cons
     std::string lenStr = buffer.substr(headPosition, headLength);
     std::optional<std::smatch> matchRes = RegexUtil::RegexMatch(lenStr, "Content-Length:\\s*(\\d+)");
     if (!matchRes.has_value() || matchRes.value().size() < matchMinNum) {
-        return -1;
+        return invalidBodyLen;
     }
     uint64_t res;
     try {
         res = std::stoull(matchRes.value()[1].str());
     } catch (std::invalid_argument &) {
-        res = -1;
+        res = invalidBodyLen;
     } catch (std::out_of_range &) {
-        res = -1;
+        res = invalidBodyLen;
     } catch (...) {
-        res = -1;
+        res = invalidBodyLen;
     }
     return res;
 }
@@ -82,7 +82,7 @@ std::unique_ptr<ProtocolMessage> ProtocolMessageBuffer::Pop()
     bodyPos = splitPos + REQ_DELIMITER.length();
     // Prevent integer overflow
     std::string::size_type msgLen = headLen + bodyLen;
-    if ((bodyLen == -1) || (buffer.length() < msgLen)) {
+    if ((bodyLen == invalidBodyLen) || (buffer.length() < msgLen)) {
         return nullptr;
     }
     std::string bodyStr = buffer.substr(bodyPos, bodyLen);

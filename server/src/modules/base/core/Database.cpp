@@ -18,7 +18,7 @@ Database::~Database()
 
 bool Database::CreateDbIfNotExist(const std::string &dbPath)
 {
-    struct stat st = {0};
+    struct stat st;
     std::string dbPathStr = CheckSqlString(dbPath);
     if (stat(dbPathStr.c_str(), &st) == -1) {
         int result = sqlite3_open(dbPathStr.c_str(), &db);

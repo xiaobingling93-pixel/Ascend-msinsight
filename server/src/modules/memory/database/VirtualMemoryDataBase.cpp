@@ -181,9 +181,6 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryView(Protocol::MemoryComponentPara
         ServerLog::Error("Query memory view. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
-    int index = bindStartIndex;
-    // 减去timeline开始的时间作为时间戳
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string peakMemory;
     std::vector<Protocol::ComponentDto> componentDtoVec;
     std::set<std::string> componentSets;

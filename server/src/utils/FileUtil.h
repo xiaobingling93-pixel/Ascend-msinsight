@@ -120,7 +120,8 @@ public:
     static inline bool FindFolders(const std::string &path,
         std::vector<std::string> &folders, std::vector<std::string> &files)
     {
-        long hFile = 0;
+        // long type will crash when use wingw11 compile in windows11
+        long long hFile = 0;
         struct _finddata_t fileInfo{};
         std::string tmpPath;
         if (StringUtil::IsUtf8String(path)) {

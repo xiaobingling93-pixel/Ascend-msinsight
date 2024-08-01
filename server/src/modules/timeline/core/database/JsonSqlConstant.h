@@ -435,7 +435,7 @@ public:
             " t ON s.track_id = t.track_id "
             "WHERE kd.accelerator_core != 'HCCL' ) "
             "SELECT d0.* FROM data d0 ";
-        for (int i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
+        for (size_t i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
             std::string table = "d" + std::to_string(i);
             sql += "JOIN data " + table + " ON " + table + ".row_num = d0.row_num + " + std::to_string(i) + " AND " +
                 table + ".op_type = '" + rule.opList.at(i) + "' ";

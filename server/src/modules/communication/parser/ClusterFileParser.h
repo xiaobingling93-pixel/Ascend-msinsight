@@ -28,7 +28,7 @@ private:
     static void SaxParseJsonFile(const std::string& filePath, int saxHandlerType);
     bool InitClusterDatabase(const std::string& selectedPath);
     StepStatistic MapToStepStatistic(std::vector<std::string> tokens);
-    int subStrlen = 2;
+    size_t subStrlen = 2;
     std::string clusterDbPath;
     bool needClearDb = true;
     static bool AttAnalyze(const std::string& selectedPath, const std::string& model);

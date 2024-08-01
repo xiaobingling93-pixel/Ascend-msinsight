@@ -209,12 +209,11 @@ void FlowAnalyzer::OfferFlowPointPair(const std::vector<FlowCategoryEventsDto> &
 void FlowAnalyzer::GroupSampleFlowPoint(const std::vector<FlowCategoryEventsDto> &flowEventsVec, uint64_t startTime,
     uint64_t endTime, FlowPointSampleStruct &flowPointSampleStruct)
 {
-    int64_t curTrackId = -1;
-    int64_t index = -1;
+    uint64_t curTrackId = std::numeric_limits<uint64_t>::max();
+    uint64_t index = 0;
     // 此处500是把屏幕平均分成500份，以一份屏幕的宽度为采集连线点的最小步长
     uint64_t uintTime = (endTime - startTime) / 500;
     for (const auto &item : flowEventsVec) {
-        index++;
         if (curTrackId != item.trackId) {
             curTrackId = item.trackId;
             flowPointSampleStruct.curBeginLimitTime = uintTime;
@@ -231,6 +230,7 @@ void FlowAnalyzer::GroupSampleFlowPoint(const std::vector<FlowCategoryEventsDto>
             (item.type == Protocol::LINE_END || item.type == Protocol::LINE_END_OPTIONAL)) {
             flowPointSampleStruct.endPointMap[item.flowId] = index;
         }
+        index++;
         if (uintTime == 0 && item.timestamp < startTime) {
             continue;
         }

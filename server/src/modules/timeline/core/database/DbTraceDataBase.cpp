@@ -148,7 +148,6 @@ bool DbTraceDataBase::QueryThreadDetail(const Protocol::ThreadDetailParams &requ
     }
     responseBody.emptyFlag = false;
     responseBody.data.cat = sliceDto->cat;
-    uint64_t id = sliceDto->id;
     TraceDatabaseHelper::QueryTaskInfoById(stmt, requestParams, responseBody, stringsCache.at(path), metaVersion);
     return true;
 }
@@ -170,7 +169,7 @@ bool DbTraceDataBase::GenerateOverlapAnalysisMetadata(const std::string &fileId,
 {
     auto metaType = ENUM_TO_STR(PROCESS_TYPE::OVERLAP_ANALYSIS).value_or("");
     auto overlap_analysis = GenerateBaseUnitTrack("process", fileId, metaType, metaType, metaType);
-    for (int index = 0; index < OVERLAP_TYPES.size(); index++) {
+    for (size_t index = 0; index < OVERLAP_TYPES.size(); index++) {
         auto thread = GenerateBaseUnitTrack("thread", fileId,
                                             overlap_analysis->metaData.processId, "", metaType);
         thread->metaData.threadId = std::to_string(index);
@@ -219,7 +218,7 @@ bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestPar
         return false;
     }
     std::map<std::string, std::vector<UnitSingleFlow>> flowMap;
-    for (int index = 1; index < flowLocations.size(); index++) {
+    for (size_t index = 1; index < flowLocations.size(); index++) {
         UnitSingleFlow singleFlow;
         singleFlow.id = connectionId.value();
         singleFlow.from = flowLocations[index - 1];
@@ -345,7 +344,6 @@ bool DbTraceDataBase::QueryComputeStatisticsData(const Protocol::SummaryStatisti
 {
     std::string stepCondition;
     sqlite3_stmt *stmt = nullptr;
-    int index = bindStartIndex;
     std::string sql = "SELECT round(sum(endNs - startNs) / 1000.0, 2) as duration, TASKTYPE.value as acceleratorCore "
         "  FROM COMPUTE_TASK_INFO"
         "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
@@ -473,7 +471,7 @@ bool DbTraceDataBase::GetKernelDetailFilterSql(std::string& sql, const Protocol:
     if (!requestParams.filters.empty()) {
         sql += " WHERE ";
     }
-    for (int64_t index = 0; index < requestParams.filters.size(); index++) {
+    for (uint64_t index = 0; index < requestParams.filters.size(); index++) {
         std::pair<std::string, std::string> filter = requestParams.filters[index];
         if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
             ServerLog::Error("There is an SQL injection attack on this parameter. param: filter");
@@ -496,7 +494,6 @@ bool DbTraceDataBase::GetKernelDetailFilterSql(std::string& sql, const Protocol:
 
 std::string DbTraceDataBase::GetKernelDetailSql(const Protocol::KernelDetailsParams &requestParams)
 {
-    uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     std::string blockDimColumnName = isLowCamel ? "blockDim" : "block_dim";
     std::string sql = "with nameIds as (select id, value as realName from STRING_IDS),\n"
       "     main as ("
@@ -958,14 +955,13 @@ bool DbTraceDataBase::CheckTableDataInvalid(std::string tableName)
     }
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "  SELECT COUNT(*) FROM " + tableName;
-    std::vector<std::string> rankIds;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         Server::ServerLog::Error("Failed to get Memory Data. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
         sqlite3_finalize(stmt);
         return false;
     }
-    int64_t count;
+    int64_t count = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         count = sqlite3_column_int64(stmt, resultStartIndex);
     }
@@ -1036,12 +1032,12 @@ void DbTraceDataBase::UpdateDepth(const std::string &sql, std::unique_ptr<Sqlite
             data[key] = std::vector<TASK_INFO>();
         }
         TASK_INFO task;
-        task.start = resultSet->GetInt64("startNs");
-        task.end = resultSet->GetInt64("endNs");
-        task.id = resultSet->GetInt64("id");
+        task.start = resultSet->GetUint64("startNs");
+        task.end = resultSet->GetUint64("endNs");
+        task.id = resultSet->GetUint64("id");
         data[key].push_back(task);
     }
-    std::vector<int64_t> endList;
+    std::vector<uint64_t> endList;
     std::lock_guard<std::recursive_mutex> lockGuard(mutex);
     for (auto &deviceData : data) {
         for (auto &task : deviceData.second) {
@@ -1307,8 +1303,8 @@ bool DbTraceDataBase::QueryHostMetadata(std::vector<std::unique_ptr<Protocol::Un
     return true;
 }
 
-bool DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
-    std::map<std::string, std::vector<MetaDataDto>> &threadMap)
+void DbTraceDataBase::DealHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData,
+                                       std::map<std::string, std::vector<MetaDataDto>> &threadMap)
 {
     int64_t curPid = 0;
     std::unique_ptr<UnitTrack> process;
@@ -1381,6 +1377,8 @@ bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
                       " union select 'Group ' || row_number() over () || ' Communication' as name, "
                       " groupName||'group' as tid, 0 as maxDepth from main group by groupName";
                 break;
+            default:
+                break;
         }
         auto stmt = CreatPreparedStatement();
         auto metaType = ENUM_TO_STR(type).value_or("");
@@ -1432,6 +1430,8 @@ bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,
             case PROCESS_TYPE::NIC:
                 sql = StringUtil::ReplaceFirst(NIC_MEAT_DATA_SQL, "#", tableName);
                 break;
+            default:
+                break;
         }
         auto counter = GenerateBaseUnitTrack("label", fileId, tableName, tableName, tableName);
         auto stmt = CreatPreparedStatement(sql);
@@ -1471,7 +1471,7 @@ void DbTraceDataBase::GenerateCounterMetadata(const std::string &fileId,
         std::vector<std::string> units;
         std::vector<std::vector<std::string>> dataTypes;
         GetCounterUnitsAndDataTypes(type, units, dataTypes, counter);
-        for (int index = 0; index < units.size(); index++) {
+        for (size_t index = 0; index < units.size(); index++) {
             auto thread = GenerateBaseUnitTrack("counter", fileId, typeName, units.at(index), typeName);
             thread->metaData.threadName = units.at(index);
             thread->metaData.threadId = units.at(index);
@@ -1516,6 +1516,8 @@ void DbTraceDataBase::GetCounterUnitsAndDataTypes(Protocol::PROCESS_TYPE type, s
             counter->metaData.processName = "AI Core Freq";
             units = { "AI Core Freq" };
             dataTypes = {{ "Mhz" }};
+            break;
+        default:
             break;
     }
 }
@@ -1914,7 +1916,7 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
         "JOIN " + TABLE_STRING_IDS + " s2 ON info.opType = s2.id "
         " ) "
         "SELECT d0.* FROM data d0 ";
-    for (int i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
+    for (size_t i = 1; i < rule.opList.size(); ++i) { // 上文保证rule.opList.size() ≥ 2
         std::string table = "d" + std::to_string(i);
         sql += "JOIN data " + table + " ON " + table + ".row_num = d0.row_num + " + std::to_string(i) +
                " AND " + table + ".op_type = '" + rule.opList.at(i) + "' ";

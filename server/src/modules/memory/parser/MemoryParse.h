@@ -38,10 +38,10 @@ public:
     const std::string staticOpMemReg = R"(static_op_mem(_[0-9]{1,14})?.csv$)";
 
 private:
-    const int maxThreadNum = 4;
-    const int operatorTableNum = 5;
-    const int recordTableNum = 5;
-    const int staticOpTableNum = 7;
+    const uint32_t maxThreadNum = 4;
+    const uint32_t operatorTableNum = 5;
+    const uint32_t recordTableNum = 5;
+    const uint32_t staticOpTableNum = 7;
     std::map<std::string, Protocol::MemorySuccess> ranks;
     bool isCluster = false;
 

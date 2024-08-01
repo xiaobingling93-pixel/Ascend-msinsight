@@ -34,7 +34,7 @@ JsonTraceDatabase::~JsonTraceDatabase()
 bool JsonTraceDatabase::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
     Database::OpenDb(dbPath, clearAllTable);
-    SetConfig();
+    return SetConfig();
 }
 
 bool JsonTraceDatabase::InitStmt()
@@ -192,7 +192,7 @@ std::unique_ptr<SqlitePreparedStatement> JsonTraceDatabase::GetSliceStmt(uint64_
 {
     std::string sql = "INSERT INTO " + sliceTable +
         " (timestamp, duration, name, track_id, cat, args, cname, end_time, flag_id) VALUES (?,?,?,?,?,?,?,?,?)";
-    for (int i = 0; i < paramLen - 1; ++i) {
+    for (uint64_t i = 0; i < paramLen - 1; ++i) {
         sql.append(",(?,?,?,?,?,?,?,?,?)");
     }
     return CreatPreparedStatement(sql);
@@ -390,7 +390,7 @@ std::unique_ptr<SqlitePreparedStatement> JsonTraceDatabase::GetFlowStmt(uint64_t
 {
     std::string sql =
         "INSERT INTO " + flowTable + " (flow_id, name, track_id, timestamp, cat, type)" + " VALUES (?,?,?,?,?,?)";
-    for (int i = 0; i < paramLen - 1; ++i) {
+    for (uint64_t i = 0; i < paramLen - 1; ++i) {
         sql.append(",(?,?,?,?,?,?)");
     }
     return CreatPreparedStatement(sql);
@@ -433,7 +433,7 @@ bool JsonTraceDatabase::InsertCounterList(const std::vector<Trace::Counter> &eve
 std::unique_ptr<SqlitePreparedStatement> JsonTraceDatabase::GetCounterStmt(uint64_t paramLen)
 {
     std::string sql = "INSERT INTO " + counterTable + " (name, pid, timestamp, cat, args)" + " VALUES (?,?,?,?,?)";
-    for (int i = 0; i < paramLen - 1; ++i) {
+    for (uint64_t i = 0; i < paramLen - 1; ++i) {
         sql.append(",(?,?,?,?,?)");
     }
     return CreatPreparedStatement(sql);
@@ -700,7 +700,7 @@ bool JsonTraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::Thread
         uint64_t id = resultSet->GetUint64("id");
         uint64_t startTime = resultSet->GetUint64("timestamp");
         uint64_t duration = resultSet->GetUint64("duration");
-        int32_t depth = depthCache[id];
+        uint32_t depth = depthCache[id];
         if (depth == requestParams.depth + 1) {
             nextDepthResult.emplace_back(startTime, duration);
         }
@@ -914,7 +914,6 @@ bool JsonTraceDatabase::QuerySliceDtoById(const std::string &sliceId, SliceDto &
     }
     while (sliceSet->Next()) {
         int col = resultStartIndex;
-        uint64_t id = sliceSet->GetUint64(col++);
         sliceDto.trackId = sliceSet->GetUint64(col++);
         sliceDto.flagId = sliceSet->GetString(col++);
     }
@@ -968,7 +967,6 @@ bool JsonTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
     }
     std::vector<MetaDataDto> metaDataVec;
     while (resultSet->Next()) {
-        int col = resultStartIndex;
         MetaDataDto metaDataDto;
         metaDataDto.pid = resultSet->GetString("pid");
         metaDataDto.processName = resultSet->GetString("processName") + " (" + metaDataDto.pid + ")";
@@ -977,7 +975,6 @@ bool JsonTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
         metaDataDto.threadName = resultSet->GetString("threadName");
         metaDataDto.name = resultSet->GetString("name");
         metaDataDto.args = resultSet->GetString("args");
-        uint64_t trackId = resultSet->GetUint64("trackId");
         metaDataVec.emplace_back(metaDataDto);
     }
     ServerLog::Info("Query units meta data. size:", metaDataVec.size());
@@ -1060,7 +1057,6 @@ bool JsonTraceDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
         return false;
     }
     while (resultSet->Next()) {
-        int col = resultStartIndex;
         min = resultSet->GetUint64("totalMinTimestamp");
         max = resultSet->GetUint64("totalMaxTimestamp");
     }
@@ -1132,7 +1128,6 @@ bool JsonTraceDatabase::SearchSliceName(const Protocol::SearchSliceParams &param
     if (!resultSet->Next()) {
         return false;
     }
-    int col = resultStartIndex;
     uint64_t id = resultSet->GetUint64("id");
     responseBody.id = std::to_string(id);
     responseBody.pid = resultSet->GetString("pid");
@@ -1632,7 +1627,6 @@ OneKernelData JsonTraceDatabase::QueryKernelTid(const uint64_t trackId)
         ServerLog::Error("QueryKernelTid. Failed to get result set.", stmt->GetErrorMessage());
         return oneKernel;
     }
-    uint64_t tid = 0;
     if (resultSet->Next()) {
         oneKernel.threadId = resultSet->GetString("tid");
         oneKernel.pid = resultSet->GetString("pid");
@@ -1668,7 +1662,6 @@ bool JsonTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
         sameOperatorsDetail.timestamp = resultSet->GetUint64(col++) - minTimestamp;
         sameOperatorsDetail.duration = resultSet->GetUint64(col++);
         sameOperatorsDetail.id = resultSet->GetString(col++);
-        auto trackId = resultSet->GetUint64("track_id");
         SliceQuery sliceQuery;
         sliceQuery.db = db;
         sliceQuery.trackId = traceId;
@@ -1726,7 +1719,6 @@ bool JsonTraceDatabase::QueryAffinityOptimizer(const Protocol::KernelDetailsPara
         one.duration = resultSet->GetUint64("duration");
         one.threadId = resultSet->GetString("tid");
         one.id = resultSet->GetString("pid");
-        auto track_id = resultSet->GetUint64("track_id");
         data.emplace_back(one);
     }
     return true;
@@ -1758,7 +1750,6 @@ bool JsonTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetails
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
         one.tid = resultSet->GetString("tid");
-        auto track_id = resultSet->GetUint64("track_id");
         one.inputType = resultSet->GetString("input");
         one.outputType = resultSet->GetString("output");
         data.emplace_back(one);
@@ -1798,7 +1789,6 @@ bool JsonTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSlicePar
         searchAllSlice.name = resultSet->GetString(col++);
         searchAllSlice.timestamp = resultSet->GetUint64(col++) - minTimestamp;
         searchAllSlice.duration = resultSet->GetUint64(col++);
-        auto track_id = resultSet->GetUint64(col++);
         searchAllSlice.id = resultSet->GetString(col++);
         searchAllSlice.tid = resultSet->GetString(col++);
         searchAllSlice.pid = resultSet->GetString(col++);
@@ -1836,7 +1826,6 @@ bool JsonTraceDatabase::QueryAclnnOpCountExceedThreshold(const KernelDetailsPara
         one.duration = resultSet->GetUint64("duration");
         one.pid = resultSet->GetString("pid");
         one.tid = resultSet->GetString("tid");
-        auto track_id = resultSet->GetUint64("track_id");
         data.emplace_back(one);
     }
     return true;
@@ -1906,7 +1895,6 @@ bool JsonTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, c
         one.type = StringUtil::join(rule.opList, ", ");
         one.metaType = rule.fusedOp;
         one.id = rule.note;
-        auto track_id = resultSet->GetUint64("track_id");
         data.emplace_back(one);
     }
     return true;

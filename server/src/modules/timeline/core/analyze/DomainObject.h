@@ -10,7 +10,7 @@ struct SliceDomain {
     uint64_t id = 0;
     uint64_t timestamp = 0;
     uint64_t endTime = 0;
-    int32_t depth = 0;
+    uint32_t depth = 0;
     bool operator < (const SliceDomain &right) const
     {
         if (depth < right.depth) {

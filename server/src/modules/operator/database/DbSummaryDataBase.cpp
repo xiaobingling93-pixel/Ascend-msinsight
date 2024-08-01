@@ -833,7 +833,7 @@ bool DbSummaryDataBase::GenerateQueryFiltersSql(T &reqParams, std::string &sql)
         return true;
     }
     sql += " WHERE ";
-    for (int64_t index = 0; index < reqParams.filters.size(); index++) {
+    for (size_t index = 0; index < reqParams.filters.size(); index++) {
         std::pair<std::string, std::string> filter = reqParams.filters[index];
         if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
             ServerLog::Error("There is an SQL injection attack on this parameter. param: (",

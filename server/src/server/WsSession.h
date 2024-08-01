@@ -25,13 +25,13 @@ public:
     explicit WsSession(WsChannel *channel);
     virtual ~WsSession(){};
     const WsChannel *GetChannel() const;
-    const Status GetStatus() const;
+    WsSession::Status GetStatus() const;
     void SetStatus(Status sessionStatus);
-    const uint32_t GetCreateTime() const;
-    const uint32_t GetStartTime() const;
-    const uint32_t GetStopTime() const;
+    uint32_t GetCreateTime() const;
+    uint32_t GetStartTime() const;
+    uint32_t GetStopTime() const;
     void SetDeadTime(const uint32_t time);
-    const uint32_t GetDeadTime() const;
+    uint32_t GetDeadTime() const;
 
     void OnRequestMessage(const std::string &data);
     void OnResponse(std::unique_ptr<Protocol::Response> responsePtr);

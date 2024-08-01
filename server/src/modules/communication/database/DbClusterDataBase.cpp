@@ -23,14 +23,14 @@ bool DbClusterDataBase::QuerySummaryData(const Protocol::SummaryTopRankParams &r
     }
     if (!requestParams.stepIdList.empty()) {
         stepCondition = " and step in (?";
-        for (int i = 1; i < requestParams.stepIdList.size(); i++) {
+        for (size_t i = 1; i < requestParams.stepIdList.size(); i++) {
             stepCondition.append(",?");
         }
         stepCondition.append(") ");
     }
     if (!requestParams.rankIdList.empty()) {
         rankCondition = " and \"index\" in (?";
-        for (int i = 1; i < requestParams.rankIdList.size(); i++) {
+        for (size_t i = 1; i < requestParams.rankIdList.size(); i++) {
             rankCondition.append(",?");
         }
         rankCondition.append(") ");
@@ -84,15 +84,16 @@ bool DbClusterDataBase::GetStepIdList(Protocol::PipelineStepResponseBody &respon
     return ExecuteGetStepIdList(responseBody, sql);
 }
 
-bool DbClusterDataBase::GetStages(Protocol::PipelineStageParam param, Protocol::PipelineStageResponseBody &responseBody)
+bool DbClusterDataBase::GetStages(Protocol::PipelineStageParam &param,
+                                  Protocol::PipelineStageResponseBody &responseBody)
 {
     std::string sql = "SELECT DISTINCT stage as stageId "
                       "FROM " + TABLE_STEP_TRACE_TIME + " WHERE stage != '' AND step = ?";
     return ExecuteGetStages(param, responseBody, sql);
 }
 
-bool DbClusterDataBase::GetStageAndBubble(Protocol::PipelineStageTimeParam param,
-    Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
+bool DbClusterDataBase::GetStageAndBubble(Protocol::PipelineStageTimeParam &param,
+                                          Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
 {
     std::string sql = "SELECT max(ROUND(stage, 4)) as stageTime, "
                       "max(ROUND(bubble, 4)) as bubbleTime "
@@ -104,8 +105,8 @@ bool DbClusterDataBase::GetStageAndBubble(Protocol::PipelineStageTimeParam param
     return ExecuteGetStageAndBubble(param, stageIds, responseBody, sql);
 }
 
-bool DbClusterDataBase::GetRankAndBubble(Protocol::PipelineRankTimeParam param,
-    Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
+bool DbClusterDataBase::GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
+                                         Protocol::PipelineStageOrRankTimeResponseBody &responseBody)
 {
     std::string sql = "SELECT \"index\" as rankId, "
                       "ROUND(stage, 4) as stageTime, "
@@ -116,17 +117,17 @@ bool DbClusterDataBase::GetRankAndBubble(Protocol::PipelineRankTimeParam param,
     std::vector<std::string> stageIds;
     PrepareForStageId(param.stageId, sql, stageIds);
 
-    return ExecuteGetRankAndBubble(param, stageIds, responseBody, sql);
+    return ExecuteGetRankAndBubble(param, std::move(stageIds), responseBody, std::move(sql));
 }
 
-bool DbClusterDataBase::GetGroups(Protocol::MatrixGroupParam param, Protocol::MatrixGroupResponseBody &responseBody)
+bool DbClusterDataBase::GetGroups(Protocol::MatrixGroupParam &param, Protocol::MatrixGroupResponseBody &responseBody)
 {
     std::string sql = "SELECT DISTINCT rank_set as rank FROM " + TABLE_COMM_ANALYZER_MATRIX;
     return ExecuteGetGroups(param, responseBody, sql);
 }
 
-bool DbClusterDataBase::QueryMatrixList(Protocol::MatrixBandwidthParam param,
-    Protocol::MatrixListResponseBody &responseBody)
+bool DbClusterDataBase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,
+                                        Protocol::MatrixListResponseBody &responseBody)
 {
     std::string sql = "SELECT src_rank as srcRank, dst_rank as dstRank, "
                       "transport_type as transportType, "
@@ -419,7 +420,7 @@ void DbClusterDataBase::PrepareForStageId(std::string &stageIdStr, std::string &
     }
 
     std::string rankSql;
-    for (int i = 0; i < stageIds.size(); i++) {
+    for (size_t i = 0; i < stageIds.size(); i++) {
         if (i == 0) {
             rankSql.append("?");
         }

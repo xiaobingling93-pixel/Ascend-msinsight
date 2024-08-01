@@ -133,8 +133,8 @@ private:
     const std::string counterTable = "counter";
     const std::string timelineParseStatus = "Timeline files parsing status";
     const std::string hcclType = "HCCL";
-    const int unit = 1000;
-    const int tolerance = 500; // 匹配算子时的范围为±500
+    const uint32_t unit = 1000;
+    const uint32_t tolerance = 500; // 匹配算子时的范围为±500
     bool initStmt = false;
     std::unique_ptr<SqlitePreparedStatement> insertSliceStmt = nullptr;
     std::unique_ptr<SqlitePreparedStatement> updateProcessNameStmt = nullptr;

@@ -685,6 +685,7 @@ std::unique_ptr <SqliteResultSet> GetEventsViewResult4CANNAPI(std::unique_ptr <S
             return QueryEventsView4SubCANN(stmt, orderByCondition, params);
         }
     }
+    return nullptr;
 }
 
 void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
@@ -722,7 +723,7 @@ void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
     auto indexStart = (params.currentPage - 1) * params.pageSize;
     auto indexEnd = indexStart + params.pageSize;
     indexEnd = indexEnd > details.size() ? details.size() : indexEnd;
-    for (int i = indexStart; i <indexEnd; ++i) {
+    for (uint64_t i = indexStart; i < indexEnd; ++i) {
         body.eventDetailList.emplace_back(std::move(details.at(i)));
     }
     if (metaType == Protocol::PROCESS_TYPE::OVERLAP_ANALYSIS) {
@@ -739,18 +740,25 @@ void ResolveEventsViewResultSet4Db(std::unique_ptr <SqliteResultSet> &resultSet,
     }
 }
 
+std::string TraceDatabaseHelper::GetOrderByCondition(const Protocol::EventsViewParams &params)
+{
+    std::string orderBy = params.orderBy.empty() ? "start" : params.orderBy;
+    if (!StringUtil::CheckSqlValid(orderBy)) {
+        return std::string{};
+    }
+    std::string order = params.order == "descend" ? "DESC" : "ASC";
+    std::string orderByCondition = " ORDER BY " + orderBy + " " + order;
+    return orderByCondition;
+}
+
 bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePreparedStatement> &stmt,
     const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body, uint64_t minTimestamp,
     const std::string& rankId)
 {
-    std::string orderBy = params.orderBy.empty() ? "start" : params.orderBy;
-    if (!StringUtil::CheckSqlValid(orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", orderBy);
+    std::string orderByCondition = GetOrderByCondition(params);
+    if (orderByCondition.empty()) {
         return false;
     }
-    std::string order = params.order == "descend" ? "DESC" : "ASC";
-    std::string orderByCondition = " ORDER BY " + orderBy + " " + order;
-
     auto metaType = GetProcessType(params.metaType);
     std::unique_ptr <SqliteResultSet> resultSet;
     try {
@@ -781,6 +789,9 @@ bool TraceDatabaseHelper::QueryEventsViewData4Db(std::unique_ptr <SqlitePrepared
                 } else {
                     resultSet = QueryEventsView4OverlapSub(stmt, orderByCondition, params);
                 }
+                break;
+            default:
+                ServerLog::Warn("No defined query way");
         }
     } catch (DatabaseException &de) {
         ServerLog::Error("Query events view data for DB. Execute query failed: ", de.What());
@@ -857,7 +868,6 @@ void ResolveEventsViewResultSet(std::unique_ptr<SqliteResultSet> &resultSet,
         ptr->duration = resultSet->GetUint64("duration");
         ptr->threadId = resultSet->GetString("threadId");
         ptr->processId = resultSet->GetString("processId");
-        auto track_id = resultSet->GetUint64("track_id");
         ptr->id = std::to_string(resultSet->GetUint64("id"));
         details.emplace_back(std::move(ptr));
     }
@@ -868,7 +878,7 @@ void ResolveEventsViewResultSet(std::unique_ptr<SqliteResultSet> &resultSet,
     auto indexStart = (params.currentPage - 1) * params.pageSize;
     auto indexEnd = indexStart + params.pageSize;
     indexEnd = indexEnd > details.size() ? details.size() : indexEnd;
-    for (int i = indexStart; i <indexEnd; ++i) {
+    for (uint64_t i = indexStart; i < indexEnd; ++i) {
         body.eventDetailList.emplace_back(std::move(details.at(i)));
     }
     for (const auto &item: eventsViewColumnsMap.at(metaType)) {
@@ -946,13 +956,11 @@ void TraceDatabaseHelper::QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<Sq
 {
     uint64_t tempStartTime = 0;
     uint64_t tempEndTime = 0;
-    uint64_t maxTime = 0;
     while (resultSet->Next()) {
         uint64_t curStartTime = resultSet->GetUint64("timestamp");
         uint64_t curEndTime = resultSet->GetUint64("end_time");
         if (tempEndTime + unitTime >= curStartTime) {
             tempEndTime = tempEndTime > curEndTime ? tempEndTime : curEndTime;
-            maxTime = tempEndTime;
             continue;
         }
         ThreadTracesSummary summary;
@@ -998,7 +1006,7 @@ void TraceDatabaseHelper::FilterTopLevelApi(std::vector<Protocol::FlowLocation> 
     std::vector<uint64_t> endList;
     uint32_t index = 0;
     for (auto &item : originData) {
-        int32_t depth = 0;
+        uint32_t depth = 0;
         while (depth < endList.size() && endList[depth] > item.timestamp) {
             depth++;
         }
