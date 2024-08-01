@@ -10,7 +10,6 @@
     style="enable-background: new 0 0 16 12"
     xml:space="preserve"
   >
-    <title>folder</title>
     <g id="控件">
       <g
         id="Dark_x2F_2-控件_x2F_14树_x2F_02部件_x2F_02带图标_x2F_01default"

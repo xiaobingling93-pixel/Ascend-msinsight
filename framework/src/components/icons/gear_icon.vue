@@ -7,7 +7,6 @@
     xmlns="http://www.w3.org/2000/svg"
     xmlns:xlink="http://www.w3.org/1999/xlink"
   >
-    <title>gear</title>
     <g id="gear" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
       <g id="编组" transform="translate(1.000000, 1.000000)" fill="#D1D1D1" fill-rule="nonzero">
         <path

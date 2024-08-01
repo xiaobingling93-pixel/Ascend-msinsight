@@ -10,7 +10,6 @@
     style="enable-background: new 0 0 16 16"
     xml:space="preserve"
   >
-    <title>file</title>
     <g id="icons_x2F_light_x2F_normal_x2F_project_x2F_file1">
       <g id="编组" transform="translate(2.999993, 1.000000)">
         <path
