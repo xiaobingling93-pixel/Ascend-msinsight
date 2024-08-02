@@ -475,6 +475,8 @@ bool SourceFileParser::GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &resp
         responseBody.blockDim = JsonUtil::GetString(baseInfoJson.value(), "block_dim");
         responseBody.mixBlockDim = JsonUtil::GetString(baseInfoJson.value(), "mix_block_dim");
         responseBody.duration = JsonUtil::GetString(baseInfoJson.value(), "duration");
+        responseBody.deviceId = JsonUtil::GetString(baseInfoJson.value(), "device_id");
+        responseBody.pid = JsonUtil::GetString(baseInfoJson.value(), "pid");
         Value blockDetailsValue;
         if (responseBody.opType == "mix" && baseInfoJson.value().HasMember("mix_block_detail")) {
             blockDetailsValue = baseInfoJson.value()["mix_block_detail"];
