@@ -4,7 +4,6 @@
 
 <template>
     <svg width="16px" height="16px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-        <title>icon/dark/normal/project/general/gearPlain备份</title>
         <g id="高保真" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
             <g id="Timeline-view-light" transform="translate(-71.000000, -76.000000)">
                 <g id="编组-29备份" transform="translate(0.000000, 24.000000)">
