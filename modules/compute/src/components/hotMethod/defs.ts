@@ -27,16 +27,16 @@ export interface Iline {
 
 export interface Ilinetable {
     [LINE]: number;
-    [CYCLES]?: number;
-    [INSTRUCIONS_EXECUTED]?: number;
     [ADDRESS_RANGE]?: string[][];
+    cycles?: number;
+    instructionsExecuted?: number;
 };
 
 export interface InstrsColumnType {
     [ADDESS]: string ;
     [SOURCE]: string ;
     [PIPE]: string ;
-    [INSTRUCIONS_EXECUTED]: number;
-    [CYCLES]: number;
     maxCycles: number;
+    cycles: number;
+    instructionsExecuted: number;
 };
