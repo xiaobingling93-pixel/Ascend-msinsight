@@ -81,6 +81,8 @@ template<> std::optional<document_t> ToResponseJson<DetailsBaseInfoResponse>(con
     JsonUtil::AddMember(body, "blockDim", response.body.blockDim, allocator);
     JsonUtil::AddMember(body, "mixBlockDim", response.body.mixBlockDim, allocator);
     JsonUtil::AddMember(body, "duration", response.body.duration, allocator);
+    JsonUtil::AddMember(body, "deviceId", response.body.deviceId, allocator);
+    JsonUtil::AddMember(body, "pid", response.body.pid, allocator);
 
     json_t blockDetail(kObjectType);
     JsonUtil::AddMember(blockDetail, "headerName", response.body.blockDetail.headerName, allocator);

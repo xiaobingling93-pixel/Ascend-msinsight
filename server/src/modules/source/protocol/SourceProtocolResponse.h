@@ -69,6 +69,8 @@ struct DetailsBaseInfoResBody {
     std::string blockDim;
     std::string mixBlockDim;
     std::string duration;
+    std::string deviceId;
+    std::string pid;
     TableDetail blockDetail;
     std::vector<std::string> advice;
 };
