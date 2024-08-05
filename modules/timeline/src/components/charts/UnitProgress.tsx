@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import type { KeyedInsightUnit } from '../ChartContainer/Units/types';
 import { Progress } from 'lib/components';
 import { useTheme } from '@emotion/react';
+import { runInAction } from 'mobx';
 
 export const UnitProgress = ({ unit, realProgress, showProgress }: { unit: KeyedInsightUnit; realProgress: number; showProgress: boolean }): JSX.Element => {
     const [progress, setProgress] = useState(0);
@@ -18,7 +19,9 @@ export const UnitProgress = ({ unit, realProgress, showProgress }: { unit: Keyed
                 setIsShowProgress(showProgress);
             }, 300);
             setTimeout(() => {
-                unit.shouldParse = false;
+                runInAction(() => {
+                    unit.shouldParse = false;
+                });
             }, 300);
         } else {
             setIsShowProgress(showProgress);
