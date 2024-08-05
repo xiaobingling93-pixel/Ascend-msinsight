@@ -43,13 +43,13 @@ const useCodeColumns = (): ColumnsType<Ilinetable> => {
     const { t } = useTranslation('source');
     return [{
         title: t('InstructionsExecuted'),
-        dataIndex: 'Instructions Executed',
+        dataIndex: 'instructionsExecuted',
         ellipsis: true,
         width: 155,
     },
     {
         title: t('Cycles'),
-        dataIndex: 'Cycles',
+        dataIndex: 'cycles',
         ellipsis: true,
         width: 50,
     }];
