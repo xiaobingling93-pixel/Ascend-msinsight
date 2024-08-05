@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Button } from 'lib/components';
@@ -16,6 +16,7 @@ import { totalOperator } from './Filter';
 import ResizeTable from 'lib/ResizeTable';
 import type { Session } from '../../entity/session';
 import CollapsiblePanel from 'lib/CollapsiblePanel';
+import { CaretDownIcon, CaretRightIcon } from 'lib/Icon';
 
 export interface DataType {
     [prop: string]: any;
@@ -115,7 +116,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
 };
 
 const useRankColumns = (handleAction: VoidFunction[], conditions: any, t: TFunction): any => {
-    const [showOperator, setExpandedKeys] = handleAction;
+    const [showOperator, handleExpand] = handleAction;
     return [
         {
             title: t('tableHead.Rank ID'),
@@ -124,6 +125,14 @@ const useRankColumns = (handleAction: VoidFunction[], conditions: any, t: TFunct
             sorter: (a: DataType, b: DataType) => Number(a.rankId) - Number(b.rankId),
             ellipsis: true,
             width: 70,
+            render: (_: any, record: DataType): React.ReactNode => {
+                const iconProps = {
+                    onClick: (): void => handleExpand(record),
+                    style: { cursor: 'pointer', float: 'left', marginRight: '5px' },
+                };
+                const icon = record.expanded === true ? (<CaretDownIcon {...iconProps}/>) : <CaretRightIcon {...iconProps}/>;
+                return <div>{icon}{record.rankId} </div>;
+            },
         },
         ...useCommonColumns(),
         {
@@ -146,16 +155,7 @@ const useRankColumns = (handleAction: VoidFunction[], conditions: any, t: TFunct
             minWidth: 110,
             render: (_: any, record: DataType) => (<Button type="link"
                 onClick={(): void => {
-                    setExpandedKeys((pre: any) => {
-                        const list = [...pre];
-                        const keyIndex = list.indexOf(record[rowKey]);
-                        if (keyIndex === -1) {
-                            list.push(record[rowKey]);
-                        } else {
-                            list.splice(keyIndex, 1);
-                        }
-                        return list;
-                    });
+                    handleExpand(record);
                 }}>{t('tableHead.see more')}<DownOutlined/></Button>),
             display: conditions.operatorName === totalOperator,
         },
@@ -166,36 +166,51 @@ const CommunicationTimeTable = observer((props:
 {dataSource?: DataType[];showOperator: (rankid: string) => void;conditions: any;updateSort: VoidFunction; session: Session}) => {
     const { t } = useTranslation('communication');
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
-    const columns = useRankColumns([props.showOperator, setExpandedKeys], props.conditions, t);
-    const dataSource: DataType[] = props.dataSource ?? [];
+    const handleExpand = (record: DataType): void => {
+        setExpandedKeys((pre: any) => {
+            const list = [...pre];
+            const keyIndex = list.indexOf(record[rowKey]);
+            if (keyIndex === -1) {
+                list.push(record[rowKey]);
+            } else {
+                list.splice(keyIndex, 1);
+            }
+            return list;
+        });
+    };
+    const dataSource: DataType[] = useMemo(() => {
+        const newData: DataType[] = props.dataSource ?? [];
+        return newData.map(record => ({ ...record, expanded: expandedRowKeys.includes(record[rowKey]) }));
+    }, [props.dataSource, expandedRowKeys]);
+
+    const columns = useMemo(() => useRankColumns([props.showOperator, handleExpand], props.conditions, t),
+        [handleExpand, props.conditions, t, expandedRowKeys.length]);
+
     useEffect(() => {
         setExpandedKeys([]);
     }, [props.dataSource]);
-    return (
-        <CollapsiblePanel title={t('sessionTitle.DataAnalysisCommunicationTime')}>
-            <ResizeTable
-                loading={!props.session.durationFileCompleted}
-                dataSource={dataSource}
-                columns={columns}
-                expandable={{
-                    expandedRowRender: (record: DataType): JSX.Element => <div style={{ marginLeft: '0' }}>
-                        <OperatorsTable record={record} conditions={props.conditions}/>
-                    </div>,
-                    expandedRowKeys,
-                    expandIcon: (): JSX.Element => (<></>),
-                }}
-                rowKey={rowKey}
-                pagination={getPageConfigWithAllData(dataSource.length)}
-                onChange={(pagination: any, filters: any, sorter: any, extra: any): void => {
-                    if (extra.action === 'sort') {
-                        setExpandedKeys([]);
-                        props.updateSort(extra.currentDataSource);
-                    }
+    return (<CollapsiblePanel title={t('sessionTitle.DataAnalysisCommunicationTime')}>
+        <ResizeTable
+            loading={!props.session.durationFileCompleted}
+            dataSource={dataSource}
+            columns={columns}
+            expandable={{
+                expandedRowRender: (record: DataType): JSX.Element => <div style={{ marginLeft: '0' }}>
+                    <OperatorsTable record={record} conditions={props.conditions}/>
+                </div>,
+                expandedRowKeys,
+                showExpandColumn: false,
+            }}
+            rowKey={rowKey}
+            pagination={getPageConfigWithAllData(dataSource.length)}
+            onChange={(pagination: any, filters: any, sorter: any, extra: any): void => {
+                if (extra.action === 'sort') {
+                    setExpandedKeys([]);
+                    props.updateSort(extra.currentDataSource);
                 }
-                }
-            />
-        </CollapsiblePanel>
-    );
+            } }
+        />
+    </CollapsiblePanel>);
 });
 
 export default CommunicationTimeTable;
