@@ -83,13 +83,13 @@ const useInstrsColumns = (): ColumnsType<InstrsColumnType> => {
         },
         {
             title: t('InstructionsExecuted'),
-            dataIndex: 'Instructions Executed',
+            dataIndex: 'instructionsExecuted',
             ellipsis: true,
             width: 165,
         },
         {
             title: t('Cycles'),
-            dataIndex: 'Cycles',
+            dataIndex: 'cycles',
             width: 150,
             ellipsis: true,
             sorter: true,
@@ -249,8 +249,8 @@ const Index = observer(({ session }: { session: Session }) => {
         const coreIndex = session.coreList.findIndex(item => item === core);
         const list = records.map((item: JsonInstructionType, index: number) => ({
             ...item,
-            Cycles: item.Cycles?.[coreIndex] ?? '',
-            'Instructions Executed': item['Instructions Executed']?.[coreIndex] ?? '',
+            cycles: item.Cycles?.[coreIndex] ?? '',
+            instructionsExecuted: item['Instructions Executed']?.[coreIndex] ?? '',
             index: index + 1,
             maxCycles: 0,
         }));
@@ -273,8 +273,8 @@ const Index = observer(({ session }: { session: Session }) => {
         const records: Iline[] = res?.lines ?? [];
         const list = records.map((item: Iline, index: number) => ({
             ...item,
-            Cycles: item.Cycle,
-            'Instructions Executed': item['Instruction Executed'],
+            cycles: item.Cycle,
+            instructionsExecuted: item['Instruction Executed'],
         }));
         return list.reverse();
     };
