@@ -193,8 +193,8 @@ const bandwidthOption: echarts.EChartsOption = {
     },
     legend: {
         data: [
-            { name: 'Stage Time', textStyle: { color: COLOR.Grey50 } },
-            { name: 'Bubble Time', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Stage Time', textStyle: { color: COLOR.GREY_50 } },
+            { name: 'Bubble Time', textStyle: { color: COLOR.GREY_50 } },
         ],
     },
     xAxis:
@@ -205,7 +205,7 @@ const bandwidthOption: echarts.EChartsOption = {
                 type: 'shadow',
             },
             axisLabel: {
-                color: COLOR.Grey40,
+                color: COLOR.GREY_40,
                 width: 300,
                 overflow: 'truncate',
             },
@@ -216,7 +216,7 @@ const bandwidthOption: echarts.EChartsOption = {
             name: 'Times(us)',
             axisLabel: {
                 formatter: '{value}',
-                color: COLOR.Grey40,
+                color: COLOR.GREY_40,
             },
         },
     ],

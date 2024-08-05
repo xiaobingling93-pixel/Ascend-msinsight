@@ -112,8 +112,8 @@ const defaultVisualMap = {
     orient: 'horizontal',
     left: 'center',
     bottom: '0',
-    inRange: { color: [COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3] },
-    textStyle: { color: COLOR.Grey40 },
+    inRange: { color: [COLOR.BAND_0, COLOR.BAND_1, COLOR.BAND_2, COLOR.BAND_3] },
+    textStyle: { color: COLOR.GREY_40 },
     dimension: 2,
     itemHeight: 300, // 调整宽度
 };
@@ -135,7 +135,7 @@ function wrapData(dataSource: any, t: TFunction): any {
             option.visualMap.max = max;
             option.visualMap.min = min;
             if (min === max) {
-                option.visualMap.inRange = { color: [COLOR.Band1] };
+                option.visualMap.inRange = { color: [COLOR.BAND_1] };
             }
             const minDecimalCount = getDecimalCount(min);
             const maxDecimalCount = getDecimalCount(max);
@@ -213,8 +213,8 @@ const baseOption: any = {
         orient: 'horizontal',
         left: 'center',
         bottom: '0',
-        inRange: { color: [COLOR.Band0, COLOR.Band1, COLOR.Band2, COLOR.Band3] },
-        textStyle: { color: COLOR.Grey40 },
+        inRange: { color: [COLOR.BAND_0, COLOR.BAND_1, COLOR.BAND_2, COLOR.BAND_3] },
+        textStyle: { color: COLOR.GREY_40 },
         dimension: 2,
     },
     series: [
@@ -234,7 +234,7 @@ const baseOption: any = {
             emphasis: {
                 itemStyle: {
                     shadowBlur: 10,
-                    shadowColor: COLOR.Grey50,
+                    shadowColor: COLOR.GREY_50,
                 },
             },
         },
@@ -250,12 +250,12 @@ const transportTypeOption = {
         bottom: '0',
         splitNumber: 1,
         pieces: [
-            { value: 0, label: allTransporType[0], color: COLOR.Band0 },
-            { value: 1, label: allTransporType[1], color: COLOR.Band1 },
-            { value: 2, label: allTransporType[2], color: COLOR.Band2 },
-            { value: 3, label: allTransporType[3], color: COLOR.Band3 },
+            { value: 0, label: allTransporType[0], color: COLOR.BAND_0 },
+            { value: 1, label: allTransporType[1], color: COLOR.BAND_1 },
+            { value: 2, label: allTransporType[2], color: COLOR.BAND_2 },
+            { value: 3, label: allTransporType[3], color: COLOR.BAND_3 },
         ],
-        textStyle: { color: COLOR.Grey40 },
+        textStyle: { color: COLOR.GREY_40 },
         dimension: 2,
     },
 };

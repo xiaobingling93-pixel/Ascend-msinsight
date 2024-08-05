@@ -49,13 +49,13 @@ interface AdviceAndSummary {
 }
 
 const baseOptionLegendData = [
-    { name: 'Preparing', textStyle: { color: COLOR.Grey50 } },
-    { name: 'Pure Computing', textStyle: { color: COLOR.Grey50 } },
-    { name: 'Communication(Overlapped)', textStyle: { color: COLOR.Grey50 } },
-    { name: 'Communication(Not Overlapped)', textStyle: { color: COLOR.Grey50 } },
-    { name: 'Free', textStyle: { color: COLOR.Grey50 } },
-    { name: 'Total Computing Ratio', textStyle: { color: COLOR.Grey50 } },
-    { name: 'Communication Ratio', textStyle: { color: COLOR.Grey50 } },
+    { name: 'Preparing', textStyle: { color: COLOR.GREY_50 } },
+    { name: 'Pure Computing', textStyle: { color: COLOR.GREY_50 } },
+    { name: 'Communication(Overlapped)', textStyle: { color: COLOR.GREY_50 } },
+    { name: 'Communication(Not Overlapped)', textStyle: { color: COLOR.GREY_50 } },
+    { name: 'Free', textStyle: { color: COLOR.GREY_50 } },
+    { name: 'Total Computing Ratio', textStyle: { color: COLOR.GREY_50 } },
+    { name: 'Communication Ratio', textStyle: { color: COLOR.GREY_50 } },
 ];
 
 const commonSeries: any = {
@@ -161,7 +161,7 @@ const baseOption: any = {
             nameGap: 15,
             nameTextStyle: { fontWeight: 'bold', fontSize: '1rem', padding: [0, 10, 0, 0] },
             axisLabel: {
-                color: COLOR.Grey40,
+                color: COLOR.GREY_40,
             },
         },
     ],
@@ -171,7 +171,7 @@ const baseOption: any = {
             name: 'Time(μs)',
             axisLabel: {
                 formatter: '{value}',
-                color: COLOR.Grey40,
+                color: COLOR.GREY_40,
             },
         },
         {
@@ -180,7 +180,7 @@ const baseOption: any = {
             min: 0,
             axisLabel: {
                 formatter: '{value}%',
-                color: COLOR.Grey40,
+                color: COLOR.GREY_40,
             },
             splitLine: commonEchartsOptions.splitLineY,
         },

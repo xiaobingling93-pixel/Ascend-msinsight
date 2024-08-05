@@ -235,8 +235,8 @@ const bandwidthOption: echarts.EChartsOption = {
     },
     legend: {
         data: [
-            { name: 'Packet Number', textStyle: { color: COLOR.Grey50 } },
-            { name: 'Bandwidth(GB/s)', textStyle: { color: COLOR.Grey50 } },
+            { name: 'Packet Number', textStyle: { color: COLOR.GREY_50 } },
+            { name: 'Bandwidth(GB/s)', textStyle: { color: COLOR.GREY_50 } },
         ],
         tooltip: {
             show: true,
@@ -258,7 +258,7 @@ const bandwidthOption: echarts.EChartsOption = {
             type: 'shadow',
         },
         axisLabel: {
-            color: COLOR.Grey40,
+            color: COLOR.GREY_40,
         },
     },
     yAxis: [
@@ -268,7 +268,7 @@ const bandwidthOption: echarts.EChartsOption = {
             name: 'Packet Number',
             axisLabel: {
                 formatter: '{value}',
-                color: COLOR.Grey40,
+                color: COLOR.GREY_40,
                 width: 60,
                 overflow: 'break',
             },
@@ -278,7 +278,7 @@ const bandwidthOption: echarts.EChartsOption = {
             name: 'Bandwidth(GB/s)',
             axisLabel: {
                 formatter: '{value} GB/s',
-                color: COLOR.Grey40,
+                color: COLOR.GREY_40,
                 width: 85,
                 overflow: 'break',
             },

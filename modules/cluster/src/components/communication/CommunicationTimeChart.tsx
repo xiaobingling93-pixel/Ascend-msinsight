@@ -54,12 +54,12 @@ const baseOption: any = {
     legend: {
         bottom: 0,
         data: [
-            { name: 'Elapse Time', textStyle: { color: COLOR.Grey50 } },
-            { name: 'Transit Time', textStyle: { color: COLOR.Grey50 } },
-            { name: 'Synchronization Time', textStyle: { color: COLOR.Grey50 } },
-            { name: 'Wait Time', textStyle: { color: COLOR.Grey50 } },
-            { name: 'Synchronization Time Ratio', textStyle: { color: COLOR.Grey50 } },
-            { name: 'Wait Time Ratio', textStyle: { color: COLOR.Grey50 } }],
+            { name: 'Elapse Time', textStyle: { color: COLOR.GREY_50 } },
+            { name: 'Transit Time', textStyle: { color: COLOR.GREY_50 } },
+            { name: 'Synchronization Time', textStyle: { color: COLOR.GREY_50 } },
+            { name: 'Wait Time', textStyle: { color: COLOR.GREY_50 } },
+            { name: 'Synchronization Time Ratio', textStyle: { color: COLOR.GREY_50 } },
+            { name: 'Wait Time Ratio', textStyle: { color: COLOR.GREY_50 } }],
         tooltip: {
             show: true,
             formatter: function () {
@@ -78,7 +78,7 @@ const baseOption: any = {
                 type: 'shadow',
             },
             axisLabel: {
-                color: COLOR.Grey40,
+                color: COLOR.GREY_40,
             },
         },
     ],
@@ -88,7 +88,7 @@ const baseOption: any = {
             name: 'Time(ms)',
             axisLabel: {
                 formatter: '{value}',
-                color: COLOR.Grey40,
+                color: COLOR.GREY_40,
             },
         },
         {
@@ -96,7 +96,7 @@ const baseOption: any = {
             name: 'Ratio',
             axisLabel: {
                 formatter: '{value}',
-                color: COLOR.Grey40,
+                color: COLOR.GREY_40,
             },
             splitLine: commonEchartsOptions.splitLineY,
         },

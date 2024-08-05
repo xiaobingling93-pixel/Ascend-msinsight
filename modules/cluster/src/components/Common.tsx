@@ -180,13 +180,13 @@ export const checkDomDisplay = (dom: HTMLElement): boolean => {
 
 export const COLOR = {
     BRIGHT_BLUE: '#7df7ff',
-    Grey20: '#cacaca',
-    Grey40: '#8D98AA',
-    Grey50: '#8D98AA',
-    Band0: '#f82d18',
-    Band1: '#eac299',
-    Band2: '#c7eef5',
-    Band3: '#0177ff',
+    GREY_20: '#cacaca',
+    GREY_40: '#8D98AA',
+    GREY_50: '#8D98AA',
+    BAND_0: '#f82d18',
+    BAND_1: '#eac299',
+    BAND_2: '#c7eef5',
+    BAND_3: '#0177ff',
 };
 
 interface AnyFunction {
@@ -292,7 +292,7 @@ export const commonEchartsOptions: {
     },
     splitLineY: {
         lineStyle: {
-            color: COLOR.Grey20,
+            color: COLOR.GREY_20,
             type: 'dashed',
         },
     },
