@@ -191,7 +191,7 @@ const filterNode = async (value: string, data: ResourceItem, node: Node): Promis
 };
 
 function removeTrailingSlashes(str: string) {
-  return str.replace(/[^\/\\][\/\\]+$/, (match) => match.substr(0,1));
+  return str.replace(/[^\/\\][\/\\]+$/, (match: string) => match.substr(0,1));
 }
 
 
@@ -245,7 +245,7 @@ const handleMounted = () => {
 };
 
 const doCheckFileConflict = async (projectName: string) => {
-    const currentkey = treeRef.value.getCurrentKey().replace(/[^\\/][\\/]+$/, (match) => match.substr(0,1));
+    const currentkey = treeRef.value.getCurrentKey().replace(/[^\\/][\\/]+$/, (match: string) => match.substr(0,1));
     const curProjectName = projectName === '' ? currentkey : projectName;
     if (currentkey && currentkey === state.inputPath) {
         setCurrentPath(currentkey);
@@ -262,7 +262,7 @@ const doCheckFileConflict = async (projectName: string) => {
 };
 
 const doSetCurrentPath = (projectName: string, isConflict: boolean) => {
-    const currentkey = treeRef.value.getCurrentKey().replace(/[^\\/][\\/]+$/, (match) => match.substr(0,1));
+    const currentkey = treeRef.value.getCurrentKey().replace(/[^\\/][\\/]+$/, (match: string) => match.substr(0,1));
     const curProjectName = projectName === '' ? currentkey : projectName;
     if (currentkey && currentkey === state.inputPath) {
         setCurrentPath(currentkey);
