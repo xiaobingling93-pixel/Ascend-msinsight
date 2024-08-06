@@ -21,8 +21,8 @@
       "Show in events view": "在事件视图中显示",
       "Show python call stack": "显示python调用栈",
       "Hide python call stack": "隐藏python调用栈",
-      "Collapse all": "收起全部",
-      "Expand all": "展开全部",
+      "Collapse all": "收起全部子项",
+      "Expand all": "展开全部子项",
       "Hide flag events": "隐藏SET/WAIT事件",
       "Show flag events": "显示SET/WAIT事件"
     },
