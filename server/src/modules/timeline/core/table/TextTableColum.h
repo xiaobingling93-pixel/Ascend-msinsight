@@ -10,34 +10,34 @@ namespace Module {
 namespace Timeline {
 #pragma region << Slice Table Info>>
 namespace SliceColumn {
-const std::string ID = "id";
-const std::string TIMESTAMP = "timestamp";
-const std::string DURATION = "duration";
-const std::string NAME = "name";
-const std::string TRACKID = "track_id";
-const std::string CAT = "cat";
-const std::string ARGS = "args";
-const std::string CNAME = "cname";
-const std::string ENDTIME = "end_time";
-const std::string FLAGID = "flag_id";
+constexpr std::string_view ID = "id";
+constexpr std::string_view TIMESTAMP = "timestamp";
+constexpr std::string_view DURATION = "duration";
+constexpr std::string_view NAME = "name";
+constexpr std::string_view TRACKID = "track_id";
+constexpr std::string_view CAT = "cat";
+constexpr std::string_view ARGS = "args";
+constexpr std::string_view CNAME = "cname";
+constexpr std::string_view ENDTIME = "end_time";
+constexpr std::string_view FLAGID = "flag_id";
 }
 #pragma endregion
 namespace FlowColumn {
-const std::string ID = "id";
-const std::string FLOW_ID = "flow_id";
-const std::string NAME = "name";
-const std::string CAT = "cat";
-const std::string TRACK_ID = "track_id";
-const std::string TIMESTAMP = "timestamp";
-const std::string TYPE = "type";
+constexpr std::string_view ID = "id";
+constexpr std::string_view FLOW_ID = "flow_id";
+constexpr std::string_view NAME = "name";
+constexpr std::string_view CAT = "cat";
+constexpr std::string_view TRACK_ID = "track_id";
+constexpr std::string_view TIMESTAMP = "timestamp";
+constexpr std::string_view TYPE = "type";
 }
 
 namespace ThreadColumn {
-const std::string TRACK_ID = "track_id";
-const std::string TID = "tid";
-const std::string PID = "pid";
-const std::string THREAD_NAME = "thread_name";
-const std::string THREAD_SORT_INDEX = "thread_sort_index";
+constexpr std::string_view TRACK_ID = "track_id";
+constexpr std::string_view TID = "tid";
+constexpr std::string_view PID = "pid";
+constexpr std::string_view THREAD_NAME = "thread_name";
+constexpr std::string_view THREAD_SORT_INDEX = "thread_sort_index";
 }
 }
 }

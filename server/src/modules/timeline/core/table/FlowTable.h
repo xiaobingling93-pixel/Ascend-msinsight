@@ -23,9 +23,9 @@ public:
     ~FlowTable() = default;
 
 protected:
-    const std::unordered_map<std::string, assign> &GetAssignMap() override
+    const std::unordered_map<std::string_view, assign>& GetAssignMap() override
     {
-        static std::unordered_map<std::string, assign> assignMap = {
+        static std::unordered_map<std::string_view, assign> assignMap = {
             { FlowColumn::ID, IdHandle },
             { FlowColumn::FLOW_ID, FlowIdHandle },
             { FlowColumn::NAME, NameHandle },

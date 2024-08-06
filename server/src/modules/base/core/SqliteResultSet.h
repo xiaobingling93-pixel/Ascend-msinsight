@@ -71,34 +71,34 @@ public:
         return sqlite3_column_double(stmt, index);
     }
 
-    inline std::string GetString(std::string columnName)
+    inline std::string GetString(std::string_view columnName)
     {
-        return GetString(columns.at(columnName));
+        return GetString(columns.at(std::string(columnName)));
     }
 
-    inline int32_t GetInt32(const std::string &columnName)
+    inline int32_t GetInt32(std::string_view columnName)
     {
-        return GetInt32(columns.at(columnName));
+        return GetInt32(columns.at(std::string(columnName)));
     }
 
-    inline int64_t GetInt64(const std::string &columnName)
+    inline int64_t GetInt64(std::string_view columnName)
     {
-        return GetInt64(columns.at(columnName));
+        return GetInt64(columns.at(std::string(columnName)));
     }
 
-    inline uint32_t GetUint32(const std::string &columnName)
+    inline uint32_t GetUint32(std::string_view columnName)
     {
-        return GetUint32(columns.at(columnName));
+        return GetUint32(columns.at(std::string(columnName)));
     }
 
-    inline uint64_t GetUint64(std::string columnName)
+    inline uint64_t GetUint64(std::string_view columnName)
     {
-        return GetUint64(columns.at(columnName));
+        return GetUint64(columns.at(std::string(columnName)));
     }
 
-    inline double GetDouble(const std::string &columnName)
+    inline double GetDouble(std::string_view columnName)
     {
-        return GetDouble(columns.at(columnName));
+        return GetDouble(columns.at(std::string(columnName)));
     }
 
 private:

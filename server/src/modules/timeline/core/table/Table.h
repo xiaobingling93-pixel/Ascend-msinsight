@@ -29,12 +29,12 @@ public:
         sql = "";
         orderByStr = "";
     }
-    Table &Select(const std::string &str)
+    Table &Select(std::string_view str)
     {
         if (std::empty(selectStr)) {
-            selectStr = "SELECT " + str;
+            selectStr = "SELECT " + std::string(str);
         } else {
-            selectStr += "," + str;
+            selectStr += "," + std::string(str);
         }
         auto it = GetAssignMap().find(str);
         if (it != GetAssignMap().end()) {
@@ -45,12 +45,12 @@ public:
         return *this;
     }
 
-    template <typename... Args> Table &Select(const std::string &str, const Args &... args)
+    template <typename... Args> Table &Select(std::string_view str, const Args &... args)
     {
         if (std::empty(selectStr)) {
-            selectStr = "SELECT " + str;
+            selectStr = "SELECT " + std::string(str);
         } else {
-            selectStr += " , " + str;
+            selectStr += " , " + std::string(str);
         }
         auto it = GetAssignMap().find(str);
         if (it != GetAssignMap().end()) {
@@ -62,54 +62,54 @@ public:
         return *this;
     }
 
-    Table &Eq(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &Eq(std::string_view str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        conditionStr += " AND " + str + " = ? ";
+        conditionStr += " AND " + std::string(str) + " = ? ";
         values.emplace_back(value);
         return *this;
     }
 
-    Table &NotEq(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &NotEq(std::string_view str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        conditionStr += " AND " + str + " != ? ";
+        conditionStr += " AND " + std::string(str) + " != ? ";
         values.emplace_back(value);
         return *this;
     }
 
-    Table &Less(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &Less(std::string_view str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        conditionStr += " AND " + str + " < ? ";
+        conditionStr += " AND " + std::string(str) + " < ? ";
         values.emplace_back(value);
         return *this;
     }
 
-    Table &LessEq(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &LessEq(std::string_view str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        conditionStr += " AND " + str + " <= ? ";
+        conditionStr += " AND " + std::string(str) + " <= ? ";
         values.emplace_back(value);
         return *this;
     }
 
-    Table &Greater(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &Greater(std::string_view str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        conditionStr += " AND " + str + " > ? ";
+        conditionStr += " AND " + std::string(str) + " > ? ";
         values.emplace_back(value);
         return *this;
     }
 
-    Table &GreaterEq(const std::string &str, std::variant<uint32_t, uint64_t, std::string> value)
+    Table &GreaterEq(std::string_view str, std::variant<uint32_t, uint64_t, std::string> value)
     {
-        conditionStr += " AND " + str + " >= ? ";
+        conditionStr += " AND " + std::string(str) + " >= ? ";
         values.emplace_back(value);
         return *this;
     }
 
-    Table &OrderBy(const std::string &columnName, TableOrder order)
+    Table &OrderBy(std::string_view columnName, TableOrder order)
     {
         if (std::empty(orderByStr)) {
-            orderByStr = " ORDER BY " + columnName;
+            orderByStr = " ORDER BY " + std::string(columnName);
         } else {
-            orderByStr += " , " + columnName;
+            orderByStr += " , " + std::string(columnName);
         }
         if (order == TableOrder::DESC) {
             orderByStr += " DESC ";
@@ -119,12 +119,12 @@ public:
         return *this;
     }
 
-    Table &GroupBy(const std::string &columnName)
+    Table &GroupBy(std::string_view columnName)
     {
         if (std::empty(groupByStr)) {
-            groupByStr = " GROUP BY " + columnName;
+            groupByStr = " GROUP BY " + std::string(columnName);
         } else {
-            groupByStr += " , " + columnName;
+            groupByStr += " , " + std::string(columnName);
         }
         return *this;
     }
@@ -230,7 +230,7 @@ protected:
         groupByStr.clear();
     }
 
-    virtual const std::unordered_map<std::string, assign> &GetAssignMap() = 0;
+    virtual const std::unordered_map<std::string_view, assign>& GetAssignMap() = 0;
     virtual const std::string &GetTableName() = 0;
 };
 }
