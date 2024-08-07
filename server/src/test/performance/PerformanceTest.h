@@ -17,7 +17,6 @@ struct CaseExecuteStatus {
     std::string refTime;
     std::string realTime;
 };
-
 const std::string SEPARATOR = ",";
 const std::string TEST_RESULT_FILE_NAME = "performance_test.csv";
 
@@ -40,6 +39,8 @@ protected:
 
     static int number;
     static CaseExecuteStatus status;
+    static std::string_view test1P2GBRootPath;
+    static std::string_view test1P5GBRootPath;
 };
 
 }

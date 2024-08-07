@@ -8,12 +8,18 @@
 namespace Performance {
 CaseExecuteStatus PerformanceTest::status = {};
 int PerformanceTest::number = 0;
+std::string_view PerformanceTest::test1P2GBRootPath;
+std::string_view PerformanceTest::test1P5GBRootPath;
 
 void PerformanceTest::SetUpTestCase()
 {
     status = {"No.", "Module", "CaseName", "Result", "Baseline(ms)", "Real Time(ms)"};
     WriteTestCaseResult(status, true);
     number = 0;
+#ifdef _WIN32
+    test1P2GBRootPath = R"(D:\data\2G\ubuntu125_7611_20240206073731998_ascend_pt)";
+    test1P5GBRootPath = R"(D:\data\5G\ubuntu125_72115_20240206115521705_ascend_pt)";
+#endif
 }
 
 void PerformanceTest::TearDownTestCase() {
@@ -58,7 +64,6 @@ void PerformanceTest::SetUp()
 
 void PerformanceTest::TearDown()
 {
-    status.result = ::testing::UnitTest::GetInstance()->ad_hoc_test_result().Passed() ? "pass" : "failed";
     WriteTestCaseResult(status, false);
     Test::TearDown();
 }
