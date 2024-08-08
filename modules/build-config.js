@@ -15,7 +15,7 @@ class ScriptTypePlugin {
         'ScriptTypePlugin',
         (data, cb) => {
           data.html = data.html.replace(
-            /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+            /<script\b[^<]*<\/script>/gi,
             (match) => match.replace('<script', '<script type="module"'),
           );
           cb(null, data);
