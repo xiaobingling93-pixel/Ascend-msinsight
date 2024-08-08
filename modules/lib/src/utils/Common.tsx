@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import * as React from 'react';
+import styled from '@emotion/styled';
 import BaseContainer from '../container/BaseContainer';
 import { MIDescriptions, MIDescriptionsItem } from '../MIDescriptions';
 import COLOR from './Color';
@@ -9,6 +10,7 @@ import { chartVisbilityListener, getResizeEcharts, getDefaultChartOptions } from
 import { Empty } from '../components/index';
 import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
+import { BulbIcon } from '../icon/Icon';
 export { customConsole } from './Console';
 
 export { BaseContainer, MIDescriptions, MIDescriptionsItem, COLOR, chartVisbilityListener, getResizeEcharts, getDefaultChartOptions };
@@ -28,6 +30,39 @@ export const StyledEmpty = ({ descriptor, style }:
         </Empty>
     );
 };
+
+const StyledAdvice = styled.div`
+    color: ${(p): string => p.theme.textColorPrimary};
+    background-color: ${(p): string => p.theme.bgColorLight};
+    line-height: 36px;
+    font-size: 14px;
+    padding: 0 15px;
+    display: flex;
+    flex-direction: row;
+    & > div:first-child {
+        flex: 0 0 auto;
+        vertical-align: top;
+        & > span {
+            margin: 0 8px;
+            font-weight: bold;
+        }
+    }
+    & > div:nth-child(2) {
+        flex: auto;
+        word-break: break-all;
+    }
+`;
+
+export function Advice({ text }: { text: string }): JSX.Element {
+    const { t } = useTranslation();
+    return <StyledAdvice>
+        <div>
+            <BulbIcon/>
+            <span>{t('Advice')}:</span>
+        </div>
+        <div>{text}</div>
+    </StyledAdvice>;
+}
 
 export function limitInput(maxlength?: string): void {
     setTimeout(() => {

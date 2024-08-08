@@ -3,7 +3,8 @@
 */
 import React from 'react';
 import styled from '@emotion/styled';
-import { ReactComponent as HelpSvg } from './img/icons_dark_normal_ascendinsight_help.svg';
+import { ReactComponent as HelpDarkSvg } from './img/help_dark.svg';
+import { ReactComponent as HelpLightSvg } from './img/help_light.svg';
 import { ReactComponent as PinSvg } from './img/icons_dark_normal_ascendinsight_pin.svg';
 import { ReactComponent as UnPinSvg } from './img/icons_dark_normal_ascendinsight_pin_line.svg';
 import { ReactComponent as StartSvg } from './img/icons_dark_normal_mindstudioinsight_start.svg';
@@ -22,6 +23,7 @@ import { ReactComponent as LinkDarkIcon } from './img/link_dark.svg';
 import { ReactComponent as LinkLightIcon } from './img/link_light.svg';
 import { ReactComponent as ResetDarkIcon } from './img/reset_dark.svg';
 import { ReactComponent as ResetLightIcon } from './img/reset_light.svg';
+import { ReactComponent as BulbSvg } from './img/bulb.svg';
 import { themeInstance } from '../theme';
 import CaretRightSvg from './img/caret-right.svg';
 
@@ -44,12 +46,13 @@ interface IIconDivProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTM
 }
 
 const iconMap: Record<string, any> = {
-    help: HelpSvg,
     pin: PinSvg,
     linePin: UnPinSvg,
     start: StartSvg,
     caretRight: CaretRightSvg,
+    bulb: BulbSvg,
     dark: {
+        help: HelpDarkSvg,
         flag: FlagDarkIcon,
         filter: FilterDarkIcon,
         search: SearchDarkIcon,
@@ -59,6 +62,7 @@ const iconMap: Record<string, any> = {
         reset: ResetDarkIcon,
     },
     light: {
+        help: HelpLightSvg,
         flag: FlagLightIcon,
         filter: FilterLightIcon,
         search: SearchLightIcon,
@@ -161,7 +165,6 @@ export function SearchIcon(props: ISVGProps): JSX.Element {
 export function LinkIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'link'} {...props } />;
 }
-
 export function PlusIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'plus'} {...props } />;
 }
@@ -171,7 +174,9 @@ export function MinusIcon(props: ISVGProps): JSX.Element {
 export function ResetIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'reset'} {...props } />;
 }
-
 export function StartIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'start'} {...props }/>;
+}
+export function BulbIcon(props: ISVGProps): JSX.Element {
+    return <Icon type={'bulb'} {...props }/>;
 }

@@ -14,6 +14,7 @@ import ResizeTable from 'lib/ResizeTable';
 import type { Session } from '../../entity/session';
 import { type AdviceInfo } from './ComputationCommunicationOverview';
 import CollapsiblePanel from 'lib/CollapsiblePanel';
+import { Advice } from 'lib/CommonUtils';
 
 const useComputingStatisticsColumns = (): ColumnsType => {
     const { t } = useTranslation('summary');
@@ -364,18 +365,7 @@ const AdviceLabel = (props: {advice: AdviceInfo}): JSX.Element => {
             adviceText += t('SummaryAdvice', { type: t(capitalKey), time: value });
         }
     }
-    return (
-        <div style={{ marginBottom: '20px' }}>
-            <CollapsiblePanel
-                secondary
-                title={t('Advice')}
-                headerStyle={{ padding: 0 }}
-                contentStyle={{ paddingLeft: 0, paddingRight: 0 }}
-            >
-                <div className="summary-advice-content">{adviceText}</div>
-            </CollapsiblePanel>
-        </div>
-    );
+    return (<Advice text={adviceText}/>);
 };
 
 const StatisticsTable = (props: {step: string; rankId: string;session: Session; advice: AdviceInfo}): JSX.Element => {
