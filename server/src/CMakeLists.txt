@@ -42,6 +42,7 @@ include_directories(${SRC_HOME_DIR}/modules/timeline/core/analyze)
 include_directories(${SRC_HOME_DIR}/modules/timeline/core/cache)
 include_directories(${SRC_HOME_DIR}/modules/timeline/core/parser)
 include_directories(${SRC_HOME_DIR}/modules/timeline/core/table)
+include_directories(${SRC_HOME_DIR}/modules/timeline/core/dataEngine)
 include_directories(${SRC_HOME_DIR}/modules/timeline/handler)
 include_directories(${SRC_HOME_DIR}/modules/timeline/protocol)
 include_directories(${SRC_HOME_DIR}/modules/summary)
@@ -102,6 +103,7 @@ aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/analyze DIC_MODULES_T
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/cache DIC_MODULES_TIMELINE_CORE_CACHE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/parser DIC_MODULES_TIMELINE_CORE_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/table DIC_MODULES_TIMELINE_CORE_TABLE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/dataEngine DIC_MODULES_TIMELINE_CORE_DATAENGINE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/handler DIC_MODULES_TIMELINE_HANDLER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/protocol DIC_MODULES_TIMELINE_PROTOCOL_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/summary/protocol DIC_MODULES_SUMMARY_SRC)
@@ -166,6 +168,7 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_TIMELINE_CORE_CACHE_SRC}
         ${DIC_MODULES_TIMELINE_CORE_PARSER_SRC}
         ${DIC_MODULES_TIMELINE_CORE_TABLE_SRC}
+        ${DIC_MODULES_TIMELINE_CORE_DATAENGINE_SRC}
         ${DIC_MODULES_TIMELINE_HANDLER_SRC}
         ${DIC_MODULES_TIMELINE_PROTOCOL_SRC}
         ${DIC_MODULES_SUMMARY_SRC}
