@@ -13,7 +13,5 @@ opt-level = 3
 strip = "symbols"
 relocation_model = "pic/pie"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-wry = {registry = "openSources", version="0.24.3" }
+wry = {registry = "openSources", version="0.24.3", features = ["file-drop"] }

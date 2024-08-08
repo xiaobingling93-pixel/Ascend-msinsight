@@ -13,7 +13,6 @@ import {
     clusterCompletedHandler,
     removeSingleRemoteHandler,
     clusterDurationCompletedHandler,
-    dragImportSuccessHandler,
     locateUnitHandler,
     jupyterCompletedHandler,
     switchLanguageHandler,
@@ -43,7 +42,6 @@ const PARSE_PROGRESS = 'parse/progress';
 const PARSE_FAIL = 'parse/fail';
 const PARSE_CLUSTER_COMPLETED = 'parse/clusterCompleted';
 const PARSE_CLUSTER_STEP2_COMPLETED = 'parse/clusterStep2Completed';
-const DRAG_IMPORT = 'drag/import';
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     [REMOTE_IMPORT]: importRemoteHandler,
     [REMOTE_REMOVE]: removeRemoteHandler,
@@ -55,7 +53,6 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     [PARSE_FAIL]: parseFailHandler,
     [PARSE_CLUSTER_COMPLETED]: clusterCompletedHandler,
     [PARSE_CLUSTER_STEP2_COMPLETED]: clusterDurationCompletedHandler,
-    [DRAG_IMPORT]: dragImportSuccessHandler,
     [JUPYTER_COMPLETED]: jupyterCompletedHandler,
     [MEMORY_COMPLETED]: parseMemorySuccessHandler,
     [OPERATOR_COMPLETED]: parseOperatorSuccessHandler,

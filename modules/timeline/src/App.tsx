@@ -6,7 +6,7 @@ import { ThemeProvider } from '@emotion/react';
 import { SharedConfigProvider } from 'lib/SharedConfigProvider';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppErrorBoundary } from './components/error/AppErrorBoundary';
 import { SessionPageErrorBoundary } from './components/error/SessionPageErrorBoundary';
 import { useRootStore } from './context/context';
@@ -15,8 +15,6 @@ import { platform } from './platforms';
 import { themeInstance } from './theme/theme';
 import type { ThemeItem } from './theme/theme';
 import eventBus, { EventType } from './utils/eventBus';
-import { dragFileImportInit } from './components/dragFile/DragFile';
-import type { CheckResultType } from './components/dragFile/DragFile';
 import connector from './connection';
 import { GlobalStyles } from 'lib/theme';
 
@@ -34,12 +32,6 @@ document.addEventListener('keydown', (e) => {
         eventBus.emit(EventType.GLOBALSEARCH);
     }
 });
-
-const forbidDefaultEvent = (e: MouseEvent): void => {
-    e.preventDefault();
-};
-window.addEventListener('drop', forbidDefaultEvent);
-window.addEventListener('dragover', forbidDefaultEvent);
 
 const ImgWithFallback = ({
     className = '',
@@ -89,26 +81,9 @@ const StatePopover = observer(() => {
     </Mask>;
 });
 
-function handleDropFile(result: CheckResultType): void {
-    connector.send({
-        event: 'dropFile',
-        body: {
-            isCluster: false,
-            reset: true,
-            result: result.files?.map(file => ({
-                cardName: file.attr.name,
-                rankId: file.attr.path,
-                cardPath: file.attr.path,
-                result: true,
-            })),
-        },
-    });
-}
-
 export const App = observer(() => {
     const { insightStore, sessionStore } = useRootStore();
     let session = sessionStore.activeSession;
-    const isInitialized = useRef(false);
     const [locale, setLocale] = useState<'zhCN' | 'enUS'>('zhCN');
     const theme = themeInstance.getThemeType();
 
@@ -126,7 +101,6 @@ export const App = observer(() => {
             window.setTheme(res === 'dark');
         });
         getLanguage();
-        initDragFile();
     }, []);
 
     const getLanguage = (): void => {
@@ -135,18 +109,6 @@ export const App = observer(() => {
         });
     };
 
-    const initDragFile = (): void => {
-        if (!isInitialized.current) {
-            // 防止严格模式下useEffect渲染两次
-            isInitialized.current = true;
-            dragFileImportInit({
-                id: 'root',
-                onDrop: (result: any) => {
-                    handleDropFile(result);
-                },
-            });
-        }
-    };
     return (
         <ThemeProvider theme={theme}>
             <GlobalStyles />

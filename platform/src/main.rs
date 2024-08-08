@@ -4,10 +4,6 @@
 
 #![windows_subsystem = "windows"]
 
-#[cfg(any(target_os = "macos", target_os = "linux"))]
-use std::collections::{HashMap, VecDeque};
-#[cfg(windows)]
-use std::os::windows::process::CommandExt;
 use std::{
     env,
     env::current_exe,
@@ -18,18 +14,22 @@ use std::{
     process::{Child, Command, Stdio},
     sync::Mutex,
 };
-
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+use std::collections::{HashMap, VecDeque};
 #[cfg(windows)]
-use webview2err::show_webview_err_message;
+use std::os::windows::process::CommandExt;
+
 use wry::{
     application::{
         event::{Event, WindowEvent},
         event_loop::{ControlFlow, EventLoop},
-        window::{Icon, Window, WindowBuilder},
+        window::{Window, WindowBuilder},
     },
     http::{header::CONTENT_TYPE, Response},
-    webview::{webview_version, WebViewBuilder},
+    webview::{webview_version, WebViewBuilder, FileDropEvent},
 };
+#[cfg(windows)]
+use webview2err::show_webview_err_message;
 
 #[cfg(windows)]
 mod webview2err;
@@ -119,7 +119,9 @@ fn run_script(
     root_path: &PathBuf,
     port: &str,
 ) -> wry::Result<()> {
-    let event_loop = EventLoop::new();
+    let event_loop = EventLoop::with_user_event();
+    
+    let proxy = event_loop.create_proxy();
 
     let resource_path = root_path.to_path_buf();
     let window: Window = WindowBuilder::new()
@@ -130,6 +132,7 @@ fn run_script(
 
     #[cfg(windows)]
     {
+        use wry::application::window::Icon;
         use wry::application::platform::windows::IconExtWindows;
 
         window.set_window_icon(
@@ -141,7 +144,7 @@ fn run_script(
         );
     }
 
-    let _webview = WebViewBuilder::new(window)
+    let webview = WebViewBuilder::new(window)
         .expect("Failed to create webview builder")
         .with_custom_protocol("wry".into(), move |request| {
             let path = request.uri().path();
@@ -149,7 +152,7 @@ fn run_script(
                 Ok(a) => a.into(),
                 Err(e) => return Err(wry::Error::Io(e)),
             };
-            
+
             let mut mimetype = MIMETYPE_HTML;
             if let Some((_, ext)) = path.rsplit_once('.') {
                 mimetype = match ext {
@@ -169,6 +172,18 @@ fn run_script(
             format!("wry://localhost/resources/profiler/frontend/index.html?port={}", port)
                 .as_str(),
         )?
+        .with_file_drop_handler(move |window, ev| {
+            match ev {
+                FileDropEvent::Dropped(paths) => {
+                    if let Err(e) = proxy.send_event(paths[0].to_owned()) {
+                        eprintln!("app closed unexpectly: {:#?}", e);
+                    }
+                }
+                _ => {}
+            }
+
+            true
+        })
         .build()
         .expect("Failed to create webview");
 
@@ -199,7 +214,11 @@ fn run_script(
                     ControlFlow::Exit
                 }
             }
-
+            Event::UserEvent(path) => {
+                if let Err(e) = webview.evaluate_script(&format!("window.handleDrop({:#?})",path)) {
+                    eprintln!("drop-file ipc failed: {:#?}", e);
+                }
+            }
             _ => (),
         }
     });

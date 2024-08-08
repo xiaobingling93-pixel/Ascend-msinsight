@@ -1,9 +1,11 @@
-use std::{env, io, path::PathBuf, process};
+use std::{env, io};
 
 fn main() -> io::Result<()> {
     if env::var("CARGO_CFG_TARGET_ARCH").is_ok() {
         #[cfg(windows)]
         {
+            use std::{path::PathBuf, process};
+
             let output = PathBuf::from("./bundle/main.lib");
             let input = PathBuf::from("./bundle/main.rc");
             let mut command = process::Command::new("windres");

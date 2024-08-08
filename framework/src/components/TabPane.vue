@@ -17,7 +17,7 @@ import { t } from '@/i18n';
 import { localStorageService, LocalStorageKeys } from '@/utils/local-storage';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
 import SwitchTheme from '@/components/SwitchTheme.vue';
-const { confirmDrop, initProjectName } = useDataSources();
+const { initProjectName } = useDataSources();
 
 type SceneType = 'Default' | 'Cluster' | 'Compute' | 'Jupyter';
 const scene = ref<SceneType>('Default');
@@ -119,8 +119,8 @@ function registerEventListeners() {
         if (!e.data.remote) {
             e.data.remote = useDataSources().lastDataSource;
         }
-        const { remote, args, module, voidResponse, bufferField } = e.data;
-        const result = await request(remote, module, args, voidResponse, bufferField);
+        const { remote, args, module, voidResponse } = e.data;
+        const result = await request(remote, module, args, voidResponse);
         return { dataSource: remote, body: result };
     });
 
@@ -235,13 +235,6 @@ function registerEventListeners() {
             return;
         }
         connector.send({ event: 'deleteRank', body: receiver });
-    });
-
-    connector.addListener('dropFile', (e) => {
-      const res = e.data.body;
-      const path = res.result?.[0]?.cardPath;
-      const dataSource = { remote: LOCAL_HOST, port: PORT, projectName: path, dataPath: [path] };
-      confirmDrop(dataSource, res);
     });
 
     connector.addListener('switchModule', (e) => {

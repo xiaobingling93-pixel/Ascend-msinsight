@@ -103,26 +103,6 @@ export const useDataSources = defineStore('dataSources', () => {
         lastDataSource.value = dataSource;
     };
 
-    const confirmDrop = async (dataSource: DataSource, result: any): Promise<void> => {
-        if (checkExistedServer(dataSource, 'drag', result)) {
-            return;
-        }
-        mergeDataSource(dataSources, dataSource, false);
-        if (isExistedRemote(dataSource)) {
-            addDataPath(dataSource, 'drag', result);
-        } else {
-            const isSuccess = await connectRemote(dataSource);
-            if (isSuccess) {
-                useLoading().open({});
-                connector.send({
-                    event: 'drag/import',
-                    body: { dataSource, result },
-                });
-            }
-        }
-        lastDataSource.value = dataSource;
-    };
-
     const menuTree = computed<TreeNodeType[]>(() => {
             // 树状目录索引值，从1开始计
             let index = 1;
@@ -231,5 +211,5 @@ export const useDataSources = defineStore('dataSources', () => {
         });
     };
 
-    return { menuTree, remove, confirm, confirmDrop, removeSingle, lastDataSource, updateProjectName, initProjectName, checkConflict };
+    return { menuTree, remove, confirm, removeSingle, lastDataSource, updateProjectName, initProjectName, checkConflict };
 });

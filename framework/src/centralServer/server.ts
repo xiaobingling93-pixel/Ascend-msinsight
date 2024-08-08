@@ -44,21 +44,14 @@ export const connectRemote = async function (dataSource: DataSource): Promise<bo
     return true;
 };
 
-export const addDataPath = function(dataSource: DataSource, importMethod?: 'drag', result?: any): void {
+export const addDataPath = function(dataSource: DataSource, result?: any): void {
     const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
     if (connection) {
         useLoading().open({});
-        if (importMethod && result) {
-            connector.send({
-                event: 'drag/import',
-                body: { dataSource, result },
-            });
-        } else {
-            connector.send({
-                event: 'remote/import',
-                body: { dataSource },
-            });
-        }
+        connector.send({
+            event: 'remote/import',
+            body: { dataSource },
+        });
     }
 };
 
@@ -77,8 +70,7 @@ export const request = function (
     moduleName: ModuleName,
     args: DataRequest,
     voidResponse?: boolean,
-    bufferField?: string,
 ): Promise<unknown> {
     const connection: Connection | undefined = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
-    return new Promise((resolve, reject) => connection?.fetch(moduleName, args, voidResponse, bufferField)?.then(resolve, reject));
+    return new Promise((resolve, reject) => connection?.fetch(moduleName, args, voidResponse)?.then(resolve, reject));
 };
