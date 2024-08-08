@@ -11,6 +11,7 @@ import { useSession } from './session';
 import {ElMessage} from 'element-plus';
 import { console } from '@/utils/console';
 import { t } from '@/i18n';
+import { ProjectErrorType } from '@/utils/enmus';
 import { useLoading } from '@/hooks/useLoading';
 
 const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource, isConflict: boolean): boolean => {
@@ -60,23 +61,23 @@ export const useDataSources = defineStore('dataSources', () => {
         return dataSource.dataPath.length > 0 && lastDataSource.value?.dataPath.includes(dataSource.dataPath[0]);
     };
 
-    const checkConflict = async (dataSource: DataSource): Promise<boolean> => {
+    const checkProjectValid = async (dataSource: DataSource): Promise<ProjectErrorType> => {
         if (checkExistedDataSource(dataSources, dataSource)) {
             // 检查文件是否已经存在，如果存在直接结束,视为无冲突
-            return false;
+            return ProjectErrorType.NO_ERRORS;
         }
         try {
             const res = await request(dataSource, 'global', {
-                command: 'files/checkProjectConflict',
+                command: 'files/checkProjectValid',
                 params: {
                     projectName: dataSource.projectName,
                     dataPath: dataSource.dataPath,
                 },
             });
-            return (res as {isConflict: false}).isConflict;
+            return (res as {result: ProjectErrorType.NO_ERRORS}).result;
         } catch {
-            console.log('checkConflict error');
-            return false;
+            console.log('checkProjectValid error');
+            return ProjectErrorType.NO_ERRORS;
         }
     };
 
@@ -211,5 +212,5 @@ export const useDataSources = defineStore('dataSources', () => {
         });
     };
 
-    return { menuTree, remove, confirm, removeSingle, lastDataSource, updateProjectName, initProjectName, checkConflict };
+    return { menuTree, remove, confirm, removeSingle, lastDataSource, updateProjectName, initProjectName, checkProjectValid };
 });

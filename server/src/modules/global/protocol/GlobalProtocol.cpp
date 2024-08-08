@@ -17,7 +17,7 @@ void GlobalProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_PROJECT_EXPLORER_UPDATE, ToProjectExplorerUpdateRequest);
     jsonToReqFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_GET, ToProjectExplorerInfoGetRequest);
     jsonToReqFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_DELETE, ToProjectExplorerInfoDeleteRequest);
-    jsonToReqFactory.emplace(REQ_RES_PROJECT_CONFLICT_CHECK, ToProjectConflictCheckRequest);
+    jsonToReqFactory.emplace(REQ_RES_PROJECT_VALID_CHECK, ToProjectValidCheckRequest);
 }
 
 void GlobalProtocol::RegisterResponseToJsonFuncs()
@@ -27,7 +27,7 @@ void GlobalProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_PROJECT_EXPLORER_UPDATE, ToProjectExplorerInfoUpdateResponseJson);
     resToJsonFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_GET, ToProjectExplorerInfoGetResponseJson);
     resToJsonFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_DELETE, ToProjectExplorerInfoDeleteResponseJson);
-    resToJsonFactory.emplace(REQ_RES_PROJECT_CONFLICT_CHECK, ToProjectConflictCheckResponseJson);
+    resToJsonFactory.emplace(REQ_RES_PROJECT_VALID_CHECK, ToProjectValidCheckResponseJson);
 }
 
 void GlobalProtocol::RegisterEventToJsonFuncs()
@@ -94,9 +94,9 @@ std::unique_ptr<Request> GlobalProtocol::ToProjectExplorerInfoDeleteRequest(cons
     return reqPtr;
 }
 
-std::unique_ptr<Request> GlobalProtocol::ToProjectConflictCheckRequest(const json_t &json, std::string &error)
+std::unique_ptr<Request> GlobalProtocol::ToProjectValidCheckRequest(const json_t &json, std::string &error)
 {
-    std::unique_ptr<ProjectConflictCheckRequest> reqPtr = std::make_unique<ProjectConflictCheckRequest>();
+    std::unique_ptr<ProjectCheckValidRequest> reqPtr = std::make_unique<ProjectCheckValidRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
         error = "Failed to set request project explorer delete info, command is: " + reqPtr->command;
         return nullptr;
@@ -141,10 +141,10 @@ std::optional<document_t> GlobalProtocol::ToProjectExplorerInfoDeleteResponseJso
             dynamic_cast<const ProjectExplorerInfoDeleteResponse &>(response));
 }
 
-std::optional<document_t> GlobalProtocol::ToProjectConflictCheckResponseJson(const Response &response)
+std::optional<document_t> GlobalProtocol::ToProjectValidCheckResponseJson(const Response &response)
 {
-    return ToResponseJson<ProjectConflictCheckResponse>(
-            dynamic_cast<const ProjectConflictCheckResponse &>(response));
+    return ToResponseJson<ProjectCheckValidResponse>(
+            dynamic_cast<const ProjectCheckValidResponse &>(response));
 }
 #pragma endregion
 

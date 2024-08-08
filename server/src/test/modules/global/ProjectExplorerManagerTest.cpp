@@ -60,14 +60,14 @@ TEST_F(ProjectExplorerManagerTest, CheckProjectConflictAndCoverData)
     std::string projectName = "testProject";
     InitProjectExplorerData();
     std::vector<std::string> filePathList;
-    Dic::Protocol::ProjectConflictCheckBody body;
+    Dic::Protocol::ProjectCheckBody body;
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find_last_of("server");
     std::string filePath =
             currPath.substr(0, index + 1) + "/src/test/test_data/test_rank_1/ASCEND_PROFILER_OUTPUT";
     filePathList.push_back(filePath);
-    ProjectExplorerManager::Instance().CheckProjectConflict(projectName, filePathList, body);
-    EXPECT_EQ(body.isConflict, true);
+    bool result = ProjectExplorerManager::Instance().CheckProjectConflict(projectName, filePathList);
+    EXPECT_EQ(result, true);
     bool res = ProjectExplorerManager::Instance().SaveProjectExplorer(projectName, filePathList[0],
         Dic::ProjectTypeEnum::TRACE, "import", std::vector<std::string>());
     EXPECT_EQ(res, true);

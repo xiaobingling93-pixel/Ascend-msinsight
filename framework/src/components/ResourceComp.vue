@@ -9,11 +9,12 @@ import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import { useDataSources } from '@/stores/dataSource';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
 import { console } from '@/utils/console';
+import { ProjectErrorType } from '@/utils/enmus';
 
 const props = defineProps<{ maxPathLen: number, changeConfirmButtonState: (arg0: boolean) => void, show: boolean }>();
 const emit = defineEmits(['input-change']);
 
-const { confirm, checkConflict } = useDataSources();
+const { confirm, checkProjectValid } = useDataSources();
 
 const treeRef = ref();
 
@@ -244,20 +245,20 @@ const handleMounted = () => {
   }, 800);
 };
 
-const doCheckFileConflict = async (projectName: string) => {
+const doCheckFileVallid = async (projectName: string) => {
     const currentkey = treeRef.value.getCurrentKey().replace(/[^\\/][\\/]+$/, (match: string) => match.substr(0,1));
     const curProjectName = projectName === '' ? currentkey : projectName;
     if (currentkey && currentkey === state.inputPath) {
         setCurrentPath(currentkey);
         const dataSource = { remote: LOCAL_HOST, port: PORT, projectName: curProjectName, dataPath: [currentkey] };
         try {
-          return await checkConflict(dataSource);
+          return await checkProjectValid(dataSource);
         } catch {
-          console.log('doCheckFileConflict error.');
-          return false;
+          console.log('doCheckFileVallid error.');
+          return ProjectErrorType.NO_ERRORS;
         }
     } else {
-        return false;
+        return ProjectErrorType.NO_ERRORS;
     }
 };
 
@@ -298,7 +299,7 @@ const doWhileOpenDialog = () => {
 defineExpose({
     doSetCurrentPath,
     doWhileOpenDialog,
-    doCheckFileConflict,
+    doCheckFileVallid,
 });
 </script>
 

@@ -128,12 +128,11 @@ bool ProjectExplorerManager::DeleteProjectAndFilePath(const std::string &project
     return true;
 }
 
-void ProjectExplorerManager::CheckProjectConflict(const std::string &projectName,
-                                                  const std::vector<std::string>& filePathList,
-                                                  Protocol::ProjectConflictCheckBody &body)
+bool ProjectExplorerManager::CheckProjectConflict(const std::string &projectName,
+                                                  const std::vector<std::string>& filePathList)
 {
     if (projectName.empty() || filePathList.empty()) {
-        return;
+        return false;
     }
 
     std::pair<std::string, ParserType> parserType = ParserFactory::GetImportType(filePathList);
@@ -143,14 +142,15 @@ void ProjectExplorerManager::CheckProjectConflict(const std::string &projectName
 
     if (!InitSystemMemoryDb()) {
         Server::ServerLog::Error("Failed to open database. path:", systemMemoryDbPath);
-        return;
+        return false;
     }
     std::vector<ProjectExplorerInfo> infos =
             db->QueryProjectExplorerData(projectName, std::vector<std::string>());
 
-    body.isConflict = !infos.empty() &&
+    bool isConflict = !infos.empty() &&
             (infos[0].projectType != static_cast<int64_t>(projectTypeEnum) || infos[0].importType == "drag"
             || isCoverProjectType(projectTypeEnum));
+    return isConflict;
 }
 
 void ProjectExplorerManager::UpdateProjectDbPath(const std::string &projectName,

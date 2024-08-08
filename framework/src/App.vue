@@ -17,6 +17,7 @@ import {LocalStorageKeys, localStorageService} from '@/utils/local-storage';
 import { useDataSources } from '@/stores/dataSource';
 import { useLoading } from "@/hooks/useLoading";
 import useWatchTranslation from "@/hooks/useWatchTranslation";
+import { ProjectErrorType } from '@/utils/enmus';
 
 let lastWidth = 300;
 const displayAside = ref(true);
@@ -36,7 +37,7 @@ type Language = 'zhCN' | 'enUS';
 
 const locale = computed(() => locales[session.language as Language] ?? enUS);
 
-const {checkConflict, confirm} = useDataSources();
+const {checkProjectValid , confirm} = useDataSources();
 
 const [FileConflict, FileConflictContent] = useWatchTranslation(['FileConflict', 'FileConflictContent'])
 
@@ -60,9 +61,9 @@ onMounted(() => {
           dataPath: [path]
         };
 
-        const isConflict = await checkConflict(dataSource);
+        const isConflict = await checkProjectValid (dataSource);
 
-        if (isConflict) {
+        if (isConflict == ProjectErrorType.PROJECT_NAME_CONFLICT) {
           ElNotification.info({
             title: <string>FileConflict.value,
             message: <string>FileConflictContent.value,

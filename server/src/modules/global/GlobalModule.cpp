@@ -7,7 +7,7 @@
 #include "UpdateProjectExplorerInfoHandler.h"
 #include "GetProjectExplorerInfoHandler.h"
 #include "DeleteProjectExplorerInfoHandler.h"
-#include "CheckProjectConflictHandler.h"
+#include "CheckProjectValidHandler.h"
 #include "GlobalModule.h"
 
 namespace Dic {
@@ -35,7 +35,7 @@ void GlobalModule::RegisterRequestHandlers()
                               std::make_unique<GetProjectExplorerInfoHandler>());
     requestHandlerMap.emplace(REQ_RES_PROJECT_EXPLORER_INFO_DELETE,
                               std::make_unique<DeleteProjectExplorerInfoHandler>());
-    requestHandlerMap.emplace(REQ_RES_PROJECT_CONFLICT_CHECK, std::make_unique<CheckProjectConflictHandler>());
+    requestHandlerMap.emplace(REQ_RES_PROJECT_VALID_CHECK, std::make_unique<CheckProjectValidHandler>());
 }
 
 void GlobalModule::OnRequest(std::unique_ptr<Protocol::Request> request)

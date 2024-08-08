@@ -27,8 +27,7 @@ public:
     bool SaveProjectExplorer(const std::string &projectName, const std::string &filePath, ProjectTypeEnum projectType,
                              const std::string& importType, const std::vector<std::string> &dbPath);
     bool DeleteProjectAndFilePath(const std::string &projectName, const std::vector<std::string>& filePathList);
-    void CheckProjectConflict(const std::string &projectName, const std::vector<std::string>& filePathList,
-                              Protocol::ProjectConflictCheckBody &body);
+    bool CheckProjectConflict(const std::string &projectName, const std::vector<std::string>& filePathList);
     void UpdateProjectDbPath(const std::string &projectName,
                              const std::map<std::string, std::vector<std::string>>& dataPathToDbMap);
     void InitSystemMemoryDbPath(const std::string &filePath);

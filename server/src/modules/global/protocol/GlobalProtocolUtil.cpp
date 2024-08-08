@@ -117,13 +117,13 @@ std::optional<document_t> ToResponseJson<ProjectExplorerInfoDeleteResponse>(
 }
 
 template <>
-std::optional<document_t> ToResponseJson<ProjectConflictCheckResponse>(const ProjectConflictCheckResponse &response)
+std::optional<document_t> ToResponseJson<ProjectCheckValidResponse>(const ProjectCheckValidResponse &response)
 {
     document_t json(kObjectType);
     json_t body(kObjectType);
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     auto &allocator = json.GetAllocator();
-    JsonUtil::AddMember(body, "isConflict", response.body.isConflict, allocator);
+    JsonUtil::AddMember(body, "result", response.body.result, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }

@@ -56,7 +56,7 @@ struct ProjectExplorerInfoDeleteRequest : public Request {
     ProjectExplorerInfoDeleteParams params;
 };
 
-struct ProjectConflictCheckParams {
+struct ProjectCheckParams {
     std::string projectName;
     std::vector<std::string> dataPath;
     bool ConvertToRealPath(std::string &errorMsg)
@@ -65,9 +65,9 @@ struct ProjectConflictCheckParams {
     }
 };
 
-struct ProjectConflictCheckRequest : public Request {
-    ProjectConflictCheckRequest(): Request(REQ_RES_PROJECT_CONFLICT_CHECK) {}
-    ProjectConflictCheckParams params;
+struct ProjectCheckValidRequest : public Request {
+    ProjectCheckValidRequest(): Request(REQ_RES_PROJECT_VALID_CHECK) {}
+    ProjectCheckParams params;
 };
 } // end of namespace Protocol
 } // end of namespace Dic

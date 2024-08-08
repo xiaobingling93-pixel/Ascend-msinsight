@@ -13,10 +13,17 @@
 
 namespace Dic {
 namespace Protocol {
-
 // token.heartCheck
 struct TokenHeartCheckResponse : public Response {
     TokenHeartCheckResponse() : Response(REQ_RES_HEART_CHECK) {};
+};
+
+enum class ProjectErrorType {
+    NO_ERRORS = 0,
+    PROJECT_NAME_CONFLICT = 1,
+    IS_UNSAFE_PATH = 2,
+    EXISTING_LARGE_FILES = 3,
+    OTHER = -1
 };
 
 struct File {
@@ -76,13 +83,14 @@ struct ProjectExplorerInfoDeleteResponse : public Response {
     ProjectExplorerInfoDeleteBody body;
 };
 
-struct ProjectConflictCheckBody {
-    bool isConflict;
+struct ProjectCheckBody {
+    ProjectErrorType error = ProjectErrorType::NO_ERRORS;
+    int result = static_cast<int>(error);
 };
 
-struct ProjectConflictCheckResponse : public Response {
-    ProjectConflictCheckResponse() : Response(REQ_RES_PROJECT_CONFLICT_CHECK) {};
-    ProjectConflictCheckBody body;
+struct ProjectCheckValidResponse : public Response {
+    ProjectCheckValidResponse() : Response(REQ_RES_PROJECT_VALID_CHECK) {};
+    ProjectCheckBody body;
 };
 } // end of namespace Protocol
 } // end of namespace Dic

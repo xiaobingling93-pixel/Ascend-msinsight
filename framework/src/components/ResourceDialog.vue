@@ -3,6 +3,7 @@ import ResourceComp from '@/components/ResourceComp.vue';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
 import {computed, onMounted, ref} from 'vue';
 import {isWindows} from '@/utils/is';
+import { ProjectErrorType } from '@/utils/enmus';
 import {ElMessage} from 'element-plus';
 import FileConflictDialog from '@/components/FileConflictDialog.vue';
 import {useLoading} from '@/hooks/useLoading';
@@ -31,6 +32,8 @@ onMounted(() => {
     }
 });
 
+const projectCheckResult = ref(ProjectErrorType.NO_ERRORS);
+
 const changeConfirmButtonState = (buttonState: boolean) => {
   fileIsExist.value = buttonState;
 };
@@ -52,10 +55,11 @@ const addClickProtect = (func: () => void): void => {
 
 const handleConfirm = async () => {
     useLoading().open({});
-    const result = await resourceComp.value.doCheckFileConflict(props.projectName);
-    if (result) {
+    const result = await resourceComp.value.doCheckFileVallid(props.projectName);
+    if (result != ProjectErrorType.NO_ERRORS) {
       useLoading().close();
       dialogCoverVisible.value = true;
+      projectCheckResult.value = result;
     } else {
       const setPathResult = resourceComp.value.doSetCurrentPath(props.projectName, false);
       emit('update:showModal', false);
@@ -83,7 +87,7 @@ const handleCoverVisible = (value: boolean) => {
     <el-tooltip v-if="projectName" :content="projectName">
       <span class="project-name-span">{{ CurProject }} ：{{ projectName }}</span>
     </el-tooltip>
-    <FileConflictDialog :dialog-cover-visible="dialogCoverVisible" :project-name="projectName" @cover-file="handleCoverVisible"></FileConflictDialog>
+    <FileConflictDialog :dialog-cover-visible="dialogCoverVisible" :project-name="projectName" :project-check-result="projectCheckResult" @cover-file="handleCoverVisible"></FileConflictDialog>
     <ResourceComp ref="resourceComp" :show="showModal" :max-path-len="maxPathLen" @input-change="onInputChange" :changeConfirmButtonState = "changeConfirmButtonState" />
     <template #footer>
       <span>

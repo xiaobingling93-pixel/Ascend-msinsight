@@ -22,7 +22,7 @@ template <> std::optional<document_t> ToResponseJson<ProjectExplorerInfoGetRespo
 template <> std::optional<document_t> ToResponseJson<ProjectExplorerInfoDeleteResponse>(
     const ProjectExplorerInfoDeleteResponse &response);
 template <>
-std::optional<document_t> ToResponseJson<ProjectConflictCheckResponse>(const ProjectConflictCheckResponse &response);
+std::optional<document_t> ToResponseJson<ProjectCheckValidResponse>(const ProjectCheckValidResponse &response);
 } // end of namespace Protocol
 } // end of namespace Dic
 
