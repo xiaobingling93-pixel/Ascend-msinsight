@@ -80,7 +80,6 @@ const std::string REQ_RES_FLOW_CATEGORY_LIST = "flow/categoryList";
 const std::string REQ_RES_FLOW_CATEGORY_EVENTS = "flow/categoryEvents";
 const std::string REQ_RES_UNIT_COUNTER = "unit/counter";
 const std::string REQ_RES_SAME_OPERATORS_DURATION = "query/all/same/operators/duration";
-const std::string REQ_RES_UPLOAD_FILE = "upload/file";
 
 // communication
 const std::string REQ_RES_COMMUNICATION_OPERATOR_DETAILS = "communication/operatorDetails";

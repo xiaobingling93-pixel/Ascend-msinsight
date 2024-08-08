@@ -26,32 +26,6 @@ public:
         return sysconf(_SC_NPROCESSORS_CONF);
 #endif
     }
-
-    static std::string GetTempDir()
-    {
-        std::string tempDir;
-
-        const char *tempEnvVars[] = {"TMPDIR", "TEMP", "TMP"};
-        const int numVars = sizeof(tempEnvVars) / sizeof(tempEnvVars[0]);
-
-        for (int i = 0; i < numVars; ++i) {
-            const char *envValue = std::getenv(tempEnvVars[i]);
-            if (envValue) {
-                tempDir = envValue;
-                break;
-            }
-        }
-
-        if (tempDir.empty()) {
-#ifdef _WIN32
-            tempDir = "C:\\Temp";
-#else
-            tempDir = "/tmp";
-#endif
-        }
-
-        return tempDir;
-    }
 };
 }
 #endif // PROFILER_SERVER_SYSTEM_UTIL_H

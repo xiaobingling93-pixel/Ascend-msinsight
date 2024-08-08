@@ -358,29 +358,6 @@ TEST_F(ProtocolTest, ToUnitThreadsOperatorsRequest)
     unsigned int id = timelineProtocol.FromJson(json, error).get()->id;
     EXPECT_EQ(id, tempId);
 }
-TEST_F(ProtocolTest, ToUploadFileRequest)
-{
-    const uint64_t tempId = 89;
-    Dic::Protocol::TimelineProtocol timelineProtocol;
-    timelineProtocol.Register();
-    std::string error;
-    Dic::document_t json(Dic::kObjectType);
-    auto &allocator = json.GetAllocator();
-    Dic::JsonUtil::AddMember(json, "type", "request", allocator);
-    Dic::JsonUtil::AddMember(json, "command", "upload/file", allocator);
-    timelineProtocol.FromJson(json, error);
-
-    Dic::json_t params(Dic::kObjectType);
-    Dic::JsonUtil::AddMember(json, "id", tempId, allocator);
-    Dic::JsonUtil::AddMember(json, "moduleName", "hhh", allocator);
-    Dic::json_t fileAttr(Dic::kObjectType);
-    Dic::json_t slice(Dic::kObjectType);
-    Dic::JsonUtil::AddMember(params, "slice", slice, allocator);
-    Dic::JsonUtil::AddMember(params, "fileAttr", fileAttr, allocator);
-    Dic::JsonUtil::AddMember(json, "params", params, allocator);
-    unsigned int id = timelineProtocol.FromJson(json, error).get()->id;
-    EXPECT_EQ(id, tempId);
-}
 
 TEST_F(ProtocolTest, ResponseToJson)
 {
@@ -424,8 +401,6 @@ TEST_F(ProtocolTest, ResponseToJson)
         timelineProtocol.ToJson(response17, error);
         Dic::Protocol::UnitThreadsOperatorsResponse response18;
         timelineProtocol.ToJson(response18, error);
-        Dic::Protocol::UploadFileResponse response19;
-        timelineProtocol.ToJson(response19, error);
     });
 }
 

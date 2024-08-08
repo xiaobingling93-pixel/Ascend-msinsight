@@ -13,7 +13,6 @@
 #include <iostream>
 #include <sstream>
 #include <chrono>
-#include <zlib.h>
 #include "algorithm"
 #ifdef _WIN32
 #include <winsock2.h>
@@ -296,21 +295,6 @@ static std::string ToCamelCase(const std::string& str)
     return res;
 }
 
-static std::string GetHashStrName(const std::string &string)
-{
-    std::hash<std::string> hasher;
-    std::size_t fileHash = hasher(string);
-    std::string fileHashStr = std::to_string(fileHash);
-
-    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-    time_t timestamp = std::chrono::system_clock::to_time_t(now);
-    std::string timestampStr = std::to_string(timestamp);
-
-    std::string dbName =
-            fileHashStr.substr(0, 5) + "_" + timestampStr.substr(timestampStr.length() - 5);
-    return dbName;
-}
-
 static bool CheckSqlValid(const std::string& input)
 {
     std::string pattern = "[a-zA-Z0-9_-]";
@@ -350,57 +334,6 @@ inline static std::string DoubleToStringWithTwoDecimalPlaces(double value)
     std::stringstream stream;
     stream << std::fixed << std::setprecision(2) << value; // 保留有效位数为2，四舍五入
     return stream.str();
-}
-
-static std::optional<std::string> Decompress(const std::string &str)
-{
-    // 非 zlib 格式压缩数据直接返回
-    if (str.empty() || str[0] != '\x78') {
-        return str;
-    }
-    // 解压后的数据不能大于50M
-    const static size_t MAX_DECOMPRESSED_SIZE = 1024 * 1024 * 50;
-
-    z_stream zs;
-    zs.zalloc = Z_NULL;
-    zs.zfree = Z_NULL;
-    zs.opaque = Z_NULL;
-    zs.avail_in = 0;
-    zs.next_in = Z_NULL;
-
-    if (inflateInit2(&zs, MAX_WBITS) != Z_OK) {
-        return std::nullopt;
-    }
-
-    zs.next_in = (Bytef *)str.data();
-    zs.avail_in = str.size();
-
-    int ret;
-    char buffer[32768];
-    std::string output;
-
-    do {
-        zs.next_out = reinterpret_cast<Bytef *>(buffer);
-        zs.avail_out = sizeof(buffer);
-
-        ret = inflate(&zs, 0);
-
-        if (output.size() < zs.total_out) {
-            if (zs.total_out > MAX_DECOMPRESSED_SIZE) {
-                inflateEnd(&zs);
-                return std::nullopt;
-            }
-            output.append(buffer, zs.next_out - reinterpret_cast<Bytef *>(buffer));
-        }
-    } while (ret == Z_OK);
-
-    inflateEnd(&zs);
-
-    if (ret != Z_STREAM_END) {
-        return std::nullopt;
-    }
-
-    return output;
 }
 };
 }

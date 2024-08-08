@@ -326,35 +326,6 @@ struct UnitThreadsOperatorsRequest : public Request {
     UnitThreadsOperatorsParams params;
 };
 
-// upload.file
-struct UploadFileAttr {
-    int count;
-    int index;
-    bool isInFolder = false;
-    bool isLast = true;
-    std::string name;
-    std::string path;
-    int size;
-};
-
-struct UploadFileSlice {
-    int count;
-    int index;
-    bool isLast = true;
-    bool isSliced = false;
-};
-
-struct UploadFileParams {
-    UploadFileAttr fileAttr;
-    UploadFileSlice slice;
-    std::string text;
-};
-
-struct UploadFileRequest : public Request {
-    UploadFileRequest() : Request(REQ_RES_UPLOAD_FILE) {}
-    UploadFileParams params;
-};
-
 struct SearchAllSliceParams {
     bool isMatchCase = false;
     bool isMatchExact = false;

@@ -466,17 +466,6 @@ struct UnitThreadsOperatorsResponse : public Response {
     UnitThreadsOperatorsBody body;
 };
 
-struct UploadFileResBody {
-    std::vector<Action> result;
-    bool isCluster = false;
-    bool reset = false;
-};
-
-struct UploadFileResponse : public Response {
-    UploadFileResponse() : Response(REQ_RES_UPLOAD_FILE) {}
-    UploadFileResBody body;
-};
-
 struct SearchAllSlices {
     std::string name;
     uint64_t timestamp = 0;

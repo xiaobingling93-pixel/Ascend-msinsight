@@ -33,7 +33,6 @@ void TimelineProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_UNIT_KERNEL_DETAILS, ToKernelDetailRequest);
     jsonToReqFactory.emplace(REQ_RES_ONE_KERNEL_DETAILS, ToOneKernelRequest);
     jsonToReqFactory.emplace(REQ_RES_SAME_OPERATORS_DURATION, ToUnitThreadsOperatorsRequest);
-    jsonToReqFactory.emplace(REQ_RES_UPLOAD_FILE, ToUploadFileRequest);
     jsonToReqFactory.emplace(REQ_RES_SEARCH_ALL_SLICES, ToSearchAllSlicesRequest);
 }
 
@@ -59,7 +58,6 @@ void TimelineProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_UNIT_KERNEL_DETAILS, ToKernelDetailResponseJson);
     resToJsonFactory.emplace(REQ_RES_ONE_KERNEL_DETAILS, ToOneKernelResponseJson);
     resToJsonFactory.emplace(REQ_RES_SAME_OPERATORS_DURATION, ToUnitThreadsOperatorsResponseJson);
-    resToJsonFactory.emplace(REQ_RES_UPLOAD_FILE, ToUploadFileResponseJson);
     resToJsonFactory.emplace(REQ_RES_SEARCH_ALL_SLICES, ToSearchAllSlicesResponseJson);
     resToJsonFactory.emplace(REQ_RES_PARSE_CARDS, ToParseCardsResponseJson);
 }
@@ -414,31 +412,6 @@ std::unique_ptr<Request> TimelineProtocol::ToOneKernelRequest(const Dic::json_t 
     return reqPtr;
 }
 
-std::unique_ptr<Request> TimelineProtocol::ToUploadFileRequest(const json_t &json, std::string &error)
-{
-    std::unique_ptr<UploadFileRequest> reqPtr = std::make_unique<UploadFileRequest>();
-    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
-        return nullptr;
-    }
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.text, json["params"], "text");
-
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.fileAttr.count, json["params"]["fileAttr"], "count");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.fileAttr.index, json["params"]["fileAttr"], "index");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.fileAttr.isInFolder, json["params"]["fileAttr"], "isInFolder");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.fileAttr.isLast, json["params"]["fileAttr"], "isLast");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.fileAttr.name, json["params"]["fileAttr"], "name");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.fileAttr.path, json["params"]["fileAttr"], "path");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.fileAttr.size, json["params"]["fileAttr"], "size");
-
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.slice.count, json["params"]["slice"], "count");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.slice.index, json["params"]["slice"], "index");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.slice.isLast, json["params"]["slice"], "isLast");
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.slice.isSliced, json["params"]["slice"], "isSliced");
-
-    return reqPtr;
-}
-
 std::unique_ptr<Request> TimelineProtocol::ToUnitThreadsOperatorsRequest(const Dic::json_t &json, std::string &error)
 {
     std::unique_ptr<UnitThreadsOperatorsRequest> reqPtr = std::make_unique<UnitThreadsOperatorsRequest>();
@@ -580,11 +553,6 @@ std::optional<document_t> TimelineProtocol::ToOneKernelResponseJson(const Dic::P
 std::optional<document_t> TimelineProtocol::ToUnitThreadsOperatorsResponseJson(const Dic::Protocol::Response &response)
 {
     return ToResponseJson<UnitThreadsOperatorsResponse>(dynamic_cast<const UnitThreadsOperatorsResponse &>(response));
-}
-
-std::optional<document_t> TimelineProtocol::ToUploadFileResponseJson(const Response &response)
-{
-    return ToResponseJson<UploadFileResponse>(dynamic_cast<const UploadFileResponse &>(response));
 }
 
 std::optional<document_t> TimelineProtocol::ToSearchAllSlicesResponseJson(const Response &response)

@@ -44,7 +44,6 @@ private:
     static std::unique_ptr<Request> ToKernelDetailRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToOneKernelRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToUnitThreadsOperatorsRequest(const json_t &json, std::string &error);
-    static std::unique_ptr<Request> ToUploadFileRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToSearchAllSlicesRequest(const json_t &json, std::string &error);
     // response to json
     static std::optional<document_t> ToImportActionResponseJson(const Response &response);
@@ -67,7 +66,6 @@ private:
     static std::optional<document_t> ToKernelDetailResponseJson(const Response &response);
     static std::optional<document_t> ToOneKernelResponseJson(const Response &response);
     static std::optional<document_t> ToUnitThreadsOperatorsResponseJson(const Response &response);
-    static std::optional<document_t> ToUploadFileResponseJson(const Response &response);
     static std::optional<document_t> ToSearchAllSlicesResponseJson(const Response &response);
     static std::optional<document_t> ToParseCardsResponseJson(const Response &response);
     // event to json

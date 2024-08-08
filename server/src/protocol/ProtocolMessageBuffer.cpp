@@ -91,21 +91,7 @@ std::unique_ptr<ProtocolMessage> ProtocolMessageBuffer::Pop()
         return nullptr;
     }
     auto bodyJson = JsonUtil::TryParse(bodyStr, error).value();
-
-    // 增加上传二进制数据的处理
-    uint64_t textLen = 0;
-    if (JsonUtil::IsJsonKeyValid(bodyJson, "command") && bodyJson["command"].GetString() == REQ_RES_UPLOAD_FILE &&
-        JsonUtil::IsJsonKeyValid(bodyJson, "params") && JsonUtil::IsJsonKeyValid(bodyJson["params"], "textLength")) {
-        textLen = bodyJson["params"]["textLength"].GetInt();
-        if (buffer.length() < msgLen + textLen) {
-            return nullptr;
-        }
-        auto &uploadFileRequest = dynamic_cast<UploadFileRequest &>(*request);
-        uint64_t textPos = bodyPos + bodyLen;
-        uploadFileRequest.params.text = buffer.substr(textPos, textLen);
-    }
-
-    buffer = buffer.substr(bodyPos + bodyLen + textLen); // buffer removes head and body string
+    buffer = buffer.substr(bodyPos + bodyLen); // buffer removes head and body string
     return std::unique_ptr<ProtocolMessage>(request.release());
 }
 

@@ -8,7 +8,6 @@
 #include "MemoryParse.h"
 #include "FullDbParser.h"
 #include "DataBaseManager.h"
-#include "UploadFileParser.h"
 #include "SourceFileParser.h"
 #include "ResetWindowHandler.h"
 
@@ -28,7 +27,6 @@ void ResetWindowHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         TraceFileParser::Instance().Reset();
         Summary::KernelParse::Instance().Reset();
         Memory::MemoryParse::Instance().Reset();
-        UploadFileParser::Instance().ResetAllFiles();
         Source::SourceFileParser::Instance().Reset();
     } else {
         FullDb::FullDbParser::Instance().Reset();
