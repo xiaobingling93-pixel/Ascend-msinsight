@@ -540,13 +540,13 @@ const Menu = (props: Props): JSX.Element => {
 
     useEffect(() => {
         document.addEventListener('contextmenu', handleContextMenu);
-        window.addEventListener('mousedown', (e) => handleMouseDown(e));
-        window.addEventListener('wheel', () => closeMenu(session));
+        window.addEventListener('mousedown', handleMouseDown);
+        window.addEventListener('wheel', handleCloseMenu);
 
         return () => {
             document.removeEventListener('contextmenu', handleContextMenu);
-            window.removeEventListener('mousedown', (e) => handleMouseDown(e));
-            window.removeEventListener('wheel', () => closeMenu(session));
+            window.removeEventListener('mousedown', handleMouseDown);
+            window.removeEventListener('wheel', handleCloseMenu);
         };
     });
 
@@ -570,6 +570,10 @@ const Menu = (props: Props): JSX.Element => {
         if ((e.target as HTMLElement)?.parentNode !== menuRef.current) {
             closeMenu(session);
         }
+    };
+
+    const handleCloseMenu = (): void => {
+        closeMenu(session);
     };
 
     return (

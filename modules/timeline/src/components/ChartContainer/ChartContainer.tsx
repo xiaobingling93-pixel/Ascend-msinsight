@@ -132,20 +132,6 @@ const ChartBody = observer((props: ChartBodyProps) => {
     </>);
 });
 
-const addKeyEvent = (keyHoldAction: { beginLoop: (event: React.KeyboardEvent<HTMLDivElement>) => void; clearLoop: () => void }): void => {
-    document.addEventListener('keydown', (e) => {
-        if (!e.repeat) {
-            keyHoldAction.beginLoop(e as unknown as React.KeyboardEvent<HTMLDivElement>);
-        }
-    });
-    document.addEventListener('keyup', (e) => {
-        keyHoldAction.clearLoop();
-    });
-    document.addEventListener('blur', (e) => {
-        keyHoldAction.clearLoop();
-    });
-};
-
 export const ChartContainer = observer((props: Props) => {
     const { session } = props;
     const [containerDom, setContainerDom] = React.useState<HTMLDivElement | undefined>(undefined);
@@ -163,7 +149,22 @@ export const ChartContainer = observer((props: Props) => {
         };
     }, [containerDom]);
     const keyHoldAction = useMemo(() => loopActionFactory((e: React.KeyboardEvent<HTMLDivElement>) => onKeyDown(e), 40, 100), [session]);
-    addKeyEvent(keyHoldAction);
+    const handleKeyDownEvent = (e: KeyboardEvent): void => {
+        if (!e.repeat) {
+            keyHoldAction.beginLoop(e as unknown as React.KeyboardEvent<HTMLDivElement>);
+        }
+    };
+    useEffect(() => {
+        document.addEventListener('keydown', handleKeyDownEvent);
+        document.addEventListener('keyup', keyHoldAction.clearLoop);
+        document.addEventListener('blur', keyHoldAction.clearLoop);
+
+        return (): void => {
+            document.removeEventListener('keydown', handleKeyDownEvent);
+            document.removeEventListener('keyup', keyHoldAction.clearLoop);
+            document.removeEventListener('blur', keyHoldAction.clearLoop);
+        };
+    });
     return <Container
         onKeyDown={(e): void => {
             if (!e.repeat) {

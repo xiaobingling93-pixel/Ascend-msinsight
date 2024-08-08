@@ -766,7 +766,14 @@ export const TimelineMarkerElement = observer(({ session }: TimelineMarkerProps)
     const vertical = React.useRef<HTMLCanvasElement>(null);
     const flagCursor = React.useRef<HTMLCanvasElement>(null);
     const mouseMoveListener = (e: MouseEvent): void => handleMouseMove(e, session, flagCursor.current);
-    addEventListener('mousemove', mouseMoveListener);
+
+    React.useEffect(() => {
+        addEventListener('mousemove', mouseMoveListener);
+
+        return () => {
+            removeEventListener('mousemove', mouseMoveListener);
+        };
+    });
 
     React.useEffect(() => {
         if (!canvas.current || !vertical.current) {
