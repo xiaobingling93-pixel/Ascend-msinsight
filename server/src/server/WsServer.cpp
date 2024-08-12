@@ -81,6 +81,7 @@ uWS::App::WebSocketBehavior<WsUserData> WsServer::CreateWsBehavior()
         .drain = nullptr,
         .ping = nullptr,
         .pong = nullptr,
+        .subscription = nullptr,
         .close =
             std::bind(&WsServer::OnCloseCb, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
     };

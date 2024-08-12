@@ -29,17 +29,17 @@ OPEN_SOURCE = [
     ],
     [
         'uSockets',
-        'v0.8.1',
+        'v0.8.6',
         'https://szv-open.codehub.huawei.com/OpenSourceCenter/uNetworking/uSockets.git'
     ],
     [
         'uWebSockets',
-        'v20.10.0',
+        'v20.48.0',
         'https://szv-open.codehub.huawei.com/OpenSourceCenter/uNetworking/uWebSockets.git'
     ],
     [
         'rapidjson',
-        '012be8528783cdbf4b7a9e64f78bd8f056b97e24',
+        '6089180ecb704cb2b136777798fa1be303618975-htrunk1',
         'https://szv-open.codehub.huawei.com/OpenSourceCenter/Tencent/rapidjson.git'
     ],
     [
