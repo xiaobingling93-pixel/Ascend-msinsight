@@ -102,16 +102,20 @@ void AffinityAPIAdvisor::FilterAffinityApiData(const Protocol::APITypeParams &pa
     if (dataList.empty() || indexList.empty()) {
         return;
     }
-
+    auto dataListSize = dataList.size();
+    auto ruleSize = AFFINITY_API_RULE.size();
     for (auto index : indexList) { // 遍历索引
-        if (index >= dataList.size()) {
-            continue;
+        if (index >= dataListSize) {
+            break;
         }
         std::vector<uint32_t> possible = FilterPossibleRules(dataList[index].name); // 先过滤可能的rule，以提高效率
         if (possible.empty()) {
             continue;
         }
         for (auto ruleIndex : possible) {
+            if (ruleIndex >= ruleSize) {
+                break;
+            }
             auto rule = AFFINITY_API_RULE[ruleIndex];
             Protocol::AffinityAPIData one{};
             if (!CheckApiSeqWithRule(rule.apiList, dataList, index)) {
