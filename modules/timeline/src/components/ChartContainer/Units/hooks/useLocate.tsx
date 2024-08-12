@@ -78,14 +78,13 @@ export const useJumpTarget = (session: Session, unitsArea: InsightUnit[], suppor
 
     const handleUnitSelection = (targetUnit: InsightUnit): void => {
         const unitKey = getAutoKey(targetUnit);
-        if (!session.selectedUnitKeys.includes(unitKey)) {
-            if (session.locateUnit?.showDetail === false) {
-                session.setSelectedUnitKeys([unitKey]);
-            } else {
-                session.selectedUnitKeys = [unitKey];
-            }
-            session.selectedUnits = [targetUnit];
+
+        if (session.locateUnit?.showDetail === false) {
+            session.setSelectedUnitKeys([unitKey]);
+        } else {
+            session.selectedUnitKeys = [unitKey];
         }
+        session.selectedUnits = [targetUnit];
     };
 
     React.useEffect(() => autorun(
