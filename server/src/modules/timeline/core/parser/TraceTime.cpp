@@ -42,7 +42,13 @@ uint64_t TraceTime::GetStartTime()
 uint64_t TraceTime::GetDuration()
 {
     std::unique_lock<std::mutex> lock(mutex);
-    return maxTimestamp - minTimestamp;
+    if (maxTimestamp >= minTimestamp) {
+        return maxTimestamp - minTimestamp;
+    } else {
+        Server::ServerLog::Warn("Max timestamp is less than min timestamp. Max timestamp:", maxTimestamp,
+                                ", min timestamp:", minTimestamp);
+        return 0;
+    }
 }
 } // end of namespace Timeline
 } // end of namespace Module
