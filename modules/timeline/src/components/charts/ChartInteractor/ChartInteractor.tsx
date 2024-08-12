@@ -179,7 +179,10 @@ const Interactor = ({
             customRenderers,
             theme,
         };
-        draw(drawArgs);
+        // 加延时确保画布尺寸变化后，正常重新绘制，否则可能不能及时绘制
+        setTimeout(() => {
+            draw(drawArgs);
+        }, 10);
         const traceAction: string[] = ['selectBrushScope', 'dragLane', 'zoomProportion'];
         traceAction.forEach((item) => { traceEnd(item); });
     }, [domainStart, domainEnd, endTimeAll, selectedRange, theme, normalRect,

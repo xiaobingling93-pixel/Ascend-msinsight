@@ -224,7 +224,7 @@ const drawMaskRange = ({
     }, selectedRange, isNsMode, session, theme,
 }: DrawArgs & { ctx: CanvasRenderingContext2D }): void => {
     let maskRange: number[] | undefined;
-    if (clickPos !== undefined && mousePosNow !== undefined) {
+    if (clickPos !== undefined && mousePosNow !== undefined && clickPos.x !== mousePosNow.x) {
         // 1st priority
         // is brushing
         maskRange = [clickPos.x, mousePosNow.x];
@@ -288,10 +288,13 @@ export const drawOnMove = ({
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     // draw mask
-    drawMaskRange({ ctx, width, height, xReverseScale, xScale, interactorMouseState, selectedRange, isNsMode, session, theme });
+    // 因为拖动结束时normal canvas也会绘制mask，避免绘制双层mask，这里限制只有在拖动过程中才hover canvas才绘制mask
+    if (clickPos !== undefined) {
+        drawMaskRange({ ctx, width, height, xReverseScale, xScale, interactorMouseState, selectedRange, isNsMode, session, theme });
+        // should filter on data type
+        drawSelectedRange(ctx, selectedRange, xReverseScale);
+    }
 
-    // should filter on data type
-    drawSelectedRange(ctx, selectedRange, xReverseScale);
     // draw hoverline and timeaxis highlight
     if (clickPos !== undefined) {
         ctx.strokeStyle = '#3778ED';
