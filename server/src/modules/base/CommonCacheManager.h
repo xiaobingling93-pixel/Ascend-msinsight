@@ -30,19 +30,13 @@ public:
 
     const std::vector<UnitSingleFlow> GetFlowCache(const std::string &rankId, const std::string &cat)
     {
-        if (!flowCacheState[rankId]) {
-            std::unique_lock<std::mutex> lock(mutex);
-            flowCv.wait(lock, [this, rankId]() { return flowCacheState[rankId]; });
-        }
+        WaitUntilCacheVaild(rankId);
         return flowCache[rankId][cat];
     }
 
     void GetCategoryList(const std::string &rankId, std::vector<std::string> &categories)
     {
-        if (!flowCacheState[rankId]) {
-            std::unique_lock<std::mutex> lock(mutex);
-            flowCv.wait(lock, [this, rankId]() { return flowCacheState[rankId]; });
-        }
+        WaitUntilCacheVaild(rankId);
         for (const auto &catGroup: flowCache[rankId]) {
             categories.emplace_back(catGroup.first);
         }
@@ -82,6 +76,17 @@ public:
 private:
     CommonCacheManager() = default;
     ~CommonCacheManager() = default;
+
+    inline void WaitUntilCacheVaild(const std::string &rankId)
+    {
+        if (flowCacheState.find(rankId) == flowCacheState.end() || !flowCacheState[rankId]) {
+            std::unique_lock<std::mutex> lock(mutex);
+            flowCv.wait(lock, [this, rankId]() {
+                return (flowCacheState.find(rankId) != flowCacheState.end() && flowCacheState[rankId]);
+            });
+        }
+    }
+
     using FlowCacheMap = std::unordered_map<std::string, std::unordered_map<std::string, std::vector<UnitSingleFlow>>>;
 
     std::mutex mutex;

@@ -124,9 +124,8 @@ bool Database::IsOpen() const
 std::string Database::CheckSqlString(const std::string &src)
 {
     std::string res(src);
-    uint64_t pos = 0;
-    while (res.find('\'', pos) != std::string::npos) {
-        pos = res.find('\'', pos);
+    size_t pos = 0;
+    while ((pos = res.find('\'', pos)) != std::string::npos) {
         res.replace(pos, 1, "''");
         pos += sizeof("''") - 1;
     }

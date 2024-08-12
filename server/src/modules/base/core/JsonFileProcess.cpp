@@ -102,12 +102,12 @@ bool JsonFileProcess::SeekCharPosition(std::ifstream &file, char c)
     }
     file.seekg(cur);
     std::string str(buffer.get(), readCount);
-    uint64_t offset = str.find(c);
+    size_t offset = str.find(c);
     if (offset == std::string::npos) {
         Dic::Server::ServerLog::Error("Failed to find separator.");
         return false;
     }
-    file.seekg(offset, std::ifstream::cur);
+    file.seekg(static_cast<int64_t>(offset), std::ifstream::cur);
     return true;
 }
 
