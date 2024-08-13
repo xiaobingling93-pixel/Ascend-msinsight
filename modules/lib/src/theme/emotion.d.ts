@@ -35,6 +35,7 @@ declare module '@emotion/react' {
         limeGreen: string;
     };
     export interface Theme {
+        mode: 'light' | 'dark';
         backgroundColor: string; // 主界面背景色
         timeInsightIcon: string; // time Insight 图标颜色
         allocationInsightIcon: string; // allocation Insight 图标颜色

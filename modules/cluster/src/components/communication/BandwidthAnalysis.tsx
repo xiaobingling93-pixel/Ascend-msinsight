@@ -14,10 +14,11 @@ import type { ColumnsType } from 'antd/es/table';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import { addResizeEvent, COLOR, commonEchartsOptions } from '../Common';
 import i18n from 'lib/i18n';
-import { cloneDeep } from 'lodash';
-import { customConsole as console, chartColors } from 'lib/CommonUtils';
+import { cloneDeep, merge } from 'lodash';
+import { customConsole as console, chartColors, getDefaultChartOptions } from 'lib/CommonUtils';
 import CollapsiblePanel from 'lib/CollapsiblePanel';
 import styled from '@emotion/styled';
+import { useTheme } from '@emotion/react';
 
 const ChartsContainer = styled.div`
   display: flex;
@@ -84,13 +85,18 @@ function wrapData(data: any): any {
 
 const BandwidthChart: React.FC<{ iterationId: string; rankId: number; operatorName: string;
     stage: string; }> = (props: any) => {
+    const { iterationId, rankId, operatorName, stage } = props;
     const { t } = useTranslation('communication');
+    const theme = useTheme();
+    const isDark = theme.mode === 'dark';
+    const locale = i18n.language?.slice(0, 2);
+
     useEffect(() => {
-        InitPacketAndBandwidthCharts('HCCS', props.iterationId, props.rankId, props.operatorName, props.stage);
-        InitPacketAndBandwidthCharts('PCIE', props.iterationId, props.rankId, props.operatorName, props.stage);
-        InitPacketAndBandwidthCharts('RDMA', props.iterationId, props.rankId, props.operatorName, props.stage);
-        InitPacketAndBandwidthCharts('SIO', props.iterationId, props.rankId, props.operatorName, props.stage);
-    }, [t]);
+        InitPacketAndBandwidthCharts({ domId: 'HCCS', iterationId, rankId, operatorName, stage, isDark, locale });
+        InitPacketAndBandwidthCharts({ domId: 'PCIE', iterationId, rankId, operatorName, stage, isDark, locale });
+        InitPacketAndBandwidthCharts({ domId: 'RDMA', iterationId, rankId, operatorName, stage, isDark, locale });
+        InitPacketAndBandwidthCharts({ domId: 'SIO', iterationId, rankId, operatorName, stage, isDark, locale });
+    }, [t, theme]);
     return (
         <ChartsContainer>
             <div className={'chart-item'}>
@@ -144,15 +150,36 @@ async function getChartData(domId: string, iterationId: number, rankId: number,
     return distributions?.distributionData ?? '{}';
 }
 
-async function InitPacketAndBandwidthCharts(domId: string, iterationId: number,
-    rankId: number, operatorName: string, stage: string): Promise<void> {
+interface WrapBandwidthDataParams {
+    domId: string;
+    iterationId: number;
+    rankId: number;
+    operatorName: string;
+    stage: string;
+    isDark: boolean;
+}
+
+interface PacketAndBandwidthChartsParams extends WrapBandwidthDataParams {
+    locale: string;
+}
+
+async function InitPacketAndBandwidthCharts({
+    domId,
+    iterationId,
+    rankId,
+    operatorName,
+    stage,
+    isDark,
+    locale,
+}: PacketAndBandwidthChartsParams): Promise<void> {
     const chartDom = document.getElementById(domId);
     if (chartDom !== null) {
-        const res = await wrapBandwidthData(domId, iterationId, rankId, operatorName, stage);
+        const res = await wrapBandwidthData({ domId, iterationId, rankId, operatorName, stage, isDark });
         if (res === null || res === undefined) {
             ReactDOM.render((<Empty style={{ margin: 'auto' }} image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
         } else {
-            const myChart = echarts.init(chartDom);
+            echarts.getInstanceByDom(chartDom)?.dispose();
+            const myChart = echarts.init(chartDom, null, { locale });
             myChart.setOption(res);
             addResizeEvent(myChart);
         }
@@ -166,8 +193,7 @@ const translateList = <T extends Record<string, any>>(list: T[]): T[] => {
     }));
 };
 
-async function wrapBandwidthData(domId: string, iterationId: number,
-    rankId: number, operatorName: string, stage: string): Promise<echarts.EChartsOption | null> {
+async function wrapBandwidthData({ domId, iterationId, rankId, operatorName, stage, isDark }: WrapBandwidthDataParams): Promise<echarts.EChartsOption | null> {
     const distributionData = await getChartData(domId, iterationId, rankId, operatorName, stage);
     const packetSizeData: number[] = [];
     const packetNumberData: number[] = [];
@@ -212,6 +238,8 @@ async function wrapBandwidthData(domId: string, iterationId: number,
     (bandwidthOptionClone.xAxis as CategoryAxisBaseOption).data = packetSizeData;
     (bandwidthOptionClone.series as echarts.SeriesOption[])[0].data = packetNumberData;
     (bandwidthOptionClone.series as echarts.SeriesOption[])[1].data = packetBandwidthData;
+    merge(bandwidthOptionClone.toolbox, getDefaultChartOptions(isDark).toolbox);
+
     return bandwidthOptionClone;
 }
 

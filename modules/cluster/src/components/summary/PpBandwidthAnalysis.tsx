@@ -19,7 +19,9 @@ import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonT
 import ReactDOM from 'react-dom';
 import _ from 'lodash';
 import styled from '@emotion/styled';
-import { chartColors } from 'lib/CommonUtils';
+import { chartColors, getDefaultChartOptions } from 'lib/CommonUtils';
+import { useTheme } from '@emotion/react';
+import { useTranslation } from 'react-i18next';
 
 const ChartsContainer = styled.div`
   display: flex;
@@ -47,10 +49,16 @@ const PpBandwidthAnalysis = observer(({ session }: { session: Session }) => {
 });
 
 const PPBandwidthChart: React.FC<any> = ({ conditions, allStageIds, session }: {conditions: ConditionDataType; allStageIds: string[];session: Session}) => {
+    const theme = useTheme();
+    const { i18n } = useTranslation();
+    const isDark = theme.mode === 'dark';
+    const locale = i18n.language?.slice(0, 2);
+    const { step: stepId, stage } = conditions;
+
     function init(): void {
         if (session.clusterCompleted && notNullObj(conditions)) {
-            InitCharts('STAGE', conditions.step, conditions.stage, allStageIds);
-            InitCharts('RANK', conditions.step, conditions.stage, allStageIds);
+            InitCharts({ domId: 'STAGE', stepId, stage, allStageIds, isDark, locale });
+            InitCharts({ domId: 'RANK', stepId, stage, allStageIds, isDark, locale });
         } else {
             renderEmpty('STAGE');
             renderEmpty('RANK');
@@ -61,7 +69,7 @@ const PPBandwidthChart: React.FC<any> = ({ conditions, allStageIds, session }: {
     });
     useEffect(() => {
         init();
-    }, [conditions, allStageIds]);
+    }, [conditions, allStageIds, theme, locale]);
     return (
         <ChartsContainer>
             <div className={'chart-item'}>
@@ -83,20 +91,28 @@ function renderEmpty(domId: string): void {
     ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
 }
 
-async function InitCharts(domId: string, stepId: string, stage: string, allStageIds: string[]): Promise<void> {
+interface InitChartsParams {
+    domId: string;
+    stepId: string;
+    stage: string;
+    allStageIds: string[];
+    isDark: boolean;
+    locale: string;
+}
+
+async function InitCharts({ domId, stepId, stage, allStageIds, isDark, locale }: InitChartsParams): Promise<void> {
     const chartDom = document.getElementById(domId);
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
     try {
         const stageIds = stage !== 'All' ? [stage] : allStageIds;
-        const res = domId === 'STAGE' ? await wrapBandwidthDataInStage(domId, stepId, stageIds) : await wrapBandwidthDataInRank(domId, stepId, stageIds);
+        const res = domId === 'STAGE' ? await wrapBandwidthDataInStage(domId, stepId, stageIds, isDark) : await wrapBandwidthDataInRank(domId, stepId, stageIds, isDark);
         if (res === null || res === undefined) {
             ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
         } else {
-            const myChart: echarts.ECharts = echarts.getInstanceByDom(chartDom)
-                ? echarts.getInstanceByDom(chartDom) as echarts.ECharts
-                : echarts.init(chartDom);
+            echarts.getInstanceByDom(chartDom)?.dispose();
+            const myChart = echarts.init(chartDom, null, { locale });
             myChart.setOption(res, true);
             myChart.dispatchAction({
                 type: 'takeGlobalCursor',
@@ -111,7 +127,7 @@ async function InitCharts(domId: string, stepId: string, stage: string, allStage
     }
 }
 
-async function wrapBandwidthDataInStage(domId: string, stepId: string, stageIds: string[]): Promise<echarts.EChartsOption | null> {
+async function wrapBandwidthDataInStage(domId: string, stepId: string, stageIds: string[], isDark: boolean): Promise<echarts.EChartsOption | null> {
     const result = _.cloneDeep(bandwidthOption);
     const xAxis = result.xAxis as CategoryAxisBaseOption;
     const series = result.series as echarts.SeriesOption[];
@@ -131,10 +147,12 @@ async function wrapBandwidthDataInStage(domId: string, stepId: string, stageIds:
         series[0].data = (series[0].data as number[]).concat(stageTimeData);
         series[1].data = (series[1].data as number[]).concat(bubbleTimeData);
     }
+    _.merge(result.toolbox, getDefaultChartOptions(isDark).toolbox);
+
     return result;
 }
 
-async function wrapBandwidthDataInRank(domId: string, stepId: string, stageIds: string[]): Promise<echarts.EChartsOption | null> {
+async function wrapBandwidthDataInRank(domId: string, stepId: string, stageIds: string[], isDark: boolean): Promise<echarts.EChartsOption | null> {
     const result = _.cloneDeep(bandwidthOption);
     const xAxis = result.xAxis as CategoryAxisBaseOption;
     const series = result.series as echarts.SeriesOption[];
@@ -154,6 +172,8 @@ async function wrapBandwidthDataInRank(domId: string, stepId: string, stageIds: 
         series[0].data = (series[0].data as number[]).concat(stageTimeData);
         series[1].data = (series[1].data as number[]).concat(bubbleTimeData);
     }
+    _.merge(result.toolbox, getDefaultChartOptions(isDark).toolbox);
+
     return result;
 }
 
@@ -184,7 +204,7 @@ const bandwidthOption: echarts.EChartsOption = {
     tooltip: commonEchartsOptions.tooltip,
     toolbox: {
         feature: {
-            dataView: { show: true, readOnly: false },
+            dataView: { show: true },
             dataZoom: {
                 yAxisIndex: 'none',
             },

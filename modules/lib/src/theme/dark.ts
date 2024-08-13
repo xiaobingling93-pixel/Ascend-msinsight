@@ -3,6 +3,7 @@
  */
 import type { Theme } from '@emotion/react';
 export const dark: Theme = {
+    mode: 'dark',
     backgroundColor: '#1f2329', // 主界面背景色
     timeInsightIcon: '#86AD53', // time Insight 图标颜色
     allocationInsightIcon: '#9E644F', // allocation Insight 图标颜色

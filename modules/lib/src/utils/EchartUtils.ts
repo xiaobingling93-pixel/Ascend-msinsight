@@ -135,5 +135,15 @@ export const getDefaultChartOptions = (isDark: boolean): any => {
             borderWidth: 0,
             padding: 16,
         },
+        toolbox: {
+            feature: {
+                dataView: {
+                    backgroundColor: isDark ? '#2A2F37' : '#EBEFF6',
+                    textareaColor: isDark ? '#2A2F37' : '#EBEFF6',
+                    textColor: isDark ? '#D2DCE9' : '#4E5865',
+                    buttonColor: '#0077FF',
+                },
+            },
+        },
     };
 };

@@ -210,7 +210,8 @@ export const LineChart: React.FC<IProps> = (props) => {
     const selectedPoints = React.useRef<number[]>([]);
     const chartCharacter = useChartCharacter();
     const title = useTitle(graph.title ?? '');
-    const { t } = useTranslation('memory');
+    const { t, i18n } = useTranslation('memory');
+    const locale = i18n.language?.slice(0, 2);
 
     React.useLayoutEffect(() => {
         const element = graphRef.current;
@@ -219,7 +220,7 @@ export const LineChart: React.FC<IProps> = (props) => {
         }
         element.oncontextmenu = (): boolean => { return false; };
 
-        const myChart = echarts.init(element, isDark ? 'dark' : 'customed');
+        const myChart = echarts.init(element, isDark ? 'dark' : 'customed', { locale });
         onSelectionChanged?.(0, -1);
         _showGraph(myChart, selectedPoints, props, isDark, isStatic);
 
@@ -227,7 +228,7 @@ export const LineChart: React.FC<IProps> = (props) => {
         return () => {
             myChart.dispose();
         };
-    }, [graph, resizeEventDependency, isDark]);
+    }, [graph, resizeEventDependency, isDark, i18n]);
 
     React.useEffect(() => {
         _handleEvents(chartObj, props, selectedPoints, graph, t);
