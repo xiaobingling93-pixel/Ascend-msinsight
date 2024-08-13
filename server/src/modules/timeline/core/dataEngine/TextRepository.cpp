@@ -165,7 +165,7 @@ void TextRepository::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const 
     SliceTable sliceTable;
     std::vector<SlicePO> tempSlicePOVec;
     sliceTable.Select(SliceColumn::ID, SliceColumn::TIMESTAMP, SliceColumn::ENDTIME)
-        .Select(SliceColumn::NAME)
+        .Select(SliceColumn::NAME, SliceColumn::CNAME)
         .In(SliceColumn::ID, sliceIds)
         .ExcuteQuery(trackInfo.cardId, tempSlicePOVec);
     for (const auto &item : tempSlicePOVec) {
@@ -174,6 +174,7 @@ void TextRepository::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const 
         cachelice.timestamp = item.timestamp;
         cachelice.endTime = item.endTime;
         cachelice.name = item.name;
+        cachelice.cname = item.cname;
         competeSliceVec.emplace_back(cachelice);
     }
 }
