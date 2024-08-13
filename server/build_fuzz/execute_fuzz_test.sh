@@ -1,4 +1,6 @@
 #!/bin/bash
+# This script is used to generate fuzz test case.
+# Copyright Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 set -o errexit
 
 dir_build_fuzz=$(pwd)
