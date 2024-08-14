@@ -42,6 +42,8 @@ const ChartsContainer = styled.div`
   }
 `;
 
+const chartDomIds = ['HCCS', 'PCIE', 'RDMA', 'SIO'];
+
 const BandwidthTable: React.FC<{ iterationId: string; rankId: number; operatorName: string }> = (props: any) => {
     const [data, setData] = useState([]);
     useEffect(() => {
@@ -203,9 +205,14 @@ async function wrapBandwidthData({ domId, iterationId, rankId, operatorName, sta
     if (distributionData === '') {
         const chartDom = document.getElementById(domId);
         const chartParentDom = chartDom?.parentElement;
-        if (chartParentDom) {
-            (chartParentDom as HTMLElement).style.display = 'none';
-        }
+        if (!chartParentDom) { return null; }
+        (chartParentDom as HTMLElement).style.display = 'none';
+        chartDomIds.forEach(id => {
+            const dom = document.getElementById(id);
+            if (dom && id !== domId) {
+                echarts.getInstanceByDom(dom)?.resize();
+            }
+        });
     }
 
     if (['{}', null, undefined, 'null', ''].includes(distributionData)) {
@@ -224,8 +231,7 @@ async function wrapBandwidthData({ domId, iterationId, rankId, operatorName, sta
         if (durationTime === 0.0) {
             packetBandwidthData.push(0);
         } else {
-            packetBandwidthData.push(Number((packetSizeNumber * packetNumber / 1000 / (durationTime / 1000))
-                .toFixed(4)));
+            packetBandwidthData.push(Number((packetSizeNumber * packetNumber / 1000 / (durationTime / 1000)).toFixed(4)));
         }
         packetSizeData.push(Number(packetSizeNumber.toFixed(4)));
         packetNumberData.push(packetNumber);
