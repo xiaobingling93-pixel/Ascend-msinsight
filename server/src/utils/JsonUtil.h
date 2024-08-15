@@ -178,6 +178,24 @@ public:
         return "";
     }
 
+    static inline float GetFloat(const json_t &json, std::string_view key)
+    {
+        if (!json.HasMember(key.data())) {
+            return 0;
+        }
+        if (json[key.data()].IsFloat()) {
+            return json[key.data()].GetFloat();
+        }
+        if (json[key.data()].IsString()) {
+            try {
+                return std::stof(json[key.data()].GetString());
+            } catch (std::exception &e) {
+                return 0;
+            }
+        }
+        return 0;
+    }
+
     static inline std::optional<std::string> GetOptionalString(const json_t &json, std::string_view key)
     {
         if (!json.HasMember(key.data())) {

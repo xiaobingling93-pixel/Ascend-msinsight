@@ -139,6 +139,7 @@ const std::string REQ_RES_DETAILS_BASE_INFO = "source/details/baseInfo";
 const std::string REQ_RES_DETAILS_COMPUTE_LOAD_INFO = "source/details/computeworkload";
 const std::string REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH = "source/details/memoryGraph";
 const std::string REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE = "source/details/memoryTable";
+const std::string REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH = "source/details/interCoreLoadAnalysis";
 
 // Advisor Request/Response
 const std::string REQ_RES_ADVISOR_AFFINITY_OPTIMIZER = "advisor/affinity_optimizer";

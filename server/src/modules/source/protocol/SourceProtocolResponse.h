@@ -161,6 +161,105 @@ struct DetailsMemoryTableResponse : public Response {
     DetailsMemoryTableResponse() : Response(REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE) {};
     DetailsMemoryTableResBody body;
 };
+
+template<typename T>
+struct DetailsInterCoreLoadDimension {
+    T value = 0;
+    int level = 0;
+};
+
+struct DetailsInterCoreLoadSubCoreDetail {
+    static const uint8_t MAX_LEVEL = 10;
+    std::string subCoreName;
+    DetailsInterCoreLoadDimension<uint64_t> cycles;
+    DetailsInterCoreLoadDimension<float> throughput;
+    DetailsInterCoreLoadDimension<float> cacheHitRate;
+
+    void SetCyclesDimension(uint64_t curCycles, uint64_t minCycles)
+    {
+        if (minCycles == 0 || curCycles < minCycles) { // 说明所有的cycles数据都为0
+            return;
+        }
+        cycles.value = curCycles;
+        // 比较当前cycle数和最小cycle数的差值，如果大于最小cycles数，那么level直接置为1
+        uint64_t diff = curCycles - minCycles;
+        if (diff >= minCycles) {
+            cycles.level = 1;
+            return;
+        }
+        // 每增加10%，level由MAX_LEVEL减少1
+        cycles.level = MAX_LEVEL - diff * 10 / minCycles;
+        if (cycles.level < 1) {
+            cycles.level = 1;
+        }
+    }
+
+    void SetThroughputDimension(float curThroughput, float minThroughput)
+    {
+        if (minThroughput == 0) { // 说明所有的throughput数据都为0
+            return;
+        }
+        throughput.value = curThroughput;
+        // 比较当前的throughput和最小的throughput的差值
+        float diff = curThroughput - minThroughput;
+        if (NumberUtil::IsGreater(diff, minThroughput)) {
+            // 如果差值大于一倍, level直接置为1
+            throughput.level = 1;
+            return;
+        }
+        // 每增加10%，level由MAX_LEVEL减少1直到等于1
+        throughput.level = MAX_LEVEL - diff * 10 / minThroughput;
+        if (throughput.level < 1) {
+            throughput.level = 1;
+        }
+    }
+
+    void SetCacheHitRateDimension(float curRate, float maxRate)
+    {
+        if (maxRate == 0) { // 说明所有的cache rate hit数据都为0
+            return;
+        }
+        cacheHitRate.value = curRate;
+        // 比较当前的cache hit rate和最大的rate之间的差值，每减小10%，level由MAX_LEVEL减少1直到等于1
+        cacheHitRate.level = MAX_LEVEL - (maxRate - curRate) * 10 / maxRate;
+        if (cacheHitRate.level < 1) {
+            cacheHitRate.level = 1;
+        }
+    }
+
+    void SetSubCoreName(const std::string& type, uint8_t id)
+    {
+        subCoreName = type + std::to_string(id);
+    }
+};
+
+struct DetailsInterCoreLoadOpDetail {
+    uint8_t coreId = 0;
+    std::vector<DetailsInterCoreLoadSubCoreDetail> subCoreDetails = {};
+
+    void AddSubCoreDetail(DetailsInterCoreLoadSubCoreDetail&& subCoreDetail)
+    {
+        subCoreDetails.emplace_back(subCoreDetail);
+    }
+};
+
+struct DetailsInterCoreLoadGraphBody {
+    std::string soc;
+    std::string opType;
+    std::string advice;
+    std::vector<DetailsInterCoreLoadOpDetail> opDetails = {};
+
+    void AddOpDetail(DetailsInterCoreLoadOpDetail&& opDetail)
+    {
+        opDetails.emplace_back(opDetail);
+    }
+};
+
+struct DetailsInterCoreLoadGraphResponse : public Response {
+    DetailsInterCoreLoadGraphResponse() : Response(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH) {};
+    DetailsInterCoreLoadGraphBody body;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 
