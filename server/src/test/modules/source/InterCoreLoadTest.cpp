@@ -4,6 +4,10 @@
 
 #include <gtest/gtest.h>
 #include "InterCoreLoadGraphParser.h"
+#include "SourceProtocolRequest.h"
+#include "SourceFileParser.h"
+#include "SourceProtocolUtil.h"
+#include "WsSessionManager.h"
 #include "InterCoreLoadTest.h"
 
 namespace Dic::Module::Source::Test {
@@ -42,5 +46,44 @@ TEST_F(InterCoreLoadTest, test_GetInterCoreLoadAnalysisInfo_with_normal_json)
     int hitRateLevel = 6;
     EXPECT_FLOAT_EQ(subCoreDetail.cacheHitRate.value, hitRate);
     EXPECT_EQ(subCoreDetail.cacheHitRate.level, hitRateLevel);
+}
+
+TEST_F(InterCoreLoadTest, test_response_to_json)
+{
+    DetailsInterCoreLoadGraphResponse response;
+    response.body = {
+            "soc",
+            "optype",
+            "advice"
+    };
+    DetailsInterCoreLoadOpDetail opDetail0 = {
+        0,
+        {
+            {
+                "cube0",
+                {100, 8},
+                {10.1, 9},
+                {98.8, 10}
+                },
+            {
+                "vector0",
+                {99, 7},
+                {9.1, 8},
+                {97.8, 9}
+                }
+            }
+    };
+
+    response.body.opDetails.emplace_back(opDetail0);
+    const std::optional<document_t> &docOpt = ToResponseJson<DetailsInterCoreLoadGraphResponse>(response);
+    EXPECT_TRUE(docOpt.has_value());
+    document_t &doc = const_cast<document_t &>(docOpt.value());
+    EXPECT_TRUE(doc.HasMember("body"));
+
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+    std::string docString = buffer.GetString();
+    EXPECT_TRUE(StringUtil::StartWith(docString, INTER_CORE_LOAD_ANALYSIS_RESPONSE_JSON));
 }
 }

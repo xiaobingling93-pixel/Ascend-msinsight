@@ -44,5 +44,10 @@ const std::string INTER_CORE_LOAD_ANALYSIS_JSON = R"(
 }
 )";
 
+const std::string INTER_CORE_LOAD_ANALYSIS_RESPONSE_JSON =
+    R"({"type":"response","id":0,"requestId":0,"result":false,"command":"source/details/interCoreLoadAnalysis",)"
+    R"("moduleName":"unknown","body":{"soc":"soc","opType":"optype","advice":"advice",)"
+    R"("opDetails":[{"coreId":0,"subCoreDetails":[{"subCoreName":"cube0",)";
+
 }
 #endif // PROFILER_SERVER_INTERCORELOADTEST_H

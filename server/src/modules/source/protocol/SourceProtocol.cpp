@@ -19,6 +19,7 @@ void SourceProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_DETAILS_COMPUTE_LOAD_INFO, ToDetailsLoadInfoRequest);
     jsonToReqFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH, ToDetailsMemoryGraphRequest);
     jsonToReqFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE, ToDetailsMemoryTableRequest);
+    jsonToReqFactory.emplace(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH, ToDetailsInterCoreLoadGraphRequest);
 }
 
 void SourceProtocol::RegisterResponseToJsonFuncs()
@@ -30,6 +31,7 @@ void SourceProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_DETAILS_COMPUTE_LOAD_INFO, ToDetailsLoadInfoResponse);
     resToJsonFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH, ToDetailsMemoryGraphResponse);
     resToJsonFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE, ToDetailsMemoryTableResponse);
+    resToJsonFactory.emplace(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH, ToDetailsInterCoreLoadGraphResponse);
 }
 
 void SourceProtocol::RegisterEventToJsonFuncs()
@@ -113,6 +115,16 @@ std::unique_ptr<Request> SourceProtocol::ToDetailsMemoryTableRequest(const Dic::
     return reqPtr;
 }
 
+std::unique_ptr<Request> SourceProtocol::ToDetailsInterCoreLoadGraphRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<DetailsInterCoreLoadGraphRequest> reqPtr = std::make_unique<DetailsInterCoreLoadGraphRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+
+    return reqPtr;
+}
 #pragma endregion
 
 #pragma region <<Reponse To Json>>
@@ -150,6 +162,12 @@ std::optional<document_t> SourceProtocol::ToDetailsMemoryGraphResponse(const Dic
 std::optional<document_t> SourceProtocol::ToDetailsMemoryTableResponse(const Dic::Protocol::Response &response)
 {
     return ToResponseJson<DetailsMemoryTableResponse>(dynamic_cast<const DetailsMemoryTableResponse &>(response));
+}
+
+std::optional<document_t> SourceProtocol::ToDetailsInterCoreLoadGraphResponse(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<DetailsInterCoreLoadGraphResponse>(
+            dynamic_cast<const DetailsInterCoreLoadGraphResponse &>(response));
 }
 #pragma endregion
 

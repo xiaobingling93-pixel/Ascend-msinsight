@@ -246,6 +246,52 @@ std::optional<document_t> ToResponseJson<DetailsMemoryTableResponse>(const Detai
     return std::move(json);
 }
 
+template<typename T>
+void TransformInterCoreLoadDetail(json_t &jDetail, const std::string_view dimensionName, T value, int level,
+                                  RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+{
+    json_t jDimension(kObjectType);
+    JsonUtil::AddMember(jDimension, "value", value, allocator);
+    JsonUtil::AddMember(jDimension, "level", level, allocator);
+    JsonUtil::AddMember(jDetail, dimensionName, jDimension, allocator);
+}
+
+template<> std::optional<document_t> ToResponseJson<DetailsInterCoreLoadGraphResponse>(
+    const DetailsInterCoreLoadGraphResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "soc", response.body.soc, allocator);
+    JsonUtil::AddMember(body, "opType", response.body.opType, allocator);
+    JsonUtil::AddMember(body, "advice", response.body.advice, allocator);
+    json_t jOpDetails(kArrayType);
+    // 转换op detail数组
+    for (const auto &opDetail: response.body.opDetails) {
+        json_t jOpDetail(kObjectType);
+        JsonUtil::AddMember(jOpDetail, "coreId", opDetail.coreId, allocator);
+        json_t jSubCoreDetails(kArrayType);
+        // 转换 sub core detail数组
+        for (const auto &subCoreDetail: opDetail.subCoreDetails) {
+            json_t jSubCoreDetail(kObjectType);
+            JsonUtil::AddMember(jSubCoreDetail, "subCoreName", subCoreDetail.subCoreName, allocator);
+            TransformInterCoreLoadDetail(jSubCoreDetail, "cycles", subCoreDetail.cycles.value,
+                                         subCoreDetail.cycles.level, allocator);
+            TransformInterCoreLoadDetail(jSubCoreDetail, "throughput", subCoreDetail.throughput.value,
+                                         subCoreDetail.throughput.level, allocator);
+            TransformInterCoreLoadDetail(jSubCoreDetail, "cacheHitRate", subCoreDetail.cacheHitRate.value,
+                                         subCoreDetail.cacheHitRate.level, allocator);
+            jSubCoreDetails.PushBack(jSubCoreDetail, allocator);
+        }
+        JsonUtil::AddMember(jOpDetail, "subCoreDetails", jSubCoreDetails, allocator);
+        jOpDetails.PushBack(jOpDetail, allocator);
+    }
+    JsonUtil::AddMember(body, "opDetails", jOpDetails, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+
+    return std::move(json);
+}
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

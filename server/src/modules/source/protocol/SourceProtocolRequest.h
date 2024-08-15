@@ -67,6 +67,10 @@ struct DetailsMemoryTableRequest: public Request {
     DetailsMemoryInfoParams params;
 };
 
+struct DetailsInterCoreLoadGraphRequest : public Request {
+    DetailsInterCoreLoadGraphRequest() : Request(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH) {};
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

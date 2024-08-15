@@ -31,20 +31,21 @@ struct InterCoreLoadAnalysisDetail {
     std::string opType;
     std::string advice;
     std::vector<InterCoreOpDetail> opDetails = {};
-    uint64_t minCycle = 0;
-    float minThroughput = 0;
-    float maxHitRate = 0;
+    std::map<std::string, uint64_t> minCycleMap;
+    std::map<std::string, float> minThroughputMap;
+    std::map<std::string, float> maxHitRateMap;
 
     void AddOpDetail(InterCoreOpDetail&& opDetail)
     {
         opDetails.emplace_back(std::move(opDetail));
     }
 
-    void SetMinCycle(uint64_t cycle)
+    void SetMinCycle(const std::string &subCoreType, uint64_t cycle)
     {
         if (cycle <= 0) {
             return;
         }
+        uint64_t &minCycle = minCycleMap[subCoreType];
         if (minCycle == 0) {
             minCycle = cycle;
             return;
@@ -52,11 +53,12 @@ struct InterCoreLoadAnalysisDetail {
         minCycle = std::min(minCycle, cycle);
     }
 
-    void SetMinThroughput(float throughput)
+    void SetMinThroughput(const std::string &subCoreType, float throughput)
     {
         if (throughput <= 0) {
             return;
         }
+        float &minThroughput = minThroughputMap[subCoreType];
         if (minThroughput == 0) {
             minThroughput = throughput;
             return;
@@ -64,8 +66,9 @@ struct InterCoreLoadAnalysisDetail {
         minThroughput = (NumberUtil::IsGreater(minThroughput, throughput) ? throughput : minThroughput);
     }
 
-    void SetMaxHitRate(float hitRate)
+    void SetMaxHitRate(const std::string &subCoreType, float hitRate)
     {
+        float &maxHitRate = maxHitRateMap[subCoreType];
         maxHitRate = (NumberUtil::IsGreater(hitRate, maxHitRate) ? hitRate : maxHitRate);
     }
 };

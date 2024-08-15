@@ -34,6 +34,7 @@ enum class DataTypeEnum : int {
     DETAILS_COMPUTE_LOAD_TABLE = 7,
     DETAILS_MEMORY_GRAPH = 8,
     DETAILS_MEMORY_TABLE = 9,
+    DETAILS_INTER_CORE_LOAD_GRAPH = 12,
 };
 
 class SourceFileParser : public FileParser {
@@ -69,6 +70,7 @@ public:
     void ConvertToData();
     int64_t GetSimulationPid(const std::string &fileId, const std::string &processName);
     int64_t GetSimulationTid(const std::string &fileId, const std::string &processName, const std::string &threadName);
+    bool GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInterCoreLoadGraphBody& responseBody);
 
 private:
     std::string filePath;

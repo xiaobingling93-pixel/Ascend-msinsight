@@ -11,6 +11,7 @@
 #include "QueryDetailsLoadInfoHandler.h"
 #include "QueryDetailsMemoryGraphHandler.h"
 #include "QueryDetailsMemoryTableHandler.h"
+#include "QueryInterCoreLoadAnalysisGraphHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -37,6 +38,8 @@ void SourceModule::RegisterRequestHandlers()
                               std::make_unique<QueryDetailsMemoryGraphHandler>());
     requestHandlerMap.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE,
                               std::make_unique<QueryDetailsMemoryTableHandler>());
+    requestHandlerMap.emplace(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH,
+                              std::make_unique<QueryInterCoreLoadAnalysisGraphHandler>());
 }
 
 void SourceModule::OnRequest(std::unique_ptr<Protocol::Request> request)

@@ -8,6 +8,7 @@
 #include "ServerLog.h"
 #include "rapidjson.h"
 #include "document.h"
+#include "InterCoreLoadGraphParser.h"
 #include "JsonUtil.h"
 #include "ParserStatusManager.h"
 #include "DataBaseManager.h"
@@ -971,6 +972,19 @@ std::string SourceFileParser::GetUnitType(int64_t unitTypeNumber)
 bool SourceFileParser::IsDataSizeExceedUpperLimit(uint64_t realSize, uint64_t upperLimit) const
 {
     return realSize > upperLimit;
+}
+
+bool SourceFileParser::GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInterCoreLoadGraphBody &responseBody)
+{
+    InterCoreLoadGraphParser parser;
+    std::ifstream file(filePath, std::ios::binary);
+    std::string json = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_INTER_CORE_LOAD_GRAPH);
+    if (json.empty()) {
+        ServerLog::Warn("Json for inter core load analysis in bin file is empty.");
+        return false;
+    }
+
+    return parser.GetInterCoreLoadAnalysisInfo(json, responseBody);
 }
 } // end of namespace Memory
 } // end of namespace Module

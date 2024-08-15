@@ -27,9 +27,12 @@ bool InterCoreLoadGraphParser::GetInterCoreLoadAnalysisInfo(const std::string &j
         bodyOpDetail.coreId = opDetail.coreId;
         for (const auto &subCoreDetail: opDetail.subCoreDetails) {
             DetailsInterCoreLoadSubCoreDetail bodySubCoreDetail;
-            bodySubCoreDetail.SetCyclesDimension(subCoreDetail.cycles, analysisDetail.minCycle);
-            bodySubCoreDetail.SetThroughputDimension(subCoreDetail.throughput, analysisDetail.minThroughput);
-            bodySubCoreDetail.SetCacheHitRateDimension(subCoreDetail.hitRate, analysisDetail.maxHitRate);
+            bodySubCoreDetail.SetCyclesDimension(subCoreDetail.cycles,
+                                                 analysisDetail.minCycleMap[subCoreDetail.subCoreType]);
+            bodySubCoreDetail.SetThroughputDimension(subCoreDetail.throughput,
+                                                     analysisDetail.minThroughputMap[subCoreDetail.subCoreType]);
+            bodySubCoreDetail.SetCacheHitRateDimension(subCoreDetail.hitRate,
+                                                       analysisDetail.maxHitRateMap[subCoreDetail.subCoreType]);
             bodySubCoreDetail.SetSubCoreName(subCoreDetail.subCoreType, subCoreDetail.subCoreIndex);
             bodyOpDetail.AddSubCoreDetail(std::move(bodySubCoreDetail));
         }
@@ -123,9 +126,9 @@ void InterCoreLoadGraphParser::ParseJsonOpDetailArray(InterCoreLoadAnalysisDetai
             subCoreDetail.hitRate = JsonUtil::GetFloat(jsonCoreDetail, "L2cache_hit_rate");
 
             // 设置最优值
-            analysisDetail.SetMaxHitRate(subCoreDetail.hitRate);
-            analysisDetail.SetMinThroughput(subCoreDetail.throughput);
-            analysisDetail.SetMinCycle(subCoreDetail.cycles);
+            analysisDetail.SetMaxHitRate(subCoreDetail.subCoreType, subCoreDetail.hitRate);
+            analysisDetail.SetMinThroughput(subCoreDetail.subCoreType, subCoreDetail.throughput);
+            analysisDetail.SetMinCycle(subCoreDetail.subCoreType, subCoreDetail.cycles);
             opDetail.subCoreDetails.emplace_back(subCoreDetail);
         }
         analysisDetail.AddOpDetail(std::move(opDetail));
