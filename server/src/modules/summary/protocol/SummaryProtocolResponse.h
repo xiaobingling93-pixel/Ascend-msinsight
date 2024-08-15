@@ -141,6 +141,35 @@ struct CommunicationDetailResponse : public Response {
     std::vector<CommunicationDetail> commDetails;
     int64_t totalNum;
 };
+
+const std::string KEY_ALGORITHM = "algorithm";
+const std::string KEY_LEVEL = "level";
+const std::string KEY_WORLD_SIZE = "worldSize";
+const std::string KEY_TP_SIZE = "tpSize";
+const std::string KEY_PP_SIZE = "ppSize";
+const std::string KEY_DP_SIZE = "dpSize";
+const std::string KEY_RESULT = "result";
+const std::string KEY_MSG = "msg";
+
+struct ParallelStrategyConfigWithLevel {
+    std::string algorithm; // megatron-lm tp-dp-pp, megatron-lm tp-pp-dp
+    std::string level; // collected, predicted, confirmed, configured, undefined
+    int64_t worldSize = 1;
+    int64_t ppSize = 1;
+    int64_t tpSize = 1;
+    int64_t dpSize = 1;
+};
+
+struct QueryParallelStrategyResponse : public Response {
+    QueryParallelStrategyResponse() : Response(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY) {}
+    ParallelStrategyConfigWithLevel config;
+};
+
+struct SetParallelStrategyResponse : public Response {
+    SetParallelStrategyResponse() : Response(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY) {}
+    bool result = true;
+    std::string msg;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

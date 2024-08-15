@@ -96,9 +96,10 @@ const std::string REQ_RES_COMMUNICATION_LIST = "communication/duration/list";
 // summary
 const std::string REQ_RES_SUMMARY_QUERY_TOP_DATA = "summary/queryTopData";
 const std::string REQ_RES_SUMMARY_STATISTIC = "summary/statistic";
+const std::string REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY = "summary/query/parallelStrategy";
+const std::string REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY = "summary/set/parallelStrategy";
 const std::string REQ_RES_COMPUTE_DETAIL = "summary/queryComputeDetail";
 const std::string REQ_RES_COMMUNICATION_DETAIL = "summary/queryCommunicationDetail";
-const std::string AFFINITY_OPERATOR_QUERY = "summary/queryAffinityOperator";
 
 // pipeline
 const std::string REQ_RES_PIPELINE_GET_ALL_STEPS = "parallelism/pipeline/getAllSteps";
@@ -151,6 +152,7 @@ const std::string REQ_RES_ADVISOR_ACLNN_OPERATORS = "advisor/aclnn_operator";
 // jupyter
 const std::string EVENT_PARSE_JUPYTER_COMPLETED = "parse/jupyterCompleted";
 
+const std::string KEY_BODY = "body";
 #pragma endregion
 } // end of namespace
 }

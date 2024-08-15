@@ -25,6 +25,10 @@ template <>
 std::optional<document_t> ToResponseJson<PipelineRankTimeResponse>(const PipelineRankTimeResponse &response);
 template <>
 std::optional<document_t> ToResponseJson<CommunicationDetailResponse>(const CommunicationDetailResponse &response);
+template <>
+std::optional<document_t> ToResponseJson<QueryParallelStrategyResponse>(const QueryParallelStrategyResponse &response);
+template <>
+std::optional<document_t> ToResponseJson<SetParallelStrategyResponse>(const SetParallelStrategyResponse &response);
 } // end of namespace Protocol
 } // end of namespace Dic
 

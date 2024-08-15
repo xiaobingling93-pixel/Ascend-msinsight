@@ -28,6 +28,8 @@ private:
     static std::unique_ptr<Request> ToStageTimeRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToRankTimeRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToCommunicationRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToQueryParallelStrategyRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToSetParallelStrategyRequest(const json_t &json, std::string &error);
 
     static std::optional<document_t> ToTopNResponse(const Response &response);
     static std::optional<document_t> ToStatisticsResponse(const Response &response);
@@ -37,6 +39,8 @@ private:
     static std::optional<document_t> ToStageTimeResponse(const Response &response);
     static std::optional<document_t> ToRankTimeResponse(const Response &response);
     static std::optional<document_t> ToCommunicationResponse(const Response &response);
+    static std::optional<document_t> ToQueryParallelStrategyResponse(const Response &response);
+    static std::optional<document_t> ToSetParallelStrategyResponse(const Response &response);
     // response to json
 };
 } // namespace Protocol

@@ -109,6 +109,22 @@ struct CommunicationDetailRequest : public Request {
     CommunicationDetailParams params;
 };
 
+struct ParallelStrategyConfig {
+    std::string algorithm; // megatron-lm tp-dp-pp, megatron-lm tp-pp-dp
+    int64_t ppSize = 1;
+    int64_t tpSize = 1;
+    int64_t dpSize = 1;
+};
+
+struct QueryParallelStrategyRequest : public Request {
+    QueryParallelStrategyRequest() : Request(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY) {};
+};
+
+struct SetParallelStrategyRequest : public Request {
+    SetParallelStrategyRequest() : Request(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY) {};
+    ParallelStrategyConfig config;
+};
+
 } // end of namespace Protocol
 } // end of namespace Dic
 

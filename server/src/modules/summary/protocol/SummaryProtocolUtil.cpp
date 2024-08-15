@@ -184,6 +184,7 @@ template <> std::optional<document_t> ToResponseJson<PipelineRankTimeResponse>(c
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
+
 template <>
 std::optional<document_t> ToResponseJson<CommunicationDetailResponse>(const CommunicationDetailResponse &response)
 {
@@ -207,6 +208,35 @@ std::optional<document_t> ToResponseJson<CommunicationDetailResponse>(const Comm
     return std::move(json);
 }
 
+template <>
+std::optional<document_t> ToResponseJson<QueryParallelStrategyResponse>(const QueryParallelStrategyResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, KEY_ALGORITHM, response.config.algorithm, allocator);
+    JsonUtil::AddMember(body, KEY_LEVEL, response.config.level, allocator);
+    JsonUtil::AddMember(body, KEY_WORLD_SIZE, response.config.worldSize, allocator);
+    JsonUtil::AddMember(body, KEY_TP_SIZE, response.config.tpSize, allocator);
+    JsonUtil::AddMember(body, KEY_PP_SIZE, response.config.ppSize, allocator);
+    JsonUtil::AddMember(body, KEY_DP_SIZE, response.config.dpSize, allocator);
+    JsonUtil::AddMember(json, KEY_BODY, body, allocator);
+    return std::move(json);
+}
+
+template <>
+std::optional<document_t> ToResponseJson<SetParallelStrategyResponse>(const SetParallelStrategyResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, KEY_RESULT, response.result, allocator);
+    JsonUtil::AddMember(body, KEY_MSG, response.msg, allocator);
+    JsonUtil::AddMember(json, KEY_BODY, body, allocator);
+    return std::move(json);
+}
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

@@ -20,6 +20,8 @@ void SummaryProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_PIPELINE_STAGE_BUBBLE, ToStageTimeRequest);
     jsonToReqFactory.emplace(REQ_RES_PIPELINE_RANK_BUBBLE, ToRankTimeRequest);
     jsonToReqFactory.emplace(REQ_RES_COMMUNICATION_DETAIL, ToCommunicationRequest);
+    jsonToReqFactory.emplace(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY, ToQueryParallelStrategyRequest);
+    jsonToReqFactory.emplace(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY, ToSetParallelStrategyRequest);
 }
 
 void SummaryProtocol::RegisterResponseToJsonFuncs()
@@ -32,6 +34,8 @@ void SummaryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_PIPELINE_STAGE_BUBBLE, ToStageTimeResponse);
     resToJsonFactory.emplace(REQ_RES_PIPELINE_RANK_BUBBLE, ToRankTimeResponse);
     resToJsonFactory.emplace(REQ_RES_COMMUNICATION_DETAIL, ToCommunicationResponse);
+    resToJsonFactory.emplace(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY, ToQueryParallelStrategyResponse);
+    resToJsonFactory.emplace(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY, ToSetParallelStrategyResponse);
 }
 
 void SummaryProtocol::RegisterEventToJsonFuncs()
@@ -135,6 +139,7 @@ std::unique_ptr<Request> SummaryProtocol::ToRankTimeRequest(const json_t &json, 
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stageId, json["params"], "stageId");
     return reqPtr;
 }
+
 std::unique_ptr<Request> SummaryProtocol::ToCommunicationRequest(const json_t &json, std::string &error)
 {
     std::unique_ptr<CommunicationDetailRequest> reqPtr = std::make_unique<CommunicationDetailRequest>();
@@ -150,6 +155,38 @@ std::unique_ptr<Request> SummaryProtocol::ToCommunicationRequest(const json_t &j
     JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
     return reqPtr;
 }
+
+std::unique_ptr<Request> SummaryProtocol::ToQueryParallelStrategyRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<QueryParallelStrategyRequest> reqPtr = std::make_unique<QueryParallelStrategyRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    return reqPtr;
+}
+
+std::unique_ptr<Request> SummaryProtocol::ToSetParallelStrategyRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<SetParallelStrategyRequest> reqPtr = std::make_unique<SetParallelStrategyRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    std::vector<std::string> keys = {KEY_ALGORITHM, KEY_TP_SIZE, KEY_PP_SIZE, KEY_DP_SIZE};
+    for (auto &item : keys) {
+        if (!json["params"].HasMember(item.c_str())) {
+            error = "Set parallel strategy request didn't have key: " + item;
+            return nullptr;
+        }
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->config.algorithm, json["params"], KEY_ALGORITHM);
+    JsonUtil::SetByJsonKeyValue(reqPtr->config.tpSize, json["params"], KEY_TP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->config.ppSize, json["params"], KEY_PP_SIZE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->config.dpSize, json["params"], KEY_DP_SIZE);
+    return reqPtr;
+}
+
 #pragma endregion
 
 #pragma region <<Json To Request>>
@@ -194,6 +231,15 @@ std::optional<document_t> SummaryProtocol::ToCommunicationResponse(const Respons
     return ToResponseJson<CommunicationDetailResponse>(dynamic_cast<const CommunicationDetailResponse &>(response));
 }
 
+std::optional<document_t> SummaryProtocol::ToQueryParallelStrategyResponse(const Response &response)
+{
+    return ToResponseJson<QueryParallelStrategyResponse>(dynamic_cast<const QueryParallelStrategyResponse &>(response));
+}
+
+std::optional<document_t> SummaryProtocol::ToSetParallelStrategyResponse(const Response &response)
+{
+    return ToResponseJson<SetParallelStrategyResponse>(dynamic_cast<const SetParallelStrategyResponse &>(response));
+}
 #pragma endregion
 } // namespace Protocol
 } // namespace Dic
