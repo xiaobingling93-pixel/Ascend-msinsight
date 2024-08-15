@@ -10,32 +10,18 @@ void CannApiRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQu
     TrackInfo trackInfo;
     const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
     if (!isSuccess) {
-        ServerLog::Warn("Cann query all slice track info is not exist, track is: ", sliceQuery.trackId);
         return;
     }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
-    if (database == nullptr) {
-        ServerLog::Warn("Cann query all slice database not open, rank is: ", sliceQuery.rankId);
-        return;
-    }
-    std::string sql = "SELECT ROWID as id, startNs, endNs from " + TABLE_CANN_API +
-        " where type = ? and globalTid = ? order by startNs , id";
-    auto stmt = database->CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Warn("Failed to parpare Cann query all slice, rank is: ", sliceQuery.rankId);
-        return;
-    }
-    stmt->BindParams(trackInfo.threadId, trackInfo.processId);
-    auto resultSet = stmt->ExecuteQuery();
-    if (resultSet == nullptr) {
-        ServerLog::Warn("Failed to execute query Cann query all slice result set");
-        return;
-    }
-    while (resultSet->Next()) {
+    std::vector<CannApiPO> cannApipoVec;
+    cannApiTable->Select(CannApiColumn::ID, CannApiColumn::TIMESTAMP, CannApiColumn::ENDTIME)
+        .Eq(CannApiColumn::TYPE, trackInfo.threadId)
+        .Eq(CannApiColumn::GLOBAL_TID, trackInfo.processId)
+        .ExcuteQuery(trackInfo.cardId, cannApipoVec);
+    for (const auto &item : cannApipoVec) {
         SliceDomain sliceDomain;
-        sliceDomain.id = resultSet->GetUint64("id");
-        sliceDomain.timestamp = resultSet->GetUint64("startNs");
-        sliceDomain.endTime = resultSet->GetUint64("endNs");
+        sliceDomain.id = item.id;
+        sliceDomain.timestamp = item.timestamp;
+        sliceDomain.endTime = item.endTime;
         sliceVec.emplace_back(sliceDomain);
     }
 }
@@ -59,34 +45,31 @@ void CannApiRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std
     if (std::empty(sliceIds)) {
         return;
     }
-    auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
-    if (database == nullptr) {
-        ServerLog::Warn("Cann query slice by ids database not open, rank is: ", sliceQuery.rankId);
+    TrackInfo trackInfo;
+    const bool isSuccess = TrackInfoManager::Instance().GetTrackInfo(sliceQuery.trackId, trackInfo);
+    if (!isSuccess) {
         return;
     }
-    const std::string nameKey = database->GetDbPath();
-    std::string sql = "select name, ROWID as id, startNs, endNs "
-        " from " +
-        TABLE_CANN_API + " where 1 = 1 and id in (";
-    std::string sliceidvecStr = StringUtil::join(sliceIds, ", ");
-    sql += sliceidvecStr + ");";
-    auto stmt = database->CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Warn("Failed to parpare Cann query slice by ids, rank is: ", sliceQuery.rankId);
-        return;
+    const std::string nameKey = cannApiTable->GetDbPath(trackInfo.cardId);
+    std::vector<CannApiPO> cannApipoVec;
+    cannApiTable->Select(CannApiColumn::ID, CannApiColumn::TIMESTAMP)
+        .Select(CannApiColumn::ENDTIME, CannApiColumn::NAME)
+        .In(CannApiColumn::ID, sliceIds)
+        .ExcuteQuery(trackInfo.cardId, cannApipoVec);
+    for (const auto &item : cannApipoVec) {
+        CompeteSliceDomain competeSliceDomain;
+        competeSliceDomain.id = item.id;
+        competeSliceDomain.timestamp = item.timestamp;
+        competeSliceDomain.endTime = item.endTime;
+        competeSliceDomain.name = FullDb::DbTraceDataBase::GetStringCacheValue(nameKey, std::to_string(item.name));
+        competeSliceVec.emplace_back(competeSliceDomain);
     }
-    auto resultSet = stmt->ExecuteQuery();
-    if (resultSet == nullptr) {
-        ServerLog::Warn("Failed to execute query Cann query slice by ids");
-        return;
-    }
-    while (resultSet->Next()) {
-        CompeteSliceDomain competeSlice;
-        competeSlice.id = resultSet->GetUint64("id");
-        competeSlice.timestamp = resultSet->GetUint64("startNs");
-        competeSlice.endTime = resultSet->GetUint64("endNs");
-        competeSlice.name = FullDb::DbTraceDataBase::GetStringCacheValue(nameKey, resultSet->GetString("name"));
-        competeSliceVec.emplace_back(competeSlice);
+}
+
+void CannApiRepo::SetCannApiTable(std::unique_ptr<CannApiTable> cannApiTablePtr)
+{
+    if (cannApiTablePtr != nullptr) {
+        cannApiTable = std::move(cannApiTablePtr);
     }
 }
 }

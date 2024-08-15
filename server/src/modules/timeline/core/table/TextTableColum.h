@@ -88,6 +88,16 @@ constexpr std::string_view COUNT = "count";
 constexpr std::string_view OP_TYPE = "opType";
 constexpr std::string_view WAIT_TIME = "waitNs";
 }
+
+namespace CannApiColumn {
+constexpr std::string_view ID = "connectionId";
+constexpr std::string_view TIMESTAMP = "startNs";
+constexpr std::string_view ENDTIME = "endNs";
+constexpr std::string_view TYPE = "type";
+constexpr std::string_view GLOBAL_TID = "globalTid";
+constexpr std::string_view NAME = "name";
+constexpr std::string_view DEPTH = "depth";
+}
 }
 }
 }
