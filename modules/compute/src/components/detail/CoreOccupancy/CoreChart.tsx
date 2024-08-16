@@ -4,18 +4,14 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import ResizeObserver from 'resize-observer-polyfill';
 import styled from '@emotion/styled';
 import { useTheme } from '@emotion/react';
 import {
     sizeConfig,
-    MIN_CHART_WIDTH,
     type CoreDrawData,
     getDrawData,
     getSubCoreColor,
     getLegendData,
-    isLastInRow,
-    isInLastRow,
 } from './draw';
 import { type ICondition } from './Filter';
 import { type Session } from '../../../entity/session';
@@ -26,24 +22,22 @@ const MAX_CORE_NUMBER = 1000;
 
 const Container = styled.div`
     .chart-box {
-        min-width: ${MIN_CHART_WIDTH}px;
+        min-width: 500px;
+        max-height: 600px;
+        min-height: 300px;
         margin: 10px 0 20px;
         overflow: auto;
+        display: flex;
     }
     .core-group {
         width: calc(100% - ${sizeConfig.legend.width}px);
-        display: inline-block;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(${sizeConfig.core.width}px, 1fr));
+        gap: ${sizeConfig.core.space}px;
     }
     .core {
         height: ${sizeConfig.core.height}px;
         width: ${sizeConfig.core.width}px;
-        margin: 0 ${sizeConfig.core.widthSpace}px ${sizeConfig.core.heightSpace}px 0;
-        &.lastInRow {
-            margin-right: 0;
-        }
-        &.lastRow {
-            margin-bottom: 0;
-        }
     }
     .core-border {
         stroke: ${(p): string => p.theme.borderColorLighter};
@@ -74,51 +68,27 @@ const Container = styled.div`
 
 const CoreChart = observer(({ condition, data }:
 {data: ICore[];condition: ICondition;session?: Session}): JSX.Element => {
-    const [chartWidth, setChartWidth] = useState(MIN_CHART_WIDTH);
     const [limit, setLimit] = useState({ maxSize: MAX_CORE_NUMBER, overlimit: false, current: 0 });
     const [drawData, setDrawData] = useState<CoreDrawData[]>([]);
-    const ref = React.useRef(null);
     const { t } = useTranslation('details');
     const theme = useTheme();
     const legendData = useMemo(() => getLegendData(theme), [theme]);
 
-    // 监听画布宽度变动
-    React.useEffect(() => {
-        // 初始宽度
-        if (ref.current !== null && (ref.current as any).offsetWidth > MIN_CHART_WIDTH) {
-            setChartWidth((ref.current as any).offsetWidth);
-        }
-        const reObserver = new ResizeObserver(([entry]) => {
-            window.requestAnimationFrame(() => {
-                const { width } = entry.contentRect;
-                if (width > MIN_CHART_WIDTH) {
-                    setChartWidth(width);
-                }
-            });
-        });
-        if (ref.current !== null) {
-            reObserver.observe(ref.current);
-        }
-        return () => {
-            reObserver.disconnect();
-        };
-    }, []);
-    // 数据量是否超过限制
     useEffect(() => {
         setLimit({ ...limit, overlimit: data.length > limit.maxSize, current: data.length });
     }, [data.length]);
     // 画图
     useEffect(() => {
-        const newDrawData = getDrawData({ svgWidth: chartWidth, data: data.slice(0, limit.maxSize), ...condition });
+        const newDrawData = getDrawData({ data: data.slice(0, limit.maxSize), ...condition });
         setDrawData(newDrawData);
-    }, [data, condition, chartWidth]);
+    }, [data, condition.showAs]);
     return <Container>
         {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`${t('Current Count')} (${limit.current})`}/>}
-        <div className={'chart-box'} style={{ height: `${sizeConfig.chartHeight}px` }} ref={ref} >
+        <div className={'chart-box'}>
             <div className={'core-group'}>
                 {
-                    drawData.map((core, coreIndex) => (
-                        <svg className={`core ${isLastInRow(coreIndex) ? 'lastInRow' : ''} ${isInLastRow(coreIndex) ? 'lastRow' : ''}`} key={core.name}>
+                    drawData.map((core) => (
+                        <svg className={'core'} key={core.name}>
                             <g transform={`translate(${sizeConfig.core.border},${sizeConfig.core.border})`}>
                                 <rect className="core-border" rx="2" ry="2" fill="none"
                                     width={sizeConfig.core.width - (2 * sizeConfig.core.border)}

@@ -8,7 +8,6 @@ import type { Theme } from '@emotion/react';
 interface DataConfig {
     data: ICore[];
     showAs: ShowAs;
-    svgWidth: number;
 }
 
 export interface CoreDrawData {
@@ -21,21 +20,12 @@ interface SubCoreDrawData {
     level: string;
 }
 
-// 画布、节点、文字等尺寸
-export const MIN_CHART_HEIGHT = 300;
-export const MAX_CHART_HEIGHT = 600;
-export const MIN_CHART_WIDTH = 500;
+// 画布、节点、图例等尺寸
 export const sizeConfig = {
-    oneRowCount: 0,
-    rowCount: 0,
-    svgWidth: 0,
-    svgHeight: 0,
-    chartHeight: MIN_CHART_HEIGHT,
     core: {
         width: 120,
         height: 250,
-        widthSpace: 30,
-        heightSpace: 10,
+        space: 15,
         title: {
             top: 20,
         },
@@ -77,6 +67,7 @@ export const COLOR: Record<string, string> = {
 
 const MAX_TEXT_LENGTH = 50;
 
+// 图例
 export function getLegendData(theme: Theme): Array<{ level: number; color: string}> {
     const legendData = [];
     for (let i = 10; i >= 0; i--) {
@@ -90,54 +81,7 @@ export function getLegendData(theme: Theme): Array<{ level: number; color: strin
 }
 
 // 画图
-export function getDrawData(config: DataConfig): CoreDrawData[] {
-    // 计算尺寸
-    setSize(config);
-    // 格式化数据
-    let data: CoreDrawData[] = [];
-    if (sizeConfig.rowCount !== 0 && sizeConfig.oneRowCount !== 0) {
-        data = wrapData(config);
-    }
-    return data;
-}
-
-// 设置画布尺寸
-function setSize(config: DataConfig): void {
-    const { svgWidth, data } = config;
-    const { rowCount, oneRowCount, svgHeight, chartHeight } = computeSize(svgWidth, data.length);
-    sizeConfig.svgWidth = svgWidth;
-    sizeConfig.oneRowCount = oneRowCount;
-    sizeConfig.rowCount = rowCount;
-    sizeConfig.svgHeight = svgHeight;
-    sizeConfig.chartHeight = chartHeight;
-}
-
-// 计算绘制尺寸
-function computeSize(svgWidth: number, count: number): Record<string, number> {
-    // 一行显示几个
-    const oneCoreSize = sizeConfig.core.width + sizeConfig.core.widthSpace;
-    const oneRowCount = oneCoreSize <= 0
-        ? count
-        : Math.floor((svgWidth - sizeConfig.legend.width - sizeConfig.core.width) / oneCoreSize) + 1;
-    // 总共需要多少行
-    const rowCount = oneRowCount <= 0 ? 0 : Math.ceil(count / oneRowCount);
-    // 画布高度
-    const svgHeight = rowCount <= 0
-        ? 0
-        : ((rowCount - 1) * (sizeConfig.core.height + sizeConfig.core.heightSpace)) + sizeConfig.core.height;
-    // 图高度
-    let chartHeight;
-    if (svgHeight >= MIN_CHART_HEIGHT && svgHeight <= MAX_CHART_HEIGHT) {
-        chartHeight = svgHeight + 15;
-    } else if (svgHeight < MIN_CHART_HEIGHT) {
-        chartHeight = MIN_CHART_HEIGHT;
-    } else {
-        chartHeight = MAX_CHART_HEIGHT;
-    }
-    return { rowCount, oneRowCount, svgHeight, chartHeight };
-}
-
-function wrapData({ data: originData, showAs }: DataConfig): CoreDrawData[] {
+export function getDrawData({ data: originData, showAs }: DataConfig): CoreDrawData[] {
     const subCoreNameList: string[] = ['Cube0', 'Vector0', 'Vector1'];
     const data = originData.map(item => ({
         name: `Core${item.coreId}`.slice(0, MAX_TEXT_LENGTH),
@@ -151,18 +95,6 @@ function wrapData({ data: originData, showAs }: DataConfig): CoreDrawData[] {
         }),
     }));
     return data;
-}
-
-export function isLastInRow(index: number): boolean {
-    return sizeConfig.oneRowCount === 0
-        ? false
-        : (index + 1) % sizeConfig.oneRowCount === 0;
-}
-
-export function isInLastRow(index: number): boolean {
-    return sizeConfig.oneRowCount === 0
-        ? false
-        : Math.ceil((index + 1) / sizeConfig.oneRowCount) === sizeConfig.rowCount;
 }
 
 // 颜色
