@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { Button } from 'lib/components';
+import { Button } from 'ascend-components';
 import type { ColumnsType } from 'antd/es/table';
 import { DownOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
@@ -10,11 +10,11 @@ import type { TFunction } from 'i18next';
 import type { StringMap } from '../../utils/interface';
 import { notNull, getPageConfigWithPageData } from '../Common';
 import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } from '../../utils/RequestUtils';
-import ResizeTable from 'lib/ResizeTable';
+import { ResizeTable } from 'ascend-resize';
 import type { Session } from '../../entity/session';
 import { type AdviceInfo } from './ComputationCommunicationOverview';
-import CollapsiblePanel from 'lib/CollapsiblePanel';
-import { Advice } from 'lib/CommonUtils';
+import CollapsiblePanel from 'ascend-collapsible-panel';
+import { Advice } from 'ascend-utils';
 
 const useComputingStatisticsColumns = (): ColumnsType => {
     const { t } = useTranslation('summary');
@@ -382,8 +382,7 @@ const StatisticsTable = (props: {step: string; rankId: string;session: Session; 
                         secondary
                         title={`${getTitle('compute', t)} ( Rank ${rankId} )`}
                         headerStyle={{ padding: 0 }}
-                        contentStyle={{ paddingLeft: 0, paddingRight: 0 }}
-                    >
+                        contentStyle={{ paddingLeft: 0, paddingRight: 0 }}>
                         {session.parseCompleted
                             ? (<ComputeStatisticsTable rankId={rankId} step={step} session={session}/>)
                             : <div style={{ textAlign: 'center' }}>{ t('Timeline not fully parsed') }</div>
@@ -398,8 +397,7 @@ const StatisticsTable = (props: {step: string; rankId: string;session: Session; 
                                     secondary
                                     title={`${t('CommunicationDetail')} ( Rank ${rankId} )`}
                                     headerStyle={{ padding: 0 }}
-                                    contentStyle={{ paddingLeft: 0, paddingRight: 0 }}
-                                >
+                                    contentStyle={{ paddingLeft: 0, paddingRight: 0 }}>
                                     {session.parseCompleted
                                         ? <CommunicationStatisticsTable rankId={rankId} step={step} session={session}/>
                                         : <div style={{ textAlign: 'center' }}>{ t('Timeline not fully parsed') }</div>

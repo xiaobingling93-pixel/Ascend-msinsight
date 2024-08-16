@@ -9,7 +9,7 @@ import { BottomPanel } from '../components/BottomPanel';
 import { ChartContainer } from '../components/ChartContainer';
 import type { Session } from '../entity/session';
 import { stateTexts } from '../utils/constant';
-import { DragDirection, useDraggableContainer } from 'lib/useDraggableContainer';
+import { DragDirection, useDraggableContainer } from 'ascend-use-draggable-container';
 
 const ImgWithFallback = ({
     className = '',

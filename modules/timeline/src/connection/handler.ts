@@ -15,9 +15,9 @@ import connector from '../connection/index';
 import { message } from 'antd';
 import { getTimeOffset } from '../insight/units/utils';
 import { calculateDomainRange } from '../components/CategorySearch';
-import i18n from 'lib/i18n';
+import i18n from 'ascend-i18n';
 import { forEach, groupBy, isEmpty, cloneDeep } from 'lodash';
-import { customConsole as console } from 'lib/CommonUtils';
+import { customConsole as console } from 'ascend-utils';
 
 const DEFAULT_EXPAND_UNIT_NUMBER = 1;
 const getPropFromData = function <T extends keyof U, U extends Record<string, unknown>>(data: U, key: T): U[T] {
@@ -109,7 +109,7 @@ export const parseFailHandler: NotificationHandler = (data): void => {
         }
         setUnitPhaseByCardId((data as any).rankId, session, 'error');
     });
-    message.error(data.error);
+    message.error(data.error as string);
 };
 
 const initUnitInfo = (session: Session | undefined, result: any, dataSource: DataSource): void => {

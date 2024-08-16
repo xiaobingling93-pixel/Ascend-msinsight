@@ -4,14 +4,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
-import { Checkbox, Tooltip } from 'lib/components';
+import { Checkbox, Tooltip } from 'ascend-components';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import './HotMethod.css';
 import type { Session } from '../../entity/session';
 import Filter from './Filter';
 import CodeViewer from './codeViewer/CodeViewer';
-import ResizeTable from 'lib/ResizeTable';
+import { ResizeTable } from 'ascend-resize';
 import Bar from './Bar';
 import {
     HeaderFixedContainer,
@@ -23,7 +23,7 @@ import {
 import type { InstrsColumnType, Iline, Ilinetable, JsonInstructionType } from './defs';
 import { queryApiInstr, queryApiLine, querySourceCode } from '../RequestUtils';
 import { runInAction } from 'mobx';
-import Layout from 'lib/Layout';
+import { Layout } from 'ascend-layout';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 const MAX_FILE_SIZE = 1000000; // 100,0000
@@ -354,7 +354,7 @@ const Index = observer(({ session }: { session: Session }) => {
     }, [t]);
 
     return <div id={domId} style={{ height: '100%', width: '100%' }} className={'th35'}>
-        <Layout padding={0}>
+        <Layout>
             <HeaderFixedContainer
                 headerStyle={{ padding: '10px' }}
                 header={

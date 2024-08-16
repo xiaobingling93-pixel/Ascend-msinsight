@@ -4,14 +4,14 @@
 import React, { type ReactNode, useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Tooltip } from 'lib/components';
+import { Tooltip } from 'ascend-components';
 import { observer } from 'mobx-react';
-import { MIDescriptions, MIDescriptionsItem } from 'lib/CommonUtils';
-import ResizeTable from 'lib/ResizeTable';
+import { MIDescriptions, MIDescriptionsItem } from 'ascend-utils';
+import { ResizeTable } from 'ascend-resize';
 import { type Session } from '../../entity/session';
 import { queryBaseInfo } from '../RequestUtils';
 import { LimitHit } from '../LimitSet';
-import CollapsiblePanel from 'lib/CollapsiblePanel';
+import CollapsiblePanel from 'ascend-collapsible-panel';
 
 interface Iprops {
     session: Session;
@@ -121,7 +121,7 @@ function BlockDetail({ blockDetail = { headerName: [], row: [] }, translate }: I
             size="small"
             columns={tableset.cols}
             dataSource={tableset.dataset}
-            scroll={tableset.dataset.length > 10 ? { y: 400 } : false}
+            scroll={tableset.dataset.length > 10 ? { y: 400 } : undefined}
             pagination={false}
         />
     </div>);
@@ -136,7 +136,7 @@ function getFullCols(headerName: string[], tanslate: any): any[] {
     ));
 }
 
-const getInfoItem = (item: Ilabel, dataObj: Ibaseinfo, translate: any): Record<string, unknown> => {
+const getInfoItem = (item: Ilabel, dataObj: Ibaseinfo, translate: any): Record<string, ReactNode> => {
     if (item.key === 'blockDetail') {
         return {
             ...item,
@@ -170,7 +170,7 @@ const defaultData: Ibaseinfo = {
 
 const index = observer(({ session }: Iprops): JSX.Element => {
     const [data, setData] = useState<Ibaseinfo>(defaultData);
-    const [items, setItems] = useState<Array<Record<string, unknown>>>([]);
+    const [items, setItems] = useState<Array<Record<string, ReactNode>>>([]);
     const { t } = useTranslation();
     const { t: tDetails } = useTranslation('details');
 
@@ -202,7 +202,7 @@ const index = observer(({ session }: Iprops): JSX.Element => {
 
     return (
         <CollapsiblePanel title={t('BaseInfo')}>
-            <MIDescriptions>
+            <MIDescriptions title={''}>
                 {
                     items.map((item, itemIndex) => <MIDescriptionsItem key={itemIndex} label={item.label}>
                         {item.value}

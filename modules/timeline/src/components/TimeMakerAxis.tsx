@@ -5,7 +5,7 @@
 import * as React from 'react';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
-import { Button } from 'lib/components';
+import { Button } from 'ascend-components';
 import { message } from 'antd';
 import type { RowProps } from 'antd/lib/grid';
 import type { Session } from '../entity/session';
@@ -13,7 +13,7 @@ import { ChartRowLeft, ChartRowRight } from './base/ChartRow';
 import { useTranslation } from 'react-i18next';
 import { TimelineMarkerElement } from './TimelineMarker';
 import { useTheme } from '@emotion/react';
-import { StartIcon } from 'lib/Icon';
+import { StartIcon } from 'ascend-icon';
 import { type ParseCardsParam, parseCards } from '../api/Request';
 import { CardUnit } from '../insight/units/AscendUnit';
 

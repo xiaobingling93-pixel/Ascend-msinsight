@@ -24,8 +24,7 @@ MODULES_MAP = {
     'operator': 'Operator',
     'timeline': 'Timeline',
     'compute': 'Compute',
-    'jupyter': 'Jupyter',
-    'lib': 'lib'
+    'jupyter': 'Jupyter'
 }
 
 
@@ -83,6 +82,10 @@ def parallel_build():
     result = execute_cmd('moudles', MODULES_DIR, [npm_cmd, 'install', '--force'])
     if result != 0:
         logging.error('[%s]Failed to install dependencies, %s', result)
+        return 1
+    result = execute_cmd('lib', os.path.join(MODULES_DIR, 'lib'), [npm_cmd, 'run', 'build'])
+    if result != 0:
+        logging.error('[%s]Failed to build lib, %s', result)
         return 1
 
     modules = list(MODULES_MAP.keys())

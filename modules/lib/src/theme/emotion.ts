@@ -33,7 +33,7 @@ declare module '@emotion/react' {
         sunsetOrange: string;
         amethystPurple: string;
         limeGreen: string;
-    };
+    }
     export interface Theme {
         mode: 'light' | 'dark';
         backgroundColor: string; // 主界面背景色

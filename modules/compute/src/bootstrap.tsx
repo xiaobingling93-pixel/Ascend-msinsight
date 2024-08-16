@@ -4,8 +4,8 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { RootStoreContext } from './context/context';
-import 'lib/i18n';
-import 'lib/style/index';
+import 'ascend-i18n';
+import 'ascend-style';
 import './index.css';
 import App from './App';
 import connector from './connection';

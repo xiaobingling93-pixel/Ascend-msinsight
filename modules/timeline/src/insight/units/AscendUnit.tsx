@@ -39,7 +39,7 @@ import { isPinned, isSonPinned } from '../../components/ChartContainer/unitPin';
 import type { Theme } from '@emotion/react';
 import type { ChartHandle, ChartType, Scale, StackStatusConfig, StackStatusData, StatusData } from '../../entity/chart';
 import { StyledTooltip } from '../../components/base/StyledTooltip';
-import ResizeTable from 'lib/ResizeTable';
+import { ResizeTable } from 'ascend-resize';
 import { getDefaultColumData, getPageData } from '../../components/detailViews/Common';
 import { calculateDomainRange } from '../../components/CategorySearch';
 

@@ -12,7 +12,7 @@ import { platform } from '../../platforms';
 import { logger } from '../../utils/Logger';
 import { EMPTY_TABLE_STATE, type TableState } from './types';
 import { onExpandForChildren, parseColDef, treeAttachInfo } from './utils';
-import i18n from 'lib/i18n';
+import i18n from 'ascend-i18n';
 
 const useFilterDeps = (selectedDetailKeys: Session['selectedDetailKeys'], trigger: any[], depsList: unknown[]): boolean => {
     const [triggerHook, setTriggerHook] = React.useState(false);

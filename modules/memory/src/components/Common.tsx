@@ -3,8 +3,8 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { HelpIcon } from 'lib/Icon';
-import { Tooltip } from 'lib/components';
+import { HelpIcon } from 'ascend-icon';
+import { Tooltip } from 'ascend-components';
 
 const HOUR_TO_MICROSECOND = 1000 * 1000 * 60 * 60;
 const MINUTE_TO_MICROSECOND = 1000 * 1000 * 60;

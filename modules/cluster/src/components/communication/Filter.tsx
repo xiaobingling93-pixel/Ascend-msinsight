@@ -5,9 +5,9 @@ import { observer } from 'mobx-react';
 import { observable, observe } from 'mobx';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Select, Radio } from 'lib/components';
+import { Select, Radio } from 'ascend-components';
 import type { RadioChangeEvent } from 'antd';
-import { getUsableVal, delayExecute } from 'lib/CommonUtils';
+import { getUsableVal, delayExecute } from 'ascend-utils';
 import { Label } from '../Common';
 import type { optionDataType, optionMapDataType, VoidFunction } from '../../utils/interface';
 import { queryIterations, queryMatrixOperators, queryOperators, queryStages } from '../../utils/RequestUtils';
@@ -51,24 +51,24 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
             const stageOptions: optionDataType[] = await getStageOptions(val, session);
             const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage);
             optionMap.stageOptions = stageOptions;
-            condition.stage = stage;
+            condition.stage = stage.toString();
         }
         if (['iterationId', 'stage', 'type'].includes(key as string)) {
             const operatorOptions: optionDataType[] = await getOperatorOptions(
                 { iterationId: condition.iterationId, rankList: [], stage: condition.stage, type: condition.type });
             optionMap.operatorOptions = operatorOptions;
-            condition.operatorName = getUsableVal(initObj.operatorName, operatorOptions, totalOperator);
+            condition.operatorName = getUsableVal(initObj.operatorName, operatorOptions, totalOperator).toString();
         }
         return { optionMap, condition };
     }
 
     // iterationId（step）
     const iterationOptions: optionDataType[] = await getiterationOptions();
-    const iterationId = getUsableVal(initObj.iterationId, iterationOptions, defaultCondition.iterationId);
+    const iterationId = getUsableVal(initObj.iterationId, iterationOptions, defaultCondition.iterationId).toString();
 
     // stage
     const stageOptions: optionDataType[] = await getStageOptions(iterationId, session);
-    const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage);
+    const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage).toString();
 
     // type
     const type = initObj.type ?? 'CommunicationMatrix';
@@ -76,7 +76,7 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
     // Operator Name
     const operatorOptions: optionDataType[] =
         await getOperatorOptions({ iterationId, rankList: [], stage, type });
-    const operatorName = getUsableVal(initObj.operatorName, operatorOptions, totalOperator);
+    const operatorName = getUsableVal(initObj.operatorName, operatorOptions, totalOperator).toString();
 
     return { optionMap: { iterationOptions, stageOptions, operatorOptions }, condition: { iterationId, stage, type, operatorName } };
 };

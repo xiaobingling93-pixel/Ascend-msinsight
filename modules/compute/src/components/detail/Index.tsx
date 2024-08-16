@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { observer } from 'mobx-react';
-import Layout from 'lib/Layout';
+import { Layout } from 'ascend-layout';
 import { type Session } from '../../entity/session';
 import BaseInfo from './BaseInfo';
 import ComputeWorkload from './ComputeWorkload/Index';
@@ -12,7 +12,7 @@ import CoreOccupancy from './CoreOccupancy/Index';
 
 const index = observer(({ session }: { session: Session }): JSX.Element => {
     return (
-        <Layout padding={0}>
+        <Layout>
             <BaseInfo session={session}/>
             <CoreOccupancy session={session}/>
             <ComputeWorkload session={session}/>

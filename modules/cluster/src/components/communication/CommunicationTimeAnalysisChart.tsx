@@ -9,12 +9,12 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import { addResizeEvent, Loading, safeStr } from '../Common';
 import { colorPalette, hashToNumber } from '../../utils/colorUtil';
-import { Dropdown } from 'lib/components';
+import { Dropdown } from 'ascend-components';
 import type { MenuProps } from 'antd';
 import connector from '../../connection';
-import CollapsiblePanel from 'lib/CollapsiblePanel';
-import i18n from 'lib/i18n';
-import { themeInstance } from 'lib/theme';
+import CollapsiblePanel from 'ascend-collapsible-panel';
+import i18n from 'ascend-i18n';
+import { themeInstance } from 'ascend-theme';
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;

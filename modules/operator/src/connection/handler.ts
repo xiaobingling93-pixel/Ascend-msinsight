@@ -4,7 +4,7 @@
 import { store } from '../store';
 import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
-import i18n from 'lib/i18n';
+import i18n from 'ascend-i18n';
 
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));

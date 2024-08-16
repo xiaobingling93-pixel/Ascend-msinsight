@@ -3,9 +3,10 @@
  */
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Button } from 'lib/components';
+import { Button } from 'ascend-components';
 import type { TableColumnsType } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
@@ -13,10 +14,10 @@ import { getPageConfigWithAllData, getPageConfigWithPageData } from '../Common';
 import type { VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails } from '../../utils/RequestUtils';
 import { totalOperator } from './Filter';
-import ResizeTable from 'lib/ResizeTable';
+import { ResizeTable } from 'ascend-resize';
 import type { Session } from '../../entity/session';
-import CollapsiblePanel from 'lib/CollapsiblePanel';
-import { CaretDownIcon, CaretRightIcon } from 'lib/Icon';
+import CollapsiblePanel from 'ascend-collapsible-panel';
+import { CaretDownIcon, CaretRightIcon } from 'ascend-icon';
 
 export interface DataType {
     [prop: string]: any;
@@ -126,9 +127,10 @@ const useRankColumns = (handleAction: VoidFunction[], conditions: any, t: TFunct
             ellipsis: true,
             width: 70,
             render: (_: any, record: DataType): React.ReactNode => {
+                const style: CSSProperties = { cursor: 'pointer', float: 'left', marginRight: '5px' };
                 const iconProps = {
                     onClick: (): void => handleExpand(record),
-                    style: { cursor: 'pointer', float: 'left', marginRight: '5px' },
+                    style,
                 };
                 const icon = record.expanded === true ? (<CaretDownIcon {...iconProps}/>) : <CaretRightIcon {...iconProps}/>;
                 return <div>{icon}{record.rankId} </div>;

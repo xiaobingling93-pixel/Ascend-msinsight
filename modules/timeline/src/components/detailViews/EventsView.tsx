@@ -5,17 +5,17 @@
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import { eventViewData, getDefaultColumData, getPageData, queryOneKernel } from './Common';
-import ResizeTable from 'lib/ResizeTable';
+import { ResizeTable } from 'ascend-resize';
 import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
 import type { ThreadMetaData } from '../../entity/data';
-import { Button } from 'lib/components';
+import { Button } from 'ascend-components';
 import type { InsightUnit } from '../../entity/insight';
 import { colorPalette, getTimeOffset } from '../../insight/units/utils';
 import { calculateDomainRange } from '../CategorySearch';
 import { hashToNumber } from '../../utils/colorUtils';
 import { runInAction } from 'mobx';
 import { useTranslation } from 'react-i18next';
-import i18n from 'lib/i18n';
+import i18n from 'ascend-i18n';
 import { DETAIL_HEADER_HEIGHT_ETC_PX } from './SystemView';
 export interface EventTableData {
     eventDetails: EventDetails[];

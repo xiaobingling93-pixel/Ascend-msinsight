@@ -11,10 +11,9 @@ import { useTranslation } from 'react-i18next';
 import type { BottomPanelSingleRender, TriggerEvent } from '../entity/insight';
 import type { Session } from '../entity/session';
 import { BOTTOM_HEIGHT } from '../pages/SessionPage';
-import { DragDirection, useDraggableContainer } from 'lib/useDraggableContainer';
+import { DragDirection, useDraggableContainer } from 'ascend-use-draggable-container';
 import { SimpleTabularDetail } from './details/SimpleDetail';
 import { ChartErrorBoundary } from './error/ChartErrorBoundary';
-import { FILTER_HEIGHT } from './FilterContainer';
 import { getDetailViewItem } from './detailViews/DetailView';
 import { useFindDetail } from './detailViews/FindInWindow';
 import { StyledTabs } from './base/StyledTabs';
@@ -34,6 +33,7 @@ interface DataCardType {
     event: TriggerEvent;
 };
 
+const FILTER_HEIGHT = 31;
 export const DETAIL_HEADER_HEIGHT_PX = 36;
 const MORE_HEADER_HEIGHT_PX = 22;
 const enum TriggerType {

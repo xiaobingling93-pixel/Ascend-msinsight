@@ -7,12 +7,13 @@ import styled from '@emotion/styled';
 
 interface CollapsiblePanelProps {
     title: ReactNode;
-    collapsible: boolean; // 是否可展开收起
+    collapsible?: boolean; // 是否可展开收起
     children: ReactNode;
     secondary?: boolean; // 次级标题
     style?: CSSProperties;
     headerStyle?: CSSProperties;
     contentStyle?: CSSProperties;
+    padding?: string;
 }
 
 const PanelContainer = styled.div<Partial<CollapsiblePanelProps>>`

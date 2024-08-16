@@ -17,7 +17,11 @@ interface CustomButtonProps {
     icon?: FunctionComponent<SVGProps<SVGSVGElement> & { title?: string }>;
 }
 
-export const StyledButton = styled(Button)`
+interface StyledButtonProps {
+    width?: number;
+}
+
+export const StyledButton = styled(Button)<StyledButtonProps>`
     display: flex;
     align-items: center;
     width: ${(props): string => props.width !== undefined ? `${props.width}px` : '22px'};

@@ -5,12 +5,12 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { RootStoreContext } from './context/context';
-import 'lib/style/index';
+import 'ascend-style';
 import './index.css';
 import { store } from './store';
 import { NOTIFICATION_HANDLERS } from './interface';
 import connector from './connection';
-import 'lib/i18n';
+import 'ascend-i18n';
 
 interface CefQueryType {request: string; onSuccess: (response: string) => void; onFailure: (errorCode: number, errorMessage: string) => void};
 

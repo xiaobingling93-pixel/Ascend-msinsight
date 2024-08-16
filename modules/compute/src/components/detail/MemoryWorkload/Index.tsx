@@ -8,7 +8,7 @@ import { type Session } from '../../../entity/session';
 import MemoryChart from './MemoryChart';
 import Filter, { defaultCondition, type Icondition } from './Filter';
 import MemoryTable from './MemoryTable';
-import CollapsiblePanel from 'lib/CollapsiblePanel';
+import CollapsiblePanel from 'ascend-collapsible-panel';
 
 const index = observer(({ session }: { session: Session }): JSX.Element => {
     const [condition, setCondition] = useState<Icondition>(defaultCondition);

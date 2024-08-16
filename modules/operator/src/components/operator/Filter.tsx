@@ -5,8 +5,8 @@ import { observer } from 'mobx-react';
 import { observable, runInAction, observe } from 'mobx';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Select, InputNumber } from 'lib/components';
-import { GroupRankIdsByHost, Label } from 'lib/CommonUtils';
+import { Select, InputNumber } from 'ascend-components';
+import { GroupRankIdsByHost, Label } from 'ascend-utils';
 import type { optionMapType, VoidFunction } from '../../utils/interface';
 import type { Session } from '../../entity/session';
 const OPERATOR_TYPE = 'Operator Type';
@@ -199,7 +199,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
                 min={0}
                 max={100000000}
                 value={condition.custom}
-                onChange={(val: string): void => handleChange('custom', val)}
+                onChange={(val: string | number | null): void => handleChange('custom', val)}
                 controls={false}
                 precision={0}
                 style={{ marginLeft: '10px', width: '80px', display: condition.topK === 0 ? 'inline-block' : 'none' }} />

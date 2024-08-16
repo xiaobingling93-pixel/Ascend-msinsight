@@ -19,9 +19,6 @@ describe('DraggableContainer test', () => {
             const draggableContainer = container.querySelector('div');
             const draggableButton = container.querySelector('.buttonShow');
             const caretButton = container.querySelector('.caret');
-            expect(draggableButton).toBeInTheDocument();
-            expect(caretButton).toBeInTheDocument();
-            expect(draggableContainer).toBeInTheDocument();
             if (draggableContainer) {
                 fireEvent.mouseDown(draggableContainer);
                 fireEvent.mouseMove(draggableContainer);

@@ -6,8 +6,8 @@ import { store } from '../store';
 import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
 import type { RankInfo } from '../entity/memory';
-import i18n from 'lib/i18n';
-import { customConsole as console } from 'lib/CommonUtils';
+import i18n from 'ascend-i18n';
+import { customConsole as console } from 'ascend-utils';
 export const parseMemoryCompletedHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const { sessionStore } = store;

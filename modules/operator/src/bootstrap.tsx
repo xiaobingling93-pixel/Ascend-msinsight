@@ -4,14 +4,13 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { RootStoreContext } from './context/context';
-import 'lib/i18n';
-import 'lib/style/index';
+import 'ascend-i18n';
+import 'ascend-style';
 import './index.css';
 import { store } from './store';
 import App from './App';
 import { NOTIFICATION_HANDLERS } from './interface';
 import connector from './connection';
-import 'lib/style/color';
 
 // 禁用右键刷新以及F5、Ctrl+R刷新
 document.oncontextmenu = (): boolean => false;

@@ -4,7 +4,7 @@
 
 import { observer } from 'mobx-react-lite';
 import type { Session } from '../../entity/session';
-import { Empty } from 'lib/components';
+import { Empty } from 'ascend-components';
 import {
     addResizeEvent,
     chartVisbilityListener,
@@ -19,7 +19,7 @@ import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonT
 import ReactDOM from 'react-dom';
 import _ from 'lodash';
 import styled from '@emotion/styled';
-import { chartColors, getDefaultChartOptions } from 'lib/CommonUtils';
+import { chartColors, getDefaultChartOptions } from 'ascend-utils';
 import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 

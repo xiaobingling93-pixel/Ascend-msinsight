@@ -33,7 +33,7 @@ export const StyledSelect = styled((props: SelectProps &
         <Select
             suffixIcon={<StyledPullDownIcon/>}
             notFoundContent={<StyledEmpty/>}
-            getPopupContainer={(trigger: HTMLElement): ParentNode | null => trigger.parentNode}
+            getPopupContainer={(trigger: HTMLElement): HTMLElement => trigger.parentNode as HTMLElement ?? React.Fragment}
             {...props}
         />
     </ArrowController>)`

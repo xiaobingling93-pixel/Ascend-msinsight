@@ -10,19 +10,19 @@ class CustomConsole {
         this.record[this.index++ % 1000] = msg;
     }
 
-    log(message: any): void {
+    log(...message: any[]): void {
         this.print('log', message);
     }
 
-    error(message: any): void {
+    error(...message: any[]): void {
         this.print('error', message);
     }
 
-    warn(message: any): void {
+    warn(...message: any[]): void {
         this.print('warn', message);
     }
 
-    info(message: any): void {
+    info(...message: any[]): void {
         this.print('info', message);
     }
 }

@@ -4,7 +4,7 @@
 import { observer } from 'mobx-react';
 import React, { type ReactElement, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Select } from 'lib/components';
+import { Select } from 'ascend-components';
 import { Label } from '../Common';
 import type { optionDataType, optionMapDataType } from '../../utils/interface';
 import type { Session } from '../../entity/session';

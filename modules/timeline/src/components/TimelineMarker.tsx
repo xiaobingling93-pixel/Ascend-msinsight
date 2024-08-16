@@ -27,7 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { TIME_MARKER_AXIS_HEIGHT } from './TimeMakerAxis';
 import { ReactComponent as CloseIcon } from '../assets/images/insights/UIicon_closeFlagList.svg';
 import type { TimeStamp } from '../entity/common';
-import { adaptDpr } from 'lib/CommonUtils';
+import { adaptDpr } from 'ascend-utils';
 
 const FLAG_DEFAULT_NAME_REG = /default-\d+/;
 const SCROLLBAR_WIDTH = 7;

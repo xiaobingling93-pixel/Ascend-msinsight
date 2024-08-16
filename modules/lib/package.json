@@ -2,12 +2,15 @@
   "name": "common",
   "version": "0.1.0",
   "private": true,
+  "main": "src/lib.js",
+  "types": "src/lib.d.ts",
   "dependencies": {
     "@cloudsop/horizon": "0.0.77"
   },
   "scripts": {
     "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
-    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production GENERATE_SOURCEMAP=false CI=false craco build",
+    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production GENERATE_SOURCEMAP=false CI=false tsc --declaration",
+    "dev": "cross-env NODE_OPTIONS=--openssl-legacy-provider tsc --declaration",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\lib\\ /E /I /Y",

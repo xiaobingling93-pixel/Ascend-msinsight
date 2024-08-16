@@ -34,7 +34,7 @@ const StyledRemoveIcon = styled.div`
     background-size: cover;
 `;
 
-export const MISelect = styled((props: SelectProps & { width?: number; height?: number }): JSX.Element => {
+export const MISelect = styled((props: SelectProps & { width?: number; height?: number; name?: string }): JSX.Element => {
     const { t } = useTranslation('lib');
     const { size, ...restProps } = props;
     return <Select

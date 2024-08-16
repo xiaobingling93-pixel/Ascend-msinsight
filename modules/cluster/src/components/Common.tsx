@@ -3,10 +3,10 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Checkbox, Divider, Select, Pagination } from 'lib/components';
+import { Checkbox, Divider, Select, Pagination } from 'ascend-components';
 import type { optionDataType, VoidFunction } from '../utils/interface';
 import type { EChartsType } from 'echarts';
-import i18n from 'lib/i18n';
+import i18n from 'ascend-i18n';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
 export const Label = (props: {name: string;style?: object }): JSX.Element => {

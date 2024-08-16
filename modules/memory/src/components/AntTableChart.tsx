@@ -7,9 +7,9 @@ import type { SorterResult } from 'antd/lib/table/interface';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import i18n from 'lib/i18n';
+import i18n from 'ascend-i18n';
 import type { MemoryTable, MemoryTableColumn, OperatorDetail } from '../entity/memory';
-import ResizeTable from 'lib/ResizeTable';
+import { ResizeTable } from 'ascend-resize';
 
 interface IProps {
     tableData: MemoryTable;

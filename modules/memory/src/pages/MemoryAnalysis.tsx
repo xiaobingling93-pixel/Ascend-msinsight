@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import { AntTableChart } from '../components/AntTableChart';
 import { LineChart } from '../components/LineChart';
-import { Button, Input, InputNumber, Select, Spin } from 'lib/components';
+import { Button, Input, InputNumber, Select, Spin } from 'ascend-components';
 import { message } from 'antd';
 import type { Session } from '../entity/session';
 import type {
@@ -20,9 +20,9 @@ import {
 } from '../utils/RequestUtils';
 import { useHit, Label } from '../components/Common';
 import styled from '@emotion/styled';
-import { GroupRankIdsByHost, StyledEmpty } from 'lib/CommonUtils';
-import Layout from 'lib/Layout';
-import CollapsiblePanel from 'lib/CollapsiblePanel';
+import { GroupRankIdsByHost, StyledEmpty } from 'ascend-utils';
+import { Layout } from 'ascend-layout';
+import CollapsiblePanel from 'ascend-collapsible-panel';
 
 interface SelectedRange {
     startTs: number;
@@ -152,11 +152,11 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
         }
     };
 
-    const onFilterEventMinSizeInputChanged = (value: number | null): void => {
+    const onFilterEventMinSizeInputChanged = (value: number | string | null): void => {
         setMinSize(value as number);
     };
 
-    const onFilterEventMaxSizeInputChanged = (value: number | null): void => {
+    const onFilterEventMaxSizeInputChanged = (value: number | string | null): void => {
         setMaxSize(value as number);
     };
 

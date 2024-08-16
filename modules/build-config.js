@@ -6,7 +6,6 @@ const HtmlInlineScriptPlugin = require('html-inline-script-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const fs = require('fs');
 const path = require('path');
-const {ModuleFederationPlugin} = require('webpack').container;
 
 class ScriptTypePlugin {
   apply(compiler) {
@@ -15,7 +14,7 @@ class ScriptTypePlugin {
         'ScriptTypePlugin',
         (data, cb) => {
           data.html = data.html.replace(
-            /<script\b[^<]*<\/script>/gi,
+            /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
             (match) => match.replace('<script', '<script type="module"'),
           );
           cb(null, data);
@@ -49,22 +48,6 @@ class BackgroundSvgInlinePlugin {
   }
 }
 
-const federationConfig = {
-  filename: 'remoteEntry.js',
-  name: 'host',
-  remotes: {lib: process.env.NODE_ENV === 'development' ? 'lib@http://localhost:8000/remoteEntry.js' : 'lib@../lib/remoteEntry.js'},
-  shared: {
-    react: {singleton: true, eager: true},
-    'react-dom': {singleton: true, eager: true},
-    '@cloudsop/horizon': {singleton: true, eager: true},
-    i18next: {singleton: true},
-    'react-i18next': {singleton: true},
-    antd: {singleton: true},
-    '@emotion/react': {singleton: true},
-    '@emotion/styled': {singleton: true},
-  },
-};
-
 const htmllist = [
   new HtmlWebpackPlugin({
     template: 'public/index.html',
@@ -75,8 +58,7 @@ const htmllist = [
     template: 'public/index.html',
     filename: 'communication.html',
     chunks: ['communication'],
-  }), new HtmlInlineScriptPlugin(), new ScriptTypePlugin(), new BackgroundSvgInlinePlugin('cluster'),
-  new ModuleFederationPlugin(federationConfig),
+  }),
 ];
 
 const webpackCfg = {
@@ -84,8 +66,6 @@ const webpackCfg = {
     // Because CEF has issues with loading source maps properly atm,
     // lets use the best we can get in line with `inline-source-map`
     webpackConfig.devtool = 'inline-source-map';
-    webpackConfig.plugins.push(...[new HtmlInlineScriptPlugin(), new ScriptTypePlugin(), new BackgroundSvgInlinePlugin('timeline'),
-      new ModuleFederationPlugin(federationConfig)]);
     return webpackConfig;
   },
   clusterConfigure: (webpackConfig) => {
@@ -95,20 +75,16 @@ const webpackCfg = {
       communication: './src/CommunicationIndex.ts',
     };
     webpackConfig.output.filename = 'static/js/[name].bundle.js';
-    webpackConfig.plugins.splice(0, 1);
     webpackConfig.plugins.push(...htmllist);
     return webpackConfig;
   },
   memoryConfigure: (webpackConfig) => {
-    webpackConfig.plugins.push(...[new HtmlInlineScriptPlugin(), new ScriptTypePlugin(), new ModuleFederationPlugin(federationConfig)]);
     return webpackConfig;
   },
   operatorConfigure: (webpackConfig) => {
-    webpackConfig.plugins.push(new ModuleFederationPlugin(federationConfig));
     return webpackConfig;
   },
   jupyterConfigure: (webpackConfig) => {
-    webpackConfig.plugins.push(new ModuleFederationPlugin(federationConfig));
     return webpackConfig;
   },
   computeConfigure: (webpackConfig) => {
@@ -130,7 +106,6 @@ const webpackCfg = {
         chunks: ['source'],
       }),
     );
-    webpackConfig.plugins.push(new ModuleFederationPlugin(federationConfig));
     return webpackConfig;
   },
   alias: {

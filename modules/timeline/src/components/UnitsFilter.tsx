@@ -3,11 +3,11 @@
  */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip, Select } from 'lib/components';
+import { Tooltip, Select } from 'ascend-components';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import React, { useEffect, useRef, useState } from 'react';
-import { FilterIcon } from 'lib/Icon';
+import { FilterIcon } from 'ascend-icon';
 import type { Session } from '../entity/session';
 import { CustomButton } from './base/StyledButton';
 import type { InsightUnit } from '../entity/insight';
@@ -346,7 +346,7 @@ export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Elem
             align={{ offset: [-8, 3] }}
             zIndex={1040}
         >
-            <CustomButton tooltip={t('tooltip:filter')} icon={FilterIcon} { ...customButtonProps } ref={ref}/>
+            <CustomButton tooltip={t('tooltip:filter')} icon={FilterIcon as any} { ...customButtonProps } ref={ref}/>
         </Tooltip>
     );
 });

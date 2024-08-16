@@ -33,7 +33,7 @@ interface ISVGProps extends React.SVGProps< SVGSVGElement > {
 }
 
 interface IIconProps extends ISVGProps {
-    type?: string ;
+    type?: string;
 
     svgElement?: React.FunctionComponent<React.SVGProps< SVGSVGElement > & { title?: string }>;
 }
@@ -41,6 +41,7 @@ interface IIconProps extends ISVGProps {
 interface IIconDivProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement> {
     type?: string;
     url?: string;
+    float?: string;
     height?: string;
     width?: string;
 }

@@ -18,7 +18,7 @@ import { GOLDEN_RATE as MOVE_RATE } from '../../../entity/domain';
 import type { Theme } from '@emotion/react';
 import { setZoomHistory } from '../../ContextMenu';
 import { isMac } from '../../../utils/is';
-import { adaptDpr } from 'lib/CommonUtils';
+import { adaptDpr } from 'ascend-utils';
 
 const dragInitData = {
     isDragging: false,
@@ -118,6 +118,9 @@ const getDrawOnMoveArgs = ({
 }: GetDrawOnMoveArgs): DrawArgs => {
     if (!canvas.current) { throw Error('missed canvas'); }
     const ctx = canvas.current.getContext('2d');
+    if (!ctx) {
+        throw Error('Failed to get CanvasRenderingContext2D');
+    }
     const { canvasWidth, canvasHeight } = adaptDpr(canvas.current, ctx);
     return {
         ctx,

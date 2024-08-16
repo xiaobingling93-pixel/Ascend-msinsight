@@ -1,11 +1,10 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import ResizeTable from 'lib/ResizeTable';
-import { fetchColumnFilterProps } from 'lib/ColumnFilter';
+import { ResizeTable, fetchColumnFilterProps } from 'ascend-resize';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from 'lib/components';
+import { Button } from 'ascend-components';
 import { DownOutlined } from '@ant-design/icons';
 import { getPageConfigWithPageData } from '../Common';
 import { type ConditionType, type FilterType } from './Filter';
@@ -13,8 +12,7 @@ import { queryOperators, queryOperatorsInStatic, queryOperatorStatic } from '../
 import { runInAction } from 'mobx';
 import type { Session } from '../../entity/session';
 import type { ColumnsType } from 'antd/es/table';
-import i18n from 'lib/i18n';
-import CollapsiblePanel from 'lib/CollapsiblePanel';
+import CollapsiblePanel from 'ascend-collapsible-panel';
 
 interface FullConditionType {
     rankId: string ;
@@ -43,14 +41,14 @@ const useOpl0Columns = (): ColumnsType<any> => {
             dataIndex: 'name',
             sorter: true,
             ellipsis: true,
-            ...fetchColumnFilterProps('name', 'Name', i18n.t),
+            ...fetchColumnFilterProps('name', 'Name'),
         },
         {
             title: t('Type'),
             dataIndex: 'type',
             sorter: true,
             ellipsis: true,
-            ...fetchColumnFilterProps('type', 'Type', i18n.t),
+            ...fetchColumnFilterProps('type', 'Type'),
         },
         {
             title: t('AcceleratorCore'),
@@ -58,7 +56,7 @@ const useOpl0Columns = (): ColumnsType<any> => {
             key: 'accCore',
             sorter: true,
             ellipsis: true,
-            ...fetchColumnFilterProps('accCore', 'AcceleratorCore', i18n.t),
+            ...fetchColumnFilterProps('accCore', 'AcceleratorCore'),
         },
         {
             title: `${t('StartTime')}(ms)`,

@@ -2,9 +2,9 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import React, { useEffect, useState } from 'react';
-import { Select } from 'lib/components';
+import { Select } from 'ascend-components';
 import { useTranslation } from 'react-i18next';
-import { getUsableVal, FormItem } from 'lib/CommonUtils';
+import { getUsableVal, FormItem } from 'ascend-utils';
 import type { optionDataType, optionMapDataType } from '../../../utils/interface';
 import { limitInput, useHit } from '../../Common';
 

@@ -9,7 +9,7 @@ import { binarySearch, useResizeEventDependency } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
 import { convertTime, safeStr, useChartCharacter } from './Common';
 import styled from '@emotion/styled';
-import { chartColors, getDefaultChartOptions } from 'lib/CommonUtils';
+import { chartColors, getDefaultChartOptions } from 'ascend-utils';
 
 const ChartDesc = styled.div`
     color: ${(props): string => props.theme.textColorTertiary};

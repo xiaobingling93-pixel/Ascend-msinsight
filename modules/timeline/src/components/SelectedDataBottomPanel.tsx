@@ -12,8 +12,8 @@ import type { SingleDataDesc } from '../entity/insight';
 import { useSelectedDataDetailUpdater } from './details/hooks';
 import type { AscendSliceDetail } from '../entity/data';
 import { ReactComponent as ExpandIcon } from '../assets/images/insights/PullDownIcon.svg';
-import { Col, Row } from 'lib/components';
-import { customConsole as console } from 'lib/CommonUtils';
+import { Col, Row } from 'ascend-components';
+import { customConsole as console } from 'ascend-utils';
 
 interface DetailProps<T extends Record<string, unknown>> {
     session: Session;

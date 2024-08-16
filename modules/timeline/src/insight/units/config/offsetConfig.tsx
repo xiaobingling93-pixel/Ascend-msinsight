@@ -3,7 +3,7 @@
 */
 import type { InputRef } from 'antd';
 import { StyledInput } from '../../../components/base/StyledInput';
-import React, { useRef, useState } from 'react';
+import React, { RefObject, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
@@ -113,7 +113,7 @@ const InputDiv = styled.div`
     }
 `;
 
-function handleAlignStart(inputRef: InputRef, session: Session, setValue: React.Dispatch<React.SetStateAction<string>>): void {
+function handleAlignStart(inputRef: RefObject<InputRef>, session: Session, setValue: React.Dispatch<React.SetStateAction<string>>): void {
     const alignStartTimestamp = session.selectedUnits[0]?.alignStartTimestamp;
     if (alignStartTimestamp === undefined) {
         message.warning('Please expand the card first');

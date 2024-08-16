@@ -4,12 +4,12 @@
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
-import CollapsiblePanel from 'lib/CollapsiblePanel';
+import CollapsiblePanel from 'ascend-collapsible-panel';
 import { type Session } from '../../../entity/session';
 import Filter, { defaultCondition, type ICondition } from './Filter';
 import CoreChart from './CoreChart';
 import { queryCoreOccupancy } from '../../RequestUtils';
-import { Advice } from 'lib/CommonUtils';
+import { Advice } from 'ascend-utils';
 export interface ICoreOccupancy {
     soc: string; // 算子运行平台
     opType: string; // 算子类型：vector, cube, mix

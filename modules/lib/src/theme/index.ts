@@ -5,7 +5,7 @@
 import { light } from './light';
 import { dark } from './dark';
 import ThemeStore from '../utils/ThemeStore';
-import './emotion.d';
+import './emotion';
 export { GlobalStyles } from './Global';
 declare global {
     interface Window {

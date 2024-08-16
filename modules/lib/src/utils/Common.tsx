@@ -16,7 +16,7 @@ export { customConsole } from './Console';
 export { BaseContainer, MIDescriptions, MIDescriptionsItem, COLOR, chartVisbilityListener, getResizeEcharts, getDefaultChartOptions };
 
 export const StyledEmpty = ({ descriptor, style }:
-{ descriptor: string; style?: object; translation: any}): JSX.Element => {
+{ descriptor?: string; style?: object; translation?: any}): JSX.Element => {
     const theme = useTheme();
     const { t } = useTranslation();
     return (
@@ -55,7 +55,7 @@ const StyledAdvice = styled.div`
     }
 `;
 
-export function Advice({ text, style = {} }: { text: string; style: React.CSSProperties }): JSX.Element {
+export function Advice({ text, style = {} }: { text: string; style?: React.CSSProperties }): JSX.Element {
     const { t } = useTranslation();
     return <StyledAdvice style={style}>
         <div>

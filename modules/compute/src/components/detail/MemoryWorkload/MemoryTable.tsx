@@ -7,8 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { type Icondition } from './Filter';
 import { queryMemoryTable } from '../../RequestUtils';
 import { LimitHit } from '../../LimitSet';
-import ResizeTable from 'lib/ResizeTable';
-import { firstLetterUpper, Advice } from 'lib/CommonUtils';
+import { ResizeTable } from 'ascend-resize';
+import { firstLetterUpper, Advice } from 'ascend-utils';
 import { type Session } from '../../../entity/session';
 
 interface ItableDetail {
@@ -114,7 +114,7 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
                     size="small"
                     columns={item.cols ?? []}
                     dataSource={item.dataset ?? []}
-                    scroll={item.dataset.length > 10 ? { y: 500 } : false}
+                    scroll={item.dataset.length > 10 ? { y: 500 } : undefined}
                     pagination={false}
                 />
             ))}

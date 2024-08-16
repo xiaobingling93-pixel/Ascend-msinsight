@@ -9,7 +9,7 @@ import * as d3 from 'd3';
 import { type Icondition } from './Filter';
 import { queryMemoryGraph } from '../../RequestUtils';
 import { type Session } from '../../../entity/session';
-import { Advice } from 'lib/CommonUtils';
+import { Advice } from 'ascend-utils';
 export interface ImemoryData {
     blockId: string;
     blockType: string;

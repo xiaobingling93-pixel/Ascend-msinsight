@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Tooltip } from 'lib/components';
+import { Tooltip } from 'ascend-components';
 import type { Session } from '../../entity/session';
 import Filter from './Filter';
 import type { ConditionDataType } from './Filter';
@@ -19,10 +19,10 @@ import { notNullObj } from '../Common';
 import { queryCommunication, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
 import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
 import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
-import { HelpIcon } from 'lib/Icon';
-import Layout from 'lib/Layout';
+import { HelpIcon } from 'ascend-icon';
+import { Layout } from 'ascend-layout';
 import styled from '@emotion/styled';
-import CollapsiblePanel from 'lib/CollapsiblePanel';
+import CollapsiblePanel from 'ascend-collapsible-panel';
 
 const FixedBox = styled.div`
     z-index: 10;

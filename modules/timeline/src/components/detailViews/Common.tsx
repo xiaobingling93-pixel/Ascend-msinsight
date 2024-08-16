@@ -4,13 +4,14 @@
 import type { CompareFn, FilterConfirmProps } from 'antd/es/table/interface';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input } from 'lib/components';
+import { Button, Input } from 'ascend-components';
 import { Space } from 'antd/lib/index';
 import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnType } from 'antd/es/table';
-import { limitInput } from 'lib/CommonUtils';
-import { fetchColumnFilterProps } from 'lib/ColumnFilter';
-import i18n from 'lib/i18n';
+import { limitInput } from 'ascend-utils';
+import { fetchColumnFilterProps } from 'ascend-resize';
+import i18n from 'ascend-i18n';
+import type { TableColumnsType } from 'antd';
 interface ColumData {
     title: string;
     dataIndex: string;
@@ -73,7 +74,7 @@ export const pythonApiSummaryColumns: ColumData[] = [
     { title: 'Max(us)', dataIndex: 'max', ...getDefaultColumData('max') },
 ];
 
-export const useKernelDetails = (): ColumData[] => {
+export const useKernelDetails = (): TableColumnsType<any> => {
     const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
     return [
         { title: t('Name'), dataIndex: 'name', ...getDefaultColumData('name'), ...fetchColumnFilterProps('name', 'Name') },

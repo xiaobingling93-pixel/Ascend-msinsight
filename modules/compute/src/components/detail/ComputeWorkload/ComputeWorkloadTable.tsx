@@ -5,8 +5,8 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { type IblockData } from './Index';
-import ResizeTable from 'lib/ResizeTable';
-import { getSet, firstLetterUpper } from 'lib/CommonUtils';
+import { ResizeTable } from 'ascend-resize';
+import { getSet, firstLetterUpper } from 'ascend-utils';
 import { LimitHit } from '../../LimitSet';
 
 interface Iprops {
@@ -82,7 +82,7 @@ function Index({ blockId, data }: Iprops): JSX.Element {
                     size="small"
                     columns={item.cols ?? []}
                     dataSource={item.dataset ?? []}
-                    scroll={item.dataset.length > 10 ? { y: 500 } : false}
+                    scroll={item.dataset.length > 10 ? { y: 500 } : undefined}
                     pagination={false}
                 />
             ))}

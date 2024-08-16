@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import { useTheme } from '@emotion/react';
-import { Tooltip } from 'lib/components';
+import { Tooltip } from 'ascend-components';
 import type { TooltipPlacement } from 'antd/lib/tooltip';
 import * as React from 'react';
 
@@ -66,7 +66,7 @@ export const Abbreviature = ({ content, availableWidth, fontSize, placement }: A
         {isOverstep
             ? (<Tooltip
                 mouseEnterDelay={0.3}
-                overlayStyle={{ maxHeight: 200, overflow: 'hidden', tempFontSize }}
+                overlayStyle={{ maxHeight: 200, overflow: 'hidden', fontSize: tempFontSize }}
                 placement={(placement ?? 'topLeft') as TooltipPlacement }
                 color={theme.selectBackgroundColor}
                 overlayInnerStyle={{ color: theme.fontColor, borderRadius: 10, boxShadow: 'none' }}

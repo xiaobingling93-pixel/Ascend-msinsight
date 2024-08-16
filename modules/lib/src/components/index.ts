@@ -22,4 +22,5 @@ export {
     notification,
     Progress,
     Switch,
+    message,
 } from 'antd';

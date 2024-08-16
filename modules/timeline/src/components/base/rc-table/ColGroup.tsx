@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
+import React from 'react';
 import type { ColumnType } from './types';
 
 export interface ColGroupProps<RecordType> {

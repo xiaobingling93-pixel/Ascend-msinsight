@@ -3,11 +3,11 @@
  */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip, Button, Input } from 'lib/components';
+import { Tooltip, Button, Input } from 'ascend-components';
 import { message } from 'antd';
 import { observer } from 'mobx-react';
 import React, { type ChangeEvent, useEffect, useState } from 'react';
-import { SearchIcon } from 'lib/Icon';
+import { SearchIcon } from 'ascend-icon';
 import { ReactComponent as AntdCloseIcon } from '../assets/images/insights/ic_close_filled.svg';
 import type { Session } from '../entity/session';
 import { CustomButton, PressButton, StyledButton } from './base/StyledButton';
@@ -276,7 +276,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                         ? <div className={'icon_selected_exact_match'}/>
                         : <div className={'icon_exact_match'}/>} onClick={(): void => changeMatchExactStatus()}></StyledButton>
                 </StyledTooltip>
-                <CustomButton icon={SearchIcon} onClick={onInputPressEnter}></CustomButton>
+                <CustomButton icon={SearchIcon as any} onClick={onInputPressEnter}></CustomButton>
             </div>;
         } else {
             dom = <div className={'search_icon_css'}>
@@ -328,7 +328,7 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
             onOpenChange={onTooltipVisibleChange}
             overlayClassName={'insight-category-search-overlay'}
             align={{ offset: [-8, 3] }}>
-            <CustomButton tooltip={t('tooltip:search')} icon={SearchIcon} { ...customButtonProps }/>
+            <CustomButton tooltip={t('tooltip:search')} icon={SearchIcon as any} { ...customButtonProps }/>
         </Tooltip>
     );
 });

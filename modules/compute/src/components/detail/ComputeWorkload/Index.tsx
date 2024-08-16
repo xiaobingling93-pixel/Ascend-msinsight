@@ -8,10 +8,10 @@ import { runInAction } from 'mobx';
 import ComputeWorkloadChart from './ComputeWorkloadChart';
 import ComputeWorkloadTable from './ComputeWorkloadTable';
 import { type Session } from '../../../entity/session';
-import { sortFunc } from 'lib/CommonUtils';
+import { sortFunc } from 'ascend-utils';
 import Filter, { defaultCondition, type Icondition } from './Filter';
 import { queryComputeWorkload } from '../../RequestUtils';
-import CollapsiblePanel from 'lib/CollapsiblePanel';
+import CollapsiblePanel from 'ascend-collapsible-panel';
 
 export interface IblockData {
     blockId: string;

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import { Tooltip } from 'lib/components';
+import { Tooltip } from 'ascend-components';
 import { Modal } from 'antd';
 import React, { useState, type MouseEvent } from 'react';
 import type { TimelineAxisFlag } from '../entity/timeMaker';

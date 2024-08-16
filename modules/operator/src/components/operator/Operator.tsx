@@ -9,7 +9,7 @@ import Filter from './Filter';
 import DetailChart from './DetailChart';
 import BaseTable from './DetailTable';
 import { type ConditionType, defaultCondition, type FilterType, defaultFilterType } from './Filter';
-import Layout from 'lib/Layout';
+import { Layout } from 'ascend-layout';
 
 // eslint-disable-next-line max-lines-per-function
 const Index = observer(({ session }: { session: Session }) => {

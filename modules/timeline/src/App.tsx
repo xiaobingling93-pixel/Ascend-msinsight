@@ -3,7 +3,7 @@
  */
 
 import { ThemeProvider } from '@emotion/react';
-import { SharedConfigProvider } from 'lib/SharedConfigProvider';
+import { SharedConfigProvider } from 'ascend-shared-config-provider';
 import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
@@ -16,7 +16,7 @@ import { themeInstance } from './theme/theme';
 import type { ThemeItem } from './theme/theme';
 import eventBus, { EventType } from './utils/eventBus';
 import connector from './connection';
-import { GlobalStyles } from 'lib/theme';
+import { GlobalStyles } from 'ascend-theme';
 
 const Window = styled.div`
     height: 100vh;

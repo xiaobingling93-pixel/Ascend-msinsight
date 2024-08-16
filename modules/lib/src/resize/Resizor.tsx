@@ -5,7 +5,7 @@ import React, { useRef } from 'react';
 import './Resizor.css';
 
 // eslint-disable-next-line max-lines-per-function
-function Resizor(props: {
+export function Resizor(props: {
     onResize: (deltaX: number, width: number, nextWidth?: number) => void;
     style?: object;
 }): JSX.Element {
@@ -97,4 +97,3 @@ function Resizor(props: {
 
     return <div ref={divRef} className={'resizor'} onMouseDown={handleMouseDown} style={props.style ?? {}}></div>;
 };
-export default Resizor;

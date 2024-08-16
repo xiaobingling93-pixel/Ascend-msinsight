@@ -6,7 +6,7 @@ import styled from '@emotion/styled';
 import { Table, type PaginationProps } from 'antd';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import { isArray } from 'lodash';
-import Resizor from './Resizor';
+import { Resizor } from './Resizor';
 import { getColumnSearchProps } from './ColumnFilterWithSelection';
 import { limitInput } from '../utils/Common';
 import { useWatchVirtualRender } from '../utils/VirtualRenderUtils';
@@ -204,7 +204,7 @@ interface Iprop<T> {
     minThWidth?: number;
     style?: object;
     virtual?: boolean;
-    scroll?: {x?: number;y?: number;rowHeight?: number};
+    scroll?: {x?: number;y?: number;rowHeight?: number;scrollToFirstRowOnChange?: boolean};
     pagination?: false | TablePaginationConfig;
     onChange?: (...p: any) => void;
 }
@@ -279,7 +279,7 @@ const handleChangeSafe = (onChange?: (...p: any) => void, ...params: any): void 
     }
 };
 
-function ResizeTable<T extends object>(prop: Iprop<T>): JSX.Element {
+export function ResizeTable<T extends object>(prop: Iprop<T>): JSX.Element {
     const {
         columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, style, virtual = false,
         scroll, dataSource, pagination, expandable, onChange, ...restProps
@@ -340,5 +340,3 @@ function ResizeTable<T extends object>(prop: Iprop<T>): JSX.Element {
         </div>
     );
 };
-
-export default ResizeTable;

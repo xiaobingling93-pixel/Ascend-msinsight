@@ -11,7 +11,7 @@ import type { InsightUnit, UnitMatcher, LinkLines, LinkDataDesc } from './insigh
 import { type TimeLineMaker, TIME_MAKER_DEFAULT } from './timeMaker';
 import { omit } from 'lodash';
 import { platform } from '../platforms';
-import i18n from 'lib/i18n';
+import i18n from 'ascend-i18n';
 import { type Phase, stateTexts } from '../utils/constant';
 import { SimpleCache } from '../cache/simplecache';
 

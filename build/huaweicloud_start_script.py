@@ -27,25 +27,61 @@ def insight_start(backend_args):
     frontend_dir = os.path.join(AI_TEMP_DIR, "server", "frontend")
 
     exec_name = "profiler_server.exe" if platform.platform().find("Windows") > -1 else "profiler_server"
-    backend_path = os.path.join(os.path.join(AI_TEMP_DIR, "server", "backend"), exec_name)
+    backend_dir = os.path.join(AI_TEMP_DIR, "server", "backend")
+    backend_path = os.path.join(backend_dir, exec_name)
+    # 检查 backend_path 是否存在
+    if not os.path.exists(backend_path):
+        logging.info("The backend path %s is not exist.", backend_path)
+        return
 
     # 非阻塞启动前后的进程
-    subprocess.Popen([shutil.which('python'), "-m", "http.server", "-d", frontend_dir, str(FIX_FRONTEND_PORT)],
-                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    subprocess.Popen([backend_path] + backend_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.Popen([backend_path] + backend_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                     env={'LD_LIBRARY_PATH': backend_dir + ":" + os.getenv('LD_LIBRARY_PATH', '')})
+    process = subprocess.Popen([shutil.which('python'), "-m", "http.server", "-d", frontend_dir,
+        str(FIX_FRONTEND_PORT)], stdout=sys.stdout, stderr=sys.stdout, universal_newlines=True, bufsize=1)
+
+
+def kill_process(pid):
+    try:
+        execute_command(["kill", "-9", str(pid)])
+    except subprocess.CalledProcessError:
+        logging.info("Kill process error. Please check the port occupancy status and manually release the port.")
+        pass
+
+
+def get_process_list():
+    try:
+        result = execute_command(["ps", "-eo", "pid,ppid,comm"])
+        return result.splitlines()
+    except subprocess.CalledProcessError:
+        logging.info("Get process list error.")
+        return []
 
 
 def insight_stop():
-    frontend_dir = os.path.join(AI_TEMP_DIR, "server", "frontend")
+    exec_name = "profiler_server"
+    process_list = get_process_list()
+    temp_process_pid = -1
 
-    exec_name = "profiler_server.exe" if platform.platform().find("Windows") > -1 else "profiler_server"
-    backend_path = os.path.join(os.path.join(AI_TEMP_DIR, "server", "backend"), exec_name)
+    for line in process_list:
+        parts = line.split()
+        if len(parts) < 3:
+            continue
+        try:
+            pid = int(parts[0])
+            ppid = int(parts[1])
+            name = parts[2]
 
-    execute_command(["pkill", "-f", frontend_dir])
-    execute_command(["pkill", "-f", backend_path])
+            if name == exec_name:
+                temp_process_pid = pid
+                kill_process(pid)
+                continue
 
-    shutil.rmtree(AI_TEMP_DIR, ignore_errors=True)
-    logging.info(f"%s has stopped.", ASCEND_INSIGHT_NAME)
+            if name == 'python' and pid - temp_process_pid < 5:
+                kill_process(pid)
+                temp_process_pid = -1
+        except ValueError: # 过滤非数字行
+            pass
 
 
 def insight_help():

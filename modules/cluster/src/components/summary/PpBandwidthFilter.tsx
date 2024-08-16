@@ -5,12 +5,12 @@
 import { observer } from 'mobx-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Select, Tooltip } from 'lib/components';
+import { Select, Tooltip } from 'ascend-components';
 import { Label } from '../Common';
 import { getStepsData } from './PpBandwidthAnalysis';
 import { getAllPpStageIds, getPpContainerData } from '../communicatorContainer/ContainerUtils';
 import type { Session } from '../../entity/session';
-import { HelpIcon } from 'lib/Icon';
+import { HelpIcon } from 'ascend-icon';
 
 type ValueType = string | number | string[];
 

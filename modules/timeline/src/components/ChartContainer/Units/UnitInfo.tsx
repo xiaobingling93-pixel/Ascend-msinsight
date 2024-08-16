@@ -28,7 +28,7 @@ import { useSelectUnit } from './hooks';
 import { ReactComponent as Supported } from '../../../assets/images/insights/Supported.svg';
 import { StyledTooltip } from '../../base/StyledTooltip';
 import { CardUnit } from '../../../insight/units/AscendUnit';
-import { StartIcon, PinIcon, UnPinIcon } from 'lib/Icon';
+import { StartIcon, PinIcon, UnPinIcon } from 'ascend-icon';
 import { UnitProgress } from '../../charts/UnitProgress';
 import { type ParseCardsParam, parseCards } from '../../../api/Request';
 import { message } from 'antd';

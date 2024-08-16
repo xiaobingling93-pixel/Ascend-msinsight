@@ -6,7 +6,7 @@ import * as React from 'react';
 import styled from '@emotion/styled';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
-import { ResetIcon, PlusIcon as Add, MinusIcon as Del } from 'lib/Icon';
+import { ResetIcon, PlusIcon as Add, MinusIcon as Del } from 'ascend-icon';
 import type { Session } from '../entity/session';
 import { traceStart } from '../utils/traceLogger';
 import { getDuration } from '../utils/humanReadable';

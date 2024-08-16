@@ -28,7 +28,7 @@ import { loopActionFactory } from '../../utils/FactoryActions';
 import { RenderEngineContext } from '../../context/context';
 import { renderEngine } from '../../renderEngine';
 import { DragDirection, useDraggableContainerEx } from '../../utils/useDraggableContainerEx';
-import Resizor from 'lib/Resizor';
+import { Resizor } from 'ascend-resize';
 
 export const TIME_LINE_AXIS_HEIGHT_PX = 30;
 const LANE_INFO_WIDTH_PX = observable({ value: 250 });
@@ -115,9 +115,9 @@ const ChartBody = observer((props: ChartBodyProps) => {
             })
         }
         <Overlay leftOffset={LANE_INFO_WIDTH_PX.value} rightAreaName={CHARTINTERACTOR_NAME}>
-            <><Resizor style={{ width: '10px', right: '1px', pointerEvents: 'all' }} onResize={(deltaX: number, width: number, nextWidth: number): void => {
+            <><Resizor style={{ width: '10px', right: '1px', pointerEvents: 'all' }} onResize={(deltaX: number, width: number, nextWidth?: number): void => {
                 runInAction(() => {
-                    if (width > 150 && nextWidth > 100) {
+                    if (width > 150 && nextWidth != null && nextWidth > 100) {
                         LANE_INFO_WIDTH_PX.value = width;
                     }
                 });

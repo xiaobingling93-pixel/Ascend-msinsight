@@ -13,7 +13,7 @@ import type { TimeUnit } from '../../utils/adaptTimeForLength';
 import { getTimestamp } from '../../utils/humanReadable';
 import { useWatchResize } from '../../utils/useWatchDomResize';
 import { RangeMarkerButtonCanvas } from '../TimeMakerButton';
-import { adaptDpr } from 'lib/CommonUtils';
+import { adaptDpr } from 'ascend-utils';
 
 export const BASE_TICKS_SPACE_PX = 50;
 export const BASE_DOMAIN_STEP = 1;

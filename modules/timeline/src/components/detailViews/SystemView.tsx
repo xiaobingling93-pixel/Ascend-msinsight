@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Divider } from 'antd/lib/index';
 import styled from '@emotion/styled';
-import { Button, Select } from 'lib/components';
+import { Button, Select } from 'ascend-components';
 import {
     getColumnSearchProps,
     getDefaultColumData,
@@ -33,8 +33,8 @@ import {
     fusionOperatorColumns,
     eventViewData,
 } from './Common';
-import ResizeTable from 'lib/ResizeTable';
-import { limitInput, GroupRankIdsByHost, FormItem } from 'lib/CommonUtils';
+import { ResizeTable } from 'ascend-resize';
+import { limitInput, GroupRankIdsByHost, FormItem } from 'ascend-utils';
 import type { CardMetaData, ThreadMetaData } from '../../entity/data';
 import { runInAction } from 'mobx';
 import { ChartErrorBoundary } from '../error/ChartErrorBoundary';

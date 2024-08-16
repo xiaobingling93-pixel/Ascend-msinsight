@@ -3,10 +3,10 @@
  */
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip } from 'lib/components';
+import { Tooltip } from 'ascend-components';
 import { observer } from 'mobx-react';
 import React, { useRef, useState } from 'react';
-import { LinkIcon } from 'lib/Icon';
+import { LinkIcon } from 'ascend-icon';
 import type { Session } from '../entity/session';
 import { CustomButton, StyledButton } from './base/StyledButton';
 import { useTranslation } from 'react-i18next';
@@ -252,7 +252,7 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
             color={theme.tooltipBGColor}
             overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
             overlayClassName={'insight-category-search-overlay'} align={{ offset: [-8, 3] }}>
-            <CustomButton tooltip={t('tooltip:linker')} icon={LinkIcon} { ...customButtonProps } ref={ref}/>
+            <CustomButton tooltip={t('tooltip:linker')} icon={LinkIcon as any} { ...customButtonProps } ref={ref}/>
         </Tooltip>
     );
 });

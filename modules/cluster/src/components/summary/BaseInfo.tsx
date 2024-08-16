@@ -9,8 +9,8 @@ import type { StringMap } from '../../utils/interface';
 import type { Session } from '../../entity/session';
 import { queryTopSummary } from '../../utils/RequestUtils';
 import { defaultConditions } from './Filter';
-import CollapsiblePanel from 'lib/CollapsiblePanel';
-import { MIDescriptions, MIDescriptionsItem } from 'lib/CommonUtils';
+import CollapsiblePanel from 'ascend-collapsible-panel';
+import { MIDescriptions, MIDescriptionsItem } from 'ascend-utils';
 
 export interface BaseInfoDataType {
     [prop: string]: any;
@@ -130,7 +130,7 @@ const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
     const displaylist = useDisplayItems(session);
 
     return <CollapsiblePanel title={t('BaseInfo')}>
-        <MIDescriptions>
+        <MIDescriptions title={''}>
             {
                 displaylist.map((item, index) => <MIDescriptionsItem key={index} label={item.label}>
                     { data[item.key] }

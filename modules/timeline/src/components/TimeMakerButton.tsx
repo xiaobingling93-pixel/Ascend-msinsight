@@ -13,12 +13,12 @@ import { useWatchResize } from '../utils/useWatchDomResize';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as AntdPlaceFlagButtonSvg } from '../assets/images/timeline/ic_place_flag.svg';
-import { FlagIcon } from 'lib/Icon';
+import { FlagIcon } from 'ascend-icon';
 import { addRangeFlag, deleteRangeFlag, linearScaleFactory, transformTimeToLeft } from './TimelineMarker';
 import { runInAction } from 'mobx';
 import { getTimestamp } from '../utils/humanReadable';
 import type { SvgType } from './base/rc-table/types';
-import { adaptDpr } from 'lib/CommonUtils';
+import { adaptDpr } from 'ascend-utils';
 
 const PlaceFlagButtonSvg = AntdPlaceFlagButtonSvg as SvgType;
 
@@ -29,7 +29,7 @@ export const TimeMakerButton = observer(({ session }: { session: Session }): JSX
         updateIsSuspend(open);
     };
     const timeMakerProps = { session, onToolTipVisibleChange };
-    return <CustomButton icon={FlagIcon} tooltip={t('timelineMarker:markerList')}
+    return <CustomButton icon={FlagIcon as any} tooltip={t('timelineMarker:markerList')}
         isSuspend={ isSuspend } onClick={ (): void => { handleTimeMakerAction(timeMakerProps); }}/>;
 });
 

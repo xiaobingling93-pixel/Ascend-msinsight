@@ -4,7 +4,7 @@
 import type { Theme } from '@emotion/react';
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip } from 'lib/components';
+import { Tooltip } from 'ascend-components';
 import { action } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';

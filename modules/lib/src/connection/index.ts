@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import { customConsole as console } from '../utils/Console';
+import { customConsole as console } from 'ascend-utils';
 type ReservedEventHandler = 'request';
 type EventHanlder = string;
 interface SendParams<T extends EventHanlder> {

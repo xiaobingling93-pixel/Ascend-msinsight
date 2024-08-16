@@ -17,12 +17,12 @@ import StatisticsTable from './StatisticsTable';
 import BaseInfo from './BaseInfo';
 import { CommunicatorContainer } from '../communicatorContainer/CommunicatorContainer';
 import PpBandwidthAnalysis from './PpBandwidthAnalysis';
-import i18n from 'lib/i18n';
-import { HelpIcon } from 'lib/Icon';
-import Layout from 'lib/Layout';
-import CollapsiblePanel from 'lib/CollapsiblePanel';
-import { Tooltip } from 'lib/components';
-import { chartColors } from 'lib/CommonUtils';
+import i18n from 'ascend-i18n';
+import { HelpIcon } from 'ascend-icon';
+import { Layout } from 'ascend-layout';
+import CollapsiblePanel from 'ascend-collapsible-panel';
+import { Tooltip } from 'ascend-components';
+import { chartColors } from 'ascend-utils';
 
 interface SummaryDataType {
     [propName: string]: any;
@@ -357,7 +357,7 @@ function OverviewCom({ handleFilterChange, dataSource, selected, advice, session
     useEventBus('setActiveTab', (data) => {
         setPipelineVisible(data === 'pp');
     });
-    return <Layout padding={0}>
+    return <Layout>
         <BaseInfo session={session}/>
 
         <CollapsiblePanel title={t('Parallel Strategy Analysis')}>
@@ -367,8 +367,7 @@ function OverviewCom({ handleFilterChange, dataSource, selected, advice, session
                     secondary
                     title={<div className={'flex items-center'}>{t('Computation/CommunicationOverview')}{useHit(containsPreparing)}</div>}
                     headerStyle={{ padding: 0 }}
-                    contentStyle={{ paddingLeft: 0, paddingRight: 0 }}
-                >
+                    contentStyle={{ paddingLeft: 0, paddingRight: 0 }}>
                     <Filter handleFilterChange={handleFilterChange} session={session} visible={!pipelineVisible}/>
                     <div id={'overview-chart'} style={{ height: '400px' }} ></div>
                     <StatisticsTable {...selected} advice={advice} session={session}/>

@@ -6,7 +6,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Select, Checkbox, InputNumber, Button } from 'lib/components';
+import { Select, Checkbox, InputNumber, Button } from 'ascend-components';
 import { message } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import * as echarts from 'echarts';
@@ -16,7 +16,7 @@ import type { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
 import _, { cloneDeep } from 'lodash';
 import { type Session } from '../../entity/session';
-import CollapsiblePanel from 'lib/CollapsiblePanel';
+import CollapsiblePanel from 'ascend-collapsible-panel';
 
 interface FilterInfos {
     min: number;
@@ -358,10 +358,10 @@ const RangeFilter = ({ range, changeFilter }: { range: RangeInfo; changeFilter: 
         <>
             <Label name={t('searchCriteria.VisibleRange', { ns: 'communication' })} style={{ margin: '0 8px 0 24px' }} />
             <InputNumber value={minValue} size="small" style={{ marginRight: 8 }} min={minRange} max={maxRange}
-                onChange={(value: number | null): void => changeInput(value as number, 'min')} status={isValid ? '' : 'error'} step={0.1} />
+                onChange={(value: string | number | null): void => changeInput(value as number, 'min')} status={isValid ? '' : 'error'} step={0.1} />
             ~
             <InputNumber value={maxValue} size="small" style={{ margin: '0 32px 0 8px' }} min={minRange} max={maxRange}
-                onChange={(value: number | null): void => changeInput(value as number, 'max')} status={isValid ? '' : 'error'} step={0.1} />
+                onChange={(value: string | number | null): void => changeInput(value as number, 'max')} status={isValid ? '' : 'error'} step={0.1} />
             <Button onClick={onConfirm} type="primary" size="middle">{t('Confirm', { ns: 'buttonText' })}</Button>
         </>
     );

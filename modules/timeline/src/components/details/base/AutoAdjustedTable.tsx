@@ -3,7 +3,7 @@
 */
 import { css } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Empty } from 'lib/components';
+import { Empty } from 'ascend-components';
 import classNames from 'classnames';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';

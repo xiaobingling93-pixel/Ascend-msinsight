@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type * as echarts from 'echarts';
-import { getResizeEcharts, chartVisbilityListener, chartColors, getDefaultChartOptions } from 'lib/CommonUtils';
+import { getResizeEcharts, chartVisbilityListener, chartColors, getDefaultChartOptions } from 'ascend-utils';
 import type { ConditionType } from './Filter';
 import { queryOperatorCategory, queryOperatorComputeUnit } from '../RequestUtils';
 import type { Session } from '../../entity/session';

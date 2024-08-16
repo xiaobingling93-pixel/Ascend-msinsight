@@ -6,9 +6,9 @@ import React, { type ReactNode } from 'react';
 
 interface LayoutProps {
     children: ReactNode;
-    padding: number | string;
+    padding?: number | string;
 }
-const Layout: React.FC<LayoutProps> = ({ padding, children }): JSX.Element => {
+export const Layout: React.FC<LayoutProps> = ({ padding, children }): JSX.Element => {
     return (
         <div className="mi-page">
             <div className="mi-page-content" style={{ padding }}>
@@ -17,5 +17,3 @@ const Layout: React.FC<LayoutProps> = ({ padding, children }): JSX.Element => {
         </div>
     );
 };
-
-export default Layout;

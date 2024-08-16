@@ -76,7 +76,7 @@ interface EChartsTypeExtends extends EChartsType {
     resizeFunc?: () => void;
     loadFunc?: () => void;
 }
-export function getResizeEcharts(chartDom: HTMLElement, myChart: EChartsTypeExtends): EChartsType {
+export function getResizeEcharts(chartDom: HTMLElement, myChart?: EChartsTypeExtends): EChartsType {
     removeResizeEvent(myChart);
     const newChart = echarts.getInstanceByDom(chartDom)
         ? echarts.getInstanceByDom(chartDom) as echarts.ECharts
