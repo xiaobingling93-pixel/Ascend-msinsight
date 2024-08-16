@@ -177,6 +177,7 @@ export const dark: Theme = {
     majorColorLight1: '#FBA25D',
     bgColor: '#1f2329',
     bgColorDark: '#181b20',
+    bgColorGrey: '#343a43',
     bgColorLight: '#2a2f37',
     bgColorLighter: '#343a43',
     bgColorDisabled: '#272c33',

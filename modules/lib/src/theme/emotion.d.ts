@@ -182,6 +182,7 @@ declare module '@emotion/react' {
         majorColorLight1: string;
         bgColor: string; // 背景色
         bgColorDark: string;
+        bgColorGrey: string;
         bgColorLight: string;
         bgColorLighter: string;
         bgColorDisabled: string; // 组件禁用后背景色

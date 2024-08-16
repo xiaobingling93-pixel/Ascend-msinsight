@@ -29,6 +29,7 @@
     "Throughput": "吞吐量",
     "Throughput(GB/s)": "吞吐量(GB/s)",
     "Cycle": "时钟周期",
+    "Cycles": "时钟周期",
     "Wait Cycles": "等待周期",
     "Active Rate(%)": "活跃率(%)",
     "Cube0 Duration (μs)": "Cube0时长(μs)",
@@ -43,7 +44,9 @@
     "All Instruction Records": "指令记录数",
     "Memory Workload Table Records": "内存负载表记录数",
     "Current Count": "当前总数",
+    "Cache Hit Rate(%)": "Cache命中率(%)",
     "Pid": "进程号",
-    "DeviceId": "设备号"
+    "DeviceId": "设备号",
+    "Level": "等级"
   }
 }
