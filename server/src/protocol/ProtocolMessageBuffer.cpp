@@ -88,9 +88,10 @@ std::unique_ptr<ProtocolMessage> ProtocolMessageBuffer::Pop()
     std::string bodyStr = buffer.substr(bodyPos, bodyLen);
     std::unique_ptr<Request> request = ProtocolManager::Instance().FromJson(bodyStr, error);
     if (request == nullptr) {
+        // 从buffer中删除无法处理的请求数据
+        buffer = buffer.substr(bodyPos + bodyLen);
         return nullptr;
     }
-    auto bodyJson = JsonUtil::TryParse(bodyStr, error).value();
     buffer = buffer.substr(bodyPos + bodyLen); // buffer removes head and body string
     return std::unique_ptr<ProtocolMessage>(request.release());
 }
