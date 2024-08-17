@@ -142,7 +142,7 @@ std::optional<ProtocolUtil::JsonToRequestFunc> ProtocolUtil::GetJsonToRequestFun
 {
     std::lock_guard<std::mutex> lock(mutex);
     if (jsonToReqFactory.count(command) == 0) {
-        ServerLog::Warn("The json to request function is not find. command:", command);
+        ServerLog::Warn("The json to request function is not found. command:", command);
         return std::nullopt;
     }
     return jsonToReqFactory[command];
@@ -152,7 +152,7 @@ std::optional<ProtocolUtil::ResponseToJsonFunc> ProtocolUtil::GetResponseToJsonF
 {
     std::lock_guard<std::mutex> lock(mutex);
     if (resToJsonFactory.count(command) == 0) {
-        ServerLog::Warn("The response to json function is not find. command:", command);
+        ServerLog::Warn("The response to json function is not found. command:", command);
         return std::nullopt;
     }
     return resToJsonFactory[command];
