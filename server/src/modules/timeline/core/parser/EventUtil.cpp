@@ -63,7 +63,7 @@ std::unique_ptr<Event> EventUtil::FromJson(const json_t &json, const std::string
 std::optional<EventUtil::JsonToEventFunc> EventUtil::GetJsonToEventFunc(const std::string &type)
 {
     if (jsonToEventFactory.count(type) == 0) {
-        ServerLog::Warn("The json to event function is not find. type:", type);
+        ServerLog::Warn("The json to event function is not found. type:", type);
         return std::nullopt;
     }
     return jsonToEventFactory[type];
