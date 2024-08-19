@@ -12,6 +12,7 @@ import { limitInput } from 'ascend-utils';
 import { fetchColumnFilterProps } from 'ascend-resize';
 import i18n from 'ascend-i18n';
 import type { TableColumnsType } from 'antd';
+import { ColumnFilterIcon } from 'ascend-icon';
 interface ColumData {
     title: string;
     dataIndex: string;
@@ -328,7 +329,7 @@ export const getColumnSearchProps = ({ dataIndex, setSearchText, searchText, set
         filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) =>
             filterDropdownCom({ setSelectedKeys, selectedKeys, handleSearch, confirm, dataIndex, clearFilters, handleReset }),
         filterIcon: (filtered: boolean) => (
-            <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+            <ColumnFilterIcon/>
         ),
         onFilter: (value, record) =>
             record[dataIndex]

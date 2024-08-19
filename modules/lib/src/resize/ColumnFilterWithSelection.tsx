@@ -2,7 +2,6 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import React, { useEffect, useState } from 'react';
-import { FilterOutlined } from '@ant-design/icons';
 import { Button, Input } from '../components/index';
 import { limitInput } from '../utils/Common';
 import type { ColumnType } from 'antd/es/table';
@@ -11,6 +10,7 @@ import VirtalUl from '../utils/VirtualUl';
 import type { CheckItem, ValueType } from '../utils/VirtualUl';
 import i18n from '../i18n';
 import styled from '@emotion/styled';
+import { ColumnFilterIcon } from '../icon/Icon';
 
 export const ButtonGroup = styled.div`
     display: flex;
@@ -57,7 +57,7 @@ export const getColumnSearchProps = <T extends Record<string, unknown>>(clearFil
         filterDropdown: (props: FilterDropdownProps): React.ReactNode => (
             <FilterDropdown {...props} clearFilters={clearFilters}/>),
         filterIcon: (filtered: boolean) => (
-            <FilterOutlined />
+            <ColumnFilterIcon />
         ),
         onFilterDropdownOpenChange: (visible: boolean): void => {
             if (visible) {

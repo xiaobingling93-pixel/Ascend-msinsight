@@ -3,18 +3,18 @@
  */
 
 import React from 'react';
-import { ReactComponent as FunnelIcon } from '../../assets/images/insights/FunnelIcon.svg';
 import styled from '@emotion/styled';
 import type { FilterConfirmProps } from '../base/rc-table/interface';
 import { ReactComponent as CancelIcon } from '../../assets/images/insights/CancelIcon.svg';
-import Input from 'antd/lib/input';
+import { Input } from 'ascend-components';
+import { ColumnFilterIcon } from 'ascend-icon';
 
 const FilterContainer = styled.div`
     width: 230px;
     height: 50px;
     padding: 10px;
-    border-radius: 16px;
-    background-color: ${(props): string => props.theme.selectBackgroundColor};
+    border-radius: 4px;
+    background-color: ${(props): string => props.theme.bgColorLight};
     color: ${(props): string => props.theme.fontColor};
     align-items: center;
     justify-content: space-evenly;
@@ -24,9 +24,7 @@ const FilterContainer = styled.div`
         border: none;
         font-size: .875rem;
         border-radius: 6px;
-        background-color: ${(props): string => props.theme.searchBackgroundColor};
         caret-color: ${(props): string => props.theme.searchInputCaretColor};
-        color: ${(props): string => props.theme.tableHeadFontColor};
     }
     input:focus {
         box-shadow: none;
@@ -82,7 +80,7 @@ const filterIndex = (data: string, value: string): boolean => {
 export const parseFilterDef = <T extends Record<string, unknown>>(dataIndex?: keyof T | Array<keyof T>): Record<string, unknown> => dataIndex === undefined
     ? {}
     : ({
-        filterIcon: <FunnelIcon className="filterIcon" />,
+        filterIcon: <ColumnFilterIcon/>,
         filterDropdown: setFiltersContent,
         onFilter: onFilterFunc(dataIndex),
     });

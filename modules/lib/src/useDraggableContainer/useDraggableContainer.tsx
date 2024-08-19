@@ -1,13 +1,11 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2024. All rights reserved.
 */
-import { CaretLeftOutlined, CaretRightOutlined } from '@ant-design/icons';
 import styled from '@emotion/styled';
 import { clamp } from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ReactComponent as DrawerButtonSvg } from './icons/toggle_bg_light.svg';
-
-const DrawerButton = DrawerButtonSvg as React.ElementType;
+import { ArrowDownIcon, ArrowUpIcon } from '../icon/Icon';
+import { themeInstance } from '../theme';
 
 interface CssProps {
     column: boolean;
@@ -53,7 +51,7 @@ interface DCProps {
     open?: boolean;
 }
 
-const MIN_HORIZONTAL_WH = 14;
+const MIN_HORIZONTAL_WH = 24;
 const MIN_VERTICAL_WH = 36;
 
 const ContainerBase = styled.div<CssProps>`
@@ -66,9 +64,6 @@ const ContainerBase = styled.div<CssProps>`
         background-color: ${(p): string => p.theme.contentBackgroundColor};
         svg + .buttonShow {
             position: absolute;
-            g {
-                fill: ${(props): string => props.theme.closeDragContainerBG};
-            }
             .caret {
                 position: absolute;
                 cursor: pointer;
@@ -121,9 +116,6 @@ const ContainerLeft = styled(ContainerBase)`
             z-index: 2;
             transform: rotate(90deg);
             right: -33px;
-            g {
-                fill: ${(props): string => props.theme.closeDragContainerBG};
-            }
         }
         & > .caret {
             position: absolute;
@@ -180,9 +172,6 @@ const ContainerRight = styled(ContainerBase)`
             z-index: 2;
             transform: rotate(-90deg);
             left: -33px;
-            g {
-                fill: ${(props): string => props.theme.closeDragContainerBG};
-            }
         }
         & > .caret {
             position: absolute;
@@ -231,10 +220,6 @@ const ContainerBottom = styled(ContainerBase)`
             top: 0;
             left: calc(50% - 39px);
             z-index: 4;
-
-            g {
-                fill: ${(p): string => p.theme.closeDragContainerBG};
-            }
         }
 
         & > .caret {
@@ -505,6 +490,7 @@ export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => 
             draggable.current.style.width = `${MIN_DRAG_WH}px`;
         }
     });
+    const DrawerButton = dragTranslate ? ArrowUpIcon : ArrowDownIcon;
     const view = (viewProps: ViewProps): JSX.Element => {
         return <Container
             key={viewProps.id} ref={container} column translateXY={dragTranslate}
@@ -516,8 +502,7 @@ export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => 
             <div className={'topC'}> {viewProps.mainContainer} </div>
             <div className={'bottomC'} ref={draggable}>
                 <div className={'dragContainer'} aria-disabled={dragTranslate !== 0}>{viewProps.draggableContainer}</div>
-                <DrawerButton className={'buttonShow'} onClick={(): void => showDraggable()} />
-                {dragTranslate ? <CaretLeftOutlined onClick={(): void => showDraggable()} className={'caret'}/> : <CaretRightOutlined onClick={(): void => showDraggable()} className={'caret'}/>}
+                <DrawerButton className={'buttonShow'} onClick={(): void => showDraggable()} theme={themeInstance.getCurrentTheme()}/>
                 <div className={'splitLine'} aria-disabled={dragTranslate !== 0} />
             </div>
             {viewProps.slot}

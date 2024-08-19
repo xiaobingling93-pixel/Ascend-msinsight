@@ -16,7 +16,7 @@ import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import { ThemeProvider, useTheme } from '@emotion/react';
 import type { Theme } from '@emotion/react';
-import { themeInstance } from '../theme/theme';
+import { themeInstance } from 'ascend-theme';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { StyledButton } from '../components/base/StyledButton';
