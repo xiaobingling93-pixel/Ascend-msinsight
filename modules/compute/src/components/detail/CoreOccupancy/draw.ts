@@ -23,8 +23,8 @@ interface SubCoreDrawData {
 // 画布、节点、图例等尺寸
 export const sizeConfig = {
     core: {
-        width: 120,
-        height: 250,
+        width: 130,
+        height: 280,
         space: 15,
         title: {
             top: 20,
@@ -32,15 +32,15 @@ export const sizeConfig = {
         border: 1,
     },
     subCore: {
-        width: 80,
-        height: 28,
+        width: 90,
+        height: 33,
         heightSpace: 15,
         top: 35,
     },
     legend: {
         width: 70,
         height: 300,
-        top: 20,
+        top: 10,
         left: 10,
         title: {
             height: 10,
@@ -86,10 +86,10 @@ export function getDrawData({ data: originData, showAs }: DataConfig): CoreDrawD
     const data = originData.map(item => ({
         name: `Core${item.coreId}`.slice(0, MAX_TEXT_LENGTH),
         children: subCoreNameList.map(subCoreName => {
-            const subCore = item.subCoreDetails.find(subCoreItem => subCoreItem.subCoreName === subCoreName)?.[showAs];
+            const subCore = item.subCoreDetails.find(subCoreItem => (subCoreItem.subCoreName ?? '').toLowerCase() === subCoreName.toLowerCase())?.[showAs];
             return {
                 name: subCoreName,
-                value: String(subCore?.value ?? '').slice(0, MAX_TEXT_LENGTH),
+                value: String(getSubCoreValue(showAs, subCore?.value)).slice(0, MAX_TEXT_LENGTH),
                 level: String(subCore?.level ?? '').slice(0, MAX_TEXT_LENGTH),
             };
         }),
@@ -97,6 +97,33 @@ export function getDrawData({ data: originData, showAs }: DataConfig): CoreDrawD
     return data;
 }
 
+function getSubCoreValue(showAs: ShowAs, value?: number): string | number {
+    switch (showAs) {
+        case 'throughput':
+            return formatThroughput(value);
+        case 'cacheHitRate':
+            return value !== undefined ? Number((value).toFixed(2)) : '';
+        case 'cycles':
+            return String(value);
+        default:
+            return '';
+    }
+}
+const K = 1024;
+const M = 1024 * 1024;
+const G = 1024 * 1024 * 1024;
+function formatThroughput(value?: number | string): string {
+    const num = Number(value);
+    if (num < K) {
+        return `${num}Byte`;
+    } else if (num < M) {
+        return `${Number((num / K).toFixed(2))} KB`;
+    } else if (num < G) {
+        return `${Number((num / M).toFixed(2))} MB`;
+    } else {
+        return `${Number((num / G).toFixed(2))} GB`;
+    }
+}
 // 颜色
 export function getSubCoreColor(level: string, theme: Theme): string {
     COLOR[0] = theme.bgColorGrey;

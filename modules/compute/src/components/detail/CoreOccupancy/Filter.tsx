@@ -25,7 +25,7 @@ export const defaultCondition: ICondition = {
 const defaultOptionMap = {
     showAsOptions: [
         { label: 'Cycles', value: 'cycles' },
-        { label: 'Throughput(GB/s)', value: 'throughput' },
+        { label: 'Throughput', value: 'throughput' },
         { label: 'Cache Hit Rate(%)', value: 'cacheHitRate' },
     ],
 };
