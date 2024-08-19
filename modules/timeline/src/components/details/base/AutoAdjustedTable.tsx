@@ -54,12 +54,8 @@ const StyledTable = styled(Table)`
     }
     .insight-table .insight-table-thead > tr > th {
         .active {
-            color: ${(p): string => p.theme.buttonFontColor};
+            color: ${(p): string => p.theme.primaryColor};
         }
-    }
-    .insight-table .insight-table-thead > tr > .insight-table-column-has-sorters[aria-sort] {
-        color: ${(p): string => p.theme.fontColor};
-        border-bottom: 2px solid ${(p): string => p.theme.buttonFontColor};
     }
     .insight-table {
         font-size: 12px;
@@ -102,23 +98,15 @@ const StyledTable = styled(Table)`
             }
         }
 
-        .insight-table-cell[aria-sort="ascending"] svg {
-            g g g path:nth-of-type(odd) {
-                fill: #526ECC;
-            }
-
-            g g g path:nth-of-type(even) {
-                fill: #7A7A7A;
+        .insight-table-cell[aria-sort="ascending"] {
+            .sorter-up svg path {
+                fill: ${(p): string => p.theme.primaryColor}
             }
         }
 
-        .insight-table-cell[aria-sort="descending"] svg {
-            g g g path:nth-of-type(even) {
-                fill: #526ECC;
-            }
-
-            g g g path:nth-of-type(odd) {
-                fill: #7A7A7A;
+        .insight-table-cell[aria-sort="descending"] {
+            .sorter-down svg path {
+                fill: ${(p): string => p.theme.primaryColor}
             }
         }
     }
@@ -126,20 +114,6 @@ const StyledTable = styled(Table)`
         overflow-y: overlay !important; /* overriding an element-inline style */
         ${tableStyle}
         user-select:text;
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            border-radius: 8px;
-        }
-        ::-webkit-scrollbar-thumb {
-            border-radius: 8px;
-            background: ${(props): string => props.theme.scrollbarColor};
-        }
-        ::-webkit-scrollbar-corner {
-            background: transparent;
-        }
     }
     td > div > .expanded {
         g use {

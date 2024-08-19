@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
-import type { ThemeItem } from '../theme/theme';
+import type { ThemeItem } from 'ascend-theme';
 import type { InsightState, NavigationParam, NotifyLevel, Platform } from './platform';
 import type { IMessageSender } from '../connection/messageSender';
 

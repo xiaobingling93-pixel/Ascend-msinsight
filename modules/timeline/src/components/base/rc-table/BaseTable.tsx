@@ -22,6 +22,7 @@ import type { ColumnsType, ColumnType, DefaultRecordType, ExpandableConfig, Expa
 import { getCellFixedInfo } from './utils/fixUtil';
 import { getColumnsKey, isValidValue } from './utils/valueUtil';
 import type { EmotionJSX } from '@emotion/react/types/jsx-namespace';
+import { ColumnSorterIcon } from 'ascend-icon';
 
 const VIRTUAL_TOLERANCE = 4;
 
@@ -34,7 +35,6 @@ const SortWrapper = styled.div`
     &>div:last-child {
         display: flex;
         align-items: center;
-        margin-left: 4px;
     }
 `;
 
@@ -399,7 +399,7 @@ const ForwardBaseTable = React.forwardRef(<RecordType extends DefaultRecordType>
             return {
                 ...item,
                 title: <SortWrapper>
-                    { item.title }<div><SortNormal /></div>
+                    { item.title }<div><ColumnSorterIcon/></div>
                 </SortWrapper>,
             };
         } else {

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="91px" height="17px" viewBox="0 0 91 17" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g id="组件库" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g transform="translate(-24.000000, -171.000000)" id="编组-5备份-2">
+            <g transform="translate(69.500000, 179.500000) rotate(-270.000000) translate(-69.500000, -179.500000) translate(61.500000, 134.000000)">
+                <polygon id="矩形" fill="#F4F6FA" transform="translate(8.000000, 45.500000) scale(-1, 1) rotate(-90.000000) translate(-8.000000, -45.500000) " points="-23.5887311 37.5 39.5887311 37.5 53.5 53.5 -37.5 53.5"></polygon>
+                <g id="icons/dark/normal/project/下拉三角" transform="translate(8.000000, 45.500000) scale(-1, 1) rotate(-270.000000) translate(-8.000000, -45.500000) translate(1.500000, 42.532609)" fill="#8D98AA">
+                    <path d="M7.17426936,0.615637245 L12.0479722,5.06553986 C12.2518994,5.25173421 12.2662746,5.56799015 12.0800803,5.77191729 C11.9853478,5.87567191 11.851334,5.93478261 11.7108375,5.93478261 L1.28916245,5.93478261 C1.01302008,5.93478261 0.789162452,5.71092498 0.789162452,5.43478261 C0.789162452,5.29428612 0.848273154,5.16027234 0.95202777,5.06553986 L5.82573064,0.615637245 C6.20762484,0.266951237 6.79237516,0.266951237 7.17426936,0.615637245 Z" id="三角形" transform="translate(6.500000, 2.967391) scale(1, -1) translate(-6.500000, -2.967391) "></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

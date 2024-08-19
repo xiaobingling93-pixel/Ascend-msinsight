@@ -12,11 +12,10 @@ import { SessionPageErrorBoundary } from './components/error/SessionPageErrorBou
 import { useRootStore } from './context/context';
 import { SessionPage } from './pages/SessionPage';
 import { platform } from './platforms';
-import { themeInstance } from './theme/theme';
-import type { ThemeItem } from './theme/theme';
+import { themeInstance, GlobalStyles } from 'ascend-theme';
+import type { ThemeItem } from 'ascend-theme';
 import eventBus, { EventType } from './utils/eventBus';
 import connector from './connection';
-import { GlobalStyles } from 'ascend-theme';
 
 const Window = styled.div`
     height: 100vh;

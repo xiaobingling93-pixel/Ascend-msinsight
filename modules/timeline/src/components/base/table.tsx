@@ -13,28 +13,27 @@ const Support = React.forwardRef(
 );
 Support.displayName = 'table';
 export const Table = styled(Support)`
-    .insight-table-body::-webkit-scrollbar {
-        width: 7px;
-        transition: opacity 120ms ease-out;
-    }
-
-    .insight-table-body::-webkit-scrollbar-track {
-        background-color: transparent;
-    }
-
-    .insight-table-body::-webkit-scrollbar-thumb {
-        background-color: rgba(127, 127, 127, .5);
-        z-index: 100;
-        border-radius: 5px;
-        transition: .3s background-color;
-    }
     .insight-table .insight-table-thead th.insight-table-cell {
         background-color: ${(props): string => props.theme.contentBackgroundColor};
         border-bottom-color: unset;
         color: unset;
+        &:not(:last-child):not(:nth-last-child(2)):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+            background-color: ${(p): string => p.theme.borderColorLight};
+            position: absolute;
+            top: 50%;
+            right: 0;
+            width: 1px;
+            height: 1.6em;
+            transform: translateY(-50%);
+            transition: background-color .3s;
+            content: "";
+        }
+        &.insight-table-column-has-sorters{
+            cursor: pointer;
+        }
     }
 
-    color: ${(props): string => props.theme.fontColor};
+    color: ${(props): string => props.theme.tableTextColor};
 
     .insight-table-cell {
         white-space: nowrap;
@@ -113,11 +112,12 @@ export const Table = styled(Support)`
         position: relative;
         display: flex;
         align-items: center;
-        padding: 0 4px;
+        padding: 0 0 0 4px;
         font-size: 12px;
         border-radius: 2px;
         cursor: pointer;
         transition: all 0.3s;
+        color: #bfbfbf;
     }
     .insight-table-filter-dropdown {
         box-sizing: border-box;

@@ -5,7 +5,7 @@
 import * as React from 'react';
 import { Select } from 'antd';
 import styled from '@emotion/styled';
-import caretDownIcon from '../icon/img/caret-down.svg';
+import caretDownIcon from 'ascend-icon/img/caret-down.svg';
 import removeIcon from '../icon/img/select_multiple_remove.svg';
 import type { SelectProps } from 'antd/lib/select';
 import { useTranslation } from 'react-i18next';

@@ -21,7 +21,7 @@ import { useWatchResize } from '../utils/useWatchDomResize';
 import type { Theme } from '@emotion/react';
 import type { TimeLineMakerProps } from '../utils/TimeMakerUtils';
 import { ThemeProvider, useTheme } from '@emotion/react';
-import { themeInstance } from '../theme/theme';
+import { themeInstance } from 'ascend-theme';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { TIME_MARKER_AXIS_HEIGHT } from './TimeMakerAxis';

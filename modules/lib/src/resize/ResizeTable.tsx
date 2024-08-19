@@ -80,7 +80,7 @@ const StyledTable = styled(Table)`
 
     //筛选
     .ant-table-filter-trigger:hover {
-        color: ${(p): string => p.theme.textColorPrimary};
+        color: #a6a6a6;
         background: rgba(0, 0, 0, 0.04);
     }
 
@@ -90,7 +90,7 @@ const StyledTable = styled(Table)`
     
     //排序
     td.ant-table-column-sort {
-        background: ${(p): string => p.theme.bgColorDark};
+        background: none;
     }
 
     //分页

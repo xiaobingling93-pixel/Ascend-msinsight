@@ -4,11 +4,12 @@
 import React from 'react';
 import type { ColumnType } from 'antd/es/table';
 import { Input, Button } from '../components/index';
-import { FilterOutlined, SearchOutlined } from '@ant-design/icons';
+import { SearchOutlined } from '@ant-design/icons';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
 import { limitInput } from '../utils/Common';
 import i18n from '../i18n';
 import { ButtonGroup } from './ColumnFilterWithSelection';
+import { ColumnFilterIcon } from '../icon/Icon';
 
 const state = {
     searchText: '',
@@ -63,7 +64,7 @@ export function fetchColumnFilterProps(columnDataIndex: string, columnTitle: str
             </div>
         ),
         filterIcon: (filtered: boolean) => (
-            <FilterOutlined />
+                <ColumnFilterIcon/>
         ),
         onFilter: (value, record) =>
             record[dataIndex]
