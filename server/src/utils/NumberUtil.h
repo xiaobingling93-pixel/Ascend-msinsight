@@ -34,6 +34,21 @@ public:
         return ret;
     }
 
+    static inline unsigned long long TryParseUnsignedLongLong(const std::string &longLongStr)
+    {
+        int ret;
+        try {
+            ret = std::stoull(longLongStr);
+        } catch (std::invalid_argument &) {
+            // no conversion
+            return INVALID_NUMBER;
+        } catch (std::out_of_range &) {
+            // out of range
+            return INVALID_NUMBER;
+        }
+        return ret;
+    }
+
     static inline std::string Uint64ToHexString(uint64_t number)
     {
         std::ostringstream ss;

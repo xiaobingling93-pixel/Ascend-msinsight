@@ -3,6 +3,7 @@
  */
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "NumberUtil.h"
 #include "QueryMemoryViewHandler.h"
 
 namespace Dic {
@@ -17,15 +18,118 @@ void QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     MemoryViewResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
-    if (!database->QueryMemoryView(request.params, response.data)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to query memory view data.");
-        session.OnResponse(std::move(responsePtr));
-        return;
+    if (!request.params.isCompare) {
+        if (!database->QueryMemoryView(request.params, response.data)) {
+            SetResponseResult(response, false);
+            ServerLog::Error("Failed to query memory view data.");
+            session.OnResponse(std::move(responsePtr));
+            return;
+        }
+    } else {
+        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabaseBaseline();
+        if (!databaseBaseline) {
+            SetResponseResult(response, false);
+            ServerLog::Error("Failed to connect to database of baseline.");
+            session.OnResponse(std::move(responsePtr));
+            return;
+        }
+        std::unique_ptr<MemoryViewResponse> responsePtrCompare = std::make_unique<MemoryViewResponse>();
+        MemoryViewResponse &responseCompare = *responsePtrCompare.get();
+        if (!database->QueryMemoryView(request.params, responseCompare.data)) {
+            SetResponseResult(response, false);
+            ServerLog::Error("Failed to query memory view compare data.");
+            session.OnResponse(std::move(responsePtr));
+            return;
+        }
+        std::unique_ptr<MemoryViewResponse> responsePtrBaseline = std::make_unique<MemoryViewResponse>();
+        MemoryViewResponse &responseBaseline = *responsePtrBaseline.get();
+        if (!databaseBaseline->QueryMemoryView(request.params, responseBaseline.data)) {
+            SetResponseResult(response, false);
+            ServerLog::Error("Failed to query memory view baseline data.");
+            session.OnResponse(std::move(responsePtr));
+            return;
+        }
+        if (request.params.type == Protocol::MEMORY_STREAM_GROUP) {
+            SetResponseResult(response, false);
+            ServerLog::Error("Memory comparing does not support request type Stream.");
+            session.OnResponse(std::move(responsePtr));
+            return;
+        }
+        GetCompareGraphLegends(responseCompare.data, responseBaseline.data, response.data);
+        GetCompareGraphLines(responseCompare.data, responseBaseline.data, response.data);
     }
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+}
+
+void QueryMemoryViewHandler::GetCompareGraphLegends(const Protocol::MemoryViewData &compareData,
+                                                    const Protocol::MemoryViewData &baselineData,
+                                                    Protocol::MemoryViewData &resultData)
+{
+    resultData.title = "";
+    resultData.legends = compareData.legends;
+    for (size_t i = 1; i < compareData.legends.size(); ++i) {
+        resultData.legends[i] += " of Compare";
+    }
+    if (baselineData.legends.size() > 0) {
+        resultData.legends.insert(resultData.legends.end(),
+            baselineData.legends.begin() + 1, baselineData.legends.end());
+    }
+    for (size_t i = compareData.legends.size(); i < resultData.legends.size(); ++i) {
+        resultData.legends[i] += " of Baseline";
+    }
+}
+
+void QueryMemoryViewHandler::GetCompareGraphLines(const Protocol::MemoryViewData& compareData,
+                                                  const Protocol::MemoryViewData& baselineData,
+                                                  Protocol::MemoryViewData& resultData)
+{
+    // compareData.lines和baselineData.lines都已经按照时间排好序，接下来将两个有序表进行归并。
+    size_t indexCompare = 0;
+    size_t indexBaseline = 0;
+    while ((indexCompare < compareData.lines.size()) || (indexBaseline < baselineData.lines.size())) {
+        // 如果baseline已经遍历完或者compare的时间戳小于baseline的时间戳，返回compare数据并补NULL。
+        if (indexBaseline >= baselineData.lines.size() ||
+            (indexCompare < compareData.lines.size() &&
+            NumberUtil::StringToLongDouble(compareData.lines[indexCompare][0]) <
+            NumberUtil::StringToLongDouble(baselineData.lines[indexBaseline][0]))) {
+            std::vector<std::string> points = compareData.lines[indexCompare];
+            if (baselineData.legends.size() > 0) {
+                points.insert(points.end(), baselineData.legends.size() - 1, "NULL");
+            }
+            resultData.lines.emplace_back(points);
+            ++indexCompare;
+            continue;
+        }
+        // 如果compare已经遍历完或者compare的时间戳大于baseline的时间戳，返回baseline数据并补NULL。
+        if (indexCompare >= compareData.lines.size() ||
+            (indexBaseline < baselineData.lines.size() &&
+            NumberUtil::StringToLongDouble(compareData.lines[indexCompare][0]) >
+            NumberUtil::StringToLongDouble(baselineData.lines[indexBaseline][0]))) {
+            std::vector<std::string> points = {};
+            points.push_back(baselineData.lines[indexBaseline][0]);
+            if (compareData.legends.size() > 0) {
+                points.insert(points.end(), compareData.legends.size() - 1, "NULL");
+            }
+            if (baselineData.lines[indexBaseline].size() > 0) {
+                points.insert(points.end(), baselineData.lines[indexBaseline].begin() + 1,
+                    baselineData.lines[indexBaseline].end());
+            }
+            resultData.lines.emplace_back(points);
+            ++indexBaseline;
+            continue;
+        }
+        // 如果compare的时间戳等于baseline的时间戳，合并compare和baseline的数据。
+        std::vector<std::string> points = compareData.lines[indexCompare];
+        if (baselineData.lines[indexBaseline].size() > 0) {
+            points.insert(points.end(), baselineData.lines[indexBaseline].begin() + 1,
+                baselineData.lines[indexBaseline].end());
+        }
+        resultData.lines.emplace_back(points);
+        ++indexCompare;
+        ++indexBaseline;
+    }
 }
 
 } // end of namespace Memory

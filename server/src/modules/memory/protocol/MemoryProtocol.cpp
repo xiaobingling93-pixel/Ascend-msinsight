@@ -109,6 +109,7 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryViewRequest(const json_t &json,
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.type, json["params"], "type");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
     return reqPtr;
 }
 
@@ -134,6 +135,7 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryStaticOperatorGraphRequest(cons
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.modelName, json["params"], "modelName");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.graphId, json["params"], "graphId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
     return reqPtr;
 }
 

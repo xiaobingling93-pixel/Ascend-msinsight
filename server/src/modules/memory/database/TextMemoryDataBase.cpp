@@ -287,13 +287,13 @@ std::string  TextMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &
     std::string sql =
         "SELECT name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
         "ROUND((allocation_time - " +
-        std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) END AS allocationTimestamp, "
+        std::to_string(startTime) + ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
         "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " +
-        std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) "
-        "END AS releaseTimestamp, ROUND(duration / 1000.0, 2) as duration, "
+        std::to_string(startTime) + ") / (1000.0 * 1000.0), 3) "
+        "END AS releaseTimestamp, ROUND(duration / 1000.0, 3) as duration, "
         "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
-        std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) "
-        "END AS activeReleaseTime, ROUND(active_duration / 1000.0, 2) as active_duration, "
+        std::to_string(startTime) + ") / (1000.0 * 1000.0), 3) "
+        "END AS activeReleaseTime, ROUND(active_duration / 1000.0, 3) as active_duration, "
         "ROUND(allocation_allocated, 2) as allocation_allocated,ROUND(allocation_reserve, 2) as allocation_reserve, " +
         "ROUND(allocation_active, 2) as allocation_active, ROUND(release_allocated, 2) as  release_allocated, " +
         "ROUND(release_reserve, 2) as release_reserve, ROUND(release_active, 2) as release_active, " +
@@ -359,11 +359,16 @@ bool TextMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &reques
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string sql = "SELECT component, ROUND((timestamp - " + std::to_string(startTime) +
-        ") / (1000.0 * 1000.0), 2) as timestamp, "
+        ") / (1000.0 * 1000.0), 3) as timestamp, "
         "ROUND(total_allocated, 2) as total_allocated, ROUND(total_reserve, 2) as total_reserve, "
         "ROUND(total_active, 2) as total_active, stream FROM " +
         recordTable + " WHERE 1==1";
-    return ExecuteQueryMemoryView(requestParams, operatorBody, sql);
+    std::vector<Protocol::ComponentDto> componentDtoVec;
+    std::vector<std::string> streams;
+    if (!ExecuteQueryMemoryViewExecuteSql(requestParams, componentDtoVec, streams, sql)) {
+        return false;
+    }
+    return ExecuteQueryMemoryViewGetGraph(requestParams, componentDtoVec, streams, operatorBody);
 }
 
 bool TextMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
@@ -492,8 +497,8 @@ bool TextMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &
         sql += " AND stream <> ''";
     }
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        sql += " AND (ROUND((allocation_time - ?) / (1000.0 * 1000.0), 2) BETWEEN ? AND ? "
-               " OR ROUND((release_time - ?) / (1000.0 * 1000.0), 2) BETWEEN ? AND ?) ";
+        sql += " AND (ROUND((allocation_time - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ? "
+               " OR ROUND((release_time - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ?) ";
     }
     if (requestParams.minSize != -1) {
         sql += " AND size >= ? ";

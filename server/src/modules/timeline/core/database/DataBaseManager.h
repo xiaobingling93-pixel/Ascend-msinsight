@@ -52,6 +52,7 @@ public:
     VirtualClusterDatabase *GetReadClusterDatabase();
 
     Memory::VirtualMemoryDataBase *GetMemoryDatabase(const std::string &fileId);
+    Memory::VirtualMemoryDataBase *GetMemoryDatabaseBaseline(); // 该方法属于公共部分，待公共部分代码上库后删去
     std::vector<Memory::VirtualMemoryDataBase *> GetAllMemoryDatabase();
 
     Summary::VirtualSummaryDataBase *GetSummaryDatabase(const std::string &fileId);

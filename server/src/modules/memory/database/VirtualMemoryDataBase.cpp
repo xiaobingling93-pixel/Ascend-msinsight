@@ -168,8 +168,9 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorListTotalNum(Protocol::StaticOp
     return true;
 }
 
-bool VirtualMemoryDataBase::ExecuteQueryMemoryView(Protocol::MemoryComponentParams &requestParams,
-                                                   Protocol::MemoryViewData &operatorBody, std::string sql)
+bool VirtualMemoryDataBase::ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryComponentParams &requestParams,
+                                                             std::vector<Protocol::ComponentDto> &componentDtoVec,
+                                                             std::vector<std::string> &streams, std::string &sql)
 {
     if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
         sql += " AND stream <> ''";
@@ -182,7 +183,6 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryView(Protocol::MemoryComponentPara
         return false;
     }
     std::string peakMemory;
-    std::vector<Protocol::ComponentDto> componentDtoVec;
     std::set<std::string> componentSets;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
@@ -203,11 +203,18 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryView(Protocol::MemoryComponentPara
     }
 
     // 查询是否包含stream信息，如果不包含则不显示stream相关信息，同时也用来判断是否active相关信息
-    std::vector<std::string> streams = GetStreamLists(requestParams.rankId);
+    streams = GetStreamLists(requestParams.rankId);
+    return true;
+}
 
+bool VirtualMemoryDataBase::ExecuteQueryMemoryViewGetGraph(Protocol::MemoryComponentParams &requestParams,
+                                                           std::vector<Protocol::ComponentDto> &componentDtoVec,
+                                                           std::vector<std::string> &streams,
+                                                           Protocol::MemoryViewData &operatorBody)
+{
     Protocol::MemoryPeak peak;
     if (requestParams.type == Protocol::MEMORY_OVERALL_GROUP) {
-        GetLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak, streams);
+        GetOverallLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak, streams);
         operatorBody.title = GetPeakMemory(peak, streams);
     } else {
         GetStreamLines(componentDtoVec, operatorBody.lines, operatorBody.legends, peak, streams);
@@ -520,19 +527,18 @@ void VirtualMemoryDataBase::AddStableOperatorSql(Protocol::StaticOperatorListPar
 }
 
 /*
-* 将多个单条线的数据组装成[x,y,y,y,y]的格式，对于x点上不存在的y补为NULL。
-*/
-void VirtualMemoryDataBase::GetLines(const componentDtoVector componentDtoVec,
+ * 将多个单条线的数据组装成[x,y,y,y,y]的格式。
+ * 各元素分别表示标签"Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved" "App Reserved"。
+ * 如果整组数据中某个标签的数据都不存在，不仅在标签中删除，也在[x,y,y,y,y]中删除该元素。
+ * 如果只是部分时间上某些标签的数据不存在，则补NULL。
+ */
+void VirtualMemoryDataBase::GetOverallLines(const componentDtoVector &componentDtoVec,
     std::vector<std::vector<std::string>> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
     const std::vector<std::string> &streams)
 {
-    for (const auto& legend : baseLegends) {
-        if (streams.empty() && legend == "Operators Activated") { // 实现数据兼容
-            continue;
-        }
-        legends.emplace_back(legend);
-    }
+    GetOverallLinesLegends(componentDtoVec, legends, peak, streams);
 
+    const std::string stringNull = "NULL";
     for (auto &item: componentDtoVec) {
         std::vector<std::string> points = {};
         if (item.component == COMPONENT_PTA_AND_GE || item.component == MIND_SPORE_GE
@@ -544,36 +550,67 @@ void VirtualMemoryDataBase::GetLines(const componentDtoVector componentDtoVec,
             points.emplace_back(time.substr(0, time.length() - exLength + 1));
             std::string allocated = std::to_string(item.totalAllocated);
             points.emplace_back(allocated.substr(0, allocated.length() - exLength));
-            if (!streams.empty()) { // 实现数据兼容
+            if (!streams.empty()) {
                 std::string activated = std::to_string(item.totalActivated);
                 points.emplace_back(activated.substr(0, activated.length() - exLength));
             }
             std::string reserved = std::to_string(item.totalReserved);
             points.emplace_back(reserved.substr(0, reserved.length() - exLength));
-            points.emplace_back("NULL");
-            peak.hasPtaGe = true;
+            if (peak.hasApp) {
+                points.emplace_back(stringNull);
+            }
             lines.emplace_back(points);
         } else if (item.component == COMPONENT_APP) {
             peak.appReserved = std::max(peak.appReserved, item.totalReserved);
             std::string time = std::to_string(item.timesTamp);
             points.emplace_back(time.substr(0, time.length() - exLength + 1));
-            points.emplace_back("NULL");
-            if (!streams.empty()) { // 实现数据兼容
-                points.emplace_back("NULL");
+            if (peak.hasPtaGe) {
+                points.emplace_back(stringNull);
             }
-            points.emplace_back("NULL");
+            if (!streams.empty()) {
+                points.emplace_back(stringNull);
+            }
+            if (peak.hasPtaGe) {
+                points.emplace_back(stringNull);
+            }
             std::string reserved = std::to_string(item.totalReserved);
             points.emplace_back(reserved.substr(0, reserved.length() - exLength));
-            peak.hasApp = true;
             lines.emplace_back(points);
         }
+    }
+}
+
+void VirtualMemoryDataBase::GetOverallLinesLegends(const componentDtoVector &componentDtoVec,
+    std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
+    const std::vector<std::string> &streams)
+{
+    for (auto &item: componentDtoVec) {
+        if (item.component == COMPONENT_PTA_AND_GE || item.component == MIND_SPORE_GE
+            || (isInference && item.component == COMPONENT_GE)) {
+            peak.hasPtaGe = true;
+            } else if (item.component == COMPONENT_APP) {
+                peak.hasApp = true;
+            }
+    }
+
+    for (const auto& legend : baseLegends) {
+        if (!peak.hasPtaGe && legend == "Operators Allocated") {
+            continue;
+        }
+        if (streams.empty() && legend == "Operators Activated") {
+            continue;
+        }
+        if (!peak.hasPtaGe && legend == "Operators Reserved") {
+            continue;
+        }
+        legends.emplace_back(legend);
     }
     if (peak.hasApp) {
         legends.emplace_back(appLegend);
     }
 }
 
-void VirtualMemoryDataBase::GetStreamLines(const componentDtoVector componentDtoVec,
+void VirtualMemoryDataBase::GetStreamLines(const componentDtoVector &componentDtoVec,
     std::vector<std::vector<std::string>> &lines, std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
     const std::vector<std::string> &streams)
 {

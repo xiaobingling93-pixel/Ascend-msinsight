@@ -47,6 +47,7 @@ struct StaticOperatorGraphParams {
     std::string rankId;
     std::string modelName;
     std::string graphId;
+    bool isCompare = false;
 };
 
 struct MemoryTypeRequest : public Request {
@@ -70,6 +71,7 @@ const std::string MEMORY_STREAM_GROUP = "Stream";
 struct MemoryComponentParams {
     std::string rankId;
     std::string type; // Overall, Stream
+    bool isCompare = false;
 };
 
 struct MemoryViewRequest : public Request {

@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_QUERY_MEMORY_COMPONENT_HANDLER_H
 
 #include "MemoryRequestHandler.h"
+#include "MemoryProtocolRespose.h"
 
 namespace Dic {
 namespace Module {
@@ -18,8 +19,14 @@ public:
     };
     ~QueryMemoryViewHandler() override = default;
     void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+private:
+    void GetCompareGraphLines(const Protocol::MemoryViewData &compareData,
+                              const Protocol::MemoryViewData &baselineData,
+                              Protocol::MemoryViewData &resultData);
+    void GetCompareGraphLegends(const Protocol::MemoryViewData &compareData,
+                                const Protocol::MemoryViewData &baselineData,
+                                Protocol::MemoryViewData &resultData);
 };
-
 } // end of namespace Memory
 } // end of namespace Module
 } // end of namespace Dic

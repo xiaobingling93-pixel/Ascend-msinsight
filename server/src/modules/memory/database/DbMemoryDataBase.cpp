@@ -50,12 +50,12 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
         sql += "SELECT NAME.value AS realName, ROUND(size / 1024.0, 2) as size, "
                " CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
             "ROUND((allocation_time - " + std::to_string(startTime) +
-            ") / (1000.0 * 1000.0), 2) END AS allocationTimestamp, "
+            ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
             "CASE WHEN release_time == 0 THEN 'NA' ELSE ROUND((release_time - " + std::to_string(startTime) +
-            ") / (1000.0 * 1000.0), 2) END AS releaseTimestamp, ROUND(duration / (1000.0 * 1000.0), 2) as duration, "
+            ") / (1000.0 * 1000.0), 3) END AS releaseTimestamp, ROUND(duration / (1000.0 * 1000.0), 3) as duration, "
             "CASE WHEN active_release_time == 0 THEN 'NA' ELSE ROUND((active_release_time - " +
-            std::to_string(startTime) + ") / (1000.0 * 1000.0), 2) "
-            "END AS activeReleaseTime, ROUND(active_duration / (1000.0 * 1000.0), 2) as active_duration, "
+            std::to_string(startTime) + ") / (1000.0 * 1000.0), 3) "
+            "END AS activeReleaseTime, ROUND(active_duration / (1000.0 * 1000.0), 3) as active_duration, "
             "ROUND(allocation_total_allocated / (1024.0 * 1024.0), 2) as allocation_allocated, "
             " ROUND(allocation_total_reserved / (1024.0 * 1024.0), 2) as allocation_reserve, "
             "ROUND(allocation_total_active / (1024.0 * 1024.0), 2) as allocation_active, "
@@ -79,14 +79,19 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
     if (type == FileType::PYTORCH) {
         sql += "SELECT NAME.value AS component, ROUND((time_stamp - " +
             std::to_string(startTime) +
-            ") / (1000.0 * 1000.0), 2) as timestamp, "
+            ") / (1000.0 * 1000.0), 3) as timestamp, "
             "ROUND(total_allocated / (1024.0 * 1024.0), 2) as total_allocated, "
             " ROUND(total_reserved / (1024.0 * 1024.0), 2) as total_reserve, "
             "ROUND(total_active / (1024.0 * 1024.0), 2) as total_active, stream_ptr as stream FROM ";
         sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
         sql += TABLE_MEMORY_RECORD + " JOIN STRING_IDS AS NAME ON NAME.id = MEMORY_RECORD.component where 1=1 ";
     }
-    return ExecuteQueryMemoryView(requestParams, operatorBody, sql);
+    std::vector<Protocol::ComponentDto> componentDtoVec;
+    std::vector<std::string> streams;
+    if (!ExecuteQueryMemoryViewExecuteSql(requestParams, componentDtoVec, streams, sql)) {
+        return false;
+    }
+    return ExecuteQueryMemoryViewGetGraph(requestParams, componentDtoVec, streams, operatorBody);
 }
 
 bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum)
@@ -117,9 +122,9 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
     }
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
         sql.append(" AND (ROUND((").append(isLowCamel ? "allocationTime" : "allocation_time")
-                .append(" - ?) / (1000.0 * 1000.0), 2) BETWEEN ? AND ? ");
+                .append(" - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ? ");
         sql.append(" OR ROUND((").append(isLowCamel ? "releaseTime" : "release_time")
-                .append(" - ?) / (1000.0 * 1000.0), 2) BETWEEN ? AND ?) ");
+                .append(" - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ?) ");
     }
     if (requestParams.minSize != -1) {
         sql += " AND realSize >= ? ";

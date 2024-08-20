@@ -103,8 +103,14 @@ protected:
     bool ExecuteOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum, std::string sql);
     bool ExecuteStaticOperatorListTotalNum(Protocol::StaticOperatorListParams &requestParams,
                                            int64_t &totalNum, std::string sql);
-    bool ExecuteQueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody,
-                                std::string sql);
+    bool ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryComponentParams &requestParams,
+                                   std::vector<Protocol::ComponentDto> &componentDtoVec,
+                                   std::vector<std::string> &streams,
+                                   std::string &sql);
+    bool ExecuteQueryMemoryViewGetGraph(Protocol::MemoryComponentParams &requestParams,
+                                         std::vector<Protocol::ComponentDto> &componentDtoVec,
+                                         std::vector<std::string> &streams,
+                                         Protocol::MemoryViewData &operatorBody);
     bool ExecuteOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
         std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails,
         std::string sql);
@@ -127,11 +133,14 @@ protected:
     void AddStableOperatorSql(Protocol::StaticOperatorListParams requestParams, std::string &sql);
 
 private:
-    void GetLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
+    void GetOverallLines(const componentDtoVector &componentDtoVec, std::vector<std::vector<std::string>> &lines,
                   std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
                   const std::vector<std::string> &streams);
+    void GetOverallLinesLegends(const componentDtoVector &componentDtoVec,
+        std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
+        const std::vector<std::string> &streams);
     std::string GetPeakMemory(const Protocol::MemoryPeak &peak, const std::vector<std::string> &streams);
-    void GetStreamLines(const componentDtoVector componentDtoVec, std::vector<std::vector<std::string>> &lines,
+    void GetStreamLines(const componentDtoVector &componentDtoVec, std::vector<std::vector<std::string>> &lines,
                         std::vector<std::string> &legends, Protocol::MemoryPeak &peak,
                         const std::vector<std::string> &streams);
 };

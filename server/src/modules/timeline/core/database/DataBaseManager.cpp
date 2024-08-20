@@ -115,6 +115,11 @@ Memory::VirtualMemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::str
     return curMemoryDbMap[fileId].get();
 }
 
+Memory::VirtualMemoryDataBase* DataBaseManager::GetMemoryDatabaseBaseline()
+{
+    return nullptr;
+}
+
 void DataBaseManager::ReleaseDatabase(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
