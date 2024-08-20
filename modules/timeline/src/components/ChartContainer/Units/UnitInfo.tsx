@@ -254,35 +254,11 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
     </InsightLaneInfoContainer>;
 });
 
-const ExpandIcon = observer(({ unit, session }: { unit: KeyedInsightUnit; session: Session }): JSX.Element | null => {
-    const onExpand = React.useCallback(async (_unit: KeyedInsightUnit) => {
-        const spreadUnits = _unit.spreadUnits;
-        if (spreadUnits?.phase === 'expand') {
-            await spreadUnits.action?.(_unit, session);
-        }
-        runInAction(() => {
-            _unit.isExpanded = !_unit.isExpanded;
-            if (_unit.isExpanded) {
-                platform.trace(`unfold${_unit.name.replace(/\s*/g, '')}`, {});
-                _unit.children?.forEach(item => {
-                    if (item.collapsible && !item.isExpanded && item.collapseAction !== undefined) {
-                        item.collapseAction?.(item);
-                        item.isExpanded = true;
-                    }
-                });
-            }
-            session.renderTrigger = !session.renderTrigger;
-        });
-        _unit.collapseAction?.(_unit);
-    }, [session]);
-    if (unit.children !== undefined || (unit.collapsible && unit.collapseAction)) {
-        return <div style={{ float: 'left', height: '20px', marginLeft: '6px', top: 'calc(50% - 10px)', position: 'relative' }}
-            onClick={(e: React.MouseEvent<HTMLElement, MouseEvent>): Promise<void> => onExpand(unit)}>
-            <Arrow style={{ transform: `rotate(${unit.isExpanded ? 0 : '-90deg'})`, cursor: 'pointer' }}
-                className={`insight-unit-${unit.isExpanded ? 'expanded' : 'fold'}`} />
-        </div>;
-    }
-    return null;
+const ExpandIcon = observer(({ unit }: { unit: KeyedInsightUnit }): JSX.Element => {
+    return <div style={{ float: 'left', height: '20px', marginLeft: '6px', top: 'calc(50% - 10px)', position: 'relative' }}>
+        <Arrow style={{ transform: `rotate(${unit.isExpanded ? 0 : '-90deg'})`, cursor: 'pointer' }}
+            className={`insight-unit-${unit.isExpanded ? 'expanded' : 'fold'}`} />
+    </div>;
 });
 
 const UnitInfoContainer = styled.div<{ unit: InsightUnit; laneInfoWidth: number }>`
@@ -309,6 +285,30 @@ interface UnitInfoProps {
 export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon, className, ...props }: UnitInfoProps): JSX.Element => {
     const [isHovered, setIsHovered] = React.useState(false);
     const selectUnit = useSelectUnit(session);
+    const expandable: boolean = hasExpandIcon && (Boolean(unit.children) || (Boolean(unit.collapsible) && Boolean(unit.collapseAction)));
+    const onExpand = React.useCallback(async (_unit: KeyedInsightUnit) => {
+        if (!expandable) {
+            return;
+        }
+        const spreadUnits = _unit.spreadUnits;
+        if (spreadUnits?.phase === 'expand') {
+            await spreadUnits.action?.(_unit, session);
+        }
+        runInAction(() => {
+            _unit.isExpanded = !_unit.isExpanded;
+            if (_unit.isExpanded) {
+                platform.trace(`unfold${_unit.name.replace(/\s*/g, '')}`, {});
+                _unit.children?.forEach(item => {
+                    if (item.collapsible && !item.isExpanded && item.collapseAction !== undefined) {
+                        item.collapseAction?.(item);
+                        item.isExpanded = true;
+                    }
+                });
+            }
+            session.renderTrigger = !session.renderTrigger;
+        });
+        _unit.collapseAction?.(_unit);
+    }, [session, expandable]);
     return <UnitInfoContainer
         className={`unit-info ${className ?? ''}`}
         unit={unit}
@@ -323,8 +323,9 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
             selectUnit(unit);
             traceSingle('selectLane', [unit.name]);
         }}
+        onClick={async (e: React.MouseEvent<HTMLElement, MouseEvent>): Promise<void> => { onExpand(unit); }}
     >
-        {hasExpandIcon && <ExpandIcon unit={unit} session={session}/>}
+        {expandable && <ExpandIcon unit={unit} />}
         <UnitInfoContent
             unit={unit}
             session={session}
