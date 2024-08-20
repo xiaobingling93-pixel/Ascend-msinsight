@@ -519,12 +519,12 @@ void VirtualClusterDatabase::StatisticBandwidthData(const Protocol::Duration &it
     for (auto &one : bwStat) {
         if (one.type == "SDMA") {
             one.maxBw = std::max(one.maxBw, item.sdmaBw);
-            one.minBw = std::min(one.maxBw, item.sdmaBw);
+            one.minBw = std::min(one.minBw, item.sdmaBw);
             one.avgBw += item.sdmaBw;
             one.allTime += item.sdmaTime;
         } else {
             one.maxBw = std::max(one.maxBw, item.rdmaBw);
-            one.minBw = std::min(one.maxBw, item.rdmaBw);
+            one.minBw = std::min(one.minBw, item.rdmaBw);
             one.avgBw += item.rdmaBw;
             one.allTime += item.rdmaTime;
         }
