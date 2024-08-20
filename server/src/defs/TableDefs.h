@@ -49,6 +49,7 @@ namespace Dic {
     const static std::string TABLE_COMM_ANALYZER_BANDWIDTH = "ClusterCommAnalyzerBandwidth";
     const static std::string TABLE_COMM_ANALYZER_MATRIX = "ClusterCommAnalyzerMatrix";
     const static std::string TABLE_COMM_GROUP = "CommunicationGroup";
+    const static std::string TABLE_CLUSTER_BASE_INFO = "ClusterBaseInfo";
 
     // database version
 #ifndef DATABASE_VERSION

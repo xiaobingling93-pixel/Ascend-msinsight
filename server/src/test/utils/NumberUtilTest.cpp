@@ -46,3 +46,21 @@ TEST(NumberUtil, DoubleReservedNDigits) {
     EXPECT_EQ(NumberUtil::DoubleReservedNDigits(a, 7), a);
     EXPECT_EQ(NumberUtil::DoubleReservedNDigits(a, 5), stod("490.05385"));
 }
+
+TEST(NumberUtil, StringToDouble) {
+    EXPECT_EQ(NumberUtil::StringToDouble(""), 0);
+    EXPECT_EQ(NumberUtil::StringToDouble("xxx"), 0);
+    EXPECT_EQ(NumberUtil::StringToDouble("490.053"), 490.053); // 490.053
+}
+
+TEST(NumberUtil, StringToLongDouble) {
+    EXPECT_EQ(NumberUtil::StringToLongDouble(""), 0);
+    EXPECT_EQ(NumberUtil::StringToLongDouble("xxx"), 0);
+    EXPECT_EQ(NumberUtil::StringToLongDouble("490.053"), std::stold("490.053")); // 490.053
+}
+
+TEST(NumberUtil, StringToLong) {
+    EXPECT_EQ(NumberUtil::StringToLong(""), 0);
+    EXPECT_EQ(NumberUtil::StringToLong("xxx"), 0);
+    EXPECT_EQ(NumberUtil::StringToLong("490"), 490); // 490
+}

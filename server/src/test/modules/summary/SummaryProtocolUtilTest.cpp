@@ -64,13 +64,11 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelStrategyResponseTest)
     Dic::Protocol::QueryParallelStrategyResponse response;
     std::string err;
     response.config.algorithm = "megatron-lm";
-    response.config.worldSize = 64; // world_size = 64
     response.config.tpSize = 8; // tp = 8
     response.config.ppSize = 4; // pp = 4
     response.config.dpSize = 2; // dp = 2
     std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
     EXPECT_EQ(jsonOptional.value()["body"][KEY_ALGORITHM.c_str()], response.config.algorithm.c_str());
-    EXPECT_EQ(jsonOptional.value()["body"][KEY_WORLD_SIZE.c_str()], response.config.worldSize);
     EXPECT_EQ(jsonOptional.value()["body"][KEY_TP_SIZE.c_str()], response.config.tpSize);
     EXPECT_EQ(jsonOptional.value()["body"][KEY_PP_SIZE.c_str()], response.config.ppSize);
     EXPECT_EQ(jsonOptional.value()["body"][KEY_DP_SIZE.c_str()], response.config.dpSize);

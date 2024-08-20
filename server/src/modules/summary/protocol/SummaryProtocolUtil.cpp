@@ -216,8 +216,7 @@ std::optional<document_t> ToResponseJson<QueryParallelStrategyResponse>(const Qu
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(body, KEY_ALGORITHM, response.config.algorithm, allocator);
-    JsonUtil::AddMember(body, KEY_LEVEL, response.config.level, allocator);
-    JsonUtil::AddMember(body, KEY_WORLD_SIZE, response.config.worldSize, allocator);
+    JsonUtil::AddMember(body, KEY_LEVEL, response.level, allocator);
     JsonUtil::AddMember(body, KEY_TP_SIZE, response.config.tpSize, allocator);
     JsonUtil::AddMember(body, KEY_PP_SIZE, response.config.ppSize, allocator);
     JsonUtil::AddMember(body, KEY_DP_SIZE, response.config.dpSize, allocator);

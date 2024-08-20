@@ -60,6 +60,10 @@ public:
     virtual bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) = 0;
     virtual bool QueryIterationAndCommunicationGroup(Protocol::KernelParams &params,
         Protocol::OneKernelBody &responseBody, uint64_t minTimestamp) = 0;
+    virtual bool GetParallelConfigFromStepTrace(ParallelStrategyConfig &config) = 0;
+    virtual bool QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level) = 0;
+    virtual bool UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
+        std::string &level, std::string &msg) = 0;
 
 protected:
     const std::string totalOpInfo = "Total Op Info";
@@ -104,6 +108,9 @@ protected:
     bool ExecuteQueryExtremumTimestamp(std::string &sql, uint64_t &min, uint64_t &max);
     bool ExecuteQueryIterationAndCommunicationGroup(std::string &sql,
         std::string &opName, uint64_t &startTime, std::string &iteration, std::string &communicationGroup);
+    bool ExecuteGetParallelConfigFromStepTrace(std::string &sql, ParallelStrategyConfig &config);
+    bool ExecuteQueryParallelStrategyConfig(std::string &sql, ParallelStrategyConfig &config, std::string &level);
+    bool ExecuteSetParallelStrategyConfig(std::string &sql, const ParallelStrategyConfig &config, std::string &level);
 
 private:
     void GetStepsOrRanksObject(const std::string &jsonStr,

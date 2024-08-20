@@ -711,5 +711,66 @@ std::string VirtualClusterDatabase::GetRanksSql(const std::vector<std::string> &
     ranks += ")";
     return ranks;
 }
+
+bool VirtualClusterDatabase::ExecuteQueryParallelStrategyConfig(std::string &sql,
+    ParallelStrategyConfig &config, std::string &level)
+{
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare query parallel strategy config statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        config.algorithm = sqlite3_column_string(stmt, col++);
+        config.dpSize = sqlite3_column_int64(stmt, col++);
+        config.ppSize = sqlite3_column_int64(stmt, col++);
+        config.tpSize = sqlite3_column_int64(stmt, col++);
+        level = sqlite3_column_string(stmt, col++);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool VirtualClusterDatabase::ExecuteSetParallelStrategyConfig(std::string &sql,
+    const ParallelStrategyConfig &config, std::string &level)
+{
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+        ServerLog::Error("Failed to prepare set parallel strategy config statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    int index = bindStartIndex;
+    sqlite3_bind_text(stmt, index++, config.algorithm.c_str(), config.algorithm.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt, index++, config.dpSize);
+    sqlite3_bind_int64(stmt, index++, config.ppSize);
+    sqlite3_bind_int64(stmt, index++, config.tpSize);
+    sqlite3_bind_text(stmt, index++, level.c_str(), level.length(), SQLITE_TRANSIENT);
+    auto result = sqlite3_step(stmt);
+    if (result != SQLITE_DONE) {
+        ServerLog::Error("Fail to update parallel strategy config. ", sqlite3_errmsg(db));
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool VirtualClusterDatabase::ExecuteGetParallelConfigFromStepTrace(std::string &sql, ParallelStrategyConfig &config)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK || stmt == nullptr) {
+        ServerLog::Error("Failed to prepare get parallel config statement. error:", sqlite3_errmsg(db));
+        return false;
+    }
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        config.algorithm = MEGATRON_LM_TP_DP_PP_ALG;
+        config.dpSize = sqlite3_column_int64(stmt, col++);
+        config.ppSize = sqlite3_column_int64(stmt, col++);
+        config.tpSize = sqlite3_column_int64(stmt, col++);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
 }
 }

@@ -430,6 +430,31 @@ void DbClusterDataBase::PrepareForStageId(std::string &stageIdStr, std::string &
         sql += "AND \"index\" IN (" + rankSql + ")";
     }
 }
+
+bool DbClusterDataBase::QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level)
+{
+    return false;
+}
+
+bool DbClusterDataBase::UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
+    std::string &level, std::string &msg)
+{
+    return false;
+}
+
+bool DbClusterDataBase::GetParallelConfigFromStepTrace(ParallelStrategyConfig &config)
+{
+    static const std::vector<std::string> validHeads = {"dp_index", "pp_index", "tp_index"};
+    for (auto &item : validHeads) {
+        if (!HasColumn(TABLE_STEP_TRACE_TIME, item)) {
+            ServerLog::Warn(TABLE_STEP_TRACE_TIME, " didn't have parallel strategy config.");
+            return false;
+        }
+    }
+    std::string sql = "select max(dp_index) + 1 as dp_size, max(pp_index) + 1 as pp_size, max(tp_index) + 1 as tp_size "
+                      " from " + TABLE_STEP_TRACE_TIME + " where type = 'rank'";
+    return ExecuteGetParallelConfigFromStepTrace(sql, config);
+}
 }
 }
 }

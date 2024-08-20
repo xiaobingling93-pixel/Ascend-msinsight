@@ -10,11 +10,12 @@
 #include <vector>
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
+#include "ClusterDef.h"
 
 namespace Dic {
 namespace Protocol {
 struct SummaryTopRankParams {
-    int limit;
+    int limit{};
     std::vector<std::string> stepIdList;
     std::vector<std::string> rankIdList;
     std::string orderBy;
@@ -109,20 +110,13 @@ struct CommunicationDetailRequest : public Request {
     CommunicationDetailParams params;
 };
 
-struct ParallelStrategyConfig {
-    std::string algorithm; // megatron-lm tp-dp-pp, megatron-lm tp-pp-dp
-    int64_t ppSize = 1;
-    int64_t tpSize = 1;
-    int64_t dpSize = 1;
-};
-
 struct QueryParallelStrategyRequest : public Request {
     QueryParallelStrategyRequest() : Request(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY) {};
 };
 
 struct SetParallelStrategyRequest : public Request {
     SetParallelStrategyRequest() : Request(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY) {};
-    ParallelStrategyConfig config;
+    Module::ParallelStrategyConfig config;
 };
 
 } // end of namespace Protocol

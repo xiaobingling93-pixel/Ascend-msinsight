@@ -79,6 +79,18 @@ public:
         }
     }
 
+    static inline double StringToDouble(const std::string& usStr)
+    {
+        if (usStr.empty()) {
+            return 0;
+        }
+        try {
+            return std::stod(usStr);
+        } catch (std::exception &) {
+            return 0;
+        }
+    }
+
     static inline long double StringToLongDouble(const std::string& usStr)
     {
         if (usStr.empty()) {
@@ -86,6 +98,18 @@ public:
         }
         try {
             return std::stold(usStr);
+        } catch (std::exception &) {
+            return 0;
+        }
+    }
+
+    static inline long StringToLong(const std::string& usStr)
+    {
+        if (usStr.empty()) {
+            return 0;
+        }
+        try {
+            return std::stol(usStr);
         } catch (std::exception &) {
             return 0;
         }

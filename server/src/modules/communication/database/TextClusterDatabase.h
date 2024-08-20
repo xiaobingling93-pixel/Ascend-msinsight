@@ -34,10 +34,10 @@ public:
     void InsertBandwidth(CommunicationBandWidth &bandWidth);
     void InsertBandwidthList(std::vector<CommunicationBandWidth> &bandWidthList);
     void InsertStepStatisticsInfo(StepStatistic &stepStatistic);
-    void InsertClusterBaseInfo(ClusterBaseInfo &clusterBaseInfo);
+    void InsertClusterBaseInfo(ClusterBaseInfo &baseInfo);
     void InsertGroupId(const std::unordered_map<std::string, int64_t> &groupIds);
     void InsertCommunicationMatrix(CommunicationMatrixInfo &communicationMatrix);
-    void InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &communicationMatrixInfo);
+    void InsertCommunicationMatrixInfo(std::vector<CommunicationMatrixInfo> &matrixInfos);
 
     bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
                           Protocol::SummaryTopRankResBody &responseBody) override;
@@ -73,6 +73,10 @@ public:
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
     bool QueryIterationAndCommunicationGroup(Protocol::KernelParams &params, Protocol::OneKernelBody &responseBody,
         uint64_t minTimestamp) override;
+    bool GetParallelConfigFromStepTrace(ParallelStrategyConfig &config) override;
+    bool QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level) override;
+    bool UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
+        std::string &level, std::string &msg) override;
 
     void PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds);
     std::unordered_map<std::string, int64_t> GetAllGroupMap();

@@ -10,6 +10,8 @@
 #include "StageAndBubbleTimeHandler.h"
 #include "RankAndBubbleTimeHandler.h"
 #include "QueryCommunicationDetailHandler.h"
+#include "QueryParallelStrategyConfigHandler.h"
+#include "SetParallelStrategyConfigHandler.h"
 #include "SummaryModule.h"
 
 namespace Dic {
@@ -36,6 +38,10 @@ void SummaryModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_PIPELINE_STAGE_BUBBLE, std::make_unique<StageAndBubbleTimeHandler>());
     requestHandlerMap.emplace(REQ_RES_PIPELINE_RANK_BUBBLE, std::make_unique<RankAndBubbleTimeHandler>());
     requestHandlerMap.emplace(REQ_RES_COMMUNICATION_DETAIL, std::make_unique<QueryCommunicationDetailHandler>());
+    requestHandlerMap.emplace(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY,
+                              std::make_unique<QueryParallelStrategyConfigHandler>());
+    requestHandlerMap.emplace(REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY,
+                              std::make_unique<SetParallelStrategyConfigHandler>());
 }
 
 void SummaryModule::OnRequest(std::unique_ptr<Protocol::Request> request)

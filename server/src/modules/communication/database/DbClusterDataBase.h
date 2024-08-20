@@ -49,6 +49,10 @@ public:
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
     bool QueryIterationAndCommunicationGroup(Protocol::KernelParams &params, Protocol::OneKernelBody &responseBody,
         uint64_t minTimestamp) override;
+    bool GetParallelConfigFromStepTrace(ParallelStrategyConfig &config) override;
+    bool QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level) override;
+    bool UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
+        std::string &level, std::string &msg) override;
 
     void SetBaseInfo(Protocol::SummaryTopRankResBody responseBody);
     void PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds);

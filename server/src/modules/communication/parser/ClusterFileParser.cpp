@@ -14,6 +14,7 @@
 #include "DbClusterDataBase.h"
 #include "TraceTime.h"
 #include "FileUtil.h"
+#include "NumberUtil.h"
 #include "ClusterFileParser.h"
 
 namespace Dic {
@@ -71,7 +72,7 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
     }
     std::ifstream stepTraceFileCsv(filePath);
     std::string line;
-    std::map<std::string, int> indexMap;
+    std::map<std::string, size_t> indexMap;
     auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     while (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::RUNNING &&
             std::getline(stepTraceFileCsv, line)) {
@@ -97,10 +98,15 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
     baseInfo.collectDuration = 0;
     auto now = std::chrono::system_clock::now();
     // 转换为毫秒数
-    baseInfo.collectStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now.time_since_epoch()).count();
+    baseInfo.collectStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
     ParseCommunicationGroup(selectedPath, baseInfo);
     auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    bool result = database->GetParallelConfigFromStepTrace(baseInfo.config);
+    if (!result || (baseInfo.config.dpSize == 1 && baseInfo.config.ppSize == 1 && baseInfo.config.tpSize == 1)) {
+        baseInfo.level = PARALLEL_CONFIG_LEVEL_UNDEFINED;
+    } else {
+        baseInfo.level = PARALLEL_CONFIG_LEVEL_COLLECTED;
+    }
     database->InsertClusterBaseInfo(baseInfo);
     ServerLog::Info("End save cluster base info data into db, path: ", selectedPath, " collectStartTime= ",
                     baseInfo.collectStartTime);
@@ -137,20 +143,16 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     if (communicationMatrixFileList.empty() && !AttAnalyze(selectedPath, ATT_MODEL_MATRIX)) {
         return false;
     }
-    // matrix
     std::vector<std::string> communicationMatrixList =
             FileUtil::FindFirstFileByRegex(selectedPath, patternCommunicationMatrix);
     if (!communicationMatrixList.empty()) {
         ParseCommunicationMatrix(communicationMatrixList);
     }
-
     database->SaveLastData();
-    // parse cluster_step_trace_time csv
     std::regex patternStepTrace(R"(cluster_step_trace_time.csv)");
     std::vector<std::string> stepTraceFileList = FileUtil::FindFirstFileByRegex(selectedPath, patternStepTrace);
     if (!stepTraceFileList.empty()) {
         ParseStepStatisticsFile(stepTraceFileList);
-        // parse cluster_step_trace_time csv
         SaveClusterBaseInfo(selectedPath);
     }
     if (!database->CreateIndex()) {
@@ -379,27 +381,25 @@ StepStatistic ClusterFileParser::MapToStepStatistic(std::vector<std::string> tok
         order = order.substr(1, order.length() - subStrlen);
         statistic.stageId = order;
     }
-    statistic.computingTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
-    index++;
-    statistic.pureCommunicationTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
-    index++;
-    statistic.overlapCommunicationTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
-    index++;
-    statistic.communicationTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
-    index++;
-    statistic.freeTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
-    index++;
-    statistic.stageTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
-    index++;
-    statistic.bubbleTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
-    index++;
-    statistic.pureCommunicationExcludeReceiveTime =
-            tokens[index].empty() ? 0 : std::stod(tokens[index]);
-    index++;
+    statistic.computingTime = NumberUtil::StringToDouble(tokens[index++]);
+    statistic.pureCommunicationTime = NumberUtil::StringToDouble(tokens[index++]);
+    statistic.overlapCommunicationTime = NumberUtil::StringToDouble(tokens[index++]);
+    statistic.communicationTime = NumberUtil::StringToDouble(tokens[index++]);
+    statistic.freeTime = NumberUtil::StringToDouble(tokens[index++]);
+    statistic.stageTime = NumberUtil::StringToDouble(tokens[index++]);
+    statistic.bubbleTime = NumberUtil::StringToDouble(tokens[index++]);
+    statistic.pureCommunicationExcludeReceiveTime = NumberUtil::StringToDouble(tokens[index++]);
     if (index >= tokens.size()) {
         statistic.prepareTime = -1; // 代表csv文件中没有Preparing字段
+        return statistic;
     } else {
-        statistic.prepareTime = tokens[index].empty() ? 0 : std::stod(tokens[index]);
+        statistic.prepareTime = NumberUtil::StringToDouble(tokens[index]);
+    }
+    // 该部分需要进一步优化为按csv文件表头查询数据
+    if (index + 3 < tokens.size()) { // 3 for dp_index, pp_index, tp_index
+        statistic.dpIndex = NumberUtil::StringToLong(tokens[++index]);
+        statistic.ppIndex = NumberUtil::StringToLong(tokens[++index]);
+        statistic.tpIndex = NumberUtil::StringToLong(tokens[++index]);
     }
     return statistic;
 }
@@ -417,7 +417,7 @@ bool ClusterFileParser::ParserClusterOfDb(const std::string& selectedPath)
     }
 
     std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(tempPath, std::regex(clusterDBReg));
-    if (clusterPath.size() == 0) {
+    if (clusterPath.empty()) {
         return false;
     }
     auto clusterDatabase =

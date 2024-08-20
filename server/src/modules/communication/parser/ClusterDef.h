@@ -53,7 +53,17 @@ struct StepStatistic {
     double stageTime = 0;
     double bubbleTime = 0;
     double pureCommunicationExcludeReceiveTime = 0;
-    double prepareTime = 0;
+    double prepareTime = -1;
+    int64_t dpIndex = 0;
+    int64_t ppIndex = 0;
+    int64_t tpIndex = 0;
+};
+
+struct ParallelStrategyConfig {
+    std::string algorithm; // megatron-lm tp-dp-pp, megatron-lm tp-pp-dp
+    int64_t ppSize = 1;
+    int64_t tpSize = 1;
+    int64_t dpSize = 1;
 };
 
 struct ClusterBaseInfo {
@@ -65,6 +75,8 @@ struct ClusterBaseInfo {
     long collectStartTime;
     double collectDuration;
     long long dataSize  =  0;
+    ParallelStrategyConfig config;
+    std::string level;
 };
 
 struct CommunicationMatrixInfo {
@@ -80,6 +92,16 @@ struct CommunicationMatrixInfo {
     double transitTime;
     double bandwidth;
 };
+
+const std::string PARALLEL_CONFIG_LEVEL_COLLECTED = "collected";
+const std::string PARALLEL_CONFIG_LEVEL_PREDICTED = "predicted";
+const std::string PARALLEL_CONFIG_LEVEL_CONFIRMED = "confirmed";
+const std::string PARALLEL_CONFIG_LEVEL_CONFIGURED = "configured";
+const std::string PARALLEL_CONFIG_LEVEL_UNDEFINED = "undefined";
+
+const std::string MEGATRON_LM_TP_DP_PP_ALG = "Megatron-LM(tp-dp-pp)";
+const std::string MEGATRON_LM_TP_PP_DP_ALG = "Megatron-LM(tp-pp-dp)";
+
 
 } // end of namespace Module
 } // end of namespace Dic

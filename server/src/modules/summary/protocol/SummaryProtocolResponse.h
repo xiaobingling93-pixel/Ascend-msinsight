@@ -8,6 +8,7 @@
 
 #include <vector>
 #include "GlobalDefs.h"
+#include "ClusterDef.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
 
@@ -125,7 +126,7 @@ struct ComputeDetail {
 struct ComputeDetailResponse : public Response {
     ComputeDetailResponse() : Response(REQ_RES_COMPUTE_DETAIL) {}
     std::vector<ComputeDetail> computeDetails;
-    int64_t totalNum;
+    int64_t totalNum{};
 };
 
 struct CommunicationDetail {
@@ -139,7 +140,7 @@ struct CommunicationDetail {
 struct CommunicationDetailResponse : public Response {
     CommunicationDetailResponse() : Response(REQ_RES_COMMUNICATION_DETAIL) {}
     std::vector<CommunicationDetail> commDetails;
-    int64_t totalNum;
+    int64_t totalNum{};
 };
 
 const std::string KEY_ALGORITHM = "algorithm";
@@ -151,18 +152,10 @@ const std::string KEY_DP_SIZE = "dpSize";
 const std::string KEY_RESULT = "result";
 const std::string KEY_MSG = "msg";
 
-struct ParallelStrategyConfigWithLevel {
-    std::string algorithm; // megatron-lm tp-dp-pp, megatron-lm tp-pp-dp
-    std::string level; // collected, predicted, confirmed, configured, undefined
-    int64_t worldSize = 1;
-    int64_t ppSize = 1;
-    int64_t tpSize = 1;
-    int64_t dpSize = 1;
-};
-
 struct QueryParallelStrategyResponse : public Response {
     QueryParallelStrategyResponse() : Response(REQ_RES_SUMMARY_QUERY_PARALLEL_STRATEGY) {}
-    ParallelStrategyConfigWithLevel config;
+    Module::ParallelStrategyConfig config;
+    std::string level;
 };
 
 struct SetParallelStrategyResponse : public Response {
