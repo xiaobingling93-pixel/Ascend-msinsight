@@ -613,21 +613,43 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return true;
     }
 
-    std::string TextSummaryDataBase::GenerateQueryDetailSql(Protocol::OperatorStatisticReqParams &reqParams)
+    std::string TextSummaryDataBase::GetQueryStaticBaseSql(Protocol::OperatorStatisticReqParams &reqParams,
+                                                           bool isLimit)
     {
         bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
-        std::string sql =
+        std::string sql;
+        std::string sqlTab =
                 " SELECT rank_id, step_id, name, op_type, accelerator_core,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
                 " END AS startTime, duration, wait_time, block_dim,"
-                " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
+                " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats";
+        std::string conditionalQuerySql =
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
                 "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     ORDER by duration DESC LIMIT ?"
                 " ) subquery ";
+        std::string allQuerySql =
+                " FROM ("
+                "     SELECT * FROM " + kernelTable +
+                "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
+                " ) subquery ";
 
+        if (isLimit) {
+            sql = sqlTab + conditionalQuerySql;
+        } else {
+            sql = sqlTab + allQuerySql;
+        }
         if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
+            return "";
+        }
+        return sql;
+    }
+
+    std::string TextSummaryDataBase::GenerateQueryDetailSql(Protocol::OperatorStatisticReqParams &reqParams)
+    {
+        std::string sql = GetQueryStaticBaseSql(reqParams, true);
+        if (sql.empty()) {
             return "";
         }
 
@@ -640,14 +662,11 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return sql;
     }
 
-    bool TextSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
-                                                      Protocol::OperatorDetailInfoResponse &response)
+    bool TextSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
+                                                   Protocol::OperatorStatisticReqParams &reqParams,
+                                                   std::vector<Protocol::OperatorDetailInfoRes> &res,
+                                                   std::string &level)
     {
-        if (!QueryDetailTotalNum(reqParams, response.total)) {
-            ServerLog::Error("[Operator]Failed to query total num of detail info.");
-            return false;
-        }
-        std::string sql = GenerateQueryDetailSql(reqParams);
         if (sql.empty()) {
             ServerLog::Error("Failed to generate query statistic sql.");
             return false;
@@ -666,7 +685,6 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
         sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
 
-        std::vector<Protocol::OperatorDetailInfoRes> res;
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             int col = 0;
             Protocol::OperatorDetailInfoRes one{};
@@ -687,9 +705,38 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
             one.outputFormat = sqlite3_column_string(stmt, col++);
             res.emplace_back(one);
         }
-        response.level = OperatorGetLevel(res);
-        response.datas = res;
+        level = OperatorGetLevel(res);
         sqlite3_finalize(stmt);
+        return true;
+    }
+
+    bool TextSummaryDataBase::QueryAllOperatorDetailInfo(
+        Protocol::OperatorStatisticReqParams &reqParams, std::vector<Protocol::OperatorDetailInfoRes> &res,
+        std::string &level)
+    {
+        std::string sql = GetQueryStaticBaseSql(reqParams, false);
+        return ExecSqlGetDetailInfo(sql, reqParams, res, level);
+    }
+
+    bool TextSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
+                                                      Protocol::OperatorDetailInfoResponse &response)
+    {
+        if (!QueryDetailTotalNum(reqParams, response.total)) {
+            ServerLog::Error("[Operator]Failed to query total num of detail info.");
+            return false;
+        }
+        std::string sql = GenerateQueryDetailSql(reqParams);
+        std::vector<Protocol::OperatorDetailInfoRes> sqlRes;
+        if (!ExecSqlGetDetailInfo(sql, reqParams, sqlRes, response.level)) {
+            return false;
+        }
+        std::vector<Protocol::OperatorDetailCmpInfoRes> resultData;
+        for (auto &data : sqlRes) {
+            OperatorDetailCmpInfoRes tmpInfo;
+            tmpInfo.compare = data;
+            resultData.emplace_back(tmpInfo);
+        }
+        response.datas = resultData;
         return true;
     }
 

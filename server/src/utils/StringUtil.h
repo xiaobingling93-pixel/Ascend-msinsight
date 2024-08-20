@@ -24,6 +24,16 @@
 namespace Dic {
 class StringUtil {
 public:
+    static inline double StringToDouble(std::string numStr)
+    {
+        try {
+            double num = std::stod(numStr);
+            return num;
+        } catch (const std::invalid_argument& e) {
+            return 0;
+        }
+    }
+
     static inline const std::string IntToString(int number, int length)
     {
         std::string s = std::to_string(number);

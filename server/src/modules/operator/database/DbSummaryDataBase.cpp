@@ -320,10 +320,11 @@ bool DbSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqPa
     sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
     sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
 
-    std::vector<OperatorDetailInfoRes> res;
+    std::vector<OperatorDetailCmpInfoRes> res;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = 0;
         OperatorDetailInfoRes one{};
+        OperatorDetailCmpInfoRes tmpInfo;
         one.rankId = sqlite3_column_string(stmt, col++);
         one.stepId = sqlite3_column_string(stmt, col++);
         one.name = sqlite3_column_string(stmt, col++);
@@ -339,14 +340,25 @@ bool DbSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqPa
         one.outputShape = sqlite3_column_string(stmt, col++);
         one.outputType = sqlite3_column_string(stmt, col++);
         one.outputFormat = sqlite3_column_string(stmt, col++);
-        res.emplace_back(one);
+        tmpInfo.compare = one;
+        res.emplace_back(tmpInfo);
     }
-    response.level = OperatorGetLevel(res);
+    std::vector<Protocol::OperatorDetailInfoRes> levelRes;
+    if (!res.empty()) {
+        levelRes.emplace_back(res[0].compare);
+    }
+    response.level = OperatorGetLevel(levelRes);
     response.datas = res;
     sqlite3_finalize(stmt);
     return true;
 }
 
+bool DbSummaryDataBase::QueryAllOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
+                                                   std::vector<Protocol::OperatorDetailInfoRes> &res,
+                                                   std::string &level)
+{
+    return true;
+}
 bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqParams, int64_t &total)
 {
     OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);

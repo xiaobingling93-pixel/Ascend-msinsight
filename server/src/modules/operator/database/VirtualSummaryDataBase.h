@@ -39,6 +39,9 @@ public:
 
     virtual bool QueryOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                  Protocol::OperatorDetailInfoResponse& response) = 0;
+    virtual bool QueryAllOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
+                                            std::vector<Protocol::OperatorDetailInfoRes> &res,
+                                            std::string &level) = 0;
 
     virtual bool QueryOperatorMoreInfo(Protocol::OperatorMoreInfoReqParams &reqParams,
                                Protocol::OperatorMoreInfoResponse& response) = 0;

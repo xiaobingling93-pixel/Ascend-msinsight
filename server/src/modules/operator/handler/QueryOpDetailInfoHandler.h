@@ -8,6 +8,7 @@
 #include "ModuleRequestHandler.h"
 #include "OperatorRequestHandler.h"
 #include "OperatorProtocolRequest.h"
+#include "OperatorProtocolResponse.h"
 
 namespace Dic::Module::Operator {
     class QueryOpDetailInfoHandler : public OperatorRequestHandler {
@@ -20,6 +21,22 @@ namespace Dic::Module::Operator {
         ~QueryOpDetailInfoHandler() override = default;
 
         void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    private:
+        bool HandleCompareDataRequest(OperatorDetailInfoRequest &request,
+                                      OperatorDetailInfoResponse &response);
+        bool HandleDetailDataRequest(OperatorDetailInfoRequest &request,
+                                     OperatorDetailInfoResponse &response);
+        std::string GetGroup(OperatorDetailInfoRes &data);
+        std::vector<Protocol::OperatorDetailCmpInfoRes> CalCompareInfo(int64_t &total,
+            std::vector<Protocol::OperatorDetailInfoRes> &baseDbData,
+            std::vector<Protocol::OperatorDetailInfoRes> &cmpDbData, int64_t pageSize, int64_t current);
+        void dealResGetDiff(std::vector<Protocol::OperatorDetailCmpInfoRes> &res);
+        void ProcessDataToMuiMap(std::vector<Protocol::OperatorDetailInfoRes> datFromDb,
+                                 std::set<std::string> infoKey,
+                                 std::multimap<std::string, Protocol::OperatorDetailInfoRes> multiDataMap);
+        std::vector<Protocol::OperatorDetailCmpInfoRes> GetFixNumDiffCmpData(
+            std::vector<Protocol::OperatorDetailCmpInfoRes> &datailData, const int64_t pageSize,
+            const int64_t current);
     };
 }
 

@@ -27,6 +27,7 @@ namespace Dic::Protocol {
 
     // 算子视图表格数据的请求参数
     struct OperatorStatisticReqParams {
+        bool isCompare{false};
         std::string rankId;
         std::string group; // Operator、Operator Type、Input Shape
         int64_t topK;

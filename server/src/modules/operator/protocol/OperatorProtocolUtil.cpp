@@ -72,6 +72,26 @@ std::optional<document_t> ToResponseJson<OperatorStatisticInfoResponse>(const Op
     return std::move(json);
 }
 
+void AdDetaildMemberWithLabel(rapidjson::Value& parent, const char* label, const OperatorDetailInfoRes& ele,
+                              rapidjson::Document::AllocatorType& allocator)
+{
+    rapidjson::Value dataJson(rapidjson::kObjectType);
+    JsonUtil::AddMember(dataJson, "name", ele.name, allocator);
+    JsonUtil::AddMember(dataJson, "type", ele.type, allocator);
+    JsonUtil::AddMember(dataJson, "accCore", ele.accCore, allocator);
+    JsonUtil::AddMember(dataJson, "startTime", ele.startTime, allocator);
+    JsonUtil::AddMember(dataJson, "duration", ele.duration, allocator);
+    JsonUtil::AddMember(dataJson, "waitTime", ele.waitTime, allocator);
+    JsonUtil::AddMember(dataJson, "blockDim", ele.blockDim, allocator);
+    JsonUtil::AddMember(dataJson, "inputShape", ele.inputShape, allocator);
+    JsonUtil::AddMember(dataJson, "inputType", ele.inputType, allocator);
+    JsonUtil::AddMember(dataJson, "inputFormat", ele.inputFormat, allocator);
+    JsonUtil::AddMember(dataJson, "outputShape", ele.outputShape, allocator);
+    JsonUtil::AddMember(dataJson, "outputType", ele.outputType, allocator);
+    JsonUtil::AddMember(dataJson, "outputFormat", ele.outputFormat, allocator);
+    parent.AddMember(rapidjson::Value(label, allocator).Move(), dataJson, allocator);
+}
+ 
 template<>
 std::optional<document_t> ToResponseJson<OperatorDetailInfoResponse>(const OperatorDetailInfoResponse &res)
 {
@@ -81,23 +101,14 @@ std::optional<document_t> ToResponseJson<OperatorDetailInfoResponse>(const Opera
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "total", res.total, allocator);
     JsonUtil::AddMember(body, "level", res.level, allocator);
-    json_t data(kArrayType);
-    for (const OperatorDetailInfoRes& ele : res.datas) {
-        json_t dataJson(kObjectType);
-        JsonUtil::AddMember(dataJson, "name", ele.name, allocator);
-        JsonUtil::AddMember(dataJson, "type", ele.type, allocator);
-        JsonUtil::AddMember(dataJson, "accCore", ele.accCore, allocator);
-        JsonUtil::AddMember(dataJson, "startTime", ele.startTime, allocator);
-        JsonUtil::AddMember(dataJson, "duration", ele.duration, allocator);
-        JsonUtil::AddMember(dataJson, "waitTime", ele.waitTime, allocator);
-        JsonUtil::AddMember(dataJson, "blockDim", ele.blockDim, allocator);
-        JsonUtil::AddMember(dataJson, "inputShape", ele.inputShape, allocator);
-        JsonUtil::AddMember(dataJson, "inputType", ele.inputType, allocator);
-        JsonUtil::AddMember(dataJson, "inputFormat", ele.inputFormat, allocator);
-        JsonUtil::AddMember(dataJson, "outputShape", ele.outputShape, allocator);
-        JsonUtil::AddMember(dataJson, "outputType", ele.outputType, allocator);
-        JsonUtil::AddMember(dataJson, "outputFormat", ele.outputFormat, allocator);
-        data.PushBack(dataJson, allocator);
+    rapidjson::Document data;
+    data.SetArray();
+    for (const OperatorDetailCmpInfoRes& eles : res.datas) {
+        rapidjson::Value cmpResJson(rapidjson::kObjectType);
+        AdDetaildMemberWithLabel(cmpResJson, "diff", eles.diff, allocator);
+        AdDetaildMemberWithLabel(cmpResJson, "baseline", eles.baseline, allocator);
+        AdDetaildMemberWithLabel(cmpResJson, "compare", eles.compare, allocator);
+        data.PushBack(cmpResJson, allocator);
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);

@@ -10,7 +10,8 @@
 #include "ProtocolMessage.h"
 
 namespace Dic::Protocol {
-
+    constexpr int64_t INT_MIN_VALUE = std::numeric_limits<int64_t>::min();;
+    constexpr double DOUBLE_MIN_VALUE = std::numeric_limits<double>::min();
     // 饼图中按算子类型耗时统计和按计算单元分类耗时统计
     struct OperatorDurationRes {
         std::string name;
@@ -38,15 +39,21 @@ namespace Dic::Protocol {
         std::string type;
         std::string accCore;
         std::string startTime;
-        double duration;
-        double waitTime;
-        int64_t blockDim;
+        double duration{DOUBLE_MIN_VALUE};
+        double waitTime{DOUBLE_MIN_VALUE};
+        int64_t blockDim{INT_MIN_VALUE};
         std::string inputShape;
         std::string inputType;
         std::string inputFormat;
         std::string outputShape;
         std::string outputType;
         std::string outputFormat;
+    };
+
+    struct OperatorDetailCmpInfoRes {
+        OperatorDetailInfoRes diff;
+        OperatorDetailInfoRes baseline;
+        OperatorDetailInfoRes compare;
     };
 
     // 获取按算子类型统计耗时信息以绘制饼图的响应
@@ -73,7 +80,7 @@ namespace Dic::Protocol {
         OperatorDetailInfoResponse() : Response(REQ_RES_OPERATOR_DETAIL_INFO) {};
         int64_t total;
         std::string level; // l0, l1, l2
-        std::vector<OperatorDetailInfoRes> datas;
+        std::vector<OperatorDetailCmpInfoRes> datas;
     };
 
     // 获取See More时算子详情信息的响应

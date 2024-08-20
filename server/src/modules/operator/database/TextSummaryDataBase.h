@@ -85,6 +85,11 @@ private:
     bool GenerateQueryFiltersSql(T &reqParams, std::string &sql);
 
     bool IsOperatorGroupInType(OperatorGroupConverter::OperatorGroup operatorGroup);
+    std::string GetQueryStaticBaseSql(Protocol::OperatorStatisticReqParams &reqParams, bool isLimit);
+    bool ExecSqlGetDetailInfo(std::string sql, Protocol::OperatorStatisticReqParams &reqParams,
+                              std::vector<Protocol::OperatorDetailInfoRes> &res, std::string &level);
+    bool QueryAllOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
+                                    std::vector<Protocol::OperatorDetailInfoRes> &res, std::string &level);
 };
 
 } // end of namespace Summary

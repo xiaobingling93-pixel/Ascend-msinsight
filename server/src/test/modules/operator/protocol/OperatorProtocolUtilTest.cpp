@@ -93,7 +93,8 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorStatisticInfoRequestTest)
         {"id": 4, "moduleName": "operator", "type": "request", "command": "operator/statistic", "resultCallbackId": 0,
         "params": {"rankId": "2", "group": "Input Shape", "topK": -1, "current": 2, "pageSize": 20,
         "orderBy": "avg_time", "order": "Asc", "filters": [{"columnName": "name", "value": "MatMul"}]}})";
-    OperatorStatisticReqParams expect = {"2", "Input Shape", -1, 2, 20, "avg_time",  "Asc", {{"name", "MatMul"}}};
+    OperatorStatisticReqParams expect = {false, "2", "Input Shape", -1, 2, 20,
+                                         "avg_time", "Asc", {{"name", "MatMul"}}};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
@@ -112,7 +113,8 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorDetailInfoRequestTest)
     std::string reqJson = R"({"id": 4, "moduleName": "operator", "type": "request", "command": "operator/details",
         "resultCallbackId": 0, "params": {"rankId": "2", "group": "Operator Type", "topK": 100, "current": 3,
         "pageSize": 50, "orderBy": "cnt", "order": "Desc", "filters": [{"columnName": "opType", "value": "MatMul"}]}})";
-    OperatorStatisticReqParams expect = {"2", "Operator Type", 100, 3, 50, "cnt",  "Desc", {{"op_type", "MatMul"}}};
+    OperatorStatisticReqParams expect = {false, "2", "Operator Type", 100, 3, 50,
+                                         "cnt", "Desc", {{"op_type", "MatMul"}}};
     Dic::document_t json;
     json.Parse(reqJson.c_str());
     std::string err;
@@ -298,8 +300,16 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorDetailInfoResponseTest)
     EXPECT_EQ(jsonOptional.value()["body"]["data"].Size(), response.datas.size());
     // valid data
     response.datas = {
-        {"0", "1", "ApplyAdamW", "NA", "NA", "131.2", 7111.4, 1.8, 24, "", "", "", "", "", ""},
-        {"1", "2", "MatMul", "NA", "NA", "108.09", 1505.92, 0.05, 24,     "", "", "", "", "", ""}
+        {
+            {"0", "1", "ApplyAdamW", "NA", "NA", "131.2", 7111.4, 1.8, 24, "", "", "", "", "", ""},
+            {"0", "1", "ApplyAdamW", "NA", "NA", "131.2", 7111.4, 1.8, 24, "", "", "", "", "", ""},
+            {"0", "1", "ApplyAdamW", "NA", "NA", "131.2", 7111.4, 1.8, 24, "", "", "", "", "", ""}
+        },
+        {
+            {"1", "2", "MatMul", "NA", "NA", "108.09", 1505.92, 0.05, 24,     "", "", "", "", "", ""},
+            {"1", "2", "MatMul", "NA", "NA", "108.09", 1505.92, 0.05, 24,     "", "", "", "", "", ""},
+            {"1", "2", "MatMul", "NA", "NA", "108.09", 1505.92, 0.05, 24,     "", "", "", "", "", ""}
+        }
     };
     response.total = response.datas.size();
     response.level = "l0";
@@ -310,7 +320,7 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorDetailInfoResponseTest)
     EXPECT_EQ(jsonOptional.value()["body"]["data"].Size(), response.datas.size());
     int i = 0;
     for (const auto &item : jsonOptional.value()["body"]["data"].GetArray()) {
-        CheckOperatorDetailInfoResStruct(item, response.datas[i++]);
+        CheckOperatorDetailInfoResStruct(item["diff"], response.datas[i++].diff);
     }
 }
 
