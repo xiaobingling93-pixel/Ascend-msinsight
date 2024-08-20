@@ -3,7 +3,7 @@
 */
 import type { InputRef } from 'antd';
 import { StyledInput } from '../../../components/base/StyledInput';
-import React, { RefObject, useRef, useState } from 'react';
+import React, { RefObject, useRef, useState, useEffect } from 'react';
 import type { ChangeEvent } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
@@ -18,7 +18,6 @@ import { getTimeOffset } from '../utils';
 import { CustomButton } from '../../../components/base/StyledButton';
 import type { SvgType } from '../../../components/base/rc-table/types';
 import { ReactComponent as AlignStartIcon } from '../../../assets/images/timeline/ic_align_start.svg';
-import { message } from 'antd';
 const AlignIcon = AlignStartIcon as SvgType;
 const defaultOffset = '0';
 const minOffset = -Number.MAX_VALUE;
@@ -116,7 +115,6 @@ const InputDiv = styled.div`
 function handleAlignStart(inputRef: RefObject<InputRef>, session: Session, setValue: React.Dispatch<React.SetStateAction<string>>): void {
     const alignStartTimestamp = session.selectedUnits[0]?.alignStartTimestamp;
     if (alignStartTimestamp === undefined) {
-        message.warning('Please expand the card first');
         return;
     }
     setValue(alignStartTimestamp.toString());
@@ -131,6 +129,9 @@ const InputOption = observer(({ session, metaData }: { session: Session; metaDat
     const [title, setTitle] = useState('Please enter a proper value');
     const inputRef = useRef<InputRef>(null);
     const { t } = useTranslation();
+    useEffect(() => {
+        setOffset(String(timestampOffset));
+    }, [timestampOffset]);
     return <StyledTooltip
         trigger={'click'}
         placement={'bottom'}

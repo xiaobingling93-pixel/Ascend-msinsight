@@ -594,7 +594,7 @@ bool DbTraceDataBase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesS
     }
     return true;
 }
-void DbTraceDataBase::UpdateStartTime()
+void DbTraceDataBase::UpdateStartTime(const std::string &fileId)
 {
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT startTimeNs, endTimeNs FROM " + TABLE_SESSION_TIME_INFO;
@@ -610,6 +610,8 @@ void DbTraceDataBase::UpdateStartTime()
         int64_t startTime = sqlite3_column_int64(stmt, col++);
         int64_t endTime = sqlite3_column_int64(stmt, col++);
         TraceTime::Instance().UpdateTime(startTime, endTime);
+        TraceTime::Instance().UpdateCardMinTime(fileId, startTime);
+        TraceTime::Instance().UpdateCardMinTime(QueryHostInfo()+"Host", startTime);
     }
     Server::ServerLog::Info("Update start and end time. ");
     sqlite3_finalize(stmt);

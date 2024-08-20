@@ -1,13 +1,12 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
-
+#include "pch.h"
 #include "TraceTime.h"
 
 namespace Dic {
 namespace Module {
 namespace Timeline {
-
 TraceTime &TraceTime::Instance()
 {
     static TraceTime instance;
@@ -19,6 +18,7 @@ void TraceTime::Reset()
     std::unique_lock<std::mutex> lock(mutex);
     maxTimestamp = 0;
     minTimestamp = UINT64_MAX;
+    cardMinTimeMap.clear();
 }
 
 TraceTime::TraceTime()
@@ -46,9 +46,41 @@ uint64_t TraceTime::GetDuration()
         return maxTimestamp - minTimestamp;
     } else {
         Server::ServerLog::Warn("Max timestamp is less than min timestamp. Max timestamp:", maxTimestamp,
-                                ", min timestamp:", minTimestamp);
+            ", min timestamp:", minTimestamp);
         return 0;
     }
+}
+
+void TraceTime::UpdateCardMinTime(const std::string &fileId, uint64_t min)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (cardMinTimeMap.count(fileId) == 0) {
+        cardMinTimeMap[fileId] = min;
+    } else {
+        cardMinTimeMap[fileId] = std::min(cardMinTimeMap[fileId], min);
+    }
+    minTimestamp = std::min(minTimestamp, cardMinTimeMap[fileId]);
+}
+
+std::vector<std::pair<std::string, uint64_t>> TraceTime::ComputeCardMinTimeInfo()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    std::vector<std::pair<std::string, uint64_t>> result;
+    for (const auto &item : cardMinTimeMap) {
+        uint64_t offset = item.second - minTimestamp;
+        result.emplace_back(item.first, offset);
+    }
+    return result;
+}
+
+uint64_t TraceTime::GetOffsetByFileId(const std::string &fileId)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    uint64_t cardMinTime = cardMinTimeMap[fileId];
+    if (cardMinTime > minTimestamp) {
+        return (cardMinTime - minTimestamp);
+    }
+    return 0;
 }
 } // end of namespace Timeline
 } // end of namespace Module

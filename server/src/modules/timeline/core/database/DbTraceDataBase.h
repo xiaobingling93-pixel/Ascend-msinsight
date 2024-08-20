@@ -122,7 +122,7 @@ public:
 
     bool CheckTableDataInvalid(std::string tableName);
 
-    void UpdateStartTime();
+    void UpdateStartTime(const std::string &fileId);
     void UpdateAllDepth();
     void InitStringsCache();
     void InitFlowCache();

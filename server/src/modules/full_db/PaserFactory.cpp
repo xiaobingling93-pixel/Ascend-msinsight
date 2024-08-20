@@ -114,7 +114,7 @@ void ParserAlloc::ParseEndCallBack(const std::string &fileId, bool result, const
 }
 
 void ParserAlloc::ParseProgressCallBack(const std::string &fileId, uint64_t parsedSize, uint64_t totalSize,
-                                        int progress)
+    int progress)
 {
     WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
@@ -156,8 +156,10 @@ void ParserAlloc::SendParseSuccessEvent(const std::string &fileId)
     } else {
         event->body.startTimeUpdated = true;
         TraceTime::Instance().UpdateTime(min, max);
+        TraceTime::Instance().UpdateCardMinTime(fileId, min);
     }
     event->body.maxTimeStamp = TraceTime::Instance().GetDuration();
+    event->body.offset = TraceTime::Instance().GetOffsetByFileId(fileId);
     SearchMetaData(fileId, event->body.unit.children);
     session->OnEvent(std::move(event));
 }
@@ -249,10 +251,10 @@ std::string ParserAlloc::GetDbPath(const std::string &filePath, const int index)
 bool ParserAlloc::CheckIfClusterAndReset(const std::string &path, int filesSize, ImportActionResBody &body, bool isDb)
 {
     bool isCluster = (filesSize > 1 && std::strcmp(curScene.c_str(), "train") == 0) || CheckIsCluster(path);
-    bool reset = isCluster || DataBaseManager::Instance().curIsCluster || isDb || DataBaseManager::Instance().curIsDb
-            || DataBaseManager::Instance().curIsBin;
+    bool reset = isCluster || DataBaseManager::Instance().curIsCluster || isDb || DataBaseManager::Instance().curIsDb ||
+        DataBaseManager::Instance().curIsBin;
     ServerLog::Info("new Cluster:", isCluster, ", old Cluster:", DataBaseManager::Instance().curIsCluster,
-                    ", reset:", reset);
+        ", reset:", reset);
     if (reset) {
         if (isDb) {
             FullDb::FullDbParser::Instance().Reset();
@@ -288,14 +290,18 @@ void ParserAlloc::SendAllParseSuccess()
     event->moduleName = ModuleType::MEMORY;
     event->result = true;
     event->body.isAllPageParsed = true;
+    for (const auto &item : TraceTime::Instance().ComputeCardMinTimeInfo()) {
+        CardOffset cardOffset = { item.first, item.second };
+        event->body.cardOffsets.emplace_back(cardOffset);
+    }
+    event->body.minTime = TraceTime::Instance().GetStartTime();
     session->OnEvent(std::move(event));
 }
 
 void ParserAlloc::SaveDbPath(const std::string &curProjectName,
-                             std::map<std::string, std::vector<std::string>> &dataPathToDbMap)
+    std::map<std::string, std::vector<std::string>> &dataPathToDbMap)
 {
     Global::ProjectExplorerManager::Instance().UpdateProjectDbPath(curProjectName, dataPathToDbMap);
 }
-
 } // Module
 } // Dic

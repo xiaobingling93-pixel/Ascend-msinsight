@@ -28,7 +28,7 @@ public:
         DataBaseManager::Instance().CreatConnectionPool("0", currPath + dbPath3 + "msprof_0.db");
         auto database = std::dynamic_pointer_cast<DbTraceDataBase, VirtualTraceDatabase>(
             DataBaseManager::Instance().GetTraceDatabase("0"));
-        database->UpdateStartTime();
+        database->UpdateStartTime("0");
         auto summaryDatabase =
                 dynamic_cast<DbSummaryDataBase *>(DataBaseManager::Instance().GetSummaryDatabase("0"));
         summaryDatabase->OpenDb(currPath + dbPath3 + "msprof_0.db", false);

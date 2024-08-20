@@ -81,6 +81,7 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         auto threadMap = database->QueryAllThreadMap();
         TrackInfoManager::Instance().UpdateTrackIdMap(fileId, threadMap);
         Timeline::TraceTime::Instance().UpdateTime(min, 0);
+        Timeline::TraceTime::Instance().UpdateCardMinTime(fileId, min);
         ParseEndCallBack(fileId, true, "");
         ParserStatusManager::Instance().SetFinishStatus(fileId);
         return true;

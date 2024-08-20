@@ -599,6 +599,7 @@ template <> std::optional<document_t> ToEventJson<ParseSuccessEvent>(const Parse
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "maxTimeStamp", event.body.maxTimeStamp, allocator);
+    JsonUtil::AddMember(body, "offset", event.body.offset, allocator);
     JsonUtil::AddMember(body, "startTimeUpdated", event.body.startTimeUpdated, allocator);
     JsonUtil::AddMember(body, "isFullDb", event.body.isFullDb, allocator);
     json_t unit(kObjectType);
@@ -647,6 +648,15 @@ template <> std::optional<document_t> ToEventJson<AllSuccessEvent>(const AllSucc
     ProtocolUtil::SetEventJsonBaseInfo(event, json);
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "isAllPageParsed", event.body.isAllPageParsed, allocator);
+    json_t dataType(kArrayType);
+    for (const auto &type : event.body.cardOffsets) {
+        json_t itemJson(kObjectType);
+        JsonUtil::AddMember(itemJson, "cardId", type.cardId, allocator);
+        JsonUtil::AddMember(itemJson, "offset", type.offset, allocator);
+        dataType.PushBack(itemJson, allocator);
+    }
+    JsonUtil::AddMember(body, "cardOffsets", dataType, allocator);
+    JsonUtil::AddMember(body, "minTime", event.body.minTime, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }

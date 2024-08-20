@@ -46,6 +46,7 @@ struct ParseSuccessEventBody {
     bool startTimeUpdated = false;
     bool isFullDb = false;
     uint64_t maxTimeStamp = 0;
+    uint64_t offset = 0;
 };
 
 struct ParseSuccessEvent : public Event {
@@ -79,8 +80,15 @@ struct ParseClusterCompletedEvent : public Event {
     ParseClusterCompletedEventBody body;
 };
 
+struct CardOffset {
+    std::string cardId;
+    uint64_t offset = 0;
+};
+
 struct AllSuccessEventEventBody {
     bool isAllPageParsed = false;
+    std::vector<CardOffset> cardOffsets;
+    uint64_t minTime = 0;
 };
 
 struct AllSuccessEvent : public Event {

@@ -43,6 +43,9 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             setUnitProgressByFileId(unitData, session);
             session.units.forEach((unit) => {
                 if ((unit.metadata as CardMetaData).cardId === unitData.unit.metadata.cardId) {
+                    unit.alignStartTimestamp = unitData.offset;
+                    const prevObj = session.unitsConfig.offsetConfig.timestampOffset as Record<string, number>;
+                    session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [(unit.metadata as CardMetaData).cardId]: (unit.alignStartTimestamp) };
                     handleMap(unitData.unit, (unit.metadata as CardMetaData).dataSource);
                     recursiveExpandUnit(unitData.unit.children ?? [], unit);
                 }
@@ -447,10 +450,19 @@ export const parseOperatorSuccessHandler: NotificationHandler = (data): void => 
     });
 };
 
+interface CardOffset {
+    cardId: string;
+    offset: number;
+}
 export const allSuccessHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const { sessionStore } = store;
         const session = sessionStore.activeSession;
+        const cardOffSets = data.cardOffsets as CardOffset[];
+        const offsetMap: Map<string, number> = new Map();
+        cardOffSets.forEach((value) => {
+            offsetMap.set(value.cardId, value.offset);
+        });
         runInAction(() => {
             if (!session) {
                 return;
@@ -459,6 +471,11 @@ export const allSuccessHandler: NotificationHandler = async (data): Promise<void
                 session.isPending = false;
                 session.isParserLoading = false;
             }
+            session.units.forEach((unit) => {
+                unit.alignStartTimestamp = offsetMap.get((unit.metadata as CardMetaData).cardId);
+                const prevObj = session.unitsConfig.offsetConfig.timestampOffset as Record<string, number>;
+                session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [(unit.metadata as CardMetaData).cardId]: (unit.alignStartTimestamp) };
+            });
         });
     } catch (error) {
         console.error(error);

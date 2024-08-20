@@ -93,7 +93,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
 
     threadPool->AddTask(EndParseTask, rankIds, filePath, futures, start);
 
-    database->UpdateStartTime();
+    database->UpdateStartTime(rankIds[0]);
 
     FileType type = DataBaseManager::Instance().GetFileType();
     if (type == FileType::MS_PROF && !database->CheckTableDataInvalid(TABLE_OPERATOR_MEMORY)) {

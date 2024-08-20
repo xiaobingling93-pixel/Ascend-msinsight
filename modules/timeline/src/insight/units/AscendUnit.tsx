@@ -266,6 +266,9 @@ export const ThreadUnit = unit<ThreadMetaData>({
             if (data === undefined) { return; }
             const linkFlow = generateFlowParam(metadata as ThreadMetaData, data);
             linkFlow.isSimulation = session.isSimulation;
+            const timestampOffset = getTimeOffset(session, (metadata as ThreadMetaData).cardId);
+            linkFlow.startTime = timestampOffset + (linkFlow.startTime as number);
+            linkFlow.endTime = timestampOffset + (linkFlow.endTime as number);
             const raw = await window.request((metadata as ThreadMetaData).dataSource as DataSource, { command: 'unit/flows', params: linkFlow as Record<string, unknown> }) as any;
             const categoryFlowEvents = raw.unitAllFlows as CategoryFlows[] ?? [];
             const newLines: LinkLines = {};
@@ -399,13 +402,8 @@ const SummaryChart = chart({
             }
             const threadTraceList = request.data as ProcessData[];
             const res: StatusData[] = [];
-            let minAlignStartTimestamp: number | null = null;
             // 泳道chart返回数据减去时间偏移
             threadTraceList.forEach((data) => {
-                if (data.duration !== 0 && (minAlignStartTimestamp === null || data.startTime < minAlignStartTimestamp)) {
-                    minAlignStartTimestamp = data.startTime;
-                }
-
                 res.push({
                     startTime: data.startTime - timestampOffset,
                     duration: data.duration,
@@ -414,13 +412,6 @@ const SummaryChart = chart({
                     color: '#7d7d7d',
                 });
             });
-            const curUnit = session.units.find(item => (item.metadata as CardMetaData).cardId === processMetaData.cardId) ??
-                session.units.find(item => (item.metadata as CardMetaData).cardId === 'Host');
-            const shouldUpdateAlignStartTimestamp = curUnit && minAlignStartTimestamp !== null &&
-                (curUnit.alignStartTimestamp === undefined || minAlignStartTimestamp < curUnit.alignStartTimestamp);
-            if (shouldUpdateAlignStartTimestamp) {
-                curUnit.alignStartTimestamp = minAlignStartTimestamp as unknown as number;
-            }
             return res;
         } catch (e) {
             return [];
@@ -464,7 +455,6 @@ export const CardUnit = unit<CardMetaData>({
 
 export const ROOT_UNIT = unit<HostMetaData>({
     name: 'Root',
-    configBar: offsetConfig,
     pinType: 'copied',
     renderInfo: (session: Session, metadata: { host: string }) => metadata.host,
 });
@@ -479,6 +469,7 @@ export const CounterUnit = unit<CounterMetaData>({
         height: UnitHeight.SUPER_UPPER,
         mapFunc: async (session: Session, metadata) => {
             const countMetaData = metadata as CounterMetaData;
+            const timestampOffset = getTimeOffset(session, countMetaData.cardId);
             // 查询泳道chart参数加上时间偏移
             const requestParam = {
                 rankId: countMetaData.cardId,
@@ -486,14 +477,22 @@ export const CounterUnit = unit<CounterMetaData>({
                 threadName: countMetaData.threadName,
                 threadId: countMetaData.threadId,
                 metaType: countMetaData.metaType,
-                startTime: session.domainRange.domainStart,
-                endTime: Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd),
+                startTime: Math.floor(session.domainRange.domainStart + timestampOffset),
+                endTime: Math.ceil(Math.min(session.endTimeAll ?? 0, session.domainRange.domainEnd + timestampOffset)),
                 dataSource: countMetaData.dataSource,
                 timePerPx: session.domain.timePerPx,
             };
             const requestKey = createCounterParam('unit/counter', requestParam);
             const request = await session.simpleCache.tryFetchFromCache('unit/counter', requestKey, requestParam, metadata);
-            return request?.data as number[][];
+            const res = request?.data as number[][];
+            const ans: number[][] = [];
+            res.forEach((data) => {
+                const temp: number[] = [];
+                temp[0] = data[0] - timestampOffset;
+                temp[1] = data[1];
+                ans.push(temp);
+            });
+            return ans;
         },
         config: (session: Session, metadata) => {
             const palette: Array<keyof Theme['colorPalette']> = [];

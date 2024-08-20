@@ -36,7 +36,7 @@ public:
         }
         auto database = std::dynamic_pointer_cast<DbTraceDataBase, Timeline::VirtualTraceDatabase>(
             Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb"));
-        database->UpdateStartTime();
+        database->UpdateStartTime("FullDb");
     }
 
     static void TearDownTestCase()
