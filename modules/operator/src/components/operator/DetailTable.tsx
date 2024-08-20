@@ -12,7 +12,7 @@ import { queryOperators, queryOperatorsInStatic, queryOperatorStatic } from '../
 import { runInAction } from 'mobx';
 import type { Session } from '../../entity/session';
 import CollapsiblePanel from 'ascend-collapsible-panel';
-import { OperatorGroup, useColMap } from '../TableColumnConfig';
+import { OperatorGroup, useColMap, useCompareSourceColumn } from '../TableColumnConfig';
 
 interface FullConditionType {
     rankId: string ;
@@ -29,8 +29,14 @@ interface FullConditionType {
     accCore: string[];
 };
 
-const OperatorTable = ({ condition, filterType, opType, accCore, opName, inputShape, session }:
-{condition: ConditionType;filterType: FilterType;opType?: string;accCore?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
+interface CompInfo {
+    level: string;
+    detailData: any[];
+}
+
+const OperatorTable = ({ condition, filterType, opType, accCore, opName, inputShape, compInfo, session }:
+{condition: ConditionType;filterType: FilterType;opType?: string;accCore?: string;opName?: string;
+    inputShape?: string;compInfo?: CompInfo;session: Session;}): JSX.Element => {
     return <BaseTable
         condition={condition}
         filterType={filterType}
@@ -38,6 +44,7 @@ const OperatorTable = ({ condition, filterType, opType, accCore, opName, inputSh
         accCore={accCore}
         opName={opName}
         inputShape={inputShape}
+        compInfo={compInfo}
         session={session}
     />;
 };
@@ -52,17 +59,30 @@ const defaultFilters = { type: [], opType: [], name: [], opName: [], accCore: []
 
 const getCols = ({ group, columnLevel, btnCol, colMap, condition, isExpend }:
 {group: string;columnLevel: string;btnCol: any;colMap: any;condition: ConditionType;isExpend: boolean}): any[] => {
+    const isCompare = condition.isCompare as boolean;
     switch (group) {
         case OperatorGroup.OPERATOR:
+            if (isCompare && !isExpend) {
+                return [...colMap[group][columnLevel] ?? colMap[group].l2, btnCol];
+            }
             return colMap[group][columnLevel] ?? colMap[group].l2;
         case OperatorGroup.HCCL_OPERATOR:
+            if (isCompare && !isExpend) {
+                return [...colMap[group], btnCol];
+            }
             return colMap[group];
         case OperatorGroup.HCCL_OPERATOR_TYPE:
             if (columnLevel === undefined) {
                 return [...colMap[group].l0 ?? [], btnCol];
             }
+            if (isCompare && !isExpend) {
+                return [...colMap[group][columnLevel], btnCol];
+            }
             return colMap[group][columnLevel];
         default:
+            if (isCompare && isExpend) {
+                return [...colMap[group] ?? []];
+            }
             return [...colMap[group] ?? [], btnCol];
     }
 };
@@ -85,10 +105,10 @@ const queryOperatorData = async ({ condition, fullCondition, filterTypes }:
 {condition: ConditionType;fullCondition: FullConditionType;filterTypes: string[]}): Promise<any> => {
     let res;
     if (condition.group === OperatorGroup.OPERATOR || condition.group === OperatorGroup.HCCL_OPERATOR) {
-        const param = { ...fullCondition, orderBy: fullCondition.field, filters: filterTypes };
+        const param = { ...fullCondition, orderBy: fullCondition.field, filters: filterTypes, isCompare: condition.isCompare };
         res = await queryOperators(param);
     } else {
-        const param = { ...fullCondition, orderBy: fullCondition.field, filters: filterTypes };
+        const param = { ...fullCondition, orderBy: fullCondition.field, filters: filterTypes, isCompare: condition.isCompare };
         res = await queryOperatorStatic(param);
     }
     return res;
@@ -100,11 +120,51 @@ const queryOperatorDetailData = async ({ fullCondition, filterTypes, opType, opN
     return await queryOperatorsInStatic(param);
 };
 
+const handleOrginData = (group: string, pageSize: number, current: number, data: any[]): any[] => {
+    const realData: any[] = [];
+    data.forEach((item: any, index: number) => {
+        if (item.compare !== null && item.compare !== undefined) {
+            const diff = 'diff';
+            item.compare.rowKey = group + String((pageSize * current) + index) + diff;
+            realData.push(item.compare);
+        } else {
+            item.rowKey = String((pageSize * current) + index);
+            realData.push(item);
+        };
+    });
+    return realData;
+};
+
+const handleDiffData = (group: string, pageSize: number, current: number, data: any[]): any => {
+    const realData: any[] = [];
+    const detailData = new Map();
+    data.forEach((item: any, index: number) => {
+        if (item.diff !== null && item.diff !== undefined) {
+            item.diff.rowKey = group + String((pageSize * current) + index);
+            item.diff.source = 'Difference';
+            realData.push(item.diff);
+            detailData.set(item.diff.rowKey, [item.baseline, item.compare]);
+        };
+    });
+    return { realData, detailData };
+};
+
+const handleCompareData = (data: any): any[] => {
+    if (data.length === 0) {
+        return data;
+    }
+    data[0].source = 'Baseline';
+    data[1].source = 'Compare';
+    return [data[0], data[1]];
+};
+
 // eslint-disable-next-line max-lines-per-function
-const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape, session }:
-{condition: ConditionType;filterType: FilterType;opType?: string;accCore?: string;opName?: string;inputShape?: string;session: Session}): JSX.Element => {
+const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape, compInfo, session }:
+{condition: ConditionType;filterType: FilterType;opType?: string;accCore?: string;
+    opName?: string;inputShape?: string;compInfo?: CompInfo;session: Session;}): JSX.Element => {
+    const isCompare = condition.isCompare as boolean;
     const { t } = useTranslation();
-    const [cols, setCols] = useState<any[]>(useColMap()[OperatorGroup.OPERATOR].l0);
+    const [cols, setCols] = useState<any[]>(useColMap(isCompare)[OperatorGroup.OPERATOR].l0);
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
     const [filters, setFilters] = useState(defaultFilters);
@@ -115,6 +175,8 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     const [fullCondition, setFullCondition] = useState<FullConditionType>({
         current: 1, pageSize: 10, field: '', order: '', group: '', rankId: '', topK: 0, type: [], opType: [], name: [], opName: [], accCore: [],
     });
+    const [compareDetailData, setCompareDetailData] = useState(new Map());
+    const [compareColumnLevel, setCompareColumnLevel] = useState<string>();
     const btnCol = {
         title: t('Details'),
         width: 115,
@@ -133,7 +195,8 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
                 });
             }}>{t('SeeMore', { ns: 'buttonText' })}<DownOutlined/></Button>),
     };
-    const colMap = useColMap();
+    const colMap = useColMap(isCompare && compInfo === undefined);
+    const compareSourceCol = useCompareSourceColumn();
     const updateData = async(): Promise<void> => {
         let isExpend = false;
         const filterTypes = setFilterTypes(fullCondition);
@@ -141,7 +204,11 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         if (opType !== undefined || opName !== undefined || accCore !== undefined) {
             // 展开算子
             isExpend = true;
-            res = await queryOperatorDetailData({ fullCondition, filterTypes, opType, opName, accCore, inputShape });
+            if (isCompare) {
+                res = { data: compInfo?.detailData ?? [], total: 2, level: compInfo?.level };
+            } else {
+                res = await queryOperatorDetailData({ fullCondition, filterTypes, opType, opName, accCore, inputShape });
+            }
         } else {
             res = await queryOperatorData({ condition, fullCondition, filterTypes });
         };
@@ -149,18 +216,31 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
             return;
         }
         const { data, total, level } = res;
-        data.forEach((item: any, index: number) => {
-            item.rowKey = condition.group + String((page.pageSize * page.current) + index);
-        });
-        setTableData(data);
+        let realData = [];
+        let detailData = new Map();
+        if (isCompare) {
+            if (isExpend) {
+                realData = handleCompareData(data);
+            } else {
+                ({ realData, detailData } = handleDiffData(fullCondition.group, fullCondition.pageSize, fullCondition.current, data));
+                setCompareDetailData(detailData);
+                setCompareColumnLevel(level);
+            }
+        } else {
+            realData = handleOrginData(fullCondition.group, fullCondition.pageSize, fullCondition.current, data);
+        }
+        setTableData(realData);
         setPage({ ...page, total });
-        let group = opType !== undefined ? OperatorGroup.OPERATOR : condition.group;
+        let group = opType !== undefined && !isCompare ? OperatorGroup.OPERATOR : condition.group;
         let columnLevel = level;
-        if (condition.group === OperatorGroup.HCCL_OPERATOR_TYPE && isExpend) {
+        if (condition.group === OperatorGroup.HCCL_OPERATOR_TYPE && isExpend && !isCompare) {
             group = OperatorGroup.HCCL_OPERATOR_TYPE;
             columnLevel = 'l1';
         }
         const columns = getCols({ group, columnLevel, btnCol, colMap, condition, isExpend });
+        if (isCompare) {
+            columns.splice(1, 0, compareSourceCol[0]);
+        }
         setCols(columns);
         runInAction(() => {
             session.total = total;
@@ -200,7 +280,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
             return;
         }
         updateTable();
-    }, [JSON.stringify(fullCondition), t]);
+    }, [JSON.stringify(fullCondition), condition.isCompare, t]);
 
     useEffect(() => {
         setSorter(defaultSorter);
@@ -231,7 +311,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         }
         }
         rowKey={rowKey}
-        expandable={condition.group !== OperatorGroup.OPERATOR && condition.group !== OperatorGroup.HCCL_OPERATOR
+        expandable={isCompare || (condition.group !== OperatorGroup.OPERATOR && condition.group !== OperatorGroup.HCCL_OPERATOR)
             ? {
                 expandedRowRender: (record: any) => <OperatorTable
                     condition={condition}
@@ -240,6 +320,14 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
                     opType={record.opType}
                     inputShape={record.inputShape}
                     accCore={record.accCore}
+                    compInfo={
+                        isCompare
+                            ? {
+                                level: compareColumnLevel,
+                                detailData: compareDetailData.get(expandedRowKeys[0]) ?? [],
+                            } as CompInfo
+                            : undefined
+                    }
                     session={session}
                 />,
                 expandedRowKeys,

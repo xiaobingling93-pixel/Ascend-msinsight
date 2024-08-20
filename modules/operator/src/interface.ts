@@ -5,6 +5,7 @@ import type { NotificationHandler } from './connection/defs';
 import {
     setTheme,
     updateSessionHandler,
+    switchDirectoryHandler,
     parseSuccessHandler,
     resetHandler,
     deleteRankHandler,
@@ -14,6 +15,7 @@ import {
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     setTheme,
     updateSession: updateSessionHandler,
+    switchDirectory: switchDirectoryHandler,
     'parse/operatorCompleted': parseSuccessHandler,
     'remote/remove': resetHandler,
     'remote/reset': resetHandler,

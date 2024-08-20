@@ -25,6 +25,7 @@
       "15": "15"
     },
     "tableHead": {
+      "Source": "Source",
       "Name": "Name",
       "Type": "Type",
       "AcceleratorCore": "Accelerator Core",

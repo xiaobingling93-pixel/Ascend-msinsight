@@ -31,7 +31,7 @@ const Index = observer(({ session }: { session: Session }) => {
         <div className="mi-search-box">
             <Filter session={session} handleFilterChange={handleFilterChange}/>
         </div>
-        <DetailChart condition={condition} session={session}/>
+        {condition.isCompare as boolean ? <></> : <DetailChart condition={condition} session={session}/>}
         <DetailTable condition={condition} filterType={filterType} session={session}/>
     </Layout>;
 });

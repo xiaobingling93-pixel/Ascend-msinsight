@@ -25,6 +25,7 @@
       "15": "15"
     },
     "tableHead": {
+      "Source": "来源",
       "Name": "名称",
       "Type": "类型",
       "AcceleratorCore": "加速器核",

@@ -1,9 +1,11 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
+import React from 'react';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { fetchColumnFilterProps } from 'ascend-resize';
+import { useTheme } from '@emotion/react';
 
 export const enum OperatorGroup {
     OPERATOR = 'Operator',
@@ -13,7 +15,23 @@ export const enum OperatorGroup {
     HCCL_OPERATOR_TYPE = 'HCCL Operator Type',
 };
 
-const useOpl0Columns = (): ColumnsType<any> => {
+export const useCompareSourceColumn = (): ColumnsType<any> => {
+    const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
+    return [
+        {
+            title: t('Source'),
+            dataIndex: 'source',
+            ellipsis: true,
+        },
+    ];
+};
+
+const useTextColor = (value: string | number): JSX.Element => {
+    const theme = useTheme();
+    return <div style={{ color: Number(value) >= 0 ? theme.successColor : theme.dangerColor }}>{value}</div>;
+};
+
+const useOpl0Columns = (isCompare: boolean): ColumnsType<any> => {
     const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
     return [
         {
@@ -49,6 +67,7 @@ const useOpl0Columns = (): ColumnsType<any> => {
             dataIndex: 'duration',
             sorter: true,
             ellipsis: true,
+            render: isCompare ? useTextColor : undefined,
         },
         {
             title: `${t('WaitTime')}(μs)`,
@@ -58,10 +77,10 @@ const useOpl0Columns = (): ColumnsType<any> => {
         },
     ];
 };
-const useOpl2Columns = (): ColumnsType<any> => {
+const useOpl2Columns = (isCompare: boolean): ColumnsType<any> => {
     const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
     return [
-        ...useOpl0Columns(),
+        ...useOpl0Columns(isCompare),
         {
             title: t('BlockDim'),
             dataIndex: 'blockDim',
@@ -106,7 +125,7 @@ const useOpl2Columns = (): ColumnsType<any> => {
         },
     ];
 };
-const useOpStaticColumns = (): ColumnsType<any> => {
+const useOpStaticColumns = (isCompare: boolean): ColumnsType<any> => {
     const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
     return [
         {
@@ -129,12 +148,14 @@ const useOpStaticColumns = (): ColumnsType<any> => {
             dataIndex: 'count',
             sorter: true,
             ellipsis: true,
+            render: isCompare ? useTextColor : undefined,
         },
         {
             title: `${t('TotalTime')}(μs)`,
             dataIndex: 'totalTime',
             sorter: true,
             ellipsis: true,
+            render: isCompare ? useTextColor : undefined,
         },
         {
             title: `${t('AvgTime')}(μs)`,
@@ -156,7 +177,7 @@ const useOpStaticColumns = (): ColumnsType<any> => {
         },
     ];
 };
-const useOpShapeStaticColumns = (): ColumnsType<any> => {
+const useOpShapeStaticColumns = (isCompare: boolean): ColumnsType<any> => {
     const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
     return [
         { title: t('Name'), dataIndex: 'opName', sorter: true, ellipsis: true, ...fetchColumnFilterProps('opName', 'Name') },
@@ -174,12 +195,14 @@ const useOpShapeStaticColumns = (): ColumnsType<any> => {
             dataIndex: 'count',
             sorter: true,
             ellipsis: true,
+            render: isCompare ? useTextColor : undefined,
         },
         {
             title: `${t('TotalTime')}(μs)`,
             dataIndex: 'totalTime',
             sorter: true,
             ellipsis: true,
+            render: isCompare ? useTextColor : undefined,
         },
         {
             title: `${t('AvgTime')}(μs)`,
@@ -201,7 +224,7 @@ const useOpShapeStaticColumns = (): ColumnsType<any> => {
         },
     ];
 };
-const useHcclOpColumns = (): ColumnsType<any> => {
+const useHcclOpColumns = (isCompare: boolean): ColumnsType<any> => {
     const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
     return [
         {
@@ -229,6 +252,7 @@ const useHcclOpColumns = (): ColumnsType<any> => {
             dataIndex: 'duration',
             sorter: true,
             ellipsis: true,
+            render: isCompare ? useTextColor : undefined,
         },
         {
             title: `${t('WaitTime')}(μs)`,
@@ -239,7 +263,7 @@ const useHcclOpColumns = (): ColumnsType<any> => {
     ];
 };
 
-const useHcclOpTypeColumns = (): ColumnsType<any> => {
+const useHcclOpTypeColumns = (isCompare: boolean): ColumnsType<any> => {
     const { t } = useTranslation('operator', { keyPrefix: 'tableHead' });
     return [
         {
@@ -254,12 +278,14 @@ const useHcclOpTypeColumns = (): ColumnsType<any> => {
             dataIndex: 'count',
             sorter: true,
             ellipsis: true,
+            render: isCompare ? useTextColor : undefined,
         },
         {
             title: `${t('TotalTime')}(μs)`,
             dataIndex: 'totalTime',
             sorter: true,
             ellipsis: true,
+            render: isCompare ? useTextColor : undefined,
         },
         {
             title: `${t('AvgTime')}(μs)`,
@@ -282,13 +308,13 @@ const useHcclOpTypeColumns = (): ColumnsType<any> => {
     ];
 };
 
-export const useColMap = (): any => {
-    const opl0Columns = useOpl0Columns();
-    const opl2Columns = useOpl2Columns();
-    const opStaticColumns = useOpStaticColumns();
-    const opShapeStaticColumns = useOpShapeStaticColumns();
-    const hcclOpColumns = useHcclOpColumns();
-    const hcclOpTypeColumns = useHcclOpTypeColumns();
+export const useColMap = (isCompare: boolean): any => {
+    const opl0Columns = useOpl0Columns(isCompare);
+    const opl2Columns = useOpl2Columns(isCompare);
+    const opStaticColumns = useOpStaticColumns(isCompare);
+    const opShapeStaticColumns = useOpShapeStaticColumns(isCompare);
+    const hcclOpColumns = useHcclOpColumns(isCompare);
+    const hcclOpTypeColumns = useHcclOpTypeColumns(isCompare);
 
     return {
         [OperatorGroup.OPERATOR]: {

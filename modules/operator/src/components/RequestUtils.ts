@@ -54,6 +54,7 @@ export const queryOperatorComputeUnit = async(param: ShortParam): Promise<any> =
  * @param {number} orderBy 排序
  * @param {number} order
  * @param {Array} filters
+ * @param {boolean} isCompare
  * @return {total:number;data:[]}
  */
 export const queryOperators = async(param: StaticParam): Promise<any> => {
@@ -71,6 +72,7 @@ export const queryOperators = async(param: StaticParam): Promise<any> => {
  * @param {number} orderBy 排序
  * @param {number} order
  * @param {Array} filters
+ * @param {boolean} isCompare
  * @return {total:number;data:[]}
  */
 export const queryOperatorStatic = async(param: StaticParam): Promise<any> => {

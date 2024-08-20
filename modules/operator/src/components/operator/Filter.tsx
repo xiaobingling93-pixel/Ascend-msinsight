@@ -17,6 +17,7 @@ export interface ConditionType {
     topK: number;
     custom: number;
     host: string;
+    isCompare: boolean;
 }
 
 export const defaultCondition = {
@@ -25,6 +26,7 @@ export const defaultCondition = {
     topK: 15,
     custom: 0,
     host: '',
+    isCompare: false,
 };
 
 export interface FilterType {
@@ -78,10 +80,10 @@ const setCondition = (initCondition: ConditionType = {} as ConditionType): void 
         });
         if (condition.host === '' || !optionMap.hostsOptions.find(item => item.value === condition.host)) {
             condition.host = optionMap.hostsOptions[0]?.value as string ?? '';
-        }
-        if (condition.rankId === '' || !optionMap.rankIdOptions.find(item => item.value === condition.rankId)) {
+        };
+        if (condition.rankId === '') {
             condition.rankId = optionMap.rankIdOptions[0]?.value as string ?? '';
-        }
+        };
     });
 };
 
@@ -120,6 +122,12 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
             setCondition(defaultCondition);
         }
     }, [session.allRankIds]);
+
+    useEffect(() => {
+        condition.rankId = session.dirInfo.rankId !== '' ? session.dirInfo.rankId : optionMap.rankIdOptions[0]?.value as string ?? '';
+        condition.isCompare = session.dirInfo.isCompare ?? false;
+        handleFilterChange(condition);
+    }, [session.dirInfo]);
 
     useEffect(() => {
         const hostOption = optionMap.hostsOptions.find(item => item.value === condition.host);
@@ -185,6 +193,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
                 onChange={(val: string): void => handleChange('rankId', val)}
                 options={optionMap.rankIdOptions}
                 showSearch={true}
+                disabled={condition.isCompare}
             />
             )}/>
         <FormItem
