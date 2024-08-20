@@ -69,6 +69,22 @@ struct ProjectCheckValidRequest : public Request {
     ProjectCheckValidRequest(): Request(REQ_RES_PROJECT_VALID_CHECK) {}
     ProjectCheckParams params;
 };
+
+struct BaselineSettingParams {
+    std::string projectName;
+    std::string filePath;
+};
+
+struct BaselineSettingRequest : public Request {
+    BaselineSettingRequest(): Request(REQ_RES_PROJECT_SET_BASELINE) {}
+    BaselineSettingParams params;
+};
+
+struct BaselineCancelParams {};
+struct BaselineCancelRequest : public Request {
+    BaselineCancelRequest(): Request(REQ_RES_PROJECT_CANCEL_BASELINE) {}
+    BaselineCancelParams params;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

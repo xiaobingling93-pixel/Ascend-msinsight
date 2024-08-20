@@ -17,6 +17,7 @@ import { t } from '@/i18n';
 import { localStorageService, LocalStorageKeys } from '@/utils/local-storage';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
 import SwitchTheme from '@/components/SwitchTheme.vue';
+import { useCompareConfig } from '@/stores/compareConfig';
 const { initProjectName } = useDataSources();
 
 type SceneType = 'Default' | 'Cluster' | 'Compute' | 'Jupyter';
@@ -24,6 +25,7 @@ const scene = ref<SceneType>('Default');
 const activeModule = ref(0);
 const moduleRefs = ref<HTMLIFrameElement[] | undefined>();
 const { session, setSession } = useSession();
+const compareConfig = useCompareConfig();
 const showHelpModal = ref(false);
 
 // Ascend-Insight版本信息
@@ -112,6 +114,26 @@ watch(
         }
         updateScene();
     },
+);
+
+watch(
+    () => [useDataSources().lastDataSource.dataPath, compareConfig.isCompareStatus, compareConfig.compareDataInfo.rankId],
+    ()=> {
+      const filePathList = useDataSources().lastDataSource.dataPath;
+      const projectName = useDataSources().lastDataSource.projectName;
+      let curRankId: string;
+      if (compareConfig.isCompareStatus) {
+        curRankId = compareConfig.compareDataInfo.rankId;
+      } else if (projectName.length === 0 || filePathList.length === 0) {
+        curRankId = '';
+      } else {
+        curRankId = compareConfig.getRankIdByProjectInfo(projectName, filePathList[0]);
+      }
+      connector.send({
+        event: 'switchDirectory',
+        body: { rankId: curRankId, isCompare: compareConfig.isCompareStatus },
+      });
+    }
 );
 
 function registerEventListeners() {

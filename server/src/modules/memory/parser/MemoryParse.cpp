@@ -35,8 +35,16 @@ MemoryParse::~MemoryParse()
 bool MemoryParse::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
                         const std::string &selectedFolder)
 {
-    // 待废弃
-    return false;
+    MemoryFilePairs memoryFilePairs = GetMemoryFile(selectedFolder);
+    if (memoryFilePairs.recordFiles.empty()) {
+        return false;
+    }
+    std::string dbPath = FileUtil::GetDbPath(*memoryFilePairs.recordFiles.begin(), fileId);
+    Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId)->SetDbPath(dbPath);
+    Timeline::ParserStatusManager::Instance().SetParserStatus(MEMORY_PREFIX + fileId,
+                                                              Timeline::ParserStatus::INIT);
+    threadPool->AddTask(PreParseTask, memoryFilePairs, fileId);
+    return true;
 }
 
 bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &fileId)
@@ -359,6 +367,21 @@ std::vector<std::string> MemoryParse::GetMemoryRecordFileLists(const std::vector
         }
     }
     return fileList;
+}
+
+MemoryFilePairs MemoryParse::GetMemoryFile(const std::string &path)
+{
+    MemoryFilePairs result;
+    std::vector<std::string> fileList = GetMemoryRecordFileLists(std::vector<std::string>{path});
+    if (fileList.empty()) {
+        return result;
+    }
+    std::vector<std::string> operatorFiles = GetPeerDirOperatorFile(fileList[0], memoryOperatorReg);
+    std::vector<std::string> staticOpFiles = GetPeerDirOperatorFile(fileList[0], staticOpMemReg);
+    result.recordFiles.insert(fileList[0]);
+    result.operatorFiles.insert(operatorFiles.begin(), operatorFiles.end());
+    result.staticOpFiles.insert(staticOpFiles.begin(), staticOpFiles.end());
+    return result;
 }
 
 std::map<std::string, MemoryFilePairs> MemoryParse::GetMemoryFiles(const std::vector<std::string>& paths)

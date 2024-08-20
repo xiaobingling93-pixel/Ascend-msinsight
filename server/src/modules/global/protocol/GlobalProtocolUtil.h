@@ -23,6 +23,8 @@ template <> std::optional<document_t> ToResponseJson<ProjectExplorerInfoDeleteRe
     const ProjectExplorerInfoDeleteResponse &response);
 template <>
 std::optional<document_t> ToResponseJson<ProjectCheckValidResponse>(const ProjectCheckValidResponse &response);
+template <> std::optional<document_t> ToResponseJson<BaselineSettingResponse>(const BaselineSettingResponse &response);
+template <> std::optional<document_t> ToResponseJson<BaselineCancelResponse>(const BaselineCancelResponse &response);
 } // end of namespace Protocol
 } // end of namespace Dic
 

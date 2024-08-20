@@ -8,6 +8,7 @@
 #include "DbMemoryDataBase.h"
 #include "DbSummaryDataBase.h"
 #include "DbClusterDataBase.h"
+#include "BaselineManager.h"
 #include "DataBaseManager.h"
 
 namespace Dic {
@@ -24,10 +25,14 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
 {
     const static unsigned int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
     std::unique_lock<std::mutex> lock(mutex);
-    if (traceDatabaseMap.count(fileId) == 0) {
+    bool isBaseline = Global::BaselineManager::IsBaselineId(fileId);
+    std::map<std::string, std::unique_ptr<ConnectionPool>> &curTraceDbMap =
+            isBaseline ? traceBaselineDatabaseMap : traceDatabaseMap;
+    DataType curDataType = isBaseline ? baselineType : dataType;
+    if (curTraceDbMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
         std::unique_ptr<ConnectionPool> conn;
-        switch (dataType) {
+        switch (curDataType) {
             case DataType::DB:
                 conn = std::make_unique<ConnectionPool>(dbPath, [&dbMutex]() {
                     return new FullDb::DbTraceDataBase(dbMutex);
@@ -41,22 +46,25 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
                 break;
         }
         conn->SetMaxActiveCount(CPU_CORE_COUNT);
-        traceDatabaseMap.emplace(fileId, std::move(conn));
+        curTraceDbMap.emplace(fileId, std::move(conn));
         return true;
     }
     ServerLog::Error("The file id has a connection. id:", fileId, ", old path:",
-                     traceDatabaseMap.at(fileId)->GetDbPath(), ", new path:", dbPath);
+                     curTraceDbMap.at(fileId)->GetDbPath(), ", new path:", dbPath);
     return false;
 }
 
 std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    auto it = traceDatabaseMap.find(fileId);
-    if (it == traceDatabaseMap.end() && dbFilePathMap.count(fileId) != 0) {
-        it = traceDatabaseMap.find(dbFilePathMap[fileId]);
+    bool isBaseline = Global::BaselineManager::IsBaselineId(fileId);
+    std::map<std::string, std::unique_ptr<ConnectionPool>> &curTraceDbMap =
+            isBaseline ? traceBaselineDatabaseMap : traceDatabaseMap;
+    auto it = curTraceDbMap.find(fileId);
+    if (it == curTraceDbMap.end() && dbFilePathMap.count(fileId) != 0) {
+        it = curTraceDbMap.find(dbFilePathMap[fileId]);
     }
-    if (it == traceDatabaseMap.end()) {
+    if (it == curTraceDbMap.end()) {
         ServerLog::Error("Can't find connection pool. fileId:", fileId);
         return nullptr;
     }
@@ -66,35 +74,45 @@ std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const st
 Summary::VirtualSummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::string &inputId)
 {
     std::unique_lock<std::mutex> lock(mutex);
+    bool isBaseline = Global::BaselineManager::IsBaselineId(inputId);
+    // 获取当前map，如果fileId包含baseline字样则从summaryBaselineDatabaseMap中获取，否则从summaryDatabaseMap获取
+    std::map<std::string, std::unique_ptr<Summary::VirtualSummaryDataBase>> &curSummaryDbMap =
+            isBaseline ? summaryBaselineDatabaseMap : summaryDatabaseMap;
+    DataType curDataType = isBaseline ? baselineType : dataType;
     std::string fileId = inputId;
-    if (summaryDatabaseMap.count(fileId) == 0) {
+    if (curSummaryDbMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
-        if (this->dataType == DataType::TEXT) {
-            summaryDatabaseMap.emplace(fileId, std::make_unique<Summary::TextSummaryDataBase>(dbMutex));
-        } else if (this->dataType == DataType::DB) {
-            summaryDatabaseMap.emplace(fileId, std::make_unique<FullDb::DbSummaryDataBase>(dbMutex));
+        if (curDataType == DataType::TEXT) {
+            curSummaryDbMap.emplace(fileId, std::make_unique<Summary::TextSummaryDataBase>(dbMutex));
+        } else if (curDataType == DataType::DB) {
+            curSummaryDbMap.emplace(fileId, std::make_unique<FullDb::DbSummaryDataBase>(dbMutex));
         }
     }
-    return summaryDatabaseMap[fileId].get();
+    return curSummaryDbMap[fileId].get();
 }
 
 Memory::VirtualMemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::string &inputId)
 {
     std::unique_lock<std::mutex> lock(mutex);
+    bool isBaseline = Global::BaselineManager::IsBaselineId(inputId);
+    // 获取当前map，如果fileId包含baseline字样则从summaryBaselineDatabaseMap中获取，否则从summaryDatabaseMap获取
+    std::map<std::string, std::unique_ptr<Memory::VirtualMemoryDataBase>> &curMemoryDbMap =
+            isBaseline ? memoryBaselineDatabaseMap : memoryDatabaseMap;
+    DataType curDataType = isBaseline ? baselineType : dataType;
     std::string fileId = inputId;
-    if (memoryDatabaseMap.count(fileId) == 0) {
+    if (curMemoryDbMap.count(fileId) == 0) {
         std::recursive_mutex &dbMutex = GetDbMutex(fileId);
-        switch (dataType) {
+        switch (curDataType) {
             case DataType::DB:
-                memoryDatabaseMap.emplace(fileId, std::make_unique<FullDb::DbMemoryDataBase>(dbMutex));
+                curMemoryDbMap.emplace(fileId, std::make_unique<FullDb::DbMemoryDataBase>(dbMutex));
                 break;
             case DataType::TEXT:
             default:
-                memoryDatabaseMap.emplace(fileId, std::make_unique<Memory::TextMemoryDataBase>(dbMutex));
+                curMemoryDbMap.emplace(fileId, std::make_unique<Memory::TextMemoryDataBase>(dbMutex));
                 break;
         }
     }
-    return memoryDatabaseMap[fileId].get();
+    return curMemoryDbMap[fileId].get();
 }
 
 void DataBaseManager::ReleaseDatabase(const std::string &fileId)
@@ -174,8 +192,6 @@ void DataBaseManager::Clear()
     dbMutexMap.clear();
     dbFilePathMap.clear();
     host2DbPath.clear();
-    curIsCluster = false;
-    curIsDb = false;
 }
 
 void DataBaseManager::Clear(DatabaseType type)
@@ -292,17 +308,62 @@ FileType DataBaseManager::GetFileType()
 {
     return fileType;
 }
+
+FileType DataBaseManager::GetFileTypeByRankId(const std::string &rankId)
+{
+    if (!rankId.empty() && Global::BaselineManager::IsBaselineId(rankId)) {
+        return baselineFileType;
+    }
+    return fileType;
+}
 void DataBaseManager::SetFileType(FileType type)
 {
+    std::lock_guard<std::mutex> lock(mutex);
     fileType = type;
 }
+
+void DataBaseManager::SetBaselineFileType(FileType type)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    baselineFileType = type;
+}
+
+void DataBaseManager::SetBaselineDataType(DataType type)
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    baselineType = type;
+}
+
 void DataBaseManager::SetDbPathMapping(const std::string &rankId, const std::string &filePath,
                                        const std::string& hostId)
 {
     std::lock_guard<std::mutex> lock(mutex);
     dbFilePathMap[rankId] = filePath;
     host2DbPath[hostId].push_back(filePath);
-};
+}
+
+bool DataBaseManager::ResetBaseline()
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    for (const auto &item: traceBaselineDatabaseMap) {
+        if (item.second != nullptr) {
+            item.second->Stop();
+        }
+    }
+    for (const auto &item: memoryBaselineDatabaseMap) {
+        if (item.second != nullptr) {
+            item.second->CloseDb();
+        }
+    }
+    memoryBaselineDatabaseMap.clear();
+    for (auto &item: summaryBaselineDatabaseMap) {
+        if (item.second != nullptr) {
+            item.second->CloseDb();
+        }
+    }
+    return false;
+}
+
 } // end of namespace Timeline
 } // end of namespace Module
 } // end of namespace Dic

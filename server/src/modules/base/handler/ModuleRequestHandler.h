@@ -23,6 +23,8 @@ public:
     static void SetBaseResponse(const Request &request, Response &response);
     static void SetResponseResult(Response &response, bool result, const std::string &errorMsg = "",
                                   const ErrorCode &errorCode = ErrorCode::UNKNOW_ERROR);
+    static void SendResponse(std::unique_ptr<Protocol::Response> responsePtr, bool result,
+                             const std::string &errorMsg = "", const ErrorCode &errorCode = ErrorCode::UNKNOW_ERROR);
 protected:
     std::string command;
     std::string error;

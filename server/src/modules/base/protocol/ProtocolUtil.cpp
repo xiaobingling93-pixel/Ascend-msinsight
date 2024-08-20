@@ -83,6 +83,9 @@ bool ProtocolUtil::SetRequestBaseInfo(Request &request, const json_t &json)
     }
     request.id = json["id"].GetUint();
     request.command = json["command"].GetString();
+    if (JsonUtil::IsJsonKeyValid(json, "projectName")) {
+        request.projectName = json["projectName"].GetString();
+    }
     auto type = STR_TO_ENUM<Dic::Protocol::ProtocolMessage::Type>(json["type"].GetString());
     request.type = type.has_value() ? type.value() : ProtocolMessage::Type::NONE;
     auto moduleName = STR_TO_ENUM<Dic::Protocol::ModuleType>(json["moduleName"].GetString());

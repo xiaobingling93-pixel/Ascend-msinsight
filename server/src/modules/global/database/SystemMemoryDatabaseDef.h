@@ -11,11 +11,19 @@
 namespace Dic {
 namespace Module {
 namespace Global {
+struct ParseFileInfo {
+    int64_t id = -1;
+    int64_t projectExplorerId = -1;
+    std::string parseFilePath;
+    std::string dbPath;
+};
+
 struct ProjectExplorerInfo {
-    int64_t id;
+    int64_t id = -1;
     std::string projectName;
     std::string fileName;
-    int64_t projectType;
+    std::vector<ParseFileInfo> parseFilePathInfos;
+    int64_t projectType = 0;
     std::string importType;
     std::vector<std::string> dbPath;
 };

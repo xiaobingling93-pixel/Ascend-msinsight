@@ -58,6 +58,7 @@ struct Request : public ProtocolMessage {
     }
 
     ~Request() override = default;
+    std::string projectName;
     std::string command;
     // arguments will be placed into specified request
 };

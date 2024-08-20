@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2012-2022. All rights reserved.
  */
+#include "GlobalModule.h"
 #include "pch.h"
 #include "HeartCheckHandler.h"
 #include "FilesGetHandler.h"
@@ -8,7 +9,8 @@
 #include "GetProjectExplorerInfoHandler.h"
 #include "DeleteProjectExplorerInfoHandler.h"
 #include "CheckProjectValidHandler.h"
-#include "GlobalModule.h"
+#include "SetBaselineHandler.h"
+#include "CancelBaselineHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -36,6 +38,8 @@ void GlobalModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_PROJECT_EXPLORER_INFO_DELETE,
                               std::make_unique<DeleteProjectExplorerInfoHandler>());
     requestHandlerMap.emplace(REQ_RES_PROJECT_VALID_CHECK, std::make_unique<CheckProjectValidHandler>());
+    requestHandlerMap.emplace(REQ_RES_PROJECT_SET_BASELINE, std::make_unique<SetBaselineHandler>());
+    requestHandlerMap.emplace(REQ_RES_PROJECT_CANCEL_BASELINE, std::make_unique<CancelBaselineHandler>());
 }
 
 void GlobalModule::OnRequest(std::unique_ptr<Protocol::Request> request)

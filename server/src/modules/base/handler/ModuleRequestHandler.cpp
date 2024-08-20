@@ -2,9 +2,10 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
  */
 
+#include "ModuleRequestHandler.h"
 #include "pch.h"
 #include "IdBuilder.h"
-#include "ModuleRequestHandler.h"
+#include "WsSessionManager.h"
 
 namespace Dic {
 namespace Module {
@@ -41,6 +42,14 @@ void ModuleRequestHandler::SetResponseResult(Response &response, bool result, co
         ServerLog::Error(errorMsg);
         response.error = MakeError(errorCode, errorMsg);
     }
+}
+
+void ModuleRequestHandler::SendResponse(std::unique_ptr<Protocol::Response> responsePtr, bool result,
+                                        const std::string &errorMsg, const ErrorCode &errorCode)
+{
+    WsSession &session = *WsSessionManager::Instance().GetSession();
+    SetResponseResult(*responsePtr, result, errorMsg, errorCode);
+    session.OnResponse(std::move(responsePtr));
 }
 
 bool ModuleRequestHandler::IsAsync()

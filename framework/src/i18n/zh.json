@@ -25,7 +25,12 @@
         "Current Project": "当前项目",
         "Duplicate Project": "项目名已存在，修改项目名失败",
         "Update Project Name Failed": "更新项目名失败",
-        "Loading": "加载中..."
+        "Loading": "加载中...",
+        "Set as Baseline Data": "设置基线数据",
+        "Set as Compare Data": "设置对比数据",
+        "Set Compare Data Out Of Range": "设置对比数据超出范围",
+        "Set baseline first": "请先设置baseline！",
+        "Baseline Conflict": "不能将基线数据和对比数据设置为同一卡"
     },
     "tabs": {
         "Timeline": "时间线",

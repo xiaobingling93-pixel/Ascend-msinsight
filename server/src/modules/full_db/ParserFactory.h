@@ -21,7 +21,17 @@ public:
     ParserAlloc() = default;
     virtual ~ParserAlloc() = default;
     virtual void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) = 0;
+    virtual void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos, const std::string &rankId)
+    {
+        return;
+    }
     virtual ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) = 0;
+    virtual std::vector<std::string> GetParseFileByImportFile(const std::string &importFile,
+                                                                  ProjectTypeEnum projectTypeEnum, std::string &error)
+    {
+        std::vector<std::string> res = {importFile};
+        return res;
+    };
     static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
     static void ParseProgressCallBack(const std::string &fileId, uint64_t parsedSize, uint64_t totalSize, int progress);
     static void SendAllParseSuccess();

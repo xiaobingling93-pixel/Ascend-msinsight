@@ -428,6 +428,7 @@ bool ClusterFileParser::ParserClusterOfDb(const std::string& selectedPath)
     }
 
     ServerLog::Info("Cluster Db Path: " + clusterPath[0]);
+    clusterDbPath = clusterPath[0];
     if (!clusterDatabase->OpenDb(clusterPath[0], false)) {
         ServerLog::Error("Failed to open Cluster. rankId:", "FullDb");
         return false;

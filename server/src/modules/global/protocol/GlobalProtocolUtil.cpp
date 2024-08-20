@@ -127,6 +127,29 @@ std::optional<document_t> ToResponseJson<ProjectCheckValidResponse>(const Projec
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
+
+template <> std::optional<document_t> ToResponseJson<BaselineSettingResponse>(const BaselineSettingResponse &response)
+{
+    document_t json(kObjectType);
+    json_t body(kObjectType);
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    auto &allocator = json.GetAllocator();
+    JsonUtil::AddMember(body, "rankId", response.body.rankId, allocator);
+    JsonUtil::AddMember(body, "errorMessage", response.body.errorMessage, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
+template <> std::optional<document_t> ToResponseJson<BaselineCancelResponse>(const BaselineCancelResponse &response)
+{
+    document_t json(kObjectType);
+    json_t body(kObjectType);
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    auto &allocator = json.GetAllocator();
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
 #pragma endregion
 
 #pragma region <<Event to json>>

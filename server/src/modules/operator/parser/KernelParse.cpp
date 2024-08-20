@@ -393,8 +393,19 @@ void KernelParse::SetParseCallBack()
 bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
                         const std::string &selectedFolder)
 {
-    // 待废弃
-    return false;
+    // 获取kernel文件
+    std::vector<std::string> kernelFile = FileUtil::FindFilesWithFilter(selectedFolder, std::regex(KERNEL_DETAIL_REG));
+    if (kernelFile.empty()) {
+        return false;
+    }
+    // 初始化DB
+    std::string dbPath = FileUtil::GetDbPath(kernelFile[0], fileId);
+    Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId)->SetDbPath(dbPath);
+    // 初始化解析状态
+    Timeline::ParserStatusManager::Instance().SetParserStatus(KERNEL_PREFIX + fileId,
+                                                              Timeline::ParserStatus::INIT);
+    threadPool->AddTask(PreParseTask, filePaths, fileId);
+    return true;
 }
 
 void KernelParse::Reset()

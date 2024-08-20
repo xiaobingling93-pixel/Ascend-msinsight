@@ -5,7 +5,7 @@
 import { defineStore } from 'pinia';
 import { reactive } from 'vue';
 import { request } from '@/centralServer/server';
-import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
+import {LOCAL_HOST, PORT, ProjectActionEnum} from '@/centralServer/websocket/defs';
 
 export interface ResourceItem {
     path: string;
@@ -27,6 +27,14 @@ interface Body {
 interface ResourceTotal {
     [key: string]: ResourceItem[];
 };
+
+export interface UpdateProjectExplorerParam {
+    projectName: string;
+    subdirectory: string[];
+    subdirectoryForUpdate: string[];
+    isConflict: boolean;
+    projectAction: ProjectActionEnum;
+}
 
 
 export const useResource = defineStore('resource', () => {

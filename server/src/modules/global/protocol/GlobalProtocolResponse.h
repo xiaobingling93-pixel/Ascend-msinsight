@@ -92,6 +92,22 @@ struct ProjectCheckValidResponse : public Response {
     ProjectCheckValidResponse() : Response(REQ_RES_PROJECT_VALID_CHECK) {};
     ProjectCheckBody body;
 };
+
+struct BaselineSettingBody {
+    std::string rankId;
+    std::string errorMessage;
+};
+
+struct BaselineSettingResponse : public Response {
+    BaselineSettingResponse() : Response(REQ_RES_PROJECT_SET_BASELINE) {};
+    BaselineSettingBody body;
+};
+
+struct BaselineCancelBody {};
+struct BaselineCancelResponse : public Response {
+    BaselineCancelResponse() : Response(REQ_RES_PROJECT_CANCEL_BASELINE) {};
+    BaselineCancelBody body;
+};
 } // end of namespace Protocol
 } // end of namespace Dic
 

@@ -10,6 +10,7 @@
 #include "DbSummaryDataBase.h"
 #include "ClusterParseThreadPoolExecutor.h"
 #include "CommonCacheManager.h"
+#include "BaselineManager.h"
 #include "FullDbParser.h"
 
 namespace Dic::Module::FullDb {
@@ -74,7 +75,9 @@ std::shared_ptr<DbTraceDataBase> FullDbParser::GetTraceDatabase(const std::strin
 void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std::string> &rankIds)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    auto db = Timeline::DataBaseManager::Instance().GetTraceDatabase(filePath);
+    std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::IsBaselineId(rankIds[0])) ?
+        rankIds[0] : filePath;
+    auto db = Timeline::DataBaseManager::Instance().GetTraceDatabase(dbId);
     if (db == nullptr) {
         ServerLog::Error("Failed to get connection.");
         return;
@@ -86,16 +89,16 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     }
     auto &threadPool = FullDbParser::Instance().threadPool;
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
-    futures->emplace_back(threadPool->AddTask([filePath]() { GetTraceDatabase(filePath)->InitStringsCache(); }));
-    futures->emplace_back(threadPool->AddTask([filePath]() { GetTraceDatabase(filePath)->UpdateAllDepth(); }));
-    futures->emplace_back(threadPool->AddTask([filePath]() { GetTraceDatabase(filePath)->UpdateWaitTime(); }));
-    futures->emplace_back(threadPool->AddTask([filePath]() { GetTraceDatabase(filePath)->GenerateOverlapAnalysis(); }));
+    futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->InitStringsCache(); }));
+    futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->UpdateAllDepth(); }));
+    futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->UpdateWaitTime(); }));
+    futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->GenerateOverlapAnalysis(); }));
 
     threadPool->AddTask(EndParseTask, rankIds, filePath, futures, start);
 
     database->UpdateStartTime(rankIds[0]);
 
-    FileType type = DataBaseManager::Instance().GetFileType();
+    FileType type = DataBaseManager::Instance().GetFileTypeByRankId(rankIds[0]);
     if (type == FileType::MS_PROF && !database->CheckTableDataInvalid(TABLE_OPERATOR_MEMORY)) {
         for (const auto& rankId: rankIds) {
             FullDb::DbMemoryDataBase::ParserEnd(rankId, false);
@@ -105,8 +108,12 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     } else {
         InitMemory(rankIds, filePath);
     }
-
-    auto realRankIds = database->QueryRankId();
+    std::vector<std::string> realRankIds;
+    if (rankIds.size() > 0 && Global::BaselineManager::IsBaselineId(rankIds[0])) {
+        realRankIds = rankIds;
+    } else {
+        realRankIds = database->QueryRankId();
+    }
     if (!database->CheckTableDataInvalid(TABLE_COMPUTE_TASK_INFO)) {
         for (const auto& rankId: realRankIds) {
             FullDb::DbSummaryDataBase::ParserEnd(rankId, false, "");
@@ -124,8 +131,9 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     for (const auto &future : *futures) {
         future.wait();
     }
-
-    FullDbParser::Instance().threadPool->AddTask([filePath]() { GetTraceDatabase(filePath)->InitFlowCache(); });
+    std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::IsBaselineId(rankIds[0])) ?
+        rankIds[0] : filePath;
+    FullDbParser::Instance().threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->InitFlowCache(); });
 
     for (const std::string& id : rankIds) {
         ParserCallBack(id, true);
@@ -134,7 +142,7 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Parse completed. path:", filePath,
                     " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-    SendHostEvent(filePath);
+    SendHostEvent(dbId);
     for (auto rankId: rankIds) {
         Timeline::ParserStatusManager::Instance().SetParserStatus(rankId, Timeline::ParserStatus::FINISH_ALL);
     }

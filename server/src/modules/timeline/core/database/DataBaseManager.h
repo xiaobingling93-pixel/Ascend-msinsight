@@ -62,7 +62,11 @@ public:
     DataType GetDataType();
     void SetDataType(DataType type);
     FileType GetFileType();
+    FileType GetFileTypeByRankId(const std::string &rankId);
     void SetFileType(FileType type);
+    void SetBaselineDataType(DataType type);
+    void SetBaselineFileType(FileType type);
+    bool ResetBaseline();
     void SetDbPathMapping(const std::string& rankId, const std::string& filePath, const std::string& hostId);
     inline std::vector<std::string> GetDbPathByHost(const std::string& id)
     {
@@ -79,6 +83,7 @@ private:
 
     std::mutex mutex;
     DataType dataType = DataType::TEXT;
+    DataType baselineType = DataType::TEXT;
     FileType fileType = FileType::PYTORCH;
     std::map<std::string, std::recursive_mutex> dbMutexMap;
     std::map<std::string, std::string> dbFilePathMap;
@@ -87,6 +92,11 @@ private:
     std::map<std::string, std::unique_ptr<VirtualClusterDatabase>> clusterDatabaseMap;
     std::map<std::string, std::unique_ptr<Memory::VirtualMemoryDataBase>> memoryDatabaseMap;
     std::map<std::string, std::unique_ptr<Summary::VirtualSummaryDataBase>> summaryDatabaseMap;
+
+    FileType baselineFileType = FileType::PYTORCH;
+    std::map<std::string, std::unique_ptr<ConnectionPool>> traceBaselineDatabaseMap;
+    std::map<std::string, std::unique_ptr<Memory::VirtualMemoryDataBase>> memoryBaselineDatabaseMap;
+    std::map<std::string, std::unique_ptr<Summary::VirtualSummaryDataBase>> summaryBaselineDatabaseMap;
 
     std::recursive_mutex &GetDbMutex(const std::string &fileId);
 };

@@ -7,6 +7,7 @@ import connector from '@/connection';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { console } from '@/utils/console';
 import { connectRemote } from '../server';
+import { useDataSources } from '@/stores/dataSource';
 
 const createRequestHead = function (
     id: number,
@@ -14,11 +15,13 @@ const createRequestHead = function (
     command: string,
     args: Request['params'],
 ): Request {
+    const { lastDataSource } = useDataSources();
     return {
         id,
         moduleName: module,
         type: 'request',
         command,
+        projectName: lastDataSource.projectName,
         params: { ...args },
     };
 };

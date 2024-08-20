@@ -25,7 +25,12 @@
         "Current Project": "Current Project",
         "Duplicate Project": "Project name already exists, modification of project name failed",
         "Update Project Name Failed": "Update project name failed",
-        "Loading": "Loading..."
+        "Loading": "Loading...",
+        "Set as Baseline Data": "Set as Baseline Data",
+        "Set as Compare Data": "Set as Compare Data",
+        "Set Compare Data Out Of Range": "Set Compare Data Out Of Range!",
+        "Set baseline first": "Please set baseline first!",
+        "Baseline Conflict": "Can't set baseline and comparison data to be the same"
     },
     "tabs": {
         "Timeline": "Timeline",

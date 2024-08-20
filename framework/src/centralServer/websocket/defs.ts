@@ -28,6 +28,7 @@ export const PORT:number = port;
 
 export interface DataRequest {
     command: string;
+    projectName?: string;
     params: Request['params'];
 };
 
@@ -37,6 +38,7 @@ export interface Request {
     moduleName: string;
     params: Record<string, unknown>;
     command: string;
+    projectName?: string;
     token?: string;
 };
 
@@ -72,6 +74,11 @@ export interface DataSource {
 export interface ProjectDirectory {
     projectName: string;
     fileName: string[];
+};
+
+export enum ProjectActionEnum {
+    TRANSFER_PROJECT = 0,
+    ADD_FILE = 1,
 };
 
 export type ResponseHandler = (res: Response) => void;

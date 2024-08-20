@@ -26,6 +26,8 @@ private:
     static std::unique_ptr<Request> ToProjectExplorerInfoGetRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToProjectExplorerInfoDeleteRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToProjectValidCheckRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToSetBaselineRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToCancelBaselineRequest(const json_t &json, std::string &error);
     // response to json
     static std::optional<document_t> ToFilesGetResponseJson(const Response &response);
     static std::optional<document_t> ToTokenHeartCheckResponseJson(const Response &response);
@@ -33,6 +35,8 @@ private:
     static std::optional<document_t> ToProjectExplorerInfoGetResponseJson(const Response &response);
     static std::optional<document_t> ToProjectExplorerInfoDeleteResponseJson(const Response &response);
     static std::optional<document_t> ToProjectValidCheckResponseJson(const Response &response);
+    static std::optional<document_t> ToSetBaselineResponseJson(const Response &response);
+    static std::optional<document_t> ToCancelBaselineResponseJson(const Response &response);
 };
 } // namespace Protocol
 } // namespace Dic
