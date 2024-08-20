@@ -243,7 +243,7 @@ TEST_F(DbMemoryTest, FullDb_of_QueryMemoryViewData)
     Dic::Protocol::MemoryViewData responseBody;
     auto result = database->QueryMemoryView(requestParams, responseBody);
     EXPECT_EQ(result, true);
-    int expectSize = 935;
+    int expectSize = 806;
     EXPECT_EQ(responseBody.lines.size(), expectSize);
 }
 
@@ -256,7 +256,7 @@ TEST_F(DbMemoryTest, FullDb_of_QueryMemoryViewDataByStreamExpectSeveral)
     Dic::Protocol::MemoryViewData responseBody;
     auto result = database->QueryMemoryView(requestParams, responseBody);
     EXPECT_EQ(result, true);
-    int expectSize = 935;
+    int expectSize = 806;
     EXPECT_EQ(responseBody.lines.size(), expectSize);
 }
 

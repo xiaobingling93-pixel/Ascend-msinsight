@@ -77,6 +77,7 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
     FileType type = DataBaseManager::Instance().GetFileType();
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     if (type == FileType::PYTORCH) {
+        sql += "select * from ( ";
         sql += "SELECT NAME.value AS component, ROUND((time_stamp - " +
             std::to_string(startTime) +
             ") / (1000.0 * 1000.0), 3) as timestamp, "
@@ -84,7 +85,12 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
             " ROUND(total_reserved / (1024.0 * 1024.0), 2) as total_reserve, "
             "ROUND(total_active / (1024.0 * 1024.0), 2) as total_active, stream_ptr as stream FROM ";
         sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
-        sql += TABLE_MEMORY_RECORD + " JOIN STRING_IDS AS NAME ON NAME.id = MEMORY_RECORD.component where 1=1 ";
+        sql += TABLE_MEMORY_RECORD + " JOIN STRING_IDS AS NAME ON NAME.id = MEMORY_RECORD.component ";
+        sql += " UNION select 'APP' as component, ROUND((timestampNs - " + std::to_string(startTime) +
+                " ) / (1000.0 * 1000.0), 2) as timestampNs, "
+               " 0 as total_allocated,  ROUND((hbm + ddr) / (1024.0 * 1024.0), 2) as total_reserve, "
+               " 0 as totalActive, '' as stream from NPU_MEM where type = 0 ";
+        sql += " ) where 1 = 1";
     }
     std::vector<Protocol::ComponentDto> componentDtoVec;
     std::vector<std::string> streams;
