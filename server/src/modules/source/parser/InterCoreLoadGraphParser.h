@@ -79,7 +79,11 @@ public:
 
 private:
     std::optional<InterCoreLoadAnalysisDetail> ParseInterCoreLoadAnalysisInfo(const std::string& json);
-    void ParseJsonOpDetailArray(InterCoreLoadAnalysisDetail &analysisDetail, const json_t &jsonOpDetailArray) const;
+    void ParseJsonOpDetailArray(InterCoreLoadAnalysisDetail &analysisDetail, const json_t &jsonOpDetailArray);
+    void TransformAnalysisDetail(InterCoreLoadAnalysisDetail &analysisDetail);
+    void Try2MoveSubCoreDetails(InterCoreOpDetail &source, InterCoreOpDetail &dest, uint8_t subCoreIndex);
+    const uint8_t SUB_CORE_INDEX_0 = 0;
+    const uint8_t SUB_CORE_INDEX_1 = 1;
 };
 
 } // Dic

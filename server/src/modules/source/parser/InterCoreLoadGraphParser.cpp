@@ -100,7 +100,7 @@ std::optional<InterCoreLoadAnalysisDetail> InterCoreLoadGraphParser::ParseInterC
 }
 
 void InterCoreLoadGraphParser::ParseJsonOpDetailArray(InterCoreLoadAnalysisDetail &analysisDetail,
-                                                      const json_t &jsonOpDetailArray) const
+                                                      const json_t &jsonOpDetailArray)
 {
     for (auto &jsonOpDetail: jsonOpDetailArray.GetArray()) {
         // 解析op detail
@@ -132,6 +132,44 @@ void InterCoreLoadGraphParser::ParseJsonOpDetailArray(InterCoreLoadAnalysisDetai
             opDetail.subCoreDetails.emplace_back(subCoreDetail);
         }
         analysisDetail.AddOpDetail(std::move(opDetail));
+    }
+    TransformAnalysisDetail(analysisDetail);
+}
+
+void InterCoreLoadGraphParser::TransformAnalysisDetail(InterCoreLoadAnalysisDetail &analysisDetail)
+{
+    if (analysisDetail.opType != "vector") {
+        return;
+    }
+    std::sort(analysisDetail.opDetails.begin(), analysisDetail.opDetails.end(),
+              [](InterCoreOpDetail a, InterCoreOpDetail b) {
+                  return a.coreId < b.coreId;
+              });
+
+    std::vector<InterCoreOpDetail> newOpDetails;
+    uint8_t index = 0;
+    // 按照2个一组，将vector计算单元，分配到新的core op detail中
+    while (index < analysisDetail.opDetails.size()) {
+        uint8_t coreId = index / 2;
+        InterCoreOpDetail detail;
+        detail.coreId = coreId;
+        Try2MoveSubCoreDetails(analysisDetail.opDetails[index], detail, SUB_CORE_INDEX_0);
+        if (++index < analysisDetail.opDetails.size()) {
+            Try2MoveSubCoreDetails(analysisDetail.opDetails[index], detail, SUB_CORE_INDEX_1);
+        }
+        newOpDetails.emplace_back(detail);
+        index++;
+    }
+    analysisDetail.opDetails = std::move(newOpDetails);
+}
+
+void InterCoreLoadGraphParser::Try2MoveSubCoreDetails(InterCoreOpDetail &source, InterCoreOpDetail &dest,
+    uint8_t subCoreIndex)
+{
+    if (!source.subCoreDetails.empty()) {
+        auto subCoreDetail = source.subCoreDetails[0];
+        subCoreDetail.subCoreIndex = subCoreIndex;
+        dest.subCoreDetails.emplace_back(subCoreDetail);
     }
 }
 
