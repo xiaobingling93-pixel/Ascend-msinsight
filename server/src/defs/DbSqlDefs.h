@@ -36,6 +36,8 @@ const static std::map<std::string, std::string> FULL_DB_TABLE_MAP = {
     {TABLE_MSTX_EVENTS, "create TEMPORARY table if not exists MSTX_EVENTS(startNs INTEGER,endNs INTEGER, "
                         " eventType INTEGER,rangeId INTEGER, category INTEGER, message INTEGER, globalTid INTEGER, "
                         " endGlobalTid INTEGER, domainId INTEGER, connectionId INTEGER, depth integer); "},
+    {TABLE_PYTORCH_CALLCHAINS,"create TEMPORARY table if not exists PYTORCH_CALLCHAINS(id INTEGER, stack INTEGER"
+                              " , stackDepth INTEGER );"}
 };
 
     // sql of metadata counter

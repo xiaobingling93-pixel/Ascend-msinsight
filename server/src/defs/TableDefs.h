@@ -23,6 +23,7 @@ namespace Dic {
     // db table name
     const static std::string TABLE_TASK = "TASK";
     const static std::string TABLE_API = "PYTORCH_API";
+    const static std::string TABLE_PYTORCH_CALLCHAINS = "PYTORCH_CALLCHAINS";
     const static std::string TABLE_CANN_API = "CANN_API";
     const static std::string TABLE_MSTX_EVENTS = "MSTX_EVENTS";
     const static std::string TABLE_ENUM_MSTX_EVENTS = "ENUM_MSTX_EVENT_TYPE";
