@@ -19,12 +19,12 @@ namespace Dic {
     public:
         static bool CheckCsvFile(const std::string& fileName)
         {
-            std::string filePath = FileUtil::PathPreprocess(fileName);
-            std::ifstream file(filePath);
+            std::ifstream file = FileUtil::OpenReadFileSafely(fileName);
             if (!file.good()) {
                 Server::ServerLog::Error("Cannot get file:", fileName);
                 return false;
             }
+            std::string filePath = FileUtil::PathPreprocess(fileName);
             if (access(filePath.c_str(), R_OK) == -1) {
                 Server::ServerLog::Error("Cannot read file", filePath);
                 return false;

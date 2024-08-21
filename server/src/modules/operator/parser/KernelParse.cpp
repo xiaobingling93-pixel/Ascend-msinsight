@@ -302,7 +302,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
 {
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Start to parse kernel detail. fileId: ", fileId, ", file path: ", fileId);
-    std::ifstream file(FileUtil::PathPreprocess(filePath));
+    std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     auto db = dynamic_cast<TextSummaryDataBase*>(Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));

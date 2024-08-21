@@ -70,7 +70,7 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
     if (!ValidateUtil::CheckCsvFile(filePath)) {
         return;
     }
-    std::ifstream stepTraceFileCsv(filePath);
+    std::ifstream stepTraceFileCsv = FileUtil::OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> indexMap;
     auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
@@ -239,7 +239,7 @@ bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath)
     // 导入前清空cluster databaseWrite
     DataBaseManager::Instance().ClearClusterDb();
     clusterDbPath = selectedPath + FILE_SEPARATOR + "cluster.db";
-    std::ifstream file(FileUtil::PathPreprocess(clusterDbPath));
+    std::ifstream file = FileUtil::OpenReadFileSafely(clusterDbPath, std::ios::in);
     auto databaseWrite = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     // 查询单独一个连接
     auto databaseRead = dynamic_cast<TextClusterDatabase *>(DataBaseManager::Instance().GetReadClusterDatabase());
@@ -282,7 +282,7 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
     }
     const std::string &filePath = FileUtil::PathPreprocess(communicationGroupList[0].c_str());
     auto start = std::chrono::high_resolution_clock::now();
-    std::ifstream communicationGroup(filePath, std::ios::binary);
+    std::ifstream communicationGroup = FileUtil::OpenReadFileSafely(filePath, std::ios::binary);
     if (communicationGroup.good()) {
         Document doc;
         std::string fileContent;

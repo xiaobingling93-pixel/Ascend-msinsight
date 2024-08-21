@@ -35,8 +35,8 @@ bool JupyterServerManager::Close()
 std::string JupyterServerManager::GetPidByPort(std::string& port)
 {
 #ifdef WIN32
-    std::string queryPidCmd = "for /f \"tokens=5 delims= \" %a in ('netstat -ano^|findstr 127.0.0.1:"
-                              + port + "^| findstr LISTENING') do @echo %a";
+    std::string queryPidCmd = "for /f \"tokens=5 delims= \" %a in ('netstat -ano^|findstr 127.0.0.1:" +
+                              port + "^| findstr LISTENING') do @echo %a";
 #else
     std::string queryPidCmd = "lsof -i :" + port + " | grep -i LISTEN | awk '{print $2}'";
 #endif
@@ -190,7 +190,7 @@ bool JupyterServerManager::InitJupyterServerInfo()
         return true;
     }
     std::string line;
-    std::ifstream file(jupyterLogPath);
+    std::ifstream file = FileUtil::OpenReadFileSafely(jupyterLogPath);
     std::string url;
     // 文件打开失败直接返回
     if (!file.is_open()) {

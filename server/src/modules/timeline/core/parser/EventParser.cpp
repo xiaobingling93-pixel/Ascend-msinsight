@@ -140,15 +140,7 @@ void EventParser::Parse(int sliceIndex, const std::string &fileContent)
 
 std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
 {
-#ifdef _WIN32
-    std::string path(filePath);
-    if (StringUtil::IsUtf8String(filePath)) {
-        path = StringUtil::Utf8ToGbk(filePath.c_str());
-    }
-    std::ifstream file(path, std::ios::in | std::ios::binary);
-#else
-    std::ifstream file(filePath, std::ios::in | std::ios::binary);
-#endif
+    std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::in | std::ios::binary);
     if (!file.is_open()) {
         ServerLog::Error("Event Parser. Failed to open file.");
         return "";

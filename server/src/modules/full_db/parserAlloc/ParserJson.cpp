@@ -158,7 +158,10 @@ void ParserJson::ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &pr
 
 bool ParserJson::isSimulation(std::string filePath)
 {
-    std::ifstream file(FileUtil::PathPreprocess(filePath), std::ios::in);
+    std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
+    if (!file.is_open()) {
+        return false;
+    }
     std::string headerString;
     int64_t contentStart = 0;
     file.seekg(contentStart, std::ios::beg);

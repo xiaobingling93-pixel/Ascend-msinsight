@@ -56,7 +56,7 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
     }
     auto memoryDatabase =
             dynamic_cast<TextMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
-    std::ifstream file(FileUtil::PathPreprocess(filePath));
+    std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
@@ -217,7 +217,7 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
     }
     auto database =
             dynamic_cast<TextMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
-    std::ifstream file(FileUtil::PathPreprocess(filePath));
+    std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
@@ -266,7 +266,7 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
     }
     auto database =
             dynamic_cast<TextMemoryDataBase*>(Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
-    std::ifstream file(FileUtil::PathPreprocess(filePath));
+    std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==

@@ -327,44 +327,9 @@ public:
 
     static std::string GetProfilerFileId(const std::string &filePath);
 
-    static std::string GetDbPath(const std::string &filePath)
-    {
-        std::string grandparentPath = FileUtil::GetParentPath(FileUtil::GetParentPath(filePath));
-        if (grandparentPath.empty()) {
-            return FileUtil::SplicePath(FileUtil::GetParentPath(filePath), DATABASE_FILE_NAME);
-        }
-        std::vector<std::string> folders;
-        std::vector<std::string> files;
-        if (!FileUtil::FindFolders(grandparentPath, folders, files)) {
-            return FileUtil::SplicePath(FileUtil::GetParentPath(filePath), DATABASE_FILE_NAME);
-        }
-        if (std::find(folders.begin(), folders.end(), ASCEND_PROFILER_OUTPUT) != folders.end()) {
-            // 如果是ASCEND_PROFILER_OUTPUT，则放在ASCEND_PROFILER_OUTPUT下
-            auto directory = FileUtil::SplicePath(grandparentPath, ASCEND_PROFILER_OUTPUT);
-            return FileUtil::SplicePath(directory, DATABASE_FILE_NAME);
-        } else if (std::find(folders.begin(), folders.end(), MINDSTUDIO_PROFILER_OUTPUT) != folders.end()) {
-            // 如果是mindstudio_profiler_output目录，则放在mindstudio_profiler_output
-            auto directory = FileUtil::SplicePath(grandparentPath, MINDSTUDIO_PROFILER_OUTPUT);
-            return FileUtil::SplicePath(directory, DATABASE_FILE_NAME);
-        } else if (std::regex_match(FileUtil::GetFileName(grandparentPath), std::regex(DEVICE_DIR_REG))) {
-            // 如果是device_x目录，则放在device_x的上层目录
-            return FileUtil::SplicePath(grandparentPath, DATABASE_FILE_NAME);
-        }
+    static std::string GetDbPath(const std::string &filePath);
 
-        return FileUtil::SplicePath(FileUtil::GetParentPath(filePath), DATABASE_FILE_NAME);
-    }
-
-    static std::string GetDbPath(const std::string &filePath, const std::string &fileId)
-    {
-        std::string dbPath = GetDbPath(filePath);
-        std::string tmpFileId = GetProfilerFileId(filePath);
-        if (tmpFileId.length() < fileId.length() && fileId.find(tmpFileId) == 0) {
-            // 修改db文件名为mindstudio_insight_data_xxx.db
-            dbPath = dbPath.substr(0, dbPath.length() - DB_FILE_SUFFIX.length()) +
-                     fileId.substr(tmpFileId.length()) + DB_FILE_SUFFIX;
-        }
-        return dbPath;
-    }
+    static std::string GetDbPath(const std::string &filePath, const std::string &fileId);
 
     static inline std::string GetParentPath(const std::string filePath)
     {
@@ -394,26 +359,7 @@ public:
         return path;
     }
 
-    static long long GetFileSize(const char* fileName)
-    {
-        if (strcmp(fileName, "") == 0) {
-            return 0;
-        }
-#ifdef _WIN32
-        std::ifstream in(PathPreprocess(fileName));
-        in.seekg(0, std::ios_base::end);
-        std::streampos size =  in.tellg();
-        in.close();
-        return size;
-#else
-        struct stat st;
-        long long size = 0;
-        if (stat(fileName, &st) == 0) {
-            size = st.st_size;
-        }
-        return size;
-#endif
-    }
+    static long long GetFileSize(const char* fileName);
 
     static void CalculateDirSize(const std::string &path, long long &size, int depth);
 
@@ -529,7 +475,7 @@ public:
 
     static bool IsSoftLink(const std::string &path);
     static bool IsAbsolutePath(const std::string &path);
-    static bool CheckDirValid(const std::string &path);
+    static bool CheckPathValid(const std::string &path);
     static bool CheckFilePathExist(const std::string& filePath);
     static bool CheckFilePath(const std::string& filePath);
     static bool CheckFilePathLength(const std::string& filePath);
@@ -547,6 +493,9 @@ public:
     static int FindDbOrJsonType(const std::string &path, int depth,
                                 const std::regex &jsonRegex, const std::regex &dbRegex);
     static std::vector<std::string> FindFirstByRegex(const std::string &path, int depth, const std::regex &fileRegex);
-};
+
+    static std::ifstream OpenReadFileSafely(const std::string &path, std::ios::openmode mode = std::ios::in);
+    static bool CheckFileSize(const std::string &filePath);
+    };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_FILEUTIL_H

@@ -94,7 +94,7 @@ bool FileUtil::IsSoftLink(const std::string &path)
 #endif
 }
  
-bool FileUtil::CheckDirValid(const std::string &path)
+bool FileUtil::CheckPathValid(const std::string &path)
 {
     if (path.empty()) {
         Server::ServerLog::Error("The path is empty. ");
@@ -328,7 +328,7 @@ bool FileUtil::ModifyFilePermissions(const std::string &filePath, const mode_t &
 bool FileUtil::ConvertToRealPath(std::string &errorMsg, std::vector<std::string> &path)
 {
     for (auto it = path.begin(); it != path.end(); ++it) {
-        if (!FileUtil::CheckDirValid(*it)) {
+        if (!FileUtil::CheckPathValid(*it)) {
             errorMsg = *it + "is invalid path";
             return false;
         }
@@ -414,4 +414,114 @@ std::vector<std::string> FileUtil::FindFirstByRegex(const std::string &path, int
     }
     return matchedFiles;
 }
+
+std::ifstream FileUtil::OpenReadFileSafely(const std::string &path, std::ios::openmode mode)
+{
+    std::ifstream res;
+    res.setstate(std::ifstream::badbit);
+    if (mode & std::ios::out) {
+        Server::ServerLog::Error("Should open file in read mode");
+        return res;
+    }
+    std::string tmpPath = PathPreprocess(path);
+    if (!CheckPathValid(tmpPath)) {
+        Server::ServerLog::Error("Open read file safely failed, path=", path);
+        return res;
+    }
+    if (!CheckFileSize(path)) {
+        Server::ServerLog::Error("Open read file safely failed, File size larger than limit.");
+        return res;
+    }
+    res.open(tmpPath, std::ios::in | mode);
+    return res;
+}
+
+bool FileUtil::CheckFileSize(const std::string &filePath)
+{
+    constexpr size_t fileMaxSize = 20ULL * 1024 * 1024 * 1024;
+#ifdef _WIN32
+    std::string tmpFilePath = FileUtil::PathPreprocess(filePath);
+    WIN32_FILE_ATTRIBUTE_DATA fileData;
+    if (GetFileAttributesEx(tmpFilePath.c_str(), GetFileExInfoStandard, &fileData)) {
+        // 获取文件大小
+        uintmax_t fileSize = (static_cast<uintmax_t>(fileData.nFileSizeHigh) << 32) | fileData.nFileSizeLow;
+        if (fileSize <= fileMaxSize) {
+            return true;
+        }
+    }
+#else
+    // 获取文件大小
+struct stat fileStat;
+if (stat(filePath.c_str(), &fileStat) == 0) {
+    if (fileStat.st_size <= fileMaxSize) {
+        return true;
+    }
+}
+#endif
+    return false;
+}
+
+std::string FileUtil::GetDbPath(const std::string &filePath, const std::string &fileId)
+{
+    std::string dbPath = GetDbPath(filePath);
+    std::string tmpFileId = GetProfilerFileId(filePath);
+    if (tmpFileId.length() < fileId.length() && fileId.find(tmpFileId) == 0) {
+        // 修改db文件名为mindstudio_insight_data_xxx.db
+        dbPath = dbPath.substr(0, dbPath.length() - DB_FILE_SUFFIX.length()) +
+                 fileId.substr(tmpFileId.length()) + DB_FILE_SUFFIX;
+    }
+    return dbPath;
+}
+
+long long FileUtil::GetFileSize(const char *fileName)
+{
+    if (strcmp(fileName, "") == 0) {
+        return 0;
+    }
+#ifdef _WIN32
+    std::ifstream in = FileUtil::OpenReadFileSafely(fileName);
+    if (!in.is_open()) {
+        return 0;
+    }
+    in.seekg(0, std::ios_base::end);
+    std::streampos size =  in.tellg();
+    in.close();
+    return size;
+#else
+    struct stat st;
+        long long size = 0;
+        if (stat(fileName, &st) == 0) {
+            size = st.st_size;
+        }
+        return size;
+#endif
+}
+
+std::string FileUtil::GetDbPath(const std::string &filePath)
+{
+    std::string grandparentPath = FileUtil::GetParentPath(FileUtil::GetParentPath(filePath));
+    if (grandparentPath.empty()) {
+        return FileUtil::SplicePath(FileUtil::GetParentPath(filePath), DATABASE_FILE_NAME);
+    }
+    std::vector<std::string> folders;
+    std::vector<std::string> files;
+    if (!FileUtil::FindFolders(grandparentPath, folders, files)) {
+        return FileUtil::SplicePath(FileUtil::GetParentPath(filePath), DATABASE_FILE_NAME);
+    }
+    if (std::find(folders.begin(), folders.end(), ASCEND_PROFILER_OUTPUT) != folders.end()) {
+        // 如果是ASCEND_PROFILER_OUTPUT，则放在ASCEND_PROFILER_OUTPUT下
+        auto directory = FileUtil::SplicePath(grandparentPath, ASCEND_PROFILER_OUTPUT);
+        return FileUtil::SplicePath(directory, DATABASE_FILE_NAME);
+    } else if (std::find(folders.begin(), folders.end(), MINDSTUDIO_PROFILER_OUTPUT) != folders.end()) {
+        // 如果是mindstudio_profiler_output目录，则放在mindstudio_profiler_output
+        auto directory = FileUtil::SplicePath(grandparentPath, MINDSTUDIO_PROFILER_OUTPUT);
+        return FileUtil::SplicePath(directory, DATABASE_FILE_NAME);
+    } else if (std::regex_match(FileUtil::GetFileName(grandparentPath), std::regex(DEVICE_DIR_REG))) {
+        // 如果是device_x目录，则放在device_x的上层目录
+        return FileUtil::SplicePath(grandparentPath, DATABASE_FILE_NAME);
+    }
+
+    return FileUtil::SplicePath(FileUtil::GetParentPath(filePath), DATABASE_FILE_NAME);
+}
+
 } // Dic

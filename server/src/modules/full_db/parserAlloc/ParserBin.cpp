@@ -43,6 +43,9 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
         session.OnResponse(std::move(responsePtr));
     } else {
         SendParseFailEvent("", "Import file is invalid,path :" + selectedFolder);
+        // 这里需要返回一个true应答,否则前端会陷入不停loading中
+        responsePtr->result = true;
+        session.OnResponse(std::move(responsePtr));
     }
 }
 

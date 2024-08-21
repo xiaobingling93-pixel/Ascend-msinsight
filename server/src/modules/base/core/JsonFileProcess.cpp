@@ -9,15 +9,7 @@ namespace Dic {
 namespace Module {
 std::vector<std::pair<int64_t, int64_t>> JsonFileProcess::SplitFile(const std::string &filePath)
 {
-#ifdef _WIN32
-    std::string path(filePath);
-    if (Dic::StringUtil::IsUtf8String(filePath)) {
-        path = Dic::StringUtil::Utf8ToGbk(filePath.c_str());
-    }
-    std::ifstream file(path, std::ios::in | std::ios::binary);
-#else
-    std::ifstream file(filePath, std::ios::in | std::ios::binary);
-#endif
+    std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::in | std::ios::binary);
     if (!file.is_open()) {
         Dic::Server::ServerLog::Error("Failed to open json file. ", filePath);
         return {};
