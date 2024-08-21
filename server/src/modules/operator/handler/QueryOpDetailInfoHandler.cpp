@@ -126,7 +126,7 @@ namespace Dic::Module::Operator {
     }
 
     std::vector<Protocol::OperatorDetailCmpInfoRes> QueryOpDetailInfoHandler::GetFixNumDiffCmpData(
-        std::vector<Protocol::OperatorDetailCmpInfoRes> &datailData, const int64_t pageSize,
+        std::vector<Protocol::OperatorDetailCmpInfoRes> &datailData, const int64_t paraPageSize,
         const int64_t current)
     {
         if (datailData.empty()) {
@@ -148,8 +148,8 @@ namespace Dic::Module::Operator {
                 return a.diff.duration > b.diff.duration;
             });
 
-        // 截取需要的部分 （偏移量） 到 （偏移量 + limit - 1）
-        pageSize == 0 ? 10 : pageSize; // pageSize 默认是10条，此处防止除零操作
+        // 截取需要的部分 （偏移量） 到 （偏移量 + limit - 1） pageSize 默认是10条，此处防止除零操作
+        uint64_t pageSize = (paraPageSize == 0 ? 10 : paraPageSize);
         uint64_t offset = pageSize * (current - 1);
         if (offset >= datailData.size()) {
             offset = datailData.size() -
