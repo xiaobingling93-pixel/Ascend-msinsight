@@ -142,7 +142,7 @@ void InterCoreLoadGraphParser::TransformAnalysisDetail(InterCoreLoadAnalysisDeta
         return;
     }
     std::sort(analysisDetail.opDetails.begin(), analysisDetail.opDetails.end(),
-              [](InterCoreOpDetail a, InterCoreOpDetail b) {
+              [](const InterCoreOpDetail &a, const InterCoreOpDetail &b) {
                   return a.coreId < b.coreId;
               });
 
