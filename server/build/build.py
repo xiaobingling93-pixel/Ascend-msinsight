@@ -204,7 +204,7 @@ def build_test(args):
         build_log('Failed to execute cmake command in test.')
         return result
 
-    build_cmds = ['cmake', '--build', '.', '-j', str(MAKE_JOBS)]
+    build_cmds = ['cmake', '--build', '.', '--target', 'insight_test', '-j', str(MAKE_JOBS)]
     result = execute_cmd(build_cmds, build_dir)
     if result != 0:
         build_log('Failed to execute cmake build command in test.')
