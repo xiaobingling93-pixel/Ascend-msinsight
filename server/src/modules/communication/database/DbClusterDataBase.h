@@ -16,6 +16,8 @@ public:
     explicit DbClusterDataBase(std::recursive_mutex &sqlMutex) : VirtualClusterDatabase(sqlMutex) {};
     ~DbClusterDataBase() override;
 
+    bool CreateTable();
+    bool DropTable();
     bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
                           Protocol::SummaryTopRankResBody &responseBody) override;
     std::string QueryParseClusterStatus() override;
@@ -54,10 +56,10 @@ public:
     bool UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
         std::string &level, std::string &msg) override;
 
-    void SetBaseInfo(Protocol::SummaryTopRankResBody responseBody);
     void PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds);
+
+    void InsertClusterBaseInfo(ClusterBaseInfo &baseInfo);
 private:
-    Protocol::SummaryTopRankResBody baseInfoResponse;
     std::string parseStatus = "UN_FINISH";
 };
 }

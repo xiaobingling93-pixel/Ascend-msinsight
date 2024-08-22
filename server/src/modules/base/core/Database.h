@@ -56,6 +56,8 @@ public:
     bool IsDatabaseVersionChange();
     bool GetMetaVersion();
 
+    bool SetDataBaseVersion();
+
 protected:
     bool ExecSql(const std::string &sql);
     bool CheckTableExist(const std::string& tableName);

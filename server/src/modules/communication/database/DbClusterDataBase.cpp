@@ -12,6 +12,26 @@ namespace Module {
 namespace FullDb {
 DbClusterDataBase::~DbClusterDataBase() {}
 
+bool DbClusterDataBase::CreateTable()
+{
+    if (!isOpen) {
+        ServerLog::Error("Cluster Database(DB) is not open.");
+        return false;
+    }
+    std::string sql = "CREATE TABLE " + TABLE_CLUSTER_BASE_INFO + " (id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "ranks json, steps json, collect_start_time DATETIME, collect_duration double, "
+        "algorithm VARCHAR(50), dp_size INTEGER, pp_size INTEGER, tp_size INTEGER, level VARCHAR(10)); ";
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    return ExecSql(sql);
+}
+
+bool DbClusterDataBase::DropTable()
+{
+    std::vector<std::string> tables = {TABLE_CLUSTER_BASE_INFO};
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    return DropSomeTables(tables);
+}
+
 bool DbClusterDataBase::QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
     Protocol::SummaryTopRankResBody &responseBody)
 {
@@ -78,9 +98,7 @@ bool DbClusterDataBase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseB
 
 bool DbClusterDataBase::GetStepIdList(Protocol::PipelineStepResponseBody &responseBody)
 {
-    std::string sql = "select distinct step as stepId "
-                      "FROM " + TABLE_STEP_TRACE_TIME +
-                      " ORDER BY step";
+    std::string sql = "select distinct step as stepId FROM " + TABLE_STEP_TRACE_TIME + " ORDER BY step";
     return ExecuteGetStepIdList(responseBody, sql);
 }
 
@@ -371,7 +389,7 @@ bool DbClusterDataBase::QueryCommunicationGroup(Document &responseBody)
     sqlite3_stmt *stmtBaseInfo = nullptr;
     int baseInfoResult = sqlite3_prepare_v2(db, baseInfoSql.c_str(), -1, &stmtBaseInfo, nullptr);
     if (baseInfoResult != SQLITE_OK) {
-        Server::ServerLog::Error("Failed to Query CommunicationGroup info statement. error:", sqlite3_errmsg(db));
+        Server::ServerLog::Error("Failed to prepare query communicationGroup statement. error:", sqlite3_errmsg(db));
         return false;
     }
     responseBody.SetObject();
@@ -398,8 +416,7 @@ bool DbClusterDataBase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &re
     std::vector<Protocol::OperatorNamesObject> &responseBody)
 {
     std::string sql = "SELECT DISTINCT hccl_op_name  FROM " + TABLE_COMM_ANALYZER_MATRIX +
-                      " WHERE step = ?" +
-                      " AND rank_set = ?" +
+                      " WHERE step = ? AND rank_set = ?" +
                       " ORDER BY hccl_op_name";
     requestParams.iterationId = "step" + requestParams.iterationId;
     return ExecuteQueryMatrixSortOpNames(requestParams, responseBody, sql);
@@ -431,15 +448,42 @@ void DbClusterDataBase::PrepareForStageId(std::string &stageIdStr, std::string &
     }
 }
 
+void DbClusterDataBase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
+{
+    sqlite3_stmt *stmt;
+    std::string sql = "INSERT INTO " + TABLE_CLUSTER_BASE_INFO +
+        " (algorithm, dp_size, pp_size, tp_size, level) VALUES (?, ?, ?, ?, ?)";
+    auto result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK || stmt == nullptr) {
+        ServerLog::Error("Failed to prepare inserting cluster base info statement. error:", sqlite3_errmsg(db));
+        return;
+    }
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    int idx = bindStartIndex;
+    sqlite3_bind_text(stmt, idx++, baseInfo.config.algorithm.c_str(),
+                      baseInfo.config.algorithm.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt, idx++, baseInfo.config.dpSize);
+    sqlite3_bind_int64(stmt, idx++, baseInfo.config.ppSize);
+    sqlite3_bind_int64(stmt, idx++, baseInfo.config.tpSize);
+    result = sqlite3_step(stmt);
+    if (result != SQLITE_DONE) {
+        ServerLog::Error("Failed to insert cluster base info. ", sqlite3_errmsg(db));
+    }
+    sqlite3_finalize(stmt);
+}
+
 bool DbClusterDataBase::QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level)
 {
-    return false;
+    std::string sql = "select algorithm, dp_size, pp_size, tp_size, level from " + TABLE_CLUSTER_BASE_INFO;
+    return ExecuteQueryParallelStrategyConfig(sql, config, level);
 }
 
 bool DbClusterDataBase::UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
     std::string &level, std::string &msg)
 {
-    return false;
+    std::string sql = "update " + TABLE_CLUSTER_BASE_INFO +
+                      " set algorithm = ?, dp_size = ?, pp_size = ?, tp_size = ?, level = ? WHERE id = '1'";
+    return ExecuteSetParallelStrategyConfig(sql, config, level);
 }
 
 bool DbClusterDataBase::GetParallelConfigFromStepTrace(ParallelStrategyConfig &config)

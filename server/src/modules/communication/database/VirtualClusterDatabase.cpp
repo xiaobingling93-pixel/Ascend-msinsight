@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
+#include <ConstantDefs.h>
 #include "pch.h"
 #include "NumDefs.h"
 #include "VirtualClusterDatabase.h"
@@ -740,6 +741,7 @@ bool VirtualClusterDatabase::ExecuteSetParallelStrategyConfig(std::string &sql,
         ServerLog::Error("Failed to prepare set parallel strategy config statement. error:", sqlite3_errmsg(db));
         return false;
     }
+    std::unique_lock<std::recursive_mutex> lock(mutex);
     int index = bindStartIndex;
     sqlite3_bind_text(stmt, index++, config.algorithm.c_str(), config.algorithm.length(), SQLITE_TRANSIENT);
     sqlite3_bind_int64(stmt, index++, config.dpSize);
@@ -771,6 +773,16 @@ bool VirtualClusterDatabase::ExecuteGetParallelConfigFromStepTrace(std::string &
     }
     sqlite3_finalize(stmt);
     return true;
+}
+
+bool VirtualClusterDatabase::HasFinishedParseLastTime()
+{
+    return CheckValueFromStatusInfoTable(clusterParseStatus, FINISH_STATUS);
+}
+
+bool VirtualClusterDatabase::UpdatesClusterParseStatus(const std::string &status)
+{
+    return UpdateValueIntoStatusInfoTable(clusterParseStatus, status);
 }
 }
 }

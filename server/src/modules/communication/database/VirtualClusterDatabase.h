@@ -25,6 +25,8 @@ public:
 
     virtual std::string QueryParseClusterStatus() = 0;
     virtual void UpdateClusterParseStatus(std::string status) = 0;
+    bool HasFinishedParseLastTime();
+    bool UpdatesClusterParseStatus(const std::string& status);
 
     virtual bool QuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,
                           Protocol::SummaryTopRankResBody &responseBody) = 0;
@@ -67,6 +69,7 @@ public:
 
 protected:
     const std::string totalOpInfo = "Total Op Info";
+    const std::string clusterParseStatus = "Cluster files parsing status";
     const double overlapThreshold = 0.05;
     bool HasColumn(const std::string &tableName, const std::string &columnName);
     bool ExecuteQuerySummaryData(const Protocol::SummaryTopRankParams &requestParams,

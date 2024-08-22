@@ -430,12 +430,25 @@ bool ClusterFileParser::ParserClusterOfDb(const std::string& selectedPath)
     ServerLog::Info("Cluster Db Path: " + clusterPath[0]);
     clusterDbPath = clusterPath[0];
     if (!clusterDatabase->OpenDb(clusterPath[0], false)) {
-        ServerLog::Error("Failed to open Cluster. rankId:", "FullDb");
+        ServerLog::Error("Failed to open Cluster. File path:", clusterDbPath);
         return false;
     }
-    clusterDatabase->UpdateClusterParseStatus(FINISH_STATUS);
-    ServerLog::Info("ParseClusterFiles is success");
+    if (!clusterDatabase->IsDatabaseVersionChange() && clusterDatabase->HasFinishedParseLastTime()) {
+        ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
+        return true;
+    }
 
+    if (!clusterDatabase->DropTable() or !clusterDatabase->CreateTable() or !clusterDatabase->SetDataBaseVersion() or
+        !clusterDatabase->UpdatesClusterParseStatus(NOT_FINISH_STATUS)) {
+        return false;
+    }
+
+    ClusterBaseInfo baseInfo;
+    clusterDatabase->GetParallelConfigFromStepTrace(baseInfo.config);
+    clusterDatabase->InsertClusterBaseInfo(baseInfo);
+
+    clusterDatabase->UpdatesClusterParseStatus(FINISH_STATUS);
+    ServerLog::Info("ParseClusterFiles is success");
     ParserStatusManager::Instance().SetClusterParseStatus(ParserStatus::FINISH);
     return true;
 }

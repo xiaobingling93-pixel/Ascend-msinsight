@@ -215,6 +215,17 @@ bool Database::IsDatabaseVersionChange()
     return std::strcmp(version.c_str(), GetDataBaseVersion().c_str()) != 0;
 }
 
+bool Database::SetDataBaseVersion()
+{
+    if (!isOpen) {
+        ServerLog::Error("Failed to set db version. Database is not open.");
+        return false;
+    }
+    std::string dbVersion = GetDataBaseVersion();
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    return ExecSql(" PRAGMA user_version = " + dbVersion + ";");
+}
+
 std::string Database::GetDataBaseVersion()
 {
     std::stringstream version;
