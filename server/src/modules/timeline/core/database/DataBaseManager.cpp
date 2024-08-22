@@ -350,6 +350,7 @@ bool DataBaseManager::ResetBaseline()
             item.second->Stop();
         }
     }
+    traceBaselineDatabaseMap.clear();
     for (const auto &item: memoryBaselineDatabaseMap) {
         if (item.second != nullptr) {
             item.second->CloseDb();
@@ -361,6 +362,7 @@ bool DataBaseManager::ResetBaseline()
             item.second->CloseDb();
         }
     }
+    summaryBaselineDatabaseMap.clear();
     return false;
 }
 
