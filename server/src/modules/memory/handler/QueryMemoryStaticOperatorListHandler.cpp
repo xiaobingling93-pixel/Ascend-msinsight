@@ -128,11 +128,12 @@ void QueryMemoryStaticOperatorListHandler::VectorMerge(std::vector<StaticOperato
         std::numeric_limits<long long>::lowest(), std::numeric_limits<double>::lowest()};
     for (size_t i = 0; i < std::min(compareVec.size(), baselineVec.size()); ++i) {
         StaticOperatorCompItem element = {compareVec[i], baselineVec[i], {}};
+        const int precision = 3;
         element.diff.deviceId = "host";
         element.diff.opName = compareVec[i].opName;
         element.diff.nodeIndexStart = compareVec[i].nodeIndexStart - baselineVec[i].nodeIndexStart;
         element.diff.nodeIndexEnd = compareVec[i].nodeIndexEnd - baselineVec[i].nodeIndexEnd;
-        element.diff.size = compareVec[i].size - baselineVec[i].size;
+        element.diff.size = NumberUtil::DoubleReservedNDigits(compareVec[i].size - baselineVec[i].size, precision);
         diffData.operatorDiffDetails.emplace_back(element);
     }
     for (size_t i = compareVec.size(); i < baselineVec.size(); ++i) {
@@ -175,6 +176,10 @@ bool QueryMemoryStaticOperatorListHandler::SelectDiffResult(MemoryStaticOperator
     }
     for (const auto& column : staticOpTableColumnAttr) {
         response.columnAttr.emplace_back(column);
+        if (column.name == "Name") {
+            MemoryTableColumnAttr sourceItem = {"Source", "string", "source"};
+            response.columnAttr.emplace_back(sourceItem);
+        }
     }
     return true;
 }

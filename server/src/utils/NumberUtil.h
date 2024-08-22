@@ -8,6 +8,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include "cmath"
 
 namespace Dic {
@@ -130,12 +131,14 @@ public:
         }
     }
 
-    static inline std::string StringDoubleMinus(const std::string &str1, const std::string &str2)
+    static inline std::string StringDoubleMinus(const std::string &str1, const std::string &str2, int precision = 3)
     {
         long double num1 = StringToLongDouble(str1);
         long double num2 = StringToLongDouble(str2);
         long double difference = num1 - num2;
-        return std::to_string(difference);
+        std::stringstream sstream;
+        sstream << std::fixed << std::setprecision(precision) << difference;
+        return sstream.str();
     }
 
     // 只处理1~6位小数位的截尾
