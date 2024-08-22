@@ -24,8 +24,8 @@ namespace Dic::Module::Operator {
 
         void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
     private:
-        std::vector<Protocol::OperatorStatisticCmpInfoRes> CalCompareInfo(
-            Protocol::OperatorStatisticReqParams &reqParams, OpStaticResVec &base, OpStaticResVec &cmp);
+        std::vector<Protocol::OperatorStatisticCmpInfoRes> GetCmpDataVec(std::string &group, OpStaticResVec &base,
+                                                                         OpStaticResVec &cmp);
         std::string GetGroup(const std::string &paramsGroup, OperatorStatisticInfoRes &data);
         bool HandleCompareDataRequest(OperatorStatisticInfoRequest &request, OperatorStatisticInfoResponse &response);
         bool HandleStatisticcDataRequest(OperatorStatisticInfoRequest &request,
@@ -35,10 +35,10 @@ namespace Dic::Module::Operator {
                           bool isBaselineData);
         void SetOpInputShapeGroupData(OperatorStatisticCmpInfoRes &data);
         void SetOpOrHcclTypeGroupData(OperatorStatisticCmpInfoRes &data);
-        void SetCommonDataByGroup(const std::string &paramsGroup, OperatorStatisticCmpInfoRes &data);
-        void CalDiffData(const std::string &paramsGroup,
-                         std::map<std::string, Protocol::OperatorStatisticCmpInfoRes> &groupMap,
-                         std::vector<Protocol::OperatorStatisticCmpInfoRes> &cmpRes);
+        void CalDiffDataByGroup(const std::string &paramsGroup, OperatorStatisticCmpInfoRes &data);
+        std::vector<Protocol::OperatorStatisticCmpInfoRes> GetFixNumDiffCmpData(
+            std::vector<Protocol::OperatorStatisticCmpInfoRes> &statisticData,
+            const int64_t pageSize, const int64_t current, const std::string &order, const std::string &orderBy);
     };
 }
 #endif // PROFILER_SERVER_QUERYOPSTATISTICINFOHANDLER_H

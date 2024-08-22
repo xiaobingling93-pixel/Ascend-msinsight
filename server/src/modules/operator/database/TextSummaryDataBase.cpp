@@ -523,6 +523,17 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
             group = R"(name || input_shapes || accelerator_core)";
             name = "name";
         }
+        std::string sql = GetQuerySqlNofilter(reqParams, isHccl, group, name);
+        if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
+            return "";
+        }
+        return sql;
+    }
+
+    std::string TextSummaryDataBase::GetQuerySqlNofilter(Protocol::OperatorStatisticReqParams &reqParams,
+                                                         const bool isHccl,
+                                                         const std::string &group, const std::string &name)
+    {
         std::string limitSql =
                 " SELECT * FROM ("
                 "     SELECT op_type, " + name + " as name, input_shapes, accelerator_core,"
@@ -536,6 +547,18 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
                 " ) subquery ";
 
+        std::string baseNolimitSql =
+                " SELECT * FROM ("
+                "     SELECT op_type, " + name + " as name, input_shapes, accelerator_core,"
+                "     ROUND(SUM(duration), 2) as total_time, COUNT(0) as cnt,"
+                "     ROUND(SUM(duration) / COUNT(0), 2) as avg_time,"
+                "     ROUND(max(duration), 2) as max_time,"
+                "     ROUND(min(duration), 2) as min_time"
+                "     FROM " + kernelTable +
+                "     WHERE accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
+                "     GROUP by " + group +
+                " ) subquery";
+
         std::string noLimitsql =
                 " SELECT * FROM ("
                 "     SELECT op_type, " + name + " as name, input_shapes, accelerator_core,"
@@ -546,27 +569,23 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     FROM " + kernelTable +
                 "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     GROUP by " + group +
-                " )";
+                " ) subquery";
 
-        std::string sql(limitSql);
-        if (reqParams.isCompare) {
-            sql = noLimitsql;
+        if (!reqParams.isCompare) {
+            return limitSql;
         }
-        if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
-            return "";
+        if (reqParams.isCompare && !reqParams.rankId.empty()) {
+            return noLimitsql;
         }
-        return sql;
+        if (reqParams.isCompare && reqParams.rankId.empty()) {
+            return  baseNolimitSql;
+        }
+        return "";
     }
 
-    bool TextSummaryDataBase::QueryAllOperatorStatisticInfo(int64_t &total,
-                                                            Protocol::OperatorStatisticReqParams &reqParams,
+    bool TextSummaryDataBase::QueryAllOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                                             std::vector<Protocol::OperatorStatisticInfoRes> &res)
     {
-        if (!QueryStatisticTotalNum(reqParams, total)) {
-            ServerLog::Error("[Operator]Failed to query total num of statistic info.");
-            return false;
-        }
-
         std::string sql = GetQueryBaseStaticSql(reqParams);
         return ExecSqlGetStaticInfo(sql, reqParams, res);
     }
@@ -610,9 +629,13 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
         int index = bindStartIndex;
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
-        sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
-        sqlite3_bind_int64(stmt, index++, reqParams.pageSize * (reqParams.current - 1));
+        if (!reqParams.rankId.empty()) {
+            sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
+        }
+        if (!reqParams.isCompare) {
+            sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
+            sqlite3_bind_int64(stmt, index++, reqParams.pageSize * (reqParams.current - 1));
+        }
 
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             int col = 0;
@@ -665,7 +688,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         return true;
     }
 
-    std::string TextSummaryDataBase::GetQueryStaticBaseSql(Protocol::OperatorStatisticReqParams &reqParams,
+    std::string TextSummaryDataBase::GetQueryDetailBaseSql(Protocol::OperatorStatisticReqParams &reqParams,
                                                            bool isLimit)
     {
         bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
@@ -684,13 +707,24 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         std::string allQuerySql =
                 " FROM ("
                 "     SELECT * FROM " + kernelTable +
-                "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
-                " ) subquery ";
+                "     WHERE accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
+                "     ORDER by start_time DESC"
+                "     ) subquery ";
+        std::string baseAllQuerySql =
+                " FROM ("
+                "     SELECT * FROM " + kernelTable +
+                "     WHERE accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
+                "     ORDER by start_time DESC"
+                "     ) subquery ";
 
-        if (isLimit) {
+        if (isLimit && !reqParams.rankId.empty()) {
             sql = sqlTab + conditionalQuerySql;
         } else {
-            sql = sqlTab + allQuerySql;
+            if (reqParams.rankId.empty()) {
+                sql = sqlTab + baseAllQuerySql;
+            } else {
+                sql = sqlTab + allQuerySql;
+            }
         }
         if (!GenerateQueryFiltersSql<Protocol::OperatorStatisticReqParams>(reqParams, sql)) {
             return "";
@@ -700,7 +734,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
     std::string TextSummaryDataBase::GenerateQueryDetailSql(Protocol::OperatorStatisticReqParams &reqParams)
     {
-        std::string sql = GetQueryStaticBaseSql(reqParams, true);
+        std::string sql = GetQueryDetailBaseSql(reqParams, true);
         if (sql.empty()) {
             return "";
         }
@@ -732,11 +766,14 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
         int index = bindStartIndex;
         sqlite3_bind_int64(stmt, index++, Timeline::TraceTime::Instance().GetStartTime());
-        sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
-        sqlite3_bind_int64(stmt, index++, reqParams.topK);
-        sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
-        sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
-
+        if (!reqParams.rankId.empty()) {
+            sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
+        }
+        if (!reqParams.isCompare) {
+            sqlite3_bind_int64(stmt, index++, reqParams.topK);
+            sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
+            sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
+        }
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             int col = 0;
             Protocol::OperatorDetailInfoRes one{};
@@ -766,7 +803,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         Protocol::OperatorStatisticReqParams &reqParams, std::vector<Protocol::OperatorDetailInfoRes> &res,
         std::string &level)
     {
-        std::string sql = GetQueryStaticBaseSql(reqParams, false);
+        std::string sql = GetQueryDetailBaseSql(reqParams, false);
         return ExecSqlGetDetailInfo(sql, reqParams, res, level);
     }
 

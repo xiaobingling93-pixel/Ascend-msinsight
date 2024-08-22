@@ -21,8 +21,6 @@ public:
     bool Parse(const std::vector<std::string> &fileIds, const std::string &filePath,
                const std::string &selectedFolder) override;
     void Reset() override;
-    static bool FindDevicePaths(const std::string &selectedFolder,
-                                std::map<std::string, std::string>& devicePaths);
     static void InitOpenDb(const std::string &filePath, const std::vector<std::string> &rankId);
 
     bool Parse(const std::vector<std::string> &fileIds, const std::string &filePath);

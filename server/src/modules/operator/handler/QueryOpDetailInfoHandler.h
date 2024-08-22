@@ -26,17 +26,15 @@ namespace Dic::Module::Operator {
                                       OperatorDetailInfoResponse &response);
         bool HandleDetailDataRequest(OperatorDetailInfoRequest &request,
                                      OperatorDetailInfoResponse &response);
-        std::string GetGroup(OperatorDetailInfoRes &data);
-        std::vector<Protocol::OperatorDetailCmpInfoRes> CalCompareInfo(int64_t &total,
+        std::vector<Protocol::OperatorDetailCmpInfoRes> GetCmpDataVec(
             std::vector<Protocol::OperatorDetailInfoRes> &baseDbData,
-            std::vector<Protocol::OperatorDetailInfoRes> &cmpDbData, int64_t pageSize, int64_t current);
-        void dealResGetDiff(std::vector<Protocol::OperatorDetailCmpInfoRes> &res);
-        void ProcessDataToMuiMap(std::vector<Protocol::OperatorDetailInfoRes> datFromDb,
-                                 std::set<std::string> infoKey,
-                                 std::multimap<std::string, Protocol::OperatorDetailInfoRes> multiDataMap);
+            std::vector<Protocol::OperatorDetailInfoRes> &cmpDbData);
         std::vector<Protocol::OperatorDetailCmpInfoRes> GetFixNumDiffCmpData(
             std::vector<Protocol::OperatorDetailCmpInfoRes> &datailData, const int64_t pageSize,
-            const int64_t current);
+            const int64_t current, const std::string &order, const std::string &orderBy);
+        void SortDataBynameAndStartTime(std::vector<Protocol::OperatorDetailInfoRes> &baseDbData,
+                                std::vector<Protocol::OperatorDetailInfoRes> &cmpDbData);
+        void FromatDatailData(Protocol::OperatorDetailCmpInfoRes &data);
     };
 }
 

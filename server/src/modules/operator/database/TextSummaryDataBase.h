@@ -47,7 +47,7 @@ public:
 
     bool UpdateParseStatus(const std::string& status);
     bool HasFinishedParseLastTime();
-    bool QueryAllOperatorStatisticInfo(int64_t &total, OperatorStatisticReqParams &reqParams,
+    bool QueryAllOperatorStatisticInfo(OperatorStatisticReqParams &reqParams,
                                        std::vector<Protocol::OperatorStatisticInfoRes> &res) override;
 
 private:
@@ -90,7 +90,9 @@ private:
     bool GenerateQueryFiltersSql(T &reqParams, std::string &sql);
 
     bool IsOperatorGroupInType(OperatorGroupConverter::OperatorGroup operatorGroup);
-    std::string GetQueryStaticBaseSql(Protocol::OperatorStatisticReqParams &reqParams, bool isLimit);
+    std::string GetQueryDetailBaseSql(Protocol::OperatorStatisticReqParams &reqParams, bool isLimit);
+    std::string GetQuerySqlNofilter(Protocol::OperatorStatisticReqParams &reqParams, const bool isHccl,
+                                    const std::string &group, const std::string &name);
     bool ExecSqlGetDetailInfo(std::string sql, Protocol::OperatorStatisticReqParams &reqParams,
                               std::vector<Protocol::OperatorDetailInfoRes> &res, std::string &level);
     bool QueryAllOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,

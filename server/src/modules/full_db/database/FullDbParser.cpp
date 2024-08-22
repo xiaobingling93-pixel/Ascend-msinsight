@@ -222,23 +222,6 @@ void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path
     ServerLog::Info("Init Memory finish");
 }
 
-bool FullDbParser::FindDevicePaths(const std::string &selectedFolder,
-                                   std::map<std::string, std::string> &devicePaths)
-{
-    static const std::string DeviceReg = R"(device_\d{1,4})";
-    auto folders = FileUtil::FindFilesAndFoldersByRegex(selectedFolder, std::regex(DeviceReg), true);
-    for (const auto &folder: folders) {
-        auto folderName = FileUtil::GetFileName(folder);
-        auto index = folderName.find('_');
-        if (index == std::string::npos) {
-            return false;
-        }
-        auto deviceId = folderName.substr(index + 1);
-        devicePaths[deviceId] = FileUtil::GetParentPath(folder);
-    }
-    return true;
-}
-
 bool FullDbParser::Parse(const std::vector<std::string> &fileIds, const std::string &filePath,
                          const std::string &selectedFolder)
 {

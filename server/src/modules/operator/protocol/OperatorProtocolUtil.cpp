@@ -45,19 +45,39 @@ std::optional<document_t> ToResponseJson<OperatorComputeUnitInfoResponse>(const 
     return std::move(json);
 }
 
-void AddMemberWithLabel(rapidjson::Value& parent, const char* label, const OperatorStatisticInfoRes& ele,
-                        rapidjson::Document::AllocatorType& allocator)
+void AddStatisticMemberWithLabel(rapidjson::Value& parent, const char* label, const OperatorStatisticInfoRes& ele,
+                                 rapidjson::Document::AllocatorType& allocator)
 {
     rapidjson::Value dataJson(rapidjson::kObjectType);
     JsonUtil::AddMember(dataJson, "opType", ele.opType, allocator);
     JsonUtil::AddMember(dataJson, "opName", ele.opName, allocator);
     JsonUtil::AddMember(dataJson, "accCore", ele.accCore, allocator);
     JsonUtil::AddMember(dataJson, "inputShape", ele.inputShape, allocator);
-    JsonUtil::AddMember(dataJson, "totalTime", ele.totalTime, allocator);
-    JsonUtil::AddMember(dataJson, "count", ele.count, allocator);
-    JsonUtil::AddMember(dataJson, "avgTime", ele.avgTime, allocator);
-    JsonUtil::AddMember(dataJson, "maxTime", ele.maxTime, allocator);
-    JsonUtil::AddMember(dataJson, "minTime", ele.minTime, allocator);
+    if (ele.totalTime == DOUBLE_MIN_VALUE) {
+        JsonUtil::AddMember(dataJson, "totalTime", "-", allocator);
+    } else {
+        JsonUtil::AddMember(dataJson, "totalTime", ele.totalTime, allocator);
+    }
+    if (ele.count == INT_MIN_VALUE) {
+        JsonUtil::AddMember(dataJson, "count", "-", allocator);
+    } else {
+        JsonUtil::AddMember(dataJson, "count", ele.count, allocator);
+    }
+    if (ele.avgTime == DOUBLE_MIN_VALUE) {
+        JsonUtil::AddMember(dataJson, "avgTime", "-", allocator);
+    } else {
+        JsonUtil::AddMember(dataJson, "avgTime", ele.avgTime, allocator);
+    }
+    if (ele.maxTime == DOUBLE_MIN_VALUE) {
+        JsonUtil::AddMember(dataJson, "maxTime", "-", allocator);
+    } else {
+        JsonUtil::AddMember(dataJson, "maxTime", ele.maxTime, allocator);
+    }
+    if (ele.minTime == DOUBLE_MIN_VALUE) {
+        JsonUtil::AddMember(dataJson, "minTime", "-", allocator);
+    } else {
+        JsonUtil::AddMember(dataJson, "minTime", ele.minTime, allocator);
+    }
     parent.AddMember(rapidjson::Value(label, allocator).Move(), dataJson, allocator);
 }
 
@@ -74,9 +94,9 @@ std::optional<document_t> ToResponseJson<OperatorStatisticInfoResponse>(const Op
     data.SetArray();
     for (const OperatorStatisticCmpInfoRes& eles : res.datas) {
         rapidjson::Value cmpResJson(rapidjson::kObjectType);
-        AddMemberWithLabel(cmpResJson, "diff", eles.diff, allocator);
-        AddMemberWithLabel(cmpResJson, "baseline", eles.baseline, allocator);
-        AddMemberWithLabel(cmpResJson, "compare", eles.compare, allocator);
+        AddStatisticMemberWithLabel(cmpResJson, "diff", eles.diff, allocator);
+        AddStatisticMemberWithLabel(cmpResJson, "baseline", eles.baseline, allocator);
+        AddStatisticMemberWithLabel(cmpResJson, "compare", eles.compare, allocator);
         data.PushBack(cmpResJson, allocator);
     }
     JsonUtil::AddMember(body, "data", data, allocator);
@@ -92,9 +112,21 @@ void AdDetaildMemberWithLabel(rapidjson::Value& parent, const char* label, const
     JsonUtil::AddMember(dataJson, "type", ele.type, allocator);
     JsonUtil::AddMember(dataJson, "accCore", ele.accCore, allocator);
     JsonUtil::AddMember(dataJson, "startTime", ele.startTime, allocator);
-    JsonUtil::AddMember(dataJson, "duration", ele.duration, allocator);
-    JsonUtil::AddMember(dataJson, "waitTime", ele.waitTime, allocator);
-    JsonUtil::AddMember(dataJson, "blockDim", ele.blockDim, allocator);
+    if (ele.duration == DOUBLE_MIN_VALUE) {
+        JsonUtil::AddMember(dataJson, "duration", "-", allocator);
+    } else {
+        JsonUtil::AddMember(dataJson, "duration", ele.duration, allocator);
+    }
+    if (ele.duration == DOUBLE_MIN_VALUE) {
+        JsonUtil::AddMember(dataJson, "waitTime", "-", allocator);
+    } else {
+        JsonUtil::AddMember(dataJson, "waitTime", ele.waitTime, allocator);
+    }
+    if (ele.duration == INT_MIN_VALUE) {
+        JsonUtil::AddMember(dataJson, "blockDim", "-", allocator);
+    } else {
+        JsonUtil::AddMember(dataJson, "blockDim", ele.blockDim, allocator);
+    }
     JsonUtil::AddMember(dataJson, "inputShape", ele.inputShape, allocator);
     JsonUtil::AddMember(dataJson, "inputType", ele.inputType, allocator);
     JsonUtil::AddMember(dataJson, "inputFormat", ele.inputFormat, allocator);

@@ -3,11 +3,107 @@
  */
 #include <algorithm>
 #include "pch.h"
+#include "BaselineManager.h"
 #include "DataBaseManager.h"
 #include "OperatorProtocolRequest.h"
 #include "WsSessionManager.h"
 #include "OperatorProtocol.h"
 #include "QueryOpDetailInfoHandler.h"
+
+namespace {
+    using namespace Dic::Server;
+    using DetailCmpRes = Protocol::OperatorDetailCmpInfoRes;
+    using DetailCmpFun = std::function<bool(const DetailCmpRes&, const DetailCmpRes&)>;
+    static std::unordered_map<std::string, DetailCmpFun> DetailDescCompareFunctions = {
+        {"rank_id", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                    { return a.diff.rankId > b.diff.rankId; }},
+        {"step_id", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                    { return a.diff.stepId > b.diff.stepId; }},
+        {"name", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                 { return a.diff.name > b.diff.name; }},
+        {"op_type", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                    { return a.diff.type > b.diff.type; }},
+        {"accelerator_core", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                             { return a.diff.accCore > b.diff.accCore; }},
+        {"start_time", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                       { return a.diff.startTime > b.diff.startTime; }},
+        {"duration", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                     { return a.diff.duration > b.diff.duration; }},
+        {"wait_time", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                      { return a.diff.waitTime > b.diff.waitTime; }},
+        {"block_dim", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                      { return a.diff.blockDim > b.diff.blockDim; }},
+        {"input_shapes", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                         { return a.diff.inputShape > b.diff.inputShape; }},
+        {"input_data_types", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                             { return a.diff.inputType > b.diff.inputType; }},
+        {"input_formats", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                          { return a.diff.inputFormat > b.diff.inputFormat; }},
+        {"output_shapes", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                          { return a.diff.outputShape > b.diff.outputShape; }},
+        {"output_data_types", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                              { return a.diff.outputType > b.diff.outputType; }},
+        {"output_formats", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                           { return a.diff.outputFormat > b.diff.outputFormat; }},
+    };
+    static std::unordered_map<std::string, DetailCmpFun> DetailAsceCompareFunctions = {
+        {"rank_id", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                    { return a.diff.rankId < b.diff.rankId; }},
+        {"step_id", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                    { return a.diff.stepId < b.diff.stepId; }},
+        {"name", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                 { return a.diff.name < b.diff.name; }},
+        {"op_type", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                    { return a.diff.type < b.diff.type; }},
+        {"accelerator_core", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                             { return a.diff.accCore < b.diff.accCore; }},
+        {"start_time", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                       { return a.diff.startTime < b.diff.startTime; }},
+        {"duration", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                     { return a.diff.duration < b.diff.duration; }},
+        {"wait_time", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                      { return a.diff.waitTime < b.diff.waitTime; }},
+        {"block_dim", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                      { return a.diff.blockDim < b.diff.blockDim; }},
+        {"input_shapes", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                         { return a.diff.inputShape < b.diff.inputShape; }},
+        {"input_data_types", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                             { return a.diff.inputType < b.diff.inputType; }},
+        {"input_formats", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                          { return a.diff.inputFormat < b.diff.inputFormat; }},
+        {"output_shapes", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                          { return a.diff.outputShape < b.diff.outputShape; }},
+        {"output_data_types", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                              { return a.diff.outputType < b.diff.outputType; }},
+        {"output_formats", [](const DetailCmpRes& a, const DetailCmpRes& b)
+                           { return a.diff.outputFormat < b.diff.outputFormat; }},
+    };
+    bool DetailDescCmp(const DetailCmpRes& a, const DetailCmpRes& b, const std::string orderBy)
+    {
+        auto it = DetailDescCompareFunctions.find(orderBy);
+        if (it != DetailDescCompareFunctions.end()) {
+            return it->second(a, b);
+        }
+        return a.diff.duration > b.diff.duration;
+    }
+    bool DetailAsceCmp(const DetailCmpRes &a, const DetailCmpRes &b, const std::string orderBy)
+    {
+        auto it = DetailAsceCompareFunctions.find(orderBy);
+        if (it != DetailAsceCompareFunctions.end()) {
+            return it->second(a, b);
+        }
+        return a.diff.duration > b.diff.duration;
+    }
+    bool StaticCmp(const DetailCmpRes &a, const DetailCmpRes &b, const std::string order,
+                   const std::string orderBy)
+    {
+        if (order == "ascend") {
+            return DetailAsceCmp(a, b, orderBy);
+        } else {
+            return DetailDescCmp(a, b, orderBy);
+        }
+    }
+};
 
 namespace Dic::Module::Operator {
     using namespace Dic::Server;
@@ -22,7 +118,7 @@ namespace Dic::Module::Operator {
         std::string errorMsg;
         if (request.params.CommonCheck(errorMsg)) {
             rst = request.params.isCompare ?
-                HandleDetailDataRequest(request, dynamic_cast<OperatorDetailInfoResponse &>(*responsePtr)) :
+                HandleCompareDataRequest(request, dynamic_cast<OperatorDetailInfoResponse &>(*responsePtr)) :
                 HandleDetailDataRequest(request, dynamic_cast<OperatorDetailInfoResponse &>(*responsePtr));
         }
         SetBaseResponse(request, response);
@@ -37,11 +133,23 @@ namespace Dic::Module::Operator {
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
         std::vector<Protocol::OperatorDetailInfoRes> cmpRes;
         if (!database->QueryAllOperatorDetailInfo(request.params, cmpRes, response.level)) {
+            ServerLog::Error("[Operator]Failed to query currnet detail Info, RankId = ", rankId);
             return false;
         }
-        std::vector<Protocol::OperatorDetailCmpInfoRes> res;
-        res = CalCompareInfo(response.total, cmpRes, cmpRes, request.params.pageSize, request.params.current);
-        response.datas = res;
+
+        std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+        auto databaseBaseline = DataBaseManager::Instance().GetSummaryDatabase(baselineId);
+        std::vector<Protocol::OperatorDetailInfoRes> baselineRes;
+        request.params.rankId = "";
+        if (!databaseBaseline->QueryAllOperatorDetailInfo(request.params, baselineRes, response.level)) {
+            ServerLog::Error("[Operator]Failed to query baseline detail Info, RankId = ", baselineId);
+            return false;
+        }
+        std::vector<Protocol::OperatorDetailCmpInfoRes> fullCmpData;
+        fullCmpData = GetCmpDataVec(baselineRes, cmpRes);
+        response.total = fullCmpData.size();
+        response.datas = GetFixNumDiffCmpData(fullCmpData, request.params.pageSize, request.params.current,
+                                              request.params.order, request.params.orderBy);
         return true;
     }
 
@@ -51,103 +159,122 @@ namespace Dic::Module::Operator {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
         if (!database->QueryOperatorDetailInfo(request.params, response)) {
-            ServerLog::Error("[Operator]Failed to query Statistic Info, RankId = ", rankId);
+            ServerLog::Error("[Operator]Failed to query detail Info, RankId = ", rankId);
             return false;
         }
         return true;
     }
 
-    std::string QueryOpDetailInfoHandler::GetGroup(OperatorDetailInfoRes &data)
+    void QueryOpDetailInfoHandler::SortDataBynameAndStartTime(std::vector<Protocol::OperatorDetailInfoRes> &baseDbData,
+                                                              std::vector<Protocol::OperatorDetailInfoRes> &cmpDbData)
     {
-        return data.stepId + data.name + data.type + data.accCore + data.inputShape +
-               data.inputType + data.inputFormat + data.outputShape + data.outputType +
-               data.outputFormat;
+        sort(baseDbData.begin(), baseDbData.end(), [](OperatorDetailInfoRes &a, OperatorDetailInfoRes &b) {
+            if (a.name != b.name) {
+                return a.name < b.name;
+            } else {
+                return a.startTime < b.startTime;
+            }
+        });
+        sort(cmpDbData.begin(), cmpDbData.end(), [](OperatorDetailInfoRes &a, OperatorDetailInfoRes &b) {
+            if (a.name != b.name) {
+                return a.name < b.name;
+            } else {
+                return a.startTime < b.startTime;
+            }
+        });
     }
 
-    std::vector<Protocol::OperatorDetailCmpInfoRes> QueryOpDetailInfoHandler::CalCompareInfo(int64_t &total,
+    std::vector<Protocol::OperatorDetailCmpInfoRes> QueryOpDetailInfoHandler::GetCmpDataVec(
         std::vector<Protocol::OperatorDetailInfoRes> &baseDbData,
-        std::vector<Protocol::OperatorDetailInfoRes> &cmpDbData, int64_t pageSize, int64_t current)
+        std::vector<Protocol::OperatorDetailInfoRes> &cmpDbData)
     {
-        std::set<std::string> infoKey;
-        std::multimap<std::string, Protocol::OperatorDetailInfoRes> multiGroupBaselineMap;
-        std::multimap<std::string, Protocol::OperatorDetailInfoRes> multiGroupCompareMap;
+        SortDataBynameAndStartTime(baseDbData, cmpDbData);
+        std::vector<Protocol::OperatorDetailInfoRes>::iterator baseIter = baseDbData.begin();
+        std::vector<Protocol::OperatorDetailInfoRes>::iterator cmpIter = cmpDbData.begin();
         std::vector<Protocol::OperatorDetailCmpInfoRes> datailData;
-        // 处理从sql获取的base 和 cmp 数据放在map里
-        ProcessDataToMuiMap(cmpDbData, infoKey, multiGroupBaselineMap);
-        ProcessDataToMuiMap(baseDbData, infoKey, multiGroupCompareMap);
 
-        for (auto it = infoKey.begin(); it != infoKey.end(); ++it) {
-            std::multimap<std::string, OperatorDetailInfoRes>::iterator baseIter = multiGroupBaselineMap.find(*it);
-            std::multimap<std::string, OperatorDetailInfoRes>::iterator cmpIter = multiGroupCompareMap.find(*it);
-            int baseCount = multiGroupBaselineMap.count(*it);
-            int cmpCount = multiGroupCompareMap.count(*it);
-            int count = std::min(baseCount, cmpCount);
-            int idx = 0;
-            for (int idx = 0; idx < count; ++idx, ++baseIter, ++cmpIter) {
-                OperatorDetailCmpInfoRes tmpInfo;
-                tmpInfo.diff = cmpIter->second;
-                tmpInfo.compare = cmpIter->second;
-                tmpInfo.baseline = baseIter->second;
-                datailData.emplace_back(tmpInfo);
+        while (baseIter != baseDbData.end() && cmpIter != cmpDbData.end()) {
+            while (baseIter != baseDbData.end() && cmpIter != cmpDbData.end() &&
+                  baseIter->name == cmpIter->name) {
+                OperatorDetailCmpInfoRes tmp;
+                tmp.baseline = *baseIter;
+                tmp.compare = *cmpIter;
+                datailData.emplace_back(tmp);
+                baseIter++;
+                cmpIter++;
             }
-            // 剩余数据处理
-            while (idx < baseCount) {
-                OperatorDetailCmpInfoRes tmpInfo;
-                tmpInfo.diff = baseIter->second;
-                tmpInfo.baseline = baseIter->second;
-                datailData.emplace_back(tmpInfo);
-                ++baseIter;
-                ++idx;
+            if (baseIter == baseDbData.end() || cmpIter == cmpDbData.end()) {
+                break;
             }
-            while (idx < cmpCount) {
-                OperatorDetailCmpInfoRes tmpInfo;
-                tmpInfo.diff = cmpIter->second;
-                tmpInfo.compare = cmpIter->second;
-                datailData.emplace_back(tmpInfo);
-                ++cmpIter;
-                ++idx;
+            while (baseIter != baseDbData.end() && baseIter->name < cmpIter->name) {
+                OperatorDetailCmpInfoRes tmp;
+                tmp.baseline = *baseIter;
+                datailData.emplace_back(tmp);
+                baseIter++;
+            }
+            while (cmpIter != cmpDbData.end() && cmpIter->name < baseIter->name) {
+                OperatorDetailCmpInfoRes tmp;
+                tmp.baseline = *cmpIter;
+                datailData.emplace_back(tmp);
+                cmpIter++;
             }
         }
-        total = datailData.size();
-        return GetFixNumDiffCmpData(datailData, pageSize, current);
+        while (baseIter != baseDbData.end()) {
+            OperatorDetailCmpInfoRes tmp;
+            tmp.baseline = *baseIter;
+            datailData.emplace_back(tmp);
+            baseIter++;
+        }
+        while (cmpIter != cmpDbData.end()) {
+            OperatorDetailCmpInfoRes tmp;
+            tmp.baseline = *cmpIter;
+            datailData.emplace_back(tmp);
+            cmpIter++;
+        }
+        return datailData;
     }
 
-    void QueryOpDetailInfoHandler::ProcessDataToMuiMap(std::vector<Protocol::OperatorDetailInfoRes> datFromDb,
-        std::set<std::string> infoKey, std::multimap<std::string, Protocol::OperatorDetailInfoRes> multiDataMap)
+    void QueryOpDetailInfoHandler::FromatDatailData(Protocol::OperatorDetailCmpInfoRes &data)
     {
-        std::string group;
-        for (auto &data : datFromDb) {
-            group = GetGroup(data);
-            if (group.empty()) {
-                continue;
-            }
-            infoKey.insert(group);
-            multiDataMap.insert(std::make_pair(group, data));
+        if (data.compare.duration == DOUBLE_MIN_VALUE) {
+            data.diff.name = data.baseline.name;
+        } else if (data.baseline.duration == DOUBLE_MIN_VALUE) {
+            data.diff.name = data.compare.name;
+        } else {
+            data.diff.rankId = data.compare.rankId;
+            data.diff.stepId = data.compare.stepId;
+            data.diff.name = data.compare.name;
+            data.diff.type = data.compare.type + "->" + data.baseline.type;
+            data.diff.accCore = data.compare.accCore + "->" + data.baseline.accCore;
+            data.diff.startTime = std::to_string(StringUtil::StringToDouble(data.compare.startTime) -
+                                  StringUtil::StringToDouble(data.baseline.startTime));
+            data.diff.duration = data.compare.duration - data.baseline.duration;
+            data.diff.waitTime = data.compare.waitTime - data.baseline.waitTime;
+            data.diff.blockDim = data.compare.blockDim - data.baseline.blockDim;
+            data.diff.inputShape = data.compare.inputShape + "->" + data.baseline.inputShape;
+            data.diff.inputType = data.compare.inputType + "->" + data.baseline.inputType;
+            data.diff.inputFormat = data.compare.inputFormat + "->" + data.baseline.inputFormat;
+            data.diff.outputShape = data.compare.outputShape + "->" + data.baseline.outputShape;
+            data.diff.outputType = data.compare.outputType + "->" + data.baseline.outputType;
+            data.diff.outputFormat = data.compare.outputFormat + "->" + data.baseline.outputFormat;
         }
     }
 
     std::vector<Protocol::OperatorDetailCmpInfoRes> QueryOpDetailInfoHandler::GetFixNumDiffCmpData(
         std::vector<Protocol::OperatorDetailCmpInfoRes> &datailData, const int64_t paraPageSize,
-        const int64_t current)
+        const int64_t current, const std::string &order, const std::string &orderBy)
     {
         if (datailData.empty()) {
             return datailData;
         }
         for (auto &data: datailData) {
-            if (data.compare.startTime.empty() || data.baseline.startTime.empty()) {
-                data.diff.startTime = "-";
-                continue;
-            }
-            data.diff.startTime = std::to_string(StringUtil::StringToDouble(data.compare.startTime) -
-                                  StringUtil::StringToDouble(data.baseline.startTime));
-            data.diff.duration = data.compare.duration - data.baseline.duration;
-            data.diff.waitTime = data.compare.waitTime - data.baseline.waitTime;
-            data.diff.blockDim = data.compare.blockDim - data.baseline.waitTime;
+            FromatDatailData(data);
         }
         // 对差值排序
-        std::sort(datailData.begin(), datailData.end(), [](const auto& a, const auto& b) {
-                return a.diff.duration > b.diff.duration;
-            });
+        std::sort(datailData.begin(), datailData.end(), [&order, &orderBy](Protocol::OperatorDetailCmpInfoRes &a,
+                                                                           Protocol::OperatorDetailCmpInfoRes &b) {
+            return StaticCmp(a, b, order, orderBy);
+        });
 
         // 截取需要的部分 （偏移量） 到 （偏移量 + limit - 1） pageSize 默认是10条，此处防止除零操作
         uint64_t pageSize = (paraPageSize == 0 ? 10 : paraPageSize);
@@ -163,5 +290,4 @@ namespace Dic::Module::Operator {
         result.assign(start, end);
         return result;
     }
-
 }

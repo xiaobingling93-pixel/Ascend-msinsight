@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include "pch.h"
+#include "BaselineManager.h"
 #include "DataBaseManager.h"
 #include "OperatorProtocolRequest.h"
 #include "OperatorProtocolResponse.h"
@@ -11,6 +12,78 @@
 #include "WsSessionManager.h"
 #include "OperatorProtocol.h"
 #include "QueryOpStatisticInfoHandler.h"
+
+namespace {
+    using namespace Dic::Server;
+    using StatisticCmpRes = Protocol::OperatorStatisticCmpInfoRes;
+
+    using StatisticCmpFun = std::function<bool(const StatisticCmpRes&, const StatisticCmpRes&)>;
+    std::unordered_map<std::string, StatisticCmpFun> StatisticDescCompareFunctions = {
+        {"op_type", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                    { return a.diff.opType > b.diff.opType; }},
+        {"opName", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                    { return a.diff.opName > b.diff.opName; }},
+        {"inputShape", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                 { return a.diff.inputShape > b.diff.inputShape; }},
+        {"accCore", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                    { return a.diff.accCore > b.diff.accCore; }},
+        {"totalTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                             { return a.diff.totalTime > b.diff.totalTime; }},
+        {"count", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                       { return a.diff.count > b.diff.count; }},
+        {"avgTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                     { return a.diff.avgTime > b.diff.avgTime; }},
+        {"maxTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                      { return a.diff.maxTime > b.diff.maxTime; }},
+        {"minTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                      { return a.diff.minTime > b.diff.minTime; }}
+    };
+    std::unordered_map<std::string, StatisticCmpFun> StatisticAsceCompareFunctions = {
+        {"op_type", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                    { return a.diff.opType < b.diff.opType; }},
+        {"opName", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                    { return a.diff.opName < b.diff.opName; }},
+        {"inputShape", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                 { return a.diff.inputShape < b.diff.inputShape; }},
+        {"accCore", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                    { return a.diff.accCore < b.diff.accCore; }},
+        {"totalTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                             { return a.diff.totalTime < b.diff.totalTime; }},
+        {"count", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                       { return a.diff.count < b.diff.count; }},
+        {"avgTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                     { return a.diff.avgTime < b.diff.avgTime; }},
+        {"maxTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                      { return a.diff.maxTime < b.diff.maxTime; }},
+        {"minTime", [](const StatisticCmpRes& a, const StatisticCmpRes& b)
+                      { return a.diff.minTime < b.diff.minTime; }}
+    };
+    bool StatisticDescCmp(const StatisticCmpRes& a, const StatisticCmpRes& b, const std::string orderBy)
+    {
+        auto it = StatisticDescCompareFunctions.find(orderBy);
+        if (it != StatisticDescCompareFunctions.end()) {
+            return it->second(a, b);
+        }
+        return a.diff.totalTime > b.diff.totalTime;
+    }
+    bool StatisticAsceCmp(const StatisticCmpRes &a, const StatisticCmpRes &b, const std::string orderBy)
+    {
+        auto it = StatisticAsceCompareFunctions.find(orderBy);
+        if (it != StatisticAsceCompareFunctions.end()) {
+            return it->second(a, b);
+        }
+        return a.diff.totalTime < b.diff.totalTime;
+    }
+    bool StaticCmp(const StatisticCmpRes &a, const StatisticCmpRes &b, const std::string order,
+                   const std::string orderBy)
+    {
+        if (order =="ascend") {
+            return StatisticAsceCmp(a, b, orderBy);
+        } else {
+            return StatisticDescCmp(a, b, orderBy);
+        }
+    }
+};
 
 namespace Dic::Module::Operator {
     using namespace Dic::Server;
@@ -26,7 +99,7 @@ namespace Dic::Module::Operator {
         std::string errorMsg;
         if ((request.params.CommonCheck(errorMsg) && request.params.StatisticGroupCheck(errorMsg))) {
             rst = request.params.isCompare ?
-                HandleStatisticcDataRequest(request, dynamic_cast<OperatorStatisticInfoResponse &>(*responsePtr)) :
+                HandleCompareDataRequest(request, dynamic_cast<OperatorStatisticInfoResponse &>(*responsePtr)) :
                 HandleStatisticcDataRequest(request, dynamic_cast<OperatorStatisticInfoResponse &>(*responsePtr));
         }
 
@@ -41,13 +114,24 @@ namespace Dic::Module::Operator {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
         std::vector<Protocol::OperatorStatisticInfoRes> compareRes;
-        if (!database->QueryAllOperatorStatisticInfo(response.total, request.params, compareRes)) {
-            ServerLog::Error("[Operator]Failed to query Statistic Info, RankId = ", rankId);
+        if (!database->QueryAllOperatorStatisticInfo(request.params, compareRes)) {
+            ServerLog::Error("[Operator]Failed to query current Statistic Info, RankId = ", rankId);
+            return false;
+        }
+    
+        std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+        auto databaseBaseline = DataBaseManager::Instance().GetSummaryDatabase(baselineId);
+        std::vector<Protocol::OperatorStatisticInfoRes> baselineRes;
+        request.params.rankId = "";
+        if (!databaseBaseline->QueryAllOperatorStatisticInfo(request.params, baselineRes)) {
+            ServerLog::Error("[Operator]Failed to query baseline Statistic Info, RankId = ", baselineId);
             return false;
         }
         std::vector<Protocol::OperatorStatisticCmpInfoRes> res;
-        res = CalCompareInfo(request.params, compareRes, compareRes);
-        response.datas = res;
+        res = GetCmpDataVec(request.params.group, baselineRes, compareRes);
+        response.total = res.size();
+        response.datas = GetFixNumDiffCmpData(res, request.params.pageSize, request.params.current,
+                                              request.params.order, request.params.orderBy);
         return true;
     }
 
@@ -138,8 +222,8 @@ namespace Dic::Module::Operator {
         }
     }
 
-    void QueryOpStatisticInfoHandler::SetCommonDataByGroup(const std::string &paramsGroup,
-                                                           OperatorStatisticCmpInfoRes &data)
+    void QueryOpStatisticInfoHandler::CalDiffDataByGroup(const std::string &paramsGroup,
+                                                         OperatorStatisticCmpInfoRes &data)
     {
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(paramsGroup);
         switch (operatorGroup) {
@@ -155,46 +239,44 @@ namespace Dic::Module::Operator {
         }
     }
 
-    void QueryOpStatisticInfoHandler::CalDiffData(const std::string &paramsGroup,
-        std::map<std::string, Protocol::OperatorStatisticCmpInfoRes> &groupMap,
-        std::vector<Protocol::OperatorStatisticCmpInfoRes> &cmpRes)
-    {
-        std::vector<Protocol::OperatorStatisticCmpInfoRes> calDiffRes;
-        for (auto &dataMap : groupMap) {
-            // 其中一个不存在，不做比较
-            if (dataMap.second.compare.count == INT_MIN_VALUE && dataMap.second.baseline.count == INT_MIN_VALUE) {
-                continue;
-            }
-            SetCommonDataByGroup(paramsGroup, dataMap.second);
-            cmpRes.emplace_back(dataMap.second);
-        }
-    }
-
-    std::vector<Protocol::OperatorStatisticCmpInfoRes> QueryOpStatisticInfoHandler::CalCompareInfo(
-        Protocol::OperatorStatisticReqParams &reqParams, OpStaticResVec &base, OpStaticResVec &cmp)
+    std::vector<Protocol::OperatorStatisticCmpInfoRes> QueryOpStatisticInfoHandler::GetCmpDataVec(
+        std::string &group, OpStaticResVec &base, OpStaticResVec &cmp)
     {
         std::map<std::string, Protocol::OperatorStatisticCmpInfoRes> groupMap;
         std::vector<Protocol::OperatorStatisticCmpInfoRes> cmpRes;
         // 处理base cmp放在map里
-        GroupingData(reqParams.group, base, groupMap, true);
-        GroupingData(reqParams.group, cmp, groupMap, false);
-        CalDiffData(reqParams.group, groupMap, cmpRes);
-
-        // 对差值排序
-        std::sort(cmpRes.begin(), cmpRes.end(), [](const auto& a, const auto& b) {
-                return a.diff.totalTime > b.diff.totalTime;
-            });
-        // 截取需要的部分 （偏移量） 到 （偏移量 + limit - 1） pagesize 默认是10条
-        int64_t pageSize = reqParams.pageSize == 0 ? 10 : reqParams.pageSize;
-        int64_t current = reqParams.current;
-        uint64_t offset = pageSize * (current - 1);
-        if (offset >= cmpRes.size()) {
-            offset = cmpRes.size() -
-                     ((cmpRes.size() %  pageSize) == 0 ? pageSize : (cmpRes.size() %  pageSize));
+        GroupingData(group, base, groupMap, true);
+        GroupingData(group, cmp, groupMap, false);
+        for (auto &CmpInfo : groupMap) {
+            // 其中一个不存在，不做比较
+            if (CmpInfo.second.compare.count == INT_MIN_VALUE && CmpInfo.second.baseline.count == INT_MIN_VALUE) {
+                continue;
+            }
+            CalDiffDataByGroup(group, CmpInfo.second);
+            cmpRes.emplace_back(CmpInfo.second);
         }
-        std::vector<Protocol::OperatorStatisticCmpInfoRes>::const_iterator start = cmpRes.begin() + offset;
-        std::vector<Protocol::OperatorStatisticCmpInfoRes>::const_iterator end = cmpRes.begin() +
-            std::min(offset + pageSize - 1, static_cast<uint64_t>(cmpRes.size() - 1));
+        return cmpRes;
+    }
+
+    std::vector<Protocol::OperatorStatisticCmpInfoRes> QueryOpStatisticInfoHandler::GetFixNumDiffCmpData(
+        std::vector<Protocol::OperatorStatisticCmpInfoRes> &statisticData, const int64_t paraPageSize,
+        const int64_t current, const std::string &order, const std::string &orderBy)
+    {
+        // 对差值排序
+        std::sort(statisticData.begin(), statisticData.end(), [&order, &orderBy](OperatorStatisticCmpInfoRes &a,
+                                                                           OperatorStatisticCmpInfoRes &b) {
+            return StaticCmp(a, b, order, orderBy);
+        });
+        int total = statisticData.size();
+        // 截取需要的部分 （偏移量） 到 （偏移量 + limit - 1） pagesize 默认是10条
+        uint64_t pageSize = (paraPageSize == 0 ? 10 : paraPageSize); // pageSize 默认是10条，此处防止除零操作
+        uint64_t offset = pageSize * (current - 1);
+        if (offset >= total) {
+            offset = total - ((total % pageSize) == 0 ? pageSize : (total % pageSize));
+        }
+        std::vector<Protocol::OperatorStatisticCmpInfoRes>::const_iterator start = statisticData.begin() + offset;
+        std::vector<Protocol::OperatorStatisticCmpInfoRes>::const_iterator end = statisticData.begin() +
+            std::min(offset + pageSize - 1, static_cast<uint64_t>(statisticData.size() - 1));
         std::vector<Protocol::OperatorStatisticCmpInfoRes> result;
         result.assign(start, end);
         return result;

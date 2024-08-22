@@ -69,6 +69,7 @@ namespace Dic::Protocol {
             error = "Failed to set request base info of Statistic Info, command is: " + reqPtr->command;
             return nullptr;
         }
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.group, json["params"], "group");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.topK, json["params"], "topK");
@@ -87,6 +88,7 @@ namespace Dic::Protocol {
             error = "Failed to set request base info of Detail Info, command is: " + reqPtr->command;
             return nullptr;
         }
+        JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.group, json["params"], "group");
         JsonUtil::SetByJsonKeyValue(reqPtr->params.topK, json["params"], "topK");

@@ -26,7 +26,7 @@ public:
                                    std::vector<Protocol::OperatorDurationRes> &datas);
     bool QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                     Protocol::OperatorStatisticInfoResponse &response);
-    bool QueryAllOperatorStatisticInfo(int64_t &total, OperatorStatisticReqParams &reqParams,
+    bool QueryAllOperatorStatisticInfo(OperatorStatisticReqParams &reqParams,
                                        std::vector<Protocol::OperatorStatisticInfoRes> &res) override;
     bool QueryOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                  Protocol::OperatorDetailInfoResponse& response);
@@ -61,6 +61,10 @@ private:
     template <typename T>
     bool GenerateQueryFiltersSql(T &reqParams, std::string &sql);
     bool GenerateQueryMoreInfoFilters(OperatorMoreInfoReqParams &reqParams, std::string &sql);
+    bool ExecSqlGetDetailInfo(std::string sql, Protocol::OperatorStatisticReqParams &reqParams,
+                              std::vector<Protocol::OperatorDetailInfoRes> &res);
+    bool ExecSqlGetStatisticInfo(std::string sql, Protocol::OperatorStatisticReqParams &reqParams,
+                                 std::vector<Protocol::OperatorStatisticInfoRes> &res);
     std::string blockDimColumnName;
 };
 

@@ -449,15 +449,31 @@ TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcessThreadCANNAcl)
     EXPECT_EQ(ptr->depth, EXPECT_DEPTH);
 }
 
-TEST_F(FullDbTestSuit, QueryFlowCategoryList)
+TEST_F(FullDbTestSuit, QueryComputeStatisticsData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
 
-    std::vector<std::string> categories;
-    database->QueryFlowCategoryList(categories, "0");
+    Protocol::SummaryStatisticParams requestParams;
+    Protocol::SummaryStatisticsBody responseBody;
+
+    database->QueryComputeStatisticsData(requestParams, responseBody);
+    const uint64_t EXPECT_COUNT = 1;
+
+    EXPECT_EQ(responseBody.summaryStatisticsItemList.size(), EXPECT_COUNT);
+}
+
+TEST_F(FullDbTestSuit, QueryFlowCategoryEvents)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+
+    Protocol::FlowCategoryEventsParams params;
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> flowDetailList;
+
+    database->QueryFlowCategoryEvents(params, minTimestamp, flowDetailList);
     const uint64_t EXPECT_COUNT = 0;
 
-    EXPECT_EQ(categories.size(), EXPECT_COUNT);
+    EXPECT_EQ(flowDetailList.size(), EXPECT_COUNT);
 }
 
 TEST_F(FullDbTestSuit, QueryUnitFLows)

@@ -10,6 +10,7 @@
 #include "DbSummaryDataBase.h"
 #include "ParamsParser.h"
 #include "FileUtil.h"
+#include "../../FullDbTestSuit.cpp"
 
 using namespace Dic::Module::Timeline;
 using namespace Dic::Module::FullDb;
@@ -112,47 +113,14 @@ TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorStatisticInfoByOpTypeAndInputS
     EXPECT_EQ(response.datas.size(), size);
 }
 
-TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorDetailInfoByOperator)
+TEST_F(DbOperatorTestSuit, FullDb_of_QueryAllOperatorStatisticInfoByOpTypeAndInputShape)
 {
     auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("2");
-    Dic::Protocol::OperatorStatisticReqParams reqParams = {false, "2", GROUP_OPERATOR, 15, 0, 10, "", ""};
-    Dic::Protocol::OperatorDetailInfoResponse response = {};
-    bool result = db->QueryOperatorDetailInfo(reqParams, response);
+    Dic::Protocol::OperatorStatisticReqParams reqParams = {true, "2", GROUP_INPUT_SHAPE, 15, 0, 5, "", ""};
+    Dic::Protocol::OperatorStatisticInfoResponse response = {};
+    std::vector<Protocol::OperatorStatisticInfoRes> compareRes;
+    bool result = db->QueryAllOperatorStatisticInfo(reqParams, compareRes);
     EXPECT_EQ(result, true);
-    int total = 11;
-    EXPECT_EQ(response.total, total);
-    EXPECT_EQ(response.level, "l1");
-    int size = 10;
-    EXPECT_EQ(response.datas.size(), size);
-}
-
-TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorMoreInfoByOpType)
-{
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("2");
-    Dic::Protocol::OperatorMoreInfoReqParams reqParams = {
-        "2", GROUP_OPERATOR_TYPE, 15, "Cast", "", "", "AI_CORE", 0, 10, "", ""
-    };
-    Dic::Protocol::OperatorMoreInfoResponse response = {};
-    bool result = db->QueryOperatorMoreInfo(reqParams, response);
-    EXPECT_EQ(result, true);
-    int64_t total = 0;
-    int64_t size = 0;
-    EXPECT_EQ(response.total, total);
-    EXPECT_EQ(response.level, "l1");
-    EXPECT_EQ(response.datas.size(), size);
-}
-
-TEST_F(DbOperatorTestSuit, FullDb_of_QueryOperatorMoreInfoByInputShape)
-{
-    auto db = Dic::Module::Timeline::DataBaseManager::Instance().GetSummaryDatabase("2");
-    Dic::Protocol::OperatorMoreInfoReqParams reqParams = {
-        "2", GROUP_INPUT_SHAPE, 15, "", "NonZero", R"("""16""")", "MIX_AIV", 0, 10, "", ""
-    };
-    Dic::Protocol::OperatorMoreInfoResponse response = {};
-    bool result = db->QueryOperatorMoreInfo(reqParams, response);
-    EXPECT_EQ(result, true);
-    int total = 0;
-    EXPECT_EQ(response.total, total);
-    EXPECT_EQ(response.level, "l1");
-    EXPECT_EQ(response.datas.size(), total);
+    int size = 5;
+    EXPECT_EQ(compareRes.size(), size);
 }

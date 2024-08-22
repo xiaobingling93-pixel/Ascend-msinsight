@@ -159,16 +159,10 @@ bool DbSummaryDataBase::QueryOperatorDurationInfo(Protocol::OperatorDurationReqP
     return true;
 }
 
-bool DbSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
-                                                   Protocol::OperatorStatisticInfoResponse &response)
+bool DbSummaryDataBase::ExecSqlGetStatisticInfo(std::string sql,
+                                                Protocol::OperatorStatisticReqParams &reqParams,
+                                                std::vector<Protocol::OperatorStatisticInfoRes> &res)
 {
-    if (!QueryStatisticTotalNum(reqParams, response.total)) {
-        ServerLog::Error("[Operator]Failed to query total num of statistic info.");
-        return false;
-    }
-
-    std::string sql = GenerateQueryStatisticSql(reqParams);
-
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql to query operator statistic info.", sqlite3_errmsg(db));
@@ -176,7 +170,6 @@ bool DbSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticRe
     }
     auto resultSet =
         stmt->ExecuteQuery(reqParams.topK, reqParams.pageSize, reqParams.pageSize * (reqParams.current - 1));
-    std::vector<Protocol::OperatorStatisticCmpInfoRes> res;
     while (resultSet->Next()) {
         Protocol::OperatorStatisticInfoRes one{};
         one.opType = resultSet->GetString("op_type");
@@ -188,11 +181,42 @@ bool DbSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticRe
         one.avgTime = resultSet->GetDouble("avg_time");
         one.maxTime = resultSet->GetDouble("max_time");
         one.minTime = resultSet->GetDouble("min_time");
-        OperatorStatisticCmpInfoRes tmpInfo;
-        tmpInfo.compare = one;
-        res.emplace_back(tmpInfo);
+        res.emplace_back(one);
     }
-    response.datas = res;
+    return true;
+}
+
+bool DbSummaryDataBase::QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
+                                                   Protocol::OperatorStatisticInfoResponse &response)
+{
+    if (!QueryStatisticTotalNum(reqParams, response.total)) {
+        ServerLog::Error("[Operator]Failed to query total num of statistic info.");
+        return false;
+    }
+    std::string sql = GenerateQueryStatisticSql(reqParams);
+    std::vector<Protocol::OperatorStatisticInfoRes> res;
+    if (!ExecSqlGetStatisticInfo(sql, reqParams, res)) {
+        ServerLog::Error("Failed to exec query detail sql.");
+        return false;
+    }
+    std::vector<Protocol::OperatorStatisticCmpInfoRes> cmpRes;
+    for (auto &data : res) {
+        OperatorStatisticCmpInfoRes tmpInfo;
+        tmpInfo.compare = data;
+        cmpRes.emplace_back(tmpInfo);
+    }
+    response.datas = cmpRes;
+    return true;
+}
+
+bool DbSummaryDataBase::QueryAllOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
+                                                      std::vector<Protocol::OperatorStatisticInfoRes> &res)
+{
+    std::string sql = GenerateQueryStatisticSql(reqParams);
+    if (!ExecSqlGetStatisticInfo(sql, reqParams, res)) {
+        ServerLog::Error("Failed to exec query detail sql.");
+        return false;
+    }
     return true;
 }
 
@@ -213,7 +237,7 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
             " JOIN STRING_IDS AS NAME ON NAME.id = COMMUNICATION_OP.opName"
             " GROUP BY SUBSTR(NAME.value, 1, INSTR(NAME.value, '__'))"
             " ORDER by total_time DESC LIMIT ?"
-            ") subquery ";
+            " ) subquery ";
     } else {
         std::string group = operatorGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP ?
             "op_type || accelerator_core" :
@@ -309,6 +333,44 @@ bool DbSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqPa
         return false;
     }
     std::string sql = GenerateQueryDetailSql(reqParams);
+    std::vector<Protocol::OperatorDetailInfoRes> sqlRes;
+    if (!ExecSqlGetDetailInfo(sql, reqParams, sqlRes)) {
+        ServerLog::Error("Failed to exec query detail sql.");
+        return false;
+    }
+    std::vector<Protocol::OperatorDetailCmpInfoRes> resultData;
+    for (auto &data : sqlRes) {
+        OperatorDetailCmpInfoRes tmpInfo;
+        tmpInfo.compare = data;
+        resultData.emplace_back(tmpInfo);
+    }
+    response.datas = resultData;
+    response.level = OperatorGetLevel(sqlRes);
+    return true;
+}
+
+bool DbSummaryDataBase::QueryAllOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
+                                                   std::vector<Protocol::OperatorDetailInfoRes> &res,
+                                                   std::string &level)
+{
+    std::string sql = GenerateQueryDetailSql(reqParams);
+    if (!ExecSqlGetDetailInfo(sql, reqParams, res)) {
+        ServerLog::Error("Failed to exec query detail sql.");
+        return false;
+    } else {
+        level = OperatorGetLevel(res);
+    }
+    return true;
+}
+
+bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
+                                             Protocol::OperatorStatisticReqParams &reqParams,
+                                             std::vector<Protocol::OperatorDetailInfoRes> &res)
+{
+    if (sql.empty()) {
+        ServerLog::Error("Failed to generate query statistic sql.");
+        return false;
+    }
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -318,15 +380,14 @@ bool DbSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqPa
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     int index = bindStartIndex;
     sqlite3_bind_int64(stmt, index++, startTime);
+
     sqlite3_bind_int64(stmt, index++, reqParams.topK);
     sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
     sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
 
-    std::vector<OperatorDetailCmpInfoRes> res;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = 0;
         OperatorDetailInfoRes one{};
-        OperatorDetailCmpInfoRes tmpInfo;
         one.rankId = sqlite3_column_string(stmt, col++);
         one.stepId = sqlite3_column_string(stmt, col++);
         one.name = sqlite3_column_string(stmt, col++);
@@ -342,23 +403,9 @@ bool DbSummaryDataBase::QueryOperatorDetailInfo(Protocol::OperatorStatisticReqPa
         one.outputShape = sqlite3_column_string(stmt, col++);
         one.outputType = sqlite3_column_string(stmt, col++);
         one.outputFormat = sqlite3_column_string(stmt, col++);
-        tmpInfo.compare = one;
-        res.emplace_back(tmpInfo);
+        res.emplace_back(one);
     }
-    std::vector<Protocol::OperatorDetailInfoRes> levelRes;
-    if (!res.empty()) {
-        levelRes.emplace_back(res[0].compare);
-    }
-    response.level = OperatorGetLevel(levelRes);
-    response.datas = res;
     sqlite3_finalize(stmt);
-    return true;
-}
-
-bool DbSummaryDataBase::QueryAllOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
-                                                   std::vector<Protocol::OperatorDetailInfoRes> &res,
-                                                   std::string &level)
-{
     return true;
 }
 bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqParams, int64_t &total)
@@ -911,11 +958,5 @@ void DbSummaryDataBase::Reset()
         }
     }
     Timeline::DataBaseManager::Instance().Clear(Timeline::DatabaseType::SUMMARY);
-}
-
-bool DbSummaryDataBase::QueryAllOperatorStatisticInfo(int64_t &total, Protocol::OperatorStatisticReqParams &reqParams,
-                                                      std::vector<Protocol::OperatorStatisticInfoRes> &res)
-{
-    return true;
 }
 }
