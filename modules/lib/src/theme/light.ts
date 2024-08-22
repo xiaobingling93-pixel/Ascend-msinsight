@@ -216,4 +216,5 @@ export const light: Theme = {
     icon: '#8D98AA',
     tableTextColor: '#000000',
     radioSelectedColor: '#007AFF',
+    rankBackgroudColor: 'rgb(172 177 185)',
 };

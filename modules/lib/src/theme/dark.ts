@@ -216,5 +216,6 @@ export const dark: Theme = {
     icon: '#D1D1D1',
     tableTextColor: '#8D98AA',
     radioSelectedColor: '#007AFF',
+    rankBackgroudColor: 'rgb(62, 69, 81)',
     // 把新加的字段同时加到light.ts文件、以及emotion.d.ts文件...........
 };

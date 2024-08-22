@@ -5,7 +5,7 @@ import { observer } from 'mobx-react';
 import type { Session } from '../../entity/session';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Form, InputNumber, Button, Select, Checkbox } from 'ascend-components';
+import { Form, InputNumber, Button, Select, Checkbox, Tooltip } from 'ascend-components';
 import { message } from 'antd';
 import _ from 'lodash';
 import eventBus, { useEventBus } from '../../utils/eventBus';
@@ -24,6 +24,7 @@ import styled from '@emotion/styled';
 import { displayRect, drawLineSVG, hideLine, transformLine } from './draw';
 import { select } from 'd3';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import { FormInstance } from 'antd/lib/form';
 
 const RankContainer = styled.div`
     position: relative;
@@ -58,7 +59,7 @@ const TpContainer = styled.div`
     text-align: center;
     padding: 16px;
     margin: 0 10px;
-    background-color: #3E4551;
+    background-color: ${(props): string => props.theme.rankBackgroudColor};
     border-radius: 2px;
     box-shadow: 0px 2px 4px 0px;
 `;
@@ -83,24 +84,24 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
 });
 
 const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount }: { session: Session; defaultPPSize: number; unitCount: number }) => {
-    const [form] = Form.useForm();
+    const [form, setForm] = useState({} as FormInstance<any>);
     const [disabled, setDisabled] = useState(false);
-    const { t } = useTranslation('summary');
+    const init = async (): Promise<void> => {
+        const { dpSize, tpSize, ppSize, level } = (await getParallelStrategy()) as unknown as parallelStrategyType;
+        form.setFieldsValue({ dpSize, tpSize, ppSize });
+        if (level === 'collected') {
+            setDisabled(true);
+        } else {
+            setDisabled(false);
+        }
+        session.communicatorData = generateCommunicatorData({ dpSize, tpSize, ppSize }, defaultPPSize);
+        session.ranksData = getRankData({ dpSize, tpSize, ppSize });
+        connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
+        eventBus.emit('activeCommunicator', undefined);
+    };
     useEffect(() => {
-        (async (): Promise<void> => {
-            const { dpSize, tpSize, ppSize, level } = (await getParallelStrategy()) as unknown as parallelStrategyType;
-            form.setFieldsValue({ dpSize, tpSize, ppSize });
-            if (level === 'collected') {
-                setDisabled(true);
-            } else {
-                setDisabled(false);
-            }
-            session.communicatorData = generateCommunicatorData({ dpSize, tpSize, ppSize }, defaultPPSize);
-            session.ranksData = getRankData({ dpSize, tpSize, ppSize });
-            connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
-            eventBus.emit('activeCommunicator', undefined);
-        })();
-    }, []);
+        init();
+    }, [session.renderId]);
     const onClick = (size: number) => (): void => {
         const values: { ppSize: number; tpSize: number; dpSize: number; algorithm: string } = form.getFieldsValue();
         if (values.dpSize * values.tpSize * values.ppSize !== unitCount) {
@@ -114,6 +115,22 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount }: { se
         connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
         eventBus.emit('activeCommunicator', undefined);
     };
+    const getForm = (dom: FormInstance<any>): void => {
+        setForm(dom);
+    };
+    return (
+        <FormDom unitCount={unitCount} disabled={disabled} defaultPPSize={defaultPPSize} onClick={onClick} getForm={getForm}/>
+    );
+});
+
+const FormDom = ({ unitCount, disabled, defaultPPSize, onClick, getForm }:
+{ unitCount: number; disabled: boolean; defaultPPSize: number; onClick: (size: number) => () => void;
+    getForm: (dom: FormInstance<any>) => void; }): JSX.Element => {
+    const { t } = useTranslation('summary');
+    const [form] = Form.useForm();
+    useEffect(() => {
+        getForm(form);
+    }, []);
     return (
         <Form form={form} labelAlign={'left'} layout="inline" className={'CommunicatorHeader'}>
             <Form.Item name={'algorithm'} label={t('Algorithm')} style={{ margin: '10px 24px 10px 0' }} initialValue={'Megatron-LM(tp-dp-pp)'}>
@@ -129,10 +146,14 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount }: { se
             <Form.Item name={'dpSize'} label={t('DPSize')} style={{ margin: '10px 24px 10px 0' }}>
                 <InputNumber min={0} max={unitCount} style={{ width: '120px' }} maxLength={200}></InputNumber>
             </Form.Item>
-            <Button type="primary" style={{ margin: '10px 32px 10px 0' }} disabled={disabled} onClick={onClick(defaultPPSize)}>{t('Generate')}</Button>
+            <Tooltip placement="right" title={disabled ? t('ProhibitConfiguration') : ''}>
+                <div style={{ width: '70px' }}>
+                    <Button type="primary" style={{ margin: '10px 32px 10px 0' }} disabled={disabled} onClick={onClick(defaultPPSize)}>{t('Generate')}</Button>
+                </div>
+            </Tooltip>
         </Form>
     );
-});
+};
 
 export async function getDefaultCommunicatorData(setUnitCount: React.Dispatch<React.SetStateAction<number>>): Promise<communicatorContainerData> {
     const result = {
@@ -302,7 +323,7 @@ const Rank = ({ session, rank }: { session: Session; rank: rankItem }): JSX.Elem
     return (
         <RankItem>
             <div className={'rank'} ref={ref}></div>
-            <div style={{ fontSize: '6px' }}>rank {rank.value}</div>
+            <div style={{ fontSize: '16px', width: '70px', overflow: 'hide', height: '18.84px' }} title={`rank ${rank.value}`}>rank {rank.value}</div>
         </RankItem>
     );
 };
