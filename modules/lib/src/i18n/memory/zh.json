@@ -45,6 +45,7 @@
     "tableHead": {
       "Device ID": "设备序号",
       "Name": "名称",
+      "Source": "来源",
       "Node Index Start": "节点索引开始",
       "Node Index End": "节点索引结束",
       "Size(KB)": "大小(KB)",

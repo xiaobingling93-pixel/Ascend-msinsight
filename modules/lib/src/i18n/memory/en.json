@@ -45,6 +45,7 @@
     "tableHead": {
       "Device ID": "Device ID",
       "Name": "Name",
+      "Source": "Source",
       "Node Index Start": "Node Index Start",
       "Node Index End": "Node Index End",
       "Size(KB)": "Size(KB)",
