@@ -101,6 +101,10 @@ const StyledTable = styled(Table)`
     .ant-pagination * {
         font-size: 12px;
     }
+    //固定列
+    td.ant-table-cell-fix-right {
+        background-color: ${(p): string => p.theme.bgColor};
+    }
 
     .ant-pagination-item {
         background: none;
