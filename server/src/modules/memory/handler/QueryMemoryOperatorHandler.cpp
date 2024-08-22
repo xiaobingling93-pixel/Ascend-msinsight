@@ -261,13 +261,16 @@ void QueryMemoryOperatorHandler::SortAscend(MemoryOperatorRequest& request, Memo
         {"size", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
             return op1.diff.size < op2.diff.size;}},
         {"allocation_time", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.allocationTime < op2.diff.allocationTime;}},
+            return NumberUtil::StringToDouble(op1.diff.allocationTime) <
+            NumberUtil::StringToDouble(op2.diff.allocationTime);}},
         {"release_time", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.releaseTime < op2.diff.releaseTime;}},
+            return NumberUtil::StringToDouble(op1.diff.releaseTime) <
+            NumberUtil::StringToDouble(op2.diff.releaseTime);}},
         {"duration", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
             return op1.diff.duration < op2.diff.duration;}},
         {"active_release_time", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.activeReleaseTime < op2.diff.activeReleaseTime;}},
+            return NumberUtil::StringToDouble(op1.diff.activeReleaseTime) <
+            NumberUtil::StringToDouble(op2.diff.activeReleaseTime);}},
         {"active_duration", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
             return op1.diff.activeDuration < op2.diff.activeDuration;}},
         {"allocation_allocated", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
@@ -300,13 +303,16 @@ void QueryMemoryOperatorHandler::SortDescend(MemoryOperatorRequest& request, Mem
         {"size", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
             return op1.diff.size > op2.diff.size;}},
         {"allocation_time", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.allocationTime > op2.diff.allocationTime;}},
+            return NumberUtil::StringToDouble(op1.diff.allocationTime) >
+            NumberUtil::StringToDouble(op2.diff.allocationTime);}},
         {"release_time", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.releaseTime > op2.diff.releaseTime;}},
+            return NumberUtil::StringToDouble(op1.diff.releaseTime) >
+            NumberUtil::StringToDouble(op2.diff.releaseTime);}},
         {"duration", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
             return op1.diff.duration > op2.diff.duration;}},
         {"active_release_time", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
-            return op1.diff.activeReleaseTime > op2.diff.activeReleaseTime;}},
+            return NumberUtil::StringToDouble(op1.diff.activeReleaseTime) >
+            NumberUtil::StringToDouble(op2.diff.activeReleaseTime);}},
         {"active_duration", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
             return op1.diff.activeDuration > op2.diff.activeDuration;}},
         {"allocation_allocated", [](MemoryOperatorComparison &op1, MemoryOperatorComparison &op2) {
