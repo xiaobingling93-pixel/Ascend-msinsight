@@ -89,7 +89,8 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
         sql += " UNION select 'APP' as component, ROUND((timestampNs - " + std::to_string(startTime) +
                 " ) / (1000.0 * 1000.0), 2) as timestampNs, "
                " 0 as total_allocated,  ROUND((hbm + ddr) / (1024.0 * 1024.0), 2) as total_reserve, "
-               " 0 as totalActive, '' as stream from NPU_MEM where type = 0 ";
+               " 0 as totalActive, '' as stream from NPU_MEM join STRING_IDS as ids on ids.id = type "
+               " where value = 'app' ";
         sql += " ) where 1 = 1";
     }
     std::vector<Protocol::ComponentDto> componentDtoVec;
