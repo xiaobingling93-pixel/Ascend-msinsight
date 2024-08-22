@@ -95,10 +95,6 @@ public:
                                 uint64_t minTimestamp) override;
     bool QueryThreadSameOperatorsDetails(const Protocol::UnitThreadsOperatorsParams &requestParams,
          Protocol::UnitThreadsOperatorsBody &responseBody, uint64_t minTimestamp, int64_t traceId) override;
-
-    bool QueryDurationFromTaskByTimeRange(const Protocol::ThreadDetailParams &requestParams,
-                                      SliceDto sliceDto, std::vector<uint64_t> &nextDepthResult,
-                                      int64_t streamId);
     bool QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
 
     std::vector<std::string> QueryRankId();

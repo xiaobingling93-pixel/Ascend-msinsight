@@ -448,3 +448,78 @@ TEST_F(FullDbTestSuit, QueryEventsViewData4HostProcessThreadCANNAcl)
     EXPECT_EQ(ptr->threadId, "20000");
     EXPECT_EQ(ptr->depth, EXPECT_DEPTH);
 }
+
+TEST_F(FullDbTestSuit, QueryFlowCategoryList)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+
+    std::vector<std::string> categories;
+    database->QueryFlowCategoryList(categories, "0");
+    const uint64_t EXPECT_COUNT = 0;
+
+    EXPECT_EQ(categories.size(), EXPECT_COUNT);
+}
+
+TEST_F(FullDbTestSuit, QueryUnitFLows)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+
+    Protocol::UnitFlowsParams requestParams;
+    requestParams.metaType = "Ascend Hardware";
+    requestParams.id = "0";
+    Protocol::UnitFlowsBody responseBody;
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+
+    database->QueryUintFlows(requestParams, responseBody, minTimestamp, 0);
+    const uint64_t EXPECT_COUNT = 1;
+
+    EXPECT_EQ(responseBody.unitAllFlows.size(), EXPECT_COUNT);
+}
+
+TEST_F(FullDbTestSuit, QueryTotalKernel)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+
+    Protocol::KernelDetailsParams requestParams;
+    requestParams.coreType = "";
+
+    auto result = database->QueryTotalKernel(requestParams);
+    const uint64_t EXPECT_COUNT = 11;
+
+    EXPECT_EQ(result, EXPECT_COUNT);
+}
+
+TEST_F(FullDbTestSuit, QueryKernelDepthAndThread)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+
+    Protocol::KernelParams params;
+    params.name = "aclnnInplaceZero_ZerosLikeAiCore_ZerosLike";
+    params.timestamp = 39828694; // timestamp = 39828694
+    Protocol::OneKernelBody responseBody;
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+
+    database->QueryKernelDepthAndThread(params, responseBody, minTimestamp);
+    const std::string EXPECT_ID = "0";
+
+    EXPECT_EQ(responseBody.id, EXPECT_ID);
+}
+
+TEST_F(FullDbTestSuit, SearchAllSlicesDetails)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
+
+    Protocol::SearchAllSliceParams params;
+    params.current = 1;
+    params.pageSize = 100; // pageSize = 100
+    params.searchContent = "aclnn";
+    params.rankId = "2";
+    params.orderBy = "name";
+    Protocol::SearchAllSlicesBody body;
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+
+    database->SearchAllSlicesDetails(params, body, minTimestamp);
+    const uint64_t EXPECT_COUNT = 20;
+
+    EXPECT_EQ(body.searchAllSlices.size(), EXPECT_COUNT);
+}
