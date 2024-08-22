@@ -109,6 +109,7 @@ const webpackCfg = {
     return webpackConfig;
   },
   alias: {
+    '@': path.resolve(__dirname, 'src'),
     react: '@cloudsop/horizon', // 新增
     'react-dom/client': '@cloudsop/horizon', // 兼容react18的用法
     'react-dom': '@cloudsop/horizon', // 新增

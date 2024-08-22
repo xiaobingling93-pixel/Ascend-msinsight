@@ -48,11 +48,11 @@ const Container = styled.div`
         font-weight: bold;
         fill: ${(p): string => p.theme.textColorPrimary};
     }
-    .subCore > rect {
+    .subCore rect {
         stroke: ${(p): string => p.theme.borderColorLighter};
         stroke-opacity: 0.5;
     }
-    .subCore > text {
+    .subCore text {
         font-size: 12px;
         fill: #ffffff;
     }
@@ -102,11 +102,11 @@ const CoreChart = observer(({ condition, data }:
                                             <g className="subCore" key={core.name + subCore.name}
                                                 transform={`translate(0,${subCoreIndex * ((sizeConfig.subCore.height * 2) + sizeConfig.subCore.heightSpace)})`}>
                                                 {[subCore.name, subCore.value].map((text, index) => (
-                                                    <>
+                                                    <g key={index}>
                                                         <rect x="0" rx="2" ry="0" y={index * sizeConfig.subCore.height} width={sizeConfig.subCore.width}
                                                             height={sizeConfig.subCore.height} fill={getSubCoreColor(subCore.level, theme)} ></rect>
                                                         <text textAnchor="middle" dominantBaseline="middle" x={sizeConfig.subCore.width / 2} y={sizeConfig.subCore.height * (index + 0.5)}>{text}</text>
-                                                    </>
+                                                    </g>
                                                 ))}
                                             </g>
                                         ))
@@ -123,10 +123,10 @@ const CoreChart = observer(({ condition, data }:
                     <g transform={`translate(0,${sizeConfig.legend.title.height})`}>
                         {
                             legendData.map((legend, index) => (
-                                <>
+                                <g key={index}>
                                     <rect x="0" y={sizeConfig.legend.block.height * index} width={sizeConfig.legend.block.width} height={sizeConfig.legend.block.height} fill={legend.color}></rect>
                                     <text x={sizeConfig.legend.block.width + 15} y={sizeConfig.legend.block.height * (index + 0.65)} textAnchor="middle" >{legend.level}</text>
-                                </>
+                                </g>
                             ))
                         }
                     </g>

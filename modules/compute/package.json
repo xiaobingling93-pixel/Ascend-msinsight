@@ -34,7 +34,7 @@
   },
   "jest": {
     "transformIgnorePatterns": [
-      "/node_modules/(?!d3|d3-array)"
+      "/node_modules/(?!d3|d3-array|internmap|delaunator|robust-predicates)"
     ],
     "clearMocks": true,
     "coverageReporters": [
@@ -67,6 +67,9 @@
         "functions": 0,
         "lines": 0
       }
+    },
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
     }
   },
   "browserslist": {
