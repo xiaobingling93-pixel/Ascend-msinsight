@@ -1458,28 +1458,6 @@ void DbTraceDataBase::GetCounterUnitsAndDataTypes(PROCESS_TYPE type, std::vector
     }
 }
 
-bool DbTraceDataBase::QueryDurationFromTaskByTimeRange(const Protocol::ThreadDetailParams &requestParams,
-    SliceDto sliceDto, std::vector<uint64_t> &nextDepthResult, int64_t trackId)
-{
-    std::string sql = "SELECT endNs - startNs as duration FROM " + TABLE_TASK +
-        " WHERE depth = ? AND endNs <= ? AND startNs >= ? AND streamId = ?";
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("QueryDurationFromTaskByTimeRange. Failed to prepare sql.", sqlite3_errmsg(db));
-        return false;
-    }
-    auto resultSet = stmt->ExecuteQuery(requestParams.depth + 1, sliceDto.timestamp + sliceDto.duration,
-        sliceDto.timestamp, trackId);
-    if (resultSet == nullptr) {
-        ServerLog::Error("QueryDurationFromTaskByTimeRange. Failed to get result set.", stmt->GetErrorMessage());
-        return false;
-    }
-    while (resultSet->Next()) {
-        nextDepthResult.emplace_back(resultSet->GetUint64("duration"));
-    }
-    return true;
-}
-
 std::string DbTraceDataBase::GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId,
                                                    const std::string &order, const std::string &orderByField)
 {
