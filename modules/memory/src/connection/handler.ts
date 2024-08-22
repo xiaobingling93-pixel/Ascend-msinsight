@@ -135,3 +135,12 @@ export const switchLanguageHandler: NotificationHandler = (data): void => {
     }
     i18n.changeLanguage(lang);
 };
+
+export const switchDirectoryHandler: NotificationHandler = (data): void => {
+    const session = store.sessionStore.activeSession;
+    if (session) {
+        runInAction(() => {
+            session.compareRank = { rankId: data.rankId as string, isCompare: data.isCompare as boolean };
+        });
+    }
+};

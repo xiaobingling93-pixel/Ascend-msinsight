@@ -4,6 +4,11 @@
 
 import { makeAutoObservable } from 'mobx';
 
+export interface ICompareRankInfo {
+    rankId: string;
+    isCompare: boolean;
+}
+
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     unitcount = 0;
@@ -11,6 +16,7 @@ export class Session {
     isCluster: boolean = false;
     isClusterMemoryCompletedSwitch: boolean = false;
     curRankIdsCount = 0;
+    compareRank: ICompareRankInfo = { rankId: '', isCompare: false };
 
     constructor() {
         makeAutoObservable(this);

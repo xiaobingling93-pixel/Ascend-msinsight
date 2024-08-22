@@ -20,7 +20,7 @@ import {
 } from '../utils/RequestUtils';
 import { useHit, Label } from '../components/Common';
 import styled from '@emotion/styled';
-import { GroupRankIdsByHost, StyledEmpty } from 'ascend-utils';
+import { GroupRankIdsByHost, StyledEmpty, customConsole as console } from 'ascend-utils';
 import { Layout } from 'ascend-layout';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 
@@ -35,6 +35,9 @@ interface ConditionType {
     ranks?: Map<string, string[]>;
 }
 
+const COMPARE_MIN_INPUT_NUMBER = -2147483648;
+const MAX_INPUT_NUMBER = 4294967295;
+
 const FlexDiv = styled.div`
     display: flex;
     align-items: center;
@@ -44,6 +47,7 @@ const SearchBox = styled(FlexDiv)`
     margin: 0 0 20px;
     flex-wrap: wrap;
     gap: 24px;
+    padding: 0 24px;
 `;
 
 const groupBy = [
@@ -64,6 +68,8 @@ const dataResourceType = {
 
 // eslint-disable-next-line max-lines-per-function
 const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark: boolean }) => {
+    // 是否为比对场景
+    const isCompare: boolean = session.compareRank.isCompare;
     // memory数据类型，默认为dynamic
     const [memoryType, setMemoryType] = useState<string>(memoryGraphType.dynamic);
     // memory数据来源，默认为pytorch
@@ -117,7 +123,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
             }
             setMemoryGraphIdList(graphIdList);
         }).catch(err => {
-            message.error(err);
+            console.error(err);
         });
     };
 
@@ -127,9 +133,12 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
         }
         resourceTypeGet({ rankId: memoryRankId }).then((resp) => {
             const type = resp.type;
+            if (type === dataResourceType.mindspore) {
+                setGroupId('Overall');
+            }
             setResourceType(type);
         }).catch(err => {
-            message.error(err);
+            console.error(err);
         });
     };
 
@@ -181,6 +190,19 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
         return newParam;
     };
 
+    const handleOperatorDetails = (operatorDetails: any[]): any => {
+        return isCompare
+            ? operatorDetails.map(item => {
+                if (item.diff === undefined || item.diff === null) {
+                    return item;
+                }
+                item.diff.source = 'Difference';
+                item.diff.children = [{ ...item.baseline, source: 'Baseline' }, { ...item.compare, source: 'Compare' }];
+                return item.diff;
+            })
+            : operatorDetails.map(item => item.compare);
+    };
+
     const onSearch = (searchName: string, minimumSize: number, maximumSize: number, resetCurrent = false): void => {
         if (rankIdCondition.value === undefined || rankIdCondition.value === '') {
             return;
@@ -192,29 +214,31 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
         const tempCurrent = setTempCurrent(resetCurrent);
         let param: OperatorMemoryCondition = {
             rankId: rankIdCondition.value,
-            type: groupId,
+            type: isCompare ? 'Overall' : groupId,
             currentPage: tempCurrent,
             pageSize,
             searchName,
             minSize: minimumSize,
             maxSize: maximumSize,
+            isCompare,
         };
         if (selectedRange) {
-            param.startTime = selectedRange.startTs; param.endTime = selectedRange.endTs;
+            param.startTime = selectedRange.startTs;
+            param.endTime = selectedRange.endTs;
         }
         param = setParamOtherCondition(param);
         operatorsMemoryGet(param).then((resp) => {
             const operatorDetails = resp.operatorDetail;
             setTotal(resp.totalNum);
-            setMemoryTableData(operatorDetails);
+            setMemoryTableData(handleOperatorDetails(operatorDetails));
             if (JSON.stringify(memoryTableHead) !== JSON.stringify(resp.columnAttr)) {
                 setMemoryTableHead(resp.columnAttr);
             }
-            setBtnDisabled(false);
         }).catch(err => {
-            message.error(err);
+            console.error(err);
         }).finally(() => {
             setTableSpin(false);
+            setBtnDisabled(false);
         });
     };
 
@@ -235,6 +259,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
             searchName,
             minSize: minimumSize,
             maxSize: maximumSize,
+            isCompare,
         };
         if (selectedRange) {
             param.startNodeIndex = selectedRange.startTs; param.endNodeIndex = selectedRange.endTs;
@@ -243,14 +268,14 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
         staticOpMemoryListGet(param).then((resp) => {
             const staticOperatorListDetails = resp.staticOperatorListDetail;
             setTotal(resp.totalNum);
-            setMemoryTableData(staticOperatorListDetails);
+            setMemoryTableData(handleOperatorDetails(staticOperatorListDetails));
             if (JSON.stringify(memoryTableHead) !== JSON.stringify(resp.columnAttr)) {
                 setMemoryTableHead(resp.columnAttr);
             }
-            setBtnDisabled(false);
         }).catch(err => {
-            message.error(err);
+            console.error(err);
         }).finally(() => {
+            setBtnDisabled(false);
             setTableSpin(false);
         });
     };
@@ -348,7 +373,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
             return;
         }
         setCurveSpin(true);
-        memoryCurveGet({ rankId: rankIdCondition.value, type: groupId }).then((resp) => {
+        memoryCurveGet({ rankId: rankIdCondition.value, type: isCompare ? 'Overall' : groupId, isCompare }).then((resp) => {
             // Reset the select range to null when rankId changes
             setSelectedRange(undefined);
             setMemoryCurveData(resp);
@@ -358,7 +383,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                 rows: resp.lines,
             });
         }).catch(err => {
-            message.error(err);
+            console.error(err);
         }).finally(() => {
             setCurveSpin(false);
         });
@@ -381,7 +406,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
             return;
         }
         setStaticCurveSping(true);
-        staticOpMemoryGraphGet({ rankId: rankIdCondition.value, graphId: memoryGraphId }).then((resp) => {
+        staticOpMemoryGraphGet({ rankId: rankIdCondition.value, graphId: memoryGraphId, isCompare }).then((resp) => {
             // Reset the select range to null when rankId changes
             setSelectedRange(undefined);
             setMemoryStaticCurveData(resp);
@@ -390,7 +415,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                 rows: resp.lines,
             });
         }).catch(err => {
-            message.error(err);
+            console.error(err);
         }).finally(() => {
             setStaticCurveSping(false);
         });
@@ -402,6 +427,10 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
         setRankIdCondition({ options: rankIdOptions, value: rankIdOptions[0] });
     }, [hostCondition.options, hostCondition.value, hostCondition.ranks]);
 
+    useEffect(() => {
+        onRankIdChanged(session.compareRank.rankId);
+    }, [JSON.stringify(session.compareRank)]);
+
     return (
         <Layout>
             <div className="mb-30">
@@ -412,6 +441,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                             <Select
                                 value={hostCondition.value}
                                 size="middle"
+                                disabled={isCompare}
                                 onChange={(value: string): void => setHostCondition({ ...hostCondition, value })}
                                 options={hostCondition.options.map((host) => {
                                     return { value: host, label: host };
@@ -426,6 +456,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                             value={rankIdCondition.value}
                             size="middle"
                             onChange={onRankIdChanged}
+                            disabled={isCompare}
                             options={rankIdCondition.options.map((rankId) => {
                                 return {
                                     value: rankId,
@@ -435,7 +466,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                         />
                     </FlexDiv>
                     {
-                        resourceType === dataResourceType.pytorch
+                        (resourceType === dataResourceType.pytorch && !isCompare)
                             ? <FlexDiv>
                                 <Label name={<span>{t('searchCriteria.GroupBy')}{hit}</span>} />
                                 <Select
@@ -518,8 +549,8 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                         <InputNumber
                             value={minSize}
                             onChange={onFilterEventMinSizeInputChanged}
-                            min={0}
-                            max={4294967295}
+                            min={isCompare ? COMPARE_MIN_INPUT_NUMBER : 0}
+                            max={MAX_INPUT_NUMBER}
                         />
                     </div>
                     <div className="flex items-center">
@@ -527,8 +558,8 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                         <InputNumber
                             value={maxSize}
                             onChange={onFilterEventMaxSizeInputChanged}
-                            min={0}
-                            max={4294967295}
+                            min={isCompare ? COMPARE_MIN_INPUT_NUMBER : 0}
+                            max={MAX_INPUT_NUMBER}
                             minLength={1}
                         />
                     </div>
@@ -565,6 +596,7 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
                         onOrderChange={setOrder}
                         onOrderByChange={setOrderBy}
                         total={total}
+                        isCompare={isCompare}
                     />
                 </Spin>
             </CollapsiblePanel>

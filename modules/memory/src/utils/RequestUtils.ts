@@ -39,7 +39,9 @@ export const staticOpMemoryListGet = (params: StaticMemoryCondition): Promise<St
  * @param params 查询条件
  * @returns {StaticOperatorGraph[]} 查询结果
  */
-export const staticOpMemoryGraphGet = async (params: {rankId: string; graphId: string; modelName?: string}): Promise<StaticOperatorCurve> => {
+export const staticOpMemoryGraphGet = async (params: {
+    rankId: string; graphId: string; modelName?: string; isCompare: boolean;
+}): Promise<StaticOperatorCurve> => {
     return window.request({ command: 'Memory/view/staticOpMemoryGraph', params: { ...params } });
 };
 
@@ -57,6 +59,6 @@ export const operatorsMemoryGet = (params: OperatorMemoryCondition): Promise<Ope
  * @param params 查询条件
  * @returns {OperatorDetail[]} 查询结果
  */
-export const memoryCurveGet = async (params: {rankId: string; type: string }): Promise<MemoryCurve> => {
+export const memoryCurveGet = async (params: { rankId: string; type: string; isCompare: boolean }): Promise<MemoryCurve> => {
     return window.request({ command: 'Memory/view/memoryUsage', params });
 };

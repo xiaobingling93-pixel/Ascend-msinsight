@@ -10,6 +10,7 @@ import {
     deleteRankHandler,
     allSuccessHandler,
     switchLanguageHandler,
+    switchDirectoryHandler,
 } from './connection/handler';
 
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
@@ -22,4 +23,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     setTheme,
     deleteRank: deleteRankHandler,
     switchLanguage: switchLanguageHandler,
+    switchDirectory: switchDirectoryHandler,
 };

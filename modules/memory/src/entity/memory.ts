@@ -47,22 +47,31 @@ export interface MemoryCurve {
 }
 
 /**
+ * 每条数据详情，包含diff、baseline和compare内容
+ */
+interface OperatorCompareDetail<T> {
+    diff: T;
+    baseline: T;
+    compare: T;
+}
+
+/**
  *
  * @interface OperatorMemory
  */
 export interface OperatorMemory {
+    /**
+     *
+     * @type {Array<OperatorCompareDetail<OperatorDetail>>}
+     * @memberof OperatorMemory
+     */
+    operatorDetail: Array<OperatorCompareDetail<OperatorDetail>>;
+    /**
+     *
+     * @type {MemoryTableColumn[]}
+     * @memberof OperatorMemory
+     */
     columnAttr: MemoryTableColumn[];
-    /**
-     *
-     * @type {OperatorDetail[]}
-     * @memberof OperatorMemory
-     */
-    operatorDetail: OperatorDetail[];
-    /**
-     *
-     * @type {string}
-     * @memberof OperatorMemory
-     */
     /**
      *
      * @type {number}
@@ -88,6 +97,12 @@ export interface OperatorDetail {
      * @memberof OperatorDetail
      */
     name: string;
+    /**
+     *
+     * @type {string}
+     * @memberof OperatorDetail
+     */
+    source?: string;
     /**
      *
      * @type {number}
@@ -166,6 +181,10 @@ export interface OperatorDetail {
      * @memberof streamId
      */
     streamId?: string;
+    /**
+     * 表格展开项内容
+     */
+    children?: OperatorDetail[];
 }
 
 /**
@@ -253,6 +272,10 @@ export interface OperatorMemoryCondition {
      * 查询的类型：Overall、Stream
      */
     type: string;
+    /**
+     * 是否为比对场景
+     */
+    isCompare: boolean;
 }
 
 /**
@@ -312,6 +335,10 @@ export interface StaticMemoryCondition {
      * 算子名称筛选条件
      */
     searchName?: string;
+    /**
+     * 是否为比对场景
+     */
+    isCompare: boolean;
 }
 
 /**
@@ -320,13 +347,13 @@ export interface StaticMemoryCondition {
  */
 export interface MemoryType {
     /**
-     * 
+     *
      * @type {string}
      * @memberof MemoryType
      */
     type: string;
     /**
-     * 
+     *
      * @type {string[]}
      * @memberof MemoryType
      */
@@ -357,6 +384,12 @@ export interface StaticOperatorListDetail {
      * @type {string}
      * @memberof StaticOperatorListDetail
      */
+    source?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof StaticOperatorListDetail
+     */
     opName: string;
     /**
      *
@@ -376,6 +409,10 @@ export interface StaticOperatorListDetail {
      * @memberof StaticOperatorListDetail
      */
     size: number;
+    /**
+     * 静态图表格展开项内容
+     */
+    children: StaticOperatorListDetail[];
 }
 
 /**
@@ -391,10 +428,10 @@ export interface StaticOperatorList {
     columnAttr: MemoryTableColumn[];
     /**
      *
-     * @type {StaticOperatorListDetail[]}
+     * @type {Array<OperatorCompareDetail<StaticOperatorListDetail>>}
      * @memberof StaticOperatorList
      */
-    staticOperatorListDetail: StaticOperatorListDetail[];
+    staticOperatorListDetail: Array<OperatorCompareDetail<StaticOperatorListDetail>>;
     /**
      *
      * @type {number}

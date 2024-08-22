@@ -13,6 +13,7 @@
     "Size": "大小",
     "Total Size": "总大小",
     "App Reserved": "进程保留",
+    "SeeMore": "查看更多",
     "searchCriteria": {
       "RankId": "卡序号",
       "GroupBy": "分组方式",
@@ -59,7 +60,8 @@
       "Release Total Allocated(MB)": "总释放已分配内存(MB)",
       "Release Total Reserved(MB)": "总释放保留内存(MB)",
       "Release Total Active(MB)": "总释放持有内存(MB)",
-      "Stream": "流"
+      "Stream": "流",
+      "Details": "详情"
     },
     "tableHeadTooltip": {
       "Allocation Time(ms)": "Tensor内存分配时间",

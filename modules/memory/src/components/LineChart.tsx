@@ -51,7 +51,7 @@ const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolea
             },
             ...getDefaultChartOptions(isDark).tooltip,
         },
-        legend: { type: 'scroll' },
+        legend: { type: 'scroll', itemGap: 20 },
         grid: { left: '100', right: '100', bottom: 40 },
         xAxis: {
             type: 'category',
@@ -70,6 +70,7 @@ const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolea
                 },
                 restore: {},
             },
+            top: '8%',
         },
         backgroundColor: 'transparent',
     };

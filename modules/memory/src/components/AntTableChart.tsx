@@ -10,10 +10,14 @@ import type { TFunction } from 'i18next';
 import i18n from 'ascend-i18n';
 import type { MemoryTable, MemoryTableColumn, OperatorDetail } from '../entity/memory';
 import { ResizeTable } from 'ascend-resize';
+import { Button } from 'ascend-components';
+import { DownOutlined } from '@ant-design/icons';
+import type { TableColumnsType } from 'antd';
+import { type Theme, useTheme } from '@emotion/react';
+import styled from '@emotion/styled';
 
 interface IProps {
     tableData: MemoryTable;
-    sortColumn?: string;
     onRowSelected?: (record?: OperatorDetail, rowIndex?: number) => void;
     current: number;
     pageSize: number;
@@ -22,6 +26,7 @@ interface IProps {
     onOrderChange: (order: string | undefined) => void;
     onOrderByChange: (orderBy: string) => void;
     total: number;
+    isCompare: boolean;
 }
 
 interface IColName {
@@ -66,34 +71,91 @@ const orderByColName: IColName = {
     streamId: 'stream',
 };
 
+const CompareDiv = styled.div`
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    word-break: keep-all;
+`;
+
+const getCompareRows = (data: string | number, isCompare: boolean, theme: Theme, source?: string): JSX.Element | number | string => {
+    if (isCompare && source === 'Difference') {
+        const dataNum = Number(data);
+        if (isNaN(dataNum)) {
+            return data;
+        }
+        return <CompareDiv style={{ color: dataNum >= 0 ? theme.successColor : theme.dangerColor }} title={`${data}`}>{data}</CompareDiv>;
+    } else {
+        return data;
+    }
+};
+
+const renderExpandColomn = (record: OperatorDetail, t: TFunction, setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>): JSX.Element => {
+    return record.source === 'Difference'
+        ? (<Button type="link"
+            onClick={(): void => {
+                setExpandedKeys((pre: any) => {
+                    const list = [...pre];
+                    const keyIndex = list.indexOf(record.key);
+                    if (keyIndex === -1) {
+                        list.push(record.key);
+                    } else {
+                        list.splice(keyIndex, 1);
+                    }
+                    return list;
+                });
+            }}>{t('SeeMore', { ns: 'buttonText' })}<DownOutlined/></Button>)
+        : <></>;
+};
+
 const getTableColumns = function (
     columns: MemoryTableColumn[],
-    sort: string | undefined,
+    theme: Theme,
     t: TFunction,
-): any {
-    return columns.map((col: MemoryTableColumn, index) => {
+    isCompare: boolean,
+    setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>,
+): TableColumnsType<OperatorDetail> {
+    const dataColumns: TableColumnsType<OperatorDetail> = columns.map((col: MemoryTableColumn) => {
         return {
             dataIndex: col.key,
             key: col.key,
             title: t(col.name, { defaultValue: col.name, keyPrefix: 'tableHead' }),
             sorter: true,
             ellipsis: true,
-            showSorterTooltip: t(col.name, { keyPrefix: 'tableHeadTooltip', defaultValue: '' }) === '' ? true : { title: t(col.name, { keyPrefix: 'tableHeadTooltip' }) },
+            showSorterTooltip: t(col.name, { keyPrefix: 'tableHeadTooltip', defaultValue: '' }) === ''
+                ? true
+                : { title: t(col.name, { keyPrefix: 'tableHeadTooltip' }) },
+            render: (data: string | number, record: OperatorDetail) => getCompareRows(data, isCompare, theme, record.source),
         };
     });
+    if (isCompare) {
+        dataColumns.push({
+            key: 'action',
+            title: t('Details', { keyPrefix: 'tableHead' }),
+            sorter: false,
+            fixed: 'right',
+            render: (record: OperatorDetail): JSX.Element => {
+                return renderExpandColomn(record, t, setExpandedKeys);
+            },
+        });
+    }
+    return dataColumns;
 };
 
 // eslint-disable-next-line max-lines-per-function
 export const AntTableChart: React.FC<IProps> = (props) => {
     const { t } = useTranslation('memory');
     const {
-        tableData, sortColumn, onRowSelected, current, pageSize,
-        onCurrentChange, onPageSizeChange, total, onOrderChange, onOrderByChange,
+        tableData, onRowSelected, current, pageSize,
+        onCurrentChange, onPageSizeChange, total, onOrderChange, onOrderByChange, isCompare,
     } = props;
+    const theme = useTheme();
+    const [expandedRowKeys, setExpandedKeys] = React.useState<string[]>([]);
 
     const columns = React.useMemo(
-        () => getTableColumns(tableData.columns, sortColumn, t),
-        [tableData.columns, sortColumn, t],
+        () => getTableColumns(tableData.columns, theme, t, isCompare, setExpandedKeys),
+        [tableData.columns, t, isCompare],
     );
 
     // key is used to reset the Table state (page and sort) if the columns change
@@ -126,6 +188,10 @@ export const AntTableChart: React.FC<IProps> = (props) => {
         };
     };
 
+    React.useEffect(() => {
+        setExpandedKeys([]);
+    }, [JSON.stringify(tableData), current, pageSize]);
+
     return (
         <ResizeTable
             columns={columns}
@@ -146,6 +212,10 @@ export const AntTableChart: React.FC<IProps> = (props) => {
             rowClassName="memory-ant-table-row"
             key={key}
             onRow={onRow}
+            expandable={{
+                expandIcon: () => <></>,
+                expandedRowKeys,
+            }}
         />
     );
 };

@@ -13,6 +13,7 @@
     "Size": "Size",
     "Total Size": "Total Size",
     "App Reserved": "App Reserved",
+    "SeeMore": "See More",
     "searchCriteria": {
       "RankId": "Rank ID",
       "GroupBy": "Group By",
@@ -59,7 +60,8 @@
       "Release Total Allocated(MB)": "Release Total Allocated(MB)",
       "Release Total Reserved(MB)": "Release Total Reserved(MB)",
       "Release Total Active(MB)": "Release Total Active(MB)",
-      "Stream": "Stream"
+      "Stream": "Stream",
+      "Details": "Details"
     },
     "tableHeadTooltip": {
       "Allocation Time(ms)": "Tensor memory allocation time",
