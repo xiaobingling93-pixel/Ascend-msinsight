@@ -34,3 +34,28 @@ TEST_F(SourceProtocolTest, ToApiInstrRequest)
 {
     manager->FromJson(TO_API_INSTR_REQ_JSON, error);
 }
+
+TEST_F(SourceProtocolTest, ToDetailsBaseInfoRequest)
+{
+    manager->FromJson(TO_BASE_INFO_REQ_JSON, error);
+}
+
+TEST_F(SourceProtocolTest, ToDetailsLoadInfoRequest)
+{
+    manager->FromJson(TO_LOAD_INFO_REQ_JSON, error);
+}
+
+TEST_F(SourceProtocolTest, ToDetailsMemoryGraphRequest)
+{
+    manager->FromJson(TO_MEMORY_GRAPH_REQ_JSON, error);
+}
+
+TEST_F(SourceProtocolTest, ToDetailsMemoryTableRequest)
+{
+    manager->FromJson(TO_MEMORY_TABLE_REQ_JSON, error);
+}
+
+TEST_F(SourceProtocolTest, ToDetailsInterCoreLoadGraphRequest)
+{
+    manager->FromJson(TO_INTER_CORE_LOAD_GRAPH_JSON, error);
+}

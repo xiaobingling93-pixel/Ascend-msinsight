@@ -8,15 +8,60 @@
 #include "string"
 
 const std::string JSON = R"()";
+const std::string TO_INTER_CORE_LOAD_GRAPH_JSON = R"(
+{
+  "id": 288,
+  "moduleName": "source",
+  "type": "request",
+  "command": "source/details/interCoreLoadAnalysis"
+}
+)";
+const std::string TO_MEMORY_TABLE_REQ_JSON = R"(
+{
+  "id": 288,
+  "moduleName": "source",
+  "type": "request",
+  "command": "source/details/memoryTable",
+  "params": {
+    "blockId": "0",
+    "showAs": "request"
+  }
+}
+)";
+const std::string TO_MEMORY_GRAPH_REQ_JSON = R"(
+{
+  "id": 287,
+  "moduleName": "source",
+  "type": "request",
+  "command": "source/details/memoryGraph",
+  "params": {
+    "blockId": "0",
+    "showAs": "request"
+  }
+}
+)";
+const std::string TO_LOAD_INFO_REQ_JSON = R"(
+{
+  "id": 286,
+  "moduleName": "source",
+  "type": "request",
+  "command": "source/details/computeworkload"
+}
+)";
+const std::string TO_BASE_INFO_REQ_JSON = R"(
+{
+  "id": 281,
+  "moduleName": "source",
+  "type": "request",
+  "command": "source/details/baseInfo"
+}
+)";
 const std::string TO_API_INSTR_REQ_JSON = R"(
 {
   "id": 4777,
   "moduleName": "source",
   "type": "request",
-  "command": "source/api/instructions",
-  "params": {
-    "token": "eQoptm^_fwSPlX^X"
-  }
+  "command": "source/api/instructions"
 }
 )";
 const std::string TO_API_LINE_REQ_JSON = R"(
@@ -26,7 +71,6 @@ const std::string TO_API_LINE_REQ_JSON = R"(
   "type": "request",
   "command": "source/api/line",
   "params": {
-    "token": "eQoptm^_fwSPlX^X",
     "sourceName": "xxx.cpp",
     "coreName": "core0.cubecore0"
   }
