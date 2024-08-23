@@ -212,6 +212,9 @@ namespace Dic::Module::Operator {
                 datailData.emplace_back(tmp);
                 baseIter++;
             }
+            if (baseIter == baseDbData.end() || cmpIter == cmpDbData.end()) {
+                break;
+            }
             while (cmpIter != cmpDbData.end() && cmpIter->name < baseIter->name) {
                 OperatorDetailCmpInfoRes tmp;
                 tmp.baseline = *cmpIter;
