@@ -79,6 +79,10 @@ TEST_F(SourceProtocolTest, ToCodeFileResponse)
 TEST_F(SourceProtocolTest, ToApiLineResponse)
 {
     SourceApiLineResponse response;
+    SourceFileLineRes lineRes;
+    std::pair<std::string, std::string> pair = {"1", "10"};
+    lineRes.addressRange.emplace_back(pair);
+    response.body.lines.emplace_back(lineRes);
     response.moduleName = ModuleType::SOURCE;
     manager->ToJson(response, error);
 }
@@ -100,6 +104,9 @@ TEST_F(SourceProtocolTest, ToDetailsBaseInfoResponse)
 TEST_F(SourceProtocolTest, ToDetailsLoadInfoResponse)
 {
     DetailsLoadInfoResponse response;
+    SubBlockUnitData subBlockUnitData;
+    response.body.chartData.detailDataList.emplace_back(subBlockUnitData);
+    response.body.tableData.detailDataList.emplace_back(subBlockUnitData);
     response.moduleName = ModuleType::SOURCE;
     manager->ToJson(response, error);
 }
@@ -107,6 +114,10 @@ TEST_F(SourceProtocolTest, ToDetailsLoadInfoResponse)
 TEST_F(SourceProtocolTest, ToDetailsMemoryGraphResponse)
 {
     DetailsMemoryGraphResponse response;
+    MemoryGraph memoryGraph;
+    MemoryUnit memoryUnit;
+    memoryGraph.memoryUnit.emplace_back(memoryUnit);
+    response.body.coreMemory.emplace_back(memoryGraph);
     response.moduleName = ModuleType::SOURCE;
     manager->ToJson(response, error);
 }
@@ -114,6 +125,12 @@ TEST_F(SourceProtocolTest, ToDetailsMemoryGraphResponse)
 TEST_F(SourceProtocolTest, ToDetailsMemoryTableResponse)
 {
     DetailsMemoryTableResponse response;
+    MemoryTable memoryTable;
+    TableDetail tableDetail;
+    TableRow tableRow;
+    tableDetail.row.emplace_back(tableRow);
+    memoryTable.tableDetail.emplace_back(tableDetail);
+    response.body.memoryTable.emplace_back(memoryTable);
     response.moduleName = ModuleType::SOURCE;
     manager->ToJson(response, error);
 }
@@ -121,6 +138,21 @@ TEST_F(SourceProtocolTest, ToDetailsMemoryTableResponse)
 TEST_F(SourceProtocolTest, ToDetailsInterCoreLoadGraphResponse)
 {
     DetailsInterCoreLoadGraphResponse response;
+    DetailsInterCoreLoadOpDetail opDetail;
+    DetailsInterCoreLoadSubCoreDetail subCoreDetail;
+    float curRate = 11.0f;
+    float maxRate = 23.0f;
+    subCoreDetail.SetCacheHitRateDimension(curRate, maxRate);
+    uint64_t curCycles = 100;
+    uint64_t minCycles = 10;
+    subCoreDetail.SetCyclesDimension(curCycles, minCycles);
+    uint64_t curPut = 200;
+    uint64_t minPut = 110;
+    subCoreDetail.SetThroughputDimension(curPut, minPut);
+    uint8_t subCoreIndex = 0;
+    subCoreDetail.SetSubCoreName("cube", subCoreIndex);
+    opDetail.AddSubCoreDetail(std::move(subCoreDetail));
+    response.body.opDetails.emplace_back(opDetail);
     response.moduleName = ModuleType::SOURCE;
     manager->ToJson(response, error);
 }
