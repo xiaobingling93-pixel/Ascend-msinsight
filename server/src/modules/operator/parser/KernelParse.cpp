@@ -10,6 +10,7 @@
 #include "WsSessionManager.h"
 #include "OperatorProtocolEvent.h"
 #include "TraceTime.h"
+#include "BaselineManager.h"
 #include "KernelParse.h"
 
 namespace Dic::Module::Summary {
@@ -307,6 +308,8 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> parseProcessList;
 
+    std::string realFileId = Global::BaselineManager::IsBaselineId(fileId) ?
+        FileUtil::GetProfilerFileId(filePath) : fileId;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(statusId) ==
            Timeline::ParserStatus::RUNNING && getline(file, line)) {
         const std::basic_string<char>& basicString(line);
@@ -324,7 +327,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
         }
         Kernel kernel {};
         for (const auto& parseFunc : parseProcessList) {
-            parseFunc(dataMap, rowVector, fileId, kernel);
+            parseFunc(dataMap, rowVector, realFileId, kernel);
         }
         // 记录有多少device
         devices.emplace(dataMap.find(DEVICE_ID) != dataMap.end() ? rowVector[dataMap[DEVICE_ID]] : fileId);
