@@ -78,7 +78,7 @@ export const CommunicatorContainer = observer(({ session }: { session: Session }
     return (
         <div style={{ marginBottom: 24 }}>
             {<CommunicatorHeader session={session} defaultPPSize={session.communicatorData.defaultPPSize}
-                unitCount={session.unitcount} setShowRank={setShowRank}></CommunicatorHeader>}
+                unitCount={session.rankCount} setShowRank={setShowRank}></CommunicatorHeader>}
             {<CommunicatorContent session={session} ranksData={session.ranksData} showRank={showRank}/>}
             { !showRank && <div className={'noDataTip'}>{t('NoDataTip')}</div> }
         </div>
@@ -90,24 +90,33 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount, setSho
     const [form, setForm] = useState({} as FormInstance<any>);
     const [disabled, setDisabled] = useState(false);
     const init = async (): Promise<void> => {
-        const { dpSize, tpSize, ppSize, level } = (await getParallelStrategy()) as unknown as parallelStrategyType;
-        const equal = dpSize === 1 && tpSize === 1 && tpSize === 1;
-        form.setFieldsValue({ dpSize, tpSize, ppSize });
-        if (level === 'collected') {
-            setDisabled(true);
-        } else if (level === 'undefined' || equal) {
-            setShowRank(false);
+        if (form.setFieldsValue === undefined) {
+            setTimeout(() => {
+                init();
+            });
         } else {
-            setDisabled(false);
+            const { dpSize, tpSize, ppSize, level } = (await getParallelStrategy()) as unknown as parallelStrategyType;
+            const equal = dpSize === 1 && tpSize === 1 && tpSize === 1;
+            if (level === 'collected') {
+                setDisabled(true);
+            } else {
+                setDisabled(false);
+            }
+            if (level === 'undefined' || equal) {
+                setShowRank(false);
+            } else {
+                setShowRank(true);
+            }
+            session.communicatorData = generateCommunicatorData({ dpSize, tpSize, ppSize }, unitCount, defaultPPSize);
+            session.ranksData = getRankData({ dpSize, tpSize, ppSize });
+            form.setFieldsValue({ dpSize, tpSize, ppSize });
+            connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
+            eventBus.emit('activeCommunicator', undefined);
         }
-        session.communicatorData = generateCommunicatorData({ dpSize, tpSize, ppSize }, unitCount, defaultPPSize);
-        session.ranksData = getRankData({ dpSize, tpSize, ppSize });
-        connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
-        eventBus.emit('activeCommunicator', undefined);
     };
     useEffect(() => {
         init();
-    }, [session.renderId]);
+    }, [session.renderId, session.rankCount]);
     const onClick = (size: number) => (): void => {
         const values: { ppSize: number; tpSize: number; dpSize: number; algorithm: string } = form.getFieldsValue();
         if (values.dpSize * values.tpSize * values.ppSize !== unitCount) {
@@ -122,11 +131,8 @@ const CommunicatorHeader = observer(({ session, defaultPPSize, unitCount, setSho
         connector.send({ event: 'updateCommunicatorData', body: session.communicatorData, to: 4 });
         eventBus.emit('activeCommunicator', undefined);
     };
-    const getForm = (dom: FormInstance<any>): void => {
-        setForm(dom);
-    };
     return (
-        <FormDom unitCount={unitCount} disabled={disabled} defaultPPSize={defaultPPSize} onClick={onClick} getForm={getForm}/>
+        <FormDom unitCount={unitCount} disabled={disabled} defaultPPSize={defaultPPSize} onClick={onClick} getForm={setForm}/>
     );
 });
 
@@ -135,9 +141,7 @@ const FormDom = ({ unitCount, disabled, defaultPPSize, onClick, getForm }:
     getForm: (dom: FormInstance<any>) => void; }): JSX.Element => {
     const { t } = useTranslation('summary');
     const [form] = Form.useForm();
-    useEffect(() => {
-        getForm(form);
-    }, []);
+    getForm(form);
     return (
         <Form form={form} labelAlign={'left'} layout="inline" className={'CommunicatorHeader'}>
             <Form.Item name={'algorithm'} label={t('Algorithm')} style={{ margin: '10px 24px 10px 0' }} initialValue={'Megatron-LM(tp-dp-pp)'}>

@@ -19,6 +19,7 @@ export class Session {
     communicatorData: communicatorContainerData;
     activeCommunicator: communicator | undefined;
     ranksData: ppData[] = [];
+    rankCount: number = 0;
 
     constructor(conf?: Partial<Session>) {
         makeAutoObservable(this);

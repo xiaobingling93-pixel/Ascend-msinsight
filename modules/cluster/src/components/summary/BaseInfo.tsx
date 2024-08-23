@@ -97,9 +97,10 @@ const formateTime = (t: number): string => {
     return `${t}μs`;
 };
 
-const initBaseInfo = async (setData: any): Promise<void> => {
+const initBaseInfo = async (setData: any, session: Session): Promise<void> => {
     const res: any = await queryTopSummary(defaultConditions);
     const resObj = res ?? {};
+    session.rankCount = res.rankCount;
     setData({
         ...resObj,
         collectDuration: formateTime(Number(resObj.collectDuration)),
@@ -124,7 +125,7 @@ const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
             return;
         }
         setTimeout(() => {
-            initBaseInfo(setData);
+            initBaseInfo(setData, session);
         });
     }, [session.parseCompleted, session.renderId]);
     const displaylist = useDisplayItems(session);
