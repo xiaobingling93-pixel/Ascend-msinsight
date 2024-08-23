@@ -66,6 +66,16 @@ export const sendDaseLineInfo = function(dataSource: DataSource, baseLine: Timel
     }
 };
 
+export const removeBaseline = function(dataSource: DataSource, singleDataPath: string): void {
+    const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
+    if (connection) {
+        connector.send({
+            event: 'baseline/remove',
+            body: { dataSource, singleDataPath },
+        });
+    }
+};
+
 export const deleteDataPath = function(dataSource: DataSource): void {
     const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
     if (connection) {

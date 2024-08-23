@@ -19,6 +19,7 @@ import {
     parseOperatorSuccessHandler,
     parseMemorySuccessHandler,
     baselineAddHandler,
+    removeBaselineHandler,
 } from './connection/handler';
 
 interface InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> {
@@ -44,6 +45,7 @@ const PARSE_FAIL = 'parse/fail';
 const PARSE_CLUSTER_COMPLETED = 'parse/clusterCompleted';
 const PARSE_CLUSTER_STEP2_COMPLETED = 'parse/clusterStep2Completed';
 const BASELINE_ADD = 'baseline/add';
+const BASELINE_REMOVE = 'baseline/remove';
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     [REMOTE_IMPORT]: importRemoteHandler,
     [REMOTE_REMOVE]: removeRemoteHandler,
@@ -59,6 +61,7 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     [MEMORY_COMPLETED]: parseMemorySuccessHandler,
     [OPERATOR_COMPLETED]: parseOperatorSuccessHandler,
     [BASELINE_ADD]: baselineAddHandler,
+    [BASELINE_REMOVE]: removeBaselineHandler,
     setTheme,
     locateUnit: locateUnitHandler,
     switchLanguage: switchLanguageHandler,

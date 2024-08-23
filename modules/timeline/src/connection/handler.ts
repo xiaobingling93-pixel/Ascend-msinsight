@@ -164,6 +164,17 @@ const createBaselineCard = (session: Session | undefined, result: any, dataSourc
     if (!session) {
         return;
     }
+    const singleDataPath = dataSource.dataPath[0];
+    const isSamePath = session?.units.some((unit) => {
+        const metadata = unit.metadata as any;
+        if ((metadata.dataSource.dataPath as string[]) === undefined) {
+            return false;
+        }
+        return metadata.dataSource.remote !== dataSource.remote || (metadata.dataSource.dataPath as string[]).includes(singleDataPath);
+    });
+    if (isSamePath) {
+        return;
+    }
     session.phase = 'download';
     const hostInfo = groupBy(result, (item: CardInfo) => item.host ?? '');
     forEach(hostInfo, (cards, host) => {
@@ -174,7 +185,7 @@ const createBaselineCard = (session: Session | undefined, result: any, dataSourc
             curDataSource.dataPath = item.dataPathList;
             const cardUnit = new CardUnit({ dataSource: curDataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
             if (item.result as boolean) {
-                cardUnit.shouldParse = true;
+                cardUnit.shouldParse = false;
                 cardUnit.phase = 'analyzing';
                 cardUnit.progress = 0;
                 cardUnit.showProgress = true;
@@ -262,6 +273,9 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
             session.isFullDb = false;
             const removeUnits = session.pinnedUnits.concat(session.units).filter((unit) => {
                 const metadata = unit.metadata as any;
+                if (metadata.dataSource.dataPath === undefined) {
+                    return true;
+                }
                 const isSameDataPath = dataSource.dataPath.filter((item) => metadata.dataSource.dataPath.includes(item)).length !== 0;
                 return metadata.dataSource.remote === dataSource.remote && isSameDataPath;
             });
@@ -331,6 +345,51 @@ const remoteDeleteRequest = async (session: Session, dataSource: DataSource, rem
     }
 };
 
+export const removeBaselineHandler: NotificationHandler = async (data): Promise<void> => {
+    try {
+        runInAction(() => {
+            const dataSource = getPropFromData(data, 'dataSource') as DataSource;
+            const singleDataPath = getPropFromData(data, 'singleDataPath') as string;
+            const session = store.sessionStore.activeSession as Session;
+            const removeUnits = getRemoveUnits(session, dataSource, singleDataPath);
+            session.units = session?.units.filter((unit) => {
+                const metadata = unit.metadata as any;
+                if (!((metadata.cardId.startsWith('baseline')) as boolean)) {
+                    return true;
+                }
+                if ((metadata.dataSource.dataPath as string[]) === undefined) {
+                    return false;
+                }
+                return metadata.dataSource.remote !== dataSource.remote || !(metadata.dataSource.dataPath as string[]).includes(singleDataPath);
+            });
+            if (session.selectedUnits[0] !== undefined && !session.units.includes(session.selectedUnits[0])) {
+                session.selectedUnits = [];
+            }
+            if (session.units.length === 0) {
+                session.selectedRange = undefined;
+            }
+            if (session.eventUnits[0] !== undefined) {
+                session.eventUnits = [];
+            }
+            session.doReset = !session.doReset;
+            for (const unit of removeUnits) {
+                const metadata = unit.metadata as any;
+                const remote = metadata.dataSource.remote;
+                if (session.remoteAttrs.has(remote) && !session.units.find(item => (item.metadata as any)?.dataSource.remote === remote)) {
+                    session.remoteAttrs.delete(remote);
+                }
+            }
+            session.pinnedUnits = session?.pinnedUnits.filter((unit) => {
+                const metadata = unit.metadata as any;
+                return metadata.dataSource.remote !== dataSource.remote || !(metadata.dataSource.dataPath as string[]).includes(singleDataPath);
+            });
+            clearTimeMarkerFlags(session);
+        });
+    } catch (error) {
+        console.error(error);
+    }
+};
+
 export const removeSingleRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
         const dataSource = getPropFromData(data, 'dataSource') as DataSource;
@@ -340,6 +399,9 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
         const removeCardIds = getRemoveCardIds(removeUnits);
         session.units = session?.units.filter((unit) => {
             const metadata = unit.metadata as any;
+            if ((metadata.dataSource.dataPath as string[]) === undefined) {
+                return true;
+            }
             return metadata.dataSource.remote !== dataSource.remote || !(metadata.dataSource.dataPath as string[]).includes(singleDataPath);
         });
         if (session.selectedUnits[0] !== undefined && !session.units.includes(session.selectedUnits[0])) {
@@ -382,6 +444,9 @@ export const removeSingleRemoteHandler: NotificationHandler = async (data): Prom
 const getRemoveUnits = (session: Session, dataSource: DataSource, singleDataPath: string): InsightUnit[] => {
     return session.units.filter((unit) => {
         const metadata = unit.metadata as any;
+        if ((metadata.dataSource.dataPath as string[]) === undefined) {
+            return true;
+        }
         const isSameDataPath = metadata.dataSource.dataPath.includes(singleDataPath);
         return metadata.dataSource.remote === dataSource.remote && isSameDataPath;
     });

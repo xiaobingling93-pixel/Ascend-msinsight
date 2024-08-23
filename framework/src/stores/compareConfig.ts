@@ -7,7 +7,7 @@ import { LOCAL_HOST, PORT, ProjectActionEnum } from '@/centralServer/websocket/d
 import { useDataSources } from '@/stores/dataSource';
 import { ElMessage } from 'element-plus';
 import { t } from '@/i18n';
-import {request, sendDaseLineInfo} from '@/centralServer/server';
+import {removeBaseline, request, sendDaseLineInfo} from '@/centralServer/server';
 
 const UNDERLINE: string = '_';
 export interface DataInfo {
@@ -67,10 +67,12 @@ export const useCompareConfig = defineStore('compareConfig', () => {
      * @param filePath 路径
      */
     const setBaselineData = async (projectName: string, filePath: string): Promise<void> => {
+        const oldDatasource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] as string[] };
+        removeBaseline(oldDatasource, baselineDataInfo.value.filePath);
         // 取消对比数据的设置
         cancelCompareData();
         baselineDataInfo.value = { projectName, filePath, rankId: 'baseline' };
-        const datasource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
+        const datasource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] as string[] };
         const result: any = await request(datasource, 'global', {
             command: 'global/setBaseline',
             params: { projectName, filePath },
@@ -85,7 +87,9 @@ export const useCompareConfig = defineStore('compareConfig', () => {
             timelineCardInfo.cardName = baselineDataInfo.value.rankId;
             timelineCardInfo.host = baselineDataInfo.value.host ?? '';
             timelineCardInfo.rankId = baselineDataInfo.value.rankId;
-            timelineCardInfo.cardPath = baselineDataInfo.value.projectName;
+            timelineCardInfo.cardPath = baselineDataInfo.value.filePath;
+            datasource.dataPath.push(baselineDataInfo.value.filePath);
+            datasource.projectName = baselineDataInfo.value.projectName;
             timelineCardInfos.push(timelineCardInfo);
             sendDaseLineInfo(datasource, timelineCardInfos);
         }
@@ -95,6 +99,14 @@ export const useCompareConfig = defineStore('compareConfig', () => {
      * 取消基线数据
      */
     const cancelBaselineData = async (): Promise<void> => {
+        const datasource = {
+            remote: LOCAL_HOST,
+            port: PORT,
+            projectName: baselineDataInfo.value.projectName,
+            dataPath: [] as string[],
+        };
+        datasource.dataPath.push(baselineDataInfo.value.filePath);
+        removeBaseline(datasource, baselineDataInfo.value.filePath);
         // 取消baseline同时也取消对比数据
         baselineDataInfo.value = { projectName: '', filePath: '', rankId: '' };
         compareDataInfo.value = { projectName: '', filePath: '', rankId: '' };
