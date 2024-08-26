@@ -104,7 +104,7 @@ abstract class BaseConnector {
     }
 
     getTargetOrigin(): string {
-        return import.meta.env.DEV ? '*' : window.location.origin;
+        return import.meta.env.DEV || window.location.origin.startsWith('file') ? '*' : window.location.origin;
     }
 
     protected printErrMsg(errMsg: string): string {

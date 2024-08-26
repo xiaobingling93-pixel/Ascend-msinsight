@@ -106,7 +106,7 @@ abstract class BaseConnector {
     }
 
     getTargetOrigin(): string {
-        return process.env.NODE_ENV === 'development' ? '*' : window.location.origin;
+        return process.env.NODE_ENV === 'development' || window.location.origin.startsWith('file') ? '*' : window.location.origin;
     }
 
     protected printErrMsg(errMsg: string): string {
