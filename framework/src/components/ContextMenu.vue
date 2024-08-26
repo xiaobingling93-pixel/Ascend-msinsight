@@ -41,6 +41,13 @@ function clickMenuItem(item: MenuItem): void {
 </template>
 
 <style scoped>
+.container {
+    position: relative;
+    height: calc(100vh - 84px);
+    overflow: auto;
+    margin-right: 10px;
+}
+
 .context-menu {
     z-index: 99999;
     position: fixed;
