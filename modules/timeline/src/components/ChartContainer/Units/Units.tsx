@@ -104,7 +104,7 @@ interface UnitProps {
     isPinned: boolean;
     isSonPinned: boolean;
     isSelecting?: boolean;
-    isInRange?: boolean;
+    inRangeUnitKeys?: Set<string>;
     forwardedRef?: React.ForwardedRef<HTMLDivElement>;
 }
 
@@ -112,7 +112,7 @@ const isSelectable = (unit: KeyedInsightUnit): boolean => {
     return !['Card', 'Root'].includes(unit?.name);
 };
 
-export const UnitObserver = observer(({ unit, session, isVisible, isSelecting, isInRange, forwardedRef, ...props }: UnitProps): JSX.Element => {
+export const UnitObserver = observer(({ unit, session, isVisible, isSelecting, inRangeUnitKeys, forwardedRef, ...props }: UnitProps): JSX.Element => {
     const unitKey = getAutoKey(unit);
     const isSelected = session.selectedUnitKeys.includes(unitKey);
     const [chartWidth, ref] = useWatchResize<HTMLDivElement>('width');
@@ -132,16 +132,15 @@ export const UnitObserver = observer(({ unit, session, isVisible, isSelecting, i
     const isSameCard = unitMetaData.cardId === clickedUnitMetaData?.cardId || unitMetaData.cardId?.endsWith('.db');
 
     useEffect(() => {
-        if (isInRange === undefined || [undefined, false].includes(isSelecting)) { return; }
+        if (inRangeUnitKeys === undefined || [undefined, false].includes(isSelecting)) { return; }
         if (isSelectable(unit) && isSelectable(clickedUnit) && isSameCard) {
-            // 限制在卡级别的框选，不能跨卡框选
-            if (isInRange) {
+            if (inRangeUnitKeys?.has(unitKey)) {
                 selectUnits(unit);
             } else {
                 deSelectUnits(unit);
             }
         }
-    }, [isInRange]);
+    }, [inRangeUnitKeys?.size]);
 
     return <Lane className={cls('unit', {
         [UNIT_SELECTED]: isSelected,
@@ -264,7 +263,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
     const cardIdSet = computeOnScreenCardIdSet(flattenUnits, first, last);
 
     const [isSelecting, setIsSelecting] = useState(false);
-    const [selectedUnits, setSelectedUnits] = useState(new Set());
+    const [selectedUnitKeys, setSelectedUnitKeys] = useState<Set<string>>(new Set());
     const startPoint = useRef({ x: 0, y: 0 });
     const unitsRefs = useRef(new Map());
 
@@ -292,6 +291,11 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
 
     const handleMouseUp = (e: MouseEvent): void => {
         setIsSelecting(false);
+        for (const [key, value] of unitsRefs.current) {
+            if (value === null) {
+                unitsRefs.current.delete(key);
+            }
+        }
     };
     const handleMouseLeave = (e: MouseEvent): void => {
         setIsSelecting(false);
@@ -302,7 +306,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         const currentPoint = { x: e.clientX, y: e.clientY };
         const top = Math.min(currentPoint.y, startPoint.current.y);
         const bottom = Math.max(currentPoint.y, startPoint.current.y);
-        const newSelected = new Set();
+        const newSelected: Set<string> = new Set();
 
         for (const [key, value] of unitsRefs.current) {
             const rect = value?.getBoundingClientRect();
@@ -312,7 +316,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
             }
         }
 
-        setSelectedUnits(newSelected);
+        setSelectedUnitKeys(newSelected);
     };
 
     return <div ref={ref} style={{ display: 'flex', flexDirection: 'column', height: totalHeight }} className="laneView"
@@ -343,7 +347,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
                     isPinned={isPinned(unit)}
                     isSonPinned={isSonPinned(unit)}
                     isSelecting={isSelecting}
-                    isInRange={selectedUnits.has(unitKey)}
+                    inRangeUnitKeys={selectedUnitKeys}
                 />;
             } else {
                 return false;

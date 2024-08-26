@@ -99,6 +99,7 @@
     --selectedChartBorderColor: #5391ff;
 }
 
+.laneView .invisible-units-placeholder + .unit-selected:has(+ .unit-selected) .chart-selected,
 .laneView .unit:not(.unit-selected) + .unit-selected:has(+ .unit-selected) .chart-selected{
     box-shadow: inset 3px 0 0 0 var(--selectedChartBorderColor),
     inset -3px 0 0 0 var(--selectedChartBorderColor),

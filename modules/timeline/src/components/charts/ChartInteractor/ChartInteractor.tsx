@@ -163,10 +163,10 @@ const Interactor = ({
     const xReverseScaleRef = React.useRef(xReverseScale);
     xReverseScaleRef.current = xReverseScale;
     const interactorParams: InteractorParams = { normalCanvas, hoverCanvas, xReverseScale, xScale, isNsMode, session, customRenderers, theme };
-    useEffect(() => { resetCanvasSize(normalCanvas, normalRect); resetCanvasSize(hoverCanvas, hoverRect); }, [normalRect, hoverRect]);
-    useEffect(() => {
-        if (!normalCanvas.current) { return; }
-        const drawArgs: DrawCanvasArgs = {
+
+    function getDrawArgs(): DrawCanvasArgs | null {
+        if (!normalCanvas.current) { return null; }
+        return {
             ctx: normalCanvas.current.getContext('2d'),
             width: normalCanvas.current.clientWidth,
             height: normalCanvas.current.clientHeight,
@@ -179,14 +179,31 @@ const Interactor = ({
             customRenderers,
             theme,
         };
-        // 加延时确保画布尺寸变化后，正常重新绘制，否则可能不能及时绘制
-        setTimeout(() => {
-            draw(drawArgs);
-        }, 10);
+    }
+    useEffect(() => {
+        resetCanvasSize(normalCanvas, normalRect);
+        resetCanvasSize(hoverCanvas, hoverRect);
+    },
+    [normalRect, hoverRect]);
+
+    useEffect(() => {
+        const drawArgs = getDrawArgs();
+        if (!drawArgs) { return; }
+        draw(drawArgs);
         const traceAction: string[] = ['selectBrushScope', 'dragLane', 'zoomProportion'];
         traceAction.forEach((item) => { traceEnd(item); });
     }, [domainStart, domainEnd, endTimeAll, selectedRange, theme, normalRect,
         scrollTop, renderTrigger, ...customRenderTriggers]);
+
+    useEffect(() => {
+        const drawArgs = getDrawArgs();
+        if (!drawArgs) { return; }
+        // 加延时确保画布尺寸变化后，正常重新绘制，否则可能不能及时绘制(场景：框选后，底部面板弹起，触发重新绘制)
+        setTimeout(() => {
+            draw(drawArgs);
+        }, 10);
+    }, [normalRect]);
+
     const point = interactorMouseState.lastPos?.current?.x !== undefined
         ? xScale(interactorMouseState.lastPos?.current?.x)
         : undefined;
