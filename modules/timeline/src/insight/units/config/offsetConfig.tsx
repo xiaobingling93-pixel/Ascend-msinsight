@@ -151,7 +151,10 @@ const InputOption = observer(({ session, metaData }: { session: Session; metaDat
                 </InputDiv>
             </InputContainer>}
         overlayInnerStyle={{ borderRadius: 8, color: useTheme().fontColor }}>
-        <div>{t('Offset', { ns: 'timeline' })}</div>
+        <div onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            e.preventDefault();
+        }} style={{ cursor: 'pointer' }}>{t('Offset', { ns: 'timeline' })}</div>
     </StyledTooltip>
     ;
 });
