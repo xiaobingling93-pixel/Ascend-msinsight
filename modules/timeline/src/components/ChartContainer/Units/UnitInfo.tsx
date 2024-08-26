@@ -169,7 +169,10 @@ interface ConfigBarProps {
 }
 const ConfigBar = observer(({ session, unit, isHovered, hasPinButton }: ConfigBarProps): JSX.Element => {
     return <div className="insight-lane-configbar">
-        <div style={{ display: 'flex', marginLeft: 5 }}>
+        <div style={{ display: 'flex', marginLeft: 5 }} onClick={(e: React.MouseEvent): void => {
+            e.stopPropagation();
+            e.preventDefault();
+        }} >
             {unit.configBar?.(session, unit.metadata)}
             <PinButton
                 session={session}
