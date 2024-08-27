@@ -74,11 +74,19 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
     std::string line;
     std::map<std::string, size_t> indexMap;
     auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    if (database == nullptr) {
+        ServerLog::Error("Can't get cluster database when parse step statistics file.");
+        return;
+    }
     while (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::RUNNING &&
             std::getline(stepTraceFileCsv, line)) {
         std::vector<std::string> fields;
         std::string field;
         std::vector<std::string> tokens = StringUtil::StringSplit(line);
+        if (tokens.size() < minStepTraceTimeColumnNumber) {
+            ServerLog::Error("The number of columns in the step statistics file does not meet the requirements");
+            return;
+        }
         if (tokens[0] != "Step") {
             StepStatistic statistic = MapToStepStatistic(tokens);
             database->InsertStepStatisticsInfo(statistic);
@@ -101,6 +109,10 @@ void ClusterFileParser::SaveClusterBaseInfo(const std::string &selectedPath)
     baseInfo.collectStartTime = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
     ParseCommunicationGroup(selectedPath, baseInfo);
     auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    if (database == nullptr) {
+        ServerLog::Error("Can't get cluster database when sava cluster base info.");
+        return;
+    }
     bool result = database->GetParallelConfigFromStepTrace(baseInfo.config, baseInfo.level);
     if (!result || (baseInfo.config.dpSize == 1 && baseInfo.config.ppSize == 1 && baseInfo.config.tpSize == 1)) {
         ServerLog::Error("Failed to get parallel config from step trace.");
@@ -119,7 +131,7 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     }
     auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     if (database == nullptr) {
-        ServerLog::Error("Can't get cluster database.");
+        ServerLog::Error("Can't get cluster database when parse cluster files.");
         return false;
     }
     if (!needClearDb) {
@@ -241,6 +253,10 @@ bool ClusterFileParser::InitClusterDatabase(const std::string& selectedPath)
     auto databaseWrite = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
     // 查询单独一个连接
     auto databaseRead = dynamic_cast<TextClusterDatabase *>(DataBaseManager::Instance().GetReadClusterDatabase());
+    if (databaseWrite == nullptr || databaseRead == nullptr) {
+        ServerLog::Error("Can't get cluster database.");
+        return false;
+    }
     databaseRead->OpenDb(clusterDbPath, false);
     databaseRead->SetConfig();
     if (!file.good()) {
@@ -287,8 +303,7 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
         std::copy(std::istream_iterator<unsigned char>(communicationGroup), std::istream_iterator<unsigned char>(),
                   back_inserter(fileContent));
         doc.Parse(fileContent.c_str());
-        if (doc.HasParseError()) {
-            ServerLog::Error("JSON file is invalid.");
+        if (!CheckDocumentValid(doc)) {
             return;
         }
         auto p2p = doc.FindMember("p2p")->value.GetArray();
@@ -319,6 +334,21 @@ void ClusterFileParser::ParseCommunicationGroup(const std::string selectedPath, 
     } else {
         ServerLog::Error("parseCommunicationGroupFile fail, path:", filePath);
     }
+}
+
+bool ClusterFileParser::CheckDocumentValid(const Document &doc)
+{
+    if (doc.HasParseError()) {
+        ServerLog::Error("JSON file is invalid.");
+        return false;
+    }
+    bool isLegal = doc.HasMember("p2p") && doc.FindMember("p2p")->value.IsArray() &&
+                   doc.HasMember("collective") && doc.FindMember("collective")->value.IsArray();
+    if (!isLegal) {
+        ServerLog::Error("JSON file is illegal.");
+        return false;
+    }
+    return true;
 }
 
 bool ClusterFileParser::AttAnalyze(const std::string& selectedPath, const std::string& model)

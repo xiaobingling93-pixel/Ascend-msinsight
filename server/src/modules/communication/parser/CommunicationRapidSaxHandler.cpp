@@ -126,10 +126,18 @@ bool CommunicationRapidSaxHandler::EndObject(rapidjson::SizeType memberCount)
     }
     // 获取所有的groupId映射关系
     auto databaseRead = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetReadClusterDatabase());
+    if (databaseRead == nullptr) {
+        ServerLog::Error("Can't get cluster database for read when parse communication data.");
+        return false;
+    }
     if (groupIdsMap.empty()) {
         groupIdsMap = databaseRead->GetAllGroupMap();
     }
     auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    if (database == nullptr) {
+        ServerLog::Error("Can't get cluster database for write when parse communication data.");
+        return false;
+    }
     currentDepth--;
     if (currentDepth == infoDepth && std::strcmp(tableFlag.c_str(), "Communication Bandwidth Info") == 0) {
         CommunicationBandWidth bandWidth = MapToBandwidth(currentObject);

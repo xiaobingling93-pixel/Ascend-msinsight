@@ -94,6 +94,10 @@ bool CommunicationMatrixRapidHandler::EndObject(rapidjson::SizeType memberCount)
         return false;
     }
     auto database = dynamic_cast<TextClusterDatabase*>(DataBaseManager::Instance().GetWriteClusterDatabase());
+    if (database == nullptr) {
+        ServerLog::Error("Can't get cluster database.");
+        return false;
+    }
     currentDepth--;
     if (currentDepth == ranksDepth) {
         CommunicationMatrixInfo matrix = MapToMatrixInfo(currentObject);
