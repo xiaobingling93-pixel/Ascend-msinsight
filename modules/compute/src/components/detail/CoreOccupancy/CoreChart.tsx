@@ -15,7 +15,7 @@ import {
 } from './draw';
 import { type ICondition } from './Filter';
 import { type Session } from '../../../entity/session';
-import { type ICore } from './Index';
+import { type ICoreOccupancy } from './Index';
 import { LimitHit } from '../../LimitSet';
 
 const MAX_CORE_NUMBER = 1000;
@@ -67,19 +67,20 @@ const Container = styled.div`
 `;
 
 const CoreChart = observer(({ condition, data }:
-{data: ICore[];condition: ICondition;session?: Session}): JSX.Element => {
+{data: ICoreOccupancy;condition: ICondition;session?: Session}): JSX.Element => {
     const [limit, setLimit] = useState({ maxSize: MAX_CORE_NUMBER, overlimit: false, current: 0 });
     const [drawData, setDrawData] = useState<CoreDrawData[]>([]);
     const { t } = useTranslation('details');
     const theme = useTheme();
     const legendData = useMemo(() => getLegendData(theme), [theme]);
+    const opDetails = useMemo(() => data?.opDetails ?? [], [data]);
 
     useEffect(() => {
-        setLimit({ ...limit, overlimit: data.length > limit.maxSize, current: data.length });
-    }, [data.length]);
+        setLimit({ ...limit, overlimit: opDetails.length > limit.maxSize, current: opDetails.length });
+    }, [opDetails.length]);
     // 画图
     useEffect(() => {
-        const newDrawData = getDrawData({ data: data.slice(0, limit.maxSize), ...condition });
+        const newDrawData = getDrawData({ data, maxSize: limit.maxSize, ...condition });
         setDrawData(newDrawData);
     }, [data, condition.showAs]);
     return <Container>

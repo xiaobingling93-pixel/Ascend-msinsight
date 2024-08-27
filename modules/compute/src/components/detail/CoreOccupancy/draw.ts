@@ -1,13 +1,14 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import type { ICore } from './Index';
+import type { ICoreOccupancy } from './Index';
 import { type ShowAs } from './Filter';
 import type { Theme } from '@emotion/react';
 
 interface DataConfig {
-    data: ICore[];
+    data: ICoreOccupancy;
     showAs: ShowAs;
+    maxSize: number;
 }
 
 export interface CoreDrawData {
@@ -19,6 +20,17 @@ interface SubCoreDrawData {
     value: string;
     level: string;
 }
+
+const CORE_NUM_910 = {
+    B1: 24,
+    B2: 24,
+    B3: 20,
+    B4: 20,
+    C1: 24,
+    C2: 24,
+    C3: 20,
+    C4: 20,
+};
 
 // 画布、节点、图例等尺寸
 export const sizeConfig = {
@@ -81,9 +93,11 @@ export function getLegendData(theme: Theme): Array<{ level: number; color: strin
 }
 
 // 画图
-export function getDrawData({ data: originData, showAs }: DataConfig): CoreDrawData[] {
+export function getDrawData({ data, maxSize, showAs }: DataConfig): CoreDrawData[] {
+    const opDetails = (data?.opDetails ?? []).slice(0, maxSize);
     const subCoreNameList: string[] = ['Cube0', 'Vector0', 'Vector1'];
-    const data = originData.map(item => ({
+    const maxCoreNum = getCoreNum(data.soc);
+    const drawData = opDetails.map(item => ({
         name: `Core${item.coreId}`.slice(0, MAX_TEXT_LENGTH),
         children: subCoreNameList.map(subCoreName => {
             const subCore = item.subCoreDetails.find(subCoreItem => (subCoreItem.subCoreName ?? '').toLowerCase() === subCoreName.toLowerCase())?.[showAs];
@@ -94,7 +108,25 @@ export function getDrawData({ data: originData, showAs }: DataConfig): CoreDrawD
             };
         }),
     }));
-    return data;
+    for (let i = drawData.length; i < maxCoreNum; i++) {
+        drawData.push(
+            {
+                name: `Core${i}`,
+                children: subCoreNameList.map(subCoreName =>
+                    ({
+                        name: subCoreName,
+                        value: '',
+                        level: '',
+                    }),
+                ),
+            },
+        );
+    }
+    return drawData;
+}
+
+function getCoreNum(soc: string): number {
+    return Object.entries(CORE_NUM_910).find(([key]) => soc.includes(`910${key}`))?.[1] ?? 0;
 }
 
 function getSubCoreValue(showAs: ShowAs, value?: number): string | number {

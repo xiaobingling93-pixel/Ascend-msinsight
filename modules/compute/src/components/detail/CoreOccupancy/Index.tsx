@@ -65,7 +65,7 @@ const Index = observer(({ session }: { session: Session }): JSX.Element => {
     return data?.soc?.includes('910B')
         ? (<CollapsiblePanel title={tDetails('Core Occupancy')}>
             <Filter handleFilterChange={handleFilterChange}/>
-            <CoreChart condition={condition} session={session} data={data.opDetails}/>
+            <CoreChart condition={condition} session={session} data={data}/>
             <Advice text={data.advice}/>
         </CollapsiblePanel>)
         : <></>;
