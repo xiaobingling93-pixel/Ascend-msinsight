@@ -333,6 +333,9 @@ public:
 
     static inline std::string GetParentPath(const std::string filePath)
     {
+        if (filePath.empty()) {
+            return "";
+        }
 #ifdef _WIN32
         size_t pos = filePath.find_last_of("\\");
         size_t pos2 = filePath.find_last_of("\\/");

@@ -34,7 +34,9 @@ KernelParse::KernelParse()
 
 KernelParse::~KernelParse()
 {
-    threadPool->ShutDown();
+    if (threadPool != nullptr) {
+        threadPool->ShutDown();
+    }
 }
 
 void KernelParse::InitKernelParseMap()
@@ -103,6 +105,10 @@ std::map<std::string, std::vector<std::string>> KernelParse::GetKernelFiles(cons
 
 bool KernelParse::Parse(const std::vector<std::string> &pathList)
 {
+    if (threadPool == nullptr) {
+        ServerLog::Error("Failed to get thread pool in kernel parse.");
+        return false;
+    }
     auto kernelFiles = GetKernelFiles(pathList);
     if (kernelFiles.empty()) {
         ServerLog::Warn("Kernel file is empty.");
@@ -303,6 +309,10 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     std::string line;
     std::map<std::string, size_t> dataMap;
     auto db = dynamic_cast<TextSummaryDataBase*>(Timeline::DataBaseManager::Instance().GetSummaryDatabase(fileId));
+    if (db == nullptr) {
+        ServerLog::Error("Failed to get connection.");
+        return false;
+    }
     bool isHeader = true;
     // 用来存储数据处理的系列函数
     std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,
@@ -392,6 +402,10 @@ void KernelParse::SetParseCallBack()
 bool KernelParse::Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
                         const std::string &selectedFolder)
 {
+    if (threadPool == nullptr) {
+        ServerLog::Error("Failed to get thread pool in kernel parse.");
+        return false;
+    }
     // 获取kernel文件
     std::vector<std::string> kernelFile = FileUtil::FindFilesWithFilter(selectedFolder, std::regex(KERNEL_DETAIL_REG));
     if (kernelFile.empty()) {
@@ -411,7 +425,9 @@ void KernelParse::Reset()
 {
     ServerLog::Info("Summary reset. wait task completed.");
     ParseEndCallBack("", true, "");
-    threadPool->Reset();
+    if (threadPool != nullptr) {
+        threadPool->Reset();
+    }
     ServerLog::Info("Summary task completed.");
     auto databaseList = Timeline::DataBaseManager::Instance().GetAllSummaryDatabase();
     for (auto &db: databaseList) {

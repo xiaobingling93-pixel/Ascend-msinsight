@@ -869,8 +869,8 @@ std::string &DbSummaryDataBase::GenerateQueryDetailSqlForHCCL(std::string &sql) 
     return sql;
 }
 
-std::string &DbSummaryDataBase::GenerateMoreInfoTotalNumForOther(std::string &sql,
-                                                                 OperatorGroupConverter::OperatorGroup opGroup) const
+void DbSummaryDataBase::GenerateMoreInfoTotalNumForOther(std::string &sql,
+                                                         OperatorGroupConverter::OperatorGroup opGroup) const
 {
     std::string condition = (opGroup == OperatorGroupConverter::OperatorGroup::OP_TYPE_GROUP) ?
                             " op_type = ?" : " name = ? AND input_shapes = ?";
@@ -884,7 +884,6 @@ std::string &DbSummaryDataBase::GenerateMoreInfoTotalNumForOther(std::string &sq
           "     JOIN STRING_IDS AS INPUTSHAPES ON INPUTSHAPES.id = COMPUTE_TASK_INFO.inputShapes"
           "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
           "     WHERE accelerator_core = ? AND" + condition + " ) subquery";
-    return sql;
 }
 
 template <typename T>
