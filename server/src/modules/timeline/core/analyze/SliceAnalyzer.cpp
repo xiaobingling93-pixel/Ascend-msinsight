@@ -136,6 +136,9 @@ uint32_t SliceAnalyzer::ComputeFlowPointDepth(std::vector<SliceDomain> &cacheSli
                 break;
             }
         }
+        if (it == cacheSlices.end()) {
+            return 0;
+        }
         return it->depth;
     }
     if (type == Protocol::LINE_END || type == Protocol::LINE_END_OPTIONAL) {
