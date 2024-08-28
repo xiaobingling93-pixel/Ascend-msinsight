@@ -218,7 +218,7 @@ const customNodeClass = (data: TreeData) => {
 }
 
 :deep(.el-tree-node__content:has(.activate-node)) {
-    background-color: var(--mi-bg-color-light);
+    background-color: var(--mi-tree-bg-color-light);
 }
 
 .btn-box {

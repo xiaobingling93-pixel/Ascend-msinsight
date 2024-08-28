@@ -60,6 +60,7 @@ body {
     --mi-bg-color-dark: #ebeff6;
     --mi-bg-color-light: #f4f6fa;
     --mi-bg-color-lighter: #ffffff;
+    --mi-tree-bg-color-light: #EBEFF6;
     --mi-text-color-primary: #000000;
     --mi-text-color-secondary: #4e5865;
     --mi-text-color-tertiary: #8d98aa;
@@ -84,6 +85,7 @@ html.dark {
     --mi-bg-color-dark: #181b20;
     --mi-bg-color-light: #2a2f37;
     --mi-bg-color-lighter: #343a43;
+    --mi-tree-bg-color-light: #343A43;
     --mi-text-color-primary: #ffffff;
     --mi-text-color-secondary: #d3dce9;
     --mi-text-color-placeholder: #626d7c;
