@@ -3,6 +3,7 @@
  *
  */
 
+#include <unordered_set>
 #include "pch.h"
 #include "SourceProtocol.h"
 #include "SourceProtocolUtil.h"
@@ -156,6 +157,19 @@ template<> std::optional<document_t> ToResponseJson<DetailsLoadInfoResponse>(con
     return std::move(json);
 }
 
+std::vector<std::string> RemoveDuplicateAdvice(const std::vector<std::string> &list)
+{
+    std::vector<std::string> result;
+    std::unordered_set<std::string> set;
+    for (const auto &item: list) {
+        if (set.find(item) == set.end()) {
+            set.insert(item);
+            result.emplace_back(item);
+        }
+    }
+    return result;
+}
+
 template<>
 std::optional<document_t> ToResponseJson<DetailsMemoryGraphResponse>(const DetailsMemoryGraphResponse &response)
 {
@@ -166,7 +180,7 @@ std::optional<document_t> ToResponseJson<DetailsMemoryGraphResponse>(const Detai
     json_t coreMemory(kArrayType);
     for (const auto &item: response.body.coreMemory) {
         json_t singleCoreMemory(kObjectType);
-        JsonUtil::AddMember(singleCoreMemory, "advice", item.advice, allocator);
+        JsonUtil::AddMember(singleCoreMemory, "advice", RemoveDuplicateAdvice(item.advice), allocator);
         JsonUtil::AddMember(singleCoreMemory, "blockId", item.blockId, allocator);
         json_t l2CacheJson(kObjectType);
         JsonUtil::AddMember(l2CacheJson, "hitRatio", item.l2Cache.hitRatio, allocator);
@@ -219,7 +233,7 @@ std::optional<document_t> ToResponseJson<DetailsMemoryTableResponse>(const Detai
     json_t memoryTable(kArrayType);
     for (const auto &item: response.body.memoryTable) {
         json_t singleMemoryTable(kObjectType);
-        JsonUtil::AddMember(singleMemoryTable, "advice", item.advice, allocator);
+        JsonUtil::AddMember(singleMemoryTable, "advice", RemoveDuplicateAdvice(item.advice), allocator);
         JsonUtil::AddMember(singleMemoryTable, "blockId", item.blockId, allocator);
         JsonUtil::AddMember(singleMemoryTable, "tableOpType", item.tableOpType, allocator);
         json_t tableDetailListJson(kArrayType);
