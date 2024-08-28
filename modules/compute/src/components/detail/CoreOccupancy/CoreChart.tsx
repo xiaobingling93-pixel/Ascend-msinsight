@@ -23,7 +23,7 @@ const MAX_CORE_NUMBER = 1000;
 const Container = styled.div`
     .chart-box {
         min-width: 500px;
-        max-height: 600px;
+        max-height: 620px;
         min-height: 300px;
         margin: 10px 0 20px;
         overflow: auto;

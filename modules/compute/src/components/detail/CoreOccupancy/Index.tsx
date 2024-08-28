@@ -44,6 +44,8 @@ const Index = observer(({ session }: { session: Session }): JSX.Element => {
     const [condition, setCondition] = useState<ICondition>(defaultCondition);
     const [data, setData] = useState<ICoreOccupancy>(defaultData);
     const { t: tDetails } = useTranslation('details');
+    const hasInfo = data?.opDetails?.length > 0 || (data?.soc !== undefined && data?.soc !== null && data?.soc !== '');
+
     const handleFilterChange = (newCondition: ICondition): void => {
         setCondition({ ...condition, ...newCondition });
     };
@@ -62,7 +64,7 @@ const Index = observer(({ session }: { session: Session }): JSX.Element => {
         updateData();
     }, [session.parseStatus]);
 
-    return data?.soc?.includes('910B')
+    return hasInfo
         ? (<CollapsiblePanel title={tDetails('Core Occupancy')}>
             <Filter handleFilterChange={handleFilterChange}/>
             <CoreChart condition={condition} session={session} data={data}/>
