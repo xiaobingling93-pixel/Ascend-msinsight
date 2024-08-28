@@ -9,7 +9,7 @@ import { type Session } from '../../../entity/session';
 import Filter, { defaultCondition, type ICondition } from './Filter';
 import CoreChart from './CoreChart';
 import { queryCoreOccupancy } from '../../RequestUtils';
-import { Advice } from 'ascend-utils';
+import { Hit } from 'ascend-utils';
 export interface ICoreOccupancy {
     soc: string; // 算子运行平台
     opType: string; // 算子类型：vector, cube, mix
@@ -68,7 +68,7 @@ const Index = observer(({ session }: { session: Session }): JSX.Element => {
         ? (<CollapsiblePanel title={tDetails('Core Occupancy')}>
             <Filter handleFilterChange={handleFilterChange}/>
             <CoreChart condition={condition} session={session} data={data}/>
-            <Advice text={data.advice}/>
+            {data?.advice?.length > 0 && (<Hit text={data.advice} style={{ marginTop: '10px' }}/>)}
         </CollapsiblePanel>)
         : <></>;
 });

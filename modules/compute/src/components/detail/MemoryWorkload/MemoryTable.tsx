@@ -8,7 +8,7 @@ import { type Icondition } from './Filter';
 import { queryMemoryTable } from '../../RequestUtils';
 import { LimitHit } from '../../LimitSet';
 import { ResizeTable } from 'ascend-resize';
-import { firstLetterUpper, Advice } from 'ascend-utils';
+import { firstLetterUpper, Hit } from 'ascend-utils';
 import { type Session } from '../../../entity/session';
 
 interface ItableDetail {
@@ -118,7 +118,7 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
                     pagination={false}
                 />
             ))}
-            {advice.length > 0 && (<Advice text={advice} />) }
+            {advice.length > 0 && (<Hit text={advice} style={{ marginTop: '10px' }}/>) }
         </div>
     );
 });

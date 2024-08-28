@@ -55,7 +55,12 @@ const StyledAdvice = styled.div`
     }
 `;
 
-export function Advice({ text, style = {} }: { text: React.ReactNode | React.ReactNode[]; style?: React.CSSProperties }): JSX.Element {
+interface IAdviceProps {
+    title?: React.ReactNode;
+    text: React.ReactNode | React.ReactNode[];
+    style?: React.CSSProperties ;
+}
+export function Advice({text, title, style = {} }: IAdviceProps ): JSX.Element {
     const { t } = useTranslation();
     const splitText = (str: React.ReactNode): React.ReactNode => {
         if (typeof str !== 'string') {
@@ -67,10 +72,13 @@ export function Advice({ text, style = {} }: { text: React.ReactNode | React.Rea
     return <StyledAdvice style={style}>
         <div>
             <BulbIcon/>
-            <span>{t('Advice')}:</span>
+            <span>{title ?? `${t('Advice')}:`}</span>
         </div>
         <div>{Array.isArray(text) ? text.map(item => (<div>{splitText(item)}</div>)) : splitText(text)}</div>
     </StyledAdvice>;
+}
+export function Hit(props: IAdviceProps): JSX.Element {
+    return <Advice {...props} title={''}/>;
 }
 
 export function limitInput(maxlength?: string): void {

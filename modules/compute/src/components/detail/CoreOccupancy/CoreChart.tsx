@@ -25,7 +25,7 @@ const Container = styled.div`
         min-width: 500px;
         max-height: 620px;
         min-height: 300px;
-        margin: 10px 0 20px;
+        margin: 10px 0 0;
         overflow: auto;
         display: flex;
     }
