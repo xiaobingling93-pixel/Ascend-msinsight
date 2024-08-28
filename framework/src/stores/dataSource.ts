@@ -124,13 +124,11 @@ export const useDataSources = defineStore('dataSources', () => {
     };
 
     const menuTree = computed<TreeNodeType[]>(() => {
-            // 树状目录索引值，从1开始计
-            let index = 1;
             return dataSources.value.filter(dataSource => dataSource.dataPath.length !== 0).map(dataSource => ({
-                id: index++,
+                id: dataSource.projectName,
                 projectName: '',
                 label: dataSource.projectName,
-                children: dataSource.dataPath.map(data => ({ id:index++, projectName: dataSource.projectName, label: data})),
+                children: dataSource.dataPath.map(data => ({ id: `${dataSource.projectName}-${data}`, projectName: dataSource.projectName, label: data})),
                 cancelable: true,
             }));
         }

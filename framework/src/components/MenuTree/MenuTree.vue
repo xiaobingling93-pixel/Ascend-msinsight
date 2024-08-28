@@ -17,7 +17,7 @@ import ContextMenu from '@/components/ContextMenu.vue';
 import { storeToRefs } from 'pinia';
 
 interface TreeData {
-    id: number;
+    id: string;
     label: string;
     projectName: string;
 }
@@ -34,6 +34,10 @@ const { setBaselineData, setCompareData, cancelBaselineData, cancelCompareData }
 const { baselineDataInfo, compareDataInfo } = storeToRefs(compareConfigStore);
 
 const selectProjectExplorerInfo = ref({ projectName: '', fileName: '' });
+
+const collapsedKeys = ref<Set<string>>(new Set());
+const allKeys = computed(() => props.dataSource.map(item => item.id));
+const expandedKeys = computed(() => allKeys.value.filter(item => !collapsedKeys.value.has(item)));
 
 const allMenuItems = [
     {
@@ -88,6 +92,14 @@ const isActiveNode = (node: Node, data: TreeData): boolean => {
     return data.label === activateNode.value.filePath && data.projectName === activateNode.value.projectName;
 };
 
+const handleNodeExpand = (data: TreeData) => {
+  collapsedKeys.value.delete(data.id);
+};
+
+const handleNodeCollapse = (data: TreeData) => {
+  collapsedKeys.value.add(data.id);
+};
+
 const handleNodeClick = (data: any, node: any) => {
     let dataSource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] } as DataSource;
     if (node.level === 1) {
@@ -137,10 +149,11 @@ const customNodeClass = (data: TreeData) => {
             <el-tree
                 :data="props.dataSource"
                 node-key="id"
-                :default-expand-all="true"
+                :default-expanded-keys="expandedKeys"
                 :expand-on-click-node="false"
-                :current-node-key="2"
                 :props="{ class: customNodeClass }"
+                @node-expand="handleNodeExpand"
+                @node-collapse="handleNodeCollapse"
                 @node-click="handleNodeClick"
             >
                 <template #default="{ node, data }">

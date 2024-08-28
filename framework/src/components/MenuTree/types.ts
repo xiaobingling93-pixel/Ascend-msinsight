@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 export interface TreeNodeType {
-    id: number;
+    id: string;
     projectName: string;
     label: string;
     cancelable?: boolean;
