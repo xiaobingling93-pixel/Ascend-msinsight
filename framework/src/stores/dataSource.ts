@@ -153,6 +153,9 @@ export const useDataSources = defineStore('dataSources', () => {
                 await request(dataSource, 'timeline', { command: 'remote/reset', params: {} });
                 lastDataSource.value = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
             }
+            if (compareConfig.baselineDataInfo.projectName === dataSource.projectName) {
+                await compareConfig.cancelBaselineData();
+            }
             // 发送请求给后端，清空该项目目录数据
             await request(dataSource, 'global', {command: 'files/deleteProjectExplorer',
                 params: {projectName: dataSource.projectName, dataPath: []}});
@@ -183,6 +186,10 @@ export const useDataSources = defineStore('dataSources', () => {
             body: { dataSource, singleDataPath },
         });
         try {
+            if (compareConfig.baselineDataInfo.projectName === dataSource.projectName &&
+                compareConfig.baselineDataInfo.filePath === singleDataPath) {
+                await compareConfig.cancelBaselineData();
+            }
             await request(dataSource, 'global', {command: 'files/deleteProjectExplorer',
                 params: {projectName: dataSource.projectName, dataPath: [singleDataPath]}});
         } catch {
