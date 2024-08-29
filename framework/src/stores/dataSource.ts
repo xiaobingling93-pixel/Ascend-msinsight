@@ -65,6 +65,7 @@ export const useDataSources = defineStore('dataSources', () => {
     const dataSources = ref<DataSource[]>([{ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] }]);
     // 当前选中数据，projectName为选中一级目录，dataPath为二级目录，为空时表示选中的是一级目录，不为空则表示选中的是二级目录
     const lastDataSource = ref<DataSource>({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
+    const compareConfig = useCompareConfig();
     function checkExistedServer(dataSource: DataSource, importMethod?: 'drag', result?: any): boolean {
         if (session.isReset) {
             session.reset();
@@ -103,12 +104,13 @@ export const useDataSources = defineStore('dataSources', () => {
         // 如果是只是切换二级目录，则只修改当前选中内容
         if (action === ProjectActionEnum.TRANSFER_PROJECT && dataSource.projectName === lastDataSource.value.projectName) {
             lastDataSource.value = dataSource;
-            useCompareConfig().cancelCompareData();
+            compareConfig.cancelCompareData();
             return;
         }
         if (checkExistedServer(dataSource)) {
             return;
         }
+        await compareConfig.cancelBaselineData();
         if (isExistedRemote(dataSource)) {
             addDataPath(dataSource, action, isConflict);
         } else {
@@ -204,7 +206,7 @@ export const useDataSources = defineStore('dataSources', () => {
                     newProjectName,
                 },
             });
-            useCompareConfig().updateProjectName(oldProjectName, newProjectName);
+            compareConfig.updateProjectName(oldProjectName, newProjectName);
             const idx = dataSources.value.findIndex((item) =>
                 item.projectName === oldProjectName);
             if (idx !== -1) {

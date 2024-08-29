@@ -19,6 +19,8 @@ const fileIsExist = ref(false);
 const clickAble = ref(true);
 const dialogCoverVisible = ref(false);
 
+const loadingMask = useLoading();
+
 const MAX_FILE_PATH_LENGTH_WINDOWS = 260;
 const MAX_FILE_PATH_LENGTH_LINUX = 4096;
 const maxPathLen = isWindows ? MAX_FILE_PATH_LENGTH_WINDOWS : MAX_FILE_PATH_LENGTH_LINUX;
@@ -54,16 +56,17 @@ const addClickProtect = (func: () => void): void => {
 };
 
 const handleConfirm = async () => {
-    useLoading().open({});
+    loadingMask.open({});
     const result = await resourceComp.value.doCheckFileVallid(props.projectName);
     if (result != ProjectErrorType.NO_ERRORS) {
-      useLoading().close();
+      loadingMask.close();
       dialogCoverVisible.value = true;
       projectCheckResult.value = result;
     } else {
       const setPathResult = resourceComp.value.doSetCurrentPath(props.projectName, false);
       emit('update:showModal', false);
       if (!setPathResult) {
+        loadingMask.close();
         ElMessage.error('Error');
       }
     }
