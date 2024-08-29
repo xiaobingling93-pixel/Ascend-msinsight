@@ -4,9 +4,6 @@
   "private": true,
   "main": "src/lib.js",
   "types": "src/lib.d.ts",
-  "dependencies": {
-    "@cloudsop/horizon": "0.0.77"
-  },
   "scripts": {
     "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
     "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production GENERATE_SOURCEMAP=false CI=false tsc --declaration",

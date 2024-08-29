@@ -1,20 +1,8 @@
 {
-  "name": "insight_frontend",
+  "name": "ascend-timeline",
   "version": "0.1.0",
   "private": true,
   "homepage": "./",
-  "dependencies": {
-    "@cloudsop/horizon": "0.0.77",
-    "@emotion/react": "11.11.0",
-    "@emotion/styled": "11.11.0",
-    "antd": "4.24.13",
-    "d3": "7.8.5",
-    "i18next": "23.10.0",
-    "lodash": "4.17.21",
-    "mobx": "6.10.0",
-    "mobx-react": "9.0.0",
-    "react-i18next": "12.1.4"
-  },
   "scripts": {
     "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
     "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production GENERATE_SOURCEMAP=false CI=false craco build",

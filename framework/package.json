@@ -1,6 +1,6 @@
 {
-  "name": "insight_framework_core",
-  "version": "0.0.0",
+  "name": "ascend-insight",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "start": "vite --mode staging",
