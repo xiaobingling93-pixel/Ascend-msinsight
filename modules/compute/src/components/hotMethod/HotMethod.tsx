@@ -256,8 +256,8 @@ const Index = observer(({ session }: { session: Session }) => {
         }));
         let maxCycles = 1;
         list.forEach(item => {
-            if (!isNaN(Number(item.Cycles))) {
-                maxCycles = Math.max(maxCycles, Number(item.Cycles));
+            if (!isNaN(Number(item.cycles))) {
+                maxCycles = Math.max(maxCycles, Number(item.cycles));
             }
         });
         list.forEach(item => {
