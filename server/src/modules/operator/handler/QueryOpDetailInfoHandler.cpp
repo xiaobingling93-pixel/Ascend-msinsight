@@ -114,7 +114,7 @@ namespace Dic::Module::Operator {
         WsSession &session = *WsSessionManager::Instance().GetSession();
         std::unique_ptr<OperatorDetailInfoResponse> responsePtr = std::make_unique<OperatorDetailInfoResponse>();
         OperatorDetailInfoResponse &response = *responsePtr;
-        bool rst = false;
+        bool rst = true;
         std::string errorMsg;
         if (request.params.CommonCheck(errorMsg)) {
             rst = request.params.isCompare ?
@@ -136,7 +136,9 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to query currnet detail Info, RankId = ", rankId);
             return false;
         }
-
+        if (request.params.topK == 0) {
+            return true;
+        }
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
         auto databaseBaseline = DataBaseManager::Instance().GetSummaryDatabase(baselineId);
         std::vector<Protocol::OperatorDetailInfoRes> baselineRes;

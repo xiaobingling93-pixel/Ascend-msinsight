@@ -95,14 +95,14 @@ namespace Dic::Module::Operator {
         std::unique_ptr<OperatorStatisticInfoResponse> responsePtr = std::make_unique<OperatorStatisticInfoResponse>();
         OperatorStatisticInfoResponse &response = *responsePtr;
 
-        bool rst = false;
+        bool rst = true;
         std::string errorMsg;
-        if ((request.params.CommonCheck(errorMsg) && request.params.StatisticGroupCheck(errorMsg))) {
+        if ((request.params.topK != 0) && request.params.CommonCheck(errorMsg) &&
+            request.params.StatisticGroupCheck(errorMsg)) {
             rst = request.params.isCompare ?
                 HandleCompareDataRequest(request, dynamic_cast<OperatorStatisticInfoResponse &>(*responsePtr)) :
                 HandleStatisticcDataRequest(request, dynamic_cast<OperatorStatisticInfoResponse &>(*responsePtr));
         }
-
         SetBaseResponse(request, response);
         SetResponseResult(response, rst);
         session.OnResponse(std::move(responsePtr));
@@ -118,7 +118,6 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to query current Statistic Info, RankId = ", rankId);
             return false;
         }
-    
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
         auto databaseBaseline = DataBaseManager::Instance().GetSummaryDatabase(baselineId);
         std::vector<Protocol::OperatorStatisticInfoRes> baselineRes;

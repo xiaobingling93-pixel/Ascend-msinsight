@@ -77,22 +77,14 @@ namespace Dic::Protocol {
     // 获取按算子类型统计耗时信息以填充表格的响应
     struct OperatorStatisticInfoResponse : public Response {
         OperatorStatisticInfoResponse() : Response(REQ_RES_OPERATOR_STATISTIC_INFO) {};
-        int64_t total;
+        int64_t total{0};
         std::vector<OperatorStatisticCmpInfoRes> datas;
     };
 
     // 获取按算子详情信息以填充表格的响应
     struct OperatorDetailInfoResponse : public Response {
         OperatorDetailInfoResponse() : Response(REQ_RES_OPERATOR_DETAIL_INFO) {};
-        int64_t total;
-        std::string level; // l0, l1, l2
-        std::vector<OperatorDetailCmpInfoRes> datas;
-    };
-
-    // 获取按算子详情信息以填充表格的响应
-    struct OperatorDetailInfoCmpResponse : public Response {
-        OperatorDetailInfoCmpResponse() : Response(REQ_RES_OPERATOR_DETAIL_INFO) {};
-        int64_t total;
+        int64_t total{0};
         std::string level; // l0, l1, l2
         std::vector<OperatorDetailCmpInfoRes> datas;
     };
