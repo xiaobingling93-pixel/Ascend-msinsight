@@ -105,6 +105,9 @@ def build_server():
         os.makedirs(tmp_path)
         bin_path = os.path.join(output_path, tmp, 'bin')
         for file in os.listdir(bin_path):
+            if os.path.isdir(os.path.join(bin_path, file)):
+                shutil.copytree(os.path.join(bin_path, file), os.path.join(tmp_path, file))
+                continue
             if file.endswith('.a'):  # 跳过.a文件
                 continue
             shutil.copyfile(os.path.join(bin_path, file), os.path.join(tmp_path, file))

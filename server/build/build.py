@@ -30,7 +30,8 @@ CMAKE_BUILD_DIR = os.path.join(BUILD_DIR, 'build')
 HOME_DIR = os.path.dirname(BUILD_DIR)
 THIRD_PARTY_DIR = os.path.join(HOME_DIR, 'third_party')
 SRC_DIR = os.path.join(HOME_DIR, 'src')
-CLUSTER_ANALYSE_DIR = os.path.join(THIRD_PARTY_DIR, 'att', 'profiler', 'cluster_analyse')
+CLUSTER_ANALYSE = 'cluster_analyse'
+CLUSTER_ANALYSE_DIR = os.path.join(THIRD_PARTY_DIR, 'att', 'profiler', CLUSTER_ANALYSE)
 PROTO_DIR = os.path.join(SRC_DIR, 'protos')
 
 OUTPUT_DIR = os.path.join(HOME_DIR, 'output')
@@ -131,17 +132,23 @@ def build_bin(args):
 
     att_dir = os.path.join(OUTPUT_DIR, gxx_type)
     att_bin_dir = os.path.join(att_dir, 'bin')
-    att_main_path = os.path.join(CLUSTER_ANALYSE_DIR, 'cluster_analysis.py')
-    build_att = [
-        'pyinstaller', '--collect-submodules', 'cluster_analyse', '--path=' + CLUSTER_ANALYSE_DIR,
-        '--distpath=' + att_bin_dir, '--specpath', CMAKE_BUILD_DIR, '--onefile', att_main_path
-    ]
-    if not IS_WINDOWS:
-        build_att.append('-s')
-    result = execute_cmd(build_att, BUILD_DIR)
-    if result != 0:
-        build_log('Failed to execute build att command.')
-        return result
+    if IS_LINUX:
+        script_path = os.path.join(att_bin_dir, CLUSTER_ANALYSE)
+        if os.path.exists(script_path):
+            shutil.rmtree(script_path)
+        shutil.copytree(CLUSTER_ANALYSE_DIR, os.path.join(att_bin_dir, CLUSTER_ANALYSE), copy_function=shutil.copy2)
+    else:
+        att_main_path = os.path.join(CLUSTER_ANALYSE_DIR, 'cluster_analysis.py')
+        build_att = [
+            'pyinstaller', '--collect-submodules', CLUSTER_ANALYSE, '--path=' + CLUSTER_ANALYSE_DIR,
+            '--distpath=' + att_bin_dir, '--specpath', CMAKE_BUILD_DIR, '--onefile', att_main_path
+        ]
+        if not IS_WINDOWS:
+            build_att.append('-s')
+        result = execute_cmd(build_att, BUILD_DIR)
+        if result != 0:
+            build_log('Failed to execute build att command.')
+            return result
 
     build_log('end build.\n')
 

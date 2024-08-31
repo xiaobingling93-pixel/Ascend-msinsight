@@ -358,37 +358,39 @@ bool ClusterFileParser::AttAnalyze(const std::string& selectedPath, const std::s
         ServerLog::Warn("validate string select path failed! select path", selectedPath);
         return false;
     }
-    std::string regex;
     std::string currPath = FileUtil::GetCurrPath();
-    std::string switchCommand = "";
+    std::string command = "cd \"" + FileUtil::PathPreprocess(selectedPath);
+
 #ifdef _WIN32
-    regex = "cluster_analysis.exe";
+    std::string analysisPath = FileUtil::SplicePath(currPath, "cluster_analysis.exe");
     // windows 下数据和安装目录不在一个磁盘需要切换磁盘
+    std::string switchCommand = "";
     if (std::strcmp(currPath.substr(0, 1).c_str(), selectedPath.substr(0, 1).c_str()) != 0) {
         switchCommand = " && " + selectedPath.substr(0, INT_TWO);
     }
+    command += "\"" + switchCommand + " && \"" + analysisPath + "\" -d .";
+#elifdef __APPLE__
+    std::string analysisPath = FileUtil::SplicePath(currPath, "cluster_analysis");
+    command += "\" && \"" + analysisPath + "\" -d .";
 #else
-    regex = "cluster_analysis";
+    std::string analysisPath = currPath + FILE_SEPARATOR + "cluster_analyse" + FILE_SEPARATOR + "cluster_analysis.py";
+    command += "\" && python3 \"" + analysisPath + "\" -d .";
 #endif
-    ServerLog::Info("Start find cluster analysis executable file in dir: ", currPath);
-    std::vector<std::string> exePathVector =
-            FileUtil::FindFilesByRegex(currPath, std::regex(regex));
-    if (!exePathVector.empty()) {
-        std::string command = "cd \"" + FileUtil::PathPreprocess(selectedPath) +
-                "\"" + switchCommand + " && \"" + exePathVector[0] + "\" -d .";
+
+    if (!FileUtil::CheckFilePathExist(analysisPath)) {
+        ServerLog::Error("Can not find cluster analysis execute file: ", analysisPath);
+        return false;
+    } else {
         if (!model.empty()) {
             command.append(" -m ").append(model);
         }
-        ServerLog::Info("start execute command:", command);
+        ServerLog::Info("Start execute command: ", command);
         int result = std::system(command.c_str());
         if (result != 0) {
-            ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file, command:", command);
+            ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file, command: ", command);
             return false;
         }
         ServerLog::Info("Execute cluster analysis success, command:", command);
-    } else {
-        ServerLog::Warn("Can not find cluster analysis execute file under.", selectedPath);
-        return false;
     }
     return true;
 }

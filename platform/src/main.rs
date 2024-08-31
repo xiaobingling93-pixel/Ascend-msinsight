@@ -58,12 +58,13 @@ fn run_server(
 
     #[cfg(target_os = "linux")]
     {
-        env::set_var(
-            "LD_LIBRARY_PATH",
-            server_path
-                .join("resources/profiler/server/:$LD_LIBRARY_PATH")
-                .as_path(),
+        let ld_library_path = env::var_os("LD_LIBRARY_PATH").unwrap_or_default();
+        let new_ld_library_path = format!(
+            "{}:{}",
+             server_path.join("resources/profiler/server/").display(),
+             ld_library_path.to_string_lossy()
         );
+        env::set_var("LD_LIBRARY_PATH", &new_ld_library_path);
     }
 
     for tmp in SERVER_RELATIVE_LIST {
