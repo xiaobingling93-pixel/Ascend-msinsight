@@ -278,7 +278,7 @@ const filterDropdownCom = ({ setSelectedKeys, selectedKeys, handleSearch, confir
     return (
         <div style={{ padding: 8 }} onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>): void => { e.stopPropagation(); }}>
             <Input
-                placeholder="Search by Name"
+                placeholder={`${i18n.t('buttonText:Search')} ${i18n.t('filterColumnName:Name')}`}
                 value={selectedKeys[0] !== null && selectedKeys[0] !== undefined ? selectedKeys[0] : ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                     setSelectedKeys((e.target.value !== null && e.target.value !== undefined) ? [e.target.value] : [])}
@@ -293,14 +293,14 @@ const filterDropdownCom = ({ setSelectedKeys, selectedKeys, handleSearch, confir
                     size="small"
                     style={{ width: 80 }}
                 >
-                    Search
+                    {i18n.t('buttonText:Search')}
                 </Button>
                 <Button
                     onClick={(): void => { if (clearFilters) { handleReset(confirm, dataIndex, clearFilters); } }}
                     size="small"
                     style={{ width: 80 }}
                 >
-                    Reset
+                    {i18n.t('buttonText:Reset')}
                 </Button>
             </Space>
         </div>

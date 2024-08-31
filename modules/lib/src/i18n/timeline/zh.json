@@ -10,6 +10,11 @@
     "Rank ID": "卡序号",
     "Host": "机器名称",
     "Offset": "偏移量",
+    "All": "全部选中",
+    "None": "全部取消",
+    "Card Filter": "卡过滤",
+    "Units Filter": "泳道过滤",
+    "Select filter type": "选择过滤类型",
     "contextMenu": {
       "Fit to screen": "整屏显示",
       "Find in Communication": "在通信中查找",

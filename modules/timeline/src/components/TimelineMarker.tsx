@@ -28,6 +28,7 @@ import { TIME_MARKER_AXIS_HEIGHT } from './TimeMakerAxis';
 import { ReactComponent as CloseIcon } from '../assets/images/insights/UIicon_closeFlagList.svg';
 import type { TimeStamp } from '../entity/common';
 import { adaptDpr } from 'ascend-utils';
+import { Button } from 'ascend-components';
 
 const FLAG_DEFAULT_NAME_REG = /default-\d+/;
 const SCROLLBAR_WIDTH = 7;
@@ -387,9 +388,8 @@ const SingleFlagEditDiv = styled.div`
     pointer-events: auto;
     padding-top: 13px;
     width: 258px;
-    height: 189px;
     box-shadow: 0 10px 100px 0 rgba(0,0,0,0.50);
-    border-radius: 16px;
+    border-radius: 4px;
 `;
 
 const Describe = styled.div`
@@ -421,31 +421,6 @@ const ColorText = styled.div`
     line-height: 19px;
 `;
 
-const ConfirmButton = styled.button`
-    position: absolute;
-    left: 33px;
-    bottom: 37px;
-    width: 88px;
-    background: #5291FF;
-    border: 0px;
-    border-radius: 20px;
-    text-align: center;
-    font-size: 12px;
-    line-height: 28px;
-`;
-const DeleteButton = styled.button`
-    position: absolute;
-    left: 137px;
-    bottom: 37px;
-    height: 28px;
-    width: 88px;
-    border: 0px;
-    border-radius: 20px;
-    text-align: center;
-    font-size: 12px;
-    line-height: 28px;
-`;
-
 const InputLengthContainer = styled.div`
     float: left;
     position: absolute;
@@ -455,6 +430,14 @@ const InputLengthContainer = styled.div`
 
 const EditInputContainer = styled.div`
     height: 34px;
+`;
+
+const ButtonContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 36px 0 30px;
 `;
 
 const SingleFlagEditElement = observer((props: TimeLineMakerProps): JSX.Element => {
@@ -476,7 +459,7 @@ const SingleFlagEditElement = observer((props: TimeLineMakerProps): JSX.Element 
     const cancelListener = (): void => handleCancel(session, index);
     const inputChangeListener = (e: React.ChangeEvent<HTMLInputElement>): void => handleEditInputChange(e, timelineAxisFlag, theme);
     return timelineAxisFlag !== undefined
-        ? <SingleFlagEditDiv id={ 'singleFlagEdit' } style={{ background: theme.tooltipBGColor }}>
+        ? <SingleFlagEditDiv id={ 'singleFlagEdit' } style={{ background: theme.bgColorLight }}>
             <Describe style={{ color: theme.svgPlayBackgroundColor }}>{t('timelineMarker:description')}<CloseIcon style={{ float: 'right', marginRight: '15px', fill: '#71757F' }} onClick={cancelListener}></CloseIcon></Describe>
             <EditInputContainer>
                 <EditInput style={{ color: theme.svgPlayBackgroundColor, backgroundColor: theme.searchBackgroundColor }} defaultValue={ timelineAxisFlag.descriptionCache } onChange={inputChangeListener} type={ 'text' }/>
@@ -502,8 +485,10 @@ const SingleFlagEditElement = observer((props: TimeLineMakerProps): JSX.Element 
                 }) }
                 <BrushIcon id={ 'brushIconBox' } onClick={ diyColorListener } style={{ fill: theme.svgPlayBackgroundColor, marginTop: '6px', marginRight: '6px' }}/>
             </div>
-            <ConfirmButton style={{ color: theme.svgPlayBackgroundColor }} onClick={ confirmListener }>{t('timelineMarker:confirmButton')}</ConfirmButton>
-            <DeleteButton style={{ color: theme.svgPlayBackgroundColor, background: theme.solidLine }} onClick={ deleteListener }>{t('timelineMarker:deleteButton')}</DeleteButton>
+            <ButtonContainer>
+                <Button type={'primary'} onClick={ confirmListener }>{t('timelineMarker:confirmButton')}</Button>
+                <Button onClick={ deleteListener }>{t('timelineMarker:deleteButton')}</Button>
+            </ButtonContainer>
         </SingleFlagEditDiv>
         : <></>;
 });
@@ -840,7 +825,7 @@ export const ColorEditor = observer((props: TimeLineMakerProps): JSX.Element => 
             setTheme(themeInstance.getThemeType());
         }
     }, [themeInstance.getThemeType()]);
-    return <SingleFlagEditDiv id={ 'colorEditor' } style={{ backgroundColor: theme.tooltipBGColor, height: '150px' }}>
+    return <SingleFlagEditDiv id={ 'colorEditor' } style={{ backgroundColor: theme.bgColorLight, height: '150px' }}>
         <ColorText id={ 'colorText' } style={{ color: theme.svgPlayBackgroundColor, userSelect: 'none' }}>{t('timelineMarker:color')}</ColorText >
         <div id={ 'colorBoxes' } style={{ height: '30px', width: '220px', marginLeft: '19px' }}>
             { session.timelineMaker.timelineFlagColorList.map((item: string, index: number) => {
@@ -859,14 +844,16 @@ export const ColorEditor = observer((props: TimeLineMakerProps): JSX.Element => 
             }) }
             <BrushIcon id={ 'brushIconBox' } onClick={ diyColorListener } style={{ fill: theme.svgPlayBackgroundColor, marginTop: '6px', marginRight: '6px' }}/>
         </div>
-        <ConfirmButton style={{ color: theme.svgPlayBackgroundColor }} onClick={ (): void => {
-            confirmClickHandler(timelineAxisFlag, session, setFlagColor);
-        }}>
-            {t('timelineMarker:confirmButton')}
-        </ConfirmButton>
-        <DeleteButton style={{ color: theme.svgPlayBackgroundColor, background: theme.solidLine }} onClick={closeEditorWindow}>
-            {t('timelineMarker:cancelButton')}
-        </DeleteButton>
+        <ButtonContainer>
+            <Button type={'primary'} onClick={ (): void => {
+                confirmClickHandler(timelineAxisFlag, session, setFlagColor);
+            }}>
+                {t('timelineMarker:confirmButton')}
+            </Button>
+            <Button onClick={closeEditorWindow}>
+                {t('timelineMarker:cancelButton')}
+            </Button>
+        </ButtonContainer>
     </SingleFlagEditDiv>;
 });
 

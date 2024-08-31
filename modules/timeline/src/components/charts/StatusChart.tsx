@@ -135,13 +135,14 @@ export const StatusChart = observer(({
         const yScale = (n: number): number => n * rowHeight;
         const startY = ((height - rowHeight) / 2) + 1;
         ctx?.clearRect(0, 0, width, height);
+        if (unit.isExpanded) { return; }
         draw({ ctx, datas: datasState, xScale, yScale, theme, startY });
         drawExt({
             context: ctx,
             draw: (data, scaleX, scaleY) => draw({ ctx, datas: data, xScale: scaleX, yScale: scaleY, theme, startY }),
             findAll: (condition) => datasState.filter(condition),
         }, xScale, yScale, theme);
-    }, [datasState, rangeAndDomain, ...triggers, theme]);
+    }, [datasState, rangeAndDomain, ...triggers, theme, unit.isExpanded]);
 
     const tooltipProp: TooltipProps<StatusData, StatusData[]> = {
         data: hoveredData,

@@ -10,7 +10,7 @@ import React, { type ChangeEvent, useEffect, useState } from 'react';
 import { SearchIcon } from 'ascend-icon';
 import { ReactComponent as AntdCloseIcon } from '../assets/images/insights/ic_close_filled.svg';
 import type { Session } from '../entity/session';
-import { CustomButton, PressButton, StyledButton } from './base/StyledButton';
+import { CustomButton, StyledButton } from './base/StyledButton';
 import type { SvgType } from './base/rc-table/types';
 import { action, runInAction } from 'mobx';
 import { ThreadUnit } from '../insight/units/AscendUnit';
@@ -34,7 +34,6 @@ const CustomDiv = styled.div`
     height: 32px;
     background: ${(props): string => props.theme.bgColorLight};
     .searchResult {
-        color: ${(props): string => props.theme.svgBackgroundColor};
         font-size: 12px;
         white-space: nowrap;
     }
@@ -55,6 +54,12 @@ const CustomDiv = styled.div`
     button.ant-btn.ant-btn-default {
         font-size: 12px;
     }
+`;
+
+const SearchContainer = styled.div`
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
 `;
 
 interface RankCount {
@@ -263,7 +268,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
         dom = <ImgWithFallback className={'loading'} />;
     } else {
         if (searchIconVisible) {
-            dom = <div className={'search_icon_css'}>
+            dom = <SearchContainer>
                 <Tooltip title={t('Match case', { ns: 'tooltip' })}>
                     <StyledButton icon={isMatchCase
                         ? <div className={'icon_selected_case_match'}/>
@@ -276,12 +281,12 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                         : <div className={'icon_exact_match'}/>} onClick={(): void => changeMatchExactStatus()}></StyledButton>
                 </Tooltip>
                 <CustomButton icon={SearchIcon as any} onClick={onInputPressEnter}></CustomButton>
-            </div>;
+            </SearchContainer>;
         } else {
-            dom = <div className={'search_icon_css'}>
+            dom = <SearchContainer>
                 <StylePagination {...paginationData} onChange={onPageChange} />
-                <PressButton size="small" onClick={doSearchList}>{t('Open in Find Window', { ns: 'buttonText' })}</PressButton>
-            </div>;
+                <Button type={'primary'} size="small" onClick={doSearchList}>{t('Open in Find Window', { ns: 'buttonText' })}</Button>
+            </SearchContainer>;
         }
     }
 
@@ -320,10 +325,9 @@ export const CategorySearch = observer(({ session }: { session: Session}): JSX.E
 
     return (
         <Tooltip overlayStyle={{ maxWidth: 1000 }}
-            overlayInnerStyle={{ maxWidth: 800 }}
+            overlayInnerStyle={{ maxWidth: 800, borderRadius: 2 }}
             title={CategorySearchContent(session)}
             trigger="click"
-            placement="right"
             onOpenChange={onTooltipVisibleChange}
             overlayClassName={'insight-category-search-overlay'}
             align={{ offset: [-8, 3] }}>
@@ -347,8 +351,8 @@ const StylePagination = ({ onChange, current, total }: Props): JSX.Element => {
     useEffect(() => {
         setCurrentValue(current);
     }, [current]);
-    return (<div className={'StylePaginationClass'}>
-        <Button size="middle" disabled={current === 1} icon={<LeftOutlined />} onClick={(): void => onChange(current - 1) }/>
+    return (<div>
+        <Button size="middle" disabled={current === 1} icon={<LeftOutlined />} style={{ minWidth: 'auto' }} onClick={(): void => onChange(current - 1) }/>
         <span><Input
             size="small"
             value={currentValue}
@@ -367,6 +371,6 @@ const StylePagination = ({ onChange, current, total }: Props): JSX.Element => {
             }}
             onPressEnter={(): void => handleSearch(searchNumber)}
         /></span> / <span>{total}</span>
-        <Button size="middle" disabled={current === total} icon={<RightOutlined />} onClick={(): void => onChange(current + 1) }/>
+        <Button size="middle" disabled={current === total} icon={<RightOutlined />} style={{ minWidth: 'auto' }} onClick={(): void => onChange(current + 1) }/>
     </div>);
 };

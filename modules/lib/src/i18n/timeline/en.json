@@ -10,6 +10,11 @@
     "Rank ID": "Rank ID",
     "Host": "Host Name",
     "Offset": "Offset",
+    "All": "All",
+    "None": "None",
+    "Card Filter": "Card Filter",
+    "Units Filter": "Units Filter",
+    "Select filter type": "Select filter type",
     "contextMenu": {
       "Fit to screen": "Fit to screen",
       "Find in Communication": "Find in Communication",

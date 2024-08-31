@@ -13,12 +13,20 @@ import { CustomButton } from './base/StyledButton';
 import type { InsightUnit } from '../entity/insight';
 import type { CardMetaData, ProcessMetaData } from '../entity/data';
 import { useTranslation } from 'react-i18next';
+import i18n from 'ascend-i18n';
 
 const ChildrenContainer = styled.div`
-    color: ${(props): string => props.theme.fontColor};
-    text-align: left;
-    padding-left: 20px;
+    color: ${(props): string => props.theme.textColorPrimary};
+    font-size: 12px;
     user-select: none;
+
+    > div {
+      padding: 5px 11px;
+      cursor: pointer;
+      &:hover{
+        background: ${(props): string => props.theme.primaryColor};
+      }
+    }
 `;
 
 const CustomDiv = styled.div`
@@ -109,7 +117,7 @@ interface CompleteOptionProps {
 }
 
 type UseAutoCompleteHandlesReturnType = [
-    selectValue: string,
+    selectValue: string | null,
     dropdownRenderr: () => JSX.Element,
     isOpen: boolean,
     setIsOpen: React.Dispatch<React.SetStateAction<boolean>>,
@@ -117,7 +125,7 @@ type UseAutoCompleteHandlesReturnType = [
     handleChange: (value: string[]) => void,
 ];
 const useAutoCompleteHandles = (session: Session): UseAutoCompleteHandlesReturnType => {
-    const [selectValue, setSelectValue] = useState<string>('Filter');
+    const [selectValue, setSelectValue] = useState<string | null>(null);
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const { cardNames, unitNames } = useUnitsNameSet(session);
     const [completeOptions, setCompleteOptions] = useState<CompleteOptionProps[]>([]);
@@ -132,11 +140,11 @@ const useAutoCompleteHandles = (session: Session): UseAutoCompleteHandlesReturnT
                 <div key={'file'} onClick={(): void => {
                     setSelectValue('Card Filter');
                     setIsOpen(false);
-                }}>Card Filter</div>
+                }}>{i18n.t('Card Filter', { ns: 'timeline' })}</div>
                 <div key={'folder'} onClick={(): void => {
                     setSelectValue('Units Filter');
                     setIsOpen(false);
-                }}>Units Filter</div>
+                }}>{i18n.t('Units Filter', { ns: 'timeline' })}</div>
             </ChildrenContainer>
         );
     };
@@ -180,6 +188,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
                 dropdownRender={dropdownRender}
                 onDropdownVisibleChange={(open: boolean): void => setIsOpen(open)}
                 open={isOpen}
+                placeholder={i18n.t('Select filter type', { ns: 'timeline' })}
                 height={32} width={120}>
             </Select>
             <Select
@@ -196,7 +205,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     );
 };
 
-const startFilter = (session: Session, inputValue: string[], selectValue: string): void => {
+const startFilter = (session: Session, inputValue: string[], selectValue: string | null): void => {
     setAllUnitsDisplay(session);
     if (inputValue.length === 0) {
         return;
@@ -338,9 +347,9 @@ export const UnitsFilter = observer(({ session }: { session: Session}): JSX.Elem
     const { t } = useTranslation();
     return (
         <Tooltip overlayStyle={{ maxWidth: 1000 }}
+            overlayInnerStyle={{ borderRadius: 2 }}
             title={CategorySearchContent(session)}
             trigger="click"
-            placement="right"
             onOpenChange={onTooltipVisibleChange}
             overlayClassName="insight-category-search-overlay"
             align={{ offset: [-8, 3] }}

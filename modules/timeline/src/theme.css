@@ -87,10 +87,6 @@
     width: 16px;
 }
 
-.search_icon_css{
-    display: flex;
-}
-
 .laneView{
     --selectedChartBorderColor: #0959f4;
 }

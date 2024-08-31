@@ -14,7 +14,7 @@ interface timeDetailProps {
 
 const StyledSliceDetailDiv = styled.div`
     flex: 1;
-    color: ${(props): string => props.theme.fontColor};
+    color: ${(props): string => props.theme.tableTextColor};
     font-size: 12px;
 
     .sliceDetailTitle {
@@ -52,8 +52,8 @@ const StyledSliceDetailDiv = styled.div`
             }
         }
     }
-    .sliceDetail: hover {
-        background-color: ${(props): string => props.theme.tableRowSelect};
+    .sliceDetail:hover {
+        background-color: ${(props): string => props.theme.bgColorLight};
     }
 `;
 

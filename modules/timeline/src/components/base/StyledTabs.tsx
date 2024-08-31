@@ -8,7 +8,7 @@ import { Tabs } from 'antd';
 import type { TabsProps } from 'antd/lib/tabs';
 
 export const StyledTabs = styled((props: TabsProps & { fontSize?: number }) => <Tabs {...props}/>)`
-    color: inherit;
+    color: ${(props): string => props.theme.textColorPrimary};
     &.ant-tabs-top {
         > .ant-tabs-nav {
             padding: 0 20px;

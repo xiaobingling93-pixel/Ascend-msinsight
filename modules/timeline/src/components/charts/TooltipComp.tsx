@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import type { Session } from '../../entity/session';
 import { CHARTINTERACTOR_NAME } from '../ChartContainer/ChartContainer';
 import { EventType, useEventBus } from '../../utils/eventBus';
+import { PAGE_PADDING } from './ChartInteractor/draw';
 
 export interface TooltipArg {
     x: number;
@@ -24,8 +25,8 @@ export interface TooltipArg {
 // 默认展示在鼠标右侧，needReverse为true时转为左侧
 const Tooltip = styled.div<{ needReverse?: boolean }>(props => ({
     position: 'absolute',
-    backgroundColor: props.theme.selectBackgroundColor,
-    color: props.theme.fontColor,
+    backgroundColor: props.theme.bgColorLight,
+    color: props.theme.textColorSecondary,
     borderRadius: 10,
     padding: '0 10px 0 10px',
     whiteSpace: 'pre',
@@ -40,10 +41,10 @@ const Tooltip = styled.div<{ needReverse?: boolean }>(props => ({
         content: '""',
         height: 10,
         width: 10,
-        background: props.theme.selectBackgroundColor,
+        background: props.theme.bgColorLight,
         top: '50%',
-        left: props.needReverse ? 'unset' : -3,
-        right: props.needReverse ? -3 : 'unset',
+        left: props.needReverse ? 'unset' : -2,
+        right: props.needReverse ? -2 : 'unset',
         transform: props.needReverse ? 'translate(0, -50%) rotate(-45deg)' : 'translate(0, -50%) rotate(45deg)',
         zIndex: -1,
         pointerEvents: 'none',
@@ -111,8 +112,7 @@ export function TooltipComponent<F, T>({ data, session, x, calcHeight, mouseX, d
         const _left = x ? x(data) : mouseX;
         const _top = calcHeight(data);
         const rect = dom.current?.getBoundingClientRect();
-
-        return [_left, (rect?.top ?? 0) + _top];
+        return [_left, ((rect?.top ?? 0) - PAGE_PADDING) + _top];
     }, [domainStart, domainEnd, mouseX, dataset, scrollTop]);
 
     const content = data !== undefined ? renderContent(data) : undefined;

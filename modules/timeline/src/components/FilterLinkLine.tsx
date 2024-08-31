@@ -1,16 +1,14 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
-import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
-import { Tooltip } from 'ascend-components';
+import { Tooltip, Button, Checkbox } from 'ascend-components';
 import { observer } from 'mobx-react';
 import React, { useRef, useState } from 'react';
 import { LinkIcon } from 'ascend-icon';
 import type { Session } from '../entity/session';
-import { CustomButton, StyledButton } from './base/StyledButton';
+import { CustomButton } from './base/StyledButton';
 import { useTranslation } from 'react-i18next';
-import { StyledCheckbox } from './base/StyledCheckbox';
 import { StyledEmpty } from './base/StyledEmpty';
 import { runInAction } from 'mobx';
 import type { InsightUnit, LinkLines } from '../entity/insight';
@@ -18,9 +16,10 @@ import { CardUnit } from '../insight/units/AscendUnit';
 import { customDebounce } from '../utils/customDebounce';
 import { getTimeOffset } from '../insight/units/utils';
 import { type HostMetaData } from '../entity/data';
+import i18n from 'ascend-i18n';
 
 const MAX_HEIGHT = 200;
-const PADDING_RATIO_TO_MAX_HEIGHT = 0.1;
+const PADDING_RATIO_TO_MAX_HEIGHT = 0.08;
 const FilterContainer = styled.div`
     display: flex;
     flex-direction: column;
@@ -38,7 +37,7 @@ const FilterButtonLine = styled.div`
     display: flex;
     justify-content: space-evenly;
     align-items: center;
-    margin-top: 7px;
+    margin-top: 14px;
 `;
 
 interface FilterItemProps {
@@ -50,13 +49,13 @@ const FilterItem: React.FC<FilterItemProps> = observer(({ category, checkedCateg
     const isChecked = checkedCategories.includes(category);
     return (
         <p style={{ marginBottom: 0 }}>
-            <StyledCheckbox
+            <Checkbox
                 checked={isChecked}
                 onChange={(): void => {
                     setCheckedCategories(prev => isChecked ? prev.filter(cat => cat !== category) : prev.concat(category));
                 }}>
                 {category}
-            </StyledCheckbox>
+            </Checkbox>
         </p>
     );
 });
@@ -220,12 +219,12 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
                     />)}
             </FilterList>
             {!isEmptyData && <FilterButtonLine>
-                <StyledButton width={50} onClick={(): void => setCheckedCategories([...displayCategories])}>
-                    All
-                </StyledButton>
-                <StyledButton width={50} onClick={((): void => setCheckedCategories([]))}>
-                    None
-                </StyledButton>
+                <Button type={'primary'} onClick={(): void => setCheckedCategories([...displayCategories])}>
+                    {i18n.t('timeline:All')}
+                </Button>
+                <Button onClick={((): void => setCheckedCategories([]))}>
+                    {i18n.t('timeline:None')}
+                </Button>
             </FilterButtonLine>}
         </FilterContainer>
     );
@@ -233,7 +232,6 @@ const LinkLineFilterBody = observer(({ session, isSuspend }: { session: Session;
 
 export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.Element | null => {
     const { t } = useTranslation();
-    const theme = useTheme();
     const [customButtonProps, updateCustomButtonProps] = useState({
         isEmphasize: false,
         isSuspend: false,
@@ -247,10 +245,8 @@ export const FilterLinkLine = observer(({ session }: { session: Session}): JSX.E
         <Tooltip overlayStyle={{ maxWidth: 1000 }}
             title={<LinkLineFilterBody session={session} isSuspend={customButtonProps.isSuspend} />}
             trigger="click"
-            placement="right"
             onOpenChange={onTooltipVisibleChange}
-            color={theme.tooltipBGColor}
-            overlayInnerStyle={{ color: theme.tooltipFontColor, padding: 0, borderRadius: 20 }}
+            overlayInnerStyle={{ borderRadius: 2 }}
             overlayClassName={'insight-category-search-overlay'} align={{ offset: [-8, 3] }}>
             <CustomButton tooltip={t('tooltip:linker')} icon={LinkIcon as any} { ...customButtonProps } ref={ref}/>
         </Tooltip>

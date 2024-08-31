@@ -11,7 +11,7 @@ import type { Session } from '../entity/session';
 import type { SingleDataDesc } from '../entity/insight';
 import { useSelectedDataDetailUpdater } from './details/hooks';
 import type { AscendSliceDetail } from '../entity/data';
-import { ReactComponent as ExpandIcon } from '../assets/images/insights/PullDownIcon.svg';
+import { CaretDownIcon } from 'ascend-icon';
 import { Col, Row } from 'ascend-components';
 import { customConsole as console } from 'ascend-utils';
 
@@ -23,14 +23,14 @@ interface DetailProps<T extends Record<string, unknown>> {
 
 const StyledSliceDetailDiv = styled.div`
     width: 100%;
-    color: ${(props): string => props.theme.fontColor};
+    color: ${(props): string => props.theme.tableTextColor};
     display: flex;
     font-size: 12px;
 `;
 
 const StyledSliceArgsDiv = styled.div`
     width: 100%;
-    color: ${(props): string => props.theme.fontColor};
+    color: ${(props): string => props.theme.tableTextColor};
     text-align: left;
     font-size: 12px;
 `;
@@ -56,7 +56,7 @@ const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element =>
         const breakKeys = ['Call stack', 'code'];
         return <div>
             <StyledSliceArgsDiv>
-                <ExpandIcon
+                <CaretDownIcon
                     onClick={ (): void => setHidden(!isHiddenArgs) } style={{ margin: '-2px 0 0 8px', float: 'left', transform: `rotate(${!isHiddenArgs ? 0 : '-90deg'}) translate(${!isHiddenArgs ? '-2' : '1'}px, ${!isHiddenArgs ? '0' : '-2'}px)`, cursor: 'pointer' }}/>
                 <div style={{ fontWeight: 'bold', margin: '8px 0 0 8px' }}>{t('Args')}</div>
                 {!isHiddenArgs
