@@ -169,7 +169,7 @@ struct DetailsInterCoreLoadDimension {
 };
 
 struct DetailsInterCoreLoadSubCoreDetail {
-    static const uint8_t MAX_LEVEL = 10;
+    static const uint8_t maxLevel = 10;
     std::string subCoreName;
     DetailsInterCoreLoadDimension<uint64_t> cycles;
     DetailsInterCoreLoadDimension<uint64_t> throughput;
@@ -188,7 +188,7 @@ struct DetailsInterCoreLoadSubCoreDetail {
             return;
         }
         // 每增加10%，level由MAX_LEVEL减少1
-        cycles.level = MAX_LEVEL - diff * 10 / minCycles;
+        cycles.level = maxLevel - diff * 10 / minCycles;
         if (cycles.level < 1) {
             cycles.level = 1;
         }
@@ -208,7 +208,7 @@ struct DetailsInterCoreLoadSubCoreDetail {
             return;
         }
         // 每增加10%，level由MAX_LEVEL减少1直到等于1
-        throughput.level = MAX_LEVEL - diff * 10 / minThroughput;
+        throughput.level = maxLevel - diff * 10 / minThroughput;
         if (throughput.level < 1) {
             throughput.level = 1;
         }
@@ -221,7 +221,7 @@ struct DetailsInterCoreLoadSubCoreDetail {
         }
         cacheHitRate.value = curRate;
         // 比较当前的cache hit rate和最大的rate之间的差值，每减小10%，level由MAX_LEVEL减少1直到等于1
-        cacheHitRate.level = MAX_LEVEL - (maxRate - curRate) * 10 / maxRate;
+        cacheHitRate.level = maxLevel - (maxRate - curRate) * 10 / maxRate;
         if (cacheHitRate.level < 1) {
             cacheHitRate.level = 1;
         }
