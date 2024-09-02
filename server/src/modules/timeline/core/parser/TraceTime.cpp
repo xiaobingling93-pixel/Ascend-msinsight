@@ -47,7 +47,7 @@ uint64_t TraceTime::GetDuration()
     for (const auto &item: cardMinTimeMap) {
         maxOffset = std::max(maxOffset, item.second - minTimestamp);
     }
-    if (maxTimestamp >= minTimestamp) {
+    if (minTimestamp < UINT64_MAX - maxOffset && maxTimestamp >= minTimestamp + maxOffset) {
         return maxTimestamp - minTimestamp - maxOffset;
     } else {
         Server::ServerLog::Warn("Max timestamp is less than min timestamp. Max timestamp:", maxTimestamp,
