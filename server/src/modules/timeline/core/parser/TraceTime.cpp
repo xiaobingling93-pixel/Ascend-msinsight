@@ -30,7 +30,9 @@ TraceTime::TraceTime()
 void TraceTime::UpdateTime(uint64_t min, uint64_t max)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    minTimestamp = std::min(minTimestamp, min);
+    if (min > 0) {
+        minTimestamp = std::min(minTimestamp, min);
+    }
     maxTimestamp = std::max(maxTimestamp, max);
 }
 
@@ -81,6 +83,9 @@ std::vector<std::pair<std::string, uint64_t>> TraceTime::ComputeCardMinTimeInfo(
 uint64_t TraceTime::GetOffsetByFileId(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
+    if (cardMinTimeMap.count(fileId) == 0) {
+        return 0;
+    }
     uint64_t cardMinTime = cardMinTimeMap[fileId];
     if (cardMinTime > minTimestamp) {
         return (cardMinTime - minTimestamp);

@@ -15,26 +15,27 @@
 
 namespace Dic {
 namespace Module {
-
 class ParserAlloc {
 public:
     ParserAlloc() = default;
     virtual ~ParserAlloc() = default;
     virtual void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) = 0;
-    virtual void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos, const std::string &rankId)
+    virtual void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+        Global::BaselineInfo &baselineInfo)
     {
         return;
     }
     virtual ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) = 0;
     virtual std::vector<std::string> GetParseFileByImportFile(const std::string &importFile,
-                                                                  ProjectTypeEnum projectTypeEnum, std::string &error)
+        ProjectTypeEnum projectTypeEnum, std::string &error)
     {
-        std::vector<std::string> res = {importFile};
+        std::vector<std::string> res = { importFile };
         return res;
     };
     static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
     static void ParseProgressCallBack(const std::string &fileId, uint64_t parsedSize, uint64_t totalSize, int progress);
     static void SendAllParseSuccess();
+
 protected:
     std::string curScene;
     std::map<std::string, std::vector<std::string>> dataPathToDbMap;
@@ -47,10 +48,10 @@ protected:
     static void SendParseSuccessEvent(const std::string &fileId);
     static void SendParseFailEvent(const std::string &fileId, const std::string &message);
 
-    void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
-                                 const std::string &cardPath, std::vector<std::string> dataPath);
+    void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId, const std::string &cardPath,
+        std::vector<std::string> dataPath);
     static void SaveDbPath(const std::string &curProjectName,
-                           std::map<std::string, std::vector<std::string>> &dataPathToDbMap);
+        std::map<std::string, std::vector<std::string>> &dataPathToDbMap);
 };
 
 class ParserFactory {
@@ -58,6 +59,7 @@ public:
     static std::shared_ptr<ParserAlloc> ParserImport(ParserType allocType);
     static std::pair<std::string, ParserType> GetImportType(const std::vector<std::string> &pathList);
     static void Reset();
+
 private:
     static std::mutex mutex;
 };

@@ -26,7 +26,7 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
     const static unsigned int CPU_CORE_COUNT = SystemUtil::GetCpuCoreCount();
     std::unique_lock<std::mutex> lock(mutex);
     databasePathSet.emplace(dbPath);
-    bool isBaseline = Global::BaselineManager::IsBaselineId(fileId);
+    bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(fileId);
     std::map<std::string, std::unique_ptr<ConnectionPool>> &curTraceDbMap =
         isBaseline ? traceBaselineDatabaseMap : traceDatabaseMap;
     DataType curDataType = isBaseline ? baselineType : dataType;
@@ -56,7 +56,7 @@ bool DataBaseManager::CreatConnectionPool(const std::string &fileId, const std::
 std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const std::string &fileId)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    bool isBaseline = Global::BaselineManager::IsBaselineId(fileId);
+    bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(fileId);
     std::map<std::string, std::unique_ptr<ConnectionPool>> &curTraceDbMap =
         isBaseline ? traceBaselineDatabaseMap : traceDatabaseMap;
     auto it = curTraceDbMap.find(fileId);
@@ -73,7 +73,7 @@ std::shared_ptr<VirtualTraceDatabase> DataBaseManager::GetTraceDatabase(const st
 Summary::VirtualSummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::string &inputId)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    bool isBaseline = Global::BaselineManager::IsBaselineId(inputId);
+    bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(inputId);
     // 获取当前map，如果fileId包含baseline字样则从summaryBaselineDatabaseMap中获取，否则从summaryDatabaseMap获取
     std::map<std::string, std::unique_ptr<Summary::VirtualSummaryDataBase>> &curSummaryDbMap =
         isBaseline ? summaryBaselineDatabaseMap : summaryDatabaseMap;
@@ -93,10 +93,9 @@ Summary::VirtualSummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::
 Memory::VirtualMemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::string &inputId)
 {
     std::unique_lock<std::mutex> lock(mutex);
-    bool isBaseline = Global::BaselineManager::IsBaselineId(inputId);
+    bool isBaseline = Global::BaselineManager::Instance().IsBaselineId(inputId);
     // 获取当前map，如果fileId包含baseline字样则从summaryBaselineDatabaseMap中获取，否则从summaryDatabaseMap获取
-    std::map<std::string, std::unique_ptr<Memory::VirtualMemoryDataBase>> &curMemoryDbMap =
-        isBaseline ? memoryBaselineDatabaseMap : memoryDatabaseMap;
+    std::map<std::string, std::unique_ptr<Memory::VirtualMemoryDataBase>> &curMemoryDbMap = memoryDatabaseMap;
     DataType curDataType = isBaseline ? baselineType : dataType;
     std::string fileId = inputId;
     if (curMemoryDbMap.count(fileId) == 0) {
@@ -311,7 +310,7 @@ FileType DataBaseManager::GetFileType()
 
 FileType DataBaseManager::GetFileTypeByRankId(const std::string &rankId)
 {
-    if (!rankId.empty() && Global::BaselineManager::IsBaselineId(rankId)) {
+    if (!rankId.empty() && Global::BaselineManager::Instance().IsBaselineId(rankId)) {
         return baselineFileType;
     }
     return fileType;
@@ -371,7 +370,7 @@ bool DataBaseManager::ResetBaseline()
 bool DataBaseManager::IsContainDatabasePath(const std::string &databasePath)
 {
     std::lock_guard<std::mutex> lock(mutex);
-    return databasePathSet.count(databasePath) > 0;
+    return (databasePathSet.count(databasePath) > 0);
 }
 } // end of namespace Timeline
 } // end of namespace Module

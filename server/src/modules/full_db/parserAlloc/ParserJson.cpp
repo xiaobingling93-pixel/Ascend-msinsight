@@ -14,6 +14,7 @@
 #include "MemoryParse.h"
 #include "ParserStatusManager.h"
 #include "EventNotifyThreadPoolExecutor.h"
+#include "BaselineManager.h"
 #include "ProjectExplorerManager.h"
 #include "TraceTime.h"
 #include "ParserJson.h"
@@ -38,11 +39,7 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
     std::vector<std::string> subdirectoryList = {};
-    for (const auto &projectInfo : projectInfos) {
-        for (const auto &item : projectInfo.parseFilePathInfos) {
-            subdirectoryList.push_back(item.parseFilePath);
-        }
-    }
+    ComputeSubirectoryList(projectInfos, subdirectoryList);
     response.body.subdirectoryList = subdirectoryList;
     response.command = Protocol::REQ_RES_IMPORT_ACTION;
     response.moduleName = Protocol::ModuleType::TIMELINE;
@@ -51,7 +48,17 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
         ParserFactory::Reset();
     }
     // 获取rankid及文件映射关系信息
-    std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap(response, projectInfos);
+    std::map<std::string, std::vector<std::string>> rankToFoldersMap;
+    std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap(projectInfos, rankToFoldersMap);
+    // 设置基础响应内容
+    for (const auto &rankEntry : rankListMap) {
+        auto folders = rankToFoldersMap[rankEntry.first];
+        if (rankEntry.second.empty()) {
+            continue;
+        }
+        std::string cardPath = FileUtil::GetRankIdFromPath(rankEntry.second[0]);
+        SetBaseActionOfResponse(response, rankEntry.first, cardPath, folders);
+    }
     // 解析内容
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos[0].projectType);
     if (projectTypeEnum == ProjectTypeEnum::SIMULATION) {
@@ -78,6 +85,16 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     ParserTraceData(rankListMap, projectInfos, request);
 }
 
+void ParserJson::ComputeSubirectoryList(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+    std::vector<std::string> &subdirectoryList)
+{
+    for (const auto &projectInfo : projectInfos) {
+        for (const auto &item : projectInfo.parseFilePathInfos) {
+            subdirectoryList.push_back(item.parseFilePath);
+        }
+    }
+}
+
 bool ParserJson::IsNeedReset(const ImportActionRequest &request)
 {
     // 如果是切换项目，则必须重置
@@ -92,11 +109,11 @@ bool ParserJson::IsNeedReset(const ImportActionRequest &request)
     return false;
 }
 
-std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(ImportActionResponse &response,
-    const std::vector<Global::ProjectExplorerInfo> &projectInfos)
+std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(
+    const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+    std::map<std::string, std::vector<std::string>> &rankToFoldersMap)
 {
     // 获取单卡文件，并根据单卡所在目录获取其单卡信息
-    std::map<std::string, std::vector<std::string>> rankToFoldersMap;
     std::map<std::string, std::vector<std::string>> rankToTraceMap;
     for (const auto &project : projectInfos) {
         for (const auto &parseFileInfo : project.parseFilePathInfos) {
@@ -108,16 +125,6 @@ std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(Impor
             rankToFoldersMap[fileId].push_back(parseFileInfo.parseFilePath);
             rankToTraceMap[fileId].push_back(jsonFile);
         }
-    }
-
-    // 设置基础响应内容
-    for (const auto &rankEntry : rankToTraceMap) {
-        auto folders = rankToFoldersMap[rankEntry.first];
-        if (rankEntry.second.empty()) {
-            continue;
-        }
-        std::string cardPath = FileUtil::GetRankIdFromPath(rankEntry.second[0]);
-        SetBaseActionOfResponse(response, rankEntry.first, cardPath, folders);
     }
     return rankToTraceMap;
 }
@@ -470,7 +477,8 @@ std::vector<std::string> ParserJson::GetParseFileByImportFile(const std::string 
     return result;
 }
 
-void ParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos, const std::string &rankId)
+void ParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+    Global::BaselineInfo &baselineInfo)
 {
     if (projectInfos.empty() || projectInfos[0].parseFilePathInfos.empty()) {
         return;
@@ -481,19 +489,30 @@ void ParserJson::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &
     // 判断项目类型，如果是算子调优数据，则直接解析
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos[0].projectType);
     // 创建db连接池
-    std::string dbPath = FileUtil::GetDbPath(jsonFile, rankId);
-    bool isParseTimeline = !DataBaseManager::Instance().IsContainDatabasePath(dbPath);
-    if (isParseTimeline && !DataBaseManager::Instance().CreatConnectionPool(rankId, dbPath)) {
+    std::string dbPath = FileUtil::GetDbPath(jsonFile);
+    std::map<std::string, std::vector<std::string>> rankToFoldersMap;
+    std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap(projectInfos, rankToFoldersMap);
+    if (std::empty(rankListMap)) {
+        Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
+        baselineInfo.errorMessage = "Json get rank id failed!";
+        return;
+    }
+    std::string rankId = rankListMap.begin()->first;
+    baselineInfo.rankId = rankId;
+    baselineInfo.cardName = "baseline" + rankId;
+    Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
+    bool isParsed = DataBaseManager::Instance().IsContainDatabasePath(dbPath);
+    if (!isParsed && !DataBaseManager::Instance().CreatConnectionPool(rankId, dbPath)) {
         ServerLog::Error("Failed to create connection pool. fileId:", rankId, ". path:", dbPath);
     }
 
-    if (isParseTimeline && projectTypeEnum == ProjectTypeEnum::SIMULATION) {
+    if (!isParsed && projectTypeEnum == ProjectTypeEnum::SIMULATION) {
         Timeline::TraceFileSimulationParser::Instance().Parse(std::vector<std::string>{ jsonFile }, rankId, filePath);
         return;
     }
 
     // 如果是系统调优数据，分别解析trace、kernel和memory数据
-    if (isParseTimeline &&
+    if (!isParsed &&
         !Timeline::TraceFileParser::Instance().Parse(std::vector<std::string>{ jsonFile }, rankId, filePath)) {
         ServerLog::Warn("Failed to parse baseline trace files.");
     }

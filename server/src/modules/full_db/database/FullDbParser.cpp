@@ -11,6 +11,7 @@
 #include "ClusterParseThreadPoolExecutor.h"
 #include "CommonCacheManager.h"
 #include "BaselineManager.h"
+#include "CollectionTimeService.h"
 #include "FullDbParser.h"
 
 namespace Dic::Module::FullDb {
@@ -60,9 +61,11 @@ void FullDbParser::Reset()
     Timeline::ParserStatusManager::Instance().ClearAllParserStatus();
     FullDb::DbMemoryDataBase::Reset();
     FullDb::DbSummaryDataBase::Reset();
+    FullDb::DbTraceDataBase::Reset();
     CommonCacheManager::Instance().Clear();
     ServerLog::Info("End Reset trace Parser");
     threadPool->Reset();
+    CollectionTimeService::Instance().Reset();
 }
 
 // 此方法为私有方法，调用前需保证不会出现空指针的情况
@@ -75,7 +78,7 @@ std::shared_ptr<DbTraceDataBase> FullDbParser::GetTraceDatabase(const std::strin
 void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std::string> &rankIds)
 {
     auto start = std::chrono::high_resolution_clock::now();
-    std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::IsBaselineId(rankIds[0])) ?
+    std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::Instance().IsBaselineId(rankIds[0])) ?
         rankIds[0] : filePath;
     auto db = Timeline::DataBaseManager::Instance().GetTraceDatabase(dbId);
     if (db == nullptr) {
@@ -109,7 +112,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
         InitMemory(rankIds, filePath);
     }
     std::vector<std::string> realRankIds;
-    if (rankIds.size() > 0 && Global::BaselineManager::IsBaselineId(rankIds[0])) {
+    if (rankIds.size() > 0 && Global::BaselineManager::Instance().IsBaselineId(rankIds[0])) {
         realRankIds = rankIds;
     } else {
         realRankIds = database->QueryRankId();
@@ -131,10 +134,11 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     for (const auto &future : *futures) {
         future.wait();
     }
-    std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::IsBaselineId(rankIds[0])) ?
+    std::string dbId = (rankIds.size() > 0 && Global::BaselineManager::Instance().IsBaselineId(rankIds[0])) ?
         rankIds[0] : filePath;
+    bool isNotSendMessage = Global::BaselineManager::Instance().IsBaselineId(rankIds[0])
+            && DataBaseManager::Instance().IsContainDatabasePath(filePath);
     FullDbParser::Instance().threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->InitFlowCache(); });
-
     for (const std::string& id : rankIds) {
         ParserCallBack(id, true);
     }
@@ -142,7 +146,9 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Parse completed. path:", filePath,
                     " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-    SendHostEvent(dbId);
+    if (!isNotSendMessage) {
+        SendHostEvent(dbId);
+    }
     for (auto rankId: rankIds) {
         Timeline::ParserStatusManager::Instance().SetParserStatus(rankId, Timeline::ParserStatus::FINISH_ALL);
     }

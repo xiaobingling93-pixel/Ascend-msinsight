@@ -135,6 +135,8 @@ template <> std::optional<document_t> ToResponseJson<BaselineSettingResponse>(co
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     auto &allocator = json.GetAllocator();
     JsonUtil::AddMember(body, "rankId", response.body.rankId, allocator);
+    JsonUtil::AddMember(body, "host", response.body.host, allocator);
+    JsonUtil::AddMember(body, "cardName", response.body.cardName, allocator);
     JsonUtil::AddMember(body, "errorMessage", response.body.errorMessage, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);

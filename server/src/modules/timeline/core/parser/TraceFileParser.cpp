@@ -11,6 +11,7 @@
 #include "EventNotifyThreadPoolExecutor.h"
 #include "CacheManager.h"
 #include "TrackInfoManager.h"
+#include "BaselineManager.h"
 #include "TraceFileParser.h"
 
 namespace Dic {
@@ -74,7 +75,8 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         ServerLog::Error("Failed to open trace database. rankId:", fileId);
         return false;
     }
-    if (!database->IsDatabaseVersionChange() && database->HasFinishedParseLastTime()) {
+    if (!database->IsDatabaseVersionChange() && database->HasFinishedParseLastTime() &&
+        !Global::BaselineManager::Instance().IsBaselineId(fileId)) {
         uint64_t min = UINT64_MAX;
         uint64_t max = 0;
         database->QueryExtremumTimestamp(min, max);
@@ -86,17 +88,22 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         ParserStatusManager::Instance().SetFinishStatus(fileId);
         return true;
     }
-    if (!database->DropTable()  || !database->CreateTable() || !database->UpdateParseStatus(NOT_FINISH_STATUS)) {
+    if (!database->DropTable() || !database->CreateTable() || !database->UpdateParseStatus(NOT_FINISH_STATUS)) {
         ServerLog::Error("Failed to init trace database. rankId:", fileId);
         return false;
     }
+    InitFileProcess(filePathArr, fileId);
+    return true;
+}
 
-    auto &instance = TraceFileParser::Instance();
+void TraceFileParser::InitFileProcess(const std::vector<std::string> &filePathArr, const std::string &fileId)
+{
+    auto &instance = Instance();
     auto start = std::chrono::high_resolution_clock::now();
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
     for (const auto &filePath : filePathArr) {
         ServerLog::Info("Start parse. file id:", fileId, ". path:", filePath);
-        auto splitFile = TraceFileParser::SplitFile(filePath);
+        auto splitFile = SplitFile(filePath);
         instance.fileProgressMap[fileId] = std::make_unique<FileProgress>(0, FileUtil::GetFileSize(filePath.c_str()));
         if (splitFile.empty()) {
             ServerLog::Error("Failed to split file.");
@@ -110,7 +117,6 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         }
     }
     instance.threadPool->AddTask(EndParseTask, fileId, filePathArr, futures, start);
-    return true;
 }
 
 void TraceFileParser::ParseTask(const std::string &filePath, const std::string &fileId, std::pair<int64_t, int64_t> pos)
@@ -131,7 +137,7 @@ void TraceFileParser::ParseTask(const std::string &filePath, const std::string &
     std::unique_ptr<FileProgress> &curFileProgress = instance.fileProgressMap[fileId];
     curFileProgress->AddToParsedSize(pos.second - pos.first);
     instance.paserProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
-                                   curFileProgress->GetProgressPercentage());
+        curFileProgress->GetProgressPercentage());
 }
 
 void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<std::string> &filePathArr,
@@ -192,11 +198,11 @@ int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string
 }
 
 void TraceFileParser::UpdateTrackIdMap(const std::string &fileId,
-    const std::map<uint64_t, std::pair<std::string, std::string>>& threadMap)
+    const std::map<uint64_t, std::pair<std::string, std::string>> &threadMap)
 {
     std::unique_lock<std::mutex> lock(trackMutex);
     for (auto [key, item] : threadMap) {
-        std::pair<std::string, std::string> tmp = {item.second, item.first};
+        std::pair<std::string, std::string> tmp = { item.second, item.first };
         trackIdMap[fileId].emplace(tmp, key);
         trackId = std::max(trackId, key);
     }

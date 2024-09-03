@@ -28,11 +28,7 @@ export class SimpleCache {
     tryFetchFromCache = async (
         method: Method, requestKey: string, params: Record<string, unknown> & { timePerPx: number }, metaData?: unknown,
     ): Promise<Record<string, unknown> | undefined> => {
-        const cacheData = this.data.get(method).get(requestKey);
-        if (method === 'unit/threadTracesSummary' && cacheData !== undefined) {
-            return { data: cacheData };
-        }
-        if (this.data.get(method).get(requestKey) === undefined || this.timePerPx !== params.timePerPx) {
+        if (this.data.get(method).get(requestKey) === undefined) {
             try {
                 const result = await handlerMap.get(method)?.(params, metaData);
                 if (result !== undefined && result.length !== 0) {
@@ -81,12 +77,7 @@ async function requestProcessData(requestParam: Record<string, unknown>): Promis
 
 async function requestCounterData(requestParam: Record<string, unknown>, metadata: unknown): Promise<number[][]> {
     try {
-        const { store } = require('../store');
-        const { sessionStore } = store;
-        const session = sessionStore.activeSession;
         const param: Record<string, unknown> = Object.assign({}, requestParam);
-        param.startTime = 0;
-        param.endTime = session?.endTimeAll ?? 0;
         const request = await window.request(requestParam.dataSource as DataSource, { command: 'unit/counter', params: param });
         const acc = (request.data as CounterData[]).reduce((dataList: CounterData[], cur) => {
             const existItem = dataList.find(item => item.timestamp === cur.timestamp);

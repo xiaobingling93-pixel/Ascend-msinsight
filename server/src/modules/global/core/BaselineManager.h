@@ -20,21 +20,17 @@ public:
     BaselineManager &operator=(const BaselineManager &) = delete;
     BaselineManager(BaselineManager &&) = delete;
     BaselineManager &operator=(BaselineManager &&) = delete;
-
-    bool IsSelectBaseline();
-    void ResetBaseline();
-    bool InitBaselineData(const std::string &projectName, const std::string &filePath, std::string &errorMsg,
-                          std::string &rankId);
     std::string GetBaselineId();
-    static bool IsBaselineId(const std::string &rankId);
+    bool IsBaselineId(const std::string &rankId);
+    void SetBaselineInfo(const BaselineInfo &baselineInfo);
+    void Reset();
 
 private:
     BaselineManager() = default;
     ~BaselineManager() = default;
-
-    int64_t parseFileId = -1;
-    const inline static std::string baselineMark = "baseline";
-    std::string status;
+    std::string baselineRankId;
+    std::string baselineHost;
+    std::string baselineCardName;
     std::recursive_mutex mutex;
 };
 }

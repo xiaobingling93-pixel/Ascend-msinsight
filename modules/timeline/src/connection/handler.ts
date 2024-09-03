@@ -354,7 +354,7 @@ export const removeBaselineHandler: NotificationHandler = async (data): Promise<
             const removeUnits = getRemoveUnits(session, dataSource, singleDataPath);
             session.units = session?.units.filter((unit) => {
                 const metadata = unit.metadata as any;
-                if (!((metadata.cardId.startsWith('baseline')) as boolean)) {
+                if (!((metadata.cardName.startsWith('baseline')) as boolean)) {
                     return true;
                 }
                 if ((metadata.dataSource.dataPath as string[]) === undefined) {

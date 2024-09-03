@@ -318,7 +318,7 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> parseProcessList;
 
-    std::string realFileId = Global::BaselineManager::IsBaselineId(fileId) ?
+    std::string realFileId = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
         FileUtil::GetProfilerFileId(filePath) : fileId;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(statusId) ==
            Timeline::ParserStatus::RUNNING && getline(file, line)) {

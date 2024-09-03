@@ -77,16 +77,17 @@ export const useCompareConfig = defineStore('compareConfig', () => {
             command: 'global/setBaseline',
             params: { projectName, filePath },
         });
-        if (result.error as string) {
-            ElMessage.warning(result.error as string);
+        if (result.errorMessage as string) {
+            ElMessage.warning(result.errorMessage as string);
         } else {
+            const dataInfo = result as DataInfo;
             baselineDataInfo.value.rankId = result.rankId;
             const timelineCardInfos = [] as TimelineCardInfo[];
             const timelineCardInfo = {} as TimelineCardInfo;
             timelineCardInfo.result = true;
-            timelineCardInfo.cardName = baselineDataInfo.value.rankId;
-            timelineCardInfo.host = baselineDataInfo.value.host ?? '';
-            timelineCardInfo.rankId = baselineDataInfo.value.rankId;
+            timelineCardInfo.cardName = dataInfo.cardName ?? '';
+            timelineCardInfo.host = dataInfo.host ?? '';
+            timelineCardInfo.rankId = dataInfo.rankId;
             timelineCardInfo.cardPath = baselineDataInfo.value.filePath;
             datasource.dataPath.push(baselineDataInfo.value.filePath);
             datasource.projectName = baselineDataInfo.value.projectName;

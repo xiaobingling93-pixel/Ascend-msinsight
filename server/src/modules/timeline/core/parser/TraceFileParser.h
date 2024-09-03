@@ -48,6 +48,8 @@ private:
     std::mutex trackMutex;
     std::unordered_map<std::string, std::map<std::pair<std::string, std::string>, uint64_t>> trackIdMap;
     uint64_t trackId = 0;
+
+    static void InitFileProcess(const std::vector<std::string> &filePathArr, const std::string &fileId);
 };
 } // end of namespace Timeline
 } // end of namespace Module

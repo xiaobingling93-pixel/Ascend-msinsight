@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 #include "BaselineManager.h"
+#include "BaselineManagerService.h"
 #include "ProjectExplorerManager.h"
 #include "DataBaseManager.h"
 #include "ParserStatusManager.h"
@@ -79,7 +80,8 @@ TEST_F(BaselineManagerTest, testText)
     std::string rankId;
     std::string filePathText = currPath.substr(0, index + 1) +
         R"(/src/test/test_data/test_rank_0/ASCEND_PROFILER_OUTPUT)";
-    BaselineManager::Instance().InitBaselineData("testProject", filePathText, errorMsg, rankId);
+    BaselineInfo baselineInfo;
+    BaselineManagerService::InitBaselineData("testProject", filePathText, baselineInfo);
     std::string notFinishTask = "";
     int index = 0;
     while (index < retry && !Dic::Protocol::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
@@ -87,7 +89,8 @@ TEST_F(BaselineManagerTest, testText)
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
         index++;
     }
-    EXPECT_EQ(BaselineManager::Instance().GetBaselineId(), rankId);
+    EXPECT_EQ(BaselineManager::Instance().GetBaselineId(), baselineInfo.rankId);
+    Dic::Module::Timeline::DataBaseManager::Instance().Clear();
 }
 
 // 测试db数据baseline设置正常情况
@@ -97,7 +100,8 @@ TEST_F(BaselineManagerTest, testDb)
     std::string rankId;
     std::string filePathDb = currPath.substr(0, index + 1) +
         R"(/src/test/test_data/full_db/ascend_pytorch_profiler.db)";
-    BaselineManager::Instance().InitBaselineData("testProjectDb", filePathDb, errorMsg, rankId);
+    BaselineInfo baselineInfo;
+    BaselineManagerService::InitBaselineData("testProjectDb", filePathDb, baselineInfo);
     std::string notFinishTask = "";
     int index = 0;
     while (index < retry && !Dic::Protocol::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
@@ -105,7 +109,8 @@ TEST_F(BaselineManagerTest, testDb)
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
         index++;
     }
-    EXPECT_EQ(BaselineManager::Instance().GetBaselineId(), rankId);
+    EXPECT_EQ(BaselineManager::Instance().GetBaselineId(), baselineInfo.rankId);
+    Dic::Module::Timeline::DataBaseManager::Instance().Clear();
 }
 
 // 测试db不存在的场景
@@ -114,7 +119,8 @@ TEST_F(BaselineManagerTest, testFileNotExist)
     std::string errorMsg;
     std::string rankId;
     std::string filePathDb = "noData";
-    BaselineManager::Instance().InitBaselineData("testProjectDb", filePathDb, errorMsg, rankId);
-    EXPECT_EQ(BaselineManager::Instance().GetBaselineId(), "baseline-1");
+    BaselineInfo baselineInfo;
+    BaselineManagerService::InitBaselineData("testProjectDb", filePathDb, baselineInfo);
+    EXPECT_EQ(BaselineManager::Instance().GetBaselineId(), "");
     EXPECT_EQ(rankId, "");
 }

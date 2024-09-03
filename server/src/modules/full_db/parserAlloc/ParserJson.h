@@ -17,10 +17,11 @@ public:
     virtual ~ParserJson();
 
     void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
-    void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos, const std::string &rankId) final;
+    void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+        Global::BaselineInfo &baselineInfo) final;
     ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
-    std::vector<std::string> GetParseFileByImportFile(const std::string &importFile,
-                                                      ProjectTypeEnum projectTypeEnum, std::string &error) final;
+    std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, ProjectTypeEnum projectTypeEnum,
+        std::string &error) final;
 
 private:
     std::vector<std::string> FindAllTraceFile(const std::string &path, std::string &error);
@@ -38,11 +39,15 @@ private:
     bool isSimulation(std::string filePath);
 
     void ReloadDbPath(const std::vector<Global::ProjectExplorerInfo> &projectInfos, const ImportActionRequest &request);
-    std::map<std::string, std::vector<std::string>> GetRankListMap(ImportActionResponse &response,
-        const std::vector<Global::ProjectExplorerInfo> &projectInfos);
+    std::map<std::string, std::vector<std::string>> GetRankListMap(
+        const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+        std::map<std::string, std::vector<std::string>> &rankToFoldersMap);
     std::string GetJsonFileUnderFolder(const std::string &path);
     void ParserTraceData(const std::map<std::string, std::vector<std::string>> &rankListMap,
         const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request);
+
+    static void ComputeSubirectoryList(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+        std::vector<std::string> &subdirectoryList);
 };
 } // end of namespace Module
 } // end of namespace Dic

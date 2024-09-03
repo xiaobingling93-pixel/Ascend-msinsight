@@ -1,11 +1,11 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-#include "SetBaselineHandler.h"
+#include "BaselineManagerService.h"
 #include "ProjectExplorerManager.h"
 #include "GlobalDefs.h"
 #include "BaselineManager.h"
-
+#include "SetBaselineHandler.h"
 namespace Dic {
 namespace Module {
 using namespace Dic::Server;
@@ -22,12 +22,14 @@ void SetBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
         SendResponse(std::move(responsePtr), false);
         return;
     }
-
-    bool res = BaselineManager::Instance().InitBaselineData(request.params.projectName, request.params.filePath,
-                                                            response.body.errorMessage, response.body.rankId);
+    BaselineInfo baselineInfo;
+    bool res =
+        BaselineManagerService::InitBaselineData(request.params.projectName, request.params.filePath, baselineInfo);
+    response.body.rankId = Global::BaselineManager::Instance().GetBaselineId();
+    response.body.host = baselineInfo.host;
+    response.body.errorMessage = baselineInfo.errorMessage;
+    response.body.cardName = baselineInfo.cardName;
     SendResponse(std::move(responsePtr), res);
 }
-
-
 } // end of namespace Module
 } // Dic

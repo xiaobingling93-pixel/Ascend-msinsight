@@ -125,6 +125,7 @@ public:
     void UpdateWaitTime();
     void GenerateOverlapAnalysis();
     static std::string GetStringCacheValue(const std::string& path, std::string key);
+    static void Reset();
 
 private:
     const uint32_t cacheSize = 5000;

@@ -11,16 +11,15 @@
 #include "ParserStatusManager.h"
 #include "EventNotifyThreadPoolExecutor.h"
 #include "TrackInfoManager.h"
+#include "BaselineManager.h"
 #include "ParserDb.h"
 
 namespace Dic {
 namespace Module {
 using namespace Timeline;
-ParserDb::ParserDb() {
-}
+ParserDb::ParserDb() {}
 
-ParserDb::~ParserDb() {
-}
+ParserDb::~ParserDb() {}
 
 void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request)
 {
@@ -31,8 +30,8 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     ModuleRequestHandler::SetBaseResponse(request, response);
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
     std::vector<std::string> reportFiles = {};
-    for (const auto &projectInfo: projectInfos) {
-        for (const auto &item: projectInfo.parseFilePathInfos) {
+    for (const auto &projectInfo : projectInfos) {
+        for (const auto &item : projectInfo.parseFilePathInfos) {
             reportFiles.push_back(item.parseFilePath);
         }
     }
@@ -96,7 +95,7 @@ void ParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster,
 }
 
 void ParserDb::ClusterProcessAsyncStep(const std::string &selectedFolder,
-                                       std::map<std::string, std::vector<std::string>> &dataPathToDbMap)
+    std::map<std::string, std::vector<std::string>> &dataPathToDbMap)
 {
     std::string parseClusterResult;
     ClusterFileParser clusterFileParser;
@@ -126,7 +125,7 @@ void ParserDb::ClusterProcessAsyncStep(const std::string &selectedFolder,
 std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::string> &reportFiles)
 {
     std::vector<std::string> dbFiles = {};
-    for (const auto &file: reportFiles) {
+    for (const auto &file : reportFiles) {
         if (!FileUtil::IsFolder(file)) {
             dbFiles.push_back(file);
             continue;
@@ -138,7 +137,7 @@ std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::
     }
     // 只解析找到的第一个report文件
     std::map<std::string, HostInfo> hostMap;
-    for (const auto& file: dbFiles) {
+    for (const auto &file : dbFiles) {
         if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(file, file)) {
             ServerLog::Error("Failed to create connection pool. ", dbFiles[0]);
         }
@@ -154,7 +153,7 @@ std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::
         }
         std::vector<std::string> rankIds = database->QueryRankId();
         auto host = database->QueryHostInfo();
-        for (const auto& rank : rankIds) {
+        for (const auto &rank : rankIds) {
             hostMap[host][file].push_back(rank);
             DataBaseManager::Instance().SetDbPathMapping(host + rank, file, host + "Host");
             TrackInfoManager::Instance().UpdateHost(host + rank, host);
@@ -166,12 +165,12 @@ std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::
 void ParserDb::SetParseCallBack()
 {
     std::function<void(const std::string, bool, const std::string)> func =
-            std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        std::bind(ParseEndCallBack, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     FullDb::FullDbParser::Instance().SetParseEndCallBack(func);
 }
 
-void ParserDb::SetBaseActionOfResponse(ImportActionResponse &response, const std::string& rankId,
-                                       const std::string& host, const std::string& dbFile)
+void ParserDb::SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId,
+    const std::string &host, const std::string &dbFile)
 {
     Action action;
     action.cardName = rankId;
@@ -200,12 +199,12 @@ ProjectTypeEnum ParserDb::GetProjectType(const std::vector<std::string> &dataPat
 }
 
 std::vector<std::string> ParserDb::GetParseFileByImportFile(const std::string &importFile,
-                                                            ProjectTypeEnum projectTypeEnum, std::string &error)
+    ProjectTypeEnum projectTypeEnum, std::string &error)
 {
     std::vector<std::string> pytorchFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(pytorchDBReg));
     std::vector<std::string> msprofFiles = FileUtil::FindFilesWithFilter(importFile, std::regex(msprofDBReg));
     if (pytorchFiles.empty() && msprofFiles.empty()) {
-        return {importFile};
+        return { importFile };
     }
     std::vector<std::string> reportFiles = {};
     if (!pytorchFiles.empty()) {
@@ -216,13 +215,14 @@ std::vector<std::string> ParserDb::GetParseFileByImportFile(const std::string &i
         DataBaseManager::Instance().SetFileType(FileType::MS_PROF);
     }
     std::vector<std::string> res;
-    for (const auto &item: reportFiles) {
+    for (const auto &item : reportFiles) {
         res.push_back(FileUtil::GetParentPath(item));
     }
     return res;
 }
 
-void ParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos, const std::string &rankId)
+void ParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+    Global::BaselineInfo &baselineInfo)
 {
     if (projectInfos.empty() || projectInfos[0].parseFilePathInfos.empty()) {
         return;
@@ -241,11 +241,28 @@ void ParserDb::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &pr
         DataBaseManager::Instance().SetBaselineFileType(FileType::MS_PROF);
         file = msprofFiles[0];
     }
-
+    Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
+    auto hostInfoMap = GetReportFiles({ parseFilePath });
+    if (std::empty(hostInfoMap)) {
+        Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
+        baselineInfo.errorMessage = "Db get host info failed!";
+        return;
+    }
+    if (std::empty(hostInfoMap.begin()->second) || std::empty(hostInfoMap.begin()->second.begin()->second)) {
+        Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
+        baselineInfo.errorMessage = "Db get rank info failed!";
+        return;
+    }
+    std::string rankId = hostInfoMap.begin()->first + hostInfoMap.begin()->second.begin()->second[0];
+    const std::string &cardId = rankId;
+    baselineInfo.rankId = rankId;
+    baselineInfo.cardName = "baseline" + cardId;
+    baselineInfo.host = hostInfoMap.begin()->first;
+    Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
     if (!Timeline::DataBaseManager::Instance().CreatConnectionPool(rankId, file)) {
         ServerLog::Error("Failed to create baseline connection pool. ");
     }
-    FullDb::FullDbParser::Instance().Parse(std::vector<std::string>{rankId}, file);
+    FullDb::FullDbParser::Instance().Parse(std::vector<std::string>{ rankId }, file);
 }
 } // Module
 } // Dic

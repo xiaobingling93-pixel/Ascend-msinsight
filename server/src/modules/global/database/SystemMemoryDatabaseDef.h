@@ -27,6 +27,13 @@ struct ProjectExplorerInfo {
     std::string importType;
     std::vector<std::string> dbPath;
 };
+
+struct BaselineInfo {
+    std::string host;
+    std::string rankId;
+    std::string cardName;
+    std::string errorMessage;
+};
 }
 }
 }

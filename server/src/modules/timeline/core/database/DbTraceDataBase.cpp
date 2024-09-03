@@ -6,6 +6,7 @@
 #include "CommonDefs.h"
 #include "DataBaseManager.h"
 #include "CommonCacheManager.h"
+#include "CollectionTimeService.h"
 #include "DbTraceDataBase.h"
 
 namespace Dic::Module::FullDb {
@@ -14,7 +15,6 @@ static std::map<std::string, std::map<std::string, std::string>> stringsCache;
 
 DbTraceDataBase::~DbTraceDataBase()
 {
-    stringsCache.erase(path);
     for (const auto &rankId: rankIds) {
         CommonCacheManager::Instance().EraseFlowByRank(rankId);
     }
@@ -835,7 +835,7 @@ std::string DbTraceDataBase::QueryHostInfo()
     if (!host.empty() || !CheckTableDataInvalid(TABLE_HOST_INFO)) {
         return host;
     }
-    std::string sql = "select hostName||hostUid||' ' as host from " + TABLE_HOST_INFO;
+    std::string sql = "select hostName||hostUid||'' as host from " + TABLE_HOST_INFO;
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -847,6 +847,24 @@ std::string DbTraceDataBase::QueryHostInfo()
         host = sqlite3_column_string(stmt, resultStartIndex);
     }
     sqlite3_finalize(stmt);
+
+    sqlite3_stmt *timeStmt = nullptr;
+    std::string timeSql = "SELECT startTimeNs, endTimeNs FROM " + TABLE_SESSION_TIME_INFO;
+    int timeResult = sqlite3_prepare_v2(db, timeSql.c_str(), -1, &timeStmt, nullptr);
+    if (timeResult != SQLITE_OK) {
+        Server::ServerLog::Error(" Msg: ", sqlite3_errmsg(db), " ", result);
+        sqlite3_finalize(timeStmt);
+        return host;
+    }
+    int64_t startTime = 0;
+    int64_t endTime = 0;
+    while (sqlite3_step(timeStmt) == SQLITE_ROW) {
+        int col = resultStartIndex;
+        startTime = sqlite3_column_int64(timeStmt, col++);
+        endTime = sqlite3_column_int64(timeStmt, col++);
+    }
+    sqlite3_finalize(timeStmt);
+    host = CollectionTimeService::Instance().ComputeMarkHost(host, startTime, endTime);
     return host;
 }
 
@@ -1915,5 +1933,10 @@ std::vector<Protocol::SimpleSlice> DbTraceDataBase::QueryThreadByPid(const Metad
     }
     TraceDatabaseHelper::CalculateSelfTime(completeSlice, selfTimeKeyValue, startTime, endTime);
     return completeSlice;
+}
+
+void DbTraceDataBase::Reset()
+{
+    stringsCache.clear();
 }
 }

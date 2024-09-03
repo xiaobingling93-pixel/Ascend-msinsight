@@ -95,6 +95,8 @@ struct ProjectCheckValidResponse : public Response {
 
 struct BaselineSettingBody {
     std::string rankId;
+    std::string host;
+    std::string cardName;
     std::string errorMessage;
 };
 
