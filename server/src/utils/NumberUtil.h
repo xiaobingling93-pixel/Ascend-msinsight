@@ -142,7 +142,7 @@ public:
     }
 
     // 只处理1~6位小数位的截尾
-    static inline double DoubleReservedNDigits(double data, int n)
+    static inline double DoubleReservedNDigits(double data, int n = 6)
     {
         if (n <= 0 || n > 6) { // 最多处理6位小数位
             return data;
@@ -154,6 +154,11 @@ public:
         }
         long double temp = data;
         return (double)(std::round(data * ratio) / ratio);
+    }
+
+    static inline double Sub(double a, double b)
+    {
+        return DoubleReservedNDigits(DoubleReservedNDigits(a) - DoubleReservedNDigits(b));
     }
 
     static inline bool IsGreater(float a, float b, float epsilon = 1e-9)

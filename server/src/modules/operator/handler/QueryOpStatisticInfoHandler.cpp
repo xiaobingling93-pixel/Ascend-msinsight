@@ -195,11 +195,11 @@ namespace Dic::Module::Operator {
             data.diff.opName = data.compare.opName;
             data.diff.inputShape = data.compare.inputShape;
             data.diff.accCore = data.compare.accCore;
-            data.diff.totalTime = data.compare.totalTime - data.baseline.totalTime;
+            data.diff.totalTime = NumberUtil::Sub(data.compare.totalTime, data.baseline.totalTime);
             data.diff.count = data.compare.count - data.baseline.count;
-            data.diff.avgTime = data.compare.avgTime - data.baseline.avgTime;
-            data.diff.maxTime = data.compare.maxTime - data.baseline.maxTime;
-            data.diff.minTime = data.compare.minTime - data.baseline.minTime;
+            data.diff.avgTime = NumberUtil::Sub(data.compare.avgTime, data.baseline.avgTime);
+            data.diff.maxTime = NumberUtil::Sub(data.compare.maxTime, data.baseline.maxTime);
+            data.diff.minTime = NumberUtil::Sub(data.compare.minTime, data.baseline.minTime);
         }
     }
 
@@ -216,11 +216,11 @@ namespace Dic::Module::Operator {
             data.diff.opName = data.compare.opName + "->" + data.baseline.opName;
             data.diff.inputShape = data.compare.inputShape + "->" + data.baseline.inputShape;
             data.diff.accCore = data.compare.accCore;
-            data.diff.totalTime = data.compare.totalTime - data.baseline.totalTime;
+            data.diff.totalTime = NumberUtil::Sub(data.compare.totalTime, data.baseline.totalTime);
             data.diff.count = data.compare.count - data.baseline.count;
-            data.diff.avgTime = data.compare.avgTime - data.baseline.avgTime;
-            data.diff.maxTime = data.compare.maxTime - data.baseline.maxTime;
-            data.diff.minTime = data.compare.minTime - data.baseline.minTime;
+            data.diff.avgTime = NumberUtil::Sub(data.compare.avgTime, data.baseline.avgTime);
+            data.diff.maxTime = NumberUtil::Sub(data.compare.maxTime, data.baseline.maxTime);
+            data.diff.minTime = NumberUtil::Sub(data.compare.minTime, data.baseline.minTime);
         }
     }
 

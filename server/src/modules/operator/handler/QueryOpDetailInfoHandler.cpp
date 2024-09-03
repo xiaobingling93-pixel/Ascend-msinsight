@@ -256,8 +256,8 @@ namespace Dic::Module::Operator {
             data.diff.accCore = data.compare.accCore + "->" + data.baseline.accCore;
             data.diff.startTime = std::to_string(NumberUtil::StringToDouble(data.compare.startTime) -
                                   NumberUtil::StringToDouble(data.baseline.startTime));
-            data.diff.duration = data.compare.duration - data.baseline.duration;
-            data.diff.waitTime = data.compare.waitTime - data.baseline.waitTime;
+            data.diff.duration = NumberUtil::Sub(data.compare.duration, data.baseline.duration);
+            data.diff.waitTime = NumberUtil::Sub(data.compare.waitTime, data.baseline.waitTime);
             data.diff.blockDim = data.compare.blockDim - data.baseline.blockDim;
             data.diff.inputShape = data.compare.inputShape + "->" + data.baseline.inputShape;
             data.diff.inputType = data.compare.inputType + "->" + data.baseline.inputType;
