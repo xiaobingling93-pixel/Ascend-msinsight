@@ -173,7 +173,7 @@ void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<s
     }
     auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr) {
-        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDataBase in EndParseTask of Source.");
+        ServerLog::Error("Failed to cast virtual trace database to json trace database in end parse task of source.");
         return;
     }
     database->CreateIndex();

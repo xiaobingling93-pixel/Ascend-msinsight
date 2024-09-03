@@ -102,6 +102,7 @@ std::optional<InterCoreLoadAnalysisDetail> InterCoreLoadGraphParser::ParseInterC
 void InterCoreLoadGraphParser::ParseJsonOpDetailArray(InterCoreLoadAnalysisDetail &analysisDetail,
                                                       const json_t &jsonOpDetailArray)
 {
+    std::string_view errMsg;
     for (auto &jsonOpDetail: jsonOpDetailArray.GetArray()) {
         // 解析op detail
         InterCoreOpDetail opDetail;
@@ -109,7 +110,9 @@ void InterCoreLoadGraphParser::ParseJsonOpDetailArray(InterCoreLoadAnalysisDetai
 
         // 解析sub core detail数组
         if (!JsonUtil::IsJsonArray(jsonOpDetail, "core_detail")) {
-            ServerLog::Warn("Sub core detail is not an array.");
+            if (errMsg.empty()) {
+                errMsg = "Found sub core detail is not array when parse inter core load analysis json.";
+            }
             analysisDetail.AddOpDetail(std::move(opDetail));
             analysisDetail.opDetails.emplace_back(opDetail);
             analysisDetail.opDetails.emplace_back(std::move(opDetail));
@@ -132,6 +135,9 @@ void InterCoreLoadGraphParser::ParseJsonOpDetailArray(InterCoreLoadAnalysisDetai
             opDetail.subCoreDetails.emplace_back(subCoreDetail);
         }
         analysisDetail.AddOpDetail(std::move(opDetail));
+    }
+    if (!errMsg.empty()) {
+        ServerLog::Warn(errMsg);
     }
     TransformAnalysisDetail(analysisDetail);
 }
