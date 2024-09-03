@@ -299,7 +299,7 @@ const RankFloatContainer = ({ rankId, session }: { rankId: number; session: Sess
                             rankData[item.value] !== 0 &&
                             <div className='rankDataItem' key={item.value}>
                                 <div className='title'>{t(item.title)}</div>
-                                <div className='value'>{rankData[item.value]} {item.unit}</div>
+                                <div className='value'>{`${rankData[item.value]} ${item.unit}`}</div>
                             </div>
                         ))
                     }

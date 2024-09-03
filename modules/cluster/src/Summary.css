@@ -36,4 +36,5 @@
 .rankData .rankDataItem .value {
     flex: 1;
     text-align: end;
+    white-space: nowrap;
 }

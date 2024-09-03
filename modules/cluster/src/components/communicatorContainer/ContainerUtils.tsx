@@ -341,6 +341,11 @@ export const getRankDataById = (rankId: number, summaryList: summaryListItem[]):
     return {
         ...rank,
         pureComputingTime,
+        communicationNotOverLappedTime: Number(rank.communicationNotOverLappedTime.toFixed(2)),
+        communicationOverLappedTime: Number(rank.communicationNotOverLappedTime.toFixed(2)),
+        computingTime: Number(rank.communicationNotOverLappedTime.toFixed(2)),
+        freeTime: Number(rank.communicationNotOverLappedTime.toFixed(2)),
+        prepareTime: Number(rank.communicationNotOverLappedTime.toFixed(2)),
         computeTimeRatio: opacity ? Number((opacity.totalComputingOpacity * 100).toFixed(2)) : 0,
         communicationTimeRatio: opacity ? Number((opacity.communicationOpacity * 100).toFixed(2)) : 0,
     };
