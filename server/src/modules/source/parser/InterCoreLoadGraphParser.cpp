@@ -111,8 +111,6 @@ void InterCoreLoadGraphParser::ParseJsonOpDetailArray(InterCoreLoadAnalysisDetai
         if (!JsonUtil::IsJsonArray(jsonOpDetail, "core_detail")) {
             ServerLog::Warn("Core detail is not an array.");
             analysisDetail.AddOpDetail(std::move(opDetail));
-            analysisDetail.opDetails.emplace_back(opDetail);
-            analysisDetail.opDetails.emplace_back(std::move(opDetail));
             continue;
         }
         const json_t &jsonCoreDetailArray = jsonOpDetail["core_detail"];
