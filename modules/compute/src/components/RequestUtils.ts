@@ -129,3 +129,7 @@ export const queryMemoryGraph = async(param: {blockId: string}): Promise<any> =>
 export const queryCoreOccupancy = async(): Promise<any> => {
     return window.requestData('source/details/interCoreLoadAnalysis', {});
 };
+
+export const queryRoofline = async(): Promise<any> => {
+    return window.requestData('source/details/roofline', {});
+};
