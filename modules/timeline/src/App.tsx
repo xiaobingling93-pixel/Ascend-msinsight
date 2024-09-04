@@ -22,7 +22,7 @@ const Window = styled.div`
     overflow: hidden;
     display: flex;
     width: 100vw;
-    color: ${(props): string => props.theme.fontColor};
+    color: ${(props): string => props.theme.textColor};
 `;
 
 // 全局新增监听搜索快捷键输入

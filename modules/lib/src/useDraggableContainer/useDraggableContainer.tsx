@@ -104,6 +104,7 @@ const ContainerLeft = styled(ContainerBase)`
             right: 0;
             background-color: transparent;
             border-right: ${(p): string => p.theme.dividerColor} 0 solid;
+            user-select: none;
             &:hover[aria-disabled=false] {
                 border-right-width: 1px;
                 cursor: e-resize;
@@ -160,6 +161,7 @@ const ContainerRight = styled(ContainerBase)`
             z-index: 1;
             background-color: transparent;
             border-left: ${(p): string => p.theme.dividerColor} 0 solid;
+            user-select: none;
             &:hover[aria-disabled=false] {
                 border-left-width: 3px;
                 cursor: e-resize;
@@ -210,6 +212,7 @@ const ContainerBottom = styled(ContainerBase)`
             top: 0;
             background-color: transparent;
             border-top: ${(p): string => p.theme.dividerColor} 0 solid;
+            user-select: none;
             &:hover[aria-disabled=false] {
                 border-top-width: 1px;
                 cursor: n-resize;

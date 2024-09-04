@@ -43,7 +43,7 @@ import { hashToNumber } from '../../utils/colorUtils';
 import { getDetailTimeDisplay, ThreadUnit } from '../../insight/units/AscendUnit';
 import { EventDetail } from './EventsView';
 
-export const DETAIL_HEADER_HEIGHT_ETC_PX = 130;
+export const DETAIL_HEADER_HEIGHT_ETC_PX = 146;
 const Container = styled.div`
     width: 100%;
     height: 100%;
@@ -88,6 +88,7 @@ const AsideSelectContainer = styled.div`
 
 const SelectContentContainer = styled.div`
     flex: 1;
+    padding: 8px 16px;
     height: 100%;
     border-radius: 4px;
     overflow: hidden;

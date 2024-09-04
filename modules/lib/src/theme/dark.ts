@@ -181,6 +181,8 @@ export const dark: Theme = {
     bgColorLight: '#2a2f37',
     bgColorLighter: '#343a43',
     bgColorDisabled: '#272c33',
+    bgColorCommon: '#2A2F37',
+    textColor: '#D2DCE9',
     textColorPrimary: '#ffffff',
     textColorSecondary: '#d3dce9',
     textColorTertiary: '#8D98AA',
@@ -219,5 +221,6 @@ export const dark: Theme = {
     rankBackgroudColor: 'rgb(62, 69, 81)',
     contextMenuBgColor: '#2a2f37',
     summaryChartBgColor: '#576372',
+    unitInfoTextColor: '#BCBCBC',
     // 把新加的字段同时加到light.ts文件、以及emotion.d.ts文件...........
 };

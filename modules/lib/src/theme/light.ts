@@ -181,6 +181,8 @@ export const light: Theme = {
     bgColorLight: '#F4F6FA',
     bgColorLighter: '#ffffff',
     bgColorDisabled: '#EBEDF3',
+    bgColorCommon: '#EBEFF6',
+    textColor: '#4E5865',
     textColorPrimary: '#000000',
     textColorSecondary: '#4E5865',
     textColorTertiary: '#8D98AA',
@@ -219,4 +221,5 @@ export const light: Theme = {
     rankBackgroudColor: 'rgb(172 177 185)',
     contextMenuBgColor: '#EBEFF6',
     summaryChartBgColor: '#BFC7D7',
+    unitInfoTextColor: '#4E5865',
 };

@@ -111,13 +111,13 @@ const drawHoverTimeRect = (ctx: CanvasRenderingContext2D,
     const textLength = ctx.measureText(displayText).width;
     const roundRectWidth = textLength + 10;
     const roundRectHeight = 16;
-    const rouned = 8;
+    const rounded = 4;
     ctx.fillStyle = '#3778ED';
     if (mousePosNow.x < 0 || mousePosNow.x > ctx.canvas.clientWidth - THUMB_WIDTH_PX) {
         return;
     }
     if (mousePosNow.x <= roundRectWidth / 2) {
-        drawRoundedRect([0, 0, roundRectWidth, roundRectHeight], ctx, rouned);
+        drawRoundedRect([0, 0, roundRectWidth, roundRectHeight], ctx, rounded);
         ctx.fill();
         ctx.fillStyle = 'white';
         ctx.fillText(displayText, roundRectWidth / 2, 3);
@@ -125,13 +125,13 @@ const drawHoverTimeRect = (ctx: CanvasRenderingContext2D,
     }
 
     if (mousePosNow.x >= width - (roundRectWidth / 2) && mousePosNow.x <= ctx.canvas.clientWidth - THUMB_WIDTH_PX) {
-        drawRoundedRect([width - roundRectWidth, 0, roundRectWidth, roundRectHeight], ctx, rouned);
+        drawRoundedRect([width - roundRectWidth, 0, roundRectWidth, roundRectHeight], ctx, rounded);
         ctx.fill();
         ctx.fillStyle = 'white';
         ctx.fillText(displayText, width - (roundRectWidth / 2), 3);
         return;
     }
-    drawRoundedRect([mousePosNow.x - (roundRectWidth / 2), 0, roundRectWidth, roundRectHeight], ctx, rouned);
+    drawRoundedRect([mousePosNow.x - (roundRectWidth / 2), 0, roundRectWidth, roundRectHeight], ctx, rounded);
     ctx.fill();
     ctx.fillStyle = 'white';
     ctx.fillText(displayText, mousePosNow.x, 3);
@@ -237,7 +237,7 @@ const drawMaskRange = ({
     const elements = document.getElementsByClassName('chart-selected');
     if (maskRange !== undefined) {
         maskRange.sort((a, b) => a - b);
-        ctx.fillStyle = 'rgba(66,66,66,0.5)';
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
         if (session.selectedUnits.length !== 0) {
             ctx.fillRect(0, TIME_LINE_AXIS_HEIGHT_PX, width, height);
             if (elements.length !== 0) {

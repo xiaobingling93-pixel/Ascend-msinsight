@@ -62,21 +62,11 @@ interface LineOptions {
     color?: React.CSSProperties['color'];
 };
 
-const drawVerticalLine = (ctx: CanvasRenderingContext2D, { beginX, beginY, length, lineWidth = 2, color = 'black' }: LineOptions): void => {
+const drawVerticalLine = (ctx: CanvasRenderingContext2D, { beginX, beginY, length, lineWidth = 1, color = 'black' }: LineOptions): void => {
     ctx.beginPath();
     ctx.lineWidth = lineWidth;
     ctx.moveTo(beginX, beginY);
-    ctx.lineTo(beginX, beginY - length);
-    ctx.closePath();
-    ctx.strokeStyle = color;
-    ctx.stroke();
-};
-
-const drawHorizontallLine = (ctx: CanvasRenderingContext2D, { beginX, beginY, length, lineWidth = 2, color = 'black' }: LineOptions): void => {
-    ctx.beginPath();
-    ctx.lineWidth = lineWidth;
-    ctx.moveTo(beginX, beginY);
-    ctx.lineTo(beginX + length, beginY);
+    ctx.lineTo(beginX, beginY + length);
     ctx.closePath();
     ctx.strokeStyle = color;
     ctx.stroke();
@@ -132,7 +122,7 @@ export const getTickLength = ({ beginX, originX, distanceX, timestamp, timeStep,
         return 0;
     // short tick with timestamp
     } else if ((timestamp + timeStep) % (timeStep * spaceInterval) !== 0) {
-        return 2 * ticksLength / 3;
+        return ticksLength / 3;
     } else {
     // long tick
         return ticksLength;
@@ -160,12 +150,12 @@ const getAdaptableTickSpaceAndNum = ([start, end]: Domain, timePerPx: number): {
      * so the tickNum's bound is (4, 20)
      */
     const getTimeStep = (time: number): number => {
-        const INTEGER_ONE = 5;
-        const INTEGER_TWO = 2.5;
+        const INTEGER_ONE = 2.5;
+        const INTEGER_TWO = 1;
         const timeString = time.toString();
         const expotential = timeString.length - 2;
         const base = Number(timeString[0]) > INTEGER_ONE ? INTEGER_ONE : INTEGER_TWO;
-        return base * Math.pow(10, expotential);
+        return base * Math.pow(10, expotential) / 2;
     };
     const timeStep = getTimeStep(Math.ceil(duration));
     const tickSpace = timePerPx === 0 ? 0 : timeStep / timePerPx;
@@ -255,14 +245,14 @@ interface DrawAxisOptions {
 const drawTimelineAxis = (canvas: HTMLCanvasElement, {
     domain,
     spaceX = 30,
-    spaceY = 25,
-    ticksLength = -10,
+    spaceY = 2,
+    ticksLength = -12,
     fontSize = 11,
     fontFamily = 'microsoft yahei',
-    letterLineSpace = -20,
+    letterLineSpace = 16,
     fontColor = 'black',
     lineColor = 'black',
-    lineWidth = 2,
+    lineWidth = 1,
     textParser = (text: number): string => text.toString(),
     timePerPx = 1,
 }: DrawAxisOptions = DEFAULT_DRAW_TIMELINE_AXIS_OPTIONS): void => {
@@ -274,8 +264,7 @@ const drawTimelineAxis = (canvas: HTMLCanvasElement, {
     const originY = canvasHeight - spaceY;
     const distanceX = canvasWidth - (2 * spaceX);
 
-    // draw stable line, includes a horizontal main axis, and vertical ticks for both terminal point
-    drawHorizontallLine(ctx, { beginX: originX, beginY: originY, length: distanceX, lineWidth, color: lineColor });
+    // draw stable line, includes a horizontal main axis(if needed), and vertical ticks for both terminal point
     drawVerticalLine(ctx, { beginX: originX, beginY: originY, length: ticksLength, lineWidth, color: lineColor });
     drawVerticalLine(ctx, { beginX: originX + distanceX, beginY: originY, length: ticksLength, lineWidth, color: lineColor });
 
@@ -351,7 +340,7 @@ const TimelineAxis = observer(({ session, margin, timelineHeight }: TimelineAxis
             drawTimelineAxis(canvas.current, {
                 domain: [session.domainRange.domainStart, session.domainRange.domainEnd],
                 spaceX: margin,
-                fontColor: theme.fontColor,
+                fontColor: theme.textColor,
                 fontFamily: theme.fontFamily,
                 lineColor: theme.timelineAxisColor,
                 textParser: getTextParser(session.isNsMode),

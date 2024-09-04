@@ -98,6 +98,7 @@ const ContainerLeft = styled(ContainerBase)`
             z-index: 1;
             background-color: transparent;
             border-right: ${(p): string => p.theme.dividerColor} 0 solid;
+            user-select: none;
             &:hover[aria-disabled=true] {
                 border-right-width: 3px;
                 cursor: e-resize;
@@ -135,6 +136,7 @@ const ContainerRight = styled(ContainerBase)`
             z-index: 1;
             background-color: transparent;
             border-left: ${(p): string => p.theme.dividerColor} 0 solid;
+            user-select: none;
             &:hover[aria-disabled=true] {
                 border-left-width: 3px;
                 cursor: e-resize;
@@ -168,6 +170,7 @@ const ContainerBottom = styled(ContainerBase)`
             top: 0;
             background-color: transparent;
             border-top: ${(p): string => p.theme.dividerColor} 0 solid;
+            user-select: none;
             &:hover[aria-disabled=true] {
                 border-top-width: 1px;
                 cursor: n-resize;
@@ -209,6 +212,7 @@ const ContainerTop = styled(ContainerBase)`
             bottom: 0;
             background-color: transparent;
             border-bottom: ${(p): string => p.theme.dividerColor} 0 solid;
+            user-select: none;
             &:hover[aria-disabled=true] {
                 border-bottom-width: 1px;
                 cursor: n-resize;

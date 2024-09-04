@@ -186,6 +186,8 @@ declare module '@emotion/react' {
         bgColorLight: string;
         bgColorLighter: string;
         bgColorDisabled: string; // 组件禁用后背景色
+        bgColorCommon: string; // 背景常用色
+        textColor: string; // 文字常用色
         textColorPrimary: string; // 文字主色
         textColorSecondary: string; // 文字次级色
         textColorTertiary: string; // 文字三级色
@@ -224,5 +226,6 @@ declare module '@emotion/react' {
         rankBackgroudColor: string;
         contextMenuBgColor: string;
         summaryChartBgColor: string;
+        unitInfoTextColor: string;
     }
 }

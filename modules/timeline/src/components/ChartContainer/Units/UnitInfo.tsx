@@ -66,7 +66,7 @@ const DefaultInfoContainer = styled.div`
 
             .insight-lane-info-tag-text {
                 padding: 1px 8px;
-                background-color: ${(props): string => props.theme.unitTagInfoBackgroundColor};
+                background-color: ${(props): string => `${props.theme.bgColorCommon}bd`};
                 border-radius: 4px;
             }
         }
@@ -170,7 +170,7 @@ interface ConfigBarProps {
     isSelected: boolean;
 }
 const ConfigBar = observer(({ session, unit, isHovered, hasPinButton, isSelected }: ConfigBarProps): JSX.Element => {
-    return <div className="insight-lane-configbar">
+    return <div className="insight-lane-configbar" style={{ flex: 'none' }}>
         <div style={{ display: 'flex', marginLeft: 5 }} onClick={(e: React.MouseEvent): void => {
             e.stopPropagation();
             e.preventDefault();
@@ -275,6 +275,7 @@ const UnitInfoContainer = styled.div<{ unit: InsightUnit; laneInfoWidth: number 
     height: ${(props): number => props.unit.height()}px;
     padding-left: ${(props): number => 36 * ((props.unit as any)[level] ?? 0)}px;
     text-align: left;
+    color: ${(props): string => props.theme.unitInfoTextColor};
 `;
 
 interface UnitInfoProps {

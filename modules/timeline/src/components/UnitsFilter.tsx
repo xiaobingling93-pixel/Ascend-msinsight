@@ -184,7 +184,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
     return (
         <CustomDiv theme={theme}>
             <Select
-                value={selectValue}
+                value={selectValue === null ? null : i18n.t(selectValue, { ns: 'timeline' })}
                 dropdownRender={dropdownRender}
                 onDropdownVisibleChange={(open: boolean): void => setIsOpen(open)}
                 open={isOpen}
