@@ -45,12 +45,12 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
     const std::string &selectedFile)
 {
     if (!FileUtil::CheckFilePathLength(selectedFile)) {
-        ServerLog::Error("File path length check failed.");
+        ServerLog::Error("Parse bin file failed cause path length is too long.");
         return false;
     }
     std::ifstream file = FileUtil::OpenReadFileSafely(selectedFile, std::ios::binary);
     if (!file) {
-        ServerLog::Warn("Failed to open file: ", selectedFile);
+        ServerLog::Error("Open bin file failed: ", selectedFile);
         return false;
     }
 
@@ -72,7 +72,7 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
         paddingLength = static_cast<int>(paddingLength);
         if (dataType == static_cast<int>(DataTypeEnum::SOURCE)) {
             if (INT64_MAX - filePathLen < dataSize) { // 溢出防护
-                ServerLog::Error("Data unit in selected file is invalid which data size is :", dataSize);
+                ServerLog::Error("Source code data block in selected file is invalid which data size is :", dataSize);
                 return false;
             }
             dataSize = dataSize + filePathLen;
@@ -85,7 +85,7 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
 
         int64_t startPos = file.tellg();
         if (startPos + dataSize - paddingLength >= INT64_MAX) {  // 溢出防
-            ServerLog::Error("Data unit in selected file is invalid which data size is :", dataSize);
+            ServerLog::Error("Data block in selected file is invalid which data size is :", dataSize);
             return false;
         }
         int64_t endPos = startPos + dataSize - paddingLength;
@@ -97,7 +97,7 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
     }
     file.close();
     Timeline::ParserStatusManager::Instance().SetParserStatus(fileId, Timeline::ParserStatus::INIT);
-    ServerLog::Info("Start simulation parse. file id: ", fileId);
+    ServerLog::Info("Start to parse simulation timeline file. file id: ", fileId);
     threadPool->AddTask(PreParseTask, fileId);
     return true;
 }
@@ -112,17 +112,17 @@ void SourceFileParser::PreParseTask(const std::string &fileId)
 bool SourceFileParser::InitParser(const std::string &fileId)
 {
     if (!Timeline::ParserStatusManager::Instance().SetRunningStatus(fileId)) {
-        ServerLog::Info("Pre task skip this file.");
+        ServerLog::Info("Pre task skip this file cause set running status failed: ", fileId);
         return true;
     }
     auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
     if (db == nullptr) {
-        ServerLog::Error("Failed to get connection.");
+        ServerLog::Error("Failed to get database connection for: ", fileId);
         return false;
     }
     auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr || !(database->DropTable() && database->CreateTable())) {
-        ServerLog::Error("Failed to open traceDatabase. rankId:", fileId);
+        ServerLog::Error("Failed to open trace database. rankId:", fileId);
         return false;
     }
     auto &instance = SourceFileParser::Instance();
@@ -158,7 +158,7 @@ bool SourceFileParser::InitParser(const std::string &fileId)
 void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<std::vector<std::future<void>>> futures)
 {
     if (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) != Timeline::ParserStatus::RUNNING) {
-        ServerLog::Info("End parse task skip this file. ID:", fileId);
+        ServerLog::Info("End parse task skip this file cause timeline parser status is not running: ", fileId);
         return;
     }
     ServerLog::Info("Wait parse completed. ID:", fileId);
@@ -168,12 +168,12 @@ void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<s
     ServerLog::Info("Parse completed. ID:", fileId);
     auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
     if (db == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", fileId);
+        ServerLog::Error("Failed to get database connection in end parse task. fileId:", fileId);
         return;
     }
     auto database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
     if (database == nullptr) {
-        ServerLog::Error("Failed to convert VirtualTraceDatabase to JsonTraceDataBase in EndParseTask of Source.");
+        ServerLog::Error("Failed to cast virtual trace database to json trace database in end parse task of source.");
         return;
     }
     database->CreateIndex();
@@ -186,10 +186,10 @@ void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<s
 void SourceFileParser::ParseTask(const std::string &fileId, std::pair<int64_t, int64_t> pos)
 {
     if (Timeline::ParserStatusManager::Instance().GetParserStatus(fileId) != Timeline::ParserStatus::RUNNING) {
-        ServerLog::Info("Parse task skip this file. ID:", fileId);
+        ServerLog::Info("Parse task skip this file cause timeline parser status is not running. ID:", fileId);
         return;
     }
-    ServerLog::Info("Ptart parse:", fileId);
+    ServerLog::Info("Start parse timeline from bin file:", fileId);
     auto &instance = SourceFileParser::Instance();
     Timeline::EventParser eventParser(instance.filePath, fileId);
     eventParser.SetSimulationStatus(true);
@@ -214,7 +214,7 @@ std::pair<int64_t, int64_t> SourceFileParser::AdjustPosition(std::ifstream &file
     char startTemp;
     while (file.get(startTemp)) {
         if (!file) {
-            ServerLog::Error("Failed to read start pos.");
+            ServerLog::Error("Failed to read start position.");
             break;
         }
         if (startTemp == '[') {
@@ -228,7 +228,7 @@ std::pair<int64_t, int64_t> SourceFileParser::AdjustPosition(std::ifstream &file
     const int offset = -2;
     while (file.get(endTemp)) {
         if (!file) {
-            ServerLog::Error("Failed to read end pos.");
+            ServerLog::Error("Failed to read end position.");
             break;
         }
         if (endTemp == ']') {
@@ -254,7 +254,7 @@ void SourceFileParser::ParseEndCallBack(const std::string &fileId, bool result, 
 
 void SourceFileParser::Reset()
 {
-    ServerLog::Info("Reset. wait task completed.");
+    ServerLog::Info("Reset file parser and wait task completed.");
     Timeline::ParserStatusManager::Instance().SetAllTerminateStatus();
     Timeline::ParserStatusManager::Instance().SetClusterParseStatus(Timeline::ParserStatus::TERMINATE);
     threadPool->Reset();
@@ -285,13 +285,13 @@ void SourceFileParser::Reset()
     Timeline::TraceTime::Instance().Reset();
     FileParser::Reset();
     Timeline::ParserStatusManager::Instance().ClearAllParserStatus();
-    ServerLog::Info("End Reset trace Parser");
+    ServerLog::Info("End reset file parser.");
 }
 
 bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath)
 {
     if (!FileUtil::CheckFilePathLength(selectedFilePath)) {
-        ServerLog::Error("File path length check failed");
+        ServerLog::Error("File path length check failed.");
         return false;
     }
     std::ifstream file = FileUtil::OpenReadFileSafely(selectedFilePath, std::ios::binary);
@@ -656,7 +656,7 @@ bool SourceFileParser::GetDetailsMemoryTable(const std::string& targetBlockId,
             return false;
         }
         if (!tableJson.value().HasMember("table_per_block") || !tableJson.value()["table_per_block"].IsArray()) {
-            ServerLog::Error("Memory table data invalid.");
+            ServerLog::Error("Memory table data invalid, can not find array member table per block.");
             return false;
         }
         Value &tableList = tableJson.value()["table_per_block"];
@@ -962,7 +962,7 @@ std::string SourceFileParser::GetUnitType(int64_t unitTypeNumber)
     if (unitTypeMapping.find(unitTypeNumber) != unitTypeMapping.end()) {
         return unitTypeMapping[unitTypeNumber];
     } else {
-        ServerLog::Error("Unknown unit type.");
+        ServerLog::Error("Unknown data block type: ", unitTypeNumber);
         return "";
     }
 }
