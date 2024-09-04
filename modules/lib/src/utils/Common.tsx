@@ -144,10 +144,11 @@ export function sortFunc<T>(a: T, b: T, sorter = 'asc'): number {
     }
 }
 
-export const safeStr = (str: string, ignore?: string): string => {
-    if (str === undefined || str === null) {
-        return str;
+export const safeStr = (val: string | number, ignore?: string): string => {
+    if (val === undefined || val === null) {
+        return val;
     }
+    const str = String(val);
     if (ignore !== undefined && ignore !== null && ignore !== '') {
         const list = str.split(ignore);
         const safelist = list.map(item => item.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
