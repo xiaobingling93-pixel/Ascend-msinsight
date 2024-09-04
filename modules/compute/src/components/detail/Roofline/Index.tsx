@@ -13,9 +13,9 @@ import { queryRoofline } from '../../../components/RequestUtils';
 import { Hit } from 'ascend-utils';
 import type { TFunction } from 'i18next';
 
-interface IOriginData {
+export interface IOriginData {
     soc: string;
-    advice: string | string[];
+    advice: string;
     data: IOriginRooflineChart[];
 }
 
@@ -35,7 +35,7 @@ interface IOriginRoofline {
 
 interface IData {
     soc: string;
-    advice: string | string[];
+    advice: string ;
     data: IRooflineChart[];
 }
 
@@ -47,7 +47,7 @@ export interface IRooflineChart {
 export interface IRoofline {
     bw: number;
     computility: number;
-    point: [number, number];
+    point: Point;
     bwName: string;
     computilityName: string;
     ratio: string;
@@ -81,12 +81,11 @@ const allTabItems: ITab[] = [
     },
 ];
 
-const defaultData: IData =
-    {
-        soc: '',
-        advice: '',
-        data: [],
-    };
+const defaultData: IData = {
+    soc: '',
+    advice: '',
+    data: [],
+};
 
 function getTabItems(data: IData, tDetails: TFunction): Tab[] {
     const soc = data?.soc ?? '';
@@ -117,7 +116,7 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
 
     const updateData = async (): Promise<void> => {
         const res = await queryRoofline();
-        const originData = (res ?? defaultData) as IOriginData;
+        const originData = res ?? defaultData;
         const newData = {
             ...originData,
             data: originData.data.map(chart => ({
@@ -125,7 +124,7 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
                 rooflines: chart.rooflines.map(roofline => {
                     const bw = Number(roofline.bw);
                     const computility = Number(roofline.computility);
-                    const point = [Number(roofline.point[0]), Number(roofline.point[1])] as [number, number];
+                    const point: Point = [Number(roofline.point[0]), Number(roofline.point[1])];
                     return {
                         ...roofline,
                         bw,

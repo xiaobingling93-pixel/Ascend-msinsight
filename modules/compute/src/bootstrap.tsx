@@ -25,15 +25,15 @@ export function init(page?: string): void {
 declare global {
     interface Window {
         setTheme: (isDark: boolean) => void;
-        requestData: (method: string, params: object, module?: string) => Promise<object>;
+        requestData: <T extends object>(method: string, params: object, module?: string) => Promise<T>;
     }
 };
-window.requestData = async (command, params, module): Promise<object> => {
+window.requestData = async <T extends object>(command: string, params: object, module?: string): Promise<T> => {
     const data = await connector.fetch({
         args: { command, params },
         module: module !== undefined ? module : String(command).split('/')[0]?.toLowerCase(),
     });
-    return (data as {body: object})?.body;
+    return (data as {body: T})?.body;
 };
 Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
     connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
+import type { IOriginData as IRooflineData } from './detail/Roofline/Index';
 /**
  * 查询源代码
  *
@@ -130,6 +131,6 @@ export const queryCoreOccupancy = async(): Promise<any> => {
     return window.requestData('source/details/interCoreLoadAnalysis', {});
 };
 
-export const queryRoofline = async(): Promise<any> => {
+export const queryRoofline = async(): Promise<IRooflineData> => {
     return window.requestData('source/details/roofline', {});
 };

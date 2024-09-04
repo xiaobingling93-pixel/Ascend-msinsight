@@ -75,11 +75,11 @@ function getRoofInfo(data: IRooflineChart): {
         return null;
     }
     // 数据点和转折点
-    const allPoints = data.rooflines.reduce<Array<[number, number]>>((pre, roofline) => {
+    const allPoints = data.rooflines.reduce<Point[]>((pre, roofline) => {
         const { point, bw, computility } = roofline;
         const allPositive = point[0] > 0 && point[1] > 0 && bw > 0 && computility > 0;
         if (allPositive) {
-            const turningPoint: [number, number] = [computility / bw, computility];
+            const turningPoint: Point = [computility / bw, computility];
             pre.push(point, turningPoint);
         }
         return pre;

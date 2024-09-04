@@ -22,6 +22,11 @@
     "Memory Workload Table Records": "Memory Workload Table Records",
     "Current Count": "Current Count",
     "Pid": "Pid",
-    "DeviceId": "Device Id"
+    "DeviceId": "Device Id",
+    "Memory Unit": "Memory Unit",
+    "Memory Transfer": "Memory Transfer",
+    "Performance": "Performance",
+    "Performance Ratio": "Performance Ratio",
+    "Intensity": "Arithmetic Intensity"
   }
 }
