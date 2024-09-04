@@ -12,6 +12,7 @@ import { sortFunc } from 'ascend-utils';
 import Filter, { defaultCondition, type Icondition } from './Filter';
 import { queryComputeWorkload } from '../../RequestUtils';
 import CollapsiblePanel from 'ascend-collapsible-panel';
+import { CompareData } from '../../../utils/interface';
 
 export interface IblockData {
     blockId: string;
@@ -23,8 +24,8 @@ export interface IblockData {
 }
 interface Idata {
     blockIdList: string[];
-    chartData: IblockData[];
-    tableData: IblockData[];
+    chartData: Array<CompareData<IblockData>>;
+    tableData: Array<CompareData<IblockData>>;
 }
 const defaultData = {
     blockIdList: [],

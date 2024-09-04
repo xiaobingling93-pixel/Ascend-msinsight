@@ -7,10 +7,11 @@ import { useTranslation } from 'react-i18next';
 import { type IblockData } from './Index';
 import { COLOR, getResizeEcharts, chartVisbilityListener, safeStr, sortFunc, chartColors } from 'ascend-utils';
 import { LimitHit } from '../../LimitSet';
+import { CompareData } from '../../../utils/interface';
 
 interface Iprops {
     blockId: string;
-    data: IblockData[];
+    data: Array<CompareData<IblockData>>;
 }
 
 const baseOption = {
@@ -69,7 +70,7 @@ const baseOption = {
 };
 
 let myChart: echarts.ECharts;
-function InitCharts(data: IblockData[]): void {
+function InitCharts(data: Array<CompareData<IblockData>>): void {
     const chartDom = document.getElementById(chartID);
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
@@ -78,11 +79,11 @@ function InitCharts(data: IblockData[]): void {
     myChart.setOption(wrapData(data));
 }
 
-function wrapData(data: IblockData[]): any {
+function wrapData(data: Array<CompareData<IblockData>>): any {
     const option = { ...baseOption };
-    data.sort((a, b) => sortFunc(a.value, b.value));
-    const namelist = data.map(item => item.name);
-    const valuelist = data.map(item => ({ value: item.value, originValue: item.originValue }));
+    data.sort((a, b) => sortFunc(a.compare.value, b.compare.value));
+    const namelist = data.map(item => item.compare.name);
+    const valuelist = data.map(item => ({ value: item.compare.value, originValue: item.compare.originValue }));
     option.yAxis.data = namelist;
     option.series[0].data = valuelist;
     // 左边距
@@ -100,8 +101,8 @@ const chartID = 'ComputeWorkload';
 function ComputeWorkloadChart({ blockId, data }: Iprops): JSX.Element {
     const { t } = useTranslation('details');
     const [limit, setLimit] = useState({ maxSize: 5000, overlimit: true, current: 0 });
-    const allData = useMemo(() => data.filter(item => item.blockId === blockId), [blockId, data]);
-    const showData = useMemo(() => data.filter(item => item.blockId === blockId).slice(0, limit.maxSize), [blockId, data]);
+    const allData = useMemo(() => data.filter(item => item.compare.blockId === blockId), [blockId, data]);
+    const showData = useMemo(() => data.filter(item => item.compare.blockId === blockId).slice(0, limit.maxSize), [blockId, data]);
     chartVisbilityListener(chartID, () => {
         InitCharts(showData);
     });

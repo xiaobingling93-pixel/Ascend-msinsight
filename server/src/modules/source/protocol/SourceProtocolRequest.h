@@ -38,6 +38,7 @@ struct SourceApiInstrRequest : public Request {
 };
 
 struct SourceDetailBaseInfoParams {
+    bool isCompared = false;
 };
 
 struct SourceDetailBaseInfoRequest : public Request {
@@ -46,6 +47,7 @@ struct SourceDetailBaseInfoRequest : public Request {
 };
 
 struct SourceDetailLoadInfoParams {
+    bool isCompared = false;
 };
 
 struct SourceDetailsLoadInfoRequest: public Request {
@@ -55,6 +57,7 @@ struct SourceDetailsLoadInfoRequest: public Request {
 
 struct DetailsMemoryInfoParams {
     std::string blockId;
+    bool isCompared = false;
 };
 
 struct DetailsMemoryGraphRequest: public Request {

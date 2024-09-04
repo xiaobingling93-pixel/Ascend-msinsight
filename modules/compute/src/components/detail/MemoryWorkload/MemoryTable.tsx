@@ -10,14 +10,17 @@ import { LimitHit } from '../../LimitSet';
 import { ResizeTable } from 'ascend-resize';
 import { firstLetterUpper, Hit } from 'ascend-utils';
 import { type Session } from '../../../entity/session';
+import { CompareData } from '../../../utils/interface';
 
 interface ItableDetail {
     tableName: string;
     headerName: string[];
-    row: Array<{
-        name: string;
-        value: string[];
-    }>;
+    row: Array<CompareData<RowDetail>>;
+}
+
+interface RowDetail {
+    name: string;
+    value: string[];
 }
 
 interface ItableConfig {
@@ -52,7 +55,7 @@ function wrapData(data: ItableDetail[], limit: Ilimit, tDetails: any): { tableli
         headerName[0] = tableName;
         const cols = getFullCols(headerName, tDetails);
         let dataset = row.map(item => {
-            const arr = [item.name, ...item.value];
+            const arr = [item.compare.name, ...item.compare.value];
             const obj: Record<string, string> = {};
             headerName.forEach((header, index) => {
                 obj[header] = arr[index];

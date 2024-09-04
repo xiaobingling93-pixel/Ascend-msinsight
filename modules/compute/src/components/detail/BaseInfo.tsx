@@ -176,7 +176,7 @@ const index = observer(({ session }: Iprops): JSX.Element => {
 
     const getBaseInfo = async (): Promise<void> => {
         const res = await queryBaseInfo();
-        setData(res ?? defaultData);
+        setData(res.compare ?? defaultData);
     };
 
     const showBaseInfo = (dataObj: Ibaseinfo): void => {

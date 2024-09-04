@@ -13,6 +13,14 @@
 
 namespace Dic {
 namespace Protocol {
+
+template<typename T>
+struct CompareData {
+    T baseline;
+    T compare;
+    T diff;
+};
+
 struct SourceCodeFileResBody {
     std::string fileContent;
 };
@@ -55,11 +63,12 @@ struct TableRow {
     std::vector<std::string> value;
 };
 
+template<typename R>
 struct TableDetail {
     std::string tableName;
     std::vector<std::string> size;
     std::vector<std::string> headerName;
-    std::vector<TableRow> row;
+    std::vector<R> row;
 };
 
 struct DetailsBaseInfoResBody {
@@ -71,13 +80,13 @@ struct DetailsBaseInfoResBody {
     std::string duration;
     std::string deviceId;
     std::string pid;
-    TableDetail blockDetail;
+    TableDetail<TableRow> blockDetail;
     std::vector<std::string> advice;
 };
 
 struct DetailsBaseInfoResponse : public Response {
     DetailsBaseInfoResponse() : Response(REQ_RES_DETAILS_BASE_INFO) {}
-    DetailsBaseInfoResBody body;
+    CompareData<DetailsBaseInfoResBody> body;
 };
 
 struct SubBlockUnitData {
@@ -110,7 +119,7 @@ struct RooflineData {
 };
 
 struct SubBlockData {
-    std::vector<SubBlockUnitData> detailDataList;
+    std::vector<CompareData<SubBlockUnitData>> detailDataList;
     std::vector<std::string> advice;
 };
 
@@ -150,18 +159,18 @@ struct MemoryGraph {
     std::string blockId;
     std::string blockType;
     std::string chipType;
-    std::vector<MemoryUnit> memoryUnit;
-    L2Cache l2Cache;
+    std::vector<CompareData<MemoryUnit>> memoryUnit;
+    CompareData<L2Cache> l2Cache;
     std::vector<std::string> advice;
-    UtilizationRate vector;
-    UtilizationRate vector1;
-    UtilizationRate cube;
+    CompareData<UtilizationRate> vector;
+    CompareData<UtilizationRate> vector1;
+    CompareData<UtilizationRate> cube;
 };
 
 struct MemoryTable {
     std::string blockId;
     std::string tableOpType;
-    std::vector<TableDetail> tableDetail;
+    std::vector<TableDetail<CompareData<TableRow>>> tableDetail;
     std::vector<std::string> advice;
 };
 struct DetailsMemoryGraphResBody {

@@ -93,6 +93,7 @@ std::unique_ptr<Request> SourceProtocol::ToDetailsBaseInfoRequest(const Dic::jso
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompared, json["params"], "isCompared");
     return reqPtr;
 }
 
@@ -103,6 +104,7 @@ std::unique_ptr<Request> SourceProtocol::ToDetailsLoadInfoRequest(const Dic::jso
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompared, json["params"], "isCompared");
     return reqPtr;
 }
 
@@ -114,6 +116,7 @@ std::unique_ptr<Request> SourceProtocol::ToDetailsMemoryGraphRequest(const Dic::
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.blockId, json["params"], "blockId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompared, json["params"], "isCompared");
     return reqPtr;
 }
 
@@ -125,6 +128,7 @@ std::unique_ptr<Request> SourceProtocol::ToDetailsMemoryTableRequest(const Dic::
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.blockId, json["params"], "blockId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompared, json["params"], "isCompared");
     return reqPtr;
 }
 

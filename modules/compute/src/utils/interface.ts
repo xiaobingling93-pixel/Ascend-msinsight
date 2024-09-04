@@ -14,3 +14,9 @@ export interface optionDataType {
 export interface optionMapDataType {
     [props: string]: optionDataType[];
 }
+
+export interface CompareData<T> {
+    compare: T;
+    baseline: T;
+    diff: T;
+}

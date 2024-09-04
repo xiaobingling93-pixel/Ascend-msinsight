@@ -1148,10 +1148,10 @@ export const updateData = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, 
 
 const updateHitRatio = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition): void => {
     const dic: Record<string, string | number> = {
-        hitRatio: getFormatNum(data?.l2Cache?.hitRatio),
-        vectorRatio: getFormatNum(data?.vector?.ratio),
-        vector1Ratio: getFormatNum(data?.vector1?.ratio),
-        cubeRatio: getFormatNum(data?.cube?.ratio),
+        hitRatio: getFormatNum(data?.l2Cache?.compare.hitRatio),
+        vectorRatio: getFormatNum(data?.vector?.compare.ratio),
+        vector1Ratio: getFormatNum(data?.vector1?.compare.ratio),
+        cubeRatio: getFormatNum(data?.cube?.compare.ratio),
     };
     svg.selectAll('text.rect-labels')
         .text((d: any) => {
@@ -1167,14 +1167,14 @@ const updatePath = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, d
     const peakDic: Record<string, number> = {};
     const peakSet = new Set<number>();
     memoryUnit.forEach(unit => {
-        let label = String(getFormatNum(unit[showAs]));
+        let label = String(getFormatNum(unit.compare[showAs]));
         if (showAs === 'bandwidth') {
             label = `${label} GB/s`;
         }
-        labelDic[unit.memoryPath] = label;
-        const peak = Number(unit.peakRatio);
+        labelDic[unit.compare.memoryPath] = label;
+        const peak = Number(unit.compare.peakRatio);
         if (!isNaN(peak)) {
-            peakDic[unit.memoryPath] = peak;
+            peakDic[unit.compare.memoryPath] = peak;
             peakSet.add(peak);
         }
     });

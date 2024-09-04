@@ -142,6 +142,15 @@ public:
         return sstream.str();
     }
 
+    static inline std::string StringDoubleMinusReturnEmpty(const std::string &str1, const std::string &str2,
+                                                           int precision = 3)
+    {
+        if (str1.empty() || str2.empty()) {
+            return "";
+        }
+        return StringDoubleMinus(str1, str2, precision);
+    }
+
     // 只处理1~6位小数位的截尾
     static inline double DoubleReservedNDigits(double data, int n = 6)
     {

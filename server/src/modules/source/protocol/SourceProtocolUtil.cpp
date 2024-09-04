@@ -76,33 +76,43 @@ template<> std::optional<document_t> ToResponseJson<DetailsBaseInfoResponse>(con
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
-    JsonUtil::AddMember(body, "name", response.body.name, allocator);
-    JsonUtil::AddMember(body, "soc", response.body.soc, allocator);
-    JsonUtil::AddMember(body, "opType", response.body.opType, allocator);
-    JsonUtil::AddMember(body, "blockDim", response.body.blockDim, allocator);
-    JsonUtil::AddMember(body, "mixBlockDim", response.body.mixBlockDim, allocator);
-    JsonUtil::AddMember(body, "duration", response.body.duration, allocator);
-    JsonUtil::AddMember(body, "deviceId", response.body.deviceId, allocator);
-    JsonUtil::AddMember(body, "pid", response.body.pid, allocator);
+    std::optional<document_t> jsonCompare = DetailsBaseInfoToJson(response.body.compare, allocator);
+    JsonUtil::AddMember(body, "compare", jsonCompare, allocator);
+    std::optional<document_t> jsonBaseline = DetailsBaseInfoToJson(response.body.baseline, allocator);
+    JsonUtil::AddMember(body, "baseline", jsonBaseline, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
+std::optional<document_t> DetailsBaseInfoToJson(const DetailsBaseInfoResBody &body, Document::AllocatorType &allocator)
+{
+    document_t bodyJson(kObjectType);
+    JsonUtil::AddMember(bodyJson, "name", body.name, allocator);
+    JsonUtil::AddMember(bodyJson, "soc", body.soc, allocator);
+    JsonUtil::AddMember(bodyJson, "opType", body.opType, allocator);
+    JsonUtil::AddMember(bodyJson, "blockDim", body.blockDim, allocator);
+    JsonUtil::AddMember(bodyJson, "mixBlockDim", body.mixBlockDim, allocator);
+    JsonUtil::AddMember(bodyJson, "duration", body.duration, allocator);
+    JsonUtil::AddMember(bodyJson, "deviceId", body.deviceId, allocator);
+    JsonUtil::AddMember(bodyJson, "pid", body.pid, allocator);
 
     json_t blockDetail(kObjectType);
-    JsonUtil::AddMember(blockDetail, "headerName", response.body.blockDetail.headerName, allocator);
-    JsonUtil::AddMember(blockDetail, "size", response.body.blockDetail.size, allocator);
+    JsonUtil::AddMember(blockDetail, "headerName", body.blockDetail.headerName, allocator);
+    JsonUtil::AddMember(blockDetail, "size", body.blockDetail.size, allocator);
     json_t rowJson(kArrayType);
-    for (const auto &rowItem: response.body.blockDetail.row) {
+    for (const auto &rowItem: body.blockDetail.row) {
         json_t oneRow(kObjectType);
         JsonUtil::AddMember(oneRow, "value", rowItem.value, allocator);
         rowJson.PushBack(oneRow, allocator);
     }
     JsonUtil::AddMember(blockDetail, "row", rowJson, allocator);
-    JsonUtil::AddMember(body, "blockDetail", blockDetail, allocator);
+    JsonUtil::AddMember(bodyJson, "blockDetail", blockDetail, allocator);
     json_t advice(kArrayType);
-    for (const auto &item: response.body.advice) {
+    for (const auto &item: body.advice) {
         advice.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
     }
-    JsonUtil::AddMember(body, "advice", advice, allocator);
-    JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
+    JsonUtil::AddMember(bodyJson, "advice", advice, allocator);
+    return std::move(bodyJson);
 }
 
 template<> std::optional<document_t> ToResponseJson<DetailsLoadInfoResponse>(const DetailsLoadInfoResponse &response)
@@ -116,45 +126,47 @@ template<> std::optional<document_t> ToResponseJson<DetailsLoadInfoResponse>(con
         blockIdList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
     }
     JsonUtil::AddMember(body, "blockIdList", blockIdList, allocator);
-    json_t chartData(kObjectType);
-    json_t detailDataList(kArrayType);
-    for (const auto &item: response.body.chartData.detailDataList) {
-        json_t unitData(kObjectType);
-        JsonUtil::AddMember(unitData, "blockId", item.blockId, allocator);
-        JsonUtil::AddMember(unitData, "blockType", item.blockType, allocator);
-        JsonUtil::AddMember(unitData, "name", item.name, allocator);
-        JsonUtil::AddMember(unitData, "unit", item.unit, allocator);
-        JsonUtil::AddMember(unitData, "value", item.value, allocator);
-        JsonUtil::AddMember(unitData, "originValue", item.originValue, allocator);
-        detailDataList.PushBack(unitData, allocator);
-    }
-    JsonUtil::AddMember(chartData, "detailDataList", detailDataList, allocator);
-    json_t advice(kArrayType);
-    for (const auto &item: response.body.chartData.advice) {
-        advice.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
-    }
-    JsonUtil::AddMember(chartData, "advice", advice, allocator);
+    std::optional<document_t> chartData = SubBlockDataToJson(response.body.chartData, allocator);
     JsonUtil::AddMember(body, "chartData", chartData, allocator);
-    json_t tableData(kObjectType);
-    json_t tableDetailDataList(kArrayType);
-    for (const auto &item: response.body.tableData.detailDataList) {
-        json_t unitData(kObjectType);
-        JsonUtil::AddMember(unitData, "blockId", item.blockId, allocator);
-        JsonUtil::AddMember(unitData, "blockType", item.blockType, allocator);
-        JsonUtil::AddMember(unitData, "name", item.name, allocator);
-        JsonUtil::AddMember(unitData, "unit", item.unit, allocator);
-        JsonUtil::AddMember(unitData, "value", item.value, allocator);
-        tableDetailDataList.PushBack(unitData, allocator);
-    }
-    JsonUtil::AddMember(tableData, "detailDataList", tableDetailDataList, allocator);
-    json_t tableAdvice(kArrayType);
-    for (const auto &item: response.body.tableData.advice) {
-        tableAdvice.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
-    }
-    JsonUtil::AddMember(tableData, "advice", tableAdvice, allocator);
+    std::optional<document_t> tableData = SubBlockDataToJson(response.body.tableData, allocator);
     JsonUtil::AddMember(body, "tableData", tableData, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
+}
+
+std::optional<document_t> SubBlockDataToJson(const SubBlockData &data, Document::AllocatorType &allocator)
+{
+    document_t chartData(kObjectType);
+    json_t detailDataList(kArrayType);
+    for (const auto &item: data.detailDataList) {
+        json_t compareData(kObjectType);
+        std::optional<document_t> compare = SubBlockUnitDataToJson(item.compare, allocator);
+        JsonUtil::AddMember(compareData, "compare", compare, allocator);
+        std::optional<document_t> baseline = SubBlockUnitDataToJson(item.baseline, allocator);
+        JsonUtil::AddMember(compareData, "baseline", baseline, allocator);
+        std::optional<document_t> diff = SubBlockUnitDataToJson(item.diff, allocator);
+        JsonUtil::AddMember(compareData, "diff", diff, allocator);
+        detailDataList.PushBack(compareData, allocator);
+    }
+    JsonUtil::AddMember(chartData, "detailDataList", detailDataList, allocator);
+    json_t advice(kArrayType);
+    for (const auto &item: data.advice) {
+        advice.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+    }
+    JsonUtil::AddMember(chartData, "advice", advice, allocator);
+    return std::move(chartData);
+}
+
+std::optional<document_t> SubBlockUnitDataToJson(const SubBlockUnitData &data, Document::AllocatorType &allocator)
+{
+    document_t unitData(kObjectType);
+    JsonUtil::AddMember(unitData, "blockId", data.blockId, allocator);
+    JsonUtil::AddMember(unitData, "blockType", data.blockType, allocator);
+    JsonUtil::AddMember(unitData, "name", data.name, allocator);
+    JsonUtil::AddMember(unitData, "unit", data.unit, allocator);
+    JsonUtil::AddMember(unitData, "value", data.value, allocator);
+    JsonUtil::AddMember(unitData, "originValue", data.originValue, allocator);
+    return std::move(unitData);
 }
 
 std::vector<std::string> RemoveDuplicateAdvice(const std::vector<std::string> &list)
@@ -182,45 +194,82 @@ std::optional<document_t> ToResponseJson<DetailsMemoryGraphResponse>(const Detai
         json_t singleCoreMemory(kObjectType);
         JsonUtil::AddMember(singleCoreMemory, "advice", RemoveDuplicateAdvice(item.advice), allocator);
         JsonUtil::AddMember(singleCoreMemory, "blockId", item.blockId, allocator);
-        json_t l2CacheJson(kObjectType);
-        JsonUtil::AddMember(l2CacheJson, "hitRatio", item.l2Cache.hitRatio, allocator);
-        JsonUtil::AddMember(l2CacheJson, "hit", item.l2Cache.hit, allocator);
-        JsonUtil::AddMember(l2CacheJson, "totalRequest", item.l2Cache.totalRequest, allocator);
-        JsonUtil::AddMember(l2CacheJson, "miss", item.l2Cache.miss, allocator);
-        JsonUtil::AddMember(singleCoreMemory, "l2Cache", l2CacheJson, allocator);
+        json_t l2CacheCompareJson(kObjectType);
+        std::optional<document_t> compareCache = L2CacheToJson(item.l2Cache.compare, allocator);
+        JsonUtil::AddMember(l2CacheCompareJson, "compare", compareCache, allocator);
+        std::optional<document_t> baselineCache = L2CacheToJson(item.l2Cache.baseline, allocator);
+        JsonUtil::AddMember(l2CacheCompareJson, "baseline", baselineCache, allocator);
+        std::optional<document_t> diffCache = L2CacheToJson(item.l2Cache.diff, allocator);
+        JsonUtil::AddMember(l2CacheCompareJson, "diff", diffCache, allocator);
+        JsonUtil::AddMember(singleCoreMemory, "l2Cache", l2CacheCompareJson, allocator);
         JsonUtil::AddMember(singleCoreMemory, "blockType", item.blockType, allocator);
         JsonUtil::AddMember(singleCoreMemory, "chipType", item.chipType, allocator);
         json_t memoryUnitJson(kArrayType);
         for (const auto &unit: item.memoryUnit) {
             json_t unitJson(kObjectType);
-            JsonUtil::AddMember(unitJson, "request", unit.request, allocator);
-            JsonUtil::AddMember(unitJson, "display", unit.display, allocator);
-            JsonUtil::AddMember(unitJson, "peakRatio", unit.peakRatio, allocator);
-            JsonUtil::AddMember(unitJson, "bandwidth", unit.bandwidth, allocator);
-            JsonUtil::AddMember(unitJson, "memoryPath", unit.memoryPath, allocator);
+            std::optional<document_t> compare = MemoryUnitToJson(unit.compare, allocator);
+            JsonUtil::AddMember(unitJson, "compare", compare, allocator);
+            std::optional<document_t> baseline = MemoryUnitToJson(unit.baseline, allocator);
+            JsonUtil::AddMember(unitJson, "baseline", baseline, allocator);
+            std::optional<document_t> diff = MemoryUnitToJson(unit.diff, allocator);
+            JsonUtil::AddMember(unitJson, "diff", diff, allocator);
             memoryUnitJson.PushBack(unitJson, allocator);
         }
         JsonUtil::AddMember(singleCoreMemory, "memoryUnit", memoryUnitJson, allocator);
-        json_t vector(kObjectType);
-        JsonUtil::AddMember(vector, "cycle", item.vector.cycle, allocator);
-        JsonUtil::AddMember(vector, "totalCycles", item.vector.totalCycles, allocator);
-        JsonUtil::AddMember(vector, "ratio", item.vector.ratio, allocator);
-        JsonUtil::AddMember(singleCoreMemory, "vector", vector, allocator);
-        json_t vector1(kObjectType);
-        JsonUtil::AddMember(vector1, "cycle", item.vector1.cycle, allocator);
-        JsonUtil::AddMember(vector1, "totalCycles", item.vector1.totalCycles, allocator);
-        JsonUtil::AddMember(vector1, "ratio", item.vector1.ratio, allocator);
-        JsonUtil::AddMember(singleCoreMemory, "vector1", vector1, allocator);
-        json_t cube(kObjectType);
-        JsonUtil::AddMember(cube, "cycle", item.cube.cycle, allocator);
-        JsonUtil::AddMember(cube, "totalCycles", item.cube.totalCycles, allocator);
-        JsonUtil::AddMember(cube, "ratio", item.cube.ratio, allocator);
-        JsonUtil::AddMember(singleCoreMemory, "cube", cube, allocator);
+        std::optional<document_t > vector =  UtilizationRateCompareToJson(item.vector, allocator);
+        JsonUtil::AddMember(singleCoreMemory, "vector", vector.value(), allocator);
+        std::optional<document_t > vector1 =  UtilizationRateCompareToJson(item.vector1, allocator);
+        JsonUtil::AddMember(singleCoreMemory, "vector1", vector1.value(), allocator);
+        std::optional<document_t > cube =  UtilizationRateCompareToJson(item.cube, allocator);
+        JsonUtil::AddMember(singleCoreMemory, "cube", cube.value(), allocator);
         coreMemory.PushBack(singleCoreMemory, allocator);
     }
     JsonUtil::AddMember(body, "coreMemory", coreMemory, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
+}
+
+std::optional<document_t> L2CacheToJson(const L2Cache &l2Cache, Document::AllocatorType &allocator)
+{
+    document_t l2CacheJson(kObjectType);
+    JsonUtil::AddMember(l2CacheJson, "hitRatio", l2Cache.hitRatio, allocator);
+    JsonUtil::AddMember(l2CacheJson, "hit", l2Cache.hit, allocator);
+    JsonUtil::AddMember(l2CacheJson, "totalRequest", l2Cache.totalRequest, allocator);
+    JsonUtil::AddMember(l2CacheJson, "miss", l2Cache.miss, allocator);
+    return std::move(l2CacheJson);
+}
+
+std::optional<document_t> MemoryUnitToJson(const MemoryUnit &memoryUnit, Document::AllocatorType &allocator)
+{
+    document_t unitJson(kObjectType);
+    JsonUtil::AddMember(unitJson, "request", memoryUnit.request, allocator);
+    JsonUtil::AddMember(unitJson, "display", memoryUnit.display, allocator);
+    JsonUtil::AddMember(unitJson, "peakRatio", memoryUnit.peakRatio, allocator);
+    JsonUtil::AddMember(unitJson, "bandwidth", memoryUnit.bandwidth, allocator);
+    JsonUtil::AddMember(unitJson, "memoryPath", memoryUnit.memoryPath, allocator);
+    return std::move(unitJson);
+}
+
+std::optional<document_t> UtilizationRateToJson(const UtilizationRate &rate, Document::AllocatorType &allocator)
+{
+    document_t rateJson(kObjectType);
+    JsonUtil::AddMember(rateJson, "cycle", rate.cycle, allocator);
+    JsonUtil::AddMember(rateJson, "totalCycles", rate.totalCycles, allocator);
+    JsonUtil::AddMember(rateJson, "ratio", rate.ratio, allocator);
+    return std::move(rateJson);
+}
+
+std::optional<document_t> UtilizationRateCompareToJson(const CompareData<UtilizationRate> &compareRate,
+                                                       Document::AllocatorType &allocator)
+{
+    document_t compareJson(kObjectType);
+    std::optional<document_t> compare = UtilizationRateToJson(compareRate.compare, allocator);
+    JsonUtil::AddMember(compareJson, "compare", compare, allocator);
+    std::optional<document_t> baseline = UtilizationRateToJson(compareRate.baseline, allocator);
+    JsonUtil::AddMember(compareJson, "baseline", baseline, allocator);
+    std::optional<document_t> diff = UtilizationRateToJson(compareRate.diff, allocator);
+    JsonUtil::AddMember(compareJson, "diff", diff, allocator);
+    return std::move(compareJson);
 }
 
 template<>
@@ -242,13 +291,7 @@ std::optional<document_t> ToResponseJson<DetailsMemoryTableResponse>(const Detai
             JsonUtil::AddMember(tableDetailJson, "headerName", tableDetailItem.headerName, allocator);
             JsonUtil::AddMember(tableDetailJson, "tableName", tableDetailItem.tableName, allocator);
             JsonUtil::AddMember(tableDetailJson, "size", tableDetailItem.size, allocator);
-            json_t rowJson(kArrayType);
-            for (const auto &rowItem: tableDetailItem.row) {
-                json_t oneRow(kObjectType);
-                JsonUtil::AddMember(oneRow, "name", rowItem.name, allocator);
-                JsonUtil::AddMember(oneRow, "value", rowItem.value, allocator);
-                rowJson.PushBack(oneRow, allocator);
-            }
+            std::optional<document_t> rowJson = CompareTableRowToJson(tableDetailItem.row, allocator);
             JsonUtil::AddMember(tableDetailJson, "row", rowJson, allocator);
             tableDetailListJson.PushBack(tableDetailJson, allocator);
         }
@@ -258,6 +301,32 @@ std::optional<document_t> ToResponseJson<DetailsMemoryTableResponse>(const Detai
     JsonUtil::AddMember(body, "memoryTable", memoryTable, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
+}
+
+std::optional<document_t> CompareTableRowToJson(const std::vector<CompareData<TableRow>> &rows,
+                                                Document::AllocatorType &allocator)
+{
+    document_t res(kArrayType);
+    for (const auto &row: rows) {
+        json_t rowJson(kObjectType);
+        json_t compareRow(kObjectType);
+        JsonUtil::AddMember(compareRow, "name", row.compare.name, allocator);
+        JsonUtil::AddMember(compareRow, "value", row.compare.value, allocator);
+
+        json_t baselineRow(kObjectType);
+        JsonUtil::AddMember(baselineRow, "name", row.baseline.name, allocator);
+        JsonUtil::AddMember(baselineRow, "value", row.baseline.value, allocator);
+
+        json_t diffRow(kObjectType);
+        JsonUtil::AddMember(diffRow, "name", row.diff.name, allocator);
+        JsonUtil::AddMember(diffRow, "value", row.diff.value, allocator);
+
+        JsonUtil::AddMember(rowJson, "compare", compareRow, allocator);
+        JsonUtil::AddMember(rowJson, "baseline", baselineRow, allocator);
+        JsonUtil::AddMember(rowJson, "diff", diffRow, allocator);
+        res.PushBack(rowJson, allocator);
+    }
+    return std::move(res);
 }
 
 template<typename T>

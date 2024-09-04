@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "pch.h"
-#include "SourceFileParser.h"
+#include "DetailsService.h"
 #include "WsSessionManager.h"
 #include "SourceProtocolRequest.h"
 #include "QueryDetailsMemoryTableHandler.h"
@@ -20,8 +20,7 @@ void QueryDetailsMemoryTableHandler::HandleRequest(std::unique_ptr<Protocol::Req
             std::make_unique<DetailsMemoryTableResponse>();
     DetailsMemoryTableResponse &response = *responsePtr;
     SetBaseResponse(request, response);
-    bool result = SourceFileParser::Instance().GetDetailsMemoryTable(request.params.blockId,
-                                                                     response.body);
+    bool result = DetailsService::QueryMemoryTable(request, response);
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

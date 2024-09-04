@@ -44,6 +44,7 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
     if (FileUtil::CheckFilePathLength(selectedFolder) &&
         Source::SourceFileParser::Instance().CheckOperatorBinary(selectedFolder)) {
         ServerLog::Info("Import file is binary.Start parse source binary file.");
+        Source::SourceFileParser::Instance().SetFilePath(selectedFolder);
         HandleCompute(response, selectedFolder);
         TraceTime::Instance().SetIsSimulation(true);
         SaveDbPath(projectInfos[0].projectName, dataPathToDbMap);
@@ -111,6 +112,26 @@ void ParserBin::SetParseCallBack(FileParser &fileParser)
 ProjectTypeEnum ParserBin::GetProjectType(const std::vector<std::string> &dataPath)
 {
     return ProjectTypeEnum::BIN;
+}
+
+void ParserBin::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                               Global::BaselineInfo &baselineInfo)
+{
+    if (projectInfos.empty() || projectInfos[0].parseFilePathInfos.empty()) {
+        return;
+    }
+    std::string filePath = projectInfos[0].parseFilePathInfos[0].parseFilePath;
+    std::string dbPath = FileUtil::GetDbPath(filePath, baselineInfo.rankId);
+    if (!DataBaseManager::Instance().CreatConnectionPool(baselineInfo.rankId, dbPath)) {
+        ServerLog::Error("Failed to create connection pool. fileId:", baselineInfo.rankId, ". path:", dbPath);
+        return;
+    }
+    Source::SourceFileParser &sourceFileParser = Source::SourceFileParser::Instance();
+    // 只需要对比timeline和details页面内容，因此不需要对source相关的内容做处理
+    if (sourceFileParser.CheckOperatorBinary(filePath)) {
+        sourceFileParser.SetBaselineFilePath(filePath);
+        sourceFileParser.Parse(std::vector<std::string>(), baselineInfo.rankId, filePath);
+    }
 }
 } // Module
 } // Dic

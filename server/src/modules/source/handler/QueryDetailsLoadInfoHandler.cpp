@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "pch.h"
-#include "SourceFileParser.h"
+#include "DetailsService.h"
 #include "WsSessionManager.h"
 #include "SourceProtocolRequest.h"
 #include "SourceProtocolResponse.h"
@@ -20,7 +20,7 @@ void QueryDetailsLoadInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     std::unique_ptr<DetailsLoadInfoResponse> responsePtr = std::make_unique<DetailsLoadInfoResponse>();
     DetailsLoadInfoResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    bool result = SourceFileParser::Instance().GetDetailsLoadInfo(response.body);
+    bool result = DetailsService::QueryDetailsLoadInfo(request, response);
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

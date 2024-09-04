@@ -11,6 +11,7 @@ import { limitInput, useHit } from '../../Common';
 export interface Icondition {
     blockId: string ;
     showAs: string;
+    isCompared: boolean;
 };
 interface IcomProps {
     optionMap: optionMapDataType;
@@ -22,6 +23,7 @@ interface IcomProps {
 export const defaultCondition = {
     blockId: '',
     showAs: 'request',
+    isCompared: false,
 };
 const defaultOptionMap = {
     blockIdOptions: [],
@@ -40,7 +42,7 @@ const getOptionsAndValue = (initObj: Icondition, initOptionMap: optionMapDataTyp
     // showAs
     const showAsOptions: optionDataType[] = defaultOptionMap.showAsOptions.map(item => ({ ...item, label: t(item.label) }));
     const showAs = getUsableVal(initObj.showAs, showAsOptions, defaultCondition.showAs) as string;
-    return { optionMap: { blockIdOptions, showAsOptions }, condition: { blockId, showAs } };
+    return { optionMap: { blockIdOptions, showAsOptions }, condition: { blockId, showAs, isCompared: false } };
 };
 
 function Filter({ blockIdList, handleFilterChange }: {blockIdList: string[];handleFilterChange: (condition: Icondition) => void}): JSX.Element {

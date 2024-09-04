@@ -8,10 +8,11 @@ import { type IblockData } from './Index';
 import { ResizeTable } from 'ascend-resize';
 import { getSet, firstLetterUpper } from 'ascend-utils';
 import { LimitHit } from '../../LimitSet';
+import { CompareData } from '../../../utils/interface';
 
 interface Iprops {
     blockId: string;
-    data: IblockData[];
+    data: Array<CompareData<IblockData>>;
 }
 
 interface Iobj {
@@ -24,14 +25,14 @@ interface ItableConfig {
     dataset: Iobj[];
 }
 
-function getFullCols(blockType: string, blockTypeData: IblockData[], t: TFunction): any[] {
+function getFullCols(blockType: string, blockTypeData: Array<CompareData<IblockData>>, t: TFunction): any[] {
     const firstCol = {
         title: blockType?.toUpperCase(),
         dataIndex: 'name',
         ellipsis: true,
 
     };
-    const units = getSet(blockTypeData, 'unit') as string[];
+    const units = getSet(getSet(blockTypeData, 'compare') as IblockData[], 'unit') as string[];
     const restCols = units.map((item, index) => (
         {
             title: t(firstLetterUpper(item)),
@@ -49,20 +50,20 @@ function Index({ blockId, data }: Iprops): JSX.Element {
     const { t } = useTranslation('details');
 
     const updateTable = (): void => {
-        const allData = data.filter(item => item.blockId === blockId);
+        const allData = data.filter(item => item.compare.blockId === blockId);
         setLimit({ ...limit, overlimit: allData.length > limit.maxSize, current: allData.length });
         const showData = allData.slice(0, limit.maxSize);
         // 按照blockType分表
-        const blockTypeSet = getSet(showData, 'blockType') as string[];
+        const blockTypeSet = getSet(getSet(showData, 'compare') as IblockData[], 'blockType') as string[];
         const dataGroupByBlockType = blockTypeSet.map(blockType => {
-            const blockTypeData = showData.filter(item => item.blockType === blockType);
+            const blockTypeData = showData.filter(item => item.compare.blockType === blockType);
             const cols = getFullCols(blockType, blockTypeData, t);
             const dataObj: Record<string, Iobj> = {};
             blockTypeData.forEach(item => {
-                if (dataObj[item.name] === undefined) {
-                    dataObj[item.name] = { name: item.name };
+                if (dataObj[item.compare.name] === undefined) {
+                    dataObj[item.compare.name] = { name: item.compare.name };
                 }
-                dataObj[item.name][item.unit] = item.value;
+                dataObj[item.compare.name][item.compare.unit] = item.compare.value;
             });
             const dataset = Object.keys(dataObj).map(name => dataObj[name]);
             return { blockType, cols, dataset };

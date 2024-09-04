@@ -65,6 +65,7 @@ static Module::Source::SourceFileParser &InitParser(string dataPath)
 {
     Module::Source::SourceFileParser &parser = Dic::Module::Source::SourceFileParser::Instance();
     EXPECT_EQ(true, parser.CheckOperatorBinary(dataPath));
+    parser.SetFilePath(dataPath);
     parser.Parse(std::vector<std::string>(), "", dataPath);
     parser.ConvertToData();
     return parser;
@@ -169,7 +170,7 @@ TEST_F(SourceTest, QueryBaseInfo)
 {
     auto &parser = InitParser(baseInfo);
     Protocol::DetailsBaseInfoResBody resBody;
-    bool res = parser.GetDetailsBaseInfo(resBody);
+    bool res = parser.GetDetailsBaseInfo(resBody, false);
     EXPECT_EQ(true, res);
     EXPECT_EQ("sin_custom", resBody.name);
     EXPECT_EQ("Ascend910B4", resBody.soc);
@@ -182,7 +183,7 @@ TEST_F(SourceTest, GetDetailsLoadInfo)
 {
     auto &parser = InitParser(loadData);
     Protocol::DetailsLoadInfoResBody responseBody;
-    bool res = parser.GetDetailsLoadInfo(responseBody);
+    bool res = parser.GetDetailsLoadInfo(responseBody, false);
     EXPECT_EQ(true, res);
     EXPECT_EQ(32, responseBody.blockIdList.size()); // block id list is 32
     parser.Reset();
@@ -192,7 +193,7 @@ TEST_F(SourceTest, GetDetailsMemoryGraph)
 {
     auto &parser = InitParser(memoryData);
     Protocol::DetailsMemoryGraphResBody resBody;
-    bool res = parser.GetDetailsMemoryGraph("0", resBody);
+    bool res = parser.GetDetailsMemoryGraph("0", false, resBody);
     EXPECT_EQ(true, res);
     parser.Reset();
 }
@@ -201,15 +202,15 @@ TEST_F(SourceTest, GetDetailsMemoryTable)
 {
     auto &parser = InitParser(memoryData);
     Protocol::DetailsMemoryTableResBody resBody;
-    bool res = parser.GetDetailsMemoryTable("", resBody);
+    bool res = parser.GetDetailsMemoryTable("", false, resBody);
     EXPECT_EQ(true, res);
     EXPECT_EQ(0, resBody.memoryTable.size());
 
-    res = parser.GetDetailsMemoryTable("32", resBody);
+    res = parser.GetDetailsMemoryTable("32", false, resBody);
     EXPECT_EQ(true, res);
     EXPECT_EQ(0, resBody.memoryTable.size());
 
-    res = parser.GetDetailsMemoryTable("0", resBody);
+    res = parser.GetDetailsMemoryTable("0", false, resBody);
     EXPECT_EQ(true, res);
     EXPECT_EQ(1, resBody.memoryTable.size());
     parser.Reset();

@@ -19,6 +19,8 @@ public:
     virtual ~ParserBin();
 
     void Parser(const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request) final;
+    void ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
+                        Global::BaselineInfo &baselineInfo) final;
     ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
 
 private:

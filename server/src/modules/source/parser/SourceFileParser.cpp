@@ -17,6 +17,7 @@
 #include "FileUtil.h"
 #include "TextTraceDatabase.h"
 #include "CacheManager.h"
+#include "BaselineManager.h"
 #include "SourceProtocolResponse.h"
 #include "RooflineParser.h"
 
@@ -62,11 +63,9 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
         return false;
     }
 
-    const int dataSizeLen = 8; // 数据类型字段距离数据大小字段的偏移
-    const int dataTypeLen = 1; // 填充长度字段距离数据类型字段的偏移
-    const int paddingLen = 1;  // 填充长度字段距离数据类型字段的偏移
-    const int reserveLen = 2;  // 实际数据距离填充长度字段的偏移
-    const int filePathLen = 4096;
+    // 获取目标数据对象的应用，下面对数据进行改动时会影响
+    auto &curDataBlockMap = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
+        baselineDataBlockMap : dataBlockMap;
 
     while (!file.eof()) {
         uint64_t dataSize;
@@ -97,21 +96,21 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
             return false;
         }
         int64_t endPos = startPos + dataSize - paddingLength;
-
-        dataBlockMap[dataType].emplace_back(startPos, endPos);
+        Position position = {startPos, endPos};
+        curDataBlockMap[dataType].emplace_back(position);
 
         // 跳转到下一个数据块的开始位置，考虑到当前数据块的大小和填充
         file.seekg(dataSize, std::ios::cur);
     }
     file.close();
     Timeline::ParserStatusManager::Instance().SetParserStatus(fileId, Timeline::ParserStatus::INIT);
-    ServerLog::Info("Start to parse simulation timeline file. file id: ", fileId);
     threadPool->AddTask(PreParseTask, fileId);
     return true;
 }
 
 void SourceFileParser::PreParseTask(const std::string &fileId)
 {
+    ServerLog::Info("Start to parse simulation timeline file. file id: ", fileId);
     if (!InitParser(fileId)) {
         ParseEndCallBack(fileId, false, "Failed to open db. Please delete dbFile and try again.");
     }
@@ -134,8 +133,11 @@ bool SourceFileParser::InitParser(const std::string &fileId)
         return false;
     }
     auto &instance = SourceFileParser::Instance();
-    std::vector<std::pair<int64_t, int64_t>> &traceFilePos =
-        instance.dataBlockMap[static_cast<int>(DataTypeEnum::TRACE)];
+    auto curDataBlockMap = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
+        instance.baselineDataBlockMap :  instance.dataBlockMap;
+    std::string curFilePath = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
+        instance.baselineFilePath : instance.filePath;
+    std::vector<Position> &traceFilePos = curDataBlockMap[static_cast<int>(DataTypeEnum::TRACE)];
     std::ifstream file = FileUtil::OpenReadFileSafely(instance.filePath, std::ios::in | std::ios::binary);
     if (!file) {
         ServerLog::Error("Failed to open file. filePath:", instance.filePath);
@@ -143,7 +145,7 @@ bool SourceFileParser::InitParser(const std::string &fileId)
     }
     std::vector<std::pair<int64_t, int64_t>> adjustTraceFilePos;
     for (const auto &pos : traceFilePos) {
-        adjustTraceFilePos.emplace_back(AdjustPosition(file, pos.first, pos.second));
+        adjustTraceFilePos.emplace_back(AdjustPosition(file, pos.startPos, pos.endPos));
     }
     file.close();
 
@@ -262,6 +264,7 @@ void SourceFileParser::ParseEndCallBack(const std::string &fileId, bool result, 
 
 void SourceFileParser::Reset()
 {
+    std::unique_lock<std::mutex> lock(mutex);
     ServerLog::Info("Reset file parser and wait task completed.");
     Timeline::ParserStatusManager::Instance().SetAllTerminateStatus();
     Timeline::ParserStatusManager::Instance().SetClusterParseStatus(Timeline::ParserStatus::TERMINATE);
@@ -287,7 +290,7 @@ void SourceFileParser::Reset()
     traceFiles.clear();
     apiCores.clear();
     apiFiles.clear();
-    apiInstrPos = std::make_pair(0, 0);
+    apiInstrPos = {0, 0};
 
     Timeline::DataBaseManager::Instance().Clear();
     Timeline::TraceTime::Instance().Reset();
@@ -322,11 +325,6 @@ bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath)
 
     bool isBinary = (contentLength != 0) && (reverse == SourceFileParser::reverseConst);
     file.close();
-
-    if (isBinary) {
-        this->filePath = FileUtil::PathPreprocess(selectedFilePath);
-    }
-
     return isBinary;
 }
 
@@ -392,8 +390,8 @@ std::string SourceFileParser::GetInstr()
         ServerLog::Error("Can't open file,please check file exist or not,file name :", filePath);
         return "";
     }
-    int64_t start = apiInstrPos.first;
-    int64_t end = apiInstrPos.second;
+    int64_t start = apiInstrPos.startPos;
+    int64_t end = apiInstrPos.endPos;
     if (end < start) {
         ServerLog::Error("The dataSize parameter is error. The value of end is smaller than start.");
         file.close();
@@ -460,10 +458,11 @@ std::string SourceFileParser::GetSourceByName(std::string sourceName)
     return content;
 }
 
-bool SourceFileParser::GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &responseBody)
+bool SourceFileParser::GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &responseBody, bool isBaseline)
 {
-    std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::binary);
-    std::string baseInfo = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_BASE_INFO);
+    std::string curFilePath = isBaseline ? baselineFilePath : filePath;
+    std::ifstream file = FileUtil::OpenReadFileSafely(curFilePath, std::ios::binary);
+    std::string baseInfo = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_BASE_INFO, isBaseline);
     file.close();
     if (baseInfo.empty()) {
         ServerLog::Info("Details base info data does not exist.");
@@ -476,37 +475,7 @@ bool SourceFileParser::GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &resp
             ServerLog::Error("Get base info error:", error);
             return false;
         }
-        responseBody.name = JsonUtil::GetString(baseInfoJson.value(), "name");
-        responseBody.soc = JsonUtil::GetString(baseInfoJson.value(), "soc");
-        responseBody.opType = JsonUtil::GetString(baseInfoJson.value(), "op_type");
-        responseBody.blockDim = JsonUtil::GetString(baseInfoJson.value(), "block_dim");
-        responseBody.mixBlockDim = JsonUtil::GetString(baseInfoJson.value(), "mix_block_dim");
-        responseBody.duration = JsonUtil::GetString(baseInfoJson.value(), "duration");
-        responseBody.deviceId = JsonUtil::GetString(baseInfoJson.value(), "device_id");
-        responseBody.pid = JsonUtil::GetString(baseInfoJson.value(), "pid");
-        Value blockDetailsValue;
-        if (responseBody.opType == "mix" && baseInfoJson.value().HasMember("mix_block_detail")) {
-            blockDetailsValue = baseInfoJson.value()["mix_block_detail"];
-        } else if (responseBody.opType != "mix" && baseInfoJson.value().HasMember("block_detail")) {
-            blockDetailsValue = baseInfoJson.value()["block_detail"];
-        } else {
-            return true;
-        }
-        if (!blockDetailsValue.IsObject()) {
-            return true;
-        }
-        Protocol::TableDetail tableDetail;
-        tableDetail.size = JsonUtil::GetVector<std::string>(blockDetailsValue, "size");
-        tableDetail.headerName = JsonUtil::GetVector<std::string>(blockDetailsValue, "head_name");
-        if (blockDetailsValue.HasMember("row") && blockDetailsValue["row"].IsArray()) {
-            Value &row = blockDetailsValue["row"];
-            for (const auto &dataRow: row.GetArray()) {
-                Protocol::TableRow memoryTableRow;
-                memoryTableRow.value = JsonUtil::GetVector<std::string>(dataRow, "value");
-                tableDetail.row.push_back(memoryTableRow);
-            }
-        }
-        responseBody.blockDetail = tableDetail;
+        responseBody = ParseJsonToBaseInfo(baseInfoJson.value());
         return true;
     } catch (const std::exception &e) {
         ServerLog::Error("Can't parse details base info,not json.Error is ", e.what());
@@ -514,16 +483,52 @@ bool SourceFileParser::GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &resp
     }
 }
 
-bool SourceFileParser::GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody & responseBody)
+Protocol::DetailsBaseInfoResBody SourceFileParser::ParseJsonToBaseInfo(const document_t &json)
 {
+    Protocol::DetailsBaseInfoResBody baseInfoRes;
+    baseInfoRes.name = JsonUtil::GetString(json, "name");
+    baseInfoRes.soc = JsonUtil::GetString(json, "soc");
+    baseInfoRes.opType = JsonUtil::GetString(json, "op_type");
+    baseInfoRes.blockDim = JsonUtil::GetString(json, "block_dim");
+    baseInfoRes.mixBlockDim = JsonUtil::GetString(json, "mix_block_dim");
+    baseInfoRes.duration = JsonUtil::GetString(json, "duration");
+    baseInfoRes.deviceId = JsonUtil::GetString(json, "device_id");
+    baseInfoRes.pid = JsonUtil::GetString(json, "pid");
+
+    if (!json.HasMember("mix_block_detail") && !json.HasMember("block_detail")) {
+        return baseInfoRes;
+    }
+    const Value& blockDetailsValue = baseInfoRes.opType == "mix" && json.HasMember("mix_block_detail") ?
+        json["mix_block_detail"] : json["block_detail"];
+    if (!blockDetailsValue.IsObject()) {
+        return baseInfoRes;
+    }
+    Protocol::TableDetail<Protocol::TableRow> tableDetail;
+    tableDetail.size = JsonUtil::GetVector<std::string>(blockDetailsValue, "size");
+    tableDetail.headerName = JsonUtil::GetVector<std::string>(blockDetailsValue, "head_name");
+    if (blockDetailsValue.HasMember("row") && blockDetailsValue["row"].IsArray()) {
+        const Value &row = blockDetailsValue["row"];
+        for (const auto &dataRow: row.GetArray()) {
+            Protocol::TableRow memoryTableRow;
+            memoryTableRow.value = JsonUtil::GetVector<std::string>(dataRow, "value");
+            tableDetail.row.push_back(memoryTableRow);
+        }
+    }
+    baseInfoRes.blockDetail = tableDetail;
+    return baseInfoRes;
+}
+
+bool SourceFileParser::GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody & responseBody, bool isBaseline)
+{
+    std::string curFilePath = isBaseline ? baselineFilePath : filePath;
     // 从文件获取内容
-    std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::binary);
-    std::string loadGraph = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_COMPUTE_LOAD_GRAPH);
-    std::string loadTable = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_COMPUTE_LOAD_TABLE);
+    std::ifstream file = FileUtil::OpenReadFileSafely(curFilePath, std::ios::binary);
+    std::string loadGraph = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_COMPUTE_LOAD_GRAPH, isBaseline);
+    std::string loadTable = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_COMPUTE_LOAD_TABLE, isBaseline);
     file.close();
     if (loadGraph.empty() && loadTable.empty()) {
         ServerLog::Info("Details load data does not exist.");
-        return true;
+        return false;
     }
 
     std::optional<Protocol::SubBlockData> blockData = ConvertStrToSubBlockData(loadGraph);
@@ -535,19 +540,19 @@ bool SourceFileParser::GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody & res
         responseBody.tableData = tableData.value();
     }
 
-    // 获取blockid列表
+    // 获取blockid列表(以compare数据为准)
     std::unordered_set<std::string> blockIdSet;
     for (const auto &item: responseBody.chartData.detailDataList) {
-        blockIdSet.insert(item.blockId);
+        blockIdSet.insert(item.compare.blockId);
     }
     for (const auto &item: responseBody.tableData.detailDataList) {
-        blockIdSet.insert(item.blockId);
+        blockIdSet.insert(item.compare.blockId);
     }
     std::copy(blockIdSet.begin(), blockIdSet.end(), std::back_inserter(responseBody.blockIdList));
     return true;
 }
 
-bool SourceFileParser::GetDetailsMemoryGraph(const std::string& targetBlockId,
+bool SourceFileParser::GetDetailsMemoryGraph(const std::string& targetBlockId, bool isBaseline,
                                              Protocol::DetailsMemoryGraphResBody &responseBody)
 {
     if (targetBlockId.empty()) {
@@ -555,8 +560,9 @@ bool SourceFileParser::GetDetailsMemoryGraph(const std::string& targetBlockId,
         return true;
     }
     // 读取内存表数据
-    std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::binary);
-    std::string memoryGraph = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_MEMORY_GRAPH);
+    std::string curFilePath = isBaseline ? baselineFilePath : filePath;
+    std::ifstream file = FileUtil::OpenReadFileSafely(curFilePath, std::ios::binary);
+    std::string memoryGraph = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_MEMORY_GRAPH, isBaseline);
     file.close();
     if (memoryGraph.empty()) {
         ServerLog::Info("Details memory graph data does not exist.");
@@ -617,7 +623,9 @@ Protocol::MemoryGraph SourceFileParser::ParseJsonToMemoryGraph(const json_t &jso
             memoryUnitTemp.bandwidth = JsonUtil::GetString(unit, "bandwidth");
             memoryUnitTemp.peakRatio = JsonUtil::GetString(unit, "peak_ratio");
             memoryUnitTemp.display = (JsonUtil::GetInteger(unit, "display") == 1);
-            temp.memoryUnit.push_back(memoryUnitTemp);
+            Protocol::CompareData<Protocol::MemoryUnit> compareData;
+            compareData.compare = memoryUnitTemp;
+            temp.memoryUnit.push_back(compareData);
         }
     }
     if (json.HasMember("L2cache") && json["L2cache"].IsObject()) {
@@ -627,30 +635,31 @@ Protocol::MemoryGraph SourceFileParser::ParseJsonToMemoryGraph(const json_t &jso
         l2CacheTemp.miss = JsonUtil::GetString(L2cache, "miss");
         l2CacheTemp.totalRequest = JsonUtil::GetString(L2cache, "total_request");
         l2CacheTemp.hitRatio = JsonUtil::GetString(L2cache, "hit_ratio");
-        temp.l2Cache = l2CacheTemp;
+        temp.l2Cache.compare = l2CacheTemp;
     }
 
     if (json.HasMember("Vector") && json["Vector"].IsObject()) {
-        temp.vector = ParseJsonToUtilizationRate(json["Vector"]);
+        temp.vector.compare = ParseJsonToUtilizationRate(json["Vector"]);
     }
     if (json.HasMember("Vector1") && json["Vector1"].IsObject()) {
-        temp.vector1 = ParseJsonToUtilizationRate(json["Vector1"]);
+        temp.vector1.compare = ParseJsonToUtilizationRate(json["Vector1"]);
     }
     if (json.HasMember("Cube") && json["Cube"].IsObject()) {
-        temp.cube = ParseJsonToUtilizationRate(json["Cube"]);
+        temp.cube.compare = ParseJsonToUtilizationRate(json["Cube"]);
     }
     return temp;
 }
 
-bool SourceFileParser::GetDetailsMemoryTable(const std::string& targetBlockId,
+bool SourceFileParser::GetDetailsMemoryTable(const std::string& targetBlockId, bool isBaseline,
                                              Protocol::DetailsMemoryTableResBody &responseBody)
 {
     if (targetBlockId.empty()) {
         ServerLog::Info("Block id is empty.");
         return true;
     }
-    std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::binary);
-    std::string memoryTable = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_MEMORY_TABLE);
+    std::string curFilePath = isBaseline ? baselineFilePath : filePath;
+    std::ifstream file = FileUtil::OpenReadFileSafely(curFilePath, std::ios::binary);
+    std::string memoryTable = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_MEMORY_TABLE, isBaseline);
     file.close();
     if (memoryTable.empty()) {
         ServerLog::Info("Details memory table data does not exist.");
@@ -692,7 +701,7 @@ Protocol::MemoryTable SourceFileParser::ParseJsonToMemoryTable(const json_t &jso
     result.advice = JsonUtil::GetVector<std::string>(json, "advice");
     auto &tableDetailJson = const_cast<Value &>(json["table_detail"]);
     for (auto &item: tableDetailJson.GetArray()) {
-        Protocol::TableDetail tableDetail;
+        Protocol::TableDetail<Protocol::CompareData<Protocol::TableRow>> tableDetail;
         tableDetail.tableName = JsonUtil::GetString(item, "table_name");
         tableDetail.size = JsonUtil::GetVector<std::string>(item, "size");
         tableDetail.headerName = JsonUtil::GetVector<std::string>(item, "header_name");
@@ -701,7 +710,9 @@ Protocol::MemoryTable SourceFileParser::ParseJsonToMemoryTable(const json_t &jso
             Protocol::TableRow memoryTableRow;
             memoryTableRow.name = JsonUtil::GetString(dataRow, "name");
             memoryTableRow.value = JsonUtil::GetVector<std::string>(dataRow, "value");
-            tableDetail.row.push_back(memoryTableRow);
+            Protocol::CompareData<Protocol::TableRow> compareRow;
+            compareRow.compare = memoryTableRow;
+            tableDetail.row.push_back(compareRow);
         }
         result.tableDetail.push_back(tableDetail);
     }
@@ -716,10 +727,10 @@ void SourceFileParser::ConvertToData()
         return;
     }
 
-    std::vector<std::pair<int64_t, int64_t>> &sourceFilePos = dataBlockMap[static_cast<int>(DataTypeEnum::SOURCE)];
+    std::vector<Position> &sourceFilePos = dataBlockMap[static_cast<int>(DataTypeEnum::SOURCE)];
     for (auto pos : sourceFilePos) {
-        int64_t start = pos.first;
-        int64_t end = pos.second;
+        int64_t start = pos.startPos;
+        int64_t end = pos.endPos;
 
         file.seekg(start, std::ios::beg);
 
@@ -733,9 +744,9 @@ void SourceFileParser::ConvertToData()
         sourceFiles[sourceFilePath] = std::make_pair(start + filePathLengthConst, end);
     }
 
-    std::vector<std::pair<int64_t, int64_t>> &apiFilePos = dataBlockMap[static_cast<int>(DataTypeEnum::API_FILE)];
+    std::vector<Position> &apiFilePos = dataBlockMap[static_cast<int>(DataTypeEnum::API_FILE)];
     if (!apiFilePos.empty()) {
-        std::pair<int64_t, int64_t> &pair = apiFilePos.at(0);
+        Position &pair = apiFilePos.at(0);
         std::string jsonStr = GetContentStr(file, pair);
         ConvertApiFile(jsonStr);
     }
@@ -743,7 +754,7 @@ void SourceFileParser::ConvertToData()
     if (!apiInstrPosArray.empty()) {
         apiInstrPos = apiInstrPosArray.at(0);
 
-        std::pair<int64_t, int64_t> &pair = apiInstrPosArray.at(0);
+        Position &pair = apiInstrPosArray.at(0);
         std::string jsonStr = GetContentStr(file, pair);
         ConvertApiInstr(jsonStr);
     }
@@ -896,14 +907,15 @@ std::vector<SourceFileLine> SourceFileParser::ConvertToLineArray(Value &lineArra
     return sourceFileLines;
 }
 
-std::string SourceFileParser::GetSingleContentStrByDataType(std::ifstream &file, DataTypeEnum dataTypeEnum)
+std::string SourceFileParser::GetSingleContentStrByDataType(std::ifstream &file, DataTypeEnum dataTypeEnum,
+                                                            bool isBaseline)
 {
     if (!file.is_open()) {
         return "";
     }
     // 从文件获取内容
-    std::vector<std::pair<int64_t, int64_t>> &baseInfoPos =
-            dataBlockMap[static_cast<int>(dataTypeEnum)];
+    std::map<int, std::vector<Position>> curBlockMap = isBaseline ? baselineDataBlockMap : dataBlockMap;
+    std::vector<Position> &baseInfoPos = curBlockMap[static_cast<int>(dataTypeEnum)];
     if (baseInfoPos.empty()) {
         return "";
     }
@@ -934,7 +946,7 @@ std::optional<Protocol::SubBlockData> SourceFileParser::ConvertStrToSubBlockData
     return blockData;
 }
 
-Protocol::SubBlockUnitData SourceFileParser::ParseSubBlockUnitData(const json_t &item)
+Protocol::CompareData<Protocol::SubBlockUnitData> SourceFileParser::ParseSubBlockUnitData(const json_t &item)
 {
     Protocol::SubBlockUnitData unitData;
     unitData.blockId = JsonUtil::GetString(item, "block_id");
@@ -943,13 +955,15 @@ Protocol::SubBlockUnitData SourceFileParser::ParseSubBlockUnitData(const json_t 
     unitData.unit = GetUnitType(JsonUtil::GetInteger(item, "unit"));
     unitData.value = JsonUtil::GetString(item, "value");
     unitData.originValue = JsonUtil::GetString(item, "origin_value");
-    return unitData;
+    Protocol::CompareData<Protocol::SubBlockUnitData> compareData;
+    compareData.compare = unitData;
+    return compareData;
 }
 
-std::string SourceFileParser::GetContentStr(std::ifstream &file, const std::pair<int64_t, int64_t> &pair) const
+std::string SourceFileParser::GetContentStr(std::ifstream &file, const Position &position) const
 {
-    int64_t start = pair.first;
-    int64_t end = pair.second;
+    int64_t start = position.startPos;
+    int64_t end = position.endPos;
     int64_t dataSize = end - start;
     constexpr uint64_t maxDataSize = 1024 * 1024 * 100; // limit data size to 100MB
     if (IsDataSizeExceedUpperLimit(dataSize, maxDataSize)) {
@@ -1013,6 +1027,18 @@ bool SourceFileParser::GetDetailsRoofline(Protocol::DetailsRooflineBody &respons
     std::string jsonStr = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_ROOFLINE);
     RooflineParser parser;
     return parser.GetDetailsRoofline(jsonStr, responseBody);
+}
+
+void SourceFileParser::SetFilePath(const std::string &inputFilePath)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    this->filePath = FileUtil::PathPreprocess(inputFilePath);
+}
+
+void SourceFileParser::SetBaselineFilePath(const std::string &inputFilePath)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    this->baselineFilePath = FileUtil::PathPreprocess(inputFilePath);
 }
 } // end of namespace Memory
 } // end of namespace Module

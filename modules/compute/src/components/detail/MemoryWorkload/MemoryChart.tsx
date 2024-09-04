@@ -10,21 +10,24 @@ import { type Icondition } from './Filter';
 import { queryMemoryGraph } from '../../RequestUtils';
 import { type Session } from '../../../entity/session';
 import { Hit } from 'ascend-utils';
+import { CompareData } from '../../../utils/interface';
 export interface ImemoryData {
     blockId: string;
     blockType: string;
     chipType: string;
-    memoryUnit: ImemoryUnit[] ;
-    l2Cache: {
-        hit: string;
-        miss: string;
-        totalRequest: string;
-        hitRatio: string;
-    };
-    vector?: Icore;
-    vector1?: Icore;
-    cube?: Icore;
+    memoryUnit: Array<CompareData<ImemoryUnit>>;
+    l2Cache: CompareData<L2Cache>;
+    vector?: CompareData<Icore>;
+    vector1?: CompareData<Icore>;
+    cube?: CompareData<Icore>;
     advice: string[];
+}
+
+export interface L2Cache {
+    hit: string;
+    miss: string;
+    totalRequest: string;
+    hitRatio: string;
 }
 
 export interface Icore {
@@ -46,10 +49,24 @@ const defaultData = {
     chipType: '',
     memoryUnit: [],
     l2Cache: {
-        hit: '',
-        miss: '',
-        totalRequest: '',
-        hitRatio: '',
+        compare: {
+            hit: '',
+            miss: '',
+            totalRequest: '',
+            hitRatio: '',
+        },
+        baseline: {
+            hit: '',
+            miss: '',
+            totalRequest: '',
+            hitRatio: '',
+        },
+        diff: {
+            hit: '',
+            miss: '',
+            totalRequest: '',
+            hitRatio: '',
+        },
     },
     advice: [],
 };

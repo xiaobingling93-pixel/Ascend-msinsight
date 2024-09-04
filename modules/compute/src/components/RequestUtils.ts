@@ -38,7 +38,7 @@ export const queryApiInstr = async(): Promise<any> => {
  * @return {[x:string]:string|number}
  */
 export const queryBaseInfo = async(): Promise<any> => {
-    return window.requestData('source/details/baseInfo', {});
+    return window.requestData('source/details/baseInfo', { isCompared: false });
 };
 
 /**
@@ -47,7 +47,7 @@ export const queryBaseInfo = async(): Promise<any> => {
  * @return {[x:string]:string|number}
  */
 export const queryComputeWorkload = async(): Promise<any> => {
-    return window.requestData('source/details/computeworkload', {});
+    return window.requestData('source/details/computeworkload', { isCompared: false });
 };
 
 /**
@@ -67,7 +67,7 @@ export const queryComputeWorkload = async(): Promise<any> => {
  *   }]
  * }
  */
-export const queryMemoryTable = async(param: {blockId: string}): Promise<any> => {
+export const queryMemoryTable = async(param: { blockId: string; isCompared: boolean }): Promise<any> => {
     return window.requestData('source/details/memoryTable', param);
 };
 
@@ -94,7 +94,7 @@ export const queryMemoryTable = async(param: {blockId: string}): Promise<any> =>
  *   }]
  * }
  */
-export const queryMemoryGraph = async(param: {blockId: string}): Promise<any> => {
+export const queryMemoryGraph = async(param: { blockId: string; isCompared: boolean }): Promise<any> => {
     return window.requestData('source/details/memoryGraph', param);
 };
 

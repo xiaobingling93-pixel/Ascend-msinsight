@@ -105,8 +105,10 @@ TEST_F(SourceProtocolTest, ToDetailsLoadInfoResponse)
 {
     DetailsLoadInfoResponse response;
     SubBlockUnitData subBlockUnitData;
-    response.body.chartData.detailDataList.emplace_back(subBlockUnitData);
-    response.body.tableData.detailDataList.emplace_back(subBlockUnitData);
+    CompareData<SubBlockUnitData> blockCompareData;
+    blockCompareData.compare = subBlockUnitData;
+    response.body.chartData.detailDataList.emplace_back(blockCompareData);
+    response.body.tableData.detailDataList.emplace_back(blockCompareData);
     response.moduleName = ModuleType::SOURCE;
     manager->ToJson(response, error);
 }
@@ -116,7 +118,9 @@ TEST_F(SourceProtocolTest, ToDetailsMemoryGraphResponse)
     DetailsMemoryGraphResponse response;
     MemoryGraph memoryGraph;
     MemoryUnit memoryUnit;
-    memoryGraph.memoryUnit.emplace_back(memoryUnit);
+    CompareData<MemoryUnit> memoryCompareData;
+    memoryCompareData.compare = memoryUnit;
+    memoryGraph.memoryUnit.emplace_back(memoryCompareData);
     response.body.coreMemory.emplace_back(memoryGraph);
     response.moduleName = ModuleType::SOURCE;
     manager->ToJson(response, error);
@@ -126,9 +130,11 @@ TEST_F(SourceProtocolTest, ToDetailsMemoryTableResponse)
 {
     DetailsMemoryTableResponse response;
     MemoryTable memoryTable;
-    TableDetail tableDetail;
+    TableDetail<CompareData<TableRow>> tableDetail;
+    CompareData<TableRow> tableRowCompare;
     TableRow tableRow;
-    tableDetail.row.emplace_back(tableRow);
+    tableRowCompare.compare = tableRow;
+    tableDetail.row.emplace_back(tableRowCompare);
     memoryTable.tableDetail.emplace_back(tableDetail);
     response.body.memoryTable.emplace_back(memoryTable);
     response.moduleName = ModuleType::SOURCE;

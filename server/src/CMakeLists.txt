@@ -133,12 +133,14 @@ include_directories(${SRC_HOME_DIR}/modules/source)
 include_directories(${SRC_HOME_DIR}/modules/source/handler)
 include_directories(${SRC_HOME_DIR}/modules/source/parser)
 include_directories(${SRC_HOME_DIR}/modules/source/protocol)
+include_directories(${SRC_HOME_DIR}/modules/source/core)
 
 # Source
 aux_source_directory(${SRC_HOME_DIR}/modules/source  DIC_MODULES_SOURCE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/source/handler DIC_MODULES_SOURCE_HANDLER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/source/parser DIC_MODULES_SOURCE_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/source/protocol DIC_MODULES_SOURCE_PROTOCOL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/source/core DIC_MODULES_SOURCE_CORE_SRC)
 
 # full db
 aux_source_directory(${SRC_HOME_DIR}/modules/full_db  DIC_MODULES_FULL_DB_SRC)
@@ -203,6 +205,7 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_SOURCE_PARSER_SRC}
         ${DIC_MODULES_SOURCE_HANDLER_SRC}
         ${DIC_MODULES_SOURCE_PROTOCOL_SRC}
+        ${DIC_MODULES_SOURCE_CORE_SRC}
         ${DIC_MODULES_ADVISOR_SRC} ${DIC_MODULES_ADVISOR_HANDLER_SRC}
         ${DIC_MODULES_ADVISOR_PROTOCOL_SRC} ${DIC_MODULES_ADVISOR_PROCESS_SRC})
 include_directories(${SRC_HOME_DIR}/entry/server/bin/include)

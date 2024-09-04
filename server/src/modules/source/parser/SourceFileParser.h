@@ -38,6 +38,11 @@ enum class DataTypeEnum : int {
     DETAILS_ROOFLINE = 13
 };
 
+struct Position {
+    int64_t startPos;
+    int64_t endPos;
+};
+
 class SourceFileParser : public FileParser {
 public:
     const static uint16_t reverseConst = 0x5a5a;
@@ -64,42 +69,52 @@ public:
     std::vector<SourceFileLine> GetApiLinesByCoreAndSource(const std::string &core, const std::string &sourceName);
     std::string GetInstr();
     std::string GetSourceByName(std::string sourceName);
-    bool GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &responseBody);
-    bool GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody &responseBody);
-    bool GetDetailsMemoryGraph(const std::string& targetBlockId, Protocol::DetailsMemoryGraphResBody &responseBody);
-    bool GetDetailsMemoryTable(const std::string& targetBlockId, Protocol::DetailsMemoryTableResBody &responseBody);
+    bool GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &responseBody, bool isBaseline);
+    bool GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody &responseBody, bool isBaseline);
+    bool GetDetailsMemoryGraph(const std::string& targetBlockId, bool isBaseline,
+                               Protocol::DetailsMemoryGraphResBody &responseBody);
+    bool GetDetailsMemoryTable(const std::string& targetBlockId, bool isBaseline,
+                               Protocol::DetailsMemoryTableResBody &responseBody);
     void ConvertToData();
     int64_t GetSimulationPid(const std::string &fileId, const std::string &processName);
     int64_t GetSimulationTid(const std::string &fileId, const std::string &processName, const std::string &threadName);
     bool GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInterCoreLoadGraphBody& responseBody);
     bool GetDetailsRoofline(Protocol::DetailsRooflineBody &responseBody);
+    void SetFilePath(const std::string &inputFilePath);
+    void SetBaselineFilePath(const std::string &inputFilePath);
 
 private:
     std::string filePath;
-    std::map<int, std::vector<std::pair<int64_t, int64_t>>> dataBlockMap;
+    std::map<int, std::vector<Position>> dataBlockMap;
     std::map<std::string, std::pair<int64_t, int64_t>> sourceFiles;
     std::map<std::string, std::pair<int64_t, int64_t>> traceFiles;
 
+    std::string baselineFilePath;
+    std::map<int, std::vector<Position>> baselineDataBlockMap;
+
     std::vector<std::string> apiCores;
     std::map<std::string, std::vector<SourceFileLine>> apiFiles;
-    std::pair<int64_t, int64_t> apiInstrPos;
+    Position apiInstrPos;
 
     void ConvertApiInstr(const std::string &jsonStr);
     void ConvertApiFile(const std::string &jsonStr);
     std::map<std::string, std::vector<SourceFileLine>> ConvertToFileMap(rapidjson::Value &fileArray);
     std::vector<SourceFileLine> ConvertToLineArray(rapidjson::Value &lineArray);
-    std::string GetSingleContentStrByDataType(std::ifstream &file, DataTypeEnum dataTypeEnum);
+    std::string GetSingleContentStrByDataType(std::ifstream &file, DataTypeEnum dataTypeEnum,
+                                              bool isBaseline = false);
     std::optional<Protocol::SubBlockData> ConvertStrToSubBlockData(const std::string& str);
-    std::string GetContentStr(std::ifstream &file, const std::pair<int64_t, int64_t> &pair) const;
+    std::string GetContentStr(std::ifstream &file, const Position &position) const;
     static std::string GetUnitType(int64_t unitTypeNumber);
     bool IsDataSizeExceedUpperLimit(uint64_t realSize, uint64_t upperLimit) const;
     static Protocol::MemoryGraph ParseJsonToMemoryGraph(const json_t &json);
     static Protocol::MemoryTable ParseJsonToMemoryTable(const json_t &json);
     static Protocol::UtilizationRate ParseJsonToUtilizationRate(const json_t &json);
+    static Protocol::DetailsBaseInfoResBody ParseJsonToBaseInfo(const document_t &json);
 
     std::unique_ptr<ThreadPool> threadPool;
     const int maxThreadNum = 4;
 
+    std::mutex mutex;
     std::mutex trackMutex;
     std::mutex processMutex;
     std::mutex threadMutex;
@@ -110,7 +125,12 @@ private:
     int64_t pid = 0;
     int64_t tid = 0;
 
-    static Protocol::SubBlockUnitData ParseSubBlockUnitData(const json_t &item);
+    static Protocol::CompareData<Protocol::SubBlockUnitData> ParseSubBlockUnitData(const json_t &item);
+    const int dataSizeLen = 8; // 数据类型字段距离数据大小字段的偏移
+    const int dataTypeLen = 1; // 填充长度字段距离数据类型字段的偏移
+    const int paddingLen = 1;  // 填充长度字段距离数据类型字段的偏移
+    const int reserveLen = 2;  // 实际数据距离填充长度字段的偏移
+    const int filePathLen = 4096;
 };
 } // end of namespace Summary
 } // end of namespace Module
