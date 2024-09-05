@@ -15,7 +15,6 @@ void ParamsOptionInfo()
 {
     const ParamsOption &option = ParamsParser::Instance().GetOption();
     const int mbSize = 1024 * 1024;
-    ServerLog::Info("Websocket server port: ", option.wsPort);
     ServerLog::Info("Server Log Path: ", option.logPath);
     ServerLog::Info("Server Log Max Size: ", option.logSize / mbSize, "MB");
     ServerLog::Info("Server Log Level: ", option.logLevel);

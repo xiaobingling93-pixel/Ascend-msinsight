@@ -18,7 +18,7 @@ void QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     SetBaseResponse(request, response);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
+        ServerLog::Error("Query flow category list failed to get connection. ");
         SetResponseResult(response, true);
         session.OnResponse(std::move(responsePtr));
         return;

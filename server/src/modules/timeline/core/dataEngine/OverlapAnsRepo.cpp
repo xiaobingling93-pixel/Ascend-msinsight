@@ -16,14 +16,14 @@ void OverlapAnsRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &slic
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
     if (database == nullptr) {
-        ServerLog::Warn("overlap open database is failed, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("overlap open database is failed");
         return;
     }
     std::string sql = "SELECT ROWID as id, startNs, endNs from " + TABLE_OVERLAP_ANALYSIS +
         " where deviceId = ? and type = ? order by startNs , id";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Warn("Failed to parpare overlap query all slice, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("Failed to parpare overlap query all slice");
         return;
     }
     stmt->BindParams(trackInfo.rankId, trackInfo.threadId);
@@ -67,13 +67,13 @@ void OverlapAnsRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const 
     sql += sliceidvecStr + ");";
     auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
     if (database == nullptr) {
-        ServerLog::Warn("overlap open database is failed, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("overlap open database is failed");
         return;
     }
     const std::string nameKey = database->GetDbPath();
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Warn("Failed to parpare overlap query slice by ids, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("Failed to parpare overlap query slice by ids");
         return;
     }
     auto resultSet = stmt->ExecuteQuery();

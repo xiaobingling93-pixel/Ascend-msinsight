@@ -20,7 +20,7 @@ void QueryThreadTracesSummaryHandler::HandleRequest(std::unique_ptr<Protocol::Re
 
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.cardId);
     if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", request.params.cardId);
+        ServerLog::Error("Query thread traces summary failed to get connection.");
         session.OnResponse(std::move(responsePtr));
         return;
     }

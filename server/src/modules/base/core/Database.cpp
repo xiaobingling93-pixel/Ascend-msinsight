@@ -25,14 +25,14 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
         int result = sqlite3_open(dbPathStr.c_str(), &db);
         if (result) {
             sqlite3_close(db); // 异常后关闭数据库
-            ServerLog::Error("Open db fail when create Db. path:", dbPath);
+            ServerLog::Error("Open db fail when create Db.");
             return false;
         }
         sqlite3_close(db); // 修改权限前先关闭数据库
         mode_t mode = 0640; // 业务数据权限要求设置为0640 （rw-r-----）
         result = FileUtil::ModifyFilePermissions(dbPathStr, mode);
         if (result) {
-            ServerLog::Error("Can't set db file permissions. path:", dbPath);
+            ServerLog::Error("Can't set db file permissions.");
             return false;
         }
     }
@@ -42,15 +42,15 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
 bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
     if (!FileUtil::CheckFilePathLength(dbPath)) {
-        ServerLog::Error("This db path is illegal : " + dbPath);
+        ServerLog::Error("This db path is illegal");
         return false;
     }
     if (!Database::CreateDbIfNotExist(dbPath)) {
-        ServerLog::Error("Create db fail. path:", dbPath);
+        ServerLog::Error("Create db fail.");
         return false;
     }
     if (isOpen) {
-        ServerLog::Error("The db file has been opened. " + dbPath);
+        ServerLog::Error("The db file has been opened.");
         return false;
     }
     int result = sqlite3_open_v2(CheckSqlString(dbPath).c_str(), &db,
@@ -64,7 +64,7 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
         sqlite3_busy_timeout(db, timeoutMs);
         return true;
     }
-    ServerLog::Error("Faild when open existed Db. path:", dbPath);
+    ServerLog::Error("Faild when open existed Db.");
     return false;
 }
 
@@ -74,7 +74,7 @@ bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
 bool Database::AttachDb(const std::string &dbPath)
 {
     if (isOpen) {
-        ServerLog::Error("The db file has been opened. " + dbPath);
+        ServerLog::Error("The db file has been opened.");
         return false;
     }
 
@@ -85,7 +85,7 @@ bool Database::AttachDb(const std::string &dbPath)
         path = dbPath;
         return true;
     }
-    ServerLog::Error("open db fail. path:", dbPath);
+    ServerLog::Error("open db fail.");
     return false;
 }
 

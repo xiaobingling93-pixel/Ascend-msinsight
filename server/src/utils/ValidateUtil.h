@@ -21,17 +21,17 @@ namespace Dic {
         {
             std::ifstream file = FileUtil::OpenReadFileSafely(fileName);
             if (!file.good()) {
-                Server::ServerLog::Error("Cannot get file:", fileName);
+                Server::ServerLog::Error("Check csv file cannot get file");
                 return false;
             }
             std::string filePath = FileUtil::PathPreprocess(fileName);
             if (access(filePath.c_str(), R_OK) == -1) {
-                Server::ServerLog::Error("Cannot read file", filePath);
+                Server::ServerLog::Error("Check csv file cannot read file");
                 return false;
             }
             long long size = FileUtil::GetFileSize(filePath.c_str());
             if (size > MAX_FILE_SIZE_2G) {
-                Server::ServerLog::Warn("The csv file is too big, and the max size is 2G, file:", filePath);
+                Server::ServerLog::Warn("The csv file is too big, and the max size is 2G");
             }
             return true;
         }

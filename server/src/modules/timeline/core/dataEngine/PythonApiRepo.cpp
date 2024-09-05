@@ -17,14 +17,14 @@ void PythonApiRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &slice
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
     if (database == nullptr) {
-        ServerLog::Warn("python api open database is failed, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("python api open database is failed");
         return;
     }
     std::string sql =
         "SELECT ROWID as id, startNs, endNs from " + TABLE_API + " where globalTid = ? order by startNs , id";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Warn("Failed to parpare python api query all slice, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("Failed to parpare python api query all slice");
         return;
     }
     stmt->BindParams(trackInfo.processId);
@@ -52,12 +52,12 @@ void PythonApiRepo::QuerySliceIdsByCat(const SliceQuery &sliceQuery, std::vector
     std::string sql = "SELECT ROWID as id from " + TABLE_API + " where globalTid = ? and type = 50003";
     auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
     if (database == nullptr) {
-        ServerLog::Warn("python api open database is failed, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("python api open database is failed");
         return;
     }
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Warn("Failed to parpare python api query slice by cat, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("Failed to parpare python api query slice by cat");
         return;
     }
     stmt->BindParams(trackInfo.processId);
@@ -83,12 +83,12 @@ uint64_t PythonApiRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &slic
     std::string sql = "SELECT count(*) as count from " + TABLE_API + " where globalTid = ? and type = 50003";
     auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
     if (database == nullptr) {
-        ServerLog::Warn("python api open database is failed, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("python api open database is failed");
         return 0;
     }
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Warn("Failed to parpare python api query python function, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("Failed to parpare python api query python function");
         return 0;
     }
     stmt->BindParams(trackInfo.processId);
@@ -124,13 +124,13 @@ void PythonApiRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const s
     sql += sliceidvecStr + ");";
     auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
     if (database == nullptr) {
-        ServerLog::Warn("python api open database is failed, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("python api open database is failed");
         return;
     }
     const std::string nameKey = database->GetDbPath();
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Warn("Failed to parpare python api query slice by ids, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("Failed to parpare python api query slice by ids");
         return;
     }
     auto resultSet = stmt->ExecuteQuery();

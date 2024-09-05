@@ -28,7 +28,7 @@ void ProtocolUtil::UnRegister()
 std::unique_ptr<Request> ProtocolUtil::FromJson(const json_t &requestJson, std::string &error)
 {
     if (!IsRequest(requestJson)) {
-        ServerLog::Warn("Json is not request type. json=", JsonUtil::JsonDump(requestJson));
+        ServerLog::Warn("Json is not request type.");
         return nullptr;
     }
     const std::string command = Command(requestJson);
@@ -145,7 +145,7 @@ std::optional<ProtocolUtil::JsonToRequestFunc> ProtocolUtil::GetJsonToRequestFun
 {
     std::lock_guard<std::mutex> lock(mutex);
     if (jsonToReqFactory.count(command) == 0) {
-        ServerLog::Warn("The json to request function is not found. command:", command);
+        ServerLog::Warn("The json to request function is not found.");
         return std::nullopt;
     }
     return jsonToReqFactory[command];

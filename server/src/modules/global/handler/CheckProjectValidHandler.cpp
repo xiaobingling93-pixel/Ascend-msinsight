@@ -144,7 +144,7 @@ bool Dic::Module::CheckProjectValidHandler::TraverseFolder(const std::string& fo
     std::string tmpFolderPath = FileUtil::PathPreprocess(folderPath + "\\*");
     HANDLE hFind = FindFirstFile(tmpFolderPath.c_str(), &findData);
     if (hFind == INVALID_HANDLE_VALUE) {
-        Server::ServerLog::Warn("Unable to open folder.", folderPath);
+        Server::ServerLog::Warn("Unable to open folder.");
         return true;
     }
     do {

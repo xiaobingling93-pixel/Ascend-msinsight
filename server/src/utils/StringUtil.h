@@ -319,26 +319,6 @@ static bool CheckSqlValid(const std::string& input)
     return true;
 }
 
-static bool GetRegularMatchPositions(const std::string &input, const std::regex &regex,
-                                            std::vector<int64_t> &positions)
-{
-    if (input.empty()) {
-        return false;
-    }
-    std::string::const_iterator it = input.cbegin();
-    std::string::const_iterator end = input.cend();
-    std::regex_iterator<std::string::const_iterator> iter(it, end, regex);
-    std::regex_iterator<std::string::const_iterator> enditer;
-    std::regex_iterator<std::string::const_iterator> matchIter;
-    while (iter != enditer) {
-        matchIter = iter;
-        std::smatch match = *matchIter;
-        positions.emplace_back(match.position());
-        ++iter;
-    }
-    return true;
-}
-
 inline static std::string DoubleToStringWithTwoDecimalPlaces(double value)
 {
     std::stringstream stream;

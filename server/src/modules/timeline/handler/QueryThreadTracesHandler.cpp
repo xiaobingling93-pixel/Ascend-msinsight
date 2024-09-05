@@ -19,7 +19,7 @@ void QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     UnitThreadTracesResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     if (renderEngine == nullptr) {
-        ServerLog::Error("Failed to render. fileId:", request.params.cardId);
+        ServerLog::Error("Query thread traces Failed to render.");
         session.OnResponse(std::move(responsePtr));
         return;
     }

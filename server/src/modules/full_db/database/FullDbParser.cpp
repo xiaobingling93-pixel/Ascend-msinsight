@@ -107,7 +107,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
             FullDb::DbMemoryDataBase::ParserEnd(rankId, false);
             FullDb::DbMemoryDataBase::ParseCallBack(rankId, false, "");
         }
-        ServerLog::Error("There is no Memory Data in this db file:" + filePath);
+        ServerLog::Error("There is no Memory Data in this db file");
     } else {
         InitMemory(rankIds, filePath);
     }
@@ -121,7 +121,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
         for (const auto& rankId: realRankIds) {
             FullDb::DbSummaryDataBase::ParserEnd(rankId, false, "");
         }
-        ServerLog::Error("There is no Summery Data in this db file:" + filePath);
+        ServerLog::Error("There is no Summery Data in this db file");
     } else {
         InitSummery(realRankIds, filePath);
     }
@@ -144,7 +144,7 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
     }
 
     auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("Parse completed. path:", filePath,
+    ServerLog::Info("Parse completed.",
                     " Cost time(ms): ", std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
     if (!isNotSendMessage) {
         SendHostEvent(dbId);
@@ -199,7 +199,7 @@ void FullDbParser::InitSummery(std::vector<std::string> rankIds, std::string pat
         if (summeryDatabase != nullptr && summeryDatabase->OpenDb(path, false)) {
             result = true;
         } else {
-            ServerLog::Error("Failed to connect or open SummeryDatabase. rankId:", id);
+            ServerLog::Error("Failed to connect or open SummeryDatabase.");
         }
         if (!Global::BaselineManager::Instance().IsBaselineId(id)) {
             FullDb::DbSummaryDataBase::ParserEnd(id, result, "");
@@ -219,7 +219,7 @@ void FullDbParser::InitMemory(std::vector<std::string> rankIds, std::string path
             result = true;
         } else {
             FullDb::DbMemoryDataBase::ParserEnd(id, false);
-            ServerLog::Error("Failed to connect or open memoryDatabase. rankId:", id);
+            ServerLog::Error("Failed to connect or open memoryDatabase.");
         }
         if (!Global::BaselineManager::Instance().IsBaselineId(id)) {
             FullDb::DbMemoryDataBase::ParseCallBack(id, result, "");

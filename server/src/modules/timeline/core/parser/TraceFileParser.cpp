@@ -197,17 +197,6 @@ int64_t TraceFileParser::GetTrackId(const std::string &fileId, const std::string
     return trackId;
 }
 
-void TraceFileParser::UpdateTrackIdMap(const std::string &fileId,
-    const std::map<uint64_t, std::pair<std::string, std::string>> &threadMap)
-{
-    std::unique_lock<std::mutex> lock(trackMutex);
-    for (auto [key, item] : threadMap) {
-        std::pair<std::string, std::string> tmp = { item.second, item.first };
-        trackIdMap[fileId].emplace(tmp, key);
-        trackId = std::max(trackId, key);
-    }
-}
-
 void TraceFileParser::Reset()
 {
     ServerLog::Info("Reset. wait task completed.");

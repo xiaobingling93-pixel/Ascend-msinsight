@@ -22,8 +22,6 @@ public:
     bool Parse(int64_t startPosition, int64_t endPosition);
     std::string GetError();
     void SetSimulationStatus(const bool &isSimulation);
-    void Parse(int sliceIndex, const std::string &fileContent);
-
 private:
     std::string filePath;
     std::string fileId;
@@ -49,10 +47,6 @@ private:
     std::map<std::string, Trace::Slice> setFlagSliceMap;
     std::map<std::string, Trace::Slice> waitFlagSliceMap;
     int64_t GetTrackId(const std::string &pid, const std::string &tid);
-    std::map<std::string, int64_t> simulationProcessMap;
-    std::map<std::string, int64_t> simulationThreadMap;
-    int64_t GetPid(const std::string &processName);
-    int64_t GetTid(const std::string &processName, const std::string &threadName);
 
     void ProcessLastFlagSlice();
 };

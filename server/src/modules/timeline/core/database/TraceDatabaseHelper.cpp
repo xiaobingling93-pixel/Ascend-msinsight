@@ -851,7 +851,7 @@ bool TraceDatabaseHelper::QueryEventsViewData4Text(std::unique_ptr <SqlitePrepar
     }
     std::string orderBy = params.orderBy.empty() ? "start" : params.orderBy;
     if (!StringUtil::CheckSqlValid(orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", orderBy);
+        ServerLog::Error("Query events view data text is an SQL injection attack");
         return false;
     }
     std::string sql4Details = GetSql4QueryEventsViewDetailsInText(params);

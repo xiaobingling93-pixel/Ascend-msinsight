@@ -90,7 +90,7 @@ std::vector<std::pair<std::string, std::string>> ParserBin::GetSimulationTraceFi
     std::vector<std::pair<std::string, std::string>> files;
     std::string fileId = GetFileId(selectFilePath, selectFilePath);
     if (fileId.empty()) {
-        ServerLog::Error("File id is empty. file:", selectFilePath);
+        ServerLog::Error("File id is empty");
         return files;
     }
     files.emplace_back(selectFilePath, fileId);

@@ -209,7 +209,7 @@ std::string ParserAlloc::GetFileId(const std::string &filePath, const std::strin
     }
     std::string dbPath = FileUtil::GetDbPath(filePath, result);
     if (!DataBaseManager::Instance().CreatConnectionPool(result, dbPath)) {
-        ServerLog::Error("Failed to create connection pool. fileId:", result, ". path:", dbPath);
+        ServerLog::Error("Failed to create connection pool. fileId:", result);
         return "";
     }
     dataPathToDbMap[importPath].push_back(dbPath);
@@ -252,7 +252,6 @@ void ParserAlloc::SendAllParseSuccess()
 {
     std::string notFinishTask = "";
     while (!ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
-        ServerLog::Info("Not finish task is: ", notFinishTask);
         const int sleepTime = 2000;
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
     }
