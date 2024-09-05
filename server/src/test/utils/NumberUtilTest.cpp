@@ -70,6 +70,6 @@ TEST(NumberUtil, StringRservedNDigits)
     EXPECT_EQ(NumberUtil::StrReservedNDigits("3.1415", 2), "3.14");
     EXPECT_EQ(NumberUtil::StrReservedNDigits("3.1", 2), "3.1");
     EXPECT_EQ(NumberUtil::StrReservedNDigits("31", 2), "31");
-    EXPECT_EQ(NumberUtil::StrReservedNDigits("0.0002", 2), "0");
-    EXPECT_EQ(NumberUtil::StrReservedNDigits("0.0002", 3), "0");
+    EXPECT_EQ(NumberUtil::StrReservedNDigits("0.0002", 2), "0.0002");
+    EXPECT_EQ(NumberUtil::StrReservedNDigits("0.0002", 3), "0.0002");
 }
