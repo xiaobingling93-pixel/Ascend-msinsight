@@ -23,6 +23,8 @@
     "Current Count": "Current Count",
     "Pid": "Pid",
     "DeviceId": "Device Id",
+    "Roofline": "Roofline",
+    "Pipeline": "Pipeline",
     "Memory Unit": "Memory Unit",
     "Memory Transfer": "Memory Transfer",
     "Performance": "Performance",

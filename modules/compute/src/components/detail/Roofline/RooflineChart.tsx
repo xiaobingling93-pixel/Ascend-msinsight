@@ -3,10 +3,13 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react';
-import { getResizeEcharts, chartColors, COLOR, safeStr } from 'ascend-utils';
+import { chartColors, COLOR, safeStr, useWatchDomResize } from 'ascend-utils';
 import i18n from 'ascend-i18n';
 import { cloneDeep } from 'lodash';
 import type { Point, IRooflineChart } from './Index';
+import * as echarts from 'echarts';
+import CollapsiblePanel from 'ascend-collapsible-panel';
+import { useTheme, type Theme } from '@emotion/react';
 
 const baseOption: any = {
     title: {
@@ -44,6 +47,12 @@ const baseOption: any = {
     xAxis: {
         type: 'log',
         name: 'Ops/Byte',
+        nameTextStyle: {
+            color: COLOR.Grey20,
+        },
+        axisLabel: {
+            color: COLOR.Grey40,
+        },
     },
     yAxis: {
         type: 'log',
@@ -51,19 +60,65 @@ const baseOption: any = {
         axisLabel: {
             color: COLOR.Grey40,
         },
+        nameTextStyle: {
+            color: COLOR.Grey20,
+        },
         axisPointer: {
             type: 'shadow',
         },
     },
 };
 
-function InitCharts(data: IRooflineChart, chartDom: HTMLElement | null, myChart?: echarts.ECharts): echarts.ECharts | undefined {
-    if (chartDom === null || chartDom === undefined || chartDom?.offsetParent === null) {
-        return undefined;
+function wrapData(originData: IRooflineChart, theme: Theme): any {
+    const series: any[] = [];
+    const legendData: any[] = [];
+    const transInfo = getRoofInfo(originData);
+    if (transInfo !== null) {
+        const { maxAxisX, minAxis } = transInfo;
+        originData.rooflines.forEach((roofline, index) => {
+            const { bw, computility, bwName, point, ratio, computilityName } = roofline;
+            const allPositive = bw > 0 && computility > 0 && point[0] > 0 && point[1] > 0;
+            if (allPositive) {
+            // 斜线公式 y = kx
+                const crossPoint = bw > 1 ? [minAxis, bw * minAxis] : [minAxis / bw, minAxis];
+                const turningPoint: Point = [computility / bw, computility];
+                const rightPoint: Point = [maxAxisX, computility];
+                const rooflinePoints = [crossPoint, turningPoint, rightPoint];
+                series.push({
+                    name: bwName,
+                    type: 'scatter',
+                    symbolSize: 16,
+                    itemStyle: {
+                        color: chartColors[(index % chartColors.length)],
+                    },
+                    emphasis: {
+                        scale: 1.2,
+                    },
+                    data: [[...point, bw, bwName, ratio, point, computilityName]],
+                });
+                series.push({
+                    name: bwName,
+                    type: 'line',
+                    lineStyle: { width: 2, color: chartColors[(index % chartColors.length)] },
+                    data: rooflinePoints,
+                    emphasis: {
+                        lineStyle: { width: 4 },
+                    },
+                });
+                legendData.push({ name: bwName });
+            }
+        });
     }
-    const newChart = getResizeEcharts(chartDom, myChart);
-    newChart.setOption(wrapData(data));
-    return newChart;
+    const option = cloneDeep(baseOption);
+    option.title.text = originData.title;
+    option.series = series;
+    option.legend.data = legendData;
+    option.tooltip.formatter = getTooltipFormatter();
+    option.title.textStyle.color = theme.textColorSecondary;
+    option.legend.textStyle.color = theme.textColorSecondary;
+    option.xAxis.nameTextStyle.color = theme.textColorTertiary;
+    option.yAxis.nameTextStyle.color = theme.textColorTertiary;
+    return option;
 }
 
 // roofline 公式 y = kx
@@ -116,54 +171,6 @@ export function getDigit(num: number, diff = 0): number {
     return Math.pow(10, decimalCount + diff);
 }
 
-function wrapData(originData: IRooflineChart): any {
-    const series: any[] = [];
-    const legendData: any[] = [];
-    const transInfo = getRoofInfo(originData);
-    if (transInfo !== null) {
-        const { maxAxisX, minAxis } = transInfo;
-        originData.rooflines.forEach((roofline, index) => {
-            const { bw, computility, bwName, point, ratio, computilityName } = roofline;
-            const allPositive = bw > 0 && computility > 0 && point[0] > 0 && point[1] > 0;
-            if (allPositive) {
-            // 斜线公式 y = kx
-                const crossPoint = bw > 1 ? [minAxis, bw * minAxis] : [minAxis / bw, minAxis];
-                const turningPoint: Point = [computility / bw, computility];
-                const rightPoint: Point = [maxAxisX, computility];
-                const rooflinePoints = [crossPoint, turningPoint, rightPoint];
-                series.push({
-                    name: bwName,
-                    type: 'scatter',
-                    symbolSize: 16,
-                    itemStyle: {
-                        color: chartColors[(index % chartColors.length)],
-                    },
-                    emphasis: {
-                        scale: 1.2,
-                    },
-                    data: [[...point, bw, bwName, ratio, point, computilityName]],
-                });
-                series.push({
-                    name: bwName,
-                    type: 'line',
-                    lineStyle: { width: 2, color: chartColors[(index % chartColors.length)] },
-                    data: rooflinePoints,
-                    emphasis: {
-                        lineStyle: { width: 4 },
-                    },
-                });
-                legendData.push({ name: bwName });
-            }
-        });
-    }
-    const option = cloneDeep(baseOption);
-    option.title.text = originData.title;
-    option.series = series;
-    option.legend.data = legendData;
-    option.tooltip.formatter = getTooltipFormatter();
-    return option;
-}
-
 function getTooltipFormatter(): (p: any) => string {
     return (params: any) => {
         if (params.data !== undefined && params.seriesType === 'scatter') {
@@ -180,14 +187,41 @@ function getTooltipFormatter(): (p: any) => string {
     };
 }
 
+function InitCharts(data: IRooflineChart, chartDom: HTMLElement | null, theme: Theme): echarts.ECharts | undefined {
+    if (chartDom === null || chartDom === undefined || chartDom?.offsetParent === null) {
+        return undefined;
+    }
+    const newChart = echarts.getInstanceByDom(chartDom)
+        ? echarts.getInstanceByDom(chartDom)
+        : echarts.init(chartDom);
+    if (newChart !== undefined) {
+        newChart.setOption(wrapData(data, theme));
+    }
+    return newChart;
+}
+
 const RooflineChart = observer(({ dataSource }: { dataSource: IRooflineChart}): JSX.Element => {
+    const theme = useTheme();
     const ref = useRef(null);
     const [chart, setChart] = useState<echarts.ECharts | undefined>(undefined);
 
+    // 监听宽度变化
+    useWatchDomResize(ref.current, (domRect) => {
+        if (domRect.width <= 0) {
+            return;
+        }
+        if (chart !== undefined && chart !== null) {
+            chart.resize();
+        } else {
+            const newChart = InitCharts(dataSource, ref.current, theme);
+            setChart(newChart);
+        }
+    });
+
     useEffect(() => {
-        const newChart = InitCharts(dataSource, ref.current, chart);
+        const newChart = InitCharts(dataSource, ref.current, theme);
         setChart(newChart);
-    }, [dataSource]);
+    }, [dataSource, theme]);
     return (
         <div ref={ref} style={{ height: '500px', width: '100%' }}>
         </div>
@@ -197,9 +231,23 @@ const RooflineChart = observer(({ dataSource }: { dataSource: IRooflineChart}): 
 export const RooflineChartGroup = ({ dataSource }: {
     dataSource: IRooflineChart[];
 }): JSX.Element => {
+    const theme = useTheme();
     return <div>
         {
-            dataSource.map(item => (<RooflineChart key={item.title} dataSource={item}/>))
+            dataSource.slice(0, 1).map(item => (<RooflineChart key={item.title} dataSource={item}/>))
+        }
+        {
+            dataSource.length > 1
+                ? (
+                    <CollapsiblePanel title={i18n.t('More')} collapsible defaultOpen={false}
+                        headerStyle={{ color: theme.primaryColor, fontSize: '12px', cursor: 'pointer', paddingLeft: '12px' }}
+                        contentStyle={{ padding: 0, width: 'calc( 100% + 50px)', marginLeft: '-50px' }}
+                        style={{ margin: '0 0 20px 50px' }}
+                    >
+                        {dataSource.slice(1).map(item => (<RooflineChart key={item.title} dataSource={item}/>))}
+                    </CollapsiblePanel>
+                )
+                : <></>
         }
     </div>;
 };

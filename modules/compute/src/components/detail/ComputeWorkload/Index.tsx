@@ -68,7 +68,7 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
         });
     }, [data.blockIdList]);
     return (
-        <CollapsiblePanel title={t('ComputeWorkloadAnalysis')}>
+        <CollapsiblePanel title={t('ComputeWorkloadAnalysis')} collapsible>
             <Filter handleFilterChange={handleFilterChange} blockIdList={data.blockIdList} session={session}/>
             <ComputeWorkloadChart condition={condition} data={data.chartData}/>
             <ComputeWorkloadTable condition={condition} data={data.tableData}/>

@@ -29,6 +29,8 @@ import { ReactComponent as ArrowDownLightSvg } from './img/arrow_down_light.svg'
 import { ReactComponent as ArrowUpDarkSvg } from './img/arrow_up_dark.svg';
 import { ReactComponent as ArrowUpLightSvg } from './img/arrow_up_light.svg';
 import { ReactComponent as ColumnFilterSvg } from './img/column_filter.svg';
+import { ReactComponent as ExpandSvg } from './img/expand.svg';
+import { ReactComponent as ExpandRightSvg } from './img/expand_right.svg';
 import { themeInstance } from '../theme';
 import CaretRightSvg from './img/caret-right.svg';
 import { CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
@@ -60,6 +62,8 @@ const iconMap: Record<string, any> = {
     caretRight: CaretRightSvg,
     bulb: BulbSvg,
     columnFilter: ColumnFilterSvg,
+    expand:ExpandSvg,
+    expandRight:ExpandRightSvg,
     dark: {
         help: HelpDarkSvg,
         flag: FlagDarkIcon,
@@ -208,4 +212,12 @@ export function ColumnSorterIcon(): JSX.Element {
 }
 export function ColumnFilterIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'columnFilter'} {...props }/>;
+}
+export function ExpandIcon(props: ISVGProps): JSX.Element {
+    const {style = {}, ...restProps} = props;
+    return <Icon type={'expand'} style={{verticalAlign: 'middle', margin: '0 10px 0 0', ...style}} {...restProps} />;
+}
+export function CollapseIcon(props: ISVGProps): JSX.Element {
+    const {style = {}, ...restProps} = props;
+    return <Icon type={'expandRight'} style={{verticalAlign: 'middle', margin: '-5px 5px 0 -2px', ...style}} {...restProps} />;
 }
