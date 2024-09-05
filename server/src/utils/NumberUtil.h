@@ -178,7 +178,10 @@ public:
         }
         auto pos  = data.find_last_of('.');
         if (pos != std::string::npos) {
-            return data.substr(0, pos + n + 1);
+            std::string sub =  data.substr(0, pos + n + 1);
+            // 保留小数后为零
+            bool isZero = std::all_of(sub.begin(), sub.end(), [](char c) { return (c == '0' || c == '.'); });
+            return isZero ? "0" : sub;
         }
         return data;
     }

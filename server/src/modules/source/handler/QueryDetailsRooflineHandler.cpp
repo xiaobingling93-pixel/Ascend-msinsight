@@ -17,6 +17,13 @@ void QueryDetailsRooflineHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     DetailsRooflineResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     bool result = SourceFileParser::Instance().GetDetailsRoofline(response.body);
+    // 解析失败时返回空数据
+    if (!result) {
+        response.body.soc = "";
+        response.body.data.clear();
+        response.body.advice.clear();
+        result = true;
+    }
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
