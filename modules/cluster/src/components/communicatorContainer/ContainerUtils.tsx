@@ -293,41 +293,108 @@ export interface summaryListItem {
     totalTime: number;
 };
 
-interface opacityListItem {
-    rankId: string;
-    totalComputingOpacity: number;
-    communicationOpacity: number;
+interface rankDyeingDataType {
+    [key: string]: { average: number; max: number };
 };
 
-let opacityList: opacityListItem[] = [];
+let rankDyeingData: rankDyeingDataType = {};
+let rankDataList: Array<summaryListItem & { pureComputingTime: number }> = [];
 
-export const computeOpacity = (summaryList: summaryListItem[]): void => {
-    let totalTime = 0;
-    opacityList = summaryList.map(item => {
+export const computeRankDyeingData = (summaryList: summaryListItem[]): void => {
+    rankDyeingData = {
+        communicationNotOverLappedTime: { average: 0, max: 0 },
+        communicationOverLappedTime: { average: 0, max: 0 },
+        computingTime: { average: 0, max: 0 },
+        freeTime: { average: 0, max: 0 },
+        prepareTime: { average: 0, max: 0 },
+        pureComputingTime: { average: 0, max: 0 },
+    };
+    rankDataList = [];
+    let pureComputingTime = 0;
+    summaryList.forEach(item => {
         if (item.prepareTime < 0) {
             item.prepareTime = 0;
         }
-        totalTime = item.communicationNotOverLappedTime + item.computingTime + item.freeTime + item.prepareTime;
-        return {
-            rankId: item.rankId,
-            totalComputingOpacity: Number((item.computingTime / notZero(totalTime)).toFixed(4)),
-            communicationOpacity: Number((item.communicationNotOverLappedTime / notZero(totalTime)).toFixed(4)),
-        };
+        pureComputingTime = Number((item.computingTime - item.communicationOverLappedTime).toFixed(2));
+        rankDataList.push({
+            ...item,
+            pureComputingTime,
+        });
+        computeRankDyeingMax(rankDyeingData, item, pureComputingTime);
+        computeRankDyeingCount(rankDyeingData, item, pureComputingTime);
     });
+    rankDyeingData.communicationNotOverLappedTime.average /= summaryList.length;
+    rankDyeingData.communicationOverLappedTime.average /= summaryList.length;
+    rankDyeingData.computingTime.average /= summaryList.length;
+    rankDyeingData.freeTime.average /= summaryList.length;
+    rankDyeingData.prepareTime.average /= summaryList.length;
+    rankDyeingData.pureComputingTime.average /= summaryList.length;
+};
+
+const computeRankDyeingMax = (dyeingData: rankDyeingDataType, item: summaryListItem, pureComputingTime: number): void => {
+    dyeingData.communicationNotOverLappedTime.max = Math.max(
+        dyeingData.communicationNotOverLappedTime.max,
+        item.communicationNotOverLappedTime,
+    );
+    dyeingData.communicationOverLappedTime.max = Math.max(
+        dyeingData.communicationOverLappedTime.max,
+        item.communicationOverLappedTime,
+    );
+    dyeingData.computingTime.max = Math.max(dyeingData.computingTime.max, item.computingTime);
+    dyeingData.freeTime.max = Math.max(dyeingData.freeTime.max, item.freeTime);
+    dyeingData.prepareTime.max = Math.max(dyeingData.prepareTime.max, item.prepareTime);
+    dyeingData.pureComputingTime.max = Math.max(dyeingData.pureComputingTime.max, pureComputingTime);
+};
+
+const computeRankDyeingCount = (dyeingData: rankDyeingDataType, item: summaryListItem, pureComputingTime: number): void => {
+    dyeingData.communicationNotOverLappedTime.average += item.communicationNotOverLappedTime;
+    dyeingData.communicationOverLappedTime.average += item.communicationOverLappedTime;
+    dyeingData.computingTime.average += item.computingTime;
+    dyeingData.freeTime.average += item.freeTime;
+    dyeingData.prepareTime.average += item.prepareTime;
+    dyeingData.pureComputingTime.average += pureComputingTime;
+};
+
+export const getRankDyeingData = (): rankDyeingDataType => {
+    return rankDyeingData;
 };
 
 export const getOpacity = (rankId: number, dyeingMode: string): number => {
-    const opacity = opacityList.find(item => item.rankId === rankId.toString());
-    if (opacity === undefined) {
-        return 1;
+    const rankData = rankDataList.find(item => item.rankId === rankId.toString());
+    let opacity = 0;
+    if (rankData === undefined) {
+        return opacity;
     }
-    if (dyeingMode === 'TotalComputingTime') {
-        return opacity.totalComputingOpacity;
-    } else if (dyeingMode === 'CommunicationTime') {
-        return opacity.communicationOpacity;
-    } else {
-        return 1;
+    switch (dyeingMode) {
+        case 'prepareTime':
+            opacity = computeOpacity(rankData.prepareTime, rankDyeingData.prepareTime);
+            break;
+        case 'computingTime':
+            opacity = computeOpacity(rankData.computingTime, rankDyeingData.computingTime);
+            break;
+        case 'pureComputingTime':
+            opacity = computeOpacity(rankData.pureComputingTime, rankDyeingData.pureComputingTime);
+            break;
+        case 'communicationOverLappedTime':
+            opacity = computeOpacity(rankData.pureComputingTime, rankDyeingData.pureComputingTime);
+            break;
+        case 'communicationNotOverLappedTime':
+            opacity = computeOpacity(rankData.communicationNotOverLappedTime, rankDyeingData.communicationNotOverLappedTime);
+            break;
+        case 'freeTime':
+            opacity = computeOpacity(rankData.freeTime, rankDyeingData.freeTime);
+            break;
+        default:
+            opacity = 1;
+            break;
     }
+    return opacity;
+};
+
+export const computeOpacity = (rankDataValue: number, rankDyeingDataItem: { average: number; max: number }): number => {
+    return Number((
+        (rankDataValue - rankDyeingDataItem.average) / notZero(rankDyeingDataItem.max - rankDyeingDataItem.average)
+    ).toFixed(4));
 };
 
 export const getRankDataById = (rankId: number, summaryList: summaryListItem[]):
@@ -336,7 +403,10 @@ export const getRankDataById = (rankId: number, summaryList: summaryListItem[]):
     if (rank === undefined) {
         return undefined;
     }
-    const opacity = opacityList.find(item => item.rankId === rankId.toString());
+    if (rank.prepareTime < 0) {
+        rank.prepareTime = 0;
+    }
+    const totalTime = rank.communicationNotOverLappedTime + rank.computingTime + rank.freeTime + rank.prepareTime;
     const pureComputingTime = Number((rank.computingTime - rank.communicationOverLappedTime).toFixed(2));
     return {
         ...rank,
@@ -346,7 +416,7 @@ export const getRankDataById = (rankId: number, summaryList: summaryListItem[]):
         computingTime: Number(rank.communicationNotOverLappedTime.toFixed(2)),
         freeTime: Number(rank.communicationNotOverLappedTime.toFixed(2)),
         prepareTime: Number(rank.communicationNotOverLappedTime.toFixed(2)),
-        computeTimeRatio: opacity ? Number((opacity.totalComputingOpacity * 100).toFixed(2)) : 0,
-        communicationTimeRatio: opacity ? Number((opacity.communicationOpacity * 100).toFixed(2)) : 0,
+        computeTimeRatio: Number((rank.computingTime / notZero(totalTime) * 100).toFixed(2)),
+        communicationTimeRatio: Number((rank.communicationNotOverLappedTime / notZero(totalTime) * 100).toFixed(2)),
     };
 };

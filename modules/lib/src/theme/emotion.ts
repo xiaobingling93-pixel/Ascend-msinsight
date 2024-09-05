@@ -226,6 +226,7 @@ declare module '@emotion/react' {
         rankBackgroudColor: string;
         contextMenuBgColor: string;
         summaryChartBgColor: string;
+        rankContainerBackgroudColor: string;
         unitInfoTextColor: string;
     }
 }
