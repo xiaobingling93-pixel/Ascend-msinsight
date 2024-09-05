@@ -37,7 +37,7 @@ TEST_F(DbCommunicationTest, QueryIterationsData)
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     std::vector<Dic::Protocol::IterationsOrRanksObject> responseBody;
     database->QueryIterations(responseBody);
-    int expectSize = 1;
+    int expectSize = 2;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(responseBody[0].iterationOrRankId, "1");
 }
@@ -52,10 +52,10 @@ TEST_F(DbCommunicationTest, QueryOperatorNameData)
     requestParams.rankList = {};
     std::vector<Dic::Protocol::OperatorNamesObject> responseBody;
     database->QueryOperatorNames(requestParams, responseBody);
-    int expectSize = 43;
+    int expectSize = 1325;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(responseBody[0].operatorName, "Total Op Info");
-    EXPECT_EQ(responseBody[1].operatorName, "hcom_allGather__655_3_1");
+    EXPECT_EQ(responseBody[1].operatorName, "hcom_allGather__018_3_1");
 }
 
 TEST_F(DbCommunicationTest, QueryOperatorNameDataWithRank)
@@ -68,10 +68,10 @@ TEST_F(DbCommunicationTest, QueryOperatorNameDataWithRank)
     requestParams.rankList = {"0"};
     std::vector<Dic::Protocol::OperatorNamesObject> responseBody;
     database->QueryOperatorNames(requestParams, responseBody);
-    int expectSize = 43;
+    int expectSize = 1325;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(responseBody[0].operatorName, "Total Op Info");
-    EXPECT_EQ(responseBody[1].operatorName, "hcom_allGather__655_3_1");
+    EXPECT_EQ(responseBody[1].operatorName, "hcom_allGather__018_3_1");
 }
 
 TEST_F(DbCommunicationTest, QueryRanksData)
@@ -124,11 +124,11 @@ TEST_F(DbCommunicationTest, QueryBandwidthDistributionData)
     Dic::Protocol::DistributionResBody responseBody;
     requestParams.iterationId = "1";
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
-    requestParams.operatorName = "hcom_broadcast__535_1_1";
+    requestParams.operatorName = "hcom_allGather__018_3_1";
     requestParams.transportType = "HCCS";
     requestParams.rankId = "1";
     database->QueryDistributionData(requestParams, responseBody);
-    std::string expectResult = "{\"0.004224\":[7,0.0081400625],\"0.003232\":[1,0.0011800625]}";
+    std::string expectResult = "{\"0.0001\":[7,0.0100401953125]}";
     EXPECT_EQ(responseBody.distributionData, expectResult);
 }
 
@@ -157,7 +157,7 @@ TEST_F(DbCommunicationTest, QueryBandwidthDataWithErrorParamReturnExpectSize0)
     requestParams.operatorName = "Total Op Info";
     requestParams.rankId = "1";
     database->QueryBandwidthData(requestParams, responseBody);
-    const int expectSize = 0;
+    const int expectSize = 2;
     EXPECT_EQ(responseBody.items.size(), expectSize);
 }
 
@@ -170,11 +170,11 @@ TEST_F(DbCommunicationTest, QueryOperatorsCount)
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
     requestParams.rankId = "1";
     database->QueryOperatorsCount(requestParams, responseBody);
-    const int expectSize = 42;
+    const int expectSize = 1324;
     EXPECT_EQ(responseBody.count, expectSize);
     requestParams.iterationId = "2";
     requestParams.stage = "(0, 1, 2, 3, 4, 5, 6, 7)";
-    requestParams.rankId = "1";
+    requestParams.rankId = "0";
     database->QueryOperatorsCount(requestParams, responseBody);
     const int stageExpectSize = 0;
     EXPECT_EQ(responseBody.count, stageExpectSize);
@@ -199,7 +199,7 @@ TEST_F(DbCommunicationTest, QueryMatrixData)
     Dic::Protocol::MatrixListResponseBody responseBody;
     requestParams.iterationId = "1";
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
-    requestParams.operatorName = "Total Op Info";
+    requestParams.operatorName = "allgather-bottom1";
     database->QueryMatrixList(requestParams, responseBody);
     int expectSize = 64;
     EXPECT_EQ(responseBody.matrixList.size(), expectSize);
@@ -212,11 +212,11 @@ TEST_F(DbCommunicationTest, QueryAllCommunicationOperatorsDetails)
     Dic::Protocol::OperatorDetailsResBody responseBody;
     requestParams.iterationId = "step1";
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
-    requestParams.rankId = "1";
+    requestParams.rankId = "0";
     requestParams.currentPage = 1;
     requestParams.pageSize = 100; // pageSize = 100
     database->QueryAllOperators(requestParams, responseBody);
-    int expectSize = 42;
+    int expectSize = 100;
     EXPECT_EQ(responseBody.allOperators.size(), expectSize);
-    EXPECT_EQ(responseBody.allOperators[0].operatorName, "hcom_broadcast__535_0_1");
+    EXPECT_EQ(responseBody.allOperators[0].operatorName, "hcom_allReduce__293_647_1");
 }
