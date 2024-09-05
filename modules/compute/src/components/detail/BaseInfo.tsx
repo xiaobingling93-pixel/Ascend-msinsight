@@ -211,7 +211,7 @@ const index = observer(({ session }: Iprops): JSX.Element => {
     }, [JSON.stringify(data), t]);
 
     return (
-        <CollapsiblePanel title={t('BaseInfo')}>
+        <CollapsiblePanel title={t('BaseInfo')} collapsible>
             {
                 items.map((item, itemIndex) => <MIDescriptions title={''} key={itemIndex}>
                     {

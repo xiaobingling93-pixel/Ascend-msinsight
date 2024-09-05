@@ -70,14 +70,14 @@ const allTabItems: ITab[] = [
     {
         label: 'Memory Transfer',
         key: 'memoryPath',
-        contents: ['Memory Pipe Cube', 'Memory Pipe Vector'],
-        surportSocs: ['910B'],
+        contents: ['Memory Pipe Cube', 'Memory Pipe Vector', 'Memory Transfer(Cube)', 'Memory Transfer(Vector)'],
+        surportSocs: ['910'],
     },
     {
         label: 'Pipeline',
         key: 'pipeline',
-        contents: ['Pipe Line Cube', 'Pipe Line Vector'],
-        surportSocs: ['910B'],
+        contents: ['Pipe Line Cube', 'Pipe Line Vector', 'Pipeline(Cube)', 'Pipeline(Vector)'],
+        surportSocs: ['910'],
     },
 ];
 
@@ -92,14 +92,20 @@ function getTabItems(data: IData, tDetails: TFunction): Tab[] {
     const allRooflineCharts = data?.data ?? [];
     const tabItems = allTabItems.filter(tab =>
         tab.surportSocs === undefined || tab.surportSocs.find(surportSoc => soc.includes(surportSoc)) !== undefined);
-    return tabItems.map(tabItem => {
-        const rooflineCharts = tabItem.contents.reduce<IRooflineChart[]>((pre, cur) => {
+    const allContents = tabItems.map(tabItem => tabItem.contents).flat();
+    // 不在页签中的图默认显示在第一个页签
+    const noneInCharts = allRooflineCharts.filter(chart => !allContents.includes(chart.title));
+    return tabItems.map((tabItem, index) => {
+        let rooflineCharts = tabItem.contents.reduce<IRooflineChart[]>((pre, cur) => {
             const curChart = allRooflineCharts.find(chart => chart.title === cur);
             if (curChart !== undefined && curChart !== null) {
                 pre.push(curChart);
             }
             return pre;
         }, []);
+        if (index === 0 && noneInCharts.length > 0) {
+            rooflineCharts = [...rooflineCharts, ...noneInCharts];
+        }
         return {
             label: tDetails(tabItem.label),
             key: tabItem.key,
@@ -143,12 +149,14 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
         }
         updateData();
     }, [session.parseStatus]);
-    return (
-        <CollapsiblePanel title={tDetails('Roofline')}>
-            <Tabs items={items}></Tabs>
-            {data?.advice?.length > 0 && <Hit text={data.advice}/>}
-        </CollapsiblePanel>
-    );
+    return data?.data?.length > 0
+        ? (
+            <CollapsiblePanel title={tDetails('Roofline')} collapsible>
+                <Tabs items={items}></Tabs>
+                {data?.advice?.length > 0 && <Hit text={data.advice}/>}
+            </CollapsiblePanel>
+        )
+        : <></>;
 });
 
 export default index;
