@@ -103,7 +103,12 @@ const handleNodeCollapse = (data: TreeData) => {
 const handleNodeClick = (data: any, node: any) => {
     let dataSource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] } as DataSource;
     if (node.level === 1) {
+        if(lastDataSource.value.projectName === data.label) { return }
+        const firstDataPath = data.children?.[0].label;
         dataSource.projectName = data.label;
+        if(firstDataPath) {
+            dataSource.dataPath.push(firstDataPath);
+        }
     } else {
         dataSource.projectName = data.projectName;
         dataSource.dataPath.push(data.label);

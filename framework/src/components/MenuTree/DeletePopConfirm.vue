@@ -35,7 +35,7 @@ const handleDeleteAll = () => {
     <el-popconfirm width="200" v-if="!isDeleteAll" :hide-icon="true" @confirm="handleDeleteSingle" :hide-after="0"
         :title="DeleteItemConfirmDescribe">
         <template #reference>
-            <Delete />
+            <Delete @click.stop />
         </template>
     </el-popconfirm>
     <Delete v-if="isDeleteAll" @click.stop="dialogVisible = true" />

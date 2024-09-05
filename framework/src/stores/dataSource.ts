@@ -196,6 +196,10 @@ export const useDataSources = defineStore('dataSources', () => {
             console.log('removeSingle error');
         }
         dataSources.value[parentIndex].dataPath.splice(index, 1);
+
+        if (lastDataSource.value.projectName === dataSource.projectName && lastDataSource.value.dataPath[0] === singleDataPath) {
+            lastDataSource.value = { ...dataSource, dataPath: [dataSource.dataPath[0]] };
+        }
     };
 
     const updateProjectName = async (oldProjectName: string, newProjectName: string): Promise<boolean> => {
@@ -237,7 +241,7 @@ export const useDataSources = defineStore('dataSources', () => {
                 mergeDataSource(dataSources, dataSource, param.isConflict);
                 // 如果存在冲突 或 切换的子目录存在多个，则选中一级目录
                 if (param.isConflict || param.subdirectoryForUpdate.length > 1) {
-                    lastDataSource.value = { remote: LOCAL_HOST, port: PORT, projectName: param.projectName, dataPath: [] };
+                    lastDataSource.value = { remote: LOCAL_HOST, port: PORT, projectName: param.projectName, dataPath: [param.subdirectoryForUpdate[0]] };
                     return;
                 }
                 // 导入项目时，如果项目发生了切换，或原本选的为二级目录，则更新当前选中目录
