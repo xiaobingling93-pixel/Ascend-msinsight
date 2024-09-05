@@ -733,7 +733,7 @@ void DbTraceDataBase::QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_IN
             timeInfoList.emplace_back(curInfo);
         }
     } catch (DatabaseException &e) {
-        ServerLog::Error("QueryTaskTimeInfo Fail, ", e.What());
+        ServerLog::Error("Query task time info fail, ", e.What());
         return;
     }
 }
@@ -742,7 +742,7 @@ void DbTraceDataBase::UpdateWaitTime()
 {
     if (!CheckTableExist(TABLE_COMPUTE_TASK_INFO) || !CheckTableExist(TABLE_COMMUNICATION_OP) ||
         !CheckTableDataInvalid(TABLE_TASK)) {
-        Server::ServerLog::Error("UpdateWaitTime:Table is not exist.");
+        Server::ServerLog::Error("Update wait time:Table is not exist.");
         return;
     }
     if (CheckValueFromStatusInfoTable(WAIT_TIME_STATUS, FINISH_STATUS)) { // 已更新数据，跳过更新
@@ -752,12 +752,12 @@ void DbTraceDataBase::UpdateWaitTime()
     auto updateComputeStmt = CreatPreparedStatement("UPDATE COMPUTE_TASK_INFO SET waitNs = ? WHERE ROWID = ?;");
     auto updateCommunicationStmt = CreatPreparedStatement("UPDATE COMMUNICATION_OP SET waitNs = ? WHERE ROWID = ?;");
     if (stmt == nullptr || updateComputeStmt == nullptr || updateCommunicationStmt == nullptr) {
-        ServerLog::Error("UpdateWaitTime, fail to prepare sql.");
+        ServerLog::Error("Update wait time, fail to prepare sql.");
         return;
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
-        ServerLog::Error("UpdateWaitTime. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Update wait time. failed to get result set.", stmt->GetErrorMessage());
         return;
     }
     std::map<int32_t, int64_t> prevTime;
@@ -779,12 +779,12 @@ void DbTraceDataBase::UpdateWaitTime()
         taskWaitTimeCache.push_back(task);
         if (taskWaitTimeCache.size() == cacheSize &&
             !UpdateTaskInfoWaitTime(updateComputeStmt, updateCommunicationStmt)) {
-            ServerLog::Error("UpdateWaitTime. Failed to update data.");
+            ServerLog::Error("Update wait time. Failed to update data.");
             return;
         }
     }
     if (!UpdateTaskInfoWaitTime(updateComputeStmt, updateCommunicationStmt)) {
-        ServerLog::Error("UpdateWaitTime. Failed to update last data.");
+        ServerLog::Error("Update wait time. Failed to update last data.");
         return;
     }
     UpdateValueIntoStatusInfoTable(WAIT_TIME_STATUS, FINISH_STATUS);
@@ -805,14 +805,14 @@ bool DbTraceDataBase::UpdateTaskInfoWaitTime(std::unique_ptr<SqlitePreparedState
         refStmt->Reset();
         refStmt->BindParams(item.waitTime, item.id);
         if (!refStmt->Execute()) {
-            ServerLog::Error("Failed to UpdateTaskInfoWaitTime");
+            ServerLog::Error("Failed to update task info wait time");
             result = false;
             break;
         }
     }
     taskWaitTimeCache.clear();
     if (!EndTransaction()) {
-        ServerLog::Error("Failed to end UpdateTaskInfoWaitTime.");
+        ServerLog::Error("Failed to end update task info wait time.");
         return false;
     }
     return result;
