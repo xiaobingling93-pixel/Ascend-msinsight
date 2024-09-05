@@ -78,20 +78,23 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
         dataType = static_cast<int>(dataType);
         paddingLength = static_cast<int>(paddingLength);
         if (dataType == static_cast<int>(DataTypeEnum::SOURCE)) {
-            if (INT64_MAX - filePathLen < dataSize) { // 溢出防护
+            if (INT64_MAX - filePathLen < dataSize) {
+                // 溢出防护
                 ServerLog::Error("Source code data block in selected file is invalid which data size is :", dataSize);
                 return false;
             }
             dataSize = dataSize + filePathLen;
         }
 
-        if (!file) { // 检查读取是否成功
+        if (!file) {
             break;
         }
-        file.seekg(reserveLen, std::ios::cur); // 跳转到实际数据的开始
+        // 跳转到实际数据的开始
+        file.seekg(reserveLen, std::ios::cur);
 
         int64_t startPos = file.tellg();
-        if (startPos + dataSize - paddingLength >= INT64_MAX) {  // 溢出防
+        if (startPos + dataSize - paddingLength >= INT64_MAX) {
+            // 溢出防
             ServerLog::Error("Data block in selected file is invalid which data size is :", dataSize);
             return false;
         }
