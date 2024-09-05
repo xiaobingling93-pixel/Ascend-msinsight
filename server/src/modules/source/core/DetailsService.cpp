@@ -63,9 +63,9 @@ SubBlockData DetailsService::MergeSubBlockData(const SubBlockData &compare, cons
             subBlockDataMap[key].diff.blockType = baselineData.blockType;
             subBlockDataMap[key].diff.unit = baselineData.unit;
             subBlockDataMap[key].diff.value =
-                NumberUtil::StringDoubleMinusReturnEmpty(baselineData.value, compareData.value);
+                NumberUtil::StringDoubleMinusReturnEmpty(compareData.value, baselineData.value);
             subBlockDataMap[key].diff.originValue =
-                NumberUtil::StringDoubleMinusReturnEmpty(baselineData.originValue, compareData.originValue);
+                NumberUtil::StringDoubleMinusReturnEmpty(compareData.originValue, baselineData.originValue);
         }
         // baseline信息填入
         subBlockDataMap[key].baseline = baselineData;

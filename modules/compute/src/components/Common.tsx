@@ -223,3 +223,10 @@ export const getFormatNum = (str?: string | number): number | string => {
     }
     return str ?? '';
 };
+
+export const getFormatNumReturnEmpty = (str?: string | number): number | string => {
+    if (str === '') {
+        return '';
+    }
+    return getFormatNum(str);
+};

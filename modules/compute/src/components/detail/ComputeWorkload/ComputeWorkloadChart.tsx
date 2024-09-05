@@ -8,10 +8,26 @@ import { type IblockData } from './Index';
 import { COLOR, getResizeEcharts, chartVisbilityListener, safeStr, sortFunc, chartColors } from 'ascend-utils';
 import { LimitHit } from '../../LimitSet';
 import { CompareData } from '../../../utils/interface';
+import { type Icondition } from './Filter';
+import { cloneDeep } from 'lodash';
 
 interface Iprops {
-    blockId: string;
+    condition: Icondition;
     data: Array<CompareData<IblockData>>;
+}
+
+interface SeriesData {
+    value: string;
+    originValue: string;
+    source?: string;
+}
+
+interface Series {
+    name: string;
+    type: string;
+    data: SeriesData[];
+    itemStyle: { borderColor: string };
+    barMaxWidth: number;
 }
 
 const baseOption = {
@@ -27,8 +43,17 @@ const baseOption = {
             type: 'shadow',
         },
         confine: true,
-        formatter: function (params: any): string {
-            return `${safeStr(params[0]?.name)} <br/>${params[0]?.marker} Cycles:${Number(params[0]?.data?.originValue)}`;
+        formatter: function (params: any[]): string {
+            let result: string = `${safeStr(params[0]?.name)}`;
+            params.forEach(param => {
+                const source = param.data?.source;
+                if (source !== undefined) {
+                    result += `<br/>${param?.marker} Cycles ${param?.data?.source}:${Number(param?.data?.originValue)}`;
+                } else {
+                    result += `<br/>${param?.marker} Cycles:${Number(param?.data?.originValue)}`;
+                }
+            });
+            return result;
         },
     },
     legend: {
@@ -58,7 +83,7 @@ const baseOption = {
     },
     series: [
         {
-            name: 'Pipe Utilization',
+            name: 'compare',
             type: 'bar',
             data: [] as unknown[],
             itemStyle: {
@@ -69,23 +94,49 @@ const baseOption = {
     ],
 };
 
+const defaultSeries: Series = {
+    name: 'compare',
+    type: 'bar',
+    data: [],
+    itemStyle: {
+        borderColor: 'white',
+    },
+    barMaxWidth: 30,
+};
+
 let myChart: echarts.ECharts;
-function InitCharts(data: Array<CompareData<IblockData>>): void {
+function InitCharts(data: Array<CompareData<IblockData>>, isCompared: boolean): void {
     const chartDom = document.getElementById(chartID);
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
+    myChart?.dispose();
     myChart = getResizeEcharts(chartDom, myChart);
-    myChart.setOption(wrapData(data));
+    myChart.setOption(wrapData(data, isCompared));
 }
 
-function wrapData(data: Array<CompareData<IblockData>>): any {
-    const option = { ...baseOption };
+function wrapData(data: Array<CompareData<IblockData>>, isCompared: boolean): any {
+    const option = cloneDeep(baseOption);
     data.sort((a, b) => sortFunc(a.compare.value, b.compare.value));
     const namelist = data.map(item => item.compare.name);
-    const valuelist = data.map(item => ({ value: item.compare.value, originValue: item.compare.originValue }));
     option.yAxis.data = namelist;
-    option.series[0].data = valuelist;
+    option.series = [];
+    if (isCompared) {
+        const compareValueList = data.map(item => ({ value: item.compare.value, originValue: item.compare.originValue, source: 'Compare' } as SeriesData));
+        const baselineValueList = data.map(item => ({ value: item.baseline.value, originValue: item.baseline.originValue, source: 'Baseline' }));
+        const compare: Series = cloneDeep(defaultSeries);
+        const baseline: Series = cloneDeep(defaultSeries);
+        baseline.name = 'baseline';
+        compare.data = compareValueList;
+        baseline.data = baselineValueList;
+        option.series.push(compare);
+        option.series.push(baseline);
+    } else {
+        const valueList = data.map(item => ({ value: item.compare.value, originValue: item.compare.originValue } as SeriesData));
+        const compare: Series = cloneDeep(defaultSeries);
+        compare.data = valueList;
+        option.series.push(compare);
+    }
     // 左边距
     let maxLength = 0;
     namelist.forEach(item => {
@@ -98,13 +149,13 @@ function wrapData(data: Array<CompareData<IblockData>>): any {
 }
 
 const chartID = 'ComputeWorkload';
-function ComputeWorkloadChart({ blockId, data }: Iprops): JSX.Element {
+function ComputeWorkloadChart({ condition, data }: Iprops): JSX.Element {
     const { t } = useTranslation('details');
     const [limit, setLimit] = useState({ maxSize: 5000, overlimit: true, current: 0 });
-    const allData = useMemo(() => data.filter(item => item.compare.blockId === blockId), [blockId, data]);
-    const showData = useMemo(() => data.filter(item => item.compare.blockId === blockId).slice(0, limit.maxSize), [blockId, data]);
+    const allData = useMemo(() => data.filter(item => item.compare.blockId === condition.blockId), [condition.blockId, data]);
+    const showData = useMemo(() => data.filter(item => item.compare.blockId === condition.blockId).slice(0, limit.maxSize), [condition.blockId, data]);
     chartVisbilityListener(chartID, () => {
-        InitCharts(showData);
+        InitCharts(showData, condition.isCompared);
     });
 
     useEffect(() => {
@@ -112,9 +163,9 @@ function ComputeWorkloadChart({ blockId, data }: Iprops): JSX.Element {
     }, [allData]);
     useEffect(() => {
         setTimeout(() => {
-            InitCharts(showData);
+            InitCharts(showData, condition.isCompared);
         });
-    }, [showData]);
+    }, [showData, condition.isCompared]);
     return (
         <div style={{ marginBottom: '20px' }}>
             {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`${t('Current Count')} (${limit.current})`}/>}

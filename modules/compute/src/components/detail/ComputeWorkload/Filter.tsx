@@ -6,9 +6,11 @@ import { Select } from 'ascend-components';
 import { FormItem, getUsableVal } from 'ascend-utils';
 import type { optionDataType, optionMapDataType } from '../../../utils/interface';
 import { limitInput, useHit } from '../../Common';
+import { type Session } from '../../../entity/session';
 
 export interface Icondition {
-    blockId: string ;
+    blockId: string;
+    isCompared: boolean;
 };
 interface Iprops {
     optionMap: optionMapDataType;
@@ -18,21 +20,23 @@ interface Iprops {
 
 export const defaultCondition = {
     blockId: '',
+    isCompared: false,
 };
 const defaultOptionMap = {
     blockIdOptions: [],
 };
 
-const getOptionsAndValue = (initObj: Icondition, initOptionMap: optionMapDataType):
+const getOptionsAndValue = (initObj: Icondition, initOptionMap: optionMapDataType, isCompared: boolean):
 {optionMap: optionMapDataType;condition: Icondition} => {
     // blockId
     const blockIdOptions: optionDataType[] = initOptionMap.blockIdOptions;
     const blockId = getUsableVal(initObj.blockId, blockIdOptions, defaultCondition.blockId) as string;
 
-    return { optionMap: { blockIdOptions }, condition: { blockId } };
+    return { optionMap: { blockIdOptions }, condition: { blockId, isCompared } };
 };
 
-function Filter({ blockIdList, handleFilterChange }: {blockIdList: string[];handleFilterChange: (condition: Icondition) => void}): JSX.Element {
+function Filter({ blockIdList, handleFilterChange, session }: {blockIdList: string[];
+    handleFilterChange: (condition: Icondition) => void;session: Session;}): JSX.Element {
     const [condition, setCondition] = useState(defaultCondition);
     const [optionMap, setOptionMap] = useState<optionMapDataType>(defaultOptionMap);
     const handleChange = (key: keyof Icondition, val: string): void => {
@@ -43,10 +47,10 @@ function Filter({ blockIdList, handleFilterChange }: {blockIdList: string[];hand
     }, []);
     useEffect(() => {
         const blockIdOptions = blockIdList.map(item => ({ label: item, value: item }));
-        const { optionMap: newOptionMap, condition: newCondition } = getOptionsAndValue(condition, { blockIdOptions });
+        const { optionMap: newOptionMap, condition: newCondition } = getOptionsAndValue(condition, { blockIdOptions }, session.dirInfo.isCompare);
         setCondition(newCondition);
         setOptionMap(newOptionMap);
-    }, [blockIdList]);
+    }, [blockIdList, session.dirInfo.isCompare]);
     useEffect(() => {
         handleFilterChange(condition);
     }, [condition]);

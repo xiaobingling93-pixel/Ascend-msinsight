@@ -41,6 +41,7 @@ inline std::vector<ProjectTypeEnum> projectTypeSupportCompare = {
     ProjectTypeEnum::SIMULATION,
     ProjectTypeEnum::TRACE,
     ProjectTypeEnum::DB_CLUSTER,
+    ProjectTypeEnum::BIN,
 };
 
 static inline bool IsBaseLineConfigurableType(ProjectTypeEnum projectTypeEnum)

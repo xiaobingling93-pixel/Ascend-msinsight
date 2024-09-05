@@ -82,6 +82,9 @@ public:
     bool GetDetailsRoofline(Protocol::DetailsRooflineBody &responseBody);
     void SetFilePath(const std::string &inputFilePath);
     void SetBaselineFilePath(const std::string &inputFilePath);
+    bool IsBaselineParsed(const std::string &inputFilePath);
+    void SynchronizeBaselineInfo();
+    void ResetBaseline();
 
 private:
     std::string filePath;

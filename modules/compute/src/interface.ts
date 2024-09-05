@@ -8,6 +8,7 @@ import {
     updateSessionHandler,
     resetHandler,
     switchLanguageHandler,
+    switchDirectoryHandler,
 } from './connection/handler';
 
 const IMPORT = 'remote/import';
@@ -20,4 +21,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     [REMOVE]: resetHandler,
     [RESET]: resetHandler,
     switchLanguage: switchLanguageHandler,
+    switchDirectory: switchDirectoryHandler,
 };

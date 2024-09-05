@@ -5,6 +5,7 @@ import { store } from '../store';
 import { runInAction } from 'mobx';
 import { type NotificationHandler } from './defs';
 import i18n from 'ascend-i18n';
+import { DirInfo } from '../entity/session';
 
 export const setTheme: NotificationHandler = (data): void => {
     window.setTheme(Boolean(data.isDark));
@@ -76,4 +77,15 @@ export const switchLanguageHandler: NotificationHandler = (data): void => {
         });
     }
     i18n.changeLanguage(lang);
+};
+
+export const switchDirectoryHandler: NotificationHandler = async (data): Promise<void> => {
+    const session = store.sessionStore.activeSession;
+    const dirInfo = { rankId: data.rankId, isCompare: data.isCompare } as DirInfo;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.dirInfo = dirInfo;
+    });
 };

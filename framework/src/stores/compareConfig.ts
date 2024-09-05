@@ -35,6 +35,7 @@ export const useCompareConfig = defineStore('compareConfig', () => {
     const dataInfoMap = ref<Map<string, DataInfo>>(new Map<string, DataInfo>());
     const baselineDataInfo = ref<DataInfo>({ projectName: '', filePath: '', rankId: '' });
     const compareDataInfo = ref<DataInfo>({ projectName: '', filePath: '', rankId: '' });
+    const dataSources = useDataSources();
     const isCompareStatus = ref<boolean>(false);
 
     const updateDataInfoMap = (
@@ -71,7 +72,6 @@ export const useCompareConfig = defineStore('compareConfig', () => {
         removeBaseline(oldDatasource, baselineDataInfo.value.filePath);
         // 取消对比数据的设置
         cancelCompareData();
-        baselineDataInfo.value = { projectName, filePath, rankId: 'baseline' };
         const datasource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] as string[] };
         const result: any = await request(datasource, 'global', {
             command: 'global/setBaseline',
@@ -81,7 +81,7 @@ export const useCompareConfig = defineStore('compareConfig', () => {
             ElMessage.warning(result.errorMessage as string);
         } else {
             const dataInfo = result as DataInfo;
-            baselineDataInfo.value.rankId = result.rankId;
+            baselineDataInfo.value = { projectName, filePath, rankId: result.rankId };
             const timelineCardInfos = [] as TimelineCardInfo[];
             const timelineCardInfo = {} as TimelineCardInfo;
             timelineCardInfo.result = true;
@@ -139,17 +139,17 @@ export const useCompareConfig = defineStore('compareConfig', () => {
             ElMessage.warning(t('Set baseline first') as string);
             return;
         }
-        const key = getUniqueKeyByProjectInfo(projectName, filePath);
-        // 必须被包含在当前选中目录中
-        if (!dataInfoMap.value.has(key)) {
-            ElMessage.warning(t('Set Comparison Data Out Of Range') as string);
-            return;
-        }
-        if (dataInfoMap.value.get(key)?.rankId === baselineDataInfo.value.rankId) {
+        if (projectName === baselineDataInfo.value.projectName && filePath === baselineDataInfo.value.filePath) {
             ElMessage.warning(t('Baseline Conflict') as string);
             return;
         }
-        compareDataInfo.value = dataInfoMap.value.get(key) as DataInfo;
+        if (projectName !== dataSources.lastDataSource.projectName) {
+            ElMessage.warning(t('Set Comparison Data Out Of Range') as string);
+            return;
+        }
+        const key = getUniqueKeyByProjectInfo(projectName, filePath);
+        const rankId = dataInfoMap.value.get(key)?.rankId || '';
+        compareDataInfo.value = {projectName, filePath, rankId};
         isCompareStatus.value = true;
     };
 

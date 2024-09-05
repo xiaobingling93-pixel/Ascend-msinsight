@@ -33,7 +33,7 @@ const defaultOptionMap = {
     ],
 };
 
-const getOptionsAndValue = (initObj: Icondition, initOptionMap: optionMapDataType, t: any):
+const getOptionsAndValue = (initObj: Icondition, initOptionMap: optionMapDataType, t: any, isCompared: boolean):
 {optionMap: optionMapDataType;condition: Icondition} => {
     // blockId
     const blockIdOptions: optionDataType[] = initOptionMap.blockIdOptions;
@@ -42,10 +42,11 @@ const getOptionsAndValue = (initObj: Icondition, initOptionMap: optionMapDataTyp
     // showAs
     const showAsOptions: optionDataType[] = defaultOptionMap.showAsOptions.map(item => ({ ...item, label: t(item.label) }));
     const showAs = getUsableVal(initObj.showAs, showAsOptions, defaultCondition.showAs) as string;
-    return { optionMap: { blockIdOptions, showAsOptions }, condition: { blockId, showAs, isCompared: false } };
+    return { optionMap: { blockIdOptions, showAsOptions }, condition: { blockId, showAs, isCompared } };
 };
 
-function Filter({ blockIdList, handleFilterChange }: {blockIdList: string[];handleFilterChange: (condition: Icondition) => void}): JSX.Element {
+function Filter({ blockIdList, handleFilterChange, isCompared }: {blockIdList: string[];
+    handleFilterChange: (condition: Icondition) => void;isCompared: boolean;}): JSX.Element {
     const [condition, setCondition] = useState(defaultCondition);
     const [optionMap, setOptionMap] = useState<optionMapDataType>(defaultOptionMap);
     const { t: tDetails } = useTranslation('details');
@@ -57,10 +58,10 @@ function Filter({ blockIdList, handleFilterChange }: {blockIdList: string[];hand
     }, []);
     useEffect(() => {
         const blockIdOptions = blockIdList.map((item, index) => ({ label: item, value: item }));
-        const { optionMap: newOptionMap, condition: newCondition } = getOptionsAndValue(condition, { blockIdOptions }, tDetails);
+        const { optionMap: newOptionMap, condition: newCondition } = getOptionsAndValue(condition, { blockIdOptions }, tDetails, isCompared);
         setCondition(newCondition);
         setOptionMap(newOptionMap);
-    }, [blockIdList, tDetails]);
+    }, [blockIdList, tDetails, isCompared]);
     useEffect(() => {
         handleFilterChange(condition);
     }, [condition]);

@@ -11,6 +11,8 @@ import { ResizeTable } from 'ascend-resize';
 import { firstLetterUpper, Hit } from 'ascend-utils';
 import { type Session } from '../../../entity/session';
 import { CompareData } from '../../../utils/interface';
+import { DownOutlined } from '@ant-design/icons';
+import { Button } from 'ascend-components';
 
 interface ItableDetail {
     tableName: string;
@@ -25,7 +27,7 @@ interface RowDetail {
 
 interface ItableConfig {
     cols: any[];
-    dataset: Array<Record<string, string>>;
+    dataset: Array<Record<string, string | Array<Record<string, string>>>>;
 }
 
 interface Ilimit {
@@ -34,17 +36,65 @@ interface Ilimit {
     current: number;
 }
 
-function getFullCols(headerName: string[], tDetails: any): any[] {
-    return headerName.map((item, index) => (
+const renderExpandColomn = (record: any, setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>): JSX.Element => {
+    return record.source === 'Difference'
+        ? (<Button type="link"
+            onClick={(): void => {
+                setExpandedKeys((pre: any) => {
+                    const list = [...pre];
+                    const keyIndex = list.indexOf(record.key);
+                    if (keyIndex === -1) {
+                        list.push(record.key);
+                    } else {
+                        list.splice(keyIndex, 1);
+                    }
+                    return list;
+                });
+            }}>see more<DownOutlined/></Button>)
+        : <></>;
+};
+
+function getFullCols(headerName: string[], tDetails: any, isCompared: boolean, setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>): any[] {
+    const dataColumns: any[] = headerName.map((item, index) => (
         {
+            key: item,
             title: index === 0 ? item : tDetails(firstLetterUpper(item)),
             dataIndex: item,
             ellipsis: true,
         }
     ));
+    if (isCompared) {
+        dataColumns.push({
+            key: 'action',
+            title: 'Details',
+            dataIndex: 'action',
+            ellipsis: true,
+            fixed: 'right',
+            render: (_: any, record: any): JSX.Element => {
+                return renderExpandColomn(record, setExpandedKeys);
+            },
+        });
+        dataColumns.splice(1, 0, {
+            key: 'source',
+            title: 'Source',
+            dataIndex: 'source',
+            ellipsis: true,
+        });
+    }
+    return dataColumns;
 }
 
-function wrapData(data: ItableDetail[], limit: Ilimit, tDetails: any): { tablelist: ItableConfig[] ;limit: Ilimit} {
+function covertRowToRecord(row: RowDetail, headerName: string[]): Record<string, string> {
+    const arr = [row.name, ...row.value];
+    const obj: Record<string, string> = {};
+    headerName.forEach((header, index) => {
+        obj[header] = arr[index];
+    });
+    return obj;
+}
+
+function wrapData(data: ItableDetail[], limit: Ilimit, tDetails: any, isCompared: boolean,
+    setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>): { tablelist: ItableConfig[] ;limit: Ilimit} {
     let count = 0;
     const tablelist = data.reduce<ItableConfig[]>((pre, tableDetail) => {
         if (count > limit.maxSize) {
@@ -53,14 +103,19 @@ function wrapData(data: ItableDetail[], limit: Ilimit, tDetails: any): { tableli
         }
         const { headerName = [], row = [], tableName = '' } = tableDetail ?? {};
         headerName[0] = tableName;
-        const cols = getFullCols(headerName, tDetails);
+        const cols = getFullCols(headerName, tDetails, isCompared, setExpandedKeys);
         let dataset = row.map(item => {
-            const arr = [item.compare.name, ...item.compare.value];
-            const obj: Record<string, string> = {};
-            headerName.forEach((header, index) => {
-                obj[header] = arr[index];
-            });
-            return obj;
+            const compare: Record<string, string> = covertRowToRecord(item.compare, headerName);
+            if (!isCompared) {
+                return compare;
+            }
+            const res: Record<string, string | Array<Record<string, string>>> = covertRowToRecord(item.diff, headerName);
+            res.source = 'Difference';
+            compare.source = 'Compare';
+            const baseline: Record<string, string> = covertRowToRecord(item.baseline, headerName);
+            baseline.source = 'Baseline';
+            res.children = [compare, baseline] as Array<Record<string, string>>;
+            return res;
         });
 
         if (count + data.length > limit.maxSize) {
@@ -70,7 +125,6 @@ function wrapData(data: ItableDetail[], limit: Ilimit, tDetails: any): { tableli
         pre.push({ cols, dataset });
         return pre;
     }, []);
-
     return { tablelist, limit: { ...limit, current: count, overlimit: count > limit.maxSize } };
 }
 
@@ -81,6 +135,7 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
     const [tablelist, setTablelist] = useState<ItableConfig[]>([]);
     const [limit, setLimit] = useState<Ilimit>(defaultLimit);
     const { t: tDetails } = useTranslation('details');
+    const [expandedRowKeys, setExpandedKeys] = React.useState<string[]>([]);
 
     const updateData = async(): Promise<void> => {
         const res = await queryMemoryTable(condition);
@@ -101,9 +156,9 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
             return;
         }
         updateData();
-    }, [condition.blockId, session.parseStatus]);
+    }, [condition, session.parseStatus]);
     useEffect(() => {
-        const { tablelist: newTablelist, limit: newLimit } = wrapData(data, limit, tDetails);
+        const { tablelist: newTablelist, limit: newLimit } = wrapData(data, limit, tDetails, session.dirInfo.isCompare, setExpandedKeys);
         setTablelist(newTablelist);
         setLimit(newLimit);
     }, [data, tDetails]);
@@ -116,9 +171,13 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
                     key={`memoryTable${index}`}
                     size="small"
                     columns={item.cols ?? []}
-                    dataSource={item.dataset ?? []}
+                    dataSource={item.dataset.map((row, rowIndex) => { return { ...row, key: `memoryTable${index}_${rowIndex}` }; })}
                     scroll={item.dataset.length > 10 ? { y: 500 } : undefined}
                     pagination={false}
+                    expandable={{
+                        expandIcon: () => <></>,
+                        expandedRowKeys,
+                    }}
                 />
             ))}
             {advice.length > 0 && (<Hit text={advice} style={{ marginTop: '10px' }}/>) }

@@ -136,7 +136,7 @@ struct DetailsLoadInfoResponse : public Response {
 
 struct MemoryUnit {
     std::string memoryPath;
-    uint64_t request;
+    int64_t request;
     std::string bandwidth;
     std::string peakRatio;
     bool display;
