@@ -57,17 +57,17 @@ const getAllLabellist = (t: TFunction): Ilabel[] => {
             key: 'opType',
         },
         {
-            label: t('BlockDim'),
-            key: 'blockDim',
-            isMix: false,
-        },
-        {
             label: t('DeviceId'),
             key: 'deviceId',
         },
         {
             label: t('Pid'),
             key: 'pid',
+        },
+        {
+            label: t('BlockDim'),
+            key: 'blockDim',
+            isMix: false,
         },
         {
             label: t('BlockDetail'),

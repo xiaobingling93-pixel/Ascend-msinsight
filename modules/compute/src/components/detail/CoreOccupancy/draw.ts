@@ -104,7 +104,7 @@ export function getDrawData({ data, maxSize, showAs, isCompared }: DataConfig): 
             const subCore = item.subCoreDetails.find(subCoreItem => (subCoreItem.subCoreName ?? '').toLowerCase() === subCoreName.toLowerCase())?.[showAs];
             let compareValue = String(getSubCoreValue(showAs, subCore?.value.compare)).slice(0, MAX_TEXT_LENGTH);
             if (isCompared) {
-                const baselineValue = String(getSubCoreValue(showAs, subCore?.value.compare)).slice(0, MAX_TEXT_LENGTH);
+                const baselineValue = String(getSubCoreValue(showAs, subCore?.value.baseline)).slice(0, MAX_TEXT_LENGTH);
                 compareValue = `${compareValue}(${baselineValue})`;
             }
             return {

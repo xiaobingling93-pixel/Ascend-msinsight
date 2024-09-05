@@ -136,7 +136,7 @@ struct DetailsLoadInfoResponse : public Response {
 
 struct MemoryUnit {
     std::string memoryPath;
-    int64_t request;
+    int64_t request = 0;
     std::string bandwidth;
     std::string peakRatio;
     bool display;
@@ -200,9 +200,9 @@ struct DetailsInterCoreLoadDimension {
 struct DetailsInterCoreLoadSubCoreDetail {
     static const uint8_t maxLevel = 10;
     std::string subCoreName;
-    DetailsInterCoreLoadDimension<uint64_t> cycles;
-    DetailsInterCoreLoadDimension<uint64_t> throughput;
-    DetailsInterCoreLoadDimension<float> cacheHitRate;
+    DetailsInterCoreLoadDimension<uint64_t> cycles = {{0, 0, 0}};
+    DetailsInterCoreLoadDimension<uint64_t> throughput = {{0, 0, 0}};
+    DetailsInterCoreLoadDimension<float> cacheHitRate = {{0, 0, 0}};
 
     void SetCyclesDimension(uint64_t curCycles, uint64_t minCycles)
     {
