@@ -302,6 +302,83 @@ std::vector<CompareData<TableRow>> DetailsService::MergeCompareRows(const std::v
     }
     return res;
 }
+
+bool DetailsService::QueryCoreLoadAnalysisGraph(const DetailsInterCoreLoadGraphRequest &request,
+                                                DetailsInterCoreLoadGraphResponse &response)
+{
+    DetailsInterCoreLoadGraphBody compareBody;
+    bool result = SourceFileParser::Instance().GetDetailsInterCoreLoadAnalysisGraph(compareBody, false);
+    if (!result) {
+        return false;
+    }
+    // 非对比情况，直接赋值返回
+    response.body = compareBody;
+    if (!request.params.isCompared) {
+        return true;
+    }
+    // 对比场景,获取baseline数据
+    DetailsInterCoreLoadGraphBody baselineBody;
+    bool baselineRes = SourceFileParser::Instance().GetDetailsInterCoreLoadAnalysisGraph(baselineBody, true);
+    // baseline数据不存在，直接返回
+    if (!baselineRes) {
+        return true;
+    }
+    // baseline数据存在，进行数据整合
+    response.body.opDetails = MergeCoreLoadOpDetail(compareBody.opDetails, baselineBody.opDetails);
+    return true;
+}
+
+std::vector<DetailsInterCoreLoadOpDetail> DetailsService::MergeCoreLoadOpDetail(
+    const std::vector<DetailsInterCoreLoadOpDetail> &compare,
+    const std::vector<DetailsInterCoreLoadOpDetail> &baseline)
+{
+    std::unordered_map<uint8_t, DetailsInterCoreLoadOpDetail> opDetailMap;
+    for (const auto &item: compare) {
+        opDetailMap[item.coreId] = item;
+    }
+    for (const auto &item: baseline) {
+        // 这里会查找compare中是否存在数据，如果存在才会记录baseline的信息，否则不对这条数据进行合并
+        if (opDetailMap.find(item.coreId) == opDetailMap.end()) {
+            continue;
+        }
+        opDetailMap[item.coreId].subCoreDetails = MergeCoreDetail(opDetailMap[item.coreId].subCoreDetails,
+                                                                  item.subCoreDetails);
+    }
+
+    std::vector<DetailsInterCoreLoadOpDetail> result;
+    for (const auto &item: opDetailMap) {
+        result.push_back(item.second);
+    }
+    return result;
+}
+
+std::vector<DetailsInterCoreLoadSubCoreDetail> DetailsService::MergeCoreDetail(
+    const std::vector<DetailsInterCoreLoadSubCoreDetail> &compare,
+    const std::vector<DetailsInterCoreLoadSubCoreDetail> &baseline)
+{
+    std::unordered_map<std::string, DetailsInterCoreLoadSubCoreDetail> coreDetailMap;
+    for (const auto &item: compare) {
+        coreDetailMap[item.subCoreName] = item;
+    }
+
+    for (const auto &item: baseline) {
+        if (coreDetailMap.find(item.subCoreName) == coreDetailMap.end()) {
+            continue;
+        }
+        DetailsInterCoreLoadSubCoreDetail &detail = coreDetailMap[item.subCoreName];
+        detail.cycles.value.baseline = item.cycles.value.compare;
+        detail.cycles.value.diff = item.cycles.value.compare - detail.cycles.value.baseline;
+        detail.throughput.value.baseline = item.throughput.value.compare;
+        detail.throughput.value.diff = item.throughput.value.compare - detail.throughput.value.baseline;
+        detail.cacheHitRate.value.baseline = item.cacheHitRate.value.compare;
+        detail.cacheHitRate.value.diff = item.cacheHitRate.value.compare - detail.cacheHitRate.value.baseline;
+    }
+    std::vector<DetailsInterCoreLoadSubCoreDetail> result;
+    for (const auto &item: coreDetailMap) {
+        result.push_back(item.second);
+    }
+    return result;
+}
 }
 }
 }

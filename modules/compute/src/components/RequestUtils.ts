@@ -127,8 +127,8 @@ export const queryMemoryGraph = async(param: { blockId: string; isCompared: bool
  *     }]
  * }
  */
-export const queryCoreOccupancy = async(): Promise<any> => {
-    return window.requestData('source/details/interCoreLoadAnalysis', {});
+export const queryCoreOccupancy = async(isCompared: boolean): Promise<any> => {
+    return window.requestData('source/details/interCoreLoadAnalysis', { isCompared });
 };
 
 export const queryRoofline = async(): Promise<IRooflineData> => {

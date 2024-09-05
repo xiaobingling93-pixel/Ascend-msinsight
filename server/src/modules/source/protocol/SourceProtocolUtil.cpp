@@ -330,11 +330,15 @@ std::optional<document_t> CompareTableRowToJson(const std::vector<CompareData<Ta
 }
 
 template<typename T>
-void TransformInterCoreLoadDetail(json_t &jDetail, const std::string_view dimensionName, T value, int level,
-                                  RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
+void TransformInterCoreLoadDetail(json_t &jDetail, const std::string_view dimensionName, CompareData<T> value,
+                                  int level, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
 {
     json_t jDimension(kObjectType);
-    JsonUtil::AddMember(jDimension, "value", value, allocator);
+    json_t valueJson(kObjectType);
+    JsonUtil::AddMember(valueJson, "compare", value.compare, allocator);
+    JsonUtil::AddMember(valueJson, "baseline", value.baseline, allocator);
+    JsonUtil::AddMember(valueJson, "diff", value.diff, allocator);
+    JsonUtil::AddMember(jDimension, "value", valueJson, allocator);
     JsonUtil::AddMember(jDimension, "level", level, allocator);
     JsonUtil::AddMember(jDetail, dimensionName, jDimension, allocator);
 }

@@ -134,7 +134,13 @@ std::unique_ptr<Request> SourceProtocol::ToDetailsMemoryTableRequest(const Dic::
 
 std::unique_ptr<Request> SourceProtocol::ToDetailsInterCoreLoadGraphRequest(const Dic::json_t &json, std::string &error)
 {
-    return ToNoParamsRequest(json, error, REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH);
+    std::unique_ptr<DetailsInterCoreLoadGraphRequest> reqPtr = std::make_unique<DetailsInterCoreLoadGraphRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompared, json["params"], "isCompared");
+    return reqPtr;
 }
 
 std::unique_ptr<Request> SourceProtocol::ToDetailsRooflineRequest(const Dic::json_t &json, std::string &error)

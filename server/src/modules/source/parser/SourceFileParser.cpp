@@ -1003,11 +1003,14 @@ bool SourceFileParser::IsDataSizeExceedUpperLimit(uint64_t realSize, uint64_t up
     return realSize > upperLimit;
 }
 
-bool SourceFileParser::GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInterCoreLoadGraphBody &responseBody)
+bool SourceFileParser::GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInterCoreLoadGraphBody &responseBody,
+                                                            bool isBaseline)
 {
+    std::string curFilePath = isBaseline ? baselineFilePath : filePath;
     InterCoreLoadGraphParser parser;
-    std::ifstream file(filePath, std::ios::binary);
-    std::string json = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_INTER_CORE_LOAD_GRAPH);
+    std::ifstream file = FileUtil::OpenReadFileSafely(curFilePath, std::ios::binary);
+    std::string json = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_INTER_CORE_LOAD_GRAPH,
+                                                     isBaseline);
     if (json.empty()) {
         ServerLog::Warn("Json for inter core load analysis in bin file is empty.");
         return false;

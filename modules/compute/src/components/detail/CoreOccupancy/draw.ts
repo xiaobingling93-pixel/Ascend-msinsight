@@ -9,6 +9,7 @@ interface DataConfig {
     data: ICoreOccupancy;
     showAs: ShowAs;
     maxSize: number;
+    isCompared: boolean;
 }
 
 export interface CoreDrawData {
@@ -93,7 +94,7 @@ export function getLegendData(theme: Theme): Array<{ level: number; color: strin
 }
 
 // 画图
-export function getDrawData({ data, maxSize, showAs }: DataConfig): CoreDrawData[] {
+export function getDrawData({ data, maxSize, showAs, isCompared }: DataConfig): CoreDrawData[] {
     const opDetails = (data?.opDetails ?? []).slice(0, maxSize);
     const subCoreNameList: string[] = ['Cube0', 'Vector0', 'Vector1'];
     const maxCoreNum = getCoreNum(data.soc);
@@ -101,9 +102,14 @@ export function getDrawData({ data, maxSize, showAs }: DataConfig): CoreDrawData
         name: `Core${item.coreId}`.slice(0, MAX_TEXT_LENGTH),
         children: subCoreNameList.map(subCoreName => {
             const subCore = item.subCoreDetails.find(subCoreItem => (subCoreItem.subCoreName ?? '').toLowerCase() === subCoreName.toLowerCase())?.[showAs];
+            let compareValue = String(getSubCoreValue(showAs, subCore?.value.compare)).slice(0, MAX_TEXT_LENGTH);
+            if (isCompared) {
+                const baselineValue = String(getSubCoreValue(showAs, subCore?.value.compare)).slice(0, MAX_TEXT_LENGTH);
+                compareValue = `${compareValue}(${baselineValue})`;
+            }
             return {
                 name: subCoreName,
-                value: String(getSubCoreValue(showAs, subCore?.value)).slice(0, MAX_TEXT_LENGTH),
+                value: compareValue,
                 level: String(subCore?.level ?? '').slice(0, MAX_TEXT_LENGTH),
             };
         }),

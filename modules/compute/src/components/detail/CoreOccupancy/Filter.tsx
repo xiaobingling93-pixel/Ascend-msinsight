@@ -7,10 +7,12 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { getUsableVal, FormItem } from 'ascend-utils';
 import type { optionDataType, optionMapDataType } from '../../../utils/interface';
+import type { Session } from '../../../entity/session';
 
 export type ShowAs = 'cycles' | 'throughput' | 'cacheHitRate';
 export interface ICondition {
     showAs: ShowAs;
+    isCompared: boolean;
 };
 interface IComProps {
     optionMap: optionMapDataType;
@@ -21,6 +23,7 @@ interface IComProps {
 
 export const defaultCondition: ICondition = {
     showAs: 'cycles',
+    isCompared: false,
 };
 const defaultOptionMap = {
     showAsOptions: [
@@ -30,15 +33,15 @@ const defaultOptionMap = {
     ],
 };
 
-const getOptionsAndValue = (initObj: ICondition, initOptionMap: optionMapDataType, t: any):
+const getOptionsAndValue = (initObj: ICondition, initOptionMap: optionMapDataType, t: any, isCompared: boolean):
 {optionMap: optionMapDataType;condition: ICondition} => {
     // showAs
     const showAsOptions: optionDataType[] = defaultOptionMap.showAsOptions.map(item => ({ ...item, label: t(item.label) }));
     const showAs = getUsableVal(initObj.showAs, showAsOptions, defaultCondition.showAs) as ShowAs;
-    return { optionMap: { showAsOptions }, condition: { showAs } };
+    return { optionMap: { showAsOptions }, condition: { showAs, isCompared } };
 };
 
-function Filter({ handleFilterChange }: {handleFilterChange: (condition: ICondition) => void}): JSX.Element {
+function Filter({ handleFilterChange, session }: {handleFilterChange: (condition: ICondition) => void; session: Session}): JSX.Element {
     const [condition, setCondition] = useState<ICondition>(defaultCondition);
     const [optionMap, setOptionMap] = useState<optionMapDataType>(defaultOptionMap);
     const { t: tDetails } = useTranslation('details');
@@ -47,10 +50,10 @@ function Filter({ handleFilterChange }: {handleFilterChange: (condition: ICondit
     };
 
     useEffect(() => {
-        const { optionMap: newOptionMap, condition: newCondition } = getOptionsAndValue(condition, {}, tDetails);
+        const { optionMap: newOptionMap, condition: newCondition } = getOptionsAndValue(condition, {}, tDetails, session.dirInfo.isCompare);
         setCondition(newCondition);
         setOptionMap(newOptionMap);
-    }, [tDetails]);
+    }, [tDetails, session.dirInfo]);
     useEffect(() => {
         handleFilterChange(condition);
     }, [condition]);

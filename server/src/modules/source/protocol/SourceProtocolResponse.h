@@ -193,7 +193,7 @@ struct DetailsMemoryTableResponse : public Response {
 
 template<typename T>
 struct DetailsInterCoreLoadDimension {
-    T value = 0;
+    CompareData<T> value;
     int level = 0;
 };
 
@@ -209,7 +209,7 @@ struct DetailsInterCoreLoadSubCoreDetail {
         if (minCycles == 0 || curCycles < minCycles) { // 说明所有的cycles数据都为0
             return;
         }
-        cycles.value = curCycles;
+        cycles.value.compare = curCycles;
         // 比较当前cycle数和最小cycle数的差值，如果大于最小cycles数，那么level直接置为1
         uint64_t diff = curCycles - minCycles;
         if (diff >= minCycles) {
@@ -228,7 +228,7 @@ struct DetailsInterCoreLoadSubCoreDetail {
         if (minThroughput == 0) { // 说明所有的throughput数据都为0
             return;
         }
-        throughput.value = curThroughput;
+        throughput.value.compare = curThroughput;
         // 比较当前的throughput和最小的throughput的差值
         uint64_t diff = curThroughput - minThroughput;
         if (diff > minThroughput) {
@@ -248,7 +248,7 @@ struct DetailsInterCoreLoadSubCoreDetail {
         if (maxRate == 0) { // 说明所有的cache rate hit数据都为0
             return;
         }
-        cacheHitRate.value = curRate;
+        cacheHitRate.value.compare = curRate;
         // 比较当前的cache hit rate和最大的rate之间的差值，每减小10%，level由MAX_LEVEL减少1直到等于1
         cacheHitRate.level = maxLevel - (maxRate - curRate) * 10 / maxRate;
         if (cacheHitRate.level < 1) {

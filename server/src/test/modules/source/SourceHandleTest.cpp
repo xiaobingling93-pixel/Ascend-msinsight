@@ -91,7 +91,7 @@ TEST_F(SourceHandleTest, QueryDetailsMemoryTableHandler)
 TEST_F(SourceHandleTest, QueryInterCoreLoadAnalysisGraphHandler)
 {
     Dic::Module::Source::QueryInterCoreLoadAnalysisGraphHandler handler;
-    std::unique_ptr<Request> requestPtr = std::make_unique<Request>(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH);
+    std::unique_ptr<Request> requestPtr = std::make_unique<DetailsInterCoreLoadGraphRequest>();
     handler.HandleRequest(std::move(requestPtr));
 }
 
