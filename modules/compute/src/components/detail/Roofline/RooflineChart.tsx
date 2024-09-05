@@ -176,9 +176,10 @@ function getTooltipFormatter(): (p: any) => string {
         if (params.data !== undefined && params.seriesType === 'scatter') {
             const [, , bw, bwName, ratio, point] = params.data;
             return `<div>
-        <div>${params.marker}${safeStr(bwName)}: ${safeStr(bw)}TB/s</div>
+        <div>${params.marker}${safeStr(bwName)}</div>
+        <div>${i18n.t('Bandwidth', { ns: 'details' })}: ${safeStr(bw)}TB/s</div>
         <div>${i18n.t('Intensity', { ns: 'details' })}: ${safeStr(point[0])}Ops/Byte</div>
-        <div>${i18n.t('Performance', { ns: 'details' })}: ${safeStr(point[1])}Ops/s</div>
+        <div>${i18n.t('Performance', { ns: 'details' })}: ${safeStr(point[1])}TOps/s</div>
         <div>${i18n.t('Performance Ratio', { ns: 'details' })}: ${Number((100 * ratio).toFixed(2))}%</div>
         </div>`;
         } else {
