@@ -10,6 +10,7 @@ import { useDataSources } from '@/stores/dataSource';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
 import { console } from '@/utils/console';
 import { ProjectErrorType } from '@/utils/enmus';
+import {LocalStorageKeys, localStorageService} from '@/utils/local-storage';
 
 const props = defineProps<{ maxPathLen: number, changeConfirmButtonState: (arg0: boolean) => void, show: boolean }>();
 const emit = defineEmits(['input-change']);
@@ -30,7 +31,7 @@ let defalultExpandedKeysSet: Set<string> = new Set();
 
 const state = reactive({
     defalultExpandedKeys: [] as string[],
-    inputPath: '',
+    inputPath: localStorageService.getItem(LocalStorageKeys.LAST_FILE_PATH),
 });
 
 watch(() => state.inputPath, () => {
