@@ -211,7 +211,6 @@ export class Connection {
         if (this._ws === undefined) {
             throw new Error('');
         }
-        this._ws.send(`${CONTENT_LENGTH_PREFIX}:${new TextEncoder().encode(msgStr).length}\r\n\r\n`);
         this._ws.send(msgStr);
         this.setHeartCheck();
     }

@@ -58,6 +58,9 @@ ProtocolMessage::Type ProtocolMessageBuffer::GetMessageType(const std::string &b
 ProtocolMessageBuffer &ProtocolMessageBuffer::operator << (const std::string &data)
 {
     std::unique_lock<std::mutex> lock(mutex);
+    buffer.append(HEAD_START);
+    buffer.append(std::to_string(data.length()));
+    buffer.append(REQ_DELIMITER);
     buffer.append(data);
     return *this;
 }
