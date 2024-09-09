@@ -20,7 +20,7 @@ public:
             std::chrono::time_point_cast<std::chrono::milliseconds>(m_StartTimepoint).time_since_epoch().count();
         long long end =
             std::chrono::time_point_cast<std::chrono::milliseconds>(endTimepoint).time_since_epoch().count();
-        Server::ServerLog::Info("Performence : ", m_Name, ": ", end - start, "ms");
+        Server::ServerLog::Info("Performance : ", m_Name, ": ", end - start, "ms");
         m_Stopped = true;
     }
 
