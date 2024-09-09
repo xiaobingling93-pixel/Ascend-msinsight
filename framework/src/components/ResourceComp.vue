@@ -233,6 +233,8 @@ const handleMounted = () => {
       expandPath(defaultSelectedDir);
     });
   }
+
+  expandLastSelectedFile();
   // 选中并滚动至当前节点
   setTimeout(() => {
     const node = treeRef.value.getNode(state.inputPath);
@@ -244,6 +246,16 @@ const handleMounted = () => {
       });
     }
   }, 800);
+};
+
+// 每次打开弹窗只展开上一次选择的目录
+const expandLastSelectedFile = () => {
+    for (let path of defalultExpandedKeysSet) {
+        if (!state.inputPath.startsWith(path)) {
+            defalultExpandedKeysSet.delete(path);
+        }
+    }
+    state.defalultExpandedKeys = [...defalultExpandedKeysSet];
 };
 
 const doCheckFileVallid = async (projectName: string) => {
