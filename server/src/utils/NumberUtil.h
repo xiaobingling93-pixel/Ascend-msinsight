@@ -142,13 +142,46 @@ public:
         return sstream.str();
     }
 
-    static inline std::string StringDoubleMinusReturnEmpty(const std::string &str1, const std::string &str2,
-                                                           int precision = 3)
+    /**
+     * 去除浮点数字符串后缀0
+     * @param numStr 浮点数字符串
+     * @return 去除后缀0的结果
+     */
+    static inline std::string RemoveTrailingZerosAndDecimal(const std::string &numStr)
+    {
+        // 找到最后一个非零字符的位置
+        size_t pos = numStr.find_last_not_of('0');
+        // 如末尾没有零字符，直接返回
+        if (pos == numStr.length() - 1) {
+            return numStr;
+        }
+        // 如果所有字符都是零，则返回0
+        if (pos == std::string::npos) {
+            return "0";
+        }
+        // 检查小数点后的零是否都是零
+        if (numStr[pos] == '.') {
+            return numStr.substr(0, pos);
+        }
+        // 返回去除末尾0的结果
+        return numStr.substr(0, pos + 1);
+    }
+
+    /**
+     * 字符串浮点数减法（去除后缀0）
+     * @param str1 被减数
+     * @param str2 减数
+     * @param maxPrecision 最大保留位数
+     * @return 减法结果
+     */
+    static inline std::string StringDoubleMinusWithoutTrailingZero(const std::string &str1, const std::string &str2,
+                                                                   int maxPrecision = 3)
     {
         if (str1.empty() || str2.empty()) {
             return "";
         }
-        return StringDoubleMinus(str1, str2, precision);
+        std::string minusRes =  StringDoubleMinus(str1, str2, maxPrecision);
+        return RemoveTrailingZerosAndDecimal(minusRes);
     }
 
     // 只处理1~6位小数位的截尾
@@ -178,7 +211,10 @@ public:
         }
         auto pos  = data.find_last_of('.');
         if (pos != std::string::npos) {
-            return data.substr(0, pos + n + 1);
+            std::string sub =  data.substr(0, pos + n + 1);
+            // 保留小数后为零
+            bool isZero = std::all_of(sub.begin(), sub.end(), [](char c) { return (c == '0' || c == '.'); });
+            return isZero ? data : sub;
         }
         return data;
     }

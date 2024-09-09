@@ -141,9 +141,9 @@ bool SourceFileParser::InitParser(const std::string &fileId)
     std::string curFilePath = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
         instance.baselineFilePath : instance.filePath;
     std::vector<Position> &traceFilePos = curDataBlockMap[static_cast<int>(DataTypeEnum::TRACE)];
-    std::ifstream file = FileUtil::OpenReadFileSafely(instance.filePath, std::ios::in | std::ios::binary);
+    std::ifstream file = FileUtil::OpenReadFileSafely(curFilePath, std::ios::in | std::ios::binary);
     if (!file) {
-        ServerLog::Error("Failed to open file. filePath:", instance.filePath);
+        ServerLog::Error("Failed to open file. filePath:", curFilePath);
         return false;
     }
     std::vector<std::pair<int64_t, int64_t>> adjustTraceFilePos;
@@ -204,7 +204,9 @@ void SourceFileParser::ParseTask(const std::string &fileId, std::pair<int64_t, i
     }
     ServerLog::Info("Start parse timeline from bin file:", fileId);
     auto &instance = SourceFileParser::Instance();
-    Timeline::EventParser eventParser(instance.filePath, fileId);
+    std::string curFilePath = Global::BaselineManager::Instance().IsBaselineId(fileId) ? instance.baselineFilePath :
+        instance.filePath;
+    Timeline::EventParser eventParser(curFilePath, fileId);
     eventParser.SetSimulationStatus(true);
     if (!eventParser.Parse(pos.first, pos.second)) {
         if (Timeline::ParserStatusManager::Instance().SetTerminateStatus(fileId) == Timeline::ParserStatus::RUNNING) {
@@ -1001,11 +1003,14 @@ bool SourceFileParser::IsDataSizeExceedUpperLimit(uint64_t realSize, uint64_t up
     return realSize > upperLimit;
 }
 
-bool SourceFileParser::GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInterCoreLoadGraphBody &responseBody)
+bool SourceFileParser::GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInterCoreLoadGraphBody &responseBody,
+                                                            bool isBaseline)
 {
+    std::string curFilePath = isBaseline ? baselineFilePath : filePath;
     InterCoreLoadGraphParser parser;
-    std::ifstream file(filePath, std::ios::binary);
-    std::string json = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_INTER_CORE_LOAD_GRAPH);
+    std::ifstream file = FileUtil::OpenReadFileSafely(curFilePath, std::ios::binary);
+    std::string json = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_INTER_CORE_LOAD_GRAPH,
+                                                     isBaseline);
     if (json.empty()) {
         ServerLog::Warn("Json for inter core load analysis in bin file is empty.");
         return false;
@@ -1042,6 +1047,28 @@ void SourceFileParser::SetBaselineFilePath(const std::string &inputFilePath)
 {
     std::unique_lock<std::mutex> lock(mutex);
     this->baselineFilePath = FileUtil::PathPreprocess(inputFilePath);
+}
+
+bool SourceFileParser::IsBaselineParsed(const std::string &inputFilePath)
+{
+    if (inputFilePath == this->filePath && !this->dataBlockMap.empty()) {
+        return true;
+    }
+    return false;
+}
+
+void SourceFileParser::SynchronizeBaselineInfo()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    this->baselineFilePath = this->filePath;
+    this->baselineDataBlockMap = this->dataBlockMap;
+}
+
+void SourceFileParser::ResetBaseline()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    this->baselineFilePath = "";
+    this->baselineDataBlockMap.clear();
 }
 } // end of namespace Memory
 } // end of namespace Module

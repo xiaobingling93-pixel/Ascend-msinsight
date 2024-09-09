@@ -129,10 +129,9 @@ watch(
       } else {
         curRankId = compareConfig.getRankIdByProjectInfo(projectName, filePathList[0]);
       }
-      const realRankId = curRankId?.split(' ').pop() ?? '';
       connector.send({
         event: 'switchDirectory',
-        body: { rankId: realRankId, isCompare: compareConfig.isCompareStatus },
+        body: { rankId: curRankId, isCompare: compareConfig.isCompareStatus },
       });
     }
 );
@@ -395,7 +394,7 @@ function handleToggleLang(): void {
         <el-dialog
             v-model="showHelpModal"
             :title="`${t('About')} MindStudio Insight`"
-            width="20%"
+            width="400"
             :show-close="true"
         >
             <ul class="help-ul">
@@ -419,7 +418,7 @@ function handleToggleLang(): void {
     align-items: center;
     justify-content: space-between;
     height: var(--header-height);
-    background: var(--mi-bg-color-light);
+    background: var(--header-bg-color);
 }
 
 .tab-titles .right-tool-box {

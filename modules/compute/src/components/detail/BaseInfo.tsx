@@ -20,6 +20,7 @@ interface Ilabel {
     label: ReactNode;
     key: string;
     isMix?: boolean;
+    value?: ReactNode;
 }
 interface IblockDetail {
     headerName: string[] ;
@@ -56,17 +57,17 @@ const getAllLabellist = (t: TFunction): Ilabel[] => {
             key: 'opType',
         },
         {
-            label: t('BlockDim'),
-            key: 'blockDim',
-            isMix: false,
-        },
-        {
             label: t('DeviceId'),
             key: 'deviceId',
         },
         {
             label: t('Pid'),
             key: 'pid',
+        },
+        {
+            label: t('BlockDim'),
+            key: 'blockDim',
+            isMix: false,
         },
         {
             label: t('BlockDetail'),
@@ -136,7 +137,7 @@ function getFullCols(headerName: string[], tanslate: any): any[] {
     ));
 }
 
-const getInfoItem = (item: Ilabel, dataObj: Ibaseinfo, translate: any): Record<string, ReactNode> => {
+const getInfoItem = (item: Ilabel, dataObj: Ibaseinfo, translate: any): Ilabel => {
     if (item.key === 'blockDetail') {
         return {
             ...item,
@@ -169,46 +170,57 @@ const defaultData: Ibaseinfo = {
 };
 
 const index = observer(({ session }: Iprops): JSX.Element => {
-    const [data, setData] = useState<Ibaseinfo>(defaultData);
-    const [items, setItems] = useState<Array<Record<string, ReactNode>>>([]);
+    const [data, setData] = useState<Ibaseinfo[]>([defaultData]);
+    const [items, setItems] = useState<Ilabel[][]>([]);
     const { t } = useTranslation();
     const { t: tDetails } = useTranslation('details');
 
-    const getBaseInfo = async (): Promise<void> => {
-        const res = await queryBaseInfo();
-        setData(res.compare ?? defaultData);
+    const getBaseInfo = async (isCompared: boolean): Promise<void> => {
+        const res = await queryBaseInfo({ isCompared });
+        const baseInfoList: Ibaseinfo[] = [];
+        baseInfoList.push(res.compare ?? defaultData);
+        if (isCompared && res.baseline !== null && res.baseline !== undefined) {
+            baseInfoList.push(res.baseline ?? defaultData);
+        }
+        setData(baseInfoList);
     };
 
-    const showBaseInfo = (dataObj: Ibaseinfo): void => {
-        const labellist = getLabellist(dataObj, tDetails);
-        const disaplayList = labellist.map(labelItem => getInfoItem(labelItem, dataObj, tDetails));
-        setItems(disaplayList);
+    const showBaseInfo = (dataObjList: Ibaseinfo[]): void => {
+        const res: Ilabel[][] = [];
+        dataObjList.forEach((dataObj): void => {
+            const labelList = getLabellist(dataObj, tDetails);
+            const displayList = labelList.map(labelItem => getInfoItem(labelItem, dataObj, tDetails));
+            res.push(displayList);
+        });
+        setItems(res);
     };
 
     useEffect(() => {
         if (!session.parseStatus) {
             setTimeout(() => {
                 if (!session.parseStatus) {
-                    setData(defaultData);
+                    setData([defaultData]);
                 }
             }, 100);
             return;
         }
-        getBaseInfo();
-    }, [session.updateId, session.parseStatus]);
+        getBaseInfo(session.dirInfo.isCompare);
+    }, [session.updateId, session.parseStatus, session.dirInfo.isCompare]);
     useEffect(() => {
         showBaseInfo(data);
     }, [JSON.stringify(data), t]);
 
     return (
-        <CollapsiblePanel title={t('BaseInfo')}>
-            <MIDescriptions title={''}>
-                {
-                    items.map((item, itemIndex) => <MIDescriptionsItem key={itemIndex} label={item.label}>
-                        {item.value}
-                    </MIDescriptionsItem>)
-                }
-            </MIDescriptions>
+        <CollapsiblePanel title={t('BaseInfo')} collapsible>
+            {
+                items.map((item, itemIndex) => <MIDescriptions title={''} key={itemIndex}>
+                    {
+                        item.map((node, nodeIndex) => <MIDescriptionsItem key={nodeIndex} label={node.label}>
+                            {node.value}
+                        </MIDescriptionsItem>)
+                    }
+                </MIDescriptions>)
+            }
         </CollapsiblePanel>
     );
 });

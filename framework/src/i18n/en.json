@@ -32,7 +32,8 @@
         "Unset as Comparison Data": "Unset as Comparison Data",
         "Set Comparison Data Out Of Range": "Set Comparison Data Out Of Range!",
         "Set baseline first": "Please set baseline first!",
-        "Baseline Conflict": "Can't set baseline and comparison data to be the same"
+        "Baseline Conflict": "Can't set baseline and comparison data to be the same",
+        "PathNotFound": "The file at path '{{path}}' was not found"
     },
     "tabs": {
         "Timeline": "Timeline",

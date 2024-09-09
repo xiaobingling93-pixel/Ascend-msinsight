@@ -102,7 +102,7 @@ bool FileUtil::CheckPathValid(const std::string &path)
     }
     std::string dir = GetAbsPath(path);
     if (dir.empty()) {
-        Server::ServerLog::Error("Failed to retrieve the absolute path. path: ", path);
+        Server::ServerLog::Error("Failed to retrieve the absolute path.");
         return false;
     }
  
@@ -143,7 +143,7 @@ bool FileUtil::CheckFilePathExist(const std::string& filePath)
     }
 #endif
     if (access(tmpPath.c_str(), R_OK) == -1) {
-        Server::ServerLog::Error("Cannot read filePath: ", tmpPath);
+        Server::ServerLog::Error("Check file path exist cannot read file path");
         return false;
     }
     return true;
@@ -152,18 +152,18 @@ bool FileUtil::CheckFilePathExist(const std::string& filePath)
 bool FileUtil::CheckFilePath(const std::string& filePath)
 {
     if (access(filePath.c_str(), R_OK) == -1) {
-        Server::ServerLog::Error("Cannot read" + filePath +": ", filePath);
+        Server::ServerLog::Error("Check file path cannot read file path");
         return false;
     }
     std::ifstream file(filePath);
     if (!file.good()) {
-        Server::ServerLog::Error("Cannot get" + filePath +": ", filePath);
+        Server::ServerLog::Error("Check file path cannot get file path");
         return false;
     }
     file.close();
     long long size = GetFileSize(filePath.c_str());
     if (size >= MAX_FILE_SIZE_10G) {
-        Server::ServerLog::Warn("The size of " + filePath + " is too large in path:", filePath);
+        Server::ServerLog::Warn("The size of file is too large");
     }
     return true;
 }
@@ -172,7 +172,7 @@ bool FileUtil::CheckFilePathLength(const std::string& filePath)
 {
 #ifdef _WIN32
     if (filePath.size() >= MAX_PATH) {
-        Server::ServerLog::Error("The length of " + filePath + " is too long :", filePath.size());
+        Server::ServerLog::Error("The file path length is too long");
         return false;
     }
 #else
@@ -425,7 +425,7 @@ std::ifstream FileUtil::OpenReadFileSafely(const std::string &path, std::ios::op
     }
     std::string tmpPath = PathPreprocess(path);
     if (!CheckPathValid(tmpPath)) {
-        Server::ServerLog::Error("Open read file safely failed, path=", path);
+        Server::ServerLog::Error("Open read file safely failed");
         return res;
     }
     if (!CheckFileSize(path)) {

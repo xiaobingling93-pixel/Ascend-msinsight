@@ -393,10 +393,13 @@ const MemoryAnalysis = observer(({ session, isDark }: { session: Session; isDark
             return;
         }
         onMemoryCurveGet();
-    }, [rankIdCondition.value, groupId, t, isCompare, session.isClusterMemoryCompletedSwitch]);
+    }, [rankIdCondition.value, groupId, t, session.isClusterMemoryCompletedSwitch]);
 
     useEffect(() => {
         onBaseChanged();
+        if (rankIdCondition.value === undefined || rankIdCondition.value === '') {
+            return;
+        }
         onMemoryCurveGet();
     }, [isCompare]);
 

@@ -70,6 +70,15 @@ struct DetailsMemoryTableRequest: public Request {
     DetailsMemoryInfoParams params;
 };
 
+struct DetailsInterCoreLoadGraphParams {
+    bool isCompared = false;
+};
+
+struct DetailsInterCoreLoadGraphRequest: public Request {
+    DetailsInterCoreLoadGraphRequest() : Request(REQ_RES_DETAILS_INTER_CORE_LOAD_GRAPH) {};
+    DetailsInterCoreLoadGraphParams params;
+};
+
 struct DetailsRooflineParams {
 };
 

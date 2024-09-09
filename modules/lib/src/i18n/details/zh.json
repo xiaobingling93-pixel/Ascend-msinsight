@@ -49,10 +49,13 @@
     "DeviceId": "设备号",
     "Level": "等级",
     "Core Occupancy": "核间负载分析",
+    "Roofline": "Roofline瓶颈分析",
+    "Pipeline": "搬运单元",
     "Memory Unit": "内存单元",
     "Memory Transfer": "内存通路",
     "Performance": "性能",
     "Performance Ratio": "性能百分比",
-    "Intensity": "算术强度"
+    "Intensity": "算术强度",
+    "See More": "查看更多"
   }
 }

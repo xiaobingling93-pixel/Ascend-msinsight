@@ -25,11 +25,6 @@ export const parseMemoryCompletedHandler: NotificationHandler = async (data): Pr
                     }
                 });
             } else {
-                if (isCluster) {
-                    if (++session.curRankIdsCount === session.unitcount) {
-                        session.isClusterMemoryCompletedSwitch = !session.isClusterMemoryCompletedSwitch;
-                    }
-                }
                 session.memoryRankIds = [];
                 memoryResult.forEach((item) => {
                     if (item.hasMemory) {

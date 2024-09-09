@@ -103,42 +103,6 @@ void EventParser::SetSimulationStatus(const bool &isSimulation)
     m_isSimulation = isSimulation;
 }
 
-/**
- * 解析文件内容存入DB
- * @param fileContent
- */
-void EventParser::Parse(int sliceIndex, const std::string &fileContent)
-{
-    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
-    if (db == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", fileId);
-        return;
-    }
-    database = std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
-    if (database == nullptr) {
-        ServerLog::Error("Failed to convert virtual trace database to json trace database in parse2 of event parser.");
-        return;
-    }
-    database->InitStmt();
-
-    auto jsonContent = JsonUtil::TryParse<kParseNumbersAsStringsFlag>(fileContent, error);
-    if (!jsonContent.has_value()) {
-        ServerLog::Error("Event Parser. File is not valid json.");
-        return;
-    }
-    if (!jsonContent.value().IsArray()) {
-        ServerLog::Error("Event Parser. json is not an array.");
-        return;
-    }
-    for (auto &event : jsonContent.value().GetArray()) {
-        EventHandle(event);
-    }
-    ProcessLastFlagSlice();
-    database->CommitData();
-    database.reset(); // return connection pool
-    ServerLog::Info("Event parser slice index is ", sliceIndex, ". Count:", parseCount, ", ignore Count:", ignoreCount);
-}
-
 std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
 {
     std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::in | std::ios::binary);
@@ -359,27 +323,6 @@ int64_t EventParser::GetTrackId(const std::string &pid, const std::string &tid)
     }
     int64_t id = TrackInfoManager::Instance().GetTrackId(fileId, pid, tid);
     trackIdMap.emplace(str, id);
-    return id;
-}
-
-int64_t EventParser::GetPid(const std::string &processName)
-{
-    if (simulationProcessMap.count(processName) > 0) {
-        return simulationProcessMap.at(processName);
-    }
-    int64_t id = Source::SourceFileParser::Instance().GetSimulationPid(fileId, processName);
-    simulationProcessMap.emplace(processName, id);
-    return id;
-}
-
-int64_t EventParser::GetTid(const std::string &processName, const std::string &threadName)
-{
-    std::string str = processName + threadName;
-    if (simulationThreadMap.count(threadName) > 0) {
-        return simulationThreadMap.at(threadName);
-    }
-    int64_t id = Source::SourceFileParser::Instance().GetSimulationTid(fileId, processName, threadName);
-    simulationThreadMap.emplace(str, id);
     return id;
 }
 

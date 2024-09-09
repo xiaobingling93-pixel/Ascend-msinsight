@@ -19,7 +19,7 @@ void QueryUnitCounterHandler::HandleRequest(std::unique_ptr<Protocol::Request> r
     SetBaseResponse(request, response);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
+        ServerLog::Error("Query unit counter failed to get connection.");
         session.OnResponse(std::move(responsePtr));
         return;
     }

@@ -20,7 +20,7 @@ void QueryThreadDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     SetBaseResponse(request, response);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
-        ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
+        ServerLog::Error("Query thread detail failed to get connection.");
         session.OnResponse(std::move(responsePtr));
         return;
     }

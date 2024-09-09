@@ -78,16 +78,35 @@ Summary::VirtualSummaryDataBase *DataBaseManager::GetSummaryDatabase(const std::
     std::map<std::string, std::unique_ptr<Summary::VirtualSummaryDataBase>> &curSummaryDbMap =
         isBaseline ? summaryBaselineDatabaseMap : summaryDatabaseMap;
     DataType curDataType = isBaseline ? baselineType : dataType;
-    std::string fileId = inputId;
-    if (curSummaryDbMap.count(fileId) == 0) {
-        std::recursive_mutex &dbMutex = GetDbMutex(fileId);
-        if (curDataType == DataType::TEXT) {
-            curSummaryDbMap.emplace(fileId, std::make_unique<Summary::TextSummaryDataBase>(dbMutex));
-        } else if (curDataType == DataType::DB) {
-            curSummaryDbMap.emplace(fileId, std::make_unique<FullDb::DbSummaryDataBase>(dbMutex));
+    auto func = [&curSummaryDbMap, this, &curDataType](const std::string &inputId) -> Summary::VirtualSummaryDataBase* {
+        if (curSummaryDbMap.count(inputId) == 0) {
+            std::recursive_mutex &dbMutex = GetDbMutex(inputId);
+            if (curDataType == DataType::TEXT) {
+                curSummaryDbMap.emplace(inputId, std::make_unique<Summary::TextSummaryDataBase>(dbMutex));
+            } else if (curDataType == DataType::DB) {
+                curSummaryDbMap.emplace(inputId, std::make_unique<FullDb::DbSummaryDataBase>(dbMutex));
+            }
+        }
+        return curSummaryDbMap[inputId].get();
+    };
+    Summary::VirtualSummaryDataBase* db = nullptr;
+    std::vector<std::string> ids;
+    for (const auto &hostInfo : host2DbPath) {
+        auto host = StringUtil::ReplaceFirst(hostInfo.first, "Host", "");
+        if (!StringUtil::StartWith(inputId, host)) {
+            ids.push_back(StringUtil::ReplaceFirst(hostInfo.first, "Host", inputId));
         }
     }
-    return curSummaryDbMap[fileId].get();
+    for (const auto &id : ids) {
+        db = func(id);
+        if (db != nullptr) {
+            break;
+        }
+    }
+    if (db == nullptr) {
+        db = func(inputId);
+    }
+    return db;
 }
 
 Memory::VirtualMemoryDataBase *DataBaseManager::GetMemoryDatabase(const std::string &inputId)

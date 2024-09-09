@@ -47,6 +47,8 @@ SubBlockData DetailsService::MergeSubBlockData(const SubBlockData &compare, cons
             continue;
         }
         subBlockDataMap[key] = item;
+        subBlockDataMap[key].baseline.BaseInfoClone(subBlockDataMap[key].compare);
+        subBlockDataMap[key].diff.BaseInfoClone(subBlockDataMap[key].compare);
     }
     // 遍历baseline，将baseline数据也存入map中
     for (const auto &item: baseline.detailDataList) {
@@ -57,18 +59,19 @@ SubBlockData DetailsService::MergeSubBlockData(const SubBlockData &compare, cons
         // 如果map中存在对应的对比数据，则计算差异值，对diff内容进行填充
         SubBlockUnitData baselineData = item.compare;
         if (subBlockDataMap.find(key) != subBlockDataMap.end()) {
+            // diff数据计算
             SubBlockUnitData compareData = subBlockDataMap[key].compare;
             subBlockDataMap[key].diff.blockId = baselineData.blockId;
             subBlockDataMap[key].diff.name = baselineData.name;
             subBlockDataMap[key].diff.blockType = baselineData.blockType;
             subBlockDataMap[key].diff.unit = baselineData.unit;
             subBlockDataMap[key].diff.value =
-                NumberUtil::StringDoubleMinusReturnEmpty(baselineData.value, compareData.value);
+                NumberUtil::StringDoubleMinusWithoutTrailingZero(compareData.value, baselineData.value);
             subBlockDataMap[key].diff.originValue =
-                NumberUtil::StringDoubleMinusReturnEmpty(baselineData.originValue, compareData.originValue);
+                NumberUtil::StringDoubleMinusWithoutTrailingZero(compareData.originValue, baselineData.originValue);
+            // baseline信息填入（以compare数据为基准）
+            subBlockDataMap[key].baseline = baselineData;
         }
-        // baseline信息填入
-        subBlockDataMap[key].baseline = baselineData;
     }
     // 将map内容收集并返回合并的结果
     SubBlockData res;
@@ -154,10 +157,10 @@ std::vector<CompareData<MemoryUnit>> DetailsService::MergeMemoryUnit(
             MemoryUnit diff;
             diff.memoryPath = baselineMemoryUnit.memoryPath;
             diff.request = compareMemoryUnit.request - baselineMemoryUnit.request;
-            diff.bandwidth = NumberUtil::StringDoubleMinusReturnEmpty(compareMemoryUnit.bandwidth,
-                                                                      baselineMemoryUnit.bandwidth);
-            diff.peakRatio = NumberUtil::StringDoubleMinusReturnEmpty(compareMemoryUnit.peakRatio,
-                                                                      baselineMemoryUnit.peakRatio);
+            diff.bandwidth = NumberUtil::StringDoubleMinusWithoutTrailingZero(compareMemoryUnit.bandwidth,
+                                                                              baselineMemoryUnit.bandwidth);
+            diff.peakRatio = NumberUtil::StringDoubleMinusWithoutTrailingZero(compareMemoryUnit.peakRatio,
+                                                                              baselineMemoryUnit.peakRatio);
             // 线的数据是否展示以compare数据为准
             diff.display = compareMemoryUnit.display;
             memoryUnitMap[baselineMemoryUnit.memoryPath].diff = diff;
@@ -177,11 +180,11 @@ CompareData<Protocol::L2Cache> DetailsService::MergeL2Cache(const L2Cache &compa
     CompareData<L2Cache> res;
     res.compare = compare;
     res.baseline = baseline;
-    res.diff.totalRequest = NumberUtil::StringDoubleMinusReturnEmpty(res.compare.totalRequest,
-                                                                     res.baseline.totalRequest);
-    res.diff.miss = NumberUtil::StringDoubleMinusReturnEmpty(res.compare.miss, res.baseline.miss);
-    res.diff.hit = NumberUtil::StringDoubleMinusReturnEmpty(res.compare.hit, res.baseline.hit);
-    res.diff.hitRatio = NumberUtil::StringDoubleMinusReturnEmpty(res.compare.hitRatio, res.baseline.hitRatio);
+    res.diff.totalRequest = NumberUtil::StringDoubleMinusWithoutTrailingZero(res.compare.totalRequest,
+                                                                             res.baseline.totalRequest);
+    res.diff.miss = NumberUtil::StringDoubleMinusWithoutTrailingZero(res.compare.miss, res.baseline.miss);
+    res.diff.hit = NumberUtil::StringDoubleMinusWithoutTrailingZero(res.compare.hit, res.baseline.hit);
+    res.diff.hitRatio = NumberUtil::StringDoubleMinusWithoutTrailingZero(res.compare.hitRatio, res.baseline.hitRatio);
     return res;
 }
 
@@ -191,10 +194,10 @@ CompareData<UtilizationRate> DetailsService::MergeUtilizationRate(const Utilizat
     CompareData<UtilizationRate> res;
     res.compare = compare;
     res.baseline = baseline;
-    res.diff.ratio = NumberUtil::StringDoubleMinusReturnEmpty(res.compare.ratio, res.baseline.ratio);
-    res.diff.totalCycles = NumberUtil::StringDoubleMinusReturnEmpty(res.compare.totalCycles,
-                                                                    res.baseline.totalCycles);
-    res.diff.cycle = NumberUtil::StringDoubleMinusReturnEmpty(res.compare.cycle, res.baseline.cycle);
+    res.diff.ratio = NumberUtil::StringDoubleMinusWithoutTrailingZero(res.compare.ratio, res.baseline.ratio);
+    res.diff.totalCycles = NumberUtil::StringDoubleMinusWithoutTrailingZero(res.compare.totalCycles,
+                                                                            res.baseline.totalCycles);
+    res.diff.cycle = NumberUtil::StringDoubleMinusWithoutTrailingZero(res.compare.cycle, res.baseline.cycle);
     return res;
 }
 
@@ -228,6 +231,7 @@ std::vector<MemoryTable> DetailsService::MergeMemoryTables(const std::vector<Mem
     std::unordered_map<std::string, MemoryTable> memoryTableMap;
     for (const auto &item: compare) {
         memoryTableMap[item.blockId] = item;
+        memoryTableMap[item.blockId].FillBaseInfoFromCompare();
     }
     for (const auto &item: baseline) {
         MemoryTable &table = memoryTableMap[item.blockId];
@@ -288,19 +292,100 @@ std::vector<CompareData<TableRow>> DetailsService::MergeCompareRows(const std::v
     for (const auto &item: baseline) {
         std::string rowName = item.compare.name;
         if (tableRowMap.find(rowName) != tableRowMap.end()) {
-            TableRow diff;
-            diff.name = rowName;
             unsigned long long colNum = std::min(tableRowMap[rowName].compare.value.size(), item.compare.value.size());
             for (unsigned long long i = 0; i < colNum; ++i) {
-                diff.value.push_back(NumberUtil::StringDoubleMinusReturnEmpty(tableRowMap[rowName].compare.value[i],
-                                                                              item.compare.value[i]));
+                tableRowMap[rowName].diff.value[i] = NumberUtil::StringDoubleMinusWithoutTrailingZero(
+                    tableRowMap[rowName].compare.value[i], item.compare.value[i]);
             }
-            tableRowMap[rowName].diff = diff;
+            // baseline数据填充(以compare数据为准)
+            tableRowMap[rowName].baseline = item.compare;
         }
-        tableRowMap[rowName].baseline = item.compare;
-        res.push_back(tableRowMap[rowName]);
+    }
+
+    res.reserve(tableRowMap.size());
+    for (const auto &item: tableRowMap) {
+        res.push_back(item.second);
     }
     return res;
+}
+
+bool DetailsService::QueryCoreLoadAnalysisGraph(const DetailsInterCoreLoadGraphRequest &request,
+                                                DetailsInterCoreLoadGraphResponse &response)
+{
+    DetailsInterCoreLoadGraphBody compareBody;
+    bool result = SourceFileParser::Instance().GetDetailsInterCoreLoadAnalysisGraph(compareBody, false);
+    if (!result) {
+        return false;
+    }
+    // 非对比情况，直接赋值返回
+    response.body = compareBody;
+    if (!request.params.isCompared) {
+        return true;
+    }
+    // 对比场景,获取baseline数据
+    DetailsInterCoreLoadGraphBody baselineBody;
+    bool baselineRes = SourceFileParser::Instance().GetDetailsInterCoreLoadAnalysisGraph(baselineBody, true);
+    // baseline数据不存在，直接返回
+    if (!baselineRes) {
+        return true;
+    }
+    // baseline数据存在，进行数据整合
+    response.body.opDetails = MergeCoreLoadOpDetail(compareBody.opDetails, baselineBody.opDetails);
+    return true;
+}
+
+std::vector<DetailsInterCoreLoadOpDetail> DetailsService::MergeCoreLoadOpDetail(
+    const std::vector<DetailsInterCoreLoadOpDetail> &compare,
+    const std::vector<DetailsInterCoreLoadOpDetail> &baseline)
+{
+    std::unordered_map<uint8_t, DetailsInterCoreLoadOpDetail> opDetailMap;
+    for (const auto &item: compare) {
+        opDetailMap[item.coreId] = item;
+    }
+    for (const auto &item: baseline) {
+        // 这里会查找compare中是否存在数据，如果存在才会记录baseline的信息，否则不对这条数据进行合并
+        if (opDetailMap.find(item.coreId) == opDetailMap.end()) {
+            continue;
+        }
+        opDetailMap[item.coreId].subCoreDetails = MergeCoreDetail(opDetailMap[item.coreId].subCoreDetails,
+                                                                  item.subCoreDetails);
+    }
+
+    std::vector<DetailsInterCoreLoadOpDetail> result;
+    result.reserve(opDetailMap.size());
+    for (const auto &item: opDetailMap) {
+        result.push_back(item.second);
+    }
+    return result;
+}
+
+std::vector<DetailsInterCoreLoadSubCoreDetail> DetailsService::MergeCoreDetail(
+    const std::vector<DetailsInterCoreLoadSubCoreDetail> &compare,
+    const std::vector<DetailsInterCoreLoadSubCoreDetail> &baseline)
+{
+    std::unordered_map<std::string, DetailsInterCoreLoadSubCoreDetail> coreDetailMap;
+    for (const auto &item: compare) {
+        coreDetailMap[item.subCoreName] = item;
+    }
+
+    for (const auto &item: baseline) {
+        if (coreDetailMap.find(item.subCoreName) == coreDetailMap.end()) {
+            continue;
+        }
+        DetailsInterCoreLoadSubCoreDetail &detail = coreDetailMap[item.subCoreName];
+        detail.cycles.value.baseline = item.cycles.value.compare;
+        detail.cycles.value.diff = item.cycles.value.compare - detail.cycles.value.baseline;
+        detail.throughput.value.baseline = item.throughput.value.compare;
+        detail.throughput.value.diff = item.throughput.value.compare - detail.throughput.value.baseline;
+        detail.cacheHitRate.value.baseline = item.cacheHitRate.value.compare;
+        detail.cacheHitRate.value.diff = item.cacheHitRate.value.compare - detail.cacheHitRate.value.baseline;
+    }
+    std::vector<DetailsInterCoreLoadSubCoreDetail> result;
+    result.reserve(coreDetailMap.size());
+    for (const auto &item: coreDetailMap) {
+        result.push_back(item.second);
+    }
+    return result;
 }
 }
 }

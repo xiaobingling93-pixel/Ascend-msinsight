@@ -29,8 +29,8 @@ private:
     std::unique_ptr<ThreadPool> threadPool;
     const int maxThreadNum = 4;
 
-    static void InitMemory(std::vector<std::string> fileId, std::string path);
-    static void InitSummery(std::vector<std::string> fileId, std::string path);
+    static void InitMemory(const std::vector<std::string> &rankIds, const std::string &path);
+    static void InitSummary(const std::vector<std::string> &rankIds, const std::string &path);
 
     static void ParserCallBack(std::string fileId, bool result);
     static void SendHostEvent(const std::string &fileId);

@@ -12,7 +12,7 @@ import styled from '@emotion/styled';
 import { chartColors, getDefaultChartOptions } from 'ascend-utils';
 
 const ChartDesc = styled.div`
-    color: ${(props): string => props.theme.textColorTertiary};
+    color: ${(props): string => props.theme.textColor};
     margin-bottom: 24px;
 `;
 
@@ -48,9 +48,7 @@ const _getLegendData = (data: string[]): string[] => {
 const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolean, isStatic: boolean, graph: Graph): echarts.EChartsOption => {
     const legendDatas = _getLegendData(graph.columns);
     return {
-        title: {
-            text: '',
-        },
+        title: { text: '' },
         tooltip: {
             trigger: 'axis',
             formatter: (params: any): string => {
@@ -62,8 +60,7 @@ const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolea
                         width: 10px;
                         border-radius: 50%;
                         display: inline-block;
-                        margin-right: 10px;">
-                        </span>
+                        margin-right: 10px;"></span>
                         ${safeStr(item.seriesName)}: ${safeStr(item?.value?.[item?.encode?.y?.[0]])}<br/>`;
                     }
                 }
@@ -87,10 +84,13 @@ const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolea
             feature: {
                 dataZoom: {
                     yAxisIndex: 'none',
+                    emphasis: { iconStyle: { textPosition: 'top' } },
                 },
-                restore: {},
+                restore: {
+                    emphasis: { iconStyle: { textPosition: 'top' } },
+                },
             },
-            top: '8%',
+            top: 20,
         },
         backgroundColor: 'transparent',
     };

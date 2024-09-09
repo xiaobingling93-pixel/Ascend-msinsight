@@ -43,12 +43,12 @@ void WsServer::ListenThreadFunc(WsServer &server)
 
 void WsServer::StartListen()
 {
-    ServerLog::Info("Start server listen, host: ", host, ", port: ", port);
+    ServerLog::Info("Start server listen");
     wsApp = std::make_unique<uWS::App>();
     uWS::App::WebSocketBehavior<WsUserData> behavior = CreateWsBehavior();
     wsApp->ws<WsUserData>("/*", std::move(behavior));
     wsApp->listen(host, port, std::bind(&WsServer::ListenCb, this, std::placeholders::_1));
-    ServerLog::Info("Run server, port: ", port);
+    ServerLog::Info("Run server");
     wsApp->run();
 }
 

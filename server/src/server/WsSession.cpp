@@ -38,7 +38,7 @@ void WsSession::OnHandleMsgBuffer(WsSession &session)
             if (reqPtr != nullptr) {
                 ModuleManager::Instance().OnDispatchModuleRequest(std::unique_ptr<Request>(reqPtr));
             } else {
-                ServerLog::Info("Request is not supported, moduleName = ", static_cast<int>(msg->moduleName));
+                ServerLog::Info("Request is not supported");
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(interval));

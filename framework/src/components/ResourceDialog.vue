@@ -7,6 +7,7 @@ import { ProjectErrorType } from '@/utils/enmus';
 import {ElMessage} from 'element-plus';
 import FileConflictDialog from '@/components/FileConflictDialog.vue';
 import {useLoading} from '@/hooks/useLoading';
+import i18n from '@/i18n';
 
 const props = defineProps<{ showModal: boolean; projectName: string }>();
 const emit=defineEmits(['update:showModal']);
@@ -63,22 +64,24 @@ const handleConfirm = async () => {
       dialogCoverVisible.value = true;
       projectCheckResult.value = result;
     } else {
-      const setPathResult = resourceComp.value.doSetCurrentPath(props.projectName, false);
-      emit('update:showModal', false);
-      if (!setPathResult) {
+      const { result: setPathResult, inputPath } = resourceComp.value.doSetCurrentPath(props.projectName, false);
+      if(setPathResult) {
+        emit('update:showModal', false);
+      } else {
         loadingMask.close();
-        ElMessage.error('Error');
+        ElMessage.error(i18n.t('PathNotFound', { path: inputPath }));
       }
     }
 };
 
 const handleCoverVisible = (value: boolean) => {
   if (value) {
-    const setPathResult = resourceComp.value.doSetCurrentPath(props.projectName, true);
-    if (!setPathResult) {
-      ElMessage.error('Error');
+    const { result: setPathResult, inputPath } = resourceComp.value.doSetCurrentPath(props.projectName, true);
+    if (setPathResult) {
+      emit('update:showModal', false);
+    } else {
+      ElMessage.error(i18n.t('PathNotFound', { path: inputPath }));
     }
-    emit('update:showModal', false);
   }
   dialogCoverVisible.value = false;
 };

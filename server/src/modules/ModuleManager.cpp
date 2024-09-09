@@ -76,13 +76,11 @@ void ModuleManager::OnDispatchModuleRequest(std::unique_ptr<Request> request)
 {
     auto moduleName = request->moduleName;
     if (moduleMap.count(moduleName) == 0) {
-        ServerLog::Error("Failed to dispatch to module, module = ", ENUM_TO_STR(moduleName).value(), ", command = ",
-                         request->command);
+        ServerLog::Error("Failed to dispatch to module");
         return;
     }
     if (!WsSessionManager::Instance().CheckSession()) {
-        ServerLog::Error("Invalid session found when dispatch, module=", ENUM_TO_STR(moduleName).value(), ", command=",
-                         request->command, ", request id=", request->id);
+        ServerLog::Error("Invalid session found when dispatch");
         return;
     }
     ServerLog::Info("Dispatch to module, module = ", ENUM_TO_STR(moduleName).value(),

@@ -5,6 +5,7 @@
 #include "ParserFactory.h"
 #include "DataBaseManager.h"
 #include "BaselineManager.h"
+#include "SourceFileParser.h"
 #include "BaselineManagerService.h"
 namespace Dic {
 namespace Module {
@@ -13,6 +14,7 @@ void BaselineManagerService::ResetBaseline()
 {
     Dic::Module::Timeline::DataBaseManager::Instance().ResetBaseline();
     BaselineManager::Instance().Reset();
+    Source::SourceFileParser::Instance().ResetBaseline();
 }
 
 bool BaselineManagerService::InitBaselineData(const std::string &projectName, const std::string &filePath,

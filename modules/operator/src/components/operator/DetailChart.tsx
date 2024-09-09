@@ -91,6 +91,7 @@ const baseOption: echarts.EChartsOption = {
         left: 'left',
         top: 'middle',
         type: 'scroll',
+        padding: [40, 5, 5, 5],
     },
     series: [
         {

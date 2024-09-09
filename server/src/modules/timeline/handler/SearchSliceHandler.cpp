@@ -21,15 +21,14 @@ void SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
     response.body.rankId = request.params.rankId;
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
-        ServerLog::Error("Can't find rankId. rankId:", request.params.rankId);
+        ServerLog::Error("Search slice can't find rankId.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;
     }
     if (!database->SearchSliceName(request.params, request.params.index - 1,
                                    TraceTime::Instance().GetStartTime(), response.body)) {
-        ServerLog::Error("Failed to search slice name. rankId:", request.params.rankId, ", searchContent:",
-                         request.params.searchContent, ", index:", request.params.index);
+        ServerLog::Error("Failed to search slice name.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return;

@@ -4,9 +4,10 @@
 import * as d3 from 'd3';
 import type { TFunction } from 'i18next';
 import type { Igraph, Inode, InodePosition, IlinePosition, Ibox, IdrawGraph, IdrawNode, IdrawLine, IdrawRect, Iline, Irect, IrectPosition, Ixy, IdrawLabel } from './flowType';
-import type { ImemoryData } from '../MemoryChart';
+import type { ImemoryData, ImemoryUnit } from '../MemoryChart';
 import type { Icondition } from '../Filter';
-import { getFormatNum } from '../../../Common';
+import { getFormatNum, getFormatNumReturnEmpty } from '../../../Common';
+import { CompareData } from '../../../../utils/interface';
 
 const cubeCore: Inode = {
     name: '',
@@ -52,6 +53,7 @@ const cubeCore: Inode = {
                 { value: 'Cube' },
                 { value: 'Ratio:', x: 575, y: 215 },
                 { id: 'cubeRatio', value: '0%', x: 605, y: 215, position: 'right' },
+                { id: 'cubeRatioBaseline', value: '' },
             ],
         },
         {
@@ -172,6 +174,7 @@ const vectorCore: Inode = {
                 { value: 'Vector' },
                 { value: 'Ratio:', x: 490, y: 95 },
                 { id: 'vectorRatio', value: '0%', x: 520, y: 95, position: 'right' },
+                { id: 'vectorRatioBaseline', value: '' },
             ],
         },
     ],
@@ -222,6 +225,7 @@ const vectorCore2: Inode = {
                     { value: 'Vector' },
                     { value: 'Ratio:', x: 490, y: 95 },
                     { id: 'vector1Ratio', value: '0%', x: 520, y: 95, position: 'right' },
+                    { id: 'vector1RatioBaseline', value: '' },
                 ],
             };
         }
@@ -265,6 +269,7 @@ const mixCore: Inode = {
                 { value: 'Cube' },
                 { value: 'Ratio:', x: 535, y: 110 },
                 { id: 'cubeRatio', value: '0%', x: 565, y: 110, position: 'right' },
+                { id: 'cubeRatioBaseline', value: '' },
             ],
         },
         {
@@ -283,6 +288,7 @@ const mixCore: Inode = {
                 { value: 'Vector', x: 655, y: 180 },
                 { value: 'Ratio:', x: 635, y: 200 },
                 { id: 'vectorRatio', x: 665, y: 200, value: '0%', position: 'right' },
+                { id: 'vectorRatioBaseline', value: '' },
             ],
             name: 'Vector',
         },
@@ -444,6 +450,7 @@ const common: Inode[] = [
                     { value: '' },
                     { value: 'Hit Rate:' },
                     { id: 'hitRatio', value: '0%' },
+                    { id: 'hitRatioBaseline', value: '' },
                 ],
             },
         ],
@@ -1146,32 +1153,71 @@ export const updateData = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, 
     updatePath(svg, data);
 };
 
-const updateHitRatio = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition): void => {
-    const dic: Record<string, string | number> = {
-        hitRatio: getFormatNum(data?.l2Cache?.compare.hitRatio),
-        vectorRatio: getFormatNum(data?.vector?.compare.ratio),
-        vector1Ratio: getFormatNum(data?.vector1?.compare.ratio),
-        cubeRatio: getFormatNum(data?.cube?.compare.ratio),
+const getHitRatioData = (data: ImemoryData & Icondition): Record<string, CompareData<string | number>> => {
+    return {
+        hitRatio: {
+            compare: getFormatNum(data?.l2Cache?.compare.hitRatio),
+            diff: getFormatNumReturnEmpty(data?.l2Cache?.diff.hitRatio),
+            baseline: getFormatNumReturnEmpty(data?.l2Cache?.baseline.hitRatio),
+        } as CompareData<string | number>,
+        vectorRatio: {
+            compare: getFormatNum(data?.vector?.compare.ratio),
+            diff: getFormatNumReturnEmpty(data?.vector?.diff.ratio),
+            baseline: getFormatNumReturnEmpty(data?.vector?.baseline.ratio),
+        } as CompareData<string | number>,
+        vector1Ratio: {
+            compare: getFormatNum(data?.vector1?.compare.ratio),
+            diff: getFormatNumReturnEmpty(data?.vector1?.diff.ratio),
+            baseline: getFormatNumReturnEmpty(data?.vector1?.baseline.ratio),
+        } as CompareData<string | number>,
+        cubeRatio: {
+            compare: getFormatNum(data?.cube?.compare.ratio),
+            diff: getFormatNumReturnEmpty(data?.cube?.diff.ratio),
+            baseline: getFormatNumReturnEmpty(data?.cube?.baseline.ratio),
+        } as CompareData<string | number>,
     };
+};
+
+const updateHitRatio = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition): void => {
+    const dic = getHitRatioData(data);
     svg.selectAll('text.rect-labels')
         .text((d: any) => {
-            if (Object.keys(dic).includes(d.id)) {
-                return `${dic[d.id]}%`;
+            let context: string = '';
+            Object.keys(dic).forEach(item => {
+                if (item === d.id) {
+                    context = `${dic[d.id].compare}%`;
+                }
+                const baselineItem = `${item}Baseline`;
+                if (baselineItem === d.id && dic[item].baseline !== '') {
+                    context = `(${dic[item].baseline}%)`;
+                }
+            });
+            if (context !== '') {
+                return context;
             }
             return d.value ?? '';
         });
 };
+
+const getMemoryUnitLabel = (data: CompareData<ImemoryUnit>, isCompared: boolean, showAs: string): string => {
+    let label = String(getFormatNum(data.compare[showAs]));
+    if (showAs === 'bandwidth') {
+        label = `${label} GB/s`;
+    }
+    if (isCompared) {
+        const diffValue = data.baseline[showAs] === '' ? '-' : String(getFormatNum(data.baseline[showAs]));
+        label = `${label}(${diffValue})`;
+    }
+    return label;
+};
+
 const updatePath = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition): void => {
     const { showAs, memoryUnit } = data;
     const labelDic: Record<string, string> = {};
     const peakDic: Record<string, number> = {};
     const peakSet = new Set<number>();
     memoryUnit.forEach(unit => {
-        let label = String(getFormatNum(unit.compare[showAs]));
-        if (showAs === 'bandwidth') {
-            label = `${label} GB/s`;
-        }
-        labelDic[unit.compare.memoryPath] = label;
+        labelDic[unit.compare.memoryPath] = getMemoryUnitLabel(unit, data.isCompared, showAs);
         const peak = Number(unit.compare.peakRatio);
         if (!isNaN(peak)) {
             peakDic[unit.compare.memoryPath] = peak;

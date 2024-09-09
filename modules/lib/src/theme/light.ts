@@ -218,8 +218,9 @@ export const light: Theme = {
     icon: '#8D98AA',
     tableTextColor: '#000000',
     radioSelectedColor: '#007AFF',
-    rankBackgroudColor: 'rgb(172 177 185)',
+    rankBackgroudColor: '#FDFEFF',
     contextMenuBgColor: '#EBEFF6',
     summaryChartBgColor: '#BFC7D7',
+    rankContainerBackgroudColor: '#EBEFF6',
     unitInfoTextColor: '#4E5865',
 };

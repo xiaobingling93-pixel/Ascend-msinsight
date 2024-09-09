@@ -11,6 +11,7 @@ import { Empty } from '../components/index';
 import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 import { BulbIcon } from '../icon/Icon';
+import ResizeObserver from 'resize-observer-polyfill';
 export { customConsole } from './Console';
 
 export { BaseContainer, MIDescriptions, MIDescriptionsItem, COLOR, chartVisbilityListener, getResizeEcharts, getDefaultChartOptions };
@@ -199,6 +200,20 @@ export const adaptDpr = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2
     ctx.scale(dpr, dpr);
     return { canvasWidth, canvasHeight };
 };
+
+export function useWatchDomResize(dom: Element | null, callback: (rect: DOMRectReadOnly) => void): () => void {
+    const observer = new ResizeObserver(([entry]) => {
+        window.requestAnimationFrame(() => {
+            callback(entry.contentRect);
+        });
+    });
+    if (dom !== undefined && dom !== null) {
+        observer.observe(dom);
+    }
+    return () => {
+        observer.disconnect();
+    };
+}
 
 export const chartColors = [
     '#0062DC',

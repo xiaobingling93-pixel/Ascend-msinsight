@@ -49,7 +49,7 @@ OPEN_SOURCE = [
     ],
     [
         'att',
-        'v6.0.0-ATT-htrunk5',
+        'v6.0.0-ATT-htrunk6',
         'https://szv-open.codehub.huawei.com/OpenSourceCenter/Ascend/att.git'
     ]
 ]

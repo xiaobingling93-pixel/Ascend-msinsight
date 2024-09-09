@@ -17,6 +17,7 @@
 #include "NumberUtil.h"
 #include "ClusterFileParser.h"
 
+
 namespace Dic {
 namespace Module {
 namespace Timeline {
@@ -150,7 +151,7 @@ bool ClusterFileParser::ParseClusterFiles(const std::string &selectedPath)
     std::vector<std::string> communicationMatrixFileList =
             FileUtil::FindFirstFileByRegex(selectedPath, patternCommunicationMatrix);
     // cluster analysis
-    if (communicationMatrixFileList.empty() && !AttAnalyze(selectedPath, ATT_MODEL_MATRIX)) {
+    if (communicationMatrixFileList.empty() && !AttAnalyze(selectedPath, ATT_MODEL_MATRIX, AttDataType::TEXT)) {
         return false;
     }
     std::vector<std::string> communicationMatrixList =
@@ -196,7 +197,7 @@ bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
         }
     }
     // cluster analysis
-    if (communicationFileList.empty() && !AttAnalyze(selectedPath, ATT_MODEL_TIME)) {
+    if (communicationFileList.empty() && !AttAnalyze(selectedPath, ATT_MODEL_TIME, AttDataType::TEXT)) {
         return false;
     }
 
@@ -351,7 +352,7 @@ bool ClusterFileParser::CheckDocumentValid(const Document &doc)
     return true;
 }
 
-bool ClusterFileParser::AttAnalyze(const std::string& selectedPath, const std::string& model)
+bool ClusterFileParser::AttAnalyze(const std::string &selectedPath, const std::string &model, AttDataType dataType)
 {
     ServerLog::Info("Start execute cluster analysis");
     if (!StringUtil::ValidateCommandFilePathParam(selectedPath)) {
@@ -385,6 +386,10 @@ bool ClusterFileParser::AttAnalyze(const std::string& selectedPath, const std::s
     } else {
         if (!model.empty()) {
             command.append(" -m ").append(model);
+        }
+        // Db类型的数据需要开启字段精简功能
+        if (dataType == AttDataType::DB) {
+            command.append(" --data_simplification");
         }
         ServerLog::Info("Start execute command: ", command);
         int result = std::system(command.c_str());
@@ -444,7 +449,7 @@ bool ClusterFileParser::ParserClusterOfDb(const std::string& selectedPath)
         tempPath = FileUtil::GetParentPath(selectedPath);
     }
     // cluster analysis
-    if (!AttAnalyze(tempPath, ATT_MODEL_DEFAULT)) {
+    if (!AttAnalyze(tempPath, ATT_MODEL_DEFAULT, AttDataType::DB)) {
         return false;
     }
 

@@ -16,6 +16,8 @@ public:
 static bool QueryDetailsLoadInfo(const SourceDetailsLoadInfoRequest &request, DetailsLoadInfoResponse &response);
 static bool QueryMemoryGraph(const DetailsMemoryGraphRequest &request, DetailsMemoryGraphResponse &response);
 static bool QueryMemoryTable(const DetailsMemoryTableRequest &request, DetailsMemoryTableResponse &response);
+static bool QueryCoreLoadAnalysisGraph(const DetailsInterCoreLoadGraphRequest &request,
+                                       DetailsInterCoreLoadGraphResponse &response);
 
 private:
 const static inline std::string underline = "_";
@@ -35,6 +37,12 @@ static std::vector<TableDetail<CompareData<TableRow>>> MergeCompareTableList(
     const std::vector<TableDetail<CompareData<TableRow>>> &baseline);
 static std::vector<CompareData<TableRow>> MergeCompareRows(const std::vector<CompareData<TableRow>> &compare,
     const std::vector<CompareData<TableRow>> &baseline);
+static std::vector<DetailsInterCoreLoadOpDetail> MergeCoreLoadOpDetail(
+    const std::vector<DetailsInterCoreLoadOpDetail> &compare,
+    const std::vector<DetailsInterCoreLoadOpDetail> &baseline);
+static std::vector<DetailsInterCoreLoadSubCoreDetail> MergeCoreDetail(
+    const std::vector<DetailsInterCoreLoadSubCoreDetail> &compare,
+    const std::vector<DetailsInterCoreLoadSubCoreDetail> &baseline);
 };
 }
 }

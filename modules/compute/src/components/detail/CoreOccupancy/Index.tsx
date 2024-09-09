@@ -10,6 +10,7 @@ import Filter, { defaultCondition, type ICondition } from './Filter';
 import CoreChart from './CoreChart';
 import { queryCoreOccupancy } from '../../RequestUtils';
 import { Hit } from 'ascend-utils';
+import { CompareData } from '../../../utils/interface';
 export interface ICoreOccupancy {
     soc: string; // 算子运行平台
     opType: string; // 算子类型：vector, cube, mix
@@ -29,7 +30,7 @@ export interface ISubCore {
 }
 
 export interface IData {
-    value: number;
+    value: CompareData<number>;
     level: number;
 }
 
@@ -50,8 +51,8 @@ const Index = observer(({ session }: { session: Session }): JSX.Element => {
         setCondition({ ...condition, ...newCondition });
     };
 
-    const updateData = async (): Promise<void> => {
-        const res = await queryCoreOccupancy();
+    const updateData = async (isCompared: boolean): Promise<void> => {
+        const res = await queryCoreOccupancy(isCompared);
         const newData = (res ?? defaultData) as ICoreOccupancy;
         setData(newData);
     };
@@ -61,12 +62,12 @@ const Index = observer(({ session }: { session: Session }): JSX.Element => {
             setData(defaultData);
             return;
         }
-        updateData();
-    }, [session.parseStatus]);
+        updateData(session.dirInfo.isCompare);
+    }, [session.parseStatus, session.dirInfo]);
 
     return hasInfo
-        ? (<CollapsiblePanel title={tDetails('Core Occupancy')}>
-            <Filter handleFilterChange={handleFilterChange}/>
+        ? (<CollapsiblePanel title={tDetails('Core Occupancy')} collapsible>
+            <Filter handleFilterChange={handleFilterChange} session={session}/>
             <CoreChart condition={condition} session={session} data={data}/>
             {data?.advice?.length > 0 && (<Hit text={data.advice} style={{ marginTop: '10px' }}/>)}
         </CollapsiblePanel>)

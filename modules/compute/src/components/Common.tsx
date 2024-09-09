@@ -2,12 +2,14 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
 */
 import React from 'react';
-import { Col, Row, message, Tooltip } from 'ascend-components';
+import { Col, Row, message, Tooltip, Button } from 'ascend-components';
 import { Modal } from 'antd';
-import { ExclamationCircleOutlined, InfoCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { type ArgsProps } from 'antd/lib/message';
 import { useTranslation } from 'react-i18next';
 import i18n from 'ascend-i18n';
+import type { Theme } from '@emotion/react';
+import type { TFunction } from 'i18next';
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? `${props.name} :` : ''} </span>;
 };
@@ -215,11 +217,47 @@ export const useHit = (): JSX.Element => {
 
 export const getFormatNum = (str?: string | number): number | string => {
     const num = Number(str);
-    if (!isNaN(num)) {
-        if (num !== 0 && Number(num.toFixed(2)) === 0) {
-            return num;
-        }
-        return Number(num.toFixed(2));
+    if (!isNaN(num) && num !== 0) {
+        // 保留两位有效数字
+        let decimal = Math.log10(Math.abs(num));
+        decimal = decimal >= 0 ? 0 : -decimal;
+        return Number(num.toFixed(2 + decimal));
     }
     return str ?? '';
+};
+
+export const getFormatNumReturnEmpty = (str?: string | number): number | string => {
+    if (str === '') {
+        return '';
+    }
+    return getFormatNum(str);
+};
+
+export const getContextElement = (text: string, record: any, theme: Theme): JSX.Element => {
+    if (isNaN(Number(text))) {
+        return <div>{text}</div>;
+    }
+    if (record.source === 'Difference') {
+        return <div style={{ color: Number(text) >= 0 ? theme.successColor : theme.dangerColor }}>{text}</div>;
+    } else {
+        return <div>{Number(text)}</div>;
+    }
+};
+
+export const renderExpandColumn = (record: any, setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>, t: TFunction): JSX.Element => {
+    return record.source === 'Difference'
+        ? (<Button type="link"
+            onClick={(): void => {
+                setExpandedKeys((pre: any) => {
+                    const list = [...pre];
+                    const keyIndex = list.indexOf(record.key);
+                    if (keyIndex === -1) {
+                        list.push(record.key);
+                    } else {
+                        list.splice(keyIndex, 1);
+                    }
+                    return list;
+                });
+            }}>{t('See More')}<DownOutlined/></Button>)
+        : <></>;
 };

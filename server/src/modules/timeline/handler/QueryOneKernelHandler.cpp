@@ -29,7 +29,7 @@ void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     if (database == nullptr) {
         database = Timeline::DataBaseManager::Instance().GetTraceDatabaseWithOutHost(request.params.rankId);
         if (database == nullptr) {
-            ServerLog::Error("Failed to get connection. fileId:", request.params.rankId);
+            ServerLog::Error("Query one kernel failed to get connection.");
             session.OnResponse(std::move(responsePtr));
             return;
         }
@@ -48,7 +48,7 @@ void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     // 根据通信算子name,startTime查询step、group
     auto clusterDatabase = DataBaseManager::Instance().GetReadClusterDatabase();
     if (database == nullptr) {
-        ServerLog::Error("Failed to get cluster connection. fileId:", request.params.rankId);
+        ServerLog::Error("Query one kernel failed to get cluster connection.");
         session.OnResponse(std::move(responsePtr));
         return;
     }

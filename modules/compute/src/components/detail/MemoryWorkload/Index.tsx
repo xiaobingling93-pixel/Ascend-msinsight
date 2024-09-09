@@ -18,8 +18,8 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
     };
 
     return (
-        <CollapsiblePanel title={tDetails('Memory Workload Analysis')}>
-            <Filter blockIdList={session.blockIdList} handleFilterChange={handleFilterChange}/>
+        <CollapsiblePanel title={tDetails('Memory Workload Analysis')} collapsible>
+            <Filter blockIdList={session.blockIdList} handleFilterChange={handleFilterChange} isCompared={session.dirInfo.isCompare}/>
             <MemoryChart condition={condition} session={session}/>
             <MemoryTable condition={condition} session={session}/>
         </CollapsiblePanel>

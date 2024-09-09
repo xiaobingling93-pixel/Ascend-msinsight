@@ -229,7 +229,7 @@ const customNodeClass = (data: TreeData) => {
 .content-node-text {
     padding: 0 0 0 2px;
     font-size: 12px;
-    color: var(--mi-text-color-tertiary);
+    color: var(--tree-child-node-text-color);
     font-weight: 400;
     overflow: hidden;
     white-space: nowrap;

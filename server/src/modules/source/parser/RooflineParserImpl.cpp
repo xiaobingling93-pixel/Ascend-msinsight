@@ -53,6 +53,9 @@ Protocol::RooflineGraph RooflineParserImpl::ParseRooflineData(const json_t &item
         return rooflineData;
     }
     const Value &rooflines = item["rooflines"];
+    if (!rooflines.IsArray()) {
+        return rooflineData;
+    }
     std::transform(rooflines.GetArray().begin(), rooflines.GetArray().end(),
                    std::back_inserter(rooflineData.rooflines), RooflineParserImpl::ParseRoofline);
     return rooflineData;

@@ -57,6 +57,7 @@ body {
     --mi-color-major: #f97611;
     --mi-color-major-light3: #fba25d;
     --mi-bg-color: #fdfeff;
+    --mi-bg-color-common: #EBEFF6;
     --mi-bg-color-dark: #ebeff6;
     --mi-bg-color-light: #f4f6fa;
     --mi-bg-color-lighter: #ffffff;
@@ -77,11 +78,14 @@ body {
     --mi-box-shadow: 0px 12px 32px 4px rgba(0, 0, 0, 0.04), 0px 8px 20px rgba(0, 0, 0, 0.08);
     --header-height: 36px;
     --menu-bg-color: var(--mi-bg-color-dark);
+    --header-bg-color: #ffffff;
+    --tree-child-node-text-color: var(--mi-text-color-secondary);
 }
 
 html.dark {
     --mi-bg-color-page: #0a0a0a;
     --mi-bg-color: #1f2329;
+    --mi-bg-color-common: #2A2F37;
     --mi-bg-color-dark: #181b20;
     --mi-bg-color-light: #2a2f37;
     --mi-bg-color-lighter: #343a43;
@@ -97,4 +101,6 @@ html.dark {
     --mi-border-color-extra-light: #fffefe;
     --mi-box-shadow: 0px 12px 32px 4px rgba(0, 0, 0, 0.36), 0px 8px 20px rgba(0, 0, 0, 0.72);
     --menu-bg-color: var(--mi-bg-color-light);
+    --header-bg-color: var(--mi-bg-color-light);
+    --tree-child-node-text-color: var(--mi-text-color-tertiary);
 }

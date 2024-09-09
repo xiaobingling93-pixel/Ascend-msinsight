@@ -262,7 +262,7 @@ bool TextTraceDatabase::InsertThreadList(const std::set<std::tuple<int64_t, std:
 {
     for (const auto &item : threadList) {
         if (!UpdateThreadInfo(item)) {
-            ServerLog::Error("Update thread name fail. pid: ", std::get<2>(item), " tid: ", std::get<1>(item)); // 第2个
+            ServerLog::Error("Insert thread name fail.");
             return false;
         }
     }
@@ -442,12 +442,13 @@ void TextTraceDatabase::SimulationUpdateProcessSortIndex()
     std::string queryAllProcess = "select pid FROM " + processTable + " ORDER BY process_name, pid;";
     auto processStmt = CreatPreparedStatement(queryAllProcess);
     if (processStmt == nullptr) {
-        ServerLog::Error("SimulationUpdateProcessSortIndex. Failed to prepare sql.", GetLastError());
+        ServerLog::Error("Simulation update process sort index. Failed to prepare sql.", GetLastError());
         return;
     }
     auto processResultSet = processStmt->ExecuteQuery();
     if (processResultSet == nullptr) {
-        ServerLog::Error("SimulationUpdateProcessSortIndex. Failed to get result set.", processStmt->GetErrorMessage());
+        ServerLog::Error("Simulation update process sort index. Failed to get result set.",
+                         processStmt->GetErrorMessage());
         return;
     }
     uint32_t order = 0;
@@ -465,12 +466,12 @@ void TextTraceDatabase::QueryAllSliceInRangeByTrackId(uint64_t traceId, std::vec
     std::string sql = QUERY_ALL_SLICE_IN_RANGE_BY_TRACKID_SQL;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", GetLastError());
+        ServerLog::Error("Query all slice in range by trackId failed to prepare sql.", GetLastError());
         return;
     }
     auto resultSet = stmt->ExecuteQuery(traceId);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryThreadTraces. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query all slice in range by trackId failed to get result set.", stmt->GetErrorMessage());
         return;
     }
     SliceQuery sliceQuery;
@@ -496,7 +497,7 @@ bool TextTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTrace
     std::string sql = TextSqlConstant::GetSummarySliceSql(trackIds.size());
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryThreadTraces. Failed to prepare sql.", GetLastError());
+        ServerLog::Error("Query thread traces summary failed to prepare sql.", GetLastError());
         return false;
     }
     for (const auto &item : trackIds) {
@@ -504,7 +505,7 @@ bool TextTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTrace
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryThreadTracesSummary. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query thread traces summary failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     TraceDatabaseHelper::QueryAllSliceInRangeByTrackIdHelper(resultSet, unitTime, minTimestamp, responseBody);
@@ -551,12 +552,12 @@ bool TextTraceDatabase::QueryThreadDetail(const Protocol::ThreadDetailParams &re
 {
     auto stmt = CreatPreparedStatement(QUERY_SLICE_DETAIL_SQL);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryThreadDetail. Failed to prepare sql.");
+        ServerLog::Error("Query thread detail failed to prepare sql.");
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(requestParams.id);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryThreadDetail. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query thread detail failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     std::vector<SliceDto> sliceDtoVec;
@@ -621,18 +622,18 @@ bool TextTraceDatabase::QueryDurationFromSliceByTimeRange(const Protocol::Thread
     const std::vector<SliceDto> &rows, std::vector<std::pair<uint64_t, uint64_t>> &nextDepthResult, int64_t trackId)
 {
     if (rows.empty()) {
-        ServerLog::Error("sliceDto array is empty!");
+        ServerLog::Error("slice array is empty!");
         return false;
     }
     std::string sql = QUERY_DURATION_FROM_SLICE_BY_TIME_RANGE_SQL;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryDurationFromSliceByTimeRange. Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Query duration from slice by time range failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(rows[0].timestamp + rows[0].duration, rows[0].timestamp, trackId);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryDurationFromSliceByTimeRange. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query duration from slice by time range failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     SliceQuery sliceQuery;
@@ -655,17 +656,17 @@ KernelShapesDataDto TextTraceDatabase::QueryKernelShapes(const std::vector<Slice
 {
     KernelShapesDataDto kernelShapesDataDto;
     if (param.empty()) {
-        ServerLog::Error("sliceDto array is empty!");
+        ServerLog::Error("slice array is empty!");
         return kernelShapesDataDto;
     }
     auto stmt = CreatPreparedStatement(QUERY_KERNAL_SHAPE_SQL);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryKernelShapes. Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Query kernel shapes failed to prepare sql.", sqlite3_errmsg(db));
         return kernelShapesDataDto;
     }
     auto resultSet = stmt->ExecuteQuery(param[0].name, param[0].timestamp);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryKernelShapes. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query kernel shapes failed to get result set.", stmt->GetErrorMessage());
         return kernelShapesDataDto;
     }
     while (resultSet->Next()) {
@@ -687,12 +688,12 @@ std::vector<FlowDetailDto> TextTraceDatabase::QuerySingleFlowDetail(const std::s
     std::vector<FlowDetailDto> flowDetailVec;
     auto stmt = CreatPreparedStatement(QUERY_FLOW_BY_FLOWID_SQL);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryFlowDetail. Failed to prepare sql.");
+        ServerLog::Error("Query single flow detail failed to prepare sql.");
         return flowDetailVec;
     }
     auto resultSet = stmt->ExecuteQuery(flowId);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryFlowDetail. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query single flow detail failed to get result set.", stmt->GetErrorMessage());
         return flowDetailVec;
     }
     while (resultSet->Next()) {
@@ -713,12 +714,12 @@ std::map<uint64_t, std::pair<std::string, std::string>> TextTraceDatabase::Query
     auto threadStmt = CreatPreparedStatement(QUERY_ALL_THREAD_SQL);
     std::map<uint64_t, std::pair<std::string, std::string>> threadMap;
     if (threadStmt == nullptr) {
-        ServerLog::Error("QueryFlowDetail. Failed to prepare sql.");
+        ServerLog::Error("Query all thread failed to prepare sql.");
         return threadMap;
     }
     auto threadSet = threadStmt->ExecuteQuery();
     if (threadSet == nullptr) {
-        ServerLog::Error("QueryFlowDetail. Failed to get result set.", threadStmt->GetErrorMessage());
+        ServerLog::Error("Query all thread failed to get result set.", threadStmt->GetErrorMessage());
         return threadMap;
     }
 
@@ -847,12 +848,12 @@ bool TextTraceDatabase::QuerySliceDtoById(const std::string &sliceId, SliceDto &
     std::string sliceSql = QUERY_SLICE_BY_ID_SQL;
     auto sliceStmt = CreatPreparedStatement(sliceSql);
     if (sliceStmt == nullptr) {
-        ServerLog::Error("QuerySliceDtoById. Failed to prepare sql.");
+        ServerLog::Error("Query slice by id failed to prepare sql.");
         return false;
     }
     auto sliceSet = sliceStmt->ExecuteQuery(sliceId);
     if (sliceSet == nullptr) {
-        ServerLog::Error("QuerySliceDtoById. Failed to get result set.", sliceStmt->GetErrorMessage());
+        ServerLog::Error("Query slice by id failed to get result set.", sliceStmt->GetErrorMessage());
         return false;
     }
     while (sliceSet->Next()) {
@@ -870,12 +871,13 @@ std::vector<SimpleSlice> TextTraceDatabase::QuerySimpleSliceByFlagAndTrackId(con
     auto sliceStmt = CreatPreparedStatement(sliceSql);
     std::vector<SimpleSlice> simpleSliceVec;
     if (sliceStmt == nullptr) {
-        ServerLog::Error("QuerySimpleSliceByFlagAndTrackId. Failed to prepare sql.");
+        ServerLog::Error("Query simple slice by flag and trackId failed to prepare sql.");
         return simpleSliceVec;
     }
     auto sliceSet = sliceStmt->ExecuteQuery(flagId, trackId);
     if (sliceSet == nullptr) {
-        ServerLog::Error("QuerySimpleSliceByFlagAndTrackId. Failed to get result set.", sliceStmt->GetErrorMessage());
+        ServerLog::Error("Query simple slice by flag and trackId failed to get result set.",
+                         sliceStmt->GetErrorMessage());
         return simpleSliceVec;
     }
     SliceQuery sliceQuery;
@@ -889,7 +891,7 @@ std::vector<SimpleSlice> TextTraceDatabase::QuerySimpleSliceByFlagAndTrackId(con
         simpleSlice.depth = depthCache[id];
         simpleSliceVec.emplace_back(simpleSlice);
     }
-    ServerLog::Info("simpleSliceVec size is: ", simpleSliceVec.size());
+    ServerLog::Info("simple slice array size is: ", simpleSliceVec.size());
     return simpleSliceVec;
 }
 
@@ -899,12 +901,12 @@ bool TextTraceDatabase::QueryUnitsMetadata(const std::string &fileId,
     std::string sql = QUERY_UNITS_META_SQL;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryUnitsMetadata failed!.");
+        ServerLog::Error("Query units metadata failed!.");
         return false;
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryUnitsMetadata. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query units metadata failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     std::vector<MetaDataDto> metaDataVec;
@@ -995,12 +997,12 @@ bool TextTraceDatabase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
     std::string sql = QUERY_EXETREME_TIME_SQL;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryExtremumTimestamp failed!.");
+        ServerLog::Error("Query extremum timestamp failed!.");
         return false;
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryExtremumTimestamp. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query extremum timestamp failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     while (resultSet->Next()) {
@@ -1044,12 +1046,12 @@ int TextTraceDatabase::SearchSliceNameCount(const Protocol::SearchCountParams &p
     std::string sql = TextSqlConstant::GetSearchSliceNameCountSql(params.isMatchExact, params.isMatchCase);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QuerySliceNameCount failed!.");
+        ServerLog::Error("Query slice name count failed!.");
         return 0;
     }
     auto resultSet = stmt->ExecuteQuery(params.searchContent);
     if (resultSet == nullptr) {
-        ServerLog::Error("SearchSliceNameCount. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query slice name count. Failed to get result set.", stmt->GetErrorMessage());
         return 0;
     }
     if (resultSet->Next()) {
@@ -1064,12 +1066,12 @@ bool TextTraceDatabase::SearchSliceName(const Protocol::SearchSliceParams &param
     std::string sql = TextSqlConstant::GetSearchSliceNameSql(params.isMatchExact, params.isMatchCase);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QuerySliceName failed!.");
+        ServerLog::Error("Query slice name failed!.");
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(minTimestamp, params.searchContent, index);
     if (resultSet == nullptr) {
-        ServerLog::Error("SearchSliceName. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query slice name. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     if (!resultSet->Next()) {
@@ -1096,12 +1098,12 @@ bool TextTraceDatabase::QueryFlowCategoryList(std::vector<std::string> &categori
     std::string sql = "SELECT cat FROM flow GROUP BY cat";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryFlowCategoryList failed!.");
+        ServerLog::Error("Query flow category list failed!.");
         return false;
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryFlowCategoryList. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query flow category list. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     while (resultSet->Next()) {
@@ -1116,12 +1118,12 @@ std::vector<uint64_t> TextTraceDatabase::QueryAllTrackIdsByPid(std::string pid)
     std::string sql = "Select track_id AS trackId from " + threadTable + " where pid = ? ;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryAllTrackIdsByPid failed!.");
+        ServerLog::Error("Query all track ids by pid failed!.");
         return trackIds;
     }
     auto resultSet = stmt->ExecuteQuery(pid);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryAllTrackIdsByPid. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query all track ids by pid. Failed to get result set.", stmt->GetErrorMessage());
         return trackIds;
     }
     while (resultSet->Next()) {
@@ -1188,12 +1190,12 @@ void TextTraceDatabase::QueryFlowPointByCategory(FlowCategoryEventsParams &param
     std::string sql = QUERY_FLOWCATEGORY_EVENTS_FAST_SQL;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryFlowCategoryEvents failed!.");
+        ServerLog::Error("Query flow category events failed!.");
         return;
     }
     auto resultSet = stmt->ExecuteQuery(params.category);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryFlowCategoryEvents. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query flow category events. Failed to get result set.", stmt->GetErrorMessage());
         return;
     }
     while (resultSet->Next()) {
@@ -1214,12 +1216,12 @@ void TextTraceDatabase::QueryAllFlagSlice(std::unordered_map<std::string, uint32
     std::string sql = QUERY_FLAG_SLICE_SQL;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryAllFlagSlice failed!.");
+        ServerLog::Error("Query all flag slice failed!.");
         return;
     }
     auto resultSet = stmt->ExecuteQuery(trackId);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryAllFlagSlice. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query all flag slice. Failed to get result set.", stmt->GetErrorMessage());
         return;
     }
     SliceQuery sliceQuery;
@@ -1241,12 +1243,12 @@ bool TextTraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, ui
     std::string sql = QUERY_UNIT_COUNTER_SQL;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryUnitCounter failed!.");
+        ServerLog::Error("Query unit counter failed!.");
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(minTimestamp, params.pid, params.threadName, params.startTime, params.endTime);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryUnitCounter. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query unit counter. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     while (resultSet->Next()) {
@@ -1266,7 +1268,7 @@ bool TextTraceDatabase::QueryComputeStatisticsData(const Protocol::SummaryStatis
     int index = bindStartIndex;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("QueryComputeStatisticsData failed!. ", sqlite3_errmsg(db));
+        ServerLog::Error("Query compute statistics data failed!. ", sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         return false;
     }
@@ -1302,7 +1304,7 @@ bool TextTraceDatabase::QueryCommunicationStatisticsData(const Protocol::Summary
     std::string sql = TextSqlConstant::GetCommunicationStatisticsSql(requestParams.stepId);
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("QueryCommunicationStatisticsData failed!. ", sqlite3_errmsg(db));
+        ServerLog::Error("Query communication statistics data failed!. ", sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         return false;
     }
@@ -1338,7 +1340,7 @@ bool TextTraceDatabase::QueryStepDuration(const std::string &stepId, uint64_t &m
     int index = bindStartIndex;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("QueryStepDuration failed!. ", sqlite3_errmsg(db));
+        ServerLog::Error("Query step duration failed!. ", sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         return false;
     }
@@ -1368,20 +1370,20 @@ bool TextTraceDatabase::QuerySystemViewData(const Protocol::SystemViewParams &re
     const LayerStatData &data = QueryLayerData(requestParams.layer, searchName);
     double layerOperatorTime = data.allOperatorTime;
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
+        ServerLog::Error("Query system view data an SQL injection attack.");
         return false;
     }
     std::string sql = TextSqlConstant::GetQueryPythonViewDataSql(requestParams.order, requestParams.orderBy);
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QuerySystemViewData, fail to prepare sql.");
+        ServerLog::Error("Query system view data, fail to prepare sql.");
         return false;
     }
     auto resultSet =
         stmt->ExecuteQuery(layerOperatorTime, searchName, requestParams.layer, requestParams.pageSize, offset);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryFlowCategoryEvents. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query system view data. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     while (resultSet->Next()) {
@@ -1408,12 +1410,12 @@ LayerStatData TextTraceDatabase::QueryLayerData(const std::string &layer, const 
     std::string sql = QUERY_LAYER_DATA_SQL;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryLayerOperatorTime, fail to prepare sql.");
+        ServerLog::Error("Query layer operator time, fail to prepare sql.");
         return layerStatData;
     }
     auto resultSet = stmt->ExecuteQuery(name, layer);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryLayerData. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query layer operator time. Failed to get result set.", stmt->GetErrorMessage());
         return layerStatData;
     }
     if (resultSet->Next()) {
@@ -1429,12 +1431,12 @@ std::vector<std::string> TextTraceDatabase::QueryCoreType()
     std::string sql = QUERY_QUERY_TYPE_SQL;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryCoreType, fail to prepare sql.");
+        ServerLog::Error("Query core type, fail to prepare sql.");
         return acceleratorCoreList;
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryCoreType. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query core type. Failed to get result set.", stmt->GetErrorMessage());
         return acceleratorCoreList;
     }
     while (resultSet->Next()) {
@@ -1466,7 +1468,7 @@ uint64_t TextTraceDatabase::QueryTotalKernel(const Protocol::KernelDetailsParams
     }
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryTotalKernel, fail to prepare sql.");
+        ServerLog::Error("Query total kernel, fail to prepare sql.");
         return total;
     }
     if (!requestParams.coreType.empty()) {
@@ -1474,7 +1476,7 @@ uint64_t TextTraceDatabase::QueryTotalKernel(const Protocol::KernelDetailsParams
     }
     auto resultSet = stmt->ExecuteQuery();
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryTotalKernel. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query total kernel. Failed to get result set.", stmt->GetErrorMessage());
         return total;
     }
     if (resultSet->Next()) {
@@ -1487,7 +1489,7 @@ bool TextTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
                                               Protocol::KernelDetailsBody &responseBody, uint64_t minTimestamp)
 {
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
+        ServerLog::Error("Query kernel detail data is an SQL injection attack");
         return false;
     }
     std::string sql = TextSqlConstant::GetKernelDetailSql(requestParams.order, requestParams.orderBy,
@@ -1495,7 +1497,7 @@ bool TextTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryKernelDetailData, fail to prepare sql.");
+        ServerLog::Error("Query kernel detail data, fail to prepare sql.");
         return false;
     }
     if (!requestParams.coreType.empty()) {
@@ -1504,7 +1506,7 @@ bool TextTraceDatabase::QueryKernelDetailData(const Protocol::KernelDetailsParam
     std::string searchName = "%" + requestParams.searchName + "%";
     auto resultSet = stmt->ExecuteQuery(requestParams.pageSize, offset);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryKernelDepthAndThread. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query kernel detail data. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     TraceDatabaseHelper::SetKernelDetailHelpler(std::move(resultSet), minTimestamp, responseBody);
@@ -1522,7 +1524,7 @@ bool TextTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &
     std::string sql = "SELECT id, track_id FROM " + sliceTable + " WHERE name = ? AND timestamp > ? AND timestamp < ?";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryKernelDepthAndThread, fail to prepare sql.");
+        ServerLog::Error("Query kernel depth and thread, fail to prepare sql.");
         return false;
     }
     std::unique_ptr<SqliteResultSet> resultSet;
@@ -1532,12 +1534,12 @@ bool TextTraceDatabase::QueryKernelDepthAndThread(const Protocol::KernelParams &
     } else if (UINT64_MAX - timestamp > tolerance) {
         resultSet = stmt->ExecuteQuery(params.name, timestamp - tolerance, timestamp + tolerance);
     } else {
-        ServerLog::Error("QueryKernelDepthAndThread, The minTimestamp is out of the valid range.");
+        ServerLog::Error("Query kernel depth and thread, The minTimestamp is out of the valid range.");
         return false;
     }
 
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryKernelDepthAndThread. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query kernel depth and thread. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     uint64_t trackId = 0;
@@ -1565,12 +1567,12 @@ OneKernelData TextTraceDatabase::QueryKernelTid(const uint64_t trackId)
     auto stmt = CreatPreparedStatement(sql);
     OneKernelData oneKernel;
     if (stmt == nullptr) {
-        ServerLog::Error("QueryKernelTid, fail to prepare sql.");
+        ServerLog::Error("Query kernel tid, fail to prepare sql.");
         return oneKernel;
     }
     auto resultSet = stmt->ExecuteQuery(trackId);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryKernelTid. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query kernel tid. Failed to get result set.", stmt->GetErrorMessage());
         return oneKernel;
     }
     if (resultSet->Next()) {
@@ -1586,20 +1588,20 @@ bool TextTraceDatabase::QueryThreadSameOperatorsDetails(const Protocol::UnitThre
     uint64_t startTime = requestParams.startTime + minTimestamp;
     uint64_t endTime = requestParams.endTime + minTimestamp;
     if (!StringUtil::CheckSqlValid(requestParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", requestParams.orderBy);
+        ServerLog::Error("There is an SQL injection attack");
         return false;
     }
     std::string sql = TextSqlConstant::GetThreadSameOperatorsDetailsSql(requestParams.order, requestParams.orderBy);
     uint64_t offset = (requestParams.current - 1) * requestParams.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("QueryThreadSameOperatorsDetails. Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Query thread same operators details. Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     auto resultSet =
         stmt->ExecuteQuery(requestParams.name, traceId, endTime, startTime, requestParams.pageSize, offset);
     if (resultSet == nullptr) {
-        ServerLog::Error("QueryThreadSameOperatorsDetails. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Query thread same operators details. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     while (resultSet->Next()) {
@@ -1630,12 +1632,12 @@ uint64_t TextTraceDatabase::SameOperatorsCount(const std::string &name, int64_t 
         " WHERE name = ? AND track_id = ? AND timestamp <= ? AND timestamp + duration >= ?;";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("Fail to prepare sql for SameOperatorsCount.", sqlite3_errmsg(db));
+        ServerLog::Error("Fail to prepare sql for same operators count.", sqlite3_errmsg(db));
         return total;
     }
     auto resultSet = stmt->ExecuteQuery(name, trackId, endTime, startTime);
     if (resultSet == nullptr) {
-        ServerLog::Error("SameOperatorsCount. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("same operators count. Failed to get result set.", stmt->GetErrorMessage());
         return total;
     }
     if (resultSet->Next()) {
@@ -1650,12 +1652,12 @@ bool TextTraceDatabase::QueryAffinityOptimizer(const Protocol::KernelDetailsPara
     std::string sql = TextSqlConstant::QueryAffinityOptimizerSql(optimizers, params.orderBy, params.order);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("Fail to prepare sql for QueryAffinityOptimizer.", sqlite3_errmsg(db));
+        ServerLog::Error("Fail to prepare sql for query affinity optimizer.", sqlite3_errmsg(db));
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(minTimestamp);
     if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for QueryAffinityOptimizer.", stmt->GetErrorMessage());
+        ServerLog::Error("Failed to get result set for query affinity optimizer.", stmt->GetErrorMessage());
         return false;
     }
     while (resultSet->Next()) {
@@ -1681,12 +1683,12 @@ bool TextTraceDatabase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetails
     std::string sql = TextSqlConstant::GenerateAICpuQuerySql(replace, params, dataType);
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("Fail to prepare sql for AICpuOpExceedThreshold.");
+        ServerLog::Error("Fail to prepare sql for AI cpu op exceed threshold.");
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(minTimestamp, AICPU_OP_DURATION_THRESHOLD / THOUSAND);
     if (resultSet == nullptr) {
-        ServerLog::Error("Failed to get result set for AICpuOpExceedThreshold.", stmt->GetErrorMessage());
+        ServerLog::Error("Failed to get result set for AI cpu op exceed threshold.", stmt->GetErrorMessage());
         return false;
     }
     while (resultSet->Next()) {
@@ -1723,12 +1725,12 @@ bool TextTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSlicePar
     uint64_t offset = (params.current - 1) * params.pageSize;
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("SearchAllSlicesDetails failed!.");
+        ServerLog::Error("Search all slices details failed!.");
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(params.searchContent, params.pageSize, offset);
     if (resultSet == nullptr) {
-        ServerLog::Error("SearchAllSlicesDetails. Failed to get result set.", stmt->GetErrorMessage());
+        ServerLog::Error("Search all slices details. Failed to get result set.", stmt->GetErrorMessage());
         return false;
     }
     while (resultSet->Next()) {

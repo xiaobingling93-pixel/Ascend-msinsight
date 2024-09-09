@@ -35,7 +35,7 @@ const Controller = styled.div`
   display: flex;
   align-items: center;
   text-align: center;
-  background: ${(props): string => props.theme.bgColorLight};
+  background: ${(props): string => props.theme.bgColorCommon};
   border-radius: 4px;
   padding: 1px 6px;
   margin-left: 8px;

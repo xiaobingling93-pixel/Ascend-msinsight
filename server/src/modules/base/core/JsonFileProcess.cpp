@@ -11,7 +11,7 @@ std::vector<std::pair<int64_t, int64_t>> JsonFileProcess::SplitFile(const std::s
 {
     std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::in | std::ios::binary);
     if (!file.is_open()) {
-        Dic::Server::ServerLog::Error("Failed to open json file. ", filePath);
+        Dic::Server::ServerLog::Error("Split file failed to open json file. ");
         return {};
     }
     std::vector<std::pair<int64_t, int64_t>> result = GetSplitPosition(file);

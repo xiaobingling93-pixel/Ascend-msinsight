@@ -51,7 +51,6 @@ std::string EventUtil::Type(const json_t &json)
 std::unique_ptr<Event> EventUtil::FromJson(const json_t &json, const std::string &type)
 {
     if (type.empty()) {
-        ServerLog::Warn("Can't find the type. json:", JsonUtil::JsonDump(json));
         return nullptr;
     }
     std::optional<EventUtil::JsonToEventFunc> func = GetJsonToEventFunc(type);
@@ -64,7 +63,6 @@ std::unique_ptr<Event> EventUtil::FromJson(const json_t &json, const std::string
 std::optional<EventUtil::JsonToEventFunc> EventUtil::GetJsonToEventFunc(const std::string &type)
 {
     if (jsonToEventFactory.count(type) == 0) {
-        ServerLog::Warn("The json to event function is not found. type:", type);
         return std::nullopt;
     }
     return jsonToEventFactory[type];
@@ -138,19 +136,6 @@ std::unique_ptr<Event> EventUtil::ToMetaDataEvent(const json_t &json)
 }
 
 std::unique_ptr<Event> EventUtil::ToFlowEvent(const json_t &json)
-{
-    std::unique_ptr<Flow> event = std::make_unique<Flow>();
-    event->type = Type(json);
-    event->ts = NumberUtil::TimestampUsToNs(JsonUtil::GetLongDouble(json, "ts"));
-    event->tid = JsonUtil::GetDumpString(json, "tid");
-    event->pid = JsonUtil::GetDumpString(json, "pid");
-    event->flowId = JsonUtil::GetDumpString(json, "id");
-    event->name = JsonUtil::GetString(json, "name");
-    event->cat = JsonUtil::GetOptionalString(json, "cat");
-    return event;
-}
-
-std::unique_ptr<Event> EventUtil::ToSimulationFlowEvent(const json_t &json)
 {
     std::unique_ptr<Flow> event = std::make_unique<Flow>();
     event->type = Type(json);

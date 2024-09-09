@@ -24,12 +24,15 @@ const Container = styled.div<Partial<MIDescriptionsProps>>`
 `;
 
 const Item = styled.div<Partial<MIDescriptionsItemProps>>`
+    max-width: 400px;
     color: ${(props): string => props.theme.textColorPrimary};
+    white-space: pre-wrap;
     .label{
         color: ${(props): string => props.theme.textColorTertiary};
         margin-bottom: 4px;
     }
     .content{
+        word-break: break-all;
         font-size: 16px;
     }
 `;

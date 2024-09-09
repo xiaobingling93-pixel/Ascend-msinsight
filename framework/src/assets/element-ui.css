@@ -18,12 +18,14 @@ html.dark {
     --el-border-color-lighter: var(--mi-border-color-lighter);
     --el-border-color-extra-light: var(--mi-border-color-extra-light);
     --el-font-family: var(--mi-font-family);
+    --el-menu-horizontal-height: var(--header-height);
 }
 
 .el-dialog {
     --el-dialog-title-font-size: var(--el-font-size-medium);
     --el-dialog-padding-primary: 24px;
     --el-dialog-border-radius: var(--el-border-radius-base);
+    padding: 0;
 }
 .el-dialog__body {
     padding: var(--el-dialog-padding-primary);
@@ -31,6 +33,7 @@ html.dark {
 .el-dialog__header {
     padding-top: 16px;
     padding-bottom: 16px;
+    padding-left: 24px;
     border-bottom: 1px solid var(--el-border-color);
     margin-right: 0;
 }
@@ -42,6 +45,7 @@ html.dark {
 }
 .el-dialog__footer {
     text-align: center;
+    padding-bottom: var(--el-dialog-padding-primary);
 }
 
 .el-popper {
@@ -85,10 +89,10 @@ html.dark {
     content: '';
     position: absolute;
     bottom: 0;
-    width: calc(100% - 60px);
+    width: calc(100% - var(--el-menu-base-level-padding) * 2);
     height: 1px;
     background-color: #007aff;
-    left: 30px;
+    left: var(--el-menu-base-level-padding);
 }
 
 .el-menu-item:hover,

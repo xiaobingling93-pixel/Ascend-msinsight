@@ -9,14 +9,17 @@ import { ResizeTable } from 'ascend-resize';
 import { getSet, firstLetterUpper } from 'ascend-utils';
 import { LimitHit } from '../../LimitSet';
 import { CompareData } from '../../../utils/interface';
+import { Icondition } from './Filter';
+import { type Theme, useTheme } from '@emotion/react';
+import { getContextElement, renderExpandColumn } from '../../Common';
 
 interface Iprops {
-    blockId: string;
+    condition: Icondition;
     data: Array<CompareData<IblockData>>;
 }
 
 interface Iobj {
-    [x: string]: string;
+    [x: string]: string | Iobj[];
 }
 
 interface ItableConfig {
@@ -25,7 +28,9 @@ interface ItableConfig {
     dataset: Iobj[];
 }
 
-function getFullCols(blockType: string, blockTypeData: Array<CompareData<IblockData>>, t: TFunction): any[] {
+function getFullCols({ blockType, blockTypeData, t, setExpandedKeys, isCompared, theme }: {blockType: string;
+    blockTypeData: Array<CompareData<IblockData>>; t: TFunction; setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>;
+    isCompared: boolean; theme: Theme;}): any[] {
     const firstCol = {
         title: blockType?.toUpperCase(),
         dataIndex: 'name',
@@ -38,41 +43,74 @@ function getFullCols(blockType: string, blockTypeData: Array<CompareData<IblockD
             title: t(firstLetterUpper(item)),
             dataIndex: item,
             ellipsis: true,
-            render: (text: string): string | number => (isNaN(Number(text)) ? text : Number(text)),
+            render: (text: string, record: any): JSX.Element => getContextElement(text, record, theme),
         }
     ));
+    if (isCompared) {
+        restCols.push({
+            title: 'Details',
+            dataIndex: 'action',
+            ellipsis: true,
+            render: (text: string, record: any): JSX.Element => {
+                return renderExpandColumn(record, setExpandedKeys, t);
+            },
+        });
+        restCols.splice(0, 0, {
+            title: 'Source',
+            dataIndex: 'source',
+            ellipsis: true,
+            render: (text: string, record: any): JSX.Element => <div>{text}</div>,
+        });
+    }
     return [firstCol, ...restCols];
 }
 
-function Index({ blockId, data }: Iprops): JSX.Element {
+function getRowBaseData(data: IblockData): Iobj {
+    const dataObj: Iobj = {};
+    if (dataObj[data.name] === undefined) {
+        dataObj.name = data.name;
+    }
+    dataObj[data.unit] = data.value;
+    return dataObj;
+}
+
+function Index({ condition, data }: Iprops): JSX.Element {
     const [tablelist, setTablelist] = useState<ItableConfig[]>([]);
     const [limit, setLimit] = useState({ overlimit: false, maxSize: 5000, current: 0 });
     const { t } = useTranslation('details');
+    const theme = useTheme();
+    const [expandedRowKeys, setExpandedKeys] = React.useState<string[]>([]);
 
     const updateTable = (): void => {
-        const allData = data.filter(item => item.compare.blockId === blockId);
+        const allData = data.filter(item => item.compare.blockId === condition.blockId);
         setLimit({ ...limit, overlimit: allData.length > limit.maxSize, current: allData.length });
         const showData = allData.slice(0, limit.maxSize);
         // 按照blockType分表
         const blockTypeSet = getSet(getSet(showData, 'compare') as IblockData[], 'blockType') as string[];
         const dataGroupByBlockType = blockTypeSet.map(blockType => {
             const blockTypeData = showData.filter(item => item.compare.blockType === blockType);
-            const cols = getFullCols(blockType, blockTypeData, t);
-            const dataObj: Record<string, Iobj> = {};
-            blockTypeData.forEach(item => {
-                if (dataObj[item.compare.name] === undefined) {
-                    dataObj[item.compare.name] = { name: item.compare.name };
+            const cols = getFullCols(
+                { blockType, blockTypeData, t, setExpandedKeys, isCompared: condition.isCompared, theme });
+            const dataset: Iobj[] = blockTypeData.map(item => {
+                const compare: Iobj = getRowBaseData(item.compare);
+                if (!condition.isCompared) {
+                    return compare;
                 }
-                dataObj[item.compare.name][item.compare.unit] = item.compare.value;
+                compare.source = 'Compare';
+                const diff = getRowBaseData(item.diff);
+                const baseline = getRowBaseData(item.baseline);
+                diff.source = 'Difference';
+                baseline.source = 'Baseline';
+                diff.children = [compare, baseline] as Iobj[];
+                return diff;
             });
-            const dataset = Object.keys(dataObj).map(name => dataObj[name]);
             return { blockType, cols, dataset };
         });
         setTablelist(dataGroupByBlockType);
     };
     useEffect(() => {
         updateTable();
-    }, [blockId, data, t]);
+    }, [condition, data, t]);
     return (
         <div>
             {tablelist.length === 0 && (<div style={{ textAlign: 'center', color: 'var(--grey15) ' }}>No data</div>) }
@@ -82,9 +120,13 @@ function Index({ blockId, data }: Iprops): JSX.Element {
                     key={item.blockType}
                     size="small"
                     columns={item.cols ?? []}
-                    dataSource={item.dataset ?? []}
+                    dataSource={item.dataset.map((row, rowIndex) => { return { ...row, key: `${item.blockType}_${rowIndex}` }; })}
                     scroll={item.dataset.length > 10 ? { y: 500 } : undefined}
                     pagination={false}
+                    expandable={{
+                        expandIcon: () => <></>,
+                        expandedRowKeys,
+                    }}
                 />
             ))}
         </div>

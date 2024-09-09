@@ -61,6 +61,15 @@ struct SourceApiInstrResponse : public Response {
 struct TableRow {
     std::string name;
     std::vector<std::string> value;
+
+    void BaseInfoClone(const TableRow &row)
+    {
+        name = row.name;
+        value.clear();
+        for (size_t i = 0; i < row.value.size(); ++i) {
+            value.emplace_back("-");
+        }
+    }
 };
 
 template<typename R>
@@ -94,8 +103,15 @@ struct SubBlockUnitData {
     std::string blockType;
     std::string name;
     std::string unit;
-    std::string value;
-    std::string originValue;
+    std::string value = "-";
+    std::string originValue = "-";
+    void BaseInfoClone(const SubBlockUnitData &origin)
+    {
+        blockId = origin.blockId;
+        blockType = origin.blockType;
+        name = origin.name;
+        unit = origin.unit;
+    }
 };
 
 struct Roofline {
@@ -136,7 +152,7 @@ struct DetailsLoadInfoResponse : public Response {
 
 struct MemoryUnit {
     std::string memoryPath;
-    uint64_t request;
+    int64_t request = 0;
     std::string bandwidth;
     std::string peakRatio;
     bool display;
@@ -172,6 +188,18 @@ struct MemoryTable {
     std::string tableOpType;
     std::vector<TableDetail<CompareData<TableRow>>> tableDetail;
     std::vector<std::string> advice;
+
+    void FillBaseInfoFromCompare()
+    {
+        for (auto &item: tableDetail) {
+            for (auto &row: item.row) {
+                TableRow &baseline = row.baseline;
+                baseline.BaseInfoClone(row.compare);
+                TableRow &diff = row.diff;
+                diff.BaseInfoClone(row.compare);
+            }
+        }
+    }
 };
 struct DetailsMemoryGraphResBody {
     std::vector<MemoryGraph> coreMemory;
@@ -193,23 +221,23 @@ struct DetailsMemoryTableResponse : public Response {
 
 template<typename T>
 struct DetailsInterCoreLoadDimension {
-    T value = 0;
+    CompareData<T> value;
     int level = 0;
 };
 
 struct DetailsInterCoreLoadSubCoreDetail {
     static const uint8_t maxLevel = 10;
     std::string subCoreName;
-    DetailsInterCoreLoadDimension<uint64_t> cycles;
-    DetailsInterCoreLoadDimension<uint64_t> throughput;
-    DetailsInterCoreLoadDimension<float> cacheHitRate;
+    DetailsInterCoreLoadDimension<uint64_t> cycles = {{0, 0, 0}};
+    DetailsInterCoreLoadDimension<uint64_t> throughput = {{0, 0, 0}};
+    DetailsInterCoreLoadDimension<float> cacheHitRate = {{0, 0, 0}};
 
     void SetCyclesDimension(uint64_t curCycles, uint64_t minCycles)
     {
         if (minCycles == 0 || curCycles < minCycles) { // 说明所有的cycles数据都为0
             return;
         }
-        cycles.value = curCycles;
+        cycles.value.compare = curCycles;
         // 比较当前cycle数和最小cycle数的差值，如果大于最小cycles数，那么level直接置为1
         uint64_t diff = curCycles - minCycles;
         if (diff >= minCycles) {
@@ -228,7 +256,7 @@ struct DetailsInterCoreLoadSubCoreDetail {
         if (minThroughput == 0) { // 说明所有的throughput数据都为0
             return;
         }
-        throughput.value = curThroughput;
+        throughput.value.compare = curThroughput;
         // 比较当前的throughput和最小的throughput的差值
         uint64_t diff = curThroughput - minThroughput;
         if (diff > minThroughput) {
@@ -248,7 +276,7 @@ struct DetailsInterCoreLoadSubCoreDetail {
         if (maxRate == 0) { // 说明所有的cache rate hit数据都为0
             return;
         }
-        cacheHitRate.value = curRate;
+        cacheHitRate.value.compare = curRate;
         // 比较当前的cache hit rate和最大的rate之间的差值，每减小10%，level由MAX_LEVEL减少1直到等于1
         cacheHitRate.level = maxLevel - (maxRate - curRate) * 10 / maxRate;
         if (cacheHitRate.level < 1) {

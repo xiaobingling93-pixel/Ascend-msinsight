@@ -78,10 +78,13 @@ public:
     void ConvertToData();
     int64_t GetSimulationPid(const std::string &fileId, const std::string &processName);
     int64_t GetSimulationTid(const std::string &fileId, const std::string &processName, const std::string &threadName);
-    bool GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInterCoreLoadGraphBody& responseBody);
+    bool GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInterCoreLoadGraphBody& responseBody, bool isBaseline);
     bool GetDetailsRoofline(Protocol::DetailsRooflineBody &responseBody);
     void SetFilePath(const std::string &inputFilePath);
     void SetBaselineFilePath(const std::string &inputFilePath);
+    bool IsBaselineParsed(const std::string &inputFilePath);
+    void SynchronizeBaselineInfo();
+    void ResetBaseline();
 
 private:
     std::string filePath;

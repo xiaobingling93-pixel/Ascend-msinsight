@@ -19,8 +19,9 @@ import {
     type tpData,
     type rankItem,
     getOpacity,
-    computeOpacity,
     getRankDataById,
+    computeRankDyeingData,
+    getRankDyeingData,
 } from './ContainerUtils';
 import connector from '../../connection';
 import styled from '@emotion/styled';
@@ -34,53 +35,86 @@ const RankContainer = styled.div`
     position: relative;
     max-height: 700px;
     overflow: auto;
-    margin-top: 40px;
+    margin-top: 10px;
+    padding-top: 5px;
+    background-color: ${(props): string => props.theme.rankContainerBackgroudColor};
 `;
 
 const RankItem = styled.div`
     text-align: center;
     &::before {
         display: block;
-        height: 33px;
-        width: 33px;
+        height: 32px;
+        width: 32px;
         content: "";
-        margin: 1px 21px;
         border-radius: 2px;
+        margin: 0 4px;
         position: absolute;
         background: rgb(255, 255, 255);
     }
-    .rankBase{
-        height: 35px;
-        width: 35px;
-        margin: 0 20px;
+    .rank, .rankDyeing {
+        height: 32px;
+        width: 32px;
         position: relative;
+        margin: 0 4px;
+        border-radius: 2px;
     }
     .rankDyeing {
-        background-color: #ff0000;
+        background-color: #F97611;
+    }
+    .rankId {
+        font-size: 8px;
+        width: 32px;
+        overflow: hide;
+        height: 14px;
+        margin: 0 4px;
     }
 `;
 
 const PpContainer = styled.div`
     display: flex;
     text-align: center;
-    padding: 16px;
+    padding: 8px 16px;
 `;
 
 const DpContainer = styled.div`
     position: relative;
     display: flex;
     text-align: center;
-    padding: 0 16px;
 `;
 
 const TpContainer = styled.div`
     display: flex;
     text-align: center;
-    padding: 16px;
-    margin: 0 10px;
+    padding: 12px 8px 6px 8px;
+    margin: 0 8px;
     background-color: ${(props): string => props.theme.rankBackgroudColor};
     border-radius: 2px;
-    box-shadow: 0px 2px 4px 0px;
+    box-shadow: ${(props): string => props.theme.rankBackgroudColor} 0px 2px 4px 0px;
+`;
+
+const Legend = styled.div`
+    height: 20px;
+    .legendContainer {
+        display: flex;
+        padding-top: 20px;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        .legendItem {
+            display: flex;
+            height: 12px;
+            line-height: 12px;
+            margin: 0 12px;
+            .legendColor {
+                width: 12px;
+                margin-right: 4px;
+            }
+            .legendLabel {
+                font-size: 12px;
+            }
+        }
+    }
 `;
 
 interface parallelStrategyType {
@@ -229,12 +263,12 @@ export async function getDefaultCommunicatorData(): Promise<communicatorContaine
 }
 
 const CommunicatorContent = observer(({ session, ranksData, showRank }: { session: Session; ranksData: ppData[]; showRank: boolean }) => {
-    const [dyeingMode, setDyeingMode] = useState('Unstained');
+    const [dyeingMode, setDyeingMode] = useState('None');
     const svg = select('#parallelDrawLineSVG');
     const onClick = (e: React.MouseEvent<any>): void => {
         e.stopPropagation();
         const target = e.target as HTMLElement;
-        if (target.nodeName === 'DIV' && target.className.includes('rankBase')) {
+        if (target.className.includes('rank') || target.className.includes('rankDyeing')) {
             const site = target.getAttribute('site')?.split(' ').map(Number);
             if (site !== undefined) {
                 transformLine(svg, site);
@@ -261,10 +295,10 @@ const CommunicatorContent = observer(({ session, ranksData, showRank }: { sessio
         <>
             { (showRank && ranksData.length > 0) && <ParallelSwitch session={session} onChange={onChange} setDyeingMode={setDyeingMode}/> }
             <RankContainer onClick={(e): void => onClick(e)} >
-                <svg id='parallelDrawLineSVG' style={{ position: 'absolute', pointerEvents: 'none', zIndex: 10 }}></svg>
+                <svg id="parallelDrawLineSVG" style={{ position: 'absolute', pointerEvents: 'none', zIndex: 10 }}></svg>
                 {
                     showRank &&
-                    <div style={{ paddingBottom: '40px' }}>
+                    <div style={{ paddingBottom: '5px' }}>
                         {
                             ranksData.map(item => (
                                 <Pp key={item.key} ppData={item.values} session={session} dyeingMode={dyeingMode}></Pp>
@@ -273,17 +307,41 @@ const CommunicatorContent = observer(({ session, ranksData, showRank }: { sessio
                     </div>
                 }
             </RankContainer>
+            { (showRank && ranksData.length > 0) && <LegendContainer/> }
         </>
     );
 });
+
+const LegendContainer = (): JSX.Element => {
+    const { t } = useTranslation('summary');
+    const legendList = [
+        { label: 'Pipeline Parallel', color: '#0277FF' },
+        { label: 'Tensor Parallel', color: '#01CEB0' },
+        { label: 'Data Parallel', color: '#6948C9' },
+    ];
+    return (
+        <Legend>
+            <div className="legendContainer">
+                {
+                    legendList.map(item => (
+                        <div className="legendItem" key={item.label}>
+                            <div className="legendColor" style={{ backgroundColor: item.color }}></div>
+                            <div className="legendLabel">{t(item.label)}</div>
+                        </div>
+                    ))
+                }
+            </div>
+        </Legend>
+    );
+};
 
 const RankFloatContainer = ({ rankId, session }: { rankId: number; session: Session }): JSX.Element => {
     const { t } = useTranslation('summary');
     const order = [{ value: 'prepareTime', title: 'Preparing', unit: 'μs' },
         { value: 'computingTime', title: 'Total Computing', unit: 'μs' },
         { value: 'pureComputingTime', title: 'Pure Computing', unit: 'μs' },
-        { value: 'communicationOverLappedTime', title: 'Communication(Not Overlapped)', unit: 'μs' },
-        { value: 'communicationNotOverLappedTime', title: 'Communication(Overlapped)', unit: 'μs' },
+        { value: 'communicationOverLappedTime', title: 'Communication(Overlapped)', unit: 'μs' },
+        { value: 'communicationNotOverLappedTime', title: 'Communication(Not Overlapped)', unit: 'μs' },
         { value: 'freeTime', title: 'Free', unit: 'μs' },
         { value: 'computeTimeRatio', title: 'Total Computing Ratio', unit: '%' },
         { value: 'communicationTimeRatio', title: 'Communication Ratio', unit: '%' }];
@@ -292,14 +350,14 @@ const RankFloatContainer = ({ rankId, session }: { rankId: number; session: Sess
         <>
             {
                 rankData !== undefined &&
-                <div className='rankData'>
-                    <div className='rankId'>rank {rankData.rankId}</div>
+                <div className="rankData">
+                    <div className="rankId">rank {rankData.rankId}</div>
                     {
                         order.map(item => (
                             rankData[item.value] !== 0 &&
-                            <div className='rankDataItem' key={item.value}>
-                                <div className='title'>{t(item.title)}</div>
-                                <div className='value'>{`${rankData[item.value]} ${item.unit}`}</div>
+                            <div className="rankDataItem" key={item.value}>
+                                <div className="title">{t(item.title)}</div>
+                                <div className="value">{`${rankData[item.value]} ${item.unit}`}</div>
                             </div>
                         ))
                     }
@@ -313,31 +371,42 @@ const ParallelSwitch = ({ onChange, session, setDyeingMode }: { onChange: (name:
     setDyeingMode: (value: string) => void; session: Session; }): JSX.Element => {
     const { t } = useTranslation('summary');
     const [form] = Form.useForm();
+    const [selectOptions, setSelectOptions] = useState([] as any[]);
     const checkboxOptions = [
         { name: 'pipelineParallel', title: 'Pipeline Parallel' },
         { name: 'tensorParallel', title: 'Tensor Parallel' },
         { name: 'dataParallel', title: 'Data Parallel' },
     ];
-    const selectOptions = [
-        { value: 'None', label: t('None') },
-        { value: 'TotalComputingTime', label: t('Total Computing Ratio') },
-        { value: 'CommunicationTime', label: t('Communication Ratio') },
+    const selectOrder = [{ value: 'None', label: t('None') },
+        { value: 'prepareTime', label: t('Preparing') },
+        { value: 'computingTime', label: t('Total Computing') },
+        { value: 'pureComputingTime', label: t('Pure Computing') },
+        { value: 'communicationOverLappedTime', label: t('Communication(Overlapped)') },
+        { value: 'communicationNotOverLappedTime', label: t('Communication(Not Overlapped)') },
+        { value: 'freeTime', label: t('Free') },
     ];
-    useEffect(() => {
-        form.setFieldsValue({
-            dataParallel: false,
-            tensorParallel: false,
-            pipelineParallel: false,
-            dataType: 'None',
+    const initSelectOptions = (): void => {
+        const rankDyeingData = getRankDyeingData();
+        const res: any[] = [];
+        selectOrder.forEach(item => {
+            if (item.value === 'None' || rankDyeingData[item.value].max !== 0) {
+                res.push(item);
+            }
         });
+        setSelectOptions(res);
+    };
+    useEffect(() => {
+        form.setFieldsValue({ dataParallel: false, tensorParallel: false, pipelineParallel: false, dataType: 'None' });
         setDyeingMode('None');
-        computeOpacity(session.summaryList);
+        computeRankDyeingData(session.summaryList);
+        initSelectOptions();
     }, [session.ranksData]);
+    useEffect(() => { initSelectOptions(); }, [session.language]);
     return (
         <Form form={form} layout="inline">
             {
                 checkboxOptions.map(item => (
-                    <Form.Item name={item.name} label={t(item.title)} key={item.name} valuePropName='checked' style={{ marginRight: '40px' }}>
+                    <Form.Item name={item.name} label={t(item.title)} key={item.name} valuePropName="checked" style={{ marginRight: '40px' }}>
                         <Checkbox onChange={(e: CheckboxChangeEvent): void => { onChange(item.title, e.target.checked); }}></Checkbox>
                     </Form.Item>
                 ))
@@ -375,7 +444,7 @@ const Dp = ({ session, dpData, dyeingMode }: { session: Session; dpData: tpData[
 
 const Tp = ({ session, tpData, dyeingMode }: { session: Session; tpData: rankItem[]; dyeingMode: string }): JSX.Element => {
     return (
-        <TpContainer style={{ border: '2px white solid' }}>
+        <TpContainer>
             {
                 tpData.map(item => (
                     <Rank key={item.value} rank={item} session={session} dyeingMode={dyeingMode}></Rank>
@@ -387,19 +456,24 @@ const Tp = ({ session, tpData, dyeingMode }: { session: Session; tpData: rankIte
 
 const Rank = ({ session, rank, dyeingMode }: { session: Session; rank: rankItem; dyeingMode: string }): JSX.Element => {
     const ref = useRef(null);
+    const [isDyeing, setIsDyeing] = useState(false);
+    const opacity = getOpacity(rank.value, dyeingMode);
     useEffect(() => {
         if (ref.current !== null) {
             (ref.current as HTMLElement).setAttribute('site', rank.site.join(' '));
             (ref.current as HTMLElement).setAttribute('rank-id', rank.value.toString());
         }
     }, [session.ranksData]);
+    useEffect(() => {
+        setIsDyeing((dyeingMode !== 'None' && opacity > 0));
+    }, [dyeingMode]);
     return (
         <RankItem>
             <Tooltip title={(<RankFloatContainer rankId={rank.value} session={session}/>)} placement="bottom">
-                <div className={`rankBase ${dyeingMode === 'None' ? 'rank' : 'rankDyeing'}`} ref={ref}
-                    style={{ opacity: getOpacity(rank.value, dyeingMode) }}/>
-                <div style={{ fontSize: '16px', width: '70px', overflow: 'hide', height: '18.84px' }}>rank {rank.value}</div>
+                <div className={`${isDyeing ? 'rankDyeing' : 'rank'}`} ref={ref}
+                    style={{ opacity: isDyeing ? opacity : 1 }}/>
             </Tooltip>
+            <div className={'rankId'}>{rank.value}</div>
         </RankItem>
     );
 };

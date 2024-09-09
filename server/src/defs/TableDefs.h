@@ -46,10 +46,10 @@ namespace Dic {
 
     // cluster db table
     const static std::string TABLE_STEP_TRACE_TIME = "ClusterStepTraceTime";
-    const static std::string TABLE_COMM_ANALYZER_TIME = "ClusterCommAnalyzerTime";
-    const static std::string TABLE_COMM_ANALYZER_BANDWIDTH = "ClusterCommAnalyzerBandwidth";
-    const static std::string TABLE_COMM_ANALYZER_MATRIX = "ClusterCommAnalyzerMatrix";
-    const static std::string TABLE_COMM_GROUP = "CommunicationGroup";
+    const static std::string TABLE_COMM_ANALYZER_TIME = "ClusterCommunicationTime";
+    const static std::string TABLE_COMM_ANALYZER_BANDWIDTH = "ClusterCommunicationBandwidth";
+    const static std::string TABLE_COMM_ANALYZER_MATRIX = "ClusterCommunicationMatrix";
+    const static std::string TABLE_COMM_GROUP = "CommunicationGroupMapping";
     const static std::string TABLE_CLUSTER_BASE_INFO = "ClusterBaseInfo";
 
     // database version

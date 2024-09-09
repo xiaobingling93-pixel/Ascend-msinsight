@@ -82,7 +82,7 @@ const CoreChart = observer(({ condition, data }:
     useEffect(() => {
         const newDrawData = getDrawData({ data, maxSize: limit.maxSize, ...condition });
         setDrawData(newDrawData);
-    }, [data, condition.showAs]);
+    }, [data, condition]);
     return <Container>
         {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`${t('Current Count')} (${limit.current})`}/>}
         <div className={'chart-box'}>

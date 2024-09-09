@@ -38,8 +38,8 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
     const [condition, setCondition] = useState(defaultCondition);
     const { t } = useTranslation('details');
 
-    const getBaseInfo = async (): Promise<void> => {
-        const res = await queryComputeWorkload();
+    const getBaseInfo = async (isCompared: boolean): Promise<void> => {
+        const res = await queryComputeWorkload({ isCompared });
         const renderData = {
             blockIdList: res?.blockIdList ?? [],
             chartData: res?.chartData?.detailDataList ?? [],
@@ -60,18 +60,18 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
             }, 200);
             return;
         }
-        getBaseInfo();
-    }, [session.updateId, session.parseStatus]);
+        getBaseInfo(session.dirInfo.isCompare);
+    }, [session.updateId, session.parseStatus, session.dirInfo]);
     useEffect(() => {
         runInAction(() => {
             session.blockIdList = data.blockIdList;
         });
     }, [data.blockIdList]);
     return (
-        <CollapsiblePanel title={t('ComputeWorkloadAnalysis')}>
-            <Filter handleFilterChange={handleFilterChange} blockIdList={data.blockIdList}/>
-            <ComputeWorkloadChart blockId={condition.blockId} data={data.chartData}/>
-            <ComputeWorkloadTable blockId={condition.blockId} data={data.tableData}/>
+        <CollapsiblePanel title={t('ComputeWorkloadAnalysis')} collapsible>
+            <Filter handleFilterChange={handleFilterChange} blockIdList={data.blockIdList} session={session}/>
+            <ComputeWorkloadChart condition={condition} data={data.chartData}/>
+            <ComputeWorkloadTable condition={condition} data={data.tableData}/>
         </CollapsiblePanel>
     );
 });

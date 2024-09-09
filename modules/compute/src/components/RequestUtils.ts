@@ -37,8 +37,8 @@ export const queryApiInstr = async(): Promise<any> => {
  *
  * @return {[x:string]:string|number}
  */
-export const queryBaseInfo = async(): Promise<any> => {
-    return window.requestData('source/details/baseInfo', { isCompared: false });
+export const queryBaseInfo = async(param: { isCompared: boolean }): Promise<any> => {
+    return window.requestData('source/details/baseInfo', param);
 };
 
 /**
@@ -46,8 +46,8 @@ export const queryBaseInfo = async(): Promise<any> => {
  *
  * @return {[x:string]:string|number}
  */
-export const queryComputeWorkload = async(): Promise<any> => {
-    return window.requestData('source/details/computeworkload', { isCompared: false });
+export const queryComputeWorkload = async(param: { isCompared: boolean }): Promise<any> => {
+    return window.requestData('source/details/computeworkload', param);
 };
 
 /**
@@ -127,8 +127,8 @@ export const queryMemoryGraph = async(param: { blockId: string; isCompared: bool
  *     }]
  * }
  */
-export const queryCoreOccupancy = async(): Promise<any> => {
-    return window.requestData('source/details/interCoreLoadAnalysis', {});
+export const queryCoreOccupancy = async(isCompared: boolean): Promise<any> => {
+    return window.requestData('source/details/interCoreLoadAnalysis', { isCompared });
 };
 
 export const queryRoofline = async(): Promise<IRooflineData> => {

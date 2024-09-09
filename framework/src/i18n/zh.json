@@ -32,7 +32,8 @@
         "Unset as Comparison Data": "取消设置对比数据",
         "Set Comparison Data Out Of Range": "设置对比数据超出范围",
         "Set baseline first": "请先设置baseline！",
-        "Baseline Conflict": "不能将基线数据和对比数据设置为同一卡"
+        "Baseline Conflict": "不能将基线数据和对比数据设置为同一卡",
+        "PathNotFound": "未找到路径为 '{{path}}' 的文件"
     },
     "tabs": {
         "Timeline": "时间线",

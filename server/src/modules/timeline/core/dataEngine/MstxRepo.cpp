@@ -15,14 +15,14 @@ void MstxRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
     if (database == nullptr) {
-        ServerLog::Warn("mstx open database is failed, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("mstx open database is failed");
         return;
     }
     std::string sql =
         "SELECT ROWID as id, startNs, endNs from " + TABLE_MSTX_EVENTS + " where globalTid = ? order by startNs , id";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Warn("Failed to parpare mstx query all slice, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("Failed to parpare mstx query all slice");
         return;
     }
     stmt->BindParams(trackInfo.processId);
@@ -68,13 +68,13 @@ void MstxRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::v
     sql += sliceidvecStr + ");";
     auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
     if (database == nullptr) {
-        ServerLog::Warn("mstx open database is failed, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("mstx open database is failed");
         return;
     }
     const std::string nameKey = database->GetDbPath();
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Warn("Failed to parpare mstx query slice by ids, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("Failed to parpare mstx query slice by ids");
         return;
     }
     auto resultSet = stmt->ExecuteQuery();

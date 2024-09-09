@@ -9,6 +9,7 @@
 #include "DataBaseManager.h"
 #include "SourceFileParser.h"
 #include "TraceTime.h"
+#include "BaselineManager.h"
 #include "ParserBin.h"
 
 namespace Dic {
@@ -89,7 +90,7 @@ std::vector<std::pair<std::string, std::string>> ParserBin::GetSimulationTraceFi
     std::vector<std::pair<std::string, std::string>> files;
     std::string fileId = GetFileId(selectFilePath, selectFilePath);
     if (fileId.empty()) {
-        ServerLog::Error("File id is empty. file:", selectFilePath);
+        ServerLog::Error("File id is empty");
         return files;
     }
     files.emplace_back(selectFilePath, fileId);
@@ -121,16 +122,25 @@ void ParserBin::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &p
         return;
     }
     std::string filePath = projectInfos[0].parseFilePathInfos[0].parseFilePath;
-    std::string dbPath = FileUtil::GetDbPath(filePath, baselineInfo.rankId);
-    if (!DataBaseManager::Instance().CreatConnectionPool(baselineInfo.rankId, dbPath)) {
-        ServerLog::Error("Failed to create connection pool. fileId:", baselineInfo.rankId, ". path:", dbPath);
+    std::string fileId = GetFileId(filePath, filePath);
+    std::string dbPath = FileUtil::GetDbPath(filePath, fileId);
+    baselineInfo.rankId = fileId;
+    baselineInfo.cardName = "baseline" + fileId;
+    Global::BaselineManager::Instance().SetBaselineInfo(baselineInfo);
+    if (!DataBaseManager::Instance().CreatConnectionPool(fileId, dbPath)) {
+        ServerLog::Error("Fail to create connection pool, fileId:", fileId, ", path:", dbPath, '.');
         return;
     }
     Source::SourceFileParser &sourceFileParser = Source::SourceFileParser::Instance();
+    // 如果文件已经被解析则直接返回
+    if (sourceFileParser.IsBaselineParsed(filePath)) {
+        sourceFileParser.SynchronizeBaselineInfo();
+        return;
+    }
     // 只需要对比timeline和details页面内容，因此不需要对source相关的内容做处理
     if (sourceFileParser.CheckOperatorBinary(filePath)) {
         sourceFileParser.SetBaselineFilePath(filePath);
-        sourceFileParser.Parse(std::vector<std::string>(), baselineInfo.rankId, filePath);
+        sourceFileParser.Parse(std::vector<std::string>(), fileId, filePath);
     }
 }
 } // Module

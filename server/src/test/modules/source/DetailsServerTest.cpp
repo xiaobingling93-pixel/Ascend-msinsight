@@ -52,7 +52,7 @@ TEST_F(DetailsServerTest, QueryDetailsLoadInfoWithBaseline)
     EXPECT_EQ(res, true);
     EXPECT_EQ(response.body.chartData.detailDataList.size(), NUMBER_TWELVE);
     EXPECT_EQ(response.body.chartData.detailDataList[0].diff.name, "Vector All Active1");
-    EXPECT_EQ(response.body.chartData.detailDataList[0].diff.value, "0.000");
+    EXPECT_EQ(response.body.chartData.detailDataList[0].diff.value, "0");
     EXPECT_EQ(response.body.tableData.detailDataList.size(), NUMBER_SIXTY_EIGHT);
 }
 

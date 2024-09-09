@@ -21,6 +21,7 @@ import {ProjectErrorType} from '@/utils/enmus';
 import {useLoading} from '@/hooks/useLoading';
 import {type UpdateProjectExplorerParam} from '@/stores/resourceComp';
 import {useCompareConfig} from '@/stores/compareConfig';
+import {LocalStorageKeys, localStorageService} from '@/utils/local-storage';
 
 const mergeDataSource = (dataSources: Ref<DataSource[]>, dataSource: DataSource, isConflict: boolean): boolean => {
     const idx = dataSources.value.findIndex((item) =>
@@ -111,6 +112,9 @@ export const useDataSources = defineStore('dataSources', () => {
             return;
         }
         await compareConfig.cancelBaselineData();
+        if (dataSource.dataPath.length > 0) {
+            localStorageService.setItem(LocalStorageKeys.LAST_FILE_PATH, dataSource.dataPath[0]);
+        }
         if (isExistedRemote(dataSource)) {
             addDataPath(dataSource, action, isConflict);
         } else {

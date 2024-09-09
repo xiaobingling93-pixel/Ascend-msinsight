@@ -174,6 +174,7 @@ const FilterCom = observer(({ session }: {session: Session}): JSX.Element => {
                         style={{ width: 250 }}
                         onChange={(val: string): void => handleChange('host', val)}
                         options={optionMap.hostsOptions}
+                        disabled={condition.isCompare}
                     />
                     )}/>
                 : <div></div>

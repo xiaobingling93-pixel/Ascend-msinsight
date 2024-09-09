@@ -230,7 +230,6 @@ bool ParserJson::isSimulation(std::string filePath)
         }
         contentStart++;
     }
-    ServerLog::Info("Import first file header is: ", headerString);
     if (headerString.find("profilingType") != std::string::npos && headerString.find("op") != std::string::npos) {
         return true;
     }
@@ -307,7 +306,7 @@ std::vector<std::string> ParserJson::FindAllTraceFile(const std::string &path, s
     }
     auto files = FindTraceFile(path, error);
     if (files.empty()) {
-        ServerLog::Warn("Can't find trace file in path:", path);
+        ServerLog::Warn("Can't find trace file");
     }
     traceFiles.insert(traceFiles.end(), files.begin(), files.end());
     return traceFiles;
@@ -388,7 +387,6 @@ void ParserJson::FindAscendFolder(const std::string &path, std::vector<std::stri
 {
     std::string traceFilePath = FileUtil::SplicePath(path, ASCEND_PROFILER_OUTPUT);
     traceFilePath = FileUtil::SplicePath(traceFilePath, "trace_view.json");
-    ServerLog::Info("FindAscendFolder. ", traceFilePath);
     // 检查traceFilePath是否存在
     if (FileUtil::CheckDirAccess(traceFilePath, 0)) {
         traceFiles.emplace_back(traceFilePath);

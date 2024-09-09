@@ -36,15 +36,15 @@ TEST_F(InterCoreLoadTest, test_GetInterCoreLoadAnalysisInfo_with_normal_json)
     EXPECT_STREQ(subCoreDetail.subCoreName.c_str(), "cube0");
     uint64_t cycles = 135938;
     int cycleLevel = 10;
-    EXPECT_EQ(subCoreDetail.cycles.value, cycles);
+    EXPECT_EQ(subCoreDetail.cycles.value.compare, cycles);
     EXPECT_EQ(subCoreDetail.cycles.level, cycleLevel);
     float throughput = 256;
     int throughputLevel = 10;
-    EXPECT_FLOAT_EQ(subCoreDetail.throughput.value, throughput);
+    EXPECT_FLOAT_EQ(subCoreDetail.throughput.value.compare, throughput);
     EXPECT_EQ(subCoreDetail.throughput.level, throughputLevel);
     float hitRate = 63.994083f;
     int hitRateLevel = 10;
-    EXPECT_FLOAT_EQ(subCoreDetail.cacheHitRate.value, hitRate);
+    EXPECT_FLOAT_EQ(subCoreDetail.cacheHitRate.value.compare, hitRate);
     EXPECT_EQ(subCoreDetail.cacheHitRate.level, hitRateLevel);
 }
 

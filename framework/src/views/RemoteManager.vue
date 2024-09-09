@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import ImportLightIcon from '@/components/icons/import_light_icon.vue';
-import ImportDarkIcon from '@/components/icons/import_dark_icon.vue';
+import ImportIcon from '@/components/icons/import_icon.vue';
 import MenuTree from '@/components/MenuTree/MenuTree.vue';
 import { useDataSources } from '@/stores/dataSource';
 import ProjectMode from '@/components/ProjectMode.vue';
@@ -27,8 +26,7 @@ function addRemote(e: MouseEvent) {
     <div class="container">
         <div class="btn-import" @click="addRemote">
             <el-icon class="icon-button" :size="16">
-                <Import-dark-icon v-if="session.theme=='dark'"/>
-                <Import-light-icon v-else/>
+                <ImportIcon />
             </el-icon>
             <span>{{ ImportData }}</span>
         </div>
@@ -46,7 +44,8 @@ header {
     align-items: center;
     min-width: 80px;
     padding: 0 15px 0 5px;
-    background: var(--mi-bg-color-light);
+    background: var(--header-bg-color);
+    border-bottom: 1px solid var(--mi-bg-color-light);
 }
 
 
@@ -56,7 +55,7 @@ header {
     justify-content: center;
     padding: 8px;
     margin: 8px;
-    background: var(--mi-bg-color-light);
+    background: var(--mi-bg-color-common);
     border-radius: var(--mi-border-radius-small);
     cursor: pointer;
     font-size: 12px;

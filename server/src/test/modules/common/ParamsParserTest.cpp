@@ -87,6 +87,7 @@ TEST_F(ParamsParserTest, testWsSession)
     session->SendEvent(event1);
     Dic::Server::WsSessionManager::Instance().AddSession(std::move(session));
     auto getSession = Dic::Server::WsSessionManager::Instance().GetSession(ws);
+    getSession->Stop();
     Dic::Server::WsSessionManager::Instance().ClearSessions();
     Dic::Protocol::Event event("1");
     Dic::Server::WsSessionManager::Instance().OnEventByMainSession(event);

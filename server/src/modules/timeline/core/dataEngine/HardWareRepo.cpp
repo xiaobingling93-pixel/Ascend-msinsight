@@ -16,14 +16,14 @@ void HardWareRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQ
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
     if (database == nullptr) {
-        ServerLog::Warn("hardWare open database is failed, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("hardWare open database is failed");
         return;
     }
     std::string sql = "SELECT ROWID as id, startNs, endNs from " + TABLE_TASK +
         " where deviceId = ? and streamId = ? order by startNs , id";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Warn("Failed to parpare hardWare query all slice, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("Failed to parpare hardWare query all slice");
         return;
     }
     stmt->BindParams(trackInfo.rankId, trackInfo.threadId);
@@ -62,7 +62,7 @@ void HardWareRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const st
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(sliceQuery.rankId);
     if (database == nullptr) {
-        ServerLog::Warn("hardWare open database is failed, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("hardWare open database is failed");
         return;
     }
     const std::string nameKey = database->GetDbPath();
@@ -75,7 +75,7 @@ void HardWareRepo::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const st
     sql += sliceidvecStr + ");";
     auto stmt = database->CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Warn("Failed to parpare hardWare query slice by ids, rank is: ", sliceQuery.rankId);
+        ServerLog::Warn("Failed to parpare hardWare query slice by ids");
         return;
     }
     auto resultSet = stmt->ExecuteQuery();
