@@ -3,7 +3,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react';
-import { chartColors, COLOR, safeStr, useWatchDomResize } from 'ascend-utils';
+import { chartColors, COLOR, safeStr, useWatchDomResize, formatDeicimal } from 'ascend-utils';
 import i18n from 'ascend-i18n';
 import { cloneDeep } from 'lodash';
 import type { Point, IRooflineChart } from './Index';
@@ -174,13 +174,14 @@ export function getDigit(num: number, diff = 0): number {
 function getTooltipFormatter(): (p: any) => string {
     return (params: any) => {
         if (params.data !== undefined && params.seriesType === 'scatter') {
+            const keepDecimalNum = 3;
             const [, , bw, bwName, ratio, point] = params.data;
             return `<div>
         <div>${params.marker}${safeStr(bwName)}</div>
-        <div>${i18n.t('Bandwidth', { ns: 'details' })}: ${safeStr(bw)}TB/s</div>
-        <div>${i18n.t('Intensity', { ns: 'details' })}: ${safeStr(point[0])}Ops/Byte</div>
-        <div>${i18n.t('Performance', { ns: 'details' })}: ${safeStr(point[1])}TOps/s</div>
-        <div>${i18n.t('Performance Ratio', { ns: 'details' })}: ${Number((100 * ratio).toFixed(2))}%</div>
+        <div>${i18n.t('Bandwidth', { ns: 'details' })}: ${formatDeicimal(bw, keepDecimalNum)}TB/s</div>
+        <div>${i18n.t('Intensity', { ns: 'details' })}: ${formatDeicimal(point[0], keepDecimalNum)}Ops/Byte</div>
+        <div>${i18n.t('Performance', { ns: 'details' })}: ${formatDeicimal(point[1], keepDecimalNum)}TOps/s</div>
+        <div>${i18n.t('Performance Ratio', { ns: 'details' })}: ${formatDeicimal((100 * Number(ratio)), keepDecimalNum)}%</div>
         </div>`;
         } else {
             return '';
