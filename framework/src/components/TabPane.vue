@@ -369,8 +369,8 @@ function handleToggleLang(): void {
                 <SwitchTheme class="tool-item" />
                 <el-tooltip content="中文/English" effect="light">
                     <el-icon class="tool-item" @click="handleToggleLang">
-                        <LangEnIcon class="icon" v-if="isChinese" />
-                        <LangZhIcon class="icon" v-else />
+                        <LangZhIcon class="icon" v-if="isChinese" />
+                        <LangEnIcon class="icon" v-else />
                     </el-icon>
                 </el-tooltip>
 
