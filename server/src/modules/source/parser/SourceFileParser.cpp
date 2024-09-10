@@ -78,7 +78,7 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
         dataType = static_cast<int>(dataType);
         paddingLength = static_cast<int>(paddingLength);
         if (dataType == static_cast<int>(DataTypeEnum::SOURCE)) {
-            if (INT64_MAX - filePathLen < dataSize) {
+            if (static_cast<uint64_t>(INT64_MAX - filePathLen) < dataSize) {
                 // 溢出防护
                 ServerLog::Error("Source code data block in selected file is invalid which data size is :", dataSize);
                 return false;
