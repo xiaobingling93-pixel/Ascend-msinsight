@@ -766,34 +766,6 @@ void SourceFileParser::ConvertToData()
     file.close();
 }
 
-int64_t SourceFileParser::GetSimulationPid(const std::string &fileId, const std::string &processName)
-{
-    std::unique_lock<std::mutex> lock(processMutex);
-    if (simulationPidMap[fileId].count(processName) > 0) {
-        return simulationPidMap[fileId].at(processName);
-    }
-    if (pid == INT64_MAX) {
-        pid = 0;
-    }
-    simulationPidMap[fileId].emplace(processName, ++pid);
-    return pid;
-}
-
-int64_t SourceFileParser::GetSimulationTid(const std::string &fileId, const std::string &processName,
-    const std::string &threadName)
-{
-    std::unique_lock<std::mutex> lock(threadMutex);
-    auto item = std::make_pair(processName, threadName);
-    if (simulationTidMap[fileId].count(item) > 0) {
-        return simulationTidMap[fileId].at(item);
-    }
-    if (tid == INT64_MAX) {
-        tid = 0;
-    }
-    simulationTidMap[fileId].emplace(item, ++tid);
-    return tid;
-}
-
 void SourceFileParser::ConvertApiInstr(const std::string &jsonStr)
 {
     Document d;

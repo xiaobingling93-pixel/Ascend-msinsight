@@ -25,6 +25,7 @@ aux_source_directory(${TEST_HOME_DIR}/modules/operator/protocol TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/operator/handler TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/common TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/source TEST)
+aux_source_directory(${TEST_HOME_DIR}/modules/source/mockUtils TEST)
 aux_source_directory(${TEST_HOME_DIR}/modules/global TEST)
 
 aux_source_directory(${TEST_HOME_DIR}/performance PERFORMANCE_TEST)

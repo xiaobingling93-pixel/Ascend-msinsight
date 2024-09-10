@@ -76,8 +76,6 @@ public:
     bool GetDetailsMemoryTable(const std::string& targetBlockId, bool isBaseline,
                                Protocol::DetailsMemoryTableResBody &responseBody);
     void ConvertToData();
-    int64_t GetSimulationPid(const std::string &fileId, const std::string &processName);
-    int64_t GetSimulationTid(const std::string &fileId, const std::string &processName, const std::string &threadName);
     bool GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInterCoreLoadGraphBody& responseBody, bool isBaseline);
     bool GetDetailsRoofline(Protocol::DetailsRooflineBody &responseBody);
     void SetFilePath(const std::string &inputFilePath);
