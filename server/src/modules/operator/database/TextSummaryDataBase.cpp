@@ -539,7 +539,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     FROM " + kernelTable +
                 "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     GROUP by " + group +
-                "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
+                "     ORDER by total_time DESC LIMIT ?"
                 " ) subquery ";
 
         std::string baseNolimitSql =
@@ -628,6 +628,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
             sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
         }
         if (!reqParams.isCompare) {
+            sqlite3_bind_int64(stmt, index++, reqParams.topK);
             sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
             sqlite3_bind_int64(stmt, index++, reqParams.pageSize * (reqParams.current - 1));
         }
