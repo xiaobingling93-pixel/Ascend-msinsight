@@ -173,7 +173,7 @@ uint64_t TextSummaryDataBase::QueryMinStartTime()
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare sql for QueryMinStartTime.", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare sql for query minimum start time.", sqlite3_errmsg(db));
         return 0;
     }
     uint64_t min = 0;
@@ -235,7 +235,7 @@ std::string TextSummaryDataBase::GenSortSql(std::string orderBy, std::string ord
 {
     std::string orderBySql;
     if (!StringUtil::CheckSqlValid(orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", orderBy);
+        ServerLog::Error("There is an SQL injection attack on the parameter of orderBy to generate sort sql.");
         return orderBySql;
     }
     if (order == "descend") {
@@ -320,7 +320,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("QueryCommDetailHandler failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Query common detail failed! Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_int64(stmt, index++, startTime);
@@ -415,7 +415,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get Duration Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Duration Info. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
 
@@ -472,7 +472,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get Statistic Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Statistic Num. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
@@ -494,7 +494,8 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
             return "";
         }
         if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-            ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+            ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
+                             "to generate query statistic sql.");
         } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
@@ -538,7 +539,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     FROM " + kernelTable +
                 "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     GROUP by " + group +
-                "     ORDER by total_time DESC LIMIT " + std::to_string(reqParams.topK) +
+                "     ORDER by total_time DESC LIMIT ?"
                 " ) subquery ";
 
         std::string baseNolimitSql =
@@ -617,7 +618,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get Statistic Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Statistic Info. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
 
@@ -627,6 +628,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
             sqlite3_bind_text(stmt, index++, rankId.c_str(), rankId.length(), SQLITE_TRANSIENT);
         }
         if (!reqParams.isCompare) {
+            sqlite3_bind_int64(stmt, index++, reqParams.topK);
             sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
             sqlite3_bind_int64(stmt, index++, reqParams.pageSize * (reqParams.current - 1));
         }
@@ -667,7 +669,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get Detail Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Detail Total Num. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
@@ -734,7 +736,8 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         }
 
         if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-            ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+            ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
+                             "to generate query detail sql.");
         } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
@@ -754,7 +757,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get Detail Info. Cmd: ", sql, " Msg:", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Detail Info. Msg:", sqlite3_errmsg(db), " ", result);
             return false;
         }
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
@@ -846,7 +849,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get More Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get More Total Num. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
         int index = bindStartIndex;
@@ -889,15 +892,16 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
         for (const auto &filter: reqParams.filters) {
             if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
-                ServerLog::Error("There is an SQL injection attack on this parameter. param: (",
-                                 filter.first, ", ", filter.second, ")");
+                ServerLog::Error("There is an SQL injection attack on the parameter of filter"
+                                 "to generate query more info sql.");
                 return "";
             }
             sql += " AND " + filter.first + " LIKE '%" + filter.second + "%' ";
         }
 
         if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-            ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+            ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
+                             "to generate query more info sql.");
         } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
             sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
         }
@@ -922,7 +926,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get Op More Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Op More Info. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
         if (reqParams.current <= 0) {
@@ -988,8 +992,8 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         for (uint64_t index = 0; index < reqParams.filters.size(); index++) {
             std::pair<std::string, std::string> filter = reqParams.filters[index];
             if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
-                ServerLog::Error("There is an SQL injection attack on this parameter. param: (",
-                                 filter.first, ", ", filter.second, ")");
+                ServerLog::Error("There is an SQL injection attack on the parameter of filter"
+                                 "to generate query filters sql.");
                 return false;
             }
             if (index != 0) {

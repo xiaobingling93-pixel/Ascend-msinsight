@@ -133,7 +133,7 @@ namespace Dic::Module::Operator {
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
         std::vector<Protocol::OperatorDetailInfoRes> cmpRes;
         if (!database->QueryAllOperatorDetailInfo(request.params, cmpRes, response.level)) {
-            ServerLog::Error("[Operator]Failed to query currnet detail Info, RankId = ", rankId);
+            ServerLog::Error("[Operator]Failed to query current detail info by rankId.");
             return false;
         }
         if (request.params.topK == 0) {
@@ -144,7 +144,7 @@ namespace Dic::Module::Operator {
         std::vector<Protocol::OperatorDetailInfoRes> baselineRes;
         request.params.rankId = "";
         if (!databaseBaseline->QueryAllOperatorDetailInfo(request.params, baselineRes, response.level)) {
-            ServerLog::Error("[Operator]Failed to query baseline detail Info, RankId = ", baselineId);
+            ServerLog::Error("[Operator]Failed to query baseline detail Info by baselineId.");
             return false;
         }
         std::vector<Protocol::OperatorDetailCmpInfoRes> fullCmpData;
@@ -164,7 +164,7 @@ namespace Dic::Module::Operator {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
         if (!database->QueryOperatorDetailInfo(request.params, response)) {
-            ServerLog::Error("[Operator]Failed to query detail Info, RankId = ", rankId);
+            ServerLog::Error("[Operator]Failed to query detail Info by rankId");
             return false;
         }
         return true;

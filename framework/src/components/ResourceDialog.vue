@@ -59,7 +59,7 @@ const addClickProtect = (func: () => void): void => {
 const handleConfirm = async () => {
     loadingMask.open({});
     const result = await resourceComp.value.doCheckFileVallid(props.projectName);
-    if (result != ProjectErrorType.NO_ERRORS) {
+    if (result !== ProjectErrorType.NO_ERRORS) {
       loadingMask.close();
       dialogCoverVisible.value = true;
       projectCheckResult.value = result;

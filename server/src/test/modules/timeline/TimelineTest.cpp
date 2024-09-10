@@ -96,9 +96,9 @@ TEST_F(TestSuit, QueryLayerOperatorTimeWithOverlap)
 
     const Dic::Module::Timeline::LayerStatData &data = database->QueryLayerData("Overlap Analysis", "%%");
 #ifdef WIN32
-    int expectSize = 445796394;
+    int expectSize = 292195067;
 #else
-    int expectSize = 445796392;
+    int expectSize = 292195067;
 #endif
     EXPECT_EQ(lround(data.allOperatorTime), expectSize);
 }

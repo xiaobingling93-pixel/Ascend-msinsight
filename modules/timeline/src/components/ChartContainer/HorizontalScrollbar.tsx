@@ -24,25 +24,6 @@ const Scroller = styled.div<ScrollerProps>`
     left: ${(props): number => props.leftLaneInfoWidth}px;
     bottom: 0;
     z-index: 2;
-
-    &::-webkit-scrollbar {
-        height: 7px;
-        transition: opacity 120ms ease-out;
-    }
-
-    &::-webkit-scrollbar:hover {
-        cursor: pointer;
-    }
-
-    &::-webkit-scrollbar-track {
-        background-color: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background-color: rgba(127, 127, 127, .5);
-        border-radius: 5px;
-        transition: .3s background-color;
-    }
 `;
 
 interface ScrollBarProps {

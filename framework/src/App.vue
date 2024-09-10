@@ -101,11 +101,11 @@ function resize(deltaX: number, width: number) {
                 @click="handleDisplayAside"
             >
                 <template v-if="displayAside">
-                    <ArrowLeftDarkIcon v-if="session.theme=='dark'"/>
+                    <ArrowLeftDarkIcon v-if="session.theme==='dark'"/>
                     <ArrowLeftLightIcon v-else/>
                 </template>
                 <template v-else>
-                    <ArrowRightDarkIcon v-if="session.theme=='dark'"/>
+                    <ArrowRightDarkIcon v-if="session.theme==='dark'"/>
                     <ArrowRightLightIcon v-else/>
                 </template>
             </div>

@@ -63,17 +63,15 @@ Protocol::RooflineGraph RooflineParserImpl::ParseRooflineData(const json_t &item
 
 Protocol::Roofline RooflineParserImpl::ParseRoofline(const json_t &item)
 {
-    constexpr int precision = 2;
     Protocol::Roofline roofline;
-    roofline.bw = NumberUtil::StrReservedNDigits(JsonUtil::GetString(item, "bw"), precision);
+    roofline.bw = JsonUtil::GetString(item, "bw");
     roofline.bwName = JsonUtil::GetString(item, "bw_name");
-    roofline.computility = NumberUtil::StrReservedNDigits(JsonUtil::GetString(item, "computility"), precision);
+    roofline.computility = JsonUtil::GetString(item, "computility");
     roofline.computilityName = JsonUtil::GetString(item, "computility_name");
     auto point = JsonUtil::GetVector<std::string>(item, "point");
     constexpr int pointSizeLimit = 2;
     if (point.size() == pointSizeLimit) {
-        roofline.point = {NumberUtil::StrReservedNDigits(point[0], precision),
-                          NumberUtil::StrReservedNDigits(point[1], precision)};
+        roofline.point = point;
     }
     roofline.ratio = JsonUtil::GetString(item, "ratio");
     return roofline;

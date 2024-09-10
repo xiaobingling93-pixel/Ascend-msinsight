@@ -4,6 +4,8 @@ import { onMounted, ref } from 'vue';
 import { LocalStorageKeys, localStorageService } from '@/utils/local-storage';
 import connector from '@/connection';
 import {useSession} from '@/stores/session';
+import ThemeLightIcon from '@/components/icons/theme_light.vue';
+import ThemeDarkIcon from '@/components/icons/theme_dark.vue';
 
 const { session, setSession } = useSession();
 
@@ -43,13 +45,20 @@ function handleThemeChange(isDark: boolean) {
 
 <template>
     <el-tooltip :content="SwitchTheme" effect="light">
-        <el-switch class="switch-theme" v-model="isDarkTheme" @change="handleThemeChange"></el-switch>
+        <el-switch class="switch-theme" v-model="isDarkTheme" @change="handleThemeChange">
+            <template #active-action>
+                <ThemeDarkIcon />
+            </template>
+            <template #inactive-action>
+                <ThemeLightIcon />
+            </template>
+        </el-switch>
     </el-tooltip>
 </template>
 
 <style scoped>
 .switch-theme {
-    --el-switch-off-color: var(--mi-bg-color-dark);
-    --el-switch-on-color: var(--mi-bg-color-dark);
+    --el-switch-off-color: var(--mi-border-color-lighter);
+    --el-switch-on-color: var(--mi-border-color-lighter);
 }
 </style>

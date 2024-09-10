@@ -11,7 +11,7 @@ const [DataManager] =  useWatchTranslation(['Data Manager']);
 <template>
   <div class="projectMode">
     <el-icon class="projectModeIcon" :size="16">
-        <ProjectDarkIcon v-if="session.theme=='dark'"/>
+        <ProjectDarkIcon v-if="session.theme==='dark'"/>
         <ProjectLightIcon v-else/>
     </el-icon>
     <span class="modeName">{{ DataManager }}</span>

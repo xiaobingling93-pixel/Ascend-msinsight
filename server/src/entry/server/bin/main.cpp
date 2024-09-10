@@ -5,6 +5,7 @@
 #include "SocketUtil.h"
 #include "WsServer.h"
 #include "ProjectExplorerManager.h"
+#include "JupyterServerManager.h"
 
 using namespace std;
 using namespace Dic;
@@ -66,6 +67,7 @@ int main(int argc, const char *argv[])
     }
     ServerLog::Initialize(option.logPath, option.logSize, option.logLevel, to_string(option.wsPort));
     Dic::Module::Global::ProjectExplorerManager::Instance().InitSystemMemoryDbPath(option.logPath);
+    Dic::Module::Jupyter::JupyterServerManager::Instance().InitJupyterLogPath(option.logPath);
     ParamsOptionInfo();
     StartServer(option);
     return 0;

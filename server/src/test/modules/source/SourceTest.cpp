@@ -229,7 +229,7 @@ TEST_F(SourceTest, GetRoofline)
     EXPECT_EQ(item.title, "Memory Unit(Cube)");
     int rooflineSize = 6;
     EXPECT_EQ(item.rooflines.size(), rooflineSize);
-    std::string expect = "18.44";
+    std::string expect = "18.440187454223633";
     EXPECT_EQ(item.rooflines[0].bw, expect);
     parser.Reset();
 }

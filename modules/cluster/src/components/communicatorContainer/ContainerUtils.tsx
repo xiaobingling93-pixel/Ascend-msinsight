@@ -294,21 +294,18 @@ export interface summaryListItem {
 };
 
 interface rankDyeingDataType {
-    [key: string]: { average: number; max: number };
+    [key: string]: { min: number; max: number };
 };
 
-let rankDyeingData: rankDyeingDataType = {};
+const rankDyeingData: rankDyeingDataType = {};
 let rankDataList: Array<summaryListItem & { pureComputingTime: number }> = [];
 
 export const computeRankDyeingData = (summaryList: summaryListItem[]): void => {
-    rankDyeingData = {
-        communicationNotOverLappedTime: { average: 0, max: 0 },
-        communicationOverLappedTime: { average: 0, max: 0 },
-        computingTime: { average: 0, max: 0 },
-        freeTime: { average: 0, max: 0 },
-        prepareTime: { average: 0, max: 0 },
-        pureComputingTime: { average: 0, max: 0 },
-    };
+    const keys = ['communicationNotOverLappedTime', 'communicationOverLappedTime',
+        'computingTime', 'freeTime', 'prepareTime', 'pureComputingTime'];
+    keys.forEach(key => {
+        rankDyeingData[key] = { min: Number.MAX_SAFE_INTEGER, max: 0 };
+    });
     rankDataList = [];
     let pureComputingTime = 0;
     summaryList.forEach(item => {
@@ -316,85 +313,40 @@ export const computeRankDyeingData = (summaryList: summaryListItem[]): void => {
             item.prepareTime = 0;
         }
         pureComputingTime = Number((item.computingTime - item.communicationOverLappedTime).toFixed(2));
+        const newItem: summaryListItem & { pureComputingTime: number } = {
+            ...item,
+            pureComputingTime,
+        };
         rankDataList.push({
             ...item,
             pureComputingTime,
         });
-        computeRankDyeingMax(rankDyeingData, item, pureComputingTime);
-        computeRankDyeingCount(rankDyeingData, item, pureComputingTime);
+        keys.forEach(key => {
+            rankDyeingData[key].max = Math.max(rankDyeingData[key].max, newItem[key]);
+            rankDyeingData[key].min = Math.min(rankDyeingData[key].min, newItem[key]);
+        });
     });
-    rankDyeingData.communicationNotOverLappedTime.average /= summaryList.length;
-    rankDyeingData.communicationOverLappedTime.average /= summaryList.length;
-    rankDyeingData.computingTime.average /= summaryList.length;
-    rankDyeingData.freeTime.average /= summaryList.length;
-    rankDyeingData.prepareTime.average /= summaryList.length;
-    rankDyeingData.pureComputingTime.average /= summaryList.length;
-};
-
-const computeRankDyeingMax = (dyeingData: rankDyeingDataType, item: summaryListItem, pureComputingTime: number): void => {
-    dyeingData.communicationNotOverLappedTime.max = Math.max(
-        dyeingData.communicationNotOverLappedTime.max,
-        item.communicationNotOverLappedTime,
-    );
-    dyeingData.communicationOverLappedTime.max = Math.max(
-        dyeingData.communicationOverLappedTime.max,
-        item.communicationOverLappedTime,
-    );
-    dyeingData.computingTime.max = Math.max(dyeingData.computingTime.max, item.computingTime);
-    dyeingData.freeTime.max = Math.max(dyeingData.freeTime.max, item.freeTime);
-    dyeingData.prepareTime.max = Math.max(dyeingData.prepareTime.max, item.prepareTime);
-    dyeingData.pureComputingTime.max = Math.max(dyeingData.pureComputingTime.max, pureComputingTime);
-};
-
-const computeRankDyeingCount = (dyeingData: rankDyeingDataType, item: summaryListItem, pureComputingTime: number): void => {
-    dyeingData.communicationNotOverLappedTime.average += item.communicationNotOverLappedTime;
-    dyeingData.communicationOverLappedTime.average += item.communicationOverLappedTime;
-    dyeingData.computingTime.average += item.computingTime;
-    dyeingData.freeTime.average += item.freeTime;
-    dyeingData.prepareTime.average += item.prepareTime;
-    dyeingData.pureComputingTime.average += pureComputingTime;
 };
 
 export const getRankDyeingData = (): rankDyeingDataType => {
     return rankDyeingData;
 };
 
-export const getOpacity = (rankId: number, dyeingMode: string): number => {
-    const rankData = rankDataList.find(item => item.rankId === rankId.toString());
-    let opacity = 0;
-    if (rankData === undefined) {
-        return opacity;
-    }
-    switch (dyeingMode) {
-        case 'prepareTime':
-            opacity = computeOpacity(rankData.prepareTime, rankDyeingData.prepareTime);
-            break;
-        case 'computingTime':
-            opacity = computeOpacity(rankData.computingTime, rankDyeingData.computingTime);
-            break;
-        case 'pureComputingTime':
-            opacity = computeOpacity(rankData.pureComputingTime, rankDyeingData.pureComputingTime);
-            break;
-        case 'communicationOverLappedTime':
-            opacity = computeOpacity(rankData.pureComputingTime, rankDyeingData.pureComputingTime);
-            break;
-        case 'communicationNotOverLappedTime':
-            opacity = computeOpacity(rankData.communicationNotOverLappedTime, rankDyeingData.communicationNotOverLappedTime);
-            break;
-        case 'freeTime':
-            opacity = computeOpacity(rankData.freeTime, rankDyeingData.freeTime);
-            break;
-        default:
-            opacity = 1;
-            break;
-    }
-    return opacity;
+interface RankDyeingStyle {
+    backgroundColor?: string;
+    opacity?: number;
 };
 
-export const computeOpacity = (rankDataValue: number, rankDyeingDataItem: { average: number; max: number }): number => {
-    return Number((
-        (rankDataValue - rankDyeingDataItem.average) / notZero(rankDyeingDataItem.max - rankDyeingDataItem.average)
-    ).toFixed(4));
+export const getOpacity = (rankId: number, dyeingMode: string, step: number): RankDyeingStyle => {
+    const rankData = rankDataList.find(item => item.rankId === rankId.toString()) ?? {} as summaryListItem & { pureComputingTime: number };
+    if (!Object.keys(rankData).includes(dyeingMode)) {
+        return {};
+    }
+    const ratio = (rankData[dyeingMode] - rankDyeingData[dyeingMode].min) / notZero(rankDyeingData[dyeingMode].min);
+    const level = Math.ceil(ratio / step);
+    return level < 5
+        ? { backgroundColor: '#24AB36', opacity: (5 - level) * 0.2 }
+        : { backgroundColor: '#E32020', opacity: (level - 5) * 0.2 };
 };
 
 export const getRankDataById = (rankId: number, summaryList: summaryListItem[]):

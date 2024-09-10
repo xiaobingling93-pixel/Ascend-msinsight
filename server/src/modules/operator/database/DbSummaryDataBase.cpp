@@ -91,7 +91,7 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
                       " WHERE TASKTYPE.value = ? ";
 
     if (!StringUtil::CheckSqlValid(request.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
+        ServerLog::Error("There is an SQL injection attack on the parameter of orderBy to generate compute sql.");
     } else if (!request.orderBy.empty() && !request.order.empty()) {
         sql += " ORDER by " + request.orderBy + " " + (request.order == "ascend" ? "ASC" : "DESC");
     }
@@ -133,7 +133,7 @@ bool DbSummaryDataBase::QueryOperatorDurationInfo(Protocol::OperatorDurationReqP
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to get Duration Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        ServerLog::Error("Failed to get Duration Info. Msg: ", sqlite3_errmsg(db), " ", result);
         return false;
     }
 
@@ -265,7 +265,8 @@ std::string DbSummaryDataBase::GenerateQueryStatisticSql(Protocol::OperatorStati
     }
 
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+        ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
+                         "to generate query statistic sql.");
     } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
     }
@@ -374,7 +375,7 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to get Detail Info. Cmd: ", sql, " Msg:", sqlite3_errmsg(db), " ", result);
+        ServerLog::Error("Failed to get Detail Info. Msg:", sqlite3_errmsg(db), " ", result);
         return false;
     }
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
@@ -430,7 +431,7 @@ bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqPara
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to get More Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        ServerLog::Error("Failed to get More Total Num. Msg: ", sqlite3_errmsg(db), " ", result);
         return false;
     }
     int index = bindStartIndex;
@@ -480,7 +481,8 @@ std::string DbSummaryDataBase::GenerateQueryMoreInfoSql(OperatorMoreInfoReqParam
     }
 
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+        ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
+                         "to generate query more info sql.");
     } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
     }
@@ -499,7 +501,7 @@ bool DbSummaryDataBase::QueryOperatorMoreInfo(OperatorMoreInfoReqParams &reqPara
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to get Op More Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        ServerLog::Error("Failed to get Op More Info. Msg: ", sqlite3_errmsg(db), " ", result);
         return false;
     }
     BindSqliteParam(stmt, reqParams);
@@ -566,7 +568,7 @@ bool DbSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPara
     int index = bindStartIndex;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("QueryCommDetailHandler failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Query common detail failed! Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_int64(stmt, index++, startTime);
@@ -606,7 +608,7 @@ std::string DbSummaryDataBase::GetCommSql(const CommunicationDetailParams& reque
                       " ) subquery ";
 
     if (!StringUtil::CheckSqlValid(request.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", request.orderBy);
+        ServerLog::Error("There is an SQL injection attack on the parameter of orderBy to get common sql.");
     } else if (!request.orderBy.empty() && !request.order.empty()) {
         sql += " ORDER by " + request.orderBy + " " + (request.order == "ascend" ? "ASC" : "DESC");
     }
@@ -619,7 +621,7 @@ std::string DbSummaryDataBase::GenerateQueryCategoryDurationSql(Protocol::Operat
 {
     OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
     if (operatorGroup == OperatorGroupConverter::OperatorGroup::UNKNOWN) {
-        ServerLog::Error("GenerateQueryCategoryDurationSql failed, unknown operator group.");
+        ServerLog::Error("Generate query category duration sql failed, unknown operator group.");
         return "";
     }
     bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
@@ -723,7 +725,7 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to get Detail Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        ServerLog::Error("Failed to get Detail Total Num. Msg: ", sqlite3_errmsg(db), " ", result);
         return false;
     }
     int index = bindStartIndex;
@@ -772,7 +774,8 @@ std::string DbSummaryDataBase::GenerateAllQueryDetailSql(OperatorStatisticReqPar
     }
 
     if (!StringUtil::CheckSqlValid(reqParams.orderBy)) {
-        ServerLog::Error("There is an SQL injection attack on this parameter. error param: ", reqParams.orderBy);
+        ServerLog::Error("There is an SQL injection attack on the parameter of orderBy"
+                         "to generate all query detail sql.");
     } else if (!reqParams.orderBy.empty() && !reqParams.order.empty()) {
         sql += " ORDER by " + reqParams.orderBy + " " + (reqParams.order == "ascend" ? "ASC" : "DESC");
     }
@@ -907,8 +910,8 @@ bool DbSummaryDataBase::GenerateQueryFiltersSql(T &reqParams, std::string &sql)
     for (size_t index = 0; index < reqParams.filters.size(); index++) {
         std::pair<std::string, std::string> filter = reqParams.filters[index];
         if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
-            ServerLog::Error("There is an SQL injection attack on this parameter. param: (",
-                             filter.first, ", ", filter.second, ")");
+            ServerLog::Error("There is an SQL injection attack on the parameter of filter"
+                             "to generate query filter sql.");
             return false;
         }
         if (index != 0) {
@@ -923,8 +926,8 @@ bool DbSummaryDataBase::GenerateQueryMoreInfoFilters(OperatorMoreInfoReqParams &
 {
     for (const auto &filter: reqParams.filters) {
         if (!StringUtil::CheckSqlValid(filter.first) || !StringUtil::CheckSqlValid(filter.second)) {
-            ServerLog::Error("There is an SQL injection attack on this parameter. param: (",
-                             filter.first, ", ", filter.second, ")");
+            ServerLog::Error("There is an SQL injection attack on the parameter of filter"
+                             "to generate query more info filters.");
             return false;
         }
         sql += " AND " + filter.first + " LIKE '%" + filter.second + "%' ";

@@ -7,6 +7,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form, InputNumber, Button, Select, Checkbox, Tooltip } from 'ascend-components';
 import { message } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 import _ from 'lodash';
 import eventBus, { useEventBus } from '../../utils/eventBus';
 import {
@@ -58,9 +59,6 @@ const RankItem = styled.div`
         position: relative;
         margin: 0 4px;
         border-radius: 2px;
-    }
-    .rankDyeing {
-        background-color: #F97611;
     }
     .rankId {
         font-size: 8px;
@@ -114,6 +112,21 @@ const Legend = styled.div`
                 font-size: 12px;
             }
         }
+    }
+`;
+
+const ColorScaleContainer = styled.div`
+    height: 20px;
+    line-height: 20px;
+    display: flex;
+    margin-top: 5px;
+    color: ${(props): string => props.theme.svgPlayBackgroundColor};
+    .colorScale {
+        width: 150px;
+        background-image: linear-gradient(to right, #24AB36, #ffffff, #E32020);
+    }
+    .colorScaleNum {
+        margin: 0 5px;
     }
 `;
 
@@ -264,6 +277,7 @@ export async function getDefaultCommunicatorData(): Promise<communicatorContaine
 
 const CommunicatorContent = observer(({ session, ranksData, showRank }: { session: Session; ranksData: ppData[]; showRank: boolean }) => {
     const [dyeingMode, setDyeingMode] = useState('None');
+    const [dyeingStep, setDyeingStep] = useState(0.03);
     const svg = select('#parallelDrawLineSVG');
     const onClick = (e: React.MouseEvent<any>): void => {
         e.stopPropagation();
@@ -284,16 +298,15 @@ const CommunicatorContent = observer(({ session, ranksData, showRank }: { sessio
     };
     useEventBus('activeCommunicator', (data) => {
         const selectCommunicator = data as communicator | undefined;
-        runInAction(() => {
-            session.activeCommunicator = selectCommunicator;
-        });
+        runInAction(() => { session.activeCommunicator = selectCommunicator; });
     });
     useEffect(() => {
         drawLineSVG(svg, ranksData, session.communicatorData.partitionModes);
     }, [ranksData]);
     return (
         <>
-            { (showRank && ranksData.length > 0) && <ParallelSwitch session={session} onChange={onChange} setDyeingMode={setDyeingMode}/> }
+            { (showRank && ranksData.length > 0) && <ParallelSwitch session={session} onChange={onChange}
+                setDyeingMode={setDyeingMode} dyeingMode={dyeingMode} setDyeingStep={setDyeingStep}/> }
             <RankContainer onClick={(e): void => onClick(e)} >
                 <svg id="parallelDrawLineSVG" style={{ position: 'absolute', pointerEvents: 'none', zIndex: 10 }}></svg>
                 {
@@ -301,7 +314,7 @@ const CommunicatorContent = observer(({ session, ranksData, showRank }: { sessio
                     <div style={{ paddingBottom: '5px' }}>
                         {
                             ranksData.map(item => (
-                                <Pp key={item.key} ppData={item.values} session={session} dyeingMode={dyeingMode}></Pp>
+                                <Pp key={item.key} ppData={item.values} session={session} dyeingMode={dyeingMode} dyeingStep={dyeingStep}></Pp>
                             ))
                         }
                     </div>
@@ -311,6 +324,20 @@ const CommunicatorContent = observer(({ session, ranksData, showRank }: { sessio
         </>
     );
 });
+
+const ColorScale = ({ dyeingMode }: { dyeingMode: string }): JSX.Element => {
+    const rankDyeingData = getRankDyeingData();
+    const colorScaleData = rankDyeingData[dyeingMode];
+    return (
+        (dyeingMode === 'None')
+            ? <></>
+            : <ColorScaleContainer>
+                <div className="colorScaleNum">{Number(colorScaleData.min.toFixed(2))}</div>
+                <div className="colorScale"></div>
+                <div className="colorScaleNum">{Number(colorScaleData.max.toFixed(2))}</div>
+            </ColorScaleContainer>
+    );
+};
 
 const LegendContainer = (): JSX.Element => {
     const { t } = useTranslation('summary');
@@ -367,37 +394,42 @@ const RankFloatContainer = ({ rankId, session }: { rankId: number; session: Sess
     );
 };
 
-const ParallelSwitch = ({ onChange, session, setDyeingMode }: { onChange: (name: string, checked: boolean) => void;
-    setDyeingMode: (value: string) => void; session: Session; }): JSX.Element => {
+const checkboxOptions = [
+    { name: 'pipelineParallel', title: 'Pipeline Parallel' },
+    { name: 'tensorParallel', title: 'Tensor Parallel' },
+    { name: 'dataParallel', title: 'Data Parallel' },
+];
+
+const selectOrder = [
+    { value: 'None', label: 'None' },
+    { value: 'prepareTime', label: 'Preparing' },
+    { value: 'computingTime', label: 'Total Computing' },
+    { value: 'pureComputingTime', label: 'Pure Computing' },
+    { value: 'communicationOverLappedTime', label: 'Communication(Overlapped)' },
+    { value: 'communicationNotOverLappedTime', label: 'Communication(Not Overlapped)' },
+    { value: 'freeTime', label: 'Free' },
+];
+
+const ParallelSwitch = ({ onChange, session, setDyeingMode, dyeingMode, setDyeingStep }:
+{ onChange: (name: string, checked: boolean) => void; setDyeingMode: (value: string) => void;
+    session: Session; dyeingMode: string; setDyeingStep: (value: number) => void; }): JSX.Element => {
     const { t } = useTranslation('summary');
     const [form] = Form.useForm();
     const [selectOptions, setSelectOptions] = useState([] as any[]);
-    const checkboxOptions = [
-        { name: 'pipelineParallel', title: 'Pipeline Parallel' },
-        { name: 'tensorParallel', title: 'Tensor Parallel' },
-        { name: 'dataParallel', title: 'Data Parallel' },
-    ];
-    const selectOrder = [{ value: 'None', label: t('None') },
-        { value: 'prepareTime', label: t('Preparing') },
-        { value: 'computingTime', label: t('Total Computing') },
-        { value: 'pureComputingTime', label: t('Pure Computing') },
-        { value: 'communicationOverLappedTime', label: t('Communication(Overlapped)') },
-        { value: 'communicationNotOverLappedTime', label: t('Communication(Not Overlapped)') },
-        { value: 'freeTime', label: t('Free') },
-    ];
     const initSelectOptions = (): void => {
         const rankDyeingData = getRankDyeingData();
         const res: any[] = [];
         selectOrder.forEach(item => {
             if (item.value === 'None' || rankDyeingData[item.value].max !== 0) {
-                res.push(item);
+                res.push({ value: item.value, label: t(item.label) });
             }
         });
         setSelectOptions(res);
     };
     useEffect(() => {
-        form.setFieldsValue({ dataParallel: false, tensorParallel: false, pipelineParallel: false, dataType: 'None' });
+        form.setFieldsValue({ dataParallel: false, tensorParallel: false, pipelineParallel: false, dataType: 'None', dyeingStep: 0.03 });
         setDyeingMode('None');
+        setDyeingStep(0.03);
         computeRankDyeingData(session.summaryList);
         initSelectOptions();
     }, [session.ranksData]);
@@ -414,50 +446,78 @@ const ParallelSwitch = ({ onChange, session, setDyeingMode }: { onChange: (name:
             <Form.Item name={'dataType'} label={t('Data Type')} style={{ marginRight: '40px' }} initialValue={'None'}>
                 <Select defaultValue="" style={{ width: '120px' }} onChange={(value: string): void => { setDyeingMode(value); }} options={selectOptions}/>
             </Form.Item>
+            {
+                dyeingMode !== 'None' && <Form.Item name={'dyeingStep'} label={(<DyeingTipAndLabel/>)} style={{ marginRight: '40px' }}>
+                    <InputNumber defaultValue={0.03} min={0.01} max={0.1} style={{ width: '120px' }} step={0.01} maxLength={4}
+                        onChange={(value): void => { setDyeingStep(value as number); }}/>
+                </Form.Item>
+            }
+            <ColorScale dyeingMode={dyeingMode}/>
         </Form>
     );
 };
 
-const Pp = ({ session, ppData, dyeingMode }: { session: Session; ppData: dpData[]; dyeingMode: string }): JSX.Element => {
+const DyeingTipAndLabel = (): JSX.Element => {
+    const { t } = useTranslation('summary');
+    const hit = t('DyeingTooltip', { returnObjects: true }) as string[];
+    return <div style={{ display: 'flex' }}>
+        <Tooltip overlayClassName={'width-auto'} placement="bottom"
+            title={
+                (
+                    <div style={{ padding: 10, whiteSpace: 'nowrap' }}>
+                        {
+                            hit?.map((item: string) => (
+                                <div key={item}>{item}</div>
+                            ))
+                        }
+                    </div>
+                )
+            }>
+            <QuestionCircleOutlined style={{ cursor: 'pointer' }}/>
+        </Tooltip>
+        <div style={{ marginLeft: 5 }}>{t('DyeingStep')}</div>
+    </div>;
+};
+
+const Pp = ({ session, ppData, dyeingMode, dyeingStep }: { session: Session; ppData: dpData[]; dyeingMode: string; dyeingStep: number }): JSX.Element => {
     return (
         <PpContainer id={'PpContainer'}>
             {
                 ppData.map(item => (
-                    <Dp key={item.key} dpData={item.values} session={session} dyeingMode={dyeingMode}></Dp>
+                    <Dp key={item.key} dpData={item.values} session={session} dyeingMode={dyeingMode} dyeingStep={dyeingStep}></Dp>
                 ))
             }
         </PpContainer>
     );
 };
 
-const Dp = ({ session, dpData, dyeingMode }: { session: Session; dpData: tpData[]; dyeingMode: string }): JSX.Element => {
+const Dp = ({ session, dpData, dyeingMode, dyeingStep }: { session: Session; dpData: tpData[]; dyeingMode: string; dyeingStep: number }): JSX.Element => {
     return (
         <DpContainer>
             {
                 dpData.map(item => (
-                    <Tp key={item.key} tpData={item.values} session={session} dyeingMode={dyeingMode}></Tp>
+                    <Tp key={item.key} tpData={item.values} session={session} dyeingMode={dyeingMode} dyeingStep={dyeingStep}></Tp>
                 ))
             }
         </DpContainer>
     );
 };
 
-const Tp = ({ session, tpData, dyeingMode }: { session: Session; tpData: rankItem[]; dyeingMode: string }): JSX.Element => {
+const Tp = ({ session, tpData, dyeingMode, dyeingStep }: { session: Session; tpData: rankItem[]; dyeingMode: string; dyeingStep: number }): JSX.Element => {
     return (
         <TpContainer>
             {
                 tpData.map(item => (
-                    <Rank key={item.value} rank={item} session={session} dyeingMode={dyeingMode}></Rank>
+                    <Rank key={item.value} rank={item} session={session} dyeingMode={dyeingMode} dyeingStep={dyeingStep}></Rank>
                 ))
             }
         </TpContainer>
     );
 };
 
-const Rank = ({ session, rank, dyeingMode }: { session: Session; rank: rankItem; dyeingMode: string }): JSX.Element => {
+const Rank = ({ session, rank, dyeingMode, dyeingStep }: { session: Session; rank: rankItem; dyeingMode: string; dyeingStep: number }): JSX.Element => {
     const ref = useRef(null);
-    const [isDyeing, setIsDyeing] = useState(false);
-    const opacity = getOpacity(rank.value, dyeingMode);
+    const [opacity, setOpacity] = useState({});
     useEffect(() => {
         if (ref.current !== null) {
             (ref.current as HTMLElement).setAttribute('site', rank.site.join(' '));
@@ -465,13 +525,13 @@ const Rank = ({ session, rank, dyeingMode }: { session: Session; rank: rankItem;
         }
     }, [session.ranksData]);
     useEffect(() => {
-        setIsDyeing((dyeingMode !== 'None' && opacity > 0));
-    }, [dyeingMode]);
+        setOpacity(getOpacity(rank.value, dyeingMode, dyeingStep));
+    }, [dyeingMode, dyeingStep]);
     return (
         <RankItem>
             <Tooltip title={(<RankFloatContainer rankId={rank.value} session={session}/>)} placement="bottom">
-                <div className={`${isDyeing ? 'rankDyeing' : 'rank'}`} ref={ref}
-                    style={{ opacity: isDyeing ? opacity : 1 }}/>
+                <div className={`${dyeingMode !== 'None' ? 'rankDyeing' : 'rank'}`} ref={ref}
+                    style={opacity}/>
             </Tooltip>
             <div className={'rankId'}>{rank.value}</div>
         </RankItem>

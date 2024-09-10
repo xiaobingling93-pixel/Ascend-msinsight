@@ -20,11 +20,11 @@ const int64_t MAX_CURRENT_PAGE = 10000000000;
 inline bool CheckPageValid(int64_t pageSize, int64_t currentPage, std::string &errorMsg)
 {
     if (pageSize <= MIN_PAGESIZE || pageSize > MAX_PAGESIZE) {
-        errorMsg = "pageSize:" + std::to_string(pageSize) + " is invaild";
+        errorMsg = "pagesize: " + std::to_string(pageSize) + " is invalid";
         return false;
     }
     if (currentPage <= MIN_CURRENT_PAGE || currentPage > MAX_CURRENT_PAGE) {
-        errorMsg = "currentPage" + std::to_string(currentPage) + " is invaild";
+        errorMsg = "current page: " + std::to_string(currentPage) + " is invalid";
         return false;
     }
     return true;

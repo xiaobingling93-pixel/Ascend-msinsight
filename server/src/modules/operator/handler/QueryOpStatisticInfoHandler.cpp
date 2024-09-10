@@ -115,7 +115,7 @@ namespace Dic::Module::Operator {
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
         std::vector<Protocol::OperatorStatisticInfoRes> compareRes;
         if (!database->QueryAllOperatorStatisticInfo(request.params, compareRes)) {
-            ServerLog::Error("[Operator]Failed to query current Statistic Info, RankId = ", rankId);
+            ServerLog::Error("[Operator]Failed to query current Statistic Info by rankId.");
             return false;
         }
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
@@ -123,7 +123,7 @@ namespace Dic::Module::Operator {
         std::vector<Protocol::OperatorStatisticInfoRes> baselineRes;
         request.params.rankId = "";
         if (!databaseBaseline->QueryAllOperatorStatisticInfo(request.params, baselineRes)) {
-            ServerLog::Error("[Operator]Failed to query baseline Statistic Info, RankId = ", baselineId);
+            ServerLog::Error("[Operator]Failed to query baseline Statistic Info by baselineId.");
             return false;
         }
         std::vector<Protocol::OperatorStatisticCmpInfoRes> res;
@@ -143,7 +143,7 @@ namespace Dic::Module::Operator {
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
         if (!database->QueryOperatorStatisticInfo(request.params, response)) {
-            ServerLog::Error("[Operator]Failed to query Statistic Info, RankId = ", rankId);
+            ServerLog::Error("[Operator]Failed to query Statistic Info by rankId.");
             return false;
         }
         return true;

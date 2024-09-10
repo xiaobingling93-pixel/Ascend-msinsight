@@ -180,7 +180,7 @@ void WsSession::Send(const std::string &message)
     if (channel != nullptr) {
         channel->send(message, uWS::OpCode::TEXT, false);
     } else {
-        ServerLog::Error("Channel is null, so that message can not be sent.");
+        ServerLog::Error("Channel is null, so that message cannot be sent.");
     }
 }
 

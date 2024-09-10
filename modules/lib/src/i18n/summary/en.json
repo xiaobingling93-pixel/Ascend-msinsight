@@ -70,6 +70,12 @@
     "ProhibitConfiguration": "The data collected by the system cannot be manually configured",
     "NoDataTip": "The original collected data doesn't contain the parallelism strategy configuration parameters. Please configure the parameters",
     "Data Type": "Data Type",
-    "None": "None"
+    "None": "None",
+    "DyeingStep": "Step",
+    "DyeingTooltip": [
+      "Calculate based on the minimum value",
+      "Divide the data into 10 levels based on accuracy",
+      "The greener the color, the lower the level; the redder the color, the higher the level"
+    ]
   }
 }

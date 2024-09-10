@@ -30,6 +30,7 @@ public:
     bool Start(const std::string& path);
     bool IsJupyterRunning();
     bool ResetUnderRootPath(const std::string& path);
+    void InitJupyterLogPath(const std::string &filePath);
 
 private:
     JupyterServerManager();
@@ -43,7 +44,7 @@ private:
     JupyterServerInfo jupyterServerInfo;
     std::shared_ptr<std::thread> jupyterThread;
     FILE *pipe;
-    const std::string jupyterLogPath = "./jupyter.log";
+    std::string jupyterLogPath;
     static const int maxRetryTimes = 5;
     const std::string jupyterUrlReg =
             R"(^(?:([a-z]+):\/\/)?([a-z0-9.-]+)(?::(\d+))?(\/[^?#]*)?$)";

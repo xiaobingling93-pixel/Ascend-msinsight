@@ -128,7 +128,7 @@ bool FileUtil::CheckPathValid(const std::string &path)
     }
  
     if (!CheckDirAccess(dir, R_OK)) {
-        Server::ServerLog::Error("The path have no read access. path: ", dir);
+        Server::ServerLog::Error("The path has no read access. path: ", dir);
         return false;
     }
     return true;

@@ -5,7 +5,7 @@ import { console } from '@/utils/console';
 export enum LocalStorageKeys {
     LANGUAGE = 'language',
     THEME = 'theme',
-    LAST_FILE_PATH = '',
+    LAST_FILE_PATH = 'last_file_path',
 }
 
 class LocalStorageService {

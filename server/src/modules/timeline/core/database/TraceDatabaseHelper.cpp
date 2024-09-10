@@ -233,12 +233,11 @@ std::unique_ptr<SqliteResultSet> TraceDatabaseHelper::QuerySystemViewData(
         orderBy = " ORDER BY " + requestParams.orderBy + " ASC";
     }
     std::string mainSql;
-    auto sql = " total as (select sum(duration) as totalTime, count(distinct name) as num from main) "
-       " select name, round(sum(duration)*100.0/total.totalTime, 4) as time, sum(duration) / 1000.0 as totalTime, "
-       "       count(1) as numberCalls, round(avg(duration) / 1000.0, 2) as avg, min(duration) / 1000.0 as min, "
-       "       max(duration) / 1000.0 as max, total.num from main join total group by name ";
+    auto sql = " total as (select sum(case when name != 'Communication' then duration else 0 end) as totalTime, "
+     " count(distinct name) as num from main) select name, round(sum(duration)*100.0/total.totalTime, 4) as time, "
+     "sum(duration) / 1000.0 as totalTime, count(1) as numberCalls, round(avg(duration) / 1000.0, 2) as avg, "
+     "min(duration) / 1000.0 as min, max(duration) / 1000.0 as max, total.num from main join total group by name ";
     auto limitSql = " limit ? offset ?";
-
     if (requestParams.layer == "Ascend Hardware") {
         mainSql = "with nameIds as ( select id, value as realName from STRING_IDS where lower(value) like ?),\n"
           "  main as (select coalesce(a.realName, b.realName) as name, endNs - startNs as duration from TASK task\n"
@@ -905,7 +904,7 @@ void TraceDatabaseHelper::QueryAllSliceInRangeByTrackIdHelper(std::unique_ptr<Sq
     summary.startTime = tempStartTime - minTimestamp;
     summary.duration = tempEndTime - tempStartTime;
     responseBody.data.emplace_back(summary);
-    ServerLog::Info("Summery Size is: ", responseBody.data.size());
+    ServerLog::Info("Summary Size is: ", responseBody.data.size());
 }
 
 void TraceDatabaseHelper::SetKernelDetailHelpler(std::unique_ptr<SqliteResultSet> resultSet, uint64_t minTimestamp,

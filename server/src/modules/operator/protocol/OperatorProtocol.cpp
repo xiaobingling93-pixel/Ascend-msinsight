@@ -40,7 +40,7 @@ namespace Dic::Protocol {
     {
         std::unique_ptr<OperatorCategoryInfoRequest> reqPtr = std::make_unique<OperatorCategoryInfoRequest>();
         if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-            error = "Failed to set request base info of Category Info, command is: " + reqPtr->command;
+            error = "Failed to set request base info of Category Info.";
             return nullptr;
         }
         JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
@@ -53,7 +53,7 @@ namespace Dic::Protocol {
     {
         std::unique_ptr<OperatorComputeUnitInfoRequest> reqPtr = std::make_unique<OperatorComputeUnitInfoRequest>();
         if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-            error = "Failed to set request base info of Compute Unit Info, command is: " + reqPtr->command;
+            error = "Failed to set request base info of Compute Unit Info.";
             return nullptr;
         }
         JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
@@ -66,7 +66,7 @@ namespace Dic::Protocol {
     {
         std::unique_ptr<OperatorStatisticInfoRequest> reqPtr = std::make_unique<OperatorStatisticInfoRequest>();
         if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-            error = "Failed to set request base info of Statistic Info, command is: " + reqPtr->command;
+            error = "Failed to set request base info of Statistic Info.";
             return nullptr;
         }
         JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
@@ -85,7 +85,7 @@ namespace Dic::Protocol {
     {
         std::unique_ptr<OperatorDetailInfoRequest> reqPtr = std::make_unique<OperatorDetailInfoRequest>();
         if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-            error = "Failed to set request base info of Detail Info, command is: " + reqPtr->command;
+            error = "Failed to set request base info of Detail Info.";
             return nullptr;
         }
         JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
@@ -104,7 +104,7 @@ namespace Dic::Protocol {
     {
         std::unique_ptr<OperatorMoreInfoRequest> reqPtr = std::make_unique<OperatorMoreInfoRequest>();
         if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-            error = "Failed to set request base info of More Info, command is: " + reqPtr->command;
+            error = "Failed to set request base info of More Info.";
             return nullptr;
         }
         JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");

@@ -70,16 +70,8 @@ const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolea
         },
         legend: { itemGap: 20, data: legendDatas },
         grid: { left: '100', right: '100', bottom: 40 },
-        xAxis: {
-            type: 'category',
-            boundaryGap: false,
-            name: hAxisTitle,
-        },
-        yAxis: {
-            type: 'value',
-            name: vAxisTitle,
-            scale: true,
-        },
+        xAxis: { type: 'category', boundaryGap: false, name: hAxisTitle },
+        yAxis: { type: 'value', name: vAxisTitle, scale: true },
         toolbox: {
             feature: {
                 dataZoom: {
@@ -91,6 +83,7 @@ const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolea
                 },
             },
             top: 20,
+            right: 10,
         },
         backgroundColor: 'transparent',
     };
