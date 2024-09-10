@@ -78,15 +78,6 @@ void WsSession::WaitForExit(int milliSeconds)
     onExitCv.wait_for(lock, std::chrono::milliseconds(milliSeconds));
 }
 
-const std::string WsSession::GetMessageHeader(int length) const
-{
-    const std::string delimiter = "\r\n\r\n";
-    std::string result = "Content-Length:";
-    result.append(std::to_string(length));
-    result.append(delimiter);
-    return result;
-}
-
 const WsChannel *WsSession::GetChannel() const
 {
     return channel;
@@ -193,10 +184,8 @@ void WsSession::SendResponse(const Protocol::Response &response)
         return;
     }
     std::string responseStr = JsonUtil::JsonDump(json.value());
-    std::string responseHeader = GetMessageHeader(responseStr.length());
     // send header + response
-    loop->defer([this, responseHeader, responseStr]() {
-        Send(responseHeader);
+    loop->defer([this, responseStr]() {
         Send(responseStr);
     });
 }
@@ -210,10 +199,8 @@ void WsSession::SendEvent(Protocol::Event &event)
         return;
     }
     std::string eventStr = JsonUtil::JsonDump(json.value());
-    std::string eventHeader = GetMessageHeader(eventStr.length());
     // send header + response
-    loop->defer([this, eventStr, eventHeader]() {
-        Send(eventHeader);
+    loop->defer([this, eventStr]() {
         Send(eventStr);
         ServerLog::Info("Send event end.");
     });

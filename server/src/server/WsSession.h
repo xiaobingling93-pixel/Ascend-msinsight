@@ -51,7 +51,6 @@ protected:
     static void OnHandleMsgBuffer(WsSession &session);
     static void OnHandleResponseQueue(WsSession &session);
     void OnNotifyExit();
-    const std::string GetMessageHeader(int length) const;
 
     WsChannel *channel = nullptr;
     uWS::Loop *loop = nullptr;
