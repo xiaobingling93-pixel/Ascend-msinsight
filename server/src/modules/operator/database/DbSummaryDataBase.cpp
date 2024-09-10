@@ -568,7 +568,7 @@ bool DbSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPara
     int index = bindStartIndex;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("QueryCommDetailHandler failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Query common detail failed! Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_int64(stmt, index++, startTime);
@@ -621,7 +621,7 @@ std::string DbSummaryDataBase::GenerateQueryCategoryDurationSql(Protocol::Operat
 {
     OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
     if (operatorGroup == OperatorGroupConverter::OperatorGroup::UNKNOWN) {
-        ServerLog::Error("GenerateQueryCategoryDurationSql failed, unknown operator group.");
+        ServerLog::Error("Generate query category duration sql failed, unknown operator group.");
         return "";
     }
     bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);

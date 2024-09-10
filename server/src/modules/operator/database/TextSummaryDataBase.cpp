@@ -173,7 +173,7 @@ uint64_t TextSummaryDataBase::QueryMinStartTime()
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to prepare sql for QueryMinStartTime.", sqlite3_errmsg(db));
+        ServerLog::Error("Failed to prepare sql for query minimum start time.", sqlite3_errmsg(db));
         return 0;
     }
     uint64_t min = 0;
@@ -320,7 +320,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("QueryCommDetailHandler failed! Failed to prepare sql.", sqlite3_errmsg(db));
+        ServerLog::Error("Query common detail failed! Failed to prepare sql.", sqlite3_errmsg(db));
         return false;
     }
     sqlite3_bind_int64(stmt, index++, startTime);
