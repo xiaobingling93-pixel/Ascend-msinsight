@@ -415,7 +415,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get Duration Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Duration Info. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
 
@@ -472,7 +472,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get Statistic Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Statistic Num. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
@@ -617,7 +617,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get Statistic Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Statistic Info. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
 
@@ -667,7 +667,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
 
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get Detail Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Detail Total Num. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
@@ -754,7 +754,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get Detail Info. Cmd: ", sql, " Msg:", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Detail Info. Msg:", sqlite3_errmsg(db), " ", result);
             return false;
         }
         std::string rankId = GetDeviceIdFromCombinationId(reqParams.rankId);
@@ -846,7 +846,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get More Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get More Total Num. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
         int index = bindStartIndex;
@@ -922,7 +922,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {
-            ServerLog::Error("Failed to get Op More Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+            ServerLog::Error("Failed to get Op More Info. Msg: ", sqlite3_errmsg(db), " ", result);
             return false;
         }
         if (reqParams.current <= 0) {

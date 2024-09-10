@@ -133,7 +133,7 @@ bool DbSummaryDataBase::QueryOperatorDurationInfo(Protocol::OperatorDurationReqP
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to get Duration Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        ServerLog::Error("Failed to get Duration Info. Msg: ", sqlite3_errmsg(db), " ", result);
         return false;
     }
 
@@ -374,7 +374,7 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to get Detail Info. Cmd: ", sql, " Msg:", sqlite3_errmsg(db), " ", result);
+        ServerLog::Error("Failed to get Detail Info. Msg:", sqlite3_errmsg(db), " ", result);
         return false;
     }
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
@@ -430,7 +430,7 @@ bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqPara
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to get More Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        ServerLog::Error("Failed to get More Total Num. Msg: ", sqlite3_errmsg(db), " ", result);
         return false;
     }
     int index = bindStartIndex;
@@ -499,7 +499,7 @@ bool DbSummaryDataBase::QueryOperatorMoreInfo(OperatorMoreInfoReqParams &reqPara
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to get Op More Info. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        ServerLog::Error("Failed to get Op More Info. Msg: ", sqlite3_errmsg(db), " ", result);
         return false;
     }
     BindSqliteParam(stmt, reqParams);
@@ -723,7 +723,7 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to get Detail Total Num. Cmd: ", sql, " Msg: ", sqlite3_errmsg(db), " ", result);
+        ServerLog::Error("Failed to get Detail Total Num. Msg: ", sqlite3_errmsg(db), " ", result);
         return false;
     }
     int index = bindStartIndex;
