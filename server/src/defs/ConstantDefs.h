@@ -21,6 +21,8 @@ static const std::string PARSE_RESULT_FAIL = "fail";
 static const std::string CONFIG_STATUS = "CONFIG_STATUS";
 static const std::string OVERLAP_ANALYSIS_STATUS = "OVERLAP_ANALYSIS_STATUS";
 static const std::string WAIT_TIME_STATUS = "WAIT_TIME_STATUS";
+static const std::string CONNECTION_STATUS = "CONNECTION_STATUS";
+static std::list<std::string> DB_STATUS_LIST =  { OVERLAP_ANALYSIS_STATUS, WAIT_TIME_STATUS, CONNECTION_STATUS };
 
 // att model
 static const std::string ATT_MODEL_DEFAULT = "all";

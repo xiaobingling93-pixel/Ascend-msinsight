@@ -193,7 +193,17 @@ int DbTraceDataBase::SearchSliceNameCount(const Protocol::SearchCountParams &par
 
 bool DbTraceDataBase::QueryFlowCategoryList(std::vector<std::string> &categories, const std::string& rankId)
 {
-    CommonCacheManager::Instance().GetCategoryList(rankId, categories);
+    auto stmt = CreatPreparedStatement("select cat from connectionCats group by cat");
+    if (stmt == nullptr) {
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery();
+    if (resultSet == nullptr) {
+        return false;
+    }
+    while (resultSet->Next()) {
+        categories.emplace_back(resultSet->GetString("cat"));
+    }
     return true;
 }
 
@@ -229,15 +239,23 @@ bool DbTraceDataBase::QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams
     for (const auto &rankId: rankIds) {
         deviceIds.emplace_back(deviceHost + rankId);
     }
+    auto perTime = (params.endTime - params.startTime) / THOUSAND;
+    std::map<std::string, uint64_t> depthTimes;
     for (const auto &rankId: deviceIds) {
         auto flowCache = CommonCacheManager::Instance().GetFlowCache(rankId, params.category);
         for (const auto &flow: flowCache) {
-            if (flow.from.timestamp > params.startTime && flow.from.timestamp < params.endTime) {
-                flowDetailList.emplace_back(std::make_unique<UnitSingleFlow>(flow));
+            auto start = flow.from;
+            auto end = flow.to;
+            if ((start.timestamp < params.startTime || start.timestamp > params.endTime) &&
+                    (end.timestamp < params.startTime || end.timestamp > params.endTime)) {
                 continue;
             }
-            if (flow.to.timestamp > params.startTime && flow.to.timestamp < params.endTime) {
+            auto startKey = start.metaType + start.pid + start.tid + std::to_string(start.depth);
+            auto endKey = end.metaType + end.pid + end.tid + std::to_string(end.depth);
+            if (depthTimes[startKey] + perTime < start.timestamp && depthTimes[endKey] + perTime < end.timestamp) {
                 flowDetailList.emplace_back(std::make_unique<UnitSingleFlow>(flow));
+                depthTimes[startKey] = start.timestamp;
+                depthTimes[endKey] = end.timestamp;
             }
         }
     }
@@ -1041,17 +1059,24 @@ bool DbTraceDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
     return Database::OpenDb(dbPath, clearAllTable) && GetMetaVersion() && SetConfig() && InitStmt();
 }
 
+void DbTraceDataBase::InitConnectionCats()
+{
+    if (CheckValueFromStatusInfoTable(CONNECTION_STATUS, FINISH_STATUS)) { // 已更新数据，跳过更新
+        return;
+    }
+    if (ExecSql(DbSqlDefs::GetConnectionCatSql())) {
+        UpdateValueIntoStatusInfoTable(CONNECTION_STATUS, FINISH_STATUS);
+    }
+}
+
 void DbTraceDataBase::InitFlowCache()
 {
-    {
-        std::lock_guard<std::recursive_mutex> lockGuard(mutex);
-        if (!ExecSql("CREATE TEMPORARY TABLE IF NOT EXISTS connectionCats as " + DbSqlDefs::GetConnectionCatSql())) {
-            return;
-        }
-    }
+    auto start = std::chrono::high_resolution_clock::now();
     std::map<std::string, std::map<std::string, FlowLocation>> startFlowLocations; // 连线起始节点
     std::map<std::string, std::map<std::string, std::vector<FlowLocation>>> endFlowLocations; // 连线结束节点
-    QueryFlowLocation(DbSqlDefs::GetQueryApiLocationSql(), startFlowLocations, endFlowLocations);
+    QueryFlowLocation(DbSqlDefs::GetQueryCannApiLocationSql(), startFlowLocations, endFlowLocations);
+    QueryFlowLocation(DbSqlDefs::GetQueryPyApiLocationSql(), startFlowLocations, endFlowLocations);
+    QueryFlowLocation(DbSqlDefs::GetQueryMstxApiLocationSql(), startFlowLocations, endFlowLocations);
     QueryFlowLocation(QUERY_DEVICE_LOCATION_SQL, startFlowLocations, endFlowLocations);
     auto dealLineData = [](const std::string &cat,  const std::string &connectionId, const FlowLocation &startLocation,
             std::map<std::string, std::map<std::string, std::vector<FlowLocation>>>& endFlowLocations) {
@@ -1067,17 +1092,20 @@ void DbTraceDataBase::InitFlowCache()
             dealLineData(catGroup.first, startLocation.first, startLocation.second, endFlowLocations);
         }
     }
-    for (const auto &rankId: rankIds) {
-        CommonCacheManager::Instance().SetFlowState(QueryHostInfo() + rankId, true);
-    }
 }
 
 void DbTraceDataBase::QueryFlowLocation(const std::string& sql,
     std::map<std::string, std::map<std::string, FlowLocation>>& startFlowLocations,
     std::map<std::string, std::map<std::string, std::vector<FlowLocation>>>& endFlowLocations)
 {
-    auto stmt = CreatPreparedStatement();
-    auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, TraceTime::Instance().GetStartTime());
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        return;
+    }
+    auto resultSet = stmt->ExecuteQuery(TraceTime::Instance().GetStartTime());
+    if (resultSet == nullptr) {
+        return;
+    }
     while (resultSet->Next()) {
         auto metaType = resultSet->GetString("metaType");
         auto deviceId = QueryHostInfo() + resultSet->GetString("deviceId");
@@ -1195,8 +1223,9 @@ bool DbTraceDataBase::SetConfig()
         if (CheckTableExist(TABLE_COMMUNICATION_OP)) {
             ExecSql("alter table COMMUNICATION_OP add column waitNs INTEGER;");
         }
-        UpdateValueIntoStatusInfoTable(OVERLAP_ANALYSIS_STATUS, NOT_FINISH_STATUS);
-        UpdateValueIntoStatusInfoTable(WAIT_TIME_STATUS, NOT_FINISH_STATUS);
+        for (const auto &status: DB_STATUS_LIST) {
+            UpdateValueIntoStatusInfoTable(status, NOT_FINISH_STATUS);
+        }
     }
     return ExecSql("PRAGMA case_sensitive_like=1;");
 }

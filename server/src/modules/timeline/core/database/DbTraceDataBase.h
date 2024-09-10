@@ -122,6 +122,7 @@ public:
     void UpdateAllDepth();
     void InitStringsCache();
     void InitFlowCache();
+    void InitConnectionCats();
     void UpdateWaitTime();
     void GenerateOverlapAnalysis();
     static std::string GetStringCacheValue(const std::string& path, std::string key);

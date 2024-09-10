@@ -284,7 +284,8 @@ public:
 static std::string GetConnectionCatSql()
 {
     std::string sql =
-               "with operateConnIds as (select op.connectionId from COMMUNICATION_OP op "
+               "CREATE TABLE IF NOT EXISTS connectionCats as "
+               " with operateConnIds as (select op.connectionId from COMMUNICATION_OP op "
                "   UNION all select connectionId from TASK task "
                " join COMPUTE_TASK_INFO CTI on task.globalTaskId = CTI.globalTaskId) ";
     sql.append(" select api.connectionId, 'HostToDevice' as cat  from CANN_API api " // cann侧
@@ -300,7 +301,7 @@ static std::string GetConnectionCatSql()
     return sql;
 }
 
-static std::string GetQueryApiLocationSql()
+static std::string GetQueryCannApiLocationSql()
 {
     std::string sql = "with constValue as (select ? as minTime), "
                       "     rankIds as (select deviceId, globalPid from TASK group by globalPid) ";
@@ -310,20 +311,36 @@ static std::string GetQueryApiLocationSql()
                " join connectionCats on api.connectionId = connectionCats.connectionId "
                " join rankIds on api.globalTid >> 32 = rankIds.globalPid "
                "  where cat = 'HostToDevice'");
-    sql.append(" union select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, 'pytorch' as tid,depth,"
+    sql.append(" order by startTime");
+    return sql;
+}
+
+static std::string GetQueryPyApiLocationSql()
+{
+    std::string sql = "with constValue as (select ? as minTime), "
+                      "     rankIds as (select deviceId, globalPid from TASK group by globalPid) ";
+    sql.append(" select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, 'pytorch' as tid,depth,"
                " startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid,"
                " 'PYTORCH_API' as metaType, name, deviceId from PYTORCH_API api join constValue "
                " join CONNECTION_IDS ids on api.connectionId = ids.id "
                " join connectionCats on ids.connectionId = connectionCats.connectionId "
                " join rankIds on api.globalTid >> 32 = rankIds.globalPid "
                " where cat = 'async_task_queue' or cat = 'fwdbwd' or cat = 'async_npu' ");
-    sql.append(" union select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, 'MsTx' as tid, "
+    sql.append(" order by startTime");
+    return sql;
+}
+
+static std::string GetQueryMstxApiLocationSql()
+{
+    std::string sql = "with constValue as (select ? as minTime), "
+                      "     rankIds as (select deviceId, globalPid from TASK group by globalPid) ";
+    sql.append(" select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, 'MsTx' as tid, "
                "  depth, startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid, "
                "       'MSTX_EVENTS' as metaType, message as name, deviceId from MSTX_EVENTS api join constValue "
                "        join connectionCats on api.connectionId = connectionCats.connectionId "
                " join rankIds on api.globalTid >> 32 = rankIds.globalPid "
                " where cat = 'MsTx'");
-    sql.append(" order by startTime;");
+    sql.append(" order by startTime");
     return sql;
 }
 };

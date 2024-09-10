@@ -95,6 +95,7 @@ void FullDbParser::InitOpenDb(const std::string &filePath, const std::vector<std
     futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->InitStringsCache(); }));
     futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->UpdateAllDepth(); }));
     futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->UpdateWaitTime(); }));
+    futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->InitConnectionCats(); }));
     futures->emplace_back(threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->GenerateOverlapAnalysis(); }));
 
     threadPool->AddTask(EndParseTask, rankIds, filePath, futures, start);

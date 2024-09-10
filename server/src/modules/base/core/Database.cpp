@@ -474,9 +474,11 @@ bool Database::SetConfig()
     }
     std::string dbVersion = GetDataBaseVersion();
     std::lock_guard<std::recursive_mutex> lock(mutex);
+    if (!ExecSql("PRAGMA journal_mode = WAL;PRAGMA synchronous = OFF;")) {
+        return false;
+    }
     if (IsDatabaseVersionChange()) {
-        return ExecSql("PRAGMA synchronous = OFF; PRAGMA journal_mode = MEMORY;"
-                       " PRAGMA user_version = " + dbVersion + ";");
+        return ExecSql("PRAGMA user_version = " + dbVersion + ";");
     }
     return true;
 }
