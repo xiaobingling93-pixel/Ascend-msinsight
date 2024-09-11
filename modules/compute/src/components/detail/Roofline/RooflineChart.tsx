@@ -3,13 +3,15 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react';
-import { chartColors, COLOR, safeStr, useWatchDomResize, formatDeicimal } from 'ascend-utils';
+import { chartColors, COLOR, safeStr, useWatchDomResize, formatDeicimal, getLegendStyle } from 'ascend-utils';
 import i18n from 'ascend-i18n';
 import { cloneDeep } from 'lodash';
 import type { Point, IRooflineChart } from './Index';
 import * as echarts from 'echarts';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import { useTheme, type Theme } from '@emotion/react';
+import { LimitHit } from '../../LimitSet';
+import { useTranslation } from 'react-i18next';
 
 const baseOption: any = {
     title: {
@@ -26,6 +28,8 @@ const baseOption: any = {
         },
     },
     legend: {
+        type: 'scroll',
+        orient: 'horizontal',
         tooltip: {
             show: true,
             formatter: function () {
@@ -39,10 +43,12 @@ const baseOption: any = {
             color: COLOR.Grey20,
         },
         top: 30,
+        left: 'center',
     },
     grid: {
         bottom: '30',
         containLabel: true,
+        top: 85,
     },
     xAxis: {
         type: 'log',
@@ -69,7 +75,9 @@ const baseOption: any = {
     },
 };
 
-function wrapData(originData: IRooflineChart, theme: Theme): any {
+type Option = typeof baseOption;
+
+function wrapData(originData: IRooflineChart, theme: Theme): Option {
     const series: any[] = [];
     const legendData: any[] = [];
     const transInfo = getRoofInfo(originData);
@@ -95,6 +103,7 @@ function wrapData(originData: IRooflineChart, theme: Theme): any {
                         scale: 1.2,
                     },
                     data: [[...point, bw, bwName, ratio, point, computilityName]],
+                    zlevel: 2,
                 });
                 series.push({
                     name: bwName,
@@ -104,6 +113,7 @@ function wrapData(originData: IRooflineChart, theme: Theme): any {
                     emphasis: {
                         lineStyle: { width: 4 },
                     },
+                    zlevel: 1,
                 });
                 legendData.push({ name: bwName });
             }
@@ -114,8 +124,12 @@ function wrapData(originData: IRooflineChart, theme: Theme): any {
     option.series = series;
     option.legend.data = legendData;
     option.tooltip.formatter = getTooltipFormatter();
+    return getOptionStyle(option, theme);
+}
+
+function getOptionStyle(option: Option, theme: Theme): Option {
     option.title.textStyle.color = theme.textColorSecondary;
-    option.legend.textStyle.color = theme.textColorSecondary;
+    option.legend = { ...option.legend, ...getLegendStyle(theme) };
     option.xAxis.nameTextStyle.color = theme.textColorTertiary;
     option.yAxis.nameTextStyle.color = theme.textColorTertiary;
     return option;
@@ -202,10 +216,20 @@ function InitCharts(data: IRooflineChart, chartDom: HTMLElement | null, theme: T
     return newChart;
 }
 
+const MAX_ROOFLINE_NUM = 100;
 const RooflineChart = observer(({ dataSource }: { dataSource: IRooflineChart}): JSX.Element => {
     const theme = useTheme();
+    const { t } = useTranslation('details');
     const ref = useRef(null);
     const [chart, setChart] = useState<echarts.ECharts | undefined>(undefined);
+    // 超大数据量防护
+    const [limit, setLimit] = useState({ maxSize: MAX_ROOFLINE_NUM, overlimit: false, current: 0 });
+
+    // 监测超大数据量
+    const size = dataSource?.rooflines?.length ?? 0;
+    useEffect(() => {
+        setLimit({ ...limit, overlimit: size > limit.maxSize, current: size });
+    }, [size]);
 
     // 监听宽度变化
     useWatchDomResize(ref.current, (domRect) => {
@@ -221,11 +245,17 @@ const RooflineChart = observer(({ dataSource }: { dataSource: IRooflineChart}): 
     });
 
     useEffect(() => {
-        const newChart = InitCharts(dataSource, ref.current, theme);
+        const data = {
+            ...dataSource,
+            rooflines: dataSource.rooflines.slice(0, limit.maxSize),
+        };
+        const newChart = InitCharts(data, ref.current, theme);
         setChart(newChart);
     }, [dataSource, theme]);
     return (
-        <div ref={ref} style={{ height: '500px', width: '100%' }}>
+        <div>
+            {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`${dataSource.title} ${t('Roofline Data')} (${limit.current})`} style={{ margin: '10px 0 10px 50px' }} />}
+            <div ref={ref} style={{ height: '500px', width: '100%' }}> </div>
         </div>
     );
 });

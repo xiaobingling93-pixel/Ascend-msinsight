@@ -6,15 +6,23 @@ import styled from '@emotion/styled';
 import BaseContainer from '../container/BaseContainer';
 import { MIDescriptions, MIDescriptionsItem } from '../MIDescriptions';
 import COLOR from './Color';
-import { chartVisbilityListener, getResizeEcharts, getDefaultChartOptions } from './EchartUtils';
+import {chartVisbilityListener, getResizeEcharts, getDefaultChartOptions, getLegendStyle} from './EchartUtils';
 import { Empty } from '../components/index';
 import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 import { BulbIcon } from '../icon/Icon';
 import ResizeObserver from 'resize-observer-polyfill';
 export { customConsole } from './Console';
-
-export { BaseContainer, MIDescriptions, MIDescriptionsItem, COLOR, chartVisbilityListener, getResizeEcharts, getDefaultChartOptions };
+export {
+    BaseContainer,
+    MIDescriptions,
+    MIDescriptionsItem,
+    COLOR,
+    chartVisbilityListener,
+    getResizeEcharts,
+    getDefaultChartOptions,
+    getLegendStyle
+};
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 export const StyledEmpty = ({ descriptor, style }:

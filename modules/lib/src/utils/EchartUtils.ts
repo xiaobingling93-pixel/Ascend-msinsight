@@ -3,6 +3,7 @@
  */
 import * as echarts from 'echarts';
 import type { EChartsType } from 'echarts';
+import type { Theme } from '@emotion/react';
 declare global {
     interface Window {
         // for inspecting some internal state
@@ -145,5 +146,15 @@ export const getDefaultChartOptions = (isDark: boolean): any => {
                 },
             },
         },
+    };
+};
+export const getLegendStyle = (theme: Theme): any => {
+    return {
+        textStyle: {
+            color: theme.textColorTertiary,
+        },
+        pageTextStyle: {color: theme.textColorTertiary},
+        pageIconColor: theme.primaryColorLight2,
+        pageIconInactiveColor: theme.disableButtonBackgroundColor,
     };
 };

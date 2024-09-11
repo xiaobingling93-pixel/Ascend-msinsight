@@ -92,20 +92,14 @@ function getTabItems(data: IData, tDetails: TFunction): Tab[] {
     const allRooflineCharts = data?.data ?? [];
     const tabItems = allTabItems.filter(tab =>
         tab.surportSocs === undefined || tab.surportSocs.find(surportSoc => soc.includes(surportSoc)) !== undefined);
-    const allContents = tabItems.map(tabItem => tabItem.contents).flat();
-    // 不在页签中的图默认显示在第一个页签
-    const noneInCharts = allRooflineCharts.filter(chart => !allContents.includes(chart.title));
     return tabItems.map((tabItem, index) => {
-        let rooflineCharts = tabItem.contents.reduce<IRooflineChart[]>((pre, cur) => {
+        const rooflineCharts = tabItem.contents.reduce<IRooflineChart[]>((pre, cur) => {
             const curChart = allRooflineCharts.find(chart => chart.title === cur);
             if (curChart !== undefined && curChart !== null) {
                 pre.push(curChart);
             }
             return pre;
         }, []);
-        if (index === 0 && noneInCharts.length > 0) {
-            rooflineCharts = [...rooflineCharts, ...noneInCharts];
-        }
         return {
             label: tDetails(tabItem.label),
             key: tabItem.key,

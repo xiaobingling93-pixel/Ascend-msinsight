@@ -56,6 +56,7 @@
     "Performance": "性能",
     "Performance Ratio": "性能百分比",
     "Intensity": "算术强度",
-    "See More": "查看更多"
+    "See More": "查看更多",
+    "Roofline Data": "Roofline数据量"
   }
 }
