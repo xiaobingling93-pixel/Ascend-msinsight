@@ -32,9 +32,9 @@ struct SourceCodeFileResponse : public Response {
 };
 
 struct SourceFileLineRes {
-    int line;
-    float cycle;
-    int instructionExecuted;
+    int line{};
+    float cycle{};
+    int instructionExecuted{};
     std::vector<std::pair<std::string, std::string>> addressRange;
 };
 

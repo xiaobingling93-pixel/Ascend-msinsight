@@ -27,8 +27,12 @@ void QueryApiLineHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     for (auto line: lines) {
         SourceFileLineRes lineRes;
         lineRes.line = line.line;
-        lineRes.cycle = line.cycles[0];
-        lineRes.instructionExecuted = line.instructionsExecuted[0];
+        if (!line.cycles.empty()) {
+            lineRes.cycle = line.cycles[0];
+        }
+        if (!line.instructionsExecuted.empty()) {
+            lineRes.instructionExecuted = line.instructionsExecuted[0];
+        }
         std::vector<std::pair<std::string, std::string>> copiedVector(line.addressRange);
         lineRes.addressRange = copiedVector;
 
