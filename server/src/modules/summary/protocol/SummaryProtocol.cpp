@@ -48,7 +48,7 @@ std::unique_ptr<Request> SummaryProtocol::ToTopNRequest(const json_t &json, std:
 {
     std::unique_ptr<SummaryTopRankRequest> reqPtr = std::make_unique<SummaryTopRankRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of topN request.";
         return nullptr;
     }
     if (json["params"].HasMember("stepIdList") && json["params"]["stepIdList"].IsArray()) {
@@ -70,7 +70,7 @@ std::unique_ptr<Request> SummaryProtocol::ToStatisticsRequest(const json_t &json
 {
     std::unique_ptr<SummaryStatisticRequest> reqPtr = std::make_unique<SummaryStatisticRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of statistics request.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
@@ -83,7 +83,7 @@ std::unique_ptr<Request> SummaryProtocol::ToComputeDetailRequest(const json_t &j
 {
     std::unique_ptr<ComputeDetailRequest> reqPtr = std::make_unique<ComputeDetailRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of compute detail request.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
@@ -99,7 +99,7 @@ std::unique_ptr<Request> SummaryProtocol::ToStepRequest(const json_t &json, std:
 {
     std::unique_ptr<PipelineStepRequest> reqPtr = std::make_unique<PipelineStepRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of step request.";
         return nullptr;
     }
     return reqPtr;
@@ -109,7 +109,7 @@ std::unique_ptr<Request> SummaryProtocol::ToStagesRequest(const json_t &json, st
 {
     std::unique_ptr<PipelineStageRequest> reqPtr = std::make_unique<PipelineStageRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of stages request";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
@@ -120,7 +120,7 @@ std::unique_ptr<Request> SummaryProtocol::ToStageTimeRequest(const json_t &json,
 {
     std::unique_ptr<PipelineStageTimeRequest> reqPtr = std::make_unique<PipelineStageTimeRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of stage time request.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
@@ -132,7 +132,7 @@ std::unique_ptr<Request> SummaryProtocol::ToRankTimeRequest(const json_t &json, 
 {
     std::unique_ptr<PipelineRankTimeRequest> reqPtr = std::make_unique<PipelineRankTimeRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of rank time request.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.stepId, json["params"], "stepId");
@@ -144,7 +144,7 @@ std::unique_ptr<Request> SummaryProtocol::ToCommunicationRequest(const json_t &j
 {
     std::unique_ptr<CommunicationDetailRequest> reqPtr = std::make_unique<CommunicationDetailRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of communication request.";
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
@@ -160,7 +160,7 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryParallelStrategyRequest(const j
 {
     std::unique_ptr<QueryParallelStrategyRequest> reqPtr = std::make_unique<QueryParallelStrategyRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of query parallel strategy request.";
         return nullptr;
     }
     return reqPtr;
@@ -170,7 +170,7 @@ std::unique_ptr<Request> SummaryProtocol::ToSetParallelStrategyRequest(const jso
 {
     std::unique_ptr<SetParallelStrategyRequest> reqPtr = std::make_unique<SetParallelStrategyRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
-        error = "Failed to set request base info, command is: " + reqPtr->command;
+        error = "Failed to set request base info of set parallel strategy request.";
         return nullptr;
     }
     std::vector<std::string> keys = {KEY_ALGORITHM, KEY_TP_SIZE, KEY_PP_SIZE, KEY_DP_SIZE};
