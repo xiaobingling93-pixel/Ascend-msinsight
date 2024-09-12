@@ -281,7 +281,7 @@ const updateData = async(conditions: ConditionDataType, callback: VoidFunction):
 
 const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow: boolean;conditions: ConditionDataType;session: Session}) => {
     const [dataSource, setDataSource] = useState<{data: any[];rankIds: any[]}>({ data: [], rankIds: [] });
-    const [switchCondition, setSwitchCondition] = useState({ type: 'bandwidth', showInner: false });
+    const [switchCondition, setSwitchCondition] = useState({ type: 'bandwidth', showInner: true });
     const [range, setRange] = useState<RangeInfo>({ minRange: 0, maxRange: 1 });
     const { t } = useTranslation('communication');
 
