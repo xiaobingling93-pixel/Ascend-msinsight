@@ -46,7 +46,8 @@
     "PaginationTotal": "Total {{total}} items",
     "Details": "Details",
     "LimitWarn": "Warn : {{name}} exceed the limit , Only display the first {{maxSize}} .",
-    "More": "More"
+    "More": "More",
+    "Error": "Error"
   },
   "sessionList": {
     "Template": "Template",

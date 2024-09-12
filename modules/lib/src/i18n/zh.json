@@ -47,7 +47,8 @@
     "Details": "详情",
     "LimitWarn": "提示 : {{name}} 超出限制数量, 只显示前 {{maxSize}} 条。",
     "Advice": "专家建议",
-    "More": "更多"
+    "More": "更多",
+    "Error": "错误"
   },
   "headerButtonTooltip": {
     "Title": "选择性能分析类型",

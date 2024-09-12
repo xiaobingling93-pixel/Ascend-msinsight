@@ -1,5 +1,6 @@
 {
   "jupyter": {
-    "Jupyter Tip": "Due to system compatibility issues, there may be no content on the Jupyter page. If this occurs, please open the following link in your browser"
+    "Jupyter Tip": "Due to system compatibility issues, there may be no content on the Jupyter page. If this occurs, please open the following link in your browser",
+    "Unsafe Link": "Unsafe Link"
   }
 }
