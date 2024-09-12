@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react';
 import { chartColors, COLOR, safeStr, useWatchDomResize, formatDeicimal, getLegendStyle } from 'ascend-utils';
 import i18n from 'ascend-i18n';
@@ -217,21 +217,26 @@ function InitCharts(data: IRooflineChart, chartDom: HTMLElement | null, theme: T
 }
 
 const MAX_ROOFLINE_NUM = 100;
-const RooflineChart = observer(({ dataSource }: { dataSource: IRooflineChart}): JSX.Element => {
+const RooflineChart = observer(({ dataSource: orginDataSource }: { dataSource: IRooflineChart}): JSX.Element => {
     const theme = useTheme();
     const { t } = useTranslation('details');
     const ref = useRef(null);
     const [chart, setChart] = useState<echarts.ECharts | undefined>(undefined);
     // 超大数据量防护
     const [limit, setLimit] = useState({ maxSize: MAX_ROOFLINE_NUM, overlimit: false, current: 0 });
+    const size = orginDataSource?.rooflines?.length ?? 0;
+    const dataSource = useMemo(() => ({
+        ...orginDataSource,
+        rooflines: orginDataSource.rooflines.slice(0, limit.maxSize),
+    }), [orginDataSource, limit.maxSize]);
 
-    // 监测超大数据量
-    const size = dataSource?.rooflines?.length ?? 0;
+    const updateChart = (): void => {
+        const newChart = InitCharts(dataSource, ref.current, theme);
+        setChart(newChart);
+    };
     useEffect(() => {
         setLimit({ ...limit, overlimit: size > limit.maxSize, current: size });
     }, [size]);
-
-    // 监听宽度变化
     useWatchDomResize(ref.current, (domRect) => {
         if (domRect.width <= 0) {
             return;
@@ -239,18 +244,12 @@ const RooflineChart = observer(({ dataSource }: { dataSource: IRooflineChart}): 
         if (chart !== undefined && chart !== null) {
             chart.resize();
         } else {
-            const newChart = InitCharts(dataSource, ref.current, theme);
-            setChart(newChart);
+            updateChart();
         }
     });
 
     useEffect(() => {
-        const data = {
-            ...dataSource,
-            rooflines: dataSource.rooflines.slice(0, limit.maxSize),
-        };
-        const newChart = InitCharts(data, ref.current, theme);
-        setChart(newChart);
+        updateChart();
     }, [dataSource, theme]);
     return (
         <div>
