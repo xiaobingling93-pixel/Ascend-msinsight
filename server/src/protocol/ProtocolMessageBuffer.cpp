@@ -61,8 +61,14 @@ ProtocolMessageBuffer &ProtocolMessageBuffer::operator << (const std::string &da
     if (data.find(HEAD_START) != std::string::npos || data.find(REQ_DELIMITER) != std::string::npos) {
         return *this;
     }
+    std::string dataLengthStr = std::to_string(data.length());
+    uint64_t completeDataLength = HEAD_START.length() + dataLengthStr.length() + REQ_DELIMITER.length() + data.length();
+    if (completeDataLength + buffer.size() > bufferLimit) {
+        ServerLog::Warn("Request is too long or too many");
+        return *this;
+    }
     buffer.append(HEAD_START);
-    buffer.append(std::to_string(data.length()));
+    buffer.append(dataLengthStr);
     buffer.append(REQ_DELIMITER);
     buffer.append(data);
     return *this;

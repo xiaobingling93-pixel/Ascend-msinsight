@@ -29,6 +29,7 @@ private:
     const std::string REQ_DELIMITER = "\r\n\r\n";
     const std::string HEAD_START = "Content-Length:";
     const uint32_t matchMinNum = 2;
+    const uint64_t bufferLimit = 16 * 1024 * 1024;
     const uint64_t invalidBodyLen = std::numeric_limits<uint64_t>::max();
     std::mutex mutex;
     std::string buffer;
