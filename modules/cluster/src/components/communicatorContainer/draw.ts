@@ -141,10 +141,10 @@ const drawVerticalLine = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, a
 };
 
 const drawDpLine = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): void => {
+    tpContinerSize.width = (parallelSize.preTpCount * rankSize.width) + (tpContinerSize.padding * 2);
     if (parallelSize.preTpCount < 2) {
         return;
     }
-    tpContinerSize.width = (parallelSize.preTpCount * rankSize.width) + (tpContinerSize.padding * 2);
     const width = rankSize.width - (rankSize.padding * 2);
     let startX = ppContinerSize.left + rankSize.width;
     const startY = ppContinerSize.top + 30;
