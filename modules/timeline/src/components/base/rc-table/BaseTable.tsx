@@ -91,7 +91,10 @@ const useExpand = <RecordType extends Record<string, unknown>>(
         } else {
             let keysAdded = new Set<Key>([key]);
             let children = record[childrenColumnName];
-            while (Array.isArray(children) && children.length === 1) {
+            const maxDepth = 1000000;
+            let i = 0;
+            while (Array.isArray(children) && children.length === 1 && i < maxDepth) {
+                i++;
                 const child = children[0];
                 const childKey = getRowKey(child);
                 if (expandedKeySet.has(childKey)) {

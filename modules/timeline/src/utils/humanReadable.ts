@@ -110,6 +110,9 @@ export const getDuration = (time: TimeStamp, options: TimeOptions = DEFAULT_DURA
                 splitTime.unshift(...emptyPadder.slice(-padStartIdx).map(item => item));
             }
         } else {
+            if (padStartIdx === Infinity) {
+                return [splitTime, timesIdx];
+            }
             do {
                 handleEmptyPadder(padStartIdx);
                 (length as number) += getLength(emptyPadder[padStartIdx]);
@@ -165,6 +168,9 @@ export const getTimestamp = (originTime: TimeStamp, options: TimeOptions = DEFAU
                 splitTime.unshift(emptyPadder[index]);
             }
         };
+        if (padStartIdx === Infinity || (mode.maxChars as number) === Infinity) {
+            return [resTime, timesIdx];
+        }
         if (mode?.segments !== undefined) {
             emptyPadder = emptyPadder.reverse();
             for (let i = 0; i <= padStartIdx || isLowerUnit(splitTime[0]) || splitTime[0]?.unit === 's'; i++) {

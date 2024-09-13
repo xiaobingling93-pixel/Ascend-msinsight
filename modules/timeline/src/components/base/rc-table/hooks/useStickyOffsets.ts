@@ -8,6 +8,12 @@ export function useStickyOffsets(colWidths: number[], columnCount: number): Stic
     const stickyOffsets: StickyOffsets = useMemo(() => {
         const leftOffsets: number[] = [];
         const rightOffsets: number[] = [];
+        if (columnCount === Infinity) {
+            return {
+                left: leftOffsets,
+                right: rightOffsets,
+            };
+        }
         let left = 0;
         let right = 0;
 
