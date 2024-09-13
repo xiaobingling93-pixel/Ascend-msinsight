@@ -155,3 +155,28 @@ export const queryCoreOccupancy = async(isCompared: boolean): Promise<any> => {
 export const queryRoofline = async(): Promise<IRooflineData> => {
     return window.requestData('source/details/roofline', {});
 };
+
+export interface CacheRecordItem {
+    [key: string]: any;
+    allocate: number[];
+    cacheLineId: string;
+    evictAndWrite: number[];
+    evictWithoutWrite: number[];
+    hit: number[];
+    loadCount: number[];
+    miss: number[];
+    storeCount: number[];
+};
+interface QueryCacheRecordReturn {
+    cacheRecords: CacheRecordItem[];
+};
+
+/**
+ * 查询内存流量图
+ *
+ * @param {}
+ * @return {cacheRecords:[]}
+ */
+export const queryCacheRecord = async(): Promise<QueryCacheRecordReturn> => {
+    return window.requestData('source/cache/traceRecord', {}) as Promise<QueryCacheRecordReturn>;
+};

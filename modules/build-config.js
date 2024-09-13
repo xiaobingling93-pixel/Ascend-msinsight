@@ -34,6 +34,7 @@ const webpackCfg = {
       main: webpackConfig.entry,
       detail: './src/detailIndex.ts',
       source: './src/sourceIndex.ts',
+      cache: './src/cacheKitIndex.ts',
     };
     webpackConfig.output.filename = 'static/js/[name].bundle.js';
     webpackConfig.plugins.push(
@@ -46,6 +47,11 @@ const webpackCfg = {
         template: 'public/index.html',
         filename: 'source.html',
         chunks: ['source'],
+      }),
+      new HtmlWebpackPlugin({
+        template: 'public/index.html',
+        filename: 'cache.html',
+        chunks: ['cache'],
       }),
     );
     return webpackConfig;

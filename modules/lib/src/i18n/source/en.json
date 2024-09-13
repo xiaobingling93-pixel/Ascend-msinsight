@@ -18,6 +18,8 @@
     "TheoreticalStallCycles": "Theoretical Stall Cycles",
     "RegisterNum": "Register Number",
     "Gpr Count": "Gpr Count",
-    "L2Cache Hit Rate": "L2Cache Hit Rate"
+    "L2Cache Hit Rate": "L2Cache Hit Rate",
+    "EventNumber": "Number of events",
+    "EventRatio": "Proportion of events"
   }
 }

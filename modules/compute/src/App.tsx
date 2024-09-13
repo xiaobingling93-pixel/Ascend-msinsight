@@ -11,6 +11,7 @@ import HotMethod from './components/hotMethod/HotMethod';
 import Detail from './components/detail/Index';
 import { themeInstance } from './theme/theme';
 import { GlobalStyles } from 'ascend-theme';
+import CacheKit from './components/cacheKit/Index';
 
 const app = observer(({ page }: {page?: string}) => {
     const { sessionStore } = useRootStore();
@@ -39,6 +40,8 @@ const app = observer(({ page }: {page?: string}) => {
         dom = <></>;
     } else if (page === 'detail') {
         dom = <Detail session={session}/>;
+    } else if (page === 'cacheKit') {
+        dom = <CacheKit session={session}/>;
     } else {
         dom = <HotMethod session={session} />;
     }
