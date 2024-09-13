@@ -48,7 +48,7 @@ const baseOption = {
             params.forEach(param => {
                 const source = param.data?.source;
                 if (source !== undefined) {
-                    result += `<br/>${param?.marker} Cycles ${param?.data?.source}:${Number(param?.data?.originValue)}`;
+                    result += `<br/>${param?.marker} Cycles ${safeStr(param?.data?.source)}:${Number(param?.data?.originValue)}`;
                 } else {
                     result += `<br/>${param?.marker} Cycles:${Number(param?.data?.originValue)}`;
                 }
