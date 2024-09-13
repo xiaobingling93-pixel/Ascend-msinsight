@@ -128,10 +128,13 @@ namespace Dic::Module::Operator {
         }
         std::vector<Protocol::OperatorStatisticCmpInfoRes> res;
         res = GetCmpDataVec(request.params.group, baselineRes, compareRes);
+        constexpr int64_t MAX_INT64 = std::numeric_limits<int64_t>::max();
+        int64_t safeSize = (res.size() > static_cast<size_t>(MAX_INT64)) ?
+                            MAX_INT64 : static_cast<int64_t>(res.size());
         if (request.params.topK > 0) {
-            response.total = request.params.topK >= res.size() ? res.size() : request.params.topK;
+            response.total = std::min(request.params.topK, safeSize);
         } else {
-            response.total = res.size();
+            response.total = safeSize;
         }
         response.datas = GetFixNumDiffCmpData(res, request.params, response.total);
         return true;
