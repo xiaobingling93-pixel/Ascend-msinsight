@@ -3,6 +3,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { runInAction } from 'mobx';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '../Common';
 import type { StringMap } from '../../utils/interface';
@@ -100,8 +101,10 @@ const formateTime = (t: number): string => {
 const initBaseInfo = async (setData: any, session: Session): Promise<void> => {
     const res: any = await queryTopSummary(defaultConditions);
     const resObj = res ?? {};
-    session.rankCount = res.rankCount;
-    session.summaryList = res.summaryList;
+    runInAction(() => {
+        session.rankCount = res.rankCount;
+        session.summaryList = res.summaryList;
+    });
     setData({
         ...resObj,
         collectDuration: formateTime(Number(resObj.collectDuration)),
