@@ -67,7 +67,27 @@ struct Request : public ProtocolMessage {
     std::string projectName;
     std::string command;
     // arguments will be placed into specified request
+
+    std::tuple<bool, std::string> ParamVaild() const
+    {
+        return {true, ""};
+    }
 };
+// arguments will be placed into specified request
+static inline bool CheckStrParamVaild(const std::string &param,
+                                      std::string &errorMsg)
+{
+    constexpr unsigned MAX_STR_LENGTH = 500;
+    if (param.size() > MAX_STR_LENGTH) {
+        errorMsg = "Parameter length exceeds the upper limit";
+        return false;
+    }
+    if (!StringUtil::ValidateCommandFilePathParam(param)) {
+        errorMsg = "Parameter contains illegel character";
+        return false;
+    }
+    return true;
+}
 
 struct Response : public ProtocolMessage {
     explicit Response(const std::string &command) : command(command)

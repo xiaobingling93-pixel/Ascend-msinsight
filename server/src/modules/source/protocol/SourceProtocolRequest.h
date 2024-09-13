@@ -16,6 +16,12 @@ namespace Dic {
 namespace Protocol {
 struct SourceCodeFileParams {
     std::string sourceName;
+    std::tuple<bool, std::string> Vaild()
+    {
+        std::string errMsg;
+        bool res = CheckStrParamVaild(sourceName, errMsg);
+        return {res, errMsg};
+    }
 };
 
 struct SourceCodeFileRequest : public Request {
@@ -26,6 +32,16 @@ struct SourceCodeFileRequest : public Request {
 struct SourceApiLineParams {
     std::string coreName;
     std::string sourceName;
+    std::tuple<bool, std::string> Vaild()
+    {
+        std::string errMsg;
+        bool res = CheckStrParamVaild(coreName, errMsg);
+        if (!res) {
+            return {res, errMsg};
+        }
+        res = CheckStrParamVaild(sourceName, errMsg);
+        return {res, errMsg};
+    }
 };
 
 struct SourceApiLineRequest : public Request {
@@ -58,6 +74,12 @@ struct SourceDetailsLoadInfoRequest: public Request {
 struct DetailsMemoryInfoParams {
     std::string blockId;
     bool isCompared = false;
+    std::tuple<bool, std::string> Vaild()
+    {
+        std::string errMsg;
+        bool res = CheckStrParamVaild(blockId, errMsg);
+        return {res, errMsg};
+    }
 };
 
 struct DetailsMemoryGraphRequest: public Request {

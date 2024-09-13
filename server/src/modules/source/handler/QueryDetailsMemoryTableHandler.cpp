@@ -20,6 +20,12 @@ void QueryDetailsMemoryTableHandler::HandleRequest(std::unique_ptr<Protocol::Req
             std::make_unique<DetailsMemoryTableResponse>();
     DetailsMemoryTableResponse &response = *responsePtr;
     SetBaseResponse(request, response);
+    if (auto [isVaild, errMsg] = request.params.Vaild(); isVaild == false) {
+        ServerLog::Error("Parameter of command ", request.command, " is invaild, error:", errMsg);
+        SetResponseResult(response, false, errMsg, ErrorCode::REQUEST_PARAMS_ERROR);
+        session.OnResponse(std::move(responsePtr));
+        return;
+    }
     bool result = DetailsService::QueryMemoryTable(request, response);
     SetResponseResult(response, result);
     // add response to response queue in session
