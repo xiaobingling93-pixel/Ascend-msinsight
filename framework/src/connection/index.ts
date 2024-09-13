@@ -3,6 +3,7 @@
 */
 import { console } from '@/utils/console';
 import { INTERCEPTOR_HANDLERS, type ResponseType } from '@/connection/interceptor';
+import { safeJSONParse } from '@/utils';
 
 type ReservedEventHandler = 'request';
 type EventHanlder = string;
@@ -37,7 +38,7 @@ abstract class BaseConnector {
         window.onmessage = (event: MessageEvent): void => {
             const res = { ...event };
             if (typeof event.data === 'string') {
-                res.data = JSON.parse(event.data);
+                res.data = safeJSONParse(event.data, {});
             } else {
                 res.data = event.data;
             }

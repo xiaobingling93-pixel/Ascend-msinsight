@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import type { IMessageSender } from '../connection/messageSender';
+import { safeJSONParse } from 'ascend-utils';
 
 export class IntellijPlatform implements IMessageSender {
     selectFolder(): Promise<string> {
@@ -15,7 +16,8 @@ export class IntellijPlatform implements IMessageSender {
                     },
                 }),
                 onSuccess: function (response: string) {
-                    resolve(JSON.parse(response).body);
+                    const result = safeJSONParse(response, { body: '' });
+                    resolve(result.body);
                 },
             });
         });
@@ -32,7 +34,8 @@ export class IntellijPlatform implements IMessageSender {
                     },
                 }),
                 onSuccess: function (response: string) {
-                    resolve(JSON.parse(response).body);
+                    const result = safeJSONParse(response, { body: '' });
+                    resolve(result.body);
                 },
             });
         });

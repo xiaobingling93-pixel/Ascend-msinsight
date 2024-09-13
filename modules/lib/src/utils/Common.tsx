@@ -233,6 +233,14 @@ export function useWatchDomResize(dom: Element | null, callback: (rect: DOMRectR
     };
 }
 
+export const safeJSONParse = (str: any, defaultValue: any = null): any => {
+    try {
+        return JSON.parse(str);
+    } catch (error) {
+        return defaultValue;
+    }
+};
+
 export const chartColors = [
     '#0062DC',
     '#279C6E',

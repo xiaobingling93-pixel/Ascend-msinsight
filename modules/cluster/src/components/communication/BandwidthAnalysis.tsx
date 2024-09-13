@@ -15,7 +15,7 @@ import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonT
 import { addResizeEvent, COLOR, commonEchartsOptions } from '../Common';
 import i18n from 'ascend-i18n';
 import { cloneDeep, merge } from 'lodash';
-import { customConsole as console, chartColors, getDefaultChartOptions } from 'ascend-utils';
+import { customConsole as console, chartColors, getDefaultChartOptions, safeJSONParse } from 'ascend-utils';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import styled from '@emotion/styled';
 import { useTheme } from '@emotion/react';
@@ -218,7 +218,7 @@ async function wrapBandwidthData({ domId, iterationId, rankId, operatorName, sta
     if (['{}', null, undefined, 'null', ''].includes(distributionData)) {
         return null;
     }
-    const distributionDataJson: Distribution = JSON.parse(distributionData);
+    const distributionDataJson: Distribution = safeJSONParse(distributionData, {});
     for (const [packetSize, values] of Object.entries(distributionDataJson)
         .sort((a, b) => parseFloat(a[0]) - parseFloat(b[0]))) {
         if (values.length !== 2) {
