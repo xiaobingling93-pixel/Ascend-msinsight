@@ -153,7 +153,7 @@ export class OrderStatisticTree<T> {
         const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - tolerance);
         const endIndex = Math.min(this.getTotalCount() - 1, tolerance + Math.floor((scrollTop + vpHeight - 1) / rowHeight));
         const result = [];
-        for (let i = startIndex; i <= endIndex; i++) {
+        for (let i = startIndex; i <= endIndex && endIndex < Infinity; i++) {
             const found = this.findNode(this.vm, i);
             if (!found) {
                 warning(false, 'getFlattenData found undefined element');

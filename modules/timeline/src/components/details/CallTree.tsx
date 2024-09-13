@@ -84,7 +84,10 @@ const computeStack = <T extends Record<string, unknown>>(compare: Comparator<T>)
 
         // trace forward to the leaves
         let child = node;
-        while (child.children && child.children.length > 0) {
+        const maxDepth = 1000000;
+        let i = 0;
+        while (child.children && child.children.length > 0 && i < maxDepth) {
+            i++;
             const target = child.children.reduce((prev, cur) => compare(prev, cur) ? prev : cur, child.children[0]);
             // add ref to every child
             (target as unknown as Traceable<T>).ref = (stack[0] as unknown as Traceable<T>).ref;

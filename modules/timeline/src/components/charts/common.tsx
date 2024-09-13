@@ -69,7 +69,7 @@ export const zipStatusData = <T extends { startTime: number; duration: number; t
 };
 
 export const zipTimeSeriesData = (dataset: number[][], width: number, start: number, end: number): number[][] => {
-    if (width <= 0 || dataset.length === 0) {
+    if (width <= 0 || dataset.length === 0 || width === Infinity) {
         return [];
     }
     const pxToTime = (px: number): number => start + ((end - start) / width * px);
