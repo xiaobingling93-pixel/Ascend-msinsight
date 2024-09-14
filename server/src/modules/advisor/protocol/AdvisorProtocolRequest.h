@@ -14,16 +14,22 @@ struct APITypeParams {
     uint32_t pageSize{};
     std::string orderBy;
     std::string orderType;
-    void Check(std::string &error) const
+    bool Check(std::string &errorMsg) const
     {
-        if (currentPage == 0) {
-            error = "currentPage is invaild";
-            return;
+        std::string paramError;
+        if (!CheckStrParamVaild(this->rankId, paramError)) {
+            errorMsg = "[Advisor] Failed to check rankId." + paramError;
+            return false;
         }
-        if (pageSize == 0) {
-            error = "pageSize is invaild";
-            return;
+        if (!CheckStrParamVaild(this->orderBy, paramError)) {
+            errorMsg = "[Advisor] Failed to check orderBy." + paramError;
+            return false;
         }
+        if (!CheckStrParamVaild(this->orderType, paramError)) {
+            errorMsg = "[Advisor] Failed to check OrderType." + paramError;
+            return false;
+        }
+        return true;
     }
 };
 
