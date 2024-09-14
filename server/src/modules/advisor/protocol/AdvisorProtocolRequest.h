@@ -16,6 +16,9 @@ struct APITypeParams {
     std::string orderType;
     bool Check(std::string &errorMsg) const
     {
+        if (!CheckPageValid(this->pageSize, this->currentPage, errorMsg)) {
+            return false;
+        }
         std::string paramError;
         if (!CheckStrParamVaild(this->rankId, paramError)) {
             errorMsg = "[Advisor] Failed to check rankId." + paramError;
