@@ -160,21 +160,6 @@ struct ThreadDetailRequest : public Request {
     ThreadDetailParams params;
 };
 
-struct UnitFlowNameParams {
-    std::string rankId;
-    std::string tid;
-    std::string pid;
-    std::string id;
-    std::string metaType;
-    uint64_t startTime = 0;
-    uint64_t endTime = 0;
-};
-
-struct UnitFlowNameRequest : public Request {
-    UnitFlowNameRequest() : Request(REQ_RES_UNIT_FLOW_NAME){};
-    UnitFlowNameParams params;
-};
-
 struct UnitFlowsParams {
     std::string rankId;
     std::string tid;
@@ -201,20 +186,6 @@ struct UnitFlowsParams {
 struct UnitFlowsRequest : public Request {
     UnitFlowsRequest() : Request(REQ_RES_UNIT_FLOWS){};
     UnitFlowsParams params;
-};
-
-struct UnitFlowParams {
-    uint64_t startTime = 0;
-    std::string flowId;
-    std::string rankId;
-    std::string id;
-    std::string metaType;
-    std::string type; // s, f
-};
-
-struct UnitFlowRequest : public Request {
-    UnitFlowRequest() : Request(REQ_RES_UNIT_FLOW){};
-    UnitFlowParams params;
 };
 
 struct ResetWindowParams {};

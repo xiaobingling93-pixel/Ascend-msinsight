@@ -5,8 +5,6 @@
 #include "QueryThreadTracesHandler.h"
 #include "QueryThreadsHandler.h"
 #include "QueryThreadDetailHandler.h"
-#include "QueryFlowNameHandler.h"
-#include "QueryFlowHandler.h"
 #include "QuerySystemViewHandler.h"
 #include "ResetWindowHandler.h"
 #include "ImportActionHandler.h"
@@ -57,8 +55,6 @@ void TimelineModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_TRACES_SUMMARY, std::make_unique<QueryThreadTracesSummaryHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_THREADS, std::make_unique<QueryThreadsHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_THREAD_DETAIL, std::make_unique<QueryThreadDetailHandler>());
-    requestHandlerMap.emplace(REQ_RES_UNIT_FLOW_NAME, std::make_unique<QueryFlowNameHandler>());
-    requestHandlerMap.emplace(REQ_RES_UNIT_FLOW, std::make_unique<QueryFlowHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_FLOWS, std::make_unique<QueryFlowsBySliceInfoHandler>());
     requestHandlerMap.emplace(REQ_RES_RESET_WINDOW, std::make_unique<ResetWindowHandler>());
     requestHandlerMap.emplace(REQ_RES_IMPORT_ACTION, std::make_unique<ImportActionHandler>());

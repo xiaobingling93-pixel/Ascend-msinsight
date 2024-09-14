@@ -124,8 +124,6 @@
 {"id":316,"moduleName":"communication","type":"request","command":"communication/matrix/sortOpNames","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":317,"moduleName":"timeline","type":"request","command":"import/action","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":318,"moduleName":"timeline","type":"request","command":"parse/cards","params":{"token":"Rd``OTxPVKtcJPt]"}}
-{"id":319,"moduleName":"timeline","type":"request","command":"unit/flowName","params":{"token":"Rd``OTxPVKtcJPt]"}}
-{"id":320,"moduleName":"timeline","type":"request","command":"unit/flow","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":321,"moduleName":"timeline","type":"request","command":"unit/flows","params":{"token":"Rd``OTxPVKtcJPt]","rankId":"0"}}
 {"id":322,"moduleName":"timeline","type":"request","command":"remote/reset","params":{"token":"Rd``OTxPVKtcJPt]"}}
 {"id":323,"moduleName":"timeline","type":"request","command":"remote/delete","params":{"token":"Rd``OTxPVKtcJPt]"}}

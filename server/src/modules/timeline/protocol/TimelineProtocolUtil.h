@@ -23,8 +23,6 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadTracesSummaryResp
 template <> std::optional<document_t> ToResponseJson<UnitThreadsResponse>(const UnitThreadsResponse &response);
 template <>
 std::optional<document_t> ToResponseJson<UnitThreadDetailResponse>(const UnitThreadDetailResponse &response);
-template <> std::optional<document_t> ToResponseJson<UnitFlowNameResponse>(const UnitFlowNameResponse &response);
-template <> std::optional<document_t> ToResponseJson<UnitFlowResponse>(const UnitFlowResponse &response);
 template <> std::optional<document_t> ToResponseJson<UnitFlowsResponse>(const UnitFlowsResponse &response);
 template <> std::optional<document_t> ToResponseJson<ResetWindowResponse>(const ResetWindowResponse &response);
 template <> std::optional<document_t> ToResponseJson<SearchCountResponse>(const SearchCountResponse &response);

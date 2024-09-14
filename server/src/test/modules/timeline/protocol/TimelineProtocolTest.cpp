@@ -108,44 +108,7 @@ TEST_F(ProtocolTest, ToThreadDetailRequest)
     unsigned int id = timelineProtocol.FromJson(json, error).get()->id;
     EXPECT_EQ(id, tempId);
 }
-TEST_F(ProtocolTest, ToUnitFlowNameRequest)
-{
-    const uint64_t tempId = 89;
-    Dic::Protocol::TimelineProtocol timelineProtocol;
-    timelineProtocol.Register();
-    std::string error;
-    Dic::document_t json(Dic::kObjectType);
-    auto &allocator = json.GetAllocator();
-    Dic::JsonUtil::AddMember(json, "type", "request", allocator);
-    Dic::JsonUtil::AddMember(json, "command", "unit/flowName", allocator);
-    timelineProtocol.FromJson(json, error);
 
-    Dic::json_t params(Dic::kObjectType);
-    Dic::JsonUtil::AddMember(json, "id", tempId, allocator);
-    Dic::JsonUtil::AddMember(json, "moduleName", "hhh", allocator);
-    Dic::JsonUtil::AddMember(json, "params", params, allocator);
-    unsigned int id = timelineProtocol.FromJson(json, error).get()->id;
-    EXPECT_EQ(id, tempId);
-}
-TEST_F(ProtocolTest, ToUnitFlowRequest)
-{
-    const uint64_t tempId = 89;
-    Dic::Protocol::TimelineProtocol timelineProtocol;
-    timelineProtocol.Register();
-    std::string error;
-    Dic::document_t json(Dic::kObjectType);
-    auto &allocator = json.GetAllocator();
-    Dic::JsonUtil::AddMember(json, "type", "request", allocator);
-    Dic::JsonUtil::AddMember(json, "command", "unit/flow", allocator);
-    timelineProtocol.FromJson(json, error);
-
-    Dic::json_t params(Dic::kObjectType);
-    Dic::JsonUtil::AddMember(json, "id", tempId, allocator);
-    Dic::JsonUtil::AddMember(json, "moduleName", "hhh", allocator);
-    Dic::JsonUtil::AddMember(json, "params", params, allocator);
-    unsigned int id = timelineProtocol.FromJson(json, error).get()->id;
-    EXPECT_EQ(id, tempId);
-}
 TEST_F(ProtocolTest, ToResetWindowRequest)
 {
     const uint64_t tempId = 89;
@@ -375,10 +338,6 @@ TEST_F(ProtocolTest, ResponseToJson)
         timelineProtocol.ToJson(response4, error);
         Dic::Protocol::UnitThreadDetailResponse response5;
         timelineProtocol.ToJson(response5, error);
-        Dic::Protocol::UnitFlowNameResponse response6;
-        timelineProtocol.ToJson(response6, error);
-        Dic::Protocol::UnitFlowResponse response7;
-        timelineProtocol.ToJson(response7, error);
         Dic::Protocol::ResetWindowResponse response8;
         timelineProtocol.ToJson(response8, error);
         Dic::Protocol::SearchCountResponse response9;

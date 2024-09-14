@@ -125,22 +125,6 @@ struct UnitThreadDetailResponse : public Response {
     UnitThreadDetailBody body;
 };
 
-struct FlowName {
-    std::string title;
-    std::string flowId;
-    std::string type; // s, f
-    uint64_t timestamp;
-};
-
-struct UnitFlowNameBody {
-    std::vector<FlowName> flowDetail;
-};
-
-struct UnitFlowNameResponse : public Response {
-    UnitFlowNameResponse() : Response(REQ_RES_UNIT_FLOW_NAME) {}
-    UnitFlowNameBody body;
-};
-
 struct FlowLocation {
     std::string tid;
     std::string id;
@@ -162,11 +146,6 @@ struct UnitSingleFlow {
     FlowLocation from;
     FlowLocation to;
     std::string title;
-};
-
-struct UnitFlowResponse : public Response {
-    UnitFlowResponse() : Response(REQ_RES_UNIT_FLOW) {}
-    UnitSingleFlow body;
 };
 
 struct UnitCatFlows {

@@ -7,7 +7,6 @@
 
 #include "VirtualTraceDatabase.h"
 #include "SliceCacheManager.h"
-#include "ImportActionAnalyzer.h"
 #include "SliceAnalyzer.h"
 #include "FlowAnalyzer.h"
 #include "TextSqlConstant.h"
@@ -153,7 +152,6 @@ private:
     std::set<std::tuple<int64_t, std::string, std::string>> threadInfoCache;
     std::set<Trace::ThreadEvent> simulationThreadInfoCache;
     std::set<Trace::ProcessEvent> simulationProcessInfoCache;
-    std::unique_ptr<ImportActionAnalyzer> importActionAnalyzerPtr = nullptr;
     std::unique_ptr<SliceAnalyzer> sliceAnalyzerPtr = nullptr;
     std::unique_ptr<FlowAnalyzer> flowAnalyzerPtr = nullptr;
 

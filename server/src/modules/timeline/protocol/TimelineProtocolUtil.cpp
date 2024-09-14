@@ -168,25 +168,6 @@ template <> std::optional<document_t> ToResponseJson<UnitThreadDetailResponse>(c
     return std::move(json);
 }
 
-template <> std::optional<document_t> ToResponseJson<UnitFlowNameResponse>(const UnitFlowNameResponse &response)
-{
-    document_t json(kObjectType);
-    auto &allocator = json.GetAllocator();
-    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json_t body(kObjectType);
-    json_t flowDetail(kArrayType);
-    for (const FlowName &flowName : response.body.flowDetail) {
-        json_t flowJson(kObjectType);
-        JsonUtil::AddMember(flowJson, "title", flowName.title, allocator);
-        JsonUtil::AddMember(flowJson, "flowId", flowName.flowId, allocator);
-        JsonUtil::AddMember(flowJson, "type", flowName.type, allocator);
-        flowDetail.PushBack(flowJson, allocator);
-    }
-    JsonUtil::AddMember(body, "flowDetail", flowDetail, allocator);
-    JsonUtil::AddMember(json, "body", body, allocator);
-    return std::move(json);
-}
-
 json_t FlowLocationToJson(const FlowLocation &flowLocation, RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
 {
     json_t json(kObjectType);
@@ -199,21 +180,6 @@ json_t FlowLocationToJson(const FlowLocation &flowLocation, RAPIDJSON_DEFAULT_AL
     JsonUtil::AddMember(json, "id", flowLocation.id, allocator);
     JsonUtil::AddMember(json, "metaType", flowLocation.metaType, allocator);
     JsonUtil::AddMember(json, "rankId", flowLocation.rankId, allocator);
-    return std::move(json);
-}
-
-template <> std::optional<document_t> ToResponseJson<UnitFlowResponse>(const UnitFlowResponse &response)
-{
-    document_t json(kObjectType);
-    auto &allocator = json.GetAllocator();
-    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json_t body(kObjectType);
-    JsonUtil::AddMember(body, "title", response.body.title, allocator);
-    JsonUtil::AddMember(body, "cat", response.body.cat, allocator);
-    JsonUtil::AddMember(body, "id", response.body.id, allocator);
-    JsonUtil::AddMember(body, "from", FlowLocationToJson(response.body.from, allocator), allocator);
-    JsonUtil::AddMember(body, "to", FlowLocationToJson(response.body.to, allocator), allocator);
-    JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
 }
 

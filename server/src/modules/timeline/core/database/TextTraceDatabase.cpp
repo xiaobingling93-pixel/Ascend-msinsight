@@ -12,9 +12,6 @@ using namespace Dic::Server;
 using namespace Dic::Protocol;
 TextTraceDatabase::TextTraceDatabase(std::recursive_mutex &sqlMutex) : VirtualTraceDatabase(sqlMutex)
 {
-    if (importActionAnalyzerPtr == nullptr) {
-        importActionAnalyzerPtr = std::make_unique<ImportActionAnalyzer>();
-    }
     if (sliceAnalyzerPtr == nullptr) {
         sliceAnalyzerPtr = std::make_unique<SliceAnalyzer>();
     }
@@ -27,7 +24,6 @@ TextTraceDatabase::~TextTraceDatabase()
 {
     CommitData();
     ReleaseStmt();
-    importActionAnalyzerPtr = nullptr;
     sliceAnalyzerPtr = nullptr;
     flowAnalyzerPtr = nullptr;
 }

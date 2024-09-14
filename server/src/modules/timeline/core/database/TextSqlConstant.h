@@ -55,9 +55,6 @@ const std::string CREATE_TABLE_SQL = "CREATE TABLE " + SLICE_TABLE +
 const std::string CREATE_INDEX_SQL = "CREATE INDEX " + TRACKID_TIME_INDEX + " ON " + SLICE_TABLE +
     " (track_id, timestamp, end_time);" + "CREATE INDEX " + TRACKID_CAT_INDEX + " ON " + SLICE_TABLE +
     " (track_id, cat);" + "CREATE INDEX " + FLOW_INDEX + " ON " + FLOW_TABLE + " (cat);";
-const std::string QUERY_SLICE_BY_TRACKID_SQL =
-    "select id, timestamp, end_time as endTime from slice where track_id = ? order by timestamp ASC, id ASC;";
-const std::string QUERY_ALL_TRACKID_SQL = "select track_id as trackId from thread;";
 const std::string QUERY_ALL_SLICE_IN_RANGE_BY_TRACKID_SQL =
     "SELECT id, timestamp, end_time FROM " + SLICE_TABLE + " WHERE track_id = ? ";
 const std::string QUERY_SLICE_DETAIL_SQL = "SELECT id, timestamp, duration, name, track_id, cat, args"
@@ -80,9 +77,6 @@ const std::string QUERY_ALL_THREAD_SQL = "SELECT track_id as trackId, tid, pid"
 const std::string QUERY_SLICE_BY_ID_SQL = "SELECT track_id, flag_id"
     " FROM " +
     SLICE_TABLE + " WHERE id = ?";
-const std::string QUERY_SLICE_BY_TIME_POINT_SQL = "SELECT id, timestamp, end_time as endTime, name"
-    " FROM " +
-    SLICE_TABLE + " WHERE timestamp <= ? AND endTime >= ? AND track_id = ?;";
 const std::string QUERY_SLICE_BY_FLAG_ID_SQL = "SELECT id"
     " FROM " +
     SLICE_TABLE + " WHERE flag_id = ? AND track_id = ?;";
@@ -155,15 +149,6 @@ public:
             sql.append(",(?,?,?,?,?)");
         }
         return sql;
-    }
-    static std::string GetSliceByIdListSql(uint64_t idSetSize)
-    {
-        std::string sliceSql = "SELECT id, timestamp, end_time, name, cname from slice where id in ( ? ";
-        for (uint64_t i = 0; i < idSetSize - 1; ++i) {
-            sliceSql += ", ? ";
-        }
-        sliceSql += " );";
-        return sliceSql;
     }
 
     static std::string GetSummarySliceSql(uint64_t size)

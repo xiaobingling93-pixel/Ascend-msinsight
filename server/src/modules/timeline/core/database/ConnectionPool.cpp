@@ -53,28 +53,6 @@ void ConnectionPool::SetMaxActiveCount(unsigned int count)
     maxActiveConnections = std::max(maxActiveConnections, count);
 }
 
-/**
- * Set max retry attempts when create connection failed.
- * Default value is 3.
- *
- * @param count max retry attempts.
- */
-void ConnectionPool::SetMaxRetryCount(int count)
-{
-    maxRetryAttempts = count;
-}
-
-/**
- * Set max wait time when no connection available.
- * Default value is 2 seconds.
- *
- * @param seconds max wait time.
- */
-void ConnectionPool::SetMaxWaitTime(int seconds)
-{
-    maxWaitTime = seconds;
-}
-
 void ConnectionPool::Stop()
 {
     std::unique_lock<std::mutex> lock(mutex);

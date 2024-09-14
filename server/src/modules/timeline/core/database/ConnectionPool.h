@@ -30,8 +30,6 @@ public:
 
     std::shared_ptr<VirtualTraceDatabase> GetConnection();
     void SetMaxActiveCount(unsigned int count);
-    void SetMaxRetryCount(int count);
-    void SetMaxWaitTime(int seconds);
     std::string GetDbPath();
     void Stop();
 
