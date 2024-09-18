@@ -2,13 +2,12 @@
   "name": "framework",
   "version": "0.1.0",
   "private": true,
+  "homepage": "./",
   "scripts": {
     "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider craco start",
     "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production GENERATE_SOURCEMAP=false CI=false craco build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\lib\\ /E /I /Y",
-    "publishLinux": "cp -rf ./build/* ../../framework/plugins/lib"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [

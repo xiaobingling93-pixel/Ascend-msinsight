@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"],
     },
@@ -25,7 +24,6 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react",
-    "jsxImportSource": "@emotion/react",
     "useDefineForClassFields": true,
     "downlevelIteration": true
   },

@@ -117,6 +117,7 @@ module.exports = {
     }],
     '@typescript-eslint/no-unnecessary-type-assertion': ['off'],
     '@typescript-eslint/no-var-requires': 0,
+    'import/no-unresolved':['error', { "ignore": ["@"] }],
   },
   overrides: [
     {
