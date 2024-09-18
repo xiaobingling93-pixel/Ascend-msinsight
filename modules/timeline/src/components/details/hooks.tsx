@@ -67,11 +67,11 @@ const handleFetchedData = ({
             title: i18n.t(`sliceList.${col.title}`, { ns: 'timeline', defaultValue: col.title }),
         }));
         setState({
-            data: result,
+            dataSource: result,
             columns,
             rowKey: (detail.rowKey ?? undefined) as (row: object) => string,
             onExpand: onExpandForChildren(session, detail.onExpand, setState),
-            isLoading: false,
+            loading: false,
         });
         onDataLoaded?.(result);
     }
@@ -99,7 +99,7 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
     const loadData = (): void => {
         if (detail && onDataFetched && selectedRange !== undefined) {
             logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
-            setState({ ...EMPTY_TABLE_STATE, isLoading: true });
+            setState({ ...EMPTY_TABLE_STATE, loading: true });
             onDataFetched?.then(result => {
                 handleFetchedData({ result, session, recentUnits, recentRange, tabState, selectedUnit, detail, setState, onDataLoaded });
             }).catch(() => {
@@ -121,11 +121,11 @@ export const useDetailUpdater = (session: Session, detail: DetailDescriptor<unkn
         autorun(() => {
             if (detail === undefined || tabState?.filter === undefined) { return; }
             setState({
-                data: tabState.getFilterData(),
+                dataSource: tabState.getFilterData(),
                 columns: parseColDef(detail, session, tabState),
                 rowKey: (detail.rowKey ?? undefined) as (row: object) => string,
                 onExpand: onExpandForChildren(session, detail.onExpand, setState),
-                isLoading: false,
+                loading: false,
             });
         }), []);
     return state;
@@ -137,14 +137,14 @@ export const useMoreUpdater = (session: Session, more: MoreDescriptor | undefine
 
     React.useEffect(() => {
         const selectedDetail = selectedDetails.length > 0 ? selectedDetails[0] : undefined;
-        setState({ ...EMPTY_TABLE_STATE, isLoading: true });
+        setState({ ...EMPTY_TABLE_STATE, loading: true });
         if (more && selectedDetail) {
             setState({
-                data: selectedDetail[more.field] as object[],
+                dataSource: selectedDetail[more.field] as object[],
                 columns: parseColDef(more, session),
                 rowKey: (more.rowKey ?? undefined) as (row: object) => string,
                 onExpand: onExpandForChildren(session, more.onExpand, setState),
-                isLoading: false,
+                loading: false,
             });
         } else {
             setState(EMPTY_TABLE_STATE);
@@ -167,15 +167,15 @@ TableState => {
         if (fetchData && hasDependencies && session.phase === 'download') {
             logger('DetailPanel', `[DetailPanel] calling ${selectedUnit?.name ?? ''}'s fetchData`);
             platform.trace('useComparison', {});
-            setState({ ...EMPTY_TABLE_STATE, isLoading: true });
+            setState({ ...EMPTY_TABLE_STATE, loading: true });
             fetchData(session, selectedUnit?.metadata).then(result => {
                 result.forEach(treeAttachInfo);
                 setState({
-                    data: result,
+                    dataSource: result,
                     columns: parseColDef(detail, session),
                     rowKey: (detail.rowKey ?? undefined) as (row: object) => string,
                     onExpand: onExpandForChildren(session, detail.onExpand, setState),
-                    isLoading: false,
+                    loading: false,
                 });
             }).catch(() => {
                 setState(EMPTY_TABLE_STATE);

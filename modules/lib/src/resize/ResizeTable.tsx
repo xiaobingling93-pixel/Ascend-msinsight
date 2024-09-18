@@ -4,15 +4,23 @@
 import React, { cloneElement, useState, useEffect, useRef, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { Table, type PaginationProps } from 'antd';
-import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import type { ColumnsType, TablePaginationConfig, TableProps } from 'antd/es/table';
 import { isArray } from 'lodash';
 import { Resizor } from './Resizor';
 import { getColumnSearchProps } from './ColumnFilterWithSelection';
 import { limitInput } from '../utils/Common';
 import { useWatchVirtualRender } from '../utils/VirtualRenderUtils';
 import { CaretDownIcon, CaretRightIcon } from '../icon/Icon';
+import type { EmotionJSX } from '@emotion/react/types/jsx-namespace';
 
-const StyledTable = styled(Table)`
+const Support = React.forwardRef(
+    (props: TableProps<any>) => {
+        return <Table { ...props } />;
+    },
+);
+Support.displayName = 'table';
+
+const StyledTable = styled(Support)`
     .ant-table {
         background-color: unset;
         font-size: 12px;
@@ -179,6 +187,7 @@ const StyledTable = styled(Table)`
         border: none;
     }
 `;
+
 interface ExtendsColumnType {minWidth?: number};
 
 interface IResizableTitleProps extends React.ReactElement {
@@ -198,19 +207,13 @@ const resizableTitle: React.FC<IResizableTitleProps> = (props) => {
             <Resizor key={th.props.children.length} onResize={onResize}/>]);
 };
 
-interface Iprop<T> {
-    [prop: string]: object | number | string | boolean | undefined | object[];
-    columns: ColumnsType<T> ;
-    dataSource: T[];
-    size?: 'small' | 'middle' | 'large' ;
+interface ResizeTableProps<T> extends TableProps<T> {
     id?: string;
     variableTotalWidth?: boolean;
     minThWidth?: number;
     style?: object;
     virtual?: boolean;
     scroll?: {x?: number;y?: number;rowHeight?: number;scrollToFirstRowOnChange?: boolean};
-    pagination?: false | TablePaginationConfig;
-    onChange?: (...p: any) => void;
 }
 type TablePaginationPosition = 'topLeft' | 'topCenter' | 'topRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';
 
@@ -283,7 +286,7 @@ const handleChangeSafe = (onChange?: (...p: any) => void, ...params: any): void 
     }
 };
 
-export function ResizeTable<T extends object>(prop: Iprop<T>): JSX.Element {
+export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): EmotionJSX.Element {
     const {
         columns: propColumns, variableTotalWidth = false, minThWidth = 50, id, style, virtual = false,
         scroll, dataSource, pagination, expandable, onChange, ...restProps
@@ -301,7 +304,7 @@ export function ResizeTable<T extends object>(prop: Iprop<T>): JSX.Element {
                 const newColumns = getResizeColumns({ columns, index, width, nextWidth, minThWidth, variableTotalWidth });
                 setColumns(newColumns);
             },
-            resizable: variableTotalWidth || index !== propColumns.length - 1,
+            resizable: variableTotalWidth || (propColumns !== undefined && index !== propColumns.length - 1),
         }),
         // ============================ filters ============================
         ...((isArray(col.filters) && col.filters.length > 0) ? getColumnSearchProps() : {}),
@@ -310,7 +313,7 @@ export function ResizeTable<T extends object>(prop: Iprop<T>): JSX.Element {
     // ============================ virtual ============================
     const ref = useRef(null);
     const { data: renderList, boxRef, targetRef } = useWatchVirtualRender(
-        { visibleHeight: scroll?.y ?? 0, itemHeight: scroll?.rowHeight ?? 39, dataSource });
+        { visibleHeight: scroll?.y ?? 0, itemHeight: scroll?.rowHeight ?? 32, dataSource: dataSource ?? [] });
     useEffect(() => {
         if (virtual && ref.current !== null) {
             getVirtualElement(ref.current as Element, boxRef, targetRef);
@@ -318,7 +321,7 @@ export function ResizeTable<T extends object>(prop: Iprop<T>): JSX.Element {
     }, []);
 
     // ============================ pagination ============================
-    const fullPagination = useMemo(() => getFullPagination(pagination, dataSource.length), [pagination]);
+    const fullPagination = useMemo(() => getFullPagination(pagination, dataSource?.length), [pagination]);
 
     // ============================ expandable ============================
     const fullExpandable = useMemo(() => getFullExpandable(expandable), [expandable]);
@@ -326,14 +329,14 @@ export function ResizeTable<T extends object>(prop: Iprop<T>): JSX.Element {
     // 出现分页跳转输入框
     useEffect(() => {
         limitInput();
-    }, [dataSource.length, fullPagination]);
+    }, [dataSource?.length, fullPagination]);
 
     return (
         <div id={id} style={{ ...(style ?? {}) }} ref={ref}>
             <StyledTable
                 { ...restProps }
                 onChange={(...params: any): void => { handleChangeSafe(onChange, ...params); }}
-                pagination={fullPagination}
+                pagination={virtual ? false : fullPagination}
                 expandable={fullExpandable}
                 scroll={scroll}
                 dataSource={virtual ? renderList : dataSource}

@@ -8,12 +8,13 @@ import type { FilterConfirmProps } from '../base/rc-table/interface';
 import { ReactComponent as CancelIcon } from '../../assets/images/insights/CancelIcon.svg';
 import { Input } from 'ascend-components';
 import { ColumnFilterIcon } from 'ascend-icon';
+import i18n from 'ascend-i18n';
 
 const FilterContainer = styled.div`
     width: 230px;
     height: 50px;
     padding: 10px;
-    border-radius: 4px;
+    border-radius: 2px;
     background-color: ${(props): string => props.theme.bgColorLight};
     color: ${(props): string => props.theme.fontColor};
     align-items: center;
@@ -50,7 +51,7 @@ interface FilterDropdownType {
 const setFiltersContent = ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: FilterDropdownType): JSX.Element => {
     return <FilterContainer>
         <Input
-            placeholder="Filter by field content"
+            placeholder={`${i18n.t('Filter by field content')}`}
             value={selectedKeys[0]}
             onChange={(e): void => setSelectedKeys(e.target.value ? [e.target.value] : [])}
             onPressEnter={(): void => confirm()}

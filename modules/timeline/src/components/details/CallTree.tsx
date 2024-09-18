@@ -8,12 +8,12 @@ import type { DetailDescriptor, TableDataAdapter } from '../../entity/insight';
 import type { Session } from '../../entity/session';
 import { getAutoKey } from '../../utils/dataAutoKey';
 import type { TableHandle } from '../base/rc-table/interface';
-import { AutoAdjustedTable } from './base/AutoAdjustedTable';
 import type { CommonStateProto } from './base/Tabs';
 import { SimpleTabularDetail } from './SimpleDetail';
 import type { DetailTabs } from './TabPanes';
 import { EMPTY_TABLE_STATE, type TableState, type TableViewProps } from './types';
 import { parseColDef } from './utils';
+import { ResizeTable } from 'ascend-resize';
 
 const PARENT = Symbol('parent');
 
@@ -104,12 +104,12 @@ const useStackUpdater = <T extends Record<string, unknown>>(session: Session, co
     const compute = computeStack(compare);
     useEffect(() => {
         const selectedDetail = selectedDetails.length > 0 ? selectedDetails[0] : undefined;
-        setState({ ...EMPTY_TABLE_STATE, isLoading: true });
+        setState({ ...EMPTY_TABLE_STATE, loading: true });
         if (selectedDetail) {
             setState({
-                data: compute(selectedDetail as TreeNode<T>),
+                dataSource: compute(selectedDetail as TreeNode<T>),
                 columns: parseColDef(adapter, session),
-                isLoading: false,
+                loading: false,
             });
         } else {
             setState(EMPTY_TABLE_STATE);
@@ -122,21 +122,21 @@ export type CallStackViewProps<T extends Record<string, unknown>> = {
     session: Session;
     height: number;
     compare: Comparator<T>; // used for extracting heaviest stack
-    onNavigate?: ({ row }: { row: T }) => void;
+    onNavigate?: ({ row }: { row: Record<string, unknown> }) => void;
 } & TableDataAdapter<T>;
 
 export const CallStackView = observer(<T extends Record<string, unknown>>(
     { session, height, compare, columns, onNavigate }: CallStackViewProps<T>): JSX.Element => {
     const state = useStackUpdater(session, compare, { columns });
-    return <AutoAdjustedTable {...state} height={height} expandable={{ showExpandColumn: false }}
-        onRow={(row): {onClick: () => void; onDoubleClick: () => void | undefined} => ({
+    return <ResizeTable {...state} expandable={{ showExpandColumn: false }}
+        onRow={(row): {onClick: () => void; onDoubleClick: () => void } => ({
             onDoubleClick: () => onNavigate?.({ row }),
             onClick: (): void => {
                 session.selectedDetailKeys = [getAutoKey(row)];
                 // need combine two functions
-                ((state.data[0] as unknown as Traceable<T>).ref)?.current?.appendExpandedKeys(state.data.map(getAutoKey));
+                ((state.dataSource[0] as unknown as Traceable<T>).ref)?.current?.appendExpandedKeys(state.dataSource.map(getAutoKey));
                 setTimeout(() => {
-                    ((state.data[0] as unknown as Traceable<T>).ref)?.current?.scrollTo(row);
+                    ((state.dataSource[0] as unknown as Traceable<T>).ref)?.current?.scrollTo(row);
                 }, 0);
             },
         })}

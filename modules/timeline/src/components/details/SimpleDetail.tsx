@@ -6,22 +6,20 @@ import { observer } from 'mobx-react';
 import React from 'react';
 import type { ForwardedRef } from 'react';
 import type { TableHandle } from '../base/rc-table/interface';
-import { AutoAdjustedTable } from './base/AutoAdjustedTable';
 import type { CommonStateProto } from './base/Tabs';
 import { useDetailUpdater, useMoreUpdater } from './hooks';
 import type { DetailTabs } from './TabPanes';
 import type { MoreTableProps, TableViewProps } from './types';
 import { selectRow } from './utils';
+import { ResizeTable } from 'ascend-resize';
 
 function Support<T extends CommonStateProto>(
     { session, height, detail, isTree = true, tabState, commonState, onDataLoaded }: TableViewProps<DetailTabs, T>,
     ref: ForwardedRef<TableHandle>): JSX.Element {
     const state = useDetailUpdater(session, detail, tabState, [], onDataLoaded);
     const unit = session.selectedUnits[0];
-    return <AutoAdjustedTable
+    return <ResizeTable
         {...state}
-        height={height}
-        ref={ref}
         rowSelection={{
             selectedRowKeys: session.selectedDetailKeys,
         }}
@@ -43,6 +41,6 @@ export const SimpleTabularDetail = React.forwardRef(Support) as
 
 export const SimpleTabularMore = observer(({ more, session, height, isTree = true }: MoreTableProps) => {
     const state = useMoreUpdater(session, more);
-    return <AutoAdjustedTable {...state} height={height}
+    return <ResizeTable {...state}
         expandable={{ onExpand: state.onExpand, showExpandColumn: isTree }}/>;
 });

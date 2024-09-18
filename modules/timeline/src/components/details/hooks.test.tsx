@@ -25,14 +25,14 @@ describe('hooks test', () => {
         metadata: {},
     };
     const expectedTablestate = {
-        data: [],
+        dataSource: [],
         columns: [
             {
                 title: 'name2',
                 key: 'name2',
                 colSpan: 1,
                 ellipsis: {
-                    showTitle: false,
+                    showTitle: true,
                 },
                 width: 'max-content',
                 fixed: undefined,
@@ -41,7 +41,7 @@ describe('hooks test', () => {
         ],
         rowKey: undefined,
         onExpand: undefined,
-        isLoading: false,
+        loading: false,
     };
     const col: ColumnDef<Record<string, unknown>> = ['name2', (): string => 'render2', 'max-content'];
 
@@ -117,7 +117,7 @@ describe('hooks test', () => {
         session.selectedDetails = [{ name: [{}] }];
         session.selectedDetailKeys = [''];
         rerender({ session, more: moreDescriptor });
-        expect(JSON.stringify(result.current)).toEqual(JSON.stringify({ ...expectedTablestate, data: [{}] }));
+        expect(JSON.stringify(result.current)).toEqual(JSON.stringify({ ...expectedTablestate, dataSource: [{}] }));
     });
 
     it('useSelectedParamsDetailUpdater test', async () => {

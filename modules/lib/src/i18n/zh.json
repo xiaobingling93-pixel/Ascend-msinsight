@@ -48,7 +48,8 @@
     "LimitWarn": "提示 : {{name}} 超出限制数量, 只显示前 {{maxSize}} 条。",
     "Advice": "专家建议",
     "More": "更多",
-    "Error": "错误"
+    "Error": "错误",
+    "Filter by field content": "输入关键字过滤"
   },
   "headerButtonTooltip": {
     "Title": "选择性能分析类型",

@@ -70,9 +70,9 @@ const initVirtual = ({ boxElement, targetElement, scrollEvent, totalHeight }:
 export const useWatchVirtualRender = <T>({ visibleHeight, itemHeight, dataSource }: {
     visibleHeight: number;
     itemHeight: number;
-    dataSource: T[];
+    dataSource: readonly T[];
 },
-): { data: T[];boxRef: React.MutableRefObject<null>;targetRef: React.MutableRefObject<null>} => {
+): { data: readonly T[];boxRef: React.MutableRefObject<null>;targetRef: React.MutableRefObject<null>} => {
     const boxRef = useRef(null);
     const targetRef = useRef(null);
 

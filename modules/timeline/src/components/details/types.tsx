@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
-import type { ColumnsType } from '../base/rc-table';
+import type { ColumnsType } from 'antd/es/table';
 import type { AutoKey } from '../../utils/dataAutoKey';
 import type { Session } from '../../entity/session';
 import type { DetailDescriptor, MoreDescriptor } from '../../entity/insight';
@@ -29,15 +29,15 @@ export interface MoreTableProps {
 };
 
 export interface TableState {
-    data: Array<AutoKey<object>>;
-    columns: ColumnsType<object>;
+    dataSource: Array<AutoKey<object>>;
+    columns: ColumnsType<Record<string, unknown>>;
     rowKey?: (row: object) => string;
-    onExpand?: (expanded: boolean, data: Record<string, unknown>) => void;
-    isLoading: boolean;
+    onExpand?: (expanded: boolean, record: Record<string, unknown>) => void;
+    loading: boolean;
 };
 
 export const EMPTY_TABLE_STATE: TableState = {
-    data: [],
+    dataSource: [],
     columns: [],
-    isLoading: false,
+    loading: false,
 };

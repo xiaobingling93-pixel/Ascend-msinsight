@@ -2,111 +2,11 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import type { TooltipProps } from 'antd';
-import type * as React from 'react';
-import type {
-    ColumnType as RcColumnType, ExpandableConfig, GetRowKey, Key, TriggerEventHandler
-} from './types';
+import type {Key} from './types';
 
-export type { GetRowKey, ExpandableConfig, Key };
-
-export interface TableLocale {
-    filterTitle?: string;
-    filterConfirm?: React.ReactNode;
-    filterReset?: React.ReactNode;
-    filterEmptyText?: React.ReactNode;
-    filterCheckall?: React.ReactNode;
-    filterSearchPlaceholder?: string;
-    emptyText?: React.ReactNode | (() => React.ReactNode);
-    sortTitle?: string;
-    expand?: string;
-    collapse?: string;
-    triggerDesc?: string;
-    triggerAsc?: string;
-    cancelSort?: string;
-}
-
-export type SortOrder = 'descend' | 'ascend' | null;
-export type CompareFn<T> = (a: T, b: T, sortOrder?: SortOrder) => number;
-
-export interface ColumnFilterItem {
-    text: React.ReactNode;
-    value: string | number | boolean;
-    children?: ColumnFilterItem[];
-}
-
-export interface ColumnTitleProps<RecordType> {
-    sortColumns?: Array<{ column: ColumnType<RecordType>; order?: SortOrder }>;
-    filters?: Record<string, string[]>;
-}
-
-export type ColumnTitle<RecordType> =
-    | React.ReactNode
-    | ((props: ColumnTitleProps<RecordType>) => React.ReactNode);
-
-export type FilterValue = Array<Key | boolean>;
 export interface FilterConfirmProps {
     closeDropdown: boolean;
 }
-
-export interface FilterDropdownProps {
-    prefixCls: string;
-    setSelectedKeys: (selectedKeys: React.Key[]) => void;
-    selectedKeys: React.Key[];
-    confirm: (param?: FilterConfirmProps) => void;
-    clearFilters?: () => void;
-    filters?: ColumnFilterItem[];
-    visible: boolean;
-}
-
-export interface ColumnType<RecordType> extends RcColumnType<RecordType> {
-    // Sorter
-    sorter?:
-        | boolean
-        | CompareFn<RecordType>
-        | {
-            compare?: CompareFn<RecordType>;
-            /** Config multiple sorter order priority */
-            multiple?: number;
-        };
-    sortOrder?: SortOrder;
-    defaultSortOrder?: SortOrder;
-    sortDirections?: SortOrder[];
-    showSorterTooltip?: boolean | TooltipProps;
-
-    // Filter
-    filtered?: boolean;
-    filters?: ColumnFilterItem[];
-    filterDropdown?: React.ReactNode | ((props: FilterDropdownProps) => React.ReactNode);
-    filterMultiple?: boolean;
-    filteredValue?: FilterValue | null;
-    defaultFilteredValue?: FilterValue | null;
-    filterIcon?: React.ReactNode | ((filtered: boolean) => React.ReactNode);
-    filterMode?: 'menu' | 'tree';
-    filterSearch?: boolean;
-    onFilter?: (value: string | number | boolean, record: RecordType) => boolean;
-    filterDropdownVisible?: boolean;
-    onFilterDropdownVisibleChange?: (visible: boolean) => void;
-}
-
-export type ColumnsType<RecordType = unknown> = Array<ColumnType<RecordType>>;
-
-export interface TableRowSelection<T> {
-    selectedRowKeys?: Key[];
-    defaultSelectedRowKeys?: Key[];
-    onChange?: (selectedRowKeys: Key[], selectedRows: T[]) => void;
-}
-
-export type TransformColumns<RecordType> = (columns: ColumnsType<RecordType>) => ColumnsType<RecordType>;
-
-export interface SorterResult<RecordType> {
-    column?: ColumnType<RecordType>;
-    order?: SortOrder;
-    field?: Key | readonly Key[];
-    columnKey?: Key;
-}
-
-export type GetPopupContainer = (triggerNode: HTMLElement) => HTMLElement;
 
 export interface TableHandle<RecordType = unknown> {
     scrollTo: (node: RecordType) => void;

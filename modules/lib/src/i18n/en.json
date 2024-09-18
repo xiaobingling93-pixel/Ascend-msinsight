@@ -47,7 +47,8 @@
     "Details": "Details",
     "LimitWarn": "Warn : {{name}} exceed the limit , Only display the first {{maxSize}} .",
     "More": "More",
-    "Error": "Error"
+    "Error": "Error",
+    "Filter by field content": "Filter by field content"
   },
   "sessionList": {
     "Template": "Template",

@@ -3,11 +3,11 @@
  */
 import * as React from 'react';
 import { observer } from 'mobx-react';
-import { AutoAdjustedTable } from '../base/AutoAdjustedTable';
 import type { Session } from '../../../entity/session';
 import type { InsightUnit, TableDataAdapter } from '../../../entity/insight';
 import { parseColDef } from '../utils';
 import { type TableState, EMPTY_TABLE_STATE } from '../types';
+import { ResizeTable } from 'ascend-resize';
 
 /**
  * This Component is independent fetch data More Component,
@@ -24,21 +24,21 @@ const useMoreUpdater = function<T extends Record<string, unknown>>(session: Sess
     React.useEffect(() => {
         const selectedDetail = selectedDetails.length > 0 ? selectedDetails[0] : undefined;
         if (selectedDetail !== undefined && selectedRange !== undefined && session.phase === 'download') {
-            setState({ ...EMPTY_TABLE_STATE, isLoading: true });
+            setState({ ...EMPTY_TABLE_STATE, loading: true });
             fetchData(session, selectedDetail).then(result => {
                 if (recentUnits.current !== selectedUnits || recentRange.current !== selectedRange) {
                     return;
                 }
                 setState({
-                    data: result,
+                    dataSource: result,
                     columns: parseColDef(def, session),
-                    isLoading: false,
+                    loading: false,
                 });
             }).catch(() => {
-                setState({ ...EMPTY_TABLE_STATE, isLoading: false });
+                setState({ ...EMPTY_TABLE_STATE, loading: false });
             });
         } else {
-            setState({ ...EMPTY_TABLE_STATE, isLoading: false });
+            setState({ ...EMPTY_TABLE_STATE, loading: false });
         }
     }, [selectedUnits, selectedDetailKeys]);
     return state;
@@ -46,16 +46,14 @@ const useMoreUpdater = function<T extends Record<string, unknown>>(session: Sess
 
 export type FetchDataMoreProps<T extends Record<string, unknown>> = {
     session: Session;
-    height: number;
     isTree?: boolean;
     fetchData: (...args: unknown[]) => Promise<T[]>;
     onExpand: (...args: unknown[]) => void;
-    clickCallback?: ({ row, session, unit }: { row: T; session: Session; unit?: InsightUnit }) => void;
-    doubleClickCallback?: ({ row, session, unit }: { row: T; session: Session; unit?: InsightUnit }) => void;
+    clickCallback?: ({ row, session, unit }: { row: Record<string, unknown>; session: Session; unit?: InsightUnit }) => void;
+    doubleClickCallback?: ({ row, session, unit }: { row: Record<string, unknown>; session: Session; unit?: InsightUnit }) => void;
 } & TableDataAdapter<T>;
 export const FetchDataMore = observer(<T extends Record<string, unknown>>({
     session,
-    height,
     isTree = false,
     fetchData,
     columns,
@@ -64,7 +62,7 @@ export const FetchDataMore = observer(<T extends Record<string, unknown>>({
     doubleClickCallback,
 }: FetchDataMoreProps<T>): JSX.Element => {
     const state = useMoreUpdater(session, fetchData, { columns, actions });
-    return <AutoAdjustedTable {...state} height={height}
+    return <ResizeTable {...state}
         expandable={{ onExpand: state.onExpand, showExpandColumn: isTree }}
         onRow={(row): {onClick: () => void; onDoubleClick: () => void} => ({
             onClick: (): void => {

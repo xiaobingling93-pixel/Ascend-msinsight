@@ -17,7 +17,7 @@ describe('utils test', () => {
                 key: 'name2',
                 colSpan: 1,
                 ellipsis: {
-                    showTitle: false,
+                    showTitle: true,
                 },
                 render: (): void => { },
             },
@@ -27,10 +27,10 @@ describe('utils test', () => {
     it('selectRow test', () => {
         const rowData = {};
         const tableState = {
-            data: [],
+            dataSource: [],
             rowKey: (row: object): string => 'testkey',
             columns: [],
-            isLoading: false,
+            loading: false,
         };
         selectRow(rowData, session, tableState);
 

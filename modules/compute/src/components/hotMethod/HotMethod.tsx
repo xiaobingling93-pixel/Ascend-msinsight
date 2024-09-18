@@ -569,8 +569,8 @@ function InstructionTableNopage({
     columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, lineClickListener, condition,
 }: IinstrProp): JSX.Element {
     const [showDataSource, setShowDataSource] = useState(dataSource);
-    const [filters, setFilters] = useState<Record<string, any[]>>({});
-    const [sorter, setSorter] = useState<Record<string, any>>({});
+    const [filters, setFilters] = useState({});
+    const [sorter, setSorter] = useState({});
 
     useEffect(() => {
         setShowDataSource(getShowData(dataSource, filters, sorter));
@@ -594,7 +594,7 @@ function InstructionTableNopage({
         pagination={false}
         scroll={{ y: tableHeight, rowHeight: ROW_HEIGHT, scrollToFirstRowOnChange: false }}
         virtual={true}
-        onChange={(pagination: any, newFilters: {[p: string]: any[]}, newSorter: any, extra: any): void => {
+        onChange={(pagination, newFilters, newSorter, extra): void => {
             switch (extra.action) {
                 case 'filter':
                     setFilters(newFilters);
@@ -613,8 +613,8 @@ function InstructionTablePage({
     columns, dataSource, isRelatedInstr, handleInstrsClick, tableHeight, selectedline, lineClickListener, condition,
 }: IinstrProp): JSX.Element {
     const [showDataSource, setShowDataSource] = useState<InstrsColumnType[]>([]);
-    const [filters, setFilters] = useState<Record<string, any[]>>({});
-    const [sorter, setSorter] = useState<Record<string, any>>({});
+    const [filters, setFilters] = useState({});
+    const [sorter, setSorter] = useState({});
     const [page, setPage] = useState({ current: 1, pageSize: PAGE_LIMIT, total: dataSource.length });
     const [pageData, setPageData] = useState(showDataSource.slice((page.current - 1) * page.pageSize, page.current * page.pageSize));
 
@@ -654,7 +654,7 @@ function InstructionTablePage({
         pagination={ GetPageConfigWhithPageData(page, setPage, [PAGE_LIMIT]) }
         scroll={{ y: tableHeight - 50, rowHeight: ROW_HEIGHT }}
         virtual={true}
-        onChange={(pagination: any, newFilters: {[p: string]: any[]}, newSorter: any, extra: any): void => {
+        onChange={(pagination, newFilters, newSorter, extra): void => {
             switch (extra.action) {
                 case 'filter':
                     setFilters(newFilters);

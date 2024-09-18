@@ -338,7 +338,7 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
                 expandedRowKeys,
                 expandIcon: () => (<></>),
             }
-            : false}
+            : undefined}
     />;
 };
 

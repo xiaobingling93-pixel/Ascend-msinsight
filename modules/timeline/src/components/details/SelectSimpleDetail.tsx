@@ -1,14 +1,18 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import type { MoreTableProps, TableViewProps } from './types';
 import { useDetailUpdater, useMoreUpdater } from './hooks';
 import { selectRow } from './utils';
-import { AutoAdjustedTable } from './base/AutoAdjustedTable';
 import type { CommonStateProto, TabProto } from './base/Tabs';
+import { ResizeTable } from 'ascend-resize';
+import { getAutoKey } from '../../utils/dataAutoKey';
+import { SorterResult } from 'antd/lib/table/interface';
+
+const TABLE_HEAD_HEIGHT = 35;
 
 export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
     { session, height, detail, tabState, commonState, depsList }: TableViewProps<TabProto, T>) => {
@@ -21,11 +25,15 @@ export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
     }, [session.selectedRange]);
     const state = useDetailUpdater(session, detail, tabState, depsList);
     const unit = session.selectedUnits[0];
-    return <AutoAdjustedTable {...state} height={height}
-        rowSelection={{
-            selectedRowKeys: session.selectedDetailKeys,
+    const [dataSource, setDataSource] = useState(state.dataSource);
+    useEffect(() => {
+        setDataSource(state.dataSource);
+    }, [state.dataSource]);
+    return <ResizeTable {...state} dataSource={dataSource} scroll={{ y: height - TABLE_HEAD_HEIGHT }} virtual
+        rowClassName={(row): string => {
+            return session.selectedDetailKeys[0] === getAutoKey(row) ? 'selected-row' : 'click-able';
         }}
-        rowClassName={'click-able'}
+        showSorterTooltip={false}
         expandable={{ showExpandColumn: false }}
         onRow={(row): React.HTMLAttributes<any> => ({
             onClick: async (): Promise<void> => {
@@ -46,11 +54,41 @@ export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
                 detail?.mouseLeaveCallback?.({ session, row });
             },
         })}
+        onChange={(pagination, filters, sorter, { currentDataSource }): void => {
+            let filteredData = [...state.dataSource];
+            // 筛选
+            Object.keys(filters).forEach(key => {
+                const filterValues = filters[key];
+                if (filterValues !== null) {
+                    const columnFilter = state.columns.find(col => col.key === key)?.onFilter;
+                    if (columnFilter) {
+                        filteredData = filteredData.filter(item => filterValues.some(value => columnFilter(value, item)));
+                    }
+                }
+            });
+
+            // 排序
+            const { columnKey, order } = sorter as SorterResult<Record<string, unknown>>;
+            let sortedData = [...filteredData];
+            if (order) {
+                const columnSorter = state.columns.find(col => col.key === columnKey)?.sorter;
+                sortedData = sortedData.sort((a, b) => {
+                    if (typeof columnSorter === 'function') {
+                        const result = columnSorter(a, b);
+                        return order === 'ascend' ? result : -result;
+                    }
+                    return 0;
+                });
+                setDataSource(sortedData);
+            } else {
+                setDataSource(filteredData);
+            }
+        }}
     />;
 });
 
 export const SelectSimpleTabularMore = observer(({ more, height, session }: MoreTableProps) => {
     const state = useMoreUpdater(session, more);
-    return <AutoAdjustedTable {...state} height={height}
+    return <ResizeTable {...state}
         expandable={{ showExpandColumn: false }}/>;
 });

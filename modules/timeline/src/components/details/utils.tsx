@@ -10,7 +10,7 @@ import type { Session } from '../../entity/session';
 import type { TabState } from '../../entity/tabDependency';
 import { type AutoKey, getAutoKey } from '../../utils/dataAutoKey';
 import { getOrigin } from '../../utils/traceOrigin';
-import type { ColumnsType } from '../base/rc-table';
+import type { ColumnsType } from 'antd/es/table';
 import type { FixedType } from '../base/rc-table/types';
 import { Abbreviature } from './base/Abbreviature';
 import { parseFilterDef } from './tableFilter';
@@ -28,18 +28,18 @@ export const parseColDef = <T extends Record<string, unknown>>(
     def: TableDataAdapter<T>,
     session: Session,
     tabState?: TabState | undefined,
-): ColumnsType<object> => {
+): ColumnsType<Record<string, unknown>> => {
     if (def.columns.every(col => typeof (col[2]) === 'number')) {
         throw new Error('columnsWidth at least one of the columns should have width "max-content" or "auto"');
     }
-    const cols = [] as ColumnsType<object>;
+    const cols = [] as ColumnsType<Record<string, unknown>>;
     def.columns.forEach((col, index) => {
         const actionDef = def.actions?.[index];
         const partialCol = {
             title: col[0],
             key: col[0],
             colSpan: 1,
-            ellipsis: { showTitle: false },
+            ellipsis: { showTitle: true },
             ...parseFilterDef(actionDef?.filterKey),
             ...parseSorterDef(actionDef),
         };
@@ -91,7 +91,7 @@ export const onExpandForChildren = (session: Session, onExpand: OnExpandConfig |
             // do nothing if data is not updated
             if (!tree) { return; }
             // data is updated in place, which won't trigger ui refreshing, so force refresh the ui
-            setTableState(state => ({ ...state, data: [...state.data] }));
+            setTableState(state => ({ ...state, data: [...state.dataSource] }));
             // force refresh more panel in case data is updated in place
             if (session.selectedDetailKeys.length > 0) {
                 runInAction(() => { session.selectedDetailKeys = [...session.selectedDetailKeys]; });
