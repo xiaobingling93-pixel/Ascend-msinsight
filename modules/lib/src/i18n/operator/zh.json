@@ -1,5 +1,8 @@
 {
   "operator": {
+    "Difference": "差值",
+    "Baseline": "基线数据",
+    "Comparison": "比对数据",
     "sessionTitle": {
       "TotalTimeGroupByCriteria": "按{{criteria}}分组总耗时（μs）",
       "Operator": "算子",

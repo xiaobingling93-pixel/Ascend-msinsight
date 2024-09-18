@@ -4,6 +4,7 @@
 import { ResizeTable } from 'ascend-resize';
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Button } from 'ascend-components';
 import { DownOutlined } from '@ant-design/icons';
 import { getPageConfigWithPageData } from '../Common';
@@ -144,12 +145,12 @@ const handleOrginData = (group: string, pageSize: number, current: number, data:
     return realData;
 };
 
-const handleDiffData = (group: string, pageSize: number, current: number, data: any[]): any => {
+const handleDiffData = (group: string, pageSize: number, current: number, data: any[], t: TFunction): any => {
     const realData: any[] = [];
     data.forEach((item: any, index: number) => {
         if (item.diff !== null && item.diff !== undefined) {
             item.diff.rowKey = group + String((pageSize * current) + index);
-            item.diff.source = 'Difference';
+            item.diff.source = t('operator:Difference');
             item.diff.compInfo = [item.baseline, item.compare];
             realData.push(item.diff);
         };
@@ -157,12 +158,12 @@ const handleDiffData = (group: string, pageSize: number, current: number, data: 
     return realData;
 };
 
-const handleCompareData = (data: any): any[] => {
+const handleCompareData = (data: any, t: TFunction): any[] => {
     if (data.length === 0) {
         return data;
     }
-    data[0].source = 'Baseline';
-    data[1].source = 'Compare';
+    data[0].source = t('operator:Baseline');
+    data[1].source = t('operator:Comparison');
     return [data[0], data[1]];
 };
 
@@ -226,9 +227,9 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
         let realData = [];
         if (isCompare) {
             if (isExpend) {
-                realData = handleCompareData(data);
+                realData = handleCompareData(data, t);
             } else {
-                realData = handleDiffData(fullCondition.group, fullCondition.pageSize, fullCondition.current, data);
+                realData = handleDiffData(fullCondition.group, fullCondition.pageSize, fullCondition.current, data, t);
                 setCompareColumnLevel(level);
             }
         } else {

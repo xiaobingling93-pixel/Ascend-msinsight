@@ -1,5 +1,8 @@
 {
   "operator": {
+    "Difference": "Difference",
+    "Baseline": "Baseline",
+    "Comparison": "Comparison",
     "sessionTitle": {
       "TotalTimeGroupByCriteria": "Total Time(μs) Group by {{criteria}}",
       "Operator": "Operator",

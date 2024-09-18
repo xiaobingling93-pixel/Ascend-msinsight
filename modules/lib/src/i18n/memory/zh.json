@@ -27,8 +27,8 @@
     "App Reserved": "进程保留",
     "SeeMore": "查看更多",
     "Difference": "差值",
-    "Baseline": "基线卡",
-    "Comparison": "比对卡",
+    "Baseline": "基线数据",
+    "Comparison": "比对数据",
     "searchCriteria": {
       "RankId": "卡序号",
       "GroupBy": "分组方式",
