@@ -43,6 +43,7 @@ fn run_server(
     root_path: &PathBuf,
     cache_path: &PathBuf,
     port: &mut String,
+    sid: &String,
 ) -> Option<Mutex<Child>> {
     let mut server_path = root_path.to_path_buf();
 
@@ -107,6 +108,7 @@ fn run_server(
     match server_command
         .arg(format!("--wsPort={}", port))
         .arg(format!("--logPath={}", cache_path.display()))
+        .arg(format!("--sid={}", sid))
         .spawn()
     {
         Ok(child) => Some(Mutex::new(child)),
@@ -119,6 +121,7 @@ fn run_script(
     server_process: Mutex<Child>,
     root_path: &PathBuf,
     port: &str,
+    sid: &String,
 ) -> wry::Result<()> {
     let event_loop = EventLoop::with_user_event();
     
@@ -170,7 +173,7 @@ fn run_script(
             Response::builder().header(CONTENT_TYPE, mimetype).body(content).map_err(Into::into)
         })
         .with_url(
-            format!("wry://localhost/resources/profiler/frontend/index.html?port={}", port)
+            format!("wry://localhost/resources/profiler/frontend/index.html?port={}&sid={}", port, sid)
                 .as_str(),
         )?
         .with_file_drop_handler(move |window, ev| {
@@ -370,7 +373,7 @@ fn main() {
         .parent()
         .expect("Failed to get parent path of  current exe")
         .to_path_buf();
-    
+
     #[cfg(windows)]
     {
         // 当用户安装在C盘时，使用user目录
@@ -412,8 +415,9 @@ fn main() {
     }
 
     let mut port: String = String::new();
+    let sid = uuid::Uuid::new_v4().to_string();
     // start the server
-    if let Some(child) = run_server(&root_path, &cache_path, &mut port) {
-        let _ = run_script(child, &root_path, &port.as_str());
+    if let Some(child) = run_server(&root_path, &cache_path, &mut port, &sid) {
+        let _ = run_script(child, &root_path, &port.as_str(), &sid);
     }
 }

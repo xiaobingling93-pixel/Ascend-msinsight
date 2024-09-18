@@ -67,11 +67,12 @@ uWS::App::WebSocketBehavior<WsUserData> WsServer::CreateWsBehavior()
         .sendPingsAutomatically = true,
         .maxLifetime = 0,
         .upgrade =
-            [](auto *res, auto *req, auto *context) {
+            [](auto *res, uWS::HttpRequest *req, auto *context) {
+                std::string_view sid = req->getQuery("sid");
                 std::string_view url = req->getUrl();
                 res->template upgrade<WsUserData>(
                     {
-                        .reqUrl = url.data() },
+                        .reqUrl = url.data(), .sid = std::string(sid) },
                     req->getHeader("sec-websocket-key"), req->getHeader("sec-websocket-protocol"),
                     req->getHeader("sec-websocket-extensions"), context);
             },
@@ -110,6 +111,11 @@ void WsServer::OnOpenCb(WsChannel *ws)
     if (url.empty()) {
         ServerLog::Info("Accept new session failed, channel = ", ws, " url is null");
         ws->end(URL_NULL_CODE, "url is null");
+        return;
+    }
+    if (!sid.empty() && sid != ws->getUserData()->sid) {
+        ServerLog::Info("Accept new session failed, channel = ", ws, " sid is not correct");
+        ws->end(SID_UN_CORRECT_CODE, WS_CLOSE_CODE_REASON.at(SID_UN_CORRECT_CODE));
         return;
     }
     if (WsSessionManager::Instance().GetSession() != nullptr) {

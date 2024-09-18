@@ -46,7 +46,7 @@ export class Connection {
         let protocol = `${window.location.protocol === 'https:' && window.location.host !== 'wry.localhost' ? 'wss:' : 'ws:'}//`;
         if (!window.location.pathname.includes('\/proxy\/')) {
             const hostname = location.hostname && location.hostname !== '' ? location.hostname : LOCAL_HOST;
-            this._ws = new WebSocket(`${protocol}${hostname}:${dataSource.port}`);
+            this._ws = new WebSocket(`${protocol}${hostname}:${dataSource.port}${window.location.search}`);
         } else {
             const { location } = window;
             const { host } = location;

@@ -6,6 +6,7 @@ version = 3
 name = "MindStudio_Insight"
 version = "0.1.0"
 dependencies = [
+ "uuid",
  "wry",
 ]
 
