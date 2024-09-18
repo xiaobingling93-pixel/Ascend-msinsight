@@ -176,3 +176,40 @@ export class ClientConnector extends BaseConnector {
         }
     }
 };
+
+type Response = (res: MessageEvent) => Promise<Record<string, unknown>>;
+export class ServerConnector extends BaseConnector {
+    private _responseForFetch: Response | null = null;
+    private _getInterceptorHandlers: (command: string) => <T>(event: MessageEvent, responseInterceptor: T) => void;
+    constructor({getTargetWindow, getInterceptorHandlers}: {
+        getTargetWindow: GetTragetWindows;
+        getInterceptorHandlers: (command: string) => <T>(event: MessageEvent, responseInterceptor: T) => void;
+    }) {
+        super(getTargetWindow);
+        this._getInterceptorHandlers = getInterceptorHandlers;
+    }
+
+    resigsterAwaitFetch(callback: Response): void {
+        this._responseForFetch = callback;
+    }
+
+    protected async awaitFetch(event: MessageEvent): Promise<void> {
+        if (typeof event.data.id !== 'number' || !this._responseForFetch) {
+            const errMsg = 'something wrong with requset response for fetch listener or data.id, please check your config';
+            console.error(this.printErrMsg(errMsg));
+            return;
+        }
+        const res = await this._responseForFetch(event);
+        // 判断是否对该命令的返回内容进行了拦截配置，如果有配置，则先执行拦截方法逻辑
+        const callback = this._getInterceptorHandlers(event.data.args.command);
+        if (callback) {
+            callback(event, res);
+        }
+        this.send({
+            event: 'request',
+            to: event.data.from,
+            id: event.data.id,
+            ...res,
+        } as SendParams<EventHanlder>);
+    }
+}

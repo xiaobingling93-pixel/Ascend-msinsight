@@ -3,7 +3,7 @@
 */
 import styled from '@emotion/styled';
 import { clamp } from 'lodash';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import { ArrowDownIcon, ArrowUpIcon } from '../icon/Icon';
 import { themeInstance } from '../theme';
 
@@ -85,6 +85,7 @@ const ContainerBase = styled.div<CssProps>`
 const ContainerLeft = styled(ContainerBase)`
     flex-direction: row-reverse;
     border-bottom: ${(p): string => p.theme.dividerColor} 1px solid;
+    height: 100%;
     & > .topC {
         flex: 1;
         flex-flow: row;
@@ -355,7 +356,7 @@ const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: 
         case DragDirection.LEFT:
             offsetX = e.x - moving.startX;
             if (Math.abs(offsetX) >= 5) {
-                domDrag.style.width = `${clamp(e.x, 245, dom.clientWidth * 0.4)}px`;
+                domDrag.style.width = `${clamp(e.x, 245, dom.clientWidth * 0.5)}px`;
             }
             break;
         default:
