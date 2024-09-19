@@ -939,7 +939,7 @@ void DbSummaryDataBase::ParserEnd(const std::string &fileId, bool result, const 
 {
     WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
-        ServerLog::Error("Failed to get session token for summary callback.");
+        ServerLog::Error("Failed to get session for summary callback.");
         return;
     }
     if (fileId.empty()) {

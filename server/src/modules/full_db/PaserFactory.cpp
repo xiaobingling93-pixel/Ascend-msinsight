@@ -258,7 +258,7 @@ void ParserAlloc::SendAllParseSuccess()
     ServerLog::Info("Send all parse finished");
     WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
-        ServerLog::Warn("Failed to get session token ");
+        ServerLog::Warn("Failed to get session");
         return;
     }
     auto event = std::make_unique<AllSuccessEvent>();

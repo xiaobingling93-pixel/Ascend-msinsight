@@ -112,7 +112,7 @@ void ParserDb::ClusterProcessAsyncStep(const std::string &selectedFolder,
     ServerLog::Info("Parse cluster file end, send event");
     WsSession *session = WsSessionManager::Instance().GetSession();
     if (session == nullptr) {
-        ServerLog::Warn("Failed to get session token ");
+        ServerLog::Warn("Failed to get session");
         return;
     }
     auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
