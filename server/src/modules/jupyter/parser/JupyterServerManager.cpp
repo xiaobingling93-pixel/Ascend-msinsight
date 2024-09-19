@@ -99,8 +99,7 @@ bool JupyterServerManager::Start(const std::string& path)
     std::shared_ptr<std::string> cmd = std::make_shared<std::string>(("jupyter-lab " + path +
                 " --ServerApp.tornado_settings=\"{'headers': {'Content-Security-Policy': 'frame-ancestors "
                 "\"self\" * wry://localhost'}}\" --ServerApp.disable_check_xsrf=True --ServerApp.token=\"\" "
-                "--ServerApp.password=\"\" --no-browser --port 4000 "
-                "--allow-root > \"" + jupyterLogPath + "\" 2>&1"));
+                "--no-browser --port 4000 > \"" + jupyterLogPath + "\" 2>&1"));
 
     // 开启子进程启动jupyter服务
     pipe = popen(cmd->c_str(), "r");
