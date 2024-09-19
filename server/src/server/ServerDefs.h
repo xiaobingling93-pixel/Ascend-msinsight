@@ -11,6 +11,7 @@ namespace Dic {
 namespace Server {
 struct WsUserData {
     std::string reqUrl;
+    std::string sid;
     void *arg;
 };
 using WsChannel = uWS::WebSocket<false, true, WsUserData>;
