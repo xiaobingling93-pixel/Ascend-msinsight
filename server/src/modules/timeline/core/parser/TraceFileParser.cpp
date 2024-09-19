@@ -75,7 +75,8 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
         ServerLog::Error("Failed to open trace database. rankId:", fileId);
         return false;
     }
-    if (!database->IsDatabaseVersionChange() && database->HasFinishedParseLastTime() &&
+    std::string statusInfo = ComputeStatusInfoFromPathArr(filePathArr);
+    if (!database->IsDatabaseVersionChange() && database->HasFinishedParseLastTime(statusInfo) &&
         !Global::BaselineManager::Instance().IsBaselineId(fileId)) {
         uint64_t min = UINT64_MAX;
         uint64_t max = 0;
@@ -94,6 +95,14 @@ bool TraceFileParser::InitParser(const std::vector<std::string> &filePathArr, co
     }
     InitFileProcess(filePathArr, fileId);
     return true;
+}
+
+std::string TraceFileParser::ComputeStatusInfoFromPathArr(const std::vector<std::string> &filePathArr)
+{
+    std::vector<std::string> tempPathArr(filePathArr);
+    std::sort(tempPathArr.begin(), tempPathArr.end());
+    std::string statusInfo = StringUtil::join(tempPathArr, ",");
+    return statusInfo;
 }
 
 void TraceFileParser::InitFileProcess(const std::vector<std::string> &filePathArr, const std::string &fileId)
@@ -168,7 +177,8 @@ void TraceFileParser::EndParseTask(const std::string &fileId, const std::vector<
         return;
     }
     database->CreateIndex();
-    database->UpdateParseStatus(FINISH_STATUS);
+    std::string statusInfo = ComputeStatusInfoFromPathArr(filePathArr);
+    database->UpdateParseStatus(statusInfo);
     ServerLog::Info("Update depth completed. ID:", fileId);
     ParseEndCallBack(fileId, true, "");
     ParserStatusManager::Instance().SetFinishStatus(fileId);

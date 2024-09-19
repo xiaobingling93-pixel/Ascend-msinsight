@@ -115,7 +115,7 @@ public:
     bool QueryFuseableOpData(const Protocol::KernelDetailsParams &params, const Timeline::FuseableOpRule &rule,
         std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp) override;
     bool UpdateParseStatus(const std::string &status);
-    bool HasFinishedParseLastTime();
+    bool HasFinishedParseLastTime(const std::string &statuInfo);
 
     void SimulationUpdateProcessSortIndex();
 

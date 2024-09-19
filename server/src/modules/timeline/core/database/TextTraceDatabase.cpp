@@ -1708,9 +1708,9 @@ bool TextTraceDatabase::UpdateParseStatus(const std::string &status)
     return UpdateValueIntoStatusInfoTable(timelineParseStatus, status);
 }
 
-bool TextTraceDatabase::HasFinishedParseLastTime()
+bool TextTraceDatabase::HasFinishedParseLastTime(const std::string &statuInfo)
 {
-    return CheckValueFromStatusInfoTable(timelineParseStatus, FINISH_STATUS);
+    return CheckValueFromStatusInfoTable(timelineParseStatus, statuInfo);
 }
 
 bool TextTraceDatabase::SearchAllSlicesDetails(const Protocol::SearchAllSliceParams &params,

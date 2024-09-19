@@ -47,6 +47,8 @@ private:
     uint64_t trackId = 0;
 
     static void InitFileProcess(const std::vector<std::string> &filePathArr, const std::string &fileId);
+
+    static std::string ComputeStatusInfoFromPathArr(const std::vector<std::string> &filePathArr);
 };
 } // end of namespace Timeline
 } // end of namespace Module
