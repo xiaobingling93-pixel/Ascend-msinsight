@@ -320,6 +320,7 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
                 selectedDetails: [],
                 searchData: undefined,
             });
+            session.selectedUnitKeys = [];
         });
     } catch (error) {
         console.error(error);
