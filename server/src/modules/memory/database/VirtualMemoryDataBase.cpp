@@ -564,7 +564,9 @@ void VirtualMemoryDataBase::AddOperatorSql(Protocol::MemoryOperatorParams reques
     if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
         sql += " AND size <= " + std::to_string(requestParams.maxSize);
     }
-    if (!requestParams.orderBy.empty()) {
+    if (!requestParams.orderBy.empty() &&
+        std::find(Protocol::operatorTableColumn.begin(), Protocol::operatorTableColumn.end(), requestParams.orderBy) !=
+        Protocol::operatorTableColumn.end()) {
         auto columnName = isLowCamel ? StringUtil::ToCamelCase(requestParams.orderBy) : requestParams.orderBy;
         sql += " ORDER BY " + columnName + " " + ascend;
     }
@@ -597,7 +599,9 @@ void VirtualMemoryDataBase::AddStableOperatorSql(Protocol::StaticOperatorListPar
     if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
         sql += " AND size <= " + std::to_string(requestParams.maxSize);
     }
-    if (!requestParams.orderBy.empty()) {
+    if (!requestParams.orderBy.empty() &&
+        std::find(Protocol::staticOperatorTableColumn.begin(), Protocol::staticOperatorTableColumn.end(),
+        requestParams.orderBy) != Protocol::staticOperatorTableColumn.end()) {
         auto columnName = isLowCamel ? StringUtil::ToCamelCase(requestParams.orderBy) : requestParams.orderBy;
         sql += " ORDER BY " + columnName + " " + ascend;
     }
