@@ -195,7 +195,7 @@ def copy_file_back(ssh_client, workspace):
     output_dir = workspace + SLASH + MINDSTUDIO_INSIGHT + SLASH + 'out'
     sftp = ssh_client.open_sftp()
     for file in sftp.listdir(output_dir):
-        remote_path = os.path.join(output_dir, SLASH, file)
+        remote_path = output_dir + SLASH + file
         local_path = os.path.join(local_dir, file)
         sftp.get(remote_path, local_path)
         logging.info('Copy remote file %s to local %s', remote_path, local_path)
