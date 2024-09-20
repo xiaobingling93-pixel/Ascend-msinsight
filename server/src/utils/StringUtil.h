@@ -353,9 +353,9 @@ static std::string GetIllegalCharacter()
 }
 private:
 #ifdef _WIN32
-    static constexpr char injectList[] = {'|', ';', '&', '$', '>', '<', '`', '!', '\n'};
+    static inline char injectList[] = {'|', ';', '&', '$', '>', '<', '`', '!', '\n'};
 #else
-    static constexpr char injectList[] = {'|', ';', '&', '$', '>', '<', '`', '\\', '!', '\n'};
+    static inline char injectList[] = {'|', ';', '&', '$', '>', '<', '`', '\\', '!', '\n'};
 #endif
 };
 }

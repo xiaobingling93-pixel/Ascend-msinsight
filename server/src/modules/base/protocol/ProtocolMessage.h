@@ -74,12 +74,12 @@ struct Request : public ProtocolMessage {
     }
 };
 // arguments will be placed into specified request
-static bool CheckStrParamValid(const std::string &param,
+inline bool CheckStrParamValid(const std::string &param,
     std::string &errorMsg)
 {
-    constexpr unsigned MAX_STR_LENGTH = 500;
-    if (param.size() > MAX_STR_LENGTH) {
-        errorMsg = "Parameter length exceeds the upper limit " + std::to_string(MAX_STR_LENGTH) + ".";
+    constexpr unsigned maxStrLength = 500;
+    if (param.size() > maxStrLength) {
+        errorMsg = "Parameter length exceeds the upper limit " + std::to_string(maxStrLength) + ".";
         return false;
     }
     if (!StringUtil::ValidateCommandFilePathParam(param)) {
@@ -90,13 +90,13 @@ static bool CheckStrParamValid(const std::string &param,
     return true;
 }
 
-// 和CheckStrParamVaild不同，该函数认为空字符串是合法的
-static bool CheckStrParamValidEmptyAllowed(const std::string &param,
+// 和CheckStrParamValid不同，该函数认为空字符串是合法的
+inline bool CheckStrParamValidEmptyAllowed(const std::string &param,
     std::string &errorMsg)
 {
-    constexpr unsigned MAX_STR_LENGTH = 500;
-    if (param.size() > MAX_STR_LENGTH) {
-        errorMsg = "Parameter length exceeds the upper limit " + std::to_string(MAX_STR_LENGTH) + ".";
+    constexpr unsigned maxStrLength = 500;
+    if (param.size() > maxStrLength) {
+        errorMsg = "Parameter length exceeds the upper limit " + std::to_string(maxStrLength) + ".";
         return false;
     }
     if (!StringUtil::ValidateStringParam(param)) {
