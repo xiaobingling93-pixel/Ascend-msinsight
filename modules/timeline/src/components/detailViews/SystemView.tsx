@@ -177,7 +177,7 @@ export const RankFilter = observer((props: any): JSX.Element => {
         }
         const { hosts, ranks }: { hosts: string[]; ranks: Map<string, string[]> } = GroupRankIdsByHost(rankList);
         setHostCondition({ options: hosts, value: hosts[0] ?? '', ranks });
-    }, [props.session.units.length]);
+    }, [props.session.units]);
 
     useEffect(() => {
         const rankIdOptions = hostCondition.ranks?.get(hostCondition.value) ?? [];
