@@ -98,11 +98,12 @@ const getLabellist = (dataObj: Ibaseinfo, t: TFunction): Ilabel[] => {
     });
 };
 
-function BlockDetail({ blockDetail = { headerName: [], row: [] }, translate }: Ibaseinfo & {translate: any}): JSX.Element {
+function BlockDetail({ blockDetail = { headerName: [], row: [] } }: Ibaseinfo): JSX.Element {
     const [limit, setLimit] = useState({ maxSize: 10000, overlimit: false, current: 0 });
+    const { t: tDetails } = useTranslation('details');
     const tableset = useMemo(() => {
         const { headerName = [], row = [] } = blockDetail ?? {};
-        const cols = getFullCols(headerName, translate);
+        const cols = getFullCols(headerName, tDetails);
         const dataset = row.slice(0, limit.maxSize).map(item => {
             const arr = item.value;
             const obj: Record<string, string> = {};
@@ -112,12 +113,12 @@ function BlockDetail({ blockDetail = { headerName: [], row: [] }, translate }: I
             return obj;
         });
         return { cols, dataset };
-    }, [blockDetail]);
+    }, [blockDetail, tDetails]);
     useEffect(() => {
         setLimit({ ...limit, overlimit: blockDetail.row.length > limit.maxSize, current: blockDetail.row.length });
     }, [blockDetail]);
     return (<div style={{ width: '600px' }}>
-        {limit.overlimit && (<LimitHit maxSize={limit.maxSize} name={`${translate('Block Detail Records')} (${limit.current})`}/>)}
+        {limit.overlimit && (<LimitHit maxSize={limit.maxSize} name={`${tDetails('Block Detail Records')} (${limit.current})`}/>)}
         <ResizeTable
             size="small"
             columns={tableset.cols}
@@ -141,7 +142,7 @@ const getInfoItem = (item: Ilabel, dataObj: Ibaseinfo, translate: any): Ilabel =
     if (item.key === 'blockDetail') {
         return {
             ...item,
-            value: <BlockDetail {...dataObj} translate={translate}/>,
+            value: <BlockDetail {...dataObj}/>,
         };
     } else {
         let text = (dataObj[item.key as keyof Ibaseinfo] ?? '') as string;
@@ -185,11 +186,11 @@ const index = observer(({ session }: Iprops): JSX.Element => {
         setData(baseInfoList);
     };
 
-    const showBaseInfo = (dataObjList: Ibaseinfo[]): void => {
+    const showBaseInfo = (dataObjList: Ibaseinfo[], translate: TFunction): void => {
         const res: Ilabel[][] = [];
         dataObjList.forEach((dataObj): void => {
-            const labelList = getLabellist(dataObj, tDetails);
-            const displayList = labelList.map(labelItem => getInfoItem(labelItem, dataObj, tDetails));
+            const labelList = getLabellist(dataObj, translate);
+            const displayList = labelList.map(labelItem => getInfoItem(labelItem, dataObj, translate));
             res.push(displayList);
         });
         setItems(res);
@@ -207,8 +208,8 @@ const index = observer(({ session }: Iprops): JSX.Element => {
         getBaseInfo(session.dirInfo.isCompare);
     }, [session.updateId, session.parseStatus, session.dirInfo.isCompare]);
     useEffect(() => {
-        showBaseInfo(data);
-    }, [JSON.stringify(data), t]);
+        showBaseInfo(data, tDetails);
+    }, [JSON.stringify(data), tDetails]);
 
     return (
         <CollapsiblePanel title={t('BaseInfo')} collapsible>
