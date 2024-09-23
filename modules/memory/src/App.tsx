@@ -27,8 +27,6 @@ export const App = observer(() => {
     useEffect(() => {
         session = sessionStore.activeSession;
         getLanguage();
-        themeInstance.setCurrentTheme('dark');
-        window.setTheme(true);
         connector.send({ event: 'getParseStatus', body: { from: 'Memory', request: 'memoryRankIds' } });
     }, []);
 

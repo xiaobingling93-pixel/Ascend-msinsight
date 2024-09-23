@@ -10,18 +10,26 @@ import ThemeDarkIcon from '@/components/icons/theme_dark.vue';
 const { session, setSession } = useSession();
 
 const [SwitchTheme] = useWatchTranslation(['Switch Theme']);
-const isDarkTheme = ref(localStorageService.getItem(LocalStorageKeys.THEME) === 'dark');
+const lsTheme = localStorageService.getItem(LocalStorageKeys.THEME) ?? 'dark';
+const isDarkTheme = ref(lsTheme === 'dark');
 
 onMounted(() => {
     changeElementTheme(isDarkTheme.value);
     connector.addListener('getParseStatus', () => {
-        connector.send({
-            event: 'setTheme',
-            body: { isDark: isDarkTheme.value },
-        });
+        sendThemeEvent(isDarkTheme.value);
     });
-    setSession({theme: localStorageService.getItem(LocalStorageKeys.THEME)});
+    connector.addListener('getTheme', () => {
+        sendThemeEvent(isDarkTheme.value);
+    });
+    setSession({theme: lsTheme});
 });
+
+function sendThemeEvent(isDark: boolean) {
+    connector.send({
+      event: 'setTheme',
+      body: { isDark },
+    });
+}
 
 function changeElementTheme(isDark: boolean) {
     if (isDark) {

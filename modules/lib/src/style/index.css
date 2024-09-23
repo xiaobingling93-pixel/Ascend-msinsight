@@ -14,7 +14,6 @@
 @import 'base.css';
 
 #root {
-    background: var(--mi-bg-color-dark);
     color: var(--mi-text-color-primary);
 }
 

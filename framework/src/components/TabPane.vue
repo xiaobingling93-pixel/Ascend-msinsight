@@ -385,7 +385,7 @@ function handleToggleLang(): void {
                     :key="`frame-${index}-${moduleConfig.name}`"
                     v-if="isShow(moduleConfig) && !session.isVscode"
                     v-bind="{ ...moduleConfig.attributes }"
-                    :style="{ display: activeModule === index ? 'block' : 'none' }"
+                    :style="{ display: activeModule === index ? 'block' : 'none', background: 'transparent', 'color-scheme': 'light' }"
                     :id="`${moduleConfig.name}`"
                     ref="moduleRefs"
                 ></iframe>
@@ -460,6 +460,7 @@ function handleToggleLang(): void {
 .tab-body {
     flex-grow: 1;
     height: calc(100% - 40px);
+    background: var(--mi-bg-color-dark);
 }
 
 iframe {

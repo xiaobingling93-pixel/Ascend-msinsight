@@ -15,7 +15,13 @@ export default class ThemeStore {
     theme: ThemeType;
     constructor(theme = { light: {}, dark: {} }) {
         makeAutoObservable(this);
-        this.currentTheme = 'dark';
+        let lsTheme = localStorage.getItem('theme') ?? 'dark';
+        try {
+            lsTheme = JSON.parse(lsTheme);
+        } catch (e) {
+            lsTheme = 'dark';
+        }
+        this.currentTheme = ['light', 'dark'].includes(lsTheme) ? lsTheme as ThemeItem : 'dark';
         this.theme = theme as ThemeType;
     }
 

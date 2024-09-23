@@ -11,9 +11,7 @@ import { AppErrorBoundary } from './components/error/AppErrorBoundary';
 import { SessionPageErrorBoundary } from './components/error/SessionPageErrorBoundary';
 import { useRootStore } from './context/context';
 import { SessionPage } from './pages/SessionPage';
-import { platform } from './platforms';
 import { themeInstance, GlobalStyles } from 'ascend-theme';
-import type { ThemeItem } from 'ascend-theme';
 import connector from './connection';
 import { disableShortcuts } from 'ascend-utils';
 
@@ -91,10 +89,8 @@ export const App = observer(() => {
         insightStore.loadTemplates().then(() => {
             session = sessionStore.activeSession;
         });
-        platform.initTheme().then((res: ThemeItem) => {
-            window.setTheme(res === 'dark');
-        });
         getLanguage();
+        getTheme();
     }, []);
 
     const getLanguage = (): void => {
@@ -102,7 +98,11 @@ export const App = observer(() => {
             event: 'getLanguage',
         });
     };
-
+    const getTheme = (): void => {
+        connector.send({
+            event: 'getTheme',
+        });
+    };
     return (
         <ThemeProvider theme={theme}>
             <GlobalStyles />
