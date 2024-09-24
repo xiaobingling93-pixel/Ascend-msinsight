@@ -205,7 +205,7 @@ bool DbClusterDataBase::QueryAllOperators(Protocol::OperatorDetailsParam &param,
         " / (synchronization_time + transit_time), 4) END AS synchronizationTimeRatio, "
         "CASE WHEN wait_time = 0 THEN 0 ELSE "
         "ROUND(wait_time / (wait_time + transit_time), 4) END AS waitTimeRatio, "
-        "bw.sdma_bw as sdma_bw, bw.rdma_bw as rdma_bw "
+        "bw.sdma_bw as sdmaBw, bw.rdma_bw as rdmaBw "
         "FROM " + TABLE_COMM_ANALYZER_TIME + " t "
         "LEFT JOIN " + TABLE_COMM_GROUP + " m ON t.group_name = m.group_name "
         "JOIN ( "

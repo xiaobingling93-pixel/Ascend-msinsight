@@ -317,7 +317,7 @@ bool VirtualClusterDatabase::ExecuteQueryAllOperators(Protocol::OperatorDetailsP
 {
     sqlite3_stmt *stmt = nullptr;
     std::vector<std::string> orderByFlagVector = {"operatorName", "startTime", "elapseTime", "synchronizationTime",
-                                                  "waitTime", "idleTime", "transitTime", "sdma_bw", "rdma_bw",
+                                                  "waitTime", "idleTime", "transitTime", "sdmaBw", "rdmaBw",
                                                   "synchronizationTimeRatio", "waitTimeRatio"};
     if (param.orderBy.empty() ||
         std::find(orderByFlagVector.begin(), orderByFlagVector.end(), param.orderBy) ==

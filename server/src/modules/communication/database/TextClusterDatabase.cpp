@@ -675,7 +675,7 @@ bool TextClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &para
         "ROUND(idle_time, 4) as idleTime, "
         "ROUND(synchronization_time_ratio, 4) as synchronizationTimeRatio, "
         "ROUND(wait_time_ratio, 4) as waitTimeRatio, "
-        "bw.sdma_bw as sdma_bw, bw.rdma_bw as rdma_bw "
+        "bw.sdma_bw as sdmaBw, bw.rdma_bw as rdmaBw "
         "FROM " + TABLE_TIME_INFO + " t "
         "JOIN ( "
         "    SELECT op_name, "
