@@ -142,7 +142,7 @@ const PinButton = observer(({ session, unit, isHovered, hasPinButton, isPinned }
                         if (!isPinned) {
                             execute = (): void => {
                                 platform.trace('stickyLane', {});
-                                pinnedUnits.unshift(unit);
+                                pinnedUnits.push(unit);
                                 session.pinnedUnits = [...pinnedUnits];
                             };
                         } else {

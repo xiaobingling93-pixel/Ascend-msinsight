@@ -8,6 +8,15 @@ namespace Dic {
 namespace Module {
 namespace Global {
 using namespace Protocol;
+bool FileSelector::CompareStrIgnoreCase(const std::string &s1, const std::string &s2)
+{
+    std::string str1(s1);
+    std::string str2(s2);
+    std::transform(str1.begin(), str1.end(), str1.begin(), [](unsigned char c) { return std::tolower(c);});
+    std::transform(str2.begin(), str2.end(), str2.begin(), [](unsigned char c) { return std::tolower(c);});
+    return str1 < str2;
+}
+
 void FileSelector::GetFoldersAndFiles(const std::string &path,
                                       std::vector<std::unique_ptr<Protocol::Folder>> &childrenFolders,
                                       std::vector<std::unique_ptr<Protocol::File>> &childrenFiles,
@@ -35,11 +44,17 @@ void FileSelector::GetFoldersAndFiles(const std::string &path,
     } else if (tempPath == filepath) {
         exist = FileUtil::FindFolders(path, folders, files) || FileUtil::CheckFilePath(tempPath);
     }
+    if (!folders.empty()) {
+        std::sort(folders.begin(), folders.end(), CompareStrIgnoreCase);
+    }
     for (const auto &folder : folders) {
         auto folderPtr = std::make_unique<Folder>();
         folderPtr->name = folder;
         folderPtr->path = FileUtil::SplicePath(path, folder);
         childrenFolders.emplace_back(std::move(folderPtr));
+    }
+    if (!files.empty()) {
+        std::sort(files.begin(), files.end(), CompareStrIgnoreCase);
     }
     for (const auto &file : files) {
         std::string tmpPath = FileUtil::SplicePath(path, file);
