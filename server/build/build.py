@@ -38,6 +38,7 @@ OUTPUT_DIR = os.path.join(HOME_DIR, 'output')
 OUTPUT_OS_DIR = ''
 OUTPUT_BIN_DIR = ''
 OUTPUT_EXE_DIR = ''
+Spec_Path = os.path.join(BUILD_DIR, 'cluster_analysis.spec')
 
 LOG_DIR = os.path.join(BUILD_DIR, 'logs')
 LOG_FILE = os.path.join(LOG_DIR, 'build.log')
@@ -138,13 +139,9 @@ def build_bin(args):
             shutil.rmtree(script_path)
         shutil.copytree(CLUSTER_ANALYSE_DIR, os.path.join(att_bin_dir, CLUSTER_ANALYSE), copy_function=shutil.copy2)
     else:
-        att_main_path = os.path.join(CLUSTER_ANALYSE_DIR, 'cluster_analysis.py')
         build_att = [
-            'pyinstaller', '--collect-submodules', CLUSTER_ANALYSE, '--path=' + CLUSTER_ANALYSE_DIR,
-            '--distpath=' + att_bin_dir, '--specpath', CMAKE_BUILD_DIR, '--onefile', att_main_path
+            'pyinstaller', '--distpath=' + att_bin_dir, Spec_Path
         ]
-        if not IS_WINDOWS:
-            build_att.append('-s')
         result = execute_cmd(build_att, BUILD_DIR)
         if result != 0:
             build_log('Failed to execute build att command.')
