@@ -26,6 +26,8 @@ const baseOption: any = {
         axisPointer: {
             type: 'cross',
         },
+        trigger: 'axis',
+        enterable: true,
     },
     legend: {
         type: 'scroll',
@@ -87,7 +89,7 @@ function wrapData(originData: IRooflineChart, theme: Theme): Option {
             const { bw, computility, bwName, point, ratio, computilityName } = roofline;
             const allPositive = bw > 0 && computility > 0 && point[0] > 0 && point[1] > 0;
             if (allPositive) {
-            // 斜线公式 y = kx
+                // 斜线公式 y = kx
                 const crossPoint = bw > 1 ? [minAxis, bw * minAxis] : [minAxis / bw, minAxis];
                 const turningPoint: Point = [computility / bw, computility];
                 const rightPoint: Point = [maxAxisX, computility];
@@ -186,22 +188,27 @@ export function getDigit(num: number, diff = 0): number {
 }
 
 function getTooltipFormatter(): (p: any) => string {
-    return (params: any) => {
-        if (params.data !== undefined && params.seriesType === 'scatter') {
-            const keepDecimalNum = 3;
-            const [, , bw, bwName, ratio, point] = params.data;
-            return `<div>
+    return (params: any[]) => {
+        const tips = params.map(item => getTipText((item))).join('');
+        return tips === '' ? '' : `<div style="max-height:400px;overflow-y:auto;">${tips}</div>`;
+    };
+}
+
+const getTipText = (params: any): any => {
+    if (params.data !== undefined && params.seriesType === 'scatter') {
+        const keepDecimalNum = 3;
+        const [, , bw, bwName, ratio, point] = params.data;
+        return `<div>
         <div>${params.marker}${safeStr(bwName)}</div>
         <div>${i18n.t('Bandwidth', { ns: 'details' })}: ${safeStr(formatDecimal(bw, keepDecimalNum))}TB/s</div>
         <div>${i18n.t('Intensity', { ns: 'details' })}: ${safeStr(formatDecimal(point[0], keepDecimalNum))}Ops/Byte</div>
         <div>${i18n.t('Performance', { ns: 'details' })}: ${safeStr(formatDecimal(point[1], keepDecimalNum))}TOps/s</div>
         <div>${i18n.t('Performance Ratio', { ns: 'details' })}: ${safeStr(formatDecimal((100 * Number(ratio)), keepDecimalNum))}%</div>
         </div>`;
-        } else {
-            return '';
-        }
-    };
-}
+    } else {
+        return '';
+    }
+};
 
 function InitCharts(data: IRooflineChart, chartDom: HTMLElement | null, theme: Theme): echarts.ECharts | undefined {
     if (chartDom === null || chartDom === undefined || chartDom?.offsetParent === null) {
