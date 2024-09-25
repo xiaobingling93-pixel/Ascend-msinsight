@@ -320,7 +320,7 @@ const moveDomain = (session: Session, direction: number): void => {
 };
 
 const moveDomainByDragging = throttle((session: Session, offset: number, canvasWidth: number): void => {
-    if (!dragData.isDragging) {
+    if (!dragData.isDragging || canvasWidth === 0) {
         return;
     }
     const { domainRange: { domainStart, domainEnd } } = session;

@@ -84,6 +84,9 @@ const drawLegend = (context: CanvasRenderingContext2D, {
     maxNumber,
     splits,
 }: DrawLengendParams): void => {
+    if (maxNumber === 0) {
+        return;
+    }
     let lastStartAngle = Math.PI;
     splits.forEach((d, index) => {
         context.beginPath();

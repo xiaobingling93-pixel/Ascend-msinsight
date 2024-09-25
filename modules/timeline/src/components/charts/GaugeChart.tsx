@@ -116,6 +116,7 @@ const drawRight = (ctx: CanvasRenderingContext2D, {
     palette,
     canvasHeight,
 }: DrawRightParams): void => {
+    if (datas.length === 0) { return; }
     const xScale = d3.scaleLinear().range(range).domain([0, 10]);
     const ratio = 0.15;
     const yOffset = canvasHeight / datas.length;
