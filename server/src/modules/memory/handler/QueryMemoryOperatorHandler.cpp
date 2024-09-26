@@ -26,9 +26,7 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
     uint64_t minTimeStamp = Timeline::TraceTime::Instance().GetStartTime();
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg, minTimeStamp)) {
-        SetResponseResult(response, false);
-        ServerLog::Error(errorMsg);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, errorMsg);
         return;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
@@ -36,9 +34,7 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
         std::vector<MemoryOperator> opDetails;
         if (!database->QueryOperatorDetail(request.params, response.columnAttr, opDetails) or
         !database->QueryOperatorsTotalNum(request.params, response.totalNum)) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Failed to query memory operator data.");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, "Failed to query memory operator data.");
             return;
         }
         for (const auto &item: opDetails) {
@@ -47,26 +43,25 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
         }
     } else {
         if (request.params.type == Protocol::MEMORY_STREAM_GROUP) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Memory comparing does not support request type Stream.");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, "Memory comparing does not support request type Stream.");
             return;
         }
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+        if (baselineId == "") {
+            SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
+            return;
+        }
         auto databaseBaseline = DataBaseManager::Instance().GetMemoryDatabase(baselineId);
         if (!databaseBaseline) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Failed to connect to database of baseline.");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return;
         }
         if (!CompareOperator(database, databaseBaseline, request, responsePtr, session)) {
             return;
         }
     }
-    SetResponseResult(response, true);
     // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
 }
 
 bool QueryMemoryOperatorHandler::CompareOperator(VirtualMemoryDataBase *database,
@@ -79,21 +74,21 @@ bool QueryMemoryOperatorHandler::CompareOperator(VirtualMemoryDataBase *database
     uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
     if (!database->QueryEntireOperatorTable(responseCompare.columnAttr, responseCompare.operatorDetails,
                                             request.params.rankId, offsetTimeCompare)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to query memory operator compare data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, "Failed to query memory operator compare data.");
         return false;
     }
     responseCompare.totalNum = responseCompare.operatorDetails.size();
     std::unique_ptr<MemoryOperatorResponse> responsePtrBaseline = std::make_unique<MemoryOperatorResponse>();
     MemoryOperatorResponse &responseBaseline = *responsePtrBaseline.get();
     std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+    if (baselineId == "") {
+        SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
+        return false;
+    }
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
     if (!databaseBaseline->QueryEntireOperatorTable(responseBaseline.columnAttr, responseBaseline.operatorDetails,
                                                     request.params.rankId, offsetTimeBaseline)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to query memory operator baseline data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, "Failed to query memory operator baseline data.");
         return false;
     }
     responseBaseline.totalNum = responseBaseline.operatorDetails.size();

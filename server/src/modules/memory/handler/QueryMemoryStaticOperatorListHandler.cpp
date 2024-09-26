@@ -23,9 +23,7 @@ void QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
     SetBaseResponse(request, response);
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg)) {
-        SetResponseResult(response, false);
-        ServerLog::Error(errorMsg);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, errorMsg);
         return;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
@@ -33,9 +31,7 @@ void QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
         std::vector<StaticOperatorItem> opDetails;
         if (!database->QueryStaticOperatorList(request.params, response.columnAttr, opDetails) or
             !database->QueryStaticOperatorsTotalNum(request.params, response.totalNum)) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Failed to query memory static operator data.");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, "Failed to query memory static operator data.");
             return;
         }
         for (const auto &item: opDetails) {
@@ -44,20 +40,21 @@ void QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
         }
     } else {
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+        if (baselineId == "") {
+            SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
+            return;
+        }
         auto databaseBaseline = DataBaseManager::Instance().GetMemoryDatabase(baselineId);
         if (!databaseBaseline) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Failed to connect to database of baseline.");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return;
         }
         if (!CompareOperator(database, databaseBaseline, request, responsePtr, session)) {
             return;
         }
     }
-    SetResponseResult(response, true);
     // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
 }
 
 bool QueryMemoryStaticOperatorListHandler::CompareOperator(VirtualMemoryDataBase *database,
@@ -70,9 +67,7 @@ bool QueryMemoryStaticOperatorListHandler::CompareOperator(VirtualMemoryDataBase
     MemoryStaticOperatorListResponse &responseCompare = *responsePtrCompare.get();
     if (!database->QueryEntireStaticOperatorTable(request.params, responseCompare.columnAttr,
         responseCompare.operatorDetails)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to query memory static operator compare data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, "Failed to query memory static operator compare data.");
         return false;
     }
     responseCompare.totalNum = responseCompare.operatorDetails.size();
@@ -81,9 +76,7 @@ bool QueryMemoryStaticOperatorListHandler::CompareOperator(VirtualMemoryDataBase
     MemoryStaticOperatorListResponse &responseBaseline = *responsePtrBaseline.get();
     if (!databaseBaseline->QueryEntireStaticOperatorTable(request.params, responseBaseline.columnAttr,
         responseBaseline.operatorDetails)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to query memory static operator baseline data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, "Failed to query memory static operator baseline data.");
         return false;
     }
     responseBaseline.totalNum = responseBaseline.operatorDetails.size();

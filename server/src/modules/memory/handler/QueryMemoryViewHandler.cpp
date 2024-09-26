@@ -21,42 +21,37 @@ void QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     SetBaseResponse(request, response);
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg)) {
-        SetResponseResult(response, false);
-        ServerLog::Error(errorMsg);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, errorMsg);
         return;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!request.params.isCompare) {
         uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
         if (!database->QueryMemoryView(request.params, response.data, offsetTime)) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Failed to query memory view data.");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, "Failed to query memory view data.");
             return;
         }
     } else {
         if (request.params.type == Protocol::MEMORY_STREAM_GROUP) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Memory comparing does not support request type Stream.");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, "Memory comparing does not support request type Stream.");
             return;
         }
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+        if (baselineId == "") {
+            SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
+            return;
+        }
         auto databaseBaseline = DataBaseManager::Instance().GetMemoryDatabase(baselineId);
         if (!databaseBaseline) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Failed to connect to database of baseline.");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return;
         }
         if (!GetCompareGraph(database, databaseBaseline, request, responsePtr, session)) {
             return;
         }
     }
-    SetResponseResult(response, true);
     // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
 }
 
 bool QueryMemoryViewHandler::GetCompareGraph(VirtualMemoryDataBase *database, VirtualMemoryDataBase *databaseBaseline,
@@ -67,19 +62,19 @@ bool QueryMemoryViewHandler::GetCompareGraph(VirtualMemoryDataBase *database, Vi
     MemoryViewResponse &responseCompare = *responsePtrCompare.get();
     uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
     if (!database->QueryMemoryView(request.params, responseCompare.data, offsetTimeCompare)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to query memory view compare data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, "Failed to query memory view compare data.");
         return false;
     }
     std::unique_ptr<MemoryViewResponse> responsePtrBaseline = std::make_unique<MemoryViewResponse>();
     MemoryViewResponse &responseBaseline = *responsePtrBaseline.get();
     std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+    if (baselineId == "") {
+        SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
+        return false;
+    }
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
     if (!databaseBaseline->QueryMemoryView(request.params, responseBaseline.data, offsetTimeBaseline)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to query memory view baseline data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, "Failed to query memory view baseline data.");
         return false;
     }
     GetCompareGraphLegends(responseCompare.data, responseBaseline.data, response.data);

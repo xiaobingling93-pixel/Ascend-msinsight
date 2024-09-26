@@ -31,7 +31,7 @@ private:
     std::string baselineRankId;
     std::string baselineHost;
     std::string baselineCardName;
-    std::recursive_mutex mutex;
+    std::shared_mutex sharedMutex;
 };
 }
 }

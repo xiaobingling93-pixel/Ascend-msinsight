@@ -140,6 +140,11 @@ bool ParserStatusManager::IsFinished(const std::string &fileId)
         statusMap[fileId] == ParserStatus::FINISH_ALL;
 }
 
+bool ParserStatusManager::IsKernelAndMemoryFinished(const std::string &fileId)
+{
+    return IsFinished(fileId) && IsFinished(KERNEL_PREFIX + fileId) && IsFinished(MEMORY_PREFIX + fileId);
+}
+
 void ParserStatusManager::WaitAllFinished(const std::vector<std::string> &fileIds)
 {
     std::unique_lock<std::mutex> lock(mutex);

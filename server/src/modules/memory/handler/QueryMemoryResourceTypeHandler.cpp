@@ -19,21 +19,16 @@ namespace Memory {
         SetBaseResponse(request, response);
         std::string errorMsg;
         if (!CheckStrParamValid(request.rankId, errorMsg)) {
-            SetResponseResult(response, false);
-            ServerLog::Error(errorMsg);
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, errorMsg);
             return;
         }
         auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.rankId);
         if (!database->QueryMemoryResourceType(response.type)) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Failed to query memory resource type data.");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, "Failed to query memory resource type data.");
             return;
         }
-        SetResponseResult(response, true);
         // add response to response queue in session
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), true);
     }
 } // end of namespace Memory
 } // end of namespace Module

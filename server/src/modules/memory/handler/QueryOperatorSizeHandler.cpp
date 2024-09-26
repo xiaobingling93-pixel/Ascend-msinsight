@@ -18,21 +18,16 @@ void QueryOperatorSizeHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     SetBaseResponse(request, response);
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg)) {
-        SetResponseResult(response, false);
-        ServerLog::Error(errorMsg);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, errorMsg);
         return;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!database->QueryOperatorSize(response.size.minSize, response.size.maxSize, request.params.rankId)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to query operator size data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, "Failed to query operator size data.");
         return;
     }
-    SetResponseResult(response, true);
     // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
 }
 
 } // end of namespace Memory

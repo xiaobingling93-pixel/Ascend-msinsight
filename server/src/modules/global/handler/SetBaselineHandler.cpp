@@ -25,7 +25,7 @@ void SetBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     BaselineInfo baselineInfo;
     bool res =
         BaselineManagerService::InitBaselineData(request.params.projectName, request.params.filePath, baselineInfo);
-    response.body.rankId = Global::BaselineManager::Instance().GetBaselineId();
+    response.body.rankId = baselineInfo.rankId;
     response.body.host = baselineInfo.host;
     response.body.errorMessage = baselineInfo.errorMessage;
     response.body.cardName = baselineInfo.cardName;

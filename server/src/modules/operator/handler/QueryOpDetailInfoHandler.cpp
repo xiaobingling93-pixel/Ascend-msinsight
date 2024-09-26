@@ -140,6 +140,10 @@ namespace Dic::Module::Operator {
             return true;
         }
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+        if (baselineId == "") {
+            ServerLog::Error("[Operator]Failed to get baseline id.");
+            return false;
+        }
         auto databaseBaseline = DataBaseManager::Instance().GetSummaryDatabase(baselineId);
         std::vector<Protocol::OperatorDetailInfoRes> baselineRes;
         request.params.rankId = "";

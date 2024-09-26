@@ -45,6 +45,7 @@ public:
     void WaitAllFinished(const std::vector<std::string> &fileIds);
     bool IsAllFinished(std::string &notFinishTask);
     bool IsFinished(const std::string &fileId);
+    bool IsKernelAndMemoryFinished(const std::string &fileId);
     void SetPendingStatus(const std::string &fileId,
         const std::pair<ProjectTypeEnum, std::vector<std::string>> &filePathPair);
     std::pair<ProjectTypeEnum, std::vector<std::string>> QueryPendingFilePath(const std::string &fileId);

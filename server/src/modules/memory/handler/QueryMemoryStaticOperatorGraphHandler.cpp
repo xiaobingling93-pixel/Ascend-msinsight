@@ -25,35 +25,32 @@ void QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
     SetBaseResponse(request, response);
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg)) {
-        SetResponseResult(response, false);
-        ServerLog::Error(errorMsg);
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, errorMsg);
         return;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!request.params.isCompare) {
         if (!database->QueryStaticOperatorGraph(request.params, response.data)) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Failed to query memory static operator graph data.");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, "Failed to query memory static operator graph data.");
             return;
         }
     } else {
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+        if (baselineId == "") {
+            SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
+            return;
+        }
         auto databaseBaseline = DataBaseManager::Instance().GetMemoryDatabase(baselineId);
         if (!databaseBaseline) {
-            SetResponseResult(response, false);
-            ServerLog::Error("Failed to connect to database of baseline.");
-            session.OnResponse(std::move(responsePtr));
+            SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return;
         }
         if (!GetCompareGraph(database, databaseBaseline, request, responsePtr, session)) {
             return;
         }
     }
-    SetResponseResult(response, true);
     // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
+    SendResponse(std::move(responsePtr), true);
 }
 
 bool QueryMemoryStaticOperatorGraphHandler::GetCompareGraph(VirtualMemoryDataBase *database,
@@ -65,18 +62,14 @@ bool QueryMemoryStaticOperatorGraphHandler::GetCompareGraph(VirtualMemoryDataBas
             std::make_unique<MemoryStaticOperatorGraphResponse>();
     MemoryStaticOperatorGraphResponse &responseCompare = *responsePtrCompare.get();
     if (!database->QueryStaticOperatorGraph(request.params, responseCompare.data)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to query memory static operator graph compare data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, "Failed to query memory static operator graph compare data.");
         return false;
     }
     std::unique_ptr<MemoryStaticOperatorGraphResponse> responsePtrBaseline =
             std::make_unique<MemoryStaticOperatorGraphResponse>();
     MemoryStaticOperatorGraphResponse &responseBaseline = *responsePtrBaseline.get();
     if (!databaseBaseline->QueryStaticOperatorGraph(request.params, responseBaseline.data)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to query memory static operator graph baseline data.");
-        session.OnResponse(std::move(responsePtr));
+        SendResponse(std::move(responsePtr), false, "Failed to query memory static operator graph baseline data.");
         return false;
     }
     GetCompareGraphLegends(responseCompare.data, responseBaseline.data, response.data);
