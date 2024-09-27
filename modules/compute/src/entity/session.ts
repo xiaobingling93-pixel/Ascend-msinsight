@@ -19,6 +19,7 @@ export class Session {
     theme: string = 'dark';
     // global param
     dirInfo: DirInfo = { rankId: '', isCompare: false };
+    computeAdvice?: string[];
     constructor() {
         makeAutoObservable(this);
     }

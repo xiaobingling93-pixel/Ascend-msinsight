@@ -11,14 +11,14 @@ import { CompareData } from '../../../../utils/interface';
 
 const cubeCore: Inode = {
     name: '',
-    left: 0,
-    top: 0,
+    left: -15,
+    top: 20,
     container: [
         {
-            x: 100,
-            y: 0,
+            x: 125,
+            y: -20,
             width: 610,
-            height: 310,
+            height: 330,
         },
     ],
     rect: [
@@ -145,11 +145,11 @@ const cubeCore: Inode = {
 };
 const vectorCore: Inode = {
     name: '',
-    left: 0,
+    left: -15,
     top: 0,
     container: [
         {
-            left: 100,
+            left: 125,
             top: 0,
             width: 610,
             height: 150,
@@ -235,8 +235,8 @@ const vectorCore2: Inode = {
 };
 const mixCore: Inode = {
     name: '',
-    left: 0,
-    top: 0,
+    left: -15,
+    top: -10,
     rect: [
         {
             name: 'L1',
@@ -423,28 +423,30 @@ const mixCore: Inode = {
 };
 const common: Inode[] = [
     {
-        name: 'hbm',
+        name: 'GM',
         x: 1,
         y: 1,
-        rect: [
+        container: [
             {
-                name: 'HBM',
-                width: 85,
-                height: 650,
-                label: 'HBM',
+                width: 305,
+                height: 660,
             },
         ],
-    },
-    {
-        name: 'l2catch',
-        top: 0,
-        left: 0,
         rect: [
+            {
+                left: 15,
+                top: 15,
+                name: 'HBM',
+                width: 85,
+                height: 630,
+                label: 'HBM',
+            },
             {
                 name: 'L2Catch',
                 left: 120,
+                top: 0,
                 width: 70,
-                height: 650,
+                height: 630,
                 labels: [
                     { value: 'L2 Cache' },
                     { value: '' },
@@ -458,7 +460,7 @@ const common: Inode[] = [
             {
                 id: 'HBM_TO_L2',
                 label: 'HBM_TO_L2',
-                x: 0,
+                x: 100,
                 top: '46%-10',
                 orient: 'right',
                 length: 117,
@@ -466,7 +468,7 @@ const common: Inode[] = [
             {
                 id: 'L2_TO_HBM',
                 label: 'L2_TO_HBM',
-                x: 119,
+                x: 219,
                 top: '46%+10',
                 orient: 'left',
                 length: 117,
@@ -476,21 +478,33 @@ const common: Inode[] = [
     },
 ];
 const cube: Igraph = [
-    ...common.map(item => ({ ...item, rect: (item.rect ?? []).map(rectItem => ({ ...rectItem, height: 310 })) })),
+    ...common.map(item => ({
+        ...item,
+        rect: (item.rect ?? []).map(rectItem => ({ ...rectItem, height: 300 })),
+        container: (item.container ?? []).map(containerItem => ({ ...containerItem, height: 330 })),
+    })),
     cubeCore,
 ];
 const vector: Igraph = [
-    ...common.map(item => ({ ...item, rect: (item.rect ?? []).map(rectItem => ({ ...rectItem, height: 150 })) })),
+    ...common.map(item => ({
+        ...item,
+        rect: (item.rect ?? []).map(rectItem => ({ ...rectItem, height: 120 })),
+        container: (item.container ?? []).map(containerItem => ({ ...containerItem, height: 150 })),
+    })),
     vectorCore,
 ];
 const mix: Igraph = [
     ...common,
     cubeCore,
-    { ...vectorCore, x: 276, y: 330 },
-    { ...vectorCore2, x: 276, y: 500 },
+    { ...vectorCore, x: 291, y: 345 },
+    { ...vectorCore2, x: 291, y: 510 },
 ];
 const mix310: Igraph = [
-    ...common.map(item => ({ ...item, rect: (item.rect ?? []).map(rectItem => ({ ...rectItem, height: 390 })) })),
+    ...common.map(item => ({
+        ...item,
+        rect: (item.rect ?? []).map(rectItem => ({ ...rectItem, height: 350 })),
+        container: (item.container ?? []).map(containerItem => ({ ...containerItem, height: 380 })),
+    })),
     mixCore,
 ];
 const flow: Record<string, Igraph> = { mix910: mix, cube910: cube, vector910: vector, mix310 };
@@ -1087,7 +1101,7 @@ const addLegend = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, ti
 
     const g = svg.append('g')
         .attr('class', 'legend')
-        .attr('transform', 'translate(1150,10)');
+        .attr('transform', 'translate(1180,10)');
     // 创建渐变色的矩形
     const size = { width: 15, height: 380 };
     g.append('rect')

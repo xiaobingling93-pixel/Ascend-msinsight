@@ -50,7 +50,7 @@ const baseOption: any = {
     grid: {
         bottom: '30',
         containLabel: true,
-        top: 85,
+        top: 100,
     },
     xAxis: {
         type: 'log',
@@ -71,6 +71,7 @@ const baseOption: any = {
         nameTextStyle: {
             color: COLOR.Grey20,
         },
+        nameGap: 25,
         axisPointer: {
             type: 'shadow',
         },
@@ -85,42 +86,36 @@ function wrapData(originData: IRooflineChart, theme: Theme): Option {
     const transInfo = getRoofInfo(originData);
     if (transInfo !== null) {
         const { maxAxisX, minAxis } = transInfo;
+        // 算力名
+        let labelPoint: Point | undefined;
+        let computilityNameLabel: string | undefined;
         originData.rooflines.forEach((roofline, index) => {
             const { bw, computility, bwName, point, ratio, computilityName } = roofline;
-            const allPositive = bw > 0 && computility > 0 && point[0] > 0 && point[1] > 0;
-            if (allPositive) {
-                // 斜线公式 y = kx
-                const crossPoint = bw > 1 ? [minAxis, bw * minAxis] : [minAxis / bw, minAxis];
-                const turningPoint: Point = [computility / bw, computility];
-                const rightPoint: Point = [maxAxisX, computility];
-                const rooflinePoints = [crossPoint, turningPoint, rightPoint];
-                series.push({
-                    name: bwName,
-                    type: 'scatter',
-                    symbolSize: 16,
-                    itemStyle: {
-                        color: chartColors[(index % chartColors.length)],
-                    },
-                    emphasis: {
-                        scale: 1.2,
-                    },
-                    data: [[...point, bw, bwName, ratio, point, computilityName]],
-                    zlevel: 2,
-                });
-                series.push({
-                    name: bwName,
-                    type: 'line',
-                    lineStyle: { width: 2, color: chartColors[(index % chartColors.length)] },
-                    data: rooflinePoints,
-                    emphasis: {
-                        lineStyle: { width: 4 },
-                    },
-                    zlevel: 1,
-                });
-                legendData.push({ name: bwName });
+            const allPositive = bw > 0 && computility > 0 && point?.[0] > 0 && point?.[1] > 0;
+            if (!allPositive) {
+                return;
+            }
+            // 斜线公式 y = kx
+            const crossPoint: Point = bw > 1 ? [minAxis, bw * minAxis] : [minAxis / bw, minAxis];
+            const turningPoint: Point = [computility / bw, computility];
+            const rightPoint: Point = [maxAxisX, computility];
+            const rooflinePoints: Point[] = [crossPoint, turningPoint, rightPoint];
+            series.push(getPointSerie(bwName, index, [...point, bw, bwName, ratio, point, computilityName]));
+            series.push(getRooflineSerie(bwName, index, rooflinePoints));
+            legendData.push({ name: bwName });
+            // 算力名
+            if (labelPoint === undefined) {
+                labelPoint = rightPoint;
+                computilityNameLabel = roofline.computilityName;
             }
         });
+
+        // 算力名
+        if (labelPoint !== undefined && computilityNameLabel !== undefined) {
+            series.push(getComputilityNameSerie(labelPoint, computilityNameLabel ?? '', theme));
+        }
     }
+
     const option = cloneDeep(baseOption);
     option.title.text = originData.title;
     option.series = series;
@@ -129,11 +124,70 @@ function wrapData(originData: IRooflineChart, theme: Theme): Option {
     return getOptionStyle(option, theme);
 }
 
+function getPointSerie(bwName: string, index: number, data: Array<number | string | Point>): any {
+    return {
+        name: bwName,
+        itemStyle: {
+            color: chartColors[(index % chartColors.length)],
+        },
+        data: [data],
+        type: 'scatter',
+        symbolSize: 16,
+        emphasis: {
+            scale: 1.2,
+        },
+        zlevel: 2,
+    };
+}
+
+function getRooflineSerie(bwName: string, index: number, rooflinePoints: Point[]): any {
+    return {
+        name: bwName,
+        lineStyle: { width: 2, color: chartColors[(index % chartColors.length)] },
+        data: rooflinePoints,
+        type: 'line',
+        emphasis: {
+            lineStyle: { width: 4 },
+        },
+        zlevel: 1,
+    };
+}
+
+function getComputilityNameSerie(labelPoint: Point, computilityNameLabel: string, theme: Theme): any {
+    return {
+        name: 'computilityName',
+        type: 'scatter',
+        symbolSize: 0,
+        data: [labelPoint],
+        emphasis: { disabled: true },
+        label: {
+            position: 'insideBottomRight',
+            distance: 5,
+            show: true,
+            formatter: safeStr(computilityNameLabel ?? ''),
+            padding: 10,
+            fontSize: 14,
+            color: theme.textColor,
+            fontWeight: 'bold',
+        },
+    };
+}
 function getOptionStyle(option: Option, theme: Theme): Option {
     option.title.textStyle.color = theme.textColorSecondary;
     option.legend = { ...option.legend, ...getLegendStyle(theme) };
     option.xAxis.nameTextStyle.color = theme.textColorTertiary;
     option.yAxis.nameTextStyle.color = theme.textColorTertiary;
+    // 网格样式
+    option.xAxis.splitLine = {
+        lineStyle: {
+            color: [theme.borderColorLight],
+        },
+    };
+    option.yAxis.splitLine = {
+        lineStyle: {
+            color: [theme.borderColorLight],
+        },
+    };
     return option;
 }
 
@@ -195,7 +249,7 @@ function getTooltipFormatter(): (p: any) => string {
 }
 
 const getTipText = (params: any): any => {
-    if (params.data !== undefined && params.seriesType === 'scatter') {
+    if (params.data !== undefined && params.seriesType === 'scatter' && params.seriesName !== 'computilityName') {
         const keepDecimalNum = 3;
         const [, , bw, bwName, ratio, point] = params.data;
         return `<div>
