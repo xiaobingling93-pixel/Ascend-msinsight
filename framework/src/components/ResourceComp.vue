@@ -20,7 +20,7 @@ const { menuTree, confirm, checkProjectValid } = useDataSources();
 
 const treeRef = ref();
 
-const { resourceState, loadFiles, setCurrentPath, fileExist } = useResource();
+const { resourceState, loadFiles, setCurrentPath, fileExist, addDefalultExpandedKeysSet, delDefalultExpandedKeysSet } = useResource();
 
 const defaultProps = {
     label: 'name',
@@ -28,7 +28,6 @@ const defaultProps = {
     isLeaf: 'leaf',
 };
 let isUpdateLoading = {} as {[key: string]: boolean};
-let defalultExpandedKeysSet: Set<string> = new Set();
 
 const state = reactive({
     defalultExpandedKeys: [] as string[],
@@ -97,23 +96,23 @@ const checkData = (newData: ResourceItem[], oldData: ResourceItem[], node: Node)
 
 const handleExpand = async (data: ResourceItem, node: Node) => {
     state.inputPath = data.path;
-    defalultExpandedKeysSet.add(data.path);
-    state.defalultExpandedKeys = [...defalultExpandedKeysSet];
+    addDefalultExpandedKeysSet(data.path);
+    state.defalultExpandedKeys = [...resourceState.defalultExpandedKeysSet];
     updateData(data.path,node);
     props.changeConfirmButtonState(true);
 };
 
 const hanldeCollapse = (data: ResourceItem, node: Node) => {
     state.inputPath = data.path;
-    defalultExpandedKeysSet.delete(data.path);
-    state.defalultExpandedKeys = [...defalultExpandedKeysSet];
+    delDefalultExpandedKeysSet(data.path);
+    state.defalultExpandedKeys = [...resourceState.defalultExpandedKeysSet];
 };
 
 const handleClick = async (data: ResourceItem, node: Node) => {
     const oldData = resourceState.resourceTotal[data.path];
     if (oldData && oldData.length <= 0) {
-        defalultExpandedKeysSet.add(data.path);
-        state.defalultExpandedKeys = [...defalultExpandedKeysSet];
+        addDefalultExpandedKeysSet(data.path);
+        state.defalultExpandedKeys = [...resourceState.defalultExpandedKeysSet];
     }
     state.inputPath = data.path;
     updateData(data.path, node);
@@ -259,12 +258,12 @@ const handleMounted = () => {
 
 // 每次打开弹窗只展开上一次选择的目录
 const expandLastSelectedFile = () => {
-    for (let path of defalultExpandedKeysSet) {
+    for (let path of resourceState.defalultExpandedKeysSet) {
         if (!state.inputPath.startsWith(path)) {
-            defalultExpandedKeysSet.delete(path);
+            delDefalultExpandedKeysSet(path);
         }
     }
-    state.defalultExpandedKeys = [...defalultExpandedKeysSet];
+    state.defalultExpandedKeys = [...resourceState.defalultExpandedKeysSet];
 };
 
 const doCheckFileVallid = async (projectName: string) => {

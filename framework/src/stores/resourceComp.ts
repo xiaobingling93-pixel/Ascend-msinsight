@@ -39,6 +39,7 @@ export interface UpdateProjectExplorerParam {
 
 export const useResource = defineStore('resource', () => {
     const resourceState = reactive({
+        defalultExpandedKeysSet: new Set() as Set<string>,
         currentPath: '',
         startResource: [] as ResourceItem[],
         resourceTotal: {} as ResourceTotal,
@@ -103,5 +104,13 @@ export const useResource = defineStore('resource', () => {
         resourceState.currentPath = path;
     };
 
-    return { resourceState, loadFiles, setCurrentPath, fileExist };
+    const addDefalultExpandedKeysSet = (path: string): void => {
+        resourceState.defalultExpandedKeysSet.add(path);
+    };
+
+    const delDefalultExpandedKeysSet = (path: string): void => {
+        resourceState.defalultExpandedKeysSet.delete(path);
+    };
+
+    return { resourceState, loadFiles, setCurrentPath, fileExist, addDefalultExpandedKeysSet, delDefalultExpandedKeysSet };
 });
