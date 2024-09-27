@@ -342,10 +342,13 @@ const updateUnitData = (currentUnit: InsightUnit, threadTraceMaxDepth: number, h
                 currentUnit.collapsible = true;
                 currentUnit.isExpanded = true;
             }
-            if (currentUnit.onceExpand === false) {
-                currentUnit.isExpanded = false;
-                config.isCollapse = true;
+            // 恢复历史数据
+            if (currentUnit.onceExpand !== undefined) {
+                currentUnit.isExpanded = currentUnit.onceExpand;
+                config.isCollapse = !currentUnit.onceExpand;
                 delete currentUnit.onceExpand;
+                currentChart.height = config.isCollapse ? UnitHeight.COLL : threadTraceMaxDepth * config.rowHeight;
+                config.maxDepth = threadTraceMaxDepth;
             }
             if (threadTraceMaxDepth !== config.maxDepth) {
                 currentChart.height = config.isCollapse ? UnitHeight.COLL : threadTraceMaxDepth * config.rowHeight;
