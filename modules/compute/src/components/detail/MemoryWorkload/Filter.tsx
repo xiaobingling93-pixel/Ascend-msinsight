@@ -22,14 +22,14 @@ interface IcomProps {
 
 export const defaultCondition = {
     blockId: '',
-    showAs: 'request',
+    showAs: 'bandwidth',
     isCompared: false,
 };
 const defaultOptionMap = {
     blockIdOptions: [],
     showAsOptions: [
-        { label: 'Num of Request', value: 'request' },
         { label: 'Bandwidth', value: 'bandwidth' },
+        { label: 'Num of Request', value: 'request' },
     ],
 };
 

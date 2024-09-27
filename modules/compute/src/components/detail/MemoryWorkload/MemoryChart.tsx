@@ -9,8 +9,8 @@ import * as d3 from 'd3';
 import { type Icondition } from './Filter';
 import { queryMemoryGraph } from '../../RequestUtils';
 import { type Session } from '../../../entity/session';
-import { Hit } from 'ascend-utils';
 import { CompareData } from '../../../utils/interface';
+import { runInAction } from 'mobx';
 export interface ImemoryData {
     blockId: string;
     blockType: string;
@@ -111,11 +111,16 @@ const chart = observer(({ condition, session }: {condition: Icondition;session: 
         }
         setStyle(newStyle);
     }, [data]);
+
+    useEffect(() => {
+        runInAction(() => {
+            session.computeAdvice = data.advice;
+        });
+    }, [data.advice]);
     return <div>
-        <div id={chartId} style={{ ...style, width: '1220px', margin: '10px auto' }}>
+        <div id={chartId} style={{ ...style, width: '1250px', margin: '10px auto' }}>
             <svg width={'100%'} height={'100%'}></svg>
         </div>
-        { data.advice?.length > 0 && (<Hit text={data.advice} />) }
     </div>;
 });
 

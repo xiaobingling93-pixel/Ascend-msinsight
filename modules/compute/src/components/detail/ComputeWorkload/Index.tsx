@@ -8,7 +8,7 @@ import { runInAction } from 'mobx';
 import ComputeWorkloadChart from './ComputeWorkloadChart';
 import ComputeWorkloadTable from './ComputeWorkloadTable';
 import { type Session } from '../../../entity/session';
-import { sortFunc } from 'ascend-utils';
+import { Hit, sortFunc } from 'ascend-utils';
 import Filter, { defaultCondition, type Icondition } from './Filter';
 import { queryComputeWorkload } from '../../RequestUtils';
 import CollapsiblePanel from 'ascend-collapsible-panel';
@@ -71,6 +71,7 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
         <CollapsiblePanel title={t('ComputeWorkloadAnalysis')} collapsible>
             <Filter handleFilterChange={handleFilterChange} blockIdList={data.blockIdList} session={session}/>
             <ComputeWorkloadChart condition={condition} data={data.chartData}/>
+            { Number(session?.computeAdvice?.length) > 0 && (<Hit text={session.computeAdvice} style={{ marginBottom: '10px' }}/>) }
             <ComputeWorkloadTable condition={condition} data={data.tableData}/>
         </CollapsiblePanel>
     );
