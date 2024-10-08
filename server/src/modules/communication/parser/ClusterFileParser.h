@@ -38,7 +38,7 @@ private:
     // cluster_step_trace_time.csv文件最小列数需要为11列，否则会造成数组越界
     static const int minStepTraceTimeColumnNumber = 11;
     static bool AttAnalyze(const std::string &selectedPath,
-                           const std::string &model,
+                           const std::string &mode,
                            AttDataType dataType = AttDataType::TEXT);
     static bool TransCommunicationToDb(const std::string &selectedPath, const std::regex &patternCommunication);
     static bool CheckDocumentValid(const Document &doc);

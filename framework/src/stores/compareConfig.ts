@@ -48,8 +48,7 @@ export const useCompareConfig = defineStore('compareConfig', () => {
         // 当前选中为一级目录，并在该目录下新增文件时，不进行重置，其他情况都需要对Map进行重置
         const needReset =
             projectAction !== ProjectActionEnum.ADD_FILE ||
-            useDataSources().lastDataSource.projectName !== projectName ||
-            useDataSources().lastDataSource.dataPath.length > 0;
+            useDataSources().lastDataSource.projectName !== projectName;
         if (needReset) {
             dataInfoMap.value.clear();
         }

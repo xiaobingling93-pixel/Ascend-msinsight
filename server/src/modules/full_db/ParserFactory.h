@@ -47,6 +47,7 @@ protected:
     static bool CheckIsCluster(const std::string &filePath);
     static void SendParseSuccessEvent(const std::string &fileId);
     static void SendParseFailEvent(const std::string &fileId, const std::string &message);
+    static bool IsNeedReset(const ImportActionRequest &request);
 
     void SetBaseActionOfResponse(ImportActionResponse &response, const std::string &rankId, const std::string &cardPath,
         std::vector<std::string> dataPath);

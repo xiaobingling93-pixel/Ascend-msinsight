@@ -117,6 +117,15 @@ export const parseFailHandler: NotificationHandler = (data): void => {
     });
     message.error(data.error as string);
 };
+
+const getRootUnit = (session: Session, host: string, dataSource: DataSource): InsightUnit | undefined => {
+    if (isEmpty(host)) {
+        return undefined;
+    }
+    const insightUnit = session.units.find(unit => (unit.metadata as CardMetaData)?.cardId.includes(host))?.parent;
+    return insightUnit !== undefined ? insightUnit : new ROOT_UNIT({ dataSource, host });
+};
+
 const initUnitInfo = (session: Session | undefined, result: any, dataSource: DataSource): void => {
     if (!session) {
         return;
@@ -134,9 +143,16 @@ const initUnitInfo = (session: Session | undefined, result: any, dataSource: Dat
     session.isCluster = result.isCluster;
     const hostInfo = groupBy(result.result, (item: CardInfo) => item.host ?? '');
     forEach(hostInfo, (cards, host) => {
-        const unit = isEmpty(host) ? undefined : new ROOT_UNIT({ dataSource, host });
+        const unit = getRootUnit(session, host, dataSource);
         const cardUnits: InsightUnit[] = [];
+        if (unit?.children !== undefined) {
+            cardUnits.push(...unit.children);
+        }
         forEach(cards, (item: CardInfo) => {
+            const oldUnit = session.units.find(unitItem => (unitItem.metadata as CardMetaData)?.cardId === item.rankId);
+            if (oldUnit !== undefined) {
+                return;
+            }
             const curDataSource = cloneDeep(dataSource);
             curDataSource.dataPath = item.dataPathList;
             const cardUnit = new CardUnit({ dataSource: curDataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });

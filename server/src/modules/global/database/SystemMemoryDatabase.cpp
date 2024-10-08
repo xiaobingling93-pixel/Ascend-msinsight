@@ -186,7 +186,11 @@ bool SystemMemoryDatabase::DeleteFileMenu(const std::string &projectName, const 
     }
     std::string sql = "DELETE FROM " + projectExplorerTable + " WHERE projectName = ?";
     if (!fileNameList.empty()) {
-        sql += " and fileName in (?)";
+        sql += " and fileName in (?";
+        for (size_t i = 1; i < fileNameList.size(); ++i) {
+            sql += ",?";
+        }
+        sql += ")";
     }
     sql += ";";
     auto stmt = CreatPreparedStatement(sql);
@@ -194,11 +198,10 @@ bool SystemMemoryDatabase::DeleteFileMenu(const std::string &projectName, const 
         ServerLog::Error("Failed to delete by project name, failed to create prepared stmt: projectName=", projectName);
         return false;
     }
-    if (fileNameList.empty()) {
-        stmt->BindParams(projectName);
-    } else {
-        std::string fileNameStr = StringUtil::join(fileNameList, ", ");
-        stmt->BindParams(projectName, fileNameStr);
+
+    stmt->BindParams(projectName);
+    for (const auto &item: fileNameList) {
+        stmt->BindParams(item);
     }
     if (!stmt->Execute()) {
         ServerLog::Error("Failed to delete info by project name: projectName=", projectName);

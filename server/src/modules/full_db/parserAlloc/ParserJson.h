@@ -29,7 +29,6 @@ private:
     void FindTraceFiles(const std::string &path, int depth, std::string &error, std::vector<std::string> &traceFiles);
     void FindAscendFolder(const std::string &path, std::vector<std::string> &traceFiles);
     bool IsJsonValid(const std::string &fileName);
-    static bool IsNeedReset(const ImportActionRequest &request);
     static void ClusterProcess(const std::string &selectedFolder, ProjectTypeEnum projectType,
         std::map<std::string, std::vector<std::string>> &dataPathToDbMap, const std::string &projectName);
     static void ClusterProcessAsyncStep(const std::string &selectedFolder);

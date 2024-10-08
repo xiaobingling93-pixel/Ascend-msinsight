@@ -129,7 +129,7 @@ bool ImportActionHandler::ImportFile(ImportActionRequest &request, std::string &
 
     LogIfFileNotExist(projectExplorerInfoList);
     // 以下情况需要对当前导入内容进行重置：1.导入数据和原来数据有冲突；2.无冲突，但是当前选中项目与目标项目不一致；
-    if (allocType != ParserType::JSON) {
+    if (allocType != ParserType::JSON && allocType != ParserType::DB) {
         ParserFactory::Reset();
     }
     factory->Parser(projectExplorerInfoList, request);

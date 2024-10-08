@@ -95,20 +95,6 @@ void ParserJson::ComputeSubirectoryList(const std::vector<Global::ProjectExplore
     }
 }
 
-bool ParserJson::IsNeedReset(const ImportActionRequest &request)
-{
-    // 如果是切换项目，则必须重置
-    if (request.params.projectAction == ProjectActionEnum::TRANSFER_PROJECT) {
-        return true;
-    }
-    // 新增文件时，以下情况需要对当前导入内容进行重置：1.导入数据和原来数据有冲突；2.无冲突，但是当前选中项目与目标项目不一致；
-    std::string curProjectName = request.projectName;
-    if (request.params.isConflict || (!curProjectName.empty() && curProjectName != request.params.projectName)) {
-        return true;
-    }
-    return false;
-}
-
 std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(
     const std::vector<Global::ProjectExplorerInfo> &projectInfos,
     std::map<std::string, std::vector<std::string>> &rankToFoldersMap)

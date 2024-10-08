@@ -29,6 +29,10 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     ImportActionResponse &response = *responsePtr.get();
     ModuleRequestHandler::SetBaseResponse(request, response);
     Timeline::DataBaseManager::Instance().SetDataType(Timeline::DataType::DB);
+    response.body.reset = IsNeedReset(request);
+    if (response.body.reset) {
+        ParserFactory::Reset();
+    }
     std::vector<std::string> reportFiles = {};
     for (const auto &projectInfo : projectInfos) {
         for (const auto &item : projectInfo.parseFilePathInfos) {
@@ -36,6 +40,33 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
         }
     }
     auto hostInfoMap = GetReportFiles(reportFiles);
+    SetHostInfo(hostInfoMap, response);
+    response.body.subdirectoryList = reportFiles;
+    SetParseCallBack();
+    ModuleRequestHandler::SetResponseResult(response, true);
+    response.command = Protocol::REQ_RES_IMPORT_ACTION;
+    response.moduleName = Protocol::ModuleType::TIMELINE;
+    // add response to response queue in session
+    session.OnResponse(std::move(responsePtr));
+    for (const auto &hostInfo : hostInfoMap) {
+        for (const auto &ranks : hostInfo.second) {
+            if (response.body.isPending) {
+                ParserStatusManager::Instance().SetPendingStatus(ranks.second[0],
+                    { ProjectTypeEnum::DB, { ranks.first } });
+                continue;
+            }
+            FullDb::FullDbParser::Instance().Parse(ranks.second, ranks.first);
+        }
+    }
+    response.body.isCluster = static_cast<ProjectTypeEnum>(projectInfos[0].projectType) == ProjectTypeEnum::DB_CLUSTER;
+    // 执行集群数据解析
+    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, path,
+        response.body.isCluster, dataPathToDbMap, projectInfos[0].projectName);
+    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
+}
+
+void ParserDb::SetHostInfo(std::map<std::string, HostInfo> &hostInfoMap, ImportActionResponse &response)
+{
     uint32_t rankSize = 0;
     for (auto &hostInfo : hostInfoMap) {
         if (!hostInfo.second.empty()) {
@@ -52,28 +83,6 @@ void ParserDb::Parser(const std::vector<Global::ProjectExplorerInfo> &projectInf
     }
     bool isPendingParse = rankSize >= PENDIND_CRITICAL_VALUE;
     response.body.isPending = isPendingParse;
-    response.body.subdirectoryList = reportFiles;
-    SetParseCallBack();
-    ModuleRequestHandler::SetResponseResult(response, true);
-    response.command = Protocol::REQ_RES_IMPORT_ACTION;
-    response.moduleName = Protocol::ModuleType::TIMELINE;
-    // add response to response queue in session
-    session.OnResponse(std::move(responsePtr));
-    for (const auto &hostInfo : hostInfoMap) {
-        for (const auto &ranks : hostInfo.second) {
-            if (isPendingParse) {
-                ParserStatusManager::Instance().SetPendingStatus(ranks.second[0],
-                    { ProjectTypeEnum::DB, { ranks.first } });
-                continue;
-            }
-            FullDb::FullDbParser::Instance().Parse(ranks.second, ranks.first);
-        }
-    }
-    response.body.isCluster = static_cast<ProjectTypeEnum>(projectInfos[0].projectType) == ProjectTypeEnum::DB_CLUSTER;
-    // 执行集群数据解析
-    Timeline::ClusterParseThreadPoolExecutor::Instance().GetThreadPool()->AddTask(ClusterProcess, path,
-        response.body.isCluster, dataPathToDbMap, projectInfos[0].projectName);
-    Timeline::EventNotifyThreadPoolExecutor::Instance().GetThreadPool()->AddTask(SendAllParseSuccess);
 }
 
 void ParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster,

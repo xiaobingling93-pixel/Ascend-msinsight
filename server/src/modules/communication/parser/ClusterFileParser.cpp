@@ -351,7 +351,7 @@ bool ClusterFileParser::CheckDocumentValid(const Document &doc)
     return true;
 }
 
-bool ClusterFileParser::AttAnalyze(const std::string &selectedPath, const std::string &model, AttDataType dataType)
+bool ClusterFileParser::AttAnalyze(const std::string &selectedPath, const std::string &mode, AttDataType dataType)
 {
     ServerLog::Info("Start execute cluster analysis");
     if (!StringUtil::ValidateCommandFilePathParam(selectedPath)) {
@@ -383,21 +383,21 @@ bool ClusterFileParser::AttAnalyze(const std::string &selectedPath, const std::s
         ServerLog::Error("Can not find cluster analysis execute file: ", analysisPath);
         return false;
     } else {
-        if (!model.empty()) {
-            command.append(" -m ").append(model);
+        if (!mode.empty()) {
+            command.append(" -m ").append(mode);
         }
         // Db类型的数据需要开启字段精简功能
         if (dataType == AttDataType::DB) {
             command.append(" --data_simplification");
         }
-        ServerLog::Info("Start execute command, selected path:", selectedPath, " ,model: ", model);
+        ServerLog::Info("Start execute command, selected path:", selectedPath, " ,mode: ", mode);
         int result = std::system(command.c_str());
         if (result != 0) {
             ServerLog::Warn("Execute cluster analysis failed, skip parse cluster file, selected path:",
-                            selectedPath, " ,model: ", model);
+                            selectedPath, " ,mode: ", mode);
             return false;
         }
-        ServerLog::Info("Execute cluster analysis success, selected path:", selectedPath, " ,model: ", model);
+        ServerLog::Info("Execute cluster analysis success, selected path:", selectedPath, " ,mode: ", mode);
     }
     return true;
 }
