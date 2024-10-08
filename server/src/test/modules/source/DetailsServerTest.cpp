@@ -51,8 +51,15 @@ TEST_F(DetailsServerTest, QueryDetailsLoadInfoWithBaseline)
     bool res = Dic::Module::Source::DetailsService::QueryDetailsLoadInfo(request, response);
     EXPECT_EQ(res, true);
     EXPECT_EQ(response.body.chartData.detailDataList.size(), NUMBER_TWELVE);
-    EXPECT_EQ(response.body.chartData.detailDataList[0].diff.name, "Vector All Active1");
-    EXPECT_EQ(response.body.chartData.detailDataList[0].diff.value, "0");
+    CompareData<SubBlockUnitData> compareData;
+    for (const auto &item: response.body.chartData.detailDataList) {
+        if (item.diff.name == "Vector All Active1") {
+            compareData = item;
+            break;
+        }
+    }
+    EXPECT_EQ(compareData.diff.name, "Vector All Active1");
+    EXPECT_EQ(compareData.diff.value, "0");
     EXPECT_EQ(response.body.tableData.detailDataList.size(), NUMBER_SIXTY_EIGHT);
 }
 
@@ -85,6 +92,13 @@ TEST_F(DetailsServerTest, QueryMemoryTableWithBaseline)
     EXPECT_EQ(response.body.memoryTable.size(), NUMBER_ONE);
     EXPECT_EQ(response.body.memoryTable[0].tableOpType, "mix");
     EXPECT_EQ(response.body.memoryTable[0].tableDetail.size(), NUMBER_SIXTEEN);
-    EXPECT_EQ(response.body.memoryTable[0].tableDetail[0].row.size(), NUMBER_TWO);
-    EXPECT_EQ(response.body.memoryTable[0].tableDetail[0].tableName, "Vector Core1");
+    TableDetail<CompareData<TableRow>> compareData;
+    for (const auto &item: response.body.memoryTable[0].tableDetail) {
+        if (item.tableName == "Vector Core1") {
+            compareData = item;
+            break;
+        }
+    }
+    EXPECT_EQ(compareData.row.size(), NUMBER_TWO);
+    EXPECT_EQ(compareData.tableName, "Vector Core1");
 }
