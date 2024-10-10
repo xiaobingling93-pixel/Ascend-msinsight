@@ -81,6 +81,9 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
         sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
         sql += TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name"
             " WHERE realName LIKE ? ";
+    } else {
+        ServerLog::Error("Memory tab does not support msprof data.");
+        return false;
     }
     AddOperatorSql(requestParams, sql);
     return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql);
@@ -112,6 +115,9 @@ bool DbMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryTabl
             "ROUND(release_total_active / (1024.0 * 1024.0), 2) as release_active, stream_ptr as stream FROM ";
         sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
         sql += TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name";
+    } else {
+        ServerLog::Error("Memory tab does not support msprof data.");
+        return false;
     }
     return ExecuteQueryEntireOperatorTable(columnattr, opDetails, sql, rankId);
 }
@@ -139,6 +145,9 @@ bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestP
                " 0 as totalActive, '' as stream from NPU_MEM join STRING_IDS as ids on ids.id = type "
                " where value = 'app' ";
         sql += " ) where 1 = 1";
+    } else {
+        ServerLog::Error("Memory tab does not support msprof data.");
+        return false;
     }
     std::vector<Protocol::ComponentDto> componentDtoVec;
     std::vector<std::string> streams;
@@ -162,16 +171,20 @@ bool DbMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &re
             "   NAME.id = OP_MEMORY.name"
             ") "
             " WHERE name LIKE ? ");
+    } else {
+        ServerLog::Error("Memory tab does not support msprof data.");
+        return false;
     }
 
     if (requestParams.type == Protocol::MEMORY_STREAM_GROUP) {
         sql.append(isLowCamel ? " AND streamPtr <> ''" : " AND stream_ptr <> ''");
     }
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        sql.append(" AND (ROUND((").append(isLowCamel ? "allocationTime" : "allocation_time")
-                .append(" - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ? ");
-        sql.append(" OR ROUND((").append(isLowCamel ? "releaseTime" : "release_time")
-                .append(" - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ?) ");
+        sql.append(" AND ((").append(isLowCamel ? "releaseTime" : "release_time")
+                .append(" IS NULL OR ROUND((")
+                .append(isLowCamel ? "releaseTime" : "release_time").append(" - ?) / (1000.0 * 1000.0), 3) >= ? )")
+                .append(" AND ROUND((").append(isLowCamel ? "allocationTime" : "allocation_time")
+                .append(" - ?) / (1000.0 * 1000.0), 3) <= ?) ");
     }
     if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
         sql += " AND realSize >= ? ";
@@ -189,6 +202,9 @@ bool DbMemoryDataBase::QueryOperatorSize(double &min, double &max, std::string r
     if (type == FileType::PYTORCH) {
         sql += "SELECT ROUND(min(size)/ 1024.0, 2) as minSize, "
                " ROUND(max(size)/ 1024.0, 2) as maxSize FROM " + TABLE_OPERATOR_MEMORY;
+    } else {
+        ServerLog::Error("Memory tab does not support msprof data.");
+        return false;
     }
     return ExecuteOperatorSize(min, max, sql);
 }

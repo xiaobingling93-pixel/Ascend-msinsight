@@ -233,10 +233,6 @@ bool QueryMemoryOperatorHandler::IsSelected(MemoryOperatorRequest &request, cons
     if (request.params.maxSize != std::numeric_limits<int64_t>::max()) {
         filter = filter && (op.diff.size <= request.params.maxSize);
     }
-    if (op.compare.allocationTime == "" || op.compare.releaseTime == "" ||
-        op.baseline.allocationTime == "" || op.baseline.releaseTime == "") {
-        return filter;
-    }
     if (request.params.startTime != -1 && request.params.endTime != -1) {
         // 要求compare对象的开始和结束时间有一个在startTime endTime内，且baseline对象的开始和结束时间也有一个在startTime endTime内。
         long double compareAlloTime = NumberUtil::StringToLongDouble(op.compare.allocationTime);
@@ -244,10 +240,10 @@ bool QueryMemoryOperatorHandler::IsSelected(MemoryOperatorRequest &request, cons
         long double baselineAlloTime = NumberUtil::StringToLongDouble(op.baseline.allocationTime);
         long double baselineReleTime = NumberUtil::StringToLongDouble(op.baseline.releaseTime);
         filter = filter &&
-            ((compareAlloTime >= request.params.startTime && compareAlloTime <= request.params.endTime) ||
-            (compareReleTime >= request.params.startTime && compareReleTime <= request.params.endTime)) &&
-            ((baselineAlloTime >= request.params.startTime && baselineAlloTime <= request.params.endTime) ||
-            (baselineReleTime >= request.params.startTime && baselineReleTime <= request.params.endTime));
+            (compareReleTime == 0 || compareReleTime >= request.params.startTime) &&
+            (compareAlloTime <= request.params.endTime) &&
+            (baselineReleTime == 0 || baselineReleTime >= request.params.startTime) &&
+            (baselineAlloTime <= request.params.endTime);
     }
     return filter;
 }

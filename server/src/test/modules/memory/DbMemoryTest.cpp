@@ -80,6 +80,35 @@ TEST_F(DbMemoryTest, FullDb_of_QueryMemoryOperatorWithTime)
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
+TEST_F(DbMemoryTest, FullDb_of_QueryMemoryOperatorWithLimitedTime)
+{
+    uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
+    uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
+    const uint64_t timeStamp = 1734230739778225840;
+    const double secondToMillisecond = 1000.0;
+    const int precision = 3;
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::MemoryOperatorParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
+    requestParams.currentPage = 0;
+    requestParams.pageSize = 100; // page size = 100
+    requestParams.startTime = NumberUtil::DoubleReservedNDigits(
+        (timeStamp - startTime - offsetTime)/ (secondToMillisecond * secondToMillisecond), precision);
+    requestParams.endTime = NumberUtil::DoubleReservedNDigits(
+        (timeStamp - startTime - offsetTime) / (secondToMillisecond * secondToMillisecond), precision);
+    requestParams.minSize = std::numeric_limits<int64_t>::min();
+    requestParams.maxSize = std::numeric_limits<int64_t>::max();
+    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
+    std::vector<Dic::Protocol::MemoryOperator> responseBody;
+    auto result = database->QueryOperatorDetail(requestParams, columnAttr, responseBody);
+    EXPECT_EQ(result, true);
+    int expectSize = 6;
+    int expectColumnSize = 14;
+    EXPECT_EQ(responseBody.size(), expectSize);
+    EXPECT_EQ(columnAttr.size(), expectColumnSize);
+}
+
 TEST_F(DbMemoryTest, FullDb_of_QueryMemoryOperatorWithSize)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
@@ -197,6 +226,30 @@ TEST_F(DbMemoryTest, FullDb_of_QueryOperatorsTotalNumWithTime)
     auto result = database->QueryOperatorsTotalNum(requestParams, totalNum);
     EXPECT_EQ(result, true);
     int expectSize = 18;
+    EXPECT_EQ(totalNum, expectSize);
+}
+
+TEST_F(DbMemoryTest, FullDb_of_QueryOperatorsTotalNumWithLimitedTime)
+{
+    uint64_t startTime = Dic::Module::Timeline::TraceTime::Instance().GetStartTime();
+    uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
+    const uint64_t timeStamp = 1734230739778225840;
+    const double secondToMillisecond = 1000.0;
+    const int precision = 3;
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
+    Dic::Protocol::MemoryOperatorParams requestParams;
+    requestParams.rankId = "0";
+    requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
+    requestParams.minSize = std::numeric_limits<int64_t>::min();
+    requestParams.maxSize = std::numeric_limits<int64_t>::max();
+    requestParams.startTime = NumberUtil::DoubleReservedNDigits(
+        (timeStamp - startTime - offsetTime)/ (secondToMillisecond * secondToMillisecond), precision);
+    requestParams.endTime = NumberUtil::DoubleReservedNDigits(
+        (timeStamp - startTime - offsetTime) / (secondToMillisecond * secondToMillisecond), precision);
+    int64_t totalNum;
+    auto result = database->QueryOperatorsTotalNum(requestParams, totalNum);
+    EXPECT_EQ(result, true);
+    int expectSize = 6;
     EXPECT_EQ(totalNum, expectSize);
 }
 

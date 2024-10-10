@@ -27,6 +27,9 @@ std::vector<std::string> VirtualMemoryDataBase::GetStreamLists(std::string rankI
             sql += "SELECT " + streamPtrColumnName + " FROM " + TABLE_MEMORY_RECORD +
                 " WHERE " + streamPtrColumnName + " <> ''"
                 " Group BY " + streamPtrColumnName + " ORDER BY " + timeColumnName + " ASC";
+        } else {
+            ServerLog::Error("Memory tab does not support msprof data.");
+            return streams;
         }
     }
     sqlite3_stmt *stmt = nullptr;
@@ -117,9 +120,7 @@ bool VirtualMemoryDataBase::ExecuteOperatorsTotalNum(Protocol::MemoryOperatorPar
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
         sqlite3_bind_int64(stmt, index++, startTime + offsetTime);
         sqlite3_bind_double(stmt, index++, requestParams.startTime);
-        sqlite3_bind_double(stmt, index++, requestParams.endTime);
         sqlite3_bind_int64(stmt, index++, startTime + offsetTime);
-        sqlite3_bind_double(stmt, index++, requestParams.startTime);
         sqlite3_bind_double(stmt, index++, requestParams.endTime);
     }
 
@@ -552,10 +553,12 @@ void VirtualMemoryDataBase::AddOperatorSql(Protocol::MemoryOperatorParams reques
         sql += " AND stream <> ''";
     }
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        sql += " AND (allocationTimestamp BETWEEN " + std::to_string(requestParams.startTime) +
-               " AND " + std::to_string(requestParams.endTime) +
-               " OR releaseTimestamp BETWEEN " + std::to_string(requestParams.startTime) +
-               " AND " + std::to_string(requestParams.endTime) + ")";
+        sql += " AND ((";
+        sql += (isLowCamel ? "releaseTime" : "release_time");
+        sql += " IS NULL OR ";
+        sql += (isLowCamel ? "releaseTime" : "release_time");
+        sql += " = 0 OR releaseTimestamp >= " + std::to_string(requestParams.startTime) +
+               " ) AND allocationTimestamp <= " + std::to_string(requestParams.endTime) + ")";
     }
 
     if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {

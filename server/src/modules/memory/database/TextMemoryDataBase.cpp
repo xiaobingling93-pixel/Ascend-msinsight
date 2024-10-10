@@ -534,8 +534,9 @@ bool TextMemoryDataBase::QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &
         sql += " AND stream <> ''";
     }
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        sql += " AND (ROUND((allocation_time - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ? "
-               " OR ROUND((release_time - ?) / (1000.0 * 1000.0), 3) BETWEEN ? AND ?) ";
+        sql += " AND ((release_time = 0 OR "
+               " ROUND((release_time - ?) / (1000.0 * 1000.0), 3) >= ?) AND "
+               " ROUND((allocation_time - ?) / (1000.0 * 1000.0), 3) <= ?) ";
     }
     if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
         sql += " AND size >= ? ";
