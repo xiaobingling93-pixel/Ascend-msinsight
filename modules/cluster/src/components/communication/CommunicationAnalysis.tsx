@@ -86,7 +86,8 @@ interface showDataType {
 }
 
 const searchData = async (conditions: ConditionDataType): Promise<showDataType> => {
-    if (!notNullObj(conditions)) {
+    const notNullKeys: string[] = ['stage', 'operatorName', 'type'];
+    if (!notNullObj(conditions, notNullKeys)) {
         return { chartData: wrapChartData([]), analysisChartData: { minTime: 0, maxTime: 0, data: [] }, tableData: [], adviceData: [] };
     }
     const communicationOperatorData = await queryCommunicationOperatorLists(conditions);
