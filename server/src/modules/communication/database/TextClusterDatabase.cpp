@@ -381,9 +381,9 @@ void TextClusterDatabase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
     }
     int idx = bindStartIndex;
     sqlite3_bind_text(stmt, idx++, baseInfo.filePath.c_str(), baseInfo.filePath.length(), SQLITE_TRANSIENT);
-    sqlite3_bind_double(stmt, idx++, baseInfo.collectStartTime);
+    sqlite3_bind_int64(stmt, idx++, baseInfo.collectStartTime);
     sqlite3_bind_double(stmt, idx++, baseInfo.collectDuration);
-    sqlite3_bind_double(stmt, idx++, baseInfo.dataSize);
+    sqlite3_bind_int64(stmt, idx++, baseInfo.dataSize);
     sqlite3_bind_text(stmt, idx++, baseInfo.stages.c_str(), baseInfo.stages.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, baseInfo.ppStages.c_str(), baseInfo.ppStages.length(), SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, idx++, baseInfo.config.algorithm.c_str(),

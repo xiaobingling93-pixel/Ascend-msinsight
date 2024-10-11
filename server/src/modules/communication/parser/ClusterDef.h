@@ -81,7 +81,7 @@ struct ClusterBaseInfo {
     std::string steps;
     std::string ppStages;
     std::string stages;
-    long collectStartTime;
+    long long collectStartTime;
     double collectDuration;
     long long dataSize  =  0;
     ParallelStrategyConfig config;
