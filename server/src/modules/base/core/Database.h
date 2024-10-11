@@ -58,9 +58,10 @@ public:
 
     bool SetDataBaseVersion();
 
+    bool CheckTableExist(const std::string& tableName);
+
 protected:
     bool ExecSql(const std::string &sql);
-    bool CheckTableExist(const std::string& tableName);
     bool CheckTableContainData(const std::string& tableName);
     virtual bool SetConfig();
     static std::string CheckSqlString(const std::string &src);

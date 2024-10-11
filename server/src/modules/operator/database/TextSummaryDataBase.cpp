@@ -33,18 +33,18 @@ bool TextSummaryDataBase::CreateTable()
         return false;
     }
     std::string sql =
-        "CREATE TABLE " + kernelTable + " (id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id TEXT, step_id TEXT, " +
+        "CREATE TABLE " + TABLE_KERNEL + " (id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id TEXT, step_id TEXT, " +
         "name TEXT, op_type TEXT, accelerator_core TEXT, start_time INTEGER, duration INTEGER, wait_time INTEGER, " +
         "block_dim INTEGER, input_shapes TEXT, input_data_types TEXT, input_formats TEXT, output_shapes TEXT, " +
         "output_data_types TEXT, output_formats TEXT);" +
-        "CREATE INDEX rank_index ON " + kernelTable + " (rank_id);";
+        "CREATE INDEX rank_index ON " + TABLE_KERNEL + " (rank_id);";
     std::lock_guard<std::recursive_mutex> lock(mutex);
     return ExecSql(sql);
 }
 
 bool TextSummaryDataBase::DropTable()
 {
-    std::vector<std::string> tables = {kernelTable};
+    std::vector<std::string> tables = {TABLE_KERNEL};
     std::lock_guard<std::recursive_mutex> lock(mutex);
     return DropSomeTables(tables);
 }
@@ -55,7 +55,7 @@ bool TextSummaryDataBase::InitStmt()
         return true;
     }
     std::string sql =
-            "INSERT INTO " + kernelTable + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
+            "INSERT INTO " + TABLE_KERNEL + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
             "duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, output_shapes, " +
             "output_data_types, output_formats)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     for (size_t i = 0; i < cacheSize - 1; ++i) {
@@ -75,6 +75,7 @@ void TextSummaryDataBase::ReleaseStmt()
     if (insertKernelStmt != nullptr) {
         sqlite3_finalize(insertKernelStmt);
         insertKernelStmt = nullptr;
+        hasInitStmt = false;
     }
 }
 
@@ -118,7 +119,7 @@ void TextSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel>& kern
     }
 }
 
-void TextSummaryDataBase::InsertKernelDetail(Kernel kernel)
+void TextSummaryDataBase::InsertKernelDetail(const Kernel& kernel)
 {
     kernelCache.emplace_back(kernel);
     if (kernelCache.size() == cacheSize) {
@@ -143,7 +144,7 @@ sqlite3_stmt *TextSummaryDataBase::GetKernelStmt(uint64_t paramLen)
         sqlite3_reset(stmt);
     } else {
         std::string sql =
-                "INSERT INTO " + kernelTable + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
+                "INSERT INTO " + TABLE_KERNEL + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
                 "duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, output_shapes, " +
                 "output_data_types, output_formats)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         for (uint64_t i = 0; i < paramLen - 1; ++i) {
@@ -169,7 +170,7 @@ bool TextSummaryDataBase::HasFinishedParseLastTime()
 
 uint64_t TextSummaryDataBase::QueryMinStartTime()
 {
-    std::string sql = "Select MIN(start_time) FROM " + kernelTable + " WHERE start_time != 0";
+    std::string sql = "Select MIN(start_time) FROM " + TABLE_KERNEL + " WHERE start_time != 0";
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
@@ -188,8 +189,8 @@ uint64_t TextSummaryDataBase::QueryMinStartTime()
     return min;
 }
 
-bool TextSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
-                                                    std::vector<Protocol::ComputeDetail> &computeDetails)
+bool TextSummaryDataBase::QueryComputeOpDetail(Protocol::ComputeDetailParams params,
+    std::vector<Protocol::ComputeDetail> &computeDetails)
 {
     std::string sql = GenComputeSql(params);
     std::string timeFlag = params.timeFlag;
@@ -256,7 +257,7 @@ std::string TextSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams req
               "duration, wait_time as waitTime, block_dim as blockDim, "
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
-              "FROM " + kernelTable +
+              "FROM " + TABLE_KERNEL +
               " WHERE accelerator_core = ?  LIMIT ? offset ?";
     } else {
         sql = "SELECT name, op_type as type, "
@@ -264,16 +265,16 @@ std::string TextSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams req
               "duration, wait_time as waitTime, block_dim as blockDim, "
               "input_shapes as inputShapes, input_data_types as inputDataTypes, input_formats as inputFormats, "
               "output_shapes as outputShapes, output_data_types as outputDataTypes, output_formats as outputFormats "
-              "FROM " + kernelTable +
+              "FROM " + TABLE_KERNEL +
               " WHERE accelerator_core = ?  " + orderBy + " LIMIT ? offset ?";
     }
     return sql;
 }
 
-bool TextSummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
+bool TextSummaryDataBase::QueryTotalNumByAcceleratorCore(std::string name, int64_t &totalNum)
 {
     sqlite3_stmt *stmt = nullptr;
-    std::string sql = "SELECT count(*) as nums FROM " + kernelTable + " WHERE accelerator_core = ?";
+    std::string sql = "SELECT count(*) as nums FROM " + TABLE_KERNEL + " WHERE accelerator_core = ?";
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (result == SQLITE_OK) {
         int index = bindStartIndex;
@@ -294,22 +295,22 @@ std::string TextSummaryDataBase::GetCommSql(Protocol::CommunicationDetailParams 
 {
     std::string orderBy = GenSortSql(request.orderBy, request.order);
     std::string sql;
-    if (request.orderBy.size() == 0) {
+    if (request.orderBy.empty()) {
         sql = "SELECT name, op_type as type, CASE WHEN start_time == 0 THEN 'NA' "
               "ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
-              "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + kernelTable +
+              "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + TABLE_KERNEL +
               " WHERE accelerator_core = ?  LIMIT ? offset ?";
     } else {
         sql = "SELECT name, op_type as type, CASE WHEN start_time == 0 THEN 'NA' "
               "ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
-              "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + kernelTable +
+              "ROUND(duration, 4) as duration, ROUND(wait_time, 4) as waitTime FROM " + TABLE_KERNEL +
               " WHERE accelerator_core = ? " + orderBy + " LIMIT ? offset ?";
     }
     return sql;
 }
 
-bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams params,
-                                                 std::vector<Protocol::CommunicationDetail> &commDetails)
+bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDetailParams params,
+    std::vector<Protocol::CommunicationDetail> &computeDetails)
 {
     std::string sql = GetCommSql(params);
     std::string timeFlag = params.timeFlag;
@@ -335,7 +336,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         computeDetail.startTime = sqlite3_column_string(stmt, col++);
         computeDetail.duration = sqlite3_column_double(stmt, col++);
         computeDetail.waitTime = sqlite3_column_double(stmt, col++);
-        commDetails.emplace_back(computeDetail);
+        computeDetails.emplace_back(computeDetail);
     }
 
     sqlite3_finalize(stmt);
@@ -355,7 +356,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         if (operatorGroup == OperatorGroupConverter::OperatorGroup::OP_NAME_GROUP ||
             operatorGroup == OperatorGroupConverter::OperatorGroup::HCCL_NAME_GROUP) {
             std::string name = "name";
-            sql = " SELECT " + name + " as name , ROUND(duration, 2) as duration FROM " + kernelTable +
+            sql = " SELECT " + name + " as name , ROUND(duration, 2) as duration FROM " + TABLE_KERNEL +
                 " WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'" +
                 " ORDER BY duration DESC LIMIT ?";
         } else {
@@ -368,7 +369,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 name = R"(name || '[' || input_shapes || ']')";
                 group = R"(name || '[' || input_shapes || ']' || accelerator_core)";
             }
-            sql = " SELECT " + name + " as name, ROUND(sum(duration), 2) as duration FROM " + kernelTable +
+            sql = " SELECT " + name + " as name, ROUND(sum(duration), 2) as duration FROM " + TABLE_KERNEL +
                 " WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL' GROUP by " + group +
                 " ORDER BY duration DESC LIMIT ?";
         }
@@ -391,7 +392,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 " FROM ("
                 "     SELECT " + group + ", accelerator_core," + (reqParams.group == Protocol::OPERATOR_GROUP ?
                 "     ROUND(duration, 2) as duration" : " ROUND(SUM(duration), 2) as duration") +
-                "     FROM " + kernelTable +
+                "     FROM " + TABLE_KERNEL +
                 "     WHERE rank_id = ? AND accelerator_core <> 'HCCL'" + (reqParams.group == Protocol::OPERATOR_GROUP ?
                 "     " : (" GROUP BY " + group)) +
                 "     ORDER BY duration DESC LIMIT ?"
@@ -459,7 +460,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
-                "     SELECT * FROM " + kernelTable +
+                "     SELECT * FROM " + TABLE_KERNEL +
                 "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     GROUP by " + group +
                 "     ORDER by ROUND(SUM(duration), 2) DESC LIMIT ?"
@@ -536,7 +537,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     ROUND(SUM(duration) / COUNT(0), 2) as avg_time,"
                 "     ROUND(max(duration), 2) as max_time,"
                 "     ROUND(min(duration), 2) as min_time"
-                "     FROM " + kernelTable +
+                "     FROM " + TABLE_KERNEL +
                 "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     GROUP by " + group +
                 "     ORDER by total_time DESC LIMIT ?"
@@ -549,7 +550,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     ROUND(SUM(duration) / COUNT(0), 2) as avg_time,"
                 "     ROUND(max(duration), 2) as max_time,"
                 "     ROUND(min(duration), 2) as min_time"
-                "     FROM " + kernelTable +
+                "     FROM " + TABLE_KERNEL +
                 "     WHERE accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     GROUP by " + group +
                 " ) subquery";
@@ -561,7 +562,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 "     ROUND(SUM(duration) / COUNT(0), 2) as avg_time,"
                 "     ROUND(max(duration), 2) as max_time,"
                 "     ROUND(min(duration), 2) as min_time"
-                "     FROM " + kernelTable +
+                "     FROM " + TABLE_KERNEL +
                 "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     GROUP by " + group +
                 " ) subquery";
@@ -658,7 +659,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
-                "     SELECT * FROM " + kernelTable +
+                "     SELECT * FROM " + TABLE_KERNEL +
                 "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     ORDER BY duration DESC LIMIT ?"
                 " ) subquery";
@@ -696,19 +697,19 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats";
         std::string conditionalQuerySql =
                 " FROM ("
-                "     SELECT * FROM " + kernelTable +
+                "     SELECT * FROM " + TABLE_KERNEL +
                 "     WHERE rank_id = ? AND accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     ORDER by duration DESC LIMIT ?"
                 " ) subquery ";
         std::string allQuerySql =
                 " FROM ("
-                "     SELECT * FROM " + kernelTable +
+                "     SELECT * FROM " + TABLE_KERNEL +
                 "     WHERE accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     ORDER by start_time DESC"
                 "     ) subquery ";
         std::string baseAllQuerySql =
                 " FROM ("
-                "     SELECT * FROM " + kernelTable +
+                "     SELECT * FROM " + TABLE_KERNEL +
                 "     WHERE accelerator_core " + (isHccl ? "=" : "<>") + " 'HCCL'"
                 "     ORDER by start_time DESC"
                 "     ) subquery ";
@@ -838,7 +839,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
         std::string sql =
                 " SELECT COUNT(*) as nums"
                 " FROM ("
-                "     SELECT * FROM " + kernelTable +
+                "     SELECT * FROM " + TABLE_KERNEL +
                 "     WHERE rank_id = ? AND accelerator_core = ? AND" + condition +
                 " ) subquery";
 
@@ -878,7 +879,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
                 " END AS startTime, duration, wait_time, block_dim,"
                 " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
                 " FROM ("
-                "     SELECT * FROM " + kernelTable +
+                "     SELECT * FROM " + TABLE_KERNEL +
                 "     WHERE rank_id = ? AND accelerator_core = ?"
                 "     ORDER by duration DESC"
                 " ) subquery ";
@@ -1007,7 +1008,7 @@ bool TextSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailPa
     std::set<std::string> TextSummaryDataBase::QueryRankIds()
     {
         std::set<std::string> rankIds = {};
-        std::string sql = "SELECT rank_id FROM " + kernelTable + " GROUP BY rank_id";
+        std::string sql = "SELECT rank_id FROM " + TABLE_KERNEL + " GROUP BY rank_id";
         sqlite3_stmt *stmt = nullptr;
         int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
         if (result != SQLITE_OK) {

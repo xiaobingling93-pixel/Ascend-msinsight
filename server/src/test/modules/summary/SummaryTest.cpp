@@ -54,7 +54,7 @@ TEST_F(TestSuit, QueryCommunicationDetailData)
     requestParams.currentPage = 1;
     requestParams.pageSize = 10; // page size = 10
     Dic::Protocol::CommunicationDetailResponse responseBody;
-    database->QueryCommDetailHandler(requestParams, responseBody.commDetails);
+    database->QueryCommunicationOpDetail(requestParams, responseBody.commDetails);
     int expectSize = 4;
     EXPECT_EQ(responseBody.commDetails.size(), expectSize);
 }
@@ -68,7 +68,7 @@ TEST_F(TestSuit, QueryGetTotalNumData)
     requestParams.pageSize = 10; // page size = 10
     requestParams.timeFlag = "AI_CORE";
     Dic::Protocol::CommunicationDetailResponse responseBody;
-    database->QueryGetTotalNum(requestParams.timeFlag, responseBody.totalNum);
+    database->QueryTotalNumByAcceleratorCore(requestParams.timeFlag, responseBody.totalNum);
     int expectSize = 4;
     EXPECT_EQ(responseBody.totalNum, expectSize);
 }
@@ -82,7 +82,7 @@ TEST_F(TestSuit, QueryComputeDetailData)
     requestParams.pageSize = 10; // page size = 10
     requestParams.timeFlag = "AI_CORE";
     std::vector<Dic::Protocol::ComputeDetail> responseBody;
-    database->QueryComputeDetailHandler(requestParams, responseBody);
+    database->QueryComputeOpDetail(requestParams, responseBody);
     int expectSize = 4;
     EXPECT_EQ(responseBody.size(), expectSize);
 }

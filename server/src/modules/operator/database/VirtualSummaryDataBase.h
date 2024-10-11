@@ -24,12 +24,12 @@ public:
     explicit VirtualSummaryDataBase(std::recursive_mutex &sqlMutex) : Database(sqlMutex) {};
     ~VirtualSummaryDataBase() override = default;
 
-    virtual bool QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
-                                   std::vector<Protocol::ComputeDetail> &computeDetails) = 0;
-    virtual bool QueryGetTotalNum(std::string name, int64_t &totalNum) = 0;
+    virtual bool QueryComputeOpDetail(Protocol::ComputeDetailParams params,
+        std::vector<Protocol::ComputeDetail> &computeDetails) = 0;
+    virtual bool QueryTotalNumByAcceleratorCore(std::string name, int64_t &totalNum) = 0;
 
-    virtual bool QueryCommDetailHandler(Protocol::CommunicationDetailParams params,
-                                std::vector<Protocol::CommunicationDetail> &computeDetails) = 0;
+    virtual bool QueryCommunicationOpDetail(Protocol::CommunicationDetailParams params,
+        std::vector<Protocol::CommunicationDetail> &computeDetails) = 0;
 
     virtual bool QueryOperatorDurationInfo(Protocol::OperatorDurationReqParams &reqParams, Protocol::QueryType type,
                                    std::vector<Protocol::OperatorDurationRes> &datas) = 0;

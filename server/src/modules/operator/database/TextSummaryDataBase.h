@@ -23,17 +23,16 @@ public:
     bool InitStmt();
     void ReleaseStmt();
 
-    void InsertKernelDetailList(const std::vector<Kernel>& kernelVec);
-    void InsertKernelDetail(Kernel kernel);
+    void InsertKernelDetail(const Kernel& kernel);
     void SaveKernelDetail();
     uint64_t QueryMinStartTime();
     std::set<std::string> QueryRankIds();
 
-    bool QueryComputeDetailHandler(ComputeDetailParams params, std::vector<ComputeDetail> &computeDetails) override;
-    bool QueryGetTotalNum(std::string name, int64_t &totalNum) override;
+    bool QueryComputeOpDetail(ComputeDetailParams params, std::vector<ComputeDetail> &computeDetails) override;
+    bool QueryTotalNumByAcceleratorCore(std::string name, int64_t &totalNum) override;
 
-    bool QueryCommDetailHandler(CommunicationDetailParams params,
-                                std::vector<CommunicationDetail> &computeDetails) override;
+    bool QueryCommunicationOpDetail(CommunicationDetailParams params,
+        std::vector<CommunicationDetail> &computeDetails) override;
 
     bool QueryOperatorDurationInfo(OperatorDurationReqParams &reqParams, QueryType type,
                                    std::vector<OperatorDurationRes> &datas) override;
@@ -51,16 +50,15 @@ public:
                                        std::vector<Protocol::OperatorStatisticInfoRes> &res) override;
 
 private:
-    const std::string kernelTable = "kernel_detail";
     const std::string kernelParseState = "Kernel files parsing status";
     bool hasInitStmt = false;
     sqlite3_stmt *insertKernelStmt = nullptr;
     const uint32_t cacheSize = 1000;
     const uint32_t maxCategorySize = 50;
     std::vector<Kernel> kernelCache;
-    std::vector<std::string> kernelFiles = {};
 
     sqlite3_stmt *GetKernelStmt(uint64_t paramLen);
+    void InsertKernelDetailList(const std::vector<Kernel>& kernelVec);
     std::string GenSortSql(std::string orderBy, std::string order);
     std::string GenComputeSql(Protocol::ComputeDetailParams request);
     std::string GetCommSql(Protocol::CommunicationDetailParams request);

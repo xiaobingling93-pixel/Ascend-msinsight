@@ -80,7 +80,7 @@ TEST_F(DbSummaryTest, QueryCommunicationDetailData)
     requestParams.pageSize = 10; // page size = 10
     requestParams.timeFlag = "AI_VECTOR_CORE";
     Dic::Protocol::CommunicationDetailResponse responseBody;
-    database->QueryCommDetailHandler(requestParams, responseBody.commDetails);
+    database->QueryCommunicationOpDetail(requestParams, responseBody.commDetails);
     int expectSize = 10;
     EXPECT_EQ(responseBody.commDetails.size(), expectSize);
 }
@@ -94,7 +94,7 @@ TEST_F(DbSummaryTest, QueryGetTotalNumData)
     requestParams.pageSize = 10; // page size = 10
     requestParams.timeFlag = "AI_VECTOR_CORE";
     Dic::Protocol::CommunicationDetailResponse responseBody;
-    database->QueryGetTotalNum(requestParams.timeFlag, responseBody.totalNum);
+    database->QueryTotalNumByAcceleratorCore(requestParams.timeFlag, responseBody.totalNum);
     int expectSize = 11;
     EXPECT_EQ(responseBody.totalNum, expectSize);
 }
@@ -108,7 +108,7 @@ TEST_F(DbSummaryTest, QueryComputeDetailData)
     requestParams.pageSize = 10; // page size = 10
     requestParams.timeFlag = "AI_VECTOR_CORE";
     std::vector<Dic::Protocol::ComputeDetail> responseBody;
-    database->QueryComputeDetailHandler(requestParams, responseBody);
+    database->QueryComputeOpDetail(requestParams, responseBody);
     int expectSize = 10;
     EXPECT_EQ(responseBody.size(), expectSize);
 }

@@ -21,8 +21,8 @@ bool DbSummaryDataBase::OpenDb(const std::string &dbPath, bool clearAllTable)
     blockDimColumnName = isLowCamel ? "blockDim" : "block_dim";
     return result;
 }
-bool DbSummaryDataBase::QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
-                                                  std::vector<Protocol::ComputeDetail> &computeDetails)
+bool DbSummaryDataBase::QueryComputeOpDetail(Protocol::ComputeDetailParams params,
+    std::vector<Protocol::ComputeDetail> &computeDetails)
 {
     std::string sql = GenComputeSql(params);
     std::string timeFlag = params.timeFlag;
@@ -99,7 +99,7 @@ std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams
     return sql;
 }
 
-bool DbSummaryDataBase::QueryGetTotalNum(std::string name, int64_t &totalNum)
+bool DbSummaryDataBase::QueryTotalNumByAcceleratorCore(std::string name, int64_t &totalNum)
 {
     sqlite3_stmt *stmt = nullptr;
     std::string sql = "SELECT count(*) as nums FROM " + TABLE_COMPUTE_TASK_INFO +
@@ -553,8 +553,8 @@ void DbSummaryDataBase::BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMo
     sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
 }
 
-bool DbSummaryDataBase::QueryCommDetailHandler(Protocol::CommunicationDetailParams params,
-                                               std::vector<Protocol::CommunicationDetail> &commDetails)
+bool DbSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDetailParams params,
+    std::vector<Protocol::CommunicationDetail> &commDetails)
 {
     std::string sql = GetCommSql(params);
     std::string timeFlag = params.timeFlag;

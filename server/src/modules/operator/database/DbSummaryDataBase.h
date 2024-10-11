@@ -17,11 +17,11 @@ public:
     virtual ~DbSummaryDataBase() {};
 
     bool OpenDb(const std::string &dbPath, bool clearAllTable);
-    bool QueryComputeDetailHandler(Protocol::ComputeDetailParams params,
-                                   std::vector<Protocol::ComputeDetail> &computeDetails);
-    bool QueryGetTotalNum(std::string name, int64_t &totalNum);
-    bool QueryCommDetailHandler(Protocol::CommunicationDetailParams params,
-                                std::vector<Protocol::CommunicationDetail> &commDetails);
+    bool QueryComputeOpDetail(Protocol::ComputeDetailParams params,
+        std::vector<Protocol::ComputeDetail> &computeDetails);
+    bool QueryTotalNumByAcceleratorCore(std::string name, int64_t &totalNum);
+    bool QueryCommunicationOpDetail(Protocol::CommunicationDetailParams params,
+        std::vector<Protocol::CommunicationDetail> &commDetails);
     bool QueryOperatorDurationInfo(Protocol::OperatorDurationReqParams &reqParams, Protocol::QueryType type,
                                    std::vector<Protocol::OperatorDurationRes> &datas);
     bool QueryOperatorStatisticInfo(Protocol::OperatorStatisticReqParams &reqParams,
