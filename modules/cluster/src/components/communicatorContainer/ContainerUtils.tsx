@@ -96,7 +96,7 @@ const fillPpCommunicators = ({ values, rankNum, pipelineSize, partitionModes }: 
 };
 
 const fillTpCommunicators = ({ values, modelCount, partitionModes }: fillCommunicatorsType): void => {
-    if (values.tpSize < 1 || modelCount === undefined) {
+    if (values.tpSize < 1 || values.dpSize < 1 || modelCount === undefined) {
         return;
     }
     const communicators = getCommunicators(partitionModes, 'tp');
