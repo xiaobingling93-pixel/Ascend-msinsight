@@ -110,3 +110,14 @@ TEST(TestUtil, TestIdBuilder)
     EXPECT_EQ(id3, 0);
     EXPECT_EQ(id4, 0);
 }
+
+TEST(TestUtil, TestGetFileSizeNullFileName)
+{
+    auto res = FileUtil::GetFileSize(nullptr);
+    EXPECT_EQ(res, 0);
+}
+
+TEST(TestUtil, TestIsAbsolutePathEmtpyPath)
+{
+    EXPECT_EQ(FileUtil::IsAbsolutePath(""), false);
+}

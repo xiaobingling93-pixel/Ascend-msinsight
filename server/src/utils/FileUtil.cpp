@@ -53,7 +53,7 @@ bool FileUtil::IsAbsolutePath(const std::string &path)
         return true;
     }
 #else
-    if (path[0] == '/') {
+    if (!path.empty() && path[0] == '/') {
         return true;
     }
 #endif
@@ -477,6 +477,10 @@ std::string FileUtil::GetDbPath(const std::string &filePath, const std::string &
 
 long long FileUtil::GetFileSize(const char *fileName)
 {
+    if (!fileName) {
+        return 0;
+    }
+
     if (strcmp(fileName, "") == 0) {
         return 0;
     }
