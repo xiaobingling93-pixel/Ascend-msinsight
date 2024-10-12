@@ -40,12 +40,13 @@ namespace Dic::Module::Operator {
 
     bool QueryOpMoreInfoHandler::CheckRequestParam(OperatorMoreInfoReqParams& params)
     {
-        if (params.rankId.empty()) {
-            ServerLog::Error("[Operator]Failed to check rankId in query op more info.");
+        std::string errMsg;
+        if (!CheckStrParamValid(params.rankId, errMsg)) {
+            ServerLog::Error(std::string("[Operator]Failed to check rankId in query op more info.") + errMsg);
             return false;
         }
-        if (params.opName.empty() && params.opType.empty()) {
-            ServerLog::Error("[Operator]Failed to check parameter in query op more info.");
+        if (!CheckStrParamValid(params.opName, errMsg) && !CheckStrParamValid(params.opType, errMsg)) {
+            ServerLog::Error(std::string("[Operator]Failed to check name and type in query op more info.") + errMsg);
             return false;
         }
         OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(params.group);

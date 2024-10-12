@@ -38,8 +38,9 @@ namespace Dic::Module::Operator {
 
     bool QueryOpCategoryInfoHandler::CheckRequestParam(OperatorDurationReqParams params)
     {
-        if (params.rankId.empty()) {
-            ServerLog::Error("[Operator]Failed to check rankId in Query Category Info.");
+        std::string errMsg;
+        if (!CheckStrParamValid(params.rankId, errMsg)) {
+            ServerLog::Error(std::string("[Operator]Failed to check rankId in Query Category Info.") + errMsg);
             return false;
         }
         return true;

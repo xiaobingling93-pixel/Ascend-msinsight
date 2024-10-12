@@ -46,8 +46,8 @@ namespace Dic::Protocol {
             if (!CheckPageValid(this->pageSize, this->current, errorMsg)) {
                 return false;
             }
-            if (this->rankId.empty()) {
-                errorMsg = "[Operator]Failed to check rankId in Query Op Statistic Info.";
+            if (!CheckStrParamValid(rankId, errorMsg)) {
+                errorMsg = std::string("[Operator]Failed to check rankId in Query Op Statistic Info.") + errorMsg;
                 return false;
             }
             if (!this->orderBy.empty()) {
