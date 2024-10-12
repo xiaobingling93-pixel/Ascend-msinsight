@@ -11,6 +11,8 @@ import type { ChartProps, Scale, StatusData } from '../../entity/chart';
 import { Canvas, CanvasContainer, drawRoundedRect, zipStatusData } from './common';
 import { useBatchedRender, useClick, useData, useHoverPosX, useRangeAndDomain } from './hooks';
 import { TooltipComponent, type TooltipProps } from './TooltipComp';
+import type { ThreadMetaData } from '../../entity/data';
+import type { InsightUnit } from '../../entity/insight';
 
 type StatusChartProps = ChartProps<'status'>;
 interface DrawParams {
@@ -104,6 +106,15 @@ const findDataByX = (mousePosX: number | undefined, data: StatusData[],
     return undefined;
 };
 
+const shouldHidePreview = (unit: InsightUnit): boolean => {
+    if ((unit.metadata as ThreadMetaData).cardId?.endsWith('.db')) {
+        // Host侧的CANN层泳道(Label类型)未展开时，不隐藏预览图，否则感知不到CANN层下有无数据
+        const labelUnit = unit.children?.find(childUnit => childUnit.name === 'Label');
+        return unit.isExpanded && Boolean(labelUnit?.isExpanded);
+    }
+    return unit.isExpanded;
+};
+
 export const StatusChart = observer(({
     session, margin, mapFunc, unit, metadata, renderTooltip, height, onHover, onClick, decorator, width, rowHeight,
 }: StatusChartProps) => {
@@ -137,7 +148,7 @@ export const StatusChart = observer(({
         ctx?.setTransform(1, 0, 0, 1, 0, 0);
         ctx?.scale(devicePixelRatio, devicePixelRatio);
         ctx?.clearRect(0, 0, width, height);
-        if (unit.isExpanded) { return; }
+        if (shouldHidePreview(unit)) { return; }
         draw({ ctx, datas: datasState, xScale, yScale, theme, startY });
         drawExt({
             context: ctx,
