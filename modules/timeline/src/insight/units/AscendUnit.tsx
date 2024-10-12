@@ -332,6 +332,20 @@ export const ThreadUnit = unit<ThreadMetaData>({
     },
 });
 
+const recoverHistory = (currentUnit: InsightUnit, threadTraceMaxDepth: number): void => {
+    const currentChart = currentUnit.chart as ChartDesc<'stackStatus'>;
+    const config = currentChart.config as StackStatusConfig;
+    if (currentUnit.onceExpand !== undefined) {
+        currentUnit.isExpanded = currentUnit.onceExpand;
+        if (currentUnit.collapsible) {
+            config.isCollapse = !currentUnit.onceExpand;
+        }
+        delete currentUnit.onceExpand;
+        currentChart.height = config.isCollapse ? UnitHeight.COLL : threadTraceMaxDepth * config.rowHeight;
+        config.maxDepth = threadTraceMaxDepth;
+    }
+};
+
 const updateUnitData = (currentUnit: InsightUnit, threadTraceMaxDepth: number, havePythonFunction: boolean): void => {
     const currentChart = currentUnit.chart as ChartDesc<'stackStatus'>;
     const config = currentChart.config as StackStatusConfig;
@@ -343,13 +357,7 @@ const updateUnitData = (currentUnit: InsightUnit, threadTraceMaxDepth: number, h
                 currentUnit.isExpanded = true;
             }
             // 恢复历史数据
-            if (currentUnit.onceExpand !== undefined) {
-                currentUnit.isExpanded = currentUnit.onceExpand;
-                config.isCollapse = !currentUnit.onceExpand;
-                delete currentUnit.onceExpand;
-                currentChart.height = config.isCollapse ? UnitHeight.COLL : threadTraceMaxDepth * config.rowHeight;
-                config.maxDepth = threadTraceMaxDepth;
-            }
+            recoverHistory(currentUnit, threadTraceMaxDepth);
             if (threadTraceMaxDepth !== config.maxDepth) {
                 currentChart.height = config.isCollapse ? UnitHeight.COLL : threadTraceMaxDepth * config.rowHeight;
                 config.maxDepth = threadTraceMaxDepth;

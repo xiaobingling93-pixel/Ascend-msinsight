@@ -360,6 +360,7 @@ function resetSession(): void {
             searchData: undefined,
         });
         session.selectedUnitKeys = [];
+        session.singleLinkLine = {};
     });
 }
 
