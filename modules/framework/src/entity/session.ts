@@ -6,8 +6,11 @@ import { type DataSource, LOCAL_HOST, PORT } from '../centralServer/websocket/de
 
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
-
     lastDataSource: DataSource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
+    isBinary: boolean | null = false;
+    isCluster: boolean | null = false;
+    isIpynb: boolean = false;
+    isVscode: boolean = document.location.origin.startsWith('vscode');
 
     constructor() {
         makeAutoObservable(this);

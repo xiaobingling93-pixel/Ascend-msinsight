@@ -11,7 +11,7 @@ interface IProps {
     session: Session;
 }
 const Main = observer(({ session }: IProps) => {
-    return <div>
+    return <div style={{ height: '100%' }}>
         <ToolBox session={session}/>
         <TabPane session={session}/>
     </div>;
