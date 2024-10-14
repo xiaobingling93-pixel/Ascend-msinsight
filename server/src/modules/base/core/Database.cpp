@@ -378,6 +378,10 @@ bool Database::CheckTableExist(const std::string& tableName)
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(tableName);
+    if (resultSet == nullptr) {
+        ServerLog::Error("Query Table Exist failed!");
+        return false;
+    }
     if (resultSet->GetErrorCode() == SQLITE_OK && resultSet->Next()) {
         return true;
     }

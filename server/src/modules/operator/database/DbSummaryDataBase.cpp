@@ -170,6 +170,10 @@ bool DbSummaryDataBase::ExecSqlGetStatisticInfo(std::string sql,
     }
     auto resultSet =
         stmt->ExecuteQuery(reqParams.topK, reqParams.pageSize, reqParams.pageSize * (reqParams.current - 1));
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to exec sql to query operator statistic info.");
+        return false;
+    }
     while (resultSet->Next()) {
         Protocol::OperatorStatisticInfoRes one{};
         one.opType = resultSet->GetString("op_type");
@@ -294,15 +298,13 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
             " FROM ( "
             "     SELECT deviceId, startNs, endNs,"
             "     TASKTYPE.value AS accelerator_core, "
-            "     OPTYPE.value AS op_type, NAME.value AS name"
-            "     FROM COMPUTE_TASK_INFO"
+            "     OPTYPE.value AS op_type, NAME.value AS name FROM COMPUTE_TASK_INFO"
             "     JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
             "     JOIN STRING_IDS AS TASKTYPE ON TASKTYPE.id = COMPUTE_TASK_INFO.taskType"
             "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
             "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
             "     WHERE accelerator_core <> 'HCCL' "
-            "     GROUP by " +
-            group +
+            "     GROUP by " + group +
             "     ORDER by ROUND(SUM(TASK.endNs - TASK.startNs) / 1000.0, 2) DESC LIMIT ?"
             " ) subquery";
     }
@@ -315,7 +317,10 @@ bool DbSummaryDataBase::QueryStatisticTotalNum(Protocol::OperatorStatisticReqPar
         return false;
     }
     auto resultSet = stmt->ExecuteQuery(reqParams.topK);
-
+    if (resultSet == nullptr) {
+        ServerLog::Error("Failed to exec query statistic total sql.");
+        return false;
+    }
     while (resultSet->Next()) {
         total = resultSet->GetInt64("nums");
     }
