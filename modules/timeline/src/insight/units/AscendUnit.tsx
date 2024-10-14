@@ -42,6 +42,7 @@ import { Tooltip } from 'ascend-components';
 import { ResizeTable } from 'ascend-resize';
 import { getDefaultColumData, getPageData } from '../../components/detailViews/Common';
 import { calculateDomainRange } from '../../components/CategorySearch';
+import { safeJSONParse } from 'ascend-utils';
 
 const isHiddenTitle = (data: AscendSliceDetail): boolean => {
     return data.title === undefined;
@@ -644,7 +645,7 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
     const [isLoading, setLoading] = useState(false);
-    const slice = useMemo(() => session.selectedMultiSlice === '' ? undefined : JSON.parse(session.selectedMultiSlice), [session.selectedMultiSlice]);
+    const slice = useMemo(() => session.selectedMultiSlice === '' ? undefined : safeJSONParse(session.selectedMultiSlice), [session.selectedMultiSlice]);
     const [selectedRowKey, setSelectedRowKey] = useState('');
 
     const jumpTo = async (record: OpData): Promise<void> => {
@@ -658,7 +659,7 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
                     (iunit.metadata as MetaData).threadId === record.tid && (iunit.metadata as MetaData).processId === record.pid;
                 },
                 onSuccess: (iunit): void => {
-                    const selectedMultiSlice = JSON.parse(session.selectedMultiSlice);
+                    const selectedMultiSlice = safeJSONParse(session.selectedMultiSlice);
                     const startTime = record.timestamp - getTimeOffset(session, (iunit.metadata as ThreadMetaData).cardId);
                     const [rangeStart, rangeEnd] = calculateDomainRange(session, startTime, record.duration);
                     session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };

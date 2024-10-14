@@ -13,7 +13,7 @@ import { useSelectedDataDetailUpdater } from './details/hooks';
 import type { AscendSliceDetail } from '../entity/data';
 import { CaretDownIcon } from 'ascend-icon';
 import { Col, Row } from 'ascend-components';
-import { customConsole as console } from 'ascend-utils';
+import { safeJSONParse } from 'ascend-utils';
 
 interface DetailProps<T extends Record<string, unknown>> {
     session: Session;
@@ -51,30 +51,28 @@ const ArgsData = observer(({ data }: { data: AscendSliceDetail}): JSX.Element =>
     if (argsJson === undefined) {
         return <></>;
     }
-    try {
-        const args = JSON.parse(argsJson);
-        const breakKeys = ['Call stack', 'code'];
-        return <div>
-            <StyledSliceArgsDiv>
-                <CaretDownIcon
-                    onClick={ (): void => setHidden(!isHiddenArgs) } style={{ margin: '-2px 0 0 8px', float: 'left', transform: `rotate(${!isHiddenArgs ? 0 : '-90deg'}) translate(${!isHiddenArgs ? '-2' : '1'}px, ${!isHiddenArgs ? '0' : '-2'}px)`, cursor: 'pointer' }}/>
-                <div style={{ fontWeight: 'bold', margin: '8px 0 0 8px' }}>{t('Args')}</div>
-                {!isHiddenArgs
-                    ? Object.keys(args).map(key => {
-                        return <Row key={key} style={{ marginLeft: '24px', lineHeight: '32px' }} >
-                            <Col flex="150px" style={{ whiteSpace: 'nowrap' }}>{key}</Col>
-                            <Col flex="auto" style={{ wordBreak: 'break-all' }}>
-                                { breakKeys.includes(key) ? createContentWithBreaks(args[key]) : args[key] }
-                            </Col>
-                        </Row>;
-                    })
-                    : <></>}
-            </StyledSliceArgsDiv>
-        </div>;
-    } catch (e) {
-        console.info('parse args fail:', e);
+    const args = safeJSONParse(argsJson);
+    if (args === null) {
         return <></>;
     }
+    const breakKeys = ['Call stack', 'code'];
+    return <div>
+        <StyledSliceArgsDiv>
+            <CaretDownIcon
+                onClick={ (): void => setHidden(!isHiddenArgs) } style={{ margin: '-2px 0 0 8px', float: 'left', transform: `rotate(${!isHiddenArgs ? 0 : '-90deg'}) translate(${!isHiddenArgs ? '-2' : '1'}px, ${!isHiddenArgs ? '0' : '-2'}px)`, cursor: 'pointer' }}/>
+            <div style={{ fontWeight: 'bold', margin: '8px 0 0 8px' }}>{t('Args')}</div>
+            {!isHiddenArgs
+                ? Object.keys(args).map(key => {
+                    return <Row key={key} style={{ marginLeft: '24px', lineHeight: '32px' }} >
+                        <Col flex="150px" style={{ whiteSpace: 'nowrap' }}>{key}</Col>
+                        <Col flex="auto" style={{ wordBreak: 'break-all' }}>
+                            { breakKeys.includes(key) ? createContentWithBreaks(args[key]) : args[key] }
+                        </Col>
+                    </Row>;
+                })
+                : <></>}
+        </StyledSliceArgsDiv>
+    </div>;
 });
 
 export const SelectedDataBottomPanel = observer(<T extends Record<string, unknown>>(props: DetailProps<T>): JSX.Element => {

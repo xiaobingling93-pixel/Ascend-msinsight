@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console, safeJSONParse } from 'ascend-utils';
 export enum LocalStorageKeys {
     LANGUAGE = 'language',
     THEME = 'theme',
@@ -9,13 +9,8 @@ export enum LocalStorageKeys {
 
 class LocalStorageService {
     getItem(key: LocalStorageKeys): any {
-        try {
-            const item = localStorage.getItem(key);
-            return item ? JSON.parse(item) : null;
-        } catch (error) {
-            console.log(error);
-            return null;
-        }
+        const item = localStorage.getItem(key);
+        return item ? safeJSONParse(item) : null;
     }
 
     setItem(key: LocalStorageKeys, value: any): void {

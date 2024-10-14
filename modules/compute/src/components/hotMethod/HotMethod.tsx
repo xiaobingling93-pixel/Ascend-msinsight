@@ -24,6 +24,7 @@ import type { InstrsColumnType, Iline, Ilinetable, JsonInstructionType } from '.
 import { queryApiInstr, queryApiLine, querySourceCode } from '../RequestUtils';
 import { runInAction } from 'mobx';
 import { Layout } from 'ascend-layout';
+import { safeJSONParse } from 'ascend-utils';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 const MAX_FILE_SIZE = 1000000; // 100,0000
@@ -229,10 +230,8 @@ const Index = observer(({ session }: { session: Session }) => {
             if (res === undefined || res === null || res.instructions === '') {
                 return [];
             }
-            let obj;
-            try {
-                obj = JSON.parse(res.instructions);
-            } catch (err) {
+            const obj = safeJSONParse(res.instructions);
+            if (obj === null) {
                 return [];
             }
             let list = obj.Instructions ?? [];
