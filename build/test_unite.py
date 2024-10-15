@@ -18,7 +18,8 @@ class Constant:
     MODULES_LIST = [
         r"modules/memory",
         r"modules/timeline",
-        r"modules/cluster"
+        r"modules/cluster",
+        r"modules/compute"
     ]
     SCRIPT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     FINAL_REPORT_PATH = os.path.join(SCRIPT_PATH, "llt_cov")

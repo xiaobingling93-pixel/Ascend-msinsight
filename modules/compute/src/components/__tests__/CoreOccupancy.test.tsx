@@ -14,7 +14,9 @@ it('testCoreChartComponent', () => {
     if (session === undefined) {
         return;
     }
-    const dom = render(<CoreChart condition={{ showAs: 'cycles' }} data={coreData.opDetails.slice(0, 3)}/>);
+    const dom = render(<CoreChart condition={{ showAs: 'cycles', isCompared: false }} data={coreData}/>);
     // 对比快照
-    expect(dom.baseElement).toMatchSnapshot();
+    const res = dom.baseElement.getElementsByClassName('core');
+    expect(res[15]).toMatchSnapshot();
+    expect(res[19]).toMatchSnapshot();
 });

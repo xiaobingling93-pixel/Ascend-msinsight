@@ -10,7 +10,7 @@ const mockCoreData: ICoreOccupancy = {
     opDetails: [],
 };
 
-for (let i = 0; i < 24; i++) {
+for (let i = 0; i < 16; i++) {
     mockCoreData.opDetails.push({
         coreId: i, // core序号
         subCoreDetails: [
