@@ -16,32 +16,13 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
         ServerLog::Error("Failed to get connection for Affinity API query. fileId:", params.rankId);
         return false;
     }
-
-    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-    Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
-                                           .current = params.currentPage, .pageSize = params.pageSize};
-    param.order = params.orderType == "ascend" ? "ASC" : "DESC";
-    if (std::count(AFFINITY_API_ORDER_BY_NAME_LIST.begin(),
-                   AFFINITY_API_ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
-        param.orderBy = "duration";
-    }
-    std::map<uint64_t, std::vector<Protocol::FlowLocation>> dataMap{};
-    std::map<uint64_t, std::vector<uint32_t>> indexMap{};
-    if (!database->QueryAffinityAPIData(param, GetFirstApiList(AFFINITY_API_RULE), startTime, dataMap, indexMap)) {
-        ServerLog::Error("Failed to Query Affinity API from database.");
+    std::vector<Protocol::FlowLocation> results = GetFlowLocationData(params);
+    if (results.empty()) {
         return false;
     }
-    std::vector<Protocol::FlowLocation> results;
-    for (const auto& it : dataMap) { // 获取某个泳道的数据
-        uint64_t trackId = it.first;
-        std::vector<Protocol::FlowLocation> datas = it.second;
-        std::vector<uint32_t> indexList = indexMap[trackId];
-        FilterAffinityApiData(params, datas, indexList, results);
-    }
-    AdvisorProcessUtil::SortFlowLocationData(results, param);
-    uint64_t start = param.pageSize * (param.current - 1);
+    uint64_t start = params.pageSize * (params.currentPage - 1);
     auto dbType = Timeline::DataBaseManager::Instance().GetDataType();
-    for (uint64_t i = start; i < start + param.pageSize && i < results.size(); ++i) {
+    for (uint64_t i = start; i < start + params.pageSize && i < results.size(); ++i) {
         auto item = results.at(i);
         Protocol::AffinityAPIData one{};
         one.name = item.name;
@@ -50,6 +31,11 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
         one.baseInfo.pid = item.pid;
         one.baseInfo.tid = item.tid;
         one.baseInfo.startTime = item.timestamp;
+        if (item.duration < item.timestamp) {
+            ServerLog::Error("The original data seems to have an issue, as the end time is smaller than the timestamp."
+                              "Please check the rationality of the data.");
+            return false;
+        }
         one.baseInfo.duration = (item.duration - item.timestamp) / THOUSAND; // duration里存储的是end time，前端需要的是us
         one.baseInfo.depth = item.depth;
         one.originAPI = item.type;
@@ -59,6 +45,38 @@ bool AffinityAPIAdvisor::Process(const Protocol::APITypeParams &params, Protocol
     }
     resBody.size = results.size();
     return true;
+}
+
+std::vector<Protocol::FlowLocation> AffinityAPIAdvisor::GetFlowLocationData(const Protocol::APITypeParams &params)
+{
+    std::vector<Protocol::FlowLocation> results;
+    auto database = Timeline::DataBaseManager::Instance().GetTraceDatabase(params.rankId);
+    if (database == nullptr) {
+        ServerLog::Error("Failed to get connection for Affinity API query. fileId:", params.rankId);
+        return results;
+    }
+    Protocol::KernelDetailsParams param = {.orderBy = params.orderBy, .order = params.orderType,
+                                           .current = params.currentPage, .pageSize = params.pageSize};
+    param.order = params.orderType == "ascend" ? "ASC" : "DESC";
+    if (std::count(AFFINITY_API_ORDER_BY_NAME_LIST.begin(),
+                   AFFINITY_API_ORDER_BY_NAME_LIST.end(), params.orderBy) == 0) {
+        param.orderBy = "duration";
+    }
+    uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
+    std::map<uint64_t, std::vector<Protocol::FlowLocation>> dataMap{};
+    std::map<uint64_t, std::vector<uint32_t>> indexMap{};
+    if (!database->QueryAffinityAPIData(param, GetFirstApiList(AFFINITY_API_RULE), startTime, dataMap, indexMap)) {
+        ServerLog::Error("Failed to Query Affinity API from database.");
+        return results;
+    }
+    for (const auto& it : dataMap) { // 获取某个泳道的数据
+        uint64_t trackId = it.first;
+        std::vector<Protocol::FlowLocation> datas = it.second;
+        std::vector<uint32_t> indexList = indexMap[trackId];
+        FilterAffinityApiData(params, datas, indexList, results);
+    }
+    AdvisorProcessUtil::SortFlowLocationData(results, param);
+    return results;
 }
 
 std::set<std::string> AffinityAPIAdvisor::GetFirstApiList(const std::vector<AffinityApiData> &affinityApiData)
@@ -139,7 +157,7 @@ bool AffinityAPIAdvisor::CheckApiSeqWithRule(const std::vector<std::string> &rul
     if (std::find(list0.begin(), list0.end(), name) == list0.end()) {
         return false; // 匹配rule中第一个API，不匹配规则时跳过
     }
-    if (index + rule.size() >= dataList.size()) {
+    if (index >= dataList.size() - rule.size()) {
         return false;  // 真实数据长度 < 预期数据长度，无法匹配
     }
 
