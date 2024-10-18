@@ -17,6 +17,7 @@ void GlobalProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_PROJECT_EXPLORER_UPDATE, ToProjectExplorerUpdateRequest);
     jsonToReqFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_GET, ToProjectExplorerInfoGetRequest);
     jsonToReqFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_DELETE, ToProjectExplorerInfoDeleteRequest);
+    jsonToReqFactory.emplace(REQ_RES_PROJECT_EXPLORER_CLEAR, ToProjectExplorerInfoClearRequest);
     jsonToReqFactory.emplace(REQ_RES_PROJECT_VALID_CHECK, ToProjectValidCheckRequest);
     jsonToReqFactory.emplace(REQ_RES_PROJECT_SET_BASELINE, ToSetBaselineRequest);
     jsonToReqFactory.emplace(REQ_RES_PROJECT_CANCEL_BASELINE, ToCancelBaselineRequest);
@@ -29,6 +30,7 @@ void GlobalProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_PROJECT_EXPLORER_UPDATE, ToProjectExplorerInfoUpdateResponseJson);
     resToJsonFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_GET, ToProjectExplorerInfoGetResponseJson);
     resToJsonFactory.emplace(REQ_RES_PROJECT_EXPLORER_INFO_DELETE, ToProjectExplorerInfoDeleteResponseJson);
+    resToJsonFactory.emplace(REQ_RES_PROJECT_EXPLORER_CLEAR, ToProjectExplorerInfoClearResponseJson);
     resToJsonFactory.emplace(REQ_RES_PROJECT_VALID_CHECK, ToProjectValidCheckResponseJson);
     resToJsonFactory.emplace(REQ_RES_PROJECT_SET_BASELINE, ToSetBaselineResponseJson);
     resToJsonFactory.emplace(REQ_RES_PROJECT_CANCEL_BASELINE, ToCancelBaselineResponseJson);
@@ -94,6 +96,16 @@ std::unique_ptr<Request> GlobalProtocol::ToProjectExplorerInfoDeleteRequest(cons
         for (const auto &item : json["params"]["dataPath"].GetArray()) {
             reqPtr->params.dataPath.emplace_back(item.GetString());
         }
+    }
+    return reqPtr;
+}
+
+std::unique_ptr<Request> GlobalProtocol::ToProjectExplorerInfoClearRequest(const json_t &json, std::string &error)
+{
+    std::unique_ptr<ProjectExplorerInfoClearRequest> reqPtr = std::make_unique<ProjectExplorerInfoClearRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request project explorer get info, command is: " + reqPtr->command;
+        return nullptr;
     }
     return reqPtr;
 }
@@ -165,6 +177,12 @@ std::optional<document_t> GlobalProtocol::ToProjectExplorerInfoDeleteResponseJso
 {
     return ToResponseJson<ProjectExplorerInfoDeleteResponse>(
             dynamic_cast<const ProjectExplorerInfoDeleteResponse &>(response));
+}
+
+std::optional<document_t> GlobalProtocol::ToProjectExplorerInfoClearResponseJson(const Response &response)
+{
+    return ToResponseJson<ProjectExplorerInfoClearResponse>(
+            dynamic_cast<const ProjectExplorerInfoClearResponse &>(response));
 }
 
 std::optional<document_t> GlobalProtocol::ToProjectValidCheckResponseJson(const Response &response)

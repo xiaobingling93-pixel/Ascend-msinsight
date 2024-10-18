@@ -269,6 +269,24 @@ bool ProjectExplorerManager::IsClusterData(const std::string &projectName)
     }
     return false;
 }
+
+bool ProjectExplorerManager::ClearProjectExplorer()
+{
+    std::unique_lock<std::recursive_mutex> lock(mutex);
+    db->StartTransaction();
+    // 删除两个表的数据
+    if (db->DeleteFileMenu("", std::vector<std::string>{}) &&
+        db->DeleteParsedFile(std::vector<int64_t>{}, std::vector<int64_t>{})) {
+        // 删除成功，提交事务
+        db->EndTransaction();
+        Server::ServerLog::Info("Success to clear project explorer.");
+        return true;
+    }
+    // 如果出现其中一个表删除失败的清空，则进行事务回滚
+    db->RollbackTransaction();
+    Server::ServerLog::Error("Fail to clear project explorer.");
+    return false;
+}
 }
 }
 }

@@ -84,6 +84,10 @@ struct ProjectExplorerInfoDeleteResponse : public Response {
     ProjectExplorerInfoDeleteBody body;
 };
 
+struct ProjectExplorerInfoClearResponse : public Response {
+    ProjectExplorerInfoClearResponse() : Response(REQ_RES_PROJECT_EXPLORER_CLEAR) {};
+};
+
 struct ProjectCheckBody {
     ProjectErrorType error = ProjectErrorType::NO_ERRORS;
     int result = static_cast<int>(error);

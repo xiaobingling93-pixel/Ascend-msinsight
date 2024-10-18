@@ -177,15 +177,14 @@ std::vector<ProjectExplorerInfo> SystemMemoryDatabase::QueryProjectExplorerData(
 bool SystemMemoryDatabase::DeleteFileMenu(const std::string &projectName, const std::vector<std::string>& fileNameList)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    if (projectName.empty()) {
-        ServerLog::Error("Failed to delete by project name, param is invalid.");
-        return false;
-    }
     if (!CheckTableExist(projectExplorerTable)) {
         ServerLog::Error("Failed to delete by project name, table is not exist.");
         return false;
     }
-    std::string sql = "DELETE FROM " + projectExplorerTable + " WHERE projectName = ?";
+    std::string sql = "DELETE FROM " + projectExplorerTable + " WHERE 1 = 1";
+    if (!projectName.empty()) {
+        sql += " and projectName = ?";
+    }
     if (!fileNameList.empty()) {
         sql += " and fileName in (?";
         for (size_t i = 1; i < fileNameList.size(); ++i) {
@@ -199,8 +198,9 @@ bool SystemMemoryDatabase::DeleteFileMenu(const std::string &projectName, const 
         ServerLog::Error("Failed to delete by project name, failed to create prepared stmt: projectName=", projectName);
         return false;
     }
-
-    stmt->BindParams(projectName);
+    if (!projectName.empty()) {
+        stmt->BindParams(projectName);
+    }
     for (const auto &item: fileNameList) {
         stmt->BindParams(item);
     }

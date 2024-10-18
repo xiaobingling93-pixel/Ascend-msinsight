@@ -117,6 +117,18 @@ std::optional<document_t> ToResponseJson<ProjectExplorerInfoDeleteResponse>(
 }
 
 template <>
+std::optional<document_t> ToResponseJson<ProjectExplorerInfoClearResponse>(
+    const ProjectExplorerInfoClearResponse &response)
+{
+    document_t json(kObjectType);
+    json_t body(kObjectType);
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    auto &allocator = json.GetAllocator();
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
+template <>
 std::optional<document_t> ToResponseJson<ProjectCheckValidResponse>(const ProjectCheckValidResponse &response)
 {
     document_t json(kObjectType);

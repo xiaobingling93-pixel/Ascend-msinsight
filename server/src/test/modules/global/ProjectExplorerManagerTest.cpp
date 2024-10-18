@@ -100,3 +100,14 @@ TEST_F(ProjectExplorerManagerTest, CheckProjectConflictAndCoverData)
     EXPECT_EQ(static_cast<Dic::ProjectTypeEnum>(queryRes[0].projectType), Dic::ProjectTypeEnum::BIN);
     ClearProjectExplorerData();
 }
+
+// 清空项目内容
+TEST_F(ProjectExplorerManagerTest, ClearProjectExplorerSuccess)
+{
+    InitProjectExplorerData();
+    bool result = ProjectExplorerManager::Instance().ClearProjectExplorer();
+    EXPECT_EQ(result, true);
+    std::vector<ProjectExplorerInfo> queryRes = ProjectExplorerManager::Instance()
+            .QueryProjectExplorer("", std::vector<std::string>());
+    EXPECT_EQ(queryRes.size(), 0);
+}

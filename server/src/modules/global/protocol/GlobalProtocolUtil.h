@@ -21,6 +21,8 @@ template <> std::optional<document_t> ToResponseJson<ProjectExplorerInfoGetRespo
     const ProjectExplorerInfoGetResponse &response);
 template <> std::optional<document_t> ToResponseJson<ProjectExplorerInfoDeleteResponse>(
     const ProjectExplorerInfoDeleteResponse &response);
+template <> std::optional<document_t> ToResponseJson<ProjectExplorerInfoClearResponse>(
+    const ProjectExplorerInfoClearResponse &response);
 template <>
 std::optional<document_t> ToResponseJson<ProjectCheckValidResponse>(const ProjectCheckValidResponse &response);
 template <> std::optional<document_t> ToResponseJson<BaselineSettingResponse>(const BaselineSettingResponse &response);

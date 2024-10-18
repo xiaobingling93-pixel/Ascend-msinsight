@@ -25,6 +25,7 @@ private:
     static std::unique_ptr<Request> ToProjectExplorerUpdateRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToProjectExplorerInfoGetRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToProjectExplorerInfoDeleteRequest(const json_t &json, std::string &error);
+    static std::unique_ptr<Request> ToProjectExplorerInfoClearRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToProjectValidCheckRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToSetBaselineRequest(const json_t &json, std::string &error);
     static std::unique_ptr<Request> ToCancelBaselineRequest(const json_t &json, std::string &error);
@@ -34,6 +35,7 @@ private:
     static std::optional<document_t> ToProjectExplorerInfoUpdateResponseJson(const Response &response);
     static std::optional<document_t> ToProjectExplorerInfoGetResponseJson(const Response &response);
     static std::optional<document_t> ToProjectExplorerInfoDeleteResponseJson(const Response &response);
+    static std::optional<document_t> ToProjectExplorerInfoClearResponseJson(const Response &response);
     static std::optional<document_t> ToProjectValidCheckResponseJson(const Response &response);
     static std::optional<document_t> ToSetBaselineResponseJson(const Response &response);
     static std::optional<document_t> ToCancelBaselineResponseJson(const Response &response);

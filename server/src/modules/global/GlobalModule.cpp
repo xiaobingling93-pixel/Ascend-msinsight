@@ -11,6 +11,7 @@
 #include "CheckProjectValidHandler.h"
 #include "SetBaselineHandler.h"
 #include "CancelBaselineHandler.h"
+#include "ClearProjectExplorerHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -37,6 +38,8 @@ void GlobalModule::RegisterRequestHandlers()
                               std::make_unique<GetProjectExplorerInfoHandler>());
     requestHandlerMap.emplace(REQ_RES_PROJECT_EXPLORER_INFO_DELETE,
                               std::make_unique<DeleteProjectExplorerInfoHandler>());
+    requestHandlerMap.emplace(REQ_RES_PROJECT_EXPLORER_CLEAR,
+                              std::make_unique<ClearProjectExplorerHandler>());
     requestHandlerMap.emplace(REQ_RES_PROJECT_VALID_CHECK, std::make_unique<CheckProjectValidHandler>());
     requestHandlerMap.emplace(REQ_RES_PROJECT_SET_BASELINE, std::make_unique<SetBaselineHandler>());
     requestHandlerMap.emplace(REQ_RES_PROJECT_CANCEL_BASELINE, std::make_unique<CancelBaselineHandler>());
