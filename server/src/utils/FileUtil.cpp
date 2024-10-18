@@ -93,8 +93,38 @@ bool FileUtil::IsSoftLink(const std::string &path)
     return S_ISLNK(fileStat.st_mode);
 #endif
 }
+
+bool FileUtil::IsRegularFile(const std::string &filePath)
+{
+#ifdef _WIN32
+    DWORD fileAttributes = GetFileAttributesA(filePath.c_str());
+    if (fileAttributes == INVALID_FILE_ATTRIBUTES) {
+        return false;
+    }
+    return (fileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+#else
+    struct stat fileStat;
+    if (stat(filePath.c_str(), &fileStat) != 0) {
+        return false;
+    }
+    return S_ISREG(fileStat.st_mode);
+#endif
+}
  
-bool FileUtil::CheckPathValid(const std::string &path)
+bool FileUtil::CheckFileValid(const std::string &filePath)
+{
+    if (!CheckDirValid(filePath)) {
+        Server::ServerLog::Error("The file path is insecure.");
+        return false;
+    }
+    if (!IsRegularFile(filePath)) {
+        Server::ServerLog::Error("The file is not a regular file.");
+        return false;
+    }
+    return true;
+}
+
+bool FileUtil::CheckDirValid(const std::string &path)
 {
     if (path.empty()) {
         Server::ServerLog::Error("The path is empty. ");
@@ -152,7 +182,7 @@ bool FileUtil::CheckFilePathExist(const std::string& filePath)
 bool FileUtil::CheckFilePath(const std::string& filePath)
 {
     // 文件基础校验：校验文件最小权限、软连接、长度、特殊字符
-    if (!CheckPathValid(filePath)) {
+    if (!CheckDirValid(filePath)) {
         Server::ServerLog::Error("Invalid file path.There may be issues with file permissions, soft link, length,"
                                  " or special characters");
         return false;
@@ -330,7 +360,7 @@ bool FileUtil::ModifyFilePermissions(const std::string &filePath, const mode_t &
 bool FileUtil::ConvertToRealPath(std::string &errorMsg, std::vector<std::string> &path)
 {
     for (auto it = path.begin(); it != path.end(); ++it) {
-        if (!FileUtil::CheckPathValid(*it)) {
+        if (!FileUtil::CheckDirValid(*it)) {
             errorMsg = *it + "is invalid path";
             return false;
         }
@@ -426,12 +456,13 @@ std::ifstream FileUtil::OpenReadFileSafely(const std::string &path, std::ios::op
         return res;
     }
     std::string tmpPath = PathPreprocess(path);
-    if (!CheckPathValid(tmpPath)) {
+    if (!CheckFileValid(tmpPath)) {
         Server::ServerLog::Error("Open read file safely failed");
         return res;
     }
     if (!CheckFileSize(path)) {
-        Server::ServerLog::Error("Open read file safely failed, File size larger than limit.");
+        Server::ServerLog::Error("Open read file safely failed, "
+                                 "The file size does not comply with security regulations.");
         return res;
     }
     res.open(tmpPath, std::ios::in | mode);
@@ -440,6 +471,7 @@ std::ifstream FileUtil::OpenReadFileSafely(const std::string &path, std::ios::op
 
 bool FileUtil::CheckFileSize(const std::string &filePath)
 {
+    constexpr size_t fileMinSize = 0;
     constexpr size_t fileMaxSize = 20ULL * 1024 * 1024 * 1024;
 #ifdef _WIN32
     std::string tmpFilePath = FileUtil::PathPreprocess(filePath);
@@ -447,18 +479,30 @@ bool FileUtil::CheckFileSize(const std::string &filePath)
     if (GetFileAttributesEx(tmpFilePath.c_str(), GetFileExInfoStandard, &fileData)) {
         // 获取文件大小
         uintmax_t fileSize = (static_cast<uintmax_t>(fileData.nFileSizeHigh) << 32) | fileData.nFileSizeLow;
-        if (fileSize <= fileMaxSize) {
-            return true;
+        if (fileSize <= fileMinSize) {
+            Server::ServerLog::Error("This file is an empty file.");
+            return false;
         }
+        if (fileSize > fileMaxSize) {
+            Server::ServerLog::Error("File size limitation exceeded.");
+            return false;
+        }
+        return true;
     }
 #else
     // 获取文件大小
-struct stat fileStat;
-if (stat(filePath.c_str(), &fileStat) == 0) {
-    if (fileStat.st_size <= fileMaxSize) {
+    struct stat fileStat;
+    if (stat(filePath.c_str(), &fileStat) == 0) {
+        if (fileStat.st_size <= fileMinSize) {
+            Server::ServerLog::Error("This file is an empty file.");
+            return false;
+        }
+        if (fileStat.st_size > fileMaxSize) {
+            Server::ServerLog::Error("File size limitation exceeded.");
+            return false;
+        }
         return true;
     }
-}
 #endif
     return false;
 }

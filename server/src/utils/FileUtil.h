@@ -136,7 +136,7 @@ public:
             if (std::string(fileInfo.name) == ".." || std::string(fileInfo.name) == ".") {
                 continue;
             }
-            if (!CheckPathValid(SplicePath(path, fileInfo.name))) {
+            if (!CheckDirValid(SplicePath(path, fileInfo.name))) {
                 continue;
             }
             if ((fileInfo.attrib & _A_SUBDIR) != 0) {
@@ -179,7 +179,7 @@ public:
             if (stat(fullPath.c_str(), &pathStat) != 0) {
                 continue;
             }
-            if (!CheckPathValid(fullPath)) {
+            if (!CheckDirValid(fullPath)) {
                 continue;
             }
             if (S_ISDIR(pathStat.st_mode)) {
@@ -482,7 +482,9 @@ public:
 
     static bool IsSoftLink(const std::string &path);
     static bool IsAbsolutePath(const std::string &path);
-    static bool CheckPathValid(const std::string &path);
+    static bool IsRegularFile(const std::string &filePath);
+    static bool CheckDirValid(const std::string &path);
+    static bool CheckFileValid(const std::string &filePath);
     static bool CheckFilePathExist(const std::string& filePath);
     static bool CheckFilePath(const std::string& filePath);
     static bool CheckFilePathLength(const std::string& filePath);
