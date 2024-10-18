@@ -71,18 +71,20 @@ export const getAllPpStageIds = (data: communicatorContainerData): string[] => {
 };
 
 const fillPpCommunicators = ({ values, rankNum, pipelineSize, partitionModes }: fillCommunicatorsType): void => {
-    if (values.ppSize < 1) {
+    if (values.ppSize < 1 || values.tpSize < 1) {
         return;
     }
     const communicators = getCommunicators(partitionModes, 'pp');
     let ranks: number[] = [];
+    let start = 0;
     for (let i = 0; i < pipelineSize; i++) {
         switch (values.algorithm) {
             case 'Megatron-LM(tp-dp-pp)':
                 ranks = _.range(i, rankNum, pipelineSize);
                 break;
             case 'Megatron-LM(tp-pp-dp)':
-                ranks = _.range(i * values.ppSize, (i + 1) * values.ppSize, 1);
+                start = (Math.floor(i / values.tpSize) * values.ppSize * values.tpSize) + (i % values.tpSize);
+                ranks = _.range(start, start + (values.ppSize * values.tpSize), values.tpSize);
                 break;
             default:
                 break;
@@ -108,8 +110,8 @@ const fillTpCommunicators = ({ values, modelCount, partitionModes }: fillCommuni
                 ranks = _.range(i * values.tpSize, (i + 1) * values.tpSize);
                 break;
             case 'Megatron-LM(tp-pp-dp)':
-                start = Math.floor(i / values.dpSize) + ((i % values.dpSize) * (values.ppSize * values.tpSize));
-                ranks = _.range(start, start + (values.ppSize * values.tpSize), values.ppSize);
+                start = (Math.floor(i / values.dpSize) * values.tpSize) + ((i % values.dpSize) * (values.ppSize * values.tpSize));
+                ranks = _.range(start, start + values.tpSize);
                 break;
             default:
                 break;
@@ -135,7 +137,7 @@ const fillDpCommunicators = ({ values, rankNum, pipelineSize, partitionModes }: 
                     ranks = _.range((i * pipelineSize) + j, ((i + 1) * pipelineSize) + j, values.tpSize);
                     break;
                 case 'Megatron-LM(tp-pp-dp)':
-                    ranks = _.range(i + (j * values.ppSize), rankNum - (values.ppSize - i - 1), values.tpSize * values.ppSize);
+                    ranks = _.range((i * values.tpSize) + j, rankNum - (values.ppSize - i - 1), values.tpSize * values.ppSize);
                     break;
                 default:
                     break;
@@ -231,6 +233,15 @@ export interface ppData {
     values: dpData[];
 };
 
+const getPpValueMap = (values: formFieldsValue, arr: number[], index: number): void => {
+    if (values.ppSize < 1 || values.tpSize < 1 || values.dpSize < 1) {
+        return;
+    }
+    for (let n = 0; n < values.dpSize; n++) {
+        const start = (index + (n * values.ppSize)) * values.tpSize;
+        arr.push(..._.range(start, start + values.tpSize, 1));
+    }
+};
 export const getRankData = (values: formFieldsValue): ppData[] => {
     const ranksData: ppData[] = [];
     const rankNum = values.ppSize * values.tpSize * values.dpSize;
@@ -247,7 +258,7 @@ export const getRankData = (values: formFieldsValue): ppData[] => {
                 ppValue = _.range(pipelineSize * i, pipelineSize * (i + 1), 1);
                 break;
             case 'Megatron-LM(tp-pp-dp)':
-                ppValue = _.range(i, rankNum, values.ppSize);
+                getPpValueMap(values, ppValue, i);
                 break;
             default:
                 break;
