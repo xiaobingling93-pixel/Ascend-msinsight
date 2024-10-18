@@ -92,7 +92,11 @@ bool JupyterServerManager::Start(const std::string& path)
         return false;
     }
     if (!StringUtil::ValidateCommandFilePathParam(path)) {
-        ServerLog::Error("Fail to start jupyter server, invalid file path: ", path);
+        ServerLog::Error("Fail to start jupyter server because of invalid file path");
+        return false;
+    }
+    if (!StringUtil::ValidateCommandFilePathParam(jupyterLogPath)) {
+        ServerLog::Error("Fail to start jupyter server because of invalid jupyter log file path");
         return false;
     }
     // 获取路径的根目录，在根目录下启动
