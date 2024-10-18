@@ -67,6 +67,18 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
     auto &curDataBlockMap = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
         baselineDataBlockMap : dataBlockMap;
 
+    bool success = ParseDataBlocks(file, curDataBlockMap);
+    if (!success) {
+        return false;
+    }
+    file.close();
+    Timeline::ParserStatusManager::Instance().SetParserStatus(fileId, Timeline::ParserStatus::INIT);
+    threadPool->AddTask(PreParseTask, fileId);
+    return true;
+}
+
+bool SourceFileParser::ParseDataBlocks(std::ifstream &file, std::map<int, std::vector<Position>> &curDataBlockMap)
+{
     while (!file.eof()) {
         uint64_t dataSize;
         uint8_t dataType;
@@ -93,21 +105,26 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
         file.seekg(reserveLen, std::ios::cur);
 
         int64_t startPos = file.tellg();
-        if (startPos + dataSize - paddingLength >= INT64_MAX) {
-            // 溢出防
+        if (startPos < 0) {
+            ServerLog::Error("Parse source file failed, source file is invalid.");
+            return false;
+        }
+        if (dataSize > INT64_MAX - startPos || startPos + dataSize - paddingLength > INT64_MAX) {
+            // 溢出防护
             ServerLog::Error("Data block in selected file is invalid which data size is :", dataSize);
             return false;
         }
         int64_t endPos = startPos + dataSize - paddingLength;
+        if (startPos >= endPos) {
+            ServerLog::Error("Data error: the start position is greater than the end position.");
+            return false;
+        }
         Position position = {startPos, endPos};
         curDataBlockMap[dataType].emplace_back(position);
 
         // 跳转到下一个数据块的开始位置，考虑到当前数据块的大小和填充
         file.seekg(dataSize, std::ios::cur);
     }
-    file.close();
-    Timeline::ParserStatusManager::Instance().SetParserStatus(fileId, Timeline::ParserStatus::INIT);
-    threadPool->AddTask(PreParseTask, fileId);
     return true;
 }
 
@@ -156,6 +173,10 @@ bool SourceFileParser::InitParser(const std::string &fileId)
     uint64_t totalSize = 0;
     for (const auto &pos : adjustTraceFilePos) {
         totalSize += (pos.second - pos.first);
+        if ((pos.second - pos.first) > UINT64_MAX - totalSize) {
+            ServerLog::Error("Addition overflowed, source file is too large.");
+            return false;
+        }
     }
     instance.fileProgressMap[fileId] = std::make_unique<FileProgress>(0, totalSize);
 
@@ -746,6 +767,11 @@ void SourceFileParser::ConvertToData()
             break;
         }
         std::string sourceFilePath(filePathBuffer.data());
+        if ((start < 0) || (filePathLengthConst > INT64_MAX - start)) {
+            ServerLog::Error(std::string("Start position: ") + std::to_string(start) +
+            std::string(" is illegal at covert to data in source file."));
+            return;
+        }
         sourceFiles[sourceFilePath] = std::make_pair(start + filePathLengthConst, end);
     }
 
