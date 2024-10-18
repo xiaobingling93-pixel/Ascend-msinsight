@@ -29,14 +29,14 @@ export const PORT:number = port;
 export interface DataRequest {
     command: string;
     projectName?: string;
-    params: Request['params'];
+    params?: Request['params'];
 };
 
 export interface Request {
     id: number;
     type: string;
     moduleName: string;
-    params: Record<string, unknown>;
+    params?: Record<string, unknown>;
     command: string;
     projectName?: string;
     token?: string;

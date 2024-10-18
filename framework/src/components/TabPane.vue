@@ -99,7 +99,7 @@ onMounted(async () => {
         await connectRemote({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
     }
 
-    const result: any = await request({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] }, 'global', {
+    const result: any = await request({ remote: LOCAL_HOST, port: PORT }, 'global', {
       command: 'files/getProjectExplorer',
       params: {}
     });

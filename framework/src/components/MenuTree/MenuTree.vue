@@ -181,7 +181,7 @@ const customNodeClass = (data: TreeData) => {
                                 </el-icon>
                             </el-tooltip>
 
-                            <el-tooltip :content="node.level === 1 ? DeleteAll : DeleteItem" effect="light">
+                            <el-tooltip :content="node.level === 1 ? DeleteAll : DeleteItem" effect="light" :show-after="400">
                                 <div class="icon-button">
                                     <DeletePopConfirm :data="data" :node="node" :is-delete-all="node.level === 1" />
                                 </div>

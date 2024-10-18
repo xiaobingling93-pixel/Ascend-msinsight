@@ -144,6 +144,23 @@ export const useDataSources = defineStore('dataSources', () => {
         }
     );
 
+    const removeAllProjects = async (): Promise<void> => {
+        session.loading = true;
+        await request({ remote: LOCAL_HOST, port: PORT }, 'global', {
+            command: 'files/clearProjectExplorer',
+        }).finally(() => {
+            session.loading = false;
+        });
+        connector.send({
+            event: 'remote/reset',
+            body: {},
+        });
+        session.reset(true);
+        dataSources.value = [];
+        lastDataSource.value = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
+    };
+
+    // 删除单个工程
     const remove = async (index: number): Promise<void> => {
         session.loading = true;
         const dataSource = dataSources.value[index];
@@ -158,7 +175,7 @@ export const useDataSources = defineStore('dataSources', () => {
                     body: { dataSource },
                 });
                 session.reset(true);
-                await request(dataSource, 'timeline', { command: 'remote/reset', params: {} });
+                await request(dataSource, 'timeline', { command: 'remote/reset' });
                 lastDataSource.value = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
             }
             if (compareConfig.baselineDataInfo.projectName === dataSource.projectName) {
@@ -178,6 +195,7 @@ export const useDataSources = defineStore('dataSources', () => {
         }
     };
 
+    // 删除工程二级目录
     const removeSingle = async (parentIndex: number, index: number): Promise<void> => {
         session.loading = true;
         const dataSource = dataSources.value[parentIndex];
@@ -218,7 +236,7 @@ export const useDataSources = defineStore('dataSources', () => {
                 return false;
             }
             // 请求后端 更新数据
-            await request({ remote: LOCAL_HOST, port: PORT, projectName: oldProjectName, dataPath: [] }, 'global', {
+            await request({ remote: LOCAL_HOST, port: PORT }, 'global', {
                 command: 'files/updateProjectExplorer',
                 params: {
                     oldProjectName,
@@ -281,5 +299,16 @@ export const useDataSources = defineStore('dataSources', () => {
         });
     };
 
-    return { menuTree, remove, confirm, removeSingle, lastDataSource, updateProjectName, initProjectName, checkProjectValid, updateProjectExplorer };
+    return {
+        menuTree,
+        remove,
+        confirm,
+        removeSingle,
+        lastDataSource,
+        updateProjectName,
+        initProjectName,
+        checkProjectValid,
+        updateProjectExplorer,
+        removeAllProjects,
+    };
 });

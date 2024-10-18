@@ -111,7 +111,7 @@ export const useCompareConfig = defineStore('compareConfig', () => {
         baselineDataInfo.value = { projectName: '', filePath: '', rankId: '' };
         compareDataInfo.value = { projectName: '', filePath: '', rankId: '' };
         isCompareStatus.value = false;
-        await request({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] }, 'global', {
+        await request({ remote: LOCAL_HOST, port: PORT }, 'global', {
             command: 'global/cancelBaseline',
             params: {},
         });

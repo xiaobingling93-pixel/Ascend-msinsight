@@ -9,7 +9,7 @@ import type {DataInfo, TimelineCardInfo} from '@/stores/compareConfig';
 
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
-const getConnectionMapKey = (dataSource: DataSource): string => {
+const getConnectionMapKey = (dataSource: Pick<DataSource, 'remote' | 'port'>): string => {
     return `${dataSource.remote}:${dataSource.port}`;
 };
 
@@ -87,7 +87,7 @@ export const deleteDataPath = function(dataSource: DataSource): void {
 };
 
 export const request = function (
-    dataSource: DataSource,
+    dataSource: Pick<DataSource, 'remote' | 'port'>,
     moduleName: ModuleName,
     args: DataRequest,
     voidResponse?: boolean,

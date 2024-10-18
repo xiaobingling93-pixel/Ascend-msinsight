@@ -77,7 +77,7 @@ export const useResource = defineStore('resource', () => {
         if (path === undefined) {
             return [];
         }
-        const result = await request({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] }, 'global', {
+        const result = await request({ remote: LOCAL_HOST, port: PORT }, 'global', {
             command: 'files/get',
             params: {
                 path,
@@ -90,7 +90,7 @@ export const useResource = defineStore('resource', () => {
         if (path === undefined) {
             return false;
         }
-        const result = await request({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] }, 'global', {
+        const result = await request({ remote: LOCAL_HOST, port: PORT }, 'global', {
             command: 'files/get',
             params: {
                 path,

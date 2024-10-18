@@ -88,7 +88,7 @@ interface SingleDataPath {
     singleDataPath: string;
     dataSource: DataSource;
 }
-export function updatePageSetting({ type, data }: {type: string;data: any}): void {
+export function updatePageSetting({ type, data }: {type: string; data?: any}): void {
     const session = store.sessionStore.activeSession;
     if (session === undefined) {
         return;
@@ -119,6 +119,9 @@ export function updatePageSetting({ type, data }: {type: string;data: any}): voi
                     session.pageSetting[projectName] = undefined;
                 }
             }
+            break;
+        case 'reset':
+            session.pageSetting = {};
             break;
         default:
             break;

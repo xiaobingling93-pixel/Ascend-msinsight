@@ -9,15 +9,9 @@ import { ElMessageBox } from 'element-plus';
 
 const props = defineProps<{ data: TreeNodeType; isDeleteAll: boolean; node: Node }>();
 const store = useDataSources();
-const [DeleteAll, Cancel, Confirm, DeleteItemConfirmDescribe, DeleteAllConfirmDescribe] = useWatchTranslation([
-    'Delete All',
-    'Cancel',
-    'Confirm',
-    'DeleteItemConfirmDescribe',
-    'DeleteAllConfirmDescribe',
-]);
+const [DeleteItemConfirmDescribe, DeleteProjectConfirmDescribe] = useWatchTranslation(['DeleteItemConfirmDescribe', 'DeleteProjectConfirmDescribe']);
 
-const handleDeleteSingle = () => {
+const handleSingleDelete = () => {
     const parentData = props.node.parent.data;
     const parentIndex = store.menuTree.findIndex((data) => data === toRaw(parentData));
     const dataIndex = store.menuTree[parentIndex]?.children?.findIndex((data) => data === toRaw(props.data));
@@ -25,25 +19,28 @@ const handleDeleteSingle = () => {
         store.removeSingle(parentIndex, dataIndex);
     }
 };
-const handleDelete = () => {
+const handleAllDelete = () => {
     const current = store.menuTree.findIndex((data) => data === toRaw(props.data));
     store.remove(current);
 };
 
-const handleDeleteAllClick = () => {
-    ElMessageBox.confirm(DeleteAllConfirmDescribe.value, {
-        title: DeleteAll.value,
-        confirmButtonText: Confirm.value,
-        cancelButtonText: Cancel.value,
-    }).then(() => {
-        handleDelete();
-    });
+const handleDelete = () => {
+    if (props.isDeleteAll) {
+        handleAllDelete();
+    } else {
+        handleSingleDelete();
+    }
 };
 </script>
 
 <template>
-    <Delete v-if="isDeleteAll" @click.stop="handleDeleteAllClick" />
-    <el-popconfirm width="200" v-else :hide-icon="true" @confirm="handleDeleteSingle" :hide-after="0" :title="DeleteItemConfirmDescribe">
+    <el-popconfirm
+        width="200"
+        :hide-icon="true"
+        @confirm="handleDelete"
+        :hide-after="0"
+        :title="isDeleteAll ? DeleteProjectConfirmDescribe : DeleteItemConfirmDescribe"
+    >
         <template #reference>
             <Delete @click.stop />
         </template>

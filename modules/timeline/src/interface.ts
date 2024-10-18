@@ -21,6 +21,7 @@ import {
     baselineAddHandler,
     removeBaselineHandler,
     updateProjectNameHandler,
+    resetRemoteHandler,
 } from './connection/handler';
 
 interface InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> {
@@ -50,7 +51,7 @@ const BASELINE_REMOVE = 'baseline/remove';
 export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     [REMOTE_IMPORT]: importRemoteHandler,
     [REMOTE_REMOVE]: removeRemoteHandler,
-    [REMOTE_RESET]: removeRemoteHandler,
+    [REMOTE_RESET]: resetRemoteHandler,
     allPagesSuccess: allSuccessHandler,
     [REMOTE_REMOVE_SINGLE]: removeSingleRemoteHandler,
     [PARSE_SUCCESS]: parseSuccessHandler,

@@ -294,21 +294,24 @@ export const removeRemoteHandler: NotificationHandler = async (data): Promise<vo
     updatePageSetting({ type: 'removeDataSource', data: getPropFromData(data, 'dataSource') });
 };
 
-const resetPage = (data: Record<string, unknown>): void => {
-    runInAction(() => {
-        const dataSource = getPropFromData(data, 'dataSource') as DataSource;
-        const session = store.sessionStore.activeSession;
-        if (!session) {
-            return;
-        }
-        session.isFullDb = false;
+export const resetRemoteHandler: NotificationHandler = async (): Promise<void> => {
+    resetPage();
+    updatePageSetting({ type: 'reset' });
+};
+
+const clearUnits = (session: Session, data?: Record<string, unknown>): void => {
+    let dataSource: DataSource | null = null;
+    if (data) {
+        dataSource = getPropFromData(data, 'dataSource') as DataSource;
+    }
+    if (dataSource !== null && dataSource !== undefined) {
         const removeUnits = session.pinnedUnits.concat(session.units).filter((unit) => {
             const metadata = unit.metadata as any;
             if (metadata.dataSource.dataPath === undefined) {
                 return true;
             }
-            const isSameDataPath = dataSource.dataPath.filter((item) => metadata.dataSource.dataPath.includes(item)).length !== 0;
-            return metadata.dataSource.remote === dataSource.remote && isSameDataPath;
+            const isSameDataPath = dataSource?.dataPath.filter((item) => metadata.dataSource.dataPath.includes(item)).length !== 0;
+            return metadata.dataSource.remote === dataSource?.remote && isSameDataPath;
         });
         for (const unit of removeUnits) {
             const metadata = unit.metadata as any;
@@ -316,12 +319,28 @@ const resetPage = (data: Record<string, unknown>): void => {
         }
         session.units = session?.units.filter((unit) => {
             const metadata = unit.metadata as any;
-            return metadata.dataSource.remote !== dataSource.remote && !removeUnits.includes(unit);
+            return metadata.dataSource.remote !== dataSource?.remote && !removeUnits.includes(unit);
         });
         session.pinnedUnits = session?.pinnedUnits.filter((unit) => {
             const metadata = unit.metadata as any;
-            return metadata.dataSource.remote !== dataSource.remote && !removeUnits.includes(unit);
+            return metadata.dataSource.remote !== dataSource?.remote && !removeUnits.includes(unit);
         });
+    } else {
+        session.remoteAttrs.clear();
+        session.units = [];
+        session.pinnedUnits = [];
+    }
+};
+
+const resetPage = (data?: Record<string, unknown>): void => {
+    runInAction(() => {
+        const session = store.sessionStore.activeSession;
+        if (!session) {
+            return;
+        }
+        session.isFullDb = false;
+
+        clearUnits(session, data);
         session.simpleCache.clear();
         let remoteMaxTimeStamps = 0;
         session.remoteAttrs.forEach((attrs) => {
