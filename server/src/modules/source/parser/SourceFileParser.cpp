@@ -894,7 +894,7 @@ std::vector<SourceFileLine> SourceFileParser::ConvertToLineArray(Value &lineArra
         }
         Value &instrExecutedArray = line["Instructions Executed"];
         for (auto &instrExecuted : instrExecutedArray.GetArray()) {
-            sourceFileLine.instructionsExecuted.emplace_back(instrExecuted.GetInt());
+            sourceFileLine.instructionsExecuted.emplace_back(instrExecuted.IsInt() ? instrExecuted.GetInt() : 0);
         }
 
         // 解析Line
@@ -939,6 +939,11 @@ std::optional<Protocol::SubBlockData> SourceFileParser::ConvertStrToSubBlockData
             return std::nullopt;
         }
         blockData.advice = JsonUtil::GetVector<std::string>(d.value(), "advice");
+        if (!d.value().HasMember("subblock_detail") || !d.value()["subblock_detail"].IsArray()) {
+            ServerLog::Error("Error encountered while converting string to sub-block data"
+                             "in the sub-block detail conversion.");
+            return std::nullopt;
+        }
         Value &blockDetails = d.value()["subblock_detail"];
         std::transform(blockDetails.GetArray().begin(), blockDetails.GetArray().end(),
                        std::back_inserter(blockData.detailDataList), SourceFileParser::ParseSubBlockUnitData);
