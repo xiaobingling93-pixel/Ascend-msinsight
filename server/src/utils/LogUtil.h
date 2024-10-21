@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #endif
 #include "TimeUtil.h"
+#include "StringUtil.h"
 
 namespace Dic {
 enum class LogLevel : int {
@@ -171,7 +172,28 @@ public:
         if (logLevel < level) {
             return;
         }
-        std::string str = GetString(t, args...);
+        FormatLogT(t, args...);
+    }
+
+    template<typename Head, typename Format>
+    inline void FormatLogT(const Head &head, const Format &format)
+    {
+        std::string str = GetString(head, format);
+        LogStr(str);
+    }
+
+    template <typename Head, typename Format, typename... ARGS>
+    inline void FormatLogT(const Head &head, const Format &format, const ARGS... args)
+    {
+        size_t start = 0;
+        size_t pos = 0;
+        std::string str = GetString(head);
+        std::string formatStr = GetString(format);
+        if (formatStr.find('%') != std::string::npos) {
+            str += formatString(formatStr, args...);
+        } else {
+            str += GetString(format, args...);
+        }
         LogStr(str);
     }
 
@@ -211,6 +233,56 @@ private:
         while (outType != LogOutType::TERMINAL && CheckRotating()) {
             RotatingLogFile();
         }
+    }
+
+    inline std::string SanitizeLogMessage(const std::string &message)
+    {
+        std::string sanitized;
+        for (char c : message) {
+            switch (c) {
+                case '\n': sanitized += "\\n"; break;
+                case '\r': sanitized += "\\r"; break;
+                case '\f': sanitized += "\\f"; break;
+                case '\b': sanitized += "\\b"; break;
+                case '\v': sanitized += "\\v"; break;
+                case '\u007F': sanitized += "\\u007F"; break;
+                case '\t': sanitized += "\\t"; break;
+                case '"': sanitized += "\\\""; break;
+                case '\'': sanitized += "\\'"; break;
+                case '\\': sanitized += "\\\\"; break;
+                case '%': sanitized += "\\%"; break;
+                case '<': sanitized += "\\<"; break;
+                case '>': sanitized += "\\>"; break;
+                case '|': sanitized += "\\|"; break;
+                case '&': sanitized += "\\&"; break;
+                case '$': sanitized += "\\$"; break;
+                default: sanitized += c; break;
+            }
+        }
+        return sanitized;
+    }
+
+    // Function to format the string with multiple parameters
+    template<typename... Args>
+    inline std::string formatString(const std::string& format, Args... args)
+    {
+        std::ostringstream oss;
+        std::array<std::string, sizeof...(args)> arr = {GetString(args)...};
+        for (auto& arg : arr) {
+            arg = SanitizeLogMessage(arg);
+        }
+        size_t start = 0;
+        size_t pos = 0;
+        size_t argIndex = 0;
+        while ((pos = format.find('%', start)) != std::string::npos) {
+            oss << format.substr(start, pos - start);
+            if (argIndex < arr.size()) {
+                oss << arr[argIndex++];
+            }
+            start = pos + 1;
+        }
+        oss << format.substr(start);
+        return oss.str();
     }
 
     void Destroy()
@@ -298,7 +370,7 @@ private:
     inline void Append(const std::string &str)
     {
         if (ofs.is_open()) {
-            ofs << str;
+            ofs << str << std::endl;
             ofs.flush();
             currentSize += str.length();
         }
@@ -307,7 +379,7 @@ private:
     inline void LogStr(const std::string &str)
     {
         if (outType == LogOutType::BOTH || outType == LogOutType::TERMINAL) {
-            (*outMap[level]) << str;
+            (*outMap[level]) << str << std::endl;
         }
         if (outType == LogOutType::BOTH || outType == LogOutType::FILE) {
             if (CheckRotating()) {

@@ -107,7 +107,7 @@ private:
             recordInstance->SetLogLevel(level).SetMaxSize(logSize);
         }
         std::string head = GetLogHead(level);
-        recordInstance->LogT(level, head, args..., "\n");
+        recordInstance->LogT(level, head, args...);
         recordInstance->SetWsPort(wsPort);
     }
 
@@ -118,7 +118,7 @@ private:
             printInstance = std::make_unique<LogUtil>(LogOutType::TERMINAL, "", wsPort);
         }
         std::string head = GetLogHead(level);
-        printInstance->LogT(level, head, args..., "\n");
+        printInstance->LogT(level, head, args...);
     }
 
     std::unique_ptr<LogUtil> printInstance = nullptr;

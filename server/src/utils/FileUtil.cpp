@@ -142,23 +142,23 @@ bool FileUtil::CheckDirValid(const std::string &path)
  
     for (auto &item: INVALID_CHAR) {
         if (dir.find(item.first) != std::string::npos) {
-            Server::ServerLog::Error("The path: ", dir, " contains invalid character: ", item.second);
+            Server::ServerLog::Error("The path: % contains invalid character: %.", dir, item.second);
             return false;
         }
     }
  
     if (!CheckDirAccess(dir, 0)) {
-        Server::ServerLog::Error("The directory path not exists. path: ", dir);
+        Server::ServerLog::Error("The directory path not exists. path: %.", dir);
         return false;
     }
  
     if (IsSoftLink(dir)) {
-        Server::ServerLog::Error("The path is soft link. path: ", dir);
+        Server::ServerLog::Error("The path is soft link. path: %.", dir);
         return false;
     }
  
     if (!CheckDirAccess(dir, R_OK)) {
-        Server::ServerLog::Error("The path has no read access. path: ", dir);
+        Server::ServerLog::Error("The path has no read access. path: %.", dir);
         return false;
     }
     return true;
@@ -204,12 +204,14 @@ bool FileUtil::CheckFilePathLength(const std::string& filePath)
 {
 #ifdef _WIN32
     if (filePath.size() >= MAX_PATH) {
-        Server::ServerLog::Error("The file path length is too long");
+        Server::ServerLog::Error("The path length of % exceeds the maximum allowed length of % characters."
+                                 "The file size is % MB", filePath, MAX_PATH, filePath.size());
         return false;
     }
 #else
     if (filePath.size() >= PATH_MAX) {
-        Server::ServerLog::Error("The length of " + filePath + " is too long :", filePath.size());
+        Server::ServerLog::Error("The path length of % exceeds the maximum allowed length of % characters."
+                                 "The file size is % MB", filePath, PATH_MAX, filePath.size());
         return false;
     }
 #endif
@@ -480,11 +482,12 @@ bool FileUtil::CheckFileSize(const std::string &filePath)
         // 获取文件大小
         uintmax_t fileSize = (static_cast<uintmax_t>(fileData.nFileSizeHigh) << 32) | fileData.nFileSizeLow;
         if (fileSize <= fileMinSize) {
-            Server::ServerLog::Error("This file is an empty file.");
+            Server::ServerLog::Error("This file % is an empty file.", tmpFilePath);
             return false;
         }
         if (fileSize > fileMaxSize) {
-            Server::ServerLog::Error("File size limitation exceeded.");
+            Server::ServerLog::Error("The size limit for the file located at tmpFilePath has been exceeded.",
+                                     tmpFilePath);
             return false;
         }
         return true;
@@ -494,11 +497,12 @@ bool FileUtil::CheckFileSize(const std::string &filePath)
     struct stat fileStat;
     if (stat(filePath.c_str(), &fileStat) == 0) {
         if (fileStat.st_size <= fileMinSize) {
-            Server::ServerLog::Error("This file is an empty file.");
+            Server::ServerLog::Error("This file % is an empty file.", filePath);
             return false;
         }
         if (fileStat.st_size > fileMaxSize) {
-            Server::ServerLog::Error("File size limitation exceeded.");
+            Server::ServerLog::Error("The size limit for the file located at % has been exceeded.",
+                                     filePath);
             return false;
         }
         return true;
