@@ -30,7 +30,6 @@ void StartServer(const ParamsOption &option)
     while (server.IsStart()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(checkInterval));
     }
-    ServerLog::Info("=============================== Server End =================================");
 }
 
 void PrintAvailablePort(int startPort)
