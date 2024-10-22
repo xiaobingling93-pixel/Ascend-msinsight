@@ -84,7 +84,7 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
     const stage = getUsableVal(initObj.stage, stageOptions, defaultCondition.stage, getDefaultStage).toString();
 
     // type
-    const type = initObj.type ?? 'CommunicationMatrix';
+    const type = initObj.type ?? defaultCondition.type;
 
     // Operator Name
     const operatorOptions: optionDataType[] =

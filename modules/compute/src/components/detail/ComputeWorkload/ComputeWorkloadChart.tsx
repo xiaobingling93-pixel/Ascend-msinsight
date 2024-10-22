@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import * as echarts from 'echarts';
 import { useTranslation } from 'react-i18next';
 import { type IblockData } from './Index';
-import { COLOR, getResizeEcharts, chartVisbilityListener, safeStr, sortFunc, chartColors } from 'ascend-utils';
+import { COLOR, getAdaptiveEchart, chartVisbilityListener, safeStr, sortFunc, chartColors } from 'ascend-utils';
 import { LimitHit } from '../../LimitSet';
 import { CompareData } from '../../../utils/interface';
 import { type Icondition } from './Filter';
@@ -104,15 +104,13 @@ const defaultSeries: Series = {
     barMaxWidth: 30,
 };
 
-let myChart: echarts.ECharts;
 function InitCharts(data: Array<CompareData<IblockData>>, isCompared: boolean): void {
     const chartDom = document.getElementById(chartID);
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
-    myChart?.dispose();
-    myChart = getResizeEcharts(chartDom, myChart);
-    myChart.setOption(wrapData(data, isCompared));
+    const myChart: echarts.ECharts = getAdaptiveEchart(chartDom);
+    myChart.setOption(wrapData(data, isCompared), { replaceMerge: ['series'] });
 }
 
 function wrapData(data: Array<CompareData<IblockData>>, isCompared: boolean): any {

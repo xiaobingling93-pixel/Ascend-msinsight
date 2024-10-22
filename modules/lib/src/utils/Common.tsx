@@ -6,12 +6,13 @@ import styled from '@emotion/styled';
 import BaseContainer from '../container/BaseContainer';
 import { MIDescriptions, MIDescriptionsItem } from '../MIDescriptions';
 import COLOR from './Color';
-import {chartVisbilityListener, getResizeEcharts, getDefaultChartOptions, getLegendStyle} from './EchartUtils';
+import {chartVisbilityListener, getAdaptiveEchart, disposeAdaptiveEchart, getDefaultChartOptions, getLegendStyle} from './EchartUtils';
 import { Empty } from '../components/index';
 import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 import { BulbIcon } from '../icon/Icon';
 import ResizeObserver from 'resize-observer-polyfill';
+import {useEffect} from 'react';
 export { customConsole } from './Console';
 export {
     BaseContainer,
@@ -19,7 +20,8 @@ export {
     MIDescriptionsItem,
     COLOR,
     chartVisbilityListener,
-    getResizeEcharts,
+    getAdaptiveEchart,
+    disposeAdaptiveEchart,
     getDefaultChartOptions,
     getLegendStyle
 };
@@ -223,18 +225,24 @@ export const adaptDpr = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2
     return { canvasWidth, canvasHeight };
 };
 
-export function useWatchDomResize(dom: Element | null, callback: (rect: DOMRectReadOnly) => void): () => void {
-    const observer = new ResizeObserver(([entry]) => {
-        window.requestAnimationFrame(() => {
-            callback(entry.contentRect);
+export type SizeProp = 'width' | 'height';
+export function useWatchDomResize<T extends Element>(prop: SizeProp): [number, React.RefObject<T>] {
+    const [rect, setRect] = React.useState<DOMRectReadOnly | null>(null);
+    const ref = React.useRef<T>(null);
+    React.useEffect(() => {
+        const observer = new ResizeObserver(([entry]) => {
+            window.requestAnimationFrame(() => {
+                setRect(entry.contentRect);
+            });
         });
-    });
-    if (dom !== undefined && dom !== null) {
-        observer.observe(dom);
-    }
-    return () => {
-        observer.disconnect();
-    };
+        if (ref.current) {
+            observer.observe(ref.current);
+        }
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
+    return [rect?.[prop] ?? 0, ref];
 }
 
 const removePrototypePollution = (obj: any): void => {

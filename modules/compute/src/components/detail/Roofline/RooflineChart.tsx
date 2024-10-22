@@ -1,9 +1,16 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react';
-import { chartColors, COLOR, safeStr, useWatchDomResize, formatDecimal, getLegendStyle } from 'ascend-utils';
+import {
+    chartColors,
+    COLOR,
+    safeStr,
+    formatDecimal,
+    getLegendStyle,
+    useWatchDomResize,
+} from 'ascend-utils';
 import i18n from 'ascend-i18n';
 import { cloneDeep } from 'lodash';
 import type { Point, IRooflineChart } from './Index';
@@ -264,25 +271,21 @@ const getTipText = (params: any): any => {
     }
 };
 
-function InitCharts(data: IRooflineChart, chartDom: HTMLElement | null, theme: Theme): echarts.ECharts | undefined {
-    if (chartDom === null || chartDom === undefined || chartDom?.offsetParent === null) {
-        return undefined;
+function InitChart(data: IRooflineChart, chartDom: HTMLElement | null, theme: Theme): void {
+    if (!chartDom) {
+        return;
     }
     const newChart = echarts.getInstanceByDom(chartDom)
         ? echarts.getInstanceByDom(chartDom)
         : echarts.init(chartDom);
-    if (newChart !== undefined) {
-        newChart.setOption(wrapData(data, theme));
-    }
-    return newChart;
+    newChart?.setOption(wrapData(data, theme), { replaceMerge: ['series'] });
 }
 
 const MAX_ROOFLINE_NUM = 100;
 const RooflineChart = observer(({ dataSource: orginDataSource }: { dataSource: IRooflineChart}): JSX.Element => {
     const theme = useTheme();
     const { t } = useTranslation('details');
-    const ref = useRef(null);
-    const [chart, setChart] = useState<echarts.ECharts | undefined>(undefined);
+    const [width, ref] = useWatchDomResize<HTMLDivElement>('width');
     // 超大数据量防护
     const [limit, setLimit] = useState({ maxSize: MAX_ROOFLINE_NUM, overlimit: false, current: 0 });
     const size = orginDataSource?.rooflines?.length ?? 0;
@@ -291,27 +294,19 @@ const RooflineChart = observer(({ dataSource: orginDataSource }: { dataSource: I
         rooflines: orginDataSource.rooflines.slice(0, limit.maxSize),
     }), [orginDataSource, limit.maxSize]);
 
-    const updateChart = (): void => {
-        const newChart = InitCharts(dataSource, ref.current, theme);
-        setChart(newChart);
-    };
     useEffect(() => {
         setLimit({ ...limit, overlimit: size > limit.maxSize, current: size });
     }, [size]);
-    useWatchDomResize(ref.current, (domRect) => {
-        if (domRect.width <= 0) {
-            return;
-        }
-        if (chart !== undefined && chart !== null) {
-            chart.resize();
-        } else {
-            updateChart();
-        }
-    });
 
     useEffect(() => {
-        updateChart();
+        InitChart(dataSource, ref.current, theme);
     }, [dataSource, theme]);
+    useEffect(() => {
+        if (ref.current === null || width <= 0) {
+            return;
+        }
+        echarts.getInstanceByDom(ref.current)?.resize();
+    }, [width]);
     return (
         <div>
             {limit.overlimit && <LimitHit maxSize={limit.maxSize} name={`${dataSource.title} ${t('Roofline Data')} (${limit.current})`} style={{ margin: '10px 0 10px 50px' }} />}

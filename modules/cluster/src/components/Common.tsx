@@ -5,7 +5,6 @@
 import React, { useEffect, useState } from 'react';
 import { Checkbox, Divider, Select, Pagination } from 'ascend-components';
 import type { optionDataType, VoidFunction } from '../utils/interface';
-import type { EChartsType } from 'echarts';
 import i18n from 'ascend-i18n';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
@@ -160,23 +159,6 @@ export function formatDate(date: Date): string {
     const timeStr = [padTo2Digits(date.getHours()), padTo2Digits(date.getMinutes()), padTo2Digits(date.getSeconds())].join(':');
     return `${dateStr} ${timeStr}`;
 }
-
-export function addResizeEvent(echart: EChartsType): void {
-    window.addEventListener('resize', (): void => {
-        if (checkDomDisplay(echart.getDom())) {
-            echart.resize();
-        }
-    });
-    window.addEventListener('load', (): void => {
-        if (checkDomDisplay(echart.getDom())) {
-            echart.resize();
-        }
-    });
-}
-
-export const checkDomDisplay = (dom: HTMLElement): boolean => {
-    return dom?.offsetParent !== null;
-};
 
 export const COLOR = {
     BRIGHT_BLUE: '#7df7ff',

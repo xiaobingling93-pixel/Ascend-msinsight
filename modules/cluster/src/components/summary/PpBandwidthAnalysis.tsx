@@ -6,7 +6,6 @@ import { observer } from 'mobx-react-lite';
 import type { Session } from '../../entity/session';
 import { Empty } from 'ascend-components';
 import {
-    addResizeEvent,
     chartVisbilityListener,
     COLOR,
     commonEchartsOptions,
@@ -19,7 +18,7 @@ import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonT
 import ReactDOM from 'react-dom';
 import _ from 'lodash';
 import styled from '@emotion/styled';
-import { chartColors, getDefaultChartOptions } from 'ascend-utils';
+import { chartColors, disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
 import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 
@@ -87,7 +86,7 @@ function renderEmpty(domId: string): void {
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
-    echarts.getInstanceByDom(chartDom)?.dispose();
+    disposeAdaptiveEchart(chartDom);
     ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
 }
 
@@ -111,18 +110,17 @@ async function InitCharts({ domId, stepId, stage, allStageIds, isDark, locale }:
         if (res === null || res === undefined) {
             ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
         } else {
-            echarts.getInstanceByDom(chartDom)?.dispose();
-            const myChart = echarts.init(chartDom, null, { locale });
+            disposeAdaptiveEchart(chartDom);
+            const myChart = getAdaptiveEchart(chartDom, null, { locale });
             myChart.setOption(res, true);
             myChart.dispatchAction({
                 type: 'takeGlobalCursor',
                 key: 'dataZoomSelect',
                 dataZoomSelectActive: true,
             });
-            addResizeEvent(myChart);
         }
     } catch (error) {
-        echarts.getInstanceByDom(chartDom)?.dispose();
+        disposeAdaptiveEchart(chartDom);
         ReactDOM.render((<></>), chartDom);
     }
 }

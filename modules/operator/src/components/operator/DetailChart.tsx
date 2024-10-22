@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type * as echarts from 'echarts';
-import { getResizeEcharts, chartVisbilityListener, chartColors, getDefaultChartOptions } from 'ascend-utils';
+import { getAdaptiveEchart, chartVisbilityListener, chartColors, getDefaultChartOptions } from 'ascend-utils';
 import type { ConditionType } from './Filter';
 import { queryOperatorCategory, queryOperatorComputeUnit } from '../RequestUtils';
 import type { Session } from '../../entity/session';
@@ -34,17 +34,14 @@ export type dataType = Array<{
     value: number;
 }>;
 
-const chartsInstanceMap: Map<string, echarts.ECharts> = new Map();
 function InitCharts({ data, domId, isDark, title }: {data: dataType; domId: string; isDark: boolean;title: string}): void {
     const chartDom = document.getElementById(domId);
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
 
-    const chatInstance = chartsInstanceMap.get(domId);
-    const myChart: echarts.ECharts = getResizeEcharts(chartDom, chatInstance);
+    const myChart: echarts.ECharts = getAdaptiveEchart(chartDom);
     myChart.setOption(wrapData({ data, domId, isDark, title }));
-    chartsInstanceMap.set(domId, myChart);
 }
 function wrapData({ data, domId, isDark, title }: {data: dataType; domId: string; isDark: boolean;title: string}): any {
     const option = getOption({ isDark, title });

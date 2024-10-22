@@ -244,7 +244,14 @@ export const LineChart: React.FC<IProps> = (props) => {
         return () => {
             myChart.dispose();
         };
-    }, [graph, resizeEventDependency, isDark, i18n]);
+    }, [graph, isDark, i18n]);
+
+    React.useEffect(() => {
+        if (!graphRef.current) {
+            return;
+        }
+        echarts.getInstanceByDom(graphRef.current)?.resize();
+    }, [resizeEventDependency]);
 
     React.useEffect(() => {
         _handleEvents(chartObj, props, selectedPoints, graph, t);

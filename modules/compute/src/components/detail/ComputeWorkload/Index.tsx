@@ -53,11 +53,7 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
     };
     useEffect(() => {
         if (!session.parseStatus) {
-            setTimeout(() => {
-                if (!session.parseStatus) {
-                    setData(defaultData);
-                }
-            }, 200);
+            setData(defaultData);
             return;
         }
         getBaseInfo(session.dirInfo.isCompare);

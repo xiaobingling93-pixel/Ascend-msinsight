@@ -7,7 +7,7 @@ import type { Session } from '../../entity/session';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
-import { addResizeEvent, Loading, safeStr } from '../Common';
+import { Loading, safeStr } from '../Common';
 import { colorPalette, hashToNumber } from '../../utils/colorUtil';
 import { Dropdown } from 'ascend-components';
 import type { MenuProps } from 'antd';
@@ -15,6 +15,7 @@ import connector from '../../connection';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import i18n from 'ascend-i18n';
 import { themeInstance } from 'ascend-theme';
+import { disposeAdaptiveEchart, getAdaptiveEchart } from 'ascend-utils';
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;
@@ -199,8 +200,8 @@ function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDown
     if (chartDom === null) {
         return;
     }
-    echarts.init(chartDom).dispose();
-    const myChart = echarts.init(chartDom);
+    disposeAdaptiveEchart(chartDom);
+    const myChart = getAdaptiveEchart(chartDom);
     myChart.on('contextmenu', { element: 'op' }, (e: echarts.ECElementEvent): void => {
         if (session.unitcount === 0) {
             return;
@@ -217,7 +218,6 @@ function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDown
     if (dataSource !== undefined) {
         myChart.setOption(wrapData(dataSource));
     }
-    addResizeEvent(myChart);
 }
 
 function calculateDataHeight(dataSource: AnalysisChartData): number {

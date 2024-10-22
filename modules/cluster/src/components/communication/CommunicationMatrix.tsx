@@ -9,14 +9,14 @@ import type { TFunction } from 'i18next';
 import { Select, Checkbox, InputNumber, Button } from 'ascend-components';
 import { message } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
-import * as echarts from 'echarts';
-import { addResizeEvent, Label, COLOR, getDecimalCount, safeStr } from '../Common';
+import { Label, COLOR, getDecimalCount, safeStr } from '../Common';
 import type { ConditionDataType } from './Filter';
 import type { optionDataType, VoidFunction } from '../../utils/interface';
 import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
 import _, { cloneDeep } from 'lodash';
 import { type Session } from '../../entity/session';
 import CollapsiblePanel from 'ascend-collapsible-panel';
+import { disposeAdaptiveEchart, getAdaptiveEchart } from 'ascend-utils';
 
 interface FilterInfos {
     min: number;
@@ -58,13 +58,12 @@ const useOptions = (): optionDataType[] => {
     ];
 };
 
-function InitCharts(data: any, t: TFunction): void {
+function InitChart(data: any, t: TFunction): void {
     const chartDom = document.getElementById('matrixchart');
     if (chartDom !== null) {
-        echarts.init(chartDom).dispose();
-        const myChart = echarts.init(chartDom);
-        myChart.setOption(wrapData(data, t));
-        addResizeEvent(myChart);
+        disposeAdaptiveEchart(chartDom);
+        const myChart = getAdaptiveEchart(chartDom);
+        myChart.setOption(wrapData(data, t), { replaceMerge: ['series', 'xAxis', 'yAxis'] });
     }
 }
 
@@ -285,7 +284,7 @@ const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow:
     const [range, setRange] = useState<RangeInfo>({ minRange: 0, maxRange: 1 });
     const { t } = useTranslation('communication');
 
-    const updateCharts = (shouldUpdateRange: boolean, filterInfo?: FilterInfos): void => {
+    const updateChart = (shouldUpdateRange: boolean, filterInfo?: FilterInfos): void => {
         let data: any = dataSource.data.map((item: any) => {
             return [String(item.srcRank), String(item.dstRank),
                 item[switchCondition.type] !== undefined ? item[switchCondition.type] : null, item.opName];
@@ -303,7 +302,7 @@ const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow:
         if (shouldUpdateRange) {
             setRange({ minRange: min, maxRange: max });
         }
-        InitCharts({ ...dataSource, data, type: switchCondition.type, min: filterInfo?.min ?? min, max: filterInfo?.max ?? max }, t);
+        InitChart({ ...dataSource, data, type: switchCondition.type, min: filterInfo?.min ?? min, max: filterInfo?.max ?? max }, t);
     };
     useEffect(() => {
         if (isShow) {
@@ -315,13 +314,13 @@ const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow:
         }
     }, [isShow, conditions]);
     useEffect(() => {
-        updateCharts(true);
+        updateChart(true);
     }, [dataSource, switchCondition]);
     const handleChange = (filed: string, val: string | boolean): void => {
         setSwitchCondition({ ...switchCondition, [filed]: val });
     };
     const handleFilterChange = (data: FilterInfos): void => {
-        updateCharts(false, data);
+        updateChart(false, data);
     };
 
     return <CommunicationMatrixCom isShow={isShow} handleChange={handleChange} switchCondition={switchCondition} range={range} setFilter={handleFilterChange}/>;

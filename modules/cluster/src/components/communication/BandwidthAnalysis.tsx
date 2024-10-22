@@ -12,10 +12,16 @@ import { Empty } from 'ascend-components';
 import { ResizeTable } from 'ascend-resize';
 import type { ColumnsType } from 'antd/es/table';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
-import { addResizeEvent, COLOR, commonEchartsOptions } from '../Common';
+import { COLOR, commonEchartsOptions } from '../Common';
 import i18n from 'ascend-i18n';
 import { cloneDeep, merge } from 'lodash';
-import { customConsole as console, chartColors, getDefaultChartOptions, safeJSONParse } from 'ascend-utils';
+import {
+    customConsole as console,
+    chartColors,
+    getDefaultChartOptions,
+    safeJSONParse,
+    getAdaptiveEchart, disposeAdaptiveEchart,
+} from 'ascend-utils';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import styled from '@emotion/styled';
 import { useTheme } from '@emotion/react';
@@ -180,10 +186,9 @@ async function InitPacketAndBandwidthCharts({
         if (res === null || res === undefined) {
             ReactDOM.render((<Empty style={{ margin: 'auto' }} image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
         } else {
-            echarts.getInstanceByDom(chartDom)?.dispose();
-            const myChart = echarts.init(chartDom, null, { locale });
+            disposeAdaptiveEchart(chartDom);
+            const myChart = getAdaptiveEchart(chartDom, null, { locale });
             myChart.setOption(res);
-            addResizeEvent(myChart);
         }
     }
 }

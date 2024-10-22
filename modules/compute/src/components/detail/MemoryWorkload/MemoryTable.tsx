@@ -132,12 +132,9 @@ const memoryTable = observer(({ condition, session }: {condition: Icondition;ses
 
     useEffect(() => {
         if (!session.parseStatus) {
-            setTimeout(() => {
-                if (!session.parseStatus) {
-                    setTablelist([]);
-                    setLimit(defaultLimit);
-                }
-            }, 200);
+            setTablelist([]);
+            setAdvice([]);
+            setLimit(defaultLimit);
             return;
         }
         updateData();

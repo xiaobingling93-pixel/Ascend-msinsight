@@ -71,59 +71,92 @@ export const chartVisbilityListener = (dom: string, onVisibleChange?: (visible?:
 export const checkDomDisplay = (dom: HTMLElement): boolean => {
     return dom?.offsetParent !== null;
 };
+
 interface EChartsTypeExtends extends EChartsType {
-    addResizeEvent?: boolean;
-    addLoadEvent?: boolean;
     resizeFunc?: () => void;
     loadFunc?: () => void;
 }
-export function getResizeEcharts(chartDom: HTMLElement, myChart?: EChartsTypeExtends): EChartsType {
-    removeResizeEvent(myChart);
-    const newChart = echarts.getInstanceByDom(chartDom)
-        ? echarts.getInstanceByDom(chartDom) as echarts.ECharts
-        : echarts.init(chartDom);
-    addResizeEvent(newChart);
-    return newChart;
+interface Listenter {
+    id: string;
+    type: string;
+    value: () => void;
+}
+let listenerList: Listenter[] = [];
+export function getAdaptiveEchart(chartDom: HTMLElement, theme?: string | object | null, opts?: any): EChartsType {
+    let chart: EChartsType;
+    if (echarts.getInstanceByDom(chartDom)) {
+        chart = echarts.getInstanceByDom(chartDom) as EChartsType;
+    } else {
+        chart = echarts.init(chartDom, theme, opts);
+        addResizeEvent(chart);
+    }
+    chart?.resize();
+    return chart;
 }
 export function addResizeEvent(echart?: EChartsTypeExtends): void {
     if (echart === undefined || echart === null) {
         return;
     }
-    if (!echart.addResizeEvent) {
+    const domId = echart.getDom().id;
+    if (!echart.resizeFunc) {
         const resizeFunc = (): void => {
             if (checkDomDisplay(echart.getDom())) {
                 echart.resize();
             }
         };
         window.addEventListener('resize', resizeFunc);
-        echart.addResizeEvent = true;
         echart.resizeFunc = resizeFunc;
+        if (domId !== '') {
+            listenerList.push({
+                id: domId,
+                type:'resize',
+                value: resizeFunc,
+            });
+        }
     }
-    if (!echart.addLoadEvent) {
+    if (!echart.loadFunc) {
         const loadFunc = (): void => {
             if (checkDomDisplay(echart.getDom())) {
                 echart.resize();
             }
         };
         window.addEventListener('load', loadFunc);
-        echart.addLoadEvent = true;
         echart.loadFunc = loadFunc;
+        if (domId !== '') {
+            listenerList.push({
+                id: domId,
+                type:'load',
+                value: loadFunc,
+            });
+        }
     }
 }
 export function removeResizeEvent(echart?: EChartsTypeExtends): void {
     if (echart === undefined || echart === null) {
         return;
     }
-    if (echart.addResizeEvent && echart.resizeFunc !== undefined) {
+    if (echart?.resizeFunc !== undefined) {
         window.removeEventListener('resize', echart.resizeFunc);
-        echart.addResizeEvent = false;
         delete echart.resizeFunc;
     }
-    if (echart.addLoadEvent && echart?.loadFunc !== undefined) {
+    if (echart?.loadFunc !== undefined) {
         window.removeEventListener('load', echart.loadFunc);
-        echart.addLoadEvent = false;
         delete echart.loadFunc;
     }
+}
+export function disposeAdaptiveEchart(chartDom: HTMLElement): void {
+    try {
+        const listeners = listenerList.filter(item => item.id === chartDom.id);
+        listeners.forEach(listener => {
+            window.removeEventListener(listener.type, listener.value);
+        });
+        listenerList = listenerList.filter(item => item.id !== chartDom.id);
+    } catch {
+        // 不影响后面的，继续
+    }
+    const chart = echarts.getInstanceByDom(chartDom);
+    removeResizeEvent(chart);
+    chart?.dispose();
 }
 
 export const getDefaultChartOptions = (isDark: boolean): any => {

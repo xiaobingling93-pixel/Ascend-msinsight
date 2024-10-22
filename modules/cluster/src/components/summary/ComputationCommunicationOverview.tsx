@@ -3,14 +3,13 @@
 */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import * as echarts from 'echarts';
 import { observer } from 'mobx-react';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import type { Session } from '../../entity/session';
 import type { VoidFunction } from '../../utils/interface';
 import { useEventBus } from '../../utils/eventBus';
 import { queryTopSummary } from '../../utils/RequestUtils';
-import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions, notZero } from '../Common';
+import { chartVisbilityListener, COLOR, commonEchartsOptions, notZero } from '../Common';
 import Filter from './Filter';
 import type { ConditionDataType } from './Filter';
 import StatisticsTable from './StatisticsTable';
@@ -23,7 +22,7 @@ import { HelpIcon } from 'ascend-icon';
 import { Layout } from 'ascend-layout';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import { Tooltip } from 'ascend-components';
-import { chartColors } from 'ascend-utils';
+import { chartColors, getAdaptiveEchart } from 'ascend-utils';
 
 interface SummaryDataType {
     [propName: string]: any;
@@ -261,11 +260,9 @@ async function initCharts(data: any, handleClick: VoidFunction): Promise<void> {
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
-    echarts.init(chartDom).dispose();
-    const myChart = echarts.init(chartDom);
-    myChart.setOption(wrapData(data));
+    const myChart = getAdaptiveEchart(chartDom);
+    myChart.setOption(wrapData(data), { replaceMerge: ['series', 'xAxis', 'yAxis', 'legend'] });
     myChart.on('click', handleClick);
-    addResizeEvent(myChart);
 }
 export const useHit = (containsPreparing: boolean): React.ReactElement => {
     const { t } = useTranslation('summary');

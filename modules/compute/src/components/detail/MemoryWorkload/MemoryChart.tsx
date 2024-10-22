@@ -84,11 +84,7 @@ const chart = observer(({ condition, session }: {condition: Icondition;session: 
 
     useEffect(() => {
         if (!session.parseStatus) {
-            setTimeout(() => {
-                if (!session.parseStatus) {
-                    setData(defaultData);
-                }
-            }, 200);
+            setData(defaultData);
             return;
         }
         updateData();

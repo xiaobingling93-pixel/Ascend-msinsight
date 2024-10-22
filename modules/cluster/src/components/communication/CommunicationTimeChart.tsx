@@ -4,24 +4,21 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import * as echarts from 'echarts';
 import { Spin } from 'ascend-components';
-import { addResizeEvent, chartVisbilityListener, COLOR, commonEchartsOptions } from '../Common';
+import { chartVisbilityListener, COLOR, commonEchartsOptions } from '../Common';
 import type { Session } from '../../entity/session';
 import i18n from 'ascend-i18n';
 import { cloneDeep } from 'lodash';
 import CollapsiblePanel from 'ascend-collapsible-panel';
-import { chartColors } from 'ascend-utils';
+import { chartColors, getAdaptiveEchart } from 'ascend-utils';
 
 function InitCharts(data: dataType): void {
     const chartDom = document.getElementById('main');
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
-    echarts.init(chartDom).dispose();
-    const myChart = echarts.init(chartDom);
+    const myChart = getAdaptiveEchart(chartDom);
     myChart.setOption(wrapData(data));
-    addResizeEvent(myChart);
 }
 function wrapData(data: dataType): any {
     const options = cloneDeep(baseOption);
