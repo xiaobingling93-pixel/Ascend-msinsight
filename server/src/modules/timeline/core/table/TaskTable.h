@@ -37,7 +37,7 @@ protected:
             { TaskColumn::GLOBAL_TASK_ID, GlobalTaskIdHandle },
             { TaskColumn::GLOBAL_PID, GlobalPidHandle },
             { TaskColumn::TASK_TYPE, TaskTypeHandle },
-            { TaskColumn::CONNECTION_ID, ContextIdHandle },
+            { TaskColumn::CONTEXT_ID, ContextIdHandle },
             { TaskColumn::STREAM_ID, StreamIdHandle },
             { TaskColumn::TASK_ID, TaskIdHandle },
             { TaskColumn::MODEL_ID, ModelIdHandle } };

@@ -4,6 +4,9 @@
 
 #include "../../FullDbTestSuit.cpp"
 #include "TimelineTestUtil.h"
+#include "RenderEngine.h"
+#include "DataEngine.h"
+#include "RepositoryFactory.h"
 
 class DbTimelineTestSuit : FullDbTestSuit {
 };
@@ -460,6 +463,91 @@ TEST_F(FullDbTestSuit, QueryComputeStatisticsData)
     const uint64_t EXPECT_COUNT = 1;
 
     EXPECT_EQ(responseBody.summaryStatisticsItemList.size(), EXPECT_COUNT);
+}
+
+TEST_F(FullDbTestSuit, QueryInsightHostToDeviceFlowCategoryEvents)
+{
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
+    Protocol::FlowCategoryEventsParams params;
+    params.rankId = "Fulldb";
+    params.category = "HostToDevice";
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> flowDetailList;
+    renderEngine->QueryFlowCategoryEvents(params, minTimestamp, flowDetailList);
+    const uint64_t EXPECT_COUNT = 0;
+    EXPECT_EQ(flowDetailList.size(), EXPECT_COUNT);
+}
+
+TEST_F(FullDbTestSuit, QueryInsightMsTxFlowCategoryEvents)
+{
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
+    Protocol::FlowCategoryEventsParams params;
+    params.rankId = "Fulldb";
+    params.category = "MsTx";
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> flowDetailList;
+    renderEngine->QueryFlowCategoryEvents(params, minTimestamp, flowDetailList);
+    const uint64_t EXPECT_COUNT = 0;
+    EXPECT_EQ(flowDetailList.size(), EXPECT_COUNT);
+}
+
+TEST_F(FullDbTestSuit, QueryInsightAsyncTaskQueueFlowCategoryEvents)
+{
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
+    Protocol::FlowCategoryEventsParams params;
+    params.rankId = "Fulldb";
+    params.category = "async_task_queue";
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> flowDetailList;
+    renderEngine->QueryFlowCategoryEvents(params, minTimestamp, flowDetailList);
+    const uint64_t EXPECT_COUNT = 0;
+    EXPECT_EQ(flowDetailList.size(), EXPECT_COUNT);
+}
+
+TEST_F(FullDbTestSuit, QueryInsightFwdbwdFlowCategoryEvents)
+{
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
+    Protocol::FlowCategoryEventsParams params;
+    params.rankId = "Fulldb";
+    params.category = "fwdbwd";
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> flowDetailList;
+    renderEngine->QueryFlowCategoryEvents(params, minTimestamp, flowDetailList);
+    const uint64_t EXPECT_COUNT = 0;
+    EXPECT_EQ(flowDetailList.size(), EXPECT_COUNT);
+}
+
+TEST_F(FullDbTestSuit, QueryInsightAsyncNpuFlowCategoryEvents)
+{
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
+    Protocol::FlowCategoryEventsParams params;
+    params.rankId = "Fulldb";
+    params.category = "async_npu";
+    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
+    std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> flowDetailList;
+    renderEngine->QueryFlowCategoryEvents(params, minTimestamp, flowDetailList);
+    const uint64_t EXPECT_COUNT = 0;
+    EXPECT_EQ(flowDetailList.size(), EXPECT_COUNT);
 }
 
 TEST_F(FullDbTestSuit, QueryUnitFLows)

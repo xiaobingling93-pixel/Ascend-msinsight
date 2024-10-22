@@ -8,6 +8,9 @@
 #include "../../TestSuit.cpp"
 #include "cmath"
 #include "TimelineTestUtil.h"
+#include "RenderEngine.h"
+#include "DataEngine.h"
+#include "RepositoryFactory.h"
 
 class TimelineTest : TestSuit {
 };
@@ -189,6 +192,40 @@ TEST_F(TestSuit, QueryUnitCounterData)
     database->QueryUnitCounter(requestParams, 0, unitData);
     EXPECT_EQ(unitData.size(), 2); // unit data size = 2
     EXPECT_EQ(unitData[0].timestamp, 1695115378653323500); // timestamp = 1695115378653323500
+}
+
+TEST_F(TestSuit, QueryFlowCategoryEvents)
+{
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
+    Dic::Protocol::FlowCategoryEventsParams requestParams;
+    std::vector<std::unique_ptr<Dic::Protocol::UnitSingleFlow>> flowDetailList;
+    uint64_t STARTTIME = 9171200;
+    uint64_t ENDTIME = 20617000;
+    requestParams.startTime = STARTTIME;
+    requestParams.endTime = ENDTIME;
+    requestParams.timePerPx = 1;
+    requestParams.category = "HostToDevice";
+    requestParams.rankId = "0";
+    uint64_t minTimestamp = 1695115378704489800;
+    const int expectSize = 12;
+    const uint64_t expectFromTimestamp = 17654000;
+    const uint64_t expectToTimestamp = 17902700;
+    renderEngine->QueryFlowCategoryEvents(requestParams, minTimestamp, flowDetailList);
+    std::string EXPECT_FROM_TID = "1408366";
+    EXPECT_EQ(flowDetailList.size(), expectSize); // flowDetailList size = 5
+    EXPECT_EQ(flowDetailList[0]->cat, "HostToDevice");
+    EXPECT_EQ(flowDetailList[0]->from.timestamp, expectFromTimestamp); // timestamp = 1695115378722143800
+    EXPECT_EQ(flowDetailList[0]->from.pid, "140836602");
+    EXPECT_EQ(flowDetailList[0]->from.depth, 0);
+    EXPECT_EQ(flowDetailList[0]->from.tid, EXPECT_FROM_TID); // from.tid = 1408366
+    EXPECT_EQ(flowDetailList[0]->to.timestamp, expectToTimestamp); // to.timestamp = 1695115378722392500
+    EXPECT_EQ(flowDetailList[0]->to.pid, "14083661400");
+    EXPECT_EQ(flowDetailList[0]->to.depth, 0);
+    EXPECT_EQ(flowDetailList[0]->to.tid, "0"); // to.tid = 0
 }
 
 TEST_F(TestSuit, QueryFlowCategoryList)
