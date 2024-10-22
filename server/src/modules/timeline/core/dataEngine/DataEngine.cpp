@@ -1,6 +1,5 @@
 // Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 #include "pch.h"
-#include "DataBaseManager.h"
 #include "DataEngine.h"
 
 namespace Dic::Module::Timeline {
@@ -54,20 +53,20 @@ void DataEngine::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sli
 
 void DataEngine::QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
 {
-    auto sliceRespo = respotoryFactory->GetSliceRespo(flowQuery.metaType);
-    if (sliceRespo == nullptr) {
+    auto flowRespo = respotoryFactory->GetFlowRespo(flowQuery.metaType);
+    if (flowRespo == nullptr) {
         return;
     }
-    sliceRespo->QueryFlowPointByTimeRange(flowQuery, flowPointVec);
+    flowRespo->QueryFlowPointByTimeRange(flowQuery, flowPointVec);
 }
 
 void DataEngine::QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
 {
-    auto sliceRespo = respotoryFactory->GetSliceRespo(flowQuery.metaType);
-    if (sliceRespo == nullptr) {
+    auto flowRespo = respotoryFactory->GetFlowRespo(flowQuery.metaType);
+    if (flowRespo == nullptr) {
         return;
     }
-    sliceRespo->QueryFlowPointByFlowId(flowQuery, flowPointVec);
+    flowRespo->QueryFlowPointByFlowId(flowQuery, flowPointVec);
 }
 
 void DataEngine::QueryAllThreadInfo(const ThreadQuery &threadQuery,
@@ -94,5 +93,22 @@ void DataEngine::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std:
         return;
     }
     sliceRespo->QueryCompeteSliceByIds(sliceQuery, sliceIds, competeSliceVec);
+}
+
+void DataEngine::QueryFlowPointByCategory(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
+{
+    auto textFlowRespo = respotoryFactory->GetFlowRespo(PROCESS_TYPE::TEXT);
+    textFlowRespo->QueryFlowPointByCategory(flowQuery, flowPointVec);
+    if (!std::empty(flowPointVec)) {
+        return;
+    }
+    auto DbFlowRepo = respotoryFactory->GetFlowRespo(PROCESS_TYPE::DB);
+    DbFlowRepo->QueryFlowPointByCategory(flowQuery, flowPointVec);
+}
+
+void DataEngine::QueryAllFlagSlice(const SliceQuery &sliceQuery, std::vector<CompeteSliceDomain> &competeSliceDomainVec)
+{
+    auto textRepo = respotoryFactory->GetSimulationSliceRespo(PROCESS_TYPE::TEXT);
+    textRepo->QueryAllFlagSlice(sliceQuery, competeSliceDomainVec);
 }
 }

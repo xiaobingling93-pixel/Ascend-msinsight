@@ -43,6 +43,7 @@ struct CompeteSliceDomain {
     std::string tid;
     std::string pid;
     std::string metaType;
+    std::string flagId;
     bool operator < (const CompeteSliceDomain &right) const
     {
         if (depth < right.depth) {
@@ -63,6 +64,23 @@ struct FlowPoint {
     uint32_t depth = 0;
     std::string tid;
     std::string pid;
+    std::string rankId;
+    bool operator < (const FlowPoint &right) const
+    {
+        if (trackId < right.trackId) {
+            return true;
+        }
+        if (trackId > right.trackId) {
+            return false;
+        }
+        if (trackId == right.trackId && timestamp < right.timestamp) {
+            return true;
+        }
+        if (trackId == right.trackId && timestamp > right.timestamp) {
+            return false;
+        }
+        return timestamp == right.timestamp && id < right.id;
+    }
 };
 
 enum class PROCESS_TYPE {
@@ -87,6 +105,7 @@ enum class PROCESS_TYPE {
     MS_TX,
     TEXT,
     NONE,
+    DB,
 };
 }
 #endif // PROFILER_SERVER_DOMAINOBJECT_H

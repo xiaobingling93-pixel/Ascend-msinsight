@@ -47,8 +47,7 @@ uint64_t MstxRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuer
 void MstxRepo::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
     std::vector<CompeteSliceDomain> &sliceVec)
 {}
-void MstxRepo::QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) {}
-void MstxRepo::QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) {}
+
 void MstxRepo::QueryAllThreadInfo(const ThreadQuery &flowQuery,
     std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
 {}

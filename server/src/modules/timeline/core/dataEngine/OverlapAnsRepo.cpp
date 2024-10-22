@@ -48,8 +48,7 @@ uint64_t OverlapAnsRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &sli
 void OverlapAnsRepo::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
     std::vector<CompeteSliceDomain> &sliceVec)
 {}
-void OverlapAnsRepo::QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) {}
-void OverlapAnsRepo::QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) {}
+
 void OverlapAnsRepo::QueryAllThreadInfo(const ThreadQuery &flowQuery,
     std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
 {}

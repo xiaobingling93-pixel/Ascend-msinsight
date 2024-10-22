@@ -6,15 +6,15 @@
 #include "RepositoryFactoryInterface.h"
 #include "SliceRepoInterface.h"
 #include "CounterRepoInterface.h"
-namespace Dic {
-namespace Module {
-namespace Timeline {
-class DataEngineInterface : public SliceRepoInterface {
+#include "SimulationSliceRepoInterface.h"
+
+namespace Dic::Module::Timeline {
+class DataEngineInterface : public SliceRepoInterface, public FlowRepoInterface, public SimulationSliceRepoInterface {
 public:
     ~DataEngineInterface() override = default;
     virtual void SetRepositoryFactory(std::shared_ptr<RepositoryFactoryInterface>) = 0;
 };
 }
-}
-}
+
+
 #endif // PROFILER_SERVER_DATAENGINEINTERFACE_H

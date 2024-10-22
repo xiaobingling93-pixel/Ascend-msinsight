@@ -63,7 +63,11 @@ void TimelineModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_SEARCH_SLICE, std::make_unique<SearchSliceHandler>());
     requestHandlerMap.emplace(REQ_RES_REMOTE_DELETE, std::make_unique<RemoteDeleteHandler>());
     requestHandlerMap.emplace(REQ_RES_FLOW_CATEGORY_LIST, std::make_unique<QueryFlowCategoryListHandler>());
-    requestHandlerMap.emplace(REQ_RES_FLOW_CATEGORY_EVENTS, std::make_unique<QueryFlowCategoryEventsHandler>());
+
+    auto queryFlowCategoryEventsHandler = std::make_unique<QueryFlowCategoryEventsHandler>();
+    queryFlowCategoryEventsHandler->SetRenderEngine(renderEngine);
+    requestHandlerMap.emplace(REQ_RES_FLOW_CATEGORY_EVENTS, std::move(queryFlowCategoryEventsHandler));
+
     requestHandlerMap.emplace(REQ_RES_UNIT_COUNTER, std::make_unique<QueryUnitCounterHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_SYSTEM_VIEW, std::make_unique<QuerySystemViewHandler>());
     requestHandlerMap.emplace(REQ_RES_UNIT_KERNEL_DETAILS, std::make_unique<QueryKernelDetailHandler>());

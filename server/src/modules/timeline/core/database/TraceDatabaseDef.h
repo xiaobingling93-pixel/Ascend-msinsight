@@ -41,17 +41,6 @@ struct FlowDetailDto {
     int64_t trackId = 0;
 };
 
-struct FlowCategoryEventsDto {
-    uint64_t id;
-    uint64_t trackId;
-    std::string type;
-    std::string flowId;
-    std::string pid;
-    std::string tid;
-    uint32_t depth = 0;
-    uint64_t timestamp = 0;
-};
-
 struct MetaDataDto {
     std::string pid;
     std::string processName;

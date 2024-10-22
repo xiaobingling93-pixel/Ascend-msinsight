@@ -2,7 +2,6 @@
 #include "pch.h"
 #include "TableDefs.h"
 #include "TrackInfoManager.h"
-#include "DataBaseManager.h"
 #include "CannApiRepo.h"
 namespace Dic::Module::Timeline {
 void CannApiRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery, std::vector<SliceDomain> &sliceVec)
@@ -33,8 +32,6 @@ uint64_t CannApiRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQ
 void CannApiRepo::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
     std::vector<CompeteSliceDomain> &sliceVec)
 {}
-void CannApiRepo::QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) {}
-void CannApiRepo::QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) {}
 void CannApiRepo::QueryAllThreadInfo(const ThreadQuery &flowQuery,
     std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
 {}

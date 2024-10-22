@@ -178,4 +178,45 @@ void TextRepository::QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const 
         competeSliceVec.emplace_back(cachelice);
     }
 }
+
+void TextRepository::QueryFlowPointByCategory(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec)
+{
+    FlowTable flowTable;
+    std::vector<FlowPO> flowPOVec;
+    flowTable.Select(FlowColumn::ID, FlowColumn::TRACK_ID, FlowColumn::FLOW_ID, FlowColumn::TYPE)
+        .Select(FlowColumn::TIMESTAMP)
+        .Eq(FlowColumn::CAT, flowQuery.cat)
+        .OrderBy(FlowColumn::TRACK_ID, TableOrder::ASC)
+        .OrderBy(FlowColumn::TIMESTAMP, TableOrder::ASC)
+        .ExcuteQuery(flowQuery.fileId, flowPOVec);
+    for (const auto &item : flowPOVec) {
+        if (item.timestamp < flowQuery.minTimestamp) {
+            continue;
+        }
+        FlowPoint flowPoint;
+        flowPoint.id = item.id;
+        flowPoint.trackId = item.trackId;
+        flowPoint.flowId = item.flowId;
+        flowPoint.type = item.type;
+        flowPoint.timestamp = item.timestamp - flowQuery.minTimestamp;
+        flowPointVec.emplace_back(flowPoint);
+    }
+}
+
+void TextRepository::QueryAllFlagSlice(const SliceQuery &sliceQuery,
+    std::vector<CompeteSliceDomain> &competeSliceDomainVec)
+{
+    SliceTable sliceTable;
+    std::vector<SlicePO> slicePOVec;
+    sliceTable.Select(SliceColumn::ID, SliceColumn::FLAGID)
+        .NotEq(SliceColumn::FLAGID, "")
+        .Eq(SliceColumn::TRACKID, sliceQuery.trackId)
+        .ExcuteQuery(sliceQuery.rankId, slicePOVec);
+    for (const auto &item : slicePOVec) {
+        CompeteSliceDomain competeSliceDomain;
+        competeSliceDomain.id = item.id;
+        competeSliceDomain.flagId = item.flagId;
+        competeSliceDomainVec.emplace_back(competeSliceDomain);
+    }
+}
 }

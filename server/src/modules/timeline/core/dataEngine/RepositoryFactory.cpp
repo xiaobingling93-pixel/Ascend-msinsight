@@ -7,6 +7,7 @@
 #include "PythonApiRepo.h"
 #include "MstxRepo.h"
 #include "TextRepository.h"
+#include "DbFlowRepo.h"
 #include "RepositoryFactory.h"
 namespace Dic::Module::Timeline {
 RepositoryFactory::RepositoryFactory()
@@ -18,11 +19,16 @@ RepositoryFactory::RepositoryFactory()
     sliceRespoMap.emplace(PROCESS_TYPE::API, std::make_unique<PythonApiRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::MS_TX, std::make_unique<MstxRepo>());
     sliceRespoMap.emplace(PROCESS_TYPE::TEXT, std::make_unique<TextRepository>());
+    flowRespoMap.emplace(PROCESS_TYPE::TEXT, std::make_unique<TextRepository>());
+    flowRespoMap.emplace(PROCESS_TYPE::DB, std::make_unique<DbFlowRepo>());
+    simulationRespoMap.emplace(PROCESS_TYPE::TEXT, std::make_unique<TextRepository>());
 };
 RepositoryFactory::~RepositoryFactory()
 {
     sliceRespoMap.clear();
     counterRespoMap.clear();
+    flowRespoMap.clear();
+    simulationRespoMap.clear();
 }
 
 std::shared_ptr<SliceRepoInterface> RepositoryFactory::GetSliceRespo(PROCESS_TYPE metaType)
@@ -39,5 +45,18 @@ std::shared_ptr<CounterRepoInterface> RepositoryFactory::GetCounterRespo(PROCESS
         return nullptr;
     }
     return counterRespoMap.at(metaType);
-};
+}
+
+std::shared_ptr<FlowRepoInterface> RepositoryFactory::GetFlowRespo(PROCESS_TYPE metaType)
+{
+    if (flowRespoMap.count(metaType) == 0) {
+        return nullptr;
+    }
+    return flowRespoMap.at(metaType);
+}
+
+std::shared_ptr<SimulationSliceRepoInterface> RepositoryFactory::GetSimulationSliceRespo(PROCESS_TYPE)
+{
+    return simulationRespoMap.at(PROCESS_TYPE::TEXT);
+}
 }

@@ -456,33 +456,6 @@ void TextTraceDatabase::SimulationUpdateProcessSortIndex()
     }
 }
 
-void TextTraceDatabase::QueryAllSliceInRangeByTrackId(uint64_t traceId, std::vector<SliceDomain> &cacheSlices)
-{
-    // 此处sql需全部走索引且禁止触发回表
-    std::string sql = QUERY_ALL_SLICE_IN_RANGE_BY_TRACKID_SQL;
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Query all slice in range by trackId failed to prepare sql.", GetLastError());
-        return;
-    }
-    auto resultSet = stmt->ExecuteQuery(traceId);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Query all slice in range by trackId failed to get result set.", stmt->GetErrorMessage());
-        return;
-    }
-    SliceQuery sliceQuery;
-    sliceQuery.trackId = traceId;
-    std::unordered_map<uint64_t, uint32_t> depthCache;
-    sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
-    while (resultSet->Next()) {
-        SliceDomain cacheSlice{};
-        cacheSlice.id = resultSet->GetUint64("id");
-        cacheSlice.timestamp = resultSet->GetUint64("timestamp");
-        cacheSlice.depth = depthCache[cacheSlice.id];
-        cacheSlices.emplace_back(cacheSlice);
-    }
-}
-
 bool TextTraceDatabase::QueryThreadTracesSummary(const Protocol::UnitThreadTracesSummaryParams &requestParams,
     Protocol::UnitThreadTracesSummaryBody &responseBody, uint64_t minTimestamp)
 {
@@ -1133,113 +1106,6 @@ std::vector<uint64_t> TextTraceDatabase::QueryAllTrackIdsByPid(std::string pid)
     return trackIds;
 }
 
-bool TextTraceDatabase::QueryFlowCategoryEvents(FlowCategoryEventsParams &params, uint64_t minTimestamp,
-                                                std::vector<std::unique_ptr<UnitSingleFlow>> &flowDetailList)
-{
-    std::vector<FlowCategoryEventsDto> flowPointResult;
-    std::vector<FlowCategoryEventsDto> flowEventsVec;
-    QueryFlowPointByCategory(params, minTimestamp, flowEventsVec);
-    flowAnalyzerPtr->ComputeScreenFlowPoint(flowEventsVec, params.startTime, params.endTime, flowPointResult);
-    std::map<uint64_t, std::pair<std::string, std::string>> threadMap = QueryAllThreadMap();
-    flowAnalyzerPtr->SortByTrackIdASC(flowPointResult);
-    if (params.isSimulation) {
-        std::unordered_map<std::string, uint32_t> simpleSliceMap;
-        uint64_t curTrackId = 0;
-        for (auto &item : flowPointResult) {
-            if (curTrackId != item.trackId) {
-                curTrackId = item.trackId;
-                simpleSliceMap.clear();
-                QueryAllFlagSlice(simpleSliceMap, curTrackId);
-            }
-            item.depth = simpleSliceMap[item.flowId];
-            item.tid = threadMap[item.trackId].first;
-            item.pid = threadMap[item.trackId].second;
-        }
-        flowAnalyzerPtr->SortByFlowIdAndTimestampASC(flowPointResult);
-        flowAnalyzerPtr->ComputeUintFlows(flowPointResult, params.category, flowDetailList);
-        ServerLog::Info("Query Simulation flow category events. size:", flowDetailList.size());
-        return true;
-    }
-    uint64_t curTrackId = 0;
-    std::vector<SliceDomain> cacheSlices;
-    for (auto &item : flowPointResult) {
-        if (item.trackId != curTrackId) {
-            cacheSlices.clear();
-            std::string sliceCacheKey = std::to_string(item.trackId);
-            cacheSlices = SliceCacheManager::Instance().GetSliceDomainVec(sliceCacheKey);
-            if (std::empty(cacheSlices)) {
-                QueryAllSliceInRangeByTrackId(item.trackId, cacheSlices);
-            }
-            curTrackId = item.trackId;
-            sliceAnalyzerPtr->SortByTimestampASC(cacheSlices);
-        }
-        item.depth = sliceAnalyzerPtr->ComputeFlowPointDepth(cacheSlices, item.type, item.timestamp + minTimestamp);
-        item.tid = threadMap[item.trackId].first;
-        item.pid = threadMap[item.trackId].second;
-    }
-    flowAnalyzerPtr->SortByFlowIdAndTimestampASC(flowPointResult);
-    flowAnalyzerPtr->ComputeUintFlows(flowPointResult, params.category, flowDetailList);
-    ServerLog::Info("Query flow category events. size:", flowDetailList.size());
-    return true;
-}
-
-void TextTraceDatabase::QueryFlowPointByCategory(FlowCategoryEventsParams &params, uint64_t minTimestamp,
-                                                 std::vector<FlowCategoryEventsDto> &flowEventsVec)
-{
-    std::string sql = QUERY_FLOWCATEGORY_EVENTS_FAST_SQL;
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Query flow category events failed!.");
-        return;
-    }
-    auto resultSet = stmt->ExecuteQuery(params.category);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Query flow category events. Failed to get result set.", stmt->GetErrorMessage());
-        return;
-    }
-    while (resultSet->Next()) {
-        int col = resultStartIndex;
-        FlowCategoryEventsDto flowCategoryEventsDto;
-        flowCategoryEventsDto.id = resultSet->GetUint64(col++);
-        flowCategoryEventsDto.trackId = resultSet->GetUint64(col++);
-        uint64_t tempStartTime = resultSet->GetUint64(col++);
-        if (tempStartTime < minTimestamp) {
-            continue;
-        }
-        flowCategoryEventsDto.timestamp = tempStartTime - minTimestamp;
-        flowCategoryEventsDto.flowId = resultSet->GetString(col++);
-        flowCategoryEventsDto.type = resultSet->GetString(col++);
-        flowEventsVec.emplace_back(flowCategoryEventsDto);
-    }
-}
-
-
-void TextTraceDatabase::QueryAllFlagSlice(std::unordered_map<std::string, uint32_t> &simpleSliceMap, uint64_t trackId)
-{
-    std::string sql = QUERY_FLAG_SLICE_SQL;
-    auto stmt = CreatPreparedStatement(sql);
-    if (stmt == nullptr) {
-        ServerLog::Error("Query all flag slice failed!.");
-        return;
-    }
-    auto resultSet = stmt->ExecuteQuery(trackId);
-    if (resultSet == nullptr) {
-        ServerLog::Error("Query all flag slice. Failed to get result set.", stmt->GetErrorMessage());
-        return;
-    }
-    SliceQuery sliceQuery;
-    sliceQuery.trackId = trackId;
-    std::unordered_map<uint64_t, uint32_t> depthCache;
-    sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
-    while (resultSet->Next()) {
-        int col = resultStartIndex;
-        uint64_t id = resultSet->GetUint64(col++);
-        std::string flagId = resultSet->GetString(col++);
-        uint32_t depth = depthCache[id];
-        simpleSliceMap[flagId] = depth;
-    }
-}
-
 bool TextTraceDatabase::QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
                                          std::vector<Protocol::UnitCounterData> &dataList)
 {
@@ -1866,6 +1732,12 @@ bool TextTraceDatabase::QueryFuseableOpData(const KernelDetailsParams &params, c
         data.emplace_back(one);
     }
     return true;
+}
+
+std::string TextTraceDatabase::QueryHostInfo()
+{
+    std::string host;
+    return host;
 }
 } // end of namespace Timeline
   // end of namespace Module

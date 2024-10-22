@@ -11,7 +11,7 @@
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
-#include <SliceRepoInterface.h>
+#include "FlowRepoInterface.h"
 #include "TimelineProtocolResponse.h"
 #include "TraceDatabaseDef.h"
 namespace Dic::Module::Timeline {
@@ -39,7 +39,7 @@ class FlowAnalyzer {
 public:
     explicit FlowAnalyzer();
     ~FlowAnalyzer() = default;
-    void SetRepository(std::unique_ptr<SliceRepoInterface> repositoryDependency);
+    void SetRepository(std::unique_ptr<FlowRepoInterface> repositoryDependency);
     /* *
      * 计算选中的算子相关联的所有连线点
      * @param flowQuery
@@ -57,11 +57,11 @@ public:
         const std::string &sliceId);
     void ComputeCategoryAndFlowMap(const std::vector<FlowDetailDto> &flowDetailVec,
         std::map<std::string, std::vector<Protocol::UnitSingleFlow>> &flowMap, uint64_t minTimestamp);
-    void SortByTrackIdASC(std::vector<FlowCategoryEventsDto> &FlowCategoryEventsDtoVec);
-    void SortByFlowIdAndTimestampASC(std::vector<FlowCategoryEventsDto> &flowCategoryEventsDtoVec);
-    void ComputeScreenFlowPoint(const std::vector<FlowCategoryEventsDto> &flowEventsVec, uint64_t startTime,
-        uint64_t endTime, std::vector<FlowCategoryEventsDto> &flowIdResult);
-    void ComputeUintFlows(const std::vector<FlowCategoryEventsDto> &flowEventsVec, const std::string &category,
+    void SortByTrackIdASC(std::vector<FlowPoint> &FlowCategoryEventsDtoVec);
+    void SortByFlowIdAndTimestampASC(std::vector<FlowPoint> &flowCategoryEventsDtoVec);
+    void ComputeScreenFlowPoint(const std::vector<FlowPoint> &flowEventsVec, uint64_t startTime,
+        uint64_t endTime, std::vector<FlowPoint> &flowIdResult);
+    void ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec, const std::string &category,
         std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList);
     /* *
      * 根据连线点计算点所在的算子
@@ -73,15 +73,15 @@ public:
         const std::vector<SliceDomain> &sliceVec) const;
 
 private:
-    std::unique_ptr<SliceRepoInterface> repository;
-    static bool CompareTrackIdASC(const FlowCategoryEventsDto &first, const FlowCategoryEventsDto &second);
-    static bool CompareFlowIdAndTimestampASC(const FlowCategoryEventsDto &first, const FlowCategoryEventsDto &second);
-    static void GroupSampleFlowPoint(const std::vector<FlowCategoryEventsDto> &flowEventsVec, uint64_t startTime,
+    std::unique_ptr<FlowRepoInterface> repository;
+    static bool CompareTrackIdASC(const FlowPoint &first, const FlowPoint &second);
+    static bool CompareFlowIdAndTimestampASC(const FlowPoint &first, const FlowPoint &second);
+    static void GroupSampleFlowPoint(const std::vector<FlowPoint> &flowEventsVec, uint64_t startTime,
         uint64_t endTime, FlowPointSampleStruct &flowPointSampleStruct);
     static void ComputePointOnScreen(FlowPointSampleStruct &flowPointSampleStruct, uint64_t uintTime,
-        const FlowCategoryEventsDto &flowPoint);
-    void OfferFlowPointPair(const std::vector<FlowCategoryEventsDto> &flowEventsVec,
-        std::vector<FlowCategoryEventsDto> &flowIdResult, FlowPointSampleStruct &flowPointSampleStruct,
+        const FlowPoint &flowPoint);
+    void OfferFlowPointPair(const std::vector<FlowPoint> &flowEventsVec,
+        std::vector<FlowPoint> &flowIdResult, FlowPointSampleStruct &flowPointSampleStruct,
         const std::string &flowId) const;
 };
 }

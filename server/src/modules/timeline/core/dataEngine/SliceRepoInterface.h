@@ -40,20 +40,6 @@ public:
         std::vector<CompeteSliceDomain> &sliceVec) = 0;
 
     /* *
-     * 查询时间范围内的所有连线点
-     * @param flowQuery
-     * @param flowPointVec
-     */
-    virtual void QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) = 0;
-
-    /* *
-     * 根据连线点id查询所有连线点
-     * @param flowQuery
-     * @param flowPointVec
-     */
-    virtual void QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) = 0;
-
-    /* *
      * 查询所有泳道线程和进程信息
      * @param flowQuery
      * @param flowPointVec

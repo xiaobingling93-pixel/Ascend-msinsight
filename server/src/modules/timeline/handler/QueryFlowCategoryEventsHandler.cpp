@@ -25,19 +25,12 @@ void QueryFlowCategoryEventsHandler::HandleRequest(std::unique_ptr<Protocol::Req
         session.OnResponse(std::move(responsePtr));
         return;
     }
-    bool result = false;
-    std::vector<std::string> fileIdList;
-    fileIdList.emplace_back(request.params.rankId);
-    for (const auto &fileId : fileIdList) {
-        auto database = DataBaseManager::Instance().GetTraceDatabase(fileId);
-        if (database != nullptr) {
-            result = database->QueryFlowCategoryEvents(request.params, minTimestamp,
-                                                       response.body.flowDetailList);
-        }
-        if (!result) {
-            break;
-        }
+    if (renderEngine == nullptr) {
+        ServerLog::Error("Query flow events Failed to render.");
+        session.OnResponse(std::move(responsePtr));
+        return;
     }
+    bool result = renderEngine->QueryFlowCategoryEvents(request.params, minTimestamp, response.body.flowDetailList);
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));

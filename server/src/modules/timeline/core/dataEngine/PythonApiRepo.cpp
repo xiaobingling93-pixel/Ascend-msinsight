@@ -2,7 +2,6 @@
 #include "pch.h"
 #include "TableDefs.h"
 #include "TrackInfoManager.h"
-#include "DataBaseManager.h"
 #include "PythonApiRepo.h"
 namespace Dic::Module::Timeline {
 void PythonApiRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery,
@@ -105,8 +104,7 @@ uint64_t PythonApiRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &slic
 void PythonApiRepo::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
     std::vector<CompeteSliceDomain> &sliceVec)
 {}
-void PythonApiRepo::QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) {}
-void PythonApiRepo::QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) {}
+
 void PythonApiRepo::QueryAllThreadInfo(const ThreadQuery &flowQuery,
     std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
 {}

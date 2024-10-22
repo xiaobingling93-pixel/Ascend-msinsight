@@ -67,8 +67,6 @@ public:
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
         Protocol::SearchSliceBody &responseBody) override;
     bool QueryFlowCategoryList(std::vector<std::string> &categories, const std::string &rankId) override;
-    bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
-        std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) override;
     bool QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
         std::vector<Protocol::UnitCounterData> &dataList) override;
 
@@ -121,6 +119,7 @@ public:
 
     bool QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
         uint64_t minTimestamp) override;
+    std::string QueryHostInfo() override;
 
 private:
     const std::string sliceTable = "slice";
@@ -170,21 +169,14 @@ private:
 
     uint64_t ComputeSingleSliceSelfTime(const Protocol::ThreadDetailParams &requestParams, int64_t trackId,
         std::vector<SliceDto> &sliceDtoVec);
-
-    void QueryAllSliceInRangeByTrackId(uint64_t traceId, std::vector<SliceDomain> &cacheSlices);
-    
     std::vector<Protocol::SimpleSlice> QuerySimpleSliceByFlagAndTrackId(const std::string &flagId, uint64_t trackId);
 
     std::vector<FlowDetailDto> QuerySingleFlowDetail(const std::string &flowId);
 
-    void QueryFlowPointByCategory(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
-        std::vector<FlowCategoryEventsDto> &flowEventsVec);
     bool QuerySliceDtoById(const std::string &sliceId, SliceDto &sliceDto);
 
     void QuerySimulationUintFlows(const Protocol::UnitFlowsParams &requestParams, Protocol::UnitFlowsBody &responseBody,
         uint64_t minTimestamp);
-    void QueryAllFlagSlice(std::unordered_map<std::string, uint32_t> &simpleSliceMap, uint64_t trackId);
-
     static void AssembleUnitFlowsBody(Protocol::UnitFlowsBody &responseBody, uint64_t minTimestamp,
              std::unordered_map<std::string, std::vector<FlowPoint>> &flowPointMap) ;
 };

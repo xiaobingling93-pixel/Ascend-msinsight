@@ -18,7 +18,7 @@ FlowAnalyzer::FlowAnalyzer()
     }
 }
 
-void FlowAnalyzer::SetRepository(std::unique_ptr<SliceRepoInterface> repositoryDependency)
+void FlowAnalyzer::SetRepository(std::unique_ptr<FlowRepoInterface> repositoryDependency)
 {
     repository = std::move(repositoryDependency);
 }
@@ -122,12 +122,12 @@ void FlowAnalyzer::ComputeCategoryAndFlowMap(const std::vector<FlowDetailDto> &f
     flowMap[unitSingleFlow.cat].emplace_back(unitSingleFlow);
 }
 
-void FlowAnalyzer::SortByTrackIdASC(std::vector<FlowCategoryEventsDto> &flowCategoryEventsDtoVec)
+void FlowAnalyzer::SortByTrackIdASC(std::vector<FlowPoint> &flowCategoryEventsDtoVec)
 {
     std::sort(flowCategoryEventsDtoVec.begin(), flowCategoryEventsDtoVec.end(), CompareTrackIdASC);
 }
 
-void FlowAnalyzer::SortByFlowIdAndTimestampASC(std::vector<FlowCategoryEventsDto> &flowCategoryEventsDtoVec)
+void FlowAnalyzer::SortByFlowIdAndTimestampASC(std::vector<FlowPoint> &flowCategoryEventsDtoVec)
 {
     std::sort(flowCategoryEventsDtoVec.begin(), flowCategoryEventsDtoVec.end(), CompareFlowIdAndTimestampASC);
 }
@@ -139,8 +139,8 @@ void FlowAnalyzer::SortByFlowIdAndTimestampASC(std::vector<FlowCategoryEventsDto
  * @param endTime 屏幕结束时间
  * @param flowIdResult 计算结果
  */
-void FlowAnalyzer::ComputeScreenFlowPoint(const std::vector<FlowCategoryEventsDto> &flowEventsVec, uint64_t startTime,
-    uint64_t endTime, std::vector<FlowCategoryEventsDto> &flowIdResult)
+void FlowAnalyzer::ComputeScreenFlowPoint(const std::vector<FlowPoint> &flowEventsVec, uint64_t startTime,
+    uint64_t endTime, std::vector<FlowPoint> &flowIdResult)
 {
     FlowPointSampleStruct flowPointSampleStruct;
     GroupSampleFlowPoint(flowEventsVec, startTime, endTime, flowPointSampleStruct);
@@ -158,7 +158,7 @@ void FlowAnalyzer::ComputeScreenFlowPoint(const std::vector<FlowCategoryEventsDt
  * @param category 连线类别
  * @param flowDetailList 结果集
  */
-void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowCategoryEventsDto> &flowEventsVec,
+void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowPoint> &flowEventsVec,
     const std::string &category, std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList)
 {
     std::string curFlowId;
@@ -173,6 +173,7 @@ void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowCategoryEventsDto> &fl
             location.depth = flow.depth;
             location.timestamp = flow.timestamp;
             location.type = type;
+            location.rankId = flow.rankId;
             locationPtr = &location;
         } else if ((type == Protocol::LINE_END || type == Protocol::LINE_END_OPTIONAL) && flowId == curFlowId) {
             auto flowEvent = std::make_unique<Protocol::UnitSingleFlow>();
@@ -182,6 +183,7 @@ void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowCategoryEventsDto> &fl
             flowEvent->to.tid = flow.tid;
             flowEvent->to.depth = flow.depth;
             flowEvent->to.timestamp = flow.timestamp;
+            flowEvent->to.rankId = flow.rankId;
             locationPtr = &(flowEvent->to);
             if (flowEvent->from.type == Protocol::LINE_START) {
                 flowDetailList.emplace_back(std::move(flowEvent));
@@ -191,8 +193,8 @@ void FlowAnalyzer::ComputeUintFlows(const std::vector<FlowCategoryEventsDto> &fl
     }
 }
 
-void FlowAnalyzer::OfferFlowPointPair(const std::vector<FlowCategoryEventsDto> &flowEventsVec,
-    std::vector<FlowCategoryEventsDto> &flowIdResult, FlowPointSampleStruct &flowPointSampleStruct,
+void FlowAnalyzer::OfferFlowPointPair(const std::vector<FlowPoint> &flowEventsVec,
+    std::vector<FlowPoint> &flowIdResult, FlowPointSampleStruct &flowPointSampleStruct,
     const std::string &flowId) const
 {
     // 过滤重复连线
@@ -213,7 +215,7 @@ void FlowAnalyzer::OfferFlowPointPair(const std::vector<FlowCategoryEventsDto> &
     flowPointSampleStruct.resultFlowIdSet.emplace(flowId);
 }
 
-void FlowAnalyzer::GroupSampleFlowPoint(const std::vector<FlowCategoryEventsDto> &flowEventsVec, uint64_t startTime,
+void FlowAnalyzer::GroupSampleFlowPoint(const std::vector<FlowPoint> &flowEventsVec, uint64_t startTime,
     uint64_t endTime, FlowPointSampleStruct &flowPointSampleStruct)
 {
     uint64_t curTrackId = std::numeric_limits<uint64_t>::max();
@@ -249,7 +251,7 @@ void FlowAnalyzer::GroupSampleFlowPoint(const std::vector<FlowCategoryEventsDto>
 }
 
 void FlowAnalyzer::ComputePointOnScreen(FlowPointSampleStruct &flowPointSampleStruct, uint64_t uintTime,
-    const FlowCategoryEventsDto &flowPoint)
+    const FlowPoint &flowPoint)
 {
     if (uintTime == 0 && flowPoint.type == Protocol::LINE_START) {
         flowPointSampleStruct.startPointResultSet.emplace(flowPoint.flowId);
@@ -286,7 +288,7 @@ void FlowAnalyzer::ComputePointOnScreen(FlowPointSampleStruct &flowPointSampleSt
 }
 
 
-bool FlowAnalyzer::CompareTrackIdASC(const FlowCategoryEventsDto &first, const FlowCategoryEventsDto &second)
+bool FlowAnalyzer::CompareTrackIdASC(const FlowPoint &first, const FlowPoint &second)
 {
     if (first.trackId < second.trackId) {
         return true;
@@ -297,7 +299,7 @@ bool FlowAnalyzer::CompareTrackIdASC(const FlowCategoryEventsDto &first, const F
     return false;
 }
 
-bool FlowAnalyzer::CompareFlowIdAndTimestampASC(const FlowCategoryEventsDto &first, const FlowCategoryEventsDto &second)
+bool FlowAnalyzer::CompareFlowIdAndTimestampASC(const FlowPoint &first, const FlowPoint &second)
 {
     if (first.flowId < second.flowId) {
         return true;

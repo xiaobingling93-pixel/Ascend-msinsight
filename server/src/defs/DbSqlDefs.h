@@ -221,25 +221,6 @@ const static std::string FULL_DB_UPDATE_TIME =
         "opInfo.startNs, opInfo.endNs, 'communication' AS type, opInfo.ROWID AS id FROM COMMUNICATION_OP "
         "opInfo JOIN TASK ON TASK.connectionId = opInfo.connectionId ORDER BY startNs;";
 
-// QueryDeviceLocationSql
-const static std::string QUERY_DEVICE_LOCATION_SQL =
-        " with constValue as (select ? as minTime) "
-        " select connectionCats.cat, connectionCats.connectionId, task.ROWID as id, streamId as tid, depth,"
-        " startNs - constValue.minTime as startTime, endNs - startNs as duration, 'Ascend Hardware' as pid, "
-        " 'Ascend Hardware' as metaType, name, deviceId from TASK task join constValue join COMPUTE_TASK_INFO CTI "
-        " on task.globalTaskId = CTI.globalTaskId join connectionCats on task.connectionId=connectionCats.connectionId "
-        " union all select connectionCats.cat, connectionCats.connectionId, task.ROWID as id, streamId as tid, "
-        "  task.depth, task.startNs - constValue.minTime as startTime, task.endNs - task.startNs as duration, "
-        "  'Ascend Hardware' as pid,'Ascend Hardware' as metaType, taskType, deviceId from TASK task join constValue "
-        " join MSTX_EVENTS CTI on task.connectionId = CTI.connectionId "
-        " join connectionCats on task.connectionId=connectionCats.connectionId "
-        " union all select connectionCats.cat, connectionCats.connectionId, op.ROWID as id, groupName||'group' as tid, "
-        " 0 as depth,op.startNs-constValue.minTime as startTime, op.endNs - op.startNs as duration, 'HCCL' as pid, "
-        " 'HCCL' as metaType, opName as name, deviceId from COMMUNICATION_OP op join constValue "
-        " join TASK task on task.connectionId = op.connectionId "
-        " join connectionCats on op.connectionId = connectionCats.connectionId group by opId, connectionCats.cat "
-        " order by startTime;";
-
 // QueryThreadsByPid
 const static std::string ASCEND_THREADS_BY_PID =
             "select main.startNs,main.endNs - main.startNs as duration,main.endNs, "
@@ -300,49 +281,6 @@ static std::string GetConnectionCatSql()
                " group by conn.connectionId having count(1) > 1 ");
     sql.append(" union select api.connectionId, 'MsTx' as cat  from MSTX_EVENTS api " // 打点侧
                "      join Task task on api.connectionId = task.connectionId where api.connectionId != 4294967295 ");
-    return sql;
-}
-
-static std::string GetQueryCannApiLocationSql()
-{
-    std::string sql = "with constValue as (select ? as minTime), "
-                      "     rankIds as (select deviceId, globalPid from TASK group by globalPid) ";
-    sql.append(" select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, api.type as tid,"
-               " depth, startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid, "
-               " 'CANN_API' as metaType, name, deviceId from " + TABLE_CANN_API + " api join constValue "
-               " join connectionCats on api.connectionId = connectionCats.connectionId "
-               " join rankIds on api.globalTid >> 32 = rankIds.globalPid "
-               "  where cat = 'HostToDevice'");
-    sql.append(" order by startTime");
-    return sql;
-}
-
-static std::string GetQueryPyApiLocationSql()
-{
-    std::string sql = "with constValue as (select ? as minTime), "
-                      "     rankIds as (select deviceId, globalPid from TASK group by globalPid) ";
-    sql.append(" select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, 'pytorch' as tid,depth,"
-               " startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid,"
-               " 'PYTORCH_API' as metaType, name, deviceId from PYTORCH_API api join constValue "
-               " join CONNECTION_IDS ids on api.connectionId = ids.id "
-               " join connectionCats on ids.connectionId = connectionCats.connectionId "
-               " join rankIds on api.globalTid >> 32 = rankIds.globalPid "
-               " where cat = 'async_task_queue' or cat = 'fwdbwd' or cat = 'async_npu' ");
-    sql.append(" order by startTime");
-    return sql;
-}
-
-static std::string GetQueryMstxApiLocationSql()
-{
-    std::string sql = "with constValue as (select ? as minTime), "
-                      "     rankIds as (select deviceId, globalPid from TASK group by globalPid) ";
-    sql.append(" select connectionCats.cat, connectionCats.connectionId, api.ROWID as id, 'MsTx' as tid, "
-               "  depth, startNs - constValue.minTime as startTime, endNs - startNs as duration, globalTid as pid, "
-               "       'MSTX_EVENTS' as metaType, message as name, deviceId from MSTX_EVENTS api join constValue "
-               "        join connectionCats on api.connectionId = connectionCats.connectionId "
-               " join rankIds on api.globalTid >> 32 = rankIds.globalPid "
-               " where cat = 'MsTx'");
-    sql.append(" order by startTime");
     return sql;
 }
 };

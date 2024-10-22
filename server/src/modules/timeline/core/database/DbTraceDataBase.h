@@ -67,8 +67,6 @@ public:
     bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
                          Protocol::SearchSliceBody &responseBody) override;
     bool QueryFlowCategoryList(std::vector<std::string> &categories, const std::string& rankId) override;
-    bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
-                                 std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) override;
     bool QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
                           std::vector<Protocol::UnitCounterData> &dataList) override;
 
@@ -98,7 +96,7 @@ public:
     bool QueryHostMetadata(std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData);
 
     std::vector<std::string> QueryRankId();
-    std::string QueryHostInfo();
+    std::string QueryHostInfo() override;
     std::string GetRealRankId(const std::string& fileId);
 
     bool QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,
@@ -121,7 +119,6 @@ public:
     void UpdateStartTime(const std::string &fileId);
     void UpdateAllDepth();
     void InitStringsCache();
-    void InitFlowCache();
     void InitConnectionCats();
     void UpdateWaitTime();
     void GenerateOverlapAnalysis();
@@ -177,10 +174,6 @@ private:
          std::vector<std::vector<std::string>> &dataTypes, std::unique_ptr<Protocol::UnitTrack> &counter);
     std::string GetSearchAllSlicesDetailsSql(bool isMatchExact, bool isMatchCase,
                                              const std::string& order, const std::string& orderByField);
-    void QueryFlowLocation(const std::string& sql,
-        std::map<std::string, std::map<std::string, Protocol::FlowLocation>>& startFlowLocations,
-        std::map<std::string, std::map<std::string, std::vector<Protocol::FlowLocation>>>& endFlowLocations);
-
     std::vector<Protocol::SimpleSlice>
     QueryThreadByPid(const Protocol::Metadata &metaData, uint64_t startTime, uint64_t endTime,
                      const std::string &rankId, std::map<std::string, uint64_t> &selfTimeKeyValue);

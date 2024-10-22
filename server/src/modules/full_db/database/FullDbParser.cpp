@@ -9,7 +9,6 @@
 #include "DbMemoryDataBase.h"
 #include "DbSummaryDataBase.h"
 #include "ClusterParseThreadPoolExecutor.h"
-#include "CommonCacheManager.h"
 #include "BaselineManager.h"
 #include "CollectionTimeService.h"
 #include "FullDbParser.h"
@@ -62,7 +61,6 @@ void FullDbParser::Reset()
     FullDb::DbMemoryDataBase::Reset();
     FullDb::DbSummaryDataBase::Reset();
     FullDb::DbTraceDataBase::Reset();
-    CommonCacheManager::Instance().Clear();
     ServerLog::Info("End Reset trace Parser");
     threadPool->Reset();
     CollectionTimeService::Instance().Reset();
@@ -133,7 +131,6 @@ void FullDbParser::EndParseTask(const std::vector<std::string> &rankIds, const s
         rankIds[0] : filePath;
     bool isNotSendMessage = Global::BaselineManager::Instance().IsBaselineId(rankIds[0])
             && DataBaseManager::Instance().IsContainDatabasePath(filePath);
-    FullDbParser::Instance().threadPool->AddTask([dbId]() { GetTraceDatabase(dbId)->InitFlowCache(); });
     for (const std::string& id : rankIds) {
         ParserCallBack(id, true);
     }

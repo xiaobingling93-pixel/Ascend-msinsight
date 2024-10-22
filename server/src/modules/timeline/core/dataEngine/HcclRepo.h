@@ -18,8 +18,6 @@ public:
     uint64_t QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuery) override;
     void QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
         std::vector<CompeteSliceDomain> &sliceVec) override;
-    void QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) override;
-    void QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) override;
     void QueryAllThreadInfo(const ThreadQuery &flowQuery,
         std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo) override;
     void QueryCompeteSliceByIds(const SliceQuery &sliceQuery, const std::vector<uint64_t> &sliceIds,

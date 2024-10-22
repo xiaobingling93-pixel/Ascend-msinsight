@@ -2,7 +2,6 @@
 #include "pch.h"
 #include "TableDefs.h"
 #include "TrackInfoManager.h"
-#include "DataBaseManager.h"
 #include "HcclRepo.h"
 namespace Dic::Module::Timeline {
 void HcclRepo::QuerySimpleSliceWithOutNameByTrackId(const SliceQuery &sliceQuery, std::vector<SliceDomain> &sliceVec)
@@ -109,8 +108,7 @@ uint64_t HcclRepo::QueryPythonFunctionCountByTrackId(const SliceQuery &sliceQuer
 void HcclRepo::QueryCompeteSliceVecByTimeRangeAndTrackId(const SliceQuery &sliceQuery,
     std::vector<CompeteSliceDomain> &sliceVec)
 {}
-void HcclRepo::QueryFlowPointByTimeRange(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) {}
-void HcclRepo::QueryFlowPointByFlowId(const FlowQuery &flowQuery, std::vector<FlowPoint> &flowPointVec) {}
+
 void HcclRepo::QueryAllThreadInfo(const ThreadQuery &flowQuery,
     std::unordered_map<uint64_t, std::pair<std::string, std::string>> &threadInfo)
 {}

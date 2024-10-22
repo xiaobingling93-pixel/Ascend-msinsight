@@ -45,8 +45,6 @@ public:
     virtual bool SearchSliceName(const Protocol::SearchSliceParams &params, int index, uint64_t minTimestamp,
                          Protocol::SearchSliceBody &responseBody) = 0;
     virtual bool QueryFlowCategoryList(std::vector<std::string> &categories, const std::string& rankId) = 0;
-    virtual bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
-                                 std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) = 0;
     virtual bool QueryUnitCounter(Protocol::UnitCounterParams &params, uint64_t minTimestamp,
                           std::vector<Protocol::UnitCounterData> &dataList) = 0;
 
@@ -84,6 +82,7 @@ public:
         std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp) = 0;
     virtual bool QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
         uint64_t minTimestamp) = 0;
+    virtual std::string QueryHostInfo() = 0;
 };
 }
 #endif // PROFILER_SERVER_TRACE_DATABASE_H

@@ -17,6 +17,8 @@ public:
     virtual void SetDataEngineInterface(std::shared_ptr<DataEngineInterface>) = 0;
     virtual void QueryThreadTraces(const Protocol::UnitThreadTracesParams &requestParams,
         Protocol::UnitThreadTracesBody &responseBody, uint64_t minTimestamp, int64_t traceId) = 0;
+    virtual bool QueryFlowCategoryEvents(Protocol::FlowCategoryEventsParams &params, uint64_t minTimestamp,
+        std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) = 0;
 };
 }
 }

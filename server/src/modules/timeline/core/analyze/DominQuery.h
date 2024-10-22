@@ -60,6 +60,10 @@ struct FlowQuery {
      * 泳道在数据库中的最小时间
      */
     uint64_t minTimestamp = 0;
+    /**
+     * 连线类别
+     */
+    std::string cat;
     std::string fileId;
     PROCESS_TYPE metaType = PROCESS_TYPE::NONE;
 };

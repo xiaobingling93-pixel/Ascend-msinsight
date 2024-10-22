@@ -55,8 +55,6 @@ const std::string CREATE_TABLE_SQL = "CREATE TABLE " + SLICE_TABLE +
 const std::string CREATE_INDEX_SQL = "CREATE INDEX " + TRACKID_TIME_INDEX + " ON " + SLICE_TABLE +
     " (track_id, timestamp, end_time);" + "CREATE INDEX " + TRACKID_CAT_INDEX + " ON " + SLICE_TABLE +
     " (track_id, cat);" + "CREATE INDEX " + FLOW_INDEX + " ON " + FLOW_TABLE + " (cat);";
-const std::string QUERY_ALL_SLICE_IN_RANGE_BY_TRACKID_SQL =
-    "SELECT id, timestamp, end_time FROM " + SLICE_TABLE + " WHERE track_id = ? ";
 const std::string QUERY_SLICE_DETAIL_SQL = "SELECT id, timestamp, duration, name, track_id, cat, args"
     " FROM " +
     SLICE_TABLE + " WHERE id = ?";
@@ -96,11 +94,6 @@ const std::string QUERY_EXETREME_TIME_SQL = "SELECT  min(minTimestamp) AS totalM
     "as minTimestamp, max(timestamp) as maxTimestamp FROM " +
     SLICE_TABLE + " UNION SELECT min(timestamp) as minTimestamp, max(timestamp) as maxTimestamp FROM " + COUNTER_TABLE +
     ")";
-const std::string QUERY_FLOWCATEGORY_EVENTS_FAST_SQL =
-    "select id,track_id AS trackId,timestamp,flow_id AS flowId ,type from " + FLOW_TABLE +
-    " WHERE cat = ? ORDER BY trackId, timestamp;";
-const std::string QUERY_FLAG_SLICE_SQL =
-    "SELECT id, flag_id AS flagId FROM " + SLICE_TABLE + " WHERE flagId != '' AND track_id = ?";
 const std::string QUERY_UNIT_COUNTER_SQL = "SELECT timestamp - ? as startTime, args"
     " FROM " +
     COUNTER_TABLE +

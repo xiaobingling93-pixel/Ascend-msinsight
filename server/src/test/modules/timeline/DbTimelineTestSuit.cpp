@@ -462,20 +462,6 @@ TEST_F(FullDbTestSuit, QueryComputeStatisticsData)
     EXPECT_EQ(responseBody.summaryStatisticsItemList.size(), EXPECT_COUNT);
 }
 
-TEST_F(FullDbTestSuit, QueryFlowCategoryEvents)
-{
-    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
-
-    Protocol::FlowCategoryEventsParams params;
-    const uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
-    std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> flowDetailList;
-
-    database->QueryFlowCategoryEvents(params, minTimestamp, flowDetailList);
-    const uint64_t EXPECT_COUNT = 0;
-
-    EXPECT_EQ(flowDetailList.size(), EXPECT_COUNT);
-}
-
 TEST_F(FullDbTestSuit, QueryUnitFLows)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("FullDb");
