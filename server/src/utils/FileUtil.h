@@ -122,10 +122,8 @@ public:
         long long hFile = 0;
         const uint64_t fileCountLimit = 100000;
         struct _finddata_t fileInfo {};
-        std::string tmpPath;
-        if (StringUtil::IsUtf8String(path)) {
-            tmpPath = StringUtil::Utf8ToGbk(path.c_str());
-        }
+        std::string tmpPath = PathPreprocess(path);
+        std::string currentPath = PathPreprocess(path);
         if ((hFile = _findfirst(tmpPath.append("\\*").c_str(), &fileInfo)) == -1) {
             return false;
         }
@@ -136,7 +134,7 @@ public:
             if (std::string(fileInfo.name) == ".." || std::string(fileInfo.name) == ".") {
                 continue;
             }
-            if (!CheckDirValid(SplicePath(path, fileInfo.name))) {
+            if (!CheckDirValid(SplicePath(currentPath, fileInfo.name))) {
                 continue;
             }
             if ((fileInfo.attrib & _A_SUBDIR) != 0) {
