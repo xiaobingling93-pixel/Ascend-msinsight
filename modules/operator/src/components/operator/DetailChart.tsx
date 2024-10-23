@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type * as echarts from 'echarts';
-import { getAdaptiveEchart, chartVisbilityListener, chartColors, getDefaultChartOptions } from 'ascend-utils';
+import { getAdaptiveEchart, disposeAdaptiveEchart, chartVisbilityListener, chartColors, getDefaultChartOptions } from 'ascend-utils';
 import type { ConditionType } from './Filter';
 import { queryOperatorCategory, queryOperatorComputeUnit } from '../RequestUtils';
 import type { Session } from '../../entity/session';
@@ -39,7 +39,7 @@ function InitCharts({ data, domId, isDark, title }: {data: dataType; domId: stri
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
-
+    disposeAdaptiveEchart(chartDom);
     const myChart: echarts.ECharts = getAdaptiveEchart(chartDom);
     myChart.setOption(wrapData({ data, domId, isDark, title }));
 }
