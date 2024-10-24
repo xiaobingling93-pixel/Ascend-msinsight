@@ -9,6 +9,9 @@ import type { Icondition } from '../Filter';
 import { getFormatNum, getFormatNumReturnEmpty } from '../../../Common';
 import { CompareData } from '../../../../utils/interface';
 
+const bodyStyle = window.getComputedStyle(document.body);
+const fontFamily = bodyStyle.fontFamily;
+
 const cubeCore: Inode = {
     name: '',
     left: -15,
@@ -1038,7 +1041,7 @@ const drawLine = (nodes: d3.Selection<SVGGElement, IdrawNode, d3.BaseType, unkno
         .attr('dominant-baseline', 'middle')
         .text(d => d.label ?? '')
         .style('font-size', '12px')
-        .style('font-family', 'Micro Yahei')
+        .style('font-family', fontFamily)
         .style('fill', COLOR.label);
 };
 
@@ -1117,7 +1120,7 @@ const addLegend = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, ti
         .attr('y', 0)
         .text(title)
         .style('font-size', '12px')
-        .style('font-family', 'Micro Yahei')
+        .style('font-family', fontFamily)
         .style('fill', COLOR.label);
 
     // 添加渐变色的颜色标签

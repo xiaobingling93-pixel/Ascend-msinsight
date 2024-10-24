@@ -48,6 +48,7 @@ const _getLegendData = (data: string[]): string[] => {
 const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolean, isStatic: boolean, graph: Graph): echarts.EChartsOption => {
     const legendDatas = _getLegendData(graph.columns);
     return {
+        textStyle: getDefaultChartOptions().textStyle,
         title: { text: '' },
         tooltip: {
             trigger: 'axis',

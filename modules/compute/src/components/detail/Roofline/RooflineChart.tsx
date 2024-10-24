@@ -10,6 +10,7 @@ import {
     formatDecimal,
     getLegendStyle,
     useWatchDomResize,
+    getDefaultChartOptions,
 } from 'ascend-utils';
 import i18n from 'ascend-i18n';
 import { cloneDeep } from 'lodash';
@@ -21,6 +22,7 @@ import { LimitHit } from '../../LimitSet';
 import { useTranslation } from 'react-i18next';
 
 const baseOption: any = {
+    textStyle: getDefaultChartOptions().textStyle,
     title: {
         left: 'center',
         textStyle: {

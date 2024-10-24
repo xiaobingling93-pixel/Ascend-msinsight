@@ -22,7 +22,7 @@ import { HelpIcon } from 'ascend-icon';
 import { Layout } from 'ascend-layout';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import { Tooltip } from 'ascend-components';
-import { chartColors, getAdaptiveEchart } from 'ascend-utils';
+import { chartColors, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
 
 interface SummaryDataType {
     [propName: string]: any;
@@ -132,6 +132,7 @@ const baseSeries = [
 ];
 
 const baseOption: any = {
+    textStyle: getDefaultChartOptions().textStyle,
     color: chartColors,
     tooltip: commonEchartsOptions.tooltip,
     legend: {

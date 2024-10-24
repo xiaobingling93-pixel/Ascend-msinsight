@@ -159,8 +159,12 @@ export function disposeAdaptiveEchart(chartDom: HTMLElement): void {
     chart?.dispose();
 }
 
-export const getDefaultChartOptions = (isDark: boolean): any => {
+export const getDefaultChartOptions = (isDark?: boolean): any => {
+    const bodyStyle = getComputedStyle(document.body);
     return {
+        textStyle: {
+            fontFamily: bodyStyle?.fontFamily,
+        },
         tooltip: {
             backgroundColor: isDark ? '#2A2F37' : '#EBEFF6',
             textStyle: {

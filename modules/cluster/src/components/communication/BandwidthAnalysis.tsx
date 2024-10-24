@@ -259,6 +259,7 @@ export interface Distribution {
 }
 
 const bandwidthOption: echarts.EChartsOption = {
+    textStyle: getDefaultChartOptions().textStyle,
     color: chartColors,
     tooltip: {
         ...commonEchartsOptions.tooltip,

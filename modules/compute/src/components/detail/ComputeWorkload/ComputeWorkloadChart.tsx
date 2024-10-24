@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import * as echarts from 'echarts';
 import { useTranslation } from 'react-i18next';
 import { type IblockData } from './Index';
-import { COLOR, getAdaptiveEchart, chartVisbilityListener, safeStr, sortFunc, chartColors } from 'ascend-utils';
+import { COLOR, getAdaptiveEchart, chartVisbilityListener, safeStr, sortFunc, chartColors, getDefaultChartOptions } from 'ascend-utils';
 import { LimitHit } from '../../LimitSet';
 import { CompareData } from '../../../utils/interface';
 import { type Icondition } from './Filter';
@@ -31,6 +31,7 @@ interface Series {
 }
 
 const baseOption = {
+    textStyle: getDefaultChartOptions().textStyle,
     color: chartColors,
     title: {
         text: 'Pipe Utilization',

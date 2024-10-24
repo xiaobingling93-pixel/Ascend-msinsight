@@ -15,7 +15,7 @@ import connector from '../../connection';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import i18n from 'ascend-i18n';
 import { themeInstance } from 'ascend-theme';
-import { safeStr, disposeAdaptiveEchart, getAdaptiveEchart } from 'ascend-utils';
+import { safeStr, disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;
@@ -106,6 +106,7 @@ function getTipLineStr(name: string, value: string): string {
 }
 
 const option: any = {
+    textStyle: getDefaultChartOptions().textStyle,
     tooltip: {
         formatter: function (params: {marker: any; name: any; value: any[] }) {
             let tooltipMarkup = `${params.marker} `;

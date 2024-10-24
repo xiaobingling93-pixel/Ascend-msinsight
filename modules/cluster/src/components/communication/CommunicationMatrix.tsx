@@ -16,7 +16,7 @@ import { queryCommunicationMatrix, queryRanks } from '../../utils/RequestUtils';
 import _, { cloneDeep } from 'lodash';
 import { type Session } from '../../entity/session';
 import CollapsiblePanel from 'ascend-collapsible-panel';
-import { safeStr, disposeAdaptiveEchart, getAdaptiveEchart } from 'ascend-utils';
+import { safeStr, disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
 
 interface FilterInfos {
     min: number;
@@ -165,6 +165,7 @@ function wrapData(dataSource: any, t: TFunction): any {
 }
 
 const baseOption: any = {
+    textStyle: getDefaultChartOptions().textStyle,
     dataZoom: [
         {
             type: 'inside',

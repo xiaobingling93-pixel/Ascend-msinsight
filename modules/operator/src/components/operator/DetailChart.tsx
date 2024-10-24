@@ -74,6 +74,7 @@ const getOption = ({ isDark, title }: { isDark: boolean;title: string }): echart
 };
 
 const baseOption: echarts.EChartsOption = {
+    textStyle: getDefaultChartOptions().textStyle,
     color: chartColors,
     title: {
         textStyle: { },

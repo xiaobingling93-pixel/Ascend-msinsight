@@ -10,7 +10,7 @@ import type { Session } from '../../entity/session';
 import i18n from 'ascend-i18n';
 import { cloneDeep } from 'lodash';
 import CollapsiblePanel from 'ascend-collapsible-panel';
-import { chartColors, getAdaptiveEchart } from 'ascend-utils';
+import { chartColors, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
 
 function InitCharts(data: dataType): void {
     const chartDom = document.getElementById('main');
@@ -40,6 +40,7 @@ function wrapData(data: dataType): any {
 }
 
 const baseOption: any = {
+    textStyle: getDefaultChartOptions().textStyle,
     color: chartColors,
     tooltip: {
         ...commonEchartsOptions.tooltip,

@@ -198,6 +198,7 @@ async function getRankAndBubbleTimeData(stepId: string, stageId: string): Promis
 }
 
 const bandwidthOption: echarts.EChartsOption = {
+    textStyle: getDefaultChartOptions().textStyle,
     color: chartColors,
     tooltip: commonEchartsOptions.tooltip,
     toolbox: {
