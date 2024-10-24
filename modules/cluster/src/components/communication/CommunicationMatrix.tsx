@@ -68,6 +68,7 @@ function InitChart(data: any, t: TFunction): void {
 }
 
 function handleRepeatData(repeatDataToolTip: {[key: string]: string}, data: any[][]): any[][] {
+    // 此处data中每项均为[srcRank, dstRank, value, ...]形式，存在重复value时拼接为[value1,value2,...]形式在通信矩阵中呈现，并以value1作为颜色指标
     return data.reduce((prev: any[][], cur: any[]) => {
         const repeatItem = prev.find((item) => {
             return item[0] === cur[0] && item[1] === cur[1];
@@ -75,9 +76,9 @@ function handleRepeatData(repeatDataToolTip: {[key: string]: string}, data: any[
         if (repeatItem) {
             const repeadKey = `${cur[0]},${cur[1]}`;
             if (repeadKey in repeatDataToolTip) {
-                repeatDataToolTip[repeadKey] = `${repeatDataToolTip[repeadKey]},${cur[2]}`;
+                repeatDataToolTip[repeadKey] = `${repeatItem[2]},${repeatDataToolTip[repeadKey]}`;
             } else {
-                repeatDataToolTip[repeadKey] = `${cur[2]}`;
+                repeatDataToolTip[repeadKey] = `${repeatItem[2]}`;
             }
             repeatItem[2] = cur[2];
             return prev;
