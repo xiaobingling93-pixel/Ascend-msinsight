@@ -60,6 +60,7 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
     std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
+    bool isHeader = true;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
             Timeline::ParserStatus::RUNNING && getline(file, line)) {
         std::stringstream ss(line);
@@ -69,25 +70,28 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
         while (getline(ss, cell, ',')) {
             row.push_back(cell);
         }
-        if (!row.empty() && (row[0] == Dic::NAME || row[0] == Dic::DEVICE_ID)) {
+        if (isHeader) {
+            if (row.empty()) {
+                ServerLog::Error("The first line of operator_memory.csv is not header.");
+                return false;
+            }
             for (size_t i = 0; i < row.size(); i++) {
                 dataMap[row[i]] = i;
             }
-            if (dataMap.size() < operatorTableNum) {
-                ServerLog::Error("The header of the file is incorrect or incomplete. The file path is: " + filePath);
-                file.close();
+            bool columnExist = GetMapValid((row[0] == Dic::NAME ? OPERATOR_CSV : OPERATOR_CSV_MSPROF), dataMap);
+            if (!columnExist) {
                 return false;
             }
-            GetMapValid((row[0] == Dic::NAME ? OPERATOR_CSV : OPERATOR_CSV_MSPROF), dataMap);
-            continue;
+            isHeader = false;
+        } else {
+            // 如果某一行数据个数与表头不一致，则跳过
+            if (dataMap.size() != row.size()) {
+                continue;
+            }
+            Operator opePtr = MemoryParse::mapperToOperatorDetail(dataMap, row);
+            // 读取每一行数据并插入到operator内
+            memoryDatabase->insertOperatorDetail(opePtr);
         }
-        // 如果某一行数据个数与表头不一致，则跳过
-        if (dataMap.size() != row.size()) {
-            continue;
-        }
-        Operator opePtr = MemoryParse::mapperToOperatorDetail(dataMap, row);
-        // 读取每一行数据并插入到operator内
-        memoryDatabase->insertOperatorDetail(opePtr);
     }
     // 读取剩下的数据并插入到operator内
     memoryDatabase->SaveOperatorDetail();
@@ -96,17 +100,18 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
     uint64_t minStartTime = memoryDatabase->QueryMinOperatorAllocationTime();
     Timeline::TraceTime::Instance().UpdateTime(minStartTime, 0);
-    file.close();
     return true;
 }
 
-void MemoryParse::GetMapValid(const std::vector<std::string>& vec, std::map<std::string, size_t> dataMap)
+bool MemoryParse::GetMapValid(const std::vector<std::string>& vec, const std::map<std::string, size_t> &dataMap)
 {
     for (const std::string& col : vec) {
         if (dataMap.find(col) == dataMap.end()) {
-            ServerLog::Warn("The file lacks a parameter column : ", col);
+            ServerLog::Error("The file lacks a parameter column : ", col);
+            return false;
         }
     }
+    return true;
 }
 
 Operator MemoryParse::mapperToOperatorDetail(std::map<std::string, size_t> dataMap, std::vector<std::string> row)
@@ -222,6 +227,7 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
     std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
+    bool isHeader = true;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
            Timeline::ParserStatus::RUNNING && getline(file, line)) {
         std::stringstream ss(line);
@@ -230,24 +236,28 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
         while (getline(ss, cell, ',')) {
             row.push_back(cell);
         }
-        if (!row.empty() && (row[0] == Dic::COMPONENT || row[0] == Dic::DEVICE_ID)) {
+        if (isHeader) {
+            if (row.empty()) {
+                ServerLog::Error("The first line of memory_record.csv is not header.");
+                return false;
+            }
             for (size_t i = 0; i < row.size(); i++) {
                 dataMap[row[i]] = i;
             }
-            if (dataMap.size() < recordTableNum) {
-                ServerLog::Error("The header of the file is incorrect or incomplete. The path is: " + filePath);
-                file.close();
+            bool columnExist = GetMapValid((row[0] == Dic::COMPONENT ? RECORD_CSV : RECORD_CSV_MSPROF), dataMap);
+            if (!columnExist) {
                 return false;
             }
-            GetMapValid((row[0] == Dic::COMPONENT ? RECORD_CSV : RECORD_CSV_MSPROF), dataMap);
-            continue;
+            isHeader = false;
+        } else {
+            // 如果某一行数据个数与表头不一致，则跳过
+            if (row.size() != dataMap.size()) {
+                continue;
+            }
+            Record recordPtr = MemoryParse::mapperToRecordDetail(dataMap, row);
+            // 读取每一行数据并插入到record内
+            database->insertRecordDetail(recordPtr);
         }
-        if (row.size() != dataMap.size()) {
-            continue;
-        }
-        Record recordPtr = MemoryParse::mapperToRecordDetail(dataMap, row);
-        // 读取每一行数据并插入到record内
-        database->insertRecordDetail(recordPtr);
     }
     // 读取剩下的数据并插入到record内
     database->SaveRecordDetail();
@@ -256,7 +266,6 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
     uint64_t minTimestamp = database->QueryMinRecordTimestamp();
     Timeline::TraceTime::Instance().UpdateTime(minTimestamp, 0);
-    file.close();
     return true;
 }
 
@@ -272,6 +281,7 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
     std::ifstream file = FileUtil::OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
+    bool isHeader = true;
     while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
     Timeline::ParserStatus::RUNNING && getline(file, line)) {
         std::stringstream ss(line);
@@ -280,24 +290,28 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
         while (getline(ss, cell, ',')) {
             row.push_back(cell);
         }
-        if (!row.empty() && row[0] == Dic::DEVICE_ID) {
+        if (isHeader) {
+            if (row.empty()) {
+                ServerLog::Error("The first line of static_op_mem.csv is not header.");
+                return false;
+            }
             for (size_t i = 0; i < row.size(); i++) {
                 dataMap[row[i]] = i;
             }
-            if (dataMap.size() < staticOpTableNum) {
-                ServerLog::Error("The header of the file is incorrect or incomplete. The path is: " + filePath);
-                file.close();
+            bool columnExist = GetMapValid(STATIC_OP_MEM_CSV, dataMap);
+            if (!columnExist) {
                 return false;
             }
-            GetMapValid(STATIC_OP_MEM_CSV, dataMap);
-            continue;
+            isHeader = false;
+        } else {
+            // 如果某一行数据个数与表头不一致，则跳过
+            if (row.size() != dataMap.size()) {
+                continue;
+            }
+            StaticOp staticOpPtr = MemoryParse::mapperToStaticOpDetail(dataMap, row);
+            // 读取每一行数据并插入到record内
+            database->insertStaticOpDetail(staticOpPtr);
         }
-        if (row.size() != dataMap.size()) {
-            continue;
-        }
-        StaticOp staticOpPtr = MemoryParse::mapperToStaticOpDetail(dataMap, row);
-        // 读取每一行数据并插入到record内
-        database->insertStaticOpDetail(staticOpPtr);
     }
     // 读取剩下的数据并插入到record内
     database->SaveStaticOpDetail();
@@ -306,7 +320,6 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
     uint64_t minTimestamp = database->QueryMinRecordTimestamp();
     Timeline::TraceTime::Instance().UpdateTime(minTimestamp, 0);
-    file.close();
     return true;
 }
 
