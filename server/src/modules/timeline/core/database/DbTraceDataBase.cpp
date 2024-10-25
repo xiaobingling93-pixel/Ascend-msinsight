@@ -713,7 +713,7 @@ void DbTraceDataBase::QueryTaskTimeInfo(bool isComputing, std::vector<OVERLAP_IN
                 curInfo = info;
                 hasCurInfo = true;
             } else if (info.startNs <= curInfo.endNs) {
-                curInfo.endNs = info.endNs;
+                curInfo.endNs = std::max(info.endNs, curInfo.endNs);
             } else {
                 timeInfoList.emplace_back(curInfo);
                 curInfo = info;
@@ -1245,7 +1245,7 @@ std::unique_ptr<Protocol::UnitTrack> DbTraceDataBase::GenerateBaseUnitTrack(cons
 }
 
 bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
-    std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
+                                           std::vector<std::unique_ptr<Protocol::UnitTrack>> &metaData)
 {
     PROCESS_TYPE types[] = {PROCESS_TYPE::ASCEND_HARDWARE, PROCESS_TYPE::HCCL};
     for (const auto &type : types) {
@@ -1275,10 +1275,8 @@ bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
             auto resultSet = TraceDatabaseHelper::ExecuteQuery(stmt, sql, GetRealRankId(fileId));
             while (resultSet->Next()) {
                 auto thread = GenerateBaseUnitTrack("thread", fileId, process->metaData.processId, "", metaType);
-                thread->metaData.threadId = resultSet->GetString("tid");
-                thread->metaData.threadName = resultSet->GetString("name");
-                thread->metaData.maxDepth = resultSet->GetInt32("maxDepth") + 1;
-                process->children.emplace_back(std::move(thread));
+                std::string threadId = resultSet->GetString("tid");
+                ProcessThreadUnit(process, resultSet, thread, threadId);
             }
         } catch (DatabaseException &e) {
             ServerLog::Error("Query operate metadata, MetaType: ", metaType, " reason: ", e.What());
@@ -1289,6 +1287,22 @@ bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
         }
     }
     return true;
+}
+
+void DbTraceDataBase::ProcessThreadUnit(std::unique_ptr<Protocol::UnitTrack> &process,
+                                        std::unique_ptr<SqliteResultSet> &resultSet,
+                                        std::unique_ptr<Protocol::UnitTrack> &thread,
+                                        const std::string &threadId) const
+{
+    const static std::string WRONG_THREAD_ID = std::to_string(UINT32_MAX);
+    // hccl的plane泳道约定一个异常数据不做展示
+    if (threadId.find(WRONG_THREAD_ID) != std::string::npos) {
+        return;
+    }
+    thread->metaData.threadId = threadId;
+    thread->metaData.threadName = resultSet->GetString("name");
+    thread->metaData.maxDepth = resultSet->GetInt32("maxDepth") + 1;
+    process->children.emplace_back(std::move(thread));
 }
 
 bool DbTraceDataBase::QueryCounterMetadata(const std::string &fileId,

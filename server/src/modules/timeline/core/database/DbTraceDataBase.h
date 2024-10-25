@@ -177,6 +177,9 @@ private:
     std::vector<Protocol::SimpleSlice>
     QueryThreadByPid(const Protocol::Metadata &metaData, uint64_t startTime, uint64_t endTime,
                      const std::string &rankId, std::map<std::string, uint64_t> &selfTimeKeyValue);
+
+    void ProcessThreadUnit(std::unique_ptr<Protocol::UnitTrack> &process, std::unique_ptr<SqliteResultSet> &resultSet,
+                           std::unique_ptr<Protocol::UnitTrack> &thread, const std::string &threadId) const;
 };
 }
 

@@ -3,7 +3,6 @@
  */
 #include <gtest/gtest.h>
 #include "DatabaseTest.cpp"
-#include "Database.h"
 #include "TextTraceDatabase.h"
 
 class TextTraceDatabaseTest : DatabaseTest {
