@@ -355,7 +355,8 @@ def load_version_info(default_version):
 # 创建、修改版本信息文件，文件目录在framework/src/下，文件名为version_info.json
 def create_version_info_file(version, modify_time):
     output_path = os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, Const.SRC_DIR, 'version_info.json')
-    flags = os.O_WRONLY
+    # os.O_WRONLY表示只写入，os.O_CREAT在文件不存在时会创建文件，os.O_TRUNC会清空原文件内容
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
     mode = stat.S_IWUSR
     with os.fdopen(os.open(output_path, flags, mode), "w") as f:
         data = {'version': version, 'modifyTime': modify_time}
