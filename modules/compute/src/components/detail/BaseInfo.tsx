@@ -45,10 +45,6 @@ const getAllLabellist = (t: TFunction): Ilabel[] => {
             key: 'name',
         },
         {
-            label: t('Soc'),
-            key: 'soc',
-        },
-        {
             label: `${t('Duration')} (μs)`,
             key: 'duration',
         },
