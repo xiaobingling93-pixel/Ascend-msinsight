@@ -19,7 +19,7 @@ public:
         command = Protocol::REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH;
     };
     ~QueryMemoryStaticOperatorGraphHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
     bool GetCompareGraph(VirtualMemoryDataBase *database, VirtualMemoryDataBase *databaseBaseline,
         MemoryStaticOperatorGraphRequest &request, std::unique_ptr<MemoryStaticOperatorGraphResponse> &responsePtr,

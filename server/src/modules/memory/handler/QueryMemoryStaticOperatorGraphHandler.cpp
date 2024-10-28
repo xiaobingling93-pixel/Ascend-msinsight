@@ -14,7 +14,7 @@ namespace Dic {
 namespace Module {
 namespace Memory {
 using namespace Dic::Server;
-void QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     MemoryStaticOperatorGraphRequest &request =
             dynamic_cast<MemoryStaticOperatorGraphRequest &>(*requestPtr.get());
@@ -26,31 +26,31 @@ void QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg)) {
         SendResponse(std::move(responsePtr), false, errorMsg);
-        return;
+        return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!request.params.isCompare) {
         if (!database->QueryStaticOperatorGraph(request.params, response.data)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory static operator graph data.");
-            return;
+            return false;
         }
     } else {
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
         if (baselineId == "") {
             SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
-            return;
+            return false;
         }
         auto databaseBaseline = DataBaseManager::Instance().GetMemoryDatabase(baselineId);
         if (!databaseBaseline) {
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
-            return;
+            return false;
         }
         if (!GetCompareGraph(database, databaseBaseline, request, responsePtr, session)) {
-            return;
+            return false;
         }
     }
-    // add response to response queue in session
     SendResponse(std::move(responsePtr), true);
+    return true;
 }
 
 bool QueryMemoryStaticOperatorGraphHandler::GetCompareGraph(VirtualMemoryDataBase *database,

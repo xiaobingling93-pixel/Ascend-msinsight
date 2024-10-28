@@ -22,7 +22,7 @@ namespace Dic::Module::Operator {
 
         ~QueryOpStatisticInfoHandler() override = default;
 
-        void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+        bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
     private:
         std::vector<Protocol::OperatorStatisticCmpInfoRes> GetCmpDataVec(std::string &group, OpStaticResVec &base,
                                                                          OpStaticResVec &cmp);

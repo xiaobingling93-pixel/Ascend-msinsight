@@ -19,7 +19,7 @@ public:
     }
     ~MemoryRequestHandler() override = default;
 
-    void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override {}
+    bool HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override { return true; }
 };
 } // end of namespace Memory
 } // end of namespace Module

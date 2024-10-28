@@ -13,7 +13,7 @@
 namespace Dic::Module::Operator {
     using namespace Dic::Server;
 
-    void QueryOpMoreInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+    bool QueryOpMoreInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     {
         OperatorMoreInfoRequest &request = dynamic_cast<OperatorMoreInfoRequest &>(*requestPtr);
         WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -24,7 +24,7 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to check request parameter in query op more info.");
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
-            return;
+            return false;
         }
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
@@ -32,10 +32,11 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to query More Info by rankId.");
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
-            return;
+            return false;
         }
         SetResponseResult(response, true);
         session.OnResponse(std::move(responsePtr));
+        return true;
     }
 
     bool QueryOpMoreInfoHandler::CheckRequestParam(OperatorMoreInfoReqParams& params)

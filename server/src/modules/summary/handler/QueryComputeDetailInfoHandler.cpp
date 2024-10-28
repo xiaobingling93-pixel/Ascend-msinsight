@@ -9,7 +9,7 @@ namespace Dic {
 namespace Module {
 namespace Summary {
 using namespace Dic::Server;
-void QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     ComputeDetailRequest &request = dynamic_cast<ComputeDetailRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -22,7 +22,7 @@ void QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Requ
         ServerLog::Error("[Operator]Failed to check request parameter.", errorMsg);
         SetResponseResult(response, false, errorMsg);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(request.params.rankId);
     if (!database->QueryComputeOpDetail(request.params, response.computeDetails) or
@@ -30,11 +30,12 @@ void QueryComputeDetailInfoHandler::HandleRequest(std::unique_ptr<Protocol::Requ
         ServerLog::Warn("Query compute detail or query total num is failed");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Summary

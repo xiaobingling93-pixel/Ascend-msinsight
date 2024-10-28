@@ -13,7 +13,7 @@ namespace Module {
 namespace Source {
 using namespace Dic::Server;
 
-void QueryCodeFileHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryCodeFileHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SourceCodeFileRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -24,13 +24,14 @@ void QueryCodeFileHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
         ServerLog::Error("Parameter of command ", request.command, "is invaild, error:", errMsg);
         SetResponseResult(response, false, errMsg, ErrorCode::REQUEST_PARAMS_ERROR);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     const std::string &fileContent = SourceFileParser::Instance().GetSourceByName(request.params.sourceName);
     response.body.fileContent = fileContent;
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Source

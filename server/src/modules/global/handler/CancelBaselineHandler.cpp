@@ -10,7 +10,7 @@ namespace Module {
 using namespace Dic::Server;
 using namespace Global;
 
-void Dic::Module::CancelBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
+bool Dic::Module::CancelBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     auto &request = dynamic_cast<BaselineCancelRequest &>(*requestPtr.get());
     std::unique_ptr<BaselineCancelResponse> responsePtr = std::make_unique<BaselineCancelResponse>();
@@ -18,7 +18,7 @@ void Dic::Module::CancelBaselineHandler::HandleRequest(std::unique_ptr<Request> 
     SetBaseResponse(request, response);
     BaselineManagerService::ResetBaseline();
     SendResponse(std::move(responsePtr), true);
+    return true;
 }
-
 }
 }

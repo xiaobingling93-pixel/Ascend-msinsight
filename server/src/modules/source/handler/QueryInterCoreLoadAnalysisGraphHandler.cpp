@@ -11,7 +11,7 @@
 namespace Dic::Module::Source {
 using namespace Dic::Server;
 
-void QueryInterCoreLoadAnalysisGraphHandler::HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr)
+bool QueryInterCoreLoadAnalysisGraphHandler::HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<DetailsInterCoreLoadGraphRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -24,5 +24,6 @@ void QueryInterCoreLoadAnalysisGraphHandler::HandleRequest(std::unique_ptr<Dic::
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return result;
 }
 }

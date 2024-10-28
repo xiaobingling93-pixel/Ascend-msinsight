@@ -10,7 +10,7 @@
 
 namespace Dic::Module::Summary {
 
-void SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SetParallelStrategyRequest &>(*requestPtr);
     std::unique_ptr<SetParallelStrategyResponse> responsePtr = std::make_unique<SetParallelStrategyResponse>();
@@ -24,8 +24,11 @@ void SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::R
         response.result = false;
         SetResponseResult(response, false);
         ServerLog::Error("Failed to update parallel strategy config.");
+        session.OnResponse(std::move(responsePtr));
+        return false;
     }
 
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 }

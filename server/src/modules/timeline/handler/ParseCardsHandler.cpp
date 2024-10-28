@@ -10,7 +10,7 @@
 namespace Dic::Module::Timeline {
 using namespace Dic;
 using namespace Dic::Server;
-void Dic::Module::Timeline::ParseCardsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool Dic::Module::Timeline::ParseCardsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     ParseCardsRequest &request = dynamic_cast<ParseCardsRequest &>(*requestPtr.get());
     for (const auto &item : request.params.cards) {
@@ -34,5 +34,6 @@ void Dic::Module::Timeline::ParseCardsHandler::HandleRequest(std::unique_ptr<Pro
     WsSession &session = *WsSessionManager::Instance().GetSession();
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 }

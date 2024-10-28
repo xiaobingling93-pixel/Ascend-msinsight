@@ -19,7 +19,7 @@ public:
         command = Protocol::REQ_RES_MEMORY_OPERATOR;
     };
     ~QueryMemoryOperatorHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
     bool CompareOperator(VirtualMemoryDataBase *database, VirtualMemoryDataBase *databaseBaseline,
         MemoryOperatorRequest &request, std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr,

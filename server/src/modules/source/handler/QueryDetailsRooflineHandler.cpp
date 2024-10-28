@@ -9,7 +9,7 @@
 namespace Dic::Module::Source {
 using namespace Dic::Server;
 
-void QueryDetailsRooflineHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryDetailsRooflineHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<DetailsRooflineRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -27,5 +27,6 @@ void QueryDetailsRooflineHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return result;
 }
 }

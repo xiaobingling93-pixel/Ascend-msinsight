@@ -9,7 +9,7 @@ namespace Dic {
 namespace Module {
 namespace Summary {
 using namespace Dic::Server;
-void QueryCommunicationDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryCommunicationDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     CommunicationDetailRequest &request = dynamic_cast<CommunicationDetailRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -21,7 +21,7 @@ void QueryCommunicationDetailHandler::HandleRequest(std::unique_ptr<Protocol::Re
         ServerLog::Error("[Operator]Failed to check request parameter.", errorMsg);
         SetResponseResult(response, false, errorMsg);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(request.params.rankId);
     if (!database->QueryCommunicationOpDetail(request.params, response.commDetails) or
@@ -29,11 +29,11 @@ void QueryCommunicationDetailHandler::HandleRequest(std::unique_ptr<Protocol::Re
         ServerLog::Warn("query communication detail or get total num is failed");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     SetResponseResult(response, true);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Summary

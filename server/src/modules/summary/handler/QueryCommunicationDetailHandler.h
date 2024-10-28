@@ -18,7 +18,7 @@ public:
         command = Protocol::REQ_RES_COMMUNICATION_DETAIL;
     }
     ~QueryCommunicationDetailHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 
 } // Summary

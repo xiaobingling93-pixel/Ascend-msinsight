@@ -12,7 +12,7 @@ namespace Module {
 namespace Source {
 using namespace Dic::Server;
 
-void QueryDetailsMemoryTableHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryDetailsMemoryTableHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<DetailsMemoryTableRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -24,12 +24,13 @@ void QueryDetailsMemoryTableHandler::HandleRequest(std::unique_ptr<Protocol::Req
         ServerLog::Error("Parameter of command ", request.command, " is invaild, error:", errMsg);
         SetResponseResult(response, false, errMsg, ErrorCode::REQUEST_PARAMS_ERROR);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     bool result = DetailsService::QueryMemoryTable(request, response);
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 }
 }

@@ -14,7 +14,7 @@ namespace Communication {
 using namespace Dic;
 using namespace Dic::Server;
 
-void DistributionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool DistributionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     Protocol::DistributionDataRequest &request =
             dynamic_cast<Protocol::DistributionDataRequest &>(*requestPtr.get());
@@ -23,18 +23,16 @@ void DistributionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     DistributionResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession();
-    // query data
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryDistributionData(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication distribution data.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
-    // send msg
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // Communication
 } // Module

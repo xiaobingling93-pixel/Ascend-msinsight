@@ -11,7 +11,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     UnitThreadTracesRequest &request = dynamic_cast<UnitThreadTracesRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -24,20 +24,20 @@ void QueryThreadTracesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     if (renderEngine == nullptr) {
         ServerLog::Error("Query thread traces Failed to render.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     int64_t trackId = TrackInfoManager::Instance().GetTrackId(request.params.cardId, request.params.processId,
         request.params.threadId);
 
     renderEngine->QueryThreadTraces(request.params, response.body, minTimestamp, trackId);
     SetResponseResult(response, true);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // Timeline
 } // Module

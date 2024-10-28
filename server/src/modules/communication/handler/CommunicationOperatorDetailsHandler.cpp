@@ -14,7 +14,7 @@ namespace Communication {
 using namespace Dic;
 using namespace Dic::Server;
 
-void CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     Protocol::OperatorDetailsRequest &request =
             dynamic_cast<Protocol::OperatorDetailsRequest &>(*requestPtr.get());
@@ -32,9 +32,10 @@ void CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication operator data.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // Communication
 } // Module

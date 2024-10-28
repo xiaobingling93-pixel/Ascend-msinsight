@@ -9,7 +9,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     SearchCountRequest &request = dynamic_cast<SearchCountRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -41,8 +41,8 @@ void SearchCountHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         response.body.totalCount = searchResult.count;
     }
     SetResponseResult(response, true);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Timeline

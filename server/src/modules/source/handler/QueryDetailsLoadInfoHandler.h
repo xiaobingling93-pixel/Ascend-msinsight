@@ -17,7 +17,7 @@ public:
         command = Protocol::REQ_RES_DETAILS_COMPUTE_LOAD_INFO;
     }
     ~QueryDetailsLoadInfoHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 }
 }

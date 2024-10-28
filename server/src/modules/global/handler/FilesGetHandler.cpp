@@ -10,7 +10,7 @@ namespace Dic {
 namespace Module {
 namespace Global {
 using namespace Dic::Server;
-void FilesGetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
+bool FilesGetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     FilesGetRequest &request = dynamic_cast<FilesGetRequest &>(*requestPtr.get());
     ServerLog::Info("Files get start");
@@ -24,8 +24,8 @@ void FilesGetHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
                                      response.body.childrenFiles,
                                      response.body.exist);
     SetResponseResult(response, true);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // Global
 } // Module

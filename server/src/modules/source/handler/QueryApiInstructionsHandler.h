@@ -20,7 +20,7 @@ public:
 
     ~QueryApiInstructionsHandler() override = default;
 
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 } // Source
 } // Module

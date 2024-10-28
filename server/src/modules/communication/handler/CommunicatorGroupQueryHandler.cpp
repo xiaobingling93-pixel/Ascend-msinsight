@@ -11,22 +11,24 @@
 namespace Dic::Module::Communication {
 using namespace Dic::Server;
 using namespace Dic::Protocol;
-void CommunicatorGroupQueryHandler::HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr)
+bool CommunicatorGroupQueryHandler::HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<Protocol::CommunicatorGroupRequest &>(*requestPtr);
     std::unique_ptr<Protocol::CommunicatorGroupResponse> responsePtr =
             std::make_unique<Protocol::CommunicatorGroupResponse>();
     CommunicatorGroupResponse &response = *responsePtr;
     SetBaseResponse(request, response);
-    // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession();
     SetResponseResult(response, true);
     auto database = Module::Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
     if (!database->QueryCommunicationGroup(response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Communication CommunicationGroupQueryHandler Failed");
+        session.OnResponse(std::move(responsePtr));
+        return false;
     }
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // end of namespace Communication
 // end of namespace Module

@@ -18,7 +18,7 @@ public:
         async = false;
     }
     ~SummaryRequestHandler() override = default;
-    void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override {}
+    bool HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override { return true; }
 };
 } // end of namespace Summary
 } // end of namespace Module

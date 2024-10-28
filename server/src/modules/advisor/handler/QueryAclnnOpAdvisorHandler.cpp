@@ -10,7 +10,7 @@
 
 namespace Dic::Module::Advisor {
 using namespace Dic::Server;
-void QueryAclnnOpAdvisorHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryAclnnOpAdvisorHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<AclnnOperatorRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -24,14 +24,15 @@ void QueryAclnnOpAdvisorHandler::HandleRequest(std::unique_ptr<Protocol::Request
         ServerLog::Error(error);
         SetResponseResult(response, false, error);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     if (!AclnnOpAdvisor::Process(request.params, response.body)) {
         ServerLog::Error("Failed to Query Aclnn Operator Advice");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // Dic::Module::Advisor

@@ -10,7 +10,7 @@
 
 namespace Dic::Module::Advisor {
 using namespace Dic::Server;
-void QueryAiCpuOpAdviceHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryAiCpuOpAdviceHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<AICpuOperatorRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -24,14 +24,15 @@ void QueryAiCpuOpAdviceHandler::HandleRequest(std::unique_ptr<Protocol::Request>
         ServerLog::Error(error);
         SetResponseResult(response, false, error);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     if (!AICpuOpAdvisor::Process(request.params, response.body)) {
         ServerLog::Error("Failed to Query AI CPU Operator Advice");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // Dic::Module::Advisor

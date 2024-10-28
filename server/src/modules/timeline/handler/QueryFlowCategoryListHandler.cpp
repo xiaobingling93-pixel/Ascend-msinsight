@@ -9,7 +9,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     FlowCategoryListRequest &request = dynamic_cast<FlowCategoryListRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -21,12 +21,12 @@ void QueryFlowCategoryListHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         ServerLog::Error("Query flow category list failed to get connection. ");
         SetResponseResult(response, true);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     bool result = database->QueryFlowCategoryList(response.body.category, request.params.rankId);
     SetResponseResult(response, result);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return result;
 }
 
 } // Timeline

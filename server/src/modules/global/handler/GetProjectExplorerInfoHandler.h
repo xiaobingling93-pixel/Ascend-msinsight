@@ -18,7 +18,7 @@ public:
     }
     ~GetProjectExplorerInfoHandler() override = default;
 
-    void HandleRequest(std::unique_ptr<Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Request> requestPtr) override;
 };
 } // end of namespace Module
 } // Dic

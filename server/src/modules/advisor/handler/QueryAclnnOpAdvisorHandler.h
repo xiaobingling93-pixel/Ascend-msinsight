@@ -16,7 +16,7 @@ public:
         command = Protocol::REQ_RES_ADVISOR_ACLNN_OPERATORS;
     }
     ~QueryAclnnOpAdvisorHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 
 } // Dic::Module::Advisor

@@ -11,7 +11,7 @@ namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
 
-void QueryEventsViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryEventsViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     EventsViewRequest &request = dynamic_cast<EventsViewRequest &>(*requestPtr.get());
 
@@ -24,22 +24,24 @@ void QueryEventsViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     SetResponseResult(response, true);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query events view failed to get connection.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     if (!database->QueryEventsViewData(request.params, responsePtr->body,
         TraceTime::Instance().GetStartTime())) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get events view table response data.");
+        session.OnResponse(std::move(responsePtr));
+        return false;
     }
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // end of namespace Timeline
 } // end of namespace Module

@@ -10,7 +10,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryFlowCategoryEventsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryFlowCategoryEventsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     FlowCategoryEventsRequest &request = dynamic_cast<FlowCategoryEventsRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -23,17 +23,17 @@ void QueryFlowCategoryEventsHandler::HandleRequest(std::unique_ptr<Protocol::Req
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     if (renderEngine == nullptr) {
         ServerLog::Error("Query flow events Failed to render.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     bool result = renderEngine->QueryFlowCategoryEvents(request.params, minTimestamp, response.body.flowDetailList);
     SetResponseResult(response, result);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return result;
 }
 } // Timeline
 } // Module

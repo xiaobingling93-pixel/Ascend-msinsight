@@ -14,7 +14,7 @@ namespace Communication {
 using namespace Dic;
 using namespace Dic::Server;
 
-void OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     OperatorNamesRequest &request = dynamic_cast<OperatorNamesRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -26,11 +26,11 @@ void OperatorNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get operator names response data.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     SetResponseResult(response, true);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Communication

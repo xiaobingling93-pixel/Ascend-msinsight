@@ -10,7 +10,7 @@ namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
 
-void QueryKernelDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryKernelDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     KernelDetailsRequest &request = dynamic_cast<KernelDetailsRequest &>(*requestPtr.get());
     std::unique_ptr<KernelDetailsResponse> responsePtr = std::make_unique<KernelDetailsResponse>();
@@ -22,7 +22,7 @@ void QueryKernelDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     if (database == nullptr) {
         ServerLog::Error("Query kernel detail failed to get connection. ");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     std::string error;
     request.params.Check(error);
@@ -30,14 +30,16 @@ void QueryKernelDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         ServerLog::Warn(error);
         SetResponseResult(response, false, error);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     if (!database->QueryKernelDetailData(request.params, response.body, TraceTime::Instance().GetStartTime())) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get kernel detail response data.");
+        session.OnResponse(std::move(responsePtr));
+        return false;
     }
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // Timeline
 } // Module

@@ -13,7 +13,7 @@ namespace Module {
 namespace Source {
 using namespace Dic::Server;
 
-void QueryDetailsBaseInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryDetailsBaseInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SourceDetailBaseInfoRequest &>(*requestPtr);
     std::unique_ptr<DetailsBaseInfoResponse> responsePtr = std::make_unique<DetailsBaseInfoResponse>();
@@ -22,7 +22,7 @@ void QueryDetailsBaseInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     bool compareDataRes = SourceFileParser::Instance().GetDetailsBaseInfo(response.body.compare, false);
     if (!compareDataRes) {
         SendResponse(std::move(responsePtr), false, "Get detail base info error", ErrorCode::UNKNOW_ERROR);
-        return;
+        return false;
     }
 
     // 如果设置了对比状态，但是获取基线数据失败，则打印警告日志，但不影响前端返回（只返回了对比数据）
@@ -30,6 +30,7 @@ void QueryDetailsBaseInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reques
         ServerLog::Warn("Get baseline details base info fail.");
     }
     SendResponse(std::move(responsePtr), true);
+    return true;
 }
 }
 }

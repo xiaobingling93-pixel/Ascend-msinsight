@@ -11,7 +11,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryThreadDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryThreadDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     ThreadDetailRequest &request = dynamic_cast<ThreadDetailRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -21,16 +21,17 @@ void QueryThreadDetailHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query thread detail failed to get connection.");
+        SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     int64_t trackId = TrackInfoManager::Instance()
         .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
     bool result = database->QueryThreadDetail(request.params, response.body, TraceTime::Instance().GetStartTime(),
                                               trackId);
     SetResponseResult(response, result);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return result;
 }
 
 } // Timeline

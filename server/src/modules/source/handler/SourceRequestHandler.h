@@ -18,7 +18,7 @@ public:
         async = false;
     }
     ~SourceRequestHandler() override = default;
-    void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override {}
+    bool HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override { return true; }
 };
 } // end of namespace Source
 } // end of namespace Module

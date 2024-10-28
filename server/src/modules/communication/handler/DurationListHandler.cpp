@@ -13,7 +13,7 @@ namespace Module {
 namespace Communication {
 using namespace Dic;
 using namespace Dic::Server;
-void DurationListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool DurationListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     DurationListRequest &request = dynamic_cast<DurationListRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -25,11 +25,11 @@ void DurationListHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication duration list data.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     SetResponseResult(response, true);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Communication

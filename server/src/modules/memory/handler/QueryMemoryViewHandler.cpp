@@ -12,7 +12,7 @@ namespace Dic {
 namespace Module {
 namespace Memory {
 using namespace Dic::Server;
-void QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     MemoryViewRequest &request = dynamic_cast<MemoryViewRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -22,36 +22,37 @@ void QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg)) {
         SendResponse(std::move(responsePtr), false, errorMsg);
-        return;
+        return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!request.params.isCompare) {
         uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
         if (!database->QueryMemoryView(request.params, response.data, offsetTime)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory view data.");
-            return;
+            return false;
         }
     } else {
         if (request.params.type == Protocol::MEMORY_STREAM_GROUP) {
             SendResponse(std::move(responsePtr), false, "Memory comparing does not support request type Stream.");
-            return;
+            return false;
         }
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
         if (baselineId == "") {
             SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
-            return;
+            return false;
         }
         auto databaseBaseline = DataBaseManager::Instance().GetMemoryDatabase(baselineId);
         if (!databaseBaseline) {
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
-            return;
+            return false;
         }
         if (!GetCompareGraph(database, databaseBaseline, request, responsePtr, session)) {
-            return;
+            SendResponse(std::move(responsePtr), false, "Failed to get compare graph.");
+            return false;
         }
     }
-    // add response to response queue in session
     SendResponse(std::move(responsePtr), true);
+    return true;
 }
 
 bool QueryMemoryViewHandler::GetCompareGraph(VirtualMemoryDataBase *database, VirtualMemoryDataBase *databaseBaseline,

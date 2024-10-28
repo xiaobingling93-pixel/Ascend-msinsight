@@ -11,7 +11,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     UnitThreadsOperatorsRequest &request = dynamic_cast<UnitThreadsOperatorsRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -24,13 +24,14 @@ void QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Re
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     auto db = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (db == nullptr) {
         ServerLog::Error("Query threads same operator failed to get connection.");
+        SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     int64_t trackId = TrackInfoManager::Instance()
             .GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
@@ -39,6 +40,7 @@ void QueryThreadsSameOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Re
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return result;
 }
 
 } // Timeline

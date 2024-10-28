@@ -10,7 +10,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryUnitCounterHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryUnitCounterHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     UnitCounterRequest &request = dynamic_cast<UnitCounterRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -23,18 +23,18 @@ void QueryUnitCounterHandler::HandleRequest(std::unique_ptr<Protocol::Request> r
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query unit counter failed to get connection.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     bool result = database->QueryUnitCounter(request.params, minTimestamp, response.body.data);
     SetResponseResult(response, result);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return result;
 }
 } // end of namespace Timeline
 } // end of namespace Module

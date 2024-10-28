@@ -10,7 +10,7 @@
 
 namespace Dic::Module::Summary {
 using namespace Dic::Server;
-void QueryParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<QueryParallelStrategyRequest &>(*requestPtr.get());
     std::unique_ptr<QueryParallelStrategyResponse> responsePtr = std::make_unique<QueryParallelStrategyResponse>();
@@ -22,7 +22,10 @@ void QueryParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol:
     if (!database->QueryParallelStrategyConfig(response.config, response.level)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to query parallel strategy config.");
+        session.OnResponse(std::move(responsePtr));
+        return false;
     }
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 }

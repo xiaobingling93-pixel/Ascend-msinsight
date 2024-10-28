@@ -17,7 +17,7 @@ public:
         command = Protocol::REQ_RES_MEMORY_TYPE;
     };
     ~QueryMemoryTypeHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 } // end of namespace Memory
 } // end of namespace Module

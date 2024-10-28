@@ -13,7 +13,7 @@ namespace Module {
 namespace Communication {
 using namespace Dic;
 using namespace Dic::Server;
-void RanksHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool RanksHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     {
         RanksRequest &request = dynamic_cast<RanksRequest &>(*requestPtr.get());
         WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -25,11 +25,11 @@ void RanksHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
             SetResponseResult(response, false);
             ServerLog::Error("Failed to get ranks response data.");
             session.OnResponse(std::move(responsePtr));
-            return;
+            return false;
         }
         SetResponseResult(response, true);
-        // add response to response queue in session
         session.OnResponse(std::move(responsePtr));
+        return true;
     }
 
 } // Communication

@@ -10,7 +10,7 @@
 
 namespace Dic::Module::Advisor {
 using namespace Dic::Server;
-void QueryAffinityAPIAdvice::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryAffinityAPIAdvice::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<AffinityAPIRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -24,14 +24,15 @@ void QueryAffinityAPIAdvice::HandleRequest(std::unique_ptr<Protocol::Request> re
         ServerLog::Error(error);
         SetResponseResult(response, false, error);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     if (!AffinityAPIAdvisor::Process(request.params, response.body)) {
         ServerLog::Error("Failed to Query Affinity API Advice for rank ", request.params.rankId);
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // Dic::Module::Advisor

@@ -17,7 +17,7 @@ public:
         command = Protocol::REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH;
     };
     ~MatrixListHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 } // end of namespace Communication
 } // end of namespace Module

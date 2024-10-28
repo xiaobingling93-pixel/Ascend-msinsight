@@ -23,7 +23,7 @@ std::unordered_map<std::string, unsigned long long> FILE_MAX_SIZE = {
 };
 }
 
-void Dic::Module::CheckProjectValidHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
+bool Dic::Module::CheckProjectValidHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     auto &request = dynamic_cast<ProjectCheckValidRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -36,8 +36,8 @@ void Dic::Module::CheckProjectValidHandler::HandleRequest(std::unique_ptr<Reques
         response.body.result = static_cast<int>(error);
     }
     SetResponseResult(response, true);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 bool Dic::Module::CheckProjectValidHandler::CheckRequestParamsValid(ProjectCheckParams &params, ProjectErrorType &error)

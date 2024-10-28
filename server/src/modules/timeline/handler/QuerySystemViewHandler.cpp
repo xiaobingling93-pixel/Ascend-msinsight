@@ -10,7 +10,7 @@ namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
 
-void QuerySystemViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QuerySystemViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     SystemViewRequest &request = dynamic_cast<SystemViewRequest &>(*requestPtr.get());
 
@@ -23,14 +23,14 @@ void QuerySystemViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     SetResponseResult(response, true);
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query system view failed to get connection.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     if (!database->QuerySystemViewData(request.params, response.body)) {
         SetResponseResult(response, false);
@@ -41,10 +41,13 @@ void QuerySystemViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         if (!database->QuerySystemViewData(request.params, response.body)) {
             SetResponseResult(response, false);
             ServerLog::Error("Failed to get timeline table response data.");
+            session.OnResponse(std::move(responsePtr));
+            return false;
         }
     }
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Timeline

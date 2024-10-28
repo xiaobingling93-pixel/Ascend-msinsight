@@ -10,7 +10,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     SearchSliceRequest &request = dynamic_cast<SearchSliceRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -24,18 +24,18 @@ void SearchSliceHandler::HandleRequest(std::unique_ptr<Protocol::Request> reques
         ServerLog::Error("Search slice can't find rankId.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     if (!database->SearchSliceName(request.params, request.params.index - 1,
                                    TraceTime::Instance().GetStartTime(), response.body)) {
         ServerLog::Error("Failed to search slice name.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     SetResponseResult(response, true);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Timeline

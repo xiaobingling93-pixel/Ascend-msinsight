@@ -21,7 +21,7 @@ public:
         command = Protocol::REQ_RES_SUMMARY_QUERY_TOP_DATA;
     };
     ~SummaryTopRankHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
     int numberThousands = 1000;
 };

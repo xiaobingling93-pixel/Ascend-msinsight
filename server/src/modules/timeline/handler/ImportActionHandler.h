@@ -22,7 +22,7 @@ public:
         async = false;
     };
     ~ImportActionHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 
 private:
     static void SendParseFailEvent(const std::string &message);

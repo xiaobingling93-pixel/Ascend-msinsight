@@ -11,7 +11,7 @@ namespace Module {
 using namespace Dic::Server;
 using namespace Global;
 
-void SetBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
+bool SetBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     auto &request = dynamic_cast<BaselineSettingRequest &>(*requestPtr.get());
     std::unique_ptr<BaselineSettingResponse> responsePtr = std::make_unique<BaselineSettingResponse>();
@@ -20,7 +20,7 @@ void SetBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     if (request.params.projectName.empty() || request.params.filePath.empty()) {
         response.body.errorMessage = "Set baseline failed, project name or filepath can't be empty!";
         SendResponse(std::move(responsePtr), false);
-        return;
+        return false;
     }
     BaselineInfo baselineInfo;
     bool res =
@@ -30,6 +30,7 @@ void SetBaselineHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
     response.body.errorMessage = baselineInfo.errorMessage;
     response.body.cardName = baselineInfo.cardName;
     SendResponse(std::move(responsePtr), res);
+    return res;
 }
 } // end of namespace Module
 } // Dic

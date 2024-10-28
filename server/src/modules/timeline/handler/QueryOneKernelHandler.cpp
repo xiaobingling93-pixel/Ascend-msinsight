@@ -12,7 +12,7 @@ namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
 
-void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     KernelRequest &request = dynamic_cast<KernelRequest &>(*requestPtr.get());
     std::unique_ptr<OneKernelResponse> responsePtr = std::make_unique<OneKernelResponse>();
@@ -21,17 +21,17 @@ void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     SetBaseResponse(request, response);
     uint64_t minTimestamp = TraceTime::Instance().GetStartTime();
     std::string warnMsg;
+    SetResponseResult(response, false);
     if (!request.params.CheckParams(minTimestamp, warnMsg)) {
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
-    SetResponseResult(response, true);
     if (request.projectName.empty()) {
         ServerLog::Error("project name is empty");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
@@ -39,18 +39,17 @@ void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
         if (database == nullptr) {
             ServerLog::Error("Query one kernel failed to get connection.");
             session.OnResponse(std::move(responsePtr));
-            return;
+            return false;
         }
     }
     if (!database->QueryKernelDepthAndThread(request.params, response.body, TraceTime::Instance().GetStartTime())) {
-        SetResponseResult(response, false);
         ServerLog::Error("Failed to query the operator response data.");
     }
 
     // 判断是否具备集群数据并且包含集群文件
     if (!Global::ProjectExplorerManager::Instance().IsClusterData(request.projectName)) {
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
 
     // 根据通信算子name,startTime查询step、group
@@ -58,16 +57,18 @@ void QueryOneKernelHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
     if (database == nullptr) {
         ServerLog::Error("Query one kernel failed to get cluster connection.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     if (!clusterDatabase->QueryIterationAndCommunicationGroup(request.params, response.body,
         TraceTime::Instance().GetStartTime())) {
-        SetResponseResult(response, false);
         ServerLog::Error("Failed to query the operator group and step response data.");
+        session.OnResponse(std::move(responsePtr));
+        return false;
     }
 
-    // add response to response queue in session
+    SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Timeline

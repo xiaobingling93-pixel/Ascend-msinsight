@@ -19,7 +19,7 @@ public:
         command = Protocol::REQ_RES_MEMORY_VIEW;
     };
     ~QueryMemoryViewHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
     bool GetCompareGraph(VirtualMemoryDataBase *database, VirtualMemoryDataBase *databaseBaseline,
         MemoryViewRequest &request, std::unique_ptr<MemoryViewResponse> &responsePtr, Server::WsSession &session);

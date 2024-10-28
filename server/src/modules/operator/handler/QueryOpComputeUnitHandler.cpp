@@ -11,7 +11,7 @@
 namespace Dic::Module::Operator {
     using namespace Dic::Server;
 
-    void QueryOpComputeUnitHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+    bool QueryOpComputeUnitHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     {
         OperatorComputeUnitInfoRequest &request = dynamic_cast<OperatorComputeUnitInfoRequest &>(*requestPtr);
         WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -22,7 +22,7 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to check request parameter in Query Compute Unit Info.");
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
-            return;
+            return false;
         }
         std::string rankId = Summary::VirtualSummaryDataBase::GetFileIdFromCombinationId(request.params.rankId);
         auto database = Timeline::DataBaseManager::Instance().GetSummaryDatabase(rankId);
@@ -30,10 +30,11 @@ namespace Dic::Module::Operator {
             ServerLog::Error("[Operator]Failed to query Compute Unit Info by rankId.");
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
-            return;
+            return false;
         }
         SetResponseResult(response, true);
         session.OnResponse(std::move(responsePtr));
+        return true;
     }
 
     bool QueryOpComputeUnitHandler::CheckRequestParam(OperatorDurationReqParams params)

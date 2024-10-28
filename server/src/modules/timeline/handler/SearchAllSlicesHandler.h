@@ -17,7 +17,7 @@ public:
         command = Protocol::REQ_RES_SEARCH_ALL_SLICES;
     };
     ~SearchAllSlicesHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 } // end of namespace Timeline
 } // end of namespace Module

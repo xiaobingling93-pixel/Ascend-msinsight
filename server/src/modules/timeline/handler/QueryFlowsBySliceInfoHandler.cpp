@@ -10,7 +10,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     UnitFlowsRequest &request = dynamic_cast<UnitFlowsRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -23,13 +23,13 @@ void QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reque
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Query flows by slice info failed to get connection. ");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     uint64_t trackId =
         TrackInfoManager::Instance().GetTrackId(request.params.rankId, request.params.pid, request.params.tid);
@@ -44,6 +44,7 @@ void QueryFlowsBySliceInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reque
     SetResponseResult(response, result);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return result;
 }
 } // Timeline
 } // Module

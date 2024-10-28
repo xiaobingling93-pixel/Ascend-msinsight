@@ -13,7 +13,7 @@ namespace Module {
 namespace Communication {
 using namespace Dic;
 using namespace Dic::Server;
-void IterationsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool IterationsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     IterationsRequest &request = dynamic_cast<IterationsRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -25,11 +25,11 @@ void IterationsHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get iterations response data.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     SetResponseResult(response, true);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Communication

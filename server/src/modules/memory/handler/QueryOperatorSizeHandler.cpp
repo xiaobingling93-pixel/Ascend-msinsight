@@ -9,7 +9,7 @@ namespace Dic {
 namespace Module {
 namespace Memory {
 using namespace Dic::Server;
-void QueryOperatorSizeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryOperatorSizeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     MemoryOperatorSizeRequest &request = dynamic_cast<MemoryOperatorSizeRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -19,15 +19,15 @@ void QueryOperatorSizeHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg)) {
         SendResponse(std::move(responsePtr), false, errorMsg);
-        return;
+        return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!database->QueryOperatorSize(response.size.minSize, response.size.maxSize, request.params.rankId)) {
         SendResponse(std::move(responsePtr), false, "Failed to query operator size data.");
-        return;
+        return false;
     }
-    // add response to response queue in session
     SendResponse(std::move(responsePtr), true);
+    return true;
 }
 
 } // end of namespace Memory

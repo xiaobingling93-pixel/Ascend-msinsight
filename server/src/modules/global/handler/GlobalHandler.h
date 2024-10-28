@@ -18,7 +18,7 @@ public:
         moduleName = MODULE_GLOBAL;
     }
     ~GlobalHandler() override = default;
-    void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override {}
+    bool HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override { return true; }
 };
 } // end of namespace Module
 } // end of namespace Dic

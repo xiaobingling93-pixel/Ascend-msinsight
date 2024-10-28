@@ -15,7 +15,7 @@ public:
         command = Protocol::REQ_RES_SUMMARY_SET_PARALLEL_STRATEGY;
     }
     ~SetParallelStrategyConfigHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 }
 

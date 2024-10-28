@@ -13,7 +13,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void RemoteDeleteHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool RemoteDeleteHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     RemoteDeleteRequest &request = dynamic_cast<RemoteDeleteRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -24,8 +24,8 @@ void RemoteDeleteHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     TraceFileSimulationParser::Instance().DeleteParseFiles(request.params.rankId);
     GetUpdateTime(response.body);
     SetResponseResult(response, true);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 void RemoteDeleteHandler::GetUpdateTime(RemoteDeleteBody &body)

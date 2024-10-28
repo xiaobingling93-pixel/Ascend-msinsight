@@ -21,7 +21,7 @@ public:
         command = Protocol::REQ_RES_COMMUNICATION_OPERATOR_DETAILS;
     };
     ~CommunicationOperatorDetailsHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 } // end of namespace Communication
 } // end of namespace Module

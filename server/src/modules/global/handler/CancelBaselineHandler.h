@@ -16,7 +16,7 @@ public:
 
     ~CancelBaselineHandler() override = default;
 
-    void HandleRequest(std::unique_ptr<Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Request> requestPtr) override;
 };
 }
 }

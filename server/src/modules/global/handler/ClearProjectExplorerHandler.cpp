@@ -13,7 +13,7 @@ namespace Module {
 using namespace Dic::Server;
 using namespace Global;
 
-void ClearProjectExplorerHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
+bool ClearProjectExplorerHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     auto &request = dynamic_cast<ProjectExplorerInfoClearRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -27,8 +27,8 @@ void ClearProjectExplorerHandler::HandleRequest(std::unique_ptr<Request> request
     // 清空db
     bool res = ProjectExplorerManager::Instance().ClearProjectExplorer();
     SetResponseResult(response, res);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return res;
 }
 } // end of namespace Module
 } // Dic

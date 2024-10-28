@@ -17,7 +17,7 @@ public:
         command = REQ_RES_FILES_GET;
     }
     ~FilesGetHandler() override = default;
-    void HandleRequest(std::unique_ptr<Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Request> requestPtr) override;
 };
 } // Global
 } // Module

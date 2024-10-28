@@ -9,7 +9,7 @@ namespace Dic {
 namespace Module {
 namespace Summary {
 using namespace Dic::Server;
-void StepHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool StepHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     PipelineStepRequest &request = dynamic_cast<PipelineStepRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -21,8 +21,11 @@ void StepHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     if (!database->GetStepIdList(response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get step response data.");
+        session.OnResponse(std::move(responsePtr));
+        return false;
     }
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // end of namespace Summary

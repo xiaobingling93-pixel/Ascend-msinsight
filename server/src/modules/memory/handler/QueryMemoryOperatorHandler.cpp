@@ -15,7 +15,7 @@ namespace Dic {
 namespace Module {
 namespace Memory {
 using namespace Dic::Server;
-void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     MemoryOperatorRequest &request = dynamic_cast<MemoryOperatorRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -27,7 +27,7 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg, minTimeStamp)) {
         SendResponse(std::move(responsePtr), false, errorMsg);
-        return;
+        return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!request.params.isCompare) {
@@ -35,7 +35,7 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
         if (!database->QueryOperatorDetail(request.params, response.columnAttr, opDetails) or
         !database->QueryOperatorsTotalNum(request.params, response.totalNum)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory operator data.");
-            return;
+            return false;
         }
         for (const auto &item: opDetails) {
             MemoryOperatorComparison element = {item, {}, {}};
@@ -44,24 +44,25 @@ void QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
     } else {
         if (request.params.type == Protocol::MEMORY_STREAM_GROUP) {
             SendResponse(std::move(responsePtr), false, "Memory comparing does not support request type Stream.");
-            return;
+            return false;
         }
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
         if (baselineId == "") {
             SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
-            return;
+            return false;
         }
         auto databaseBaseline = DataBaseManager::Instance().GetMemoryDatabase(baselineId);
         if (!databaseBaseline) {
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
-            return;
+            return false;
         }
         if (!CompareOperator(database, databaseBaseline, request, responsePtr, session)) {
-            return;
+            return false;
         }
     }
     // add response to response queue in session
     SendResponse(std::move(responsePtr), true);
+    return true;
 }
 
 bool QueryMemoryOperatorHandler::CompareOperator(VirtualMemoryDataBase *database,

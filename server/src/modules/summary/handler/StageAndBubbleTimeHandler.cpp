@@ -9,7 +9,7 @@ namespace Dic {
 namespace Module {
 namespace Summary {
 using namespace Dic::Server;
-void StageAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool StageAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     PipelineStageTimeRequest &request = dynamic_cast<PipelineStageTimeRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -21,8 +21,11 @@ void StageAndBubbleTimeHandler::HandleRequest(std::unique_ptr<Protocol::Request>
     if (!database->GetStageAndBubble(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get time response data.");
+        session.OnResponse(std::move(responsePtr));
+        return false;
     }
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // end of namespace Summary

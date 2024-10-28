@@ -16,7 +16,7 @@ namespace Timeline {
 using namespace Dic;
 using namespace Dic::Server;
 
-void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     ImportActionRequest &request = dynamic_cast<ImportActionRequest &>(*requestPtr.get());
     ServerLog::Info("Import action request handler start");
@@ -29,22 +29,23 @@ void ImportActionHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
 
     if (request.params.projectAction == ProjectActionEnum::ADD_FILE) {
         if (!request.params.ConvertToRealPath(warnMsg) || !ImportFile(request, warnMsg)) {
             SetResponseResult(response, false, warnMsg);
             session.OnResponse(std::move(responsePtr));
-            return;
+            return false;
         }
     } else if (request.params.projectAction == ProjectActionEnum::TRANSFER_PROJECT) {
         if (!TransferProject(request)) {
             SetResponseResult(response, false);
             session.OnResponse(std::move(responsePtr));
-            return;
+            return false;
         }
     }
+    return true;
 }
 
 void ImportActionHandler::SendParseFailEvent(const std::string &message)

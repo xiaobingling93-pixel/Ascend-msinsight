@@ -18,7 +18,7 @@ public:
         async = false;
     }
     ~CommunicationRequestHandler() override = default;
-    void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override {}
+    bool HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override { return true; }
 };
 } // end of namespace Communication
 } // end of namespace Module

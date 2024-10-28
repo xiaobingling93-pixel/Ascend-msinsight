@@ -13,7 +13,7 @@ namespace Module {
 namespace Source {
 using namespace Dic::Server;
 
-void QueryDetailsLoadInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryDetailsLoadInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SourceDetailsLoadInfoRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -22,8 +22,8 @@ void QueryDetailsLoadInfoHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     SetBaseResponse(request, response);
     bool result = DetailsService::QueryDetailsLoadInfo(request, response);
     SetResponseResult(response, result);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return result;
 }
 }
 }

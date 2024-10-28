@@ -17,7 +17,7 @@ public:
         command = Protocol::REQ_RES_DETAILS_BASE_INFO;
     }
     ~QueryDetailsBaseInfoHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 }
 }

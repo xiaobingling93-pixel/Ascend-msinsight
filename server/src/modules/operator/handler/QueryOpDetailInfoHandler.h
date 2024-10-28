@@ -20,7 +20,7 @@ namespace Dic::Module::Operator {
 
         ~QueryOpDetailInfoHandler() override = default;
 
-        void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+        bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
     private:
         bool HandleCompareDataRequest(OperatorDetailInfoRequest &request,
                                       OperatorDetailInfoResponse &response);

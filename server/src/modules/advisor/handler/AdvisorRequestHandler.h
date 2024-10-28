@@ -16,7 +16,7 @@ public:
         async = false;
     }
     ~AdvisorRequestHandler() override = default;
-    void HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override {}
+    bool HandleRequest(std::unique_ptr<Dic::Protocol::Request> requestPtr) override { return true; }
 };
 } // Advisor
 

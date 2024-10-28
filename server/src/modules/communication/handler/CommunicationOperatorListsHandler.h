@@ -19,7 +19,7 @@ public:
         command = Protocol::REQ_RES_COMMUNICATION_OPERATOR_LISTS;
     }
     ~CommunicationOperatorListsHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 
 } // Dic

@@ -12,7 +12,7 @@ namespace Communication {
 using namespace Dic;
 using namespace Dic::Server;
 
-void MatrixListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool MatrixListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     ServerLog::Info("request to Communication Matrix List");
     MatrixBandwidthRequest &request =
@@ -29,8 +29,11 @@ void MatrixListHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
     if (!database->QueryMatrixList(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get matrix response data.");
+        session.OnResponse(std::move(responsePtr));
+        return false;
     }
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // Communication
 } // Module

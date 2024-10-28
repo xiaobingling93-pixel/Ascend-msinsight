@@ -16,7 +16,7 @@ public:
     ModuleRequestHandler() = default;
     virtual ~ModuleRequestHandler() = default;
     virtual const std::string GetError();
-    virtual void HandleRequest(std::unique_ptr<Request> requestPtr) = 0;
+    virtual bool HandleRequest(std::unique_ptr<Request> requestPtr) = 0;
     virtual bool IsAsync();
 
 public:

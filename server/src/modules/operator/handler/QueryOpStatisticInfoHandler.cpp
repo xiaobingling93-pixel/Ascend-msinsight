@@ -88,7 +88,7 @@ namespace {
 namespace Dic::Module::Operator {
     using namespace Dic::Server;
 
-    void QueryOpStatisticInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+    bool QueryOpStatisticInfoHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     {
         OperatorStatisticInfoRequest &request = dynamic_cast<OperatorStatisticInfoRequest &>(*requestPtr);
         WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -106,6 +106,7 @@ namespace Dic::Module::Operator {
         SetBaseResponse(request, response);
         SetResponseResult(response, rst);
         session.OnResponse(std::move(responsePtr));
+        return rst;
     }
 
     bool QueryOpStatisticInfoHandler::HandleCompareDataRequest(OperatorStatisticInfoRequest &request,

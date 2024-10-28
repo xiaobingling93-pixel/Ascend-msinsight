@@ -10,7 +10,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void QueryThreadTracesSummaryHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryThreadTracesSummaryHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     UnitThreadTracesSummaryRequest &request = dynamic_cast<UnitThreadTracesSummaryRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -23,19 +23,19 @@ void QueryThreadTracesSummaryHandler::HandleRequest(std::unique_ptr<Protocol::Re
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.cardId);
     if (database == nullptr) {
         ServerLog::Error("Query thread traces summary failed to get connection.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     bool result = database->QueryThreadTracesSummary(request.params, response.body,
                                                      minTimestamp);
     SetResponseResult(response, result);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return result;
 }
 
 } // Timeline

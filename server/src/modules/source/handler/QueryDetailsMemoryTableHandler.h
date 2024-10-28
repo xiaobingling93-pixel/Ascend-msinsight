@@ -16,7 +16,7 @@ public:
         command = Protocol::REQ_RES_DETAILS_COMPUTE_MEMORY_TABLE;
     }
     ~QueryDetailsMemoryTableHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 }
 }

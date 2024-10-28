@@ -9,7 +9,7 @@ namespace Dic {
 namespace Module {
 namespace Summary {
 using namespace Dic::Server;
-void StageHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool StageHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     PipelineStageRequest &request = dynamic_cast<PipelineStageRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -21,8 +21,11 @@ void StageHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     if (!database->GetStages(request.params, response.body)) {
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get stage response data.");
+        session.OnResponse(std::move(responsePtr));
+        return false;
     }
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // end of namespace Summary

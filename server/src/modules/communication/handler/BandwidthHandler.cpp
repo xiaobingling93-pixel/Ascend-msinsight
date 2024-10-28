@@ -14,16 +14,14 @@ namespace Communication {
 using namespace Dic;
 using namespace Dic::Server;
 
-void BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
-    Protocol::BandwidthDataRequest &request =
-            dynamic_cast<Protocol::BandwidthDataRequest &>(*requestPtr.get());
+    Protocol::BandwidthDataRequest &request = dynamic_cast<Protocol::BandwidthDataRequest &>(*requestPtr.get());
     std::unique_ptr<Protocol::BandwidthDataResponse> responsePtr =
             std::make_unique<Protocol::BandwidthDataResponse>();
     BandwidthDataResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
-    // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession();
 
     auto database = Timeline::DataBaseManager::Instance().GetReadClusterDatabase();
@@ -31,9 +29,10 @@ void BandwidthHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestP
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get communication bandwidth data.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // Communication
 } // Module

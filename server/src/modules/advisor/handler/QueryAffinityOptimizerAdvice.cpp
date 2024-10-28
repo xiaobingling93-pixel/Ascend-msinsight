@@ -10,7 +10,7 @@
 
 namespace Dic::Module::Advisor {
 using namespace Dic::Server;
-void QueryAffinityOptimizerAdvice::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryAffinityOptimizerAdvice::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<AffinityOptimizerRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -23,16 +23,17 @@ void QueryAffinityOptimizerAdvice::HandleRequest(std::unique_ptr<Protocol::Reque
         ServerLog::Error(error);
         SetResponseResult(response, false, error);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     if (!AffinityOptimizerAdvisor::Process(request.params, response.body)) {
         ServerLog::Error("Failed to Query Affinity Optimizer Advice");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
 
     SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // Dic::Module::Advisor

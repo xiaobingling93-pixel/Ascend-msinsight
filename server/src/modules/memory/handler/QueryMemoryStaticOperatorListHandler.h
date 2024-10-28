@@ -17,7 +17,7 @@ public:
         command = Protocol::REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST;
     };
     ~QueryMemoryStaticOperatorListHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
     bool CompareOperator(VirtualMemoryDataBase *database, VirtualMemoryDataBase *databaseBaseline,
         MemoryStaticOperatorListRequest &request, std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr,

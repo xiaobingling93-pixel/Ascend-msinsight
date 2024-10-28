@@ -19,7 +19,7 @@ namespace Dic::Module::Operator {
 
         ~QueryOpMoreInfoHandler() override = default;
 
-        void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+        bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 
         bool CheckRequestParam(OperatorMoreInfoReqParams& params);
     };

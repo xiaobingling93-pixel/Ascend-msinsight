@@ -10,7 +10,7 @@ namespace Dic {
 namespace Module {
 namespace Memory {
     using namespace Dic::Server;
-    void QueryMemoryResourceTypeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+    bool QueryMemoryResourceTypeHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
     {
         MemoryResourceTypeRequest &request = dynamic_cast<MemoryResourceTypeRequest &>(*requestPtr.get());
         WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -20,15 +20,16 @@ namespace Memory {
         std::string errorMsg;
         if (!CheckStrParamValid(request.rankId, errorMsg)) {
             SendResponse(std::move(responsePtr), false, errorMsg);
-            return;
+            return false;
         }
         auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.rankId);
         if (!database->QueryMemoryResourceType(response.type)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory resource type data.");
-            return;
+            return false;
         }
         // add response to response queue in session
         SendResponse(std::move(responsePtr), true);
+        return true;
     }
 } // end of namespace Memory
 } // end of namespace Module

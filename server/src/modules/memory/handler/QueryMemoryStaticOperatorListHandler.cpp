@@ -12,7 +12,7 @@ namespace Dic {
 namespace Module {
 namespace Memory {
 using namespace Dic::Server;
-void QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     MemoryStaticOperatorListRequest &request =
             dynamic_cast<MemoryStaticOperatorListRequest &>(*requestPtr.get());
@@ -24,7 +24,7 @@ void QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
     std::string errorMsg;
     if (!request.params.CommonCheck(errorMsg)) {
         SendResponse(std::move(responsePtr), false, errorMsg);
-        return;
+        return false;
     }
     auto database = Timeline::DataBaseManager::Instance().GetMemoryDatabase(request.params.rankId);
     if (!request.params.isCompare) {
@@ -32,7 +32,7 @@ void QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
         if (!database->QueryStaticOperatorList(request.params, response.columnAttr, opDetails) or
             !database->QueryStaticOperatorsTotalNum(request.params, response.totalNum)) {
             SendResponse(std::move(responsePtr), false, "Failed to query memory static operator data.");
-            return;
+            return false;
         }
         for (const auto &item: opDetails) {
             StaticOperatorCompItem element = {item, {}, {}};
@@ -42,19 +42,20 @@ void QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
         if (baselineId == "") {
             SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
-            return;
+            return false;
         }
         auto databaseBaseline = DataBaseManager::Instance().GetMemoryDatabase(baselineId);
         if (!databaseBaseline) {
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
-            return;
+            return false;
         }
         if (!CompareOperator(database, databaseBaseline, request, responsePtr, session)) {
-            return;
+            SendResponse(std::move(responsePtr), false, "Failed to compare operator.");
+            return false;
         }
     }
-    // add response to response queue in session
     SendResponse(std::move(responsePtr), true);
+    return true;
 }
 
 bool QueryMemoryStaticOperatorListHandler::CompareOperator(VirtualMemoryDataBase *database,

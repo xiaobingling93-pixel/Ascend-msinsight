@@ -17,7 +17,7 @@ public:
         command = Protocol::REQ_RES_SOURCE_CODE_FILE;
     }
     ~QueryCodeFileHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 };
 
 } // Source

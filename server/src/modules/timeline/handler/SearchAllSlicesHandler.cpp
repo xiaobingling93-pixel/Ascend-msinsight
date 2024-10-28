@@ -10,7 +10,7 @@ namespace Dic {
 namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
-void SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     SearchAllSlicesRequest &request = dynamic_cast<SearchAllSlicesRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -22,25 +22,25 @@ void SearchAllSlicesHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
         ServerLog::Warn(warnMsg);
         SetResponseResult(response, false, warnMsg);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     auto database = DataBaseManager::Instance().GetTraceDatabase(request.params.rankId);
     if (database == nullptr) {
         ServerLog::Error("Failed to get search all slices  connection.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     if (!database->SearchAllSlicesDetails(request.params, response.body, TraceTime::Instance().GetStartTime())) {
         ServerLog::Error("Failed to search slice details.");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
 
     SetResponseResult(response, true);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Timeline

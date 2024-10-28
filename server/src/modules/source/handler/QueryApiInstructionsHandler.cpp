@@ -13,7 +13,7 @@ namespace Module {
 namespace Source {
 using namespace Dic::Server;
 
-void QueryApiInstructionsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryApiInstructionsHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SourceApiInstrRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -26,6 +26,7 @@ void QueryApiInstructionsHandler::HandleRequest(std::unique_ptr<Protocol::Reques
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Source

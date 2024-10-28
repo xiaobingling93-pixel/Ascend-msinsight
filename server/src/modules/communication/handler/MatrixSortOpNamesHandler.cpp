@@ -14,7 +14,7 @@ namespace Communication {
 using namespace Dic;
 using namespace Dic::Server;
 
-void MatrixSortOpNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool MatrixSortOpNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     MatrixSortOpNamesRequest &request = dynamic_cast<MatrixSortOpNamesRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -26,11 +26,11 @@ void MatrixSortOpNamesHandler::HandleRequest(std::unique_ptr<Protocol::Request> 
         SetResponseResult(response, false);
         ServerLog::Error("Failed to get matrix sort op names response data.");
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     SetResponseResult(response, true);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Communication

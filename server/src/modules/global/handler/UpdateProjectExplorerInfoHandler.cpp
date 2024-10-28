@@ -11,7 +11,7 @@ namespace Module {
 using namespace Dic::Server;
 using namespace Global;
 
-void UpdateProjectExplorerInfoHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
+bool UpdateProjectExplorerInfoHandler::HandleRequest(std::unique_ptr<Request> requestPtr)
 {
     auto &request = dynamic_cast<ProjectExplorerInfoUpdateRequest &>(*requestPtr.get());
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -22,8 +22,8 @@ void UpdateProjectExplorerInfoHandler::HandleRequest(std::unique_ptr<Request> re
     bool res = ProjectExplorerManager::Instance().UpdateProjectName(request.params.oldProjectName,
                                                                     request.params.newProjectName);
     SetResponseResult(response, res);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return res;
 }
 } // end of namespace Module
 } // Dic

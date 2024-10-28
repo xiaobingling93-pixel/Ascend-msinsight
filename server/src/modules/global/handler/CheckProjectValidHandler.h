@@ -24,7 +24,7 @@ public:
     }
     ~CheckProjectValidHandler() override = default;
 
-    void HandleRequest(std::unique_ptr<Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Request> requestPtr) override;
 private:
     static bool CheckRequestParamsValid(ProjectCheckParams &params, ProjectErrorType &error);
     static bool CheckProjectFileSize(const std::vector<std::string>& filePathList);

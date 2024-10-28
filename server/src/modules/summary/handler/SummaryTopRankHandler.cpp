@@ -14,7 +14,7 @@ namespace Summary {
 using namespace Dic;
 using namespace Dic::Server;
 
-void SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     SummaryTopRankRequest &request = dynamic_cast<SummaryTopRankRequest &>(*requestPtr.get());
     std::unique_ptr<SummaryTopRankResponse> responsePtr = std::make_unique<SummaryTopRankResponse>();
@@ -37,12 +37,13 @@ void SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
         ServerLog::Warn("Query summary data or query base info is failed");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 } // Timeline
 } // Module

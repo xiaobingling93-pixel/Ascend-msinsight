@@ -13,7 +13,7 @@ namespace Module {
 namespace Source {
 using namespace Dic::Server;
 
-void QueryApiLineHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
+bool QueryApiLineHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
 {
     auto &request = dynamic_cast<SourceApiLineRequest &>(*requestPtr);
     WsSession &session = *WsSessionManager::Instance().GetSession();
@@ -24,7 +24,7 @@ void QueryApiLineHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         ServerLog::Error("Parameter of command ", request.command, "is invaild, error:", errMsg);
         SetResponseResult(response, false, errMsg, ErrorCode::REQUEST_PARAMS_ERROR);
         session.OnResponse(std::move(responsePtr));
-        return;
+        return false;
     }
     const std::vector<SourceFileLine> &lines = SourceFileParser::Instance().GetApiLinesByCoreAndSource(
         request.params.coreName, request.params.sourceName);
@@ -46,8 +46,8 @@ void QueryApiLineHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
     }
     response.body.lines = lineResArray;
     SetResponseResult(response, true);
-    // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    return true;
 }
 
 } // Source

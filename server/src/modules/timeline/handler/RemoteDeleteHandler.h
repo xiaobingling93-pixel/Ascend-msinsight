@@ -18,7 +18,7 @@ public:
         async = false;
     };
     ~RemoteDeleteHandler() override = default;
-    void HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 
 private:
     static void GetUpdateTime(RemoteDeleteBody &body);
