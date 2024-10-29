@@ -96,7 +96,7 @@ async function findInCommunication(session: Session): Promise<void> {
     if (!session.selectedData) {
         return;
     }
-    const { startTime: timestamp, name, cardId: rankId } = session.selectedData;
+    const { originalStartTime: timestamp, name, cardId: rankId } = session.selectedData;
     const params = {
         rankId,
         name,

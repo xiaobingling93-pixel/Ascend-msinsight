@@ -215,6 +215,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     }
                     return {
                         startTime: data.startTime - timestampOffset,
+                        originalStartTime: data.startTime,
                         duration: data.duration,
                         name: data.name,
                         type: data.name,
