@@ -111,6 +111,7 @@ private:
     static Protocol::MemoryTable ParseJsonToMemoryTable(const json_t &json);
     static Protocol::UtilizationRate ParseJsonToUtilizationRate(const json_t &json);
     static Protocol::DetailsBaseInfoResBody ParseJsonToBaseInfo(const document_t &json);
+    static uint64_t CalculateTotalSize(std::vector<std::pair<int64_t, int64_t>> &filePos);
 
     std::unique_ptr<ThreadPool> threadPool;
     const int maxThreadNum = 4;

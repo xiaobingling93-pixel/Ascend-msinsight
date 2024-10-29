@@ -84,7 +84,17 @@ bool SourceFileParser::ParseDataBlocks(std::ifstream &file, std::map<int, std::v
         uint8_t dataType;
         uint8_t paddingLength;
 
+        auto fileSize = FileUtil::GetFileSize(filePath.c_str());
+        if (fileSize <= 0) {
+            ServerLog::Error("Get bin file size failed : ", fileSize);
+            return false;
+        }
         file.read(reinterpret_cast<char *>(&dataSize), dataSizeLen);
+        if (dataSize > static_cast<uint64_t>(fileSize)) {
+            ServerLog::Error("The size of data block is greater than bin file size : ", dataSize);
+            return false;
+        }
+
         file.read(reinterpret_cast<char *>(&dataType), dataTypeLen);
         file.read(reinterpret_cast<char *>(&paddingLength), paddingLen);
         dataType = static_cast<int>(dataType);
@@ -109,7 +119,7 @@ bool SourceFileParser::ParseDataBlocks(std::ifstream &file, std::map<int, std::v
             ServerLog::Error("Parse source file failed, source file is invalid.");
             return false;
         }
-        if (dataSize > INT64_MAX - startPos || startPos + dataSize - paddingLength > INT64_MAX) {
+        if (dataSize > static_cast<uint64_t>(INT64_MAX - startPos) || startPos + dataSize - paddingLength > INT64_MAX) {
             // 溢出防护
             ServerLog::Error("Data block in selected file is invalid which data size is :", dataSize);
             return false;
@@ -171,13 +181,14 @@ bool SourceFileParser::InitParser(const std::string &fileId)
 
     // 计算待解析的文件大小
     uint64_t totalSize = 0;
-    for (const auto &pos : adjustTraceFilePos) {
-        totalSize += (pos.second - pos.first);
-        if ((pos.second - pos.first) > UINT64_MAX - totalSize) {
-            ServerLog::Error("Addition overflowed, source file is too large.");
+    if (!adjustTraceFilePos.empty()) {
+        totalSize = CalculateTotalSize(adjustTraceFilePos);
+        if (totalSize == 0) {
+            ServerLog::Error("Failed to calculate total size of data block.");
             return false;
         }
     }
+
     instance.fileProgressMap[fileId] = std::make_unique<FileProgress>(0, totalSize);
 
     std::shared_ptr<std::vector<std::future<void>>> futures = std::make_shared<std::vector<std::future<void>>>();
@@ -187,6 +198,26 @@ bool SourceFileParser::InitParser(const std::string &fileId)
     }
     instance.threadPool->AddTask(EndParseTask, fileId, futures);
     return true;
+}
+
+uint64_t SourceFileParser::CalculateTotalSize(std::vector<std::pair<int64_t, int64_t>> &filePos)
+{
+    // 计算待解析的文件大小
+    uint64_t totalSize = 0;
+    for (const auto &pos : filePos) {
+        int64_t size = pos.second - pos.first;
+        if (size <= 0) {
+            ServerLog::Error("End position of data block should be greater than start position.");
+            return 0;
+        }
+        if (static_cast<uint64_t>(size) > UINT64_MAX - totalSize) {
+            ServerLog::Error("Addition overflowed, source file is too large.");
+            return 0;
+        }
+        totalSize += size;
+    }
+
+    return totalSize;
 }
 
 void SourceFileParser::EndParseTask(const std::string &fileId, std::shared_ptr<std::vector<std::future<void>>> futures)
