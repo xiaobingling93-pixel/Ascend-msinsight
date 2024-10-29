@@ -10,6 +10,11 @@ describe('test function safeStr', () => {
         expect(safeStr(unSafeText)).toBe('This is unsafe &#x2F; &quot; &#39; &amp; &lt;div&gt;div&lt;&#x2F;div&gt;');
     });
 
+    it('test input number', () => {
+        const num = 100;
+        expect(safeStr(num)).toBe('100');
+    });
+
     it('test ignore', () => {
         const unSafeText = 'This is unsafe / " \' & <div>div</div>';
         expect(safeStr(unSafeText, '')).toBe('This is unsafe &#x2F; &quot; &#39; &amp; &lt;div&gt;div&lt;&#x2F;div&gt;');

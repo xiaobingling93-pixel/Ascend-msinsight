@@ -184,6 +184,9 @@ const escapeHTML = (input: string): string => {
 
 
 export const safeStr = (val: string | number, ignore?: string): string => {
+    if (typeof val === 'number') {
+        return val.toString();
+    }
     if (typeof val !== 'string') {
         return '';
     }
