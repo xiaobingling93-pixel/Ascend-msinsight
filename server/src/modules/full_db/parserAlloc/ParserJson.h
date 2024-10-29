@@ -22,6 +22,8 @@ public:
     ProjectTypeEnum GetProjectType(const std::vector<std::string> &dataPath) final;
     std::vector<std::string> GetParseFileByImportFile(const std::string &importFile, ProjectTypeEnum projectTypeEnum,
         std::string &error) final;
+protected:
+    bool CheckParseFileInfoSize(const Global::ParseFileInfo &parseFileInfo, std::vector<std::string> &jsonFiles) const;
 
 private:
     std::vector<std::string> FindAllTraceFile(const std::string &path, std::string &error);

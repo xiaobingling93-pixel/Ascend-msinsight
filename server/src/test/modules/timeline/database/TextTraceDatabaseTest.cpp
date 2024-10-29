@@ -15,6 +15,43 @@ TEST_F(DatabaseTest, OpenDb)
     database.OpenDb("tttt", true);
     database.CloseDb();
 }
+
+/**
+ * db路径有日志注入
+ */
+TEST_F(DatabaseTest, TestOpenDbWithPathInject)
+{
+    std::recursive_mutex sqlMutex;
+    Dic::Module::Database database(sqlMutex);
+    bool result = database.OpenDb("tt>>>><<</\tt", true);
+    EXPECT_EQ(result, false);
+    database.CloseDb();
+}
+
+/**
+ * db路径超过最大限制
+ */
+TEST_F(DatabaseTest, TestOpenDbWithPathLengthExceedLimit)
+{
+    std::recursive_mutex sqlMutex;
+    Dic::Module::Database database(sqlMutex);
+    std::string dbPath;
+    int lengthLimit = 0;
+#ifdef _WIN32
+    const uint32_t WIN_FILE_WRONG_LENGTH = 261;
+    lengthLimit = WIN_FILE_WRONG_LENGTH;
+#else
+    const uint32_t LINUX_FILE_WRONG_LENGTH = 4097;
+    lengthLimit = LINUX_FILE_WRONG_LENGTH;
+#endif
+    for (int i = 0; i < lengthLimit; ++i) {
+        dbPath += "a";
+    }
+    bool result = database.OpenDb(dbPath, true);
+    EXPECT_EQ(result, false);
+    database.CloseDb();
+}
+
 TEST_F(DatabaseTest, InitStmt)
 {
     std::recursive_mutex sqlMutex;

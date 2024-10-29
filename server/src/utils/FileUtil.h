@@ -309,7 +309,7 @@ public:
         }
         // 从profiler_info_文件获取
         for (const auto &file: files) {
-            std::regex rankIdFileRegex("profiler_info_[0-9]{1,5}.json");
+            std::regex rankIdFileRegex(PROFILER_INFO_FILE_REG);
             if (std::regex_match(file, rankIdFileRegex)) {
                 int index = file.find_last_of('_');
                 int index2 = file.find_last_of('.');

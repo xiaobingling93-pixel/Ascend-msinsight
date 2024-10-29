@@ -17,12 +17,16 @@
 #include "BaselineManager.h"
 #include "ProjectExplorerManager.h"
 #include "TraceTime.h"
+#include "FileReader.h"
 #include "ParserJson.h"
 
 namespace Dic {
 namespace Module {
 using namespace Timeline;
-ParserJson::ParserJson() {}
+ParserJson::ParserJson()
+{
+    fileReader = std::make_unique<FileReader>();
+}
 
 ParserJson::~ParserJson() {}
 
@@ -111,7 +115,7 @@ std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(
     for (const auto &project : projectInfos) {
         for (const auto &parseFileInfo : project.parseFilePathInfos) {
             std::vector<std::string> jsonFiles = GetJsonFileUnderFolder(parseFileInfo.parseFilePath);
-            if (jsonFiles.empty()) {
+            if (!CheckParseFileInfoSize(parseFileInfo, jsonFiles)) {
                 continue;
             }
             std::string fileId = GetFileId(jsonFiles[0], parseFileInfo.parseFilePath);
@@ -120,6 +124,31 @@ std::map<std::string, std::vector<std::string>> ParserJson::GetRankListMap(
         }
     }
     return rankToTraceMap;
+}
+
+bool ParserJson::CheckParseFileInfoSize(const Global::ParseFileInfo &parseFileInfo,
+    vector<std::string> &jsonFiles) const
+{
+    if (jsonFiles.empty()) {
+        return false;
+    }
+    if (jsonFiles.size() > JSON_FILE_COUNT_LIMIT) {
+        ServerLog::Warn("The number of json fragments in the ",
+            StringUtil::GetPrintAbleString(parseFileInfo.parseFilePath), " exceeds ",
+            std::to_string(JSON_FILE_COUNT_LIMIT));
+        return false;
+    }
+    int64_t jsonFileSize = 0;
+    for (const auto &item : jsonFiles) {
+        int64_t singleJsonFileSize = fileReader->GetFileSize(item);
+        if (singleJsonFileSize > JSON_MAX_FILE_SIZE || singleJsonFileSize + jsonFileSize > JSON_MAX_FILE_SIZE) {
+            ServerLog::Warn("The file size in the ", StringUtil::GetPrintAbleString(parseFileInfo.parseFilePath),
+                            " exceeds ", std::to_string(JSON_MAX_FILE_SIZE));
+            return false;
+        }
+        jsonFileSize += singleJsonFileSize;
+    }
+    return true;
 }
 
 std::vector<std::string> ParserJson::GetJsonFileUnderFolder(const std::string &path)
@@ -377,8 +406,8 @@ void ParserJson::FindAscendFolder(const std::string &path, std::vector<std::stri
 {
     std::string traceFilePath = FileUtil::SplicePath(path, ASCEND_PROFILER_OUTPUT);
     traceFilePath = FileUtil::SplicePath(traceFilePath, "trace_view.json");
-    // 检查traceFilePath是否存在
-    if (FileUtil::CheckDirAccess(traceFilePath, 0)) {
+    // 检查traceFilePath是否存在且合法
+    if (FileUtil::CheckFileValid(traceFilePath)) {
         traceFiles.emplace_back(traceFilePath);
         return;
     }

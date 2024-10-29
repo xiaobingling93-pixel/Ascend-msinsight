@@ -41,12 +41,26 @@ bool Database::CreateDbIfNotExist(const std::string &dbPath)
 
 bool Database::OpenDb(const std::string &dbPath, bool clearAllTable)
 {
+    if (!StringUtil::ValidateStringParam(dbPath)) {
+        ServerLog::Error("DB path contains illegal character. Illegal characters are: " +
+                         StringUtil::GetIllegalCharacter() + " and newline character.");
+        return false;
+    }
     if (!FileUtil::CheckFilePathLength(dbPath)) {
-        ServerLog::Error("This db path is illegal.Db path:", dbPath);
+        ServerLog::Error("This db path length is illegal.Db path:", dbPath);
+        return false;
+    }
+    std::string dbDir = FileUtil::GetParentPath(dbPath);
+    if (!std::empty(dbDir) && !FileUtil::CheckDirValid(dbDir)) {
+        ServerLog::Error("This db dir is illegal path:", dbDir);
         return false;
     }
     if (!Database::CreateDbIfNotExist(dbPath)) {
         ServerLog::Error("Create db failed.Db path:", dbPath);
+        return false;
+    }
+    if (!FileUtil::CheckDirValid(dbPath)) {
+        ServerLog::Error("This db path is illegal.Db path:", dbPath);
         return false;
     }
     if (isOpen) {
@@ -435,7 +449,7 @@ bool Database::CheckValueFromStatusInfoTable(const std::string &key, const std::
     return true;
 }
 
-bool Database::UpdateValueIntoStatusInfoTable(const std::string& key, const std::string& value)
+bool Database::UpdateValueIntoStatusInfoTable(const std::string &key, const std::string &value)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!CheckTableExist(infoTable) && !CreateStatusInfoTable()) {

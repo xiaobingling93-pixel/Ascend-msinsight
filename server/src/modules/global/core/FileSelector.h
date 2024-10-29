@@ -24,7 +24,6 @@ public:
                                    bool &exist);
 
 private:
-    static const int maxDepth = 2;
     static bool CompareStrIgnoreCase(const std::string& s1, const std::string& s2);
 };
 } // end of namespace Global

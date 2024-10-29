@@ -11,6 +11,7 @@
 #include <map>
 #include "TimelineRequestHandler.h"
 #include "GlobalDefs.h"
+#include "IFileReader.h"
 #include "SystemMemoryDatabaseDef.h"
 
 namespace Dic {
@@ -39,6 +40,7 @@ public:
 protected:
     std::string curScene;
     std::map<std::string, std::vector<std::string>> dataPathToDbMap;
+    std::unique_ptr<IFileReader> fileReader = nullptr;
 
     static void ParseClusterEndProcess(std::string result);
     static void SearchMetaData(const std::string &fileId, std::vector<std::unique_ptr<UnitTrack>> &metaData);
