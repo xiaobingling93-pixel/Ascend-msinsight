@@ -188,25 +188,28 @@ void EventParser::SimulationBeginEventHandle(std::unique_ptr<Trace::Event> event
         return;
     }
     auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
-    if (event.name == "SET_FLAG" && setFlagSliceMap.count(event.flagId) == 0) {
-        setFlagSliceMap[event.flagId] = event;
-        return;
+    if (event.name == "SET_FLAG" || event.name == "set_event") {
+        if (setFlagSliceMap.find(event.flagId) == setFlagSliceMap.end()) {
+            setFlagSliceMap[event.flagId] = event;
+            return;
+        } else {
+            event.dur = setFlagSliceMap[event.flagId].ts - event.ts;
+            SimulationEventHandle(std::move(eventPtr));
+            setFlagSliceMap.erase(event.flagId);
+            return;
+        }
     }
-    if (event.name == "SET_FLAG" && setFlagSliceMap.count(event.flagId) > 0) {
-        event.dur = setFlagSliceMap[event.flagId].ts - event.ts;
-        SimulationEventHandle(std::move(eventPtr));
-        setFlagSliceMap.erase(event.flagId);
-        return;
-    }
-    if (event.name == "WAIT_FLAG" && waitFlagSliceMap.count(event.flagId) == 0) {
-        waitFlagSliceMap[event.flagId] = event;
-        return;
-    }
-    if (event.name == "WAIT_FLAG" && waitFlagSliceMap.count(event.flagId) > 0) {
-        event.dur = waitFlagSliceMap[event.flagId].ts - event.ts;
-        SimulationEventHandle(std::move(eventPtr));
-        waitFlagSliceMap.erase(event.flagId);
-        return;
+
+    if (event.name == "WAIT_FLAG" || event.name == "wait_event") {
+        if (waitFlagSliceMap.find(event.flagId) == waitFlagSliceMap.end()) {
+            waitFlagSliceMap[event.flagId] = event;
+            return;
+        } else {
+            event.dur = waitFlagSliceMap[event.flagId].ts - event.ts;
+            SimulationEventHandle(std::move(eventPtr));
+            waitFlagSliceMap.erase(event.flagId);
+            return;
+        }
     }
 }
 
@@ -216,27 +219,31 @@ void EventParser::SimulationEndEventHandle(std::unique_ptr<Trace::Event> eventPt
         return;
     }
     auto &event = dynamic_cast<Trace::Slice &>(*eventPtr);
-    if (event.name == "SET_FLAG" && setFlagSliceMap.count(event.flagId) == 0) {
-        setFlagSliceMap[event.flagId] = event;
-        return;
+
+    if (event.name == "SET_FLAG" || event.name == "set_event") {
+        if (setFlagSliceMap.find(event.flagId) == setFlagSliceMap.end()) {
+            setFlagSliceMap[event.flagId] = event;
+            return;
+        } else {
+            Trace::Slice beginSlice = setFlagSliceMap[event.flagId];
+            beginSlice.dur = event.ts - beginSlice.ts;
+            SimulationEventHandle(std::make_unique<Trace::Slice>(beginSlice));
+            setFlagSliceMap.erase(event.flagId);
+            return;
+        }
     }
-    if (event.name == "SET_FLAG" && setFlagSliceMap.count(event.flagId) > 0) {
-        Trace::Slice beginSlice = setFlagSliceMap[event.flagId];
-        beginSlice.dur = event.ts - beginSlice.ts;
-        SimulationEventHandle(std::make_unique<Trace::Slice>(beginSlice));
-        setFlagSliceMap.erase(event.flagId);
-        return;
-    }
-    if (event.name == "WAIT_FLAG" && waitFlagSliceMap.count(event.flagId) == 0) {
-        waitFlagSliceMap[event.flagId] = event;
-        return;
-    }
-    if (event.name == "WAIT_FLAG" && waitFlagSliceMap.count(event.flagId) > 0) {
-        Trace::Slice beginSlice = waitFlagSliceMap[event.flagId];
-        beginSlice.dur = event.ts - beginSlice.ts;
-        SimulationEventHandle(std::make_unique<Trace::Slice>(beginSlice));
-        waitFlagSliceMap.erase(event.flagId);
-        return;
+
+    if (event.name == "WAIT_FLAG" || event.name == "wait_event") {
+        if (waitFlagSliceMap.find(event.flagId) == waitFlagSliceMap.end()) {
+            waitFlagSliceMap[event.flagId] = event;
+            return;
+        } else {
+            Trace::Slice beginSlice = waitFlagSliceMap[event.flagId];
+            beginSlice.dur = event.ts - beginSlice.ts;
+            SimulationEventHandle(std::make_unique<Trace::Slice>(beginSlice));
+            waitFlagSliceMap.erase(event.flagId);
+            return;
+        }
     }
 }
 

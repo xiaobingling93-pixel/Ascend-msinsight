@@ -4,6 +4,7 @@
 
 #ifndef PROFILER_SERVER_RENDERENGINE_H
 #define PROFILER_SERVER_RENDERENGINE_H
+#include <unordered_set>
 #include "RenderEngineInterface.h"
 namespace Dic::Module::Timeline {
 class RenderEngine : public RenderEngineInterface {
@@ -27,6 +28,7 @@ public:
 
 private:
     std::shared_ptr<DataEngineInterface> dataEngine = nullptr;
+    const std::unordered_set<std::string> hideAbleNameSet = {"SET_FLAG", "WAIT_FLAG", "set_event", "wait_event"};
 
     void ComputeSimulationFlows(const Protocol::FlowCategoryEventsParams &params,
         std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList,

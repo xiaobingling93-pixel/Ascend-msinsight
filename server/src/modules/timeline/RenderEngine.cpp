@@ -43,7 +43,7 @@ void RenderEngine::QueryThreadTraces(const Protocol::UnitThreadTracesParams &req
     }
     std::sort(competeSliceVec.begin(), competeSliceVec.end(), std::less<CompeteSliceDomain>());
     for (auto &item : competeSliceVec) {
-        bool isHide = requestParams.isHideFlagEvents && (item.name == "SET_FLAG" || item.name == "WAIT_FLAG");
+        bool isHide = requestParams.isHideFlagEvents && (hideAbleNameSet.find(item.name) != hideAbleNameSet.end());
         if (isHide) {
             continue;
         }
