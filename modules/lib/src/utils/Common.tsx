@@ -10,9 +10,8 @@ import {chartVisbilityListener, getAdaptiveEchart, disposeAdaptiveEchart, getDef
 import { Empty } from '../components/index';
 import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
-import { BulbIcon } from '../icon/Icon';
+import {AlarmIcon, BulbIcon} from '../icon/Icon';
 import ResizeObserver from 'resize-observer-polyfill';
-import {useEffect} from 'react';
 export { customConsole } from './Console';
 export {
     BaseContainer,
@@ -56,8 +55,8 @@ const StyledAdvice = styled.div`
     & > div:first-child {
         flex: 0 0 auto;
         vertical-align: top;
-        & > span {
-            margin: 0 8px;
+        & > span,div {
+            margin-right: 8px;
             font-weight: bold;
         }
     }
@@ -67,13 +66,15 @@ const StyledAdvice = styled.div`
     }
 `;
 
-interface IAdviceProps {
+interface IHitProps {
     title?: React.ReactNode;
     text: React.ReactNode | React.ReactNode[];
     style?: React.CSSProperties ;
+    type?: string;
 }
-export function Advice({text, title, style = {} }: IAdviceProps ): JSX.Element {
-    const { t } = useTranslation();
+export function Hit(props: IHitProps): JSX.Element {
+    const {type, title, text, style = {}} = props;
+    const icon = type === 'alarm' ? <AlarmIcon/> : <BulbIcon/>;
     const splitText = (str: React.ReactNode): React.ReactNode => {
         if (typeof str !== 'string') {
             return str;
@@ -83,14 +84,15 @@ export function Advice({text, title, style = {} }: IAdviceProps ): JSX.Element {
     };
     return <StyledAdvice style={style}>
         <div>
-            <BulbIcon/>
-            <span>{title ?? `${t('Advice')}:`}</span>
+            {icon}
+            {(title !== undefined && title !== null) ? (<span>{title}</span>) : <></>}
         </div>
         <div>{Array.isArray(text) ? text.map(item => (<div>{splitText(item)}</div>)) : splitText(text)}</div>
     </StyledAdvice>;
 }
-export function Hit(props: IAdviceProps): JSX.Element {
-    return <Advice {...props} title={''}/>;
+export function Advice(props: IHitProps): JSX.Element {
+    const {t} = useTranslation();
+    return <Hit type={'advice'} title={`${t('Advice')}:`} {...props}/>;
 }
 
 export function limitInput(maxlength?: string): void {

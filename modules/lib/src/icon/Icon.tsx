@@ -31,6 +31,7 @@ import { ReactComponent as ArrowUpLightSvg } from './img/arrow_up_light.svg';
 import { ReactComponent as ColumnFilterSvg } from './img/column_filter.svg';
 import { ReactComponent as ExpandSvg } from './img/expand.svg';
 import { ReactComponent as ExpandRightSvg } from './img/expand_right.svg';
+import { ReactComponent as AlarmSvg } from './img/alarm.svg';
 import { themeInstance } from '../theme';
 import CaretRightSvg from './img/caret-right.svg';
 import { CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
@@ -62,8 +63,9 @@ const iconMap: Record<string, any> = {
     caretRight: CaretRightSvg,
     bulb: BulbSvg,
     columnFilter: ColumnFilterSvg,
-    expand:ExpandSvg,
-    expandRight:ExpandRightSvg,
+    expand: ExpandSvg,
+    expandRight: ExpandRightSvg,
+    alarm: AlarmSvg,
     dark: {
         help: HelpDarkSvg,
         flag: FlagDarkIcon,
@@ -220,4 +222,8 @@ export function ExpandIcon(props: ISVGProps): JSX.Element {
 export function CollapseIcon(props: ISVGProps): JSX.Element {
     const {style = {}, ...restProps} = props;
     return <Icon type={'expandRight'} style={{verticalAlign: 'middle', margin: '-5px 5px 0 -2px', ...style}} {...restProps} />;
+}
+
+export function AlarmIcon(props: ISVGProps): JSX.Element {
+    return <Icon type={'alarm'} {...props } style={{marginTop:'2px'}}/>;
 }
