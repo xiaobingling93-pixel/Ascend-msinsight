@@ -82,7 +82,7 @@ const std::string ALLOCATION_ACTIVE_KB = "Allocation Total Active(KB)";
 const std::string RELEASE_ALLOCATED_KB = "Release Total Allocated(KB)";
 const std::string RELEASE_RESERVED_KB = "Release Total Reserved(KB)";
 const std::string RELEASE_ACTIVE_KB = "Release Total Active(KB)";
-const std::vector<std::string> OPERATOR_CSV = {NAME, ALLOCATION_TIME, RELEASE_TIME, SIZE, DURATION};
+const std::vector<std::string> OPERATOR_CSV = {NAME, ALLOCATION_TIME, SIZE, DURATION};
 const std::vector<std::string> OPERATOR_CSV_MSPROF = {NAME, ALLOCATION_TIME, SIZE, DURATION};
 
 // field in memory_record
