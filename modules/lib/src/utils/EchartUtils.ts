@@ -90,7 +90,6 @@ export function getAdaptiveEchart(chartDom: HTMLElement, theme?: string | object
         chart = echarts.init(chartDom, theme, opts);
         addResizeEvent(chart);
     }
-    chart?.resize();
     return chart;
 }
 export function addResizeEvent(echart?: EChartsTypeExtends): void {

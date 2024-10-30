@@ -67,7 +67,7 @@ const index = observer(({ session }: { session: Session }): JSX.Element => {
         <CollapsiblePanel title={t('ComputeWorkloadAnalysis')} collapsible>
             <Filter handleFilterChange={handleFilterChange} blockIdList={data.blockIdList} session={session}/>
             <ComputeWorkloadChart condition={condition} data={data.chartData}/>
-            { Number(session?.computeAdvice?.length) > 0 && (<Hit text={session.computeAdvice} style={{ marginBottom: '10px' }}/>) }
+            { Number(session?.computeAdvice?.length) > 0 && (<Hit text={session.computeAdvice} style={{ marginBottom: '10px' }} type={'alarm'}/>) }
             <ComputeWorkloadTable condition={condition} data={data.tableData}/>
         </CollapsiblePanel>
     );
