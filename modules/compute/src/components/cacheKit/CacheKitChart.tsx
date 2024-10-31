@@ -3,34 +3,36 @@
 */
 import React, { useEffect, useState } from 'react';
 import { CloseCircleOutlined } from '@ant-design/icons';
-import * as echarts from 'echarts';
 import { range } from 'lodash';
 import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { addResizeEvent } from 'ascend-utils/EchartUtils';
 import { queryCacheRecord, type CacheRecordItem } from '../RequestUtils';
 import styled from '@emotion/styled';
 import { type Session } from '../../entity/session';
 import { safeStr } from 'ascend-utils';
+import * as echarts from 'echarts';
+import { type Theme, useTheme } from '@emotion/react';
 
 const ChartContainer = styled.div`
     width: 620px;
     height: 600px;
     padding: 50px;
     position: relative;
+    display: inline-block;
     .title {
         text-align: center;
+        font-weight: bolder;
     }
     .mapTitle {
         position: relative;
-        display: inline-block;
+        width: 520px;
         bottom: 50px;
-        left: 400px;
+        text-align: end;
     }
     .chart {
-        width: 100%;
-        height: 100%;
+        width: 520px;
+        height: 500px;
         position: relative;
         poimter-events: none;
         &::before {
@@ -58,13 +60,30 @@ const PreviewCacheKitChartContainer = styled.div`
         position: absolute;
         top: 10px;
         right: 10px;
+        z-index: 10;
+    }
+    .chartTitle {
+        text-align: center;
+        padding: 20px;
+        font-size: 20px;
+        font-weight: bolder;
+        position: absolute;
+        width: 100%;
     }
     .mapTitle {
         position: relative;
-        display: inline-block;
+        width: 1100px;
         bottom: 50px;
-        left: 1400px;
+        margin: auto;
+        text-align: end;
     }
+`;
+
+const CacheKitChartsContainer = styled.div`
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 620px);
+    width: 100%;
+    justify-content: center;
 `;
 
 interface ChartDataItem {
@@ -72,8 +91,9 @@ interface ChartDataItem {
     data: any[];
 };
 
-const baseOption = (yAxis: number[], data: any[], isPreview: boolean, t: TFunction): any => {
+const baseOption = (yAxis: number[], data: any[], isPreview: boolean, t: TFunction, theme: Theme): any => {
     return {
+        animation: false,
         tooltip: {
             position: 'top',
             formatter: (item: { [key: string]: any }): string => {
@@ -92,18 +112,24 @@ const baseOption = (yAxis: number[], data: any[], isPreview: boolean, t: TFuncti
             data: yAxis,
         },
         visualMap: {
+            animation: false,
             min: 0,
             max: 100,
-            calculable: true,
+            calculable: false,
             orient: 'vertical',
             align: 'left',
-            right: '20px',
+            right: '30px',
             top: '50px',
+            textStyle: {
+                color: theme.textColorSecondary,
+            },
             itemHeight: isPreview ? '870px' : '370px',
-            color: ['red', 'yellow', 'lightGreen', 'lightBlue', 'blue'],
+            color: ['red', 'yellow', 'lightGreen', theme.bgColorGrey],
         },
         series: {
             type: 'heatmap',
+            animation: false,
+            progressive: 0,
             data,
             emphasis: {
                 itemStyle: {
@@ -147,34 +173,39 @@ const getchartsData = async (): Promise<{ [key: string]: ChartDataItem } > => {
     return chartsData;
 };
 
-const initCharts = (dataSource: ChartDataItem, domId: string, isPreview: boolean, t: TFunction): void => {
+const initCharts = (dataSource: ChartDataItem, domId: string, isPreview: boolean, t: TFunction, theme: Theme): void => {
     const chartDom = document.getElementById(domId);
     if (chartDom !== null) {
-        echarts.init(chartDom).dispose();
+        echarts.getInstanceByDom(chartDom)?.dispose();
         const myChart = echarts.init(chartDom);
         const { data, yAxisNum } = dataSource;
-        const options = baseOption(range(0, yAxisNum), data, isPreview, t);
+        const options = baseOption(range(0, yAxisNum), data, isPreview, t, theme);
         myChart.setOption(options);
-        addResizeEvent(myChart);
     }
 };
 
-const PreviewCacheKitChart = ({ setShowPreChart, preChartData }:
-{ setShowPreChart: (val: boolean) => void; preChartData: ChartDataItem }): JSX.Element => {
+const PreviewCacheKitChart = ({ setShowPreChart, preChartData, title }:
+{ setShowPreChart: (val: boolean) => void; preChartData: ChartDataItem; title: string }): JSX.Element => {
     const { t } = useTranslation('source');
+    const theme = useTheme();
     useEffect(() => {
-        initCharts(preChartData, 'previewCacheKitChart', true, t);
+        initCharts(preChartData, 'previewCacheKitChart', true, t, theme);
     }, []);
+    useEffect(() => {
+        initCharts(preChartData, 'previewCacheKitChart', true, t, theme);
+    }, [theme]);
     return <PreviewCacheKitChartContainer>
-        <CloseCircleOutlined className="closePreview" onClick={(): void => setShowPreChart(false)}/>
+        <CloseCircleOutlined className="closePreview" onClick={(): void => setShowPreChart(false)} />
+        <div className="chartTitle">{title}</div>
         <div id="previewCacheKitChart" style={{ width: '1100px', height: '1000px', margin: 'auto' }}></div>
         <div className="mapTitle">{`${t('EventRatio')}(%)`}</div>
     </PreviewCacheKitChartContainer>;
 };
 
 const CacheKitChartBase = ({ session, title, data, handleClick }:
-{ session: Session; title: string; data: ChartDataItem; handleClick: (val: ChartDataItem) => void }): JSX.Element => {
+{ session: Session; title: string; data: ChartDataItem; handleClick: (val: ChartDataItem, title: string) => void }): JSX.Element => {
     const { t } = useTranslation('source');
+    const theme = useTheme();
     const titleMap: { [key: string]: string } = {
         loadCount: 'Load Count',
         storeCount: 'Store Count',
@@ -186,11 +217,11 @@ const CacheKitChartBase = ({ session, title, data, handleClick }:
     };
     const domId = `cacheChart_${title}`;
     useEffect(() => {
-        initCharts(data, domId, false, t);
-    }, [data]);
+        initCharts(data, domId, false, t, theme);
+    }, [data, theme]);
     return <ChartContainer>
         <div className="title">{titleMap[title]}</div>
-        <div id={domId} className="chart" onClick={(): void => handleClick(data)}/>
+        <div id={domId} className="chart" onClick={(): void => handleClick(data, titleMap[title])} />
         <div className="mapTitle">{`${t('EventRatio')}(%)`}</div>
     </ChartContainer>;
 };
@@ -199,8 +230,10 @@ const CacheKitChart = observer(({ session }: { session: Session }): JSX.Element 
     const [chartsData, setChartsData] = useState({} as { [key: string]: ChartDataItem });
     const [showPreChart, setShowPreChart] = useState(false);
     const [preChartData, setPreChartData] = useState({} as ChartDataItem);
-    const handleClick = (chartData: ChartDataItem): void => {
+    const [preChartDataTitle, setPreChartDataTitle] = useState('');
+    const handleClick = (chartData: ChartDataItem, chartTitle: string): void => {
         setPreChartData(chartData);
+        setPreChartDataTitle(chartTitle);
         setShowPreChart(true);
     };
     useEffect(() => {
@@ -210,14 +243,14 @@ const CacheKitChart = observer(({ session }: { session: Session }): JSX.Element 
         });
     }, [session.updateId]);
     return <>
-        <div style={{ display: showPreChart ? 'none' : 'flex', flexWrap: 'wrap', width: '1860px' }}>
+        <CacheKitChartsContainer style={{ display: showPreChart ? 'none' : 'grid' }}>
             {
                 Object.keys(chartsData).map(key => (
-                    <CacheKitChartBase key={key} title={key} session={session} data={chartsData[key]} handleClick={handleClick}/>
+                    <CacheKitChartBase key={key} title={key} session={session} data={chartsData[key]} handleClick={handleClick} />
                 ))
             }
-        </div>
-        {showPreChart && <PreviewCacheKitChart preChartData={preChartData} setShowPreChart={setShowPreChart}/>}
+        </CacheKitChartsContainer>
+        {showPreChart && <PreviewCacheKitChart preChartData={preChartData} setShowPreChart={setShowPreChart} title={preChartDataTitle} />}
     </>;
 });
 
