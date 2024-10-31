@@ -372,9 +372,11 @@ inline static std::string DoubleToStringWithTwoDecimalPlaces(double value)
 
 private:
 #ifdef _WIN32
-    static inline char injectList[] = {'|', ';', '&', '$', '>', '<', '`', '!', '\n'};
+    static inline char injectList[] = {
+        '|', ';', '&', '$', '>', '<', '`', '!', '\n', '\"', '\'', '\t', '\r', '\f', '\u0000'};
 #else
-    static inline char injectList[] = {'|', ';', '&', '$', '>', '<', '`', '\\', '!', '\n'};
+    static inline char injectList[] = {
+        '|', ';', '&', '$', '>', '<', '`', '\\', '!', '\n', '\"', '\'', '\t', '\r', '\f', '\u0000'};
 #endif
 };
 }
