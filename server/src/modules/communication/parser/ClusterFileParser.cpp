@@ -4,6 +4,7 @@
  *
  */
 
+#include <algorithm>
 #include "pch.h"
 #include "CommunicationMatrixRapidHandler.h"
 #include "CommunicationRapidSaxHandler.h"
@@ -14,6 +15,7 @@
 #include "TraceTime.h"
 #include "FileUtil.h"
 #include "NumberUtil.h"
+#include "CollectionUtil.h"
 #include "ClusterFileParser.h"
 
 
@@ -78,23 +80,37 @@ void ClusterFileParser::ParseStepStatisticsFile(const std::vector<std::string> &
         ServerLog::Error("Can't get cluster database when parse step statistics file.");
         return;
     }
+    bool isHeader = true;
+    std::map<std::string, size_t> dataMap;
     while (ParserStatusManager::Instance().GetClusterParserStatus() == ParserStatus::RUNNING &&
             std::getline(stepTraceFileCsv, line)) {
-        std::vector<std::string> fields;
-        std::string field;
         std::vector<std::string> tokens = StringUtil::StringSplit(line);
-        if (tokens.size() < minStepTraceTimeColumnNumber) {
-            ServerLog::Error("The number of columns in the step statistics file does not meet the requirements");
-            return;
+        if (!tokens.empty() and isHeader) {
+            // 校验表头，求必要表头和当前文件表头的差集，如果差集数量大于0，则校验不通过
+            std::vector<std::string> difference = CollectionUtil::CalDifferenceVector(VALID_STEP_STATISTICS_HEADERS,
+                                                                                      tokens);
+            if (difference.size() != 0) {
+                ServerLog::Error("The header of step statistics file is invalid, "
+                                 "missing header data as follows: %, filePath: %",
+                                 StringUtil::join(difference, ","), filePath);
+                return;
+            }
+            for (size_t i = 0; i < tokens.size(); ++i) {
+                dataMap[tokens[i]] = i;
+            }
+            isHeader = false;
+            continue;
         }
-        if (tokens[0] != "Step") {
-            StepStatistic statistic = MapToStepStatistic(tokens);
-            database->InsertStepStatisticsInfo(statistic);
+        // 行内容校验，列数不相等则跳过
+        if (tokens.size() != dataMap.size()) {
+            ServerLog::Warn("Row size is not equal to header number.");
+            continue;
         }
+        StepStatistic statistic = MapToStepStatistic(dataMap, tokens);
+        database->InsertStepStatisticsInfo(statistic);
     }
     auto end = std::chrono::high_resolution_clock::now();
-    ServerLog::Info("End parse step statistics file data into db, file:", filePath, ",cost time:",
-                    (end - start).count());
+    ServerLog::Info("End parse step statistics file data into db, cost time:", (end - start).count());
     stepTraceFileCsv.close();
 }
 
@@ -402,14 +418,14 @@ bool ClusterFileParser::AttAnalyze(const std::string &selectedPath, const std::s
     return true;
 }
 
-StepStatistic ClusterFileParser::MapToStepStatistic(std::vector<std::string> tokens)
+StepStatistic ClusterFileParser::MapToStepStatistic(std::map<std::string, size_t> &dataMap,
+                                                    const std::vector<std::string> &tokens)
 {
     StepStatistic statistic;
-    size_t index = 0;
-    statistic.stepId = tokens[index].empty() ? "0" : tokens[index];
-    index++;
-    std::string flag = tokens[index++];
-    std::string order = tokens[index++];
+    std::string stepId = GetStrValue(dataMap, tokens, FIELD_STEP);
+    std::string flag = GetStrValue(dataMap, tokens, FIELD_TYPE);
+    std::string order = GetStrValue(dataMap, tokens, FIELD_INDEX);
+    statistic.stepId = stepId.empty() ? "0" : stepId;
     statistic.rankId = std::strcmp(flag.c_str(), "rank") == 0 ? order : "";
     // 去掉stage的首尾引号
     if (std::strcmp(flag.c_str(), "stage") == 0 &&
@@ -418,27 +434,43 @@ StepStatistic ClusterFileParser::MapToStepStatistic(std::vector<std::string> tok
         order = order.substr(1, order.length() - subStrlen);
         statistic.stageId = order;
     }
-    statistic.computingTime = NumberUtil::StringToDouble(tokens[index++]);
-    statistic.pureCommunicationTime = NumberUtil::StringToDouble(tokens[index++]);
-    statistic.overlapCommunicationTime = NumberUtil::StringToDouble(tokens[index++]);
-    statistic.communicationTime = NumberUtil::StringToDouble(tokens[index++]);
-    statistic.freeTime = NumberUtil::StringToDouble(tokens[index++]);
-    statistic.stageTime = NumberUtil::StringToDouble(tokens[index++]);
-    statistic.bubbleTime = NumberUtil::StringToDouble(tokens[index++]);
-    statistic.pureCommunicationExcludeReceiveTime = NumberUtil::StringToDouble(tokens[index++]);
-    if (index >= tokens.size()) {
-        statistic.prepareTime = -1; // 代表csv文件中没有Preparing字段
-        return statistic;
-    } else {
-        statistic.prepareTime = NumberUtil::StringToDouble(tokens[index]);
-    }
-    // 该部分需要进一步优化为按csv文件表头查询数据
-    if (index + 3 < tokens.size()) { // 3 for dp_index, pp_index, tp_index
-        statistic.dpIndex = NumberUtil::StringToLong(tokens[++index]);
-        statistic.ppIndex = NumberUtil::StringToLong(tokens[++index]);
-        statistic.tpIndex = NumberUtil::StringToLong(tokens[++index]);
+    statistic.computingTime = NumberUtil::StringToDouble(GetStrValue(dataMap, tokens, FIELD_COMPUTING));
+    statistic.pureCommunicationTime = NumberUtil::StringToDouble(
+        GetStrValue(dataMap, tokens, FIELD_COMMUNICATION_NOT_OVERLAPPED));
+    statistic.overlapCommunicationTime = NumberUtil::StringToDouble(GetStrValue(dataMap, tokens, FIELD_OVERLAPPED));
+    statistic.communicationTime = NumberUtil::StringToDouble(GetStrValue(dataMap, tokens, FIELD_COMMUNICATION));
+    statistic.freeTime = NumberUtil::StringToDouble(GetStrValue(dataMap, tokens, FIELD_FREE));
+    statistic.stageTime = NumberUtil::StringToDouble(GetStrValue(dataMap, tokens, FIELD_STAGE));
+    statistic.bubbleTime = NumberUtil::StringToDouble(GetStrValue(dataMap, tokens, FIELD_BUBBLE));
+    statistic.pureCommunicationExcludeReceiveTime = NumberUtil::StringToDouble(
+        GetStrValue(dataMap, tokens, FIELD_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE));
+
+    std::string prepareTime = GetStrValue(dataMap, tokens, FIELD_PREPARE_TIME);
+    statistic.prepareTime = prepareTime.empty() ? -1 : NumberUtil::StringToDouble(prepareTime);
+
+    // 判断表头中是否存在所有并行策略的key值
+    bool allParallelKeys = std::all_of(PARALLEL_STRATEGY_HEADERS.begin(),
+                                       PARALLEL_STRATEGY_HEADERS.end(), [&dataMap](const std::string& str) {
+        return dataMap.find(str) != dataMap.end();
+    });
+    // 存在则读取相关的值
+    if (allParallelKeys) {
+        // 如果非数字字符串，这里会返回0
+        statistic.dpIndex = NumberUtil::StringToLong(GetStrValue(dataMap, tokens, FIELD_DP_INDEX));
+        statistic.ppIndex = NumberUtil::StringToLong(GetStrValue(dataMap, tokens, FIELD_PP_INDEX));
+        statistic.tpIndex = NumberUtil::StringToLong(GetStrValue(dataMap, tokens, FIELD_TP_INDEX));
     }
     return statistic;
+}
+
+std::string ClusterFileParser::GetStrValue(std::map<std::string, size_t> &dataMap,
+                                           const std::vector<std::string> &tokens, const std::string &key)
+{
+    if (dataMap.find(key) == dataMap.end()) {
+        return "";
+    }
+    int index = dataMap[key];
+    return tokens[index];
 }
 
 bool ClusterFileParser::ParserClusterOfDb(const std::string& selectedPath)

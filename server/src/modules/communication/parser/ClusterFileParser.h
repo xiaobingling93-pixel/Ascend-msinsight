@@ -31,7 +31,8 @@ public:
 private:
     static void SaxParseJsonFile(const std::string& filePath, int saxHandlerType);
     bool InitClusterDatabase(const std::string& selectedPath);
-    StepStatistic MapToStepStatistic(std::vector<std::string> tokens);
+    StepStatistic MapToStepStatistic(std::map<std::string, size_t> &dataMap,
+                                     const std::vector<std::string> &tokens);
     size_t subStrlen = 2;
     std::string clusterDbPath;
     bool needClearDb = true;
@@ -42,6 +43,8 @@ private:
                            AttDataType dataType = AttDataType::TEXT);
     static bool TransCommunicationToDb(const std::string &selectedPath, const std::regex &patternCommunication);
     static bool CheckDocumentValid(const Document &doc);
+    static std::string GetStrValue(std::map<std::string, size_t> &dataMap, const std::vector<std::string> &tokens,
+                                   const std::string &key);
 };
 } // end of namespace Timeline
 } // end of namespace Module

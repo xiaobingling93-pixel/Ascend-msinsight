@@ -101,6 +101,31 @@ struct CommunicationMatrixInfo {
     double transitTime;
     double bandwidth;
 };
+
+// cluster_step_trace_time.csv表头
+const std::string FIELD_STEP = "Step";
+const std::string FIELD_TYPE = "Type";
+const std::string FIELD_INDEX = "Index";
+const std::string FIELD_COMPUTING = "Computing";
+const std::string FIELD_COMMUNICATION_NOT_OVERLAPPED = "Communication(Not Overlapped)";
+const std::string FIELD_OVERLAPPED = "Overlapped";
+const std::string FIELD_COMMUNICATION = "Communication";
+const std::string FIELD_FREE = "Free";
+const std::string FIELD_STAGE = "Stage";
+const std::string FIELD_BUBBLE = "Bubble";
+const std::string FIELD_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE = "Communication(Not Overlapped and Exclude Receive)";
+const std::string FIELD_PREPARE_TIME = "Preparing";
+const std::string FIELD_DP_INDEX = "DP Index";
+const std::string FIELD_PP_INDEX = "PP Index";
+const std::string FIELD_TP_INDEX = "TP Index";
+
+const std::vector<std::string> VALID_STEP_STATISTICS_HEADERS = {
+    FIELD_STEP, FIELD_TYPE, FIELD_INDEX, FIELD_COMPUTING, FIELD_COMMUNICATION_NOT_OVERLAPPED, FIELD_OVERLAPPED,
+    FIELD_COMMUNICATION, FIELD_FREE, FIELD_STAGE, FIELD_BUBBLE, FIELD_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE
+};
+const std::vector<std::string> PARALLEL_STRATEGY_HEADERS = {
+    FIELD_DP_INDEX, FIELD_PP_INDEX, FIELD_TP_INDEX
+};
 } // end of namespace Module
 } // end of namespace Dic
 #endif // PROFILER_SERVER_CLUSTER_DEF_H
