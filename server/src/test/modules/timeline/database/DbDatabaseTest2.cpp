@@ -124,7 +124,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackExist)
     const uint8_t first = 0;
     const uint8_t second = 1;
     const uint8_t three = 2;
-    const std::string expectGroupName = "Group 1 Communication";
+    const std::string expectGroupName = "Group 0 Communication";
     const std::string expectPlaneName = "Plane 0";
     database.QueryUnitsMetadata(fileId, metaData);
     EXPECT_EQ(metaData.size(), expectProcessCount);
@@ -170,7 +170,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackIsWrong)
     const uint8_t expectProcessCount = 3;
     const uint8_t first = 0;
     const uint8_t second = 1;
-    const std::string expectGroupName = "Group 1 Communication";
+    const std::string expectGroupName = "Group 0 Communication";
     database.QueryUnitsMetadata(fileId, metaData);
     EXPECT_EQ(metaData.size(), expectProcessCount);
     EXPECT_EQ(metaData[second]->children.size(), second);

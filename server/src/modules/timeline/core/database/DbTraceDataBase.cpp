@@ -1295,7 +1295,7 @@ bool DbTraceDataBase::QueryOperateMetadata(const std::string &fileId,
                     " join COMMUNICATION_OP op on op.opId = info.opId where deviceId = ?) "
                     " select 'Plane ' || planeId as name, groupName || '_' || planeId as tid, 0 as maxDepth, "
                     " groupName, planeId  from main group by planeId, groupName "
-                    " union select 'Group ' || row_number() over () || ' Communication' as name, "
+                    " union select 'Group ' || ((row_number() over ()) -1) || ' Communication' as name, "
                     " groupName || 'group' as tid, 0 as maxDepth, groupName, -1 as planeId from main "
                     " group by groupName order by groupName ASC, planeId ASC";
                 break;

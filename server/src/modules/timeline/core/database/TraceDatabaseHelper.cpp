@@ -579,7 +579,7 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4DeviceHCCL(std::unique_ptr <Sq
         "where opId in (select opId from tmp group by opId)) "
         "select ROWID as id, name, startNs as start, duration, 0 as depth, 'HCCL' as processId, "
         "groupName||'group' as threadId, "
-        "'Group '||(DENSE_RANK() OVER (ORDER BY groupName))||' Communication' AS threadName, "
+        "'Group '||((DENSE_RANK() OVER (ORDER BY groupName)) - 1)||' Communication' AS threadName, "
         "? AS rankId from sub ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId, rankId);
 }
