@@ -105,6 +105,10 @@ void EventParser::SetSimulationStatus(const bool &isSimulation)
 
 std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
 {
+    if (endPosition < startPosition) {
+        ServerLog::Warn("Event Parser. Illegal position. Start: ", startPosition, " End: ", endPosition);
+        return "";
+    }
     std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::in | std::ios::binary);
     if (!file.is_open()) {
         ServerLog::Error("Event Parser. Failed to open file.");

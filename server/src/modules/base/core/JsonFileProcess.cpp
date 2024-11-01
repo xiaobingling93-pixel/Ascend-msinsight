@@ -75,6 +75,10 @@ void JsonFileProcess::ComputeSmallFilePosition(std::ifstream &file, std::vector<
         file.seekg(0 - endBufferLength, std::ifstream::end);
         if (SeekRegexPosition(file, R"(\}\s*\]\s*\})")) {
             int64_t end = file.tellg();
+            if (start > INT64_MAX - 1 || start + 1 > end) {
+                Server::ServerLog::Warn("Failed to find legal end position of json object format.");
+                return;
+            }
             result.emplace_back(start + 1, end); // 此处的1表示跳过R"(\[\s*\{)"中的"["
         }
     } else {
