@@ -41,16 +41,8 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     Server::WsSession &session = *Server::WsSessionManager::Instance().GetSession();
     std::unique_ptr<ImportActionResponse> responsePtr = std::make_unique<ImportActionResponse>();
     ImportActionResponse &response = *responsePtr.get();
-    ModuleRequestHandler::SetBaseResponse(request, response);
-    std::vector<std::string> subdirectoryList = {};
-    ComputeSubirectoryList(projectInfos, subdirectoryList);
-    response.body.subdirectoryList = subdirectoryList;
-    response.command = Protocol::REQ_RES_IMPORT_ACTION;
-    response.moduleName = MODULE_TIMELINE;
-    response.body.reset = IsNeedReset(request);
-    if (response.body.reset) {
-        ParserFactory::Reset();
-    }
+    FillBaseResponseInfo(request, response, projectInfos);
+
     // 获取rankid及文件映射关系信息
     std::map<std::string, std::vector<std::string>> rankToFoldersMap;
     std::map<std::string, std::vector<std::string>> rankListMap = GetRankListMap(projectInfos, rankToFoldersMap);
@@ -64,14 +56,6 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
         SetBaseActionOfResponse(response, rankEntry.first, cardPath, folders);
     }
     // 解析内容
-    ParseContentByProjectType(projectInfos, response, rankListMap, session, responsePtr);
-    ParserTraceData(rankListMap, projectInfos, request);
-}
-
-void ParserJson::ParseContentByProjectType(const std::vector<Global::ProjectExplorerInfo>& projectInfos,
-    ImportActionResponse& response, const std::map<std::string, std::vector<std::string>>& rankListMap,
-    Server::WsSession& session, std::unique_ptr<ImportActionResponse>& responsePtr)
-{
     auto projectTypeEnum = static_cast<ProjectTypeEnum>(projectInfos[0].projectType);
     if (projectTypeEnum == ProjectTypeEnum::SIMULATION) {
         SetParseCallBack(Timeline::TraceFileSimulationParser::Instance());
@@ -80,7 +64,7 @@ void ParserJson::ParseContentByProjectType(const std::vector<Global::ProjectExpl
         session.OnResponse(std::move(responsePtr));
         for (const auto &rankEntry : rankListMap) {
             Timeline::TraceFileSimulationParser::Instance().Parse(rankEntry.second, rankEntry.first,
-                rankEntry.second[0]);
+                                                                  rankEntry.second[0]);
         }
         TraceTime::Instance().SetIsSimulation(true);
         return;
@@ -94,6 +78,22 @@ void ParserJson::ParseContentByProjectType(const std::vector<Global::ProjectExpl
     ModuleRequestHandler::SetResponseResult(response, true);
     // add response to response queue in session
     session.OnResponse(std::move(responsePtr));
+    ParserTraceData(rankListMap, projectInfos, request);
+}
+
+void ParserJson::FillBaseResponseInfo(const ImportActionRequest &request, ImportActionResponse &response,
+                                      const std::vector<Global::ProjectExplorerInfo> &projectInfos)
+{
+    ModuleRequestHandler::SetBaseResponse(request, response);
+    std::vector<std::string> subdirectoryList = {};
+    ComputeSubirectoryList(projectInfos, subdirectoryList);
+    response.body.subdirectoryList = subdirectoryList;
+    response.command = Protocol::REQ_RES_IMPORT_ACTION;
+    response.moduleName = MODULE_TIMELINE;
+    response.body.reset = IsNeedReset(request);
+    if (response.body.reset) {
+        ParserFactory::Reset();
+    }
 }
 
 void ParserJson::ComputeSubirectoryList(const std::vector<Global::ProjectExplorerInfo> &projectInfos,

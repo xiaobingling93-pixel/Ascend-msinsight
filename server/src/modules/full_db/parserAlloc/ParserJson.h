@@ -46,11 +46,8 @@ private:
     std::vector<std::string> GetJsonFileUnderFolder(const std::string &path);
     void ParserTraceData(const std::map<std::string, std::vector<std::string>> &rankListMap,
         const std::vector<Global::ProjectExplorerInfo> &projectInfos, ImportActionRequest &request);
-
-    void ParseContentByProjectType(const std::vector<Global::ProjectExplorerInfo>& projectInfos,
-        ImportActionResponse& response, const std::map<std::string, std::vector<std::string>>& rankListMap,
-        Server::WsSession& session, std::unique_ptr<ImportActionResponse>& responsePtr);
-
+    static void FillBaseResponseInfo(const ImportActionRequest &request, ImportActionResponse &response,
+                              const std::vector<Global::ProjectExplorerInfo> &projectInfos);
     static void ComputeSubirectoryList(const std::vector<Global::ProjectExplorerInfo> &projectInfos,
         std::vector<std::string> &subdirectoryList);
 };
