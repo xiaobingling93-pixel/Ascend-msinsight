@@ -384,7 +384,7 @@ bool ClusterFileParser::AttAnalyze(const std::string &selectedPath, const std::s
     if (std::strcmp(currPath.substr(0, 1).c_str(), selectedPath.substr(0, 1).c_str()) != 0) {
         switchCommand = " && " + selectedPath.substr(0, INT_TWO);
     }
-    command += "\"" + switchCommand + " && \"" + analysisPath + "\" -d .";
+    command += "\"" + switchCommand + " && \"" + FileUtil::PathPreprocess(analysisPath) + "\" -d .";
 #else
     #ifdef __APPLE__
     std::string analysisPath = FileUtil::SplicePath(currPath, "cluster_analysis");
