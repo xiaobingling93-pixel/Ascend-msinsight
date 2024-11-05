@@ -1,0 +1,239 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+ 
+import React, { useState, useEffect } from 'react';
+import { observer } from 'mobx-react-lite';
+import { runInAction } from 'mobx';
+import CollapsiblePanel from 'ascend-collapsible-panel';
+import { Spin } from 'ascend-components';
+import { message } from 'antd';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { Session } from '../entity/session';
+import { MemorySession, MemoryGraphType, DEFAULT_GROUP_BY } from '../entity/memorySession';
+import MemoryDetailTableFilter from './MemoryDetailTableFilter';
+import { AntTableChart } from './AntTableChart';
+import { OperatorMemoryCondition, StaticMemoryCondition } from '../entity/memory';
+import { operatorsMemoryGet, staticOpMemoryListGet } from '../utils/RequestUtils';
+import { customConsole as console } from 'ascend-utils';
+
+const enum CompareSource {
+    DIFFERENCE = 'Difference',
+    BASELINE = 'Baseline',
+    COMPARISON = 'Comparison',
+};
+
+const setSelectedRecord = (memorySession: MemorySession, record?: any): void => {
+    const memoryType: string = memorySession.memoryType;
+    runInAction(() => {
+        switch (memoryType) {
+            case MemoryGraphType.DYNAMIC:
+                memorySession.selectedRecord = record;
+                break;
+            case MemoryGraphType.STATIC:
+                memorySession.selectedStaticRecord = record;
+                break;
+            default:
+                break;
+        };
+    });
+};
+
+const buildDynamicSearchParam = (memorySession: MemorySession, tempCurrent: number, isCompare: boolean): any => {
+    const param: OperatorMemoryCondition = {
+        rankId: memorySession.rankIdCondition.value,
+        type: isCompare ? DEFAULT_GROUP_BY : memorySession.groupId,
+        currentPage: tempCurrent,
+        pageSize: memorySession.pageSize,
+        searchName: memorySession.searchEventOperatorName,
+        minSize: memorySession.minSize,
+        maxSize: memorySession.maxSize,
+        isCompare,
+    };
+    if (memorySession.selectedRange) {
+        param.startTime = memorySession.selectedRange.startTs;
+        param.endTime = memorySession.selectedRange.endTs;
+    };
+    return param;
+};
+
+const buildStaticSearchParam = (memorySession: MemorySession, tempCurrent: number, isCompare: boolean): any => {
+    const param: StaticMemoryCondition = {
+        rankId: memorySession.rankIdCondition.value,
+        graphId: memorySession.memoryGraphId,
+        currentPage: tempCurrent,
+        pageSize: memorySession.pageSize,
+        searchName: memorySession.searchEventOperatorName,
+        minSize: memorySession.minSize,
+        maxSize: memorySession.maxSize,
+        isCompare,
+    };
+    if (memorySession.staticSelectedRange) {
+        param.startNodeIndex = memorySession.staticSelectedRange.startTs;
+        param.endNodeIndex = memorySession.staticSelectedRange.endTs;
+    };
+    return param;
+};
+
+const buildSearchParam = (memorySession: MemorySession, tempCurrent: number, isCompare: boolean): any => {
+    const memoryType = memorySession.memoryType;
+    switch (memoryType) {
+        case MemoryGraphType.DYNAMIC:
+            return buildDynamicSearchParam(memorySession, tempCurrent, isCompare);
+        case MemoryGraphType.STATIC:
+            return buildStaticSearchParam(memorySession, tempCurrent, isCompare);
+        default:
+            return buildDynamicSearchParam(memorySession, tempCurrent, isCompare);
+    };
+};
+
+const getFetchApi = (memoryType: string): any => {
+    switch (memoryType) {
+        case MemoryGraphType.DYNAMIC:
+            return operatorsMemoryGet;
+        case MemoryGraphType.STATIC:
+            return staticOpMemoryListGet;
+        default:
+            return operatorsMemoryGet;
+    };
+};
+
+const handleOperatorDetails = (operatorDetails: any[], isCompare: boolean, t: TFunction): any => {
+    return isCompare
+        ? operatorDetails.map(item => {
+            if (item.diff === undefined || item.diff === null) {
+                return item;
+            }
+            item.diff.source = t(CompareSource.DIFFERENCE);
+            item.diff.children = [{ ...item.baseline, source: t(CompareSource.BASELINE) }, { ...item.compare, source: t(CompareSource.COMPARISON) }];
+            return item.diff;
+        })
+        : operatorDetails.map(item => item.compare);
+};
+
+const MemoryDetailTable = observer(({ session, memorySession }:
+{ session: Session; memorySession: MemorySession }) => {
+    const isCompare: boolean = session.compareRank.isCompare;
+    const memoryType: string = memorySession.memoryType;
+    // 算子表格内存信息
+    const [memoryTableData, setMemoryTableData] = useState<any>([]);
+    // 算子表格表头信息
+    const [memoryTableHead, setMemoryTableHead] = useState<any>([]);
+    const [tableSpin, setTableSpin] = useState<boolean>(false);
+    const [current, setCurrent] = useState<number>(1);
+    const [pageSize, setPageSize] = useState<number>(10);
+    const [total, setTotal] = useState<number>(0);
+    const [orderBy, setOrderBy] = useState<string | undefined>(undefined);
+    const [order, setOrder] = useState<string | undefined>(undefined);
+    const { t } = useTranslation('memory');
+
+    const onRowSelected = (record?: any, rowIndex?: number): void => {
+        setSelectedRecord(memorySession, record);
+    };
+
+    const preParamCheck = (): boolean => {
+        const isRankIdConditionInvalid = memorySession.rankIdCondition.value === undefined || memorySession.rankIdCondition.value === '';
+        const isStaticMemoryInvalid = memorySession.memoryType === MemoryGraphType.STATIC && memorySession.memoryGraphId === '';
+        if (isRankIdConditionInvalid || isStaticMemoryInvalid) {
+            setMemoryTableData([]);
+            setTotal(0);
+            setCurrent(1);
+            setPageSize(10);
+            runInAction(() => {
+                memorySession.isBtnDisabled = true;
+                memorySession.current = 1;
+                memorySession.pageSize = 10;
+            });
+            return false;
+        };
+        if (memorySession.maxSize < memorySession.minSize) {
+            message.warning(t('Invalid Size Warning'));
+            return false;
+        };
+        return true;
+    };
+
+    const setTempCurrent = (resetCurrent = false): number => {
+        let tempCurrent = current;
+        if (resetCurrent) {
+            tempCurrent = 1;
+            setCurrent(1);
+            runInAction(() => {
+                memorySession.current = 1;
+            });
+        }
+        return tempCurrent;
+    };
+
+    const setParamOtherCondition = (param: any): any => {
+        let newParam = param;
+        if (order !== undefined) {
+            newParam = { order, orderBy, ...param };
+        };
+        setTableSpin(true);
+        runInAction(() => {
+            memorySession.isBtnDisabled = true;
+        });
+        return newParam;
+    };
+
+    const fetchDetailTableData = (param: any): void => {
+        const fetchApi = getFetchApi(memorySession.memoryType);
+        fetchApi(param).then((resp: any) => {
+            const tableDataDetails = resp.operatorDetail;
+            setTotal(resp.totalNum);
+            setMemoryTableData(handleOperatorDetails(tableDataDetails, isCompare, t));
+            if (JSON.stringify(memoryTableHead) !== JSON.stringify(resp.columnAttr)) {
+                setMemoryTableHead(resp.columnAttr);
+            }
+        }).catch((err: any) => {
+            console.error(err);
+        }).finally(() => {
+            setTableSpin(false);
+            runInAction(() => {
+                memorySession.isBtnDisabled = false;
+            });
+        });
+    };
+
+    const setDetailTableData = (resetCurrent = false): void => {
+        if (!preParamCheck()) {
+            return;
+        };
+        const tempCurrent = setTempCurrent(resetCurrent);
+        let param = buildSearchParam(memorySession, tempCurrent, isCompare);
+        param = setParamOtherCondition(param);
+        fetchDetailTableData(param);
+    };
+
+    useEffect(() => {
+        setDetailTableData();
+    }, [memorySession.selectedRange, memorySession.staticSelectedRange, memorySession.rankIdCondition.value, current, pageSize, order, orderBy,
+        session.isClusterMemoryCompletedSwitch, memorySession.groupId, memorySession.memoryGraphId, t, isCompare, memoryType]);
+
+    return (
+        <CollapsiblePanel title={t('Memory Allocation/Release Details')} secondary>
+            <MemoryDetailTableFilter session={session} memorySession={memorySession} queryDetailData={setDetailTableData}></MemoryDetailTableFilter>
+            <Spin spinning={tableSpin} tip="loading...">
+                <AntTableChart
+                    tableData={{
+                        columns: memoryTableHead,
+                        rows: memoryTableData,
+                    }}
+                    onRowSelected={onRowSelected}
+                    current={current}
+                    pageSize={pageSize}
+                    onCurrentChange={setCurrent}
+                    onPageSizeChange={setPageSize}
+                    onOrderChange={setOrder}
+                    onOrderByChange={setOrderBy}
+                    total={total}
+                    isCompare={isCompare}
+                />
+            </Spin>
+        </CollapsiblePanel>
+    );
+});
+
+export default MemoryDetailTable;

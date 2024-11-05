@@ -208,7 +208,7 @@ std::optional<document_t> ToResponseJson<MemoryStaticOperatorListCompResponse>
         operatorDiffDetail.PushBack(basicJson, allocator);
     }
     JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);
-    JsonUtil::AddMember(body, "staticOperatorListDetail", operatorDiffDetail, allocator);
+    JsonUtil::AddMember(body, "operatorDetail", operatorDiffDetail, allocator);
     JsonUtil::AddMember(body, "columnAttr", columnAttr, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
