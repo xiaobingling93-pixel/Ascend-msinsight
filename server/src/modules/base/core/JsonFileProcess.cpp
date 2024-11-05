@@ -88,6 +88,7 @@ void JsonFileProcess::ComputeSmallFilePosition(std::ifstream &file, std::vector<
 
 bool JsonFileProcess::SeekCharPosition(std::ifstream &file, char c)
 {
+    file.clear();
     auto cur = file.tellg();
     std::unique_ptr<char[]> buffer = std::make_unique<char[]>(startBufferLength);
     file.read(buffer.get(), startBufferLength);
@@ -96,6 +97,7 @@ bool JsonFileProcess::SeekCharPosition(std::ifstream &file, char c)
         Dic::Server::ServerLog::Error("Seek char. Failed to read file.");
         return false;
     }
+    file.clear();
     file.seekg(cur);
     std::string str(buffer.get(), readCount);
     size_t offset = str.find(c);
@@ -109,6 +111,7 @@ bool JsonFileProcess::SeekCharPosition(std::ifstream &file, char c)
 
 bool JsonFileProcess::SeekRegexPosition(std::ifstream &file, const std::string &regex)
 {
+    file.clear();
     auto cur = file.tellg();
     std::unique_ptr<char[]> buffer = std::make_unique<char[]>(endBufferLength);
     file.read(buffer.get(), endBufferLength);
@@ -117,6 +120,7 @@ bool JsonFileProcess::SeekRegexPosition(std::ifstream &file, const std::string &
         Dic::Server::ServerLog::Error("Seek regex. Failed to read file.");
         return false;
     }
+    file.clear();
     file.seekg(cur);
     std::string str(buffer.get(), readCount);
     auto result = Dic::RegexUtil::RegexSearch(str, regex);
