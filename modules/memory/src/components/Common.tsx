@@ -66,3 +66,11 @@ export const convertTime = (time: any): string => {
     res += `.${String(millisecond).padStart(3, '0')}.${String(timeNum).padStart(3, '0')}`;
     return res;
 };
+
+export const joinStringArray = (memoryRankIds: string[]): string => {
+    let ans = '';
+    for (const rankId of memoryRankIds) {
+        ans += rankId;
+    };
+    return ans;
+};
