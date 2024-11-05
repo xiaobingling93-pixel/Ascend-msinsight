@@ -47,8 +47,28 @@ root.render(
         </RootStoreContext.Provider>
     </React.StrictMode>));
 
+// 用于存储最近一次请求的时间戳
+const requestCache = new Map<string, number>();
+
 window.request = async (params): Promise<any> => {
+    // 根据 command、params生成一个唯一键
+    const requestKey = `${params.command}_${JSON.stringify(params.params)}`;
+
+    const now = Date.now();
+    // 检查最近的请求时间
+    const lastRequestTime = requestCache.get(requestKey);
+
+    // 如果最近请求时间在 100ms 内，则跳过请求
+    if (lastRequestTime !== null && lastRequestTime !== undefined && (now - lastRequestTime) < 100) {
+        // 返回一个拒绝的 Promise 或自定义行为
+        return Promise.reject(new Error('Requests are too frequent'));
+    };
+
+    // 更新请求时间
+    requestCache.set(requestKey, now);
     const data = await connector.fetch({ args: params });
+    // 移除缓存中的请求记录
+    requestCache.delete(requestKey);
     return (data as any).body;
 };
 

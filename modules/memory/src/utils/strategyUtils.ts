@@ -37,9 +37,24 @@ export class HostCompareDisplayStrategy implements MemoryHeaderStrategy {
     };
 };
 
+export const displayStrategyKey = {
+    resourceType: {
+        pytorch: 'pytorch',
+        mindspore: 'mindspore',
+    },
+    hasHostOptions: {
+        isHost: 'isHost',
+        notHost: 'notHost',
+    },
+    isComparing: {
+        isCompared: 'isCompared',
+        notCompared: 'notCompared',
+    },
+};
+
 export const displayStrategyMap: {
     [resourceType: string]: {
-        [hasOptions: string]: {
+        [hasHostOptions: string]: {
             [isComparing: string]: MemoryHeaderStrategy;
         };
     };

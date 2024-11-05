@@ -40,15 +40,17 @@ export const parseMemoryCompletedHandler: NotificationHandler = async (data): Pr
 
 export const removeRemoteHandler: NotificationHandler = async (data): Promise<void> => {
     try {
-        const { sessionStore } = store;
+        const { sessionStore, memoryStore } = store;
         const session = sessionStore.activeSession;
+        const memorySession = memoryStore.activeSession;
         runInAction(() => {
-            if (!session) {
+            if (!session || !memorySession) {
                 return;
             }
             session.memoryRankIds = [];
             session.isCluster = false;
             session.curRankIdsCount = 0;
+            memorySession.rankIdCondition = { options: [], value: '' };
         });
     } catch (error) {
         console.error(error);

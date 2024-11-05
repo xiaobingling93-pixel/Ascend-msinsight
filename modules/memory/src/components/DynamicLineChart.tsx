@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
- 
+
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
@@ -14,7 +14,7 @@ import { LineChart } from './LineChart';
 import { Session } from '../entity/session';
 import { MemorySession, DEFAULT_SIZE_CONDITION, DEFAULT_GROUP_BY } from '../entity/memorySession';
 import { memoryCurveGet } from '../utils/RequestUtils';
- 
+
 const DynamicLineChart = observer(({ session, memorySession, isDark }:
 { session: Session; memorySession: MemorySession; isDark: boolean }) => {
     const isCompare: boolean = session.compareRank.isCompare;
@@ -24,7 +24,7 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
     const [lineChartData, setLineChartData] = useState<Graph | undefined>(undefined);
     const [curveSpin, setCurveSpin] = useState<boolean>(false);
     const { t } = useTranslation('memory');
- 
+
     const onSelectedRangeChanged = (start: number, end: number): void => {
         runInAction(() => {
             if (start > end || !memoryCurveData) {
@@ -45,7 +45,7 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
             memorySession.pageSize = 10;
         });
     };
- 
+
     const onMemoryCurveGet = (): void => {
         setCurveSpin(true);
         memoryCurveGet({ rankId: memorySession.rankIdCondition.value, type: isCompare ? DEFAULT_GROUP_BY : memorySession.groupId, isCompare }).then((resp) => {
@@ -78,7 +78,7 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
             setCurveSpin(false);
         });
     };
- 
+
     useEffect(() => {
         if (memorySession.rankIdCondition.value === undefined || memorySession.rankIdCondition.value === '') {
             setLineChartData(undefined);
@@ -87,7 +87,7 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
         }
         onMemoryCurveGet();
     }, [memorySession.rankIdCondition.value, memorySession.groupId, t, session.isClusterMemoryCompletedSwitch]);
- 
+
     useEffect(() => {
         runInAction(() => {
             memorySession.selectedRange = undefined;
@@ -102,7 +102,7 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
         }
         onMemoryCurveGet();
     }, [isCompare]);
- 
+
     return (
         <div className="mb-30">
             <CollapsiblePanel title={t('Memory Analysis')}>
@@ -124,5 +124,5 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
         </div>
     );
 });
- 
+
 export default DynamicLineChart;

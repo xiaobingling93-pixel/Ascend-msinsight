@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
- 
+
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
@@ -15,7 +15,7 @@ import { LineChart } from './LineChart';
 import { Session } from '../entity/session';
 import { MemorySession, DEFAULT_SIZE_CONDITION } from '../entity/memorySession';
 import { staticOpMemoryGraphGet } from '../utils/RequestUtils';
- 
+
 const StaticLineChart = observer(({ session, memorySession, isDark }:
 { session: Session; memorySession: MemorySession; isDark: boolean }) => {
     const isCompare: boolean = session.compareRank.isCompare;
@@ -25,7 +25,7 @@ const StaticLineChart = observer(({ session, memorySession, isDark }:
     const [staticLineChartData, setStaticLineChartData] = useState<Graph | undefined>(undefined);
     const [staticCurveSpin, setStaticCurveSping] = useState<boolean>(false);
     const { t } = useTranslation('memory');
- 
+
     const onMemoryGraphIdChanged = (value: string): void => {
         runInAction(() => {
             memorySession.memoryGraphId = value;
@@ -37,7 +37,7 @@ const StaticLineChart = observer(({ session, memorySession, isDark }:
             memorySession.pageSize = 10;
         });
     };
- 
+
     const onStaticSelectedRangeChanged = (start: number, end: number): void => {
         runInAction(() => {
             if (start > end || !memoryStaticCurveData) {
@@ -58,7 +58,7 @@ const StaticLineChart = observer(({ session, memorySession, isDark }:
             memorySession.pageSize = 10;
         });
     };
- 
+
     useEffect(() => {
         if (memorySession.rankIdCondition.value === undefined || memorySession.rankIdCondition.value === '' || memorySession.memoryGraphId === undefined) {
             setStaticLineChartData(undefined);
@@ -82,7 +82,7 @@ const StaticLineChart = observer(({ session, memorySession, isDark }:
             setStaticCurveSping(false);
         });
     }, [memorySession.rankIdCondition.value, session.isClusterMemoryCompletedSwitch, memorySession.memoryGraphId, t]);
- 
+
     return (
         <div className="mb-30">
             <SearchBox>
@@ -118,5 +118,5 @@ const StaticLineChart = observer(({ session, memorySession, isDark }:
         </div>
     );
 });
- 
+
 export default StaticLineChart;

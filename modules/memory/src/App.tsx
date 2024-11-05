@@ -7,7 +7,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { SharedConfigProvider } from 'ascend-shared-config-provider';
 import { useRootStore } from './context/context';
 import { themeInstance } from './theme/theme';
-import MemoryAnalysis from './pages/MemoryAnalysis';
+import Memory from './pages/Memory';
 import connector from './connection';
 import { GlobalStyles } from 'ascend-theme';
 
@@ -47,7 +47,7 @@ export const App = observer(() => {
         <ThemeProvider theme={themeInstance.getThemeType()}>
             <GlobalStyles />
             <SharedConfigProvider locale={locale}>
-                {session !== undefined ? <MemoryAnalysis session={session} isDark={themeDark} /> : <></>}
+                {session !== undefined ? <Memory session={session} isDark={themeDark} /> : <></>}
             </SharedConfigProvider>
         </ThemeProvider>
     );
