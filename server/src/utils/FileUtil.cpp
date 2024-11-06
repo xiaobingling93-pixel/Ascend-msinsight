@@ -181,19 +181,20 @@ bool FileUtil::CheckFilePathExist(const std::string& filePath)
 
 bool FileUtil::CheckFilePath(const std::string& filePath)
 {
+    std::string tempPath = FileUtil::PathPreprocess(filePath);
     // 文件基础校验：校验文件最小权限、软连接、长度、特殊字符
-    if (!CheckDirValid(filePath)) {
+    if (!CheckDirValid(tempPath)) {
         Server::ServerLog::Error("Invalid file path. There may be issues with file permissions, soft link, length,"
                                  " or special characters");
         return false;
     }
-    std::ifstream file(filePath);
+    std::ifstream file(tempPath);
     if (!file.good()) {
         Server::ServerLog::Error("Fail to open file path");
         return false;
     }
     file.close();
-    long long size = GetFileSize(filePath.c_str());
+    long long size = GetFileSize(tempPath.c_str());
     if (size >= MAX_FILE_SIZE_10G) {
         Server::ServerLog::Warn("The size of file is too large");
     }
