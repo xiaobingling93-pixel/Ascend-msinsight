@@ -12,6 +12,9 @@
     "CharactersExceed": "总字符数超过{{max}} , 超出部分不显示",
     "LineExceed"  :"超出{{max}}行 , 超出部分不显示",
     "Exceed": "超出 {{max}} , 超出部分不显示",
-    "ExceedInstructions": "只显示前{{max}}条指令记录"
+    "ExceedInstructions": "只显示前{{max}}条指令记录",
+    "RealStallCycles": "实际阻塞时钟周期",
+    "TheoreticalStallCycles": "预期阻塞时钟周期",
+    "RegisterNum": "寄存器数"
   }
 }

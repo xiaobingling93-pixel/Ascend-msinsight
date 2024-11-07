@@ -10,12 +10,18 @@ const CYCLES = 'Cycles';
 const CYCLE = 'Cycle';
 const LINE = 'Line';
 const ADDRESS_RANGE = 'Address Range';
+const REAL_STALL_CYCLES = 'RealStallCycles';
+const THEORETICAL_STALL_CYCLES = 'TheoreticalStallCycles';
+const REGISTER_NUM = 'RegisterNum';
 export interface JsonInstructionType {
     [ADDESS]: string ;
     [SOURCE]: string ;
     [PIPE]: string ;
     [INSTRUCIONS_EXECUTED]: number[] ;
     [CYCLES]: number[];
+    [REAL_STALL_CYCLES]?: number[];
+    [THEORETICAL_STALL_CYCLES]?: number[];
+    [REGISTER_NUM]?: number[];
 };
 
 export interface Iline {
@@ -39,4 +45,7 @@ export interface InstrsColumnType {
     maxCycles: number;
     cycles: number;
     instructionsExecuted: number;
+    realStallCycles?: number;
+    theoreticalStallCycles?: number;
+    registerNum?: number;
 };

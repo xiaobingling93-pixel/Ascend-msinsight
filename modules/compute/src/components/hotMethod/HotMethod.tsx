@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
 import { Checkbox, Tooltip } from 'ascend-components';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
+import type { AlignType } from 'rc-table/lib/interface';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import './HotMethod.css';
 import type { Session } from '../../entity/session';
@@ -25,6 +26,7 @@ import { queryApiInstr, queryApiLine, querySourceCode } from '../RequestUtils';
 import { runInAction } from 'mobx';
 import { Layout } from 'ascend-layout';
 import { safeJSONParse } from 'ascend-utils';
+import type { TFunction } from 'i18next';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 const MAX_FILE_SIZE = 1000000; // 100,0000
@@ -56,57 +58,47 @@ const useCodeColumns = (): ColumnsType<Ilinetable> => {
     }];
 };
 
-const useInstrsColumns = (): ColumnsType<InstrsColumnType> => {
-    const { t } = useTranslation('source');
-    return [
-        { title: '#', dataIndex: 'index', width: 50, align: 'right', ellipsis: true },
-        {
-            title: t('Address'),
-            dataIndex: 'Address',
-            width: 100,
-            ellipsis: true,
-        },
-        {
-            title: t('Pipe'),
-            dataIndex: 'Pipe',
-            width: 100,
-            ellipsis: true,
-        },
+const getInstrsColumns = (t: TFunction, condition?: {hasStallCycles?: boolean;hasRegisterNum?: boolean}): ColumnsType<InstrsColumnType> => {
+    const { hasStallCycles = false, hasRegisterNum = false } = condition ?? {};
+    const cols = [
+        { title: '#', dataIndex: 'index', width: 50, align: 'right' as AlignType, ellipsis: true },
+        { title: t('Address'), dataIndex: 'Address', width: 100, ellipsis: true },
+        { title: t('Pipe'), dataIndex: 'Pipe', width: 100, ellipsis: true },
         {
             title: t('Source'),
             dataIndex: 'Source',
             ellipsis: { showTitle: false },
-            render: source => (
+            render: (source: string) => (
                 <Tooltip placement="topLeft" title={source} >
                     {source}
                 </Tooltip>
             ),
         },
-        {
-            title: t('InstructionsExecuted'),
-            dataIndex: 'instructionsExecuted',
-            ellipsis: true,
-            width: 165,
-        },
+        { title: t('InstructionsExecuted'), dataIndex: 'instructionsExecuted', ellipsis: true, width: 145 },
         {
             title: t('Cycles'),
             dataIndex: 'cycles',
             width: 150,
             ellipsis: true,
             sorter: true,
-            render: (cycles, record): string | React.ReactElement => {
+            render: (cycles: number | string, record: InstrsColumnType): string | React.ReactElement => {
                 if (cycles === '') {
                     return '';
                 }
-                return <Bar value={cycles} max={record.maxCycles ?? cycles}/>;
+                return <Bar value={Number(cycles)} max={record.maxCycles ?? cycles}/>;
             },
         },
+        { title: t('RealStallCycles'), dataIndex: 'realStallCycles', ellipsis: true, display: hasStallCycles },
+        { title: t('TheoreticalStallCycles'), dataIndex: 'theoreticalStallCycles', ellipsis: true, display: hasStallCycles },
+        { title: t('RegisterNum'), dataIndex: 'registerNum', ellipsis: true, display: hasRegisterNum },
     ];
+    return cols.filter(col => col.display !== false);
 };
 
 // eslint-disable-next-line max-lines-per-function
 const Index = observer(({ session }: { session: Session }) => {
     const domId = 'hotMethod';
+    const { t } = useTranslation('source');
     const [condition, setCondition] = useState<ConditionType>({ core: '', source: '', onlyRelated: false });
     const [code, setCode] = useState('');
     const [codeLines, setCodeLines] = useState<Ilinetable[]>([]);
@@ -115,11 +107,10 @@ const Index = observer(({ session }: { session: Session }) => {
     const [selectedline, setSelectedline] = useState<number>(-1);
     const [lineClickListener, setLineClickListener] = useState<number>(0);
     const [tableHeight, setTableHeight] = useState<number>(1000);
-    const instrsColumns = useInstrsColumns();
+    const instrsColumns = getInstrsColumns(t);
     const [filterInstrsColumns, setFilterInstrsColumns] = useState<ColumnsType<InstrsColumnType>>(instrsColumns);
     const [doneQuery, setDoneQuery] = useState(false);
     const [instrLimit, setInstrLimit] = useState({ maxSize: MAX_INSTRUCTION, overlimit: false, current: 0 });
-    const { t } = useTranslation('source');
     const reset = (): void => {
         // 重置选中行数，-1不选中任一行
         setSelectedline(-1);
@@ -162,7 +153,9 @@ const Index = observer(({ session }: { session: Session }) => {
     }
 
     const updateInstrsColumns = (): void => {
-        const newColumns: ColumnsType<InstrsColumnType> = [...instrsColumns];
+        const hasStallCycles = instrsData[0]?.realStallCycles !== undefined && instrsData[0]?.realStallCycles !== null;
+        const hasRegisterNum = instrsData[0]?.registerNum !== undefined && instrsData[0]?.registerNum !== null;
+        const newColumns: ColumnsType<InstrsColumnType> = getInstrsColumns(t, { hasStallCycles, hasRegisterNum });
         const fields = ['Address', 'Pipe', 'Source', 'Instructions Executed', 'Cycles'];
         newColumns.forEach((col: ColumnType<InstrsColumnType>) => {
             if (fields.includes(String(col.dataIndex))) {
@@ -252,6 +245,9 @@ const Index = observer(({ session }: { session: Session }) => {
             instructionsExecuted: item['Instructions Executed']?.[coreIndex] ?? '',
             index: index + 1,
             maxCycles: 0,
+            realStallCycles: item.RealStallCycles?.[coreIndex],
+            theoreticalStallCycles: item.TheoreticalStallCycles?.[coreIndex],
+            registerNum: item.RegisterNum?.[coreIndex],
         }));
         let maxCycles = 1;
         list.forEach(item => {

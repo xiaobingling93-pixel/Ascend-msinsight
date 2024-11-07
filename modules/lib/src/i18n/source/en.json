@@ -12,6 +12,9 @@
     "CharactersExceed": "Characters Exceed {{max}} , Hide the rest content",
     "LineExceed": "Exceed {{max}} lines , Hide the rest content",
     "Exceed": "Exceed {{max}} , Hide the rest content",
-    "ExceedInstructions": "Only display the first {{max}} Instructions"
+    "ExceedInstructions": "Only display the first {{max}} Instructions",
+    "RealStallCycles": "Real Stall Cycles",
+    "TheoreticalStallCycles": "Theoretical Stall Cycles",
+    "RegisterNum": "Register Number"
   }
 }
