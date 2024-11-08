@@ -9,11 +9,13 @@ export class MemoryPage {
     readonly page: Page;
     readonly memoryFrame: FrameLocator;
     readonly rankIdSelector: Locator;
+    readonly groupIdSelector: Locator;
 
     constructor(page: Page) {
         this.page = page;
         this.memoryFrame = page.frameLocator('#Memory');
-        this.rankIdSelector = this.memoryFrame.locator('.ant-select[name="rankId"]');
+        this.rankIdSelector = this.memoryFrame.locator('#select-rankId');
+        this.groupIdSelector = this.memoryFrame.locator('#select-groupId');
     }
 
     async goto(): Promise<void> {

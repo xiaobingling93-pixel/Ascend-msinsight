@@ -103,7 +103,7 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
                     <FlexDiv>
                         <Label name={t('searchCriteria.Host')} />
                         <Select
-                            name={'host'}
+                            id={'select-host'}
                             value={hostCondition.value}
                             size="middle"
                             onChange={onHostChanged}
@@ -120,7 +120,7 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
                     <FlexDiv>
                         <Label name={t('searchCriteria.RankId')} />
                         <Select
-                            name={'rankId'}
+                            id={'select-rankId'}
                             value={rankIdCondition.value}
                             size="middle"
                             onChange={onRankIdChanged}
@@ -140,7 +140,7 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
                     <FlexDiv>
                         <Label name={<span>{t('searchCriteria.GroupBy')}{hit}</span>} />
                         <Select
-                            name={'groupId'}
+                            id={'select-groupId'}
                             value={groupId}
                             style={{ width: 180 }}
                             onChange={onGroupByChanged}
