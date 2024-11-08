@@ -321,7 +321,7 @@ const CommunicatorContent = observer(({ session, ranksData, showRank }: { sessio
                 <svg id="parallelDrawLineSVG" style={{ position: 'absolute', pointerEvents: 'none', zIndex: 10 }}></svg>
                 {
                     showRank &&
-                    <div style={{ paddingBottom: '5px' }}>
+                    <div style={{ paddingBottom: '5px' }} data-testid="parallelRankContainer">
                         {
                             ranksData.map(item => (
                                 <Pp key={item.key} ppData={item.values} session={session} dyeingMode={dyeingMode} dyeingStep={dyeingStep}></Pp>

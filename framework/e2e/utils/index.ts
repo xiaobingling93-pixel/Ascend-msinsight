@@ -26,7 +26,7 @@ export async function importData(page: Page, filePath: FilePath = FilePath.TEXT)
     await confirmBtn.click();
     const projectListItemCount = await projectList.getByRole('treeitem').count();
     expect(projectListItemCount).toBeGreaterThan(0);
-    const currentProject = projectList.getByText(filePath, { exact: true });
+    const currentProject = projectList.getByText(filePath, { exact: true }).first();
     await expect(currentProject).toBeVisible();
 }
 

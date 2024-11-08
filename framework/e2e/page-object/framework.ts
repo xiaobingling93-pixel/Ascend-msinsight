@@ -34,6 +34,8 @@ export class FrameworkPage {
     // 帮助信息弹窗
     readonly helpInfoDialog: Locator;
 
+    readonly loadingDialog: Locator;
+
     constructor(page: Page) {
         this.page = page;
         this.deleteAllBtn = page.locator('.btn-delete');
@@ -53,6 +55,7 @@ export class FrameworkPage {
         this.deleteAllCancelBtn = page.getByRole('button', { name: 'Cancel' });
         this.projectList = page.getByRole('tree');
         this.helpInfoDialog = page.getByLabel('About MindStudio Insight');
+        this.loadingDialog = page.locator('.el-loading-mask');
     }
 
     async goto(): Promise<void> {
