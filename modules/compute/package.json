@@ -15,12 +15,6 @@
     "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\Compute\\ /E /I /Y",
     "publishLinux": "cp -rf ./build/* ../../framework/plugins/Compute"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
   "jest": {
     "transformIgnorePatterns": [
       "/node_modules/(?!d3|d3-array|internmap|delaunator|robust-predicates)"

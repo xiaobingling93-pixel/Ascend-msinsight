@@ -15,12 +15,6 @@
     "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\Jupyter\\ /E /I /Y",
     "publishLinux": "cp -rf ./build/* ../../framework/plugins/Jupyter"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
   "jest": {
     "transformIgnorePatterns": [
       "/node_modules/(?!d3|d3-array)"

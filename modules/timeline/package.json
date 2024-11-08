@@ -16,12 +16,6 @@
     "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\Timeline\\ /E /I /Y",
     "publishLinux": "cp -rf ./build/* ../../framework/plugins/Timeline"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
   "jest": {
     "transformIgnorePatterns": [
       "/node_modules/(?!d3|d3-array|ascend-)"

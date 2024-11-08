@@ -13,12 +13,6 @@
     "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\lib\\ /E /I /Y",
     "publishLinux": "cp -rf ./build/* ../../framework/plugins/lib"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
   "browserslist": {
     "production": [
       ">0.2%",

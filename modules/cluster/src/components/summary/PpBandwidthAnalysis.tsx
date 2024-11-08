@@ -15,7 +15,7 @@ import React, { useEffect, useState } from 'react';
 import * as echarts from 'echarts';
 import Filter, { type ConditionDataType } from './PpBandwidthFilter';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import _ from 'lodash';
 import styled from '@emotion/styled';
 import { chartColors, disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
@@ -87,7 +87,8 @@ function renderEmpty(domId: string): void {
         return;
     }
     disposeAdaptiveEchart(chartDom);
-    ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
+    const root = createRoot(chartDom);
+    root.render(<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>);
 }
 
 interface InitChartsParams {
@@ -108,7 +109,8 @@ async function InitCharts({ domId, stepId, stage, allStageIds, isDark, locale }:
         const stageIds = stage !== 'All' ? [stage] : allStageIds;
         const res = domId === 'STAGE' ? await wrapBandwidthDataInStage(domId, stepId, stageIds, isDark) : await wrapBandwidthDataInRank(domId, stepId, stageIds, isDark);
         if (res === null || res === undefined) {
-            ReactDOM.render((<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
+            const root = createRoot(chartDom);
+            root.render(<Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>);
         } else {
             disposeAdaptiveEchart(chartDom);
             const myChart = getAdaptiveEchart(chartDom, null, { locale });
@@ -120,8 +122,9 @@ async function InitCharts({ domId, stepId, stage, allStageIds, isDark, locale }:
             });
         }
     } catch (error) {
+        const root = createRoot(chartDom);
         disposeAdaptiveEchart(chartDom);
-        ReactDOM.render((<></>), chartDom);
+        root.render(<></>);
     }
 }
 

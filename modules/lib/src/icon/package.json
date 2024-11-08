@@ -4,12 +4,6 @@
   "private": true,
   "main": "./Icon.js",
   "types": "./Icon.d.ts",
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
   "browserslist": {
     "production": [
       ">0.2%",

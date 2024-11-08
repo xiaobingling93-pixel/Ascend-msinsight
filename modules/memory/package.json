@@ -15,12 +15,6 @@
     "publishWin": "xcopy .\\build ..\\..\\framework\\plugins\\Memory\\ /E /I /Y",
     "publishLinux": "cp -rf ./build/* ../../framework/plugins/Memory"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
   "jest": {
     "transformIgnorePatterns": [
       "/node_modules/(?!d3|d3-array|ascend-)"

@@ -4,7 +4,7 @@
 
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { useTranslation } from 'react-i18next';
 import * as echarts from 'echarts';
 import type { PlainLegendComponentOption } from 'echarts';
@@ -184,7 +184,8 @@ async function InitPacketAndBandwidthCharts({
     if (chartDom !== null) {
         const res = await wrapBandwidthData({ domId, iterationId, rankId, operatorName, stage, isDark });
         if (res === null || res === undefined) {
-            ReactDOM.render((<Empty style={{ margin: 'auto' }} image={Empty.PRESENTED_IMAGE_SIMPLE}/>), chartDom);
+            const root = createRoot(chartDom);
+            root.render(<Empty style={{ margin: 'auto' }} image={Empty.PRESENTED_IMAGE_SIMPLE}/>);
         } else {
             disposeAdaptiveEchart(chartDom);
             const myChart = getAdaptiveEchart(chartDom, null, { locale });

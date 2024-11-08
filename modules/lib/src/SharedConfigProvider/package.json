@@ -4,12 +4,6 @@
   "private": true,
   "main": "./index.js",
   "types": "./index.d.ts",
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
   "browserslist": {
     "production": [
       ">0.2%",
