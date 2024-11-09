@@ -56,6 +56,25 @@ constexpr std::string_view CAT = "cat";
 constexpr std::string_view ARGS = "args";
 }
 
+namespace KernelDetailColumn {
+constexpr std::string_view ID = "id";
+constexpr std::string_view RANK_ID = "rank_id";
+constexpr std::string_view STEP_ID = "step_id";
+constexpr std::string_view NAME = "name";
+constexpr std::string_view OP_TYPE = "op_type";
+constexpr std::string_view ACCELERATOR_CORE = "accelerator_core";
+constexpr std::string_view START_TIME = "start_time";
+constexpr std::string_view DURATION = "duration";
+constexpr std::string_view WAIT_TIME = "wait_time";
+constexpr std::string_view BLOCK_DIM = "block_dim";
+constexpr std::string_view INPUT_SHAPES = "input_shapes";
+constexpr std::string_view INPUT_DATA_TYPES = "input_data_types";
+constexpr std::string_view INPUT_FORMATS = "input_formats";
+constexpr std::string_view OUTPUT_SHAPES = "output_shapes";
+constexpr std::string_view OUTPUT_DATA_TYPES = "output_data_types";
+constexpr std::string_view OUTPUT_FORMATS = "output_formats";
+}
+
 namespace TaskColumn {
 constexpr std::string_view ROW_ID = "rowid";
 constexpr std::string_view TIMESTAMP = "startNs";
@@ -184,6 +203,60 @@ constexpr std::string_view DOMAIN_ID = "domainId";
 //    host侧tx打点数据与TASK表里npu打点task的关联id
 constexpr std::string_view CONNECTION_ID = "connectionId";
 constexpr std::string_view DEPTH = "depth";
+}
+
+namespace EnumHcclDataTypeClumn {
+constexpr std::string_view ID = "id";
+// hccl data type类型
+constexpr std::string_view NAME = "name";
+}
+
+namespace EnumHcclRdmaTypeClumn {
+constexpr std::string_view ID = "id";
+// hccl rdma type类型
+constexpr std::string_view NAME = "name";
+}
+
+namespace EnumHcclTransportTypeClumn {
+constexpr std::string_view ID = "id";
+// hccl transport type类型
+constexpr std::string_view NAME = "name";
+}
+
+namespace EnumHcclLinkTypeClumn {
+constexpr std::string_view ID = "id";
+// hccl link type类型
+constexpr std::string_view NAME = "name";
+}
+
+namespace ComputeTaskInfoColumn {
+// 算子名，STRING_IDS(name)
+constexpr std::string_view NAME = "name";
+// 全局算子任务id，用于关联TASK表,主键
+constexpr std::string_view GLOBAL_TASK_ID = "globalTaskId";
+// 算子运行切分数量，对应算子运行时核数
+constexpr std::string_view BLOCK_DIM = "blockDim";
+// mix算子从加速器的block_dim值
+constexpr std::string_view MIX_BLOCK_DIM = "mixBlockDim";
+// host执行该算子的加速器类型，STRING_IDS(taskType)
+constexpr std::string_view TASK_TYPE = "taskType";
+// 算子类型，STRING_IDS(opType)
+constexpr std::string_view OP_TYPE = "opType";
+// 算子输入数据格式，STRING_IDS(inputFormats)
+constexpr std::string_view INPUT_FORMATS = "inputFormats";
+// 算子输入数据类型，STRING_IDS(inputDataTypes)
+constexpr std::string_view INPUT_DATA_TYPES = "inputDataTypes";
+// 算子的输入维度，STRING_IDS(inputShapes)
+constexpr std::string_view INPUT_SHAPES = "inputShapes";
+// 算子输出数据格式，STRING_IDS(outputFormats)
+constexpr std::string_view OUTOUT_FORMATS = "outputFormats";
+// 算子输出数据类型，STRING_IDS(outputDataTypes)
+constexpr std::string_view OUTPUT_DATA_TYPES = "outputDataTypes";
+// 算子输出维度，STRING_IDS(outputShapes)
+constexpr std::string_view OUTPUT_SHAPES = "outputShapes";
+// 算子的attr信息，用来映射算子shape，算子自定义的参数等，STRING_IDS(attrInfo)
+constexpr std::string_view ATTRINFO = "attrInfo";
+constexpr std::string_view WAIT_NS = "waitNs";
 }
 }
 }
