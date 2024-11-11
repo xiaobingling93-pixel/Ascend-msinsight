@@ -7,33 +7,55 @@
 
 namespace Dic {
 namespace Module {
-std::vector<std::pair<int64_t, int64_t>> JsonFileProcess::SplitFile(const std::string &filePath)
+std::vector<std::pair<int64_t, int64_t>> JsonFileProcess::SplitFile(const std::string &filePath,
+    std::optional<std::pair<int64_t, int64_t>> position)
 {
     std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::in | std::ios::binary);
     if (!file.is_open()) {
         Dic::Server::ServerLog::Error("Split file failed to open json file. ");
         return {};
     }
-    std::vector<std::pair<int64_t, int64_t>> result = GetSplitPosition(file);
+
+    // 如果解析文件的position使用的是默认参数，那么将起止位置设为0和文件结尾
+    std::pair<int64_t, int64_t> pos;
+    if (position.has_value()) {
+        pos = std::make_pair(position.value().first, position.value().second);
+    } else {
+        int64_t start = 0;
+        file.seekg(0, std::ifstream::end);
+        int64_t end = file.tellg();
+        pos = std::make_pair(start, end);
+    }
+    std::vector<std::pair<int64_t, int64_t>> result = GetSplitPosition(file, pos);
     file.close();
     return result;
 }
 
-std::vector<std::pair<int64_t, int64_t>> JsonFileProcess::GetSplitPosition(std::ifstream &file)
+std::vector<std::pair<int64_t, int64_t>> JsonFileProcess::GetSplitPosition(std::ifstream &file,
+    std::pair<int64_t, int64_t> position)
 {
-    std::vector<std::pair<int64_t, int64_t>> result = {};
     file.seekg(0, std::ifstream::end); // 将当前位置移动到文件尾，以获取文件大小
     int64_t fileSize = file.tellg();
+    int64_t contentStart = position.first;
+    int64_t contentEnd = position.second;
+    if (contentStart < 0 || contentEnd < 0 || contentStart >= contentEnd || contentEnd > fileSize) {
+        Dic::Server::ServerLog::Error("Invalid position to split file, start position is % and end position is %.",
+            position.first, position.second);
+        return {};
+    }
+
+    std::vector<std::pair<int64_t, int64_t>> result = {};
+    int64_t contentSize = contentEnd - contentStart;
     file.clear();
-    file.seekg(0, std::ios::beg); // 将当前位置移动到文件开头，正式开始处理
+    file.seekg(contentStart, std::ios::beg); // 将当前位置移动到文件开头，正式开始处理
     // 首先判断Trace文件的格式是JSON Object Format还是JSON Array
     // Format，二者有差异，Object格式实际的数据应该从traceEvents之后开始
     Dic::Module::JsonFormat json = SeekRegexPosition(file, R"(\"traceEvents")") ?
         Dic::Module::JsonFormat::JSON_OBJECT_FORMAT :
         Dic::Module::JsonFormat::JSON_ARRAY_FORMAT;
-    if (fileSize <= blockSize) {
+    if (contentSize <= blockSize) {
         // 如果是Object类型，则有效数据从 ”traceEvents“: [  的"["之后开始
-        ComputeSmallFilePosition(file, result, json);
+        ComputeSmallFilePosition(file, result, json, position);
         return result;
     }
     // 前面获取JsonFormat时，如果是Json Object Format，则已将当前位置移动到traceEvents之后，两种文件处理的逻辑一致
@@ -45,8 +67,13 @@ std::vector<std::pair<int64_t, int64_t>> JsonFileProcess::GetSplitPosition(std::
         }
         int64_t start = file.tellg();
         std::string endRegex;
-        if (start + blockSize >= fileSize) {
-            file.seekg(0 - endBufferLength, std::ifstream::end);
+        if (start + blockSize >= contentSize) {
+            // 如果解析的内容长度小于endBufferLength,直接将文件指针移动到内容起始位置
+            if (contentSize < endBufferLength) {
+                file.seekg(contentStart, std::ifstream::beg);
+            } else {
+                file.seekg(contentEnd - endBufferLength, std::ifstream::beg);
+            }
             endRegex = R"(\}\s*\]|\}\s*,\s*\])";
             endFlag = true;
         } else {
@@ -64,15 +91,23 @@ std::vector<std::pair<int64_t, int64_t>> JsonFileProcess::GetSplitPosition(std::
 }
 
 void JsonFileProcess::ComputeSmallFilePosition(std::ifstream &file, std::vector<std::pair<int64_t, int64_t>> &result,
-    const JsonFormat &json)
+    const JsonFormat &json, std::pair<int64_t, int64_t> position)
 {
     if (json == JsonFormat::JSON_OBJECT_FORMAT) {
+        int64_t contentStart = position.first;
+        int64_t contentEnd = position.second;
+        int64_t contentSize = contentEnd - contentStart;
         if (!SeekRegexPosition(file, R"(\[\s*\{)")) {
             Server::ServerLog::Warn("Failed to find start position of json object format.");
             return;
         }
         int64_t start = file.tellg();
-        file.seekg(0 - endBufferLength, std::ifstream::end);
+        // 如果解析的内容长度小于endBufferLength,直接将文件指针移动到内容起始位置
+        if (contentSize < endBufferLength) {
+            file.seekg(contentStart, std::ifstream::beg);
+        } else {
+            file.seekg(contentEnd - endBufferLength, std::ifstream ::beg);
+        }
         if (SeekRegexPosition(file, R"(\}\s*\]\s*\})")) {
             int64_t end = file.tellg();
             if (start > INT64_MAX - 1 || start + 1 > end) {

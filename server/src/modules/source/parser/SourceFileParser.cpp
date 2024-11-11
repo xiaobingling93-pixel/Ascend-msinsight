@@ -174,8 +174,9 @@ bool SourceFileParser::InitParser(const std::string &fileId)
         return false;
     }
     std::vector<std::pair<int64_t, int64_t>> adjustTraceFilePos;
+    adjustTraceFilePos.reserve(traceFilePos.size());
     for (const auto &pos : traceFilePos) {
-        adjustTraceFilePos.emplace_back(AdjustPosition(file, pos.startPos, pos.endPos));
+        adjustTraceFilePos.emplace_back(pos.startPos, pos.endPos);
     }
     file.close();
 
@@ -260,52 +261,22 @@ void SourceFileParser::ParseTask(const std::string &fileId, std::pair<int64_t, i
         instance.filePath;
     Timeline::EventParser eventParser(curFilePath, fileId);
     eventParser.SetSimulationStatus(true);
-    if (!eventParser.Parse(pos.first, pos.second)) {
-        if (Timeline::ParserStatusManager::Instance().SetTerminateStatus(fileId) == Timeline::ParserStatus::RUNNING) {
-            // 只发送一次解析失败事件
-            ParseEndCallBack(fileId, false, eventParser.GetError());
+    // 先将文件内容切片，避免一次解析的数据量过大
+    for (const auto& pair : JsonFileProcess::SplitFile(curFilePath, pos)) {
+        if (!eventParser.Parse(pair.first, pair.second)) {
+            if (Timeline::ParserStatusManager::Instance().SetTerminateStatus(fileId) ==
+                Timeline::ParserStatus::RUNNING) {
+                // 只发送一次解析失败事件
+                ParseEndCallBack(fileId, false, eventParser.GetError());
+                break;
+            }
         }
+        // 发送解析进度事件
+        std::unique_ptr<FileProgress> &curFileProgress = instance.fileProgressMap[fileId];
+        curFileProgress->AddToParsedSize(pair.second - pair.first);
+        instance.paserProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
+                                       curFileProgress->GetProgressPercentage());
     }
-    // 发送单卡解析进度事件
-    std::unique_ptr<FileProgress> &curFileProgress = instance.fileProgressMap[fileId];
-    curFileProgress->AddToParsedSize(pos.second - pos.first);
-    instance.paserProgressCallback(fileId, curFileProgress->GetParsedSize(), curFileProgress->GetTotalSize(),
-                                   curFileProgress->GetProgressPercentage());
-}
-std::pair<int64_t, int64_t> SourceFileParser::AdjustPosition(std::ifstream &file, int64_t start, int64_t end)
-{
-    ServerLog::Info("Start is: ", start, " End is: ", end);
-    int64_t contentStart = start;
-    int64_t contentEnd = end;
-    file.seekg(contentStart, std::ios::beg);
-    char startTemp;
-    while (file.get(startTemp)) {
-        if (!file) {
-            ServerLog::Error("Failed to read start position.");
-            break;
-        }
-        if (startTemp == '[') {
-            contentStart++;
-            break;
-        }
-        contentStart++;
-    }
-    file.seekg(contentEnd, std::ios::beg);
-    char endTemp;
-    const int offset = -2;
-    while (file.get(endTemp)) {
-        if (!file) {
-            ServerLog::Error("Failed to read end position.");
-            break;
-        }
-        if (endTemp == ']') {
-            contentEnd--;
-            break;
-        }
-        contentEnd--;
-        file.seekg(offset, std::ifstream::cur);
-    }
-    return std::make_pair(contentStart, contentEnd);
 }
 
 void SourceFileParser::ParseEndCallBack(const std::string &fileId, bool result, const std::string &message)

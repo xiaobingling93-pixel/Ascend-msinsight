@@ -13,6 +13,7 @@
 #include "FileParser.h"
 #include "ThreadPool.h"
 #include "SourceProtocolResponse.h"
+#include "JsonFileProcess.h"
 
 namespace Dic {
 namespace Module {
@@ -63,7 +64,6 @@ public:
     static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
     static void ParseTask(const std::string &fileId, std::pair<int64_t, int64_t> pos);
     static void EndParseTask(const std::string &fileId, std::shared_ptr<std::vector<std::future<void>>> futures);
-    static std::pair<int64_t, int64_t> AdjustPosition(std::ifstream &file, int64_t start, int64_t end);
     std::vector<std::string> GetCoreList();
     std::vector<std::string> GetSourceList();
     std::vector<SourceFileLine> GetApiLinesByCoreAndSource(const std::string &core, const std::string &sourceName);
