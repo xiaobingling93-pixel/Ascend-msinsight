@@ -67,7 +67,7 @@ export class Connection {
         if (!Array.isArray(dataPath)) {
             tempPath = [dataPath];
         }
-        this._dataSource.dataPath.push(...tempPath);
+        this._dataSource.dataPath?.push(...tempPath);
     }
 
     deleteDataPath(dataPath: string[] | string): void {
@@ -75,7 +75,7 @@ export class Connection {
         if (!Array.isArray(dataPath)) {
             tempPath = [dataPath];
         }
-        this._dataSource.dataPath = this._dataSource.dataPath.filter(item => !tempPath.includes(item));
+        this._dataSource.dataPath = this._dataSource.dataPath?.filter(item => !tempPath.includes(item)) ?? [];
     }
 
     async reset(): Promise<void> {
@@ -116,6 +116,7 @@ export class Connection {
                     content: 'WebSocket is already in CLOSING or CLOSED state! Please try to reconnect or restart MindStudio Insight.',
                     okText: 'Reconnect',
                     onOk: () => connectRemote(this._dataSource),
+                    closable: true,
                 });
             };
         }) as Promise<void>;

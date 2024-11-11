@@ -1,0 +1,119 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+* {
+    margin: 0;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+html, body {
+    overscroll-behavior: none; /* 禁用边界的回弹效果 */
+}
+input, button, select, textarea {
+    margin: 0;
+    color: inherit;
+    font-size: inherit;
+    font-family: inherit;
+    line-height: inherit;
+}
+
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+    transition: opacity 120ms ease-out;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--mi-text-color-placeholder);
+    z-index: 100;
+    border-radius: 5px;
+    transition: 0.3s background-color;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: transparent;
+    z-index: 100;
+}
+
+body {
+    min-height: 100vh;
+    color: var(--mi-text-color-primary);
+    background: var(--mi-bg-color-dark);
+    transition:
+        color 0.5s,
+        background-color 0.5s;
+    font-family: var(--mi-font-family);
+    font-size: 14px;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+    --mi-font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+        Cantarell, 'Fira Sans', 'Droid Sans', sans-serif;
+    --mi-border-radius-base: 4px;
+    --mi-border-radius-small: 2px;
+    --mi-color-primary: #0077ff;
+    --mi-color-success: #24ab36;
+    --mi-color-warning: #ebaf00;
+    --mi-color-danger: #e32020;
+    --mi-color-info: #576372;
+    --mi-color-major: #f97611;
+    --mi-color-major-light3: #fba25d;
+    --mi-bg-color: #fdfeff;
+    --mi-bg-color-common: #EBEFF6;
+    --mi-bg-color-dark: #ebeff6;
+    --mi-bg-color-light: #f4f6fa;
+    --mi-bg-color-lighter: #ffffff;
+    --mi-tree-bg-color-light: #EBEFF6;
+    --mi-text-color-primary: #000000;
+    --mi-text-color-secondary: #4e5865;
+    --mi-text-color-tertiary: #8d98aa;
+    --mi-text-color-fourth: #ffffff;
+    --mi-text-color-placeholder: #bfc7d7;
+    --mi-text-color-placeholder-light: #ebedf3;
+    --mi-text-color-disabled: #c0c4cc;
+    --mi-border-color: #e4eaf1;
+    --mi-border-color-light: #dfe5ef;
+    --mi-border-color-lighter: #c3cedf;
+    --mi-border-color-extra-light: #b3bfd3;
+    --mi-mask-color: rgba(0, 0, 0, 0.8);
+    --mi-mask-color-extra-light: rgba(0, 0, 0, 0.3);
+    --mi-box-shadow: 0px 12px 32px 4px rgba(0, 0, 0, 0.04), 0px 8px 20px rgba(0, 0, 0, 0.08);
+    --header-height: 36px;
+    --menu-bg-color: var(--mi-bg-color-dark);
+    --header-bg-color: #ffffff;
+    --tree-child-node-text-color: var(--mi-text-color-secondary);
+}
+
+html.dark {
+    --mi-bg-color-page: #0a0a0a;
+    --mi-bg-color: #1f2329;
+    --mi-bg-color-common: #2A2F37;
+    --mi-bg-color-dark: #181b20;
+    --mi-bg-color-light: #2a2f37;
+    --mi-bg-color-lighter: #343a43;
+    --mi-tree-bg-color-light: #343A43;
+    --mi-text-color-primary: #ffffff;
+    --mi-text-color-secondary: #d3dce9;
+    --mi-text-color-placeholder: #626d7c;
+    --mi-text-color-placeholder-light: #272c33;
+    --mi-text-color-disabled: #6c6e72;
+    --mi-border-color: #363c46;
+    --mi-border-color-light: #3e4551;
+    --mi-border-color-lighter: #576372;
+    --mi-border-color-extra-light: #fffefe;
+    --mi-box-shadow: 0px 12px 32px 4px rgba(0, 0, 0, 0.36), 0px 8px 20px rgba(0, 0, 0, 0.72);
+    --menu-bg-color: var(--mi-bg-color-light);
+    --header-bg-color: var(--mi-bg-color-light);
+    --tree-child-node-text-color: var(--mi-text-color-tertiary);
+}

@@ -3,6 +3,8 @@
 */
 import type { DataRequest, ModuleName, DataSource } from './websocket/defs';
 import { Connection } from './websocket/connection';
+import connector from '@/connection';
+import { ProjectAction } from '@/utils/enum';
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
 const getConnectionMapKey = (dataSource: DataSource): string => {
@@ -18,6 +20,20 @@ export const connectRemote = async function (dataSource: DataSource): Promise<bo
     }
     CONNECTION_MAP.set(getConnectionMapKey(dataSource), connection);
     return true;
+};
+
+export const isExistedRemote = function(dataSource: DataSource): boolean {
+    return CONNECTION_MAP.has(getConnectionMapKey(dataSource));
+};
+
+export const addDataPath = function(dataSource: DataSource, action: ProjectAction, isConflict: boolean): void {
+    const connection = CONNECTION_MAP.get(getConnectionMapKey(dataSource));
+    if (connection) {
+        connector.send({
+            event: 'remote/import',
+            body: { dataSource, isConflict, action },
+        });
+    }
 };
 
 export const request = function (

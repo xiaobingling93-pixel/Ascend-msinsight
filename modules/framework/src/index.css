@@ -1,0 +1,22 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+@import './assets/base.css';
+/*弹窗对话框*/
+.ant-modal-content{
+  background: var(--mi-bg-color);
+  color: var(--mi-text-color-primary);
+}
+.ant-modal-header{
+  background: none;
+}
+.ant-modal-title{
+  color: var(--mi-text-color-primary);
+}
+.ant-modal-close{
+  color: var(--mi-text-color-primary);
+}
+.ant-modal-footer{
+  text-align: center;
+  padding: 0px 16px 24px;
+}

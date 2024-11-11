@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+		version="1.1"
+		id="图层_1"
+		xmlns="http://www.w3.org/2000/svg"
+		xmlns:xlink="http://www.w3.org/1999/xlink"
+		x="0px"
+		y="0px"
+		viewBox="0 0 16 16"
+		style="enable-background: new 0 0 16 16"
+		xml:space="preserve"
+>
+    <g id="icons_x2F_light_x2F_normal_x2F_project_x2F_file1">
+      <g id="编组" transform="translate(2.999993, 1.000000)">
+        <path
+				id="形状结合"
+				fill="#BDBDBD"
+				d="M5,0l4.2,0C9.5,0,10,0.5,10,1v12c0,0.9-0.1,1-0.8,1H0.8C0.6,14,0,14,0,13V5h4.2
+			C5,5,5,5,5,4V0z M4.5,11h-3C1.2,11,1,11.2,1,11.5S1.2,12,1.5,12h3C4.8,12,5,11.8,5,11.5S4.8,11,4.5,11z M4.5,8h-3
+			C1.2,8,1,8.2,1,8.5S1.2,9,1.5,9h3C4.8,9,5,8.8,5,8.5S4.8,8,4.5,8z"
+		/>
+		  <path
+				  id="路径"
+				  fill="#BDBDBD"
+				  d="M0,4c2.3,0,3.5,0,3.7,0C3.8,4,4,3.9,4,3.6C4,3.5,4,2.3,4,0L0,4z"
+		  />
+      </g>
+    </g>
+  </svg>

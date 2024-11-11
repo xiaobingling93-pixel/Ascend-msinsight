@@ -67,10 +67,15 @@ export type ModuleName = string;
 export interface DataSource {
     remote: string;
     port: number;
-    projectName: string;
-    dataPath: string[];
+    projectName?: string;
+    dataPath?: string[];
     isBaseLine?: boolean;
     baseLineCardId?: string;
+};
+
+export interface ProjectDirectory {
+    projectName: string;
+    fileName: string[];
 };
 export enum ProjectActionEnum {
     TRANSFER_PROJECT = 0,

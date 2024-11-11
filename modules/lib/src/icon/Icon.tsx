@@ -31,6 +31,10 @@ import { ReactComponent as ArrowUpLightSvg } from './img/arrow_up_light.svg';
 import { ReactComponent as ColumnFilterSvg } from './img/column_filter.svg';
 import { ReactComponent as ExpandSvg } from './img/expand.svg';
 import { ReactComponent as ExpandRightSvg } from './img/expand_right.svg';
+import { ReactComponent as ImportDataSvg } from './img/import_data.svg';
+import { ReactComponent as RefreshSvg } from './img/refresh.svg';
+import { ReactComponent as FileSvg } from './img/file.svg';
+import { ReactComponent as FolderSvg } from './img/folder.svg';
 import { ReactComponent as AlarmSvg } from './img/alarm.svg';
 import { themeInstance } from '../theme';
 import CaretRightSvg from './img/caret-right.svg';
@@ -66,6 +70,10 @@ const iconMap: Record<string, any> = {
     expand: ExpandSvg,
     expandRight: ExpandRightSvg,
     alarm: AlarmSvg,
+    importData: ImportDataSvg,
+    refresh: RefreshSvg,
+    file: FileSvg,
+    folder: FolderSvg,
     dark: {
         help: HelpDarkSvg,
         flag: FlagDarkIcon,
@@ -226,4 +234,17 @@ export function CollapseIcon(props: ISVGProps): JSX.Element {
 
 export function AlarmIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'alarm'} {...props } style={{marginTop:'2px'}}/>;
+}
+
+export function ImportDataIcon(props: ISVGProps): JSX.Element {
+    return <Icon type={'importData'} {...props }/>;
+}
+export function RefreshIcon(props: ISVGProps): JSX.Element {
+    return <Icon type={'refresh'} {...props }/>;
+}
+export function FileIcon(props: ISVGProps): JSX.Element {
+    return <Icon type={'file'} {...props }/>;
+}
+export function FolderIcon(props: ISVGProps): JSX.Element {
+    return <Icon type={'folder'} {...props }/>;
 }
