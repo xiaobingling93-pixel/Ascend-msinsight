@@ -27,12 +27,22 @@ export class SummaryPage {
     readonly summaryFrame: FrameLocator;
     readonly fullmask: Locator;
     readonly btnGenerate: Locator;
+    readonly chartContainer: Locator;
+    readonly parallelRankContainer: Locator;
+    readonly parallelDrawLineSVG: Locator;
+    readonly stageChartContainer: Locator;
+    readonly rankChartContainer: Locator;
 
     constructor(page: Page) {
         this.page = page;
         this.summaryFrame = page.frameLocator('#Summary');
         this.fullmask = this.summaryFrame.locator('.fullmask');
         this.btnGenerate = this.summaryFrame.locator('button').first();
+        this.chartContainer = this.summaryFrame.locator('#overview-chart > div').first();
+        this.parallelRankContainer = this.summaryFrame.getByTestId('parallelRankContainer');
+        this.parallelDrawLineSVG = this.summaryFrame.locator('#parallelDrawLineSVG');
+        this.stageChartContainer = this.summaryFrame.locator('#STAGE');
+        this.rankChartContainer = this.summaryFrame.locator('#RANK');
     }
 
     async configureParallel(summaryFrame: FrameLocator, btnGenerate: Locator, value: ParallelValue): Promise<void> {
@@ -55,7 +65,7 @@ export class SummaryPage {
 
     async configureParallelSwitch(page: Page, summaryFrame: FrameLocator, value: ParallelSwitchValue): Promise<void> {
         const config = summaryFrame.getByTestId('parallelSwitch');
-        
+
         if (value.pipelineParallel) {
             const pipelineParallelCheckbox = new CheckboxHelpers(
                 page,
@@ -91,6 +101,12 @@ export class SummaryPage {
             const dyeingStepInput = config.locator('#dyeingStep');
             await dyeingStepInput.fill(`${value.dyeingStep}`);
         }
+    }
+
+    async clickLine(lineSVG: Locator, gClass: string): Promise<void> {
+        const lineContainer = lineSVG.locator(`.${gClass}`);
+        const line = lineContainer.locator('polyline').first();
+        await line.click({ force: true });
     }
 
     async goto(): Promise<void> {
