@@ -258,6 +258,22 @@ constexpr std::string_view OUTPUT_SHAPES = "outputShapes";
 constexpr std::string_view ATTRINFO = "attrInfo";
 constexpr std::string_view WAIT_NS = "waitNs";
 }
+
+namespace EnumApiTypeColumn {
+constexpr std::string_view ID = "id";
+constexpr std::string_view NAME = "name";
+}
+
+namespace EnumMstxEventTypeColumn {
+constexpr std::string_view ID = "id";
+constexpr std::string_view NAME = "name";
+}
+
+namespace PytorchCallchainsColumn {
+constexpr std::string_view ID = "id";
+constexpr std::string_view STACK = "stack";
+constexpr std::string_view STACK_DEPTH = "stackDepth";
+}
 }
 }
 }
