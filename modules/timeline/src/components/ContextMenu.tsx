@@ -513,7 +513,7 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
     const findInCommunicationVisible = isGroupCommunicationUnit && isCommunicationOperator && session.isCluster;
 
     const menuItems: MenuItemModel[] = [
-        { name: t('Fit to screen'), key: 'fitToScreen', event: fitToScreen, visible: session.selectedData !== undefined },
+        { name: t('Fit to screen'), key: 'fitToScreen', event: fitToScreen, disabled: session.selectedData?.duration === 0, visible: session.selectedData !== undefined },
         { name: t('Find in Communication'), key: 'findInCommunication', event: findInCommunication, visible: findInCommunicationVisible },
         { name: t('Zoom into selection'), key: 'zoomIntoSelection', event: zoomIntoSelection, visible: session.selectedRange !== undefined },
         { name: `${t('Undo Zoom')} (${zoomHistory.length})`, key: 'undoZoom', event: undoZoom, disabled: zoomHistory.length === 0, visible: true },
@@ -530,7 +530,12 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
 
     return <>
         {menuItems.filter(menuItem => menuItem.visible).map(item => (<MenuItem className={`menu-item ${item.disabled ? 'disabled' : ''}`} key={item.key}
-            onClick={(e): void => item.event(session, item)}>
+            onClick={(e): void => {
+                if (item.disabled) {
+                    return;
+                }
+                item.event(session, item);
+            }}>
             {item.name}
         </MenuItem>))}
     </>;
