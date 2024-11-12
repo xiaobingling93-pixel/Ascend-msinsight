@@ -132,6 +132,13 @@ const MemoryDetailTable = observer(({ session, memorySession }:
         setSelectedRecord(memorySession, record);
     };
 
+    const handlePageSizeChanged = (newPageSize: number): void => {
+        setPageSize(newPageSize);
+        runInAction(() => {
+            memorySession.pageSize = newPageSize;
+        });
+    };
+
     const preParamCheck = (): boolean => {
         const isRankIdConditionInvalid = memorySession.rankIdCondition.value === undefined || memorySession.rankIdCondition.value === '';
         const isStaticMemoryInvalid = memorySession.memoryType === MemoryGraphType.STATIC && memorySession.memoryGraphId === '';
@@ -225,7 +232,7 @@ const MemoryDetailTable = observer(({ session, memorySession }:
                     current={current}
                     pageSize={pageSize}
                     onCurrentChange={setCurrent}
-                    onPageSizeChange={setPageSize}
+                    onPageSizeChange={handlePageSizeChanged}
                     onOrderChange={setOrder}
                     onOrderByChange={setOrderBy}
                     total={total}

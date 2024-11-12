@@ -21,8 +21,8 @@ interface IProps {
     onRowSelected?: (record?: OperatorDetail, rowIndex?: number) => void;
     current: number;
     pageSize: number;
-    onCurrentChange: (record: number) => void;
-    onPageSizeChange: (record: number) => void;
+    onCurrentChange: (newCurrent: number) => void;
+    onPageSizeChange: (newPageSize: number) => void;
     onOrderChange: (order: string | undefined) => void;
     onOrderByChange: (orderBy: string) => void;
     total: number;
