@@ -13,7 +13,7 @@ import type { Session } from '../../entity/session';
 import Filter from './Filter';
 import CodeViewer from './codeViewer/CodeViewer';
 import { ResizeTable } from 'ascend-resize';
-import Bar from './Bar';
+import Bar, { StallBar } from './Bar';
 import {
     HeaderFixedContainer,
     LeftRightContainer,
@@ -88,8 +88,14 @@ const getInstrsColumns = (t: TFunction, condition?: {hasStallCycles?: boolean;ha
                 return <Bar value={Number(cycles)} max={record.maxCycles ?? cycles}/>;
             },
         },
-        { title: t('RealStallCycles'), dataIndex: 'realStallCycles', ellipsis: true, display: hasStallCycles },
-        { title: t('TheoreticalStallCycles'), dataIndex: 'theoreticalStallCycles', ellipsis: true, display: hasStallCycles },
+        {
+            title: t('StallCycles'),
+            ellipsis: true,
+            width: 115,
+            render: (realStallCycles: number | string, record: InstrsColumnType): string | React.ReactElement =>
+                <StallBar real={record.realStallCycles} theoretical={record.theoreticalStallCycles}/>,
+            display: hasStallCycles,
+        },
         { title: t('RegisterNum'), dataIndex: 'registerNum', ellipsis: true, display: hasRegisterNum },
     ];
     return cols.filter(col => col.display !== false);

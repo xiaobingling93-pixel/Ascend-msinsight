@@ -25,10 +25,3 @@
 .theme_dark .ant-message-notice-content{
     background: var(--grey60);
 }
-
-.bar > div{
-    border:1px solid var(--grey10);
-}
-.theme_dark .bar > div{
-    border:1px solid var(--grey0);
-}
