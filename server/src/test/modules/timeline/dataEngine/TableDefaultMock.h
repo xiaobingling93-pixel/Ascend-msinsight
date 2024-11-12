@@ -33,6 +33,9 @@ protected:
         CommucationOpTable::ExcuteQuery(db, result);
         ClearThreadLocal();
     }
+
+private:
+    sqlite3 *db = nullptr;
 };
 class StringIdsTableMock : public StringIdsTable, public TableDefaultMock {
 protected:
@@ -41,6 +44,9 @@ protected:
         StringIdsTable::ExcuteQuery(db, result);
         ClearThreadLocal();
     }
+
+private:
+    sqlite3 *db = nullptr;
 };
 class TaskTableMock : public TaskTable, public TableDefaultMock {
 protected:
@@ -49,6 +55,9 @@ protected:
         TaskTable::ExcuteQuery(db, result);
         ClearThreadLocal();
     }
+
+private:
+    sqlite3 *db = nullptr;
 };
 class CommucationTaskInfoTableMock : public CommucationTaskInfoTable, public TableDefaultMock {
 protected:
@@ -57,6 +66,9 @@ protected:
         CommucationTaskInfoTable::ExcuteQuery(db, result);
         ClearThreadLocal();
     }
+
+private:
+    sqlite3 *db = nullptr;
 };
 class EnumHcclLinkTypeTableMock : public EnumHcclLinkTypeTable, public TableDefaultMock {
 protected:
@@ -65,6 +77,9 @@ protected:
         EnumHcclLinkTypeTable::ExcuteQuery(db, result);
         ClearThreadLocal();
     }
+
+private:
+    sqlite3 *db = nullptr;
 };
 class EnumHcclTransportTypeTableMock : public EnumHcclTransportTypeTable, public TableDefaultMock {
 protected:
@@ -73,6 +88,9 @@ protected:
         EnumHcclTransportTypeTable::ExcuteQuery(db, result);
         ClearThreadLocal();
     }
+
+private:
+    sqlite3 *db = nullptr;
 };
 class EnumHcclRdmaTypeTableMock : public EnumHcclRdmaTypeTable, public TableDefaultMock {
 protected:
@@ -81,6 +99,9 @@ protected:
         EnumHcclRdmaTypeTable::ExcuteQuery(db, result);
         ClearThreadLocal();
     }
+
+private:
+    sqlite3 *db = nullptr;
 };
 class EnumHcclDataTypeTableMock : public EnumHcclDataTypeTable, public TableDefaultMock {
 protected:
@@ -89,6 +110,9 @@ protected:
         EnumHcclDataTypeTable::ExcuteQuery(db, result);
         ClearThreadLocal();
     }
+
+private:
+    sqlite3 *db = nullptr;
 };
 class EnumApiTypeTableMock : public EnumApiTypeTable, public TableDefaultMock {
 protected:
