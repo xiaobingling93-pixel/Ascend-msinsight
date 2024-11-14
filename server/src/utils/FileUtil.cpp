@@ -253,6 +253,11 @@ void FileUtil::CalculateDirSize(const std::string &path, long long int &size, in
     if (!FileUtil::FindFolders(path, folders, files)) {
         return;
     }
+    std::string error;
+    if (!IsWithinRecursionLimit(files, depth, error)) {
+        Server::ServerLog::Error("Directory size calculation aborted. Reason: " + error);
+        return;
+    }
     for (std::string& folder: folders) {
         std::string spliceFile = SplicePath(path, folder);
         CalculateDirSize(spliceFile, size, depth + 1);

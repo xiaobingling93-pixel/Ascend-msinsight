@@ -362,7 +362,7 @@ void ParserJson::FindTraceFiles(const std::string &path, int depth, std::string 
     if (!std::empty(error)) {
         return;
     }
-    if (!FileUtil::FileRecursionCheck(traceFiles, depth, error)) {
+    if (!FileUtil::IsWithinRecursionLimit(traceFiles, depth, error)) {
         return;
     }
     std::vector<std::string> folders;
@@ -417,7 +417,7 @@ void ParserJson::FindAscendFolder(const std::string &path, std::vector<std::stri
         if (!std::empty(error)) {
             return;
         }
-        if (!FileUtil::FileRecursionCheck(traceFiles, depth, error)) {
+        if (!FileUtil::IsWithinRecursionLimit(traceFiles, depth, error)) {
             return;
         }
         std::vector<std::string> folders;

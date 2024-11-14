@@ -424,7 +424,7 @@ public:
             if (!std::empty(error)) {
                 return;
             }
-            if (!FileRecursionCheck(matchedFiles, depth, error)) {
+            if (!IsWithinRecursionLimit(matchedFiles, depth, error)) {
                 return;
             }
             std::vector<std::string> folders;
@@ -475,7 +475,7 @@ public:
         }
     }
 
-    static inline bool FileRecursionCheck(const std::vector<std::string> &files, int depth, std::string &error)
+    static inline bool IsWithinRecursionLimit(const std::vector<std::string> &files, int depth, std::string &error)
     {
         const int depthLimit = 8;
         const size_t fileSizeLimit = 100000;
