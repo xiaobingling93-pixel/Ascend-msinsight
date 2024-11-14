@@ -4,7 +4,7 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
 
-type TabName = 'timeline' | 'memory' | 'operator' | 'summary' | 'communication';
+export type TabName = 'timeline' | 'memory' | 'operator' | 'summary' | 'communication' | 'Source' | 'details' | 'trace' | 'cache';
 export class FrameworkPage {
     readonly page: Page;
     // 顶部功能按钮
@@ -64,6 +64,16 @@ export class FrameworkPage {
 
     async clickTab(tabName: TabName): Promise<void> {
         await this[`${tabName}Tab`].click();
+    }
+
+    async goToTab(tabName: TabName): Promise<void> {
+        const tab = this.page.getByRole('menuitem', {name: tabName});
+        await expect(tab).toBeVisible();
+        await tab.click();
+    }
+
+    async mouseOut(): Promise<void> {
+        await this.page.mouse.move(0, 0);
     }
 }
 

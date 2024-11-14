@@ -8,3 +8,4 @@ export { MemoryPage } from './memory';
 export { OperatorPage } from './operator';
 export { SummaryPage } from './summary';
 export { CommunicationPage } from './communication';
+export { SourcePage } from './source';

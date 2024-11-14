@@ -5,7 +5,7 @@
 <template class="mi-icon">
     <svg width="16px" height="16px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
         <g id="高保真2" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-            <g id="Source" transform="translate(-71.000000, -76.000000)">
+            <g transform="translate(-71.000000, -76.000000)">
                 <g id="编组-29备份" transform="translate(-0.000000, 24.000000)">
                     <g id="编组-3" transform="translate(8.000000, 44.000000)">
                         <g id="编组-4" transform="translate(63.000000, 7.000000)">

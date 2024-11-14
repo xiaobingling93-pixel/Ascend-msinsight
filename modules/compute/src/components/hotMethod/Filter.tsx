@@ -85,6 +85,7 @@ function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element 
             name={t('Core')}
             style={{ width: 'calc(30% - 40px)', minWidth: '270px' }}
             content={(<Select
+                id={'coreSelect'}
                 value={condition.core}
                 style={{ width: 'calc(100% - 100px)' }}
                 onChange={(val: string): void => {
@@ -98,6 +99,7 @@ function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element 
             name={t('Source')}
             style={{ width: 'calc(70% - 300px)', minWidth: '700px' }}
             content={(<Select
+                id={'sourceSelect'}
                 value={condition.source}
                 style={{ width: 'calc(100% - 100px)' }}
                 onChange={(val: string): void => {
