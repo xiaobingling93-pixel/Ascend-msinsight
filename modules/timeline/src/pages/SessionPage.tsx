@@ -77,7 +77,7 @@ export const SessionPage = observer(({ session }: { session: Session }): any => 
     }, [session.selectedUnitKeys, session.selectedRange, session.selectedData]);
 
     useEffect(() => {
-        if (session.doContextSearch || session.showEvent) {
+        if (session.doContextSearch !== undefined || session.showEvent !== undefined) {
             handleOpen(true);
         }
     }, [session.doContextSearch, session.showEvent]);

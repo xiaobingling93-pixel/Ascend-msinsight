@@ -328,14 +328,9 @@ function showInEventsView(session: Session, menuItem?: MenuItemModel): void {
         return;
     }
     runInAction(() => {
-        session.showEvent = true;
+        session.showEvent = !session.showEvent;
         session.eventUnits = session.selectedUnits;
         session.contextMenu.isVisible = false;
-    });
-    setTimeout(() => {
-        runInAction(() => {
-            session.showEvent = false;
-        });
     });
 }
 

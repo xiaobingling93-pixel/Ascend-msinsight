@@ -296,13 +296,12 @@ export const BottomPanel = observer((props: BottomPanelProps & CssProps) => {
     }, [session.selectedData, session.selectedRange]);
 
     useEffect(() => {
-        if (session.doContextSearch) {
-            setItem('Find');
-        }
-        if (session.showEvent) {
-            setItem('SystemView');
-        }
-    }, [session.doContextSearch, session.showEvent]);
+        setItem('Find');
+    }, [session.doContextSearch]);
+
+    useEffect(() => {
+        setItem('SystemView');
+    }, [session.showEvent]);
 
     return (<Container ref={ref} className="bottomPanelContainer">
         <BottomTabs style={{ width: '100%' }} items={items} activeKey={item} onTabClick={(key): void => setItem(key)}/>

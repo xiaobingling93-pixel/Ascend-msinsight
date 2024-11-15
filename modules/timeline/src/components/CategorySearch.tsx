@@ -271,12 +271,7 @@ const CategorySearchContent = (session: Session): JSX.Element => {
             if (session.searchData !== null && session.searchData !== undefined) {
                 session.searchData = { ...session.searchData, content: searchContent, isMatchCase, isMatchExact };
             }
-            session.doContextSearch = true;
-        });
-        setTimeout(() => {
-            runInAction(() => {
-                session.doContextSearch = false;
-            });
+            session.doContextSearch = !session.doContextSearch;
         });
     };
 

@@ -132,10 +132,8 @@ export const SystemView = observer((props: any) => {
         setKey(0);
     };
     useEffect(() => {
-        if (props.session.showEvent as boolean) {
-            setViewOption(2);
-            setKey(0);
-        }
+        setViewOption(2);
+        setKey(0);
     }, [props.session.showEvent]);
     return (<Container>
         <AsideSelectContainer>
