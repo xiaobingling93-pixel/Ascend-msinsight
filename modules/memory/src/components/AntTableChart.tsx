@@ -141,6 +141,7 @@ const getTableColumns = function (
 
 // eslint-disable-next-line max-lines-per-function
 export const AntTableChart: React.FC<IProps> = (props) => {
+    const defaultDataSource = [{}] as OperatorDetail[]; // 防止antd4 table组件报ResizeObserver loop错误
     const { t } = useTranslation('memory');
     const {
         tableData, onRowSelected, current, pageSize,
@@ -191,7 +192,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
     return (
         <ResizeTable
             columns={columns}
-            dataSource={tableData.rows.map((item, index) => { return { ...item, key: `${item.name}_${index}` }; })}
+            dataSource={tableData.rows.length === 0 ? defaultDataSource : tableData.rows.map((item, index) => ({ ...item, key: `${item.name}_${index}` }))}
             onChange={onTableChange}
             scroll={{
                 x: 150 * columns.length,
