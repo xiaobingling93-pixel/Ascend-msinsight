@@ -142,6 +142,8 @@ export class Session {
         units: InsightUnitSet[];
     } | undefined> = {};
 
+    autoAdjustUnitHeight: boolean = false;
+
     private readonly _domain: Domain;
     private _selectedUnitKeys: string[] = [];
     // Relative to the startTimeOffset, which means that it will start from 0.

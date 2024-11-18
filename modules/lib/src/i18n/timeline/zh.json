@@ -29,7 +29,9 @@
       "Collapse all": "收起全部子项",
       "Expand all": "展开全部子项",
       "Hide flag events": "隐藏SET/WAIT事件",
-      "Show flag events": "显示SET/WAIT事件"
+      "Show flag events": "显示SET/WAIT事件",
+      "Enable auto unit height": "开启泳道高度自适应",
+      "Disable auto unit height": "关闭泳道高度自适应"
     },
     "sliceDetail": {
       "Slice Detail": "选中详情",

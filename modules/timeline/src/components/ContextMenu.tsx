@@ -397,6 +397,10 @@ const getShowPythonFunctionButtonText = (session: Session, t: TFunction): string
     return isFilteredPythonFunction ? t('Show python call stack') : t('Hide python call stack');
 };
 
+const getAutoUnitHeightButtonText = (session: Session, t: TFunction): string => {
+    return session.autoAdjustUnitHeight ? t('Disable auto unit height') : t('Enable auto unit height');
+};
+
 const expandUnits = (_unit: InsightUnit, shouldExpand: boolean): void => {
     if (_unit.children && _unit.children?.length > 0) {
         _unit?.children?.forEach(childUnit => {
@@ -435,6 +439,14 @@ const hideOrShowFlagEvents = (session: Session, menuItem?: MenuItemModel): void 
             session.renderTrigger = !session.renderTrigger;
         }
         session.contextMenu.isVisible = false;
+    });
+};
+
+const toggleAutoUnitHeight = (session: Session): void => {
+    runInAction(() => {
+        session.autoAdjustUnitHeight = !session.autoAdjustUnitHeight;
+        session.contextMenu.isVisible = false;
+        session.renderTrigger = !session.renderTrigger;
     });
 };
 
@@ -521,6 +533,7 @@ const getMenuItems = (props: Props, t: TFunction): JSX.Element => {
         { name: t('Expand all'), key: 'expandAll', event: collapseOrExpandAll, disabled: false, visible: isExpandAllVisible(session) },
         { name: t('Hide flag events'), key: 'hideFlagEvents', event: hideOrShowFlagEvents, disabled: false, visible: isHideFlagEventsVisible(session) },
         { name: t('Show flag events'), key: 'showFlagEvents', event: hideOrShowFlagEvents, disabled: false, visible: isShowFlagEventsVisible(session) },
+        { name: getAutoUnitHeightButtonText(session, t), key: 'autoUnitHeight', event: toggleAutoUnitHeight, visible: true },
     ];
 
     return <>

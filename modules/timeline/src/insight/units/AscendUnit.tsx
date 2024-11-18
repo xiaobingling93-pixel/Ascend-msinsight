@@ -201,9 +201,10 @@ export const ThreadUnit = unit<ThreadMetaData>({
                     return [];
                 }
 
-                const { data: threadTraceList, maxDepth: threadTraceMaxDepth, havePythonFunction } = request;
+                const { data: threadTraceList, maxDepth, currentMaxDepth, havePythonFunction } = request;
                 if (thisUnit) {
-                    updateUnitData(thisUnit, threadTraceMaxDepth, havePythonFunction);
+                    const activeMaxDepth = session.autoAdjustUnitHeight ? currentMaxDepth : maxDepth;
+                    updateUnitData(thisUnit, activeMaxDepth, havePythonFunction);
                 }
                 // 泳道chart返回数据减去时间偏移
                 return _.map(threadTraceList, (it) => _.map(it, (data) => {

@@ -29,7 +29,9 @@
       "Collapse all": "Collapse all",
       "Expand all": "Expand all",
       "Hide flag events": "Hide SET/WAIT events",
-      "Show flag events": "Show SET/WAIT events"
+      "Show flag events": "Show SET/WAIT events",
+      "Enable auto unit height": "Enable auto unit height",
+      "Disable auto unit height": "Disable auto unit height"
     },
     "sliceDetail": {
       "Slice Detail": "Slice Detail",
