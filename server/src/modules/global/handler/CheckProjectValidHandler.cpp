@@ -55,16 +55,17 @@ bool Dic::Module::CheckProjectValidHandler::CheckRequestParamsValid(ProjectCheck
         if (++fileCount > FILE_COUNT_LIMIT) {
             break;
         }
-        if (!fs::exists(path)) {
+        auto filePath = fs::u8path(path);
+        if (!fs::exists(filePath)) {
             continue;
         }
-        if (fs::is_directory(path)) {
+        if (fs::is_directory(filePath)) {
             if (TraverseFolder(params, path, fileCount, error)) {
                 continue;
             }
             return false;
         }
-        if (!CheckProjectFile(params, fs::path(path), error)) {
+        if (!CheckProjectFile(params, filePath, error)) {
             return false;
         }
     }
@@ -99,7 +100,7 @@ bool Dic::Module::CheckProjectValidHandler::CheckFileSize(const fs::path &filePa
 bool CheckProjectValidHandler::TraverseFolder(ProjectCheckParams &params, const std::string& folderPath,
                                               uint64_t &fileCount, ProjectErrorType &error)
 {
-    for (auto &file : fs::directory_iterator(folderPath)) {
+    for (auto &file : fs::directory_iterator(fs::u8path(folderPath))) {
         if (++fileCount > FILE_COUNT_LIMIT) {
             break;
         }
@@ -110,7 +111,7 @@ bool CheckProjectValidHandler::TraverseFolder(ProjectCheckParams &params, const 
             }
             return false;
         }
-        if (!CheckProjectFile(params, path, error)) {
+        if (!CheckProjectFile(params, file, error)) {
             return false;
         }
     }

@@ -529,7 +529,7 @@ long long FileUtil::GetFileSize(const char *fileName)
     if (strcmp(fileName, "") == 0) {
         return 0;
     }
-    return fs::file_size(fileName);
+    return fs::file_size(fs::u8path(fileName));
 }
 
 std::string FileUtil::GetDbPath(const std::string &filePath)
