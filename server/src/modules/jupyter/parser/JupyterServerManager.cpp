@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 #include "pch.h"
+#include "SafeFile.h"
 #include "JupyterServerManager.h"
 
 namespace Dic {
@@ -203,7 +204,7 @@ bool JupyterServerManager::InitJupyterServerInfo()
         return true;
     }
     std::string line;
-    std::ifstream file = FileUtil::OpenReadFileSafely(jupyterLogPath);
+    std::ifstream file = OpenReadFileSafely(jupyterLogPath);
     std::string url;
     // 文件打开失败直接返回
     if (!file.is_open()) {

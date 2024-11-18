@@ -32,4 +32,7 @@ else()
             dl
             sqlite)
 endif()
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_libraries(${PROJECT_NAME} stdc++fs)
+endif()
 target_link_libraries(${PROJECT_NAME} z)

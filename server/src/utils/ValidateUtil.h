@@ -6,6 +6,7 @@
 #define DATA_INSIGHT_CORE_VALIDATEUTIL_H
 
 #include "ServerLog.h"
+#include "SafeFile.h"
 #include "ExecUtil.h"
 #include "FileUtil.h"
 #include "FileDef.h"
@@ -19,7 +20,7 @@ namespace Dic {
     public:
         static bool CheckCsvFile(const std::string& fileName)
         {
-            std::ifstream file = FileUtil::OpenReadFileSafely(fileName);
+            std::ifstream file = OpenReadFileSafely(fileName);
             if (!file.good()) {
                 Server::ServerLog::Error("Check csv file cannot get file");
                 return false;

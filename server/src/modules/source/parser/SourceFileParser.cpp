@@ -57,7 +57,7 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
         ServerLog::Error("Parse bin file failed cause path length is too long.");
         return false;
     }
-    std::ifstream file = FileUtil::OpenReadFileSafely(selectedFile, std::ios::binary);
+    std::ifstream file = OpenReadFileSafely(selectedFile, std::ios::binary);
     if (!file) {
         ServerLog::Error("Open bin file failed: ", selectedFile);
         return false;
@@ -168,7 +168,7 @@ bool SourceFileParser::InitParser(const std::string &fileId)
     std::string curFilePath = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
         instance.baselineFilePath : instance.filePath;
     std::vector<Position> &traceFilePos = curDataBlockMap[static_cast<int>(DataTypeEnum::TRACE)];
-    std::ifstream file = FileUtil::OpenReadFileSafely(curFilePath, std::ios::in | std::ios::binary);
+    std::ifstream file = OpenReadFileSafely(curFilePath, std::ios::in | std::ios::binary);
     if (!file) {
         ServerLog::Error("Failed to open file. filePath:", curFilePath);
         return false;
@@ -333,7 +333,7 @@ bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath)
         ServerLog::Error("File path length check failed.");
         return false;
     }
-    std::ifstream file = FileUtil::OpenReadFileSafely(selectedFilePath, std::ios::binary);
+    std::ifstream file = OpenReadFileSafely(selectedFilePath, std::ios::binary);
     if (!file) {
         return false;
     }
@@ -413,7 +413,7 @@ std::vector<SourceFileLine> SourceFileParser::GetApiLinesByCoreAndSource(const s
 
 std::string SourceFileParser::GetInstr()
 {
-    std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::binary);
+    std::ifstream file = OpenReadFileSafely(filePath, std::ios::binary);
     if (!file) {
         ServerLog::Error("Can't open file,please check file exist or not,file name :", filePath);
         return "";
@@ -465,7 +465,7 @@ std::string SourceFileParser::GetSourceByName(std::string sourceName)
         return "";
     }
 
-    std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::binary);
+    std::ifstream file = OpenReadFileSafely(filePath, std::ios::binary);
     if (!file) {
         ServerLog::Error("Can't open file,please check file exist or not,file name :", filePath);
         return "";
@@ -489,7 +489,7 @@ std::string SourceFileParser::GetSourceByName(std::string sourceName)
 bool SourceFileParser::GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &responseBody, bool isBaseline)
 {
     std::string curFilePath = isBaseline ? baselineFilePath : filePath;
-    std::ifstream file = FileUtil::OpenReadFileSafely(curFilePath, std::ios::binary);
+    std::ifstream file = OpenReadFileSafely(curFilePath, std::ios::binary);
     std::string baseInfo = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_BASE_INFO, isBaseline);
     file.close();
     if (baseInfo.empty()) {
@@ -550,7 +550,7 @@ bool SourceFileParser::GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody & res
 {
     std::string curFilePath = isBaseline ? baselineFilePath : filePath;
     // 从文件获取内容
-    std::ifstream file = FileUtil::OpenReadFileSafely(curFilePath, std::ios::binary);
+    std::ifstream file = OpenReadFileSafely(curFilePath, std::ios::binary);
     std::string loadGraph = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_COMPUTE_LOAD_GRAPH, isBaseline);
     std::string loadTable = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_COMPUTE_LOAD_TABLE, isBaseline);
     file.close();
@@ -589,7 +589,7 @@ bool SourceFileParser::GetDetailsMemoryGraph(const std::string& targetBlockId, b
     }
     // 读取内存表数据
     std::string curFilePath = isBaseline ? baselineFilePath : filePath;
-    std::ifstream file = FileUtil::OpenReadFileSafely(curFilePath, std::ios::binary);
+    std::ifstream file = OpenReadFileSafely(curFilePath, std::ios::binary);
     std::string memoryGraph = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_MEMORY_GRAPH, isBaseline);
     file.close();
     if (memoryGraph.empty()) {
@@ -686,7 +686,7 @@ bool SourceFileParser::GetDetailsMemoryTable(const std::string& targetBlockId, b
         return true;
     }
     std::string curFilePath = isBaseline ? baselineFilePath : filePath;
-    std::ifstream file = FileUtil::OpenReadFileSafely(curFilePath, std::ios::binary);
+    std::ifstream file = OpenReadFileSafely(curFilePath, std::ios::binary);
     std::string memoryTable = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_MEMORY_TABLE, isBaseline);
     file.close();
     if (memoryTable.empty()) {
@@ -749,7 +749,7 @@ Protocol::MemoryTable SourceFileParser::ParseJsonToMemoryTable(const json_t &jso
 
 void SourceFileParser::ConvertToData()
 {
-    std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::binary);
+    std::ifstream file = OpenReadFileSafely(filePath, std::ios::binary);
     if (!file) {
         ServerLog::Error("Can't open file,please check file exist or not,file name :", filePath);
         return;
@@ -1013,7 +1013,7 @@ bool SourceFileParser::GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInt
 {
     std::string curFilePath = isBaseline ? baselineFilePath : filePath;
     InterCoreLoadGraphParser parser;
-    std::ifstream file = FileUtil::OpenReadFileSafely(curFilePath, std::ios::binary);
+    std::ifstream file = OpenReadFileSafely(curFilePath, std::ios::binary);
     std::string json = GetSingleContentStrByDataType(file, DataTypeEnum::DETAILS_INTER_CORE_LOAD_GRAPH,
                                                      isBaseline);
     if (json.empty()) {
@@ -1025,7 +1025,7 @@ bool SourceFileParser::GetDetailsInterCoreLoadAnalysisGraph(Protocol::DetailsInt
 
 bool SourceFileParser::GetDetailsRoofline(Protocol::DetailsRooflineBody &responseBody)
 {
-    std::ifstream file = FileUtil::OpenReadFileSafely(filePath, std::ios::binary);
+    std::ifstream file = OpenReadFileSafely(filePath, std::ios::binary);
     if (!file.is_open()) {
         return false;
     }

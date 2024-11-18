@@ -468,28 +468,6 @@ std::vector<std::string> FileUtil::FindFirstByRegex(const std::string &path, int
     return matchedFiles;
 }
 
-std::ifstream FileUtil::OpenReadFileSafely(const std::string &path, std::ios::openmode mode)
-{
-    std::ifstream res;
-    res.setstate(std::ifstream::badbit);
-    if (mode & std::ios::out) {
-        Server::ServerLog::Error("Should open file in read mode");
-        return res;
-    }
-    std::string tmpPath = PathPreprocess(path);
-    if (!CheckFileValid(tmpPath)) {
-        Server::ServerLog::Error("Open read file safely failed");
-        return res;
-    }
-    if (!CheckFileSize(path)) {
-        Server::ServerLog::Error("Open read file safely failed, "
-                                 "The file size does not comply with security regulations.");
-        return res;
-    }
-    res.open(tmpPath, std::ios::in | mode);
-    return res;
-}
-
 bool FileUtil::CheckFileSize(const std::string &filePath)
 {
     constexpr size_t fileMinSize = 0;
@@ -551,23 +529,7 @@ long long FileUtil::GetFileSize(const char *fileName)
     if (strcmp(fileName, "") == 0) {
         return 0;
     }
-#ifdef _WIN32
-    std::ifstream in = FileUtil::OpenReadFileSafely(fileName);
-    if (!in.is_open()) {
-        return 0;
-    }
-    in.seekg(0, std::ios_base::end);
-    std::streampos size =  in.tellg();
-    in.close();
-    return size;
-#else
-    struct stat st;
-        long long size = 0;
-        if (stat(fileName, &st) == 0) {
-            size = st.st_size;
-        }
-        return size;
-#endif
+    return fs::file_size(fileName);
 }
 
 std::string FileUtil::GetDbPath(const std::string &filePath)

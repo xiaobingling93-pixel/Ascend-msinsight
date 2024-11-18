@@ -27,11 +27,10 @@ public:
     bool HandleRequest(std::unique_ptr<Request> requestPtr) override;
 private:
     static bool CheckRequestParamsValid(ProjectCheckParams &params, ProjectErrorType &error);
-    static bool CheckProjectFileSize(const std::vector<std::string>& filePathList);
-    static std::string GetFileExtension(const std::string& filePath);
-    static bool CheckFileSize(const std::string& filePath);
-    static bool TraverseFolder(const std::string& folderPath, int depth);
-    static bool IsFile(const std::string& path);
+    static bool CheckProjectFile(ProjectCheckParams &params, const fs::path &filePath, ProjectErrorType &error);
+    static bool CheckFileSize(const fs::path &filePath);
+    static bool TraverseFolder(ProjectCheckParams &params, const std::string& folderPath, uint64_t &fileCount,
+                               ProjectErrorType &error);
 };
 } // end of namespace Module
 } // Dic

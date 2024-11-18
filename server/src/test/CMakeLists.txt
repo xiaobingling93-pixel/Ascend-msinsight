@@ -83,6 +83,11 @@ else()
     target_link_libraries(insight_performance gtest_main gmock_main uv_a pthread dl sqlite z)
 endif()
 
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_libraries(insight_performance stdc++fs)
+    target_link_libraries(insight_test stdc++fs)
+endif()
+
 if (${_PROJECT_TYPE} MATCHES "fuzz")
     add_subdirectory(fuzz)
 endif ()

@@ -22,19 +22,27 @@
 #include "CommonDefs.h"
 
 #if defined(_WIN32)
+#include <filesystem>
 #include <windows.h>
 #include <shlwapi.h>
 #include <io.h>
 #include <tchar.h>
+namespace fs = std::filesystem;
 #else
 #include <sys/stat.h>
 #include <unistd.h>
 #include <climits>
 #include <sys/wait.h>
+#include "dlfcn.h"
+#endif
+#ifdef __linux__
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
 #endif
 #ifdef __APPLE__
 #include <filesystem>
 #include <mach-o/dyld.h>
+namespace fs = std::filesystem;
 #endif
 #ifdef _WIN32
 #define FILE_SEPARATOR '\\'
@@ -526,7 +534,6 @@ public:
                                 const std::regex &jsonRegex, const std::regex &dbRegex);
     static std::vector<std::string> FindFirstByRegex(const std::string &path, int depth, const std::regex &fileRegex);
 
-    static std::ifstream OpenReadFileSafely(const std::string &path, std::ios::openmode mode = std::ios::in);
     static bool CheckFileSize(const std::string &filePath);
     };
 } // end of namespace Dic

@@ -40,7 +40,6 @@
 #include <fstream>
 #include "rapidjson.h"
 #include "document.h"
-#include "ValidateUtil.h"
 #include <deque>
 #include <condition_variable>
 #include "SystemUtil.h"

@@ -10,6 +10,7 @@
 #include <map>
 #include <atomic>
 #include <memory>
+#include "ValidateUtil.h"
 
 namespace Dic {
 namespace Module {
