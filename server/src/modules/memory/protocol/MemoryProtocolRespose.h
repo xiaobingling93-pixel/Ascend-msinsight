@@ -38,6 +38,19 @@ struct MemoryOperatorComparison {
     MemoryOperator diff;
 };
 
+struct MemoryComponent {
+    std::string component;
+    std::string timestamp;
+    double totalReserved;
+    std::string device;
+};
+
+struct MemoryComponentComparison {
+    MemoryComponent compare;
+    MemoryComponent baseline;
+    MemoryComponent diff;
+};
+
 struct StaticOperatorItem {
     std::string deviceId;
     std::string opName;
@@ -91,6 +104,20 @@ struct MemoryOperatorComparisonResponse : public Response {
     MemoryOperatorComparisonResponse() : Response(REQ_RES_MEMORY_OPERATOR) {}
     std::vector<MemoryTableColumnAttr> columnAttr;
     std::vector<MemoryOperatorComparison> operatorDiffDetails;
+    int64_t totalNum = 0;
+};
+
+struct MemoryComponentResponse : public Response {
+    MemoryComponentResponse() : Response(REQ_RES_MEMORY_COMPONENT) {}
+    std::vector<MemoryTableColumnAttr> columnAttr;
+    std::vector<MemoryComponent> componentDetails;
+    int64_t totalNum = 0;
+};
+
+struct MemoryComponentComparisonResponse : public Response {
+    MemoryComponentComparisonResponse() : Response(REQ_RES_MEMORY_COMPONENT) {}
+    std::vector<MemoryTableColumnAttr> columnAttr;
+    std::vector<MemoryComponentComparison> componentDiffDetails;
     int64_t totalNum = 0;
 };
 

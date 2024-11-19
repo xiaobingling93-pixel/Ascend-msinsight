@@ -386,7 +386,7 @@ bool TextMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryTa
     return ExecuteQueryEntireOperatorTable(columnattr, opDetails, sql, rankId);
 }
 
-bool TextMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
+bool TextMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams,
                                          Protocol::MemoryViewData &operatorBody, uint64_t offsetTime)
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();

@@ -23,7 +23,7 @@ public:
     bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                              std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                              std::vector<Protocol::MemoryOperator> &opDetails);
-    bool QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody,
+    bool QueryMemoryView(Protocol::MemoryViewParams &requestParams, Protocol::MemoryViewData &operatorBody,
         uint64_t offsetTime);
     bool QueryOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum);
     bool QueryOperatorSize(double &min, double &max, std::string rankId) override;

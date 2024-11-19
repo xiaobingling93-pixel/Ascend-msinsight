@@ -16,6 +16,7 @@ void MemoryProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_MEMORY_TYPE, ToMemoryTypeRequest);
     jsonToReqFactory.emplace(REQ_RES_MEMORY_RESOURCE_TYPE, ToMemoryResourceTypeRequest);
     jsonToReqFactory.emplace(REQ_RES_MEMORY_OPERATOR, ToMemoryOperatorRequest);
+    jsonToReqFactory.emplace(REQ_RES_MEMORY_COMPONENT, ToMemoryComponentRequest);
     jsonToReqFactory.emplace(REQ_RES_MEMORY_VIEW, ToMemoryViewRequest);
     jsonToReqFactory.emplace(REQ_RES_MEMORY_OPERATOR_MIN_MAX, ToMemoryOperatorSizeRequest);
     jsonToReqFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH, ToMemoryStaticOperatorGraphRequest);
@@ -27,6 +28,7 @@ void MemoryProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_MEMORY_TYPE, ToMemoryTypeResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMORY_RESOURCE_TYPE, ToMemoryResourceTypeResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMORY_OPERATOR, ToMemoryOperatorResponseJson);
+    resToJsonFactory.emplace(REQ_RES_MEMORY_COMPONENT, ToMemoryComponentResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMORY_VIEW, ToMemoryViewResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMORY_OPERATOR_MIN_MAX, ToMemoryOperatorSizeResponseJson);
     resToJsonFactory.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH, ToMemoryStaticOperatorGraphResponseJson);
@@ -97,6 +99,26 @@ std::unique_ptr<Request> MemoryProtocol::ToMemoryOperatorRequest(const json_t &j
         reqPtr->params.maxSize = std::numeric_limits<int64_t>::max();
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.searchName, json["params"], "searchName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> MemoryProtocol::ToMemoryComponentRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<MemoryComponentRequest> reqPtr = std::make_unique<MemoryComponentRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    if (!json.HasMember("params") || !json["params"].HasMember("rankId")) {
+        error = "Request json lacks member rankId.";
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.rankId, json["params"], "rankId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.currentPage, json["params"], "currentPage");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.pageSize, json["params"], "pageSize");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.order, json["params"], "order");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
     return reqPtr;
 }
@@ -199,6 +221,12 @@ std::optional<document_t> MemoryProtocol::ToMemoryOperatorResponseJson(const Res
 {
     return ToResponseJson<MemoryOperatorComparisonResponse>(
         dynamic_cast<const MemoryOperatorComparisonResponse &>(response));
+}
+
+std::optional<document_t> MemoryProtocol::ToMemoryComponentResponseJson(const Response &response)
+{
+    return ToResponseJson<MemoryComponentComparisonResponse>(
+        dynamic_cast<const MemoryComponentComparisonResponse &>(response));
 }
 
 std::optional<document_t> MemoryProtocol::ToMemoryViewResponseJson(const Response &response)

@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-#ifndef PROFILER_SERVER_QUERYOPERATORSIZEHANDLER_H
-#define PROFILER_SERVER_QUERYOPERATORSIZEHANDLER_H
+#ifndef PROFILER_SERVER_QUERY_OPERATOR_SIZE_HANDLER_H
+#define PROFILER_SERVER_QUERY_OPERATOR_SIZE_HANDLER_H
 
 #include "MemoryRequestHandler.h"
 
@@ -24,4 +24,4 @@ public:
 } // end of namespace Module
 } // end of namespace Dic
 
-#endif // PROFILER_SERVER_QUERYOPERATORSIZEHANDLER_H
+#endif // PROFILER_SERVER_QUERY_OPERATOR_SIZE_HANDLER_H

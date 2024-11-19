@@ -4,6 +4,7 @@
 #include "QueryMemoryTypeHandler.h"
 #include "QueryMemoryResourceTypeHandler.h"
 #include "QueryMemoryOperatorHandler.h"
+#include "QueryMemoryComponentHandler.h"
 #include "QueryMemoryViewHandler.h"
 #include "QueryOperatorSizeHandler.h"
 #include "QueryMemoryStaticOperatorGraphHandler.h"
@@ -29,6 +30,7 @@ void MemoryModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_MEMORY_TYPE, std::make_unique<QueryMemoryTypeHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMORY_RESOURCE_TYPE, std::make_unique<QueryMemoryResourceTypeHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMORY_OPERATOR, std::make_unique<QueryMemoryOperatorHandler>());
+    requestHandlerMap.emplace(REQ_RES_MEMORY_COMPONENT, std::make_unique<QueryMemoryComponentHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMORY_VIEW, std::make_unique<QueryMemoryViewHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMORY_OPERATOR_MIN_MAX, std::make_unique<QueryOperatorSizeHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH,

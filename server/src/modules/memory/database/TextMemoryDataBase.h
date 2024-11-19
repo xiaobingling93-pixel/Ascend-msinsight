@@ -38,7 +38,7 @@ public:
     bool QueryOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
                              std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                              std::vector<Protocol::MemoryOperator> &opDetails) override;
-    bool QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
+    bool QueryMemoryView(Protocol::MemoryViewParams &requestParams,
                          Protocol::MemoryViewData &operatorBody, uint64_t offsetTime) override;
 
     bool QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,

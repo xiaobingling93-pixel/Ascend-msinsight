@@ -410,7 +410,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryTypeDataDynamic)
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
-    Dic::Protocol::MemoryComponentParams requestParams;
+    Dic::Protocol::MemoryViewParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     Dic::Protocol::MemoryViewData responseBody;
@@ -424,7 +424,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewData)
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryViewDataByStreamExpectSeveral)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
-    Dic::Protocol::MemoryComponentParams requestParams;
+    Dic::Protocol::MemoryViewParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
     Dic::Protocol::MemoryViewData responseBody;

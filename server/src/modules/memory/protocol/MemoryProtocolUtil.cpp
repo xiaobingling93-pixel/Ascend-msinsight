@@ -80,6 +80,59 @@ std::optional<document_t> ToMemoryOperatorJson(const MemoryOperator &op, bool ha
     return std::move(json);
 }
 
+template <> std::optional<document_t> ToResponseJson<MemoryComponentComparisonResponse>(
+    const MemoryComponentComparisonResponse &response)
+{
+    document_t json(kObjectType);
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    auto &allocator = json.GetAllocator();
+    json_t body(kObjectType);
+    json_t columnAttr(kArrayType);
+    for (const auto &attr : response.columnAttr) {
+        json_t attrJson(kObjectType);
+        JsonUtil::AddMember(attrJson, "name", attr.name, allocator);
+        JsonUtil::AddMember(attrJson, "type", attr.type, allocator);
+        JsonUtil::AddMember(attrJson, "key", attr.key, allocator);
+        columnAttr.PushBack(attrJson, allocator);
+    }
+    json_t componentDiffDetail(kArrayType);
+    for (const MemoryComponentComparison &aComponent : response.componentDiffDetails) {
+        json_t basicJson(kObjectType);
+        std::optional<document_t> jsonCompare = ToMemoryComponentJson(aComponent.compare, allocator);
+        std::optional<document_t> jsonBaseline = ToMemoryComponentJson(aComponent.baseline, allocator);
+        std::optional<document_t> jsonDiff = ToMemoryComponentJson(aComponent.diff, allocator);
+        if (jsonCompare.has_value()) {
+            JsonUtil::AddMember(basicJson, "compare", jsonCompare.value(), allocator);
+        }
+        if (jsonBaseline.has_value()) {
+            JsonUtil::AddMember(basicJson, "baseline", jsonBaseline.value(), allocator);
+        }
+        if (jsonDiff.has_value()) {
+            JsonUtil::AddMember(basicJson, "diff", jsonDiff.value(), allocator);
+        }
+        componentDiffDetail.PushBack(basicJson, allocator);
+    }
+    JsonUtil::AddMember(body, "totalNum", response.totalNum, allocator);
+    JsonUtil::AddMember(body, "componentDetail", componentDiffDetail, allocator);
+    JsonUtil::AddMember(body, "columnAttr", columnAttr, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
+std::optional<document_t> ToMemoryComponentJson(const MemoryComponent &component, Document::AllocatorType &allocator)
+{
+    document_t json(kObjectType);
+    if (component.component.empty()) {
+        JsonUtil::AddMember(json, "component", "Unknown", allocator);
+    } else {
+        JsonUtil::AddMember(json, "component", component.component, allocator);
+    }
+    JsonUtil::AddMember(json, "timestamp", component.timestamp, allocator);
+    JsonUtil::AddMember(json, "totalReserved", component.totalReserved, allocator);
+    JsonUtil::AddMember(json, "device", component.device, allocator);
+    return std::move(json);
+}
+
 template <> std::optional<document_t> ToResponseJson<MemoryViewResponse>(const MemoryViewResponse &response)
 {
     document_t json(kObjectType);

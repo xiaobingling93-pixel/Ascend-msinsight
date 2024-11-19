@@ -118,6 +118,7 @@ const std::string REQ_RES_COMMUNICATION_MATRIX_BANDWIDTH = "communication/matrix
 const std::string REQ_RES_MEMORY_TYPE = "Memory/view/type";
 const std::string REQ_RES_MEMORY_RESOURCE_TYPE = "Memory/view/resourceType";
 const std::string REQ_RES_MEMORY_OPERATOR = "Memory/view/operator";
+const std::string REQ_RES_MEMORY_COMPONENT = "Memory/view/component";
 const std::string REQ_RES_MEMORY_VIEW = "Memory/view/memoryUsage";
 const std::string REQ_RES_MEMORY_OPERATOR_MIN_MAX = "Memory/view/operator/size";
 const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH = "Memory/view/staticOpMemoryGraph";

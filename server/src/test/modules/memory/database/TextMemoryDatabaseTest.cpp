@@ -534,7 +534,7 @@ TEST_F(TestSuit, QueryOperatorsTotalNumByStreamExpectSeveral)
 TEST_F(TestSuit, QueryMemoryViewData)
 {
     auto database = DataBaseManager::Instance().GetMemoryDatabase("0");
-    Dic::Protocol::MemoryComponentParams requestParams;
+    Dic::Protocol::MemoryViewParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_OVERALL_GROUP;
     Dic::Protocol::MemoryViewData responseBody;
@@ -548,7 +548,7 @@ TEST_F(TestSuit, QueryMemoryViewData)
 TEST_F(TestSuit, QueryMemoryViewDataByStreamExpectZero)
 {
     auto database = DataBaseManager::Instance().GetMemoryDatabase("0");
-    Dic::Protocol::MemoryComponentParams requestParams;
+    Dic::Protocol::MemoryViewParams requestParams;
     requestParams.rankId = "0";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
     Dic::Protocol::MemoryViewData responseBody;
@@ -562,7 +562,7 @@ TEST_F(TestSuit, QueryMemoryViewDataByStreamExpectZero)
 TEST_F(TestSuit, QueryMemoryViewDataByStreamExpectSeveral)
 {
     auto database = DataBaseManager::Instance().GetMemoryDatabase("1");
-    Dic::Protocol::MemoryComponentParams requestParams;
+    Dic::Protocol::MemoryViewParams requestParams;
     requestParams.rankId = "1";
     requestParams.type = Protocol::MEMORY_STREAM_GROUP;
     Dic::Protocol::MemoryViewData responseBody;

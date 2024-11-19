@@ -170,7 +170,7 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorListTotalNum(Protocol::StaticOp
     return true;
 }
 
-bool VirtualMemoryDataBase::ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryComponentParams &requestParams,
+bool VirtualMemoryDataBase::ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryViewParams &requestParams,
                                                              std::vector<Protocol::ComponentDto> &componentDtoVec,
                                                              std::vector<std::string> &streams, std::string &sql)
 {
@@ -209,7 +209,7 @@ bool VirtualMemoryDataBase::ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryCom
     return true;
 }
 
-bool VirtualMemoryDataBase::ExecuteQueryMemoryViewGetGraph(Protocol::MemoryComponentParams &requestParams,
+bool VirtualMemoryDataBase::ExecuteQueryMemoryViewGetGraph(Protocol::MemoryViewParams &requestParams,
                                                            std::vector<Protocol::ComponentDto> &componentDtoVec,
                                                            std::vector<std::string> &streams,
                                                            Protocol::MemoryViewData &operatorBody)

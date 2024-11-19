@@ -20,6 +20,9 @@ const std::vector<std::string> operatorTableColumn = {
     "allocation_allocated", "allocation_reserve", "allocation_active", "release_allocated", "release_reserve",
     "release_active", "stream", "device_type"
 };
+const std::vector<std::string> componentTableColumn = {
+    "component", "timestamp", "total_reserved", "device"
+};
 const std::vector<std::string> staticOperatorTableColumn = {
     "device_id", "op_name", "node_index_start", "node_index_end", "size"
 };
@@ -170,6 +173,41 @@ struct MemoryOperatorRequest : public Request {
 
 struct MemoryComponentParams {
     std::string rankId;
+    int64_t currentPage = 0;
+    int64_t pageSize = 0;
+    std::string orderBy;
+    std::string order;
+    bool isCompare = false;
+    bool CommonCheck(std::string &errorMsg)
+    {
+        if (!CheckStrParamValid(rankId, errorMsg)) {
+            return false;
+        }
+        if (!CheckPageValid(pageSize, currentPage, errorMsg)) {
+            return false;
+        }
+        if (!order.empty() && order != "ascend" && order != "descend") {
+            errorMsg = "Order parameter is not legal: Order parameter is " + order +
+                ", it should be ascend or descend.";
+            return false;
+        }
+        if (!orderBy.empty() && std::find(componentTableColumn.begin(), componentTableColumn.end(),
+                                          orderBy) == componentTableColumn.end()) {
+            errorMsg = "Order By parameter is not legal: Order By parameter is " + orderBy +
+                ", it should be one of the column names";
+            return false;
+        }
+        return true;
+    }
+};
+
+struct MemoryComponentRequest : public Request {
+    MemoryComponentRequest() : Request(REQ_RES_MEMORY_COMPONENT) {};
+    MemoryComponentParams params;
+};
+
+struct MemoryViewParams {
+    std::string rankId;
     std::string type; // Overall, Stream
     bool isCompare = false;
     bool CommonCheck(std::string &errorMsg)
@@ -187,12 +225,12 @@ struct MemoryComponentParams {
 
 struct MemoryViewRequest : public Request {
     MemoryViewRequest() : Request(REQ_RES_MEMORY_VIEW) {};
-    MemoryComponentParams params;
+    MemoryViewParams params;
 };
 
 struct MemoryOperatorSizeRequest : public Request {
     MemoryOperatorSizeRequest() : Request(REQ_RES_MEMORY_OPERATOR_MIN_MAX) {};
-    MemoryComponentParams params;
+    MemoryViewParams params;
 };
 
 struct MemoryStaticOperatorGraphRequest : public Request {

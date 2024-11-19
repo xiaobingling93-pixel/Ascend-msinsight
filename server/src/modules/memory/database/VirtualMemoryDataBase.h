@@ -24,7 +24,7 @@ public:
                                      std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                      std::vector<Protocol::MemoryOperator> &opDetails) = 0;
     virtual bool
-    QueryMemoryView(Protocol::MemoryComponentParams &requestParams, Protocol::MemoryViewData &operatorBody,
+    QueryMemoryView(Protocol::MemoryViewParams &requestParams, Protocol::MemoryViewData &operatorBody,
         uint64_t offsetTime) = 0;
     virtual bool QueryStaticOperatorList(Protocol::StaticOperatorListParams &requestParams,
                                          std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
@@ -110,11 +110,11 @@ protected:
     bool ExecuteOperatorsTotalNum(Protocol::MemoryOperatorParams &requestParams, int64_t &totalNum, std::string sql);
     bool ExecuteStaticOperatorListTotalNum(Protocol::StaticOperatorListParams &requestParams,
                                            int64_t &totalNum, std::string sql);
-    bool ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryComponentParams &requestParams,
+    bool ExecuteQueryMemoryViewExecuteSql(Protocol::MemoryViewParams &requestParams,
                                    std::vector<Protocol::ComponentDto> &componentDtoVec,
                                    std::vector<std::string> &streams,
                                    std::string &sql);
-    bool ExecuteQueryMemoryViewGetGraph(Protocol::MemoryComponentParams &requestParams,
+    bool ExecuteQueryMemoryViewGetGraph(Protocol::MemoryViewParams &requestParams,
                                          std::vector<Protocol::ComponentDto> &componentDtoVec,
                                          std::vector<std::string> &streams,
                                          Protocol::MemoryViewData &operatorBody);

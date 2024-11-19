@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-#ifndef PROFILER_SERVER_MEMORYREQUESTHANDLER_H
-#define PROFILER_SERVER_MEMORYREQUESTHANDLER_H
+#ifndef PROFILER_SERVER_MEMORY_REQUEST_HANDLER_H
+#define PROFILER_SERVER_MEMORY_REQUEST_HANDLER_H
 
 #include "ModuleRequestHandler.h"
 
@@ -24,4 +24,4 @@ public:
 } // end of namespace Memory
 } // end of namespace Module
 } // end of namespace Dic
-#endif // PROFILER_SERVER_MEMORYREQUESTHANDLER_H
+#endif // PROFILER_SERVER_MEMORY_REQUEST_HANDLER_H

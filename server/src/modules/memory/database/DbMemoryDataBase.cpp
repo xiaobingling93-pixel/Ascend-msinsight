@@ -122,7 +122,7 @@ bool DbMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryTabl
     return ExecuteQueryEntireOperatorTable(columnattr, opDetails, sql, rankId);
 }
 
-bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryComponentParams &requestParams,
+bool DbMemoryDataBase::QueryMemoryView(Protocol::MemoryViewParams &requestParams,
                                        Protocol::MemoryViewData &operatorBody, uint64_t offsetTime)
 {
     std::string sql = "";
