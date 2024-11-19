@@ -132,8 +132,10 @@ export const SystemView = observer((props: any) => {
         setKey(0);
     };
     useEffect(() => {
-        setViewOption(2);
-        setKey(0);
+        if (props.session.showEvent !== undefined) {
+            setViewOption(2);
+            setKey(0);
+        }
     }, [props.session.showEvent]);
     return (<Container>
         <AsideSelectContainer>
@@ -367,13 +369,10 @@ const BaseSummary = observer((props: any) => {
         setPage({ ...page, total: res.count });
     };
     useEffect(() => {
-        updateData(searchText, page, sorter, props);
-    }, [sorter, props.rankId]);
-    useEffect(() => {
         if (status === 'download') {
             updateData(searchText, page, sorter, props);
         }
-    }, [status]);
+    }, [sorter, props.rankId, status]);
     useEffect(() => {
         if (rowData.name === null || rowData.name === undefined) {
             return;
