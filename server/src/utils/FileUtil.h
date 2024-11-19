@@ -443,16 +443,12 @@ public:
 
             auto dirs = {FileUtil::SplicePath(path, ASCEND_PROFILER_OUTPUT),
                          FileUtil::SplicePath(path, MINDSTUDIO_PROFILER_OUTPUT)};
-            auto preSize = matchedFiles.size();
             for (const auto &dir: dirs) {
                 if (FileUtil::IsFolder(dir)) {
                     find(dir, depth + 1);
-                }
-                if (matchedFiles.size() != preSize) {
                     return;
                 }
             }
-
             for (const auto &folder: folders) {
                 std::string tmpPath = FileUtil::SplicePath(path, folder);
                 find(tmpPath, depth + 1);
