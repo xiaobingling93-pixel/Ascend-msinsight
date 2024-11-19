@@ -32,7 +32,7 @@ export class SourcePage {
 
         async goto(): Promise<void> {
                 const frameworkPage = new FrameworkPage(this.page);
-                await frameworkPage.goToTab(this.tabName);
+                await frameworkPage.clickTab(this.tabName);
         }
 
         async mouseOut(): Promise<void> {
