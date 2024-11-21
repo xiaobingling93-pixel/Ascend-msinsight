@@ -39,6 +39,7 @@ private:
     static std::optional<document_t> ToProjectValidCheckResponseJson(const Response &response);
     static std::optional<document_t> ToSetBaselineResponseJson(const Response &response);
     static std::optional<document_t> ToCancelBaselineResponseJson(const Response &response);
+    static std::optional<document_t> ToGetModuleConfigResponseJson(const Response &response);
 };
 } // namespace Protocol
 } // namespace Dic

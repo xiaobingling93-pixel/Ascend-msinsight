@@ -8,6 +8,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { console } from '@/utils/console';
 import { connectRemote } from '../server';
 import { useDataSources } from '@/stores/dataSource';
+import { useSession } from '@/stores/session';
 
 const createRequestHead = function (
     id: number,
@@ -42,11 +43,12 @@ export class Connection {
             // wedge: close and release the old websocket
         }
         this._msgId = 0;
-
+        const { session } = useSession();
         let protocol = `${window.location.protocol === 'https:' && window.location.host !== 'wry.localhost' ? 'wss:' : 'ws:'}//`;
         if (!window.location.pathname.includes('\/proxy\/')) {
             const hostname = location.hostname && location.hostname !== '' ? location.hostname : LOCAL_HOST;
             this._ws = new WebSocket(`${protocol}${hostname}:${dataSource.port}${window.location.search}`);
+            session.toIframeUrl = `${protocol}${hostname}:${dataSource.port}`;
         } else {
             const { location } = window;
             const { host } = location;
@@ -55,6 +57,7 @@ export class Connection {
             let uri = protocol + host + path + search;
 
             this._ws = new WebSocket(uri);
+            session.toIframeUrl = `${protocol}${host}${path.replace(/\/index.html/, '')}`;
         }
         this._dataSource = dataSource;
     }

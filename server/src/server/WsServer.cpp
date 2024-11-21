@@ -49,6 +49,7 @@ void WsServer::StartListen()
     wsApp = std::make_unique<uWS::App>();
     uWS::App::WebSocketBehavior<WsUserData> behavior = CreateWsBehavior();
     wsApp->ws<WsUserData>("/*", std::move(behavior));
+    LoadHandlers();
     wsApp->listen(host, port, std::bind(&WsServer::ListenCb, this, std::placeholders::_1));
     ServerLog::Info("Run server");
     wsApp->run();
@@ -154,6 +155,56 @@ void WsServer::OnMessageCb(WsChannel *ws, std::string_view message, uWS::OpCode 
         return;
     }
     session->OnRequestMessage(std::string(message));
+}
+
+void WsServer::LoadHandlers()
+{
+    auto& pluginManager = Dic::Core::PluginsManager::Instance();
+    for (const auto &[key, plugin]: pluginManager.GetAllPlugins()) {
+        for (const auto &[prefix, handler]: plugin->GetAllHandlers()) {
+            if (handler->GetApiType() == Core::API_TYPE::GET) {
+                AddGetHandler("/" + key + "/" + prefix, handler);
+            } else {
+                AddPostHandler("/" + key + "/" + prefix, handler);
+            }
+        }
+    }
+}
+
+void WsServer::AddGetHandler(const std::string& key, std::shared_ptr<Core::ApiHandler> handler)
+{
+    wsApp->get(key.data(), [handler](uWS::HttpResponse<false> *res, uWS::HttpRequest *req) {
+        // add coc
+        res->writeHeader("Access-Control-Allow-Origin", "*");
+        res->writeHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        res->writeHeader("Access-Control-Allow-Headers", "Content-Type");
+        std::string result;
+        handler->run(req->getQuery(), result);
+        res->end(result);
+    });
+}
+
+void WsServer::AddPostHandler(const std::string& key, std::shared_ptr<Core::ApiHandler> handler)
+{
+    wsApp->post(key.data(), [handler](uWS::HttpResponse<false> *res, auto *req) {
+        res->onAborted([]() {
+            uWS::Loop::get()->defer([]() {
+            });
+        });
+        res->onData([res, handler, bodyBuffer = std::string()](std::string_view data, bool isEnd) mutable {
+            bodyBuffer.append(data);
+            if (isEnd) {
+                // add coc
+                res->writeHeader("Access-Control-Allow-Origin", "*");
+                res->writeHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+                res->writeHeader("Access-Control-Allow-Headers", "Content-Type");
+                // 处理数据
+                std::string result;
+                handler->run(bodyBuffer, result);
+                res->end(result);
+            }
+        });
+    });
 }
 } // end of namespace Server
 } // end of namespace Dic

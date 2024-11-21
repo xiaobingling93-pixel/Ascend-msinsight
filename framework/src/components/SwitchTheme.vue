@@ -28,6 +28,7 @@ function sendThemeEvent(isDark: boolean) {
     connector.send({
       event: 'setTheme',
       body: { isDark },
+      target: 'plugin',
     });
 }
 
@@ -45,6 +46,7 @@ function handleThemeChange(isDark: boolean) {
     connector.send({
         event: 'setTheme',
         body: { isDark: isDark },
+        target: 'plugin',
     });
     document.body.className = isDark ? 'dark-theme' : 'light-theme';
     setSession({theme});

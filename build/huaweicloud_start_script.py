@@ -7,38 +7,40 @@
 import os
 import platform
 import shutil
+import site
 import sys
 import subprocess
 import logging
 
-ASCEND_INSIGHT_NAME = "MindStudio Insight"
-PY_MEI_DIR = getattr(sys, '_MEIPASS', None)
-AI_TEMP_DIR = os.path.join(os.path.dirname(PY_MEI_DIR), "MindStudioInsightTemp")
+MINDSTUDIO_INSIGHT_NAME = "MindStudio Insight"
+ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 FIX_FRONTEND_PORT = 8085
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
 def insight_start(backend_args):
-    if os.path.exists(AI_TEMP_DIR):
-        shutil.rmtree(AI_TEMP_DIR)
-    shutil.copytree(PY_MEI_DIR, AI_TEMP_DIR)
-
-    frontend_dir = os.path.join(AI_TEMP_DIR, "server", "frontend")
+    frontend_dir = os.path.join(ROOT_PATH, "frontend")
 
     exec_name = "profiler_server.exe" if platform.platform().find("Windows") > -1 else "profiler_server"
-    backend_dir = os.path.join(AI_TEMP_DIR, "server", "backend")
+    backend_dir = os.path.join(ROOT_PATH, "server")
     backend_path = os.path.join(backend_dir, exec_name)
     # 检查 backend_path 是否存在
     if not os.path.exists(backend_path):
         logging.info("The backend path %s is not exist.", backend_path)
         return
 
-    # 非阻塞启动前后的进程
-    subprocess.Popen([backend_path] + backend_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                     env={'LD_LIBRARY_PATH': backend_dir + ":" + os.getenv('LD_LIBRARY_PATH', '')})
-    process = subprocess.Popen([shutil.which('python'), "-m", "http.server", "-d", frontend_dir,
-        str(FIX_FRONTEND_PORT)], stdout=sys.stdout, stderr=sys.stdout, universal_newlines=True, bufsize=1)
+    user_sites = site.getusersitepackages()
+    sites = ''.join(site.getsitepackages())
+    if platform.platform().find('Windows') == -1:
+        # 非阻塞启动前后的进程
+        subprocess.Popen([backend_path] + backend_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         env={'LD_LIBRARY_PATH': backend_dir + ":" + os.getenv('LD_LIBRARY_PATH', ''),
+                              'PYTHONPATH': sites + ":" + user_sites + ":" + os.getenv('PYTHONPATH', '')})
+    else:
+        subprocess.Popen([backend_path] + backend_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.Popen([shutil.which('python'), "-m", "http.server", "-d", frontend_dir,
+                      str(FIX_FRONTEND_PORT)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def kill_process(pid):
@@ -87,8 +89,8 @@ def insight_stop():
 def insight_help():
     logging.info("")
 
-    logging.info(f"Usage: %s [command].", ASCEND_INSIGHT_NAME)
-    logging.info(f" %s start [option=arg | option arg]", ASCEND_INSIGHT_NAME)
+    logging.info(f"Usage: %s [command].", MINDSTUDIO_INSIGHT_NAME)
+    logging.info(f" %s start [option=arg | option arg]", MINDSTUDIO_INSIGHT_NAME)
     logging.info("   --wsPort <port>         Specify the port number on which the service will start.")
     logging.info("   --wsHost <ip>           Specify the ip address on which the service will start.")
     logging.info("   --logPath <path>        Specify the path where log files will be stored.")
@@ -98,9 +100,9 @@ def insight_help():
     logging.info(
         "   --scan <port>           Scan whether the specified port is available, if not, return an available port.")
     logging.info("")
-    logging.info(f" %s stop      Stop all related processes.", ASCEND_INSIGHT_NAME)
-    logging.info(f" %s -h        Show this help message and exit.", ASCEND_INSIGHT_NAME)
-    logging.info(f" %s --help    Show this help message and exit.", ASCEND_INSIGHT_NAME)
+    logging.info(f" %s stop      Stop all related processes.", MINDSTUDIO_INSIGHT_NAME)
+    logging.info(f" %s -h        Show this help message and exit.", MINDSTUDIO_INSIGHT_NAME)
+    logging.info(f" %s --help    Show this help message and exit.", MINDSTUDIO_INSIGHT_NAME)
     logging.info("")
 
 
@@ -116,7 +118,7 @@ if len(sys.argv) <= 1:
     logging.info("Please try executing '-h or --help' to get more information.")
     raise Exception
 
-argvs = sys.argv[1:]
+argvs = sys.argv[2:]
 
 FIRST_ARG = argvs[0]
 REMAIN_ARG = argvs[1:]

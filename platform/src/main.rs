@@ -19,6 +19,7 @@ use std::collections::{HashMap, VecDeque};
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
+#[cfg(feature = "default")]
 use wry::{
     application::{
         event::{Event, WindowEvent},
@@ -117,6 +118,7 @@ fn run_server(
 }
 
 // run script
+#[cfg(feature = "default")]
 fn run_script(
     server_process: Mutex<Child>,
     root_path: &PathBuf,
@@ -364,6 +366,7 @@ fn eq_prefix(lhs: &PathBuf, rhs: &PathBuf) -> bool {
     }
 }
 
+#[cfg(feature = "default")]
 fn main() {
     let mut cache_path = home_dir()
         .expect("Home dir not exists, check your env variable")
@@ -420,4 +423,28 @@ fn main() {
     if let Some(child) = run_server(&root_path, &cache_path, &mut port, &sid) {
         let _ = run_script(child, &root_path, &port.as_str(), &sid);
     }
+}
+
+#[cfg(not(feature = "default"))]
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    let profiler_path = current_exe()
+        .expect("Failed to get current exe path")
+        .parent()
+        .expect("Failed to get parent path of  current exe")
+        .join("resources").join("profiler").join("start_script.py").to_path_buf();
+    let Some(path) = profiler_path.to_str() else {
+        return;
+    };
+    let mut server_command = Command::new("python3");
+    server_command.arg(path);
+    for arg in args {
+        server_command.arg(arg);
+    }
+    match server_command.spawn() {
+        Ok(_) => {},
+        _ => {
+            eprintln!("Failed to start server.")
+        },
+    };
 }

@@ -52,6 +52,7 @@ export const addDataPath = function(dataSource: DataSource, action: ProjectActio
         connector.send({
             event: 'remote/import',
             body: { dataSource, isConflict, action },
+            target: 'plugin',
         });
     }
 };

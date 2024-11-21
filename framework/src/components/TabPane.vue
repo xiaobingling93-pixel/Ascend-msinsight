@@ -18,6 +18,8 @@ import { localStorageService, LocalStorageKeys } from '@/utils/local-storage';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
 import SwitchTheme from '@/components/SwitchTheme.vue';
 import { useCompareConfig } from '@/stores/compareConfig';
+import { assign } from 'lodash';
+import { safeJSONParse } from '@/utils';
 const { initProjectName } = useDataSources();
 
 type SceneType = 'Default' | 'Cluster' | 'Compute' | 'Jupyter';
@@ -92,12 +94,28 @@ function questionIconClickHandler(e: MouseEvent) {
     showHelpModal.value = true;
 }
 
+async function getModuleConfig() {
+    const { configs } : any = await request(
+        { remote: LOCAL_HOST, port: PORT }, 'global',
+        { command: 'moduleConfig/get', params: {} }
+    );
+    (configs as string[]).forEach(item => {
+        let config : ModuleConfig = { name : '', requestName : '', attributes: {} };
+        assign(config, safeJSONParse(item));
+        if (config.attributes.src && config.attributes.src !== '' && !config.attributes.src.startsWith('http')) {
+            modulesConfig.push(config);
+        }
+    });
+}
+
 onMounted(async () => {
     registerEventListeners();
 
     if (!session.isVscode) {
         await connectRemote({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
     }
+
+    await getModuleConfig();
 
     const result: any = await request({ remote: LOCAL_HOST, port: PORT }, 'global', {
       command: 'files/getProjectExplorer',
@@ -275,6 +293,15 @@ function registerEventListeners() {
             event: 'switchLanguage',
             to: e.data.from,
             body: { lang: localStorageService.getItem(LocalStorageKeys.LANGUAGE) || 'enUS' },
+            target: 'plugin',
+        });
+    });
+
+    connector.addListener('pluginMounted', (e) => {
+        connector.send({
+            event: 'wakeupPlugin',
+            data: { url: session.toIframeUrl },
+            target: 'plugin',
         });
     });
 }
@@ -338,10 +365,10 @@ function findIndexByName(validIndexMap: Map<number, ModuleConfig>, name: string)
 function toggleTab(index: number): void {
     activeModule.value = index;
     connector.send({
-        event: 'wakeup',
-        body: {},
-        to: index,
-    });
+            event: 'wakeup',
+            body: {},
+            to: index,
+        });
 }
 
 function handleToggleLang(): void {

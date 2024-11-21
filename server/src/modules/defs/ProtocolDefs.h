@@ -45,6 +45,7 @@ const std::string EVENT_PARSE_PROGRESS = "parse/progress";
 // global
 const std::string REQ_RES_HEART_CHECK = "heartCheck";
 const std::string REQ_RES_FILES_GET = "files/get";
+const std::string REQ_RES_GET_MODULE_CONFIG = "moduleConfig/get";
 const std::string REQ_RES_PROJECT_EXPLORER_UPDATE = "files/updateProjectExplorer";
 const std::string REQ_RES_PROJECT_EXPLORER_INFO_GET = "files/getProjectExplorer";
 const std::string REQ_RES_PROJECT_EXPLORER_INFO_DELETE = "files/deleteProjectExplorer";

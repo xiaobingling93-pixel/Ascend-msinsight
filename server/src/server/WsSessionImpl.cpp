@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2022. All rights reserved.
  */
 #include "pch.h"
-#include "LogUtil.h"
+#include "TimeUtil.h"
 #include "ModuleManager.h"
 #include "ProtocolManager.h"
 #include "WsSessionImpl.h"

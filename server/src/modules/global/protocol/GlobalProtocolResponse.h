@@ -54,6 +54,11 @@ struct FilesGetResponse : public Response {
     FilesGetResBody body;
 };
 
+struct ModuleConfigGetResponse : public Response {
+    ModuleConfigGetResponse() : Response(REQ_RES_GET_MODULE_CONFIG) {};
+    std::vector<std::string> configs;
+};
+
 struct ProjectExplorerInfoUpdateBody {
 };
 

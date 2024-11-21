@@ -128,6 +128,7 @@ export const useDataSources = defineStore('dataSources', () => {
                 connector.send({
                     event: 'remote/import',
                     body: { dataSource, isConflict, action },
+                    target: 'plugin',
                 });
             }
         }
@@ -154,6 +155,7 @@ export const useDataSources = defineStore('dataSources', () => {
         connector.send({
             event: 'remote/reset',
             body: {},
+            target: 'plugin',
         });
         session.reset(true);
         dataSources.value = [];
@@ -173,6 +175,7 @@ export const useDataSources = defineStore('dataSources', () => {
                 connector.send({
                     event: 'remote/remove',
                     body: { dataSource },
+                    target: 'plugin',
                 });
                 session.reset(true);
                 await request(dataSource, 'timeline', { command: 'remote/reset' });

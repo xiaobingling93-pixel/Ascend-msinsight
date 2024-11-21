@@ -18,7 +18,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #else
-#include <linux/limits.h>
+#include <climits>
 #endif
 #include <map>
 #include <iomanip>

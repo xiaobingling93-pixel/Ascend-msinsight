@@ -15,6 +15,7 @@
 #include <mutex>
 #ifdef __APPLE__
 #include <filesystem>
+#include <sys/stat.h>
 #elif __linux__
 #include <sys/stat.h>
 #endif

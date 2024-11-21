@@ -11,8 +11,9 @@
 #include "CheckProjectValidHandler.h"
 #include "SetBaselineHandler.h"
 #include "CancelBaselineHandler.h"
-#include "ClearProjectExplorerHandler.h"
 #include "ProtocolDefs.h"
+#include "GetModuleConfigHandler.h"
+#include "ClearProjectExplorerHandler.h"
 
 namespace Dic {
 namespace Module {
@@ -44,6 +45,7 @@ void GlobalModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_PROJECT_VALID_CHECK, std::make_unique<CheckProjectValidHandler>());
     requestHandlerMap.emplace(REQ_RES_PROJECT_SET_BASELINE, std::make_unique<SetBaselineHandler>());
     requestHandlerMap.emplace(REQ_RES_PROJECT_CANCEL_BASELINE, std::make_unique<CancelBaselineHandler>());
+    requestHandlerMap.emplace(REQ_RES_GET_MODULE_CONFIG, std::make_unique<GetModuleConfigHandler>());
 }
 
 void GlobalModule::OnRequest(std::unique_ptr<Protocol::Request> request)

@@ -30,6 +30,8 @@ export class Session {
     sourceList: string[] = [];
     memoryRankIds: string[] = [];
     operatorRankIds: string[] = [];
+    // 需要下发给插件的url
+    toIframeUrl: string = '';
     private _sharedState: Record<string, unknown> = {};
 
     get sharedState(): Record<string, unknown> {
@@ -68,6 +70,7 @@ export class Session {
         }
         this.memoryRankIds = [];
         this.operatorRankIds = [];
+        this.toIframeUrl = '';
     }
 };
 

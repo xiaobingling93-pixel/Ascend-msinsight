@@ -21,6 +21,7 @@ void GlobalProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_PROJECT_VALID_CHECK, ToProjectValidCheckRequest);
     jsonToReqFactory.emplace(REQ_RES_PROJECT_SET_BASELINE, ToSetBaselineRequest);
     jsonToReqFactory.emplace(REQ_RES_PROJECT_CANCEL_BASELINE, ToCancelBaselineRequest);
+    jsonToReqFactory.emplace(REQ_RES_GET_MODULE_CONFIG, ToHeartCheckRequest);
 }
 
 void GlobalProtocol::RegisterResponseToJsonFuncs()
@@ -34,6 +35,7 @@ void GlobalProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_PROJECT_VALID_CHECK, ToProjectValidCheckResponseJson);
     resToJsonFactory.emplace(REQ_RES_PROJECT_SET_BASELINE, ToSetBaselineResponseJson);
     resToJsonFactory.emplace(REQ_RES_PROJECT_CANCEL_BASELINE, ToCancelBaselineResponseJson);
+    resToJsonFactory.emplace(REQ_RES_GET_MODULE_CONFIG, ToGetModuleConfigResponseJson);
 }
 
 void GlobalProtocol::RegisterEventToJsonFuncs()
@@ -200,6 +202,22 @@ std::optional<document_t> GlobalProtocol::ToSetBaselineResponseJson(const Respon
 std::optional<document_t> GlobalProtocol::ToCancelBaselineResponseJson(const Response &response)
 {
     return ToResponseJson<BaselineCancelResponse>(dynamic_cast<const BaselineCancelResponse &>(response));
+}
+
+std::optional<document_t> GlobalProtocol::ToGetModuleConfigResponseJson(const Response &response)
+{
+    auto resPtr = dynamic_cast<const ModuleConfigGetResponse&> (response);
+    document_t json(kObjectType);
+    json_t body(kObjectType);
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    auto &allocator = json.GetAllocator();
+    json_t configs(kArrayType);
+    for (const auto &item: resPtr.configs) {
+        configs.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+    }
+    JsonUtil::AddMember(body, "configs", configs, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
 }
 #pragma endregion
 

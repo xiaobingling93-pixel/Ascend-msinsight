@@ -37,6 +37,9 @@ class Const:
     VSCODE_PLUGINS_DIR = os.path.join('plugins', 'vscode')
     INTELLIJ_PLUGINS_DIR = os.path.join('plugins', 'intellij')
     JUPYTERLAB_PLUGINS_DIR = os.path.join('plugins', 'jupyterlab')
+    PLATFORM_DIR = os.path.join(PROJECT_PATH, 'platform')
+    PLATFORM_PREVIEW_DIR = os.path.join(PLATFORM_DIR, 'preview')
+    PLATFORM_TARGET_DIR = os.path.join(PLATFORM_DIR, 'target')
     ASCEND_INSIGHT_PREFIX = 'MindStudio-Insight'
     ASCEND_INSIGHT = 'MindStudio_Insight'
     BIN_SUFFIX = '.exe' if platform.system() == WINDOWS_OS else ''
@@ -254,8 +257,15 @@ def build_jupyterlab(jupyterlab_version, os_name):
     return 0
 
 
-def build_light_package(version, os_name):
-    platform_path = os.path.join(PROJECT_PATH, 'platform')
+def build_package(version, os_name):
+    return build_light_package(version, os_name, False) & build_light_package(version, os_name, True)
+
+
+def build_light_package(version, os_name, is_huaweicloud):
+    if is_huaweicloud and os_name != "linux-aarch64" and os_name != "linux-x86_64":
+        logging.warning('Only build huaweicloud package for arm and x86_64, Not for windows!')
+        return 0
+
     os.putenv('RUSTUP_UPDATE_ROOT', 'http://rust.inhuawei.com/rustup-static/rustup')
     os.putenv('RUSTUP_DIST_SERVER', 'http://rust.inhuawei.com/rustup-static')
     os.putenv('CARGO_REGISTRY', 'https://mirrors.tools.huawei.com/rust/crates.io-index/')
@@ -264,55 +274,63 @@ def build_light_package(version, os_name):
 
     # 清理构建缓存
     resource_dir = 'resources'
-    preview_path = os.path.join(platform_path, 'preview')
-    target_path = os.path.join(platform_path, 'target')
-    build_cache_paths = [preview_path, target_path]
+    build_cache_paths = [Const.PLATFORM_PREVIEW_DIR, Const.PLATFORM_TARGET_DIR]
     for tmp_path in build_cache_paths:
         if os.path.exists(tmp_path):
             traverse_folder_and_chmod(tmp_path, 0o750, 0o750)
             shutil.rmtree(tmp_path)
         os.mkdir(tmp_path)
-
     # 拷贝前后端文件
-    shutil.copytree(os.path.join(platform_path, resource_dir), os.path.join(preview_path, resource_dir))
-    profiler_path = os.path.join(preview_path, resource_dir, 'profiler')
+    shutil.copytree(os.path.join(Const.PLATFORM_DIR, resource_dir),
+                    os.path.join(Const.PLATFORM_PREVIEW_DIR, resource_dir))
+    profiler_path = os.path.join(Const.PLATFORM_PREVIEW_DIR, resource_dir, 'profiler')
     os.mkdir(profiler_path, 0o750)
     shutil.copytree(os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, 'dist'), os.path.join(profiler_path, 'frontend'))
     shutil.copytree(os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output', 'build', 'server'),
                     os.path.join(profiler_path, 'server'))
-
     # 构建底座
     cargo_cmd = 'cargo.exe' if platform.system() == Const.WINDOWS_OS else 'cargo'
-    bin_file = 'MindStudio_Insight.exe' if platform.system() == Const.WINDOWS_OS else 'MindStudio_Insight'
-    target_file = 'MindStudio-Insight.exe' if platform.system() == Const.WINDOWS_OS else 'MindStudio-Insight'
-    result = exec_command([cargo_cmd, 'build', '--release'], platform_path, 'bin_package')
+    cmd_list = [cargo_cmd, 'build', '--release']
+    package_name = Const.ASCEND_INSIGHT_PREFIX + '_' + version + '_' + os_name + Const.PACKAGE_SUFFIX
+    if is_huaweicloud:
+        shutil.copyfile(os.path.join(PROJECT_PATH, "build", "huaweicloud_start_script.py"),
+                        os.path.join(profiler_path, "start_script.py"))
+        cmd_list = cmd_list + ["--no-default-features"]
+        package_name = Const.ASCEND_INSIGHT_PREFIX + '_huaweicloud_' + version + '_' + os_name + Const.PACKAGE_SUFFIX
+
+    result = exec_command(cmd_list, Const.PLATFORM_DIR, 'bin_package')
     if result != 0:
         return 1
+    return zip_package(profiler_path, package_name)
 
-    shutil.copyfile(os.path.join(target_path, 'release', bin_file), os.path.join(preview_path, target_file))
 
+def zip_package(profiler_path, package_name):
+    bin_file = 'MindStudio_Insight.exe' if platform.system() == Const.WINDOWS_OS else 'MindStudio_Insight'
+    target_file = 'MindStudio-Insight.exe' if platform.system() == Const.WINDOWS_OS else 'MindStudio-Insight'
+    shutil.copyfile(os.path.join(Const.PLATFORM_TARGET_DIR, 'release', bin_file),
+                    os.path.join(Const.PLATFORM_PREVIEW_DIR, target_file))
     # 打包
-    package_name = Const.ASCEND_INSIGHT_PREFIX + '_' + version + '_' + os_name + Const.PACKAGE_SUFFIX
     dst_file = os.path.join(PROJECT_PATH, Const.OUT_DIR, package_name)
     if platform.system() == Const.WINDOWS_OS:
-        shutil.copytree(os.path.join(platform_path, 'config'), os.path.join(preview_path, 'config'))  # 仅Windows需要
-        bundle_path = os.path.join(platform_path, 'bundle')
-        shutil.copyfile(os.path.join(bundle_path, 'installer.nsi'), os.path.join(preview_path, 'installer.nsi'))
+        shutil.copytree(os.path.join(Const.PLATFORM_DIR, 'config'),
+                        os.path.join(Const.PLATFORM_PREVIEW_DIR, 'config'))  # 仅Windows需要
+        bundle_path = os.path.join(Const.PLATFORM_DIR, 'bundle')
+        shutil.copyfile(os.path.join(bundle_path, 'installer.nsi'),
+                        os.path.join(Const.PLATFORM_PREVIEW_DIR, 'installer.nsi'))
         nsis_cmd = os.path.join('C:\\Program Files (x86)\\NSIS', 'bin', 'makensis.exe')
-        result = exec_command([nsis_cmd, os.path.join('preview', 'installer.nsi')], platform_path, 'bin_package')
+        result = exec_command([nsis_cmd, os.path.join('preview', 'installer.nsi')], Const.PLATFORM_DIR, 'bin_package')
         if result != 0:
             return 1
-        for tmp in os.listdir(preview_path):
+        for tmp in os.listdir(Const.PLATFORM_PREVIEW_DIR):
             if not tmp.startswith(Const.ASCEND_INSIGHT_PREFIX + '_'):
                 continue
-            shutil.copyfile(os.path.join(preview_path, tmp), dst_file)
+            shutil.copyfile(os.path.join(Const.PLATFORM_PREVIEW_DIR, tmp), dst_file)
             break
     else:
-        traverse_folder_and_chmod(preview_path, 0o750, 0o640)  # 1、统一修改为文件夹750，文件640
+        traverse_folder_and_chmod(Const.PLATFORM_PREVIEW_DIR, 0o750, 0o640)  # 1、统一修改为文件夹750，文件640
         traverse_folder_and_chmod(os.path.join(profiler_path, Const.SERVER_DIR), 0o750, 0o550)  # 2、server下的文件550
-        os.chmod(os.path.join(preview_path, target_file), 0o550)  # 3、ascend_insight 550
-        shutil.make_archive(dst_file[:-4], 'zip', preview_path)
-
+        os.chmod(os.path.join(Const.PLATFORM_PREVIEW_DIR, target_file), 0o550)  # 3、ascend_insight 550
+        shutil.make_archive(dst_file[:-4], 'zip', Const.PLATFORM_PREVIEW_DIR)
     return 0
 
 
@@ -325,36 +343,6 @@ def exec_command(command, path, module_name):
     if process.returncode != 0:
         logging.error('[%s]Failed to execute %s.', module_name, ' '.join(command))
     return process.returncode
-
-
-def build_huaweicloud_package(version, os_name):
-    if os_name != "linux-aarch64" and os_name != "linux-x86_64":
-        logging.warning('[python_package]Only build http package for arm and x86_64!')
-        return 0
-
-    tmp = os.path.join(PROJECT_PATH, 'tmp_http')
-    if os.path.exists(tmp):
-        shutil.rmtree(tmp)
-    os.makedirs(tmp, exist_ok=True)
-
-    frontend_path = os.path.join(PROJECT_PATH, 'framework', 'dist')
-    backend_path = os.path.join(PROJECT_PATH, 'server', 'output', 'build', 'server')
-    shutil.copytree(frontend_path, os.path.join(tmp, "frontend"))
-    shutil.copytree(backend_path, os.path.join(tmp, "backend"))
-
-    script_path = os.path.join(PROJECT_PATH, "build", "huaweicloud_start_script.py")
-    shutil.copy(script_path, tmp)
-
-    result = exec_command(
-        ["pyinstaller", "--name", "MindStudio-Insight", "--add-data", "frontend:./server/frontend", "--add-data",
-         "backend:./server/backend", "-F", "./huaweicloud_start_script.py"], tmp, "python_package")
-    if result != 0:
-        return 1
-
-    dist_dir = os.path.join(tmp, "dist")
-    out_zip = os.path.join(PROJECT_PATH, "out", f"mindstudio_insight_huaweicloud_{version}_{os_name}")
-    shutil.make_archive(out_zip, 'zip', dist_dir)
-    return 0
 
 
 # 获取版本信息，将从config.ini中读取到的版本后去掉最后一个后缀
@@ -399,15 +387,14 @@ def create_version_info_file(version, modify_time):
 
 def build_product_parallel(vscode_version, idea_version, os_name):
     logging.info('Start to build products')
-    funcs = [build_vscode, build_intellij, build_light_package, build_huaweicloud_package, build_jupyterlab]
+    funcs = [build_vscode, build_intellij, build_package, build_jupyterlab]
     args_list = [
         (vscode_version, os_name),
         (idea_version, os_name),
         (idea_version, os_name),
-        (vscode_version, os_name),
         (idea_version, os_name)
     ]
-    pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 5))
+    pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 4))
     results = []
     for func, args in zip(funcs, args_list):
         results.append(pool.apply_async(func, args))

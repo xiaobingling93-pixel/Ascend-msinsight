@@ -14,5 +14,9 @@ strip = "symbols"
 relocation_model = "pic/pie"
 
 [dependencies]
-wry = {registry = "openSources", version="0.24.3", features = ["file-drop"] }
-uuid = {registry = "openSources", version = "1.7.0", features = ["v4"]}
+wry = {registry = "openSources", version="0.24.3", features = ["file-drop"], optional = true}
+uuid = {registry = "openSources", version = "1.7.0", features = ["v4"], optional = true}
+
+[features]
+default = ["wry", "uuid"]
+http = []

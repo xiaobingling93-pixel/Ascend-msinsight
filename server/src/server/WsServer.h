@@ -12,6 +12,7 @@
 #include <memory>
 #include "ServerDefs.h"
 #include "BaseServer.h"
+#include "ApiHandler.h"
 
 namespace Dic {
 namespace Server {
@@ -34,6 +35,9 @@ protected:
     void OnOpenCb(WsChannel *ws);
     void OnCloseCb(WsChannel *ws, int code, std::string_view message);
     void OnMessageCb(WsChannel *ws, std::string_view message, uWS::OpCode opCode);
+    void LoadHandlers();
+    void AddPostHandler(const std::string& key, std::shared_ptr<Core::ApiHandler> handler);
+    void AddGetHandler(const std::string& key, std::shared_ptr<Core::ApiHandler> handler);
 
     std::unique_ptr<uWS::App> wsApp = nullptr;
     volatile bool listenStart = false;

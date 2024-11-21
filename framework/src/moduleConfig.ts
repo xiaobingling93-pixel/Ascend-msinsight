@@ -2,6 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import type { IframeHTMLAttributes } from 'vue';
+import { reactive } from 'vue';
 
 export interface ModuleConfig {
     name: string;
@@ -14,7 +15,7 @@ export interface ModuleConfig {
 };
 
 const isDev = import.meta.env.MODE === 'development';
-export const modulesConfig: ModuleConfig[] = [
+export const modulesConfig: ModuleConfig[] = reactive([
     {
         name: 'Timeline',
         requestName: 'timeline',
@@ -86,4 +87,4 @@ export const modulesConfig: ModuleConfig[] = [
         },
         isJupyter: true,
     },
-];
+]);
