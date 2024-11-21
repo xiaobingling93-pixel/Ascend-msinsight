@@ -159,10 +159,9 @@ export function disposeAdaptiveEchart(chartDom: HTMLElement): void {
 }
 
 export const getDefaultChartOptions = (isDark?: boolean): any => {
-    const bodyStyle = getComputedStyle(document.body);
     return {
         textStyle: {
-            fontFamily: bodyStyle?.fontFamily,
+            fontFamily: '\'Inter\', -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, \'Fira Sans\', \'Droid Sans\', sans-serif',
         },
         tooltip: {
             backgroundColor: isDark ? '#2A2F37' : '#EBEFF6',

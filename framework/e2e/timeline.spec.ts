@@ -60,9 +60,9 @@ test.describe('Timeline', () => {
         const firstUnitInfo = timelineFrame.locator('.unit-info').first();
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
         await secondUnitInfo.click();
-        await firstUnitInfo.hover();
+        await firstUnitInfo.hover({ force: true });
         // 这里需要优化，改为当图表渲染完成后再继续执行
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(1500);
         const offsetBtn = timelineFrame.getByTestId('offset-btn');
         await offsetBtn.click();
         const offsetInput = timelineFrame.getByRole('tooltip', { name: /Timestamp Offset/i }).getByRole('textbox');
@@ -99,7 +99,11 @@ test.describe('Timeline', () => {
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
         await secondUnitInfo.click();
         const chart = timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas');
-        const { x: startX, y: startY } = await chart.boundingBox();
+        const chartInfo = await chart.boundingBox();
+        if (!chartInfo) {
+            return;
+        }
+        const { x: startX, y: startY } = chartInfo;
 
         await page.mouse.move(startX + 50, startY + 50);
         await page.mouse.down();
