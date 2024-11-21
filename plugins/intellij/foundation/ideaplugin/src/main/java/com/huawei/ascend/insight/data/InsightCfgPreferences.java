@@ -5,7 +5,8 @@
 package com.huawei.ascend.insight.data;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -36,7 +37,8 @@ public class InsightCfgPreferences implements PersistentStateComponent<InsightCf
         if (insightCfgPreferences == null) {
             synchronized (InsightCfgPreferences.class) {
                 if (insightCfgPreferences == null) {
-                    insightCfgPreferences = ServiceManager.getService(InsightCfgPreferences.class);
+                    Application application = ApplicationManager.getApplication();
+                    insightCfgPreferences = application.getService(InsightCfgPreferences.class);
                 }
             }
         }

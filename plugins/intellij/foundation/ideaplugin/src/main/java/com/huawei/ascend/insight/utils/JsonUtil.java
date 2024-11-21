@@ -9,8 +9,6 @@ import com.alibaba.fastjson.JSONObject;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
-
 /**
  * JsonUtil
  *
@@ -32,7 +30,7 @@ public class JsonUtil {
         try {
             return JSONObject.parseObject(text, clazz);
         } catch (JSONException e) {
-            return (T) Optional.empty();
+            return null;
         }
     }
 }

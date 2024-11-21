@@ -9,6 +9,7 @@ import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.font.TextAttribute;
 import java.util.Map;
+import java.util.HashMap;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -28,7 +29,11 @@ public class MessagePanel {
      */
     public MessagePanel() {
         Font font = messageLabel.getFont();
-        Map attributes = font.getAttributes();
+        Map<TextAttribute, ?> temp = font.getAttributes();
+        Map<TextAttribute, Object> attributes = new HashMap<>();
+        for (Map.Entry<TextAttribute, ?> entry : temp.entrySet()) {
+            attributes.put(entry.getKey(), entry.getValue());
+        }
         attributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
         attributes.put(TextAttribute.FOREGROUND, new Color(82, 145, 255));
         attributes.put(TextAttribute.SIZE, 14);

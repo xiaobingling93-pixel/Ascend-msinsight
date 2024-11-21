@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CefMessageRouterProxy extends CefMessageRouterHandlerAdapter {
     private static volatile CefMessageRouterProxy routerProxy = null;
 
-    private final Map<CefBrowser, CefMessageRouterHandler> routerHandlers = new ConcurrentHashMap();
+    private final Map<CefBrowser, CefMessageRouterHandler> routerHandlers = new ConcurrentHashMap<>();
 
     private CefMessageRouterProxy() {
     }
