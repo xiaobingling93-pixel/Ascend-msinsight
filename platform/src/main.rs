@@ -18,7 +18,6 @@ use std::{
 use std::collections::{HashMap, VecDeque};
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
-
 #[cfg(feature = "default")]
 use wry::{
     application::{
@@ -424,7 +423,7 @@ fn main() {
         let _ = run_script(child, &root_path, &port.as_str(), &sid);
     }
 }
-
+use std::process::{exit, ExitStatus};
 #[cfg(not(feature = "default"))]
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -441,10 +440,17 @@ fn main() {
     for arg in args {
         server_command.arg(arg);
     }
-    match server_command.spawn() {
-        Ok(_) => {},
-        _ => {
-            eprintln!("Failed to start server.")
+    match server_command.output() {
+        Ok(output) => {
+            let formatted = String::from_utf8(output.stdout).unwrap();
+            if !formatted.is_empty() {
+                eprintln!("{}", formatted);
+            }
+            exit(output.status.code().unwrap_or(0))
+        },
+        Err(e) => {
+            eprintln!("Failed to start server.Error:{e:?}")
         },
     };
+
 }

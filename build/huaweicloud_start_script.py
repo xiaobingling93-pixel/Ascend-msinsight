@@ -11,12 +11,79 @@ import site
 import sys
 import subprocess
 import logging
+from enum import Enum
+import argparse
+import socket
 
 MINDSTUDIO_INSIGHT_NAME = "MindStudio Insight"
 ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
 FIX_FRONTEND_PORT = 8085
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format='%(message)s', stream=sys.stdout)
+
+
+class ErrCode(Enum):
+    OK = 0
+    PortNotAvailable = 1
+    PortReuse = 2
+    BackEndPathNotExist = 3
+    UnKnown = 4
+
+
+def error_code_to_int(enum_value):
+    if not isinstance(enum_value, ErrCode):
+        return ErrCode.UnKnown.value
+    return enum_value.value
+
+
+def read_backend_port(backend_args):
+    parser = argparse.ArgumentParser();
+    parser.add_argument("--wsPort", dest='port', type=str)
+    args, _ = parser.parse_known_args(args=backend_args)
+    port = args.port
+    if len(port) == 0:
+        return None
+    try:
+        port = int(port)
+    except ValueError:
+        return None
+    return port
+
+
+def check_port_in_listen(port):
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex(("localhost", int(port)))
+        sock.close()
+        return True if result == 0 else False
+    except OSError:
+        return False
+
+
+def check_port(port):
+    if not check_port_in_listen(port):
+        return ErrCode.OK
+    result = execute_command(["/bin/ps", "aux"])
+    if "profiler_server" not in result or str(port) not in result:
+        return ErrCode.PortNotAvailable
+    else:
+        return ErrCode.PortReuse
+
+
+def check_event_dir(backend_args):
+    if "--eventDir" not in " ".join(backend_args):
+        return True
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--eventDir", dest='event_dir', type=str)
+    args, _ = parser.parse_known_args(args=backend_args)
+    event_dir = args.event_dir
+    if len(event_dir) == 0:
+        return False
+    if not os.path.exists(event_dir) or not os.path.isdir(event_dir):
+        return False
+    if os.path.islink(event_dir):
+        return False
+    return True
 
 
 def insight_start(backend_args):
@@ -28,19 +95,32 @@ def insight_start(backend_args):
     # 检查 backend_path 是否存在
     if not os.path.exists(backend_path):
         logging.info("The backend path %s is not exist.", backend_path)
-        return
+        return ErrCode.BackEndPathNotExist
 
     user_sites = site.getusersitepackages()
     sites = ''.join(site.getsitepackages())
     if platform.platform().find('Windows') == -1:
         # 非阻塞启动前后的进程
+        port = read_backend_port(backend_args)
+        if port is None:
+            return ErrCode.UnKnown
+        result = check_port(port)
+        if result != ErrCode.OK:
+            return result
+        if not check_event_dir(backend_args):
+            return ErrCode.UnKnown
         subprocess.Popen([backend_path] + backend_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          env={'LD_LIBRARY_PATH': backend_dir + ":" + os.getenv('LD_LIBRARY_PATH', ''),
                               'PYTHONPATH': sites + ":" + user_sites + ":" + os.getenv('PYTHONPATH', '')})
+
     else:
         subprocess.Popen([backend_path] + backend_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     subprocess.Popen([shutil.which('python'), "-m", "http.server", "-d", frontend_dir,
                       str(FIX_FRONTEND_PORT)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    result = execute_command(["/bin/ps", "aux"])
+    if "profiler_server" not in result:
+        return ErrCode.UnKnown
+    return ErrCode.OK
 
 
 def kill_process(pid):
@@ -82,7 +162,7 @@ def insight_stop():
             if name == 'python' and pid - temp_process_pid < 5:
                 kill_process(pid)
                 temp_process_pid = -1
-        except ValueError: # 过滤非数字行
+        except ValueError:  # 过滤非数字行
             pass
 
 
@@ -124,7 +204,9 @@ FIRST_ARG = argvs[0]
 REMAIN_ARG = argvs[1:]
 
 if FIRST_ARG == "start":
-    insight_start(REMAIN_ARG)
+    code = insight_start(REMAIN_ARG)
+    code = error_code_to_int(code)
+    sys.exit(code)
 elif FIRST_ARG == "stop":
     insight_stop()
 elif FIRST_ARG == "-h" or FIRST_ARG == "--help":

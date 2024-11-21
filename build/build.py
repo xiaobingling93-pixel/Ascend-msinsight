@@ -15,8 +15,11 @@ import stat
 import sys
 from datetime import datetime, timezone
 import json
+import zipfile
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+WORKSPACE_PATH = os.getenv("OCTOPUS_WORKSPACE")
+PLUGIN_INSTALL_TMP_PATH = os.path.join(WORKSPACE_PATH, "PluginInstallCache")
 
 
 class Const:
@@ -288,6 +291,9 @@ def build_light_package(version, os_name, is_huaweicloud):
     shutil.copytree(os.path.join(PROJECT_PATH, Const.FRAMEWORK_DIR, 'dist'), os.path.join(profiler_path, 'frontend'))
     shutil.copytree(os.path.join(PROJECT_PATH, Const.SERVER_DIR, 'output', 'build', 'server'),
                     os.path.join(profiler_path, 'server'))
+    # 华为云构建将插件一并打包
+    if is_huaweicloud:
+        huaweicloud_install_plugin(profiler_path=profiler_path)
     # 构建底座
     cargo_cmd = 'cargo.exe' if platform.system() == Const.WINDOWS_OS else 'cargo'
     cmd_list = [cargo_cmd, 'build', '--release']
@@ -432,6 +438,71 @@ def update_plugins_version(version):
     # 替换installer.nsi中的版本信息
     installer_nsi_path = os.path.join(PROJECT_PATH, Const.PLATFORM_DIR, 'bundle', 'installer.nsi')
     replace_placeholders_in_file(installer_nsi_path, Const.PLUGINS_VERSION_PLACEHOLDER, version)
+
+
+def huaweicloud_install_plugin(profiler_path):
+    plugins_dir = os.path.join(WORKSPACE_PATH, "Msi_plugin_package")
+    if not os.path.exists(plugins_dir):
+        logging.warning("Plugin dir not found")
+        return
+    for item in os.listdir(plugins_dir):
+        logging.info("Install plugin:{}".format(item))
+        item_path = os.path.join(plugins_dir, item)
+        plugin_install_init(plugin_zip=item_path)
+        install_opt = read_plugin_install_opt()
+        if install_opt is None:
+            continue
+        plugin_name = install_opt.get('pluginName')
+        if not plugin_install_frontend(profiler_path, plugin_name, install_opt):
+            continue
+        plugin_install_backend(profiler_path, plugin_name, install_opt)
+
+
+def plugin_install_init(plugin_zip):
+    if os.path.exists(PLUGIN_INSTALL_TMP_PATH):
+        shutil.rmtree(PLUGIN_INSTALL_TMP_PATH)
+    with zipfile.ZipFile(plugin_zip, "r") as zip_file:
+        zip_file.extractall(PLUGIN_INSTALL_TMP_PATH)
+
+
+def read_plugin_install_opt():
+    config_path = os.path.join(PLUGIN_INSTALL_TMP_PATH, "config.json")
+    if not os.path.exists(config_path):
+        logging.error("Config file not found in plugin")
+        return None
+    try:
+        with open(config_path) as file:
+            return json.load(file)
+    except IOError:
+        logging.error("Failed open config file")
+        return None
+
+
+def plugin_install_frontend(profiler_path, plugin_name, config):
+    front_dir = os.path.join(profiler_path, 'frontend')
+    front_dis_dir = os.path.join(front_dir, "plugins", plugin_name)
+    os.makedirs(front_dis_dir, exist_ok=True)
+    front_zip = os.path.join(PLUGIN_INSTALL_TMP_PATH, config['frontend'])
+    try:
+        with zipfile.ZipFile(front_zip, 'r') as zip_file:
+            zip_file.extractall(front_dis_dir)
+    except Exception as _:
+        logging.error("Extract failed")
+        return False
+    return True
+
+
+def plugin_install_backend(profiler_path, plugin_name, config):
+    backend_dir = os.path.join(profiler_path, 'server')
+    os_info = platform.platform()
+    backend_so = config['backend_x86'] if os_info.find('x86_64') > -1 else config['backend_arm']
+    os.makedirs(os.path.join(backend_dir, "plugins", plugin_name), exist_ok=True)
+    backend_dist = os.path.join(backend_dir, "plugins", plugin_name, backend_so)
+    if not os.path.exists(os.path.join(PLUGIN_INSTALL_TMP_PATH, backend_so)):
+        logging.error("Target plugin library not exist")
+        return False
+    shutil.copyfile(os.path.join(PLUGIN_INSTALL_TMP_PATH, backend_so), backend_dist)
+    return True
 
 
 def main():
