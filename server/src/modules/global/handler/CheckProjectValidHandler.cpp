@@ -13,12 +13,11 @@ using namespace Dic::Server;
 using namespace Global;
 
 namespace {
-constexpr unsigned long long CSV_SIZE = 2ULL * 1024 * 1024 * 1024;
-constexpr unsigned long long JSON_AND_BIN_SIZE = 10ULL * 1024 * 1024 * 1024;
+constexpr long long CSV_SIZE = 2ULL * 1024 * 1024 * 1024;
+constexpr long long JSON_AND_BIN_SIZE = 10ULL * 1024 * 1024 * 1024;
 constexpr uint64_t FILE_COUNT_LIMIT = 100000; // 最大遍历文件数量
-using ErrorType = ProjectErrorType;
 namespace Module = Dic::Module;
-std::unordered_map<std::string, unsigned long long> FILE_MAX_SIZE = {
+std::unordered_map<std::string, long long> FILE_MAX_SIZE = {
     {".csv", CSV_SIZE},
     {".json", JSON_AND_BIN_SIZE},
     {".bin", JSON_AND_BIN_SIZE},

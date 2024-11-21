@@ -68,13 +68,13 @@ private:
 class LogUtil {
 public:
     LogUtil(const LogOutType &type, const std::string &filePath, const std::string &wsPort)
-        : outType(type), originFilePath(filePath), wsPort(wsPort)
+        : originFilePath(filePath), outType(type), wsPort(wsPort)
     {
         Initialize();
     }
 
     LogUtil(const LogOutType &type, const std::string &filePath, const std::string &wsPort, int maxSize)
-        : outType(type), originFilePath(filePath), wsPort(wsPort), maxSize(maxSize)
+        : maxSize(maxSize), originFilePath(filePath), outType(type), wsPort(wsPort)
     {
         Initialize();
     }
@@ -133,8 +133,6 @@ public:
         if (logLevel < level) {
             return;
         }
-        size_t start = 0;
-        size_t pos = 0;
         std::string str = head;
         if (!logStrList.empty(), logStrList[0].find('%') != std::string::npos) {
             str += FormatString(logStrList);
@@ -164,8 +162,6 @@ public:
     template <typename Head, typename Format, typename... ARGS>
     inline void FormatLogT(const Head &head, const Format &format, const ARGS... args)
     {
-        size_t start = 0;
-        size_t pos = 0;
         std::string str = GetString(head);
         std::string formatStr = GetString(format);
         if (formatStr.find('%') != std::string::npos) {

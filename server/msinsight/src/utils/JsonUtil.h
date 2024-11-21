@@ -62,7 +62,7 @@ public:
                                                        RAPIDJSON_DEFAULT_ALLOCATOR &allocator)
     {
         json_t temp(kArrayType);
-        for (const T item: value) {
+        for (const T &item: value) {
             if constexpr (std::is_same_v<T, std::string>) {
                 temp.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
             } else {

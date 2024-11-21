@@ -331,10 +331,8 @@ public:
     template <typename T>
     static inline T CeilingClamp(T value, T bound = std::numeric_limits<T>::max())
     {
-#if defined(__GNUC__) || defined(__clang__)
-        __builtin_expect(bound > value, 1);
-#endif
-        if (bound > value) {
+        // 此处为条件预测，能提高效率
+        if (__builtin_expect(bound > value, 1)) {
             return value;
         } else {
             return bound;
