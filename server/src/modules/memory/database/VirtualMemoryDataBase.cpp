@@ -118,17 +118,19 @@ bool VirtualMemoryDataBase::ExecuteOperatorsTotalNum(Protocol::MemoryOperatorPar
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
     if (requestParams.startTime != -1 && requestParams.endTime != -1) {
-        sqlite3_bind_int64(stmt, index++, startTime + offsetTime);
+        sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime + offsetTime,
+            static_cast<uint64_t>(INT64_MAX)));
         sqlite3_bind_double(stmt, index++, requestParams.startTime);
-        sqlite3_bind_int64(stmt, index++, startTime + offsetTime);
+        sqlite3_bind_int64(stmt, index++, NumberUtil::CeilingClamp(startTime + offsetTime,
+            static_cast<uint64_t>(INT64_MAX)));
         sqlite3_bind_double(stmt, index++, requestParams.endTime);
     }
 
     if (requestParams.minSize != std::numeric_limits<int64_t>::min()) {
-        sqlite3_bind_double(stmt, index++, requestParams.minSize);
+        sqlite3_bind_int64(stmt, index++, requestParams.minSize);
     }
     if (requestParams.maxSize != std::numeric_limits<int64_t>::max()) {
-        sqlite3_bind_double(stmt, index++, requestParams.maxSize);
+        sqlite3_bind_int64(stmt, index++, requestParams.maxSize);
     }
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         totalNum = sqlite3_column_int(stmt, resultStartIndex);
