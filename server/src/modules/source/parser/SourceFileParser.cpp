@@ -254,7 +254,18 @@ void SourceFileParser::ParseTask(const std::string &fileId, std::pair<int64_t, i
     auto &instance = SourceFileParser::Instance();
     std::string curFilePath = Global::BaselineManager::Instance().IsBaselineId(fileId) ? instance.baselineFilePath :
         instance.filePath;
-    Timeline::EventParser eventParser(curFilePath, fileId);
+    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (db == nullptr) {
+        ServerLog::Warn("Failed to get connection when parse bin json,ID: ", fileId);
+        return;
+    }
+    std::shared_ptr<TextTraceDatabase> databasePtr =
+            std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
+    if (databasePtr == nullptr) {
+        ServerLog::Warn("Failed to get text connection when parse bin json,ID: ", fileId);
+        return;
+    }
+    Timeline::EventParser eventParser(curFilePath, fileId, databasePtr);
     eventParser.SetSimulationStatus(true);
     // 先将文件内容切片，避免一次解析的数据量过大
     for (const auto& pair : JsonFileProcess::SplitFile(curFilePath, pos)) {

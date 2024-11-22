@@ -17,11 +17,13 @@ namespace Module {
 namespace Timeline {
 class EventParser {
 public:
-    EventParser(const std::string &filePath, const std::string &fileId);
+    EventParser(const std::string &filePath, const std::string &fileId,
+        std::shared_ptr<TextTraceDatabase> textDatabase);
     ~EventParser() = default;
     bool Parse(int64_t startPosition, int64_t endPosition);
     std::string GetError();
     void SetSimulationStatus(const bool &isSimulation);
+
 private:
     std::string filePath;
     std::string fileId;

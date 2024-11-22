@@ -134,7 +134,18 @@ void TraceFileParser::ParseTask(const std::string &filePath, const std::string &
         ServerLog::Info("Parse task skip this file. ID:", fileId);
         return;
     }
-    EventParser eventParser(filePath, fileId);
+    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
+    if (db == nullptr) {
+        ServerLog::Warn("Failed to get connection when parse timeline json,ID: ", fileId);
+        return;
+    }
+    std::shared_ptr<TextTraceDatabase> databasePtr =
+            std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
+    if (databasePtr == nullptr) {
+        ServerLog::Warn("Failed to get text connection when parse timeline json,ID: ", fileId);
+        return;
+    }
+    EventParser eventParser(filePath, fileId, databasePtr);
     if (!eventParser.Parse(pos.first, pos.second)) {
         if (ParserStatusManager::Instance().SetTerminateStatus(fileId) == ParserStatus::RUNNING) {
             // 只发送一次解析失败事件

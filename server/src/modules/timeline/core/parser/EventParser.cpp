@@ -4,7 +4,6 @@
 
 #include "pch.h"
 #include "EventUtil.h"
-#include "DataBaseManager.h"
 #include "SourceFileParser.h"
 #include "TrackInfoManager.h"
 #include "ParserStatusManager.h"
@@ -16,7 +15,9 @@ namespace Module {
 namespace Timeline {
 using namespace Dic::Server;
 using json_t = rapidjson::Value;
-EventParser::EventParser(const std::string &filePath, const std::string &fileId) : filePath(filePath), fileId(fileId)
+EventParser::EventParser(const std::string &filePath, const std::string &fileId,
+    std::shared_ptr<TextTraceDatabase> textDatabase)
+    : filePath(filePath), fileId(fileId), database(std::move(textDatabase))
 {
     ServerLog::Info("Init event parser. fileId:", fileId);
     InitEventHandle();
@@ -40,20 +41,7 @@ void EventParser::InitEventHandle()
 
 bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
 {
-    auto db = DataBaseManager::Instance().GetTraceDatabase(fileId);
-    if (db == nullptr) {
-        error = "Failed to get connection. fileId:" + fileId;
-        ServerLog::Error(error);
-        return false;
-    }
-    std::shared_ptr<TextTraceDatabase> databasePtr =
-        std::dynamic_pointer_cast<TextTraceDatabase, VirtualTraceDatabase>(db);
-    if (databasePtr == nullptr) {
-        error = "Failed to open Database";
-        ServerLog::Error("Failed to convert virtual trace database to json trace database in event parser.");
-        return false;
-    }
-    databasePtr->InitStmt();
+    database->InitStmt();
     std::string buffer = ReadBuffer(startPosition, endPosition);
     if (buffer.empty()) {
         error = "Failed to read file.";
@@ -71,7 +59,6 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
         ServerLog::Error("Event Parser. json is not an array. fileId:", fileId);
         return false;
     }
-    database = databasePtr;
     for (auto &event : data.value().GetArray()) {
         if (ParserStatusManager::Instance().GetParserStatus(fileId) != ParserStatus::RUNNING) {
             return false;
@@ -80,7 +67,6 @@ bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
     }
     ProcessLastFlagSlice();
     database->CommitData();
-    database.reset(); // return connection pool
     ServerLog::Info("Event Parser. fileId:", fileId, " Parse ", startPosition, " to ", endPosition,
         ". Count:", parseCount, ", ignore Count:", ignoreCount);
     return true;
