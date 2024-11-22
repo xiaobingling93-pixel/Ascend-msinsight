@@ -136,7 +136,7 @@ const updateData = async ({
     setLoading(true);
     const res = await searchData(pages, sorters, props).finally(() => setLoading(false));
     const requestData = props.session.eventUnits?.[0]?.metadata as ThreadMetaData;
-    const timestampoffset = getTimeOffset(props.session, requestData.cardId as string);
+    const timestampoffset = getTimeOffset(props.session, requestData);
     const data = res.eventDetails.map((item: any) => {
         item.startTime = getDetailTimeDisplay(item.start - timestampoffset);
         return item;
@@ -183,7 +183,7 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
                     unit.metadata.threadId === rowData.threadId && unit.metadata.processId === rowData.processId;
             },
             onSuccess: (unit: InsightUnit): void => {
-                const startTime = rowData.start - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
+                const startTime = rowData.start - getTimeOffset(props.session, unit.metadata as ThreadMetaData);
                 const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
                 props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                 props.session.selectedData = {

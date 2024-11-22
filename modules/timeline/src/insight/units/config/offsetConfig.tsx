@@ -12,8 +12,8 @@ import styled from '@emotion/styled';
 import { Tooltip } from 'ascend-components';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import type { CardMetaData, ThreadTraceRequest } from '../../../entity/data';
-import { getTimeOffset } from '../utils';
+import type { ThreadTraceRequest } from '../../../entity/data';
+import { getTimeOffset, getTimeOffsetKey } from '../utils';
 import { CustomButton } from '../../../components/base/StyledButton';
 import type { SvgType } from '../../../components/base/rc-table/types';
 import { ReactComponent as AlignStartIcon } from '../../../assets/images/timeline/ic_align_start.svg';
@@ -56,18 +56,44 @@ const onChange = ({ e, session, setOffset, setVisible, setTitle, t }: {
     });
 };
 
+// 设置一级泳道偏移量时，同步其二级泳道的偏移量
+function handleTimestampOffsetReassignment(
+    session: Session,
+    cardMetaData: ThreadTraceRequest,
+    inputValue: number,
+): boolean {
+    if (!cardMetaData.processId) {
+        const cardId = cardMetaData.cardId;
+        const timestampOffsetConfig = session.unitsConfig.offsetConfig.timestampOffset;
+        const offsetKeys = Object.keys(timestampOffsetConfig);
+        let isReassigned = false;
+
+        for (const key of offsetKeys) {
+            if (key.startsWith(`${cardId}__`) && timestampOffsetConfig[key] !== inputValue) {
+                timestampOffsetConfig[key] = inputValue;
+                isReassigned = true;
+            }
+        }
+        return isReassigned;
+    }
+    return false;
+}
+
 function checkValue(inputElement: HTMLInputElement, session: Session, setValue: React.Dispatch<React.SetStateAction<string>>,
     setVisible: React.Dispatch<React.SetStateAction<boolean>>, metaData: any): void {
     const inputValue = Number(inputElement.value);
     if (!isNaN(inputValue) && (inputValue >= minOffset && inputValue <= maxOffset)) {
-        const cardMetaData = (metaData as CardMetaData);
+        const cardMetaData = (metaData as ThreadTraceRequest);
+        const timestampOffsetKey = getTimeOffsetKey(session, metaData as ThreadTraceRequest);
         // preValue = curValue, directly return
-        const preTimestampOffset = getTimeOffset(session, cardMetaData.cardId);
-        if (preTimestampOffset === inputValue) {
+        const preTimestampOffset = getTimeOffset(session, cardMetaData);
+        const isReassigned = handleTimestampOffsetReassignment(session, cardMetaData, inputValue);
+
+        if (preTimestampOffset === inputValue && !isReassigned) {
             return;
         }
-        const prevObj = session.unitsConfig.offsetConfig.timestampOffset as object;
-        session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [cardMetaData.cardId]: (inputValue) };
+        const prevObj = session.unitsConfig.offsetConfig.timestampOffset;
+        session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [timestampOffsetKey]: (inputValue) };
     } else {
         setValue(defaultOffset);
     }
@@ -117,7 +143,7 @@ const InputDiv = styled.div`
 `;
 
 function handleAlignStart(inputRef: RefObject<InputRef>, session: Session, setValue: React.Dispatch<React.SetStateAction<string>>): void {
-    const alignStartTimestamp = session.selectedUnits[0]?.alignStartTimestamp;
+    const alignStartTimestamp = session.selectedUnits[0]?.alignStartTimestamp ?? session.selectedUnits[0]?.parent?.alignStartTimestamp;
     if (alignStartTimestamp === undefined) {
         return;
     }
@@ -126,8 +152,8 @@ function handleAlignStart(inputRef: RefObject<InputRef>, session: Session, setVa
 }
 
 export const InputOption = observer(({ session, metaData }: { session: Session; metaData: any }): JSX.Element => {
-    const cardId = (metaData as ThreadTraceRequest).cardId;
-    const timestampOffset = (session.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[cardId] ?? 0;
+    const timestampOffsetKey = getTimeOffsetKey(session, metaData as ThreadTraceRequest);
+    const timestampOffset = (session.unitsConfig.offsetConfig.timestampOffset as Record<string, number>)?.[timestampOffsetKey] ?? 0;
     const [offset, setOffset] = useState(String(timestampOffset));
     const [visible, setVisible] = useState(false);
     const [title, setTitle] = useState('Please enter a proper value');

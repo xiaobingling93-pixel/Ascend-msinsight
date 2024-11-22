@@ -15,7 +15,7 @@ import type { InsightUnit, LinkLines } from '../entity/insight';
 import { CardUnit, ThreadUnit } from '../insight/units/AscendUnit';
 import { customDebounce } from '../utils/customDebounce';
 import { getTimeOffset } from '../insight/units/utils';
-import { type HostMetaData } from '../entity/data';
+import { type HostMetaData, ProcessMetaData } from '../entity/data';
 import i18n from 'ascend-i18n';
 
 const MAX_HEIGHT = 200;
@@ -88,8 +88,8 @@ const getHostChildUnitCardId = (units: InsightUnit[], viewedCardIdSet: Set<strin
 };
 
 export interface DataBlock {
-    pid: number;
-    tid: number;
+    pid: string;
+    tid: string;
     timestamp: number;
     depth: number;
     height?: number;
@@ -122,18 +122,19 @@ const useFetchLinkLines = (displayCategories: string[], viewedCardIdSet: Set<str
                 if (!unit.isExpanded) {
                     continue;
                 }
-                let { dataSource, cardId } = unit.metadata as { dataSource: DataSource; cardId: string };
-                if (cardId.endsWith('Host')) {
+                const metadata = unit.metadata as ProcessMetaData;
+                let { dataSource, cardId } = metadata;
+                if (cardId?.endsWith('Host')) {
                     const hostUnits: InsightUnit[] = [];
                     hostUnits.push(unit);
                     const hostThreadCardIds = getHostChildUnitCardId(hostUnits, viewedCardIdSet);
                     cardId = hostThreadCardIds[0];
                 }
                 // 如果不在可视范围内就不查询
-                if (!viewedCardIdSet.has(cardId)) {
+                if (cardId !== undefined && !viewedCardIdSet.has(cardId)) {
                     continue;
                 }
-                const timestampOffset = getTimeOffset(session, cardId);
+                const timestampOffset = getTimeOffset(session, metadata);
                 const start = Math.floor(domainStart + timestampOffset);
                 const end = Math.ceil(domainEnd + timestampOffset);
                 const host = (unit.parent?.metadata as HostMetaData)?.host ?? '';

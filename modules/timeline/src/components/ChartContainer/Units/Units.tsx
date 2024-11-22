@@ -292,7 +292,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
         };
     }, []);
 
-    const handleMouseUp = (e: MouseEvent): void => {
+    const handleMouseUp = (): void => {
         setIsSelecting(false);
         for (const [key, value] of unitsRefs.current) {
             if (value === null) {
@@ -331,6 +331,7 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
             }
         }}
         onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
     >
         <div className={INVISIBLE_UNITS_PLACEHOLDER} style={{ height: headOffset }} />
         {flattenUnits.filter((_, i) => first <= i && i < last).map((unit) => {

@@ -116,7 +116,7 @@ const singleSliceDetail = singleData({
     ],
     fetchData: async (session: Session, metadata: ThreadMetaData) => {
         const selectedSliceData = session.selectedData as ThreadTrace;
-        const timestampOffset = getTimeOffset(session, metadata.cardId);
+        const timestampOffset = getTimeOffset(session, metadata);
         // 因为泳道chart数据减去了偏移，所有点选的时候得把偏移加回来
         const params = {
             rankId: metadata.cardId,
@@ -180,7 +180,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
         mapFunc: async (session: Session, metaData: unknown, thisUnit?: InsightUnit) => {
             const threadMetaData = metaData as ThreadMetaData;
             // 查询泳道chart参数加上时间偏移
-            const timestampOffset = getTimeOffset(session, threadMetaData.cardId);
+            const timestampOffset = getTimeOffset(session, threadMetaData);
             const key = threadMetaData.cardId !== undefined ? `${threadMetaData.cardId}_${threadMetaData.threadName}` : null;
             const isFilterPythonFunction = key !== null ? (session?.unitsConfig.filterConfig.pythonFunction as Record<string, boolean>)?.[key] ?? false : false;
             const requestParam: Record<string, unknown> & { timePerPx: number } = {
@@ -269,7 +269,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
             if (data === undefined) { return; }
             const linkFlow = generateFlowParam(metadata as ThreadMetaData, data);
             linkFlow.isSimulation = session.isSimulation;
-            const timestampOffset = getTimeOffset(session, (metadata as ThreadMetaData).cardId);
+            const timestampOffset = getTimeOffset(session, metadata as ThreadMetaData);
             linkFlow.startTime = timestampOffset + (linkFlow.startTime as number);
             linkFlow.endTime = timestampOffset + (linkFlow.endTime as number);
             const raw = await window.request((metadata as ThreadMetaData).dataSource as DataSource, { command: 'unit/flows', params: linkFlow as Record<string, unknown> }) as any;
@@ -401,7 +401,7 @@ const SummaryChart = chart({
     type: 'status',
     mapFunc: async (session: Session, metaData: unknown) => {
         const processMetaData = metaData as ProcessMetaData;
-        const timestampOffset = getTimeOffset(session, processMetaData.cardId);
+        const timestampOffset = getTimeOffset(session, processMetaData);
         const requestParam = {
             cardId: processMetaData.cardId,
             processId: processMetaData.processId,
@@ -442,6 +442,13 @@ const SummaryChart = chart({
 
 export const ProcessUnit = unit<ProcessMetaData>({
     name: 'Process',
+    configBar: (session: Session, metadata: ProcessMetaData) => {
+        // Host侧第三级泳道不显示offset
+        if ((metadata as ThreadMetaData).threadId !== '') {
+            return <></>;
+        }
+        return offsetConfig(session, metadata);
+    },
     tag: (session: Session, metadata: { label?: string }) => metadata.label === undefined ? '' : `${metadata.label}`,
     pinType: 'copied',
     chart: SummaryChart,
@@ -490,7 +497,7 @@ export const CounterUnit = unit<CounterMetaData>({
         height: UnitHeight.SUPER_UPPER,
         mapFunc: async (session: Session, metadata) => {
             const countMetaData = metadata as CounterMetaData;
-            const timestampOffset = getTimeOffset(session, countMetaData.cardId);
+            const timestampOffset = getTimeOffset(session, countMetaData);
             // 查询泳道chart参数加上时间偏移
             const requestParam = {
                 rankId: countMetaData.cardId,
@@ -662,7 +669,7 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
                 },
                 onSuccess: (iunit): void => {
                     const selectedMultiSlice = safeJSONParse(session.selectedMultiSlice);
-                    const startTime = record.timestamp - getTimeOffset(session, (iunit.metadata as ThreadMetaData).cardId);
+                    const startTime = record.timestamp - getTimeOffset(session, iunit.metadata as ThreadMetaData);
                     const [rangeStart, rangeEnd] = calculateDomainRange(session, startTime, record.duration);
                     session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                     session.selectedData = {
@@ -697,7 +704,7 @@ export const SliceRightOpDetail = observer(({ session, metadata }: { session: Se
         const res = await window.requestData('query/all/same/operators/duration', params, 'timeline');
         const { currentPage, pageSize, sameOperatorsDetails } = res;
         const data = sameOperatorsDetails as OpData[];
-        const timestampoffset = getTimeOffset(session, (metadata as ThreadMetaData).cardId);
+        const timestampoffset = getTimeOffset(session, metadata as ThreadMetaData);
         data.forEach(item => {
             item.startTime = getDetailTimeDisplay(item.timestamp - timestampoffset);
             item.tid = slice.tid;

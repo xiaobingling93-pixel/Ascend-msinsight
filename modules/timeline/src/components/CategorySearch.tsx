@@ -158,10 +158,10 @@ const doJumpSlice = (session: Session, slice: SliceData, isGlobal: boolean): voi
                     session.linkFlow = undefined;
                 } else {
                     const [rangeStart, rangeEnd] = calculateDomainRange(session,
-                        slice.startTime - getTimeOffset(session, (unit.metadata as ThreadMetaData).cardId), slice.duration);
+                        slice.startTime - getTimeOffset(session, unit.metadata as ThreadMetaData), slice.duration);
                     session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                     session.selectedData = {
-                        startTime: slice.startTime - getTimeOffset(session, (unit.metadata as ThreadMetaData).cardId),
+                        startTime: slice.startTime - getTimeOffset(session, unit.metadata as ThreadMetaData),
                         duration: slice.duration,
                         depth: slice.depth,
                         threadId: slice.tid,

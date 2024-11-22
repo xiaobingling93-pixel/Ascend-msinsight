@@ -49,6 +49,22 @@ export interface ContextMenu {
     zoomHistory: Array<{ domainStart: TimeStamp; domainEnd: TimeStamp }>;
 };
 
+interface UnitsConfig {
+    jsAllocationUsage: {
+        isRecordStackTraces: boolean;
+    };
+    nativeConfig: {
+        filterSize: number;
+        maxStackDepth: number;
+    };
+    offsetConfig: {
+        timestampOffset: Record<string, number>;
+    };
+    filterConfig: {
+        pythonFunction: Record<string, boolean>;
+    };
+}
+
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     id = '';
@@ -99,7 +115,22 @@ export class Session {
     selectedUnits: InsightUnit[] = []; // redundant for reducing extra computation
     selectedDetailKeys: [string] | [] = [];
     selectedDetails: [Record<string, unknown>] | [] = []; // redundant for reducing extra computation
-    unitsConfig: Record<string, Record<string, unknown>> = {};
+    unitsConfig: UnitsConfig = {
+        jsAllocationUsage: {
+            isRecordStackTraces: false,
+        },
+        nativeConfig: {
+            filterSize: 4096,
+            maxStackDepth: 10,
+        },
+        offsetConfig: {
+            timestampOffset: {},
+        },
+        filterConfig: {
+            pythonFunction: {},
+        },
+    };
+
     searchData?: { [x: string]: unknown; content: string; isMatchCase: boolean; isMatchExact: boolean };
     doContextSearch?: boolean;
     showEvent?: boolean;
@@ -168,21 +199,6 @@ export class Session {
         });
         this._name = conf?.name ?? this.id;
         this._interval = 100;
-        this.unitsConfig = {
-            jsAllocationUsage: {
-                isRecordStackTraces: false,
-            },
-            nativeConfig: {
-                filterSize: 4096,
-                maxStackDepth: 10,
-            },
-            offsetConfig: {
-                timestampOffset: {},
-            },
-            filterConfig: {
-                pythonFunction: {},
-            },
-        };
         this.startRecordTime = 0;
         if (conf) {
             Object.assign(this, conf);

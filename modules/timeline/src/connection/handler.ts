@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 import { store } from '../store';
-import type { CardMetaData, ThreadMetaData, ThreadTrace } from '../entity/data';
+import type { CardMetaData, ThreadMetaData, ThreadTrace, ThreadTraceRequest } from '../entity/data';
 import { runInAction } from 'mobx';
 import { handleMap, recursiveExpandUnit } from '../insight/units/unitFunc';
 import { setUnitPhaseByCardId, setUnitProgressByFileId } from '../entity/insight';
@@ -13,7 +13,7 @@ import { Session } from '../entity/session';
 import type { NotificationHandler } from './defs';
 import connector from '../connection/index';
 import { message } from 'antd';
-import { getTimeOffset } from '../insight/units/utils';
+import { getTimeOffset, getTimeOffsetKey } from '../insight/units/utils';
 import { calculateDomainRange } from '../components/CategorySearch';
 import i18n from 'ascend-i18n';
 import { forEach, groupBy, isEmpty, cloneDeep } from 'lodash';
@@ -42,8 +42,14 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             setUnitProgressByFileId(unitData, session);
             session.units.forEach((unit) => {
                 if ((unit.metadata as CardMetaData).cardId === unitData.unit.metadata.cardId) {
-                    unit.alignStartTimestamp = unitData.offset;
-                    const prevObj = session.unitsConfig.offsetConfig.timestampOffset as Record<string, number>;
+                    unit.alignStartTimestamp = unitData.offset as number;
+                    const prevObj = session.unitsConfig.offsetConfig.timestampOffset;
+                    if (unitData.unit.children !== undefined && unitData.unit.children.length > 0) {
+                        for (const item of unitData.unit.children) {
+                            const key = getTimeOffsetKey(session, item.metadata);
+                            session.unitsConfig.offsetConfig.timestampOffset[key] = unit.alignStartTimestamp;
+                        }
+                    }
                     session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [(unit.metadata as CardMetaData).cardId]: (unit.alignStartTimestamp) };
                     handleMap(unitData.unit, (unit.metadata as CardMetaData).dataSource);
                     recursiveExpandUnit(unitData.unit.children ?? [], unit);
@@ -157,7 +163,7 @@ const initUnitInfo = (session: Session | undefined, result: any, dataSource: Dat
             curDataSource.dataPath = item.dataPathList;
             const cardUnit = new CardUnit({ dataSource: curDataSource, cardId: item.rankId, cardName: item.cardName, cardPath: item.cardPath });
             if (item.result as boolean) {
-                cardUnit.shouldParse = true;
+                cardUnit.shouldParse = item.cardName !== 'Host';
                 cardUnit.phase = 'analyzing';
                 cardUnit.progress = 0;
                 cardUnit.showProgress = true;
@@ -552,7 +558,7 @@ export const locateUnitHandler: NotificationHandler = (data): void => {
                     unit.metadata.processId === slice.processId && unit.metadata.threadId === slice.threadId;
             },
             onSuccess: (unit): void => {
-                const startTime = slice.startTime - getTimeOffset(session, (unit.metadata as ThreadMetaData).cardId);
+                const startTime = slice.startTime - getTimeOffset(session, unit.metadata as ThreadMetaData);
                 const [rangeStart, rangeEnd] = calculateDomainRange(session, startTime, slice.duration);
                 session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                 session.selectedData = {
@@ -649,8 +655,16 @@ export const allSuccessHandler: NotificationHandler = async (data): Promise<void
             }
             session.units.forEach((unit) => {
                 unit.alignStartTimestamp = offsetMap.get((unit.metadata as CardMetaData).cardId);
-                const prevObj = session.unitsConfig.offsetConfig.timestampOffset as Record<string, number>;
-                session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [(unit.metadata as CardMetaData).cardId]: (unit.alignStartTimestamp) };
+                const prevObj = session.unitsConfig.offsetConfig.timestampOffset;
+                if (unit.alignStartTimestamp !== undefined) {
+                    if (unit.children !== undefined && unit.children.length > 0) {
+                        for (const item of unit.children) {
+                            const key = getTimeOffsetKey(session, item.metadata as ThreadTraceRequest);
+                            session.unitsConfig.offsetConfig.timestampOffset[key] = unit.alignStartTimestamp;
+                        }
+                    }
+                    session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [(unit.metadata as CardMetaData).cardId]: (unit.alignStartTimestamp) };
+                }
             });
         });
     } catch (error) {

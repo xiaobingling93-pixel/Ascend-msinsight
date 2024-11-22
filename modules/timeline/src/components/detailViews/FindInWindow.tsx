@@ -256,7 +256,7 @@ const handleFindSelected = async(rowData: any, props: any): Promise<void> => {
                 unit.metadata.threadId === rowData.tid && unit.metadata.processId === rowData.pid;
             },
             onSuccess: (unit: InsightUnit): void => {
-                const startTime = rowData.timestamp - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
+                const startTime = rowData.timestamp - getTimeOffset(props.session, unit.metadata as ThreadMetaData);
                 const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, rowData.duration);
                 props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                 props.session.selectedData = {

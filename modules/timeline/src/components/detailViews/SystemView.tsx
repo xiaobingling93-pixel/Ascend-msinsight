@@ -278,7 +278,7 @@ const handleAdvisorSelected = async(rowData: any, props: any): Promise<void> => 
                     unit.metadata.threadId === rowData.tid && unit.metadata.processId === rowData.pid;
             },
             onSuccess: (unit: InsightUnit): void => {
-                const startTime = rowData.startTime - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
+                const startTime = rowData.startTime - getTimeOffset(props.session, unit.metadata as ThreadMetaData);
                 const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, nsDuration);
                 props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };
                 props.session.selectedData = {
@@ -415,7 +415,7 @@ const handleSelected = async(rowData: any, props: any): Promise<void> => {
                     unit.metadata.threadId === res.threadId && unit.metadata.processId === res.pid;
             },
             onSuccess: (unit: InsightUnit): void => {
-                const startTime = rowData.startTime - getTimeOffset(props.session, (unit.metadata as ThreadMetaData).cardId);
+                const startTime = rowData.startTime - getTimeOffset(props.session, unit.metadata as ThreadMetaData);
                 // 此处duration单位为us,计算和跳转时需要转换为ns
                 const [rangeStart, rangeEnd] = calculateDomainRange(props.session, startTime, Number((rowData.duration * 1000).toFixed(0)));
                 props.session.domainRange = { domainStart: rangeStart, domainEnd: rangeEnd };

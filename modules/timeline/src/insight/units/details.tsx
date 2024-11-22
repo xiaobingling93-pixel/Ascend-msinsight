@@ -35,7 +35,7 @@ export const slicesListDetail = detail({
         startTime = startTime < 0 ? 0 : startTime;
         let endTime = session.selectedRange?.[1] ?? 0;
         endTime = endTime < 0 ? 0 : endTime;
-        const timestampOffset = getTimeOffset(session, metadata.cardId);
+        const timestampOffset = getTimeOffset(session, metadata);
         const metadataList = session.selectedUnits.map(selectUnit => {
             const { threadId, processId, metaType } = selectUnit?.metadata as ThreadMetaData ?? {};
             return {
@@ -206,7 +206,7 @@ const doJumpSlice = (session: Session, data: any, rankId: string): void => {
                     unit.metadata.processId === data.pid && unit.metadata.threadId === data.tid;
             },
             onSuccess: (unit): void => {
-                session.selectedData = generateFlowData(data, getTimeOffset(session, (unit.metadata as ThreadMetaData).cardId));
+                session.selectedData = generateFlowData(data, getTimeOffset(session, unit.metadata as ThreadMetaData));
                 session.linkFlow = generateFlowParam(unit.metadata as ThreadMetaData, data);
             },
         };
