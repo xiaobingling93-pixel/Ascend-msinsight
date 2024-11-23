@@ -144,6 +144,11 @@ public:
         LogStr(str);
     }
 
+    inline std::string GetLogFilePath()
+    {
+        return this->filePath;
+    }
+
     template <typename T, typename... ARGS> inline void LogT(const LogLevel &logLevel, const T &t, const ARGS... args)
     {
         if (logLevel < level) {

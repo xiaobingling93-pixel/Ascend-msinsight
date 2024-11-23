@@ -18,6 +18,7 @@ namespace Dic {
 namespace Server {
 class ServerLog {
 public:
+    static std::string currentLogPath;
     static void Initialize(const std::string &logPath, const int &logSize, const std::string &logLevelStr,
                            std::string wsPortStr);
 

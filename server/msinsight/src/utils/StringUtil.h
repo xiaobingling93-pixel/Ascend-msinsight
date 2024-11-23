@@ -178,8 +178,8 @@ static inline const std::string WString2String(const std::wstring& ws)
     return result;
 }
 
-    template<typename T>
-    static std::string join(std::vector<T> list, std::string separator)
+    template<typename T, typename S>
+    static std::string join(std::vector<T> list, S separator)
     {
         std::stringstream ss;
         for (size_t i = 0; i < list.size(); i++) {
