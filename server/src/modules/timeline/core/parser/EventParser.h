@@ -10,6 +10,7 @@
 #include <functional>
 #include "GlobalDefs.h"
 #include "TextTraceDatabase.h"
+#include "IFileReader.h"
 #include "EventDef.h"
 
 namespace Dic {
@@ -23,6 +24,8 @@ public:
     bool Parse(int64_t startPosition, int64_t endPosition);
     std::string GetError();
     void SetSimulationStatus(const bool &isSimulation);
+protected:
+    std::unique_ptr<IFileReader> fileReader = nullptr;
 
 private:
     std::string filePath;
@@ -34,7 +37,6 @@ private:
     std::shared_ptr<TextTraceDatabase> database;
     std::map<std::string, std::function<void(std::unique_ptr<Trace::Event>)>> eventHandleMap;
 
-    std::string ReadBuffer(int64_t startPosition, int64_t endPosition);
     void EventHandle(const rapidjson::Value &json);
     void InitEventHandle();
     void MetaDataHandle(std::unique_ptr<Trace::Event> eventPtr);

@@ -4,10 +4,10 @@
 
 #include "pch.h"
 #include "EventUtil.h"
-#include "SourceFileParser.h"
 #include "TrackInfoManager.h"
 #include "ParserStatusManager.h"
 #include "SimulationSliceCacheManager.h"
+#include "FileReader.h"
 #include "EventParser.h"
 
 namespace Dic {
@@ -21,6 +21,7 @@ EventParser::EventParser(const std::string &filePath, const std::string &fileId,
 {
     ServerLog::Info("Init event parser. fileId:", fileId);
     InitEventHandle();
+    fileReader = std::make_unique<FileReader>();
 }
 
 void EventParser::InitEventHandle()
@@ -42,9 +43,9 @@ void EventParser::InitEventHandle()
 bool EventParser::Parse(int64_t startPosition, int64_t endPosition)
 {
     database->InitStmt();
-    std::string buffer = ReadBuffer(startPosition, endPosition);
+    std::string buffer = fileReader->ReadJsonArray(filePath, startPosition, endPosition);
     if (buffer.empty()) {
-        error = "Failed to read file.";
+        error = "Failed to read file when parse. file path is: " + filePath;
         ServerLog::Error("Event parser failed to read buffer. fileId:", fileId);
         return false;
     }
@@ -87,36 +88,6 @@ void EventParser::ProcessLastFlagSlice()
 void EventParser::SetSimulationStatus(const bool &isSimulation)
 {
     m_isSimulation = isSimulation;
-}
-
-std::string EventParser::ReadBuffer(int64_t startPosition, int64_t endPosition)
-{
-    if (endPosition < startPosition) {
-        ServerLog::Warn("Event Parser. Illegal position. Start: ", startPosition, " End: ", endPosition);
-        return "";
-    }
-    std::ifstream file = OpenReadFileSafely(filePath, std::ios::in | std::ios::binary);
-    if (!file.is_open()) {
-        ServerLog::Error("Event Parser. Failed to open file.");
-        return "";
-    }
-    if (startPosition == 0 && endPosition == 0) {
-        std::string str((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-        return str;
-    }
-    file.seekg(startPosition, std::ios::beg);
-    int64_t suffixLen = 2;                                     // [ ]
-    int64_t len = endPosition - startPosition + 1 + suffixLen; // + [ ] + \0
-    auto buffer = std::make_unique<char[]>(len);
-    if (!file.read(buffer.get() + 1, len - suffixLen)) { // reserved '[' and ']'
-        file.close();
-        ServerLog::Error("Event Parser. Failed to read file. start:", startPosition, ", end:", endPosition);
-        return "";
-    }
-    file.close();
-    buffer[0] = '[';
-    buffer[len - 1] = ']';
-    return { buffer.get(), static_cast<uint64_t>(len) };
 }
 
 void EventParser::EventHandle(const json_t &json)
