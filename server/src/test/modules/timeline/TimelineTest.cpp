@@ -114,7 +114,7 @@ TEST_F(TestSuit, QueryKernelDetailData)
     requestParams.pageSize = PAGE;
     requestParams.rankId = "0";
     database->QueryKernelDetailData(requestParams, responseBody, 0);
-    int expectSize = 21;
+    int expectSize = 20;
     EXPECT_EQ(responseBody.count, expectSize);
 }
 

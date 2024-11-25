@@ -20,11 +20,11 @@ public:
     bool SetConfig();
     bool CreateTable();
     bool DropTable();
-    bool InitStmt();
+    bool InitStmt(const std::vector<std::string> &columns);
     void ReleaseStmt();
 
-    void InsertKernelDetail(const Kernel& kernel);
-    void SaveKernelDetail();
+    void InsertKernelDetail(const Kernel &kernel, const std::vector<std::string> &columns);
+    void SaveKernelDetail(const std::vector<std::string> &columns);
     uint64_t QueryMinStartTime();
     std::set<std::string> QueryRankIds();
 
@@ -57,8 +57,8 @@ private:
     const uint32_t maxCategorySize = 50;
     std::vector<Kernel> kernelCache;
 
-    sqlite3_stmt *GetKernelStmt(uint64_t paramLen);
-    void InsertKernelDetailList(const std::vector<Kernel>& kernelVec);
+    sqlite3_stmt *GetKernelStmt(uint64_t paramLen, const std::vector<std::string> &columns);
+    void InsertKernelDetailList(const std::vector<Kernel> &kernelVec, const std::vector<std::string> &columns);
     std::string GenSortSql(std::string orderBy, std::string order);
     std::string GenComputeSql(Protocol::ComputeDetailParams request);
     std::string GetCommSql(Protocol::CommunicationDetailParams request);

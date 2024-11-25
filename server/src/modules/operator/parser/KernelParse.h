@@ -41,6 +41,7 @@ const std::string FIELD_TASK_TYPE = "Task Type";
 const std::string FIELD_TASK_START_TIME = "Task Start Time(us)";
 const std::string FIELD_TASK_DURATION = "Task Duration(us)";
 const std::string FIELD_TASK_WAIT_TIME = "Task Wait Time(us)";
+const std::string FIELD_AICORE_TIME = "aicore_time(us)";
 
 const std::vector<std::vector<std::string>> VALID_HEADERS = {
     {
@@ -75,6 +76,7 @@ protected:
     static bool CheckHeaderFieldAndFilterParseFunc(std::vector<std::string> rowVector,
         std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> &parseFuncList);
+    static bool GetUtilizationColumns(const std::vector<std::string> &rowVector, std::vector<std::string> &columns);
 
 private:
     const int maxThreadNum = 4;
@@ -112,6 +114,13 @@ private:
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
     static void ParseTaskStartTimeInfoData(const std::map<std::string, size_t> &dataMap,
         const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel);
+    static void ParseAICoreMetricsInfoData(const std::map<std::string, size_t> &dataMap,
+        const std::vector<std::string> &row, const std::string &fileId, Kernel &kernel);
+    static bool ProcessHeaderGetParseFunc(std::shared_ptr<TextSummaryDataBase> db,
+        std::vector<std::string> &rowVector, std::vector<std::string> &columns,
+        std::map<std::string, size_t> &dataMap,
+        std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,
+        const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> &parseFuncList);
 };
 
 } // end of namespace Dic::Module::Summary

@@ -60,6 +60,7 @@ public:
 
     bool CheckTableExist(const std::string& tableName);
     bool CheckTablesExist(const std::vector<std::string> &tablesName);
+    bool ExtendColumns(const std::string &tableName, const std::vector<std::string>& columns);
 
 protected:
     bool ExecSql(const std::string &sql);

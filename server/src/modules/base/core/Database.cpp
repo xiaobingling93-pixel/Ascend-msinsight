@@ -524,5 +524,20 @@ bool Database::SetConfig()
     }
     return true;
 }
+
+bool Database::ExtendColumns(const std::string &tableName, const std::vector<std::string>& columns)
+{
+    if (!isOpen) {
+        ServerLog::Error("Failed to extend table. Database is not open.");
+        return false;
+    }
+    std::string sql;
+    for (const auto& column : columns) {
+        sql += "ALTER TABLE " + tableName + " ADD COLUMN " + column + " TEXT; ";
+    }
+    std::lock_guard<std::recursive_mutex> lock(mutex);
+    return ExecSql(sql);
+}
+
 } // end of namespace Module
 } // end of namespace Dic

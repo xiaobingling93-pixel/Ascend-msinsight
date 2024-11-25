@@ -17,6 +17,8 @@
 #include "CommonDefs.h"
 
 namespace Dic::Module::Summary {
+using namespace Dic::Server;
+
 class VirtualSummaryDataBase : public Database {
 public:
     bool levelIsL0 = true;

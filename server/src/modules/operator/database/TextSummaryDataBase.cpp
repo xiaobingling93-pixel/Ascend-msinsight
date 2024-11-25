@@ -49,23 +49,32 @@ bool TextSummaryDataBase::DropTable()
     return DropSomeTables(tables);
 }
 
-bool TextSummaryDataBase::InitStmt()
+bool TextSummaryDataBase::InitStmt(const std::vector<std::string> &columns)
 {
     if (hasInitStmt) {
         return true;
     }
+    std::string columnSql;
+    std::string placeHolder;
+    if (!columns.empty()) {
+        for (const auto& column : columns) {
+            columnSql += ", " + column;
+            placeHolder += ",?";
+        }
+    }
     std::string sql =
             "INSERT INTO " + TABLE_KERNEL + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
             "duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, output_shapes, " +
-            "output_data_types, output_formats)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            "output_data_types, output_formats" + columnSql + ") " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")";
     for (size_t i = 0; i < cacheSize - 1; ++i) {
-        sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")");
     }
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &insertKernelStmt, nullptr) != SQLITE_OK) {
         ServerLog::Error("Failed to prepare insert kernel detail statement. error:", sqlite3_errmsg(db));
         return false;
     }
-
+ 
     hasInitStmt = true;
     return true;
 }
@@ -79,9 +88,10 @@ void TextSummaryDataBase::ReleaseStmt()
     }
 }
 
-void TextSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel>& kernelVec)
+void TextSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel> &kernelVec,
+                                                 const std::vector<std::string> &columns)
 {
-    sqlite3_stmt *stmt = GetKernelStmt(kernelVec.size());
+    sqlite3_stmt *stmt = GetKernelStmt(kernelVec.size(), columns);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to get kernel stmt.");
         return;
@@ -105,6 +115,13 @@ void TextSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel>& kern
         sqlite3_bind_text(stmt, idx++, event.outputDataTypes.c_str(), event.outputDataTypes.length(), SQLITE_TRANSIENT);
 
         sqlite3_bind_text(stmt, idx++, event.outputFormats.c_str(), event.outputFormats.length(), SQLITE_TRANSIENT);
+        // 此处的size比较为冗余判断，前面的逻辑能够保证二者相等，否则会丢弃相关数据
+        if (columns.empty() || columns.size() != event.utilizationInfo.size()) {
+            continue;
+        }
+        for (const auto& item : event.utilizationInfo) {
+            sqlite3_bind_text(stmt, idx++, item.c_str(), item.length(), SQLITE_TRANSIENT);
+        }
     }
     std::lock_guard<std::recursive_mutex> lock(mutex);
     auto result = sqlite3_step(stmt);
@@ -118,39 +135,48 @@ void TextSummaryDataBase::InsertKernelDetailList(const std::vector<Kernel>& kern
     }
 }
 
-void TextSummaryDataBase::InsertKernelDetail(const Kernel& kernel)
+void TextSummaryDataBase::InsertKernelDetail(const Kernel &kernel, const std::vector<std::string> &columns)
 {
     kernelCache.emplace_back(kernel);
     if (kernelCache.size() == cacheSize) {
-        InsertKernelDetailList(kernelCache);
+        InsertKernelDetailList(kernelCache, columns);
         kernelCache.clear();
     }
 }
 
-void TextSummaryDataBase::SaveKernelDetail()
+void TextSummaryDataBase::SaveKernelDetail(const std::vector<std::string> &columns)
 {
     if (kernelCache.size() > 0) {
-        InsertKernelDetailList(kernelCache);
+        InsertKernelDetailList(kernelCache, columns);
         kernelCache.clear();
     }
 }
 
-sqlite3_stmt *TextSummaryDataBase::GetKernelStmt(uint64_t paramLen)
+sqlite3_stmt *TextSummaryDataBase::GetKernelStmt(uint64_t paramLen, const std::vector<std::string> &columns)
 {
     sqlite3_stmt *stmt = nullptr;
     if (paramLen == cacheSize) {
         stmt = insertKernelStmt;
         sqlite3_reset(stmt);
     } else {
+        std::string columnSql;
+        std::string placeHolder;
+        if (!columns.empty()) {
+            for (const auto& column : columns) {
+                columnSql += ", " + column;
+                placeHolder += ",?";
+            }
+        }
         std::string sql =
                 "INSERT INTO " + TABLE_KERNEL + " (rank_id, step_id, name, op_type, accelerator_core, start_time, " +
                 "duration, wait_time, block_dim, input_shapes, input_data_types, input_formats, output_shapes, " +
-                "output_data_types, output_formats)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                "output_data_types, output_formats" + columnSql + ") " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")";
         for (uint64_t i = 0; i < paramLen - 1; ++i) {
-            sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            sql.append(",(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + placeHolder + ")");
         }
         if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
-            ServerLog::Error("Failed to prepare insert Kernel stat. error:", sqlite3_errmsg(db));
+            ServerLog::Error("Failed to prepare for insert kernel. length:", paramLen, " . error:", sqlite3_errmsg(db));
             return nullptr;
         }
     }
@@ -251,7 +277,7 @@ std::string TextSummaryDataBase::GenComputeSql(Protocol::ComputeDetailParams req
 {
     std::string orderBy = GenSortSql(request.orderBy, request.order);
     std::string sql;
-    if (request.orderBy.size() == 0) {
+    if (request.orderBy.empty()) {
         sql = "SELECT name, op_type as type, "
               "CASE WHEN start_time == 0 THEN 0 ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 4) END AS startTime, "
               "duration, wait_time as waitTime, block_dim as blockDim, "

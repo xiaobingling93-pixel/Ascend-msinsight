@@ -8,6 +8,7 @@
 #include "CommonDefs.h"
 #include "WsSessionManager.h"
 #include "OperatorProtocolEvent.h"
+#include "RegexUtil.h"
 #include "TraceTime.h"
 #include "BaselineManager.h"
 #include "KernelParse.h"
@@ -63,6 +64,9 @@ void KernelParse::InitKernelParseMap()
         std::placeholders::_3, std::placeholders::_4));
     parseFuncMap.emplace(std::vector<std::string>{ FIELD_TASK_START_TIME },
         std::bind(&KernelParse::ParseTaskStartTimeInfoData, std::placeholders::_1, std::placeholders::_2,
+        std::placeholders::_3, std::placeholders::_4));
+    parseFuncMap.emplace(std::vector<std::string>{ FIELD_AICORE_TIME },
+        std::bind(&KernelParse::ParseAICoreMetricsInfoData, std::placeholders::_1, std::placeholders::_2,
         std::placeholders::_3, std::placeholders::_4));
 }
 
@@ -174,8 +178,8 @@ bool KernelParse::InitParser(const std::vector<std::string>& filePathList, const
         PostParseTask(devices, fileId);
         return true;
     }
-    if (!database->DropTable() or !database->CreateTable() or !database->SetConfig() or !database->InitStmt() or
-            !database->UpdateParseStatus(NOT_FINISH_STATUS)) {
+    if (!database->DropTable() or !database->CreateTable() or !database->SetConfig() or
+        !database->UpdateParseStatus(NOT_FINISH_STATUS)) {
         message = "Failed to init summary database. fileId: " + fileId + " filePath: " +
                   filePathList[0] + " dbPath: " + dbPath;
         return false;
@@ -202,6 +206,44 @@ bool KernelParse::ParseTask(const std::vector<std::string>& filePathList, const 
     }
     // 判断是否为训练场景
     PostParseTask(devices, fileId);
+    return true;
+}
+
+bool KernelParse::GetUtilizationColumns(const std::vector<std::string> &rowVector,
+    std::vector<std::string> &columns)
+{
+    if (rowVector.size() < 8 || rowVector.size() > 60) { // base column 8 and no more than 60 columns
+        return false;
+    }
+    size_t index = 0;
+    auto it = std::find(rowVector.begin(), rowVector.end(), FIELD_AICORE_TIME);
+    if (it != rowVector.end()) {
+        index =  std::distance(rowVector.begin(), it);
+    }
+    if (index == 0) {
+        return true;
+    }
+    for (auto i = index; i < rowVector.size(); ++i) {
+        std::string origin = rowVector.at(i);
+        std::map<std::string, std::string> strPairs = {
+            {"(us)", "_us_"},
+            {"(%)", "_PCT_"},
+            {"(GB/s)", "_GB_s_"},
+            {"\r", ""}
+        };
+        for (const auto& item : strPairs) {
+            size_t pos = origin.find(item.first);
+            if (pos != std::string::npos) {
+                origin.replace(pos, item.first.length(), item.second);
+            }
+        }
+        // 表头只能是字母、数字、下划线、短线、空格
+        if (!RegexUtil::RegexMatch(origin, R"(^[a-zA-Z0-9\s\-_]+$)")) {
+            columns.clear();
+            return true;
+        }
+        columns.push_back(origin);
+    }
     return true;
 }
 
@@ -299,6 +341,39 @@ inline void KernelParse::ParseTaskStartTimeInfoData(const std::map<std::string, 
     kernel.startTime =  NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(timestamp));
 }
 
+inline void KernelParse::ParseAICoreMetricsInfoData(const std::map<std::string, size_t> &dataMap,
+    const std::vector<std::string> &row, const std::string &fileId, Kernel &kernel)
+{
+    if (dataMap.find(FIELD_AICORE_TIME) == dataMap.end()) {
+        return;
+    }
+    for (size_t i = dataMap.at(FIELD_AICORE_TIME); i < row.size(); ++i) {
+        kernel.utilizationInfo.push_back(row.at(i));
+    }
+}
+ 
+bool KernelParse::ProcessHeaderGetParseFunc(std::shared_ptr<TextSummaryDataBase> db,
+    std::vector<std::string> &rowVector, std::vector<std::string> &columns,
+    std::map<std::string, size_t> &dataMap,
+    std::vector<std::function<void(const std::map<std::string, size_t> &dataMap,
+    const std::vector<std::string> &rows, const std::string &fileId, Kernel &kernel)>> &parseProcessList)
+{
+    // 获取每一列，更新db表
+    if (!GetUtilizationColumns(rowVector, columns) or !db->ExtendColumns(TABLE_KERNEL, columns) or
+        !db->InitStmt(columns)) {
+        return false;
+    }
+    // 检查表头并拿到每一类数据对应的解析函数
+    if (!CheckHeaderFieldAndFilterParseFunc(rowVector, parseProcessList)) {
+        return false;
+    }
+    // 拿到每一类数据在哪一列，存储在dataMap中
+    for (size_t i = 0; i < rowVector.size(); ++i) {
+        dataMap[rowVector[i]] = i;
+    }
+    return true;
+}
+
 bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string &fileId, const std::string& statusId,
                                  std::string &message, std::set<std::string>& devices)
 {
@@ -320,37 +395,40 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
 
     std::string realFileId = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
         FileUtil::GetProfilerFileId(filePath) : fileId;
-    while (Timeline::ParserStatusManager::Instance().GetParserStatus(statusId) ==
-           Timeline::ParserStatus::RUNNING && getline(file, line)) {
+    std::vector<std::string> columns;
+    while (Dic::Module::Timeline::ParserStatusManager::Instance().GetParserStatus(statusId) ==
+           Dic::Module::Timeline::ParserStatus::RUNNING && getline(file, line)) {
+        // 获取每一行数据存储在rowVector里面
         const std::basic_string<char>& basicString(line);
         std::vector<std::string> rowVector = StringUtil::StringSplit(basicString);
-        if (!rowVector.empty() and isHeader) {
-            if (!CheckHeaderFieldAndFilterParseFunc(rowVector, parseProcessList)) {
-                message = "The header is incorrect or incomplete of " + filePath;
-                return false;
-            }
-            for (size_t i = 0; i < rowVector.size(); ++i) {
-                dataMap[rowVector[i]] = i;
-            }
+        // 如果是表头且非空
+        if (isHeader and !rowVector.empty()) {
+            // 获取每一列，更新db表
+            ProcessHeaderGetParseFunc(db, rowVector, columns, dataMap, parseProcessList);
             isHeader = false;
             continue;
         }
+        // 解析非表头数据存储在db里
         Kernel kernel {};
         for (const auto& parseFunc : parseProcessList) {
             parseFunc(dataMap, rowVector, realFileId, kernel);
         }
+        // 如果这列数据和列名个数对不上，说明可能有数据缺了，不存储这一行
+        if (rowVector.size() != dataMap.size() || kernel.utilizationInfo.size() != columns.size()) {
+            ServerLog::Warn("Invalid data is discarded in the line %.", line);
+            continue;
+        }
         // 记录有多少device
         devices.emplace(dataMap.find(DEVICE_ID) != dataMap.end() ? rowVector[dataMap[DEVICE_ID]] : fileId);
         // 读取每一行数据写入kernel内
-        db->InsertKernelDetail(kernel);
+        db->InsertKernelDetail(kernel, columns);
     }
     // 读取剩下的数据写入kernel内
-    db->SaveKernelDetail();
+    db->SaveKernelDetail(columns);
     auto end = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Finish to parse kernel detail, ", filePath, " cost time:",
                     std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-    uint64_t minStartTime = db->QueryMinStartTime();
-    Timeline::TraceTime::Instance().UpdateTime(minStartTime, 0);
+    Timeline::TraceTime::Instance().UpdateTime(db->QueryMinStartTime(), 0);
     file.close();
     return true;
 }

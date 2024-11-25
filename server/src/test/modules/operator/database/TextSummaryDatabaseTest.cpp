@@ -38,7 +38,7 @@ protected:
     void SetUp() override
     {
         g_testDataBase.CreateTable();
-        g_testDataBase.InitStmt();
+        g_testDataBase.InitStmt({});
     }
 
     void TearDown() override
@@ -65,9 +65,9 @@ TEST_F(TextSummaryDatabaseTest, CreateAndDropTableSuccess)
 
 TEST_F(TextSummaryDatabaseTest, InitAndReleaseStmtSuccess)
 {
-    bool result = g_testDataBase.InitStmt();
+    bool result = g_testDataBase.InitStmt({});
     EXPECT_EQ(result, true);
-    result = g_testDataBase.InitStmt();
+    result = g_testDataBase.InitStmt({});
     EXPECT_EQ(result, true);
     g_testDataBase.ReleaseStmt();
     // Initial失败暂时未构造出来
@@ -93,13 +93,13 @@ TEST_F(TextSummaryDatabaseTest, SaveKernelDetailAndCheckSuccess)
             "type" + std::to_string(i), "Dynamic", "AICore", 50 + i, 100.0 + i, 10.0 + i, i,
             "", "", "", "", "", ""
         };
-        g_testDataBase.InsertKernelDetail(kernel);
+        g_testDataBase.InsertKernelDetail(kernel, {});
     }
     int64_t num = 1;
     bool result = g_testDataBase.QueryTotalNumByAcceleratorCore("AICore", num);
     EXPECT_EQ(result, true);
     EXPECT_EQ(num, 0);
-    g_testDataBase.SaveKernelDetail();
+    g_testDataBase.SaveKernelDetail({});
     result = g_testDataBase.QueryTotalNumByAcceleratorCore("AICore", num);
     EXPECT_EQ(result, true);
     EXPECT_EQ(num, 1000 / 2); // 1000 is cacheSize, 2 is half of cacheSize
@@ -113,7 +113,7 @@ TEST_F(TextSummaryDatabaseTest, InsertKernelDetailAndCheckSuccess)
             "type" + std::to_string(i), "Dynamic", "AICore", 50 + i, 100.0 + i, 10.0 + i, i,
             "", "", "", "", "", ""
         };
-        g_testDataBase.InsertKernelDetail(kernel);
+        g_testDataBase.InsertKernelDetail(kernel, {});
     }
     int64_t num = 1;
     bool result = g_testDataBase.QueryTotalNumByAcceleratorCore("AICore", num);
@@ -125,12 +125,12 @@ TEST_F(TextSummaryDatabaseTest, InsertKernelDetailAndCheckSuccess)
             "type" + std::to_string(i), "Dynamic", "AICore", 50 + i, 100.0 + i, 10.0 + i, i,
             "", "", "", "", "", ""
         };
-        g_testDataBase.InsertKernelDetail(kernel);
+        g_testDataBase.InsertKernelDetail(kernel, {});
     }
     result = g_testDataBase.QueryTotalNumByAcceleratorCore("AICore", num);
     EXPECT_EQ(result, true);
     EXPECT_EQ(num, 1000); // 1000 is cacheSize
-    g_testDataBase.SaveKernelDetail();
+    g_testDataBase.SaveKernelDetail({});
 }
 
 TEST_F(TextSummaryDatabaseTest, QueryMinStartTimeTest)
@@ -152,9 +152,9 @@ TEST_F(TextSummaryDatabaseTest, QueryMinStartTimeTest)
         }
     };
     for (const auto& item : list) {
-        g_testDataBase.InsertKernelDetail(item);
+        g_testDataBase.InsertKernelDetail(item, {});
     }
-    g_testDataBase.SaveKernelDetail();
+    g_testDataBase.SaveKernelDetail({});
     start = g_testDataBase.QueryMinStartTime();
     EXPECT_EQ(start, 1695115378713661000); // 1695115378713661000
 }
@@ -173,9 +173,9 @@ TEST_F(TextSummaryDatabaseTest, QueryRankIdsTest)
             }
     };
     for (const auto& item : list) {
-        g_testDataBase.InsertKernelDetail(item);
+        g_testDataBase.InsertKernelDetail(item, {});
     }
-    g_testDataBase.SaveKernelDetail();
+    g_testDataBase.SaveKernelDetail({});
     ranks = g_testDataBase.QueryRankIds();
     EXPECT_EQ(ranks.size(), list.size());
 }

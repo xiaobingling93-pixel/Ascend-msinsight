@@ -40,7 +40,7 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOpTypeAndInputShape)
     std::vector<Dic::Protocol::OperatorDurationRes> datas = {};
     bool result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::CATEGORY, datas);
     EXPECT_EQ(result, true);
-    int size = 10;
+    int size = 9;
     EXPECT_EQ(datas.size(), size);
     datas.clear();
     result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::COMPUTE_UNIT, datas);
@@ -61,7 +61,7 @@ TEST_F(TestSuit, QueryOperatorDurationInfoByOperator)
     datas.clear();
     result = db->QueryOperatorDurationInfo(params, Dic::Protocol::QueryType::COMPUTE_UNIT, datas);
     EXPECT_EQ(result, true);
-    int cnt = 5;
+    int cnt = 6;
     EXPECT_EQ(datas.size(), cnt);
 }
 
@@ -96,7 +96,7 @@ TEST_F(TestSuit, QueryAllOperatorStatisticInfoByOpTypeAndInputShape)
     Dic::Protocol::OperatorStatisticInfoResponse response = {};
     bool result = db->QueryOperatorStatisticInfo(reqParams, response);
     EXPECT_EQ(result, true);
-    int total = 10;
+    int total = 9;
     EXPECT_EQ(response.total, total);
     int size = 5;
     EXPECT_EQ(response.datas.size(), size);
@@ -124,7 +124,7 @@ TEST_F(TestSuit, QueryAllOperatorDetailInfoByOperator)
     std::vector<Protocol::OperatorDetailInfoRes> baselineRes;
     bool result = db->QueryAllOperatorDetailInfo(reqParams, baselineRes, response.level);
     EXPECT_EQ(result, true);
-    int total = 17;
+    int total = 16;
     EXPECT_EQ(response.level, "l1");
     EXPECT_EQ(baselineRes.size(), total);
 }

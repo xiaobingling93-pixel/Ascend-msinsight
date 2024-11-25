@@ -28,6 +28,7 @@ struct Kernel {
     std::string outputShapes;
     std::string outputDataTypes;
     std::string outputFormats;
+    std::vector<std::string> utilizationInfo;
 };
 
 } // end of namespace Summary
