@@ -13,7 +13,7 @@ import { Session } from '../entity/session';
 import type { NotificationHandler } from './defs';
 import connector from '../connection/index';
 import { message } from 'antd';
-import { getTimeOffset } from '../insight/units/utils';
+import { getTimeOffset, getTimeOffsetKey } from '../insight/units/utils';
 import { calculateDomainRange } from '../components/CategorySearch';
 import i18n from 'ascend-i18n';
 import { forEach, groupBy, isEmpty, cloneDeep } from 'lodash';
@@ -42,6 +42,14 @@ export const parseSuccessHandler: NotificationHandler = (data): void => {
             setUnitProgressByFileId(unitData, session);
             session.units.forEach((unit) => {
                 if ((unit.metadata as CardMetaData).cardId === unitData.unit.metadata.cardId) {
+                    const prevObj = session.unitsConfig.offsetConfig.timestampOffset;
+                    if (unitData.unit.children !== undefined && unitData.unit.children.length > 0) {
+                        for (const item of unitData.unit.children) {
+                            const key = getTimeOffsetKey(session, item.metadata);
+                            session.unitsConfig.offsetConfig.timestampOffset[key] = 0;
+                        }
+                    }
+                    session.unitsConfig.offsetConfig.timestampOffset = { ...prevObj, [(unit.metadata as CardMetaData).cardId]: 0 };
                     unit.alignStartTimestamp = unitData.offset;
                     handleMap(unitData.unit, (unit.metadata as CardMetaData).dataSource);
                     recursiveExpandUnit(unitData.unit.children ?? [], unit);
