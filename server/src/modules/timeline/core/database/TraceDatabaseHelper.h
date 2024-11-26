@@ -18,11 +18,20 @@
 
 namespace Dic::Module::Timeline {
 using namespace Protocol;
+const std::string LANE_FP_BP = "FP/BP";
+const std::string LANE_P2P_OP = "P2P Op";
+const std::string MARKER_FP = "FP";
+const std::string MARKER_BP = "BP";
+const std::string MARKER_SEND = "SEND";
+const std::string MARKER_RECV = "RECV";
+const std::string MARKER_BATCH_SEND_RECV = "BATCH_SEND_RECV";
+
 const std::string QUERY_FWDBWD_FLOW_DATA_TEXT_SQL =
     "WITH data as ("
     "    SELECT s.timestamp as start, s.end_time as end, f.flow_id, f.type FROM " + FLOW_TABLE + " f "
     "    JOIN " + SLICE_TABLE + " s "
     "    ON f.cat = 'fwdbwd' AND s.cat = 'cpu_op' AND f.track_id = s.track_id AND f.timestamp = s.timestamp "
+    "    AND s.timestamp >= ? AND s.end_time < ? "
     ") "
     "SELECT s.start - ? as sStartTime, s.end - ? as sEndTime, f.start - ? as fStartTime, f.end - ? as fEndTime "
     "FROM data s JOIN data f ON s.type = 's' AND f.type = 'f' AND s.flow_id = f.flow_id AND s.start < f.start "
@@ -35,12 +44,28 @@ const std::string QUERY_FWDBWD_FLOW_DATA_DB_SQL =
     "        SELECT id.id as flowId, ids.connectionId as connectionId FROM " + TABLE_CONNECTION_CATS + " cats "
     "        JOIN " + TABLE_CONNECTION_IDS + " ids ON cats.cat = 'fwdbwd' AND cats.connectionId = ids.connectionId "
     "    ) flow ON api.type in (SELECT id FROM " + TABLE_ENUM_API_TYPE + " WHERE name = 'op') "
-    "    AND api.connectionId = flow.flowId "
+    "    AND api.connectionId = flow.flowId  AND startNs >= ? AND endNs <= ? "
     "    ORDER BY flow.connectionId, startNs ASC "
     ") "
     "SELECT s.startNs - ? as sStartTime, s.endNs - ? as sEndTime, f.startNs - ? as fStartTime, f.endNs - ? as fEndTime "
     "FROM data s JOIN data f ON s.startNs < f.startNs AND s.connectionId = f.connectionId "
     "ORDER BY s.startNs ASC";
+
+// 目前根据通信算子名进行过滤，此种方式不够准确，待后续进一步优化为锁定通信域后便锁定p2p通信算子
+const std::string QUERY_P2P_COMMUNICATION_OP_TEXT_SQL =
+    "SELECT t.pid as pid, t.tid as tid, s.timestamp - ? as startTime, s.duration as duration, s.name as name "
+    "FROM " + SLICE_TABLE + " s JOIN " + THREAD_TABLE + " t ON s.track_id = t.track_id WHERE s.track_id in ( "
+    "    SELECT t.track_id FROM " + THREAD_TABLE + " t JOIN " + PROCESS_TABLE + " p ON t.pid = p.pid "
+    "    WHERE p.process_name = 'HCCL' and t.thread_name like 'Group%' "
+    ") AND ( "
+    "LOWER(s.name) like 'hcom_send%' or LOWER(s.name) like 'hcom_recv%' or LOWER(s.name) like 'hcom_batchsendrecv%' "
+    ") AND s.timestamp >= ? AND s.end_time <= ? ORDER BY s.timestamp ASC";
+const std::string QUERY_P2P_COMMUNICATION_OP_DB_SQL =
+    "SELECT task.globalPid as pid, 0 as tid, op.startNs - ? as startTime, op.endNs - op.startNs as duration, "
+    "str.value as name FROM " + TABLE_COMMUNICATION_OP + " op JOIN " + TABLE_STRING_IDS + " str ON op.opName = str.id "
+    "JOIN " + TABLE_TASK + " task ON op.connectionId = task.connectionId AND op.startNs = task.startNs "
+    "WHERE (LOWER(str.value) like 'hcom_send%' or LOWER(str.value) like 'hcom_recv%' "
+    "or LOWER(str.value) like 'hcom_batchsendrecv%') AND op.startNs >= ? AND op.endNs <= ? ORDER BY op.startNs ASC";
 
 class TraceDatabaseHelper {
 public:
@@ -140,8 +165,11 @@ static void SetKernelDetailHelpler(std::unique_ptr<SqliteResultSet> resultSet, u
 static void FilterTopLevelApi(std::vector<Protocol::FlowLocation> &originData, const std::set<std::string> &pattern,
     std::vector<Protocol::FlowLocation> &filterData, std::vector<uint32_t> &indexes);
 // 内部接口不对外，调用处保证stmt不为空
-static bool ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePreparedStatement> stmt, uint64_t offset,
-    const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData);
+static bool ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePreparedStatement> stmt,
+    const std::string &rankId, uint64_t offset, const Protocol::ExtremumTimestamp &range,
+    std::vector<Protocol::ThreadTraces> &fwdBwdData);
+static bool ExecuteQueryP2POpData(std::unique_ptr<SqlitePreparedStatement> stmt, const std::string &rankId,
+    uint64_t offset, const ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData);
 
 private:
 /* Functions for BbTraceDataBase */

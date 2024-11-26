@@ -1941,8 +1941,8 @@ void DbTraceDataBase::Reset()
     stringsCache.clear();
 }
 
-bool DbTraceDataBase::QueryFwdBwdDataByFlow(int64_t offset, const std::string &rankId,
-                                            std::vector<Protocol::ThreadTraces> &fwdBwdData)
+bool DbTraceDataBase::QueryFwdBwdDataByFlow(const std::string &rankId, uint64_t offset,
+    const Protocol::ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &fwdBwdData)
 {
     std::vector<std::string> tableList = {TABLE_API, TABLE_CONNECTION_CATS, TABLE_CONNECTION_IDS, TABLE_ENUM_API_TYPE};
     if (!CheckTablesExist(tableList)) {
@@ -1953,6 +1953,17 @@ bool DbTraceDataBase::QueryFwdBwdDataByFlow(int64_t offset, const std::string &r
         ServerLog::Error("Failed to prepare sql for query fwd/bwd data by flow in the DB scenario.");
         return false;
     }
-    return TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::move(stmt), offset, rankId, fwdBwdData);
+    return TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::move(stmt), rankId, offset, range, fwdBwdData);
+}
+
+bool DbTraceDataBase::QueryP2PCommunicationOpData(const std::string &rankId, uint64_t offset,
+    const ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData)
+{
+    auto stmt = CreatPreparedStatement(QUERY_P2P_COMMUNICATION_OP_DB_SQL);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for query p2p communication op data in the DB scenario.");
+        return false;
+    }
+    return TraceDatabaseHelper::ExecuteQueryP2POpData(std::move(stmt), rankId, offset, range, p2pOpData);
 }
 }

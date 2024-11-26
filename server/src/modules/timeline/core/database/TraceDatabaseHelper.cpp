@@ -803,12 +803,12 @@ void TraceDatabaseHelper::CalculateFwdBwdDataByFlow(const FlowStartAndEndTime &s
     Protocol::ThreadTraces fwdTrace = {
         .name = std::to_string(index), .duration = end.sEndTime - start.sStartTime, // no overflow occurs
         .startTime = start.sStartTime, .endTime = end.sEndTime, .depth = 0,
-        .threadId = "FWDBWD", .pid = rankId,  .id = "", .cname = "FWD"
+        .threadId = LANE_FP_BP, .pid = rankId,  .id = "", .cname = MARKER_FP
     };
     Protocol::ThreadTraces bwdTrace = {
         .name = std::to_string(index), .duration = start.fEndTime - end.fStartTime, // no overflow occurs
         .startTime = end.fStartTime, .endTime = start.fEndTime, .depth = 0,
-        .threadId = "FWDBWD", .pid = rankId,  .id = "", .cname = "BWD"
+        .threadId = LANE_FP_BP, .pid = rankId,  .id = "", .cname = MARKER_BP
     };
     fwdBwdData.push_back(fwdTrace);
     fwdBwdData.push_back(bwdTrace);
@@ -820,10 +820,11 @@ void TraceDatabaseHelper::CalculateFwdBwdDataByFlow(const FlowStartAndEndTime &s
 // 前向的起点应该是first中前向开始时间sStartTime，终点应该是last中前向的结束时间sEndTime
 // 反向的起点应该是last中反向开始世家fStartTime，终点应该是first中反向的结束时间fEndTime
 // 计算完成后tmp变成新的first，即开始新的前反向
-bool TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePreparedStatement> stmt, uint64_t offset,
-    const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData)
+bool TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePreparedStatement> stmt,
+    const std::string &rankId, uint64_t offset, const Protocol::ExtremumTimestamp &range,
+    std::vector<Protocol::ThreadTraces> &fwdBwdData)
 {
-    auto resultSet = stmt->ExecuteQuery(offset, offset, offset, offset);
+    auto resultSet = stmt->ExecuteQuery(range.minTimestamp, range.maxTimestamp, offset, offset, offset, offset);
     if (resultSet == nullptr) {
         Server::ServerLog::Error("Failed to get result set for query fwd/bwd data.", stmt->GetErrorMessage());
         return false;
@@ -859,6 +860,38 @@ bool TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::unique_ptr<SqlitePre
         CalculateFwdBwdDataByFlow(first, last, index, rankId, fwdBwdData);
     }
 
+    return true;
+}
+
+bool TraceDatabaseHelper::ExecuteQueryP2POpData(std::unique_ptr<SqlitePreparedStatement> stmt,
+    const std::string &rankId, uint64_t offset, const ExtremumTimestamp &range,
+    std::vector<Protocol::ThreadTraces> &p2pOpData)
+{
+    if (stmt == nullptr || rankId.empty()) {
+        Server::ServerLog::Error("Failed to query p2p operator data due to null statement or empty rand id.");
+        return false;
+    }
+    auto resultSet = stmt->ExecuteQuery(offset, range.minTimestamp, range.maxTimestamp);
+    if (resultSet == nullptr) {
+        Server::ServerLog::Error("Failed to get result set for query fwd/bwd data.", stmt->GetErrorMessage());
+        return false;
+    }
+    while (resultSet->Next()) {
+        Protocol::ThreadTraces tmp{};
+        tmp.pid = resultSet->GetString("pid");
+        tmp.threadId = resultSet->GetString("tid");
+        tmp.name = resultSet->GetString("name");
+        tmp.startTime = resultSet->GetUint64("startTime");
+        tmp.duration = resultSet->GetUint64("duration");
+        if (StringUtil::StartWith(tmp.name, "hcom_send")) {
+            tmp.cname = MARKER_SEND;
+        } else if (StringUtil::StartWith(tmp.name, "hcom_recv")) {
+            tmp.cname = MARKER_RECV;
+        } else {
+            tmp.cname = MARKER_BATCH_SEND_RECV;
+        }
+        p2pOpData.push_back(tmp);
+    }
     return true;
 }
 

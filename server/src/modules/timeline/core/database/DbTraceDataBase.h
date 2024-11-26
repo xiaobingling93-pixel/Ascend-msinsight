@@ -125,8 +125,10 @@ public:
     void GenerateOverlapAnalysis();
     static std::string GetStringCacheValue(const std::string& path, std::string key);
     static void Reset();
-    bool QueryFwdBwdDataByFlow(int64_t offset,
-                               const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData) override;
+    bool QueryFwdBwdDataByFlow(const std::string &rankId, uint64_t offset, const Protocol::ExtremumTimestamp &range,
+        std::vector<Protocol::ThreadTraces> &fwdBwdData) override;
+    bool QueryP2PCommunicationOpData(const std::string &rankId, uint64_t offset,
+        const Protocol::ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData) override;
 
 private:
     const uint32_t cacheSize = 5000;

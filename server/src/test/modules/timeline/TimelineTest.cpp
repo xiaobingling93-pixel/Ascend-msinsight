@@ -8,6 +8,7 @@
 #include "../../TestSuit.cpp"
 #include "cmath"
 #include "TimelineTestUtil.h"
+#include "TraceDatabaseHelper.h"
 #include "RenderEngine.h"
 #include "DataEngine.h"
 #include "RepositoryFactory.h"
@@ -819,4 +820,16 @@ TEST_F(TestSuit, QueryEventsViewData4OverlapComputing)
     EXPECT_EQ(ptr->processId, "14083661700");
     EXPECT_EQ(ptr->threadId, "0");
     EXPECT_EQ(ptr->depth, 0);
+}
+
+TEST_F(TestSuit, QueryP2PCommunicationOpDataTest)
+{
+    auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetTraceDatabase("0");
+    std::vector<Protocol::ThreadTraces> p2pOpData{};
+    Protocol::ExtremumTimestamp range = {0, (uint64_t)INT64_MAX};
+    bool result = database->QueryP2PCommunicationOpData("0", 0, range, p2pOpData);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(p2pOpData.size(), 1);
+    EXPECT_EQ(p2pOpData.at(0).name, "hcom_send__822_0");
+    EXPECT_EQ(p2pOpData.at(0).cname, MARKER_SEND);
 }

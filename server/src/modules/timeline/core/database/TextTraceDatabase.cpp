@@ -1605,15 +1605,26 @@ std::string TextTraceDatabase::QueryHostInfo()
     return host;
 }
 
-bool TextTraceDatabase::QueryFwdBwdDataByFlow(int64_t offset, const std::string &rankId,
-                                              std::vector<Protocol::ThreadTraces> &fwdBwdData)
+bool TextTraceDatabase::QueryFwdBwdDataByFlow(const std::string &rankId, uint64_t offset,
+    const Protocol::ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &fwdBwdData)
 {
     auto stmt = CreatPreparedStatement(QUERY_FWDBWD_FLOW_DATA_TEXT_SQL);
     if (stmt == nullptr) {
         ServerLog::Error("Failed to prepare sql for query fwd/bwd data by flow in the TEXT scenario.");
         return false;
     }
-    return TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::move(stmt), offset, rankId, fwdBwdData);
+    return TraceDatabaseHelper::ExecuteQueryFwdBwdDataByFlow(std::move(stmt), rankId, offset, range, fwdBwdData);
+}
+
+bool TextTraceDatabase::QueryP2PCommunicationOpData(const std::string &rankId, uint64_t offset,
+    const ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData)
+{
+    auto stmt = CreatPreparedStatement(QUERY_P2P_COMMUNICATION_OP_TEXT_SQL);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to prepare sql for query p2p communication op data in the TEXT scenario.");
+        return false;
+    }
+    return TraceDatabaseHelper::ExecuteQueryP2POpData(std::move(stmt), rankId, offset, range, p2pOpData);
 }
 } // end of namespace Timeline
   // end of namespace Module

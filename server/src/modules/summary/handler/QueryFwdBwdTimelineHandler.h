@@ -18,8 +18,8 @@ public:
     ~QueryFwdBwdTimelineHandler() = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
-    bool QueryFwdBwdTimelineByRank(const std::string& rankId, PipelineFwdBwdTimelineByRank &data,
-        PipelineFwdBwdTimelineResponseBody &responseBody);
+    bool QueryFwdBwdTimelineByRank(const std::string &rankId, const std::string &stepId,
+        PipelineFwdBwdTimelineByRank &data, PipelineFwdBwdTimelineResponseBody &responseBody);
 };
 
 } // Dic::Module::Summary

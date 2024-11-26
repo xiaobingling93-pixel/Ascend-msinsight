@@ -115,8 +115,10 @@ public:
     bool QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
         uint64_t minTimestamp) override;
     std::string QueryHostInfo() override;
-    bool QueryFwdBwdDataByFlow(int64_t offset,
-                               const std::string &rankId, std::vector<Protocol::ThreadTraces> &fwdBwdData) override;
+    bool QueryFwdBwdDataByFlow(const std::string &rankId, uint64_t offset, const Protocol::ExtremumTimestamp &range,
+        std::vector<Protocol::ThreadTraces> &fwdBwdData) override;
+    bool QueryP2PCommunicationOpData(const std::string &rankId, uint64_t offset,
+        const Protocol::ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData) override;
 
 private:
     const std::string sliceTable = "slice";
