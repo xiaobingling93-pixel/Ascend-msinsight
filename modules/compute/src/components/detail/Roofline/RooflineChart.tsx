@@ -55,6 +55,7 @@ const baseOption: any = {
         },
         top: 30,
         left: 'center',
+        itemGap: 15,
     },
     grid: {
         bottom: '30',
