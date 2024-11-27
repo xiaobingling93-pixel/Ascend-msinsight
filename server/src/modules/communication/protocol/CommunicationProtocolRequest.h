@@ -45,6 +45,18 @@ struct OperatorDetailsParam {
         }
         return true;
     }
+
+    OperatorDetailsParam() = default;
+    OperatorDetailsParam(const OperatorDetailsParam& param)
+    {
+        this->iterationId = param.iterationId;
+        this->rankId = param.rankId;
+        this->orderBy = param.orderBy;
+        this->order = param.order;
+        this->stage = param.stage;
+        this->pageSize = param.pageSize;
+        this->currentPage = param.currentPage;
+    }
 };
 
 struct OperatorDetailsRequest : public Request {
@@ -166,6 +178,17 @@ struct OperatorNamesParams {
         }
         return true;
     }
+
+    OperatorNamesParams() = default;
+    OperatorNamesParams(const OperatorNamesParams &params)
+    {
+        this->dbIndex = params.dbIndex;
+        this->iterationId = params.iterationId;
+        for (const auto &item: params.rankList) {
+            this->rankList.push_back(item);
+        }
+        this->stage = params.stage;
+    }
 };
 
 struct OperatorNamesRequest  : public Request {
@@ -200,6 +223,18 @@ struct DurationListParams {
             return false;
         }
         return true;
+    }
+
+    DurationListParams() = default;
+    DurationListParams(const DurationListParams& params)
+    {
+        this->dbIndex = params.dbIndex;
+        this->iterationId = params.iterationId;
+        this->operatorName = params.operatorName;
+        this->stage = params.stage;
+        for (const auto &item: params.rankList) {
+            this->rankList.push_back(item);
+        }
     }
 };
 

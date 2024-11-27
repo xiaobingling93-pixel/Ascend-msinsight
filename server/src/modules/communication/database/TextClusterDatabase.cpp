@@ -680,25 +680,24 @@ bool TextClusterDatabase::QueryAllOperators(Protocol::OperatorDetailsParam &para
         "    SELECT op_name, "
         "    MAX(CASE WHEN transport_type = 'SDMA' THEN bandwidth_size ELSE 0 END) AS sdma_bw, "
         "    MAX(CASE WHEN transport_type = 'RDMA' THEN bandwidth_size ELSE 0 END) AS rdma_bw "
-        "    FROM " + TABLE_BANDWIDTH + " b "
-        "    LEFT JOIN " + TABLE_GROUP_ID + " g ON b.stage_id = g.id"
-        "    WHERE iteration_id = ? AND rank_id = ? AND g.group_id = ? AND op_name != 'Total Op Info' "
+        "    FROM " + TABLE_BANDWIDTH +
+        "    WHERE iteration_id = ? AND rank_id = ? AND stage_id = ? AND op_name != 'Total Op Info' "
         "    GROUP BY op_name "
         ") bw ON t.op_name = bw.op_name "
-        " LEFT JOIN " + TABLE_GROUP_ID + " tg ON t.stage_id = tg.id"
-        " WHERE t.iteration_id = ? AND t.rank_id = ? AND tg.group_id = ? AND t.op_name != 'Total Op Info'";
-    return ExecuteQueryAllOperators(param, resBody, sql, startTime);
+        " WHERE t.iteration_id = ? AND t.rank_id = ? AND t.stage_id = ? AND t.op_name != 'Total Op Info'";
+    // 深拷贝避免修改原param中的内容
+    Protocol::OperatorDetailsParam copyParam(param);
+    copyParam.stage = GetStageIdByGroupId(copyParam.stage);
+    return ExecuteQueryAllOperators(copyParam, resBody, sql, startTime);
 }
 
 bool TextClusterDatabase::QueryOperatorsCount(Protocol::OperatorDetailsParam &param,
     Protocol::OperatorDetailsResBody &resBody)
 {
-    std::string sql = "SELECT op_name, count(*) AS nums  from "
-    " (SELECT t.op_name as op_name, g.group_id as stage_id, t.iteration_id as iteration_id, t.rank_id as rank_id FROM "
-    + TABLE_TIME_INFO + " t"
-    " LEFT JOIN " + TABLE_GROUP_ID + " g ON t.stage_id = g.id)"
-    " where 1=1 ";
-    return ExecuteQueryOperatorsCount(param, resBody, sql);
+    std::string sql = "SELECT op_name, count(*) AS nums from " + TABLE_TIME_INFO + " where 1=1 ";
+    Protocol::OperatorDetailsParam copyParam(param);
+    copyParam.stage = GetStageIdByGroupId(copyParam.stage);
+    return ExecuteQueryOperatorsCount(copyParam, resBody, sql);
 }
 
 bool TextClusterDatabase::QueryBandwidthData(Protocol::BandwidthDataParam &param,
@@ -741,19 +740,19 @@ bool TextClusterDatabase::QueryOperatorNames(Protocol::OperatorNamesParams &requ
     std::string sql;
     if (rankList.empty()) {
         sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + TABLE_TIME_INFO + " t"
-                " LEFT JOIN " + TABLE_GROUP_ID + " tg ON t.stage_id = tg.id"
                 " WHERE iteration_id = ?" +
-                " AND tg.group_id = ?" +
+                " AND stage_id = ?" +
                 " ORDER BY op_name)";
     } else {
         std::string ranks = GetRanksSql(rankList);
         sql = "SELECT DISTINCT op_name FROM (SELECT op_name FROM " + TABLE_TIME_INFO + " t"
-                " LEFT JOIN " + TABLE_GROUP_ID + " tg ON t.stage_id = tg.id"
                 " WHERE iteration_id = ?" +
-                " AND tg.group_id = ?" +
+                " AND stage_id = ?" +
                 " AND rank_id IN " + ranks + " ORDER BY op_name)";
     }
-    return ExecuteQueryOperatorNames(requestParams, responseBody, sql);
+    Protocol::OperatorNamesParams copyParams(requestParams);
+    copyParams.stage = GetStageIdByGroupId(copyParams.stage);
+    return ExecuteQueryOperatorNames(copyParams, responseBody, sql);
 }
 
 bool TextClusterDatabase::QueryMatrixSortOpNames(Protocol::OperatorNamesParams &requestParams,
@@ -799,14 +798,34 @@ bool TextClusterDatabase::QueryDurationList(Protocol::DurationListParams &reques
         "    MAX(CASE WHEN transport_type = 'RDMA' THEN bandwidth_size ELSE 0 END) AS rdma_bw, "
         "    MAX(CASE WHEN transport_type = 'SDMA' THEN transit_time ELSE 0 END) AS sdma_time, "
         "    MAX(CASE WHEN transport_type = 'RDMA' THEN transit_time ELSE 0 END) AS rdma_time "
-        "    FROM " + TABLE_BANDWIDTH + " b "
-        "    LEFT JOIN " + TABLE_GROUP_ID + " g ON b.stage_id = g.id"
-        "    WHERE iteration_id = ? AND g.group_id = ? AND op_name = ? " + rankSql +
+        "    FROM " + TABLE_BANDWIDTH +
+        "    WHERE iteration_id = ? AND stage_id = ? AND op_name = ? " + rankSql +
         "    GROUP BY rank_id "
         ") bw ON t.rank_id = bw.rank_id"
-        " LEFT JOIN " + TABLE_GROUP_ID + " tg ON t.stage_id = tg.id"
-        " WHERE t.iteration_id = ? AND tg.group_id = ? AND t.op_name = ? " + rankSqlTime;
-    return ExecuteQueryDurationList(requestParams, responseBody, sql, startTime);
+        " WHERE t.iteration_id = ? AND t.stage_id = ? AND t.op_name = ? " + rankSqlTime;
+    Protocol::DurationListParams copyParams(requestParams);
+    copyParams.stage = GetStageIdByGroupId(copyParams.stage);
+    return ExecuteQueryDurationList(copyParams, responseBody, sql, startTime);
+}
+
+std::string TextClusterDatabase::GetStageIdByGroupId(const std::string &groupId)
+{
+    if (groupId.empty()) {
+        return "";
+    }
+    std::string sql = "SELECT id From " + TABLE_GROUP_ID + " WHERE group_id = ?";
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Get stage id by group id failed to prepare sql.");
+        return "";
+    }
+    std::unique_ptr<SqliteResultSet> resultSet;
+    resultSet = stmt->ExecuteQuery(groupId);
+    std::string stageId;
+    if (resultSet->Next()) {
+        stageId = resultSet->GetString("id");
+    }
+    return stageId;
 }
 
 bool TextClusterDatabase::QueryOperatorList(Protocol::DurationListParams &requestParams,
@@ -815,9 +834,8 @@ bool TextClusterDatabase::QueryOperatorList(Protocol::DurationListParams &reques
     std::string sql =
         "SELECT rank_id, op_name,"
         " CASE WHEN start_time = 0 THEN 0 ELSE (start_time - ?) END as startTime,"
-        " (elapse_time * 1000000) as elapse_time From " + TABLE_TIME_INFO + " T"
-        " LEFT JOIN " + TABLE_GROUP_ID + " tg ON t.stage_id = tg.id"
-        " WHERE iteration_id = ? AND tg.group_id = ? AND op_name <> 'Total Op Info'";
+        " (elapse_time * 1000000) as elapse_time From " + TABLE_TIME_INFO +
+        " WHERE iteration_id = ? AND stage_id = ? AND op_name <> 'Total Op Info'";
     std::vector<std::string> rankList = requestParams.rankList;
     if (!rankList.empty()) {
         std::string ranks = GetRanksSql(rankList);
@@ -828,7 +846,9 @@ bool TextClusterDatabase::QueryOperatorList(Protocol::DurationListParams &reques
     }
     sql += " ORDER by CAST(rank_id AS UNSIGNED) ASC";
     uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
-    return ExecuteQueryOperatorList(requestParams, responseBody, sql, startTime);
+    Protocol::DurationListParams copyParams(requestParams);
+    copyParams.stage = GetStageIdByGroupId(copyParams.stage);
+    return ExecuteQueryOperatorList(copyParams, responseBody, sql, startTime);
 }
 
 void TextClusterDatabase::PrepareForStageId(std::string &stageIdStr, std::string &sql,

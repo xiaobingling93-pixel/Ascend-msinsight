@@ -23,12 +23,45 @@ const DEFAULT_CHART_ZOOM_HEIGHT = 400;
 const MIN_CHART_ITEM_HEIGHT = 30;
 const MAX_CHART_HEIGHT = 800;
 const NS_TO_MS_FACTOR = 0.000001;
+// HCCL缩略图初始化最大可见rank数量
+const INITINAL_MAX_VISIBLE_RANK_NUMBER = 516;
+// HCCL缩略图初始化最大可见算子数
+const MAX_VISIBLE_OPERATOR_NUMBER = 10000;
+
+function initDataZoom(totalNum: number, dataLength: number): void {
+    if (dataLength <= 0 || totalNum <= 0 || option.dataZoom.length <= 1) {
+        return;
+    }
+    // 计算HCCL缩略图纵轴显示范围，限定最多显示516列，如果rank数量超过516则计算比例，计算 范围 = (516 ÷ rank数量) * 100
+    // 显示区间为[100 - 范围, 100]
+    if (dataLength > INITINAL_MAX_VISIBLE_RANK_NUMBER) {
+        const yPercentage = Math.ceil(INITINAL_MAX_VISIBLE_RANK_NUMBER / dataLength * 100);
+        option.dataZoom[1].start = 100 - yPercentage;
+        option.dataZoom[1].end = 100;
+    } else {
+        option.dataZoom[1].start = 0;
+        option.dataZoom[1].end = 100;
+    }
+    // 计算HCCL缩略图横轴显示范围，限定最多显示10000条（10000是估值，实际显示范围会有所波动），计算 范围 = (10000 ÷ 数据总量) * 100
+    // 显示区间为[0, 范围]
+    if (totalNum > MAX_VISIBLE_OPERATOR_NUMBER) {
+        const xPercentage = Math.ceil(MAX_VISIBLE_OPERATOR_NUMBER / totalNum * 100);
+        option.dataZoom[0].start = 0;
+        option.dataZoom[0].end = xPercentage;
+    } else {
+        option.dataZoom[0].start = 0;
+        option.dataZoom[0].end = 100;
+    }
+}
+
 function wrapData(dataSource: AnalysisChartData): any {
     const data: any = [];
     const yAxisData: string[] = [];
     const dataLength = Math.max(dataSource?.data?.length, 0);
     const theme = themeInstance.getThemeType();
+    let totalNumber = 0;
     for (let i = dataLength - 1; i >= 0; --i) {
+        totalNumber += dataSource.data[i].lists.length;
         const rankId = dataSource.data[i].rankId;
         yAxisData.push(rankId);
         dataSource.data[i].lists?.forEach((item, _) => {
@@ -54,6 +87,7 @@ function wrapData(dataSource: AnalysisChartData): any {
     const dataHeight = calculateDataHeight(dataSource);
     option.grid.height = dataHeight;
     option.dataZoom[0].top = dataHeight - DEFAULT_INNER_CHART_HEIGHT + DEFAULT_CHART_ZOOM_HEIGHT;
+    initDataZoom(totalNumber, dataLength);
     option.series[0].data = data;
     return option;
 }
@@ -117,7 +151,6 @@ const option: any = {
             return tooltipMarkup;
         },
     },
-
     dataZoom: [
         {
             type: 'slider',
@@ -125,6 +158,8 @@ const option: any = {
             showDataShadow: false,
             top: DEFAULT_CHART_ZOOM_HEIGHT,
             labelFormatter: '',
+            start: 0,
+            end: 100,
         },
         {
             type: 'slider',
@@ -133,6 +168,8 @@ const option: any = {
             left: '95%',
             yAxisIndex: 0,
             labelFormatter: '',
+            start: 0,
+            end: 100,
         },
         {
             type: 'inside',

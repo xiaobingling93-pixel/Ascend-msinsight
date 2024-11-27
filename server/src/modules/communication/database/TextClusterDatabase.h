@@ -95,6 +95,7 @@ private:
     std::string GetMatrixStmtSql(int len);
 
     std::string BuildCondition(const Protocol::SummaryTopRankParams &requestParams);
+    std::string GetStageIdByGroupId(const std::string &groupId);
 };
 } // end of namespace Module
 } // end of namespace Dic

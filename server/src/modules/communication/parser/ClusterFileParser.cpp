@@ -225,7 +225,8 @@ bool ClusterFileParser::ParseClusterStep2Files(const std::string &selectedPath)
             ServerLog::Warn("Copy and clear matrix temp file failed.");
         }
     }
-    return TransCommunicationToDb(selectedPath, patternCommunication);
+    auto res = TransCommunicationToDb(selectedPath, patternCommunication);
+    return res;
 }
 
 bool ClusterFileParser::TransCommunicationToDb(const std::string &selectedPath, const std::regex &patternCommunication)

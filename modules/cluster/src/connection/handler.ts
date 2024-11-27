@@ -4,7 +4,7 @@
 import { store } from '../store';
 import { runInAction } from 'mobx';
 import type { NotificationHandler } from './defs';
-import { updateData } from '../components/communication/Filter';
+import { updateData, AnalysisType } from '../components/communication/Filter';
 import type { ConditionDataType } from '../components/communication/Filter';
 import i18n from 'ascend-i18n';
 import type { communicatorContainerData } from '../components/communicatorContainer/ContainerUtils';
@@ -82,7 +82,7 @@ export const locateHCCL: NotificationHandler = (data): void => {
         iterationId,
         stage,
         operatorName: iterationId && stage && operatorName,
-        type: 'CommunicationDurationAnalysis',
+        type: AnalysisType.COMMUNICATION_DURATION_ANALYSIS,
     });
 };
 

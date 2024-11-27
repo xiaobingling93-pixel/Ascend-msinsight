@@ -19,14 +19,16 @@ export interface ConditionDataType {
     iterationId: string ;
     stage: string;
     operatorName: string ;
-    type: string;
+    type: AnalysisType;
 }
 export const totalOperator = 'Total Op Info';
+export enum AnalysisType { COMMUNICATION_DURATION_ANALYSIS = 'CommunicationDurationAnalysis', COMMUNICATION_MATRIX = 'CommunicationMatrix' };
+
 const defaultCondition = {
     iterationId: '',
     stage: '',
     operatorName: '',
-    type: 'CommunicationMatrix',
+    type: AnalysisType.COMMUNICATION_MATRIX,
 };
 const defaultOptionMap = {
     iterationOptions: [],
@@ -186,7 +188,7 @@ const getStageOptions = async (iterationId: string, session: Session): Promise<o
 const getOperatorOptions = async ({ iterationId, rankList, stage, type }: {iterationId: string;
     rankList: string[]; stage: string;type: string;}):
 Promise<optionDataType[]> => {
-    const res: {operatorName: string[] } = (type === 'CommunicationDurationAnalysis'
+    const res: {operatorName: string[] } = (type === AnalysisType.COMMUNICATION_DURATION_ANALYSIS
         ? await queryOperators({ iterationId, rankList, stage })
         : await queryMatrixOperators({ iterationId, stage }));
     const list = res?.operatorName ?? [];
@@ -289,8 +291,8 @@ function FilterCom({ optionMap, condition, handleChange }: IcomProps): JSX.Eleme
                 onChange={(e: RadioChangeEvent): void => {
                     handleChange('type', e.target.value);
                 }}>
-                <Radio value={'CommunicationMatrix'}>{t('searchCriteria.CommunicationMatrix')}</Radio>
-                <Radio value={'CommunicationDurationAnalysis'}>{t('searchCriteria.CommunicationDurationAnalysis')}</Radio>
+                <Radio value={AnalysisType.COMMUNICATION_MATRIX}>{t('searchCriteria.CommunicationMatrix')}</Radio>
+                <Radio value={AnalysisType.COMMUNICATION_DURATION_ANALYSIS}>{t('searchCriteria.CommunicationDurationAnalysis')}</Radio>
             </Radio.Group>)}/>
         <div>
         </div>
