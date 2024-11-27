@@ -95,6 +95,16 @@ public:
         }
         return level;
     }
+
+    std::string JoinExtraColName(const std::vector<std::string> &cols)
+    {
+        std::string pmuColumnNames;
+        if (!cols.empty()) {
+            pmuColumnNames = ",";
+            pmuColumnNames += StringUtil::join(cols, ',');
+        }
+        return pmuColumnNames;
+    }
 };
 }
 

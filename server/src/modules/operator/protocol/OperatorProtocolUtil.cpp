@@ -133,6 +133,11 @@ void AdDetaildMemberWithLabel(rapidjson::Value& parent, const char* label, const
     JsonUtil::AddMember(dataJson, "outputShape", ele.outputShape, allocator);
     JsonUtil::AddMember(dataJson, "outputType", ele.outputType, allocator);
     JsonUtil::AddMember(dataJson, "outputFormat", ele.outputFormat, allocator);
+    for (int i = 0; i < ele.pmuDatas.size(); i++) {
+        rapidjson::Value value(ele.pmuDatas[i].c_str(), allocator);
+        rapidjson::Value key(std::to_string(i).c_str(), allocator);
+        dataJson.AddMember(key, value, allocator);
+    }
     parent.AddMember(rapidjson::Value(label, allocator).Move(), dataJson, allocator);
 }
  
@@ -145,6 +150,16 @@ std::optional<document_t> ToResponseJson<OperatorDetailInfoResponse>(const Opera
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "total", res.total, allocator);
     JsonUtil::AddMember(body, "level", res.level, allocator);
+    // 创建一个JSON数组存储pmuHeaders的数据
+    Value pmuHeaders(kArrayType);
+    // 将vector中的元素逐个添加到JSON数组中
+    for (const auto& header : res.pmuHeaders) {
+        Value headerValue;
+        headerValue.SetString(header.c_str(), header.length(), allocator);
+        pmuHeaders.PushBack(headerValue, allocator);
+    }
+    JsonUtil::AddMember(body, "pmuHeaders", pmuHeaders, allocator);
+
     rapidjson::Document data;
     data.SetArray();
     for (const OperatorDetailCmpInfoRes& eles : res.datas) {

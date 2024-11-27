@@ -11,6 +11,12 @@
 #include "OperatorProtocolResponse.h"
 
 using namespace Dic::Protocol;
+const std::vector<std::string> DETAIL_KEY = {
+    "name", "type", "accCore", "startTime", "duration", "waitTime",
+    "blockDim", "inputShape", "inputType", "inputFormat", "outputShape",
+    "outputType", "outputFormat"
+};
+
 class OperatorProtocolUtilTest : public ::testing::Test {
 protected:
     void SetUp() override
@@ -33,11 +39,13 @@ protected:
 
     void CheckOperatorDetailInfoResStruct(const Dic::json_t &item, const OperatorDetailInfoRes &res)
     {
-        std::vector<std::string> key = {
-            "name", "type", "accCore", "startTime", "duration", "waitTime", "blockDim",
-            "inputShape", "inputType", "inputFormat", "outputShape", "outputType", "outputFormat"
-        };
-        for (const auto& it : key) {
+        CheckOperatorDetailInfoPmuResStruct(item, res);
+        EXPECT_EQ(item.MemberCount(), DETAIL_KEY.size());
+    }
+
+    void CheckOperatorDetailInfoPmuResStruct(const Dic::json_t &item, const OperatorDetailInfoRes &res)
+    {
+        for (const auto& it : DETAIL_KEY) {
             EXPECT_TRUE(item.HasMember(it.c_str()));
         }
         EXPECT_EQ(item["name"].GetString(), res.name);
@@ -53,9 +61,7 @@ protected:
         EXPECT_EQ(item["outputShape"].GetString(), res.outputShape);
         EXPECT_EQ(item["outputType"].GetString(), res.outputType);
         EXPECT_EQ(item["outputFormat"].GetString(), res.outputFormat);
-        EXPECT_EQ(item.MemberCount(), key.size());
     }
-
     Dic::Protocol::OperatorProtocol operatorProtocol;
 };
 
@@ -327,6 +333,91 @@ TEST_F(OperatorProtocolUtilTest, ToOperatorDetailInfoResponseTest)
     for (const auto &item : jsonOptional.value()["body"]["data"].GetArray()) {
         CheckOperatorDetailInfoResStruct(item["diff"], response.datas[i++].diff);
     }
+}
+
+
+TEST_F(OperatorProtocolUtilTest, ToOperatorDetailInfoRequestWhenPmuDataExist)
+{
+    Dic::Protocol::OperatorDetailInfoResponse response;
+    std::string err;
+    std::vector<std::string> datas = {"1", "2", "3", "4", "5"};
+    response.pmuHeaders = {"aic_total_time", "aic_totle_cycle", "aiv_bw", "aic_bw", "aic_rate"};
+    response.datas = {
+        {
+            {"0", "1", "ApplyAdamW", "NA", "NA", "131.2", 7111.4, 1.8, 24, "", "", "", "", "", "", datas},
+            {"0", "1", "ApplyAdamW", "NA", "NA", "131.2", 7111.4, 1.8, 24, "", "", "", "", "", "", datas},
+            {"0", "1", "ApplyAdamW", "NA", "NA", "131.2", 7111.4, 1.8, 24, "", "", "", "", "", "", datas}
+        },
+        {
+            {"1", "2", "MatMul", "NA", "NA", "108.09", 1505.92, 0.05, 24, "", "", "", "", "", "", datas},
+            {"1", "2", "MatMul", "NA", "NA", "108.09", 1505.92, 0.05, 24, "", "", "", "", "", "", datas},
+            {"1", "2", "MatMul", "NA", "NA", "108.09", 1505.92, 0.05, 24, "", "", "", "", "", "", datas}
+        }
+    };
+    response.total = response.datas.size();
+    response.level = "l0";
+    std::optional<Dic::document_t> jsonOptional = operatorProtocol.ToJson(response, err);
+    jsonOptional = operatorProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+    EXPECT_EQ(jsonOptional.value()["body"]["total"], response.total);
+    EXPECT_EQ(jsonOptional.value()["body"]["level"].GetString(), response.level);
+    EXPECT_EQ(jsonOptional.value()["body"]["data"].Size(), response.datas.size());
+    EXPECT_EQ(jsonOptional.value()["body"]["pmuHeaders"].Size(), response.pmuHeaders.size());
+    int i = 0;
+    for (const auto &item : jsonOptional.value()["body"]["data"].GetArray()) {
+        CheckOperatorDetailInfoPmuResStruct(item["compare"], response.datas[i++].compare);
+    }
+}
+
+TEST_F(OperatorProtocolUtilTest, ToOperatorDetailInfoRequestWhenPmuDataNotExist)
+{
+    Dic::Protocol::OperatorDetailInfoResponse response;
+    std::string err;
+    response.pmuHeaders = {};
+    response.datas = {
+        {
+            {"0", "1", "ApplyAdamW", "NA", "NA", "131.2", 7111.4, 1.8, 24, "", "", "", "", "", "", {}},
+            {"0", "1", "ApplyAdamW", "NA", "NA", "131.2", 7111.4, 1.8, 24, "", "", "", "", "", "", {}},
+            {"0", "1", "ApplyAdamW", "NA", "NA", "131.2", 7111.4, 1.8, 24, "", "", "", "", "", "", {}}
+        },
+        {
+            {"1", "2", "MatMul", "NA", "NA", "108.09", 1505.92, 0.05, 24, "", "", "", "", "", "", {}},
+            {"1", "2", "MatMul", "NA", "NA", "108.09", 1505.92, 0.05, 24, "", "", "", "", "", "", {}},
+            {"1", "2", "MatMul", "NA", "NA", "108.09", 1505.92, 0.05, 24, "", "", "", "", "", "", {}}
+        }
+    };
+    response.total = response.datas.size();
+    response.level = "l0";
+    std::optional<Dic::document_t> jsonOptional = operatorProtocol.ToJson(response, err);
+    jsonOptional = operatorProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+    EXPECT_EQ(jsonOptional.value()["body"]["total"], response.total);
+    EXPECT_EQ(jsonOptional.value()["body"]["level"].GetString(), response.level);
+    EXPECT_EQ(jsonOptional.value()["body"]["data"].Size(), response.datas.size());
+    EXPECT_EQ(jsonOptional.value()["body"]["pmuHeaders"].Size(), response.pmuHeaders.size());
+    int i = 0;
+    for (const auto &item : jsonOptional.value()["body"]["data"].GetArray()) {
+        CheckOperatorDetailInfoPmuResStruct(item["compare"], response.datas[i++].compare);
+    }
+}
+
+TEST_F(OperatorProtocolUtilTest, ToOperatorDetailInfoRequestWhenPmuDataNotExistAndDataIsEmpty)
+{
+    Dic::Protocol::OperatorDetailInfoResponse response;
+    std::string err;
+    // empty data
+    response.total = 0;
+    response.level = "";
+    response.datas = {};
+    std::optional<Dic::document_t> jsonOptional = operatorProtocol.ToJson(response, err);
+    CheckResponseBaseStruct(jsonOptional);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("total"), true);
+    EXPECT_EQ(jsonOptional.value()["body"]["total"], response.total);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("level"), true);
+    EXPECT_EQ(jsonOptional.value()["body"]["level"].GetString(), response.level);
+    EXPECT_EQ(jsonOptional.value()["body"].HasMember("pmuHeaders"), true);
+    EXPECT_EQ(jsonOptional.value()["body"]["pmuHeaders"].Size(), response.pmuHeaders.size());
+    EXPECT_EQ(jsonOptional.value()["body"]["data"].Size(), response.datas.size());
 }
 
 TEST_F(OperatorProtocolUtilTest, ToOperatorParseStatusEventTest)

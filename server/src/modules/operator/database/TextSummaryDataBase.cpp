@@ -11,6 +11,7 @@
 
 namespace Dic::Module::Summary {
 using namespace Server;
+const std::string FIELD_AICORE_TIME = "aicore_time_us_";
 TextSummaryDataBase::TextSummaryDataBase(std::recursive_mutex &sqlMutex) : VirtualSummaryDataBase(sqlMutex) {}
 
 TextSummaryDataBase::~TextSummaryDataBase()
@@ -711,16 +712,55 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         return true;
     }
 
+    std::vector<std::string> TextSummaryDataBase::FetchPmuColumnNames()
+    {
+        std::vector<std::string> columns;
+        std::string queryColumnSql = "SELECT name "
+                                     "FROM pragma_table_info('" + TABLE_KERNEL + "') "
+                                     "WHERE cid >= ( "
+                                     "    SELECT cid "
+                                     "    FROM pragma_table_info('" + TABLE_KERNEL + "') "
+                                     "    WHERE name = '" + FIELD_AICORE_TIME + "'"
+                                     ");";
+        sqlite3_stmt *stmt = nullptr;
+        int result = sqlite3_prepare_v2(db, queryColumnSql.c_str(), -1, &stmt, nullptr);
+        if (result != SQLITE_OK) {
+            ServerLog::Error("Failed to get Detail Info. Msg:", sqlite3_errmsg(db), " ", result);
+            return columns;
+        }
+        // 执行SQL查询并处理结果
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            std::string colName = sqlite3_column_string(stmt, 0);
+            // 表头只能是字母、数字、下划线、短线、空格，不匹配不要跳过，直接返回空
+            if (!RegexUtil::RegexMatch(colName, R"(^[a-zA-Z0-9\s\-_]+$)")) {
+                ServerLog::Error("There is an SQL injection attack on this parameter. error param: %", colName);
+                sqlite3_finalize(stmt);
+                return {};
+            }
+            columns.push_back(colName);
+        }
+        // 释放资源
+        sqlite3_finalize(stmt);
+        return columns;
+    }
+
     std::string TextSummaryDataBase::GetQueryDetailBaseSql(Protocol::OperatorStatisticReqParams &reqParams,
                                                            bool isLimit)
     {
         bool isHccl = Protocol::OperatorGroupConverter::IsHccl(reqParams.group);
+        // 获取pmu数据的列用来做查询，如果pmuColumnNames为空，就表示没有pmu列需要查找
+        std::string pmuColumnNames;
+        if (!isHccl) {
+            std::vector<std::string> pmuClos = FetchPmuColumnNames();
+            pmuColumnNames = JoinExtraColName(pmuClos);
+        }
         std::string sql;
         std::string sqlTab =
                 " SELECT rank_id, step_id, name, op_type, accelerator_core,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
                 " END AS startTime, duration, wait_time, block_dim,"
-                " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats";
+                " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats " +
+                pmuColumnNames;
         std::string conditionalQuerySql =
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
@@ -799,8 +839,18 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             sqlite3_bind_int64(stmt, index++, reqParams.pageSize);
             sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
         }
+        ExecSqlGetRes(stmt, res);
+        level = OperatorGetLevel(res);
+        sqlite3_finalize(stmt);
+        return true;
+    }
+ 
+    bool TextSummaryDataBase::ExecSqlGetRes(sqlite3_stmt *stmt,
+                                            std::vector<Protocol::OperatorDetailInfoRes> &res)
+    {
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             int col = 0;
+            int columnCount = sqlite3_column_count(stmt);
             Protocol::OperatorDetailInfoRes one{};
             one.rankId = sqlite3_column_string(stmt, col++);
             one.stepId = sqlite3_column_string(stmt, col++);
@@ -817,10 +867,13 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             one.outputShape = sqlite3_column_string(stmt, col++);
             one.outputType = sqlite3_column_string(stmt, col++);
             one.outputFormat = sqlite3_column_string(stmt, col++);
+            for (int i = col; i < columnCount; i++) {
+                std::string columnValue = sqlite3_column_string(stmt, i);
+                // 注意这里不要判空，有多少存储多少，防止和pmuheaders错行
+                one.pmuDatas.emplace_back(std::move(columnValue));
+            }
             res.emplace_back(one);
         }
-        level = OperatorGetLevel(res);
-        sqlite3_finalize(stmt);
         return true;
     }
 
@@ -851,6 +904,7 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             resultData.emplace_back(tmpInfo);
         }
         response.datas = resultData;
+        response.pmuHeaders = FetchPmuColumnNames();
         return true;
     }
 
