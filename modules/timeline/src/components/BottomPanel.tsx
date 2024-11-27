@@ -139,6 +139,7 @@ const StyledMoreCard = styled(StyledCard)`
 const DetailContainer = styled.div`
     width: 100%;
     transition: width 0.5s;
+    user-select: text;
     .emptyContainer {
         height: 100%;
         display: flex;

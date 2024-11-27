@@ -49,7 +49,6 @@ const Container = styled.div`
     height: 100%;
     display: flex;
     flex-flow: nowrap;
-    user-select:text;
     background-color: ${(p): string => p.theme.bgColorDark};
     .ant-tree {
         width: 280px;

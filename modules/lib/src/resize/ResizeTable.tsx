@@ -33,13 +33,14 @@ const StyledTable = styled(Support)`
         color: ${(p): string => p.theme.textColorSecondary};
         box-shadow: inset 0 -1px 0 0 ${(p): string => p.theme.borderColorLight};
         border-bottom: none;
+        user-select: text;
     }
 
     .ant-table-thead th.ant-table-column-has-sorters:hover {
         background: ${(p): string => p.theme.bgColorLight};
     }
 
-    .ant-table-thead > tr > th, .ant-table tfoot > tr > th，.ant-table.ant-table-small .ant-table-thead > tr > th{
+    .ant-table-thead > tr > th, .ant-table tfoot > tr > th, .ant-table.ant-table-small .ant-table-thead > tr > th{
         padding: 8px;
         line-height: 16px;
         height: 32px;
@@ -63,6 +64,7 @@ const StyledTable = styled(Support)`
     .ant-table-tbody > tr > td {
         box-shadow: inset 0 -1px 0 0 ${(p): string => p.theme.borderColorLight};
         border-bottom: none;
+        user-select: text;
     }
     
     .ant-table-tbody > tr > td:has(.ant-empty) {
@@ -79,6 +81,7 @@ const StyledTable = styled(Support)`
     }
     .ant-empty-normal{
         color:${(p): string => p.theme.textColorTertiary};
+        user-select: none;
     }
 
     tr.ant-table-row.click-able:hover > td.ant-table-cell {

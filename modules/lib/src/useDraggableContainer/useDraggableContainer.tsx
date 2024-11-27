@@ -198,6 +198,7 @@ const ContainerBottom = styled(ContainerBase)`
         flex-flow: row;
         overflow: hidden;
         padding: ${(p): number | string => p.padding ?? 0}px;
+        user-select: none;
     }
 
     & > .bottomC {
@@ -205,6 +206,7 @@ const ContainerBottom = styled(ContainerBase)`
         height: ${(p): string => p.draggableWH};
         border-top: ${(p): string => p.theme.dividerColor} 2px solid;
         position: relative;
+        user-select: none;
         & > .splitLine {
             position: absolute;
             z-index: 3;
@@ -252,8 +254,10 @@ const ContainerTop = styled(ContainerBase)`
     flex-direction: column-reverse;
     .topC {
       height: calc(100vh - ${(p): string | number => p.translateXY === 0 ? p.draggableWH : p.minWH}px);
+      user-select: none;
     }
     .bottomC {
+        user-select: none;
         top: 0;
         left: 0;
         right: 0;
@@ -367,6 +371,7 @@ const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: 
             break;
     }
     moving.stat = 'moved';
+    e.preventDefault();
 };
 
 const handleMouseUp = (container: React.RefObject<HTMLDivElement>, draggable: React.RefObject<HTMLDivElement>, movingState: React.MutableRefObject<MovingState>,
