@@ -101,3 +101,19 @@ html.dark {
     color: var(--el-color-primary);
     background-color: unset;
 }
+
+.el-checkbox__inner {
+    background-color: var(--mi-bg-color);
+    border-color: var(--mi-border-color-lighter);
+}
+
+.el-checkbox__input.is-checked .el-checkbox__inner {
+    background-color: var(--mi-color-primary);
+    border-color: var(--mi-color-primary);
+}
+
+/*设置二级目录勾选框不可见、不可点击*/
+.el-tree-node__children label.el-checkbox {
+    pointer-events:none;
+    display:none;
+}

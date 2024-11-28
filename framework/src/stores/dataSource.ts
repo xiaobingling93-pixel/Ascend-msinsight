@@ -145,21 +145,27 @@ export const useDataSources = defineStore('dataSources', () => {
         }
     );
 
-    const removeAllProjects = async (): Promise<void> => {
+    const removeProjects = async (projectNameList: string[] = []): Promise<void> => {
         session.loading = true;
-        await request({ remote: LOCAL_HOST, port: PORT }, 'global', {
+        // 通知后台
+        await request({remote: LOCAL_HOST, port: PORT}, 'global', {
             command: 'files/clearProjectExplorer',
+            params: {projectNameList},
         }).finally(() => {
             session.loading = false;
         });
-        connector.send({
-            event: 'remote/reset',
-            body: {},
-            target: 'plugin',
-        });
-        session.reset(true);
-        dataSources.value = [];
-        lastDataSource.value = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
+        // 目录更新
+        dataSources.value = dataSources.value.filter(dataSource => !projectNameList.includes(dataSource.projectName));
+        // 如果删除项目包含当前打开项目或者全部删除
+        if (projectNameList.length === 0 || projectNameList.includes(lastDataSource.value.projectName)) {
+            // 通知页签
+            connector.send({ event: 'remote/reset', body: {}, target: 'plugin' });
+            await request(lastDataSource.value, 'timeline', { command: 'remote/reset' });
+            // framework重置
+            session.reset(true);
+            // 当前选中置空
+            lastDataSource.value = {remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: []};
+        }
     };
 
     // 删除单个工程
@@ -312,6 +318,6 @@ export const useDataSources = defineStore('dataSources', () => {
         initProjectName,
         checkProjectValid,
         updateProjectExplorer,
-        removeAllProjects,
+        removeProjects,
     };
 });

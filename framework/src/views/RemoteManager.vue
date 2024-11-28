@@ -1,42 +1,39 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import DeleteIcon from '@/components/icons/bin_icon.vue';
+import {ref, watch} from 'vue';
+import SetIcon from '@/components/icons/set_icon.vue';
 import ImportIcon from '@/components/icons/import_icon.vue';
 import MenuTree from '@/components/MenuTree/MenuTree.vue';
 import { useDataSources } from '@/stores/dataSource';
 import ProjectMode from '@/components/ProjectMode.vue';
 import useWatchTranslation from '@/hooks/useWatchTranslation';
 import ResourceDialog from '@/components/ResourceDialog.vue';
-import { ElMessageBox } from 'element-plus';
 import { storeToRefs } from 'pinia';
-import i18n from '@/i18n';
 
 const showModal = ref(false);
+const editStatus = ref(false);
 const dataSourcesStore = useDataSources();
 const { menuTree } = storeToRefs(dataSourcesStore);
-const { removeAllProjects } = dataSourcesStore;
-const [ImportData, DeleteAll, Cancel, Confirm] = useWatchTranslation(['Import Data', 'Delete All', 'Cancel', 'Confirm']);
+const [ImportData, Cancel, Confirm] = useWatchTranslation(['Import Data', 'Cancel', 'Confirm']);
 
 function addRemote(e: MouseEvent) {
     showModal.value = true;
 }
 
-async function handleAllDelete() {
-    await removeAllProjects();
-}
-
-const deleteAll = () => {
-    if (menuTree.value.length === 0) {
-        return;
-    }
-    ElMessageBox.confirm(i18n.t('DeleteAllConfirmDescribe'), {
-        title: DeleteAll.value,
-        confirmButtonText: Confirm.value,
-        cancelButtonText: Cancel.value,
-    }).then(() => {
-        handleAllDelete();
-    });
+// 进入/退出项目管理
+const switchEditStatus = () => {
+  if (menuTree.value.length === 0) {
+    return;
+  }
+  editStatus.value = !editStatus.value;
 };
+
+// 项目数量为空时，退出管理状态
+watch(() => [menuTree.value.length], () => {
+  if (menuTree.value.length === 0) {
+    editStatus.value = false;
+  }
+});
+
 </script>
 
 <template>
@@ -46,22 +43,20 @@ const deleteAll = () => {
     </header>
     <div class="container">
         <div class="btn-box">
-            <el-tooltip :content="DeleteAll" effect="light" :show-after="400">
-                <div :class="['btn-item', 'btn-delete', { disabled: menuTree.length === 0 }]" @click="deleteAll">
-                    <el-icon :size="16">
-                        <DeleteIcon />
-                    </el-icon>
-                </div>
-            </el-tooltip>
-
-            <div class="btn-item btn-import" @click="addRemote">
+            <div :class="['btn-item', 'btn-import']" @click="addRemote">
                 <el-icon class="icon-button" :size="16">
                     <ImportIcon />
                 </el-icon>
                 <span>{{ ImportData }}</span>
             </div>
+            <div :class="['btn-item', 'btn-set', { disabled: menuTree.length === 0 }]" @click="switchEditStatus">
+              <el-icon :size="16" v-if="!editStatus">
+                <SetIcon/>
+              </el-icon>
+              <div v-else>{{ Cancel }}</div>
+            </div>
         </div>
-        <MenuTree :dataSource="menuTree"></MenuTree>
+        <MenuTree :dataSource="menuTree" :editStatus="editStatus"></MenuTree>
     </div>
 </template>
 
@@ -106,13 +101,14 @@ header {
     transition: 0.3s;
 }
 
-.btn-delete:not(.disabled):hover {
-    color: var(--mi-color-danger);
+.btn-item:not(.disabled):hover {
+    color: var(--mi-color-primary);
     transition: 0.3s;
 }
 
-.btn-delete.disabled {
+.btn-item.disabled {
     cursor: not-allowed;
+    pointer-events: none;
     color: var(--mi-text-color-disabled);
 }
 

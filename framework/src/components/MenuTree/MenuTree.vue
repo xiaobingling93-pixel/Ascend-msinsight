@@ -15,6 +15,9 @@ import { useSession } from '@/stores/session';
 import { useCompareConfig } from '@/stores/compareConfig';
 import ContextMenu from '@/components/ContextMenu.vue';
 import { storeToRefs } from 'pinia';
+import DeleteIcon from '@/components/icons/bin_icon.vue';
+import {ElMessageBox} from 'element-plus';
+import i18n from '@/i18n';
 
 interface TreeData {
     id: string;
@@ -24,8 +27,10 @@ interface TreeData {
 
 const { session } = useSession();
 const dataSourcesStore = useDataSources();
-const { confirm } = dataSourcesStore;
+const { confirm, removeProjects } = dataSourcesStore;
 const { lastDataSource } = storeToRefs(dataSourcesStore);
+const tree = ref();
+const checkAll = ref(true);
 const showModal = ref(false);
 const projectName = ref('');
 
@@ -78,9 +83,10 @@ const menuItems = computed(() => {
     ];
 });
 
-const [DeleteAll, DeleteItem, ImportData] = useWatchTranslation(['Delete All', 'Delete Item', 'Import Data']);
+const [DeleteAll, DeleteItem, ImportData, Cancel, Confirm, All] = useWatchTranslation(['Delete All', 'Delete Item', 'Import Data', 'Cancel', 'Confirm', 'All']);
 const props = defineProps<{
     dataSource: TreeNodeType[];
+    editStatus: boolean;
 }>();
 
 const activateNode = computed(() => ({ projectName: lastDataSource.value.projectName, filePath: lastDataSource.value.dataPath[0] }));
@@ -147,9 +153,53 @@ const customNodeClass = (data: TreeData) => {
         return null;
     }
 };
+
+// 进入管理模式，默认选中全部
+watch(() => [props.editStatus], () => {
+  tree.value.setCheckedKeys(allKeys.value);
+  checkAll.value = true;
+});
+// 选中的项目
+const checkedProjectKeys = computed((): string[] => tree.value.getCheckedKeys().filter((key: string) => allKeys.value.includes(key)));
+
+// 全选、取消全选
+const handleCheckAllChange = (val: boolean) => {
+  if (val) {
+    tree.value.setCheckedKeys(allKeys.value);
+  } else {
+    tree.value.setCheckedKeys([]);
+  }
+};
+
+// 更新全选状态
+const handleCheckChange = () => {
+  checkAll.value = checkedProjectKeys.value.length > 0 && checkedProjectKeys.value.length === allKeys.value.length;
+};
+
+// 删除项目
+const handleDeleteChecked = () => {
+  ElMessageBox.confirm(i18n.t('DeleteConfirmDescribe'), {
+    title: DeleteItem.value,
+    confirmButtonText: Confirm.value,
+    cancelButtonText: Cancel.value,
+  }).then(async () => {
+    await removeProjects(checkedProjectKeys.value);
+    // 抵消组件自动选中
+    tree.value.setCheckedKeys([]);
+  });
+};
+
 </script>
 <template>
     <ContextMenu :menu-items="menuItems">
+      <div class="manage-box" v-if="editStatus">
+        <el-checkbox v-model="checkAll" @change="handleCheckAllChange">{{ All }}</el-checkbox>
+        <div :class="['btn-item', 'btn-delete', { disabled: checkedProjectKeys.length === 0 }]" @click="handleDeleteChecked">
+          <el-icon :size="16">
+            <DeleteIcon />
+          </el-icon>
+        </div>
+      </div>
         <div class="menu-tree">
             <el-tree
                 :data="props.dataSource"
@@ -160,6 +210,9 @@ const customNodeClass = (data: TreeData) => {
                 @node-expand="handleNodeExpand"
                 @node-collapse="handleNodeCollapse"
                 @node-click="handleNodeClick"
+                :show-checkbox="props.editStatus"
+                @check-change="handleCheckChange"
+                ref="tree"
             >
                 <template #default="{ node, data }">
                     <div :class="['content-node', { 'activate-node': isActiveNode(node, data) }]">
@@ -260,5 +313,34 @@ const customNodeClass = (data: TreeData) => {
 }
 .is-comparison > .el-tree-node__content .content-node-text {
     color: var(--mi-color-warning);
+}
+
+.manage-box {
+  padding: 0 8px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+}
+
+.btn-delete:not(.disabled):hover {
+  color: var(--mi-color-danger);
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.btn-delete.disabled {
+  cursor: default;
+  color: var(--mi-text-color-disabled);
+}
+
+.btn-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: var(--mi-bg-color-common);
+  border-radius: var(--mi-border-radius-small);
+  cursor: pointer;
+  font-size: 12px;
 }
 </style>

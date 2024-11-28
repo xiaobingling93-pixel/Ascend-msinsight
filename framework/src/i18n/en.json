@@ -8,6 +8,7 @@
         "Delete All": "Delete All",
         "Delete Item": "Delete Item",
         "DeleteAllConfirmDescribe": "Are you sure to delete all projects?",
+        "DeleteConfirmDescribe": "Are you sure to delete these projects?",
         "DeleteProjectConfirmDescribe": "Are you sure to delete this project?",
         "DeleteItemConfirmDescribe": "Are you sure to delete this item?",
         "File Explorer": "File Explorer",
@@ -34,7 +35,8 @@
         "Set Comparison Data Out Of Range": "Set Comparison Data Out Of Range!",
         "Set baseline first": "Please set baseline first!",
         "Baseline Conflict": "Can't set baseline and comparison data to be the same",
-        "PathNotFound": "The file at path '{{path}}' was not found"
+        "PathNotFound": "The file at path '{{path}}' was not found",
+        "All": "All"
     },
     "tabs": {
         "Timeline": "Timeline",
