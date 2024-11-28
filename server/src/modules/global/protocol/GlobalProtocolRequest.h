@@ -56,7 +56,10 @@ struct ProjectExplorerInfoDeleteRequest : public Request {
     ProjectExplorerInfoDeleteParams params;
 };
 
-struct ProjectExplorerInfoClearParams {};
+struct ProjectExplorerInfoClearParams {
+    std::vector<std::string> projectNameList;
+};
+
 struct ProjectExplorerInfoClearRequest : public Request {
     ProjectExplorerInfoClearRequest(): Request(REQ_RES_PROJECT_EXPLORER_CLEAR) {}
     ProjectExplorerInfoClearParams params;

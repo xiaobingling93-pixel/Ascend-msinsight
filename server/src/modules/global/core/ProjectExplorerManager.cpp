@@ -40,7 +40,12 @@ std::vector<ProjectExplorerInfo> ProjectExplorerManager::QueryProjectExplorer(
         Server::ServerLog::Error("Failed to open database. path:", systemMemoryDbPath);
         return {};
     }
-    std::vector<ProjectExplorerInfo> res =  db->QueryProjectExplorerData(projectName, std::vector<std::string>());
+    std::vector<std::string> projectNameList;
+    if (!projectName.empty()) {
+        projectNameList.push_back(projectName);
+    }
+    std::vector<ProjectExplorerInfo> res =
+        db->QueryProjectExplorerData(projectNameList, std::vector<std::string>());
     std::vector<int64_t> projectExplorerIdList;
     for (const auto &item: res) {
         projectExplorerIdList.push_back(item.id);
@@ -77,7 +82,7 @@ bool ProjectExplorerManager::SaveProjectExplorer(std::vector<ProjectExplorerInfo
     std::unique_lock<std::recursive_mutex> lock(mutex);
     db->StartTransaction();
     // 如果存在冲突，则需要清空老项目内容，如果处理失败，则事务回滚
-    if (isConflict && !db->DeleteFileMenu(projectName, std::vector<std::string>())) {
+    if (isConflict && !db->DeleteFileMenu(std::vector<std::string>{projectName}, std::vector<std::string>())) {
         db->RollbackTransaction();
         return false;
     }
@@ -99,7 +104,7 @@ bool ProjectExplorerManager::SaveProjectExplorerToDb(const std::string &projectN
         return false;
     }
     std::vector<ProjectExplorerInfo> projectExplorerInfoData =
-            db->QueryProjectExplorerData(projectName, std::vector<std::string>());
+            db->QueryProjectExplorerData(std::vector<std::string>{projectName}, std::vector<std::string>());
     if (projectExplorerInfoData.empty()) {
         return false;
     }
@@ -182,7 +187,7 @@ bool ProjectExplorerManager::DeleteProjectAndFilePath(const std::string &project
     }
 
     if (!needDeleteImportFileList.empty()) {
-        db->DeleteFileMenu(projectName, needDeleteImportFileList);
+        db->DeleteFileMenu(std::vector<std::string>{projectName}, needDeleteImportFileList);
     }
     if (!db->DeleteParsedFile(projectIdList, needDeleteParseFileIdList)) {
         return false;
@@ -207,7 +212,7 @@ ProjectErrorType ProjectExplorerManager::CheckProjectConflict(const std::string 
         return ProjectErrorType::OTHER;
     }
     std::vector<ProjectExplorerInfo> infos =
-            db->QueryProjectExplorerData(projectName, std::vector<std::string>());
+            db->QueryProjectExplorerData(std::vector<std::string>{projectName}, std::vector<std::string>());
 
     // 校验是否导入的数据是否是历史导入过的
     std::vector<std::string> curFilePathList;
@@ -272,13 +277,23 @@ bool ProjectExplorerManager::IsClusterData(const std::string &projectName)
     return false;
 }
 
-bool ProjectExplorerManager::ClearProjectExplorer()
+bool ProjectExplorerManager::ClearProjectExplorer(const std::vector<std::string> &projectNameList)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     db->StartTransaction();
-    // 删除两个表的数据
-    if (db->DeleteFileMenu("", std::vector<std::string>{}) &&
-        db->DeleteParsedFile(std::vector<int64_t>{}, std::vector<int64_t>{})) {
+    // 根据项目名获取对应的id,如果projectNameList为空，代表要清空所有内容，因此这里多个if条件可以减少一次sql查询
+    std::vector<int64_t> projectIdList;
+    if (!projectNameList.empty()) {
+        std::vector<ProjectExplorerInfo> projectInfos = db->QueryProjectExplorerData(projectNameList,
+                                                                                     std::vector<std::string>{});
+        for (const auto &item: projectInfos) {
+            projectIdList.push_back(item.id);
+        }
+    }
+
+    // 删除两个表中对应的数据
+    if (db->DeleteFileMenu(projectNameList, std::vector<std::string>{}) &&
+        db->DeleteParsedFile(projectIdList, std::vector<int64_t>{})) {
         // 删除成功，提交事务
         db->EndTransaction();
         Server::ServerLog::Info("Success to clear project explorer.");

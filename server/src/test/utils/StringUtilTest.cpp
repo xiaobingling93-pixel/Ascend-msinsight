@@ -151,3 +151,15 @@ TEST(StringUtil, SplitStringWithParenthesesByCommaTestReturnNormalWhenInputWithS
     EXPECT_EQ(result.size(), 3); // 3, a, b, c
     EXPECT_EQ(result.at(result.size() - 1), "c d");
 }
+
+TEST(StringUtil, CreateQuestionMarkStringWhenInputZero)
+{
+    auto result = StringUtil::CreateQuestionMarkString(0);
+    EXPECT_EQ(result, "");
+}
+
+TEST(StringUtil, CreateQuestionMarkStringWhenInputNotZero)
+{
+    auto result = StringUtil::CreateQuestionMarkString(5);
+    EXPECT_EQ(result, "?,?,?,?,?");
+}

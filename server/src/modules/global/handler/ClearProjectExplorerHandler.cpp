@@ -22,10 +22,15 @@ bool ClearProjectExplorerHandler::HandleRequest(std::unique_ptr<Request> request
     ProjectExplorerInfoClearResponse &response = *responsePtr;
     SetBaseResponse(request, response);
     // 清空当前已加载数据
-    ParserFactory::Reset();
-    BaselineManager::Instance().Reset();
+    std::vector<std::string> projectNameList = request.params.projectNameList;
+    bool isNeedReset = projectNameList.empty() ||
+            std::find(projectNameList.begin(), projectNameList.end(), request.projectName) != projectNameList.end();
+    if (isNeedReset) {
+        ParserFactory::Reset();
+        BaselineManager::Instance().Reset();
+    }
     // 清空db
-    bool res = ProjectExplorerManager::Instance().ClearProjectExplorer();
+    bool res = ProjectExplorerManager::Instance().ClearProjectExplorer(projectNameList);
     SetResponseResult(response, res);
     session.OnResponse(std::move(responsePtr));
     return res;

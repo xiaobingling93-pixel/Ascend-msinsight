@@ -109,6 +109,11 @@ std::unique_ptr<Request> GlobalProtocol::ToProjectExplorerInfoClearRequest(const
         error = "Failed to set request project explorer get info, command is: " + reqPtr->command;
         return nullptr;
     }
+    if (json["params"].HasMember("projectNameList") && json["params"]["projectNameList"].IsArray()) {
+        for (const auto &item : json["params"]["projectNameList"].GetArray()) {
+            reqPtr->params.projectNameList.emplace_back(item.GetString());
+        }
+    }
     return reqPtr;
 }
 

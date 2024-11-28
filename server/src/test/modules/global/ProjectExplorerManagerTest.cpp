@@ -105,7 +105,7 @@ TEST_F(ProjectExplorerManagerTest, CheckProjectConflictAndCoverData)
 TEST_F(ProjectExplorerManagerTest, ClearProjectExplorerSuccess)
 {
     InitProjectExplorerData();
-    bool result = ProjectExplorerManager::Instance().ClearProjectExplorer();
+    bool result = ProjectExplorerManager::Instance().ClearProjectExplorer(std::vector<std::string>{});
     EXPECT_EQ(result, true);
     std::vector<ProjectExplorerInfo> queryRes = ProjectExplorerManager::Instance()
             .QueryProjectExplorer("", std::vector<std::string>());

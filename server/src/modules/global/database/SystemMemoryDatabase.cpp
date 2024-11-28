@@ -132,49 +132,46 @@ bool SystemMemoryDatabase::UpdateProjectName(const std::string &oldProjectName, 
 }
 
 std::vector<ProjectExplorerInfo> SystemMemoryDatabase::QueryProjectExplorerData(
-    const std::string &projectName, const std::vector<std::string>& fileNameList)
+    const std::vector<std::string> &projectNameList, const std::vector<std::string>& fileNameList)
 {
     std::vector<ProjectExplorerInfo> res;
     std::string sql = "SELECT id, projectName, fileName, projectType, importType, dbPath FROM " + projectExplorerTable +
             " WHERE 1 = 1";
-    if (!projectName.empty()) {
-        sql += " and projectName = ?";
+    if (!projectNameList.empty()) {
+        sql += " and projectName in (" + StringUtil::CreateQuestionMarkString(projectNameList.size()) + ")";
     }
     if (!fileNameList.empty()) {
-        sql += " and fileName in (?)";
+        sql += " and fileName in (" + StringUtil::CreateQuestionMarkString(fileNameList.size()) + ")";
     }
     sql += ";";
-    sqlite3_stmt *stmt = nullptr;
-    int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-    if (result != SQLITE_OK) {
-        ServerLog::Error("Failed to query FileMenuData ! Failed to prepare sql.", sqlite3_errmsg(db));
+    auto stmt = CreatPreparedStatement(sql);
+    if (stmt == nullptr) {
+        ServerLog::Error("Failed to delete file menu, create prepared stmt failed.");
         return res;
     }
-    int index = bindStartIndex;
-    if (!projectName.empty()) {
-        sqlite3_bind_text(stmt, index++, projectName.c_str(), projectName.length(), nullptr);
+    for (const auto &item: projectNameList) {
+        stmt->BindParams(item);
     }
-    if (!fileNameList.empty()) {
-        std::string fileNameStr = StringUtil::join(fileNameList, ", ");
-        sqlite3_bind_text(stmt, index, fileNameStr.c_str(), fileNameStr.length(), nullptr);
+    for (const auto &item: fileNameList) {
+        stmt->BindParams(item);
     }
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int col = resultStartIndex;
+    auto resultSet = stmt->ExecuteQuery();
+    while (resultSet->Next()) {
         ProjectExplorerInfo info{};
-        info.id = sqlite3_column_int64(stmt, col++);
-        info.projectName = sqlite3_column_string(stmt, col++);
-        info.fileName = sqlite3_column_string(stmt, col++);
-        info.projectType = sqlite3_column_int64(stmt, col++);
-        info.importType = sqlite3_column_string(stmt, col++);
-        info.dbPath = StringUtil::Split(sqlite3_column_string(stmt, col++), ",");
+        info.id = resultSet->GetInt64("id");
+        info.projectName = resultSet->GetString("projectName");
+        info.fileName = resultSet->GetString("fileName");
+        info.projectType = resultSet->GetInt64("projectType");
+        info.importType = resultSet->GetString("importType");
+        info.dbPath = StringUtil::Split(resultSet->GetString("dbPath"), ",");
         res.emplace_back(info);
     }
-    sqlite3_finalize(stmt);
     return res;
 }
 
-bool SystemMemoryDatabase::DeleteFileMenu(const std::string &projectName, const std::vector<std::string>& fileNameList)
+bool SystemMemoryDatabase::DeleteFileMenu(const std::vector<std::string> &projectNameList,
+                                          const std::vector<std::string>& fileNameList)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
     if (!CheckTableExist(projectExplorerTable)) {
@@ -182,30 +179,26 @@ bool SystemMemoryDatabase::DeleteFileMenu(const std::string &projectName, const 
         return false;
     }
     std::string sql = "DELETE FROM " + projectExplorerTable + " WHERE 1 = 1";
-    if (!projectName.empty()) {
-        sql += " and projectName = ?";
+    if (!projectNameList.empty()) {
+        sql += " and projectName in (" + StringUtil::CreateQuestionMarkString(projectNameList.size()) + ")";
     }
     if (!fileNameList.empty()) {
-        sql += " and fileName in (?";
-        for (size_t i = 1; i < fileNameList.size(); ++i) {
-            sql += ",?";
-        }
-        sql += ")";
+        sql += " and fileName in (" + StringUtil::CreateQuestionMarkString(fileNameList.size()) + ")";
     }
     sql += ";";
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
-        ServerLog::Error("Failed to delete by project name, failed to create prepared stmt: projectName=", projectName);
+        ServerLog::Error("Failed to delete file menu, create prepared stmt failed.");
         return false;
     }
-    if (!projectName.empty()) {
-        stmt->BindParams(projectName);
+    for (const auto &item: projectNameList) {
+        stmt->BindParams(item);
     }
     for (const auto &item: fileNameList) {
         stmt->BindParams(item);
     }
     if (!stmt->Execute()) {
-        ServerLog::Error("Failed to delete info by project name: projectName=", projectName);
+        ServerLog::Error("Failed to delete file menu, execute sql failed.");
         return false;
     }
     return true;

@@ -348,28 +348,49 @@ inline static std::string DoubleToStringWithTwoDecimalPlaces(double value)
     return stream.str();
 }
 
-    static std::string GetIllegalCharacter()
-    {
-        std::string illegalCharacter;
-        for (const auto ch : injectList) {
-            illegalCharacter.push_back(ch);
-        }
-        illegalCharacter.pop_back();
-        return illegalCharacter;
+static std::string GetIllegalCharacter()
+{
+    std::string illegalCharacter;
+    for (const auto ch : injectList) {
+        illegalCharacter.push_back(ch);
     }
+    illegalCharacter.pop_back();
+    return illegalCharacter;
+}
 
-    static std::string GetPrintAbleString(const std::string &input)
-    {
-        std::string sanitized;
-        for (const auto &item : input) {
-            if (isprint(item)) {
-                sanitized += item;
-            } else {
-                sanitized += "_";
-            }
+static std::string GetPrintAbleString(const std::string &input)
+{
+    std::string sanitized;
+    for (const auto &item : input) {
+        if (isprint(item)) {
+            sanitized += item;
+        } else {
+            sanitized += "_";
         }
-        return sanitized;
     }
+    return sanitized;
+}
+
+/**
+ * 创建占位符字符串
+ *
+ * @param n 占位符数量
+ * @return 由n个占位符拼接而成的字符串，比如输入2，则输出为: ?,?
+ */
+static std::string CreateQuestionMarkString(uint64_t n)
+{
+    if (n <= 0) {
+        return "";
+    }
+    std::stringstream res;
+    for (uint64_t i = 0; i < n; ++i) {
+        res << "?";
+        if (i < n - 1) {
+            res << ",";
+        }
+    }
+    return res.str();
+}
 
 // 分隔用圆括号括起来的用逗号分割的字符串，如"(a, b, c, d)"，生成由a,b,c,d组成的数组,字符前后的空格会被删除
 static std::vector<std::string> SplitStringWithParenthesesByComma(std::string str)

@@ -31,7 +31,7 @@ public:
                              const std::map<std::string, std::vector<std::string>>& dataPathToDbMap);
     void InitSystemMemoryDbPath(const std::string &filePath);
     bool IsClusterData(const std::string &projectName);
-    bool ClearProjectExplorer();
+    bool ClearProjectExplorer(const std::vector<std::string> &projectNameList);
 
 private:
     std::string systemMemoryDbPath;

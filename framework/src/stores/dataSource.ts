@@ -149,6 +149,9 @@ export const useDataSources = defineStore('dataSources', () => {
         session.loading = true;
         await request({ remote: LOCAL_HOST, port: PORT }, 'global', {
             command: 'files/clearProjectExplorer',
+            params: {
+                projectNameList: [],
+            },
         }).finally(() => {
             session.loading = false;
         });
