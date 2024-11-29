@@ -195,6 +195,7 @@ declare module '@emotion/react' {
         textColorPlaceholder: string;
         textColorPlaceholderLight: string;
         textColorDisabled: string; // 文字禁用色
+        textColorMenu: string;
         borderColor: string; // 边框色
         borderColorLight: string;
         borderColorLighter: string;

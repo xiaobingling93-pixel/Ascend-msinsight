@@ -9,7 +9,7 @@ import type { MenuProps } from 'antd';
 import { type ModuleConfig, modulesConfig } from '../../moduleConfig';
 import styled from '@emotion/styled';
 
-const Container = styled.div` 
+const Container = styled.div`
     width: 100%;
     height: 100%;
     display: flex;
@@ -87,18 +87,14 @@ const Index = observer(({ session }: {session: Session}) => {
     }, [scene]);
     return <Container>
         <Menu onClick={onClick} selectedKeys={[activeModule]} mode="horizontal" items={items} />
-        <div className="tab-body">
-            {!session.isVscode
-                ? availableModules.map(moduleConfig => (
-                    <iframe
-                        {...moduleConfig.attributes}
-                        key={`frame-${moduleConfig.name}`}
-                        id={moduleConfig.name}
-                        style={{ display: activeModule === moduleConfig.name ? 'block' : 'none' }}
-                    />
-                ))
-                : <></>
-            }
+        <div className="tab-body">{availableModules.map(moduleConfig => (
+            <iframe
+                {...moduleConfig.attributes}
+                key={`frame-${moduleConfig.name}`}
+                id={moduleConfig.name}
+                style={{ display: activeModule === moduleConfig.name ? 'block' : 'none' }}
+            />
+        ))}
         </div>
     </Container>;
 });

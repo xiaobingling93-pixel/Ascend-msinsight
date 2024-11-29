@@ -7,9 +7,8 @@ import styled from '@emotion/styled';
 import { observer } from 'mobx-react';
 import { Tree, type TreeDataNode } from 'antd';
 import type { EventDataNode } from 'antd/lib/tree';
-import { getFiles } from '@/utils/RequestUtils';
-import { dealResource, ResourceItem, updateTreeData } from '@/utils/ResourceUtils';
-import { Session } from '@/entity/session';
+import { getFiles } from '@/utils/Request';
+import { dealResource, ResourceItem, updateTreeData } from '@/utils/Resource';
 
 const ResourceCataologContainer = styled.div`
     margin-top: 24px;
@@ -72,7 +71,6 @@ export interface SearchResult {
     };
 }
 interface IResourceProps {
-    session: Session;
     actionListener: CatalogActionListener;
     onSearchReturnChange: (val: SearchResult) => void;
     onSelectedChange: (val: string) => void;
@@ -85,6 +83,7 @@ const ResourceCatalog = observer(({ actionListener, onSearchReturnChange, onSele
     const selectedKeys = useMemo(() => [selectedPath], [selectedPath]);
 
     // 查询并跳转到对应文件
+    // Recursive，递归函数
     const searchPath = async(searchText: string = '', curLevelTree: TreeDataNode[] = [], historyRouteKeys: React.Key[] = [], depth = 0): Promise<void> => {
         // 安全防护:最大查询深度
         const maxDepth = 20;

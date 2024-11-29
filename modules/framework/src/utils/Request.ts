@@ -9,7 +9,7 @@ import { DataSource, LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
  * @returns ProjectDirectory[]
  */
 export const getHistoryProject = async (): Promise<unknown> => {
-    return request({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] }, 'global', {
+    return request({ remote: LOCAL_HOST, port: PORT }, 'global', {
         command: 'files/getProjectExplorer',
         params: {},
     });
@@ -33,5 +33,32 @@ export const checkProjectValid = async (dataSource: DataSource, params: {project
     return request(dataSource, 'global', {
         command: 'files/checkProjectValid',
         params,
+    });
+};
+
+/**
+ * 清理Timeline
+ */
+export const resetTimeline = async (dataSource: DataSource): Promise<unknown> => {
+    return request(dataSource, 'timeline', { command: 'remote/reset' });
+};
+
+/**
+ *
+ * 删除项目
+ */
+export const deleteProject = async (dataSource: DataSource): Promise<unknown> => {
+    return request(dataSource, 'global', {
+        command: 'files/deleteProjectExplorer',
+        params: { projectName: dataSource.projectName, dataPath: [] },
+    });
+};
+/**
+ * 移除文件
+ */
+export const deleteDataPath = async (dataSource: DataSource): Promise<unknown> => {
+    return request(dataSource, 'global', {
+        command: 'files/deleteProjectExplorer',
+        params: { projectName: dataSource.projectName, dataPath: dataSource.dataPath },
     });
 };

@@ -1,13 +1,13 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import type { DataRequest, ModuleName, DataSource } from './websocket/defs';
+import type { DataRequest, ModuleName, DataSource, Host } from './websocket/defs';
 import { Connection } from './websocket/connection';
 import connector from '@/connection';
 import { ProjectAction } from '@/utils/enum';
 export const CONNECTION_MAP: Map<string, Connection> = new Map();
 
-const getConnectionMapKey = (dataSource: DataSource): string => {
+const getConnectionMapKey = (dataSource: Host): string => {
     return `${dataSource?.remote}:${dataSource?.port}`;
 };
 
@@ -37,7 +37,7 @@ export const addDataPath = function(dataSource: DataSource, action: ProjectActio
 };
 
 export const request = function (
-    dataSource: DataSource,
+    dataSource: Host,
     moduleName: ModuleName,
     args: DataRequest,
     voidResponse?: boolean,

@@ -7,13 +7,20 @@ export enum ProjectError {
     PROJECT_NAME_CONFLICT = 1,
     IS_UNSAFE_PATH = 2,
     EXISTING_LARGE_FILES = 3,
-    TRANSFER_PROJECT = 4,
-    IMPORTED = 5,
+    // 文件/文件夹作已导入
+    IMPORTED = 4,
     FILE_NOT_EXIST = 6,
     OTHER = -1,
 }
 
 export enum ProjectAction {
-    TRANSFER_PROJECT = 0,
+    // 切换项目
+    SWITCH_PROJECT = 0,
+    // 导入新文件
     ADD_FILE = 1,
 };
+
+export enum SessionAction {
+    ADD_DATA_UNDER_PROJECT = 'addDataUnderProject',
+    NO_ACTION = 'no action',
+}

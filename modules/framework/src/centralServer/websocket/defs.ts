@@ -25,18 +25,19 @@ export function setPort(newPort: number): void {
 }
 export const LOCAL_HOST = '127.0.0.1';
 export const PORT: number = port;
+export const GLOBAL_HOST = { remote: LOCAL_HOST, port: PORT };
 
 export interface DataRequest {
     command: string;
     projectName?: string;
-    params: Request['params'];
+    params?: Request['params'];
 };
 
 export interface Request {
     id: number;
     type: string;
     moduleName: string;
-    params: Record<string, unknown>;
+    params?: Record<string, unknown>;
     command: string;
     projectName?: string;
     token?: string;
@@ -64,11 +65,16 @@ export interface Notification<T = Record<string, unknown>> {
 
 export type ModuleName = string;
 
-export interface DataSource {
+export interface Host {
     remote: string;
     port: number;
-    projectName?: string;
-    dataPath?: string[];
+};
+
+export interface Project {
+    projectName: string;
+    dataPath: string[];
+}
+export interface DataSource extends Host, Project {
     isBaseLine?: boolean;
     baseLineCardId?: string;
 };

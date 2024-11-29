@@ -9,6 +9,7 @@ export { MITooltip as Tooltip } from './MITooltip';
 export { MIPagination as Pagination } from './MIPagination';
 export { MICheckbox as Checkbox } from './MICheckbox';
 export { MIFormItem as FormItem } from './MIFormItem';
+export { MITree as Tree } from './MITree';
 export {
     Col,
     Row,

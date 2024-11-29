@@ -36,6 +36,13 @@ import { ReactComponent as RefreshSvg } from './img/refresh.svg';
 import { ReactComponent as FileSvg } from './img/file.svg';
 import { ReactComponent as FolderSvg } from './img/folder.svg';
 import { ReactComponent as AlarmSvg } from './img/alarm.svg';
+import { ReactComponent as DeleteSvg } from './img/delete.svg';
+import { ReactComponent as AddDarkSvg } from './img/add_dark.svg';
+import { ReactComponent as AddLightSvg } from './img/add_light.svg';
+import { ReactComponent as LocalImportDarkSvg } from './img/local_import_dark.svg';
+import { ReactComponent as LocalImportLightSvg } from './img/local_import_light.svg';
+import { ReactComponent as DataManagerDarkSvg } from './img/data_manager_dark.svg';
+import { ReactComponent as DataManagerLightSvg } from './img/data_manager_light.svg';
 import { themeInstance } from '../theme';
 import CaretRightSvg from './img/caret-right.svg';
 import { CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
@@ -74,6 +81,7 @@ const iconMap: Record<string, any> = {
     refresh: RefreshSvg,
     file: FileSvg,
     folder: FolderSvg,
+    delete: DeleteSvg,
     dark: {
         help: HelpDarkSvg,
         flag: FlagDarkIcon,
@@ -85,6 +93,9 @@ const iconMap: Record<string, any> = {
         reset: ResetDarkIcon,
         arrowDown: ArrowDownDarkSvg,
         arrowUp: ArrowUpDarkSvg,
+        add: AddDarkSvg,
+        localImport: LocalImportDarkSvg,
+        dataManager: DataManagerDarkSvg,
     },
     light: {
         help: HelpLightSvg,
@@ -97,6 +108,9 @@ const iconMap: Record<string, any> = {
         reset: ResetLightIcon,
         arrowDown: ArrowDownLightSvg,
         arrowUp: ArrowUpLightSvg,
+        add: AddLightSvg,
+        localImport: LocalImportLightSvg,
+        dataManager: DataManagerLightSvg,
     },
 };
 
@@ -224,16 +238,16 @@ export function ColumnFilterIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'columnFilter'} {...props }/>;
 }
 export function ExpandIcon(props: ISVGProps): JSX.Element {
-    const {style = {}, ...restProps} = props;
-    return <Icon type={'expand'} style={{verticalAlign: 'middle', margin: '0 10px 0 0', ...style}} {...restProps} />;
+    const { style = {}, ...restProps } = props;
+    return <Icon type={'expand'} style={{ verticalAlign: 'middle', margin: '0 10px 0 0', ...style }} {...restProps} />;
 }
 export function CollapseIcon(props: ISVGProps): JSX.Element {
-    const {style = {}, ...restProps} = props;
-    return <Icon type={'expandRight'} style={{verticalAlign: 'middle', margin: '-5px 5px 0 -2px', ...style}} {...restProps} />;
+    const { style = {}, ...restProps } = props;
+    return <Icon type={'expandRight'} style={{ verticalAlign: 'middle', margin: '-5px 5px 0 -2px', ...style }} {...restProps} />;
 }
 
 export function AlarmIcon(props: ISVGProps): JSX.Element {
-    return <Icon type={'alarm'} {...props } style={{marginTop:'2px'}}/>;
+    return <Icon type={'alarm'} {...props } style={{ marginTop: '2px' }}/>;
 }
 
 export function ImportDataIcon(props: ISVGProps): JSX.Element {
@@ -247,4 +261,16 @@ export function FileIcon(props: ISVGProps): JSX.Element {
 }
 export function FolderIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'folder'} {...props }/>;
+}
+export function DeleteIcon(props: ISVGProps): JSX.Element {
+    return <Icon type={'delete'} {...props }/>;
+}
+export function AddIcon(props: ISVGProps): JSX.Element {
+    return <Icon type={'add'} {...props }/>;
+}
+export function LocalImportIcon(props: ISVGProps): JSX.Element {
+    return <Icon type={'localImport'} {...props }/>;
+}
+export function DataManagerIcon(props: ISVGProps): JSX.Element {
+    return <Icon type={'dataManager'} {...props }/>;
 }

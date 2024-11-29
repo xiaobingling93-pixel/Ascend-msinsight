@@ -190,6 +190,7 @@ export const dark: Theme = {
     textColorPlaceholder: '#626d7c',
     textColorPlaceholderLight: '#272c33',
     textColorDisabled: '#6C6E72',
+    textColorMenu: '#F4F6FA',
     borderColor: '#363c46',
     borderColorLight: '#3e4551',
     borderColorLighter: '#576372',

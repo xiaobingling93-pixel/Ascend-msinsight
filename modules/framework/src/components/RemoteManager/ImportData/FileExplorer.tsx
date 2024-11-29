@@ -6,16 +6,15 @@ import { observer } from 'mobx-react';
 import styled from '@emotion/styled';
 import { Modal, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { Session } from '@/entity/session';
 import { Button, Input } from 'ascend-components';
 import { RefreshIcon } from 'ascend-icon';
-import { checkPathValid, getLastFilePath, getTrimedPath, getSearchDir } from '@/utils/ResourceUtils';
+import { checkPathValid, getLastFilePath, getTrimedPath, getSearchDir } from '@/utils/Resource';
 import { ProjectAction, ProjectError } from '@/utils/enum';
 import { type DataSource, LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
-import { addDataPath, connectRemote, isExistedRemote } from '@/centralServer/server';
 import type { CatalogActionListener, SearchResult } from './ResourceCatalog';
 import ResourceCatalog, { CatalogAction } from './ResourceCatalog';
 import { customConsole as console } from 'ascend-utils';
+import { handleProjectAction } from '@/utils/Project';
 const { Text } = Typography;
 
 const FileExplorerContainer = styled.div`
@@ -53,14 +52,13 @@ const FileExplorerContainer = styled.div`
 // 文件最大路径长度
 const MAX_FILE_PATH_LENGTH = 260;
 interface IProps {
-    session: Session;
+    currentProject: string;
     dialogOpen: boolean;
-    currentProject?: string;
     handleOk: () => void;
     handleCancel: (e: React.MouseEvent<HTMLElement>) => void;
 }
 // 文件资源管理器
-const FileExplorer = observer(({ dialogOpen, handleOk, handleCancel, currentProject = '', session }: IProps) => {
+const FileExplorer = observer(({ dialogOpen, handleOk, handleCancel, currentProject }: IProps) => {
     const { t } = useTranslation('framework');
     const [inputPath, setInputPath] = useState(getLastFilePath());
     const [actionListener, setActionListener] = useState<CatalogActionListener>({ type: CatalogAction.NO_ACTION });
@@ -77,15 +75,9 @@ const FileExplorer = observer(({ dialogOpen, handleOk, handleCancel, currentProj
         // 校验
         const validRes: ProjectError = await checkPathValid({ path, dataSource });
         // 校验通过
-        if ([ProjectError.NO_ERRORS, ProjectError.TRANSFER_PROJECT].includes(validRes)) {
-            const action = ProjectAction.ADD_FILE;
-            if (!isExistedRemote(dataSource)) {
-                const connected = await connectRemote(dataSource);
-                if (!connected) {
-                    return;
-                }
-            }
-            addDataPath(dataSource, action, false);
+        if ([ProjectError.NO_ERRORS, ProjectError.IMPORTED].includes(validRes)) {
+            const action = validRes === ProjectError.NO_ERRORS ? ProjectAction.ADD_FILE : ProjectAction.SWITCH_PROJECT;
+            handleProjectAction({ action, dataSource, isConflict: false });
             // 校验告警
         } else {
             console.error(validRes);
@@ -118,7 +110,7 @@ const FileExplorer = observer(({ dialogOpen, handleOk, handleCancel, currentProj
             <Button onClick={handleCancel}>{t('Cancel')}</Button>
         </div>}>
         <FileExplorerContainer>
-            <span className="project-name">{t('Current Project')} ：{currentProject}</span>
+            {!currentProject ? <></> : <span className="project-name">{t('Current Project')} ：{currentProject}</span>}
             <Input
                 placeholder={t('FileSearchDescribe')}
                 showCount
@@ -129,7 +121,7 @@ const FileExplorer = observer(({ dialogOpen, handleOk, handleCancel, currentProj
                 onPressEnter={searchCatalog}
             />
             <Text type={hit.alert ? 'danger' : undefined}>{t(hit.message, hit.options)}</Text>
-            <ResourceCatalog session={session}
+            <ResourceCatalog
                 actionListener={actionListener}
                 onSelectedChange={(value: string): void => setInputPath(value)}
                 onSearchReturnChange={handleSearchReturn}

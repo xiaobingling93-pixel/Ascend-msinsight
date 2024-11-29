@@ -179,18 +179,30 @@ export class ClientConnector extends BaseConnector {
 
 type Response = (res: MessageEvent) => Promise<Record<string, unknown>>;
 export class ServerConnector extends BaseConnector {
+    protected readonly _getInterceptorHandlers: (command: string) => <T>(event: MessageEvent, responseInterceptor: T) => void;
+    protected readonly _sendBefore?: <T extends EventHanlder>(body: SendParams<T>) => SendParams<T>;
     private _responseForFetch: Response | null = null;
-    private _getInterceptorHandlers: (command: string) => <T>(event: MessageEvent, responseInterceptor: T) => void;
-    constructor({getTargetWindow, getInterceptorHandlers}: {
+
+    constructor({ getTargetWindow, getInterceptorHandlers, sendBefore }: {
         getTargetWindow: GetTragetWindows;
         getInterceptorHandlers: (command: string) => <T>(event: MessageEvent, responseInterceptor: T) => void;
+        sendBefore?: <T extends EventHanlder>(body: SendParams<T>) => SendParams<T>;
     }) {
         super(getTargetWindow);
         this._getInterceptorHandlers = getInterceptorHandlers;
+        this._sendBefore = sendBefore;
     }
 
     registerAwaitFetch(callback: Response): void {
         this._responseForFetch = callback;
+    }
+
+    send<T extends EventHanlder>(body: SendParams<T>, reject?: (err: Error) => void): void {
+        let sendbody = body;
+        if (this._sendBefore) {
+            sendbody = this._sendBefore(sendbody);
+        }
+        super.send(sendbody, reject);
     }
 
     protected async awaitFetch(event: MessageEvent): Promise<void> {

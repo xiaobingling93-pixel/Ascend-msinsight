@@ -15,13 +15,15 @@ import { Session } from '@/entity/session';
 import { connectRemote } from '@/centralServer/server';
 import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import './index.css';
-import { registerEventListeners } from '@/utils/InitUtils';
+import { registerEventListeners } from '@/utils';
 
 const init = async(session: Session): Promise<void> => {
     // 连接后端（启动后第一次）
-    if (!session.isVscode) {
-        await connectRemote({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
+    const isSuccess = await connectRemote({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
+    if (isSuccess) {
+        session.defaultConnected = true;
     }
+    // 连接与页签间的通信
     registerEventListeners();
 };
 

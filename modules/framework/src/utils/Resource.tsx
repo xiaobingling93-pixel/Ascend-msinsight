@@ -4,10 +4,12 @@
 import React from 'react';
 import { FileIcon, FolderIcon } from 'ascend-icon';
 import type { TreeDataNode } from 'antd';
-import { checkProjectValid, getFiles } from '@/utils/RequestUtils';
+import { checkProjectValid, getFiles } from '@/utils/Request';
 import { DataSource } from '@/centralServer/websocket/defs';
 import { ProjectError } from '@/utils/enum';
 import localStorageService, { LocalStorageKey } from '@/utils/local-storage';
+import { store } from '@/store';
+import { message as Message } from 'antd';
 export interface ResourceItem {
     path: string;
     name: string;
@@ -33,9 +35,15 @@ export const dealResource = (resource: ResourceItem): TreeDataNode[] => {
     return [...folders, ...files];
 };
 
+const maxDepth = 100;
 // 更新Tree组件子节点
-export const updateTreeData = (list: TreeDataNode[], key: React.Key, children: TreeDataNode[]): TreeDataNode[] =>
-    list.map(node => {
+// Recursive，递归函数
+export const updateTreeData = (list: TreeDataNode[], key: React.Key, children: TreeDataNode[], depth: number = 0): TreeDataNode[] => {
+    if (depth > maxDepth) {
+        Message.error(`The depth of the file directory exceeds ${maxDepth}`);
+        return [];
+    }
+    return list.map(node => {
         if (node.key === key) {
             return {
                 ...node,
@@ -45,11 +53,12 @@ export const updateTreeData = (list: TreeDataNode[], key: React.Key, children: T
         if (node.children) {
             return {
                 ...node,
-                children: updateTreeData(node.children, key, children),
+                children: updateTreeData(node.children, key, children, depth + 1),
             };
         }
         return node;
     });
+};
 
 // 文件/文件夹是否存在
 export const fileExist = async (path: string): Promise<boolean> => {
@@ -79,7 +88,8 @@ Promise<ProjectError> => {
 
 // 文件是否已导入
 export const checkExistedDataSource = (dataSource: DataSource): boolean => {
-    const allProject: DataSource[] = [];
+    const session = store.sessionStore.activeSession;
+    const allProject: DataSource[] = session?.dataSources ?? [];
     const projectIndex = allProject.findIndex((item) =>
         item.remote === dataSource.remote &&
             item.port === dataSource.port &&
@@ -87,7 +97,7 @@ export const checkExistedDataSource = (dataSource: DataSource): boolean => {
     if (projectIndex === -1) {
         return false;
     }
-    const pathIndex = (dataSource.dataPath ?? []).findIndex(path => allProject[projectIndex].dataPath?.includes(path));
+    const pathIndex = dataSource.dataPath.findIndex(path => allProject[projectIndex].dataPath?.includes(path));
     return pathIndex > -1;
 };
 

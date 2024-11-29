@@ -20,7 +20,7 @@ const createRequestHead = function (
         moduleName: module,
         type: 'request',
         command,
-        projectName: store.sessionStore.activeSession?.lastDataSource.projectName,
+        projectName: store.sessionStore.activeSession?.activeDataSource.projectName ?? '',
         params: { ...args },
     };
 };
@@ -45,7 +45,7 @@ export class Connection {
         const protocol = `${window.location.protocol === 'https:' && window.location.host !== 'wry.localhost' ? 'wss:' : 'ws:'}//`;
         if (!window.location.pathname.includes('/proxy/')) {
             const hostname = location.hostname && location.hostname !== '' ? location.hostname : LOCAL_HOST;
-            this._ws = new WebSocket(`${protocol}${hostname}:${dataSource.port}`);
+            this._ws = new WebSocket(`${protocol}${hostname}:${dataSource.port}${window.location.search}`);
         } else {
             const { location } = window;
             const { host } = location;
@@ -160,9 +160,10 @@ export class Connection {
             if (res.result && res.body !== undefined) {
                 // wedge: return cache resolve
                 resolve(res.body);
-            } else if (res.error === undefined) {
-                throw new Error('malformed response');
             } else {
+                if (res.error === undefined) {
+                    throw new Error('malformed response');
+                }
                 const { code, message } = res.error;
                 console.error('[connector]', 'errorCode:', code, 'msg:', message);
                 resolve({ error: res.error ?? {} });

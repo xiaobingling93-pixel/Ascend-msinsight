@@ -190,6 +190,7 @@ export const light: Theme = {
     textColorPlaceholder: '#BFC7D7',
     textColorPlaceholderLight: '#EBEDF3',
     textColorDisabled: '#c0c4cc',
+    textColorMenu: '#000000',
     borderColor: '#E4EAF1',
     borderColorLight: '#DFE5EF',
     borderColorLighter: '#C3CEDF',
