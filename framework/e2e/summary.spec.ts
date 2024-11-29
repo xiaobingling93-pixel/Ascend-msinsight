@@ -40,11 +40,7 @@ test.describe('Summary', () => {
         const filePath = await filePathDom.innerText();
         expect(filePath.length > 0).toBe(true);
         await page.mouse.move(0, 0);
-        try {
-            await expect(chartContainer).toHaveScreenshot('parallelChart1.png');
-        } catch {
-            await expect(chartContainer).toHaveScreenshot('parallelChart1-1.png');
-        }
+        await expect(chartContainer).toHaveScreenshot('parallelChart.png');
     });
 
     // 配置并行策略
