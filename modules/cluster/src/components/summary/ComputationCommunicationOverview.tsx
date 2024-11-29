@@ -193,9 +193,11 @@ const getLegendData = (): any[] => {
     return baseOptionLegendData.map(legendItem => ({ ...legendItem, name: i18n.t(legendItem.name, { ns: 'summary' }) }));
 };
 const getBaseOptionSeries = (): any[] => {
-    return baseSeries.map(serieItem => ({
+    return baseSeries.map((serieItem, index) => ({
         ...serieItem,
         name: i18n.t(serieItem.name, { ns: 'summary' }),
+        itemStyle: { color: chartColors.length > 0 ? chartColors[index % chartColors.length] : undefined },
+        lineStyle: { color: chartColors.length > 0 ? chartColors[index % chartColors.length] : undefined },
     }));
 };
 
