@@ -61,11 +61,11 @@ export const displayStrategyMap: {
 } = {
     pytorch: {
         isHost: {
-            isCompared: new HostCompareDisplayStrategy(),
+            isCompared: new FullDisplayStrategy(),
             notCompared: new FullDisplayStrategy(),
         },
         notHost: {
-            isCompared: new SingleDisplayStrategy(),
+            isCompared: new NormalDisplayStrategy(),
             notCompared: new NormalDisplayStrategy(),
         },
     },

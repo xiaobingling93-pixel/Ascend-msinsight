@@ -11,9 +11,9 @@ import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Session } from '../entity/session';
-import { MemorySession, MemoryGraphType, DEFAULT_GROUP_BY } from '../entity/memorySession';
+import { MemorySession, MemoryGraphType, GroupBy } from '../entity/memorySession';
 import MemoryDetailTableFilter from './MemoryDetailTableFilter';
-import { AntTableChart } from './AntTableChart';
+import { AntTableChart, TableByComponent } from './AntTableChart';
 import { OperatorMemoryCondition, StaticMemoryCondition } from '../entity/memory';
 import { operatorsMemoryGet, staticOpMemoryListGet } from '../utils/RequestUtils';
 import { customConsole as console } from 'ascend-utils';
@@ -43,7 +43,7 @@ const setSelectedRecord = (memorySession: MemorySession, record?: any): void => 
 const buildDynamicSearchParam = (memorySession: MemorySession, tempCurrent: number, isCompare: boolean): any => {
     const param: OperatorMemoryCondition = {
         rankId: memorySession.rankIdCondition.value,
-        type: isCompare ? DEFAULT_GROUP_BY : memorySession.groupId,
+        type: memorySession.groupId,
         currentPage: tempCurrent,
         pageSize: memorySession.pageSize,
         searchName: memorySession.searchEventOperatorName,
@@ -99,7 +99,7 @@ const getFetchApi = (memoryType: string): any => {
     };
 };
 
-const handleOperatorDetails = (operatorDetails: any[], isCompare: boolean, t: TFunction): any => {
+export const handleOperatorDetails = (operatorDetails: any[], isCompare: boolean, t: TFunction): any => {
     return isCompare
         ? operatorDetails.map(item => {
             if (item.diff === undefined || item.diff === null) {
@@ -205,7 +205,7 @@ const MemoryDetailTable = observer(({ session, memorySession }:
     };
 
     const setDetailTableData = (resetCurrent = false): void => {
-        if (!preParamCheck()) {
+        if (!preParamCheck() || memorySession.groupId === GroupBy.COMPONENT) {
             return;
         };
         const tempCurrent = setTempCurrent(resetCurrent);
@@ -221,24 +221,28 @@ const MemoryDetailTable = observer(({ session, memorySession }:
 
     return (
         <CollapsiblePanel title={t('Memory Allocation/Release Details')} secondary>
-            <MemoryDetailTableFilter session={session} memorySession={memorySession} queryDetailData={setDetailTableData}></MemoryDetailTableFilter>
-            <Spin spinning={tableSpin} tip="loading...">
-                <AntTableChart
-                    tableData={{
-                        columns: memoryTableHead,
-                        rows: memoryTableData,
-                    }}
-                    onRowSelected={onRowSelected}
-                    current={current}
-                    pageSize={pageSize}
-                    onCurrentChange={setCurrent}
-                    onPageSizeChange={handlePageSizeChanged}
-                    onOrderChange={setOrder}
-                    onOrderByChange={setOrderBy}
-                    total={total}
-                    isCompare={isCompare}
-                />
-            </Spin>
+            {memorySession.groupId === GroupBy.COMPONENT
+                ? <TableByComponent session={session} />
+                : <>
+                    <MemoryDetailTableFilter session={session} memorySession={memorySession} queryDetailData={setDetailTableData}></MemoryDetailTableFilter>
+                    <Spin spinning={tableSpin} tip={t('Loading')}>
+                        <AntTableChart
+                            tableData={{
+                                columns: memoryTableHead,
+                                rows: memoryTableData,
+                            }}
+                            onRowSelected={onRowSelected}
+                            current={current}
+                            pageSize={pageSize}
+                            onCurrentChange={setCurrent}
+                            onPageSizeChange={handlePageSizeChanged}
+                            onOrderChange={setOrder}
+                            onOrderByChange={setOrderBy}
+                            total={total}
+                            isCompare={isCompare}
+                        />
+                    </Spin>
+                </>}
         </CollapsiblePanel>
     );
 });

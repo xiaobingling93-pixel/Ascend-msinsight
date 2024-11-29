@@ -215,7 +215,20 @@ const _handleEvents = (chartObj: echarts.ECharts | undefined, props: IProps,
 
 const useTitle = (title: string): string => {
     const { t } = useTranslation('memory', { keyPrefix: 'searchCriteria' });
-    const regex = /Peak Memory Usage|Operator Activated|Operator Allocated|Operator Reserved|APP Reserved/g;
+    const regexItem = [
+        'Peak Memory Usage',
+        'Operator Activated',
+        'Operator Allocated',
+        'Operator Reserved',
+        'PTA Allocated',
+        'PTA Reserved',
+        'PTA Activated',
+        'GE Allocated',
+        'GE Reserved',
+        'GE Activated',
+        'APP Reserved',
+    ];
+    const regex = new RegExp(regexItem.join('|'), 'g');
     const translatedMessage = title.replace(regex, match => t(match));
     return translatedMessage;
 };

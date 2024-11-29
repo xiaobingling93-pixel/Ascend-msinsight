@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { runInAction } from 'mobx';
 import { Session } from '../entity/session';
-import { MemorySession, DataResourceType, DEFAULT_GROUP_BY } from '../entity/memorySession';
+import { MemorySession, DataResourceType, GroupBy } from '../entity/memorySession';
 import { useRootStore } from '../context/context';
 import { Layout } from 'ascend-layout';
 import MemoryHeader from '../components/MemoryHeader';
@@ -45,7 +45,7 @@ const fetchResourceType = (memorySession: MemorySession): void => {
         const type = resp.type;
         runInAction(() => {
             if (type === DataResourceType.MINDSPORE) {
-                memorySession.groupId = DEFAULT_GROUP_BY;
+                memorySession.groupId = GroupBy.DEFAULT;
             }
             memorySession.resourceType = type;
         });

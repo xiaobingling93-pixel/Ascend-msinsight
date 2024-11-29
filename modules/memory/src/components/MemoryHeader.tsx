@@ -8,26 +8,32 @@ import { runInAction } from 'mobx';
 import { SearchBox, FlexDiv } from '../utils/styleUtils';
 import { MemoryHeaderStrategy } from '../utils/strategyUtils';
 import { Session } from '../entity/session';
-import { MemorySession, ConditionType } from '../entity/memorySession';
+import { MemorySession, ConditionType, GroupBy } from '../entity/memorySession';
 import { Label, useHit, joinStringArray } from './Common';
 import { Select } from 'ascend-components';
 import { GroupRankIdsByHost } from 'ascend-utils';
 import { useTranslation } from 'react-i18next';
 
-const groupByOptions = [
-    { label: 'Overall', value: 'Overall' },
-    { label: 'Stream', value: 'Stream' },
-];
+const groupByOptions = (isCompare: boolean): Array<{ label: string; value: string }> => {
+    const options = [
+        { label: 'Overall', value: 'Overall' },
+        { label: 'Stream', value: 'Stream' },
+        { label: 'Component', value: 'Component' },
+    ];
+    if (isCompare) {
+        options.splice(1, 1);
+    }
+    return options;
+};
 
 const MemoryHeader = observer(({ strategy, session, memorySession }:
 {strategy: MemoryHeaderStrategy; session: Session; memorySession: MemorySession}) => {
     const [hostCondition, setHostCondition] = useState<ConditionType>(memorySession.hostCondition);
     const [rankIdCondition, setRankIdCondition] = useState<ConditionType>(memorySession.rankIdCondition);
-    const [groupId, setGroupId] = useState<string>(memorySession.groupId);
     const isCompare: boolean = session.compareRank.isCompare;
     const { t } = useTranslation('memory');
     const hit = useHit();
-    const groupByCondition = groupByOptions.map(item => ({
+    const groupByCondition = groupByOptions(isCompare).map(item => ({
         ...item,
         label: t(`searchCriteria.${item.label}`),
     }));
@@ -47,7 +53,6 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
     };
 
     const onGroupByChanged = (value: string): void => {
-        setGroupId(value);
         runInAction(() => {
             memorySession.groupId = value;
         });
@@ -95,6 +100,13 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
         }
     }, [session.compareRank.rankId, joinStringArray(session.memoryRankIds)]);
 
+    useEffect(() => {
+        if (isCompare && memorySession.groupId === GroupBy.STREAM) {
+            runInAction(() => {
+                memorySession.groupId = GroupBy.DEFAULT;
+            });
+        }
+    }, [isCompare]);
     const renderFields = (): JSX.Element[] => {
         const fields = [
             {
@@ -141,7 +153,7 @@ const MemoryHeader = observer(({ strategy, session, memorySession }:
                         <Label name={<span>{t('searchCriteria.GroupBy')}{hit}</span>} />
                         <Select
                             id={'select-groupId'}
-                            value={groupId}
+                            value={memorySession.groupId}
                             style={{ width: 180 }}
                             onChange={onGroupByChanged}
                             options={groupByCondition}

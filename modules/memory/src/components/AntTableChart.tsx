@@ -3,18 +3,22 @@
  */
 
 import type { TableProps } from 'antd/es/table';
-import type { SorterResult } from 'antd/lib/table/interface';
-import * as React from 'react';
+import type { SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import i18n from 'ascend-i18n';
-import type { MemoryTable, MemoryTableColumn, OperatorDetail } from '../entity/memory';
+import type { ComponentMemory, GetTableDataResponse, MemoryTable, MemoryTableColumn, OperatorDetail, OrderPageInfo, RenderExpandRecord } from '../entity/memory';
 import { ResizeTable } from 'ascend-resize';
-import { Button } from 'ascend-components';
+import { Button, Spin } from 'ascend-components';
 import { DownOutlined } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import { type Theme, useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
+import { useRootStore } from '../context/context';
+import { fetchTableDataByComponent } from '../utils/RequestUtils';
+import type { Session } from '../entity/session';
+import { handleOperatorDetails } from './MemoryDetailTable';
 
 interface IProps {
     tableData: MemoryTable;
@@ -87,7 +91,11 @@ const getCompareRows = (data: string | number, theme: Theme): JSX.Element | numb
     return <CompareDiv style={{ color: dataNum >= 0 ? theme.successColor : theme.dangerColor }} title={`${data}`}>{data}</CompareDiv>;
 };
 
-const renderExpandColomn = (record: OperatorDetail, t: TFunction, setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>): JSX.Element => {
+const renderExpandColomn = (
+    record: RenderExpandRecord,
+    t: TFunction,
+    setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>,
+): JSX.Element => {
     return record.source === t('Difference')
         ? (<Button type="link"
             onClick={(): void => {
@@ -101,7 +109,7 @@ const renderExpandColomn = (record: OperatorDetail, t: TFunction, setExpandedKey
                     }
                     return list;
                 });
-            }}>{t('SeeMore', { ns: 'buttonText' })}<DownOutlined/></Button>)
+            }}>{t('SeeMore', { ns: 'buttonText' })}<DownOutlined /></Button>)
         : <></>;
 };
 
@@ -111,8 +119,8 @@ const getTableColumns = function (
     t: TFunction,
     isCompare: boolean,
     setExpandedKeys: React.Dispatch<React.SetStateAction<string[]>>,
-): TableColumnsType<OperatorDetail> {
-    const dataColumns: TableColumnsType<OperatorDetail> = columns.map((col: MemoryTableColumn) => {
+): TableColumnsType<RenderExpandRecord> {
+    const dataColumns: TableColumnsType<RenderExpandRecord> = columns.map((col: MemoryTableColumn) => {
         return {
             dataIndex: col.key,
             key: col.key,
@@ -122,7 +130,8 @@ const getTableColumns = function (
             showSorterTooltip: t(col.name, { keyPrefix: 'tableHeadTooltip', defaultValue: '' }) === ''
                 ? true
                 : { title: t(col.name, { keyPrefix: 'tableHeadTooltip' }) },
-            render: (data: string | number, record: OperatorDetail) => (isCompare && record.source === t('Difference')) ? getCompareRows(data, theme) : data,
+            render: (data: string | number, record: RenderExpandRecord) =>
+                (isCompare && record.source === t('Difference')) ? getCompareRows(data, theme) : data,
         };
     });
     if (isCompare) {
@@ -131,7 +140,7 @@ const getTableColumns = function (
             title: t('Details', { keyPrefix: 'tableHead' }),
             sorter: false,
             fixed: 'right',
-            render: (record: OperatorDetail): JSX.Element => {
+            render: (record: RenderExpandRecord): JSX.Element => {
                 return renderExpandColomn(record, t, setExpandedKeys);
             },
         });
@@ -148,15 +157,15 @@ export const AntTableChart: React.FC<IProps> = (props) => {
         onCurrentChange, onPageSizeChange, total, onOrderChange, onOrderByChange, isCompare,
     } = props;
     const theme = useTheme();
-    const [expandedRowKeys, setExpandedKeys] = React.useState<string[]>([]);
+    const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
 
-    const columns = React.useMemo(
+    const columns = useMemo(
         () => getTableColumns(tableData.columns, theme, t, isCompare, setExpandedKeys),
         [tableData.columns, t, isCompare],
     );
 
     // key is used to reset the Table state (page and sort) if the columns change
-    const key = React.useMemo(() => `${Math.random()}`, [tableData.columns]);
+    const key = useMemo(() => `${Math.random()}`, [tableData.columns]);
 
     const onChange = (newCurrent: number, size: number): void => {
         onCurrentChange(newCurrent);
@@ -185,13 +194,13 @@ export const AntTableChart: React.FC<IProps> = (props) => {
         };
     };
 
-    React.useEffect(() => {
+    useEffect(() => {
         setExpandedKeys([]);
     }, [JSON.stringify(tableData), current, pageSize]);
 
     return (
         <ResizeTable
-            columns={columns}
+            columns={columns as TableColumnsType<OperatorDetail>}
             dataSource={tableData.rows.length === 0 ? defaultDataSource : tableData.rows.map((item, index) => ({ ...item, key: `${item.name}_${index}` }))}
             onChange={onTableChange}
             scroll={{
@@ -215,4 +224,69 @@ export const AntTableChart: React.FC<IProps> = (props) => {
             }}
         />
     );
+};
+
+const pagination: TablePaginationConfig = {
+    defaultCurrent: 1,
+    defaultPageSize: 10,
+    pageSizeOptions: ['10', '20', '30', '50', '100'],
+    showTotal: (total: number): string => i18n.t('PaginationTotal', { total }),
+    showQuickJumper: true,
+};
+
+export const TableByComponent = ({ session }: { session: Session }): JSX.Element => {
+    const { t } = useTranslation('memory');
+    const { memoryStore } = useRootStore();
+    const memorySession = memoryStore.activeSession;
+    const [response, setResponse] = useState<GetTableDataResponse>({ totalNum: 0, columnAttr: [], componentDetail: [] });
+    const [columns, setColumns] = useState<TableColumnsType<ComponentMemory>>([]);
+    const [tableData, setTableData] = useState<ComponentMemory[]>([]);
+    const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
+    const [tableSpin, setTableSpin] = useState(false);
+    const theme = useTheme();
+    const onTableChange: TableProps<ComponentMemory>['onChange'] = (paginationValue, _filter, originSorter) => {
+        const { current, pageSize } = paginationValue;
+        const sorter = originSorter as SorterResult<ComponentMemory>;
+        const order = sorter.field === 'source' ? undefined : sorter.order ?? undefined;
+        const orderBy = order === undefined ? undefined : sorter.field as string;
+        getTableData({
+            currentPage: current === undefined ? 1 : current,
+            pageSize: pageSize === undefined ? 10 : pageSize,
+            order,
+            orderBy,
+        });
+    };
+    const getTableData = async (value: OrderPageInfo = { currentPage: 1, pageSize: 10 }): Promise<void> => {
+        setTableSpin(true);
+        if (memorySession === undefined || memorySession.rankIdCondition.value === undefined || memorySession.rankIdCondition.value === '') {
+            setTableSpin(false);
+            setTableData([]);
+            return;
+        }
+        try {
+            const res = await fetchTableDataByComponent({
+                ...value,
+                rankId: memorySession.rankIdCondition.value,
+                isCompare: session.compareRank.isCompare,
+            });
+            setResponse({ ...res });
+        } catch {
+            setResponse({ totalNum: 0, columnAttr: [], componentDetail: [] });
+        }
+        setTableSpin(false);
+    };
+
+    useEffect(() => {
+        getTableData();
+    }, [memorySession?.rankIdCondition.value, session.compareRank.isCompare]);
+    useEffect(() => {
+        pagination.total = response.totalNum;
+        setColumns(getTableColumns(response.columnAttr, theme, t, session.compareRank.isCompare, setExpandedKeys) as TableColumnsType<ComponentMemory>);
+        setTableData(handleOperatorDetails(response.componentDetail, session.compareRank.isCompare, t));
+    }, [response, session.language]);
+
+    return <Spin spinning={tableSpin} tip={t('Loading')}>
+        <ResizeTable columns={columns} dataSource={tableData} pagination={pagination} onChange={onTableChange}
+            expandable={{ expandIcon: () => <></>, expandedRowKeys }} />
+    </Spin>;
 };

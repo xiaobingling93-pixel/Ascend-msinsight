@@ -23,6 +23,7 @@ export const useHit = (): React.ReactElement => {
             <div style={{ padding: '1rem' }}>
                 <div>{safeStr(t('searchCriteria.Overall'))}: {safeStr(t('searchCriteria.OverallDescribe'))}</div>
                 <div style={{ marginTop: '2rem' }}>{safeStr(t('searchCriteria.Stream'))}: {safeStr(t('searchCriteria.StreamDescribe'))}</div>
+                <div style={{ marginTop: '2rem' }}>{safeStr(t('searchCriteria.Component'))}: {safeStr(t('searchCriteria.ComponentDescribe'))}</div>
             </div>
         )
     }>

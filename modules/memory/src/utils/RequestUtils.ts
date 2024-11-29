@@ -10,6 +10,8 @@ import type {
     StaticMemoryCondition,
     StaticOperatorList,
     StaticOperatorCurve,
+    GetTableDataParams,
+    GetTableDataResponse,
 } from '../entity/memory';
 
 /**
@@ -17,11 +19,11 @@ import type {
  * @param params 查询条件
  * @returns { 'dynamic' | 'static' | 'mix' } 查询结果
  */
-export const memoryTypeGet = async (params: {rankId: string}): Promise<MemoryType> => {
+export const memoryTypeGet = async (params: { rankId: string }): Promise<MemoryType> => {
     return window.request({ command: 'Memory/view/type', params });
 };
 
-export const resourceTypeGet = async (params: {rankId: string}): Promise<ResourceType> => {
+export const resourceTypeGet = async (params: { rankId: string }): Promise<ResourceType> => {
     return window.request({ command: 'Memory/view/resourceType', params });
 };
 
@@ -61,4 +63,14 @@ export const operatorsMemoryGet = (params: OperatorMemoryCondition): Promise<Ope
  */
 export const memoryCurveGet = async (params: { rankId: string; type: string; isCompare: boolean }): Promise<MemoryCurve> => {
     return window.request({ command: 'Memory/view/memoryUsage', params });
+};
+
+/**
+ * 查询按组件分组时算子内存表格数据
+ * @param params 查询条件
+ * @return {GetTableDataResponse} 查询结果
+ */
+export const fetchTableDataByComponent = async (params: GetTableDataParams):
+Promise<GetTableDataResponse> => {
+    return await window.request({ command: 'Memory/view/component', params: { ...params } });
 };

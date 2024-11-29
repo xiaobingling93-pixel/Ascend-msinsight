@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Graph, MemoryCurve } from '../entity/memory';
 import { LineChart } from './LineChart';
 import { Session } from '../entity/session';
-import { MemorySession, DEFAULT_SIZE_CONDITION, DEFAULT_GROUP_BY } from '../entity/memorySession';
+import { MemorySession, DEFAULT_SIZE_CONDITION } from '../entity/memorySession';
 import { memoryCurveGet } from '../utils/RequestUtils';
 
 const DynamicLineChart = observer(({ session, memorySession, isDark }:
@@ -48,7 +48,7 @@ const DynamicLineChart = observer(({ session, memorySession, isDark }:
 
     const onMemoryCurveGet = (): void => {
         setCurveSpin(true);
-        memoryCurveGet({ rankId: memorySession.rankIdCondition.value, type: isCompare ? DEFAULT_GROUP_BY : memorySession.groupId, isCompare }).then((resp) => {
+        memoryCurveGet({ rankId: memorySession.rankIdCondition.value, type: memorySession.groupId, isCompare }).then((resp) => {
             // Reset the select range to null when rankId changes
             runInAction(() => {
                 memorySession.selectedRange = undefined;

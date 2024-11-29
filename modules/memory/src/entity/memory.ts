@@ -464,3 +464,51 @@ export interface StaticOperatorCurve {
      */
     lines: Array<Array<number | string>>;
 }
+
+/**
+ * 按组件分组时算子内存表格数据
+ * @interface ComponentMemory
+ */
+export interface ComponentMemory {
+    key?: number | string;
+    name: number;
+    peakMemory: number;
+    time: number;
+    source?: string;
+};
+
+/**
+ * 按组件分组时算子内存表格数据请求参数
+ * @interface GetTableDataParams
+ */
+export interface GetTableDataParams {
+    currentPage: number;
+    pageSize: number;
+    isCompare: boolean;
+    order?: string;
+    orderBy?: string;
+    rankId?: string;
+};
+
+/**
+ * 按组件分组时算子内存表格数据响应体
+ * @interface GetTableDataResponse
+ */
+export interface GetTableDataResponse {
+    totalNum: number;
+    columnAttr: MemoryTableColumn[];
+    componentDetail: Array<OperatorCompareDetail<ComponentMemory>>;
+};
+
+export type RenderExpandRecord = OperatorDetail | ComponentMemory;
+
+/**
+ * 按组件分组时算子内存表格数据排序分页
+ * @interface OrderPageInfo
+ */
+export interface OrderPageInfo {
+    currentPage: number;
+    pageSize: number;
+    order?: string;
+    orderBy?: string;
+};

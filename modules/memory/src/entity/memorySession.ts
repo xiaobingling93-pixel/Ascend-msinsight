@@ -27,7 +27,12 @@ export interface SelectedRange {
 };
 
 export const DEFAULT_SIZE_CONDITION = 1000000;
-export const DEFAULT_GROUP_BY = 'Overall';
+
+export const enum GroupBy {
+    DEFAULT = 'Overall',
+    STREAM = 'Stream',
+    COMPONENT = 'Component',
+};
 
 export class MemorySession {
     // memory类型相关变量
