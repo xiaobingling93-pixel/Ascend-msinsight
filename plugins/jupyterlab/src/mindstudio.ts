@@ -1,0 +1,131 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
+import * as staticMindStudio from './staticMindStudio';
+import { IDisposable } from '@lumino/disposable';
+import { ISignal } from '@lumino/signaling';
+import { JSONObject } from '@lumino/coreutils';
+import { ServerConnection } from '@jupyterlab/services';
+
+/**
+ * The namespace for mindstudio statics.
+ */
+
+/**
+ * An interface for a mindstudio.
+ */
+export interface IMindStudio extends IDisposable {
+  /**
+   * A signal emitted when the mindstudio is shut down.
+   */
+  terminated: ISignal<IMindStudio, void>;
+
+  /**
+   * The model associated with the mindstudio.
+   */
+  readonly model: IModel;
+
+  /**
+   * Get the name of the mindstudio.
+   */
+  readonly name: string;
+
+  /**
+   * The server settings for the mindstudio.
+   */
+  readonly serverSettings: ServerConnection.ISettings;
+
+  /**
+   * Shut down the mindstudio.
+   */
+  shutdown: () => Promise<void>;
+}
+
+/**
+ * The options for intializing a mindstudio object.
+ */
+export interface IOptions {
+  /**
+   * The server settings for the mindstudio.
+   */
+  serverSettings?: ServerConnection.ISettings;
+}
+
+/**
+ * The server model for a mindstudio.
+ */
+export interface IModel extends JSONObject {
+  /**
+   * The name of the mindstudio.
+   */
+  readonly name: string;
+}
+
+export interface IStaticConfig extends JSONObject {
+  /**
+   * The name of the mindstudio.
+   */
+  readonly notebookDir: string;
+}
+
+export function getStaticConfig(
+  settings?: ServerConnection.ISettings
+): Promise<IStaticConfig> {
+  return staticMindStudio.getStaticConfig(settings);
+}
+
+export function startNew(
+  name: string,
+  options?: IOptions
+): Promise<IMindStudio> {
+  return staticMindStudio.startNew(name, options);
+}
+
+export function listRunning(
+  settings?: ServerConnection.ISettings
+): Promise<IModel[]> {
+  return staticMindStudio.listRunning(settings);
+}
+
+export function shutdown(
+  name: string,
+  settings?: ServerConnection.ISettings
+): Promise<void> {
+  return staticMindStudio.shutdown(name, settings);
+}
+
+export function shutdownAll(
+  settings?: ServerConnection.ISettings
+): Promise<void> {
+  return staticMindStudio.shutdownAll(settings);
+}
+
+export function getUrl(
+  name: string,
+  settings?: ServerConnection.ISettings
+): string {
+  return staticMindStudio.getUrl(name, settings);
+}
+
+/**
+ * The interface for a mindstudio manager.
+ *
+ * The manager is respoonsible for maintaining the state of running
+ * mindstudio.
+ */
+export interface IManager extends IDisposable {
+  readonly serverSettings: ServerConnection.ISettings;
+
+  runningChanged: ISignal<this, IModel[]>;
+
+  running: () => Array<IModel>;
+
+  startNew: (name: string, options?: IOptions) => Promise<IMindStudio>;
+
+  shutdown: (name: string) => Promise<void>;
+
+  shutdownAll: () => Promise<void>;
+
+  refreshRunning: () => Promise<void>;
+}
