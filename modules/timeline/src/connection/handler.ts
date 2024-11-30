@@ -240,7 +240,11 @@ export const importRemoteHandler: NotificationHandler = async (data): Promise<vo
             return;
         }
         // 导入新Remote前，保存当前页面
-        savePageSetting();
+        // 所有卡解析完成
+        const parseCompleted = !(session.units.some(item => item.phase !== 'download'));
+        if (parseCompleted) {
+            savePageSetting();
+        }
         const result = await window.request(dataSource, {
             command: 'import/action',
             params: { projectName: dataSource.projectName, path: dataSource.dataPath, projectAction, isConflict },

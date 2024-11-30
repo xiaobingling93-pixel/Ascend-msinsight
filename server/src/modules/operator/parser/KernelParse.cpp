@@ -396,8 +396,11 @@ bool KernelParse::ParseKernelCsv(const std::string& filePath, const std::string 
     std::string realFileId = Global::BaselineManager::Instance().IsBaselineId(fileId) ?
         FileUtil::GetProfilerFileId(filePath) : fileId;
     std::vector<std::string> columns;
-    while (Dic::Module::Timeline::ParserStatusManager::Instance().GetParserStatus(statusId) ==
-           Dic::Module::Timeline::ParserStatus::RUNNING && getline(file, line)) {
+    while (getline(file, line)) {
+        if (Timeline::ParserStatusManager::Instance().GetParserStatus(statusId) != Timeline::ParserStatus::RUNNING) {
+            ServerLog::Error("Parsing process of kernel_details.csv is interrupted.");
+            return false;
+        }
         // 获取每一行数据存储在rowVector里面
         const std::basic_string<char>& basicString(line);
         std::vector<std::string> rowVector = StringUtil::StringSplit(basicString);

@@ -51,17 +51,18 @@ bool MemoryParse::OperatorParse(const std::string &filePath, const std::string &
 {
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Start parsing Operator Memory: ", filePath, ", FileId: ", fileId);
-    if (!ValidateUtil::CheckCsvFile(filePath)) {
-        return false;
-    }
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     bool isHeader = true;
-    while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
-            Timeline::ParserStatus::RUNNING && getline(file, line)) {
+    while (getline(file, line)) {
+        if (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) !=
+            Timeline::ParserStatus::RUNNING) {
+            ServerLog::Error("Parsing process of operator_memory.csv is interrupted.");
+            return false;
+        }
         std::vector<std::string> row = StringUtil::StringSplit(line);
         if (isHeader) {
             if (row.empty()) {
@@ -226,17 +227,18 @@ bool MemoryParse::RecordToParse(const std::string &filePath, const std::string &
 {
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Start parsing Memory Record: ", filePath, ", FileId: ", fileId);
-    if (!ValidateUtil::CheckCsvFile(filePath)) {
-        return false;
-    }
     auto database = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     bool isHeader = true;
-    while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
-           Timeline::ParserStatus::RUNNING && getline(file, line)) {
+    while (getline(file, line)) {
+        if (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) !=
+            Timeline::ParserStatus::RUNNING) {
+            ServerLog::Error("Parsing process of memory_record.csv is interrupted.");
+            return false;
+        }
         std::vector<std::string> row = StringUtil::StringSplit(line);
         if (isHeader) {
             if (row.empty()) {
@@ -275,17 +277,18 @@ bool MemoryParse::StaticOpParse(const std::string &filePath, const std::string &
 {
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Start parsing Memory Static Operator: ", filePath, ", FileId: ", fileId);
-    if (!ValidateUtil::CheckCsvFile(filePath)) {
-        return false;
-    }
     auto database = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     std::ifstream file = OpenReadFileSafely(filePath);
     std::string line;
     std::map<std::string, size_t> dataMap;
     bool isHeader = true;
-    while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
-    Timeline::ParserStatus::RUNNING && getline(file, line)) {
+    while (getline(file, line)) {
+        if (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) !=
+            Timeline::ParserStatus::RUNNING) {
+            ServerLog::Error("Parsing process of static_op_mem.csv is interrupted.");
+            return false;
+        }
         std::vector<std::string> row = StringUtil::StringSplit(line);
         if (isHeader) {
             if (row.empty()) {
@@ -324,9 +327,6 @@ bool MemoryParse::ComponentParse(const std::string &filePath, const std::string 
 {
     auto start = std::chrono::high_resolution_clock::now();
     ServerLog::Info("Start parsing Npu Module Mem: ", filePath, ", FileId: ", fileId);
-    if (!ValidateUtil::CheckCsvFile(filePath)) {
-        return false;
-    }
     auto memoryDatabase = std::dynamic_pointer_cast<TextMemoryDataBase, VirtualMemoryDataBase>(
         Timeline::DataBaseManager::Instance().GetMemoryDatabase(fileId));
     if (!memoryDatabase) {
@@ -337,8 +337,12 @@ bool MemoryParse::ComponentParse(const std::string &filePath, const std::string 
     std::string line;
     std::map<std::string, size_t> dataMap;
     bool isHeader = true;
-    while (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) ==
-           Timeline::ParserStatus::RUNNING && getline(file, line)) {
+    while (getline(file, line)) {
+        if (Timeline::ParserStatusManager::Instance().GetParserStatus(MEMORY_PREFIX + fileId) !=
+            Timeline::ParserStatus::RUNNING) {
+            ServerLog::Error("Parsing process of npu_module_mem.csv is interrupted.");
+            return false;
+        }
         std::vector<std::string> row = StringUtil::StringSplit(line);
         if (isHeader) {
             if (row.empty()) {
