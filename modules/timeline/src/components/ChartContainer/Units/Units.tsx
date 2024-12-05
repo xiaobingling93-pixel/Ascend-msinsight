@@ -51,6 +51,7 @@ const Lane = styled.div<{ laneHeight: number; className: string }>`
 const VIRTUAL_SCROLL_THRESHOLD = 30;
 const UNIT_SELECTED = 'unit-selected';
 const UNIT_VISIBLE = 'unit-visible';
+export const UNIT_WRAPPER_SCROLLER_ID = 'unitWrapperScroller';
 
 const Splitter = styled.div`
     width: 100%;
@@ -371,6 +372,7 @@ const TableScroller = styled.div`
 `;
 
 interface ScrollerProps {
+    id?: string;
     children: JSX.Element | null;
     session: Session;
     eventType: string;
@@ -379,7 +381,7 @@ interface ScrollerProps {
     supportJump: boolean;
 };
 
-export const Scroller = React.forwardRef(({ session, children, eventType, orderOptions: sorderOptions, unitsArea, supportJump }: ScrollerProps,
+export const Scroller = React.forwardRef(({ id, session, children, eventType, orderOptions: sorderOptions, unitsArea, supportJump }: ScrollerProps,
     ref: React.ForwardedRef<HTMLDivElement>): JSX.Element => {
     // 广播滚动事件
     function scroll(e: React.UIEvent<HTMLDivElement>): void {
@@ -399,7 +401,8 @@ export const Scroller = React.forwardRef(({ session, children, eventType, orderO
     // 跳转到指定泳道
     useJumpTarget(session, unitsArea, supportJump, sorderOptions, (ref as React.MutableRefObject<HTMLDivElement | null>).current);
 
-    return <TableScroller className={`laneWrapper ${eventType === EventType.PINNEDUNITWRAPPERSCROLL ? 'pinnedScrollArea' : ''}`} onScroll={scroll} ref={ref}>
+    return <TableScroller id={id} className={`laneWrapper ${eventType === EventType.PINNEDUNITWRAPPERSCROLL ? 'pinnedScrollArea' : ''}`}
+        onScroll={scroll} ref={ref}>
         {children}
     </TableScroller>;
 });
@@ -415,7 +418,7 @@ const INVISIBLE_UNITS_PLACEHOLDER = 'invisible-units-placeholder';
 
 const Units = ({ session, height, hasPinButton, laneInfoWidth }:
 { session: Session; height: number; hasPinButton: boolean; laneInfoWidth: number }, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element => {
-    return <Scroller session={session} unitsArea={session.units} supportJump={true}
+    return <Scroller id={UNIT_WRAPPER_SCROLLER_ID} session={session} unitsArea={session.units} supportJump={true}
         ref={ref} orderOptions={orderOptions} eventType={EventType.UNITWRAPPERSCROLL}>
         <FlattenUnits
             session={session}

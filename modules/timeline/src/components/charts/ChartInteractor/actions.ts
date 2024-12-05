@@ -20,6 +20,7 @@ import { setZoomHistory } from '../../ContextMenu';
 import { isMac } from '../../../utils/is';
 import { CardMetaData, SliceMeta, ThreadTrace } from '../../../entity/data';
 import { getTimeOffsetKey } from '../../../insight/units/utils';
+import { UNIT_WRAPPER_SCROLLER_ID } from '../../ChartContainer/Units/Units';
 
 const dragInitData = {
     isDragging: false,
@@ -27,6 +28,9 @@ const dragInitData = {
     domainStart: 0,
     domainEnd: 0,
 };
+
+// 每次滚动的步长
+const SCROLL_STEP = 20;
 
 let dragData = { ...dragInitData };
 function resetDragInitData(): void {
@@ -455,14 +459,23 @@ const processOffsetEvent = (session: Session, isLeft: boolean): void => {
     });
 };
 
+const scrollWrapper = (eventKey: string): void => {
+    const scrollElement = document.getElementById(UNIT_WRAPPER_SCROLLER_ID);
+    // 滚动方向，正数为向下滚动，反之向上
+    const scrollDirection = eventKey === 'ArrowDown' ? 1 : -1;
+    requestAnimationFrame(() => {
+        scrollElement?.scrollBy(0, SCROLL_STEP * scrollDirection);
+    });
+};
+
 export const keyDownAction = (key: string, session: Session, zoomPoint: number | undefined): void => {
     if (key === 'w' || key === 'W') {
         zoomDomain(session, zoomOrMoveDirection.downOrLeft, zoomPoint);
     } else if (key === 's' || key === 'S') {
         zoomDomain(session, zoomOrMoveDirection.upOrRight, zoomPoint);
-    } else if (key === 'a' || key === 'A') {
+    } else if (key === 'a' || key === 'A' || key === 'ArrowLeft') {
         moveDomain(session, zoomOrMoveDirection.downOrLeft);
-    } else if (key === 'd' || key === 'D') {
+    } else if (key === 'd' || key === 'D' || key === 'ArrowRight') {
         moveDomain(session, zoomOrMoveDirection.upOrRight);
     } else if (key === 'm' || key === 'M') {
         processMKeyEvent(session);
@@ -470,6 +483,8 @@ export const keyDownAction = (key: string, session: Session, zoomPoint: number |
         processOffsetEvent(session, false);
     } else if (key === 'l' || key === 'L') {
         processOffsetEvent(session, true);
+    } else if (key === 'ArrowUp' || key === 'ArrowDown') {
+        scrollWrapper(key);
     } else {
         // handle other keys
     }
