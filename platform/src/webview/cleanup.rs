@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 use std::collections::{HashMap, VecDeque};
 #[cfg(windows)]
@@ -9,8 +13,6 @@ use std::{
     process::{Child, Command, Stdio},
     sync::{Arc, Mutex},
 };
-
-use wry::application::event_loop::ControlFlow;
 
 #[cfg(windows)]
 fn query_child_pids(parent_pid: u32) -> Result<Vec<String>> {
@@ -138,9 +140,7 @@ fn kill_child_pids(child_pids: Vec<String>) {
     }
 }
 
-pub(crate) fn handle_close_requested(
-    server_process: Arc<Mutex<Child>>,
-) -> ControlFlow {
+pub(crate) fn handle_close_requested(server_process: Arc<Mutex<Child>>) {
     let mut server_process_guard =
         server_process.lock().expect("Failed to lock server-process mutex");
     let pid = server_process_guard.id();
@@ -153,6 +153,4 @@ pub(crate) fn handle_close_requested(
     if let Err(e) = server_process_guard.kill() {
         eprintln!("server process could not be killed: {e}");
     }
-
-    ControlFlow::Exit
 }

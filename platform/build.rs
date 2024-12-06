@@ -1,3 +1,6 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
 fn main() {
     #[cfg(windows)]
     if let Ok(arch) = std::env::var("CARGO_CFG_TARGET_ARCH") {
