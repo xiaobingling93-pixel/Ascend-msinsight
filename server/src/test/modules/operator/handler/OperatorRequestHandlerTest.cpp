@@ -178,6 +178,35 @@ TEST_F(OperatorRequestHandlerTest, QueryOpDetailInfoHandlerNormalTest)
     ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
 }
 
+TEST_F(OperatorRequestHandlerTest, QueryOpDetailInfoHandlerNormal2Test)
+{
+    Dic::Module::Operator::QueryOpDetailInfoHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorDetailInfoRequest>();
+    const uint64_t ten = 10;
+    const uint64_t oneOneOne = 100;
+    const uint64_t one = 1;
+    requestPtr->params.topK = ten;
+    requestPtr->params.pageSize = oneOneOne;
+    requestPtr->params.current = one;
+    requestPtr->params.rankId = "1";
+    ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
+}
+
+TEST_F(OperatorRequestHandlerTest, QueryOpDetailInfoHandlerNormal3Test)
+{
+    Dic::Module::Operator::QueryOpDetailInfoHandler handler;
+    auto requestPtr = std::make_unique<Dic::Protocol::OperatorDetailInfoRequest>();
+    const uint64_t ten = 10;
+    const uint64_t oneOneOne = 100;
+    const uint64_t one = 1;
+    requestPtr->params.topK = ten;
+    requestPtr->params.pageSize = oneOneOne;
+    requestPtr->params.current = one;
+    requestPtr->params.rankId = "1";
+    requestPtr->params.isCompare = true;
+    ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
+}
+
 TEST_F(OperatorRequestHandlerTest, QueryOpMoreInfoHandlerNormalTest)
 {
     Dic::Module::Operator::QueryOpMoreInfoHandler handler;
