@@ -8,6 +8,7 @@
 #include "ThreadTable.h"
 #include "ProcessTable.h"
 #include "CounterTable.h"
+#include "TimelineProtocolResponse.h"
 #include "TextTraceDatabase.h"
 
 using namespace Dic::Global::PROFILER::MockUtil;
@@ -40,6 +41,16 @@ protected:
         "TEXT,timestamp INTEGER, cat TEXT, args TEXT);";
     const std::string processSql =
         "CREATE TABLE process (pid TEXT PRIMARY KEY, process_name TEXT, label TEXT, process_sort_index INTEGER);";
+    const std::string kernelSql =
+        "CREATE TABLE kernel_detail (id INTEGER PRIMARY KEY AUTOINCREMENT, rank_id TEXT, step_id TEXT, name TEXT, "
+        "op_type TEXT, accelerator_core TEXT, start_time INTEGER, duration INTEGER, wait_time INTEGER, block_dim "
+        "INTEGER, input_shapes TEXT, input_data_types TEXT, input_formats TEXT, output_shapes TEXT, output_data_types "
+        "TEXT, output_formats TEXT, aicore_time_us_ TEXT, aic_total_cycles TEXT, aic_mac_time_us_ TEXT, aic_mac_ratio "
+        "TEXT, aic_scalar_time_us_ TEXT, aic_scalar_ratio TEXT, aic_mte1_time_us_ TEXT, aic_mte1_ratio TEXT, "
+        "aic_mte2_time_us_ TEXT, aic_mte2_ratio TEXT, aic_fixpipe_time_us_ TEXT, aic_fixpipe_ratio TEXT, "
+        "aic_icache_miss_rate TEXT, aiv_time_us_ TEXT, aiv_total_cycles TEXT, aiv_vec_time_us_ TEXT, aiv_vec_ratio "
+        "TEXT, aiv_scalar_time_us_ TEXT, aiv_scalar_ratio TEXT, aiv_mte2_time_us_ TEXT, aiv_mte2_ratio TEXT, "
+        "aiv_mte3_time_us_ TEXT, aiv_mte3_ratio TEXT, aiv_icache_miss_rate TEXT, cube_utilization_PCT_ TEXT);";
 };
 
 /**
@@ -1083,4 +1094,296 @@ TEST_F(TextTraceDatabaseMockTest, TestDeleteEmptyThreadWhenNotExistEmptyFlow)
     EXPECT_EQ(result.size(), two);
     EXPECT_EQ(result[zero].trackId, two);
     EXPECT_EQ(result[one].trackId, three);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryP2PCommunicationOpDataWhenDbNotOpen)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    const std::string rankId;
+    const uint64_t offset = 9;
+    Dic::Protocol::ExtremumTimestamp range;
+    std::vector<Dic::Protocol::ThreadTraces> p2pOpData;
+    bool result = database.QueryP2PCommunicationOpData(rankId, offset, range, p2pOpData);
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryFuseableOpDataWhenDbNotOpen)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    const Dic::Protocol::KernelDetailsParams params;
+    Dic::Module::Timeline::FuseableOpRule rule;
+    std::vector<Dic::Protocol::FlowLocation> data;
+    const uint64_t minTimestamp = 9;
+    rule.opList.emplace_back("19");
+    bool result = database.QueryFuseableOpData(params, rule, data, minTimestamp);
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryFuseableOpDataWhenDbOpen)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    DatabaseTestCaseMockUtil::CreateTable(dbPtr, kernelSql);
+    std::string kerData =
+        "INSERT INTO \"main\".\"kernel_detail\" (\"id\", \"rank_id\", \"step_id\", \"name\", \"op_type\", "
+        "\"accelerator_core\", \"start_time\", \"duration\", \"wait_time\", \"block_dim\", \"input_shapes\", "
+        "\"input_data_types\", \"input_formats\", \"output_shapes\", \"output_data_types\", \"output_formats\", "
+        "\"aicore_time_us_\", \"aic_total_cycles\", \"aic_mac_time_us_\", \"aic_mac_ratio\", \"aic_scalar_time_us_\", "
+        "\"aic_scalar_ratio\", \"aic_mte1_time_us_\", \"aic_mte1_ratio\", \"aic_mte2_time_us_\", \"aic_mte2_ratio\", "
+        "\"aic_fixpipe_time_us_\", \"aic_fixpipe_ratio\", \"aic_icache_miss_rate\", \"aiv_time_us_\", "
+        "\"aiv_total_cycles\", \"aiv_vec_time_us_\", \"aiv_vec_ratio\", \"aiv_scalar_time_us_\", \"aiv_scalar_ratio\", "
+        "\"aiv_mte2_time_us_\", \"aiv_mte2_ratio\", \"aiv_mte3_time_us_\", \"aiv_mte3_ratio\", "
+        "\"aiv_icache_miss_rate\", \"cube_utilization_PCT_\") VALUES (1, '11', '', "
+        "'DynamicQuant', 'Transpose', 'AI_VECTOR_CORE', 1726830796027907842, 169.927, 0, 48, "
+        "'\"6656,4992,1;3\"', 'INT8;INT64', 'ND;ND', '\"4992,6656,1\"', 'INT8', 'ND', '0.0', '0', '0.0', '0.0', '0.0', "
+        "'0.0', '0.0', '0.0', '0.0', '0.0', '0.0', '0.0', '0.0', '59.62', '5151508', '28.259', '0.474', '12.263', "
+        "'0.206', '14.739', '0.247', '11.443', '0.192', '0.01', '0');";
+    std::string sliceData =
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (5, 1726830796027907842, 5180, "
+        "'DynamicQuant', NULL, 2, NULL, '{\"Model Id\":\"4294967295\",\"Task Type\":\"AI_CORE\",\"Physic Stream "
+        "Id\":\"3\",\"Task Id\":\"3923\",\"Batch Id\":\"0\",\"Subtask "
+        "Id\":\"4294967295\",\"connection_id\":\"64685\"}', '', 1726830796027913022, '');";
+    std::string threadData = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", "
+        "\"thread_sort_index\") VALUES (2, '41725', '42506313', 'Thread 41725', 41725);";
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, kerData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sliceData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, threadData);
+    Dic::Protocol::KernelDetailsParams params;
+    Dic::Module::Timeline::FuseableOpRule rule;
+    std::vector<Dic::Protocol::FlowLocation> data;
+    const uint64_t minTimestamp = 9;
+    rule.opList.emplace_back("Transpose");
+    params.orderBy = "name";
+    params.order = "DESC";
+    bool result = database.QueryFuseableOpData(params, rule, data, minTimestamp);
+    EXPECT_EQ(result, true);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryHostInfo)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    std::string result = database.QueryHostInfo();
+    EXPECT_EQ(std::empty(result), true);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryFwdBwdDataByFlowWhenDbNotOpen)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    const std::string rankId;
+    const uint64_t offset = 0;
+    const Dic::Protocol::ExtremumTimestamp range;
+    std::vector<Dic::Protocol::ThreadTraces> fwdBwdData;
+    bool result = database.QueryFwdBwdDataByFlow(rankId, offset, range, fwdBwdData);
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryFwdBwdDataByFlowWhenDbOpen)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string sliceData =
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (1, 1726830772807463934, 2140, 'Computing', "
+        "NULL, 34, 'cpu_op', NULL, '', 1726830772807464000, '');\n"
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (2, 1726830772803060779, 1880, "
+        "'MulF16Tactic', NULL, 51, 'cpu_op', '{\"Model Id\":\"4294967295\",\"Task Type\":\"AI_CORE\",\"Physic Stream "
+        "Id\":\"3\",\"Task Id\":\"3922\",\"Batch Id\":\"0\",\"Subtask "
+        "Id\":\"4294967295\",\"connection_id\":\"64679\"}', '', 1726830796027907822, '');";
+    std::string flowData = "INSERT INTO \"main\".\"flow\" (\"id\", \"flow_id\", \"name\", \"cat\", \"track_id\", "
+        "\"timestamp\", \"type\") VALUES (34353, '100205096003960831', "
+        "'HostToDevice100205096003960831', 'fwdbwd', 34, 1726830772807463934, 'f');\n"
+        "INSERT INTO \"main\".\"flow\" (\"id\", \"flow_id\", \"name\", \"cat\", \"track_id\", \"timestamp\", \"type\") "
+        "VALUES (34354, '100205096003960831', 'HostToDevice100205096003960831', 'fwdbwd', 51, "
+        "1726830772803060779, 's');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, flowData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sliceData);
+    const std::string rankId;
+    const uint64_t offset = 0;
+    Dic::Protocol::ExtremumTimestamp range;
+    const uint64_t st = 1626830772803060779;
+    const uint64_t en = 1826830772803060779;
+    range.minTimestamp = st;
+    range.maxTimestamp = en;
+    std::vector<Dic::Protocol::ThreadTraces> fwdBwdData;
+    bool result = database.QueryFwdBwdDataByFlow(rankId, offset, range, fwdBwdData);
+    EXPECT_EQ(result, true);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryAffinityAPIDataWhenDbNotOpen)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    const Dic::Protocol::KernelDetailsParams params;
+    const std::set<std::string> pattern;
+    const uint64_t minTimestamp = 0;
+    std::map<uint64_t, std::vector<Dic::Protocol::FlowLocation>> data;
+    std::map<uint64_t, std::vector<uint32_t>> indexes;
+    bool result = database.QueryAffinityAPIData(params, pattern, minTimestamp, data, indexes);
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryAclnnOpCountExceedThresholdWhenDbNotOpen)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    const Dic::Protocol::KernelDetailsParams params;
+    const uint64_t threshold = 10000;
+    std::vector<Dic::Protocol::KernelBaseInfo> data;
+    const uint64_t minTimestamp = 10000;
+    bool result = database.QueryAclnnOpCountExceedThreshold(params, threshold, data, minTimestamp);
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryAclnnOpCountExceedThresholdWhenDbOpen)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string sliceData =
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (9, 1726830796027914803, 48342, "
+        "'aclnnQuantMatmulV4_QuantBatchMatmulV3_QuantBatchMatmulV3', NULL, 2, NULL, '{\"Model "
+        "Id\":\"4294967295\",\"Task Type\":\"MIX_AIC\",\"Physic Stream Id\":\"3\",\"Task Id\":\"3924\",\"Batch "
+        "Id\":\"0\",\"Subtask Id\":\"0\",\"connection_id\":\"64693\"}', '', 1726830796027963145, '');";
+    std::string threadData = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", "
+        "\"thread_sort_index\") VALUES (2, '4', '42506507', 'Stream 4', 4);";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, threadData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sliceData);
+    Dic::Protocol::KernelDetailsParams params;
+    params.orderBy = "name";
+    params.order = "DESC";
+    const uint64_t threshold = 1;
+    std::vector<Dic::Protocol::KernelBaseInfo> data;
+    const uint64_t minTimestamp = 10000;
+    bool result = database.QueryAclnnOpCountExceedThreshold(params, threshold, data, minTimestamp);
+    EXPECT_EQ(result, true);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryStepDurationWhenDbNotOpen)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    const std::string stepId;
+    const uint64_t emin = 1000;
+    const uint64_t emax = 10000;
+    uint64_t min = emin;
+    uint64_t max = emax;
+    bool result = database.QueryStepDuration(stepId, min, max);
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryStepDurationWhenDbOpen)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string sliceData =
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (5, 1726830796027907842, 5180, "
+        "'ProfilerStep#5', NULL, 2, NULL, '{\"Model Id\":\"4294967295\",\"Task Type\":\"AI_CORE\",\"Physic Stream "
+        "Id\":\"3\",\"Task Id\":\"3923\",\"Batch Id\":\"0\",\"Subtask "
+        "Id\":\"4294967295\",\"connection_id\":\"64685\"}', '', 1726830796027913022, '');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sliceData);
+    const std::string stepId = "5";
+    const uint64_t emin = 1000;
+    const uint64_t emax = 10000;
+    uint64_t min = emin;
+    uint64_t max = emax;
+    bool result = database.QueryStepDuration(stepId, min, max);
+    EXPECT_EQ(result, true);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadatanWhenDbNotOpen)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    const std::string fileId = "9";
+    std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
+    bool result = database.QueryUnitsMetadata(fileId, metaData);
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQueryUnitsMetadatanWhenDbOpen)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string processData = "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", "
+        "\"process_sort_index\") VALUES ('42506507', 'Ascend Hardware', 'NPU', 8);\n"
+        "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", \"process_sort_index\") VALUES "
+        "('42506731', 'HCCL', 'NPU', 15);\n"
+        "INSERT INTO \"main\".\"process\" (\"pid\", \"process_name\", \"label\", \"process_sort_index\") VALUES "
+        "('42506539', 'AI Core Freq', 'NPU', 9);";
+    std::string threadData = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", "
+        "\"thread_sort_index\") VALUES (23, '3', '42506507', 'Stream 3', 3);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (39, '1', '42506731', 'Plane 0', 1);";
+    std::string counterData =
+        "INSERT INTO \"main\".\"counter\" (\"id\", \"name\", \"pid\", \"timestamp\", \"cat\", \"args\") VALUES (6, 'AI "
+        "Core Freq', '42506539', 1726830775547610426, NULL, '{\"MHz\":\"1800\"}');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, processData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, threadData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, counterData);
+    const std::string fileId = "9";
+    std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
+    bool result = database.QueryUnitsMetadata(fileId, metaData);
+    EXPECT_EQ(result, true);
+}
+
+TEST_F(TextTraceDatabaseMockTest, TestQuerySimulationUintFlows)
+{
+    std::recursive_mutex sqlMutex;
+    MockDatabase database(sqlMutex);
+    sqlite3 *dbPtr = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(dbPtr);
+    database.SetDbPtr(dbPtr);
+    database.CreateTable();
+    std::string sliceData = "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", "
+        "\"track_id\", \"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (24463, "
+        "31081, 0, 'SET_FLAG', NULL, 15, NULL, '', 'thread_state_running', 31081, '99');\n"
+        "INSERT INTO \"main\".\"slice\" (\"id\", \"timestamp\", \"duration\", \"name\", \"depth\", \"track_id\", "
+        "\"cat\", \"args\", \"cname\", \"end_time\", \"flag_id\") VALUES (24674, 31249, 0, 'WAIT_FLAG', NULL, 16, "
+        "NULL, '', 'thread_state_iowait', 31249, '99');";
+    std::string threadData = "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", "
+        "\"thread_sort_index\") VALUES (15, 'MTE1', 'core0.cubecore0', 'MTE1', 3);\n"
+        "INSERT INTO \"main\".\"thread\" (\"track_id\", \"tid\", \"pid\", \"thread_name\", \"thread_sort_index\") "
+        "VALUES (16, 'MTE2', 'core0.cubecore0', 'MTE2', 6);";
+    std::string flowData = "INSERT INTO \"main\".\"flow\" (\"id\", \"flow_id\", \"name\", \"cat\", \"track_id\", "
+        "\"timestamp\", \"type\") VALUES (769, '99', 'flow', 'MTE1ToMTE2', 15, 31081, 's');\n"
+        "INSERT INTO \"main\".\"flow\" (\"id\", \"flow_id\", \"name\", \"cat\", \"track_id\", \"timestamp\", \"type\") "
+        "VALUES (770, '99', 'flow', 'MTE1ToMTE2', 16, 31249, 't');";
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, sliceData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, threadData);
+    DatabaseTestCaseMockUtil::InsertData(dbPtr, flowData);
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.isSimulation = true;
+    requestParams.id = "24463";
+    Dic::Protocol::UnitFlowsBody responseBody;
+    const uint64_t minTimestamp = 0;
+    const uint64_t trackId = 15;
+    bool result = database.QueryUintFlows(requestParams, responseBody, minTimestamp, trackId);
+    EXPECT_EQ(result, true);
 }
