@@ -12,6 +12,9 @@ export class MemoryPage {
     readonly rankIdSelector: Locator;
     readonly groupIdSelector: Locator;
     readonly graphIdSelector: Locator;
+    readonly nameInputor: Locator;
+    readonly minSizeInputor: Locator;
+    readonly maxSizeInputor: Locator;
 
     constructor(page: Page) {
         this.page = page;
@@ -20,6 +23,9 @@ export class MemoryPage {
         this.rankIdSelector = this.memoryFrame.locator('#select-rankId');
         this.groupIdSelector = this.memoryFrame.locator('#select-groupId');
         this.graphIdSelector = this.memoryFrame.locator('#select-graphId');
+        this.nameInputor = this.memoryFrame.locator('#input-name');
+        this.minSizeInputor = this.memoryFrame.locator('#input-minSize');
+        this.maxSizeInputor = this.memoryFrame.locator('#input-maxSize');
     }
 
     async goto(): Promise<void> {

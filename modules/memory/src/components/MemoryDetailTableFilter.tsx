@@ -72,6 +72,7 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
             <div className="flex items-center">
                 <Label name={t('searchCriteria.Name')} />
                 <Input
+                    id={'input-name'}
                     value={searchEventOperatorName}
                     onChange={onSearchEventOperatorChanged}
                     placeholder={t('searchCriteria.Search by Name')}
@@ -82,6 +83,7 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
             <div className="flex items-center">
                 <Label name={t('searchCriteria.Min Size')} />
                 <InputNumber
+                    id={'input-minSize'}
                     value={minSize}
                     onChange={onFilterEventMinSizeInputChanged}
                     min={isCompare ? COMPARE_MIN_INPUT_NUMBER : 0}
@@ -91,6 +93,7 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
             <div className="flex items-center">
                 <Label name={t('searchCriteria.Max Size')} />
                 <InputNumber
+                    id={'input-maxSize'}
                     value={maxSize}
                     onChange={onFilterEventMaxSizeInputChanged}
                     min={isCompare ? COMPARE_MIN_INPUT_NUMBER : 0}
@@ -100,6 +103,7 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
             </div>
             <div className="flex items-center">
                 <Button
+                    data-testid={'query-btn'}
                     onClick={onQuery}
                     type="primary"
                     style={{ marginRight: 8 }}
@@ -108,6 +112,7 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
                     {t('searchCriteria.Button Query')}
                 </Button>
                 <Button
+                    data-testid={'reset-btn'}
                     onClick={onReset}
                     disabled={isBtnDisabled}
                 >

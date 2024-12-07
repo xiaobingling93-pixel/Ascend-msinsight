@@ -5,7 +5,7 @@
 import { test as baseTest, expect } from '@playwright/test';
 import { MemoryPage } from './page-object';
 import { clearAllData, importData, waitForWebSocketEvent } from './utils';
-import { SelectHelpers } from './components';
+import { SelectHelpers, InputHelpers } from './components';
 
 interface TestFixtures {
     memoryPage: MemoryPage;
@@ -20,6 +20,8 @@ const test = baseTest.extend<TestFixtures>({
 const memoryImgMap = {
     loadPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single.png',
     filterPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-filter.png',
+    queryPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-query.png',
+    resetPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-reset.png',
 };
  
 test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
@@ -50,6 +52,43 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         await page.mouse.move(0, 0);
         await expect(memoryFrame.locator('.mi-page'))
         .toHaveScreenshot(memoryImgMap.filterPytorchSingleMachineMultiRankDataSuccess, {
+            maxDiffPixels: 500,
+        });
+    });
+
+    test('query_memoryDetailTbale_by_tableFilterCondition', async ({ page, memoryPage }) => {
+        const { memoryFrame, nameInputor, minSizeInputor, maxSizeInputor } = memoryPage;
+        const nameInput = new InputHelpers(page, nameInputor, memoryFrame);
+        const minSizeInput = new InputHelpers(page, minSizeInputor, memoryFrame);
+        const maxSizeInput = new InputHelpers(page, maxSizeInputor, memoryFrame);
+        await nameInput.setValue('aten::empty_strided');
+        expect(await nameInput.expectValueToBe('aten::empty_strided'));
+        expect(await minSizeInput.expectValueToBe('0'));
+        expect(await maxSizeInput.expectValueToBe('1000000'));
+        const queryBtn = memoryFrame.getByTestId('query-btn');
+        await queryBtn.waitFor({ state: 'visible' });
+        await queryBtn.click();
+        await page.mouse.move(0, 0);
+        await expect(memoryFrame.locator('.mi-page'))
+        .toHaveScreenshot(memoryImgMap.queryPytorchSingleMachineMultiRankDataSuccess, {
+            maxDiffPixels: 500,
+        });
+    });
+
+    test('reset_memoryDetailTbale_by_tableFilterCondition', async ({ page, memoryPage }) => {
+        const { memoryFrame, nameInputor, minSizeInputor, maxSizeInputor } = memoryPage;
+        const nameInput = new InputHelpers(page, nameInputor, memoryFrame);
+        const minSizeInput = new InputHelpers(page, minSizeInputor, memoryFrame);
+        const maxSizeInput = new InputHelpers(page, maxSizeInputor, memoryFrame);
+        expect(await nameInput.expectValueToBe(''));
+        expect(await minSizeInput.expectValueToBe('0'));
+        expect(await maxSizeInput.expectValueToBe('1000000'));
+        const queryBtn = memoryFrame.getByTestId('reset-btn');
+        await queryBtn.waitFor({ state: 'visible' });
+        await queryBtn.click();
+        await page.mouse.move(0, 0);
+        await expect(memoryFrame.locator('.mi-page'))
+        .toHaveScreenshot(memoryImgMap.resetPytorchSingleMachineMultiRankDataSuccess, {
             maxDiffPixels: 500,
         });
     });
