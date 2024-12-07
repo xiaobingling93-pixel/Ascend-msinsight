@@ -337,16 +337,12 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryEntireOperatorTable)
 {
     DataBaseManager::Instance().SetDataType(DataType::DB);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetMemoryDatabase("0");
-    std::string rankId = "0";
     uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
-    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Dic::Protocol::MemoryOperator> opDetails;
-    bool result = database->QueryEntireOperatorTable(columnAttr, opDetails, rankId, offsetTime);
+    bool result = database->QueryEntireOperatorTable(opDetails, offsetTime);
     int expectSize = 359;
-    int expectColumnSize = 14;
     EXPECT_TRUE(result);
     EXPECT_EQ(opDetails.size(), expectSize);
-    EXPECT_EQ(columnAttr.size(), expectColumnSize);
 }
 
 TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryResourceTypeData)
@@ -427,13 +423,10 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryEntireStaticOperatorTable)
     requestParams.endNodeIndex = -1;
     requestParams.minSize = std::numeric_limits<int64_t>::min();
     requestParams.maxSize = std::numeric_limits<int64_t>::max();
-    std::vector<Protocol::MemoryTableColumnAttr> columnAttr;
     std::vector<Protocol::StaticOperatorItem> responseBody;
-    bool result = database->QueryEntireStaticOperatorTable(requestParams, columnAttr, responseBody);
+    bool result = database->QueryEntireStaticOperatorTable(requestParams, responseBody);
     int expectSize = 0;
-    int expectColumnSize = 0;
     EXPECT_FALSE(result);
-    EXPECT_EQ(columnAttr.size(), expectColumnSize);
     EXPECT_EQ(responseBody.size(), expectSize);
 }
 

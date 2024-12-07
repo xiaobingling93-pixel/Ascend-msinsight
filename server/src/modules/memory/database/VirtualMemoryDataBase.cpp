@@ -307,9 +307,8 @@ std::vector<Protocol::MemoryOperator> VirtualMemoryDataBase::QueryOperatorDetail
     return operatorDtoVec;
 }
 
-bool VirtualMemoryDataBase::ExecuteQueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
-                                                            std::vector<Protocol::MemoryOperator> &opDetails,
-                                                            const std::string &sql, const std::string rankId)
+bool VirtualMemoryDataBase::ExecuteQueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails,
+                                                            const std::string &sql)
 {
     sqlite3_stmt *stmt = nullptr;
     int result = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
@@ -338,14 +337,6 @@ bool VirtualMemoryDataBase::ExecuteQueryEntireOperatorTable(std::vector<Protocol
         operatorDtoVec.emplace_back(operatorDto);
     }
     sqlite3_finalize(stmt);
-    std::vector<std::string> streams = GetStreamLists(rankId);
-    std::vector<std::string> columns = activeRelatedColumn;
-    for (const auto& column : tableColumnAttr) {
-        if (streams.empty() && std::find(columns.begin(), columns.end(), column.name) != columns.end()) {
-            continue;
-        }
-        columnAttr.emplace_back(column);
-    }
     return true;
 }
 
@@ -597,8 +588,6 @@ bool VirtualMemoryDataBase::ExecuteStaticOperatorDetail(Protocol::StaticOperator
 }
 
 bool VirtualMemoryDataBase::ExecuteQueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
-                                                                  std::vector<Protocol::MemoryTableColumnAttr>&
-                                                                  columnAttr,
                                                                   std::vector<Protocol::StaticOperatorItem>& opDetails,
                                                                   const std::string& sql)
 {
@@ -625,9 +614,6 @@ bool VirtualMemoryDataBase::ExecuteQueryEntireStaticOperatorTable(Protocol::Stat
     }
     sqlite3_finalize(stmt);
     opDetails = operatorDtoVec;
-    for (const auto& column : staticOpTableColumnAttr) {
-        columnAttr.emplace_back(column);
-    }
     return true;
 }
 

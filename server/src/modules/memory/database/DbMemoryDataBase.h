@@ -40,13 +40,10 @@ public:
     bool QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,
                                   Protocol::StaticOperatorGraphItem &graphItem) override;
 
-    bool QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
-                                  std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId,
-                                  uint64_t offsetTime) override;
+    bool QueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime) override;
     bool QueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
                                    uint64_t offsetTime);
     bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
-                                                std::vector<Protocol::MemoryTableColumnAttr>& columnAttr,
                                                 std::vector<Protocol::StaticOperatorItem>& opDetails) override;
 
     static void ParserEnd(std::string rankId, bool result);

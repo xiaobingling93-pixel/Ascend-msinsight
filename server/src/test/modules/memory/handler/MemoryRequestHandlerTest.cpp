@@ -280,124 +280,116 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerComparisonGroupByStre
 
 TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerGetOperatorDiffCompareEmptyTest)
 {
-    MemoryOperatorResponse compareData;
-    MemoryOperatorResponse baselineData;
-    MemoryOperatorComparisonResponse diffData;
-    std::vector<MemoryOperator> opDetails;
+    std::vector<MemoryOperator> compareData;
+    std::vector<MemoryOperator> baselineData;
+    std::vector<MemoryOperatorComparison> diffData;
     MemoryOperator operatorFirst = {"aten::empty_strided", 100, "0.000", "0.000", 1000, "0.000",
         1000, 1000, 1000, 1000, 1000, 1000, 1000, "", ""};
     MemoryOperator operatorSecond = {"matmul", 1000, "0.000", "0.000", 25, "0.000",
         25, 25, 25, 25, 25, 25, 25, "", ""};
-    opDetails.push_back(operatorFirst);
-    opDetails.push_back(operatorSecond);
-    baselineData.operatorDetails = opDetails;
+    baselineData.push_back(operatorFirst);
+    baselineData.push_back(operatorSecond);
     Dic::Module::Memory::QueryMemoryOperatorHandler handler;
     std::unique_ptr<Dic::Protocol::MemoryOperatorRequest> requestPtr =
             std::make_unique<Dic::Protocol::MemoryOperatorRequest>();
     handler.GetOperatorDiff(compareData, baselineData, diffData);
-    ASSERT_EQ(diffData.operatorDiffDetails.size(), opDetails.size());
-    for (size_t i = 0; i < opDetails.size() && i < diffData.operatorDiffDetails.size(); ++i) {
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.name, opDetails[i].name);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.size, -opDetails[i].size);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.allocationTime, opDetails[i].allocationTime);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.releaseTime, opDetails[i].releaseTime);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.duration, -opDetails[i].duration);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.activeReleaseTime, opDetails[i].activeReleaseTime);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.activeDuration, -opDetails[i].activeDuration);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.allocationAllocated, -opDetails[i].allocationAllocated);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.allocationReserved, -opDetails[i].allocationReserved);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.allocationActive, -opDetails[i].allocationActive);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.releaseAllocated, -opDetails[i].releaseAllocated);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.releaseReserved, -opDetails[i].releaseReserved);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.releaseActive, -opDetails[i].releaseActive);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.streamId, "");
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.deviceType, "");
+    ASSERT_EQ(diffData.size(), baselineData.size());
+    for (size_t i = 0; i < baselineData.size() && i < diffData.size(); ++i) {
+        EXPECT_EQ(diffData[i].diff.name, baselineData[i].name);
+        EXPECT_EQ(diffData[i].diff.size, -baselineData[i].size);
+        EXPECT_EQ(diffData[i].diff.allocationTime, baselineData[i].allocationTime);
+        EXPECT_EQ(diffData[i].diff.releaseTime, baselineData[i].releaseTime);
+        EXPECT_EQ(diffData[i].diff.duration, -baselineData[i].duration);
+        EXPECT_EQ(diffData[i].diff.activeReleaseTime, baselineData[i].activeReleaseTime);
+        EXPECT_EQ(diffData[i].diff.activeDuration, -baselineData[i].activeDuration);
+        EXPECT_EQ(diffData[i].diff.allocationAllocated, -baselineData[i].allocationAllocated);
+        EXPECT_EQ(diffData[i].diff.allocationReserved, -baselineData[i].allocationReserved);
+        EXPECT_EQ(diffData[i].diff.allocationActive, -baselineData[i].allocationActive);
+        EXPECT_EQ(diffData[i].diff.releaseAllocated, -baselineData[i].releaseAllocated);
+        EXPECT_EQ(diffData[i].diff.releaseReserved, -baselineData[i].releaseReserved);
+        EXPECT_EQ(diffData[i].diff.releaseActive, -baselineData[i].releaseActive);
+        EXPECT_EQ(diffData[i].diff.streamId, "");
+        EXPECT_EQ(diffData[i].diff.deviceType, "");
     }
 }
 
 TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerGetOperatorDiffBaselineEmptyTest)
 {
-    MemoryOperatorResponse compareData;
-    MemoryOperatorResponse baselineData;
-    MemoryOperatorComparisonResponse diffData;
-    std::vector<MemoryOperator> opDetails;
+    std::vector<MemoryOperator> compareData;
+    std::vector<MemoryOperator> baselineData;
+    std::vector<MemoryOperatorComparison> diffData;
     MemoryOperator operatorFirst = {"aten::empty_strided", 100, "0.000", "0.000", 1000, "0.000",
         1000, 1000, 1000, 1000, 1000, 1000, 1000, "", ""};
     MemoryOperator operatorSecond = {"matmul", 1000, "0.000", "0.000", 25, "0.000",
         25, 25, 25, 25, 25, 25, 25, "", ""};
-    opDetails.push_back(operatorFirst);
-    opDetails.push_back(operatorSecond);
-    compareData.operatorDetails = opDetails;
+    compareData.push_back(operatorFirst);
+    compareData.push_back(operatorSecond);
     Dic::Module::Memory::QueryMemoryOperatorHandler handler;
     std::unique_ptr<Dic::Protocol::MemoryOperatorRequest> requestPtr =
             std::make_unique<Dic::Protocol::MemoryOperatorRequest>();
     handler.GetOperatorDiff(compareData, baselineData, diffData);
-    ASSERT_EQ(diffData.operatorDiffDetails.size(), opDetails.size());
-    for (size_t i = 0; i < opDetails.size() && i < diffData.operatorDiffDetails.size(); ++i) {
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.name, opDetails[i].name);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.size, opDetails[i].size);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.allocationTime, opDetails[i].allocationTime);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.releaseTime, opDetails[i].releaseTime);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.duration, opDetails[i].duration);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.activeReleaseTime, opDetails[i].activeReleaseTime);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.activeDuration, opDetails[i].activeDuration);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.allocationAllocated, opDetails[i].allocationAllocated);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.allocationReserved, opDetails[i].allocationReserved);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.allocationActive, opDetails[i].allocationActive);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.releaseAllocated, opDetails[i].releaseAllocated);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.releaseReserved, opDetails[i].releaseReserved);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.releaseActive, opDetails[i].releaseActive);
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.streamId, "");
-        EXPECT_EQ(diffData.operatorDiffDetails[i].diff.deviceType, "");
+    ASSERT_EQ(diffData.size(), compareData.size());
+    for (size_t i = 0; i < compareData.size() && i < diffData.size(); ++i) {
+        EXPECT_EQ(diffData[i].diff.name, compareData[i].name);
+        EXPECT_EQ(diffData[i].diff.size, compareData[i].size);
+        EXPECT_EQ(diffData[i].diff.allocationTime, compareData[i].allocationTime);
+        EXPECT_EQ(diffData[i].diff.releaseTime, compareData[i].releaseTime);
+        EXPECT_EQ(diffData[i].diff.duration, compareData[i].duration);
+        EXPECT_EQ(diffData[i].diff.activeReleaseTime, compareData[i].activeReleaseTime);
+        EXPECT_EQ(diffData[i].diff.activeDuration, compareData[i].activeDuration);
+        EXPECT_EQ(diffData[i].diff.allocationAllocated, compareData[i].allocationAllocated);
+        EXPECT_EQ(diffData[i].diff.allocationReserved, compareData[i].allocationReserved);
+        EXPECT_EQ(diffData[i].diff.allocationActive, compareData[i].allocationActive);
+        EXPECT_EQ(diffData[i].diff.releaseAllocated, compareData[i].releaseAllocated);
+        EXPECT_EQ(diffData[i].diff.releaseReserved, compareData[i].releaseReserved);
+        EXPECT_EQ(diffData[i].diff.releaseActive, compareData[i].releaseActive);
+        EXPECT_EQ(diffData[i].diff.streamId, "");
+        EXPECT_EQ(diffData[i].diff.deviceType, "");
     }
 }
 
 TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerGetOperatorDiffBothNotEmptyTest)
 {
-    MemoryOperatorResponse compareData;
-    MemoryOperatorResponse baselineData;
-    MemoryOperatorComparisonResponse diffData;
-    std::vector<MemoryOperator> opCompare;
+    std::vector<MemoryOperator> compareData;
+    std::vector<MemoryOperator> baselineData;
+    std::vector<MemoryOperatorComparison> diffData;
     MemoryOperator operatorCompareFirst = {"aten::empty_strided", 100, "19.235", "21.478", 2, "21.477",
         2, 100, 100, 100, 100, 100, 100, "4589", ""};
     MemoryOperator operatorCompareSecond = {"matmul", 1000, "178.254", "199.375", 20, "199.372",
         20, 1000, 1000, 1000, 1000, 1000, 1000, "2733", ""};
-    opCompare.push_back(operatorCompareFirst);
-    opCompare.push_back(operatorCompareSecond);
-    compareData.operatorDetails = opCompare;
-    std::vector<MemoryOperator> opBaseline;
+    compareData.push_back(operatorCompareFirst);
+    compareData.push_back(operatorCompareSecond);
     MemoryOperator operatorBaselineFirst = {"aten::empty_strided", 173, "33.980", "49.211", 16, "49.210",
         16, 173, 173, 173, 173, 173, 173, "3011", ""};
     MemoryOperator operatorBaselineSecond = {"matmul", 477, "1.230", "120.211", 119, "120.210",
         119, 477, 477, 477, 477, 477, 477, "8924", ""};
-    opBaseline.push_back(operatorBaselineFirst);
-    opBaseline.push_back(operatorBaselineSecond);
-    baselineData.operatorDetails = opBaseline;
+    baselineData.push_back(operatorBaselineFirst);
+    baselineData.push_back(operatorBaselineSecond);
     Dic::Module::Memory::QueryMemoryOperatorHandler handler;
     std::unique_ptr<Dic::Protocol::MemoryOperatorRequest> requestPtr =
             std::make_unique<Dic::Protocol::MemoryOperatorRequest>();
     handler.GetOperatorDiff(compareData, baselineData, diffData);
-    ASSERT_EQ(diffData.operatorDiffDetails.size(), opCompare.size());
-    ASSERT_EQ(diffData.operatorDiffDetails.size(), opBaseline.size());
-    for (size_t i = 0; i < diffData.operatorDiffDetails.size(); ++i) {
-        const MemoryOperator &result = diffData.operatorDiffDetails[i].diff;
-        EXPECT_EQ(result.name, opCompare[i].name);
-        EXPECT_EQ(result.name, opBaseline[i].name);
-        EXPECT_EQ(result.size, opCompare[i].size - opBaseline[i].size);
-        EXPECT_EQ(result.allocationTime, NumberUtil::StringDoubleMinus(opCompare[i].allocationTime,
-            opBaseline[i].allocationTime));
-        EXPECT_EQ(result.releaseTime, NumberUtil::StringDoubleMinus(opCompare[i].releaseTime,
-            opBaseline[i].releaseTime));
-        EXPECT_EQ(result.duration, opCompare[i].duration - opBaseline[i].duration);
-        EXPECT_EQ(result.activeReleaseTime, NumberUtil::StringDoubleMinus(opCompare[i].activeReleaseTime,
-            opBaseline[i].activeReleaseTime));
-        EXPECT_EQ(result.activeDuration, opCompare[i].activeDuration - opBaseline[i].activeDuration);
-        EXPECT_EQ(result.allocationAllocated, opCompare[i].allocationAllocated - opBaseline[i].allocationAllocated);
-        EXPECT_EQ(result.allocationReserved, opCompare[i].allocationReserved - opBaseline[i].allocationReserved);
-        EXPECT_EQ(result.allocationActive, opCompare[i].allocationActive - opBaseline[i].allocationActive);
-        EXPECT_EQ(result.releaseAllocated, opCompare[i].releaseAllocated - opBaseline[i].releaseAllocated);
-        EXPECT_EQ(result.releaseReserved, opCompare[i].releaseReserved - opBaseline[i].releaseReserved);
-        EXPECT_EQ(result.releaseActive, opCompare[i].releaseActive - opBaseline[i].releaseActive);
+    ASSERT_EQ(diffData.size(), compareData.size());
+    ASSERT_EQ(diffData.size(), baselineData.size());
+    for (size_t i = 0; i < diffData.size(); ++i) {
+        const MemoryOperator &result = diffData[i].diff;
+        EXPECT_EQ(result.name, compareData[i].name);
+        EXPECT_EQ(result.name, baselineData[i].name);
+        EXPECT_EQ(result.size, compareData[i].size - baselineData[i].size);
+        EXPECT_EQ(result.allocationTime, NumberUtil::StringDoubleMinus(compareData[i].allocationTime,
+            baselineData[i].allocationTime));
+        EXPECT_EQ(result.releaseTime, NumberUtil::StringDoubleMinus(compareData[i].releaseTime,
+            baselineData[i].releaseTime));
+        EXPECT_EQ(result.duration, compareData[i].duration - baselineData[i].duration);
+        EXPECT_EQ(result.activeReleaseTime, NumberUtil::StringDoubleMinus(compareData[i].activeReleaseTime,
+            baselineData[i].activeReleaseTime));
+        EXPECT_EQ(result.activeDuration, compareData[i].activeDuration - baselineData[i].activeDuration);
+        EXPECT_EQ(result.allocationAllocated, compareData[i].allocationAllocated - baselineData[i].allocationAllocated);
+        EXPECT_EQ(result.allocationReserved, compareData[i].allocationReserved - baselineData[i].allocationReserved);
+        EXPECT_EQ(result.allocationActive, compareData[i].allocationActive - baselineData[i].allocationActive);
+        EXPECT_EQ(result.releaseAllocated, compareData[i].releaseAllocated - baselineData[i].releaseAllocated);
+        EXPECT_EQ(result.releaseReserved, compareData[i].releaseReserved - baselineData[i].releaseReserved);
+        EXPECT_EQ(result.releaseActive, compareData[i].releaseActive - baselineData[i].releaseActive);
         EXPECT_EQ(result.streamId, "");
         EXPECT_EQ(result.deviceType, "");
     }
@@ -405,8 +397,7 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerGetOperatorDiffBothNo
 
 TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerSelectDiffResultSelectNameAndSizeTest)
 {
-    MemoryOperatorComparisonResponse fullDiffResult;
-    std::vector<MemoryOperatorComparison> opDiffDetails;
+    std::vector<MemoryOperatorComparison> fullDiffResult;
     MemoryOperator opCompareFirst = {"aten::ge", 50, "190.235", "211.478", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
     MemoryOperator opBaselineFirst = {"aten::ge", -150, "186.235", "215.478", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
     MemoryOperator opDiffFirst = {"aten::ge", -100, "4.000", "-4.000", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
@@ -416,10 +407,9 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerSelectDiffResultSelec
     MemoryOperator opCompareThird = {"matmulv3", 18.2, "133.100", "145.257", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
     MemoryOperator opBaselineThird = {"matmulv3", -18.2, "13.100", "148.257", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
     MemoryOperator opDiffThird = {"matmulv3", 36.4, "120.000", "-3.000", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
-    opDiffDetails.push_back({opCompareFirst, opBaselineFirst, opDiffFirst});
-    opDiffDetails.push_back({opCompareSecond, opBaselineSecond, opDiffSecond});
-    opDiffDetails.push_back({opCompareThird, opBaselineThird, opDiffThird});
-    fullDiffResult.operatorDiffDetails = opDiffDetails;
+    fullDiffResult.push_back({opCompareFirst, opBaselineFirst, opDiffFirst});
+    fullDiffResult.push_back({opCompareSecond, opBaselineSecond, opDiffSecond});
+    fullDiffResult.push_back({opCompareThird, opBaselineThird, opDiffThird});
     MemoryOperatorRequest request;
     request.params.searchName = "matmul";
     const int64_t minSize = -75;
@@ -436,9 +426,8 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerSelectDiffResultSelec
     std::unique_ptr<MemoryOperatorComparisonResponse> responsePtr =
             std::make_unique<MemoryOperatorComparisonResponse>();
     Dic::Module::Memory::QueryMemoryOperatorHandler handler;
-    bool result = handler.SelectDiffResult(request, responsePtr, fullDiffResult);
+    handler.SelectDiffResult(request, responsePtr, fullDiffResult);
     const int expectColumnSize = 15;
-    EXPECT_TRUE(result);
     ASSERT_EQ(responsePtr.get()->totalNum, 1);
     EXPECT_EQ(responsePtr.get()->operatorDiffDetails[0].diff.name, "matmulv3");
     EXPECT_EQ(responsePtr.get()->columnAttr.size(), expectColumnSize);
@@ -446,8 +435,7 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerSelectDiffResultSelec
 
 TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerSelectDiffResultSelectStartTimeAndEndTimeTest)
 {
-    MemoryOperatorComparisonResponse fullDiffResult;
-    std::vector<MemoryOperatorComparison> opDiffDetails;
+    std::vector<MemoryOperatorComparison> fullDiffResult;
     MemoryOperator opCompareFirst = {"aten::ge", 50, "190.235", "211.478", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
     MemoryOperator opBaselineFirst = {"aten::ge", -150, "186.235", "215.478", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
     MemoryOperator opDiffFirst = {"aten::ge", -100, "4.000", "-4.000", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
@@ -457,10 +445,9 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerSelectDiffResultSelec
     MemoryOperator opCompareThird = {"matmulv3", 18.2, "133.100", "145.257", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
     MemoryOperator opBaselineThird = {"matmulv3", -18.2, "13.100", "148.257", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
     MemoryOperator opDiffThird = {"matmulv3", 36.4, "120.000", "-3.000", 0, "", 0, 0, 0, 0, 0, 0, 0, "", ""};
-    opDiffDetails.push_back({opCompareFirst, opBaselineFirst, opDiffFirst});
-    opDiffDetails.push_back({opCompareSecond, opBaselineSecond, opDiffSecond});
-    opDiffDetails.push_back({opCompareThird, opBaselineThird, opDiffThird});
-    fullDiffResult.operatorDiffDetails = opDiffDetails;
+    fullDiffResult.push_back({opCompareFirst, opBaselineFirst, opDiffFirst});
+    fullDiffResult.push_back({opCompareSecond, opBaselineSecond, opDiffSecond});
+    fullDiffResult.push_back({opCompareThird, opBaselineThird, opDiffThird});
     MemoryOperatorRequest request;
     request.params.searchName = "";
     request.params.minSize = std::numeric_limits<int64_t>::min();
@@ -477,10 +464,9 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerSelectDiffResultSelec
     std::unique_ptr<MemoryOperatorComparisonResponse> responsePtr =
             std::make_unique<MemoryOperatorComparisonResponse>();
     Dic::Module::Memory::QueryMemoryOperatorHandler handler;
-    bool result = handler.SelectDiffResult(request, responsePtr, fullDiffResult);
+    handler.SelectDiffResult(request, responsePtr, fullDiffResult);
     const int expectColumnSize = 15;
     const int expectNum = 2;
-    EXPECT_TRUE(result);
     ASSERT_EQ(responsePtr.get()->totalNum, expectNum);
     EXPECT_EQ(responsePtr.get()->operatorDiffDetails[0].diff.name, "aten::ge");
     EXPECT_EQ(responsePtr.get()->operatorDiffDetails[1].diff.name, "matmulv3");

@@ -41,13 +41,10 @@ public:
     virtual bool QueryStaticOperatorsTotalNum(Protocol::StaticOperatorListParams &requestParams, int64_t &totalNum) = 0;
 
     virtual bool QueryOperatorSize(double &min, double &max, std::string rankId) = 0;
-    virtual bool QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
-                                          std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId,
-                                          uint64_t offsetTime) = 0;
+    virtual bool QueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime) = 0;
     virtual bool QueryEntireComponentTable(std::vector<Protocol::MemoryComponent> &componentDetails,
                                            uint64_t offsetTime) = 0;
     virtual bool QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
-                                                std::vector<Protocol::MemoryTableColumnAttr>& columnAttr,
                                                 std::vector<Protocol::StaticOperatorItem>& opDetails) = 0;
 protected:
     const std::string operatorTable = "operator";
@@ -147,9 +144,7 @@ protected:
     bool ExecuteOperatorDetail(Protocol::MemoryOperatorParams &requestParams,
         std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::MemoryOperator> &opDetails,
         std::string sql);
-    bool ExecuteQueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
-                                         std::vector<Protocol::MemoryOperator> &opDetails, const std::string &sql,
-                                         const std::string rankId);
+    bool ExecuteQueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, const std::string &sql);
     bool ExecuteComponentDetail(Protocol::MemoryComponentParams &requestParams,
                                 std::vector<Protocol::MemoryTableColumnAttr> &columnAttr,
                                 std::vector<Protocol::MemoryComponent> &componentDetails, std::string &sql);
@@ -170,8 +165,7 @@ protected:
         std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::StaticOperatorItem> &opDetails,
         const std::string& sql);
     bool ExecuteQueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams &requestParams,
-        std::vector<Protocol::MemoryTableColumnAttr> &columnAttr, std::vector<Protocol::StaticOperatorItem> &opDetails,
-        const std::string& sql);
+        std::vector<Protocol::StaticOperatorItem> &opDetails, const std::string& sql);
     void AddOperatorSql(Protocol::MemoryOperatorParams requestParams, std::string &sql);
     void AddStableOperatorSql(Protocol::StaticOperatorListParams requestParams, std::string &sql);
 

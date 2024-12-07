@@ -39,76 +39,69 @@ bool QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
             response.operatorDiffDetails.emplace_back(element);
         }
     } else {
-        if (request.params.type == Protocol::MEMORY_STREAM_GROUP) {
-            SendResponse(std::move(responsePtr), false, "Memory comparing does not support request type Stream.");
+        std::vector<MemoryOperator> compareData;
+        std::vector<MemoryOperator> baselineData;
+        if (!GetRespectiveData(database, compareData, baselineData, request, responsePtr)) {
             return false;
         }
-        std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
-        if (baselineId == "") {
-            SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
-            return false;
-        }
-        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
-        if (!databaseBaseline) {
-            SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
-            return false;
-        }
-        if (!CompareOperator(database, databaseBaseline, request, responsePtr)) {
-            return false;
-        }
+        ExecuteComparisonAlgorithm(compareData, baselineData, request, responsePtr);
     }
     // add response to response queue in session
     SendResponse(std::move(responsePtr), true);
     return true;
 }
 
-bool QueryMemoryOperatorHandler::CompareOperator(std::shared_ptr<VirtualMemoryDataBase> database,
-    std::shared_ptr<VirtualMemoryDataBase> databaseBaseline,
-    MemoryOperatorRequest &request, std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr)
+bool QueryMemoryOperatorHandler::GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
+                                                   std::vector<MemoryOperator> &compareData,
+                                                   std::vector<MemoryOperator> &baselineData,
+                                                   MemoryOperatorRequest &request,
+                                                   std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr)
 {
-    std::unique_ptr<MemoryOperatorResponse> responsePtrCompare = std::make_unique<MemoryOperatorResponse>();
-    MemoryOperatorResponse &responseCompare = *responsePtrCompare.get();
-    uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
-    if (!database->QueryEntireOperatorTable(responseCompare.columnAttr, responseCompare.operatorDetails,
-                                            request.params.rankId, offsetTimeCompare)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query memory operator compare data.");
-        return false;
-    }
-    responseCompare.totalNum = responseCompare.operatorDetails.size();
-    std::unique_ptr<MemoryOperatorResponse> responsePtrBaseline = std::make_unique<MemoryOperatorResponse>();
-    MemoryOperatorResponse &responseBaseline = *responsePtrBaseline.get();
     std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
     if (baselineId == "") {
         SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
         return false;
     }
+    auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
+    if (!databaseBaseline) {
+        SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
+        return false;
+    }
+    uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
+    if (!database->QueryEntireOperatorTable(compareData, offsetTimeCompare)) {
+        SendResponse(std::move(responsePtr), false, "Failed to query memory operator compare data.");
+        return false;
+    }
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
-    if (!databaseBaseline->QueryEntireOperatorTable(responseBaseline.columnAttr, responseBaseline.operatorDetails,
-                                                    request.params.rankId, offsetTimeBaseline)) {
+    if (!databaseBaseline->QueryEntireOperatorTable(baselineData, offsetTimeBaseline)) {
         SendResponse(std::move(responsePtr), false, "Failed to query memory operator baseline data.");
         return false;
     }
-    responseBaseline.totalNum = responseBaseline.operatorDetails.size();
-    std::unique_ptr<MemoryOperatorComparisonResponse> responsePtrDiffResult =
-        std::make_unique<MemoryOperatorComparisonResponse>();
-    MemoryOperatorComparisonResponse &responseDiffResult = *responsePtrDiffResult.get();
-    GetOperatorDiff(responseCompare, responseBaseline, responseDiffResult);
-    return SelectDiffResult(request, responsePtr, responseDiffResult);
+    return true;
 }
 
-void QueryMemoryOperatorHandler::GetOperatorDiff(const MemoryOperatorResponse &compareData,
-                                                 const MemoryOperatorResponse &baselineData,
-                                                 MemoryOperatorComparisonResponse &diffData)
+void QueryMemoryOperatorHandler::ExecuteComparisonAlgorithm(std::vector<MemoryOperator> &compareData,
+    std::vector<MemoryOperator> &baselineData, Dic::Protocol::MemoryOperatorRequest &request,
+    std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr)
+{
+    std::vector<MemoryOperatorComparison> fullDiffResult;
+    GetOperatorDiff(compareData, baselineData, fullDiffResult);
+    SelectDiffResult(request, responsePtr, fullDiffResult);
+}
+
+void QueryMemoryOperatorHandler::GetOperatorDiff(const std::vector<MemoryOperator> &compareData,
+                                                 const std::vector<MemoryOperator> &baselineData,
+                                                 std::vector<MemoryOperatorComparison> &diffData)
 {
     std::set<std::string> opName;
     std::map<std::string, std::vector<MemoryOperator>> compareList;
     std::map<std::string, std::vector<MemoryOperator>> baselineList;
-    for (const auto &item : compareData.operatorDetails) {
+    for (const auto &item : compareData) {
         opName.insert(item.name);
         // 即使item.name这个key不存在，也会将item.name添加为新的key
         compareList[item.name].push_back(item);
     }
-    for (const auto &item : baselineData.operatorDetails) {
+    for (const auto &item : baselineData) {
         opName.insert(item.name);
         // 即使item.name这个key不存在，也会将item.name添加为新的key
         baselineList[item.name].push_back(item);
@@ -127,27 +120,26 @@ void QueryMemoryOperatorHandler::GetOperatorDiff(const MemoryOperatorResponse &c
         std::vector<MemoryOperator> &baselineVec = baselineList[name];
         VectorMerge(compareVec, baselineVec, diffData);
     }
-    diffData.totalNum = diffData.operatorDiffDetails.size();
 }
 
 void QueryMemoryOperatorHandler::VectorMerge(std::vector<MemoryOperator> &compareVec,
-    std::vector<MemoryOperator> &baselineVec, MemoryOperatorComparisonResponse &diffData)
+    std::vector<MemoryOperator> &baselineVec, std::vector<MemoryOperatorComparison> &diffData)
 {
     const MemoryOperator emptyOperator = {"", 0, "NA", "NA", 0, "NA", 0, 0, 0, 0, 0, 0, 0, "", ""};
     for (size_t i = 0; i < std::min(compareVec.size(), baselineVec.size()); ++i) {
         MemoryOperatorComparison element = {compareVec[i], baselineVec[i], {}};
         Subtract(element);
-        diffData.operatorDiffDetails.emplace_back(element);
+        diffData.emplace_back(element);
     }
     for (size_t i = compareVec.size(); i < baselineVec.size(); ++i) {
         MemoryOperatorComparison element = {emptyOperator, baselineVec[i], {}};
         Subtract(element);
-        diffData.operatorDiffDetails.emplace_back(element);
+        diffData.emplace_back(element);
     }
     for (size_t i = baselineVec.size(); i < compareVec.size(); ++i) {
         MemoryOperatorComparison element = {compareVec[i], emptyOperator, {}};
         Subtract(element);
-        diffData.operatorDiffDetails.emplace_back(element);
+        diffData.emplace_back(element);
     }
 }
 
@@ -186,11 +178,12 @@ void QueryMemoryOperatorHandler::Subtract(Dic::Protocol::MemoryOperatorCompariso
     element.diff.deviceType = "";
 }
 
-bool QueryMemoryOperatorHandler::SelectDiffResult(MemoryOperatorRequest &request,
-    std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr, MemoryOperatorComparisonResponse &fullDiffResult)
+void QueryMemoryOperatorHandler::SelectDiffResult(MemoryOperatorRequest &request,
+    std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr,
+    std::vector<MemoryOperatorComparison> &fullDiffResult)
 {
     MemoryOperatorComparisonResponse filteredDiffResult;
-    for (const auto &item: fullDiffResult.operatorDiffDetails) {
+    for (const auto &item: fullDiffResult) {
         if (IsSelected(request, item)) {
             filteredDiffResult.operatorDiffDetails.push_back(item);
         }
@@ -216,7 +209,6 @@ bool QueryMemoryOperatorHandler::SelectDiffResult(MemoryOperatorRequest &request
             response.columnAttr.emplace_back(sourceItem);
         }
     }
-    return true;
 }
 
 bool QueryMemoryOperatorHandler::IsSelected(MemoryOperatorRequest &request, const MemoryOperatorComparison &op)

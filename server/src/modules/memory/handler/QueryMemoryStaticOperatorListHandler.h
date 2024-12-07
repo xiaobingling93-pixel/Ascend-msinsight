@@ -18,21 +18,24 @@ public:
     };
     ~QueryMemoryStaticOperatorListHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
-private:
-    bool CompareOperator(std::shared_ptr<VirtualMemoryDataBase> database,
-        std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryStaticOperatorListRequest &request,
+    bool GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
+        std::vector<StaticOperatorItem> &compareData, std::vector<StaticOperatorItem> &baselineData,
+        MemoryStaticOperatorListRequest &request, std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr);
+    void ExecuteComparisonAlgorithm(std::vector<StaticOperatorItem> &compareData,
+        std::vector<StaticOperatorItem> &baselineData, MemoryStaticOperatorListRequest &request,
         std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr);
-    void GetOperatorDiff(const MemoryStaticOperatorListResponse &compareData,
-                         const MemoryStaticOperatorListResponse &baselineData,
-                         Protocol::MemoryStaticOperatorListCompResponse &resultData);
-    void VectorMerge(std::vector<StaticOperatorItem> &compareVec, std::vector<StaticOperatorItem> &baselineVec,
-                     MemoryStaticOperatorListCompResponse &diffData);
-    void Subtract(StaticOperatorCompItem &element);
-    bool SelectDiffResult(MemoryStaticOperatorListRequest &request,
+    void GetOperatorDiff(const std::vector<StaticOperatorItem> &compareData,
+                         const std::vector<StaticOperatorItem> &baselineData,
+                         std::vector<StaticOperatorCompItem> &resultData);
+    void SelectDiffResult(MemoryStaticOperatorListRequest &request,
                           std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr,
-                          MemoryStaticOperatorListCompResponse &fullDiffResult);
-    bool IsSelected(MemoryStaticOperatorListRequest &request, const StaticOperatorCompItem &op);
+                          std::vector<StaticOperatorCompItem> &fullDiffResult);
     void SortResult(MemoryStaticOperatorListRequest &request, MemoryStaticOperatorListCompResponse &result);
+private:
+    void VectorMerge(std::vector<StaticOperatorItem> &compareVec, std::vector<StaticOperatorItem> &baselineVec,
+                     std::vector<StaticOperatorCompItem> &diffData);
+    void Subtract(StaticOperatorCompItem &element);
+    bool IsSelected(MemoryStaticOperatorListRequest &request, const StaticOperatorCompItem &op);
     void SortAscend(MemoryStaticOperatorListRequest &request, MemoryStaticOperatorListCompResponse &result);
     void SortDescend(MemoryStaticOperatorListRequest &request, MemoryStaticOperatorListCompResponse &result);
     const std::vector<Protocol::MemoryTableColumnAttr> staticOpTableColumnAttr = {

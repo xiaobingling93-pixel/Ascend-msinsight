@@ -438,9 +438,7 @@ bool TextMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &req
     return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql);
 }
 
-bool TextMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
-                                                  std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId,
-                                                  uint64_t offsetTime)
+bool TextMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime)
 {
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     std::string sql =
@@ -459,7 +457,7 @@ bool TextMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryTa
         "ROUND(allocation_active, 2) as allocation_active, ROUND(release_allocated, 2) as  release_allocated, " +
         "ROUND(release_reserve, 2) as release_reserve, ROUND(release_active, 2) as release_active, " +
         "stream FROM " + operatorTable;
-    return ExecuteQueryEntireOperatorTable(columnattr, opDetails, sql, rankId);
+    return ExecuteQueryEntireOperatorTable(opDetails, sql);
 }
 
 bool TextMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &requestParams,
@@ -532,7 +530,6 @@ bool TextMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListPar
 }
 
 bool TextMemoryDataBase::QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
-                                                        std::vector<Protocol::MemoryTableColumnAttr>& columnAttr,
                                                         std::vector<Protocol::StaticOperatorItem>& opDetails)
 {
     std::string sql =
@@ -542,7 +539,7 @@ bool TextMemoryDataBase::QueryEntireStaticOperatorTable(Protocol::StaticOperator
     if (!requestParams.graphId.empty()) {
         sql += " AND graph_id = ?" ;
     }
-    return ExecuteQueryEntireStaticOperatorTable(requestParams, columnAttr, opDetails, sql);
+    return ExecuteQueryEntireStaticOperatorTable(requestParams, opDetails, sql);
 }
 
 bool TextMemoryDataBase::QueryStaticOperatorGraph(Protocol::StaticOperatorGraphParams &requestParams,

@@ -19,19 +19,22 @@ public:
     };
     ~QueryMemoryOperatorHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
-    void GetOperatorDiff(const MemoryOperatorResponse &compareData,
-                         const MemoryOperatorResponse &baselineData,
-                         Protocol::MemoryOperatorComparisonResponse &resultData);
-    bool SelectDiffResult(MemoryOperatorRequest &request,
+    bool GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
+        std::vector<MemoryOperator> &compareData, std::vector<MemoryOperator> &baselineData,
+        MemoryOperatorRequest &request, std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr);
+    void ExecuteComparisonAlgorithm(std::vector<MemoryOperator> &compareData, std::vector<MemoryOperator> &baselineData,
+                                    MemoryOperatorRequest &request,
+                                    std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr);
+    void GetOperatorDiff(const std::vector<MemoryOperator> &compareData,
+                         const std::vector<MemoryOperator> &baselineData,
+                         std::vector<MemoryOperatorComparison> &resultData);
+    void SelectDiffResult(MemoryOperatorRequest &request,
                           std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr,
-                          MemoryOperatorComparisonResponse &fullDiffResult);
+                          std::vector<MemoryOperatorComparison> &fullDiffResult);
     void SortResult(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result);
 private:
-    bool CompareOperator(std::shared_ptr<VirtualMemoryDataBase> database,
-        std::shared_ptr<VirtualMemoryDataBase> databaseBaseline,
-        MemoryOperatorRequest &request, std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr);
     void VectorMerge(std::vector<MemoryOperator> &compareVec, std::vector<MemoryOperator> &baselineVec,
-                     MemoryOperatorComparisonResponse &diffData);
+                     std::vector<MemoryOperatorComparison> &diffData);
     void Subtract(MemoryOperatorComparison &element);
     bool IsSelected(MemoryOperatorRequest &request, const MemoryOperatorComparison &op);
     void SortAscend(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result);

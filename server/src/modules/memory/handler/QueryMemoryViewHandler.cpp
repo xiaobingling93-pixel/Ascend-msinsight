@@ -29,10 +29,6 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
             return false;
         }
     } else {
-        if (request.params.type == Protocol::MEMORY_STREAM_GROUP) {
-            SendResponse(std::move(responsePtr), false, "Memory comparing does not support request type Stream.");
-            return false;
-        }
         std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
         if (baselineId == "") {
             SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");

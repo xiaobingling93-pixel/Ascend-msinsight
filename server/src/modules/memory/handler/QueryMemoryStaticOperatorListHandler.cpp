@@ -38,67 +38,64 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
             response.operatorDiffDetails.emplace_back(element);
         }
     } else {
-        std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
-        if (baselineId == "") {
-            SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
+        std::vector<StaticOperatorItem> compareData;
+        std::vector<StaticOperatorItem> baselineData;
+        if (!GetRespectiveData(database, compareData, baselineData, request, responsePtr)) {
             return false;
         }
-        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
-        if (!databaseBaseline) {
-            SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
-            return false;
-        }
-        if (!CompareOperator(database, databaseBaseline, request, responsePtr)) {
-            SendResponse(std::move(responsePtr), false, "Failed to compare operator.");
-            return false;
-        }
+        ExecuteComparisonAlgorithm(compareData, baselineData, request, responsePtr);
     }
     SendResponse(std::move(responsePtr), true);
     return true;
 }
 
-bool QueryMemoryStaticOperatorListHandler::CompareOperator(std::shared_ptr<VirtualMemoryDataBase> database,
-    std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryStaticOperatorListRequest &request,
+bool QueryMemoryStaticOperatorListHandler::GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
+    std::vector<StaticOperatorItem> &compareData, std::vector<StaticOperatorItem> &baselineData,
+    Dic::Protocol::MemoryStaticOperatorListRequest &request,
     std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr)
 {
-    std::unique_ptr<MemoryStaticOperatorListResponse> responsePtrCompare =
-        std::make_unique<MemoryStaticOperatorListResponse>();
-    MemoryStaticOperatorListResponse &responseCompare = *responsePtrCompare.get();
-    if (!database->QueryEntireStaticOperatorTable(request.params, responseCompare.columnAttr,
-        responseCompare.operatorDetails)) {
+    std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+    if (baselineId == "") {
+        SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
+        return false;
+    }
+    auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
+    if (!databaseBaseline) {
+        SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
+        return false;
+    }
+    if (!database->QueryEntireStaticOperatorTable(request.params, compareData)) {
         SendResponse(std::move(responsePtr), false, "Failed to query memory static operator compare data.");
         return false;
     }
-    responseCompare.totalNum = responseCompare.operatorDetails.size();
-    std::unique_ptr<MemoryStaticOperatorListResponse> responsePtrBaseline =
-        std::make_unique<MemoryStaticOperatorListResponse>();
-    MemoryStaticOperatorListResponse &responseBaseline = *responsePtrBaseline.get();
-    if (!databaseBaseline->QueryEntireStaticOperatorTable(request.params, responseBaseline.columnAttr,
-        responseBaseline.operatorDetails)) {
+    if (!databaseBaseline->QueryEntireStaticOperatorTable(request.params, baselineData)) {
         SendResponse(std::move(responsePtr), false, "Failed to query memory static operator baseline data.");
         return false;
     }
-    responseBaseline.totalNum = responseBaseline.operatorDetails.size();
-    std::unique_ptr<MemoryStaticOperatorListCompResponse> responsePtrDiffResult =
-        std::make_unique<MemoryStaticOperatorListCompResponse>();
-    MemoryStaticOperatorListCompResponse &responseDiffResult = *responsePtrDiffResult.get();
-    GetOperatorDiff(responseCompare, responseBaseline, responseDiffResult);
-    return SelectDiffResult(request, responsePtr, responseDiffResult);
+    return true;
 }
 
-void QueryMemoryStaticOperatorListHandler::GetOperatorDiff(const MemoryStaticOperatorListResponse &compareData,
-    const MemoryStaticOperatorListResponse &baselineData,
-    MemoryStaticOperatorListCompResponse &diffData)
+void QueryMemoryStaticOperatorListHandler::ExecuteComparisonAlgorithm(std::vector<StaticOperatorItem> &compareData,
+    std::vector<StaticOperatorItem> &baselineData, Dic::Protocol::MemoryStaticOperatorListRequest &request,
+    std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr)
+{
+    std::vector<StaticOperatorCompItem> fullDiffResult;
+    GetOperatorDiff(compareData, baselineData, fullDiffResult);
+    SelectDiffResult(request, responsePtr, fullDiffResult);
+}
+
+void QueryMemoryStaticOperatorListHandler::GetOperatorDiff(const std::vector<StaticOperatorItem> &compareData,
+    const std::vector<StaticOperatorItem> &baselineData, std::vector<StaticOperatorCompItem> &diffData)
 {
     std::set<std::string> opNameSet;
     std::map<std::string, std::vector<StaticOperatorItem>> compareList;
     std::map<std::string, std::vector<StaticOperatorItem>> baselineList;
-    for (const auto &item : compareData.operatorDetails) {
+    for (const auto &item : compareData) {
         opNameSet.insert(item.opName);
         // 即使item.name这个key不存在，也会将item.name添加为新的key
         compareList[item.opName].push_back(item);
     }
-    for (const auto &item : baselineData.operatorDetails) {
+    for (const auto &item : baselineData) {
         opNameSet.insert(item.opName);
         // 即使item.name这个key不存在，也会将item.name添加为新的key
         baselineList[item.opName].push_back(item);
@@ -117,27 +114,26 @@ void QueryMemoryStaticOperatorListHandler::GetOperatorDiff(const MemoryStaticOpe
         std::vector<StaticOperatorItem> &baselineVec = baselineList[name];
         VectorMerge(compareVec, baselineVec, diffData);
     }
-    diffData.totalNum = diffData.operatorDiffDetails.size();
 }
 
 void QueryMemoryStaticOperatorListHandler::VectorMerge(std::vector<StaticOperatorItem> &compareVec,
-    std::vector<StaticOperatorItem> &baselineVec, MemoryStaticOperatorListCompResponse &diffData)
+    std::vector<StaticOperatorItem> &baselineVec, std::vector<StaticOperatorCompItem> &diffData)
 {
     const StaticOperatorItem emptyStaticOp = {"", "", 0, 0, 0};
     for (size_t i = 0; i < std::min(compareVec.size(), baselineVec.size()); ++i) {
         StaticOperatorCompItem element = {compareVec[i], baselineVec[i], {}};
         Subtract(element);
-        diffData.operatorDiffDetails.emplace_back(element);
+        diffData.emplace_back(element);
     }
     for (size_t i = compareVec.size(); i < baselineVec.size(); ++i) {
         StaticOperatorCompItem element = {emptyStaticOp, baselineVec[i], {}};
         Subtract(element);
-        diffData.operatorDiffDetails.emplace_back(element);
+        diffData.emplace_back(element);
     }
     for (size_t i = baselineVec.size(); i < compareVec.size(); ++i) {
         StaticOperatorCompItem element = {compareVec[i], emptyStaticOp, {}};
         Subtract(element);
-        diffData.operatorDiffDetails.emplace_back(element);
+        diffData.emplace_back(element);
     }
 }
 
@@ -155,12 +151,12 @@ void QueryMemoryStaticOperatorListHandler::Subtract(Dic::Protocol::StaticOperato
     element.diff.size = NumberUtil::DoubleReservedNDigits(element.compare.size - element.baseline.size, precision);
 }
 
-bool QueryMemoryStaticOperatorListHandler::SelectDiffResult(MemoryStaticOperatorListRequest &request,
+void QueryMemoryStaticOperatorListHandler::SelectDiffResult(MemoryStaticOperatorListRequest &request,
     std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr,
-    MemoryStaticOperatorListCompResponse &fullDiffResult)
+    std::vector<StaticOperatorCompItem> &fullDiffResult)
 {
     MemoryStaticOperatorListCompResponse filteredDiffResult;
-    for (const auto &item: fullDiffResult.operatorDiffDetails) {
+    for (const auto &item: fullDiffResult) {
         if (IsSelected(request, item)) {
             filteredDiffResult.operatorDiffDetails.push_back(item);
         }
@@ -186,7 +182,6 @@ bool QueryMemoryStaticOperatorListHandler::SelectDiffResult(MemoryStaticOperator
             response.columnAttr.emplace_back(sourceItem);
         }
     }
-    return true;
 }
 
 bool QueryMemoryStaticOperatorListHandler::IsSelected(MemoryStaticOperatorListRequest &request,

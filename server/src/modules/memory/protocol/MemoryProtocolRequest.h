@@ -50,6 +50,10 @@ struct MemoryOperatorParams {
             errorMsg = "Group By parameter should be Overall or Stream.";
             return false;
         }
+        if (isCompare && type == MEMORY_STREAM_GROUP) {
+            errorMsg = "Memory comparing does not support request type Stream.";
+            return false;
+        }
         if (!CheckStrParamValidEmptyAllowed(searchName, errorMsg)) {
             return false;
         }
@@ -218,6 +222,10 @@ struct MemoryViewParams {
         }
         if (type != MEMORY_OVERALL_GROUP && type != MEMORY_STREAM_GROUP && type != MEMORY_COMPONENT_GROUP) {
             errorMsg = "Group By parameter should be Overall or Stream or Component.";
+            return false;
+        }
+        if (isCompare && type == MEMORY_STREAM_GROUP) {
+            errorMsg = "Memory comparing does not support request type Stream.";
             return false;
         }
         return true;

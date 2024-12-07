@@ -89,9 +89,7 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
     return ExecuteOperatorDetail(requestParams, columnAttr, opDetails, sql);
 }
 
-bool DbMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryTableColumnAttr> &columnattr,
-                                                std::vector<Protocol::MemoryOperator> &opDetails, std::string rankId,
-                                                uint64_t offsetTime)
+bool DbMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryOperator> &opDetails, uint64_t offsetTime)
 {
     std::string sql = "";
     FileType type = DataBaseManager::Instance().GetFileType();
@@ -119,7 +117,7 @@ bool DbMemoryDataBase::QueryEntireOperatorTable(std::vector<Protocol::MemoryTabl
         ServerLog::Error("Memory tab does not support msprof data.");
         return false;
     }
-    return ExecuteQueryEntireOperatorTable(columnattr, opDetails, sql, rankId);
+    return ExecuteQueryEntireOperatorTable(opDetails, sql);
 }
 
 bool DbMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &requestParams,
@@ -298,7 +296,6 @@ bool DbMemoryDataBase::QueryStaticOperatorList(Protocol::StaticOperatorListParam
 }
 
 bool DbMemoryDataBase::QueryEntireStaticOperatorTable(Protocol::StaticOperatorListParams& requestParams,
-                                                      std::vector<Protocol::MemoryTableColumnAttr>& columnAttr,
                                                       std::vector<Protocol::StaticOperatorItem>& opDetails)
 {
     return false;
