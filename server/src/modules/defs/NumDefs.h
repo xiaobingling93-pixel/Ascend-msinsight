@@ -24,6 +24,7 @@ namespace Dic {
 
     const static int64_t MIN_PAGESIZE = 0;
     const static int64_t MAX_PAGESIZE = 1000;
+    const static int64_t DEFAULT_PAGESIZE = 10;
     const static int64_t MIN_CURRENT_PAGE = 0;
     const static int64_t MAX_CURRENT_PAGE = 10000000000;
 } // end of namespace Dic
