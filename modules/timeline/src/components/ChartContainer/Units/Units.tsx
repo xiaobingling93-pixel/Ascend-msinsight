@@ -52,6 +52,7 @@ const VIRTUAL_SCROLL_THRESHOLD = 30;
 const UNIT_SELECTED = 'unit-selected';
 const UNIT_VISIBLE = 'unit-visible';
 export const UNIT_WRAPPER_SCROLLER_ID = 'unitWrapperScroller';
+export const PINNED_UNIT_WRAPPER_SCROLLER_ID = 'pinnedUnitWrapperScroller';
 
 const Splitter = styled.div`
     width: 100%;
@@ -372,7 +373,7 @@ const TableScroller = styled.div`
 `;
 
 interface ScrollerProps {
-    id?: string;
+    id: string;
     children: JSX.Element | null;
     session: Session;
     eventType: string;
@@ -393,6 +394,18 @@ export const Scroller = React.forwardRef(({ id, session, children, eventType, or
         });
     }
 
+    function mouseEnter(): void {
+        runInAction(() => {
+            session.scrollArea = eventType === EventType.PINNEDUNITWRAPPERSCROLL ? 'pinned' : 'unpinned';
+        });
+    }
+
+    function mouseLeave(): void {
+        runInAction(() => {
+            session.scrollArea = '';
+        });
+    }
+
     // 切换session滚动到之前记录的地方
     React.useEffect(() => {
         (ref as React.MutableRefObject<HTMLDivElement | null>).current?.scrollTo(0, session.scrollTop);
@@ -402,7 +415,7 @@ export const Scroller = React.forwardRef(({ id, session, children, eventType, or
     useJumpTarget(session, unitsArea, supportJump, sorderOptions, (ref as React.MutableRefObject<HTMLDivElement | null>).current);
 
     return <TableScroller id={id} className={`laneWrapper ${eventType === EventType.PINNEDUNITWRAPPERSCROLL ? 'pinnedScrollArea' : ''}`}
-        onScroll={scroll} ref={ref}>
+        onScroll={scroll} ref={ref} onMouseEnter={mouseEnter} onMouseLeave={mouseLeave}>
         {children}
     </TableScroller>;
 });

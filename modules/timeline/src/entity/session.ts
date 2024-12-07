@@ -113,6 +113,8 @@ export class Session {
     selectedParams: SelectedParams = { baseRawId: undefined, curRawId: undefined };
     selectedRange?: [ TimeStamp, TimeStamp ];
     scrollTop: number = 0;
+    // Timeline模块键盘滚动区域
+    scrollArea: string = '';
     expandedUnitKeys: string[] | [] = [];
     selectedUnits: InsightUnit[] = []; // redundant for reducing extra computation
     selectedDetailKeys: [string] | [] = [];

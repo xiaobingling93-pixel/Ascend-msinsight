@@ -17,6 +17,7 @@ import { getAutoKey } from '../../utils/dataAutoKey';
 import { Unit, Scroller, computeVisibleUnitRange } from './Units';
 import { isPinned, isSonPinned } from './unitPin';
 import { EventType, useEventBus } from '../../utils/eventBus';
+import { PINNED_UNIT_WRAPPER_SCROLLER_ID } from './Units/Units';
 
 const PinnedUnitsContainer = styled.div`
     box-shadow: 1px 2px 11px 1px ${(props): string => props.theme.shadowBackgroundColor};
@@ -94,7 +95,7 @@ const FlattenUnits = observer(({ session, height, laneInfoWidth, eventType }:
 
 const PUnits = ({ session, height, laneInfoWidth }:
 { session: Session; height: number; laneInfoWidth: number }, ref: React.ForwardedRef<HTMLDivElement>): JSX.Element => {
-    return <Scroller session={session} unitsArea={session.pinnedUnits} supportJump={false}
+    return <Scroller id={PINNED_UNIT_WRAPPER_SCROLLER_ID} session={session} unitsArea={session.pinnedUnits} supportJump={false}
         ref={ref} orderOptions={orderOptions} eventType={EventType.PINNEDUNITWRAPPERSCROLL}>
         <FlattenUnits
             session={session}

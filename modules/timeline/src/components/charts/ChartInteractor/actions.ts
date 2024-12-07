@@ -20,7 +20,7 @@ import { setZoomHistory } from '../../ContextMenu';
 import { isMac } from '../../../utils/is';
 import { CardMetaData, SliceMeta, ThreadTrace } from '../../../entity/data';
 import { getTimeOffsetKey } from '../../../insight/units/utils';
-import { UNIT_WRAPPER_SCROLLER_ID } from '../../ChartContainer/Units/Units';
+import { PINNED_UNIT_WRAPPER_SCROLLER_ID, UNIT_WRAPPER_SCROLLER_ID } from '../../ChartContainer/Units/Units';
 
 const dragInitData = {
     isDragging: false,
@@ -459,8 +459,11 @@ const processOffsetEvent = (session: Session, isLeft: boolean): void => {
     });
 };
 
-const scrollWrapper = (eventKey: string): void => {
-    const scrollElement = document.getElementById(UNIT_WRAPPER_SCROLLER_ID);
+const scrollWrapper = (eventKey: string, session: Session): void => {
+    if (!session.scrollArea) {
+        return;
+    }
+    const scrollElement = document.getElementById(session.scrollArea === 'pinned' ? PINNED_UNIT_WRAPPER_SCROLLER_ID : UNIT_WRAPPER_SCROLLER_ID);
     // 滚动方向，正数为向下滚动，反之向上
     const scrollDirection = eventKey === 'ArrowDown' ? 1 : -1;
     requestAnimationFrame(() => {
@@ -484,7 +487,7 @@ export const keyDownAction = (key: string, session: Session, zoomPoint: number |
     } else if (key === 'l' || key === 'L') {
         processOffsetEvent(session, true);
     } else if (key === 'ArrowUp' || key === 'ArrowDown') {
-        scrollWrapper(key);
+        scrollWrapper(key, session);
     } else {
         // handle other keys
     }
