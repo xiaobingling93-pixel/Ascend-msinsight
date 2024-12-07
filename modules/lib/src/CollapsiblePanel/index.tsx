@@ -16,6 +16,7 @@ interface CollapsiblePanelProps {
     contentStyle?: CSSProperties;
     padding?: string;
     defaultOpen?: boolean;
+    id?: string;
 }
 
 const PanelContainer = styled.div<Partial<CollapsiblePanelProps>>`
@@ -27,13 +28,13 @@ const PanelContainer = styled.div<Partial<CollapsiblePanelProps>>`
     font-weight: 500;
     font-size: ${(props): string => props.theme.fontSizeMedium};
   }
-  
+
   .panel-content{
     padding: 24px;
   }
 `;
 export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = (props): JSX.Element => {
-    const { title, collapsible = false, secondary = false, children, style, headerStyle, contentStyle, defaultOpen = true } = props;
+    const { title, collapsible = false, secondary = false, children, style, headerStyle, contentStyle, defaultOpen = true, id } = props;
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
     const togglePanel = (): void => {
@@ -51,7 +52,7 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = (props): JSX.El
     }
 
     return (
-        <PanelContainer secondary={secondary} style={style}>
+        <PanelContainer secondary={secondary} style={style} id={id}>
             <div className="panel-header" onClick={togglePanel} style={headerStyle}>
                 {icon}{title}
             </div>

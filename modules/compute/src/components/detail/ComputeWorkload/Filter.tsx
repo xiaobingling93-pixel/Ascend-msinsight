@@ -70,6 +70,7 @@ function FilterCom({ condition, optionMap, handleChange }: Iprops): JSX.Element 
                 }}
                 options={optionMap.blockIdOptions}
                 showSearch={true}
+                id={'compute_block_id'}
             />
             )}/>
     </div>);

@@ -66,7 +66,7 @@ const Index = observer(({ session }: { session: Session }): JSX.Element => {
     }, [session.parseStatus, session.dirInfo]);
 
     return hasInfo
-        ? (<CollapsiblePanel title={tDetails('Core Occupancy')} collapsible>
+        ? (<CollapsiblePanel title={tDetails('Core Occupancy')} collapsible id={'coreOccupancy'}>
             <Filter handleFilterChange={handleFilterChange} session={session}/>
             <CoreChart condition={condition} session={session} data={data}/>
             {data?.advice?.length > 0 && (<Hit text={data.advice} style={{ marginTop: '10px' }} type={'alarm'}/>)}

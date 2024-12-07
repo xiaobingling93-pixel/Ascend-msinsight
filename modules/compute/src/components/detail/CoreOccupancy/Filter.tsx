@@ -72,6 +72,7 @@ function FilterCom({ condition, optionMap, handleChange, t }: IComProps): JSX.El
                 }}
                 options={optionMap.showAsOptions}
                 name={'core_show_as'}
+                id={'core_show_as'}
             />
             )}/>
     </div>);

@@ -8,5 +8,6 @@ export enum FilePath {
     MIND_SPORE = 'D:\\GUI_TEST_DATA\\mindspore_pangu38b_profiler_enable_all',
     SOURCE = 'D:\\GUI_TEST_DATA\\算子调优\\source\\visualize_data.bin',
     SOURCE_MULTIFILE = 'D:\\GUI_TEST_DATA\\算子调优\\source\\visualize_data_multifile.bin',
+    DETAILS = 'D:\\GUI_TEST_DATA\\算子调优\\details\\visualize_data_910_mix.bin',
     JUPYTER = 'D:\\GUI_TEST_DATA\\jupyter\\test.ipynb',
 }
