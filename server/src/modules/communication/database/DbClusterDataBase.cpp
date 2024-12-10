@@ -481,6 +481,7 @@ void DbClusterDataBase::InsertClusterBaseInfo(ClusterBaseInfo &baseInfo)
     sqlite3_bind_int64(stmt, idx++, baseInfo.config.dpSize);
     sqlite3_bind_int64(stmt, idx++, baseInfo.config.ppSize);
     sqlite3_bind_int64(stmt, idx++, baseInfo.config.tpSize);
+    sqlite3_bind_text(stmt, idx++, baseInfo.level.c_str(), baseInfo.level.length(), SQLITE_TRANSIENT);
     result = sqlite3_step(stmt);
     if (result != SQLITE_DONE) {
         ServerLog::Error("Failed to insert cluster base info. ", sqlite3_errmsg(db));
