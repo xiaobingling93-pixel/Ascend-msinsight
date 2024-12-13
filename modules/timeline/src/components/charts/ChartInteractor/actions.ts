@@ -388,6 +388,8 @@ const extractDeviceId = (processId: number): number => {
 
 const updateSameDeviceOffset = (selectSliceMeta: SliceMeta, session: Session, selectOffsetKey: string, offsetDiff: number): void => {
     const deviceId = extractDeviceId(parseInt(selectSliceMeta.processId));
+    const benchMeta = session.benchMarkData as SliceMeta;
+    const benchKey = getTimeOffsetKey(session, benchMeta);
     session.units.forEach((unit) => {
         if ((unit.metadata as CardMetaData).cardId !== selectSliceMeta.cardId) {
             return;
@@ -401,7 +403,7 @@ const updateSameDeviceOffset = (selectSliceMeta: SliceMeta, session: Session, se
                 continue;
             }
             const key = getTimeOffsetKey(session, tempMeta);
-            if (key === selectOffsetKey) {
+            if (key === selectOffsetKey || key === benchKey) {
                 continue;
             }
             if (isNaN(Number(tempMeta.processId))) {
