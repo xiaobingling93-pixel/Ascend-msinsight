@@ -156,7 +156,7 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryComponentHandlerSelectResultEmptyTes
     std::unique_ptr<MemoryComponentComparisonResponse> responsePtr =
         std::make_unique<MemoryComponentComparisonResponse>();
     QueryMemoryComponentHandler handler;
-    handler.SelectResult(request, responsePtr, fullDiffResult);
+    handler.SelectResult(request, *responsePtr.get(), fullDiffResult);
     int expectNum = fullDiffResult.size();
     int expectSize = 0;
     EXPECT_EQ(responsePtr.get()->totalNum, expectNum);
@@ -172,7 +172,7 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryComponentHandlerSelectResultNotEmpty
     std::unique_ptr<MemoryComponentComparisonResponse> responsePtr =
         std::make_unique<MemoryComponentComparisonResponse>();
     QueryMemoryComponentHandler handler;
-    handler.SelectResult(request, responsePtr, fullDiffResult);
+    handler.SelectResult(request, *responsePtr.get(), fullDiffResult);
     int expectNum = fullDiffResult.size();
     int expectSize = 5;
     EXPECT_EQ(responsePtr.get()->totalNum, expectNum);
@@ -420,7 +420,7 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerSelectDiffResultSelec
     std::unique_ptr<MemoryOperatorComparisonResponse> responsePtr =
             std::make_unique<MemoryOperatorComparisonResponse>();
     Dic::Module::Memory::QueryMemoryOperatorHandler handler;
-    handler.SelectDiffResult(request, responsePtr, fullDiffResult);
+    handler.SelectDiffResult(request, *responsePtr.get(), fullDiffResult);
     const int expectColumnSize = 15;
     ASSERT_EQ(responsePtr.get()->totalNum, 1);
     EXPECT_EQ(responsePtr.get()->operatorDiffDetails[0].diff.name, "matmulv3");
@@ -458,7 +458,7 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerSelectDiffResultSelec
     std::unique_ptr<MemoryOperatorComparisonResponse> responsePtr =
             std::make_unique<MemoryOperatorComparisonResponse>();
     Dic::Module::Memory::QueryMemoryOperatorHandler handler;
-    handler.SelectDiffResult(request, responsePtr, fullDiffResult);
+    handler.SelectDiffResult(request, *responsePtr.get(), fullDiffResult);
     const int expectColumnSize = 15;
     const int expectNum = 2;
     ASSERT_EQ(responsePtr.get()->totalNum, expectNum);
@@ -899,7 +899,7 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerSelectDiffR
     std::unique_ptr<MemoryStaticOperatorListCompResponse> responsePtr =
         std::make_unique<MemoryStaticOperatorListCompResponse>();
     Dic::Module::Memory::QueryMemoryStaticOperatorListHandler handler;
-    handler.SelectDiffResult(request, responsePtr, fullDiffResult);
+    handler.SelectDiffResult(request, *responsePtr.get(), fullDiffResult);
     const int expectColumnSize = 6;
     ASSERT_EQ(responsePtr.get()->totalNum, 1);
     EXPECT_EQ(responsePtr.get()->operatorDiffDetails[0].diff.opName, "RmsNorm-op8");
@@ -937,7 +937,7 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerSelectDiffR
     std::unique_ptr<MemoryStaticOperatorListCompResponse> responsePtr =
         std::make_unique<MemoryStaticOperatorListCompResponse>();
     Dic::Module::Memory::QueryMemoryStaticOperatorListHandler handler;
-    handler.SelectDiffResult(request, responsePtr, fullDiffResult);
+    handler.SelectDiffResult(request, *responsePtr.get(), fullDiffResult);
     const int expectColumnSize = 6;
     ASSERT_EQ(responsePtr.get()->totalNum, 1);
     EXPECT_EQ(responsePtr.get()->operatorDiffDetails[0].diff.opName, "ReduceMax-op6");

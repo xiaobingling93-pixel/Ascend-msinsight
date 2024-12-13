@@ -48,7 +48,8 @@ bool QueryMemoryComponentHandler::HandleRequest(std::unique_ptr<Protocol::Reques
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return false;
         }
-        if (!CompareComponent(database, databaseBaseline, request, responsePtr)) {
+        if (!CompareComponent(database, databaseBaseline, request, *responsePtr.get(), errorMsg)) {
+            SendResponse(std::move(responsePtr), false, errorMsg);
             return false;
         }
     }
@@ -58,28 +59,29 @@ bool QueryMemoryComponentHandler::HandleRequest(std::unique_ptr<Protocol::Reques
 
 bool QueryMemoryComponentHandler::CompareComponent(std::shared_ptr<VirtualMemoryDataBase> database,
     std::shared_ptr<VirtualMemoryDataBase> databaseBaseline,
-    Protocol::MemoryComponentRequest &request, std::unique_ptr<MemoryComponentComparisonResponse> &responsePtr)
+    Protocol::MemoryComponentRequest &request, MemoryComponentComparisonResponse &response, std::string &errorMsg)
 {
     std::vector<Protocol::MemoryComponent> componentCompare;
     uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
     if (!database->QueryEntireComponentTable(componentCompare, offsetTimeCompare)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query memory component compare data.");
+        errorMsg = "Failed to query memory component compare data.";
         return false;
     }
     std::vector<Protocol::MemoryComponent> componentBaseline;
     std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
     if (baselineId == "") {
-        SendResponse(std::move(responsePtr), false, "Failed to get baseline id when getting offset.");
+        errorMsg = "Failed to get baseline id when getting offset.";
         return false;
     }
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
     if (!databaseBaseline->QueryEntireComponentTable(componentBaseline, offsetTimeBaseline)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query memory component baseline data.");
+        errorMsg = "Failed to query memory component baseline data.";
         return false;
     }
     std::vector<MemoryComponentComparison> diffData;
     GetComponentDiff(componentCompare, componentBaseline, diffData);
-    return SelectResult(request, responsePtr, diffData);
+    SelectResult(request, response, diffData);
+    return true;
 }
 
 void QueryMemoryComponentHandler::GetComponentDiff(const std::vector<MemoryComponent> &compareData,
@@ -133,15 +135,14 @@ void QueryMemoryComponentHandler::Merge(Dic::Protocol::MemoryComponent &componen
         componentCompare.totalReserved - componentBaseline.totalReserved, precision);
 }
 
-bool QueryMemoryComponentHandler::SelectResult(Dic::Protocol::MemoryComponentRequest &request,
-                                               std::unique_ptr<MemoryComponentComparisonResponse> &responsePtr,
+void QueryMemoryComponentHandler::SelectResult(Dic::Protocol::MemoryComponentRequest &request,
+                                               MemoryComponentComparisonResponse &response,
                                                std::vector<MemoryComponentComparison> &fullDiffResult)
 {
     SortResult(request, fullDiffResult);
     uint64_t pageSize = request.params.pageSize <= 0 ? DEFAULT_PAGE_SIZE : request.params.pageSize;
     uint64_t currentPage = request.params.currentPage < 1 ? 0 : request.params.currentPage - 1;
     uint64_t offset = currentPage * pageSize;
-    MemoryComponentComparisonResponse &response = *responsePtr.get();
     if (offset >= fullDiffResult.size()) {
         response.componentDiffDetails.clear();
     } else {
@@ -157,7 +158,6 @@ bool QueryMemoryComponentHandler::SelectResult(Dic::Protocol::MemoryComponentReq
             response.columnAttr.emplace_back(sourceItem);
         }
     }
-    return true;
 }
 
 void QueryMemoryComponentHandler::SortResult(Dic::Protocol::MemoryComponentRequest &request,

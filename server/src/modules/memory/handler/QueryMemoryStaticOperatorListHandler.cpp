@@ -40,10 +40,11 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
     } else {
         std::vector<StaticOperatorItem> compareData;
         std::vector<StaticOperatorItem> baselineData;
-        if (!GetRespectiveData(database, compareData, baselineData, request, responsePtr)) {
+        if (!GetRespectiveData(database, compareData, baselineData, request, errorMsg)) {
+            SendResponse(std::move(responsePtr), false, errorMsg);
             return false;
         }
-        ExecuteComparisonAlgorithm(compareData, baselineData, request, responsePtr);
+        ExecuteComparisonAlgorithm(compareData, baselineData, request, response);
     }
     SendResponse(std::move(responsePtr), true);
     return true;
@@ -51,25 +52,24 @@ bool QueryMemoryStaticOperatorListHandler::HandleRequest(std::unique_ptr<Protoco
 
 bool QueryMemoryStaticOperatorListHandler::GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
     std::vector<StaticOperatorItem> &compareData, std::vector<StaticOperatorItem> &baselineData,
-    Dic::Protocol::MemoryStaticOperatorListRequest &request,
-    std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr)
+    Dic::Protocol::MemoryStaticOperatorListRequest &request, std::string &errorMsg)
 {
     std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
     if (baselineId == "") {
-        SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
+        errorMsg = "Failed to get baseline id.";
         return false;
     }
     auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
     if (!databaseBaseline) {
-        SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
+        errorMsg = "Failed to connect to database of baseline.";
         return false;
     }
     if (!database->QueryEntireStaticOperatorTable(request.params, compareData)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query memory static operator compare data.");
+        errorMsg = "Failed to query memory static operator compare data.";
         return false;
     }
     if (!databaseBaseline->QueryEntireStaticOperatorTable(request.params, baselineData)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query memory static operator baseline data.");
+        errorMsg = "Failed to query memory static operator baseline data.";
         return false;
     }
     return true;
@@ -77,11 +77,11 @@ bool QueryMemoryStaticOperatorListHandler::GetRespectiveData(std::shared_ptr<Vir
 
 void QueryMemoryStaticOperatorListHandler::ExecuteComparisonAlgorithm(std::vector<StaticOperatorItem> &compareData,
     std::vector<StaticOperatorItem> &baselineData, Dic::Protocol::MemoryStaticOperatorListRequest &request,
-    std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr)
+    MemoryStaticOperatorListCompResponse &response)
 {
     std::vector<StaticOperatorCompItem> fullDiffResult;
     GetOperatorDiff(compareData, baselineData, fullDiffResult);
-    SelectDiffResult(request, responsePtr, fullDiffResult);
+    SelectDiffResult(request, response, fullDiffResult);
 }
 
 void QueryMemoryStaticOperatorListHandler::GetOperatorDiff(const std::vector<StaticOperatorItem> &compareData,
@@ -152,7 +152,7 @@ void QueryMemoryStaticOperatorListHandler::Subtract(Dic::Protocol::StaticOperato
 }
 
 void QueryMemoryStaticOperatorListHandler::SelectDiffResult(MemoryStaticOperatorListRequest &request,
-    std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr,
+    MemoryStaticOperatorListCompResponse &response,
     std::vector<StaticOperatorCompItem> &fullDiffResult)
 {
     MemoryStaticOperatorListCompResponse filteredDiffResult;
@@ -165,7 +165,6 @@ void QueryMemoryStaticOperatorListHandler::SelectDiffResult(MemoryStaticOperator
     uint64_t pageSize = request.params.pageSize <= 0 ? DEFAULT_PAGE_SIZE : request.params.pageSize;
     uint64_t currentPage = request.params.currentPage < 1 ? 0 : request.params.currentPage - 1;
     uint64_t offset = currentPage * pageSize;
-    MemoryStaticOperatorListCompResponse &response = *responsePtr.get();
     if (offset >= filteredDiffResult.operatorDiffDetails.size()) {
         response.operatorDiffDetails.clear();
         response.totalNum = 0;

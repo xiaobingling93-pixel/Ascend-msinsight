@@ -41,10 +41,11 @@ bool QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
     } else {
         std::vector<MemoryOperator> compareData;
         std::vector<MemoryOperator> baselineData;
-        if (!GetRespectiveData(database, compareData, baselineData, request, responsePtr)) {
+        if (!GetRespectiveData(database, compareData, baselineData, request, errorMsg)) {
+            SendResponse(std::move(responsePtr), false, errorMsg);
             return false;
         }
-        ExecuteComparisonAlgorithm(compareData, baselineData, request, responsePtr);
+        ExecuteComparisonAlgorithm(compareData, baselineData, request, response);
     }
     // add response to response queue in session
     SendResponse(std::move(responsePtr), true);
@@ -54,27 +55,26 @@ bool QueryMemoryOperatorHandler::HandleRequest(std::unique_ptr<Protocol::Request
 bool QueryMemoryOperatorHandler::GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
                                                    std::vector<MemoryOperator> &compareData,
                                                    std::vector<MemoryOperator> &baselineData,
-                                                   MemoryOperatorRequest &request,
-                                                   std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr)
+                                                   MemoryOperatorRequest &request, std::string &errorMsg)
 {
     std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
     if (baselineId == "") {
-        SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
+        errorMsg = "Failed to get baseline id.";
         return false;
     }
     auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
     if (!databaseBaseline) {
-        SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
+        errorMsg = "Failed to connect to database of baseline.";
         return false;
     }
     uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
     if (!database->QueryEntireOperatorTable(compareData, offsetTimeCompare)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query memory operator compare data.");
+        errorMsg = "Failed to query memory operator compare data.";
         return false;
     }
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
     if (!databaseBaseline->QueryEntireOperatorTable(baselineData, offsetTimeBaseline)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query memory operator baseline data.");
+        errorMsg = "Failed to query memory operator baseline data.";
         return false;
     }
     return true;
@@ -82,11 +82,11 @@ bool QueryMemoryOperatorHandler::GetRespectiveData(std::shared_ptr<VirtualMemory
 
 void QueryMemoryOperatorHandler::ExecuteComparisonAlgorithm(std::vector<MemoryOperator> &compareData,
     std::vector<MemoryOperator> &baselineData, Dic::Protocol::MemoryOperatorRequest &request,
-    std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr)
+    MemoryOperatorComparisonResponse &response)
 {
     std::vector<MemoryOperatorComparison> fullDiffResult;
     GetOperatorDiff(compareData, baselineData, fullDiffResult);
-    SelectDiffResult(request, responsePtr, fullDiffResult);
+    SelectDiffResult(request, response, fullDiffResult);
 }
 
 void QueryMemoryOperatorHandler::GetOperatorDiff(const std::vector<MemoryOperator> &compareData,
@@ -179,7 +179,7 @@ void QueryMemoryOperatorHandler::Subtract(Dic::Protocol::MemoryOperatorCompariso
 }
 
 void QueryMemoryOperatorHandler::SelectDiffResult(MemoryOperatorRequest &request,
-    std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr,
+    MemoryOperatorComparisonResponse &response,
     std::vector<MemoryOperatorComparison> &fullDiffResult)
 {
     MemoryOperatorComparisonResponse filteredDiffResult;
@@ -192,7 +192,6 @@ void QueryMemoryOperatorHandler::SelectDiffResult(MemoryOperatorRequest &request
     uint64_t pageSize = request.params.pageSize <= 0 ? DEFAULT_PAGE_SIZE : request.params.pageSize;
     uint64_t currentPage = request.params.currentPage < 1 ? 0 : request.params.currentPage - 1;
     uint64_t offset = currentPage * pageSize;
-    MemoryOperatorComparisonResponse &response = *responsePtr.get();
     if (offset >= filteredDiffResult.operatorDiffDetails.size()) {
         response.operatorDiffDetails.clear();
         response.totalNum = 0;

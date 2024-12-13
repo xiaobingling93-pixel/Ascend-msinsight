@@ -39,8 +39,8 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return false;
         }
-        if (!GetCompareGraph(database, databaseBaseline, request, responsePtr)) {
-            SendResponse(std::move(responsePtr), false, "Failed to get compare graph.");
+        if (!GetCompareGraph(database, databaseBaseline, request, *responsePtr.get(), errorMsg)) {
+            SendResponse(std::move(responsePtr), false, errorMsg);
             return false;
         }
     }
@@ -50,26 +50,25 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
 
 bool QueryMemoryViewHandler::GetCompareGraph(std::shared_ptr<VirtualMemoryDataBase> database,
     std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryViewRequest &request,
-    std::unique_ptr<MemoryViewResponse> &responsePtr)
+    MemoryViewResponse &response, std::string &errorMsg)
 {
-    MemoryViewResponse &response = *responsePtr.get();
     std::unique_ptr<MemoryViewResponse> responsePtrCompare = std::make_unique<MemoryViewResponse>();
     MemoryViewResponse &responseCompare = *responsePtrCompare.get();
     uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
     if (!database->QueryMemoryView(request.params, responseCompare.data, offsetTimeCompare)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query memory view compare data.");
+        errorMsg = "Failed to query memory view compare data.";
         return false;
     }
     std::unique_ptr<MemoryViewResponse> responsePtrBaseline = std::make_unique<MemoryViewResponse>();
     MemoryViewResponse &responseBaseline = *responsePtrBaseline.get();
     std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
     if (baselineId == "") {
-        SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
+        errorMsg = "Failed to get baseline id.";
         return false;
     }
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
     if (!databaseBaseline->QueryMemoryView(request.params, responseBaseline.data, offsetTimeBaseline)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query memory view baseline data.");
+        errorMsg = "Failed to query memory view baseline data.";
         return false;
     }
     GetCompareGraphLegends(responseCompare.data, responseBaseline.data, response.data);

@@ -42,7 +42,8 @@ bool QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
             SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
             return false;
         }
-        if (!GetCompareGraph(database, databaseBaseline, request, responsePtr)) {
+        if (!GetCompareGraph(database, databaseBaseline, request, *responsePtr.get(), errorMsg)) {
+            SendResponse(std::move(responsePtr), false, errorMsg);
             return false;
         }
     }
@@ -52,21 +53,20 @@ bool QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
 
 bool QueryMemoryStaticOperatorGraphHandler::GetCompareGraph(std::shared_ptr<VirtualMemoryDataBase> database,
     std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryStaticOperatorGraphRequest &request,
-    std::unique_ptr<MemoryStaticOperatorGraphResponse> &responsePtr)
+    MemoryStaticOperatorGraphResponse &response, std::string &errorMsg)
 {
-    MemoryStaticOperatorGraphResponse &response = *responsePtr.get();
     std::unique_ptr<MemoryStaticOperatorGraphResponse> responsePtrCompare =
             std::make_unique<MemoryStaticOperatorGraphResponse>();
     MemoryStaticOperatorGraphResponse &responseCompare = *responsePtrCompare.get();
     if (!database->QueryStaticOperatorGraph(request.params, responseCompare.data)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query memory static operator graph compare data.");
+        errorMsg = "Failed to query memory static operator graph compare data.";
         return false;
     }
     std::unique_ptr<MemoryStaticOperatorGraphResponse> responsePtrBaseline =
             std::make_unique<MemoryStaticOperatorGraphResponse>();
     MemoryStaticOperatorGraphResponse &responseBaseline = *responsePtrBaseline.get();
     if (!databaseBaseline->QueryStaticOperatorGraph(request.params, responseBaseline.data)) {
-        SendResponse(std::move(responsePtr), false, "Failed to query memory static operator graph baseline data.");
+        errorMsg = "Failed to query memory static operator graph baseline data.";
         return false;
     }
     GetCompareGraphLegends(responseCompare.data, responseBaseline.data, response.data);

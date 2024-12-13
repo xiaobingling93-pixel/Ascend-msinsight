@@ -21,15 +21,15 @@ public:
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
     bool GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
         std::vector<MemoryOperator> &compareData, std::vector<MemoryOperator> &baselineData,
-        MemoryOperatorRequest &request, std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr);
+        MemoryOperatorRequest &request, std::string &errorMsg);
     void ExecuteComparisonAlgorithm(std::vector<MemoryOperator> &compareData, std::vector<MemoryOperator> &baselineData,
                                     MemoryOperatorRequest &request,
-                                    std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr);
+                                    MemoryOperatorComparisonResponse &response);
     void GetOperatorDiff(const std::vector<MemoryOperator> &compareData,
                          const std::vector<MemoryOperator> &baselineData,
                          std::vector<MemoryOperatorComparison> &resultData);
     void SelectDiffResult(MemoryOperatorRequest &request,
-                          std::unique_ptr<MemoryOperatorComparisonResponse> &responsePtr,
+                          MemoryOperatorComparisonResponse &response,
                           std::vector<MemoryOperatorComparison> &fullDiffResult);
     void SortResult(MemoryOperatorRequest &request, MemoryOperatorComparisonResponse &result);
 private:

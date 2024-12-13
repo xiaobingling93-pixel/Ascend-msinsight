@@ -20,15 +20,15 @@ public:
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
     bool GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
         std::vector<StaticOperatorItem> &compareData, std::vector<StaticOperatorItem> &baselineData,
-        MemoryStaticOperatorListRequest &request, std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr);
+        MemoryStaticOperatorListRequest &request, std::string &errorMsg);
     void ExecuteComparisonAlgorithm(std::vector<StaticOperatorItem> &compareData,
         std::vector<StaticOperatorItem> &baselineData, MemoryStaticOperatorListRequest &request,
-        std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr);
+        MemoryStaticOperatorListCompResponse &response);
     void GetOperatorDiff(const std::vector<StaticOperatorItem> &compareData,
                          const std::vector<StaticOperatorItem> &baselineData,
                          std::vector<StaticOperatorCompItem> &resultData);
     void SelectDiffResult(MemoryStaticOperatorListRequest &request,
-                          std::unique_ptr<MemoryStaticOperatorListCompResponse> &responsePtr,
+                          MemoryStaticOperatorListCompResponse &response,
                           std::vector<StaticOperatorCompItem> &fullDiffResult);
     void SortResult(MemoryStaticOperatorListRequest &request, MemoryStaticOperatorListCompResponse &result);
 private:
