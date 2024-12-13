@@ -114,7 +114,7 @@ const chart = observer(({ condition, session }: {condition: Icondition;session: 
         });
     }, [data.advice]);
     return <div>
-        <div id={chartId} style={{ ...style, width: '1250px', margin: '10px auto' }}>
+        <div id={chartId} style={{ ...style, width: '1285px', margin: '10px auto' }}>
             <svg width={'100%'} height={'100%'}></svg>
         </div>
     </div>;

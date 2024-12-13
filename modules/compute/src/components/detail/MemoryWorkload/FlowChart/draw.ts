@@ -431,7 +431,7 @@ const common: Inode[] = [
         y: 1,
         container: [
             {
-                width: 305,
+                width: 340,
                 height: 660,
             },
         ],
@@ -440,9 +440,9 @@ const common: Inode[] = [
                 left: 15,
                 top: 15,
                 name: 'HBM',
-                width: 85,
+                width: 120,
                 height: 630,
-                label: 'HBM',
+                label: 'Memory On Chip',
             },
             {
                 name: 'L2Catch',
@@ -463,7 +463,7 @@ const common: Inode[] = [
             {
                 id: 'HBM_TO_L2',
                 label: 'HBM_TO_L2',
-                x: 100,
+                x: 135,
                 top: '46%-10',
                 orient: 'right',
                 length: 117,
@@ -471,7 +471,7 @@ const common: Inode[] = [
             {
                 id: 'L2_TO_HBM',
                 label: 'L2_TO_HBM',
-                x: 219,
+                x: 254,
                 top: '46%+10',
                 orient: 'left',
                 length: 117,
@@ -499,8 +499,8 @@ const vector: Igraph = [
 const mix: Igraph = [
     ...common,
     cubeCore,
-    { ...vectorCore, x: 291, y: 345 },
-    { ...vectorCore2, x: 291, y: 510 },
+    { ...vectorCore, x: 326, y: 345 },
+    { ...vectorCore2, x: 326, y: 510 },
 ];
 const mix310: Igraph = [
     ...common.map(item => ({
@@ -1104,7 +1104,7 @@ const addLegend = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, ti
 
     const g = svg.append('g')
         .attr('class', 'legend')
-        .attr('transform', 'translate(1180,10)');
+        .attr('transform', 'translate(1215,10)');
     // 创建渐变色的矩形
     const size = { width: 15, height: 380 };
     g.append('rect')
