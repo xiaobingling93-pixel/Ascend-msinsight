@@ -135,7 +135,7 @@ const cubeCore: Inode = {
         {
             id: 'L0C_TO_L1',
             label: 'L0C_TO_L1',
-            points: '545,65 180,65 181,100',
+            points: '545,65 180,65 180,102',
             labelXy: { x: 210, y: 50 },
         },
         {
@@ -143,6 +143,41 @@ const cubeCore: Inode = {
             label: 'L0C_TO_L2',
             points: '600,25 600,10 1,10',
             labelXy: { x: 60, y: 25 },
+        },
+    ],
+};
+const cubeCoreV2: Inode = {
+    ...cubeCore,
+    line: [...(cubeCore.line ?? []).filter(lineItem => !['GM_OR_L1_TO_L0A', 'GM_OR_L1_TO_L0B'].includes(lineItem.id as string)),
+        {
+            id: 'GM_TO_L0A_AIC',
+            label: 'GM_TO_L0A_AIC',
+            points: '0,80 370,80 370,123',
+            labelXy: { x: 270, y: 95 },
+        },
+        {
+            id: 'GM_TO_L0B_AIC',
+            label: 'GM_TO_L0B_AIC',
+            points: '0,290 370,290 370,267',
+            labelXy: { x: 270, y: 280 },
+        },
+        {
+            id: 'L1_TO_L0A_AIC',
+            label: 'L1_TO_L0A_AIC',
+            x: 220,
+            y: 150,
+            orient: 'right',
+            length: 98,
+            labelXy: { x: 265, y: 165 },
+        },
+        {
+            id: 'L1_TO_L0B_AIC',
+            label: 'L1_TO_L0B_AIC',
+            x: 220,
+            y: 240,
+            orient: 'right',
+            length: 98,
+            labelXy: { x: 265, y: 228 },
         },
     ],
 };
@@ -471,7 +506,7 @@ const common: Inode[] = [
             {
                 id: 'L2_TO_HBM',
                 label: 'L2_TO_HBM',
-                x: 254,
+                x: 255,
                 top: '46%+10',
                 orient: 'left',
                 length: 117,
@@ -488,6 +523,14 @@ const cube: Igraph = [
     })),
     cubeCore,
 ];
+const cubeV2: Igraph = [
+    ...common.map(item => ({
+        ...item,
+        rect: (item.rect ?? []).map(rectItem => ({ ...rectItem, height: 300 })),
+        container: (item.container ?? []).map(containerItem => ({ ...containerItem, height: 330 })),
+    })),
+    cubeCoreV2,
+];
 const vector: Igraph = [
     ...common.map(item => ({
         ...item,
@@ -502,6 +545,12 @@ const mix: Igraph = [
     { ...vectorCore, x: 326, y: 345 },
     { ...vectorCore2, x: 326, y: 510 },
 ];
+const mixV2: Igraph = [
+    ...common,
+    cubeCoreV2,
+    { ...vectorCore, x: 291, y: 345 },
+    { ...vectorCore2, x: 291, y: 510 },
+];
 const mix310: Igraph = [
     ...common.map(item => ({
         ...item,
@@ -510,7 +559,16 @@ const mix310: Igraph = [
     })),
     mixCore,
 ];
-const flow: Record<string, Igraph> = { mix910: mix, cube910: cube, vector910: vector, mix310 };
+
+const flow: Record<string, Igraph> = {
+    cube910: cube,
+    cube910V2: cubeV2,
+    vector910: vector,
+    mix910: mix,
+    mix910V2: mixV2,
+    mix310,
+};
+
 enum Path {
     // 公共pipe
     HBM_TO_L2 = 0,
@@ -542,6 +600,10 @@ enum Path {
     VEC_TO_L0C = 23,
     L0C_TO_VEC = 24,
     L2_OR_L1_TO_UB = 25,
+    GM_TO_L0A_AIC = 35,
+    GM_TO_L0B_AIC = 36,
+    L1_TO_L0A_AIC = 37,
+    L1_TO_L0B_AIC = 38,
 }
 
 const defaultBox = {
@@ -1152,17 +1214,25 @@ export const drawGraph = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, a
 
 export const drawFlowChart = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition & {theme: string},
     tDetails: TFunction): void => {
-    const { blockType = '', chipType = '', theme = 'dark' } = data;
-    let graphConfig: Igraph;
-    if (flow[blockType + (chipType.includes('910') ? '910' : '')] !== undefined) {
-        graphConfig = flow[`${blockType}910`];
-    } else if (chipType.includes('310')) {
-        graphConfig = flow.mix310;
-    } else {
-        graphConfig = [];
-    }
-    drawGraph(svg, graphConfig, theme, tDetails);
+    const graph: Igraph = getGraph(data);
+    drawGraph(svg, graph, data.theme ?? 'dark', tDetails);
     updateData(svg, data);
+};
+
+export const getGraph = (data: ImemoryData): Igraph => {
+    const { blockType = '', chipType = '', memoryUnit } = data;
+    if (chipType.includes('910')) {
+        // cube核有2种线路
+        // 第1版：包含 GM_OR_L1_TO_L0A , GM_OR_L1_TO_L0B
+        // 第2版：上面的2条分为 GM_TO_L0A_AIC，L1_TO_L0A_AIC，GM_TO_L0B_AIC，L1_TO_L0B_AIC
+        const isVersion2 = ['cube', 'mix'].includes(blockType) &&
+            memoryUnit.some(unit => String(unit.compare.memoryPath) === String(Path.GM_TO_L0A_AIC));
+        return flow[`${blockType}910${isVersion2 ? 'V2' : ''}`] ?? [];
+    } else if (chipType.includes('310')) {
+        return flow.mix310;
+    } else {
+        return [];
+    }
 };
 
 export const updateData = (svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, data: ImemoryData & Icondition): void => {
