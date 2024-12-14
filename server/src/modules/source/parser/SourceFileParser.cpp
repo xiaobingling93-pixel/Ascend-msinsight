@@ -7,14 +7,11 @@
 #include <unordered_set>
 #include "ServerLog.h"
 #include "rapidjson.h"
-#include "document.h"
 #include "InterCoreLoadGraphParser.h"
-#include "JsonUtil.h"
 #include "ParserStatusManager.h"
 #include "DataBaseManager.h"
 #include "EventParser.h"
 #include "TraceTime.h"
-#include "FileUtil.h"
 #include "TextTraceDatabase.h"
 #include "CacheManager.h"
 #include "BaselineManager.h"
@@ -22,12 +19,14 @@
 #include "RooflineParser.h"
 #include "BinFileParseUtil.h"
 #include "DetailsMemoryParser.h"
+#include "GlobalProtocolEvent.h"
 
 namespace Dic {
 namespace Module {
 namespace Source {
 using namespace Dic;
 using namespace Dic::Server;
+using namespace Dic::Protocol;
 using namespace Dic::Module::FullDb;
 
 SourceFileParser &SourceFileParser::Instance()
@@ -52,9 +51,11 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
         ServerLog::Error("Parse bin file failed cause path length is too long.");
         return false;
     }
+    std::string errMsg = "file can be written by others.";
     std::ifstream file = OpenReadFileSafely(selectedFile, std::ios::binary);
     if (!file) {
         ServerLog::Error("Open bin file failed: ", selectedFile);
+        SendReadFileFailEvent(selectedFile, errMsg);
         return false;
     }
 
@@ -329,13 +330,13 @@ void SourceFileParser::Reset()
     ServerLog::Info("End reset file parser.");
 }
 
-bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath)
+bool SourceFileParser::CheckOperatorBinary(const std::string &selectedFilePath, std::string &errMsg)
 {
     if (!FileUtil::CheckFilePathLength(selectedFilePath)) {
         ServerLog::Error("File path length check failed.");
         return false;
     }
-    std::ifstream file = OpenReadFileSafely(selectedFilePath, std::ios::binary);
+    std::ifstream file = OpenReadFileSafely(selectedFilePath, std::ios::binary, errMsg);
     if (!file) {
         return false;
     }

@@ -7,6 +7,7 @@
 
 #include <optional>
 #include "GlobalProtocolResponse.h"
+#include "GlobalProtocolEvent.h"
 
 namespace Dic {
 namespace Protocol {
@@ -26,6 +27,9 @@ template <>
 std::optional<document_t> ToResponseJson<ProjectCheckValidResponse>(const ProjectCheckValidResponse &response);
 template <> std::optional<document_t> ToResponseJson<BaselineSettingResponse>(const BaselineSettingResponse &response);
 template <> std::optional<document_t> ToResponseJson<BaselineCancelResponse>(const BaselineCancelResponse &response);
+// event
+template <typename EVENT> std::optional<document_t> ToEventJson(const EVENT &event);
+template <> std::optional<document_t> ToEventJson<ReadFileFailEvent>(const ReadFileFailEvent &event);
 } // end of namespace Protocol
 } // end of namespace Dic
 

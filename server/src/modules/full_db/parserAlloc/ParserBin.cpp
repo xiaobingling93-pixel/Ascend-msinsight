@@ -5,6 +5,7 @@
 #include "ModuleRequestHandler.h"
 #include "CommonDefs.h"
 #include "DataBaseManager.h"
+#include "GlobalProtocolEvent.h"
 #include "SourceFileParser.h"
 #include "TraceTime.h"
 #include "BaselineManager.h"
@@ -39,8 +40,9 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
     std::string selectedFolder = projectInfos[0].fileName;
 
     // compute
+    std::string errorMessage;
     if (FileUtil::CheckFilePathLength(selectedFolder) &&
-        Source::SourceFileParser::Instance().CheckOperatorBinary(selectedFolder)) {
+        Source::SourceFileParser::Instance().CheckOperatorBinary(selectedFolder, errorMessage)) {
         ServerLog::Info("Import file is binary.Start parse source binary file.");
         Source::SourceFileParser::Instance().SetFilePath(selectedFolder);
         HandleCompute(response, selectedFolder);
@@ -49,7 +51,12 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
         SetParseCallBack(Source::SourceFileParser::Instance());
         SendResponse(std::move(responsePtr), true);
     } else {
-        SendParseFailEvent("", "Import file is invalid,path :" + selectedFolder);
+        if (!errorMessage.empty()) {
+            Dic::Protocol::SendReadFileFailEvent(selectedFolder, errorMessage);
+        } else {
+            SendParseFailEvent("", "Import file is invalid, path: " + selectedFolder);
+        }
+
         // 这里需要返回一个true应答,否则前端会陷入不停loading中
         SendResponse(std::move(responsePtr), true);
     }
@@ -141,9 +148,12 @@ void ParserBin::ParserBaseline(const std::vector<Global::ProjectExplorerInfo> &p
         return;
     }
     // 只需要对比timeline和details页面内容，因此不需要对source相关的内容做处理
-    if (sourceFileParser.CheckOperatorBinary(filePath)) {
+    std::string message;
+    if (sourceFileParser.CheckOperatorBinary(filePath, message)) {
         sourceFileParser.SetBaselineFilePath(filePath);
         sourceFileParser.Parse(std::vector<std::string>(), fileId, filePath);
+    } else {
+        ServerLog::Error("Failed to parse baseline bin file cause ", message);
     }
 }
 } // Module

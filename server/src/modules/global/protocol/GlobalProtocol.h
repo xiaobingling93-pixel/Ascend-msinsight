@@ -40,6 +40,8 @@ private:
     static std::optional<document_t> ToSetBaselineResponseJson(const Response &response);
     static std::optional<document_t> ToCancelBaselineResponseJson(const Response &response);
     static std::optional<document_t> ToGetModuleConfigResponseJson(const Response &response);
+    // event to json
+    static std::optional<document_t> ToReadFileFailEventJson(const Event &event);
 };
 } // namespace Protocol
 } // namespace Dic

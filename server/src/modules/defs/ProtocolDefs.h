@@ -53,6 +53,7 @@ const std::string REQ_RES_PROJECT_EXPLORER_CLEAR = "files/clearProjectExplorer";
 const std::string REQ_RES_PROJECT_VALID_CHECK = "files/checkProjectValid";
 const std::string REQ_RES_PROJECT_SET_BASELINE = "global/setBaseline";
 const std::string REQ_RES_PROJECT_CANCEL_BASELINE = "global/cancelBaseline";
+const std::string EVENT_FILES_READ_FAIL = "files/read/fail";
 
 // timeline
 const std::string REQ_RES_IMPORT_ACTION = "import/action";

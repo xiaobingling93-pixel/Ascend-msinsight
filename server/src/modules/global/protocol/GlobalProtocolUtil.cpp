@@ -168,6 +168,17 @@ template <> std::optional<document_t> ToResponseJson<BaselineCancelResponse>(con
 #pragma endregion
 
 #pragma region <<Event to json>>
+template <> std::optional<document_t> ToEventJson<ReadFileFailEvent>(const ReadFileFailEvent &event)
+{
+    document_t json(kObjectType);
+    json_t body(kObjectType);
+    ProtocolUtil::SetEventJsonBaseInfo(event, json);
+    auto &allocator = json.GetAllocator();
+    JsonUtil::AddMember(body, "filePath", event.body.filePath, allocator);
+    JsonUtil::AddMember(body, "error", event.body.error, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
 #pragma endregion
 } // end of namespace Protocol
 } // end of namespace Dic

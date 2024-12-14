@@ -109,8 +109,12 @@ TEST_F(SourceTest, CheckOperatorBinaryFailedWithSpecificPath)
     const int pathLen = PATH_MAX;
 #endif
     string path;
-    for (int i = 0; i < pathLen - 1; i++) {
+    const int filenameMaxLen = 255;
+    while (path.length() < pathLen - 1) {
         path += "0";
+        if (path.length() % filenameMaxLen == 0) {
+            path += "/";
+        }
     }
     // Failed to check file exists
     EXPECT_EQ(false, parser.CheckOperatorBinary(path));

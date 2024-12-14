@@ -40,6 +40,7 @@ void GlobalProtocol::RegisterResponseToJsonFuncs()
 
 void GlobalProtocol::RegisterEventToJsonFuncs()
 {
+    eventToJsonFactory.emplace(EVENT_FILES_READ_FAIL, ToReadFileFailEventJson);
 }
 
 #pragma region <<Json To Request>>
@@ -227,6 +228,10 @@ std::optional<document_t> GlobalProtocol::ToGetModuleConfigResponseJson(const Re
 #pragma endregion
 
 #pragma region <<Event To Json>>
+std::optional<document_t> GlobalProtocol::ToReadFileFailEventJson(const Event &event)
+{
+    return ToEventJson<ReadFileFailEvent>(dynamic_cast<const ReadFileFailEvent &>(event));
+}
 #pragma endregion
 } // namespace Protocol
 } // namespace Dic

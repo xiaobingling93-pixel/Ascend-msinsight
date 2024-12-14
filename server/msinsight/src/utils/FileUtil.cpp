@@ -706,7 +706,7 @@ bool FileUtil::CheckPathPermission(const std::string &filePath, fs::perms permis
         if ((perms & permission) != fs::perms::none) {
             return true;
         } else {
-            Server::ServerLog::Error("File permission check failed");
+            Server::ServerLog::Warn("File % doesn't contain the permission %", filePath, static_cast<int>(permission));
             return false;
         }
     } catch (const fs::filesystem_error &e) {

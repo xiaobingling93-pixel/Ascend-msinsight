@@ -7,6 +7,7 @@
 #include "ProtocolDefs.h"
 #include "GlobalProtocolRequest.h"
 #include "GlobalProtocolResponse.h"
+#include "GlobalProtocolEvent.h"
 
 using namespace Dic::Protocol;
 
@@ -43,4 +44,24 @@ TEST_F(GlobalProtocolUtilTest, ToSetParallelStrategyResponseTest)
     response.result = false;
     std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
     EXPECT_EQ(jsonOptional.value()["result"], response.result);
+}
+
+TEST_F(GlobalProtocolUtilTest, TransformReadFileFailEventToJsonTest)
+{
+    Dic::Protocol::ReadFileFailEvent event;
+    std::string err;
+    event.body.filePath = "aaa";
+    event.body.error = "bbb";
+    std::optional<Dic::document_t> jsonOptional = protocol.ToJson(event, err);
+    EXPECT_TRUE(jsonOptional.has_value());
+    auto &value = jsonOptional.value();
+
+    EXPECT_TRUE(value.HasMember("body"));
+    auto &body = value["body"];
+
+    EXPECT_TRUE(body.HasMember("filePath"));
+    EXPECT_EQ(body["filePath"].GetString(), event.body.filePath);
+
+    EXPECT_TRUE(body.HasMember("error"));
+    EXPECT_EQ(body["error"].GetString(), event.body.error);
 }

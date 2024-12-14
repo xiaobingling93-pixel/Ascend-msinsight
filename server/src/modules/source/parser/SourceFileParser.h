@@ -16,6 +16,7 @@
 #include "JsonFileProcess.h"
 #include "SourceProtocol.h"
 #include "SourceInstructionParser.h"
+#include "SafeFile.h"
 
 namespace Dic {
 namespace Module {
@@ -23,7 +24,6 @@ namespace Source {
 class SourceFileParser : public FileParser {
 public:
     const static uint16_t reverseConst = 0x5a5a;
-
     static SourceFileParser &Instance();
 
     SourceFileParser();
@@ -32,7 +32,7 @@ public:
     bool Parse(const std::vector<std::string> &filePaths, const std::string &fileId,
         const std::string &selectedFile) override;
     void Reset() override;
-    bool CheckOperatorBinary(const std::string &selectedFilePath);
+    bool CheckOperatorBinary(const std::string &selectedFilePath, std::string &errMsg = EMPTY_ERROR_MSG);
     static void PreParseTask(const std::string &fileId);
     static bool InitParser(const std::string &fileId);
     static void ParseEndCallBack(const std::string &fileId, bool result, const std::string &message);
