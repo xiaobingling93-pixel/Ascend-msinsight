@@ -32,21 +32,3 @@ TEST_F(SafeFileTest, testOpenReadFileSafelyWhenFileCanNotBeWrittenByOthers)
     // 删除文件
     std::remove(path.c_str());
 }
-
-TEST_F(SafeFileTest, testOpenReadFileSafelyWhenFileCanBeWrittenByOthers)
-{
-    std::string path = "FileCanBeWrittenByOthers.tmp";
-    std::ofstream out(path);
-    out.close();
-    // 设置仅others拥有写权限
-    fs::permissions(path, fs::perms::others_write);
-
-    std::string msg;
-    // 读取文件并比较内容
-    auto in = Dic::OpenReadFileSafely(path, std::ios::in, msg);
-    EXPECT_FALSE(in);
-    std::string expectMsg = "Unable to open file safely, the file can be written by others, path: " + path;
-    // 删除文件
-    EXPECT_EQ(msg, expectMsg);
-    std::remove(path.c_str());
-}

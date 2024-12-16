@@ -10,28 +10,21 @@ std::ifstream OpenReadFileSafely(const std::string &path, std::ios::openmode mod
     res.setstate(std::ifstream::badbit);
     std::string message;
     if (mode & std::ios::out) {
-        message = "Should open file in read mode, path: " + path;
-        Server::ServerLog::Error(message);
+        message = "Should open file in read mode.";
+        Server::ServerLog::Error(message + " path: " + path);
         errMsg = message;
         return res;
     }
     std::string tmpPath = FileUtil::PathPreprocess(path);
-    // check if file can be written by others
-    if (FileUtil::CheckPathPermission(tmpPath, fs::perms::others_write)) {
-        message = "Unable to open file safely, the file can be written by others, path: " + path;
-        Server::ServerLog::Error(message);
-        errMsg = message;
-        return res;
-    }
     if (!FileUtil::CheckFileValid(tmpPath)) {
-        message = "Unable to open file safely, the file path is insecure or not a regular file, path: " + path;
-        Server::ServerLog::Error(message);
+        message = "Unable to open file safely, the file path is insecure or not a regular file.";
+        Server::ServerLog::Error(message + " path: " + path);
         errMsg = message;
         return res;
     }
     if (!FileUtil::CheckFileSize(path)) {
-        message = "Unable to open file safely, the file size does not comply with security regulations. path: " + path;
-        Server::ServerLog::Error(message);
+        message = "Unable to open file safely, the file size does not comply with security regulations.";
+        Server::ServerLog::Error(message + " path: " + path);
         errMsg = message;
         return res;
     }
