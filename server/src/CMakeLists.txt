@@ -52,6 +52,7 @@ include_directories(${SRC_HOME_DIR}/modules/timeline/core/dataEngine)
 include_directories(${SRC_HOME_DIR}/modules/timeline/handler)
 include_directories(${SRC_HOME_DIR}/modules/timeline/protocol)
 include_directories(${SRC_HOME_DIR}/modules/summary)
+include_directories(${SRC_HOME_DIR}/modules/summary/core)
 include_directories(${SRC_HOME_DIR}/modules/summary/protocol)
 include_directories(${SRC_HOME_DIR}/modules/summary/handler)
 include_directories(${SRC_HOME_DIR}/modules/summary/database)
@@ -112,9 +113,10 @@ aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/table DIC_MODULES_TIM
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/core/dataEngine DIC_MODULES_TIMELINE_CORE_DATAENGINE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/handler DIC_MODULES_TIMELINE_HANDLER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/timeline/protocol DIC_MODULES_TIMELINE_PROTOCOL_SRC)
-aux_source_directory(${SRC_HOME_DIR}/modules/summary/protocol DIC_MODULES_SUMMARY_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/summary DIC_MODULES_SUMMARY_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/summary/core DIC_MODULES_SUMMARY_CORE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/summary/handler DIC_MODULES_SUMMARY_HANDLER_SRC)
-aux_source_directory(${SRC_HOME_DIR}/modules/summary DIC_MODULES_SUMMARY_PROTOCOL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/summary/protocol DIC_MODULES_SUMMARY_PROTOCOL_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/summary/database DIC_MODULES_SUMMARY_DATABASE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/summary/parser DIC_MODULES_SUMMARY_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memory  DIC_MODULES_MEMORY_SRC)
@@ -180,6 +182,7 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_TIMELINE_HANDLER_SRC}
         ${DIC_MODULES_TIMELINE_PROTOCOL_SRC}
         ${DIC_MODULES_SUMMARY_SRC}
+        ${DIC_MODULES_SUMMARY_CORE_SRC}
         ${DIC_MODULES_SUMMARY_HANDLER_SRC}
         ${DIC_MODULES_SUMMARY_PROTOCOL_SRC}
         ${DIC_MODULES_SUMMARY_DATABASE_SRC}
@@ -190,7 +193,6 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_MEMORY_PARSER_SRC}
         ${DIC_MODULES_MEMORY_HANDLER_SRC}
         ${DIC_MODULES_MEMORY_PROTOCOL_SRC}
-        ${DIC_MODULES_SUMMARY_PROTOCOL_SRC}
         ${DIC_MODULES_COMMUNICATION_SRC}
         ${DIC_MODULES_COMMUNICATION_DATABASE_SRC}
         ${DIC_MODULES_COMMUNICATION_HANDLER_SRC}

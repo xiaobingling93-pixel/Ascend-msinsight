@@ -226,6 +226,13 @@ static inline const std::string WString2String(const std::wstring& ws)
         return str.find(subStr) != std::string::npos;
     }
 
+    static std::string ToLower(const std::string& input)
+    {
+        std::string lowerInput = input;
+        std::transform(lowerInput.begin(), lowerInput.end(), lowerInput.begin(), ::tolower);
+        return lowerInput;
+    }
+
     /**
      * 替换第一个对应的字符串
      * @param target 目标字符串

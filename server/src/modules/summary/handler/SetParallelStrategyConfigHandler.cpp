@@ -2,7 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-#include "DataBaseManager.h"
+#include <memory>
+#include "MegatronParallelStrategyAlgorithm.h"
 #include "ServerLog.h"
 #include "WsSessionManager.h"
 #include "SummaryProtocolRequest.h"
@@ -27,15 +28,23 @@ bool SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::R
     }
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string level = PARALLEL_CONFIG_LEVEL_CONFIGURED;
-    if (database == nullptr || !database->UpdateParallelStrategyConfig(request.config, level, response.msg)) {
-        response.result = false;
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to update parallel strategy config.");
-        session.OnResponse(std::move(responsePtr));
-        return false;
+    if (database == nullptr || !database->UpdateParallelStrategyConfig(request.config, level, response.msg) ||
+        !AddAlgorithmToManager(database, request.config.algorithm)) {
+    response.result = false;
+    SendResponse(std::move(responsePtr), false, "Failed to update parallel strategy config.");
+    return false;
     }
-
     session.OnResponse(std::move(responsePtr));
     return true;
+}
+bool SetParallelStrategyConfigHandler::AddAlgorithmToManager(const std::shared_ptr<VirtualClusterDatabase>& database,
+                                                             const std::string& algorithm)
+{
+    bool res = false;
+    if (StringUtil::Contains(StringUtil::ToLower(algorithm), MEGATRON_ALG)) {
+        res = ParallelStrategyAlgorithmManager::Instance().AddAlgorithm(database->GetDbPath(),
+            std::make_shared<MegatronParallelStrategyAlgorithm>());
+    }
+    return res;
 }
 }

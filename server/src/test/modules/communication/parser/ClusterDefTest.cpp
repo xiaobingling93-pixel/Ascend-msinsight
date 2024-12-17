@@ -23,7 +23,8 @@ TEST_F(ClusterDefTest, TestParallelStrategyConfig)
     Dic::Module::ParallelStrategyConfig config9 = { "", minSize, minSize, minSize, 0, minSize };
     Dic::Module::ParallelStrategyConfig config10 = { "", minSize, minSize, minSize, minSize, 0 };
     Dic::Module::ParallelStrategyConfig config11 = { "", 5, 5, 100, 100, 254 };
-    Dic::Module::ParallelStrategyConfig config12 = { "", 6, 5, 100, 100, 254 };
+    Dic::Module::ParallelStrategyConfig config12 = { "", 6, 5, 254, 100, 254 };
+    Dic::Module::ParallelStrategyConfig config13 = { "", 2, 2, 4, 2, 2 };
     std::string error;
     EXPECT_EQ(config1.CheckParams(error), false);
     EXPECT_EQ(error, "[Summary] PP size must be between 1 and 255");
@@ -45,9 +46,11 @@ TEST_F(ClusterDefTest, TestParallelStrategyConfig)
     EXPECT_EQ(error, "[Summary] CP size must be between 1 and 255");
     EXPECT_EQ(config10.CheckParams(error), false);
     EXPECT_EQ(error, "[Summary] EP size must be between 1 and 255");
-    std::string error2;
-    EXPECT_EQ(config11.CheckParams(error), true);
-    EXPECT_EQ(error2, "");
+    EXPECT_EQ(config11.CheckParams(error), false);
+    EXPECT_EQ(error, "[Summary] DP size must be evenly divided by EP Size.");
     EXPECT_EQ(config12.CheckParams(error), false);
     EXPECT_EQ(error, "[Summary] The product of PP size, TP size, DP size, and CP size must be less than 250000");
+    error = "";
+    EXPECT_EQ(config13.CheckParams(error), true);
+    EXPECT_EQ(error, "");
 }

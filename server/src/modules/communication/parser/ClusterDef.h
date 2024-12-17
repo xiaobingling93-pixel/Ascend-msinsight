@@ -8,7 +8,7 @@
 #include <string>
 #include <optional>
 #include <fstream>
-#include "unordered_map"
+#include <unordered_map>
 #include "ServerLog.h"
 
 namespace Dic {
@@ -66,6 +66,7 @@ const std::string PARALLEL_CONFIG_LEVEL_CONFIRMED = "confirmed";
 const std::string PARALLEL_CONFIG_LEVEL_CONFIGURED = "configured";
 const std::string PARALLEL_CONFIG_LEVEL_UNDEFINED = "undefined";
 
+const std::string MEGATRON_ALG = "megatron";
 const std::string MEGATRON_LM_TP_DP_PP_ALG = "Megatron-LM(tp-dp-pp)";
 const std::string MEGATRON_LM_TP_PP_DP_ALG = "Megatron-LM(tp-pp-dp)";
 const int64_t MAX_PARALLEL_SIZE = 255;
@@ -101,7 +102,12 @@ struct ParallelStrategyConfig {
             errorMsg = "[Summary] EP size must be between 1 and " + std::to_string(MAX_PARALLEL_SIZE);
             return false;
         }
-        // 检查三个数的乘积是否小于MAX_PARALLEL_PRODUCT_SIZE(25万)
+        // 检查dpSize是否能被epSize整除
+        if (dpSize % epSize != 0) {
+            errorMsg = "[Summary] DP size must be evenly divided by EP Size.";
+            return false;
+        }
+        // 检查四个数的乘积是否小于MAX_PARALLEL_PRODUCT_SIZE(25万)
         if (ppSize * tpSize * dpSize * cpSize > MAX_PARALLEL_PRODUCT_SIZE) {
             errorMsg = "[Summary] The product of PP size, TP size, DP size, and CP size must be less than " +
                        std::to_string(MAX_PARALLEL_PRODUCT_SIZE);
@@ -173,11 +179,15 @@ struct IndicatorAttr {
     // 性能指标名称
     std::string name;
     // 是否需要在2D排布图上按色域渲染
-    bool rendering;
+    bool rendering = false;
+    // 计算/通信概览 是否默认显示
+    bool visible = false;
     // 下方绘图时图表类型，柱形图还是折线图
     std::string chart;
     // 如果是堆积柱形图，堆积分类
     std::string stack;
+    // 数据类型，用于区分y轴
+    std::string yAxisType;
 };
 
 struct Connection {

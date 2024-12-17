@@ -318,8 +318,10 @@ std::optional<document_t> ToResponseJson<ParallelismArrangementResponse>(const P
         JsonUtil::AddMember(indicatorJson, "key", indicator.key, allocator);
         JsonUtil::AddMember(indicatorJson, "name", indicator.name, allocator);
         JsonUtil::AddMember(indicatorJson, "rendering", indicator.rendering, allocator);
+        JsonUtil::AddMember(indicatorJson, "visible", indicator.visible, allocator);
         JsonUtil::AddMember(indicatorJson, "chart", indicator.chart, allocator);
         JsonUtil::AddMember(indicatorJson, "stack", indicator.stack, allocator);
+        JsonUtil::AddMember(indicatorJson, "yAxisType", indicator.yAxisType, allocator);
         indicators.PushBack(indicatorJson, allocator);
     }
     JsonUtil::AddMember(body, "indicators", indicators, allocator);
