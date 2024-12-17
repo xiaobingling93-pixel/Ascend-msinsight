@@ -65,7 +65,7 @@ const allTabItems: ITab[] = [
     {
         label: 'Memory Unit',
         key: 'memoryUnit',
-        contents: ['Memory Unit', 'HBM/L2', 'Memory On Chip/L2', 'Memory Unit(Cube)', 'Memory Unit(Vector)'],
+        contents: ['Memory Unit', 'HBM/L2', 'GM/L2', 'Memory Unit(Cube)', 'Memory Unit(Vector)'],
     },
     {
         label: 'Memory Transfer',
