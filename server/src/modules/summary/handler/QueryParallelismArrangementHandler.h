@@ -16,6 +16,9 @@ public:
     }
     ~QueryParallelismArrangementHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+private:
+    bool QueryArrangementByDimension(const std::string& projectName, std::string& err,
+        const QueryParallelismArrangementRequest& request, ParallelismArrangementResponse& response);
 };
 }
 #endif // PROFILER_SERVER_SERVER_SRC_MODULES_SUMMARY_HANDLER_QUERYPARALLELISMARRANGEMENTHANDLER_H

@@ -21,8 +21,12 @@ public:
 
 class MockParallelStrategyAlgorithm : public BaseParallelStrategyAlgorithm {
 public:
-    void UpdateParallelDimension(const std::string& dimension) override {}
-    void GetArrangementByView() override {}
+    bool UpdateParallelDimension(const std::string &dimension,
+                                 const ParallelStrategyConfig &tmpConfig, std::string &err) override { return true; }
+    void GenerateArrangementByDimension() override {}
+    ArrangementAndConnectionData GetArrangementData() override { return data; }
+private:
+    ArrangementAndConnectionData data;
 };
 
 TEST_F(ParallelStrategyAlgorithmManagerTest, AddAlgorithm_ShouldReturnFalse_WhenProjectAlreadyExists)

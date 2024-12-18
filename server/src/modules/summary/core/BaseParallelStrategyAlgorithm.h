@@ -13,8 +13,10 @@ public:
     BaseParallelStrategyAlgorithm() = default;
     virtual ~BaseParallelStrategyAlgorithm() = default;
 
-    virtual void UpdateParallelDimension(const std::string& dimension) = 0;
-    virtual void GetArrangementByView() = 0;
+    virtual bool UpdateParallelDimension(const std::string &dimension,
+                                         const ParallelStrategyConfig &tmpConfig, std::string &err) = 0;
+    virtual void GenerateArrangementByDimension() = 0;
+    virtual ArrangementAndConnectionData GetArrangementData() = 0;
 protected:
     ParallelStrategyConfig config;
 };

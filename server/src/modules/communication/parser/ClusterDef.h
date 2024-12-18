@@ -69,6 +69,18 @@ const std::string PARALLEL_CONFIG_LEVEL_UNDEFINED = "undefined";
 const std::string MEGATRON_ALG = "megatron";
 const std::string MEGATRON_LM_TP_DP_PP_ALG = "Megatron-LM(tp-dp-pp)";
 const std::string MEGATRON_LM_TP_PP_DP_ALG = "Megatron-LM(tp-pp-dp)";
+const std::string MEGATRON_LM_TP_CP_EP_DP_PP_ALG = "megatron-lm(tp-cp-ep-dp-pp)";
+const std::string MEGATRON_LM_TP_CP_PP_EP_DP_ALG = "megatron-lm(tp-cp-pp-ep-dp)";
+const std::string DIMENSIONS_DP = "ep-dp";
+const std::string DIMENSIONS_CP = "ep-dp-cp";
+const std::string DIMENSIONS_PP = "ep-dp-cp-pp";
+const std::string DIMENSIONS_TP = "ep-dp-cp-pp-tp";
+const std::string PP_PARA = "pp";
+const std::string CP_PARA = "cp";
+const std::string DP_PARA = "dp";
+const std::string TP_PARA = "tp";
+const std::string EP_PARA = "ep";
+const std::string STR_INDEX = "Index";
 const int64_t MAX_PARALLEL_SIZE = 255;
 const int64_t MAX_PARALLEL_PRODUCT_SIZE = 250000;
 
@@ -172,6 +184,10 @@ const std::vector<std::string> PARALLEL_STRATEGY_HEADERS = {
 struct Position {
     uint8_t x = 0;
     uint8_t y = 0;
+    bool operator==(const Position& other) const
+    {
+        return x == other.x && y == other.y;
+    }
 };
 
 struct IndicatorAttr {
@@ -188,6 +204,10 @@ struct IndicatorAttr {
     std::string stack;
     // 数据类型，用于区分y轴
     std::string yAxisType;
+    IndicatorAttr() = default;
+    IndicatorAttr(std::string key, std::string name, bool rendering, bool visible, std::string chart, std::string stack,
+        std::string yAxisType) : key(std::move(key)), name(std::move(name)), rendering(rendering), visible(visible),
+        chart(std::move(chart)), stack(std::move(stack)), yAxisType(std::move(yAxisType)) {}
 };
 
 struct Connection {
@@ -197,6 +217,10 @@ struct Connection {
     std::string type;
     // 界面上一条连线对应多个通信域
     std::vector<std::string> communicationGroups;
+    Connection() = default;
+    Connection(std::string type, const std::vector<uint32_t>& indexes,
+        const std::vector<std::string>& communicationGroups) : indexes(indexes), type(std::move(type)),
+        communicationGroups(communicationGroups) {}
 };
 
 // 一张卡或一个分组的相关信息，包括序号、名称、位置、并行分组属性、包含的卡等信息
@@ -227,10 +251,36 @@ struct PerformanceIndicatorData {
 };
 
 // Summary性能数据
-const std::string KEY_COMPUTING_TIME = "computingTime";
-const std::string KEY_COMMUNICATION_TIME = "communicationTime";
+const std::string KEY_PREPARING_TIME = "preparingTime";
+const std::string KEY_TOTAL_COMPUTING_TIME = "computingTime";
+const std::string KEY_PURE_COMPUTING_TIME = "pureComputingTime";
+const std::string KEY_COMMUNICATION_OVERLAPPED = "communicationOverlapped";
 const std::string KEY_COMMUNICATION_NOT_OVERLAPPED = "communicationNotOverlapped";
 const std::string KEY_FREE_TIME = "freeTime";
+const std::string KEY_STAGE_TIME = "stageTime";
+const std::string KEY_BUBBLE_TIME = "bubbleTime";
+const std::string KEY_COMPUTING_RATIO = "computingRatio";
+const std::string KEY_COMMUNICATION_RATIO = "communicationRatio";
+
+const std::string VALUE_PREPARING_TIME = FIELD_PREPARE_TIME;
+const std::string VALUE_TOTAL_COMPUTING_TIME = FIELD_COMPUTING;
+const std::string VALUE_PURE_COMPUTING_TIME = "Pure Computing";
+const std::string VALUE_COMMUNICATION_OVERLAPPED = "Communication(Overlapped)";
+const std::string VALUE_COMMUNICATION_NOT_OVERLAPPED = FIELD_COMMUNICATION_NOT_OVERLAPPED;
+const std::string VALUE_FREE_TIME = FIELD_FREE;
+const std::string VALUE_STAGE_TIME = FIELD_STAGE;
+const std::string VALUE_BUBBLE_TIME = FIELD_BUBBLE;
+const std::string VALUE_COMPUTING_RATIO = "Computing Ratio";
+const std::string VALUE_COMMUNICATION_RATIO = "Communication Ratio";
+
+// chart type
+const std::string BAR_CHART = "bar";
+const std::string LINE_CHART = "line";
+// stack type
+const std::string TIME_STACK = "time";
+// y axis type
+const std::string TIME_AXIS = "time";
+const std::string RATIO_AXIS = "ratio";
 
 } // end of namespace Module
 } // end of namespace Dic

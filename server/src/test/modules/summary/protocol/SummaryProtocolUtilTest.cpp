@@ -312,8 +312,6 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelismArrangementResponseTestWillRet
     ele.indexAttributes["tpIndex"] = 0;
     response.arrangeData.arrangements.push_back(ele);
     response.arrangeData.size = response.arrangeData.arrangements.size();
-    Connection con {{0, 1}, "tp", {}};
-    response.arrangeData.connections.push_back(con);
     std::string err;
     std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
     EXPECT_EQ(jsonOptional.has_value(), true);
