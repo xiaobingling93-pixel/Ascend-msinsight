@@ -75,6 +75,8 @@ public:
 
     bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
 
+    bool QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
+
 private:
     const std::string hccl = "HCCL";
 

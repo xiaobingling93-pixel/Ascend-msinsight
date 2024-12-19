@@ -287,6 +287,7 @@ std::vector<Protocol::MemoryOperator> VirtualMemoryDataBase::QueryOperatorDetail
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         Protocol::MemoryOperator operatorDto{};
+        operatorDto.id = std::to_string(sqlite3_column_int64(stmt, col++));
         operatorDto.name = sqlite3_column_string(stmt, col++);
         operatorDto.size = sqlite3_column_double(stmt, col++);
         operatorDto.allocationTime = sqlite3_column_string(stmt, col++);

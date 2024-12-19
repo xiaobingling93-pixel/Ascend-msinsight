@@ -13,6 +13,7 @@ import type {
     GetTableDataParams,
     GetTableDataResponse,
 } from '../entity/memory';
+import { GetSlicePositionParams, SlicePositionResponse } from '../entity/memory';
 
 /**
  * 查询算子内存数据类型
@@ -73,4 +74,14 @@ export const memoryCurveGet = async (params: { rankId: string; type: string; isC
 export const fetchTableDataByComponent = async (params: GetTableDataParams):
 Promise<GetTableDataResponse> => {
     return await window.request({ command: 'Memory/view/component', params: { ...params } });
+};
+
+/**
+ * 查询Timeline位置信息
+ * @param params 查询条件
+ * @return {SlicePositionResponse} 查询结果
+ */
+export const fetchOperatorPosition = async (params: GetSlicePositionParams):
+Promise<SlicePositionResponse> => {
+    return await window.request({ command: 'Memory/find/slice', params: { ...params } });
 };

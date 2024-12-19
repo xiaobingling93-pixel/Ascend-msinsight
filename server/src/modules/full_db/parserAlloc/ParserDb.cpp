@@ -163,6 +163,7 @@ std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::
             DataBaseManager::Instance().SetDbPathMapping(host + rank, file, host + "Host");
             TrackInfoManager::Instance().UpdateHost(host + rank, host);
             TrackInfoManager::Instance().UpdateDeviceMap(host + rank, rankAndDeviceMap);
+            TrackInfoManager::Instance().UpdateHostCardId(host + rank, file);
         }
     }
     return hostMap;

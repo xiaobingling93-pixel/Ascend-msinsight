@@ -9,6 +9,10 @@
 #include "QueryOperatorSizeHandler.h"
 #include "QueryMemoryStaticOperatorGraphHandler.h"
 #include "QueryMemoryStaticOperatorListHandler.h"
+#include "FindSliceByAllocationTimeHandler.h"
+#include "RepositoryFactory.h"
+#include "DataEngine.h"
+#include "RenderEngine.h"
 #include "ProtocolDefs.h"
 #include "MemoryModule.h"
 
@@ -35,9 +39,13 @@ void MemoryModule::RegisterRequestHandlers()
     requestHandlerMap.emplace(REQ_RES_MEMORY_VIEW, std::make_unique<QueryMemoryViewHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMORY_OPERATOR_MIN_MAX, std::make_unique<QueryOperatorSizeHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH,
-                              std::make_unique<QueryMemoryStaticOperatorGraphHandler>());
+        std::make_unique<QueryMemoryStaticOperatorGraphHandler>());
     requestHandlerMap.emplace(REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST,
-                              std::make_unique<QueryMemoryStaticOperatorListHandler>());
+        std::make_unique<QueryMemoryStaticOperatorListHandler>());
+
+    auto renderEngine = Timeline::RenderEngine::Instance();
+    auto findSliceByAllocationTimeHandler = std::make_unique<FindSliceByAllocationTimeHandler>(renderEngine);
+    requestHandlerMap.emplace(REQ_RES_MEMORY_FIND_SLICE, std::move(findSliceByAllocationTimeHandler));
 }
 
 void MemoryModule::OnRequest(std::unique_ptr<Protocol::Request> request)

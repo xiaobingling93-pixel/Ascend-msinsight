@@ -61,7 +61,8 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
     }
     uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
     if (type == FileType::PYTORCH) {
-        sql += "SELECT NAME.value AS realName, ROUND(size / 1024.0, 2) as size, "
+        std::string tempSql = "SELECT OP_MEMORY.rowid AS id, ";
+        sql += "NAME.value AS realName, ROUND(size / 1024.0, 2) as size, "
                " CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
             "ROUND((allocation_time - " + std::to_string(startTime) + " - " + std::to_string(offsetTime) +
             ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "
@@ -81,6 +82,7 @@ bool DbMemoryDataBase::QueryOperatorDetail(Protocol::MemoryOperatorParams &reque
         sql = isLowCamel ? StringUtil::ToCamelCase(sql) : sql;
         sql += TABLE_OPERATOR_MEMORY + " JOIN STRING_IDS AS NAME ON NAME.id = OP_MEMORY.name"
             " WHERE realName LIKE ? ";
+        sql = tempSql + sql;
     } else {
         ServerLog::Error("Memory tab does not support msprof data.");
         return false;

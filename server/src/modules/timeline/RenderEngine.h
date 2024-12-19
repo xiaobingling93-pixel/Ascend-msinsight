@@ -27,6 +27,8 @@ public:
         std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) override;
     void QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
         Protocol::UnitThreadDetailBody &responseBody, uint64_t trackId) override;
+    CompeteSliceDomain FindSliceByTimePoint(const std::string &fileId, const std::string &name, uint64_t timePoint,
+        const std::string &metaType) override;
 
 private:
     std::shared_ptr<DataEngineInterface> dataEngine = nullptr;

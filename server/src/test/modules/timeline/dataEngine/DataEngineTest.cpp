@@ -308,3 +308,20 @@ TEST_F(DataEngineTest, QueryFlowPointByCategoryTestWithOutFactory)
         dataEngine.QueryFlowPointByCategory(sliceQuery, sliceVec);
     });
 }
+
+TEST_F(DataEngineTest, QuerySliceByTimepointAndNameTestWithOutFactory)
+{
+    EXPECT_NO_THROW({
+        Dic::Module::Timeline::DataEngine dataEngine;
+        SliceQuery sliceQuery;
+        CompeteSliceDomain sliceDomain;
+        dataEngine.QuerySliceByTimepointAndName(sliceQuery, sliceDomain);
+        std::shared_ptr<Dic::Module::Timeline::RepositoryFactoryInterface> repositoryFactoryInterface =
+            std::make_shared<Dic::Module::Timeline::RepositoryFactory>();
+        dataEngine.SetRepositoryFactory(repositoryFactoryInterface);
+        sliceQuery.metaType = PROCESS_TYPE::ASCEND_HARDWARE;
+        dataEngine.QuerySliceByTimepointAndName(sliceQuery, sliceDomain);
+        sliceQuery.metaType = PROCESS_TYPE::API;
+        dataEngine.QuerySliceByTimepointAndName(sliceQuery, sliceDomain);
+    });
+}

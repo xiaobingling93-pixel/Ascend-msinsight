@@ -11,10 +11,23 @@ using namespace Dic::TimeLine::Table::Default::Mock;
 using namespace Dic::Global::PROFILER::MockUtil;
 class PythonApiRepoTest : public ::testing::Test {
 protected:
+    class PythonApiRepoRepoMock : public PythonApiRepo {
+    public:
+        void SetMock(PytorchApiDependency &dependency)
+        {
+            pytorchApiTable = std::move(dependency.pytorchApiTableMock);
+            pytorchCallchainsTable = std::move(dependency.pytorchCallchainsTableMock);
+            stringIdsTable = std::move(dependency.stringIdsTableMock);
+        }
+    };
     const std::string pythonApiSql =
         "CREATE TABLE PYTORCH_API (startNs TEXT, endNs TEXT, globalTid INTEGER, connectionId INTEGER, name INTEGER, "
         "sequenceNumber INTEGER, fwdThreadId INTEGER, inputDtypes INTEGER, inputShapes INTEGER, callchainId INTEGER, "
         "depth integer);";
+    const std::string pythonApiWithTypeSql =
+        "CREATE TABLE PYTORCH_API (startNs TEXT, endNs TEXT, globalTid INTEGER, connectionId INTEGER, name INTEGER, "
+        "sequenceNumber INTEGER, fwdThreadId INTEGER, inputDtypes INTEGER, inputShapes INTEGER, callchainId INTEGER, "
+        "type INTEGER, depth integer);";
     const std::string stringIdsSql = "CREATE TABLE STRING_IDS (id INTEGER PRIMARY KEY,value TEXT);";
     const std::string chainSql = "CREATE TABLE PYTORCH_CALLCHAINS (id INTEGER, stack INTEGER, stackDepth INTEGER);";
     void SetUp() override
@@ -106,4 +119,92 @@ TEST_F(PythonApiRepoTest, TestQuerySliceDetailInfoWhenSliceNotExistThenReturnFal
     CompeteSliceDomain slice;
     bool result = repo.QuerySliceDetailInfo(query, slice);
     EXPECT_EQ(result, false);
+}
+
+/**
+ * 根据时间点查询算子，名字不存在
+ */
+TEST_F(PythonApiRepoTest, TestQuerySliceByTimepointAndNameWhenNameNotExistThenReturnFalse)
+{
+    PytorchApiDependency dependency;
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    dependency.stringIdsTableMock->SetDb(db);
+    PythonApiRepoRepoMock repo;
+    repo.SetMock(dependency);
+    SliceQuery sliceQuery;
+    CompeteSliceDomain competeSliceDomain;
+    bool result = repo.QuerySliceByTimepointAndName(sliceQuery, competeSliceDomain);
+    EXPECT_EQ(result, false);
+}
+
+/**
+ * 根据时间点查询算子，名字存在，但没有算子信息
+ */
+TEST_F(PythonApiRepoTest, TestQuerySliceByTimepointAndNameWhenNameExistAndPytorchNotExistThenReturnFalse)
+{
+    PytorchApiDependency dependency;
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    const std::string strIdsData =
+        "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (7, 'aclnnCast_CastAiCore_Cast');";
+    DatabaseTestCaseMockUtil::InsertData(db, strIdsData);
+    DatabaseTestCaseMockUtil::CreateTable(db, pythonApiWithTypeSql);
+    dependency.stringIdsTableMock->SetDb(db);
+    dependency.pytorchApiTableMock->SetDb(db);
+    PythonApiRepoRepoMock repo;
+    repo.SetMock(dependency);
+    SliceQuery sliceQuery;
+    CompeteSliceDomain competeSliceDomain;
+    sliceQuery.name = "aclnnCast_CastAiCore_Cast";
+    bool result = repo.QuerySliceByTimepointAndName(sliceQuery, competeSliceDomain);
+    EXPECT_EQ(result, false);
+}
+
+/**
+ * 根据时间点查询算子，名字存在，也有算子信息
+ */
+TEST_F(PythonApiRepoTest, TestQuerySliceByTimepointAndNameNormal)
+{
+    PytorchApiDependency dependency;
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, stringIdsSql);
+    const std::string strIdsData =
+        "INSERT INTO \"main\".\"STRING_IDS\" (\"id\", \"value\") VALUES (7, 'aclnnCast_CastAiCore_Cast');";
+    DatabaseTestCaseMockUtil::InsertData(db, strIdsData);
+    DatabaseTestCaseMockUtil::CreateTable(db, pythonApiWithTypeSql);
+    const std::string pythonData =
+        "INSERT INTO \"main\".\"PYTORCH_API\" (\"startNs\", \"endNs\", \"globalTid\", \"connectionId\", \"name\", "
+        "\"sequenceNumber\", \"fwdThreadId\", \"inputDtypes\", \"inputShapes\", \"callchainId\", \"type\", \"depth\") "
+        "VALUES ('1724670453434388370', '1724670453434401040', 1584297471746281, 1, 7, NULL, NULL, NULL, NULL, "
+        "NULL, 50002, 13);";
+    DatabaseTestCaseMockUtil::InsertData(db, pythonData);
+    dependency.stringIdsTableMock->SetDb(db);
+    dependency.pytorchApiTableMock->SetDb(db);
+    PythonApiRepoRepoMock repo;
+    repo.SetMock(dependency);
+    SliceQuery sliceQuery;
+    CompeteSliceDomain competeSliceDomain;
+    sliceQuery.name = "aclnnCast_CastAiCore_Cast";
+    const uint64_t targetTimepoint = 1724670453434388400;
+    sliceQuery.timePoint = targetTimepoint;
+    sliceQuery.rankId = "mmmmmmmmmm";
+    std::string hostCardId = "lllllllll";
+    TrackInfoManager::Instance().UpdateHostCardId(sliceQuery.rankId, hostCardId);
+    bool result = repo.QuerySliceByTimepointAndName(sliceQuery, competeSliceDomain);
+    const uint64_t one = 1;
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(competeSliceDomain.id, one);
+    const uint64_t expectStart = 1724670453434388370;
+    EXPECT_EQ(competeSliceDomain.timestamp, expectStart);
+    const uint64_t expectEnd = 1724670453434401040;
+    EXPECT_EQ(competeSliceDomain.endTime, expectEnd);
+    EXPECT_EQ(competeSliceDomain.pid, "1584297471746281");
+    EXPECT_EQ(competeSliceDomain.tid, "pytorch");
+    EXPECT_EQ(competeSliceDomain.trackId, one);
+    EXPECT_EQ(competeSliceDomain.duration, competeSliceDomain.endTime - competeSliceDomain.timestamp);
+    EXPECT_EQ(competeSliceDomain.cardId, hostCardId);
 }

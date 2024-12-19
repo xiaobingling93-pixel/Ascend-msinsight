@@ -164,4 +164,18 @@ bool DataEngine::QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSlice
     }
     return sliceRespo->QuerySliceDetailInfo(sliceQuery, competeSliceDomain);
 }
+
+bool DataEngine::QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
+{
+    if (respotoryFactory == nullptr) {
+        Server::ServerLog::Warn("Failed to query slice by time point.Data engine not assembly");
+        return false;
+    }
+    if (sliceQuery.metaType != PROCESS_TYPE::TEXT && sliceQuery.metaType != PROCESS_TYPE::API) {
+        Server::ServerLog::Warn("Failed to query slice by time point.meta type is wrong!");
+        return false;
+    }
+    auto sliceRespo = respotoryFactory->GetSliceRespo(sliceQuery.metaType);
+    return sliceRespo->QuerySliceByTimepointAndName(sliceQuery, competeSliceDomain);
+}
 }

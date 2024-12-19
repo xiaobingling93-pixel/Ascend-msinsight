@@ -23,6 +23,10 @@ public:
         std::vector<CompeteSliceDomain> &CompeteSliceVec) override;
     bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain);
 
+    ~PythonApiRepo() override = default;
+
+    bool QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) override;
+
 protected:
     std::unique_ptr<PytorchApiTable> pytorchApiTable = std::make_unique<PytorchApiTable>();
     std::unique_ptr<StringIdsTable> stringIdsTable = std::make_unique<StringIdsTable>();
@@ -32,6 +36,8 @@ protected:
 
     void
     QuerySliceArgs(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain, const PytorchApiPO &target);
+private:
+    const std::string pythonApiTid = "pytorch";
 };
 }
 #endif // PROFILER_SERVER_PYTHONAPIREPO_H

@@ -29,6 +29,14 @@ struct SliceQuery {
     std::string pid;
     std::string tid;
     std::string sliceId;
+    /**
+     * 算子名字
+     */
+    std::string name;
+    /**
+     *
+     */
+    uint64_t timePoint = 0;
     bool isFilterPythonFunction = false;
     bool QueryThreadsCheck(std::string &error) const
     {

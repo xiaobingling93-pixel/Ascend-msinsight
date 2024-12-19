@@ -57,6 +57,7 @@ std::optional<document_t> ToMemoryOperatorJson(const MemoryOperator &op, bool ha
     Document::AllocatorType &allocator)
 {
     document_t json(kObjectType);
+    JsonUtil::AddMember(json, "id", op.id, allocator);
     if (op.name.empty()) {
         JsonUtil::AddMember(json, "name", "Unknown", allocator);
     } else {
@@ -172,8 +173,25 @@ std::optional<document_t> ToResponseJson<MemoryOperatorSizeResponse>(const Memor
 }
 
 
-template<>
-std::optional<document_t> ToResponseJson<MemoryTypeResponse>(const MemoryTypeResponse &response)
+template <> std::optional<document_t> ToResponseJson<MemoryFindSliceResponse>(const MemoryFindSliceResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "id", response.data.id, allocator);
+    JsonUtil::AddMember(body, "rankId", response.data.rankId, allocator);
+    JsonUtil::AddMember(body, "processId", response.data.processId, allocator);
+    JsonUtil::AddMember(body, "threadId", response.data.threadId, allocator);
+    JsonUtil::AddMember(body, "metaType", response.data.metaType, allocator);
+    JsonUtil::AddMember(body, "depth", response.data.depth, allocator);
+    JsonUtil::AddMember(body, "startTime", response.data.startTime, allocator);
+    JsonUtil::AddMember(body, "duration", response.data.duration, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
+template <> std::optional<document_t> ToResponseJson<MemoryTypeResponse>(const MemoryTypeResponse &response)
 {
     document_t json(kObjectType);
     auto &allocator = json.GetAllocator();

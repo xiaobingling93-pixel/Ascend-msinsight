@@ -21,6 +21,8 @@ public:
         std::vector<std::unique_ptr<Protocol::UnitSingleFlow>> &flowDetailList) = 0;
     virtual void QueryThreadDetail(const Protocol::ThreadDetailParams &requestParams,
         Protocol::UnitThreadDetailBody &responseBody, uint64_t trackId) = 0;
+    virtual CompeteSliceDomain FindSliceByTimePoint(const std::string &fileId, const std::string &name,
+        uint64_t timePoint, const std::string &metaType) = 0;
 };
 }
 }

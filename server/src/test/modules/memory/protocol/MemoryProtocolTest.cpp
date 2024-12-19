@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include "MemoryProtocolUtil.h"
 #include "MemoryProtocolRequest.h"
+#include "JsonUtil.h"
 #include "MemoryProtocol.h"
 
 using namespace Dic;
@@ -758,4 +759,53 @@ TEST_F(MemoryProtocolTest, ToMemoryOperatorSizeResponseValidDataTest)
     ASSERT_TRUE(jsonOptional.value()["body"].HasMember("maxSize"));
     EXPECT_EQ(jsonOptional.value()["body"]["minSize"].GetDouble(), response.size.minSize);
     EXPECT_EQ(jsonOptional.value()["body"]["maxSize"].GetDouble(), response.size.maxSize);
+}
+
+TEST_F(MemoryProtocolTest, ToMemoryFindSliceRequest)
+{
+    const uint64_t tempId = 89;
+    Dic::Protocol::MemoryProtocol protocol;
+    protocol.Register();
+    std::string error;
+    Dic::document_t json(Dic::kObjectType);
+    auto &allocator = json.GetAllocator();
+    Dic::JsonUtil::AddMember(json, "type", "request", allocator);
+    Dic::JsonUtil::AddMember(json, "command", "Memory/find/slice", allocator);
+    protocol.FromJson(json, error);
+
+    Dic::json_t params(Dic::kObjectType);
+    Dic::JsonUtil::AddMember(params, "rankId", "mmmmm", allocator);
+    Dic::JsonUtil::AddMember(params, "id", "89", allocator);
+    Dic::JsonUtil::AddMember(params, "name", "HHHHHHHH", allocator);
+    Dic::JsonUtil::AddMember(json, "id", tempId, allocator);
+    Dic::JsonUtil::AddMember(json, "moduleName", "hhh", allocator);
+    Dic::JsonUtil::AddMember(json, "params", params, allocator);
+    unsigned int id = protocol.FromJson(json, error)->id;
+    std::string memoryId = dynamic_cast<MemoryFindSliceRequest &>(*protocol.FromJson(json, error)).params.id;
+    std::string memoryRankId = dynamic_cast<MemoryFindSliceRequest &>(*protocol.FromJson(json, error)).params.fileId;
+    std::string memoryName = dynamic_cast<MemoryFindSliceRequest &>(*protocol.FromJson(json, error)).params.name;
+    EXPECT_EQ(id, tempId);
+    EXPECT_EQ(memoryId, "89");
+    EXPECT_EQ(memoryRankId, "mmmmm");
+    EXPECT_EQ(memoryName, "HHHHHHHH");
+}
+
+/**
+ * 测试MemoryFindSliceResponseJson的error情况
+ */
+TEST_F(MemoryProtocolTest, TestTMemoryFindSliceResponseError)
+{
+    Dic::Protocol::MemoryFindSliceResponse response;
+    response.result = false;
+    const uint64_t errorCode = 3;
+    Dic::Protocol::ErrorMessage error = { errorCode, "ll" };
+    response.error = error;
+    auto jsonOp = Dic::Protocol::ToResponseJson(response);
+    EXPECT_EQ(jsonOp.has_value(), true);
+    const std::string json = Dic::JsonUtil::JsonDump(jsonOp.value());
+    const std::string jsonStr =
+        "{\"type\":\"response\",\"id\":0,\"requestId\":0,\"result\":false,\"command\":\"Memory/find/"
+        "slice\",\"moduleName\":\"unknown\",\"message\":\"ll\",\"error\":{\"code\":3},\"body\":{\"id\":\"\",\"rankId\":"
+        "\"\",\"processId\":\"\",\"threadId\":\"\",\"metaType\":\"\",\"depth\":0,\"startTime\":0,\"duration\":0}}";
+    EXPECT_EQ(json, jsonStr);
 }

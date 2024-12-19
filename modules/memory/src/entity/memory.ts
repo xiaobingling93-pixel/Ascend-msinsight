@@ -96,6 +96,12 @@ export interface OperatorDetail {
      * @type {string}
      * @memberof OperatorDetail
      */
+    id?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof OperatorDetail
+     */
     name: string;
     /**
      *
@@ -488,6 +494,31 @@ export interface GetTableDataParams {
     order?: string;
     orderBy?: string;
     rankId?: string;
+};
+
+/**
+ * 查找算子在timeline的位置信息
+ * @interface GetSlicePositionParams
+ */
+export interface GetSlicePositionParams {
+    id?: string;
+    name: string;
+    rankId: string;
+};
+
+/**
+ * 查找算子在timeline的位置信息
+ * @interface GetTableDataResponse
+ */
+export interface SlicePositionResponse {
+    id: string;
+    rankId: string;
+    processId: string;
+    threadId: string;
+    metaType: string;
+    depth: string;
+    startTime: number;
+    duration: number;
 };
 
 /**

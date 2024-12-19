@@ -61,6 +61,16 @@ public:
      * @param competeSliceDomain
      */
     virtual bool QuerySliceDetailInfo(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain) = 0;
+
+    /**
+     * 根据给定的时刻和名字查询算子
+     * @param sliceQuery
+     * @param competeSliceDomain
+     */
+    virtual bool QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
+    {
+        return false;
+    }
 };
 }
 #endif // PROFILER_SERVER_SLICERESPOTERFACE_H

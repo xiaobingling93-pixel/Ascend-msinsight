@@ -120,6 +120,7 @@ const std::string REQ_RES_MEMORY_VIEW = "Memory/view/memoryUsage";
 const std::string REQ_RES_MEMORY_OPERATOR_MIN_MAX = "Memory/view/operator/size";
 const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_GRAPH = "Memory/view/staticOpMemoryGraph";
 const std::string REQ_RES_MEMORY_STATIC_OP_MEMORY_LIST = "Memory/view/staticOpMemoryList";
+const std::string REQ_RES_MEMORY_FIND_SLICE = "Memory/find/slice";
 
 // Operator Request
 const std::string REQ_RES_OPERATOR_CATEGORY_INFO = "operator/category";

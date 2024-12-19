@@ -189,4 +189,27 @@ void RenderEngine::QueryThreadDetail(const ThreadDetailParams &requestParams, Un
         responseBody.data.selfTime = responseBody.data.duration - nextDepthTime;
     }
 }
+
+CompeteSliceDomain RenderEngine::FindSliceByTimePoint(const std::string &fileId, const std::string &name,
+    uint64_t timePoint, const std::string &metaType)
+{
+    SliceQuery sliceQuery;
+    sliceQuery.rankId = fileId;
+    sliceQuery.name = name;
+    sliceQuery.metaType = Protocol::STR_TO_ENUM<PROCESS_TYPE>(metaType).value();
+    sliceQuery.timePoint = timePoint;
+    CompeteSliceDomain slice;
+    bool res = dataEngine->QuerySliceByTimepointAndName(sliceQuery, slice);
+    if (!res) {
+        ServerLog::Warn("Failed to find slice, name is: ", name);
+        return slice;
+    }
+    std::unordered_map<uint64_t, uint32_t> depthCache;
+    std::unique_ptr<SliceAnalyzer> sliceAnalyzerPtr = std::make_unique<SliceAnalyzer>();
+    sliceQuery.trackId = slice.trackId;
+    sliceAnalyzerPtr->SetRepository(dataEngine);
+    sliceAnalyzerPtr->ComputeDepthInfoByTrackId(sliceQuery, depthCache);
+    slice.depth = depthCache[slice.id];
+    return slice;
+}
 }

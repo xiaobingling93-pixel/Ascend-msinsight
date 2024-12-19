@@ -274,4 +274,33 @@ void TextRepository::QueryShapeInfoBySlice(const SliceQuery &sliceQuery, Compete
     competeSliceDomain.sliceShape.inputDataTypes = kernelDetailPo.inputDataTypes;
     competeSliceDomain.sliceShape.inputShapes = kernelDetailPo.inputShapes;
 }
+
+bool TextRepository::QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
+{
+    SliceTable sliceTable;
+    std::vector<SlicePO> slicePOVec;
+    sliceTable.Select(SliceColumn::ID, SliceColumn::TIMESTAMP)
+        .Select(SliceColumn::ENDTIME, SliceColumn::TRACKID, SliceColumn::DURATION)
+        .LessEq(SliceColumn::TIMESTAMP, sliceQuery.timePoint)
+        .GreaterEq(SliceColumn::ENDTIME, sliceQuery.timePoint)
+        .Eq(SliceColumn::NAME, sliceQuery.name)
+        .ExcuteQuery(sliceQuery.rankId, slicePOVec);
+    if (std::empty(slicePOVec)) {
+        ServerLog::Warn("Failed to query text slice by time point in text scene!");
+        return false;
+    }
+    const SlicePO &slicePo = slicePOVec[0];
+    competeSliceDomain.id = slicePo.id;
+    competeSliceDomain.endTime = slicePo.endTime;
+    competeSliceDomain.timestamp = slicePo.timestamp;
+    TrackInfo trackInfo;
+    auto &instance = TrackInfoManager::Instance();
+    instance.GetTrackInfo(slicePo.trackId, trackInfo);
+    competeSliceDomain.pid = trackInfo.processId;
+    competeSliceDomain.tid = trackInfo.threadId;
+    competeSliceDomain.trackId = slicePo.trackId;
+    competeSliceDomain.duration = slicePo.duration;
+    competeSliceDomain.cardId = sliceQuery.rankId;
+    return true;
+}
 }

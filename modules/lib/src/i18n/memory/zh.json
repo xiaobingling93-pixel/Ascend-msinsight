@@ -1,5 +1,6 @@
 {
   "memory": {
+    "Find in Timeline": "跳转至时间线视图",
     "Invalid Size Warning": "无效查询条件：“最大值”不能小于“最小值”",
     "Memory Analysis": "内存分析",
     "Memory Allocation/Release Details": "内存申请/释放详情",

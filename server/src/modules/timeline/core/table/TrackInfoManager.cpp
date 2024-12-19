@@ -27,6 +27,7 @@ void TrackInfoManager::Reset()
     std::unique_lock<std::mutex> lock(trackMutex);
     trackIdMap.clear();
     hostMap.clear();
+    hostCardIdMap.clear();
     trackInfoMap.clear();
     maxTrackId = 0;
     deviceMap.clear();
@@ -97,5 +98,21 @@ void TrackInfoManager::UpdateDeviceMap(const std::string &cardId,
 {
     std::unique_lock<std::mutex> lock(trackMutex);
     deviceMap[cardId] = rankAndDeviceMap;
+}
+
+void TrackInfoManager::UpdateHostCardId(const std::string &cardId, const std::string &hostCardId)
+{
+    std::unique_lock<std::mutex> lock(trackMutex);
+    hostCardIdMap[cardId] = hostCardId;
+}
+
+std::string TrackInfoManager::GetHostCardId(const std::string &deviceCardId)
+{
+    std::unique_lock<std::mutex> lock(trackMutex);
+    auto it = hostCardIdMap.find(deviceCardId);
+    if (it == hostCardIdMap.end()) {
+        return deviceCardId;
+    }
+    return it->second;
 }
 }

@@ -30,6 +30,7 @@ struct MemoryOperator {
     double releaseActive;
     std::string streamId;
     std::string deviceType;
+    std::string id;
 };
 
 struct MemoryOperatorComparison {
@@ -76,6 +77,17 @@ struct MemoryViewData {
     std::vector<std::vector<std::string>> lines;
 };
 
+struct SliceInfo {
+    std::string id;
+    std::string rankId;
+    std::string processId;
+    std::string threadId;
+    std::string metaType;
+    uint32_t depth = 0;
+    uint64_t startTime = 0;
+    uint64_t duration = 0;
+};
+
 struct MemoryTableColumnAttr {
     std::string name;
     std::string type;
@@ -119,6 +131,11 @@ struct MemoryComponentComparisonResponse : public Response {
     std::vector<MemoryTableColumnAttr> columnAttr;
     std::vector<MemoryComponentComparison> componentDiffDetails;
     int64_t totalNum = 0;
+};
+
+struct MemoryFindSliceResponse : public Response {
+    MemoryFindSliceResponse() : Response(REQ_RES_MEMORY_FIND_SLICE) {}
+    SliceInfo data;
 };
 
 struct MemoryViewResponse : public Response {

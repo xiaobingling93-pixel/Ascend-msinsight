@@ -231,4 +231,42 @@ std::string PythonApiRepo::QuerySliceCallStack(const SliceQuery &sliceQuery, con
     }
     return callStack;
 }
+
+bool PythonApiRepo::QuerySliceByTimepointAndName(const SliceQuery &sliceQuery, CompeteSliceDomain &competeSliceDomain)
+{
+    std::vector<StringIdsPO> strPOs;
+    stringIdsTable->Select(StringIdsColumn::ID)
+        .Eq(StringIdsColumn::VALUE, sliceQuery.name)
+        .ExcuteQuery(sliceQuery.rankId, strPOs);
+    if (std::empty(strPOs)) {
+        ServerLog::Warn("Failed to query pytorch slice name by time point in db scene!");
+        return false;
+    }
+    std::vector<uint64_t> strIds(strPOs.size());
+    std::transform(strPOs.begin(), strPOs.end(), strIds.begin(),
+                   [](const StringIdsPO &item) { return item.id; });
+    std::vector<PytorchApiPO> apiPOs;
+    pytorchApiTable->Select(PytorchApiColumn::ID, PytorchApiColumn::TIMESTAMP)
+        .Select(PytorchApiColumn::ENDTIME, PytorchApiColumn::GLOBAL_TID)
+        .LessEq(PytorchApiColumn::TIMESTAMP, sliceQuery.timePoint)
+        .GreaterEq(PytorchApiColumn::ENDTIME, sliceQuery.timePoint)
+        .In(PytorchApiColumn::NAME, strIds)
+        .OrderBy(PytorchApiColumn::TIMESTAMP, Timeline::TableOrder::DESC)
+        .ExcuteQuery(sliceQuery.rankId, apiPOs);
+    if (std::empty(apiPOs)) {
+        ServerLog::Warn("Failed to query pytorch slice by time point in db scene!");
+        return false;
+    }
+    const PytorchApiPO target = apiPOs[0];
+    competeSliceDomain.id = target.id;
+    competeSliceDomain.timestamp = target.timestamp;
+    competeSliceDomain.endTime = target.endTime;
+    competeSliceDomain.pid = std::to_string(target.globalTid);
+    competeSliceDomain.tid = pythonApiTid;
+    competeSliceDomain.cardId = TrackInfoManager::Instance().GetHostCardId(sliceQuery.rankId);
+    competeSliceDomain.trackId = TrackInfoManager::Instance().GetTrackId(competeSliceDomain.cardId,
+        competeSliceDomain.pid, competeSliceDomain.tid);
+    competeSliceDomain.duration = target.endTime - target.timestamp;
+    return true;
+}
 }

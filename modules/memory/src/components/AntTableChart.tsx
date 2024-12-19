@@ -12,13 +12,15 @@ import type { ComponentMemory, GetTableDataResponse, MemoryTable, MemoryTableCol
 import { ResizeTable } from 'ascend-resize';
 import { Button, Spin } from 'ascend-components';
 import { DownOutlined } from '@ant-design/icons';
-import type { TableColumnsType } from 'antd';
+import type { TableColumnsType, MenuProps } from 'antd';
+import { Dropdown } from 'antd';
 import { type Theme, useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { useRootStore } from '../context/context';
-import { fetchTableDataByComponent } from '../utils/RequestUtils';
+import { fetchOperatorPosition, fetchTableDataByComponent } from '../utils/RequestUtils';
 import type { Session } from '../entity/session';
 import { handleOperatorDetails } from './MemoryDetailTable';
+import connector from '../connection';
 
 interface IProps {
     tableData: MemoryTable;
@@ -31,6 +33,7 @@ interface IProps {
     onOrderByChange: (orderBy: string) => void;
     total: number;
     isCompare: boolean;
+    rankId: string;
 }
 
 interface IColName {
@@ -148,14 +151,36 @@ const getTableColumns = function (
     return dataColumns;
 };
 
+let selectedRecord: OperatorDetail | undefined;
+
+async function redirectToTimeline(record: OperatorDetail, rankId: string): Promise<void> {
+    const res = await fetchOperatorPosition({
+        id: record.id,
+        name: record.name,
+        rankId,
+    });
+    connector.send({
+        event: 'switchModule',
+        body: {
+            switchTo: 'timeline',
+            toModuleEvent: 'locateUnit',
+            params: {
+                ...res,
+            },
+        },
+    });
+}
+
 // eslint-disable-next-line max-lines-per-function
 export const AntTableChart: React.FC<IProps> = (props) => {
     const defaultDataSource = [{}] as OperatorDetail[]; // 防止antd4 table组件报ResizeObserver loop错误
     const { t } = useTranslation('memory');
     const {
         tableData, onRowSelected, current, pageSize,
-        onCurrentChange, onPageSizeChange, total, onOrderChange, onOrderByChange, isCompare,
+        onCurrentChange, onPageSizeChange, total, onOrderChange, onOrderByChange, isCompare, rankId,
     } = props;
+    const [open, setOpen] = useState<boolean>(false);
+    const [shouldBlockMouseLeave, setShouldBlockMouseLeave] = useState<boolean>(false);
     const theme = useTheme();
     const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
 
@@ -163,6 +188,24 @@ export const AntTableChart: React.FC<IProps> = (props) => {
         () => getTableColumns(tableData.columns, theme, t, isCompare, setExpandedKeys),
         [tableData.columns, t, isCompare],
     );
+
+    const useMenuItems = (): MenuProps['items'] => {
+        if (selectedRecord === undefined || !open) {
+            return [];
+        }
+        return [
+            {
+                label: t('Find in Timeline'),
+                key: 'findInTimeline',
+                onClick: (): void => {
+                    if (selectedRecord !== undefined) {
+                        redirectToTimeline(selectedRecord, rankId);
+                    }
+                },
+            },
+        ];
+    };
+    const items = useMenuItems();
 
     // key is used to reset the Table state (page and sort) if the columns change
     const key = useMemo(() => `${Math.random()}`, [tableData.columns]);
@@ -189,7 +232,18 @@ export const AntTableChart: React.FC<IProps> = (props) => {
                 onRowSelected?.(record, rowIndex);
             },
             onMouseLeave: (event: any): void => {
+                if (shouldBlockMouseLeave) {
+                    setShouldBlockMouseLeave(false);
+                    return;
+                }
+                setOpen(false);
                 onRowSelected?.(undefined, undefined);
+            },
+            onContextMenu: (event: any): void => {
+                event.preventDefault(); // 阻止默认的右键菜单
+                selectedRecord = record;
+                setOpen(true);
+                setShouldBlockMouseLeave(true);
             },
         };
     };
@@ -199,30 +253,34 @@ export const AntTableChart: React.FC<IProps> = (props) => {
     }, [JSON.stringify(tableData), current, pageSize]);
 
     return (
-        <ResizeTable
-            columns={columns as TableColumnsType<OperatorDetail>}
-            dataSource={tableData.rows.length === 0 ? defaultDataSource : tableData.rows.map((item, index) => ({ ...item, key: `${item.name}_${index}` }))}
-            onChange={onTableChange}
-            scroll={{
-                x: 150 * columns.length,
-            }}
-            pagination={{
-                current,
-                pageSize,
-                pageSizeOptions: ['10', '20', '30', '50', '100'],
-                onChange,
-                total,
-                showTotal: (totalNum: number): string => i18n.t('PaginationTotal', { total: totalNum }),
-                showQuickJumper: true,
-            }}
-            rowClassName="memory-ant-table-row"
-            key={key}
-            onRow={onRow}
-            expandable={{
-                expandIcon: () => <></>,
-                expandedRowKeys,
-            }}
-        />
+        <Dropdown menu={{ items }} trigger={['contextMenu']}>
+            <div>
+                <ResizeTable
+                    columns={columns as TableColumnsType<OperatorDetail>}
+                    dataSource={tableData.rows.length === 0 ? defaultDataSource : tableData.rows.map((item, index) => ({ ...item, key: `${item.name}_${index}` }))}
+                    onChange={onTableChange}
+                    scroll={{
+                        x: 150 * columns.length,
+                    }}
+                    pagination={{
+                        current,
+                        pageSize,
+                        pageSizeOptions: ['10', '20', '30', '50', '100'],
+                        onChange,
+                        total,
+                        showTotal: (totalNum: number): string => i18n.t('PaginationTotal', { total: totalNum }),
+                        showQuickJumper: true,
+                    }}
+                    rowClassName="memory-ant-table-row"
+                    key={key}
+                    onRow={onRow}
+                    expandable={{
+                        expandIcon: () => <></>,
+                        expandedRowKeys,
+                    }}
+                />
+            </div>
+        </Dropdown>
     );
 };
 

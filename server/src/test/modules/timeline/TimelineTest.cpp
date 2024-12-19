@@ -833,3 +833,31 @@ TEST_F(TestSuit, QueryP2PCommunicationOpDataTest)
     EXPECT_EQ(p2pOpData.at(0).name, "hcom_send__822_0");
     EXPECT_EQ(p2pOpData.at(0).cname, MARKER_SEND);
 }
+
+TEST_F(TestSuit, QuerySliceByTimepointAndNameTest)
+{
+    TextRepository repository;
+    SliceQuery sliceQuery;
+    sliceQuery.rankId = "0";
+    CompeteSliceDomain slice;
+    bool res = repository.QuerySliceByTimepointAndName(sliceQuery, slice);
+    EXPECT_EQ(res, false);
+    sliceQuery.name = "ZerosLike";
+    const uint64_t time = 1695115378713662000;
+    sliceQuery.timePoint = time;
+    res = repository.QuerySliceByTimepointAndName(sliceQuery, slice);
+    EXPECT_EQ(res, true);
+    const uint64_t expectId = 8;
+    EXPECT_EQ(slice.id, expectId);
+    const uint64_t expectEnd = 1695115378714157851;
+    EXPECT_EQ(slice.endTime, expectEnd);
+    const uint64_t expectStart = 1695115378713661000;
+    EXPECT_EQ(slice.timestamp, expectStart);
+    EXPECT_EQ(slice.pid, "300");
+    EXPECT_EQ(slice.tid, "16");
+    const uint64_t expectTrack = 7;
+    EXPECT_EQ(slice.trackId, expectTrack);
+    const uint64_t expectDur = 496851;
+    EXPECT_EQ(slice.duration, expectDur);
+    EXPECT_EQ(slice.cardId, "0");
+}

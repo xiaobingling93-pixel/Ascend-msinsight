@@ -240,6 +240,7 @@ const MemoryDetailTable = observer(({ session, memorySession }:
                             onOrderByChange={setOrderBy}
                             total={total}
                             isCompare={isCompare}
+                            rankId={memorySession.rankIdCondition.value}
                         />
                     </Spin>
                 </>}

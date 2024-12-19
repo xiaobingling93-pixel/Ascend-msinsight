@@ -232,6 +232,17 @@ struct MemoryViewParams {
     }
 };
 
+struct MemoryFindSliceParams {
+    std::string fileId;
+    std::string id;
+    std::string name;
+};
+
+struct MemoryFindSliceRequest : public Request {
+    MemoryFindSliceRequest() : Request(REQ_RES_MEMORY_FIND_SLICE){};
+    MemoryFindSliceParams params;
+};
+
 struct MemoryViewRequest : public Request {
     MemoryViewRequest() : Request(REQ_RES_MEMORY_VIEW) {};
     MemoryViewParams params;

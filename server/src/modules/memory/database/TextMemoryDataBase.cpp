@@ -366,7 +366,7 @@ std::string  TextMemoryDataBase::GetOperatorSql(Protocol::MemoryOperatorParams &
     uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
     uint64_t offsetTime = Timeline::TraceTime::Instance().GetOffsetByFileId(requestParams.rankId);
     std::string sql =
-        "SELECT name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
+        "SELECT id, name, size, CASE WHEN allocation_time == 0 THEN 'NA' ELSE "
         "ROUND((allocation_time - " +
         std::to_string(startTime) + " - " + std::to_string(offsetTime) +
         ") / (1000.0 * 1000.0), 3) END AS allocationTimestamp, "

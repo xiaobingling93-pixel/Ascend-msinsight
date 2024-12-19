@@ -58,6 +58,7 @@ struct CompeteSliceDomain {
     uint64_t dataSize {};
     std::string memcpyDirection;
     std::string args;
+    std::string cardId;
     bool operator < (const CompeteSliceDomain &right) const
     {
         if (depth < right.depth) {
