@@ -213,12 +213,17 @@ Component MemoryParse::mapperToComponentDetail(std::map<std::string, size_t> dat
     Component component {};
     size_t componentIndex = dataMap[COMPONENT];
     size_t timestampIndex = dataMap[TIMESTAMP];
-    size_t totalReservedIndex = dataMap[TOTAL_RESERVED_MB];
     size_t deviceIndex = dataMap[DEVICE];
     component.component = row[componentIndex];
     component.timestamp = NumberUtil::TimestampUsToNs(NumberUtil::StringToLongDouble(row[timestampIndex]));
-    component.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex]);
     component.device = row[deviceIndex];
+    if (dataMap.find(TOTAL_RESERVED_MB) != dataMap.end()) {
+        size_t totalReservedIndex = dataMap[TOTAL_RESERVED_MB];
+        component.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex]);
+    } else {
+        size_t totalReservedIndex = dataMap[TOTAL_RESERVED_KB];
+        component.totalReserved = NumberUtil::StringToDouble(row[totalReservedIndex]) / mbToKb;
+    }
 
     return component;
 }
@@ -352,7 +357,8 @@ bool MemoryParse::ComponentParse(const std::string &filePath, const std::string 
             for (size_t i = 0; i < row.size(); i++) {
                 dataMap[row[i]] = i;
             }
-            bool columnExist = GetMapValid(NPU_MODULE_MEM_CSV, dataMap);
+            bool columnExist = GetMapValid(NPU_MODULE_MEM_CSV_PYTORCH, dataMap) ||
+                GetMapValid(NPU_MODULE_MEM_CSV_MINDSPORE, dataMap);
             if (!columnExist) {
                 return false;
             }

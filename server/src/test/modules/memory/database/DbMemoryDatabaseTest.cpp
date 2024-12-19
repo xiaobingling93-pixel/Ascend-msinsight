@@ -52,7 +52,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryMemoryComponentData)
     std::vector<Protocol::MemoryComponent> responseBody;
     auto result = database->QueryComponentDetail(requestParams, columnAttr, responseBody);
     EXPECT_TRUE(result);
-    int expectSize = 3;
+    int expectSize = 0;
     int expectColumnSize = 3;
     EXPECT_EQ(responseBody.size(), expectSize);
     EXPECT_EQ(columnAttr.size(), expectColumnSize);
@@ -64,7 +64,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryEntireComponentTable)
     uint64_t offsetTime = Dic::Module::Timeline::TraceTime::Instance().GetOffsetByFileId("0");
     std::vector<Dic::Protocol::MemoryComponent> responseBody;
     bool result = database->QueryEntireComponentTable(responseBody, offsetTime);
-    int expectSize = 3;
+    int expectSize = 0;
     EXPECT_TRUE(result);
     EXPECT_EQ(responseBody.size(), expectSize);
 }
@@ -217,7 +217,7 @@ TEST_F(DbMemoryDatabaseTest, FullDbQueryComponentsTotalNum)
     int64_t totalNum;
     auto result = database->QueryComponentsTotalNum(requestParams, totalNum);
     EXPECT_TRUE(result);
-    int expectSize = 3;
+    int expectSize = 0;
     EXPECT_EQ(totalNum, expectSize);
 }
 

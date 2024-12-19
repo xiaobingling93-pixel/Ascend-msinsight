@@ -117,8 +117,11 @@ const std::vector<std::string> STATIC_OP_MEM_CSV = {
 };
 
 // field in npu_module_mem
-const std::vector<std::string> NPU_MODULE_MEM_CSV = {
+const std::vector<std::string> NPU_MODULE_MEM_CSV_PYTORCH = {
     COMPONENT, TIMESTAMP, TOTAL_RESERVED_MB, DEVICE
+};
+const std::vector<std::string> NPU_MODULE_MEM_CSV_MINDSPORE = {
+    COMPONENT, TIMESTAMP, TOTAL_RESERVED_KB, DEVICE
 };
 
 // table header

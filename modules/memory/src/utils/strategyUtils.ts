@@ -71,12 +71,12 @@ export const displayStrategyMap: {
     },
     mindspore: {
         isHost: {
-            isCompared: new HostCompareDisplayStrategy(),
-            notCompared: new HostCompareDisplayStrategy(),
+            isCompared: new FullDisplayStrategy(),
+            notCompared: new FullDisplayStrategy(),
         },
         notHost: {
-            isCompared: new SingleDisplayStrategy(),
-            notCompared: new SingleDisplayStrategy(),
+            isCompared: new NormalDisplayStrategy(),
+            notCompared: new NormalDisplayStrategy(),
         },
     },
 };

@@ -135,13 +135,13 @@ bool DbMemoryDataBase::QueryComponentDetail(Protocol::MemoryComponentParams &req
         // 中间层SQL和最内层SQL的查询结果根据组件编号和内存占用值做一次连接
         // 做分组的原因是可能有多个时刻内存占用为峰值，只需要时刻最小的那个
         // 最外层SQL根据组件编号和组件名做一次连接
-        sql = "SELECT t4.name AS componentColumn, ROUND(t3.size / 1024.0, 2) AS totalReservedColumn,"
+        sql = "SELECT t4.name AS componentColumn, ROUND(t3.size / (1024.0 * 1024.0), 2) AS totalReservedColumn,"
             " t3.timestamp_maxsize AS timestampColumn FROM "
             "(SELECT t1.moduleId AS id, t1.totalReserved AS size, MIN(ROUND((t1.timestampNs - " +
             std::to_string(startTime + offsetTime) +
             ") / (1000.0 * 1000.0), 3)) AS timestamp_maxsize FROM " + TABLE_NPU_MODULE_MEM + " AS t1 JOIN " +
             "(SELECT moduleId, MAX(totalReserved) AS max_total_reserved FROM " + TABLE_NPU_MODULE_MEM +
-            " GROUP BY moduleId HAVING max_total_reserved >= " + std::to_string(componentThresholdKb) +
+            " GROUP BY moduleId HAVING max_total_reserved >= " + std::to_string(componentThresholdByte) +
             ") AS t2 ON t1.moduleId = t2.moduleId AND t1.totalReserved = t2.max_total_reserved "
             "GROUP BY t1.moduleId, t1.totalReserved) AS t3 JOIN ENUM_MODULE AS t4 ON t3.id = t4.id";
         if (!requestParams.order.empty() && !requestParams.orderBy.empty()) {
@@ -167,12 +167,12 @@ bool DbMemoryDataBase::QueryEntireComponentTable(std::vector<Protocol::MemoryCom
     FileType type = DataBaseManager::Instance().GetFileType();
     if (type == FileType::PYTORCH) {
         uint64_t startTime = Timeline::TraceTime::Instance().GetStartTime();
-        sql = "SELECT t4.name, ROUND(t3.size / 1024.0, 2), t3.timestamp_maxsize FROM "
+        sql = "SELECT t4.name, ROUND(t3.size / (1024.0 * 1024.0), 2), t3.timestamp_maxsize FROM "
               "(SELECT t1.moduleId AS id, t1.totalReserved AS size, MIN(ROUND((t1.timestampNs - " +
               std::to_string(startTime + offsetTime) +
               ") / (1000.0 * 1000.0), 3)) AS timestamp_maxsize FROM " + TABLE_NPU_MODULE_MEM + " AS t1 JOIN " +
               "(SELECT moduleId, MAX(totalReserved) AS max_total_reserved FROM " + TABLE_NPU_MODULE_MEM +
-              " GROUP BY moduleId HAVING max_total_reserved >= " + std::to_string(componentThresholdKb) +
+              " GROUP BY moduleId HAVING max_total_reserved >= " + std::to_string(componentThresholdByte) +
               ") AS t2 ON t1.moduleId = t2.moduleId AND t1.totalReserved = t2.max_total_reserved "
               "GROUP BY t1.moduleId, t1.totalReserved) AS t3 JOIN ENUM_MODULE AS t4 ON t3.id = t4.id";
     } else {
@@ -262,7 +262,7 @@ bool DbMemoryDataBase::QueryComponentsTotalNum(Protocol::MemoryComponentParams &
     if (type == FileType::PYTORCH) {
         sql = "SELECT count(*) FROM (SELECT t2.name FROM " + TABLE_NPU_MODULE_MEM +
             " AS t1 JOIN ENUM_MODULE AS t2 ON t1.moduleId = t2.id GROUP BY t2.name HAVING MAX(t1.totalReserved) >= " +
-            std::to_string(componentThresholdKb) + ") AS t3";
+            std::to_string(componentThresholdByte) + ") AS t3";
     } else {
         ServerLog::Error("Failed to query components total num: Memory tab does not support msprof data.");
         return false;

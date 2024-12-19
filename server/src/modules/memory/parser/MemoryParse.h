@@ -39,6 +39,7 @@ private:
     const uint32_t operatorTableNum = 5;
     const uint32_t recordTableNum = 5;
     const uint32_t staticOpTableNum = 7;
+    const double mbToKb = 1024.0;
     std::map<std::string, Protocol::MemorySuccess> ranks;
     bool isCluster = false;
 

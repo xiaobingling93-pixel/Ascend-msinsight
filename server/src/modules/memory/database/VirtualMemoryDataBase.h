@@ -58,7 +58,7 @@ protected:
     const double staticDefaultTotalSize = -1.0; // 静态表TOTAL字段默认赋值异常值
     // 组件占用内存大于100M的才展示
     const double componentThresholdMb = 100.0;
-    const double componentThresholdKb = 100.0 * 1024.0;
+    const double componentThresholdByte = 100.0 * 1024.0 * 1024.0;
     bool isInference = false;
 
     const std::vector<std::string> baseLegends = {
