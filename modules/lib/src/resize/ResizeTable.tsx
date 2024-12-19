@@ -27,7 +27,7 @@ const StyledTable = styled(Support)`
         color: ${(p): string => p.theme.tableTextColor};
     }
 
-    //表头 
+    //表头
     .ant-table-thead > tr > th {
         background-color: ${(p): string => p.theme.bgColorLight};
         color: ${(p): string => p.theme.textColorSecondary};
@@ -66,7 +66,7 @@ const StyledTable = styled(Support)`
         border-bottom: none;
         user-select: text;
     }
-    
+
     .ant-table-tbody > tr > td:has(.ant-empty) {
         box-shadow: none;
     }
@@ -78,6 +78,10 @@ const StyledTable = styled(Support)`
     .ant-table-tbody > tr > td, .ant-table tfoot > tr > td {
         padding: 8px;
         line-height: 16px;
+    }
+    .ant-table-tbody > tr > td.height20 {
+        padding: 6px 8px;
+        line-height: 20px;
     }
     .ant-empty-normal{
         color:${(p): string => p.theme.textColorTertiary};
@@ -94,6 +98,9 @@ const StyledTable = styled(Support)`
     }
 
     //筛选
+    .ant-table-filter-trigger {
+        padding: 0;
+    }
     .ant-table-filter-trigger:hover {
         color: #a6a6a6;
         background: rgba(0, 0, 0, 0.04);
@@ -102,10 +109,14 @@ const StyledTable = styled(Support)`
     .ant-table-filter-trigger.active {
         color: ${(p): string => p.theme.primaryColor};
     }
-    
+
     //排序
     td.ant-table-column-sort {
         background: none;
+    }
+    .ant-table-column-sorter {
+        height: 16px;
+        margin-top: -2px;
     }
 
     //分页

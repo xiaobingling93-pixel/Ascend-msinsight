@@ -87,6 +87,7 @@ const getInstrsColumns = (t: TFunction, condition?: {hasStallCycles?: boolean;ha
                 }
                 return <Bar value={Number(cycles)} max={record.maxCycles ?? cycles}/>;
             },
+            className: 'height20',
         },
         {
             title: t('StallCycles'),
