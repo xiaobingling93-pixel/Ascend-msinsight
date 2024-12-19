@@ -15,9 +15,10 @@ bool MegatronParallelStrategyAlgorithm::UpdateParallelDimension(const std::strin
 {
     config = tmpConfig;
     dimension = tmpDimension;
-    if (tmpConfig.algorithm == MEGATRON_LM_TP_CP_EP_DP_PP_ALG) {
+    if (tmpConfig.algorithm == MEGATRON_LM_TP_CP_EP_DP_PP_ALG || tmpConfig.algorithm == MEGATRON_LM_TP_DP_PP_ALG) {
         paraOrder = {TP_PARA, CP_PARA, DP_PARA, PP_PARA};
-    } else if (tmpConfig.algorithm == MEGATRON_LM_TP_CP_PP_EP_DP_ALG) {
+    } else if (tmpConfig.algorithm == MEGATRON_LM_TP_CP_PP_EP_DP_ALG ||
+               tmpConfig.algorithm == MEGATRON_LM_TP_PP_DP_ALG) {
         paraOrder = {TP_PARA, CP_PARA, PP_PARA, DP_PARA};
     } else {
         err = "Failed to update parallel view. Unexpected algorithm.";
@@ -45,6 +46,7 @@ bool MegatronParallelStrategyAlgorithm::UpdateShowMap(std::string &err)
         paraDetailsMap[para].isShown = false;
         paraDetailsMap[para].size = 1;
     }
+    SetParaDetail(EP_PARA, config.epSize);
     SetParaDetail(DP_PARA, config.dpSize);
     if (dimension == DIMENSIONS_DP) {
         return true;

@@ -28,12 +28,11 @@ bool SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::R
     }
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string level = PARALLEL_CONFIG_LEVEL_CONFIGURED;
-    if (database == nullptr || !database->UpdateParallelStrategyConfig(request.config, level, response.msg) ||
-        !AddAlgorithmToManager(database, request.config.algorithm)) {
-    response.result = false;
-    SendResponse(std::move(responsePtr), false, "Failed to update parallel strategy config.");
-    return false;
+    if (database == nullptr || !database->UpdateParallelStrategyConfig(request.config, level, response.msg)) {
+        SendResponse(std::move(responsePtr), false, "Failed to update parallel strategy config.");
+        return false;
     }
+    AddAlgorithmToManager(database, request.config.algorithm);
     session.OnResponse(std::move(responsePtr));
     return true;
 }

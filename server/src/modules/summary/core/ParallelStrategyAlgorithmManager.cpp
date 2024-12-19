@@ -29,6 +29,7 @@ bool ParallelStrategyAlgorithmManager::AddAlgorithm(const std::string& projectNa
         return false;
     }
     algorithmMap.emplace(projectName, algPtr);
+    Server::ServerLog::Info("Success to add algorithm to parallel strategy manager.");
     return true;
 }
 
@@ -55,5 +56,4 @@ std::shared_ptr<BaseParallelStrategyAlgorithm> ParallelStrategyAlgorithmManager:
     ServerLog::Info("Success to get algorithm by project name.");
     return algorithmMap.at(projectName);
 }
-
 }

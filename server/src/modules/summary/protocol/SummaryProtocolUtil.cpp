@@ -287,15 +287,10 @@ std::optional<document_t> ToResponseJson<PipelineFwdBwdTimelineResponse>(const P
     return std::move(json);
 }
 
-template <>
-std::optional<document_t> ToResponseJson<ParallelismArrangementResponse>(const ParallelismArrangementResponse &response)
+void GetArrangementsJson(const ParallelismArrangementResponse& response, document_t& json, json_t& body)
 {
-    document_t json(kObjectType);
-    auto &allocator = json.GetAllocator();
-    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
-    json_t body(kObjectType);
-    JsonUtil::AddMember(body, "size", response.arrangeData.size, allocator);
     json_t arrangements(kArrayType);
+    auto &allocator = json.GetAllocator();
     for (const auto& arrangement : response.arrangeData.arrangements) {
         json_t arrangementJson(kObjectType);
         JsonUtil::AddMember(arrangementJson, "index", arrangement.index, allocator);
@@ -312,6 +307,17 @@ std::optional<document_t> ToResponseJson<ParallelismArrangementResponse>(const P
         arrangements.PushBack(arrangementJson, allocator);
     }
     JsonUtil::AddMember(body, "arrangements", arrangements, allocator);
+}
+
+template <>
+std::optional<document_t> ToResponseJson<ParallelismArrangementResponse>(const ParallelismArrangementResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(body, "size", response.arrangeData.size, allocator);
+    GetArrangementsJson(response, json, body);
     json_t indicators(kArrayType);
     for (const auto& indicator : response.arrangeData.indicators) {
         json_t indicatorJson(kObjectType);
@@ -329,7 +335,12 @@ std::optional<document_t> ToResponseJson<ParallelismArrangementResponse>(const P
     for (const auto& connection : response.arrangeData.connections) {
         json_t connectionJson(kObjectType);
         JsonUtil::AddMember(connectionJson, "type", connection.type, allocator);
-        JsonUtil::AddMember(connectionJson, "list", connection.indexes, allocator);
+        json_t listJson(kArrayType);
+        for (const auto& index : connection.indexes) {
+            uint32_t tmpIdx = index;
+            listJson.PushBack(json_t().SetInt(tmpIdx), allocator);
+        }
+        JsonUtil::AddMember(connectionJson, "list", listJson, allocator);
         JsonUtil::AddMember(connectionJson, "group", connection.communicationGroups, allocator);
         connections.PushBack(connectionJson, allocator);
     }

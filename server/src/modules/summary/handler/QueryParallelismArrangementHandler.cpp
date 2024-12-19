@@ -38,11 +38,13 @@ bool QueryParallelismArrangementHandler::QueryArrangementByDimension(const std::
 {
     auto algPtr = ParallelStrategyAlgorithmManager::Instance().GetAlgorithmByProjectName(projectName, err);
     if (algPtr == nullptr) {
-        err = "Failed to get algorithm by project name for query  parallelism arrangement.";
+        err = "Failed to get algorithm by project name for query parallelism arrangement.";
         return false;
     }
     BaseParallelStrategyAlgorithm &algorithm = *algPtr;
-    algorithm.UpdateParallelDimension(request.params.dimension, request.params.config, err);
+    if (!algorithm.UpdateParallelDimension(request.params.dimension, request.params.config, err)) {
+        return false;
+    }
     algorithm.GenerateArrangementByDimension();
     response.arrangeData = algorithm.GetArrangementData();
     return true;

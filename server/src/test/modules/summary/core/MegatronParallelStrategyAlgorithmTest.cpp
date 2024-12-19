@@ -45,6 +45,28 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, UpdateParallelDimension_ShouldRetu
     EXPECT_TRUE(res);
 }
 
+TEST_F(MegatronParallelStrategyAlgorithmTest, UpdateParallelDimension_ShouldReturnFalse_WhenWrongInput)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = "yyyyy";
+    ParallelStrategyConfig config;
+    config.ppSize = 2; // 2
+    config.tpSize = 2; // 2
+    config.dpSize = 4; // 4
+    config.cpSize = 2; // 2
+    config.epSize = 2; // 2
+    config.algorithm = "xxxx";
+    std::string err;
+    bool res = algorithm.UpdateParallelDimension(dimension, config, err);
+    EXPECT_FALSE(res);
+    EXPECT_EQ(err, "Failed to update parallel view. Unexpected algorithm.");
+    MegatronParallelStrategyAlgorithm algorithm2;
+    config.algorithm = MEGATRON_LM_TP_DP_PP_ALG;
+    res = algorithm.UpdateParallelDimension(dimension, config, err);
+    EXPECT_FALSE(res);
+    EXPECT_EQ(err, "Failed to update show map for parallel view. Unexpected dimension.");
+}
+
 TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGetArrangement_TestWithTpDimension)
 {
     MegatronParallelStrategyAlgorithm algorithm;

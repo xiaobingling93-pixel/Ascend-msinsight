@@ -182,8 +182,8 @@ const std::vector<std::string> PARALLEL_STRATEGY_HEADERS = {
 };
 
 struct Position {
-    uint8_t x = 0;
-    uint8_t y = 0;
+    uint32_t x = 0;
+    uint32_t y = 0;
     bool operator==(const Position& other) const
     {
         return x == other.x && y == other.y;

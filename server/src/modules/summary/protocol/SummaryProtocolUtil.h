@@ -31,6 +31,7 @@ std::optional<document_t> ToResponseJson<SetParallelStrategyResponse>(const SetP
 template <>
 std::optional<document_t> ToResponseJson<PipelineFwdBwdTimelineResponse>(
     const PipelineFwdBwdTimelineResponse &response);
+void GetArrangementsJson(const ParallelismArrangementResponse& response, document_t& json, json_t& body);
 template <> std::optional<document_t> ToResponseJson<ParallelismArrangementResponse>(
     const ParallelismArrangementResponse &response);
 } // end of namespace Protocol
