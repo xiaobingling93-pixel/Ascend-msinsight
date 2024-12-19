@@ -62,6 +62,8 @@ include_directories(${SRC_HOME_DIR}/modules/memory/database)
 include_directories(${SRC_HOME_DIR}/modules/memory/handler)
 include_directories(${SRC_HOME_DIR}/modules/memory/parser)
 include_directories(${SRC_HOME_DIR}/modules/memory/protocol)
+include_directories(${SRC_HOME_DIR}/modules/memory/table)
+include_directories(${SRC_HOME_DIR}/modules/memory/service)
 include_directories(${SRC_HOME_DIR}/modules/communication)
 include_directories(${SRC_HOME_DIR}/modules/communication/database)
 include_directories(${SRC_HOME_DIR}/modules/communication/protocol)
@@ -124,6 +126,8 @@ aux_source_directory(${SRC_HOME_DIR}/modules/memory/database DIC_MODULES_MEMORY_
 aux_source_directory(${SRC_HOME_DIR}/modules/memory/handler DIC_MODULES_MEMORY_HANDLER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memory/parser DIC_MODULES_MEMORY_PARSER_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/memory/protocol DIC_MODULES_MEMORY_PROTOCOL_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memory/table DIC_MODULES_MEMORY_TABLE_SRC)
+aux_source_directory(${SRC_HOME_DIR}/modules/memory/service DIC_MODULES_MEMORY_SERVICE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/communication/database DIC_MODULES_COMMUNICATION_DATABASE_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/communication/protocol DIC_MODULES_COMMUNICATION_PROTOCOL_SRC)
 aux_source_directory(${SRC_HOME_DIR}/modules/communication/handler DIC_MODULES_COMMUNICATION_HANDLER_SRC)
@@ -193,6 +197,9 @@ list(APPEND DIC_MODULES_SRC_LIST
         ${DIC_MODULES_MEMORY_PARSER_SRC}
         ${DIC_MODULES_MEMORY_HANDLER_SRC}
         ${DIC_MODULES_MEMORY_PROTOCOL_SRC}
+        ${DIC_MODULES_MEMORY_TABLE_SRC}
+        ${DIC_MODULES_MEMORY_SERVICE_SRC}
+        ${DIC_MODULES_SUMMARY_PROTOCOL_SRC}
         ${DIC_MODULES_COMMUNICATION_SRC}
         ${DIC_MODULES_COMMUNICATION_DATABASE_SRC}
         ${DIC_MODULES_COMMUNICATION_HANDLER_SRC}
