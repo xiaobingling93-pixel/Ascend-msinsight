@@ -55,7 +55,8 @@ public:
     bool QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level) override;
     bool UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
         std::string &level, std::string &msg) override;
-    bool QueryAllPerformanceDataByStep(const std::string &step, std::vector<StepStatistic> &data) override;
+    bool QueryAllPerformanceDataByStep(const std::string &step,
+                                       std::unordered_map<std::uint32_t, StepStatistic> &data) override;
 
     void PrepareForStageId(std::string &stageIdStr, std::string &sql, std::vector<std::string> &stageIds);
 

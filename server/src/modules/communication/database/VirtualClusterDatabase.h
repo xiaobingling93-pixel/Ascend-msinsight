@@ -6,6 +6,7 @@
 #define PROFILER_SERVER_VIRTUAL_CLUSTER_DATABASE_H
 
 #include <set>
+#include <unordered_map>
 #include "Database.h"
 #include "ClusterDef.h"
 #include "ProtocolMessage.h"
@@ -66,7 +67,8 @@ public:
     virtual bool QueryParallelStrategyConfig(ParallelStrategyConfig &config, std::string &level) = 0;
     virtual bool UpdateParallelStrategyConfig(const ParallelStrategyConfig &config,
         std::string &level, std::string &msg) = 0;
-    virtual bool QueryAllPerformanceDataByStep(const std::string &step, std::vector<StepStatistic> &data) = 0;
+    virtual bool QueryAllPerformanceDataByStep(const std::string &step,
+                                               std::unordered_map<std::uint32_t, StepStatistic> &data) = 0;
 
 protected:
     const std::string totalOpInfo = "Total Op Info";
@@ -116,7 +118,7 @@ protected:
     bool ExecuteQueryParallelStrategyConfig(std::string &sql, ParallelStrategyConfig &config, std::string &level);
     bool ExecuteSetParallelStrategyConfig(std::string &sql, const ParallelStrategyConfig &config, std::string &level);
     bool ExecuteQueryAllPerformanceDataByStep(const std::string &sql,
-        const std::string &step, std::vector<StepStatistic> &data);
+        const std::string &step, std::unordered_map<std::uint32_t, StepStatistic> &data);
 
 private:
     void GetStepsOrRanksObject(const std::string &jsonStr,

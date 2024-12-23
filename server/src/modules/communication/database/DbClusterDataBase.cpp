@@ -275,10 +275,10 @@ bool DbClusterDataBase::QueryDistributionData(Protocol::DistributionDataParam &p
     int num = 0;
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        std::string package_size = sqlite3_column_string(stmt, col++);
+        std::string packageSize = sqlite3_column_string(stmt, col++);
         std::string count = sqlite3_column_string(stmt, col++);
-        std::string total_duration = sqlite3_column_string(stmt, col++);
-        std::string value = "\"" + package_size + "\":[" + count + "," + total_duration + "],";
+        std::string totalDuration = sqlite3_column_string(stmt, col++);
+        std::string value = "\"" + packageSize + "\":[" + count + "," + totalDuration + "],";
         num += 1;
         distribution += value;
     }
@@ -521,7 +521,8 @@ bool DbClusterDataBase::GetParallelConfigFromStepTrace(ParallelStrategyConfig &c
     return ExecuteGetParallelConfigFromStepTrace(sql, config, level);
 }
 
-bool DbClusterDataBase::QueryAllPerformanceDataByStep(const std::string &step, std::vector<StepStatistic> &data)
+bool DbClusterDataBase::QueryAllPerformanceDataByStep(const std::string &step,
+                                                      std::unordered_map<std::uint32_t, StepStatistic> &data)
 {
     std::string sql;
     if (step.empty() || step == "All") {

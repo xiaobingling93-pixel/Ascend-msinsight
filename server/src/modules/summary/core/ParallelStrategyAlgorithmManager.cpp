@@ -19,18 +19,22 @@ void ParallelStrategyAlgorithmManager::Reset()
     algorithmMap.clear();
 }
 
-bool ParallelStrategyAlgorithmManager::AddAlgorithm(const std::string& projectName,
-                                                    const std::shared_ptr<BaseParallelStrategyAlgorithm>& algPtr)
+void ParallelStrategyAlgorithmManager::AddOrUpdateAlgorithm(const std::string& projectName,
+    const std::shared_ptr<BaseParallelStrategyAlgorithm>& algPtr, const ParallelStrategyConfig& config)
 {
     std::unique_lock<std::recursive_mutex> lock(mutex);
-    // 若已存在该project，则添加失败
+    // 若已存在该project，则更新config
     auto it = algorithmMap.find(projectName);
     if (it != algorithmMap.end()) {
-        return false;
+        algorithmMap.at(projectName)->ClearStrategyConfigCache();
+        algorithmMap.at(projectName)->SetStrategyConfig(config);
+        Server::ServerLog::Info("Algorithm already exist. Update parallel strategy config for this program.");
+        return;
     }
     algorithmMap.emplace(projectName, algPtr);
+    algorithmMap.at(projectName)->SetStrategyConfig(config);
     Server::ServerLog::Info("Success to add algorithm to parallel strategy manager.");
-    return true;
+    return;
 }
 
 bool ParallelStrategyAlgorithmManager::DeleteAlgorithm(const std::string &projectName)

@@ -32,18 +32,22 @@ bool SetParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol::R
         SendResponse(std::move(responsePtr), false, "Failed to update parallel strategy config.");
         return false;
     }
-    AddAlgorithmToManager(database, request.config.algorithm);
+    if (!AddAlgorithmToManager(database, request.config)) {
+        SendResponse(std::move(responsePtr), false,
+            "Failed to add algorithm to manager when set parallel config. Unexpected algorithm.");
+        return false;
+    }
     session.OnResponse(std::move(responsePtr));
     return true;
 }
-bool SetParallelStrategyConfigHandler::AddAlgorithmToManager(const std::shared_ptr<VirtualClusterDatabase>& database,
-                                                             const std::string& algorithm)
+bool SetParallelStrategyConfigHandler::AddAlgorithmToManager(const std::shared_ptr<VirtualClusterDatabase> &database,
+                                                             const ParallelStrategyConfig &config)
 {
-    bool res = false;
-    if (StringUtil::Contains(StringUtil::ToLower(algorithm), MEGATRON_ALG)) {
-        res = ParallelStrategyAlgorithmManager::Instance().AddAlgorithm(database->GetDbPath(),
-            std::make_shared<MegatronParallelStrategyAlgorithm>());
+    if (StringUtil::Contains(StringUtil::ToLower(config.algorithm), MEGATRON_ALG)) {
+        ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(database->GetDbPath(),
+            std::make_shared<MegatronParallelStrategyAlgorithm>(), config);
+        return true;
     }
-    return res;
+    return false;
 }
 }

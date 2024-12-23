@@ -367,7 +367,7 @@ TEST_F(DbCommunicationTest, QueryAllPerformanceDataByStepWhenSingleStep)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string step = "1";
-    std::vector<Dic::Module::StepStatistic> data{};
+    std::unordered_map<uint32_t, Dic::Module::StepStatistic> data{};
     auto result = database->QueryAllPerformanceDataByStep(step, data);
     EXPECT_EQ(result, true);
     EXPECT_EQ(data.size(), 8); // 8
@@ -383,7 +383,7 @@ TEST_F(DbCommunicationTest, QueryAllPerformanceDataByStepWhenAllStep)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string step = "";
-    std::vector<Dic::Module::StepStatistic> data{};
+    std::unordered_map<uint32_t, Dic::Module::StepStatistic> data{};
     auto result = database->QueryAllPerformanceDataByStep(step, data);
     EXPECT_EQ(result, true);
     EXPECT_EQ(data.size(), 8); // 8

@@ -55,6 +55,7 @@ struct StepStatistic {
     double bubbleTime = 0;
     double pureCommunicationExcludeReceiveTime = 0;
     double prepareTime = -1;
+    double npuTotalTime = 0;
     int64_t dpIndex = 0;
     int64_t ppIndex = 0;
     int64_t tpIndex = 0;
@@ -123,6 +124,18 @@ struct ParallelStrategyConfig {
         if (ppSize * tpSize * dpSize * cpSize > MAX_PARALLEL_PRODUCT_SIZE) {
             errorMsg = "[Summary] The product of PP size, TP size, DP size, and CP size must be less than " +
                        std::to_string(MAX_PARALLEL_PRODUCT_SIZE);
+            return false;
+        }
+        return true;
+    }
+
+    bool operator==(const ParallelStrategyConfig& conf) const
+    {
+        if (algorithm != conf.algorithm) {
+            return false;
+        }
+        if (ppSize != conf.ppSize || tpSize != conf.tpSize || cpSize != conf.cpSize
+                || dpSize != conf.dpSize || epSize != conf.epSize) {
             return false;
         }
         return true;
@@ -248,30 +261,39 @@ struct IndicatorDataStruct {
 struct PerformanceIndicatorData {
     std::vector<IndicatorAttr> indicators;
     std::vector<IndicatorDataStruct> performanceData;
+    std::vector<std::string> advices;
 };
 
 // Summary性能数据
-const std::string KEY_PREPARING_TIME = "preparingTime";
-const std::string KEY_TOTAL_COMPUTING_TIME = "computingTime";
-const std::string KEY_PURE_COMPUTING_TIME = "pureComputingTime";
-const std::string KEY_COMMUNICATION_OVERLAPPED = "communicationOverlapped";
-const std::string KEY_COMMUNICATION_NOT_OVERLAPPED = "communicationNotOverlapped";
-const std::string KEY_FREE_TIME = "freeTime";
-const std::string KEY_STAGE_TIME = "stageTime";
-const std::string KEY_BUBBLE_TIME = "bubbleTime";
+const std::string KEY_PREPARING_TIME = "preparing";
+const std::string KEY_TOTAL_COMPUTING_TIME = "computing";
+const std::string KEY_PURE_COMPUTING_TIME = "pureComputing";
+const std::string KEY_TOTAL_COMMUNICATION = "communication";
+const std::string KEY_COMMUNICATION_OVERLAPPED = "notOverlapped";
+const std::string KEY_COMMUNICATION_NOT_OVERLAPPED = "overlapped";
+const std::string KEY_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE = "excludeReceive";
+const std::string KEY_FREE_TIME = "free";
+const std::string KEY_STAGE_TIME = "stage";
+const std::string KEY_BUBBLE_TIME = "bubble";
+const std::string KEY_NPU_TIME = "npuTime";
 const std::string KEY_COMPUTING_RATIO = "computingRatio";
 const std::string KEY_COMMUNICATION_RATIO = "communicationRatio";
 
 const std::string VALUE_PREPARING_TIME = FIELD_PREPARE_TIME;
-const std::string VALUE_TOTAL_COMPUTING_TIME = FIELD_COMPUTING;
+const std::string VALUE_TOTAL_COMPUTING_TIME = "Total Computing";
 const std::string VALUE_PURE_COMPUTING_TIME = "Pure Computing";
+const std::string VALUE_TOTAL_COMMUNICATION = FIELD_COMMUNICATION;
 const std::string VALUE_COMMUNICATION_OVERLAPPED = "Communication(Overlapped)";
 const std::string VALUE_COMMUNICATION_NOT_OVERLAPPED = FIELD_COMMUNICATION_NOT_OVERLAPPED;
+const std::string VALUE_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE = FIELD_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE;
 const std::string VALUE_FREE_TIME = FIELD_FREE;
 const std::string VALUE_STAGE_TIME = FIELD_STAGE;
 const std::string VALUE_BUBBLE_TIME = FIELD_BUBBLE;
+const std::string VALUE_NPU_TIME = "NPU Time";
 const std::string VALUE_COMPUTING_RATIO = "Computing Ratio";
 const std::string VALUE_COMMUNICATION_RATIO = "Communication Ratio";
+const std::string VALUE_MAX = "Max ";
+const std::string VALUE_SUM_OF_MAX = "Sum of Max ";
 
 // chart type
 const std::string BAR_CHART = "bar";

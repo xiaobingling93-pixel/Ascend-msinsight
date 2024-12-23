@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include "MegatronParallelStrategyAlgorithm.h"
 using namespace Dic::Module;
+using namespace Dic::Protocol;
 class MegatronParallelStrategyAlgorithmTest : public ::testing::Test {
 };
 
@@ -163,5 +164,156 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGe
     for (const auto& item : data.arrangements) {
         EXPECT_EQ(item.name, EXPECTED_NAME[item.index]);
         EXPECT_EQ(item.position, EXPECTED_POSITION[item.index]);
+    }
+}
+
+TEST_F(MegatronParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldReturnFalse_WhenWrongParams)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_TP;
+    ParallelStrategyConfig config;
+    config.ppSize = 2; // 2
+    config.tpSize = 2; // 2
+    config.dpSize = 2; // 2
+    config.cpSize = 2; // 2
+    config.epSize = 2; // 2
+    config.algorithm = MEGATRON_LM_TP_CP_EP_DP_PP_ALG;
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    ParallelismPerformance params;
+    params.config = config;
+    params.config.algorithm = "xxx";
+    std::unordered_map<std::uint32_t, StepStatistic> statistic;
+    PerformanceIndicatorData responseData;
+    bool res = algorithm.GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
+    EXPECT_EQ(res, false);
+    EXPECT_EQ(err, "Failed to get parallelism performance indicator by dimension. Unexpected parallel config.");
+    // wrong dimension
+    params.config.algorithm = config.algorithm;
+    params.dimension = "xxx";
+    res = algorithm.GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
+    EXPECT_EQ(res, false);
+    EXPECT_EQ(err, "Failed to get parallelism performance indicator by dimension. Unexpected dimension.");
+}
+
+void PrepareParametersForGetPerformanceByDimensionTest(ParallelStrategyConfig& config,
+    std::unordered_map<std::uint32_t, StepStatistic>& statistic)
+{
+    config.ppSize = 2; // 2
+    config.tpSize = 2; // 2
+    config.dpSize = 2; // 2
+    config.cpSize = 2; // 2
+    config.epSize = 2; // 2
+    config.algorithm = MEGATRON_LM_TP_CP_EP_DP_PP_ALG;
+    StepStatistic statisticOne;
+    statisticOne.computingTime = 90; // 90
+    statisticOne.pureCommunicationTime = 60; // 60
+    statisticOne.overlapCommunicationTime = 20; // 20
+    statisticOne.communicationTime = 80; // 80
+    statisticOne.freeTime = 50; // 50
+    statisticOne.prepareTime = 10; // 10
+    statisticOne.pureCommunicationExcludeReceiveTime = 40; // 40
+    uint32_t wordSize = config.ppSize * config.tpSize * config.dpSize * config.cpSize; // 16
+    for (uint32_t i = 0; i < wordSize; i++) {
+        if (i == 4 || i == 5) { // 4 5 空数据卡
+            continue;
+        }
+        statistic[i] = statisticOne;
+    }
+}
+
+TEST_F(MegatronParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldReturnTrue_TestWithTpDimension)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_TP;
+    ParallelStrategyConfig config;
+    std::unordered_map<std::uint32_t, StepStatistic> statistic;
+    PrepareParametersForGetPerformanceByDimensionTest(config, statistic);
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    ParallelismPerformance params;
+    params.config = config;
+    params.dimension = dimension;
+    PerformanceIndicatorData responseData;
+    bool res = algorithm.GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(responseData.performanceData.size(), 14); // 14 = 16 - 2(empty rank)
+}
+
+TEST_F(MegatronParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldReturnTrue_TestWithPpDimension)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_PP;
+    ParallelStrategyConfig config;
+    std::unordered_map<std::uint32_t, StepStatistic> statistic;
+    PrepareParametersForGetPerformanceByDimensionTest(config, statistic);
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    ParallelismPerformance params;
+    params.config = config;
+    params.dimension = dimension;
+    PerformanceIndicatorData responseData;
+    bool res = algorithm.GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(responseData.performanceData.size(), 7); // 7 pp groups
+}
+
+TEST_F(MegatronParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldReturnTrue_TestWithCpDimension)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_CP;
+    ParallelStrategyConfig config;
+    std::unordered_map<std::uint32_t, StepStatistic> statistic;
+    PrepareParametersForGetPerformanceByDimensionTest(config, statistic);
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    ParallelismPerformance params;
+    params.config = config;
+    params.dimension = dimension;
+    PerformanceIndicatorData responseData;
+    bool res = algorithm.GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(responseData.performanceData.size(), 4); // 4 cp groups
+    const std::vector<double> EXPECTED_COMPUTING = {180, 180, 90, 180};
+    uint32_t i = 0;
+    for (auto& item : responseData.performanceData) {
+        EXPECT_EQ(item.indicators[KEY_TOTAL_COMPUTING_TIME], EXPECTED_COMPUTING[i++]);
+    }
+    //  test for MEGATRON_LM_TP_CP_PP_EP_DP_ALG
+    config.algorithm = MEGATRON_LM_TP_CP_PP_EP_DP_ALG;
+    algorithm.ClearStrategyConfigCache();
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    params.config = config;
+    responseData.performanceData.clear();
+    res = algorithm.GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(responseData.performanceData.size(), 4); // 4 cp groups
+    const std::vector<double> EXPECTED_COMPUTING2 = {90, 180, 180, 180};
+    i = 0;
+    for (auto& item : responseData.performanceData) {
+        EXPECT_EQ(item.indicators[KEY_TOTAL_COMPUTING_TIME], EXPECTED_COMPUTING2[i++]);
+    }
+}
+
+TEST_F(MegatronParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldReturnTrue_TestWithDpDimension)
+{
+    MegatronParallelStrategyAlgorithm algorithm;
+    std::string dimension = DIMENSIONS_DP;
+    ParallelStrategyConfig config;
+    std::unordered_map<std::uint32_t, StepStatistic> statistic;
+    PrepareParametersForGetPerformanceByDimensionTest(config, statistic);
+    std::string err;
+    algorithm.UpdateParallelDimension(dimension, config, err);
+    ParallelismPerformance params;
+    params.config = config;
+    params.dimension = dimension;
+    PerformanceIndicatorData responseData;
+    bool res = algorithm.GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
+    EXPECT_EQ(res, true);
+    EXPECT_EQ(responseData.performanceData.size(), 2); // 2 dp groups
+    const std::vector<double> EXPECTED_COMPUTING = {180, 90};
+    uint32_t i = 0;
+    for (auto& item : responseData.performanceData) {
+        EXPECT_EQ(item.indicators[KEY_TOTAL_COMPUTING_TIME], EXPECTED_COMPUTING[i++]);
     }
 }

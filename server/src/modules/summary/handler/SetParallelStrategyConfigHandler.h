@@ -19,7 +19,8 @@ public:
     ~SetParallelStrategyConfigHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
-    bool AddAlgorithmToManager(const std::shared_ptr<VirtualClusterDatabase>& database, const std::string& algorithm);
+    bool AddAlgorithmToManager(const std::shared_ptr<VirtualClusterDatabase> &database,
+                               const ParallelStrategyConfig &config);
 };
 }
 

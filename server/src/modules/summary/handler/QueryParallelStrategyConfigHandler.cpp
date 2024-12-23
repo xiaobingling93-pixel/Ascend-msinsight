@@ -2,7 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-#include "DataBaseManager.h"
+#include <memory>
+#include "MegatronParallelStrategyAlgorithm.h"
 #include "WsSessionManager.h"
 #include "SummaryProtocolRequest.h"
 #include "SummaryProtocolResponse.h"
@@ -25,7 +26,22 @@ bool QueryParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol:
         session.OnResponse(std::move(responsePtr));
         return false;
     }
+    if (!AddAlgorithmToManager(database, response.config)) {
+        SendResponse(std::move(responsePtr), false,
+            "Failed to add algorithm to manager when query parallel config. Unexpected algorithm.");
+        return false;
+    }
     session.OnResponse(std::move(responsePtr));
     return true;
+}
+bool QueryParallelStrategyConfigHandler::AddAlgorithmToManager(const std::shared_ptr<VirtualClusterDatabase> &database,
+    const ParallelStrategyConfig &config)
+{
+    if (StringUtil::Contains(StringUtil::ToLower(config.algorithm), MEGATRON_ALG)) {
+        ParallelStrategyAlgorithmManager::Instance().AddOrUpdateAlgorithm(database->GetDbPath(),
+            std::make_shared<MegatronParallelStrategyAlgorithm>(), config);
+        return true;
+    }
+    return false;
 }
 }

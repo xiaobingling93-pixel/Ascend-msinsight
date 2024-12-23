@@ -818,7 +818,7 @@ bool VirtualClusterDatabase::UpdatesClusterParseStatus(const std::string &status
 }
 
 bool VirtualClusterDatabase::ExecuteQueryAllPerformanceDataByStep(const std::string &sql,
-    const std::string &step, std::vector<StepStatistic> &data)
+    const std::string &step, std::unordered_map<std::uint32_t, StepStatistic> &data)
 {
     auto stmt = CreatPreparedStatement(sql);
     if (stmt == nullptr) {
@@ -843,7 +843,14 @@ bool VirtualClusterDatabase::ExecuteQueryAllPerformanceDataByStep(const std::str
         one.freeTime = resultSet->GetDouble("free");
         one.prepareTime = resultSet->GetDouble("preparing");
         one.pureCommunicationExcludeReceiveTime = resultSet->GetDouble("exclude_receive");
-        data.emplace_back(one);
+        one.npuTotalTime = one.computingTime + one.pureCommunicationTime + one.freeTime;
+        uint32_t rankIdNum = StringUtil::StringToUint32(one.rankId);
+        if (rankIdNum != UINT32_MAX) {
+            data.emplace(rankIdNum, one);
+        } else {
+            ServerLog::Warn("RankId % could not be converted to a valid uint32_t. This entry will be skipped.",
+                            one.rankId.c_str());
+        }
     }
     return true;
 }

@@ -131,8 +131,7 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelismPerformanceRequestWillReturnTr
     std::string err;
     std::string reqJson = R"({"id": 2, "moduleName": "summary", "type": "request",
         "command": "parallelism/performance/data", "params": {"algorithm": "test", "tpSize": 2, "ppSize": 3,
-        "dpSize": 4, "cpSize": 5, "epSize": 6, "indexList": [1, 2], "dimension": "ep-dp-cp-pp-tp", "orderBy": "aaa",
-        "step": "all"}})";
+        "dpSize": 4, "cpSize": 5, "epSize": 6, "dimension": "ep-dp-cp-pp-tp", "step": "all"}})";
     json.Parse(reqJson.c_str());
     auto result = dynamic_cast<QueryParallelismPerformanceRequest &>(*(protocol.FromJson(json, err)));
     EXPECT_EQ(result.command, REQ_RES_PARALLELISM_PERFORMANCE_DATA);
@@ -142,7 +141,6 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelismPerformanceRequestWillReturnTr
     EXPECT_EQ(result.params.config.dpSize, 4); // dp = 4
     EXPECT_EQ(result.params.config.cpSize, 5); // cp = 5
     EXPECT_EQ(result.params.config.epSize, 6); // cp = 6
-    EXPECT_EQ(result.params.indexList.size(), 2); // indexList.size() = 2
     EXPECT_EQ(result.params.dimension, "ep-dp-cp-pp-tp");
     EXPECT_EQ(result.params.step, "all");
 }
@@ -153,21 +151,20 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelismPerformanceRequestWillReturnNu
     std::string err;
     std::string reqJson = R"({"id": 2, "moduleName": "summary", "type": "request",
         "command": "parallelism/performance/data", "params": {"tpSize": 2, "ppSize": 3,
-        "dpSize": 4, "cpSize": 5, "epSize": 6, "indexList": [1, 2], "dimension": "ep-dp-cp-pp-tp", "orderBy": "aaa",
-        "step": "all"}})";
+        "dpSize": 4, "cpSize": 5, "epSize": 6, "dimension": "ep-dp-cp-pp-tp", "step": "all"}})";
     json.Parse(reqJson.c_str());
     auto result = protocol.FromJson(json, err);
     EXPECT_TRUE(result == nullptr);
     reqJson = R"({"id": 2, "moduleName": "summary", "type": "request",
         "command": "parallelism/performance/data", "params": {"algorithm": "test", "ppSize": 3, "cpSize": 4,
-        "dpSize": 5, "epSize": 6, "indexList": [1, 2], "dimension": "ep-dp-cp-pp-tp", "orderBy": "aaa",
+        "dpSize": 5, "epSize": 6, "dimension": "ep-dp-cp-pp-tp",
         "step": "all"}})";
     json.Parse(reqJson.c_str());
     result = protocol.FromJson(json, err);
     EXPECT_TRUE(result == nullptr);
     reqJson = R"({"id": 2, "moduleName": "summary", "type": "request", "command": "parallelism/performance/data",
         "params": {"algorithm": "test", "tpSize": 3, "cpSize": 4, "dpSize": 5, "epSize": 6,
-        "indexList": [1, 2], "dimension": "ep-dp-cp-pp-tp", "orderBy": "aaa", "step": "all"}})";
+        "dimension": "ep-dp-cp-pp-tp", "step": "all"}})";
     json.Parse(reqJson.c_str());
     result = protocol.FromJson(json, err);
     EXPECT_TRUE(result == nullptr);

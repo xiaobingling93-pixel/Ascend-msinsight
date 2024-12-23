@@ -5,6 +5,8 @@
 #ifndef PROFILER_SERVER_QUERYPARALLELSTRATEGYCONFIGHANDLER_H
 #define PROFILER_SERVER_QUERYPARALLELSTRATEGYCONFIGHANDLER_H
 
+#include "DataBaseManager.h"
+#include "ParallelStrategyAlgorithmManager.h"
 #include "SummaryRequestHandler.h"
 
 namespace Dic::Module::Summary {
@@ -16,6 +18,9 @@ public:
     }
     ~QueryParallelStrategyConfigHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+private:
+    bool AddAlgorithmToManager(const std::shared_ptr<VirtualClusterDatabase> &database,
+                               const ParallelStrategyConfig &config);
 };
 }
 

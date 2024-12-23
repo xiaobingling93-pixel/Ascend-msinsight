@@ -248,7 +248,7 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryParallelismPerformanceRequest(c
         return nullptr;
     }
     std::vector<std::string> keys = {KEY_ALGORITHM, KEY_TP_SIZE, KEY_PP_SIZE, KEY_DP_SIZE, KEY_CP_SIZE, KEY_EP_SIZE,
-                                     KEY_DIMENSION, KEY_ORDERBY, KEY_STEP};
+                                     KEY_DIMENSION, KEY_STEP};
     for (auto &item : keys) {
         if (!json["params"].HasMember(item.c_str())) {
             error = "Query parallelism performance request didn't have key: " + item;
@@ -262,13 +262,7 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryParallelismPerformanceRequest(c
     JsonUtil::SetByJsonKeyValue(reqPtr->params.config.cpSize, json["params"], KEY_CP_SIZE);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.config.epSize, json["params"], KEY_EP_SIZE);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.dimension, json["params"], KEY_DIMENSION);
-    JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], KEY_ORDERBY);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.step, json["params"], KEY_STEP);
-    if (json["params"].HasMember("indexList") && json["params"]["indexList"].IsArray()) {
-        for (const auto& index : json["params"]["indexList"].GetArray()) {
-            reqPtr->params.indexList.emplace_back(index.GetUint());
-        }
-    }
     return reqPtr;
 }
 

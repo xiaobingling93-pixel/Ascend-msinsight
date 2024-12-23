@@ -248,7 +248,7 @@ TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenSingleStep)
     DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string step = "2";
-    std::vector<Dic::Module::StepStatistic> data{};
+    std::unordered_map<std::uint32_t, Dic::Module::StepStatistic> data{};
     auto result = database->QueryAllPerformanceDataByStep(step, data);
     EXPECT_EQ(result, true);
     EXPECT_EQ(data.size(), 16); // 16
@@ -265,7 +265,7 @@ TEST_F(TestSuit, QueryAllPerformanceDataByStepWhenAllStep)
     DataBaseManager::Instance().SetDataType(DataType::TEXT);
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     std::string step = "";
-    std::vector<Dic::Module::StepStatistic> data{};
+    std::unordered_map<std::uint32_t, Dic::Module::StepStatistic> data{};
     auto result = database->QueryAllPerformanceDataByStep(step, data);
     EXPECT_EQ(result, true);
     EXPECT_EQ(data.size(), 16); // 16

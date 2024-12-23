@@ -902,7 +902,8 @@ bool TextClusterDatabase::GetParallelConfigFromStepTrace(ParallelStrategyConfig 
     return ExecuteGetParallelConfigFromStepTrace(sql, config, level);
 }
 
-bool TextClusterDatabase::QueryAllPerformanceDataByStep(const std::string &step, std::vector<StepStatistic> &data)
+bool TextClusterDatabase::QueryAllPerformanceDataByStep(const std::string &step,
+                                                        std::unordered_map<std::uint32_t, StepStatistic> &data)
 {
     std::string sql;
     if (step.empty() || step == "All") {

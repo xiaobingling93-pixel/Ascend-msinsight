@@ -26,6 +26,20 @@
 namespace Dic {
 class StringUtil {
 public:
+
+    static inline uint32_t StringToUint32(std::string numStr)
+    {
+        try {
+            long long num = std::stoll(numStr);
+            if (num < 0 || num > UINT32_MAX) {
+                return UINT32_MAX;
+            }
+            return static_cast<uint32_t>(num);
+        } catch (const std::invalid_argument& e) {
+            return UINT32_MAX;
+        }
+    }
+
     static inline double StringToDouble(std::string numStr)
     {
         try {

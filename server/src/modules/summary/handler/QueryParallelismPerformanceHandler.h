@@ -8,7 +8,7 @@
 #include "SummaryProtocolResponse.h"
 #include "SummaryRequestHandler.h"
 namespace Dic::Module::Summary {
-class QueryParallelismPerformanceHandler : public SummaryRequestHandler  {
+class QueryParallelismPerformanceHandler : public SummaryRequestHandler {
 public:
     QueryParallelismPerformanceHandler()
     {
