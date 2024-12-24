@@ -359,3 +359,103 @@ TEST_F(SummaryProtocolUtilTest, ToQueryParallelismPerformanceResponseTestWillRet
     }
     EXPECT_EQ(jsonOptional.value()["body"].HasMember("advice"), true);
 }
+
+TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponse)
+{
+    using namespace Dic::Module;
+    Dic::Protocol::QueryParallelStrategyResponse response{};
+    const int expectId = 1;
+    response.config = {
+        .algorithm = MEGATRON_LM_TP_CP_EP_DP_PP_ALG,
+        .ppSize = 0,
+        .tpSize = 2,
+        .dpSize = 1,
+        .cpSize = 1,
+        .epSize = 1
+    };
+    EXPECT_EQ(response.IsValid(), false);
+    response.SetDefault();
+    EXPECT_EQ(response.config.algorithm, MEGATRON_LM_TP_CP_EP_DP_PP_ALG);
+    EXPECT_EQ(response.config.ppSize, expectId);
+    EXPECT_EQ(response.config.tpSize, expectId);
+}
+
+TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponse2)
+{
+    using namespace Dic::Module;
+    Dic::Protocol::QueryParallelStrategyResponse response{};
+    const int expectId = 1;
+    response.config = {
+            .algorithm = MEGATRON_LM_TP_CP_PP_EP_DP_ALG,
+            .ppSize = 0,
+            .tpSize = 2,
+            .dpSize = 1,
+            .cpSize = 1,
+            .epSize = 1
+    };
+    EXPECT_EQ(response.IsValid(), false);
+    response.SetDefault();
+    EXPECT_EQ(response.config.algorithm, MEGATRON_LM_TP_CP_PP_EP_DP_ALG);
+    EXPECT_EQ(response.config.ppSize, expectId);
+    EXPECT_EQ(response.config.tpSize, expectId);
+}
+
+TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponseWhenTpPpDp)
+{
+    using namespace Dic::Module;
+    Dic::Protocol::QueryParallelStrategyResponse response{};
+    const int expectId = 1;
+    response.config = {
+            .algorithm = MEGATRON_LM_TP_PP_DP_ALG,
+            .ppSize = 0,
+            .tpSize = 2,
+            .dpSize = 1,
+            .cpSize = 1,
+            .epSize = 1
+    };
+    EXPECT_EQ(response.IsValid(), false);
+    response.SetDefault();
+    EXPECT_EQ(response.config.algorithm, MEGATRON_LM_TP_CP_PP_EP_DP_ALG);
+    EXPECT_EQ(response.config.ppSize, expectId);
+    EXPECT_EQ(response.config.tpSize, expectId);
+}
+
+TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponseWhenTpDpPp)
+{
+    using namespace Dic::Module;
+    Dic::Protocol::QueryParallelStrategyResponse response{};
+    const int expectId = 1;
+    response.config = {
+            .algorithm = MEGATRON_LM_TP_DP_PP_ALG,
+            .ppSize = 0,
+            .tpSize = 2,
+            .dpSize = 1,
+            .cpSize = 1,
+            .epSize = 1
+    };
+    EXPECT_EQ(response.IsValid(), false);
+    response.SetDefault();
+    EXPECT_EQ(response.config.algorithm, MEGATRON_LM_TP_CP_EP_DP_PP_ALG);
+    EXPECT_EQ(response.config.ppSize, expectId);
+    EXPECT_EQ(response.config.tpSize, expectId);
+}
+
+TEST_F(SummaryProtocolUtilTest, ToTestQueryParallelStrategyResponseWhenInvalid)
+{
+    using namespace Dic::Module;
+    Dic::Protocol::QueryParallelStrategyResponse response{};
+    const int expectId = 1;
+    response.config = {
+            .algorithm = "LLLLLLLLLLLL",
+            .ppSize = 0,
+            .tpSize = 2,
+            .dpSize = 1,
+            .cpSize = 1,
+            .epSize = 1
+    };
+    EXPECT_EQ(response.IsValid(), false);
+    response.SetDefault();
+    EXPECT_EQ(response.config.algorithm, MEGATRON_LM_TP_CP_EP_DP_PP_ALG);
+    EXPECT_EQ(response.config.ppSize, expectId);
+    EXPECT_EQ(response.config.tpSize, expectId);
+}
