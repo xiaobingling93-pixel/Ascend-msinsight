@@ -143,7 +143,7 @@ pub fn run_script(
 
     let proxy = Arc::new(event_loop.create_proxy());
 
-    let window_builder: WindowBuilder = WindowBuilder::new()
+    let mut window_builder: WindowBuilder = WindowBuilder::new()
         .with_title("MindStudio Insight")
         .with_maximized(true);
 
