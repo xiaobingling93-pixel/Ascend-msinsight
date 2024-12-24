@@ -4,7 +4,7 @@
 
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import * as echarts from 'echarts';
-import { merge } from 'lodash';
+import { isArray, merge } from 'lodash';
 import { useTheme } from '@emotion/react';
 
 type EChartsOption = echarts.EChartsOption;
@@ -26,7 +26,7 @@ export interface ChartsHandle {
 }
 
 const chartColors = [
-    '#0062DC', '#279C6E', '#34B1B9', '#6037DB', '#FF5432', '#0077FF', '#FD2F2F', '#D53F78', '#2F9CE0', '#EE891D', '#AA38CE', '#75A105',
+    '#0062DC', '#279C6E', '#34B1B9', '#6037DB', '#FF5432', '#0077FF', '#D53F78', '#2F9CE0', '#EE891D', '#AA38CE', '#75A105',
     '#E44222', '#0158C5', '#248B62', '#2F9EA6', '#026AE5', '#E32A2A', '#BF376C', '#2A8CC9', '#5631C4', '#D57B18', '#9831B9', '#699006',
     '#CB2F0F', '#004EB0', '#1F7C58', '#2A8D93', '#005FCC', '#CA2425', '#AA3260', '#247CB3', '#4C2CAF', '#BE6D17', '#882CA4', '#5D8004',
     '#FE6E50', '#2679E1', '#48AA82', '#51BCC3', '#278AFF', '#FD4444', '#DB5B8C', '#4CAAE4', '#7754E0', '#F09A3D', '#B655D4', '#89AF2A',
@@ -84,6 +84,11 @@ const lightChartOptions: EChartsOption = merge({}, defaultOptions, {
     title: {
         textStyle: { color: '#4E5865' },
     },
+    legend: {
+        textStyle: {
+            color: '#4E5865',
+        },
+    },
     tooltip: {
         backgroundColor: '#EBEFF6',
         textStyle: {
@@ -129,6 +134,11 @@ const darkChartOptions: EChartsOption = merge({}, defaultOptions, {
     title: {
         textStyle: { color: '#ffffff' },
     },
+    legend: {
+        textStyle: {
+            color: '#D2DCE9',
+        },
+    },
     tooltip: {
         backgroundColor: '#2A2F37',
         textStyle: {
@@ -171,6 +181,37 @@ const darkChartOptions: EChartsOption = merge({}, defaultOptions, {
     },
 });
 
+const getOptionsWithAxisConfig = (themeMode: string, options: EChartsOption): EChartsOption => {
+    const themeOptions = themeMode === 'dark' ? darkChartOptions : lightChartOptions;
+    let xAxis;
+    let yAxis;
+    if (isArray(options.xAxis)) {
+        xAxis = options.xAxis.map((item) => ({
+            ...themeOptions.xAxis,
+            ...item,
+        }));
+    }
+
+    if (isArray(options.yAxis)) {
+        yAxis = options.yAxis.map((item) => ({
+            ...themeOptions.yAxis,
+            ...item,
+        }));
+    }
+
+    const newOptions = { ...options };
+
+    if (xAxis) {
+        newOptions.xAxis = xAxis;
+    }
+
+    if (yAxis) {
+        newOptions.yAxis = yAxis;
+    }
+
+    return newOptions;
+};
+
 export const MIChart = forwardRef<ChartsHandle, ChartProps>(
     ({ options, loading = false, width = '100%', height = '400px', onEvents = {} }, ref) => {
         const chartRef = useRef<HTMLDivElement>(null);
@@ -179,7 +220,9 @@ export const MIChart = forwardRef<ChartsHandle, ChartProps>(
 
         const updateChart = (): void => {
             if (chartInstanceRef.current) {
-                const mergedOptions = merge({}, theme.mode === 'dark' ? darkChartOptions : lightChartOptions, options);
+                const themeOptions = theme.mode === 'dark' ? darkChartOptions : lightChartOptions;
+                const newOptions = getOptionsWithAxisConfig(theme.mode, options);
+                const mergedOptions = merge({}, themeOptions, newOptions);
                 chartInstanceRef.current.setOption(mergedOptions, true);
             }
         };

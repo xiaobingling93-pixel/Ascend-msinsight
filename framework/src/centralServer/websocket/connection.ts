@@ -157,8 +157,8 @@ export class Connection {
                         throw new Error('malformed response');
                     }
                     const { code, message } = res.error;
-                    console.error('[connector]', 'errorCode:', code, 'msg:', message);
-                    resolve({ error: res.error ?? {} });
+                    console.error('[connector]', 'errorCode:', code, 'msg:', message || res.message);
+                    resolve({ error: {code, message: message || res.message} });
                 }
             };
             if (voidResponse) {

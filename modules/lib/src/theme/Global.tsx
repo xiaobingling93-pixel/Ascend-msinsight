@@ -44,6 +44,7 @@ const formatterCss = css`
         .row {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             padding: 2px 0;
 
             .label{
