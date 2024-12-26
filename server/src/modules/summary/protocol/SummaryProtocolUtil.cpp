@@ -18,6 +18,28 @@ template <typename RESPONSE> std::optional<document_t> ToResponseJson(const RESP
     return std::nullopt;
 }
 
+std::optional<document_t> BaseInfoToJson(const SummaryBaseInfo &baseInfo, Document::AllocatorType &allocator)
+{
+    document_t json(kObjectType);
+    json_t stepList(kArrayType);
+    for (const auto &item: baseInfo.stepList) {
+        stepList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+    }
+    JsonUtil::AddMember(json, "stepList", stepList, allocator);
+    json_t rankList(kArrayType);
+    for (const auto &item: baseInfo.rankList) {
+        rankList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
+    }
+    JsonUtil::AddMember(json, "rankList", rankList, allocator);
+    JsonUtil::AddMember(json, "rankCount", baseInfo.rankCount, allocator);
+    JsonUtil::AddMember(json, "dataSize", baseInfo.dataSize, allocator);
+    JsonUtil::AddMember(json, "collectStartTime", baseInfo.collectStartTime, allocator);
+    JsonUtil::AddMember(json, "filePath", baseInfo.filePath, allocator);
+    JsonUtil::AddMember(json, "collectDuration", baseInfo.collectDuration, allocator);
+    JsonUtil::AddMember(json, "stepNum", baseInfo.stepNum, allocator);
+    return std::move(json);
+}
+
 template <> std::optional<document_t> ToResponseJson<SummaryTopRankResponse>(const SummaryTopRankResponse &response)
 {
     document_t json(kObjectType);
@@ -25,21 +47,12 @@ template <> std::optional<document_t> ToResponseJson<SummaryTopRankResponse>(con
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     json_t stepList(kArrayType);
-    for (const auto &item: response.body.stepList) {
-        stepList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
-    }
-    JsonUtil::AddMember(body, "stepList", stepList, allocator);
-    json_t rankList(kArrayType);
-    for (const auto &item: response.body.rankList) {
-        rankList.PushBack(json_t().SetString(item.c_str(), allocator), allocator);
-    }
-    JsonUtil::AddMember(body, "rankList", rankList, allocator);
-    JsonUtil::AddMember(body, "rankCount", response.body.rankCount, allocator);
-    JsonUtil::AddMember(body, "dataSize", response.body.dataSize, allocator);
-    JsonUtil::AddMember(body, "collectStartTime", response.body.collectStartTime, allocator);
-    JsonUtil::AddMember(body, "filePath", response.body.filePath, allocator);
-    JsonUtil::AddMember(body, "collectDuration", response.body.collectDuration, allocator);
-    JsonUtil::AddMember(body, "stepNum", response.body.stepNum, allocator);
+    json_t baseInfo(kObjectType);
+    auto compareData = BaseInfoToJson(response.body.baseInfo.compare, allocator);
+    JsonUtil::AddMember(baseInfo, "compare", compareData, allocator);
+    auto baselineData = BaseInfoToJson(response.body.baseInfo.baseline, allocator);
+    JsonUtil::AddMember(baseInfo, "baseline", baselineData, allocator);
+    JsonUtil::AddMember(body, "baseInfo", baseInfo, allocator);
     json_t summaryList(kArrayType);
     for (const SummaryDto& summaryDto : response.body.summaryList) {
         json_t summaryDtoJson(kObjectType);

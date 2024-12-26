@@ -102,14 +102,16 @@ const initBaseInfo = async (setData: any, session: Session): Promise<void> => {
     const res: any = await queryTopSummary(defaultConditions);
     const resObj = res ?? {};
     runInAction(() => {
-        session.rankCount = res.rankCount;
-        session.summaryList = res.summaryList;
+        session.rankCount = res.baseInfo.compare.rankCount;
+        session.summaryList = res.baseInfo.compare.summaryList;
     });
     setData({
-        ...resObj,
-        collectDuration: formateTime(Number(resObj.collectDuration)),
-        collectStartTime: formatDate(new Date(resObj.collectStartTime)),
-        dataSize: resObj.dataSize !== undefined && resObj.dataSize > 0.01 ? Number(resObj.dataSize?.toFixed(2)) : resObj.dataSize,
+        ...resObj.baseInfo.compare,
+        collectDuration: formateTime(Number(resObj.baseInfo.compare.collectDuration)),
+        collectStartTime: formatDate(new Date(resObj.baseInfo.compare.collectStartTime)),
+        dataSize: resObj.baseInfo.compare.dataSize !== undefined && resObj.baseInfo.compare.dataSize > 0.01
+            ? Number(resObj.baseInfo.compare.dataSize?.toFixed(2))
+            : resObj.baseInfo.compare.dataSize,
     });
 };
 

@@ -113,7 +113,7 @@ const Filter = observer((props: any) => {
     const initDefault = async (): Promise<void> => {
         const stepOptions = await getStepOptions();
         const summaryRes: any = await queryTopSummary(conditions);
-        const rankList = summaryRes?.rankList ?? [];
+        const rankList = summaryRes?.baseInfo?.compare.rankList ?? [];
         const communicators: communicator[] = [];
         props.session.communicatorData.partitionModes.map((data: any) => data.communicators)
             .forEach((item: any) => {

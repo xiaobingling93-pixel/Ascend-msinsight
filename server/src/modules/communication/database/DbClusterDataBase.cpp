@@ -86,16 +86,15 @@ void DbClusterDataBase::UpdateClusterParseStatus(std::string status)
     parseStatus = status;
 }
 
-bool DbClusterDataBase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody)
+bool DbClusterDataBase::QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo)
 {
-    responseBody.filePath = GetDbPath();
-    std::string filePath = responseBody.filePath;
-    int64_t dataSize = FileUtil::GetFileSize(filePath.c_str());
+    baseInfo.filePath = GetDbPath();
+    int64_t dataSize = FileUtil::GetFileSize(baseInfo.filePath.c_str());
     std::string baseInfoSql = "select (select json_group_array(\"index\") as rank from (select DISTINCT \"index\" from "
         "ClusterStepTraceTime where \"index\" !='' AND type = 'rank')) as rank , (select json_group_array(step) from ("
         "select DISTINCT step from " + TABLE_STEP_TRACE_TIME +
         " where \"index\" !='')) as step, '" + std::to_string(dataSize) + "' as dataSize ";
-    return ExecuteQueryBaseInfo(responseBody, baseInfoSql);
+    return ExecuteQueryBaseInfo(baseInfo, baseInfoSql);
 }
 
 bool DbClusterDataBase::GetStepIdList(Protocol::PipelineStepResponseBody &responseBody)

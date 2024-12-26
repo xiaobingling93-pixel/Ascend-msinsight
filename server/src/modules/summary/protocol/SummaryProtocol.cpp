@@ -69,6 +69,7 @@ std::unique_ptr<Request> SummaryProtocol::ToTopNRequest(const json_t &json, std:
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.orderBy, json["params"], "orderBy");
     JsonUtil::SetByJsonKeyValue(reqPtr->params.limit, json["params"], "limit");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
     return reqPtr;
 }
 

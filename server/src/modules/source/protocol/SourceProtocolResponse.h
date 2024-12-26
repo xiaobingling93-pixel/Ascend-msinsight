@@ -14,13 +14,6 @@
 namespace Dic {
 namespace Protocol {
 
-template<typename T>
-struct CompareData {
-    T baseline;
-    T compare;
-    T diff;
-};
-
 struct SourceCodeFileResBody {
     std::string fileContent;
 };

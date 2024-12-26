@@ -19,6 +19,7 @@ struct SummaryTopRankParams {
     std::vector<std::string> stepIdList;
     std::vector<std::string> rankIdList;
     std::string orderBy;
+    bool isCompare = false;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;

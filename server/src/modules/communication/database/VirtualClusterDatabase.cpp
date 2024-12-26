@@ -111,7 +111,7 @@ bool VirtualClusterDatabase::ExecuteQuerySummaryData(const Protocol::SummaryTopR
     return true;
 }
 
-bool VirtualClusterDatabase::ExecuteQueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody, std::string sql)
+bool VirtualClusterDatabase::ExecuteQueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo, std::string sql)
 {
     sqlite3_stmt *stmtBaseInfo = nullptr;
     int baseInfoResult = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmtBaseInfo, nullptr);
@@ -123,15 +123,15 @@ bool VirtualClusterDatabase::ExecuteQueryBaseInfo(Protocol::SummaryTopRankResBod
         int coll = resultStartIndex;
         std::string ranks = sqlite3_column_string(stmtBaseInfo, coll++);
         if (!ranks.empty()) {
-            responseBody.rankList = JsonUtil::JsonToVector(ranks);
+            baseInfo.rankList = JsonUtil::JsonToVector(ranks);
         }
         std::string steps = sqlite3_column_string(stmtBaseInfo, coll++);
         if (!steps.empty()) {
-            responseBody.stepList = JsonUtil::JsonToVector(steps);
+            baseInfo.stepList = JsonUtil::JsonToVector(steps);
         }
-        responseBody.dataSize = sqlite3_column_double(stmtBaseInfo, coll++) / MB_SIZE;
-        responseBody.stepNum = responseBody.stepList.size();
-        responseBody.rankCount = responseBody.rankList.size();
+        baseInfo.dataSize = sqlite3_column_double(stmtBaseInfo, coll++) / MB_SIZE;
+        baseInfo.stepNum = baseInfo.stepList.size();
+        baseInfo.rankCount = baseInfo.rankList.size();
     }
     sqlite3_finalize(stmtBaseInfo);
     return true;

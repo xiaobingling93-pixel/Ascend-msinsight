@@ -157,6 +157,13 @@ const std::string EVENT_PARSE_JUPYTER_COMPLETED = "parse/jupyterCompleted";
 
 const std::string KEY_BODY = "body";
 #pragma endregion
+
+template<typename T>
+struct CompareData {
+    T baseline;
+    T compare;
+    T diff;
+};
 } // end of namespace
 }
 

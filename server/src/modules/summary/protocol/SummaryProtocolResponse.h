@@ -31,15 +31,20 @@ struct TraceStatistic {
     double freeDiff{};
 };
 
-struct SummaryTopRankResBody {
-    int rankCount;
+struct SummaryBaseInfo {
+    int rankCount = 0;
     std::vector<std::string> rankList;
-    double dataSize;
-    int64_t collectStartTime;
+    double dataSize = 0;
+    int64_t collectStartTime = 0;
     std::string filePath;
-    double collectDuration;
-    int stepNum;
+    double collectDuration = 0;
+    int stepNum = 0;
     std::vector<std::string> stepList;
+};
+
+struct SummaryTopRankResBody {
+    CompareData<SummaryBaseInfo> baseInfo;
+    // todo-yqs 通信概览数据会有另外的接口进行处理，此处暂留，后续需要清理
     std::vector<SummaryDto> summaryList;
     TraceStatistic traceStatistic;
 };

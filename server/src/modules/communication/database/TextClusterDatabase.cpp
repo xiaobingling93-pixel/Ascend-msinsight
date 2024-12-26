@@ -472,11 +472,11 @@ bool TextClusterDatabase::QuerySummaryData(const Protocol::SummaryTopRankParams 
     return ExecuteQuerySummaryData(requestParams, responseBody, sql);
 }
 
-bool TextClusterDatabase::QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody)
+bool TextClusterDatabase::QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo)
 {
-    responseBody.filePath = GetDbPath();
+    baseInfo.filePath = GetDbPath();
     std::string baseInfoSql = "select ranks,steps,data_size as dataSize from " + TABLE_BASE_INFO;
-    return ExecuteQueryBaseInfo(responseBody, baseInfoSql);
+    return ExecuteQueryBaseInfo(baseInfo, baseInfoSql);
 }
 
 bool TextClusterDatabase::QueryCommunicationGroup(Document &responseBody)

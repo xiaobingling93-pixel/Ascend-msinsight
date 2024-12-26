@@ -22,7 +22,7 @@ public:
                           Protocol::SummaryTopRankResBody &responseBody) override;
     std::string QueryParseClusterStatus() override;
     void UpdateClusterParseStatus(std::string status) override;
-    bool QueryBaseInfo(Protocol::SummaryTopRankResBody &responseBody) override;
+    bool QueryBaseInfo(Protocol::SummaryBaseInfo &baseInfo) override;
     bool GetStepIdList(Protocol::PipelineStepResponseBody &responseBody) override;
     bool GetStages(Protocol::PipelineStageParam &param, Protocol::PipelineStageResponseBody &responseBody) override;
     bool GetStageAndBubble(Protocol::PipelineStageTimeParam &param,

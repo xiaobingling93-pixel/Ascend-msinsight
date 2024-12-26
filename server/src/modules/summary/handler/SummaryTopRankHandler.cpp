@@ -7,6 +7,7 @@
 #include "TraceTime.h"
 #include "DataBaseManager.h"
 #include "WsSessionManager.h"
+#include "SummaryService.h"
 
 namespace Dic {
 namespace Module {
@@ -33,17 +34,15 @@ bool SummaryTopRankHandler::HandleRequest(std::unique_ptr<Protocol::Request> req
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    response.body.collectStartTime =
-            Timeline::TraceTime::Instance().GetStartTime() / (numberThousands * numberThousands);
-    response.body.collectDuration = Timeline::TraceTime::Instance().GetDuration() / numberThousands;
+
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    if (database == nullptr || !database->QuerySummaryData(request.params, response.body) ||
-        !database->QueryBaseInfo(response.body)) {
+    if (database == nullptr || !database->QuerySummaryData(request.params, response.body)) {
         ServerLog::Warn("Query summary data or query base info is failed");
         SetResponseResult(response, false);
         session.OnResponse(std::move(responsePtr));
         return false;
     }
+    SummaryService::QueryCompareSummaryBaseInfo(request, response);
     SetBaseResponse(request, response);
     SetResponseResult(response, true);
     // add response to response queue in session

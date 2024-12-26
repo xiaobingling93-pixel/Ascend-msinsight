@@ -251,11 +251,11 @@ TEST_F(DbCommunicationTest, QueryBaseInfoSuccess)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::SummaryTopRankResBody responseBody;
-    database->QueryBaseInfo(responseBody);
+    database->QueryBaseInfo(responseBody.baseInfo.compare);
     const int expectRankCount = 8;
     const int expectStepNum = 2;
-    EXPECT_EQ(responseBody.rankCount, expectRankCount);
-    EXPECT_EQ(responseBody.stepNum, expectStepNum);
+    EXPECT_EQ(responseBody.baseInfo.compare.rankCount, expectRankCount);
+    EXPECT_EQ(responseBody.baseInfo.compare.stepNum, expectStepNum);
 }
 
 TEST_F(DbCommunicationTest, GetStepIdListSuccess)
