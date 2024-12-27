@@ -116,7 +116,7 @@ private:
  */
 class NormalDataBlock : public DataBlock {
 public:
-    NormalDataBlock(DataTypeEnum type, std::string dataBody) : DataBlock(type), dataBody(dataBody)
+    NormalDataBlock(DataTypeEnum type, const std::string &dataBody) : DataBlock(type), dataBody(dataBody)
     {}
 
     uint8_t CalculatePadding() override
@@ -156,14 +156,13 @@ public:
     void WriteBody(std::ofstream &file) override
     {
         constexpr int pathLength = 4096;
-        std::string path(sourceFilePath);
-        path.resize(pathLength, '\0');
-        file.write(path.c_str(), path.size());
+        sourceFilePath.resize(pathLength, '\0');
+        file.write(sourceFilePath.c_str(), sourceFilePath.size());
         NormalDataBlock::WriteBody(file);
     }
 
 private:
-    const std::string &sourceFilePath;
+    std::string sourceFilePath;
 };
 
 template<typename T>
