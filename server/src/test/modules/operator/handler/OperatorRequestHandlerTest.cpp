@@ -72,6 +72,12 @@ public:
         BaselineInfo baselineInfo;
         bool result = BaselineManagerService::InitBaselineData("testProject", filePathText, baselineInfo);
         std::string notFinishTask = "";
+        int index = 0;
+        while (index < retry && !Dic::Module::Timeline::ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
+            const int sleepTime = 2000;
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
+            index++;
+        }
         return result;
     }
 
@@ -86,7 +92,7 @@ public:
 protected:
     inline static std::string currPath = Dic::FileUtil::GetCurrPath();
     inline static int index = currPath.find_last_of("server");
-    inline static int retry = 5;
+    inline static int retry = 2;
     static ProjectExplorerInfo CreateProjectData(const std::string &projectName, const std::string &fileName,
                                                  const std::string &importType, Dic::ProjectTypeEnum projectType,
                                                  const std::vector<std::string> parseFileList)

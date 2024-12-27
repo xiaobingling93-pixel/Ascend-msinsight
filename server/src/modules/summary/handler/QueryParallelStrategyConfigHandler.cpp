@@ -26,6 +26,9 @@ bool QueryParallelStrategyConfigHandler::HandleRequest(std::unique_ptr<Protocol:
         session.OnResponse(std::move(responsePtr));
         return false;
     }
+    if (!response.IsValid()) {
+        response.SetDefault();
+    }
     if (!AddAlgorithmToManager(database, response.config)) {
         SendResponse(std::move(responsePtr), false,
             "Failed to add algorithm to manager when query parallel config. Unexpected algorithm.");
