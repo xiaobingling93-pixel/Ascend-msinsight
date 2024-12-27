@@ -266,6 +266,9 @@ const updateData = async(conditions: ConditionDataType, callback: VoidFunction):
     const param = { iterationId: conditions.iterationId, stage: conditions.stage, operatorName: conditions.operatorName };
     const res = await queryCommunicationMatrix(param);
     const data = res?.matrixList ?? [];
+    const dataAfterDeal = data.map((item: any) => {
+        return { dstRank: item.dstRank, srcRank: item.srcRank, ...item.matrixData?.compare };
+    });
     const rankRes: {iterationOrRankId: string[] } =
         await queryRanks({ iterationId: conditions.iterationId });
     const iterationOrRankId = rankRes?.iterationOrRankId ?? [];
@@ -277,7 +280,7 @@ const updateData = async(conditions: ConditionDataType, callback: VoidFunction):
         rankIds = _.filter(rankIds, value => Number(value) >= stageRanks[0] && Number(value) <= stageRanks[stageRanks.length - 1]);
     }
     rankIds.sort((a, b) => Number(a) - Number(b));
-    callback({ data, rankIds });
+    callback({ data: dataAfterDeal, rankIds });
 };
 
 const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow: boolean;conditions: ConditionDataType;session: Session}) => {

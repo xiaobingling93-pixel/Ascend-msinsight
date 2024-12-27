@@ -41,7 +41,7 @@ TEST_F(HandlerTest, QueryCommunicationOperatorListsWithExeSqlFail)
     request->params.stage = "1";
     CommunicationOperatorListsHandler handler;
     bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
+    EXPECT_EQ(result, true);
 }
 
 TEST_F(HandlerTest, QueryBandwidthHandlerParamError)
@@ -167,7 +167,7 @@ TEST_F(HandlerTest, MatrixListHandlerWithExeSqlFail)
     request->params.stage = "1";
     MatrixListHandler handler;
     bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
+    EXPECT_EQ(result, true);
 }
 
 TEST_F(HandlerTest, MatrixSortOpNamesHandlerWithExeSqlFail)

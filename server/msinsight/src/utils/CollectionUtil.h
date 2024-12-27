@@ -5,6 +5,7 @@
 #ifndef PROFILER_SERVER_COLLECTIONUTIL_H
 #define PROFILER_SERVER_COLLECTIONUTIL_H
 #include <vector>
+#include <set>
 #include <unordered_set>
 
 namespace Dic {

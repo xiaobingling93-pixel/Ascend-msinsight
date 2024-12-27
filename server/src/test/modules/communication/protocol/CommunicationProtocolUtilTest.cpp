@@ -37,7 +37,9 @@ TEST_F(CommunicationProtocolUtilTest, ToOperatorListResponseTest)
     response.body.minTime = NUMBER_HUNDRED;
     response.body.maxTime = NUMBER_THOUSAND;
     OperatorTimeItem op = {"op1", 100, 900};
-    response.body.opLists.push_back(std::vector<OperatorTimeItem>{op});
+    CompareData<std::vector<OperatorTimeItem>> compareData;
+    compareData.compare.push_back(op);
+    response.body.opLists.push_back(compareData);
     std::optional<Dic::document_t> jsonOptional = protocol.ToJson(response, err);
     EXPECT_EQ(jsonOptional.value()["body"][KEY_MIN_TIME.c_str()], response.body.minTime);
     EXPECT_EQ(jsonOptional.value()["body"][KEY_MAX_TIME.c_str()], response.body.maxTime);

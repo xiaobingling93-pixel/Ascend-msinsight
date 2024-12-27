@@ -589,7 +589,7 @@ std::unordered_map<std::string, int64_t> TextClusterDatabase::GetAllGroupMap()
 }
 
 bool TextClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,
-                                          Protocol::MatrixListResponseBody &responseBody)
+                                          std::vector<MatrixInfoDo> &matrixInfoDoList)
 {
     std::string sql = "SELECT src_rank as srcRank, dst_rank as dstRank, "
                       "transport_type as transportType, "
@@ -600,7 +600,7 @@ bool TextClusterDatabase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,
                       "FROM " + TABLE_COMMUNICATION_MATRIX + " CM"
                       " LEFT JOIN " + TABLE_GROUP_ID + " g ON cm.group_id = g.id"
                       " WHERE g.group_id = ? AND iteration_id = ? AND op_sort = ? ";
-    return ExecuteQueryMatrixList(param, responseBody, sql);
+    return ExecuteQueryMatrixList(param, matrixInfoDoList, sql);
 }
 
 std::string TextClusterDatabase::BuildCondition(const Protocol::SummaryTopRankParams &requestParams)
@@ -775,7 +775,7 @@ bool TextClusterDatabase::QueryIterations(std::vector<Protocol::IterationsOrRank
 }
 
 bool TextClusterDatabase::QueryDurationList(Protocol::DurationListParams &requestParams,
-                                            Protocol::DurationListsResponseBody &responseBody)
+                                            std::vector<DurationDo> &durationDoList)
 {
     uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
     std::string rankSql;
@@ -807,7 +807,7 @@ bool TextClusterDatabase::QueryDurationList(Protocol::DurationListParams &reques
         " WHERE t.iteration_id = ? AND t.stage_id = ? AND t.op_name = ? " + rankSqlTime;
     Protocol::DurationListParams copyParams(requestParams);
     copyParams.stage = GetStageIdByGroupId(copyParams.stage);
-    return ExecuteQueryDurationList(copyParams, responseBody, sql, startTime);
+    return ExecuteQueryDurationList(copyParams, durationDoList, sql, startTime);
 }
 
 std::string TextClusterDatabase::GetStageIdByGroupId(const std::string &groupId)
@@ -831,7 +831,7 @@ std::string TextClusterDatabase::GetStageIdByGroupId(const std::string &groupId)
 }
 
 bool TextClusterDatabase::QueryOperatorList(Protocol::DurationListParams &requestParams,
-                                            Protocol::OperatorListsResponseBody &responseBody)
+                                            std::vector<OperatorTimeDo> &operatorTimeDoList)
 {
     std::string sql =
         "SELECT rank_id, op_name,"
@@ -850,7 +850,7 @@ bool TextClusterDatabase::QueryOperatorList(Protocol::DurationListParams &reques
     uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
     Protocol::DurationListParams copyParams(requestParams);
     copyParams.stage = GetStageIdByGroupId(copyParams.stage);
-    return ExecuteQueryOperatorList(copyParams, responseBody, sql, startTime);
+    return ExecuteQueryOperatorList(copyParams, operatorTimeDoList, sql, startTime);
 }
 
 void TextClusterDatabase::PrepareForStageId(std::string &stageIdStr, std::string &sql,

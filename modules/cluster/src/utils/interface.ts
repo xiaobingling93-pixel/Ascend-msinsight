@@ -95,3 +95,9 @@ export interface GetParallelismPerformanceRes {
     performance: PerformanceDataItem[];
     advice: string[];
 }
+
+export interface CompareData<T> {
+    compare: T;
+    baseline: T;
+    diff: T;
+}

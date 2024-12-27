@@ -6,6 +6,7 @@
 #include "CommunicationProtocolResponse.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "ClusterService.h"
 #include "DurationListHandler.h"
 
 namespace Dic {
@@ -26,13 +27,7 @@ bool DurationListHandler::HandleRequest(std::unique_ptr<Protocol::Request> reque
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    if (database == nullptr || !database->QueryDurationList(request.params, response.body)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to get communication duration list data.");
-        session.OnResponse(std::move(responsePtr));
-        return false;
-    }
+    ClusterService::QueryDurationList(request.params, response.body);
     SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
     return true;

@@ -50,6 +50,16 @@ public:
         }
     }
 
+    static inline int StringToInt(std::string numStr)
+    {
+        try {
+            int num = std::stoi(numStr);
+            return num;
+        } catch (const std::invalid_argument& e) {
+            return 0;
+        }
+    }
+
     static inline const std::string IntToString(int number, size_t length)
     {
         std::string s = std::to_string(number);

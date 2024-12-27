@@ -115,11 +115,13 @@ TEST_F(CommunicationProtocolRequestTest, MatrixGroupParamTestBaselineStepError)
 
 TEST_F(CommunicationProtocolRequestTest, MatrixBandwidthParamTest)
 {
-    Dic::Protocol::MatrixBandwidthParam param1 = {"stage", "opName", ";"};
-    Dic::Protocol::MatrixBandwidthParam param2 = {"stage", ";", "1"};
-    Dic::Protocol::MatrixBandwidthParam param3 = {";", "opName", "1"};
+    Dic::Protocol::MatrixBandwidthParam param1 = {"stage", "opName", ";", false, "1"};
+    Dic::Protocol::MatrixBandwidthParam param2 = {"stage", ";", "1", false, "1"};
+    Dic::Protocol::MatrixBandwidthParam param3 = {";", "opName", "1", false, "1"};
+    Dic::Protocol::MatrixBandwidthParam param4 = {"stage", "opName", "1", false, ";"};
     std::string msg;
     EXPECT_EQ(param1.CheckParams(msg), false);
     EXPECT_EQ(param2.CheckParams(msg), false);
     EXPECT_EQ(param3.CheckParams(msg), false);
+    EXPECT_EQ(param4.CheckParams(msg), false);
 }

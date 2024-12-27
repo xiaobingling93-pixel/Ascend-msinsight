@@ -51,8 +51,7 @@ public:
     bool GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
                           Protocol::PipelineStageOrRankTimeResponseBody &responseBody) override;
     bool GetGroups(const std::string &iterationId, std::vector<std::string> &groupList) override;
-    bool QueryMatrixList(Protocol::MatrixBandwidthParam &param,
-                         Protocol::MatrixListResponseBody &responseBody) override;
+    bool QueryMatrixList(Protocol::MatrixBandwidthParam &param, std::vector<MatrixInfoDo> &matrixInfoDoList) override;
     bool QueryAllOperators(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody) override;
     bool QueryOperatorsCount(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody) override;
     bool QueryBandwidthData(Protocol::BandwidthDataParam &param, Protocol::BandwidthDataResBody &resBody) override;
@@ -66,9 +65,9 @@ public:
                                 std::vector<Protocol::OperatorNamesObject> &responseBody);
     bool QueryIterations(std::vector<Protocol::IterationsOrRanksObject> &responseBody) override;
     bool QueryDurationList(Protocol::DurationListParams &requestParams,
-        Protocol::DurationListsResponseBody &responseBody) override;
+        std::vector<DurationDo> &durationDoList) override;
     bool QueryOperatorList(Protocol::DurationListParams &requestParams,
-        Protocol::OperatorListsResponseBody &responseBody) override;
+        std::vector<OperatorTimeDo> &operatorTimeDoList) override;
     bool QueryCommunicationGroup(Document &responseBody) override;
     bool QueryExtremumTimestamp(uint64_t &min, uint64_t &max) override;
     bool QueryIterationAndCommunicationGroup(Protocol::CommunicationKernelParams &params,

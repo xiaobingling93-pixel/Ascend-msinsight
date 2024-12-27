@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include "CommunicationProtocolRequest.h"
 #include "DataBaseManager.h"
+#include "ClusterDomainObject.h"
 #include "../../TestSuit.cpp"
 
 class CommunicationTest : TestSuit {
@@ -82,29 +83,29 @@ TEST_F(TestSuit, QueryDurationData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::DurationListParams requestParams;
-    Protocol::DurationListsResponseBody responseBody;
+    std::vector<Dic::Module::DurationDo> durationList;
     requestParams.dbIndex = "0";
     requestParams.iterationId = "2";
     requestParams.stage = "p2p";
     requestParams.operatorName = "hcom_send__822_0";
-    database->QueryDurationList(requestParams, responseBody);
+    database->QueryDurationList(requestParams, durationList);
     int expectSize = 2;
-    EXPECT_EQ(responseBody.durationList.size(), expectSize);
+    EXPECT_EQ(durationList.size(), expectSize);
 }
 
 TEST_F(TestSuit, QueryDurationDataWithRank)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::DurationListParams requestParams;
-    Protocol::DurationListsResponseBody responseBody;
+    std::vector<Dic::Module::DurationDo> durationList;
     requestParams.dbIndex = "0";
     requestParams.iterationId = "2";
     requestParams.stage = "p2p";
     requestParams.operatorName = "hcom_send__822_0";
     requestParams.rankList = {"0"};
-    database->QueryDurationList(requestParams, responseBody);
+    database->QueryDurationList(requestParams, durationList);
     int expectSize = 1;
-    EXPECT_EQ(responseBody.durationList.size(), expectSize);
+    EXPECT_EQ(durationList.size(), expectSize);
 }
 
 TEST_F(TestSuit, QueryBandwidthDistributionData)
@@ -190,19 +191,19 @@ TEST_F(TestSuit, QueryMatrixData)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::MatrixBandwidthParam requestParams;
-    Dic::Protocol::MatrixListResponseBody responseBody;
+    std::vector<Dic::Module::MatrixInfoDo> matrixList;
     requestParams.iterationId = "2";
     requestParams.stage = "p2p";
     requestParams.operatorName = "Total Op Info";
-    database->QueryMatrixList(requestParams, responseBody);
+    database->QueryMatrixList(requestParams, matrixList);
     int expectSize = 2;
-    EXPECT_EQ(responseBody.matrixList.size(), expectSize);
-    EXPECT_EQ(responseBody.matrixList[1].srcRank, 0);
-    EXPECT_EQ(responseBody.matrixList[1].dstRank, 8); // dstRank = 8
-    EXPECT_EQ(responseBody.matrixList[1].transportType, "RDMA");
-    EXPECT_EQ(responseBody.matrixList[1].transitSize, 20.9715); // transitSize = 20.9715
-    EXPECT_EQ(responseBody.matrixList[1].transitTime, 0.8638); // transitTime = 0.8638
-    EXPECT_EQ(responseBody.matrixList[1].bandwidth, 24.2778); // bandwidth = 24.2778
+    EXPECT_EQ(matrixList.size(), expectSize);
+    EXPECT_EQ(matrixList[1].srcRank, 0);
+    EXPECT_EQ(matrixList[1].dstRank, 8); // dstRank = 8
+    EXPECT_EQ(matrixList[1].transportType, "RDMA");
+    EXPECT_EQ(matrixList[1].transitSize, 20.9715); // transitSize = 20.9715
+    EXPECT_EQ(matrixList[1].transitTime, 0.8638); // transitTime = 0.8638
+    EXPECT_EQ(matrixList[1].bandwidth, 24.2778); // bandwidth = 24.2778
 }
 
 TEST_F(TestSuit, QueryAllCommunicationOperatorsDetails)

@@ -148,7 +148,7 @@ bool DbClusterDataBase::GetGroups(const std::string &iterationId, std::vector<st
 }
 
 bool DbClusterDataBase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,
-                                        Protocol::MatrixListResponseBody &responseBody)
+                                        std::vector<MatrixInfoDo> &matrixInfoDoList)
 {
     std::string sql = "SELECT src_rank as srcRank, dst_rank as dstRank, "
                       "transport_type as transportType, "
@@ -160,7 +160,7 @@ bool DbClusterDataBase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,
                       " LEFT JOIN " + TABLE_COMM_GROUP + " m ON m.group_name = t.group_name"
                       " WHERE m.rank_set = ? AND step = ? AND hccl_op_name = ? ";
     param.iterationId = "step" + param.iterationId;
-    return ExecuteQueryMatrixList(param, responseBody, sql);
+    return ExecuteQueryMatrixList(param, matrixInfoDoList, sql);
 }
 
 bool DbClusterDataBase::QueryExtremumTimestamp(uint64_t &min, uint64_t &max)
@@ -332,7 +332,7 @@ bool DbClusterDataBase::QueryIterations(std::vector<Protocol::IterationsOrRanksO
 }
 
 bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestParams,
-    Protocol::DurationListsResponseBody &responseBody)
+                                          std::vector<DurationDo> &durationDoList)
 {
     uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
     std::string rankSql;
@@ -368,11 +368,11 @@ bool DbClusterDataBase::QueryDurationList(Protocol::DurationListParams &requestP
         ") bw ON t.rank_id = bw.rank_id "
         " WHERE t.step = ? AND map.rank_set = ? AND t.hccl_op_name = ? " + rankSqlTime;
     requestParams.iterationId = "step" + requestParams.iterationId;
-    return ExecuteQueryDurationList(requestParams, responseBody, sql, startTime);
+    return ExecuteQueryDurationList(requestParams, durationDoList, sql, startTime);
 }
 
 bool DbClusterDataBase::QueryOperatorList(Protocol::DurationListParams &requestParams,
-    Protocol::OperatorListsResponseBody &responseBody)
+    std::vector<OperatorTimeDo> &operatorTimeDoList)
 {
     std::string sql =
         "SELECT rank_id, hccl_op_name as op_name,"
@@ -391,7 +391,7 @@ bool DbClusterDataBase::QueryOperatorList(Protocol::DurationListParams &requestP
     sql += " ORDER by CAST(rank_id AS UNSIGNED) ASC";
     requestParams.iterationId = "step" + requestParams.iterationId;
     uint64_t startTime = Module::Timeline::TraceTime::Instance().GetStartTime();
-    return ExecuteQueryOperatorList(requestParams, responseBody, sql, startTime);
+    return ExecuteQueryOperatorList(requestParams, operatorTimeDoList, sql, startTime);
 }
 
 bool DbClusterDataBase::QueryCommunicationGroup(Document &responseBody)

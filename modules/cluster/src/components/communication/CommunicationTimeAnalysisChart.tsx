@@ -16,6 +16,7 @@ import CollapsiblePanel from 'ascend-collapsible-panel';
 import i18n from 'ascend-i18n';
 import { themeInstance } from 'ascend-theme';
 import { safeStr, disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
+import { CompareData } from '../../utils/interface';
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;
@@ -61,10 +62,10 @@ function wrapData(dataSource: AnalysisChartData): any {
     const theme = themeInstance.getThemeType();
     let totalNumber = 0;
     for (let i = dataLength - 1; i >= 0; --i) {
-        totalNumber += dataSource.data[i].lists.length;
+        totalNumber += dataSource.data[i].lists.compare.length;
         const rankId = dataSource.data[i].rankId;
         yAxisData.push(rankId);
-        dataSource.data[i].lists?.forEach((item, _) => {
+        dataSource.data[i].lists?.compare.forEach((item, _) => {
             const startTime = nsToMs(item.startTime);
             const duration = nsToMs(item.duration);
             const endTime = startTime + duration;
@@ -216,7 +217,7 @@ export interface OperatorTimeItem {
 }
 export interface OperatorTimeInfo {
     rankId: string;
-    lists: OperatorTimeItem[];
+    lists: CompareData<OperatorTimeItem[]>;
 }
 
 export interface AnalysisChartData {

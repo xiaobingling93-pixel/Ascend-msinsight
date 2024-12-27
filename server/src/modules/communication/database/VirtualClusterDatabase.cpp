@@ -245,8 +245,8 @@ bool VirtualClusterDatabase::ExecuteGetGroups(const std::string &iterationId,
     return true;
 }
 
-bool VirtualClusterDatabase::ExecuteQueryMatrixList(Protocol::MatrixBandwidthParam param,
-    Protocol::MatrixListResponseBody &responseBody, std::string sql)
+bool VirtualClusterDatabase::ExecuteQueryMatrixList(Protocol::MatrixBandwidthParam &param,
+    std::vector<MatrixInfoDo> &matrixInfoDoList, const std::string &sql)
 {
     int index = bindStartIndex;
     sqlite3_stmt *stmt = nullptr;
@@ -259,15 +259,15 @@ bool VirtualClusterDatabase::ExecuteQueryMatrixList(Protocol::MatrixBandwidthPar
     sqlite3_bind_text(stmt, index, param.operatorName.c_str(), param.operatorName.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        Protocol::MatrixList matrixList;
-        matrixList.srcRank = sqlite3_column_int(stmt, col++);
-        matrixList.dstRank = sqlite3_column_int(stmt, col++);
-        matrixList.transportType = sqlite3_column_string(stmt, col++);
-        matrixList.transitSize = sqlite3_column_double(stmt, col++);
-        matrixList.transitTime = sqlite3_column_double(stmt, col++);
-        matrixList.bandwidth = sqlite3_column_double(stmt, col++);
-        matrixList.opName = sqlite3_column_string(stmt, col++);
-        responseBody.matrixList.emplace_back(matrixList);
+        MatrixInfoDo matrixInfoDo;
+        matrixInfoDo.srcRank = sqlite3_column_int(stmt, col++);
+        matrixInfoDo.dstRank = sqlite3_column_int(stmt, col++);
+        matrixInfoDo.transportType = sqlite3_column_string(stmt, col++);
+        matrixInfoDo.transitSize = sqlite3_column_double(stmt, col++);
+        matrixInfoDo.transitTime = sqlite3_column_double(stmt, col++);
+        matrixInfoDo.bandwidth = sqlite3_column_double(stmt, col++);
+        matrixInfoDo.opName = sqlite3_column_string(stmt, col++);
+        matrixInfoDoList.emplace_back(matrixInfoDo);
     }
     sqlite3_finalize(stmt);
     return true;
@@ -514,48 +514,9 @@ bool VirtualClusterDatabase::ExecuteQueryIterations(std::vector<Protocol::Iterat
     sqlite3_finalize(stmt);
     return true;
 }
-void VirtualClusterDatabase::StatisticBandwidthData(const Protocol::Duration &item,
-    std::vector<Protocol::BandwidthStatistic> &bwStat)
-{
-    for (auto &one : bwStat) {
-        if (one.type == "SDMA") {
-            one.maxBw = std::max(one.maxBw, item.sdmaBw);
-            one.minBw = std::min(one.minBw, item.sdmaBw);
-            one.avgBw += item.sdmaBw;
-            one.allTime += item.sdmaTime;
-        } else {
-            one.maxBw = std::max(one.maxBw, item.rdmaBw);
-            one.minBw = std::min(one.minBw, item.rdmaBw);
-            one.avgBw += item.rdmaBw;
-            one.allTime += item.rdmaTime;
-        }
-    }
-}
-
-void VirtualClusterDatabase::GetBandwidthStatisticResult(std::vector<Protocol::BandwidthStatistic> &bwStat,
-    Protocol::DurationListsResponseBody &responseBody)
-{
-    if (responseBody.durationList.empty()) {
-        return;
-    }
-    int digit = 4;
-    for (auto &item : bwStat) {
-        if (item.avgBw == 0) {
-            continue;
-        }
-        item.avgBw = NumberUtil::DoubleReservedNDigits(item.avgBw / responseBody.durationList.size(), digit);
-        if (item.minBw != DBL_MAX) {
-            item.diffBw = NumberUtil::DoubleReservedNDigits(item.maxBw - item.minBw, digit);
-        }
-        item.maxBw = NumberUtil::DoubleReservedNDigits(item.maxBw, digit);
-        item.minBw = NumberUtil::DoubleReservedNDigits(item.minBw, digit);
-        item.allTime = NumberUtil::DoubleReservedNDigits(item.allTime, digit);
-        responseBody.bwStatistics.emplace_back(item);
-    }
-}
 
 bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListParams &requestParams,
-    Protocol::DurationListsResponseBody &responseBody, std::string sql, uint64_t startTime)
+    std::vector<DurationDo> &durationDoList, std::string sql, uint64_t startTime)
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
@@ -578,7 +539,7 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
     std::vector<Protocol::BandwidthStatistic> bwStat = {{"SDMA", 0, 0, DBL_MAX, 0, 0}, {"RDMA", 0, 0, DBL_MAX, 0, 0}};
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        Protocol::Duration object;
+        DurationDo object;
         object.rankId = sqlite3_column_string(stmt, col++);
         object.startTime = sqlite3_column_double(stmt, col++);
         object.elapseTime = sqlite3_column_double(stmt, col++);
@@ -592,16 +553,14 @@ bool VirtualClusterDatabase::ExecuteQueryDurationList(Protocol::DurationListPara
         object.rdmaBw = sqlite3_column_double(stmt, col++);
         object.sdmaTime = sqlite3_column_double(stmt, col++);
         object.rdmaTime = sqlite3_column_double(stmt, col++);
-        StatisticBandwidthData(object, bwStat);
-        responseBody.durationList.emplace_back(object);
+        durationDoList.emplace_back(object);
     }
     sqlite3_finalize(stmt);
-    GetBandwidthStatisticResult(bwStat, responseBody);
     return true;
 }
 
 bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListParams &requestParams,
-    Protocol::OperatorListsResponseBody &responseBody, const std::string& sql, uint64_t startTime)
+    std::vector<OperatorTimeDo> &operatorTimeDoList, const std::string& sql, uint64_t startTime)
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
@@ -620,32 +579,15 @@ bool VirtualClusterDatabase::ExecuteQueryOperatorList(Protocol::DurationListPara
         sqlite3_bind_text(stmt, index, operatorName.c_str(), operatorName.length(), SQLITE_TRANSIENT);
     }
 
-    std::vector<std::string> rankLists = {};
-    std::vector<std::vector<Protocol::OperatorTimeItem>> opLists = {};
-
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
-        Protocol::OperatorTimeItem object{};
-        std::string rankId = sqlite3_column_string(stmt, col++);
-        if (std::find(rankLists.begin(), rankLists.end(), rankId) == rankLists.end()) {
-            rankLists.push_back(rankId);
-            std::vector<Protocol::OperatorTimeItem> list = {};
-            opLists.push_back(list);
-        }
+        OperatorTimeDo object{};
+        object.rankId = sqlite3_column_string(stmt, col++);
         object.operatorName = sqlite3_column_string(stmt, col++);
         object.startTime = sqlite3_column_int64(stmt, col++);
         object.elapseTime = sqlite3_column_int64(stmt, col++);
-        for (size_t i = 0; i < rankLists.size(); ++i) {
-            if (rankLists[i] == rankId) {
-                opLists[i].push_back(object);
-                break;
-            }
-        }
-        responseBody.minTime = std::min(responseBody.minTime, object.startTime);
-        responseBody.maxTime = std::max(responseBody.maxTime, object.startTime + object.elapseTime);
+        operatorTimeDoList.push_back(object);
     }
-    responseBody.opLists = opLists;
-    responseBody.rankLists = rankLists;
     sqlite3_finalize(stmt);
     return true;
 }

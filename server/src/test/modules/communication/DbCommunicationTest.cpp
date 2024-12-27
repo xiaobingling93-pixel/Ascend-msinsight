@@ -6,6 +6,7 @@
 #include "MemoryProtocolRequest.h"
 #include "DataBaseManager.h"
 #include "DbClusterDataBase.h"
+#include "ClusterDomainObject.h"
 #include "ParamsParser.h"
 
 using namespace Dic::Module::Timeline;
@@ -90,29 +91,29 @@ TEST_F(DbCommunicationTest, QueryDurationData)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::DurationListParams requestParams;
-    Protocol::DurationListsResponseBody responseBody;
+    std::vector<Dic::Module::DurationDo> durationDoList;
     requestParams.dbIndex = "0";
     requestParams.iterationId = "1";
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
     requestParams.operatorName = "Total Op Info";
-    database->QueryDurationList(requestParams, responseBody);
+    database->QueryDurationList(requestParams, durationDoList);
     int expectSize = 8;
-    EXPECT_EQ(responseBody.durationList.size(), expectSize);
+    EXPECT_EQ(durationDoList.size(), expectSize);
 }
 
 TEST_F(DbCommunicationTest, QueryDurationDataWithRank)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::DurationListParams requestParams;
-    Protocol::DurationListsResponseBody responseBody;
+    std::vector<Dic::Module::DurationDo> durationDoList;
     requestParams.dbIndex = "0";
     requestParams.iterationId = "1";
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
     requestParams.operatorName = "Total Op Info";
     requestParams.rankList = {"0"};
-    database->QueryDurationList(requestParams, responseBody);
+    database->QueryDurationList(requestParams, durationDoList);
     int expectSize = 1;
-    EXPECT_EQ(responseBody.durationList.size(), expectSize);
+    EXPECT_EQ(durationDoList.size(), expectSize);
 }
 
 TEST_F(DbCommunicationTest, QueryBandwidthDistributionData)
@@ -205,13 +206,13 @@ TEST_F(DbCommunicationTest, QueryMatrixData)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
     Dic::Protocol::MatrixBandwidthParam requestParams;
-    Dic::Protocol::MatrixListResponseBody responseBody;
+    std::vector<Dic::Module::MatrixInfoDo> matrixList;
     requestParams.iterationId = "1";
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
     requestParams.operatorName = "allgather-bottom1";
-    database->QueryMatrixList(requestParams, responseBody);
+    database->QueryMatrixList(requestParams, matrixList);
     int expectSize = 64;
-    EXPECT_EQ(responseBody.matrixList.size(), expectSize);
+    EXPECT_EQ(matrixList.size(), expectSize);
 }
 
 TEST_F(DbCommunicationTest, QueryAllCommunicationOperatorsDetails)
@@ -319,13 +320,10 @@ TEST_F(DbCommunicationTest, QueryOperatorListSuccess)
     requestParams.operatorName = "hcom_broadcast__293_0_1";
     requestParams.iterationId = "1";
     requestParams.stage = "(0,1,2,3,4,5,6,7)";
-    Dic::Protocol::OperatorListsResponseBody responseBody;
-    database->QueryOperatorList(requestParams, responseBody);
+    std::vector<Dic::Module::OperatorTimeDo> opLists;
+    database->QueryOperatorList(requestParams, opLists);
     int expectSize = 1;
-    const uint64_t expectTime = 10942055036122166272;
-    EXPECT_EQ(responseBody.opLists.size(), expectSize);
-    EXPECT_EQ(responseBody.minTime, expectTime);
-    EXPECT_EQ(responseBody.minTime, expectTime);
+    EXPECT_EQ(opLists.size(), expectSize);
 }
 
 TEST_F(DbCommunicationTest, QueryCommunicationGroupSuccess)

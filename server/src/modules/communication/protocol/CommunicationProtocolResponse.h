@@ -112,8 +112,7 @@ struct MatrixSortOpNamesResponse : public Response {
     std::vector<OperatorNamesObject> body;
 };
 
-struct Duration {
-    std::string rankId;
+struct DurationData {
     double startTime;
     double elapseTime;
     double transitTime;
@@ -126,6 +125,29 @@ struct Duration {
     double rdmaBw{};
     double sdmaTime{};
     double rdmaTime{};
+
+    DurationData operator-(const DurationData &durationData) const
+    {
+        DurationData res;
+        res.startTime = this->startTime - durationData.startTime;
+        res.elapseTime = this->elapseTime - durationData.elapseTime;
+        res.transitTime = this->transitTime - durationData.transitTime;
+        res.synchronizationTime = this->synchronizationTime - durationData.synchronizationTime;
+        res.waitTime = this->waitTime - durationData.waitTime;
+        res.idleTime = this->idleTime - durationData.idleTime;
+        res.synchronizationTimeRatio = this->synchronizationTimeRatio - durationData.synchronizationTimeRatio;
+        res.waitTimeRatio = this->waitTimeRatio - durationData.waitTimeRatio;
+        res.sdmaBw = this->sdmaBw - durationData.sdmaBw;
+        res.rdmaBw = this->rdmaBw - durationData.rdmaBw;
+        res.sdmaTime = this->sdmaTime - durationData.sdmaTime;
+        res.rdmaTime = this->rdmaTime - durationData.rdmaTime;
+        return res;
+    }
+};
+
+struct Duration {
+    std::string rankId;
+    CompareData<DurationData> durationData;
 };
 
 struct BandwidthStatistic {
@@ -151,7 +173,7 @@ struct OperatorListsResponseBody {
     uint64_t minTime = UINT64_MAX;
     uint64_t maxTime = 0;
     std::vector<std::string> rankLists;
-    std::vector<std::vector<OperatorTimeItem>> opLists;
+    std::vector<CompareData<std::vector<OperatorTimeItem>>> opLists;
 };
 
 struct OperatorListsResponse : public Response {
@@ -159,14 +181,18 @@ struct OperatorListsResponse : public Response {
     OperatorListsResponseBody body;
 };
 
-struct MatrixList {
-    int srcRank;
-    int dstRank;
+struct MatrixData {
     std::string transportType;
     std::string opName;
     double transitSize;
     double transitTime;
     double bandwidth;
+};
+
+struct MatrixList {
+    int srcRank;
+    int dstRank;
+    CompareData<MatrixData> matrixData;
 };
 
 struct MatrixListResponseBody {

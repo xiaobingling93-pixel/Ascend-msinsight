@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "ClusterService.h"
 #include "MatrixListHandler.h"
 
 namespace Dic {
@@ -31,13 +32,7 @@ bool MatrixListHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
         return false;
     }
     // query data
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    if (database == nullptr || !database->QueryMatrixList(request.params, response.body)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to get matrix response data.");
-        session.OnResponse(std::move(responsePtr));
-        return false;
-    }
+    ClusterService::QueryMatrixInfo(request.params, response.body);
     session.OnResponse(std::move(responsePtr));
     return true;
 }

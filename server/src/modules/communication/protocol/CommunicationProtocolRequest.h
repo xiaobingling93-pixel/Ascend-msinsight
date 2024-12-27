@@ -208,6 +208,8 @@ struct DurationListParams {
     std::vector<std::string> rankList = {};
     std::string operatorName;
     std::string stage;
+    bool isCompare = false;
+    std::string baselineIterationId;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -221,6 +223,10 @@ struct DurationListParams {
         }
         if (!CheckStrParamValidWithoutLenLimit(this->stage, paramError)) {
             errorMsg = "[Communication] Failed to check stage." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->baselineIterationId, paramError)) {
+            errorMsg = "[Communication] Failed to check baseline iteration id." + paramError;
             return false;
         }
         return true;
@@ -272,6 +278,8 @@ struct MatrixBandwidthParam {
     std::string stage;
     std::string operatorName;
     std::string iterationId;
+    bool isCompare = false;
+    std::string baselineIterationId;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
@@ -285,6 +293,10 @@ struct MatrixBandwidthParam {
         }
         if (!CheckStrParamValidWithoutLenLimit(this->stage, paramError)) {
             errorMsg = "[Communication] Failed to check stage." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->baselineIterationId, paramError)) {
+            errorMsg = "[Communication] Failed to check baseline iteration id." + paramError;
             return false;
         }
         return true;
