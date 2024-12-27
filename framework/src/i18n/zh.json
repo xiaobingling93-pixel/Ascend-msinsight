@@ -24,6 +24,8 @@
         "FileConflictContent": "导入文件与该项目原始文件冲突，继续导入将覆盖原始文件",
         "FileUnsafeContent": "导入文件路径不安全",
         "LargeFileContent": "文件过大，可能存在加载速度过慢甚至OOM的情况，如果继续请点确认",
+        "PathLengthExceeded": "路径长度超过限制",
+        "PathLengthExceededContent": "路径长度超过操作系统最大限制，可能导致解析失败，请检查文件名或者文件深度，忽略并继续解析请点击确认",
         "Current Project": "当前项目",
         "Duplicate Project": "项目名已存在，修改项目名失败",
         "Update Project Name Failed": "更新项目名失败",

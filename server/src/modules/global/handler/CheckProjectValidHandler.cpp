@@ -85,6 +85,10 @@ bool Dic::Module::CheckProjectValidHandler::CheckProjectFile(ProjectCheckParams 
         error = ProjectErrorType::EXISTING_LARGE_FILES;
         return false;
     }
+    if (!FileUtil::CheckFilePathLength(filePath.string())) {
+        error = ProjectErrorType::EXCEEDS_MXIMUN_LENGTH;
+        return false;
+    }
     return true;
 }
 
@@ -99,18 +103,14 @@ bool Dic::Module::CheckProjectValidHandler::CheckFileSize(const fs::path &filePa
 bool CheckProjectValidHandler::TraverseFolder(ProjectCheckParams &params, const fs::path &filePath,
                                               uint64_t &fileCount, ProjectErrorType &error)
 {
-    for (auto &file : fs::directory_iterator(filePath)) {
+    for (auto &file : fs::recursive_directory_iterator(filePath)) {
         if (++fileCount > FILE_COUNT_LIMIT) {
             break;
         }
-        if (fs::is_directory(file)) {
-            if (TraverseFolder(params, file, fileCount, error)) {
-                continue;
+        if (fs::is_regular_file(file.path())) {
+            if (!CheckProjectFile(params, file, error)) {
+                return false;
             }
-            return false;
-        }
-        if (!CheckProjectFile(params, file, error)) {
-            return false;
         }
     }
     return true;

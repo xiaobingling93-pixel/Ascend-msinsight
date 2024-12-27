@@ -24,6 +24,8 @@
         "FileConflictContent": "The imported file conflicts with the original file of the project. Continuing to import will overwrite the original file",
         "FileUnsafeContent": "The imported file is not a safe route and cannot be imported.",
         "LargeFileContent": "The file is too large, and there may be cases of slow loading or OOM (out of memory). If you continue, please click 'confirm'.",
+        "PathLengthExceeded": "Path length exceeds the limit",
+        "PathLengthExceededContent": "Path length exceeds the maximum limit allowed by the operating system, which may cause parsing to fail. Please check the file name or file depth. To ignore and continue parsing, please click 'confirm'.",
         "Current Project": "Current Project",
         "Duplicate Project": "Project name already exists, modification of project name failed",
         "Update Project Name Failed": "Update project name failed",

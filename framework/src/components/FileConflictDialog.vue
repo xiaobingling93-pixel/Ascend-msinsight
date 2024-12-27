@@ -4,22 +4,25 @@ import { ProjectErrorType } from '@/utils/enmus';
 import { reactive, computed } from 'vue';
 
 const props = defineProps<{ dialogCoverVisible: boolean; projectName: string; projectCheckResult: ProjectErrorType }>();
-const [Confirm, Cancel, FileConflict, FileConflictContent, FileUnsafe, FileUnsafeContent, LargeFile, LargeFileContent ] =
+const [Confirm, Cancel, FileConflict, FileConflictContent, FileUnsafe, FileUnsafeContent, LargeFile, LargeFileContent,
+      PathLengthExceeded, PathLengthExceededContent ] =
     useWatchTranslation(['Confirm', 'Cancel', 'FileConflict', 'FileConflictContent', 'FileUnsafe', 'FileUnsafeContent',
-                         'LargeFile', 'LargeFileContent']);
+                         'LargeFile', 'LargeFileContent', 'PathLengthExceeded', 'PathLengthExceededContent']);
 
 const emit=defineEmits(['cover-file']);
 
 const CONTENT_MAP = new Map([
   [ProjectErrorType.PROJECT_NAME_CONFLICT, FileConflictContent],
   [ProjectErrorType.IS_UNSAFE_PATH, FileUnsafeContent],
-  [ProjectErrorType.EXISTING_LARGE_FILES, LargeFileContent]
+  [ProjectErrorType.EXISTING_LARGE_FILES, LargeFileContent],
+  [ProjectErrorType.EXCEEDS_MXIMUN_LENGTH, PathLengthExceededContent]
 ]);
 
 const TTITLE_MAP = new Map([
   [ProjectErrorType.PROJECT_NAME_CONFLICT, FileConflict],
   [ProjectErrorType.IS_UNSAFE_PATH, FileUnsafe],
-  [ProjectErrorType.EXISTING_LARGE_FILES, LargeFile]
+  [ProjectErrorType.EXISTING_LARGE_FILES, LargeFile],
+  [ProjectErrorType.EXCEEDS_MXIMUN_LENGTH, PathLengthExceeded]
 ]);
 
 // 一个计算属性 ref
