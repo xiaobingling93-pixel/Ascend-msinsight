@@ -9,6 +9,8 @@ import {
 } from '../components/communicatorContainer/ContainerUtils';
 import { IndicatorsItem, PerformanceDataItem } from '../utils/interface';
 
+export type PerformanceDataMap = Map<number, PerformanceDataItem>;
+
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
     parseCompleted: boolean = false;
@@ -49,6 +51,14 @@ export class Session {
         const map: Map<string, IndicatorsItem> = new Map();
         this.indicatorList.forEach(item => {
             map.set(item.key, item);
+        });
+        return map;
+    }
+
+    get performanceDataMap(): PerformanceDataMap {
+        const map: Map<number, PerformanceDataItem> = new Map();
+        this.performanceData.forEach(item => {
+            map.set(item.index, item);
         });
         return map;
     }

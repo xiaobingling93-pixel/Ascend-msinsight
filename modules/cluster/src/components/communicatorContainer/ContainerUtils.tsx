@@ -25,10 +25,11 @@ export interface RankDyeingData {
 }
 
 export const getDyeingColor = (session: Session, index: number, dyeingMode: string, step: number): string => {
-    if (index > session.performanceData.length - 1 || !Object.keys(session.performanceData[index]).includes(dyeingMode)) {
+    const performanceValue = session.performanceDataMap.get(index);
+    if (performanceValue === undefined || !Object.keys(performanceValue).includes(dyeingMode)) {
         return 'rgba(0,0,0,0)';
     }
-    const ratio = (session.performanceData[index][dyeingMode] - session.rankDyeingData[dyeingMode].min) / notZero(session.rankDyeingData[dyeingMode].min);
+    const ratio = (performanceValue[dyeingMode] - session.rankDyeingData[dyeingMode].min) / notZero(session.rankDyeingData[dyeingMode].min);
     const level = Math.ceil(ratio / step);
 
     return level < 5 ? `rgba(36,171,54,${(5 - level) * 0.2})` : `rgba(227,32,32,${(level - 4) * 0.2})`;

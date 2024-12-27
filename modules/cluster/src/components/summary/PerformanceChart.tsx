@@ -7,7 +7,7 @@ import { MIChart } from 'ascend-components';
 import type { ChartsHandle } from 'ascend-components/MIChart';
 import type { EChartsOption } from 'echarts';
 import { merge } from 'lodash';
-import { Session } from '../../entity/session';
+import { PerformanceDataMap, Session } from '../../entity/session';
 import { PerformanceDataItem } from '../../utils/interface';
 import { GenerateConditions } from '../communicatorContainer/CommunicatorContainer';
 import { Advice } from 'ascend-utils';
@@ -118,7 +118,7 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
         chartRef.current?.getInstance()?.resize();
     }
 
-    const filterData = (performanceData: PerformanceDataItem[]): PerformanceDataItem[] => {
+    const filterData = (performanceData: PerformanceDataItem[], performanceDataMap: PerformanceDataMap): PerformanceDataItem[] => {
         let result = performanceData;
 
         if (group !== VALUE_ALL) {
@@ -130,8 +130,9 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
                 }
             });
             result = groupList.map(item => {
-                return result[Number(item)] ?? {
-                    index: item,
+                const index = Number(item);
+                return performanceDataMap.get(index) ?? {
+                    index,
                     ...emptyData,
                 };
             });
@@ -164,7 +165,7 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
     }, [datasource]);
 
     useEffect(() => {
-        const filteredData = filterData(session.performanceData);
+        const filteredData = filterData(session.performanceData, session.performanceDataMap);
         const firsRankId = filteredData[0]?.index;
 
         setDatasource(filteredData);

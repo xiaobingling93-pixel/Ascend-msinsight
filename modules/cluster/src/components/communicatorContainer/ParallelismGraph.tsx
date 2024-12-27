@@ -125,7 +125,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
             }
 
             const { name, index } = data.arrangements[hoveredRectIndex];
-            const currentData = session.performanceData?.[hoveredRectIndex];
+            const currentData = session.performanceDataMap?.get(hoveredRectIndex);
 
             if (currentData === undefined) {
                 return null;
@@ -319,12 +319,18 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
 
     const onMouseMove: React.MouseEventHandler<HTMLDivElement> = useCallback(throttle((event): void => {
         const { offsetX, offsetY } = event.nativeEvent;
-        const activeRect = canvasDrawer?.rectangleList.find(rect => rect.isInside(offsetX, offsetY));
         const { scrollLeft = 0, scrollTop = 0 } = canvasContainerRef?.current ?? {};
+        const x = offsetX - scrollLeft;
+        const y = offsetY - scrollTop;
+        const activeRect = canvasDrawer?.rectangleList.find(rect => rect.isInside(x, y));
 
-        setMousePos({ x: offsetX - scrollLeft, y: offsetY - scrollTop });
+        setMousePos({ x, y });
         setHoveredRectIndex(activeRect === undefined ? null : activeRect.index);
     }, 100), [canvasDrawer]);
+
+    const onMouseOut: React.MouseEventHandler<HTMLDivElement> = (event): void => {
+        setHoveredRectIndex(null);
+    };
 
     const onScroll = useCallback(() => {
         requestAnimationFrame(render);
@@ -351,6 +357,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
                         }}
                         onClick={onClickCanvas}
                         onMouseMove={onMouseMove}
+                        onMouseOut={onMouseOut}
                         ></div>
                     </CanvasContainer>;
                 }
