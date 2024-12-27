@@ -158,7 +158,19 @@ export function shutdownAll(
 export function getUrl(
     name: string,
     settings?: ServerConnection.ISettings
-): string {
+): Promise<string> {
     const localSettings = settings || ServerConnection.makeSettings();
-    return Private.getMindStudioInstanceUrl(localSettings.baseUrl, name);
+    const portUrl = Private.getPortUrl(localSettings.baseUrl);
+    let port = '9000';
+    return ServerConnection.makeRequest(portUrl, {}, localSettings)
+    .then((response: Response) => {
+        if (response.status !== 200) {
+            throw new ServerConnection.ResponseError(response);
+        }
+        return response.json();
+    })
+    .then((data: any) => {
+        port = data.port;
+        return Private.getMindStudioInstanceUrl(localSettings.baseUrl, name, port);
+    });
 }

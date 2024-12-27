@@ -22,6 +22,12 @@ export const MindStudioInsightTab = (props: MindStudioInsightProps): JSX.Element
     const currentMindStudioRef = useRef(currentMindStudio);
     // currently inactive
     const [notActiveError, setNotActiveError] = useState(false);
+    const [srcVal, setSrcVal] = useState('');
+
+    const getUrl = async (): Promise<void> => {
+        const val = await MindStudio.getUrl('');
+        setSrcVal(val);
+    };
 
     const updateCurrentMindStudio = (model: MindStudio.IModel | null): void => {
         props.updateCurrentModel(model);
@@ -30,6 +36,8 @@ export const MindStudioInsightTab = (props: MindStudioInsightProps): JSX.Element
     };
 
     const refreshRunning = async (): Promise<void> => {
+        // 获取url
+        await getUrl();
         await props.mindstudioManager.refreshRunning();
         const runningMindStudios = [...props.mindstudioManager.running()];
 
@@ -68,7 +76,7 @@ export const MindStudioInsightTab = (props: MindStudioInsightProps): JSX.Element
                     style={{ width: '100%', height: '100%' }}
                     sandbox="allow-scripts allow-forms allow-same-origin"
                     referrerPolicy="no-referrer"
-                    src={MindStudio.getUrl('')}
+                    src={srcVal}
                   />
                 ) }
                 { currentMindStudio && (

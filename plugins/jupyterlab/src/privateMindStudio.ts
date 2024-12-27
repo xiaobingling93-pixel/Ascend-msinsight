@@ -14,6 +14,8 @@ const MINDSTUDIO_STATIC_CONFIG_URL = '';
 
 const MINDSTUDIO_URL = '/resources/frontend/index.html';
 
+const MINDSTUDIO_PORT_URL = '/mindstudio_insight_jupyterlab/get_available_port';
+
 /**
  * A namespace for private data.
  */
@@ -46,6 +48,13 @@ export function getServiceUrl(baseUrl: string): string {
 }
 
 /**
+ * Get the port url.
+ */
+export function getPortUrl(baseUrl: string): string {
+    return URLExt.join(baseUrl, MINDSTUDIO_PORT_URL);
+}
+
+/**
  * Kill mindstudio by url.
  */
 export function killMindStudio(url: string): void {
@@ -62,7 +71,9 @@ export function getMindStudioInstanceRootUrl(baseUrl: string): string {
 
 export function getMindStudioInstanceUrl(
     baseUrl: string,
-    name: string
+    name: string,
+    port: string
 ): string {
-    return URLExt.join(baseUrl, MINDSTUDIO_URL);
+    let url = URLExt.join(baseUrl, MINDSTUDIO_URL);
+    return `${url}?port=${port}`;
 }
