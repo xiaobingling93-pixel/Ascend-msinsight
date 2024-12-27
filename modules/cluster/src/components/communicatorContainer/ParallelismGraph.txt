@@ -1,0 +1,365 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { queryParallelismArrangement } from '../../utils/RequestUtils';
+import { ParallelismArrangementResult } from '../../utils/interface';
+import { Session } from '../../entity/session';
+import { observer } from 'mobx-react';
+import { CanvasDrawer, Frame, Line, Rectangle } from './shape';
+import { TooltipComponent } from './Tooltips';
+import { GenerateConditions } from './CommunicatorContainer';
+import { runInAction } from 'mobx';
+import { getDyeingColor, groupFrames } from './ContainerUtils';
+import eventBus from '../../utils/eventBus';
+import styled from '@emotion/styled';
+import { useParallelSwitchConditions } from './Context';
+import { useTheme } from '@emotion/react';
+import { throttle } from 'lodash';
+import { Responsive } from 'ascend-components';
+
+const CanvasContainer = styled.div`
+    max-height: 700px;
+    overflow: auto;
+    margin-top: 10px;
+    background-color: ${(props): string => props.theme.rankContainerBackgroudColor};
+`;
+
+const Canvas = styled.canvas`
+    position: absolute;
+    top: 0;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+`;
+
+const Loading = styled.div`
+    display: flex;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: ${(props): string => props.theme.bgColorLight};
+    color: ${(props): string => props.theme.textColorPrimary};
+
+    > div {
+        margin: auto;
+    }
+`;
+
+interface UseFetchDataReturns {
+    loading: boolean;
+    data?: ParallelismArrangementResult;
+    error?: Error;
+}
+
+const useFetchData = (params: GenerateConditions | null): UseFetchDataReturns => {
+    const [data, setData] = useState<ParallelismArrangementResult>();
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<Error>();
+
+    const fetchData = async (): Promise<void> => {
+        if (params === null) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const res = await queryParallelismArrangement(params);
+            setData(res);
+        } catch (err) {
+            setError(err as Error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const isDefaultParams = params?.dpSize === 1 && params?.tpSize === 1 && params?.ppSize === 1 && params.cpSize === 1 && params?.epSize === 1;
+        if (params !== null && !isDefaultParams) {
+            fetchData();
+        }
+    }, [JSON.stringify(params)]);
+
+    return { data, loading, error };
+};
+
+interface ParallelismGraphProps {
+    session: Session;
+    generateConditions: GenerateConditions | null;
+}
+export const ParallelismGraph = observer(({ session, generateConditions }: ParallelismGraphProps): JSX.Element => {
+    const canvasContainerRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [canvasDrawer, setCanvasDrawer] = useState<CanvasDrawer | null>(null);
+    const [mousePos, setMousePos] = useState<{x: number;y: number}>({ x: 0, y: 0 });
+    const [lastRect, setLastRect] = useState<Rectangle>();
+    const [activeRectIndex, setActiveRectIndex] = useState<number | null>(null);
+    const [hoveredRectIndex, setHoveredRectIndex] = useState<number | null>(null);
+    const [responsiveSize, setResponsiveSize] = useState({ width: 0, height: 0 });
+    const { parallelTypeList, dyeingMode, dyeingStep, reset: resetParallelSwitchConditions } = useParallelSwitchConditions();
+    const theme = useTheme();
+    const { data, loading } = useFetchData(generateConditions);
+    const { tpSize = 1, dpSize = 1, cpSize = 1, epSize = 1, ppSize = 1 } = generateConditions ?? {};
+
+    const canvasSize = useMemo(() => {
+        let width = 200;
+        let height = 200;
+
+        if (lastRect !== undefined) {
+            const { x, y, width: rectWidth, height: rectHeight, textHeight } = lastRect;
+            const actualWidth = x + rectWidth + CanvasDrawer.PADDING;
+            const actualHeight = y + rectHeight + CanvasDrawer.PADDING + textHeight;
+
+            width = Math.max(actualWidth, width);
+            height = Math.max(actualHeight, height);
+        }
+        return { width, height };
+    }, [lastRect]);
+
+    // Tooltip内容
+    const hoveredData = useMemo(
+        () => {
+            if (hoveredRectIndex === null || data === undefined) {
+                return null;
+            }
+
+            const { name, index } = data.arrangements[hoveredRectIndex];
+            const currentData = session.performanceData?.[hoveredRectIndex];
+
+            if (currentData === undefined) {
+                return null;
+            }
+
+            const updatedData: Record<string, any> = {};
+            Object.entries(currentData).forEach(([key, value]) => {
+                if (key !== 'index') {
+                    const indicatorName = session.indicatorMap.get(key)?.name;
+                    if (indicatorName !== undefined) {
+                        updatedData[indicatorName] = `${value} us`;
+                    }
+                }
+            });
+            return {
+                Index: index,
+                Name: name,
+                ...updatedData,
+            };
+        },
+        [hoveredRectIndex],
+    );
+
+    const render = (): void => {
+        const { scrollLeft = 0, scrollTop = 0 } = canvasContainerRef.current ?? {};
+        canvasDrawer?.render(scrollLeft, scrollTop);
+    };
+
+    const addRectangles = (drawer: CanvasDrawer): void => {
+        data?.arrangements.forEach(arrangement => {
+            drawer?.addRectangle(
+                new Rectangle({
+                    index: arrangement.index,
+                    rowAndCol: arrangement.position,
+                    fillColor: dyeingMode === 'None' ? undefined : getDyeingColor(session, arrangement.index, dyeingMode, dyeingStep),
+                    backgroundColor: theme.bgColorLighter,
+                    color: theme.textColorPrimary,
+                    attribute: {
+                        ...arrangement.attribute,
+                        tpSize,
+                        dpSize,
+                        cpSize,
+                        epSize,
+                        ppSize,
+                    },
+                }));
+        });
+    };
+
+    const addFrames = (drawer: CanvasDrawer): void => {
+        if (drawer !== null && data !== undefined) {
+            const framesGroup = groupFrames(data.arrangements, parallelTypeList, data.connections);
+
+            drawer.clearFrames();
+            framesGroup.forEach(frame => {
+                const { type, list } = frame;
+                const frameInst = new Frame(type, list, {
+                    tpSize,
+                    dpSize,
+                    cpSize,
+                    epSize,
+                    ppSize,
+                });
+
+                drawer.addFrame(frameInst);
+            });
+        }
+    };
+
+    useEffect(() => {
+        if (!loading && canvasRef.current && data !== undefined) {
+            const drawer = new CanvasDrawer(canvasRef);
+            setCanvasDrawer(drawer);
+            addRectangles(drawer);
+            addFrames(drawer);
+            setLastRect(drawer.rectangleList[drawer.rectangleList.length - 1]);
+            setTimeout(() => {
+                drawer.render(canvasContainerRef.current?.scrollLeft ?? 0, canvasContainerRef.current?.scrollTop ?? 0);
+            });
+
+            // 更新所有通信域数据、指标数据
+            runInAction(() => {
+                const connections = data.connections.map(item => item.list.toString());
+                const frames = groupFrames(data.arrangements, ['dp', 'ep', 'cp'])
+                    .map(frameGroup => frameGroup.list.map(item => item.index).toString());
+
+                session.communicationDomains = [...new Set([...connections, ...frames])];
+                session.indicatorList = data?.indicators ?? {};
+            });
+
+            setActiveRectIndex(null);
+            resetParallelSwitchConditions();
+        }
+    }, [loading]);
+
+    useEffect(() => {
+        if (data !== undefined && canvasDrawer !== null) {
+            canvasDrawer.clearRectangles();
+            addRectangles(canvasDrawer);
+            render();
+        }
+    }, [theme.mode, dyeingMode, dyeingStep]);
+
+    useEffect(() => {
+        if (canvasDrawer !== null) {
+            canvasDrawer.clearLines();
+
+            if (activeRectIndex !== null) {
+                const linesGroup = data?.connections?.filter(connection => connection.list.includes(activeRectIndex))
+                    .map(item => {
+                        return {
+                            type: item.type,
+                            list: item.list.map(it => ({
+                                index: it,
+                                position: data.arrangements[it].position,
+                                attribute: data.arrangements[it].attribute,
+                            })),
+                        };
+                    }) ?? [];
+
+                linesGroup?.forEach(line => {
+                    const { type, list } = line;
+                    const parallelismSize = {
+                        tpSize,
+                        dpSize,
+                        cpSize,
+                        epSize,
+                        ppSize,
+                    };
+                    const lineInst = new Line(type, list, parallelismSize);
+                    canvasDrawer.addLine(lineInst);
+                });
+            }
+            render();
+        }
+    }, [activeRectIndex]);
+
+    useEffect(() => {
+        if (canvasDrawer !== null && data?.arrangements !== undefined) {
+            addFrames(canvasDrawer);
+            render();
+        }
+    }, [JSON.stringify(parallelTypeList)]);
+
+    useEffect(() => {
+        render();
+    }, [responsiveSize.width, responsiveSize.height, canvasSize.width, canvasSize.height]);
+
+    const onClickCanvas: React.MouseEventHandler<HTMLDivElement> = (event): void => {
+        const { offsetX, offsetY } = event.nativeEvent;
+        const { scrollLeft = 0, scrollTop = 0 } = canvasContainerRef.current ?? {};
+        const x = offsetX - scrollLeft;
+        const y = offsetY - scrollTop;
+
+        if (canvasDrawer === null) {
+            return;
+        }
+
+        // 判断矩形
+        for (const rect of canvasDrawer.rectangleList) {
+            if (rect.isInside(x, y)) {
+                setActiveRectIndex(rect.index);
+                return;
+            }
+        }
+
+        // 判断线
+        for (const line of canvasDrawer.lineList) {
+            if (line.isInside(x, y)) {
+                eventBus.emit('activeCommunicator', {
+                    name: line.type === 'pp' ? 'pipeline' : line.type,
+                    value: line.rectList.map(rect => rect.index).join(','),
+                });
+                return;
+            }
+        }
+
+        // 判断框
+        for (const frame of canvasDrawer.frameList) {
+            if (frame.isInside(x, y)) {
+                eventBus.emit('activeCommunicator', {
+                    name: frame.type,
+                    value: frame.rectList.map(rect => rect.index).join(','),
+                });
+                return;
+            }
+        }
+
+        setActiveRectIndex(null);
+    };
+
+    const onMouseMove: React.MouseEventHandler<HTMLDivElement> = useCallback(throttle((event): void => {
+        const { offsetX, offsetY } = event.nativeEvent;
+        const activeRect = canvasDrawer?.rectangleList.find(rect => rect.isInside(offsetX, offsetY));
+        const { scrollLeft = 0, scrollTop = 0 } = canvasContainerRef?.current ?? {};
+
+        setMousePos({ x: offsetX - scrollLeft, y: offsetY - scrollTop });
+        setHoveredRectIndex(activeRect === undefined ? null : activeRect.index);
+    }, 100), [canvasDrawer]);
+
+    const onScroll = useCallback(() => {
+        requestAnimationFrame(render);
+    }, [canvasDrawer, canvasContainerRef.current]);
+
+    const handleResize = (size: {width: number;height: number}): void => {
+        setResponsiveSize(size);
+    };
+
+    return <div style={{ position: 'relative' }}>
+        {loading && <Loading><div>Loading...</div></Loading>}
+        <Responsive onChange={handleResize}>
+            {
+                ({ width, height }): React.ReactNode => {
+                    return <CanvasContainer ref={canvasContainerRef} onScroll={onScroll}>
+                        <Canvas
+                            ref={canvasRef}
+                            width={width * devicePixelRatio}
+                            height={height * devicePixelRatio}
+                        ></Canvas>
+                        <div style={{
+                            width: canvasSize.width,
+                            height: canvasSize.height,
+                        }}
+                        onClick={onClickCanvas}
+                        onMouseMove={onMouseMove}
+                        ></div>
+                    </CanvasContainer>;
+                }
+            }
+        </Responsive>
+        <TooltipComponent
+            mouseX={mousePos.x}
+            mouseY={mousePos.y}
+            content={hoveredData}
+        />
+    </div>;
+});
