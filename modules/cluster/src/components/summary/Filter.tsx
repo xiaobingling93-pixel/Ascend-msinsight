@@ -1,23 +1,14 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
-import { observer } from 'mobx-react';
-import React, { useEffect, useState } from 'react';
+
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select } from 'ascend-components';
 import { Label } from '../Common';
-import _ from 'lodash';
-import { queryTopSummary } from '../../utils/RequestUtils';
 import type { Session } from '../../entity/session';
-import type { communicator } from '../communicatorContainer/ContainerUtils';
-
-export interface ConditionDataType {
-    step: string;
-    rankIds: string[];
-    orderBy: string;
-    top: number;
-    group?: string;
-}
+import { PerformanceChartConditions } from './Index';
+import { observer } from 'mobx-react';
 
 interface optionDataType {
     key?: string;
@@ -25,18 +16,6 @@ interface optionDataType {
     value: string | number;
     data?: string[];
 }
-
-interface optionMapDataType {
-    [props: string]: optionDataType[];
-}
-const orderOptions = [
-    { label: 'Total Computing', value: 'computingTime' },
-    { label: 'Pure Computing', value: 'pureComputingTime' },
-    { label: 'Communication(Overlapped)', value: 'communicationOverLappedTime' },
-    { label: 'Communication(Not Overlapped)', value: 'communicationNotOverLappedTime' },
-    { label: 'Free', value: 'freeTime' },
-    { label: 'Rank ID', value: 'rankId' },
-];
 
 // Top可选项： 1、2、4、8.......n(All)
 const getTopOptions = (count: number): optionDataType[] => {
@@ -47,144 +26,102 @@ const getTopOptions = (count: number): optionDataType[] => {
     }
     const topOptions: optionDataType[] = toplist.map(item => ({ value: item, label: item }));
     if (count > 0) {
-        topOptions.push({ value: count, label: `${count} ( All )` });
+        topOptions.push({ value: count, label: `${count} (All)` });
     }
     return topOptions;
 };
 
-export const defaultConditions = { step: 'All', rankIds: [], orderBy: 'computingTime', top: 0 };
+const allOptionItem = {
+    value: 'All',
+    label: 'All',
+};
 
-const getStepOptions = async(): Promise<optionDataType[]> => {
-    const res = await window.requestData('parallelism/pipeline/getAllSteps', {}, 'summary');
-    const list: string[] = res?.data ?? [];
-    const options: optionDataType[] = ['All', ...list].map(item => ({ value: item, label: item }));
+const getRankGroupOptions = (session: Session): optionDataType[] => {
+    const options = session.communicationDomains.map((domain) => ({
+        value: domain,
+        label: `(${domain})`,
+    }));
+    options.unshift(allOptionItem);
     return options;
 };
 
-const filterGroupOptions = async (communicators: communicator[], rankList: string[]): Promise<optionDataType[]> => {
-    const groupOptions: optionDataType[] = communicators.map((communicator) => {
-        const data: string[] = (communicator.value === 'All' ? rankList : communicator.ranks).map(item => item.toString());
-        return {
-            value: communicator.value as string,
-            label: communicator.value,
-            data,
-            key: communicator.value,
-        };
-    }).filter((item, index, self) => {
-        // 判断是否重复，true代表没重复
-        const isUnique: boolean = self.findIndex(el => el.key === item.key) === index;
-        // 判断当前所有rank与选中通信域列表是否存在交集
-        const isInteraction: boolean = item.data.some((rank: string) => rankList.includes(rank));
-        return isUnique && isInteraction;
-    });
-    return groupOptions;
-};
-
-// eslint-disable-next-line max-lines-per-function
-const Filter = observer((props: any) => {
-    const session: Session = props.session;
-    const [conditions, setConditions] = useState<ConditionDataType>(defaultConditions);
-    const [options, setOptions] = useState<optionMapDataType>({});
-    // 初始化
-    useEffect(() => {
-        if (!session.clusterCompleted) {
-            setConditions(defaultConditions);
-            setOptions({ ...options, stepOptions: [], topOptions: [], groupOptions: [] });
-            return;
-        }
-        initDefault();
-    }, [session.communicatorData]);
-    useEffect(() => {
-        if (_.find(options.groupOptions, item => item.value === conditions.group) !== undefined) {
-            conditions.rankIds = _.find(options.groupOptions, item => item.value === conditions.group)?.data as string[];
-        }
-        props.handleFilterChange(conditions);
-    }, [conditions.step, conditions.orderBy, conditions.group, props.visible]);
-    useEffect(() => {
-        props.handleFilterChange(conditions, false);
-    }, [conditions.top]);
-    useEffect(() => {
-        // 鼠标点击并行策略图中的线时触发，跳转对应通信组
-        const find = _.find(options.groupOptions, item => item.key === props.session.activeCommunicator?.value);
-        if (find !== undefined) {
-            setConditions({ ...conditions, group: find.value as string });
-        }
-    }, [props.session.activeCommunicator]);
-    const initDefault = async (): Promise<void> => {
-        const stepOptions = await getStepOptions();
-        const summaryRes: any = await queryTopSummary(conditions);
-        const rankList = summaryRes?.baseInfo?.compare.rankList ?? [];
-        const communicators: communicator[] = [];
-        props.session.communicatorData.partitionModes.map((data: any) => data.communicators)
-            .forEach((item: any) => {
-                _.forEach(item, tmp => {
-                    communicators.push(tmp);
-                });
-            });
-        const groupOptions = await filterGroupOptions(communicators, rankList);
-        const group = groupOptions.length > 0 ? groupOptions[0].value as string : '';
-        const rankNum = Math.max(props.session.rankCountAfterCal, rankList.length);
-        const topOptions = getTopOptions(rankNum);
-        setOptions({ stepOptions, topOptions, groupOptions, orderOptions });
-        setConditions({ ...conditions, top: rankNum, group });
-    };
-
-    const handleChange = (prop: keyof ConditionDataType, val: string | number | string[]): void => {
-        setConditions({ ...conditions, [prop]: val });
-    };
-
-    return (<FilterCom conditions={conditions} handleChange={handleChange} options={options} session={props.session}/>);
-});
-
-const FilterCom = (props: any): JSX.Element => {
-    const { conditions, handleChange = [], options = {} } = props;
-    const session: Session = props.session;
+interface FilterProps {
+    session: Session;
+    conditions: PerformanceChartConditions;
+    isPipeline: boolean;
+    onFilterChange: (val: PerformanceChartConditions) => void;
+}
+export const Filter = observer(({ session, conditions, isPipeline, onFilterChange }: FilterProps): JSX.Element => {
     const { t } = useTranslation('summary');
-    const tOrderOptions = options?.orderOptions?.map((item: any) => {
+    const tOrderOptions = session.indicatorList?.map((item) => {
         return {
-            ...item,
-            label: t(item.label),
+            value: item.key,
+            label: t(item.name),
         };
     });
+    tOrderOptions?.unshift({
+        value: 'rankId',
+        label: t('Rank ID'),
+    });
+    const handleChange = <K extends keyof PerformanceChartConditions>(key: K, val: PerformanceChartConditions[K]): void => {
+        onFilterChange({ ...conditions, [key]: val });
+    };
+
+    const stepOptions = session.stepList.map(item => ({ value: item, label: item }));
+    stepOptions.unshift(allOptionItem);
+
+    const groupOptions = useMemo(() => {
+        return getRankGroupOptions(session);
+    }, [session.communicationDomains]);
+    const topOptions = getTopOptions(session.performanceData.length);
+
     return (<div style={{ marginBottom: 24 }}>
         {
-            !(session.isFullDb)
-                ? <Label name={t('Step')} />
-                : <></>
-        }
-        {
-            !(session.isFullDb)
-                ? <Select
+            !session.isFullDb &&
+            <>
+                <Label name={t('Step')} />
+                <Select
                     value={conditions.step}
                     style={{ width: 120 }}
-                    onChange={(val: any): void => handleChange('step', val)}
-                    options={options.stepOptions}
+                    onChange={(val: string): void => handleChange('step', val)}
+                    options={stepOptions}
                 />
-                : <></>
+            </>
+
         }
         <Label name={t('RankGroup')}/>
         <Select
-            defaultValue={conditions.group}
+            showSearch
+            filterOption={(input, option): boolean =>
+                (option?.label as string ?? '').toLocaleLowerCase().includes(input.toLowerCase())
+            }
             value={conditions.group}
             style={{ width: 200 }}
-            onChange={(val: any): void => handleChange('group', val)}
-            options={options.groupOptions}
+            dropdownMatchSelectWidth
+            onChange={(val: string): void => handleChange('group', val)}
+            options={groupOptions}
         />
-        <Label name={t('OrderBy')}/>
-        <Select
-            value={conditions.orderBy}
-            style={{ width: 280 }}
-            onChange={(val: any): void => handleChange('orderBy', val)}
-            options={tOrderOptions}
-        />
-        <Label name={t('Top')}/>
-        <Select
-            value={conditions.top}
-            style={{ width: 120 }}
-            onChange={(val: any): void => handleChange('top', val)}
-            options={options.topOptions}
-        />
+        {
+            isPipeline
+                ? <></>
+                : <>
+                    <Label name={t('OrderBy')}/>
+                    <Select
+                        value={conditions.orderBy}
+                        style={{ width: 280 }}
+                        onChange={(val: string): void => handleChange('orderBy', val)}
+                        options={tOrderOptions}
+                    />
+                    <Label name={t('Top')}/>
+                    <Select
+                        value={conditions.top}
+                        style={{ width: 120 }}
+                        onChange={(val: string): void => handleChange('top', val)}
+                        options={topOptions}
+                    />
+                </>
+        }
     </div>);
-};
+});
 
 export default Filter;

@@ -35,4 +35,13 @@ export const MICheckboxGroup = styled((props: CheckboxGroupProps & React.RefAttr
         background-color: ${(props): string => props.theme.primaryColor};
         border-color: ${(props): string => props.theme.primaryColor};
     }
+
+    .ant-checkbox-disabled {
+        + span {
+            color: ${(props): string => props.theme.textColorDisabled};
+        }
+        .ant-checkbox-inner {
+            border-color: ${(props): string => props.theme.borderColorDisabled} !important;
+        }
+    }
 `;

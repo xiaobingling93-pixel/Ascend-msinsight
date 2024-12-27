@@ -9,7 +9,6 @@ import { formatDate } from '../Common';
 import type { StringMap } from '../../utils/interface';
 import type { Session } from '../../entity/session';
 import { queryTopSummary } from '../../utils/RequestUtils';
-import { defaultConditions } from './Filter';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import { MIDescriptions, MIDescriptionsItem } from 'ascend-utils';
 
@@ -23,15 +22,6 @@ interface ListItem {
     key: string;
     value?: string;
 }
-
-export const defaultBaseInfo = {
-    filePath: '',
-    dataSize: '',
-    collectStartTime: '',
-    rankCount: '',
-    stepNum: '',
-    collectDuration: '',
-};
 
 const useList = (): ListItem[] => {
     const { t } = useTranslation('summary');
@@ -99,11 +89,11 @@ const formateTime = (t: number): string => {
 };
 
 const initBaseInfo = async (setData: any, session: Session): Promise<void> => {
-    const res: any = await queryTopSummary(defaultConditions);
+    const res: any = await queryTopSummary();
     const resObj = res ?? {};
     runInAction(() => {
-        session.rankCount = res.baseInfo.compare.rankCount;
-        session.summaryList = res.baseInfo.compare.summaryList;
+        session.rankCount = resObj.baseInfo.compare.rankCount;
+        session.stepList = resObj.baseInfo.compare.stepList;
     });
     setData({
         ...resObj.baseInfo.compare,

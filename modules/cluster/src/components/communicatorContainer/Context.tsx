@@ -18,12 +18,12 @@ const ParallelSwitchConditionsContext = createContext<ParallelSwitchConditionsCo
 export function ParallelSwitchConditionsProvider({ children }: { children: React.ReactNode }): JSX.Element {
     const [dyeingMode, setDyeingMode] = useState('None');
     const [dyeingStep, setDyeingStep] = useState(0.03);
-    const [parallelTypeList, setParallelTypeList] = useState<ParallelismType[]>([]);
+    const [parallelTypeList, setParallelTypeList] = useState<ParallelismType[]>(['dp']);
 
     const reset = (): void => {
         setDyeingMode('None');
         setDyeingStep(0.03);
-        setParallelTypeList([]);
+        setParallelTypeList(['dp']);
     };
     return (
         <ParallelSwitchConditionsContext.Provider value={{

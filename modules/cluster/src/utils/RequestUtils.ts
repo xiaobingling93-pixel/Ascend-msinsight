@@ -2,6 +2,14 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
+import {
+    GetParallelismPerformanceData, GetParallelismPerformanceRes,
+    GetParallelStrategyRes,
+    ParallelismArrangementParams,
+    ParallelismArrangementResult,
+    SetParallelStrategyParams,
+} from './interface';
+
 /**
  * 查询所有迭代ID
  * 无参
@@ -118,18 +126,17 @@ export const queryCommunicationDetail = async (param: {
     return window.requestData('summary/queryCommunicationDetail', param);
 };
 
-export const queryTopSummary = async (param:
-{
-    step: string | number;
-    rankIds: string[];
-    orderBy: string ;
-    top: number;
-},
-): Promise<any> => {
+/**
+ *
+ * @param param
+ *  step: string | number;
+ *  rankIds: string[];
+ *  orderBy: string ;
+ *  top: number;
+ */
+export const queryTopSummary = async (): Promise<any> => {
     return window.requestData('summary/queryTopData', {
-        orderBy: param.orderBy,
-        stepIdList: param.step !== 'All' ? [param.step] : [],
-        rankIdList: param.rankIds,
+        stepIdList: [],
     });
 };
 
@@ -172,6 +179,32 @@ export interface QueryFwpBwdTimelineRes {
     maxTime: number;
     rankList: RankItem[];
 }
+
 export const queryFwpBwdTimeline = async(params: QueryFwpBwdTimelineParams): Promise<QueryFwpBwdTimelineRes> => {
     return window.requestData('parallelism/pipeline/fwdBwdTimeline', params, 'summary');
+};
+
+export const getParallelStrategy = async (): Promise<GetParallelStrategyRes> => {
+    return await window.requestData('summary/query/parallelStrategy', {}, 'summary');
+};
+
+export const setParallelStrategy = async (params: SetParallelStrategyParams): Promise<void> => {
+    return await window.requestData('summary/set/parallelStrategy', params, 'summary');
+};
+
+/**
+ * 获取并行策略排布数据
+ * @param {ParallelismArrangementParams} params
+ * @return {ParallelismArrangementResult}
+ */
+export const queryParallelismArrangement = async(params: ParallelismArrangementParams): Promise<ParallelismArrangementResult> => {
+    return await window.requestData('parallelism/arrangement/all', params, 'summary');
+};
+
+export const queryAllConnections = async(params: ParallelismArrangementParams): Promise<ParallelismArrangementResult> => {
+    return await window.requestData('parallelism/arrangement/all', params, 'summary');
+};
+
+export const getParallelismPerformanceData = async (params: GetParallelismPerformanceData): Promise<GetParallelismPerformanceRes> => {
+    return await window.requestData('parallelism/performance/data', params, 'summary');
 };

@@ -36,12 +36,12 @@ const StyledRemoveIcon = styled.div`
 
 export const MISelect = styled((props: SelectProps & { width?: number | string; height?: number; name?: string }): JSX.Element => {
     const { t } = useTranslation('lib');
-    const { size, ...restProps } = props;
+    const { size, dropdownMatchSelectWidth, ...restProps } = props;
     return <Select
         suffixIcon={<StyledSuffixIcon />}
         removeIcon={<StyledRemoveIcon />}
         placeholder={t('No data')}
-        dropdownMatchSelectWidth={false}
+        dropdownMatchSelectWidth={dropdownMatchSelectWidth ?? false}
         notFoundContent={<NoDataContent>{t('No data')}</NoDataContent>}
         {...restProps}
     />;

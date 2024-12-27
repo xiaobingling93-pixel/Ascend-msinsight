@@ -12,9 +12,7 @@ import { notNull, getPageConfigWithPageData } from '../Common';
 import { queryCommunicationDetail, queryComputeDetail, querySummaryStatistics } from '../../utils/RequestUtils';
 import { ResizeTable } from 'ascend-resize';
 import type { Session } from '../../entity/session';
-import { type AdviceInfo } from './ComputationCommunicationOverview';
 import CollapsiblePanel from 'ascend-collapsible-panel';
-import { Advice } from 'ascend-utils';
 
 const useComputingStatisticsColumns = (): ColumnsType => {
     const { t } = useTranslation('summary');
@@ -226,18 +224,29 @@ const serachData = async({ rankId, record, page, sorter, name, step }: any): Pro
         step: step === 'All' ? '' : step,
     };
     if (name === 'computeDetail') {
-        const res = await queryComputeDetail(param);
-        data = res?.computeDetails ?? [];
+        try {
+            const res = await queryComputeDetail(param);
+            data = res?.computeDetails ?? [];
+            total = res.totalNum;
+        } catch (e) {
+            data = [];
+            total = 0;
+        }
+
         data = data.map((item: any) => ({
             ...item,
             duration: Number(item.duration?.toFixed(4)),
             waitTime: Number(item.waitTime?.toFixed(4)),
         }));
-        total = res.totalNum;
     } else {
-        const res = await queryCommunicationDetail(param);
-        data = res?.communicationDetails ?? [];
-        total = res?.totalNum ?? 0;
+        try {
+            const res = await queryCommunicationDetail(param);
+            data = res?.communicationDetails ?? [];
+            total = res?.totalNum ?? 0;
+        } catch (e) {
+            data = [];
+            total = 0;
+        }
     }
     return { data, total };
 };
@@ -296,14 +305,18 @@ export const ComputeStatisticsTable = (props: any): JSX.Element => {
         setExpandedKeys([]);
     }, [props.rankId, props.step]);
     const updateData = async (): Promise<void> => {
-        const res = await querySummaryStatistics({ timeFlag, rankId, stepId: step === 'All' ? '' : step });
-        let data = res?.summaryStatisticsItemList ?? [];
-        data = data.map((item: any) => ({
-            ...item,
-            duration: Number(item.duration.toFixed(4)),
-            utilization: Number(item.utilization.toFixed(4)),
-        }));
-        setDataSource(data);
+        try {
+            const res = await querySummaryStatistics({ timeFlag, rankId, stepId: step === 'All' ? '' : step });
+            let data = res?.summaryStatisticsItemList ?? [];
+            data = data.map((item: any) => ({
+                ...item,
+                duration: Number(item.duration.toFixed(4)),
+                utilization: Number(item.utilization.toFixed(4)),
+            }));
+            setDataSource(data);
+        } catch (e) {
+            setDataSource([]);
+        }
     };
 
     return <ResizeTable
@@ -331,8 +344,14 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
         setExpandedKeys([]);
     }, [props.rankId, props.step]);
     const updateData = async (): Promise<void> => {
-        const res = await querySummaryStatistics({ timeFlag, rankId, stepId: step === 'All' ? '' : step });
-        const list: any[] = res?.summaryStatisticsItemList ?? [];
+        let list: any[] = [];
+        try {
+            const res = await querySummaryStatistics({ timeFlag, rankId, stepId: step === 'All' ? '' : step });
+            list = res?.summaryStatisticsItemList ?? [];
+        } catch (e) {
+            list = [];
+        }
+
         const data = {
             acceleratorCore: 'HCCL',
             overlapped: list.find(item => item.overlapType === 'Communication(Overlapped)')?.duration,
@@ -355,28 +374,12 @@ export const CommunicationStatisticsTable = (props: any): JSX.Element => {
     />;
 };
 
-const AdviceLabel = (props: {advice: AdviceInfo}): JSX.Element => {
-    const { t } = useTranslation('summary');
-    const { advice } = props;
-    let adviceText = '';
-    for (const [key, value] of Object.entries(advice)) {
-        const capitalKey = key.charAt(0).toUpperCase() + key.slice(1);
-        if (value !== 0) {
-            adviceText += t('SummaryAdvice', { type: t(capitalKey), time: value });
-        }
-    }
-    return (<Advice text={adviceText}/>);
-};
-
-const StatisticsTable = (props: {step: string; rankId: string;session: Session; advice: AdviceInfo}): JSX.Element => {
-    const { rankId = '', step = '', session, advice } = props;
+export const StatisticsTable = (props: {step: string; rankId: string;session: Session }): JSX.Element => {
+    const { rankId = '', step = '', session } = props;
     const { t } = useTranslation('summary');
     return notNull(rankId) && session.unitcount > 0
         ? (
             <div>
-                {advice.communication + advice.compute + advice.free !== 0 &&
-                    <AdviceLabel advice={advice} />
-                }
                 <div style={{ marginBottom: '20px' }}>
                     <CollapsiblePanel
                         secondary
@@ -411,4 +414,3 @@ const StatisticsTable = (props: {step: string; rankId: string;session: Session; 
         : <></>
     ;
 };
-export default StatisticsTable;
