@@ -304,12 +304,16 @@ void MegatronParallelStrategyAlgorithm::GetConnections(Element &curEle)
         // 求dp连接
         AddConnection(data.connections, DP_PARA, dpLen, cpLen, curEle);
         // 求pp连接
-        AddConnection(data.connections, PP_PARA, data.size - curEle.index, dpLen, curEle);
+        if (dimension == DIMENSIONS_TP) {
+            AddConnection(data.connections, PP_PARA, data.size - curEle.index, dpLen, curEle);
+        }
         return;
     } else {
         uint32_t ppLen = cpLen * paraDetailsMap[PP_PARA].size;
         // 求pp连接
-        AddConnection(data.connections, PP_PARA, ppLen, cpLen, curEle);
+        if (dimension == DIMENSIONS_TP) {
+            AddConnection(data.connections, PP_PARA, ppLen, cpLen, curEle);
+        }
         // 求dp连接
         AddConnection(data.connections, DP_PARA, data.size - curEle.index, ppLen, curEle);
     }
