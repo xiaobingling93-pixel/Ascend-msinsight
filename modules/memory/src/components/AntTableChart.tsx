@@ -284,7 +284,7 @@ export const AntTableChart: React.FC<IProps> = (props) => {
     );
 };
 
-const pagination: TablePaginationConfig = {
+let pagination: TablePaginationConfig = {
     defaultCurrent: 1,
     defaultPageSize: 10,
     pageSizeOptions: ['10', '20', '30', '50', '100'],
@@ -338,7 +338,7 @@ export const TableByComponent = ({ session }: { session: Session }): JSX.Element
         getTableData();
     }, [memorySession?.rankIdCondition.value, session.compareRank.isCompare]);
     useEffect(() => {
-        pagination.total = response.totalNum;
+        pagination = { ...pagination, total: response.totalNum };
         setColumns(getTableColumns(response.columnAttr, theme, t, session.compareRank.isCompare, setExpandedKeys) as TableColumnsType<ComponentMemory>);
         setTableData(handleOperatorDetails(response.componentDetail, session.compareRank.isCompare, t));
     }, [response, session.language]);
