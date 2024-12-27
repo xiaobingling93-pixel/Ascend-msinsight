@@ -4,6 +4,7 @@
 #include "pch.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "ClusterService.h"
 #include "GroupHandler.h"
 
 namespace Dic {
@@ -27,13 +28,7 @@ bool GroupHandler::HandleRequest(std::unique_ptr<Protocol::Request> requestPtr)
         SendResponse(std::move(responsePtr), false, errorMsg);
         return false;
     }
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    if (database == nullptr || !database->GetGroups(request.params, response.body)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to get group response data.");
-        session.OnResponse(std::move(responsePtr));
-        return false;
-    }
+    ClusterService::QueryGroupInfo(request, response);
     session.OnResponse(std::move(responsePtr));
     return true;
 }

@@ -101,7 +101,14 @@ TEST_F(CommunicationProtocolRequestTest, DurationListParamsTest)
 
 TEST_F(CommunicationProtocolRequestTest, MatrixGroupParamTest)
 {
-    Dic::Protocol::MatrixGroupParam param1 = {";"};
+    Dic::Protocol::MatrixGroupParam param1 = {";", "1"};
+    std::string msg;
+    EXPECT_EQ(param1.CheckParams(msg), false);
+}
+
+TEST_F(CommunicationProtocolRequestTest, MatrixGroupParamTestBaselineStepError)
+{
+    Dic::Protocol::MatrixGroupParam param1 = {"1", ";"};
     std::string msg;
     EXPECT_EQ(param1.CheckParams(msg), false);
 }

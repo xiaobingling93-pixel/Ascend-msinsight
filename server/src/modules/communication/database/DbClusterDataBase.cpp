@@ -139,12 +139,12 @@ bool DbClusterDataBase::GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
     return ExecuteGetRankAndBubble(param, std::move(stageIds), responseBody, std::move(sql));
 }
 
-bool DbClusterDataBase::GetGroups(Protocol::MatrixGroupParam &param, Protocol::MatrixGroupResponseBody &responseBody)
+bool DbClusterDataBase::GetGroups(const std::string &iterationId, std::vector<std::string> &groupList)
 {
     std::string sql = "SELECT DISTINCT m.rank_set as rank FROM " + TABLE_COMM_ANALYZER_MATRIX + " t"
                       " LEFT JOIN " + TABLE_COMM_GROUP + " m ON m.group_name = t.group_name";
 
-    return ExecuteGetGroups(param, responseBody, sql);
+    return ExecuteGetGroups(iterationId, groupList, sql);
 }
 
 bool DbClusterDataBase::QueryMatrixList(Protocol::MatrixBandwidthParam &param,

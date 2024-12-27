@@ -226,8 +226,8 @@ bool VirtualClusterDatabase::ExecuteGetRankAndBubble(const Protocol::PipelineRan
     return true;
 }
 
-bool VirtualClusterDatabase::ExecuteGetGroups(Protocol::MatrixGroupParam param,
-    Protocol::MatrixGroupResponseBody &responseBody, std::string sql)
+bool VirtualClusterDatabase::ExecuteGetGroups(const std::string &iterationId,
+    std::vector<std::string> &groupList, std::string sql)
 {
     sqlite3_stmt *stmt = nullptr;
     int index = bindStartIndex;
@@ -235,11 +235,11 @@ bool VirtualClusterDatabase::ExecuteGetGroups(Protocol::MatrixGroupParam param,
         ServerLog::Error("Failed to prepare get groups statement. error:", sqlite3_errmsg(db));
         return false;
     }
-    sqlite3_bind_text(stmt, index, param.iterationId.c_str(), param.iterationId.length(), SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, index, iterationId.c_str(), iterationId.length(), SQLITE_TRANSIENT);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int col = resultStartIndex;
         std::string res = sqlite3_column_string(stmt, col++);
-        responseBody.groupList.emplace_back(res);
+        groupList.emplace_back(res);
     }
     sqlite3_finalize(stmt);
     return true;

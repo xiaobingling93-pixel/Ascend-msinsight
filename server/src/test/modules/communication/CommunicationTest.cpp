@@ -177,14 +177,13 @@ TEST_F(TestSuit, QueryOperatorsCount)
 TEST_F(TestSuit, GetCommunicationGroups)
 {
     auto database = Dic::Module::Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    Dic::Protocol::MatrixGroupParam requestParams;
-    Dic::Protocol::MatrixGroupResponseBody responseBody;
-    requestParams.iterationId = "2";
-    database->GetGroups(requestParams, responseBody);
+    std::string iterationId = "2";
+    std::vector<std::string> groupList;
+    database->GetGroups(iterationId, groupList);
     int expectSize = 2;
-    EXPECT_EQ(responseBody.groupList.size(), expectSize);
-    EXPECT_EQ(responseBody.groupList[0], "p2p");
-    EXPECT_EQ(responseBody.groupList[1], "(0, 1, 2, 3, 4, 5, 6, 7)");
+    EXPECT_EQ(groupList.size(), expectSize);
+    EXPECT_EQ(groupList[0], "p2p");
+    EXPECT_EQ(groupList[1], "(0, 1, 2, 3, 4, 5, 6, 7)");
 }
 
 TEST_F(TestSuit, QueryMatrixData)

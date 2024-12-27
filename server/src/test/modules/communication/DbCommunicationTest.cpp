@@ -193,13 +193,12 @@ TEST_F(DbCommunicationTest, QueryOperatorsCount)
 TEST_F(DbCommunicationTest, GetCommunicationGroups)
 {
     auto database = DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    Dic::Protocol::MatrixGroupParam requestParams;
-    Dic::Protocol::MatrixGroupResponseBody responseBody;
-    requestParams.iterationId = "1";
-    database->GetGroups(requestParams, responseBody);
+    std::string iterationId = "1";
+    std::vector<std::string> groupList;
+    database->GetGroups(iterationId, groupList);
     int expectSize = 1;
-    EXPECT_EQ(responseBody.groupList.size(), expectSize);
-    EXPECT_EQ(responseBody.groupList[0], "(0,1,2,3,4,5,6,7)");
+    EXPECT_EQ(groupList.size(), expectSize);
+    EXPECT_EQ(groupList[0], "(0,1,2,3,4,5,6,7)");
 }
 
 TEST_F(DbCommunicationTest, QueryMatrixData)

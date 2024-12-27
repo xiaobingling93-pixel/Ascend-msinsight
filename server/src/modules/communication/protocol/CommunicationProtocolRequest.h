@@ -153,6 +153,7 @@ struct RanksRequest  : public Request {
 };
 
 struct IterationsParams {
+    bool isCompare = false;
 };
 
 struct IterationsRequest  : public Request {
@@ -245,11 +246,17 @@ struct DurationListRequest  : public Request {
 
 struct MatrixGroupParam {
     std::string iterationId;
+    std::string baselineIterationId;
+    bool isCompare = false;
     bool CheckParams(std::string &errorMsg) const
     {
         std::string paramError;
         if (!CheckStrParamValidEmptyAllowed(this->iterationId, paramError)) {
             errorMsg = "[Communication] Failed to check iteration id." + paramError;
+            return false;
+        }
+        if (!CheckStrParamValidEmptyAllowed(this->baselineIterationId, paramError)) {
+            errorMsg = "[Communication] Failed to check baseline iteration id." + paramError;
             return false;
         }
         return true;

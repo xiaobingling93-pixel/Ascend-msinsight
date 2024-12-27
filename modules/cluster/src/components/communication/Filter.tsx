@@ -97,8 +97,8 @@ Promise<{condition: ConditionDataType;optionMap: optionMapDataType}> => {
 
 // 下拉可选项
 const getiterationOptions = async(): Promise<optionDataType[]> => {
-    const res: {iterationOrRankId: string[] } = await queryIterations();
-    const list: string[] = res?.iterationOrRankId ?? [];
+    const res: {iterationOrRankId: {compare: string[]} } = await queryIterations();
+    const list: string[] = res?.iterationOrRankId.compare ?? [];
     const options: optionDataType[] = list.map(item => ({ value: item, label: item }));
     return options;
 };
@@ -149,16 +149,16 @@ function compareStageInfo(stageA: string, stageB: string): number {
 }
 
 const getStageOptions = async (iterationId: string, session: Session): Promise<optionDataType[]> => {
-    const res: {data: string[] } = await queryStages({ iterationId });
+    const res: {data: [{group: string}] } = await queryStages({ iterationId });
     const list = res?.data ?? [];
     const modes = session.communicatorData.partitionModes;
     const options: optionDataType[] = list
         .map(item => {
             // 如果stage是由数字组成，则对数据进行重排序，否则不做任何处理（p2p的情况）
-            const stageAfterSort = isNumberPairsFormat(item) ? toSortedStage(item) : item;
+            const stageAfterSort = isNumberPairsFormat(item.group) ? toSortedStage(item.group) : item.group;
             const strategy = getParallelStrategyByStage(modes, stageAfterSort);
             const label = strategy.length === 0 ? stageAfterSort : `${strategy}:${stageAfterSort}`;
-            return { value: item, strategy, label, stageAfterSort };
+            return { value: item.group, strategy, label, stageAfterSort };
         })
         .sort((a, b) => {
             // 存在并行策略的排在前面

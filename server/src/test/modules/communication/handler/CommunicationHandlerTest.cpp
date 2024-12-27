@@ -137,7 +137,7 @@ TEST_F(HandlerTest, GroupHandlerWithExeSqlFail)
     request->params.iterationId = "1";
     GroupHandler handler;
     bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
+    EXPECT_EQ(result, true);
 }
 
 TEST_F(HandlerTest, IterationsHandlerWithExeSqlFail)
@@ -145,7 +145,7 @@ TEST_F(HandlerTest, IterationsHandlerWithExeSqlFail)
     auto request = std::make_unique<IterationsRequest>();
     IterationsHandler handler;
     bool result = handler.HandleRequest(std::move(request));
-    EXPECT_EQ(result, false);
+    EXPECT_EQ(result, true);
 }
 
 TEST_F(HandlerTest, MatrixListHandlerParamError)

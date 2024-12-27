@@ -562,10 +562,10 @@ bool TextClusterDatabase::GetRankAndBubble(Protocol::PipelineRankTimeParam &para
     return ExecuteGetRankAndBubble(param, std::move(stageIds), responseBody, std::move(sql));
 }
 
-bool TextClusterDatabase::GetGroups(Protocol::MatrixGroupParam &param, Protocol::MatrixGroupResponseBody &responseBody)
+bool TextClusterDatabase::GetGroups(const std::string &iterationId, std::vector<std::string> &groupList)
 {
     std::string sql = "SELECT DISTINCT group_id as groupId FROM " + TABLE_GROUP_ID;
-    return ExecuteGetGroups(param, responseBody, sql);
+    return ExecuteGetGroups(iterationId, groupList, sql);
 }
 
 std::unordered_map<std::string, int64_t> TextClusterDatabase::GetAllGroupMap()

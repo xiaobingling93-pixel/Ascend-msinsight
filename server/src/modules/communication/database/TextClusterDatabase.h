@@ -50,7 +50,7 @@ public:
                            Protocol::PipelineStageOrRankTimeResponseBody &responseBody) override;
     bool GetRankAndBubble(Protocol::PipelineRankTimeParam &param,
                           Protocol::PipelineStageOrRankTimeResponseBody &responseBody) override;
-    bool GetGroups(Protocol::MatrixGroupParam &param, Protocol::MatrixGroupResponseBody &responseBody) override;
+    bool GetGroups(const std::string &iterationId, std::vector<std::string> &groupList) override;
     bool QueryMatrixList(Protocol::MatrixBandwidthParam &param,
                          Protocol::MatrixListResponseBody &responseBody) override;
     bool QueryAllOperators(Protocol::OperatorDetailsParam &param, Protocol::OperatorDetailsResBody &resBody) override;

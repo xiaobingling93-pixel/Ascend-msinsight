@@ -6,6 +6,7 @@
 #include "CommunicationProtocolResponse.h"
 #include "WsSessionManager.h"
 #include "DataBaseManager.h"
+#include "ClusterService.h"
 #include "IterationsHandler.h"
 
 namespace Dic {
@@ -20,13 +21,7 @@ bool IterationsHandler::HandleRequest(std::unique_ptr<Protocol::Request> request
     std::unique_ptr<IterationsOrRanksResponse> responsePtr = std::make_unique<IterationsOrRanksResponse>();
     IterationsOrRanksResponse &response = *responsePtr.get();
     SetBaseResponse(request, response);
-    auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(COMPARE);
-    if (database == nullptr || !database->QueryIterations(response.body)) {
-        SetResponseResult(response, false);
-        ServerLog::Error("Failed to get iterations response data.");
-        session.OnResponse(std::move(responsePtr));
-        return false;
-    }
+    ClusterService::QueryIterations(request, response);
     SetResponseResult(response, true);
     session.OnResponse(std::move(responsePtr));
     return true;

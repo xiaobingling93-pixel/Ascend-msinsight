@@ -5,7 +5,7 @@
 #ifndef PROFILER_SERVER_COLLECTIONUTIL_H
 #define PROFILER_SERVER_COLLECTIONUTIL_H
 #include <vector>
-#include <set>
+#include <unordered_set>
 
 namespace Dic {
 class CollectionUtil {
@@ -33,6 +33,21 @@ public:
             }
         }
 
+        return result;
+    }
+
+    template <typename T>
+    static inline std::vector<T> CalIntersection(const std::vector<T>& vec1, const std::vector<T>& vec2)
+    {
+        std::unordered_set<T> set1(vec1.begin(), vec1.end());
+        std::vector<T> result;
+
+        for (const auto &item: vec2) {
+            if (set1.count(item) > 0) {
+                result.push_back(item);
+                set1.erase(item);
+            }
+        }
         return result;
     }
 };

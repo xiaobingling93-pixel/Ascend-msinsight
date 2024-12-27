@@ -90,7 +90,7 @@ struct IterationsOrRanksObject {
 
 struct IterationsOrRanksResponse : public Response {
     IterationsOrRanksResponse() : Response(REQ_RES_COMMUNICATION_ITERATIONS) {}
-    std::vector<IterationsOrRanksObject> body;
+    CompareData<std::vector<IterationsOrRanksObject>> body;
 };
 
 struct RanksResponse : public Response {
@@ -179,8 +179,14 @@ struct MatrixListResponse : public Response {
     MatrixListResponseBody body;
 };
 
+struct GroupInfo {
+    std::string group;
+    std::string parallelStrategy;
+    std::string type;
+};
+
 struct MatrixGroupResponseBody {
-    std::vector<std::string> groupList;
+    std::vector<GroupInfo> groupList;
 };
 
 struct MatrixGroupResponse : public Response {

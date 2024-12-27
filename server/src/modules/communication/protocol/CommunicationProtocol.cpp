@@ -114,6 +114,8 @@ std::unique_ptr<Request> CommunicationProtocol::ToMatrixGroupRequest(const json_
         return nullptr;
     }
     JsonUtil::SetByJsonKeyValue(reqPtr->params.iterationId, json["params"], "iterationId");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.baselineIterationId, json["params"], "baselineIterationId");
     return reqPtr;
 }
 
@@ -137,6 +139,7 @@ std::unique_ptr<Request> CommunicationProtocol::ToIterationsRequest(const json_t
         error = "Failed to set request base info of iterations request.";
         return nullptr;
     }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], "isCompare");
     return reqPtr;
 }
 

@@ -91,6 +91,16 @@ std::optional<document_t> ToResponseJson<CommunicatorGroupResponse>(const Commun
     return std::move(json);
 }
 
+std::optional<document_t> IterOrRanksInfoToJson(const std::vector<IterationsOrRanksObject> &objs,
+                                                Document::AllocatorType &allocator)
+{
+    document_t iterationIdList(kArrayType);
+    for (const IterationsOrRanksObject& ranksObject : objs) {
+        iterationIdList.PushBack(json_t().SetString(ranksObject.iterationOrRankId.c_str(), allocator), allocator);
+    }
+    return std::move(iterationIdList);
+}
+
 template <>
 std::optional<document_t> ToResponseJson<IterationsOrRanksResponse>(const IterationsOrRanksResponse &response)
 {
@@ -98,10 +108,11 @@ std::optional<document_t> ToResponseJson<IterationsOrRanksResponse>(const Iterat
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
-    json_t iterationOrRankId(kArrayType);
-    for (const IterationsOrRanksObject& ranksObject : response.body) {
-        iterationOrRankId.PushBack(json_t().SetString(ranksObject.iterationOrRankId.c_str(), allocator), allocator);
-    }
+    json_t iterationOrRankId(kObjectType);
+    auto compareData = IterOrRanksInfoToJson(response.body.compare, allocator);
+    JsonUtil::AddMember(iterationOrRankId, "compare", compareData, allocator);
+    auto baselineData = IterOrRanksInfoToJson(response.body.baseline, allocator);
+    JsonUtil::AddMember(iterationOrRankId, "baseline", baselineData, allocator);
     JsonUtil::AddMember(body, "iterationOrRankId", iterationOrRankId, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
     return std::move(json);
@@ -226,8 +237,12 @@ template <> std::optional<document_t> ToResponseJson<MatrixGroupResponse>(const 
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
     json_t data(kArrayType);
-    for (const std::string &action : response.body.groupList) {
-        data.PushBack(json_t().SetString(action.c_str(), allocator), allocator);
+    for (const GroupInfo &groupInfo : response.body.groupList) {
+        json_t groupJson(kObjectType);
+        JsonUtil::AddMember(groupJson, "group", groupInfo.group, allocator);
+        JsonUtil::AddMember(groupJson, "parallelStrategy", groupInfo.parallelStrategy, allocator);
+        JsonUtil::AddMember(groupJson, "type", groupInfo.type, allocator);
+        data.PushBack(groupJson, allocator);
     }
     JsonUtil::AddMember(body, "data", data, allocator);
     JsonUtil::AddMember(json, "body", body, allocator);
