@@ -162,7 +162,7 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
             series,
         });
         setChartOptions(options);
-    }, [datasource]);
+    }, [datasource, session.indicatorList]);
 
     useEffect(() => {
         const filteredData = filterData(session.performanceData, session.performanceDataMap);
