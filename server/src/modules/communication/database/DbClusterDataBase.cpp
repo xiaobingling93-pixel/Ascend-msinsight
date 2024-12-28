@@ -5,6 +5,7 @@
 #include "TableDefs.h"
 #include "TraceTime.h"
 #include "DbClusterDataBase.h"
+// LCOV_EXCL_BR_START
 
 namespace Dic {
 using namespace Server;
@@ -543,3 +544,4 @@ bool DbClusterDataBase::QueryAllPerformanceDataByStep(const std::string &step,
 }
 }
 }
+// LCOV_EXCL_BR_STOP

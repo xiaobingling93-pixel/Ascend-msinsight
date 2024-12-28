@@ -16,6 +16,7 @@
 #include "QueryParallelismPerformanceHandler.h"
 #include "StageHandler.h"
 #include "StepHandler.h"
+#include "SummaryTopRankHandler.h"
 
 using namespace Dic::Module;
 using namespace Dic::Module::Summary;
@@ -229,6 +230,15 @@ TEST_F(HandlerTest, StepHandlerWithExecuteSqlFail)
 {
     auto request = std::make_unique<PipelineStepRequest>();
     StepHandler handler;
+    bool result = handler.HandleRequest(std::move(request));
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(HandlerTest, SummaryTopRankHandlerWithCheckDbIsNull)
+{
+    auto request = std::make_unique<SummaryTopRankRequest>();
+    request->params.orderBy = "";
+    SummaryTopRankHandler handler;
     bool result = handler.HandleRequest(std::move(request));
     EXPECT_EQ(result, false);
 }

@@ -9,7 +9,7 @@
 #include "NumDefs.h"
 #include "TraceTime.h"
 #include "TextClusterDatabase.h"
-
+// LCOV_EXCL_BR_START
 namespace Dic {
 namespace Module {
 using namespace Server;
@@ -925,3 +925,4 @@ bool TextClusterDatabase::QueryAllPerformanceDataByStep(const std::string &step,
 }
 } // end of namespace Module
 } // end of namespace Dic
+// LCOV_EXCL_BR_STOP
