@@ -73,6 +73,10 @@ const resetStatus = (): void => {
         session.allRankIds = [];
         session.communicatorData = { partitionModes: [], defaultPPSize: 0 };
         session.activeCommunicator = undefined;
+        session.indicatorList = [];
+        session.performanceData = [];
+        session.communicationDomains = [];
+        session.stepList = [];
     });
 };
 

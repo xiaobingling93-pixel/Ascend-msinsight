@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { queryParallelismArrangement } from '../../utils/RequestUtils';
 import { ParallelismArrangementResult } from '../../utils/interface';
 import { Session } from '../../entity/session';
@@ -49,14 +49,16 @@ const Loading = styled.div`
 
 interface UseFetchDataReturns {
     loading: boolean;
+    isUpdated: MutableRefObject<boolean>;
     data?: ParallelismArrangementResult;
     error?: Error;
 }
 
 const useFetchData = (params: GenerateConditions | null): UseFetchDataReturns => {
     const [data, setData] = useState<ParallelismArrangementResult>();
-    const [loading, setLoading] = useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error>();
+    const isUpdated = useRef(false);
 
     const fetchData = async (): Promise<void> => {
         if (params === null) {
@@ -66,6 +68,7 @@ const useFetchData = (params: GenerateConditions | null): UseFetchDataReturns =>
         try {
             setLoading(true);
             const res = await queryParallelismArrangement(params);
+            isUpdated.current = !isUpdated.current;
             setData(res);
         } catch (err) {
             setError(err as Error);
@@ -81,7 +84,7 @@ const useFetchData = (params: GenerateConditions | null): UseFetchDataReturns =>
         }
     }, [JSON.stringify(params)]);
 
-    return { data, loading, error };
+    return { data, loading, error, isUpdated };
 };
 
 interface ParallelismGraphProps {
@@ -99,7 +102,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
     const [responsiveSize, setResponsiveSize] = useState({ width: 0, height: 0 });
     const { parallelTypeList, dyeingMode, dyeingStep, reset: resetParallelSwitchConditions } = useParallelSwitchConditions();
     const theme = useTheme();
-    const { data, loading } = useFetchData(generateConditions);
+    const { data, loading, isUpdated } = useFetchData(generateConditions);
     const { tpSize = 1, dpSize = 1, cpSize = 1, epSize = 1, ppSize = 1 } = generateConditions ?? {};
 
     const canvasSize = useMemo(() => {
@@ -196,7 +199,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
     };
 
     useEffect(() => {
-        if (!loading && canvasRef.current && data !== undefined) {
+        if (canvasRef.current && data !== undefined) {
             const drawer = new CanvasDrawer(canvasRef);
             setCanvasDrawer(drawer);
             addRectangles(drawer);
@@ -219,7 +222,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
             setActiveRectIndex(null);
             resetParallelSwitchConditions();
         }
-    }, [loading]);
+    }, [isUpdated.current]);
 
     useEffect(() => {
         if (data !== undefined && canvasDrawer !== null) {
