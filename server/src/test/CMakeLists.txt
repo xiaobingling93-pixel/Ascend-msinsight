@@ -76,7 +76,7 @@ list(APPEND DIC_PERFORMANCE_TEST_LIST
 add_executable(insight_test ${DIC_TEST_LIST} modules/summary/SummaryTest.cpp modules/summary/MockTraceDatabase.h TestSuit.cpp
         FullDbTestSuit.cpp modules/timeline/handler/HandlerTest.cpp modules/timeline/protocol/ProtocolTest.cpp
         modules/timeline/database/DatabaseTest.cpp
-        ../utils/NumberSafeUtil.h
+        ../../msinsight/include/utils/NumberSafeUtil.h
         utils/NumberSafeUtilTest.cpp)
 target_include_directories(insight_test PUBLIC ${HOME_DIR}/src/protocol)
 add_executable(insight_performance ${DIC_PERFORMANCE_TEST_LIST})

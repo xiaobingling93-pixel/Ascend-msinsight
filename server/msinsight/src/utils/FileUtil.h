@@ -18,6 +18,7 @@
 #include "ServerLog.h"
 #include "FileDef.h"
 #include "StringUtil.h"
+#include "Status.h"
 
 #if defined(_WIN32)
 #include <filesystem>
@@ -532,12 +533,6 @@ public:
                                 const std::regex &jsonRegex, const std::regex &dbRegex);
     static std::vector<std::string> FindFirstByRegex(const std::string &path, int depth, const std::regex &fileRegex);
 
-    static std::ifstream OpenReadFileSafely(const std::string &path, std::ios::openmode mode = std::ios::in);
-
-    static std::ifstream OpenFileStreamSafely(const std::string &path, std::ios::openmode mode);
-
-    static std::ifstream OpenWriteFileSafely(const std::string &path, std::ios::openmode mode = std::ios::out);
-
     static bool CheckFileSize(const std::string &filePath);
 
     /**
@@ -548,7 +543,7 @@ public:
     /**
     * @brief 检查路径的基本安全项： 1.绝对路径校验 2.软链接校验 3.路径长度校验 4.非法字符校验 6.文件属主校验（文件属主) 7.权限校验
     */
-    static bool CheckPathBasic(const std::string &filePath, fs::perms = fs::perms::none);
+    static Status CheckPathBasic(const std::string &filePath, fs::perms = fs::perms::none);
 
     /**
     * @brief 检查文件属主
@@ -558,7 +553,7 @@ public:
     /**
     * @brief 检查文件权限，后续替换现有实现
     */
-    static bool CheckPathPermission(const std::string &filePath, fs::perms);
+    static bool CheckPathPermission(const std::string &filePath, fs::perms permission);
 };
 } // end of namespace Dic
 #endif // DATA_INSIGHT_CORE_FILEUTIL_H

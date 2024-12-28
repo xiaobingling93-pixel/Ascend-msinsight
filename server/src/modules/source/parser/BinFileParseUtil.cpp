@@ -5,6 +5,7 @@
 #include "BinFileParseUtil.h"
 #include "ServerLog.h"
 #include "FileUtil.h"
+#include "NumberSafeUtil.h"
 
 namespace Dic::Module::Source {
 using namespace Dic::Server;
@@ -20,7 +21,7 @@ std::string BinFileParseUtil::GetContentStr(std::ifstream& file, const Position&
             start, end);
         return "";
     }
-    int64_t dataSize = end - start;
+    int64_t dataSize = NumberSafe::Sub(end, start);
     if (IsDataSizeExceedUpperLimit(dataSize, maxSize)) {
         ServerLog::Error("Data size of content exceeds % bytes when get content string from bin file", maxSize);
         return "";

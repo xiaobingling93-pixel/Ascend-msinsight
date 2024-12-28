@@ -154,7 +154,7 @@ void InterCoreLoadGraphParser::TransformAnalysisDetail(InterCoreLoadAnalysisDeta
     uint8_t index = 0;
     // 按照2个一组，将vector计算单元，分配到新的core op detail中
     while (index < analysisDetail.opDetails.size()) {
-        uint8_t coreId = index / 2;
+        uint8_t coreId = NumberSafe::Division(index, 2);
         InterCoreOpDetail detail;
         detail.coreId = coreId;
         Try2MoveSubCoreDetails(analysisDetail.opDetails[index], detail, SUB_CORE_INDEX_0);

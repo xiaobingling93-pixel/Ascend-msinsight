@@ -374,11 +374,12 @@ std::vector<DetailsInterCoreLoadSubCoreDetail> DetailsService::MergeCoreDetail(
         }
         DetailsInterCoreLoadSubCoreDetail &detail = coreDetailMap[item.subCoreName];
         detail.cycles.value.baseline = item.cycles.value.compare;
-        detail.cycles.value.diff = item.cycles.value.compare - detail.cycles.value.baseline;
+        detail.cycles.value.diff = NumberSafe::Sub(item.cycles.value.compare, detail.cycles.value.baseline);
         detail.throughput.value.baseline = item.throughput.value.compare;
-        detail.throughput.value.diff = item.throughput.value.compare - detail.throughput.value.baseline;
+        detail.throughput.value.diff = NumberSafe::Sub(item.throughput.value.compare, detail.throughput.value.baseline);
         detail.cacheHitRate.value.baseline = item.cacheHitRate.value.compare;
-        detail.cacheHitRate.value.diff = item.cacheHitRate.value.compare - detail.cacheHitRate.value.baseline;
+        detail.cacheHitRate.value.diff = NumberSafe::Sub(item.cacheHitRate.value.compare,
+                                                         detail.cacheHitRate.value.baseline);
     }
     std::vector<DetailsInterCoreLoadSubCoreDetail> result;
     result.reserve(coreDetailMap.size());

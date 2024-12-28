@@ -431,7 +431,6 @@ int FileUtil::FindDbOrJsonType(const std::string &path, int depth,
     return 0;
 }
 
-
 // 递归查找函数
 std::vector<std::string> FileUtil::FindFirstByRegex(const std::string &path, int depth, const std::regex &fileRegex)
 {
@@ -462,34 +461,6 @@ std::vector<std::string> FileUtil::FindFirstByRegex(const std::string &path, int
         }
     }
     return matchedFiles;
-}
-
-std::ifstream FileUtil::OpenWriteFileSafely(const std::string &path, std::ios::openmode mode)
-{
-    return OpenFileStreamSafely(path, mode | std::ios::out);
-}
-
-std::ifstream FileUtil::OpenFileStreamSafely(const std::string &path, std::ios::openmode mode)
-{
-    std::ifstream res;
-    res.setstate(std::ifstream::badbit);
-    std::string tmpPath = PathPreprocess(path);
-    tmpPath = GetAbsPath(tmpPath);
-    std::string filePath = tmpPath;
-    if ((mode & std::ios::out) != 0 && !fs::exists(filePath)) {
-        filePath = fs::path(tmpPath).parent_path().string();
-    }
-    // 读取文件和写入文件校验不同
-    if (!CheckPathBasic(filePath, (mode & std::ios::out) == 0 ? fs::perms::owner_read : fs::perms::owner_write)) {
-        return res;
-    }
-    if ((mode & std::ios::in) != 0) {
-        if (!CheckFileSize(filePath)) {
-            return res;
-        }
-    }
-    res.open(tmpPath, mode);
-    return res;
 }
 
 bool FileUtil::CheckFileSize(const std::string &filePath)
@@ -613,39 +584,70 @@ bool FileUtil::CheckPathInvalidChar(const std::string &filePath)
     }
     return false;
 }
-bool FileUtil::CheckPathBasic(const std::string &filePath, fs::perms permission)
+Status FileUtil::CheckPathBasic(const std::string &filePath, fs::perms permission)
 {
+    Status s(true);
     if (filePath.empty()) {
-        Server::ServerLog::Error("The path is empty. ");
-        return false;
+        Server::ServerLog::Error("The path is empty. path:", filePath);
+        s.SetErr("The path is empty");
+        return s;
     }
     std::string absPath = GetAbsPath(filePath);
     if (absPath.empty()) {
-        Server::ServerLog::Error("Failed to retrieve the absolute path.");
-        return false;
+        Server::ServerLog::Error("Failed to retrieve the absolute path. path:", filePath);
+        s.SetErr("Failed to retrieve the absolute path.");
+        return s;
     }
     if (!CheckFilePathLength(absPath)) {
-        return false;
+        Server::ServerLog::Error("The file path exceed limit. path:", filePath);
+        s.SetErr("The file path exceed limit");
+        return s;
     }
     if (CheckPathInvalidChar(absPath)) {
-        return false;
+        Server::ServerLog::Error("The file path contains invalid char. path:", filePath);
+        s.SetErr("The path contains invalid character");
+        return s;
     }
-    if (!fs::exists(absPath)) {
-        return false;
+    try {
+        if (!fs::exists(absPath)) {
+            Server::ServerLog::Error("The file path not exist. path:", filePath);
+            s.SetErr("The file path not exist");
+            return s;
+        }
+        if (IsSoftLink(absPath)) {
+            Server::ServerLog::Error("The file path is soft link.path:", filePath);
+            s.SetErr("The file path is soft link");
+            return s;
+        }
+        // current dir
+        if (!CheckPathOwner(absPath)) {
+            Server::ServerLog::Error("The file path owner not current user.path:", filePath);
+            s.SetErr("The file path owner not current user");
+            return s;
+        }
+        // parent dir
+        std::string parentDir = fs::path(absPath).parent_path().string();
+        if (!parentDir.empty() && !CheckPathOwner(parentDir)) {
+            Server::ServerLog::Error("The parent file dir owner not right");
+            s.SetErr("The parent file dir owner not right");
+            return s;
+        }
+        if (!fs::is_directory(absPath) && !IsRegularFile(absPath)) {
+            Server::ServerLog::Error("The file is not regular file.path:", filePath);
+            s.SetErr("The file is not regular file");
+            return s;
+        }
+        if (permission != fs::perms::none && !CheckPathPermission(absPath, permission)) {
+            Server::ServerLog::Error("The file permission is not correct.path:", filePath);
+            s.SetErr("The file permission is not correct");
+            return s;
+        }
+    } catch (const fs::filesystem_error& e) {  // filesystem would throw exception sometimes
+        Server::ServerLog::Error("Basic file check failed by system exception (%s), path:(%s)", e.what(), filePath);
+        s.SetErr("Basic file check failed by system exception");
+        return s;
     }
-    if (IsSoftLink(absPath)) {
-        return false;
-    }
-    if (!CheckPathOwner(absPath)) {
-        return false;
-    }
-    if (!fs::is_directory(absPath) && !IsRegularFile(absPath)) {
-        return false;
-    }
-    if (permission != fs::perms::none) {
-        return CheckPathPermission(absPath, permission);
-    }
-    return true;
+    return s;
 }
 
 bool FileUtil::CheckPathOwner(const std::string &filePath)

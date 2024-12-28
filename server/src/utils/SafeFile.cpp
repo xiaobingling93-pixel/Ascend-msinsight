@@ -31,4 +31,34 @@ std::ifstream OpenReadFileSafely(const std::string &path, std::ios::openmode mod
     res.open(tmpPath, std::ios::in | mode);
     return res;
 }
+
+std::ifstream OpenWriteFileSafely(const std::string &path, std::ios::openmode mode)
+{
+    return OpenFileStreamSafely(path, mode | std::ios::out);
+}
+
+std::ifstream OpenFileStreamSafely(const std::string &path, std::ios::openmode mode)
+{
+    std::ifstream res;
+    res.setstate(std::ifstream::badbit);
+    std::string tmpPath = FileUtil::PathPreprocess(path);
+    tmpPath = FileUtil::GetAbsPath(tmpPath);
+    std::string filePath = tmpPath;
+    if ((mode & std::ios::out) != 0 && !fs::exists(filePath)) {
+        filePath = fs::path(tmpPath).parent_path().string();
+    }
+    // 读取文件和写入文件校验不同
+    if (!FileUtil::CheckPathBasic(filePath,
+                                  (mode & std::ios::out) == 0 ? fs::perms::owner_read : fs::perms::owner_write)) {
+        return res;
+    }
+    if ((mode & std::ios::in) != 0) {
+        if (!FileUtil::CheckFileSize(filePath)) {
+            return res;
+        }
+    }
+    res.open(tmpPath, mode);
+    return res;
+}
+
 }

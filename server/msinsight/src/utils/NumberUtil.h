@@ -11,6 +11,7 @@
 #include <iomanip>
 #include "cmath"
 #include "algorithm"
+#include "NumberSafeUtil.h"
 
 namespace Dic {
 const int INVALID_NUMBER = 0xffffffff;

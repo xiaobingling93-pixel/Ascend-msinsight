@@ -101,7 +101,7 @@ bool SourceFileParser::ParseDataBlocks(std::ifstream &file, long long fileSize,
                 ServerLog::Error("Source code data block in selected file is invalid which data size is :", dataSize);
                 return false;
             }
-            dataSize = dataSize + filePathLen;
+            dataSize = NumberSafe::Add(dataSize, filePathLen);
         }
 
         if (!file) {
@@ -120,7 +120,7 @@ bool SourceFileParser::ParseDataBlocks(std::ifstream &file, long long fileSize,
             ServerLog::Error("Data block in selected file is invalid which data size is :", dataSize);
             return false;
         }
-        int64_t endPos = startPos + dataSize - paddingLength;
+        int64_t endPos = NumberSafe::Sub(NumberSafe::Add(startPos, static_cast<int64_t>(dataSize)), paddingLength);
         if (startPos >= endPos) {
             ServerLog::Error("Data error: the start position is greater than the end position.");
             return false;
