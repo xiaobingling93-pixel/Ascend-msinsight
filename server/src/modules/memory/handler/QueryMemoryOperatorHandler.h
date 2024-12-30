@@ -19,7 +19,7 @@ public:
     };
     ~QueryMemoryOperatorHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
-    bool GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
+    static bool GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
         std::vector<MemoryOperator> &compareData, std::vector<MemoryOperator> &baselineData,
         MemoryOperatorRequest &request, std::string &errorMsg);
     void ExecuteComparisonAlgorithm(std::vector<MemoryOperator> &compareData, std::vector<MemoryOperator> &baselineData,

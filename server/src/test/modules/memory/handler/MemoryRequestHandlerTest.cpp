@@ -3,6 +3,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <mockcpp/mockcpp.hpp>
 #include <WsSessionManager.h>
 #include "WsSessionImpl.h"
 #include "QueryMemoryComponentHandler.h"
@@ -276,6 +277,26 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerComparisonGroupByStre
     requestPtr.get()->params.pageSize = defaultPageSize;
     requestPtr.get()->params.isCompare = true;
     ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerComparisonTestReturnFalse)
+{
+    const int64_t defaultPageSize = 10;
+    Dic::Module::Memory::QueryMemoryOperatorHandler handler;
+    MOCKER(&QueryMemoryOperatorHandler::GetRespectiveData).expects(once()).will(returnValue(false));
+    std::unique_ptr<Dic::Protocol::MemoryOperatorRequest> requestPtr =
+        std::make_unique<Dic::Protocol::MemoryOperatorRequest>();
+    requestPtr.get()->params.rankId = "0";
+    requestPtr.get()->params.type = "Overall";
+    requestPtr.get()->params.minSize = 0;
+    requestPtr.get()->params.maxSize = 0;
+    requestPtr.get()->params.startTime = 0.0;
+    requestPtr.get()->params.endTime = 0.0;
+    requestPtr.get()->params.currentPage = 1;
+    requestPtr.get()->params.pageSize = defaultPageSize;
+    requestPtr.get()->params.isCompare = true;
+    EXPECT_FALSE(handler.HandleRequest(std::move(requestPtr)));
+    GlobalMockObject::verify();
 }
 
 TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorHandlerGetOperatorDiffCompareEmptyTest)

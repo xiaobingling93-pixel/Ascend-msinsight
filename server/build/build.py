@@ -191,7 +191,7 @@ def init_log(name):
 
 def build_test(args):
     build_log('begin test build...\n')
-    generator = 'MinGW Makefiles' if IS_WINDOWS else 'Ninja'
+    generator = 'MinGW Makefiles' if IS_WINDOWS else 'Unix Makefiles'
     build_dir = os.path.join(CMAKE_BUILD_DIR, "test")
 
     if not os.path.exists(build_dir):

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(insight_server_test VERSION 0.1.0)
 
+include(cmake/third_party.cmake)
+
 set(SRC_HOME_DIR ${HOME_DIR}/src)
 set(TEST_HOME_DIR ${HOME_DIR}/src/test)
 
@@ -75,29 +77,43 @@ list(APPEND DIC_PERFORMANCE_TEST_LIST
         ${DIC_SERVER_SRC}
         ${DIC_CHANNEL_SRC})
 
+# mockcpp
+set(MOCKCPP_INCLUDE_DIR ${HOME_DIR}/output/mockcpp/include)
+message(STATUS "MOCKCPP_INCLUDE_DIR: ${MOCKCPP_INCLUDE_DIR}")
+
 add_executable(insight_test ${DIC_TEST_LIST} modules/summary/SummaryTest.cpp modules/summary/MockTraceDatabase.h TestSuit.cpp
         FullDbTestSuit.cpp modules/timeline/handler/HandlerTest.cpp modules/timeline/protocol/ProtocolTest.cpp
         modules/timeline/database/DatabaseTest.cpp
         ../../msinsight/include/utils/NumberSafeUtil.h
         utils/NumberSafeUtilTest.cpp)
+add_dependencies(insight_test mockcpp_build)
 target_include_directories(insight_test PUBLIC ${HOME_DIR}/src/protocol)
-add_executable(insight_performance ${DIC_PERFORMANCE_TEST_LIST})
+target_include_directories(insight_test PRIVATE ${MOCKCPP_INCLUDE_DIR})
+target_link_directories(insight_test PRIVATE ${HOME_DIR}/output/mockcpp/lib)
 target_link_libraries(insight_test msinsight)
+
+add_executable(insight_performance ${DIC_PERFORMANCE_TEST_LIST})
+add_dependencies(insight_performance mockcpp_build)
+target_include_directories(insight_performance PRIVATE ${MOCKCPP_INCLUDE_DIR})
+target_link_directories(insight_performance PRIVATE ${HOME_DIR}/output/mockcpp/lib)
 target_link_libraries(insight_performance msinsight)
+
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(insight_test
-            gtest_main gmock_main
+            gtest_main gmock_main mockcpp
             uv_a userenv ws2_32 iphlpapi shlwapi -lssp z
             ${EXECUTABLE_OUTPUT_PATH}/libsqlite.dll)
     target_link_libraries(insight_performance
-            gtest_main gmock_main
+            gtest_main gmock_main mockcpp
             uv_a userenv ws2_32 iphlpapi shlwapi -lssp z
             ${EXECUTABLE_OUTPUT_PATH}/libsqlite.dll)
 else()
     target_link_libraries(insight_test
-            gtest_main gmock_main
+            gtest_main gmock_main mockcpp
             uv_a pthread dl sqlite z)
-    target_link_libraries(insight_performance gtest_main gmock_main uv_a pthread dl sqlite z)
+    target_link_libraries(insight_performance
+            gtest_main gmock_main mockcpp
+            uv_a pthread dl sqlite z)
 endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
