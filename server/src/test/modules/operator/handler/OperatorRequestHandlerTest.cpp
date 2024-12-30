@@ -241,7 +241,7 @@ TEST_F(OperatorRequestHandlerTest, QueryOpStatisticInfoHandlerSuccessAndOrderByO
     requestPtr.get()->params.group = "Input Shape";
     requestPtr.get()->params.topK = 15;  // 15表示topK取15条数据
     requestPtr.get()->params.isCompare = true;
-    requestPtr.get()->params.orderBy = "op_type";
+    requestPtr.get()->params.orderBy = "opType";
     // 10 表示分页最小是10条
     requestPtr.get()->params.pageSize = 10;
     requestPtr.get()->params.current = 1;
