@@ -420,12 +420,12 @@ TEST(TestUtil, FindIfDbTypeByRegex)
     std::string currPath = Dic::FileUtil::GetCurrPath();
     int index = currPath.find_last_of("server");
     currPath = currPath.substr(0, index + 1);
-    auto testDbDir = currPath + R"(/src/test/test_data)";
+    auto testDbDir = currPath + R"(/src/test/test_data/full_db)";
     const std::string DB_REG =
             R"((msprof_[0-9]{1,16}|((ascend_pytorch_profiler)(_[0-9]{1,16}){0,1})|cluster_analysis)\.db$)";
     const std::string traceViewReg =
             R"((((trace_view|msprof(_slice_[0-9]{1,2})?_[0-9]{1,14})\.json)|)"
             R"((operator_memory|operator_memory(_slice_[0-9]{1,2})?_[0-9]{1,14})\.csv)$)";
     bool suc = FileUtil::FindIfDbTypeByRegex(testDbDir, std::regex(traceViewReg), std::regex(DB_REG));
-    EXPECT_EQ(suc, false);
+    EXPECT_EQ(suc, true);
 }
