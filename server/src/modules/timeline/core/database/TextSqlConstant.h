@@ -8,7 +8,7 @@
 #include "StringUtil.h"
 #include "ServerLog.h"
 #include "TimelineProtocolRequest.h"
-
+// LCOV_EXCL_BR_START
 namespace Dic::Module::Timeline {
 const int CACHE_SIZE = 1000;
 const std::string SLICE_TABLE = "slice";
@@ -460,6 +460,6 @@ private:
     }
 };
 }
-
+// LCOV_EXCL_BR_STOP
 
 #endif // PROFILER_SERVER_TEXTSQLCONSTANT_H

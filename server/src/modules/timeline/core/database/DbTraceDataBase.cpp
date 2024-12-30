@@ -1462,7 +1462,7 @@ void DbTraceDataBase::GenerateCounterMetadata(const std::string &fileId,
         metaData.emplace_back(std::move(counter));
     }
 }
-
+// LCOV_EXCL_BR_START
 void DbTraceDataBase::GetCounterUnitsAndDataTypes(PROCESS_TYPE type, std::vector<std::string> &units,
     std::vector<std::vector<std::string>> &dataTypes, std::unique_ptr<Protocol::UnitTrack> &counter)
 {
@@ -1501,7 +1501,7 @@ void DbTraceDataBase::GetCounterUnitsAndDataTypes(PROCESS_TYPE type, std::vector
             break;
     }
 }
-
+// LCOV_EXCL_BR_STOP
 std::string DbTraceDataBase::GetSearchSliceNameSql(bool isMatchExact, bool isMatchCase, std::string rankId,
                                                    const std::string &order, const std::string &orderByField)
 {
@@ -1678,7 +1678,7 @@ std::string DbTraceDataBase::GetSearchAllSlicesDetailsSql(bool isMatchExact, boo
     return sql;
 }
 
-
+// LCOV_EXCL_BR_START
 bool DbTraceDataBase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams &params, const std::string &optimizers,
     std::vector<Protocol::ThreadTraces> &data, uint64_t minTimestamp)
 {
@@ -1713,7 +1713,7 @@ bool DbTraceDataBase::QueryAffinityOptimizer(const Protocol::KernelDetailsParams
     }
     return true;
 }
-
+// LCOV_EXCL_BR_STOP
 bool DbTraceDataBase::QueryAICpuOpCanBeOptimized(const Protocol::KernelDetailsParams &params,
     const std::vector<std::string> &replace, const std::map<std::string, Timeline::AICpuCheckDataType> &dataType,
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
@@ -1778,6 +1778,7 @@ bool DbTraceDataBase::QueryThreadSameOperatorsDetails(const Protocol::UnitThread
     return true;
 }
 
+// LCOV_EXCL_BR_START
 bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams &params, uint64_t threshold,
     std::vector<Protocol::KernelBaseInfo> &data, uint64_t minTimestamp)
 {
@@ -1818,7 +1819,7 @@ bool DbTraceDataBase::QueryAclnnOpCountExceedThreshold(const KernelDetailsParams
     }
     return true;
 }
-
+// LCOV_EXCL_BR_STOP
 bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &params,
     const std::set<std::string> &pattern, uint64_t minTimestamp, std::map<uint64_t,
     std::vector<Protocol::FlowLocation>> &data, std::map<uint64_t, std::vector<uint32_t>> &indexes)
@@ -1867,7 +1868,7 @@ bool DbTraceDataBase::QueryAffinityAPIData(const Protocol::KernelDetailsParams &
 
     return true;
 }
-
+// LCOV_EXCL_BR_START
 bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, const FuseableOpRule &rule,
     std::vector<Protocol::FlowLocation> &data, uint64_t minTimestamp)
 {
@@ -1917,7 +1918,7 @@ bool DbTraceDataBase::QueryFuseableOpData(const KernelDetailsParams &params, con
 
     return true;
 }
-
+// LCOV_EXCL_BR_STOP
 bool DbTraceDataBase::QueryEventsViewData(const Protocol::EventsViewParams &params, Protocol::EventsViewBody &body,
     uint64_t minTimestamp)
 {

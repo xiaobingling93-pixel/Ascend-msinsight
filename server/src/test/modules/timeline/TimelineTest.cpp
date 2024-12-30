@@ -314,6 +314,39 @@ TEST_F(TestSuit, QueryThreadDetail)
     EXPECT_EQ(response.data.title, title);
 }
 
+TEST_F(TestSuit, QueryThreadTraces)
+{
+    Dic::Protocol::UnitThreadTracesParams request;
+    uint64_t STARTTIME = 1695115378713851200;
+    uint64_t ENDTIME = 1695115378728583500;
+    request.startTime = STARTTIME;
+    request.endTime = ENDTIME;
+    request.threadId = "0";
+    request.timePerPx = 1;
+    Dic::Protocol::UnitThreadTracesBody response;
+    uint64_t minTimestamp = 0;
+    int64_t traceId = 30;
+
+    int expectSize = 25;
+    std::string expectName = "AscendCL@aclDestroyTensorDesc";
+    uint64_t expectDuration = 1900;
+    uint64_t expectStartTime = 1695115378713851200;
+    uint64_t expectEndTime = expectStartTime + expectDuration;
+    int32_t expectDepth = 0;
+    std::string expectThreadId = request.threadId;
+    request.cardId = "0";
+    request.metaType = "TEXT";
+
+    auto respotoryFactory = RepositoryFactory::Instance();
+    auto dataEngine = DataEngine::Instance();
+    dataEngine->SetRepositoryFactory(respotoryFactory);
+    auto renderEngine = RenderEngine::Instance();
+    renderEngine->SetDataEngineInterface(dataEngine);
+    renderEngine->QueryThreadTraces(request, response, minTimestamp, traceId);
+
+    EXPECT_EQ(response.data[0].size(), expectSize);
+}
+
 TEST_F(TestSuit, QueryThreadDetailWithShape)
 {
     auto respotoryFactory = RepositoryFactory::Instance();
