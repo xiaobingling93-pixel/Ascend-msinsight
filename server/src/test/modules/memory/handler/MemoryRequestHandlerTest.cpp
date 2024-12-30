@@ -796,6 +796,88 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorGraphHandlerInvalidPar
     ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
 }
 
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorGraphHandlerGetCompareGraphLegendsTest)
+{
+    StaticOperatorGraphItem compareData{{"Node Index", "Size", "Total Size"}, {}};
+    StaticOperatorGraphItem baselineData{{"Node Index", "Size", "Total Size"}, {}};
+    StaticOperatorGraphItem resultData;
+    QueryMemoryStaticOperatorGraphHandler handler;
+    handler.GetCompareGraphLegends(compareData, baselineData, resultData);
+    ASSERT_EQ(resultData.legends.size(), compareData.legends.size() + baselineData.legends.size() - 1);
+    EXPECT_EQ(resultData.legends[0], compareData.legends[0]);
+    for (size_t i = 1; i < compareData.legends.size(); ++i) {
+        EXPECT_EQ(resultData.legends[i], compareData.legends[i] + " of Compare");
+    }
+    for (size_t i = 1; i < baselineData.legends.size(); ++i) {
+        EXPECT_EQ(resultData.legends[i + compareData.legends.size() - 1], baselineData.legends[i] + " of Baseline");
+    }
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorGraphHandlerGetCompareGraphLinesCompareEmptyTest)
+{
+    StaticOperatorGraphItem compareData{{"Node Index", "Size", "Total Size"}, {}};
+    StaticOperatorGraphItem baselineData{{"Node Index", "Size", "Total Size"}, {{"100", "2311.25", "106974.58"},
+        {"256", "3657.89", "106974.58"}}};
+    StaticOperatorGraphItem resultData;
+    QueryMemoryStaticOperatorGraphHandler handler;
+    handler.GetCompareGraphLines(compareData, baselineData, resultData);
+    ASSERT_EQ(resultData.lines.size(), baselineData.lines.size());
+    for (size_t i = 0; i < resultData.lines.size(); ++i) {
+        ASSERT_EQ(resultData.lines[i].size(), compareData.legends.size() + baselineData.legends.size() - 1);
+        EXPECT_EQ(resultData.lines[i][0], baselineData.lines[i][0]);
+        for (size_t j = 1; j < compareData.legends.size(); ++j) {
+            EXPECT_EQ(resultData.lines[i][j], "NULL");
+        }
+        for (size_t j = 1; j < baselineData.legends.size(); ++j) {
+            EXPECT_EQ(resultData.lines[i][j + compareData.legends.size() - 1], baselineData.lines[i][j]);
+        }
+    }
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorGraphHandlerGetCompareGraphLinesBaselineEmptyTest)
+{
+    StaticOperatorGraphItem compareData{{"Node Index", "Size", "Total Size"}, {{"100", "2311.25", "106974.58"},
+        {"256", "3657.89", "106974.58"}}};
+    StaticOperatorGraphItem baselineData{{"Node Index", "Size", "Total Size"}, {}};
+    StaticOperatorGraphItem resultData;
+    QueryMemoryStaticOperatorGraphHandler handler;
+    handler.GetCompareGraphLines(compareData, baselineData, resultData);
+    ASSERT_EQ(resultData.lines.size(), compareData.lines.size());
+    for (size_t i = 0; i < resultData.lines.size(); ++i) {
+        ASSERT_EQ(resultData.lines[i].size(), compareData.legends.size() + baselineData.legends.size() - 1);
+        EXPECT_EQ(resultData.lines[i][0], compareData.lines[i][0]);
+        for (size_t j = 1; j < compareData.legends.size(); ++j) {
+            EXPECT_EQ(resultData.lines[i][j], compareData.lines[i][j]);
+        }
+        for (size_t j = 1; j < baselineData.legends.size(); ++j) {
+            EXPECT_EQ(resultData.lines[i][j + compareData.legends.size() - 1], "NULL");
+        }
+    }
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorGraphHandlerGetCompareGraphLinesBothNotEmptyTest)
+{
+    StaticOperatorGraphItem compareData{{"Node Index", "Size", "Total Size"}, {{"100", "2311.25", "106974.58"},
+        {"256", "3657.89", "106974.58"}}};
+    StaticOperatorGraphItem baselineData{{"Node Index", "Size", "Total Size"}, {{"100", "2311.25", "106974.58"},
+        {"256", "3657.89", "106974.58"}}};
+    StaticOperatorGraphItem resultData;
+    QueryMemoryStaticOperatorGraphHandler handler;
+    handler.GetCompareGraphLines(compareData, baselineData, resultData);
+    ASSERT_EQ(resultData.lines.size(), compareData.lines.size());
+    ASSERT_EQ(resultData.lines.size(), baselineData.lines.size());
+    for (size_t i = 0; i < resultData.lines.size(); ++i) {
+        ASSERT_EQ(resultData.lines[i].size(), compareData.legends.size() + baselineData.legends.size() - 1);
+        EXPECT_EQ(resultData.lines[i][0], compareData.lines[i][0]);
+        for (size_t j = 1; j < compareData.legends.size(); ++j) {
+            EXPECT_EQ(resultData.lines[i][j], compareData.lines[i][j]);
+        }
+        for (size_t j = 1; j < baselineData.legends.size(); ++j) {
+            EXPECT_EQ(resultData.lines[i][j + compareData.legends.size() - 1], baselineData.lines[i][j]);
+        }
+    }
+}
+
 TEST_F(MemoryRequestHandlerTest, QueryMemoryStaticOperatorListHandlerNormalTest)
 {
     const int64_t defaultPageSize = 10;
@@ -1085,6 +1167,97 @@ TEST_F(MemoryRequestHandlerTest, QueryMemoryViewHandlerInvalidParamTest)
     requestPtr.get()->params.rankId = "0";
     requestPtr.get()->params.type = "Invalid";
     ASSERT_NO_THROW(handler.HandleRequest(std::move(requestPtr)));
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryViewHandlerGetCompareGraphLegendsTest)
+{
+    MemoryViewData compareData{"", {"Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved",
+        "App Reserved"}, {}};
+    MemoryViewData baselineData{"", {"Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved",
+        "App Reserved"}, {}};
+    MemoryViewData resultData;
+    QueryMemoryViewHandler handler;
+    handler.GetCompareGraphLegends(compareData, baselineData, resultData);
+    EXPECT_EQ(resultData.title, "");
+    ASSERT_EQ(resultData.legends.size(), compareData.legends.size() + baselineData.legends.size() - 1);
+    EXPECT_EQ(resultData.legends[0], compareData.legends[0]);
+    for (size_t i = 1; i < compareData.legends.size(); ++i) {
+        EXPECT_EQ(resultData.legends[i], compareData.legends[i] + " of Compare");
+    }
+    for (size_t i = 1; i < baselineData.legends.size(); ++i) {
+        EXPECT_EQ(resultData.legends[i + compareData.legends.size() - 1], baselineData.legends[i] + " of Baseline");
+    }
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryViewHandlerGetCompareGraphLinesCompareEmptyTest)
+{
+    MemoryViewData compareData{"", {"Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved",
+        "App Reserved"}, {}};
+    MemoryViewData baselineData{"", {"Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved",
+        "App Reserved"}, {{"10.032", "25.37", "13.22", "101.29", "1000.28"},
+        {"21.389", "100.88", "94.63", "150.32", "2000.01"}}};
+    MemoryViewData resultData;
+    QueryMemoryViewHandler handler;
+    handler.GetCompareGraphLines(compareData, baselineData, resultData);
+    ASSERT_EQ(resultData.lines.size(), baselineData.lines.size());
+    for (size_t i = 0; i < resultData.lines.size(); ++i) {
+        ASSERT_EQ(resultData.lines[i].size(), compareData.legends.size() + baselineData.legends.size() - 1);
+        EXPECT_EQ(resultData.lines[i][0], baselineData.lines[i][0]);
+        for (size_t j = 1; j < compareData.legends.size(); ++j) {
+            EXPECT_EQ(resultData.lines[i][j], "NULL");
+        }
+        for (size_t j = 1; j < baselineData.legends.size(); ++j) {
+            EXPECT_EQ(resultData.lines[i][j + compareData.legends.size() - 1], baselineData.lines[i][j]);
+        }
+    }
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryViewHandlerGetCompareGraphLinesBaselineEmptyTest)
+{
+    MemoryViewData compareData{"", {"Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved",
+        "App Reserved"}, {{"10.032", "25.37", "13.22", "101.29", "1000.28"},
+        {"21.389", "100.88", "94.63", "150.32", "2000.01"}}};
+    MemoryViewData baselineData{"", {"Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved",
+        "App Reserved"}, {}};
+    MemoryViewData resultData;
+    QueryMemoryViewHandler handler;
+    handler.GetCompareGraphLines(compareData, baselineData, resultData);
+    ASSERT_EQ(resultData.lines.size(), compareData.lines.size());
+    for (size_t i = 0; i < resultData.lines.size(); ++i) {
+        ASSERT_EQ(resultData.lines[i].size(), compareData.legends.size() + baselineData.legends.size() - 1);
+        EXPECT_EQ(resultData.lines[i][0], compareData.lines[i][0]);
+        for (size_t j = 1; j < compareData.legends.size(); ++j) {
+            EXPECT_EQ(resultData.lines[i][j], compareData.lines[i][j]);
+        }
+        for (size_t j = 1; j < baselineData.legends.size(); ++j) {
+            EXPECT_EQ(resultData.lines[i][j + compareData.legends.size() - 1], "NULL");
+        }
+    }
+}
+
+TEST_F(MemoryRequestHandlerTest, QueryMemoryViewHandlerGetCompareGraphLinesBothNotEmptyTest)
+{
+    MemoryViewData compareData{"", {"Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved",
+        "App Reserved"}, {{"10.032", "25.37", "13.22", "101.29", "1000.28"},
+        {"21.389", "100.88", "94.63", "150.32", "2000.01"}}};
+    MemoryViewData baselineData{"", {"Time (ms)", "Operators Allocated", "Operators Activated", "Operators Reserved",
+        "App Reserved"}, {{"10.032", "25.37", "13.22", "101.29", "1000.28"},
+        {"21.389", "100.88", "94.63", "150.32", "2000.01"}}};
+    MemoryViewData resultData;
+    QueryMemoryViewHandler handler;
+    handler.GetCompareGraphLines(compareData, baselineData, resultData);
+    ASSERT_EQ(resultData.lines.size(), compareData.lines.size());
+    ASSERT_EQ(resultData.lines.size(), baselineData.lines.size());
+    for (size_t i = 0; i < resultData.lines.size(); ++i) {
+        ASSERT_EQ(resultData.lines[i].size(), compareData.legends.size() + baselineData.legends.size() - 1);
+        EXPECT_EQ(resultData.lines[i][0], compareData.lines[i][0]);
+        for (size_t j = 1; j < compareData.legends.size(); ++j) {
+            EXPECT_EQ(resultData.lines[i][j], compareData.lines[i][j]);
+        }
+        for (size_t j = 1; j < baselineData.legends.size(); ++j) {
+            EXPECT_EQ(resultData.lines[i][j + compareData.legends.size() - 1], baselineData.lines[i][j]);
+        }
+    }
 }
 
 TEST_F(MemoryRequestHandlerTest, QueryMemoryOperatorSizeHandlerNormalTest)
