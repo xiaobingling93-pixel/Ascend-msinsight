@@ -82,6 +82,11 @@ const std::string DP_PARA = "dp";
 const std::string TP_PARA = "tp";
 const std::string EP_PARA = "ep";
 const std::string STR_INDEX = "Index";
+const std::string PP_INDEX = "ppIndex";
+const std::string CP_INDEX = "cpIndex";
+const std::string DP_INDEX = "dpIndex";
+const std::string TP_INDEX = "tpIndex";
+const std::string EP_INDEX = "epIndex";
 const int64_t MAX_PARALLEL_SIZE = 255;
 const int64_t MAX_PARALLEL_PRODUCT_SIZE = 250000;
 
@@ -208,7 +213,8 @@ struct IndicatorAttr {
     // 性能指标名称
     std::string name;
     // 是否需要在2D排布图上按色域渲染
-    bool rendering = false;
+    bool renderHeatMap = false;
+    bool renderChart = false;
     // 计算/通信概览 是否默认显示
     bool visible = false;
     // 下方绘图时图表类型，柱形图还是折线图
@@ -218,9 +224,10 @@ struct IndicatorAttr {
     // 数据类型，用于区分y轴
     std::string yAxisType;
     IndicatorAttr() = default;
-    IndicatorAttr(std::string key, std::string name, bool rendering, bool visible, std::string chart, std::string stack,
-        std::string yAxisType) : key(std::move(key)), name(std::move(name)), rendering(rendering), visible(visible),
-        chart(std::move(chart)), stack(std::move(stack)), yAxisType(std::move(yAxisType)) {}
+    IndicatorAttr(std::string key, std::string name, bool renderHeatMap, bool renderChart, bool visible,
+        std::string chart, std::string stack, std::string yAxisType)
+        : key(std::move(key)), name(std::move(name)), renderHeatMap(renderHeatMap), renderChart(renderChart),
+          visible(visible), chart(std::move(chart)), stack(std::move(stack)), yAxisType(std::move(yAxisType)) {}
 };
 
 struct Connection {
@@ -242,7 +249,7 @@ struct Element {
     std::string name; // rank or group name
     Position position{}; // rank or group position in 2D arrangement
     std::unordered_map<std::string, uint32_t> indexAttributes{}; // {dp_index=0}
-    std::vector<std::string> ranks;
+    std::vector<uint32_t> ranks;
 };
 
 struct ArrangementAndConnectionData {

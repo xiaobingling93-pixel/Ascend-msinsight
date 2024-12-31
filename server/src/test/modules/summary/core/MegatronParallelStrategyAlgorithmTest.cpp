@@ -88,6 +88,9 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGe
         {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, // y = 0
         {0, 1}, {1, 1}, {2, 1}, {3, 1}, {4, 1}, {5, 1}, {6, 1}, {7, 1}, // y = 1
         };
+    const std::vector<std::vector<uint32_t>> EXPECT_RANKS = {
+        {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15}
+    };
     std::string err;
     algorithm.UpdateParallelDimension(dimension, config, err);
     algorithm.GenerateArrangementByDimension();
@@ -96,6 +99,8 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGe
     for (const auto& item : data.arrangements) {
         EXPECT_EQ(item.name, EXPECTED_NAME[item.index]);
         EXPECT_EQ(item.position, EXPECTED_POSITION[item.index]);
+        EXPECT_EQ(item.ranks.size(), 1);
+        EXPECT_EQ(item.ranks.at(0), EXPECT_RANKS[item.index].at(0));
     }
 }
 
@@ -115,6 +120,9 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGe
         "dp0-cp0-pp1", "dp0-cp1-pp1", "dp1-cp0-pp1", "dp1-cp1-pp1"};
     const std::vector<Position> EXPECTED_POSITION = {
         {0, 0}, {1, 0}, {2, 0}, {3, 0}, {0, 1}, {1, 1}, {2, 1}, {3, 1}}; // position(x, y)
+    const std::vector<std::vector<uint32_t>> EXPECT_RANKS = {
+        {0, 1}, {2, 3}, {4, 5}, {6, 7}, {8, 9}, {10, 11}, {12, 13}, {14, 15}
+    };
     std::string err;
     algorithm.UpdateParallelDimension(dimension, config, err);
     algorithm.GenerateArrangementByDimension();
@@ -123,6 +131,10 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGe
     for (const auto& item : data.arrangements) {
         EXPECT_EQ(item.name, EXPECTED_NAME[item.index]);
         EXPECT_EQ(item.position, EXPECTED_POSITION[item.index]);
+        EXPECT_EQ(item.ranks.size(), config.tpSize);
+        for (int64_t i = 0; i < config.tpSize; ++i) {
+            EXPECT_EQ(item.ranks.at(i), EXPECT_RANKS[item.index].at(i));
+        }
     }
     config.algorithm = MEGATRON_LM_TP_CP_PP_EP_DP_ALG;
     const std::vector<std::string> EXPECTED_NAME2 = {
@@ -139,6 +151,10 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGe
     for (const auto& item : data.arrangements) {
         EXPECT_EQ(item.name, EXPECTED_NAME2[item.index]);
         EXPECT_EQ(item.position, EXPECTED_POSITION2[item.index]);
+        EXPECT_EQ(item.ranks.size(), config.tpSize);
+        for (int64_t i = 0; i < config.tpSize; ++i) {
+            EXPECT_EQ(item.ranks.at(i), EXPECT_RANKS[item.index].at(i));
+        }
     }
 }
 
@@ -155,6 +171,9 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGe
     config.algorithm = MEGATRON_LM_TP_CP_EP_DP_PP_ALG;
     const std::vector<std::string> EXPECTED_NAME = {
         "dp0-cp0", "dp0-cp1", "dp1-cp0", "dp1-cp1"};
+    const std::vector<std::vector<uint32_t>> EXPECT_RANKS = {
+        {0, 1, 8, 9}, {2, 3, 10, 11}, {4, 5, 12, 13}, {6, 7, 14, 15}
+    };
     const std::vector<Position> EXPECTED_POSITION = {{0, 0}, {1, 0}, {2, 0}, {3, 0}}; // position(x, y)
     std::string err;
     algorithm.UpdateParallelDimension(dimension, config, err);
@@ -164,6 +183,10 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetArrangementByDimension_ShouldGe
     for (const auto& item : data.arrangements) {
         EXPECT_EQ(item.name, EXPECTED_NAME[item.index]);
         EXPECT_EQ(item.position, EXPECTED_POSITION[item.index]);
+        EXPECT_EQ(item.ranks.size(), config.tpSize * config.ppSize);
+        for (size_t i = 0; i < item.ranks.size(); ++i) {
+            EXPECT_EQ(item.ranks.at(i), EXPECT_RANKS[item.index].at(i));
+        }
     }
 }
 

@@ -11,7 +11,6 @@
 
 namespace Dic::Module {
 
-const std::vector<std::string> LAYOUT = {DP_PARA, CP_PARA, PP_PARA, TP_PARA};
 struct ParallelDetails {
     bool isShown = false;  // shownMap 代表当前层次是否展示
     uint32_t size = 1; // sizeMap ppSize等。若当前层次已折叠，size置1
@@ -47,6 +46,8 @@ private:
     void UpdateIndexAttributes(std::unordered_map<std::string, uint32_t> &indexAttributes);
     std::string GetElementName(std::unordered_map<std::string, uint32_t> &indexAttributes);
     Position GetElementPosition(std::unordered_map<std::string, uint32_t>& indexAttributes);
+    std::vector<uint32_t> GetElementContainRanks(uint32_t index,
+                                                 std::unordered_map<std::string, uint32_t> &indexAttributes);
     // get connections
     void GetConnections(Element &curEle);
     void AddConnection(std::vector<Connection> &connections, const std::string &paraType, uint32_t len,
@@ -73,6 +74,10 @@ private:
 
     // get performance data
     uint32_t wordSize = 1;
+    uint32_t tpSize = 1;
+    uint32_t tpCpSize = 1;
+    uint32_t tpCpDpSize = 1;
+    uint32_t tpCpPpSize = 1;
     std::unordered_map<std::uint32_t, StepStatistic> reduceTpStatistic;
     std::unordered_map<std::uint32_t, StepStatistic> reducePpStatistic;
     std::unordered_map<std::uint32_t, StepStatistic> reduceCpStatistic;

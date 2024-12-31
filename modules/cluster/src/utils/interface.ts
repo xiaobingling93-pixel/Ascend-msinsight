@@ -45,7 +45,8 @@ export interface ParallelismArrangementParams extends SetParallelStrategyParams 
 export interface IndicatorsItem {
     name: string;
     key: string;
-    rendering: boolean;
+    renderHeatMap: boolean;
+    renderChart: boolean;
     chart: 'bar' | 'line';
     stack: string;
     yAxisType: 'time' | 'ratio';

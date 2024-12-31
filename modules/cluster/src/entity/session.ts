@@ -45,7 +45,7 @@ export class Session {
     }
 
     get dataTypeOptions(): IndicatorsItem[] {
-        return this.indicatorList.filter(item => item.rendering);
+        return this.indicatorList.filter(item => item.renderHeatMap);
     }
 
     get indicatorMap(): Map<string, IndicatorsItem> {

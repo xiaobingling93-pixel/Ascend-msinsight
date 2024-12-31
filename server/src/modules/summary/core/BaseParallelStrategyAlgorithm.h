@@ -10,6 +10,7 @@
 #include "SummaryProtocolRequest.h"
 
 namespace Dic::Module {
+const std::vector<std::string> LAYOUT = {DP_PARA, CP_PARA, PP_PARA, TP_PARA};
 class BaseParallelStrategyAlgorithm {
 public:
     BaseParallelStrategyAlgorithm() = default;
@@ -27,6 +28,7 @@ public:
 
 protected:
     ParallelStrategyConfig strategyConfig;
+    int64_t GetParallelSizeByType(const std::string& type) const;
 };
 }
 #endif // PROFILER_SERVER_SERVER_SRC_MODULES_SUMMARY_CORE_BASEPARALLELSTRATEGYALGORITHM_H

@@ -317,6 +317,7 @@ void GetArrangementsJson(const ParallelismArrangementResponse& response, documen
             JsonUtil::AddMember(attributeJson, indexAttr.first, indexAttr.second, allocator);
         }
         JsonUtil::AddMember(arrangementJson, "attribute", attributeJson, allocator);
+        JsonUtil::AddMember(arrangementJson, "ranks", arrangement.ranks, allocator);
         arrangements.PushBack(arrangementJson, allocator);
     }
     JsonUtil::AddMember(body, "arrangements", arrangements, allocator);
@@ -336,7 +337,8 @@ std::optional<document_t> ToResponseJson<ParallelismArrangementResponse>(const P
         json_t indicatorJson(kObjectType);
         JsonUtil::AddMember(indicatorJson, "key", indicator.key, allocator);
         JsonUtil::AddMember(indicatorJson, "name", indicator.name, allocator);
-        JsonUtil::AddMember(indicatorJson, "rendering", indicator.rendering, allocator);
+        JsonUtil::AddMember(indicatorJson, "renderHeatMap", indicator.renderHeatMap, allocator);
+        JsonUtil::AddMember(indicatorJson, "renderChart", indicator.renderChart, allocator);
         JsonUtil::AddMember(indicatorJson, "visible", indicator.visible, allocator);
         JsonUtil::AddMember(indicatorJson, "chart", indicator.chart, allocator);
         JsonUtil::AddMember(indicatorJson, "stack", indicator.stack, allocator);
