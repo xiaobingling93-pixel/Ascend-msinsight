@@ -18,11 +18,20 @@ export interface VoidFunction {
 export interface optionDataType {
     key?: string;
     label: React.ReactNode;
-    value: string | number ;
+    value: number | string ;
 }
 
 export interface optionMapDataType {
     [props: string]: optionDataType[];
+}
+
+export interface FormatterParams {
+    marker: string;
+    name: string;
+    value: any[];
+    data: any ;
+    seriesName: string;
+    seriesType: string;
 }
 
 export interface GetParallelStrategyRes {
@@ -94,6 +103,12 @@ export interface PerformanceDataItem {
 export interface GetParallelismPerformanceRes {
     performance: PerformanceDataItem[];
     advice: string[];
+}
+
+export interface CompareData<T> {
+    compare: T;
+    baseline: T;
+    diff: T;
 }
 
 export interface CompareData<T> {

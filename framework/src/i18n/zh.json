@@ -38,7 +38,10 @@
         "Set baseline first": "请先设置baseline！",
         "Baseline Conflict": "不能将基线数据和对比数据设置为同一卡",
         "PathNotFound": "未找到路径为 '{{path}}' 的文件",
-        "All": "全部"
+        "All": "全部",
+        "No cluster data available in Baseline": "基线数据无集群数据",
+        "No cluster data available in Comparison": "对比数据无集群数据",
+        "Open a Project as Comparison Data": "请先打开任一项目作为对比数据"
     },
     "tabs": {
         "Timeline": "时间线",

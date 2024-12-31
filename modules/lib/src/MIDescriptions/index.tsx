@@ -6,15 +6,16 @@ import React, { type ReactNode, type CSSProperties } from 'react';
 import styled from '@emotion/styled';
 
 interface MIDescriptionsProps {
-    title: ReactNode;
+    title?: ReactNode;
     children: ReactNode;
     style?: CSSProperties;
 }
 
 interface MIDescriptionsItemProps {
     label: ReactNode;
-    children: ReactNode;
+    children?: ReactNode;
     style?: CSSProperties;
+    value?: ReactNode;
 }
 
 const Container = styled.div<Partial<MIDescriptionsProps>>`
@@ -36,11 +37,12 @@ const Item = styled.div<Partial<MIDescriptionsItemProps>>`
         font-size: 16px;
     }
 `;
+
 export const MIDescriptions: React.FC<MIDescriptionsProps> = (props): JSX.Element => {
-    const { children } = props;
+    const { children, style } = props;
 
     return (
-        <Container>
+        <Container style={style}>
             {children}
         </Container>
     );

@@ -18,6 +18,7 @@
     },
     "searchCriteria": {
       "Step": "迭代ID",
+      "BaselineStep": "基线迭代ID",
       "CommunicationGroup": "通信域",
       "OperatorName": "算子名称",
       "CommunicationMatrix": "通信矩阵",
@@ -40,13 +41,27 @@
       "Wait Time": "等待时间",
       "Synchronization Time Ratio": "同步时间占比",
       "Wait Time Ratio": "等待时间占比",
+      "Elapse Time in Comparison": "比对总时间",
+      "Transit Time in Comparison": "比对传输时间",
+      "Synchronization Time in Comparison": "比对同步时间",
+      "Wait Time in Comparison": "比对等待时间",
+      "Synchronization Time Ratio in Comparison": "比对同步时间占比",
+      "Wait Time Ratio in Comparison": "比对等待时间占比",
+      "Elapse Time in Baseline": "基线总时间",
+      "Transit Time in Baseline": "基线传输时间",
+      "Synchronization Time in Baseline": "基线同步时间",
+      "Synchronization Time Ratio in Baseline": "基线同步时间占比",
+      "Wait Time Ratio in Baseline": "基线等待时间占比",
+      "Wait Time in Baseline": "基线等待时间",
       "Idle Time": "空闲时间",
       "SDMABW": "SDMA带宽",
       "RDMABW": "RDMA带宽",
       "Bandwidth Analysis": "带宽分析",
       "Large Packet Ratio": "大通信包占比",
       "Communication Operators Details": "通信算子详情",
-      "see more": "查看更多"
+      "see more": "查看更多",
+      "Details": "详情",
+      "Source": "来源"
     },
     "tableHeadTooltip": {
       "Elapse Time": "通信算子所有事件消耗时间之和。公式：总时间 = 通信Events时间之和",
@@ -66,6 +81,7 @@
     "BandwidthIssue": "带宽是瓶颈",
     "CommunicationIssue": "通信效率低",
     "Back": "返回",
-    "Tooltip": "导入集群数据中若已包含cluster_analysis_output文件夹，则不会对其进行覆盖；如果出现集群数据和单卡数据不对应，请删除原有cluster_analysis_output文件夹及cluster.db文件并重新导入。"
+    "Tooltip": "导入集群数据中若已包含cluster_analysis_output文件夹，则不会对其进行覆盖；如果出现集群数据和单卡数据不对应，请删除原有cluster_analysis_output文件夹及cluster.db文件并重新导入。",
+    "Difference": "差值"
   }
 }

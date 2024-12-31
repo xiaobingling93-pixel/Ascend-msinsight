@@ -184,7 +184,6 @@ const escapeHTML = (input: string): string => {
     return input.replace(/[&<>"'/]/g, match => htmlEscapeMap[match as keyof typeof htmlEscapeMap]);
 };
 
-
 export const safeStr = (val: string | number, ignore?: string): string => {
     if (typeof val === 'number') {
         return val.toString();
@@ -363,5 +362,61 @@ export const chartColors = [
 export function clamp(value: number, min: number, max: number): number {
     return Math.min(Math.max(value, min), max);
 }
+
+export function formateMicrosecond(t: number): string {
+    if (isNaN(t)) {
+        return '';
+    }
+    let leftTime = t;
+    // 小时级
+    if (t >= 1000 * 1000 * 60 * 60) {
+        const h = Math.floor(leftTime / (1000 * 1000 * 60 * 60));
+        leftTime = leftTime % (1000 * 1000 * 60 * 60);
+        const m = Math.floor(leftTime / (1000 * 1000 * 60));
+        leftTime = leftTime % (1000 * 1000 * 60);
+        const s = Number((leftTime / (1000 * 1000)).toFixed(2));
+        return `${h}h${m}m${s}s`;
+    }
+    // 分钟级
+    if (t >= 1000 * 1000 * 60) {
+        const m = Math.floor(leftTime / (1000 * 1000 * 60));
+        leftTime = leftTime % (1000 * 1000 * 60);
+        const s = Number((leftTime / (1000 * 1000)).toFixed(2));
+        return `${m}m${s}s`;
+    }
+    // 秒级
+    if (t >= 1000 * 1000) {
+        const s = Number((leftTime / (1000 * 1000)).toFixed(2));
+        return `${s}s`;
+    }
+    // 毫秒级
+    if (t >= 1000) {
+        const s = Number((leftTime / (1000)).toFixed(2));
+        return `${s}ms`;
+    }
+    return `${t}μs`;
+}
+
+const CompareDiv = styled.div`
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    word-break: keep-all;
+    &.positive {
+        color: ${(props): string => props.theme.successColor};
+    }
+    &.negative {
+        color: ${(props): string => props.theme.warningColor};
+    }
+`;
+
+export const CompareNumber = ({ data }: {data: string | number}): JSX.Element => {
+    const dataNum = Number(data);
+    if (isNaN(dataNum)) {
+        return <>{data}</>;
+    }
+    return <CompareDiv className={dataNum >= 0 ? 'positive' : 'negative'} title={`${data}`}>{data}</CompareDiv>;
+};
 
 export const FONT_FAMILY = '\'Inter\', -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, \'Fira Sans\', \'Droid Sans\', sans-serif';

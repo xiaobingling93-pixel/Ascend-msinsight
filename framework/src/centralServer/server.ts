@@ -87,6 +87,13 @@ export const deleteDataPath = function(dataSource: DataSource): void {
     }
 };
 
+export const sendClusterBaselineStatus = (status: boolean): void => {
+    connector.send({
+        event: 'clusterBaselineToggle',
+        body: {status},
+    });
+};
+
 export const request = function (
     dataSource: Pick<DataSource, 'remote' | 'port'>,
     moduleName: ModuleName,

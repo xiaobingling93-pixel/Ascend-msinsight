@@ -37,3 +37,19 @@ export const safeJSONParse = (str: any, defaultValue: any = null): any => {
         return defaultValue;
     }
 };
+
+export class HandleSingleDoubleClick {
+    static timerMap: Record<string, number> = {};
+
+    static click(action: () => void, key: string = 'default'): void {
+        clearTimeout(this.timerMap[key]);
+        this.timerMap[key] = window.setTimeout(() => {
+            action();
+        }, 300);
+    }
+
+    static doubleClick( action: () => void, key: string = 'default'): void {
+        clearTimeout(this.timerMap[key]);
+        action();
+    }
+}

@@ -11,3 +11,8 @@ export enum ProjectErrorType {
     EXCEEDS_MXIMUN_LENGTH = 5,
     OTHER = -1
 }
+
+export enum MenuLevel {
+    PROJECT = 1,
+    FILE = 2
+}

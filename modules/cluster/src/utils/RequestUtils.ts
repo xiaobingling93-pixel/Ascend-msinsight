@@ -134,8 +134,9 @@ export const queryCommunicationDetail = async (param: {
  *  orderBy: string ;
  *  top: number;
  */
-export const queryTopSummary = async (): Promise<any> => {
+export const queryTopSummary = async (param: {isCompare?: boolean}): Promise<any> => {
     return window.requestData('summary/queryTopData', {
+        ...param,
         stepIdList: [],
     });
 };

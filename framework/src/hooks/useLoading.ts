@@ -34,5 +34,9 @@ export const useLoading = (): any => {
         }
     };
 
-    return { open, close };
+    function status(): boolean {
+        return loadingInstance != null;
+    }
+
+    return { open, close, status };
 };

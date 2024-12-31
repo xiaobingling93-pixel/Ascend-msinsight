@@ -2,34 +2,31 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { runInAction } from 'mobx';
+import { observer } from 'mobx-react';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '../Common';
-import type { StringMap } from '../../utils/interface';
 import type { Session } from '../../entity/session';
 import { queryTopSummary } from '../../utils/RequestUtils';
 import CollapsiblePanel from 'ascend-collapsible-panel';
-import { MIDescriptions, MIDescriptionsItem } from 'ascend-utils';
+import { MIDescriptions, MIDescriptionsItem, formateMicrosecond } from 'ascend-utils';
+import { CompareData } from '../../utils/interface';
 
-export interface BaseInfoDataType {
-    [prop: string]: any;
-    collectDuration: string | number;
-}
-
-interface ListItem {
-    label: string;
+type BaseInfoData = Record<string, React.ReactNode>;
+interface DisplayItem {
+    label: ReactNode;
     key: string;
-    value?: string;
+    visible?: boolean;
+    value?: ReactNode;
 }
 
-const useList = (): ListItem[] => {
+const useDisplayFields = (session: Session): DisplayItem[] => {
     const { t } = useTranslation('summary');
     return [
         {
             label: t('ReportFile'),
             key: 'filePath',
-            value: '',
         },
         {
             label: `${t('ReportSize')}(MB)`,
@@ -38,6 +35,7 @@ const useList = (): ListItem[] => {
         {
             label: t('ReportCaptureTime'),
             key: 'collectStartTime',
+            visible: session.unitcount !== 0,
         },
         {
             label: t('DeviceCount'),
@@ -50,91 +48,74 @@ const useList = (): ListItem[] => {
         {
             label: t('ProfilingSessionDuration'),
             key: 'collectDuration',
+            visible: session.unitcount !== 0,
         },
-    ];
+    ].filter(displayItem => displayItem.visible !== false);
 };
 
-const formateTime = (t: number): string => {
-    if (isNaN(t)) {
-        return '';
-    }
-    let leftTime = t;
-    // 小时级
-    if (t >= 1000 * 1000 * 60 * 60) {
-        const h = Math.floor(leftTime / (1000 * 1000 * 60 * 60));
-        leftTime = leftTime % (1000 * 1000 * 60 * 60);
-        const m = Math.floor(leftTime / (1000 * 1000 * 60));
-        leftTime = leftTime % (1000 * 1000 * 60);
-        const s = Number((leftTime / (1000 * 1000)).toFixed(2));
-        return `${h}h${m}m${s}s`;
-    }
-    // 分钟级
-    if (t >= 1000 * 1000 * 60) {
-        const m = Math.floor(leftTime / (1000 * 1000 * 60));
-        leftTime = leftTime % (1000 * 1000 * 60);
-        const s = Number((leftTime / (1000 * 1000)).toFixed(2));
-        return `${m}m${s}s`;
-    }
-    // 秒级
-    if (t >= 1000 * 1000) {
-        const s = Number((leftTime / (1000 * 1000)).toFixed(2));
-        return `${s}s`;
-    }
-    // 毫秒级
-    if (t >= 1000) {
-        const s = Number((leftTime / (1000)).toFixed(2));
-        return `${s}ms`;
-    }
-    return `${t}μs`;
-};
-
-const initBaseInfo = async (setData: any, session: Session): Promise<void> => {
-    const res: any = await queryTopSummary();
-    const resObj = res ?? {};
+const updateBaseInfoData = async (setBaseinfo: (val: BaseInfoData) => void, session: Session): Promise<void> => {
+    const res: any = await queryTopSummary({ isCompare: session.isCompare });
     runInAction(() => {
-        session.rankCount = resObj.baseInfo.compare.rankCount;
-        session.stepList = resObj.baseInfo.compare.stepList;
+        session.rankCount = res.baseInfo.compare.rankCount;
+        session.stepList = res.baseInfo.compare.stepList;
     });
-    setData({
-        ...resObj.baseInfo.compare,
-        collectDuration: formateTime(Number(resObj.baseInfo.compare.collectDuration)),
-        collectStartTime: formatDate(new Date(resObj.baseInfo.compare.collectStartTime)),
-        dataSize: resObj.baseInfo.compare.dataSize !== undefined && resObj.baseInfo.compare.dataSize > 0.01
-            ? Number(resObj.baseInfo.compare.dataSize?.toFixed(2))
-            : resObj.baseInfo.compare.dataSize,
-    });
+    setBaseinfo(wrapData(res?.baseInfo ?? {}, session.isCompare));
 };
 
-const useDisplayItems = (session: Session): any[] => {
-    const list = useList();
-    if (session.unitcount === 0) {
-        return list.filter(item => !['collectStartTime', 'collectDuration'].includes(item.key));
+function wrapData(compareData: CompareData<BaseInfoData>, isCompare: boolean): BaseInfoData {
+    const sourceList: Array<'compare' | 'baseline'> = isCompare ? ['compare', 'baseline'] : ['compare'];
+    const wrapedData: CompareData<BaseInfoData> = {} as CompareData<BaseInfoData>;
+    sourceList.forEach(source => {
+        const data = compareData[source];
+        wrapedData[source] = {
+            ...data,
+            collectDuration: formateMicrosecond(Number(data.collectDuration)),
+            collectStartTime: formatDate(new Date(data.collectStartTime as number)),
+            dataSize: typeof data.dataSize === 'number' && data.dataSize > 0.01 ? Number(data.dataSize?.toFixed(2)) : data.dataSize,
+        };
+    });
+    const fields = Object.keys(compareData.compare);
+    if (isCompare) {
+        fields.push(...Object.keys(compareData.baseline));
     }
-    return list;
-};
-const BaseInfo = ({ session }: { session: Session}): JSX.Element => {
-    const [data, setData] = useState<StringMap>({});
+    const fieldSet = new Set(fields);
+    const baseinfo: BaseInfoData = {};
+    [...fieldSet].forEach(field => {
+        baseinfo[field] = isCompare
+            ? (<div><div>{wrapedData.compare[field]}</div><div>{wrapedData.baseline[field]}</div></div>)
+            : <>{wrapedData.compare[field]}</>;
+    });
+    return baseinfo;
+}
+
+const BaseInfo = observer(({ session }: { session: Session}): JSX.Element => {
+    // 基本信息原始数据
+    const [baseinfo, setBaseinfo] = useState<BaseInfoData>({});
     const { t } = useTranslation('summary');
+    const displayFields = useDisplayFields(session);
+    // 界面显示
+    const displaylist = useMemo<DisplayItem[]>(() => displayFields.map(infoItem => ({ ...infoItem, value: baseinfo[infoItem.key] }))
+        , [baseinfo, displayFields]);
+
     useEffect(() => {
         if (!session.clusterCompleted) {
-            setData({});
+            setBaseinfo({});
             return;
         }
         setTimeout(() => {
-            initBaseInfo(setData, session);
+            updateBaseInfoData(setBaseinfo, session);
         });
-    }, [session.parseCompleted, session.renderId]);
-    const displaylist = useDisplayItems(session);
+    }, [session.parseCompleted, session.isCompare, session.renderId]);
 
     return <CollapsiblePanel title={t('BaseInfo')}>
-        <MIDescriptions title={''}>
+        <MIDescriptions>
             {
                 displaylist.map((item, index) => <MIDescriptionsItem key={index} label={item.label}>
-                    { data[item.key] }
+                    { item.value}
                 </MIDescriptionsItem>)
             }
         </MIDescriptions>
     </CollapsiblePanel>;
-};
+});
 
 export default BaseInfo;

@@ -38,7 +38,10 @@
         "Set baseline first": "Please set baseline first!",
         "Baseline Conflict": "Can't set baseline and comparison data to be the same",
         "PathNotFound": "The file at path '{{path}}' was not found",
-        "All": "All"
+        "All": "All",
+        "No cluster data available in Baseline": "No cluster data available in Baseline",
+        "No cluster data available in Comparison": "No cluster data available in Comparison",
+        "Open a Project as Comparison Data": "Please open a Project as Comparison Data first"
     },
     "tabs": {
         "Timeline": "Timeline",

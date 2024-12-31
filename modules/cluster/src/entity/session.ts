@@ -34,6 +34,8 @@ export class Session {
     performanceData: PerformanceDataItem[] = []; // 性能数据
     communicationDomains: string[] = []; // 通信域（包含所有连线、框）
     stepList: string[] = [];
+    // 集群对比
+    isCompare: boolean = false;
 
     constructor(conf?: Partial<Session>) {
         makeAutoObservable(this);

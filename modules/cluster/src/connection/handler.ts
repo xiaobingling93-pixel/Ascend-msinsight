@@ -111,3 +111,24 @@ export const updateCommunicatorDataHandler: NotificationHandler = (data): void =
         session.communicatorData = data as unknown as communicatorContainerData;
     });
 };
+
+export const baselineToggleHandler: NotificationHandler = (data): void => {
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.isCompare = data.status as boolean ?? false;
+        forceRender();
+    });
+};
+
+function forceRender(): void {
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        if (!session) {
+            return;
+        }
+        session.renderId = ++session.renderId % 1000;
+    });
+}

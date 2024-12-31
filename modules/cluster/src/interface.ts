@@ -10,6 +10,7 @@ import {
     locateHCCL,
     switchLanguageHandler,
     updateCommunicatorDataHandler,
+    baselineToggleHandler,
 } from './connection/handler';
 
 interface InsightInterface<Request extends Record<string, unknown>, Response extends Record<string, unknown>> {
@@ -31,4 +32,5 @@ export const NOTIFICATION_HANDLERS: Record<string, NotificationHandler> = {
     locateHCCL,
     switchLanguage: switchLanguageHandler,
     updateCommunicatorData: updateCommunicatorDataHandler,
+    clusterBaselineToggle: baselineToggleHandler,
 };

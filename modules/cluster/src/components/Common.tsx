@@ -297,3 +297,10 @@ export const commonEchartsOptions: {
         },
     },
 };
+
+export const getCompareName = (name: string): string => {
+    return `${name} in Comparison`;
+};
+export const getBaselineName = (name: string): string => {
+    return `${name} in Baseline`;
+};

@@ -18,6 +18,7 @@
     },
     "searchCriteria": {
       "Step": "Step",
+      "BaselineStep": "Baseline Step",
       "CommunicationGroup": "Communication Group",
       "OperatorName": "Operator Name",
       "CommunicationMatrix": "Communication Matrix",
@@ -40,13 +41,27 @@
       "Wait Time": "Wait Time",
       "Synchronization Time Ratio": "Synchronization Time Ratio",
       "Wait Time Ratio": "Wait Time Ratio",
+      "Elapse Time in Comparison": "Elapse Time in Comparison",
+      "Transit Time in Comparison": "Transit Time in Comparison",
+      "Wait Time in Comparison": "Wait Time in Comparison",
+      "Synchronization Time in Comparison": "Synchronization Time in Comparison",
+      "Synchronization Time Ratio in Comparison": "Synchronization Time Ratio in Comparison",
+      "Wait Time Ratio in Comparison": "Wait Time Ratio in Comparison",
+      "Elapse Time in Baseline": "Elapse Time in Baseline",
+      "Transit Time in Baseline": "Transit Time in Baseline",
+      "Synchronization Time in Baseline": "Synchronization Time in Baseline",
+      "Wait Time in Baseline": "Wait Time in Baseline",
+      "Synchronization Time Ratio in Baseline": "Synchronization Time Ratio in Baseline",
+      "Wait Time Ratio in Baseline": "Wait Time Ratio in Baseline",
       "Idle Time": "Idle Time",
       "SDMABW": "SDMA BW",
       "RDMABW": "RDMA BW",
       "Bandwidth Analysis": "Bandwidth Analysis",
       "Large Packet Ratio": "Large Packet Ratio",
       "Communication Operators Details": "Communication Operators Details",
-      "see more": "see more"
+      "see more": "see more",
+      "Details": "Details",
+      "Source": "Source"
     },
     "tableHeadTooltip": {
       "Elapse Time": "Total time consumed by all events of communication operators. Formula: Elapse time = Sum of communication event time",
@@ -66,6 +81,7 @@
     "BandwidthIssue": "Bandwidth is the bottleneck",
     "CommunicationIssue": "Communication efficiency is low",
     "Back": "Back",
-    "Tooltip": "If the cluster data already includes the cluster_analysis_output folder, it will not be overwritten; if there is a mismatch between the cluster data and the single-card data, please delete the original cluster_analysis_output folder and the cluster.db file and re-import the data."
+    "Tooltip": "If the cluster data already includes the cluster_analysis_output folder, it will not be overwritten; if there is a mismatch between the cluster data and the single-card data, please delete the original cluster_analysis_output folder and the cluster.db file and re-import the data.",
+    "Difference": "Difference"
   }
 }

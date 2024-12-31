@@ -136,9 +136,14 @@ export const useDataSources = defineStore('dataSources', () => {
     const menuTree = computed<TreeNodeType[]>(() => {
             return dataSources.value.filter(dataSource => dataSource.dataPath.length !== 0).map(dataSource => ({
                 id: dataSource.projectName,
-                projectName: '',
+                projectName: dataSource.projectName,
                 label: dataSource.projectName,
-                children: dataSource.dataPath.map(data => ({ id: `${dataSource.projectName}-${data}`, projectName: dataSource.projectName, label: data})),
+                children: dataSource.dataPath.map(path => ({
+                    id: `${dataSource.projectName}-${path}`,
+                    projectName: dataSource.projectName,
+                    filePath: path,
+                    label: path,
+                })),
                 cancelable: true,
             }));
         }

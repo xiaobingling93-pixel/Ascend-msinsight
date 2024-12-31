@@ -7,12 +7,8 @@ import { useContextMenu } from '@/hooks/useContextMenu';
 import { computed, ref } from 'vue';
 import { t } from '@/i18n';
 import { useViewport } from '@/hooks/useViewport';
+import type {MenuItem} from '@/components/MenuTree/types';
 
-interface MenuItem {
-    label: string;
-    key: string;
-    action?: (...args: any[]) => void;
-}
 defineProps<{ menuItems: MenuItem[] }>();
 const emit = defineEmits(['select']);
 
@@ -52,7 +48,7 @@ function handleSizeChange({ width, height }: { width: number; height: number }) 
     <div class="container" ref="containerRef">
         <slot></slot>
         <Teleport to="body">
-            <div class="context-menu" v-if="visible" v-size-ob="handleSizeChange" :style="{ left: `${pos.posX}px`, top: `${pos.posY}px` }">
+            <div class="context-menu" v-if="visible&&menuItems.length>0" v-size-ob="handleSizeChange" :style="{ left: `${pos.posX}px`, top: `${pos.posY}px` }">
                 <div class="context-menu-item" v-for="item in menuItems" :key="item.label" @mousedown.stop @click="clickMenuItem(item)">
                     {{ t(item.label) }}
                 </div>

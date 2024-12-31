@@ -18,11 +18,15 @@ import { storeToRefs } from 'pinia';
 import DeleteIcon from '@/components/icons/bin_icon.vue';
 import {ElMessageBox} from 'element-plus';
 import i18n from '@/i18n';
+import {HandleSingleDoubleClick} from '@/utils';
+import {MenuLevel} from '@/utils/enmus';
+import type {MenuItem} from './types';
 
 interface TreeData {
     id: string;
     label: string;
     projectName: string;
+    filePath:string;
 }
 
 const { session } = useSession();
@@ -44,43 +48,45 @@ const collapsedKeys = ref<Set<string>>(new Set());
 const allKeys = computed(() => props.dataSource.map(item => item.id));
 const expandedKeys = computed(() => allKeys.value.filter(item => !collapsedKeys.value.has(item)));
 
-const allMenuItems = [
-    {
+const menuItems = computed(() => {
+    const {projectName: selectedProjectName, fileName: selectedFileName} = selectProjectExplorerInfo.value;
+    const {projectName: baselineProjectName, filePath: baselineFilePath} = baselineDataInfo.value;
+    const {projectName: compareProjectName, filePath: compareFilePath} = compareDataInfo.value;
+    const isProject = selectedProjectName !== '' && selectedFileName === '';
+    const isBaseline = selectedProjectName === baselineProjectName && selectedFileName === baselineFilePath;
+    const isBaselineSetted = baselineFilePath != '';
+    const isComparison = selectedProjectName === compareProjectName && selectedFileName === compareFilePath;
+    const allMenuItems: MenuItem[] = [
+      {
         label: 'Set as Baseline Data',
         key: 'setAsBaselineData',
         action: (): void => {
-            setBaselineData(selectProjectExplorerInfo.value.projectName, selectProjectExplorerInfo.value.fileName);
+          setBaselineData(selectProjectExplorerInfo.value.projectName, selectProjectExplorerInfo.value.fileName);
         },
-    },
-    {
+        visible: !isBaseline,
+      },
+      {
         label: 'Unset as Baseline Data',
         key: 'unsetAsBaselineData',
         action: cancelBaselineData,
-    },
-    {
+        visible: isBaseline
+      },
+      {
         label: 'Set as Comparison Data',
         key: 'setAsComparisonData',
         action: (): void => {
-            setCompareData(selectProjectExplorerInfo.value.projectName, selectProjectExplorerInfo.value.fileName);
+          setCompareData(selectProjectExplorerInfo.value.projectName, selectProjectExplorerInfo.value.fileName);
         },
-    },
-    {
+        visible: !isProject && !isBaseline && !isComparison && isBaselineSetted
+      },
+      {
         label: 'Unset as Comparison Data',
         key: 'unsetAsComparisonData',
         action: cancelCompareData,
-    },
-];
-
-const menuItems = computed(() => {
-    const { projectName: selectedProjectName, fileName: selectedFileName } = selectProjectExplorerInfo.value;
-    const [itemSettingBaseline, itemUnsettingBaseline, itemSettingComparison, itemUnsettingComparison] = allMenuItems;
-    const { projectName: baselineProjectName, filePath: baselineFilePath } = baselineDataInfo.value;
-    const { projectName: compareProjectName, filePath: compareFilePath } = compareDataInfo.value;
-
-    return [
-        selectedProjectName === baselineProjectName && selectedFileName === baselineFilePath ? itemUnsettingBaseline : itemSettingBaseline,
-        selectedProjectName === compareProjectName && selectedFileName === compareFilePath ? itemUnsettingComparison : itemSettingComparison,
+        visible: isComparison
+      },
     ];
+    return allMenuItems.filter(item => item.visible);
 });
 
 const [DeleteAll, DeleteItem, ImportData, Cancel, Confirm, All] = useWatchTranslation(['Delete All', 'Delete Item', 'Import Data', 'Cancel', 'Confirm', 'All']);
@@ -92,7 +98,7 @@ const props = defineProps<{
 const activateNode = computed(() => ({ projectName: lastDataSource.value.projectName, filePath: lastDataSource.value.dataPath[0] }));
 
 const isActiveNode = (node: Node, data: TreeData): boolean => {
-    if (node.level === 1) {
+    if (node.level === MenuLevel.PROJECT) {
         return data.label === activateNode.value.projectName;
     }
     return data.label === activateNode.value.filePath && data.projectName === activateNode.value.projectName;
@@ -108,7 +114,7 @@ const handleNodeCollapse = (data: TreeData) => {
 
 const handleNodeClick = (data: any, node: any) => {
     let dataSource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] } as DataSource;
-    if (node.level === 1) {
+    if (node.level === MenuLevel.PROJECT) {
         if(lastDataSource.value.projectName === data.label) { return }
         const firstDataPath = data.children?.[0].label;
         dataSource.projectName = data.label;
@@ -122,6 +128,18 @@ const handleNodeClick = (data: any, node: any) => {
     confirm(dataSource, false, ProjectActionEnum.TRANSFER_PROJECT);
 };
 
+const handleSingleClick = (data: any, node: any) => {
+  // Vue不区分单击、双击
+  // 如果点击项目名，为避免影响双击事件，增加了额外控制
+  if (node.level === MenuLevel.PROJECT) {
+    HandleSingleDoubleClick.click(() => {
+      handleNodeClick(data, node);
+    }, 'projectName');
+  } else {
+    handleNodeClick(data, node);
+  }
+};
+
 function addRemoteUnderProject(node: any, e: MouseEvent) {
     e.stopPropagation();
     projectName.value = node.data.label;
@@ -129,8 +147,8 @@ function addRemoteUnderProject(node: any, e: MouseEvent) {
 }
 
 const handleRightClick = (data: any) => {
-    selectProjectExplorerInfo.value.projectName = data.projectName;
-    selectProjectExplorerInfo.value.fileName = data.label;
+  selectProjectExplorerInfo.value.projectName = data.projectName ?? '';
+  selectProjectExplorerInfo.value.fileName = data.filePath ?? '';
 };
 
 const getToolTip = (data:any, node: any): string => {
@@ -144,13 +162,16 @@ const getToolTip = (data:any, node: any): string => {
   return rankId + ' : ' + data.label;
 };
 
-const customNodeClass = (data: TreeData) => {
-    if (data.label === baselineDataInfo.value.filePath) {
-        return 'is-baseline';
+const customNodeClass = (data: TreeData,node:Node) => {
+    const {projectName: baselineProjectName, filePath: baselineFilePath} = baselineDataInfo.value;
+    const isBaselineNode=(node.level === MenuLevel.FILE && data.label === baselineFilePath) ||
+        (node.level === MenuLevel.PROJECT && data.label === baselineProjectName && baselineFilePath === '');
+    if (isBaselineNode) {
+      return 'is-baseline';
     } else if (data.label === compareDataInfo.value.filePath) {
-        return 'is-comparison';
+      return 'is-comparison';
     } else {
-        return null;
+      return null;
     }
 };
 
@@ -209,7 +230,7 @@ const handleDeleteChecked = () => {
                 :props="{ class: customNodeClass }"
                 @node-expand="handleNodeExpand"
                 @node-collapse="handleNodeCollapse"
-                @node-click="handleNodeClick"
+                @node-click="handleSingleClick"
                 :show-checkbox="props.editStatus"
                 @check-change="handleCheckChange"
                 ref="tree"
@@ -219,7 +240,8 @@ const handleDeleteChecked = () => {
                         <span class="content-body">
                             <LocalIcon v-if="node.level === 1" style="flex: none" />
                             <el-tooltip :content="getToolTip(data, node)" effect="light" :show-after="400">
-                                <EditableText v-if="node.level === 1" :tree-node="node" :key="data.id + data.label"></EditableText>
+                                <EditableText v-if="node.level === 1" :tree-node="node" :key="data.id + data.label"
+                                              @contextmenu.prevent="handleRightClick(data)"></EditableText>
                                 <span v-else class="content-node-text can-right-click" @contextmenu.prevent="handleRightClick(data)">
                                     {{ getToolTip(data, node) }}
                                 </span>
@@ -309,9 +331,11 @@ const handleDeleteChecked = () => {
 }
 
 .is-baseline > .el-tree-node__content .content-node-text {
+    font-weight: bold;
     color: var(--mi-color-primary);
 }
 .is-comparison > .el-tree-node__content .content-node-text {
+    font-weight: bold;
     color: var(--mi-color-warning);
 }
 

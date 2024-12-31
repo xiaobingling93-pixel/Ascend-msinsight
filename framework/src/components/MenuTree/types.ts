@@ -11,3 +11,10 @@ export interface TreeNodeType {
 };
 
 export const indent = 1.2;
+
+export interface MenuItem {
+    label: string;
+    key: string;
+    action?: (...args: any[]) => void;
+    visible?:boolean;
+}

@@ -7,15 +7,22 @@ import { LOCAL_HOST, PORT, ProjectActionEnum } from '@/centralServer/websocket/d
 import { useDataSources } from '@/stores/dataSource';
 import { ElMessage } from 'element-plus';
 import { t } from '@/i18n';
-import {removeBaseline, request, sendDaseLineInfo} from '@/centralServer/server';
+import {removeBaseline, request, sendClusterBaselineStatus, sendDaseLineInfo} from '@/centralServer/server';
+import {useSession} from '@/stores/session';
+import {useLoading} from '@/hooks/useLoading';
 
 const UNDERLINE: string = '_';
+export interface File {
+    projectName: string;
+    filePath: string;
+}
 export interface DataInfo {
     projectName: string;
     filePath: string;
     rankId: string;
     host?: string;
     cardName?: string;
+    isCluster?: boolean;
 }
 
 export interface TimelineCardInfo {
@@ -37,6 +44,7 @@ export const useCompareConfig = defineStore('compareConfig', () => {
     const compareDataInfo = ref<DataInfo>({ projectName: '', filePath: '', rankId: '' });
     const dataSources = useDataSources();
     const isCompareStatus = ref<boolean>(false);
+    const {session} = useSession();
 
     const updateDataInfoMap = (
         projectAction: ProjectActionEnum,
@@ -76,8 +84,13 @@ export const useCompareConfig = defineStore('compareConfig', () => {
             command: 'global/setBaseline',
             params: { projectName, filePath },
         });
-        if (result.errorMessage as string) {
-            ElMessage.warning(result.errorMessage as string);
+        // 基线是工程或者集群文件(cluster_analysis_output)，进入集群对比
+        const isProject = projectName !== '' && filePath === '';
+        const isClusterCompare = isProject || result.isCluster === true;
+        if (result.errorMessage || result.error?.code) {
+            ElMessage.warning( `Error: ${result.errorMessage ?? result.error?.code}` );
+        } else if (isClusterCompare) {
+            handleClusterCompare(isProject, {projectName, filePath, ...result});
         } else {
             const dataInfo = result as DataInfo;
             baselineDataInfo.value = { projectName, filePath, rankId: result.rankId };
@@ -96,9 +109,35 @@ export const useCompareConfig = defineStore('compareConfig', () => {
     };
 
     /**
+     * 集群对比
+     */
+    const handleClusterCompare = async(isProject: boolean, dataInfo: DataInfo): Promise<void> => {
+        const {lastDataSource, confirm} = useDataSources();
+        // 如果没有打开的工程，打开此工程
+        if (lastDataSource.projectName === '') {
+            ElMessage.warning(t('Open a Project as Comparison Data') as string);
+            return;
+        }
+        // 如果基线没有集群数据，告警
+        if (!dataInfo.isCluster) {
+            ElMessage.warning(t('No cluster data available in Baseline') as string);
+            return;
+        }
+        // 如果对比没有集群数据，告警
+        if (!session.isCluster) {
+            ElMessage.warning(t('No cluster data available in Comparison') as string);
+            return;
+        }
+        baselineDataInfo.value = {projectName: dataInfo.projectName, filePath: dataInfo.filePath, rankId: ''};
+        sendClusterBaselineStatus(true);
+    };
+
+    /**
      * 取消基线数据
      */
     const cancelBaselineData = async (): Promise<void> => {
+        // 取消集群对比
+        sendClusterBaselineStatus(false);
         const datasource = {
             remote: LOCAL_HOST,
             port: PORT,
@@ -123,6 +162,8 @@ export const useCompareConfig = defineStore('compareConfig', () => {
     const cancelCompareData = (): void => {
         compareDataInfo.value = { projectName: '', filePath: '', rankId: '' };
         isCompareStatus.value = false;
+        // 取消集群对比状态
+        sendClusterBaselineStatus(false);
     };
 
     /**
