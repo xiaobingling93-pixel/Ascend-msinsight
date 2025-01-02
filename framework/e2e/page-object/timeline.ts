@@ -49,6 +49,12 @@ export class TimelinePage {
         }
         await expandBtn.click();
     }
+
+    async clickMenu(clickUnit: Locator, timelineFrame: FrameLocator, option: string): Promise<void> {
+        await clickUnit.click({ button: 'right' });
+        const options = timelineFrame.locator('.menu-item');
+        await options.getByText(option).click();
+    }
 }
 
 export class SystemView extends TimelinePage {

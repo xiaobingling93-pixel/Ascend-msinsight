@@ -151,6 +151,58 @@ test.describe('Timeline', () => {
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`search-operator.png`, { maxDiffPixels: 100 });
     });
 
+    // 右键菜单--Hide/Show All Hidden
+    test('test_context_menu_click_hide', async ({ timelinePage }) => {
+        const { timelineFrame, clickMenu } = timelinePage;
+        const unitList = timelineFrame.locator('#unitWrapperScroller');
+        const clickUnit = unitList.locator('.unit-info').first();
+        await clickMenu(clickUnit, timelineFrame, 'Hide');
+        const hideUnit = unitList.locator('.unit > .empty');
+        expect(await hideUnit.count()).toBe(1);
+        await clickMenu(hideUnit, timelineFrame, 'Show All Hidden');
+        expect(await hideUnit.count()).toBe(0);
+    });
+
+    // 右键菜单--Expand all/Collapse all
+    test('test_context_menu_click_ExpandAll', async ({ timelinePage }) => {
+        const { timelineFrame, clickMenu } = timelinePage;
+        const unitList = timelineFrame.locator('#unitWrapperScroller');
+        const clickUnit = unitList.locator('.unit-info').first();
+        await clickMenu(clickUnit, timelineFrame, 'Expand all');
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('menu-click-expand-all.png', { maxDiffPixels: 100 });
+        await clickMenu(clickUnit, timelineFrame, 'Collapse all');
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('menu-click-collapse-all.png', { maxDiffPixels: 100 });
+    });
+
+    // 右键菜单--Show in events view
+    test('test_context_menu_click_ShowInEventsView', async ({ timelinePage }) => {
+        const { timelineFrame, clickMenu, bottomPanel } = timelinePage;
+        const unitList = timelineFrame.locator('#unitWrapperScroller');
+        const clickUnit = unitList.locator('.unit-info').nth(1);
+        await clickMenu(clickUnit, timelineFrame, 'Show in events view');
+        await timelineFrame.locator('.ant-spin').waitFor({ state: 'attached' });
+        await timelineFrame.locator('.ant-spin').waitFor({ state: 'detached' });
+        await expect(bottomPanel).toHaveScreenshot('test-context-menu-click-ShowInEventsView.png', { maxDiffPixels: 100 });
+    });
+
+    // 右键菜单--Undo Zoom/Reset Zoom
+    test('test_context_menu_click_zoom', async ({ timelinePage, page }) => {
+        const { timelineFrame, clickMenu } = timelinePage;
+        const unitList = timelineFrame.locator('#unitWrapperScroller');
+        const clickUnit = unitList.locator('.unit-info').first();
+        const options = ['UndoZoom', 'ResetZoom'];
+
+        for (let i = 0; i < options.length; i++) {
+            // 聚焦在timeline
+            await clickUnit.click({ button: 'middle' });
+            await page.keyboard.press('w');
+            await page.keyboard.press('w');
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-context-menu-click-Zoom.png', { maxDiffPixels: 100 });
+            await clickMenu(clickUnit, timelineFrame, 'Undo Zoom');
+            await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-context-menu-click-${options[i]}.png`, { maxDiffPixels: 100 });
+        }
+    });
+
     test.afterEach(async ({ page }) => {
         await clearAllData(page);
     });
