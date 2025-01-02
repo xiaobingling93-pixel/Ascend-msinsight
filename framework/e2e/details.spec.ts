@@ -3,7 +3,7 @@
  */
 import {expect, test as baseTest} from '@playwright/test';
 import {DetailsPage} from './page-object';
-import {importData} from './utils';
+import {importData, setCompare} from './utils';
 import {FilePath} from './utils/constants';
 import {SelectHelpers} from './components';
 
@@ -20,17 +20,22 @@ const test = baseTest.extend<TestFixtures>({
 
 const imgMap = {
     baseinfoDataCorrect: 'baseinfo-data-correct.png',
+    baseinfoCompare: 'details-baseinfo-compare.png',
     coreOccupancyCorrect: 'core-occupancy-correct.png',
     coreOccupancyShowThroughput: 'core-occupancy-show-throughput.png',
     rooflineChart: 'roofline-chart.png',
     rooflineAdvice: 'roofline-advice.png',
     computeWorkloadChartCorrect: 'compute-workload-chart-correct.png',
+    computeWorkloadChartCompare: 'compute-workl oad-chart-compare.png',
     computeWorkloadBlockIdChange: 'compute-workload-block-id-change.png',
     computeWorkloadAdvice: 'compute-workload-advice.png',
     computeWorkloadTable: 'compute-workload-table.png',
+    computeWorkloadTableCompare: 'compute-workload-table-compare.png',
     memoryWorkloadChart: 'memory-workload-chart.png',
+    memoryWorkloadChartCompare: 'memory-workload-chart-compare.png',
     memoryWorkloadAdvice: 'memory-workload-advice.png',
     memoryWorkloadTable: 'memory-workload-table.png',
+    memoryWorkloadTableCompare: 'memory-workload-table-compare.png',
 };
 const inputMap = {
     coreOccupancyShowAsThroughput: 'Throughput',
@@ -51,6 +56,15 @@ test.describe('Details', () => {
     test('test_details_baseinfo_data_correct', async ({detailsPage}) => {
         const {baseInfoContent} = detailsPage;
         await expect(baseInfoContent).toHaveScreenshot(imgMap.baseinfoDataCorrect);
+    });
+
+    // 基本信息-对比
+    // 预期：基本信息文字、图表正确
+    test('test_details_baseinfo_compare', async ({detailsPage, page}) => {
+        const {baseInfoContent, detailsFrame} = detailsPage;
+        await importData(page, FilePath.DETAILS_ROOFLINE);
+        await setCompare(page, detailsFrame, {baseline: FilePath.DETAILS, comparison: FilePath.DETAILS_ROOFLINE});
+        await expect(baseInfoContent).toHaveScreenshot(imgMap.baseinfoCompare);
     });
 
     // 核间负载分析
@@ -92,6 +106,15 @@ test.describe('Details', () => {
         await expect(ComputeWorkloadChart).toHaveScreenshot(imgMap.computeWorkloadBlockIdChange);
     });
 
+    // 计算负载分析-pipe utilization对比
+    // 预期：柱状图正确
+    test('test_details_compute_workload_chart_compare', async ({detailsPage, page}) => {
+        const {ComputeWorkloadChart, detailsFrame} = detailsPage;
+        await importData(page, FilePath.DETAILS_ROOFLINE);
+        await setCompare(page, detailsFrame, {baseline: FilePath.DETAILS, comparison: FilePath.DETAILS_ROOFLINE});
+        await expect(ComputeWorkloadChart).toHaveScreenshot(imgMap.computeWorkloadChartCompare);
+    });
+
     // 计算负载分析-瓶颈分析结果
     // 预期：瓶颈分析结果正确
     test('test_details_compute_workload_advice', async ({page, detailsPage}) => {
@@ -104,6 +127,14 @@ test.describe('Details', () => {
         const {computeWorkloadTable} = detailsPage;
         await expect(computeWorkloadTable).toHaveScreenshot(imgMap.computeWorkloadTable);
     });
+    // 计算负载分析-信息表对比
+    // 预期：表格信息正确
+    test('test_details_compute_workload_table_compare', async ({detailsPage, page}) => {
+        const {computeWorkloadTable, detailsFrame} = detailsPage;
+        await importData(page, FilePath.DETAILS_ROOFLINE);
+        await setCompare(page, detailsFrame, {baseline: FilePath.DETAILS, comparison: FilePath.DETAILS_ROOFLINE});
+        await expect(computeWorkloadTable).toHaveScreenshot(imgMap.computeWorkloadTableCompare);
+    });
     // 内存负载分析-热力图
     // 预期：
     // 1、导入数据成功
@@ -111,6 +142,14 @@ test.describe('Details', () => {
     test('test_details_memory_workload_chart', async ({page, detailsPage}) => {
         const {memoryWorkloadChart} = detailsPage;
         await expect(memoryWorkloadChart).toHaveScreenshot(imgMap.memoryWorkloadChart);
+    });
+    // 内存负载分析-热力图对比
+    // 预期：热力图显示正确
+    test('test_details_memory_workload_chart_compare', async ({detailsPage, page}) => {
+        const {memoryWorkloadChart, detailsFrame} = detailsPage;
+        await importData(page, FilePath.DETAILS_ROOFLINE);
+        await setCompare(page, detailsFrame, {baseline: FilePath.DETAILS, comparison: FilePath.DETAILS_ROOFLINE});
+        await expect(memoryWorkloadChart).toHaveScreenshot(imgMap.memoryWorkloadChartCompare);
     });
     // 内存负载分析-瓶颈分析结果
     // 预期： 瓶颈分析结果正确
@@ -123,5 +162,13 @@ test.describe('Details', () => {
     test('test_details_memory_workload_table', async ({page, detailsPage}) => {
         const {memoryWorkloadTable} = detailsPage;
         await expect(memoryWorkloadTable).toHaveScreenshot(imgMap.memoryWorkloadTable);
+    });
+    // 内存负载分析-信息表对比
+    // 预期：表格信息正确
+    test('test_details_memory_workload_table_compare', async ({detailsPage, page}) => {
+        const {memoryWorkloadTable, detailsFrame} = detailsPage;
+        await importData(page, FilePath.DETAILS_ROOFLINE);
+        await setCompare(page, detailsFrame, {baseline: FilePath.DETAILS, comparison: FilePath.DETAILS_ROOFLINE});
+        await expect(memoryWorkloadTable).toHaveScreenshot(imgMap.memoryWorkloadTableCompare);
     });
 });
