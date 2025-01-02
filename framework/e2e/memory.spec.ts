@@ -3,8 +3,8 @@
  */
 
 import { test as baseTest, expect } from '@playwright/test';
-import { MemoryPage } from './page-object';
-import { clearAllData, importData, waitForWebSocketEvent } from './utils';
+import {FrameworkPage, MemoryPage} from './page-object';
+import {clearAllData, importData, setCompare, waitForWebSocketEvent} from './utils';
 import { SelectHelpers, InputHelpers } from './components';
 
 interface TestFixtures {
@@ -22,8 +22,9 @@ const memoryImgMap = {
     filterPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-filter.png',
     queryPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-query.png',
     resetPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-reset.png',
+    compareRankRes: 'memory-compare-rank.png',
 };
- 
+
 test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
     test.beforeEach(async ({ page, memoryPage }) => {
         const allCardParsedPromise = waitForWebSocketEvent(page, (res) => res?.event === 'allPagesSuccess');
@@ -41,7 +42,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
             maxDiffPixels: 500,
         });
     });
- 
+
     // 【case】memory顶部过滤条件改变界面加载
     test('change_filterCondition', async ({ page, memoryPage }) => {
         const { memoryFrame, rankIdSelector, groupIdSelector } = memoryPage;
@@ -95,6 +96,16 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
         .toHaveScreenshot(memoryImgMap.resetPytorchSingleMachineMultiRankDataSuccess, {
             maxDiffPixels: 500,
         });
+    });
+
+    // 对比数据
+    test('memory_compare_rank', async ({page, memoryPage}) => {
+        const {memoryFrame} = memoryPage;
+        setCompare(page, memoryFrame);
+        await expect(memoryFrame.locator('.mi-page'))
+            .toHaveScreenshot(memoryImgMap.compareRankRes, {
+                maxDiffPixels: 500,
+            });
     });
 
     test.afterEach(async ({ page }) => {

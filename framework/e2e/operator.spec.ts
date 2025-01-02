@@ -4,7 +4,7 @@
 
 import { test as baseTest, expect } from '@playwright/test';
 import { OperatorPage } from './page-object';
-import { clearAllData, importData, waitForWebSocketEvent } from './utils';
+import {clearAllData, importData, setCompare, waitForWebSocketEvent} from './utils';
 import { SelectHelpers } from './components';
 
 interface TestFixtures {
@@ -20,6 +20,7 @@ const test = baseTest.extend<TestFixtures>({
 const operatorImgMap = {
     loadOperatorDataSuccess: 'operator.png',
     expandOperatorDetailTableDataSuccess: 'operator-expand-detail.png',
+    compareRankRes: 'operator-compare-rank.png',
 };
 
 test.describe('Operator', () => {
@@ -59,6 +60,16 @@ test.describe('Operator', () => {
         .toHaveScreenshot(operatorImgMap.expandOperatorDetailTableDataSuccess, {
             maxDiffPixels: 500,
         });
+    });
+
+    // 对比数据
+    test('operator_compare_rank', async ({page, operatorPage}) => {
+        const {operatorFrame} = operatorPage;
+        setCompare(page, operatorFrame);
+        await expect(operatorFrame.locator('.mi-page'))
+            .toHaveScreenshot(operatorImgMap.compareRankRes, {
+                maxDiffPixels: 500,
+            });
     });
 
     test.afterEach(async ({ page }) => {
