@@ -66,18 +66,7 @@ const resetStatus = (): void => {
         if (!session) {
             return;
         }
-        session.clusterCompleted = false;
-        session.parseCompleted = false;
-        session.unitcount = 0;
-        session.durationFileCompleted = false;
-        session.allRankIds = [];
-        session.communicatorData = { partitionModes: [], defaultPPSize: 0 };
-        session.activeCommunicator = undefined;
-        session.indicatorList = [];
-        session.performanceData = [];
-        session.communicationDomains = [];
-        session.stepList = [];
-        session.arrangementRankCount = 0;
+        session.reset();
     });
 };
 

@@ -249,6 +249,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
                 session.communicationDomains = [...new Set([...connections, ...frames])];
                 session.indicatorList = data?.indicators ?? {};
                 session.arrangementRankCount = data?.size || 0;
+                session.setRankDyeingData();
             });
 
             setActiveRectIndex(null);
@@ -294,7 +295,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
         }
 
         // 判断矩形
-        for (const rect of canvasDrawer.rectangleList) {
+        for (const rect of canvasDrawer.visibleRectangleList) {
             if (rect.isInside(x, y)) {
                 setActiveRectIndex(rect.index);
                 return;

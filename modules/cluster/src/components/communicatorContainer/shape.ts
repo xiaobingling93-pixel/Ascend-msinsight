@@ -85,13 +85,21 @@ export class Rectangle extends Shape {
         this.attribute = attribute;
     }
 
+    get originalX(): number {
+        return (this.rowIndex * this.width) + this.totalGap + CanvasDrawer.PADDING;
+    }
+
+    get originalY(): number {
+        const yIndex = this.colIndex;
+        return (this.colIndex * this.height) + CanvasDrawer.PADDING + (this.colIndex * this.textHeight) + (yIndex * this.yGap);
+    }
+
     get x(): number {
-        return (this.rowIndex * this.width) + this.totalGap + CanvasDrawer.PADDING - this.scrollLeft;
+        return this.originalX - this.scrollLeft;
     }
 
     get y(): number {
-        const yIndex = this.colIndex;
-        return (this.colIndex * this.height) + CanvasDrawer.PADDING + (this.colIndex * this.textHeight) + (yIndex * this.yGap) - this.scrollTop;
+        return this.originalY - this.scrollTop;
     }
 
     get width(): number {
@@ -165,7 +173,7 @@ export class Rectangle extends Shape {
         this.scrollTop = scrollTop;
 
         ctx.save();
-        if (this.fillColor !== undefined) {
+        if (this.fillColor !== undefined && this.fillColor !== '') {
             ctx.fillStyle = 'white';
             ctx.fillRect(this.x, this.y, this.width, this.height);
             ctx.fillStyle = this.fillColor;
@@ -421,6 +429,8 @@ export class CanvasDrawer {
     private readonly frames: Frame[] = [];
     private readonly ctx: CanvasRenderingContext2D | null = null;
     private readonly canvasRef: RefObject<HTMLCanvasElement>;
+    private scrollLeft: number = 0;
+    private scrollTop: number = 0;
 
     constructor(canvasRef: RefObject<HTMLCanvasElement>) {
         const ctx = canvasRef.current?.getContext('2d');
@@ -440,6 +450,14 @@ export class CanvasDrawer {
 
     get frameList(): Frame[] {
         return this.frames;
+    }
+
+    get visibleRectangleList(): Rectangle[] {
+        const viewportWidth = this.canvasRef.current?.width ?? 0;
+        return this.rectangles.filter(rect =>
+            rect.originalX + rect.width > this.scrollLeft &&
+            rect.originalX < this.scrollLeft + viewportWidth,
+        );
     }
 
     addRectangle(rect: Rectangle): void {
@@ -467,10 +485,12 @@ export class CanvasDrawer {
     }
 
     render(scrollLeft: number = 0, scrollTop: number = 0): void {
+        this.scrollLeft = scrollLeft;
+        this.scrollTop = scrollTop;
         this.ctx?.resetTransform();
         this.ctx?.scale(devicePixelRatio, devicePixelRatio);
         this.clearCanvas();
-        this.rectangles.forEach(rect => rect.draw(this.ctx, scrollLeft, scrollTop));
+        this.visibleRectangleList.forEach(rect => rect.draw(this.ctx, scrollLeft, scrollTop));
         this.lines.forEach(line => line.draw(this.ctx, scrollLeft, scrollTop));
         this.frames.forEach(frame => frame.draw(this.ctx, scrollLeft, scrollTop));
     }

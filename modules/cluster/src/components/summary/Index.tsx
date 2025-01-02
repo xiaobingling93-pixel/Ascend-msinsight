@@ -22,6 +22,7 @@ import { getParallelismPerformanceData, queryAllConnections } from '../../utils/
 import { runInAction } from 'mobx';
 import { Communicator, partitionMode } from '../communicatorContainer/ContainerUtils';
 import connector from '../../connection';
+import { PerformanceDataItem } from '../../utils/interface';
 
 const FlowChartContainer = styled.div`
     margin-top: 24px;
@@ -104,6 +105,14 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
         runInAction(() => {
             if (performance !== undefined) {
                 session.performanceData = performance;
+
+                const map: Map<number, PerformanceDataItem> = new Map();
+                performance.forEach(item => {
+                    map.set(item.index, item);
+                });
+                session.performanceDataMap = map;
+
+                session.setRankDyeingData();
             }
         });
     };

@@ -32,6 +32,8 @@ export class Session {
     arrangementRankCount: number = 0;
     indicatorList: IndicatorsItem[] = []; // 性能指标项列表
     performanceData: PerformanceDataItem[] = []; // 性能数据
+    performanceDataMap: PerformanceDataMap = new Map(); // 性能数据map
+    rankDyeingData: RankDyeingData = {}; // 性能数据map
     communicationDomains: string[] = []; // 通信域（包含所有连线、框）
     stepList: string[] = [];
     // 集群对比
@@ -58,16 +60,8 @@ export class Session {
         return map;
     }
 
-    get performanceDataMap(): PerformanceDataMap {
-        const map: Map<number, PerformanceDataItem> = new Map();
-        this.performanceData.forEach(item => {
-            map.set(item.index, item);
-        });
-        return map;
-    }
-
-    // 着色数据图例
-    get rankDyeingData(): RankDyeingData {
+    // 设置着色数据图例
+    setRankDyeingData(): void {
         const data: Record<string, { min: number; max: number }> = {};
         this.dataTypeOptions.forEach(dataType => {
             data[dataType.key] = { min: Number.MAX_SAFE_INTEGER, max: 0 };
@@ -80,6 +74,23 @@ export class Session {
             });
         });
 
-        return data;
+        this.rankDyeingData = data;
+    }
+
+    reset(): void {
+        this.clusterCompleted = false;
+        this.parseCompleted = false;
+        this.unitcount = 0;
+        this.durationFileCompleted = false;
+        this.allRankIds = [];
+        this.communicatorData = { partitionModes: [], defaultPPSize: 0 };
+        this.activeCommunicator = undefined;
+        this.indicatorList = [];
+        this.performanceData = [];
+        this.performanceDataMap = new Map();
+        this.communicationDomains = [];
+        this.stepList = [];
+        this.rankDyeingData = {};
+        this.arrangementRankCount = 0;
     }
 }
