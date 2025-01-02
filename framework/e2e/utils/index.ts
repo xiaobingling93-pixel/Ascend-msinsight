@@ -77,11 +77,11 @@ export async function setCompare(page: Page, frame: FrameLocator, {baseline, com
     comparison: string;
 } = {baseline: FilePath.TEXT_RANK_0, comparison: FilePath.TEXT_RANK_1}): Promise<void> {
     const frameworkPage = new FrameworkPage(page);
-    const rank1 = frameworkPage.projectList.getByText(baseline);
+    const rank1 = frameworkPage.projectList.locator('span.content-node-text').getByText(baseline);
     await rank1.click({button: 'right'});
     const setBaselineBtn = frameworkPage.page.getByText('Set as Baseline Data');
     await setBaselineBtn.click();
-    const rank2 = frameworkPage.projectList.getByText(comparison);
+    const rank2 = frameworkPage.projectList.locator('span.content-node-text').getByText(comparison);
     await rank2.click({button: 'right'});
     const setComparisonBtn = frameworkPage.page.getByText('Set as Comparison Data');
     await setComparisonBtn.click();
