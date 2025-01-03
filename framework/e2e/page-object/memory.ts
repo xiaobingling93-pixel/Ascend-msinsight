@@ -15,6 +15,7 @@ export class MemoryPage {
     readonly nameInputor: Locator;
     readonly minSizeInputor: Locator;
     readonly maxSizeInputor: Locator;
+    readonly isOnlyShowAllocatedOrReleasedWithinIntervalChecker: Locator;
 
     constructor(page: Page) {
         this.page = page;
@@ -26,6 +27,8 @@ export class MemoryPage {
         this.nameInputor = this.memoryFrame.locator('#input-name');
         this.minSizeInputor = this.memoryFrame.locator('#input-minSize');
         this.maxSizeInputor = this.memoryFrame.locator('#input-maxSize');
+        this.isOnlyShowAllocatedOrReleasedWithinIntervalChecker =
+            this.memoryFrame.locator('#input-onlyShowAllocatedOrReleased');
     }
 
     async goto(): Promise<void> {

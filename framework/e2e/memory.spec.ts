@@ -3,9 +3,9 @@
  */
 
 import { test as baseTest, expect } from '@playwright/test';
-import {FrameworkPage, MemoryPage} from './page-object';
-import {clearAllData, importData, setCompare, waitForWebSocketEvent} from './utils';
-import { SelectHelpers, InputHelpers } from './components';
+import { MemoryPage } from './page-object';
+import { clearAllData, importData, setCompare, waitForWebSocketEvent } from './utils';
+import { SelectHelpers, InputHelpers, CheckboxHelpers } from './components';
 
 interface TestFixtures {
     memoryPage: MemoryPage;
@@ -23,6 +23,7 @@ const memoryImgMap = {
     queryPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-query.png',
     resetPytorchSingleMachineMultiRankDataSuccess: 'memory-pytorch-single-reset.png',
     compareRankRes: 'memory-compare-rank.png',
+    queryPytorchSingleMachineMultiRankDataOnlyShowAllocatedOrReleasedSuccess: 'memory-pytorch-interval-only-show.png',
 };
 
 test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
@@ -60,7 +61,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
     });
 
     // 【case】memory底部表格条件查询后结果加载
-    test('query_memoryDetailTbale_by_tableFilterCondition', async ({ page, memoryPage }) => {
+    test('query_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage }) => {
         const { memoryFrame, nameInputor, minSizeInputor, maxSizeInputor } = memoryPage;
         const nameInput = new InputHelpers(page, nameInputor, memoryFrame);
         const minSizeInput = new InputHelpers(page, minSizeInputor, memoryFrame);
@@ -80,7 +81,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
     });
 
     // 【case】memory底部表格条件重置后结果加载
-    test('reset_memoryDetailTbale_by_tableFilterCondition', async ({ page, memoryPage }) => {
+    test('reset_memoryDetailTable_by_tableFilterCondition', async ({ page, memoryPage }) => {
         const { memoryFrame, nameInputor, minSizeInputor, maxSizeInputor } = memoryPage;
         const nameInput = new InputHelpers(page, nameInputor, memoryFrame);
         const minSizeInput = new InputHelpers(page, minSizeInputor, memoryFrame);
@@ -106,6 +107,43 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
             .toHaveScreenshot(memoryImgMap.compareRankRes, {
                 maxDiffPixels: 500,
             });
+    });
+
+    // 【case】memory中间调整区间，底部表格仅查看在选中时间区间分配或释放内存的数据时的结果展示
+    test('query_memoryDetailTable_by_tableFilterConditionOnlyShowAllocatedOrReleasedWithinInterval',
+        async ({ page, memoryPage }) => {
+        const { memoryFrame, isOnlyShowAllocatedOrReleasedWithinIntervalChecker } = memoryPage;
+        const isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox =
+            new CheckboxHelpers(page, isOnlyShowAllocatedOrReleasedWithinIntervalChecker, memoryFrame);
+
+        const chart = memoryFrame.locator('.ant-spin-container > div > div:nth-child(2) > div:nth-child(1) > canvas');
+        const chartInfo = await chart.boundingBox();
+        if (!chartInfo) {
+            return;
+        }
+        const { x: startX, y: startY } = chartInfo;
+        await page.mouse.move(startX + 300, startY + 200);
+        await page.mouse.down();
+        await page.mouse.move(startX + 400, startY + 200);
+        await page.mouse.up();
+
+        await isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox.click();
+        expect(await isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox.isChecked()).toBe(true);
+        const queryBtn = memoryFrame.getByTestId('reset-btn');
+        await queryBtn.waitFor({ state: 'visible' });
+        await queryBtn.click();
+        await page.mouse.move(0, 0);
+
+        const totalNumListItem = memoryFrame.locator('.ant-spin-container > ul > li.ant-pagination-total-text');
+        // 等待 1s 后端返回更新 totalNum
+        await totalNumListItem.waitFor({ timeout: 1000 });
+        expect(await totalNumListItem.innerText()).toBe('Total 229 items');
+
+        await expect(memoryFrame.locator('.mi-page'))
+            .toHaveScreenshot(
+                memoryImgMap.queryPytorchSingleMachineMultiRankDataOnlyShowAllocatedOrReleasedSuccess,
+                { maxDiffPixels: 500 }
+            );
     });
 
     test.afterEach(async ({ page }) => {

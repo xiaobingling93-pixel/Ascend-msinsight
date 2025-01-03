@@ -6,7 +6,12 @@ import { Component } from './Component';
 export class CheckboxHelpers extends Component {
     // 点击复选框
     async click(): Promise<void> {
-        const checkBox = this.locator.locator('xpath=../..');
-        await checkBox?.click();
+        const checkbox = this.locator.locator('xpath=../..');
+        await checkbox?.click();
+    }
+
+    // 获取点击情况
+    async isChecked(): Promise<boolean> {
+        return await this.locator.locator('xpath=../..').isChecked();
     }
 }

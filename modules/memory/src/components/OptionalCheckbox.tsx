@@ -31,7 +31,7 @@ const OptionalCheckbox = observer(({ memorySession }: { memorySession: MemorySes
         return <div className="flex items-center">
             <Label name={t('searchCriteria.Show Allocated or Released Within Interval Data')} />
             <Checkbox
-                id={'input-showPassThrough'}
+                id="input-onlyShowAllocatedOrReleased"
                 checked={isOnlyShowAllocatedOrReleasedWithinInterval}
                 onChange={onShowPassThroughTimeIntervalDataCheckboxChanged}
             />
