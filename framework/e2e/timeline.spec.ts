@@ -4,8 +4,9 @@
 
 import { test as baseTest, expect } from '@playwright/test';
 import { TimelinePage, SystemView } from './page-object';
-import { clearAllData, importData, waitForWebSocketEvent } from './utils';
+import { clearAllData, importData } from './utils';
 import { InputHelpers, SelectHelpers } from './components';
+import { FilePath } from './utils/constants';
 
 interface TestFixtures {
     timelinePage: TimelinePage;
@@ -347,5 +348,87 @@ test.describe('Timeline', () => {
             await clickMenu(clickUnit, timelineFrame, 'Undo Zoom');
             await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-context-menu-click-${options[i]}.png`, { maxDiffPixels: 100 });
         }
+    });
+
+    // 键盘 W、S、A、D、方向键
+    test('test_keyword', async ({ timelinePage, page }) => {
+        const { timelineFrame, zoomOutBtn } = timelinePage;
+        const unitList = timelineFrame.locator('#unitWrapperScroller');
+        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
+        await secondUnitInfo.click();
+        await page.keyboard.press('w');
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-w.png`, { maxDiffPixels: 100 });
+        await page.keyboard.press('s');
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-s.png`, { maxDiffPixels: 100 });
+        await page.keyboard.press('d');
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-d.png`, { maxDiffPixels: 100 });
+        await page.keyboard.press('a');
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-a.png`, { maxDiffPixels: 100 });
+        await page.keyboard.press('ArrowDown');
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowDown.png`, { maxDiffPixels: 100 });
+        await page.keyboard.press('ArrowUp');
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowUp.png`, { maxDiffPixels: 100 });
+        await zoomOutBtn.click();
+        await page.keyboard.press('ArrowRight');
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowRight.png`, { maxDiffPixels: 100 });
+        await page.keyboard.press('ArrowLeft');
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowLeft.png`, { maxDiffPixels: 100 });
+    });
+
+    // Marker小旗子
+    test('test_add_marker', async ({ timelinePage, page }) => {
+        const { timelineFrame } = timelinePage;
+        const flagCanvas = timelineFrame.locator('#timelineFlagCnvas');
+        const boundingBox = await flagCanvas.boundingBox();
+        if (!boundingBox) {
+            return;
+        }
+        const { x: startX, y: startY } = boundingBox;
+        await page.mouse.click(startX + 50, startY + 5);
+        await page.mouse.click(startX + 100, startY + 5);
+        await page.mouse.click(startX + 200, startY + 5);
+        await page.mouse.move(0, 0);
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-add-marker.png`, { maxDiffPixels: 100 });
+    });
+
+    // 算子调优-框选
+    test('test_compute_timeline_selectUnitsRange', async ({ timelinePage, page }) => {
+        const { timelineFrame } = timelinePage;
+        await importData(page, FilePath.SOURCE);
+        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
+        await secondUnitInfo.click();
+        const chart = timelineFrame.locator('.chart-selected > div > .canvasContainer > .drawCanvas');
+        const boundingBox = await chart.boundingBox();
+        if (!boundingBox) {
+            return;
+        }
+        const { x: startX, y: startY } = boundingBox;
+        await page.mouse.move(startX + 50, startY + 50);
+        await page.mouse.down();
+        await page.mouse.move(startX + 200, startX - 200);
+        await page.mouse.up();
+        await expect(timelineFrame.getByText('Wall Duration', { exact: true })).toBeVisible();
+        await expect(timelineFrame.getByText('Self Time')).toBeVisible();
+        await expect(timelineFrame.getByText('Average Wall Duration')).toBeVisible();
+        const rows = await timelineFrame.locator('.ant-table-row').count();
+        expect(rows).toBeGreaterThan(0);
+    });
+
+    // 算子调优-点击算子
+    test('test_compute_timeline_operator_click', async ({ timelinePage, page }) => {
+        const { timelineFrame } = timelinePage;
+        await importData(page, FilePath.SOURCE);
+        const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
+        await secondUnitInfo.click();
+        const canvas = timelineFrame.locator('#unitWrapperScroller');
+        const boundingBox = await canvas.boundingBox();
+        if (!boundingBox) {
+            return;
+        }
+        const { x: startX, y: startY } = boundingBox;
+        await page.mouse.click(startX + 332, startY + 350);
+        await expect(timelineFrame.getByText('Wall Duration', { exact: true })).toBeVisible();
+        await expect(timelineFrame.getByText('Title')).toBeVisible();
+        await expect(timelineFrame.getByText('Start')).toBeVisible();
     });
 });
