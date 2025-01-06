@@ -72,6 +72,7 @@ bool SourceFileParser::Parse(const std::vector<std::string> &filePaths, const st
         return false;
     }
     file.close();
+    ConvertToData();
     Timeline::ParserStatusManager::Instance().SetParserStatus(fileId, Timeline::ParserStatus::INIT);
     threadPool->AddTask(PreParseTask, fileId);
     return true;

@@ -35,7 +35,6 @@ public:
         // init parser
         SourceFileParser::Instance().SetFilePath(BIN_FILE_PATH);
         SourceFileParser::Instance().Parse({BIN_FILE_PATH}, BIN_FILE_PATH, BIN_FILE_PATH);
-        SourceFileParser::Instance().ConvertToData();
 
         // init ws session
         WsChannel *ws;

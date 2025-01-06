@@ -48,7 +48,6 @@ void ParserBin::Parser(const std::vector<Global::ProjectExplorerInfo> &projectIn
         HandleCompute(response, selectedFolder);
         Timeline::TraceTime::Instance().SetIsSimulation(true);
         SaveDbPath(projectInfos[0].projectName, dataPathToDbMap);
-        SetParseCallBack(Source::SourceFileParser::Instance());
         SendResponse(std::move(responsePtr), true);
     } else {
         if (!errorMessage.empty()) {
@@ -67,6 +66,7 @@ void ParserBin::HandleCompute(ImportActionResponse &response, const std::string 
     ServerLog::Info("Start parser source binary.");
     Source::SourceFileParser &sourceFileParser = Source::SourceFileParser::Instance();
     sourceFileParser.Reset();
+    SetParseCallBack(sourceFileParser);
     std::vector<std::string> empty;
     auto files = GetSimulationTraceFiles(selectedFolder, response.body);
     std::string fileId = "";
@@ -79,7 +79,6 @@ void ParserBin::HandleCompute(ImportActionResponse &response, const std::string 
     response.body.isSimulation = true;
     std::map<std::string, std::vector<std::string>> rankListMap = FileUtil::SplitToRankList(files);
     sourceFileParser.Parse(empty, fileId, selectedFolder);
-    sourceFileParser.ConvertToData();
     for (const auto &rankEntry : rankListMap) {
         if (rankEntry.second.empty()) {
             continue;

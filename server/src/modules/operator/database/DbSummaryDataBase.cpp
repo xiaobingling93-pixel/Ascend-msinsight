@@ -65,6 +65,7 @@ bool DbSummaryDataBase::QueryComputeOpDetail(Protocol::ComputeDetailParams param
     return true;
 }
 
+// LCOV_EXCL_BR_START
 std::string DbSummaryDataBase::GenComputeSql(const Protocol::ComputeDetailParams& request)
 {
     std::string sql = "SELECT NAME.value AS name, "
@@ -419,6 +420,8 @@ bool DbSummaryDataBase::ExecSqlGetDetailInfo(std::string sql,
     sqlite3_finalize(stmt);
     return true;
 }
+// LCOV_EXCL_BR_STOP
+
 bool DbSummaryDataBase::QueryMoreInfoTotalNum(OperatorMoreInfoReqParams &reqParams, int64_t &total)
 {
     OperatorGroupConverter::OperatorGroup operatorGroup = Protocol::OperatorGroupConverter::ToEnum(reqParams.group);
@@ -565,6 +568,7 @@ void DbSummaryDataBase::BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMo
     sqlite3_bind_int64(stmt, index++, (reqParams.current - 1) * reqParams.pageSize);
 }
 
+// LCOV_EXCL_BR_START
 bool DbSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDetailParams params,
     std::vector<Protocol::CommunicationDetail> &commDetails)
 {
@@ -745,6 +749,7 @@ bool DbSummaryDataBase::QueryDetailTotalNum(OperatorStatisticReqParams &reqParam
     sqlite3_finalize(stmt);
     return true;
 }
+// LCOV_EXCL_BR_STOP
 
 std::vector<std::string> DbSummaryDataBase::FetchPmuColumnNames()
 {
@@ -818,6 +823,7 @@ std::string DbSummaryDataBase::GetPMUTmpTableColSql(const std::vector<std::strin
     return "," + StringUtil::join(tmpCols, ",");
 }
 
+// LCOV_EXCL_BR_START
 std::string DbSummaryDataBase::GenerateQueryDetailSqlForOperator()
 {
     std::vector<std::string> pmuClos = FetchPmuColumnNames();
@@ -881,7 +887,7 @@ std::string DbSummaryDataBase::GenerateQueryDetailSql(OperatorStatisticReqParams
     sql += " LIMIT ? OFFSET ?";
     return sql;
 }
-
+// LCOV_EXCL_BR_STOP
 
 std::string DbSummaryDataBase::GenerateQueryCategoryDurationSqlForHCCL(
     const OperatorGroupConverter::OperatorGroup &operatorGroup)

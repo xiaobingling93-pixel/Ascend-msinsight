@@ -73,7 +73,6 @@ TEST_F(SourceFileParserTest, Parse)
     parser.Parse(std::vector<std::string>(), dataPath, dataPath);
     // 等待解析任务完成
     WaitParseEnd({dataPath});
-    parser.ConvertToData();
     auto list = parser.GetSourceList();
     int sourceListSize = 6;
     EXPECT_EQ(list.size(), sourceListSize);
