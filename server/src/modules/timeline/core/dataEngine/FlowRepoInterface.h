@@ -11,7 +11,7 @@ namespace Dic::Module::Timeline {
 class FlowRepoInterface {
 public:
     virtual ~FlowRepoInterface() = default;
-    /**
+    /* *
      * 根据连线类别查询所有连线
      * @param flowQuery
      * @param flowPointVec

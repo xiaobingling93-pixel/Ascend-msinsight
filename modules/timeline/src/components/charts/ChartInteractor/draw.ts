@@ -346,6 +346,9 @@ const updateUnitHeight = (session: Session, pinnedAreaHeight: number): void => {
                 continue;
             }
             const metadata = unit.metadata as ThreadMetaData;
+            if (metadata.cardId !== undefined) {
+                heightMap.set(`${metadata.cardId}`, props.height);
+            }
             if (metadata.processId !== undefined) {
                 heightMap.set(`${metadata.cardId}-${metadata.processId}`, props.height);
             }
@@ -441,10 +444,16 @@ const UNDRAW_HEIGHT = 45;
 const getHeight = (session: Session, data: DataBlock, cardId: string): number | undefined => {
     let height;
     const unitHeight = heightMap.get(`${cardId}-${data.pid}-${data.tid}`);
-    if (unitHeight === undefined) {
-        // 进程折叠的情况
-        const processUnitHeight = heightMap.get(`${cardId}-${data.pid}`);
-        height = UNDRAW_HEIGHT + processUnitHeight - session.scrollTop + (0.5 * UnitHeight.UPPER);
+    const processHeight = heightMap.get(`${cardId}-${data.pid}`);
+    const cardHeight = heightMap.get(`${cardId}`);
+    // 卡折叠的情况
+    if (unitHeight === undefined && processHeight === undefined) {
+        height = UNDRAW_HEIGHT + cardHeight - session.scrollTop + (0.5 * UnitHeight.UPPER);
+        return height;
+    }
+    // 进程折叠的情况
+    if (unitHeight === undefined && processHeight !== undefined) {
+        height = UNDRAW_HEIGHT + processHeight - session.scrollTop + (0.5 * UnitHeight.UPPER);
         processIsCol.set(`${cardId}-${data.pid}`, true);
         return height;
     }
@@ -497,7 +506,7 @@ function drawSingleLinkLine(data: Record<string, unknown>, checkedCategory: stri
     if (processIsCol.get(`${targetCardId}-${to.pid}`) && processIsCol.get(`${sourceCardId}-${from.pid}`)) {
         return;
     }
-    if ((sourceY === undefined || targetY === undefined)) {
+    if ((sourceY === undefined || targetY === undefined || sourceY === targetY)) {
         return;
     }
     if (sourceY < UNDRAW_HEIGHT && targetY < UNDRAW_HEIGHT) {

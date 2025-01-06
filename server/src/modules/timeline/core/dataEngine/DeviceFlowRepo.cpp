@@ -32,7 +32,7 @@ void DeviceFlowRepo::AddHardWareMstxFlowPoint(const FlowQuery &flowQuery, std::v
         endPoint.flowId = flowId;
         endPoint.id = item.id;
         endPoint.timestamp = item.timestamp - flowQuery.minTimestamp;
-        endPoint.rankId = host + std::to_string(item.deviceId);
+        endPoint.rankId = host + instance.GetRankId(host, std::to_string(item.deviceId));
         endPoint.trackId = instance.GetTrackId(endPoint.rankId, hardWarePid, std::to_string(item.streamId));
         flowPointVec.emplace_back(endPoint);
     }
@@ -53,7 +53,7 @@ std::unordered_set<uint64_t> DeviceFlowRepo::AddGroupHcclFlowPoint(const FlowQue
         if (opIdMap.count(item.opId) == 0 || deviceMap.count(opIdMap.at(item.opId)) == 0) {
             continue;
         }
-        endPoint.rankId = host + std::to_string(deviceMap.at(opIdMap.at(item.opId)));
+        endPoint.rankId = host + instance.GetRankId(host, std::to_string(deviceMap.at(opIdMap.at(item.opId))));
         uint64_t realConnectionId = item.connectionId;
         std::string flowId = std::to_string(realConnectionId);
         hcclConnectionIdSet.emplace(realConnectionId);
@@ -111,7 +111,7 @@ void DeviceFlowRepo::AddHardWareFlowPoint(const FlowQuery &flowQuery, std::vecto
         endPoint.flowId = flowId;
         endPoint.id = item.id;
         endPoint.timestamp = item.timestamp - flowQuery.minTimestamp;
-        endPoint.rankId = host + std::to_string(item.deviceId);
+        endPoint.rankId = host + instance.GetRankId(host, std::to_string(item.deviceId));
         endPoint.trackId = instance.GetTrackId(endPoint.rankId, hardWarePid, std::to_string(item.streamId));
         flowPointVec.emplace_back(endPoint);
     }

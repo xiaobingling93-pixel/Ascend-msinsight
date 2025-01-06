@@ -101,6 +101,11 @@ bool DbTraceDataBase::QueryUintFlows(const Protocol::UnitFlowsParams &requestPar
     while (resultSet->Next()) {
         auto metaType = resultSet->GetString("metaType");
         auto rankId = resultSet->GetString("deviceId");
+        for (const auto &item: QueryRankIdAndDeviceMap()) {
+            if (rankId == item.second) {
+                rankId = item.first;
+            }
+        }
         rankId = rankId.empty() ? path : QueryHostInfo() + rankId;
         FlowLocation location {
             .tid = resultSet->GetString("tid"), .id = resultSet->GetString("id"),

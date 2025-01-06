@@ -63,6 +63,9 @@ message(STATUS "Project Type = ${_PROJECT_TYPE}, Project SubType = ${_PROJECT_SU
 string(TIMESTAMP COMPILE_TIME %Y%m%d%H)
 message(STATUS "Version = ${COMPILE_TIME}")
 add_definitions(-DDATABASE_VERSION=${COMPILE_TIME})
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+    add_definitions(-DINSIGHT_DEBUG)
+endif()
 
 include(cmake/third_party.cmake)
 add_subdirectory(msinsight)

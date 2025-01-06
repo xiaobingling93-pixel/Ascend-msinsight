@@ -58,6 +58,7 @@ public:
     void UpdateDeviceMap(const std::string &cardId, const std::unordered_map<std::string, std::string> deviceMap);
     void UpdateTrackIdMap(const std::string &fileId,
         const std::map<uint64_t, std::pair<std::string, std::string>> &threadMap);
+    std::string GetRankId(const std::string &host, const std::string &deviceId);
     void Reset();
 
 private:
@@ -84,6 +85,10 @@ private:
      * 键是cardID,数据库db文件路径唯一标识，值是显卡对应的host的cardId,host的cardId和db文件路径相同
      */
     std::unordered_map<std::string, std::string> hostCardIdMap;
+    /* *
+     * 键是host + deviceId拼接，值是rankId，显卡全局唯一id；
+     */
+    std::unordered_map<std::string, std::string> deviceIdToRankIdMap;
     uint64_t maxTrackId = 0;
     std::string GetRankId(const std::string &cardId);
     std::string GetDeviceId(const std::string &cardId);

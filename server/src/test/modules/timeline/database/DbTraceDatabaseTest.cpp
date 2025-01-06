@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include "DbTraceDataBase.h"
 #include "DataBaseManager.h"
+#include "DbSqlDefs.h"
 #include "../../../DatabaseTestCaseMockUtil.cpp"
 using namespace Dic::Global::PROFILER::MockUtil;
 class DbTraceDatabaseTest : public ::testing::Test {
@@ -38,6 +39,8 @@ protected:
         "INTEGER,algType INTEGER,count NUMERIC,opType INTEGER, waitNs INTEGER);";
     std::string cannSql = "CREATE TABLE CANN_API (startNs INTEGER,endNs INTEGER,type INTEGER,globalTid "
         "INTEGER,connectionId INTEGER PRIMARY KEY,name INTEGER, depth integer);";
+    std::string connectionCatSql = "CREATE TABLE connectionCats(connectionId INT,cat);";
+    std::string connectIds = "CREATE TABLE CONNECTION_IDS (id INTEGER, connectionId INTEGER);";
     std::string mstxSql = "CREATE TABLE MSTX_EVENTS (startNs INTEGER,endNs INTEGER,eventType INTEGER,rangeId "
         "INTEGER,category INTEGER,message INTEGER,globalTid INTEGER,endGlobalTid "
         "INTEGER,domainId INTEGER,connectionId INTEGER, depth integer);";
@@ -46,7 +49,7 @@ protected:
     std::string accPmuSql = "CREATE TABLE ACC_PMU (accId INTEGER,readBwLevel INTEGER,writeBwLevel INTEGER,readOstLevel "
         "INTEGER,writeOstLevel INTEGER,timestampNs NUMERIC,deviceId INTEGER);";
     std::string socSql = "CREATE TABLE SOC_BANDWIDTH_LEVEL (l2BufferBwLevel INTEGER,mataBwLevel INTEGER,timestampNs "
-                         "NUMERIC,deviceId INTEGER);";
+        "NUMERIC,deviceId INTEGER);";
     std::string menSql =
         "CREATE TABLE NPU_MEM (type INTEGER,ddr NUMERIC,hbm NUMERIC,timestampNs INTEGER,deviceId INTEGER);";
     std::string hccsSql =
@@ -715,4 +718,151 @@ TEST_F(DbTraceDatabaseTest, TestGetCounterUnitsAndDataTypesWhenACCPMU)
     std::vector<std::unique_ptr<Dic::Protocol::UnitTrack>> metaData;
     bool result = database.QueryUnitsMetadata(fileId, metaData);
     EXPECT_EQ(result, false);
+}
+
+TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenConnectionIdIsNotEmptyThenReturnFalse)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    for (const auto &item : Dic::FULL_DB_TABLE_MAP) {
+        DatabaseTestCaseMockUtil::CreateTable(db, item.second);
+    }
+    database.SetDbPtr(db);
+    const std::string fileId = "ll";
+    const Dic::Protocol::UnitFlowsParams requestParams;
+    Dic::Protocol::UnitFlowsBody responseBody;
+    bool result = database.QueryUintFlows(requestParams, responseBody, 0, 0);
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenConnectionIdIsOneThenReturnFalse)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, connectIds);
+    DatabaseTestCaseMockUtil::CreateTable(db, connectionCatSql);
+    const std::string connectIdCatData =
+        "INSERT INTO \"main\".\"connectionCats\" (\"connectionId\", \"cat\") VALUES (476320, 'HostToDevice');";
+    const std::string cannApiData =
+        "INSERT INTO \"main\".\"CANN_API\" (\"startNs\", \"endNs\", \"type\", \"globalTid\", \"connectionId\", "
+        "\"name\", \"depth\") VALUES (1734925661693760506, 1734925661693790778, 10000, 87471303975183, 476320, 7052, "
+        "0);";
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdCatData);
+    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
+    database.SetDbPtr(db);
+    const std::string fileId = "ll";
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "476320";
+    requestParams.metaType = "CANN_API";
+    Dic::Protocol::UnitFlowsBody responseBody;
+    bool result = database.QueryUintFlows(requestParams, responseBody, 0, 0);
+    EXPECT_EQ(result, false);
+}
+
+TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenConnectionIdIsTwoThenReturnTrue)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, connectIds);
+    DatabaseTestCaseMockUtil::CreateTable(db, connectionCatSql);
+    const std::string connectIdCatData =
+        "INSERT INTO \"main\".\"connectionCats\" (\"connectionId\", \"cat\") VALUES (476320, 'HostToDevice');";
+    const std::string cannApiData =
+        "INSERT INTO \"main\".\"CANN_API\" (\"startNs\", \"endNs\", \"type\", \"globalTid\", \"connectionId\", "
+        "\"name\", \"depth\") VALUES (1734925661693760506, 1734925661693790778, 10000, 87471303975183, 476320, 7052, "
+        "0);";
+    const std::string taskData =
+        "INSERT INTO \"main\".\"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
+        "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
+        "(1734925661780577867, 1734925661780577887, 15, 476320, 183022, 20366, 7166, 4294967295, 0, 39, "
+        "4294967295, 0);";
+    const std::string computeData =
+        "INSERT INTO \"main\".\"COMPUTE_TASK_INFO\" (\"name\", \"globalTaskId\", \"blockDim\", \"mixBlockDim\", "
+        "\"taskType\", \"opType\", \"inputFormats\", \"inputDataTypes\", \"inputShapes\", \"outputFormats\", "
+        "\"outputDataTypes\", \"outputShapes\", \"attrInfo\", \"waitNs\") VALUES (0, 183022, 48, 0, 1, 2, 4, 5, 6, 4, "
+        "5, 6, "
+        "3, 0);";
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdCatData);
+    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, computeData);
+    database.SetDbPtr(db);
+    const std::string fileId = "ll";
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "476320";
+    requestParams.metaType = "CANN_API";
+    Dic::Protocol::UnitFlowsBody responseBody;
+    bool result = database.QueryUintFlows(requestParams, responseBody, 0, 0);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "");
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "15");
+}
+
+TEST_F(DbTraceDatabaseTest, TestQueryUintFlowsWhenRankIdAndDeviceIdNotSame)
+{
+    std::recursive_mutex testMutex;
+    MockDatabase2 database(testMutex);
+    sqlite3 *db = nullptr;
+    DatabaseTestCaseMockUtil::OpenDB(db);
+    DatabaseTestCaseMockUtil::CreateTable(db, cannSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, mstxSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, pytorchSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, computeSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, taskSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, comcaOpSql);
+    DatabaseTestCaseMockUtil::CreateTable(db, connectIds);
+    DatabaseTestCaseMockUtil::CreateTable(db, connectionCatSql);
+    const std::string connectIdCatData =
+        "INSERT INTO \"main\".\"connectionCats\" (\"connectionId\", \"cat\") VALUES (476320, 'HostToDevice');";
+    const std::string cannApiData =
+        "INSERT INTO \"main\".\"CANN_API\" (\"startNs\", \"endNs\", \"type\", \"globalTid\", \"connectionId\", "
+        "\"name\", \"depth\") VALUES (1734925661693760506, 1734925661693790778, 10000, 87471303975183, 476320, 7052, "
+        "0);";
+    const std::string taskData =
+        "INSERT INTO \"main\".\"TASK\" (\"startNs\", \"endNs\", \"deviceId\", \"connectionId\", \"globalTaskId\", "
+        "\"globalPid\", \"taskType\", \"contextId\", \"streamId\", \"taskId\", \"modelId\", \"depth\") VALUES "
+        "(1734925661780577867, 1734925661780577887, 15, 476320, 183022, 20366, 7166, 4294967295, 0, 39, "
+        "4294967295, 0);";
+    const std::string computeData =
+        "INSERT INTO \"main\".\"COMPUTE_TASK_INFO\" (\"name\", \"globalTaskId\", \"blockDim\", \"mixBlockDim\", "
+        "\"taskType\", \"opType\", \"inputFormats\", \"inputDataTypes\", \"inputShapes\", \"outputFormats\", "
+        "\"outputDataTypes\", \"outputShapes\", \"attrInfo\", \"waitNs\") VALUES (0, 183022, 48, 0, 1, 2, 4, 5, 6, 4, "
+        "5, 6, "
+        "3, 0);";
+    DatabaseTestCaseMockUtil::InsertData(db, connectIdCatData);
+    DatabaseTestCaseMockUtil::InsertData(db, cannApiData);
+    DatabaseTestCaseMockUtil::InsertData(db, taskData);
+    DatabaseTestCaseMockUtil::InsertData(db, computeData);
+    std::string sql = "CREATE TABLE RANK_DEVICE_MAP (rankId INTEGER, deviceId INTEGER);";
+    DatabaseTestCaseMockUtil::CreateTable(db, sql);
+    std::string insertSql = "INSERT INTO RANK_DEVICE_MAP (rankId, deviceId) VALUES (999, 15), (276878, 7);";
+    DatabaseTestCaseMockUtil::InsertData(db, insertSql);
+    database.SetDbPtr(db);
+    const std::string fileId = "ll";
+    Dic::Protocol::UnitFlowsParams requestParams;
+    requestParams.id = "476320";
+    requestParams.metaType = "CANN_API";
+    Dic::Protocol::UnitFlowsBody responseBody;
+    bool result = database.QueryUintFlows(requestParams, responseBody, 0, 0);
+    EXPECT_EQ(result, true);
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().from.rankId, "");
+    EXPECT_EQ(responseBody.unitAllFlows.front().flows.front().to.rankId, "999");
 }

@@ -31,6 +31,7 @@ void TrackInfoManager::Reset()
     trackInfoMap.clear();
     maxTrackId = 0;
     deviceMap.clear();
+    deviceIdToRankIdMap.clear();
 }
 
 void TrackInfoManager::UpdateHost(const std::string &cardId, const std::string &host)
@@ -98,6 +99,11 @@ void TrackInfoManager::UpdateDeviceMap(const std::string &cardId,
 {
     std::unique_lock<std::mutex> lock(trackMutex);
     deviceMap[cardId] = rankAndDeviceMap;
+    std::string host = hostMap[cardId];
+    for (const auto &item: rankAndDeviceMap) {
+        std::string key = host + item.second;
+        deviceIdToRankIdMap[key] = item.first;
+    }
 }
 
 void TrackInfoManager::UpdateHostCardId(const std::string &cardId, const std::string &hostCardId)
@@ -114,5 +120,17 @@ std::string TrackInfoManager::GetHostCardId(const std::string &deviceCardId)
         return deviceCardId;
     }
     return it->second;
+}
+
+std::string TrackInfoManager::GetRankId(const std::string &host, const std::string &deviceId)
+{
+    std::unique_lock<std::mutex> lock(trackMutex);
+    std::string key = host + deviceId;
+    auto it = deviceIdToRankIdMap.find(key);
+    if (it != deviceIdToRankIdMap.end()) {
+        return it->second;
+    }
+    Server::ServerLog::Warn("Failed to query rank id by device id, device id is: ", deviceId);
+    return {};
 }
 }

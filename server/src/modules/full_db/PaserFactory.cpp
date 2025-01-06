@@ -230,6 +230,9 @@ void ParserAlloc::SendAllParseSuccess()
 {
     std::string notFinishTask = "";
     while (!ParserStatusManager::Instance().IsAllFinished(notFinishTask)) {
+#ifdef INSIGHT_DEBUG
+        ServerLog::Info("NotFinishTask is: ", notFinishTask);
+#endif
         const int sleepTime = 2000;
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
     }
