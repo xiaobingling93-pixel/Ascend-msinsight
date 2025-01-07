@@ -144,14 +144,15 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
 
         await isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox.click();
         expect(await isOnlyShowAllocatedOrReleasedWithinIntervalCheckbox.isChecked()).toBe(true);
-        const queryBtn = memoryFrame.getByTestId('reset-btn');
+        const queryBtn = memoryFrame.getByTestId('query-btn');
         await queryBtn.waitFor({ state: 'visible' });
         await queryBtn.click();
+        const spin = memoryFrame.locator('.panel-content .ant-spin-dot-spin');
+        // 等待 loading 结束后端返回更新 totalNum
+        await spin.waitFor({ state: 'detached' });
         await page.mouse.move(0, 0);
 
         const totalNumListItem = memoryFrame.locator('.ant-spin-container > ul > li.ant-pagination-total-text');
-        // 等待 1s 后端返回更新 totalNum
-        await totalNumListItem.waitFor({ timeout: 1000 });
         expect(await totalNumListItem.innerText()).toBe('Total 229 items');
 
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.queryPytorchSingleMachineMultiRankDataOnlyShowAllocatedOrReleasedSuccess, {

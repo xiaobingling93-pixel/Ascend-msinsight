@@ -10,8 +10,14 @@ import { Button, Input, InputNumber } from 'ascend-components';
 import { SearchBox } from '../utils/styleUtils';
 import { Label } from './Common';
 import { Session } from '../entity/session';
-import { MemorySession, DEFAULT_SIZE_CONDITION } from '../entity/memorySession';
+import {
+    MemorySession,
+    MemoryGraphType,
+    DEFAULT_SIZE_CONDITION,
+    DEFAULT_SHOW_WITHIN_INTERVAL,
+} from '../entity/memorySession';
 import OptionalCheckbox from './OptionalCheckbox';
+import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 
 const COMPARE_MIN_INPUT_NUMBER = -2147483648;
 const MAX_INPUT_NUMBER = 4294967295;
@@ -24,6 +30,10 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
     const [minSize, setMinSize] = useState<number>(0);
     // 最大内存范围，默认DEFAULT_SIZE_CONDITION KB
     const [maxSize, setMaxSize] = useState<number>(memorySession.maxSize);
+    const [
+        isOnlyShowAllocatedOrReleasedWithinInterval,
+        setIsOnlyShowAllocatedOrReleasedWithinInterval,
+    ] = useState<boolean>(memorySession.isOnlyShowAllocatedOrReleasedWithinInterval);
     const isBtnDisabled: boolean = memorySession.isBtnDisabled;
     const { t } = useTranslation('memory');
 
@@ -48,6 +58,13 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
         });
     };
 
+    const onShowPassThroughTimeIntervalDataCheckboxChanged = (value: CheckboxChangeEvent): void => {
+        setIsOnlyShowAllocatedOrReleasedWithinInterval(value.target.checked as boolean);
+        runInAction(() => {
+            memorySession.isOnlyShowAllocatedOrReleasedWithinInterval = value.target.checked as boolean;
+        });
+    };
+
     const onQuery = (): void => {
         queryDetailData(true);
     };
@@ -56,10 +73,12 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
         setSearchEventOperatorName('');
         setMinSize(isCompare ? -DEFAULT_SIZE_CONDITION : 0);
         setMaxSize(DEFAULT_SIZE_CONDITION);
+        setIsOnlyShowAllocatedOrReleasedWithinInterval(DEFAULT_SHOW_WITHIN_INTERVAL);
         runInAction(() => {
             memorySession.searchEventOperatorName = '';
             memorySession.minSize = isCompare ? -DEFAULT_SIZE_CONDITION : 0;
             memorySession.maxSize = DEFAULT_SIZE_CONDITION;
+            memorySession.isOnlyShowAllocatedOrReleasedWithinInterval = DEFAULT_SHOW_WITHIN_INTERVAL;
         });
         queryDetailData(false);
     };
@@ -103,7 +122,13 @@ const MemoryDetailTableFilter = observer(({ session, memorySession, queryDetailD
                 />
             </div>
             {/* 当 MemoryGraphType.STATIC 时，不显示勾选项 */}
-            <OptionalCheckbox memorySession={memorySession} />
+            <OptionalCheckbox
+                idKey="input-onlyShowAllocatedOrReleased"
+                visible={memorySession.memoryType !== MemoryGraphType.STATIC}
+                name={t('searchCriteria.Show Allocated or Released Within Interval Data')}
+                value={isOnlyShowAllocatedOrReleasedWithinInterval}
+                onChange={onShowPassThroughTimeIntervalDataCheckboxChanged}
+            />
             <div className="flex items-center">
                 <Button
                     data-testid={'query-btn'}

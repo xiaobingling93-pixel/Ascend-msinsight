@@ -28,6 +28,8 @@ export interface SelectedRange {
 
 export const DEFAULT_SIZE_CONDITION = 1000000;
 
+export const DEFAULT_SHOW_WITHIN_INTERVAL = false;
+
 export const enum GroupBy {
     DEFAULT = 'Overall',
     STREAM = 'Stream',
@@ -58,7 +60,7 @@ export class MemorySession {
     maxSize: number = DEFAULT_SIZE_CONDITION;
     isBtnDisabled: boolean = true;
     // 是否仅查看在选中时间区间分配或释放内存的数据
-    isOnlyShowAllocatedOrReleasedWithinInterval: boolean = false;
+    isOnlyShowAllocatedOrReleasedWithinInterval: boolean = DEFAULT_SHOW_WITHIN_INTERVAL;
 
     // 底部表格点选与上方折线图联动
     selectedRecord?: OperatorDetail;
