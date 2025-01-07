@@ -299,7 +299,7 @@ TEST_F(SummaryProtocolUtilTest, ToQueryFwdBwdTimelineResponseTestWillReturnWhenN
 TEST_F(SummaryProtocolUtilTest, ToQueryParallelismArrangementResponseTestWillReturnWhenNormalInput)
 {
     Dic::Protocol::ParallelismArrangementResponse response{};
-    IndicatorAttr attr = {"computingTime", "computing time", true, false, true, "bar", "time", "time"};
+    IndicatorAttr attr = {0, "computingTime", "computing time", true, false, true, "bar", "time", "time"};
     response.arrangeData.indicators.push_back(attr);
     Position pos = {0, 0};
     Element ele;

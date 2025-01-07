@@ -29,7 +29,8 @@ void MegatronParallelStrategyAlgorithm::ClearStrategyConfigCache()
     tpCpSize = 1;
     tpCpDpSize = 1;
     tpCpPpSize = 1;
-    reduceTpStatistic.clear();
+    reduceTpMax.clear();
+    reduceTpMin.clear();
     reducePpStatistic.clear();
     reduceCpStatistic.clear();
 }
@@ -133,88 +134,115 @@ ArrangementAndConnectionData MegatronParallelStrategyAlgorithm::GetArrangementDa
     return data;
 }
 
+// 对于TP View，展示全部原始数据，及step_trace_time中的内容
 void MegatronParallelStrategyAlgorithm::SetTpIndicatorAttr()
 {
-    // 总计算、总通信
-    data.indicators.emplace_back(KEY_TOTAL_COMPUTING_TIME, VALUE_TOTAL_COMPUTING_TIME, true, true, false,
-                                 BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(KEY_TOTAL_COMMUNICATION, VALUE_TOTAL_COMMUNICATION, true, true, false,
-                                 BAR_CHART, "", TIME_AXIS);
-    // Communication(Not Overlapped and Exclude Receive)
-    data.indicators.emplace_back(KEY_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE,
-        VALUE_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE, true, false, false, BAR_CHART, "", TIME_AXIS);
+    uint8_t index = 0;
+    // 总计算、总通信不在柱状图中显示，而是通过掩盖和未掩盖的堆叠形成
+    data.indicators.emplace_back(
+        index++, KEY_TOTAL_COMPUTING_TIME, VALUE_TOTAL_COMPUTING_TIME, true, false, true, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(
+        index++, KEY_TOTAL_COMMUNICATION, VALUE_TOTAL_COMMUNICATION, true, false, true, BAR_CHART, "", TIME_AXIS);
 
     // 参与stack堆叠：预处理、纯计算、重叠、纯通信、下发
-    data.indicators.emplace_back(KEY_PREPARING_TIME, VALUE_PREPARING_TIME, true, true, true,
-                                 BAR_CHART, TIME_STACK, TIME_AXIS);
-    data.indicators.emplace_back(KEY_PURE_COMPUTING_TIME, VALUE_PURE_COMPUTING_TIME, false, true, true,
-                                 BAR_CHART, TIME_STACK, TIME_AXIS);
-    data.indicators.emplace_back(KEY_COMMUNICATION_OVERLAPPED, VALUE_COMMUNICATION_OVERLAPPED, true, true, true,
-                                 BAR_CHART, TIME_STACK, TIME_AXIS);
-    data.indicators.emplace_back(KEY_COMMUNICATION_NOT_OVERLAPPED, VALUE_COMMUNICATION_NOT_OVERLAPPED, true, true, true,
-                                 BAR_CHART, TIME_STACK, TIME_AXIS);
-    data.indicators.emplace_back(KEY_FREE_TIME, VALUE_FREE_TIME, true, true, true,
-                                 BAR_CHART, TIME_STACK, TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_PURE_COMPUTING_TIME, VALUE_COMPUTING_NOT_OVERLAPPED,
+                                 true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_COMMUNICATION_OVERLAPPED, VALUE_COMMUNICATION_OVERLAPPED,
+                                 true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED, VALUE_COMMUNICATION_NOT_OVERLAPPED,
+                                 true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
+    data.indicators.emplace_back(
+        index++, KEY_FREE_TIME, VALUE_FREE_TIME, true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
+    data.indicators.emplace_back(
+        index++, KEY_PREPARING_TIME, VALUE_PREPARING_TIME, true, true, true, BAR_CHART, TIME_STACK, TIME_AXIS);
+
+    // Communication(Not Overlapped and Exclude Receive)
+    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE,
+        VALUE_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE, true, false, false, BAR_CHART, "", TIME_AXIS);
+
     // stage and bubble
-    data.indicators.emplace_back(KEY_STAGE_TIME, VALUE_STAGE_TIME, false, true, false,
-                                 BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(KEY_BUBBLE_TIME, VALUE_BUBBLE_TIME, false, true, false,
-                                 BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(
+        index++, KEY_STAGE_TIME, VALUE_STAGE_TIME, true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(
+        index++, KEY_BUBBLE_TIME, VALUE_BUBBLE_TIME, true, false, false, BAR_CHART, "", TIME_AXIS);
+
     // ratio
-    data.indicators.emplace_back(KEY_COMPUTING_RATIO, VALUE_COMPUTING_RATIO, false, true, true,
-                                 LINE_CHART, "", RATIO_AXIS);
-    data.indicators.emplace_back(KEY_COMMUNICATION_RATIO, VALUE_COMMUNICATION_RATIO, false, true, true,
-                                 LINE_CHART, "", RATIO_AXIS);
+    data.indicators.emplace_back(
+        index++, KEY_COMPUTING_RATIO, VALUE_COMPUTING_RATIO, false, true, true, LINE_CHART, "", RATIO_AXIS);
+    data.indicators.emplace_back(
+        index++, KEY_COMMUNICATION_RATIO, VALUE_COMMUNICATION_RATIO, false, true, true, LINE_CHART, "", RATIO_AXIS);
 }
 
+// 对于PP Dimension，通过展示一个TP域内计算/通信等时间的统计值，包括最大值、最小值、极差，来分析PP域的性能瓶颈
+// 对于通信，可关注最小值，有时通信最小的点，才是瓶颈所在
+// 通过极差，可以反映TP域内各卡计算、通信是否均衡，尤其是计算
 void MegatronParallelStrategyAlgorithm::SetPpIndicatorAttr()
 {
-    // 总计算、总通信, 默认显示总计算
-    data.indicators.emplace_back(KEY_TOTAL_COMPUTING_TIME, VALUE_MAX + VALUE_TOTAL_COMPUTING_TIME, true, true, true,
-                                 BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(KEY_TOTAL_COMMUNICATION, VALUE_MAX + VALUE_TOTAL_COMMUNICATION, true, true, false,
-                                 BAR_CHART, "", TIME_AXIS);
-    // 通信掩盖、通信未掩盖、下发
-    data.indicators.emplace_back(KEY_COMMUNICATION_OVERLAPPED, VALUE_MAX + VALUE_COMMUNICATION_OVERLAPPED,
-        true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(KEY_COMMUNICATION_NOT_OVERLAPPED, VALUE_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED,
+    uint8_t index = 0;
+    // 总计算、总通信、下发、npu总时间, 默认显示总计算
+    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_MAX_SUFFIX,
+                                 VALUE_MAX + VALUE_TOTAL_COMPUTING_TIME, true, true, true, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_MAX_SUFFIX,
+                                 VALUE_MAX + VALUE_TOTAL_COMMUNICATION, true, true, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_FREE_TIME,
                                  true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(KEY_FREE_TIME, VALUE_MAX + VALUE_FREE_TIME, true, true, false,
-                                 BAR_CHART, "", TIME_AXIS);
-    // npu总时间
-    data.indicators.emplace_back(KEY_NPU_TIME, VALUE_MAX + VALUE_NPU_TIME, true, true, false,
-                                 BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_MAX_SUFFIX, VALUE_MAX + VALUE_NPU_TIME,
+                                 true, true, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_MIN_SUFFIX,
+                                 VALUE_MIN + VALUE_TOTAL_COMPUTING_TIME, true, false, true, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_MIN_SUFFIX,
+                                 VALUE_MIN + VALUE_TOTAL_COMMUNICATION, true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_FREE_TIME,
+                                 true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_MIN_SUFFIX, VALUE_MIN + VALUE_NPU_TIME,
+                                 true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME + KEY_RANGE_SUFFIX,
+                                 VALUE_TOTAL_COMPUTING_TIME + VALUE_RANGE, true, false, true, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION + KEY_RANGE_SUFFIX,
+                                 VALUE_TOTAL_COMMUNICATION + VALUE_RANGE, true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_FREE_TIME + KEY_RANGE_SUFFIX, VALUE_FREE_TIME + VALUE_RANGE,
+                                 true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_NPU_TIME + KEY_RANGE_SUFFIX, VALUE_NPU_TIME + VALUE_RANGE,
+                                 true, false, false, BAR_CHART, "", TIME_AXIS);
+
+    // 通信掩盖、通信未掩盖
+    data.indicators.emplace_back(index++, KEY_COMMUNICATION_OVERLAPPED + KEY_MAX_SUFFIX,
+        VALUE_MAX + VALUE_COMMUNICATION_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX,
+        VALUE_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, true, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_COMMUNICATION_OVERLAPPED + KEY_MIN_SUFFIX,
+        VALUE_MIN + VALUE_COMMUNICATION_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS);
+    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX,
+        VALUE_MIN + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, false, false, BAR_CHART, "", TIME_AXIS);
 }
 
 void MegatronParallelStrategyAlgorithm::SetCpIndicatorAttr()
 {
+    uint8_t index = 0;
     // 总计算、总通信, 默认显示总计算
-    data.indicators.emplace_back(KEY_TOTAL_COMPUTING_TIME, VALUE_SUM_OF_MAX + VALUE_TOTAL_COMPUTING_TIME,
+    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME, VALUE_SUM_OF_MAX + VALUE_TOTAL_COMPUTING_TIME,
                                  true, true, true, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(KEY_TOTAL_COMMUNICATION, VALUE_SUM_OF_MAX + VALUE_TOTAL_COMMUNICATION,
+    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION, VALUE_SUM_OF_MAX + VALUE_TOTAL_COMMUNICATION,
                                  true, true, false, BAR_CHART, "", TIME_AXIS);
     // 通信掩盖、通信未掩盖、下发
-    data.indicators.emplace_back(KEY_COMMUNICATION_OVERLAPPED, VALUE_SUM_OF_MAX + VALUE_COMMUNICATION_OVERLAPPED,
-                                 true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(KEY_COMMUNICATION_NOT_OVERLAPPED,
+    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED,
         VALUE_SUM_OF_MAX + VALUE_COMMUNICATION_NOT_OVERLAPPED, true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(KEY_FREE_TIME, VALUE_SUM_OF_MAX + VALUE_FREE_TIME,
+    data.indicators.emplace_back(index++, KEY_FREE_TIME, VALUE_SUM_OF_MAX + VALUE_FREE_TIME,
         true, true, false, BAR_CHART, "", TIME_AXIS);
 }
 
 void MegatronParallelStrategyAlgorithm::SetDpIndicatorAttr()
 {
+    uint8_t index = 0;
     // 总计算、总通信, 默认显示总计算
-    data.indicators.emplace_back(KEY_TOTAL_COMPUTING_TIME, VALUE_TOTAL_COMPUTING_TIME, true, true, true,
+    data.indicators.emplace_back(index++, KEY_TOTAL_COMPUTING_TIME, VALUE_TOTAL_COMPUTING_TIME, true, true, true,
                                  BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(KEY_TOTAL_COMMUNICATION, VALUE_TOTAL_COMMUNICATION, true, true, false,
+    data.indicators.emplace_back(index++, KEY_TOTAL_COMMUNICATION, VALUE_TOTAL_COMMUNICATION, true, true, false,
                                  BAR_CHART, "", TIME_AXIS);
-    // 通信掩盖、通信未掩盖、下发
-    data.indicators.emplace_back(KEY_COMMUNICATION_OVERLAPPED, VALUE_COMMUNICATION_OVERLAPPED,
-                                 true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(KEY_COMMUNICATION_NOT_OVERLAPPED,
+    // 通信未掩盖、下发
+    data.indicators.emplace_back(index++, KEY_COMMUNICATION_NOT_OVERLAPPED,
                                  VALUE_COMMUNICATION_NOT_OVERLAPPED, true, true, false, BAR_CHART, "", TIME_AXIS);
-    data.indicators.emplace_back(KEY_FREE_TIME, VALUE_FREE_TIME,
+    data.indicators.emplace_back(index++, KEY_FREE_TIME, VALUE_FREE_TIME,
                                  true, true, false, BAR_CHART, "", TIME_AXIS);
 }
 
@@ -401,16 +429,17 @@ void MegatronParallelStrategyAlgorithm::AnalyzePerformanceAdviceWithDpCpPpTpDime
         max.freeDiff - min.freeDiff
     };
     if (diff.computeDiff / meanE2ETime > threshold) {
-        advices.emplace_back("Computing has some issues, because the max difference of \"Total Computing\" "
-                             "has reached " + std::to_string(diff.computeDiff) + "us.");
+        advices.emplace_back("Computing has some issues, because the max difference of \"Computing\" "
+            "has reached " + std::to_string(Reserved3DecimalPlaces(diff.computeDiff)) + "us.");
     }
     if (diff.communicationDiff / meanE2ETime > threshold) {
         advices.emplace_back("Communication has some issues, because the max difference of "
-            "\"Communication(Not Overlapped)\" has reached " + std::to_string(diff.communicationDiff) + "us.");
+            "\"Communication(Not Overlapped)\" has reached " +
+            std::to_string(Reserved3DecimalPlaces(diff.communicationDiff)) + "us.");
     }
     if (diff.freeDiff / meanE2ETime > threshold) {
         advices.emplace_back("Free has some issues, because the max difference of \"Free\" "
-                             "has reached " + std::to_string(diff.freeDiff) + "us.");
+            "has reached " + std::to_string(Reserved3DecimalPlaces(diff.freeDiff)) + "us.");
     }
 }
 
@@ -468,35 +497,81 @@ void MegatronParallelStrategyAlgorithm::CalculatePerformanceDataWithDpCpPpTpDime
 }
 
 void MegatronParallelStrategyAlgorithm::ReduceTpPerformance(
-    const std::unordered_map<std::uint32_t, StepStatistic> &statistic, uint32_t tpSize)
+    const std::unordered_map<std::uint32_t, StepStatistic> &statistic)
 {
     uint32_t idx = 0;
     for (uint32_t i = 0; i < wordSize; i += tpSize) {
-        StepStatistic reduceTpOne;
         // 若已经计算过，则不用重复计算
-        if (reduceTpStatistic.find(idx) != reduceTpStatistic.end()) {
+        if (reduceTpMax.find(idx) != reduceTpMax.end()) {
             idx++;
             continue;
         }
+        StepStatistic maxTpOne;
+        StepStatistic minTpOne = {"", "", "",
+            DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, 0, 0, 0};
         for (uint32_t j = i; j < i + tpSize && j < wordSize; j++) {
             // 跳过空数据卡
             if (statistic.find(i) == statistic.end()) {
                 continue;
             }
-            const StepStatistic &item = statistic.at(i);
-            reduceTpOne.computingTime = std::max(reduceTpOne.computingTime, item.computingTime);
-            reduceTpOne.communicationTime = std::max(reduceTpOne.communicationTime, item.communicationTime);
-            reduceTpOne.pureCommunicationTime = std::max(reduceTpOne.pureCommunicationTime, item.pureCommunicationTime);
-            reduceTpOne.overlapCommunicationTime = std::max(reduceTpOne.overlapCommunicationTime,
-                                                            item.overlapCommunicationTime);
-            reduceTpOne.freeTime = std::max(reduceTpOne.freeTime, item.freeTime);
-            reduceTpOne.npuTotalTime = std::max(reduceTpOne.npuTotalTime, item.npuTotalTime);
+            const StepStatistic &item = statistic.at(j);
+            maxTpOne.computingTime = std::max(maxTpOne.computingTime, item.computingTime);
+            maxTpOne.communicationTime = std::max(maxTpOne.communicationTime, item.communicationTime);
+            maxTpOne.pureCommunicationTime = std::max(maxTpOne.pureCommunicationTime, item.pureCommunicationTime);
+            maxTpOne.overlapCommunicationTime = std::max(maxTpOne.overlapCommunicationTime,
+                                                         item.overlapCommunicationTime);
+            maxTpOne.freeTime = std::max(maxTpOne.freeTime, item.freeTime);
+            maxTpOne.npuTotalTime = std::max(maxTpOne.npuTotalTime, item.npuTotalTime);
+
+            minTpOne.computingTime = std::min(minTpOne.computingTime, item.computingTime);
+            minTpOne.communicationTime = std::min(minTpOne.communicationTime, item.communicationTime);
+            minTpOne.pureCommunicationTime = std::min(minTpOne.pureCommunicationTime, item.pureCommunicationTime);
+            minTpOne.overlapCommunicationTime = std::min(minTpOne.overlapCommunicationTime,
+                                                         item.overlapCommunicationTime);
+            minTpOne.freeTime = std::min(minTpOne.freeTime, item.freeTime);
+            minTpOne.npuTotalTime = std::min(minTpOne.npuTotalTime, item.npuTotalTime);
         }
         // 若一组TP域不全为空，则存入reduceTpStatistic
-        if (reduceTpOne.computingTime != 0.0) {
-            reduceTpStatistic[idx] = reduceTpOne;
+        if (maxTpOne.computingTime != 0.0) {
+            reduceTpMax[idx] = maxTpOne;
+            reduceTpMin[idx] = minTpOne;
         }
         idx++;
+    }
+}
+
+void MegatronParallelStrategyAlgorithm::CalculatePerformanceDataWithPpDimension(PerformanceIndicatorData &indicatorData)
+{
+    // 前面的逻辑保证tpSize不为0
+    for (uint32_t i = 0; i < wordSize / tpSize; ++i) {
+        if (reduceTpMax.find(i) == reduceTpMax.end()) {
+            continue;
+        }
+        IndicatorDataStruct one{};
+        one.index = i;
+        auto &max = reduceTpMax.at(i);
+        auto &min = reduceTpMin.at(i);
+        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_MAX_SUFFIX, max.computingTime);
+        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_MIN_SUFFIX, min.computingTime);
+        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_RANGE_SUFFIX,
+                               Reserved3DecimalPlaces(max.computingTime - min.computingTime));
+        one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_MAX_SUFFIX, max.communicationTime);
+        one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_MIN_SUFFIX, min.communicationTime);
+        one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_RANGE_SUFFIX,
+                               Reserved3DecimalPlaces(max.communicationTime - min.communicationTime));
+        one.indicators.emplace(KEY_FREE_TIME + KEY_MAX_SUFFIX, max.freeTime);
+        one.indicators.emplace(KEY_FREE_TIME + KEY_MIN_SUFFIX, min.freeTime);
+        one.indicators.emplace(KEY_FREE_TIME + KEY_RANGE_SUFFIX,
+                               Reserved3DecimalPlaces(max.freeTime - min.freeTime));
+        one.indicators.emplace(KEY_NPU_TIME + KEY_MAX_SUFFIX, max.npuTotalTime);
+        one.indicators.emplace(KEY_NPU_TIME + KEY_MIN_SUFFIX, min.npuTotalTime);
+        one.indicators.emplace(KEY_NPU_TIME + KEY_RANGE_SUFFIX,
+                               Reserved3DecimalPlaces(max.npuTotalTime - min.npuTotalTime));
+        one.indicators.emplace(KEY_COMMUNICATION_OVERLAPPED + KEY_MAX_SUFFIX, max.overlapCommunicationTime);
+        one.indicators.emplace(KEY_COMMUNICATION_OVERLAPPED + KEY_MIN_SUFFIX, min.overlapCommunicationTime);
+        one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX, max.pureCommunicationTime);
+        one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX, min.pureCommunicationTime);
+        indicatorData.performanceData.emplace_back(one);
     }
 }
 
@@ -512,8 +587,6 @@ void MegatronParallelStrategyAlgorithm::GetPerformanceResponseDataWithCollapsedD
                                NumberUtil::DoubleReservedNDigits(indicator.computingTime, numTwo));
         one.indicators.emplace(KEY_TOTAL_COMMUNICATION,
                                NumberUtil::DoubleReservedNDigits(indicator.communicationTime, numTwo));
-        one.indicators.emplace(KEY_COMMUNICATION_OVERLAPPED,
-                               NumberUtil::DoubleReservedNDigits(indicator.overlapCommunicationTime, numTwo));
         one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED,
                                NumberUtil::DoubleReservedNDigits(indicator.pureCommunicationTime, numTwo));
         one.indicators.emplace(KEY_FREE_TIME,
@@ -557,10 +630,10 @@ void MegatronParallelStrategyAlgorithm::ReducePpPerformance(uint32_t startIndex,
     // 取累加和
     for (uint32_t k = startIndex; k < wordSize && k < startIndex + step * strategyConfig.ppSize; k += step) {
         // 跳过空数据卡
-        if (reduceTpStatistic.find(k) == reduceTpStatistic.end()) {
+        if (reduceTpMax.find(k) == reduceTpMax.end()) {
             continue;
         }
-        const StepStatistic &item = reduceTpStatistic.at(k);
+        const StepStatistic &item = reduceTpMax.at(k);
         reducePpOne.computingTime += item.computingTime;
         reducePpOne.communicationTime += item.communicationTime;
         reducePpOne.pureCommunicationTime += item.pureCommunicationTime;
@@ -589,7 +662,7 @@ void MegatronParallelStrategyAlgorithm::ReduceCpPerformance()
             if (reducePpStatistic.find(i) == reducePpStatistic.end()) {
                 continue;
             }
-            const StepStatistic &item = reducePpStatistic.at(i);
+            const StepStatistic &item = reducePpStatistic.at(j);
             reduceCpOne.computingTime = std::max(reduceCpOne.computingTime, item.computingTime);
             reduceCpOne.communicationTime = std::max(reduceCpOne.communicationTime, item.communicationTime);
             reduceCpOne.pureCommunicationTime = std::max(reduceCpOne.pureCommunicationTime, item.pureCommunicationTime);
@@ -615,15 +688,16 @@ bool MegatronParallelStrategyAlgorithm::GetPerformanceIndicatorByDimension(
         err = "Failed to get parallelism performance indicator by dimension. Unexpected parallel config.";
         return false;
     }
+    tpSize = strategyConfig.tpSize;
     wordSize = strategyConfig.tpSize * strategyConfig.ppSize * strategyConfig.cpSize * strategyConfig.dpSize;
     if (performanceParams.dimension == DIMENSIONS_TP) {
         CalculatePerformanceDataWithDpCpPpTpDimension(statistic, performanceResponseData);
         return true;
     }
     // 折叠TP
-    ReduceTpPerformance(statistic, strategyConfig.tpSize);
+    ReduceTpPerformance(statistic);
     if (performanceParams.dimension == DIMENSIONS_PP) {
-        GetPerformanceResponseDataWithCollapsedDimension(reduceTpStatistic, performanceResponseData);
+        CalculatePerformanceDataWithPpDimension(performanceResponseData);
         return true;
     }
     // 折叠PP
@@ -646,5 +720,14 @@ bool MegatronParallelStrategyAlgorithm::GetPerformanceIndicatorByDimension(
         err = "Failed to get parallelism performance indicator by dimension. Unexpected dimension.";
         return false;
     }
+}
+
+double MegatronParallelStrategyAlgorithm::Reserved3DecimalPlaces(double num)
+{
+    if (num == 0.0 || num == DBL_MAX) {
+        return 0.0;
+    }
+    const int placeNum = 3;
+    return NumberUtil::DoubleReservedNDigits(num, placeNum);
 }
 }

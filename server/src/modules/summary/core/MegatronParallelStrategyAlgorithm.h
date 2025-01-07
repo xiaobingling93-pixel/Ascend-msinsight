@@ -57,7 +57,8 @@ private:
     void CalculatePerformanceDataWithDpCpPpTpDimension(
         const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
         PerformanceIndicatorData &performanceResponseData);
-    void ReduceTpPerformance(const std::unordered_map<std::uint32_t, StepStatistic> &statistic, uint32_t tpSize);
+    void CalculatePerformanceDataWithPpDimension(PerformanceIndicatorData &indicatorData);
+    void ReduceTpPerformance(const std::unordered_map<std::uint32_t, StepStatistic> &statistic);
     void GetPerformanceResponseDataWithCollapsedDimension(
         const std::unordered_map<std::uint32_t, StepStatistic> &statistic,
         PerformanceIndicatorData &performanceResponseData);
@@ -65,6 +66,7 @@ private:
     void ReducePpPerformanceForDpLast();
     void ReducePpPerformance(uint32_t startIndex, uint32_t step, uint32_t& ppGroupIdx);
     void ReduceCpPerformance();
+    double Reserved3DecimalPlaces(double num);
 
     ArrangementAndConnectionData data;
     uint32_t elementSize = 1;
@@ -78,7 +80,8 @@ private:
     uint32_t tpCpSize = 1;
     uint32_t tpCpDpSize = 1;
     uint32_t tpCpPpSize = 1;
-    std::unordered_map<std::uint32_t, StepStatistic> reduceTpStatistic;
+    std::unordered_map<std::uint32_t, StepStatistic> reduceTpMax;
+    std::unordered_map<std::uint32_t, StepStatistic> reduceTpMin;
     std::unordered_map<std::uint32_t, StepStatistic> reducePpStatistic;
     std::unordered_map<std::uint32_t, StepStatistic> reduceCpStatistic;
     const int numTwo = 2; // 保留2位小数

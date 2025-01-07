@@ -179,17 +179,33 @@ const std::string FIELD_STEP = "Step";
 const std::string FIELD_TYPE = "Type";
 const std::string FIELD_INDEX = "Index";
 const std::string FIELD_COMPUTING = "Computing";
-const std::string FIELD_COMMUNICATION_NOT_OVERLAPPED = "Communication(Not Overlapped)";
-const std::string FIELD_OVERLAPPED = "Overlapped";
 const std::string FIELD_COMMUNICATION = "Communication";
 const std::string FIELD_FREE = "Free";
+const std::string FIELD_COMMUNICATION_NOT_OVERLAPPED = "Communication(Not Overlapped)";
+const std::string FIELD_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE = "Communication(Not Overlapped and Exclude Receive)";
+const std::string FIELD_OVERLAPPED = "Overlapped";
+const std::string FIELD_PREPARE_TIME = "Preparing";
+
 const std::string FIELD_STAGE = "Stage";
 const std::string FIELD_BUBBLE = "Bubble";
-const std::string FIELD_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE = "Communication(Not Overlapped and Exclude Receive)";
-const std::string FIELD_PREPARE_TIME = "Preparing";
+
 const std::string FIELD_DP_INDEX = "DP Index";
 const std::string FIELD_PP_INDEX = "PP Index";
 const std::string FIELD_TP_INDEX = "TP Index";
+const std::string FIELD_CP_INDEX = "CP Index";
+const std::string FIELD_EP_INDEX = "EP Index";
+
+const std::string VALUE_PREPARING_TIME = FIELD_PREPARE_TIME;
+const std::string VALUE_TOTAL_COMPUTING_TIME = FIELD_COMPUTING;
+const std::string VALUE_COMPUTING_NOT_OVERLAPPED = "Computing(Not Overlapped)";
+const std::string VALUE_TOTAL_COMMUNICATION = FIELD_COMMUNICATION;
+const std::string VALUE_COMMUNICATION_OVERLAPPED = "Computing/Communication Overlapped";
+const std::string VALUE_COMMUNICATION_NOT_OVERLAPPED = FIELD_COMMUNICATION_NOT_OVERLAPPED;
+const std::string VALUE_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE = FIELD_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE;
+const std::string VALUE_FREE_TIME = FIELD_FREE;
+const std::string VALUE_STAGE_TIME = FIELD_STAGE;
+const std::string VALUE_BUBBLE_TIME = FIELD_BUBBLE;
+const std::string VALUE_NPU_TIME = "Computing + Communication(Not Overlapped) + Free";
 
 const std::vector<std::string> VALID_STEP_STATISTICS_HEADERS = {
     FIELD_STEP, FIELD_TYPE, FIELD_INDEX, FIELD_COMPUTING, FIELD_COMMUNICATION_NOT_OVERLAPPED, FIELD_OVERLAPPED,
@@ -209,6 +225,7 @@ struct Position {
 };
 
 struct IndicatorAttr {
+    uint8_t number{}; // No.
     std::string key;
     // 性能指标名称
     std::string name;
@@ -224,10 +241,11 @@ struct IndicatorAttr {
     // 数据类型，用于区分y轴
     std::string yAxisType;
     IndicatorAttr() = default;
-    IndicatorAttr(std::string key, std::string name, bool renderHeatMap, bool renderChart, bool visible,
-        std::string chart, std::string stack, std::string yAxisType)
-        : key(std::move(key)), name(std::move(name)), renderHeatMap(renderHeatMap), renderChart(renderChart),
-          visible(visible), chart(std::move(chart)), stack(std::move(stack)), yAxisType(std::move(yAxisType)) {}
+    IndicatorAttr(uint8_t number, std::string key, std::string name, bool renderHeatMap, bool renderChart,
+        bool visible, std::string chart, std::string stack, std::string yAxisType)
+        : number(number), key(std::move(key)), name(std::move(name)), renderHeatMap(renderHeatMap),
+        renderChart(renderChart), visible(visible), chart(std::move(chart)),
+        stack(std::move(stack)), yAxisType(std::move(yAxisType)) {}
 };
 
 struct Connection {
@@ -285,21 +303,15 @@ const std::string KEY_BUBBLE_TIME = "bubble";
 const std::string KEY_NPU_TIME = "npuTime";
 const std::string KEY_COMPUTING_RATIO = "computingRatio";
 const std::string KEY_COMMUNICATION_RATIO = "communicationRatio";
+const std::string KEY_MAX_SUFFIX = "Max";
+const std::string KEY_MIN_SUFFIX = "Min";
+const std::string KEY_RANGE_SUFFIX = "Range";
 
-const std::string VALUE_PREPARING_TIME = FIELD_PREPARE_TIME;
-const std::string VALUE_TOTAL_COMPUTING_TIME = "Total Computing";
-const std::string VALUE_PURE_COMPUTING_TIME = "Pure Computing";
-const std::string VALUE_TOTAL_COMMUNICATION = FIELD_COMMUNICATION;
-const std::string VALUE_COMMUNICATION_OVERLAPPED = "Communication(Overlapped)";
-const std::string VALUE_COMMUNICATION_NOT_OVERLAPPED = FIELD_COMMUNICATION_NOT_OVERLAPPED;
-const std::string VALUE_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE = FIELD_COMMUNICATION_NOT_OVERLAPPED_AND_RECEIVE;
-const std::string VALUE_FREE_TIME = FIELD_FREE;
-const std::string VALUE_STAGE_TIME = FIELD_STAGE;
-const std::string VALUE_BUBBLE_TIME = FIELD_BUBBLE;
-const std::string VALUE_NPU_TIME = "NPU Time";
 const std::string VALUE_COMPUTING_RATIO = "Computing Ratio";
 const std::string VALUE_COMMUNICATION_RATIO = "Communication Ratio";
 const std::string VALUE_MAX = "Max ";
+const std::string VALUE_MIN = "Min ";
+const std::string VALUE_RANGE = " Range";
 const std::string VALUE_SUM_OF_MAX = "Sum of Max ";
 
 // chart type

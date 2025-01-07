@@ -334,7 +334,7 @@ TEST_F(MegatronParallelStrategyAlgorithmTest, GetPerformanceByDimension_ShouldRe
     bool res = algorithm.GetPerformanceIndicatorByDimension(params, statistic, responseData, err);
     EXPECT_EQ(res, true);
     EXPECT_EQ(responseData.performanceData.size(), 2); // 2 dp groups
-    const std::vector<double> EXPECTED_COMPUTING = {180, 90};
+    const std::vector<double> EXPECTED_COMPUTING = {180, 180};
     uint32_t i = 0;
     for (auto& item : responseData.performanceData) {
         EXPECT_EQ(item.indicators[KEY_TOTAL_COMPUTING_TIME], EXPECTED_COMPUTING[i++]);
