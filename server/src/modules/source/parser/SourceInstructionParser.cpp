@@ -56,6 +56,121 @@ bool SourceInstructionParser::ConvertToData(std::string &filePath, std::vector<P
     return true;
 }
 
+/*
+json示例
+{
+  "Cores": [ // 执行算子的计算核，如"core0.cubecore0"，"core0.veccore0"
+    string
+  ],
+"Instructions Dtype": { // 指定列名和数据类型
+  // string 0, int 1, float 2
+  "Instructions": {
+      "Address": 0,
+      "Cycles": 1
+  }
+}
+  "Instructions": [
+    {
+      "Address": string, 			// 指令的偏移地址,如"0x1269f000"
+      "AscendC Inner Code": string, // 源代码文件路径和代码行号,如"/home/xxx.cpp:23"
+      "Cycles": [ 					// 指令在各个计算核上消耗的时钟周期
+        int
+      ],
+      "Instructions Executed": [ 	// 指令在各个计算核上执行的次数
+        int
+      ],
+      "Pipe": string, 				// 指令所属的指令队列,如"SCALAR"
+      "TheoreticalStallCycles": [                    // 预期阻塞时间
+        int
+       ],
+      "Source": string, 				// 指令内容, 如"MOV_XD_IMM XD:X29,IMM"
+      "RealStallCycles": [                    // 实际阻塞时间
+        int
+       ]
+    }
+  ]
+}
+ */
+void SourceInstructionParser::ConvertApiInstrNew(const std::string &jsonStr)
+{
+    std::string errMsg;
+    auto optional = JsonUtil::TryParse(jsonStr, errMsg);
+    if (!optional.has_value() || !errMsg.empty()) {
+        ServerLog::Error("Parse instr json failed. Error is ", errMsg);
+        return;
+    }
+    auto &d = optional.value();
+    // parse column info
+    if (!d.HasMember("Instructions Dtype") || !d["Instructions Dtype"].HasMember("Instructions")) {
+        return;
+    }
+    // 遍历dtype中的列对象，获取列名和对应的数据类型
+    for (auto &column : d["Instructions Dtype"]["Instructions"].GetObject()) {
+        std::string columnName = column.name.GetString();
+        auto &value = column.value;
+        if (!value.IsInt()) {
+            continue;
+        }
+        instructionColumnTypeMap[columnName] = value.GetInt();
+    }
+
+    // 根据列信息动态解析Instruction数据
+    if (!JsonUtil::IsJsonArray(d, "Instructions")) {
+        return;
+    }
+    for (auto &instr : d["Instructions"].GetArray()) {
+        ParseInstruction(instr);
+    }
+}
+
+void SourceInstructionParser::ParseInstruction(Value &instr)
+{
+    SourceFileInstruction sourceFileInstruction;
+    for (const auto &columnType: instructionColumnTypeMap) {
+        std::string columnName = columnType.first;
+        int type = columnType.second;
+        if (!instr.HasMember(columnName.c_str())) {
+            continue;
+        }
+        // 处理不同数据类型的列
+        auto &columData = instr[columnName.c_str()];
+        if (type == ColumDataType::STRING) {
+            ProcessColumnDataArray<std::string>(columData, sourceFileInstruction.stringColumnMap[columnName]);
+        } else if (type == ColumDataType::INT) {
+            ProcessColumnDataArray<int>(columData, sourceFileInstruction.intColumnMap[columnName]);
+        } else if (type == ColumDataType::FLOAT) {
+            ProcessColumnDataArray<float>(columData, sourceFileInstruction.floatColumnMap[columnName]);
+        }
+    }
+    instructionList.emplace_back(std::move(sourceFileInstruction));
+}
+
+template <typename T>
+void SourceInstructionParser::ProcessColumnDataArray(const Value& value, std::vector<T>& columnDataList)
+{
+    if (value.IsArray()) {
+        // 如果是数组，遍历数组中的每一项并处理
+        for (const auto& item : value.GetArray()) {
+            ProcessColumnData(item, columnDataList);
+        }
+    } else {
+        // 如果不是数组，直接处理单一值
+        ProcessColumnData(value, columnDataList);
+    }
+}
+
+template <typename T>
+void SourceInstructionParser::ProcessColumnData(const Value& value, std::vector<T>& columnDataList)
+{
+    if constexpr (std::is_same<T, std::string>::value) {
+        columnDataList.emplace_back(value.IsString() ? value.GetString() : "");
+    } else if constexpr (std::is_same<T, int>::value) {
+        columnDataList.emplace_back(value.IsInt() ? value.GetInt() : 0);
+    } else if constexpr (std::is_same<T, float>::value) {
+        columnDataList.emplace_back(value.IsFloat() ? value.GetFloat() : 0.0f);
+    }
+}
+
 void SourceInstructionParser::ConvertApiInstr(const std::string &jsonStr)
 {
     Document d;
@@ -66,6 +181,10 @@ void SourceInstructionParser::ConvertApiInstr(const std::string &jsonStr)
             for (auto &core : cores.GetArray()) {
                 apiCores.emplace_back(core.GetString());
             }
+        }
+        // parse instructions
+        if (d.HasMember("Instructions Dtype")) {
+            ConvertApiInstrNew(jsonStr);
         }
     } catch (const std::exception &e) {
         ServerLog::Error("Can't parse api instr,not json.Error is ", e.what());
@@ -276,6 +395,11 @@ std::string SourceInstructionParser::GetInstr(std::string &filePath)
     std::string content = BinFileParseUtil::GetContentStr(file, apiInstrPos, maxDataSize);
     file.close();
     return content;
+}
+
+std::vector<SourceFileInstruction> SourceInstructionParser::GetInstructionsByCoreName(std::string &coreName)
+{
+    return {};
 }
 
 std::string SourceInstructionParser::GetSourceByName(std::string &sourceName, std::string &filePath)
