@@ -281,7 +281,9 @@ const useParallelTypeOptions = (dimension: ParallelSwitchProps['dimension']): Ar
     ];
 };
 
-const defaultDataTypeOptions = [{ label: 'None', value: 'None' }];
+const getDefaultDataTypeOptions = (t: TFunction): Array<{label: string;value: string}> => {
+    return [{ label: t('None'), value: 'None' }];
+};
 
 interface ParallelSwitchProps {
     session: Session;
@@ -297,7 +299,7 @@ const ParallelSwitch = observer(({ session, dimension }: ParallelSwitchProps): J
         const options = session.dataTypeOptions.map(indicator => {
             return { value: indicator.key, label: t(indicator.name) };
         });
-        return defaultDataTypeOptions.concat(options);
+        return getDefaultDataTypeOptions(t).concat(options);
     }, [t, session.indicatorList]);
 
     return (
@@ -309,12 +311,12 @@ const ParallelSwitch = observer(({ session, dimension }: ParallelSwitchProps): J
                     onChange={(checkedValues: CheckboxValueType[]): void => { setParallelTypeList(checkedValues as ParallelismType[]); }}
                 ></CheckboxGroup>
             </Form.Item>
-            <Form.Item name={'dataType'} label={t('Data Type')}>
-                <Select defaultValue={dyeingMode} value={dyeingMode} style={{ width: '140px' }} onChange={(value: string): void => { setDyeingMode(value); }} options={dataTypeOptions}/>
+            <Form.Item label={t('Data Type')}>
+                <Select id="dataType" defaultValue={dyeingMode} value={dyeingMode} style={{ width: '140px' }} onChange={(value: string): void => { setDyeingMode(value); }} options={dataTypeOptions}/>
             </Form.Item>
             {
                 dyeingMode !== 'None' &&
-                <Form.Item name={'dyeingStep'} label={(<DyeingTipAndLabel/>)}>
+                <Form.Item label={(<DyeingTipAndLabel/>)}>
                     <InputNumber
                         defaultValue={dyeingStep}
                         min={0.01}

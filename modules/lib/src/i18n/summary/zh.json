@@ -38,6 +38,8 @@
       "通信占比 = 通信时间（未被覆盖）/总时间"
     ],
     "Computation/CommunicationLastDescribe": "点击柱状图显示单节点计算/通信详情",
+    "Index": "序号",
+    "Name": "名称",
     "Step": "迭代ID",
     "RankGroup": "通信域",
     "OrderBy": "排序方式",

@@ -12,6 +12,8 @@ import { PerformanceDataItem } from '../../utils/interface';
 import { GenerateConditions } from '../communicatorContainer/CommunicatorContainer';
 import { Advice } from 'ascend-utils';
 import { observer } from 'mobx-react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 const VALUE_ALL = 'All';
 
@@ -59,14 +61,14 @@ interface PerformanceChartProps extends GenerateConditions {
     advices: string[];
 }
 
-const getSeries = (session: Session, datasource: PerformanceDataItem[]): any => {
+const getSeries = (session: Session, datasource: PerformanceDataItem[], t: TFunction): any => {
     return session.indicatorList?.map(indicator => {
         const { chart, key, name, stack, yAxisType, unit } = indicator;
         const data = datasource.map(item => item[key]);
         const yAxisIndex = yAxisType === 'time' ? 0 : 1;
 
         return {
-            name,
+            name: t(name),
             type: chart,
             stack,
             emphasis: {
@@ -83,20 +85,21 @@ const getSeries = (session: Session, datasource: PerformanceDataItem[]): any => 
     });
 };
 
-const getLegend = (session: Session): EChartsOption['legend'] => {
+const getLegend = (session: Session, t: TFunction): EChartsOption['legend'] => {
     const legendData: string[] = [];
     const legendSelected: Record<string, boolean> = {};
 
     session.indicatorList.forEach(indicator => {
         const { name, visible } = indicator;
+        const tName = t(name);
         // 默认显示的图例排在前面
         if (visible) {
-            legendData.unshift(name);
+            legendData.unshift(tName);
         } else {
-            legendData.push(name);
+            legendData.push(tName);
         }
 
-        legendSelected[name] = visible;
+        legendSelected[tName] = visible;
     });
 
     return {
@@ -111,6 +114,7 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
     const canvasEl = chartRef.current?.getChartDom()?.querySelector('canvas');
     const [chartOptions, setChartOptions] = useState<EChartsOption>({});
     const [datasource, setDatasource] = useState<PerformanceDataItem[]>([]);
+    const { t } = useTranslation('summary');
 
     // 图表的默认宽为100，此处是fix图表初始化时宽度未撑开的问题
     if (canvasEl?.width === 100) {
@@ -150,8 +154,8 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
     };
 
     useEffect(() => {
-        const legend = getLegend(session);
-        const series = getSeries(session, datasource);
+        const legend = getLegend(session, t);
+        const series = getSeries(session, datasource, t);
 
         const options = merge({}, baseOptions, {
             legend,
@@ -161,7 +165,7 @@ export const PerformanceChart = observer((props: PerformanceChartProps): JSX.Ele
             series,
         });
         setChartOptions(options);
-    }, [datasource, session.indicatorList]);
+    }, [datasource, session.indicatorList, t]);
 
     useEffect(() => {
         const filteredData = filterData(session.performanceData, session.performanceDataMap);

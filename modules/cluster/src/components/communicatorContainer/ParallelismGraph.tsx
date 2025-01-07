@@ -18,6 +18,7 @@ import { useParallelSwitchConditions } from './Context';
 import { useTheme } from '@emotion/react';
 import { throttle } from 'lodash';
 import { Responsive } from 'ascend-components';
+import { useTranslation } from 'react-i18next';
 
 const CanvasContainer = styled.div`
     max-height: 700px;
@@ -104,6 +105,7 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
     const theme = useTheme();
     const { data, loading, isUpdated } = useFetchData(generateConditions);
     const { tpSize = 1, dpSize = 1, cpSize = 1, epSize = 1, ppSize = 1, dimension } = generateConditions ?? {};
+    const { t } = useTranslation('summary');
 
     const canvasSize = useMemo(() => {
         let width = 200;
@@ -139,13 +141,13 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
                 if (key !== 'index') {
                     const { name: indicatorName, unit } = session.indicatorMap.get(key) ?? {};
                     if (indicatorName !== undefined) {
-                        updatedData[indicatorName] = `${value} ${unit}`;
+                        updatedData[t(indicatorName)] = `${value} ${unit}`;
                     }
                 }
             });
             return {
-                Index: index,
-                Name: name,
+                [t('Index')]: index,
+                [t('Name')]: name,
                 ...updatedData,
             };
         },

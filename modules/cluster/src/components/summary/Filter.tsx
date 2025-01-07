@@ -53,12 +53,14 @@ interface FilterProps {
 }
 export const Filter = observer(({ session, conditions, isPipeline, onFilterChange }: FilterProps): JSX.Element => {
     const { t } = useTranslation('summary');
-    const tOrderOptions = session.indicatorList?.map((item) => {
-        return {
-            value: item.key,
-            label: t(item.name),
-        };
-    });
+    const tOrderOptions = session.indicatorList
+        ?.filter(item => item.renderChart)
+        ?.map((item) => {
+            return {
+                value: item.key,
+                label: t(item.name),
+            };
+        });
     tOrderOptions?.unshift({
         value: 'rankId',
         label: t('Rank ID'),

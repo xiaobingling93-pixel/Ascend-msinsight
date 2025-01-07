@@ -31,6 +31,7 @@ const Tooltip = styled.div(props => ({
     opacity: 0,
     left: 0,
     top: 0,
+    userSelect: 'none',
 }));
 
 interface TranslateValue {

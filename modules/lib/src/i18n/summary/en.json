@@ -38,6 +38,8 @@
       "Communication Ratio = Communication(Not Overlapped) / Total Time"
     ],
     "Computation/CommunicationLastDescribe": "Click Bar Chart Display The Single Rank Computation / Communication Detail",
+    "Index": "Index",
+    "Name": "Name",
     "Step": "Step",
     "RankGroup": "Rank Group",
     "OrderBy": "Order By",
