@@ -62,7 +62,7 @@ interface PerformanceChartProps extends GenerateConditions {
 }
 
 const getSeries = (session: Session, datasource: PerformanceDataItem[], t: TFunction): any => {
-    return session.indicatorList?.map(indicator => {
+    return session.performanceChartsIndicators?.map(indicator => {
         const { chart, key, name, stack, yAxisType, unit } = indicator;
         const data = datasource.map(item => item[key]);
         const yAxisIndex = yAxisType === 'time' ? 0 : 1;
@@ -89,7 +89,7 @@ const getLegend = (session: Session, t: TFunction): EChartsOption['legend'] => {
     const legendData: string[] = [];
     const legendSelected: Record<string, boolean> = {};
 
-    session.indicatorList.forEach(indicator => {
+    session.performanceChartsIndicators.forEach(indicator => {
         const { name, visible } = indicator;
         const tName = t(name);
         // 默认显示的图例排在前面

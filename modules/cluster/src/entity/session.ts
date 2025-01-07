@@ -48,8 +48,14 @@ export class Session {
         };
     }
 
+    // Data Type 指标选项（着色指标）
     get dataTypeOptions(): IndicatorsItem[] {
         return this.indicatorList.filter(item => item.renderHeatMap);
+    }
+
+    // Order By 指标选项（性能图表指标）
+    get performanceChartsIndicators(): IndicatorsItem[] {
+        return this.indicatorList.filter(item => item.renderChart);
     }
 
     get indicatorMap(): Map<string, IndicatorsItem> {
