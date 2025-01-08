@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
 */
 import { observer } from 'mobx-react-lite';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Spin } from 'ascend-components';
 import { chartVisbilityListener, COLOR, commonEchartsOptions } from '../Common';
@@ -10,33 +10,97 @@ import type { Session } from '../../entity/session';
 import i18n from 'ascend-i18n';
 import { cloneDeep } from 'lodash';
 import CollapsiblePanel from 'ascend-collapsible-panel';
-import { chartColors, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
+import { chartColors, getAdaptiveEchart, getDefaultChartOptions, safeStr } from 'ascend-utils';
+import type { LegendComponentOption, TooltipComponentOption } from 'echarts/components';
+import { CompareData, FormatterParams } from '../../utils/interface';
 
-function InitCharts(data: dataType): void {
+export interface DataItem {
+    index: number;
+    rankId: string;
+    compareData: CompareData<Record>;
+}
+
+export interface Record {
+    [prop: string]: number;
+    elapseTime: number;
+    transitTime: number;
+    synchronizationTime: number;
+    waitTime: number;
+    synchronizationTimeRatio: number;
+    waitTimeRatio: number;
+}
+
+export interface ChartData {
+    [name: string]: any;
+    rankId: string[];
+    elapseTime?: number[];
+    transitTime?: number[];
+    synchronizationTime?: number[];
+    waitTime?: number[];
+    synchronizationTimeRatio?: number[];
+    waitTimeRatio?: number[];
+}
+
+function InitCharts(data: ChartData, isCompare: boolean): void {
     const chartDom = document.getElementById('main');
     if (chartDom === null || chartDom.offsetParent === null) {
         return;
     }
     const myChart = getAdaptiveEchart(chartDom);
-    myChart.setOption(wrapData(data));
+    myChart.setOption(wrapData(data, isCompare), { replaceMerge: ['series', 'xAxis', 'yAxis', 'legend'] });
 }
-function wrapData(data: dataType): any {
+function wrapData(data: ChartData, isCompare: boolean): any {
     const options = cloneDeep(baseOption);
-    options.legend.data = baseOption.legend.data.map((item: any) => ({
-        ...item,
-        name: i18n.t(`tableHead.${item.name}`, { ns: 'communication' }),
-    }));
-    options.series = baseOption.series.map((item: any) => ({
-        ...item,
-        name: i18n.t(`tableHead.${item.name}`, { ns: 'communication' }),
-    }));
     options.xAxis[0].data = data.rankId;
-    const order: Array<keyof dataType> = ['elapseTime', 'transitTime', 'synchronizationTime',
-        'waitTime', 'synchronizationTimeRatio', 'waitTimeRatio'];
-    for (let i = 0; i < options.series.length; i++) {
-        options.series[i].data = data[order[i]] ?? [];
-    }
+    options.legend = getLegend();
+    options.series = getSeries({ data });
+    options.tooltip = getTooltip(isCompare);
     return options;
+}
+
+function getLegend(): LegendComponentOption {
+    const legend = baseOption.legend;
+    return {
+        ...legend,
+        data: legend.data.map((legendDataItem: any) => ({
+            ...legendDataItem,
+            name: i18n.t(`tableHead.${legendDataItem.name}`, { ns: 'communication' }),
+        }))
+        ,
+    };
+}
+
+function getSeries({ data }: {data: ChartData}): any {
+    return baseOption.series.map((serie: any) => ({
+        ...serie,
+        name: i18n.t(`tableHead.${serie.name}`, { ns: 'communication' }),
+        data: data[serie.id],
+    }));
+}
+
+function getTooltip(isCompare: boolean): TooltipComponentOption {
+    return {
+        ...commonEchartsOptions.tooltip,
+        confine: true,
+        formatter: (params: FormatterParams[]): string => getTooltipFormatter(params, isCompare),
+    };
+}
+
+function getTooltipFormatter(params: FormatterParams[], isCompare: boolean): string {
+    let html = params[0].name;
+    params.forEach(serie => {
+        const { marker, seriesName, seriesType, value } = serie;
+        let valueClass = '';
+        if (isCompare) {
+            valueClass = value >= 0 ? 'positive-number' : 'negative-number';
+        }
+        html += `
+<div>
+    <span>${marker}${safeStr(seriesName)}</span>
+    <span class="tooltip-value ${valueClass}">${safeStr(value)} ${seriesType === 'line' ? '' : 'μs'}</span>
+</div>`;
+    });
+    return html;
 }
 
 const baseOption: any = {
@@ -101,6 +165,7 @@ const baseOption: any = {
     ],
     series: [
         {
+            id: 'elapseTime',
             name: 'Elapse Time',
             type: 'bar',
             tooltip: {
@@ -111,6 +176,7 @@ const baseOption: any = {
             data: [],
         },
         {
+            id: 'transitTime',
             name: 'Transit Time',
             type: 'bar',
             tooltip: {
@@ -121,6 +187,7 @@ const baseOption: any = {
             data: [],
         },
         {
+            id: 'synchronizationTime',
             name: 'Synchronization Time',
             type: 'bar',
             tooltip: {
@@ -131,6 +198,7 @@ const baseOption: any = {
             data: [],
         },
         {
+            id: 'waitTime',
             name: 'Wait Time',
             type: 'bar',
             tooltip: {
@@ -141,6 +209,7 @@ const baseOption: any = {
             data: [],
         },
         {
+            id: 'synchronizationTimeRatio',
             name: 'Synchronization Time Ratio',
             type: 'line',
             yAxisIndex: 1,
@@ -152,6 +221,7 @@ const baseOption: any = {
             data: [],
         },
         {
+            id: 'waitTimeRatio',
             name: 'Wait Time Ratio',
             type: 'line',
             yAxisIndex: 1,
@@ -169,27 +239,32 @@ const baseOption: any = {
     },
 };
 
-export interface dataType {
-    [name: string]: any;
-    rankId: string[];
-    elapseTime?: number[];
-    transitTime?: number[];
-    synchronizationTime?: number[];
-    waitTime?: number[];
-    synchronizationTimeRatio?: number[];
-    waitTimeRatio?: number[];
-}
+const wrapChartData = (data: DataItem[], isCompare: boolean): ChartData => {
+    const fields = ['rankId', 'startTime', 'elapseTime', 'transitTime', 'synchronizationTime',
+        'waitTime', 'synchronizationTimeRatio', 'waitTimeRatio'];
+    const chartData: ChartData = {} as ChartData;
+    fields.forEach(field => {
+        if (field === 'rankId') {
+            chartData[field] = data.map((item: DataItem) => item[field]);
+        } else {
+            chartData[field] = data.map((item: DataItem) => isCompare ? item.compareData.diff[field] : item.compareData.compare[field]);
+        }
+    });
+    return chartData;
+};
 
-const CommunicationTimeChart = observer(({ dataSource, session }: {dataSource: dataType; session: Session}) => {
+// 通信时长图 Visualized Communication Time
+const CommunicationTimeChart = observer(({ dataSource, session }: {dataSource: DataItem[]; session: Session}) => {
     const { t } = useTranslation('communication');
+    const data = useMemo(() => wrapChartData(dataSource, session.isCompare), [dataSource, session.isCompare]);
     chartVisbilityListener('main', () => {
-        InitCharts(dataSource);
+        InitCharts(data, session.isCompare);
     });
     useEffect(() => {
         setTimeout(() => {
-            InitCharts(dataSource);
+            InitCharts(data, session.isCompare);
         });
-    }, [dataSource, t]);
+    }, [dataSource, t, session.isCompare]);
     return (
         <CollapsiblePanel title={t('sessionTitle.VisualizedCommunicationTime')}>
             <Spin spinning={session.clusterCompleted && !session.durationFileCompleted } tip="">

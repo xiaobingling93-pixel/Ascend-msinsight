@@ -7,7 +7,7 @@ import type { Session } from '../../entity/session';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
-import { Loading } from '../Common';
+import { getBaselineName, getCompareName, Loading } from '../Common';
 import { colorPalette, hashToNumber } from '../../utils/colorUtil';
 import { Dropdown } from 'ascend-components';
 import type { MenuProps } from 'antd';
@@ -15,8 +15,9 @@ import connector from '../../connection';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import i18n from 'ascend-i18n';
 import { themeInstance } from 'ascend-theme';
+import { type Theme } from '@emotion/react';
 import { safeStr, disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
-import { CompareData } from '../../utils/interface';
+import { CompareData, FormatterParams } from '../../utils/interface';
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;
@@ -54,8 +55,12 @@ function initDataZoom(totalNum: number, dataLength: number): void {
         option.dataZoom[0].end = 100;
     }
 }
-
-function wrapData(dataSource: AnalysisChartData): any {
+enum compareSource {
+    COMPARISON = 0,
+    BASELINE = 1,
+}
+const sourceIndex = 4;
+function wrapData(dataSource: AnalysisChartData, isCompare: boolean): any {
     const data: any = [];
     const yAxisData: string[] = [];
     const dataLength = Math.max(dataSource?.data?.length, 0);
@@ -66,21 +71,13 @@ function wrapData(dataSource: AnalysisChartData): any {
         const rankId = dataSource.data[i].rankId;
         yAxisData.push(rankId);
         dataSource.data[i].lists?.compare.forEach((item, _) => {
-            const startTime = nsToMs(item.startTime);
-            const duration = nsToMs(item.duration);
-            const endTime = startTime + duration;
-            data.push(
-                {
-                    name: item.operatorName,
-                    value: [rankId, startTime, endTime, duration],
-                    itemStyle: {
-                        normal: {
-                            color: theme.colorPalette[colorPalette[hashToNumber(item.operatorName, colorPalette.length)]],
-                        },
-                    },
-                },
-            );
+            data.push(getRenderData({ item, rankId, theme, source: compareSource.COMPARISON }));
         });
+        if (isCompare) {
+            dataSource.data[i].lists?.baseline.forEach((item, _) => {
+                data.push(getRenderData({ item, rankId, theme, source: compareSource.BASELINE }));
+            });
+        }
     }
     option.yAxis.data = yAxisData;
     option.xAxis.min = nsToMs(dataSource.minTime);
@@ -89,40 +86,98 @@ function wrapData(dataSource: AnalysisChartData): any {
     option.grid.height = dataHeight;
     option.dataZoom[0].top = dataHeight - DEFAULT_INNER_CHART_HEIGHT + DEFAULT_CHART_ZOOM_HEIGHT;
     initDataZoom(totalNumber, dataLength);
-    option.series[0].data = data;
+    option.series = getSeries({ data, isCompare });
+    option.tooltip = getTooltip({ isCompare });
     return option;
 }
 
-function renderItem(params: any, api: any): any {
-    const categoryIndex = api.value(0);
-    const start = api.coord([api.value(1), categoryIndex]);
-    const end = api.coord([api.value(2), categoryIndex]);
-    const height = api.size([0, 1])[1] * 0.6;
-    const rectShape = echarts.graphic.clipRectByRect(
-        {
-            x: start[0],
-            y: start[1] - (height / 2),
-            width: end[0] - start[0],
-            height,
+const getRenderData = ({ item, rankId, source, theme }: {item: OperatorTimeItem;rankId: string;source: compareSource;theme: Theme}): any => {
+    const startTime = nsToMs(item.startTime);
+    const duration = nsToMs(item.duration);
+    const endTime = startTime + duration;
+    return {
+        name: item.operatorName,
+        value: [rankId, startTime, endTime, duration, source],
+        itemStyle: {
+            normal: {
+                color: theme.colorPalette[colorPalette[hashToNumber(item.operatorName, colorPalette.length)]],
+            },
         },
-        {
-            x: params.coordSys.x,
-            y: params.coordSys.y,
-            width: params.coordSys.width,
-            height: params.coordSys.height,
-        },
-    );
-    return (
-        {
-            type: 'rect',
-            transition: ['shape'],
-            shape: rectShape,
-            name: 'op',
-            style: api.style(),
-        }
-    );
+    };
+};
+
+const baseSeire = {
+    type: 'custom',
+    itemStyle: {
+        opacity: 0.8,
+    },
+    encode: {
+        x: [1, 2],
+        y: 0,
+    },
+    data: [],
+};
+function getSeries({ isCompare, data }: {isCompare: boolean;data: any[]}): any[] {
+    return [{ ...baseSeire, data, renderItem: getRenderItem(isCompare) }];
 }
 
+function getRenderItem(isCompare: boolean): any {
+    return (params: any, api: any): any => {
+        const categoryIndex = api.value(0);
+        const start = api.coord([api.value(1), categoryIndex]);
+        const end = api.coord([api.value(2), categoryIndex]);
+        const height = api.size([0, 1])[1] * 0.6 * (isCompare ? 0.5 : 1);
+        let y;
+        if (isCompare) {
+            const isComparison = api.value(4) === compareSource.COMPARISON;
+            // 对比在上，基线在下
+            y = isComparison ? start[1] - height : start[1] + (height / 3);
+        } else {
+            y = start[1] - (height / 2);
+        }
+        const rectShape = echarts.graphic.clipRectByRect(
+            {
+                x: start[0],
+                y,
+                width: end[0] - start[0],
+                height,
+            },
+            {
+                x: params.coordSys.x,
+                y: params.coordSys.y,
+                width: params.coordSys.width,
+                height: params.coordSys.height,
+            },
+        );
+        return (
+            {
+                type: 'rect',
+                transition: ['shape'],
+                shape: rectShape,
+                name: 'op',
+                style: api.style(),
+            }
+        );
+    };
+}
+
+function getTooltip({ isCompare }: { isCompare: boolean }): any {
+    return {
+        formatter: (params: FormatterParams): string => {
+            let tooltipMarkup = `${params.marker} `;
+            let getName = (val: string): string => val;
+            if (isCompare) {
+                const isBaseline = params.value[sourceIndex] === compareSource.BASELINE;
+                getName = isBaseline ? getBaselineName : getCompareName;
+            }
+            tooltipMarkup += getTipLineStr('Rank ID', `${params.value[0]}`);
+            tooltipMarkup += getTipLineStr(getName('Operator Name'), `${params.name}`);
+            tooltipMarkup += getTipLineStr(getName('Start Time'), `${numberToStr(params.value[1])}ms`);
+            tooltipMarkup += getTipLineStr(getName('Elapse Time'), `${numberToStr(params.value[3])}ms`);
+            return tooltipMarkup;
+        },
+    };
+}
 function numberToStr(value: number): string {
     return `${value.toFixed(6).replace(/\.?0+$/, '')}`;
 }
@@ -142,16 +197,6 @@ function getTipLineStr(name: string, value: string): string {
 
 const option: any = {
     textStyle: getDefaultChartOptions().textStyle,
-    tooltip: {
-        formatter: function (params: {marker: any; name: any; value: any[] }) {
-            let tooltipMarkup = `${params.marker} `;
-            tooltipMarkup += getTipLineStr('Rank ID', `${params.value[0]}`);
-            tooltipMarkup += getTipLineStr('Operator Name', `${params.name}`);
-            tooltipMarkup += getTipLineStr('Start Time', `${numberToStr(params.value[1])}ms`);
-            tooltipMarkup += getTipLineStr('Elapse Time', `${numberToStr(params.value[3])}ms`);
-            return tooltipMarkup;
-        },
-    },
     dataZoom: [
         {
             type: 'slider',
@@ -194,20 +239,7 @@ const option: any = {
         data: [],
         name: 'Rank ID',
     },
-    series: [
-        {
-            type: 'custom',
-            renderItem,
-            itemStyle: {
-                opacity: 0.8,
-            },
-            encode: {
-                x: [1, 2],
-                y: 0,
-            },
-            data: [],
-        },
-    ],
+    series: [],
 };
 
 export interface OperatorTimeItem {
@@ -245,7 +277,10 @@ function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDown
         if (session.unitcount === 0) {
             return;
         }
-        const [rankId, timestamp, , duration] = e.value as number[];
+        const [rankId, timestamp, , duration, source] = e.value as number[];
+        if (source === compareSource.BASELINE) {
+            return;
+        }
         selectedOpDetail = {
             name: e.name,
             rankId,
@@ -255,7 +290,7 @@ function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDown
         setDropDownVisible(true);
     });
     if (dataSource !== undefined) {
-        myChart.setOption(wrapData(dataSource));
+        myChart.setOption(wrapData(dataSource, session.isCompare));
     }
 }
 

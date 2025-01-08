@@ -12,7 +12,7 @@ import { Empty } from 'ascend-components';
 import { ResizeTable } from 'ascend-resize';
 import type { ColumnsType } from 'antd/es/table';
 import type { CategoryAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
-import { COLOR, commonEchartsOptions } from '../Common';
+import { COLOR, commonEchartsOptions } from '../../Common';
 import i18n from 'ascend-i18n';
 import { cloneDeep, merge } from 'lodash';
 import {

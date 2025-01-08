@@ -90,7 +90,7 @@ export const queryCommunicationOperatorLists = async(param: { iterationId: strin
  */
 export const queryOperatorDetails = async(param: {
     iterationId: number; rankId: number; pageSize: number;currentPage: number;orderBy: string;order: string;
-    stage: string;
+    stage: string;queryType?: string;
 }): Promise<any> => {
     return window.requestData('communication/operatorDetails', param);
 };

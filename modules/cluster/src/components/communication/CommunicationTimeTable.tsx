@@ -13,15 +13,26 @@ import type { ColumnsType } from 'antd/es/table';
 import { getPageConfigWithAllData, getPageConfigWithPageData } from '../Common';
 import type { VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails } from '../../utils/RequestUtils';
-import { totalOperator } from './Filter';
+import { type ConditionDataType, totalOperator } from './Filter';
 import { ResizeTable } from 'ascend-resize';
 import type { Session } from '../../entity/session';
 import CollapsiblePanel from 'ascend-collapsible-panel';
 import { CaretDownIcon, CaretRightIcon } from 'ascend-icon';
+import { CompareNumber } from 'ascend-utils';
+import i18n from 'ascend-i18n';
+import type { DataItem, Record } from './CommunicationTimeChart';
 
-export interface DataType {
+export type DataType = Record & {
     [prop: string]: any;
-}
+    expanded: boolean;
+    source: Source;
+};
+
+type TableDataItem = DataItem & {
+    [prop: string]: any;
+    expanded: boolean;
+    source: Source;
+};
 
 const useCommonColumns = (): ColumnsType<DataType> => {
     const { t } = useTranslation('communication');
@@ -87,13 +98,14 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     }, [page.current, page.pageSize, sorter.field, sorter.order, conditions.iterationId, record.rankId]);
     const updateData = async(_page: any, _sorter: {field: string;order: string}): Promise<void> => {
         const res = await queryOperatorDetails({
-            iterationId: conditions.iterationId,
+            iterationId: record.source === Source.COMPARISON ? conditions.iterationId : conditions.baselineIterationId,
             rankId: record.rankId,
             currentPage: _page.current,
             pageSize: _page.pageSize,
             orderBy: _sorter.field,
             order: _sorter.order,
             stage: conditions.stage,
+            queryType: record.source === Source.COMPARISON ? 'COMPARE' : Source.BASELINE.toUpperCase(),
         });
         setDataSource(res?.allOperators ?? []);
         setPage({ ..._page, total: res?.count ?? 0 });
@@ -117,58 +129,93 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     </div>;
 };
 
-const useRankColumns = (handleAction: VoidFunction[], conditions: any, t: TFunction): any => {
+const ExpandIcon = ({ expanded, onClick }: {expanded: boolean;onClick: VoidFunction}): JSX.Element => {
+    const iconProps = {
+        onClick,
+        style: { cursor: 'pointer', float: 'left', marginRight: '5px' } as CSSProperties,
+    };
+    return expanded
+        ? <CaretDownIcon {...iconProps}/>
+        : <CaretRightIcon {...iconProps}/>;
+};
+const commonColumnConfig = {
+    ellipsis: true,
+    width: 70,
+};
+const useRankColumns = (handleAction: VoidFunction[], conditions: any, t: TFunction, tableLevel: TableLevel): any => {
     const [showOperator, handleExpand] = handleAction;
     return [
         {
             title: t('tableHead.Rank ID'),
+            ...commonColumnConfig,
             dataIndex: 'rankId',
             key: 'rankId',
             sorter: (a: DataType, b: DataType) => Number(a.rankId) - Number(b.rankId),
-            ellipsis: true,
-            width: 70,
-            render: (_: any, record: DataType): React.ReactNode => {
-                const style: CSSProperties = { cursor: 'pointer', float: 'left', marginRight: '5px' };
-                const iconProps = {
-                    onClick: (): void => handleExpand(record),
-                    style,
-                };
-                const icon = record.expanded === true ? (<CaretDownIcon {...iconProps}/>) : <CaretRightIcon {...iconProps}/>;
-                return <div>{icon}{record.rankId} </div>;
-            },
+            render: (_: any, record: DataType): React.ReactNode =>
+                (<div><ExpandIcon expanded={record.expanded} onClick={(): void => { handleExpand(record); }}/>{record.rankId} </div>),
+            display: tableLevel !== TableLevel.DIFF_SOURCE,
         },
-        ...useCommonColumns(),
+        {
+            title: t('tableHead.Source'),
+            ...commonColumnConfig,
+            render: (data: DataType): React.ReactNode => i18n.t(data.source),
+            display: [TableLevel.DIFF, TableLevel.DIFF_SOURCE].includes(tableLevel),
+        },
+        ...useCommonColumns().map(commonCol => ({
+            ...commonCol,
+            render: (data: string | number) => tableLevel === TableLevel.DIFF ? <CompareNumber data={data}/> : data,
+        })),
         {
             title: t('tableHead.Bandwidth Analysis'),
-            key: 'action1',
             ellipsis: true,
             width: 110,
             minWidth: 100,
-            render: (_: any, record: DataType) => (
-                <Button type="link"
-                    onClick={(): void => {
-                        showOperator(record.rankId);
-                    }}>{t('tableHead.see more')}</Button>),
+            render: (_: any, record: DataType) => (<Button type="link" onClick={(): void => { showOperator(record.rankId); }}>{t('tableHead.see more')}</Button>),
+            display: tableLevel === TableLevel.RANK,
         },
         {
             title: t('tableHead.Communication Operators Details'),
-            key: 'action2',
             ellipsis: true,
             width: 110,
             minWidth: 110,
-            render: (_: any, record: DataType) => (<Button type="link"
-                onClick={(): void => {
-                    handleExpand(record);
-                }}>{t('tableHead.see more')}<DownOutlined/></Button>),
-            display: conditions.operatorName === totalOperator,
+            render: (_: any, record: DataType) => (<Button type="link" onClick={(): void => { handleExpand(record); }}>{t('tableHead.see more')}<DownOutlined/></Button>),
+            display: conditions.operatorName === totalOperator && tableLevel === TableLevel.RANK,
+        },
+        {
+            title: t('tableHead.Details'),
+            ellipsis: true,
+            width: 110,
+            minWidth: 110,
+            render: (_: any, record: DataType) => (<Button type="link" onClick={(): void => { handleExpand(record); }}>{t('tableHead.see more')}<DownOutlined/></Button>),
+            display: [TableLevel.DIFF, TableLevel.DIFF_SOURCE].includes(tableLevel),
         },
     ].filter((item: any) => item.display !== false);
 };
+
+enum TableLevel {
+    RANK = 0,
+    OPERATOR = 1,
+    DIFF = 2,
+    DIFF_SOURCE = 3,
+}
+enum Source {
+    DIFFERENCE = 'Difference',
+    COMPARISON = 'Comparison',
+    BASELINE = 'Baseline',
+}
+
+interface IProps {
+    dataSource: DataItem[];
+    showOperator: (rankid: string) => void;
+    conditions: ConditionDataType;
+    updateSort?: VoidFunction;
+    session: Session;
+    level?: TableLevel;
+}
 const rowKey = 'index';
-const CommunicationTimeTable = observer((props:
-{dataSource?: DataType[];showOperator: (rankid: string) => void;conditions: any;updateSort: VoidFunction; session: Session}) => {
+const CommunicationTimeTable = observer(({ dataSource, showOperator, conditions, session, updateSort, level }: IProps) => {
     const { t } = useTranslation('communication');
-    const [expandedRowKeys, setExpandedKeys] = useState<string[]>([]);
+    const [expandedRowKeys, setExpandedKeys] = useState<React.Key[]>([]);
     const handleExpand = (record: DataType): void => {
         setExpandedKeys((pre: any) => {
             const list = [...pre];
@@ -181,40 +228,79 @@ const CommunicationTimeTable = observer((props:
             return list;
         });
     };
-    const dataSource: DataType[] = useMemo(() => {
-        const newData: DataType[] = props.dataSource ?? [];
-        return newData.map(record => ({ ...record, expanded: expandedRowKeys.includes(record[rowKey]) }));
-    }, [props.dataSource, expandedRowKeys]);
 
-    const columns = useMemo(() => useRankColumns([props.showOperator, handleExpand], props.conditions, t),
-        [handleExpand, props.conditions, t, expandedRowKeys.length]);
+    // 表类型：卡、对比差值、对比详情
+    const tableLevel = useMemo(() => {
+        if (level !== undefined && level !== null) {
+            return level;
+        }
+        return session.isCompare ? TableLevel.DIFF : TableLevel.RANK;
+    }, [session.isCompare, level]);
 
+    const tableData: TableDataItem[] = useMemo(() => {
+        if (tableLevel === TableLevel.DIFF_SOURCE) {
+            return dataSource.reduce<TableDataItem[]>((pre, cur) => {
+                const { compareData } = cur;
+                pre.push({ ...cur, ...compareData.compare, source: Source.COMPARISON, index: 0, expanded: expandedRowKeys.includes(0) },
+                    { ...cur, ...compareData.baseline, source: Source.BASELINE, index: 1, expanded: expandedRowKeys.includes(1) });
+                return pre;
+            }, []);
+        }
+        return dataSource.map((data, index) => {
+            const { compareData } = data;
+            const record = tableLevel === TableLevel.DIFF ? (compareData.diff ?? {}) : compareData.compare;
+            return ({
+                ...data,
+                ...record,
+                index,
+                source: tableLevel === TableLevel.DIFF ? Source.DIFFERENCE : Source.COMPARISON,
+                expanded: expandedRowKeys.includes(record[rowKey]),
+            });
+        });
+    }, [dataSource, expandedRowKeys, session.isCompare, tableLevel]);
+
+    const columns = useMemo(() => useRankColumns([showOperator, handleExpand], conditions, t, tableLevel),
+        [handleExpand, tableLevel, conditions, t, expandedRowKeys.length]);
+
+    const nextLevelTable = (record: TableDataItem): JSX.Element => (<div style={{ marginLeft: '0' }}>{
+        tableLevel === TableLevel.DIFF
+            ? <CommunicationTimeTable level={TableLevel.DIFF_SOURCE} dataSource={[record]} {...{ showOperator, conditions, session }} />
+            : <OperatorsTable record={record} conditions={conditions}/>
+    }</div>);
+
+    // 数据变动，清理折叠展开
     useEffect(() => {
         setExpandedKeys([]);
-    }, [props.dataSource]);
-    return (<CollapsiblePanel title={t('sessionTitle.DataAnalysisCommunicationTime')}>
-        <ResizeTable
-            data-testid={'dataAnalysisTable'}
-            loading={!props.session.durationFileCompleted}
-            dataSource={dataSource}
-            columns={columns}
-            expandable={{
-                expandedRowRender: (record: DataType): JSX.Element => <div style={{ marginLeft: '0' }}>
-                    <OperatorsTable record={record} conditions={props.conditions}/>
-                </div>,
-                expandedRowKeys,
-                showExpandColumn: false,
-            }}
-            rowKey={rowKey}
-            pagination={getPageConfigWithAllData(dataSource.length)}
-            onChange={(pagination: any, filters: any, sorter: any, extra: any): void => {
-                if (extra.action === 'sort') {
-                    setExpandedKeys([]);
-                    props.updateSort(extra.currentDataSource);
+    }, [dataSource]);
+
+    return <ResizeTable
+        data-testid={'dataAnalysisTable'}
+        loading={!session.durationFileCompleted}
+        dataSource={tableData}
+        columns={columns}
+        expandable={{
+            expandedRowRender: nextLevelTable,
+            expandedRowKeys,
+            showExpandColumn: false,
+        }}
+        rowKey={rowKey}
+        pagination={getPageConfigWithAllData(dataSource.length)}
+        onChange={(pagination: any, filters: any, sorter: any, extra: any): void => {
+            if (extra.action === 'sort') {
+                setExpandedKeys([]);
+                if (typeof updateSort === 'function') {
+                    updateSort(extra.currentDataSource);
                 }
-            } }
-        />
-    </CollapsiblePanel>);
+            }
+        } }
+    />;
 });
 
-export default CommunicationTimeTable;
+const CommunicationTime = observer((props: IProps) => {
+    const { t } = useTranslation('communication');
+    return <CollapsiblePanel title={t('sessionTitle.DataAnalysisCommunicationTime')}>
+        <CommunicationTimeTable {...props}/>
+    </CollapsiblePanel>;
+});
+
+export default CommunicationTime;

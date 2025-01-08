@@ -4,118 +4,48 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Tooltip } from 'ascend-components';
 import type { Session } from '../../entity/session';
 import Filter, { AnalysisType, defaultCondition } from './Filter';
 import type { ConditionDataType } from './Filter';
 import CommunicationTimeTable from './CommunicationTimeTable';
-import type { DataType, DataType as tableDataType } from './CommunicationTimeTable';
-import CommunicationTimeChart from './CommunicationTimeChart';
-import type { dataType as chartDataType } from './CommunicationTimeChart';
+import CommunicationTimeChart, { type DataItem } from './CommunicationTimeChart';
 import CommunicationMatrix from './CommunicationMatrix';
-import BandwidthAnalysis from './BandwidthAnalysis';
 import { notNullObj } from '../Common';
 import { queryCommunication, queryCommunicationOperatorLists } from '../../utils/RequestUtils';
 import CommunicationTimeAnalysisChart from './CommunicationTimeAnalysisChart';
 import type { AnalysisChartData } from './CommunicationTimeAnalysisChart';
 import { HelpIcon } from 'ascend-icon';
 import { Layout } from 'ascend-layout';
-import styled from '@emotion/styled';
-import CollapsiblePanel from 'ascend-collapsible-panel';
-
-const FixedBox = styled.div`
-    z-index: 10;
-    position: fixed;
-    top: ${(props): string => props.theme.pagePadding};
-    left: ${(props): string => props.theme.pagePadding};
-    right: ${(props): string => props.theme.pagePadding};
-    bottom: ${(props): string => props.theme.pagePadding};
-    background: ${(props): string => props.theme.bgColor};
-    overflow: auto;
-    border-radius: ${(props): string => props.theme.borderRadiusBase};
-`;
-
-const BreadcrumbBox = styled.div`
-    display: flex;
-    align-items: center;
-    padding: 16px 24px;
-    .btn-back{
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        color: ${(props): string => props.theme.primaryColor};
-        cursor: pointer;
-    }
-    .delimiter{
-        padding: 0 8px;
-    }
-`;
-
-const Operators = ({ returnHome, rankId, operatorName, iterationId, stage }: any): JSX.Element => {
-    const { t } = useTranslation('communication');
-    return (
-        <FixedBox data-testid={'operators'}>
-            <BreadcrumbBox>
-                <div className={'btn-back'} onClick={returnHome}>
-                    <ArrowLeftOutlined />
-                    <div>{t('Back')}</div>
-                </div>
-                <div className="delimiter">|</div>
-                <div data-testid={'operatorRankId'}>{operatorName}(RankId {rankId})</div>
-            </BreadcrumbBox>
-            <BandwidthAnalysis iterationId={iterationId} rankId={rankId} operatorName={operatorName} stage={stage}/>
-        </FixedBox>
-    );
-};
-
-interface CommunicationAdvice {
-    type: string;
-    max: number;
-    min: number;
-    avg: number;
-    diff: number;
-    time: number;
-}
+import AdviceLabel, { type CommunicationAdvice } from './CommunicationDuration/AdviceLabel';
+import Operators from './CommunicationDuration/Opertators';
 
 interface showDataType {
-    chartData: chartDataType;
+    chartData: [];
     analysisChartData: AnalysisChartData;
     tableData: [];
     adviceData: CommunicationAdvice[];
 }
 
-const searchData = async (conditions: ConditionDataType): Promise<showDataType> => {
+const searchData = async (conditions: ConditionDataType & {isCompare: boolean}): Promise<showDataType> => {
     const notNullKeys: string[] = ['stage', 'operatorName', 'type'];
     if (!notNullObj(conditions, notNullKeys)) {
-        return { chartData: wrapChartData([]), analysisChartData: { minTime: 0, maxTime: 0, data: [] }, tableData: [], adviceData: [] };
+        return { chartData: [], analysisChartData: { minTime: 0, maxTime: 0, data: [] }, tableData: [], adviceData: [] };
     }
-    const communicationOperatorData = await queryCommunicationOperatorLists(conditions);
+    const communicationOperatorData = await queryCommunicationOperatorLists({ ...conditions });
     const res = await queryCommunication(conditions);
     const { advice = [], items: data = [] } = res ?? {};
-    const dataAfterDeal: [] = data.map((item: any, index: number) => {
-        item.index = index;
-        return { index, rankId: item.rankId, ...item.compareData.compare };
-    });
-    dataAfterDeal.sort((a: DataType, b: DataType) => b.elapseTime - a.elapseTime);
-    return { chartData: wrapChartData(dataAfterDeal), analysisChartData: communicationOperatorData, tableData: dataAfterDeal, adviceData: advice };
-};
-
-const wrapChartData = (data: tableDataType[]): chartDataType => {
-    // 显示字段
-    const fields = ['rankId', 'startTime', 'elapseTime', 'transitTime', 'synchronizationTime',
-        'waitTime', 'synchronizationTimeRatio', 'waitTimeRatio'];
-    const chartData: chartDataType = {} as chartDataType;
-    fields.forEach(field => {
-        chartData[field] = data.map((item: any) => item[field]);
-    });
-    return chartData;
+    // 默认按总时间降序排序
+    data.sort((a: DataItem, b: DataItem) => conditions.isCompare
+        ? b.compareData.diff.elapseTime - a.compareData.diff.elapseTime
+        : b.compareData.compare.elapseTime - a.compareData.compare.elapseTime);
+    return { analysisChartData: communicationOperatorData, tableData: data, chartData: data, adviceData: advice };
 };
 
 const CommunicationAnalysis = observer(({ session, active = true }: { session: Session;active?: boolean }) => {
     const [rankId, setRankId] = useState('');
     const [showData, setShowData] = useState<showDataType>({
-        chartData: {} as chartDataType,
+        chartData: [],
         analysisChartData: {} as AnalysisChartData,
         tableData: [],
         adviceData: [],
@@ -130,27 +60,17 @@ const CommunicationAnalysis = observer(({ session, active = true }: { session: S
         if (newConditions.type !== AnalysisType.COMMUNICATION_DURATION_ANALYSIS) {
             return;
         }
-        const res = await searchData(newConditions);
+        const res = await searchData({ ...newConditions, isCompare: session.isCompare });
         setShowData(res);
     };
 
-    const isShow = (name: string): boolean => {
-        return conditions.type === name;
-    };
-
-    useEffect(() => {
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.setAttribute('maxlength', '200');
-        });
-    });
     useEffect(() => {
         if (session.durationFileCompleted) {
             search();
         }
         async function search(): Promise<void> {
             if (showData.tableData.length === 0 && conditions.type === AnalysisType.COMMUNICATION_DURATION_ANALYSIS) {
-                const res = await searchData(conditions);
+                const res = await searchData({ ...conditions, isCompare: session.isCompare });
                 setShowData(res);
             }
         }
@@ -160,65 +80,14 @@ const CommunicationAnalysis = observer(({ session, active = true }: { session: S
         session={session}
         handleFilterChange={handleFilterChange} showData={showData}
         active={active} showOperator={showOperator} setShowData={setShowData} conditions={conditions}
-        isShow={isShow} rankId={rankId} returnHome={returnHome}
+        rankId={rankId} returnHome={returnHome}
     />;
 });
 
-const AdviceLabel = (props: {adviceData: CommunicationAdvice[]}): JSX.Element => {
-    const { t } = useTranslation('communication');
-    const { adviceData } = props;
-    let overAllText = '';
-    const issueList: Array<{title: string; content: string }> = [];
-    const sdmaData = adviceData.find(item => item.type === 'SDMA');
-    const rdmaData = adviceData.find(item => item.type === 'RDMA');
-    adviceData.forEach(data => {
-        overAllText += t('OverallDuration', { type: data.type, time: data.time });
-        // 比较经验带宽（最大带宽的0.8）与平均带宽
-        const isBandwidthIssue = data.avg >= data.max * 0.8;
-        issueList.push({
-            title: data.type,
-            content: t('CommunicationAdvice', { ...data, issue: isBandwidthIssue ? t('BandwidthIssue') : t('CommunicationIssue') }),
-        });
-    });
-    if (sdmaData && rdmaData) {
-        overAllText += t('MoreFocus', { type: sdmaData.time >= rdmaData.time ? sdmaData.type : rdmaData.type });
-    }
-    return (
-        <div style={{ marginBottom: '20px' }} data-testid={'communicationAdvice'}>
-            <CollapsiblePanel title={<div>
-                {t('Advice')}
-                <Tooltip title={
-                    (
-                        <div style={{ padding: '1rem' }}>
-                            {t('AdviceTip')}
-                        </div>
-                    )
-                }>
-                    <HelpIcon style={{ cursor: 'pointer', marginLeft: '3px' }} height={20} width={20}/>
-                </Tooltip>
-            </div>}>
-                <div className="communication-advice-header">{t('Overall')}</div>
-                <div className="communication-advice-content">{overAllText}</div>
-                {
-                    issueList.map(item => {
-                        return (
-                            <>
-                                <div className="communication-advice-header">{item.title}</div>
-                                <div className="communication-advice-content">{item.content}</div>
-                            </>
-                        );
-                    })
-                }
-            </CollapsiblePanel>
-        </div>
-    );
-};
-
-const CommunicationAnalysisCom = (props: {[propName: string]: any;
-    isShow: (name: string) => boolean;session: Session;}): JSX.Element => {
+const CommunicationAnalysisCom = (props: {[propName: string]: any}): JSX.Element => {
     const {
         session, handleFilterChange, showData, active, showOperator,
-        setShowData, conditions, isShow, rankId, returnHome,
+        setShowData, conditions, rankId, returnHome,
     } = props;
     const { t } = useTranslation('communication');
     return (
@@ -226,19 +95,19 @@ const CommunicationAnalysisCom = (props: {[propName: string]: any;
             {/* 筛选条件 */}
             <Filter handleFilterChange={handleFilterChange} session={session} />
             {/* 通信用时分析 */}
-            <div className={'communication'} style={{ display: isShow(AnalysisType.COMMUNICATION_DURATION_ANALYSIS) ? 'block' : 'none' }}>
+            <div className={'communication'} style={{ display: conditions.type === AnalysisType.COMMUNICATION_DURATION_ANALYSIS ? 'block' : 'none' }}>
                 <div>
                     <CommunicationTimeAnalysisChart dataSource={showData.analysisChartData} session={session}/>
                     <CommunicationTimeChart dataSource={showData.chartData} session={session}/>
                     <CommunicationTimeTable showOperator={showOperator} dataSource={showData.tableData} session={session}
                         conditions={conditions} updateSort={(data): void => {
-                            setShowData({ ...showData, chartData: wrapChartData(data) });
+                            setShowData({ ...showData, chartData: data });
                         }}/>
                     { showData.adviceData.length > 0 && <AdviceLabel adviceData={showData.adviceData} /> }
                 </div>
             </div>
             {/* 通信矩阵 */}
-            <CommunicationMatrix isShow={isShow('CommunicationMatrix') && active} conditions={conditions} session={session}/>
+            <CommunicationMatrix isShow={conditions.type === AnalysisType.COMMUNICATION_MATRIX && active} conditions={conditions} session={session}/>
             {/* 带宽分析 */}
             { rankId !== '' && <Operators iterationId={conditions.iterationId} rankId={rankId}
                 session={session} returnHome={returnHome}
