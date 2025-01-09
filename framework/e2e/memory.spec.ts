@@ -122,6 +122,7 @@ test.describe('Memory(Pytorch_SingleMachineMultiRankData)', () => {
     test('memory_compare_rank', async ({ page, memoryPage }) => {
         const { memoryFrame } = memoryPage;
         await setCompare(page, memoryFrame);
+        await memoryFrame.getByText('Difference').first().waitFor({ state: 'visible' });
         await expect(memoryFrame.locator('.mi-page')).toHaveScreenshot(memoryImgMap.compareRankRes, {
             maxDiffPixels: 500,
         });
