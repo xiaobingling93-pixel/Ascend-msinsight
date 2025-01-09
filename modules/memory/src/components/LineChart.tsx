@@ -9,8 +9,11 @@ import { binarySearch, useResizeEventDependency } from '../utils/memoryUtils';
 import * as echarts from 'echarts';
 import { convertTime, useChartCharacter } from './Common';
 import styled from '@emotion/styled';
-import { chartColors, getDefaultChartOptions, safeStr } from 'ascend-utils';
+import { chartColors, getDefaultChartOptions, getLegendStyle, safeStr } from 'ascend-utils';
+import { type Theme, useTheme } from '@emotion/react';
 
+// 最大不分页的折线图图例数量，超过该数量图例分页展示
+const MAX_PLAIN_LEGENDS_COUNT = 9;
 const ChartDesc = styled.div`
     color: ${(props): string => props.theme.textColor};
     margin-bottom: 24px;
@@ -45,8 +48,9 @@ const _getLegendData = (data: string[]): string[] => {
     return tempData;
 };
 
-const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolean, isStatic: boolean, graph: Graph): echarts.EChartsOption => {
-    const legendDatas = _getLegendData(graph.columns);
+const _getOriginOption = (props: IProps, theme: Theme): echarts.EChartsOption => {
+    const { isStatic, isDark, hAxisTitle, vAxisTitle } = props;
+    const legendDatas = _getLegendData(props.graph.columns);
     return {
         textStyle: getDefaultChartOptions().textStyle,
         title: { text: '' },
@@ -69,7 +73,12 @@ const _getOriginOption = (hAxisTitle: string, vAxisTitle: string, isDark: boolea
             },
             ...getDefaultChartOptions(isDark).tooltip,
         },
-        legend: { itemGap: 20, data: legendDatas },
+        legend: {
+            itemGap: 20,
+            data: legendDatas,
+            type: legendDatas.length > MAX_PLAIN_LEGENDS_COUNT ? 'scroll' : 'plain',
+            ...getLegendStyle(theme),
+        },
         grid: { left: '100', right: '100', bottom: 40 },
         xAxis: { type: 'category', boundaryGap: false, name: hAxisTitle },
         yAxis: { type: 'value', name: vAxisTitle, scale: true },
@@ -124,10 +133,10 @@ const _handleOption = (option: echarts.EChartsOption, graph: Graph): echarts.ECh
 };
 
 const _showGraph = (myChart: echarts.ECharts, selectedPoints: React.MutableRefObject<number[]>,
-    props: IProps, isDark: boolean, isStatic: boolean): void => {
-    const { graph, hAxisTitle, vAxisTitle, onSelectionChanged } = props;
+    props: IProps, theme: Theme): void => {
+    const { graph, onSelectionChanged } = props;
 
-    let option = _getOriginOption(hAxisTitle, vAxisTitle, isDark, isStatic, graph);
+    let option = _getOriginOption(props, theme);
     option = _handleOption(option, graph);
 
     // 数据量大时，切换主题时setOption会阻塞整体界面主题切换，使用 requestAnimationFrame 优化
@@ -233,7 +242,7 @@ const useTitle = (title: string): string => {
     return translatedMessage;
 };
 export const LineChart: React.FC<IProps> = (props) => {
-    const { graph, record, isDark, isStatic, onSelectionChanged } = props;
+    const { graph, record, isDark, onSelectionChanged } = props;
     const graphRef = React.useRef<HTMLDivElement>(null);
     const [resizeEventDependency] = useResizeEventDependency();
     const [chartObj, setChartObj] = React.useState<echarts.ECharts | undefined>();
@@ -242,6 +251,7 @@ export const LineChart: React.FC<IProps> = (props) => {
     const title = useTitle(graph.title ?? '');
     const { t, i18n } = useTranslation('memory');
     const locale = i18n.language?.slice(0, 2);
+    const theme = useTheme();
 
     React.useLayoutEffect(() => {
         const element = graphRef.current;
@@ -252,7 +262,7 @@ export const LineChart: React.FC<IProps> = (props) => {
 
         const myChart = echarts.init(element, isDark ? 'dark' : 'customed', { locale });
         onSelectionChanged?.(0, -1);
-        _showGraph(myChart, selectedPoints, props, isDark, isStatic);
+        _showGraph(myChart, selectedPoints, props, theme);
 
         setChartObj(myChart);
         return () => {
