@@ -17,21 +17,23 @@ import { CompareData, FormatterParams } from '../../utils/interface';
 export interface DataItem {
     index: number;
     rankId: string;
-    compareData: CompareData<Record>;
+    compareData: CompareData<Duration>;
 }
 
-export interface Record {
-    [prop: string]: number;
+export interface Duration {
     elapseTime: number;
     transitTime: number;
     synchronizationTime: number;
     waitTime: number;
     synchronizationTimeRatio: number;
     waitTimeRatio: number;
+    startTime: number;
+    idleTime: number;
+    sdmaBw: number;
+    rdmaBw: number;
 }
 
 export interface ChartData {
-    [name: string]: any;
     rankId: string[];
     elapseTime?: number[];
     transitTime?: number[];
@@ -74,10 +76,11 @@ function getSeries({ data }: {data: ChartData}): any {
     return baseOption.series.map((serie: any) => ({
         ...serie,
         name: i18n.t(`tableHead.${serie.name}`, { ns: 'communication' }),
-        data: data[serie.id],
+        data: data[serie.id as keyof ChartData],
     }));
 }
 
+// isCompare：是否对比状态
 function getTooltip(isCompare: boolean): TooltipComponentOption {
     return {
         ...commonEchartsOptions.tooltip,
@@ -97,7 +100,7 @@ function getTooltipFormatter(params: FormatterParams[], isCompare: boolean): str
         html += `
 <div>
     <span>${marker}${safeStr(seriesName)}</span>
-    <span class="tooltip-value ${valueClass}">${safeStr(value)} ${seriesType === 'line' ? '' : 'μs'}</span>
+    <span class="tooltip-value ${valueClass}">${safeStr(value)} ${seriesType === 'line' ? '' : 'ms'}</span>
 </div>`;
     });
     return html;
@@ -240,15 +243,12 @@ const baseOption: any = {
 };
 
 const wrapChartData = (data: DataItem[], isCompare: boolean): ChartData => {
-    const fields = ['rankId', 'startTime', 'elapseTime', 'transitTime', 'synchronizationTime',
-        'waitTime', 'synchronizationTimeRatio', 'waitTimeRatio'];
     const chartData: ChartData = {} as ChartData;
+    chartData.rankId = data.map((item: DataItem) => item.rankId);
+    const fields: Array<keyof Duration & keyof ChartData> = ['elapseTime', 'transitTime', 'synchronizationTime',
+        'waitTime', 'synchronizationTimeRatio', 'waitTimeRatio'];
     fields.forEach(field => {
-        if (field === 'rankId') {
-            chartData[field] = data.map((item: DataItem) => item[field]);
-        } else {
-            chartData[field] = data.map((item: DataItem) => isCompare ? item.compareData.diff[field] : item.compareData.compare[field]);
-        }
+        chartData[field] = data.map((item: DataItem) => isCompare ? item.compareData.diff[field] : item.compareData.compare[field]);
     });
     return chartData;
 };

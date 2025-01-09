@@ -20,16 +20,16 @@ import CollapsiblePanel from 'ascend-collapsible-panel';
 import { CaretDownIcon, CaretRightIcon } from 'ascend-icon';
 import { CompareNumber } from 'ascend-utils';
 import i18n from 'ascend-i18n';
-import type { DataItem, Record } from './CommunicationTimeChart';
+import type { DataItem, Duration } from './CommunicationTimeChart';
 
-export type DataType = Record & {
-    [prop: string]: any;
+export type DataType = Duration & {
+    rankId: string;
     expanded: boolean;
     source: Source;
+    index: number;
 };
 
 type TableDataItem = DataItem & {
-    [prop: string]: any;
     expanded: boolean;
     source: Source;
 };
@@ -140,25 +140,30 @@ const ExpandIcon = ({ expanded, onClick }: {expanded: boolean;onClick: VoidFunct
 };
 const commonColumnConfig = {
     ellipsis: true,
-    width: 70,
+    width: 110,
+    minWidth: 100,
 };
-const useRankColumns = (handleAction: VoidFunction[], conditions: any, t: TFunction, tableLevel: TableLevel): any => {
+const useRankColumns = (handleAction: VoidFunction[], conditions: ConditionDataType, t: TFunction, tableLevel: TableLevel): any => {
     const [showOperator, handleExpand] = handleAction;
     return [
         {
             title: t('tableHead.Rank ID'),
-            ...commonColumnConfig,
+            ellipsis: true,
+            width: 70,
             dataIndex: 'rankId',
             key: 'rankId',
             sorter: (a: DataType, b: DataType) => Number(a.rankId) - Number(b.rankId),
-            render: (_: any, record: DataType): React.ReactNode =>
-                (<div><ExpandIcon expanded={record.expanded} onClick={(): void => { handleExpand(record); }}/>{record.rankId} </div>),
+            render: (_: any, record: DataType): React.ReactNode => (<div>
+                {conditions.operatorName === totalOperator && <ExpandIcon expanded={record.expanded} onClick={(): void => { handleExpand(record); }}/>}
+                {record.rankId}</div>),
             display: tableLevel !== TableLevel.DIFF_SOURCE,
         },
         {
             title: t('tableHead.Source'),
             ...commonColumnConfig,
-            render: (data: DataType): React.ReactNode => i18n.t(data.source),
+            render: (data: DataType): React.ReactNode => (<div>
+                {tableLevel === TableLevel.DIFF_SOURCE && <ExpandIcon expanded={data.expanded} onClick={(): void => { handleExpand(data); }}/>}
+                {i18n.t(data.source)} </div>),
             display: [TableLevel.DIFF, TableLevel.DIFF_SOURCE].includes(tableLevel),
         },
         ...useCommonColumns().map(commonCol => ({
@@ -167,25 +172,19 @@ const useRankColumns = (handleAction: VoidFunction[], conditions: any, t: TFunct
         })),
         {
             title: t('tableHead.Bandwidth Analysis'),
-            ellipsis: true,
-            width: 110,
-            minWidth: 100,
+            ...commonColumnConfig,
             render: (_: any, record: DataType) => (<Button type="link" onClick={(): void => { showOperator(record.rankId); }}>{t('tableHead.see more')}</Button>),
             display: tableLevel === TableLevel.RANK,
         },
         {
             title: t('tableHead.Communication Operators Details'),
-            ellipsis: true,
-            width: 110,
-            minWidth: 110,
+            ...commonColumnConfig,
             render: (_: any, record: DataType) => (<Button type="link" onClick={(): void => { handleExpand(record); }}>{t('tableHead.see more')}<DownOutlined/></Button>),
             display: conditions.operatorName === totalOperator && tableLevel === TableLevel.RANK,
         },
         {
             title: t('tableHead.Details'),
-            ellipsis: true,
-            width: 110,
-            minWidth: 110,
+            ...commonColumnConfig,
             render: (_: any, record: DataType) => (<Button type="link" onClick={(): void => { handleExpand(record); }}>{t('tableHead.see more')}<DownOutlined/></Button>),
             display: [TableLevel.DIFF, TableLevel.DIFF_SOURCE].includes(tableLevel),
         },
@@ -254,13 +253,13 @@ const CommunicationTimeTable = observer(({ dataSource, showOperator, conditions,
                 ...record,
                 index,
                 source: tableLevel === TableLevel.DIFF ? Source.DIFFERENCE : Source.COMPARISON,
-                expanded: expandedRowKeys.includes(record[rowKey]),
+                expanded: expandedRowKeys.includes(index),
             });
         });
     }, [dataSource, expandedRowKeys, session.isCompare, tableLevel]);
 
     const columns = useMemo(() => useRankColumns([showOperator, handleExpand], conditions, t, tableLevel),
-        [handleExpand, tableLevel, conditions, t, expandedRowKeys.length]);
+        [handleExpand, tableLevel, conditions, t]);
 
     const nextLevelTable = (record: TableDataItem): JSX.Element => (<div style={{ marginLeft: '0' }}>{
         tableLevel === TableLevel.DIFF
