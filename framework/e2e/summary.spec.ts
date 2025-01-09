@@ -60,11 +60,11 @@ test.describe('Summary', () => {
     // 切换不同维度视图
     test('test_dimensionViews_when_changeDimensionTab', async ({ page, summaryPage }) => {
         const { summaryFrame, parallelismGraph, parallelismGraphLoading } = summaryPage;
-        const dimensionTabs = ['DP Dimension', 'CP Dimension', 'PP Dimension', 'TP Dimension'];
+        const dimensionTabs = ['DP Dimension >', 'DP + PP Dimension >', 'DP + PP + CP Dimension >', 'DP + PP + CP + TP Dimension'];
 
         for (let tab of dimensionTabs) {
             await summaryFrame.getByRole('tab', { name: tab }).click();
-            if (tab !== 'DP Dimension') {
+            if (tab !== 'DP Dimension >') {
                 await parallelismGraphLoading.waitFor({ state: 'hidden' });
             }
 
