@@ -1,0 +1,44 @@
+{
+    "config": {
+        "common_config": {
+            "activities": [
+                "ProfilerActivity.CPU",
+                "ProfilerActivity.NPU"
+            ],
+            "schedule": {
+                "wait": 0,
+                "active": 1,
+                "warmup": 10,
+                "repeat": 1,
+                "skip_first": 40
+            },
+            "record_shapes": true,
+            "profile_memory": true,
+            "with_stack": true,
+            "with_flops": false,
+            "with_modules": true
+        },
+        "experimental_config": {
+            "_profiler_level": "Level2",
+            "_aic_metrics": "ACL_AICORE_PIPE_UTILIZATION",
+            "_l2_cache": true,
+            "_msprof_tx": false,
+            "_data_simplification": true,
+            "record_op_args": false,
+            "_export_type": "db",
+            "_op_attr": false,
+            "_gc_detect_threshold": null
+        }
+    },
+    "start_info": {
+        "syscnt_enable": true,
+        "freq": 100,
+        "start_cnt": 17761792230042,
+        "start_monotonic": 177399527848890
+    },
+    "end_info": {
+        "collectionTimeEnd": 1736414119968337190,
+        "MonotonicTimeEnd": 177400209917090
+    },
+    "rank_id": 0
+}

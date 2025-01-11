@@ -14,14 +14,14 @@
             },
             "record_shapes": true,
             "profile_memory": true,
-            "with_stack": false,
+            "with_stack": true,
             "with_flops": false,
             "with_modules": true
         },
         "experimental_config": {
             "_profiler_level": "Level1",
             "_aic_metrics": "ACL_AICORE_PIPE_UTILIZATION",
-            "_l2_cache": false,
+            "_l2_cache": true,
             "_msprof_tx": false,
             "_data_simplification": true,
             "record_op_args": false,
@@ -32,13 +32,13 @@
     },
     "start_info": {
         "syscnt_enable": true,
-        "freq": 2299,
-        "start_cnt": 10873990841318072,
-        "start_monotonic": 961242821610199
+        "freq": 100,
+        "start_cnt": 17238197612056,
+        "start_monotonic": 172163581670080
     },
     "end_info": {
-        "collectionTimeEnd": 1727593955312405861,
-        "MonotonicTimeEnd": 961243802901869
+        "collectionTimeEnd": 1736408884023552840,
+        "MonotonicTimeEnd": 172164265133640
     },
     "rank_id": 0
 }
