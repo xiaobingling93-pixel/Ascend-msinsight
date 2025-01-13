@@ -9,6 +9,7 @@
 #include <cfloat>
 #include "GlobalDefs.h"
 #include "ProtocolDefs.h"
+#include "NumberUtil.h"
 #include "ProtocolMessage.h"
 
 namespace Dic {
@@ -184,9 +185,19 @@ struct OperatorListsResponse : public Response {
 struct MatrixData {
     std::string transportType;
     std::string opName;
-    double transitSize;
-    double transitTime;
-    double bandwidth;
+    double transitSize = 0;
+    double transitTime = 0;
+    double bandwidth = 0;
+    MatrixData operator-(const MatrixData &matrixData) const
+    {
+        MatrixData res;
+        // 精度
+        int precision = 4;
+        res.transitSize = NumberUtil::DoubleReservedNDigits(this->transitSize - matrixData.transitSize, precision);
+        res.transitTime = NumberUtil::DoubleReservedNDigits(this->transitTime - matrixData.transitTime, precision);
+        res.bandwidth = NumberUtil::DoubleReservedNDigits(this->bandwidth - matrixData.bandwidth, precision);
+        return res;
+    }
 };
 
 struct MatrixList {

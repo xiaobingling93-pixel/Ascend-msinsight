@@ -108,6 +108,12 @@ void ParserDb::ClusterProcess(const std::string &selectedFolder, bool isCluster,
     SaveDbPath(projectName, dataPathToDbMap);
     // send event
     ParserAlloc::ParseClusterEndProcess(parseClusterResult, isCluster);
+    // 全量db也必须发step2完成事件，否则通信耗时分析会卡住
+    auto event = std::make_unique<ParseClusterStep2CompletedEvent>();
+    event->moduleName = MODULE_TIMELINE;
+    event->result = true;
+    event->body.parseResult = std::move(parseClusterResult);
+    SendEvent(std::move(event));
 }
 
 std::map<std::string, HostInfo> ParserDb::GetReportFiles(const std::vector<std::string> &reportFiles)

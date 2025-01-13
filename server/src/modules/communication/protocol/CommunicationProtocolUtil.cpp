@@ -301,6 +301,8 @@ template <> std::optional<document_t> ToResponseJson<MatrixListResponse>(const M
         JsonUtil::AddMember(compareMatrixData, "compare", compare, allocator);
         auto baseline = MatrixDataToJson(matrix.matrixData.baseline, allocator);
         JsonUtil::AddMember(compareMatrixData, "baseline", baseline, allocator);
+        auto diff = MatrixDataToJson(matrix.matrixData.diff, allocator);
+        JsonUtil::AddMember(compareMatrixData, "diff", diff, allocator);
         JsonUtil::AddMember(itemJson, "matrixData", compareMatrixData, allocator);
         matrixList.PushBack(itemJson, allocator);
     }

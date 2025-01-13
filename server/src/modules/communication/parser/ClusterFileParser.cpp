@@ -481,17 +481,20 @@ bool ClusterFileParser::ParserClusterOfDb()
     }
     // cluster analysis
     if (!AttAnalyze(tempPath, ATT_MODEL_DEFAULT, AttDataType::DB)) {
+        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         return false;
     }
 
     std::vector<std::string> clusterPath = FileUtil::FindFilesWithFilter(tempPath, std::regex(clusterDBReg));
     if (clusterPath.empty()) {
+        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         return false;
     }
     std::shared_ptr<FullDb::DbClusterDataBase> clusterDatabase =
             std::dynamic_pointer_cast<FullDb::DbClusterDataBase>(database);
     if (clusterDatabase == nullptr) {
         ServerLog::Error("Failed to get Cluster connection.");
+        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         return false;
     }
 
@@ -499,6 +502,7 @@ bool ClusterFileParser::ParserClusterOfDb()
     clusterDbPath = clusterPath[0];
     if (!clusterDatabase->OpenDb(clusterPath[0], false)) {
         ServerLog::Error("Failed to open Cluster. File path:", clusterDbPath);
+        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         return false;
     }
     if (!clusterDatabase->IsDatabaseVersionChange() && clusterDatabase->HasFinishedParseLastTime()) {
@@ -508,6 +512,7 @@ bool ClusterFileParser::ParserClusterOfDb()
 
     if (!clusterDatabase->DropTable() or !clusterDatabase->CreateTable() or !clusterDatabase->SetDataBaseVersion() or
         !clusterDatabase->UpdatesClusterParseStatus(NOT_FINISH_STATUS)) {
+        ParserStatusManager::Instance().SetClusterParseStatus(uniqueKey, ParserStatus::FINISH);
         return false;
     }
 

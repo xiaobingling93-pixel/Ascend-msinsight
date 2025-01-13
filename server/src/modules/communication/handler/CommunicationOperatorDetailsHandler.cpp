@@ -32,7 +32,7 @@ bool CommunicationOperatorDetailsHandler::HandleRequest(std::unique_ptr<Protocol
     // add response to response queue in session
     WsSession &session = *WsSessionManager::Instance().GetSession();
     // query data
-    std::string type = request.params.queryType == BASELINE ? BASELINE : COMPARE;
+    std::string type = request.params.queryType == "Comparison" ? COMPARE : BASELINE;
     auto database = Timeline::DataBaseManager::Instance().GetClusterDatabase(type);
     if (database == nullptr || !database->QueryOperatorsCount(request.params, response.body) ||
         !database->QueryAllOperators(request.params, response.body)) {

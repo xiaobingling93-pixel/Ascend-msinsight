@@ -112,6 +112,7 @@ void ClusterService::MergeMatrixInfo(Protocol::MatrixListResponseBody &body, con
         if (baselineMap.count(key) != 0) {
             matrix.matrixData.baseline = ClusterCovert::CovertMatrixDoToInfo(baselineMap[key]);
         }
+        matrix.matrixData.diff = matrix.matrixData.compare - matrix.matrixData.baseline;
 
         body.matrixList.push_back(matrix);
     }
