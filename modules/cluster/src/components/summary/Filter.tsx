@@ -36,12 +36,24 @@ const allOptionItem = {
     label: 'All',
 };
 
-const getRankGroupOptions = (session: Session): optionDataType[] => {
-    const options = session.communicationDomains.map((domain) => ({
+const getRankGroupOptions = (session: Session, isPipeline: boolean): optionDataType[] => {
+    let optionsData: string[] = [];
+
+    if (isPipeline) {
+        optionsData = session.ppCommunicationDomains;
+    } else {
+        optionsData = session.communicationDomains;
+    }
+
+    const options = optionsData.map((domain) => ({
         value: domain,
         label: `(${domain})`,
     }));
-    options.unshift(allOptionItem);
+
+    if (!isPipeline) {
+        options.unshift(allOptionItem);
+    }
+
     return options;
 };
 
@@ -71,8 +83,8 @@ export const Filter = observer(({ session, conditions, isPipeline, onFilterChang
     stepOptions.unshift(allOptionItem);
 
     const groupOptions = useMemo(() => {
-        return getRankGroupOptions(session);
-    }, [session.communicationDomains]);
+        return getRankGroupOptions(session, isPipeline);
+    }, [session.communicationDomains, isPipeline]);
     const topOptions = getTopOptions(session.arrangementRankCount);
 
     return (<div style={{ marginBottom: 24 }}>

@@ -249,10 +249,12 @@ export const ParallelismGraph = observer(({ session, generateConditions }: Paral
             // 更新所有通信域数据、指标数据
             runInAction(() => {
                 const connections = data.connections.map(item => item.list.toString());
+                const ppConnections = data.connections.filter(item => item.type === 'pp').map(item => item.list.toString());
                 const frames = groupFrames(data.arrangements, ['dp', 'ep', 'cp'])
                     .map(frameGroup => frameGroup.list.map(item => item.index).toString());
 
                 session.communicationDomains = [...new Set([...connections, ...frames])];
+                session.ppCommunicationDomains = ppConnections;
                 session.indicatorList = data?.indicators.map(indicator => {
                     const unit = indicator.yAxisType === 'time' ? 'us' : '%';
                     return {
