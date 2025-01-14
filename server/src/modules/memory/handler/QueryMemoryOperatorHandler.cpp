@@ -80,8 +80,8 @@ bool QueryMemoryOperatorHandler::GetRespectiveData(std::shared_ptr<VirtualMemory
     return true;
 }
 
-void QueryMemoryOperatorHandler::ExecuteComparisonAlgorithm(std::vector<MemoryOperator> &compareData,
-    std::vector<MemoryOperator> &baselineData, Dic::Protocol::MemoryOperatorRequest &request,
+void QueryMemoryOperatorHandler::ExecuteComparisonAlgorithm(const std::vector<MemoryOperator> &compareData,
+    const std::vector<MemoryOperator> &baselineData, Dic::Protocol::MemoryOperatorRequest &request,
     MemoryOperatorComparisonResponse &response)
 {
     std::vector<MemoryOperatorComparison> fullDiffResult;

@@ -37,51 +37,55 @@ bool QueryMemoryComponentHandler::HandleRequest(std::unique_ptr<Protocol::Reques
             response.componentDiffDetails.emplace_back(element);
         }
     } else {
-        std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
-        if (baselineId == "") {
-            SendResponse(std::move(responsePtr), false,
-                "Failed to get baseline id when connecting to baseline database.");
-            return false;
-        }
-        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
-        if (!databaseBaseline) {
-            SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
-            return false;
-        }
-        if (!CompareComponent(database, databaseBaseline, request, *responsePtr.get(), errorMsg)) {
+        std::vector<MemoryComponent> compareData;
+        std::vector<MemoryComponent> baselineData;
+        if (!GetRespectiveData(database, compareData, baselineData, request, errorMsg)) {
             SendResponse(std::move(responsePtr), false, errorMsg);
             return false;
         }
+        ExecuteComparisonAlgorithm(compareData, baselineData, request, response);
     }
     SendResponse(std::move(responsePtr), true);
     return true;
 }
 
-bool QueryMemoryComponentHandler::CompareComponent(std::shared_ptr<VirtualMemoryDataBase> database,
-    std::shared_ptr<VirtualMemoryDataBase> databaseBaseline,
-    Protocol::MemoryComponentRequest &request, MemoryComponentComparisonResponse &response, std::string &errorMsg)
+bool QueryMemoryComponentHandler::GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
+                                                    std::vector<MemoryComponent> &compareData,
+                                                    std::vector<MemoryComponent> &baselineData,
+                                                    Dic::Protocol::MemoryComponentRequest &request,
+                                                    std::string &errorMsg)
 {
-    std::vector<Protocol::MemoryComponent> componentCompare;
+    std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+    if (baselineId == "") {
+        errorMsg = "Failed to get baseline id.";
+        return false;
+    }
+    auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
+    if (!databaseBaseline) {
+        errorMsg = "Failed to connect to database of baseline.";
+        return false;
+    }
     uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
-    if (!database->QueryEntireComponentTable(componentCompare, offsetTimeCompare)) {
+    if (!database->QueryEntireComponentTable(compareData, offsetTimeCompare)) {
         errorMsg = "Failed to query memory component compare data.";
         return false;
     }
-    std::vector<Protocol::MemoryComponent> componentBaseline;
-    std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
-    if (baselineId == "") {
-        errorMsg = "Failed to get baseline id when getting offset.";
-        return false;
-    }
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
-    if (!databaseBaseline->QueryEntireComponentTable(componentBaseline, offsetTimeBaseline)) {
+    if (!databaseBaseline->QueryEntireComponentTable(baselineData, offsetTimeBaseline)) {
         errorMsg = "Failed to query memory component baseline data.";
         return false;
     }
-    std::vector<MemoryComponentComparison> diffData;
-    GetComponentDiff(componentCompare, componentBaseline, diffData);
-    SelectResult(request, response, diffData);
     return true;
+}
+
+void QueryMemoryComponentHandler::ExecuteComparisonAlgorithm(const std::vector<MemoryComponent> &compareData,
+                                                             const std::vector<MemoryComponent> &baselineData,
+                                                             Dic::Protocol::MemoryComponentRequest &request,
+                                                             Dic::Protocol::MemoryComponentComparisonResponse &response)
+{
+    std::vector<MemoryComponentComparison> diffData;
+    GetComponentDiff(compareData, baselineData, diffData);
+    SelectResult(request, response, diffData);
 }
 
 void QueryMemoryComponentHandler::GetComponentDiff(const std::vector<MemoryComponent> &compareData,

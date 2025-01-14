@@ -20,17 +20,18 @@ public:
     };
     ~QueryMemoryStaticOperatorGraphHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
+                           StaticOperatorGraphItem &compareData, StaticOperatorGraphItem &baselineData,
+                           MemoryStaticOperatorGraphRequest &request, std::string &errorMsg);
+    void ExecuteComparisonAlgorithm(const StaticOperatorGraphItem &compareData,
+                                    const StaticOperatorGraphItem &baselineData,
+                                    MemoryStaticOperatorGraphResponse &response);
     void GetCompareGraphLines(const Protocol::StaticOperatorGraphItem &compareData,
                          const Protocol::StaticOperatorGraphItem &baselineData,
                          Protocol::StaticOperatorGraphItem &resultData);
     void GetCompareGraphLegends(const Protocol::StaticOperatorGraphItem &compareData,
                                 const Protocol::StaticOperatorGraphItem &baselineData,
                                 Protocol::StaticOperatorGraphItem &resultData);
-private:
-    bool GetCompareGraph(std::shared_ptr<VirtualMemoryDataBase> database,
-                         std::shared_ptr<VirtualMemoryDataBase> databaseBaseline,
-                         MemoryStaticOperatorGraphRequest &request,
-                         MemoryStaticOperatorGraphResponse &response, std::string &errorMsg);
 };
 } // end of namespace Memory
 } // end of namespace Module

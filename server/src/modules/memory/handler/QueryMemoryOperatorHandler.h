@@ -22,7 +22,8 @@ public:
     static bool GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
         std::vector<MemoryOperator> &compareData, std::vector<MemoryOperator> &baselineData,
         MemoryOperatorRequest &request, std::string &errorMsg);
-    void ExecuteComparisonAlgorithm(std::vector<MemoryOperator> &compareData, std::vector<MemoryOperator> &baselineData,
+    void ExecuteComparisonAlgorithm(const std::vector<MemoryOperator> &compareData,
+                                    const std::vector<MemoryOperator> &baselineData,
                                     MemoryOperatorRequest &request,
                                     MemoryOperatorComparisonResponse &response);
     void GetOperatorDiff(const std::vector<MemoryOperator> &compareData,

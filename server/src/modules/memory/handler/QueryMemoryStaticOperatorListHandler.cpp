@@ -75,9 +75,9 @@ bool QueryMemoryStaticOperatorListHandler::GetRespectiveData(std::shared_ptr<Vir
     return true;
 }
 
-void QueryMemoryStaticOperatorListHandler::ExecuteComparisonAlgorithm(std::vector<StaticOperatorItem> &compareData,
-    std::vector<StaticOperatorItem> &baselineData, Dic::Protocol::MemoryStaticOperatorListRequest &request,
-    MemoryStaticOperatorListCompResponse &response)
+void QueryMemoryStaticOperatorListHandler::ExecuteComparisonAlgorithm(
+    const std::vector<StaticOperatorItem> &compareData, const std::vector<StaticOperatorItem> &baselineData,
+    Dic::Protocol::MemoryStaticOperatorListRequest &request, MemoryStaticOperatorListCompResponse &response)
 {
     std::vector<StaticOperatorCompItem> fullDiffResult;
     GetOperatorDiff(compareData, baselineData, fullDiffResult);

@@ -19,16 +19,17 @@ public:
     };
     ~QueryMemoryViewHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
+                           MemoryViewData &compareData, MemoryViewData &baselineData,
+                           MemoryViewRequest &request, std::string &errorMsg);
+    void ExecuteComparisonAlgorithm(const MemoryViewData &compareData, const MemoryViewData &baselineData,
+                                    MemoryViewResponse &response);
     void GetCompareGraphLines(const Protocol::MemoryViewData &compareData,
                               const Protocol::MemoryViewData &baselineData,
                               Protocol::MemoryViewData &resultData);
     void GetCompareGraphLegends(const Protocol::MemoryViewData &compareData,
                                 const Protocol::MemoryViewData &baselineData,
                                 Protocol::MemoryViewData &resultData);
-private:
-    bool GetCompareGraph(std::shared_ptr<VirtualMemoryDataBase> database,
-                         std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryViewRequest &request,
-                         MemoryViewResponse &response, std::string &errorMsg);
 };
 } // end of namespace Memory
 } // end of namespace Module

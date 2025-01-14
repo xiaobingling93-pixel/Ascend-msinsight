@@ -21,6 +21,12 @@ public:
     }
     ~QueryMemoryComponentHandler() override = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
+    bool GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
+        std::vector<MemoryComponent> &compareData, std::vector<MemoryComponent> &baselineData,
+        MemoryComponentRequest &request, std::string &errorMsg);
+    void ExecuteComparisonAlgorithm(const std::vector<MemoryComponent> &compareData,
+        const std::vector<MemoryComponent> &baselineData,
+        MemoryComponentRequest &request, MemoryComponentComparisonResponse &response);
     void GetComponentDiff(const std::vector<MemoryComponent> &compareData,
         const std::vector<MemoryComponent> &baselineData, std::vector<MemoryComponentComparison> &diffData);
     void SelectResult(MemoryComponentRequest &request,
@@ -28,9 +34,6 @@ public:
         std::vector<MemoryComponentComparison> &fullDiffResult);
     void SortResult(MemoryComponentRequest &request, std::vector<MemoryComponentComparison> &result);
 private:
-    bool CompareComponent(std::shared_ptr<VirtualMemoryDataBase> database,
-        std::shared_ptr<VirtualMemoryDataBase> databaseBaseline,
-        MemoryComponentRequest &request, MemoryComponentComparisonResponse &response, std::string &errorMsg);
     void Merge(MemoryComponent &componentCompare, MemoryComponent &componentBaseline,
         MemoryComponentComparison &mergeResult);
     void SortAscend(MemoryComponentRequest &request, std::vector<MemoryComponentComparison> &result);

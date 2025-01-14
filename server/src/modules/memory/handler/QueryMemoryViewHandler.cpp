@@ -29,51 +29,52 @@ bool QueryMemoryViewHandler::HandleRequest(std::unique_ptr<Protocol::Request> re
             return false;
         }
     } else {
-        std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
-        if (baselineId == "") {
-            SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
-            return false;
-        }
-        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
-        if (!databaseBaseline) {
-            SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
-            return false;
-        }
-        if (!GetCompareGraph(database, databaseBaseline, request, *responsePtr.get(), errorMsg)) {
+        MemoryViewData compareData;
+        MemoryViewData baselineData;
+        if (!GetRespectiveData(database, compareData, baselineData, request, errorMsg)) {
             SendResponse(std::move(responsePtr), false, errorMsg);
             return false;
         }
+        ExecuteComparisonAlgorithm(compareData, baselineData, response);
     }
     SendResponse(std::move(responsePtr), true);
     return true;
 }
 
-bool QueryMemoryViewHandler::GetCompareGraph(std::shared_ptr<VirtualMemoryDataBase> database,
-    std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryViewRequest &request,
-    MemoryViewResponse &response, std::string &errorMsg)
+bool QueryMemoryViewHandler::GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
+                                               Dic::Protocol::MemoryViewData &compareData,
+                                               Dic::Protocol::MemoryViewData &baselineData,
+                                               Dic::Protocol::MemoryViewRequest &request, std::string &errorMsg)
 {
-    std::unique_ptr<MemoryViewResponse> responsePtrCompare = std::make_unique<MemoryViewResponse>();
-    MemoryViewResponse &responseCompare = *responsePtrCompare.get();
-    uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
-    if (!database->QueryMemoryView(request.params, responseCompare.data, offsetTimeCompare)) {
-        errorMsg = "Failed to query memory view compare data.";
-        return false;
-    }
-    std::unique_ptr<MemoryViewResponse> responsePtrBaseline = std::make_unique<MemoryViewResponse>();
-    MemoryViewResponse &responseBaseline = *responsePtrBaseline.get();
     std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
     if (baselineId == "") {
         errorMsg = "Failed to get baseline id.";
         return false;
     }
+    auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
+    if (!databaseBaseline) {
+        errorMsg = "Failed to connect to database of baseline.";
+        return false;
+    }
+    uint64_t offsetTimeCompare = Timeline::TraceTime::Instance().GetOffsetByFileId(request.params.rankId);
+    if (!database->QueryMemoryView(request.params, compareData, offsetTimeCompare)) {
+        errorMsg = "Failed to query memory view compare data.";
+        return false;
+    }
     uint64_t offsetTimeBaseline = Timeline::TraceTime::Instance().GetOffsetByFileId(baselineId);
-    if (!databaseBaseline->QueryMemoryView(request.params, responseBaseline.data, offsetTimeBaseline)) {
+    if (!databaseBaseline->QueryMemoryView(request.params, baselineData, offsetTimeBaseline)) {
         errorMsg = "Failed to query memory view baseline data.";
         return false;
     }
-    GetCompareGraphLegends(responseCompare.data, responseBaseline.data, response.data);
-    GetCompareGraphLines(responseCompare.data, responseBaseline.data, response.data);
     return true;
+}
+
+void QueryMemoryViewHandler::ExecuteComparisonAlgorithm(const Protocol::MemoryViewData &compareData,
+                                                        const Protocol::MemoryViewData &baselineData,
+                                                        Protocol::MemoryViewResponse &response)
+{
+    GetCompareGraphLegends(compareData, baselineData, response.data);
+    GetCompareGraphLines(compareData, baselineData, response.data);
 }
 
 void QueryMemoryViewHandler::GetCompareGraphLegends(const Protocol::MemoryViewData &compareData,

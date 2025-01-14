@@ -32,46 +32,51 @@ bool QueryMemoryStaticOperatorGraphHandler::HandleRequest(std::unique_ptr<Protoc
             return false;
         }
     } else {
-        std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
-        if (baselineId == "") {
-            SendResponse(std::move(responsePtr), false, "Failed to get baseline id.");
-            return false;
-        }
-        auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
-        if (!databaseBaseline) {
-            SendResponse(std::move(responsePtr), false, "Failed to connect to database of baseline.");
-            return false;
-        }
-        if (!GetCompareGraph(database, databaseBaseline, request, *responsePtr.get(), errorMsg)) {
+        StaticOperatorGraphItem compareData;
+        StaticOperatorGraphItem baselineData;
+        if (!GetRespectiveData(database, compareData, baselineData, request, errorMsg)) {
             SendResponse(std::move(responsePtr), false, errorMsg);
             return false;
         }
+        ExecuteComparisonAlgorithm(compareData, baselineData, response);
     }
     SendResponse(std::move(responsePtr), true);
     return true;
 }
 
-bool QueryMemoryStaticOperatorGraphHandler::GetCompareGraph(std::shared_ptr<VirtualMemoryDataBase> database,
-    std::shared_ptr<VirtualMemoryDataBase> databaseBaseline, MemoryStaticOperatorGraphRequest &request,
-    MemoryStaticOperatorGraphResponse &response, std::string &errorMsg)
+bool QueryMemoryStaticOperatorGraphHandler::GetRespectiveData(std::shared_ptr<VirtualMemoryDataBase> database,
+                                                              Dic::Protocol::StaticOperatorGraphItem &compareData,
+                                                              Dic::Protocol::StaticOperatorGraphItem &baselineData,
+                                                              Dic::Protocol::MemoryStaticOperatorGraphRequest &request,
+                                                              std::string &errorMsg)
 {
-    std::unique_ptr<MemoryStaticOperatorGraphResponse> responsePtrCompare =
-            std::make_unique<MemoryStaticOperatorGraphResponse>();
-    MemoryStaticOperatorGraphResponse &responseCompare = *responsePtrCompare.get();
-    if (!database->QueryStaticOperatorGraph(request.params, responseCompare.data)) {
+    std::string baselineId = Global::BaselineManager::Instance().GetBaselineId();
+    if (baselineId == "") {
+        errorMsg = "Failed to get baseline id.";
+        return false;
+    }
+    auto databaseBaseline = Timeline::DataBaseManager::Instance().GetMemoryDatabase(baselineId);
+    if (!databaseBaseline) {
+        errorMsg = "Failed to connect to database of baseline.";
+        return false;
+    }
+    if (!database->QueryStaticOperatorGraph(request.params, compareData)) {
         errorMsg = "Failed to query memory static operator graph compare data.";
         return false;
     }
-    std::unique_ptr<MemoryStaticOperatorGraphResponse> responsePtrBaseline =
-            std::make_unique<MemoryStaticOperatorGraphResponse>();
-    MemoryStaticOperatorGraphResponse &responseBaseline = *responsePtrBaseline.get();
-    if (!databaseBaseline->QueryStaticOperatorGraph(request.params, responseBaseline.data)) {
+    if (!databaseBaseline->QueryStaticOperatorGraph(request.params, baselineData)) {
         errorMsg = "Failed to query memory static operator graph baseline data.";
         return false;
     }
-    GetCompareGraphLegends(responseCompare.data, responseBaseline.data, response.data);
-    GetCompareGraphLines(responseCompare.data, responseBaseline.data, response.data);
     return true;
+}
+
+void QueryMemoryStaticOperatorGraphHandler::ExecuteComparisonAlgorithm(
+    const Protocol::StaticOperatorGraphItem &compareData, const Protocol::StaticOperatorGraphItem &baselineData,
+    Protocol::MemoryStaticOperatorGraphResponse &response)
+{
+    GetCompareGraphLegends(compareData, baselineData, response.data);
+    GetCompareGraphLines(compareData, baselineData, response.data);
 }
 
 void QueryMemoryStaticOperatorGraphHandler::GetCompareGraphLegends(const Protocol::StaticOperatorGraphItem &compareData,
