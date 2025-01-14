@@ -27,6 +27,7 @@ import { runInAction } from 'mobx';
 import { Layout } from 'ascend-layout';
 import { safeJSONParse } from 'ascend-utils';
 import type { TFunction } from 'i18next';
+import TableHead, { type Col } from './TableHead';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
 const MAX_FILE_SIZE = 1000000; // 100,0000
@@ -40,6 +41,11 @@ interface ConditionType {
     core: string;
     source: string;
     onlyRelated?: boolean;
+};
+
+const useSourceColumns = (): Col[] => {
+    const { t } = useTranslation('source');
+    return [{ width: 45, textAlign: 'right', name: '#' }, { name: t('Source') }];
 };
 
 const useCodeColumns = (): ColumnsType<Ilinetable> => {
@@ -394,17 +400,15 @@ const Index = observer(({ session }: { session: Session }) => {
                 }
                 body={
                     <LeftRightContainer
-                        left={<div style={{ height: '100%', width: '100%', overflow: 'auto' }}>
+                        flex
+                        left={<div style={{ height: '100%', width: '100%', overflow: 'auto', paddingRight: '8px' }}>
                             <LeftRightContainer
-                                headerStyle={{ flex: '0 0 70%' }}
-                                bodyStyle={{ flex: '0 0 30%' }}
+                                flex
+                                leftPercent={70}
                                 left={
                                     <HeaderFixedContainer
                                         style={{ overflow: 'hidden' }}
-                                        header={<div className={'table-header'}>
-                                            <div style={{ width: '45px', textAlign: 'right' }}><span>#</span></div>
-                                            <div><span>{t('Source')}</span></div>
-                                        </div>}
+                                        header={<TableHead columns={useSourceColumns()}/>}
                                         bodyProps={{ id: 'CodeTable' }}
                                         bodyStyle={{ overflowX: 'scroll', marginRight: '-8px' }}
                                         body={
@@ -443,7 +447,7 @@ const Index = observer(({ session }: { session: Session }) => {
                         right={
                             <HeaderFixedContainer
                                 id={'Instructions'}
-                                style={{ paddingLeft: '15px' }}
+                                style={{ paddingLeft: '8px' }}
                                 body={<InstructionTable
                                     tableHeight={tableHeight}
                                     columns={filterInstrsColumns}

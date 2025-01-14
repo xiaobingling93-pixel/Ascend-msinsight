@@ -236,6 +236,22 @@ interface ResizeTableProps<T> extends TableProps<T> {
 type TablePaginationPosition = 'topLeft' | 'topCenter' | 'topRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';
 
 // ============================ Resize ============================
+interface IParams {
+    columns: any[];
+    setColumns: (cols: ColumnsType<any>) => void;
+    index: number;
+    width: number;
+    nextWidth?: number;
+    minThWidth: number;
+    variableTotalWidth: boolean;
+}
+const resizeColumns = ({ columns, setColumns, index, width, nextWidth, minThWidth, variableTotalWidth }: IParams): void => {
+    if (width < minThWidth) {
+        return;
+    }
+    const newColumns = getResizeColumns({ columns, index, width, nextWidth, minThWidth, variableTotalWidth });
+    setColumns(newColumns);
+};
 const getResizeColumns = ({ columns, index, width, nextWidth, minThWidth, variableTotalWidth }:
 {columns: any[];index: number; width: number; nextWidth?: number;minThWidth: number;variableTotalWidth: boolean}): any[] => {
     const newColumns = [...columns];
@@ -253,7 +269,7 @@ const getResizeColumns = ({ columns, index, width, nextWidth, minThWidth, variab
 };
 
 // ============================ virtual ============================
-const getVirtualElement = (dom: Element, boxRef: React.MutableRefObject<null>, targetRef: React.MutableRefObject<null>):
+const getVirtualElement = (dom: Element, boxRef: React.RefObject<HTMLElement>, targetRef: React.RefObject<HTMLElement>):
 [Element | null, Element | null] => {
     const box = dom.querySelector('.ant-table-body');
     const target = dom.querySelector('.ant-table-body table');
@@ -320,10 +336,8 @@ export function ResizeTable<T extends object>(prop: ResizeTableProps<T>): Emotio
     const mergeColumns: any = useMemo(() => columns.map((col, index) => ({
         ...col,
         onHeaderCell: () => ({
-            onResize: (deltaX: number, width: number, nextWidth?: number): void => {
-                const newColumns = getResizeColumns({ columns, index, width, nextWidth, minThWidth, variableTotalWidth });
-                setColumns(newColumns);
-            },
+            onResize: (diff: number, width: number, nextWidth?: number): void =>
+                resizeColumns({ columns, setColumns, index, width, nextWidth, minThWidth, variableTotalWidth }),
             resizable: variableTotalWidth || (propColumns !== undefined && index !== propColumns.length - 1),
         }),
         // ============================ filters ============================

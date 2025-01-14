@@ -1,8 +1,8 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
 */
-import React from 'react';
-import { Col, Row, message, Tooltip, Button } from 'ascend-components';
+import React, { useMemo, useState } from 'react';
+import { message, Tooltip, Button } from 'ascend-components';
 import { Modal } from 'antd';
 import { DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { type ArgsProps } from 'antd/lib/message';
@@ -10,6 +10,9 @@ import { useTranslation } from 'react-i18next';
 import i18n from 'ascend-i18n';
 import type { Theme } from '@emotion/react';
 import type { TFunction } from 'i18next';
+import { Resizor } from 'ascend-resize';
+import styled from '@emotion/styled';
+import { useWatchDomResize } from 'ascend-utils';
 export const Label = (props: {name: string;style?: object }): JSX.Element => {
     return <span style={{ margin: '0 10px', ...(props.style ?? {}) }}>{props.name ? `${props.name} :` : ''} </span>;
 };
@@ -50,46 +53,52 @@ export const HeaderFixedContainer = (
     </div>;
 };
 
-export const LeftRightContainer = ({ style, left, right, headerStyle, bodyStyle, type, leftProps, rightProps }:
+const LeftRightBox = styled.div`
+  height: 100%;
+  width: 100%;
+  .left, .right {
+    display: inline-block;
+    position: relative;
+    height: calc(100% - 6px);
+    overflow: hidden;
+  }
+`;
+
+export const LeftRightContainer = ({ left, right, style, headerStyle, bodyStyle, leftPercent, leftProps = {}, rightProps = {}, minWidth = 50, flex = false }:
 {
-    left?: JSX.Element | string;
-    right?: JSX.Element;
+    left?: React.ReactNode;
+    right?: React.ReactNode;
     style?: React.CSSProperties;
     headerStyle?: React.CSSProperties;
     bodyStyle?: React.CSSProperties;
-    type?: string;
     leftProps?: object;
     rightProps?: object;
+    minWidth?: number;
+    flex?: boolean;
+    leftPercent?: number;
 }): JSX.Element => {
-    if (type === 'simple') {
-        return <Row><Col span={12}>{left}</Col><Col span={12}>{right}</Col></Row>;
-    }
-    return <div
-        style={{
-            height: ' 100%',
-            display: 'flex',
-            flexDirection: 'row',
-            width: '100%',
-            ...(style ?? {}),
-        }}>
-        <div style={{
-            flex: '0 0 50%',
-            height: ' 100%',
-            overflow: 'auto',
-            ...(headerStyle ?? {}),
-        }}
-        {...leftProps ?? {}}>
+    const [leftWidth, setLeftWidth] = useState(-1);
+    const leftWidthStyle = useMemo(() => leftWidth > 0 ? `${leftWidth}px` : `${leftPercent ?? 50}%`, [leftWidth]);
+    const rightWidthStyle = useMemo(() => leftWidth > 0 ? `calc(100% - ${leftWidth}px)` : `${100 - (leftPercent ?? 50)}%`, [leftWidth]);
+    const [boxWidth, ref] = useWatchDomResize<HTMLDivElement>('width');
+
+    const handleResizeEvent = (diff: number, width: number): void => {
+        // 左DOM不小于最小宽度，不大于最大Box宽度
+        const checkSize = width >= minWidth && width <= boxWidth - minWidth;
+        if (checkSize) {
+            setLeftWidth(width);
+        }
+    };
+
+    return <LeftRightBox ref={ref} style={style}>
+        <div className="left" style={{ ...headerStyle, width: leftWidthStyle }} {...leftProps}>
+            {flex && <Resizor onResize={ handleResizeEvent}/>}
             {left}
         </div>
-        <div style={{
-            display: 'block',
-            flex: '0 0 50%',
-            overflowX: 'auto',
-            height: ' 100%',
-            overflow: 'auto',
-            ...(bodyStyle ?? {}),
-        }} {...rightProps ?? {}}>{right}</div>
-    </div>;
+        <div className="right" style={{ ...bodyStyle, width: rightWidthStyle }} {...rightProps }>
+            {right}
+        </div>
+    </LeftRightBox>;
 };
 
 export const Loading = ({ size = 20, style = {} }: {size?: number;style?: object}): JSX.Element => {

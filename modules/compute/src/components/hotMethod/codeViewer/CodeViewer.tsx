@@ -7,6 +7,13 @@ import './CodeViewer.css';
 import { addClass, removeClass, isViewable } from '../../Common';
 import { highlightAllWithNumber } from './highlightLineNumbers';
 
+// 修改样式，行数的宽度
+export function changeIndexWidth(width: number): void {
+    document.querySelectorAll('#CodeTable ul>li .index').forEach(indexElement => {
+        (indexElement as HTMLElement).style.width = `${width}px`;
+    });
+}
+
 // eslint-disable-next-line max-lines-per-function
 const CodeViewer = ({ code, selectedline, hoverline, style, className = '', handleLineClick, ...restProps }: {
     code: string;

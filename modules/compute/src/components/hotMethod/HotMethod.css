@@ -12,48 +12,6 @@ tr.selected {
 .theme_dark tr.selected  td{
     background: var(--middleblue);
 }
-.table-header {
-    background: rgb(244, 246, 250);
-    color: rgb(78, 88, 101);
-    display: flex;
-    height: 32px;
-    line-height: 16px;
-    font-size: 12px;
-    box-shadow: inset 0 -1px 0 0 #DFE5EF;
-}
-.table-header > div {
-    display: inline-block;
-    position: absolute;
-    line-height: 32px;
-    height: 16px;
-}
-.table-header > div::before {
-    background-color: #DFE5EF;
-    content: "";
-    height: 1.6em;
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transition: background-color .3s;
-    width: 1px;
-}
-.table-header > div > * {
-    display: inline-block;
-    padding: 0 10px;
-}
-.table-header > div:last-child {
-    padding-left: 55px;
-    position: relative;
-    flex: 1 1;
-}
-.theme_dark .table-header {
-    background: rgb(42, 47, 55);
-    color: rgb(211, 220, 233);
-    box-shadow: inset 0 -1px 0 0 #3e4551;
-}
-.theme_dark .table-header > div::before {
-    background-color: #3e4551;
-}
 .theme_dark .ant-tooltip-arrow-content {
     --antd-arrow-background-color: linear-gradient(to right bottom, var(--grey50),var(--grey50));
 }
