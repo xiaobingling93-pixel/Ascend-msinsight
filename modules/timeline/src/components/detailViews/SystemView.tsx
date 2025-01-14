@@ -353,8 +353,7 @@ const BaseSummary = observer((props: any) => {
         if (_isStats) {
             params = { isQueryTotal: true, layer: prop.layerType, searchName, ...params };
         }
-        const res = await props.request(params);
-        setLoading(false);
+        const res = await props.request(params).finally(() => setLoading(false));
         if (_isStats) {
             setDataSource(res.systemViewDetails);
         } else {
