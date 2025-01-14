@@ -129,8 +129,11 @@
     float: right;
     margin-left: 20px;
     font-size: 14px;
-    color: var(--mi-text-color);
+    color: #666;
     font-weight: bold;
+}
+.tooltip-value.theme{
+    color: var(--mi-text-color);
 }
 
 .positive-number{

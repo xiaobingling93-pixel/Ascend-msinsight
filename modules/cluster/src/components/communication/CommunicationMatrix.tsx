@@ -17,7 +17,11 @@ import type { TooltipComponentOption, VisualMapComponentOption } from 'echarts/c
 import type { PiecewiseVisualMapOption } from 'echarts/types/dist/shared';
 import type { Condition, Range } from './CommunicationMatrix/Filter';
 import Filter, { MatrixType } from './CommunicationMatrix/Filter';
-import { getTransporTypeNumber, getTransportTypeName, transportTypeVisualMap } from './CommunicationMatrix/transportType';
+import {
+    getTransportTypeName,
+    getTransportTypeSerie,
+    getTransportTypeVisualMap,
+} from './CommunicationMatrix/transportType';
 
 interface DataSource {
     data: MatrixItem[];
@@ -44,11 +48,12 @@ interface ChartData {
     max: number;
     isCompare: boolean;
 }
-type HeatmapData = [string, string, React.Key, CompareData<Record<string, React.Key>>];
-enum HeatmapDataIndex {
+export type HeatmapData = [string, string, React.Key, CompareData<Record<string, React.Key>>];
+export enum HeatmapDataIndex {
     SRC_RANK = 0,
     DST_RANK = 1,
     VALUE = 2,
+    DATA = 3,
 }
 
 function InitChart(data: ChartData, t: TFunction): void {
@@ -66,7 +71,7 @@ function wrapData(dataSource: ChartData, t: TFunction): any {
     option.xAxis.data = rankIds;
     option.yAxis.data = rankIds;
     option.series = [getSerie({ data, rankIds, t, type, isCompare })];
-    option.visualMap = getVisualMap({ type, min, max, dataLength: data.length, isCompare });
+    option.visualMap = getVisualMap({ type, min, max, dataLength: data.length, isCompare, t });
     return option;
 }
 
@@ -111,7 +116,7 @@ const baseOption: any = {
     },
 };
 
-const baseSerie = {
+export const baseSerie = {
     type: 'heatmap',
     emphasis: {
         itemStyle: {
@@ -128,18 +133,7 @@ function getSerie({ data, rankIds, type, isCompare, t }: {
     t: TFunction;
 }): any {
     if (type === MatrixType.TRANSPORT_TYPE) {
-        const numData = data.map(item => [...item.slice(0, HeatmapDataIndex.VALUE),
-            getTransporTypeNumber(item[HeatmapDataIndex.VALUE] as string),
-            ...item.slice(HeatmapDataIndex.VALUE + 1)]);
-        return {
-            ...baseSerie,
-            data: numData,
-            label: {
-                show: rankIds.length <= 16,
-                formatter: (params: {value: HeatmapData}): string => getTransportTypeName(params.value[HeatmapDataIndex.VALUE] as number),
-            },
-            tooltip: getTooltip({ t, type, isCompare }),
-        };
+        return getTransportTypeSerie({ data, rankIds, type, isCompare, t });
     }
     const { mixData, repeatData } = handleRepeatData(data);
     return {
@@ -183,7 +177,7 @@ interface Label {
     contentClass?: string;
 }
 // 提示框
-function getTooltip({ t, type, isCompare, repeatData }: {t: TFunction;type: string;isCompare: boolean;repeatData?: Record<string, string[]>}):
+export function getTooltip({ t, type, isCompare, repeatData }: {t: TFunction;type: string;isCompare: boolean;repeatData?: Record<string, string[]>}):
 TooltipComponentOption {
     return {
         show: true,
@@ -201,13 +195,13 @@ function getDisplayList({ t, type, isCompare, repeatData, data }:
     let [srcRank, dstRank, value, { compare, baseline }] = data;
     const repeatedKey = `${srcRank},${dstRank}`;
     if (type === MatrixType.TRANSPORT_TYPE) {
-        value = getTransportTypeName(value as number);
+        value = getTransportTypeName(data, isCompare, true);
     } else if (repeatData !== undefined && repeatData[repeatedKey].length > 1) {
         value = `[${repeatData[repeatedKey].join(', ')}]`;
     }
 
     const list: Label[] = [{ label: 'srcRank -> dstRank', content: `${srcRank} -> ${dstRank}` }];
-    if (isCompare && type !== MatrixType.TRANSPORT_TYPE) {
+    if (isCompare) {
         // 算子名
         if (compare.opName !== '') {
             list.push({ label: t(getCompareName('operatorName')), content: compare.opName });
@@ -215,8 +209,10 @@ function getDisplayList({ t, type, isCompare, repeatData, data }:
         if (baseline.opName !== '') {
             list.push({ label: t(getBaselineName('operatorName')), content: baseline.opName });
         }
+        if (type !== MatrixType.TRANSPORT_TYPE) {
+            list.push({ label: t('Difference'), content: value, contentClass: typeof value === 'number' && value >= 0 ? 'positive-number' : 'negative-number' });
+        }
         list.push(
-            { label: t('Difference'), content: value, contentClass: typeof value === 'number' && value >= 0 ? 'positive-number' : 'negative-number' },
             { label: t(getCompareName(type)), content: compare.value },
             { label: t(getBaselineName(type)), content: baseline.value },
         );
@@ -238,11 +234,11 @@ const baseVisualMap: PiecewiseVisualMapOption = {
     textStyle: { color: COLOR.GREY_40 },
     dimension: 2,
 };
-function getVisualMap({ dataLength, min, max, type, isCompare = false }: {
-    dataLength: number;min: number;max: number;isCompare?: boolean;type: MatrixType;
+function getVisualMap({ dataLength, min, max, type, isCompare = false, t }: {
+    dataLength: number;min: number;max: number;isCompare?: boolean;type: MatrixType; t: TFunction;
 }): VisualMapComponentOption {
     if (type === MatrixType.TRANSPORT_TYPE) {
-        return transportTypeVisualMap;
+        return getTransportTypeVisualMap(isCompare, t);
     }
     if (isCompare) {
         return {
@@ -281,15 +277,11 @@ const updateChart = ({ dataSource, switchCondition, range, shouldUpdateRange, se
 }): void => {
     const { data, rankIds } = dataSource;
     const dataList: HeatmapData[] = data.reduce<HeatmapData[]>((pre, cur) => {
-        const { srcRank, dstRank, matrixData: { compare, baseline } } = cur;
+        const { srcRank, dstRank, matrixData: { compare, baseline, diff } } = cur;
         const compareValue = compare[switchCondition.type];
         const baselineValue = baseline[switchCondition.type];
-        let value;
-        if (isCompare && typeof compareValue === 'number' && typeof baselineValue === 'number') {
-            value = compareValue - baselineValue;
-        } else {
-            value = compareValue;
-        }
+        const diffValue = diff[switchCondition.type];
+        const value = isCompare ? diffValue : compareValue;
         let match = rankIds.includes(srcRank) && rankIds.includes(dstRank);
         if (!switchCondition.showInner) {
             match = match && srcRank !== dstRank;
@@ -302,7 +294,7 @@ const updateChart = ({ dataSource, switchCondition, range, shouldUpdateRange, se
                 {
                     compare: { opName: compare.opName, value: compareValue },
                     baseline: { opName: baseline.opName, value: baselineValue },
-                    diff: {},
+                    diff: { value: diffValue },
                 },
             ]);
         }
@@ -355,7 +347,7 @@ const CommunicationMatrix = observer(({ isShow, conditions, session }: { isShow:
 
     useEffect(() => {
         updateChart({ shouldUpdateRange: true, setRange, switchCondition, dataSource, t, isCompare: session.isCompare });
-    }, [dataSource, switchCondition, session.isCompare]);
+    }, [dataSource, switchCondition, t, session.isCompare]);
 
     return <CollapsiblePanel style={{ display: isShow ? 'block' : 'none' }} title={t('sessionTitle.MatrixModel')} padding={'16px 24px'}>
         <Filter condition={switchCondition} handleChange={handleFilterChange} range={range} onRangeChange={handleRangeChange}/>

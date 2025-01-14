@@ -105,7 +105,7 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
             orderBy: _sorter.field,
             order: _sorter.order,
             stage: conditions.stage,
-            queryType: record.source === Source.COMPARISON ? 'COMPARE' : Source.BASELINE.toUpperCase(),
+            queryType: record.source,
         });
         setDataSource(res?.allOperators ?? []);
         setPage({ ..._page, total: res?.count ?? 0 });

@@ -130,7 +130,7 @@ function getTooltipFormatter(params: FormatterParams[], isCompare: boolean): str
     html += displaylist.map((displayItem) => `
 <div class="tooltip-row">
     <span>${displayItem.marker}${safeStr(displayItem.name)}</span>
-    <span class="tooltip-value ${displayItem.contentClass}">${safeStr(displayItem.content)}</span>
+    <span class="tooltip-value theme ${displayItem.contentClass}">${safeStr(displayItem.content)}</span>
 </div>`).join('');
     return html;
 }

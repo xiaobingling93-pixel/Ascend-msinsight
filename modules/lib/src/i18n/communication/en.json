@@ -96,6 +96,8 @@
     "CommunicationIssue": "Communication efficiency is low",
     "Back": "Back",
     "Tooltip": "If the cluster data already includes the cluster_analysis_output folder, it will not be overwritten; if there is a mismatch between the cluster data and the single-card data, please delete the original cluster_analysis_output folder and the cluster.db file and re-import the data.",
-    "Difference": "Difference"
+    "Difference": "Difference",
+    "Same": "Same",
+    "Different": "Different"
   }
 }
