@@ -338,10 +338,14 @@ const BaseTable = ({ condition, filterType, opType, accCore, opName, inputShape,
     }, [condition.group]);
 
     useEffect(() => {
+        if (page.current * page.pageSize > page.total) {
+            page.current = parseInt((page.total / page.pageSize).toString()) + 1;
+        }
         updateFullCondition({ ...sorter, ...page, ...filters, ...condition });
-    }, [page.current, page.pageSize, sorter.field, sorter.order,
+    }, [page.current, page.pageSize, page.total, sorter.field, sorter.order,
         filters.type, filters.opType, filters.name, filters.opName, filters.accCore,
         condition.rankId, condition.topK]);
+
     return <ResizeTable
         size="small"
         minThWidth={50}
