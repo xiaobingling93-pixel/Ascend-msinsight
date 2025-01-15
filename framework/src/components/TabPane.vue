@@ -85,8 +85,10 @@ function questionIconClickHandler(e: MouseEvent) {
 
     // “软件最近修改年份”不是“首次发布年份时”，版权时间范围需要修改为“首年年份-最近修改年份”
     const modifyYear = VersionInfo.modifyTime.split('/')[0];
-    if (modifyYear !== copyrightYear.value) {
-        copyrightYear.value = copyrightYear.value + '-' + modifyYear;
+    // 首年年份为2024年
+    const defaultCopyrightYear = '2024';
+    if (modifyYear !== defaultCopyrightYear) {
+      copyrightYear.value = defaultCopyrightYear + '-' + modifyYear;
     }
 
     e.stopPropagation();
