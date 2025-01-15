@@ -9,6 +9,7 @@ import { Label } from '../Common';
 import type { Session } from '../../entity/session';
 import { PerformanceChartConditions } from './Index';
 import { observer } from 'mobx-react';
+import { FormItem } from '../communication/Filter';
 
 interface optionDataType {
     key?: string;
@@ -81,6 +82,8 @@ export const Filter = observer(({ session, conditions, isPipeline, onFilterChang
 
     const stepOptions = session.stepList.map(item => ({ value: item, label: item }));
     stepOptions.unshift(allOptionItem);
+    const baselineStepOptions = session.baselineStepList.map(item => ({ value: item, label: item }));
+    baselineStepOptions.unshift(allOptionItem);
 
     const groupOptions = useMemo(() => {
         return getRankGroupOptions(session, isPipeline);
@@ -99,6 +102,18 @@ export const Filter = observer(({ session, conditions, isPipeline, onFilterChang
                     onChange={(val: string): void => handleChange('step', val)}
                     options={stepOptions}
                 />
+                {
+                    session.isCompare &&
+                    <FormItem name={t('Baseline Step')}
+                        content={ <Select
+                            id="select-step"
+                            value={conditions.baselineStep}
+                            style={{ width: 120 }}
+                            onChange={(val: string): void => handleChange('baselineStep', val)}
+                            options={baselineStepOptions}
+                        />}
+                    />
+                }
             </>
 
         }
