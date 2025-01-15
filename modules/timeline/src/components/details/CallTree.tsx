@@ -129,17 +129,18 @@ export const CallStackView = observer(<T extends Record<string, unknown>>(
     { session, height, compare, columns, onNavigate }: CallStackViewProps<T>): JSX.Element => {
     const state = useStackUpdater(session, compare, { columns });
     return <ResizeTable {...state} expandable={{ showExpandColumn: false }}
-        onRow={(row): {onClick: () => void; onDoubleClick: () => void } => ({
-            onDoubleClick: () => onNavigate?.({ row }),
-            onClick: (): void => {
+        onRow={(row): {onClick: () => void; onDoubleClick: () => void } => {
+            const onDoubleClick = (): void => onNavigate?.({ row });
+            const onClick = (): void => {
                 session.selectedDetailKeys = [getAutoKey(row)];
                 // need combine two functions
                 ((state.dataSource[0] as unknown as Traceable<T>).ref)?.current?.appendExpandedKeys(state.dataSource.map(getAutoKey));
                 setTimeout(() => {
                     ((state.dataSource[0] as unknown as Traceable<T>).ref)?.current?.scrollTo(row);
                 }, 0);
-            },
-        })}
+            };
+            return { onClick, onDoubleClick };
+        }}
         rowSelection={{
             selectedRowKeys: session.selectedDetailKeys,
         }}/>;

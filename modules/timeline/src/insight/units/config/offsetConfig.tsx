@@ -56,13 +56,17 @@ const onChange = ({ e, session, setOffset, setVisible, setTitle, t }: {
     });
 };
 
+function hasStringValue(str: string = ''): boolean {
+    return str !== '';
+}
+
 // 设置一级泳道偏移量时，同步其二级泳道的偏移量
-function handleTimestampOffsetReassignment(
+export function handleTimestampOffsetReassignment(
     session: Session,
     cardMetaData: ThreadTraceRequest,
     inputValue: number,
 ): boolean {
-    if (!cardMetaData.processId) {
+    if (cardMetaData.processId === null || !hasStringValue(cardMetaData.processId)) {
         const cardId = cardMetaData.cardId;
         const timestampOffsetConfig = session.unitsConfig.offsetConfig.timestampOffset;
         const offsetKeys = Object.keys(timestampOffsetConfig);

@@ -473,20 +473,24 @@ const scrollWrapper = (eventKey: string, session: Session): void => {
     });
 };
 
+function ignoreCaseEqual(key: string, keyName: string): boolean {
+    return key.toUpperCase() === keyName.toUpperCase();
+}
+
 export const keyDownAction = (key: string, session: Session, zoomPoint: number | undefined): void => {
-    if (key === 'w' || key === 'W') {
+    if (ignoreCaseEqual(key, 'W')) {
         zoomDomain(session, zoomOrMoveDirection.downOrLeft, zoomPoint);
-    } else if (key === 's' || key === 'S') {
+    } else if (ignoreCaseEqual(key, 'S')) {
         zoomDomain(session, zoomOrMoveDirection.upOrRight, zoomPoint);
-    } else if (key === 'a' || key === 'A' || key === 'ArrowLeft') {
+    } else if (ignoreCaseEqual(key, 'A') || key === 'ArrowLeft') {
         moveDomain(session, zoomOrMoveDirection.downOrLeft);
-    } else if (key === 'd' || key === 'D' || key === 'ArrowRight') {
+    } else if (ignoreCaseEqual(key, 'D') || key === 'ArrowRight') {
         moveDomain(session, zoomOrMoveDirection.upOrRight);
-    } else if (key === 'm' || key === 'M') {
+    } else if (ignoreCaseEqual(key, 'M')) {
         processMKeyEvent(session);
-    } else if (key === 'r' || key === 'R') {
+    } else if (ignoreCaseEqual(key, 'R')) {
         processOffsetEvent(session, false);
-    } else if (key === 'l' || key === 'L') {
+    } else if (ignoreCaseEqual(key, 'L')) {
         processOffsetEvent(session, true);
     } else if (key === 'ArrowUp' || key === 'ArrowDown') {
         scrollWrapper(key, session);

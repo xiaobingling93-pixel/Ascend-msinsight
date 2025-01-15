@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { InputOption } from './offsetConfig';
+import { InputOption, handleTimestampOffsetReassignment } from './offsetConfig';
 import type { InsightUnit } from '../../../entity/insight';
 
 // Mock translations
@@ -35,6 +35,60 @@ beforeEach((): void => {
         { alignStartTimestamp: 123456789 } as InsightUnit,
     ];
     session.units = [{ metadata: mockMetaData } as InsightUnit];
+});
+
+describe('Function handleTimestampOffsetReassignment Check', () => {
+    it('normal', () => {
+        session.unitsConfig.offsetConfig.timestampOffset = {
+            cardId__1: 100,
+        };
+        expect(handleTimestampOffsetReassignment(session, {
+            cardId: 'cardId',
+            processId: '111',
+            threadId: '',
+            startTime: 0,
+            endTime: 1,
+        }, 0)).toBe(false);
+    });
+
+    it('with in cardMetaData.processId = undefined', () => {
+        session.unitsConfig.offsetConfig.timestampOffset = {
+            cardId__1: 100,
+        };
+        expect(handleTimestampOffsetReassignment(session, {
+            cardId: 'cardId',
+            processId: (undefined as unknown) as string,
+            threadId: '',
+            startTime: 0,
+            endTime: 1,
+        }, 0)).toBe(true);
+    });
+
+    it('with in cardMetaData.processId = null', () => {
+        session.unitsConfig.offsetConfig.timestampOffset = {
+            cardId__1: 100,
+        };
+        expect(handleTimestampOffsetReassignment(session, {
+            cardId: 'cardId',
+            processId: (null as unknown) as string,
+            threadId: '',
+            startTime: 0,
+            endTime: 1,
+        }, 0)).toBe(true);
+    });
+
+    it('with in cardMetaData.processId = \'\'', () => {
+        session.unitsConfig.offsetConfig.timestampOffset = {
+            cardId__1: 100,
+        };
+        expect(handleTimestampOffsetReassignment(session, {
+            cardId: 'cardId',
+            processId: '',
+            threadId: '',
+            startTime: 0,
+            endTime: 1,
+        }, 0)).toBe(true);
+    });
 });
 
 describe('Timestamp Offset Component', () => {

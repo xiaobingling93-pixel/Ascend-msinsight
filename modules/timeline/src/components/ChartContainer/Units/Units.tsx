@@ -308,9 +308,8 @@ const FlattenUnits = observer(({ session, height, hasPinButton, laneInfoWidth, e
 
     const handleMouseMove = (e: React.MouseEvent): void => {
         if (!isSelecting) { return; }
-        const currentPoint = { x: e.clientX, y: e.clientY };
-        const top = Math.min(currentPoint.y, startPoint.current.y);
-        const bottom = Math.max(currentPoint.y, startPoint.current.y);
+        const top = Math.min(e.clientY, startPoint.current.y);
+        const bottom = Math.max(e.clientY, startPoint.current.y);
         const newSelected: Set<string> = new Set();
 
         for (const [key, value] of unitsRefs.current) {

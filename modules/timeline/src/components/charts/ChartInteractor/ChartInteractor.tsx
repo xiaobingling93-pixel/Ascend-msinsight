@@ -217,12 +217,12 @@ const Interactor = ({
 
     useEffect(() => {
         const drawArgs = getDrawArgs();
-        if (!drawArgs) { return; }
+        if (drawArgs === null) { return; }
         drawMEventMask(drawArgs);
     }, [domainStart, domainEnd, endTimeAll, theme, scrollTop, session.mKeyRender, session.mMaskRange, renderTrigger, ...customRenderTriggers]);
     useEffect(() => {
         const drawArgs = getDrawArgs();
-        if (!drawArgs) { return; }
+        if (drawArgs === null) { return; }
         draw(drawArgs);
         const traceAction: string[] = ['selectBrushScope', 'dragLane', 'zoomProportion'];
         traceAction.forEach((item) => { traceEnd(item); });
@@ -230,7 +230,7 @@ const Interactor = ({
 
     useEffect(() => {
         const drawArgs = getDrawArgs();
-        if (!drawArgs) { return; }
+        if (drawArgs === null) { return; }
         // 加延时确保画布尺寸变化后，正常重新绘制，否则可能不能及时绘制(场景：框选后，底部面板弹起，触发重新绘制)
         setTimeout(() => {
             draw(drawArgs);

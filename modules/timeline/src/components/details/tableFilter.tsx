@@ -51,7 +51,7 @@ interface FilterDropdownType {
 const setFiltersContent = ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: FilterDropdownType): JSX.Element => {
     return <FilterContainer>
         <Input
-            placeholder={`${i18n.t('Filter by field content')}`}
+            placeholder={i18n.t('Filter by field content')}
             value={selectedKeys[0]}
             onChange={(e): void => setSelectedKeys(e.target.value ? [e.target.value] : [])}
             onPressEnter={(): void => confirm()}
