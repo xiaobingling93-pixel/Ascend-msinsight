@@ -59,6 +59,7 @@ export const useHit = (containsPreparing: boolean): React.ReactElement => {
 
 export interface PerformanceChartConditions {
     step: string;
+    baselineStep?: string;
     orderBy: string;
     top: string;
     group: string;
@@ -71,6 +72,7 @@ export interface CommunicatorData {
 
 const defaultPerformanceChartConditions = {
     step: 'All',
+    baselineStep: 'All',
     group: 'All',
     orderBy: 'rankId',
     top: 'All',
@@ -98,8 +100,13 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
 
     const getPerformanceData = async (): Promise<void> => {
         setPerformanceLoading(true);
-        const { performance, advice } = await getParallelismPerformanceData(
-            { step: performanceChartConditions.step, ...generateConditions, isCompare: session.isCompare }).finally(() => {
+        const params = {
+            step: performanceChartConditions.step,
+            baselineStep: session.isCompare ? performanceChartConditions.baselineStep : null,
+            ...generateConditions,
+            isCompare: session.isCompare,
+        };
+        const { performance, advice } = await getParallelismPerformanceData(params).finally(() => {
             setPerformanceLoading(false);
         });
         const performanceAfterDeal = performance.map(item => {
@@ -179,7 +186,7 @@ export const Index = observer(({ session }: { session: Session }): JSX.Element =
             return;
         }
         getPerformanceData();
-    }, [performanceChartConditions.step, JSON.stringify(generateConditions), session.isCompare]);
+    }, [performanceChartConditions.step, performanceChartConditions.baselineStep, JSON.stringify(generateConditions), session.isCompare]);
 
     useEffect(() => {
         if (JSON.stringify(generateConditions) === JSON.stringify(defaultGenerateConditions)) {

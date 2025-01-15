@@ -37,6 +37,7 @@ export class Session {
     communicationDomains: string[] = []; // 通信域（包含所有连线、框）
     ppCommunicationDomains: string[] = []; // PP 通信域（仅包含所有 PP 连线）
     stepList: string[] = [];
+    baselineStepList: string[] = [];
     // 集群对比
     isCompare: boolean = false;
 

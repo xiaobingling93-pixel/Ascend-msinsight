@@ -325,7 +325,7 @@ function FilterCom({ optionMap, condition, handleChange, session }: IcomProps): 
     </div>);
 }
 
-function FormItem(props: any): JSX.Element {
+export function FormItem(props: any): JSX.Element {
     return (<div style={{ display: 'inline-block', height: '30px', lineHeight: '30px', margin: '0 20px 10px 0' }}>
         <Label name={props.name}/>
         {props.content}

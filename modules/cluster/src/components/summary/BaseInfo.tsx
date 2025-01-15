@@ -58,6 +58,7 @@ const updateBaseInfoData = async (setBaseinfo: (val: BaseInfoData) => void, sess
     runInAction(() => {
         session.rankCount = res.baseInfo.compare.rankCount;
         session.stepList = res.baseInfo.compare.stepList;
+        session.baselineStepList = res.baseInfo.baseline.stepList;
     });
     setBaseinfo(wrapData(res?.baseInfo ?? {}, session.isCompare));
 };

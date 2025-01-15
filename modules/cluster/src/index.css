@@ -136,9 +136,9 @@
     color: var(--mi-text-color);
 }
 
-.positive-number{
+.positive-number,.theme.positive-number{
     color:var(--mi-color-success);
 }
-.negative-number{
+.negative-number,.theme.negative-number{
     color:var(--mi-color-danger);
 }

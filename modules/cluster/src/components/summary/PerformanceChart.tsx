@@ -42,7 +42,13 @@ const baseOptions: EChartsOption = {
         {
             type: 'value',
             name: 'Ratio',
-            min: 0,
+            min: function (value: {min: number; max: number}): number {
+                if (value.min >= 0) {
+                    return 0;
+                }
+                const base = parseInt((value.min - 10).toFixed(0));
+                return base - (base % 10);
+            },
             axisLabel: {
                 formatter: '{value}%',
             },
