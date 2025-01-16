@@ -263,6 +263,8 @@ std::unique_ptr<Request> SummaryProtocol::ToQueryParallelismPerformanceRequest(c
     JsonUtil::SetByJsonKeyValue(reqPtr->params.config.cpSize, json["params"], KEY_CP_SIZE);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.config.epSize, json["params"], KEY_EP_SIZE);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.dimension, json["params"], KEY_DIMENSION);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.isCompare, json["params"], KEY_IS_COMPARE);
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.baselineStep, json["params"], KEY_BASELINE_STEP);
     JsonUtil::SetByJsonKeyValue(reqPtr->params.step, json["params"], KEY_STEP);
     return reqPtr;
 }

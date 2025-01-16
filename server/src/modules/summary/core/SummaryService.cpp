@@ -85,8 +85,10 @@ std::unordered_map<std::string, double> SummaryService::CalDiffIndicators(
         keySet.insert(item.first);
     }
     std::unordered_map<std::string, double> diff;
+    // 数据保留三位小数
+    int precision = 3;
     for (const auto &item: keySet) {
-        diff[item] = compare[item] - baseline[item];
+        diff[item] = NumberUtil::DoubleReservedNDigits(compare[item] - baseline[item], precision);
     }
     return diff;
 }

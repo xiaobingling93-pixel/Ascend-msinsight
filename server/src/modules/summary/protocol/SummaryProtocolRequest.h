@@ -169,6 +169,8 @@ struct QueryParallelismPerformanceRequest : public Request {
 
 const std::string KEY_ORDERBY = "orderBy";
 const std::string KEY_STEP = "step";
+const std::string KEY_IS_COMPARE = "isCompare";
+const std::string KEY_BASELINE_STEP = "baselineStep";
 
 struct ComputeDetailParams {
     std::string rankId;

@@ -655,24 +655,31 @@ void MegatronParallelStrategyAlgorithm::CalculatePerformanceDataWithPpDimension(
         one.index = i;
         auto &max = reduceCpMax.at(i);
         auto &min = reduceCpMin.at(i);
-        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_MAX_SUFFIX, max.computingTime);
-        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_MIN_SUFFIX, min.computingTime);
+        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_MAX_SUFFIX,
+                               Reserved3DecimalPlaces(max.computingTime));
+        one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_MIN_SUFFIX,
+                               Reserved3DecimalPlaces(min.computingTime));
         one.indicators.emplace(KEY_TOTAL_COMPUTING_TIME + KEY_RANGE_SUFFIX,
                                Reserved3DecimalPlaces(max.computingTime - min.computingTime));
-        one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_MAX_SUFFIX, max.communicationTime);
-        one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_MIN_SUFFIX, min.communicationTime);
+        one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_MAX_SUFFIX,
+                               Reserved3DecimalPlaces(max.communicationTime));
+        one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_MIN_SUFFIX,
+                               Reserved3DecimalPlaces(min.communicationTime));
         one.indicators.emplace(KEY_TOTAL_COMMUNICATION + KEY_RANGE_SUFFIX,
                                Reserved3DecimalPlaces(max.communicationTime - min.communicationTime));
-        one.indicators.emplace(KEY_FREE_TIME + KEY_MAX_SUFFIX, max.freeTime);
-        one.indicators.emplace(KEY_FREE_TIME + KEY_MIN_SUFFIX, min.freeTime);
+        one.indicators.emplace(KEY_FREE_TIME + KEY_MAX_SUFFIX,
+                               Reserved3DecimalPlaces(max.freeTime));
+        one.indicators.emplace(KEY_FREE_TIME + KEY_MIN_SUFFIX, Reserved3DecimalPlaces(min.freeTime));
         one.indicators.emplace(KEY_FREE_TIME + KEY_RANGE_SUFFIX,
                                Reserved3DecimalPlaces(max.freeTime - min.freeTime));
-        one.indicators.emplace(KEY_NPU_TIME + KEY_MAX_SUFFIX, max.npuTotalTime);
-        one.indicators.emplace(KEY_NPU_TIME + KEY_MIN_SUFFIX, min.npuTotalTime);
+        one.indicators.emplace(KEY_NPU_TIME + KEY_MAX_SUFFIX, Reserved3DecimalPlaces(max.npuTotalTime));
+        one.indicators.emplace(KEY_NPU_TIME + KEY_MIN_SUFFIX, Reserved3DecimalPlaces(min.npuTotalTime));
         one.indicators.emplace(KEY_NPU_TIME + KEY_RANGE_SUFFIX,
                                Reserved3DecimalPlaces(max.npuTotalTime - min.npuTotalTime));
-        one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX, max.pureCommunicationTime);
-        one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX, min.pureCommunicationTime);
+        one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MAX_SUFFIX,
+                               Reserved3DecimalPlaces(max.pureCommunicationTime));
+        one.indicators.emplace(KEY_COMMUNICATION_NOT_OVERLAPPED + KEY_MIN_SUFFIX,
+                               Reserved3DecimalPlaces(min.pureCommunicationTime));
         indicatorData.emplace_back(one);
     }
     SortPerformanceDataByIndex(indicatorData);

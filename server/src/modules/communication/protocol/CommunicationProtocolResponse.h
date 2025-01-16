@@ -129,19 +129,23 @@ struct DurationData {
 
     DurationData operator-(const DurationData &durationData) const
     {
+        int precision = 4;
         DurationData res;
-        res.startTime = this->startTime - durationData.startTime;
-        res.elapseTime = this->elapseTime - durationData.elapseTime;
-        res.transitTime = this->transitTime - durationData.transitTime;
-        res.synchronizationTime = this->synchronizationTime - durationData.synchronizationTime;
-        res.waitTime = this->waitTime - durationData.waitTime;
-        res.idleTime = this->idleTime - durationData.idleTime;
-        res.synchronizationTimeRatio = this->synchronizationTimeRatio - durationData.synchronizationTimeRatio;
-        res.waitTimeRatio = this->waitTimeRatio - durationData.waitTimeRatio;
-        res.sdmaBw = this->sdmaBw - durationData.sdmaBw;
-        res.rdmaBw = this->rdmaBw - durationData.rdmaBw;
-        res.sdmaTime = this->sdmaTime - durationData.sdmaTime;
-        res.rdmaTime = this->rdmaTime - durationData.rdmaTime;
+        res.startTime = NumberUtil::DoubleReservedNDigits(this->startTime - durationData.startTime, precision);
+        res.elapseTime = NumberUtil::DoubleReservedNDigits(this->elapseTime - durationData.elapseTime, precision);
+        res.transitTime = NumberUtil::DoubleReservedNDigits(this->transitTime - durationData.transitTime, precision);
+        res.synchronizationTime =
+            NumberUtil::DoubleReservedNDigits(this->synchronizationTime - durationData.synchronizationTime, precision);
+        res.waitTime = NumberUtil::DoubleReservedNDigits(this->waitTime - durationData.waitTime, precision);
+        res.idleTime = NumberUtil::DoubleReservedNDigits(this->idleTime - durationData.idleTime, precision);
+        res.synchronizationTimeRatio = NumberUtil::DoubleReservedNDigits(
+            this->synchronizationTimeRatio - durationData.synchronizationTimeRatio, precision);
+        res.waitTimeRatio = NumberUtil::DoubleReservedNDigits(
+            this->waitTimeRatio - durationData.waitTimeRatio, precision);
+        res.sdmaBw = NumberUtil::DoubleReservedNDigits(this->sdmaBw - durationData.sdmaBw, precision);
+        res.rdmaBw = NumberUtil::DoubleReservedNDigits(this->rdmaBw - durationData.rdmaBw, precision);
+        res.sdmaTime = NumberUtil::DoubleReservedNDigits(this->sdmaTime - durationData.sdmaTime, precision);
+        res.rdmaTime = NumberUtil::DoubleReservedNDigits(this->rdmaTime - durationData.rdmaTime, precision);
         return res;
     }
 };
