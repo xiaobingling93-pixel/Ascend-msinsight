@@ -60,8 +60,9 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
         TraceTime::Instance().SetIsSimulation(true);
         return;
     }
-    response.body.isCluster = CheckIsOpenClusterTag(request.params.projectAction, projectTypeEnum,
-                                                    projectInfos[0].projectName);
+    bool isCluster = CheckIsOpenClusterTag(request.params.projectAction, projectTypeEnum,
+                                           projectInfos[0].projectName);
+    response.body.isCluster = isCluster;
     SetParseCallBack(Timeline::TraceFileParser::Instance());
     if (rankListMap.size() >= PENDIND_CRITICAL_VALUE) {
         response.body.isPending = true;
@@ -69,7 +70,7 @@ void ParserJson::Parser(const std::vector<Global::ProjectExplorerInfo> &projectI
     ModuleRequestHandler::SetResponseResult(response, true);
     // add response to response queue in session
     SendResponse(std::move(responsePtr), true);
-    ParserTraceData(rankListMap, projectInfos, response.body.isCluster);
+    ParserTraceData(rankListMap, projectInfos, isCluster);
 }
 
 void ParserJson::FillBaseResponseInfo(const ImportActionRequest &request, ImportActionResponse &response,
