@@ -13,9 +13,10 @@ import { getAutoKey } from '../../utils/dataAutoKey';
 import { SorterResult } from 'antd/lib/table/interface';
 
 const TABLE_HEAD_HEIGHT = 35;
+const TABLE_SUMMARY_HEIGHT = 30;
 
 export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
-    { session, height, detail, tabState, commonState, depsList }: TableViewProps<TabProto, T>) => {
+    { session, height, detail, tabState, commonState, depsList, summaryBuilder }: TableViewProps<TabProto, T>) => {
     useEffect(() => {
         runInAction(() => {
             session.selectedDetailKeys = [];
@@ -29,7 +30,9 @@ export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
     useEffect(() => {
         setDataSource(state.dataSource);
     }, [state.dataSource]);
-    return <ResizeTable {...state} dataSource={dataSource} scroll={{ y: height - TABLE_HEAD_HEIGHT }} virtual
+    // 新增Summary(Totals)行
+    const summary = (): React.ReactNode => (summaryBuilder === undefined) ? undefined : summaryBuilder(state, dataSource);
+    return <ResizeTable {...state} summary={summary} dataSource={dataSource} scroll={{ y: height - TABLE_HEAD_HEIGHT - TABLE_SUMMARY_HEIGHT }} virtual
         rowClassName={(row): string => {
             return session.selectedDetailKeys[0] === getAutoKey(row) ? 'selected-row' : 'click-able';
         }}
@@ -69,20 +72,18 @@ export const SelectSimpleTabularDetail = observer(<T extends CommonStateProto>(
 
             // 排序
             const { columnKey, order } = sorter as SorterResult<Record<string, unknown>>;
-            let sortedData = [...filteredData];
             if (order) {
                 const columnSorter = state.columns.find(col => col.key === columnKey)?.sorter;
-                sortedData = sortedData.sort((a, b) => {
+                filteredData = filteredData.sort((a, b) => {
                     if (typeof columnSorter === 'function') {
                         const result = columnSorter(a, b);
                         return order === 'ascend' ? result : -result;
                     }
                     return 0;
                 });
-                setDataSource(sortedData);
-            } else {
-                setDataSource(filteredData);
             }
+
+            setDataSource(filteredData);
         }}
     />;
 });

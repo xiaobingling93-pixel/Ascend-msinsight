@@ -204,6 +204,11 @@ const StyledTable = styled(Support)`
         font-size: 12px;
         border: none;
     }
+    
+    // summary 汇总行
+    .ant-table-summary {
+        background: ${(p): string => p.theme.bgColorLight};
+    }
 `;
 
 interface ExtendsColumnType {minWidth?: number};

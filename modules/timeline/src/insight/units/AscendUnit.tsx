@@ -27,7 +27,7 @@ import { createCounterParam, createStatusParam } from './unitFunc';
 import { SelectedDataBottomPanel } from '../../components/SelectedDataBottomPanel';
 import { SelectSimpleTabularDetail } from '../../components/details/SelectSimpleDetail';
 import { renderRadiusBorder } from '../../components/details/utils';
-import { generateFlowParam, slicesListDetail } from './details';
+import { generateFlowParam, generateSummary, slicesListDetail } from './details';
 import { colorPalette, getTimeOffset } from './utils';
 import React, { useEffect, useState, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
@@ -365,7 +365,7 @@ export const ThreadUnit = unit<ThreadMetaData>({
             },
             {
                 Detail: ({ session, height }): JSX.Element => <SelectSimpleTabularDetail
-                    session={session} height={height} detail={slicesListDetail}></SelectSimpleTabularDetail>,
+                    session={session} height={height} detail={slicesListDetail} summaryBuilder={generateSummary}></SelectSimpleTabularDetail>,
                 More: (): JSX.Element => <SliceRightOpDetail session={newSession} metadata={metadata} />,
                 moreWh: 320,
             },

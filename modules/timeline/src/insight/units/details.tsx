@@ -6,7 +6,7 @@ import { detail, linkData } from '../../entity/insight';
 import type { DetailDescriptor, LinkDataDesc } from '../../entity/insight';
 import { isEmpty } from 'lodash';
 import styled from '@emotion/styled';
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { action, runInAction } from 'mobx';
 import type { AscendMultiSliceList, ThreadMetaData, ThreadTrace } from '../../entity/data';
 import type { Session } from '../../entity/session';
@@ -14,6 +14,9 @@ import { getSliceTimeDisplay, ThreadUnit } from './AscendUnit';
 import { getTimestamp } from '../../utils/humanReadable';
 import { colorPalette, getTimeOffset } from './utils';
 import { hashToNumber } from '../../utils/colorUtils';
+import { TableState } from '../../components/details/types';
+import { Table } from 'antd';
+import { AutoKey } from '../../utils/dataAutoKey';
 export const slicesListDetail = detail({
     name: 'Slice List',
     columns: [
@@ -53,25 +56,10 @@ export const slicesListDetail = detail({
         const raw = await window.request(metadata.dataSource, { command: 'unit/threads', params });
         const res = raw.data;
 
-        let totalWallDuration = 0;
-        let totalSelfTime = 0;
-        let totalOccurrences = 0;
-
         res.forEach((element: AscendMultiSliceList) => {
-            totalWallDuration += element.wallDuration ?? 0;
-            totalSelfTime += element.selfTime ?? 0;
-            totalOccurrences += element.occurrences ?? 0;
             element.rankId = metadata.cardId;
             element.startTime = Math.floor(startTime + timestampOffset);
             element.endTime = Math.ceil(endTime + timestampOffset);
-        });
-
-        res.push({
-            title: 'Totals',
-            wallDuration: totalWallDuration,
-            selfTime: totalSelfTime,
-            avgWallDuration: totalOccurrences === 0 ? totalWallDuration : totalWallDuration / totalOccurrences,
-            occurrences: totalOccurrences,
         });
 
         return res;
@@ -127,6 +115,34 @@ export const generateFlowParam = function(metadata: ThreadMetaData, data: any, m
         startTime: data.startTime ?? data.timestamp,
         endTime: (data.startTime ?? data.timestamp) + data.duration,
     };
+};
+
+export const generateSummary = (state: TableState, dataSource: Array<AutoKey<object>>): ReactNode => (
+    <Table.Summary fixed={'top'}>
+        <Table.Summary.Row>
+            { state.columns.map((column, index) => (
+                <Table.Summary.Cell key={column.key} index={index}>
+                    {doSummary(dataSource)[index]}
+                </Table.Summary.Cell>
+            ))}
+        </Table.Summary.Row>
+    </Table.Summary>
+);
+
+const doSummary = (datas: ReadonlyArray<AutoKey<object>>): ReactNode[] => {
+    let totalWallDuration = 0;
+    let totalSelfTime = 0;
+    let totalOccurrences = 0;
+    datas.forEach((slice) => {
+        const mSlice = slice as AscendMultiSliceList;
+        totalWallDuration += mSlice.wallDuration ?? 0;
+        totalSelfTime += mSlice.selfTime ?? 0;
+        totalOccurrences += mSlice.occurrences ?? 0;
+    });
+    const averageWallDuration = totalOccurrences === 0 ? totalWallDuration : totalWallDuration / totalOccurrences;
+    // 将时间format为ms字符串
+    const tmp = [totalWallDuration, totalSelfTime, averageWallDuration].map(item => getSliceTimeDisplay(item));
+    return ['Totals', ...tmp, totalOccurrences];
 };
 
 const generateFlowData = function (data: any, timeOffset: number): any {

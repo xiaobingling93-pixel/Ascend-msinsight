@@ -7,6 +7,7 @@ import type { Session } from '../../entity/session';
 import type { DetailDescriptor, MoreDescriptor } from '../../entity/insight';
 import type { TabComponentProps, TabProto, CommonStateProto } from './base/Tabs';
 import type { TabState } from '../../entity/tabDependency';
+import React from 'react';
 
 export interface TableViewProps<Tab extends TabProto, TabsState extends CommonStateProto> {
     session: Session;
@@ -19,6 +20,7 @@ export interface TableViewProps<Tab extends TabProto, TabsState extends CommonSt
     tabs?: TabComponentProps<Tab, TabsState>['tabs'];
     interactorProps?: TabComponentProps<Tab, TabsState>['interactorProps'];
     onDataLoaded?: (data: unknown[]) => void;
+    summaryBuilder?: (state: TableState, dataSource: Array<AutoKey<object>>) => React.ReactNode;
 };
 
 export interface MoreTableProps {
