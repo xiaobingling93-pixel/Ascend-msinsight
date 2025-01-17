@@ -7,7 +7,7 @@
 
 #include <string>
 #include <vector>
-#include <stdint.h>
+#include <cstdint>
 
 namespace Dic {
 namespace Module {

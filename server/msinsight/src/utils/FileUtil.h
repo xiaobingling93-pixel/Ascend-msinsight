@@ -543,7 +543,7 @@ public:
     /**
     * @brief 检查路径的基本安全项： 1.绝对路径校验 2.软链接校验 3.路径长度校验 4.非法字符校验 6.文件属主校验（文件属主) 7.权限校验
     */
-    static Status CheckPathBasic(const std::string &filePath, fs::perms = fs::perms::none);
+    static Status CheckPathBasic(const std::string &filePath, fs::perms permission = fs::perms::none);
 
     /**
     * @brief 检查文件属主

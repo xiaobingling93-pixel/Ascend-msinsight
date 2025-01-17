@@ -15,7 +15,7 @@ class CmdUtil {
 public:
     CmdUtil() = default;
 
-    CmdUtil(std::string execPath)
+    explicit CmdUtil(std::string execPath)
     {
         this->Command(std::move(execPath));
     }
@@ -42,23 +42,23 @@ public:
         }
     }
 
-    CmdUtil &Command(std::string exec)
+    CmdUtil &Command(std::string execStr)
     {
-        if (exec.empty()) {
+        if (execStr.empty()) {
             badFlag = true;
             return *this;
         }
-        if (!FileUtil::CheckDirValid(exec) || !StringUtil::ValidateCommandFilePathParam(exec)) {
+        if (!FileUtil::CheckDirValid(execStr) || !StringUtil::ValidateCommandFilePathParam(execStr)) {
             Server::ServerLog::Error("Cmd not valid");
             badFlag = true;
             return *this;
         }
-        if (!FileUtil::CheckPathPermission(exec, fs::perms::owner_exec)) {
+        if (!FileUtil::CheckPathPermission(execStr, fs::perms::owner_exec)) {
             Server::ServerLog::Error("Cmd not have execute permission");
             badFlag = true;
             return *this;
         }
-        this->exec = std::move(exec);
+        this->exec = std::move(execStr);
         return *this;
     }
 

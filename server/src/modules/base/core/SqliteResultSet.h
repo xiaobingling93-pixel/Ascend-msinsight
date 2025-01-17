@@ -7,7 +7,7 @@
 
 #include <string>
 #include <unordered_map>
-#include <stdint.h>
+#include <cstdint>
 #include "sqlite3.h"
 
 

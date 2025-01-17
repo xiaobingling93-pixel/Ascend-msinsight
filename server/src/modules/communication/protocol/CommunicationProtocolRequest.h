@@ -58,6 +58,7 @@ struct OperatorDetailsParam {
         this->pageSize = param.pageSize;
         this->currentPage = param.currentPage;
     }
+    OperatorDetailsParam& operator=(const OperatorDetailsParam& param) = delete;
 };
 
 struct OperatorDetailsRequest : public Request {
@@ -191,6 +192,7 @@ struct OperatorNamesParams {
         }
         this->stage = params.stage;
     }
+    OperatorNamesParams& operator=(const OperatorNamesParams &params) = delete;
 };
 
 struct OperatorNamesRequest  : public Request {
@@ -244,6 +246,7 @@ struct DurationListParams {
             this->rankList.push_back(item);
         }
     }
+    DurationListParams& operator=(const DurationListParams& params) = delete;
 };
 
 struct DurationListRequest  : public Request {
