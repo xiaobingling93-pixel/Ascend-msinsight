@@ -42,6 +42,9 @@ public:
     std::vector<std::string> GetSourceList();
     std::vector<SourceFileLine> GetApiLinesByCoreAndSource(const std::string &core, const std::string &sourceName);
     std::string GetInstr();
+    std::vector<SourceFileInstructionDynamicCol> GetInstrDynamic(std::string &coreName);
+    std::map<std::string, int> GetInstructionColumnTypeMap();
+    std::map<std::string, int> GetSourceLineColumnTypeMap();
     std::string GetSourceByName(std::string &sourceName);
     bool GetDetailsBaseInfo(Protocol::DetailsBaseInfoResBody &responseBody, bool isBaseline);
     bool GetDetailsLoadInfo(Protocol::DetailsLoadInfoResBody &responseBody, bool isBaseline);

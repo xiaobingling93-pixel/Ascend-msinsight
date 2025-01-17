@@ -49,6 +49,24 @@ struct SourceApiLineRequest : public Request {
     SourceApiLineParams params;
 };
 
+struct SourceApiInstrParams {
+    std::string coreName;
+    std::tuple<bool, std::string> Valid()
+    {
+        std::string errMsg;
+        bool res = CheckStrParamValid(coreName, errMsg);
+        if (!res) {
+            return {res, errMsg};
+        }
+        return {res, errMsg};
+    }
+};
+
+struct SourceApiInstrDynamicRequest : public Request {
+    SourceApiInstrDynamicRequest() : Request(REQ_RES_SOURCE_API_INSTRUCTIONS) {};
+    SourceApiInstrParams params;
+};
+
 struct SourceApiInstrRequest : public Request {
     SourceApiInstrRequest() : Request(REQ_RES_SOURCE_API_INSTRUCTIONS) {};
 };

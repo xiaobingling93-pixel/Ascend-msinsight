@@ -70,6 +70,44 @@ template<> std::optional<document_t> ToResponseJson<SourceApiInstrResponse>(cons
     return std::move(json);
 }
 
+template<>
+std::optional<document_t> ToResponseJson<SourceApiInstrDynamicResponse>(const SourceApiInstrDynamicResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    // 组装核的名字
+    JsonUtil::AddMember(body, "Core", response.body.coreName, allocator);
+    json_t jsonInstrDtype(kObjectType);
+    // 组装表头信息
+    JsonUtil::AddMember(body, "Instruction Dtype", jsonInstrDtype, allocator);
+    json_t jsonInstrColumn(kObjectType);
+    JsonUtil::AddMember(jsonInstrDtype, "Instructions", jsonInstrColumn, allocator);
+    for (const auto &item: response.body.columnNameMap) {
+        JsonUtil::AddMember(jsonInstrColumn, item.first, item.second, allocator);
+    }
+    // 组装表格内容
+    json_t jsonInstructions(kArrayType);
+    JsonUtil::AddMember(body, "Instructions", jsonInstructions, allocator);
+    for (const auto &item: response.body.columnValues) {
+        json_t jsonInstruction(kObjectType);
+        jsonInstructions.PushBack(jsonInstruction, allocator);
+        for (const auto &stringItem: item.stringMap) {
+            JsonUtil::AddMember(jsonInstruction, stringItem.first, stringItem.second, allocator);
+        }
+        for (const auto &intItem: item.intMap) {
+            JsonUtil::AddMember(jsonInstruction, intItem.first, intItem.second, allocator);
+        }
+        for (const auto &floatItem: item.floatMap) {
+            JsonUtil::AddMember(jsonInstruction, floatItem.first, floatItem.second, allocator);
+        }
+    }
+
+    return std::move(json);
+}
+
 template<> std::optional<document_t> ToResponseJson<DetailsBaseInfoResponse>(const DetailsBaseInfoResponse &response)
 {
     document_t json(kObjectType);

@@ -13,47 +13,55 @@ namespace Dic::Module::Source::Test {
     const std::string_view BIN_FILE_PATH_API_LINE = "query_api_line_handler_test.bin";
     const std::string_view API_FILE = R"({
 "Cores" : ["core0.veccore0", "core0.veccore1"],
+"Files Dtype": {
+    "Lines": {
+        "Address Range": 0,
+        "Cycles": 1,
+        "Instructions Executed": 1,
+        "Line": 1
+    }
+},
 "Files" : [{
         "Lines" : [{
-                "Address Range" : [["0x1134e130", "0x1134e130"], ["0x1134e138", "0x1134e138"]],
+                "Address Range" : [["0x1134e2d8", "0x1134e4d8"], ["0x1134e138", "0x1134e138"]],
                 "Cycles" : [56, 56],
                 "Instructions Executed" : [8, 8],
-                "Line" : 0
+                "Line" : 31
             }, {
                 "Address Range" : [["0x1134e0f0", "0x1134e0f0"], ["0x1134e0f8", "0x1134e0f8"]],
                 "Cycles" : [284, 284],
                 "Instructions Executed" : [36, 36],
-                "Line" : 48
+                "Line" : 32
             }, {
                 "Address Range" : [["0x1134e158", "0x1134e158"], ["0x1134e160", "0x1134e160"]],
                 "Cycles" : [7729, 1984],
                 "Instructions Executed" : [208, 208],
-                "Line" : 50
+                "Line" : 33
             }, {
                 "Address Range" : [["0x1134e0e8", "0x1134e0e8"], ["0x1134e0f0", "0x1134e0f0"]],
                 "Cycles" : [8145, 2400],
                 "Instructions Executed" : [260, 260],
-                "Line" : 59
+                "Line" : 41
             }, {
                 "Address Range" : [["0x1134e048", "0x1134e0b0"], ["0x1134e0b8", "0x1134e0b8"]],
                 "Cycles" : [2670, 1609],
                 "Instructions Executed" : [33, 33],
-                "Line" : 61
+                "Line" : 42
             }, {
                 "Address Range" : [["0x1134e000", "0x1134e044"]],
                 "Cycles" : [1694, 1442],
                 "Instructions Executed" : [18, 18],
-                "Line" : 65
+                "Line" : 43
             }, {
                 "Address Range" : [["0x1134e048", "0x1134e0b0"], ["0x1134e0b8", "0x1134e0b8"]],
                 "Cycles" : [2670, 1609],
                 "Instructions Executed" : [33, 33],
-                "Line" : 68
+                "Line" : 46
             }, {
                 "Address Range" : [["0x1134e0e0", "0x1134e0e0"]],
                 "Cycles" : [0, 0],
                 "Instructions Executed" : [1, 1],
-                "Line" : 69
+                "Line" : 56
             }
         ],
         "Source" : "/test/vec_add1_simt.cpp"
@@ -62,6 +70,18 @@ namespace Dic::Module::Source::Test {
 })";
     const std::string_view INSTR_FILE = R"({
 	"Cores" : ["core0.veccore0", "core0.veccore1"],
+    "Instructions Dtype": {
+        "Instructions": {
+            "Address": 3,
+            "AscendC Inner Code": 3,
+            "Cycles": 1,
+            "Instructions Executed": 1,
+            "Pipe": 3,
+            "TheoreticalStallCycles": 1,
+            "Source": 3,
+            "RealStallCycles": 1
+         }
+    },
 	"Instructions" : [{
 			"Address" : "0x1134e2d8",
 			"AscendC Inner Code" : "/test/vec_add1_simt.cpp:50",

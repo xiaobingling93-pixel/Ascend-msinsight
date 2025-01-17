@@ -385,6 +385,24 @@ std::string SourceFileParser::GetInstr()
     return sourceInstructionParser.GetInstr(filePath);
 }
 
+std::vector<SourceFileInstructionDynamicCol> SourceFileParser::GetInstrDynamic(std::string &coreName)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    return sourceInstructionParser.GetInstrDynamic(coreName);
+}
+
+std::map<std::string, int> SourceFileParser::GetInstructionColumnTypeMap()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    return sourceInstructionParser.GetInstructionColumnTypeMap();
+}
+
+std::map<std::string, int> SourceFileParser::GetSourceLineColumnTypeMap()
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    return sourceInstructionParser.GetSourceLineColumnTypeMap();
+}
+
 std::string SourceFileParser::GetSourceByName(std::string &sourceName)
 {
     std::unique_lock<std::mutex> lock(mutex);

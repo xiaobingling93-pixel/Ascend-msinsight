@@ -16,7 +16,7 @@ class SourceInstructionParserDerived : public SourceInstructionParser {
 public:
     void ConvertApiInstrNew(std::string &json)
     {
-        SourceInstructionParser::ConvertApiInstrNew(json);
+        SourceInstructionParser::ConvertApiInstrDynamic(json);
     }
 
     std::vector<SourceFileInstructionDynamicCol>& GetInstructionList()
@@ -26,10 +26,10 @@ public:
 
     void ConvertApiFileNew(std::string &json)
     {
-        SourceInstructionParser::ConvertApiFileNew(json);
+        SourceInstructionParser::ConvertApiFileDynamic(json);
     }
 
-    std::map<std::string, std::vector<SourceFileLineDynamicCol>>& GetSourceLinesMap()
+    std::unordered_map<std::string, std::vector<SourceFileLineDynamicCol>>& GetSourceLinesMap()
     {
         return SourceInstructionParser::GetSourceLinesMap();
     }

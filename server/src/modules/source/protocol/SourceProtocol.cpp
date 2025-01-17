@@ -15,6 +15,7 @@ void SourceProtocol::RegisterJsonToRequestFuncs()
     jsonToReqFactory.emplace(REQ_RES_SOURCE_CODE_FILE, ToCodeFileRequest);
     jsonToReqFactory.emplace(REQ_RES_SOURCE_API_LINE, ToApiLineRequest);
     jsonToReqFactory.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS, ToApiInstrRequest);
+    jsonToReqFactory.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS_DYNAMIC, ToApiInstrDynamicRequest);
     jsonToReqFactory.emplace(REQ_RES_DETAILS_BASE_INFO, ToDetailsBaseInfoRequest);
     jsonToReqFactory.emplace(REQ_RES_DETAILS_COMPUTE_LOAD_INFO, ToDetailsLoadInfoRequest);
     jsonToReqFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH, ToDetailsMemoryGraphRequest);
@@ -28,6 +29,7 @@ void SourceProtocol::RegisterResponseToJsonFuncs()
     resToJsonFactory.emplace(REQ_RES_SOURCE_CODE_FILE, ToCodeFileResponse);
     resToJsonFactory.emplace(REQ_RES_SOURCE_API_LINE, ToApiLineResponse);
     resToJsonFactory.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS, ToApiInstrResponse);
+    resToJsonFactory.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS_DYNAMIC, ToApiInstrDynamicResponse);
     resToJsonFactory.emplace(REQ_RES_DETAILS_BASE_INFO, ToDetailsBaseInfoResponse);
     resToJsonFactory.emplace(REQ_RES_DETAILS_COMPUTE_LOAD_INFO, ToDetailsLoadInfoResponse);
     resToJsonFactory.emplace(REQ_RES_DETAILS_COMPUTE_MEMORY_GRAPH, ToDetailsMemoryGraphResponse);
@@ -83,6 +85,17 @@ std::unique_ptr<Request> SourceProtocol::ToApiInstrRequest(const Dic::json_t &js
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
     }
+    return reqPtr;
+}
+
+std::unique_ptr<Request> SourceProtocol::ToApiInstrDynamicRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<SourceApiInstrDynamicRequest> reqPtr = std::make_unique<SourceApiInstrDynamicRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.coreName, json["params"], "coreName");
     return reqPtr;
 }
 
@@ -170,6 +183,11 @@ std::optional<document_t> SourceProtocol::ToApiLineResponse(const Dic::Protocol:
 std::optional<document_t> SourceProtocol::ToApiInstrResponse(const Dic::Protocol::Response &response)
 {
     return ToResponseJson<SourceApiInstrResponse>(dynamic_cast<const SourceApiInstrResponse &>(response));
+}
+
+std::optional<document_t> SourceProtocol::ToApiInstrDynamicResponse(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<SourceApiInstrDynamicResponse>(dynamic_cast<const SourceApiInstrDynamicResponse &>(response));
 }
 
 std::optional<document_t> SourceProtocol::ToDetailsBaseInfoResponse(const Dic::Protocol::Response &response)

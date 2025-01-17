@@ -10,6 +10,7 @@
 #include "GlobalDefs.h"
 #include "ProtocolDefs.h"
 #include "ProtocolMessage.h"
+#include "SourceDefs.h"
 
 namespace Dic {
 namespace Protocol {
@@ -49,6 +50,23 @@ struct SourceApiInstrResponse : public Response {
     SourceApiInstrResponse() : Response(REQ_RES_SOURCE_API_INSTRUCTIONS) {}
 
     SourceApiInstrResBody body;
+};
+
+struct SourceInstructionDynamic {
+    std::unordered_map<std::string, int> intMap;
+    std::unordered_map<std::string, float> floatMap;
+    std::unordered_map<std::string, std::string> stringMap;
+};
+
+struct SourceApiInstrDynamicBody {
+    std::string coreName;
+    std::map<std::string, int> columnNameMap;
+    std::vector<SourceInstructionDynamic> columnValues;
+};
+
+struct SourceApiInstrDynamicResponse : public Response {
+    SourceApiInstrDynamicResponse() : Response(REQ_RES_SOURCE_API_INSTRUCTIONS_DYNAMIC) {}
+    SourceApiInstrDynamicBody body;
 };
 
 struct TableRow {

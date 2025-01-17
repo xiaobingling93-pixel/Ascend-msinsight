@@ -91,7 +91,7 @@ json示例
   ]
 }
  */
-void SourceInstructionParser::ConvertApiInstrNew(const std::string &jsonStr)
+void SourceInstructionParser::ConvertApiInstrDynamic(const std::string &jsonStr)
 {
     std::string errMsg;
     auto optional = JsonUtil::TryParse(jsonStr, errMsg);
@@ -185,7 +185,7 @@ void SourceInstructionParser::ConvertApiInstr(const std::string &jsonStr)
         }
         // parse instructions
         if (d.HasMember("Instructions Dtype")) {
-            ConvertApiInstrNew(jsonStr);
+            ConvertApiInstrDynamic(jsonStr);
         }
     } catch (const std::exception &e) {
         ServerLog::Error("Can't parse api instr,not json.Error is ", e.what());
@@ -227,7 +227,7 @@ json示例
   ]
 }
  */
-void SourceInstructionParser::ConvertApiFileNew(const std::string &jsonStr)
+void SourceInstructionParser::ConvertApiFileDynamic(const std::string &jsonStr)
 {
     std::string errMsg;
     auto optional = JsonUtil::TryParse(jsonStr, errMsg);
@@ -523,9 +523,43 @@ std::string SourceInstructionParser::GetInstr(std::string &filePath)
     return content;
 }
 
-std::vector<SourceFileInstructionDynamicCol> SourceInstructionParser::GetInstructionsByCoreName(std::string &coreName)
+std::vector<SourceFileInstructionDynamicCol> SourceInstructionParser::GetInstrDynamic(std::string &coreName)
 {
-    return {};
+    std::vector<SourceFileInstructionDynamicCol> list;
+    auto targetCore = std::find(apiCores.begin(), apiCores.end(), coreName);
+    if (targetCore == apiCores.end()) {
+        targetCore = apiCores.begin();
+    }
+    size_t index = std::distance(apiCores.begin(), targetCore); // never below zero
+
+    for (const auto &item: instructionList) {
+        SourceFileInstructionDynamicCol col;
+        GetInstrValueInTargetCore(item.intColumnMap, col.intColumnMap, index);
+        GetInstrValueInTargetCore(item.floatColumnMap, col.floatColumnMap, index);
+        GetInstrValueInTargetCore(item.stringColumnMap, col.stringColumnMap, index);
+        list.emplace_back(col);
+    }
+
+    return list;
+}
+
+template<typename T>
+void SourceInstructionParser::GetInstrValueInTargetCore(
+    const std::unordered_map<std::string, std::vector<T>> &sourceMap,
+    std::unordered_map<std::string, std::vector<T>> &targetMap,
+    size_t index)
+{
+    for (const auto &sourceItem: sourceMap) {
+        if (sourceItem.second.empty() || sourceItem.second.size() <= index) {
+            continue;
+        }
+        // 如果是数组，获取指定core上的数据，否则取第一个值
+        if (sourceItem.second.size() == 1) {
+            targetMap[sourceItem.first].emplace_back(sourceItem.second[0]);
+            continue;
+        }
+        targetMap[sourceItem.first].emplace_back(sourceItem.second[index]);
+    }
 }
 
 std::string SourceInstructionParser::GetSourceByName(std::string &sourceName, std::string &filePath)
@@ -545,6 +579,16 @@ std::string SourceInstructionParser::GetSourceByName(std::string &sourceName, st
     std::string content = BinFileParseUtil::GetContentStr(file, pos);
     file.close();
     return content;
+}
+
+std::map<std::string, int> SourceInstructionParser::GetInstructionColumnTypeMap() const
+{
+    return instructionColumnTypeMap;
+}
+
+std::map<std::string, int> SourceInstructionParser::GetSourceLineColumnTypeMap() const
+{
+    return sourceLineColumnTypeMap;
 }
 
 } // Dic

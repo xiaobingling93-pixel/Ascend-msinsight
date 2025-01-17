@@ -14,15 +14,17 @@ const std::string_view SOURCE_INSTRUCTIONS_JSON = R"(
 	],
 	"Instructions Dtype" : {
 		"Instructions" : {
-			"string" : 0,
+			"skip" : 0,
 			"int" : 1,
             "float" : 2,
-            "string list" : 0,
+            "string" : 3,
 			"int list" : 1,
-            "float list" : 2
+            "float list" : 2,
+            "string list" : 3
 		}
 	},
 	"Instructions" : [{
+            "skip" : "skip",
 			"string" : "0x1269f000",
 			"int" : 1,
 			"float" : 1.2,
@@ -36,6 +38,7 @@ const std::string_view SOURCE_INSTRUCTIONS_JSON = R"(
 				1.2, 2.2
 			]
 		}, {
+            "skip" : "skip",
 			"string" : "0x1269f001",
 			"int" : 11,
 			"float" : 1.2,
@@ -60,10 +63,11 @@ const std::string_view SOURCE_API_FILE_JSON = R"(
 	],
 	"Files Dtype" : {
 		"Lines" : {
-			"string" : 0,
+			"Address Range" : 0,
 			"int" : 1,
             "float" : 2,
-            "string list" : 0,
+			"string" : 3,
+            "string list" : 3,
 			"int list" : 1,
             "float list" : 2
 		}
