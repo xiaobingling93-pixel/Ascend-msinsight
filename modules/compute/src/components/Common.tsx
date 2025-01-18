@@ -56,11 +56,19 @@ export const HeaderFixedContainer = (
 const LeftRightBox = styled.div`
   height: 100%;
   width: 100%;
+  .left {
+    float: left;
+  }
+  .right {
+    float: right;
+  }
   .left, .right {
     display: inline-block;
     position: relative;
     height: calc(100% - 6px);
-    overflow: hidden;
+  }
+  .resizor {
+    cursor: col-resize;
   }
 `;
 
