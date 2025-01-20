@@ -164,7 +164,7 @@ const baseOptions: EChartsOption = {
                 </div>
                 <div class="row">
                     <div class="label">Duration</div>
-                    <div class="value">${safeStr(params.value[3])} ns</div>
+                    <div class="value">${safeStr(params.value[3])} ms</div>
                 </div>
             </div>
             `;
