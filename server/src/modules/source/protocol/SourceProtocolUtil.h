@@ -17,6 +17,8 @@ namespace Protocol {
 template<typename RESPONSE> std::optional<document_t> ToResponseJson(const RESPONSE &response);
 template<> std::optional<document_t> ToResponseJson<SourceCodeFileResponse>(const SourceCodeFileResponse &response);
 template<> std::optional<document_t> ToResponseJson<SourceApiLineResponse>(const SourceApiLineResponse &response);
+template<>
+std::optional<document_t> ToResponseJson<SourceApiLineDynamicResponse>(const SourceApiLineDynamicResponse &response);
 template<> std::optional<document_t> ToResponseJson<SourceApiInstrResponse>(const SourceApiInstrResponse &response);
 template<>
 std::optional<document_t> ToResponseJson<SourceApiInstrDynamicResponse>(const SourceApiInstrDynamicResponse &response);

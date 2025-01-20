@@ -1,0 +1,65 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
+ */
+
+#include <gtest/gtest.h>
+#include "ComputeQuerySourceApiHandlerTest.h"
+#include "SourceProtocolRequest.h"
+#include "QueryCodeFileHandler.h"
+#include "QueryApiLineDynamicHandler.h"
+
+using namespace Dic::Server;
+using namespace Dic::Module;
+using namespace Dic::Module::Source;
+using namespace Dic::Module::Source::Test;
+
+class QueryApiLineDynamicHandlerTest {};
+
+class HandlerDerived : public QueryApiLineDynamicHandler {
+public:
+    void SetResponseBody(SourceApiLineDynamicResponse &response, SourceApiLineDynamicRequest &request)
+    {
+        QueryApiLineDynamicHandler::SetResponseBody(response, request);
+    }
+};
+
+TEST_F(ComputeQuerySourceApiHandlerTest, testQueryApiLineDynamicHandlerRequestWithValidData)
+{
+    QueryApiLineDynamicHandler handler;
+    auto ptr = std::make_unique<SourceApiLineDynamicRequest>();
+    ptr->params.sourceName = SOURCE_NAME;
+    ptr->params.coreName = CORE_NAME;
+    ptr->moduleName = "Source";
+    ptr->projectName = "project";
+    handler.HandleRequest(std::move(ptr));
+}
+
+TEST_F(ComputeQuerySourceApiHandlerTest, testQueryApiLineDynamicHandlerSetResponseBodyWithValidData)
+{
+    SourceApiLineDynamicRequest request;
+    request.params.sourceName = SOURCE_NAME;
+    request.params.coreName = CORE_NAME;
+    SourceApiLineDynamicResponse response;
+    HandlerDerived handler;
+    handler.SetResponseBody(response, request);
+    auto columnMap = response.body.columnNameMap;
+    EXPECT_EQ(columnMap.size(), 4); // column map size is 4
+    EXPECT_EQ(columnMap["Address Range"], 0);
+    EXPECT_EQ(columnMap["Cycles"], 1);
+    EXPECT_EQ(columnMap["Instructions Executed"], 1);
+    EXPECT_EQ(columnMap["Line"], 1);
+
+    auto lines = response.body.sourceFileLines;
+    EXPECT_EQ(lines.size(), 8); // lines size is 8
+    auto line = lines[1];
+    auto addressRange = line.addressRange;
+    EXPECT_EQ(addressRange.size(), 2); // address range size is 2
+    EXPECT_EQ(addressRange[1].first, "0x1134e0f8");
+    EXPECT_EQ(addressRange[1].second, "0x1134e0f8");
+
+    auto map = line.columnValueMap;
+    EXPECT_EQ(map.intMap.size(), 3); // int map size is 3
+    EXPECT_EQ(map.intMap["Cycles"], 284); // cycles is 284
+    EXPECT_EQ(map.intMap["Instructions Executed"], 36); // instructions executed is 36
+    EXPECT_EQ(map.intMap["Line"], 32); // line is 32
+}

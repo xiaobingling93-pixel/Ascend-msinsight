@@ -14,6 +14,7 @@ void SourceProtocol::RegisterJsonToRequestFuncs()
 {
     jsonToReqFactory.emplace(REQ_RES_SOURCE_CODE_FILE, ToCodeFileRequest);
     jsonToReqFactory.emplace(REQ_RES_SOURCE_API_LINE, ToApiLineRequest);
+    jsonToReqFactory.emplace(REQ_RES_SOURCE_API_LINE_DYNAMIC, ToApiLineDynamicRequest);
     jsonToReqFactory.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS, ToApiInstrRequest);
     jsonToReqFactory.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS_DYNAMIC, ToApiInstrDynamicRequest);
     jsonToReqFactory.emplace(REQ_RES_DETAILS_BASE_INFO, ToDetailsBaseInfoRequest);
@@ -28,6 +29,7 @@ void SourceProtocol::RegisterResponseToJsonFuncs()
 {
     resToJsonFactory.emplace(REQ_RES_SOURCE_CODE_FILE, ToCodeFileResponse);
     resToJsonFactory.emplace(REQ_RES_SOURCE_API_LINE, ToApiLineResponse);
+    resToJsonFactory.emplace(REQ_RES_SOURCE_API_LINE_DYNAMIC, ToApiLineDynamicResponse);
     resToJsonFactory.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS, ToApiInstrResponse);
     resToJsonFactory.emplace(REQ_RES_SOURCE_API_INSTRUCTIONS_DYNAMIC, ToApiInstrDynamicResponse);
     resToJsonFactory.emplace(REQ_RES_DETAILS_BASE_INFO, ToDetailsBaseInfoResponse);
@@ -69,6 +71,18 @@ std::unique_ptr<Request> SourceProtocol::ToCodeFileRequest(const Dic::json_t &js
 std::unique_ptr<Request> SourceProtocol::ToApiLineRequest(const Dic::json_t &json, std::string &error)
 {
     std::unique_ptr<SourceApiLineRequest> reqPtr = std::make_unique<SourceApiLineRequest>();
+    if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
+        error = "Failed to set request base info, command is: " + reqPtr->command;
+        return nullptr;
+    }
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.coreName, json["params"], "coreName");
+    JsonUtil::SetByJsonKeyValue(reqPtr->params.sourceName, json["params"], "sourceName");
+    return reqPtr;
+}
+
+std::unique_ptr<Request> SourceProtocol::ToApiLineDynamicRequest(const Dic::json_t &json, std::string &error)
+{
+    std::unique_ptr<SourceApiLineDynamicRequest> reqPtr = std::make_unique<SourceApiLineDynamicRequest>();
     if (!ProtocolUtil::SetRequestBaseInfo(*reqPtr, json)) {
         error = "Failed to set request base info, command is: " + reqPtr->command;
         return nullptr;
@@ -178,6 +192,11 @@ std::optional<document_t> SourceProtocol::ToCodeFileResponse(const Dic::Protocol
 std::optional<document_t> SourceProtocol::ToApiLineResponse(const Dic::Protocol::Response &response)
 {
     return ToResponseJson<SourceApiLineResponse>(dynamic_cast<const SourceApiLineResponse &>(response));
+}
+
+std::optional<document_t> SourceProtocol::ToApiLineDynamicResponse(const Dic::Protocol::Response &response)
+{
+    return ToResponseJson<SourceApiLineDynamicResponse>(dynamic_cast<const SourceApiLineDynamicResponse &>(response));
 }
 
 std::optional<document_t> SourceProtocol::ToApiInstrResponse(const Dic::Protocol::Response &response)

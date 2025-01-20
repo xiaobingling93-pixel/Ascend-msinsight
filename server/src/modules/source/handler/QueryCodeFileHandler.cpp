@@ -20,7 +20,7 @@ bool QueryCodeFileHandler::HandleRequest(std::unique_ptr<Protocol::Request> requ
     std::unique_ptr<SourceCodeFileResponse> responsePtr = std::make_unique<SourceCodeFileResponse>();
     SourceCodeFileResponse &response = *responsePtr;
     SetBaseResponse(request, response);
-    if (auto [isVaild, errMsg] = request.params.Vaild(); isVaild == false) {
+    if (auto [isVaild, errMsg] = request.params.Valid(); isVaild == false) {
         ServerLog::Error("Parameter of command ", request.command, "is invaild, error:", errMsg);
         SetResponseResult(response, false, errMsg, REQUEST_PARAMS_ERROR);
         session.OnResponse(std::move(responsePtr));

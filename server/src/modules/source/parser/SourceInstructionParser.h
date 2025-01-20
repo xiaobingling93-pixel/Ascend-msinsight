@@ -40,6 +40,7 @@ public:
     std::vector<std::string> GetCoreList();
     std::vector<std::string> GetSourceList();
     std::vector<SourceFileLine> GetApiLinesByCoreAndSource(const std::string &core, const std::string &sourceName);
+    std::vector<SourceFileLineDynamicCol> GetApiLinesDynamic(const std::string &core, const std::string &sourceName);
     std::string GetInstr(std::string &filePath);
     std::vector<SourceFileInstructionDynamicCol> GetInstrDynamic(std::string &coreName);
     std::string GetSourceByName(std::string &sourceName, std::string &filePath);
@@ -63,8 +64,8 @@ protected:
     std::map<std::string, std::vector<SourceFileLine>> ConvertToFileMap(rapidjson::Value &fileArray);
     std::vector<SourceFileLine> ConvertToLineArray(rapidjson::Value &lineArray);
     template<typename T>
-    void GetInstrValueInTargetCore(const std::unordered_map<std::string, std::vector<T>> &sourceMap,
-                                   std::unordered_map<std::string, std::vector<T>> &targetMap, size_t index);
+    void GetValueInTargetCore(const std::unordered_map<std::string, std::vector<T>> &sourceMap,
+                              std::unordered_map<std::string, std::vector<T>> &targetMap, size_t index);
     std::vector<SourceFileInstructionDynamicCol>& GetInstructionList()
     {
         return instructionList;

@@ -52,7 +52,7 @@ struct SourceApiInstrResponse : public Response {
     SourceApiInstrResBody body;
 };
 
-struct SourceInstructionDynamic {
+struct SourceColumnValueMap {
     std::unordered_map<std::string, int> intMap;
     std::unordered_map<std::string, float> floatMap;
     std::unordered_map<std::string, std::string> stringMap;
@@ -61,12 +61,28 @@ struct SourceInstructionDynamic {
 struct SourceApiInstrDynamicBody {
     std::string coreName;
     std::map<std::string, int> columnNameMap;
-    std::vector<SourceInstructionDynamic> columnValues;
+    std::vector<SourceColumnValueMap> columnValues;
 };
 
 struct SourceApiInstrDynamicResponse : public Response {
     SourceApiInstrDynamicResponse() : Response(REQ_RES_SOURCE_API_INSTRUCTIONS_DYNAMIC) {}
     SourceApiInstrDynamicBody body;
+};
+
+struct SourceFileLineDynamic {
+    SourceColumnValueMap columnValueMap;
+    std::vector<std::pair<std::string, std::string>> addressRange;
+};
+
+struct SourceApiLineDynamicResBody {
+    std::map<std::string, int> columnNameMap;
+    std::vector<SourceFileLineDynamic> sourceFileLines;
+};
+
+struct SourceApiLineDynamicResponse : public Response {
+    SourceApiLineDynamicResponse() : Response(REQ_RES_SOURCE_API_LINE_DYNAMIC) {}
+
+    SourceApiLineDynamicResBody body;
 };
 
 struct TableRow {

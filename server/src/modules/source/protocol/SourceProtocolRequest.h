@@ -16,7 +16,7 @@ namespace Dic {
 namespace Protocol {
 struct SourceCodeFileParams {
     std::string sourceName;
-    std::tuple<bool, std::string> Vaild()
+    std::tuple<bool, std::string> Valid()
     {
         std::string errMsg;
         bool res = CheckStrParamValid(sourceName, errMsg);
@@ -32,7 +32,7 @@ struct SourceCodeFileRequest : public Request {
 struct SourceApiLineParams {
     std::string coreName;
     std::string sourceName;
-    std::tuple<bool, std::string> Vaild()
+    std::tuple<bool, std::string> Valid()
     {
         std::string errMsg;
         bool res = CheckStrParamValid(coreName, errMsg);
@@ -46,6 +46,11 @@ struct SourceApiLineParams {
 
 struct SourceApiLineRequest : public Request {
     SourceApiLineRequest() : Request(REQ_RES_SOURCE_API_LINE) {};
+    SourceApiLineParams params;
+};
+
+struct SourceApiLineDynamicRequest : public Request {
+    SourceApiLineDynamicRequest() : Request(REQ_RES_SOURCE_API_LINE_DYNAMIC) {};
     SourceApiLineParams params;
 };
 

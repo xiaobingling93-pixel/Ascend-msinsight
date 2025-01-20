@@ -45,7 +45,7 @@ void QueryApiInstructionsDynamicHandler::SetResponseBody(SourceApiInstrDynamicRe
     response.body.columnNameMap = columNameMap;
     // 组装每一列的数据
     for (const auto &item: instructions) {
-        SourceInstructionDynamic col;
+        SourceColumnValueMap col;
         TransformColumnData(item.floatColumnMap, col.floatMap);
         TransformColumnData(item.intColumnMap, col.intMap);
         TransformColumnData(item.stringColumnMap, col.stringMap);

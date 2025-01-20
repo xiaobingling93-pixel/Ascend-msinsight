@@ -59,6 +59,51 @@ template<> std::optional<document_t> ToResponseJson<SourceApiLineResponse>(const
     return std::move(json);
 }
 
+template<>
+std::optional<document_t> ToResponseJson<SourceApiLineDynamicResponse>(const SourceApiLineDynamicResponse &response)
+{
+    document_t json(kObjectType);
+    auto &allocator = json.GetAllocator();
+    ProtocolUtil::SetResponseJsonBaseInfo(response, json);
+    json_t body(kObjectType);
+    // 组装表头信息
+    json_t jsonFileLineDtype(kObjectType);
+    json_t jsonInstrColumn(kObjectType);
+    for (const auto &item: response.body.columnNameMap) {
+        JsonUtil::AddMember(jsonInstrColumn, item.first, item.second, allocator);
+    }
+    JsonUtil::AddMember(jsonFileLineDtype, "Lines", jsonInstrColumn, allocator);
+
+    json_t lines(kArrayType);
+    for (const auto &sourceFileLine: response.body.sourceFileLines) {
+        json_t jsonLine(kObjectType);
+        // 组装单值数据
+        for (const auto &stringItem: sourceFileLine.columnValueMap.stringMap) {
+            JsonUtil::AddMember(jsonLine, stringItem.first, stringItem.second, allocator);
+        }
+        for (const auto &intItem: sourceFileLine.columnValueMap.intMap) {
+            JsonUtil::AddMember(jsonLine, intItem.first, intItem.second, allocator);
+        }
+        for (const auto &floatItem: sourceFileLine.columnValueMap.floatMap) {
+            JsonUtil::AddMember(jsonLine, floatItem.first, floatItem.second, allocator);
+        }
+        // 组装指令地址范围数据
+        json_t ranges(kArrayType);
+        for (auto pair: sourceFileLine.addressRange) {
+            json_t range(kArrayType);
+            range.PushBack(json_t().SetString(pair.first.c_str(), allocator), allocator);
+            range.PushBack(json_t().SetString(pair.second.c_str(), allocator), allocator);
+            ranges.PushBack(range, allocator);
+        }
+        JsonUtil::AddMember(jsonLine, "Address Range", ranges, allocator);
+        lines.PushBack(jsonLine, allocator);
+    }
+    JsonUtil::AddMember(body, "Lines", lines, allocator);
+    JsonUtil::AddMember(body, "Files Dtype", jsonFileLineDtype, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
+    return std::move(json);
+}
+
 template<> std::optional<document_t> ToResponseJson<SourceApiInstrResponse>(const SourceApiInstrResponse &response)
 {
     document_t json(kObjectType);
@@ -77,23 +122,17 @@ std::optional<document_t> ToResponseJson<SourceApiInstrDynamicResponse>(const So
     auto &allocator = json.GetAllocator();
     ProtocolUtil::SetResponseJsonBaseInfo(response, json);
     json_t body(kObjectType);
-    JsonUtil::AddMember(json, "body", body, allocator);
-    // 组装核的名字
-    JsonUtil::AddMember(body, "Core", response.body.coreName, allocator);
-    json_t jsonInstrDtype(kObjectType);
     // 组装表头信息
-    JsonUtil::AddMember(body, "Instruction Dtype", jsonInstrDtype, allocator);
+    json_t jsonInstrDtype(kObjectType);
     json_t jsonInstrColumn(kObjectType);
-    JsonUtil::AddMember(jsonInstrDtype, "Instructions", jsonInstrColumn, allocator);
     for (const auto &item: response.body.columnNameMap) {
         JsonUtil::AddMember(jsonInstrColumn, item.first, item.second, allocator);
     }
+    JsonUtil::AddMember(jsonInstrDtype, "Instructions", jsonInstrColumn, allocator);
     // 组装表格内容
     json_t jsonInstructions(kArrayType);
-    JsonUtil::AddMember(body, "Instructions", jsonInstructions, allocator);
     for (const auto &item: response.body.columnValues) {
         json_t jsonInstruction(kObjectType);
-        jsonInstructions.PushBack(jsonInstruction, allocator);
         for (const auto &stringItem: item.stringMap) {
             JsonUtil::AddMember(jsonInstruction, stringItem.first, stringItem.second, allocator);
         }
@@ -103,7 +142,13 @@ std::optional<document_t> ToResponseJson<SourceApiInstrDynamicResponse>(const So
         for (const auto &floatItem: item.floatMap) {
             JsonUtil::AddMember(jsonInstruction, floatItem.first, floatItem.second, allocator);
         }
+        jsonInstructions.PushBack(jsonInstruction, allocator);
     }
+    JsonUtil::AddMember(body, "Instructions", jsonInstructions, allocator);
+    JsonUtil::AddMember(body, "Instructions Dtype", jsonInstrDtype, allocator);
+    // 组装核的名字
+    JsonUtil::AddMember(body, "Core", response.body.coreName, allocator);
+    JsonUtil::AddMember(json, "body", body, allocator);
 
     return std::move(json);
 }

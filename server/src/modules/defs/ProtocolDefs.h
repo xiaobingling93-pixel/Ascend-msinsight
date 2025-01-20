@@ -137,6 +137,7 @@ const std::string EVENT_PARSE_OPERATOR_CLEAR = "parse/operatorClear";
 // Source Request
 const std::string REQ_RES_SOURCE_CODE_FILE = "source/code/file";
 const std::string REQ_RES_SOURCE_API_LINE = "source/api/line";
+const std::string REQ_RES_SOURCE_API_LINE_DYNAMIC = "source/api/line/dynamic";
 const std::string REQ_RES_SOURCE_API_INSTRUCTIONS = "source/api/instructions";
 const std::string REQ_RES_SOURCE_API_INSTRUCTIONS_DYNAMIC = "source/api/instructions/dynamic";
 const std::string REQ_RES_DETAILS_BASE_INFO = "source/details/baseInfo";

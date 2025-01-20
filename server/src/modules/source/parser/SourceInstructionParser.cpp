@@ -346,6 +346,11 @@ void SourceInstructionParser::ConvertApiFile(const std::string &jsonStr)
     Document d;
     try {
         d.Parse(jsonStr.c_str());
+        if (d.HasMember("Files Dtype")) {
+            // parse file lines dynamic
+            ConvertApiFileDynamic(jsonStr);
+            return;
+        }
         if (JsonUtil::IsJsonArray(d, "Files")) {
             Value &fileArray = d["Files"];
             apiFiles = ConvertToFileMap(fileArray);
@@ -534,9 +539,9 @@ std::vector<SourceFileInstructionDynamicCol> SourceInstructionParser::GetInstrDy
 
     for (const auto &item: instructionList) {
         SourceFileInstructionDynamicCol col;
-        GetInstrValueInTargetCore(item.intColumnMap, col.intColumnMap, index);
-        GetInstrValueInTargetCore(item.floatColumnMap, col.floatColumnMap, index);
-        GetInstrValueInTargetCore(item.stringColumnMap, col.stringColumnMap, index);
+        GetValueInTargetCore(item.intColumnMap, col.intColumnMap, index);
+        GetValueInTargetCore(item.floatColumnMap, col.floatColumnMap, index);
+        GetValueInTargetCore(item.stringColumnMap, col.stringColumnMap, index);
         list.emplace_back(col);
     }
 
@@ -544,22 +549,40 @@ std::vector<SourceFileInstructionDynamicCol> SourceInstructionParser::GetInstrDy
 }
 
 template<typename T>
-void SourceInstructionParser::GetInstrValueInTargetCore(
+void SourceInstructionParser::GetValueInTargetCore(
     const std::unordered_map<std::string, std::vector<T>> &sourceMap,
     std::unordered_map<std::string, std::vector<T>> &targetMap,
     size_t index)
 {
     for (const auto &sourceItem: sourceMap) {
-        if (sourceItem.second.empty() || sourceItem.second.size() <= index) {
+        if (sourceItem.second.empty()) {
             continue;
         }
         // 如果是数组，获取指定core上的数据，否则取第一个值
-        if (sourceItem.second.size() == 1) {
-            targetMap[sourceItem.first].emplace_back(sourceItem.second[0]);
-            continue;
-        }
-        targetMap[sourceItem.first].emplace_back(sourceItem.second[index]);
+        size_t temp = index < sourceItem.second.size() ? index : 0;
+        targetMap[sourceItem.first].emplace_back(sourceItem.second[temp]);
     }
+}
+
+std::vector<SourceFileLineDynamicCol> SourceInstructionParser::GetApiLinesDynamic(
+    const std::string &core, const std::string &sourceName)
+{
+    std::vector<SourceFileLineDynamicCol> list;
+    auto targetCore = std::find(apiCores.begin(), apiCores.end(), core);
+    if (targetCore == apiCores.end()) {
+        targetCore = apiCores.begin();
+    }
+    size_t index = std::distance(apiCores.begin(), targetCore); // never below zero
+    for (const auto &item: sourceLinesMap[sourceName]) {
+        SourceFileLineDynamicCol col;
+        GetValueInTargetCore(item.stringColumnMap, col.stringColumnMap, index);
+        GetValueInTargetCore(item.intColumnMap, col.intColumnMap, index);
+        GetValueInTargetCore(item.floatColumnMap, col.floatColumnMap, index);
+        col.addressRange = item.addressRange;
+        list.emplace_back(col);
+    }
+
+    return list;
 }
 
 std::string SourceInstructionParser::GetSourceByName(std::string &sourceName, std::string &filePath)

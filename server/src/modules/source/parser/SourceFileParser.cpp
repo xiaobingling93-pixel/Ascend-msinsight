@@ -523,6 +523,13 @@ void SourceFileParser::ResetBaseline()
     this->baselineFilePath = "";
     this->baselineDataBlockMap.clear();
 }
+
+std::vector<SourceFileLineDynamicCol> SourceFileParser::GetApiLinesDynamic(
+    const std::string &core, const std::string &sourceName)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    return sourceInstructionParser.GetApiLinesDynamic(core, sourceName);
+}
 } // end of namespace Memory
 } // end of namespace Module
 } // end of namespace Dic

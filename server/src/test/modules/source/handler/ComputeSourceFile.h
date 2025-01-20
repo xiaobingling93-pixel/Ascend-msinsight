@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 
-#ifndef PROFILER_SERVER_QUERYAPILINEHANDLERTEST_H
-#define PROFILER_SERVER_QUERYAPILINEHANDLERTEST_H
+#ifndef PROFILER_SERVER_COMPUTESOURCEFILE_H
+#define PROFILER_SERVER_COMPUTESOURCEFILE_H
 
 #include <string>
 
@@ -241,4 +241,4 @@ extern "C" __global__ __aicore__ void vec_add1(GM_ADDR src0, GM_ADDR src1, GM_AD
 }
 })";
 }
-#endif // PROFILER_SERVER_QUERYAPILINEHANDLERTEST_H
+#endif // PROFILER_SERVER_COMPUTESOURCEFILE_H
