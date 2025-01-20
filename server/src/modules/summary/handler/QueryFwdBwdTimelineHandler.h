@@ -5,6 +5,7 @@
 #ifndef PROFILER_SERVER_QUERYFWDBWDTIMELINEHANDLER_H
 #define PROFILER_SERVER_QUERYFWDBWDTIMELINEHANDLER_H
 
+#include <map>
 #include "SummaryProtocolResponse.h"
 #include "SummaryRequestHandler.h"
 namespace Dic::Module::Summary {
@@ -18,8 +19,8 @@ public:
     ~QueryFwdBwdTimelineHandler() = default;
     bool HandleRequest(std::unique_ptr<Protocol::Request> requestPtr) override;
 private:
-    bool QueryFwdBwdTimelineByRank(const std::string &rankId, const std::string &stepId,
-        PipelineFwdBwdTimelineByRank &data, PipelineFwdBwdTimelineResponseBody &responseBody);
+    static bool QueryFwdBwdTimelineByRank(const std::string &rankId, const std::string &stepId);
+    static std::map<std::string, PipelineFwdBwdTimelineByRank> dataMap;
 };
 
 } // Dic::Module::Summary
