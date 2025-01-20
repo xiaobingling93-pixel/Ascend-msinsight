@@ -4,9 +4,12 @@
 
 #ifndef PROFILER_SERVER_SOURCEINSTRUCTIONPARSER_H
 #define PROFILER_SERVER_SOURCEINSTRUCTIONPARSER_H
-
+#include <map>
+#include <unordered_map>
+#include <vector>
 #include "SourceProtocol.h"
 #include "SourceDefs.h"
+
 
 namespace Dic::Module::Source {
 struct SourceFileLine {
