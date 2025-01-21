@@ -2,7 +2,7 @@
   "source": {
     "Core": "计算核",
     "Source": "源码",
-    "InstructionsExecuted": "执行指令数",
+    "Instructions Executed": "执行指令数",
     "Cycles": "时钟周期",
     "Address": "地址",
     "Pipe": "指令队列",
@@ -16,6 +16,7 @@
     "StallCycles": "阻塞时钟周期",
     "RealStallCycles": "实际阻塞时钟周期",
     "TheoreticalStallCycles": "预期阻塞时钟周期",
-    "RegisterNum": "寄存器数"
+    "RegisterNum": "寄存器数",
+    "Register Number": "通用寄存器数"
   }
 }

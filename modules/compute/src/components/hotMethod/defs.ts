@@ -5,15 +5,14 @@ const ADDESS = 'Address';
 const SOURCE = 'Source';
 const PIPE = 'Pipe';
 const INSTRUCIONS_EXECUTED = 'Instructions Executed';
-const INSTRUCION_EXECUTED = 'Instruction Executed';
 const CYCLES = 'Cycles';
-const CYCLE = 'Cycle';
 const LINE = 'Line';
 const ADDRESS_RANGE = 'Address Range';
 const REAL_STALL_CYCLES = 'RealStallCycles';
 const THEORETICAL_STALL_CYCLES = 'TheoreticalStallCycles';
 const REGISTER_NUM = 'RegisterNum';
 export interface JsonInstructionType {
+    [prop: string]: React.Key | React.Key[] | undefined;
     [ADDESS]: string ;
     [SOURCE]: string ;
     [PIPE]: string ;
@@ -25,9 +24,8 @@ export interface JsonInstructionType {
 };
 
 export interface Iline {
+    [prop: string]: React.Key | React.Key[] | string[][];
     [LINE]: number;
-    [CYCLE]: number;
-    [INSTRUCION_EXECUTED]: number;
     [ADDRESS_RANGE]: string[][];
 };
 
@@ -39,13 +37,10 @@ export interface Ilinetable {
 };
 
 export interface InstrsColumnType {
+    [prop: string]: React.Key | React.Key[] ;
     [ADDESS]: string ;
     [SOURCE]: string ;
     [PIPE]: string ;
     maxCycles: number;
     cycles: number;
-    instructionsExecuted: number;
-    realStallCycles?: number;
-    theoreticalStallCycles?: number;
-    registerNum?: number;
 };

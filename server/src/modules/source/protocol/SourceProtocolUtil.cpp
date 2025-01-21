@@ -116,8 +116,8 @@ void SetSourceApiLineResponseBody(const std::vector<SourceFileLineRes> &lines, j
     for (auto lineRes: lines) {
         json_t line(kObjectType);
         JsonUtil::AddMember(line, "Line", lineRes.line, allocator);
-        JsonUtil::AddMember(line, "Instruction Executed", lineRes.instructionExecuted, allocator);
-        JsonUtil::AddMember(line, "Cycle", lineRes.cycle, allocator);
+        JsonUtil::AddMember(line, "Instructions Executed", lineRes.instructionExecuted, allocator);
+        JsonUtil::AddMember(line, "Cycles", lineRes.cycle, allocator);
         json_t ranges(kArrayType);
         for (auto pair: lineRes.addressRange) {
             json_t range(kArrayType);

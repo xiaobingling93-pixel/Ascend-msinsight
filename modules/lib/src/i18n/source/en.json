@@ -2,7 +2,7 @@
   "source": {
     "Core": "Core",
     "Source": "Source",
-    "InstructionsExecuted": "Instructions Executed",
+    "Instructions Executed": "Instructions Executed",
     "Cycles": "Cycles",
     "Address": "Address",
     "Pipe": "Pipe",
@@ -16,6 +16,7 @@
     "StallCycles": "Stall Cycles",
     "RealStallCycles": "Real Stall Cycles",
     "TheoreticalStallCycles": "Theoretical Stall Cycles",
-    "RegisterNum": "Register Number"
+    "RegisterNum": "Register Number",
+    "Register Number": "Gpr Count"
   }
 }
