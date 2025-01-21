@@ -26,7 +26,7 @@ private:
     static void MergeMatrixInfo(Protocol::MatrixListResponseBody &body, const std::vector<MatrixInfoDo> &compare,
                                 const std::vector<MatrixInfoDo> &baseline);
     static void MergeOperatorList(Protocol::OperatorListsResponseBody &body, const std::vector<OperatorTimeDo> &compare,
-                                  const std::vector<OperatorTimeDo> &baseline);
+                                  const std::vector<OperatorTimeDo> &baseline, const std::string &operatorName);
     static void MergeDurationData(Protocol::DurationListsResponseBody &body, std::vector<DurationDo> &compare,
                                   std::vector<DurationDo> &baseline);
     static void StatisticBandwidthData(const DurationDo &item, std::vector<Protocol::BandwidthStatistic> &bwStat);

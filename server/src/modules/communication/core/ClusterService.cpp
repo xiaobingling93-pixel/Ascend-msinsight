@@ -138,7 +138,8 @@ void ClusterService::QueryMatrixInfo(Protocol::MatrixBandwidthParam &params, Pro
 }
 
 void ClusterService::MergeOperatorList(Protocol::OperatorListsResponseBody &body,
-    const std::vector<OperatorTimeDo> &compare, const std::vector<OperatorTimeDo> &baseline)
+    const std::vector<OperatorTimeDo> &compare, const std::vector<OperatorTimeDo> &baseline,
+    const std::string &operatorName)
 {
     auto numericStringCompare = [](const std::string &num1, const std::string &num2) {
         return StringUtil::StringToInt(num1) < StringUtil::StringToInt(num2);
@@ -166,12 +167,15 @@ void ClusterService::MergeOperatorList(Protocol::OperatorListsResponseBody &body
         Dic::Protocol::CompareData<std::vector<Protocol::OperatorTimeItem>> data;
         if (compareRankToOperator.count(item) != 0) {
             data.compare = compareRankToOperator[item];
+            std::sort(data.compare.begin(), data.compare.end(), Protocol::OperatorTimeItem::SortByTime);
         }
         if (baselineRankToOperator.count(item) != 0) {
             data.baseline = baselineRankToOperator[item];
+            std::sort(data.baseline.begin(), data.baseline.end(), Protocol::OperatorTimeItem::SortByTime);
         }
         body.opLists.push_back(data);
     }
+    body.AdjustTime(operatorName);
 }
 
 void ClusterService::QueryOperatorList(Protocol::DurationListParams &params, Protocol::OperatorListsResponseBody &body)
@@ -190,7 +194,7 @@ void ClusterService::QueryOperatorList(Protocol::DurationListParams &params, Pro
         }
     }
 
-    MergeOperatorList(body, compareOperatorTimeList, baselineOperatorTimeList);
+    MergeOperatorList(body, compareOperatorTimeList, baselineOperatorTimeList, params.targetOperatorName);
 }
 
 void ClusterService::MergeDurationData(Protocol::DurationListsResponseBody &body, std::vector<DurationDo> &compare,

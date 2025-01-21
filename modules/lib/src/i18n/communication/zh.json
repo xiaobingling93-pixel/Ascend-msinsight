@@ -19,6 +19,8 @@
     "Bandwidth(GB/s)": "带宽(GB/s)",
     "Packet Size(MB)": "包大小(MB)",
     "Find in Timeline": "跳转至时间线视图",
+    "Align according to selected operator": "根据选中算子对齐",
+    "Restore default state": "恢复默认状态",
     "sessionTitle": {
       "MatrixModel": "通信矩阵",
       "VisualizedCommunicationTime": "通信时长",

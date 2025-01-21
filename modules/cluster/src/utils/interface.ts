@@ -108,6 +108,13 @@ export interface GetParallelismPerformanceRes {
     advice: string[];
 }
 
+export interface ClickOperatorItem {
+    name: string;
+    rankId: number;
+    timestamp: number;
+    duration: number;
+}
+
 export interface CompareData<T> {
     compare: T;
     baseline: T;

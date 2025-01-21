@@ -1,6 +1,8 @@
 {
   "communication": {
     "Find in Timeline": "Find in Timeline",
+    "Align according to selected operator": "Align according to selected operator",
+    "Restore default state": "Restore default state",
     "bandwidth": "Bandwidth",
     "transitSize": "TransitSize",
     "transportType": "TransportType",

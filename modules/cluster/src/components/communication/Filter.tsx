@@ -20,6 +20,7 @@ export interface ConditionDataType {
     stage: string;
     operatorName: string ;
     type: AnalysisType;
+    targetOperatorName?: string;
 }
 export const totalOperator = 'Total Op Info';
 export enum AnalysisType { COMMUNICATION_DURATION_ANALYSIS = 'CommunicationDurationAnalysis', COMMUNICATION_MATRIX = 'CommunicationMatrix' };
@@ -224,6 +225,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
             return;
         }
         const { condition: newCondition, optionMap: newOptionMap } = await getOptionsAndValue(session, initObj, optionMap, key, val);
+        newCondition.targetOperatorName = session.targetOperator?.name;
         setCondition(newCondition);
         setOptionMap(newOptionMap);
     };
@@ -235,7 +237,7 @@ const Filter = observer(({ session, handleFilterChange }: {session: Session;hand
     }, []);
     useEffect(() => {
         updateCondition(condition);
-    }, [session.clusterCompleted, session.communicatorData.partitionModes, session.isCompare]);
+    }, [session.clusterCompleted, session.communicatorData.partitionModes, session.isCompare, session.targetOperator]);
     useEffect(() => {
         setTimeout(() => {
             if (activeCommunicator !== undefined && activeCommunicator !== condition.stage) {

@@ -16,8 +16,8 @@ import CollapsiblePanel from 'ascend-collapsible-panel';
 import i18n from 'ascend-i18n';
 import { themeInstance } from 'ascend-theme';
 import { type Theme } from '@emotion/react';
-import { safeStr, disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions } from 'ascend-utils';
-import { CompareData, FormatterParams } from '../../utils/interface';
+import { disposeAdaptiveEchart, getAdaptiveEchart, getDefaultChartOptions, safeStr } from 'ascend-utils';
+import { ClickOperatorItem, CompareData, FormatterParams } from '../../utils/interface';
 
 const DEFAULT_CHART_HEIGHT = 460;
 const DEFAULT_INNER_CHART_HEIGHT = 300;
@@ -274,20 +274,15 @@ function InitCharts(dataSource: AnalysisChartData, session: Session, setDropDown
     disposeAdaptiveEchart(chartDom);
     const myChart = getAdaptiveEchart(chartDom);
     myChart.on('contextmenu', { element: 'op' }, (e: echarts.ECElementEvent): void => {
-        if (session.unitcount === 0) {
-            return;
-        }
-        const [rankId, timestamp, , duration, source] = e.value as number[];
-        if (source === compareSource.BASELINE) {
-            return;
-        }
+        setDropDownVisible(true);
+
+        const [rankId, timestamp, , duration] = e.value as number[];
         selectedOpDetail = {
             name: e.name,
             rankId,
             timestamp: msToNs(timestamp),
             duration: msToNs(duration),
         };
-        setDropDownVisible(true);
     });
     if (dataSource !== undefined) {
         myChart.setOption(wrapData(dataSource, session.isCompare));
@@ -335,23 +330,52 @@ async function redirectToTimeline(): Promise<void> {
     });
 }
 
-const useMenuItems = (): MenuProps['items'] => {
+const useMenuItems = (session: Session): MenuProps['items'] => {
     const { t } = useTranslation('communication');
-    return [
-        {
-            label: t('Find in Timeline'),
-            key: 'findInTimeline',
-            onClick: (): void => {
-                redirectToTimeline();
-            },
+    const findInTimeline = {
+        label: t('Find in Timeline'),
+        key: 'findInTimeline',
+        disabled: false,
+        onClick: (): void => {
+            redirectToTimeline();
         },
+    };
+    const alignOperator = {
+        label: t('Align according to selected operator'),
+        key: 'alignAccordingToSelectedOperator',
+        disabled: false,
+        onClick: (): void => {
+            if (selectedOpDetail === null) {
+                return;
+            }
+            session.targetOperator = selectedOpDetail as ClickOperatorItem;
+        },
+    };
+    const restoredefault = {
+        label: t('Restore default state'),
+        key: 'restoreDefaultState',
+        disabled: false,
+        onClick: (): void => {
+            session.targetOperator = undefined;
+        },
+    };
+    if (session.unitcount === 0) {
+        findInTimeline.disabled = true;
+    }
+    if (session.targetOperator === undefined) {
+        restoredefault.disabled = true;
+    }
+    return [
+        findInTimeline,
+        alignOperator,
+        restoredefault,
     ];
 };
 
 const CommunicationTimeAnalysisChart = observer(({ dataSource, session }: { dataSource: AnalysisChartData; session: Session}) => {
     const [chartHeight, setChartHeight] = useState(DEFAULT_CHART_HEIGHT);
     const [dropDownVisible, setDropDownVisible] = useState(false);
-    const menuItems = useMenuItems();
+    const menuItems = useMenuItems(session);
     const chartRef = useRef<HTMLDivElement>(null);
     const scrollContainer = document.querySelector('.mi-page-content');
 

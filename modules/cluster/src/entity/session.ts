@@ -7,7 +7,7 @@ import {
     communicatorContainerData,
     RankDyeingData,
 } from '../components/communicatorContainer/ContainerUtils';
-import { IndicatorsItem, PerformanceDataItem } from '../utils/interface';
+import { ClickOperatorItem, IndicatorsItem, PerformanceDataItem } from '../utils/interface';
 
 export type PerformanceDataMap = Map<number, PerformanceDataItem>;
 
@@ -40,6 +40,8 @@ export class Session {
     baselineStepList: string[] = [];
     // 集群对比
     isCompare: boolean = false;
+    // 右键选中的算子
+    targetOperator: ClickOperatorItem | undefined = undefined;
 
     constructor(conf?: Partial<Session>) {
         makeAutoObservable(this);
@@ -101,5 +103,6 @@ export class Session {
         this.stepList = [];
         this.rankDyeingData = {};
         this.arrangementRankCount = 0;
+        this.targetOperator = undefined;
     }
 }

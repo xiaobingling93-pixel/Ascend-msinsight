@@ -16,8 +16,18 @@ namespace Dic {
 namespace Protocol {
 struct OperatorTimeItem {
     std::string operatorName;
-    uint64_t startTime;
-    uint64_t elapseTime;
+    uint64_t startTime = 0;
+    uint64_t elapseTime = 0;
+    static bool SortByTime(const OperatorTimeItem &first, const OperatorTimeItem &second)
+    {
+        if (first.startTime < second.startTime) {
+            return true;
+        }
+        if (first.startTime == second.startTime && first.elapseTime < second.elapseTime) {
+            return true;
+        }
+        return false;
+    }
 };
 
 struct OperatorItem {
@@ -179,6 +189,172 @@ struct OperatorListsResponseBody {
     uint64_t maxTime = 0;
     std::vector<std::string> rankLists;
     std::vector<CompareData<std::vector<OperatorTimeItem>>> opLists;
+    // 此方法为了所有色块能同屏展示
+    void AdjustTime(const std::string &operatorName)
+    {
+        std::vector<std::pair<uint64_t, uint64_t>> timeDurations = MergeTimeDuration();
+        std::map<size_t, uint64_t> offsetMap = ComputeOffset(timeDurations);
+        // 第一次调整time是为了同屏展示
+        AdjustTimeByOffset(offsetMap);
+        if (!std::empty(operatorName)) {
+            // 第二次调整time是为了对齐通信算子的结束时间
+            AdjustTimeByName(operatorName);
+        }
+    }
+
+private:
+    void AdjustTimeByName(const std::string &operatorName)
+    {
+        std::map<size_t, uint64_t> offsetMap;
+        uint64_t maxEndTime = 0;
+        for (auto &opList : opLists) {
+            for (const auto &item : opList.compare) {
+                if (item.operatorName == operatorName) {
+                    maxEndTime = std::max(item.startTime + item.elapseTime, maxEndTime);
+                    break;
+                }
+            }
+            for (const auto &item : opList.baseline) {
+                if (item.operatorName == operatorName) {
+                    maxEndTime = std::max(item.startTime + item.elapseTime, maxEndTime);
+                    break;
+                }
+            }
+        }
+        if (maxEndTime == 0) {
+            return;
+        }
+        for (size_t i = 0; i < opLists.size(); ++i) {
+            const size_t compareKey = i * 2;
+            const size_t baseKey = i * 2 + 1;
+            for (const auto &item : opLists[i].compare) {
+                if (item.operatorName == operatorName) {
+                    offsetMap[compareKey] = maxEndTime - (item.startTime + item.elapseTime);
+                    break;
+                }
+            }
+            for (const auto &item : opLists[i].baseline) {
+                if (item.operatorName == operatorName) {
+                    offsetMap[baseKey] = maxEndTime - (item.startTime + item.elapseTime);
+                    break;
+                }
+            }
+        }
+        AdjustTimeByOffset(offsetMap);
+    }
+
+    void AdjustTimeByOffset(std::map<size_t, uint64_t> &offsetMap)
+    {
+        if (std::empty(offsetMap)) {
+            return;
+        }
+        for (size_t i = 0; i < opLists.size(); ++i) {
+            const size_t compareKey = i * 2;
+            const size_t baseKey = i * 2 + 1;
+            auto compareIt = offsetMap.find(compareKey);
+            auto baseIt = offsetMap.find(baseKey);
+            if (compareIt != offsetMap.end()) {
+                uint64_t offset = compareIt->second;
+                for (auto &item : opLists[i].compare) {
+                    item.startTime = item.startTime + offset;
+                }
+            }
+            if (baseIt != offsetMap.end()) {
+                uint64_t offset = baseIt->second;
+                for (auto &item : opLists[i].baseline) {
+                    item.startTime = item.startTime + offset;
+                }
+            }
+        }
+        uint64_t tempMinTime = UINT64_MAX;
+        uint64_t tempMaxTime = 0;
+        for (const auto &item : opLists) {
+            if (!std::empty(item.compare)) {
+                tempMaxTime = std::max(item.compare.back().startTime + item.compare.back().elapseTime, tempMaxTime);
+                tempMinTime = std::min(item.compare.front().startTime, tempMinTime);
+            }
+            if (!std::empty(item.baseline)) {
+                tempMaxTime = std::max(item.baseline.back().startTime + item.baseline.back().elapseTime, tempMaxTime);
+                tempMinTime = std::min(item.baseline.front().startTime, tempMinTime);
+            }
+        }
+        minTime = tempMinTime;
+        maxTime = tempMaxTime;
+    }
+
+    std::vector<std::pair<uint64_t, uint64_t>> MergeTimeDuration()
+    {
+        std::vector<std::pair<uint64_t, uint64_t>> timeDurations;
+        for (auto &opList : opLists) {
+            if (!opList.baseline.empty()) {
+                const uint64_t min = opList.baseline.front().startTime;
+                const uint64_t max = opList.baseline.back().startTime + opList.baseline.back().elapseTime;
+                UpdateTimeDurations(min, max, timeDurations);
+            }
+            if (!opList.compare.empty()) {
+                const uint64_t min = opList.compare.front().startTime;
+                const uint64_t max = opList.compare.back().startTime + opList.compare.back().elapseTime;
+                UpdateTimeDurations(min, max, timeDurations);
+            }
+        }
+        return timeDurations;
+    }
+
+    std::map<size_t, uint64_t> ComputeOffset(const std::vector<std::pair<uint64_t, uint64_t>> &timeDurations)
+    {
+        std::map<size_t, uint64_t> offsetMap;
+        for (size_t i = 0; i < opLists.size(); i++) {
+            const size_t compareKey = i * 2;
+            const size_t baseKey = i * 2 + 1;
+            if (!opLists[i].compare.empty()) {
+                const uint64_t min = opLists[i].compare.front().startTime;
+                const uint64_t max = opLists[i].compare.back().startTime + opLists[i].compare.back().elapseTime;
+                uint64_t offset = ComputeTargetOffset(min, max, timeDurations);
+                offsetMap[compareKey] = offset;
+            }
+            if (!opLists[i].baseline.empty()) {
+                const uint64_t min = opLists[i].baseline.front().startTime;
+                const uint64_t max = opLists[i].baseline.back().startTime + opLists[i].baseline.back().elapseTime;
+                uint64_t offset = ComputeTargetOffset(min, max, timeDurations);
+                offsetMap[baseKey] = offset;
+            }
+        }
+        return offsetMap;
+    }
+
+    static void UpdateTimeDurations(uint64_t min, uint64_t max,
+        std::vector<std::pair<uint64_t, uint64_t>> &timeDurations)
+    {
+        std::pair<uint64_t, uint64_t> cardGroup = { min, max };
+        auto it = lower_bound(timeDurations.begin(), timeDurations.end(), cardGroup);
+        timeDurations.insert(it, cardGroup);
+        std::vector<std::pair<uint64_t, uint64_t>> mergeDurations;
+        // 遍历现有的区间，进行合并
+        for (const auto &item : timeDurations) {
+            // 如果mergedIntervals为空，或者当前区间与最后一个合并区间不重叠
+            if (mergeDurations.empty() || mergeDurations.back().second < item.first) {
+                mergeDurations.push_back(item);
+            } else {
+                // 否则，存在交集，合并当前区间和最后一个合并区间
+                mergeDurations.back().second = std::max(mergeDurations.back().second, item.second);
+            }
+        }
+        timeDurations = mergeDurations;
+    }
+
+    uint64_t ComputeTargetOffset(uint64_t min, uint64_t max,
+        const std::vector<std::pair<uint64_t, uint64_t>> &timeDurations) const
+    {
+        for (const auto &item : timeDurations) {
+            if (item.first <= min && item.second >= max) {
+                max = item.second;
+            }
+        }
+        if (max < maxTime) {
+            return (maxTime - max);
+        }
+        return 0;
+    }
 };
 
 struct OperatorListsResponse : public Response {

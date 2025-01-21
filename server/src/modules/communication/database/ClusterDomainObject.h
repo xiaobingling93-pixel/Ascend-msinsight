@@ -24,8 +24,8 @@ namespace Module {
     struct OperatorTimeDo {
         std::string rankId;
         std::string operatorName;
-        uint64_t startTime;
-        uint64_t elapseTime;
+        uint64_t startTime = 0;
+        uint64_t elapseTime = 0;
     };
 
     struct DurationDo {

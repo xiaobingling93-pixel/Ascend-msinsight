@@ -211,6 +211,7 @@ struct DurationListParams {
     std::vector<std::string> rankList = {};
     std::string operatorName;
     std::string stage;
+    std::string targetOperatorName;
     bool isCompare = false;
     std::string baselineIterationId;
     bool CheckParams(std::string &errorMsg) const
@@ -242,6 +243,7 @@ struct DurationListParams {
         this->iterationId = params.iterationId;
         this->operatorName = params.operatorName;
         this->stage = params.stage;
+        this->targetOperatorName = params.targetOperatorName;
         for (const auto &item: params.rankList) {
             this->rankList.push_back(item);
         }
