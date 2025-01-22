@@ -69,7 +69,6 @@ const instrsColsConfig = [
     },
     {
         title: 'StallCycles',
-        dataIndex: 'RealStallCycles',
         ellipsis: true,
         width: 115,
         render: (realStallCycles: number | string, record: InstrsColumnType): string | React.ReactElement =>
@@ -79,21 +78,24 @@ const instrsColsConfig = [
     { title: 'RegisterNum', dataIndex: 'RegisterNum', ellipsis: true },
 ];
 
+// 固定显示列
+const fixedCols = ['#', 'Address', 'Pipe', 'Source', 'Instructions Executed', 'Cycles'];
+// 如果存在放在前面
+const headerCols = ['#', 'Address', 'Pipe', 'Source', 'Instructions Executed'];
+// 如果存在放在最后的列
+const endCols = ['Cycles', 'StallCycles'];
+// 不显示的列
+const notDisplayedCols = ['AscendC Inner Code', 'RealStallCycles', 'TheoreticalStallCycles'];
+
 export const getDynamicInstrColumns = (t: TFunction, fields: string[] = []): ColumnsType<InstrsColumnType> => {
-    const allCols = [...fields];
+    const allCols = ['#', ...fields];
     if (allCols.includes('RealStallCycles')) {
         allCols.push('StallCycles');
     }
-    // 固定显示列
-    const fixedCols = ['#', 'Address', 'Pipe', 'Source', 'Instructions Executed'];
-    // 如果存在放在最后的列
-    const endCols = ['Cycles', 'StallCycles'];
-    // 不显示的列
-    const notDisplayedCols = ['AscendC Inner Code', 'RealStallCycles', 'TheoreticalStallCycles', 'index', 'cycles', 'maxCycles'];
     const cols = fields.length === 0
-        ? [...fixedCols, 'Cycles']
-        : ['#', ...fixedCols.filter(colName => allCols.includes(colName)),
-            ...allCols.filter(colName => !fixedCols.includes(colName) && !notDisplayedCols.includes(colName) && !endCols.includes(colName)),
+        ? fixedCols
+        : [...headerCols.filter(colName => allCols.includes(colName)),
+            ...allCols.filter(colName => !headerCols.includes(colName) && !notDisplayedCols.includes(colName) && !endCols.includes(colName)),
             ...endCols.filter(colName => allCols.includes(colName)),
         ];
     return cols.map(colName => {

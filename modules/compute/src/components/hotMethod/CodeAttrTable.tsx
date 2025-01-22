@@ -14,11 +14,12 @@ const codeCols = [
     },
 ];
 
+// 固定显示列
+const fixedCols = ['Instructions Executed', 'Cycles'];
+// 不显示的列
+const notDisplayedCols = ['Address Range', 'Line'];
+
 export const getCodeColumns = (t: TFunction, fields: string[] = []): ColumnsType<Ilinetable> => {
-    // 固定显示列
-    const fixedCols = ['Instructions Executed', 'Cycles'];
-    // 不显示的列
-    const notDisplayedCols = ['Address Range', 'Line'];
     const cols = fields.length === 0
         ? fixedCols
         : [...fixedCols.filter(colName => fields.includes(colName)),
