@@ -179,7 +179,7 @@ static bool ExecuteQueryP2POpData(std::unique_ptr<SqlitePreparedStatement> stmt,
     uint64_t offset, const ExtremumTimestamp &range, std::vector<Protocol::ThreadTraces> &p2pOpData);
 static inline bool IsValidHCCLGroupNameValue(const std::string &groupNameValue)
 {
-    const std::string regexStr = "^[a-zA-Z0-9.%]+_[0-9]{1,5}_[0-9]+";
+    const std::string regexStr = "[^0-9]";
     const std::regex pattern(regexStr);
     return std::regex_search(groupNameValue, pattern);
 }

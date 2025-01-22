@@ -254,7 +254,7 @@ TEST_F(DbDatabaseTest2, TestQueryUnitsMetadataWhenPlaneTrackExistVersion_1_1_0)
     EXPECT_EQ(metaData[second]->children.size(), three);
     EXPECT_EQ(metaData[second]->children[first]->metaData.groupNameValue, groupNameValue);
     EXPECT_EQ(metaData[second]->children[second]->metaData.threadName, expectPlaneName);
-    EXPECT_EQ(metaData[second]->children[second]->metaData.groupNameValue, groupNameValue);
+    EXPECT_EQ(metaData[second]->children[second]->metaData.groupNameValue, "");
 }
 
 
