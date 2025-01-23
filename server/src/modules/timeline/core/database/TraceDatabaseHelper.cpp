@@ -381,12 +381,14 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4SubCANN(std::unique_ptr <Sqlit
 std::unique_ptr <SqliteResultSet> QueryEventsView4Hardware(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& rankId)
 {
-    std::string sql = "SELECT main.ROWID as id, si.value AS name, startNs AS start, endNs - startNs as duration, "
-        "'Stream '||streamId as threadName, depth, 'Ascend Hardware' as processId, streamId as threadId, "
+    std::string sql =
+        "SELECT main.ROWID as id, si.value AS name, main.startNs AS start, main.endNs - main.startNs as duration, "
+        "'Stream '||streamId as threadName, main.depth, 'Ascend Hardware' as processId, streamId as threadId, "
         "deviceId AS rankId FROM  TASK AS main LEFT JOIN COMPUTE_TASK_INFO AS CTI "
         "on CTI.globalTaskId = main.globalTaskId "
-        " LEFT JOIN COMMUNICATION_SCHEDULE_TASK_INFO schedule ON main.globalTaskId = schedule.globalTaskId"
-        " LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, schedule.name, main.taskType)"
+        " LEFT JOIN COMMUNICATION_SCHEDULE_TASK_INFO schedule ON main.globalTaskId = schedule.globalTaskId "
+        " LEFT JOIN MSTX_EVENTS mstx ON main.connectionId = mstx.connectionId "
+        " LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, schedule.name, mstx.message, main.taskType)"
         " WHERE main.deviceId = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId);
 }
@@ -394,12 +396,14 @@ std::unique_ptr <SqliteResultSet> QueryEventsView4Hardware(std::unique_ptr <Sqli
 std::unique_ptr <SqliteResultSet> QueryEventsView4Stream(std::unique_ptr <SqlitePreparedStatement> &stmt,
     std::string &orderByCondition, const Protocol::EventsViewParams &params, const std::string& rankId)
 {
-    std::string sql = "SELECT main.ROWID as id, si.value AS name, startNs AS start, endNs - startNs as duration, "
-        "'Stream '||streamId as threadName, deviceId AS rankId, depth, 'Ascend Hardware' as processId, "
+    std::string sql =
+        "SELECT main.ROWID as id, si.value AS name, main.startNs AS start, main.endNs - main.startNs as duration, "
+        "'Stream '||streamId as threadName, deviceId AS rankId, main.depth, 'Ascend Hardware' as processId, "
         "streamId as threadId FROM TASK AS main "
         " LEFT JOIN COMPUTE_TASK_INFO AS CTI on CTI.globalTaskId = main.globalTaskId "
-        " LEFT JOIN COMMUNICATION_SCHEDULE_TASK_INFO schedule ON main.globalTaskId = schedule.globalTaskId"
-        " LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, schedule.name, main.taskType) "
+        " LEFT JOIN COMMUNICATION_SCHEDULE_TASK_INFO schedule ON main.globalTaskId = schedule.globalTaskId "
+        " LEFT JOIN MSTX_EVENTS mstx ON main.connectionId = mstx.connectionId "
+        " LEFT JOIN STRING_IDS AS si ON si.id = coalesce(CTI.name, schedule.name, mstx.message, main.taskType) "
         "WHERE main.deviceId = ? AND main.streamId = ? ";
     return TraceDatabaseHelper::ExecuteQuery(stmt, sql.append(orderByCondition), rankId, params.tid);
 }
