@@ -1,19 +1,17 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react';
-import { Checkbox, Tooltip } from 'ascend-components';
-import type { ColumnsType, ColumnType } from 'antd/es/table';
-import type { AlignType } from 'rc-table/lib/interface';
+import { Checkbox } from 'ascend-components';
+import type { ColumnsType } from 'antd/es/table';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import './HotMethod.css';
 import type { Session } from '../../entity/session';
 import Filter from './Filter';
 import CodeViewer from './codeViewer/CodeViewer';
 import { ResizeTable } from 'ascend-resize';
-import Bar, { StallBar } from './Bar';
 import {
     HeaderFixedContainer,
     LeftRightContainer,
@@ -22,11 +20,10 @@ import {
     GetPageConfigWhithPageData,
 } from '../Common';
 import type { InstrsColumnType, Iline, Ilinetable, JsonInstructionType } from './defs';
-import { queryApiInstr, queryApiLine, querySourceCode } from '../RequestUtils';
-import { runInAction } from 'mobx';
+import { queryDynamicInstr, queryDynamicLine, querySourceCode } from '../RequestUtils';
 import { Layout } from 'ascend-layout';
-import { safeJSONParse } from 'ascend-utils';
-import type { TFunction } from 'i18next';
+import { getInstrColumns } from './InstructionTable';
+import { getCodeColumns } from './CodeAttrTable';
 import TableHead, { type Col } from './TableHead';
 
 const BREAK_LINE_REGEXP = /\r\n|\r|\n/g;
@@ -47,65 +44,9 @@ const useSourceColumns = (): Col[] => {
     const { t } = useTranslation('source');
     return [{ width: 45, textAlign: 'right', name: '#' }, { name: t('Source') }];
 };
-
-const useCodeColumns = (): ColumnsType<Ilinetable> => {
-    const { t } = useTranslation('source');
-    return [{
-        title: t('InstructionsExecuted'),
-        dataIndex: 'instructionsExecuted',
-        ellipsis: true,
-        width: 155,
-    },
-    {
-        title: t('Cycles'),
-        dataIndex: 'cycles',
-        ellipsis: true,
-        width: 50,
-    }];
-};
-
-const getInstrsColumns = (t: TFunction, condition?: {hasStallCycles?: boolean;hasRegisterNum?: boolean}): ColumnsType<InstrsColumnType> => {
-    const { hasStallCycles = false, hasRegisterNum = false } = condition ?? {};
-    const cols = [
-        { title: '#', dataIndex: 'index', width: 50, align: 'right' as AlignType, ellipsis: true },
-        { title: t('Address'), dataIndex: 'Address', width: 100, ellipsis: true },
-        { title: t('Pipe'), dataIndex: 'Pipe', width: 100, ellipsis: true },
-        {
-            title: t('Source'),
-            dataIndex: 'Source',
-            ellipsis: { showTitle: false },
-            render: (source: string) => (
-                <Tooltip placement="topLeft" title={source} >
-                    {source}
-                </Tooltip>
-            ),
-        },
-        { title: t('InstructionsExecuted'), dataIndex: 'instructionsExecuted', ellipsis: true, width: 145 },
-        {
-            title: t('Cycles'),
-            dataIndex: 'cycles',
-            width: 150,
-            ellipsis: true,
-            sorter: true,
-            render: (cycles: number | string, record: InstrsColumnType): string | React.ReactElement => {
-                if (cycles === '') {
-                    return '';
-                }
-                return <Bar value={Number(cycles)} max={record.maxCycles ?? cycles}/>;
-            },
-            className: 'height20',
-        },
-        {
-            title: t('StallCycles'),
-            ellipsis: true,
-            width: 115,
-            render: (realStallCycles: number | string, record: InstrsColumnType): string | React.ReactElement =>
-                <StallBar real={record.realStallCycles} theoretical={record.theoreticalStallCycles}/>,
-            display: hasStallCycles,
-        },
-        { title: t('RegisterNum'), dataIndex: 'registerNum', ellipsis: true, display: hasRegisterNum },
-    ];
-    return cols.filter(col => col.display !== false);
+const isRelated = (codeline: Ilinetable, instr: InstrsColumnType): boolean => {
+    // 指令地址是否在代码行地址范围内
+    return Boolean(codeline?.['Address Range']?.find(item => Number(item[0]) <= Number(instr.Address) && Number(item[1]) >= Number(instr.Address)));
 };
 
 // eslint-disable-next-line max-lines-per-function
@@ -116,13 +57,28 @@ const Index = observer(({ session }: { session: Session }) => {
     const [code, setCode] = useState('');
     const [codeLines, setCodeLines] = useState<Ilinetable[]>([]);
     const [loggedCodeLines, setLoggedCodeLines] = useState<Ilinetable[]>([]);
-    const [instrsData, setInstrsData] = useState<InstrsColumnType[]>([]);
+    const [dynamicCodeCols, setDynamicCodeCols] = useState<string[]>([]);
+    const codeColumns = useMemo(() => getCodeColumns(t, dynamicCodeCols), [dynamicCodeCols, t]);
+    // 选中代码行
     const [selectedline, setSelectedline] = useState<number>(-1);
+    // 指令表
+    const [dynamicInstrCols, setDynamicInstrCols] = useState<string[]>([]);
+    const [allInstrData, setAllInstrData] = useState<InstrsColumnType[]>([]);
+    // 是否关联指令
+    const isRelatedInstr = useCallback((instr: InstrsColumnType): boolean => {
+        if (selectedline > 0 && codeLines.length > 0) {
+            return isRelated(codeLines[selectedline - 1], instr);
+        }
+        return false;
+    }, [selectedline, codeLines]);
+    const getRelatedInstrs = useCallback((): InstrsColumnType[] => {
+        return allInstrData.filter((record: InstrsColumnType) => isRelatedInstr(record));
+    }, [allInstrData, isRelatedInstr]);
+    // 指令表当前显示数据
+    const curInstrData = useMemo(() => condition.onlyRelated ? getRelatedInstrs() : allInstrData, [allInstrData, condition.onlyRelated, getRelatedInstrs]);
+    const instrColumns = useMemo(() => getInstrColumns(dynamicInstrCols, t, curInstrData), [dynamicInstrCols, t, curInstrData]);
     const [lineClickListener, setLineClickListener] = useState<number>(0);
     const [tableHeight, setTableHeight] = useState<number>(1000);
-    const instrsColumns = getInstrsColumns(t);
-    const [filterInstrsColumns, setFilterInstrsColumns] = useState<ColumnsType<InstrsColumnType>>(instrsColumns);
-    const [doneQuery, setDoneQuery] = useState(false);
     const [instrLimit, setInstrLimit] = useState({ maxSize: MAX_INSTRUCTION, overlimit: false, current: 0 });
     const reset = (): void => {
         // 重置选中行数，-1不选中任一行
@@ -137,25 +93,6 @@ const Index = observer(({ session }: { session: Session }) => {
         setSelectedline(data?.Line ?? -1);
     };
 
-    const getRelatedInstrs = (): InstrsColumnType[] => {
-        return instrsData.filter((record: InstrsColumnType) => isRelatedInstr(record));
-    };
-
-    const isRelatedInstr = useCallback((instr: InstrsColumnType): boolean => {
-        if (selectedline > 0 && codeLines.length > 0) {
-            return isRelated(codeLines[selectedline - 1], instr);
-        }
-        return false;
-    }, [selectedline, codeLines]);
-    const isRelated = (codeline: Ilinetable, instr: InstrsColumnType): boolean => {
-        // 指令地址是否在代码行地址范围内
-        return Boolean(codeline?.['Address Range']?.find(item => Number(item[0]) <= Number(instr.Address) && Number(item[1]) >= Number(instr.Address)));
-    };
-
-    const getCurInstrsData = (): InstrsColumnType[] => {
-        return condition.onlyRelated ? getRelatedInstrs() : instrsData;
-    };
-
     function resizeHeight(): void {
         const codeTable = document.getElementById('CodeTable');
         const height = codeTable?.clientHeight ?? 1000;
@@ -164,33 +101,6 @@ const Index = observer(({ session }: { session: Session }) => {
         }
         setTableHeight(height);
     }
-
-    const updateInstrsColumns = (): void => {
-        const hasStallCycles = instrsData[0]?.realStallCycles !== undefined && instrsData[0]?.realStallCycles !== null;
-        const hasRegisterNum = instrsData[0]?.registerNum !== undefined && instrsData[0]?.registerNum !== null;
-        const newColumns: ColumnsType<InstrsColumnType> = getInstrsColumns(t, { hasStallCycles, hasRegisterNum });
-        const fields = ['Address', 'Pipe', 'Source', 'Instructions Executed', 'Cycles'];
-        newColumns.forEach((col: ColumnType<InstrsColumnType>) => {
-            if (fields.includes(String(col.dataIndex))) {
-                const items = [...new Set(getCurInstrsData().map(item => item[col.dataIndex as keyof InstrsColumnType]))];
-                const filters = items.map(item => ({
-                    text: item,
-                    value: item,
-                }));
-                Object.assign(col, {
-                    filters,
-                    filterMode: 'menu',
-                    filterSearch: true,
-                    onFilterDropdownOpenChange: (open: boolean) => {
-                        if (open) {
-                            limitInput();
-                        }
-                    },
-                });
-            }
-        });
-        setFilterInstrsColumns(newColumns);
-    };
 
     async function getCode(source: string): Promise<string> {
         if (source === '') {
@@ -230,81 +140,65 @@ const Index = observer(({ session }: { session: Session }) => {
         return str;
     }
 
-    async function getInstrs(core: string): Promise<InstrsColumnType[]> {
-        if (session.parseStatus && !doneQuery) {
-            const res = await queryApiInstr();
-            if (res === undefined || res === null || res.instructions === '') {
-                return [];
-            }
-            const obj = safeJSONParse(res.instructions);
-            if (obj === null) {
-                return [];
-            }
-            let list = obj.Instructions ?? [];
-            setInstrLimit({ ...instrLimit, overlimit: list.length > instrLimit.maxSize });
-            if (list.length > MAX_INSTRUCTION) {
-                list = list.slice(0, MAX_INSTRUCTION);
-            }
-            runInAction(() => {
-                session.instructions = list;
-            });
-            setDoneQuery(true);
+    async function getInstrs(coreName: string): Promise<{instructions: InstrsColumnType[] ;cols: string[]}> {
+        if (coreName === '') {
+            return { instructions: [], cols: [] };
         }
-        const records = session.instructions;
-        const coreIndex = session.coreList.findIndex(item => item === core);
-        const list = records.map((item: JsonInstructionType, index: number) => ({
-            ...item,
-            cycles: item.Cycles?.[coreIndex] ?? '',
-            instructionsExecuted: item['Instructions Executed']?.[coreIndex] ?? '',
-            index: index + 1,
-            maxCycles: 0,
-            realStallCycles: item.RealStallCycles?.[coreIndex],
-            theoreticalStallCycles: item.TheoreticalStallCycles?.[coreIndex],
-            registerNum: item.RegisterNum?.[coreIndex],
-        }));
+        const res = await queryDynamicInstr({ coreName });
+        // 动态列
+        const cols = Object.keys(res?.['Instructions Dtype']?.Instructions ?? {});
+        const records = res?.Instructions ?? [];
+        setInstrLimit({ ...instrLimit, overlimit: records.length > instrLimit.maxSize });
+        const list: InstrsColumnType[] = records.map((item: JsonInstructionType, index: number) => {
+            return {
+                ...item,
+                index: index + 1,
+                maxCycles: 0,
+            };
+        });
         let maxCycles = 1;
         list.forEach(item => {
-            if (!isNaN(Number(item.cycles))) {
-                maxCycles = Math.max(maxCycles, Number(item.cycles));
+            if (!isNaN(Number(item.Cycles))) {
+                maxCycles = Math.max(maxCycles, Number(item.Cycles));
             }
         });
         list.forEach(item => {
             item.maxCycles = maxCycles;
         });
-        return list;
+        return { instructions: list, cols };
     };
-    async function getLines(source: string, core: string): Promise<Ilinetable[]> {
+    async function getLines(source: string, core: string): Promise<{ lines: Ilinetable[];cols: string[] }> {
         if (source === '' || core === '') {
-            return [];
+            return { lines: [], cols: [] };
         }
-        const res = await queryApiLine({ sourceName: source, coreName: core });
-        const records: Iline[] = res?.lines ?? [];
-        const list = records.map((item: Iline, index: number) => ({
-            ...item,
-            cycles: item.Cycle,
-            instructionsExecuted: item['Instruction Executed'],
-        }));
-        return list.reverse();
+        const res = await queryDynamicLine({ sourceName: source, coreName: core });
+        const cols = Object.keys(res?.['Files Dtype']?.Lines ?? {});
+        const list: Iline[] = res?.Lines ?? [];
+        return { lines: list.reverse(), cols };
     };
 
     function clear(): void {
         // 文件源码
         setCode('');
-        // 指令记录
-        setInstrsData([]);
         // 代码行记录
         setLoggedCodeLines([]);
+        setDynamicCodeCols([]);
+        // 选中行
         setCodeLines([]);
-        setDoneQuery(false);
+        // 指令记录
+        setAllInstrData([]);
+        setDynamicCodeCols([]);
     }
 
     async function updateData(): Promise<void> {
         Promise.all([
             getCode(condition.source),
             getLines(condition.source, condition.core),
-        ]).then(([newCode, newLoggedCodeLines]) => {
+        ]).then(([newCode, { lines: newLoggedCodeLines, cols }]) => {
             // 文件源码
             setCode(newCode);
+            // 代码行动态列
+            setDynamicCodeCols(cols);
             // 代码行记录
             setLoggedCodeLines(newLoggedCodeLines);
             // 全部代码行
@@ -317,8 +211,9 @@ const Index = observer(({ session }: { session: Session }) => {
             setCodeLines(sourceCodeLines);
         });
         // 指令记录
-        getInstrs(condition.core).then((newInstrlist) => {
-            setInstrsData(newInstrlist);
+        getInstrs(condition.core).then(({ instructions: newInstrlist, cols }) => {
+            setDynamicInstrCols(cols);
+            setAllInstrData(newInstrlist);
         });
     }
 
@@ -354,9 +249,6 @@ const Index = observer(({ session }: { session: Session }) => {
         resizeHeight();
     }, [code]);
 
-    useEffect(() => {
-        updateInstrsColumns();
-    }, [instrsData, t]);
     useEffect(() => {
         updateCode();
     }, [t]);
@@ -429,7 +321,7 @@ const Index = observer(({ session }: { session: Session }) => {
                                         size="small"
                                         minThWidth={50}
                                         pagination={false}
-                                        columns={useCodeColumns()}
+                                        columns={codeColumns}
                                         dataSource={codeLines}
                                         rowClassName={(record: Ilinetable, index: number): string => (selectedline === index + 1 ? 'selected' : '')}
                                         onRow={ (record: Ilinetable): {onClick: (event: React.MouseEvent<HTMLElement>) => void} => {
@@ -450,14 +342,14 @@ const Index = observer(({ session }: { session: Session }) => {
                                 style={{ paddingLeft: '8px' }}
                                 body={<InstructionTable
                                     tableHeight={tableHeight}
-                                    columns={filterInstrsColumns}
+                                    columns={instrColumns}
                                     condition={condition}
-                                    dataSource={condition.onlyRelated ? getRelatedInstrs() : instrsData}
+                                    dataSource={curInstrData}
                                     isRelatedInstr={isRelatedInstr}
                                     handleInstrsClick={handleInstrsClick}
                                     selectedline={selectedline}
                                     lineClickListener={lineClickListener}
-                                    isShowPage ={instrsData.length > PAGE_LIMIT}
+                                    isShowPage ={curInstrData.length > PAGE_LIMIT}
                                 />}
                             />
                         }
