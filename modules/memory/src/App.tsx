@@ -3,21 +3,19 @@
  */
 import { ThemeProvider } from '@emotion/react';
 import { observer } from 'mobx-react';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SharedConfigProvider } from 'ascend-shared-config-provider';
 import { useRootStore } from './context/context';
 import { themeInstance } from './theme/theme';
 import Memory from './pages/Memory';
 import connector from './connection';
 import { GlobalStyles } from 'ascend-theme';
+import { registerEventHandlers } from './bootstrap';
 
 export const App = observer(() => {
     const { sessionStore } = useRootStore();
-    const [themeDark, setThemeDark] = useState<boolean>(true);
-    const hasListenerRef = useRef<boolean>(false);
-    let session = sessionStore.activeSession;
+    const session = sessionStore.activeSession;
     const [locale, setLocale] = useState<'zhCN' | 'enUS'>('zhCN');
-
     useEffect(() => {
         if (session) {
             setLocale(session.language);
@@ -25,17 +23,11 @@ export const App = observer(() => {
     }, [session?.language]);
 
     useEffect(() => {
-        session = sessionStore.activeSession;
+        registerEventHandlers();
         getLanguage();
         connector.send({ event: 'getParseStatus', body: { from: 'Memory', request: 'memoryRankIds' } });
+        connector.send({ event: 'getTheme' });
     }, []);
-
-    if (!hasListenerRef.current) {
-        connector.addListener('setTheme', (e: any) => {
-            hasListenerRef.current = true;
-            setThemeDark(e.data.body.isDark);
-        });
-    };
 
     const getLanguage = (): void => {
         connector.send({
@@ -47,7 +39,7 @@ export const App = observer(() => {
         <ThemeProvider theme={themeInstance.getThemeType()}>
             <GlobalStyles />
             <SharedConfigProvider locale={locale}>
-                {session !== undefined ? <Memory session={session} isDark={themeDark} /> : <></>}
+                {session !== undefined ? <Memory session={session} isDark={themeInstance.getCurrentTheme() === 'dark'} /> : <></>}
             </SharedConfigProvider>
         </ThemeProvider>
     );

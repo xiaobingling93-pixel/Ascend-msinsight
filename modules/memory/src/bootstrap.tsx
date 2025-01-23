@@ -72,12 +72,14 @@ window.request = async (params): Promise<any> => {
     return (data as any).body;
 };
 
-Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
-    connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
-        const res = e.data;
-        if (res.body === undefined || typeof res.body !== 'object') {
-            return;
-        }
-        callback(res.body);
+export function registerEventHandlers(): void {
+    Object.entries(NOTIFICATION_HANDLERS).forEach(([event, callback]) => {
+        connector.addListener(event, (e: MessageEvent<{ event: string; body: Record<string, unknown> }>) => {
+            const res = e.data;
+            if (res.body === undefined || typeof res.body !== 'object') {
+                return;
+            }
+            callback(res.body);
+        });
     });
-});
+}

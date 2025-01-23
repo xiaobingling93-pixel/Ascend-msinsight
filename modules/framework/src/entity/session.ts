@@ -5,21 +5,75 @@ import { makeAutoObservable } from 'mobx';
 import { type DataSource, LOCAL_HOST, PORT } from '../centralServer/websocket/defs';
 import { SessionAction } from '@/utils/enum';
 
+// Scene：数据场景,默认、集群、算子调优、Jupter
+export type Scene = 'Default' | 'Cluster' | 'Compute' | 'Jupyter';
+
+export interface File {
+    projectName: string;
+    filePath: string;
+    rankId?: string;
+}
+
+export interface Rank {
+    cardId: string;
+    cardName: string;
+    cardPath: string;
+    host?: string;
+    dataSource: DataSource;
+}
 export class Session {
     language: 'zhCN' | 'enUS' = 'enUS';
-    activeDataSource: DataSource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
-    isBinary: boolean | null = false;
-    isCluster: boolean | null = false;
-    isIpynb: boolean = false;
-    actionListener: {type: SessionAction;value: string} = { type: SessionAction.NO_ACTION, value: '' };
-
     defaultConnected?: boolean;
+    actionListener: {type: SessionAction;value: string} = { type: SessionAction.NO_ACTION, value: '' };
+    // 数据源/项目管理
+    activeDataSource: DataSource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
+    rankList: Rank[] = [];
+    // 场景
+    isCluster: boolean | null = false;
+    isBinary: boolean | null = false;
+    isIpynb: boolean = false;
+    ipynbUrl: string = '';
+    isFullDb: boolean = false;
+    // 解析状态
+    parseCompleted: boolean = false;
+    clusterCompleted: boolean = false;
+    durationFileCompleted: boolean = false;
+    // 模块数据
+    startTime: number = -1;
+    endTimeAll: number = -1;
+    unitcount: number = 0;
+    memoryRankIds: string[] = [];
+    operatorRankIds: string[] = [];
+    // 模块数据:算子调优
+    coreList: string[] = [];
+    sourceList: string[] = [];
+
+    // 需要下发给插件的url
+    toIframeUrl: string = '';
+
+    // 数据源/项目管理
     private _dataSources: DataSource[] = [];
 
     constructor() {
         makeAutoObservable(this);
     }
 
+    // 导入数据场景：默认、集群、算子调优、Jupter
+    get scene(): Scene {
+        let scene: Scene;
+        if (this.isBinary) {
+            scene = 'Compute';
+        } else if (this.isCluster) {
+            scene = 'Cluster';
+        } else if (this.isIpynb) {
+            scene = 'Jupyter';
+        } else {
+            scene = 'Default';
+        }
+        return scene;
+    }
+
+    // 数据源/项目管理
     get dataSources(): DataSource[] {
         return this._dataSources;
     }
@@ -34,6 +88,7 @@ export class Session {
         this.isBinary = remove ? false : null;
     }
 
+    // 数据源管理
     deleteDataSource(projectIndex: number): void {
         this._dataSources = this._dataSources.filter((dataSource, index) => index !== projectIndex);
     }
@@ -42,5 +97,14 @@ export class Session {
         const dataSources = JSON.parse(JSON.stringify(this._dataSources));
         dataSources[projectIndex].dataPath.splice(dataPahtIndex, 1);
         this._dataSources = dataSources;
+    }
+
+    // Timeline解析卡信息
+    getRank({ projectName, filePath }: File): Rank | undefined {
+        return this.rankList.find(rank => rank.dataSource.projectName === projectName && rank.dataSource.dataPath[0] === filePath);
+    }
+
+    getRankId(file: File): string {
+        return this.getRank(file)?.cardId ?? '';
     }
 }

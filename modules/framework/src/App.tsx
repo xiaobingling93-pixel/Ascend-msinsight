@@ -15,24 +15,23 @@ import { Session } from '@/entity/session';
 import { connectRemote } from '@/centralServer/server';
 import { LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import './index.css';
-import { registerEventListeners } from '@/utils';
+import { registerEventListeners } from '@/connection';
 
 const init = async(session: Session): Promise<void> => {
-    // 连接后端（启动后第一次）
+    // 连接与模块的通信
+    registerEventListeners();
+
+    // 连接ws（启动后第一次）
     const isSuccess = await connectRemote({ remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] });
     if (isSuccess) {
         session.defaultConnected = true;
     }
-    // 连接与页签间的通信
-    registerEventListeners();
 };
 
 const LEFT_WIDTH = 300;
 const App = observer(() => {
-    const { sessionStore } = useRootStore();
-    const session = sessionStore.activeSession;
+    const session = useRootStore().sessionStore.activeSession;
     const [locale] = useState<'zhCN' | 'enUS'>('zhCN');
-    const currentTheme = themeInstance.getCurrentTheme();
 
     const [view] = useDraggableContainer({
         draggableWH: LEFT_WIDTH,
@@ -41,18 +40,6 @@ const App = observer(() => {
     });
 
     useEffect(() => {
-        if (currentTheme === 'dark') {
-            document.documentElement.getElementsByTagName('body')[0]?.classList.add('theme_dark');
-        } else {
-            document.documentElement.getElementsByTagName('body')[0]?.classList.remove('theme_dark');
-        }
-    }, [currentTheme]);
-
-    useEffect(() => {
-        if (!session) {
-            return;
-        }
-
         // 启动
         init(session);
     }, []);

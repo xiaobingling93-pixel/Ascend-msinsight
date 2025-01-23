@@ -9,9 +9,9 @@ interface SendParams<T extends EventHanlder> {
     to?: SendTargetKey;
     module?: string;
     event: T extends ReservedEventHandler ? never : T;
-};
+}
 type ListenerCallback = (res: MessageEvent) => void;
-interface ListenerHandler { event: EventHanlder; sequence: number };
+interface ListenerHandler { event: EventHanlder; sequence: number }
 type TargetWindow = Window;
 type GetTragetWindows = () => TargetWindow[];
 type SendTargetKey = number;
@@ -22,7 +22,7 @@ abstract class BaseConnector {
     protected _getTargetWindows: GetTragetWindows;
     protected _listeners: Map<EventHanlder, Array<ListenerCallback | null>> = new Map();
 
-    constructor(getTargetWindow: GetTragetWindows) {
+    protected constructor(getTargetWindow: GetTragetWindows) {
         if (typeof window !== 'object') {
             const errMsg = 'cannot find global Window object, please check your runtime environment';
             console.error(this.printErrMsg(errMsg));
@@ -114,20 +114,20 @@ abstract class BaseConnector {
     }
 
     protected abstract awaitFetch(e: MessageEvent): void;
-};
+}
 
 type FetchSequenceID = number;
 
 interface FetchParams {
     [x: string]: unknown;
     event?: never;
-};
+}
 interface FetchRequest {
     [x: string]: any;
     event: 'request';
     from: SendTargetKey;
     id: FetchSequenceID;
-};
+}
 export class ClientConnector extends BaseConnector {
     private readonly _msgSequence: Map<FetchSequenceID, {resolve: (value: unknown) => void; reject: (value: unknown) => void}> = new Map();
     private _curFetchSequenceID: FetchSequenceID = 0;
@@ -175,7 +175,7 @@ export class ClientConnector extends BaseConnector {
             this._msgSequence.delete(res.data.id);
         }
     }
-};
+}
 
 type Response = (res: MessageEvent) => Promise<Record<string, unknown>>;
 export class ServerConnector extends BaseConnector {
@@ -214,7 +214,7 @@ export class ServerConnector extends BaseConnector {
         const res = await this._responseForFetch(event);
         // 判断是否对该命令的返回内容进行了拦截配置，如果有配置，则先执行拦截方法逻辑
         const callback = this._getInterceptorHandlers(event.data.args.command);
-        if (callback) {
+        if (typeof callback === 'function') {
             callback(event, res);
         }
         this.send({

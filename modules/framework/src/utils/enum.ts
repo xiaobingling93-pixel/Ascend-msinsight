@@ -21,6 +21,17 @@ export enum ProjectAction {
 };
 
 export enum SessionAction {
-    ADD_DATA_UNDER_PROJECT = 'addDataUnderProject',
+    ADD_DATA_UNDER_PROJECT = 'add data under project',
+    SWITCH_ACTIVE_MODULE = 'switch active module',
     NO_ACTION = 'no action',
+}
+
+export enum ThemeName {
+    DARK = 'dark',
+    LIGHT = 'light',
+}
+
+export enum Language {
+    ZH = 'zhCN',
+    EN = 'enUS',
 }
