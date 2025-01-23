@@ -15,7 +15,6 @@ const Container = styled.div`
   display: flex;
   align-items: center;
   > * {
-    display: inline-flex;
     margin-left: 10px;
     cursor: pointer;
   }

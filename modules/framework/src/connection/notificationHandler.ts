@@ -68,21 +68,11 @@ export const getParseStatusHandler = (e: NotificationMessage): void => {
     }
     // 请求特定数据
     const receiver = e.data.body;
-    if (receiver?.request !== undefined) {
-        let val = {};
-        switch (receiver.request) {
-            case 'memoryRankIds':
-                val = { memoryRankIds: session.memoryRankIds };
-                break;
-            case 'operatorRankIds':
-                val = { operatorRankIds: session.operatorRankIds };
-                break;
-            default:
-                break;
-        }
+    const requestKey = receiver?.request as string;
+    if (requestKey !== undefined && requestKey !== null && (session as any)[requestKey] !== undefined) {
         connector.send({
             event: 'updateSession',
-            body: val,
+            body: { [requestKey]: (session as any)[requestKey] },
             to: getModuleIndex(receiver?.from),
         });
         return;

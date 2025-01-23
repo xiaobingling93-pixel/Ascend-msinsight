@@ -46,11 +46,8 @@ export const sendTabRemoveBaseline = function(dataSource: DataSource, singleData
  */
 export const setBaselineData = async ({ projectName, filePath }: File): Promise<void> => {
     const session = store.sessionStore.activeSession;
-    // 取消上次选中的基线数据
-    const oldDatasource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
-    sendTabRemoveBaseline(oldDatasource, session.compareSet.baseline.filePath);
-    // 取消对比数据的设置
-    cancelCompareData();
+    // 取消原来的基线数据
+    cancelBaselineData();
 
     // 设置新的基线
     // 通知后台
