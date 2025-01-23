@@ -3,11 +3,15 @@
 */
 import { makeAutoObservable } from 'mobx';
 import { type DataSource, LOCAL_HOST, PORT } from '../centralServer/websocket/defs';
+import type { CompareData } from '@/utils/Compare';
 import { SessionAction } from '@/utils/enum';
 
 // Scene：数据场景,默认、集群、算子调优、Jupter
 export type Scene = 'Default' | 'Cluster' | 'Compute' | 'Jupyter';
 
+interface ContextMenu {
+    visible: boolean;
+}
 export interface File {
     projectName: string;
     filePath: string;
@@ -44,9 +48,17 @@ export class Session {
     unitcount: number = 0;
     memoryRankIds: string[] = [];
     operatorRankIds: string[] = [];
-    // 模块数据:算子调优
+    // 模块数据-算子调优
     coreList: string[] = [];
     sourceList: string[] = [];
+    // 右键菜单
+    contextMenu: ContextMenu = { visible: false };
+    // 对比功能
+    selectedFile: File = { projectName: '', filePath: '' };
+    compareSet: {baseline: CompareData;comparison: CompareData} = {
+        baseline: { projectName: '', filePath: '', rankId: '' },
+        comparison: { projectName: '', filePath: '', rankId: '' },
+    };
 
     // 需要下发给插件的url
     toIframeUrl: string = '';
@@ -73,7 +85,13 @@ export class Session {
         return scene;
     }
 
-    // 数据源/项目管理
+    // 对比状态
+    get isCompareStatus(): boolean {
+        const { baseline, comparison } = this.compareSet;
+        return baseline.projectName !== '' && comparison.filePath !== '' && comparison.projectName !== '' && comparison.filePath !== '';
+    }
+
+    // 数据源/工程管理
     get dataSources(): DataSource[] {
         return this._dataSources;
     }

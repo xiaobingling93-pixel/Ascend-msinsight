@@ -3,20 +3,33 @@
  */
 import React from 'react';
 import { observer } from 'mobx-react';
-import { Session } from '@/entity/session';
 import styled from '@emotion/styled';
+import SwitchTheme from './SwitchTheme';
+import SwitchLanguage from './SwitchLanguage';
+import Version from './Version';
 
-const Container = styled.div` 
-    position: absolute;
-    right:0;
-    color: ${(props): string => props.theme.textColorPrimary};
+const Container = styled.div`
+  position: absolute;
+  right: 0;
+  margin: 6px 20px 0 0;
+  display: flex;
+  align-items: center;
+  > * {
+    margin-left: 10px;
+    cursor: pointer;
+  }
+  svg {
+    width: 20px;
+    height: 20px;
+  }
 `;
 
-interface IProps {
-    session: Session;
-}
-const Index = observer(({ session }: IProps) => {
-    return <Container>Tool Box </Container>;
+const Index = observer(() => {
+    return <Container>
+        <SwitchTheme/>
+        <SwitchLanguage/>
+        <Version/>
+    </Container>;
 });
 
 export default Index;

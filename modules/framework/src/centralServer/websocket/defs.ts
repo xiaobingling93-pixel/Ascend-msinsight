@@ -19,10 +19,8 @@ const getParamMap = (): Map<string, string> => {
     return paramMap;
 };
 const PARAM_MAP = getParamMap();
-let port: number = Number.parseInt(<string>PARAM_MAP.get('port'));
-export function setPort(newPort: number): void {
-    port = newPort;
-}
+const port: number = Number.parseInt(<string>PARAM_MAP.get('port'));
+
 export const LOCAL_HOST = '127.0.0.1';
 export const PORT: number = port;
 export const GLOBAL_HOST = { remote: LOCAL_HOST, port: PORT };

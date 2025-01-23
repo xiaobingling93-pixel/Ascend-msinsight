@@ -5,6 +5,8 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from './en.json';
 import zh from './zh.json';
+import frameworkEn from './framework/en.json';
+import frameworkZh from './framework/zh.json';
 import communicationEn from './communication/en.json';
 import communicationZh from './communication/zh.json';
 import sourceEn from './source/en.json';
@@ -26,6 +28,7 @@ import libZh from './lib/zh.json';
 export const resources = {
     enUS: {
         ...en,
+        ...frameworkEn,
         ...communicationEn,
         ...sourceEn,
         ...detailsEn,
@@ -38,6 +41,7 @@ export const resources = {
     },
     zhCN: {
         ...zh,
+        ...frameworkZh,
         ...communicationZh,
         ...sourceZh,
         ...detailsZh,

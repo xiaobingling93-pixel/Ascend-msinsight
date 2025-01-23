@@ -20,9 +20,6 @@ export interface UpdateProjectParam {
 // 历史项目
 export const loadHistoryProject = async(): Promise<void> => {
     const session = store.sessionStore.activeSession;
-    if (!session) {
-        return;
-    }
     const sources: DataSource[] = [];
     const result = await getHistoryProject() as {projectDirectoryList: ProjectDirectory[]};
     const projectDirectoryList = result?.projectDirectoryList ?? [];
@@ -39,9 +36,6 @@ export const loadHistoryProject = async(): Promise<void> => {
 export async function handleProjectAction({ action, dataSource: orginDataSource, isConflict }:
 {action: ProjectAction;dataSource: DataSource;isConflict: boolean}): Promise<void> {
     const session = store.sessionStore.activeSession;
-    if (!session) {
-        return;
-    }
     runInAction(async() => {
         const { activeDataSource, dataSources } = session;
         const dataSource = { ...orginDataSource };
@@ -76,9 +70,6 @@ function arraysValueEqual<T>(a: T[], b: T[]): boolean {
 // 2、设置为打开(选中）项目
 export const updateProject = ({ projectAction, projectName, dataPath, hasConflict }: UpdateProjectParam): void => {
     const session = store.sessionStore.activeSession;
-    if (!session) {
-        return;
-    }
     runInAction(() => {
         try {
             if (projectAction === ProjectAction.ADD_FILE) {
@@ -118,14 +109,11 @@ function getMergedDataSources(oldDataSources: DataSource[], dataSource: DataSour
         }
     }
     return dataSources;
-};
+}
 
 // 移除项目
 export const removeProject = (projectIndex: number): void => {
     const session = store.sessionStore.activeSession;
-    if (!session) {
-        return;
-    }
     runInAction(async() => {
         try {
             const dataSource = session.dataSources[projectIndex];
@@ -153,9 +141,6 @@ export const removeProject = (projectIndex: number): void => {
 // 移除文件
 export const removeDataPath = (projectIndex: number, dataPathIndex: number): void => {
     const session = store.sessionStore.activeSession;
-    if (!session) {
-        return;
-    }
     runInAction(async() => {
         try {
             const dataSource = session.dataSources[projectIndex];

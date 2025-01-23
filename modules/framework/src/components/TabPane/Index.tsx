@@ -3,11 +3,12 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react';
-import { Session } from '@/entity/session';
-import { Menu } from 'antd';
+import type { Scene, Session } from '@/entity/session';
 import type { MenuProps } from 'antd';
+import { Menu } from 'antd';
 import { type ModuleConfig, modulesConfig } from '../../moduleConfig';
 import styled from '@emotion/styled';
+import { SessionAction } from '@/utils/enum';
 
 const Container = styled.div`
     width: 100%;
@@ -15,10 +16,20 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     .ant-menu{
+        height: 36px;
         background: ${(props): string => props.theme.bgColorLight};
     }
     .ant-menu-item{
+        height: 32px;
+        line-height: 32px;
+        font-weight: bold;
         color: ${(props): string => props.theme.textColorPrimary};
+    }
+    .ant-menu-item-selected{
+        color: ${(props): string => props.theme.primaryColor};
+        &:after {
+            border-bottom: 1px solid ${(props): string => props.theme.primaryColor};
+        }
     }
     .tab-body {
         flex-grow: 1;
@@ -33,23 +44,6 @@ const Container = styled.div`
         background: transparent;
     }
 `;
-
-// Scene：数据场景,默认、集群、算子调优、Jupter
-type Scene = 'Default' | 'Cluster' | 'Compute' | 'Jupyter';
-
-function getScene(session: Session): Scene {
-    let scene: Scene;
-    if (session.isBinary) {
-        scene = 'Compute';
-    } else if (session.isCluster) {
-        scene = 'Cluster';
-    } else if (session.isIpynb) {
-        scene = 'Jupyter';
-    } else {
-        scene = 'Default';
-    }
-    return scene;
-}
 
 function getActive(session: Session, scene: Scene, activeModule: string, availableModules: ModuleConfig[]): string {
     const moduleNameList = availableModules.map(config => config.name);
@@ -79,12 +73,19 @@ const Index = observer(({ session }: {session: Session}) => {
         if (session.isBinary === null && session.isCluster === null) {
             return;
         }
-        setScene(getScene(session));
+        setScene(session.scene);
     }, [session.isBinary, session.isCluster, session.isIpynb]);
     useEffect(() => {
         const newActiveModule = getActive(session, scene, activeModule, availableModules);
         setActiveModule(newActiveModule);
     }, [scene]);
+    useEffect(() => {
+        const { type, value } = session.actionListener;
+        const allModuleName = modulesConfig.map(module => module.name);
+        if (type === SessionAction.SWITCH_ACTIVE_MODULE && allModuleName.includes(value)) {
+            setActiveModule(value);
+        }
+    }, [session.actionListener]);
     return <Container>
         <Menu onClick={onClick} selectedKeys={[activeModule]} mode="horizontal" items={items} />
         <div className="tab-body">{availableModules.map(moduleConfig => (

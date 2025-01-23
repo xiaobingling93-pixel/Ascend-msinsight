@@ -43,6 +43,8 @@ import { ReactComponent as LocalImportDarkSvg } from './img/local_import_dark.sv
 import { ReactComponent as LocalImportLightSvg } from './img/local_import_light.svg';
 import { ReactComponent as DataManagerDarkSvg } from './img/data_manager_dark.svg';
 import { ReactComponent as DataManagerLightSvg } from './img/data_manager_light.svg';
+import { ReactComponent as LangZhSvg } from './img/lang_zh.svg';
+import { ReactComponent as LangEnSvg } from './img/lang_en.svg';
 import { themeInstance } from '../theme';
 import CaretRightSvg from './img/caret-right.svg';
 import { CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
@@ -82,6 +84,8 @@ const iconMap: Record<string, any> = {
     file: FileSvg,
     folder: FolderSvg,
     delete: DeleteSvg,
+    langZh: LangZhSvg,
+    langEn: LangEnSvg,
     dark: {
         help: HelpDarkSvg,
         flag: FlagDarkIcon,
@@ -273,4 +277,11 @@ export function LocalImportIcon(props: ISVGProps): JSX.Element {
 }
 export function DataManagerIcon(props: ISVGProps): JSX.Element {
     return <Icon type={'dataManager'} {...props }/>;
+}
+
+export function LangZhIcon(props: ISVGProps): JSX.Element {
+    return <Icon type={'langZh'} {...props }/>;
+}
+export function LangEnIcon(props: ISVGProps): JSX.Element {
+    return <Icon type={'langEn'} {...props }/>;
 }

@@ -3,17 +3,19 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react';
+import { runInAction } from 'mobx';
 import styled from '@emotion/styled';
 import { type TreeDataNode } from 'antd';
 import { Tree } from 'ascend-components';
 import type { EventDataNode } from 'antd/lib/tree';
 import { AddIcon, LocalImportIcon } from 'ascend-icon';
-import { loadHistoryProject, handleProjectAction } from '@/utils/Project';
-import DeleteConfirm from './DeleteConfirm';
-import type { Session } from '@/entity/session';
+import { store } from '@/store';
+import type { File, Session } from '@/entity/session';
 import { type DataSource, LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
 import { ProjectAction, SessionAction } from '@/utils/enum';
-import { runInAction } from 'mobx';
+import { loadHistoryProject, handleProjectAction } from '@/utils/Project';
+import DeleteConfirm from './DeleteConfirm';
+import { isSameFile } from './ContextMenu';
 
 const ContentsContainer = styled.div`
     padding: 0.5rem 0.8rem;
@@ -91,6 +93,24 @@ const ContentsContainer = styled.div`
     }
 `;
 
+const getNodeClass = (session: Session, file: File): string => {
+    const { compareSet: { baseline, comparison } } = session;
+    if (isSameFile(baseline, file)) {
+        return 'baseline';
+    } else if (isSameFile(comparison, file)) {
+        return 'comparison';
+    } else {
+        return '';
+    }
+};
+
+const handleRightClick = (file: File): void => {
+    const session = store.sessionStore.activeSession;
+    runInAction(() => {
+        session.selectedFile = file;
+    });
+};
+
 // 目录
 const Contents = observer(({ session }: {session: Session}) => {
     const contents = useMemo<TreeDataNode[]>(() => session.dataSources.map((dataSource, dataSourceIndex) => ({
@@ -107,21 +127,22 @@ const Contents = observer(({ session }: {session: Session}) => {
         children: dataSource.dataPath?.map((path, dataPathIndex) => ({
             key: `${dataSource.projectName}-${path}`,
             isLeaf: true,
-            title: <span className={'content-body'}>
-                <span className={'content-text can-right-click'}>{path}</span>
+            title: <span className={`content-body ${getNodeClass(session, { projectName: dataSource.projectName, filePath: path })}`}>
+                <span className={'content-text can-right-click'}
+                    onContextMenu={(): void => handleRightClick({ projectName: dataSource.projectName, filePath: path })}>{path}</span>
                 <div className={'btn-box'} onClick={(e): void => e.stopPropagation()}>
                     <DeleteConfirm isProject={false} projectIndex={dataSourceIndex} dataPathIndex={dataPathIndex}/>
                 </div>
             </span>,
         })),
-    })), [session.dataSources]);
+    })), [session.dataSources, JSON.stringify(session.compareSet)]);
 
-    // 展开情况: 默认展开所有项目，新导入项目默认展开
+    // 展开情况: 默认展开所有工程，新导入工程默认展开
     const allProjectKeys = contents.map(item => item.key);
     const [collapsedKeys, setCollapsedKeys] = useState(new Set());
     const expandedKeys = useMemo(() => allProjectKeys.filter(item => !collapsedKeys.has(item)), [collapsedKeys, allProjectKeys]);
 
-    // 当前选中（打开）项目、文件
+    // 当前选中（打开）工程、文件
     const selectedKeys = useMemo(() => {
         if (session.activeDataSource.projectName !== '') {
             const { projectName, dataPath } = session.activeDataSource;
@@ -135,7 +156,7 @@ const Contents = observer(({ session }: {session: Session}) => {
         const { activeDataSource, dataSources } = session;
         const [,projectIndex, dataPathIndex] = node.pos.split('-').map(index => Number(index));
         const dataSource: DataSource = dataSources[projectIndex];
-        // 如果点击其它项目或者其它项目下文件
+        // 如果点击其它工程或者其它工程下文件
         if (dataSource.projectName !== activeDataSource.projectName) {
             handleProjectAction({ action: ProjectAction.SWITCH_PROJECT, dataSource, isConflict: false });
         }

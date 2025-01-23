@@ -27,8 +27,9 @@ const DeleteConfirm = observer(({ isProject, projectIndex, dataPathIndex }: IPro
         onConfirm={confirm}
         okText="Yes"
         cancelText="No"
+        destroyTooltipOnHide={{ keepParent: false }}
     >
-        <Tooltip placement="bottom" title="Delete">
+        <Tooltip placement="top" title="Delete" destroyTooltipOnHide={{ keepParent: false }}>
             <DeleteIcon/>
         </Tooltip>
     </Popconfirm>;

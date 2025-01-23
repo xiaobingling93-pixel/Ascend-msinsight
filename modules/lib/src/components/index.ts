@@ -12,6 +12,7 @@ export { MICheckboxGroup as CheckboxGroup } from './MICheckbox';
 export { MIFormItem as FormItem } from './MIFormItem';
 export { MIChart } from './MIChart';
 export { MITree as Tree } from './MITree';
+export { MISwitch as Switch } from './MISwitch';
 export { Responsive } from './Responsive';
 export {
     Col,
@@ -26,6 +27,5 @@ export {
     Radio,
     notification,
     Progress,
-    Switch,
     message,
 } from 'antd';

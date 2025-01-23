@@ -2,7 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
  */
 import { request } from '@/centralServer/server';
-import { DataSource, LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
+import { DataSource, GLOBAL_HOST, LOCAL_HOST, PORT } from '@/centralServer/websocket/defs';
+import { File } from '@/entity/session';
 
 /**
  * 获取历史导入的文件
@@ -60,5 +61,25 @@ export const deleteDataPath = async (dataSource: DataSource): Promise<unknown> =
     return request(dataSource, 'global', {
         command: 'files/deleteProjectExplorer',
         params: { projectName: dataSource.projectName, dataPath: dataSource.dataPath },
+    });
+};
+
+/**
+ * 设置基线数据
+ */
+export const setBaseline = async (file: File): Promise<unknown> => {
+    return request(GLOBAL_HOST, 'global', {
+        command: 'global/setBaseline',
+        params: { ...file },
+    });
+};
+
+/**
+ * 取消基线数据
+ */
+export const cancelBaseline = async (): Promise<unknown> => {
+    return request(GLOBAL_HOST, 'global', {
+        command: 'global/cancelBaseline',
+        params: {},
     });
 };

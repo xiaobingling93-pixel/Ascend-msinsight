@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="10px" height="10px" viewBox="0 0 10 10" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g transform="translate(-105.000000, -335.000000)" fill="currentColor">
+            <g transform="translate(86.000000, 332.000000)">
+                <g transform="translate(19.000000, 3.000000)">
+                    <circle cx="5" cy="5" r="3"></circle>
+                    <rect x="4.5" y="0" width="1" height="1.5" rx="0.5"></rect>
+                    <rect x="4.5" y="8.5" width="1" height="1.5" rx="0.5"></rect>
+                    <rect transform="translate(0.750000, 5.000000) rotate(-90.000000) translate(-0.750000, -5.000000) " x="0.25" y="4.25" width="1" height="1.5" rx="0.5"></rect>
+                    <rect transform="translate(9.250000, 5.000000) rotate(-90.000000) translate(-9.250000, -5.000000) " x="8.75" y="4.25" width="1" height="1.5" rx="0.5"></rect>
+                    <rect transform="translate(1.994796, 1.994796) rotate(-45.000000) translate(-1.994796, -1.994796) " x="1.49479618" y="1.24479618" width="1" height="1.5" rx="0.5"></rect>
+                    <rect transform="translate(8.005204, 8.005204) rotate(-45.000000) translate(-8.005204, -8.005204) " x="7.50520382" y="7.25520382" width="1" height="1.5" rx="0.5"></rect>
+                    <rect transform="translate(1.994796, 8.005204) rotate(-135.000000) translate(-1.994796, -8.005204) " x="1.49479618" y="7.25520382" width="1" height="1.5" rx="0.5"></rect>
+                    <rect transform="translate(8.005204, 1.994796) rotate(-135.000000) translate(-8.005204, -1.994796) " x="7.50520382" y="1.24479618" width="1" height="1.5" rx="0.5"></rect>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
