@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import styled from '@emotion/styled';
-import { type TreeDataNode } from 'antd';
+import { Tooltip, type TreeDataNode } from 'antd';
 import { Tree } from 'ascend-components';
 import type { EventDataNode } from 'antd/lib/tree';
 import { AddIcon, LocalImportIcon } from 'ascend-icon';
@@ -16,6 +16,7 @@ import { ProjectAction, SessionAction } from '@/utils/enum';
 import { loadHistoryProject, handleProjectAction } from '@/utils/Project';
 import DeleteConfirm from './DeleteConfirm';
 import { isSameFile } from './ContextMenu';
+import { useTranslation } from 'react-i18next';
 
 const ContentsContainer = styled.div`
     padding: 0.5rem 0.8rem;
@@ -111,6 +112,14 @@ const handleRightClick = (file: File): void => {
     });
 };
 
+// 导入数据按钮
+function ImportDataBtn({ projectName, session }: {projectName: string;session: Session}): JSX.Element {
+    const { t } = useTranslation('framework');
+    return <Tooltip placement="bottom" title={t('Import Data')} destroyTooltipOnHide={{ keepParent: false }}>
+        <AddIcon onClick={(): void => { session.actionListener = { type: SessionAction.ADD_DATA_UNDER_PROJECT, value: projectName }; }}/>
+    </Tooltip>;
+};
+
 // 目录
 const Contents = observer(({ session }: {session: Session}) => {
     const contents = useMemo<TreeDataNode[]>(() => session.dataSources.map((dataSource, dataSourceIndex) => ({
@@ -120,7 +129,7 @@ const Contents = observer(({ session }: {session: Session}) => {
         title: <span className={'content-body'}>
             <span className={'content-text'}>{dataSource.projectName}</span>
             <div className={'btn-box'} onClick={(e): void => e.stopPropagation()}>
-                <AddIcon onClick={(): void => { session.actionListener = { type: SessionAction.ADD_DATA_UNDER_PROJECT, value: dataSource.projectName }; }}/>
+                <ImportDataBtn projectName={dataSource.projectName} session={session}/>
                 <DeleteConfirm isProject={true} projectIndex={dataSourceIndex} />
             </div>
         </span>,

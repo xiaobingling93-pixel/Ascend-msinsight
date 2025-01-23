@@ -12,6 +12,7 @@ import { useTheme } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 import { AlarmIcon, BulbIcon } from '../icon/Icon';
 import ResizeObserver from 'resize-observer-polyfill';
+export { localStorageService, LocalStorageKey } from './local-storage';
 export { customConsole } from './Console';
 export {
     BaseContainer,

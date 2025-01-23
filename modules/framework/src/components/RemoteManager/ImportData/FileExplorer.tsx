@@ -6,7 +6,7 @@ import { observer } from 'mobx-react';
 import styled from '@emotion/styled';
 import { Modal, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { Button, Input } from 'ascend-components';
+import { Button, Input, Tooltip } from 'ascend-components';
 import { RefreshIcon } from 'ascend-icon';
 import { checkPathValid, getLastFilePath, getTrimedPath, getSearchDir } from '@/utils/Resource';
 import { ProjectAction, ProjectError } from '@/utils/enum';
@@ -62,7 +62,7 @@ const FileExplorer = observer(({ dialogOpen, handleOk, handleCancel, currentProj
     const { t } = useTranslation('framework');
     const [inputPath, setInputPath] = useState(getLastFilePath());
     const [actionListener, setActionListener] = useState<CatalogActionListener>({ type: CatalogAction.NO_ACTION });
-    const [hit, setHit] = useState<{alert: boolean;message: string;options?: Record<string, string | number>}>({ alert: false, message: 'enterHit' });
+    const [hit, setHit] = useState<{alert: boolean;message: string;options?: Record<string, string | number>}>({ alert: false, message: 'FileSearchDescribe' });
 
     // 点击确认
     const handleConfirm = async(): Promise<void> => {
@@ -94,7 +94,7 @@ const FileExplorer = observer(({ dialogOpen, handleOk, handleCancel, currentProj
 
     // 目录查询返回结果
     const handleSearchReturn = ({ success, result }: SearchResult): void => {
-        setHit({ alert: !success, message: result?.message ? result.message : 'enterHit', options: result?.options });
+        setHit({ alert: !success, message: result?.message ? result.message : 'FileSearchDescribe', options: result?.options });
     };
 
     // 每次打开对话框，刷新目录
@@ -104,7 +104,7 @@ const FileExplorer = observer(({ dialogOpen, handleOk, handleCancel, currentProj
         }
     }, [dialogOpen]);
 
-    return <Modal maskClosable={false} title="File Explorer" open={dialogOpen} onOk={handleOk} onCancel={handleCancel}
+    return <Modal maskClosable={false} title={t('File Explorer')} open={dialogOpen} onOk={handleOk} onCancel={handleCancel}
         footer={<div>
             <Button onClick={handleConfirm} type="primary" style={{ marginRight: 8 }} >{t('Confirm')}</Button>
             <Button onClick={handleCancel}>{t('Cancel')}</Button>
@@ -115,7 +115,7 @@ const FileExplorer = observer(({ dialogOpen, handleOk, handleCancel, currentProj
                 placeholder={t('FileSearchDescribe')}
                 showCount
                 maxLength={MAX_FILE_PATH_LENGTH}
-                suffix={<RefreshIcon className={'icon-refresh'} onClick={searchCatalog}/>}
+                suffix={<Tooltip placement="bottom" title={t('RefreshDirectory')} ><RefreshIcon className={'icon-refresh'} onClick={searchCatalog}/></Tooltip>}
                 value={inputPath}
                 onChange={(e): void => setInputPath(e.target.value)}
                 onPressEnter={searchCatalog}

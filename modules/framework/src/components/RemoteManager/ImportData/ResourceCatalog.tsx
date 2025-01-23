@@ -60,7 +60,7 @@ export interface CatalogActionListener {
 
 export enum SearchReturnMessage {
     EXCEEDING_MAX_DEPETH = 'ExceedingMaxDepth',
-    FILE_NOT_FOUND = 'FileNotFound',
+    FILE_NOT_FOUND = 'FileNotFundDescribe',
 }
 
 export interface SearchResult {

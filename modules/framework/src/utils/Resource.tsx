@@ -7,7 +7,7 @@ import type { TreeDataNode } from 'antd';
 import { checkProjectValid, getFiles } from '@/utils/Request';
 import { DataSource } from '@/centralServer/websocket/defs';
 import { ProjectError } from '@/utils/enum';
-import localStorageService, { LocalStorageKey } from '@/utils/local-storage';
+import { localStorageService, LocalStorageKey } from 'ascend-utils';
 import { store } from '@/store';
 import { message as Message } from 'antd';
 export interface ResourceItem {

@@ -9,6 +9,7 @@ import { Menu } from 'antd';
 import { type ModuleConfig, modulesConfig } from '../../moduleConfig';
 import styled from '@emotion/styled';
 import { SessionAction } from '@/utils/enum';
+import { useTranslation } from 'react-i18next';
 
 const Container = styled.div`
     width: 100%;
@@ -60,11 +61,13 @@ function isAvailable(moduleConfig: ModuleConfig, scene: Scene): boolean {
 }
 
 const Index = observer(({ session }: {session: Session}) => {
+    const { t } = useTranslation('framework', { keyPrefix: 'tabs' });
     const [scene, setScene] = useState<Scene>('Default');
     const [activeModule, setActiveModule] = useState('Timeline');
 
     const availableModules = useMemo(() => modulesConfig.filter(config => isAvailable(config, scene)), [scene]);
-    const items: MenuProps['items'] = useMemo(() => availableModules.map(config => ({ label: config.name, key: config.name })), [availableModules]);
+    const items: MenuProps['items'] = useMemo(() => availableModules.map(config => ({ label: t(config.name), key: config.name }))
+        , [availableModules, t]);
     const onClick: MenuProps['onClick'] = e => {
         setActiveModule(e.key);
     };

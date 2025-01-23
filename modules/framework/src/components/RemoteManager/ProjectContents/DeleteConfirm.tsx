@@ -6,6 +6,7 @@ import { observer } from 'mobx-react';
 import { Popconfirm, Tooltip } from 'antd';
 import { DeleteIcon } from 'ascend-icon';
 import { removeDataPath, removeProject } from '@/utils/Project';
+import { useTranslation } from 'react-i18next';
 
 interface IProps {
     isProject: boolean;
@@ -13,6 +14,7 @@ interface IProps {
     dataPathIndex?: number;
 }
 const DeleteConfirm = observer(({ isProject, projectIndex, dataPathIndex }: IProps) => {
+    const { t } = useTranslation('framework');
     const confirm = (): void => {
         if (isProject) {
             removeProject(projectIndex);
@@ -23,13 +25,13 @@ const DeleteConfirm = observer(({ isProject, projectIndex, dataPathIndex }: IPro
         }
     };
     return <Popconfirm placement="topLeft"
-        title={isProject ? 'DeleteProjectConfirmDescribe' : 'DeleteItemConfirmDescribe'}
+        title={isProject ? t('DeleteProjectConfirmDescribe') : t('DeleteItemConfirmDescribe')}
         onConfirm={confirm}
-        okText="Yes"
-        cancelText="No"
+        okText={t('Yes')}
+        cancelText={t('No')}
         destroyTooltipOnHide={{ keepParent: false }}
     >
-        <Tooltip placement="top" title="Delete" destroyTooltipOnHide={{ keepParent: false }}>
+        <Tooltip placement="top" title={isProject ? t('Delete All') : t('Delete Item')} destroyTooltipOnHide={{ keepParent: false }}>
             <DeleteIcon/>
         </Tooltip>
     </Popconfirm>;

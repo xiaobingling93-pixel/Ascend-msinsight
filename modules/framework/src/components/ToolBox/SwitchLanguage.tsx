@@ -3,7 +3,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Tooltip } from 'ascend-components';
-import localStorageService, { LocalStorageKey } from '@/utils/local-storage';
+import { localStorageService, LocalStorageKey } from 'ascend-utils';
 import i18n from 'ascend-i18n';
 import { sendLanguage } from '@/connection/sendNotification';
 import { LangEnIcon, LangZhIcon } from 'ascend-icon';
@@ -11,7 +11,6 @@ import { Language } from '@/utils/enum';
 
 const useLanguage = (): [Language, (val: Language) => void] => {
     const [lang, setLang] = useState(localStorageService.getItem(LocalStorageKey.LANGUAGE) ?? Language.EN);
-
     useEffect(() => {
         i18n.changeLanguage(lang);
         localStorageService.setItem(LocalStorageKey.LANGUAGE, lang);
@@ -29,7 +28,7 @@ function SwitchLanguage(): JSX.Element {
         setLang(isChinese ? Language.EN : Language.ZH);
     };
 
-    return <Tooltip>
+    return <Tooltip placement={'bottom'} title={'中文/English'}>
         <div onClick={handleToggleLang} >
             { isChinese ? <LangZhIcon/> : <LangEnIcon/> }
         </div>

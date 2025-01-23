@@ -8,6 +8,7 @@ import ImportData from './ImportData/Index';
 import styled from '@emotion/styled';
 import ProjectContents from './ProjectContents/Index';
 import { DataManagerIcon } from 'ascend-icon';
+import { useTranslation } from 'react-i18next';
 
 const Container = styled.div`
     color:${(props): string => props.theme.textColorPrimary};
@@ -35,9 +36,12 @@ const Header = styled.div`
 interface IProps {
     session: Session;
 }
+
 const Index = observer(({ session }: IProps) => {
+    const { t } = useTranslation('framework');
+
     return <Container>
-        <Header><DataManagerIcon/>Data Manager</Header>
+        <Header><DataManagerIcon/>{ t('Data Manager')}</Header>
         <ImportData session={session}/>
         <ProjectContents/>
     </Container>;
