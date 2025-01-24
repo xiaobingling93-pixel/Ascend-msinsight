@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2024-2024. All rights reserved.
 */
 import { runInAction } from 'mobx';
-import { customConsole as console } from 'ascend-utils';
+import { customConsole as console, LocalStorageKey, localStorageService } from 'ascend-utils';
 import connector from '@/connection';
 import { store } from '@/store';
 import { ProjectAction } from '@/utils/enum';
@@ -58,6 +58,10 @@ export async function handleProjectAction({ action, dataSource: orginDataSource,
             }
         }
         addDataPath(dataSource, action, isConflict);
+
+        // 保存文件路径
+        const path = dataSource.dataPath[0].includes(dataSource.projectName) ? dataSource.projectName : dataSource.dataPath[0];
+        localStorageService.setItem(LocalStorageKey.LAST_FILE_PATH, path);
     });
 }
 // 允许2个数组值重复或乱序

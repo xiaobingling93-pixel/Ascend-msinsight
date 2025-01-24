@@ -62,8 +62,7 @@ const ImportData = observer(({ session }: {session: Session}) => {
         <FileExplorer
             currentProject={currentProject}
             dialogOpen={dialogOpen}
-            handleOk={closeDialog}
-            handleCancel={closeDialog}
+            closeDialog={closeDialog}
         />
     </>;
 });

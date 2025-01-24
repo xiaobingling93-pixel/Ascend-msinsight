@@ -54,11 +54,10 @@ const MAX_FILE_PATH_LENGTH = 260;
 interface IProps {
     currentProject: string;
     dialogOpen: boolean;
-    handleOk: () => void;
-    handleCancel: (e: React.MouseEvent<HTMLElement>) => void;
+    closeDialog: () => void;
 }
 // 文件资源管理器
-const FileExplorer = observer(({ dialogOpen, handleOk, handleCancel, currentProject }: IProps) => {
+const FileExplorer = observer(({ dialogOpen, closeDialog, currentProject }: IProps) => {
     const { t } = useTranslation('framework');
     const [inputPath, setInputPath] = useState(getLastFilePath());
     const [actionListener, setActionListener] = useState<CatalogActionListener>({ type: CatalogAction.NO_ACTION });
@@ -82,7 +81,7 @@ const FileExplorer = observer(({ dialogOpen, handleOk, handleCancel, currentProj
         } else {
             console.error(validRes);
         }
-        handleOk();
+        closeDialog();
     };
 
     // 查询目录树
@@ -104,10 +103,10 @@ const FileExplorer = observer(({ dialogOpen, handleOk, handleCancel, currentProj
         }
     }, [dialogOpen]);
 
-    return <Modal maskClosable={false} title={t('File Explorer')} open={dialogOpen} onOk={handleOk} onCancel={handleCancel}
+    return <Modal maskClosable={false} title={t('File Explorer')} open={dialogOpen} onOk={closeDialog} onCancel={closeDialog}
         footer={<div>
             <Button onClick={handleConfirm} type="primary" style={{ marginRight: 8 }} >{t('Confirm')}</Button>
-            <Button onClick={handleCancel}>{t('Cancel')}</Button>
+            <Button onClick={closeDialog}>{t('Cancel')}</Button>
         </div>}>
         <FileExplorerContainer>
             {!currentProject ? <></> : <span className="project-name">{t('Current Project')} ：{currentProject}</span>}

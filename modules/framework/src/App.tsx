@@ -35,6 +35,7 @@ const App = observer(() => {
 
     const [view] = useDraggableContainer({
         draggableWH: LEFT_WIDTH,
+        minWH: 0,
         dragDirection: DragDirection.LEFT,
         open: true,
     });

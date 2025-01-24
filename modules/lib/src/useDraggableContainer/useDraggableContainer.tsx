@@ -3,9 +3,10 @@
 */
 import styled from '@emotion/styled';
 import { clamp } from 'lodash';
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDownIcon, ArrowUpIcon } from '../icon/Icon';
 import { themeInstance } from '../theme';
+import { disableIframePointerEvent, recoverIframePointerEvent } from '../utils/Common';
 
 interface CssProps {
     column: boolean;
@@ -49,6 +50,7 @@ interface DCProps {
     dragDirection: DragDirection;
     draggableWH: number;
     open?: boolean;
+    minWH?: number;
 }
 
 const MIN_HORIZONTAL_WH = 24;
@@ -96,8 +98,10 @@ const ContainerLeft = styled(ContainerBase)`
         height: 100%;
         width: ${(p): string => p.draggableWH};
         border-right: ${(p): string => p.theme.dividerColor} 2px solid;
-        overflow: hidden;
         display: flex;
+        & > .dragContainer {
+            overflow: hidden;
+        }
         & > .splitLine {
             position: absolute;
             height: 100%;
@@ -129,6 +133,11 @@ const ContainerLeft = styled(ContainerBase)`
             color: ${(p): string => p.theme.switchIconColor};
             svg {
                 width: 10px;
+            }
+        }
+        &.width0 {
+            & > .buttonShow {
+                right: -53px;
             }
         }
     }
@@ -282,6 +291,8 @@ const getHandleMouseDown = (dragDirection: DragDirection, draggable: React.RefOb
     movingState: React.MutableRefObject<MovingState>, isOpen: React.MutableRefObject<boolean>) => (e: MouseEvent): void => {
     const domDrag = draggable.current;
     if (!domDrag) { return; }
+    disableIframePointerEvent();
+
     let offset; const baseMS: MovingState = { stat: 'movable', startX: 0, startY: 0, screenX: e.screenX, screenY: e.screenY };
     const domDragRect = domDrag.getBoundingClientRect();
     switch (dragDirection) {
@@ -360,7 +371,7 @@ const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: 
         case DragDirection.LEFT:
             offsetX = e.x - moving.startX;
             if (Math.abs(offsetX) >= 5) {
-                domDrag.style.width = `${clamp(e.x, 245, dom.clientWidth * 0.5)}px`;
+                domDrag.style.width = `${clamp(e.x, 245, dom.clientHeight - minDragWh)}px`;
             }
             break;
         default:
@@ -376,6 +387,7 @@ const handleMouseMove = (container: React.RefObject<HTMLDivElement>, draggable: 
 
 const handleMouseUp = (container: React.RefObject<HTMLDivElement>, draggable: React.RefObject<HTMLDivElement>, movingState: React.MutableRefObject<MovingState>,
     dragDirection: DragDirection, minDragWh: number) => (e: MouseEvent): void => {
+    recoverIframePointerEvent();
     const dom = container.current;
     const domDrag = draggable.current;
     const moving = movingState.current;
@@ -397,7 +409,7 @@ const handleMouseUp = (container: React.RefObject<HTMLDivElement>, draggable: Re
             window.dispatchEvent(new Event('bottomResize'));
             break;
         case DragDirection.LEFT:
-            dragWHTmp = clamp(e.clientX, 245, dom.clientWidth * 0.4);
+            dragWHTmp = clamp(e.clientX, 245, dom.clientHeight - minDragWh);
             domDrag.style.width = `${dragWHTmp / dom.clientWidth * 100}%`;
             window.dispatchEvent(new Event('leftResize'));
             break;
@@ -446,9 +458,13 @@ const handleDraggableShow = (draggableProps: DraggableContext) => (): void => {
         if (draggableProps.isOpen.current) { // open -> close
             draggableProps.setDragTranslate(domDrag.clientWidth);
             domDrag.style.width = `${draggableProps.minDragWh}px`;
+            if (draggableProps.minDragWh === 0) {
+                domDrag.classList.add('width0');
+            }
         } else { // close -> open
             domDrag.style.width = `${pxConvert(draggableProps.dragTranslate, draggableProps.container, draggableProps.dragDirection)}`;
             draggableProps.setDragTranslate(0);
+            domDrag.classList.remove('width0');
         }
     }
     draggableProps.isOpen.current = !draggableProps.isOpen.current;
@@ -462,6 +478,13 @@ const containerMap: Map<DragDirection, typeof ContainerBase> = new Map([
     [DragDirection.RIGHT, ContainerRight],
 ]);
 
+const getMinDragWidth = (dragDirection: DragDirection, minWH?: number): number => {
+    if (minWH !== undefined && typeof minWH === 'number') {
+        return minWH;
+    }
+    return dragDirection <= 1 ? MIN_VERTICAL_WH : MIN_HORIZONTAL_WH;
+};
+
 /**
  * 在当前布局下创建两个容器，其中draggable容器可拖动改变宽/高，可点击收起隐藏，main容器自适应改变，根据传入拖动方向不同，提供leftResize/rightResize等事件
  * @param props
@@ -470,13 +493,14 @@ const containerMap: Map<DragDirection, typeof ContainerBase> = new Map([
  * handleOpen：显示/隐藏可拖动容器；
  */
 export const useDraggableContainer = (props: DCProps): [ ((props: ViewProps) => JSX.Element), ((needOpen?: boolean) => void) ] => {
-    const { draggableWH, dragDirection, open = true } = props;
-    const container = useRef<HTMLDivElement>(null); const draggable = useRef<HTMLDivElement>(null);
+    const { draggableWH, dragDirection, minWH, open = true } = props;
+    const container = useRef<HTMLDivElement>(null);
+    const draggable = useRef<HTMLDivElement>(null);
     const [dragWh, setDragWh] = useState(String(draggableWH));
     const [autoPopUp, setAutoPopUp] = useState(true);
     const [containerWH, setContainerWH] = useState([0, 0] as [number, number]);
     useEffect(() => { setDragWh(pxConvert(draggableWH, containerWH, dragDirection)); }, [draggableWH, containerWH, dragDirection]);
-    const MIN_DRAG_WH = useMemo(() => dragDirection <= 1 ? MIN_VERTICAL_WH : MIN_HORIZONTAL_WH, [dragDirection]);
+    const MIN_DRAG_WH = useMemo(() => getMinDragWidth(dragDirection, minWH), [dragDirection, minWH]);
     const [dragTranslate, setDragTranslate] = useState(open ? 0 : draggableWH); // 可拖动的距离范围。0 | 具体某个值
     const isOpen = useRef(dragTranslate === 0);
     useEffect(() => {

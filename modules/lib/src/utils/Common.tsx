@@ -421,3 +421,18 @@ export const CompareNumber = ({ data }: {data: string | number}): JSX.Element =>
 };
 
 export const FONT_FAMILY = '\'Inter\', -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, \'Fira Sans\', \'Droid Sans\', sans-serif';
+
+export const disableIframePointerEvent = (): void => {
+    if (window.document.querySelectorAll('iframe').length !== 0) {
+        window.document.querySelectorAll('iframe').forEach((item: HTMLIFrameElement) => {
+            (item.style as any)['pointer-events'] = 'none';
+        });
+    }
+};
+export const recoverIframePointerEvent = (): void => {
+    if (window.document.querySelectorAll('iframe').length !== 0) {
+        window.document.querySelectorAll('iframe').forEach((item: HTMLIFrameElement) => {
+            (item.style as any)['pointer-events'] = 'auto';
+        });
+    }
+};
