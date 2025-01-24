@@ -59,7 +59,7 @@ private:
     static std::string GenerateQueryCategoryDurationSqlForHCCL(
         const Dic::Protocol::OperatorGroupConverter::OperatorGroup &operatorGroup);
     std::string &GenerateQueryMoreInfoSqlForHCCL(std::string &sql) const;
-    std::string &GenerateQueryMoreInfoSqlForOther(std::string &sql) const;
+    std::string &GenerateQueryMoreInfoSqlForOther(std::string &sql);
     std::string &GenerateQueryDetailSqlForHCCL(std::string &sql) const;
     void GenerateMoreInfoTotalNumForOther(std::string &sql,
                                           OperatorGroupConverter::OperatorGroup opGroup) const;

@@ -955,11 +955,15 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
 
     std::string TextSummaryDataBase::GenerateQueryMoreInfoSql(Protocol::OperatorMoreInfoReqParams &reqParams)
     {
+        // 获取pmu数据的列用来做查询，如果pmuColumnNames为空，就表示没有pmu列需要查找
+        std::set<std::string> pmuClos = FetchPmuColumnNames();
+        std::string pmuColumnNames = JoinExtraColName(std::vector<std::string>(pmuClos.begin(), pmuClos.end()));
         std::string sql =
                 " SELECT rank_id, step_id, name, op_type, accelerator_core,"
                 " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
                 " END AS startTime, duration, wait_time, block_dim,"
-                " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
+                " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats " +
+                pmuColumnNames +
                 " FROM ("
                 "     SELECT * FROM " + TABLE_KERNEL +
                 "     WHERE rank_id = ? AND accelerator_core = ?"
@@ -1019,6 +1023,16 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
         }
         BindSqliteParam(stmt, reqParams);
 
+        std::vector<Protocol::OperatorDetailInfoRes> res = ExecSqlGetMoreInfo(stmt);
+        response.level = OperatorGetLevel(res);
+        response.datas = res;
+        response.pmuHeaders = pmuColumns_;
+        sqlite3_finalize(stmt);
+        return true;
+    }
+
+    std::vector<Protocol::OperatorDetailInfoRes> TextSummaryDataBase::ExecSqlGetMoreInfo(sqlite3_stmt *stmt)
+    {
         std::vector<Protocol::OperatorDetailInfoRes> res;
         while (sqlite3_step(stmt) == SQLITE_ROW) {
             int col = 0;
@@ -1038,12 +1052,13 @@ bool TextSummaryDataBase::QueryCommunicationOpDetail(Protocol::CommunicationDeta
             one.outputShape = sqlite3_column_string(stmt, col++);
             one.outputType = sqlite3_column_string(stmt, col++);
             one.outputFormat = sqlite3_column_string(stmt, col++);
+            for (const auto &pmuCol : pmuColumns_) {
+                // 注意这里不要判空，有多少存储多少，防止和pmuheaders错行
+                one.pmuDatas[pmuCol] = sqlite3_column_string(stmt, col++);
+            }
             res.emplace_back(one);
         }
-        response.level = OperatorGetLevel(res);
-        response.datas = res;
-        sqlite3_finalize(stmt);
-        return true;
+        return res;
     }
 
     void TextSummaryDataBase::BindSqliteParam(sqlite3_stmt *stmt, Protocol::OperatorMoreInfoReqParams &reqParams)

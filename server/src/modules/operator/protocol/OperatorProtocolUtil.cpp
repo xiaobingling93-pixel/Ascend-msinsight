@@ -183,6 +183,15 @@ std::optional<document_t> ToResponseJson<OperatorMoreInfoResponse>(const Operato
     json_t body(kObjectType);
     JsonUtil::AddMember(body, "total", res.total, allocator);
     JsonUtil::AddMember(body, "level", res.level, allocator);
+    // 创建一个JSON数组存储pmuHeaders的数据
+    Value pmuHeaders(kArrayType);
+    // 将vector中的元素逐个添加到JSON数组中
+    for (const auto& header : res.pmuHeaders) {
+        Value headerValue;
+        headerValue.SetString(header.c_str(), header.length(), allocator);
+        pmuHeaders.PushBack(headerValue, allocator);
+    }
+    JsonUtil::AddMember(body, "pmuHeaders", pmuHeaders, allocator);
     json_t data(kArrayType);
     for (const OperatorDetailInfoRes& ele : res.datas) {
         json_t dataJson(kObjectType);
@@ -199,6 +208,11 @@ std::optional<document_t> ToResponseJson<OperatorMoreInfoResponse>(const Operato
         JsonUtil::AddMember(dataJson, "outputShape", ele.outputShape, allocator);
         JsonUtil::AddMember(dataJson, "outputType", ele.outputType, allocator);
         JsonUtil::AddMember(dataJson, "outputFormat", ele.outputFormat, allocator);
+        for (auto& [colName, pmuValue] : ele.pmuDatas) {
+            rapidjson::Value key(colName.c_str(), allocator);
+            rapidjson::Value value(pmuValue.c_str(), allocator);
+            dataJson.AddMember(key, value, allocator);
+        }
         data.PushBack(dataJson, allocator);
     }
     JsonUtil::AddMember(body, "data", data, allocator);

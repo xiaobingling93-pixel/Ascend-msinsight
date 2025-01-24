@@ -535,10 +535,15 @@ bool DbSummaryDataBase::QueryOperatorMoreInfo(OperatorMoreInfoReqParams &reqPara
         one.outputShape = sqlite3_column_string(stmt, col++);
         one.outputType = sqlite3_column_string(stmt, col++);
         one.outputFormat = sqlite3_column_string(stmt, col++);
+        for (const auto &pmuCol : pmuColumns_) {
+            // 注意这里不要判空，有多少存储多少，防止和pmuheaders错行
+            one.pmuDatas[pmuCol] = sqlite3_column_string(stmt, col++);
+        }
         res.emplace_back(one);
     }
     response.level = OperatorGetLevel(res);
     response.datas = res;
+    response.pmuHeaders = pmuColumns_;
     sqlite3_finalize(stmt);
     return true;
 }
@@ -931,12 +936,14 @@ std::string &DbSummaryDataBase::GenerateQueryMoreInfoSqlForHCCL(std::string &sql
     return sql;
 }
 
-std::string &DbSummaryDataBase::GenerateQueryMoreInfoSqlForOther(std::string &sql) const
+std::string &DbSummaryDataBase::GenerateQueryMoreInfoSqlForOther(std::string &sql)
 {
+    std::set<std::string> pmuClos = FetchPmuColumnNames();
     sql = " SELECT rank_id, step_id, name, op_type, accelerator_core,"
           " CASE WHEN start_time == 0 THEN 'NA' ELSE ROUND((start_time - ?) / (1000.0 * 1000.0), 2)"
           " END AS startTime, duration, wait_time, " + blockDimColumnName + ","
-          " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats"
+          " input_shapes, input_data_types, input_formats, output_shapes, output_data_types, output_formats "
+          + JoinExtraColName(std::vector<std::string>(pmuClos.begin(), pmuClos.end())) +
           " FROM ("
           "     SELECT " + blockDimColumnName + ", deviceId as rank_id, streamId as step_id, "
           "     NAME.value AS name,  OPTYPE.value AS op_type,"
@@ -944,7 +951,8 @@ std::string &DbSummaryDataBase::GenerateQueryMoreInfoSqlForOther(std::string &sq
           "     ROUND((waitNs)/1000.0, 3) as wait_time, INPUTSHAPES.value as input_shapes, "
           "     INPUTDATATYPES.value as input_data_types, "
           "     INPUTFORMATS.value as input_formats, OUTPUTSHAPES.value as output_shapes, "
-          "     OUTPUTDATATYPES.value as output_data_types, OUTPUTFORMATS.value as output_formats "
+          "     OUTPUTDATATYPES.value as output_data_types, OUTPUTFORMATS.value as output_formats " +
+          GetPMUTmpTableColSql(pmuClos) +
           "     FROM " + TABLE_COMPUTE_TASK_INFO + " JOIN TASK ON COMPUTE_TASK_INFO.globalTaskId = TASK.globalTaskId "
           "     JOIN STRING_IDS AS NAME ON NAME.id = COMPUTE_TASK_INFO.name"
           "     JOIN STRING_IDS AS OPTYPE ON OPTYPE.id = COMPUTE_TASK_INFO.opType"
@@ -954,7 +962,8 @@ std::string &DbSummaryDataBase::GenerateQueryMoreInfoSqlForOther(std::string &sq
           "     JOIN STRING_IDS AS INPUTFORMATS ON INPUTFORMATS.id = COMPUTE_TASK_INFO.inputFormats"
           "     JOIN STRING_IDS AS OUTPUTSHAPES ON OUTPUTSHAPES.id = COMPUTE_TASK_INFO.outputShapes"
           "     JOIN STRING_IDS AS OUTPUTDATATYPES ON OUTPUTDATATYPES.id = COMPUTE_TASK_INFO.outputDataTypes"
-          "     JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats"
+          "     JOIN STRING_IDS AS OUTPUTFORMATS ON OUTPUTFORMATS.id = COMPUTE_TASK_INFO.outputFormats " +
+          CreatPMUTmpTableSql(pmuClos) +
           "     WHERE accelerator_core = ?"
           "     ORDER by duration DESC ) subquery ";
     return sql;

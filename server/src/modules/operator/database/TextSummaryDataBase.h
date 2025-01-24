@@ -95,6 +95,7 @@ private:
     bool ExecSqlGetDetailInfo(std::string sql, Protocol::OperatorStatisticReqParams &reqParams,
                               std::vector<Protocol::OperatorDetailInfoRes> &res, std::string &level);
     bool ExecSqlGetRes(sqlite3_stmt *stmt, std::vector<Protocol::OperatorDetailInfoRes> &res);
+    std::vector<Protocol::OperatorDetailInfoRes> ExecSqlGetMoreInfo(sqlite3_stmt *stmt);
     bool QueryAllOperatorDetailInfo(Protocol::OperatorStatisticReqParams &reqParams,
                                     std::vector<Protocol::OperatorDetailInfoRes> &res, std::string &level);
 };

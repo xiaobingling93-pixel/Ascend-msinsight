@@ -97,6 +97,7 @@ namespace Dic::Protocol {
         OperatorMoreInfoResponse() : Response(REQ_RES_OPERATOR_MORE_INFO) {};
         int64_t total;
         std::string level; // l0, l1, l2
+        std::set<std::string> pmuHeaders;
         std::vector<OperatorDetailInfoRes> datas;
     };
 }
