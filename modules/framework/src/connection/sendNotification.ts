@@ -56,3 +56,10 @@ export function sendWakeupPlugin(): void {
         target: 'plugin',
     });
 }
+
+export function sendUpdateProjectName(oldProjectName: string, newProjectName: string): void {
+    connector.send({
+        event: 'updateProjectName',
+        body: { oldProjectName, newProjectName },
+    });
+}

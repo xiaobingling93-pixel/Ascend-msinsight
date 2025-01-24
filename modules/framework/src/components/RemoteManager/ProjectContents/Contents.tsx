@@ -7,6 +7,7 @@ import { runInAction } from 'mobx';
 import styled from '@emotion/styled';
 import { Tooltip, type TreeDataNode } from 'antd';
 import { Tree } from 'ascend-components';
+import { HandleSingleDoubleClick } from 'ascend-utils';
 import type { EventDataNode } from 'antd/lib/tree';
 import { AddIcon, LocalImportIcon } from 'ascend-icon';
 import { store } from '@/store';
@@ -17,6 +18,7 @@ import { loadHistoryProject, handleProjectAction } from '@/utils/Project';
 import DeleteConfirm from './DeleteConfirm';
 import { isSameFile } from './ContextMenu';
 import { useTranslation } from 'react-i18next';
+import EditableText from './EditableText';
 
 const ContentsContainer = styled.div`
     padding: 0.5rem 0.8rem;
@@ -73,17 +75,13 @@ const ContentsContainer = styled.div`
         margin-left: 10px;
         display: none;
     }
-    // 鼠标滑动效果
-    .ant-tree-treenode:hover {
+    // 选中效果/鼠标滑动效果
+    .ant-tree-treenode-selected, .ant-tree-treenode:hover {
         background: ${(props): string => props.theme.bgColorLight};
 
         .btn-box {
             display: flex;
         }
-    }
-    // 选中效果
-    .ant-tree-treenode-selected {
-        background: ${(props): string => props.theme.bgColorLight};
     }
     // 比对数据
     .baseline{
@@ -127,7 +125,7 @@ const Contents = observer(({ session }: {session: Session}) => {
         isLeaf: false,
         icon: <LocalImportIcon/>,
         title: <span className={'content-body'}>
-            <span className={'content-text'}>{dataSource.projectName}</span>
+            <span className={'content-text'}><EditableText text={dataSource.projectName}/></span>
             <div className={'btn-box'} onClick={(e): void => e.stopPropagation()}>
                 <ImportDataBtn projectName={dataSource.projectName} session={session}/>
                 <DeleteConfirm isProject={true} projectIndex={dataSourceIndex} />
@@ -161,7 +159,7 @@ const Contents = observer(({ session }: {session: Session}) => {
     }, [session.activeDataSource]);
 
     // 点击目录
-    const handleSelect = (keys: React.Key[], { node }: {node: EventDataNode<TreeDataNode>}): void => {
+    const handleNodeClick = (keys: React.Key[], { node }: {node: EventDataNode<TreeDataNode>}): void => {
         const { activeDataSource, dataSources } = session;
         const [,projectIndex, dataPathIndex] = node.pos.split('-').map(index => Number(index));
         const dataSource: DataSource = dataSources[projectIndex];
@@ -179,6 +177,18 @@ const Contents = observer(({ session }: {session: Session}) => {
                     dataPath: [dataSource.dataPath[dataPathIndex]],
                 };
             });
+        }
+    };
+
+    const handleSingleClick = (keys: React.Key[], nodeEvent: {node: EventDataNode<TreeDataNode>}): void => {
+        // React不区分单击、双击
+        // 如果点击项目名，为避免影响双击事件，增加了额外控制
+        if (!nodeEvent.node.isLeaf) {
+            HandleSingleDoubleClick.click(() => {
+                handleNodeClick(keys, nodeEvent);
+            }, 'projectName');
+        } else {
+            handleNodeClick(keys, nodeEvent);
         }
     };
 
@@ -206,7 +216,7 @@ const Contents = observer(({ session }: {session: Session}) => {
             selectedKeys={selectedKeys}
             multiple={true}
             expandedKeys={expandedKeys}
-            onSelect={handleSelect}
+            onSelect={handleSingleClick}
             onExpand={handleExpand}
         />
     </ContentsContainer>

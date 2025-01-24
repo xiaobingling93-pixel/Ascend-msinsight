@@ -38,6 +38,16 @@ export const checkProjectValid = async (dataSource: DataSource, params: {project
 };
 
 /**
+ * 修改工程名
+ */
+export const updateProjectName = async (oldProjectName: string, newProjectName: string): Promise<unknown> => {
+    return request(GLOBAL_HOST, 'global', {
+        command: 'files/updateProjectExplorer',
+        params: { oldProjectName, newProjectName },
+    });
+};
+
+/**
  * 清理Timeline
  */
 export const resetTimeline = async (dataSource: DataSource): Promise<unknown> => {

@@ -122,3 +122,22 @@ export const cancelCompareData = (): void => {
         session.compareSet.comparison = { projectName: '', filePath: '', rankId: '' };
     });
 };
+
+/**
+ * 更新对比数据
+ * @param oldProjectName 原工程名
+ * @param newProjectName 新工程名
+ */
+export const updateProjectNameHandler = (oldProjectName: string, newProjectName: string): void => {
+    const session = store.sessionStore.activeSession;
+    // 选中对比文件
+    runInAction(() => {
+        const { compareSet } = session;
+        if (compareSet.baseline.projectName === oldProjectName) {
+            compareSet.baseline.projectName = newProjectName;
+        }
+        if (compareSet.comparison.projectName === oldProjectName) {
+            compareSet.comparison.projectName = newProjectName;
+        }
+    });
+};
