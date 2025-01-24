@@ -436,3 +436,16 @@ export const recoverIframePointerEvent = (): void => {
         });
     }
 };
+
+export class HandleSingleDoubleClick {
+    static timerMap: Record<string, number> = {};
+    static click(action: () => void, key: string = 'default'): void {
+        clearTimeout(this.timerMap[key]);
+        this.timerMap[key] = window.setTimeout(() => { action(); }, 300);
+    }
+
+    static doubleClick(action: () => void, key: string = 'default'): void {
+        clearTimeout(this.timerMap[key]);
+        action();
+    }
+}

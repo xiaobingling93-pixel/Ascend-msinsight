@@ -18,17 +18,17 @@ const sizeOption = {
     middle: 160,
     large: 240,
 };
-export const MIInput = styled((props: InputProps & React.RefAttributes<InputRef>) => {
+const Support = React.forwardRef((props: InputProps, ref: React.ForwardedRef<InputRef>) => {
     const { t } = useTranslation('lib');
-    const { size, ...restProps } = props;
-    return (
-        <Input
-            maxLength={DEFAULT_MAX_LENGTH}
-            placeholder={t('Please enter')}
-            {...restProps}
-        />
-    );
-})`
+    return <Input
+        maxLength={DEFAULT_MAX_LENGTH}
+        placeholder={t('Please enter')}
+        {...props} ref={ref} />;
+},
+);
+Support.displayName = 'Support';
+
+export const MIInput = styled(Support)`
     width: ${(props): number => (props.size && sizeOption[props.size]) ?? sizeOption.middle}px;
     height: ${(props): number | string => (props.height ?? 32)}px;
     background-color: ${(props): string => props.theme.bgColor};
@@ -94,7 +94,7 @@ export const MIInputNumber = styled((props: InputNumberProps<ValueType> & {
             &:hover >span {
                 color: ${(props): string => props.theme.primaryColor};
             }
-            
+
             &.ant-input-number-handler-up-disabled, &.ant-input-number-handler-down-disabled {
                 > span {
                     color: ${(props): string => props.theme.textColorTertiary};

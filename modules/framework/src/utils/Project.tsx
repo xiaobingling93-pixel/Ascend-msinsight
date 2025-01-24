@@ -8,7 +8,12 @@ import { store } from '@/store';
 import { ProjectAction } from '@/utils/enum';
 import { DataSource, LOCAL_HOST, PORT, ProjectDirectory } from '@/centralServer/websocket/defs';
 import { addDataPath, connectRemote, isExistedRemote } from '@/centralServer/server';
-import { deleteDataPath, deleteProject, resetTimeline, getHistoryProject } from '@/utils/Request';
+import { deleteDataPath, deleteProject, resetTimeline, getHistoryProject, updateProjectName as requestUpdateProjectName } from '@/utils/Request';
+import i18n from 'ascend-i18n';
+import { message as Message } from 'antd';
+import { isProjectNameExisted, updateDataSourceName } from '@/utils/Resource';
+import { sendUpdateProjectName } from '@/connection/sendNotification';
+import { updateProjectNameHandler } from '@/utils/Compare';
 
 export interface UpdateProjectParam {
     projectAction: ProjectAction;
@@ -170,4 +175,27 @@ export const removeDataPath = (projectIndex: number, dataPathIndex: number): voi
             console.error('removeSingle error');
         }
     });
+};
+
+// 修改工程名
+export const updateProjectName = async (oldProjectName: string, newProjectName: string): Promise<boolean> => {
+    try {
+        const existed = isProjectNameExisted(newProjectName);
+        if (existed) {
+            Message.warning(i18n.t('Duplicate Project', { ns: 'framework' }));
+            return false;
+        }
+        // 通知后端
+        await requestUpdateProjectName(oldProjectName, newProjectName);
+        // 通知模块
+        sendUpdateProjectName(oldProjectName, newProjectName);
+        // 修改目录
+        updateDataSourceName(oldProjectName, newProjectName);
+        // 更新对比功能
+        updateProjectNameHandler(oldProjectName, newProjectName);
+        return true;
+    } catch {
+        Message.warning(i18n.t('Update Project Name Failed', { ns: 'framework' }));
+        return false;
+    }
 };

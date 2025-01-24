@@ -10,6 +10,7 @@ import { ProjectError } from '@/utils/enum';
 import { localStorageService, LocalStorageKey } from 'ascend-utils';
 import { store } from '@/store';
 import { message as Message } from 'antd';
+import { runInAction } from 'mobx';
 export interface ResourceItem {
     path: string;
     name: string;
@@ -125,4 +126,28 @@ export const getSearchDir = (inputPath = ''): string => {
     const isCloudEnv = window.location.pathname.includes('/proxy/');
     const defaultCloudDir = '/home/ma-user/work';
     return isCloudEnv ? defaultCloudDir : path;
+};
+
+// 工程名是否存在
+export const isProjectNameExisted = (projectName: string): boolean => {
+    const session = store.sessionStore.activeSession;
+    return session.dataSources.some((item) => item.projectName === projectName);
+};
+
+// 修改数据源的工程名
+export const updateDataSourceName = (oldProjectName: string, newProjectName: string): void => {
+    if (!isProjectNameExisted(oldProjectName)) {
+        return;
+    }
+    const session = store.sessionStore.activeSession;
+    const { dataSources, activeDataSource } = session;
+
+    runInAction(() => {
+        session.dataSources = dataSources.map(dataSource =>
+            dataSource.projectName === oldProjectName ? { ...dataSource, projectName: newProjectName } : dataSource);
+
+        if (activeDataSource.projectName === oldProjectName) {
+            session.activeDataSource = { ...activeDataSource, projectName: newProjectName };
+        }
+    });
 };

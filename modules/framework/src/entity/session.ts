@@ -30,7 +30,6 @@ export class Session {
     defaultConnected?: boolean;
     actionListener: {type: SessionAction;value: string} = { type: SessionAction.NO_ACTION, value: '' };
     // 数据源/项目管理
-    activeDataSource: DataSource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
     rankList: Rank[] = [];
     // 场景
     isCluster: boolean | null = false;
@@ -66,6 +65,8 @@ export class Session {
     // 数据源/项目管理
     private _dataSources: DataSource[] = [];
 
+    private _activeDataSource: DataSource = { remote: LOCAL_HOST, port: PORT, projectName: '', dataPath: [] };
+
     constructor() {
         makeAutoObservable(this);
     }
@@ -96,8 +97,16 @@ export class Session {
         return this._dataSources;
     }
 
+    get activeDataSource(): DataSource {
+        return this._activeDataSource;
+    }
+
     set dataSources(data: DataSource[]) {
         this._dataSources = data;
+    }
+
+    set activeDataSource(data: DataSource) {
+        this._activeDataSource = data;
     }
 
     reset(remove?: boolean): void {
