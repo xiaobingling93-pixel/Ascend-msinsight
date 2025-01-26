@@ -1,6 +1,7 @@
 {
   "communication": {
     "Find in Timeline": "Find in Timeline",
+    "Find in HCCL": "Find in HCCL",
     "Align according to selected operator": "Align according to selected operator",
     "Restore default state": "Restore default state",
     "bandwidth": "Bandwidth",

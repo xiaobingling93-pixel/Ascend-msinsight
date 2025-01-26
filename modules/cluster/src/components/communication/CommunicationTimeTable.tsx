@@ -2,18 +2,19 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Button } from 'ascend-components';
-import type { TableColumnsType } from 'antd';
+import type { MenuProps, TableColumnsType } from 'antd';
+import { Dropdown } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { getPageConfigWithAllData, getPageConfigWithPageData } from '../Common';
 import type { VoidFunction } from '../../utils/interface';
 import { queryOperatorDetails } from '../../utils/RequestUtils';
-import { type ConditionDataType, totalOperator } from './Filter';
+import { type ConditionDataType, totalOperator, updateData } from './Filter';
 import { ResizeTable } from 'ascend-resize';
 import type { Session } from '../../entity/session';
 import CollapsiblePanel from 'ascend-collapsible-panel';
@@ -21,6 +22,7 @@ import { CaretDownIcon, CaretRightIcon } from 'ascend-icon';
 import { CompareNumber } from 'ascend-utils';
 import i18n from 'ascend-i18n';
 import type { DataItem, Duration } from './CommunicationTimeChart';
+import connector from '../../connection';
 
 export type DataType = Duration & {
     rankId: string;
@@ -37,7 +39,6 @@ type TableDataItem = DataItem & {
 const useCommonColumns = (): ColumnsType<DataType> => {
     const { t } = useTranslation('communication');
     return [
-        { title: `${t('tableHead.Start Time')}(ms)`, dataIndex: 'startTime', sorter: (a: DataType, b: DataType) => a.startTime - b.startTime, ellipsis: true },
         { title: `${t('tableHead.Elapse Time')}(ms)`, dataIndex: 'elapseTime', sorter: (a: DataType, b: DataType) => a.elapseTime - b.elapseTime, ellipsis: true, showSorterTooltip: { title: `${t('tableHeadTooltip.Elapse Time')}` } },
         {
             title: `${t('tableHead.Transit Time')}(ms)`,
@@ -84,6 +85,55 @@ const useCommonColumns = (): ColumnsType<DataType> => {
             title: `${t('tableHead.RDMABW')}(GB)`, dataIndex: 'rdmaBw', sorter: (a: DataType, b: DataType) => a.rdmaBw - b.rdmaBw, ellipsis: true,
         }];
 };
+interface OpDetail {
+    operatorName: string;
+    rankId: number;
+    elapseTime: number;
+}
+let selectedOpDetail: OpDetail | null;
+async function redirectToTimeline(): Promise<void> {
+    if (selectedOpDetail === null) {
+        return;
+    }
+    const name = selectedOpDetail.operatorName;
+    const rankId = selectedOpDetail.rankId;
+    const NS_TO_MS_FACTOR = 0.000001;
+    const duration = Math.round(selectedOpDetail.elapseTime / NS_TO_MS_FACTOR);
+    const params = {
+        name,
+        rankId: rankId.toString(),
+    };
+    const res = await window.requestData('unit/kernelDetail', params, 'timeline');
+    const resObj = res ?? {};
+    connector.send({
+        event: 'switchModule',
+        body: {
+            switchTo: 'timeline',
+            toModuleEvent: 'locateUnit',
+            params: {
+                ...resObj,
+                ...params,
+                processId: resObj.pid,
+                startTime: resObj.startTime,
+                rankId: resObj.rankId,
+                duration,
+            },
+        },
+    });
+}
+
+async function findInCommunication(condition: ConditionDataType): Promise<void> {
+    if (selectedOpDetail === null) {
+        return;
+    }
+    condition.operatorName = selectedOpDetail.operatorName;
+    updateData(condition);
+    const it = document.querySelector('.mi-page-content');
+    if (it !== null) {
+        it.scroll(0, 0);
+    }
+}
+
 // Total HCCL Opertators表
 const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     const defaultPage = { current: 1, pageSize: 10, total: 0 };
@@ -92,11 +142,31 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
     const [page, setPage] = useState(defaultPage);
     const [sorter, setSorter] = useState(defaultSorter);
     const { t } = useTranslation('communication');
+    const [shouldBlockMouseLeave, setShouldBlockMouseLeave] = useState<boolean>(false);
+    const useMenuItems = (): MenuProps['items'] => {
+        return [
+            {
+                label: t('Find in Timeline'),
+                key: 'findInTimeline',
+                onClick: (): void => {
+                    redirectToTimeline();
+                },
+            },
+            {
+                label: t('Find in HCCL'),
+                key: 'findInHCCL',
+                onClick: (): void => {
+                    findInCommunication(conditions);
+                },
+            },
+        ];
+    };
+    const items = useMenuItems();
 
     useEffect(() => {
-        updateData(page, sorter);
+        updateTableData(page, sorter);
     }, [page.current, page.pageSize, sorter.field, sorter.order, conditions.iterationId, record.rankId]);
-    const updateData = async(_page: any, _sorter: {field: string;order: string}): Promise<void> => {
+    const updateTableData = async(_page: any, _sorter: {field: string;order: string}): Promise<void> => {
         const res = await queryOperatorDetails({
             iterationId: record.source === Source.COMPARISON ? conditions.iterationId : conditions.baselineIterationId,
             rankId: record.rankId,
@@ -117,16 +187,38 @@ const OperatorsTable = ({ record, conditions }: any): JSX.Element => {
             return { ...item, sorter: true };
         }),
     ];
-    return <div>
-        <ResizeTable columns={columns} dataSource={dataSource} size="small"
-            pagination={getPageConfigWithPageData(page, setPage)}
-            onChange={(pagination: any, filters: any, newSorter: any, extra: any): void => {
-                if (extra.action === 'sort') {
-                    setSorter(newSorter);
+    const onRow = (rowData: any): React.HTMLAttributes<any> => {
+        return {
+            onMouseLeave: (): void => {
+                if (shouldBlockMouseLeave) {
+                    setShouldBlockMouseLeave(false);
                 }
-            }}
-        />
-    </div>;
+            },
+            onContextMenu: (event: any): void => {
+                event.preventDefault(); // 阻止默认的右键菜单
+                selectedOpDetail = rowData as OpDetail;
+                if (selectedOpDetail !== undefined) {
+                    selectedOpDetail.rankId = record.rankId;
+                }
+                setShouldBlockMouseLeave(true);
+            },
+        };
+    };
+    return (
+        <Dropdown menu={{ items }} trigger={['contextMenu']}>
+            <div>
+                <ResizeTable columns={columns} dataSource={dataSource} size="small"
+                    pagination={getPageConfigWithPageData(page, setPage)}
+                    onChange={(pagination: any, filters: any, newSorter: any, extra: any): void => {
+                        if (extra.action === 'sort') {
+                            setSorter(newSorter);
+                        }
+                    }}
+                    onRow={onRow}
+                />
+            </div>
+        </Dropdown>
+    );
 };
 
 const ExpandIcon = ({ expanded, onClick }: {expanded: boolean;onClick: VoidFunction}): JSX.Element => {
