@@ -272,6 +272,9 @@ function closeMenu(session: Session): void {
 }
 
 function openMenu(session: Session): void {
+    if (session.selectedUnits.length === 0) {
+        return;
+    }
     runInAction(() => {
         session.contextMenu.isVisible = true;
     });
@@ -295,6 +298,7 @@ const showAllHidedUnits = (session: Session): void => {
         if (selectUnit.parent) {
             setUnitNotHide(selectUnit.parent);
         } else {
+            // 顶层 EmptyUnit 的处理方式
             session.units.forEach(cardUnit => setUnitNotHide(cardUnit));
             runInAction(() => {
                 session.units.pop();
@@ -308,14 +312,15 @@ const showAllHidedUnits = (session: Session): void => {
         }
     };
 
-    const selectUnit = session.selectedUnits[0];
-    if (selectUnit !== undefined) {
-        if (selectUnit.name === 'Empty') {
-            handleEmptyUnit(selectUnit);
-        } else {
-            showChildrenUnits(selectUnit);
+    session.selectedUnits.forEach((selectUnit): void => {
+        if (selectUnit !== undefined) {
+            if (selectUnit.name === 'Empty') {
+                handleEmptyUnit(selectUnit);
+            } else {
+                showChildrenUnits(selectUnit);
+            }
         }
-    }
+    });
 };
 
 export const EmptyUnit = unit<EmptyMetaData>({
@@ -333,12 +338,16 @@ interface EmptyMetaData {
     dataSource: DataSource;
 };
 
-const hideUnits = (session: Session, selectUnit: InsightUnit[]): void => {
+const hideUnits = (session: Session, selectUnits: InsightUnit[]): void => {
     const hideEveryUnit = (insightUnit: InsightUnit): void => {
-        if (selectUnit[0].metadata === insightUnit.metadata) {
+        /**
+         * 对于有父子Unit被选中的情况
+         * 由于代码是从顶向下找的，当发现第一个父Unit是选中的，就直接 hideSelectUnit，然后退出程序
+         * 这样可以避免再次选中子Unit导致子Unit又创建一个Hidden Unit这种不希望的情形出现
+         */
+        if (selectUnits.some((item): boolean => item.metadata === insightUnit.metadata)) {
             hideSelectUnit(insightUnit);
-        }
-        if (insightUnit.children) {
+        } else if (insightUnit.children) {
             for (const child of insightUnit.children) {
                 hideEveryUnit(child);
             }
@@ -400,7 +409,8 @@ const setChildrenUnitHide = (units: InsightUnit[]): void => {
 };
 
 const isShowHideText = (session: Session): boolean => {
-    if (session.selectedUnits[0] === undefined) {
+    // 必须只选中一个才能显示“显示全部已隐藏泳道”菜单项
+    if (session.selectedUnits.length !== 1) {
         return false;
     }
     if (session.selectedUnits[0].name === 'Empty') {
@@ -417,10 +427,10 @@ const isShowHideText = (session: Session): boolean => {
 };
 
 const isHideText = (session: Session): boolean => {
-    if (session.selectedUnits[0] === undefined) {
+    if (session.selectedUnits.length === 0) {
         return false;
     }
-    return session.selectedUnits[0].name !== 'Empty';
+    return session.selectedUnits.every((item): boolean => item.name !== 'Empty');
 };
 
 function showInEventsView(session: Session, menuItem?: MenuItemModel): void {
@@ -435,6 +445,10 @@ function showInEventsView(session: Session, menuItem?: MenuItemModel): void {
 }
 
 const isShowEventMenu = (session: Session): boolean => {
+    // 必须只选中一个才能显示“跳转数据窗口事件视图”菜单项
+    if (session.selectedUnits.length !== 1) {
+        return false;
+    }
     const selectUnit = session.selectedUnits[0];
     if (selectUnit === undefined || session.isSimulation) {
         return false;
@@ -456,7 +470,11 @@ const isShowEventMenu = (session: Session): boolean => {
 };
 
 const showPythonFunction = (session: Session): void => {
-    const selectedUnit = session.selectedUnits?.[0];
+    // 必须只选中一个才能调用“显示、隐藏python调用栈”菜单项
+    if (session.selectedUnits.length !== 1) {
+        return;
+    }
+    const selectedUnit = session.selectedUnits[0];
     if (selectedUnit === undefined) {
         return;
     }
@@ -476,7 +494,11 @@ const showPythonFunction = (session: Session): void => {
     });
 };
 const isShowPythonFunction = (session: Session): boolean => {
-    const selectedUnit = session.selectedUnits?.[0];
+    // 必须只选中一个才能显示“显示、隐藏python调用栈”菜单项
+    if (session.selectedUnits.length !== 1) {
+        return false;
+    }
+    const selectedUnit = session.selectedUnits[0];
     if (selectedUnit === undefined) {
         return false;
     }
@@ -484,8 +506,12 @@ const isShowPythonFunction = (session: Session): boolean => {
 };
 
 const getShowPythonFunctionButtonText = (session: Session, t: TFunction): string => {
+    // 必须只选中一个才能显示菜单项名
+    if (session.selectedUnits.length !== 1) {
+        return '';
+    }
     let isFilteredPythonFunction = true;
-    const selectedUnit = session.selectedUnits?.[0];
+    const selectedUnit = session.selectedUnits[0];
     if (selectedUnit === undefined) {
         return '';
     }
@@ -515,6 +541,10 @@ const expandUnits = (_unit: InsightUnit, shouldExpand: boolean): void => {
     }
 };
 const collapseOrExpandAll = (session: Session, menuItem?: MenuItemModel): void => {
+    // 必须只选中一个才能调用“收起、展开全部子项”菜单项
+    if (session.selectedUnits.length !== 1) {
+        return;
+    }
     const selectedUnit = session.selectedUnits[0];
     const shouldExpand = menuItem?.key === 'expandAll';
     runInAction(() => {
@@ -609,7 +639,11 @@ const haveCollapsedChildren = (_unit: InsightUnit): boolean => {
 };
 
 const isCollapseAllVisible = (session: Session): boolean => {
-    const selectedUnit = session.selectedUnits?.[0];
+    // 必须只选中一个才能显示“收起全部子项”菜单项
+    if (session.selectedUnits.length !== 1) {
+        return false;
+    }
+    const selectedUnit = session.selectedUnits[0];
     if (selectedUnit !== undefined) {
         return haveExpandedChildren(selectedUnit);
     }
@@ -617,7 +651,11 @@ const isCollapseAllVisible = (session: Session): boolean => {
 };
 
 const isExpandAllVisible = (session: Session): boolean => {
-    const selectedUnit = session.selectedUnits?.[0];
+    // 必须只选中一个才能显示“展开全部子项”菜单项
+    if (session.selectedUnits.length !== 1) {
+        return false;
+    }
+    const selectedUnit = session.selectedUnits[0];
     if (selectedUnit !== undefined) {
         const isCollapsed = selectedUnit.collapsible && !selectedUnit.isExpanded;
         const haveChildUnits = selectedUnit.children && selectedUnit.children.length > 0;

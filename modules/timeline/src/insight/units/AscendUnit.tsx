@@ -519,7 +519,7 @@ export const CardUnit = unit<CardMetaData>({
     configBar: offsetConfig,
     pinType: 'copied',
     renderInfo: (session: Session, metadata: { cardName: string; cardPath: string }) => <Tooltip placement="leftBottom" title={metadata.cardPath}>
-        <span style={{ marginLeft: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{ marginLeft: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {metadata.cardName}
         </span>
     </Tooltip>,

@@ -345,6 +345,52 @@ test.describe('Timeline', () => {
         expect(await hideUnit.count()).toBe(0);
     });
 
+    // 右键菜单--多选隐藏有兄弟关系 Hide/Show All Hidden
+    test('test_context_menu_click_multi_hide_siblings', async ({ timelinePage }) => {
+        const { timelineFrame, clickMenu } = timelinePage;
+        const unitList = timelineFrame.locator('#unitWrapperScroller .unit-info');
+        const clickUnitOne = unitList.nth(1);
+        const clickUnitTwo = unitList.nth(2);
+
+        await clickUnitOne.hover();
+        const clickUnitCheckboxOne = clickUnitOne.locator('input[type="checkbox"]');
+        await clickUnitCheckboxOne.click({ button: 'left' });
+        expect(await clickUnitCheckboxOne.isChecked()).toBe(true);
+        await clickUnitTwo.hover();
+        const clickUnitCheckboxTwo = clickUnitTwo.locator('input[type="checkbox"]');
+        await clickUnitCheckboxTwo.click({ button: 'left' });
+        expect(await clickUnitCheckboxTwo.isChecked()).toBe(true);
+        await clickMenu(clickUnitTwo, timelineFrame, 'Hide');
+        const hideUnit = timelineFrame.locator('#unitWrapperScroller .unit > .empty');
+        const hideUnitTitle = hideUnit.locator('.insight-lane-info > span');
+        expect(await hideUnitTitle.innerHTML()).toBe('2 units hidden');
+        await clickMenu(hideUnit, timelineFrame, 'Show All Hidden');
+        expect(await hideUnit.count()).toBe(0);
+    });
+
+    // 右键菜单--多选隐藏有父子关系 Hide/Show All Hidden
+    test('test_context_menu_click_multi_hide_parent_child', async ({ timelinePage }) => {
+        const { timelineFrame, clickMenu } = timelinePage;
+        const unitList = timelineFrame.locator('#unitWrapperScroller .unit-info');
+        const clickUnitParent = unitList.nth(0);
+        const clickUnitChild = unitList.nth(1);
+
+        await clickUnitParent.hover();
+        const clickUnitCheckboxParent = clickUnitParent.locator('input[type="checkbox"]');
+        await clickUnitCheckboxParent.click({ button: 'left' });
+        expect(await clickUnitCheckboxParent.isChecked()).toBe(true);
+        await clickUnitChild.hover();
+        const clickUnitCheckboxChild = clickUnitChild.locator('input[type="checkbox"]');
+        await clickUnitCheckboxChild.click({ button: 'left' });
+        expect(await clickUnitCheckboxChild.isChecked()).toBe(true);
+        await clickMenu(clickUnitChild, timelineFrame, 'Hide');
+
+        const hideUnit = timelineFrame.locator('#unitWrapperScroller .unit > .empty');
+        expect(await hideUnit.count()).toBe(1);
+        await clickMenu(hideUnit, timelineFrame, 'Show All Hidden');
+        expect(await hideUnit.count()).toBe(0);
+    });
+
     // 右键菜单--Expand all/Collapse all
     test('test_context_menu_click_ExpandAll', async ({ timelinePage, page }) => {
         const { timelineFrame, clickMenu } = timelinePage;
@@ -379,13 +425,14 @@ test.describe('Timeline', () => {
 
         for (let i = 0; i < options.length; i++) {
             // 聚焦在timeline
-            await clickUnit.click({ button: 'middle' });
+            await clickUnit.click({ button: 'left' }); // 选中unit+收起unit
+            await clickUnit.click({ button: 'left' }); // 选中unit+展开unit
             await page.keyboard.press('w');
             await page.keyboard.press('w');
             await page.waitForTimeout(1000);
+            await page.mouse.move(0, 0);
             await expect(timelineFrame.locator('#main-container')).toHaveScreenshot('test-context-menu-click-Zoom.png', { maxDiffPixels: 200 });
             await clickMenu(clickUnit, timelineFrame, options[i]);
-            await page.mouse.move(0, 0);
             await page.waitForTimeout(1000);
             await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-context-menu-click-${options[i]}.png`, { maxDiffPixels: 200 });
         }
@@ -397,14 +444,15 @@ test.describe('Timeline', () => {
         const unitList = timelineFrame.locator('#unitWrapperScroller');
         const secondUnitInfo = timelineFrame.locator('.unit-info').nth(1);
         await secondUnitInfo.click();
+        await page.mouse.move(0, 0);
         await page.keyboard.press('w');
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-w.png`, { maxDiffPixels: 100 });
-        await page.keyboard.press('s');
-        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-s.png`, { maxDiffPixels: 100 });
         await page.keyboard.press('d');
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-d.png`, { maxDiffPixels: 100 });
         await page.keyboard.press('a');
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-a.png`, { maxDiffPixels: 100 });
+        await page.keyboard.press('s');
+        await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-s.png`, { maxDiffPixels: 100 });
         await page.keyboard.press('ArrowDown');
         await expect(timelineFrame.locator('#main-container')).toHaveScreenshot(`test-keyword-ArrowDown.png`, { maxDiffPixels: 100 });
         await page.keyboard.press('ArrowUp');

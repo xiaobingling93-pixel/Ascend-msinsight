@@ -18,29 +18,33 @@ import { getAutoKey } from '../../../utils/dataAutoKey';
 import { ReactComponent as Arrow } from '../../../assets/images/insights/PullDownIcon.svg';
 import { ReactComponent as StickyIcon } from '../../../assets/images/sticky_unit_button_icon.svg';
 // components
+import { message } from 'antd';
+import { Checkbox, Tooltip } from 'ascend-components';
+import { StartIcon, PinIcon, UnPinIcon } from 'ascend-icon';
 import { StyledButton } from '../../base/StyledButton';
+import { ReactComponent as Supported } from '../../../assets/images/insights/Supported.svg';
+import { CardUnit } from '../../../insight/units/AscendUnit';
+import { UnitProgress } from '../../charts/UnitProgress';
 // trace/platform
 import { platform } from '../../../platforms';
 import { traceSingle } from '../../../utils/traceLogger';
 // common constant variable
+import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import { isPinned, switchPinned } from '../unitPin';
 import { useSelectUnit } from './hooks';
-import { ReactComponent as Supported } from '../../../assets/images/insights/Supported.svg';
-import { Tooltip } from 'ascend-components';
-import { CardUnit } from '../../../insight/units/AscendUnit';
-import { StartIcon, PinIcon, UnPinIcon } from 'ascend-icon';
-import { UnitProgress } from '../../charts/UnitProgress';
+import { useDeselectUnits, useSelectUnits } from './hooks/useSelectUnit';
 import { type ParseCardsParam, parseCards } from '../../../api/Request';
-import { message } from 'antd';
+import { useComplexMouseEvent } from './mouseEvent';
 
 const DefaultInfoContainer = styled.div`
     display: flex;
     justify-content: space-between;
     font-size: 14px;
     height: 100%;
+    flex: auto;
 
     .insight-lane-info-header {
-        margin-left: 8px;
+        padding-left: 6px;
         min-width: 0;
         flex: 1;
         height: 100%;
@@ -172,7 +176,7 @@ interface ConfigBarProps {
 }
 const ConfigBar = observer(({ session, unit, isHovered, hasPinButton, isSelected }: ConfigBarProps): JSX.Element => {
     return <div className="insight-lane-configbar" style={{ flex: 'none' }}>
-        <div style={{ display: 'flex', marginLeft: 5 }} onClick={(e: React.MouseEvent): void => {
+        <div style={{ display: 'flex', marginLeft: 5 }} onMouseUp={(e: React.MouseEvent): void => {
             e.stopPropagation();
             e.preventDefault();
         }}>
@@ -200,6 +204,7 @@ interface UnitInfoContentProps {
 const InsightLaneInfoContainer = styled.div`
     height: 100%;
     display: flex;
+    flex: auto;
     justify-content: space-between;
 `;
 
@@ -262,21 +267,50 @@ const UnitInfoContent = observer(({ unit, session, ...props }: UnitInfoContentPr
 });
 
 const ExpandIcon = observer(({ unit }: { unit: KeyedInsightUnit }): JSX.Element => {
-    return <div style={{ float: 'left', height: '20px', marginLeft: '6px', top: 'calc(50% - 10px)', position: 'relative' }}>
+    return <div style={{ height: '20px', marginLeft: '4px' }}>
         <Arrow data-testid={'expand-btn'} style={{ transform: `rotate(${unit.isExpanded ? 0 : '-90deg'})`, cursor: 'pointer' }}
             className={`insight-unit-${unit.isExpanded ? 'expanded' : 'fold'}`} />
     </div>;
 });
 
 const UnitInfoContainer = styled.div<{ unit: InsightUnit; laneInfoWidth: number }>`
+    position: relative;
     flex-grow: 0;
     flex-shrink: 0;
     width: ${(props): number => props.laneInfoWidth}px;
     flex-basis: ${(props): number => props.laneInfoWidth}px;
     height: ${(props): number => props.unit.height()}px;
-    padding-left: ${(props): number => 36 * ((props.unit as any)[level] ?? 0)}px;
+    padding-left: ${(props): number => 28 * ((props.unit as any)[level] ?? 0)}px;
     text-align: left;
     color: ${(props): string => props.theme.unitInfoTextColor};
+    display: flex;
+    align-items: center;
+`;
+
+const UnitInfoActionHeader = styled.div<{ showCheckbox: boolean; moveRight: boolean }>`
+    position: ${(props): string => props.moveRight ? 'static' : 'absolute'};
+    margin-left: ${(props): number => props.moveRight ? 0 : -20}px;
+    display: flex;
+    align-items: center;
+    width: ${(props): number => (props.moveRight && !props.showCheckbox) ? 0 : 20}px;
+    transform-origin: ${(props): string => props.moveRight ? 'left' : 'right'};
+    transform: scaleX(${(props): number => props.showCheckbox ? 1 : 0});
+    transition: transform 0.3s ease-in, width 0.3s ease-in;
+    overflow: hidden;
+
+    .ant-checkbox-wrapper {
+        max-height: 20px;
+        margin-left: 4px;
+    }
+`;
+
+const UnitInfoBody = styled.div<{ offset: number }>`
+    width: calc(100% - ${(props): number => props.offset}px);
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    position: relative;
+    transition: width 0.3s ease-in;
 `;
 
 interface UnitInfoProps {
@@ -292,9 +326,19 @@ interface UnitInfoProps {
 }
 
 export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon, className, ...props }: UnitInfoProps): JSX.Element => {
+    const { isSelected } = props;
     const [isHovered, setIsHovered] = React.useState(false);
     const selectUnit = useSelectUnit(session);
+    const selectUnits = useSelectUnits(session);
+    const deselectUnits = useDeselectUnits(session);
+    const showCheckbox = React.useMemo(() => isSelected || isHovered, [isSelected, isHovered]);
+    const checkboxMoveRight = unit.parent === undefined;
     const expandable: boolean = hasExpandIcon && (Boolean(unit.children) || (Boolean(unit.collapsible) && Boolean(unit.collapseAction)));
+    const calculateSiblingsAllNotExpandable = React.useCallback(() => {
+        const siblings = (unit.parent === undefined) ? session.units : (unit.parent.children ?? []);
+        return !siblings.some((item) => hasExpandIcon &&
+            (Boolean(item.children) || (Boolean(item.collapsible) && Boolean(item.collapseAction))));
+    }, [hasExpandIcon, unit]);
     const onExpand = React.useCallback(async (_unit: KeyedInsightUnit) => {
         if (!expandable) {
             return;
@@ -323,6 +367,38 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
         });
         _unit.collapseAction?.(_unit);
     }, [session, expandable]);
+    const onStopPropagation = React.useCallback((e: React.MouseEvent) => {
+        // 阻止事件冒泡到 UnitInfoContainer
+        e.stopPropagation();
+        // 阻止默认事件行为
+        e.preventDefault();
+    }, []);
+    const onCheckChange = React.useCallback((e: CheckboxChangeEvent) => {
+        const checked = (e.target as HTMLInputElement).checked;
+        if (Object.is(checked, true)) {
+            selectUnits(unit);
+        } else {
+            deselectUnits(unit);
+        }
+    }, [unit]);
+    const onMouseLeft = (): void => {
+        selectUnit(unit);
+        traceSingle('selectLane', [unit.name]);
+        onExpand(unit);
+    };
+    const onMouseRight = (): void => {
+        // 当前泳道已选中，不再对当前泳道选中
+        if (!isSelected) {
+            selectUnit(unit);
+            traceSingle('selectLane', [unit.name]);
+            // 显示右键菜单需使用 contentmenu 事件，不在 mouseup 事件中处理
+        }
+    };
+    const onUnitInfoContainerMouseUp = useComplexMouseEvent({
+        stopPropagation: true,
+        left: onMouseLeft,
+        right: onMouseRight,
+    });
     return <UnitInfoContainer
         className={`unit-info ${className ?? ''}`}
         unit={unit}
@@ -333,18 +409,23 @@ export const UnitInfo = observer(({ session, unit, laneInfoWidth, hasExpandIcon,
             }
         }}
         onMouseLeave={(): void => { setIsHovered(false); }}
-        onMouseDown={(): void => {
-            selectUnit(unit);
-            traceSingle('selectLane', [unit.name]);
-        }}
-        onClick={async (e: React.MouseEvent<HTMLElement, MouseEvent>): Promise<void> => { onExpand(unit); }}
+        onMouseUp={onUnitInfoContainerMouseUp}
     >
-        {expandable && <ExpandIcon unit={unit} />}
-        <UnitInfoContent
-            unit={unit}
-            session={session}
-            isHovered={isHovered}
-            {...props}
-        />
+        <UnitInfoActionHeader showCheckbox={showCheckbox} moveRight={checkboxMoveRight} onMouseUp={onStopPropagation}>
+            <Checkbox onChange={onCheckChange} checked={isSelected}/> {/* Checkbox(20px) */}
+        </UnitInfoActionHeader>
+        <UnitInfoBody offset={(checkboxMoveRight && showCheckbox) ? 20 : 0}>
+            {/* position: 'absolute' 将 ExpandIcon 从文档流移出，不影响 UnitInfoContent 宽度显示 */}
+            {expandable && <div style={{ position: 'absolute' }}><ExpandIcon unit={unit} /></div>} {/* ExpandIcon(14px) */}
+            {/* paddingLeft: '14px' 为 ExpandIcon 的显示留出空间 */}
+            <div style={{ paddingLeft: calculateSiblingsAllNotExpandable() ? '0px' : '14px', width: '100%' }}>
+                <UnitInfoContent
+                    unit={unit}
+                    session={session}
+                    isHovered={isHovered}
+                    {...props}
+                />
+            </div>
+        </UnitInfoBody>
     </UnitInfoContainer>;
 });
