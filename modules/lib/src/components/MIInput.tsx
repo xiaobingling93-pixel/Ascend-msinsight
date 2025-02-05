@@ -20,10 +20,12 @@ const sizeOption = {
 };
 const Support = React.forwardRef((props: InputProps, ref: React.ForwardedRef<InputRef>) => {
     const { t } = useTranslation('lib');
+    // size在styled中使用
+    const { size, ...restProps } = props;
     return <Input
         maxLength={DEFAULT_MAX_LENGTH}
         placeholder={t('Please enter')}
-        {...props} ref={ref} />;
+        {...restProps} ref={ref} />;
 },
 );
 Support.displayName = 'Support';

@@ -24,7 +24,8 @@
         "test": "npm install --force && npm run buildLibLinux && npm run testMemory && npm run testTimeline",
         "testCluster": "cd cluster && npm run test",
         "testMemory": "cd memory && npm run test",
-        "testTimeline": "cd timeline && npm run test"
+        "testTimeline": "cd timeline && npm run test",
+        "publishWinReact": "xcopy ..\\framework\\plugins\\  .\\framework\\public\\plugins\\ /E /I /Y"
     },
     "dependencies": {
         "@cloudsop/horizon": "0.0.77",
